@@ -139,6 +139,59 @@ struct X87FloatConversion {
     rounded_up: bool,
 }
 
+#[derive(Clone, Copy, Debug)]
+struct X86SimdFpFormat {
+    total_bits: u32,
+    exponent_bits: u32,
+    fraction_bits: u32,
+    bias: i32,
+}
+
+const X86_SIMD_F32: X86SimdFpFormat = X86SimdFpFormat {
+    total_bits: 32,
+    exponent_bits: 8,
+    fraction_bits: 23,
+    bias: 127,
+};
+const X86_SIMD_F64: X86SimdFpFormat = X86SimdFpFormat {
+    total_bits: 64,
+    exponent_bits: 11,
+    fraction_bits: 52,
+    bias: 1023,
+};
+
+const X86_SM4_SBOX: [u8; 256] = [
+    0xD6, 0x90, 0xE9, 0xFE, 0xCC, 0xE1, 0x3D, 0xB7, 0x16, 0xB6, 0x14, 0xC2, 0x28, 0xFB, 0x2C, 0x05,
+    0x2B, 0x67, 0x9A, 0x76, 0x2A, 0xBE, 0x04, 0xC3, 0xAA, 0x44, 0x13, 0x26, 0x49, 0x86, 0x06, 0x99,
+    0x9C, 0x42, 0x50, 0xF4, 0x91, 0xEF, 0x98, 0x7A, 0x33, 0x54, 0x0B, 0x43, 0xED, 0xCF, 0xAC, 0x62,
+    0xE4, 0xB3, 0x1C, 0xA9, 0xC9, 0x08, 0xE8, 0x95, 0x80, 0xDF, 0x94, 0xFA, 0x75, 0x8F, 0x3F, 0xA6,
+    0x47, 0x07, 0xA7, 0xFC, 0xF3, 0x73, 0x17, 0xBA, 0x83, 0x59, 0x3C, 0x19, 0xE6, 0x85, 0x4F, 0xA8,
+    0x68, 0x6B, 0x81, 0xB2, 0x71, 0x64, 0xDA, 0x8B, 0xF8, 0xEB, 0x0F, 0x4B, 0x70, 0x56, 0x9D, 0x35,
+    0x1E, 0x24, 0x0E, 0x5E, 0x63, 0x58, 0xD1, 0xA2, 0x25, 0x22, 0x7C, 0x3B, 0x01, 0x21, 0x78, 0x87,
+    0xD4, 0x00, 0x46, 0x57, 0x9F, 0xD3, 0x27, 0x52, 0x4C, 0x36, 0x02, 0xE7, 0xA0, 0xC4, 0xC8, 0x9E,
+    0xEA, 0xBF, 0x8A, 0xD2, 0x40, 0xC7, 0x38, 0xB5, 0xA3, 0xF7, 0xF2, 0xCE, 0xF9, 0x61, 0x15, 0xA1,
+    0xE0, 0xAE, 0x5D, 0xA4, 0x9B, 0x34, 0x1A, 0x55, 0xAD, 0x93, 0x32, 0x30, 0xF5, 0x8C, 0xB1, 0xE3,
+    0x1D, 0xF6, 0xE2, 0x2E, 0x82, 0x66, 0xCA, 0x60, 0xC0, 0x29, 0x23, 0xAB, 0x0D, 0x53, 0x4E, 0x6F,
+    0xD5, 0xDB, 0x37, 0x45, 0xDE, 0xFD, 0x8E, 0x2F, 0x03, 0xFF, 0x6A, 0x72, 0x6D, 0x6C, 0x5B, 0x51,
+    0x8D, 0x1B, 0xAF, 0x92, 0xBB, 0xDD, 0xBC, 0x7F, 0x11, 0xD9, 0x5C, 0x41, 0x1F, 0x10, 0x5A, 0xD8,
+    0x0A, 0xC1, 0x31, 0x88, 0xA5, 0xCD, 0x7B, 0xBD, 0x2D, 0x74, 0xD0, 0x12, 0xB8, 0xE5, 0xB4, 0xB0,
+    0x89, 0x69, 0x97, 0x4A, 0x0C, 0x96, 0x77, 0x7E, 0x65, 0xB9, 0xF1, 0x09, 0xC5, 0x6E, 0xC6, 0x84,
+    0x18, 0xF0, 0x7D, 0xEC, 0x3A, 0xDC, 0x4D, 0x20, 0x79, 0xEE, 0x5F, 0x3E, 0xD7, 0xCB, 0x39, 0x48,
+];
+
+#[derive(Clone, Copy, Debug)]
+struct X86SimdFpResult {
+    bits: u64,
+    status: u32,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct X86SimdFinite {
+    negative: bool,
+    significand: u128,
+    exponent: i32,
+}
+
 // ============================================================================
 // Interpreter
 // ============================================================================
@@ -169,6 +222,67 @@ impl SmirInterpreter {
     /// Set the maximum instructions per run
     pub fn set_max_insns(&mut self, max: u64) {
         self.max_insns_per_run = max;
+    }
+
+    fn x86_fp16_to_fp32_bits(bits: u16) -> u32 {
+        let sign = u32::from(bits & 0x8000) << 16;
+        let exponent = (bits >> 10) & 0x1F;
+        let fraction = u32::from(bits & 0x03FF);
+        match exponent {
+            0 if fraction == 0 => sign,
+            0 => {
+                let shift = fraction.leading_zeros() - 21;
+                let normalized = fraction << shift;
+                let unbiased = -14 - shift as i32;
+                sign | (((unbiased + 127) as u32) << 23) | ((normalized & 0x03FF) << 13)
+            }
+            0x1F if fraction == 0 => sign | 0x7F80_0000,
+            0x1F => sign | 0x7FC0_0000 | (fraction << 13),
+            _ => sign | ((((i32::from(exponent)) - 15 + 127) as u32) << 23) | (fraction << 13),
+        }
+    }
+
+    fn x86_fp32_to_bf16_bits(bits: u32) -> u16 {
+        let sign = (bits >> 16) as u16 & 0x8000;
+        let exponent = bits & 0x7F80_0000;
+        let fraction = bits & 0x007F_FFFF;
+        if exponent == 0 {
+            // BF16 conversion always applies DAZ and preserves the zero sign.
+            sign
+        } else if exponent == 0x7F80_0000 {
+            let mut result = (bits >> 16) as u16;
+            if fraction != 0 {
+                result |= 1 << 6;
+            }
+            result
+        } else {
+            let lsb = (bits >> 16) & 1;
+            (bits.wrapping_add(0x7FFF + lsb) >> 16) as u16
+        }
+    }
+
+    fn x86_bf16_to_fp32_daz(bits: u16) -> u32 {
+        if bits & 0x7F80 == 0 {
+            u32::from(bits & 0x8000) << 16
+        } else {
+            u32::from(bits) << 16
+        }
+    }
+
+    fn x86_fp32_ftz(bits: u32) -> u32 {
+        if bits & 0x7F80_0000 == 0 {
+            bits & 0x8000_0000
+        } else {
+            bits
+        }
+    }
+
+    fn x86_bf16_is_nan(bits: u16) -> bool {
+        bits & 0x7F80 == 0x7F80 && bits & 0x007F != 0
+    }
+
+    fn x86_bf16_quiet_nan(bits: u16) -> u32 {
+        u32::from(bits | (1 << 6)) << 16
     }
 
     /// Add a block to the cache
@@ -1231,7 +1345,8 @@ impl SmirInterpreter {
                 Self::write_gpr(ctx, *dst, (clamped as u64) & width.mask(), *width);
             }
 
-            // Carry-less (GF(2)) polynomial multiply — `pmpyw`/`vpmpyh` (+ `_acc`).
+            // Carry-less (GF(2)) polynomial multiply — Hexagon
+            // `pmpyw`/`vpmpyh` (+ `_acc`) and x86 PCLMULQDQ.
             OpKind::ClMul {
                 dst,
                 dst_hi,
@@ -1244,11 +1359,11 @@ impl SmirInterpreter {
                 // Carry-less product of two `bits`-wide operands: XOR-accumulate
                 // of the shifted partial products (no carries; sign irrelevant).
                 #[inline]
-                fn clmul(a: u64, b: u64, bits: u32) -> u64 {
-                    let mut prod: u64 = 0;
+                fn clmul(a: u64, b: u64, bits: u32) -> u128 {
+                    let mut prod: u128 = 0;
                     for k in 0..bits {
                         if (b >> k) & 1 == 1 {
-                            prod ^= a << k;
+                            prod ^= u128::from(a) << k;
                         }
                     }
                     prod
@@ -1256,10 +1371,24 @@ impl SmirInterpreter {
                 let a = self.read_src_operand(ctx, src1);
                 let b = self.read_src_operand(ctx, src2);
                 let bits = *elem_bits as u32;
+                let elem_mask = if bits == 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << bits) - 1
+                };
+                let result_mask = if *lanes == 1 {
+                    elem_mask
+                } else {
+                    u64::from(u32::MAX)
+                };
                 let (mut lo, mut hi): (u64, u64) = if *lanes == 1 {
-                    // pmpyw: one 32x32 -> 64-bit product; lo/hi = its words.
-                    let p = clmul(a & 0xffff_ffff, b & 0xffff_ffff, bits);
-                    (p & 0xffff_ffff, (p >> 32) & 0xffff_ffff)
+                    // One product split at the element boundary: 32x32 for
+                    // Hexagon pmpyw, 64x64 for x86 PCLMULQDQ.
+                    let p = clmul(a & elem_mask, b & elem_mask, bits);
+                    (
+                        (p & u128::from(elem_mask)) as u64,
+                        ((p >> bits) & u128::from(elem_mask)) as u64,
+                    )
                 } else {
                     // vpmpyh: two 16x16 -> 32-bit products, interleaved:
                     //   lo.h0=p0.lo, lo.h1=p1.lo, hi.h0=p0.hi, hi.h1=p1.hi.
@@ -1267,22 +1396,49 @@ impl SmirInterpreter {
                     let x1 = (a >> 16) & 0xffff;
                     let y0 = b & 0xffff;
                     let y1 = (b >> 16) & 0xffff;
-                    let p0 = clmul(x0, y0, bits) & 0xffff_ffff;
-                    let p1 = clmul(x1, y1, bits) & 0xffff_ffff;
+                    let p0 = (clmul(x0, y0, bits) & 0xffff_ffff) as u64;
+                    let p1 = (clmul(x1, y1, bits) & 0xffff_ffff) as u64;
                     let lo = (p0 & 0xffff) | ((p1 & 0xffff) << 16);
                     let hi = ((p0 >> 16) & 0xffff) | (((p1 >> 16) & 0xffff) << 16);
                     (lo, hi)
                 };
                 if *acc {
-                    lo ^= ctx.read_vreg(*dst) & 0xffff_ffff;
+                    lo ^= ctx.read_vreg(*dst) & result_mask;
                     if let Some(h) = dst_hi {
-                        hi ^= ctx.read_vreg(*h) & 0xffff_ffff;
+                        hi ^= ctx.read_vreg(*h) & result_mask;
                     }
                 }
-                Self::write_gpr(ctx, *dst, lo & 0xffff_ffff, OpWidth::W32);
+                let width = if bits == 64 && *lanes == 1 {
+                    OpWidth::W64
+                } else {
+                    OpWidth::W32
+                };
+                Self::write_gpr(ctx, *dst, lo & result_mask, width);
                 if let Some(h) = dst_hi {
-                    Self::write_gpr(ctx, *h, hi & 0xffff_ffff, OpWidth::W32);
+                    Self::write_gpr(ctx, *h, hi & result_mask, width);
                 }
+            }
+
+            OpKind::Crc32C {
+                dst,
+                crc,
+                data,
+                data_width,
+            } => {
+                // Reflected Castagnoli recurrence. Register byte 0 is consumed
+                // first, matching x86's little-endian source interpretation.
+                const POLY_REFLECTED: u32 = 0x82F6_3B78;
+                let mut value = ctx.read_vreg(*crc) as u32;
+                let input = ctx.read_vreg(*data);
+                for byte in 0..(data_width.bits() / 8) {
+                    value ^= ((input >> (byte * 8)) & 0xFF) as u32;
+                    for _ in 0..8 {
+                        value = (value >> 1) ^ (POLY_REFLECTED & 0u32.wrapping_sub(value & 1));
+                    }
+                }
+                // Both r32 and r64 instruction forms architecturally clear the
+                // destination's high 32 bits.
+                Self::write_gpr(ctx, *dst, u64::from(value), OpWidth::W64);
             }
 
             // `M7_wcmpy*` — 32x32 wide complex multiply with an i128 accumulator,
@@ -2424,6 +2580,140 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::X86VectorFpCompare {
+                dst,
+                src1,
+                src2,
+                mask,
+                elem,
+                width,
+                lanes,
+                predicate,
+                scalar,
+                mask_destination,
+                zero_upper,
+                suppress_exceptions,
+            } => {
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let active = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
+                let format = match elem {
+                    VecElementType::F32 => X86_SIMD_F32,
+                    VecElementType::F64 => X86_SIMD_F64,
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                let signaling = matches!(
+                    *predicate & 0x1F,
+                    1 | 2 | 5 | 6 | 9 | 10 | 13 | 14 | 16 | 19 | 20 | 23 | 24 | 27 | 28 | 31
+                );
+                let mut status = 0u32;
+                let mut mask_result = 0u64;
+                let mut vector_result = if *scalar {
+                    first
+                } else {
+                    Self::read_vec(ctx, *dst)
+                };
+                if *zero_upper && !*mask_destination {
+                    vector_result[(width.bytes() / 8) as usize..].fill(0);
+                }
+                for lane in 0..*lanes {
+                    if active & (1u64 << lane) == 0 {
+                        continue;
+                    }
+                    let first_raw = Self::get_lane(&first, lane, elem.bytes() * 8);
+                    let second_raw = Self::get_lane(&second, lane, elem.bytes() * 8);
+                    let first_value = Self::x86_simd_fp_apply_daz(first_raw, format, mxcsr);
+                    let second_value = Self::x86_simd_fp_apply_daz(second_raw, format, mxcsr);
+                    status |= first_value.status | second_value.status;
+                    let first_nan = Self::x86_simd_fp_is_nan(first_value.bits, format);
+                    let second_nan = Self::x86_simd_fp_is_nan(second_value.bits, format);
+                    if Self::x86_simd_fp_is_snan(first_value.bits, format)
+                        || Self::x86_simd_fp_is_snan(second_value.bits, format)
+                        || (signaling && (first_nan || second_nan))
+                    {
+                        status |= 1;
+                    }
+                    let relation = if first_nan || second_nan {
+                        3
+                    } else {
+                        let ordering = match elem {
+                            VecElementType::F32 => f32::from_bits(first_value.bits as u32)
+                                .partial_cmp(&f32::from_bits(second_value.bits as u32)),
+                            VecElementType::F64 => f64::from_bits(first_value.bits)
+                                .partial_cmp(&f64::from_bits(second_value.bits)),
+                            _ => unreachable!(),
+                        };
+                        match ordering {
+                            Some(std::cmp::Ordering::Greater) => 0,
+                            Some(std::cmp::Ordering::Less) => 1,
+                            Some(std::cmp::Ordering::Equal) => 2,
+                            None => 3,
+                        }
+                    };
+                    const TRUTH_TABLES: [u8; 16] = [
+                        0b0100, 0b0010, 0b0110, 0b1000, 0b1011, 0b1101, 0b1001, 0b0111, 0b1100,
+                        0b1010, 0b1110, 0b0000, 0b0011, 0b0101, 0b0001, 0b1111,
+                    ];
+                    let is_true =
+                        TRUTH_TABLES[usize::from(*predicate & 0x0F)] & (1u8 << relation) != 0;
+                    if *mask_destination {
+                        if is_true {
+                            mask_result |= 1u64 << lane;
+                        }
+                    } else {
+                        Self::set_lane(
+                            &mut vector_result,
+                            lane,
+                            elem.bytes() * 8,
+                            if is_true {
+                                if *elem == VecElementType::F32 {
+                                    u64::from(u32::MAX)
+                                } else {
+                                    u64::MAX
+                                }
+                            } else {
+                                0
+                            },
+                        );
+                    }
+                }
+                if !*suppress_exceptions {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= status;
+                    }
+                    if Self::x86_simd_fp_unmasked(status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
+                    }
+                }
+                if *mask_destination {
+                    ctx.write_vreg(*dst, mask_result);
+                } else {
+                    Self::write_vec(ctx, *dst, vector_result);
+                }
+            }
+
+            OpKind::X86CheckAlignment { addr, alignment } => {
+                debug_assert!(alignment.is_power_of_two());
+                let effective_addr = self.compute_address(ctx, addr);
+                if effective_addr & (u64::from(*alignment) - 1) != 0 {
+                    ctx.request_exit(ExitReason::GeneralProtection {
+                        addr: op.guest_pc,
+                        error_code: 0,
+                    });
+                }
+            }
+
             OpKind::FConvert { dst, src, from, to } => {
                 let a = self.read_fp(ctx, *src, *from);
                 self.write_fp(ctx, *dst, a, *to);
@@ -2784,6 +3074,262 @@ impl SmirInterpreter {
                 self.write_fp(ctx, *dst, self.round_fp_value(ctx, a, *mode), *precision);
             }
 
+            OpKind::X86Round {
+                dst,
+                merge,
+                src,
+                elem,
+                width,
+                lanes,
+                scalar_source,
+                zero_upper,
+                mode,
+                suppress_precision,
+            } => {
+                let source = if *scalar_source && matches!(src, VReg::Virtual(_)) {
+                    let mut value = [0u64; 16];
+                    value[0] = ctx.read_vreg(*src);
+                    value
+                } else {
+                    Self::read_vec(ctx, *src)
+                };
+                let old = Self::read_vec(ctx, *dst);
+                let mut result = if u32::from(*lanes) * elem.bytes() < width.bytes() {
+                    Self::read_vec(ctx, *merge)
+                } else {
+                    old
+                };
+                if *zero_upper {
+                    result[(width.bytes() / 8) as usize..].fill(0);
+                }
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let daz = mxcsr & (1 << 6) != 0;
+                let mut status = 0u32;
+                for lane in 0..*lanes {
+                    let raw = Self::get_lane(&source, lane, elem.bytes() * 8);
+                    let rounded = match elem {
+                        VecElementType::F32 => {
+                            let mut bits = raw as u32;
+                            let exponent = bits & 0x7F80_0000;
+                            let fraction = bits & 0x007F_FFFF;
+                            if exponent == 0 && fraction != 0 && daz {
+                                bits &= 0x8000_0000;
+                            }
+                            let exponent = bits & 0x7F80_0000;
+                            let fraction = bits & 0x007F_FFFF;
+                            if exponent == 0x7F80_0000 && fraction != 0 {
+                                if fraction & 0x0040_0000 == 0 {
+                                    status |= 1;
+                                    bits |= 0x0040_0000;
+                                }
+                                u64::from(bits)
+                            } else {
+                                let value = f32::from_bits(bits);
+                                let rounded =
+                                    self.round_fp_value(ctx, f64::from(value), *mode) as f32;
+                                let rounded_bits = rounded.to_bits();
+                                if rounded_bits != bits && !*suppress_precision {
+                                    status |= 1 << 5;
+                                }
+                                u64::from(rounded_bits)
+                            }
+                        }
+                        VecElementType::F64 => {
+                            let mut bits = raw;
+                            let exponent = bits & 0x7FF0_0000_0000_0000;
+                            let fraction = bits & 0x000F_FFFF_FFFF_FFFF;
+                            if exponent == 0 && fraction != 0 && daz {
+                                bits &= 0x8000_0000_0000_0000;
+                            }
+                            let exponent = bits & 0x7FF0_0000_0000_0000;
+                            let fraction = bits & 0x000F_FFFF_FFFF_FFFF;
+                            if exponent == 0x7FF0_0000_0000_0000 && fraction != 0 {
+                                if fraction & 0x0008_0000_0000_0000 == 0 {
+                                    status |= 1;
+                                    bits |= 0x0008_0000_0000_0000;
+                                }
+                                bits
+                            } else {
+                                let value = f64::from_bits(bits);
+                                let rounded = self.round_fp_value(ctx, value, *mode);
+                                let rounded_bits = rounded.to_bits();
+                                if rounded_bits != bits && !*suppress_precision {
+                                    status |= 1 << 5;
+                                }
+                                rounded_bits
+                            }
+                        }
+                        _ => {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: ctx.pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        }
+                    };
+                    Self::set_lane(&mut result, lane, elem.bytes() * 8, rounded);
+                }
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.mxcsr |= status;
+                }
+                let invalid_unmasked = status & 1 != 0 && mxcsr & (1 << 7) == 0;
+                let precision_unmasked = status & (1 << 5) != 0 && mxcsr & (1 << 12) == 0;
+                if invalid_unmasked || precision_unmasked {
+                    ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                } else {
+                    Self::write_vec(ctx, *dst, result);
+                }
+            }
+
+            OpKind::X86DotProduct {
+                dst,
+                src1,
+                src2,
+                elem,
+                width,
+                imm,
+            } => {
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let mode = match (mxcsr >> 13) & 3 {
+                    0 => FpRoundMode::RoundNearest,
+                    1 => FpRoundMode::RoundDown,
+                    2 => FpRoundMode::RoundUp,
+                    _ => FpRoundMode::RoundTowardZero,
+                };
+                let (format, lanes_per_group, groups) = match (*elem, *width) {
+                    (VecElementType::F32, VecWidth::V128) => (X86_SIMD_F32, 4u8, 1u8),
+                    (VecElementType::F32, VecWidth::V256) => (X86_SIMD_F32, 4, 2),
+                    (VecElementType::F64, VecWidth::V128) => (X86_SIMD_F64, 2, 1),
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                let commit_stage = |ctx: &mut SmirContext, stage_status: u32| -> bool {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= stage_status;
+                    }
+                    if Self::x86_simd_fp_unmasked(stage_status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        true
+                    } else {
+                        false
+                    }
+                };
+
+                let mut products = vec![[0u64; 4]; groups as usize];
+                let mut stage_status = 0u32;
+                for group in 0..groups {
+                    for lane in 0..lanes_per_group {
+                        if imm & (1 << (lane + 4)) == 0 {
+                            continue;
+                        }
+                        let vector_lane = group * lanes_per_group + lane;
+                        let a = Self::get_lane(&first, vector_lane, elem.bytes() * 8);
+                        let b = Self::get_lane(&second, vector_lane, elem.bytes() * 8);
+                        let product = Self::x86_simd_fp_mul(a, b, format, mode, mxcsr);
+                        products[group as usize][lane as usize] = product.bits;
+                        stage_status |= product.status;
+                    }
+                }
+                if commit_stage(ctx, stage_status) {
+                    return Ok(());
+                }
+
+                let mut totals = vec![0u64; groups as usize];
+                if *elem == VecElementType::F64 {
+                    stage_status = 0;
+                    for group in 0..groups {
+                        let sum = Self::x86_simd_fp_add(
+                            products[group as usize][0],
+                            products[group as usize][1],
+                            format,
+                            mode,
+                            mxcsr,
+                        );
+                        totals[group as usize] = sum.bits;
+                        stage_status |= sum.status;
+                    }
+                    if commit_stage(ctx, stage_status) {
+                        return Ok(());
+                    }
+                } else {
+                    let mut low = vec![0u64; groups as usize];
+                    let mut high = vec![0u64; groups as usize];
+                    stage_status = 0;
+                    for group in 0..groups {
+                        let sum = Self::x86_simd_fp_add(
+                            products[group as usize][0],
+                            products[group as usize][1],
+                            format,
+                            mode,
+                            mxcsr,
+                        );
+                        low[group as usize] = sum.bits;
+                        stage_status |= sum.status;
+                    }
+                    if commit_stage(ctx, stage_status) {
+                        return Ok(());
+                    }
+                    stage_status = 0;
+                    for group in 0..groups {
+                        let sum = Self::x86_simd_fp_add(
+                            products[group as usize][2],
+                            products[group as usize][3],
+                            format,
+                            mode,
+                            mxcsr,
+                        );
+                        high[group as usize] = sum.bits;
+                        stage_status |= sum.status;
+                    }
+                    if commit_stage(ctx, stage_status) {
+                        return Ok(());
+                    }
+                    stage_status = 0;
+                    for group in 0..groups {
+                        let sum = Self::x86_simd_fp_add(
+                            low[group as usize],
+                            high[group as usize],
+                            format,
+                            mode,
+                            mxcsr,
+                        );
+                        totals[group as usize] = sum.bits;
+                        stage_status |= sum.status;
+                    }
+                    if commit_stage(ctx, stage_status) {
+                        return Ok(());
+                    }
+                }
+
+                let mut result = [0u64; 16];
+                for group in 0..groups {
+                    for lane in 0..lanes_per_group {
+                        if imm & (1 << lane) != 0 {
+                            Self::set_lane(
+                                &mut result,
+                                group * lanes_per_group + lane,
+                                elem.bytes() * 8,
+                                totals[group as usize],
+                            );
+                        }
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             // ==================================================================
             // SIMD / VECTOR (simplified)
             // ==================================================================
@@ -3030,6 +3576,53 @@ impl SmirInterpreter {
                 }
                 (VecUnaryOp::FSqrt, VecElementType::F64) => {
                     self.vec_unary_op_f64(ctx, *dst, *src, *lanes, |a| a.sqrt());
+                }
+                (VecUnaryOp::FRecipEstimate | VecUnaryOp::FRsqrtEstimate, VecElementType::F32) => {
+                    let input = Self::read_vec(ctx, *src);
+                    let mut result = [0u64; 16];
+                    for lane in 0..*lanes {
+                        let raw = Self::get_lane(&input, lane, 32) as u32;
+                        let sign = raw & 0x8000_0000;
+                        let exponent = raw & 0x7F80_0000;
+                        let fraction = raw & 0x007F_FFFF;
+                        let estimate = if exponent == 0 {
+                            // Zero and denormal inputs are both treated as signed zero.
+                            sign | 0x7F80_0000
+                        } else if exponent == 0x7F80_0000 && fraction != 0 {
+                            // Preserve the NaN payload/sign and quiet signaling NaNs.
+                            raw | 0x0040_0000
+                        } else if *op == VecUnaryOp::FRsqrtEstimate && sign != 0 {
+                            // Negative finite values and -infinity produce FP indefinite;
+                            // -0 was handled by the exponent==0 case above.
+                            0xFFC0_0000
+                        } else if exponent == 0x7F80_0000 {
+                            // Reciprocal(+/-inf) is signed zero; rsqrt(+inf) is +zero.
+                            if *op == VecUnaryOp::FRecipEstimate {
+                                sign
+                            } else {
+                                0
+                            }
+                        } else {
+                            let value = f32::from_bits(raw);
+                            let exact = if *op == VecUnaryOp::FRecipEstimate {
+                                1.0 / value
+                            } else {
+                                1.0 / value.sqrt()
+                            };
+                            let bits = exact.to_bits();
+                            // Architectural estimate results that are tiny are flushed.
+                            if bits & 0x7F80_0000 == 0 {
+                                bits & 0x8000_0000
+                            } else {
+                                bits
+                            }
+                        };
+                        Self::set_lane(&mut result, lane, 32, u64::from(estimate));
+                    }
+                    Self::write_vec(ctx, *dst, result);
+                }
+                (VecUnaryOp::FRecipEstimate | VecUnaryOp::FRsqrtEstimate, VecElementType::F64) => {
+                    unreachable!("x86 reciprocal estimate instructions are F32-only")
                 }
                 (VecUnaryOp::Neg, _) => {
                     let bits = elem.bytes() * 8;
@@ -3701,7 +4294,7 @@ impl SmirInterpreter {
                         // Clz within the elem-wide lane
                         3 => {
                             let v = av & mask;
-                            (v << (64 - elem_bits)).leading_zeros() as u64
+                            (v << (64 - elem_bits)).leading_zeros().min(elem_bits) as u64
                         }
                         // Popcount of the elem-wide lane
                         4 => (av & mask).count_ones() as u64,
@@ -4108,12 +4701,13 @@ impl SmirInterpreter {
                 src2,
                 src_elem,
                 to_unsigned,
+                src_lanes,
+                block_lanes,
             } => {
                 let u = Self::read_vec(ctx, *src1);
                 let v = Self::read_vec(ctx, *src2);
                 let wbits = src_elem.bytes() * 8;
                 let nbits = wbits / 2;
-                let wide_lanes = (1024 / wbits) as u8;
                 let (lo_b, hi_b) = if *to_unsigned {
                     (0i64, ((1i64 << nbits) - 1))
                 } else {
@@ -4125,14 +4719,24 @@ impl SmirInterpreter {
                     sv.clamp(lo_b, hi_b) as u64
                 };
                 let mut result = [0u64; 16];
-                for i in 0..wide_lanes {
-                    Self::set_lane(&mut result, i, nbits, sat(Self::get_lane(&v, i, wbits)));
-                    Self::set_lane(
-                        &mut result,
-                        i + wide_lanes,
-                        nbits,
-                        sat(Self::get_lane(&u, i, wbits)),
-                    );
+                debug_assert!(*block_lanes != 0 && *src_lanes % *block_lanes == 0);
+                for block_base in (0..*src_lanes).step_by(*block_lanes as usize) {
+                    let output_base = block_base * 2;
+                    for i in 0..*block_lanes {
+                        let source_lane = block_base + i;
+                        Self::set_lane(
+                            &mut result,
+                            output_base + i,
+                            nbits,
+                            sat(Self::get_lane(&v, source_lane, wbits)),
+                        );
+                        Self::set_lane(
+                            &mut result,
+                            output_base + *block_lanes + i,
+                            nbits,
+                            sat(Self::get_lane(&u, source_lane, wbits)),
+                        );
+                    }
                 }
                 Self::write_vec(ctx, *dst, result);
             }
@@ -5116,6 +5720,7 @@ impl SmirInterpreter {
                 src1,
                 src2,
                 src_elem,
+                lanes,
                 signed1,
                 signed2,
                 shift_left,
@@ -5126,7 +5731,6 @@ impl SmirInterpreter {
                 let a = Self::read_vec(ctx, *src1);
                 let b = Self::read_vec(ctx, *src2);
                 let nbits = src_elem.bytes() * 8;
-                let lanes = (1024 / nbits) as u8;
                 let ext = |raw: u64, signed: bool| -> i64 {
                     if signed {
                         let sh = 64 - nbits;
@@ -5136,7 +5740,7 @@ impl SmirInterpreter {
                     }
                 };
                 let mut result = [0u64; 16];
-                for i in 0..lanes {
+                for i in 0..*lanes {
                     let mut p = ext(Self::get_lane(&a, i, nbits), *signed1)
                         .wrapping_mul(ext(Self::get_lane(&b, i, nbits), *signed2));
                     p <<= *shift_left;
@@ -6082,8 +6686,211 @@ impl SmirInterpreter {
                 ctx.write_vreg(*dst, value);
             }
 
-            OpKind::VCmp { .. } | OpKind::VShuffle { .. } => {
-                // Simplified: not fully implemented
+            OpKind::VCmp {
+                dst,
+                src1,
+                src2,
+                cond,
+                elem,
+                lanes,
+            } => {
+                let a = Self::read_vec(ctx, *src1);
+                let b = Self::read_vec(ctx, *src2);
+                let bits = elem.bytes() * 8;
+                let signed = |value: u64| -> i64 {
+                    if bits == 64 {
+                        value as i64
+                    } else {
+                        let shift = 64 - bits;
+                        ((value << shift) as i64) >> shift
+                    }
+                };
+                let int_cmp = |av: u64, bv: u64| match cond {
+                    VecCmpCond::Eq => av == bv,
+                    VecCmpCond::Ne => av != bv,
+                    VecCmpCond::Lt => signed(av) < signed(bv),
+                    VecCmpCond::Le => signed(av) <= signed(bv),
+                    VecCmpCond::Gt => signed(av) > signed(bv),
+                    VecCmpCond::Ge => signed(av) >= signed(bv),
+                    VecCmpCond::Ltu => av < bv,
+                    VecCmpCond::Leu => av <= bv,
+                    VecCmpCond::Gtu => av > bv,
+                    VecCmpCond::Geu => av >= bv,
+                };
+                let fp_cmp = |av: f64, bv: f64| match cond {
+                    VecCmpCond::Eq => av == bv,
+                    VecCmpCond::Ne => av != bv,
+                    VecCmpCond::Lt | VecCmpCond::Ltu => av < bv,
+                    VecCmpCond::Le | VecCmpCond::Leu => av <= bv,
+                    VecCmpCond::Gt | VecCmpCond::Gtu => av > bv,
+                    VecCmpCond::Ge | VecCmpCond::Geu => av >= bv,
+                };
+                let f16_to_f64 = |raw: u16| -> f64 {
+                    let sign = (u32::from(raw & 0x8000)) << 16;
+                    let exp = (raw >> 10) & 0x1f;
+                    let frac = raw & 0x03ff;
+                    let bits32 = if exp == 0 {
+                        if frac == 0 {
+                            sign
+                        } else {
+                            let shift = frac.leading_zeros() - 6;
+                            let normalized = (u32::from(frac) << (shift + 1)) & 0x03ff;
+                            sign | ((112 - shift) << 23) | (normalized << 13)
+                        }
+                    } else if exp == 0x1f {
+                        sign | 0x7f80_0000 | (u32::from(frac) << 13)
+                    } else {
+                        sign | ((u32::from(exp) + 112) << 23) | (u32::from(frac) << 13)
+                    };
+                    f64::from(f32::from_bits(bits32))
+                };
+
+                let mut result = [0u64; 16];
+                let true_value = if bits == 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << bits) - 1
+                };
+                for lane in 0..*lanes {
+                    let av = Self::get_lane(&a, lane, bits);
+                    let bv = Self::get_lane(&b, lane, bits);
+                    let matched = match elem {
+                        VecElementType::I8
+                        | VecElementType::I16
+                        | VecElementType::I32
+                        | VecElementType::I64 => int_cmp(av, bv),
+                        VecElementType::F16 => fp_cmp(f16_to_f64(av as u16), f16_to_f64(bv as u16)),
+                        VecElementType::F32 => fp_cmp(
+                            f64::from(f32::from_bits(av as u32)),
+                            f64::from(f32::from_bits(bv as u32)),
+                        ),
+                        VecElementType::F64 => fp_cmp(f64::from_bits(av), f64::from_bits(bv)),
+                    };
+                    if matched {
+                        Self::set_lane(&mut result, lane, bits, true_value);
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VShuffle {
+                dst,
+                src1,
+                src2,
+                indices,
+                elem,
+                lanes,
+            } => {
+                let first = Self::read_vec(ctx, *src1);
+                let second = src2.map(|reg| Self::read_vec(ctx, reg));
+                let selectors = Self::read_vec(ctx, *indices);
+                let bits = elem.bytes() * 8;
+                let mut result = [0u64; 16];
+                for lane in 0..*lanes {
+                    let index = Self::get_lane(&selectors, lane, bits);
+                    let selected = if index < u64::from(*lanes) {
+                        Self::get_lane(&first, index as u8, bits)
+                    } else if let Some(second) = &second {
+                        let second_index = index - u64::from(*lanes);
+                        if second_index < u64::from(*lanes) {
+                            Self::get_lane(second, second_index as u8, bits)
+                        } else {
+                            0
+                        }
+                    } else {
+                        0
+                    };
+                    Self::set_lane(&mut result, lane, bits, selected);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VByteShuffle {
+                dst,
+                src,
+                control,
+                lanes,
+                block_lanes,
+            } => {
+                debug_assert!(block_lanes.is_power_of_two());
+                debug_assert!(*block_lanes != 0 && *lanes % *block_lanes == 0);
+                let source = Self::read_vec(ctx, *src);
+                let selectors = Self::read_vec(ctx, *control);
+                let mut result = [0u64; 16];
+                for lane in 0..*lanes {
+                    let selector = Self::get_lane(&selectors, lane, 8) as u8;
+                    let selected = if selector & 0x80 != 0 {
+                        0
+                    } else {
+                        let block_base = (lane / *block_lanes) * *block_lanes;
+                        let source_lane = block_base + (selector & (*block_lanes - 1));
+                        Self::get_lane(&source, source_lane, 8)
+                    };
+                    Self::set_lane(&mut result, lane, 8, selected);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VHorizontalBin {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                block_lanes,
+                subtract,
+                saturating,
+            } => {
+                debug_assert!(*block_lanes != 0 && *block_lanes % 2 == 0);
+                debug_assert!(*lanes % *block_lanes == 0);
+                debug_assert!(matches!(elem, VecElementType::I16 | VecElementType::I32));
+                debug_assert!(!*saturating || *elem == VecElementType::I16);
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let bits = elem.bytes() * 8;
+                let mask = (1u64 << bits) - 1;
+                let calculate = |a: u64, b: u64| -> u64 {
+                    if *saturating {
+                        let shift = 64 - bits;
+                        let lhs = ((a << shift) as i64) >> shift;
+                        let rhs = ((b << shift) as i64) >> shift;
+                        let value = if *subtract { lhs - rhs } else { lhs + rhs };
+                        let low = -(1i64 << (bits - 1));
+                        let high = (1i64 << (bits - 1)) - 1;
+                        value.clamp(low, high) as u64 & mask
+                    } else if *subtract {
+                        a.wrapping_sub(b) & mask
+                    } else {
+                        a.wrapping_add(b) & mask
+                    }
+                };
+                let mut result = [0u64; 16];
+                let half = *block_lanes / 2;
+                for block_base in (0..*lanes).step_by(*block_lanes as usize) {
+                    for pair in 0..half {
+                        let lhs_lane = block_base + pair * 2;
+                        let rhs_lane = lhs_lane + 1;
+                        Self::set_lane(
+                            &mut result,
+                            block_base + pair,
+                            bits,
+                            calculate(
+                                Self::get_lane(&first, lhs_lane, bits),
+                                Self::get_lane(&first, rhs_lane, bits),
+                            ),
+                        );
+                        Self::set_lane(
+                            &mut result,
+                            block_base + half + pair,
+                            bits,
+                            calculate(
+                                Self::get_lane(&second, lhs_lane, bits),
+                                Self::get_lane(&second, rhs_lane, bits),
+                            ),
+                        );
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
             }
 
             OpKind::VLoad { dst, addr, width } => {
@@ -6656,23 +7463,1144 @@ impl SmirInterpreter {
                 ctx.write_vreg(*dst, result & mask);
             }
 
+            OpKind::VCompress {
+                dst,
+                src,
+                mask,
+                elem,
+                width,
+                zeroing,
+            } => {
+                let source = Self::read_vec(ctx, *src);
+                let old = Self::read_vec(ctx, *dst);
+                let control = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
+                let lanes = width.lanes(*elem) as u8;
+                let bits = elem.bytes() * 8;
+                let mut result = [0u64; 16];
+                let mut output = 0u8;
+                for lane in 0..lanes {
+                    if control & (1u64 << lane) != 0 {
+                        let value = Self::get_lane(&source, lane, bits);
+                        Self::set_lane(&mut result, output, bits, value);
+                        output += 1;
+                    }
+                }
+                if !zeroing {
+                    for lane in output..lanes {
+                        let value = Self::get_lane(&old, lane, bits);
+                        Self::set_lane(&mut result, lane, bits, value);
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VExpand {
+                dst,
+                src,
+                mask,
+                elem,
+                width,
+                zeroing,
+            } => {
+                let source = Self::read_vec(ctx, *src);
+                let old = Self::read_vec(ctx, *dst);
+                let control = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
+                let lanes = width.lanes(*elem) as u8;
+                let bits = elem.bytes() * 8;
+                let mut result = [0u64; 16];
+                let mut input = 0u8;
+                for lane in 0..lanes {
+                    if control & (1u64 << lane) != 0 {
+                        let value = Self::get_lane(&source, input, bits);
+                        Self::set_lane(&mut result, lane, bits, value);
+                        input += 1;
+                    } else if !zeroing {
+                        let value = Self::get_lane(&old, lane, bits);
+                        Self::set_lane(&mut result, lane, bits, value);
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86NarrowInt {
+                dst,
+                src,
+                mask,
+                src_elem,
+                dst_elem,
+                width,
+                mode,
+                zeroing,
+            } => {
+                let source = Self::read_vec(ctx, *src);
+                let old = Self::read_vec(ctx, *dst);
+                let control = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
+                let lanes = width.lanes(*src_elem) as u8;
+                let src_bits = src_elem.bytes() * 8;
+                let dst_bits = dst_elem.bytes() * 8;
+                let dst_mask = if dst_bits == 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << dst_bits) - 1
+                };
+                let mut result = [0u64; 16];
+                for lane in 0..lanes {
+                    if control & (1u64 << lane) != 0 {
+                        let raw = Self::get_lane(&source, lane, src_bits);
+                        let shift = 128 - src_bits;
+                        let signed = (i128::from(raw) << shift) >> shift;
+                        let value = match mode {
+                            X86NarrowMode::Truncate => raw & dst_mask,
+                            X86NarrowMode::SignedSaturate => {
+                                let low = -(1i128 << (dst_bits - 1));
+                                let high = (1i128 << (dst_bits - 1)) - 1;
+                                signed.clamp(low, high) as u64 & dst_mask
+                            }
+                            X86NarrowMode::UnsignedSaturate => {
+                                signed.clamp(0, i128::from(dst_mask)) as u64
+                            }
+                        };
+                        Self::set_lane(&mut result, lane, dst_bits, value);
+                    } else if !zeroing {
+                        let value = Self::get_lane(&old, lane, dst_bits);
+                        Self::set_lane(&mut result, lane, dst_bits, value);
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VDotProduct {
+                dst,
+                acc,
+                src1,
+                src2,
+                src_elem,
+                acc_elem,
+                width,
+                src1_unsigned,
+                saturate,
+            } => {
+                debug_assert!(matches!(src_elem, VecElementType::I8 | VecElementType::I16));
+                debug_assert!(matches!(
+                    acc_elem,
+                    VecElementType::I16 | VecElementType::I32
+                ));
+                let src_bits = src_elem.bytes() * 8;
+                let acc_bits = acc_elem.bytes() * 8;
+                debug_assert!(acc_bits >= src_bits && acc_bits % src_bits == 0);
+
+                // Snapshot every input before writing `dst`: VNNI normally aliases
+                // dst/acc, while PMADDUBSW can also alias either multiplicand.
+                let accumulator = Self::read_vec(ctx, *acc);
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let terms = acc_bits / src_bits;
+                let lanes = width.lanes(*acc_elem) as u8;
+                let src_mask = (1u64 << src_bits) - 1;
+                let acc_mask = (1u64 << acc_bits) - 1;
+                let signed = |value: u64, bits: u32| -> i128 {
+                    let shift = 128 - bits;
+                    ((i128::from(value) << shift) >> shift) as i128
+                };
+                let acc_low = -(1i128 << (acc_bits - 1));
+                let acc_high = (1i128 << (acc_bits - 1)) - 1;
+                let mut result = [0u64; 16];
+
+                for lane in 0..lanes {
+                    let mut sum = signed(Self::get_lane(&accumulator, lane, acc_bits), acc_bits);
+                    let first_term = u32::from(lane) * terms;
+                    for term in 0..terms {
+                        let source_lane = (first_term + term) as u8;
+                        let a_raw = Self::get_lane(&first, source_lane, src_bits) & src_mask;
+                        let b_raw = Self::get_lane(&second, source_lane, src_bits) & src_mask;
+                        let a = if *src1_unsigned {
+                            i128::from(a_raw)
+                        } else {
+                            signed(a_raw, src_bits)
+                        };
+                        let b = signed(b_raw, src_bits);
+                        sum += a * b;
+                    }
+                    let narrowed = if *saturate {
+                        sum.clamp(acc_low, acc_high)
+                    } else {
+                        sum
+                    };
+                    Self::set_lane(&mut result, lane, acc_bits, narrowed as u64 & acc_mask);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VMpsadbw {
+                dst,
+                src1,
+                src2,
+                width,
+                imm,
+            } => {
+                let blocks = match width {
+                    VecWidth::V128 => 1u8,
+                    VecWidth::V256 => 2,
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let mut result = [0u64; 16];
+                for block in 0..blocks {
+                    let (first_select, second_select) = if block == 0 {
+                        (((imm >> 2) & 1) * 4, (imm & 3) * 4)
+                    } else {
+                        (((imm >> 5) & 1) * 4, ((imm >> 3) & 3) * 4)
+                    };
+                    let block_base = block * 16;
+                    for output in 0..8u8 {
+                        let mut sum = 0u16;
+                        for tap in 0..4u8 {
+                            let first_byte =
+                                Self::get_lane(&first, block_base + first_select + output + tap, 8)
+                                    as u8;
+                            let second_byte =
+                                Self::get_lane(&second, block_base + second_select + tap, 8) as u8;
+                            sum += u16::from(first_byte.abs_diff(second_byte));
+                        }
+                        Self::set_lane(&mut result, block * 8 + output, 16, u64::from(sum));
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VSadBytes {
+                dst,
+                src1,
+                src2,
+                width,
+            } => {
+                // Snapshot both inputs before writing: every register form may
+                // alias the destination architecturally.
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let mut result = [0u64; 16];
+                for block in 0..(width.bytes() / 8) as u8 {
+                    let mut sum = 0u16;
+                    for byte in 0..8u8 {
+                        let lane = block * 8 + byte;
+                        let a = Self::get_lane(&first, lane, 8) as u8;
+                        let b = Self::get_lane(&second, lane, 8) as u8;
+                        sum += u16::from(a.abs_diff(b));
+                    }
+                    Self::set_lane(&mut result, block, 64, u64::from(sum));
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Aes {
+                dst,
+                src1,
+                src2,
+                width,
+                op,
+                imm,
+            } => {
+                use crate::isa::x86_64::execute::crypto::aes;
+
+                let first = Self::read_vec(ctx, *src1);
+                let second = src2.map(|reg| Self::read_vec(ctx, reg));
+                let mut result = [0u64; 16];
+                for lane in 0..(width.bytes() / 16) as usize {
+                    let word = lane * 2;
+                    let (lo, hi) = match op {
+                        X86AesOp::Enc => aes::aesenc(
+                            first[word],
+                            first[word + 1],
+                            second.as_ref().unwrap()[word],
+                            second.as_ref().unwrap()[word + 1],
+                        ),
+                        X86AesOp::EncLast => aes::aesenclast(
+                            first[word],
+                            first[word + 1],
+                            second.as_ref().unwrap()[word],
+                            second.as_ref().unwrap()[word + 1],
+                        ),
+                        X86AesOp::Dec => aes::aesdec(
+                            first[word],
+                            first[word + 1],
+                            second.as_ref().unwrap()[word],
+                            second.as_ref().unwrap()[word + 1],
+                        ),
+                        X86AesOp::DecLast => aes::aesdeclast(
+                            first[word],
+                            first[word + 1],
+                            second.as_ref().unwrap()[word],
+                            second.as_ref().unwrap()[word + 1],
+                        ),
+                        X86AesOp::InvMixColumns => aes::aesimc(first[word], first[word + 1]),
+                        X86AesOp::KeygenAssist => {
+                            aes::aeskeygenassist(first[word], first[word + 1], *imm)
+                        }
+                    };
+                    result[word] = lo;
+                    result[word + 1] = hi;
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Sha512Msg1 { dst, src } => {
+                let old = Self::read_vec(ctx, *dst);
+                let source = Self::read_vec(ctx, *src);
+                let sigma0 = |x: u64| x.rotate_right(1) ^ x.rotate_right(8) ^ (x >> 7);
+                let mut result = [0u64; 16];
+                result[0] = old[0].wrapping_add(sigma0(old[1]));
+                result[1] = old[1].wrapping_add(sigma0(old[2]));
+                result[2] = old[2].wrapping_add(sigma0(old[3]));
+                result[3] = old[3].wrapping_add(sigma0(source[0]));
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Sha512Msg2 { dst, src } => {
+                let old = Self::read_vec(ctx, *dst);
+                let source = Self::read_vec(ctx, *src);
+                let sigma1 = |x: u64| x.rotate_right(19) ^ x.rotate_right(61) ^ (x >> 6);
+                let w16 = old[0].wrapping_add(sigma1(source[2]));
+                let w17 = old[1].wrapping_add(sigma1(source[3]));
+                let w18 = old[2].wrapping_add(sigma1(w16));
+                let w19 = old[3].wrapping_add(sigma1(w17));
+                let mut result = [0u64; 16];
+                result[..4].copy_from_slice(&[w16, w17, w18, w19]);
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Sha512Rounds2 { dst, state, wk } => {
+                let cdgh = Self::read_vec(ctx, *dst);
+                let abef = Self::read_vec(ctx, *state);
+                let constants = Self::read_vec(ctx, *wk);
+                let mut a = abef[3];
+                let mut b = abef[2];
+                let mut c = cdgh[3];
+                let mut d = cdgh[2];
+                let mut e = abef[1];
+                let mut f = abef[0];
+                let mut g = cdgh[1];
+                let mut h = cdgh[0];
+                for &round_constant in &constants[..2] {
+                    let choose = (e & f) ^ (g & !e);
+                    let majority = (a & b) ^ (a & c) ^ (b & c);
+                    let big1 = e.rotate_right(14) ^ e.rotate_right(18) ^ e.rotate_right(41);
+                    let big0 = a.rotate_right(28) ^ a.rotate_right(34) ^ a.rotate_right(39);
+                    let t1 = choose
+                        .wrapping_add(big1)
+                        .wrapping_add(round_constant)
+                        .wrapping_add(h);
+                    let next_a = t1.wrapping_add(majority).wrapping_add(big0);
+                    let next_e = t1.wrapping_add(d);
+                    (h, g, f, e, d, c, b, a) = (g, f, e, next_e, c, b, a, next_a);
+                }
+                let mut result = [0u64; 16];
+                result[..4].copy_from_slice(&[f, e, b, a]);
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Sm3Msg1 { dst, src1, src2 } => {
+                let old = Self::read_vec(ctx, *dst);
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let lane = |value: &VecValue, index| Self::get_lane(value, index, 32) as u32;
+                let p1 = |x: u32| x ^ x.rotate_left(15) ^ x.rotate_left(23);
+                let mut result = [0u64; 16];
+                for index in 0..4u8 {
+                    let mut tmp = lane(&old, index) ^ lane(&second, index);
+                    if index < 3 {
+                        tmp ^= lane(&first, index).rotate_left(15);
+                    }
+                    Self::set_lane(&mut result, index, 32, u64::from(p1(tmp)));
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Sm3Msg2 { dst, src1, src2 } => {
+                let old = Self::read_vec(ctx, *dst);
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let lane = |value: &VecValue, index| Self::get_lane(value, index, 32) as u32;
+                let mut words = [0u32; 4];
+                for index in 0..4u8 {
+                    words[index as usize] = lane(&first, index).rotate_left(7)
+                        ^ lane(&second, index)
+                        ^ lane(&old, index);
+                }
+                words[3] ^=
+                    words[0].rotate_left(6) ^ words[0].rotate_left(15) ^ words[0].rotate_left(30);
+                let mut result = [0u64; 16];
+                for (index, value) in words.into_iter().enumerate() {
+                    Self::set_lane(&mut result, index as u8, 32, u64::from(value));
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Sm3Rounds2 {
+                dst,
+                state,
+                words,
+                imm,
+            } => {
+                let cdgh = Self::read_vec(ctx, *dst);
+                let abef = Self::read_vec(ctx, *state);
+                let message = Self::read_vec(ctx, *words);
+                let lane = |value: &VecValue, index| Self::get_lane(value, index, 32) as u32;
+                let mut a = lane(&abef, 3);
+                let mut b = lane(&abef, 2);
+                let mut c = lane(&cdgh, 3).rotate_left(9);
+                let mut d = lane(&cdgh, 2).rotate_left(9);
+                let mut e = lane(&abef, 1);
+                let mut f = lane(&abef, 0);
+                let mut g = lane(&cdgh, 1).rotate_left(19);
+                let mut h = lane(&cdgh, 0).rotate_left(19);
+                let w = [
+                    lane(&message, 0),
+                    lane(&message, 1),
+                    lane(&message, 2),
+                    lane(&message, 3),
+                ];
+                let round = imm & 0x3E;
+                let mut constant = if round < 16 {
+                    0x79CC_4519u32
+                } else {
+                    0x7A87_9D8A
+                }
+                .rotate_left(u32::from(round));
+                for index in 0..2usize {
+                    let a12 = a.rotate_left(12);
+                    let s1 = a12.wrapping_add(e).wrapping_add(constant).rotate_left(7);
+                    let s2 = s1 ^ a12;
+                    let ff = if round < 16 {
+                        a ^ b ^ c
+                    } else {
+                        (a & b) | (a & c) | (b & c)
+                    };
+                    let gg = if round < 16 {
+                        e ^ f ^ g
+                    } else {
+                        (e & f) | (!e & g)
+                    };
+                    let t1 = ff
+                        .wrapping_add(d)
+                        .wrapping_add(s2)
+                        .wrapping_add(w[index] ^ w[index + 2]);
+                    let t2 = gg.wrapping_add(h).wrapping_add(s1).wrapping_add(w[index]);
+                    let next_e = t2 ^ t2.rotate_left(9) ^ t2.rotate_left(17);
+                    (d, c, b, a) = (c, b.rotate_left(9), a, t1);
+                    (h, g, f, e) = (g, f.rotate_left(19), e, next_e);
+                    constant = constant.rotate_left(1);
+                }
+                let mut result = [0u64; 16];
+                for (index, value) in [f, e, b, a].into_iter().enumerate() {
+                    Self::set_lane(&mut result, index as u8, 32, u64::from(value));
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Sm4 {
+                dst,
+                src1,
+                src2,
+                width,
+                key_schedule,
+            } => {
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let substitute = |value: u32| {
+                    let bytes = value.to_le_bytes();
+                    u32::from_le_bytes([
+                        X86_SM4_SBOX[bytes[0] as usize],
+                        X86_SM4_SBOX[bytes[1] as usize],
+                        X86_SM4_SBOX[bytes[2] as usize],
+                        X86_SM4_SBOX[bytes[3] as usize],
+                    ])
+                };
+                let transform = |value: u32| {
+                    let value = substitute(value);
+                    if *key_schedule {
+                        value ^ value.rotate_left(13) ^ value.rotate_left(23)
+                    } else {
+                        value
+                            ^ value.rotate_left(2)
+                            ^ value.rotate_left(10)
+                            ^ value.rotate_left(18)
+                            ^ value.rotate_left(24)
+                    }
+                };
+                let groups = width.bytes() / 16;
+                let mut result = [0u64; 16];
+                for group in 0..groups as u8 {
+                    let base = group * 4;
+                    let p = [
+                        Self::get_lane(&first, base, 32) as u32,
+                        Self::get_lane(&first, base + 1, 32) as u32,
+                        Self::get_lane(&first, base + 2, 32) as u32,
+                        Self::get_lane(&first, base + 3, 32) as u32,
+                    ];
+                    let keys = [
+                        Self::get_lane(&second, base, 32) as u32,
+                        Self::get_lane(&second, base + 1, 32) as u32,
+                        Self::get_lane(&second, base + 2, 32) as u32,
+                        Self::get_lane(&second, base + 3, 32) as u32,
+                    ];
+                    let c0 = p[0] ^ transform(p[1] ^ p[2] ^ p[3] ^ keys[0]);
+                    let c1 = p[1] ^ transform(p[2] ^ p[3] ^ c0 ^ keys[1]);
+                    let c2 = p[2] ^ transform(p[3] ^ c0 ^ c1 ^ keys[2]);
+                    let c3 = p[3] ^ transform(c0 ^ c1 ^ c2 ^ keys[3]);
+                    for (lane, value) in [c0, c1, c2, c3].into_iter().enumerate() {
+                        Self::set_lane(&mut result, base + lane as u8, 32, u64::from(value));
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Convert16ToFp32 {
+                dst,
+                src,
+                width,
+                fp16,
+                odd,
+                broadcast,
+            } => {
+                let packed = if *broadcast {
+                    None
+                } else {
+                    Some(Self::read_vec(ctx, *src))
+                };
+                let scalar = if *broadcast {
+                    ctx.read_vreg(*src) as u16
+                } else {
+                    0
+                };
+                let mut result = [0u64; 16];
+                let lanes = width.lanes(VecElementType::F32) as u8;
+                for lane in 0..lanes {
+                    let input = if *broadcast {
+                        scalar
+                    } else {
+                        Self::get_lane(packed.as_ref().unwrap(), lane * 2 + u8::from(*odd), 16)
+                            as u16
+                    };
+                    let converted = if *fp16 {
+                        Self::x86_fp16_to_fp32_bits(input)
+                    } else {
+                        u32::from(input) << 16
+                    };
+                    Self::set_lane(&mut result, lane, 32, u64::from(converted));
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86PackedShiftImm {
+                dst,
+                src,
+                width,
+                elem,
+                shift,
+                amount,
+                byte_lane,
+            } => {
+                let input = Self::read_vec(ctx, *src);
+                let mut result = [0u64; 16];
+                if *byte_lane {
+                    let amount = usize::from(*amount);
+                    for block in 0..(width.bytes() / 16) as usize {
+                        for lane in 0..16usize {
+                            let source_lane = match shift {
+                                ShiftOp::Lsl => lane.checked_sub(amount),
+                                ShiftOp::Lsr => {
+                                    lane.checked_add(amount).filter(|index| *index < 16)
+                                }
+                                _ => unreachable!(),
+                            };
+                            if let Some(source_lane) = source_lane {
+                                let value =
+                                    Self::get_lane(&input, (block * 16 + source_lane) as u8, 8);
+                                Self::set_lane(&mut result, (block * 16 + lane) as u8, 8, value);
+                            }
+                        }
+                    }
+                } else {
+                    let bits = elem.bytes() * 8;
+                    let lanes = width.lanes(*elem) as u8;
+                    let amount = u32::from(*amount);
+                    let mask = if bits == 64 {
+                        u64::MAX
+                    } else {
+                        (1u64 << bits) - 1
+                    };
+                    for lane in 0..lanes {
+                        let value = Self::get_lane(&input, lane, bits);
+                        let shifted = if amount >= bits {
+                            if *shift == ShiftOp::Asr && value & (1u64 << (bits - 1)) != 0 {
+                                mask
+                            } else {
+                                0
+                            }
+                        } else {
+                            match shift {
+                                ShiftOp::Lsl => (value << amount) & mask,
+                                ShiftOp::Lsr => value >> amount,
+                                ShiftOp::Asr => {
+                                    let signed = if bits == 64 {
+                                        value as i64
+                                    } else {
+                                        ((value << (64 - bits)) as i64) >> (64 - bits)
+                                    };
+                                    ((signed >> amount) as u64) & mask
+                                }
+                                _ => unreachable!(),
+                            }
+                        };
+                        Self::set_lane(&mut result, lane, bits, shifted);
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86PackedShift {
+                dst,
+                src,
+                count,
+                width,
+                elem,
+                shift,
+            } => {
+                let input = Self::read_vec(ctx, *src);
+                let mut result = [0u64; 16];
+                let bits = elem.bytes() * 8;
+                let lanes = width.lanes(*elem) as u8;
+                let amount = ctx.read_vreg(*count);
+                let mask = if bits == 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << bits) - 1
+                };
+                for lane in 0..lanes {
+                    let value = Self::get_lane(&input, lane, bits);
+                    let shifted = if amount >= u64::from(bits) {
+                        if *shift == ShiftOp::Asr && value & (1u64 << (bits - 1)) != 0 {
+                            mask
+                        } else {
+                            0
+                        }
+                    } else {
+                        match shift {
+                            ShiftOp::Lsl => (value << amount) & mask,
+                            ShiftOp::Lsr => value >> amount,
+                            ShiftOp::Asr => {
+                                let signed = if bits == 64 {
+                                    value as i64
+                                } else {
+                                    ((value << (64 - bits)) as i64) >> (64 - bits)
+                                };
+                                ((signed >> amount) as u64) & mask
+                            }
+                            _ => unreachable!(),
+                        }
+                    };
+                    Self::set_lane(&mut result, lane, bits, shifted);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86PackedShiftVariable {
+                dst,
+                src,
+                count,
+                width,
+                elem,
+                shift,
+            } => {
+                let input = Self::read_vec(ctx, *src);
+                let counts = Self::read_vec(ctx, *count);
+                let mut result = [0u64; 16];
+                let bits = elem.bytes() * 8;
+                let lanes = width.lanes(*elem) as u8;
+                let mask = if bits == 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << bits) - 1
+                };
+                for lane in 0..lanes {
+                    let value = Self::get_lane(&input, lane, bits);
+                    let amount = Self::get_lane(&counts, lane, bits);
+                    let shifted = if amount >= u64::from(bits) {
+                        if *shift == ShiftOp::Asr && value & (1u64 << (bits - 1)) != 0 {
+                            mask
+                        } else {
+                            0
+                        }
+                    } else {
+                        match shift {
+                            ShiftOp::Lsl => (value << amount) & mask,
+                            ShiftOp::Lsr => value >> amount,
+                            ShiftOp::Asr => {
+                                let signed = if bits == 64 {
+                                    value as i64
+                                } else {
+                                    ((value << (64 - bits)) as i64) >> (64 - bits)
+                                };
+                                ((signed >> amount) as u64) & mask
+                            }
+                            _ => unreachable!(),
+                        }
+                    };
+                    Self::set_lane(&mut result, lane, bits, shifted);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86PackedRotate {
+                dst,
+                src,
+                count,
+                amount,
+                width,
+                elem,
+                left,
+            } => {
+                let input = Self::read_vec(ctx, *src);
+                let counts = count.map(|register| Self::read_vec(ctx, register));
+                let mut result = [0u64; 16];
+                let bits = elem.bytes() * 8;
+                let lanes = width.lanes(*elem) as u8;
+                for lane in 0..lanes {
+                    let value = Self::get_lane(&input, lane, bits);
+                    let raw_count = counts.as_ref().map_or(u64::from(*amount), |values| {
+                        Self::get_lane(values, lane, bits)
+                    });
+                    let reduced = (raw_count % u64::from(bits)) as u32;
+                    let rotated = match (bits, left) {
+                        (32, true) => u64::from((value as u32).rotate_left(reduced)),
+                        (32, false) => u64::from((value as u32).rotate_right(reduced)),
+                        (64, true) => value.rotate_left(reduced),
+                        (64, false) => value.rotate_right(reduced),
+                        _ => unreachable!(),
+                    };
+                    Self::set_lane(&mut result, lane, bits, rotated);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86TernaryLogic {
+                dst,
+                src1,
+                src2,
+                src3,
+                imm,
+                width,
+            } => {
+                let a = Self::read_vec(ctx, *src1);
+                let b = Self::read_vec(ctx, *src2);
+                let c = Self::read_vec(ctx, *src3);
+                let mut result = [0u64; 16];
+                for word in 0..(width.bytes() / 8) as usize {
+                    let mut out = 0u64;
+                    for index in 0..8u8 {
+                        if imm & (1 << index) != 0 {
+                            out |= if index & 4 != 0 { a[word] } else { !a[word] }
+                                & if index & 2 != 0 { b[word] } else { !b[word] }
+                                & if index & 1 != 0 { c[word] } else { !c[word] };
+                        }
+                    }
+                    result[word] = out;
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86PackedFunnelShift {
+                dst,
+                src,
+                fill,
+                count,
+                amount,
+                width,
+                elem,
+                left,
+            } => {
+                let primary = Self::read_vec(ctx, *src);
+                let secondary = Self::read_vec(ctx, *fill);
+                let counts = count.map(|register| Self::read_vec(ctx, register));
+                let bits = elem.bytes() * 8;
+                let lanes = width.lanes(*elem) as u8;
+                let mask = if bits == 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << bits) - 1
+                };
+                let mut result = [0u64; 16];
+                for lane in 0..lanes {
+                    let value = Self::get_lane(&primary, lane, bits);
+                    let fill_value = Self::get_lane(&secondary, lane, bits);
+                    let raw_count = counts.as_ref().map_or(u64::from(*amount), |values| {
+                        Self::get_lane(values, lane, bits)
+                    });
+                    let reduced = (raw_count % u64::from(bits)) as u32;
+                    let shifted = if reduced == 0 {
+                        value
+                    } else if *left {
+                        ((value << reduced) | (fill_value >> (bits - reduced))) & mask
+                    } else {
+                        (value >> reduced) | ((fill_value << (bits - reduced)) & mask)
+                    };
+                    Self::set_lane(&mut result, lane, bits, shifted);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86MultiShiftQB {
+                dst,
+                control,
+                source,
+                width,
+            } => {
+                let controls = Self::read_vec(ctx, *control);
+                let data = Self::read_vec(ctx, *source);
+                let mut result = [0u64; 16];
+                for qword in 0..(width.bytes() / 8) as u8 {
+                    let value = Self::get_lane(&data, qword, 64);
+                    for byte in 0..8u8 {
+                        let lane = qword * 8 + byte;
+                        let shift = Self::get_lane(&controls, lane, 8) as u32 & 63;
+                        Self::set_lane(&mut result, lane, 8, value.rotate_right(shift) & 0xFF);
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             // ==================================================================
             // AVX10 OPERATIONS (Stubs - not yet implemented in interpreter)
             // ==================================================================
+            OpKind::VFma {
+                dst,
+                src1,
+                src2,
+                acc,
+                elem,
+                lanes,
+                negate_product,
+                negate_acc,
+            } => {
+                let a = Self::read_vec(ctx, *src1);
+                let b = Self::read_vec(ctx, *src2);
+                let c = Self::read_vec(ctx, *acc);
+                let mut out = [0u64; 16];
+                for lane in 0..*lanes {
+                    let bits = match elem {
+                        VecElementType::F32 => {
+                            let mut av = f32::from_bits(Self::get_lane(&a, lane, 32) as u32);
+                            let bv = f32::from_bits(Self::get_lane(&b, lane, 32) as u32);
+                            let mut cv = f32::from_bits(Self::get_lane(&c, lane, 32) as u32);
+                            if *negate_product {
+                                av = -av;
+                            }
+                            if *negate_acc {
+                                cv = -cv;
+                            }
+                            u64::from(av.mul_add(bv, cv).to_bits())
+                        }
+                        VecElementType::F64 => {
+                            let mut av = f64::from_bits(Self::get_lane(&a, lane, 64));
+                            let bv = f64::from_bits(Self::get_lane(&b, lane, 64));
+                            let mut cv = f64::from_bits(Self::get_lane(&c, lane, 64));
+                            if *negate_product {
+                                av = -av;
+                            }
+                            if *negate_acc {
+                                cv = -cv;
+                            }
+                            av.mul_add(bv, cv).to_bits()
+                        }
+                        _ => unreachable!("VFma requires F32 or F64 elements"),
+                    };
+                    Self::set_lane(&mut out, lane, elem.bytes() * 8, bits);
+                }
+                Self::write_vec(ctx, *dst, out);
+            }
+
+            OpKind::VPermute {
+                dst,
+                src1,
+                src2,
+                indices,
+                elem,
+                width,
+                ..
+            } => {
+                let table1 = Self::read_vec(ctx, *src1);
+                let table2 = src2.map(|reg| Self::read_vec(ctx, reg));
+                let controls = Self::read_vec(ctx, *indices);
+                let lanes = width.lanes(*elem) as u8;
+                let bits = elem.bytes() * 8;
+                let table_lanes = u64::from(lanes) * if table2.is_some() { 2 } else { 1 };
+                debug_assert!(table_lanes.is_power_of_two());
+                let mut result = [0u64; 16];
+                for lane in 0..lanes {
+                    let selected = Self::get_lane(&controls, lane, bits) & (table_lanes - 1);
+                    let value = if selected < u64::from(lanes) {
+                        Self::get_lane(&table1, selected as u8, bits)
+                    } else {
+                        Self::get_lane(
+                            table2.as_ref().expect("second permute table"),
+                            (selected - u64::from(lanes)) as u8,
+                            bits,
+                        )
+                    };
+                    Self::set_lane(&mut result, lane, bits, value);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VPopcnt {
+                dst,
+                src,
+                elem,
+                width,
+            } => {
+                let input = Self::read_vec(ctx, *src);
+                let bits = elem.bytes() * 8;
+                let mut result = [0u64; 16];
+                for lane in 0..width.lanes(*elem) as u8 {
+                    let count = Self::get_lane(&input, lane, bits).count_ones();
+                    Self::set_lane(&mut result, lane, bits, u64::from(count));
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VConflict {
+                dst,
+                src,
+                elem,
+                width,
+            } => {
+                let input = Self::read_vec(ctx, *src);
+                let bits = elem.bytes() * 8;
+                let lanes = width.lanes(*elem) as u8;
+                let mut result = [0u64; 16];
+                for lane in 0..lanes {
+                    let value = Self::get_lane(&input, lane, bits);
+                    let mut conflicts = 0u64;
+                    for previous in 0..lane {
+                        if Self::get_lane(&input, previous, bits) == value {
+                            conflicts |= 1u64 << previous;
+                        }
+                    }
+                    Self::set_lane(&mut result, lane, bits, conflicts);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VCvtFP32ToBF16 {
+                dst,
+                src1,
+                src2,
+                width,
+            } => {
+                let first = Self::read_vec(ctx, *src1);
+                let second = src2.map(|reg| Self::read_vec(ctx, reg));
+                let fp32_lanes = width.lanes(VecElementType::F32) as u8;
+                let mut result = [0u64; 16];
+                if let Some(second) = second {
+                    for lane in 0..fp32_lanes {
+                        let low = Self::get_lane(&second, lane, 32) as u32;
+                        let high = Self::get_lane(&first, lane, 32) as u32;
+                        Self::set_lane(
+                            &mut result,
+                            lane,
+                            16,
+                            u64::from(Self::x86_fp32_to_bf16_bits(low)),
+                        );
+                        Self::set_lane(
+                            &mut result,
+                            lane + fp32_lanes,
+                            16,
+                            u64::from(Self::x86_fp32_to_bf16_bits(high)),
+                        );
+                    }
+                } else {
+                    for lane in 0..fp32_lanes {
+                        let input = Self::get_lane(&first, lane, 32) as u32;
+                        Self::set_lane(
+                            &mut result,
+                            lane,
+                            16,
+                            u64::from(Self::x86_fp32_to_bf16_bits(input)),
+                        );
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VDotProductBF16 {
+                dst,
+                acc,
+                src1,
+                src2,
+                width,
+            } => {
+                let accumulator = Self::read_vec(ctx, *acc);
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let mut result = [0u64; 16];
+                for lane in 0..width.lanes(VecElementType::F32) as u8 {
+                    let acc_bits = Self::get_lane(&accumulator, lane, 32) as u32;
+                    let a_low = Self::get_lane(&first, lane * 2, 16) as u16;
+                    let a_high = Self::get_lane(&first, lane * 2 + 1, 16) as u16;
+                    let b_low = Self::get_lane(&second, lane * 2, 16) as u16;
+                    let b_high = Self::get_lane(&second, lane * 2 + 1, 16) as u16;
+
+                    // Intel Table 5-4 overrides evaluation order for NaN
+                    // propagation: low pair, high pair, then accumulator.
+                    let nan = [a_low, b_low, a_high, b_high]
+                        .into_iter()
+                        .find_map(|value| {
+                            Self::x86_bf16_is_nan(value).then(|| Self::x86_bf16_quiet_nan(value))
+                        })
+                        .or_else(|| {
+                            Self::x86_simd_fp_is_nan(u64::from(acc_bits), X86_SIMD_F32).then(|| {
+                                Self::x86_simd_fp_quiet_nan(u64::from(acc_bits), X86_SIMD_F32)
+                                    as u32
+                            })
+                        });
+                    let value = if let Some(nan) = nan {
+                        nan
+                    } else {
+                        let acc = Self::x86_fp32_ftz(acc_bits);
+                        let high = f32::from_bits(Self::x86_bf16_to_fp32_daz(a_high)).mul_add(
+                            f32::from_bits(Self::x86_bf16_to_fp32_daz(b_high)),
+                            f32::from_bits(acc),
+                        );
+                        let high_bits = if high.is_nan() {
+                            0xFFC0_0000
+                        } else {
+                            Self::x86_fp32_ftz(high.to_bits())
+                        };
+                        let low = f32::from_bits(Self::x86_bf16_to_fp32_daz(a_low)).mul_add(
+                            f32::from_bits(Self::x86_bf16_to_fp32_daz(b_low)),
+                            f32::from_bits(high_bits),
+                        );
+                        if low.is_nan() {
+                            0xFFC0_0000
+                        } else {
+                            Self::x86_fp32_ftz(low.to_bits())
+                        }
+                    };
+                    Self::set_lane(&mut result, lane, 32, u64::from(value));
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VMultiplyAdd52 {
+                dst,
+                acc,
+                src1,
+                src2,
+                width,
+                high,
+            } => {
+                const MASK52: u64 = (1u64 << 52) - 1;
+                let accumulator = Self::read_vec(ctx, *acc);
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let mut result = [0u64; 16];
+                for lane in 0..width.lanes(VecElementType::I64) as u8 {
+                    let lhs = Self::get_lane(&first, lane, 64) & MASK52;
+                    let rhs = Self::get_lane(&second, lane, 64) & MASK52;
+                    let product = u128::from(lhs) * u128::from(rhs);
+                    let addend = if *high {
+                        ((product >> 52) as u64) & MASK52
+                    } else {
+                        product as u64 & MASK52
+                    };
+                    let value = Self::get_lane(&accumulator, lane, 64).wrapping_add(addend);
+                    Self::set_lane(&mut result, lane, 64, value);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::VDotProductExt {
+                dst,
+                acc,
+                src1,
+                src2,
+                src_elem,
+                acc_elem,
+                width,
+                src1_signed,
+                src2_signed,
+                saturate,
+            } => {
+                debug_assert!(matches!(src_elem, VecElementType::I8 | VecElementType::I16));
+                debug_assert_eq!(*acc_elem, VecElementType::I32);
+
+                // Snapshot all operands before the architectural accumulator is
+                // overwritten. VEX dot products permit dst to alias either
+                // multiplicand as well as the implicit accumulator.
+                let accumulator = Self::read_vec(ctx, *acc);
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let src_bits = src_elem.bytes() * 8;
+                let terms = 32 / src_bits;
+                let lanes = width.lanes(VecElementType::I32) as u8;
+                let src_mask = (1u64 << src_bits) - 1;
+                let sign_extend = |value: u64| -> i128 {
+                    let shift = 128 - src_bits;
+                    (i128::from(value) << shift) >> shift
+                };
+                let unsigned_result = !src1_signed && !src2_signed;
+                let mut result = [0u64; 16];
+
+                for lane in 0..lanes {
+                    let acc_raw = Self::get_lane(&accumulator, lane, 32) as u32;
+                    let mut sum = if unsigned_result {
+                        i128::from(acc_raw)
+                    } else {
+                        i128::from(acc_raw as i32)
+                    };
+                    let first_term = u32::from(lane) * terms;
+                    for term in 0..terms {
+                        let source_lane = (first_term + term) as u8;
+                        let a_raw = Self::get_lane(&first, source_lane, src_bits) & src_mask;
+                        let b_raw = Self::get_lane(&second, source_lane, src_bits) & src_mask;
+                        let a = if *src1_signed {
+                            sign_extend(a_raw)
+                        } else {
+                            i128::from(a_raw)
+                        };
+                        let b = if *src2_signed {
+                            sign_extend(b_raw)
+                        } else {
+                            i128::from(b_raw)
+                        };
+                        sum += a * b;
+                    }
+                    let value = if *saturate {
+                        if unsigned_result {
+                            sum.clamp(0, i128::from(u32::MAX)) as u32
+                        } else {
+                            sum.clamp(i128::from(i32::MIN), i128::from(i32::MAX)) as i32 as u32
+                        }
+                    } else {
+                        sum as u32
+                    };
+                    Self::set_lane(&mut result, lane, 32, u64::from(value));
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::VMin { .. }
-            | OpKind::VFma { .. }
-            | OpKind::VDotProduct { .. }
-            | OpKind::VMultiplyAdd52 { .. }
-            | OpKind::VPopcnt { .. }
-            | OpKind::VPermute { .. }
-            | OpKind::VDotProductBF16 { .. }
-            | OpKind::VCvtFP32ToBF16 { .. }
             | OpKind::VCvtBF16ToFP32 { .. }
             | OpKind::VFP16Arith { .. }
             | OpKind::VCvtFpToIntSat { .. }
-            | OpKind::VMinMax { .. }
-            | OpKind::VMpsadbw { .. }
-            | OpKind::VDotProductExt { .. } => {
+            | OpKind::VMinMax { .. } => {
                 // AVX10 operations not yet implemented in interpreter
                 // These would require full vector register state tracking
                 ctx.request_exit(ExitReason::Undefined {
@@ -11266,15 +13194,17 @@ impl SmirInterpreter {
         let mut value = 0u64;
         #[cfg(unix)]
         {
-            // SAFETY: `value` is valid writable storage for `bytes <= 8`, and
-            // getentropy neither retains the pointer nor reads from it.
-            let result = unsafe {
-                libc::getentropy(
-                    (&mut value as *mut u64).cast::<libc::c_void>(),
-                    bytes as libc::size_t,
-                )
-            };
-            if result == 0 {
+            use std::io::Read;
+
+            // `/dev/urandom` is available across the supported Unix hosts and
+            // avoids linking libc's `getentropy`, which is absent from the old
+            // glibc sysroots used by several cross targets.
+            let mut value_bytes = [0u8; 8];
+            if std::fs::File::open("/dev/urandom")
+                .and_then(|mut source| source.read_exact(&mut value_bytes[..bytes]))
+                .is_ok()
+            {
+                value = u64::from_le_bytes(value_bytes);
                 return (value & width.mask(), true);
             }
         }
@@ -11619,6 +13549,426 @@ impl SmirInterpreter {
             FpPrecision::F64 | FpPrecision::F80 => value.to_bits(),
         };
         ctx.write_vreg(vreg, bits);
+    }
+
+    fn x86_simd_fp_masks(format: X86SimdFpFormat) -> (u64, u64, u64, u64) {
+        let sign = 1u64 << (format.total_bits - 1);
+        let fraction = (1u64 << format.fraction_bits) - 1;
+        let exponent_field = (1u64 << format.exponent_bits) - 1;
+        let exponent = exponent_field << format.fraction_bits;
+        let quiet = 1u64 << (format.fraction_bits - 1);
+        (sign, exponent, fraction, quiet)
+    }
+
+    fn x86_simd_fp_is_nan(bits: u64, format: X86SimdFpFormat) -> bool {
+        let (_, exponent, fraction, _) = Self::x86_simd_fp_masks(format);
+        bits & exponent == exponent && bits & fraction != 0
+    }
+
+    fn x86_simd_fp_is_snan(bits: u64, format: X86SimdFpFormat) -> bool {
+        let (_, _, _, quiet) = Self::x86_simd_fp_masks(format);
+        Self::x86_simd_fp_is_nan(bits, format) && bits & quiet == 0
+    }
+
+    fn x86_simd_fp_is_infinite(bits: u64, format: X86SimdFpFormat) -> bool {
+        let (_, exponent, fraction, _) = Self::x86_simd_fp_masks(format);
+        bits & exponent == exponent && bits & fraction == 0
+    }
+
+    fn x86_simd_fp_is_denormal(bits: u64, format: X86SimdFpFormat) -> bool {
+        let (_, exponent, fraction, _) = Self::x86_simd_fp_masks(format);
+        bits & exponent == 0 && bits & fraction != 0
+    }
+
+    fn x86_simd_fp_is_zero(bits: u64, format: X86SimdFpFormat) -> bool {
+        let (sign, _, _, _) = Self::x86_simd_fp_masks(format);
+        bits & !sign == 0
+    }
+
+    fn x86_simd_fp_quiet_nan(bits: u64, format: X86SimdFpFormat) -> u64 {
+        let (_, _, _, quiet) = Self::x86_simd_fp_masks(format);
+        bits | quiet
+    }
+
+    fn x86_simd_fp_indefinite(format: X86SimdFpFormat) -> u64 {
+        let (sign, exponent, _, quiet) = Self::x86_simd_fp_masks(format);
+        sign | exponent | quiet
+    }
+
+    fn x86_simd_fp_propagate_nan(first: u64, second: u64, format: X86SimdFpFormat) -> u64 {
+        // Intel SDM Table 4-8: SSE/AVX forwards the first source when both
+        // sources are NaNs; a sole NaN source is forwarded. SNaNs are quieted.
+        if Self::x86_simd_fp_is_nan(first, format) {
+            Self::x86_simd_fp_quiet_nan(first, format)
+        } else {
+            Self::x86_simd_fp_quiet_nan(second, format)
+        }
+    }
+
+    fn x86_simd_fp_apply_daz(bits: u64, format: X86SimdFpFormat, mxcsr: u32) -> X86SimdFpResult {
+        if !Self::x86_simd_fp_is_denormal(bits, format) {
+            return X86SimdFpResult { bits, status: 0 };
+        }
+        if mxcsr & (1 << 6) != 0 {
+            let (sign, _, _, _) = Self::x86_simd_fp_masks(format);
+            X86SimdFpResult {
+                bits: bits & sign,
+                status: 0,
+            }
+        } else {
+            X86SimdFpResult {
+                bits,
+                status: 1 << 1,
+            }
+        }
+    }
+
+    fn x86_simd_fp_decode(bits: u64, format: X86SimdFpFormat) -> X86SimdFinite {
+        let (sign, _, fraction_mask, _) = Self::x86_simd_fp_masks(format);
+        let exponent_field =
+            ((bits >> format.fraction_bits) & ((1u64 << format.exponent_bits) - 1)) as i32;
+        let fraction = u128::from(bits & fraction_mask);
+        if exponent_field == 0 {
+            X86SimdFinite {
+                negative: bits & sign != 0,
+                significand: fraction,
+                exponent: 1 - format.bias - format.fraction_bits as i32,
+            }
+        } else {
+            X86SimdFinite {
+                negative: bits & sign != 0,
+                significand: fraction | (1u128 << format.fraction_bits),
+                exponent: exponent_field - format.bias - format.fraction_bits as i32,
+            }
+        }
+    }
+
+    fn x86_simd_fp_round_up(mode: FpRoundMode, negative: bool, inexact: bool) -> bool {
+        inexact
+            && matches!(
+                (mode, negative),
+                (FpRoundMode::RoundUp, false) | (FpRoundMode::RoundDown, true)
+            )
+    }
+
+    fn x86_simd_fp_round_shift(
+        mut magnitude: u128,
+        mut exponent: i32,
+        sticky: bool,
+        drop: i32,
+        mode: FpRoundMode,
+        negative: bool,
+    ) -> (u128, i32, bool) {
+        if drop <= 0 {
+            let inexact = sticky;
+            if Self::x86_simd_fp_round_up(mode, negative, inexact) {
+                magnitude += 1;
+            }
+            return (magnitude, exponent, inexact);
+        }
+        let drop = drop as u32;
+        let dropped = if drop >= 128 {
+            magnitude
+        } else {
+            magnitude & ((1u128 << drop) - 1)
+        };
+        let half = if (1..=128).contains(&drop) {
+            1u128 << (drop - 1)
+        } else {
+            0
+        };
+        magnitude = if drop >= 128 { 0 } else { magnitude >> drop };
+        exponent += drop as i32;
+        let inexact = dropped != 0 || sticky;
+        let increment = match mode {
+            FpRoundMode::RoundNearest => {
+                let round_bit = half != 0 && dropped & half != 0;
+                let rest = half != 0 && ((dropped & (half - 1)) != 0 || sticky);
+                round_bit && (rest || magnitude & 1 != 0)
+            }
+            FpRoundMode::RoundUp | FpRoundMode::RoundDown => {
+                Self::x86_simd_fp_round_up(mode, negative, inexact)
+            }
+            FpRoundMode::RoundTowardZero => false,
+            _ => unreachable!("x86 SIMD arithmetic requires a resolved MXCSR rounding mode"),
+        };
+        if increment {
+            magnitude += 1;
+        }
+        (magnitude, exponent, inexact)
+    }
+
+    fn x86_simd_fp_unbounded_tiny(
+        magnitude: u128,
+        exponent: i32,
+        sticky: bool,
+        format: X86SimdFpFormat,
+        mode: FpRoundMode,
+        negative: bool,
+    ) -> bool {
+        let msb = 127 - magnitude.leading_zeros() as i32;
+        let drop = msb - format.fraction_bits as i32;
+        let (rounded, rounded_exponent, _) =
+            Self::x86_simd_fp_round_shift(magnitude, exponent, sticky, drop, mode, negative);
+        let rounded_msb = 127 - rounded.leading_zeros() as i32;
+        rounded_msb + rounded_exponent < 1 - format.bias
+    }
+
+    fn x86_simd_fp_round_exact(
+        negative: bool,
+        magnitude: u128,
+        exponent: i32,
+        sticky: bool,
+        format: X86SimdFpFormat,
+        mode: FpRoundMode,
+        mxcsr: u32,
+    ) -> X86SimdFpResult {
+        let (sign_mask, exponent_mask, fraction_mask, _) = Self::x86_simd_fp_masks(format);
+        let sign = if negative { sign_mask } else { 0 };
+        if magnitude == 0 {
+            return X86SimdFpResult {
+                bits: sign,
+                status: 0,
+            };
+        }
+
+        let tiny =
+            Self::x86_simd_fp_unbounded_tiny(magnitude, exponent, sticky, format, mode, negative);
+        let msb = 127 - magnitude.leading_zeros() as i32;
+        let unbiased = msb + exponent;
+        let minimum_normal = 1 - format.bias;
+        let minimum_subnormal = minimum_normal - format.fraction_bits as i32;
+        let lowest_exponent = if unbiased < minimum_normal {
+            minimum_subnormal
+        } else {
+            unbiased - format.fraction_bits as i32
+        };
+        let (rounded, rounded_exponent, inexact) = Self::x86_simd_fp_round_shift(
+            magnitude,
+            exponent,
+            sticky,
+            lowest_exponent - exponent,
+            mode,
+            negative,
+        );
+        let mut status = if inexact { 1 << 5 } else { 0 };
+        if rounded == 0 {
+            if tiny {
+                if mxcsr & (1 << 11) == 0 || inexact {
+                    status |= 1 << 4;
+                }
+                if mxcsr & (1 << 15) != 0 && mxcsr & (1 << 11) != 0 {
+                    status |= (1 << 4) | (1 << 5);
+                }
+            }
+            return X86SimdFpResult { bits: sign, status };
+        }
+
+        let rounded_msb = 127 - rounded.leading_zeros() as i32;
+        let rounded_unbiased = rounded_msb + rounded_exponent;
+        let maximum_unbiased = format.bias;
+        if rounded_unbiased > maximum_unbiased {
+            status |= (1 << 3) | (1 << 5);
+            let infinity = sign | exponent_mask;
+            let max_finite =
+                sign | (exponent_mask - (1u64 << format.fraction_bits)) | fraction_mask;
+            let bits = match (mode, negative) {
+                (FpRoundMode::RoundNearest, _) => infinity,
+                (FpRoundMode::RoundTowardZero, _) => max_finite,
+                (FpRoundMode::RoundUp, false) | (FpRoundMode::RoundDown, true) => infinity,
+                (FpRoundMode::RoundUp, true) | (FpRoundMode::RoundDown, false) => max_finite,
+                _ => unreachable!(),
+            };
+            return X86SimdFpResult { bits, status };
+        }
+
+        if tiny {
+            if mxcsr & (1 << 11) == 0 || inexact {
+                status |= 1 << 4;
+            }
+            if mxcsr & (1 << 15) != 0 && mxcsr & (1 << 11) != 0 {
+                return X86SimdFpResult {
+                    bits: sign,
+                    status: status | (1 << 4) | (1 << 5),
+                };
+            }
+        }
+
+        let bits = if rounded_unbiased < minimum_normal {
+            let fraction = if rounded_exponent >= minimum_subnormal {
+                rounded << (rounded_exponent - minimum_subnormal)
+            } else {
+                rounded >> (minimum_subnormal - rounded_exponent)
+            };
+            sign | (fraction as u64 & fraction_mask)
+        } else {
+            let shift = rounded_msb - format.fraction_bits as i32;
+            let significand = if shift >= 0 {
+                rounded >> shift
+            } else {
+                rounded << -shift
+            };
+            let biased = (rounded_unbiased + format.bias) as u64;
+            sign | (biased << format.fraction_bits) | (significand as u64 & fraction_mask)
+        };
+        X86SimdFpResult { bits, status }
+    }
+
+    fn x86_simd_fp_mul(
+        first: u64,
+        second: u64,
+        format: X86SimdFpFormat,
+        mode: FpRoundMode,
+        mxcsr: u32,
+    ) -> X86SimdFpResult {
+        let first = Self::x86_simd_fp_apply_daz(first, format, mxcsr);
+        let second = Self::x86_simd_fp_apply_daz(second, format, mxcsr);
+        let mut status = first.status | second.status;
+        let any_nan = Self::x86_simd_fp_is_nan(first.bits, format)
+            || Self::x86_simd_fp_is_nan(second.bits, format);
+        if any_nan {
+            if Self::x86_simd_fp_is_snan(first.bits, format)
+                || Self::x86_simd_fp_is_snan(second.bits, format)
+            {
+                status |= 1;
+            }
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_propagate_nan(first.bits, second.bits, format),
+                status,
+            };
+        }
+        let first_inf = Self::x86_simd_fp_is_infinite(first.bits, format);
+        let second_inf = Self::x86_simd_fp_is_infinite(second.bits, format);
+        let first_zero = Self::x86_simd_fp_is_zero(first.bits, format);
+        let second_zero = Self::x86_simd_fp_is_zero(second.bits, format);
+        if (first_inf && second_zero) || (second_inf && first_zero) {
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_indefinite(format),
+                status: status | 1,
+            };
+        }
+        let (sign_mask, exponent_mask, _, _) = Self::x86_simd_fp_masks(format);
+        let negative = (first.bits ^ second.bits) & sign_mask != 0;
+        if first_inf || second_inf {
+            return X86SimdFpResult {
+                bits: if negative { sign_mask } else { 0 } | exponent_mask,
+                status,
+            };
+        }
+        if first_zero || second_zero {
+            return X86SimdFpResult {
+                bits: if negative { sign_mask } else { 0 },
+                status,
+            };
+        }
+        let a = Self::x86_simd_fp_decode(first.bits, format);
+        let b = Self::x86_simd_fp_decode(second.bits, format);
+        let rounded = Self::x86_simd_fp_round_exact(
+            negative,
+            a.significand * b.significand,
+            a.exponent + b.exponent,
+            false,
+            format,
+            mode,
+            mxcsr,
+        );
+        X86SimdFpResult {
+            bits: rounded.bits,
+            status: status | rounded.status,
+        }
+    }
+
+    fn x86_simd_fp_add(
+        first: u64,
+        second: u64,
+        format: X86SimdFpFormat,
+        mode: FpRoundMode,
+        mxcsr: u32,
+    ) -> X86SimdFpResult {
+        let first = Self::x86_simd_fp_apply_daz(first, format, mxcsr);
+        let second = Self::x86_simd_fp_apply_daz(second, format, mxcsr);
+        let mut status = first.status | second.status;
+        let any_nan = Self::x86_simd_fp_is_nan(first.bits, format)
+            || Self::x86_simd_fp_is_nan(second.bits, format);
+        if any_nan {
+            if Self::x86_simd_fp_is_snan(first.bits, format)
+                || Self::x86_simd_fp_is_snan(second.bits, format)
+            {
+                status |= 1;
+            }
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_propagate_nan(first.bits, second.bits, format),
+                status,
+            };
+        }
+        let first_inf = Self::x86_simd_fp_is_infinite(first.bits, format);
+        let second_inf = Self::x86_simd_fp_is_infinite(second.bits, format);
+        let (sign_mask, exponent_mask, _, _) = Self::x86_simd_fp_masks(format);
+        if first_inf && second_inf && (first.bits ^ second.bits) & sign_mask != 0 {
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_indefinite(format),
+                status: status | 1,
+            };
+        }
+        if first_inf || second_inf {
+            return X86SimdFpResult {
+                bits: if first_inf { first.bits } else { second.bits }
+                    & (sign_mask | exponent_mask),
+                status,
+            };
+        }
+        let first_zero = Self::x86_simd_fp_is_zero(first.bits, format);
+        let second_zero = Self::x86_simd_fp_is_zero(second.bits, format);
+        if first_zero && second_zero {
+            let negative = if (first.bits ^ second.bits) & sign_mask == 0 {
+                first.bits & sign_mask != 0
+            } else {
+                mode == FpRoundMode::RoundDown
+            };
+            return X86SimdFpResult {
+                bits: if negative { sign_mask } else { 0 },
+                status,
+            };
+        }
+        if first_zero || second_zero {
+            return X86SimdFpResult {
+                bits: if first_zero { second.bits } else { first.bits },
+                status,
+            };
+        }
+        let a = Self::x86_simd_fp_decode(first.bits, format);
+        let b = Self::x86_simd_fp_decode(second.bits, format);
+        let guard = if format.total_bits == 32 { 100 } else { 72 };
+        let (negative, magnitude, exponent, sticky) = hr_add_scaled(
+            a.negative,
+            a.significand,
+            a.exponent,
+            b.negative,
+            b.significand,
+            b.exponent,
+            guard,
+        );
+        if magnitude == 0 && !sticky {
+            return X86SimdFpResult {
+                bits: if mode == FpRoundMode::RoundDown {
+                    sign_mask
+                } else {
+                    0
+                },
+                status,
+            };
+        }
+        let rounded = Self::x86_simd_fp_round_exact(
+            negative, magnitude, exponent, sticky, format, mode, mxcsr,
+        );
+        X86SimdFpResult {
+            bits: rounded.bits,
+            status: status | rounded.status,
+        }
+    }
+
+    fn x86_simd_fp_unmasked(status: u32, mxcsr: u32) -> bool {
+        status & 0x3F & !((mxcsr >> 7) & 0x3F) != 0
     }
 
     fn dynamic_fp_round_mode(&self, ctx: &SmirContext) -> FpRoundMode {
@@ -15334,6 +17684,54 @@ mod tests {
         ctx.write_vreg(r8, u64::MAX);
         execute_lifted_x86(&[0xC4, 0x41, 0xFC, 0x50, 0xC1], &mut ctx, &mut memory);
         assert_eq!(ctx.read_vreg(r8), 0xAA);
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_legacy_and_vex_pmovmskb_execute_exact_bits_and_zero_extend() {
+        fn source(mask: u32, bytes: usize) -> VecValue {
+            let mut raw = [0u8; 128];
+            for (index, byte) in raw[..bytes].iter_mut().enumerate() {
+                *byte = if mask & (1 << index) != 0 {
+                    0x80 | index as u8
+                } else {
+                    index as u8
+                };
+            }
+            let mut value = [0u64; 16];
+            for (word, chunk) in value.iter_mut().zip(raw.chunks_exact(8)) {
+                *word = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            value
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        let flags_before = 0x8D7;
+        let pattern = 0xA55A_C33C;
+        let mut memory = FlatMemory::new(1);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = source(pattern, 16);
+            x86.xmm[10] = source(pattern, 32);
+        }
+
+        ctx.write_vreg(rax, u64::MAX);
+        assert!(matches!(
+            execute_lifted_x86(&[0x66, 0x0F, 0xD7, 0xC1], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        assert_eq!(ctx.read_vreg(rax), u64::from(pattern & 0xFFFF));
+
+        ctx.write_vreg(r9, u64::MAX);
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0x41, 0xFD, 0xD7, 0xCA], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        assert_eq!(ctx.read_vreg(r9), u64::from(pattern));
+        ctx.flags.materialize_all();
         assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
     }
 
@@ -23828,6 +26226,3242 @@ mod tests {
     }
 
     #[test]
+    fn interprets_vpermute_single_and_two_table_domains() {
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Ymm(0)));
+        let table = VReg::Arch(ArchReg::X86(X86Reg::Ymm(1)));
+        let indices = VReg::Arch(ArchReg::X86(X86Reg::Ymm(2)));
+        let second = VReg::Arch(ArchReg::X86(X86Reg::Xmm(3)));
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] =
+                vec_from_bytes(&(10u32..18).flat_map(u32::to_le_bytes).collect::<Vec<_>>());
+            x86.xmm[2] = vec_from_bytes(
+                &[7u32, 0, 6, 1, 13, 2, 12, 3]
+                    .into_iter()
+                    .flat_map(u32::to_le_bytes)
+                    .collect::<Vec<_>>(),
+            );
+            x86.xmm[3] = vec_from_bytes(&(0x80u8..0x90).collect::<Vec<_>>());
+        }
+        let interp = SmirInterpreter::new();
+        let mut memory = FlatMemory::new(0x1000);
+        interp
+            .execute_op(
+                &mut ctx,
+                &mut memory,
+                &SmirOp::new(
+                    OpId(0),
+                    0x1000,
+                    OpKind::VPermute {
+                        dst,
+                        src1: table,
+                        src2: None,
+                        indices,
+                        elem: VecElementType::I32,
+                        width: VecWidth::V256,
+                        overwrite_table: false,
+                    },
+                ),
+            )
+            .unwrap();
+        let expected = [17u32, 10, 16, 11, 15, 12, 14, 13]
+            .into_iter()
+            .flat_map(u32::to_le_bytes)
+            .collect::<Vec<_>>();
+        assert_eq!(
+            SmirInterpreter::read_vec(&ctx, dst),
+            vec_from_bytes(&expected)
+        );
+
+        let byte_indices = VReg::Virtual(VirtualId(200));
+        let byte_dst = VReg::Virtual(VirtualId(201));
+        SmirInterpreter::write_vec(
+            &mut ctx,
+            byte_indices,
+            vec_from_bytes(&[0, 15, 16, 31, 32, 47, 48, 63, 8, 24, 40, 56, 1, 17, 33, 49]),
+        );
+        interp
+            .execute_op(
+                &mut ctx,
+                &mut memory,
+                &SmirOp::new(
+                    OpId(1),
+                    0x1000,
+                    OpKind::VPermute {
+                        dst: byte_dst,
+                        src1: table,
+                        src2: Some(second),
+                        indices: byte_indices,
+                        elem: VecElementType::I8,
+                        width: VecWidth::V128,
+                        overwrite_table: false,
+                    },
+                ),
+            )
+            .unwrap();
+        let out = SmirInterpreter::read_vec(&ctx, byte_dst);
+        let table1 = SmirInterpreter::read_vec(&ctx, table);
+        let table2 = SmirInterpreter::read_vec(&ctx, second);
+        for (lane, selected) in [0u8, 15, 16, 31, 0, 15, 16, 31, 8, 24, 8, 24, 1, 17, 1, 17]
+            .into_iter()
+            .enumerate()
+        {
+            let expected = if selected < 16 {
+                SmirInterpreter::get_lane(&table1, selected, 8)
+            } else {
+                SmirInterpreter::get_lane(&table2, selected - 16, 8)
+            };
+            assert_eq!(SmirInterpreter::get_lane(&out, lane as u8, 8), expected);
+        }
+    }
+
+    #[test]
+    fn executes_avx_permute_domains_masks_aliases_and_fault_suppression() {
+        fn vec_u32(values: &[u32]) -> VecValue {
+            vec_from_bytes(
+                &values
+                    .iter()
+                    .copied()
+                    .flat_map(u32::to_le_bytes)
+                    .collect::<Vec<_>>(),
+            )
+        }
+
+        fn vec_u64(values: &[u64]) -> VecValue {
+            vec_from_bytes(
+                &values
+                    .iter()
+                    .copied()
+                    .flat_map(u64::to_le_bytes)
+                    .collect::<Vec<_>>(),
+            )
+        }
+
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = vec_u32(&[7, 0, 6, 1, 5, 2, 4, 3]);
+            x86.xmm[3] = vec_u32(&[10, 11, 12, 13, 14, 15, 16, 17]);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0x6D, 0x36, 0xCB], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], vec_u32(&[17, 10, 16, 11, 15, 12, 14, 13]));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = vec_u32(&[100, 101, 102, 103, 104, 105, 106, 107]);
+            x86.xmm[3] = vec_u32(&[0, 1, 2, 3, 4, 5, 6, 7]);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0x69, 0x0C, 0xD3], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2], vec_u32(&[100, 101, 102, 103]));
+            assert_eq!(&x86.xmm[2][2..], &[0; 14]);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[5] = vec_u64(&[10, 11, 20, 21]);
+            x86.xmm[6] = vec_u64(&[0, 2, 2, 0]);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0x55, 0x0D, 0xE6], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[4], vec_u64(&[10, 11, 21, 20]));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = vec_u64(&[1, 2, 3, 4]);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE3, 0xFD, 0x00, 0xCA, 0x1B], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], vec_u64(&[4, 3, 2, 1]));
+            assert_eq!(&x86.xmm[1][4..], &[0; 12]);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[18] = vec_u64(&[100, 101, 102, 103, 104, 105, 106, 107]);
+            x86.xmm[19] = vec_u64(&[10, 11, 12, 13, 14, 15, 16, 17]);
+            x86.k[5] = 0x55;
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xA3, 0xFD, 0x4D, 0x05, 0xD3, 0xA5],
+                &mut ctx,
+                &mut memory
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[18], vec_u64(&[11, 101, 13, 103, 14, 105, 16, 107]));
+        }
+
+        memory
+            .write(0x200, &0x1122_3344_5566_7788u64.to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x200);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = [u64::MAX; 16];
+            x86.k[4] = 0xA5;
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xE3, 0xFD, 0xDC, 0x00, 0x08, 0x1B],
+                &mut ctx,
+                &mut memory
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 64),
+                    if 0xA5 & (1 << lane) != 0 {
+                        0x1122_3344_5566_7788
+                    } else {
+                        0
+                    }
+                );
+            }
+        }
+
+        memory.write(0x3FC, &0xA1B2_C3D4u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[20] = [0xCCCC_CCCC_CCCC_CCCC; 16];
+            x86.xmm[21] = vec_u32(&[
+                0, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+            ]);
+            x86.k[5] = 1;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xE2, 0x55, 0xC5, 0x36, 0x20], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[20], 0, 32), 0xA1B2_C3D4);
+            for lane in 1..16 {
+                assert_eq!(SmirInterpreter::get_lane(&x86.xmm[20], lane, 32), 0);
+            }
+        }
+
+        let sentinel = [0x5A5A_5A5A_5A5A_5A5A; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[20] = sentinel;
+            x86.k[5] = 2;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xE2, 0x55, 0xC5, 0x36, 0x20], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[20], sentinel);
+        }
+    }
+
+    #[test]
+    fn executes_evex_two_table_permute_overwrite_masks_and_selected_memory_faults() {
+        fn vec_u32(values: &[u32]) -> VecValue {
+            vec_from_bytes(
+                &values
+                    .iter()
+                    .copied()
+                    .flat_map(u32::to_le_bytes)
+                    .collect::<Vec<_>>(),
+            )
+        }
+
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = vec_u32(&[0, 5, 2, 7]);
+            x86.xmm[1] = vec_u32(&[10, 11, 12, 13]);
+            x86.xmm[2] = vec_u32(&[20, 21, 22, 23]);
+            x86.k[1] = 0xB;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x89, 0x76, 0xC2], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], vec_u32(&[10, 21, 0, 23]));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = vec_u32(&[10, 11, 12, 13]);
+            x86.xmm[1] = vec_u32(&[0, 5, 2, 7]);
+            x86.xmm[2] = vec_u32(&[20, 21, 22, 23]);
+            x86.k[1] = 0xB;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x09, 0x7E, 0xC2], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], vec_u32(&[10, 21, 12, 23]));
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        ctx.write_vreg(rax, 0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = vec_u32(&[0, 0, 0, 0]);
+            x86.xmm[1] = vec_u32(&[0xAA, 0xBB, 0xCC, 0xDD]);
+            x86.k[1] = 1;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x89, 0x76, 0x00], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], vec_u32(&[0xAA, 0, 0, 0]));
+        }
+
+        memory.write(0x3FC, &0x1234_5678u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = vec_u32(&[4, 0, 0, 0]);
+            x86.k[1] = 1;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x89, 0x76, 0x00], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], vec_u32(&[0x1234_5678, 0, 0, 0]));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = vec_u32(&[4, 5, 0, 7]);
+            x86.k[1] = 0xB;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x99, 0x76, 0x00], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.xmm[0],
+                vec_u32(&[0x1234_5678, 0x1234_5678, 0, 0x1234_5678])
+            );
+        }
+
+        let sentinel = [0xA5A5_A5A5_A5A5_A5A5; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = vec_u32(&[7, 0, 0, 0]);
+            x86.xmm[0][2..].copy_from_slice(&sentinel[2..]);
+            x86.k[1] = 1;
+        }
+        let before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.xmm[0],
+            _ => unreachable!(),
+        };
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x89, 0x76, 0x00], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], before);
+        }
+    }
+
+    #[test]
+    fn executes_evex_vpopcnt_elements_masks_broadcast_and_fault_atomicity() {
+        fn bytes(value: &VecValue, count: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count)
+                .collect()
+        }
+
+        let input = [
+            0u8, 1, 3, 7, 15, 31, 63, 127, 255, 0x55, 0xAA, 0x81, 0x18, 0xF0, 0xFE, 0x80,
+        ];
+        let mask = 0xA55Au64;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0x8D5);
+        ctx.flags.lazy = None;
+        let flags_before = ctx.flags.materialized.to_rflags();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = [u64::MAX; 16];
+            x86.xmm[18] = vec_from_bytes(&input);
+            x86.k[2] = mask;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xA2, 0x7D, 0x8A, 0x54, 0xCA], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let actual = bytes(&x86.xmm[17], 16);
+            for lane in 0..16 {
+                assert_eq!(
+                    actual[lane],
+                    if mask & (1 << lane) != 0 {
+                        input[lane].count_ones() as u8
+                    } else {
+                        0
+                    }
+                );
+            }
+            assert_eq!(&x86.xmm[17][2..], &[0; 14]);
+        }
+
+        let scalar = 0xF0F0_0F0Fu32;
+        memory.write(0x3FC, &scalar.to_le_bytes()).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = [u64::MAX; 16];
+            x86.k[6] = 0x8001;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xE2, 0x7D, 0xDE, 0x55, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 32),
+                    if matches!(lane, 0 | 15) {
+                        u64::from(scalar.count_ones())
+                    } else {
+                        0
+                    }
+                );
+            }
+        }
+
+        let sentinel = [0x5C5C_5C5C_5C5C_5C5C; 16];
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.k[6] = 1;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xE2, 0x7D, 0xDE, 0x55, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn executes_evex_vplzcnt_zero_values_masks_broadcast_and_fault_atomicity() {
+        fn vec_u32(values: &[u32]) -> VecValue {
+            vec_from_bytes(
+                &values
+                    .iter()
+                    .copied()
+                    .flat_map(u32::to_le_bytes)
+                    .collect::<Vec<_>>(),
+            )
+        }
+
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = [u64::MAX; 16];
+            x86.xmm[18] = vec_u32(&[0, 1, 0x8000_0000, 0x00F0_0000]);
+            x86.k[2] = 0xB;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xA2, 0x7D, 0x8A, 0x44, 0xCA], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17], vec_u32(&[32, 31, 0, 8]));
+            assert_eq!(&x86.xmm[17][2..], &[0; 14]);
+        }
+
+        memory.write(0x3FC, &0x0000_0001u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[21] = [u64::MAX; 16];
+            x86.k[4] = 0x8001;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xE2, 0x7D, 0xDC, 0x44, 0x28], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[21], lane, 32),
+                    if matches!(lane, 0 | 15) { 31 } else { 0 }
+                );
+            }
+        }
+
+        let sentinel = [0x3D3D_3D3D_3D3D_3D3D; 16];
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[21] = sentinel;
+            x86.k[4] = 1;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xE2, 0x7D, 0xDC, 0x44, 0x28], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[21], sentinel);
+        }
+    }
+
+    #[test]
+    fn executes_evex_vpconflict_prefix_dependencies_and_fault_atomicity() {
+        fn vec_u32(values: &[u32]) -> VecValue {
+            vec_from_bytes(
+                &values
+                    .iter()
+                    .copied()
+                    .flat_map(u32::to_le_bytes)
+                    .collect::<Vec<_>>(),
+            )
+        }
+
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [u64::MAX; 16];
+            x86.xmm[1] = vec_u32(&[1, 2, 1, 1]);
+            x86.k[1] = 0xF;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x89, 0xC4, 0xC1], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], vec_u32(&[0, 0, 1, 5]));
+            assert_eq!(&x86.xmm[0][2..], &[0; 14]);
+        }
+
+        memory
+            .write(
+                0x3F4,
+                &[1u32, 2, 1]
+                    .into_iter()
+                    .flat_map(u32::to_le_bytes)
+                    .collect::<Vec<_>>(),
+            )
+            .unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3F4);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [u64::MAX; 16];
+            x86.k[1] = 1 << 2;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x89, 0xC4, 0x00], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], vec_u32(&[0, 0, 1, 0]));
+        }
+
+        let sentinel = [0x6E6E_6E6E_6E6E_6E6E; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.k[1] = 1 << 3;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x89, 0xC4, 0x00], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+    }
+
+    #[test]
+    fn executes_vpmadd52_low_high_accumulator_masks_broadcast_and_fault_atomicity() {
+        fn vec_u64(values: &[u64]) -> VecValue {
+            vec_from_bytes(
+                &values
+                    .iter()
+                    .copied()
+                    .flat_map(u64::to_le_bytes)
+                    .collect::<Vec<_>>(),
+            )
+        }
+        const MASK52: u64 = (1u64 << 52) - 1;
+        let reference = |acc: u64, a: u64, b: u64, high: bool| {
+            let product = u128::from(a & MASK52) * u128::from(b & MASK52);
+            let addend = if high {
+                ((product >> 52) as u64) & MASK52
+            } else {
+                product as u64 & MASK52
+            };
+            acc.wrapping_add(addend)
+        };
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = vec_u64(&[5, 7]);
+            x86.xmm[2] = vec_u64(&[MASK52, 0x12345]);
+            x86.xmm[3] = vec_u64(&[3, 0x6789A]);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0xE9, 0xB4, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.xmm[1],
+                vec_u64(&[
+                    reference(5, MASK52, 3, false),
+                    reference(7, 0x12345, 0x6789A, false),
+                ])
+            );
+            assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = vec_u64(&[10, 20, 30, 40, 50, 60, 70, 80]);
+            x86.xmm[18] = vec_u64(&[MASK52; 8]);
+            x86.xmm[19] = vec_u64(&[MASK52; 8]);
+            x86.k[2] = 0x55;
+        }
+        execute_lifted_x86(&[0x62, 0xA2, 0xED, 0xC2, 0xB4, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 64),
+                    if lane % 2 == 0 {
+                        reference(10 * (lane as u64 + 1), MASK52, MASK52, false)
+                    } else {
+                        0
+                    }
+                );
+            }
+        }
+
+        memory.write(0x3F8, &MASK52.to_le_bytes()).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3F8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[20] = vec_u64(&[1, 2, 3, 4]);
+            x86.xmm[21] = vec_u64(&[MASK52; 4]);
+            x86.k[3] = 1;
+        }
+        execute_lifted_x86(&[0x62, 0xE2, 0xD5, 0x33, 0xB5, 0x20], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[20], 0, 64),
+                reference(1, MASK52, MASK52, true)
+            );
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[20], 1, 64), 2);
+        }
+
+        let sentinel = [0x7171_7171_7171_7171; 16];
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[20] = sentinel;
+            x86.k[3] = 1;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xE2, 0xD5, 0x33, 0xB5, 0x20], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[20], sentinel);
+        }
+    }
+
+    #[test]
+    fn executes_vnni_dot_signedness_saturation_masks_broadcast_and_fault_atomicity() {
+        fn vec_bytes(bytes: &[u8]) -> VecValue {
+            vec_from_bytes(bytes)
+        }
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = vec_bytes(&100i32.to_le_bytes().repeat(4));
+            x86.xmm[2] = vec_bytes(&[1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]);
+            x86.xmm[3] = vec_bytes(&[-1i8 as u8, 2, -3i8 as u8, 4].repeat(4));
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x69, 0x50, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..4 {
+                assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], lane, 32), 110);
+            }
+        }
+
+        let broadcast = [1i16, -2]
+            .into_iter()
+            .flat_map(i16::to_le_bytes)
+            .collect::<Vec<_>>();
+        memory.write(0x3FC, &broadcast).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[20] = vec_bytes(&i32::MAX.to_le_bytes().repeat(8));
+            x86.xmm[21] = vec_bytes(
+                &[2i16, -3]
+                    .into_iter()
+                    .cycle()
+                    .take(16)
+                    .flat_map(i16::to_le_bytes)
+                    .collect::<Vec<_>>(),
+            );
+            x86.k[3] = 0x55;
+        }
+        execute_lifted_x86(&[0x62, 0xE2, 0x55, 0x33, 0x53, 0x20], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[20], lane, 32),
+                    if lane % 2 == 0 {
+                        i32::MAX as u64
+                    } else {
+                        i32::MAX as u64
+                    }
+                );
+            }
+        }
+
+        let sentinel = [0x4242_4242_4242_4242; 16];
+        memory
+            .write(0x3FC, &1.0f32.to_bits().to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[1] = 1;
+        }
+        let sparse =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7E, 0x09, 0x72, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(sparse, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 16), 0x3F80);
+            for lane in 1..4 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 16),
+                    SmirInterpreter::get_lane(&sentinel, lane, 16)
+                );
+            }
+            assert_eq!(&x86.xmm[1][1..], &[0; 15]);
+        }
+
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[20] = sentinel;
+            x86.k[3] = 1;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xE2, 0x55, 0x33, 0x53, 0x20], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[20], sentinel);
+        }
+    }
+
+    #[test]
+    fn executes_avx_vnni_int8_int16_signedness_saturation_aliases_memory_and_faults() {
+        fn reference(
+            acc: u32,
+            lhs: &[u64],
+            rhs: &[u64],
+            bits: u32,
+            lhs_signed: bool,
+            rhs_signed: bool,
+            saturate: bool,
+        ) -> u32 {
+            let signed = |value: u64| -> i128 {
+                let shift = 128 - bits;
+                (i128::from(value) << shift) >> shift
+            };
+            let unsigned_result = !lhs_signed && !rhs_signed;
+            let mut sum = if unsigned_result {
+                i128::from(acc)
+            } else {
+                i128::from(acc as i32)
+            };
+            for (&a, &b) in lhs.iter().zip(rhs) {
+                let a = if lhs_signed { signed(a) } else { i128::from(a) };
+                let b = if rhs_signed { signed(b) } else { i128::from(b) };
+                sum += a * b;
+            }
+            if !saturate {
+                sum as u32
+            } else if unsigned_result {
+                sum.clamp(0, i128::from(u32::MAX)) as u32
+            } else {
+                sum.clamp(i128::from(i32::MIN), i128::from(i32::MAX)) as i32 as u32
+            }
+        }
+
+        let cases = [
+            (
+                &[0xC4, 0xE2, 0x6B, 0x50, 0xCB][..],
+                8,
+                true,
+                true,
+                false,
+                4usize,
+            ),
+            (&[0xC4, 0xE2, 0x57, 0x51, 0xE6][..], 8, true, true, true, 8),
+            (
+                &[0xC4, 0xE2, 0x6A, 0x50, 0xCB][..],
+                8,
+                true,
+                false,
+                false,
+                4,
+            ),
+            (&[0xC4, 0xE2, 0x56, 0x51, 0xE6][..], 8, true, false, true, 8),
+            (
+                &[0xC4, 0xE2, 0x68, 0x50, 0xCB][..],
+                8,
+                false,
+                false,
+                false,
+                4,
+            ),
+            (
+                &[0xC4, 0xE2, 0x54, 0x51, 0xE6][..],
+                8,
+                false,
+                false,
+                true,
+                8,
+            ),
+            (
+                &[0xC4, 0xE2, 0x6A, 0xD2, 0xCB][..],
+                16,
+                true,
+                false,
+                false,
+                4,
+            ),
+            (
+                &[0xC4, 0xE2, 0x56, 0xD3, 0xE6][..],
+                16,
+                true,
+                false,
+                true,
+                8,
+            ),
+            (
+                &[0xC4, 0xE2, 0x69, 0xD2, 0xCB][..],
+                16,
+                false,
+                true,
+                false,
+                4,
+            ),
+            (
+                &[0xC4, 0xE2, 0x55, 0xD3, 0xE6][..],
+                16,
+                false,
+                true,
+                true,
+                8,
+            ),
+            (
+                &[0xC4, 0xE2, 0x68, 0xD2, 0xCB][..],
+                16,
+                false,
+                false,
+                false,
+                4,
+            ),
+            (
+                &[0xC4, 0xE2, 0x54, 0xD3, 0xE6][..],
+                16,
+                false,
+                false,
+                true,
+                8,
+            ),
+        ];
+        for (bytes, bits, lhs_signed, rhs_signed, saturate, lanes) in cases {
+            let dst_reg = if lanes == 4 { 1 } else { 4 };
+            let lhs_reg = if lanes == 4 { 2 } else { 5 };
+            let rhs_reg = if lanes == 4 { 3 } else { 6 };
+            let terms = 32 / bits;
+            let mask = (1u64 << bits) - 1;
+            let positive = (1u64 << (bits - 1)) - 1;
+            let negative = 1u64 << (bits - 1);
+            let unsigned_max = mask;
+            let mut acc = Vec::with_capacity(lanes);
+            let mut lhs = Vec::with_capacity(lanes * terms as usize);
+            let mut rhs = Vec::with_capacity(lanes * terms as usize);
+            for lane in 0..lanes {
+                acc.push(match lane % 4 {
+                    0 => {
+                        if !lhs_signed && !rhs_signed {
+                            u32::MAX
+                        } else {
+                            i32::MAX as u32
+                        }
+                    }
+                    1 => {
+                        if !lhs_signed && !rhs_signed {
+                            0
+                        } else {
+                            i32::MIN as u32
+                        }
+                    }
+                    2 => 100,
+                    _ => 0xA5A5_5A5A,
+                });
+                for term in 0..terms {
+                    let (a, b) = match lane % 4 {
+                        0 => (
+                            if lhs_signed { positive } else { unsigned_max },
+                            if rhs_signed { positive } else { unsigned_max },
+                        ),
+                        1 if lhs_signed => {
+                            (negative, if rhs_signed { positive } else { unsigned_max })
+                        }
+                        1 if rhs_signed => {
+                            (if lhs_signed { positive } else { unsigned_max }, negative)
+                        }
+                        1 => (unsigned_max, unsigned_max),
+                        2 => ((term as u64 + 1) & mask, (term as u64 + 2) & mask),
+                        _ => (mask.wrapping_sub(term as u64) & mask, term as u64 & mask),
+                    };
+                    lhs.push(a);
+                    rhs.push(b);
+                }
+            }
+            let expected = (0..lanes)
+                .map(|lane| {
+                    let start = lane * terms as usize;
+                    reference(
+                        acc[lane],
+                        &lhs[start..start + terms as usize],
+                        &rhs[start..start + terms as usize],
+                        bits,
+                        lhs_signed,
+                        rhs_signed,
+                        saturate,
+                    )
+                })
+                .collect::<Vec<_>>();
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x400);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0x8D5);
+            ctx.flags.lazy = None;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                let mut dst = [0xDEAD_BEEF_DEAD_BEEF; 16];
+                let mut first = [0x1111_1111_1111_1111; 16];
+                let mut second = [0x2222_2222_2222_2222; 16];
+                for lane in 0..lanes {
+                    SmirInterpreter::set_lane(&mut dst, lane as u8, 32, u64::from(acc[lane]));
+                }
+                for (lane, value) in lhs.iter().enumerate() {
+                    SmirInterpreter::set_lane(&mut first, lane as u8, bits, *value);
+                }
+                for (lane, value) in rhs.iter().enumerate() {
+                    SmirInterpreter::set_lane(&mut second, lane as u8, bits, *value);
+                }
+                x86.xmm[dst_reg] = dst;
+                x86.xmm[lhs_reg] = first;
+                x86.xmm[rhs_reg] = second;
+            }
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            ctx.flags.materialize_all();
+            assert_eq!(
+                ctx.flags.materialized.to_rflags(),
+                MaterializedFlags::from_rflags(0x8D5).to_rflags()
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                for (lane, expected) in expected.into_iter().enumerate() {
+                    assert_eq!(
+                        SmirInterpreter::get_lane(&x86.xmm[dst_reg], lane as u8, 32),
+                        u64::from(expected),
+                        "case {bytes:02X?}, lane {lane}"
+                    );
+                }
+                assert_eq!(&x86.xmm[dst_reg][lanes / 2..], &[0; 16][..16 - lanes / 2]);
+            }
+        }
+
+        // dst == src1 == src2 must use snapshots of the original vector.
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        let alias = vec_from_bytes(&[1u8, 2, 3, 4].repeat(4));
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = alias;
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x73, 0x50, 0xC9], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..4 {
+                let original_acc = SmirInterpreter::get_lane(&alias, lane, 32) as u32;
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 32),
+                    u64::from(original_acc.wrapping_add(30))
+                );
+            }
+        }
+
+        // Type-4 memory operands are unaligned, read the complete vector, and
+        // fault before modifying the architectural accumulator.
+        let source = [0xFFu8; 32];
+        memory.write(0x101, &source).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[4] = vec_from_bytes(&u32::MAX.to_le_bytes().repeat(8));
+            x86.xmm[5] = vec_from_bytes(&[0xFF; 32]);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x54, 0x51, 0x20], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[4], lane, 32),
+                    u32::MAX as u64
+                );
+            }
+        }
+
+        let sentinel = [0x4242_4242_4242_4242; 16];
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3F0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[4] = sentinel;
+        }
+        let exit = execute_lifted_x86(&[0xC4, 0xE2, 0x54, 0x51, 0x20], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[4], sentinel);
+        }
+    }
+
+    #[test]
+    fn executes_bf16_converts_dot_masks_rounding_aliases_and_fault_classes() {
+        fn vector_u32(values: &[u32], fill: u64) -> VecValue {
+            let mut result = [fill; 16];
+            for (lane, value) in values.iter().enumerate() {
+                SmirInterpreter::set_lane(&mut result, lane as u8, 32, u64::from(*value));
+            }
+            result
+        }
+        fn vector_bf16(values: &[u16], fill: u64) -> VecValue {
+            let mut result = [fill; 16];
+            for (lane, value) in values.iter().enumerate() {
+                SmirInterpreter::set_lane(&mut result, lane as u8, 16, u64::from(*value));
+            }
+            result
+        }
+
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        let conversion_inputs = [
+            0x0000_0001,
+            0x8000_0001,
+            0x7F80_0000,
+            0x7F80_0001,
+            0x3F80_0000,
+            0x3F80_8000,
+            0x3F81_8000,
+            0xBF80_0001,
+        ];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[4] = [0xDEAD_BEEF_DEAD_BEEF; 16];
+            x86.xmm[6] = vector_u32(&conversion_inputs, 0x1111_1111_1111_1111);
+        }
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0x8D5);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xC4, 0xE2, 0x7E, 0x72, 0xE6], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for (lane, expected) in [
+                0x0000u16, 0x8000, 0x7F80, 0x7FC0, 0x3F80, 0x3F80, 0x3F82, 0xBF80,
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[4], lane as u8, 16),
+                    u64::from(expected)
+                );
+            }
+            assert_eq!(&x86.xmm[4][2..], &[0; 14]);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(
+            ctx.flags.materialized.to_rflags(),
+            MaterializedFlags::from_rflags(0x8D5).to_rflags()
+        );
+
+        // The one-source EVEX form masks only the converted low half; all
+        // higher destination bits are unconditionally zero.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = vector_bf16(&[0xA55A; 8], 0xA55A_A55A_A55A_A55A);
+            x86.xmm[2] = vector_u32(&[0x3F80_0000, 0x4000_0000, 0x4040_0000, 0x4080_0000], 0);
+            x86.k[1] = 0b0101;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x7E, 0x09, 0x72, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                (0..8)
+                    .map(|lane| SmirInterpreter::get_lane(&x86.xmm[1], lane, 16) as u16)
+                    .collect::<Vec<_>>(),
+                vec![0x3F80, 0xA55A, 0x4040, 0xA55A, 0, 0, 0, 0]
+            );
+            assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+        }
+
+        // Two-source conversion stores src2 in the low half and src1 in the
+        // high half, with a mask spanning the complete BF16 result.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = vector_bf16(&[0xA55A; 8], 0xA55A_A55A_A55A_A55A);
+            x86.xmm[2] = vector_u32(
+                &[
+                    10.0f32.to_bits(),
+                    20.0f32.to_bits(),
+                    30.0f32.to_bits(),
+                    40.0f32.to_bits(),
+                ],
+                0,
+            );
+            x86.xmm[3] = vector_u32(
+                &[
+                    1.0f32.to_bits(),
+                    2.0f32.to_bits(),
+                    3.0f32.to_bits(),
+                    4.0f32.to_bits(),
+                ],
+                0,
+            );
+            x86.k[1] = 0b1010_0101;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6F, 0x09, 0x72, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let raw = [
+                0x3F80u16, 0x4000, 0x4040, 0x4080, 0x4120, 0x41A0, 0x41F0, 0x4220,
+            ];
+            for (lane, raw) in raw.into_iter().enumerate() {
+                let expected = if 0b1010_0101 & (1 << lane) != 0 {
+                    raw
+                } else {
+                    0xA55A
+                };
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane as u8, 16),
+                    u64::from(expected)
+                );
+            }
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = vector_u32(&[1.0f32.to_bits(), 0, 0, f32::INFINITY.to_bits()], 0);
+            x86.xmm[2] = vector_bf16(
+                &[
+                    0x4000, 0x4040, 0x0080, 0x0001, 0x7F81, 0x7FC3, 0x0000, 0x0000,
+                ],
+                0,
+            );
+            x86.xmm[3] = vector_bf16(
+                &[
+                    0x4080, 0x40A0, 0x3F00, 0x7F7F, 0x7FC2, 0x7FC4, 0x7F80, 0x0000,
+                ],
+                0,
+            );
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6E, 0x08, 0x52, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[1], 0, 32),
+                24.0f32.to_bits() as u64
+            );
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 1, 32), 0);
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 2, 32), 0x7FC1_0000);
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 3, 32), 0xFFC0_0000);
+            assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+        }
+
+        // All three operands may alias; every lane must use the original bits.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = vector_u32(&[1.0f32.to_bits(); 4], 0xFFFF_FFFF_FFFF_FFFF);
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x76, 0x08, 0x52, 0xC9], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..4 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 32),
+                    2.0f32.to_bits() as u64
+                );
+            }
+        }
+
+        // VCVTNEPS2BF16 and VDPBF16PS are E4 fault-suppressing; the two-source
+        // conversion explicitly is not.
+        let sentinel = [0x4242_4242_4242_4242; 16];
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[1] = 0;
+        }
+        let no_fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7E, 0x09, 0x72, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(no_fault, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[1][..1], &sentinel[..1]);
+            assert_eq!(&x86.xmm[1][1..], &[0; 15]);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[1] = 1;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7E, 0x09, 0x72, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[1] = 0;
+        }
+        let pair_fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x6F, 0x09, 0x72, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            pair_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[1] = 0;
+        }
+        let dot_no_fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x6E, 0x09, 0x52, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(dot_no_fault, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[1][..2], &sentinel[..2]);
+            assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[1] = 1;
+        }
+        let dot_fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x6E, 0x09, 0x52, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            dot_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+    }
+
+    #[test]
+    fn executes_vpshufbitqmb_lane_domains_opmask_zeroing_memory_and_faults() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        let mut data = [0u64; 16];
+        let mut controls = [0u64; 16];
+        for qword in 0..8u8 {
+            SmirInterpreter::set_lane(
+                &mut data,
+                qword,
+                64,
+                0x8040_2010_0804_0201u64.rotate_left(u32::from(qword)),
+            );
+            for byte in 0..8u8 {
+                SmirInterpreter::set_lane(
+                    &mut controls,
+                    qword * 8 + byte,
+                    8,
+                    u64::from((byte * 9 + qword) & 0x3F) | 0xC0,
+                );
+            }
+        }
+        let reference = |width: VecWidth, mask: u64| -> u64 {
+            let mut result = 0u64;
+            for qword in 0..(width.bytes() / 8) as u8 {
+                let source = SmirInterpreter::get_lane(&data, qword, 64);
+                for byte in 0..8u8 {
+                    let output = qword * 8 + byte;
+                    if mask & (1u64 << output) != 0 {
+                        let control = SmirInterpreter::get_lane(&controls, output, 8) & 0x3F;
+                        result |= ((source >> control) & 1) << output;
+                    }
+                }
+            }
+            result
+        };
+
+        for (bytes, width, dst, src, indices, mask) in [
+            (
+                &[0x62, 0xF2, 0x6D, 0x08, 0x8F, 0xCB][..],
+                VecWidth::V128,
+                1usize,
+                2usize,
+                3usize,
+                u64::MAX,
+            ),
+            (
+                &[0x62, 0xF2, 0x55, 0x2B, 0x8F, 0xE6][..],
+                VecWidth::V256,
+                4,
+                5,
+                6,
+                0xA5A5_5A5A,
+            ),
+            (
+                &[0x62, 0xB2, 0x6D, 0x42, 0x8F, 0xFB][..],
+                VecWidth::V512,
+                7,
+                18,
+                19,
+                0xF0F0_0F0F_AA55_55AA,
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[src] = data;
+                x86.xmm[indices] = controls;
+                x86.k[dst] = u64::MAX;
+                x86.k[2] = if dst == 7 { mask } else { x86.k[2] };
+                x86.k[3] = if dst == 4 { mask } else { x86.k[3] };
+            }
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.k[dst], reference(width, mask));
+            }
+        }
+
+        // A sparse E4 mask may read the last mapped byte without touching any
+        // masked-off byte beyond the memory boundary.
+        memory.write(0x3FF, &[5]).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3FF);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = [0; 16];
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 64, 1 << 5);
+            x86.k[1] = 0xDEAD_BEEF_DEAD_BEEF;
+            x86.k[3] = 1;
+        }
+        let sparse =
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x0B, 0x8F, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(sparse, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[1], 1);
+        }
+
+        // Activating the next byte faults before the K destination is changed.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[1] = 0xDEAD_BEEF_DEAD_BEEF;
+            x86.k[3] = 2;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x0B, 0x8F, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[1], 0xDEAD_BEEF_DEAD_BEEF);
+        }
+    }
+
+    #[test]
+    fn executes_evex_compress_expand_all_elements_aliases_dense_memory_and_faults() {
+        let cases = [
+            (
+                &[0x62, 0xF2, 0x7D, 0x09, 0x63, 0xD1][..],
+                true,
+                8u32,
+                16u8,
+                1usize,
+                2usize,
+                1usize,
+                false,
+            ),
+            (
+                &[0x62, 0xF2, 0xFD, 0xAB, 0x63, 0xEC][..],
+                true,
+                16,
+                16,
+                4,
+                5,
+                3,
+                true,
+            ),
+            (
+                &[0x62, 0xA2, 0x7D, 0x4A, 0x8B, 0xD1][..],
+                true,
+                32,
+                16,
+                17,
+                18,
+                2,
+                false,
+            ),
+            (
+                &[0x62, 0xF2, 0xFD, 0x89, 0x8B, 0xD9][..],
+                true,
+                64,
+                2,
+                1,
+                3,
+                1,
+                true,
+            ),
+            (
+                &[0x62, 0xF2, 0x7D, 0x2B, 0x8A, 0xF4][..],
+                true,
+                32,
+                8,
+                4,
+                6,
+                3,
+                false,
+            ),
+            (
+                &[0x62, 0xA2, 0xFD, 0xCA, 0x8A, 0xD9][..],
+                true,
+                64,
+                8,
+                17,
+                19,
+                2,
+                true,
+            ),
+            (
+                &[0x62, 0xF2, 0x7D, 0x09, 0x62, 0xCA][..],
+                false,
+                8,
+                16,
+                1,
+                2,
+                1,
+                false,
+            ),
+            (
+                &[0x62, 0xF2, 0xFD, 0xAB, 0x62, 0xE5][..],
+                false,
+                16,
+                16,
+                4,
+                5,
+                3,
+                true,
+            ),
+            (
+                &[0x62, 0xA2, 0x7D, 0x4A, 0x89, 0xCA][..],
+                false,
+                32,
+                16,
+                17,
+                18,
+                2,
+                false,
+            ),
+            (
+                &[0x62, 0xF2, 0xFD, 0x89, 0x89, 0xCB][..],
+                false,
+                64,
+                2,
+                1,
+                3,
+                1,
+                true,
+            ),
+            (
+                &[0x62, 0xF2, 0x7D, 0x2B, 0x88, 0xE6][..],
+                false,
+                32,
+                8,
+                4,
+                6,
+                3,
+                false,
+            ),
+            (
+                &[0x62, 0xA2, 0xFD, 0xCA, 0x88, 0xCB][..],
+                false,
+                64,
+                8,
+                17,
+                19,
+                2,
+                true,
+            ),
+        ];
+        let mut memory = FlatMemory::new(0x400);
+        for (bytes, compress, bits, lanes, dst, src, mask_reg, zeroing) in cases {
+            let mask = match lanes {
+                2 => 0b10,
+                8 => 0b1010_0101,
+                16 => 0b1010_0101_1100_0011,
+                _ => unreachable!(),
+            };
+            let mut source = [0x1111_1111_1111_1111; 16];
+            let mut old = [0x2222_2222_2222_2222; 16];
+            for lane in 0..lanes {
+                SmirInterpreter::set_lane(&mut source, lane, bits, u64::from(lane) + 1);
+                SmirInterpreter::set_lane(&mut old, lane, bits, u64::from(lane) + 0x80);
+            }
+            let mut expected = [0u64; 16];
+            if compress {
+                let mut output = 0;
+                for lane in 0..lanes {
+                    if mask & (1u64 << lane) != 0 {
+                        SmirInterpreter::set_lane(
+                            &mut expected,
+                            output,
+                            bits,
+                            SmirInterpreter::get_lane(&source, lane, bits),
+                        );
+                        output += 1;
+                    }
+                }
+                if !zeroing {
+                    for lane in output..lanes {
+                        SmirInterpreter::set_lane(
+                            &mut expected,
+                            lane,
+                            bits,
+                            SmirInterpreter::get_lane(&old, lane, bits),
+                        );
+                    }
+                }
+            } else {
+                let mut input = 0;
+                for lane in 0..lanes {
+                    if mask & (1u64 << lane) != 0 {
+                        SmirInterpreter::set_lane(
+                            &mut expected,
+                            lane,
+                            bits,
+                            SmirInterpreter::get_lane(&source, input, bits),
+                        );
+                        input += 1;
+                    } else if !zeroing {
+                        SmirInterpreter::set_lane(
+                            &mut expected,
+                            lane,
+                            bits,
+                            SmirInterpreter::get_lane(&old, lane, bits),
+                        );
+                    }
+                }
+            }
+
+            let mut ctx = SmirContext::new_x86_64();
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[dst] = old;
+                x86.xmm[src] = source;
+                x86.k[mask_reg] = mask;
+            }
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[dst], expected, "case {bytes:02X?}");
+            }
+        }
+
+        // Source/destination aliasing uses the complete original register.
+        let mut ctx = SmirContext::new_x86_64();
+        let mut alias = [0u64; 16];
+        for lane in 0..16u8 {
+            SmirInterpreter::set_lane(&mut alias, lane, 8, u64::from(lane) + 1);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = alias;
+            x86.k[1] = 0b1010_0101_1100_0011;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x09, 0x63, 0xC9], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let selected = [1u8, 2, 7, 8, 9, 11, 14, 16];
+            for (lane, value) in selected.into_iter().enumerate() {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane as u8, 8),
+                    u64::from(value)
+                );
+            }
+        }
+
+        // Dense memory stores contain only selected elements, in source order.
+        memory.write(0x100, &[0xCC; 64]).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            let mut source = [0u64; 16];
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut source, lane, 32, u64::from(lane) + 100);
+            }
+            x86.xmm[18] = source;
+            x86.k[2] = (1 << 0) | (1 << 3) | (1 << 5);
+        }
+        execute_lifted_x86(&[0x62, 0xE2, 0x7D, 0x4A, 0x8B, 0x10], &mut ctx, &mut memory);
+        let mut stored = [0u8; 16];
+        memory.read(0x100, &mut stored).unwrap();
+        assert_eq!(
+            &stored[..12],
+            &[100u32, 103, 105].map(u32::to_le_bytes).concat()
+        );
+        assert_eq!(&stored[12..], &[0xCC; 4]);
+
+        // Dense memory loads are distributed to sparse destination lanes.
+        memory
+            .write(0x180, &[11u32, 22, 33].map(u32::to_le_bytes).concat())
+            .unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x180);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = [0xDEAD_BEEF_DEAD_BEEF; 16];
+            x86.k[2] = (1 << 0) | (1 << 3) | (1 << 5);
+        }
+        execute_lifted_x86(&[0x62, 0xE2, 0x7D, 0xCA, 0x89, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 32),
+                    match lane {
+                        0 => 11,
+                        3 => 22,
+                        5 => 33,
+                        _ => 0,
+                    }
+                );
+            }
+            assert_eq!(&x86.xmm[17][8..], &[0; 8]);
+        }
+
+        // A faulting expand leaves the architectural destination unchanged;
+        // a faulting compress may have completed earlier dense stores.
+        memory.write(0x3FF, &[0x5A]).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3FF);
+        let sentinel = [0x4242_4242_4242_4242; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[1] = 0b11;
+        }
+        let load_fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x09, 0x62, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            load_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = alias;
+            x86.k[1] = 0b11;
+        }
+        let store_fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x09, 0x63, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(
+            store_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        let mut first = [0u8; 1];
+        memory.read(0x3FF, &mut first).unwrap();
+        assert_eq!(first[0], 1);
+    }
+
+    #[test]
+    fn executes_evex_packed_rotates_counts_masks_aliases_broadcasts_and_faults() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        let flags_before = 0xCD7;
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Immediate D-word rotate covers count reduction and upper-state zeroing.
+        let dwords = [0x0123_4567u32, 0x8000_0001, 0xFFFF_FFFF, 0x1357_9BDF];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0xCCCC_CCCC_CCCC_CCCC; 16];
+            for (lane, value) in dwords.into_iter().enumerate() {
+                SmirInterpreter::set_lane(&mut x86.xmm[2], lane as u8, 32, u64::from(value));
+            }
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF1, 0x75, 0x08, 0x72, 0xCA, 39],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for (lane, value) in dwords.into_iter().enumerate() {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane as u8, 32),
+                    u64::from(value.rotate_left(39 % 32))
+                );
+            }
+            assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+        }
+
+        // Per-lane counts use the complete element and reduce modulo its width.
+        let counts = [0u32, 1, 32, 255];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..4u8 {
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[2],
+                    lane,
+                    32,
+                    u64::from(dwords[usize::from(lane)]),
+                );
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[3],
+                    lane,
+                    32,
+                    u64::from(counts[usize::from(lane)]),
+                );
+            }
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x08, 0x15, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..4usize {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane as u8, 32),
+                    u64::from(dwords[lane].rotate_left(counts[lane] % 32))
+                );
+            }
+        }
+
+        // All three operands may alias; reads must be snapshotted before write.
+        let mut alias = [0u64; 16];
+        for (lane, value) in [1u32, 7, 31, 0x8000_0001].into_iter().enumerate() {
+            SmirInterpreter::set_lane(&mut alias, lane as u8, 32, u64::from(value));
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = alias;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x08, 0x15, 0xC9], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..4u8 {
+                let value = SmirInterpreter::get_lane(&alias, lane, 32) as u32;
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 32),
+                    u64::from(value.rotate_left(value % 32))
+                );
+            }
+        }
+
+        // Merge masking and right rotation preserve inactive destination lanes.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[5] = [0xA5A5_A5A5_A5A5_A5A5; 16];
+            for lane in 0..4u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[6], lane, 32, 1u64 << lane);
+            }
+            x86.k[1] = 0b0101;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF1, 0x55, 0x09, 0x72, 0xC6, 5],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..4u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[5], lane, 32),
+                    if lane & 1 == 0 {
+                        u64::from((1u32 << lane).rotate_right(5))
+                    } else {
+                        0xA5A5_A5A5
+                    }
+                );
+            }
+        }
+
+        // Compressed disp8 broadcast plus zero masking.
+        memory.write(508, &0x8000_0001u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[3] = [u64::MAX; 16];
+            x86.k[2] = 0b1010_0101;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF1, 0x65, 0xBA, 0x72, 0x48, 0x7F, 31],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[3], lane, 32),
+                    if 0b1010_0101 & (1 << lane) != 0 {
+                        u64::from(0x8000_0001u32.rotate_left(31))
+                    } else {
+                        0
+                    }
+                );
+            }
+            assert_eq!(&x86.xmm[3][4..], &[0; 12]);
+        }
+
+        // E4 suppresses all memory access for an all-zero mask. If one lane is
+        // active, a fault occurs before the architectural destination commits.
+        let sentinel = [0x4242_4242_4242_4242; 16];
+        let mut architectural_sentinel = [0u64; 16];
+        architectural_sentinel[..8].copy_from_slice(&sentinel[..8]);
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[5] = sentinel;
+            x86.xmm[6] = alias;
+            x86.k[2] = 0;
+        }
+        let suppressed = execute_lifted_x86(
+            &[0x62, 0xF2, 0x4D, 0x5A, 0x14, 0x68, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[5], architectural_sentinel);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[2] = 1;
+        }
+        let fault = execute_lifted_x86(
+            &[0x62, 0xF2, 0x4D, 0x5A, 0x14, 0x68, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[5], architectural_sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn executes_evex_ternary_logic_all_tables_masks_aliases_memory_and_faults() {
+        fn ternary(a: u64, b: u64, c: u64, imm: u8) -> u64 {
+            let mut out = 0u64;
+            for bit in 0..64 {
+                let index = (((a >> bit) & 1) << 2) | (((b >> bit) & 1) << 1) | ((c >> bit) & 1);
+                out |= u64::from((imm >> index) & 1) << bit;
+            }
+            out
+        }
+
+        let a = [0x0123_4567_89AB_CDEFu64, 0xFFFF_0000_AAAA_5555];
+        let b = [0x1357_9BDF_2468_ACE0u64, 0x0F0F_F0F0_3333_CCCC];
+        let c = [0xCAFE_BABE_DEAD_BEEFu64, 0x55AA_55AA_FF00_00FF];
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        let flags_before = 0xCD7;
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Exhaust the complete imm8 truth-table space. Destination input A is
+        // read before the same architectural register is overwritten.
+        for imm in 0u8..=u8::MAX {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[1] = [0xCCCC_CCCC_CCCC_CCCC; 16];
+                x86.xmm[1][..2].copy_from_slice(&a);
+                x86.xmm[2][..2].copy_from_slice(&b);
+                x86.xmm[3][..2].copy_from_slice(&c);
+            }
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x6D, 0x08, 0x25, 0xCB, imm],
+                &mut ctx,
+                &mut memory,
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[1][0], ternary(a[0], b[0], c[0], imm), "imm={imm}");
+                assert_eq!(x86.xmm[1][1], ternary(a[1], b[1], c[1], imm), "imm={imm}");
+                assert_eq!(&x86.xmm[1][2..], &[0; 14], "imm={imm}");
+            }
+        }
+
+        // High YMM registers, Q-word granularity, and zero masking.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[20] = [0xAAAA_AAAA_AAAA_AAAA; 16];
+            x86.xmm[21][..4].copy_from_slice(&[
+                0x1111_1111_1111_1111,
+                0x2222_2222_2222_2222,
+                0x3333_3333_3333_3333,
+                0x4444_4444_4444_4444,
+            ]);
+            x86.xmm[22][..4].copy_from_slice(&[
+                0xFFFF_0000_FFFF_0000,
+                0x0000_FFFF_0000_FFFF,
+                0x55AA_55AA_55AA_55AA,
+                0xAA55_AA55_AA55_AA55,
+            ]);
+            x86.k[3] = 0b0101;
+        }
+        let old = [0xAAAA_AAAA_AAAA_AAAAu64; 4];
+        let src2 = [
+            0x1111_1111_1111_1111u64,
+            0x2222_2222_2222_2222,
+            0x3333_3333_3333_3333,
+            0x4444_4444_4444_4444,
+        ];
+        let src3 = [
+            0xFFFF_0000_FFFF_0000u64,
+            0x0000_FFFF_0000_FFFF,
+            0x55AA_55AA_55AA_55AA,
+            0xAA55_AA55_AA55_AA55,
+        ];
+        execute_lifted_x86(
+            &[0x62, 0xA3, 0xD5, 0xA3, 0x25, 0xE6, 0xE2],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..4usize {
+                assert_eq!(
+                    x86.xmm[20][lane],
+                    if lane & 1 == 0 {
+                        ternary(old[lane], src2[lane], src3[lane], 0xE2)
+                    } else {
+                        0
+                    }
+                );
+            }
+            assert_eq!(&x86.xmm[20][4..], &[0; 12]);
+        }
+
+        // E4 broadcast source uses compressed disp8 and preserves inactive
+        // destination lanes under merge masking.
+        memory.write(508, &0x8000_0001u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::R13)), 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = [0xA5A5_A5A5_A5A5_A5A5; 16];
+            x86.xmm[18] = [0x5A5A_5A5A_5A5A_5A5A; 16];
+            x86.k[7] = 0x5555;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xC3, 0x6D, 0x57, 0x25, 0x4D, 0x7F, 0xE4],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 32),
+                    if lane & 1 == 0 {
+                        ternary(0xA5A5_A5A5, 0x5A5A_5A5A, 0x8000_0001, 0xE4) & 0xFFFF_FFFF
+                    } else {
+                        0xA5A5_A5A5
+                    }
+                );
+            }
+            assert_eq!(&x86.xmm[17][8..], &[0; 8]);
+        }
+
+        // An all-zero mask suppresses the out-of-range broadcast access; an
+        // active lane faults before any architectural destination write.
+        let mut sentinel = [0u64; 16];
+        sentinel[..8].fill(0x4242_4242_4242_4242);
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::R13)), 0x204);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.k[7] = 0;
+        }
+        let suppressed = execute_lifted_x86(
+            &[0x62, 0xC3, 0x6D, 0x57, 0x25, 0x4D, 0x7F, 0xE4],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17], sentinel);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[7] = 1;
+        }
+        let fault = execute_lifted_x86(
+            &[0x62, 0xC3, 0x6D, 0x57, 0x25, 0x4D, 0x7F, 0xE4],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn executes_evex_packed_funnel_shifts_all_forms_masks_memory_and_faults() {
+        fn reference(src: u64, fill: u64, count: u64, bits: u32, left: bool) -> u64 {
+            let mask = if bits == 64 {
+                u64::MAX
+            } else {
+                (1u64 << bits) - 1
+            };
+            let count = (count % u64::from(bits)) as u32;
+            if count == 0 {
+                src & mask
+            } else if left {
+                ((src << count) | (fill >> (bits - count))) & mask
+            } else {
+                (src >> count) | ((fill << (bits - count)) & mask)
+            }
+        }
+
+        let cases = [
+            (
+                &[0x62, 0xF3, 0xED, 0x08, 0x70, 0xCB, 23][..],
+                16,
+                true,
+                false,
+                23,
+            ),
+            (
+                &[0x62, 0xF3, 0x6D, 0x08, 0x71, 0xCB, 47][..],
+                32,
+                true,
+                false,
+                47,
+            ),
+            (
+                &[0x62, 0xF3, 0xED, 0x08, 0x71, 0xCB, 79][..],
+                64,
+                true,
+                false,
+                79,
+            ),
+            (
+                &[0x62, 0xF3, 0xED, 0x08, 0x72, 0xCB, 17][..],
+                16,
+                false,
+                false,
+                17,
+            ),
+            (
+                &[0x62, 0xF3, 0x6D, 0x08, 0x73, 0xCB, 39][..],
+                32,
+                false,
+                false,
+                39,
+            ),
+            (
+                &[0x62, 0xF3, 0xED, 0x08, 0x73, 0xCB, 65][..],
+                64,
+                false,
+                false,
+                65,
+            ),
+            (&[0x62, 0xF2, 0xED, 0x08, 0x70, 0xCB][..], 16, true, true, 0),
+            (&[0x62, 0xF2, 0x6D, 0x08, 0x71, 0xCB][..], 32, true, true, 0),
+            (&[0x62, 0xF2, 0xED, 0x08, 0x71, 0xCB][..], 64, true, true, 0),
+            (
+                &[0x62, 0xF2, 0xED, 0x08, 0x72, 0xCB][..],
+                16,
+                false,
+                true,
+                0,
+            ),
+            (
+                &[0x62, 0xF2, 0x6D, 0x08, 0x73, 0xCB][..],
+                32,
+                false,
+                true,
+                0,
+            ),
+            (
+                &[0x62, 0xF2, 0xED, 0x08, 0x73, 0xCB][..],
+                64,
+                false,
+                true,
+                0,
+            ),
+        ];
+        let flags_before = 0xCD7;
+        let mut memory = FlatMemory::new(0x400);
+        for (bytes, bits, left, variable, immediate) in cases {
+            let mut ctx = SmirContext::new_x86_64();
+            ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+            ctx.flags.lazy = None;
+            let lanes = 128 / bits;
+            let mut old = [0u64; 16];
+            let mut second = [0u64; 16];
+            let mut third = [0u64; 16];
+            for lane in 0..lanes as u8 {
+                SmirInterpreter::set_lane(
+                    &mut old,
+                    lane,
+                    bits,
+                    0xA5A5_A5A5_A5A5_A5A5u64.rotate_left(u32::from(lane)),
+                );
+                SmirInterpreter::set_lane(
+                    &mut second,
+                    lane,
+                    bits,
+                    0x1357_9BDF_2468_ACE0u64.rotate_right(u32::from(lane)),
+                );
+                SmirInterpreter::set_lane(
+                    &mut third,
+                    lane,
+                    bits,
+                    if variable {
+                        [0, 1, u64::from(bits), u64::MAX][usize::from(lane) & 3]
+                    } else {
+                        0xCAFE_BABE_DEAD_BEEFu64.rotate_left(u32::from(lane))
+                    },
+                );
+            }
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[1] = old;
+                x86.xmm[2] = second;
+                x86.xmm[3] = third;
+            }
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                for lane in 0..lanes as u8 {
+                    let primary = SmirInterpreter::get_lane(
+                        if variable { &old } else { &second },
+                        lane,
+                        bits,
+                    );
+                    let fill = SmirInterpreter::get_lane(
+                        if variable { &second } else { &third },
+                        lane,
+                        bits,
+                    );
+                    let count = if variable {
+                        SmirInterpreter::get_lane(&third, lane, bits)
+                    } else {
+                        immediate
+                    };
+                    assert_eq!(
+                        SmirInterpreter::get_lane(&x86.xmm[1], lane, bits),
+                        reference(primary, fill, count, bits, left),
+                        "bits={bits} left={left} variable={variable} lane={lane}"
+                    );
+                }
+                assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+            }
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+        }
+
+        // Broadcast source, compressed disp8, zero mask, and E4 fault behavior.
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        memory.write(508, &0x8000_0001u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[4] = [u64::MAX; 16];
+            x86.xmm[5] = [0x1234_5678_9ABC_DEF0; 16];
+            x86.k[2] = 0b0101_1010;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0x55, 0xBA, 0x71, 0x60, 0x7F, 31],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8u8 {
+                let primary = SmirInterpreter::get_lane(&x86.xmm[5], lane, 32);
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[4], lane, 32),
+                    if 0b0101_1010 & (1 << lane) != 0 {
+                        reference(primary, 0x8000_0001, 31, 32, true)
+                    } else {
+                        0
+                    }
+                );
+            }
+            assert_eq!(&x86.xmm[4][4..], &[0; 12]);
+        }
+
+        let mut sentinel = [0u64; 16];
+        sentinel[..4].fill(0x4242_4242_4242_4242);
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x204);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[4] = sentinel;
+            x86.k[2] = 0;
+        }
+        let suppressed = execute_lifted_x86(
+            &[0x62, 0xF3, 0x55, 0xBA, 0x71, 0x60, 0x7F, 31],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[4], [0; 16]);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[4] = sentinel;
+            x86.k[2] = 1;
+        }
+        let fault = execute_lifted_x86(
+            &[0x62, 0xF3, 0x55, 0xBA, 0x71, 0x60, 0x7F, 31],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[4], sentinel);
+        }
+    }
+
+    #[test]
+    fn executes_evex_multishift_qb_controls_masks_broadcast_and_e4nf_faults() {
+        let controls = [
+            0u8, 1, 7, 8, 15, 31, 56, 63, 64, 65, 71, 72, 79, 95, 120, 127,
+        ];
+        let sources = [0x0123_4567_89AB_CDEFu64, 0xFEDC_BA98_7654_3210];
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for (lane, control) in controls.into_iter().enumerate() {
+                SmirInterpreter::set_lane(&mut x86.xmm[2], lane as u8, 8, u64::from(control));
+            }
+            x86.xmm[3][..2].copy_from_slice(&sources);
+            x86.xmm[1] = [u64::MAX; 16];
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0xED, 0x08, 0x83, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 8),
+                    sources[usize::from(lane / 8)]
+                        .rotate_right(u32::from(controls[usize::from(lane)] & 63))
+                        & 0xFF
+                );
+            }
+            assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+        }
+
+        // Broadcast supplies the same qword to every block; byte-granular
+        // merge masking preserves inactive destination bytes.
+        memory
+            .write(1016, &0x8040_2010_0804_0201u64.to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::R13)), 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = [0xA5A5_A5A5_A5A5_A5A5; 16];
+            for lane in 0..64u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[18], lane, 8, u64::from(lane));
+            }
+            x86.k[7] = 0x5555_5555_5555_5555;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xC2, 0xED, 0x57, 0x83, 0x4D, 0x7F],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..64u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 8),
+                    if lane & 1 == 0 {
+                        0x8040_2010_0804_0201u64.rotate_right(u32::from(lane & 63)) & 0xFF
+                    } else {
+                        0xA5
+                    }
+                );
+            }
+            assert_eq!(&x86.xmm[17][8..], &[0; 8]);
+        }
+
+        // E4NF performs the complete full-vector access even when k1 is zero.
+        let sentinel = [0x4242_4242_4242_4242; 16];
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3C0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[31] = sentinel;
+            x86.k[1] = 0;
+        }
+        let fault = execute_lifted_x86(
+            &[0x62, 0x62, 0x8D, 0xC1, 0x83, 0x78, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[31], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn executes_evex_scatter_vsib_masks_signed_indices_and_partial_faults() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.write_vreg(rax, 0x100);
+        let indices = [0i32, 2, -1, 4];
+        let values = [0x1111_1111u32, 0x2222_2222, 0x3333_3333, 0x4444_4444];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..4u8 {
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[2],
+                    lane,
+                    32,
+                    indices[usize::from(lane)] as u32 as u64,
+                );
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[1],
+                    lane,
+                    32,
+                    u64::from(values[usize::from(lane)]),
+                );
+            }
+            x86.k[1] = 0b1111;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF2, 0x7D, 0x09, 0xA0, 0x0C, 0x90],
+            &mut ctx,
+            &mut memory,
+        );
+        for lane in 0..4usize {
+            let address = (0x100i64 + i64::from(indices[lane]) * 4) as u64;
+            let mut actual = [0u8; 4];
+            memory.read(address, &mut actual).unwrap();
+            assert_eq!(u32::from_le_bytes(actual), values[lane]);
+        }
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[1], 0);
+            for lane in 0..4u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 32),
+                    u64::from(values[usize::from(lane)])
+                );
+            }
+        }
+
+        // Inactive lanes suppress invalid addresses completely.
+        ctx.write_vreg(rax, 0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[1] = 0;
+        }
+        let suppressed = execute_lifted_x86(
+            &[0x62, 0xF2, 0x7D, 0x09, 0xA0, 0x0C, 0x90],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[1], 0);
+        }
+
+        // Completed stores clear their mask bits. A faulting lane retains its
+        // bit and stops later lanes, while earlier memory writes remain visible.
+        ctx.write_vreg(rax, 0x1FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 32, 0);
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 1, 32, 1);
+            SmirInterpreter::set_lane(&mut x86.xmm[1], 0, 32, 0xAABB_CCDD);
+            SmirInterpreter::set_lane(&mut x86.xmm[1], 1, 32, 0xEEFF_0011);
+            x86.k[1] = 0b11;
+        }
+        let fault = execute_lifted_x86(
+            &[0x62, 0xF2, 0x7D, 0x09, 0xA0, 0x0C, 0x90],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        let mut stored = [0u8; 4];
+        memory.read(0x1FC, &mut stored).unwrap();
+        assert_eq!(u32::from_le_bytes(stored), 0xAABB_CCDD);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[1], 0b10);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn executes_evex_vector_align_wrap_masks_aliases_broadcast_and_e4nf_faults() {
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..4u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[2], lane, 32, 10 + u64::from(lane));
+                SmirInterpreter::set_lane(&mut x86.xmm[3], lane, 32, u64::from(lane));
+            }
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0x6D, 0x08, 0x03, 0xCB, 5],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for (lane, expected) in [1u64, 2, 3, 10].into_iter().enumerate() {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane as u8, 32),
+                    expected
+                );
+            }
+            assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+        }
+
+        // Source 3 may alias the destination; all extracts precede masked writes.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..4u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[1], lane, 32, 20 + u64::from(lane));
+                SmirInterpreter::set_lane(&mut x86.xmm[2], lane, 32, 30 + u64::from(lane));
+            }
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0x6D, 0x08, 0x03, 0xC9, 3],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                (0..4u8)
+                    .map(|lane| SmirInterpreter::get_lane(&x86.xmm[1], lane, 32))
+                    .collect::<Vec<_>>(),
+                [23, 30, 31, 32]
+            );
+        }
+
+        // Scalar memory broadcast and compressed disp8 with byte-mask merge.
+        memory.write(508, &99u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::R13)), 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = [0xA5A5_A5A5_A5A5_A5A5; 16];
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[18], lane, 32, 100 + u64::from(lane));
+            }
+            x86.k[7] = 0x5555;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xC3, 0x6D, 0x57, 0x03, 0x4D, 0x7F, 15],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 32),
+                    if lane & 1 == 0 {
+                        if lane == 0 {
+                            99
+                        } else {
+                            100 + u64::from(lane - 1)
+                        }
+                    } else {
+                        0xA5A5_A5A5
+                    }
+                );
+            }
+        }
+
+        // E4NF full-vector memory access is not suppressed by an empty mask.
+        let sentinel = [0x4242_4242_4242_4242; 16];
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::R13)), 0x3C0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.k[7] = 0;
+        }
+        let fault = execute_lifted_x86(
+            &[0x62, 0xC3, 0x6D, 0x47, 0x03, 0x4D, 0x01, 31],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn executes_evex_integer_test_masks_all_elements_polarities_masks_and_faults() {
+        let cases = [
+            (&[0x62, 0xF2, 0x65, 0x08, 0x26, 0xD4][..], 8u32, false),
+            (&[0x62, 0xF2, 0xE5, 0x08, 0x26, 0xD4][..], 16, false),
+            (&[0x62, 0xF2, 0x65, 0x08, 0x27, 0xD4][..], 32, false),
+            (&[0x62, 0xF2, 0xE5, 0x08, 0x27, 0xD4][..], 64, false),
+            (&[0x62, 0xF2, 0x66, 0x08, 0x26, 0xD4][..], 8, true),
+            (&[0x62, 0xF2, 0xE6, 0x08, 0x26, 0xD4][..], 16, true),
+            (&[0x62, 0xF2, 0x66, 0x08, 0x27, 0xD4][..], 32, true),
+            (&[0x62, 0xF2, 0xE6, 0x08, 0x27, 0xD4][..], 64, true),
+        ];
+        let mut memory = FlatMemory::new(0x400);
+        for (bytes, bits, inverted) in cases {
+            let lanes = 128 / bits;
+            let mut ctx = SmirContext::new_x86_64();
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                for lane in 0..lanes as u8 {
+                    let (a, b) = match lane % 3 {
+                        0 => (u64::MAX, u64::MAX),
+                        1 => (0, u64::MAX),
+                        _ => (u64::MAX, 0),
+                    };
+                    SmirInterpreter::set_lane(&mut x86.xmm[3], lane, bits, a);
+                    SmirInterpreter::set_lane(&mut x86.xmm[4], lane, bits, b);
+                }
+                x86.k[2] = u64::MAX;
+            }
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            let valid = (1u64 << lanes) - 1;
+            let nonzero =
+                (0..lanes).fold(0u64, |mask, lane| mask | u64::from(lane % 3 == 0) << lane);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.k[2], if inverted { valid ^ nonzero } else { nonzero });
+            }
+        }
+
+        // Destination writemask is zeroing and may alias the destination K reg.
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[3] = [u64::MAX; 16];
+            x86.xmm[4] = [u64::MAX; 16];
+            x86.k[2] = 0x5;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x65, 0x0A, 0x27, 0xD4], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[2], 0x5);
+        }
+
+        // Type E4 suppresses a broadcast memory fault when every lane is
+        // inactive, but an active lane faults before the K destination write.
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[2] = 0;
+            x86.k[4] = 0xA5;
+        }
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x52, 0x27, 0x20], &mut ctx, &mut memory);
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[4], 0);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[2] = 1;
+            x86.k[4] = 0xA5;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x52, 0x27, 0x20], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[4], 0xA5);
+        }
+    }
+
+    #[test]
+    fn executes_evex_pair_intersect_duplicates_pairing_and_e4nf_faults() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        let flags_before = 0xCD7;
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for (lane, value) in [1u32, 2, 2, 5].into_iter().enumerate() {
+                SmirInterpreter::set_lane(&mut x86.xmm[3], lane as u8, 32, u64::from(value));
+            }
+            for (lane, value) in [3u32, 2, 4, 1].into_iter().enumerate() {
+                SmirInterpreter::set_lane(&mut x86.xmm[4], lane as u8, 32, u64::from(value));
+            }
+            x86.k[2] = u64::MAX;
+            x86.k[3] = u64::MAX;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x67, 0x08, 0x68, 0xD4], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[2], 0b0111);
+            assert_eq!(x86.k[3], 0b1010);
+        }
+
+        // E4NF broadcast source faults before either architectural K write.
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[6] = 0xA5;
+            x86.k[7] = 0x5A;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x77, 0x50, 0x68, 0x30], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!((x86.k[6], x86.k[7]), (0xA5, 0x5A));
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn executes_packed_variable_shifts_boundaries_signedness_masks_and_aliases() {
+        let cases = [
+            (
+                &[0x62, 0xF2, 0xED, 0x08, 0x10, 0xCB][..],
+                16u32,
+                ShiftOp::Lsr,
+            ),
+            (&[0x62, 0xF2, 0x6D, 0x08, 0x46, 0xCB][..], 32, ShiftOp::Asr),
+            (&[0x62, 0xF2, 0xED, 0x08, 0x47, 0xCB][..], 64, ShiftOp::Lsl),
+        ];
+        let mut memory = FlatMemory::new(0x100);
+        for (bytes, bits, shift) in cases {
+            let mut ctx = SmirContext::new_x86_64();
+            let lanes = 128 / bits;
+            let counts = [
+                0u64,
+                u64::from(bits - 1),
+                u64::from(bits),
+                u64::from(bits + 1),
+            ];
+            let mask = if bits == 64 {
+                u64::MAX
+            } else {
+                (1u64 << bits) - 1
+            };
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                for lane in 0..lanes as u8 {
+                    SmirInterpreter::set_lane(&mut x86.xmm[2], lane, bits, mask ^ u64::from(lane));
+                    SmirInterpreter::set_lane(
+                        &mut x86.xmm[3],
+                        lane,
+                        bits,
+                        counts[usize::from(lane) & 3],
+                    );
+                }
+            }
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                for lane in 0..lanes as u8 {
+                    let value = mask ^ u64::from(lane);
+                    let amount = counts[usize::from(lane) & 3];
+                    let expected = if amount >= u64::from(bits) {
+                        if shift == ShiftOp::Asr && value & (1u64 << (bits - 1)) != 0 {
+                            mask
+                        } else {
+                            0
+                        }
+                    } else {
+                        match shift {
+                            ShiftOp::Lsr => value >> amount,
+                            ShiftOp::Lsl => (value << amount) & mask,
+                            ShiftOp::Asr => {
+                                let signed = if bits == 64 {
+                                    value as i64
+                                } else {
+                                    ((value << (64 - bits)) as i64) >> (64 - bits)
+                                };
+                                ((signed >> amount) as u64) & mask
+                            }
+                            _ => unreachable!(),
+                        }
+                    };
+                    assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], lane, bits), expected);
+                }
+                assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+            }
+        }
+    }
+
+    #[test]
+    fn executes_load_broadcasts_tuple_order_masks_gpr_aliases_and_e6_fault_suppression() {
+        let mut memory = FlatMemory::new(0x400);
+        let flags_before = 0xCD7;
+
+        // Register tuple broadcast repeats lanes 0,1 and preserves inactive
+        // destination lanes under merging masking.
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        let control = 0xA55Au64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 32, 0x1122_3344);
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 1, 32, 0xAABB_CCDD);
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[1], lane, 32, 0xDEAD_0000 + u64::from(lane));
+            }
+            x86.k[1] = control;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x49, 0x19, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                let expected = if control & (1u64 << lane) != 0 {
+                    if lane & 1 == 0 {
+                        0x1122_3344
+                    } else {
+                        0xAABB_CCDD
+                    }
+                } else {
+                    0xDEAD_0000 + u64::from(lane)
+                };
+                assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], lane, 32), expected);
+            }
+        }
+
+        // The GPR source may alias an extended destination encoding; zeroing
+        // masking applies at qword granularity.
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::R9)), 0x0123_4567_89AB_CDEF);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = [u64::MAX; 16];
+            x86.k[3] = 0b0101_1010;
+        }
+        execute_lifted_x86(&[0x62, 0xC2, 0xFD, 0xCB, 0x7C, 0xC9], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 64),
+                    if 0b0101_1010 & (1u64 << lane) != 0 {
+                        0x0123_4567_89AB_CDEF
+                    } else {
+                        0
+                    }
+                );
+            }
+        }
+
+        // Mask-to-vector broadcasts zero-extend only the low byte/word of the
+        // K source before repeating it at qword/dword granularity.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[7] = 0x1234;
+            x86.k[3] = 0x12_3456;
+        }
+        execute_lifted_x86(&[0x62, 0xE2, 0xFE, 0x48, 0x2A, 0xCF], &mut ctx, &mut memory);
+        execute_lifted_x86(&[0x62, 0xF2, 0x7E, 0x28, 0x3A, 0xD3], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8u8 {
+                assert_eq!(SmirInterpreter::get_lane(&x86.xmm[17], lane, 64), 0x34);
+            }
+            for lane in 0..8u8 {
+                assert_eq!(SmirInterpreter::get_lane(&x86.xmm[2], lane, 32), 0x3456);
+            }
+        }
+
+        // Compressed displacement is scaled by the complete 16-byte tuple.
+        let tuple = [0x1111_1111u32, 0x2222_2222, 0x3333_3333, 0x4444_4444];
+        for (lane, value) in tuple.into_iter().enumerate() {
+            memory
+                .write(0x100 + lane as u64 * 4, &value.to_le_bytes())
+                .unwrap();
+        }
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x80);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[1] = u64::MAX;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF2, 0x7D, 0xC9, 0x1A, 0x48, 0x08],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 32),
+                    u64::from(tuple[usize::from(lane % 4)])
+                );
+            }
+        }
+
+        // Type E6 suppresses the complete tuple read for an all-zero effective
+        // mask. Any active destination lane requires the complete tuple and
+        // faults before the architectural destination changes.
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3F8);
+        let sentinel = [0xA5A5_A5A5_A5A5_A5A5; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[1] = 0;
+        }
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0xC9, 0x1A, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], [0; 16]);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[1] = 1;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0xC9, 0x1A, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn executes_evex_packed_fp_arithmetic_masks_broadcasts_aliases_and_e4_faults() {
+        let mut memory = FlatMemory::new(0x400);
+        let mut ctx = SmirContext::new_x86_64();
+        let flags_before = 0xCD7;
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        let control = 0xA55Au64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[16],
+                    lane,
+                    32,
+                    (f32::from(lane) + 1.0).to_bits().into(),
+                );
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[18],
+                    lane,
+                    32,
+                    (f32::from(lane) + 2.0).to_bits().into(),
+                );
+                SmirInterpreter::set_lane(&mut x86.xmm[17], lane, 32, 0x7FC0_0000);
+            }
+            x86.k[3] = control;
+        }
+        execute_lifted_x86(&[0x62, 0xA1, 0x7C, 0xC3, 0x58, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                let expected = if control & (1u64 << lane) != 0 {
+                    (f32::from(lane) * 2.0 + 3.0).to_bits()
+                } else {
+                    0
+                };
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 32),
+                    u64::from(expected)
+                );
+            }
+        }
+
+        // A broadcast memory source is read under each destination mask bit;
+        // simple exact operands make division results reproducible.
+        memory
+            .write(0x100, &2.0f64.to_bits().to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0xC0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..8u8 {
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[2],
+                    lane,
+                    64,
+                    (f64::from(lane) * 2.0 + 4.0).to_bits(),
+                );
+            }
+            x86.k[1] = u64::MAX;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF1, 0xED, 0x59, 0x5E, 0x48, 0x08],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 64),
+                    (f64::from(lane) + 2.0).to_bits()
+                );
+            }
+        }
+
+        // Type E4 suppresses every masked-off full-vector load and commits no
+        // destination state when an active lane faults.
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x400);
+        let mut sentinel = [0u64; 16];
+        sentinel[..8].fill(0xA5A5_A5A5_A5A5_A5A5);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[1] = 0;
+        }
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF1, 0x6C, 0x49, 0x5C, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[1] = 1;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF1, 0x6C, 0x49, 0x5C, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn executes_evex_mask_blends_select_sources_zero_and_suppress_e4_faults() {
+        let mut memory = FlatMemory::new(0x200);
+        let mut ctx = SmirContext::new_x86_64();
+        let control = 0xA55Au64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[16], lane, 32, 0x1000 + u64::from(lane));
+                SmirInterpreter::set_lane(&mut x86.xmm[18], lane, 32, 0x2000 + u64::from(lane));
+                SmirInterpreter::set_lane(&mut x86.xmm[17], lane, 32, 0xDEAD_BEEF);
+            }
+            x86.k[3] = control;
+        }
+        execute_lifted_x86(&[0x62, 0xA2, 0x7D, 0xC3, 0x65, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 32),
+                    if control & (1u64 << lane) != 0 {
+                        0x2000 + u64::from(lane)
+                    } else {
+                        0
+                    }
+                );
+            }
+        }
+
+        let byte_control = 0xA55A_F00F_9669_3CC3u64;
+        let (byte_src1, byte_src2) = match &mut ctx.arch_regs {
+            ArchRegState::X86_64(x86) => {
+                x86.k[3] = byte_control;
+                (x86.xmm[16], x86.xmm[18])
+            }
+            _ => unreachable!(),
+        };
+        execute_lifted_x86(&[0x62, 0xA2, 0x7D, 0xC3, 0x66, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..64u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 8),
+                    if byte_control & (1u64 << lane) != 0 {
+                        SmirInterpreter::get_lane(&byte_src2, lane, 8)
+                    } else {
+                        0
+                    },
+                    "byte lane {lane}; inactive source would be {}",
+                    SmirInterpreter::get_lane(&byte_src1, lane, 8)
+                );
+            }
+        }
+
+        // Merging mask selects SRC1, not the previous destination value.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..4u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[2], lane, 64, 0x3000 + u64::from(lane));
+                SmirInterpreter::set_lane(&mut x86.xmm[3], lane, 64, 0x4000 + u64::from(lane));
+                SmirInterpreter::set_lane(&mut x86.xmm[1], lane, 64, u64::MAX);
+            }
+            x86.k[2] = 0b0101;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0xED, 0x2A, 0x64, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..4u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 64),
+                    if 0b0101 & (1u64 << lane) != 0 {
+                        0x4000 + u64::from(lane)
+                    } else {
+                        0x3000 + u64::from(lane)
+                    }
+                );
+            }
+        }
+
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x200);
+        let mut sentinel = [0u64; 16];
+        sentinel[..8].fill(0xA5A5_A5A5_A5A5_A5A5);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[1] = 0;
+        }
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0xC9, 0x64, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], [0; 16]);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[1] = 1;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0xC9, 0x64, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+    }
+
+    #[test]
+    fn executes_evex_integer_narrow_all_modes_ratios_masks_aliases_memory_and_faults() {
+        let mut memory = FlatMemory::new(0x400);
+        for high in [0x10u8, 0x20, 0x30] {
+            for (low, src_bits, dst_bits, lanes) in [
+                (0u8, 16u32, 8u32, 8u8),
+                (1, 32, 8, 4),
+                (2, 64, 8, 2),
+                (3, 32, 16, 4),
+                (4, 64, 16, 2),
+                (5, 64, 32, 2),
+            ] {
+                let opcode = high | low;
+                let bytes = [0x62, 0xF2, 0x7E, 0x09, opcode, 0xD1];
+                let src_mask = if src_bits == 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << src_bits) - 1
+                };
+                let dst_mask = (1u64 << dst_bits) - 1;
+                let values = [
+                    1u64 << (src_bits - 1),
+                    src_mask,
+                    0,
+                    (1u64 << (src_bits - 1)) - 1,
+                    1u64 << dst_bits,
+                    src_mask - 7,
+                    (1u64 << (dst_bits - 1)) - 1,
+                    1u64 << (dst_bits - 1),
+                ];
+                let control = 0b1010_0101u64 & ((1u64 << lanes) - 1);
+                let mut source = [0u64; 16];
+                let mut old = [0xA5A5_A5A5_A5A5_A5A5; 16];
+                let mut expected = [0u64; 16];
+                for lane in 0..lanes {
+                    let raw = values[lane as usize];
+                    SmirInterpreter::set_lane(&mut source, lane, src_bits, raw);
+                    SmirInterpreter::set_lane(&mut old, lane, dst_bits, 0x5A & dst_mask);
+                    if control & (1u64 << lane) != 0 {
+                        let shift = 128 - src_bits;
+                        let signed = (i128::from(raw) << shift) >> shift;
+                        let narrowed = match high {
+                            0x10 => signed.clamp(0, i128::from(dst_mask)) as u64,
+                            0x20 => {
+                                let low = -(1i128 << (dst_bits - 1));
+                                let high = (1i128 << (dst_bits - 1)) - 1;
+                                signed.clamp(low, high) as u64 & dst_mask
+                            }
+                            0x30 => raw & dst_mask,
+                            _ => unreachable!(),
+                        };
+                        SmirInterpreter::set_lane(&mut expected, lane, dst_bits, narrowed);
+                    } else {
+                        SmirInterpreter::set_lane(&mut expected, lane, dst_bits, 0x5A & dst_mask);
+                    }
+                }
+                let mut ctx = SmirContext::new_x86_64();
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.xmm[1] = old;
+                    x86.xmm[2] = source;
+                    x86.k[1] = control;
+                }
+                execute_lifted_x86(&bytes, &mut ctx, &mut memory);
+                if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                    assert_eq!(x86.xmm[1], expected, "opcode {opcode:02X}");
+                }
+            }
+        }
+
+        // The source and narrowed destination may alias the shared ZMM state.
+        let mut ctx = SmirContext::new_x86_64();
+        let mut alias = [0u64; 16];
+        for lane in 0..32u8 {
+            SmirInterpreter::set_lane(&mut alias, lane, 16, u64::from(lane) + 0x100);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = alias;
+            x86.k[1] = u32::MAX as u64;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x7E, 0x49, 0x30, 0xC9], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..32u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 8),
+                    u64::from(lane)
+                );
+            }
+            assert_eq!(&x86.xmm[1][4..], &[0; 12]);
+        }
+
+        // Memory destinations retain inactive bytes and suppress their faults.
+        memory.write(0x100, &[0xCC; 16]).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            let mut source = [0u64; 16];
+            for (lane, value) in [i32::MIN, -1, 0, 300].into_iter().enumerate() {
+                SmirInterpreter::set_lane(&mut source, lane as u8, 32, value as u32 as u64);
+            }
+            x86.xmm[2] = source;
+            x86.k[1] = 0b1011;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x7E, 0x09, 0x21, 0x10], &mut ctx, &mut memory);
+        let mut narrowed = [0u8; 4];
+        memory.read(0x100, &mut narrowed).unwrap();
+        assert_eq!(narrowed, [0x80, 0xFF, 0xCC, 0x7F]);
+
+        memory.write(0x3FF, &[0xCC]).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x3FF);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[1] = 0;
+        }
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7E, 0x09, 0x31, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[1] = 0b11;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7E, 0x09, 0x31, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        let mut first = [0u8; 1];
+        memory.read(0x3FF, &mut first).unwrap();
+        assert_eq!(first[0], 0);
+    }
+
+    #[test]
+    fn executes_evex_mask_vector_conversions_all_elements_widths_and_high_registers() {
+        let cases = [
+            (
+                &[0x62, 0xF2, 0x7E, 0x08, 0x28, 0xD1][..],
+                true,
+                8u32,
+                16u8,
+                2usize,
+                1usize,
+            ),
+            (
+                &[0x62, 0xF2, 0xFE, 0x28, 0x28, 0xE3][..],
+                true,
+                16,
+                16,
+                4,
+                3,
+            ),
+            (
+                &[0x62, 0xE2, 0x7E, 0x48, 0x38, 0xD2][..],
+                true,
+                32,
+                16,
+                18,
+                2,
+            ),
+            (&[0x62, 0xF2, 0xFE, 0x08, 0x38, 0xD9][..], true, 64, 2, 3, 1),
+            (
+                &[0x62, 0xF2, 0x7E, 0x08, 0x29, 0xCA][..],
+                false,
+                8,
+                16,
+                2,
+                1,
+            ),
+            (
+                &[0x62, 0xF2, 0xFE, 0x28, 0x29, 0xDC][..],
+                false,
+                16,
+                16,
+                4,
+                3,
+            ),
+            (
+                &[0x62, 0xB2, 0x7E, 0x48, 0x39, 0xD2][..],
+                false,
+                32,
+                16,
+                18,
+                2,
+            ),
+            (
+                &[0x62, 0xF2, 0xFE, 0x08, 0x39, 0xCB][..],
+                false,
+                64,
+                2,
+                3,
+                1,
+            ),
+        ];
+        for (bytes, mask_to_vector, bits, lanes, vector_reg, mask_reg) in cases {
+            let pattern = 0xA5A5_5AA5_F00F_9669u64;
+            let mut ctx = SmirContext::new_x86_64();
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                if mask_to_vector {
+                    x86.k[mask_reg] = pattern;
+                    x86.xmm[vector_reg] = [u64::MAX; 16];
+                } else {
+                    let mut source = [0u64; 16];
+                    for lane in 0..lanes {
+                        let value = if pattern & (1u64 << lane) != 0 {
+                            1u64 << (bits - 1)
+                        } else {
+                            (1u64 << (bits - 1)) - 1
+                        };
+                        SmirInterpreter::set_lane(&mut source, lane, bits, value);
+                    }
+                    x86.xmm[vector_reg] = source;
+                    x86.k[mask_reg] = u64::MAX;
+                }
+            }
+            let mut memory = FlatMemory::new(0x100);
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                let lane_mask = if lanes == 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << lanes) - 1
+                };
+                if mask_to_vector {
+                    let elem_mask = if bits == 64 {
+                        u64::MAX
+                    } else {
+                        (1u64 << bits) - 1
+                    };
+                    let mut expected = [0u64; 16];
+                    for lane in 0..lanes {
+                        SmirInterpreter::set_lane(
+                            &mut expected,
+                            lane,
+                            bits,
+                            if pattern & (1u64 << lane) != 0 {
+                                elem_mask
+                            } else {
+                                0
+                            },
+                        );
+                    }
+                    assert_eq!(x86.xmm[vector_reg], expected);
+                } else {
+                    assert_eq!(x86.k[mask_reg], pattern & lane_mask);
+                }
+            }
+        }
+    }
+
+    #[test]
     fn atomic_cmpxadd_updates_memory_dst_and_flags() {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
@@ -26032,6 +31666,126 @@ mod tests {
     }
 
     #[test]
+    fn vcmp_executes_all_integer_conditions_and_ieee_float_lane_masks() {
+        let mkv = |n| VReg::Arch(ArchReg::Hexagon(HexagonReg::V(n)));
+        for (cond, expected) in [
+            (VecCmpCond::Eq, false),
+            (VecCmpCond::Ne, true),
+            (VecCmpCond::Lt, true),
+            (VecCmpCond::Le, true),
+            (VecCmpCond::Gt, false),
+            (VecCmpCond::Ge, false),
+            (VecCmpCond::Ltu, false),
+            (VecCmpCond::Leu, false),
+            (VecCmpCond::Gtu, true),
+            (VecCmpCond::Geu, true),
+        ] {
+            let out = run_vec2(
+                [0xFF; 16],
+                [1; 16],
+                OpKind::VCmp {
+                    dst: mkv(2),
+                    src1: mkv(0),
+                    src2: mkv(1),
+                    cond,
+                    elem: VecElementType::I8,
+                    lanes: 1,
+                },
+            );
+            assert_eq!(out[0] & 0xFF, if expected { 0xFF } else { 0 }, "{cond:?}");
+            assert!(out[1..].iter().all(|word| *word == 0));
+        }
+
+        for (elem, lhs, rhs, cond, expected) in [
+            (VecElementType::F16, 0x8000, 0, VecCmpCond::Eq, true),
+            (VecElementType::F16, 0xC000, 0x3C00, VecCmpCond::Lt, true),
+            (VecElementType::F16, 0x7E00, 0x3C00, VecCmpCond::Ne, true),
+            (
+                VecElementType::F32,
+                u64::from((-2.0f32).to_bits()),
+                u64::from(1.0f32.to_bits()),
+                VecCmpCond::Gt,
+                false,
+            ),
+            (
+                VecElementType::F64,
+                3.0f64.to_bits(),
+                2.0f64.to_bits(),
+                VecCmpCond::Ge,
+                true,
+            ),
+        ] {
+            let mut a = [0u64; 16];
+            let mut b = [0u64; 16];
+            a[0] = lhs;
+            b[0] = rhs;
+            let out = run_vec2(
+                a,
+                b,
+                OpKind::VCmp {
+                    dst: mkv(2),
+                    src1: mkv(0),
+                    src2: mkv(1),
+                    cond,
+                    elem,
+                    lanes: 1,
+                },
+            );
+            let mask = if elem.bytes() == 8 {
+                u64::MAX
+            } else {
+                (1u64 << (elem.bytes() * 8)) - 1
+            };
+            assert_eq!(out[0] & mask, if expected { mask } else { 0 });
+        }
+    }
+
+    #[test]
+    fn vshuffle_uses_explicit_lanes_two_source_indices_and_zeroes_inactive_state() {
+        let mkv = |n| VReg::Arch(ArchReg::Hexagon(HexagonReg::V(n)));
+        let mut ctx = SmirContext::new_hexagon();
+        let mut memory = FlatMemory::new(0x1000);
+        if let ArchRegState::Hexagon(hex) = &mut ctx.arch_regs {
+            let mut first = [u64::MAX; 16];
+            first[0] = 0x0013_0012_0011_0010;
+            let mut second = [u64::MAX; 16];
+            second[0] = 0x0023_0022_0021_0020;
+            let mut indices = [0u64; 16];
+            indices[0] = 0x0007_0003_0004_0000;
+            hex.set_v(0, first);
+            hex.set_v(1, second);
+            hex.set_v(3, indices);
+            hex.set_v(2, [0xA5A5_A5A5_A5A5_A5A5; 16]);
+        }
+        let block = SmirBlock {
+            id: BlockId(0),
+            guest_pc: 0x1000,
+            phis: vec![],
+            ops: vec![SmirOp::new(
+                OpId(0),
+                0x1000,
+                OpKind::VShuffle {
+                    dst: mkv(2),
+                    src1: mkv(0),
+                    src2: Some(mkv(1)),
+                    indices: mkv(3),
+                    elem: VecElementType::I16,
+                    lanes: 4,
+                },
+            )],
+            terminator: Terminator::Trap {
+                kind: TrapKind::Halt,
+            },
+            exec_count: 0,
+        };
+        SmirInterpreter::new().execute_block(&mut ctx, &mut memory, &block);
+        if let ArchRegState::Hexagon(hex) = &ctx.arch_regs {
+            assert_eq!(hex.get_v(2)[0], 0x0023_0013_0020_0010);
+            assert!(hex.get_v(2)[1..].iter().all(|word| *word == 0));
+        }
+    }
+
+    #[test]
     fn test_vpack_even_byte() {
         // vpackeb: out.b[i] = V1(=Vv).b[2i] (low half), out.b[i+64] = V0(=Vu).b[2i] (high half).
         // V0 halfwords = 0xAA11 (byte0=0x11), V1 halfwords = 0xBB22 (byte0=0x22).
@@ -26073,6 +31827,8 @@ mod tests {
                 src2: mkv(1),
                 src_elem: VecElementType::I16,
                 to_unsigned: true,
+                src_lanes: 64,
+                block_lanes: 64,
             },
         );
         // low half = sat(V1 halfwords) = 0xFF; high half = sat(V0 halfwords) = 0x00.
@@ -26298,6 +32054,7 @@ mod tests {
             src1: s1,
             src2: s2,
             src_elem: VecElementType::I16,
+            lanes: 64,
             signed1: true,
             signed2: true,
             shift_left: 1,
@@ -26333,6 +32090,7 @@ mod tests {
                 src1: mkv(0),
                 src2: mkv(1),
                 src_elem: VecElementType::I16,
+                lanes: 64,
                 signed1: false,
                 signed2: false,
                 shift_left: 0,
@@ -27449,6 +33207,126 @@ mod tests {
         )
     }
 
+    fn run_clmul64(a: u64, b: u64, acc: bool, init: (u64, u64)) -> (u64, u64) {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x1000);
+        let interp = SmirInterpreter::new();
+        let lo = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let hi = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let lhs = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let rhs = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        ctx.write_vreg(lhs, a);
+        ctx.write_vreg(rhs, b);
+        ctx.write_vreg(lo, init.0);
+        ctx.write_vreg(hi, init.1);
+        let block = SmirBlock {
+            id: BlockId(0),
+            guest_pc: 0x1000,
+            phis: vec![],
+            ops: vec![SmirOp {
+                id: OpId(0),
+                guest_pc: 0x1000,
+                kind: OpKind::ClMul {
+                    dst: lo,
+                    dst_hi: Some(hi),
+                    src1: SrcOperand::Reg(lhs),
+                    src2: SrcOperand::Reg(rhs),
+                    elem_bits: 64,
+                    lanes: 1,
+                    acc,
+                },
+                x86_hint: None,
+            }],
+            terminator: Terminator::Trap {
+                kind: TrapKind::Halt,
+            },
+            exec_count: 0,
+        };
+        interp.execute_block(&mut ctx, &mut memory, &block);
+        (ctx.read_vreg(lo), ctx.read_vreg(hi))
+    }
+
+    #[test]
+    fn clmul_64x64_produces_exact_128_bit_polynomial_product() {
+        assert_eq!(run_clmul64(1, u64::MAX, false, (0, 0)), (u64::MAX, 0));
+        assert_eq!(
+            run_clmul64(0xFEDC_BA98_7654_3210, 0x0123_4567_89AB_CDEF, false, (0, 0),),
+            (0x40A0_7898_28C8_10F0, 0x00E0_38D8_6888_50B0)
+        );
+        assert_eq!(
+            run_clmul64(u64::MAX, u64::MAX, false, (0, 0)),
+            (0x5555_5555_5555_5555, 0x5555_5555_5555_5555)
+        );
+        assert_eq!(
+            run_clmul64(
+                0xFEDC_BA98_7654_3210,
+                0x0123_4567_89AB_CDEF,
+                true,
+                (u64::MAX, 0xA5A5_A5A5_A5A5_A5A5),
+            ),
+            (0xBF5F_8767_D737_EF0F, 0xA545_9D7D_CD2D_F515)
+        );
+    }
+
+    fn run_crc32c(crc: u64, data: u64, data_width: OpWidth) -> u64 {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x1000);
+        let interp = SmirInterpreter::new();
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let crc_reg = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let data_reg = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        ctx.write_vreg(crc_reg, crc);
+        ctx.write_vreg(data_reg, data);
+        let block = SmirBlock {
+            id: BlockId(0),
+            guest_pc: 0x1000,
+            phis: vec![],
+            ops: vec![SmirOp {
+                id: OpId(0),
+                guest_pc: 0x1000,
+                kind: OpKind::Crc32C {
+                    dst,
+                    crc: crc_reg,
+                    data: data_reg,
+                    data_width,
+                },
+                x86_hint: None,
+            }],
+            terminator: Terminator::Trap {
+                kind: TrapKind::Halt,
+            },
+            exec_count: 0,
+        };
+        interp.execute_block(&mut ctx, &mut memory, &block);
+        ctx.read_vreg(dst)
+    }
+
+    #[test]
+    fn crc32c_primitive_matches_castagnoli_known_answers_and_widths() {
+        assert_eq!(run_crc32c(0, 0, OpWidth::W8), 0);
+        assert_eq!(run_crc32c(u64::MAX, 0x31, OpWidth::W8), 0x6F0A_661C);
+        assert_eq!(
+            run_crc32c(u64::MAX, 0x3837_3635_3433_3231, OpWidth::W64),
+            0x9F78_7F65
+        );
+        assert_eq!(run_crc32c(0x9F78_7F65, 0x39, OpWidth::W8), 0x1CF9_6D7C);
+        // Complementing the raw state yields the standard CRC-32C check value
+        // E3069283 for ASCII "123456789".
+        assert_eq!(
+            !run_crc32c(0x9F78_7F65, 0x39, OpWidth::W8) as u32,
+            0xE306_9283
+        );
+        assert_eq!(run_crc32c(0x1234_5678, 0xABCD, OpWidth::W16), 0xAAE3_2043);
+        assert_eq!(
+            run_crc32c(0x89AB_CDEF, 0x0123_4567, OpWidth::W32),
+            0x796A_B9A9
+        );
+        assert_eq!(
+            run_crc32c(0xFFFF_FFFF_DEAD_BEEF, 0x0123_4567_89AB_CDEF, OpWidth::W64),
+            0x3AB0_1437
+        );
+    }
+
     #[test]
     fn test_clmul_pmpyw_and_vpmpyh() {
         // pmpyw: carry-less 32x32 -> 64; 1 * x = x (identity), no high bits.
@@ -28183,6 +34061,10275 @@ mod tests {
             exit,
             ctx.flags.materialized.to_rflags(),
         )
+    }
+
+    #[test]
+    fn lifted_legacy_vex_evex_movd_movq_execute_zeroing_widths_and_faults_exactly() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let flags_before = 0xCD7;
+        let legacy_old = [0xA5A5_A5A5_A5A5_A5A5u64; 16];
+        let mut memory = FlatMemory::new(0x400);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Legacy MOVD clears bits 127:32 but preserves the shared backing state
+        // above bit 127.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = legacy_old;
+        }
+        ctx.write_vreg(rcx, 0x1122_3344_5566_7788);
+        execute_lifted_x86(&[0x66, 0x0F, 0x6E, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 0x0000_0000_5566_7788);
+            assert_eq!(x86.xmm[0][1], 0);
+            assert_eq!(&x86.xmm[0][2..], &legacy_old[2..]);
+        }
+
+        // Legacy MOVQ has the same upper-state rule and reads exactly 8 bytes.
+        memory
+            .write(0x80, &0x0123_4567_89AB_CDEFu64.to_le_bytes())
+            .unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = legacy_old;
+        }
+        ctx.write_vreg(rax, 0x80);
+        execute_lifted_x86(&[0x66, 0x48, 0x0F, 0x6E, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 0x0123_4567_89AB_CDEF);
+            assert_eq!(x86.xmm[0][1], 0);
+            assert_eq!(&x86.xmm[0][2..], &legacy_old[2..]);
+        }
+
+        // VEX MOVD and EVEX MOVQ zero all state above the scalar result.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [u64::MAX; 16];
+        }
+        ctx.write_vreg(rcx, 0xFFFF_FFFF_CAFE_BABE);
+        execute_lifted_x86(&[0xC5, 0xF9, 0x6E, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 0xCAFE_BABE);
+            assert!(x86.xmm[0][1..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = [u64::MAX; 16];
+        }
+        ctx.write_vreg(r8, 0xDEAD_BEEF_0123_4567);
+        execute_lifted_x86(&[0x62, 0xC1, 0xFD, 0x08, 0x6E, 0xC8], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17][0], 0xDEAD_BEEF_0123_4567);
+            assert!(x86.xmm[17][1..].iter().all(|word| *word == 0));
+        }
+
+        // MOVD to a GPR is a 32-bit write and therefore zero-extends RCX.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0][0] = 0x1122_3344_89AB_CDEF;
+        }
+        ctx.write_vreg(rcx, u64::MAX);
+        execute_lifted_x86(&[0x66, 0x0F, 0x7E, 0xC1], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rcx), 0x89AB_CDEF);
+
+        // MOVQ to memory writes exactly the low qword.
+        ctx.write_vreg(rax, 0x100);
+        execute_lifted_x86(&[0x66, 0x48, 0x0F, 0x7E, 0x00], &mut ctx, &mut memory);
+        let mut qword = [0u8; 8];
+        memory.read(0x100, &mut qword).unwrap();
+        assert_eq!(u64::from_le_bytes(qword), 0x1122_3344_89AB_CDEF);
+
+        // EVEX disp8*N uses N=8 for VMOVQ.
+        memory
+            .write(0x180, &0x8877_6655_4433_2211u64.to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(rax, 0x100);
+        execute_lifted_x86(
+            &[0x62, 0xF1, 0xFD, 0x08, 0x6E, 0x40, 0x10],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 0x8877_6655_4433_2211);
+            assert!(x86.xmm[0][1..].iter().all(|word| *word == 0));
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+
+        // A load fault occurs before any architectural vector write.
+        let fault_sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = fault_sentinel;
+        }
+        ctx.write_vreg(rax, 0x1000);
+        let exit = execute_lifted_x86(&[0xC5, 0xF9, 0x6E, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], fault_sentinel);
+        }
+    }
+
+    #[test]
+    fn lifted_scalar_vector_movq_executes_aliasing_upper_state_memory_and_faults_exactly() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let flags_before = 0xCD7;
+        let mut memory = FlatMemory::new(0x400);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Legacy load clears bits 127:64 and preserves backing state above bit
+        // 127. A same-register source must be captured before that clear.
+        let legacy_dst = [0xAAAA_AAAA_AAAA_AAAAu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = legacy_dst;
+            x86.xmm[1][0] = 0x0123_4567_89AB_CDEF;
+        }
+        execute_lifted_x86(&[0xF3, 0x0F, 0x7E, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 0x0123_4567_89AB_CDEF);
+            assert_eq!(x86.xmm[0][1], 0);
+            assert_eq!(&x86.xmm[0][2..], &legacy_dst[2..]);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = legacy_dst;
+            x86.xmm[0][0] = 0x8877_6655_4433_2211;
+        }
+        execute_lifted_x86(&[0xF3, 0x0F, 0x7E, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 0x8877_6655_4433_2211);
+            assert_eq!(x86.xmm[0][1], 0);
+            assert_eq!(&x86.xmm[0][2..], &legacy_dst[2..]);
+        }
+
+        // Legacy store-to-register has the same destination upper-state rule.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0][0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.xmm[1] = legacy_dst;
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0xD6, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0xDEAD_BEEF_CAFE_BABE);
+            assert_eq!(x86.xmm[1][1], 0);
+            assert_eq!(&x86.xmm[1][2..], &legacy_dst[2..]);
+        }
+
+        // VEX load and store-to-register clear all state above the low qword.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [u64::MAX; 16];
+            x86.xmm[1][0] = 0x1111_2222_3333_4444;
+        }
+        execute_lifted_x86(&[0xC5, 0xFA, 0x7E, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 0x1111_2222_3333_4444);
+            assert!(x86.xmm[0][1..].iter().all(|word| *word == 0));
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0][0] = 0x5555_6666_7777_8888;
+            x86.xmm[1] = [u64::MAX; 16];
+        }
+        execute_lifted_x86(&[0xC5, 0xF9, 0xD6, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x5555_6666_7777_8888);
+            assert!(x86.xmm[1][1..].iter().all(|word| *word == 0));
+        }
+
+        // EVEX high-register load and compressed disp8*N store use N=8 bytes.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = [u64::MAX; 16];
+            x86.xmm[18][0] = 0x9999_AAAA_BBBB_CCCC;
+        }
+        execute_lifted_x86(&[0x62, 0xA1, 0xFE, 0x08, 0x7E, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17][0], 0x9999_AAAA_BBBB_CCCC);
+            assert!(x86.xmm[17][1..].iter().all(|word| *word == 0));
+        }
+        memory.write(0x180, &[0xA5; 16]).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        execute_lifted_x86(
+            &[0x62, 0xF1, 0xFD, 0x08, 0xD6, 0x40, 0x10],
+            &mut ctx,
+            &mut memory,
+        );
+        let mut stored = [0u8; 16];
+        memory.read(0x180, &mut stored).unwrap();
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&stored[..8], &x86.xmm[0][0].to_le_bytes());
+        }
+        assert_eq!(&stored[8..], &[0xA5; 8]);
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+
+        // A faulting load must not perform any part of its destination write.
+        let fault_sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = fault_sentinel;
+        }
+        ctx.write_vreg(rax, 0x1000);
+        let exit = execute_lifted_x86(&[0xC5, 0xFA, 0x7E, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], fault_sentinel);
+        }
+    }
+
+    #[test]
+    fn lifted_legacy_and_vex_packed_integer_compares_execute_signedness_widths_and_faults() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let flags_before = 0xCD7;
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let mut memory = FlatMemory::new(0x400);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        let signed_cases = [
+            (
+                &[0x66, 0x0F, 0x64, 0xC1][..],
+                0x3412_00FF_0505_7F80,
+                0x3512_01FF_0605_807F,
+                0x0000_0000_0000_FF00,
+                0,
+            ),
+            (
+                &[0x66, 0x0F, 0x65, 0xC1][..],
+                0xFFFE_FFFF_7FFF_8000,
+                0xFFFF_FFFE_8000_7FFF,
+                0x0000_FFFF_FFFF_0000,
+                0,
+            ),
+            (
+                &[0x66, 0x0F, 0x66, 0xC1][..],
+                0x7FFF_FFFF_8000_0000,
+                0x8000_0000_7FFF_FFFF,
+                0xFFFF_FFFF_0000_0000,
+                0,
+            ),
+            (
+                &[0x66, 0x0F, 0x38, 0x37, 0xC1][..],
+                u64::MAX,
+                u64::MAX - 1,
+                u64::MAX,
+                0,
+            ),
+        ];
+        for (bytes, lhs, rhs, expected0, expected1) in signed_cases {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [upper; 16];
+                x86.xmm[0][0] = lhs;
+                x86.xmm[0][1] = 0;
+                x86.xmm[1][0] = rhs;
+                x86.xmm[1][1] = 1;
+            }
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[0][0], expected0, "{bytes:02X?}");
+                assert_eq!(x86.xmm[0][1], expected1, "{bytes:02X?}");
+                assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+            }
+        }
+
+        // Equality produces an all-ones lane, including qwords, and treats
+        // signed zero identically because it is an integer comparison.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [upper; 16];
+            x86.xmm[0][0] = 0x0123_4567_89AB_CDEF;
+            x86.xmm[0][1] = 0x8000_0000_0000_0000;
+            x86.xmm[1][0] = 0x0123_4567_89AB_CDEF;
+            x86.xmm[1][1] = 0;
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x29, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], u64::MAX);
+            assert_eq!(x86.xmm[0][1], 0);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+        }
+
+        // VEX.256 compares all 256 bits and clears the shared backing state
+        // above bit 255. Destination/source aliasing is safe because operands
+        // are read before the single VCmp write.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [u64::MAX; 16];
+            x86.xmm[1][..4].copy_from_slice(&[
+                0xA000_0000_0000_0001,
+                0xB000_0000_0000_0002,
+                0xC000_0000_0000_0003,
+                0xD000_0000_0000_0004,
+            ]);
+            x86.xmm[2][..4].copy_from_slice(&[
+                0xA100_0000_0000_0001,
+                0xB000_0000_0000_0009,
+                0xC000_0000_0000_0003,
+                0xD100_0000_0000_0008,
+            ]);
+        }
+        execute_lifted_x86(&[0xC5, 0xF5, 0x76, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                &x86.xmm[0][..4],
+                &[0x0000_0000_FFFF_FFFF, 0xFFFF_FFFF_0000_0000, u64::MAX, 0,]
+            );
+            assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+        }
+
+        // EVEX fixed comparisons write a k-mask, apply the input writemask,
+        // zero inactive/high result bits, and remain correct when dst==mask.
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 2u64 << 32 | 1;
+            x86.xmm[1][1] = 4u64 << 32 | 3;
+            x86.xmm[2][0] = 9u64 << 32 | 1;
+            x86.xmm[2][1] = 4u64 << 32 | 3;
+        }
+        ctx.write_vreg(k1, 0b1011);
+        ctx.write_vreg(k2, u64::MAX);
+        execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x09, 0x76, 0xD2], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(k2), 0b1001);
+
+        ctx.write_vreg(k1, 0b1111);
+        execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x09, 0x76, 0xCA], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(k1), 0b1101);
+
+        // A zero writemask suppresses every memory access. Enabling one lane
+        // exposes the fault, without committing the k destination.
+        ctx.write_vreg(rax, 0x1000);
+        ctx.write_vreg(k1, 0);
+        ctx.write_vreg(k2, 0xDEAD_BEEF);
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x09, 0x76, 0x10], &mut ctx, &mut memory);
+        assert!(!matches!(
+            suppressed,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        assert_eq!(ctx.read_vreg(k2), 0);
+
+        ctx.write_vreg(k1, 1);
+        ctx.write_vreg(k2, 0xDEAD_BEEF);
+        let exposed =
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x09, 0x76, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(
+            exposed,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        assert_eq!(ctx.read_vreg(k2), 0xDEAD_BEEF);
+
+        // A masked EVEX.512 broadcast reads one dword for each active lane and
+        // compares it against all selected source lanes.
+        memory.write(0x100, &7u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k1, (1 << 0) | (1 << 5) | (1 << 15));
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0; 16];
+            x86.xmm[1][0] = 7;
+            x86.xmm[1][2] = 7u64 << 32;
+            x86.xmm[1][7] = 8u64 << 32;
+        }
+        execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x59, 0x76, 0x10], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(k2), (1 << 0) | (1 << 5));
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+
+        // A memory fault precedes the architectural compare destination write.
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        ctx.write_vreg(rax, 0x1000);
+        let exit = execute_lifted_x86(&[0xC5, 0xF5, 0x74, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+    }
+
+    #[test]
+    fn lifted_legacy_and_vex_packed_unpacks_interleave_per_128_bit_lane() {
+        fn seeded(bytes: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, chunk) in bytes.chunks_exact(8).enumerate() {
+                value[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn expected(first: &[u8], second: &[u8], elem: usize, high: bool) -> Vec<u8> {
+            let mut result = Vec::with_capacity(first.len());
+            for (a, b) in first.chunks_exact(16).zip(second.chunks_exact(16)) {
+                let start = if high { 8 } else { 0 };
+                for offset in (start..start + 8).step_by(elem) {
+                    result.extend_from_slice(&a[offset..offset + elem]);
+                    result.extend_from_slice(&b[offset..offset + elem]);
+                }
+            }
+            result
+        }
+
+        let first = (1u8..=32).collect::<Vec<_>>();
+        let second = (0x81u8..=0xA0).collect::<Vec<_>>();
+        let cases = [
+            (0x60, 1, false),
+            (0x61, 2, false),
+            (0x62, 4, false),
+            (0x6C, 8, false),
+            (0x68, 1, true),
+            (0x69, 2, true),
+            (0x6A, 4, true),
+            (0x6D, 8, true),
+        ];
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (opcode, elem, high) in cases {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = seeded(&first[..16], upper);
+                x86.xmm[1] = seeded(&second[..16], 0);
+            }
+            execute_lifted_x86(&[0x66, 0x0F, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[0], 16),
+                    expected(&first[..16], &second[..16], elem, high),
+                    "legacy opcode {opcode:02X}"
+                );
+                assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+            }
+
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [u64::MAX; 16];
+                x86.xmm[1] = seeded(&first, 0);
+                x86.xmm[2] = seeded(&second, 0);
+            }
+            execute_lifted_x86(&[0xC5, 0xF5, opcode, 0xC2], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[0], 32),
+                    expected(&first, &second, elem, high),
+                    "VEX opcode {opcode:02X}"
+                );
+                assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // Same-register legacy sources are captured before the destination
+        // merge, so each selected element is duplicated exactly.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&first[..16], upper);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x60, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 16),
+                expected(&first[..16], &first[..16], 1, false)
+            );
+        }
+
+        // EVEX merge/zero masks apply to output elements after each 128-bit
+        // lane-local interleave and clear backing state above VL.
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let raw = expected(&first, &second, 2, true);
+        let mask = 0xA55Au64;
+        for (p2, zeroing) in [(0x29, false), (0xA9, true)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = seeded(&[0xEE; 32], u64::MAX);
+                x86.xmm[1] = seeded(&first, 0);
+                x86.xmm[2] = seeded(&second, 0);
+            }
+            ctx.write_vreg(k1, mask);
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, p2, 0x69, 0xC2], &mut ctx, &mut memory);
+            let mut masked = Vec::with_capacity(32);
+            for lane in 0..16 {
+                if mask >> lane & 1 != 0 {
+                    masked.extend_from_slice(&raw[lane * 2..lane * 2 + 2]);
+                } else if zeroing {
+                    masked.extend_from_slice(&[0, 0]);
+                } else {
+                    masked.extend_from_slice(&[0xEE, 0xEE]);
+                }
+            }
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 32), masked);
+                assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // EVEX integer unpack is E4NF/E4NF.nb: every memory form performs the
+        // complete vector access before masking, including even-only or
+        // all-zero masks.
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&first, 0);
+        }
+        ctx.write_vreg(rax, 0x1000);
+        for mask in [0x55, 0x00] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = sentinel;
+            }
+            ctx.write_vreg(k1, mask);
+            let fault =
+                execute_lifted_x86(&[0x62, 0xF1, 0xF5, 0x49, 0x6D, 0x00], &mut ctx, &mut memory);
+            assert!(matches!(
+                fault,
+                BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+            ));
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[0], sentinel);
+            }
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+
+        // VEX.256 memory forms require the complete 32-byte operand before any
+        // architectural destination write.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        ctx.write_vreg(rax, 0x3F0);
+        let exit = execute_lifted_x86(&[0xC5, 0xF5, 0x60, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+    }
+
+    #[test]
+    fn lifted_saturating_packs_execute_lane_groups_masks_and_fault_suppression() {
+        fn seeded(bytes: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, chunk) in bytes.chunks_exact(8).enumerate() {
+                value[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn pack_reference(
+            first: &[u8],
+            second: &[u8],
+            src_bytes: usize,
+            to_unsigned: bool,
+        ) -> Vec<u8> {
+            let dst_bytes = src_bytes / 2;
+            let block_lanes = 16 / src_bytes;
+            let source_lanes = first.len() / src_bytes;
+            let read_signed = |source: &[u8], lane: usize| -> i64 {
+                let at = lane * src_bytes;
+                match src_bytes {
+                    2 => i16::from_le_bytes(source[at..at + 2].try_into().unwrap()) as i64,
+                    4 => i32::from_le_bytes(source[at..at + 4].try_into().unwrap()) as i64,
+                    _ => unreachable!(),
+                }
+            };
+            let saturate = |value: i64| -> u64 {
+                if to_unsigned {
+                    value.clamp(0, (1i64 << (dst_bytes * 8)) - 1) as u64
+                } else {
+                    let high = (1i64 << (dst_bytes * 8 - 1)) - 1;
+                    let low = -(1i64 << (dst_bytes * 8 - 1));
+                    value.clamp(low, high) as u64
+                }
+            };
+            let mut result = Vec::with_capacity(first.len());
+            for block_base in (0..source_lanes).step_by(block_lanes) {
+                for source in [first, second] {
+                    for lane in block_base..block_base + block_lanes {
+                        result.extend_from_slice(
+                            &saturate(read_signed(source, lane)).to_le_bytes()[..dst_bytes],
+                        );
+                    }
+                }
+            }
+            result
+        }
+
+        let words1 = [
+            -400i16,
+            -129,
+            -128,
+            -1,
+            0,
+            1,
+            127,
+            128,
+            255,
+            256,
+            i16::MAX,
+            i16::MIN,
+            42,
+            -42,
+            300,
+            -300,
+        ];
+        let words2 = [
+            500i16, 129, 128, 2, -2, 126, -127, -500, 254, 257, 1000, -1000, 7, -7, 200, -200,
+        ];
+        let dwords1 = [-100_000i32, -32_769, -32_768, -1, 0, 32_767, 65_535, 65_536];
+        let dwords2 = [i32::MAX, i32::MIN, 1, 32_768, 65_534, 70_000, -2, 1234];
+        let words1_bytes = words1
+            .iter()
+            .flat_map(|v| v.to_le_bytes())
+            .collect::<Vec<_>>();
+        let words2_bytes = words2
+            .iter()
+            .flat_map(|v| v.to_le_bytes())
+            .collect::<Vec<_>>();
+        let dwords1_bytes = dwords1
+            .iter()
+            .flat_map(|v| v.to_le_bytes())
+            .collect::<Vec<_>>();
+        let dwords2_bytes = dwords2
+            .iter()
+            .flat_map(|v| v.to_le_bytes())
+            .collect::<Vec<_>>();
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (legacy, vex, first, second, src_bytes, to_unsigned) in [
+            (
+                &[0x66, 0x0F, 0x63, 0xC1][..],
+                &[0xC5, 0xF5, 0x63, 0xC2][..],
+                words1_bytes.as_slice(),
+                words2_bytes.as_slice(),
+                2,
+                false,
+            ),
+            (
+                &[0x66, 0x0F, 0x67, 0xC1][..],
+                &[0xC5, 0xF5, 0x67, 0xC2][..],
+                words1_bytes.as_slice(),
+                words2_bytes.as_slice(),
+                2,
+                true,
+            ),
+            (
+                &[0x66, 0x0F, 0x6B, 0xC1][..],
+                &[0xC5, 0xF5, 0x6B, 0xC2][..],
+                dwords1_bytes.as_slice(),
+                dwords2_bytes.as_slice(),
+                4,
+                false,
+            ),
+            (
+                &[0x66, 0x0F, 0x38, 0x2B, 0xC1][..],
+                &[0xC4, 0xE2, 0x75, 0x2B, 0xC2][..],
+                dwords1_bytes.as_slice(),
+                dwords2_bytes.as_slice(),
+                4,
+                true,
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = seeded(&first[..16], upper);
+                x86.xmm[1] = seeded(&second[..16], 0);
+            }
+            execute_lifted_x86(legacy, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[0], 16),
+                    pack_reference(&first[..16], &second[..16], src_bytes, to_unsigned),
+                    "legacy {legacy:02X?}",
+                );
+                assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+            }
+
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [u64::MAX; 16];
+                x86.xmm[1] = seeded(first, 0);
+                x86.xmm[2] = seeded(second, 0);
+            }
+            execute_lifted_x86(vex, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[0], 32),
+                    pack_reference(first, second, src_bytes, to_unsigned),
+                    "VEX {vex:02X?}",
+                );
+                assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // EVEX masking is applied to the packed word result, after independent
+        // 128-bit groups. Merging and zeroing both clear backing state above VL.
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let raw = pack_reference(&dwords1_bytes, &dwords2_bytes, 4, true);
+        let mask = 0xA55Au64;
+        for (p2, zeroing) in [(0x29, false), (0xA9, true)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = seeded(&[0xEE; 32], u64::MAX);
+                x86.xmm[1] = seeded(&dwords1_bytes, 0);
+                x86.xmm[2] = seeded(&dwords2_bytes, 0);
+            }
+            ctx.write_vreg(k1, mask);
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, p2, 0x2B, 0xC2], &mut ctx, &mut memory);
+            let mut expected = Vec::with_capacity(32);
+            for lane in 0..16 {
+                if mask >> lane & 1 != 0 {
+                    expected.extend_from_slice(&raw[lane * 2..lane * 2 + 2]);
+                } else if zeroing {
+                    expected.extend_from_slice(&[0, 0]);
+                } else {
+                    expected.extend_from_slice(&[0xEE, 0xEE]);
+                }
+            }
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 32), expected);
+                assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // Only second-half output lanes in each 128-bit group consume the r/m
+        // source. First-half-only masks suppress an invalid address; selecting
+        // a second-half lane exposes the read fault before destination commit.
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        ctx.write_vreg(rax, 0x1000);
+        for (insn, first_half_bit, second_half_bit) in [
+            (
+                &[0x62, 0xF1, 0x75, 0x49, 0x63, 0x00][..],
+                1u64 << 0,
+                1u64 << 8,
+            ),
+            (
+                &[0x62, 0xF1, 0x75, 0x49, 0x6B, 0x00][..],
+                1u64 << 0,
+                1u64 << 4,
+            ),
+            (
+                &[0x62, 0xF1, 0x75, 0x59, 0x6B, 0x00][..],
+                1u64 << 0,
+                1u64 << 4,
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = sentinel;
+                x86.xmm[1] = seeded(&dwords1_bytes, 0);
+            }
+            ctx.write_vreg(k1, first_half_bit);
+            let suppressed = execute_lifted_x86(insn, &mut ctx, &mut memory);
+            assert!(!matches!(
+                suppressed,
+                BlockResult::Exit(ExitReason::MemoryFault { .. })
+            ));
+
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = sentinel;
+            }
+            ctx.write_vreg(k1, second_half_bit);
+            let exposed = execute_lifted_x86(insn, &mut ctx, &mut memory);
+            assert!(
+                matches!(
+                    exposed,
+                    BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+                ),
+                "second-source mask must expose memory fault for {insn:02X?}, got {exposed:?}"
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[0], sentinel);
+            }
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+
+        // Non-EVEX memory forms retain their full-width all-or-fault boundary.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        ctx.write_vreg(rax, 0x3F0);
+        let exit = execute_lifted_x86(&[0xC5, 0xF5, 0x63, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+    }
+
+    #[test]
+    fn lifted_pshufb_executes_msb_zeroing_lane_locality_masks_and_faults() {
+        fn seeded(bytes: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, chunk) in bytes.chunks_exact(8).enumerate() {
+                value[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn reference(source: &[u8], control: &[u8]) -> Vec<u8> {
+            let mut result = vec![0; source.len()];
+            for block_base in (0..source.len()).step_by(16) {
+                for lane in 0..16 {
+                    let selector = control[block_base + lane];
+                    if selector & 0x80 == 0 {
+                        result[block_base + lane] =
+                            source[block_base + usize::from(selector & 0x0F)];
+                    }
+                }
+            }
+            result
+        }
+
+        let source = (0x10u8..=0x4F).collect::<Vec<_>>();
+        let control_block = [
+            0x00, 0x01, 0x0F, 0x10, 0x1F, 0x7F, 0x80, 0x8F, 0x02, 0x0E, 0x12, 0x2E, 0xFF, 0x04,
+            0x08, 0x0C,
+        ];
+        let control = control_block.repeat(4);
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&source[..16], upper);
+            x86.xmm[1] = seeded(&control[..16], 0);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x00, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 16),
+                reference(&source[..16], &control[..16])
+            );
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+        }
+
+        // The legacy memory form checks its mandatory 16-byte alignment before
+        // reading controls or modifying the destructive destination.
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        memory.write(0x101, &control[..16]).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x00, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        // Destructive legacy aliasing must snapshot both data and controls
+        // before the first architectural destination-byte write.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&source[..16], upper);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x00, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 16),
+                reference(&source[..16], &source[..16])
+            );
+        }
+
+        // VEX.256 uses two independent 16-byte tables and clears all backing
+        // state above bit 255.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [u64::MAX; 16];
+            x86.xmm[1] = seeded(&source[..32], 0);
+            x86.xmm[2] = seeded(&control[..32], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x00, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 32),
+                reference(&source[..32], &control[..32])
+            );
+            assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+        }
+
+        // EVEX masking operates on the shuffled byte result. Both merge and
+        // zero forms clear backing state above the selected vector length.
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let raw = reference(&source, &control);
+        let mask = 0xA55A_F00F_1234_89ABu64;
+        for (p2, zeroing) in [(0x49, false), (0xC9, true)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = seeded(&[0xEE; 64], u64::MAX);
+                x86.xmm[1] = seeded(&source, 0);
+                x86.xmm[2] = seeded(&control, 0);
+            }
+            ctx.write_vreg(k1, mask);
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, p2, 0x00, 0xC2], &mut ctx, &mut memory);
+            let mut expected = Vec::with_capacity(64);
+            for lane in 0..64 {
+                expected.push(if mask >> lane & 1 != 0 {
+                    raw[lane]
+                } else if zeroing {
+                    0
+                } else {
+                    0xEE
+                });
+            }
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 64), expected);
+                assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // A masked memory control byte is accessed iff its corresponding
+        // output byte is active. Put byte 0 at the final valid address so lane
+        // 0 succeeds while lane 1 demonstrates precise fault suppression.
+        memory.write(0x3FF, &[0]).unwrap();
+        ctx.write_vreg(rax, 0x3FF);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&source[..16], 0);
+        }
+        ctx.write_vreg(k1, 1);
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x09, 0x00, 0x00], &mut ctx, &mut memory);
+        assert!(!matches!(
+            suppressed,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        ctx.write_vreg(k1, 1 << 1);
+        let exposed =
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x09, 0x00, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            exposed,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+
+        // VEX memory controls are full-width all-or-fault loads.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        ctx.write_vreg(rax, 0x3F0);
+        let fault = execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x00, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+    }
+
+    #[test]
+    fn lifted_horizontal_integer_family_executes_ordering_wrapping_saturation_and_faults() {
+        fn seeded(bytes: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, chunk) in bytes.chunks_exact(8).enumerate() {
+                value[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn reference(
+            first: &[u8],
+            second: &[u8],
+            elem_bytes: usize,
+            subtract: bool,
+            saturating: bool,
+        ) -> Vec<u8> {
+            let bits = elem_bytes * 8;
+            let mask = (1u64 << bits) - 1;
+            let block_lanes = 16 / elem_bytes;
+            let lanes = first.len() / elem_bytes;
+            let read = |source: &[u8], lane: usize| -> u64 {
+                let at = lane * elem_bytes;
+                match elem_bytes {
+                    2 => u64::from(u16::from_le_bytes(source[at..at + 2].try_into().unwrap())),
+                    4 => u64::from(u32::from_le_bytes(source[at..at + 4].try_into().unwrap())),
+                    _ => unreachable!(),
+                }
+            };
+            let calculate = |a: u64, b: u64| -> u64 {
+                if saturating {
+                    let shift = 64 - bits;
+                    let lhs = ((a << shift) as i64) >> shift;
+                    let rhs = ((b << shift) as i64) >> shift;
+                    let value = if subtract { lhs - rhs } else { lhs + rhs };
+                    value.clamp(-(1i64 << (bits - 1)), (1i64 << (bits - 1)) - 1) as u64 & mask
+                } else if subtract {
+                    a.wrapping_sub(b) & mask
+                } else {
+                    a.wrapping_add(b) & mask
+                }
+            };
+            let mut result = vec![0; first.len()];
+            let mut write = |lane: usize, value: u64| {
+                let at = lane * elem_bytes;
+                result[at..at + elem_bytes].copy_from_slice(&value.to_le_bytes()[..elem_bytes]);
+            };
+            for block_base in (0..lanes).step_by(block_lanes) {
+                let half = block_lanes / 2;
+                for pair in 0..half {
+                    let lhs = block_base + pair * 2;
+                    write(
+                        block_base + pair,
+                        calculate(read(first, lhs), read(first, lhs + 1)),
+                    );
+                    write(
+                        block_base + half + pair,
+                        calculate(read(second, lhs), read(second, lhs + 1)),
+                    );
+                }
+            }
+            result
+        }
+
+        let words1 = [
+            30_000i16,
+            10_000,
+            i16::MAX,
+            1,
+            i16::MIN,
+            -1,
+            200,
+            -300,
+            12_000,
+            -15_000,
+            20_000,
+            20_000,
+            -20_000,
+            -20_000,
+            1234,
+            4321,
+        ];
+        let words2 = [
+            -30_000i16,
+            -10_000,
+            i16::MIN,
+            1,
+            i16::MAX,
+            -1,
+            -200,
+            300,
+            -12_000,
+            15_000,
+            25_000,
+            25_000,
+            -25_000,
+            -25_000,
+            -1234,
+            -4321,
+        ];
+        let dwords1 = [
+            2_000_000_000i32,
+            1_000_000_000,
+            i32::MAX,
+            1,
+            i32::MIN,
+            -1,
+            123_456,
+            -654_321,
+        ];
+        let dwords2 = [
+            -2_000_000_000i32,
+            -1_000_000_000,
+            i32::MIN,
+            1,
+            i32::MAX,
+            -1,
+            -123_456,
+            654_321,
+        ];
+        let words1_bytes = words1
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        let words2_bytes = words2
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        let dwords1_bytes = dwords1
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        let dwords2_bytes = dwords2
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (opcode, first, second, elem_bytes, subtract, saturating) in [
+            (
+                0x01,
+                words1_bytes.as_slice(),
+                words2_bytes.as_slice(),
+                2,
+                false,
+                false,
+            ),
+            (
+                0x02,
+                dwords1_bytes.as_slice(),
+                dwords2_bytes.as_slice(),
+                4,
+                false,
+                false,
+            ),
+            (
+                0x03,
+                words1_bytes.as_slice(),
+                words2_bytes.as_slice(),
+                2,
+                false,
+                true,
+            ),
+            (
+                0x05,
+                words1_bytes.as_slice(),
+                words2_bytes.as_slice(),
+                2,
+                true,
+                false,
+            ),
+            (
+                0x06,
+                dwords1_bytes.as_slice(),
+                dwords2_bytes.as_slice(),
+                4,
+                true,
+                false,
+            ),
+            (
+                0x07,
+                words1_bytes.as_slice(),
+                words2_bytes.as_slice(),
+                2,
+                true,
+                true,
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = seeded(&first[..16], upper);
+                x86.xmm[1] = seeded(&second[..16], 0);
+            }
+            execute_lifted_x86(&[0x66, 0x0F, 0x38, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[0], 16),
+                    reference(
+                        &first[..16],
+                        &second[..16],
+                        elem_bytes,
+                        subtract,
+                        saturating,
+                    ),
+                    "legacy horizontal opcode {opcode:02X}",
+                );
+                assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+            }
+
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [u64::MAX; 16];
+                x86.xmm[1] = seeded(first, 0);
+                x86.xmm[2] = seeded(second, 0);
+            }
+            execute_lifted_x86(&[0xC4, 0xE2, 0x75, opcode, 0xC2], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[0], 32),
+                    reference(first, second, elem_bytes, subtract, saturating),
+                    "VEX horizontal opcode {opcode:02X}",
+                );
+                assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // Destructive same-register legacy operands are read before any result
+        // lane is merged back into the destination.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&words1_bytes[..16], upper);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x01, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 16),
+                reference(&words1_bytes[..16], &words1_bytes[..16], 2, false, false,)
+            );
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        memory.write(0x101, &words2_bytes).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x03, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        // Type-4 alignment applies only to legacy SSE; VEX.256 accepts the
+        // same unaligned address and consumes the complete 32-byte operand.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&words1_bytes, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x01, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 32),
+                reference(&words1_bytes, &words2_bytes, 2, false, false)
+            );
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        ctx.write_vreg(rax, 0x3F0);
+        let fault = execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x06, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+    }
+
+    #[test]
+    fn vdotproduct_executes_vnni_accumulation_wrapping_saturation_and_signed_words() {
+        fn seeded(bytes: &[u8]) -> VecValue {
+            let mut value = [0; 16];
+            for (index, chunk) in bytes.chunks_exact(8).enumerate() {
+                value[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            value
+        }
+
+        fn run(
+            acc: VecValue,
+            src1: VecValue,
+            src2: VecValue,
+            src_elem: VecElementType,
+            src1_unsigned: bool,
+            saturate: bool,
+        ) -> VecValue {
+            let dst = VReg::Arch(ArchReg::X86(X86Reg::Zmm(0)));
+            let first = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
+            let second = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
+            let mut ctx = SmirContext::new_x86_64();
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = acc;
+                x86.xmm[1] = src1;
+                x86.xmm[2] = src2;
+            }
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::VDotProduct {
+                    dst,
+                    acc: dst,
+                    src1: first,
+                    src2: second,
+                    src_elem,
+                    acc_elem: VecElementType::I32,
+                    width: VecWidth::V128,
+                    src1_unsigned,
+                    saturate,
+                },
+            );
+            builder.set_terminator(Terminator::Trap {
+                kind: TrapKind::Halt,
+            });
+            let block = &builder.finish().blocks[0];
+            let exit =
+                SmirInterpreter::new().execute_block(&mut ctx, &mut FlatMemory::new(0x100), block);
+            assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+            match &ctx.arch_regs {
+                ArchRegState::X86_64(x86) => x86.xmm[0],
+                _ => unreachable!(),
+            }
+        }
+
+        let acc = [1_000i32, i32::MAX - 10, i32::MIN + 10, -100];
+        let first = [
+            1u8, 2, 3, 4, 255, 255, 255, 255, 255, 255, 255, 255, 0, 128, 255, 4,
+        ];
+        let second = [
+            1i8, -2, 3, -4, 127, 127, 127, 127, -128, -128, -128, -128, -1, 1, -1, 127,
+        ];
+        let acc_vec = seeded(
+            &acc.iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect::<Vec<_>>(),
+        );
+        let first_vec = seeded(&first);
+        let second_vec = seeded(&second.iter().map(|value| *value as u8).collect::<Vec<_>>());
+        let sums = (0..4)
+            .map(|lane| {
+                i64::from(acc[lane])
+                    + (0..4)
+                        .map(|term| {
+                            i64::from(first[lane * 4 + term]) * i64::from(second[lane * 4 + term])
+                        })
+                        .sum::<i64>()
+            })
+            .collect::<Vec<_>>();
+        let saturated = run(
+            acc_vec,
+            first_vec,
+            second_vec,
+            VecElementType::I8,
+            true,
+            true,
+        );
+        let wrapping = run(
+            acc_vec,
+            first_vec,
+            second_vec,
+            VecElementType::I8,
+            true,
+            false,
+        );
+        for lane in 0..4 {
+            assert_eq!(
+                SmirInterpreter::get_lane(&saturated, lane as u8, 32) as u32,
+                sums[lane].clamp(i64::from(i32::MIN), i64::from(i32::MAX)) as i32 as u32
+            );
+            assert_eq!(
+                SmirInterpreter::get_lane(&wrapping, lane as u8, 32) as u32,
+                sums[lane] as i32 as u32
+            );
+        }
+        assert!(saturated[2..].iter().all(|word| *word == 0));
+
+        let word_acc = [17i32, -33, 44, -55];
+        let word_first = [-32768i16, 32767, -123, 456, 1000, -2000, 3000, -4000];
+        let word_second = [-1i16, 2, 300, -400, -30, 40, -50, 60];
+        let word_result = run(
+            seeded(
+                &word_acc
+                    .iter()
+                    .flat_map(|value| value.to_le_bytes())
+                    .collect::<Vec<_>>(),
+            ),
+            seeded(
+                &word_first
+                    .iter()
+                    .flat_map(|value| value.to_le_bytes())
+                    .collect::<Vec<_>>(),
+            ),
+            seeded(
+                &word_second
+                    .iter()
+                    .flat_map(|value| value.to_le_bytes())
+                    .collect::<Vec<_>>(),
+            ),
+            VecElementType::I16,
+            false,
+            false,
+        );
+        for lane in 0..4 {
+            let expected = word_acc[lane].wrapping_add(
+                i32::from(word_first[lane * 2]) * i32::from(word_second[lane * 2])
+                    + i32::from(word_first[lane * 2 + 1]) * i32::from(word_second[lane * 2 + 1]),
+            );
+            assert_eq!(
+                SmirInterpreter::get_lane(&word_result, lane as u8, 32) as u32,
+                expected as u32
+            );
+        }
+    }
+
+    #[test]
+    fn lifted_pmaddubsw_executes_products_saturation_masks_aliases_and_faults() {
+        fn seeded(bytes: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, chunk) in bytes.chunks_exact(8).enumerate() {
+                value[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn reference(unsigned: &[u8], signed: &[u8]) -> Vec<u8> {
+            unsigned
+                .chunks_exact(2)
+                .zip(signed.chunks_exact(2))
+                .flat_map(|(a, b)| {
+                    let sum = i32::from(a[0]) * i32::from(b[0] as i8)
+                        + i32::from(a[1]) * i32::from(b[1] as i8);
+                    (sum.clamp(i32::from(i16::MIN), i32::from(i16::MAX)) as i16).to_le_bytes()
+                })
+                .collect()
+        }
+
+        let mut unsigned = (0..64)
+            .map(|lane| (lane * 37 + 11) as u8)
+            .collect::<Vec<_>>();
+        let mut signed = (0..64)
+            .map(|lane| ((lane as i8).wrapping_mul(29)).wrapping_sub(93) as u8)
+            .collect::<Vec<_>>();
+        unsigned[0..4].copy_from_slice(&[255, 255, 255, 255]);
+        signed[0..4].copy_from_slice(&[127, 127, 0x80, 0x80]);
+        let expected = reference(&unsigned, &signed);
+        assert_eq!(
+            i16::from_le_bytes(expected[0..2].try_into().unwrap()),
+            i16::MAX
+        );
+        assert_eq!(
+            i16::from_le_bytes(expected[2..4].try_into().unwrap()),
+            i16::MIN
+        );
+
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&unsigned[..16], upper);
+            x86.xmm[1] = seeded(&signed[..16], 0);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x04, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 16), expected[..16]);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&unsigned[..32], 0);
+            x86.xmm[2] = seeded(&signed[..32], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x04, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 32), expected[..32]);
+            assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+        }
+
+        // Destructive legacy aliasing must read every unsigned and signed byte
+        // before merging any result word back into the shared destination.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&unsigned[..16], upper);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x04, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 16),
+                reference(&unsigned[..16], &unsigned[..16])
+            );
+        }
+
+        // EVEX applies each mask bit to one signed-word result. Validate both
+        // merge and zero modes over all 32 ZMM result lanes.
+        let raw = reference(&unsigned, &signed);
+        let mask = 0xA55A_89ABu64;
+        for (p2, zeroing) in [(0x49, false), (0xC9, true)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [0x6B6B_6B6B_6B6B_6B6B; 16];
+                x86.xmm[1] = seeded(&unsigned, 0);
+                x86.xmm[2] = seeded(&signed, 0);
+            }
+            ctx.write_vreg(k1, mask);
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, p2, 0x04, 0xC2], &mut ctx, &mut memory);
+            let mut masked = vec![0; 64];
+            for lane in 0..32 {
+                let at = lane * 2;
+                if mask >> lane & 1 != 0 {
+                    masked[at..at + 2].copy_from_slice(&raw[at..at + 2]);
+                } else if !zeroing {
+                    masked[at..at + 2].copy_from_slice(&[0x6B, 0x6B]);
+                }
+            }
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 64), masked);
+                assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // Independently encoded high-register EVEX form: zmm16 := zmm17,zmm18.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = sentinel;
+            x86.xmm[17] = seeded(&unsigned, 0);
+            x86.xmm[18] = seeded(&signed, 0);
+        }
+        execute_lifted_x86(&[0x62, 0xA2, 0x75, 0x40, 0x04, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[16], 64), expected);
+        }
+
+        memory.write(0x101, &signed).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x04, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        // VEX accepts the identical unaligned address and performs a complete
+        // all-or-fault 32-byte load.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&unsigned[..32], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x04, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 32), expected[..32]);
+        }
+
+        // E4NF: destination masking never suppresses the complete memory read.
+        // Only two of the required 16 bytes are mapped, so both a single-bit
+        // mask and an all-zero mask fault before modifying the destination.
+        memory.write(0x3FE, &signed[..2]).unwrap();
+        ctx.write_vreg(rax, 0x3FE);
+        for mask in [1, 0] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = sentinel;
+                x86.xmm[1] = seeded(&unsigned[..16], 0);
+            }
+            ctx.write_vreg(k1, mask);
+            let fault =
+                execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x09, 0x04, 0x00], &mut ctx, &mut memory);
+            assert!(matches!(
+                fault,
+                BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+            ));
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[0], sentinel);
+            }
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        ctx.write_vreg(rax, 0x3F0);
+        let fault = execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x04, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+    }
+
+    #[test]
+    fn lifted_psign_family_executes_wrapping_control_aliases_and_faults() {
+        fn seeded(bytes: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, chunk) in bytes.chunks_exact(8).enumerate() {
+                value[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn reference(value: &[u8], control: &[u8], elem_bytes: usize) -> Vec<u8> {
+            let bits = elem_bytes * 8;
+            let mask = (1u64 << bits) - 1;
+            value
+                .chunks_exact(elem_bytes)
+                .zip(control.chunks_exact(elem_bytes))
+                .flat_map(|(value, control)| {
+                    let read = |bytes: &[u8]| -> u64 {
+                        match elem_bytes {
+                            1 => u64::from(bytes[0]),
+                            2 => u64::from(u16::from_le_bytes(bytes.try_into().unwrap())),
+                            4 => u64::from(u32::from_le_bytes(bytes.try_into().unwrap())),
+                            _ => unreachable!(),
+                        }
+                    };
+                    let value = read(value);
+                    let control = read(control);
+                    let result = if control == 0 {
+                        0
+                    } else if control & (1u64 << (bits - 1)) != 0 {
+                        0u64.wrapping_sub(value) & mask
+                    } else {
+                        value
+                    };
+                    result.to_le_bytes()[..elem_bytes].to_vec()
+                })
+                .collect()
+        }
+
+        let byte_values = [
+            0x80u8, 0x7F, 0x01, 0xFF, 0x55, 0xAA, 0x00, 0x40, 0x81, 0x11, 0x22, 0x33, 0x44, 0x66,
+            0x77, 0x88, 0x80, 0x7F, 0x01, 0xFF, 0x55, 0xAA, 0x00, 0x40, 0x81, 0x11, 0x22, 0x33,
+            0x44, 0x66, 0x77, 0x88,
+        ];
+        let byte_controls = [
+            0xFFu8, 0x80, 0x00, 0x01, 0x7F, 0xFE, 0x00, 0x02, 0x81, 0x00, 0x01, 0xFF, 0x7F, 0x80,
+            0x00, 0x01, 0xFF, 0x80, 0x00, 0x01, 0x7F, 0xFE, 0x00, 0x02, 0x81, 0x00, 0x01, 0xFF,
+            0x7F, 0x80, 0x00, 0x01,
+        ];
+        let word_values = [
+            i16::MIN,
+            i16::MAX,
+            1,
+            -1,
+            0x1234,
+            -0x2345,
+            0,
+            17,
+            i16::MIN,
+            i16::MAX,
+            1,
+            -1,
+            0x3456,
+            -0x4567,
+            0,
+            29,
+        ];
+        let word_controls = [
+            -1i16,
+            i16::MIN,
+            0,
+            1,
+            i16::MAX,
+            -2,
+            0,
+            2,
+            -1,
+            i16::MIN,
+            0,
+            1,
+            i16::MAX,
+            -2,
+            0,
+            2,
+        ];
+        let dword_values = [i32::MIN, i32::MAX, 1, -1, 0x1234_5678, -0x2345_678, 0, 37];
+        let dword_controls = [-1i32, i32::MIN, 0, 1, i32::MAX, -2, 0, 2];
+        let word_value_bytes = word_values
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        let word_control_bytes = word_controls
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        let dword_value_bytes = dword_values
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        let dword_control_bytes = dword_controls
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        let cases = [
+            (
+                0x08,
+                1usize,
+                byte_values.as_slice(),
+                byte_controls.as_slice(),
+            ),
+            (
+                0x09,
+                2,
+                word_value_bytes.as_slice(),
+                word_control_bytes.as_slice(),
+            ),
+            (
+                0x0A,
+                4,
+                dword_value_bytes.as_slice(),
+                dword_control_bytes.as_slice(),
+            ),
+        ];
+
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (opcode, elem_bytes, value, control) in cases {
+            let expected = reference(value, control, elem_bytes);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = seeded(&value[..16], upper);
+                x86.xmm[1] = seeded(&control[..16], 0);
+            }
+            execute_lifted_x86(&[0x66, 0x0F, 0x38, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 16), expected[..16]);
+                assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+            }
+
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = sentinel;
+                x86.xmm[1] = seeded(value, 0);
+                x86.xmm[2] = seeded(control, 0);
+            }
+            execute_lifted_x86(&[0xC4, 0xE2, 0x75, opcode, 0xC2], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 32), expected);
+                assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+            }
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&byte_values[..16], 0);
+            x86.xmm[2] = seeded(&byte_controls[..16], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x71, 0x08, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 16),
+                reference(&byte_values[..16], &byte_controls[..16], 1)
+            );
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        }
+
+        // Wrapping negation leaves each signed minimum unchanged.
+        assert_eq!(
+            reference(&dword_value_bytes, &dword_control_bytes, 4)[..4],
+            i32::MIN.to_le_bytes()
+        );
+
+        // Legacy value/control alias: both roles must be captured before the
+        // first result lane is merged into the architectural destination.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&byte_values[..16], upper);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x08, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 16),
+                reference(&byte_values[..16], &byte_values[..16], 1)
+            );
+        }
+
+        // VEX destination aliases src1, then src2. Both inputs are reduced to
+        // temporaries before the final architectural VAndNot write.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&byte_values, 0);
+            x86.xmm[2] = seeded(&byte_controls, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x7D, 0x08, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 32),
+                reference(&byte_values, &byte_controls, 1)
+            );
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&byte_controls, 0);
+            x86.xmm[1] = seeded(&byte_values, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x08, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 32),
+                reference(&byte_values, &byte_controls, 1)
+            );
+        }
+
+        memory.write(0x101, &byte_controls).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x08, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&byte_values, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x08, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 32),
+                reference(&byte_values, &byte_controls, 1)
+            );
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        ctx.write_vreg(rax, 0x3F0);
+        let fault = execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x08, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+    }
+
+    #[test]
+    fn lifted_pmulhrsw_executes_rounding_masks_aliases_and_faults() {
+        fn seeded(bytes: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, chunk) in bytes.chunks_exact(8).enumerate() {
+                value[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn reference(first: &[u8], second: &[u8]) -> Vec<u8> {
+            first
+                .chunks_exact(2)
+                .zip(second.chunks_exact(2))
+                .flat_map(|(a, b)| {
+                    let a = i32::from(i16::from_le_bytes(a.try_into().unwrap()));
+                    let b = i32::from(i16::from_le_bytes(b.try_into().unwrap()));
+                    (((a * b + 0x4000) >> 15) as i16).to_le_bytes()
+                })
+                .collect()
+        }
+
+        let first_words = [
+            i16::MIN,
+            i16::MAX,
+            0x4000,
+            -0x4000,
+            1,
+            -1,
+            0x1234,
+            -0x2345,
+            i16::MIN,
+            i16::MAX,
+            0x2000,
+            -0x2000,
+            0x7FFE,
+            -0x7FFF,
+            17,
+            -29,
+            i16::MIN,
+            i16::MAX,
+            0x4000,
+            -0x4000,
+            1,
+            -1,
+            0x1234,
+            -0x2345,
+            i16::MIN,
+            i16::MAX,
+            0x2000,
+            -0x2000,
+            0x7FFE,
+            -0x7FFF,
+            17,
+            -29,
+        ];
+        let second_words = [
+            i16::MIN,
+            i16::MIN,
+            0x4000,
+            0x4000,
+            i16::MAX,
+            i16::MAX,
+            -0x3456,
+            0x4567,
+            i16::MIN,
+            i16::MAX,
+            -0x2000,
+            -0x2000,
+            0x7FFF,
+            -0x7FFF,
+            -31,
+            43,
+            i16::MIN,
+            i16::MIN,
+            0x4000,
+            0x4000,
+            i16::MAX,
+            i16::MAX,
+            -0x3456,
+            0x4567,
+            i16::MIN,
+            i16::MAX,
+            -0x2000,
+            -0x2000,
+            0x7FFF,
+            -0x7FFF,
+            -31,
+            43,
+        ];
+        let first = first_words
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        let second = second_words
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        let expected = reference(&first, &second);
+        assert_eq!(expected[..2], i16::MIN.to_le_bytes());
+
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&first[..16], upper);
+            x86.xmm[1] = seeded(&second[..16], 0);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x0B, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 16), expected[..16]);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&first[..32], 0);
+            x86.xmm[2] = seeded(&second[..32], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x0B, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 32), expected[..32]);
+            assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&first[..16], upper);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x0B, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 16),
+                reference(&first[..16], &first[..16])
+            );
+        }
+
+        let raw = reference(&first, &second);
+        let mask = 0xA55A_89ABu64;
+        for (p2, zeroing) in [(0x49, false), (0xC9, true)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [0x6B6B_6B6B_6B6B_6B6B; 16];
+                x86.xmm[1] = seeded(&first, 0);
+                x86.xmm[2] = seeded(&second, 0);
+            }
+            ctx.write_vreg(k1, mask);
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, p2, 0x0B, 0xC2], &mut ctx, &mut memory);
+            let mut masked = vec![0; 64];
+            for lane in 0..32 {
+                let at = lane * 2;
+                if mask >> lane & 1 != 0 {
+                    masked[at..at + 2].copy_from_slice(&raw[at..at + 2]);
+                } else if !zeroing {
+                    masked[at..at + 2].copy_from_slice(&[0x6B, 0x6B]);
+                }
+            }
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 64), masked);
+                assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+            }
+        }
+
+        memory.write(0x101, &second).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x0B, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&first[..32], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x0B, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 32), expected[..32]);
+        }
+
+        memory.write(0x3FE, &second[..2]).unwrap();
+        ctx.write_vreg(rax, 0x3FE);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&first[..16], 0);
+        }
+        ctx.write_vreg(k1, 1);
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x09, 0x0B, 0x00], &mut ctx, &mut memory);
+        assert!(!matches!(
+            suppressed,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 2), expected[..2]);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        ctx.write_vreg(k1, 1 << 1);
+        let exposed =
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x09, 0x0B, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            exposed,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        ctx.write_vreg(rax, 0x3F0);
+        let fault = execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x0B, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+    }
+
+    #[test]
+    fn lifted_pabs_family_executes_minima_masks_broadcasts_and_faults() {
+        fn seeded(bytes: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, chunk) in bytes.chunks_exact(8).enumerate() {
+                value[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn reference(input: &[u8], elem_bytes: usize) -> Vec<u8> {
+            input
+                .chunks_exact(elem_bytes)
+                .flat_map(|lane| match elem_bytes {
+                    1 => vec![(lane[0] as i8).wrapping_abs() as u8],
+                    2 => i16::from_le_bytes(lane.try_into().unwrap())
+                        .wrapping_abs()
+                        .to_le_bytes()
+                        .to_vec(),
+                    4 => i32::from_le_bytes(lane.try_into().unwrap())
+                        .wrapping_abs()
+                        .to_le_bytes()
+                        .to_vec(),
+                    8 => i64::from_le_bytes(lane.try_into().unwrap())
+                        .wrapping_abs()
+                        .to_le_bytes()
+                        .to_vec(),
+                    _ => unreachable!(),
+                })
+                .collect()
+        }
+
+        let mut byte_input = (0..64)
+            .map(|lane| (lane * 37 + 0x41) as u8)
+            .collect::<Vec<_>>();
+        byte_input[0] = i8::MIN as u8;
+        byte_input[1] = (-1i8) as u8;
+        byte_input[2] = 0;
+        byte_input[3] = i8::MAX as u8;
+        let word_input = [
+            i16::MIN,
+            -1,
+            0,
+            i16::MAX,
+            -0x1234,
+            0x2345,
+            -17,
+            29,
+            i16::MIN,
+            -1,
+            0,
+            i16::MAX,
+            -0x3456,
+            0x4567,
+            -31,
+            43,
+            i16::MIN,
+            -1,
+            0,
+            i16::MAX,
+            -0x1234,
+            0x2345,
+            -17,
+            29,
+            i16::MIN,
+            -1,
+            0,
+            i16::MAX,
+            -0x3456,
+            0x4567,
+            -31,
+            43,
+        ]
+        .iter()
+        .flat_map(|value| value.to_le_bytes())
+        .collect::<Vec<_>>();
+        let dword_input = [
+            i32::MIN,
+            -1,
+            0,
+            i32::MAX,
+            -0x1234_567,
+            0x2345_678,
+            -17,
+            29,
+            i32::MIN,
+            -1,
+            0,
+            i32::MAX,
+            -0x3456_789,
+            0x4567_89A,
+            -31,
+            43,
+        ]
+        .iter()
+        .flat_map(|value| value.to_le_bytes())
+        .collect::<Vec<_>>();
+        let qword_input = [
+            i64::MIN,
+            -1,
+            0,
+            i64::MAX,
+            -0x1234_5678_9ABC,
+            0x2345_6789_ABCD,
+            -17,
+            29,
+        ]
+        .iter()
+        .flat_map(|value| value.to_le_bytes())
+        .collect::<Vec<_>>();
+        let cases = [
+            (0x1C, 1usize, byte_input.as_slice()),
+            (0x1D, 2, word_input.as_slice()),
+            (0x1E, 4, dword_input.as_slice()),
+            (0x1F, 8, qword_input.as_slice()),
+        ];
+
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (opcode, elem_bytes, input) in cases {
+            let expected = reference(input, elem_bytes);
+            assert_eq!(&expected[..elem_bytes], &input[..elem_bytes]);
+
+            if opcode != 0x1F {
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.xmm[0] = [upper; 16];
+                    x86.xmm[1] = seeded(&input[..16], 0);
+                }
+                execute_lifted_x86(&[0x66, 0x0F, 0x38, opcode, 0xC1], &mut ctx, &mut memory);
+                if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                    assert_eq!(bytes(&x86.xmm[0], 16), expected[..16]);
+                    assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+                }
+
+                let vex_p2 = 0x7D;
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.xmm[0] = sentinel;
+                    x86.xmm[2] = seeded(&input[..32], 0);
+                }
+                execute_lifted_x86(&[0xC4, 0xE2, vex_p2, opcode, 0xC2], &mut ctx, &mut memory);
+                if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                    assert_eq!(bytes(&x86.xmm[0], 32), expected[..32]);
+                    assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+                }
+            }
+
+            let evex_w = if opcode == 0x1F { 0xFD } else { 0x7D };
+            let lanes = 64 / elem_bytes;
+            let mask = 0xA55A_89AB_F00F_1357u64;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [0x6B6B_6B6B_6B6B_6B6B; 16];
+                x86.xmm[2] = seeded(input, 0);
+            }
+            ctx.write_vreg(k1, mask);
+            execute_lifted_x86(
+                &[0x62, 0xF2, evex_w, 0x49, opcode, 0xC2],
+                &mut ctx,
+                &mut memory,
+            );
+            let mut masked = vec![0; 64];
+            for lane in 0..lanes {
+                let at = lane * elem_bytes;
+                if mask >> lane & 1 != 0 {
+                    masked[at..at + elem_bytes].copy_from_slice(&expected[at..at + elem_bytes]);
+                } else {
+                    masked[at..at + elem_bytes].fill(0x6B);
+                }
+            }
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 64), masked);
+                assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // Dword broadcast repeats one wrapping absolute value across all lanes.
+        memory.write(0x100, &i32::MIN.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x58, 0x1E, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 64),
+                i32::MIN
+                    .to_le_bytes()
+                    .into_iter()
+                    .cycle()
+                    .take(64)
+                    .collect::<Vec<_>>()
+            );
+        }
+
+        // A zero mask suppresses a broadcast memory fault; any active lane
+        // requires the single scalar read and exposes it.
+        ctx.write_vreg(rax, 0x1000);
+        ctx.write_vreg(k1, 0);
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x59, 0x1E, 0x00], &mut ctx, &mut memory);
+        assert!(!matches!(
+            suppressed,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        ctx.write_vreg(k1, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let exposed =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x59, 0x1E, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            exposed,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        // Normal masked memory accesses are per element.
+        memory.write(0x3FF, &[i8::MIN as u8]).unwrap();
+        ctx.write_vreg(rax, 0x3FF);
+        ctx.write_vreg(k1, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let lane0 =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x09, 0x1C, 0x00], &mut ctx, &mut memory);
+        assert!(!matches!(
+            lane0,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 1), vec![i8::MIN as u8]);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        }
+        ctx.write_vreg(k1, 1 << 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let lane1 =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x09, 0x1C, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            lane1,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        memory.write(0x101, &word_input).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x1D, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x7D, 0x1D, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 32), reference(&word_input[..32], 2));
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_palignr_executes_immediates_grouping_masks_aliases_and_faults() {
+        fn seeded(bytes: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, chunk) in bytes.chunks_exact(8).enumerate() {
+                value[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn reference(high: &[u8], low: &[u8], imm: u8) -> Vec<u8> {
+            let mut result = vec![0; high.len()];
+            for block in 0..high.len() / 16 {
+                let base = block * 16;
+                for lane in 0..16 {
+                    let index = usize::from(imm) + lane;
+                    result[base + lane] = if index < 16 {
+                        low[base + index]
+                    } else if index < 32 {
+                        high[base + index - 16]
+                    } else {
+                        0
+                    };
+                }
+            }
+            result
+        }
+
+        let high = (0..64).map(|lane| (lane + 1) as u8).collect::<Vec<_>>();
+        let low = (0..64).map(|lane| (0x80 + lane) as u8).collect::<Vec<_>>();
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for imm in [0u8, 1, 15, 16, 17, 31, 32, 255] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = seeded(&high[..16], upper);
+                x86.xmm[1] = seeded(&low[..16], 0);
+            }
+            execute_lifted_x86(&[0x66, 0x0F, 0x3A, 0x0F, 0xC1, imm], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[0], 16),
+                    reference(&high[..16], &low[..16], imm),
+                    "legacy imm={imm}"
+                );
+                assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+            }
+
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = sentinel;
+                x86.xmm[1] = seeded(&high[..32], 0);
+                x86.xmm[2] = seeded(&low[..32], 0);
+            }
+            execute_lifted_x86(&[0xC4, 0xE3, 0x75, 0x0F, 0xC2, imm], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[0], 32),
+                    reference(&high[..32], &low[..32], imm),
+                    "VEX imm={imm}"
+                );
+                assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // Legacy destructive alias and both VEX destination alias directions.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&high[..16], upper);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x3A, 0x0F, 0xC0, 0x05], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 16),
+                reference(&high[..16], &high[..16], 5)
+            );
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&high[..32], 0);
+            x86.xmm[2] = seeded(&low[..32], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE3, 0x7D, 0x0F, 0xC2, 0x05], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 32),
+                reference(&high[..32], &low[..32], 5)
+            );
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&low[..32], 0);
+            x86.xmm[1] = seeded(&high[..32], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE3, 0x75, 0x0F, 0xC0, 0x05], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 32),
+                reference(&high[..32], &low[..32], 5)
+            );
+        }
+
+        let raw = reference(&high, &low, 5);
+        let mask = 0xA55A_89AB_F00F_1357u64;
+        for (p2, zeroing) in [(0x49, false), (0xC9, true)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [0x6B6B_6B6B_6B6B_6B6B; 16];
+                x86.xmm[1] = seeded(&high, 0);
+                x86.xmm[2] = seeded(&low, 0);
+            }
+            ctx.write_vreg(k1, mask);
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x75, p2, 0x0F, 0xC2, 0x05],
+                &mut ctx,
+                &mut memory,
+            );
+            let expected = (0..64)
+                .map(|lane| {
+                    if mask >> lane & 1 != 0 {
+                        raw[lane]
+                    } else if zeroing {
+                        0
+                    } else {
+                        0x6B
+                    }
+                })
+                .collect::<Vec<_>>();
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 64), expected);
+                assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+            }
+        }
+
+        memory.write(0x101, &low).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let misaligned =
+            execute_lifted_x86(&[0x66, 0x0F, 0x3A, 0x0F, 0x00, 0x01], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&high[..32], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE3, 0x75, 0x0F, 0x00, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 32),
+                reference(&high[..32], &low[..32], 1)
+            );
+        }
+
+        // At imm=0, output byte n consumes memory byte n. Put byte 0 at the
+        // final valid address to distinguish suppressed lane 0 from lane 1.
+        memory.write(0x3FF, &[low[0]]).unwrap();
+        ctx.write_vreg(rax, 0x3FF);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&high[..16], 0);
+        }
+        ctx.write_vreg(k1, 1);
+        let lane0 = execute_lifted_x86(
+            &[0x62, 0xF3, 0x75, 0x09, 0x0F, 0x00, 0x00],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(!matches!(
+            lane0,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 1), vec![low[0]]);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        }
+        ctx.write_vreg(k1, 1 << 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let lane1 = execute_lifted_x86(
+            &[0x62, 0xF3, 0x75, 0x09, 0x0F, 0x00, 0x00],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            lane1,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        // imm=16 selects only src1: active output bytes do not consume the
+        // memory concatenand, so the invalid address remains suppressed.
+        ctx.write_vreg(rax, 0x1000);
+        ctx.write_vreg(k1, u64::MAX);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = seeded(&high[..16], 0);
+        }
+        let shifted_out = execute_lifted_x86(
+            &[0x62, 0xF3, 0x75, 0x09, 0x0F, 0x00, 0x10],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(!matches!(
+            shifted_out,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 16), high[..16]);
+        }
+
+        // Without a writemask, the complete memory operand is still read.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let full_fault = execute_lifted_x86(
+            &[0x62, 0xF3, 0x75, 0x08, 0x0F, 0x00, 0x10],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            full_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_packed_extend_families_execute_sign_zero_masks_aliases_and_faults() {
+        fn seeded(input: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, byte) in input.iter().copied().enumerate() {
+                let word = index / 8;
+                let shift = (index % 8) * 8;
+                value[word] = (value[word] & !(0xFFu64 << shift)) | (u64::from(byte) << shift);
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn reference(
+            input: &[u8],
+            source_bytes: usize,
+            destination_bytes: usize,
+            signed: bool,
+            destination_len: usize,
+        ) -> Vec<u8> {
+            let lanes = destination_len / destination_bytes;
+            assert_eq!(input.len(), lanes * source_bytes);
+            let source_bits = source_bytes * 8;
+            let mut result = Vec::with_capacity(destination_len);
+            for lane in input.chunks_exact(source_bytes) {
+                let mut raw_bytes = [0u8; 8];
+                raw_bytes[..source_bytes].copy_from_slice(lane);
+                let raw = u64::from_le_bytes(raw_bytes);
+                let extended = if signed {
+                    let shift = 64 - source_bits;
+                    ((raw << shift) as i64 >> shift) as u64
+                } else {
+                    raw
+                };
+                result.extend_from_slice(&extended.to_le_bytes()[..destination_bytes]);
+            }
+            assert_eq!(result.len(), destination_len);
+            result
+        }
+
+        let cases = [
+            (0x20, 1usize, 2usize, true),
+            (0x21, 1, 4, true),
+            (0x22, 1, 8, true),
+            (0x23, 2, 4, true),
+            (0x24, 2, 8, true),
+            (0x25, 4, 8, true),
+            (0x30, 1, 2, false),
+            (0x31, 1, 4, false),
+            (0x32, 1, 8, false),
+            (0x33, 2, 4, false),
+            (0x34, 2, 8, false),
+            (0x35, 4, 8, false),
+        ];
+        // Keeping the high bit set in every byte guarantees discriminating
+        // negative lanes for each 8-, 16-, and 32-bit source element width.
+        let source = (0..32)
+            .map(|index| 0x80 | (((index * 29 + 3) as u8) & 0x7F))
+            .collect::<Vec<_>>();
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (opcode, source_bytes, destination_bytes, signed) in cases {
+            let legacy_source_len = 16 / destination_bytes * source_bytes;
+            let legacy_expected = reference(
+                &source[..legacy_source_len],
+                source_bytes,
+                destination_bytes,
+                signed,
+                16,
+            );
+            if signed {
+                assert_ne!(
+                    legacy_expected,
+                    reference(
+                        &source[..legacy_source_len],
+                        source_bytes,
+                        destination_bytes,
+                        false,
+                        16,
+                    ),
+                    "signed opcode {opcode:02X} lacks a discriminating lane"
+                );
+            }
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [upper; 16];
+                x86.xmm[1] = seeded(&source[..legacy_source_len], 0);
+            }
+            execute_lifted_x86(&[0x66, 0x0F, 0x38, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[0], 16),
+                    legacy_expected,
+                    "legacy {opcode:02X}"
+                );
+                assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+            }
+
+            let vex_source_len = 32 / destination_bytes * source_bytes;
+            let vex_expected = reference(
+                &source[..vex_source_len],
+                source_bytes,
+                destination_bytes,
+                signed,
+                32,
+            );
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = sentinel;
+                x86.xmm[2] = seeded(&source[..vex_source_len], 0);
+            }
+            execute_lifted_x86(&[0xC4, 0xE2, 0x7D, opcode, 0xC2], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 32), vex_expected, "VEX {opcode:02X}");
+                assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+            }
+
+            let evex_source_len = 64 / destination_bytes * source_bytes;
+            let evex_raw = reference(
+                &source[..evex_source_len],
+                source_bytes,
+                destination_bytes,
+                signed,
+                64,
+            );
+            let mask = 0xA5A5u64;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [0x6B6B_6B6B_6B6B_6B6B; 16];
+                x86.xmm[2] = seeded(&source[..evex_source_len], 0);
+            }
+            ctx.write_vreg(k1, mask);
+            execute_lifted_x86(
+                &[0x62, 0xF2, 0x7D, 0x49, opcode, 0xC2],
+                &mut ctx,
+                &mut memory,
+            );
+            let mut evex_expected = vec![0x6B; 64];
+            for lane in 0..64 / destination_bytes {
+                if mask >> lane & 1 != 0 {
+                    let at = lane * destination_bytes;
+                    evex_expected[at..at + destination_bytes]
+                        .copy_from_slice(&evex_raw[at..at + destination_bytes]);
+                }
+            }
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 64), evex_expected, "EVEX {opcode:02X}");
+                assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // The source and destination may alias. All source bytes must be
+        // captured before the VEX zeroing destination write begins.
+        let alias_source = &source[..16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(alias_source, upper);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x7D, 0x20, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 32),
+                reference(alias_source, 1, 2, true, 32)
+            );
+            assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+        }
+
+        // Legacy PMOVSXBQ reads exactly two bytes, accepts an unaligned
+        // address, and commits no destination state when the second read faults.
+        memory.write(0x3FE, &[0x80, 0x7F]).unwrap();
+        ctx.write_vreg(rax, 0x3FE);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [upper; 16];
+        }
+        let exact = execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x22, 0x00], &mut ctx, &mut memory);
+        assert!(!matches!(
+            exact,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 0xFFFF_FFFF_FFFF_FF80);
+            assert_eq!(x86.xmm[0][1], 0x7F);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+        }
+
+        ctx.write_vreg(rax, 0x3FF);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let partial_fault =
+            execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x22, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            partial_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        // EVEX VPMOVZXBQ maps destination mask bit n to source byte n.
+        // A masked-off byte is not read, including at an invalid address.
+        ctx.write_vreg(rax, 0x3FF);
+        ctx.write_vreg(k1, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [0x6B6B_6B6B_6B6B_6B6B; 16];
+        }
+        let lane0 =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x49, 0x32, 0x00], &mut ctx, &mut memory);
+        assert!(!matches!(
+            lane0,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 0x7F);
+            assert!(
+                x86.xmm[0][1..8]
+                    .iter()
+                    .all(|word| *word == 0x6B6B_6B6B_6B6B_6B6B)
+            );
+            assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+        }
+
+        ctx.write_vreg(k1, 1 << 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let lane1 =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x49, 0x32, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            lane1,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        ctx.write_vreg(rax, 0x1000);
+        ctx.write_vreg(k1, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let all_suppressed =
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x49, 0x32, 0x00], &mut ctx, &mut memory);
+        assert!(!matches!(
+            all_suppressed,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[0][..8], &sentinel[..8]);
+            assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_packed_minmax_executes_signedness_masks_aliases_broadcasts_and_faults() {
+        fn seeded(input: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, byte) in input.iter().copied().enumerate() {
+                let word = index / 8;
+                let shift = (index % 8) * 8;
+                value[word] = (value[word] & !(0xFFu64 << shift)) | (u64::from(byte) << shift);
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn reference(
+            lhs: &[u8],
+            rhs: &[u8],
+            elem_bytes: usize,
+            signed: bool,
+            min: bool,
+        ) -> Vec<u8> {
+            assert_eq!(lhs.len(), rhs.len());
+            let bits = elem_bytes * 8;
+            let signed_value = |raw: u64| {
+                let shift = 64 - bits;
+                ((raw << shift) as i64) >> shift
+            };
+            lhs.chunks_exact(elem_bytes)
+                .zip(rhs.chunks_exact(elem_bytes))
+                .flat_map(|(a, b)| {
+                    let mut a_bytes = [0u8; 8];
+                    let mut b_bytes = [0u8; 8];
+                    a_bytes[..elem_bytes].copy_from_slice(a);
+                    b_bytes[..elem_bytes].copy_from_slice(b);
+                    let av = u64::from_le_bytes(a_bytes);
+                    let bv = u64::from_le_bytes(b_bytes);
+                    let take_a = if signed {
+                        if min {
+                            signed_value(av) < signed_value(bv)
+                        } else {
+                            signed_value(av) > signed_value(bv)
+                        }
+                    } else if min {
+                        av < bv
+                    } else {
+                        av > bv
+                    };
+                    if take_a { a.to_vec() } else { b.to_vec() }
+                })
+                .collect()
+        }
+
+        let lhs = (0..64)
+            .map(|index| [0x80, 0x7F, 0xFF, 0x00, 0x01, 0xFE, 0x40, 0xC0][index % 8])
+            .collect::<Vec<_>>();
+        let rhs = (0..64)
+            .map(|index| [0x7F, 0x80, 0x00, 0xFF, 0xFE, 0x01, 0xC0, 0x40][index % 8])
+            .collect::<Vec<_>>();
+        let cases = [
+            (0x38, 1usize, true, true),
+            (0x39, 4, true, true),
+            (0x3A, 2, false, true),
+            (0x3B, 4, false, true),
+            (0x3C, 1, true, false),
+            (0x3D, 4, true, false),
+            (0x3E, 2, false, false),
+            (0x3F, 4, false, false),
+        ];
+        let qword_cases = [
+            (0x39, true, true),
+            (0x3B, false, true),
+            (0x3D, true, false),
+            (0x3F, false, false),
+        ];
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (opcode, elem_bytes, signed, min) in cases {
+            let legacy_expected = reference(&lhs[..16], &rhs[..16], elem_bytes, signed, min);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = seeded(&lhs[..16], upper);
+                x86.xmm[1] = seeded(&rhs[..16], 0);
+            }
+            execute_lifted_x86(&[0x66, 0x0F, 0x38, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[0], 16),
+                    legacy_expected,
+                    "legacy {opcode:02X}"
+                );
+                assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+            }
+
+            let vex_expected = reference(&lhs[..32], &rhs[..32], elem_bytes, signed, min);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = sentinel;
+                x86.xmm[1] = seeded(&lhs[..32], 0);
+                x86.xmm[2] = seeded(&rhs[..32], 0);
+            }
+            execute_lifted_x86(&[0xC4, 0xE2, 0x75, opcode, 0xC2], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 32), vex_expected, "VEX {opcode:02X}");
+                assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+            }
+
+            let raw = reference(&lhs, &rhs, elem_bytes, signed, min);
+            let mask = 0xA55Au64;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [0x6B6B_6B6B_6B6B_6B6B; 16];
+                x86.xmm[1] = seeded(&lhs, 0);
+                x86.xmm[2] = seeded(&rhs, 0);
+            }
+            ctx.write_vreg(k1, mask);
+            execute_lifted_x86(
+                &[0x62, 0xF2, 0x75, 0x49, opcode, 0xC2],
+                &mut ctx,
+                &mut memory,
+            );
+            let mut expected = vec![0x6B; 64];
+            for lane in 0..64 / elem_bytes {
+                if mask >> lane & 1 != 0 {
+                    let at = lane * elem_bytes;
+                    expected[at..at + elem_bytes].copy_from_slice(&raw[at..at + elem_bytes]);
+                }
+            }
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 64), expected, "EVEX {opcode:02X}");
+                assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+            }
+        }
+
+        for (opcode, signed, min) in qword_cases {
+            let raw = reference(&lhs, &rhs, 8, signed, min);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = sentinel;
+                x86.xmm[1] = seeded(&lhs, 0);
+                x86.xmm[2] = seeded(&rhs, 0);
+            }
+            ctx.write_vreg(k1, u64::MAX);
+            execute_lifted_x86(
+                &[0x62, 0xF2, 0xF5, 0x49, opcode, 0xC2],
+                &mut ctx,
+                &mut memory,
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[0], 64), raw, "EVEX qword {opcode:02X}");
+                assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // VEX permits destination aliasing with either input.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&lhs[..32], 0);
+            x86.xmm[2] = seeded(&rhs[..32], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x7D, 0x38, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 32),
+                reference(&lhs[..32], &rhs[..32], 1, true, true)
+            );
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = seeded(&rhs[..32], 0);
+            x86.xmm[1] = seeded(&lhs[..32], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x38, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 32),
+                reference(&lhs[..32], &rhs[..32], 1, true, true)
+            );
+        }
+
+        memory.write(0x100, &rhs).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x38, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&lhs[..32], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x38, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 32),
+                reference(&lhs[..32], &rhs[1..33], 1, true, true)
+            );
+        }
+
+        // Masked byte memory accesses are fault-suppressed per destination lane.
+        memory.write(0x3FF, &[rhs[0]]).unwrap();
+        ctx.write_vreg(rax, 0x3FF);
+        ctx.write_vreg(k1, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [0x6B6B_6B6B_6B6B_6B6B; 16];
+            x86.xmm[1] = seeded(&lhs, 0);
+        }
+        let lane0 =
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x49, 0x38, 0x00], &mut ctx, &mut memory);
+        assert!(!matches!(
+            lane0,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        ctx.write_vreg(k1, 1 << 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let lane1 =
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x49, 0x38, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            lane1,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        // A zero mask suppresses a qword-broadcast fault. Any active lane
+        // requires the scalar eight-byte read.
+        ctx.write_vreg(rax, 0x1000);
+        ctx.write_vreg(k1, 0);
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF2, 0xF5, 0x59, 0x3F, 0x00], &mut ctx, &mut memory);
+        assert!(!matches!(
+            suppressed,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        ctx.write_vreg(k1, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let exposed =
+            execute_lifted_x86(&[0x62, 0xF2, 0xF5, 0x59, 0x3F, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            exposed,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_original_packed_minmax_executes_values_masks_e4_and_faults() {
+        fn seeded(input: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, byte) in input.iter().copied().enumerate() {
+                let shift = (index % 8) * 8;
+                value[index / 8] =
+                    (value[index / 8] & !(0xFFu64 << shift)) | (u64::from(byte) << shift);
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn reference(opcode: u8, lhs: &[u8], rhs: &[u8]) -> Vec<u8> {
+            match opcode {
+                0xDA | 0xDE => lhs
+                    .iter()
+                    .zip(rhs)
+                    .map(|(a, b)| {
+                        if opcode == 0xDA {
+                            (*a).min(*b)
+                        } else {
+                            (*a).max(*b)
+                        }
+                    })
+                    .collect(),
+                0xEA | 0xEE => lhs
+                    .chunks_exact(2)
+                    .zip(rhs.chunks_exact(2))
+                    .flat_map(|(a, b)| {
+                        let a = i16::from_le_bytes(a.try_into().unwrap());
+                        let b = i16::from_le_bytes(b.try_into().unwrap());
+                        if opcode == 0xEA { a.min(b) } else { a.max(b) }.to_le_bytes()
+                    })
+                    .collect(),
+                _ => unreachable!(),
+            }
+        }
+
+        let lhs = (0..64)
+            .map(|lane| [0x80, 0x7F, 0xFF, 0x00, 0x01, 0xFE, 0x40, 0xC0][lane % 8])
+            .collect::<Vec<_>>();
+        let rhs = (0..64)
+            .map(|lane| [0x7F, 0x80, 0x00, 0xFF, 0xFE, 0x01, 0xC0, 0x40][lane % 8])
+            .collect::<Vec<_>>();
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let sentinel = [0x6B6B_6B6B_6B6B_6B6Bu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for opcode in [0xDA, 0xDE, 0xEA, 0xEE] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = seeded(&lhs[..16], upper);
+                x86.xmm[1] = seeded(&rhs[..16], 0);
+            }
+            execute_lifted_x86(&[0x66, 0x0F, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[0], 16),
+                    reference(opcode, &lhs[..16], &rhs[..16])
+                );
+                assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+            }
+
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[8] = sentinel;
+                x86.xmm[9] = seeded(&lhs[..32], 0);
+                x86.xmm[10] = seeded(&rhs[..32], 0);
+            }
+            execute_lifted_x86(&[0xC4, 0x41, 0x35, opcode, 0xC2], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[8], 32),
+                    reference(opcode, &lhs[..32], &rhs[..32])
+                );
+                assert!(x86.xmm[8][4..].iter().all(|word| *word == 0));
+            }
+
+            let elem_bytes = if opcode < 0xE0 { 1 } else { 2 };
+            let raw = reference(opcode, &lhs, &rhs);
+            let mask = 0xA55Au64;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[16] = sentinel;
+                x86.xmm[17] = seeded(&lhs, 0);
+                x86.xmm[18] = seeded(&rhs, 0);
+            }
+            ctx.write_vreg(k1, mask);
+            execute_lifted_x86(
+                &[0x62, 0xA1, 0x75, 0x41, opcode, 0xC2],
+                &mut ctx,
+                &mut memory,
+            );
+            let mut expected = vec![0x6B; 64];
+            for lane in 0..64 / elem_bytes {
+                if mask >> lane & 1 != 0 {
+                    let at = lane * elem_bytes;
+                    expected[at..at + elem_bytes].copy_from_slice(&raw[at..at + elem_bytes]);
+                }
+            }
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[16], 64), expected);
+                assert!(x86.xmm[16][8..].iter().all(|word| *word == 0));
+            }
+        }
+
+        memory.write(0x3FF, &rhs[..1]).unwrap();
+        ctx.write_vreg(rax, 0x3FF);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = seeded(&lhs, 0);
+        }
+        ctx.write_vreg(k1, 1);
+        let lane0 =
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x49, 0xDA, 0x00], &mut ctx, &mut memory);
+        assert!(!matches!(
+            lane0,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+
+        ctx.write_vreg(k1, 2);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let lane1 =
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x49, 0xDA, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            lane1,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        ctx.write_vreg(rax, 0x1000);
+        ctx.write_vreg(k1, 0);
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x49, 0xEA, 0x00], &mut ctx, &mut memory);
+        assert!(!matches!(
+            suppressed,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+
+        memory.write(0x100, &rhs[..16]).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0xEE, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_ptest_vptest_executes_flag_truth_table_widths_alignment_and_faults() {
+        fn vec_from(input: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, byte) in input.iter().copied().enumerate() {
+                let word = index / 8;
+                let shift = (index % 8) * 8;
+                value[word] = (value[word] & !(0xFFu64 << shift)) | (u64::from(byte) << shift);
+            }
+            value
+        }
+
+        fn expected_flags(before: u64, first: &[u8], second: &[u8]) -> u64 {
+            assert_eq!(first.len(), second.len());
+            let zf = first.iter().zip(second).all(|(a, b)| (*a & *b) == 0);
+            let cf = first.iter().zip(second).all(|(a, b)| ((!*a) & *b) == 0);
+            (before & !0x8D5) | u64::from(cf) | (u64::from(zf) << 6)
+        }
+
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+
+        let truth_table = [
+            ([0x00; 16], [0x00; 16]), // ZF=1, CF=1
+            ([0xFF; 16], [0xFF; 16]), // ZF=0, CF=1
+            ([0x00; 16], [0xFF; 16]), // ZF=1, CF=0
+            ([0x0F; 16], [0xFF; 16]), // ZF=0, CF=0
+        ];
+        for (first, second) in truth_table {
+            ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+            ctx.flags.lazy = None;
+            let first_state = vec_from(&first, 0xA5A5_A5A5_A5A5_A5A5);
+            let second_state = vec_from(&second, 0x5A5A_5A5A_5A5A_5A5A);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = first_state;
+                x86.xmm[1] = second_state;
+            }
+            execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x17, 0xC1], &mut ctx, &mut memory);
+            ctx.flags.materialize_all();
+            assert_eq!(
+                ctx.flags.materialized.to_rflags(),
+                expected_flags(flags_before, &first, &second)
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[0], first_state);
+                assert_eq!(x86.xmm[1], second_state);
+            }
+        }
+
+        // Low 128 bits satisfy both zero reductions. Only the upper 128 bits
+        // make both reductions nonzero, distinguishing VPTEST.128 from .256.
+        let mut first = [0xFFu8; 32];
+        let mut second = [0u8; 32];
+        first[16..].fill(0x0F);
+        second[16..].fill(0xFF);
+        let first_state = vec_from(&first, 0xA5A5_A5A5_A5A5_A5A5);
+        let second_state = vec_from(&second, 0x5A5A_5A5A_5A5A_5A5A);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = first_state;
+            x86.xmm[1] = second_state;
+        }
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xC4, 0xE2, 0x79, 0x17, 0xC1], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(
+            ctx.flags.materialized.to_rflags(),
+            expected_flags(flags_before, &first[..16], &second[..16])
+        );
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xC4, 0xE2, 0x7D, 0x17, 0xC1], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(
+            ctx.flags.materialized.to_rflags(),
+            expected_flags(flags_before, &first, &second)
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], first_state);
+            assert_eq!(x86.xmm[1], second_state);
+        }
+
+        memory.write(0x101, &second).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x17, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xC4, 0xE2, 0x7D, 0x17, 0x00], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(
+            ctx.flags.materialized.to_rflags(),
+            expected_flags(flags_before, &first, &second)
+        );
+
+        // A faulting source read cannot expose any part of the flag update.
+        ctx.write_vreg(rax, 0x3F0);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        let fault = execute_lifted_x86(&[0xC4, 0xE2, 0x7D, 0x17, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], first_state);
+        }
+    }
+
+    #[test]
+    fn lifted_vperm2x128_executes_controls_aliases_memory_and_faults() {
+        fn reference(src1: &[u64; 4], src2: &[u64; 4], imm: u8) -> [u64; 4] {
+            let mut out = [0; 4];
+            for (output_half, control_shift, zero_bit) in [(0usize, 0u8, 3u8), (1, 4, 7)] {
+                if (imm >> zero_bit) & 1 != 0 {
+                    continue;
+                }
+                let control = (imm >> control_shift) & 3;
+                let source = if control < 2 { src1 } else { src2 };
+                let source_half = usize::from(control & 1);
+                out[output_half * 2..output_half * 2 + 2]
+                    .copy_from_slice(&source[source_half * 2..source_half * 2 + 2]);
+            }
+            out
+        }
+
+        let src1 = [10, 11, 12, 13];
+        let src2 = [20, 21, 22, 23];
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for imm in [0x00, 0x31, 0x88, 0x82, 0xFF] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = [upper; 16];
+                x86.xmm[1][..4].copy_from_slice(&src1);
+                x86.xmm[2][..4].copy_from_slice(&src2);
+            }
+            assert!(matches!(
+                execute_lifted_x86(&[0xC4, 0xE3, 0x75, 0x06, 0xC2, imm], &mut ctx, &mut memory,),
+                BlockResult::Exit(ExitReason::Halt)
+            ));
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(&x86.xmm[0][..4], &reference(&src1, &src2, imm));
+                assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // Destination aliases SRC2; all selected halves must be captured
+        // before the architectural YMM write clears upper state.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0][..4].copy_from_slice(&src2);
+            x86.xmm[1][..4].copy_from_slice(&src1);
+        }
+        execute_lifted_x86(&[0xC4, 0xE3, 0x75, 0x06, 0xC0, 0x23], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[0][..4], &reference(&src1, &src2, 0x23));
+        }
+
+        let memory_source = [30u64, 31, 32, 33];
+        let raw = memory_source
+            .iter()
+            .flat_map(|word| word.to_le_bytes())
+            .collect::<Vec<_>>();
+        memory.write(0x21, &raw).unwrap();
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        ctx.write_vreg(rax, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = [upper; 16];
+            x86.xmm[9][..4].copy_from_slice(&src1);
+        }
+        execute_lifted_x86(
+            &[0xC4, 0x63, 0x35, 0x46, 0x40, 0x20, 0x82],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[8][..4], &reference(&src1, &memory_source, 0x82));
+        }
+
+        ctx.write_vreg(rax, 0xF0);
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = sentinel;
+        }
+        let fault = execute_lifted_x86(
+            &[0xC4, 0x63, 0x35, 0x46, 0x40, 0x20, 0x82],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[8], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_vtestps_vtestpd_execute_sign_only_truth_table_and_faults() {
+        fn vector(signs: u8, elem_bytes: usize, lanes: usize) -> VecValue {
+            let mut raw = [0u8; 128];
+            for lane in 0..lanes {
+                let chunk = &mut raw[lane * elem_bytes..(lane + 1) * elem_bytes];
+                chunk.fill(0x7F);
+                if signs & (1 << lane) != 0 {
+                    chunk[elem_bytes - 1] |= 0x80;
+                }
+            }
+            let mut value = [0u64; 16];
+            for (word, chunk) in value.iter_mut().zip(raw.chunks_exact(8)) {
+                *word = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            value
+        }
+
+        fn expected(before: u64, first: u8, second: u8, lanes: usize) -> u64 {
+            let lanes_mask = ((1u16 << lanes) - 1) as u8;
+            let zf = first & second & lanes_mask == 0;
+            let cf = (!first) & second & lanes_mask == 0;
+            (before & !0x8D5) | u64::from(cf) | (u64::from(zf) << 6)
+        }
+
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x80);
+        for (first, second) in [(0, 0), (0xF, 0xF), (0, 0xF), (0x5, 0xF)] {
+            let first_state = vector(first, 4, 4);
+            let second_state = vector(second, 4, 4);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[2] = first_state;
+                x86.xmm[1] = second_state;
+            }
+            ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+            ctx.flags.lazy = None;
+            assert!(matches!(
+                execute_lifted_x86(&[0xC4, 0xE2, 0x79, 0x0E, 0xD1], &mut ctx, &mut memory,),
+                BlockResult::Exit(ExitReason::Halt)
+            ));
+            ctx.flags.materialize_all();
+            assert_eq!(
+                ctx.flags.materialized.to_rflags(),
+                expected(flags_before, first, second, 4),
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[2], first_state);
+                assert_eq!(x86.xmm[1], second_state);
+            }
+        }
+
+        let first = vector(0x5, 8, 4);
+        let second = vector(0xC, 8, 4);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[10] = first;
+            x86.xmm[9] = second;
+        }
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0xC4, 0x42, 0x7D, 0x0F, 0xD1], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(
+            ctx.flags.materialized.to_rflags(),
+            expected(flags_before, 0x5, 0xC, 4),
+        );
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let memory_source = vector(0xA5, 4, 8);
+        let memory_bytes = memory_source
+            .iter()
+            .flat_map(|word| word.to_le_bytes())
+            .take(32)
+            .collect::<Vec<_>>();
+        memory.write(0x21, &memory_bytes).unwrap();
+        ctx.write_vreg(rax, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[3] = vector(0x3C, 4, 8);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0x7D, 0x0E, 0x58, 0x20], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+
+        ctx.write_vreg(rax, 0x70);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        let fault =
+            execute_lifted_x86(&[0xC4, 0xE2, 0x7D, 0x0E, 0x58, 0x20], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_variable_blends_execute_mask_bits_aliases_widths_and_faults() {
+        fn vec_from(input: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, byte) in input.iter().copied().enumerate() {
+                let word = index / 8;
+                let shift = (index % 8) * 8;
+                value[word] = (value[word] & !(0xFFu64 << shift)) | (u64::from(byte) << shift);
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn mask_for(elem_bytes: usize, len: usize) -> Vec<u8> {
+            let mut mask = vec![0x5A; len];
+            for (lane, chunk) in mask.chunks_exact_mut(elem_bytes).enumerate() {
+                chunk[elem_bytes - 1] = if lane % 3 == 1 { 0x80 } else { 0x7F };
+            }
+            mask
+        }
+
+        fn reference(src1: &[u8], src2: &[u8], mask: &[u8], elem_bytes: usize) -> Vec<u8> {
+            assert_eq!(src1.len(), src2.len());
+            assert_eq!(src1.len(), mask.len());
+            src1.chunks_exact(elem_bytes)
+                .zip(src2.chunks_exact(elem_bytes))
+                .zip(mask.chunks_exact(elem_bytes))
+                .flat_map(|((a, b), m)| {
+                    if m[elem_bytes - 1] & 0x80 != 0 {
+                        b.to_vec()
+                    } else {
+                        a.to_vec()
+                    }
+                })
+                .collect()
+        }
+
+        let src1 = (0..32)
+            .map(|index| (index * 29 + 0x13) as u8)
+            .collect::<Vec<_>>();
+        let src2 = (0..32)
+            .map(|index| (0xF1u8).wrapping_sub((index * 17) as u8))
+            .collect::<Vec<_>>();
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (legacy_opcode, vex_opcode, elem_bytes) in
+            [(0x10, 0x4C, 1usize), (0x14, 0x4A, 4), (0x15, 0x4B, 8)]
+        {
+            let mask128 = mask_for(elem_bytes, 16);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = vec_from(&mask128, 0);
+                x86.xmm[1] = vec_from(&src2[..16], 0);
+                x86.xmm[2] = vec_from(&src1[..16], upper);
+            }
+            execute_lifted_x86(
+                &[0x66, 0x0F, 0x38, legacy_opcode, 0xD1],
+                &mut ctx,
+                &mut memory,
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[2], 16),
+                    reference(&src1[..16], &src2[..16], &mask128, elem_bytes),
+                    "legacy opcode {legacy_opcode:02X}"
+                );
+                assert!(x86.xmm[2][2..].iter().all(|word| *word == upper));
+            }
+
+            for (p2, width) in [(0x61, 16usize), (0x65, 32)] {
+                let mask = mask_for(elem_bytes, width);
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.xmm[1] = sentinel;
+                    x86.xmm[2] = vec_from(&src2[..width], 0);
+                    x86.xmm[3] = vec_from(&src1[..width], 0);
+                    x86.xmm[4] = vec_from(&mask, 0);
+                }
+                execute_lifted_x86(
+                    &[0xC4, 0xE3, p2, vex_opcode, 0xCA, 0x40],
+                    &mut ctx,
+                    &mut memory,
+                );
+                if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                    assert_eq!(
+                        bytes(&x86.xmm[1], width),
+                        reference(&src1[..width], &src2[..width], &mask, elem_bytes),
+                        "VEX opcode {vex_opcode:02X} width {width}"
+                    );
+                    assert!(x86.xmm[1][width / 8..].iter().all(|word| *word == 0));
+                }
+            }
+        }
+
+        // Legacy destination=XMM0 aliases the implicit mask. Its original bits
+        // are both source 1 data and the lane-selection mask.
+        let alias_mask = mask_for(1, 16);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = vec_from(&alias_mask, upper);
+            x86.xmm[1] = vec_from(&src2[..16], 0);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x10, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 16),
+                reference(&alias_mask, &src2[..16], &alias_mask, 1)
+            );
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+        }
+
+        // VEX destination aliases the explicit mask register encoded by /is4.
+        let explicit_mask = mask_for(1, 32);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = vec_from(&explicit_mask, 0);
+            x86.xmm[2] = vec_from(&src2, 0);
+            x86.xmm[3] = vec_from(&src1, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE3, 0x65, 0x4C, 0xCA, 0x10], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[1], 32),
+                reference(&src1, &src2, &explicit_mask, 1)
+            );
+            assert!(x86.xmm[1][4..].iter().all(|word| *word == 0));
+        }
+
+        memory.write(0x101, &src2).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = vec_from(&mask_for(1, 16), 0);
+            x86.xmm[2] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x10, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2], sentinel);
+        }
+
+        let mask256 = mask_for(4, 32);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = sentinel;
+            x86.xmm[3] = vec_from(&src1, 0);
+            x86.xmm[4] = vec_from(&mask256, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE3, 0x65, 0x4A, 0x10, 0x40], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[2], 32), reference(&src1, &src2, &mask256, 4));
+        }
+
+        ctx.write_vreg(rax, 0x3F0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = sentinel;
+        }
+        let fault =
+            execute_lifted_x86(&[0xC4, 0xE3, 0x65, 0x4A, 0x10, 0x40], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2], sentinel);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_pmuldq_executes_even_signed_lanes_masks_aliases_and_faults() {
+        fn packed(values: &[i32], fill: u64) -> VecValue {
+            let bytes = values
+                .iter()
+                .flat_map(|v| v.to_le_bytes())
+                .collect::<Vec<_>>();
+            let mut out = [fill; 16];
+            for (i, byte) in bytes.into_iter().enumerate() {
+                let shift = (i % 8) * 8;
+                out[i / 8] = (out[i / 8] & !(0xFFu64 << shift)) | (u64::from(byte) << shift);
+            }
+            out
+        }
+        fn products(a: &[i32], b: &[i32]) -> Vec<u8> {
+            a.iter()
+                .step_by(2)
+                .zip(b.iter().step_by(2))
+                .flat_map(|(x, y)| (i64::from(*x) * i64::from(*y)).to_le_bytes())
+                .collect()
+        }
+        fn bytes(v: &VecValue, len: usize) -> Vec<u8> {
+            v.iter().flat_map(|w| w.to_le_bytes()).take(len).collect()
+        }
+
+        let a = [
+            -1,
+            0x1111,
+            2,
+            0x2222,
+            i32::MIN,
+            7,
+            i32::MAX,
+            -9,
+            -3,
+            4,
+            5,
+            6,
+            -7,
+            8,
+            9,
+            10,
+        ];
+        let b = [
+            3,
+            -1,
+            i32::MAX,
+            2,
+            -1,
+            5,
+            2,
+            6,
+            -11,
+            12,
+            -13,
+            14,
+            15,
+            -16,
+            -17,
+            18,
+        ];
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = packed(&a[..4], upper);
+            x86.xmm[1] = packed(&b[..4], 0);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x28, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 16), products(&a[..4], &b[..4]));
+            assert!(x86.xmm[0][2..].iter().all(|w| *w == upper));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = packed(&a[..8], 0);
+            x86.xmm[2] = packed(&b[..8], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x28, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 32), products(&a[..8], &b[..8]));
+            assert!(x86.xmm[0][4..].iter().all(|w| *w == 0));
+        }
+
+        let raw = products(&a, &b);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [0x6B6B_6B6B_6B6B_6B6B; 16];
+            x86.xmm[1] = packed(&a, 0);
+            x86.xmm[2] = packed(&b, 0);
+        }
+        ctx.write_vreg(k1, 0x55);
+        execute_lifted_x86(&[0x62, 0xF2, 0xF5, 0x49, 0x28, 0xC2], &mut ctx, &mut memory);
+        let mut expected = vec![0x6B; 64];
+        for lane in 0..8 {
+            if (0x55 >> lane) & 1 != 0 {
+                expected[lane * 8..lane * 8 + 8].copy_from_slice(&raw[lane * 8..lane * 8 + 8]);
+            }
+        }
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 64), expected);
+        }
+
+        // Same-register VEX source/destination must be captured before zeroing.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = packed(&a[..8], 0);
+            x86.xmm[2] = packed(&b[..8], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x7D, 0x28, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 32), products(&a[..8], &b[..8]));
+        }
+
+        memory
+            .write(
+                0x3F8,
+                &b[..2]
+                    .iter()
+                    .flat_map(|v| v.to_le_bytes())
+                    .collect::<Vec<_>>(),
+            )
+            .unwrap();
+        ctx.write_vreg(rax, 0x3F8);
+        ctx.write_vreg(k1, 1);
+        let ok = execute_lifted_x86(&[0x62, 0xF2, 0xF5, 0x49, 0x28, 0x00], &mut ctx, &mut memory);
+        assert!(!matches!(
+            ok,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        ctx.write_vreg(k1, 2);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF2, 0xF5, 0x49, 0x28, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_pmuludq_executes_even_unsigned_lanes_widths_and_masks() {
+        fn packed(values: &[u32], fill: u64) -> VecValue {
+            let raw = values
+                .iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect::<Vec<_>>();
+            let mut out = [fill; 16];
+            for (index, byte) in raw.into_iter().enumerate() {
+                let shift = (index % 8) * 8;
+                out[index / 8] =
+                    (out[index / 8] & !(0xFFu64 << shift)) | (u64::from(byte) << shift);
+            }
+            out
+        }
+
+        fn products(a: &[u32], b: &[u32]) -> Vec<u8> {
+            a.iter()
+                .step_by(2)
+                .zip(b.iter().step_by(2))
+                .flat_map(|(x, y)| (u64::from(*x) * u64::from(*y)).to_le_bytes())
+                .collect()
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        let a = [
+            u32::MAX,
+            1,
+            0x8000_0000,
+            2,
+            3,
+            4,
+            0xFFFF_0001,
+            5,
+            7,
+            6,
+            11,
+            8,
+            13,
+            9,
+            17,
+            10,
+        ];
+        let b = [
+            u32::MAX,
+            10,
+            2,
+            11,
+            0xF000_0000,
+            12,
+            0x8000_0001,
+            13,
+            19,
+            14,
+            23,
+            15,
+            29,
+            16,
+            31,
+            17,
+        ];
+        let flags_before = 0xCD7;
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(1);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = packed(&a[..4], upper);
+            x86.xmm[1] = packed(&b[..4], 0);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0xF4, 0xD1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[2], 16), products(&a[..4], &b[..4]));
+            assert!(x86.xmm[2][2..].iter().all(|word| *word == upper));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = [upper; 16];
+            x86.xmm[9] = packed(&a[..8], 0);
+            x86.xmm[10] = packed(&b[..8], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x41, 0x35, 0xF4, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[8], 32), products(&a[..8], &b[..8]));
+            assert!(x86.xmm[8][4..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = [0x6B6B_6B6B_6B6B_6B6B; 16];
+            x86.xmm[17] = packed(&a, 0);
+            x86.xmm[18] = packed(&b, 0);
+            x86.k[1] = 0x55;
+        }
+        execute_lifted_x86(&[0x62, 0xA1, 0xF5, 0x41, 0xF4, 0xC2], &mut ctx, &mut memory);
+        let raw = products(&a, &b);
+        let mut expected = vec![0x6B; 64];
+        for lane in 0..8 {
+            if (0x55 >> lane) & 1 != 0 {
+                expected[lane * 8..lane * 8 + 8].copy_from_slice(&raw[lane * 8..lane * 8 + 8]);
+            }
+        }
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[16], 64), expected);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_pmulld_pmulq_execute_widths_masks_broadcasts_and_fault_suppression() {
+        fn packed32(values: &[u32], fill: u64) -> VecValue {
+            let raw = values
+                .iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect::<Vec<_>>();
+            let mut out = [fill; 16];
+            for (index, byte) in raw.into_iter().enumerate() {
+                let shift = (index % 8) * 8;
+                out[index / 8] =
+                    (out[index / 8] & !(0xFFu64 << shift)) | (u64::from(byte) << shift);
+            }
+            out
+        }
+
+        fn lanes32(value: &VecValue, count: usize) -> Vec<u32> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 4)
+                .collect::<Vec<_>>()
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+
+        let a32 = (0..16)
+            .map(|lane| 0x8000_0001u32.wrapping_add(lane * 0x1111_1111))
+            .collect::<Vec<_>>();
+        let b32 = (0..16)
+            .map(|lane| 0xFFFF_0001u32.wrapping_sub(lane * 0x0101_0101))
+            .collect::<Vec<_>>();
+        let a64 = [u64::MAX, 0x8000_0000_0000_0001, 3, 5, 7, 11, 13, 17];
+        let b64 = [19, 23, u64::MAX, 29, 31, 37, 41, 43];
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = packed32(&a32, 0);
+            x86.xmm[18] = packed32(&b32, 0);
+        }
+        execute_lifted_x86(&[0x62, 0xA2, 0x75, 0x40, 0x40, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                lanes32(&x86.xmm[16], 16),
+                a32.iter()
+                    .zip(&b32)
+                    .map(|(a, b)| a.wrapping_mul(*b))
+                    .collect::<Vec<_>>(),
+            );
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[20][..8].copy_from_slice(&a64);
+            x86.xmm[21][..8].copy_from_slice(&b64);
+        }
+        execute_lifted_x86(&[0x62, 0xA2, 0xDD, 0x40, 0x40, 0xDD], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                &x86.xmm[19][..8],
+                &a64.iter()
+                    .zip(&b64)
+                    .map(|(a, b)| a.wrapping_mul(*b))
+                    .collect::<Vec<_>>(),
+            );
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        memory.write(0xFC, &7u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0xF8);
+        ctx.write_vreg(k1, 0xA55A);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [0x6B6B_6B6B_6B6B_6B6B; 16];
+            x86.xmm[1] = packed32(&a32, 0);
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF2, 0x75, 0xD9, 0x40, 0x40, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let actual = lanes32(&x86.xmm[0], 16);
+            for lane in 0..16 {
+                assert_eq!(
+                    actual[lane],
+                    if (0xA55A >> lane) & 1 != 0 {
+                        a32[lane].wrapping_mul(7)
+                    } else {
+                        0
+                    },
+                );
+            }
+        }
+
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k1, 0);
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xF2, 0x75, 0xD9, 0x40, 0x40, 0x01],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        ctx.write_vreg(k1, 1);
+        let fault = execute_lifted_x86(
+            &[0x62, 0xF2, 0x75, 0xD9, 0x40, 0x40, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_pmullw_executes_widths_masks_alignment_and_fault_suppression() {
+        fn packed(values: &[u16], fill: u64) -> VecValue {
+            let raw = values
+                .iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect::<Vec<_>>();
+            let mut out = [fill; 16];
+            for (index, byte) in raw.into_iter().enumerate() {
+                let shift = (index % 8) * 8;
+                out[index / 8] =
+                    (out[index / 8] & !(0xFFu64 << shift)) | (u64::from(byte) << shift);
+            }
+            out
+        }
+
+        fn lanes(value: &VecValue, count: usize) -> Vec<u16> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 2)
+                .collect::<Vec<_>>()
+                .chunks_exact(2)
+                .map(|chunk| u16::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+
+        let a = (0..32)
+            .map(|lane| 0x8001u16.wrapping_add((lane as u16).wrapping_mul(0x1111)))
+            .collect::<Vec<_>>();
+        let b = (0..32)
+            .map(|lane| 0xFFF1u16.wrapping_sub((lane as u16).wrapping_mul(0x0101)))
+            .collect::<Vec<_>>();
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = packed(&a[..8], upper);
+            x86.xmm[1] = packed(&b[..8], 0);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0xD5, 0xD1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                lanes(&x86.xmm[2], 8),
+                a[..8]
+                    .iter()
+                    .zip(&b[..8])
+                    .map(|(a, b)| a.wrapping_mul(*b))
+                    .collect::<Vec<_>>(),
+            );
+            assert!(x86.xmm[2][2..].iter().all(|word| *word == upper));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = [upper; 16];
+            x86.xmm[9] = packed(&a[..16], 0);
+            x86.xmm[10] = packed(&b[..16], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x41, 0x35, 0xD5, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                lanes(&x86.xmm[8], 16),
+                a[..16]
+                    .iter()
+                    .zip(&b[..16])
+                    .map(|(a, b)| a.wrapping_mul(*b))
+                    .collect::<Vec<_>>(),
+            );
+            assert!(x86.xmm[8][4..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = [upper; 16];
+            x86.xmm[17] = packed(&a, 0);
+            x86.xmm[18] = packed(&b, 0);
+            x86.k[1] = 0xA5A5_5A5A;
+        }
+        execute_lifted_x86(&[0x62, 0xA1, 0x75, 0x41, 0xD5, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let actual = lanes(&x86.xmm[16], 32);
+            for lane in 0..32 {
+                assert_eq!(
+                    actual[lane],
+                    if (0xA5A5_5A5Au64 >> lane) & 1 != 0 {
+                        a[lane].wrapping_mul(b[lane])
+                    } else {
+                        0xA5A5
+                    },
+                );
+            }
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let memory_words = (0..8).map(|lane| lane as u16 + 3).collect::<Vec<_>>();
+        let raw = memory_words
+            .iter()
+            .flat_map(|word| word.to_le_bytes())
+            .collect::<Vec<_>>();
+        memory.write(0xF0, &raw).unwrap();
+        ctx.write_vreg(rax, 0xF0);
+        ctx.write_vreg(k1, 0xFF);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [0; 16];
+            x86.xmm[1] = packed(&a, 0);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x49, 0xD5, 0x00], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        ctx.write_vreg(k1, 1 << 8);
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x49, 0xD5, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        // Legacy SSE requires 16-byte alignment before its source load.
+        ctx.write_vreg(rax, 0x71);
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0xD5, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_pmulhw_pmulhuw_execute_signedness_masks_alignment_and_faults() {
+        fn packed(values: &[u16], fill: u64) -> VecValue {
+            let raw = values
+                .iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect::<Vec<_>>();
+            let mut out = [fill; 16];
+            for (index, byte) in raw.into_iter().enumerate() {
+                let shift = (index % 8) * 8;
+                out[index / 8] =
+                    (out[index / 8] & !(0xFFu64 << shift)) | (u64::from(byte) << shift);
+            }
+            out
+        }
+
+        fn lanes(value: &VecValue, count: usize) -> Vec<u16> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 2)
+                .collect::<Vec<_>>()
+                .chunks_exact(2)
+                .map(|chunk| u16::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+
+        fn signed_high(a: u16, b: u16) -> u16 {
+            let product = i32::from(a as i16).wrapping_mul(i32::from(b as i16));
+            ((product as u32) >> 16) as u16
+        }
+
+        fn unsigned_high(a: u16, b: u16) -> u16 {
+            ((u32::from(a) * u32::from(b)) >> 16) as u16
+        }
+
+        let a = (0..32)
+            .map(|lane| 0x8001u16.wrapping_add((lane as u16).wrapping_mul(0x1111)))
+            .collect::<Vec<_>>();
+        let b = (0..32)
+            .map(|lane| 0xFFF1u16.wrapping_sub((lane as u16).wrapping_mul(0x0101)))
+            .collect::<Vec<_>>();
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (opcode, reference) in [
+            (0xE5u8, signed_high as fn(u16, u16) -> u16),
+            (0xE4, unsigned_high as fn(u16, u16) -> u16),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[2] = packed(&a[..8], upper);
+                x86.xmm[1] = packed(&b[..8], 0);
+            }
+            execute_lifted_x86(&[0x66, 0x0F, opcode, 0xD1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    lanes(&x86.xmm[2], 8),
+                    a[..8]
+                        .iter()
+                        .zip(&b[..8])
+                        .map(|(a, b)| reference(*a, *b))
+                        .collect::<Vec<_>>(),
+                );
+                assert!(x86.xmm[2][2..].iter().all(|word| *word == upper));
+            }
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = [upper; 16];
+            x86.xmm[9] = packed(&a[..16], 0);
+            x86.xmm[10] = packed(&b[..16], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x41, 0x35, 0xE5, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                lanes(&x86.xmm[8], 16),
+                a[..16]
+                    .iter()
+                    .zip(&b[..16])
+                    .map(|(a, b)| signed_high(*a, *b))
+                    .collect::<Vec<_>>(),
+            );
+            assert!(x86.xmm[8][4..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = [upper; 16];
+            x86.xmm[17] = packed(&a, 0);
+            x86.xmm[18] = packed(&b, 0);
+            x86.k[1] = 0xA5A5_5A5A;
+        }
+        execute_lifted_x86(&[0x62, 0xA1, 0x75, 0x41, 0xE4, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let actual = lanes(&x86.xmm[16], 32);
+            for lane in 0..32 {
+                assert_eq!(
+                    actual[lane],
+                    if (0xA5A5_5A5Au64 >> lane) & 1 != 0 {
+                        unsigned_high(a[lane], b[lane])
+                    } else {
+                        0xA5A5
+                    },
+                );
+            }
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let memory_words = (0..8).map(|lane| lane as u16 + 3).collect::<Vec<_>>();
+        let raw = memory_words
+            .iter()
+            .flat_map(|word| word.to_le_bytes())
+            .collect::<Vec<_>>();
+        memory.write(0xF0, &raw).unwrap();
+        ctx.write_vreg(rax, 0xF0);
+        ctx.write_vreg(k1, 0xFF);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [0; 16];
+            x86.xmm[1] = packed(&a, 0);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x49, 0xE5, 0x00], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        ctx.write_vreg(k1, 1 << 8);
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x49, 0xE5, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+        ctx.write_vreg(rax, 0xF1);
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0xE4, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_pavgb_pavgw_execute_rounded_unsigned_masks_alignment_and_faults() {
+        fn packed_bytes(values: &[u8], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (index, byte) in values.iter().copied().enumerate() {
+                let shift = (index % 8) * 8;
+                out[index / 8] =
+                    (out[index / 8] & !(0xFFu64 << shift)) | (u64::from(byte) << shift);
+            }
+            out
+        }
+
+        fn bytes(value: &VecValue, count: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count)
+                .collect()
+        }
+
+        fn packed_words(values: &[u16], fill: u64) -> VecValue {
+            let raw = values
+                .iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect::<Vec<_>>();
+            packed_bytes(&raw, fill)
+        }
+
+        fn words(value: &VecValue, count: usize) -> Vec<u16> {
+            bytes(value, count * 2)
+                .chunks_exact(2)
+                .map(|chunk| u16::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+
+        let a8 = (0..64)
+            .map(|lane| (lane * 37 + 0x7F) as u8)
+            .collect::<Vec<_>>();
+        let b8 = (0..64)
+            .map(|lane| 0xFFu8.wrapping_sub((lane * 29) as u8))
+            .collect::<Vec<_>>();
+        let a16 = (0..32)
+            .map(|lane| 0x8001u16.wrapping_add((lane as u16).wrapping_mul(0x1111)))
+            .collect::<Vec<_>>();
+        let b16 = (0..32)
+            .map(|lane| 0xFFF1u16.wrapping_sub((lane as u16).wrapping_mul(0x0101)))
+            .collect::<Vec<_>>();
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = packed_bytes(&a8[..16], upper);
+            x86.xmm[1] = packed_bytes(&b8[..16], 0);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0xE0, 0xD1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[2], 16),
+                a8[..16]
+                    .iter()
+                    .zip(&b8[..16])
+                    .map(|(a, b)| ((u16::from(*a) + u16::from(*b) + 1) >> 1) as u8)
+                    .collect::<Vec<_>>(),
+            );
+            assert!(x86.xmm[2][2..].iter().all(|word| *word == upper));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[4] = packed_words(&a16[..8], upper);
+            x86.xmm[3] = packed_words(&b16[..8], 0);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0xE3, 0xE3], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                words(&x86.xmm[4], 8),
+                a16[..8]
+                    .iter()
+                    .zip(&b16[..8])
+                    .map(|(a, b)| ((u32::from(*a) + u32::from(*b) + 1) >> 1) as u16)
+                    .collect::<Vec<_>>(),
+            );
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = [upper; 16];
+            x86.xmm[9] = packed_bytes(&a8[..32], 0);
+            x86.xmm[10] = packed_bytes(&b8[..32], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x41, 0x35, 0xE0, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[8], 32),
+                a8[..32]
+                    .iter()
+                    .zip(&b8[..32])
+                    .map(|(a, b)| ((u16::from(*a) + u16::from(*b) + 1) >> 1) as u8)
+                    .collect::<Vec<_>>(),
+            );
+            assert!(x86.xmm[8][4..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = [upper; 16];
+            x86.xmm[17] = packed_words(&a16, 0);
+            x86.xmm[18] = packed_words(&b16, 0);
+            x86.k[1] = 0xA5A5_5A5A;
+        }
+        execute_lifted_x86(&[0x62, 0xA1, 0x75, 0x41, 0xE3, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let actual = words(&x86.xmm[16], 32);
+            for lane in 0..32 {
+                assert_eq!(
+                    actual[lane],
+                    if (0xA5A5_5A5Au64 >> lane) & 1 != 0 {
+                        ((u32::from(a16[lane]) + u32::from(b16[lane]) + 1) >> 1) as u16
+                    } else {
+                        0xA5A5
+                    },
+                );
+            }
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        memory.write(0xF0, &b8[..16]).unwrap();
+        ctx.write_vreg(rax, 0xF0);
+        ctx.write_vreg(k1, 0xFFFF);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [0; 16];
+            x86.xmm[1] = packed_bytes(&a8, 0);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x49, 0xE0, 0x00], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        ctx.write_vreg(k1, 1 << 16);
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x49, 0xE0, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+        ctx.write_vreg(rax, 0xF1);
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0xE3, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn vfma_executes_fused_f32_f64_and_sign_controls() {
+        let regs = [
+            X86Reg::Xmm(0),
+            X86Reg::Xmm(1),
+            X86Reg::Xmm(2),
+            X86Reg::Xmm(3),
+        ]
+        .map(|reg| VReg::Arch(ArchReg::X86(reg)));
+        for (elem, values, expected) in [
+            (
+                VecElementType::F32,
+                [
+                    f32::to_bits(1.5) as u64,
+                    f32::to_bits(4.0) as u64,
+                    f32::to_bits(2.0) as u64,
+                ],
+                f32::to_bits(-8.0) as u64,
+            ),
+            (
+                VecElementType::F64,
+                [f64::to_bits(1.5), f64::to_bits(4.0), f64::to_bits(2.0)],
+                f64::to_bits(-8.0),
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0][0] = values[0];
+                x86.xmm[1][0] = values[1];
+                x86.xmm[2][0] = values[2];
+            }
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::VFma {
+                    dst: regs[3],
+                    src1: regs[0],
+                    src2: regs[1],
+                    acc: regs[2],
+                    elem,
+                    lanes: 1,
+                    negate_product: true,
+                    negate_acc: true,
+                },
+            );
+            builder.set_terminator(Terminator::Trap {
+                kind: TrapKind::Halt,
+            });
+            let func = builder.finish();
+            let mut memory = FlatMemory::new(0x100);
+            assert!(matches!(
+                SmirInterpreter::new().execute_block(&mut ctx, &mut memory, &func.blocks[0]),
+                BlockResult::Exit(ExitReason::Halt)
+            ));
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[3][0], expected);
+                assert!(x86.xmm[3][1..].iter().all(|word| *word == 0));
+            }
+        }
+    }
+
+    #[test]
+    fn reciprocal_estimates_execute_special_cases_and_accuracy_bound() {
+        fn packed_f32(bits: &[u32]) -> VecValue {
+            let mut out = [0; 16];
+            for (lane, value) in bits.iter().copied().enumerate() {
+                SmirInterpreter::set_lane(&mut out, lane as u8, 32, u64::from(value));
+            }
+            out
+        }
+
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = packed_f32(&[0, 0x8000_0000, 1, 0x8000_0001]);
+            x86.xmm[1] = packed_f32(&[
+                f32::INFINITY.to_bits(),
+                f32::NEG_INFINITY.to_bits(),
+                0x7FA1_2345,
+                0xFFC5_4321,
+            ]);
+            x86.xmm[2] = packed_f32(&[
+                7.0f32.to_bits(),
+                (-11.0f32).to_bits(),
+                f32::MAX.to_bits(),
+                f32::MIN_POSITIVE.to_bits(),
+            ]);
+            x86.xmm[3] = packed_f32(&[
+                4.0f32.to_bits(),
+                (-4.0f32).to_bits(),
+                f32::INFINITY.to_bits(),
+                f32::NEG_INFINITY.to_bits(),
+            ]);
+        }
+        let regs = (0..8)
+            .map(|index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index))))
+            .collect::<Vec<_>>();
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        for (dst, src, op) in [
+            (4usize, 0usize, VecUnaryOp::FRecipEstimate),
+            (5, 1, VecUnaryOp::FRecipEstimate),
+            (6, 2, VecUnaryOp::FRecipEstimate),
+            (7, 3, VecUnaryOp::FRsqrtEstimate),
+        ] {
+            builder.push_op(
+                0x1000,
+                OpKind::VUnary {
+                    dst: regs[dst],
+                    src: regs[src],
+                    elem: VecElementType::F32,
+                    lanes: 4,
+                    op,
+                },
+            );
+        }
+        builder.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        let func = builder.finish();
+        let mut memory = FlatMemory::new(0x100);
+        assert!(matches!(
+            SmirInterpreter::new().execute_block(&mut ctx, &mut memory, &func.blocks[0]),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                (0..4)
+                    .map(|lane| SmirInterpreter::get_lane(&x86.xmm[4], lane, 32) as u32)
+                    .collect::<Vec<_>>(),
+                [
+                    f32::INFINITY.to_bits(),
+                    f32::NEG_INFINITY.to_bits(),
+                    f32::INFINITY.to_bits(),
+                    f32::NEG_INFINITY.to_bits(),
+                ]
+            );
+            assert_eq!(
+                (0..4)
+                    .map(|lane| SmirInterpreter::get_lane(&x86.xmm[5], lane, 32) as u32)
+                    .collect::<Vec<_>>(),
+                [0, 0x8000_0000, 0x7FE1_2345, 0xFFC5_4321]
+            );
+            // Exact binary32 evaluation is a valid deterministic member of the
+            // architectural estimate set. Verify the architectural error bound
+            // independently in binary64 rather than requiring a hardware bit pattern.
+            for (lane, input) in [(0u8, 7.0f64), (1, -11.0)] {
+                let actual =
+                    f64::from(f32::from_bits(
+                        SmirInterpreter::get_lane(&x86.xmm[6], lane, 32) as u32,
+                    ));
+                let exact = 1.0f64 / input;
+                let relative_error = ((actual - exact) / exact).abs();
+                assert!(relative_error <= 1.5 * 2.0f64.powi(-12));
+            }
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[6], 2, 32), 0);
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[6], 3, 32),
+                u64::from((1.0f32 / f32::MIN_POSITIVE).to_bits())
+            );
+            assert_eq!(
+                (0..4)
+                    .map(|lane| SmirInterpreter::get_lane(&x86.xmm[7], lane, 32) as u32)
+                    .collect::<Vec<_>>(),
+                [0.5f32.to_bits(), 0xFFC0_0000, 0, 0xFFC0_0000]
+            );
+        }
+    }
+
+    #[test]
+    fn lifted_vex_fma3_executes_orders_sign_families_alternation_scalar_and_faults() {
+        fn packed_f32(values: &[f32], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (lane, value) in values.iter().copied().enumerate() {
+                SmirInterpreter::set_lane(&mut out, lane as u8, 32, u64::from(value.to_bits()));
+            }
+            out
+        }
+
+        let old = [1.5, -2.0, 3.25, -4.5, 5.0, -6.25, 7.5, -8.0];
+        let vex = [0.5, 1.25, -1.5, 2.0, -2.5, 3.0, -3.5, 4.0];
+        let rm = [2.0, -3.0, 4.0, -5.0, 6.0, -7.0, 8.0, -9.0];
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        for opcode in [
+            0x96u8, 0x97, 0x98, 0x9A, 0x9C, 0x9E, 0xA6, 0xA7, 0xA8, 0xAA, 0xAC, 0xAE, 0xB6, 0xB7,
+            0xB8, 0xBA, 0xBC, 0xBE,
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[2] = packed_f32(&old, 0xA5A5_A5A5_A5A5_A5A5);
+                x86.xmm[1] = packed_f32(&vex, 0);
+                x86.xmm[3] = packed_f32(&rm, 0);
+            }
+            execute_lifted_x86(&[0xC4, 0xE2, 0x75, opcode, 0xD3], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                for lane in 0..8u8 {
+                    let (a, b, c) = match opcode >> 4 {
+                        9 => (old[lane as usize], rm[lane as usize], vex[lane as usize]),
+                        10 => (vex[lane as usize], old[lane as usize], rm[lane as usize]),
+                        11 => (vex[lane as usize], rm[lane as usize], old[lane as usize]),
+                        _ => unreachable!(),
+                    };
+                    let low = opcode & 0xF;
+                    let alternating = matches!(low, 6 | 7);
+                    let negate_product = matches!(low, 0xC | 0xE);
+                    let negate_acc = if alternating {
+                        (lane & 1 == 0) == (low == 6)
+                    } else {
+                        matches!(low, 0xA | 0xE)
+                    };
+                    let expected = (if negate_product { -a } else { a })
+                        .mul_add(b, if negate_acc { -c } else { c });
+                    assert_eq!(
+                        SmirInterpreter::get_lane(&x86.xmm[2], lane, 32),
+                        u64::from(expected.to_bits()),
+                        "opcode {opcode:02X}, lane {lane}",
+                    );
+                }
+                assert!(x86.xmm[2][4..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // Scalar FMA replaces only lane zero, preserves the old destination's
+        // remaining XMM lanes, and clears state above bit 127.
+        let upper = [9.0f32, -10.0, 11.0];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = packed_f32(&[2.0, upper[0], upper[1], upper[2]], u64::MAX);
+            x86.xmm[1] = packed_f32(&[3.0], 0);
+            x86.xmm[3] = packed_f32(&[5.0], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x71, 0xB9, 0xD3], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[2], 0, 32),
+                17.0f32.to_bits() as u64
+            );
+            for lane in 1..4u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[2], lane, 32),
+                    u64::from(upper[(lane - 1) as usize].to_bits())
+                );
+            }
+            assert!(x86.xmm[2][2..].iter().all(|word| *word == 0));
+        }
+
+        // A faulting source load occurs before any destination commit.
+        let rdi = VReg::Arch(ArchReg::X86(X86Reg::Rdi));
+        ctx.write_vreg(rdi, 0x1000);
+        let sentinel = [0x6B6B_6B6B_6B6B_6B6B; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0x71, 0x99, 0x17], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2], sentinel);
+        }
+
+        // EVEX packed masking merges or zeroes per lane after the fused result.
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let evex_mask = 0xA55Au64;
+        ctx.write_vreg(k1, evex_mask);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = packed_f32(&old, 0);
+            x86.xmm[1] = packed_f32(&vex, 0);
+            x86.xmm[3] = packed_f32(&rm, 0);
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x75, 0x49, 0x98, 0xD3], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                let expected = if lane < 8 && evex_mask >> lane & 1 != 0 {
+                    old[lane as usize].mul_add(rm[lane as usize], vex[lane as usize])
+                } else if lane < 8 {
+                    old[lane as usize]
+                } else {
+                    0.0
+                };
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[2], lane, 32),
+                    u64::from(expected.to_bits())
+                );
+            }
+        }
+
+        // A zero EVEX mask suppresses a broadcast source fault and zeroing
+        // clears every destination lane. Activating one lane exposes the fault
+        // without committing the destination.
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        ctx.write_vreg(rax, 0x1000);
+        ctx.write_vreg(k1, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0xD9, 0x98, 0x10], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert!(x86.xmm[2].iter().all(|word| *word == 0));
+        }
+        ctx.write_vreg(k1, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x75, 0xD9, 0x98, 0x10], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2], sentinel);
+        }
+    }
+
+    #[test]
+    fn lifted_sse3_addsub_horizontal_executes_values_lane_groups_alignment_and_upper_state() {
+        fn packed_f32(values: &[f32], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (lane, value) in values.iter().copied().enumerate() {
+                SmirInterpreter::set_lane(&mut out, lane as u8, 32, u64::from(value.to_bits()));
+            }
+            out
+        }
+        fn packed_f64(values: &[f64], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (lane, value) in values.iter().copied().enumerate() {
+                SmirInterpreter::set_lane(&mut out, lane as u8, 64, value.to_bits());
+            }
+            out
+        }
+
+        let a32 = [1.0, -2.0, 3.5, -4.5, 5.25, -6.75, 7.0, -8.0];
+        let b32 = [0.5, 1.25, -2.5, 3.75, -4.25, 5.5, -6.5, 7.75];
+        let a64 = [1.5, -2.25, 3.75, -4.5];
+        let b64 = [0.25, 1.75, -2.5, 3.125];
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+
+        for opcode in [0xD0u8, 0x7C, 0x7D] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = packed_f32(&a32, 0);
+                x86.xmm[1] = packed_f32(&b32, 0);
+            }
+            execute_lifted_x86(&[0xC5, 0xFF, opcode, 0xD1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                let expected = if opcode == 0xD0 {
+                    (0..8)
+                        .map(|lane| {
+                            if lane & 1 == 0 {
+                                a32[lane] - b32[lane]
+                            } else {
+                                a32[lane] + b32[lane]
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                } else {
+                    let op = |x: f32, y: f32| if opcode == 0x7C { x + y } else { x - y };
+                    vec![
+                        op(a32[0], a32[1]),
+                        op(a32[2], a32[3]),
+                        op(b32[0], b32[1]),
+                        op(b32[2], b32[3]),
+                        op(a32[4], a32[5]),
+                        op(a32[6], a32[7]),
+                        op(b32[4], b32[5]),
+                        op(b32[6], b32[7]),
+                    ]
+                };
+                for lane in 0..8u8 {
+                    assert_eq!(
+                        SmirInterpreter::get_lane(&x86.xmm[2], lane, 32),
+                        u64::from(expected[lane as usize].to_bits()),
+                        "PS opcode {opcode:02X}, lane {lane}",
+                    );
+                }
+                assert!(x86.xmm[2][4..].iter().all(|word| *word == 0));
+            }
+
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = packed_f64(&a64, 0);
+                x86.xmm[1] = packed_f64(&b64, 0);
+            }
+            execute_lifted_x86(&[0xC5, 0xFD, opcode, 0xD1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                let expected = if opcode == 0xD0 {
+                    vec![
+                        a64[0] - b64[0],
+                        a64[1] + b64[1],
+                        a64[2] - b64[2],
+                        a64[3] + b64[3],
+                    ]
+                } else {
+                    let op = |x: f64, y: f64| if opcode == 0x7C { x + y } else { x - y };
+                    vec![
+                        op(a64[0], a64[1]),
+                        op(b64[0], b64[1]),
+                        op(a64[2], a64[3]),
+                        op(b64[2], b64[3]),
+                    ]
+                };
+                for lane in 0..4u8 {
+                    assert_eq!(
+                        SmirInterpreter::get_lane(&x86.xmm[2], lane, 64),
+                        expected[lane as usize].to_bits(),
+                        "PD opcode {opcode:02X}, lane {lane}",
+                    );
+                }
+            }
+        }
+
+        // Legacy destructive semantics retain all state above bit 127.
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = packed_f32(&a32[..4], upper);
+            x86.xmm[1] = packed_f32(&b32[..4], 0);
+        }
+        execute_lifted_x86(&[0xF2, 0x0F, 0xD0, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        ctx.write_vreg(rax, 1);
+        assert!(matches!(
+            execute_lifted_x86(&[0x66, 0x0F, 0x7C, 0x00], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+    }
+
+    #[test]
+    fn lifted_reciprocal_estimates_execute_merges_upper_state_alignment_and_faults() {
+        fn packed_f32(values: &[f32], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (lane, value) in values.iter().copied().enumerate() {
+                SmirInterpreter::set_lane(&mut out, lane as u8, 32, u64::from(value.to_bits()));
+            }
+            out
+        }
+
+        let flags_before = 0xCD7;
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Legacy packed RCPPS is destructive below bit 128 and preserves all
+        // architectural vector state above bit 127.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = packed_f32(&[99.0; 4], upper);
+            x86.xmm[1] = packed_f32(&[2.0, 4.0, 8.0, 16.0], 0);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x0F, 0x53, 0xC1], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for (lane, expected) in [0.5f32, 0.25, 0.125, 0.0625].into_iter().enumerate() {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[0], lane as u8, 32),
+                    u64::from(expected.to_bits())
+                );
+            }
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+        }
+
+        // Legacy scalar RSQRTSS sources lane zero from r/m32, merges lanes
+        // 1..3 from the old destination, and also preserves state above XMM.
+        let scalar_merge = [10.0f32, 11.0, 12.0, 13.0];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = packed_f32(&scalar_merge, upper);
+            x86.xmm[1] = packed_f32(&[16.0], 0);
+        }
+        execute_lifted_x86(&[0xF3, 0x0F, 0x52, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[0], 0, 32),
+                u64::from(0.25f32.to_bits())
+            );
+            for lane in 1..4u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[0], lane, 32),
+                    u64::from(scalar_merge[lane as usize].to_bits())
+                );
+            }
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+        }
+
+        // VEX.256 computes eight lanes and clears state above bit 255.
+        let packed = [1.0f32, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed_f32(&packed, 0);
+            x86.xmm[2] = [u64::MAX; 16];
+        }
+        execute_lifted_x86(&[0xC5, 0xFC, 0x53, 0xD1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for (lane, input) in packed.into_iter().enumerate() {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[2], lane as u8, 32),
+                    u64::from((1.0f32 / input).to_bits())
+                );
+            }
+            assert!(x86.xmm[2][4..].iter().all(|word| *word == 0));
+        }
+
+        // VEX scalar merge comes from vvvv, not the old destination or r/m32;
+        // all architectural state above bit 127 is cleared.
+        let vex_merge = [20.0f32, 21.0, 22.0, 23.0];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed_f32(&vex_merge, 0);
+            x86.xmm[2] = [u64::MAX; 16];
+            x86.xmm[3] = packed_f32(&[4.0, 31.0, 32.0, 33.0], 0);
+        }
+        execute_lifted_x86(&[0xC5, 0xF2, 0x53, 0xD3], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[2], 0, 32),
+                u64::from(0.25f32.to_bits())
+            );
+            for lane in 1..4u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[2], lane, 32),
+                    u64::from(vex_merge[lane as usize].to_bits())
+                );
+            }
+            assert!(x86.xmm[2][2..].iter().all(|word| *word == 0));
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        ctx.write_vreg(rax, 1);
+        let sentinel = [0x6B6B_6B6B_6B6B_6B6B; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x0F, 0x53, 0x00], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        // The scalar m32 form has no alignment requirement.
+        memory.write(1, &4.0f32.to_le_bytes()).unwrap();
+        assert!(matches!(
+            execute_lifted_x86(&[0xF3, 0x0F, 0x53, 0x00], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[0], 0, 32),
+                u64::from(0.25f32.to_bits())
+            );
+        }
+
+        // All loads precede the destination commit.
+        ctx.write_vreg(rax, 0x1000);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC5, 0xFC, 0x53, 0x10], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_vex_evex_gather_executes_vsib_masks_and_restartable_faults() {
+        fn packed_lanes(values: &[u64], bits: u32, fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (lane, value) in values.iter().copied().enumerate() {
+                SmirInterpreter::set_lane(&mut out, lane as u8, bits, value);
+            }
+            out
+        }
+
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k3 = VReg::Arch(ArchReg::X86(X86Reg::K(3)));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // VEX.256 VPGATHERDD uses signed dword indices, the sign bit of each
+        // dword mask element, and scale four. Inactive lanes retain DEST.
+        let base = 0x100u64;
+        let indices = [0i32, 1, -1, 3, 4, 5, 6, 7];
+        let gathered = [
+            0x1000_0000u32,
+            0x1000_0001,
+            0x1000_00FF,
+            0x1000_0003,
+            0x1000_0004,
+            0x1000_0005,
+            0x1000_0006,
+            0x1000_0007,
+        ];
+        for (index, value) in indices.into_iter().zip(gathered) {
+            memory
+                .write(
+                    base.wrapping_add_signed(i64::from(index) * 4),
+                    &value.to_le_bytes(),
+                )
+                .unwrap();
+        }
+        let old = (0..8).map(|lane| 0xA000_0000u64 + lane).collect::<Vec<_>>();
+        let active = [true, false, true, false, true, true, false, true];
+        let masks = active
+            .into_iter()
+            .map(|set| {
+                if set {
+                    u64::from(u32::MAX)
+                } else {
+                    0x7FFF_FFFF
+                }
+            })
+            .collect::<Vec<_>>();
+        ctx.write_vreg(rax, base);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed_lanes(&masks, 32, u64::MAX);
+            x86.xmm[2] = packed_lanes(
+                &indices
+                    .into_iter()
+                    .map(|value| u64::from(value as u32))
+                    .collect::<Vec<_>>(),
+                32,
+                0,
+            );
+            x86.xmm[3] = packed_lanes(&old, 32, u64::MAX);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x90, 0x1C, 0x90], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[3], lane, 32),
+                    if active[lane as usize] {
+                        u64::from(gathered[lane as usize])
+                    } else {
+                        old[lane as usize]
+                    }
+                );
+                assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], lane, 32), 0);
+            }
+            assert!(x86.xmm[3][4..].iter().all(|word| *word == 0));
+            assert!(x86.xmm[1][4..].iter().all(|word| *word == 0));
+        }
+
+        // A 67h override truncates the GPR base and performs VSIB arithmetic
+        // modulo 2^32 before memory access. FS is added after ordinary 64-bit
+        // base/index/displacement arithmetic in the segment-prefixed form.
+        memory.write(0x44, &0x4455_6677u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0xFFFF_FFFF_0000_0040);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed_lanes(&[u64::from(u32::MAX)], 32, 0);
+            x86.xmm[2] = [0; 16];
+            x86.xmm[3] = [0; 16];
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x67, 0xC4, 0xE2, 0x75, 0x90, 0x5C, 0x90, 0x04],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[3], 0, 32), 0x4455_6677);
+        }
+        let fs_base = VReg::Arch(ArchReg::X86(X86Reg::FsBase));
+        memory.write(0x144, &0x8899_AABBu32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x40);
+        ctx.write_vreg(fs_base, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed_lanes(&[u64::from(u32::MAX)], 32, 0);
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x64, 0xC4, 0xE2, 0x75, 0x90, 0x5C, 0x90, 0x04],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[3], 0, 32), 0x8899_AABB);
+        }
+        ctx.write_vreg(fs_base, 0);
+
+        // A lane-two fault occurs only after lanes zero and one have committed.
+        // Their mask elements are cleared; the faulting and later active mask
+        // elements remain normalized to all ones for restart.
+        let fault_base = 0x3F8u64;
+        memory
+            .write(fault_base, &0x1111_1111u32.to_le_bytes())
+            .unwrap();
+        memory
+            .write(fault_base + 4, &0x2222_2222u32.to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(rax, fault_base);
+        let fault_indices = (0..8).map(|lane| lane as u64).collect::<Vec<_>>();
+        let fault_masks = (0..8)
+            .map(|lane| if lane < 4 { u64::from(u32::MAX) } else { 1 })
+            .collect::<Vec<_>>();
+        let sentinel = (0..8).map(|lane| 0xB000_0000u64 + lane).collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed_lanes(&fault_masks, 32, u64::MAX);
+            x86.xmm[2] = packed_lanes(&fault_indices, 32, 0);
+            x86.xmm[3] = packed_lanes(&sentinel, 32, u64::MAX);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x90, 0x1C, 0x90], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[3], 0, 32), 0x1111_1111);
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[3], 1, 32), 0x2222_2222);
+            for lane in 2..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[3], lane, 32),
+                    sentinel[lane as usize]
+                );
+            }
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 32), 0);
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 1, 32), 0);
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[1], 2, 32),
+                u64::from(u32::MAX)
+            );
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[1], 3, 32),
+                u64::from(u32::MAX)
+            );
+            for lane in 4..8u8 {
+                assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], lane, 32), 0);
+            }
+        }
+
+        // EVEX.512 VGATHERDPS uses an opmask and high ZMM index/destination
+        // registers. A successful instruction clears the complete opmask.
+        let evex_base = 0x180u64;
+        let evex_values = (0..16)
+            .map(|lane| 0xC000_0000u32 + lane)
+            .collect::<Vec<_>>();
+        for (lane, value) in evex_values.iter().copied().enumerate() {
+            memory
+                .write(evex_base + (lane * 4) as u64, &value.to_le_bytes())
+                .unwrap();
+        }
+        let evex_mask = 0xA55Au64;
+        let evex_old = (0..16)
+            .map(|lane| 0xD000_0000u64 + lane)
+            .collect::<Vec<_>>();
+        ctx.write_vreg(rax, evex_base);
+        ctx.write_vreg(k3, evex_mask | (u64::MAX << 16));
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = packed_lanes(&(0..16).collect::<Vec<_>>(), 32, 0);
+            x86.xmm[18] = packed_lanes(&evex_old, 32, 0);
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xE2, 0x7D, 0x43, 0x92, 0x14, 0x88],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[18], lane, 32),
+                    if evex_mask >> lane & 1 != 0 {
+                        u64::from(evex_values[lane as usize])
+                    } else {
+                        evex_old[lane as usize]
+                    }
+                );
+            }
+        }
+        assert_eq!(ctx.read_vreg(k3), 0);
+
+        // EVEX disp8 is compressed by the scalar data tuple (N=8 here).
+        // This also covers dword indices feeding qword results in high regs.
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let k5 = VReg::Arch(ArchReg::X86(X86Reg::K(5)));
+        let compressed_base = 0x240u64;
+        let qwords = (0..8)
+            .map(|lane| 0x1122_3344_5566_7700u64 + lane)
+            .collect::<Vec<_>>();
+        for (lane, value) in qwords.iter().copied().enumerate() {
+            memory
+                .write(
+                    compressed_base + 16 + (lane * 8) as u64,
+                    &value.to_le_bytes(),
+                )
+                .unwrap();
+        }
+        ctx.write_vreg(r8, compressed_base);
+        ctx.write_vreg(k5, 0xFF);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[19] = packed_lanes(&(0..8).collect::<Vec<_>>(), 32, 0);
+            x86.xmm[20] = [u64::MAX; 16];
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xC2, 0xFD, 0x45, 0x90, 0x64, 0xD8, 0x02],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[20], lane, 64),
+                    qwords[lane as usize]
+                );
+            }
+            assert!(x86.xmm[20][8..].iter().all(|word| *word == 0));
+        }
+        assert_eq!(ctx.read_vreg(k5), 0);
+
+        // An all-zero EVEX mask suppresses every memory access, including an
+        // otherwise faulting VSIB base, and leaves the full-width destination.
+        ctx.write_vreg(rax, 0x1000);
+        ctx.write_vreg(k3, 0);
+        let zero_mask_sentinel = [0xE5E5_E5E5_E5E5_E5E5; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[18] = zero_mask_sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xE2, 0x7D, 0x43, 0x92, 0x14, 0x88],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[18][..8], &zero_mask_sentinel[..8]);
+            assert!(x86.xmm[18][8..].iter().all(|word| *word == 0));
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_aesni_vaes_executes_fips_vectors_lanes_upper_state_and_faults() {
+        use crate::isa::x86_64::execute::crypto::aes;
+
+        fn block(bytes: [u8; 16]) -> [u64; 2] {
+            [
+                u64::from_le_bytes(bytes[..8].try_into().unwrap()),
+                u64::from_le_bytes(bytes[8..].try_into().unwrap()),
+            ]
+        }
+        fn packed_blocks(blocks: &[[u64; 2]], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (lane, words) in blocks.iter().enumerate() {
+                out[lane * 2..lane * 2 + 2].copy_from_slice(words);
+            }
+            out
+        }
+
+        // FIPS 197 AES-128 round-one and final-round intermediate values.
+        let round0 = block([
+            0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xA0, 0xB0, 0xC0, 0xD0,
+            0xE0, 0xF0,
+        ]);
+        let round1_key = block([
+            0xD6, 0xAA, 0x74, 0xFD, 0xD2, 0xAF, 0x72, 0xFA, 0xDA, 0xA6, 0x78, 0xF1, 0xD6, 0xAB,
+            0x76, 0xFE,
+        ]);
+        let round1 = block([
+            0x89, 0xD8, 0x10, 0xE8, 0x85, 0x5A, 0xCE, 0x68, 0x2D, 0x18, 0x43, 0xD8, 0xCB, 0x12,
+            0x8F, 0xE4,
+        ]);
+        let round9 = block([
+            0xBD, 0x6E, 0x7C, 0x3D, 0xF2, 0xB5, 0x77, 0x9E, 0x0B, 0x61, 0x21, 0x6E, 0x8B, 0x10,
+            0xB6, 0x89,
+        ]);
+        let round10_key = block([
+            0x13, 0x11, 0x1D, 0x7F, 0xE3, 0x94, 0x4A, 0x17, 0xF3, 0x07, 0xA7, 0x8B, 0x4D, 0x2B,
+            0x30, 0xC5,
+        ]);
+        let ciphertext = block([
+            0x69, 0xC4, 0xE0, 0xD8, 0x6A, 0x7B, 0x04, 0x30, 0xD8, 0xCD, 0xB7, 0x80, 0x70, 0xB4,
+            0xC5, 0x5A,
+        ]);
+        let flags_before = 0xCD7;
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Legacy AESENC is destructive and preserves architectural state above XMM.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = packed_blocks(&[round0], upper);
+            x86.xmm[1] = packed_blocks(&[round1_key], 0);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0xDC, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[0][..2], &round1);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+        }
+
+        // Legacy AESKEYGENASSIST is checked against the explicit SubWord,
+        // RotWord, and RCON=1 result for the AES-128 key 00..0f.
+        let original_key = block([
+            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D,
+            0x0E, 0x0F,
+        ]);
+        let keygen_expected = block([
+            0xF2, 0x6B, 0x6F, 0xC5, 0x6A, 0x6F, 0xC5, 0xF2, 0xFE, 0xD7, 0xAB, 0x76, 0xD6, 0xAB,
+            0x76, 0xFE,
+        ]);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [upper; 16];
+            x86.xmm[1] = packed_blocks(&[original_key], 0);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x3A, 0xDF, 0xC1, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[0][..2], &keygen_expected);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+        }
+
+        // VEX.256 applies AESENCLAST independently to each 128-bit lane and
+        // clears all state above YMM. Lane zero is the FIPS final round.
+        let lane1_state = [0x0123_4567_89AB_CDEF, 0xFEDC_BA98_7654_3210];
+        let lane1_key = [0x0F1E_2D3C_4B5A_6978, 0x8796_A5B4_C3D2_E1F0];
+        let lane1_expected =
+            aes::aesenclast(lane1_state[0], lane1_state[1], lane1_key[0], lane1_key[1]);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed_blocks(&[round9, lane1_state], 0);
+            x86.xmm[2] = [u64::MAX; 16];
+            x86.xmm[3] = packed_blocks(&[round10_key, lane1_key], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0xDD, 0xD3], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[2][..2], &ciphertext);
+            assert_eq!(x86.xmm[2][2], lane1_expected.0);
+            assert_eq!(x86.xmm[2][3], lane1_expected.1);
+            assert!(x86.xmm[2][4..].iter().all(|word| *word == 0));
+        }
+
+        // EVEX.512 handles four lanes and high registers without masking.
+        let states = [round0, round9, lane1_state, original_key];
+        let keys = [round1_key, round10_key, lane1_key, keygen_expected];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = packed_blocks(&keys, 0);
+            x86.xmm[18] = packed_blocks(&states, 0);
+            x86.xmm[19] = [u64::MAX; 16];
+        }
+        execute_lifted_x86(&[0x62, 0xA2, 0x6D, 0x40, 0xDC, 0xD9], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..4 {
+                let expected = aes::aesenc(
+                    states[lane][0],
+                    states[lane][1],
+                    keys[lane][0],
+                    keys[lane][1],
+                );
+                assert_eq!(x86.xmm[19][lane * 2], expected.0);
+                assert_eq!(x86.xmm[19][lane * 2 + 1], expected.1);
+            }
+            assert!(x86.xmm[19][8..].iter().all(|word| *word == 0));
+        }
+
+        // AESIMC and VEX AESKEYGENASSIST use the same primitive with different
+        // legacy/VEX upper-state rules.
+        let imc_expected = aes::aesimc(round10_key[0], round10_key[1]);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = [upper; 16];
+            x86.xmm[3] = packed_blocks(&[round10_key], 0);
+            x86.xmm[10] = packed_blocks(&[original_key], 0);
+            x86.xmm[11] = [u64::MAX; 16];
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0xDB, 0xD3], &mut ctx, &mut memory);
+        execute_lifted_x86(&[0xC4, 0x43, 0x79, 0xDF, 0xDA, 0x5A], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[2][..2], &[imc_expected.0, imc_expected.1]);
+            assert!(x86.xmm[2][2..].iter().all(|word| *word == upper));
+            let expected = aes::aeskeygenassist(original_key[0], original_key[1], 0x5A);
+            assert_eq!(&x86.xmm[11][..2], &[expected.0, expected.1]);
+            assert!(x86.xmm[11][2..].iter().all(|word| *word == 0));
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let sentinel = [0x6B6B_6B6B_6B6B_6B6B; 16];
+        ctx.write_vreg(rax, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x66, 0x0F, 0x38, 0xDE, 0x00], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        // VEX memory is unaligned-capable, and any load fault precedes the
+        // destination commit.
+        memory.write(1, &round10_key[0].to_le_bytes()).unwrap();
+        memory.write(9, &round10_key[1].to_le_bytes()).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = packed_blocks(&[round9], 0);
+            x86.xmm[3] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0x69, 0xDD, 0x18], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[3][..2], &ciphertext);
+        }
+        ctx.write_vreg(rax, 0x1000);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[3] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0x69, 0xDD, 0x18], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[3], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_maskmovdqu_executes_selected_stores_addresses_and_fault_suppression() {
+        fn packed_bytes(bytes: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (lane, byte) in bytes.iter().copied().enumerate() {
+                let shift = (lane % 8) * 8;
+                value[lane / 8] =
+                    (value[lane / 8] & !(0xFFu64 << shift)) | (u64::from(byte) << shift);
+            }
+            value
+        }
+
+        let data = (0..16).map(|lane| 0xA0 + lane).collect::<Vec<_>>();
+        let alternating_mask = (0..16)
+            .map(|lane| if lane % 2 == 0 { 0x80 } else { 0x7F })
+            .collect::<Vec<_>>();
+        let flags_before = 0xCD7;
+        let rdi = VReg::Arch(ArchReg::X86(X86Reg::Rdi));
+        let fs_base = VReg::Arch(ArchReg::X86(X86Reg::FsBase));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        memory.write(0x40, &[0x55; 16]).unwrap();
+        ctx.write_vreg(rdi, 0x40);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = packed_bytes(&data, 0x1111_1111_1111_1111);
+            x86.xmm[9] = packed_bytes(&alternating_mask, 0x2222_2222_2222_2222);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x66, 0x45, 0x0F, 0xF7, 0xC1], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        let mut stored = [0; 16];
+        memory.read(0x40, &mut stored).unwrap();
+        for lane in 0..16 {
+            assert_eq!(stored[lane], if lane % 2 == 0 { data[lane] } else { 0x55 });
+        }
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[8], packed_bytes(&data, 0x1111_1111_1111_1111));
+            assert_eq!(
+                x86.xmm[9],
+                packed_bytes(&alternating_mask, 0x2222_2222_2222_2222)
+            );
+        }
+
+        // Address-size override truncates RDI to EDI before adding the lane.
+        memory.write(0x80, &[0x33; 16]).unwrap();
+        ctx.write_vreg(rdi, 0xFFFF_FFFF_0000_0080);
+        assert!(matches!(
+            execute_lifted_x86(&[0x67, 0xC4, 0x41, 0x79, 0xF7, 0xC1], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        let mut stored = [0; 16];
+        memory.read(0x80, &mut stored).unwrap();
+        for lane in 0..16 {
+            assert_eq!(stored[lane], if lane % 2 == 0 { data[lane] } else { 0x33 });
+        }
+
+        // FS contributes its architectural base after the implicit RDI address.
+        memory.write(0x120, &[0x44; 16]).unwrap();
+        ctx.write_vreg(fs_base, 0x100);
+        ctx.write_vreg(rdi, 0x20);
+        assert!(matches!(
+            execute_lifted_x86(&[0x64, 0xC4, 0x41, 0x79, 0xF7, 0xC1], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        let mut stored = [0; 16];
+        memory.read(0x120, &mut stored).unwrap();
+        for lane in 0..16 {
+            assert_eq!(stored[lane], if lane % 2 == 0 { data[lane] } else { 0x44 });
+        }
+
+        // Inactive bytes beyond the mapped boundary perform no access. Making
+        // the first out-of-range byte active exposes a write fault.
+        let low_half_mask = [0x80; 8].into_iter().chain([0; 8]).collect::<Vec<_>>();
+        ctx.write_vreg(fs_base, 0);
+        ctx.write_vreg(rdi, 0x1F8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = packed_bytes(&low_half_mask, 0);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0x41, 0x79, 0xF7, 0xC1], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        let mut stored = [0; 8];
+        memory.read(0x1F8, &mut stored).unwrap();
+        assert_eq!(stored, data[..8]);
+
+        let lane8_mask = [0; 8]
+            .into_iter()
+            .chain([0x80])
+            .chain([0; 7])
+            .collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = packed_bytes(&lane8_mask, 0);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0x41, 0x79, 0xF7, 0xC1], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+
+        // Intel specifies all-zero-mask addressing faults as implementation
+        // dependent. SMIR selects the permitted fully suppressed behavior.
+        ctx.write_vreg(rdi, 0x1_0000);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = [0; 16];
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0x41, 0x79, 0xF7, 0xC1], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_vex_masked_memory_executes_zeroing_stores_and_element_faults() {
+        fn packed_lanes(values: &[u64], bits: u32, fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (lane, scalar) in values.iter().copied().enumerate() {
+                SmirInterpreter::set_lane(&mut value, lane as u8, bits, scalar);
+            }
+            value
+        }
+
+        let flags_before = 0xCD7;
+        let rdi = VReg::Arch(ArchReg::X86(X86Reg::Rdi));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        let dwords = (0..8)
+            .map(|lane| 0x1020_3040u32.wrapping_add(lane * 0x1111_1111))
+            .collect::<Vec<_>>();
+        let bytes = dwords
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        memory.write(0x40, &bytes).unwrap();
+        ctx.write_vreg(rdi, 0x40);
+        let mask32 = (0..8)
+            .map(|lane| {
+                if lane % 2 == 0 {
+                    0x8000_0000
+                } else {
+                    0x7FFF_FFFF
+                }
+            })
+            .collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed_lanes(&mask32, 32, 0);
+            x86.xmm[2] = [0xA5A5_A5A5_A5A5_A5A5; 16];
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0x75, 0x2C, 0x17], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[2], lane, 32),
+                    if lane % 2 == 0 {
+                        u64::from(dwords[lane as usize])
+                    } else {
+                        0
+                    }
+                );
+            }
+            assert!(x86.xmm[2][4..].iter().all(|word| *word == 0));
+        }
+
+        let qwords = [0x1122_3344_5566_7788, 0x99AA_BBCC_DDEE_FF00];
+        let mask64 = [u64::MAX, i64::MAX as u64];
+        memory.write(0x80, &[0x55; 16]).unwrap();
+        ctx.write_vreg(rdi, 0x80);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed_lanes(&mask64, 64, 0);
+            x86.xmm[2] = packed_lanes(&qwords, 64, 0);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0xF1, 0x8E, 0x17], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        let mut stored = [0; 16];
+        memory.read(0x80, &mut stored).unwrap();
+        assert_eq!(&stored[..8], &qwords[0].to_le_bytes());
+        assert_eq!(&stored[8..], &[0x55; 8]);
+
+        // Only an active qword may fault. A faulting load leaves the vector
+        // destination unchanged because all memory reads precede its commit.
+        ctx.write_vreg(rdi, 0x1F8);
+        memory.write(0x1F8, &qwords[0].to_le_bytes()).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed_lanes(&[u64::MAX, 0], 64, 0);
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0xF1, 0x8C, 0x17], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2][0], qwords[0]);
+            assert_eq!(x86.xmm[2][1], 0);
+        }
+
+        let sentinel = [0x6B6B_6B6B_6B6B_6B6B; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed_lanes(&[0, u64::MAX], 64, 0);
+            x86.xmm[2] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0xF1, 0x8C, 0x17], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[2], sentinel);
+        }
+
+        ctx.write_vreg(rdi, 0x1_0000);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0; 16];
+            x86.xmm[2] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC4, 0xE2, 0xF1, 0x8C, 0x17], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert!(x86.xmm[2].iter().all(|word| *word == 0));
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_pmaddwd_executes_wrap_widths_masks_complete_memory_and_faults() {
+        fn packed_words(values: &[u16], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (lane, value) in values.iter().copied().enumerate() {
+                let shift = (lane % 4) * 16;
+                out[lane / 4] =
+                    (out[lane / 4] & !(0xFFFFu64 << shift)) | (u64::from(value) << shift);
+            }
+            out
+        }
+
+        fn dwords(value: &VecValue, count: usize) -> Vec<u32> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 4)
+                .collect::<Vec<_>>()
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+
+        fn reference(a: &[u16], b: &[u16]) -> Vec<u32> {
+            a.chunks_exact(2)
+                .zip(b.chunks_exact(2))
+                .map(|(a, b)| {
+                    let lo = i32::from(a[0] as i16).wrapping_mul(i32::from(b[0] as i16));
+                    let hi = i32::from(a[1] as i16).wrapping_mul(i32::from(b[1] as i16));
+                    lo.wrapping_add(hi) as u32
+                })
+                .collect()
+        }
+
+        let mut a = (0..32)
+            .map(|lane| 0x8101u16.wrapping_add((lane as u16).wrapping_mul(0x1237)))
+            .collect::<Vec<_>>();
+        let mut b = (0..32)
+            .map(|lane| 0xFEDCu16.wrapping_sub((lane as u16).wrapping_mul(0x091D)))
+            .collect::<Vec<_>>();
+        a[..2].copy_from_slice(&[0x8000, 0x8000]);
+        b[..2].copy_from_slice(&[0x8000, 0x8000]);
+        let expected = reference(&a, &b);
+        assert_eq!(expected[0], 0x8000_0000);
+
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let sentinel = [0x6B6B_6B6B_6B6B_6B6Bu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = packed_words(&a[..8], upper);
+            x86.xmm[1] = packed_words(&b[..8], 0);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0xF5, 0xD1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(dwords(&x86.xmm[2], 4), expected[..4]);
+            assert!(x86.xmm[2][2..].iter().all(|word| *word == upper));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = sentinel;
+            x86.xmm[9] = packed_words(&a[..16], 0);
+            x86.xmm[10] = packed_words(&b[..16], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x41, 0x35, 0xF5, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(dwords(&x86.xmm[8], 8), expected[..8]);
+            assert!(x86.xmm[8][4..].iter().all(|word| *word == 0));
+        }
+
+        let mask = 0xA55Au64;
+        for (p2, zeroing) in [(0x41, false), (0xC1, true)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[16] = sentinel;
+                x86.xmm[17] = packed_words(&a, 0);
+                x86.xmm[18] = packed_words(&b, 0);
+            }
+            ctx.write_vreg(k1, mask);
+            execute_lifted_x86(&[0x62, 0xA1, 0x75, p2, 0xF5, 0xC2], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                let actual = dwords(&x86.xmm[16], 16);
+                for lane in 0..16 {
+                    assert_eq!(
+                        actual[lane],
+                        if mask >> lane & 1 != 0 {
+                            expected[lane]
+                        } else if zeroing {
+                            0
+                        } else {
+                            0x6B6B_6B6B
+                        },
+                    );
+                }
+            }
+        }
+
+        let memory_bytes = b[..8]
+            .iter()
+            .flat_map(|word| word.to_le_bytes())
+            .collect::<Vec<_>>();
+        memory.write(0x80, &memory_bytes).unwrap();
+        ctx.write_vreg(rax, 0x80);
+        ctx.write_vreg(k1, 0b0101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = packed_words(&a[..8], 0);
+        }
+        execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x09, 0xF5, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let actual = dwords(&x86.xmm[0], 4);
+            for lane in 0..4 {
+                assert_eq!(
+                    actual[lane],
+                    if 0b0101 >> lane & 1 != 0 {
+                        expected[lane]
+                    } else {
+                        0x6B6B_6B6B
+                    },
+                );
+            }
+        }
+
+        // E4NF requires the entire m128 even with an all-zero destination mask.
+        ctx.write_vreg(rax, 0xF8);
+        ctx.write_vreg(k1, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x09, 0xF5, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        ctx.write_vreg(rax, 0x81);
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0xF5, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_packed_shift_count_executes_full_counts_masks_mem128_and_faults() {
+        fn packed(values: &[u64], bits: u32, fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            let mask = if bits == 64 {
+                u64::MAX
+            } else {
+                (1u64 << bits) - 1
+            };
+            for (lane, value) in values.iter().copied().enumerate() {
+                let bit = lane * bits as usize;
+                let word = bit / 64;
+                let shift = bit % 64;
+                out[word] = (out[word] & !(mask << shift)) | ((value & mask) << shift);
+            }
+            out
+        }
+
+        fn lanes(value: &VecValue, bits: u32, count: usize) -> Vec<u64> {
+            (0..count)
+                .map(|lane| SmirInterpreter::get_lane(value, lane as u8, bits))
+                .collect()
+        }
+
+        fn source(bits: u32, count: usize) -> Vec<u64> {
+            let mask = if bits == 64 {
+                u64::MAX
+            } else {
+                (1u64 << bits) - 1
+            };
+            (0..count)
+                .map(|lane| {
+                    (0xA55A_C33C_F00F_8111u64 ^ (lane as u64).wrapping_mul(0x1111_2222_3333_4445))
+                        & mask
+                })
+                .collect()
+        }
+
+        fn shifted(value: u64, bits: u32, amount: u64, shift: ShiftOp) -> u64 {
+            let mask = if bits == 64 {
+                u64::MAX
+            } else {
+                (1u64 << bits) - 1
+            };
+            let value = value & mask;
+            if amount >= u64::from(bits) {
+                return if shift == ShiftOp::Asr && value & (1u64 << (bits - 1)) != 0 {
+                    mask
+                } else {
+                    0
+                };
+            }
+            match shift {
+                ShiftOp::Lsl => (value << amount) & mask,
+                ShiftOp::Lsr => value >> amount,
+                ShiftOp::Asr => {
+                    let signed = if bits == 64 {
+                        value as i64
+                    } else {
+                        ((value << (64 - bits)) as i64) >> (64 - bits)
+                    };
+                    ((signed >> amount) as u64) & mask
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        let flags_before = 0xCD7;
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let sentinel = [0x6B6B_6B6B_6B6B_6B6Bu64; 16];
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (opcode, bits, shift) in [
+            (0xD1, 16, ShiftOp::Lsr),
+            (0xD2, 32, ShiftOp::Lsr),
+            (0xD3, 64, ShiftOp::Lsr),
+            (0xE1, 16, ShiftOp::Asr),
+            (0xE2, 32, ShiftOp::Asr),
+            (0xF1, 16, ShiftOp::Lsl),
+            (0xF2, 32, ShiftOp::Lsl),
+            (0xF3, 64, ShiftOp::Lsl),
+        ] {
+            let input = source(bits, 128 / bits as usize);
+            for amount in [
+                0,
+                u64::from(bits - 1),
+                u64::from(bits),
+                u64::from(bits + 1),
+                1 << 40,
+            ] {
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.xmm[0] = sentinel;
+                    x86.xmm[1] = packed(&input, bits, 0);
+                    x86.xmm[2] = [amount, u64::MAX, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+                }
+                execute_lifted_x86(&[0xC5, 0xF1, opcode, 0xC2], &mut ctx, &mut memory);
+                if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                    assert_eq!(
+                        lanes(&x86.xmm[0], bits, input.len()),
+                        input
+                            .iter()
+                            .map(|value| shifted(*value, bits, amount, shift))
+                            .collect::<Vec<_>>(),
+                        "opcode {opcode:02X}, count {amount}",
+                    );
+                    assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+                }
+            }
+        }
+
+        // Legacy destructive semantics preserve all state above bit 127.
+        let input16 = source(16, 8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = packed(&input16, 16, upper);
+            x86.xmm[1] = [16, u64::MAX, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0xE1, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                lanes(&x86.xmm[0], 16, 8),
+                input16
+                    .iter()
+                    .map(|value| shifted(*value, 16, 16, ShiftOp::Asr))
+                    .collect::<Vec<_>>(),
+            );
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+        }
+
+        // A 256-bit data source still takes its single count from xmm10; the
+        // upper 64 bits of that XMM count operand are ignored.
+        let input32 = source(32, 8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = sentinel;
+            x86.xmm[9] = packed(&input32, 32, 0);
+            x86.xmm[10] = [3, u64::MAX, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        }
+        execute_lifted_x86(&[0xC4, 0x41, 0x35, 0xD2, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                lanes(&x86.xmm[8], 32, 8),
+                input32
+                    .iter()
+                    .map(|value| shifted(*value, 32, 3, ShiftOp::Lsr))
+                    .collect::<Vec<_>>(),
+            );
+            assert!(x86.xmm[8][4..].iter().all(|word| *word == 0));
+        }
+
+        // EVEX.W=1 selects VPSRAQ. Validate both merge and zero destination
+        // masks over independently encoded high registers.
+        let input64 = source(64, 8);
+        let mask = 0xA5u64;
+        for (p2, zeroing) in [(0x41, false), (0xC1, true)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[16] = sentinel;
+                x86.xmm[17] = packed(&input64, 64, 0);
+                x86.xmm[18] = [4, u64::MAX, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            }
+            ctx.write_vreg(k1, mask);
+            execute_lifted_x86(&[0x62, 0xA1, 0xF5, p2, 0xE2, 0xC2], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                let actual = lanes(&x86.xmm[16], 64, 8);
+                for lane in 0..8 {
+                    assert_eq!(
+                        actual[lane],
+                        if mask >> lane & 1 != 0 {
+                            shifted(input64[lane], 64, 4, ShiftOp::Asr)
+                        } else if zeroing {
+                            0
+                        } else {
+                            0x6B6B_6B6B_6B6B_6B6B
+                        },
+                    );
+                }
+            }
+        }
+
+        let count_bytes = [3u64, u64::MAX]
+            .into_iter()
+            .flat_map(|word| word.to_le_bytes())
+            .collect::<Vec<_>>();
+        memory.write(0x81, &count_bytes).unwrap();
+        ctx.write_vreg(rax, 0x81);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = packed(&input32, 32, 0);
+        }
+        execute_lifted_x86(&[0xC5, 0xF5, 0xD2, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                lanes(&x86.xmm[0], 32, 8),
+                input32
+                    .iter()
+                    .map(|value| shifted(*value, 32, 3, ShiftOp::Lsr))
+                    .collect::<Vec<_>>(),
+            );
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0xD2, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        // E4NF Mem128 is all-or-fault even when every destination mask bit is 0.
+        ctx.write_vreg(rax, 0xF8);
+        ctx.write_vreg(k1, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+            x86.xmm[1] = packed(&input16, 16, 0);
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF1, 0x75, 0x09, 0xE1, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_movntdqa_executes_widths_alignment_upper_state_and_faults() {
+        let data = (0..64).map(|i| (i * 37 + 5) as u8).collect::<Vec<_>>();
+        let words = |input: &[u8], fill: u64| {
+            let mut out = [fill; 16];
+            for (i, chunk) in input.chunks_exact(8).enumerate() {
+                out[i] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            out
+        };
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        memory.write(0x100, &data).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [upper; 16];
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x2A, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[0][..2], &words(&data[..16], 0)[..2]);
+            assert!(x86.xmm[0][2..].iter().all(|w| *w == upper));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x7D, 0x2A, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[0][..4], &words(&data[..32], 0)[..4]);
+            assert!(x86.xmm[0][4..].iter().all(|w| *w == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = sentinel;
+        }
+        execute_lifted_x86(&[0x62, 0xE2, 0x7D, 0x48, 0x2A, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[16][..8], &words(&data, 0)[..8]);
+            assert!(x86.xmm[16][8..].iter().all(|w| *w == 0));
+        }
+
+        for (addr, insn, reg) in [
+            (0x101, &[0x66, 0x0F, 0x38, 0x2A, 0x00][..], 0usize),
+            (0x110, &[0xC4, 0xE2, 0x7D, 0x2A, 0x00][..], 0),
+            (0x120, &[0x62, 0xE2, 0x7D, 0x48, 0x2A, 0x00][..], 16),
+        ] {
+            ctx.write_vreg(rax, addr);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[reg] = sentinel;
+            }
+            let exit = execute_lifted_x86(insn, &mut ctx, &mut memory);
+            assert!(matches!(
+                exit,
+                BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+            ));
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[reg], sentinel);
+            }
+        }
+        ctx.write_vreg(rax, 0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let fault = execute_lifted_x86(&[0xC4, 0xE2, 0x7D, 0x2A, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_phminposuw_executes_unsigned_ties_aliases_alignment_and_faults() {
+        fn packed_words(values: &[u16], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            out[0] = 0;
+            out[1] = 0;
+            for (lane, value) in values.iter().copied().enumerate() {
+                out[lane / 4] |= u64::from(value) << ((lane % 4) * 16);
+            }
+            out
+        }
+        fn expected(values: &[u16; 8]) -> u64 {
+            let (index, minimum) = values
+                .iter()
+                .copied()
+                .enumerate()
+                .min_by_key(|(_, value)| *value)
+                .unwrap();
+            u64::from(minimum) | ((index as u64) << 16)
+        }
+
+        let ties: [u16; 8] = [500, 0x8000, 7, 7, 0xFFFF, 7, 8, 7];
+        let lane7: [u16; 8] = [0xFFFF, 900, 800, 700, 600, 500, 400, 0];
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        let tie_bytes = ties
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        let lane7_bytes = lane7
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        memory.write(0x100, &tie_bytes).unwrap();
+        memory.write(0x121, &lane7_bytes).unwrap();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Equal minima retain the first index, unsigned 0x8000/0xFFFF remain
+        // greater than 7, and legacy form preserves state above bit 127.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [upper; 16];
+            x86.xmm[2] = packed_words(&ties, 0);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x41, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], expected(&ties));
+            assert_eq!(x86.xmm[1][1], 0);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == upper));
+        }
+
+        // Source/destination aliasing must capture every input word before the
+        // architectural write, including a minimum in the final lane.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = packed_words(&lane7, upper);
+        }
+        execute_lifted_x86(&[0x66, 0x0F, 0x38, 0x41, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], expected(&lane7));
+            assert_eq!(x86.xmm[0][1], 0);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
+        }
+
+        // VEX high-register form zeros all state above bit 127.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = packed_words(&ties, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x42, 0x79, 0x41, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9][0], expected(&ties));
+            assert!(x86.xmm[9][1..].iter().all(|word| *word == 0));
+        }
+
+        // The VEX memory form explicitly accepts an unaligned m128.
+        ctx.write_vreg(rax, 0x121);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        execute_lifted_x86(&[0xC4, 0x62, 0x79, 0x41, 0x48, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9][0], expected(&lane7));
+            assert!(x86.xmm[9][1..].iter().all(|word| *word == 0));
+        }
+
+        // The same misalignment is a legacy #GP(0), preceding both the load and
+        // any destination or flag modification.
+        ctx.write_vreg(rax, 0x121);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        let misaligned =
+            execute_lifted_x86(&[0x66, 0x44, 0x0F, 0x38, 0x41, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+
+        // An unaligned-capable VEX access still faults atomically when the full
+        // 16-byte memory operand is unavailable.
+        ctx.write_vreg(rax, 0x3F8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        let fault = execute_lifted_x86(&[0xC4, 0x62, 0x79, 0x41, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_pclmulqdq_executes_selectors_blocks_aliases_memory_and_faults() {
+        fn clmul(a: u64, b: u64) -> (u64, u64) {
+            let mut product = 0u128;
+            for bit in 0..64 {
+                if (b >> bit) & 1 != 0 {
+                    product ^= u128::from(a) << bit;
+                }
+            }
+            (product as u64, (product >> 64) as u64)
+        }
+        fn selected(src1: &[u64], src2: &[u64], blocks: usize, imm: u8) -> Vec<u64> {
+            let mut out = Vec::with_capacity(blocks * 2);
+            for block in 0..blocks {
+                let a = src1[block * 2 + usize::from(imm & 1)];
+                let b = src2[block * 2 + usize::from((imm >> 4) & 1)];
+                let (lo, hi) = clmul(a, b);
+                out.extend([lo, hi]);
+            }
+            out
+        }
+
+        let src1: [u64; 8] = [
+            0xFEDC_BA98_7654_3210,
+            0x0123_4567_89AB_CDEF,
+            u64::MAX,
+            0x8000_0000_0000_0001,
+            0x1111_2222_3333_4444,
+            0xAAAA_5555_AAAA_5555,
+            0xDEAD_BEEF_CAFE_BABE,
+            0x0000_0000_0000_0001,
+        ];
+        let src2: [u64; 8] = [
+            0x1357_9BDF_2468_ACE0,
+            0x0F0E_0D0C_0B0A_0908,
+            0x5555_5555_5555_5555,
+            0x7FFF_FFFF_FFFF_FFFF,
+            0x0101_0101_0101_0101,
+            0xFFFF_0000_FFFF_0000,
+            0x3141_5926_5358_9793,
+            0xFFFF_FFFF_FFFF_FFFF,
+        ];
+        let memory_src: [u64; 8] = [
+            0x2222_3333_4444_5555,
+            0xABCD_EF01_2345_6789,
+            0x0102_0304_0506_0708,
+            0x8877_6655_4433_2211,
+            0x8000_0000_0000_0000,
+            3,
+            0xF0F0_F0F0_0F0F_0F0F,
+            0x1234_0000_5678_0000,
+        ];
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        let memory_bytes = memory_src
+            .iter()
+            .flat_map(|word| word.to_le_bytes())
+            .collect::<Vec<_>>();
+        memory.write(0x101, &memory_bytes).unwrap();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Legacy form intrinsically aliases destination and source 1. Exercise
+        // all selector combinations plus ignored immediate bits.
+        for imm in [0x00u8, 0x01, 0x10, 0x11, 0xEF] {
+            let mut first = [upper; 16];
+            first[..2].copy_from_slice(&src1[..2]);
+            let mut second = [0u64; 16];
+            second[..2].copy_from_slice(&src2[..2]);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = first;
+                x86.xmm[10] = second;
+            }
+            execute_lifted_x86(
+                &[0x66, 0x45, 0x0F, 0x3A, 0x44, 0xCA, imm],
+                &mut ctx,
+                &mut memory,
+            );
+            let expected = selected(&src1[..2], &src2[..2], 1, imm);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(&x86.xmm[9][..2], expected.as_slice());
+                assert!(x86.xmm[9][2..].iter().all(|word| *word == upper));
+            }
+        }
+
+        // VEX.256 destination/source aliasing remains block-local and zeros all
+        // state above the active vector length.
+        let mut first = [upper; 16];
+        first[..4].copy_from_slice(&src1[..4]);
+        let mut second = [0u64; 16];
+        second[..4].copy_from_slice(&src2[..4]);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = first;
+            x86.xmm[10] = second;
+        }
+        execute_lifted_x86(&[0xC4, 0x43, 0x35, 0x44, 0xCA, 0x11], &mut ctx, &mut memory);
+        let expected = selected(&src1[..4], &src2[..4], 2, 0x11);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[9][..4], expected.as_slice());
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+        }
+
+        // EVEX.512 high registers perform four independent products.
+        let mut first = [0u64; 16];
+        first[..8].copy_from_slice(&src1);
+        let mut second = [0u64; 16];
+        second[..8].copy_from_slice(&src2);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = second;
+            x86.xmm[17] = sentinel;
+            x86.xmm[18] = first;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xA3, 0x6D, 0x40, 0x44, 0xC8, 0x10],
+            &mut ctx,
+            &mut memory,
+        );
+        let expected = selected(&src1, &src2, 4, 0x10);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[17][..8], expected.as_slice());
+            assert!(x86.xmm[17][8..].iter().all(|word| *word == 0));
+        }
+
+        // EVEX Full-Mem is unaligned-capable and uses one plain, non-fault-
+        // suppressed vector load.
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xE3, 0x6D, 0x40, 0x44, 0x08, 0x11],
+            &mut ctx,
+            &mut memory,
+        );
+        let expected = selected(&src1, &memory_src, 4, 0x11);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[17][..8], expected.as_slice());
+        }
+
+        // Legacy memory misalignment is #GP(0) before destination mutation.
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(
+            &[0x66, 0x44, 0x0F, 0x3A, 0x44, 0x08, 0x11],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+
+        // EVEX has no fault suppression: an unavailable byte in the full
+        // memory operand faults before any destination write.
+        ctx.write_vreg(rax, 0x3E1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+        }
+        let fault = execute_lifted_x86(
+            &[0x62, 0xE3, 0x6D, 0x40, 0x44, 0x08, 0x11],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17], sentinel);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_crc32c_executes_widths_high_bytes_aliases_memory_faults_and_flags() {
+        fn reference(mut crc: u32, data: u64, bytes: u32) -> u64 {
+            for byte in 0..bytes {
+                crc ^= ((data >> (byte * 8)) & 0xFF) as u32;
+                for _ in 0..8 {
+                    crc = (crc >> 1) ^ (0x82F6_3B78 & 0u32.wrapping_sub(crc & 1));
+                }
+            }
+            u64::from(crc)
+        }
+
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (insn, initial, data, bytes, expected) in [
+            (
+                &[0xF2, 0x45, 0x0F, 0x38, 0xF0, 0xC1][..],
+                u64::MAX,
+                0x31,
+                1,
+                0x6F0A_661C,
+            ),
+            (
+                &[0x66, 0xF2, 0x45, 0x0F, 0x38, 0xF1, 0xC1][..],
+                0x1234_5678,
+                0xABCD,
+                2,
+                0xAAE3_2043,
+            ),
+            (
+                &[0xF2, 0x45, 0x0F, 0x38, 0xF1, 0xC1][..],
+                0x89AB_CDEF,
+                0x0123_4567,
+                4,
+                0x796A_B9A9,
+            ),
+            (
+                &[0xF2, 0x4D, 0x0F, 0x38, 0xF1, 0xC1][..],
+                0xFFFF_FFFF_DEAD_BEEF,
+                0x0123_4567_89AB_CDEF,
+                8,
+                0x3AB0_1437,
+            ),
+        ] {
+            ctx.write_vreg(r8, initial);
+            ctx.write_vreg(r9, data);
+            execute_lifted_x86(insn, &mut ctx, &mut memory);
+            assert_eq!(ctx.read_vreg(r8), expected);
+            assert_eq!(expected, reference(initial as u32, data, bytes));
+        }
+
+        // Same-register source/destination reads both operands from the old
+        // value, then zero-extends the 32-bit result.
+        let alias_value = 0xA5A5_5A5A_DEAD_BEEF;
+        ctx.write_vreg(r8, alias_value);
+        execute_lifted_x86(&[0xF2, 0x45, 0x0F, 0x38, 0xF0, 0xC0], &mut ctx, &mut memory);
+        assert_eq!(
+            ctx.read_vreg(r8),
+            reference(alias_value as u32, alias_value, 1)
+        );
+        ctx.write_vreg(r8, alias_value);
+        execute_lifted_x86(&[0xF2, 0x4D, 0x0F, 0x38, 0xF1, 0xC0], &mut ctx, &mut memory);
+        assert_eq!(
+            ctx.read_vreg(r8),
+            reference(alias_value as u32, alias_value, 8)
+        );
+
+        // Without REX, byte code 5 is CH rather than BPL.
+        ctx.write_vreg(rcx, 0x1122_3344_5566_AB88);
+        ctx.write_vreg(rdx, 0xFFFF_FFFF_1234_5678);
+        execute_lifted_x86(&[0xF2, 0x0F, 0x38, 0xF0, 0xD5], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rdx), reference(0x1234_5678, 0xAB, 1));
+
+        // Qword memory accesses are unaligned-capable.
+        let memory_value = 0x8877_6655_4433_2211u64;
+        memory.write(0x109, &memory_value.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(r8, 0xFFFF_FFFF_89AB_CDEF);
+        execute_lifted_x86(
+            &[0xF2, 0x4C, 0x0F, 0x38, 0xF1, 0x40, 0x09],
+            &mut ctx,
+            &mut memory,
+        );
+        assert_eq!(ctx.read_vreg(r8), reference(0x89AB_CDEF, memory_value, 8));
+
+        // A memory fault occurs before the sole architectural destination
+        // write and preserves both destination and RFLAGS.
+        ctx.write_vreg(rax, 0x3FC);
+        ctx.write_vreg(r8, alias_value);
+        let fault =
+            execute_lifted_x86(&[0xF2, 0x4C, 0x0F, 0x38, 0xF1, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        assert_eq!(ctx.read_vreg(r8), alias_value);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_immediate_blends_execute_raw_masks_repetition_aliases_and_faults() {
+        fn vector(bytes: &[u8], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (word, chunk) in bytes.chunks_exact(8).enumerate() {
+                out[word] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            out
+        }
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+        fn blend(
+            first: &[u8],
+            second: &[u8],
+            elem_bytes: usize,
+            imm: u8,
+            repeat_128: bool,
+        ) -> Vec<u8> {
+            let lanes = first.len() / elem_bytes;
+            let block_lanes = 16 / elem_bytes;
+            let mut out = Vec::with_capacity(first.len());
+            for lane in 0..lanes {
+                let bit = if repeat_128 { lane % block_lanes } else { lane };
+                let source = if (imm >> bit) & 1 != 0 { second } else { first };
+                out.extend_from_slice(&source[lane * elem_bytes..(lane + 1) * elem_bytes]);
+            }
+            out
+        }
+
+        let first = (0..32).map(|i| (i * 29 + 3) as u8).collect::<Vec<_>>();
+        let second = (0..32)
+            .map(|i| (0xF1u16.wrapping_sub((i * 17) as u16)) as u8)
+            .collect::<Vec<_>>();
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        memory.write(0x100, &second[..16]).unwrap();
+        memory.write(0x181, &second).unwrap();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (opcode, elem_bytes, imm, repeat) in [
+            (0x0C, 4usize, 0x5A, false),
+            (0x0D, 8, 0x02, false),
+            (0x0E, 2, 0xA5, true),
+        ] {
+            let mut dst = vector(&first[..16], upper);
+            dst[2..].fill(upper);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = dst;
+                x86.xmm[10] = vector(&second[..16], 0);
+            }
+            execute_lifted_x86(
+                &[0x66, 0x45, 0x0F, 0x3A, opcode, 0xCA, imm],
+                &mut ctx,
+                &mut memory,
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[9], 16),
+                    blend(&first[..16], &second[..16], elem_bytes, imm, repeat)
+                );
+                assert!(x86.xmm[9][2..].iter().all(|word| *word == upper));
+            }
+        }
+
+        for (opcode, elem_bytes, imm, repeat) in [
+            (0x0C, 4usize, 0xA5, false),
+            (0x0D, 8, 0x05, false),
+            (0x0E, 2, 0xA5, true),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = sentinel;
+                x86.xmm[10] = vector(&second, 0);
+                x86.xmm[11] = vector(&first, 0);
+            }
+            execute_lifted_x86(
+                &[0xC4, 0x43, 0x25, opcode, 0xCA, imm],
+                &mut ctx,
+                &mut memory,
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[9], 32),
+                    blend(&first, &second, elem_bytes, imm, repeat)
+                );
+                assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // VEX source1/destination aliasing must read all old lanes before the
+        // architectural zeroing write.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&first, upper);
+            x86.xmm[10] = vector(&second, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x43, 0x35, 0x0C, 0xCA, 0xA5], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[9], 32),
+                blend(&first, &second, 4, 0xA5, false)
+            );
+        }
+
+        // VEX memory is unaligned-capable.
+        ctx.write_vreg(rax, 0x181);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[3] = vector(&first, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0xE3, 0x65, 0x0C, 0x08, 0xA5], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[1], 32),
+                blend(&first, &second, 4, 0xA5, false)
+            );
+        }
+
+        // Legacy Type-4 alignment faults before the load and destination write.
+        ctx.write_vreg(rax, 0x181);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(
+            &[0x66, 0x44, 0x0F, 0x3A, 0x0D, 0x08, 0x02],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+
+        ctx.write_vreg(rax, 0x3F0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+        }
+        let fault =
+            execute_lifted_x86(&[0xC4, 0xE3, 0x65, 0x0C, 0x08, 0xA5], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_0f3a_extracts_execute_lanes_widths_tuples_faults_and_flags() {
+        fn vector(bytes: &[u8], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (word, chunk) in bytes.chunks_exact(8).enumerate() {
+                out[word] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            out
+        }
+
+        let source = (0..16)
+            .map(|lane| (lane * 13 + 7) as u8)
+            .collect::<Vec<_>>();
+        let lane32 =
+            |lane: usize| u32::from_le_bytes(source[lane * 4..lane * 4 + 4].try_into().unwrap());
+        let lane64 =
+            |lane: usize| u64::from_le_bytes(source[lane * 8..lane * 8 + 8].try_into().unwrap());
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&source, upper);
+            x86.xmm[17] = vector(&source, upper);
+        }
+
+        // Immediate bits above the lane selector are ignored, and each GPR
+        // form zero-extends its scalar result.
+        ctx.write_vreg(r8, u64::MAX);
+        execute_lifted_x86(
+            &[0x66, 0x45, 0x0F, 0x3A, 0x14, 0xC8, 0x1F],
+            &mut ctx,
+            &mut memory,
+        );
+        assert_eq!(ctx.read_vreg(r8), u64::from(source[15]));
+
+        ctx.write_vreg(r8, u64::MAX);
+        execute_lifted_x86(&[0x66, 0x45, 0x0F, 0xC5, 0xC1, 0x0F], &mut ctx, &mut memory);
+        assert_eq!(
+            ctx.read_vreg(r8),
+            u64::from(u16::from_le_bytes(source[14..16].try_into().unwrap()))
+        );
+
+        ctx.write_vreg(r8, u64::MAX);
+        execute_lifted_x86(
+            &[0x62, 0x31, 0x7D, 0x08, 0xC5, 0xC1, 0x0F],
+            &mut ctx,
+            &mut memory,
+        );
+        assert_eq!(
+            ctx.read_vreg(r8),
+            u64::from(u16::from_le_bytes(source[14..16].try_into().unwrap()))
+        );
+
+        ctx.write_vreg(r8, u64::MAX);
+        execute_lifted_x86(&[0xC4, 0x43, 0x79, 0x16, 0xC8, 0x07], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(r8), u64::from(lane32(3)));
+
+        ctx.write_vreg(r8, 0);
+        execute_lifted_x86(&[0xC4, 0x43, 0xF9, 0x16, 0xC8, 0x03], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(r8), lane64(1));
+
+        ctx.write_vreg(r8, u64::MAX);
+        execute_lifted_x86(
+            &[0x62, 0xC3, 0x7D, 0x08, 0x17, 0xC8, 0x07],
+            &mut ctx,
+            &mut memory,
+        );
+        assert_eq!(ctx.read_vreg(r8), u64::from(lane32(3)));
+
+        // Scalar memory destinations are unaligned-capable and touch exactly
+        // their architectural byte count. This EVEX word form also exercises
+        // Tuple1 Scalar disp8*N (17*2 = 34 bytes).
+        memory.write(0x121, &[0xCC; 8]).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        execute_lifted_x86(
+            &[0x62, 0xE3, 0x7D, 0x08, 0x15, 0x48, 0x11, 0x0F],
+            &mut ctx,
+            &mut memory,
+        );
+        let mut around = [0u8; 8];
+        memory.read(0x121, &mut around).unwrap();
+        assert_eq!(around[0], 0xCC);
+        assert_eq!(&around[1..3], &source[14..16]);
+        assert!(around[3..].iter().all(|byte| *byte == 0xCC));
+
+        // A destination store fault leaves the source vector and RFLAGS
+        // unchanged. There is no alignment precondition for this scalar store.
+        let source_before = if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            x86.xmm[9]
+        } else {
+            unreachable!()
+        };
+        ctx.write_vreg(rax, 0x400);
+        let fault = execute_lifted_x86(
+            &[0x66, 0x44, 0x0F, 0x3A, 0x16, 0x08, 0x03],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], source_before);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_0f3a_inserts_execute_merges_masks_aliases_tuples_faults_and_flags() {
+        fn vector(bytes: &[u8], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (word, chunk) in bytes.chunks_exact(8).enumerate() {
+                out[word] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            out
+        }
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        let merge = (0..16)
+            .map(|lane| (lane * 17 + 3) as u8)
+            .collect::<Vec<_>>();
+        let second = (0..16)
+            .map(|lane| (0xF1u16.wrapping_sub((lane * 11) as u16)) as u8)
+            .collect::<Vec<_>>();
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Legacy PINSRB reads the low byte of r32, masks the immediate to four
+        // bits, replaces only lane 15, and preserves state above bit 127.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&merge, upper);
+        }
+        ctx.write_vreg(r8, 0xDEAD_BEEF_0123_45E7);
+        execute_lifted_x86(
+            &[0x66, 0x45, 0x0F, 0x3A, 0x20, 0xC8, 0x1F],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = merge.clone();
+            expected[15] = 0xE7;
+            assert_eq!(bytes(&x86.xmm[9], 16), expected);
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == upper));
+        }
+
+        // The older map-0F PINSRW form has reversed ModR/M operand direction,
+        // masks its selector to three bits, and has the same legacy upper rule.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&merge, upper);
+        }
+        ctx.write_vreg(r8, 0xDEAD_BEEF_0123_A1B2);
+        execute_lifted_x86(&[0x66, 0x45, 0x0F, 0xC4, 0xC8, 0x0F], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = merge.clone();
+            expected[14..16].copy_from_slice(&0xA1B2u16.to_le_bytes());
+            assert_eq!(bytes(&x86.xmm[9], 16), expected);
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == upper));
+        }
+
+        // EVEX map-0F PINSRW uses Tuple1 Scalar disp8*2, high vector registers,
+        // and clears all state above bit 127.
+        memory.write(0x192, &0xC3D4u16.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x180);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.xmm[18] = vector(&second, upper);
+        }
+        execute_lifted_x86(
+            &[0x62, 0xE1, 0x6D, 0x00, 0xC4, 0x48, 0x09, 0x0F],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = second.clone();
+            expected[14..16].copy_from_slice(&0xC3D4u16.to_le_bytes());
+            assert_eq!(bytes(&x86.xmm[17], 16), expected);
+            assert!(x86.xmm[17][2..].iter().all(|word| *word == 0));
+        }
+
+        // VEX memory insertion is unaligned-capable, reads exactly four bytes,
+        // merges from xmm10, and zeros all state above bit 127.
+        let dword = 0x8877_6655u32;
+        memory.write(0x115, &dword.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = vector(&merge, upper);
+        }
+        execute_lifted_x86(
+            &[0xC4, 0x63, 0x29, 0x22, 0x48, 0x14, 0x07],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = merge.clone();
+            expected[12..16].copy_from_slice(&dword.to_le_bytes());
+            assert_eq!(bytes(&x86.xmm[9], 16), expected);
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == 0));
+        }
+
+        // EVEX high-register qword insertion merges xmm18 into xmm17 and reads
+        // the old GPR value before zeroing the destination's upper state.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.xmm[18] = vector(&merge, upper);
+        }
+        ctx.write_vreg(r8, 0x0123_4567_89AB_CDEF);
+        execute_lifted_x86(
+            &[0x62, 0xC3, 0xED, 0x00, 0x22, 0xC8, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = merge.clone();
+            expected[8..16].copy_from_slice(&0x0123_4567_89AB_CDEFu64.to_le_bytes());
+            assert_eq!(bytes(&x86.xmm[17], 16), expected);
+            assert!(x86.xmm[17][2..].iter().all(|word| *word == 0));
+        }
+
+        // Full self-aliasing must snapshot the selected source lane and all
+        // merge lanes before the destination write. ZMask then clears lanes 1/3.
+        for insn in [
+            &[0x66, 0x45, 0x0F, 0x3A, 0x21, 0xC9, 0x6A][..],
+            &[0xC4, 0x43, 0x31, 0x21, 0xC9, 0x6A][..],
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = vector(&merge, upper);
+            }
+            execute_lifted_x86(insn, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                let mut expected = vec![0u8; 16];
+                expected[0..4].copy_from_slice(&merge[0..4]);
+                expected[8..12].copy_from_slice(&merge[4..8]);
+                assert_eq!(bytes(&x86.xmm[9], 16), expected);
+                let expected_upper = if insn[0] == 0x66 { upper } else { 0 };
+                assert!(x86.xmm[9][2..].iter().all(|word| *word == expected_upper));
+            }
+        }
+
+        // Memory INSERTPS ignores Count_S=3. EVEX Tuple1 Scalar disp8 scales
+        // by 4, so disp8=5 reads base+20 and inserts that dword into lane 2.
+        let inserted = 0xA1B2_C3D4u32;
+        memory.write(0x194, &inserted.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x180);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.xmm[18] = vector(&second, upper);
+        }
+        execute_lifted_x86(
+            &[0x62, 0xE3, 0x6D, 0x00, 0x21, 0x48, 0x05, 0xE0],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = second.clone();
+            expected[8..12].copy_from_slice(&inserted.to_le_bytes());
+            assert_eq!(bytes(&x86.xmm[17], 16), expected);
+            assert!(x86.xmm[17][2..].iter().all(|word| *word == 0));
+        }
+
+        // A scalar source load fault precedes every architectural destination
+        // write, including VEX/EVEX upper-state clearing.
+        ctx.write_vreg(rax, 0x3FE);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = vector(&merge, upper);
+        }
+        let fault =
+            execute_lifted_x86(&[0xC4, 0x63, 0x29, 0x22, 0x08, 0x03], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+
+        ctx.write_vreg(rax, 0x3FF);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.xmm[18] = vector(&second, upper);
+        }
+        let fault = execute_lifted_x86(
+            &[0x62, 0xC1, 0x6D, 0x00, 0xC4, 0x08, 0x07],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_mpsadbw_executes_block_selectors_aliases_alignment_faults_and_flags() {
+        fn vector(bytes: &[u8], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (word, chunk) in bytes.chunks_exact(8).enumerate() {
+                out[word] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            out
+        }
+        fn words(value: &VecValue, count: usize) -> Vec<u16> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 2)
+                .collect::<Vec<_>>()
+                .chunks_exact(2)
+                .map(|chunk| u16::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+        fn reference(first: &[u8], second: &[u8], imm: u8) -> Vec<u16> {
+            let blocks = first.len() / 16;
+            let mut out = Vec::with_capacity(blocks * 8);
+            for block in 0..blocks {
+                let (first_select, second_select) = if block == 0 {
+                    (((imm >> 2) & 1) * 4, (imm & 3) * 4)
+                } else {
+                    (((imm >> 5) & 1) * 4, ((imm >> 3) & 3) * 4)
+                };
+                let base = block * 16;
+                for output in 0..8usize {
+                    let mut sum = 0u16;
+                    for tap in 0..4usize {
+                        let a = first[base + usize::from(first_select) + output + tap];
+                        let b = second[base + usize::from(second_select) + tap];
+                        sum += u16::from(a.abs_diff(b));
+                    }
+                    out.push(sum);
+                }
+            }
+            out
+        }
+
+        let first = (0..32).map(|i| (i * 37 + 11) as u8).collect::<Vec<_>>();
+        let second = (0..32)
+            .map(|i| (0xF7u16.wrapping_sub((i * 19) as u16)) as u8)
+            .collect::<Vec<_>>();
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        memory.write(0x101, &second).unwrap();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Exercise every legacy selector combination. Bits 7:3 are ignored,
+        // destination/source1 aliasing is intrinsic, and upper state survives.
+        for selector in 0..8u8 {
+            let imm = selector | 0xF8;
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = vector(&first[..16], upper);
+                x86.xmm[10] = vector(&second[..16], 0);
+            }
+            execute_lifted_x86(
+                &[0x66, 0x45, 0x0F, 0x3A, 0x42, 0xCA, imm],
+                &mut ctx,
+                &mut memory,
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    words(&x86.xmm[9], 8),
+                    reference(&first[..16], &second[..16], imm)
+                );
+                assert!(x86.xmm[9][2..].iter().all(|word| *word == upper));
+            }
+        }
+
+        // VEX.256 uses independent selector fields for each 128-bit block.
+        // Source1/destination aliasing must snapshot both blocks before writeback.
+        let imm = 0x38;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&first, upper);
+            x86.xmm[10] = vector(&second, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x43, 0x35, 0x42, 0xCA, imm], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(words(&x86.xmm[9], 16), reference(&first, &second, imm));
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+        }
+
+        // VEX memory is unaligned-capable and reads a complete 256-bit operand.
+        ctx.write_vreg(rax, 0xF0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[11] = vector(&first, 0);
+        }
+        execute_lifted_x86(
+            &[0xC4, 0x63, 0x25, 0x42, 0x48, 0x11, imm],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(words(&x86.xmm[9], 16), reference(&first, &second, imm));
+        }
+
+        // The same address violates the legacy 16-byte alignment requirement
+        // before either the load or destination mutation.
+        ctx.write_vreg(rax, 0xF1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(
+            &[0x66, 0x44, 0x0F, 0x3A, 0x42, 0x08, 0x07],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+
+        // An incomplete VEX memory operand faults before upper-state clearing.
+        ctx.write_vreg(rax, 0x3F0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[11] = vector(&first, 0);
+        }
+        let fault = execute_lifted_x86(&[0xC4, 0x63, 0x25, 0x42, 0x08, imm], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_psadbw_executes_all_widths_aliases_upper_state_and_faults() {
+        fn vector(bytes: &[u8], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (word, chunk) in bytes.chunks_exact(8).enumerate() {
+                out[word] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            out
+        }
+        fn reference(first: &[u8], second: &[u8]) -> Vec<u64> {
+            first
+                .chunks_exact(8)
+                .zip(second.chunks_exact(8))
+                .map(|(a, b)| {
+                    a.iter()
+                        .zip(b)
+                        .map(|(&x, &y)| u64::from(x.abs_diff(y)))
+                        .sum()
+                })
+                .collect()
+        }
+
+        let mut first = (0..64).map(|i| (i * 37 + 11) as u8).collect::<Vec<_>>();
+        let mut second = (0..64)
+            .map(|i| (0xF7u16.wrapping_sub((i * 19) as u16)) as u8)
+            .collect::<Vec<_>>();
+        // Include the architectural maximum 8 * |0 - 255| = 2040 in block 0.
+        first[..8].fill(0);
+        second[..8].fill(255);
+        let expected = reference(&first, &second);
+        assert_eq!(expected[0], 2040);
+
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        memory.write(0x101, &second).unwrap();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Legacy PSADBW intrinsically aliases destination/source1 and preserves
+        // the architectural state above bit 127.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&first[..16], upper);
+            x86.xmm[10] = vector(&second[..16], 0);
+        }
+        execute_lifted_x86(&[0x66, 0x45, 0x0F, 0xF6, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[9][..2], &expected[..2]);
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == upper));
+        }
+
+        // VEX.128 destination/source1 and destination/source2 aliases both
+        // require complete input snapshots; VEX clears all state above bit 127.
+        for (insn, src1, src2) in [
+            (
+                &[0xC4, 0x41, 0x31, 0xF6, 0xCA][..],
+                vector(&first[..16], upper),
+                vector(&second[..16], 0),
+            ),
+            (
+                &[0xC4, 0x41, 0x21, 0xF6, 0xC9][..],
+                vector(&first[..16], 0),
+                vector(&second[..16], upper),
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = if insn[4] == 0xCA { src1 } else { src2 };
+                x86.xmm[10] = vector(&second[..16], 0);
+                x86.xmm[11] = vector(&first[..16], 0);
+            }
+            execute_lifted_x86(insn, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(&x86.xmm[9][..2], &expected[..2]);
+                assert!(x86.xmm[9][2..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // VEX.256 and EVEX.512 repeat independently for every 64-bit block and
+        // clear state above their active vector length.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = vector(&second[..32], 0);
+            x86.xmm[11] = vector(&first[..32], 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x41, 0x25, 0xF6, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[9][..4], &expected[..4]);
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.xmm[18] = vector(&second, 0);
+            x86.xmm[19] = vector(&first, 0);
+        }
+        execute_lifted_x86(&[0x62, 0xA1, 0x65, 0x40, 0xF6, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[17][..8], &expected[..8]);
+            assert!(x86.xmm[17][8..].iter().all(|word| *word == 0));
+        }
+
+        // VEX and EVEX memory operands are unaligned-capable.
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[11] = vector(&first[..16], 0);
+            x86.xmm[19] = sentinel;
+            x86.xmm[20] = vector(&first, 0);
+        }
+        execute_lifted_x86(&[0xC5, 0x21, 0xF6, 0x48, 0x01], &mut ctx, &mut memory);
+        ctx.write_vreg(rax, 0x101);
+        execute_lifted_x86(&[0x62, 0xE1, 0x5D, 0x40, 0xF6, 0x18], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[9][..2], &expected[..2]);
+            assert_eq!(&x86.xmm[19][..8], &expected[..8]);
+        }
+
+        // Legacy alignment and vector load faults precede all destination
+        // mutation, including VEX/EVEX upper-state clearing.
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(&[0x66, 0x44, 0x0F, 0xF6, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+
+        ctx.write_vreg(rax, 0x3F0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[11] = vector(&first[..32], 0);
+        }
+        let fault = execute_lifted_x86(&[0xC4, 0x61, 0x25, 0xF6, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_dot_products_execute_masks_rounding_mxcsr_atomicity_and_faults() {
+        fn vector_f32(values: &[u32], fill: u64) -> VecValue {
+            let mut bytes = Vec::with_capacity(values.len() * 4);
+            for value in values {
+                bytes.extend(value.to_le_bytes());
+            }
+            let mut out = [fill; 16];
+            for (word, chunk) in bytes.chunks_exact(8).enumerate() {
+                out[word] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            out
+        }
+        fn vector_f64(values: &[u64], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (lane, value) in values.iter().copied().enumerate() {
+                out[lane] = value;
+            }
+            out
+        }
+        fn f32_lanes(value: &VecValue, count: usize) -> Vec<u32> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 4)
+                .collect::<Vec<_>>()
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // DPPS performs the documented pairwise tree and broadcasts only to
+        // low-mask-selected lanes. Legacy state above bit 127 is preserved.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector_f32(
+                &[
+                    1.0f32.to_bits(),
+                    2.0f32.to_bits(),
+                    3.0f32.to_bits(),
+                    4.0f32.to_bits(),
+                ],
+                upper,
+            );
+            x86.xmm[10] = vector_f32(
+                &[
+                    10.0f32.to_bits(),
+                    20.0f32.to_bits(),
+                    30.0f32.to_bits(),
+                    40.0f32.to_bits(),
+                ],
+                0,
+            );
+        }
+        execute_lifted_x86(
+            &[0x66, 0x45, 0x0F, 0x3A, 0x40, 0xCA, 0xF1],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(f32_lanes(&x86.xmm[9], 4), vec![300.0f32.to_bits(), 0, 0, 0]);
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == upper));
+        }
+
+        // DPPD uses imm[5:4] for input selection and imm[1:0] for output.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector_f64(&[1.5f64.to_bits(), 2.0f64.to_bits()], upper);
+            x86.xmm[10] = vector_f64(&[2.0f64.to_bits(), 3.0f64.to_bits()], 0);
+        }
+        execute_lifted_x86(
+            &[0x66, 0x45, 0x0F, 0x3A, 0x41, 0xCA, 0x33],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[9][..2], &[9.0f64.to_bits(), 9.0f64.to_bits()]);
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == upper));
+        }
+
+        // VDPPS.256 repeats the same primitive independently in each 128-bit
+        // half and clears all state above bit 255.
+        let first = [1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0].map(f32::to_bits);
+        let second = [2.0f32, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0].map(f32::to_bits);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = vector_f32(&second, 0);
+            x86.xmm[11] = vector_f32(&first, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x43, 0x25, 0x40, 0xCA, 0xFF], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                f32_lanes(&x86.xmm[9], 8),
+                [40.0f32; 4]
+                    .into_iter()
+                    .chain([200.0f32; 4])
+                    .map(f32::to_bits)
+                    .collect::<Vec<_>>()
+            );
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+        }
+
+        // Each multiply is rounded before horizontal addition. This product is
+        // just above an exact representable value: RN selects +2 ULP, RU +3 ULP.
+        for (rc, expected) in [(0u32, 0x3F80_0002u32), (2, 0x3F80_0003)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mxcsr = (0x1F80 & !(3 << 13)) | (rc << 13);
+                x86.xmm[9] = sentinel;
+                x86.xmm[10] = vector_f32(&[0x3F80_0001, 0, 0, 0], 0);
+                x86.xmm[11] = vector_f32(&[0x3F80_0001, 0, 0, 0], 0);
+            }
+            execute_lifted_x86(&[0xC4, 0x43, 0x21, 0x40, 0xCA, 0x11], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(f32_lanes(&x86.xmm[9], 1), vec![expected]);
+                assert_ne!(x86.mxcsr & (1 << 5), 0, "inexact multiplication");
+                assert!(x86.xmm[9][2..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // Input selection occurs before arithmetic and suppresses SNaN and
+        // denormal-input exceptions for deselected lanes.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mxcsr = 0x1F80;
+            x86.xmm[9] = vector_f32(&[0x7F80_0001, 1, 0, 0], upper);
+            x86.xmm[10] = vector_f32(&[1.0f32.to_bits(), 1.0f32.to_bits(), 0, 0], 0);
+        }
+        execute_lifted_x86(
+            &[0x66, 0x45, 0x0F, 0x3A, 0x40, 0xCA, 0x0F],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(f32_lanes(&x86.xmm[9], 4), vec![0; 4]);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+
+        // With invalid masked, a selected SNaN is quieted with its payload and
+        // sign preserved. A zero output mask does not suppress computation.
+        for (imm, expected) in [(0x11u8, 0x7FC0_0123u32), (0x10, 0)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mxcsr = 0x1F80;
+                x86.xmm[9] = sentinel;
+                x86.xmm[10] = vector_f32(&[1.0f32.to_bits(), 0, 0, 0], 0);
+                x86.xmm[11] = vector_f32(&[0x7F80_0123, 0, 0, 0], 0);
+            }
+            execute_lifted_x86(&[0xC4, 0x43, 0x21, 0x40, 0xCA, imm], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(f32_lanes(&x86.xmm[9], 1), vec![expected]);
+                assert_ne!(x86.mxcsr & 1, 0);
+            }
+        }
+
+        // DAZ converts selected denormals to signed zero without DE. Without
+        // DAZ, exact denormal operands/results survive and DE becomes sticky.
+        for (daz, expected, expect_de) in [(false, 1u32, true), (true, 0x0000_0000u32, false)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mxcsr = 0x1F80 | if daz { 1 << 6 } else { 0 };
+                x86.xmm[9] = sentinel;
+                x86.xmm[10] = vector_f32(&[1.0f32.to_bits(), 0, 0, 0], 0);
+                x86.xmm[11] = vector_f32(&[1, 0, 0, 0], 0);
+            }
+            execute_lifted_x86(&[0xC4, 0x43, 0x21, 0x40, 0xCA, 0x11], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(f32_lanes(&x86.xmm[9], 1), vec![expected]);
+                assert_eq!(x86.mxcsr & (1 << 1) != 0, expect_de);
+            }
+        }
+
+        // An exact tiny product is retained with masked underflow and FTZ=0;
+        // FTZ flushes it and sets UE+PE even though the pre-flush result is exact.
+        for (ftz, expected, expected_status) in [
+            (false, 0x0040_0000u32, 0u32),
+            (true, 0u32, (1 << 4) | (1 << 5)),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mxcsr = 0x1F80 | if ftz { 1 << 15 } else { 0 };
+                x86.xmm[9] = sentinel;
+                x86.xmm[10] = vector_f32(&[0.5f32.to_bits(), 0, 0, 0], 0);
+                x86.xmm[11] = vector_f32(&[0x0080_0000, 0, 0, 0], 0);
+            }
+            execute_lifted_x86(&[0xC4, 0x43, 0x21, 0x40, 0xCA, 0x11], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(f32_lanes(&x86.xmm[9], 1), vec![expected]);
+                assert_eq!(x86.mxcsr & ((1 << 4) | (1 << 5)), expected_status);
+            }
+        }
+
+        // Selected SNaN, overflow, and exact tiny results all trap before any
+        // architectural write when their corresponding exception is unmasked.
+        for (mxcsr, first_lane, second_lane, expected_status) in [
+            (0x1F80 & !(1 << 7), 0x7F80_0001, 1.0f32.to_bits(), 1),
+            (0x1F80 & !(1 << 10), 0x7F7F_FFFF, 2.0f32.to_bits(), 1 << 3),
+            (0x1F80 & !(1 << 11), 0x0080_0000, 0.5f32.to_bits(), 1 << 4),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mxcsr = mxcsr;
+                x86.xmm[9] = sentinel;
+                x86.xmm[10] = vector_f32(&[second_lane, 0, 0, 0], 0);
+                x86.xmm[11] = vector_f32(&[first_lane, 0, 0, 0], 0);
+            }
+            let exit =
+                execute_lifted_x86(&[0xC4, 0x43, 0x21, 0x40, 0xCA, 0x11], &mut ctx, &mut memory);
+            assert!(matches!(
+                exit,
+                BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+            ));
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[9], sentinel);
+                assert_ne!(x86.mxcsr & expected_status, 0);
+            }
+        }
+
+        // VEX memory is unaligned-capable. Legacy alignment and VEX load faults
+        // occur before dot-product status or destination writes.
+        let memory_operand = [2.0f32, 3.0, 4.0, 5.0]
+            .into_iter()
+            .flat_map(|value| value.to_bits().to_le_bytes())
+            .collect::<Vec<_>>();
+        memory.write(0x101, &memory_operand).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mxcsr = 0x1F80;
+            x86.xmm[9] = sentinel;
+            x86.xmm[11] = vector_f32(&first[..4], 0);
+        }
+        execute_lifted_x86(
+            &[0xC4, 0x63, 0x21, 0x40, 0x48, 0x01, 0xF1],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(f32_lanes(&x86.xmm[9], 1), vec![40.0f32.to_bits()]);
+        }
+
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        let misaligned = execute_lifted_x86(
+            &[0x66, 0x44, 0x0F, 0x3A, 0x40, 0x08, 0xF1],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+
+        ctx.write_vreg(rax, 0x3F8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.mxcsr = 0x1F80;
+        }
+        let fault =
+            execute_lifted_x86(&[0xC4, 0x63, 0x21, 0x40, 0x08, 0xF1], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn x86_dot_product_softfloat_core_matches_ieee_nearest_and_directed_edges() {
+        let mut state = 0xD1B5_4A32_D192_ED03u64;
+        let mut next = || {
+            state = state
+                .wrapping_mul(0x9E37_79B9_7F4A_7C15)
+                .wrapping_add(0xBF58_476D_1CE4_E5B9);
+            state
+        };
+
+        // For finite normal inputs the host's individual IEEE operation is an
+        // independent nearest-even oracle. Products/additions are never fused.
+        for _ in 0..20_000 {
+            let a = next() as u32;
+            let b = next() as u32;
+            let a_exp = a & 0x7F80_0000;
+            let b_exp = b & 0x7F80_0000;
+            if a_exp == 0 || a_exp == 0x7F80_0000 || b_exp == 0 || b_exp == 0x7F80_0000 {
+                continue;
+            }
+            let multiply = SmirInterpreter::x86_simd_fp_mul(
+                u64::from(a),
+                u64::from(b),
+                X86_SIMD_F32,
+                FpRoundMode::RoundNearest,
+                0x1F80,
+            );
+            let add = SmirInterpreter::x86_simd_fp_add(
+                u64::from(a),
+                u64::from(b),
+                X86_SIMD_F32,
+                FpRoundMode::RoundNearest,
+                0x1F80,
+            );
+            assert_eq!(
+                multiply.bits as u32,
+                (f32::from_bits(a) * f32::from_bits(b)).to_bits()
+            );
+            assert_eq!(
+                add.bits as u32,
+                (f32::from_bits(a) + f32::from_bits(b)).to_bits()
+            );
+        }
+
+        for _ in 0..20_000 {
+            let a = next();
+            let b = next();
+            let a_exp = a & 0x7FF0_0000_0000_0000;
+            let b_exp = b & 0x7FF0_0000_0000_0000;
+            if a_exp == 0
+                || a_exp == 0x7FF0_0000_0000_0000
+                || b_exp == 0
+                || b_exp == 0x7FF0_0000_0000_0000
+            {
+                continue;
+            }
+            let multiply = SmirInterpreter::x86_simd_fp_mul(
+                a,
+                b,
+                X86_SIMD_F64,
+                FpRoundMode::RoundNearest,
+                0x1F80,
+            );
+            let add = SmirInterpreter::x86_simd_fp_add(
+                a,
+                b,
+                X86_SIMD_F64,
+                FpRoundMode::RoundNearest,
+                0x1F80,
+            );
+            assert_eq!(
+                multiply.bits,
+                (f64::from_bits(a) * f64::from_bits(b)).to_bits()
+            );
+            assert_eq!(add.bits, (f64::from_bits(a) + f64::from_bits(b)).to_bits());
+        }
+
+        for (format, one, half_ulp, next_up) in [
+            (
+                X86_SIMD_F32,
+                u64::from(0x3F80_0000u32),
+                u64::from(0x3380_0000u32),
+                u64::from(0x3F80_0001u32),
+            ),
+            (
+                X86_SIMD_F64,
+                0x3FF0_0000_0000_0000,
+                0x3CA0_0000_0000_0000,
+                0x3FF0_0000_0000_0001,
+            ),
+        ] {
+            for (mode, expected) in [
+                (FpRoundMode::RoundNearest, one),
+                (FpRoundMode::RoundTowardZero, one),
+                (FpRoundMode::RoundDown, one),
+                (FpRoundMode::RoundUp, next_up),
+            ] {
+                let result = SmirInterpreter::x86_simd_fp_add(one, half_ulp, format, mode, 0x1F80);
+                assert_eq!(result.bits, expected);
+                assert_ne!(result.status & (1 << 5), 0);
+            }
+        }
+    }
+
+    #[test]
+    fn lifted_sha512_executes_schedule_rounds_aliases_and_preserves_flags() {
+        fn vector(values: &[u64], fill: u64) -> VecValue {
+            let mut result = [fill; 16];
+            result[..values.len()].copy_from_slice(values);
+            result
+        }
+        fn msg1_reference(old: [u64; 4], source0: u64) -> [u64; 4] {
+            let sigma = |x: u64| x.rotate_right(1) ^ x.rotate_right(8) ^ (x >> 7);
+            [
+                old[0].wrapping_add(sigma(old[1])),
+                old[1].wrapping_add(sigma(old[2])),
+                old[2].wrapping_add(sigma(old[3])),
+                old[3].wrapping_add(sigma(source0)),
+            ]
+        }
+        fn msg2_reference(old: [u64; 4], source: [u64; 4]) -> [u64; 4] {
+            let sigma = |x: u64| x.rotate_right(19) ^ x.rotate_right(61) ^ (x >> 6);
+            let w16 = old[0].wrapping_add(sigma(source[2]));
+            let w17 = old[1].wrapping_add(sigma(source[3]));
+            let w18 = old[2].wrapping_add(sigma(w16));
+            let w19 = old[3].wrapping_add(sigma(w17));
+            [w16, w17, w18, w19]
+        }
+        fn rounds_reference(cdgh: [u64; 4], abef: [u64; 4], wk: [u64; 2]) -> [u64; 4] {
+            let (mut a, mut b, mut c, mut d) = (abef[3], abef[2], cdgh[3], cdgh[2]);
+            let (mut e, mut f, mut g, mut h) = (abef[1], abef[0], cdgh[1], cdgh[0]);
+            for round_constant in wk {
+                let choose = (e & f) ^ (g & !e);
+                let majority = (a & b) ^ (a & c) ^ (b & c);
+                let big1 = e.rotate_right(14) ^ e.rotate_right(18) ^ e.rotate_right(41);
+                let big0 = a.rotate_right(28) ^ a.rotate_right(34) ^ a.rotate_right(39);
+                let t1 = h
+                    .wrapping_add(big1)
+                    .wrapping_add(choose)
+                    .wrapping_add(round_constant);
+                let next_a = t1.wrapping_add(big0).wrapping_add(majority);
+                let next_e = d.wrapping_add(t1);
+                (h, g, f, e, d, c, b, a) = (g, f, e, next_e, c, b, a, next_a);
+            }
+            [f, e, b, a]
+        }
+
+        let old = [
+            0x0123_4567_89AB_CDEF,
+            0xFEDC_BA98_7654_3210,
+            0x0F1E_2D3C_4B5A_6978,
+            0x8877_6655_4433_2211,
+        ];
+        let source = [
+            0x1122_3344_5566_7788,
+            0x99AA_BBCC_DDEE_FF00,
+            0x1357_9BDF_2468_ACE0,
+            0xF0E1_D2C3_B4A5_9687,
+        ];
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&old, 0xA5A5_A5A5_A5A5_A5A5);
+            x86.xmm[10] = vector(&source, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x42, 0x7F, 0xCC, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                &x86.xmm[9][..4],
+                &[
+                    0x6F90_7DEB_1D5C_B34D,
+                    0x7E7A_EF81_D7C5_0C17,
+                    0xE3C1_57BC_A930_2DE6,
+                    0x0919_E64D_2A7F_B36D,
+                ]
+            );
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&old, u64::MAX);
+            x86.xmm[10] = vector(&source, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x42, 0x7F, 0xCD, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                &x86.xmm[9][..4],
+                &[
+                    0x9090_C864_365A_EF2D,
+                    0x34FA_A9E3_07FA_8701,
+                    0xEA3F_DF4E_865C_FD93,
+                    0x805D_E976_2B2A_D4FB,
+                ]
+            );
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+        }
+
+        // FIPS 180-4 SHA-512 initial state and the first two W+K values for
+        // the padded "abc" message. The constants below are independently
+        // calculated compression-round outputs [F2,E2,B2,A2].
+        let cdgh = [
+            0x5BE0_CD19_137E_2179,
+            0x1F83_D9AB_FB41_BD6B,
+            0xA54F_F53A_5F1D_36F1,
+            0x3C6E_F372_FE94_F82B,
+        ];
+        let abef = [
+            0x9B05_688C_2B3E_6C1F,
+            0x510E_527F_ADE6_82D1,
+            0xBB67_AE85_84CA_A73B,
+            0x6A09_E667_F3BC_C908,
+        ];
+        let wk = [0xA3EC_9318_D728_AE22, 0x7137_4491_23EF_65CD];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&cdgh, 0xDEAD_BEEF_DEAD_BEEF);
+            x86.xmm[10] = vector(&wk, 0);
+            x86.xmm[11] = vector(&abef, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x42, 0x27, 0xCB, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                &x86.xmm[9][..4],
+                &[
+                    0x58CB_0234_7AB5_1F91,
+                    0xC3D4_EBFD_4865_0FFA,
+                    0xF6AF_CEB8_BCFC_DDF5,
+                    0x1320_F8C9_FB87_2CC0,
+                ]
+            );
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+        }
+
+        // Destructive sources and explicit sources may all alias destination.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&old, u64::MAX);
+        }
+        execute_lifted_x86(&[0xC4, 0x42, 0x7F, 0xCC, 0xC9], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[9][..4], &msg1_reference(old, old[0]));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&old, u64::MAX);
+        }
+        execute_lifted_x86(&[0xC4, 0x42, 0x7F, 0xCD, 0xC9], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[9][..4], &msg2_reference(old, old));
+        }
+
+        let alias_input = [sentinel[0]; 4];
+        let alias_expected = rounds_reference(alias_input, alias_input, [sentinel[0]; 2]);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        execute_lifted_x86(&[0xC4, 0x42, 0x37, 0xCB, 0xC9], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[9][..4], &alias_expected);
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_sm3_executes_schedule_rounds_aliases_memory_and_faults() {
+        fn vector(values: &[u32], fill: u64) -> VecValue {
+            let mut bytes = Vec::with_capacity(values.len() * 4);
+            for value in values {
+                bytes.extend(value.to_le_bytes());
+            }
+            let mut result = [fill; 16];
+            for (word, chunk) in bytes.chunks_exact(8).enumerate() {
+                result[word] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            result
+        }
+        fn lanes(value: &VecValue) -> Vec<u32> {
+            value[..2]
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .collect::<Vec<_>>()
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+        fn msg1(old: [u32; 4], first: [u32; 4], second: [u32; 4]) -> [u32; 4] {
+            let p1 = |x: u32| x ^ x.rotate_left(15) ^ x.rotate_left(23);
+            std::array::from_fn(|index| {
+                p1(old[index]
+                    ^ second[index]
+                    ^ if index < 3 {
+                        first[index].rotate_left(15)
+                    } else {
+                        0
+                    })
+            })
+        }
+        fn msg2(old: [u32; 4], first: [u32; 4], second: [u32; 4]) -> [u32; 4] {
+            let mut result = std::array::from_fn(|index| {
+                first[index].rotate_left(7) ^ second[index] ^ old[index]
+            });
+            result[3] ^=
+                result[0].rotate_left(6) ^ result[0].rotate_left(15) ^ result[0].rotate_left(30);
+            result
+        }
+
+        let old = [0x0123_4567, 0x89AB_CDEF, 0xFEDC_BA98, 0x7654_3210];
+        let first = [0x0F1E_2D3C, 0x4B5A_6978, 0x8877_6655, 0x4433_2211];
+        let second = [0x1122_3344, 0x5566_7788, 0x99AA_BBCC, 0xDDEE_FF00];
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (insn, expected) in [
+            (
+                &[0xC4, 0x42, 0x20, 0xDA, 0xCA][..],
+                [0x684A_3D5B, 0xC2E0_D33D, 0x0101_0123, 0x4567_45AB],
+            ),
+            (
+                &[0xC4, 0x42, 0x21, 0xDA, 0xCA][..],
+                [0x9F17_E824, 0x71F9_0642, 0x5CC5_2B90, 0xA406_7917],
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = vector(&old, u64::MAX);
+                x86.xmm[10] = vector(&second, 0);
+                x86.xmm[11] = vector(&first, 0);
+            }
+            execute_lifted_x86(insn, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(lanes(&x86.xmm[9]), expected);
+                assert!(x86.xmm[9][2..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // SM3 initial state, W0/W1/W4/W5 for padded "abc", and independently
+        // calculated state [F2,E2,B2,A2] after rounds 0 and 1.
+        let cdgh = [0xB0FB_0E4E, 0xE38D_EE4D, 0xDA8A_0600, 0x1724_42D7];
+        let abef = [0x1631_38AA, 0xA96F_30BC, 0x4914_B2B9, 0x7380_166F];
+        let words = [0x6162_6380, 0, 0, 0];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&cdgh, u64::MAX);
+            x86.xmm[10] = vector(&words, 0);
+            x86.xmm[11] = vector(&abef, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x43, 0x21, 0xDE, 0xCA, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                lanes(&x86.xmm[9]),
+                [0x81F4_A5F8, 0x054E_9506, 0x37CF_E1D7, 0xE0FC_D39D]
+            );
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == 0));
+        }
+
+        // Full aliasing snapshots all three logical inputs before writeback.
+        for (insn, expected) in [
+            (&[0xC4, 0x42, 0x30, 0xDA, 0xC9][..], msg1(old, old, old)),
+            (&[0xC4, 0x42, 0x31, 0xDA, 0xC9][..], msg2(old, old, old)),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = vector(&old, u64::MAX);
+            }
+            execute_lifted_x86(insn, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(lanes(&x86.xmm[9]), expected);
+            }
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&old, u64::MAX);
+        }
+        execute_lifted_x86(&[0xC4, 0x43, 0x31, 0xDE, 0xC9, 0x3F], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                lanes(&x86.xmm[9]),
+                [0xF4B4_23DA, 0xF7AE_3424, 0xAC48_C0E4, 0xF3C9_4CFA]
+            );
+        }
+
+        // Unaligned memory succeeds; a short read faults before destination or
+        // flags can change. imm=1 is equivalent to imm=0 after masking.
+        let bytes = second
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        memory.write(0x101, &bytes).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector(&cdgh, u64::MAX);
+            x86.xmm[11] = vector(&abef, 0);
+        }
+        execute_lifted_x86(
+            &[0xC4, 0x63, 0x21, 0xDE, 0x48, 0x01, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+
+        ctx.write_vreg(rax, 0x1F8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        let fault =
+            execute_lifted_x86(&[0xC4, 0x63, 0x21, 0xDE, 0x08, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_sm4_executes_standard_vectors_widths_aliases_memory_and_faults() {
+        fn vector(values: &[u32], fill: u64) -> VecValue {
+            let mut bytes = Vec::with_capacity(values.len() * 4);
+            for value in values {
+                bytes.extend(value.to_le_bytes());
+            }
+            let mut result = [fill; 16];
+            for (word, chunk) in bytes.chunks_exact(8).enumerate() {
+                result[word] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            result
+        }
+        fn lanes(value: &VecValue, count: usize) -> Vec<u32> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 4)
+                .collect::<Vec<_>>()
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+
+        let expanded_key = [0xA292_FFA1, 0xDF01_FEBF, 0x99A1_2B0F, 0xC424_10CC];
+        let constants = [0x0007_0E15, 0x1C23_2A31, 0x383F_464D, 0x545B_6269];
+        let round_keys = [0xF121_86F9, 0x4166_2B61, 0x5A6A_B19A, 0x7BA9_2077];
+        let plaintext = [0x0123_4567, 0x89AB_CDEF, 0xFEDC_BA98, 0x7654_3210];
+        let after_four = [0x27FA_D345, 0xA18B_4CB2, 0x11C1_E22A, 0xCC13_E2EE];
+        let alternate = [0xDEAD_BEEF, 0x0123_9876, 0xA5A5_5A5A, 0x0F1E_2D3C];
+        let alternate_keys = [0x1020_3040, 0x5060_7080, 0x90A0_B0C0, 0xD0E0_F000];
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (insn, first, second, expected) in [
+            (
+                &[0xC4, 0x42, 0x22, 0xDA, 0xCA][..],
+                expanded_key,
+                constants,
+                round_keys,
+            ),
+            (
+                &[0xC4, 0x42, 0x23, 0xDA, 0xCA][..],
+                plaintext,
+                round_keys,
+                after_four,
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = sentinel;
+                x86.xmm[10] = vector(&second, 0);
+                x86.xmm[11] = vector(&first, 0);
+            }
+            execute_lifted_x86(insn, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(lanes(&x86.xmm[9], 4), expected);
+                assert!(x86.xmm[9][2..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // Compute an alternate lane independently with VEX.128, then verify the
+        // same lane is unchanged when paired with the standard vector in VEX.256.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = vector(&alternate_keys, 0);
+            x86.xmm[11] = vector(&alternate, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x42, 0x23, 0xDA, 0xCA], &mut ctx, &mut memory);
+        let alternate_expected = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => lanes(&x86.xmm[9], 4),
+            _ => unreachable!(),
+        };
+        let combined_first = plaintext.into_iter().chain(alternate).collect::<Vec<_>>();
+        let combined_keys = round_keys
+            .into_iter()
+            .chain(alternate_keys)
+            .collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = vector(&combined_keys, 0);
+            x86.xmm[11] = vector(&combined_first, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x42, 0x27, 0xDA, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&lanes(&x86.xmm[9], 8)[..4], &after_four);
+            assert_eq!(&lanes(&x86.xmm[9], 8)[4..], alternate_expected);
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+        }
+
+        // Every logical input may alias the destination.
+        for insn in [
+            &[0xC4, 0x42, 0x32, 0xDA, 0xC9][..],
+            &[0xC4, 0x42, 0x37, 0xDA, 0xC9][..],
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = vector(&combined_first, u64::MAX);
+            }
+            execute_lifted_x86(insn, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_ne!(x86.xmm[9], vector(&combined_first, u64::MAX));
+                assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // VEX.256 memory is unaligned-capable; a short read is atomic.
+        let source_bytes = combined_keys
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        memory.write(0x101, &source_bytes).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[11] = vector(&combined_first, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x62, 0x27, 0xDA, 0x48, 0x01], &mut ctx, &mut memory);
+
+        ctx.write_vreg(rax, 0x1F0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        let fault = execute_lifted_x86(&[0xC4, 0x62, 0x27, 0xDA, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn x86_fp16_to_fp32_is_exhaustive_over_binary16_encoding_space() {
+        for bits in 0..=u16::MAX {
+            let sign = u32::from(bits >> 15) << 31;
+            let exponent = u32::from((bits >> 10) & 0x1F);
+            let fraction = u32::from(bits & 0x03FF);
+            let expected = if exponent == 0x1F {
+                if fraction == 0 {
+                    sign | 0x7F80_0000
+                } else {
+                    sign | 0x7FC0_0000 | (fraction << 13)
+                }
+            } else if exponent == 0 && fraction == 0 {
+                sign
+            } else {
+                // Independent numerical oracle: every binary16 finite value is
+                // exactly representable in binary32, including subnormals.
+                let magnitude = if exponent == 0 {
+                    (fraction as f32) * 2.0f32.powi(-24)
+                } else {
+                    ((1024 + fraction) as f32) * 2.0f32.powi(exponent as i32 - 25)
+                };
+                if sign == 0 {
+                    magnitude.to_bits()
+                } else {
+                    (-magnitude).to_bits()
+                }
+            };
+            assert_eq!(
+                SmirInterpreter::x86_fp16_to_fp32_bits(bits),
+                expected,
+                "binary16 input {bits:#06x}",
+            );
+        }
+    }
+
+    #[test]
+    fn lifted_avx_ne_convert_executes_exact_bits_widths_mxcsr_and_faults() {
+        fn words(values: &[u16]) -> Vec<u8> {
+            values
+                .iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect()
+        }
+        fn f32_bits(value: &VecValue, count: usize) -> Vec<u32> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 4)
+                .collect::<Vec<_>>()
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let mxcsr_before = 0xBFC0;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        ctx.write_vreg(rax, 0x100);
+
+        // BF16 conversion is the exact bit operation input << 16, including
+        // signaling-NaN payloads; the YMM form zeroes all state above 256 bits.
+        memory.write(0x101, &0x3F80u16.to_le_bytes()).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.mxcsr = mxcsr_before;
+        }
+        execute_lifted_x86(&[0xC4, 0x62, 0x7E, 0xB1, 0x48, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(f32_bits(&x86.xmm[9], 8), vec![0x3F80_0000; 8]);
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+            assert_eq!(x86.mxcsr, mxcsr_before);
+        }
+
+        // FP16 signaling NaNs are quieted with sign/payload preservation and
+        // no SIMD exception or MXCSR status update under the instruction's SAE.
+        memory.write(0x101, &0xFC01u16.to_le_bytes()).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        execute_lifted_x86(&[0xC4, 0x62, 0x79, 0xB1, 0x48, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(f32_bits(&x86.xmm[9], 4), vec![0xFFC0_2000; 4]);
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == 0));
+            assert_eq!(x86.mxcsr, mxcsr_before);
+        }
+
+        let bf16 = [
+            0x0000, 0x8000, 0x3F80, 0xBF80, 0x7F80, 0xFF80, 0x7F81, 0xFFFF,
+        ];
+        memory.write(0x101, &words(&bf16)).unwrap();
+        for (insn, expected) in [
+            (
+                &[0xC4, 0x62, 0x7A, 0xB0, 0x48, 0x01][..],
+                [0x0000_0000, 0x3F80_0000, 0x7F80_0000, 0x7F81_0000],
+            ),
+            (
+                &[0xC4, 0x62, 0x7B, 0xB0, 0x48, 0x01][..],
+                [0x8000_0000, 0xBF80_0000, 0xFF80_0000, 0xFFFF_0000],
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = sentinel;
+            }
+            execute_lifted_x86(insn, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(f32_bits(&x86.xmm[9], 4), expected);
+                assert!(x86.xmm[9][2..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // Alternating words cover signed zero, minimum/maximum subnormal,
+        // minimum/maximum normal, finite fractions, infinities, and both NaN
+        // classes. Even and odd instructions select one word from each dword.
+        let fp16 = [
+            0x0000, 0x8000, 0x0001, 0x03FF, 0x0400, 0x3C00, 0x7C00, 0xFC00, 0x7C01, 0x7E55, 0xFC01,
+            0xFE55, 0x3555, 0xB555, 0x7BFF, 0xFBFF,
+        ];
+        memory.write(0x101, &words(&fp16)).unwrap();
+        for (insn, expected) in [
+            (
+                &[0xC4, 0x62, 0x7D, 0xB0, 0x48, 0x01][..],
+                [
+                    0x0000_0000,
+                    0x3380_0000,
+                    0x3880_0000,
+                    0x7F80_0000,
+                    0x7FC0_2000,
+                    0xFFC0_2000,
+                    0x3EAA_A000,
+                    0x477F_E000,
+                ],
+            ),
+            (
+                &[0xC4, 0x62, 0x7C, 0xB0, 0x48, 0x01][..],
+                [
+                    0x8000_0000,
+                    0x387F_C000,
+                    0x3F80_0000,
+                    0xFF80_0000,
+                    0x7FCA_A000,
+                    0xFFCA_A000,
+                    0xBEAA_A000,
+                    0xC77F_E000,
+                ],
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = sentinel;
+            }
+            execute_lifted_x86(insn, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(f32_bits(&x86.xmm[9], 8), expected);
+                assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+                assert_eq!(x86.mxcsr, mxcsr_before);
+            }
+        }
+
+        // Both scalar and full-vector memory faults precede destination writes.
+        for (address, insn) in [
+            (0x1FF, &[0xC4, 0x62, 0x7A, 0xB1, 0x08][..]),
+            (0x1F0, &[0xC4, 0x62, 0x7E, 0xB0, 0x08][..]),
+        ] {
+            ctx.write_vreg(rax, address);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = sentinel;
+            }
+            let result = execute_lifted_x86(insn, &mut ctx, &mut memory);
+            assert!(matches!(
+                result,
+                BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+            ));
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[9], sentinel);
+                assert_eq!(x86.mxcsr, mxcsr_before);
+            }
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_vex_packed_immediate_shifts_execute_overshifts_and_128_bit_lanes() {
+        fn bytes(value: &VecValue, count: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count)
+                .collect()
+        }
+
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(1);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        let word_source = (0..16)
+            .flat_map(|index| if index % 2 == 0 { 0x8001u16 } else { 0x7FFF }.to_le_bytes())
+            .collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = vec_from_bytes(&word_source);
+        }
+        execute_lifted_x86(&[0xC4, 0xC1, 0x35, 0x71, 0xE2, 17], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let expected = (0..16)
+                .flat_map(|index| if index % 2 == 0 { u16::MAX } else { 0 }.to_le_bytes())
+                .collect::<Vec<_>>();
+            assert_eq!(bytes(&x86.xmm[9], 32), expected);
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+        }
+
+        // Logical element overshifts produce zero rather than modulo-count
+        // results; this covers 16-, 32-, and 64-bit element sizes.
+        for insn in [
+            &[0xC4, 0xC1, 0x31, 0x71, 0xF2, 17][..],
+            &[0xC4, 0xC1, 0x31, 0x72, 0xD2, 33][..],
+            &[0xC4, 0xC1, 0x31, 0x73, 0xF2, 65][..],
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = sentinel;
+                x86.xmm[10] = vec_from_bytes(&[0xFF; 16]);
+            }
+            execute_lifted_x86(insn, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert!(x86.xmm[9].iter().all(|word| *word == 0));
+            }
+        }
+
+        let source = (0u8..32).collect::<Vec<_>>();
+        for (insn, expected) in [
+            (
+                &[0xC4, 0xC1, 0x35, 0x73, 0xDA, 1][..],
+                (1u8..16)
+                    .chain([0])
+                    .chain(17u8..32)
+                    .chain([0])
+                    .collect::<Vec<_>>(),
+            ),
+            (
+                &[0xC4, 0xC1, 0x35, 0x73, 0xFA, 1][..],
+                [0].into_iter()
+                    .chain(0u8..15)
+                    .chain([0])
+                    .chain(16u8..31)
+                    .collect::<Vec<_>>(),
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = sentinel;
+                x86.xmm[10] = vec_from_bytes(&source);
+            }
+            execute_lifted_x86(insn, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(bytes(&x86.xmm[9], 32), expected);
+                assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+            }
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_legacy_evex_packed_immediate_shifts_execute_masks_and_fault_classes() {
+        fn bytes(value: &VecValue, count: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count)
+                .collect()
+        }
+
+        let sentinel = [0x6B6B_6B6B_6B6B_6B6Bu64; 16];
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        let words = (0..8)
+            .flat_map(|lane| if lane % 2 == 0 { 0x8001u16 } else { 0x7FFF }.to_le_bytes())
+            .collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vec_from_bytes(&words);
+            x86.xmm[9][2..].fill(upper);
+        }
+        execute_lifted_x86(&[0x66, 0x41, 0x0F, 0x71, 0xE1, 17], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let expected = (0..8)
+                .flat_map(|lane| if lane % 2 == 0 { u16::MAX } else { 0 }.to_le_bytes())
+                .collect::<Vec<_>>();
+            assert_eq!(bytes(&x86.xmm[9], 16), expected);
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == upper));
+        }
+
+        let lane_bytes = (0u8..16).collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vec_from_bytes(&lane_bytes);
+            x86.xmm[9][2..].fill(upper);
+        }
+        execute_lifted_x86(&[0x66, 0x41, 0x0F, 0x73, 0xF9, 1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[9], 16),
+                [0].into_iter().chain(0u8..15).collect::<Vec<_>>()
+            );
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == upper));
+        }
+
+        // EVEX.W=1 selects arithmetic qword shifts and masks each qword.
+        let qwords = [
+            0x8000_0000_0000_0010,
+            0x7FFF_FFFF_FFFF_FFF0,
+            0xF000_0000_0000_0000,
+            0x1000_0000_0000_0000,
+            0xFFFF_FFFF_FFFF_FFFF,
+            1,
+            0x9000_0000_0000_0000,
+            0x7000_0000_0000_0000,
+        ];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = sentinel;
+            x86.xmm[18][..8].copy_from_slice(&qwords);
+        }
+        ctx.write_vreg(k1, 0xA5);
+        execute_lifted_x86(
+            &[0x62, 0xB1, 0xFD, 0x41, 0x72, 0xE2, 0x04],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for (lane, value) in qwords.iter().copied().enumerate() {
+                assert_eq!(
+                    x86.xmm[16][lane],
+                    if 0xA5u64 >> lane & 1 != 0 {
+                        ((value as i64) >> 4) as u64
+                    } else {
+                        sentinel[lane]
+                    },
+                );
+            }
+        }
+
+        // Type E4 full-tuple memory suppresses faults independently per active
+        // dword. Only lane 0 at 0xFC is mapped.
+        memory.write(0xFC, &0x8000_0018u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0xFC);
+        ctx.write_vreg(k1, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let active_lane = execute_lifted_x86(
+            &[0x62, 0xF1, 0x7D, 0x49, 0x72, 0x10, 0x03],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(!matches!(
+            active_lane,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[0], 0, 32), 0x1000_0003);
+            for lane in 1..16 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[0], lane, 32),
+                    0x6B6B_6B6B
+                );
+            }
+        }
+
+        ctx.write_vreg(k1, 2);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let exposed = execute_lifted_x86(
+            &[0x62, 0xF1, 0x7D, 0x49, 0x72, 0x10, 0x03],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            exposed,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], sentinel);
+        }
+
+        // Word immediate shifts are E4NF.nb: the complete vector load faults
+        // despite a mask selecting only the mapped first word.
+        ctx.write_vreg(k1, 1);
+        let e4nf = execute_lifted_x86(
+            &[0x62, 0xF1, 0x7D, 0x49, 0x71, 0x10, 0x03],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            e4nf,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+
+        // A masked-off broadcast performs no memory access at all.
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k1, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = sentinel;
+        }
+        let broadcast = execute_lifted_x86(
+            &[0x62, 0xF1, 0x7D, 0x59, 0x72, 0x10, 0x03],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(!matches!(
+            broadcast,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert!(x86.xmm[0][..8].iter().all(|word| *word == sentinel[0]));
+            assert!(x86.xmm[0][8..].iter().all(|word| *word == 0));
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_packed_immediate_shuffles_execute_lanes_aliases_memory_and_faults() {
+        fn vector_u16(values: &[u16], fill: u64) -> VecValue {
+            let bytes = values
+                .iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect::<Vec<_>>();
+            let mut result = [fill; 16];
+            for (index, chunk) in bytes.chunks(8).enumerate() {
+                let mut word = [0u8; 8];
+                word[..chunk.len()].copy_from_slice(chunk);
+                result[index] = u64::from_le_bytes(word);
+            }
+            result
+        }
+        fn words(value: &VecValue, count: usize) -> Vec<u16> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 2)
+                .collect::<Vec<_>>()
+                .chunks_exact(2)
+                .map(|chunk| u16::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+        fn dwords(value: &VecValue, count: usize) -> Vec<u32> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 4)
+                .collect::<Vec<_>>()
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (insn, expected) in [
+            (
+                &[0xF3, 0x45, 0x0F, 0x70, 0xCA, 0x1B][..],
+                [0, 1, 2, 3, 7, 6, 5, 4],
+            ),
+            (
+                &[0xF2, 0x45, 0x0F, 0x70, 0xCA, 0x1B][..],
+                [3, 2, 1, 0, 4, 5, 6, 7],
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = sentinel;
+                x86.xmm[10] = vector_u16(&(0..8).collect::<Vec<_>>(), 0);
+            }
+            execute_lifted_x86(insn, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(words(&x86.xmm[9], 8), expected);
+                assert!(x86.xmm[9][2..].iter().all(|word| *word == sentinel[0]));
+            }
+        }
+
+        let dword_source = (0u32..8)
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = vec_from_bytes(&dword_source);
+        }
+        execute_lifted_x86(&[0xC4, 0x41, 0x7D, 0x70, 0xCA, 0x1B], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(dwords(&x86.xmm[9], 8), [3, 2, 1, 0, 7, 6, 5, 4]);
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+        }
+
+        // Destination/source aliasing snapshots the complete source before
+        // writeback, and each 128-bit lane uses the same immediate selectors.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vec_from_bytes(&dword_source);
+        }
+        execute_lifted_x86(&[0xC4, 0x41, 0x7D, 0x70, 0xC9, 0x1B], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(dwords(&x86.xmm[9], 8), [3, 2, 1, 0, 7, 6, 5, 4]);
+        }
+
+        memory.write(0x101, &dword_source[..16]).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        execute_lifted_x86(&[0xC5, 0x79, 0x70, 0x48, 0x01, 0x1B], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(dwords(&x86.xmm[9], 4), [3, 2, 1, 0]);
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == 0));
+        }
+
+        // EVEX masking is applied after lane-local shuffling. E4NF memory
+        // semantics perform complete loads even when every mask bit is zero.
+        let evex_source = (0u32..16)
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.xmm[18] = vec_from_bytes(&evex_source);
+            x86.k[3] = 0x5555;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xA1, 0x7D, 0x4B, 0x70, 0xCA, 0x1B],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let actual = dwords(&x86.xmm[17], 16);
+            for lane in 0..16 {
+                let expected = if lane % 2 == 0 {
+                    (lane / 4 * 4 + (3 - lane % 4)) as u32
+                } else {
+                    0xCCCC_CCCC
+                };
+                assert_eq!(actual[lane], expected, "masked dword lane {lane}");
+            }
+        }
+
+        memory.write(0x104, &0x1234_5678u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.k[3] = u64::MAX;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xE1, 0x7D, 0x5B, 0x70, 0x48, 0x01, 0x1B],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(dwords(&x86.xmm[17], 16), vec![0x1234_5678; 16]);
+        }
+
+        ctx.write_vreg(rax, 0x1F0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.k[3] = 0;
+        }
+        let evex_fault = execute_lifted_x86(
+            &[0x62, 0xE1, 0x7D, 0x4B, 0x70, 0x08, 0x1B],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            evex_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17], sentinel);
+        }
+
+        ctx.write_vreg(rax, 0x1F8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        let fault = execute_lifted_x86(&[0xC5, 0x79, 0x70, 0x08, 0x1B], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_two_source_shuffles_execute_selectors_masks_broadcast_and_faults() {
+        fn vector_u32(values: &[u32], fill: u64) -> VecValue {
+            let mut result = [fill; 16];
+            let bytes = values
+                .iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect::<Vec<_>>();
+            for (index, chunk) in bytes.chunks(8).enumerate() {
+                result[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            result
+        }
+        fn dwords(value: &VecValue, count: usize) -> Vec<u32> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 4)
+                .collect::<Vec<_>>()
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+        fn qwords(value: &VecValue, count: usize) -> Vec<u64> {
+            value[..count].to_vec()
+        }
+
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = vector_u32(&[0, 1, 2, 3], sentinel[0]);
+            x86.xmm[10] = vector_u32(&[10, 11, 12, 13], 0);
+        }
+        execute_lifted_x86(&[0x45, 0x0F, 0xC6, 0xCA, 0xE4], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(dwords(&x86.xmm[9], 4), [0, 1, 12, 13]);
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == sentinel[0]));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[10] = vector_u32(&(10..18).collect::<Vec<_>>(), 0);
+            x86.xmm[11] = vector_u32(&(20..28).collect::<Vec<_>>(), 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x41, 0x2C, 0xC6, 0xCB, 0xE4], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(dwords(&x86.xmm[9], 8), [10, 11, 22, 23, 14, 15, 26, 27]);
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[10][..4].copy_from_slice(&[10, 11, 12, 13]);
+            x86.xmm[11][..4].copy_from_slice(&[20, 21, 22, 23]);
+        }
+        execute_lifted_x86(&[0xC4, 0x41, 0x2D, 0xC6, 0xCB, 0x0A], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(qwords(&x86.xmm[9], 4), [10, 21, 12, 23]);
+        }
+
+        memory.write(0x104, &0x1234_5678u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.xmm[18] = vector_u32(&(100..116).collect::<Vec<_>>(), 0);
+            x86.k[3] = u64::MAX;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xE1, 0x6C, 0x53, 0xC6, 0x48, 0x01, 0xE4],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                dwords(&x86.xmm[17], 16),
+                [
+                    100,
+                    101,
+                    0x1234_5678,
+                    0x1234_5678,
+                    104,
+                    105,
+                    0x1234_5678,
+                    0x1234_5678,
+                    108,
+                    109,
+                    0x1234_5678,
+                    0x1234_5678,
+                    112,
+                    113,
+                    0x1234_5678,
+                    0x1234_5678
+                ]
+            );
+        }
+
+        ctx.write_vreg(rax, 0x1F0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.k[3] = 0;
+        }
+        let fault = execute_lifted_x86(
+            &[0x62, 0xE1, 0x6C, 0x43, 0xC6, 0x08, 0xE4],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_duplicate_moves_execute_patterns_masks_memory_and_faults() {
+        fn vector(values: &[u32], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            let bytes = values
+                .iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect::<Vec<_>>();
+            for (index, chunk) in bytes.chunks(8).enumerate() {
+                out[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            out
+        }
+        fn lanes(value: &VecValue, count: usize) -> Vec<u32> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 4)
+                .collect::<Vec<_>>()
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[10] = vector(&(0..8).collect::<Vec<_>>(), 0);
+        }
+        for (insn, expected) in [
+            (
+                &[0xC4, 0x41, 0x7E, 0x12, 0xCA][..],
+                vec![0, 0, 2, 2, 4, 4, 6, 6],
+            ),
+            (
+                &[0xC4, 0x41, 0x7E, 0x16, 0xCA][..],
+                vec![1, 1, 3, 3, 5, 5, 7, 7],
+            ),
+        ] {
+            execute_lifted_x86(insn, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(lanes(&x86.xmm[9], 8), expected);
+            }
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.xmm[18] = vector(&(0..16).collect::<Vec<_>>(), 0);
+            x86.k[3] = 0x5555;
+        }
+        execute_lifted_x86(&[0x62, 0xA1, 0x7E, 0x4B, 0x12, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let actual = lanes(&x86.xmm[17], 16);
+            for lane in 0..16 {
+                assert_eq!(
+                    actual[lane],
+                    if lane % 2 == 0 {
+                        (lane / 2 * 2) as u32
+                    } else {
+                        0xCCCC_CCCC
+                    }
+                );
+            }
+        }
+        memory
+            .write(0x101, &0x1122_3344_5566_7788u64.to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(rax, 0x100);
+        execute_lifted_x86(&[0xC5, 0x7B, 0x12, 0x48, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[9][..2], &[0x1122_3344_5566_7788; 2]);
+        }
+        ctx.write_vreg(rax, 0x1FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+        }
+        let fault = execute_lifted_x86(&[0xC5, 0x7B, 0x12, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+    }
+
+    #[test]
+    fn lifted_vzero_execute_maxvl_register_limits_and_preserve_flags() {
+        fn seeded(register: u64) -> VecValue {
+            let mut value = [0; 16];
+            for (lane, word) in value.iter_mut().enumerate() {
+                *word = (register << 56) | lane as u64 + 1;
+            }
+            value
+        }
+
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(1);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for index in 0..32 {
+                x86.xmm[index] = seeded(index as u64);
+            }
+        }
+
+        assert!(matches!(
+            execute_lifted_x86(&[0xC5, 0xF8, 0x77], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for index in 0..16 {
+                assert_eq!(&x86.xmm[index][..2], &seeded(index as u64)[..2]);
+                assert_eq!(&x86.xmm[index][2..], &[0; 14]);
+            }
+            for index in 16..32 {
+                assert_eq!(x86.xmm[index], seeded(index as u64));
+            }
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for index in 0..32 {
+                x86.xmm[index] = seeded(index as u64 + 32);
+            }
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0xC5, 0xFC, 0x77], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for index in 0..16 {
+                assert_eq!(x86.xmm[index], [0; 16]);
+            }
+            for index in 16..32 {
+                assert_eq!(x86.xmm[index], seeded(index as u64 + 32));
+            }
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_movnti_executes_sizes_unaligned_addresses_and_faults_atomically() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        ctx.write_vreg(rax, 0x21);
+        ctx.write_vreg(rcx, 0xFFFF_FFFF_89AB_CDEF);
+        assert!(matches!(
+            execute_lifted_x86(&[0x0F, 0xC3, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        let mut dword = [0u8; 4];
+        memory.read(0x21, &mut dword).unwrap();
+        assert_eq!(u32::from_le_bytes(dword), 0x89AB_CDEF);
+
+        ctx.write_vreg(r8, 0x38);
+        ctx.write_vreg(r9, 0x0123_4567_89AB_CDEF);
+        assert!(matches!(
+            execute_lifted_x86(&[0x4D, 0x0F, 0xC3, 0x48, 0x08], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        let mut qword = [0u8; 8];
+        memory.read(0x40, &mut qword).unwrap();
+        assert_eq!(u64::from_le_bytes(qword), 0x0123_4567_89AB_CDEF);
+
+        let mut fault_memory = StoreFaultMemory {
+            inner: FlatMemory::new(0x100),
+            stores_before_fault: 0,
+        };
+        ctx.write_vreg(rax, 0x20);
+        let fault = execute_lifted_x86(&[0x0F, 0xC3, 0x08], &mut ctx, &mut fault_memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        fault_memory.inner.read(0x20, &mut dword).unwrap();
+        assert_eq!(dword, [0; 4]);
+        assert_eq!(ctx.read_vreg(rcx), 0xFFFF_FFFF_89AB_CDEF);
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_non_temporal_vector_stores_execute_widths_alignment_and_faults() {
+        fn bytes(words: &[u64]) -> Vec<u8> {
+            words.iter().flat_map(|word| word.to_le_bytes()).collect()
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let flags_before = 0xCD7;
+        let legacy = [0x1111_0000_0000_0001, 0x1111_0000_0000_0002];
+        let vex = [
+            0x2222_0000_0000_0001,
+            0x2222_0000_0000_0002,
+            0x2222_0000_0000_0003,
+            0x2222_0000_0000_0004,
+        ];
+        let evex = [
+            0x3333_0000_0000_0001,
+            0x3333_0000_0000_0002,
+            0x3333_0000_0000_0003,
+            0x3333_0000_0000_0004,
+            0x3333_0000_0000_0005,
+            0x3333_0000_0000_0006,
+            0x3333_0000_0000_0007,
+            0x3333_0000_0000_0008,
+        ];
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x500);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][..legacy.len()].copy_from_slice(&legacy);
+            x86.xmm[2][..vex.len()].copy_from_slice(&vex);
+            x86.xmm[19][..evex.len()].copy_from_slice(&evex);
+        }
+
+        ctx.write_vreg(rax, 0x100);
+        assert!(matches!(
+            execute_lifted_x86(&[0x0F, 0x2B, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        let mut actual = [0u8; 64];
+        memory.read(0x100, &mut actual[..16]).unwrap();
+        assert_eq!(&actual[..16], bytes(&legacy));
+
+        assert!(matches!(
+            execute_lifted_x86(&[0xC5, 0xFC, 0x2B, 0x50, 0x20], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        memory.read(0x120, &mut actual[..32]).unwrap();
+        assert_eq!(&actual[..32], bytes(&vex));
+
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xE1, 0x7C, 0x48, 0x2B, 0x58, 0x01],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        memory.read(0x140, &mut actual).unwrap();
+        assert_eq!(actual.as_slice(), bytes(&evex));
+
+        memory.read(0x180, &mut actual[..16]).unwrap();
+        let before_misaligned = actual[..16].to_vec();
+        ctx.write_vreg(rax, 0x180);
+        let misaligned = execute_lifted_x86(&[0x0F, 0x2B, 0x48, 0x01], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        memory.read(0x180, &mut actual[..16]).unwrap();
+        assert_eq!(&actual[..16], before_misaligned);
+
+        let mut fault_memory = StoreFaultMemory {
+            inner: FlatMemory::new(0x100),
+            stores_before_fault: 0,
+        };
+        ctx.write_vreg(rax, 0x40);
+        let fault = execute_lifted_x86(
+            &[0x62, 0xE1, 0x7C, 0x48, 0x2B, 0x18],
+            &mut ctx,
+            &mut fault_memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        let mut fault_bytes = [0u8; 64];
+        fault_memory.inner.read(0x40, &mut fault_bytes).unwrap();
+        assert_eq!(fault_bytes, [0; 64]);
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_half_vector_moves_execute_merges_stores_upper_rules_and_faults() {
+        let upper = 0xCCCC_CCCC_CCCC_CCCC;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        memory
+            .write(0x100, &0x1122_3344_5566_7788u64.to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(rax, 0x100);
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [upper; 16];
+            x86.xmm[1][..2].copy_from_slice(&[1, 2]);
+        }
+        execute_lifted_x86(&[0x0F, 0x12, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[1][..2], &[0x1122_3344_5566_7788, 2]);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == upper));
+        }
+        execute_lifted_x86(&[0x0F, 0x16, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                &x86.xmm[1][..2],
+                &[0x1122_3344_5566_7788, 0x1122_3344_5566_7788]
+            );
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[5][..2].copy_from_slice(&[10, 11]);
+            x86.xmm[6][..2].copy_from_slice(&[20, 21]);
+            x86.xmm[7] = [upper; 16];
+            x86.xmm[8][..2].copy_from_slice(&[30, 31]);
+        }
+        execute_lifted_x86(&[0x0F, 0x12, 0xEE], &mut ctx, &mut memory);
+        execute_lifted_x86(&[0x41, 0x0F, 0x16, 0xF8], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[5][..2], &[21, 11]);
+            assert_eq!(&x86.xmm[7][..2], &[upper, 30]);
+            assert!(x86.xmm[7][2..].iter().all(|word| *word == upper));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [upper; 16];
+            x86.xmm[2][..2].copy_from_slice(&[40, 41]);
+        }
+        execute_lifted_x86(&[0xC5, 0xE8, 0x12, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[1][..2], &[0x1122_3344_5566_7788, 41]);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = [upper; 16];
+            x86.xmm[18][..2].copy_from_slice(&[50, 51]);
+            x86.xmm[19][..2].copy_from_slice(&[60, 61]);
+        }
+        execute_lifted_x86(&[0x62, 0xA1, 0x6C, 0x00, 0x12, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[17][..2], &[61, 51]);
+            assert!(x86.xmm[17][2..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[10][..2].copy_from_slice(&[70, 71]);
+            x86.xmm[25][..2].copy_from_slice(&[80, 81]);
+        }
+        execute_lifted_x86(&[0xC5, 0x79, 0x13, 0x50, 0x08], &mut ctx, &mut memory);
+        let mut stored = [0u8; 8];
+        memory.read(0x108, &mut stored).unwrap();
+        assert_eq!(u64::from_le_bytes(stored), 70);
+        execute_lifted_x86(
+            &[0x62, 0x61, 0xFD, 0x08, 0x17, 0x48, 0x08],
+            &mut ctx,
+            &mut memory,
+        );
+        memory.read(0x140, &mut stored).unwrap();
+        assert_eq!(u64::from_le_bytes(stored), 81);
+
+        ctx.write_vreg(rax, 0x300);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [upper; 16];
+        }
+        let fault = execute_lifted_x86(&[0x0F, 0x12, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], [upper; 16]);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_fp_unpack_family_executes_lane_blocks_masks_broadcast_and_e4nf_faults() {
+        fn vector(values: &[u32], fill: u64) -> VecValue {
+            let bytes = values
+                .iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect::<Vec<_>>();
+            let mut out = [fill; 16];
+            for (index, chunk) in bytes.chunks_exact(8).enumerate() {
+                out[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            out
+        }
+        fn lanes(value: &VecValue, count: usize) -> Vec<u32> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 4)
+                .collect::<Vec<_>>()
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = vector(&[0, 1, 2, 3], sentinel[0]);
+            x86.xmm[2] = vector(&[10, 11, 12, 13], 0);
+        }
+        execute_lifted_x86(&[0x0F, 0x14, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(lanes(&x86.xmm[1], 4), [0, 10, 1, 11]);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == sentinel[0]));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[2] = vector(&(0..8).collect::<Vec<_>>(), 0);
+            x86.xmm[3] = vector(&(10..18).collect::<Vec<_>>(), 0);
+        }
+        execute_lifted_x86(&[0xC5, 0xEC, 0x14, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(lanes(&x86.xmm[1], 8), [0, 10, 1, 11, 4, 14, 5, 15]);
+            assert!(x86.xmm[1][4..].iter().all(|word| *word == 0));
+        }
+
+        memory.write(0x100, &99u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.xmm[18] = vector(&(0..16).collect::<Vec<_>>(), 0);
+            x86.k[3] = 0x7777;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xE1, 0x6C, 0x53, 0x14, 0x48, 0x00],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let actual = lanes(&x86.xmm[17], 16);
+            for lane in 0..16 {
+                assert_eq!(
+                    actual[lane],
+                    if lane % 4 == 0 {
+                        (lane / 4 * 4 + lane % 4 / 2) as u32
+                    } else if lane % 4 == 1 {
+                        99
+                    } else if lane % 4 == 2 {
+                        (lane / 4 * 4 + lane % 4 / 2) as u32
+                    } else {
+                        0xCCCC_CCCC
+                    }
+                );
+            }
+        }
+
+        // E4NF performs the complete memory access even with an all-zero mask.
+        ctx.write_vreg(rax, 0x1F8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[3] = 0;
+            x86.xmm[17] = sentinel;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xE1, 0x6C, 0x43, 0x14, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17], sentinel);
+        }
+
+        // Integer VPUNPCK* shares E4NF/E4NF.nb: its all-zero mask likewise
+        // cannot suppress the complete vector memory access.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[3] = 0;
+            x86.xmm[1] = sentinel;
+        }
+        let integer_fault =
+            execute_lifted_x86(&[0x62, 0xF1, 0x6D, 0x4B, 0x60, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            integer_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+
+        ctx.write_vreg(rax, 0x101);
+        let aligned = execute_lifted_x86(&[0x0F, 0x15, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            aligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+    }
+
+    #[test]
+    fn lifted_fp_compare_family_executes_all_predicates_masks_mxcsr_sae_and_faults() {
+        fn vector_f32(values: &[u32], fill: u64) -> VecValue {
+            let mut bytes = values
+                .iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect::<Vec<_>>();
+            bytes.resize(bytes.len().next_multiple_of(8), 0);
+            let mut out = [fill; 16];
+            for (word, chunk) in bytes.chunks_exact(8).enumerate() {
+                out[word] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            out
+        }
+        fn f32_lanes(value: &VecValue, count: usize) -> Vec<u32> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 4)
+                .collect::<Vec<_>>()
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+
+        const TRUTH_TABLES: [u8; 16] = [
+            0b0100, 0b0010, 0b0110, 0b1000, 0b1011, 0b1101, 0b1001, 0b0111, 0b1100, 0b1010, 0b1110,
+            0b0000, 0b0011, 0b0101, 0b0001, 0b1111,
+        ];
+        const SIGNALING: [u8; 16] = [1, 2, 5, 6, 9, 10, 13, 14, 16, 19, 20, 23, 24, 27, 28, 31];
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let qnan = 0x7FC0_1234u32;
+        let snan = 0x7F80_1234u32;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Lanes encode the four mutually exclusive relations in table order:
+        // greater, less, equal, unordered. Both AVX predicate halves share the
+        // same truth table; they differ only in QNaN signaling policy.
+        for predicate in 0u8..32 {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[1] = sentinel;
+                x86.xmm[2] = vector_f32(
+                    &[2.0f32.to_bits(), 1.0f32.to_bits(), 1.0f32.to_bits(), qnan],
+                    0,
+                );
+                x86.xmm[3] = vector_f32(
+                    &[
+                        1.0f32.to_bits(),
+                        2.0f32.to_bits(),
+                        1.0f32.to_bits(),
+                        0.0f32.to_bits(),
+                    ],
+                    0,
+                );
+                x86.mxcsr = 0x1F80;
+            }
+            execute_lifted_x86(&[0xC5, 0xE8, 0xC2, 0xCB, predicate], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                let table = TRUTH_TABLES[usize::from(predicate & 15)];
+                let expected = (0..4)
+                    .map(|relation| {
+                        if table & (1 << relation) != 0 {
+                            u32::MAX
+                        } else {
+                            0
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                assert_eq!(f32_lanes(&x86.xmm[1], 4), expected, "predicate {predicate}");
+                assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+                assert_eq!(
+                    x86.mxcsr & 1 != 0,
+                    SIGNALING.contains(&predicate),
+                    "predicate {predicate} QNaN invalid status"
+                );
+            }
+        }
+
+        // Legacy scalar preserves every bit above its result lane. VEX scalar
+        // copies lanes 1..3 from vvvv and clears all state above bit 127.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = vector_f32(
+                &[
+                    1.0f32.to_bits(),
+                    11.0f32.to_bits(),
+                    12.0f32.to_bits(),
+                    13.0f32.to_bits(),
+                ],
+                sentinel[0],
+            );
+            x86.xmm[3] = vector_f32(&[1.0f32.to_bits(); 4], 0);
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(&[0xF3, 0x0F, 0xC2, 0xCB, 0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                f32_lanes(&x86.xmm[1], 4),
+                [
+                    u32::MAX,
+                    11.0f32.to_bits(),
+                    12.0f32.to_bits(),
+                    13.0f32.to_bits()
+                ]
+            );
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == sentinel[0]));
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[2] = vector_f32(
+                &[
+                    1.0f32.to_bits(),
+                    21.0f32.to_bits(),
+                    22.0f32.to_bits(),
+                    23.0f32.to_bits(),
+                ],
+                sentinel[0],
+            );
+            x86.xmm[3] = vector_f32(&[2.0f32.to_bits(); 4], 0);
+        }
+        execute_lifted_x86(&[0xC5, 0xEA, 0xC2, 0xCB, 4], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                f32_lanes(&x86.xmm[1], 4),
+                [
+                    u32::MAX,
+                    21.0f32.to_bits(),
+                    22.0f32.to_bits(),
+                    23.0f32.to_bits()
+                ]
+            );
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+        }
+
+        // DAZ converts a denormal operand to signed zero without DE; without
+        // DAZ the denormal remains unequal to zero and records DE.
+        for (daz, expected, denormal_status) in [(false, 0u32, true), (true, u32::MAX, false)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[2] = vector_f32(&[1, 0, 0, 0], 0);
+                x86.xmm[3] = vector_f32(&[0; 4], 0);
+                x86.mxcsr = 0x1F80 | if daz { 1 << 6 } else { 0 };
+            }
+            execute_lifted_x86(&[0xC5, 0xE8, 0xC2, 0xCB, 0], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(f32_lanes(&x86.xmm[1], 1), [expected]);
+                assert_eq!(x86.mxcsr & (1 << 1) != 0, denormal_status);
+            }
+        }
+
+        // Every predicate invalidates SNaN. An unmasked invalid exception sets
+        // MXCSR.IE but leaves the architectural destination fully unchanged.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[2] = vector_f32(&[snan, 0, 0, 0], 0);
+            x86.xmm[3] = vector_f32(&[0; 4], 0);
+            x86.mxcsr = 0x1F80 & !(1 << 7);
+        }
+        let invalid = execute_lifted_x86(&[0xC5, 0xE8, 0xC2, 0xCB, 0], &mut ctx, &mut memory);
+        assert!(matches!(
+            invalid,
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+            assert_ne!(x86.mxcsr & 1, 0);
+        }
+
+        // Scalar EVEX SAE suppresses MXCSR status and traps while retaining the
+        // signaling predicate's unordered truth value in the destination bit.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[18] = vector_f32(&[qnan, 0, 0, 0], 0);
+            x86.xmm[19] = vector_f32(&[0; 4], 0);
+            x86.k[2] = 1;
+            x86.k[3] = u64::MAX;
+            x86.mxcsr = 0x1F80 & !(1 << 7);
+        }
+        let sae = execute_lifted_x86(
+            &[0x62, 0xB1, 0x6E, 0x12, 0xC2, 0xDB, 0x05],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(sae, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[3], 1);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+
+        // EVEX broadcast compares one memory scalar against all active lanes;
+        // the write mask both zeroes inactive results and suppresses their
+        // memory accesses and floating-point exceptions.
+        memory.write(0x100, &qnan.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = vector_f32(&[0; 16], 0);
+            x86.k[2] = 0x5555;
+            x86.k[3] = u64::MAX;
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF1, 0x6C, 0x5A, 0xC2, 0x18, 0x03],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[3], 0x5555);
+            assert_eq!(x86.mxcsr & 1, 0);
+        }
+
+        ctx.write_vreg(rax, 0x300);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[2] = 0;
+            x86.k[3] = u64::MAX;
+            x86.mxcsr = 0x1F80;
+        }
+        let suppressed_fault = execute_lifted_x86(
+            &[0x62, 0xF1, 0x6E, 0x0A, 0xC2, 0x18, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            suppressed_fault,
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[3], 0);
+            assert_eq!(x86.mxcsr, 0x1F80);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[2] = 1;
+            x86.k[3] = 0xAA;
+        }
+        let fault = execute_lifted_x86(
+            &[0x62, 0xF1, 0x6E, 0x0A, 0xC2, 0x18, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[3], 0xAA);
+        }
+
+        // Legacy packed operands use Type 2 alignment rules.
+        ctx.write_vreg(rax, 0x101);
+        let misaligned = execute_lifted_x86(&[0x0F, 0xC2, 0x08, 0], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn lifted_round_family_executes_mxcsr_daz_exceptions_merges_and_faults() {
+        fn vector_f32(values: &[u32], fill: u64) -> VecValue {
+            let mut bytes = Vec::with_capacity(values.len() * 4);
+            for value in values {
+                bytes.extend(value.to_le_bytes());
+            }
+            let mut out = [fill; 16];
+            for (word, chunk) in bytes.chunks_exact(8).enumerate() {
+                out[word] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            out
+        }
+        fn f32_lanes(value: &VecValue, count: usize) -> Vec<u32> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 4)
+                .collect::<Vec<_>>()
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+        fn vector_f64(values: &[u64], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            out[..values.len()].copy_from_slice(values);
+            out
+        }
+        fn f64_lanes(value: &VecValue, count: usize) -> Vec<u64> {
+            value[..count].to_vec()
+        }
+
+        let upper = 0xA5A5_A5A5_A5A5_A5A5;
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        let inputs = [2.5f32, -2.5, 2.1, -2.1].map(f32::to_bits);
+        for (mode, expected) in [
+            (0u8, [2.0f32, -2.0, 2.0, -2.0]),
+            (1, [2.0f32, -3.0, 2.0, -3.0]),
+            (2, [3.0f32, -2.0, 3.0, -2.0]),
+            (3, [2.0f32, -2.0, 2.0, -2.0]),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = [upper; 16];
+                x86.xmm[10] = vector_f32(&inputs, 0);
+                x86.mxcsr = 0x1F80;
+            }
+            execute_lifted_x86(
+                &[0x66, 0x45, 0x0F, 0x3A, 0x08, 0xCA, mode],
+                &mut ctx,
+                &mut memory,
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    f32_lanes(&x86.xmm[9], 4),
+                    expected.map(f32::to_bits),
+                    "mode {mode}"
+                );
+                assert!(x86.xmm[9][2..].iter().all(|word| *word == upper));
+                assert_ne!(x86.mxcsr & (1 << 5), 0, "mode {mode}: precision");
+            }
+        }
+
+        // VEX.256 rounds all eight lanes and clears state above bit 255.
+        let packed256 = [2.9f32, -2.1, 3.0, -3.0, 4.7, -4.2, 0.5, -0.5];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = vector_f32(&packed256.map(f32::to_bits), upper);
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(&[0xC4, 0x43, 0x7D, 0x08, 0xCA, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                f32_lanes(&x86.xmm[9], 8),
+                packed256.map(|value| value.floor().to_bits())
+            );
+            assert!(x86.xmm[9][4..].iter().all(|word| *word == 0));
+        }
+
+        // Double-precision packed and scalar forms use the same control fields.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = [upper; 16];
+            x86.xmm[10] = vector_f64(&[2.1f64.to_bits(), (-2.9f64).to_bits()], 0);
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(
+            &[0x66, 0x45, 0x0F, 0x3A, 0x09, 0xCA, 0x02],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                f64_lanes(&x86.xmm[9], 2),
+                [3.0f64.to_bits(), (-2.0f64).to_bits()]
+            );
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == upper));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = vector_f64(&[(-2.9f64).to_bits(), 99.0f64.to_bits()], 0);
+            x86.xmm[11] = vector_f64(&[88.0f64.to_bits(), 17.0f64.to_bits()], upper);
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(&[0xC4, 0x43, 0x21, 0x0B, 0xCA, 0x03], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                f64_lanes(&x86.xmm[9], 2),
+                [(-2.0f64).to_bits(), 17.0f64.to_bits()]
+            );
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == 0));
+        }
+
+        // VEX scalar form obtains untouched lanes from vvvv and clears all
+        // state above bit 127; its rounding mode is selected dynamically.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = vector_f32(&[2.1f32.to_bits(); 4], 0);
+            x86.xmm[11] = vector_f32(
+                &[
+                    99.0f32.to_bits(),
+                    11.0f32.to_bits(),
+                    12.0f32.to_bits(),
+                    13.0f32.to_bits(),
+                ],
+                upper,
+            );
+            x86.mxcsr = (0x1F80 & !(3 << 13)) | (2 << 13);
+        }
+        execute_lifted_x86(&[0xC4, 0x43, 0x21, 0x0A, 0xCA, 0x04], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                f32_lanes(&x86.xmm[9], 4),
+                [3.0f32, 11.0, 12.0, 13.0].map(f32::to_bits)
+            );
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == 0));
+        }
+
+        // DAZ changes a positive subnormal rounded toward +infinity from 1.0
+        // to +0.0, and the DAZ conversion itself does not signal precision.
+        for (daz, expected, precision) in [
+            (false, 1.0f32.to_bits(), true),
+            (true, 0.0f32.to_bits(), false),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = sentinel;
+                x86.xmm[10] = vector_f32(&[1, 0, 0, 0], 0);
+                x86.mxcsr = 0x1F80 | if daz { 1 << 6 } else { 0 };
+            }
+            execute_lifted_x86(
+                &[0x66, 0x45, 0x0F, 0x3A, 0x0A, 0xCA, 0x02],
+                &mut ctx,
+                &mut memory,
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(f32_lanes(&x86.xmm[9], 1), [expected]);
+                assert_eq!(x86.mxcsr & (1 << 5) != 0, precision);
+            }
+        }
+
+        // Masked invalid quiets SNaN while preserving its sign/payload. Bit 3
+        // suppresses precision only; invalid status is still recorded.
+        let snan = 0x7F80_1234u32;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = vector_f32(&[snan, 0, 0, 0], 0);
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(
+            &[0x66, 0x45, 0x0F, 0x3A, 0x0A, 0xCA, 0x08],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(f32_lanes(&x86.xmm[9], 1), [snan | 0x0040_0000]);
+            assert_ne!(x86.mxcsr & 1, 0);
+            assert_eq!(x86.mxcsr & (1 << 5), 0);
+        }
+
+        // Unmasked precision and invalid exceptions update MXCSR status but
+        // fault before any architectural vector write.
+        for (input, imm, mask_bit, status_bit) in
+            [(1.5f32.to_bits(), 0x00, 12u32, 5u32), (snan, 0x08, 7, 0)]
+        {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[9] = sentinel;
+                x86.xmm[10] = vector_f32(&[input, 0, 0, 0], 0);
+                x86.mxcsr = 0x1F80 & !(1 << mask_bit);
+            }
+            let exit = execute_lifted_x86(
+                &[0x66, 0x45, 0x0F, 0x3A, 0x0A, 0xCA, imm],
+                &mut ctx,
+                &mut memory,
+            );
+            assert!(matches!(
+                exit,
+                BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+            ));
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[9], sentinel);
+                assert_ne!(x86.mxcsr & (1 << status_bit), 0);
+            }
+        }
+
+        // Legacy packed memory requires 16-byte alignment; VEX packed memory
+        // is unaligned-capable but still faults atomically on a short operand.
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.mxcsr = 0x1F80;
+        }
+        let misaligned = execute_lifted_x86(
+            &[0x66, 0x44, 0x0F, 0x3A, 0x08, 0x08, 0x08],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+
+        ctx.write_vreg(rax, 0x3F0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.mxcsr = 0x1F80;
+        }
+        let fault =
+            execute_lifted_x86(&[0xC4, 0x63, 0x7D, 0x09, 0x08, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[9], sentinel);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
     }
 
     #[test]
