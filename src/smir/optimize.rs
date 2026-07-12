@@ -2362,6 +2362,19 @@ impl OpKind {
                 result.push(*src);
             }
 
+            OpKind::X86Round { merge, src, .. } => {
+                result.push(*merge);
+                result.push(*src);
+            }
+
+            OpKind::X86VectorFpCompare {
+                src1, src2, mask, ..
+            } => {
+                result.push(*src1);
+                result.push(*src2);
+                result.extend(mask.iter().copied());
+            }
+
             OpKind::X86PackedFpConvert { src, mask, .. } => {
                 result.push(*src);
                 result.extend(mask.iter().copied());
@@ -2398,8 +2411,35 @@ impl OpKind {
                 result.push(*src_false);
             }
 
-            OpKind::VUnary { src, .. } | OpKind::VReduce { src, .. } => {
+            OpKind::VPermute {
+                src1,
+                src2,
+                indices,
+                ..
+            } => {
+                result.push(*src1);
+                result.extend(src2.iter().copied());
+                result.push(*indices);
+            }
+
+            OpKind::VMultiplyAdd52 {
+                acc, src1, src2, ..
+            } => {
+                result.push(*acc);
+                result.push(*src1);
+                result.push(*src2);
+            }
+
+            OpKind::VUnary { src, .. }
+            | OpKind::VReduce { src, .. }
+            | OpKind::VPopcnt { src, .. }
+            | OpKind::VConflict { src, .. } => {
                 result.push(*src);
+            }
+
+            OpKind::X86Aes { src1, src2, .. } => {
+                result.push(*src1);
+                result.extend(src2.iter().copied());
             }
 
             OpKind::VTableLookup {
@@ -2971,6 +3011,16 @@ impl OpKind {
                 result.push(*indices);
             }
 
+            OpKind::VByteShuffle { src, control, .. } => {
+                result.push(*src);
+                result.push(*control);
+            }
+
+            OpKind::VHorizontalBin { src1, src2, .. } => {
+                result.push(*src1);
+                result.push(*src2);
+            }
+
             OpKind::VLoad { addr, .. } => {
                 result.extend(addr.regs());
             }
@@ -2979,7 +3029,7 @@ impl OpKind {
                 result.extend(addr.regs());
             }
 
-            OpKind::X86CacheControl { addr, .. } => {
+            OpKind::X86CacheControl { addr, .. } | OpKind::X86CheckAlignment { addr, .. } => {
                 result.extend(addr.regs());
             }
 
@@ -3064,9 +3114,17 @@ impl OpKind {
             | OpKind::Breakpoint => {}
 
             // AVX10 operations - extract source registers
-            OpKind::VMin { src1, src2, .. } | OpKind::VFma { src1, src2, .. } => {
+            OpKind::VMin { src1, src2, .. } => {
                 result.push(*src1);
                 result.push(*src2);
+            }
+
+            OpKind::VFma {
+                src1, src2, acc, ..
+            } => {
+                result.push(*src1);
+                result.push(*src2);
+                result.push(*acc);
             }
 
             OpKind::VDotProduct {
@@ -3081,14 +3139,16 @@ impl OpKind {
             }
 
             OpKind::VMultiplyAdd52 {
-                dst, src1, src2, ..
+                acc, src1, src2, ..
             } => {
-                result.push(*dst); // dst is also input (accumulator)
+                result.push(*acc);
                 result.push(*src1);
                 result.push(*src2);
             }
 
-            OpKind::VPopcnt { src, .. } | OpKind::VCvtBF16ToFP32 { src, .. } => {
+            OpKind::VPopcnt { src, .. }
+            | OpKind::VConflict { src, .. }
+            | OpKind::VCvtBF16ToFP32 { src, .. } => {
                 result.push(*src);
             }
 
@@ -3110,6 +3170,45 @@ impl OpKind {
                 result.push(*indices);
             }
 
+            OpKind::VCompress {
+                dst,
+                src,
+                mask,
+                zeroing,
+                ..
+            }
+            | OpKind::VExpand {
+                dst,
+                src,
+                mask,
+                zeroing,
+                ..
+            } => {
+                result.push(*src);
+                if let Some(mask) = mask {
+                    result.push(*mask);
+                }
+                if !zeroing {
+                    result.push(*dst);
+                }
+            }
+
+            OpKind::X86NarrowInt {
+                dst,
+                src,
+                mask,
+                zeroing,
+                ..
+            } => {
+                result.push(*src);
+                if let Some(mask) = mask {
+                    result.push(*mask);
+                }
+                if !zeroing {
+                    result.push(*dst);
+                }
+            }
+
             OpKind::VCvtFP32ToBF16 { src1, src2, .. } => {
                 result.push(*src1);
                 if let Some(s2) = src2 {
@@ -3119,9 +3218,104 @@ impl OpKind {
 
             OpKind::VFP16Arith { src1, src2, .. }
             | OpKind::VMinMax { src1, src2, .. }
-            | OpKind::VMpsadbw { src1, src2, .. } => {
+            | OpKind::VMpsadbw { src1, src2, .. }
+            | OpKind::VSadBytes { src1, src2, .. } => {
                 result.push(*src1);
                 result.push(*src2);
+            }
+
+            OpKind::X86Aes { src1, src2, .. } => {
+                result.push(*src1);
+                result.extend(src2.iter().copied());
+            }
+
+            OpKind::X86DotProduct { src1, src2, .. } => {
+                result.push(*src1);
+                result.push(*src2);
+            }
+
+            OpKind::X86Sha512Msg1 { dst, src } | OpKind::X86Sha512Msg2 { dst, src } => {
+                result.push(*dst);
+                result.push(*src);
+            }
+
+            OpKind::X86Sha512Rounds2 { dst, state, wk } => {
+                result.push(*dst);
+                result.push(*state);
+                result.push(*wk);
+            }
+
+            OpKind::X86Sm3Msg1 {
+                dst, src1, src2, ..
+            }
+            | OpKind::X86Sm3Msg2 {
+                dst, src1, src2, ..
+            } => {
+                result.push(*dst);
+                result.push(*src1);
+                result.push(*src2);
+            }
+
+            OpKind::X86Sm3Rounds2 {
+                dst, state, words, ..
+            } => {
+                result.push(*dst);
+                result.push(*state);
+                result.push(*words);
+            }
+
+            OpKind::X86Sm4 { src1, src2, .. } => {
+                result.push(*src1);
+                result.push(*src2);
+            }
+
+            OpKind::X86Convert16ToFp32 { src, .. } => {
+                result.push(*src);
+            }
+
+            OpKind::X86PackedShiftImm { src, .. } => {
+                result.push(*src);
+            }
+
+            OpKind::X86PackedShift { src, count, .. } => {
+                result.push(*src);
+                result.push(*count);
+            }
+            OpKind::X86PackedShiftVariable { src, count, .. } => {
+                result.push(*src);
+                result.push(*count);
+            }
+
+            OpKind::X86PackedRotate { src, count, .. } => {
+                result.push(*src);
+                if let Some(count) = count {
+                    result.push(*count);
+                }
+            }
+
+            OpKind::X86TernaryLogic {
+                src1, src2, src3, ..
+            } => {
+                result.push(*src1);
+                result.push(*src2);
+                result.push(*src3);
+            }
+
+            OpKind::X86PackedFunnelShift {
+                src, fill, count, ..
+            } => {
+                result.push(*src);
+                result.push(*fill);
+                if let Some(count) = count {
+                    result.push(*count);
+                }
+            }
+
+            OpKind::X86MultiShiftQB {
+                control, source, ..
+            } => {
+                result.push(*control);
+                result.push(*source);
             }
 
             OpKind::VCvtFpToIntSat { src, .. } => {
@@ -3158,6 +3352,11 @@ impl OpKind {
                         result.push(*hi);
                     }
                 }
+            }
+
+            OpKind::Crc32C { crc, data, .. } => {
+                result.push(*crc);
+                result.push(*data);
             }
 
             // Wide complex multiply: reads both halves of the Rss and Rtt pairs.
@@ -3223,7 +3422,7 @@ mod tests {
     use super::*;
     use crate::smir::ir::ops::{OpKind, X86CacheControlKind, X86X87ControlKind, X86X87DataKind};
     use crate::smir::ir::types::{
-        Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType,
+        Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType, X86AesOp, X86NarrowMode,
     };
 
     fn make_op(id: u16, kind: OpKind) -> SmirOp {
@@ -3611,7 +3810,9 @@ mod tests {
 
     #[test]
     fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
-        use crate::smir::ir::types::{SourceArch, VecUnaryOp, X86Reg};
+        use crate::smir::ir::types::{
+            FpRoundMode, ShiftOp, SourceArch, VecCmpCond, VecUnaryOp, VecWidth, X86Reg,
+        };
         use crate::smir::ir::{FunctionBuilder, SmirFunction};
         use crate::smir::lift::x86_64::X86_64Lifter;
         use crate::smir::lift::{LiftContext, SmirLifter};
@@ -3698,6 +3899,2640 @@ mod tests {
             load < destination_write,
             "destination changed before load fault boundary"
         );
+
+        let movq = optimized(&[0xC4, 0xE1, 0xF9, 0x6E, 0x00]);
+        let ops = &movq.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting VMOVQ load must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VBroadcast {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I64,
+                        ..
+                    }
+                )
+            })
+            .expect("VMOVQ destination clear must survive optimization");
+        assert!(
+            load < destination_write,
+            "VMOVQ changed its destination before the load fault boundary"
+        );
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                elem: VecElementType::I64,
+                lane: 0,
+                ..
+            }
+        )));
+
+        let scalar_vec_movq = optimized(&[0xC5, 0xFA, 0x7E, 0x00]);
+        let ops = &scalar_vec_movq.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting scalar-vector VMOVQ load must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VBroadcast {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I64,
+                        ..
+                    }
+                )
+            })
+            .expect("scalar-vector VMOVQ destination clear must survive optimization");
+        assert!(
+            load < destination_write,
+            "scalar-vector VMOVQ changed its destination before the load fault boundary"
+        );
+
+        let alias = optimized(&[0xC5, 0xFA, 0x7E, 0xC0]);
+        let ops = &alias.blocks[0].ops;
+        let extract = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I64,
+                        lane: 0,
+                        ..
+                    }
+                )
+            })
+            .expect("same-register VMOVQ source extraction must survive optimization");
+        let clear = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VBroadcast {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I64,
+                        ..
+                    }
+                )
+            })
+            .expect("same-register VMOVQ destination clear must survive optimization");
+        assert!(extract < clear, "VMOVQ alias extraction must precede clear");
+
+        let packed_compare = optimized(&[0xC5, 0xF5, 0x74, 0x00]);
+        let ops = &packed_compare.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting VPCMPEQB source load must survive optimization");
+        let compare = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VCmp {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        cond: VecCmpCond::Eq,
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("VPCMPEQB architectural compare write must survive optimization");
+        assert!(
+            load < compare,
+            "VPCMPEQB changed its destination before the source load fault boundary"
+        );
+
+        let legacy_compare = optimized(&[0x66, 0x0F, 0x66, 0xC0]);
+        let ops = &legacy_compare.blocks[0].ops;
+        let compare = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VCmp {
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        cond: VecCmpCond::Gt,
+                        elem: VecElementType::I32,
+                        ..
+                    }
+                )
+            })
+            .expect("same-register PCMPGTD source compare must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I32,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PCMPGTD destination merge must survive optimization");
+        assert!(
+            compare < destination_write,
+            "legacy packed compare must capture aliased inputs before destination writes"
+        );
+
+        let evex_compare = optimized(&[0x62, 0xF1, 0x75, 0x09, 0x76, 0x10]);
+        let ops = &evex_compare.blocks[0].ops;
+        let first_pred_load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX VPCMPEQD predicated source loads must survive optimization");
+        let k_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::And {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::K(2))),
+                        src2: SrcOperand::Reg(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+                        flags: FlagUpdate::None,
+                        ..
+                    }
+                )
+            })
+            .expect("EVEX VPCMPEQD masked k-destination write must survive optimization");
+        assert!(
+            first_pred_load < k_write,
+            "EVEX compare committed its k destination before masked memory accesses"
+        );
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            4,
+            "EVEX.128 VPCMPEQD requires one fault-suppressible load per lane"
+        );
+
+        let vex_unpack = optimized(&[0xC5, 0xF5, 0x60, 0x00]);
+        let ops = &vex_unpack.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting VPUNPCKLBW source load must survive optimization");
+        let shuffle = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VShuffle {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        elem: VecElementType::I8,
+                        lanes: 32,
+                        ..
+                    }
+                )
+            })
+            .expect("VPUNPCKLBW architectural shuffle write must survive optimization");
+        assert!(
+            load < shuffle,
+            "VPUNPCKLBW changed its destination before the memory fault boundary"
+        );
+
+        let evex_unpack = optimized(&[0x62, 0xF1, 0xF5, 0x49, 0x6D, 0x00]);
+        let ops = &evex_unpack.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V512,
+                        ..
+                    }
+                )
+            })
+            .expect("E4NF VPUNPCKHQDQ complete source load must survive optimization");
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+        );
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        elem: VecElementType::I64,
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX unpack destination writes must survive optimization");
+        assert!(
+            load < destination_write,
+            "EVEX unpack committed its destination before the complete E4NF memory access"
+        );
+
+        let vex_pack = optimized(&[0xC5, 0xF5, 0x63, 0x00]);
+        let ops = &vex_pack.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting VPACKSSWB source load must survive optimization");
+        let pack = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VPackSat {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        src_elem: VecElementType::I16,
+                        src_lanes: 16,
+                        block_lanes: 8,
+                        ..
+                    }
+                )
+            })
+            .expect("VPACKSSWB architectural pack write must survive optimization");
+        assert!(
+            load < pack,
+            "VPACKSSWB changed its destination before the memory fault boundary"
+        );
+
+        let evex_pack = optimized(&[0x62, 0xF1, 0x75, 0x49, 0x6B, 0x00]);
+        let ops = &evex_pack.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            16,
+            "masked EVEX.512 VPACKSSDW requires one fault-suppressible load per r/m dword"
+        );
+        let last_load = ops
+            .iter()
+            .rposition(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        elem: VecElementType::I16,
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX pack destination writes must survive optimization");
+        assert!(
+            last_load < destination_write,
+            "EVEX pack committed its destination before predicated memory accesses"
+        );
+
+        let evex_pack_broadcast = optimized(&[0x62, 0xF1, 0x75, 0x59, 0x6B, 0x00]);
+        let ops = &evex_pack_broadcast.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            1,
+            "masked EVEX VPACKSSDW broadcast must retain one conditional scalar read"
+        );
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VBroadcast {
+                elem: VecElementType::I32,
+                lanes: 16,
+                ..
+            }
+        )));
+
+        let vex_pshufb = optimized(&[0xC4, 0xE2, 0x75, 0x00, 0x00]);
+        let ops = &vex_pshufb.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting VPSHUFB control load must survive optimization");
+        let shuffle = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VByteShuffle {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        lanes: 32,
+                        block_lanes: 16,
+                        ..
+                    }
+                )
+            })
+            .expect("VPSHUFB architectural shuffle write must survive optimization");
+        assert!(
+            load < shuffle,
+            "VPSHUFB changed its destination before the memory fault boundary"
+        );
+
+        let legacy_pshufb = optimized(&[0x66, 0x0F, 0x38, 0x00, 0x00]);
+        let ops = &legacy_pshufb.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy PSHUFB alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PSHUFB aligned control load must survive optimization");
+        assert!(
+            alignment < load,
+            "legacy PSHUFB loaded memory before its mandatory alignment check"
+        );
+
+        let evex_pshufb = optimized(&[0x62, 0xF2, 0x75, 0x49, 0x00, 0x00]);
+        let ops = &evex_pshufb.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B1,
+                        ..
+                    }
+                ))
+                .count(),
+            64,
+            "masked EVEX.512 VPSHUFB requires one conditional control-byte load per output"
+        );
+        let last_load = ops
+            .iter()
+            .rposition(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B1,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX VPSHUFB destination writes must survive optimization");
+        assert!(
+            last_load < destination_write,
+            "EVEX VPSHUFB committed its destination before predicated control-byte accesses"
+        );
+
+        let legacy_horizontal = optimized(&[0x66, 0x0F, 0x38, 0x03, 0x00]);
+        let ops = &legacy_horizontal.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy PHADDSW alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PHADDSW source load must survive optimization");
+        let horizontal = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VHorizontalBin {
+                        elem: VecElementType::I16,
+                        saturating: true,
+                        subtract: false,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PHADDSW computation must survive optimization");
+        assert!(alignment < load && load < horizontal);
+
+        let vex_horizontal = optimized(&[0xC4, 0xE2, 0x75, 0x06, 0x00]);
+        let ops = &vex_horizontal.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting VPHSUBD source load must survive optimization");
+        let horizontal = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VHorizontalBin {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        elem: VecElementType::I32,
+                        subtract: true,
+                        saturating: false,
+                        ..
+                    }
+                )
+            })
+            .expect("VPHSUBD architectural write must survive optimization");
+        assert!(
+            load < horizontal,
+            "VPHSUBD changed its destination before the memory fault boundary"
+        );
+
+        let legacy_maddubs = optimized(&[0x66, 0x0F, 0x38, 0x04, 0x00]);
+        let ops = &legacy_maddubs.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy PMADDUBSW alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMADDUBSW source load must survive optimization");
+        let dot = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VDotProduct {
+                        acc_elem: VecElementType::I16,
+                        saturate: true,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMADDUBSW computation must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I16,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMADDUBSW destination merge must survive optimization");
+        assert!(alignment < load && load < dot && dot < destination_write);
+
+        let vex_maddubs = optimized(&[0xC4, 0xE2, 0x75, 0x04, 0x00]);
+        let ops = &vex_maddubs.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VPMADDUBSW source load must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VDotProduct {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        acc_elem: VecElementType::I16,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VPMADDUBSW architectural write must survive optimization");
+        assert!(load < destination_write);
+
+        let evex_maddubs = optimized(&[0x62, 0xF2, 0x75, 0x49, 0x04, 0x00]);
+        let ops = &evex_maddubs.blocks[0].ops;
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. })),
+            "E4NF EVEX.512 VPMADDUBSW must not predicate its memory read"
+        );
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V512,
+                        ..
+                    }
+                )
+            })
+            .expect("E4NF EVEX.512 VPMADDUBSW full source load must survive optimization");
+        let dot = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VDotProduct {
+                        acc_elem: VecElementType::I16,
+                        width: VecWidth::V512,
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX VPMADDUBSW computation must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        elem: VecElementType::I16,
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX VPMADDUBSW destination write must survive optimization");
+        assert!(load < dot && dot < destination_write);
+
+        let legacy_psign = optimized(&[0x66, 0x0F, 0x38, 0x09, 0x00]);
+        let ops = &legacy_psign.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy PSIGNW alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PSIGNW source load must survive optimization");
+        let negation = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VUnary {
+                        elem: VecElementType::I16,
+                        op: VecUnaryOp::Neg,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PSIGNW wrapping negation must survive optimization");
+        let sign_select = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VBitSelect {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PSIGNW sign selection must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I16,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PSIGNW destination merge must survive optimization");
+        assert!(alignment < load && load < negation && negation < sign_select);
+        assert!(sign_select < destination_write);
+
+        let vex_psign = optimized(&[0xC4, 0xE2, 0x75, 0x0A, 0x00]);
+        let ops = &vex_psign.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VPSIGND source load must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VAndNot {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VPSIGND architectural write must survive optimization");
+        assert!(load < destination_write);
+
+        let legacy_mulhrsw = optimized(&[0x66, 0x0F, 0x38, 0x0B, 0x00]);
+        let ops = &legacy_mulhrsw.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy PMULHRSW alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMULHRSW load must survive optimization");
+        let multiply = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VMulShiftSat {
+                        lanes: 8,
+                        round: true,
+                        out_shift: 15,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMULHRSW rounded multiply must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I16,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMULHRSW destination merge must survive optimization");
+        assert!(alignment < load && load < multiply && multiply < destination_write);
+
+        let evex_mulhrsw = optimized(&[0x62, 0xF2, 0x75, 0x49, 0x0B, 0x00]);
+        let ops = &evex_mulhrsw.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B2,
+                        ..
+                    }
+                ))
+                .count(),
+            32
+        );
+        let last_load = ops
+            .iter()
+            .rposition(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B2,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let multiply = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VMulShiftSat {
+                        lanes: 32,
+                        round: true,
+                        out_shift: 15,
+                        ..
+                    }
+                )
+            })
+            .expect("EVEX VPMULHRSW rounded multiply must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        elem: VecElementType::I16,
+                        ..
+                    }
+                )
+            })
+            .expect("EVEX VPMULHRSW destination write must survive optimization");
+        assert!(last_load < multiply && multiply < destination_write);
+
+        let legacy_pabs = optimized(&[0x66, 0x0F, 0x38, 0x1D, 0x00]);
+        let ops = &legacy_pabs.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy PABSW alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PABSW load must survive optimization");
+        let absolute = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VUnary {
+                        elem: VecElementType::I16,
+                        op: VecUnaryOp::Abs,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PABSW absolute value must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I16,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PABSW destination merge must survive optimization");
+        assert!(alignment < load && load < absolute && absolute < destination_write);
+
+        let evex_pabs = optimized(&[0x62, 0xF2, 0x7D, 0x49, 0x1C, 0x00]);
+        let ops = &evex_pabs.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B1,
+                        ..
+                    }
+                ))
+                .count(),
+            64
+        );
+        let last_load = ops
+            .iter()
+            .rposition(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B1,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let absolute = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VUnary {
+                        elem: VecElementType::I8,
+                        lanes: 64,
+                        op: VecUnaryOp::Abs,
+                        ..
+                    }
+                )
+            })
+            .expect("EVEX VPABSB absolute value must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("EVEX VPABSB destination write must survive optimization");
+        assert!(last_load < absolute && absolute < destination_write);
+
+        let broadcast_pabs = optimized(&[0x62, 0xF2, 0x7D, 0x59, 0x1E, 0x00]);
+        let ops = &broadcast_pabs.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            1
+        );
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VBroadcast {
+                elem: VecElementType::I32,
+                lanes: 16,
+                ..
+            }
+        )));
+
+        let legacy_palignr = optimized(&[0x66, 0x0F, 0x3A, 0x0F, 0x00, 0x01]);
+        let ops = &legacy_palignr.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy PALIGNR alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PALIGNR source load must survive optimization");
+        let shuffle = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VShuffle {
+                        elem: VecElementType::I8,
+                        lanes: 16,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PALIGNR shuffle must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PALIGNR destination merge must survive optimization");
+        assert!(alignment < load && load < shuffle && shuffle < destination_write);
+
+        let evex_palignr = optimized(&[0x62, 0xF3, 0x75, 0x49, 0x0F, 0x00, 0x01]);
+        let ops = &evex_palignr.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B1,
+                        ..
+                    }
+                ))
+                .count(),
+            60
+        );
+        let last_load = ops
+            .iter()
+            .rposition(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B1,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let shuffle = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VShuffle {
+                        elem: VecElementType::I8,
+                        lanes: 64,
+                        ..
+                    }
+                )
+            })
+            .expect("EVEX VPALIGNR shuffle must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("EVEX VPALIGNR destination write must survive optimization");
+        assert!(last_load < shuffle && shuffle < destination_write);
+
+        let high_only_palignr = optimized(&[0x62, 0xF3, 0x75, 0x49, 0x0F, 0x00, 0x10]);
+        assert!(
+            !high_only_palignr.blocks[0]
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+        );
+
+        let legacy_pmovsxbq = optimized(&[0x66, 0x0F, 0x38, 0x22, 0x00]);
+        let ops = &legacy_pmovsxbq.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B1,
+                        ..
+                    }
+                ))
+                .count(),
+            2,
+            "legacy PMOVSXBQ must retain its exact two-byte fault surface"
+        );
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. })),
+            "legacy packed extension has no aligned-memory requirement"
+        );
+        let last_load = ops
+            .iter()
+            .rposition(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B1,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I64,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMOVSXBQ destination merge must survive optimization");
+        assert!(
+            last_load < destination_write,
+            "packed-extension destination write crossed its source fault boundary"
+        );
+
+        for (opcode, destination_elem, expected_loads) in [
+            (0x20, VecElementType::I16, 32usize),
+            (0x22, VecElementType::I64, 8usize),
+        ] {
+            let evex_pmov = optimized(&[0x62, 0xF2, 0x7D, 0x49, opcode, 0x00]);
+            let ops = &evex_pmov.blocks[0].ops;
+            assert_eq!(
+                ops.iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::PredLoad {
+                            width: MemWidth::B1,
+                            ..
+                        }
+                    ))
+                    .count(),
+                expected_loads,
+                "EVEX packed extension lost per-source-element predication"
+            );
+            assert!(!ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Load { .. } | OpKind::X86CheckAlignment { .. }
+            )));
+            let last_load = ops
+                .iter()
+                .rposition(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::PredLoad {
+                            width: MemWidth::B1,
+                            ..
+                        }
+                    )
+                })
+                .unwrap();
+            let destination_write = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::VInsertLane {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                            elem,
+                            ..
+                        } if elem == destination_elem
+                    )
+                })
+                .expect("EVEX packed-extension destination merge must survive optimization");
+            assert!(
+                last_load < destination_write,
+                "EVEX packed-extension write crossed a conditional source fault boundary"
+            );
+        }
+
+        let legacy_pminsb = optimized(&[0x66, 0x0F, 0x38, 0x38, 0x00]);
+        let ops = &legacy_pminsb.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy PMINSB alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMINSB load must survive optimization");
+        let compare = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VCmp {
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMINSB comparison must survive optimization");
+        let select = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VBitSelect {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMINSB selection must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMINSB destination merge must survive optimization");
+        assert!(
+            alignment < load && load < compare && compare < select && select < destination_write
+        );
+
+        for (bytes, elem, mem_width, expected_loads) in [
+            (
+                &[0x62, 0xF1, 0x75, 0x49, 0xDA, 0x00][..],
+                VecElementType::I8,
+                MemWidth::B1,
+                64usize,
+            ),
+            (
+                &[0x62, 0xF1, 0x75, 0x49, 0xEA, 0x00][..],
+                VecElementType::I16,
+                MemWidth::B2,
+                32usize,
+            ),
+            (
+                &[0x62, 0xF2, 0x75, 0x49, 0x38, 0x00][..],
+                VecElementType::I8,
+                MemWidth::B1,
+                64usize,
+            ),
+            (
+                &[0x62, 0xF2, 0xF5, 0x59, 0x3F, 0x00][..],
+                VecElementType::I64,
+                MemWidth::B8,
+                8usize,
+            ),
+        ] {
+            let evex_minmax = optimized(bytes);
+            let ops = &evex_minmax.blocks[0].ops;
+            assert_eq!(
+                ops.iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::PredLoad { width, .. } if width == mem_width
+                    ))
+                    .count(),
+                expected_loads,
+                "EVEX packed min/max lost elementwise fault suppression"
+            );
+            assert!(!ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Load { .. } | OpKind::VLoad { .. } | OpKind::X86CheckAlignment { .. }
+            )));
+            let last_load = ops
+                .iter()
+                .rposition(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::PredLoad { width, .. } if width == mem_width
+                    )
+                })
+                .unwrap();
+            let compare = ops
+                .iter()
+                .position(
+                    |op| matches!(op.kind, OpKind::VCmp { elem: actual, .. } if actual == elem),
+                )
+                .unwrap();
+            let select = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::VBitSelect {
+                            width: VecWidth::V512,
+                            ..
+                        }
+                    )
+                })
+                .unwrap();
+            let destination_write = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::VInsertLane {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                            elem: actual,
+                            ..
+                        } if actual == elem
+                    )
+                })
+                .unwrap();
+            assert!(last_load < compare && compare < select && select < destination_write);
+        }
+
+        let legacy_ptest = optimized(&[0x66, 0x0F, 0x38, 0x17, 0x00]);
+        let ops = &legacy_ptest.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy PTEST alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PTEST load must survive optimization");
+        let read_flags = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::ReadFlags { .. }))
+            .expect("legacy PTEST preserved-flag capture must survive optimization");
+        let write_flags = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::WriteFlags { .. }))
+            .expect("legacy PTEST flag commit must survive optimization");
+        assert!(alignment < load && load < read_flags && read_flags < write_flags);
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        elem: VecElementType::I64,
+                        ..
+                    }
+                ))
+                .count(),
+            4
+        );
+
+        let vex_ptest = optimized(&[0xC4, 0xE2, 0x7D, 0x17, 0x00]);
+        let ops = &vex_ptest.blocks[0].ops;
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
+        );
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VPTEST.256 load must survive optimization");
+        let read_flags = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::ReadFlags { .. }))
+            .unwrap();
+        let write_flags = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::WriteFlags { .. }))
+            .unwrap();
+        assert!(load < read_flags && read_flags < write_flags);
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        elem: VecElementType::I64,
+                        ..
+                    }
+                ))
+                .count(),
+            8
+        );
+        assert!(
+            ops[..load]
+                .iter()
+                .all(|op| op.kind.flags_written().is_empty())
+        );
+
+        let legacy_blend = optimized(&[0x66, 0x0F, 0x38, 0x10, 0x10]);
+        let ops = &legacy_blend.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy PBLENDVB alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PBLENDVB source load must survive optimization");
+        let mask_compare = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VCmp {
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I8,
+                        cond: VecCmpCond::Lt,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PBLENDVB implicit mask must survive optimization");
+        let select = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VBitSelect {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PBLENDVB selection must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PBLENDVB destination merge must survive optimization");
+        assert!(
+            alignment < load
+                && load < mask_compare
+                && mask_compare < select
+                && select < destination_write
+        );
+
+        let vex_blend = optimized(&[0xC4, 0xE3, 0x65, 0x4A, 0x10, 0x40]);
+        let ops = &vex_blend.blocks[0].ops;
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
+        );
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VBLENDVPS memory source must survive optimization");
+        let mask_compare = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VCmp {
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(4))),
+                        elem: VecElementType::I32,
+                        cond: VecCmpCond::Lt,
+                        ..
+                    }
+                )
+            })
+            .expect("VBLENDVPS explicit mask must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VBitSelect {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VBLENDVPS destination write must survive optimization");
+        assert!(load < mask_compare && mask_compare < destination_write);
+        assert!(ops.iter().all(|op| op.kind.flags_written().is_empty()));
+
+        let legacy_pmuldq = optimized(&[0x66, 0x0F, 0x38, 0x28, 0x00]);
+        let ops = &legacy_pmuldq.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .unwrap();
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let multiply = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::MulS {
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I64,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        assert!(alignment < load && load < multiply && multiply < write);
+
+        let evex_pmuldq = optimized(&[0x62, 0xF2, 0xF5, 0x49, 0x28, 0x00]);
+        let ops = &evex_pmuldq.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                ))
+                .count(),
+            8
+        );
+        let last_load = ops
+            .iter()
+            .rposition(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let multiply = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::MulS {
+                        width: OpWidth::W64,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        elem: VecElementType::I64,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        assert!(last_load < multiply && multiply < write);
+
+        for (name, bytes, width, alignment, dst) in [
+            (
+                "legacy MOVNTDQA",
+                &[0x66, 0x0F, 0x38, 0x2A, 0x00][..],
+                VecWidth::V128,
+                16,
+                X86Reg::Xmm(0),
+            ),
+            (
+                "VEX.256 VMOVNTDQA",
+                &[0xC4, 0xE2, 0x7D, 0x2A, 0x00][..],
+                VecWidth::V256,
+                32,
+                X86Reg::Ymm(0),
+            ),
+            (
+                "EVEX.512 VMOVNTDQA",
+                &[0x62, 0xE2, 0x7D, 0x48, 0x2A, 0x00][..],
+                VecWidth::V512,
+                64,
+                X86Reg::Zmm(16),
+            ),
+        ] {
+            let function = optimized(bytes);
+            let ops = &function.blocks[0].ops;
+            let alignment_check = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::X86CheckAlignment {
+                            alignment: actual,
+                            ..
+                        } if actual == alignment
+                    )
+                })
+                .unwrap_or_else(|| panic!("{name}: mandatory alignment check was removed"));
+            let load = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::VLoad {
+                            width: actual,
+                            ..
+                        } if actual == width
+                    )
+                })
+                .unwrap_or_else(|| panic!("{name}: memory load was removed"));
+            let destination_write = ops
+                .iter()
+                .position(|op| match op.kind {
+                    OpKind::VMov {
+                        dst: VReg::Arch(ArchReg::X86(actual)),
+                        width: actual_width,
+                        ..
+                    } => actual == dst && actual_width == width,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(actual)),
+                        ..
+                    } => actual == dst,
+                    _ => false,
+                })
+                .unwrap_or_else(|| panic!("{name}: architectural destination write was removed"));
+            assert!(
+                alignment_check < load && load < destination_write,
+                "{name}: optimizer violated check-before-load-before-write ordering: {ops:?}"
+            );
+        }
+
+        let legacy_phminposuw = optimized(&[0x66, 0x0F, 0x38, 0x41, 0x00]);
+        let ops = &legacy_phminposuw.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy PHMINPOSUW alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PHMINPOSUW source load must survive optimization");
+        let read_flags = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::ReadFlags { .. }))
+            .expect("PHMINPOSUW flag preservation capture must survive optimization");
+        let first_compare = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Cmp {
+                        width: OpWidth::W16,
+                        ..
+                    }
+                )
+            })
+            .expect("PHMINPOSUW minimum comparisons must survive optimization");
+        let write_flags = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::WriteFlags { .. }))
+            .expect("PHMINPOSUW flag restoration must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I64,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PHMINPOSUW destination write must survive optimization");
+        assert!(
+            alignment < load
+                && load < read_flags
+                && read_flags < first_compare
+                && first_compare < write_flags
+                && write_flags < destination_write
+        );
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::SetCC {
+                        cond: Condition::Ult,
+                        ..
+                    }
+                ))
+                .count(),
+            7
+        );
+
+        let vex_phminposuw = optimized(&[0xC4, 0xE2, 0x79, 0x41, 0x00]);
+        let ops = &vex_phminposuw.blocks[0].ops;
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
+        );
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VPHMINPOSUW unaligned source load must survive optimization");
+        let read_flags = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::ReadFlags { .. }))
+            .unwrap();
+        let write_flags = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::WriteFlags { .. }))
+            .unwrap();
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VMov {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VPHMINPOSUW zeroing destination write must survive optimization");
+        assert!(load < read_flags && read_flags < write_flags && write_flags < destination_write);
+
+        for (name, bytes, width, products, legacy_alignment, dst) in [
+            (
+                "legacy PCLMULQDQ",
+                &[0x66, 0x0F, 0x3A, 0x44, 0x00, 0x11][..],
+                VecWidth::V128,
+                1usize,
+                true,
+                X86Reg::Xmm(0),
+            ),
+            (
+                "VEX.256 VPCLMULQDQ",
+                &[0xC4, 0xE3, 0x75, 0x44, 0x00, 0x11][..],
+                VecWidth::V256,
+                2,
+                false,
+                X86Reg::Ymm(0),
+            ),
+            (
+                "EVEX.512 VPCLMULQDQ",
+                &[0x62, 0xF3, 0x75, 0x48, 0x44, 0x00, 0x11][..],
+                VecWidth::V512,
+                4,
+                false,
+                X86Reg::Zmm(0),
+            ),
+        ] {
+            let function = optimized(bytes);
+            let ops = &function.blocks[0].ops;
+            let alignment = ops
+                .iter()
+                .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }));
+            assert_eq!(alignment.is_some(), legacy_alignment, "{name}");
+            let load = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::VLoad {
+                            width: actual,
+                            ..
+                        } if actual == width
+                    )
+                })
+                .unwrap_or_else(|| panic!("{name}: full source load was removed"));
+            let first_product = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::ClMul {
+                            elem_bits: 64,
+                            lanes: 1,
+                            acc: false,
+                            ..
+                        }
+                    )
+                })
+                .unwrap_or_else(|| panic!("{name}: carry-less products were removed"));
+            let last_product = ops
+                .iter()
+                .rposition(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::ClMul {
+                            elem_bits: 64,
+                            lanes: 1,
+                            acc: false,
+                            ..
+                        }
+                    )
+                })
+                .unwrap();
+            assert_eq!(
+                ops.iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::ClMul {
+                            elem_bits: 64,
+                            lanes: 1,
+                            acc: false,
+                            ..
+                        }
+                    ))
+                    .count(),
+                products,
+                "{name}"
+            );
+            let destination_write = ops
+                .iter()
+                .position(|op| match op.kind {
+                    OpKind::VMov {
+                        dst: VReg::Arch(ArchReg::X86(actual)),
+                        width: actual_width,
+                        ..
+                    } => actual == dst && actual_width == width,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(actual)),
+                        ..
+                    } => actual == dst,
+                    _ => false,
+                })
+                .unwrap_or_else(|| panic!("{name}: architectural result write was removed"));
+            if let Some(alignment) = alignment {
+                assert!(alignment < load, "{name}");
+            }
+            assert!(
+                load < first_product
+                    && first_product <= last_product
+                    && last_product < destination_write,
+                "{name}: optimizer violated load/product/write ordering: {ops:?}"
+            );
+            assert!(
+                !ops.iter()
+                    .any(|op| matches!(op.kind, OpKind::PredLoad { .. })),
+                "{name}: PCLMULQDQ must not acquire memory fault suppression"
+            );
+            assert!(ops.iter().all(|op| op.kind.flags_written().is_empty()));
+        }
+
+        let crc_memory = optimized(&[0xF2, 0x4C, 0x0F, 0x38, 0xF1, 0x00]);
+        let ops = &crc_memory.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                )
+            })
+            .expect("CRC32 qword memory read must survive optimization");
+        let crc = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Crc32C {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::R8)),
+                        crc: VReg::Arch(ArchReg::X86(X86Reg::R8)),
+                        data_width: OpWidth::W64,
+                        ..
+                    }
+                )
+            })
+            .expect("CRC32 architectural result must survive optimization");
+        assert!(load < crc);
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
+        );
+        assert!(ops.iter().all(|op| op.kind.flags_written().is_empty()));
+
+        let crc_high_byte = optimized(&[0xF2, 0x0F, 0x38, 0xF0, 0xD5]);
+        let ops = &crc_high_byte.blocks[0].ops;
+        let extraction = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Shr {
+                        src: VReg::Arch(ArchReg::X86(X86Reg::Rcx)),
+                        amount: SrcOperand::Imm(8),
+                        flags: FlagUpdate::None,
+                        ..
+                    }
+                )
+            })
+            .expect("CRC32 CH extraction must survive optimization");
+        let crc = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Crc32C {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
+                        data_width: OpWidth::W8,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        assert!(extraction < crc);
+
+        let crc_alias = optimized(&[0xF2, 0x4D, 0x0F, 0x38, 0xF1, 0xC0]);
+        assert!(crc_alias.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Crc32C {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::R8)),
+                crc: VReg::Arch(ArchReg::X86(X86Reg::R8)),
+                data: VReg::Arch(ArchReg::X86(X86Reg::R8)),
+                data_width: OpWidth::W64,
+            }
+        )));
+
+        let legacy_blend_imm = optimized(&[0x66, 0x0F, 0x3A, 0x0C, 0x00, 0xA5]);
+        let ops = &legacy_blend_imm.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy BLENDPS alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy BLENDPS memory source must survive optimization");
+        let selection = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        elem: VecElementType::I32,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy BLENDPS lane selection must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I32,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy BLENDPS destination merge must survive optimization");
+        assert!(alignment < load && load < selection && selection < destination_write);
+
+        let vex_blend_imm = optimized(&[0xC4, 0xE3, 0x65, 0x0C, 0x08, 0xA5]);
+        let ops = &vex_blend_imm.blocks[0].ops;
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
+        );
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VBLENDPS unaligned source load must survive optimization");
+        let first_selection = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        elem: VecElementType::I32,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VMov {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VBLENDPS destination write must survive optimization");
+        assert!(load < first_selection && first_selection < destination_write);
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        elem: VecElementType::I32,
+                        ..
+                    }
+                ))
+                .count(),
+            8
+        );
+        assert!(ops.iter().all(|op| op.kind.flags_written().is_empty()));
+
+        let legacy_insert = optimized(&[0x66, 0x44, 0x0F, 0x3A, 0x22, 0x08, 0x03]);
+        let ops = &legacy_insert.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting PINSRD scalar load must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
+                        elem: VecElementType::I32,
+                        ..
+                    }
+                )
+            })
+            .expect("PINSRD architectural merge must survive optimization");
+        assert!(load < destination_write);
+
+        let vector_insert = optimized(&[0xC4, 0x63, 0x29, 0x22, 0x48, 0x14, 0x03]);
+        let ops = &vector_insert.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting VPINSRD scalar load must survive optimization");
+        let first_merge_read = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(10))),
+                        elem: VecElementType::I32,
+                        ..
+                    }
+                )
+            })
+            .expect("VPINSRD merge-source reads must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VMov {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("VPINSRD destination write must survive optimization");
+        assert!(load < first_merge_read && first_merge_read < destination_write);
+
+        let extract = optimized(&[0x66, 0x44, 0x0F, 0x3A, 0x15, 0x48, 0x22, 0x0F]);
+        let ops = &extract.blocks[0].ops;
+        let extraction = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
+                        lane: 7,
+                        elem: VecElementType::I16,
+                        ..
+                    }
+                )
+            })
+            .expect("PEXTRW source lane extraction must survive optimization");
+        let store = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Store {
+                        width: MemWidth::B2,
+                        ..
+                    }
+                )
+            })
+            .expect("PEXTRW scalar store must survive optimization");
+        assert!(extraction < store);
+
+        let mpsadbw = optimized(&[0x66, 0x44, 0x0F, 0x3A, 0x42, 0x08, 0x07]);
+        let ops = &mpsadbw.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy MPSADBW alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy MPSADBW source load must survive optimization");
+        let sad = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VMpsadbw {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy MPSADBW operation must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
+                        elem: VecElementType::I16,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy MPSADBW destination merge must survive optimization");
+        assert!(alignment < load && load < sad && sad < destination_write);
+
+        let vex_mpsadbw = optimized(&[0xC4, 0x63, 0x25, 0x42, 0x08, 0x38]);
+        let ops = &vex_mpsadbw.blocks[0].ops;
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
+        );
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VMPSADBW unaligned load must survive optimization");
+        let sad = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VMpsadbw {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VMPSADBW destination operation must survive optimization");
+        assert!(load < sad);
+
+        let psadbw = optimized(&[0x66, 0x44, 0x0F, 0xF6, 0x08]);
+        let ops = &psadbw.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy PSADBW alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PSADBW source load must survive optimization");
+        let sad = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VSadBytes {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PSADBW operation must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
+                        elem: VecElementType::I64,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PSADBW destination merge must survive optimization");
+        assert!(alignment < load && load < sad && sad < destination_write);
+
+        let evex_psadbw = optimized(&[0x62, 0xE1, 0x5D, 0x40, 0xF6, 0x18]);
+        let ops = &evex_psadbw.blocks[0].ops;
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
+        );
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V512,
+                        ..
+                    }
+                )
+            })
+            .expect("EVEX VPSADBW unaligned load must survive optimization");
+        let sad = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VSadBytes {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(19))),
+                        width: VecWidth::V512,
+                        ..
+                    }
+                )
+            })
+            .expect("EVEX VPSADBW destination operation must survive optimization");
+        assert!(load < sad);
+
+        let dpps = optimized(&[0x66, 0x44, 0x0F, 0x3A, 0x40, 0x08, 0xF1]);
+        let ops = &dpps.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy DPPS alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy DPPS source load must survive optimization");
+        let dot = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86DotProduct {
+                        elem: VecElementType::F32,
+                        width: VecWidth::V128,
+                        imm: 0xF1,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy DPPS MXCSR side effect must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
+                        elem: VecElementType::F32,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy DPPS destination merge must survive optimization");
+        assert!(alignment < load && load < dot && dot < destination_write);
+
+        let vdpps = optimized(&[0xC4, 0x63, 0x25, 0x40, 0x08, 0xFF]);
+        let ops = &vdpps.blocks[0].ops;
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
+        );
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VDPPS unaligned load must survive optimization");
+        let dot = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86DotProduct {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                        elem: VecElementType::F32,
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VDPPS destination and MXCSR operation must survive optimization");
+        assert!(load < dot);
+
+        for (bytes, expected_sources) in [
+            (
+                &[0xC4, 0x42, 0x7F, 0xCC, 0xCA][..],
+                vec![
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(10))),
+                ],
+            ),
+            (
+                &[0xC4, 0x42, 0x7F, 0xCD, 0xCA][..],
+                vec![
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(10))),
+                ],
+            ),
+            (
+                &[0xC4, 0x42, 0x27, 0xCB, 0xCA][..],
+                vec![
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(11))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(10))),
+                ],
+            ),
+        ] {
+            let sha = optimized(bytes);
+            let operation = sha.blocks[0]
+                .ops
+                .iter()
+                .find(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::X86Sha512Msg1 { .. }
+                            | OpKind::X86Sha512Msg2 { .. }
+                            | OpKind::X86Sha512Rounds2 { .. }
+                    )
+                })
+                .expect("SHA-512 operation must survive optimization");
+            assert_eq!(operation.kind.source_vregs(), expected_sources);
+        }
+
+        for (bytes, rounds) in [
+            (&[0xC4, 0x62, 0x20, 0xDA, 0x08][..], false),
+            (&[0xC4, 0x63, 0x21, 0xDE, 0x08, 0x3F][..], true),
+        ] {
+            let sm3 = optimized(bytes);
+            let ops = &sm3.blocks[0].ops;
+            let load = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::VLoad {
+                            width: VecWidth::V128,
+                            ..
+                        }
+                    )
+                })
+                .expect("SM3 memory source load must survive optimization");
+            let operation = ops
+                .iter()
+                .position(|op| {
+                    if rounds {
+                        matches!(op.kind, OpKind::X86Sm3Rounds2 { .. })
+                    } else {
+                        matches!(op.kind, OpKind::X86Sm3Msg1 { .. })
+                    }
+                })
+                .expect("SM3 operation must survive optimization");
+            assert!(load < operation);
+        }
+
+        for bytes in [
+            &[0xC4, 0x62, 0x26, 0xDA, 0x08][..],
+            &[0xC4, 0x62, 0x27, 0xDA, 0x08][..],
+        ] {
+            let sm4 = optimized(bytes);
+            let ops = &sm4.blocks[0].ops;
+            let load = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::VLoad {
+                            width: VecWidth::V256,
+                            ..
+                        }
+                    )
+                })
+                .expect("SM4 memory source load must survive optimization");
+            let operation = ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::X86Sm4 {
+                            width: VecWidth::V256,
+                            ..
+                        }
+                    )
+                })
+                .expect("SM4 operation must survive optimization");
+            assert!(load < operation);
+        }
+
+        let round = optimized(&[0x66, 0x44, 0x0F, 0x3A, 0x08, 0x08, 0x00]);
+        let ops = &round.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy ROUNDPS alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy ROUNDPS source load must survive optimization");
+        let rounding = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86Round {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
+                        elem: VecElementType::F32,
+                        lanes: 4,
+                        ..
+                    }
+                )
+            })
+            .expect("ROUNDPS MXCSR side effect and destination must survive optimization");
+        assert!(alignment < load && load < rounding);
+
+        let vex_round = optimized(&[0xC4, 0x63, 0x21, 0x0B, 0x08, 0x04]);
+        let ops = &vex_round.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                )
+            })
+            .expect("VROUNDSD scalar load must survive optimization");
+        let rounding = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86Round {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
+                        merge: VReg::Arch(ArchReg::X86(X86Reg::Xmm(11))),
+                        mode: FpRoundMode::Dynamic,
+                        ..
+                    }
+                )
+            })
+            .expect("VROUNDSD merge and MXCSR side effect must survive optimization");
+        assert!(load < rounding);
 
         let evex = optimized(&[0x62, 0xF1, 0x7E, 0x09, 0x58, 0x10]);
         let ops = &evex.blocks[0].ops;
@@ -4561,6 +7396,781 @@ mod tests {
             );
         }
 
+        for (name, bytes, vector_load) in [
+            ("VBCSTNEBF162PS", &[0xC4, 0x62, 0x7A, 0xB1, 0x08][..], false),
+            ("VCVTNEEBF162PS", &[0xC4, 0x62, 0x7E, 0xB0, 0x08][..], true),
+        ] {
+            let function = optimized(bytes);
+            let ops = &function.blocks[0].ops;
+            let load = ops
+                .iter()
+                .position(|op| {
+                    if vector_load {
+                        matches!(
+                            op.kind,
+                            OpKind::VLoad {
+                                width: VecWidth::V256,
+                                ..
+                            }
+                        )
+                    } else {
+                        matches!(
+                            op.kind,
+                            OpKind::Load {
+                                width: MemWidth::B2,
+                                ..
+                            }
+                        )
+                    }
+                })
+                .unwrap_or_else(|| panic!("{name}: faulting source load removed"));
+            let conversion = ops
+                .iter()
+                .position(|op| matches!(op.kind, OpKind::X86Convert16ToFp32 { .. }))
+                .unwrap_or_else(|| panic!("{name}: conversion removed"));
+            assert!(load < conversion, "{name}: write before fault boundary");
+        }
+
+        let packed_shift = optimized(&[0xC4, 0xC1, 0x35, 0x73, 0xDA, 0x01]);
+        assert!(packed_shift.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::X86PackedShiftImm {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Ymm(10))),
+                width: VecWidth::V256,
+                shift: ShiftOp::Lsr,
+                amount: 1,
+                byte_lane: true,
+                ..
+            }
+        )));
+
+        let legacy_shift = optimized(&[0x66, 0x0F, 0x73, 0xF8, 0x01]);
+        assert!(legacy_shift.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::X86PackedShiftImm {
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                width: VecWidth::V128,
+                shift: ShiftOp::Lsl,
+                amount: 1,
+                byte_lane: true,
+                ..
+            }
+        )));
+
+        let e4nf_shift = optimized(&[0x62, 0xF1, 0x7D, 0x49, 0x71, 0x10, 0x03]);
+        let ops = &e4nf_shift.blocks[0].ops;
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+        );
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V512,
+                        ..
+                    }
+                )
+            })
+            .expect("E4NF immediate word-shift load must survive optimization");
+        let shift = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86PackedShiftImm { .. }))
+            .expect("EVEX immediate word shift must survive optimization");
+        let write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        elem: VecElementType::I16,
+                        ..
+                    }
+                )
+            })
+            .expect("EVEX immediate word-shift destination write must survive optimization");
+        assert!(load < shift && shift < write);
+
+        let e4_shift = optimized(&[0x62, 0xF1, 0x7D, 0x49, 0x72, 0x10, 0x03]);
+        assert_eq!(
+            e4_shift.blocks[0]
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            16,
+        );
+
+        let packed_shift_count = optimized(&[0xC4, 0x41, 0x35, 0xD2, 0xC2]);
+        assert!(packed_shift_count.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::X86PackedShift {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(8))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                width: VecWidth::V256,
+                elem: VecElementType::I32,
+                shift: ShiftOp::Lsr,
+                ..
+            }
+        )));
+
+        let packed_shift_variable = optimized(&[0x62, 0xF2, 0xED, 0x08, 0x10, 0xCB]);
+        assert!(
+            packed_shift_variable.blocks[0]
+                .ops
+                .iter()
+                .any(|op| matches!(
+                    op.kind,
+                    OpKind::X86PackedShiftVariable {
+                        src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                        count: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                        elem: VecElementType::I16,
+                        shift: ShiftOp::Lsr,
+                        ..
+                    }
+                ))
+        );
+
+        let packed_rotate = optimized(&[0x62, 0xF1, 0x75, 0x08, 0x72, 0xCA, 0x07]);
+        assert!(packed_rotate.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::X86PackedRotate {
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                count: None,
+                amount: 7,
+                width: VecWidth::V128,
+                elem: VecElementType::I32,
+                left: true,
+                ..
+            }
+        )));
+
+        let masked_rotate = optimized(&[0x62, 0xF2, 0x4D, 0x5A, 0x14, 0x68, 0x01]);
+        let rotate_ops = &masked_rotate.blocks[0].ops;
+        assert_eq!(
+            rotate_ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            16,
+        );
+        assert!(rotate_ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::X86PackedRotate {
+                count: Some(_),
+                width: VecWidth::V512,
+                elem: VecElementType::I32,
+                left: false,
+                ..
+            }
+        )));
+
+        let ternary = optimized(&[0x62, 0xF3, 0x6D, 0x08, 0x25, 0xCB, 0x96]);
+        assert!(ternary.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::X86TernaryLogic {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                src3: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                imm: 0x96,
+                width: VecWidth::V128,
+                ..
+            }
+        )));
+
+        let masked_ternary = optimized(&[0x62, 0xC3, 0x6D, 0x57, 0x25, 0x4D, 0x7F, 0xE4]);
+        let ternary_ops = &masked_ternary.blocks[0].ops;
+        assert_eq!(
+            ternary_ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            16,
+        );
+        assert!(
+            ternary_ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::X86TernaryLogic { imm: 0xE4, .. }))
+        );
+
+        let funnel = optimized(&[0x62, 0xF3, 0xED, 0x08, 0x70, 0xCB, 0x07]);
+        assert!(funnel.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::X86PackedFunnelShift {
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                fill: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                count: None,
+                amount: 7,
+                elem: VecElementType::I16,
+                left: true,
+                ..
+            }
+        )));
+
+        let variable_funnel = optimized(&[0x62, 0xF2, 0xED, 0x08, 0x73, 0xCB]);
+        assert!(variable_funnel.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::X86PackedFunnelShift {
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                fill: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                count: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(3)))),
+                elem: VecElementType::I64,
+                left: false,
+                ..
+            }
+        )));
+
+        let multishift = optimized(&[0x62, 0xF2, 0xED, 0x08, 0x83, 0xCB]);
+        assert!(multishift.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::X86MultiShiftQB {
+                control: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                source: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                width: VecWidth::V128,
+                ..
+            }
+        )));
+
+        let e4nf_multishift = optimized(&[0x62, 0x62, 0x8D, 0xC1, 0x83, 0x78, 0x01]);
+        assert!(e4nf_multishift.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLoad {
+                width: VecWidth::V512,
+                ..
+            }
+        )));
+        assert!(
+            !e4nf_multishift.blocks[0]
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+        );
+
+        let vector_align = optimized(&[0x62, 0xF3, 0x6D, 0x08, 0x03, 0xCB, 0x01]);
+        assert_eq!(
+            vector_align.blocks[0]
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        elem: VecElementType::I32,
+                        ..
+                    }
+                ))
+                .count(),
+            4,
+        );
+        let e4nf_align = optimized(&[0x62, 0xC3, 0x6D, 0x47, 0x03, 0x4D, 0x01, 0x1F]);
+        assert!(e4nf_align.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLoad {
+                width: VecWidth::V512,
+                ..
+            }
+        )));
+        assert!(
+            !e4nf_align.blocks[0]
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+        );
+
+        for bytes in [
+            &[0x66, 0x45, 0x0F, 0xF7, 0xC1][..],
+            &[0xC4, 0x41, 0x79, 0xF7, 0xC1][..],
+        ] {
+            let maskmov = optimized(bytes);
+            let ops = &maskmov.blocks[0].ops;
+            assert_eq!(
+                ops.iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::PredStore {
+                            width: MemWidth::B1,
+                            ..
+                        }
+                    ))
+                    .count(),
+                16,
+                "MASKMOVDQU byte stores removed for {bytes:02X?}",
+            );
+            assert!(ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VExtractLane {
+                    vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(8))),
+                    lane: 15,
+                    elem: VecElementType::I8,
+                    ..
+                }
+            )));
+            assert!(ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VExtractLane {
+                    vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
+                    lane: 15,
+                    elem: VecElementType::I8,
+                    ..
+                }
+            )));
+        }
+
+        let addr32_maskmov = optimized(&[0x67, 0xC4, 0x41, 0x79, 0xF7, 0xC1]);
+        let ops = &addr32_maskmov.blocks[0].ops;
+        let truncated = ops
+            .iter()
+            .find_map(|op| match op.kind {
+                OpKind::And {
+                    dst,
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Rdi)),
+                    src2: SrcOperand::Imm(0xFFFF_FFFF),
+                    width: OpWidth::W64,
+                    ..
+                } => Some(dst),
+                _ => None,
+            })
+            .expect("optimizer removed MASKMOVDQU EDI truncation");
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::PredStore {
+                addr: Address::BaseOffset {
+                    base,
+                    offset: 15,
+                    ..
+                },
+                ..
+            } if base == truncated
+        )));
+
+        for (bytes, loads, stores) in [
+            (&[0xC4, 0xE2, 0x75, 0x2C, 0x17][..], 8usize, 0usize),
+            (&[0xC4, 0xE2, 0xF1, 0x8E, 0x17][..], 0, 2),
+        ] {
+            let masked_memory = optimized(bytes);
+            let ops = &masked_memory.blocks[0].ops;
+            assert_eq!(
+                ops.iter()
+                    .filter(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+                    .count(),
+                loads,
+            );
+            assert_eq!(
+                ops.iter()
+                    .filter(|op| matches!(op.kind, OpKind::PredStore { .. }))
+                    .count(),
+                stores,
+            );
+            assert!(ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VExtractLane {
+                    vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1) | X86Reg::Ymm(1))),
+                    ..
+                }
+            )));
+        }
+
+        let vex_gather = optimized(&[0xC4, 0xE2, 0x75, 0x90, 0x1C, 0x90]);
+        let ops = &vex_gather.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            8,
+        );
+        let first_load = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+            .expect("VPGATHERDD loads removed");
+        let first_commit = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
+                        ..
+                    }
+                )
+            })
+            .expect("VPGATHERDD destination commits removed");
+        assert!(first_load < first_commit);
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                        ..
+                    }
+                ))
+                .count(),
+            8,
+            "restart mask updates must survive optimization",
+        );
+
+        let evex_gather = optimized(&[0x62, 0xE2, 0x7D, 0x43, 0x92, 0x14, 0x88]);
+        let ops = &evex_gather.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            16,
+        );
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::And {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::K(3))),
+                flags: FlagUpdate::None,
+                ..
+            }
+        )));
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                sign: SignExtend::Sign,
+                ..
+            }
+        )));
+
+        let evex_scatter = optimized(&[0x62, 0xF2, 0x7D, 0x09, 0xA0, 0x0C, 0x90]);
+        let ops = &evex_scatter.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredStore {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            4,
+        );
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::And {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::K(1))),
+                        flags: FlagUpdate::None,
+                        ..
+                    }
+                ))
+                .count(),
+            5,
+            "scatter mask normalization and per-lane restart updates removed",
+        );
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                sign: SignExtend::Sign,
+                ..
+            }
+        )));
+
+        let evex_aes = optimized(&[0x62, 0xE2, 0x5D, 0x20, 0xDE, 0x68, 0x02]);
+        let ops = &evex_aes.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        addr: Address::BaseOffset { offset: 64, .. },
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("EVEX VAESDEC full-tuple load removed");
+        let aes = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86Aes {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(21))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(20))),
+                        op: X86AesOp::Dec,
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("EVEX VAESDEC computation removed");
+        assert!(load < aes, "VAESDEC moved before its memory fault boundary");
+
+        let evex_fma = optimized(&[0x62, 0xF2, 0x65, 0xD9, 0xA6, 0x10]);
+        let ops = &evex_fma.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            16,
+        );
+        let first_fma = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::VFma { .. }))
+            .expect("EVEX FMA computation removed");
+        let last_load = ops
+            .iter()
+            .rposition(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+            .expect("EVEX FMA masked broadcast loads removed");
+        assert!(last_load < first_fma, "FMA moved before its fault boundary");
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(op.kind, OpKind::Select { .. }))
+                .count(),
+            16,
+        );
+
+        let horizontal = optimized(&[0xC5, 0xFF, 0x7C, 0x50, 0x20]);
+        let ops = &horizontal.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VHADDPS source load removed");
+        let arithmetic = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::FAdd { .. }))
+            .expect("VHADDPS arithmetic removed");
+        assert!(load < arithmetic);
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VMov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                width: VecWidth::V256,
+                ..
+            }
+        )));
+
+        let legacy_horizontal = optimized(&[0x66, 0x0F, 0x7D, 0x00]);
+        assert!(
+            legacy_horizontal.blocks[0]
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+        );
+
+        let reciprocal = optimized(&[0xC5, 0xFC, 0x53, 0x50, 0x20]);
+        let ops = &reciprocal.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                )
+            })
+            .expect("VRCPPS source load removed");
+        let estimate = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VUnary {
+                        op: VecUnaryOp::FRecipEstimate,
+                        lanes: 8,
+                        ..
+                    }
+                )
+            })
+            .expect("VRCPPS estimate removed");
+        assert!(load < estimate, "VRCPPS moved before its fault boundary");
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VMov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                width: VecWidth::V256,
+                ..
+            }
+        )));
+
+        let legacy_reciprocal = optimized(&[0x0F, 0x52, 0x00]);
+        assert!(
+            legacy_reciprocal.blocks[0]
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+        );
+
+        let masked_shift_count = optimized(&[0x62, 0xF1, 0xF5, 0x49, 0xF3, 0x40, 0x04]);
+        let ops = &masked_shift_count.blocks[0].ops;
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+        );
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("E4NF packed shift Mem128 load must survive optimization");
+        let shift = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86PackedShift {
+                        width: VecWidth::V512,
+                        elem: VecElementType::I64,
+                        shift: ShiftOp::Lsl,
+                        ..
+                    }
+                )
+            })
+            .expect("packed shift-by-count computation must survive optimization");
+        let write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        elem: VecElementType::I64,
+                        ..
+                    }
+                )
+            })
+            .expect("masked packed shift destination write must survive optimization");
+        assert!(load < shift && shift < write);
+
+        let packed_shuffle = optimized(&[0xC4, 0x41, 0x7D, 0x70, 0xCA, 0x1B]);
+        assert!(packed_shuffle.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VShuffle {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(10))),
+                elem: VecElementType::I32,
+                lanes: 8,
+                ..
+            }
+        )));
+
+        let masked_shuffle = optimized(&[0x62, 0xE1, 0x7D, 0x4B, 0x70, 0x08, 0x1B]);
+        let masked_ops = &masked_shuffle.blocks[0].ops;
+        let load = masked_ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V512,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VPSHUFD E4NF load removed");
+        let shuffle = masked_ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VShuffle {
+                        elem: VecElementType::I32,
+                        lanes: 16,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VPSHUFD shuffle removed");
+        assert!(
+            load < shuffle,
+            "masked VPSHUFD reordered before its E4NF load"
+        );
+        assert_eq!(
+            masked_ops
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::Select { .. }))
+                .count(),
+            16
+        );
+
+        let two_source_shuffle = optimized(&[0xC4, 0x41, 0x2C, 0xC6, 0xCB, 0xE4]);
+        assert!(two_source_shuffle.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VShuffle {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(10))),
+                src2: Some(VReg::Arch(ArchReg::X86(X86Reg::Ymm(11)))),
+                elem: VecElementType::F32,
+                lanes: 8,
+                ..
+            }
+        )));
+
+        let duplicate_move = optimized(&[0xC4, 0x41, 0x7E, 0x12, 0xCA]);
+        assert!(duplicate_move.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VShuffle {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(10))),
+                src2: None,
+                elem: VecElementType::F32,
+                lanes: 8,
+                ..
+            }
+        )));
+
         let masked_sat = optimized(&[0x62, 0xF1, 0x7D, 0xC9, 0xEC, 0xD1]);
         assert!(masked_sat.blocks[0].ops.iter().any(|op| matches!(
             op.kind,
@@ -5163,6 +8773,584 @@ mod tests {
         block.set_terminator(Terminator::Return { values: vec![v1] });
         let n = copy_propagation(&mut block);
         assert_eq!(n, 0); // not propagated
+    }
+
+    #[test]
+    fn vfma_accumulator_definition_survives_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let accumulator = VReg::virt(1);
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(i64::from(2.0f32.to_bits())),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::VBroadcast {
+                dst: accumulator,
+                scalar,
+                elem: VecElementType::F32,
+                lanes: 8,
+            },
+        ));
+        block.push_op(make_op(
+            2,
+            OpKind::VFma {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                acc: accumulator,
+                elem: VecElementType::F32,
+                lanes: 8,
+                negate_product: false,
+                negate_acc: false,
+            },
+        ));
+        block.set_terminator(Terminator::Return {
+            values: vec![VReg::Arch(ArchReg::X86(X86Reg::Ymm(2)))],
+        });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(block.ops.len(), 3, "VFma accumulator producer was removed");
+        assert!(matches!(
+            block.ops[1].kind,
+            OpKind::VBroadcast { dst, .. } if dst == accumulator
+        ));
+    }
+
+    #[test]
+    fn vpermute_table_and_index_definitions_survive_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let table1 = VReg::virt(1);
+        let table2 = VReg::virt(2);
+        let indices = VReg::virt(3);
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(3),
+                width: OpWidth::W64,
+            },
+        ));
+        for (id, vector) in [(1, table1), (2, table2), (3, indices)] {
+            block.push_op(make_op(
+                id,
+                OpKind::VBroadcast {
+                    dst: vector,
+                    scalar,
+                    elem: VecElementType::I8,
+                    lanes: 16,
+                },
+            ));
+        }
+        block.push_op(make_op(
+            4,
+            OpKind::VPermute {
+                dst,
+                src1: table1,
+                src2: Some(table2),
+                indices,
+                elem: VecElementType::I8,
+                width: VecWidth::V128,
+                overwrite_table: false,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(block.ops.len(), 5, "VPermute source producer was removed");
+        for source in [table1, table2, indices] {
+            assert!(block.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VBroadcast { dst, .. } if dst == source
+            )));
+        }
+    }
+
+    #[test]
+    fn vpopcnt_source_definition_survives_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let source = VReg::virt(1);
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(0x55),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::VBroadcast {
+                dst: source,
+                scalar,
+                elem: VecElementType::I8,
+                lanes: 16,
+            },
+        ));
+        block.push_op(make_op(
+            2,
+            OpKind::VPopcnt {
+                dst,
+                src: source,
+                elem: VecElementType::I8,
+                width: VecWidth::V128,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(block.ops.len(), 3, "VPopcnt source producer was removed");
+        assert!(block.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VBroadcast { dst, .. } if dst == source
+        )));
+    }
+
+    #[test]
+    fn vconflict_source_definition_survives_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let source = VReg::virt(1);
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::VBroadcast {
+                dst: source,
+                scalar,
+                elem: VecElementType::I32,
+                lanes: 4,
+            },
+        ));
+        block.push_op(make_op(
+            2,
+            OpKind::VConflict {
+                dst,
+                src: source,
+                elem: VecElementType::I32,
+                width: VecWidth::V128,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(block.ops.len(), 3, "VConflict source producer was removed");
+    }
+
+    #[test]
+    fn vmultiplyadd52_input_definitions_survive_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let acc = VReg::virt(1);
+        let src1 = VReg::virt(2);
+        let src2 = VReg::virt(3);
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(3),
+                width: OpWidth::W64,
+            },
+        ));
+        for (id, vector) in [(1, acc), (2, src1), (3, src2)] {
+            block.push_op(make_op(
+                id,
+                OpKind::VBroadcast {
+                    dst: vector,
+                    scalar,
+                    elem: VecElementType::I64,
+                    lanes: 2,
+                },
+            ));
+        }
+        block.push_op(make_op(
+            4,
+            OpKind::VMultiplyAdd52 {
+                dst,
+                acc,
+                src1,
+                src2,
+                width: VecWidth::V128,
+                high: false,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(
+            block.ops.len(),
+            5,
+            "VMultiplyAdd52 input producer was removed"
+        );
+    }
+
+    #[test]
+    fn vdotproductext_input_definitions_survive_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let acc = VReg::virt(1);
+        let src1 = VReg::virt(2);
+        let src2 = VReg::virt(3);
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(3),
+                width: OpWidth::W64,
+            },
+        ));
+        for (id, vector) in [(1, acc), (2, src1), (3, src2)] {
+            block.push_op(make_op(
+                id,
+                OpKind::VBroadcast {
+                    dst: vector,
+                    scalar,
+                    elem: VecElementType::I32,
+                    lanes: 4,
+                },
+            ));
+        }
+        block.push_op(make_op(
+            4,
+            OpKind::VDotProductExt {
+                dst,
+                acc,
+                src1,
+                src2,
+                src_elem: VecElementType::I8,
+                acc_elem: VecElementType::I32,
+                width: VecWidth::V128,
+                src1_signed: true,
+                src2_signed: false,
+                saturate: true,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(
+            block.ops.len(),
+            5,
+            "VDotProductExt input producer was removed"
+        );
+    }
+
+    #[test]
+    fn bf16_input_definitions_survive_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let acc = VReg::virt(1);
+        let src1 = VReg::virt(2);
+        let src2 = VReg::virt(3);
+        let dot = VReg::virt(4);
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(3),
+                width: OpWidth::W64,
+            },
+        ));
+        for (id, vector) in [(1, acc), (2, src1), (3, src2)] {
+            block.push_op(make_op(
+                id,
+                OpKind::VBroadcast {
+                    dst: vector,
+                    scalar,
+                    elem: VecElementType::I32,
+                    lanes: 4,
+                },
+            ));
+        }
+        block.push_op(make_op(
+            4,
+            OpKind::VDotProductBF16 {
+                dst: dot,
+                acc,
+                src1,
+                src2,
+                width: VecWidth::V128,
+            },
+        ));
+        block.push_op(make_op(
+            5,
+            OpKind::VCvtFP32ToBF16 {
+                dst,
+                src1: dot,
+                src2: Some(src2),
+                width: VecWidth::V128,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(block.ops.len(), 6, "BF16 input producer was removed");
+    }
+
+    #[test]
+    fn vshufflebitqm_input_definitions_survive_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let src = VReg::virt(1);
+        let indices = VReg::virt(2);
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(3),
+                width: OpWidth::W64,
+            },
+        ));
+        for (id, vector) in [(1, src), (2, indices)] {
+            block.push_op(make_op(
+                id,
+                OpKind::VBroadcast {
+                    dst: vector,
+                    scalar,
+                    elem: VecElementType::I64,
+                    lanes: 2,
+                },
+            ));
+        }
+        block.push_op(make_op(
+            3,
+            OpKind::VShuffleBitQM {
+                dst,
+                src,
+                indices,
+                width: VecWidth::V128,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(
+            block.ops.len(),
+            4,
+            "VShuffleBitQM input producer was removed"
+        );
+    }
+
+    #[test]
+    fn vcompress_vexpand_inputs_and_merge_destinations_survive_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let src = VReg::virt(1);
+        let packed = VReg::virt(2);
+        let mask = VReg::virt(3);
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(3),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::VBroadcast {
+                dst: src,
+                scalar,
+                elem: VecElementType::I32,
+                lanes: 4,
+            },
+        ));
+        block.push_op(make_op(
+            2,
+            OpKind::VBroadcast {
+                dst: packed,
+                scalar,
+                elem: VecElementType::I32,
+                lanes: 4,
+            },
+        ));
+        block.push_op(make_op(
+            3,
+            OpKind::Mov {
+                dst: mask,
+                src: SrcOperand::Imm(5),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            4,
+            OpKind::VCompress {
+                dst: packed,
+                src,
+                mask: Some(mask),
+                elem: VecElementType::I32,
+                width: VecWidth::V128,
+                zeroing: false,
+            },
+        ));
+        block.push_op(make_op(
+            5,
+            OpKind::VBroadcast {
+                dst,
+                scalar,
+                elem: VecElementType::I32,
+                lanes: 4,
+            },
+        ));
+        block.push_op(make_op(
+            6,
+            OpKind::VExpand {
+                dst,
+                src: packed,
+                mask: Some(mask),
+                elem: VecElementType::I32,
+                width: VecWidth::V128,
+                zeroing: false,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(
+            block.ops.len(),
+            7,
+            "compress/expand input producer was removed"
+        );
+    }
+
+    #[test]
+    fn x86_narrow_inputs_and_merge_destination_survive_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let src = VReg::virt(1);
+        let mask = VReg::virt(2);
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(3),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::VBroadcast {
+                dst: src,
+                scalar,
+                elem: VecElementType::I32,
+                lanes: 4,
+            },
+        ));
+        block.push_op(make_op(
+            2,
+            OpKind::Mov {
+                dst: mask,
+                src: SrcOperand::Imm(5),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            3,
+            OpKind::VBroadcast {
+                dst,
+                scalar,
+                elem: VecElementType::I8,
+                lanes: 4,
+            },
+        ));
+        block.push_op(make_op(
+            4,
+            OpKind::X86NarrowInt {
+                dst,
+                src,
+                mask: Some(mask),
+                src_elem: VecElementType::I32,
+                dst_elem: VecElementType::I8,
+                width: VecWidth::V128,
+                mode: X86NarrowMode::SignedSaturate,
+                zeroing: false,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(block.ops.len(), 5, "narrowing input producer was removed");
+    }
+
+    #[test]
+    fn x86_aes_sources_survive_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let state = VReg::virt(1);
+        let key = VReg::virt(2);
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(0x5A),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::VBroadcast {
+                dst: state,
+                scalar,
+                elem: VecElementType::I64,
+                lanes: 2,
+            },
+        ));
+        block.push_op(make_op(
+            2,
+            OpKind::VBroadcast {
+                dst: key,
+                scalar,
+                elem: VecElementType::I64,
+                lanes: 2,
+            },
+        ));
+        block.push_op(make_op(
+            3,
+            OpKind::X86Aes {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                src1: state,
+                src2: Some(key),
+                width: VecWidth::V128,
+                op: X86AesOp::Enc,
+                imm: 0,
+            },
+        ));
+        block.set_terminator(Terminator::Return {
+            values: vec![VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)))],
+        });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(block.ops.len(), 4, "AES source producer was removed");
+        assert!(block.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VBroadcast { dst, .. } if dst == state
+        )));
+        assert!(block.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VBroadcast { dst, .. } if dst == key
+        )));
     }
 
     #[test]
