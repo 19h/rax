@@ -22,8 +22,8 @@ use super::{
     CodeBuffer, LowerError, LowerResult, RelocKind, RelocTarget, Relocation, SmirLowerer,
     X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
     X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
-    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
-    X86_GUEST_ZMM_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_RFLAGS_OFFSET,
+    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 // ============================================================================
@@ -10312,6 +10312,40 @@ impl X86_64Lowerer {
                 DispSize::Disp32,
             );
         }
+
+        if store {
+            // Capture guest MXCSR before entering a Rust helper.
+            self.code.emit_u8(0x0F);
+            self.code.emit_u8(0xAE);
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_modrm_mem_disp(
+                PhysReg::Rbx, // STMXCSR /3
+                base,
+                X86_GUEST_MXCSR_OFFSET,
+                DispSize::Disp32,
+            );
+            // Rust executes under the host thread's original MXCSR.
+            self.code.emit_u8(0x0F);
+            self.code.emit_u8(0xAE);
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_modrm_mem_disp(
+                PhysReg::Rdx, // LDMXCSR /2
+                base,
+                X86_HOST_MXCSR_OFFSET,
+                DispSize::Disp32,
+            );
+        } else {
+            // Resume native guest execution under the current guest MXCSR.
+            self.code.emit_u8(0x0F);
+            self.code.emit_u8(0xAE);
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_modrm_mem_disp(
+                PhysReg::Rdx, // LDMXCSR /2
+                base,
+                X86_GUEST_MXCSR_OFFSET,
+                DispSize::Disp32,
+            );
+        }
     }
 
     /// Lower a guest `Load`/`Store` as a call into the MMU via the helper
@@ -11181,6 +11215,8 @@ mod tests {
             &[0x62, 0x61, 0xFE, 0x48, 0x7F, 0x78, 0x24][..],
             &[0xC4, 0xE1, 0xF8, 0x91, 0x80, 0x40, 0x09, 0x00, 0x00][..],
             &[0xC4, 0xE1, 0xF8, 0x91, 0xB8, 0x78, 0x09, 0x00, 0x00][..],
+            &[0x0F, 0xAE, 0x98, 0x88, 0x09, 0x00, 0x00][..],
+            &[0x0F, 0xAE, 0x90, 0x8C, 0x09, 0x00, 0x00][..],
         ] {
             assert!(
                 stores
@@ -11198,6 +11234,7 @@ mod tests {
             &[0x62, 0x61, 0xFE, 0x48, 0x6F, 0x79, 0x24][..],
             &[0xC4, 0xE1, 0xF8, 0x90, 0x81, 0x40, 0x09, 0x00, 0x00][..],
             &[0xC4, 0xE1, 0xF8, 0x90, 0xB9, 0x78, 0x09, 0x00, 0x00][..],
+            &[0x0F, 0xAE, 0x91, 0x88, 0x09, 0x00, 0x00][..],
         ] {
             assert!(
                 loads

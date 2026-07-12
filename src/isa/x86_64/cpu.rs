@@ -3858,6 +3858,7 @@ unsafe extern "C" fn rax_jit_call(
             vcpu.regs.zmm_ext[index] = gr.get_zmm(index + 16);
         }
         vcpu.regs.k = gr.k;
+        vcpu.mxcsr = gr.mxcsr;
     }
 
     // Simulate the CALL's stack effect (the block's own ops already ran
@@ -3923,6 +3924,7 @@ unsafe extern "C" fn rax_jit_call(
             gr.set_zmm(index + 16, vcpu.regs.zmm_ext[index]);
         }
         gr.k = vcpu.regs.k;
+        gr.mxcsr = vcpu.mxcsr;
     }
     gr.gpr[0] = vcpu.regs.rax;
     gr.gpr[1] = vcpu.regs.rcx;
@@ -4513,6 +4515,7 @@ impl X86_64Vcpu {
                 gr.set_zmm(index + 16, self.regs.zmm_ext[index]);
             }
             gr.k = self.regs.k;
+            gr.mxcsr = self.mxcsr;
             gr.vector_active = 1;
         }
 
@@ -4573,6 +4576,7 @@ impl X86_64Vcpu {
                 self.regs.zmm_ext[index] = gr.get_zmm(index + 16);
             }
             self.regs.k = gr.k;
+            self.mxcsr = gr.mxcsr;
         }
         // Merge: status flags from the native result, all other bits (IF, DF,
         // IOPL, NT, reserved, …) preserved from the guest's pre-region value.
@@ -5424,12 +5428,14 @@ mod tests {
 
         let mem =
             Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
-        // vprold $7,%zmm2,%zmm1{%k4}{z}; ret
-        mem.write_slice(
-            &[0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07, 0xc3],
-            GuestAddress(0x100),
-        )
-        .unwrap();
+        // vprold $7,%zmm2,%zmm1{%k4}{z}; ldmxcsr 1(%rip); ret; .long 0x5f80
+        let mut returning_callee = vec![
+            0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07, 0x0f, 0xae, 0x15, 0x01, 0x00, 0x00, 0x00,
+            0xc3,
+        ];
+        returning_callee.extend_from_slice(&0x5f80u32.to_le_bytes());
+        mem.write_slice(&returning_callee, GuestAddress(0x100))
+            .unwrap();
         let mut vcpu = X86_64Vcpu::new(0, mem.clone());
         vcpu.sregs.cr0 = 0x21;
         vcpu.sregs.cr4 = 0x20 | (1 << 9) | (1 << 18);
@@ -5471,6 +5477,7 @@ mod tests {
         gr.set_zmm(31, [0x3131_3131_3131_3131; 8]);
         gr.k[4] = mask;
         gr.k[7] = 0x7777_7777_7777_7777;
+        gr.mxcsr = 0x3f80;
 
         let ok = unsafe { rax_jit_call(&mut gr, 0x100, 0x200) };
         assert_eq!(ok, 1);
@@ -5487,20 +5494,24 @@ mod tests {
         );
         assert_eq!(gr.k[4], mask);
         assert_eq!(gr.k[7], 0x7777_7777_7777_7777);
+        assert_eq!(gr.mxcsr, 0x5f80, "callee MXCSR was not returned");
 
         // A callee that mutates vector state and then yields HLT must publish
         // that state before returning `ok=0`; the run loop consumes the stashed
         // exit while leaving the interpreter state exactly at the yield.
-        mem.write_slice(
-            &[0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07, 0xf4],
-            GuestAddress(0x300),
-        )
-        .unwrap();
+        let mut yielding_callee = vec![
+            0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07, 0x0f, 0xae, 0x15, 0x01, 0x00, 0x00, 0x00,
+            0xf4,
+        ];
+        yielding_callee.extend_from_slice(&0x7f80u32.to_le_bytes());
+        mem.write_slice(&yielding_callee, GuestAddress(0x300))
+            .unwrap();
         gr.set_zmm(1, [u64::MAX; 8]);
         gr.gpr[4] = 0x8000;
         let ok = unsafe { rax_jit_call(&mut gr, 0x300, 0x400) };
         assert_eq!(ok, 0);
         assert_eq!(gr.get_zmm(1), expected, "bailing callee lost vector state");
+        assert_eq!(gr.mxcsr, 0x7f80, "bailing callee lost MXCSR state");
         assert!(matches!(vcpu.jit_callout_exit, Some(VcpuExit::Hlt)));
     }
 

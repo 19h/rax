@@ -21,8 +21,9 @@
 use super::{
     X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
     X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
-    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
-    X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_ZMM_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_RFLAGS_OFFSET,
+    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_ZMM_OFFSET,
+    X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 /// Apple I-cache invalidation (libSystem). Required after writing a `MAP_JIT`
@@ -50,7 +51,7 @@ unsafe extern "C" {
 /// fixed layout — the trampoline reads/writes by byte offset (`gpr[i]` at
 /// `i*8`, `rflags` at [`X86_GUEST_RFLAGS_OFFSET`]).
 #[repr(C, align(64))]
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct GuestRegs {
     /// General-purpose registers, indexed by x86 encoding.
     pub gpr: [u64; X86_GUEST_GPR_COUNT],
@@ -97,6 +98,33 @@ pub struct GuestRegs {
     /// trampoline branches around every AVX-512 instruction when this is zero,
     /// preserving GPR-only JIT execution on hosts without AVX-512 support.
     pub vector_active: u64,
+    /// Guest architectural MXCSR control/status. Loaded before native vector
+    /// execution and captured afterward.
+    pub mxcsr: u32,
+    /// Host-thread MXCSR saved by the trampoline. Helper call boundaries switch
+    /// to this value so Rust code never executes under guest FP control state.
+    pub host_mxcsr: u32,
+}
+
+impl Default for GuestRegs {
+    fn default() -> Self {
+        Self {
+            gpr: [0; X86_GUEST_GPR_COUNT],
+            rflags: 0,
+            exit_pc: 0,
+            ctx: 0,
+            load_fn: 0,
+            store_fn: 0,
+            fs_base: 0,
+            gs_base: 0,
+            call_fn: 0,
+            zmm: [[0; 8]; 32],
+            k: [0; 8],
+            vector_active: 0,
+            mxcsr: 0x1F80,
+            host_mxcsr: 0,
+        }
+    }
 }
 
 impl GuestRegs {
@@ -233,6 +261,9 @@ macro_rules! x86_enter_native_trampoline {
             "sub rsp, 24", // [rsp]=entry [rsp+8]=state [rsp+16]=pad ; rsp 16-aligned
             "mov [rsp], rdi",
             "mov [rsp+8], rsi",
+            // Preserve host FP control/status before any guest state is loaded.
+            // Helper call boundaries use the saved copy while executing Rust.
+            "stmxcsr [rsi+2444]",
             // Vector state is optional. The branch executes before guest RFLAGS
             // are installed, so its CMP cannot perturb architectural flags.
             "cmp qword ptr [rsi+2432], 0",
@@ -277,6 +308,7 @@ macro_rules! x86_enter_native_trampoline {
             "kmovq k5, [rsi+2408]",
             "kmovq k6, [rsi+2416]",
             "kmovq k7, [rsi+2424]",
+            "ldmxcsr [rsi+2440]",
             "2:",
             "mov rax, [rsi+256]", // RFLAGS
             "push rax",
@@ -360,7 +392,9 @@ macro_rules! x86_enter_native_trampoline {
             "kmovq [rax+2408], k5",
             "kmovq [rax+2416], k6",
             "kmovq [rax+2424], k7",
+            "stmxcsr [rax+2440]",
             "3:",
+            "ldmxcsr [rax+2444]",
             // Sanitize the HOST EFLAGS before returning to Rust. The `popfq` above loaded
             // the GUEST RFLAGS into the host, and the region runs with them — but the
             // sticky control flags then LEAK into the host: AC (alignment check, set by
@@ -1818,6 +1852,14 @@ mod jit_gate_tests {
             std::mem::offset_of!(GuestRegs, vector_active),
             X86_GUEST_VECTOR_ACTIVE_OFFSET as usize
         );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, mxcsr),
+            X86_GUEST_MXCSR_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, host_mxcsr),
+            X86_HOST_MXCSR_OFFSET as usize
+        );
         assert_eq!(std::mem::align_of::<GuestRegs>(), 64);
 
         let mut regs = GuestRegs::default();
@@ -1827,6 +1869,7 @@ mod jit_gate_tests {
         regs.set_zmm(31, high);
         assert_eq!(regs.get_zmm(0), low);
         assert_eq!(regs.get_zmm(31), high);
+        assert_eq!(regs.mxcsr, 0x1F80);
     }
 
     #[test]
@@ -2107,6 +2150,57 @@ mod jit_gate_tests {
 
         assert_eq!(regs.zmm, expected_zmm);
         assert_eq!(regs.k, expected_k);
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn x86_vector_trampoline_round_trips_guest_mxcsr_and_restores_host() {
+        if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+            return;
+        }
+
+        fn read_mxcsr() -> u32 {
+            let mut value = 0u32;
+            unsafe {
+                core::arch::asm!(
+                    "stmxcsr [{ptr}]",
+                    ptr = in(reg) &mut value,
+                    options(nostack, preserves_flags)
+                );
+            }
+            value
+        }
+
+        // stmxcsr [rdi]; ldmxcsr [rsi]; ret
+        let exec =
+            ExecMem::new(&[0x0F, 0xAE, 0x1F, 0x0F, 0xAE, 0x16, 0xC3]).expect("map raw MXCSR block");
+        let host_before = read_mxcsr();
+        let mut observed = 0u32;
+        let replacement = 0x5F80u32;
+        let mut regs = GuestRegs {
+            vector_active: 1,
+            mxcsr: 0x3F80,
+            ..GuestRegs::default()
+        };
+        regs.gpr[7] = (&mut observed as *mut u32) as u64;
+        regs.gpr[6] = (&replacement as *const u32) as u64;
+
+        exec.run(0, &mut regs);
+
+        assert_eq!(observed, 0x3F80, "block did not observe guest MXCSR");
+        assert_eq!(
+            regs.mxcsr, replacement,
+            "guest MXCSR write was not captured"
+        );
+        assert_eq!(
+            regs.host_mxcsr, host_before,
+            "host MXCSR save slot mismatch"
+        );
+        assert_eq!(
+            read_mxcsr(),
+            host_before,
+            "guest MXCSR leaked into host Rust"
+        );
     }
 
     #[cfg(target_arch = "x86_64")]
