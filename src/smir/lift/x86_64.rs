@@ -10593,7 +10593,9 @@ impl X86_64Lifter {
         }
         .unwrap();
 
-        let raw = if prefix.encoding == VecEncodingKind::Evex {
+        let direct_vbmi =
+            prefix.encoding == VecEncodingKind::Evex && opcode == 0x8D && !modrm.is_memory;
+        let raw = if prefix.encoding == VecEncodingKind::Evex && !direct_vbmi {
             ctx.alloc_vreg()
         } else {
             dst
@@ -10601,17 +10603,31 @@ impl X86_64Lifter {
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
-            OpKind::VPermute {
-                dst: raw,
-                src1: table,
-                src2: None,
-                indices,
-                elem,
-                width: prefix.width,
-                overwrite_table: false,
+            if direct_vbmi {
+                OpKind::X86PermuteBytesWords {
+                    dst: raw,
+                    table1: table,
+                    table2: None,
+                    indices,
+                    mask,
+                    elem,
+                    width: prefix.width,
+                    overwrite_table: false,
+                    zeroing: prefix.zeroing,
+                }
+            } else {
+                OpKind::VPermute {
+                    dst: raw,
+                    src1: table,
+                    src2: None,
+                    indices,
+                    elem,
+                    width: prefix.width,
+                    overwrite_table: false,
+                }
             },
         ));
-        if prefix.encoding == VecEncodingKind::Evex {
+        if prefix.encoding == VecEncodingKind::Evex && !direct_vbmi {
             self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
@@ -10861,6 +10877,8 @@ impl X86_64Lifter {
             (vvvv, dst)
         };
         let mask = (prefix.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
+        let direct_vbmi =
+            !modrm.is_memory && matches!(elem, VecElementType::I8 | VecElementType::I16);
         let raw = if modrm.is_memory {
             let scale = if broadcast {
                 elem.bytes()
@@ -10890,23 +10908,39 @@ impl X86_64Lifter {
             )
         } else {
             let table2 = self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width);
-            let raw = ctx.alloc_vreg();
+            let raw = if direct_vbmi { dst } else { ctx.alloc_vreg() };
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
-                OpKind::VPermute {
-                    dst: raw,
-                    src1: table1,
-                    src2: Some(table2),
-                    indices,
-                    elem,
-                    width: prefix.width,
-                    overwrite_table,
+                if direct_vbmi {
+                    OpKind::X86PermuteBytesWords {
+                        dst: raw,
+                        table1,
+                        table2: Some(table2),
+                        indices,
+                        mask,
+                        elem,
+                        width: prefix.width,
+                        overwrite_table,
+                        zeroing: prefix.zeroing,
+                    }
+                } else {
+                    OpKind::VPermute {
+                        dst: raw,
+                        src1: table1,
+                        src2: Some(table2),
+                        indices,
+                        elem,
+                        width: prefix.width,
+                        overwrite_table,
+                    }
                 },
             ));
             raw
         };
-        self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+        if !direct_vbmi {
+            self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -53345,11 +53379,33 @@ mod tests {
                         width: actual_width,
                         src2: None,
                         ..
+                    } | OpKind::X86PermuteBytesWords {
+                        elem: actual_elem,
+                        width: actual_width,
+                        table2: None,
+                        ..
                     } if actual_elem == elem && actual_width == width
                 )),
                 "missing permutation for {bytes:02X?}"
             );
         }
+
+        let direct_byte = lift_single(&[0x62, 0xA2, 0x6D, 0x82, 0x8D, 0xCB]).unwrap();
+        assert_eq!(direct_byte.ops.len(), 1);
+        assert!(matches!(
+            direct_byte.ops[0].kind,
+            OpKind::X86PermuteBytesWords {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                table1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(19))),
+                table2: None,
+                indices: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                elem: VecElementType::I8,
+                width: VecWidth::V128,
+                zeroing: true,
+                ..
+            }
+        ));
 
         let high = lift_single(&[0x62, 0x82, 0xC5, 0x46, 0x36, 0xF0]).unwrap();
         assert!(high.ops.iter().any(|op| matches!(
@@ -53492,11 +53548,49 @@ mod tests {
                         elem: actual_elem,
                         overwrite_table: actual_overwrite,
                         ..
+                    } | OpKind::X86PermuteBytesWords {
+                        table2: Some(_),
+                        elem: actual_elem,
+                        overwrite_table: actual_overwrite,
+                        ..
                     } if actual_elem == elem && actual_overwrite == overwrite_table
                 )),
                 "missing two-table permutation for {bytes:02X?}"
             );
         }
+
+        let direct_index = lift_single(&[0x62, 0xA2, 0x6D, 0x82, 0x75, 0xCB]).unwrap();
+        assert_eq!(direct_index.ops.len(), 1);
+        assert!(matches!(
+            direct_index.ops[0].kind,
+            OpKind::X86PermuteBytesWords {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                table1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+                table2: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(19)))),
+                indices: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                elem: VecElementType::I8,
+                width: VecWidth::V128,
+                overwrite_table: false,
+                zeroing: true,
+            }
+        ));
+        let direct_table = lift_single(&[0x62, 0xA2, 0xD5, 0x23, 0x7D, 0xE6]).unwrap();
+        assert_eq!(direct_table.ops.len(), 1);
+        assert!(matches!(
+            direct_table.ops[0].kind,
+            OpKind::X86PermuteBytesWords {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(20))),
+                table1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(20))),
+                table2: Some(VReg::Arch(ArchReg::X86(X86Reg::Ymm(22)))),
+                indices: VReg::Arch(ArchReg::X86(X86Reg::Ymm(21))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
+                elem: VecElementType::I16,
+                width: VecWidth::V256,
+                overwrite_table: true,
+                zeroing: false,
+            }
+        ));
 
         let index_overwrite = lift_single(&[0x62, 0x82, 0x3D, 0xC4, 0x76, 0xF9]).unwrap();
         assert!(index_overwrite.ops.iter().any(|op| matches!(

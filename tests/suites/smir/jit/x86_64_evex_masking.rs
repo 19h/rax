@@ -91,6 +91,8 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vpconflictd {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0xc4, 0xca]),
         // vplzcntd %zmm2,%zmm1{%k4}{z}
         ("vplzcntd {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0x44, 0xca]),
+        // vpermb %zmm3,%zmm2,%zmm1{%k4}{z}
+        ("vpermb {k4}{z}", &[0x62, 0xf2, 0x6d, 0xcc, 0x8d, 0xcb]),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -387,6 +389,63 @@ fn hot_masked_vpopcntd_jits_with_direct_mask_semantics() {
     assert_eq!(get_zmm(&after_jit, 2), source, "source ZMM survived");
     assert_eq!(after_jit.k[4], mask, "source opmask survived");
 
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_masked_vpermb_jits_with_direct_table_and_index_roles() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512vbmi")
+    {
+        return;
+    }
+
+    // loop: vpermb %zmm3,%zmm2,%zmm1{%k4}{z}
+    //       dec ecx
+    //       jnz loop
+    // hlt
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf2, 0x6d, 0xcc, 0x8d, 0xcb]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf6]);
+    code.push(0xf4);
+
+    let table_bytes = std::array::from_fn::<_, 64, _>(|lane| (lane as u8).wrapping_mul(3) ^ 0xA5);
+    let index_bytes = std::array::from_fn::<_, 64, _>(|lane| (63 - lane) as u8);
+    let pack = |bytes: &[u8; 64]| {
+        std::array::from_fn::<_, 8, _>(|word| {
+            u64::from_le_bytes(bytes[word * 8..word * 8 + 8].try_into().unwrap())
+        })
+    };
+    let table = pack(&table_bytes);
+    let indices = pack(&index_bytes);
+    let mask = 0xA55A_9669_F00F_5AA5u64;
+    let expected_bytes = std::array::from_fn::<_, 64, _>(|lane| {
+        if ((mask >> lane) & 1) != 0 {
+            table_bytes[(index_bytes[lane] & 63) as usize]
+        } else {
+            0
+        }
+    });
+    let expected = pack(&expected_bytes);
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, [u64::MAX; 8]);
+    set_zmm(&mut regs, 2, indices);
+    set_zmm(&mut regs, 3, table);
+    regs.k[4] = mask;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(vcpu.jit_try_block().expect("jit masked VPERMB loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xffff_ffff, 0);
+    assert_eq!(get_zmm(&after, 1), expected);
+    assert_eq!(get_zmm(&after, 2), indices);
+    assert_eq!(get_zmm(&after, 3), table);
+    assert_eq!(after.k[4], mask);
     run_to_hlt(&mut vcpu);
 }
 

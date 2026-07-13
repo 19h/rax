@@ -246,6 +246,29 @@ impl Avx10Lowerer {
                 *overwrite_table,
             )),
 
+            OpKind::X86PermuteBytesWords {
+                dst,
+                table1,
+                table2,
+                indices,
+                mask,
+                elem,
+                width,
+                overwrite_table,
+                zeroing,
+            } => Some(self.lower_x86_permute_bytes_words(
+                code,
+                dst,
+                table1,
+                table2.as_ref(),
+                indices,
+                mask.as_ref(),
+                *elem,
+                *width,
+                *overwrite_table,
+                *zeroing,
+            )),
+
             // AVX10.1 BITALG
             OpKind::VShuffleBitQM {
                 dst,
@@ -785,6 +808,78 @@ impl Avx10Lowerer {
         enc.emit_opcode(opcode);
         enc.emit_modrm_rr(dst_reg, src2_reg);
 
+        Ok(())
+    }
+
+    fn lower_x86_permute_bytes_words(
+        &self,
+        code: &mut CodeBuffer,
+        dst: &VReg,
+        table1: &VReg,
+        table2: Option<&VReg>,
+        indices: &VReg,
+        mask: Option<&VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        overwrite_table: bool,
+        zeroing: bool,
+    ) -> Avx10LowerResult<()> {
+        if width == VecWidth::V64 || (zeroing && mask.is_none()) {
+            return Err(LowerError::UnsupportedOperation(
+                "VPERM B/W requires 128/256/512-bit width and zeroing requires a nonzero opmask"
+                    .to_string(),
+            ));
+        }
+        let dst_reg = self.vreg_to_zmm(dst)?;
+        let table1_reg = self.vreg_to_zmm(table1)?;
+        let indices_reg = self.vreg_to_zmm(indices)?;
+        let table2_reg = table2.map(|reg| self.vreg_to_zmm(reg)).transpose()?;
+        let mask_reg = mask.map_or(Ok(0), |reg| self.vreg_to_k(reg))?;
+        if [
+            Some(dst_reg),
+            Some(table1_reg),
+            Some(indices_reg),
+            table2_reg,
+        ]
+        .into_iter()
+        .flatten()
+        .any(|reg| reg > 31)
+            || (mask.is_some() && !(1..=7).contains(&mask_reg))
+        {
+            return Err(LowerError::InvalidRegister(
+                "VPERM B/W vector registers must be 0..31 and explicit opmask must be K1..K7"
+                    .to_string(),
+            ));
+        }
+        let w = match elem {
+            VecElementType::I8 => false,
+            VecElementType::I16 => true,
+            _ => {
+                return Err(LowerError::UnsupportedOperation(
+                    "VPERM B/W requires I8 or I16 elements".to_string(),
+                ));
+            }
+        };
+        let (opcode, vvvv, rm) = match table2_reg {
+            None => (0x8D, indices_reg, table1_reg),
+            Some(second) if !overwrite_table && dst == indices => (0x75, table1_reg, second),
+            Some(second) if overwrite_table && dst == table1 => (0x7D, indices_reg, second),
+            Some(_) => {
+                return Err(LowerError::UnsupportedOperation(
+                    "VPERMI2B/W requires dst == indices and VPERMT2B/W requires dst == table1"
+                        .to_string(),
+                ));
+            }
+        };
+
+        let mut enc = EvexEncoder::new(code);
+        enc.emit_evex(
+            2, // map 0F38
+            1, // pp = 66
+            w, width, dst_reg, vvvv, rm, mask_reg, zeroing,
+        );
+        enc.emit_opcode(opcode);
+        enc.emit_modrm_rr(dst_reg, rm);
         Ok(())
     }
 
@@ -1808,19 +1903,6 @@ mod tests {
             assert!(result.is_err(), "accepted malformed {invalid:?}");
             assert_eq!(code.len(), 0);
         }
-
-        let invalid_register = OpKind::VLeadingZeros {
-            dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(32))),
-            src: zmm2,
-            mask: None,
-            elem: VecElementType::I32,
-            width: VecWidth::V512,
-            zeroing: false,
-        };
-        let mut code = CodeBuffer::new();
-        let result = lowerer.try_lower(&invalid_register, &mut code).unwrap();
-        assert!(result.is_err(), "accepted malformed {invalid_register:?}");
-        assert_eq!(code.len(), 0);
     }
 
     #[test]
@@ -1847,6 +1929,100 @@ mod tests {
                 width,
                 zeroing,
             };
+            let mut code = CodeBuffer::new();
+            let result = lowerer.try_lower(&invalid, &mut code).unwrap();
+            assert!(result.is_err(), "accepted malformed {invalid:?}");
+            assert_eq!(code.len(), 0);
+        }
+
+        let invalid_register = OpKind::VLeadingZeros {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(32))),
+            src: zmm2,
+            mask: None,
+            elem: VecElementType::I32,
+            width: VecWidth::V512,
+            zeroing: false,
+        };
+        let mut code = CodeBuffer::new();
+        let result = lowerer.try_lower(&invalid_register, &mut code).unwrap();
+        assert!(result.is_err(), "accepted malformed {invalid_register:?}");
+        assert_eq!(code.len(), 0);
+    }
+
+    #[test]
+    fn x86_permute_bytes_words_lowering_rejects_malformed_shapes() {
+        let lowerer = Avx10Lowerer::new();
+        let zmm1 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(1)));
+        let zmm2 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
+        let zmm3 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(3)));
+        for invalid in [
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: zmm2,
+                table2: None,
+                indices: zmm3,
+                mask: None,
+                elem: VecElementType::I8,
+                width: VecWidth::V512,
+                overwrite_table: false,
+                zeroing: true,
+            },
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: zmm2,
+                table2: None,
+                indices: zmm3,
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(0)))),
+                elem: VecElementType::I8,
+                width: VecWidth::V512,
+                overwrite_table: false,
+                zeroing: false,
+            },
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: zmm2,
+                table2: None,
+                indices: zmm3,
+                mask: None,
+                elem: VecElementType::I32,
+                width: VecWidth::V512,
+                overwrite_table: false,
+                zeroing: false,
+            },
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: zmm2,
+                table2: None,
+                indices: zmm3,
+                mask: None,
+                elem: VecElementType::I8,
+                width: VecWidth::V64,
+                overwrite_table: false,
+                zeroing: false,
+            },
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: zmm2,
+                table2: Some(zmm3),
+                indices: zmm2,
+                mask: None,
+                elem: VecElementType::I8,
+                width: VecWidth::V512,
+                overwrite_table: false,
+                zeroing: false,
+            },
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: zmm2,
+                table2: Some(zmm3),
+                indices: zmm3,
+                mask: None,
+                elem: VecElementType::I8,
+                width: VecWidth::V512,
+                overwrite_table: true,
+                zeroing: false,
+            },
+        ] {
             let mut code = CodeBuffer::new();
             let result = lowerer.try_lower(&invalid, &mut code).unwrap();
             assert!(result.is_err(), "accepted malformed {invalid:?}");
@@ -2054,6 +2230,90 @@ mod tests {
                     zeroing: true,
                 },
                 &[0x62, 0xD2, 0xFD, 0x8B, 0x44, 0xF9][..],
+            ),
+            (
+                OpKind::X86PermuteBytesWords {
+                    dst: zmm1,
+                    table1: zmm3,
+                    table2: None,
+                    indices: zmm2,
+                    mask: Some(k4),
+                    elem: VecElementType::I8,
+                    width: VecWidth::V512,
+                    overwrite_table: false,
+                    zeroing: true,
+                },
+                &[0x62, 0xF2, 0x6D, 0xCC, 0x8D, 0xCB][..],
+            ),
+            (
+                OpKind::X86PermuteBytesWords {
+                    dst: zmm16,
+                    table1: zmm18,
+                    table2: None,
+                    indices: zmm17,
+                    mask: Some(k7),
+                    elem: VecElementType::I16,
+                    width: VecWidth::V512,
+                    overwrite_table: false,
+                    zeroing: false,
+                },
+                &[0x62, 0xA2, 0xF5, 0x47, 0x8D, 0xC2][..],
+            ),
+            (
+                OpKind::X86PermuteBytesWords {
+                    dst: zmm1,
+                    table1: zmm2,
+                    table2: Some(zmm3),
+                    indices: zmm1,
+                    mask: Some(k4),
+                    elem: VecElementType::I8,
+                    width: VecWidth::V512,
+                    overwrite_table: false,
+                    zeroing: true,
+                },
+                &[0x62, 0xF2, 0x6D, 0xCC, 0x75, 0xCB][..],
+            ),
+            (
+                OpKind::X86PermuteBytesWords {
+                    dst: ymm4,
+                    table1: ymm5,
+                    table2: Some(ymm6),
+                    indices: ymm4,
+                    mask: Some(k2),
+                    elem: VecElementType::I16,
+                    width: VecWidth::V256,
+                    overwrite_table: false,
+                    zeroing: false,
+                },
+                &[0x62, 0xF2, 0xD5, 0x2A, 0x75, 0xE6][..],
+            ),
+            (
+                OpKind::X86PermuteBytesWords {
+                    dst: zmm1,
+                    table1: zmm1,
+                    table2: Some(zmm3),
+                    indices: zmm2,
+                    mask: Some(k4),
+                    elem: VecElementType::I8,
+                    width: VecWidth::V512,
+                    overwrite_table: true,
+                    zeroing: true,
+                },
+                &[0x62, 0xF2, 0x6D, 0xCC, 0x7D, 0xCB][..],
+            ),
+            (
+                OpKind::X86PermuteBytesWords {
+                    dst: xmm7,
+                    table1: xmm7,
+                    table2: Some(xmm9),
+                    indices: xmm8,
+                    mask: Some(k3),
+                    elem: VecElementType::I16,
+                    width: VecWidth::V128,
+                    overwrite_table: true,
+                    zeroing: false,
+                },
+                &[0x62, 0xD2, 0xBD, 0x0B, 0x7D, 0xF9][..],
             ),
             (
                 OpKind::VDotProductBF16 {

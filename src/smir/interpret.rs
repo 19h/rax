@@ -8521,6 +8521,49 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::X86PermuteBytesWords {
+                dst,
+                table1,
+                table2,
+                indices,
+                mask,
+                elem,
+                width,
+                zeroing,
+                ..
+            } => {
+                let old = Self::read_vec(ctx, *dst);
+                let first = Self::read_vec(ctx, *table1);
+                let second = table2.map(|reg| Self::read_vec(ctx, reg));
+                let controls = Self::read_vec(ctx, *indices);
+                let lanes = width.lanes(*elem) as u8;
+                let bits = elem.bytes() * 8;
+                let table_lanes = u64::from(lanes) * if second.is_some() { 2 } else { 1 };
+                let mut result = [0u64; 16];
+                for lane in 0..lanes {
+                    let selected = Self::get_lane(&controls, lane, bits) & (table_lanes - 1);
+                    let value = if selected < u64::from(lanes) {
+                        Self::get_lane(&first, selected as u8, bits)
+                    } else {
+                        Self::get_lane(
+                            second.as_ref().expect("second permute table"),
+                            (selected - u64::from(lanes)) as u8,
+                            bits,
+                        )
+                    };
+                    Self::set_lane(&mut result, lane, bits, value);
+                }
+                Self::apply_vector_mask(
+                    &mut result,
+                    &old,
+                    mask.map(|mask| ctx.read_vreg(mask)),
+                    *zeroing,
+                    *width,
+                    *elem,
+                );
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::VPopcnt {
                 dst,
                 src,
@@ -26639,6 +26682,119 @@ mod tests {
                 SmirInterpreter::get_lane(&table2, selected - 16, 8)
             };
             assert_eq!(SmirInterpreter::get_lane(&out, lane as u8, 8), expected);
+        }
+    }
+
+    #[test]
+    fn executes_direct_masked_vbmi_permute_operand_roles() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x1000);
+        let interp = SmirInterpreter::new();
+
+        let byte_table1 = (0x10u8..0x20).collect::<Vec<_>>();
+        let byte_table2 = (0x80u8..0x90).collect::<Vec<_>>();
+        let byte_indices = [0u8, 15, 16, 31, 1, 14, 17, 30, 2, 13, 18, 29, 3, 12, 19, 28];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = vec_from_bytes(&byte_indices);
+            x86.xmm[2] = vec_from_bytes(&byte_table1);
+            x86.xmm[3] = vec_from_bytes(&byte_table2);
+            x86.k[2] = 0xA55A;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x8A, 0x75, 0xCB], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for (lane, selected) in byte_indices.iter().copied().enumerate() {
+                let expected = if (0xA55Au64 & (1 << lane)) == 0 {
+                    0
+                } else if selected < 16 {
+                    byte_table1[selected as usize]
+                } else {
+                    byte_table2[(selected - 16) as usize]
+                };
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane as u8, 8),
+                    u64::from(expected)
+                );
+            }
+        }
+
+        let word_table1 = (0..16).map(|lane| 0x1000u16 + lane).collect::<Vec<_>>();
+        let word_table2 = (0..16).map(|lane| 0x8000u16 + lane).collect::<Vec<_>>();
+        let word_indices = [0u16, 31, 1, 30, 2, 29, 3, 28, 4, 27, 5, 26, 6, 25, 7, 24];
+        let to_bytes = |words: &[u16]| {
+            words
+                .iter()
+                .copied()
+                .flat_map(u16::to_le_bytes)
+                .collect::<Vec<_>>()
+        };
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[4] = vec_from_bytes(&to_bytes(&word_table1));
+            x86.xmm[5] = vec_from_bytes(&to_bytes(&word_indices));
+            x86.xmm[6] = vec_from_bytes(&to_bytes(&word_table2));
+            x86.k[3] = 0x5AA5;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0xD5, 0x2B, 0x7D, 0xE6], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for (lane, selected) in word_indices.iter().copied().enumerate() {
+                let expected = if (0x5AA5u64 & (1 << lane)) == 0 {
+                    word_table1[lane]
+                } else if selected < 16 {
+                    word_table1[selected as usize]
+                } else {
+                    word_table2[(selected - 16) as usize]
+                };
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[4], lane as u8, 16),
+                    u64::from(expected)
+                );
+            }
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [u64::MAX; 16];
+            x86.xmm[2] = vec_from_bytes(&byte_indices);
+            x86.xmm[3] = vec_from_bytes(&byte_table1);
+            x86.k[2] = 0xA55A;
+        }
+        interp
+            .execute_op(
+                &mut ctx,
+                &mut memory,
+                &SmirOp::new(
+                    OpId(2),
+                    0x1000,
+                    OpKind::X86PermuteBytesWords {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        table1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                        table2: None,
+                        indices: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                        elem: VecElementType::I8,
+                        width: VecWidth::V128,
+                        overwrite_table: false,
+                        zeroing: true,
+                    },
+                ),
+            )
+            .unwrap();
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for (lane, selected) in byte_indices.iter().copied().enumerate() {
+                let expected = if (0xA55Au64 & (1 << lane)) == 0 {
+                    0
+                } else {
+                    byte_table1[(selected & 15) as usize]
+                };
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane as u8, 8),
+                    u64::from(expected)
+                );
+            }
         }
     }
 

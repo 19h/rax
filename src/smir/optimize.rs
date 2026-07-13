@@ -2476,6 +2476,24 @@ impl OpKind {
                 result.push(*indices);
             }
 
+            OpKind::X86PermuteBytesWords {
+                dst,
+                table1,
+                table2,
+                indices,
+                mask,
+                zeroing,
+                ..
+            } => {
+                if mask.is_some() && !zeroing {
+                    result.push(*dst);
+                }
+                result.push(*table1);
+                result.extend(table2.iter().copied());
+                result.push(*indices);
+                result.extend(mask.iter().copied());
+            }
+
             OpKind::VMultiplyAdd52 {
                 acc,
                 src1,
@@ -3257,6 +3275,24 @@ impl OpKind {
                     result.push(*s2);
                 }
                 result.push(*indices);
+            }
+
+            OpKind::X86PermuteBytesWords {
+                dst,
+                table1,
+                table2,
+                indices,
+                mask,
+                zeroing,
+                ..
+            } => {
+                if mask.is_some() && !zeroing {
+                    result.push(*dst);
+                }
+                result.push(*table1);
+                result.extend(table2.iter().copied());
+                result.push(*indices);
+                result.extend(mask.iter().copied());
             }
 
             OpKind::VShuffleBitQM {
@@ -9092,6 +9128,71 @@ mod tests {
                 OpKind::VBroadcast { dst, .. } if dst == source
             )));
         }
+    }
+
+    #[test]
+    fn x86_permute_bytes_words_inputs_and_merge_destination_survive_dce() {
+        let scalar = VReg::virt(0);
+        let dst = VReg::virt(1);
+        let table1 = VReg::virt(2);
+        let table2 = VReg::virt(3);
+        let mask = VReg::virt(4);
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(3),
+                width: OpWidth::W64,
+            },
+        ));
+        for (id, vector) in [(1, dst), (2, table1), (3, table2)] {
+            block.push_op(make_op(
+                id,
+                OpKind::VBroadcast {
+                    dst: vector,
+                    scalar,
+                    elem: VecElementType::I8,
+                    lanes: 16,
+                },
+            ));
+        }
+        block.push_op(make_op(
+            4,
+            OpKind::Mov {
+                dst: mask,
+                src: SrcOperand::Imm(0x55),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            5,
+            OpKind::X86PermuteBytesWords {
+                dst,
+                table1,
+                table2: Some(table2),
+                indices: dst,
+                mask: Some(mask),
+                elem: VecElementType::I8,
+                width: VecWidth::V128,
+                overwrite_table: false,
+                zeroing: false,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(block.ops.len(), 6);
+        for source in [dst, table1, table2] {
+            assert!(block.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VBroadcast { dst, .. } if dst == source
+            )));
+        }
+        assert!(block.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Mov { dst, .. } if dst == mask
+        )));
     }
 
     #[test]

@@ -2888,6 +2888,28 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             width,
             overwrite_table
         ),
+        OpKind::X86PermuteBytesWords {
+            dst,
+            table1,
+            table2,
+            indices,
+            mask,
+            elem,
+            width,
+            overwrite_table,
+            zeroing,
+        } => op_json!(
+            "x86_permute_bytes_words",
+            dst,
+            table1,
+            table2,
+            indices,
+            mask,
+            elem,
+            width,
+            overwrite_table,
+            zeroing
+        ),
         OpKind::VShuffleBitQM {
             dst,
             src,

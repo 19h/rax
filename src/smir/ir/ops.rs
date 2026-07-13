@@ -2790,6 +2790,21 @@ pub enum OpKind {
         overwrite_table: bool,
     },
 
+    /// Direct masked AVX-512VBMI byte/word permutation.
+    /// VPERMB/W, VPERMI2B/W, VPERMT2B/W
+    X86PermuteBytesWords {
+        dst: VReg,
+        table1: VReg,
+        table2: Option<VReg>,
+        indices: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        /// false selects VPERMI2B/W; true selects VPERMT2B/W.
+        overwrite_table: bool,
+        zeroing: bool,
+    },
+
     /// Shuffle bits from qwords using byte indices into mask
     /// VPSHUFBITQMB
     VShuffleBitQM {
@@ -3745,6 +3760,7 @@ impl OpKind {
             | OpKind::VLeadingZeros { dst, .. }
             | OpKind::VConflict { dst, .. }
             | OpKind::VPermute { dst, .. }
+            | OpKind::X86PermuteBytesWords { dst, .. }
             | OpKind::VShuffleBitQM { dst, .. }
             | OpKind::VCompress { dst, .. }
             | OpKind::VExpand { dst, .. }

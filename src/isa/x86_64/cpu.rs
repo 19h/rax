@@ -5431,6 +5431,20 @@ mod tests {
         );
         builder.push_op(
             0x1005,
+            OpKind::X86PermuteBytesWords {
+                dst: arch(X86Reg::Zmm(12)),
+                table1: arch(X86Reg::Zmm(13)),
+                table2: None,
+                indices: arch(X86Reg::Zmm(14)),
+                mask: None,
+                elem: VecElementType::I8,
+                width: VecWidth::V512,
+                overwrite_table: false,
+                zeroing: false,
+            },
+        );
+        builder.push_op(
+            0x1006,
             OpKind::VCvtBF16ToFP32 {
                 dst: arch(X86Reg::Zmm(8)),
                 src: arch(X86Reg::Zmm(9)),

@@ -976,6 +976,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::VShuffleBitQM { .. }
             | OpKind::VConflict { .. }
             | OpKind::VLeadingZeros { .. }
+            | OpKind::X86PermuteBytesWords { .. }
             | OpKind::VDotProduct { .. }
             | OpKind::VDotProductBF16 { .. }
             | OpKind::VCvtFP32ToBF16 { .. }
@@ -1098,6 +1099,53 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
                     | crate::smir::ir::types::VecElementType::I64
             )
             || *width == crate::smir::ir::types::VecWidth::V64
+            || (*zeroing && mask.is_none())
+            || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
+        {
+            return false;
+        }
+    }
+
+    if let OpKind::X86PermuteBytesWords {
+        dst,
+        table1,
+        table2,
+        indices,
+        mask,
+        elem,
+        width,
+        overwrite_table,
+        zeroing,
+    } = op
+    {
+        let valid_vector = |reg: &VReg| {
+            matches!(
+                (reg, width),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V256
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V512
+                )
+            )
+        };
+        let valid_alias = match table2 {
+            None => !overwrite_table,
+            Some(_) if *overwrite_table => dst == table1,
+            Some(_) => dst == indices,
+        };
+        if ![dst, table1, indices].into_iter().all(valid_vector)
+            || table2.is_some_and(|reg| !valid_vector(&reg))
+            || !matches!(
+                elem,
+                crate::smir::ir::types::VecElementType::I8
+                    | crate::smir::ir::types::VecElementType::I16
+            )
+            || !valid_alias
             || (*zeroing && mask.is_none())
             || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
         {
@@ -1318,6 +1366,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::VShuffleBitQM { width, .. }
             | OpKind::VConflict { width, .. }
             | OpKind::VLeadingZeros { width, .. }
+            | OpKind::X86PermuteBytesWords { width, .. }
             | OpKind::VDotProduct { width, .. }
             | OpKind::VDotProductBF16 { width, .. }
             | OpKind::VCvtFP32ToBF16 { width, .. }
@@ -1331,7 +1380,10 @@ pub fn x86_native_vector_features_supported_excluding(
             _ => unreachable!("filtered to native vector operations"),
         };
         needs_vl |= width != VecWidth::V512;
-        needs_vbmi |= matches!(op, OpKind::X86MultiShiftQB { .. });
+        needs_vbmi |= matches!(
+            op,
+            OpKind::X86MultiShiftQB { .. } | OpKind::X86PermuteBytesWords { .. }
+        );
         needs_vbmi2 |= matches!(op, OpKind::X86PackedFunnelShift { .. });
         if let OpKind::VPopcnt { elem, .. } = op {
             needs_bitalg |= matches!(
@@ -2000,6 +2052,17 @@ mod jit_gate_tests {
                 width: VecWidth::V512,
                 zeroing: true,
             },
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: zmm2,
+                table2: None,
+                indices: zmm3,
+                mask: Some(k4),
+                elem: VecElementType::I8,
+                width: VecWidth::V512,
+                overwrite_table: false,
+                zeroing: true,
+            },
             OpKind::VDotProduct {
                 dst: zmm1,
                 acc: zmm1,
@@ -2173,6 +2236,89 @@ mod jit_gate_tests {
         ] {
             assert!(!is_x86_native_vector_op(&invalid_vplzcnt));
             assert!(!x86_gate(invalid_vplzcnt));
+        }
+
+        for invalid_permute in [
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: VReg::Virtual(VirtualId(9)),
+                table2: None,
+                indices: zmm3,
+                mask: None,
+                elem: VecElementType::I8,
+                width: VecWidth::V512,
+                overwrite_table: false,
+                zeroing: false,
+            },
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: zmm2,
+                table2: None,
+                indices: zmm3,
+                mask: None,
+                elem: VecElementType::I32,
+                width: VecWidth::V512,
+                overwrite_table: false,
+                zeroing: false,
+            },
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: zmm2,
+                table2: None,
+                indices: zmm3,
+                mask: Some(x86(X86Reg::K(0))),
+                elem: VecElementType::I8,
+                width: VecWidth::V512,
+                overwrite_table: false,
+                zeroing: false,
+            },
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: zmm2,
+                table2: None,
+                indices: zmm3,
+                mask: None,
+                elem: VecElementType::I8,
+                width: VecWidth::V512,
+                overwrite_table: false,
+                zeroing: true,
+            },
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: zmm2,
+                table2: None,
+                indices: zmm3,
+                mask: None,
+                elem: VecElementType::I8,
+                width: VecWidth::V256,
+                overwrite_table: false,
+                zeroing: false,
+            },
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: zmm2,
+                table2: None,
+                indices: zmm3,
+                mask: None,
+                elem: VecElementType::I8,
+                width: VecWidth::V512,
+                overwrite_table: true,
+                zeroing: false,
+            },
+            OpKind::X86PermuteBytesWords {
+                dst: zmm1,
+                table1: zmm2,
+                table2: Some(zmm3),
+                indices: zmm2,
+                mask: None,
+                elem: VecElementType::I8,
+                width: VecWidth::V512,
+                overwrite_table: false,
+                zeroing: false,
+            },
+        ] {
+            assert!(!is_x86_native_vector_op(&invalid_permute));
+            assert!(!x86_gate(invalid_permute));
         }
 
         let invalid_bf16_output_width = OpKind::VCvtFP32ToBF16 {
