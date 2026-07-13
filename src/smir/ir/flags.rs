@@ -430,11 +430,19 @@ impl FlagState {
 
     /// Set lazy flags from a BEXTR operation.
     pub fn set_lazy_bextr(&mut self, result: u64, width: OpWidth) {
+        // BEXTR leaves SF/PF/AF undefined; the interpreter's deterministic
+        // convention preserves their immediately preceding values. Commit a
+        // pending producer before replacing it so those preserved bits do not
+        // fall back to stale materialized state.
+        self.materialize_all();
         self.lazy = Some(LazyFlags::bextr(result, width));
     }
 
     /// Set lazy flags from a BZHI operation.
     pub fn set_lazy_bzhi(&mut self, index: u64, result: u64, width: OpWidth) {
+        // BZHI leaves PF/AF undefined and preserves them under the same
+        // deterministic convention as BEXTR.
+        self.materialize_all();
         self.lazy = Some(LazyFlags::bzhi(index & 0xff, result, width));
     }
 
@@ -853,6 +861,35 @@ mod tests {
         assert!(flags.get_zf()); // Zero
         assert!(!flags.get_sf()); // Not negative
         assert!(!flags.get_of()); // Cleared
+    }
+
+    #[test]
+    fn bmi_partial_flag_definitions_materialize_the_preceding_lazy_producer() {
+        let mut bextr = FlagState::new();
+        bextr.materialized.sf = true;
+        bextr.materialized.af = true;
+        bextr.set_lazy_sub(1, 1, 0, OpWidth::W32);
+        bextr.set_lazy_bextr(1, OpWidth::W32);
+        bextr.materialize_all();
+
+        assert!(!bextr.materialized.cf, "BEXTR defines CF=0");
+        assert!(!bextr.materialized.zf, "nonzero BEXTR result clears ZF");
+        assert!(!bextr.materialized.of, "BEXTR defines OF=0");
+        assert!(!bextr.materialized.sf, "BEXTR preserves preceding SUB SF");
+        assert!(bextr.materialized.pf, "BEXTR preserves preceding SUB PF");
+        assert!(!bextr.materialized.af, "BEXTR preserves preceding SUB AF");
+
+        let mut bzhi = FlagState::new();
+        bzhi.set_lazy_sub(0, 1, u32::MAX.into(), OpWidth::W32);
+        bzhi.set_lazy_bzhi(0, 0, OpWidth::W32);
+        bzhi.materialize_all();
+
+        assert!(!bzhi.materialized.cf, "in-range BZHI index clears CF");
+        assert!(bzhi.materialized.zf, "zero BZHI result sets ZF");
+        assert!(!bzhi.materialized.sf, "BZHI defines SF from its result");
+        assert!(!bzhi.materialized.of, "BZHI defines OF=0");
+        assert!(bzhi.materialized.pf, "BZHI preserves preceding SUB PF");
+        assert!(bzhi.materialized.af, "BZHI preserves preceding SUB AF");
     }
 
     #[test]
