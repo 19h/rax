@@ -230,7 +230,9 @@ Implemented native scalar families:
   a destination or any store bytes;
 - A-extension AMO, AMOCAS, and LR/SC through indivisible helper calls; the ABI
   carries exact operation, width, and memory-order codes and preserves the
-  two-register CAS result (`old`, `success`);
+  two-register results. AMO/LR/SC distinguish access completion from the
+  architectural result, while CAS distinguishes fault, compare failure, and
+  swap success; faults exit before result commit;
 - direct conditional native CFG, indirect dispatcher exits, exact caller-supplied
   resume PCs for 16-bit compressed instructions, and classified trap/syscall/
   breakpoint exits.
@@ -247,10 +249,12 @@ codes across RV32/RV64, every SM4/AES32 byte selector, and every legal AES64KS1I
 round immediate. The scalar-FP corpus round-trips all 91 helper ABI selectors at
 O0/O2 and separately lifts representative arithmetic, FMA, min, compare, and
 integer/float conversion encodings, including dynamic rounding and invalid-mode
-trap paths. The generated count sequence is baseline x86-64 and does not require
-host `POPCNT`. Remaining native gaps are detailed scalar fault-cause reporting,
-fault-reporting atomic helper results, the production dispatcher/helper
-provider, and `RvVector` (including vector memory restart semantics).
+trap paths. Scalar and atomic out-of-range accesses are forced through every
+two-register status path and checked for no register or memory commit. The
+generated count sequence is baseline x86-64 and does not require host `POPCNT`.
+Remaining native gaps are detailed fault-cause reporting, the production
+dispatcher/helper provider, and `RvVector` (including vector memory restart
+semantics).
 
 The LR/SC reservation is owned by the helper context. Cross-hart or device writes
 must invalidate it in the memory backend; the in-tree differential helper models

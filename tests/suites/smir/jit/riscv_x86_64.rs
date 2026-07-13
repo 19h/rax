@@ -13,8 +13,9 @@ use rax::smir::lift::{ControlFlow, LiftContext, SmirLifter};
 use rax::smir::lower::SmirLowerer;
 use rax::smir::lower::cross::riscv_guest_to_x86_64_host::RiscVX86_64Lowerer;
 use rax::smir::lower::runtime::{
-    ExecMem, RISCV_FP_RESULT_INVALID, RiscVAtomicCasResult, RiscVAtomicOpCode, RiscVFpOpCode,
-    RiscVFpResult, RiscVGuestRegs, RiscVIntCryptoOpCode, RiscVLoadResult, RiscVMemoryOrderCode,
+    ExecMem, RISCV_FP_RESULT_INVALID, RiscVAtomicCasResult, RiscVAtomicCasStatus,
+    RiscVAtomicOpCode, RiscVAtomicResult, RiscVFpOpCode, RiscVFpResult, RiscVGuestRegs,
+    RiscVIntCryptoOpCode, RiscVLoadResult, RiscVMemoryOrderCode,
 };
 use rax::smir::optimize::{OptLevel, optimize_function};
 use rax::smir::{OpKind, RiscVLifter, SmirOp};
@@ -114,10 +115,16 @@ unsafe extern "sysv64" fn atomic_rmw(
     size: u64,
     op: u64,
     order: u64,
-) -> u64 {
+) -> RiscVAtomicResult {
     let memory = unsafe { &mut *(ctx as *mut TestMemory) };
     assert!(order <= RiscVMemoryOrderCode::SeqCst as u64);
     memory.last_atomic_order = order;
+    if !memory.can_access(addr, size) {
+        return RiscVAtomicResult {
+            value: 0,
+            access_success: 0,
+        };
+    }
     let bits = size * 8;
     let mask = if bits == 64 {
         u64::MAX
@@ -153,7 +160,10 @@ unsafe extern "sysv64" fn atomic_rmw(
         _ => panic!("invalid atomic RMW operation code {op}"),
     } & mask;
     memory.write_value(addr, new, size);
-    old
+    RiscVAtomicResult {
+        value: old,
+        access_success: 1,
+    }
 }
 
 unsafe extern "sysv64" fn compare_and_swap(
@@ -167,6 +177,12 @@ unsafe extern "sysv64" fn compare_and_swap(
     let memory = unsafe { &mut *(ctx as *mut TestMemory) };
     assert!(order <= RiscVMemoryOrderCode::SeqCst as u64);
     memory.last_atomic_order = order;
+    if !memory.can_access(addr, size) {
+        return RiscVAtomicCasResult {
+            old: 0,
+            status: RiscVAtomicCasStatus::Fault as u64,
+        };
+    }
     let bits = size * 8;
     let mask = if bits == 64 {
         u64::MAX
@@ -180,21 +196,73 @@ unsafe extern "sysv64" fn compare_and_swap(
     }
     RiscVAtomicCasResult {
         old,
-        success: u64::from(success),
+        status: if success {
+            RiscVAtomicCasStatus::Swapped
+        } else {
+            RiscVAtomicCasStatus::CompareFailed
+        } as u64,
     }
 }
 
-unsafe extern "sysv64" fn load_exclusive(ctx: u64, addr: u64, size: u64) -> u64 {
+unsafe extern "sysv64" fn noncanonical_atomic_rmw_status(
+    _ctx: u64,
+    _addr: u64,
+    _operand: u64,
+    _size: u64,
+    _op: u64,
+    _order: u64,
+) -> RiscVAtomicResult {
+    RiscVAtomicResult {
+        value: 0xfeed_face_feed_face,
+        access_success: 2,
+    }
+}
+
+unsafe extern "sysv64" fn noncanonical_cas_status(
+    _ctx: u64,
+    _addr: u64,
+    _expected: u64,
+    _new_value: u64,
+    _size: u64,
+    _order: u64,
+) -> RiscVAtomicCasResult {
+    RiscVAtomicCasResult {
+        old: 0xfeed_face_feed_face,
+        status: 3,
+    }
+}
+
+unsafe extern "sysv64" fn load_exclusive(ctx: u64, addr: u64, size: u64) -> RiscVAtomicResult {
     let memory = unsafe { &mut *(ctx as *mut TestMemory) };
+    if !memory.can_access(addr, size) {
+        return RiscVAtomicResult {
+            value: 0,
+            access_success: 0,
+        };
+    }
     let value = memory.read_value(addr, size);
     memory.reservation_addr = addr;
     memory.reservation_size = size;
     memory.reservation_valid = 1;
-    value
+    RiscVAtomicResult {
+        value,
+        access_success: 1,
+    }
 }
 
-unsafe extern "sysv64" fn store_exclusive(ctx: u64, addr: u64, value: u64, size: u64) -> u64 {
+unsafe extern "sysv64" fn store_exclusive(
+    ctx: u64,
+    addr: u64,
+    value: u64,
+    size: u64,
+) -> RiscVAtomicResult {
     let memory = unsafe { &mut *(ctx as *mut TestMemory) };
+    if !memory.can_access(addr, size) {
+        return RiscVAtomicResult {
+            value: 0,
+            access_success: 0,
+        };
+    }
     let success = memory.reservation_valid != 0
         && memory.reservation_addr == addr
         && memory.reservation_size == size;
@@ -202,7 +270,10 @@ unsafe extern "sysv64" fn store_exclusive(ctx: u64, addr: u64, value: u64, size:
         memory.write_value(addr, value, size);
     }
     memory.reservation_valid = 0;
-    u64::from(success)
+    RiscVAtomicResult {
+        value: u64::from(success),
+        access_success: 1,
+    }
 }
 
 unsafe extern "sysv64" fn clear_exclusive(ctx: u64) {
@@ -1186,7 +1257,7 @@ fn lifted_rv64_atomics_execute_through_helper_abi() {
     }
 
     // AMOCAS.D success and AMOCAS.W failure exercise both SysV return
-    // registers (`old`, `success`) and word-result sign extension.
+    // registers (`old`, three-state status) and word-result sign extension.
     let mut cas_success = x;
     cas_success[5] = 0x8000_0005_8000_0005;
     run_atomic_sequence(
@@ -1252,6 +1323,100 @@ fn lifted_rv64_atomics_execute_through_helper_abi() {
         memory,
         None,
     );
+}
+
+#[test]
+fn atomic_memory_faults_exit_without_committing_results() {
+    let mut initial_x = [0u64; 32];
+    initial_x[1] = MEMORY_LEN as u64 - 4;
+    initial_x[2] = 0x1122_3344_5566_7788;
+    initial_x[5] = 0x5555_5555_5555_5555;
+    initial_x[6] = 0x6666_6666_6666_6666;
+    let initial_memory = [0xa5; MEMORY_LEN];
+
+    for instruction in [
+        amo_type(0b00000, false, false, 2, 1, 0b011, 5), // amoadd.d
+        amo_type(0b00101, false, false, 2, 1, 0b011, 5), // amocas.d
+        amo_type(0b00010, false, false, 0, 1, 0b011, 5), // lr.d
+        amo_type(0b00011, false, false, 2, 1, 0b011, 6), // sc.d
+    ] {
+        let bytes = instruction.to_le_bytes();
+        let mut lifter = RiscVLifter::rv64gc();
+        let mut context = LiftContext::new(SourceArch::RiscV64);
+        let lifted = lifter
+            .lift_insn(CODE, &bytes, &mut context)
+            .expect("lift faulting atomic instruction");
+        let (function, return_pcs) =
+            function_for_lift(lifted.control_flow, lifted.ops, lifted.bytes_consumed);
+
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let mut optimized = function.clone();
+            optimize_function(&mut optimized, level);
+            let mut lowerer = RiscVX86_64Lowerer::new();
+            lowerer.set_return_pcs(return_pcs.clone());
+            let lowered = lowerer
+                .lower_function(&optimized)
+                .expect("lower faulting atomic instruction");
+            let code = lowerer.finalize().expect("finalize faulting atomic path");
+            let executable = ExecMem::new(&code).expect("map faulting atomic path");
+            let mut memory = TestMemory::new(initial_memory);
+            let mut state = jit_state(&mut memory, initial_x, [0; 32], 0, CODE);
+            executable.run_riscv(lowered.entry_offset, &mut state);
+
+            assert_eq!(state.x, initial_x, "atomic result write at {level:?}");
+            assert_eq!(state.pc, CODE, "atomic fault PC at {level:?}");
+            assert_eq!(state.exit_reason, 1, "atomic fault class at {level:?}");
+            assert_eq!(memory.bytes, initial_memory, "partial atomic at {level:?}");
+        }
+    }
+}
+
+#[test]
+fn noncanonical_atomic_helper_statuses_fail_closed() {
+    let mut initial_x = [0u64; 32];
+    initial_x[1] = DATA;
+    initial_x[2] = 0x1122_3344_5566_7788;
+    initial_x[5] = 0x5555_5555_5555_5555;
+    let initial_memory = [0xa5; MEMORY_LEN];
+
+    for (instruction, cas) in [
+        (amo_type(0b00000, false, false, 2, 1, 0b011, 5), false),
+        (amo_type(0b00101, false, false, 2, 1, 0b011, 5), true),
+    ] {
+        let bytes = instruction.to_le_bytes();
+        let mut lifter = RiscVLifter::rv64gc();
+        let mut context = LiftContext::new(SourceArch::RiscV64);
+        let lifted = lifter
+            .lift_insn(CODE, &bytes, &mut context)
+            .expect("lift atomic instruction for malformed helper status");
+        let (function, return_pcs) =
+            function_for_lift(lifted.control_flow, lifted.ops, lifted.bytes_consumed);
+
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let mut optimized = function.clone();
+            optimize_function(&mut optimized, level);
+            let mut lowerer = RiscVX86_64Lowerer::new();
+            lowerer.set_return_pcs(return_pcs.clone());
+            let lowered = lowerer
+                .lower_function(&optimized)
+                .expect("lower malformed atomic-helper status path");
+            let code = lowerer.finalize().expect("finalize malformed status path");
+            let executable = ExecMem::new(&code).expect("map malformed status path");
+            let mut memory = TestMemory::new(initial_memory);
+            let mut state = jit_state(&mut memory, initial_x, [0; 32], 0, CODE);
+            if cas {
+                state.cas_fn = noncanonical_cas_status as *const () as usize as u64;
+            } else {
+                state.atomic_rmw_fn = noncanonical_atomic_rmw_status as *const () as usize as u64;
+            }
+            executable.run_riscv(lowered.entry_offset, &mut state);
+
+            assert_eq!(state.x, initial_x, "noncanonical result at {level:?}");
+            assert_eq!(state.pc, CODE);
+            assert_eq!(state.exit_reason, 1);
+            assert_eq!(memory.bytes, initial_memory);
+        }
+    }
 }
 
 #[test]
@@ -1377,6 +1542,8 @@ fn runtime_layout_matches_codegen_offsets() {
     assert_eq!(RiscVGuestRegs::INT_CRYPTO_FN_OFFSET, 75 * 8);
     assert_eq!(RiscVGuestRegs::FP_FN_OFFSET, 76 * 8);
     assert_eq!(std::mem::size_of::<RiscVGuestRegs>(), 77 * 8);
+    assert_eq!(std::mem::size_of::<RiscVAtomicCasResult>(), 2 * 8);
+    assert_eq!(std::mem::size_of::<RiscVAtomicResult>(), 2 * 8);
     assert_eq!(std::mem::size_of::<RiscVLoadResult>(), 2 * 8);
     assert_eq!(std::mem::size_of::<RiscVFpResult>(), 2 * 8);
 }

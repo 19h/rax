@@ -257,8 +257,8 @@ impl Aarch64GuestRegs {
 }
 
 pub use super::cross::riscv_x86_64_abi::{
-    RISCV_FP_RESULT_INVALID, RiscVAtomicOpCode, RiscVFpOpCode, RiscVIntCryptoOpCode,
-    RiscVMemoryOrderCode,
+    RISCV_FP_RESULT_INVALID, RiscVAtomicCasStatus, RiscVAtomicOpCode, RiscVFpOpCode,
+    RiscVIntCryptoOpCode, RiscVMemoryOrderCode,
 };
 
 /// Two-register SysV result of [`RiscVGuestRegs::cas_fn`].
@@ -266,7 +266,17 @@ pub use super::cross::riscv_x86_64_abi::{
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct RiscVAtomicCasResult {
     pub old: u64,
-    pub success: u64,
+    /// [`RiscVAtomicCasStatus`] encoded as a `u64`.
+    pub status: u64,
+}
+
+/// Two-register SysV result for atomic RMW and exclusive-access helpers.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct RiscVAtomicResult {
+    pub value: u64,
+    /// One for a completed access and zero for a guest-memory fault.
+    pub access_success: u64,
 }
 
 /// Two-register SysV result of [`RiscVGuestRegs::load_fn`].
@@ -325,14 +335,17 @@ pub struct RiscVGuestRegs {
     /// Address of `extern "sysv64" fn(ctx, addr, value, size) -> success`.
     /// Returning zero must leave guest memory unchanged.
     pub store_fn: u64,
-    /// `extern "sysv64" fn(ctx, addr, operand, size, op_code, order_code) -> old`.
+    /// `extern "sysv64" fn(ctx, addr, operand, size, op_code, order_code) ->
+    /// {old, access_success}`.
     pub atomic_rmw_fn: u64,
     /// `extern "sysv64" fn(ctx, addr, expected, new, size, order_code) ->
-    /// {old, success}`, where `success` is 0 or 1.
+    /// {old, status}`, where status is [`RiscVAtomicCasStatus`].
     pub cas_fn: u64,
-    /// `extern "sysv64" fn(ctx, addr, size) -> value`; establishes a reservation.
+    /// `extern "sysv64" fn(ctx, addr, size) -> {value, access_success}`;
+    /// establishes a reservation on success.
     pub load_exclusive_fn: u64,
-    /// `extern "sysv64" fn(ctx, addr, value, size) -> success`; returns 0 or 1.
+    /// `extern "sysv64" fn(ctx, addr, value, size) ->
+    /// {reservation_success, access_success}`.
     pub store_exclusive_fn: u64,
     /// `extern "sysv64" fn(ctx)`; clears the reservation without storing.
     pub clear_exclusive_fn: u64,

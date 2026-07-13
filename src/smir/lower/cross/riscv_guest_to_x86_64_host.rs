@@ -764,12 +764,12 @@ impl RiscVX86_64Lowerer {
         e.emit_pop(STATE);
     }
 
-    fn emit_trap_if_zero(&mut self, status: PhysReg, guest_pc: u64) -> Result<(), LowerError> {
+    fn emit_trap_unless_one(&mut self, status: PhysReg, guest_pc: u64) -> Result<(), LowerError> {
         {
             let mut e = X86Emitter::new(&mut self.code);
-            e.emit_test_rr(status, status, OpWidth::W64);
+            e.emit_cmp_ri(status, 1, OpWidth::W64);
         }
-        let success = self.emit_jcc_placeholder(X86Cond::Ne);
+        let success = self.emit_jcc_placeholder(X86Cond::E);
         self.emit_arch_exit(guest_pc, EXIT_TRAP);
         self.patch_rel32_to_current(success)
     }
@@ -797,7 +797,7 @@ impl RiscVX86_64Lowerer {
         self.emit_mem_helper_call(TARGET);
         // The two-u64 SysV result is RAX=value, RDX=success. A fault exits
         // before the load destination is committed.
-        self.emit_trap_if_zero(HI, guest_pc)?;
+        self.emit_trap_unless_one(HI, guest_pc)?;
         self.store_reg_to(dst, ACC, OpWidth::W64)
     }
 
@@ -817,7 +817,7 @@ impl RiscVX86_64Lowerer {
             e.emit_mov_ri(RHS, size, OpWidth::W64);
         }
         self.emit_mem_helper_call(TARGET);
-        self.emit_trap_if_zero(ACC, guest_pc)
+        self.emit_trap_unless_one(ACC, guest_pc)
     }
 
     fn atomic_op_code(op: AtomicOp) -> i64 {
@@ -988,6 +988,7 @@ impl RiscVX86_64Lowerer {
         op: AtomicOp,
         width: MemWidth,
         order: MemoryOrder,
+        guest_pc: u64,
     ) -> Result<(), LowerError> {
         let (op_width, size) = Self::scalar_mem_width(width)?;
         self.load_addr_to(addr, ADDR)?;
@@ -1000,6 +1001,7 @@ impl RiscVX86_64Lowerer {
             e.emit_mov_rm(TARGET, STATE, RV_ATOMIC_RMW_FN_OFFSET, OpWidth::W64);
         }
         self.emit_mem_helper_call(TARGET);
+        self.emit_trap_unless_one(HI, guest_pc)?;
         self.store_reg_to(dst, ACC, OpWidth::W64)
     }
 
@@ -1012,6 +1014,7 @@ impl RiscVX86_64Lowerer {
         new_val: VReg,
         width: MemWidth,
         order: MemoryOrder,
+        guest_pc: u64,
     ) -> Result<(), LowerError> {
         let (op_width, size) = Self::scalar_mem_width(width)?;
         self.load_addr_to(addr, ADDR)?;
@@ -1024,7 +1027,17 @@ impl RiscVX86_64Lowerer {
             e.emit_mov_rm(TARGET, STATE, RV_CAS_FN_OFFSET, OpWidth::W64);
         }
         self.emit_mem_helper_call(TARGET);
-        // A two-u64 repr(C) result is returned in RAX/RDX by the SysV ABI.
+        // RDX is 0=fault, 1=compare failed, 2=swapped. Subtracting one maps
+        // the two completed outcomes to the SMIR Boolean; the unsigned range
+        // check also rejects zero and non-canonical helper statuses.
+        {
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_sub_ri(HI, 1, OpWidth::W64);
+            e.emit_cmp_ri(HI, 1, OpWidth::W64);
+        }
+        let valid = self.emit_jcc_placeholder(X86Cond::Be);
+        self.emit_arch_exit(guest_pc, EXIT_TRAP);
+        self.patch_rel32_to_current(valid)?;
         self.store_reg_to(dst, ACC, OpWidth::W64)?;
         self.store_reg_to(success, HI, OpWidth::W64)
     }
@@ -1034,6 +1047,7 @@ impl RiscVX86_64Lowerer {
         dst: VReg,
         addr: &Address,
         width: MemWidth,
+        guest_pc: u64,
     ) -> Result<(), LowerError> {
         let (_, size) = Self::scalar_mem_width(width)?;
         self.load_addr_to(addr, ADDR)?;
@@ -1043,6 +1057,7 @@ impl RiscVX86_64Lowerer {
             e.emit_mov_rm(TARGET, STATE, RV_LOAD_EXCLUSIVE_FN_OFFSET, OpWidth::W64);
         }
         self.emit_mem_helper_call(TARGET);
+        self.emit_trap_unless_one(HI, guest_pc)?;
         self.store_reg_to(dst, ACC, OpWidth::W64)
     }
 
@@ -1052,6 +1067,7 @@ impl RiscVX86_64Lowerer {
         src: VReg,
         addr: &Address,
         width: MemWidth,
+        guest_pc: u64,
     ) -> Result<(), LowerError> {
         let (op_width, size) = Self::scalar_mem_width(width)?;
         self.load_addr_to(addr, ADDR)?;
@@ -1062,6 +1078,7 @@ impl RiscVX86_64Lowerer {
             e.emit_mov_rm(TARGET, STATE, RV_STORE_EXCLUSIVE_FN_OFFSET, OpWidth::W64);
         }
         self.emit_mem_helper_call(TARGET);
+        self.emit_trap_unless_one(HI, guest_pc)?;
         {
             let mut e = X86Emitter::new(&mut self.code);
             e.emit_test_rr(ACC, ACC, OpWidth::W64);
@@ -1330,10 +1347,12 @@ impl RiscVX86_64Lowerer {
                 dst,
                 addr,
                 src,
-                op,
+                op: atomic_op,
                 width,
                 order,
-            } => self.lower_atomic_rmw(*dst, addr, *src, *op, *width, *order)?,
+            } => {
+                self.lower_atomic_rmw(*dst, addr, *src, *atomic_op, *width, *order, op.guest_pc)?
+            }
             OpKind::Cas {
                 dst,
                 success,
@@ -1342,16 +1361,25 @@ impl RiscVX86_64Lowerer {
                 new_val,
                 width,
                 order,
-            } => self.lower_cas(*dst, *success, addr, *expected, *new_val, *width, *order)?,
+            } => self.lower_cas(
+                *dst,
+                *success,
+                addr,
+                *expected,
+                *new_val,
+                *width,
+                *order,
+                op.guest_pc,
+            )?,
             OpKind::LoadExclusive { dst, addr, width } => {
-                self.lower_load_exclusive(*dst, addr, *width)?
+                self.lower_load_exclusive(*dst, addr, *width, op.guest_pc)?
             }
             OpKind::StoreExclusive {
                 status,
                 src,
                 addr,
                 width,
-            } => self.lower_store_exclusive(*status, *src, addr, *width)?,
+            } => self.lower_store_exclusive(*status, *src, addr, *width, op.guest_pc)?,
             OpKind::ClearExclusive => self.lower_clear_exclusive(),
             OpKind::RvIntCrypto {
                 dst,

@@ -26,6 +26,15 @@ pub enum RiscVAtomicOpCode {
     Swap = 11,
 }
 
+/// Status returned in the second register by the atomic compare-and-swap ABI.
+#[repr(u64)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RiscVAtomicCasStatus {
+    Fault = 0,
+    CompareFailed = 1,
+    Swapped = 2,
+}
+
 /// Ordering codes accepted by the RISC-V atomic helper ABI.
 #[repr(u64)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
