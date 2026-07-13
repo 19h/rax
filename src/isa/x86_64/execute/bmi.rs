@@ -124,6 +124,10 @@ pub fn blsi_blsmsk_blsr(
             }
         } // BLSR: CF = (src == 0)
     };
+    // The emulator deterministically preserves the architecturally undefined
+    // PF/AF bits. Commit any pending lazy producer before replacing only the
+    // BLS-defined CF/ZF/SF/OF subset.
+    vcpu.materialize_flags();
     vcpu.regs.rflags &= !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);
     if sf != 0 {
         vcpu.regs.rflags |= flags::bits::SF;

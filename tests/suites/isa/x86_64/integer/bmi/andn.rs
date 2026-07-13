@@ -295,6 +295,30 @@ fn test_blsr_clears_stale_lazy_zf_jz() {
 }
 
 #[test]
+fn test_blsi_preserves_lazy_undefined_pf_af() {
+    // SUB produces PF=AF=1 lazily. BLSI defines only CF/ZF/SF/OF, so the
+    // emulator's deterministic undefined-flag policy must retain both bits.
+    let code = [
+        0x83, 0xea, 0x01, // SUB EDX,1: 0 - 1 = 0xffff_ffff (PF=AF=1)
+        0xc4, 0xe2, 0x78, 0xf3, 0xdb, // BLSI EAX,EBX: 8 -> 8
+        0xf4, // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rdx = 0;
+    regs.rbx = 8;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFFFF_FFFF, 8);
+    assert_ne!(regs.rflags & (1 << 2), 0, "BLSI must preserve lazy PF");
+    assert_ne!(regs.rflags & (1 << 4), 0, "BLSI must preserve lazy AF");
+    assert_eq!(
+        regs.rflags & ((1 << 0) | (1 << 6) | (1 << 7) | (1 << 11)),
+        1,
+        "nonzero positive BLSI defines only CF in the defined subset"
+    );
+}
+
+#[test]
 fn test_bextr_clears_stale_lazy_zf_setz() {
     // BEXTR EAX,EBX,ECX with ECX=0 (len=0) -> result 0, ZF=1.
     let code = [

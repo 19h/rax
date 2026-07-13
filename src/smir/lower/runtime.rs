@@ -1014,6 +1014,7 @@ fn x86_native_scalar_feature_requirements_excluding(
         needs_bmi1 |= matches!(
             op.kind,
             OpKind::Bextr { .. }
+                | OpKind::X86Bls { .. }
                 | OpKind::Ctz { .. }
                 | OpKind::X86Count {
                     kind: X86CountKind::Tzcnt,
@@ -2167,6 +2168,7 @@ fn x86_flag_defs(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::F
         | OpKind::Bsr { flags, .. }
         | OpKind::Bextr { flags, .. }
         | OpKind::Bzhi { flags, .. }
+        | OpKind::X86Bls { flags, .. }
         | OpKind::X86Count { flags, .. } => flags.as_set(),
         OpKind::Cmp { .. } | OpKind::Test { .. } => FlagSet::ALL_X86,
         _ => FlagSet::EMPTY,
@@ -2241,7 +2243,7 @@ fn block_is_clobber_safe(
         // families receive exact shape checks below and, where needed, separate
         // host-feature gates before execution.
         let mem_ok = allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. });
-        let scalar_ok = matches!(op.kind, OpKind::AndNot { .. });
+        let scalar_ok = matches!(op.kind, OpKind::AndNot { .. } | OpKind::X86Bls { .. });
         let vector_ok = is_x86_native_vector_op(&op.kind);
         if !op.is_jit_safe() && !mem_ok && !scalar_ok && !vector_ok {
             return false;
@@ -2275,6 +2277,7 @@ fn block_is_clobber_safe(
             OpKind::AndNot { .. }
                 | OpKind::Bextr { .. }
                 | OpKind::Bzhi { .. }
+                | OpKind::X86Bls { .. }
                 | OpKind::Pdep { .. }
                 | OpKind::Pext { .. }
         ) && !x86_bmi_shape_valid(&op.kind)
@@ -2505,6 +2508,17 @@ fn x86_bmi_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
                 && native_gpr(src)
                 && native_gpr(index)
                 && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(bzhi_flags))
+        }
+        OpKind::X86Bls {
+            dst,
+            src,
+            width: OpWidth::W32 | OpWidth::W64,
+            flags,
+            ..
+        } => {
+            native_gpr(dst)
+                && native_gpr(src)
+                && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(andn_flags))
         }
         OpKind::Pdep {
             dst,
@@ -3010,7 +3024,7 @@ mod jit_gate_tests {
     use super::*;
 
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
-    use crate::smir::ir::ops::{OpKind, X86CountKind, X86OpHint};
+    use crate::smir::ir::ops::{OpKind, X86BlsKind, X86CountKind, X86OpHint};
     use crate::smir::ir::types::{
         Address, ArchReg, ArmReg, FpPrecision, FunctionId, MemWidth, OpWidth, ShiftOp, SignExtend,
         SrcOperand, VReg, VecElementType, VecWidth, VirtualId, X86AesOp, X86Reg,
@@ -4628,6 +4642,84 @@ mod jit_gate_tests {
                 "{name} must remain outside the shared architecture whitelist"
             );
             assert!(!x86_gate(op), "malformed {name} must deopt");
+        }
+    }
+
+    #[test]
+    fn x86_bls_gate_is_architecture_scoped_and_requires_exact_bmi1_shapes() {
+        let defined = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+        for op in [
+            OpKind::X86Bls {
+                dst: x86(X86Reg::R8),
+                src: x86(X86Reg::R9),
+                width: OpWidth::W32,
+                kind: X86BlsKind::Blsr,
+                flags: FlagUpdate::Specific(defined),
+            },
+            OpKind::X86Bls {
+                dst: x86(X86Reg::R15),
+                src: x86(X86Reg::R15),
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsi,
+                flags: FlagUpdate::None,
+            },
+        ] {
+            assert!(
+                !op.is_jit_safe(),
+                "x86 BLS must remain outside the shared architecture whitelist"
+            );
+            assert!(x86_gate(op.clone()), "valid x86 BLS shape must JIT");
+            assert!(
+                !aarch64_gate(vec![op.clone()], false),
+                "x86 BLS must not enter the AArch64 native gate"
+            );
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            assert_eq!(
+                x86_native_scalar_feature_requirements_excluding(
+                    &builder.finish(),
+                    &std::collections::HashMap::new()
+                ),
+                (false, true, false, false),
+                "native BLS encoding requires host BMI1"
+            );
+        }
+
+        for malformed in [
+            OpKind::X86Bls {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rbx),
+                width: OpWidth::W16,
+                kind: X86BlsKind::Blsmsk,
+                flags: FlagUpdate::Specific(defined),
+            },
+            OpKind::X86Bls {
+                dst: x86(X86Reg::Rsp),
+                src: x86(X86Reg::Rbx),
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsr,
+                flags: FlagUpdate::None,
+            },
+            OpKind::X86Bls {
+                dst: x86(X86Reg::Rax),
+                src: VReg::Virtual(VirtualId(0)),
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsi,
+                flags: FlagUpdate::None,
+            },
+            OpKind::X86Bls {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rbx),
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsr,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
+            },
+        ] {
+            assert!(!x86_gate(malformed), "malformed BLS shape must deopt");
         }
     }
 

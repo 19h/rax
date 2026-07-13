@@ -356,6 +356,17 @@ pub enum X86CountKind {
     Lzcnt,
 }
 
+/// BMI1 lowest-set-bit operation selected by VEX/EVEX.0F38.F3 /1..=/3.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86BlsKind {
+    /// Reset the lowest set bit: `src & (src - 1)`.
+    Blsr,
+    /// Create a mask through the lowest set bit: `src ^ (src - 1)`.
+    Blsmsk,
+    /// Isolate the lowest set bit: `src & -src`.
+    Blsi,
+}
+
 // ============================================================================
 // OpKind Enum
 // ============================================================================
@@ -856,6 +867,15 @@ pub enum OpKind {
         src: VReg,
         index: VReg,
         width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// x86 BMI1 lowest-set-bit operation with its exact architectural flag contract.
+    X86Bls {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        kind: X86BlsKind,
         flags: FlagUpdate,
     },
 
@@ -3725,6 +3745,7 @@ impl OpKind {
             | OpKind::Bsr { dst, .. }
             | OpKind::Bextr { dst, .. }
             | OpKind::Bzhi { dst, .. }
+            | OpKind::X86Bls { dst, .. }
             | OpKind::Pdep { dst, .. }
             | OpKind::Pext { dst, .. }
             | OpKind::Clz { dst, .. }

@@ -145,6 +145,12 @@ pub enum LazyFlagOp {
     Bextr,
     /// Zero high bits: CF = low8(index) >= width; ZF/SF from result; OF=0; PF/AF undefined.
     Bzhi,
+    /// Reset lowest set bit: CF = src == 0; ZF/SF from result; OF=0.
+    Blsr,
+    /// Mask through lowest set bit: CF = src == 0; ZF=0; SF from result; OF=0.
+    Blsmsk,
+    /// Isolate lowest set bit: CF = src != 0; ZF/SF from result; OF=0.
+    Blsi,
 }
 
 // ============================================================================
@@ -288,6 +294,23 @@ impl LazyFlags {
             result,
             left: 0,
             right: index,
+            width,
+            high: 0,
+        }
+    }
+
+    /// Create lazy flags for one of the BMI1 BLS operations. `src` is retained
+    /// because CF depends on the input rather than solely on the result.
+    fn bls(op: LazyFlagOp, src: u64, result: u64, width: OpWidth) -> Self {
+        debug_assert!(matches!(
+            op,
+            LazyFlagOp::Blsr | LazyFlagOp::Blsmsk | LazyFlagOp::Blsi
+        ));
+        LazyFlags {
+            op,
+            result,
+            left: src,
+            right: 0,
             width,
             high: 0,
         }
@@ -467,6 +490,24 @@ impl FlagState {
         self.lazy = Some(LazyFlags::bzhi(index & 0xff, result, width));
     }
 
+    /// Set lazy flags from a BMI1 BLSR operation while preserving undefined PF/AF.
+    pub fn set_lazy_blsr(&mut self, src: u64, result: u64, width: OpWidth) {
+        self.materialize_all();
+        self.lazy = Some(LazyFlags::bls(LazyFlagOp::Blsr, src, result, width));
+    }
+
+    /// Set lazy flags from a BMI1 BLSMSK operation while preserving undefined PF/AF.
+    pub fn set_lazy_blsmsk(&mut self, src: u64, result: u64, width: OpWidth) {
+        self.materialize_all();
+        self.lazy = Some(LazyFlags::bls(LazyFlagOp::Blsmsk, src, result, width));
+    }
+
+    /// Set lazy flags from a BMI1 BLSI operation while preserving undefined PF/AF.
+    pub fn set_lazy_blsi(&mut self, src: u64, result: u64, width: OpWidth) {
+        self.materialize_all();
+        self.lazy = Some(LazyFlags::bls(LazyFlagOp::Blsi, src, result, width));
+    }
+
     /// Get the carry flag, materializing if needed
     pub fn get_cf(&mut self) -> bool {
         if let Some(ref lazy) = self.lazy {
@@ -600,6 +641,8 @@ impl FlagState {
             }
             LazyFlagOp::Bextr => false,
             LazyFlagOp::Bzhi => lazy.right >= u64::from(lazy.width.bits()),
+            LazyFlagOp::Blsr | LazyFlagOp::Blsmsk => (lazy.left & mask) == 0,
+            LazyFlagOp::Blsi => (lazy.left & mask) != 0,
             LazyFlagOp::None => self.materialized.cf,
         }
     }
@@ -612,6 +655,7 @@ impl FlagState {
             | LazyFlagOp::Rcl
             | LazyFlagOp::Rcr
             | LazyFlagOp::Bt => self.materialized.zf,
+            LazyFlagOp::Blsmsk => false,
             _ => (lazy.result & lazy.width.mask()) == 0,
         }
     }
@@ -736,7 +780,11 @@ impl FlagState {
                 lazy.high != expected_hi
             }
             LazyFlagOp::Bt => self.materialized.of,
-            LazyFlagOp::Bextr | LazyFlagOp::Bzhi => false,
+            LazyFlagOp::Bextr
+            | LazyFlagOp::Bzhi
+            | LazyFlagOp::Blsr
+            | LazyFlagOp::Blsmsk
+            | LazyFlagOp::Blsi => false,
             LazyFlagOp::None => self.materialized.of,
         }
     }
@@ -751,7 +799,10 @@ impl FlagState {
             | LazyFlagOp::Bt
             | LazyFlagOp::Andn
             | LazyFlagOp::Bextr
-            | LazyFlagOp::Bzhi => self.materialized.pf,
+            | LazyFlagOp::Bzhi
+            | LazyFlagOp::Blsr
+            | LazyFlagOp::Blsmsk
+            | LazyFlagOp::Blsi => self.materialized.pf,
             _ => {
                 let byte = (lazy.result & 0xFF) as u8;
                 byte.count_ones() % 2 == 0
@@ -924,6 +975,39 @@ mod tests {
         assert!(!bzhi.materialized.of, "BZHI defines OF=0");
         assert!(bzhi.materialized.pf, "BZHI preserves preceding SUB PF");
         assert!(bzhi.materialized.af, "BZHI preserves preceding SUB AF");
+
+        let mut blsr = FlagState::new();
+        blsr.set_lazy_sub(0, 1, u32::MAX.into(), OpWidth::W32);
+        blsr.set_lazy_blsr(0, 0, OpWidth::W32);
+        blsr.materialize_all();
+        assert!(blsr.materialized.cf, "zero-source BLSR sets CF");
+        assert!(blsr.materialized.zf, "zero-result BLSR sets ZF");
+        assert!(!blsr.materialized.sf, "zero-result BLSR clears SF");
+        assert!(!blsr.materialized.of, "BLSR defines OF=0");
+        assert!(blsr.materialized.pf, "BLSR preserves preceding SUB PF");
+        assert!(blsr.materialized.af, "BLSR preserves preceding SUB AF");
+
+        let mut blsmsk = FlagState::new();
+        blsmsk.set_lazy_sub(0, 1, u32::MAX.into(), OpWidth::W32);
+        blsmsk.set_lazy_blsmsk(0, u32::MAX.into(), OpWidth::W32);
+        blsmsk.materialize_all();
+        assert!(blsmsk.materialized.cf, "zero-source BLSMSK sets CF");
+        assert!(!blsmsk.materialized.zf, "BLSMSK always clears ZF");
+        assert!(blsmsk.materialized.sf, "BLSMSK defines SF from its result");
+        assert!(!blsmsk.materialized.of, "BLSMSK defines OF=0");
+        assert!(blsmsk.materialized.pf, "BLSMSK preserves preceding SUB PF");
+        assert!(blsmsk.materialized.af, "BLSMSK preserves preceding SUB AF");
+
+        let mut blsi = FlagState::new();
+        blsi.set_lazy_sub(0, 1, u32::MAX.into(), OpWidth::W32);
+        blsi.set_lazy_blsi(0x8000_0000, 0x8000_0000, OpWidth::W32);
+        blsi.materialize_all();
+        assert!(blsi.materialized.cf, "nonzero-source BLSI sets CF");
+        assert!(!blsi.materialized.zf, "nonzero-result BLSI clears ZF");
+        assert!(blsi.materialized.sf, "BLSI defines SF from its result");
+        assert!(!blsi.materialized.of, "BLSI defines OF=0");
+        assert!(blsi.materialized.pf, "BLSI preserves preceding SUB PF");
+        assert!(blsi.materialized.af, "BLSI preserves preceding SUB AF");
     }
 
     #[test]

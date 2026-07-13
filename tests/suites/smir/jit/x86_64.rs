@@ -900,6 +900,116 @@ fn jit_andn_vex_and_apx_nf_preserve_aliases_and_exact_flags() {
     }
 }
 
+/// VEX BLSR/BLSMSK/BLSI define CF/ZF/SF/OF and preserve undefined PF/AF;
+/// APX NF preserves the entire incoming status word. Running the instruction
+/// inside the hot loop exercises native alias handling on every iteration.
+#[test]
+fn jit_bls_family_preserves_width_aliases_and_exact_flag_modes() {
+    if !std::is_x86_feature_detected!("bmi1") {
+        return;
+    }
+    const STATUS_MASK: u64 = 0x08D5;
+
+    for (name, instruction, apx, direct_reference, initial, expected) in [
+        (
+            "VEX blsr rax,rbx",
+            &[0xC4, 0xE2, 0xF8, 0xF3, 0xCB][..],
+            false,
+            true,
+            (0x1111, 0x18, 0x3333, 0x4444, 0x8888),
+            (0x10, 0x18, 0x3333, 0x4444, 0x8888, 0x44),
+        ),
+        (
+            "VEX blsmsk ecx,edx",
+            &[0xC4, 0xE2, 0x70, 0xF3, 0xD2][..],
+            false,
+            true,
+            (0x1111, 0x2222, 0xAAAA_BBBB_CCCC_DDDD, 0, 0x8888),
+            (0x1111, 0x2222, u64::from(u32::MAX), 0, 0x8888, 0x45),
+        ),
+        (
+            "VEX blsi rax,rax",
+            &[0xC4, 0xE2, 0xF8, 0xF3, 0xD8][..],
+            false,
+            true,
+            (0x18, 0x2222, 0x3333, 0x4444, 0x8888),
+            (0x8, 0x2222, 0x3333, 0x4444, 0x8888, 0x45),
+        ),
+        (
+            "APX NF blsr rax,rax",
+            &[0x62, 0xF2, 0xFC, 0x0C, 0xF3, 0xC8][..],
+            true,
+            false,
+            (0x18, 0x2222, 0x3333, 0x4444, 0x8888),
+            (0, 0x2222, 0x3333, 0x4444, 0x8888, 0x45),
+        ),
+    ] {
+        // loop: BLS; dec r9d; jnz loop; hlt. DEC preserves CF, so the final
+        // CF distinguishes VEX flagful execution from APX NF preservation.
+        let mut code = instruction.to_vec();
+        code.extend_from_slice(&[0x41, 0xFF, 0xC9]);
+        let backedge = -i8::try_from(instruction.len() + 5).unwrap();
+        code.extend_from_slice(&[0x75, backedge as u8]);
+        code.push(0xF4);
+
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            vcpu.set_apx_enabled(apx);
+            let mut regs = vcpu.get_regs().unwrap();
+            (regs.rax, regs.rbx, regs.rcx, regs.rdx, regs.r8) = initial;
+            regs.r9 = 200;
+            regs.rflags = 0xCD7;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let reference = direct_reference.then(|| {
+            let mut interp = make_vcpu_code(&code);
+            setup(&mut interp);
+            run_interp(&mut interp);
+            interp.get_regs().unwrap()
+        });
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("JIT {name}: {error:?}")),
+            "{name} loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+
+        let after = jit.get_regs().unwrap();
+        if let Some(reference) = reference {
+            assert_eq!(
+                (after.rax, after.rbx, after.rcx, after.rdx, after.r8),
+                (
+                    reference.rax,
+                    reference.rbx,
+                    reference.rcx,
+                    reference.rdx,
+                    reference.r8,
+                ),
+                "{name}: registers vs interpreter"
+            );
+            assert_eq!(
+                after.rflags & STATUS_MASK,
+                reference.rflags & STATUS_MASK,
+                "{name}: status flags vs interpreter"
+            );
+        }
+        assert_eq!(
+            (after.rax, after.rbx, after.rcx, after.rdx, after.r8),
+            (expected.0, expected.1, expected.2, expected.3, expected.4),
+            "{name}: architectural registers"
+        );
+        assert_eq!(after.r9 & 0xFFFF_FFFF, 0, "{name}: loop count");
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            expected.5,
+            "{name}: exact architectural status flags"
+        );
+    }
+}
+
 /// Register-only BMI1/BMI2 operations are native-JIT eligible at both scalar
 /// widths. The matrix covers zero extension, boundary counts, defined versus
 /// preserved flags, and destination aliasing with every explicit source role.

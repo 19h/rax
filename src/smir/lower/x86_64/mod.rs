@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AluEncoding, X86CountKind, X86OpHint, X86RepMode, X86SsePrefix,
+    OpKind, SmirOp, X86AluEncoding, X86BlsKind, X86CountKind, X86OpHint, X86RepMode, X86SsePrefix,
     X86StringKind, X86VecAlign, X86VecMap,
 };
 use crate::smir::ir::types::{
@@ -3387,6 +3387,31 @@ impl<'a> X86Emitter<'a> {
         self.code.emit_u8(opcode);
         self.emit_modrm_rr(dst, src);
     }
+
+    /// VEX.LZ.0F38.F3 /1..=/3 BLSR/BLSMSK/BLSI r, r/m.
+    pub fn emit_vex_bls_rr(
+        &mut self,
+        kind: X86BlsKind,
+        dst: PhysReg,
+        src: PhysReg,
+        width: OpWidth,
+    ) {
+        let group = match kind {
+            X86BlsKind::Blsr => 1,
+            X86BlsKind::Blsmsk => 2,
+            X86BlsKind::Blsi => 3,
+        };
+        let b = (src.encoding() >> 3) & 0x1;
+        let vvvv = dst.encoding() & 0x0f;
+        let w = u8::from(width == OpWidth::W64);
+
+        self.code.emit_u8(0xC4);
+        self.code
+            .emit_u8((1 << 7) | (1 << 6) | (((b ^ 1) & 1) << 5) | 0x02);
+        self.code.emit_u8((w << 7) | (((vvvv ^ 0x0f) & 0x0f) << 3));
+        self.code.emit_u8(0xF3);
+        self.code.emit_u8(0xC0 | (group << 3) | src.low3());
+    }
 }
 
 // ============================================================================
@@ -3882,6 +3907,52 @@ impl X86_64Lowerer {
             }
             FlagUpdate::All => {}
         }
+        Ok(())
+    }
+
+    fn lower_x86_bls(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        kind: X86BlsKind,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        let op = match kind {
+            X86BlsKind::Blsr => "Blsr",
+            X86BlsKind::Blsmsk => "Blsmsk",
+            X86BlsKind::Blsi => "Blsi",
+        };
+        if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: op.to_string(),
+                operand: format!("unsupported width {width:?}"),
+            });
+        }
+        let defined = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+        let defined_rflags_mask = match flags {
+            FlagUpdate::None => None,
+            FlagUpdate::Specific(set) if set == defined => {
+                Some(Self::x86_status_rflags_mask(defined))
+            }
+            _ => {
+                return Err(LowerError::InvalidOperand {
+                    op: op.to_string(),
+                    operand: format!("unsupported flag update {flags:?}"),
+                });
+            }
+        };
+
+        let dst_reg = self.get_dst_reg(dst)?;
+        let src_reg = self.get_reg(src)?;
+        Self::ensure_flag_stack_operands_safe(op, &[dst_reg, src_reg])?;
+        self.code.emit_u8(0x9C); // pushfq: old flags
+        let mut emitter = X86Emitter::new(&mut self.code);
+        emitter.emit_vex_bls_rr(kind, dst_reg, src_reg, width);
+        self.finish_bmi_flags(dst_reg, defined_rflags_mask);
         Ok(())
     }
 
@@ -5769,6 +5840,14 @@ impl X86_64Lowerer {
                 emitter.emit_vex_bmi_rr(0xF5, dst_reg, src_reg, index_reg, *width);
                 self.finish_bmi_flags(dst_reg, defined_rflags_mask);
             }
+
+            OpKind::X86Bls {
+                dst,
+                src,
+                width,
+                kind,
+                flags,
+            } => self.lower_x86_bls(*dst, *src, *width, *kind, *flags)?,
 
             OpKind::Pdep {
                 dst,
@@ -14519,6 +14598,82 @@ mod tests {
                 src2: SrcOperand::Reg(rbx),
                 width: OpWidth::W64,
                 flags: FlagUpdate::Specific(FlagSet::ZF),
+            },
+        ] {
+            assert!(matches!(
+                lower_single_op_err(malformed),
+                LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_x86_bls_emits_native_alias_safe_encodings_and_exact_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let defined = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+
+        let flagful = lower_single_op(OpKind::X86Bls {
+            dst: rax,
+            src: rbx,
+            width: OpWidth::W64,
+            kind: X86BlsKind::Blsr,
+            flags: FlagUpdate::Specific(defined),
+        });
+        assert!(
+            flagful
+                .windows(5)
+                .any(|window| window == [0xC4, 0xE2, 0xF8, 0xF3, 0xCB]),
+            "BLSR encoding: {flagful:02X?}"
+        );
+        assert!(
+            flagful.iter().filter(|byte| **byte == 0x9C).count() >= 2 && flagful.contains(&0x9D),
+            "flagful BLSR must merge only defined status flags"
+        );
+
+        let nf_alias = lower_single_op(OpKind::X86Bls {
+            dst: r8,
+            src: r8,
+            width: OpWidth::W32,
+            kind: X86BlsKind::Blsi,
+            flags: FlagUpdate::None,
+        });
+        assert!(
+            nf_alias
+                .windows(5)
+                .any(|window| window == [0xC4, 0xC2, 0x38, 0xF3, 0xD8]),
+            "aliased APX NF BLSI lowering: {nf_alias:02X?}"
+        );
+        assert!(
+            nf_alias.contains(&0x9C) && nf_alias.contains(&0x9D),
+            "APX NF BLSI must preserve every incoming flag"
+        );
+
+        for malformed in [
+            OpKind::X86Bls {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W16,
+                kind: X86BlsKind::Blsmsk,
+                flags: FlagUpdate::Specific(defined),
+            },
+            OpKind::X86Bls {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsr,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
+            },
+            OpKind::X86Bls {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsi,
+                flags: FlagUpdate::All,
             },
         ] {
             assert!(matches!(

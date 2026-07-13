@@ -9,10 +9,10 @@ use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext, VecValue};
 use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
-    HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
-    X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
-    X86X87IntWidth, X86XSaveKind,
+    HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86BlsKind, X86CacheControlKind,
+    X86CountKind, X86OpHint, X86X87ArithmeticDestination, X86X87ArithmeticSource,
+    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
+    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -1875,6 +1875,30 @@ impl SmirInterpreter {
 
                 if flags.updates_any() {
                     ctx.flags.set_lazy_bzhi(u64::from(index), result, *width);
+                }
+            }
+
+            OpKind::X86Bls {
+                dst,
+                src,
+                width,
+                kind,
+                flags,
+            } => {
+                let src = ctx.read_vreg(*src) & width.mask();
+                let result = match kind {
+                    X86BlsKind::Blsr => src & src.wrapping_sub(1),
+                    X86BlsKind::Blsmsk => src ^ src.wrapping_sub(1),
+                    X86BlsKind::Blsi => src.wrapping_neg() & src,
+                } & width.mask();
+                Self::write_gpr(ctx, *dst, result, *width);
+
+                if flags.updates_any() {
+                    match kind {
+                        X86BlsKind::Blsr => ctx.flags.set_lazy_blsr(src, result, *width),
+                        X86BlsKind::Blsmsk => ctx.flags.set_lazy_blsmsk(src, result, *width),
+                        X86BlsKind::Blsi => ctx.flags.set_lazy_blsi(src, result, *width),
+                    }
                 }
             }
 
@@ -30770,6 +30794,83 @@ mod tests {
         );
         assert_eq!(value, 0x0f);
         assert_eq!(got_flags, initial, "APX NF ANDN preserves every flag");
+    }
+
+    #[test]
+    fn smir_x86_bls_matches_result_and_partial_flag_contracts() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        const CF: u64 = 1 << 0;
+        const PF: u64 = 1 << 2;
+        const AF: u64 = 1 << 4;
+        const ZF: u64 = 1 << 6;
+        const SF: u64 = 1 << 7;
+        const OF: u64 = 1 << 11;
+        const STATUS: u64 = CF | PF | AF | ZF | SF | OF;
+        let defined = FlagUpdate::Specific(
+            FlagSet::CF
+                .union(FlagSet::ZF)
+                .union(FlagSet::SF)
+                .union(FlagSet::OF),
+        );
+        let initial = 0x2 | PF | AF | ZF | OF;
+
+        for (kind, source, width, expected, expected_defined) in [
+            (X86BlsKind::Blsr, 0, OpWidth::W64, 0, CF | ZF),
+            (
+                X86BlsKind::Blsmsk,
+                0,
+                OpWidth::W32,
+                u64::from(u32::MAX),
+                CF | SF,
+            ),
+            (
+                X86BlsKind::Blsi,
+                0x8000_0000_0000_0000,
+                OpWidth::W64,
+                0x8000_0000_0000_0000,
+                CF | SF,
+            ),
+        ] {
+            let (value, got_flags) = exec_x86_rax_op(
+                OpKind::X86Bls {
+                    dst: rax,
+                    src: rcx,
+                    width,
+                    kind,
+                    flags: defined,
+                },
+                0xAAAA,
+                source,
+                initial,
+            );
+            assert_eq!(value, expected, "{kind:?} result");
+            assert_eq!(
+                got_flags & (CF | ZF | SF | OF),
+                expected_defined,
+                "{kind:?} defined flags"
+            );
+            assert_eq!(
+                got_flags & (PF | AF),
+                initial & (PF | AF),
+                "{kind:?} preserves undefined PF/AF"
+            );
+        }
+
+        let (value, got_flags) = exec_x86_rax_op(
+            OpKind::X86Bls {
+                dst: rax,
+                src: rax,
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsi,
+                flags: FlagUpdate::None,
+            },
+            0x18,
+            0,
+            0x2 | STATUS,
+        );
+        assert_eq!(value, 0x8, "aliased APX NF BLSI result");
+        assert_eq!(got_flags, 0x2 | STATUS, "APX NF BLSI preserves RFLAGS");
     }
 
     #[test]

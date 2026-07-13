@@ -8,8 +8,8 @@ use std::collections::HashSet;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AluEncoding, X86CacheControlKind, X86CountKind, X86OpHint, X86RepMode,
-    X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap, X86X87ArithmeticDestination,
+    OpKind, SmirOp, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind, X86OpHint,
+    X86RepMode, X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap, X86X87ArithmeticDestination,
     X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
     X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
@@ -30,6 +30,15 @@ fn x86_bextr_flags() -> FlagUpdate {
 }
 
 fn x86_bzhi_flags() -> FlagUpdate {
+    FlagUpdate::Specific(
+        FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF),
+    )
+}
+
+fn x86_bls_flags() -> FlagUpdate {
     FlagUpdate::Specific(
         FlagSet::CF
             .union(FlagSet::ZF)
@@ -17508,24 +17517,6 @@ impl X86_64Lifter {
             self.gpr(modrm.rm)
         };
 
-        let copy_if_dst_aliases =
-            |ops: &mut Vec<SmirOp>, ctx: &mut LiftContext, dst: VReg, src: VReg| -> VReg {
-                if dst != src {
-                    return src;
-                }
-                let tmp = ctx.alloc_vreg();
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Mov {
-                        dst: tmp,
-                        src: SrcOperand::Reg(src),
-                        width,
-                    },
-                ));
-                tmp
-            };
-
         match opcode {
             0xF2 => {
                 let dst = self.gpr(modrm.reg);
@@ -17543,92 +17534,28 @@ impl X86_64Lifter {
             }
             0xF3 => {
                 let group = (modrm.byte >> 3) & 0x07;
-                if !matches!(group, 1..=3) {
-                    return Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: format!("APX NF BMI F3 /{group}"),
-                    });
-                }
-
-                let dst = self.gpr(prefix.vvvv_reg());
-                let src = copy_if_dst_aliases(&mut ops, ctx, dst, rm_src);
-                match group {
-                    1 => {
-                        let minus_one = ctx.alloc_vreg();
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::Sub {
-                                dst: minus_one,
-                                src1: src,
-                                src2: SrcOperand::Imm(1),
-                                width,
-                                flags: FlagUpdate::None,
-                            },
-                        ));
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::And {
-                                dst,
-                                src1: src,
-                                src2: SrcOperand::Reg(minus_one),
-                                width,
-                                flags: FlagUpdate::None,
-                            },
-                        ));
+                let kind = match group {
+                    1 => X86BlsKind::Blsr,
+                    2 => X86BlsKind::Blsmsk,
+                    3 => X86BlsKind::Blsi,
+                    _ => {
+                        return Err(LiftError::Unsupported {
+                            addr: pc,
+                            mnemonic: format!("APX NF BMI F3 /{group}"),
+                        });
                     }
-                    2 => {
-                        let minus_one = ctx.alloc_vreg();
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::Sub {
-                                dst: minus_one,
-                                src1: src,
-                                src2: SrcOperand::Imm(1),
-                                width,
-                                flags: FlagUpdate::None,
-                            },
-                        ));
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::Xor {
-                                dst,
-                                src1: src,
-                                src2: SrcOperand::Reg(minus_one),
-                                width,
-                                flags: FlagUpdate::None,
-                            },
-                        ));
-                    }
-                    3 => {
-                        let negated = ctx.alloc_vreg();
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::Neg {
-                                dst: negated,
-                                src,
-                                width,
-                                flags: FlagUpdate::None,
-                            },
-                        ));
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::And {
-                                dst,
-                                src1: negated,
-                                src2: SrcOperand::Reg(src),
-                                width,
-                                flags: FlagUpdate::None,
-                            },
-                        ));
-                    }
-                    _ => unreachable!(),
-                }
+                };
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86Bls {
+                        dst: self.gpr(prefix.vvvv_reg()),
+                        src: rm_src,
+                        width,
+                        kind,
+                        flags: FlagUpdate::None,
+                    },
+                ));
             }
             0xF5 => {
                 ops.push(SmirOp::new(
@@ -17732,6 +17659,82 @@ impl X86_64Lifter {
                         .union(FlagSet::SF)
                         .union(FlagSet::OF),
                 ),
+            },
+        ));
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.bytes + 1 + modrm.bytes_consumed,
+        ))
+    }
+
+    fn lift_vex_bls_0f38(
+        &self,
+        prefix: VecPrefix,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.encoding != VecEncodingKind::Vex
+            || prefix.width != VecWidth::V128
+            || prefix.pp != X86SsePrefix::None
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let width = if prefix.w { OpWidth::W64 } else { OpWidth::W32 };
+        let mem_width = if prefix.w { MemWidth::B8 } else { MemWidth::B4 };
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            cursor: prefix.bytes + 1,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[prefix.bytes + 1..], &modrm_prefix, pc)?;
+        let kind = match (modrm.byte >> 3) & 0x07 {
+            1 => X86BlsKind::Blsr,
+            2 => X86BlsKind::Blsmsk,
+            3 => X86BlsKind::Blsi,
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes[..prefix.bytes + 1 + modrm.bytes_consumed].to_vec(),
+                });
+            }
+        };
+        let next_pc = pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let src = if modrm.is_memory {
+            let x86_addr = modrm.addr.as_ref().unwrap();
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+            let tmp = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: tmp,
+                    addr,
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            tmp
+        } else {
+            self.gpr(modrm.rm)
+        };
+
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86Bls {
+                dst: self.gpr(prefix.vvvv),
+                src,
+                width,
+                kind,
+                flags: x86_bls_flags(),
             },
         ));
 
@@ -29325,6 +29328,11 @@ impl X86_64Lifter {
                 {
                     self.lift_vex_andn_0f38(prefix, bytes, pc, ctx)
                 }
+                0xF3 if prefix.encoding == VecEncodingKind::Vex
+                    && prefix.pp == X86SsePrefix::None =>
+                {
+                    self.lift_vex_bls_0f38(prefix, bytes, pc, ctx)
+                }
                 0xF5 | 0xF7
                     if prefix.encoding == VecEncodingKind::Vex
                         && prefix.pp == X86SsePrefix::None =>
@@ -37762,6 +37770,111 @@ mod tests {
         assert!(matches!(err, LiftError::Unsupported { .. }), "{err:?}");
     }
 
+    fn assert_vex_bls_op(
+        ops: &[SmirOp],
+        index: usize,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        kind: X86BlsKind,
+        flags: FlagUpdate,
+    ) {
+        match &ops[index].kind {
+            OpKind::X86Bls {
+                dst: got_dst,
+                src: got_src,
+                width: got_width,
+                kind: got_kind,
+                flags: got_flags,
+            } => {
+                assert_eq!(*got_dst, dst);
+                assert_eq!(*got_src, src);
+                assert_eq!(*got_width, width);
+                assert_eq!(*got_kind, kind);
+                assert_eq!(*got_flags, flags);
+            }
+            other => panic!("expected VEX BLS op, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn lift_vex_bls_register_alias_and_memory_forms() {
+        let defined = x86_bls_flags();
+        for (bytes, kind) in [
+            (&[0xC4, 0xE2, 0xF8, 0xF3, 0xCB][..], X86BlsKind::Blsr),
+            (&[0xC4, 0xE2, 0xF8, 0xF3, 0xD3][..], X86BlsKind::Blsmsk),
+            (&[0xC4, 0xE2, 0xF8, 0xF3, 0xDB][..], X86BlsKind::Blsi),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert_eq!(result.ops.len(), 1);
+            assert_vex_bls_op(
+                &result.ops,
+                0,
+                x86_gpr(0),
+                x86_gpr(3),
+                OpWidth::W64,
+                kind,
+                defined,
+            );
+        }
+
+        // LLVM: `blsi r15, r15` => c4 42 80 f3 df.
+        let alias = lift_single(&[0xC4, 0x42, 0x80, 0xF3, 0xDF]).unwrap();
+        assert_vex_bls_op(
+            &alias.ops,
+            0,
+            x86_gpr(15),
+            x86_gpr(15),
+            OpWidth::W64,
+            X86BlsKind::Blsi,
+            defined,
+        );
+
+        // `blsr eax, dword ptr [r10 + 4*r11 + 32]`.
+        let memory = lift_single(&[0xC4, 0x82, 0x78, 0xF3, 0x4C, 0x9A, 0x20]).unwrap();
+        assert_eq!(memory.ops.len(), 2);
+        let loaded = match &memory.ops[0].kind {
+            OpKind::Load {
+                dst,
+                addr:
+                    Address::BaseIndexScale {
+                        base: Some(base),
+                        index,
+                        scale: 4,
+                        disp: 0x20,
+                        disp_size: DispSize::Disp8,
+                    },
+                width: MemWidth::B4,
+                sign: SignExtend::Zero,
+            } => {
+                assert_eq!(*base, x86_gpr(10));
+                assert_eq!(*index, x86_gpr(11));
+                *dst
+            }
+            other => panic!("expected VEX BLS memory load, got {other:?}"),
+        };
+        assert_vex_bls_op(
+            &memory.ops,
+            1,
+            x86_gpr(0),
+            loaded,
+            OpWidth::W32,
+            X86BlsKind::Blsr,
+            defined,
+        );
+    }
+
+    #[test]
+    fn lift_vex_bls_rejects_invalid_group_and_vector_length() {
+        for bytes in [
+            &[0xC4, 0xE2, 0x78, 0xF3, 0xC3][..],
+            &[0xC4, 0xE2, 0x7C, 0xF3, 0xCB][..],
+        ] {
+            assert!(lift_single(bytes).is_err(), "invalid BLS form {bytes:02X?}");
+        }
+    }
+
     fn assert_vex_bzhi_bextr_op(
         ops: &[SmirOp],
         index: usize,
@@ -42340,88 +42453,36 @@ mod tests {
             other => panic!("expected APX BZHI op, got {other:?}"),
         }
 
-        for (bytes, name, expected_first) in [
-            ([0x62, 0xFA, 0xFC, 0x04, 0xF3, 0xD9], "blsi", "neg"),
-            ([0x62, 0xFA, 0xFC, 0x04, 0xF3, 0xD1], "blsmsk", "sub"),
-            ([0x62, 0xFA, 0xFC, 0x04, 0xF3, 0xC9], "blsr", "sub"),
+        for (bytes, name, kind) in [
+            (
+                [0x62, 0xFA, 0xFC, 0x04, 0xF3, 0xD9],
+                "blsi",
+                X86BlsKind::Blsi,
+            ),
+            (
+                [0x62, 0xFA, 0xFC, 0x04, 0xF3, 0xD1],
+                "blsmsk",
+                X86BlsKind::Blsmsk,
+            ),
+            (
+                [0x62, 0xFA, 0xFC, 0x04, 0xF3, 0xC9],
+                "blsr",
+                X86BlsKind::Blsr,
+            ),
         ] {
             // LLVM 20 encodes these as APX NF EVEX.0F38 F3 /3,/2,/1 forms.
             let result = lifter.lift_insn(0x4000, &bytes, &mut ctx).unwrap();
             assert_eq!(result.bytes_consumed, 6, "{name}");
-            assert_eq!(result.ops.len(), 2, "{name}");
-            let tmp = match (&result.ops[0].kind, expected_first) {
-                (
-                    OpKind::Neg {
-                        dst,
-                        src,
-                        width: OpWidth::W64,
-                        flags: FlagUpdate::None,
-                    },
-                    "neg",
-                ) => {
-                    assert_eq!(*src, x86_gpr(17), "{name}");
-                    *dst
-                }
-                (
-                    OpKind::Sub {
-                        dst,
-                        src1,
-                        src2: SrcOperand::Imm(1),
-                        width: OpWidth::W64,
-                        flags: FlagUpdate::None,
-                    },
-                    "sub",
-                ) => {
-                    assert_eq!(*src1, x86_gpr(17), "{name}");
-                    *dst
-                }
-                (other, _) => panic!("expected APX {name} temp op, got {other:?}"),
-            };
-            match (&result.ops[1].kind, name) {
-                (
-                    OpKind::And {
-                        dst,
-                        src1,
-                        src2: SrcOperand::Reg(src2),
-                        width: OpWidth::W64,
-                        flags: FlagUpdate::None,
-                    },
-                    "blsi",
-                ) => {
-                    assert_eq!(*dst, x86_gpr(16));
-                    assert_eq!(*src1, tmp);
-                    assert_eq!(*src2, x86_gpr(17));
-                }
-                (
-                    OpKind::Xor {
-                        dst,
-                        src1,
-                        src2: SrcOperand::Reg(src2),
-                        width: OpWidth::W64,
-                        flags: FlagUpdate::None,
-                    },
-                    "blsmsk",
-                ) => {
-                    assert_eq!(*dst, x86_gpr(16));
-                    assert_eq!(*src1, x86_gpr(17));
-                    assert_eq!(*src2, tmp);
-                }
-                (
-                    OpKind::And {
-                        dst,
-                        src1,
-                        src2: SrcOperand::Reg(src2),
-                        width: OpWidth::W64,
-                        flags: FlagUpdate::None,
-                    },
-                    "blsr",
-                ) => {
-                    assert_eq!(*dst, x86_gpr(16));
-                    assert_eq!(*src1, x86_gpr(17));
-                    assert_eq!(*src2, tmp);
-                }
-                (other, _) => panic!("expected APX {name} final op, got {other:?}"),
-            }
+            assert_eq!(result.ops.len(), 1, "{name}");
+            assert_vex_bls_op(
+                &result.ops,
+                0,
+                x86_gpr(16),
+                x86_gpr(17),
+                OpWidth::W64,
+                kind,
+                FlagUpdate::None,
+            );
         }
     }
 
@@ -42514,7 +42575,7 @@ mod tests {
         let result = lifter
             .lift_insn(0x4000, &[0x62, 0xF2, 0xBC, 0x0C, 0xF3, 0x0B], &mut ctx)
             .unwrap();
-        assert_eq!(result.ops.len(), 3);
+        assert_eq!(result.ops.len(), 2);
         let loaded = match &result.ops[0].kind {
             OpKind::Load {
                 dst,
@@ -42527,33 +42588,15 @@ mod tests {
             }
             other => panic!("expected APX BLSR memory load, got {other:?}"),
         };
-        let minus_one = match &result.ops[1].kind {
-            OpKind::Sub {
-                dst,
-                src1,
-                src2: SrcOperand::Imm(1),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*src1, loaded);
-                *dst
-            }
-            other => panic!("expected APX BLSR subtract temp, got {other:?}"),
-        };
-        match &result.ops[2].kind {
-            OpKind::And {
-                dst,
-                src1,
-                src2: SrcOperand::Reg(src2),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*dst, x86_gpr(8));
-                assert_eq!(*src1, loaded);
-                assert_eq!(*src2, minus_one);
-            }
-            other => panic!("expected APX BLSR final And, got {other:?}"),
-        }
+        assert_vex_bls_op(
+            &result.ops,
+            1,
+            x86_gpr(8),
+            loaded,
+            OpWidth::W64,
+            X86BlsKind::Blsr,
+            FlagUpdate::None,
+        );
 
         // LLVM 20: `{nf} andn rax, rbx, rax` => 62 f2 e4 0c f2 c0.
         let result = lifter
@@ -42579,45 +42622,16 @@ mod tests {
         let result = lifter
             .lift_insn(0x6000, &[0x62, 0xF2, 0xFC, 0x0C, 0xF3, 0xC8], &mut ctx)
             .unwrap();
-        assert_eq!(result.ops.len(), 3);
-        let saved_src = match &result.ops[0].kind {
-            OpKind::Mov {
-                dst,
-                src: SrcOperand::Reg(src),
-                width: OpWidth::W64,
-            } => {
-                assert_eq!(*src, x86_gpr(0));
-                *dst
-            }
-            other => panic!("expected APX BLSR alias-preserving Mov, got {other:?}"),
-        };
-        let minus_one = match &result.ops[1].kind {
-            OpKind::Sub {
-                dst,
-                src1,
-                src2: SrcOperand::Imm(1),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*src1, saved_src);
-                *dst
-            }
-            other => panic!("expected APX BLSR alias Sub, got {other:?}"),
-        };
-        match &result.ops[2].kind {
-            OpKind::And {
-                dst,
-                src1,
-                src2: SrcOperand::Reg(src2),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*dst, x86_gpr(0));
-                assert_eq!(*src1, saved_src);
-                assert_eq!(*src2, minus_one);
-            }
-            other => panic!("expected APX BLSR alias final And, got {other:?}"),
-        }
+        assert_eq!(result.ops.len(), 1);
+        assert_vex_bls_op(
+            &result.ops,
+            0,
+            x86_gpr(0),
+            x86_gpr(0),
+            OpWidth::W64,
+            X86BlsKind::Blsr,
+            FlagUpdate::None,
+        );
     }
 
     #[test]

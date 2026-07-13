@@ -165,6 +165,7 @@ fn op_out_width(kind: &OpKind) -> Option<OpWidth> {
         | OpKind::Ctz { width, .. }
         | OpKind::Popcnt { width, .. }
         | OpKind::X86Count { width, .. }
+        | OpKind::X86Bls { width, .. }
         | OpKind::Bswap { width, .. }
         | OpKind::Bt { width, .. }
         | OpKind::Bts { width, .. }
@@ -1894,6 +1895,7 @@ impl OpKind {
             | OpKind::X86Count { flags, .. }
             | OpKind::Bextr { flags, .. }
             | OpKind::Bzhi { flags, .. }
+            | OpKind::X86Bls { flags, .. }
             | OpKind::MulU { flags, .. }
             | OpKind::MulS { flags, .. } => Some(flags),
             _ => None,
@@ -1923,6 +1925,7 @@ impl OpKind {
             | OpKind::X86Count { flags, .. }
             | OpKind::Bextr { flags, .. }
             | OpKind::Bzhi { flags, .. }
+            | OpKind::X86Bls { flags, .. }
             | OpKind::MulU { flags, .. }
             | OpKind::MulS { flags, .. } => flags.as_set(),
 
@@ -2125,6 +2128,8 @@ impl OpKind {
                 result.push(*src);
                 result.push(*index);
             }
+
+            OpKind::X86Bls { src, .. } => result.push(*src),
 
             OpKind::Pdep { src, mask, .. } | OpKind::Pext { src, mask, .. } => {
                 result.push(*src);
@@ -3636,7 +3641,7 @@ impl OpKind {
 mod tests {
     use super::*;
     use crate::smir::ir::ops::{
-        OpKind, X86CacheControlKind, X86CountKind, X86X87ControlKind, X86X87DataKind,
+        OpKind, X86BlsKind, X86CacheControlKind, X86CountKind, X86X87ControlKind, X86X87DataKind,
     };
     use crate::smir::ir::types::{
         Avx10FP16Op, Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType, X86AesOp,
@@ -3716,6 +3721,40 @@ mod tests {
         assert_eq!(lzcnt.flags_written(), defined);
         assert_eq!(lzcnt.flags_must_write(), defined);
         assert!(!op_fully_defines(&lzcnt));
+    }
+
+    #[test]
+    fn x86_bls_metadata_tracks_source_and_partial_flags() {
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let src = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let defined = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+        let bls = OpKind::X86Bls {
+            dst,
+            src,
+            width: OpWidth::W64,
+            kind: X86BlsKind::Blsmsk,
+            flags: FlagUpdate::Specific(defined),
+        };
+        assert_eq!(bls.dests(), vec![dst]);
+        assert_eq!(bls.source_vregs(), vec![src]);
+        assert_eq!(bls.flags_written(), defined);
+        assert_eq!(bls.flags_must_write(), defined);
+        assert!(op_fully_defines(&bls));
+
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(0, bls));
+        block.set_terminator(Terminator::Return { values: vec![] });
+        assert_eq!(dead_flag_elimination(&mut block), 1);
+        assert!(matches!(
+            block.ops[0].kind,
+            OpKind::X86Bls {
+                flags: FlagUpdate::None,
+                ..
+            }
+        ));
     }
 
     #[test]
