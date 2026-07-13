@@ -313,6 +313,27 @@ impl Avx10Lowerer {
                 false,
             )),
 
+            OpKind::X86NarrowInt {
+                dst,
+                src,
+                mask,
+                src_elem,
+                dst_elem,
+                width,
+                mode,
+                zeroing,
+            } => Some(self.lower_x86_narrow_int(
+                code,
+                dst,
+                src,
+                mask.as_ref(),
+                *src_elem,
+                *dst_elem,
+                *width,
+                *mode,
+                *zeroing,
+            )),
+
             // AVX10.1 BF16
             OpKind::VDotProductBF16 {
                 dst,
@@ -1008,6 +1029,76 @@ impl Avx10Lowerer {
         enc.emit_evex(2, 1, w, width, evex_dst, 0, rm, mask_reg, zeroing);
         enc.emit_opcode(opcode);
         enc.emit_modrm_rr(evex_dst, rm);
+        Ok(())
+    }
+
+    fn lower_x86_narrow_int(
+        &self,
+        code: &mut CodeBuffer,
+        dst: &VReg,
+        src: &VReg,
+        mask: Option<&VReg>,
+        src_elem: VecElementType,
+        dst_elem: VecElementType,
+        width: VecWidth,
+        mode: X86NarrowMode,
+        zeroing: bool,
+    ) -> Avx10LowerResult<()> {
+        if width == VecWidth::V64 || (zeroing && mask.is_none()) {
+            return Err(LowerError::UnsupportedOperation(
+                "EVEX integer narrowing requires 128/256/512-bit source width and zeroing requires an opmask"
+                    .to_string(),
+            ));
+        }
+        let ratio = match (src_elem, dst_elem) {
+            (VecElementType::I16, VecElementType::I8) => 0,
+            (VecElementType::I32, VecElementType::I8) => 1,
+            (VecElementType::I64, VecElementType::I8) => 2,
+            (VecElementType::I32, VecElementType::I16) => 3,
+            (VecElementType::I64, VecElementType::I16) => 4,
+            (VecElementType::I64, VecElementType::I32) => 5,
+            _ => {
+                return Err(LowerError::UnsupportedOperation(
+                    "EVEX integer narrowing requires I16/I32/I64 to a smaller I8/I16/I32 element"
+                        .to_string(),
+                ));
+            }
+        };
+        let opcode = match mode {
+            X86NarrowMode::UnsignedSaturate => 0x10 | ratio,
+            X86NarrowMode::SignedSaturate => 0x20 | ratio,
+            X86NarrowMode::Truncate => 0x30 | ratio,
+        };
+        let dst_reg = self.vreg_to_zmm(dst)?;
+        let src_reg = self.vreg_to_zmm(src)?;
+        let mask_reg = mask.map_or(Ok(0), |reg| self.vreg_to_k(reg))?;
+        if dst_reg > 31 || src_reg > 31 || (mask.is_some() && !(1..=7).contains(&mask_reg)) {
+            return Err(LowerError::InvalidRegister(
+                "EVEX integer narrowing vector registers must be 0..31 and explicit opmask K1..K7"
+                    .to_string(),
+            ));
+        }
+        let output_bytes = width.lanes(src_elem) * dst_elem.bytes();
+        let expected_dst = if output_bytes <= 16 {
+            VecWidth::V128
+        } else {
+            VecWidth::V256
+        };
+        let actual_dst = match dst {
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(_))) => VecWidth::V128,
+            VReg::Arch(ArchReg::X86(X86Reg::Ymm(_))) => VecWidth::V256,
+            VReg::Arch(ArchReg::X86(X86Reg::Zmm(_))) => VecWidth::V512,
+            _ => unreachable!("vreg_to_zmm accepted non-vector destination"),
+        };
+        if actual_dst != expected_dst {
+            return Err(LowerError::UnsupportedOperation(format!(
+                "EVEX integer narrowing requires {expected_dst:?} destination for {width:?} {src_elem:?}->{dst_elem:?}"
+            )));
+        }
+        let mut enc = EvexEncoder::new(code);
+        enc.emit_evex(2, 2, false, width, src_reg, 0, dst_reg, mask_reg, zeroing);
+        enc.emit_opcode(opcode);
+        enc.emit_modrm_rr(src_reg, dst_reg);
         Ok(())
     }
 
@@ -2158,6 +2249,105 @@ mod tests {
                 mask: None,
                 elem: VecElementType::F32,
                 width: VecWidth::V64,
+                zeroing: false,
+            },
+        ] {
+            let mut code = CodeBuffer::new();
+            let result = lowerer.try_lower(&invalid, &mut code).unwrap();
+            assert!(result.is_err(), "accepted malformed {invalid:?}");
+            assert_eq!(code.len(), 0);
+        }
+    }
+
+    #[test]
+    fn x86_integer_narrow_lowering_covers_all_modes_ratios_and_rejects_malformed_shapes() {
+        let lowerer = Avx10Lowerer::new();
+        let zmm2 = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
+        let k4 = VReg::Arch(ArchReg::X86(X86Reg::K(4)));
+        for (mode, high) in [
+            (X86NarrowMode::UnsignedSaturate, 0x10u8),
+            (X86NarrowMode::SignedSaturate, 0x20),
+            (X86NarrowMode::Truncate, 0x30),
+        ] {
+            for (low, src_elem, dst_elem, wide_dst) in [
+                (0u8, VecElementType::I16, VecElementType::I8, true),
+                (1, VecElementType::I32, VecElementType::I8, false),
+                (2, VecElementType::I64, VecElementType::I8, false),
+                (3, VecElementType::I32, VecElementType::I16, true),
+                (4, VecElementType::I64, VecElementType::I16, false),
+                (5, VecElementType::I64, VecElementType::I32, true),
+            ] {
+                let dst = VReg::Arch(ArchReg::X86(if wide_dst {
+                    X86Reg::Ymm(1)
+                } else {
+                    X86Reg::Xmm(1)
+                }));
+                let op = OpKind::X86NarrowInt {
+                    dst,
+                    src: zmm2,
+                    mask: Some(k4),
+                    src_elem,
+                    dst_elem,
+                    width: VecWidth::V512,
+                    mode,
+                    zeroing: true,
+                };
+                let mut code = CodeBuffer::new();
+                lowerer.try_lower(&op, &mut code).unwrap().unwrap();
+                assert_eq!(code.as_slice(), &[0x62, 0xF2, 0x7E, 0xCC, high | low, 0xD1]);
+            }
+        }
+
+        let xmm1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        for invalid in [
+            OpKind::X86NarrowInt {
+                dst: xmm1,
+                src: zmm2,
+                mask: None,
+                src_elem: VecElementType::I32,
+                dst_elem: VecElementType::I8,
+                width: VecWidth::V512,
+                mode: X86NarrowMode::Truncate,
+                zeroing: true,
+            },
+            OpKind::X86NarrowInt {
+                dst: xmm1,
+                src: zmm2,
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(0)))),
+                src_elem: VecElementType::I32,
+                dst_elem: VecElementType::I8,
+                width: VecWidth::V512,
+                mode: X86NarrowMode::Truncate,
+                zeroing: false,
+            },
+            OpKind::X86NarrowInt {
+                dst: xmm1,
+                src: zmm2,
+                mask: None,
+                src_elem: VecElementType::I16,
+                dst_elem: VecElementType::I32,
+                width: VecWidth::V512,
+                mode: X86NarrowMode::Truncate,
+                zeroing: false,
+            },
+            OpKind::X86NarrowInt {
+                dst: xmm1,
+                src: zmm2,
+                mask: None,
+                src_elem: VecElementType::I64,
+                dst_elem: VecElementType::I32,
+                width: VecWidth::V64,
+                mode: X86NarrowMode::Truncate,
+                zeroing: false,
+            },
+            OpKind::X86NarrowInt {
+                dst: xmm1,
+                src: zmm2,
+                mask: None,
+                src_elem: VecElementType::I16,
+                dst_elem: VecElementType::I8,
+                width: VecWidth::V512,
+                mode: X86NarrowMode::Truncate,
                 zeroing: false,
             },
         ] {

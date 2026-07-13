@@ -97,6 +97,7 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vpexpandd {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0x89, 0xca]),
         ("vpcompressb {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0x63, 0xd1]),
         ("vpexpandw {k3}{z}", &[0x62, 0xd2, 0xfd, 0x8b, 0x62, 0xf9]),
+        ("vpmovusdb {k4}{z}", &[0x62, 0xf2, 0x7e, 0xcc, 0x11, 0xd1]),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -535,6 +536,66 @@ fn hot_masked_vpcompressb_jits_with_vbmi2_packed_lane_semantics() {
     let after = vcpu.get_regs().unwrap();
     assert_eq!(after.rcx & 0xffff_ffff, 0);
     assert_eq!(get_zmm(&after, 1), pack(&expected_bytes));
+    assert_eq!(get_zmm(&after, 2), source);
+    assert_eq!(after.k[4], mask);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_masked_vpmovusdb_jits_with_saturating_narrow_semantics() {
+    if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+        return;
+    }
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf2, 0x7e, 0xcc, 0x11, 0xd1]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf6]);
+    code.push(0xf4);
+    let lanes = [
+        i32::MIN,
+        -1,
+        0,
+        1,
+        127,
+        128,
+        254,
+        255,
+        256,
+        511,
+        42,
+        -42,
+        0x7fff,
+        7,
+        300,
+        i32::MAX,
+    ];
+    let mut source = [0u64; 8];
+    for (lane, value) in lanes.iter().copied().enumerate() {
+        source[lane / 2] |= u64::from(value as u32) << ((lane % 2) * 32);
+    }
+    let mask = 0xA55Au64;
+    let mut expected_bytes = [0u8; 64];
+    for (lane, value) in lanes.iter().copied().enumerate() {
+        expected_bytes[lane] = if ((mask >> lane) & 1) == 0 {
+            0
+        } else {
+            value.clamp(0, 255) as u8
+        };
+    }
+    let expected = std::array::from_fn::<_, 8, _>(|word| {
+        u64::from_le_bytes(expected_bytes[word * 8..word * 8 + 8].try_into().unwrap())
+    });
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, [u64::MAX; 8]);
+    set_zmm(&mut regs, 2, source);
+    regs.k[4] = mask;
+    vcpu.set_regs(&regs).unwrap();
+    assert!(vcpu.jit_try_block().expect("jit masked VPMOVUSDB loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xffff_ffff, 0);
+    assert_eq!(get_zmm(&after, 1), expected);
     assert_eq!(get_zmm(&after, 2), source);
     assert_eq!(after.k[4], mask);
     run_to_hlt(&mut vcpu);

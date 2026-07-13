@@ -979,6 +979,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::X86PermuteBytesWords { .. }
             | OpKind::VCompress { .. }
             | OpKind::VExpand { .. }
+            | OpKind::X86NarrowInt { .. }
             | OpKind::VDotProduct { .. }
             | OpKind::VDotProductBF16 { .. }
             | OpKind::VCvtFP32ToBF16 { .. }
@@ -1205,6 +1206,68 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         }
     }
 
+    if let OpKind::X86NarrowInt {
+        dst,
+        src,
+        mask,
+        src_elem,
+        dst_elem,
+        width,
+        zeroing,
+        ..
+    } = op
+    {
+        let valid_source = matches!(
+            (src, width),
+            (
+                VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                crate::smir::ir::types::VecWidth::V128
+            ) | (
+                VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                crate::smir::ir::types::VecWidth::V256
+            ) | (
+                VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                crate::smir::ir::types::VecWidth::V512
+            )
+        );
+        let valid_pair = matches!(
+            (src_elem, dst_elem),
+            (
+                crate::smir::ir::types::VecElementType::I16,
+                crate::smir::ir::types::VecElementType::I8
+            ) | (
+                crate::smir::ir::types::VecElementType::I32,
+                crate::smir::ir::types::VecElementType::I8
+            ) | (
+                crate::smir::ir::types::VecElementType::I64,
+                crate::smir::ir::types::VecElementType::I8
+            ) | (
+                crate::smir::ir::types::VecElementType::I32,
+                crate::smir::ir::types::VecElementType::I16
+            ) | (
+                crate::smir::ir::types::VecElementType::I64,
+                crate::smir::ir::types::VecElementType::I16
+            ) | (
+                crate::smir::ir::types::VecElementType::I64,
+                crate::smir::ir::types::VecElementType::I32
+            )
+        );
+        let output_bytes = width.lanes(*src_elem) * dst_elem.bytes();
+        let valid_destination = if output_bytes <= 16 {
+            matches!(dst, VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))))
+        } else {
+            matches!(dst, VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))))
+        };
+        if !valid_source
+            || !valid_pair
+            || !valid_destination
+            || (*zeroing && mask.is_none())
+            || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
+        {
+            return false;
+        }
+    }
+
     if let OpKind::VMultiplyAdd52 {
         dst,
         acc,
@@ -1421,6 +1484,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86PermuteBytesWords { width, .. }
             | OpKind::VCompress { width, .. }
             | OpKind::VExpand { width, .. }
+            | OpKind::X86NarrowInt { width, .. }
             | OpKind::VDotProduct { width, .. }
             | OpKind::VDotProductBF16 { width, .. }
             | OpKind::VCvtFP32ToBF16 { width, .. }
@@ -2145,6 +2209,16 @@ mod jit_gate_tests {
                 width: VecWidth::V512,
                 zeroing: false,
             },
+            OpKind::X86NarrowInt {
+                dst: ymm1,
+                src: zmm2,
+                mask: Some(k4),
+                src_elem: VecElementType::I16,
+                dst_elem: VecElementType::I8,
+                width: VecWidth::V512,
+                mode: crate::smir::ir::types::X86NarrowMode::Truncate,
+                zeroing: true,
+            },
             OpKind::VCompress {
                 dst: zmm1,
                 src: zmm2,
@@ -2417,6 +2491,52 @@ mod jit_gate_tests {
         ] {
             assert!(!is_x86_native_vector_op(&invalid_permute));
             assert!(!x86_gate(invalid_permute));
+        }
+
+        for invalid_narrow in [
+            OpKind::X86NarrowInt {
+                dst: ymm1,
+                src: VReg::Virtual(VirtualId(10)),
+                mask: None,
+                src_elem: VecElementType::I16,
+                dst_elem: VecElementType::I8,
+                width: VecWidth::V512,
+                mode: crate::smir::ir::types::X86NarrowMode::Truncate,
+                zeroing: false,
+            },
+            OpKind::X86NarrowInt {
+                dst: zmm1,
+                src: zmm2,
+                mask: None,
+                src_elem: VecElementType::I16,
+                dst_elem: VecElementType::I8,
+                width: VecWidth::V512,
+                mode: crate::smir::ir::types::X86NarrowMode::Truncate,
+                zeroing: false,
+            },
+            OpKind::X86NarrowInt {
+                dst: ymm1,
+                src: zmm2,
+                mask: Some(x86(X86Reg::K(0))),
+                src_elem: VecElementType::I16,
+                dst_elem: VecElementType::I8,
+                width: VecWidth::V512,
+                mode: crate::smir::ir::types::X86NarrowMode::Truncate,
+                zeroing: false,
+            },
+            OpKind::X86NarrowInt {
+                dst: ymm1,
+                src: zmm2,
+                mask: None,
+                src_elem: VecElementType::I16,
+                dst_elem: VecElementType::I8,
+                width: VecWidth::V512,
+                mode: crate::smir::ir::types::X86NarrowMode::Truncate,
+                zeroing: true,
+            },
+        ] {
+            assert!(!is_x86_native_vector_op(&invalid_narrow));
+            assert!(!x86_gate(invalid_narrow));
         }
 
         let invalid_bf16_output_width = OpKind::VCvtFP32ToBF16 {

@@ -5467,6 +5467,19 @@ mod tests {
         );
         builder.push_op(
             0x1008,
+            OpKind::X86NarrowInt {
+                dst: arch(X86Reg::Ymm(19)),
+                src: arch(X86Reg::Zmm(20)),
+                mask: None,
+                src_elem: VecElementType::I16,
+                dst_elem: VecElementType::I8,
+                width: VecWidth::V512,
+                mode: crate::smir::ir::types::X86NarrowMode::Truncate,
+                zeroing: false,
+            },
+        );
+        builder.push_op(
+            0x1009,
             OpKind::VCvtBF16ToFP32 {
                 dst: arch(X86Reg::Zmm(8)),
                 src: arch(X86Reg::Zmm(9)),
