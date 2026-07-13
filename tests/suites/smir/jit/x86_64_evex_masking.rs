@@ -123,6 +123,16 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vpsraq xmm17", &[0x62, 0xb1, 0xf5, 0x00, 0x72, 0xe2, 0x09]),
         ("vpslldq xmm9", &[0xc4, 0xc1, 0x31, 0x73, 0xfa, 0x07]),
         ("vpsrldq ymm11", &[0xc4, 0xc1, 0x25, 0x73, 0xdc, 0x08]),
+        ("vpsrlw xmm1 shared count", &[0xc5, 0xe9, 0xd1, 0xcb]),
+        ("vpsraw ymm4 shared count", &[0xc5, 0xd5, 0xe1, 0xe6]),
+        (
+            "vpsllq zmm17 shared count",
+            &[0x62, 0xa1, 0xed, 0x40, 0xf3, 0xcb],
+        ),
+        (
+            "vpsraq zmm17 shared count",
+            &[0x62, 0xa1, 0xed, 0x40, 0xe2, 0xcb],
+        ),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -965,6 +975,122 @@ fn hot_vpsraq_imm_jits_with_evex_signed_lane_semantics() {
     assert_eq!(after.rcx & 0xFFFF_FFFF, 0);
     assert_eq!(get_zmm(&after, 17), expected);
     assert_eq!(get_zmm(&after, 18), source);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_vpsraw_shared_count_jits_with_low64_count_and_vex_upper_zeroing() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx2")
+    {
+        return;
+    }
+    let mut code = Vec::new();
+    // vpsraw %xmm6,%ymm5,%ymm4
+    code.extend_from_slice(&[0xC5, 0xD5, 0xE1, 0xE6]);
+    code.extend_from_slice(&[0xFF, 0xC9]);
+    code.extend_from_slice(&[0x75, 0xF8]);
+    code.push(0xF4);
+    let lanes = [
+        i16::MIN,
+        -32767,
+        -1025,
+        -17,
+        -16,
+        -1,
+        0,
+        1,
+        15,
+        16,
+        255,
+        256,
+        1024,
+        4096,
+        16384,
+        i16::MAX,
+    ];
+    let pack = |values: [i16; 16], upper: u64| {
+        let mut result = [0; 8];
+        result[4..].fill(upper);
+        for (lane, value) in values.into_iter().enumerate() {
+            result[lane / 4] |= u64::from(value as u16) << ((lane % 4) * 16);
+        }
+        result
+    };
+    let source = pack(lanes, 0xA5A5_A5A5_A5A5_A5A5);
+    let expected = pack(lanes.map(|value| value >> 4), 0);
+    let count = [
+        4,
+        u64::MAX,
+        0x0123_4567_89AB_CDEF,
+        0xFEDC_BA98_7654_3210,
+        1,
+        2,
+        3,
+        4,
+    ];
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 4, [u64::MAX; 8]);
+    set_zmm(&mut regs, 5, source);
+    set_zmm(&mut regs, 6, count);
+    vcpu.set_regs(&regs).unwrap();
+    assert!(vcpu.jit_try_block().expect("jit VPSRAW shared-count loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xFFFF_FFFF, 0);
+    assert_eq!(get_zmm(&after, 4), expected);
+    assert_eq!(get_zmm(&after, 5), source);
+    assert_eq!(get_zmm(&after, 6), count);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_vpsraq_shared_count_jits_with_evex_signed_lane_semantics() {
+    if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+        return;
+    }
+    let mut code = Vec::new();
+    // vpsraq %xmm19,%zmm18,%zmm17
+    code.extend_from_slice(&[0x62, 0xA1, 0xED, 0x40, 0xE2, 0xCB]);
+    code.extend_from_slice(&[0xFF, 0xC9]);
+    code.extend_from_slice(&[0x75, 0xF6]);
+    code.push(0xF4);
+    let source = [
+        i64::MIN as u64,
+        (-1i64) as u64,
+        (-513i64) as u64,
+        0,
+        1,
+        511,
+        512,
+        i64::MAX as u64,
+    ];
+    let expected = source.map(|value| ((value as i64) >> 9) as u64);
+    let count = [
+        9,
+        u64::MAX,
+        0x0123_4567_89AB_CDEF,
+        0xFEDC_BA98_7654_3210,
+        1,
+        2,
+        3,
+        4,
+    ];
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 17, [u64::MAX; 8]);
+    set_zmm(&mut regs, 18, source);
+    set_zmm(&mut regs, 19, count);
+    vcpu.set_regs(&regs).unwrap();
+    assert!(vcpu.jit_try_block().expect("jit VPSRAQ shared-count loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xFFFF_FFFF, 0);
+    assert_eq!(get_zmm(&after, 17), expected);
+    assert_eq!(get_zmm(&after, 18), source);
+    assert_eq!(get_zmm(&after, 19), count);
     run_to_hlt(&mut vcpu);
 }
 

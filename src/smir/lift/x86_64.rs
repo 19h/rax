@@ -20740,18 +20740,23 @@ impl X86_64Lifter {
         } else {
             self.xmm(modrm.rm)
         };
-        let count = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VExtractLane {
-                dst: count,
-                vec: count_vec,
-                lane: 0,
-                elem: VecElementType::I64,
-                sign: SignExtend::Zero,
-            },
-        ));
+        let count = if modrm.is_memory {
+            let count = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VExtractLane {
+                    dst: count,
+                    vec: count_vec,
+                    lane: 0,
+                    elem: VecElementType::I64,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            count
+        } else {
+            count_vec
+        };
         let dst = self.xmm(modrm.reg);
         let raw = ctx.alloc_vreg();
         ops.push(SmirOp::new(
@@ -20830,18 +20835,23 @@ impl X86_64Lifter {
         } else {
             self.xmm(modrm.rm + if evex && prefix.rm_high { 16 } else { 0 })
         };
-        let count = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VExtractLane {
-                dst: count,
-                vec: count_vec,
-                lane: 0,
-                elem: VecElementType::I64,
-                sign: SignExtend::Zero,
-            },
-        ));
+        let count = if modrm.is_memory {
+            let count = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VExtractLane {
+                    dst: count,
+                    vec: count_vec,
+                    lane: 0,
+                    elem: VecElementType::I64,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            count
+        } else {
+            count_vec
+        };
         let src = self.vec_reg(
             prefix.vvvv + if evex && prefix.v_high { 16 } else { 0 },
             prefix.width,
@@ -57165,7 +57175,7 @@ mod tests {
         ] {
             let result = lift_single(&[0xC5, 0xF1, opcode, 0xC2]).unwrap();
             assert_eq!(result.bytes_consumed, 4);
-            assert!(result.ops.iter().any(|op| matches!(
+            assert!(!result.ops.iter().any(|op| matches!(
                 op.kind,
                 OpKind::VExtractLane {
                     vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
@@ -57180,10 +57190,10 @@ mod tests {
                 OpKind::X86PackedShift {
                     dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
                     src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    count: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
                     width: VecWidth::V128,
                     elem: actual_elem,
                     shift: actual_shift,
-                    ..
                 } if actual_elem == elem && actual_shift == shift
             )));
         }
@@ -57193,6 +57203,7 @@ mod tests {
             op.kind,
             OpKind::X86PackedShift {
                 src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                count: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
                 width: VecWidth::V128,
                 elem: VecElementType::I16,
                 shift: ShiftOp::Lsr,
@@ -57214,18 +57225,18 @@ mod tests {
             OpKind::X86PackedShift {
                 dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(8))),
                 src: VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                count: VReg::Arch(ArchReg::X86(X86Reg::Xmm(10))),
                 width: VecWidth::V256,
                 elem: VecElementType::I32,
                 ..
             }
         )));
-        assert!(vex256.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::VExtractLane {
-                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(10))),
-                ..
-            }
-        )));
+        assert!(
+            !vex256
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::VExtractLane { .. }))
+        );
 
         for (p1, elem) in [(0x75, VecElementType::I32), (0xF5, VecElementType::I64)] {
             let result = lift_single(&[0x62, 0xA1, p1, 0xC1, 0xE2, 0xC2]).unwrap();
@@ -57233,16 +57244,20 @@ mod tests {
                 op.kind,
                 OpKind::X86PackedShift {
                     src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    count: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
                     width: VecWidth::V512,
                     elem: actual_elem,
                     shift: ShiftOp::Asr,
                     ..
                 } if actual_elem == elem
             )));
-            assert!(result.ops.iter().any(|op| matches!(
+            assert!(!result.ops.iter().any(|op| matches!(
                 op.kind,
                 OpKind::VExtractLane {
                     vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+                    lane: 0,
+                    elem: VecElementType::I64,
+                    sign: SignExtend::Zero,
                     ..
                 }
             )));
@@ -57270,12 +57285,30 @@ mod tests {
                 ..
             }
         )));
+        assert!(legacy_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                lane: 0,
+                elem: VecElementType::I64,
+                sign: SignExtend::Zero,
+                ..
+            }
+        )));
 
         let vex_memory = lift_single(&[0xC5, 0xF5, 0xD2, 0x00]).unwrap();
         assert!(vex_memory.ops.iter().any(|op| matches!(
             op.kind,
             OpKind::VLoad {
                 width: VecWidth::V128,
+                ..
+            }
+        )));
+        assert!(vex_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                lane: 0,
+                elem: VecElementType::I64,
+                sign: SignExtend::Zero,
                 ..
             }
         )));

@@ -1042,6 +1042,79 @@ fn x86_packed_shift_imm_feature_requirements(
     }
 }
 
+fn x86_packed_shift_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, ShiftOp, VReg, VecElementType, VecWidth, X86Reg};
+    let OpKind::X86PackedShift {
+        dst,
+        src,
+        count,
+        width,
+        elem,
+        shift,
+    } = op
+    else {
+        return false;
+    };
+    let vector = |reg: &VReg| {
+        matches!(
+            (reg, width),
+            (
+                VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                VecWidth::V128
+            ) | (
+                VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                VecWidth::V256
+            ) | (
+                VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                VecWidth::V512
+            )
+        )
+    };
+    vector(dst)
+        && vector(src)
+        && matches!(count, VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))))
+        && matches!(
+            elem,
+            VecElementType::I16 | VecElementType::I32 | VecElementType::I64
+        )
+        && matches!(shift, ShiftOp::Lsl | ShiftOp::Lsr | ShiftOp::Asr)
+}
+
+fn x86_packed_shift_feature_requirements(op: &crate::smir::ir::ops::OpKind) -> (bool, bool, bool) {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, ShiftOp, VReg, VecElementType, VecWidth, X86Reg};
+    let OpKind::X86PackedShift {
+        dst,
+        src,
+        count,
+        width,
+        elem,
+        shift,
+    } = op
+    else {
+        return (false, false, false);
+    };
+    let high = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Xmm(16..=31) | X86Reg::Ymm(16..=31) | X86Reg::Zmm(16..=31)
+            ))
+        )
+    };
+    let evex = *width == VecWidth::V512
+        || high(dst)
+        || high(src)
+        || high(count)
+        || (*elem == VecElementType::I64 && *shift == ShiftOp::Asr);
+    if evex {
+        (false, false, *width != VecWidth::V512)
+    } else {
+        (*width == VecWidth::V128, *width == VecWidth::V256, false)
+    }
+}
+
 pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
@@ -1065,6 +1138,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::X86Sm3Rounds2 { .. }
             | OpKind::X86Sm4 { .. }
             | OpKind::X86PackedShiftImm { .. }
+            | OpKind::X86PackedShift { .. }
             | OpKind::VDotProduct { .. }
             | OpKind::VDotProductBF16 { .. }
             | OpKind::VCvtFP32ToBF16 { .. }
@@ -1080,6 +1154,9 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     }
 
     if matches!(op, OpKind::X86PackedShiftImm { .. }) && !x86_packed_shift_imm_shape_valid(op) {
+        return false;
+    }
+    if matches!(op, OpKind::X86PackedShift { .. }) && !x86_packed_shift_shape_valid(op) {
         return false;
     }
 
@@ -1755,6 +1832,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86NarrowInt { width, .. }
             | OpKind::X86Aes { width, .. }
             | OpKind::X86PackedShiftImm { width, .. }
+            | OpKind::X86PackedShift { width, .. }
             | OpKind::VDotProduct { width, .. }
             | OpKind::VDotProductBF16 { width, .. }
             | OpKind::VCvtFP32ToBF16 { width, .. }
@@ -1776,9 +1854,11 @@ pub fn x86_native_vector_features_supported_excluding(
         };
         let (aes, vaes, aes_vl) = x86_aes_feature_requirements(op);
         let (shift_avx, shift_avx2, shift_vl) = x86_packed_shift_imm_feature_requirements(op);
+        let (count_avx, count_avx2, count_vl) = x86_packed_shift_feature_requirements(op);
         needs_vl |= match op {
             OpKind::X86Aes { .. } => aes_vl,
             OpKind::X86PackedShiftImm { .. } => shift_vl,
+            OpKind::X86PackedShift { .. } => count_vl,
             OpKind::X86Sha512Msg1 { .. }
             | OpKind::X86Sha512Msg2 { .. }
             | OpKind::X86Sha512Rounds2 { .. }
@@ -1831,8 +1911,8 @@ pub fn x86_native_vector_features_supported_excluding(
         needs_sha512 |= x86_sha512_feature_required(op);
         needs_sm3 |= x86_sm3_feature_required(op);
         needs_sm4 |= x86_sm4_feature_required(op);
-        needs_shift_avx |= shift_avx;
-        needs_shift_avx2 |= shift_avx2;
+        needs_shift_avx |= shift_avx || count_avx;
+        needs_shift_avx2 |= shift_avx2 || count_avx2;
     }
 
     if !any {
@@ -2584,6 +2664,73 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn x86_packed_shared_count_requirements_select_vex_or_evex_exactly() {
+        let op = |dst, src, count, width, elem, shift| OpKind::X86PackedShift {
+            dst,
+            src,
+            count,
+            width,
+            elem,
+            shift,
+        };
+        assert_eq!(
+            x86_packed_shift_feature_requirements(&op(
+                x86(X86Reg::Xmm(1)),
+                x86(X86Reg::Xmm(2)),
+                x86(X86Reg::Xmm(3)),
+                VecWidth::V128,
+                VecElementType::I32,
+                ShiftOp::Lsr
+            )),
+            (true, false, false)
+        );
+        assert_eq!(
+            x86_packed_shift_feature_requirements(&op(
+                x86(X86Reg::Ymm(1)),
+                x86(X86Reg::Ymm(2)),
+                x86(X86Reg::Xmm(3)),
+                VecWidth::V256,
+                VecElementType::I16,
+                ShiftOp::Lsl
+            )),
+            (false, true, false)
+        );
+        assert_eq!(
+            x86_packed_shift_feature_requirements(&op(
+                x86(X86Reg::Xmm(1)),
+                x86(X86Reg::Xmm(2)),
+                x86(X86Reg::Xmm(18)),
+                VecWidth::V128,
+                VecElementType::I32,
+                ShiftOp::Asr
+            )),
+            (false, false, true)
+        );
+        assert_eq!(
+            x86_packed_shift_feature_requirements(&op(
+                x86(X86Reg::Xmm(1)),
+                x86(X86Reg::Xmm(2)),
+                x86(X86Reg::Xmm(3)),
+                VecWidth::V128,
+                VecElementType::I64,
+                ShiftOp::Asr
+            )),
+            (false, false, true)
+        );
+        assert_eq!(
+            x86_packed_shift_feature_requirements(&op(
+                x86(X86Reg::Zmm(17)),
+                x86(X86Reg::Zmm(18)),
+                x86(X86Reg::Xmm(19)),
+                VecWidth::V512,
+                VecElementType::I64,
+                ShiftOp::Lsl
+            )),
+            (false, false, false)
+        );
+    }
+
+    #[test]
     fn x86_vector_guest_state_layout_matches_trampoline_offsets() {
         assert_eq!(
             std::mem::offset_of!(GuestRegs, zmm),
@@ -2759,6 +2906,14 @@ mod jit_gate_tests {
                 shift: ShiftOp::Asr,
                 amount: 9,
                 byte_lane: false,
+            },
+            OpKind::X86PackedShift {
+                dst: zmm1,
+                src: zmm2,
+                count: xmm3,
+                width: VecWidth::V512,
+                elem: VecElementType::I64,
+                shift: ShiftOp::Lsl,
             },
             OpKind::VCompress {
                 dst: zmm1,
@@ -3255,6 +3410,52 @@ mod jit_gate_tests {
         ] {
             assert!(!is_x86_native_vector_op(&invalid_shift_imm));
             assert!(!x86_gate(invalid_shift_imm));
+        }
+
+        for invalid_shared_count_shift in [
+            OpKind::X86PackedShift {
+                dst: xmm1,
+                src: xmm2,
+                count: xmm3,
+                width: VecWidth::V64,
+                elem: VecElementType::I16,
+                shift: ShiftOp::Lsr,
+            },
+            OpKind::X86PackedShift {
+                dst: ymm1,
+                src: xmm2,
+                count: xmm3,
+                width: VecWidth::V128,
+                elem: VecElementType::I32,
+                shift: ShiftOp::Lsl,
+            },
+            OpKind::X86PackedShift {
+                dst: xmm1,
+                src: xmm2,
+                count: ymm3,
+                width: VecWidth::V128,
+                elem: VecElementType::I32,
+                shift: ShiftOp::Asr,
+            },
+            OpKind::X86PackedShift {
+                dst: xmm1,
+                src: xmm2,
+                count: VReg::Virtual(VirtualId(14)),
+                width: VecWidth::V128,
+                elem: VecElementType::I64,
+                shift: ShiftOp::Lsr,
+            },
+            OpKind::X86PackedShift {
+                dst: xmm1,
+                src: xmm2,
+                count: xmm3,
+                width: VecWidth::V128,
+                elem: VecElementType::F32,
+                shift: ShiftOp::Lsl,
+            },
+        ] {
+            assert!(!is_x86_native_vector_op(&invalid_shared_count_shift));
+            assert!(!x86_gate(invalid_shared_count_shift));
         }
 
         let invalid_bf16_output_width = OpKind::VCvtFP32ToBF16 {
