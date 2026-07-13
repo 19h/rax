@@ -224,8 +224,10 @@ Implemented native scalar families:
   preserves exact NaN boxing/canonicalization, five rounding modes, accrued
   `fflags`, half precision, and traps before architectural writes for invalid
   static or dynamic rounding modes;
-- scalar loads/stores through the guest-memory helper ABI (successful-access
-  path; the current helper result does not encode a precise guest fault);
+- scalar loads/stores through the guest-memory helper ABI; load returns
+  `{value, success}` and store returns `success`, so a failed access exits at
+  the faulting guest PC with the generic trap classification before committing
+  a destination or any store bytes;
 - A-extension AMO, AMOCAS, and LR/SC through indivisible helper calls; the ABI
   carries exact operation, width, and memory-order codes and preserves the
   two-register CAS result (`old`, `success`);
@@ -246,8 +248,9 @@ round immediate. The scalar-FP corpus round-trips all 91 helper ABI selectors at
 O0/O2 and separately lifts representative arithmetic, FMA, min, compare, and
 integer/float conversion encodings, including dynamic rounding and invalid-mode
 trap paths. The generated count sequence is baseline x86-64 and does not require
-host `POPCNT`. Remaining native gaps are fault-precise memory exits and
-`RvVector`.
+host `POPCNT`. Remaining native gaps are detailed scalar fault-cause reporting,
+fault-reporting atomic helper results, the production dispatcher/helper
+provider, and `RvVector` (including vector memory restart semantics).
 
 The LR/SC reservation is owned by the helper context. Cross-hart or device writes
 must invalidate it in the memory backend; the in-tree differential helper models

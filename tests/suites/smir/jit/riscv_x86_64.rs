@@ -14,7 +14,7 @@ use rax::smir::lower::SmirLowerer;
 use rax::smir::lower::cross::riscv_guest_to_x86_64_host::RiscVX86_64Lowerer;
 use rax::smir::lower::runtime::{
     ExecMem, RISCV_FP_RESULT_INVALID, RiscVAtomicCasResult, RiscVAtomicOpCode, RiscVFpOpCode,
-    RiscVFpResult, RiscVGuestRegs, RiscVIntCryptoOpCode, RiscVMemoryOrderCode,
+    RiscVFpResult, RiscVGuestRegs, RiscVIntCryptoOpCode, RiscVLoadResult, RiscVMemoryOrderCode,
 };
 use rax::smir::optimize::{OptLevel, optimize_function};
 use rax::smir::{OpKind, RiscVLifter, SmirOp};
@@ -54,6 +54,17 @@ impl TestMemory {
         value
     }
 
+    fn can_access(&self, addr: u64, size: u64) -> bool {
+        usize::try_from(addr)
+            .ok()
+            .and_then(|start| {
+                usize::try_from(size)
+                    .ok()
+                    .and_then(|len| start.checked_add(len))
+            })
+            .is_some_and(|end| end <= MEMORY_LEN)
+    }
+
     fn write_value(&mut self, addr: u64, value: u64, size: u64) {
         let host_addr = addr as usize;
         let host_size = size as usize;
@@ -68,8 +79,14 @@ impl TestMemory {
     }
 }
 
-unsafe extern "sysv64" fn load(ctx: u64, addr: u64, size: u64, signed: u64) -> u64 {
+unsafe extern "sysv64" fn load(ctx: u64, addr: u64, size: u64, signed: u64) -> RiscVLoadResult {
     let memory = unsafe { &*(ctx as *const TestMemory) };
+    if !memory.can_access(addr, size) {
+        return RiscVLoadResult {
+            value: 0,
+            success: 0,
+        };
+    }
     let mut value = memory.read_value(addr, size);
     if signed != 0 && size < 8 {
         let bits = size as usize * 8;
@@ -78,11 +95,14 @@ unsafe extern "sysv64" fn load(ctx: u64, addr: u64, size: u64, signed: u64) -> u
             value |= u64::MAX << bits;
         }
     }
-    value
+    RiscVLoadResult { value, success: 1 }
 }
 
 unsafe extern "sysv64" fn store(ctx: u64, addr: u64, value: u64, size: u64) -> u64 {
     let memory = unsafe { &mut *(ctx as *mut TestMemory) };
+    if !memory.can_access(addr, size) {
+        return 0;
+    }
     memory.write_value(addr, value, size);
     1
 }
@@ -869,6 +889,49 @@ fn lifted_rv64_load_store_and_control_flow_execute_natively() {
 }
 
 #[test]
+fn scalar_load_store_faults_exit_without_committing_destinations() {
+    let mut initial_x = [0u64; 32];
+    initial_x[1] = MEMORY_LEN as u64 - 4;
+    initial_x[2] = 0x1122_3344_5566_7788;
+    initial_x[5] = 0x5555_5555_5555_5555;
+    let initial_memory = [0xa5; MEMORY_LEN];
+
+    for instruction in [
+        i_type(0, 1, 3, 5, 0x03),        // ld x5,0(x1)
+        s_type_opcode(0, 2, 1, 3, 0x23), // sd x2,0(x1)
+    ] {
+        let bytes = instruction.to_le_bytes();
+        let mut lifter = RiscVLifter::rv64gc();
+        let mut context = LiftContext::new(SourceArch::RiscV64);
+        let lifted = lifter
+            .lift_insn(CODE, &bytes, &mut context)
+            .expect("lift faulting scalar memory instruction");
+        let (function, return_pcs) =
+            function_for_lift(lifted.control_flow, lifted.ops, lifted.bytes_consumed);
+
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let mut optimized = function.clone();
+            optimize_function(&mut optimized, level);
+            let mut lowerer = RiscVX86_64Lowerer::new();
+            lowerer.set_return_pcs(return_pcs.clone());
+            let lowered = lowerer
+                .lower_function(&optimized)
+                .expect("lower faulting scalar memory instruction");
+            let code = lowerer.finalize().expect("finalize faulting memory path");
+            let executable = ExecMem::new(&code).expect("map faulting memory path");
+            let mut memory = TestMemory::new(initial_memory);
+            let mut state = jit_state(&mut memory, initial_x, [0; 32], 0, CODE);
+            executable.run_riscv(lowered.entry_offset, &mut state);
+
+            assert_eq!(state.x[5], initial_x[5], "destination write at {level:?}");
+            assert_eq!(state.pc, CODE, "fault PC at {level:?}");
+            assert_eq!(state.exit_reason, 1, "fault classification at {level:?}");
+            assert_eq!(memory.bytes, initial_memory, "partial store at {level:?}");
+        }
+    }
+}
+
+#[test]
 fn compressed_fallthrough_uses_exact_two_byte_resume_pc() {
     // c.addi x5,1: quadrant 1, funct3=000, rd=x5, imm=1.
     let instruction = ((5u16) << 7) | (1 << 2) | 0b01;
@@ -1314,5 +1377,6 @@ fn runtime_layout_matches_codegen_offsets() {
     assert_eq!(RiscVGuestRegs::INT_CRYPTO_FN_OFFSET, 75 * 8);
     assert_eq!(RiscVGuestRegs::FP_FN_OFFSET, 76 * 8);
     assert_eq!(std::mem::size_of::<RiscVGuestRegs>(), 77 * 8);
+    assert_eq!(std::mem::size_of::<RiscVLoadResult>(), 2 * 8);
     assert_eq!(std::mem::size_of::<RiscVFpResult>(), 2 * 8);
 }

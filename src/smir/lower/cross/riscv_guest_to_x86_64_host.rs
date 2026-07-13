@@ -764,12 +764,23 @@ impl RiscVX86_64Lowerer {
         e.emit_pop(STATE);
     }
 
+    fn emit_trap_if_zero(&mut self, status: PhysReg, guest_pc: u64) -> Result<(), LowerError> {
+        {
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_test_rr(status, status, OpWidth::W64);
+        }
+        let success = self.emit_jcc_placeholder(X86Cond::Ne);
+        self.emit_arch_exit(guest_pc, EXIT_TRAP);
+        self.patch_rel32_to_current(success)
+    }
+
     fn lower_load(
         &mut self,
         dst: VReg,
         addr: &Address,
         width: MemWidth,
         sign: SignExtend,
+        guest_pc: u64,
     ) -> Result<(), LowerError> {
         let (_, size) = Self::scalar_mem_width(width)?;
         self.load_addr_to(addr, ADDR)?;
@@ -784,6 +795,9 @@ impl RiscVX86_64Lowerer {
             );
         }
         self.emit_mem_helper_call(TARGET);
+        // The two-u64 SysV result is RAX=value, RDX=success. A fault exits
+        // before the load destination is committed.
+        self.emit_trap_if_zero(HI, guest_pc)?;
         self.store_reg_to(dst, ACC, OpWidth::W64)
     }
 
@@ -792,6 +806,7 @@ impl RiscVX86_64Lowerer {
         src: VReg,
         addr: &Address,
         width: MemWidth,
+        guest_pc: u64,
     ) -> Result<(), LowerError> {
         let (op_width, size) = Self::scalar_mem_width(width)?;
         self.load_addr_to(addr, ADDR)?;
@@ -802,7 +817,7 @@ impl RiscVX86_64Lowerer {
             e.emit_mov_ri(RHS, size, OpWidth::W64);
         }
         self.emit_mem_helper_call(TARGET);
-        Ok(())
+        self.emit_trap_if_zero(ACC, guest_pc)
     }
 
     fn atomic_op_code(op: AtomicOp) -> i64 {
@@ -1307,8 +1322,10 @@ impl RiscVX86_64Lowerer {
                 addr,
                 width,
                 sign,
-            } => self.lower_load(*dst, addr, *width, *sign)?,
-            OpKind::Store { src, addr, width } => self.lower_store(*src, addr, *width)?,
+            } => self.lower_load(*dst, addr, *width, *sign, op.guest_pc)?,
+            OpKind::Store { src, addr, width } => {
+                self.lower_store(*src, addr, *width, op.guest_pc)?
+            }
             OpKind::AtomicRmw {
                 dst,
                 addr,

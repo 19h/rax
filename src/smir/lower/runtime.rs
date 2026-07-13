@@ -269,6 +269,15 @@ pub struct RiscVAtomicCasResult {
     pub success: u64,
 }
 
+/// Two-register SysV result of [`RiscVGuestRegs::load_fn`].
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct RiscVLoadResult {
+    pub value: u64,
+    /// One for a completed access and zero for a guest-memory fault.
+    pub success: u64,
+}
+
 /// Two-register SysV result of [`RiscVGuestRegs::fp_fn`].
 ///
 /// A valid operation returns the raw destination in `value` and the updated
@@ -288,7 +297,7 @@ pub struct RiscVFpResult {
 /// passed in RDI.  All scalar fields use eight-byte slots, including `fcsr`, so
 /// the ABI is identical for RV32 and RV64 and has mechanically checkable
 /// offsets. `load_fn` has signature
-/// `extern "sysv64" fn(ctx, addr, size, signed) -> value`; `store_fn` has
+/// `extern "sysv64" fn(ctx, addr, size, signed) -> {value, success}`; `store_fn` has
 /// signature `extern "sysv64" fn(ctx, addr, value, size) -> success`. Atomic
 /// helpers use the same ABI, share the same context, and must implement one
 /// indivisible transaction per call. The integer-crypto and scalar-FP helpers
@@ -311,9 +320,10 @@ pub struct RiscVGuestRegs {
     pub exit_reason: u64,
     /// Opaque memory-helper context.
     pub ctx: u64,
-    /// Address of the scalar load helper.
+    /// Address of `extern "sysv64" fn(ctx, addr, size, signed) -> {value, success}`.
     pub load_fn: u64,
-    /// Address of the scalar store helper.
+    /// Address of `extern "sysv64" fn(ctx, addr, value, size) -> success`.
+    /// Returning zero must leave guest memory unchanged.
     pub store_fn: u64,
     /// `extern "sysv64" fn(ctx, addr, operand, size, op_code, order_code) -> old`.
     pub atomic_rmw_fn: u64,
