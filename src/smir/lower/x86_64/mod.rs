@@ -13676,6 +13676,67 @@ mod tests {
     }
 
     #[test]
+    fn lower_immediate_one_carry_rotates_cover_widths_and_ndd_copy() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let flags = FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF));
+
+        for (name, op, expected) in [
+            (
+                "RCL byte",
+                OpKind::Rcl {
+                    dst: rax,
+                    src: rax,
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W8,
+                    flags,
+                },
+                &[0xD0, 0xD0][..],
+            ),
+            (
+                "RCR word",
+                OpKind::Rcr {
+                    dst: rcx,
+                    src: rcx,
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W16,
+                    flags,
+                },
+                &[0x66, 0xD1, 0xD9][..],
+            ),
+            (
+                "RCL dword NDD",
+                OpKind::Rcl {
+                    dst: r8,
+                    src: rax,
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W32,
+                    flags,
+                },
+                &[0x41, 0x89, 0xC0, 0x41, 0xD1, 0xD0][..],
+            ),
+            (
+                "RCR qword NDD",
+                OpKind::Rcr {
+                    dst: r8,
+                    src: rax,
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags,
+                },
+                &[0x49, 0x89, 0xC0, 0x49, 0xD1, 0xD8][..],
+            ),
+        ] {
+            let code = lower_single_op(op);
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
     fn lower_apx_ndd_nf_shift_rotate_slice_lowers_without_relocs() {
         // LLVM 20 APX MAP4 forms:
         //   shlq $4,  %rax, %r8        => 62 f4 bc 18 c1 e0 04

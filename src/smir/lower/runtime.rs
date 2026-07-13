@@ -2264,6 +2264,11 @@ fn block_is_clobber_safe(
         if matches!(op.kind, OpKind::Cwd { .. }) && !x86_cwd_shape_valid(&op.kind) {
             return false;
         }
+        if matches!(op.kind, OpKind::Rcl { .. } | OpKind::Rcr { .. })
+            && !x86_carry_rotate_shape_valid(&op.kind)
+        {
+            return false;
+        }
         if matches!(
             op.kind,
             OpKind::Bextr { .. } | OpKind::Bzhi { .. } | OpKind::Pdep { .. } | OpKind::Pext { .. }
@@ -2373,6 +2378,53 @@ fn x86_cwd_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
             src: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
             width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
         }
+    )
+}
+
+fn x86_carry_rotate_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::flags::{FlagSet, FlagUpdate};
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
+
+    let native_gpr = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Rax
+                    | X86Reg::Rcx
+                    | X86Reg::Rdx
+                    | X86Reg::Rbx
+                    | X86Reg::Rsi
+                    | X86Reg::Rdi
+                    | X86Reg::R8
+                    | X86Reg::R9
+                    | X86Reg::R10
+                    | X86Reg::R11
+                    | X86Reg::R12
+                    | X86Reg::R13
+                    | X86Reg::R14
+                    | X86Reg::R15
+            ))
+        )
+    };
+    let defined_flags = FlagSet::CF.union(FlagSet::OF);
+
+    matches!(
+        op,
+        OpKind::Rcl {
+            dst,
+            src,
+            amount: SrcOperand::Imm(1),
+            width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+            flags: FlagUpdate::Specific(set),
+        }
+        | OpKind::Rcr {
+            dst,
+            src,
+            amount: SrcOperand::Imm(1),
+            width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+            flags: FlagUpdate::Specific(set),
+        } if native_gpr(dst) && native_gpr(src) && *set == defined_flags
     )
 }
 
@@ -4715,6 +4767,142 @@ mod jit_gate_tests {
                     dst: arm_x(0),
                     src: x86(X86Reg::Rax),
                     width: OpWidth::W16,
+                },
+            ),
+        ] {
+            assert!(op.is_jit_safe(), "{name} remains class-whitelisted");
+            assert!(!x86_gate(op), "malformed {name} must deopt");
+        }
+    }
+
+    #[test]
+    fn carry_rotate_gate_admits_only_defined_immediate_one_forms() {
+        let flags = FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF));
+        for (name, op) in [
+            (
+                "RCL byte",
+                OpKind::Rcl {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W8,
+                    flags,
+                },
+            ),
+            (
+                "RCR word",
+                OpKind::Rcr {
+                    dst: x86(X86Reg::Rcx),
+                    src: x86(X86Reg::Rcx),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W16,
+                    flags,
+                },
+            ),
+            (
+                "RCL dword NDD",
+                OpKind::Rcl {
+                    dst: x86(X86Reg::R8),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W32,
+                    flags,
+                },
+            ),
+            (
+                "RCR qword NDD",
+                OpKind::Rcr {
+                    dst: x86(X86Reg::R15),
+                    src: x86(X86Reg::R14),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags,
+                },
+            ),
+        ] {
+            assert!(op.is_jit_safe(), "{name} must be class-whitelisted");
+            assert!(x86_gate(op), "{name} must enter native lowering");
+        }
+
+        for (name, op) in [
+            (
+                "multi-bit undefined OF",
+                OpKind::Rcl {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Imm(2),
+                    width: OpWidth::W64,
+                    flags,
+                },
+            ),
+            (
+                "variable count",
+                OpKind::Rcr {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                    flags,
+                },
+            ),
+            (
+                "suppressed flags",
+                OpKind::Rcl {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "overbroad flags",
+                OpKind::Rcr {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "wide operand",
+                OpKind::Rcl {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W128,
+                    flags,
+                },
+            ),
+            (
+                "extended guest register",
+                OpKind::Rcr {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags,
+                },
+            ),
+            (
+                "virtual source",
+                OpKind::Rcl {
+                    dst: x86(X86Reg::Rax),
+                    src: VReg::Virtual(VirtualId(0)),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W32,
+                    flags,
+                },
+            ),
+            (
+                "foreign destination",
+                OpKind::Rcr {
+                    dst: arm_x(0),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W16,
+                    flags,
                 },
             ),
         ] {

@@ -3659,6 +3659,8 @@ impl OpKind {
                 | OpKind::X86NddDoubleShift { .. }
                 | OpKind::Rol { .. }
                 | OpKind::Ror { .. }
+                | OpKind::Rcl { .. }
+                | OpKind::Rcr { .. }
                 | OpKind::MulU { .. }
                 | OpKind::MulS { .. }
                 | OpKind::Mov { .. }
