@@ -2731,9 +2731,19 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
                     && (!flags.updates_any()
                         || matches!(amount, SrcOperand::Imm(value) | SrcOperand::Imm64(value) if (*value as u64 & 0x1f) <= 16)))
         }
+        OpKind::MulS {
+            dst_lo,
+            dst_hi,
+            width,
+            ..
+        } => {
+            full_gpr_write(width)
+                || (dst_hi.is_none()
+                    && matches!(width, OpWidth::W16)
+                    && x86_aarch64_legacy_gpr(dst_lo))
+        }
         OpKind::AndNot { width, .. }
         | OpKind::MulU { width, .. }
-        | OpKind::MulS { width, .. }
         | OpKind::Bsf { width, .. }
         | OpKind::Bsr { width, .. }
         | OpKind::Bextr { width, .. }
@@ -6905,6 +6915,77 @@ mod jit_gate_tests {
                 }),
                 "alias-safe APX NDD IMUL {flags:?} must JIT"
             );
+        }
+    }
+
+    #[test]
+    fn x86_aarch64_gate_accepts_w16_single_result_signed_multiply_partial_writes() {
+        let rax = x86(X86Reg::Rax);
+        let rbx = x86(X86Reg::Rbx);
+        for src2 in [SrcOperand::Reg(rbx), SrcOperand::Imm(0x1234)] {
+            assert!(
+                x86_aarch64_gate(vec![OpKind::MulS {
+                    dst_lo: rbx,
+                    dst_hi: None,
+                    src1: rax,
+                    src2,
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::None,
+                }]),
+                "APX NF W16 single-result signed multiply"
+            );
+        }
+
+        let flag_setting = OpKind::MulS {
+            dst_lo: rbx,
+            dst_hi: None,
+            src1: rax,
+            src2: SrcOperand::Imm(2),
+            width: OpWidth::W16,
+            flags: FlagUpdate::All,
+        };
+        assert!(x86_aarch64_scalar_shape_valid(&flag_setting));
+        assert!(x86_aarch64_block_flags_are_representable(
+            &{
+                let mut builder = FunctionBuilder::new(FunctionId(7), 0x7000);
+                builder.push_op(0x7000, flag_setting.clone());
+                builder.set_terminator(Terminator::Return { values: vec![] });
+                builder.finish().blocks.remove(0)
+            },
+            FlagSet::EMPTY,
+        ));
+        assert!(
+            !x86_aarch64_gate(vec![flag_setting]),
+            "terminal flag-setting IMUL defines unavailable live PF/AF"
+        );
+
+        for op in [
+            OpKind::MulS {
+                dst_lo: rax,
+                dst_hi: None,
+                src1: rax,
+                src2: SrcOperand::Reg(rbx),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+            OpKind::MulS {
+                dst_lo: rax,
+                dst_hi: Some(x86(X86Reg::Rdx)),
+                src1: rax,
+                src2: SrcOperand::Reg(rbx),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::MulU {
+                dst_lo: rax,
+                dst_hi: None,
+                src1: rax,
+                src2: SrcOperand::Reg(rbx),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+        ] {
+            assert!(!x86_aarch64_scalar_shape_valid(&op), "unsupported {op:?}");
         }
     }
 

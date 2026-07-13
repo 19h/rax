@@ -10596,6 +10596,27 @@ impl Aarch64Lowerer {
         set_flags: bool,
         signed: bool,
     ) -> Result<(), LowerError> {
+        if dst_hi.is_none() && width == OpWidth::W16 {
+            if let Some((dst, result)) =
+                Self::x86_partial_write_scratch(dst_lo, width, &[src1], &[src2])?
+            {
+                let scratches = [result];
+                self.emit_scratch_save(&scratches);
+                self.lower_mul(
+                    Self::arm_x_reg(result),
+                    None,
+                    src1,
+                    src2,
+                    width,
+                    set_flags,
+                    signed,
+                )?;
+                self.emit_bitfield(dst, result, 0b01, 0, 15, OpWidth::W64)?;
+                self.emit_scratch_restore(&scratches);
+                return Ok(());
+            }
+        }
+
         if set_flags {
             if matches!(width, OpWidth::W8 | OpWidth::W16) && dst_hi.is_none() {
                 return self.lower_subword_mul_with_flags(dst_lo, src1, src2, width, signed);
@@ -56407,6 +56428,115 @@ mod tests {
             OpWidth::W8,
             0b1000,
         );
+    }
+
+    #[test]
+    fn lowers_x86_w16_single_result_signed_multiply_partial_write_alias_matrix() {
+        let reg = |index: u8| match index {
+            0 => x86(X86Reg::Rax),
+            1 => x86(X86Reg::Rcx),
+            2 => x86(X86Reg::Rdx),
+            3 => x86(X86Reg::Rbx),
+            _ => unreachable!("unexpected test register x{index}"),
+        };
+        let initial = [
+            0xaaaa_bbbb_cccc_fffe,
+            0x1111_2222_3333_7fff,
+            0xdddd_eeee_ffff_0002,
+            0xbbbb_cccc_dddd_0003,
+        ];
+        let cases = [
+            (
+                "destructive-reg-nf",
+                0,
+                0,
+                SrcOperand::Reg(reg(3)),
+                initial[3],
+                FlagUpdate::None,
+            ),
+            (
+                "ndd-dst-aliases-src2-nf",
+                3,
+                0,
+                SrcOperand::Reg(reg(3)),
+                initial[3],
+                FlagUpdate::None,
+            ),
+            (
+                "independent-imm16-nf",
+                1,
+                2,
+                SrcOperand::Imm(0x1234),
+                0x1234,
+                FlagUpdate::None,
+            ),
+            (
+                "destructive-reg-flags",
+                0,
+                0,
+                SrcOperand::Reg(reg(3)),
+                initial[3],
+                FlagUpdate::All,
+            ),
+            (
+                "destructive-imm-overflow-flags",
+                1,
+                1,
+                SrcOperand::Imm(2),
+                2,
+                FlagUpdate::All,
+            ),
+        ];
+        let sentinels = [
+            (16, 0x1616_1616_1616_1616),
+            (17, 0x1717_1717_1717_1717),
+            (15, 0x1515_1515_1515_1515),
+            (14, 0x1414_1414_1414_1414),
+            (13, 0x1313_1313_1313_1313),
+            (12, 0x1212_1212_1212_1212),
+        ];
+
+        for (label, dst, src1, src2, src2_value, flags) in cases {
+            let code = lower_single_op(OpKind::MulS {
+                dst_lo: reg(dst),
+                dst_hi: None,
+                src1: reg(src1),
+                src2,
+                width: OpWidth::W16,
+                flags,
+            });
+            let low = ref_mul(initial[src1 as usize], src2_value, true, OpWidth::W16);
+            let expected = (initial[dst as usize] & !0xffff) | low;
+            let old_nzcv = 0b1011;
+            let expected_nzcv = if flags.updates_any() {
+                expected_mul_nzcv(initial[src1 as usize], src2_value, true, OpWidth::W16)
+            } else {
+                old_nzcv
+            };
+            let mut regs = sentinels.to_vec();
+            regs.extend(
+                initial
+                    .iter()
+                    .enumerate()
+                    .map(|(index, value)| (index as u8, *value)),
+            );
+            let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+
+            assert_eq!(out[dst as usize], expected, "{label}: result");
+            for index in 0..4 {
+                if index != dst {
+                    assert_eq!(
+                        out[index as usize], initial[index as usize],
+                        "{label}: x{index} preserved"
+                    );
+                }
+            }
+            for (index, value) in sentinels {
+                assert_eq!(out[index as usize], value, "{label}: x{index} scratch");
+            }
+            assert_eq!(out_nzcv, expected_nzcv, "{label}: NZCV");
+            assert_eq!(sp, 0x8000, "{label}: stack");
+        }
     }
 
     #[test]

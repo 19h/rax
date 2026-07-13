@@ -720,6 +720,49 @@ fn x86_apx_nf_w16_destructive_double_shifts_merge_partial_registers() {
 }
 
 #[test]
+fn x86_apx_nf_w16_signed_multiply_merges_partial_registers() {
+    // LLVM 23 encodings: destructive IMUL r11w,r12w; immediate IMUL
+    // r13w,r14w,0x1234; NDD IMUL r12w,r11w,r12w. The last form aliases its
+    // destination with the second source. JNZ detects any unintended NF flag
+    // mutation before HLT.
+    let code = [
+        0x62, 0x54, 0x7D, 0x0C, 0xAF, 0xDC, 0x62, 0x54, 0x7D, 0x0C, 0x69, 0xEE, 0x34, 0x12, 0x62,
+        0x54, 0x1D, 0x1C, 0xAF, 0xDC, 0x75, 0xEA, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        vcpu.set_apx_enabled(true);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.r11 = 0xBBBB_AAAA_9999_FFFE;
+        regs.r12 = 0xCCCC_BBBB_AAAA_0003;
+        regs.r13 = 0xDDDD_CCCC_BBBB_7777;
+        regs.r14 = 0xEEEE_DDDD_CCCC_0002;
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("APX NF W16 signed-multiply JIT attempt"),
+        "APX NF W16 signed multiplies must enter the AArch64 tier"
+    );
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "APX NF W16 signed multiply");
+    assert_eq!(actual.r11, 0xBBBB_AAAA_9999_FFFA, "destructive IMUL");
+    assert_eq!(actual.r12, 0xCCCC_BBBB_AAAA_FFEE, "NDD source alias");
+    assert_eq!(actual.r13, 0xDDDD_CCCC_BBBB_2468, "imm16 IMUL");
+    assert_eq!(actual.rflags, 0xCD6, "APX NF preserves complete RFLAGS");
+}
+
+#[test]
 fn x86_aarch64_jit_rejects_live_pf_af_definitions_without_execution() {
     // add rax,rbx; jnz start; hlt. ADD's live PF/AF outputs cannot be represented
     // in NZCV, so the architecture-specific gate must retain interpreter fallback.

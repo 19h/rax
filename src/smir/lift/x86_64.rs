@@ -31148,7 +31148,13 @@ impl X86_64Lifter {
         let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
         let modrm = decode_modrm(bytes, &modrm_prefix, pc)?;
         let imm_offset = modrm.bytes_consumed;
-        let imm_size = if opcode == 0x6B { 1 } else { 4 };
+        let imm_size = if opcode == 0x6B {
+            1
+        } else if op_size == 2 {
+            2
+        } else {
+            4
+        };
 
         if bytes.len() < imm_offset + imm_size {
             return Err(LiftError::Incomplete {
@@ -31158,15 +31164,15 @@ impl X86_64Lifter {
             });
         }
 
-        let imm = if opcode == 0x6B {
-            bytes[imm_offset] as i8 as i64
-        } else {
-            i32::from_le_bytes([
+        let imm = match imm_size {
+            1 => bytes[imm_offset] as i8 as i64,
+            2 => i16::from_le_bytes([bytes[imm_offset], bytes[imm_offset + 1]]) as i64,
+            _ => i32::from_le_bytes([
                 bytes[imm_offset],
                 bytes[imm_offset + 1],
                 bytes[imm_offset + 2],
                 bytes[imm_offset + 3],
-            ]) as i64
+            ]) as i64,
         };
 
         let next_pc = pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64 + imm_size as u64;
@@ -40951,6 +40957,52 @@ mod tests {
             }
             other => panic!("expected APX NF IMUL imm32 MulS, got {other:?}"),
         }
+
+        // LLVM 23: `{nf} imulw $0x1234, %r14w, %r13w`. Opcode 69 carries an
+        // imm16 at word width; consuming four bytes would swallow the next
+        // instruction and misdecode the signed multiplier.
+        let nf_imm16 = lifter
+            .lift_insn(
+                0x1000,
+                &[0x62, 0x54, 0x7D, 0x0C, 0x69, 0xEE, 0x34, 0x12],
+                &mut ctx,
+            )
+            .unwrap();
+        assert_eq!(nf_imm16.bytes_consumed, 8);
+        assert_eq!(nf_imm16.ops.len(), 1);
+        assert_eq!(nf_imm16.ops[0].x86_hint, Some(X86OpHint::ImulImm32));
+        match &nf_imm16.ops[0].kind {
+            OpKind::MulS {
+                dst_lo,
+                dst_hi: None,
+                src1,
+                src2: SrcOperand::Imm(0x1234),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            } => {
+                assert_eq!(*dst_lo, x86_gpr(13));
+                assert_eq!(*src1, x86_gpr(14));
+            }
+            other => panic!("expected APX NF IMUL imm16 MulS, got {other:?}"),
+        }
+
+        let nf_imm16_negative = lifter
+            .lift_insn(
+                0x1000,
+                &[0x62, 0x54, 0x7D, 0x0C, 0x69, 0xEE, 0xFE, 0xFF],
+                &mut ctx,
+            )
+            .unwrap();
+        assert_eq!(nf_imm16_negative.bytes_consumed, 8);
+        assert!(matches!(
+            nf_imm16_negative.ops[0].kind,
+            OpKind::MulS {
+                src2: SrcOperand::Imm(-2),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+                ..
+            }
+        ));
 
         // APX NDD immediate form uses vvvv as the destination. LLVM prefers the
         // non-NDD EVEX encoding for this syntax because legacy IMUL already has
