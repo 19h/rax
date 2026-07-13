@@ -8,8 +8,8 @@ use std::collections::HashMap;
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AluEncoding, X86BlsKind, X86CountKind, X86OpHint, X86RepMode, X86SsePrefix,
-    X86StringKind, X86VecAlign, X86VecMap,
+    OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CountKind, X86OpHint, X86RepMode,
+    X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, BlockId, Condition, DispSize, FpRoundMode, GuestAddr, MemWidth, OpWidth,
@@ -3412,6 +3412,34 @@ impl<'a> X86Emitter<'a> {
         self.code.emit_u8(0xF3);
         self.code.emit_u8(0xC0 | (group << 3) | src.low3());
     }
+
+    /// ADCX/ADOX r, r/m (requires ADX support).
+    pub fn emit_adx_rr(&mut self, kind: X86AdxKind, dst: PhysReg, src: PhysReg, width: OpWidth) {
+        self.code.emit_u8(match kind {
+            X86AdxKind::Adcx => 0x66,
+            X86AdxKind::Adox => 0xF3,
+        });
+        self.emit_rex_for_width(width, dst, src);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0x38);
+        self.code.emit_u8(0xF6);
+        self.emit_modrm_rr(dst, src);
+    }
+
+    /// ADCX/ADOX r, [rsp], used to preserve a source destroyed by the
+    /// three-operand-to-two-operand destination move.
+    pub fn emit_adx_rsp_mem(&mut self, kind: X86AdxKind, dst: PhysReg, width: OpWidth) {
+        self.code.emit_u8(match kind {
+            X86AdxKind::Adcx => 0x66,
+            X86AdxKind::Adox => 0xF3,
+        });
+        self.emit_rex_for_width(width, dst, PhysReg::Rsp);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0x38);
+        self.code.emit_u8(0xF6);
+        self.code.emit_u8((dst.low3() << 3) | 0x04);
+        self.code.emit_u8(0x24);
+    }
 }
 
 // ============================================================================
@@ -3953,6 +3981,54 @@ impl X86_64Lowerer {
         let mut emitter = X86Emitter::new(&mut self.code);
         emitter.emit_vex_bls_rr(kind, dst_reg, src_reg, width);
         self.finish_bmi_flags(dst_reg, defined_rflags_mask);
+        Ok(())
+    }
+
+    fn lower_x86_adx(
+        &mut self,
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: OpWidth,
+        kind: X86AdxKind,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        let (op, output) = match kind {
+            X86AdxKind::Adcx => ("Adcx", FlagSet::CF),
+            X86AdxKind::Adox => ("Adox", FlagSet::OF),
+        };
+        if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: op.to_string(),
+                operand: format!("unsupported width {width:?}"),
+            });
+        }
+        if flags != FlagUpdate::None && flags != FlagUpdate::Specific(output) {
+            return Err(LowerError::InvalidOperand {
+                op: op.to_string(),
+                operand: format!("unsupported flag update {flags:?}"),
+            });
+        }
+
+        let dst_reg = self.get_dst_reg(dst)?;
+        let src1_reg = self.get_reg(src1)?;
+        let src2_reg = self.get_reg(src2)?;
+        Self::ensure_flag_stack_operands_safe(op, &[dst_reg, src1_reg, src2_reg])?;
+
+        let mut emitter = X86Emitter::new(&mut self.code);
+        if dst_reg == src2_reg && dst_reg != src1_reg {
+            emitter.emit_push(src2_reg);
+            emitter.emit_mov_rr(dst_reg, src1_reg, width);
+            emitter.emit_adx_rsp_mem(kind, dst_reg, width);
+            // LEA discards the saved operand without modifying the ADX output
+            // flag or any other guest status bit.
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 8);
+        } else {
+            if dst_reg != src1_reg {
+                emitter.emit_mov_rr(dst_reg, src1_reg, width);
+            }
+            emitter.emit_adx_rr(kind, dst_reg, src2_reg, width);
+        }
         Ok(())
     }
 
@@ -5848,6 +5924,15 @@ impl X86_64Lowerer {
                 kind,
                 flags,
             } => self.lower_x86_bls(*dst, *src, *width, *kind, *flags)?,
+
+            OpKind::X86Adx {
+                dst,
+                src1,
+                src2,
+                width,
+                kind,
+                flags,
+            } => self.lower_x86_adx(*dst, *src1, *src2, *width, *kind, *flags)?,
 
             OpKind::Pdep {
                 dst,
@@ -14679,6 +14764,95 @@ mod tests {
             assert!(matches!(
                 lower_single_op_err(malformed),
                 LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_x86_adx_emits_exact_native_encodings_and_preserves_three_operand_aliases() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+
+        let distinct = lower_single_op(OpKind::X86Adx {
+            dst: r8,
+            src1: rax,
+            src2: rbx,
+            width: OpWidth::W64,
+            kind: X86AdxKind::Adcx,
+            flags: FlagUpdate::Specific(FlagSet::CF),
+        });
+        let distinct_core = [0x49, 0x89, 0xC0, 0x66, 0x4C, 0x0F, 0x38, 0xF6, 0xC3];
+        assert!(
+            distinct
+                .windows(distinct_core.len())
+                .any(|window| window == distinct_core),
+            "distinct ADCX lowering: {distinct:02X?}"
+        );
+
+        let destructive_alias = lower_single_op(OpKind::X86Adx {
+            dst: rbx,
+            src1: rax,
+            src2: rbx,
+            width: OpWidth::W64,
+            kind: X86AdxKind::Adox,
+            flags: FlagUpdate::Specific(FlagSet::OF),
+        });
+        let alias_core = [
+            0x53, 0x48, 0x89, 0xC3, 0xF3, 0x48, 0x0F, 0x38, 0xF6, 0x1C, 0x24, 0x48, 0x8D, 0x64,
+            0x24, 0x08,
+        ];
+        assert!(
+            destructive_alias
+                .windows(alias_core.len())
+                .any(|window| window == alias_core),
+            "dst==src2 ADOX lowering: {destructive_alias:02X?}"
+        );
+
+        let self_alias = lower_single_op(OpKind::X86Adx {
+            dst: rax,
+            src1: rax,
+            src2: rax,
+            width: OpWidth::W32,
+            kind: X86AdxKind::Adcx,
+            flags: FlagUpdate::None,
+        });
+        assert!(
+            self_alias
+                .windows(5)
+                .any(|window| window == [0x66, 0x0F, 0x38, 0xF6, 0xC0]),
+            "self-aliased ADCX lowering: {self_alias:02X?}"
+        );
+
+        for malformed in [
+            OpKind::X86Adx {
+                dst: rax,
+                src1: rax,
+                src2: rbx,
+                width: OpWidth::W16,
+                kind: X86AdxKind::Adcx,
+                flags: FlagUpdate::Specific(FlagSet::CF),
+            },
+            OpKind::X86Adx {
+                dst: rax,
+                src1: rax,
+                src2: rbx,
+                width: OpWidth::W64,
+                kind: X86AdxKind::Adox,
+                flags: FlagUpdate::Specific(FlagSet::CF),
+            },
+            OpKind::X86Adx {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+                src1: rax,
+                src2: rbx,
+                width: OpWidth::W64,
+                kind: X86AdxKind::Adcx,
+                flags: FlagUpdate::Specific(FlagSet::CF),
+            },
+        ] {
+            assert!(matches!(
+                lower_single_op_err(malformed),
+                LowerError::InvalidOperand { .. } | LowerError::InvalidRegister(_)
             ));
         }
     }

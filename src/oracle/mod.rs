@@ -11,6 +11,7 @@ use crate::isa::riscv::decode as rv_decode;
 use crate::isa::riscv::{Isa as RvIsa, Op as RvOp, Xlen};
 use crate::smir::ir::ops::HexFpOp;
 use crate::smir::ir::ops::HexFpRecipKind;
+use crate::smir::ir::ops::X86AdxKind;
 use crate::smir::ir::ops::X86BlsKind;
 use crate::smir::ir::ops::X86CacheControlKind;
 use crate::smir::ir::ops::X86CountKind;
@@ -1125,6 +1126,7 @@ debug_name_json!(
     Condition,
     HexFpOp,
     HexFpRecipKind,
+    X86AdxKind,
     X86CacheControlKind,
     X86BlsKind,
     X86CountKind,
@@ -1582,6 +1584,14 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             kind,
             flags,
         } => op_json!("x86_bls", dst, src, width, kind, flags),
+        OpKind::X86Adx {
+            dst,
+            src1,
+            src2,
+            width,
+            kind,
+            flags,
+        } => op_json!("x86_adx", dst, src1, src2, width, kind, flags),
         OpKind::Pdep {
             dst,
             src,

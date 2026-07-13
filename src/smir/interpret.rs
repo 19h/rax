@@ -9,10 +9,10 @@ use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext, VecValue};
 use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
-    HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86BlsKind, X86CacheControlKind,
-    X86CountKind, X86OpHint, X86X87ArithmeticDestination, X86X87ArithmeticSource,
-    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
-    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+    HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
+    X86CacheControlKind, X86CountKind, X86OpHint, X86X87ArithmeticDestination,
+    X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
+    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -1898,6 +1898,34 @@ impl SmirInterpreter {
                         X86BlsKind::Blsr => ctx.flags.set_lazy_blsr(src, result, *width),
                         X86BlsKind::Blsmsk => ctx.flags.set_lazy_blsmsk(src, result, *width),
                         X86BlsKind::Blsi => ctx.flags.set_lazy_blsi(src, result, *width),
+                    }
+                }
+            }
+
+            OpKind::X86Adx {
+                dst,
+                src1,
+                src2,
+                width,
+                kind,
+                flags,
+            } => {
+                let left = ctx.read_vreg(*src1) & width.mask();
+                let right = ctx.read_vreg(*src2) & width.mask();
+                let carry_in = match kind {
+                    X86AdxKind::Adcx => ctx.flags.get_cf(),
+                    X86AdxKind::Adox => ctx.flags.get_of(),
+                };
+                let full = u128::from(left) + u128::from(right) + u128::from(carry_in);
+                let result = (full as u64) & width.mask();
+                let carry_out = full > u128::from(width.mask());
+                Self::write_gpr(ctx, *dst, result, *width);
+
+                if flags.updates_any() {
+                    ctx.flags.materialize_all();
+                    match kind {
+                        X86AdxKind::Adcx => ctx.flags.materialized.cf = carry_out,
+                        X86AdxKind::Adox => ctx.flags.materialized.of = carry_out,
                     }
                 }
             }
@@ -30871,6 +30899,104 @@ mod tests {
         );
         assert_eq!(value, 0x8, "aliased APX NF BLSI result");
         assert_eq!(got_flags, 0x2 | STATUS, "APX NF BLSI preserves RFLAGS");
+    }
+
+    #[test]
+    fn smir_x86_adx_matches_width_carry_chain_and_flag_contracts() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        const CF: u64 = 1 << 0;
+        const PF: u64 = 1 << 2;
+        const AF: u64 = 1 << 4;
+        const ZF: u64 = 1 << 6;
+        const SF: u64 = 1 << 7;
+        const OF: u64 = 1 << 11;
+        const STATUS: u64 = CF | PF | AF | ZF | SF | OF;
+        let initial = 0x2 | STATUS;
+
+        let (value, got_flags) = exec_x86_rax_op(
+            OpKind::X86Adx {
+                dst: rax,
+                src1: rax,
+                src2: rcx,
+                width: OpWidth::W64,
+                kind: X86AdxKind::Adcx,
+                flags: FlagUpdate::Specific(FlagSet::CF),
+            },
+            u64::MAX,
+            0,
+            initial,
+        );
+        assert_eq!(value, 0);
+        assert_ne!(got_flags & CF, 0, "ADCX reports unsigned carry-out");
+        assert_eq!(
+            got_flags & !CF,
+            initial & !CF,
+            "ADCX preserves every non-CF status bit"
+        );
+
+        let (value, got_flags) = exec_x86_rax_op(
+            OpKind::X86Adx {
+                dst: rax,
+                src1: rax,
+                src2: rcx,
+                width: OpWidth::W64,
+                kind: X86AdxKind::Adox,
+                flags: FlagUpdate::Specific(FlagSet::OF),
+            },
+            5,
+            3,
+            initial,
+        );
+        assert_eq!(value, 9);
+        assert_eq!(
+            got_flags & OF,
+            0,
+            "ADOX clears OF when the chain has no carry-out"
+        );
+        assert_eq!(
+            got_flags & !OF,
+            initial & !OF,
+            "ADOX preserves every non-OF status bit"
+        );
+
+        let (value, got_flags) = exec_x86_rax_op(
+            OpKind::X86Adx {
+                dst: rax,
+                src1: rax,
+                src2: rcx,
+                width: OpWidth::W32,
+                kind: X86AdxKind::Adcx,
+                flags: FlagUpdate::Specific(FlagSet::CF),
+            },
+            u64::MAX,
+            0,
+            initial,
+        );
+        assert_eq!(value, 0, "32-bit ADCX zero-extends its destination");
+        assert_ne!(got_flags & CF, 0);
+
+        let (value, got_flags) = exec_x86_rax_op(
+            OpKind::X86Adx {
+                dst: rax,
+                src1: rax,
+                src2: rax,
+                width: OpWidth::W64,
+                kind: X86AdxKind::Adox,
+                flags: FlagUpdate::None,
+            },
+            7,
+            0,
+            initial,
+        );
+        assert_eq!(
+            value, 15,
+            "suppressed-output alias reads both sources before writing"
+        );
+        assert_eq!(
+            got_flags, initial,
+            "suppressed ADX output preserves interpreter flags"
+        );
     }
 
     #[test]

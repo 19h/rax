@@ -1010,6 +1010,131 @@ fn jit_bls_family_preserves_width_aliases_and_exact_flag_modes() {
     }
 }
 
+/// ADX carry chains read and update only CF (ADCX) or OF (ADOX). The loop and
+/// split-final-block shapes force native-region execution while retaining exact
+/// final flags, and APX NDD additionally verifies independent source/destination
+/// operands survive the two-operand host encoding.
+#[test]
+fn jit_adcx_adox_preserve_carry_chains_flags_and_apx_ndd_sources() {
+    if !std::is_x86_feature_detected!("adx") {
+        return;
+    }
+    const STATUS_MASK: u64 = 0x08D5;
+
+    for (name, instruction, apx, initial, expected) in [
+        (
+            "legacy adcx rax,rbx",
+            &[0x66, 0x48, 0x0F, 0x38, 0xF6, 0xC3][..],
+            false,
+            (u64::MAX, 0, 0xA5A5, 0xCD7),
+            (0, 0, 0xA5A5, 0x45),
+        ),
+        (
+            "APX NDD adcx r8,rax,rbx",
+            &[0x62, 0xF4, 0xBD, 0x18, 0x66, 0xC3][..],
+            true,
+            (u64::MAX, 0, 0xDEAD, 0xCD7),
+            (u64::MAX, 0, 0, 0x45),
+        ),
+    ] {
+        // ADX; dec r9d; jnz ADX; hlt. r9d=1 executes ADX once; DEC then
+        // materializes deterministic PF/ZF while preserving ADCX's CF.
+        let mut code = instruction.to_vec();
+        code.extend_from_slice(&[0x41, 0xFF, 0xC9]);
+        let backedge = -i8::try_from(instruction.len() + 5).unwrap();
+        code.extend_from_slice(&[0x75, backedge as u8, 0xF4]);
+
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            vcpu.set_apx_enabled(apx);
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = initial.0;
+            regs.rbx = initial.1;
+            regs.r8 = initial.2;
+            regs.r9 = 1;
+            regs.rflags = initial.3;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let reference = (!apx).then(|| {
+            let mut interp = make_vcpu_code(&code);
+            setup(&mut interp);
+            run_interp(&mut interp);
+            interp.get_regs().unwrap()
+        });
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("JIT {name}: {error:?}")),
+            "{name} loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+        let after = jit.get_regs().unwrap();
+
+        if let Some(reference) = reference {
+            assert_eq!(after.rax, reference.rax, "{name}: rax vs interpreter");
+            assert_eq!(after.rbx, reference.rbx, "{name}: rbx vs interpreter");
+            assert_eq!(
+                after.rflags & STATUS_MASK,
+                reference.rflags & STATUS_MASK,
+                "{name}: status vs interpreter"
+            );
+        }
+        assert_eq!(
+            after.rax, expected.0,
+            "{name}: source 1 / legacy destination"
+        );
+        assert_eq!(after.rbx, expected.1, "{name}: source 2 preserved");
+        assert_eq!(after.r8, expected.2, "{name}: APX destination");
+        assert_eq!(after.r9 & u64::from(u32::MAX), 0, "{name}: loop count");
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            expected.3,
+            "{name}: exact status"
+        );
+    }
+
+    // dec r9d; jnz repeat; mov r10d,0x7fffffff; add r10d,1;
+    // adox rax,rbx; jmp hlt; repeat: jmp dec; hlt.
+    // The terminal ADD supplies OF=1, PF=1, AF=1, SF=1. ADOX consumes OF,
+    // produces 9 with OF=0, and must preserve the other status bits (0x94).
+    let code = [
+        0x41, 0xFF, 0xC9, 0x75, 0x12, 0x41, 0xBA, 0xFF, 0xFF, 0xFF, 0x7F, 0x41, 0x83, 0xC2, 0x01,
+        0xF3, 0x48, 0x0F, 0x38, 0xF6, 0xC3, 0xEB, 0x02, 0xEB, 0xE7, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 5;
+        regs.rbx = 3;
+        regs.r9 = 1;
+        regs.r10 = 0;
+        regs.rflags = 0x2;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interp = make_vcpu_code(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+    let reference = interp.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block().expect("JIT terminal ADOX"),
+        "terminal ADOX region must enter the native tier"
+    );
+    run_interp(&mut jit);
+    let after = jit.get_regs().unwrap();
+    assert_eq!(after.rax, 9);
+    assert_eq!(after.rbx, 3);
+    assert_eq!(after.r10 & u64::from(u32::MAX), 0x8000_0000);
+    assert_eq!(after.rflags & STATUS_MASK, 0x94);
+    assert_eq!(after.rax, reference.rax);
+    assert_eq!(after.r10, reference.r10);
+    assert_eq!(after.rflags & STATUS_MASK, reference.rflags & STATUS_MASK);
+}
+
 /// Register-only BMI1/BMI2 operations are native-JIT eligible at both scalar
 /// widths. The matrix covers zero extension, boundary counts, defined versus
 /// preserved flags, and destination aliasing with every explicit source role.

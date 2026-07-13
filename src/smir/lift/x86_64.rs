@@ -8,10 +8,11 @@ use std::collections::HashSet;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind, X86OpHint,
-    X86RepMode, X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap, X86X87ArithmeticDestination,
-    X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
-    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+    OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
+    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap,
+    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
+    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
+    X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -191,29 +192,6 @@ pub struct X86Prefix {
 enum VecEncodingKind {
     Vex,
     Evex,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum AdxKind {
-    Adcx,
-    Adox,
-}
-
-impl AdxKind {
-    fn carry_cond(self) -> Condition {
-        match self {
-            // x86 condition B/C maps to the carry flag.
-            AdxKind::Adcx => Condition::Ult,
-            AdxKind::Adox => Condition::Overflow,
-        }
-    }
-
-    fn flag_bit(self) -> u8 {
-        match self {
-            AdxKind::Adcx => 0,
-            AdxKind::Adox => 11,
-        }
-    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -17108,14 +17086,14 @@ impl X86_64Lifter {
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
         let kind = match prefix.rep_prefix {
-            Some(0xF3) => AdxKind::Adox,
+            Some(0xF3) => X86AdxKind::Adox,
             Some(_) => {
                 return Err(LiftError::InvalidEncoding {
                     addr: pc,
                     bytes: bytes.to_vec(),
                 });
             }
-            None if prefix.operand_size_override => AdxKind::Adcx,
+            None if prefix.operand_size_override => X86AdxKind::Adcx,
             None => {
                 return Err(LiftError::InvalidEncoding {
                     addr: pc,
@@ -17138,7 +17116,7 @@ impl X86_64Lifter {
         prefix: &X86Prefix,
         pc: u64,
         ctx: &mut LiftContext,
-        kind: AdxKind,
+        kind: X86AdxKind,
         width: OpWidth,
         dst_override: Option<VReg>,
     ) -> Result<LiftResult, LiftError> {
@@ -17173,180 +17151,27 @@ impl X86_64Lifter {
             self.gpr(modrm.rm)
         };
         let dst = dst_override.unwrap_or(src1);
-        self.push_adx_ops(&mut ops, pc, ctx, dst, src1, src2, width, kind);
+        let flags = FlagUpdate::Specific(match kind {
+            X86AdxKind::Adcx => FlagSet::CF,
+            X86AdxKind::Adox => FlagSet::OF,
+        });
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86Adx {
+                dst,
+                src1,
+                src2,
+                width,
+                kind,
+                flags,
+            },
+        ));
 
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
         ))
-    }
-
-    fn push_adx_ops(
-        &self,
-        ops: &mut Vec<SmirOp>,
-        pc: u64,
-        ctx: &mut LiftContext,
-        dst: VReg,
-        src1: VReg,
-        src2: VReg,
-        width: OpWidth,
-        kind: AdxKind,
-    ) {
-        let old_flags = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::ReadFlags { dst: old_flags },
-        ));
-
-        let carry_in = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::SetCC {
-                dst: carry_in,
-                cond: kind.carry_cond(),
-                width: OpWidth::W64,
-            },
-        ));
-
-        let lhs = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Mov {
-                dst: lhs,
-                src: SrcOperand::Reg(src1),
-                width,
-            },
-        ));
-
-        let sum = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Add {
-                dst: sum,
-                src1: lhs,
-                src2: SrcOperand::Reg(src2),
-                width,
-                flags: FlagUpdate::None,
-            },
-        ));
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Add {
-                dst,
-                src1: sum,
-                src2: SrcOperand::Reg(carry_in),
-                width,
-                flags: FlagUpdate::None,
-            },
-        ));
-
-        let carry_from_add = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Cmp {
-                src1: sum,
-                src2: SrcOperand::Reg(lhs),
-                width,
-            },
-        ));
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::SetCC {
-                dst: carry_from_add,
-                cond: Condition::Ult,
-                width: OpWidth::W64,
-            },
-        ));
-
-        let carry_from_cin = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Cmp {
-                src1: dst,
-                src2: SrcOperand::Reg(sum),
-                width,
-            },
-        ));
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::SetCC {
-                dst: carry_from_cin,
-                cond: Condition::Ult,
-                width: OpWidth::W64,
-            },
-        ));
-
-        let carry_out = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Or {
-                dst: carry_out,
-                src1: carry_from_add,
-                src2: SrcOperand::Reg(carry_from_cin),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            },
-        ));
-
-        let flag_value = if kind.flag_bit() == 0 {
-            carry_out
-        } else {
-            let shifted = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Shl {
-                    dst: shifted,
-                    src: carry_out,
-                    amount: SrcOperand::Imm(kind.flag_bit() as i64),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            shifted
-        };
-
-        let flag_mask = 1i64 << kind.flag_bit();
-        let cleared_flags = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::And {
-                dst: cleared_flags,
-                src1: old_flags,
-                src2: SrcOperand::Imm(!flag_mask),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            },
-        ));
-
-        let new_flags = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Or {
-                dst: new_flags,
-                src1: cleared_flags,
-                src2: SrcOperand::Reg(flag_value),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            },
-        ));
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::WriteFlags { src: new_flags },
-        ));
     }
 
     fn lift_rao_int_0f38(
@@ -30875,8 +30700,8 @@ impl X86_64Lifter {
         }
 
         let kind = match prefix.pp {
-            1 => AdxKind::Adcx,
-            2 => AdxKind::Adox,
+            1 => X86AdxKind::Adcx,
+            2 => X86AdxKind::Adox,
             _ => {
                 return Err(LiftError::InvalidEncoding {
                     addr: pc,
@@ -37366,178 +37191,35 @@ mod tests {
     fn assert_adx_sequence(
         result: &LiftResult,
         start: usize,
-        kind: AdxKind,
+        kind: X86AdxKind,
         dst: VReg,
         src1: VReg,
         src2: VReg,
         width: OpWidth,
     ) {
         let ops = &result.ops[start..];
-        assert_eq!(ops.len(), if kind == AdxKind::Adcx { 13 } else { 14 });
-
-        let old_flags = match &ops[0].kind {
-            OpKind::ReadFlags { dst } => *dst,
-            other => panic!("expected ADX ReadFlags, got {other:?}"),
-        };
-        let carry_in = match &ops[1].kind {
-            OpKind::SetCC {
-                dst,
-                cond,
-                width: OpWidth::W64,
-            } => {
-                assert_eq!(*cond, kind.carry_cond());
-                *dst
-            }
-            other => panic!("expected ADX carry-in SetCC, got {other:?}"),
-        };
-        let lhs = match &ops[2].kind {
-            OpKind::Mov {
-                dst,
-                src: SrcOperand::Reg(src),
-                width: got_width,
-            } => {
-                assert_eq!(*src, src1);
-                assert_eq!(*got_width, width);
-                *dst
-            }
-            other => panic!("expected ADX lhs copy, got {other:?}"),
-        };
-        let sum = match &ops[3].kind {
-            OpKind::Add {
-                dst,
-                src1: got_src1,
-                src2: SrcOperand::Reg(got_src2),
-                width: got_width,
-                flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*got_src1, lhs);
-                assert_eq!(*got_src2, src2);
-                assert_eq!(*got_width, width);
-                *dst
-            }
-            other => panic!("expected ADX source add, got {other:?}"),
-        };
-        match &ops[4].kind {
-            OpKind::Add {
+        assert_eq!(ops.len(), 1);
+        match &ops[0].kind {
+            OpKind::X86Adx {
                 dst: got_dst,
                 src1: got_src1,
-                src2: SrcOperand::Reg(got_src2),
+                src2: got_src2,
                 width: got_width,
-                flags: FlagUpdate::None,
+                kind: got_kind,
+                flags,
             } => {
                 assert_eq!(*got_dst, dst);
-                assert_eq!(*got_src1, sum);
-                assert_eq!(*got_src2, carry_in);
+                assert_eq!(*got_src1, src1);
+                assert_eq!(*got_src2, src2);
                 assert_eq!(*got_width, width);
+                assert_eq!(*got_kind, kind);
+                let expected_flag = match kind {
+                    X86AdxKind::Adcx => FlagSet::CF,
+                    X86AdxKind::Adox => FlagSet::OF,
+                };
+                assert_eq!(*flags, FlagUpdate::Specific(expected_flag));
             }
-            other => panic!("expected ADX carry add, got {other:?}"),
-        }
-        match &ops[5].kind {
-            OpKind::Cmp {
-                src1: got_src1,
-                src2: SrcOperand::Reg(got_src2),
-                width: got_width,
-            } => {
-                assert_eq!(*got_src1, sum);
-                assert_eq!(*got_src2, lhs);
-                assert_eq!(*got_width, width);
-            }
-            other => panic!("expected ADX first carry Cmp, got {other:?}"),
-        }
-        let carry_from_add = match &ops[6].kind {
-            OpKind::SetCC {
-                dst,
-                cond: Condition::Ult,
-                width: OpWidth::W64,
-            } => *dst,
-            other => panic!("expected ADX first carry SetCC, got {other:?}"),
-        };
-        match &ops[7].kind {
-            OpKind::Cmp {
-                src1: got_src1,
-                src2: SrcOperand::Reg(got_src2),
-                width: got_width,
-            } => {
-                assert_eq!(*got_src1, dst);
-                assert_eq!(*got_src2, sum);
-                assert_eq!(*got_width, width);
-            }
-            other => panic!("expected ADX carry-in Cmp, got {other:?}"),
-        }
-        let carry_from_cin = match &ops[8].kind {
-            OpKind::SetCC {
-                dst,
-                cond: Condition::Ult,
-                width: OpWidth::W64,
-            } => *dst,
-            other => panic!("expected ADX carry-in SetCC, got {other:?}"),
-        };
-        let carry_out = match &ops[9].kind {
-            OpKind::Or {
-                dst,
-                src1: got_src1,
-                src2: SrcOperand::Reg(got_src2),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*got_src1, carry_from_add);
-                assert_eq!(*got_src2, carry_from_cin);
-                *dst
-            }
-            other => panic!("expected ADX carry merge, got {other:?}"),
-        };
-
-        let (flag_value, flag_patch_idx) = if kind == AdxKind::Adcx {
-            (carry_out, 10)
-        } else {
-            let shifted = match &ops[10].kind {
-                OpKind::Shl {
-                    dst,
-                    src,
-                    amount: SrcOperand::Imm(11),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                } => {
-                    assert_eq!(*src, carry_out);
-                    *dst
-                }
-                other => panic!("expected ADOX OF shift, got {other:?}"),
-            };
-            (shifted, 11)
-        };
-
-        let flag_mask = 1i64 << kind.flag_bit();
-        let cleared_flags = match &ops[flag_patch_idx].kind {
-            OpKind::And {
-                dst,
-                src1,
-                src2: SrcOperand::Imm(mask),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*src1, old_flags);
-                assert_eq!(*mask, !flag_mask);
-                *dst
-            }
-            other => panic!("expected ADX old flag clear, got {other:?}"),
-        };
-        let new_flags = match &ops[flag_patch_idx + 1].kind {
-            OpKind::Or {
-                dst,
-                src1,
-                src2: SrcOperand::Reg(src2),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*src1, cleared_flags);
-                assert_eq!(*src2, flag_value);
-                *dst
-            }
-            other => panic!("expected ADX new flag merge, got {other:?}"),
-        };
-        match &ops[flag_patch_idx + 2].kind {
-            OpKind::WriteFlags { src } => assert_eq!(*src, new_flags),
-            other => panic!("expected ADX WriteFlags, got {other:?}"),
+            other => panic!("expected one exact X86Adx op, got {other:?}"),
         }
     }
 
@@ -37547,31 +37229,31 @@ mod tests {
             (
                 &[0x66, 0x0F, 0x38, 0xF6, 0xC3][..],
                 "adcxl",
-                AdxKind::Adcx,
+                X86AdxKind::Adcx,
                 OpWidth::W32,
             ),
             (
                 &[0x66, 0x48, 0x0F, 0x38, 0xF6, 0xC3][..],
                 "adcxq",
-                AdxKind::Adcx,
+                X86AdxKind::Adcx,
                 OpWidth::W64,
             ),
             (
                 &[0xF3, 0x0F, 0x38, 0xF6, 0xC3][..],
                 "adoxl",
-                AdxKind::Adox,
+                X86AdxKind::Adox,
                 OpWidth::W32,
             ),
             (
                 &[0xF3, 0x48, 0x0F, 0x38, 0xF6, 0xC3][..],
                 "adoxq",
-                AdxKind::Adox,
+                X86AdxKind::Adox,
                 OpWidth::W64,
             ),
             (
                 &[0x66, 0xF3, 0x0F, 0x38, 0xF6, 0xC3][..],
                 "66+f3 adoxl",
-                AdxKind::Adox,
+                X86AdxKind::Adox,
                 OpWidth::W32,
             ),
         ] {
@@ -37589,7 +37271,7 @@ mod tests {
         assert_adx_sequence(
             &result,
             0,
-            AdxKind::Adcx,
+            X86AdxKind::Adcx,
             x86_gpr(8),
             x86_gpr(0),
             x86_gpr(3),
@@ -37602,7 +37284,7 @@ mod tests {
         assert_adx_sequence(
             &result,
             0,
-            AdxKind::Adcx,
+            X86AdxKind::Adcx,
             x86_gpr(8),
             x86_gpr(0),
             x86_gpr(3),
@@ -37636,7 +37318,7 @@ mod tests {
         assert_adx_sequence(
             &result,
             1,
-            AdxKind::Adox,
+            X86AdxKind::Adox,
             x86_gpr(20),
             x86_gpr(19),
             mem_src,

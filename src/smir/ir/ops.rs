@@ -367,6 +367,15 @@ pub enum X86BlsKind {
     Blsi,
 }
 
+/// ADX carry-chain selected by the ADCX/ADOX mandatory prefix.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86AdxKind {
+    /// Read and write CF.
+    Adcx,
+    /// Read and write OF.
+    Adox,
+}
+
 // ============================================================================
 // OpKind Enum
 // ============================================================================
@@ -876,6 +885,16 @@ pub enum OpKind {
         src: VReg,
         width: OpWidth,
         kind: X86BlsKind,
+        flags: FlagUpdate,
+    },
+
+    /// x86 ADX addition using CF (`ADCX`) or OF (`ADOX`) as an independent carry chain.
+    X86Adx {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: OpWidth,
+        kind: X86AdxKind,
         flags: FlagUpdate,
     },
 
@@ -3746,6 +3765,7 @@ impl OpKind {
             | OpKind::Bextr { dst, .. }
             | OpKind::Bzhi { dst, .. }
             | OpKind::X86Bls { dst, .. }
+            | OpKind::X86Adx { dst, .. }
             | OpKind::Pdep { dst, .. }
             | OpKind::Pext { dst, .. }
             | OpKind::Clz { dst, .. }

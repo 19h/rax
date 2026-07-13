@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::smir::ir::flags::{FlagSet, FlagState, FlagUpdate};
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86OpHint, X86RepMode, X86StringKind, X86VecAlign, X86X87DataKind,
+    OpKind, SmirOp, X86AdxKind, X86OpHint, X86RepMode, X86StringKind, X86VecAlign, X86X87DataKind,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, BlockId, HexagonReg, MemWidth, OpWidth, SignExtend, SrcOperand, VReg,
@@ -166,6 +166,7 @@ fn op_out_width(kind: &OpKind) -> Option<OpWidth> {
         | OpKind::Popcnt { width, .. }
         | OpKind::X86Count { width, .. }
         | OpKind::X86Bls { width, .. }
+        | OpKind::X86Adx { width, .. }
         | OpKind::Bswap { width, .. }
         | OpKind::Bt { width, .. }
         | OpKind::Bts { width, .. }
@@ -1896,6 +1897,7 @@ impl OpKind {
             | OpKind::Bextr { flags, .. }
             | OpKind::Bzhi { flags, .. }
             | OpKind::X86Bls { flags, .. }
+            | OpKind::X86Adx { flags, .. }
             | OpKind::MulU { flags, .. }
             | OpKind::MulS { flags, .. } => Some(flags),
             _ => None,
@@ -1926,6 +1928,7 @@ impl OpKind {
             | OpKind::Bextr { flags, .. }
             | OpKind::Bzhi { flags, .. }
             | OpKind::X86Bls { flags, .. }
+            | OpKind::X86Adx { flags, .. }
             | OpKind::MulU { flags, .. }
             | OpKind::MulS { flags, .. } => flags.as_set(),
 
@@ -2017,6 +2020,11 @@ impl OpKind {
             OpKind::Adc { .. } | OpKind::Sbb { .. } | OpKind::Rcl { .. } | OpKind::Rcr { .. } => {
                 FlagSet::CF
             }
+
+            OpKind::X86Adx { kind, .. } => match kind {
+                X86AdxKind::Adcx => FlagSet::CF,
+                X86AdxKind::Adox => FlagSet::OF,
+            },
 
             // Conditional move reads flags based on condition
             OpKind::CMove { cond, .. } | OpKind::SetCC { cond, .. } => {
@@ -2130,6 +2138,11 @@ impl OpKind {
             }
 
             OpKind::X86Bls { src, .. } => result.push(*src),
+
+            OpKind::X86Adx { src1, src2, .. } => {
+                result.push(*src1);
+                result.push(*src2);
+            }
 
             OpKind::Pdep { src, mask, .. } | OpKind::Pext { src, mask, .. } => {
                 result.push(*src);
@@ -3641,7 +3654,8 @@ impl OpKind {
 mod tests {
     use super::*;
     use crate::smir::ir::ops::{
-        OpKind, X86BlsKind, X86CacheControlKind, X86CountKind, X86X87ControlKind, X86X87DataKind,
+        OpKind, X86AdxKind, X86BlsKind, X86CacheControlKind, X86CountKind, X86X87ControlKind,
+        X86X87DataKind,
     };
     use crate::smir::ir::types::{
         Avx10FP16Op, Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType, X86AesOp,
@@ -3755,6 +3769,45 @@ mod tests {
                 ..
             }
         ));
+    }
+
+    #[test]
+    fn x86_adx_metadata_tracks_sources_carry_chain_and_dead_output() {
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let src1 = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let src2 = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        for (kind, output) in [
+            (X86AdxKind::Adcx, FlagSet::CF),
+            (X86AdxKind::Adox, FlagSet::OF),
+        ] {
+            let adx = OpKind::X86Adx {
+                dst,
+                src1,
+                src2,
+                width: OpWidth::W64,
+                kind,
+                flags: FlagUpdate::Specific(output),
+            };
+            assert_eq!(adx.dests(), vec![dst]);
+            assert_eq!(adx.source_vregs(), vec![src1, src2]);
+            assert_eq!(adx.flags_read(), output);
+            assert_eq!(adx.flags_written(), output);
+            assert_eq!(adx.flags_must_write(), output);
+            assert_eq!(op_out_width(&adx), Some(OpWidth::W64));
+
+            let mut block = SmirBlock::new(BlockId(0), 0x1000);
+            block.push_op(make_op(0, adx));
+            block.set_terminator(Terminator::Return { values: vec![] });
+            assert_eq!(dead_flag_elimination(&mut block), 1);
+            assert!(matches!(
+                block.ops[0].kind,
+                OpKind::X86Adx {
+                    flags: FlagUpdate::None,
+                    ..
+                }
+            ));
+            assert_eq!(block.ops[0].kind.flags_read(), output);
+        }
     }
 
     #[test]

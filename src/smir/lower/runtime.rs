@@ -964,14 +964,14 @@ pub fn is_native_clobber_safe_excluding(
 
 /// Verify host support for scalar x86 extensions emitted directly by the
 /// identity-register native JIT. Generic scalar lowerings use baseline x86-64;
-/// Encoding-hinted MULX, scalar BMI operations, and native count operations
+/// Encoding-hinted MULX, scalar BMI/ADX operations, and native count operations
 /// require additional CPUID features. Excluded exit blocks do not execute
 /// natively and therefore do not contribute feature requirements.
 pub fn x86_native_scalar_features_supported_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
 ) -> bool {
-    let (needs_bmi2, needs_bmi1, needs_lzcnt, needs_popcnt) =
+    let (needs_bmi2, needs_bmi1, needs_lzcnt, needs_popcnt, needs_adx) =
         x86_native_scalar_feature_requirements_excluding(func, excluded);
 
     #[cfg(target_arch = "x86_64")]
@@ -980,18 +980,19 @@ pub fn x86_native_scalar_features_supported_excluding(
             && (!needs_bmi1 || std::is_x86_feature_detected!("bmi1"))
             && (!needs_lzcnt || std::is_x86_feature_detected!("lzcnt"))
             && (!needs_popcnt || std::is_x86_feature_detected!("popcnt"))
+            && (!needs_adx || std::is_x86_feature_detected!("adx"))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
     {
-        !(needs_bmi2 || needs_bmi1 || needs_lzcnt || needs_popcnt)
+        !(needs_bmi2 || needs_bmi1 || needs_lzcnt || needs_popcnt || needs_adx)
     }
 }
 
 fn x86_native_scalar_feature_requirements_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
-) -> (bool, bool, bool, bool) {
+) -> (bool, bool, bool, bool, bool) {
     use crate::smir::ir::ops::X86OpHint;
 
     use crate::smir::ir::ops::{OpKind, X86CountKind};
@@ -1000,6 +1001,7 @@ fn x86_native_scalar_feature_requirements_excluding(
     let mut needs_bmi1 = false;
     let mut needs_lzcnt = false;
     let mut needs_popcnt = false;
+    let mut needs_adx = false;
     for op in func
         .blocks
         .iter()
@@ -1037,8 +1039,9 @@ fn x86_native_scalar_feature_requirements_excluding(
                     ..
                 }
         );
+        needs_adx |= matches!(op.kind, OpKind::X86Adx { .. });
     }
-    (needs_bmi2, needs_bmi1, needs_lzcnt, needs_popcnt)
+    (needs_bmi2, needs_bmi1, needs_lzcnt, needs_popcnt, needs_adx)
 }
 
 /// Return whether `op` is one of the register-only x86 vector operations whose
@@ -2123,7 +2126,7 @@ fn x86_flags_before_op(
 
 fn x86_flag_uses(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::FlagSet {
     use crate::smir::ir::flags::{FlagSet, FlagState};
-    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::ops::{OpKind, X86AdxKind};
 
     match op {
         OpKind::TestCondition { cond, .. }
@@ -2132,6 +2135,10 @@ fn x86_flag_uses(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::F
         OpKind::Adc { .. } | OpKind::Sbb { .. } | OpKind::Rcl { .. } | OpKind::Rcr { .. } => {
             FlagSet::CF
         }
+        OpKind::X86Adx { kind, .. } => match kind {
+            X86AdxKind::Adcx => FlagSet::CF,
+            X86AdxKind::Adox => FlagSet::OF,
+        },
         _ => FlagSet::EMPTY,
     }
 }
@@ -2169,6 +2176,7 @@ fn x86_flag_defs(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::F
         | OpKind::Bextr { flags, .. }
         | OpKind::Bzhi { flags, .. }
         | OpKind::X86Bls { flags, .. }
+        | OpKind::X86Adx { flags, .. }
         | OpKind::X86Count { flags, .. } => flags.as_set(),
         OpKind::Cmp { .. } | OpKind::Test { .. } => FlagSet::ALL_X86,
         _ => FlagSet::EMPTY,
@@ -2179,7 +2187,24 @@ fn x86_block_preserves_live_flags(
     block: &crate::smir::ir::SmirBlock,
     mut live: crate::smir::ir::flags::FlagSet,
 ) -> bool {
+    use crate::smir::ir::flags::{FlagSet, FlagUpdate};
+    use crate::smir::ir::ops::{OpKind, X86AdxKind};
+
     for op in block.ops.iter().rev() {
+        if let OpKind::X86Adx {
+            kind,
+            flags: FlagUpdate::None,
+            ..
+        } = &op.kind
+        {
+            let native_output = match kind {
+                X86AdxKind::Adcx => FlagSet::CF,
+                X86AdxKind::Adox => FlagSet::OF,
+            };
+            if !live.intersection(native_output).is_empty() {
+                return false;
+            }
+        }
         if x86_native_op_would_clobber_preserved_flags(&op.kind) && !live.is_empty() {
             return false;
         }
@@ -2243,7 +2268,10 @@ fn block_is_clobber_safe(
         // families receive exact shape checks below and, where needed, separate
         // host-feature gates before execution.
         let mem_ok = allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. });
-        let scalar_ok = matches!(op.kind, OpKind::AndNot { .. } | OpKind::X86Bls { .. });
+        let scalar_ok = matches!(
+            op.kind,
+            OpKind::AndNot { .. } | OpKind::X86Bls { .. } | OpKind::X86Adx { .. }
+        );
         let vector_ok = is_x86_native_vector_op(&op.kind);
         if !op.is_jit_safe() && !mem_ok && !scalar_ok && !vector_ok {
             return false;
@@ -2282,6 +2310,9 @@ fn block_is_clobber_safe(
                 | OpKind::Pext { .. }
         ) && !x86_bmi_shape_valid(&op.kind)
         {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86Adx { .. }) && !x86_adx_shape_valid(&op.kind) {
             return false;
         }
         if matches!(
@@ -2534,6 +2565,55 @@ fn x86_bmi_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         } => native_gpr(dst) && native_gpr(src) && native_gpr(mask),
         _ => false,
     }
+}
+
+fn x86_adx_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::flags::{FlagSet, FlagUpdate};
+    use crate::smir::ir::ops::{OpKind, X86AdxKind};
+    use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
+
+    let native_gpr = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Rax
+                    | X86Reg::Rcx
+                    | X86Reg::Rdx
+                    | X86Reg::Rbx
+                    | X86Reg::Rsi
+                    | X86Reg::Rdi
+                    | X86Reg::R8
+                    | X86Reg::R9
+                    | X86Reg::R10
+                    | X86Reg::R11
+                    | X86Reg::R12
+                    | X86Reg::R13
+                    | X86Reg::R14
+                    | X86Reg::R15
+            ))
+        )
+    };
+
+    let OpKind::X86Adx {
+        dst,
+        src1,
+        src2,
+        width: OpWidth::W32 | OpWidth::W64,
+        kind,
+        flags,
+    } = op
+    else {
+        return false;
+    };
+    let output = match kind {
+        X86AdxKind::Adcx => FlagSet::CF,
+        X86AdxKind::Adox => FlagSet::OF,
+    };
+
+    native_gpr(dst)
+        && native_gpr(src1)
+        && native_gpr(src2)
+        && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(output))
 }
 
 fn x86_count_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
@@ -3024,7 +3104,7 @@ mod jit_gate_tests {
     use super::*;
 
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
-    use crate::smir::ir::ops::{OpKind, X86BlsKind, X86CountKind, X86OpHint};
+    use crate::smir::ir::ops::{OpKind, X86AdxKind, X86BlsKind, X86CountKind, X86OpHint};
     use crate::smir::ir::types::{
         Address, ArchReg, ArmReg, FpPrecision, FunctionId, MemWidth, OpWidth, ShiftOp, SignExtend,
         SrcOperand, VReg, VecElementType, VecWidth, VirtualId, X86AesOp, X86Reg,
@@ -4364,9 +4444,9 @@ mod jit_gate_tests {
             },
         ];
         for (op, expected) in valid.iter().cloned().zip([
-            (false, false, false, true),
-            (false, true, false, false),
-            (false, false, true, false),
+            (false, false, false, true, false),
+            (false, true, false, false, false),
+            (false, false, true, false, false),
         ]) {
             let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
             builder.push_op(0x1000, op);
@@ -4397,7 +4477,7 @@ mod jit_gate_tests {
                     kind: X86CountKind::Popcnt,
                     flags: FlagUpdate::All,
                 },
-                (false, false, false, true),
+                (false, false, false, true, false),
             ),
             (
                 OpKind::X86Count {
@@ -4407,7 +4487,7 @@ mod jit_gate_tests {
                     kind: X86CountKind::Tzcnt,
                     flags: FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF)),
                 },
-                (false, true, false, false),
+                (false, true, false, false, false),
             ),
             (
                 OpKind::X86Count {
@@ -4417,7 +4497,7 @@ mod jit_gate_tests {
                     kind: X86CountKind::Lzcnt,
                     flags: FlagUpdate::None,
                 },
-                (false, false, true, false),
+                (false, false, true, false, false),
             ),
         ];
         for (op, expected) in &x86_valid {
@@ -4580,7 +4660,7 @@ mod jit_gate_tests {
                     &builder.finish(),
                     &std::collections::HashMap::new()
                 ),
-                (false, false, false, false),
+                (false, false, false, false, false),
                 "generic lowering must not require host BMI1"
             );
         }
@@ -4684,7 +4764,7 @@ mod jit_gate_tests {
                     &builder.finish(),
                     &std::collections::HashMap::new()
                 ),
-                (false, true, false, false),
+                (false, true, false, false, false),
                 "native BLS encoding requires host BMI1"
             );
         }
@@ -4724,6 +4804,113 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn x86_adx_gate_tracks_cpuid_shapes_architecture_and_suppressed_flag_liveness() {
+        for (kind, output) in [
+            (X86AdxKind::Adcx, FlagSet::CF),
+            (X86AdxKind::Adox, FlagSet::OF),
+        ] {
+            let op = OpKind::X86Adx {
+                dst: x86(X86Reg::R8),
+                src1: x86(X86Reg::Rax),
+                src2: x86(X86Reg::Rbx),
+                width: OpWidth::W64,
+                kind,
+                flags: FlagUpdate::Specific(output),
+            };
+            assert!(!op.is_jit_safe(), "ADX remains scoped to the x86 gate");
+            assert!(x86_gate(op.clone()), "valid ADX shape must JIT");
+            assert!(!aarch64_gate(vec![op.clone()], false));
+
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+            assert_eq!(
+                x86_native_scalar_feature_requirements_excluding(
+                    &func,
+                    &std::collections::HashMap::new()
+                ),
+                (false, false, false, false, true)
+            );
+            #[cfg(target_arch = "x86_64")]
+            assert_eq!(
+                x86_native_scalar_features_supported_excluding(
+                    &func,
+                    &std::collections::HashMap::new()
+                ),
+                std::is_x86_feature_detected!("adx")
+            );
+        }
+
+        let suppressed = OpKind::X86Adx {
+            dst: x86(X86Reg::R8),
+            src1: x86(X86Reg::Rax),
+            src2: x86(X86Reg::Rbx),
+            width: OpWidth::W32,
+            kind: X86AdxKind::Adcx,
+            flags: FlagUpdate::None,
+        };
+        assert!(
+            !x86_gate(suppressed.clone()),
+            "suppressed native CF output cannot escape a region"
+        );
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(0x1000, suppressed);
+        builder.push_op(
+            0x1001,
+            OpKind::Xor {
+                dst: x86(X86Reg::Rcx),
+                src1: x86(X86Reg::Rcx),
+                src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        assert!(
+            is_native_clobber_safe(&builder.finish()),
+            "suppressed native CF output is safe when overwritten before observation"
+        );
+
+        for malformed in [
+            OpKind::X86Adx {
+                dst: x86(X86Reg::Rax),
+                src1: x86(X86Reg::Rcx),
+                src2: x86(X86Reg::Rdx),
+                width: OpWidth::W16,
+                kind: X86AdxKind::Adcx,
+                flags: FlagUpdate::Specific(FlagSet::CF),
+            },
+            OpKind::X86Adx {
+                dst: x86(X86Reg::Rsp),
+                src1: x86(X86Reg::Rcx),
+                src2: x86(X86Reg::Rdx),
+                width: OpWidth::W64,
+                kind: X86AdxKind::Adox,
+                flags: FlagUpdate::Specific(FlagSet::OF),
+            },
+            OpKind::X86Adx {
+                dst: x86(X86Reg::Rax),
+                src1: VReg::Virtual(VirtualId(0)),
+                src2: x86(X86Reg::Rdx),
+                width: OpWidth::W64,
+                kind: X86AdxKind::Adcx,
+                flags: FlagUpdate::Specific(FlagSet::CF),
+            },
+            OpKind::X86Adx {
+                dst: x86(X86Reg::Rax),
+                src1: x86(X86Reg::Rcx),
+                src2: x86(X86Reg::Rdx),
+                width: OpWidth::W64,
+                kind: X86AdxKind::Adox,
+                flags: FlagUpdate::Specific(FlagSet::CF),
+            },
+        ] {
+            assert!(!x86_gate(malformed), "malformed ADX shape must deopt");
+        }
+    }
+
+    #[test]
     fn bmi_gate_and_feature_requirements_cover_exact_native_shapes() {
         let bextr_flags = FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF);
         let bzhi_flags = FlagSet::CF
@@ -4739,7 +4926,7 @@ mod jit_gate_tests {
                     width: OpWidth::W32,
                     flags: FlagUpdate::Specific(bextr_flags),
                 },
-                (false, true, false, false),
+                (false, true, false, false, false),
             ),
             (
                 OpKind::Bextr {
@@ -4749,7 +4936,7 @@ mod jit_gate_tests {
                     width: OpWidth::W64,
                     flags: FlagUpdate::None,
                 },
-                (false, true, false, false),
+                (false, true, false, false, false),
             ),
             (
                 OpKind::Bzhi {
@@ -4759,7 +4946,7 @@ mod jit_gate_tests {
                     width: OpWidth::W32,
                     flags: FlagUpdate::Specific(bzhi_flags),
                 },
-                (true, false, false, false),
+                (true, false, false, false, false),
             ),
             (
                 OpKind::Bzhi {
@@ -4769,7 +4956,7 @@ mod jit_gate_tests {
                     width: OpWidth::W64,
                     flags: FlagUpdate::None,
                 },
-                (true, false, false, false),
+                (true, false, false, false, false),
             ),
             (
                 OpKind::Pdep {
@@ -4778,7 +4965,7 @@ mod jit_gate_tests {
                     mask: x86(X86Reg::R13),
                     width: OpWidth::W32,
                 },
-                (true, false, false, false),
+                (true, false, false, false, false),
             ),
             (
                 OpKind::Pext {
@@ -4787,7 +4974,7 @@ mod jit_gate_tests {
                     mask: x86(X86Reg::R14),
                     width: OpWidth::W64,
                 },
-                (true, false, false, false),
+                (true, false, false, false, false),
             ),
         ];
 
