@@ -3826,7 +3826,7 @@ impl RiscVLifter {
             (false, false) => MemoryOrder::Relaxed,
             (true, false) => MemoryOrder::Acquire,
             (false, true) => MemoryOrder::Release,
-            (true, true) => MemoryOrder::AcqRel,
+            (true, true) => MemoryOrder::SeqCst,
         };
 
         let mut ops = Vec::new();
@@ -3960,7 +3960,36 @@ impl RiscVLifter {
                 }
             };
 
+            let exclusive = matches!(funct5, 0b00010 | 0b00011);
+            if exclusive
+                && matches!(
+                    order,
+                    MemoryOrder::Release | MemoryOrder::AcqRel | MemoryOrder::SeqCst
+                )
+            {
+                ops.push(SmirOp::new(
+                    ctx.next_op_id(),
+                    addr,
+                    OpKind::Fence {
+                        kind: FenceKind::Full,
+                    },
+                ));
+            }
             ops.push(SmirOp::new(ctx.next_op_id(), addr, kind));
+            if exclusive
+                && matches!(
+                    order,
+                    MemoryOrder::Acquire | MemoryOrder::AcqRel | MemoryOrder::SeqCst
+                )
+            {
+                ops.push(SmirOp::new(
+                    ctx.next_op_id(),
+                    addr,
+                    OpKind::Fence {
+                        kind: FenceKind::Full,
+                    },
+                ));
+            }
             if needs_sext {
                 ops.push(SmirOp::new(
                     ctx.next_op_id(),
@@ -6380,6 +6409,37 @@ mod tests {
             // OK
         } else {
             panic!("Expected AtomicRmw Add");
+        }
+    }
+
+    #[test]
+    fn lr_sc_ordering_bits_emit_fences_at_the_memory_boundary() {
+        let encode = |funct5: u32, aq: bool, rl: bool| {
+            (funct5 << 27)
+                | (u32::from(aq) << 26)
+                | (u32::from(rl) << 25)
+                | (2 << 20)
+                | (1 << 15)
+                | (0b010 << 12)
+                | (3 << 7)
+                | 0x2f
+        };
+        for (funct5, expected_memory_op) in
+            [(0b00010, "load-exclusive"), (0b00011, "store-exclusive")]
+        {
+            let mut lifter = RiscVLifter::rv64gc();
+            let mut context = test_ctx();
+            let instruction = encode(funct5, true, true);
+            let result = lifter
+                .lift_insn(0x1000, &instruction.to_le_bytes(), &mut context)
+                .expect("lift ordered LR/SC");
+            assert!(matches!(result.ops[0].kind, OpKind::Fence { .. }));
+            match (expected_memory_op, &result.ops[1].kind) {
+                ("load-exclusive", OpKind::LoadExclusive { .. })
+                | ("store-exclusive", OpKind::StoreExclusive { .. }) => {}
+                (_, other) => panic!("unexpected ordered LR/SC memory op: {other:?}"),
+            }
+            assert!(matches!(result.ops[2].kind, OpKind::Fence { .. }));
         }
     }
 

@@ -15,6 +15,9 @@ use super::float::RoundingMode;
 use super::memory::{MemError, Memory};
 use super::{Isa, Xlen};
 
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+mod jit;
+
 /// Privilege level of the hart.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Priv {
@@ -135,6 +138,23 @@ impl RiscVConfig {
     }
 }
 
+/// Observable counters for the opt-in RISC-V SMIR-to-x86-64 execution path.
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct RiscVJitStats {
+    /// Compiled and interpreter-only entries currently retained in the cache.
+    pub cache_entries: usize,
+    /// Cache lookups that reused an existing decision or native block.
+    pub cache_hits: u64,
+    /// Cache lookups that required a new native-admission decision.
+    pub cache_misses: u64,
+    /// Successfully entered native blocks, including blocks that faulted.
+    pub native_executions: u64,
+    /// Instructions executed by the interpreter because the JIT boundary did
+    /// not admit them or because native execution requested a safe replay.
+    pub interpreter_fallbacks: u64,
+}
+
 /// A single RISC-V hart.
 pub struct RiscVCpu {
     cfg: RiscVConfig,
@@ -190,6 +210,11 @@ pub struct RiscVCpu {
 
     /// Guest memory.
     mem: Box<dyn Memory>,
+
+    /// Opt-in single-instruction SMIR JIT cache. The ordinary [`step`](Self::step)
+    /// and [`run`](Self::run) paths never consult it.
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    jit: jit::RiscVJitCache,
 }
 
 /// Vector register length in bits (matches the qemu-riscv64 default).
@@ -247,6 +272,8 @@ impl RiscVCpu {
             v: [0; 32 * VLENB as usize],
             ext_csr: HashMap::new(),
             mem,
+            #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+            jit: jit::RiscVJitCache::default(),
         }
     }
 
@@ -281,6 +308,8 @@ impl RiscVCpu {
         self.vxsat = 0;
         self.v = [0; 32 * VLENB as usize];
         self.ext_csr.clear();
+        #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+        self.jit.clear();
     }
 
     /// Read the raw 16-byte contents of vector register `i`.
@@ -614,7 +643,7 @@ impl RiscVCpu {
 
     fn execute(&mut self, insn: &Insn, pc: u64) -> Result<RiscVExit, Trap> {
         // Default fall-through PC; control-flow ops override.
-        self.pc = pc.wrapping_add(insn.len as u64);
+        self.pc = pc.wrapping_add(insn.len as u64) & self.xmask();
 
         if insn.op.is_fp() {
             return self.exec_fp(insn, pc);
@@ -657,12 +686,12 @@ impl RiscVCpu {
             }
 
             // ---- branches ----
-            Op::Beq => self.branch(self.sx(a) == self.sx(b), pc, imm),
-            Op::Bne => self.branch(self.sx(a) != self.sx(b), pc, imm),
-            Op::Blt => self.branch(self.sx(a) < self.sx(b), pc, imm),
-            Op::Bge => self.branch(self.sx(a) >= self.sx(b), pc, imm),
-            Op::Bltu => self.branch(a < b, pc, imm),
-            Op::Bgeu => self.branch(a >= b, pc, imm),
+            Op::Beq => self.branch(self.sx(a) == self.sx(b), pc, imm)?,
+            Op::Bne => self.branch(self.sx(a) != self.sx(b), pc, imm)?,
+            Op::Blt => self.branch(self.sx(a) < self.sx(b), pc, imm)?,
+            Op::Bge => self.branch(self.sx(a) >= self.sx(b), pc, imm)?,
+            Op::Bltu => self.branch(a < b, pc, imm)?,
+            Op::Bgeu => self.branch(a >= b, pc, imm)?,
 
             // ---- loads ----
             Op::Lb => self.load(rd, a, imm, 1, true)?,
@@ -806,10 +835,10 @@ impl RiscVCpu {
                     andes_bitfield(a, rs2, imm as u8, matches!(insn.op, Op::NdsBfos)),
                 );
             }
-            Op::NdsBbc => self.branch(((a >> rs2) & 1) == 0, pc, imm),
-            Op::NdsBbs => self.branch(((a >> rs2) & 1) != 0, pc, imm),
-            Op::NdsBeqc => self.branch((a & self.xmask()) == rs2 as u64, pc, imm),
-            Op::NdsBnec => self.branch((a & self.xmask()) != rs2 as u64, pc, imm),
+            Op::NdsBbc => self.branch(((a >> rs2) & 1) == 0, pc, imm)?,
+            Op::NdsBbs => self.branch(((a >> rs2) & 1) != 0, pc, imm)?,
+            Op::NdsBeqc => self.branch((a & self.xmask()) == rs2 as u64, pc, imm)?,
+            Op::NdsBnec => self.branch((a & self.xmask()) != rs2 as u64, pc, imm)?,
             Op::NdsLeaH => self.set_x(rd, a.wrapping_add(b << 1)),
             Op::NdsLeaW => self.set_x(rd, a.wrapping_add(b << 2)),
             Op::NdsLeaD => self.set_x(rd, a.wrapping_add(b << 3)),
@@ -1306,10 +1335,18 @@ impl RiscVCpu {
     // ---------------------------------------------------------------
 
     #[inline]
-    fn branch(&mut self, taken: bool, pc: u64, imm: u64) {
+    fn branch(&mut self, taken: bool, pc: u64, imm: u64) -> Result<(), Trap> {
         if taken {
-            self.pc = pc.wrapping_add(imm) & self.xmask();
+            let target = pc.wrapping_add(imm);
+            if !self.cfg.isa.c && target & 0b11 != 0 {
+                return Err(Trap {
+                    cause: cause::INSTR_MISALIGNED,
+                    tval: target,
+                });
+            }
+            self.pc = target & self.xmask();
         }
+        Ok(())
     }
 
     fn load(&mut self, rd: u8, base: u64, imm: u64, size: usize, signed: bool) -> Result<(), Trap> {
@@ -5672,6 +5709,36 @@ mod tests {
     }
 
     #[test]
+    fn branch_alignment_traps_only_when_taken_without_compressed_extension() {
+        let mut config = RiscVConfig::rv64gc();
+        config.isa.c = false;
+        let make_cpu = || RiscVCpu::new(config, Box::new(FlatMemory::new(0, 0x1_0000)));
+
+        let mut taken = make_cpu();
+        taken.set_pc(0x400);
+        taken.set_x(1, 5);
+        taken.set_x(2, 5);
+        assert_eq!(
+            run_one(&mut taken, b_type(2, 2, 1, 0)),
+            RiscVExit::Trap(Trap {
+                cause: cause::INSTR_MISALIGNED,
+                tval: 0x402,
+            })
+        );
+        assert_eq!(taken.csr_read(0x341), Ok(0x400));
+
+        let mut not_taken = make_cpu();
+        not_taken.set_pc(0x400);
+        not_taken.set_x(1, 5);
+        not_taken.set_x(2, 6);
+        assert_eq!(
+            run_one(&mut not_taken, b_type(2, 2, 1, 0)),
+            RiscVExit::Continue
+        );
+        assert_eq!(not_taken.pc(), 0x404);
+    }
+
+    #[test]
     fn jal_jalr_link_and_target() {
         let mut c = cpu();
         c.set_pc(0x1000);
@@ -6039,6 +6106,18 @@ mod tests {
         c.set_x(2, 1);
         run_one(&mut c, r_type(0, 2, 1, 0, 3, 0x33)); // add
         assert_eq!(c.x(3), 0); // wraps at 32 bits, zero-extended
+    }
+
+    #[test]
+    fn rv32_fallthrough_pc_wraps_at_xlen() {
+        let mut c = rv32();
+        let addi = (1u32 << 20) | (1 << 15) | (1 << 7) | 0x13;
+        let instruction = crate::isa::riscv::decode(addi, Xlen::Rv32, &Isa::rv64gc());
+        assert_eq!(
+            c.execute_insn(&instruction, 0xffff_fffc),
+            Ok(RiscVExit::Continue)
+        );
+        assert_eq!(c.pc(), 0);
     }
 
     #[test]

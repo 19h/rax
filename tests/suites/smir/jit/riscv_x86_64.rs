@@ -1433,7 +1433,7 @@ fn lifted_rv64_atomics_execute_through_helper_abi() {
         (false, false, RiscVMemoryOrderCode::Relaxed),
         (true, false, RiscVMemoryOrderCode::Acquire),
         (false, true, RiscVMemoryOrderCode::Release),
-        (true, true, RiscVMemoryOrderCode::AcqRel),
+        (true, true, RiscVMemoryOrderCode::SeqCst),
     ];
     for (index, funct5) in operations.into_iter().enumerate() {
         let (aq, rl, order) = orders[index % orders.len()];
@@ -1451,7 +1451,7 @@ fn lifted_rv64_atomics_execute_through_helper_abi() {
         &[amo_type(0b00101, true, true, 2, 1, 0b011, 5)],
         cas_success,
         memory,
-        Some(RiscVMemoryOrderCode::AcqRel),
+        Some(RiscVMemoryOrderCode::SeqCst),
     );
     let mut cas_failure = x;
     cas_failure[5] = 0x1234;
@@ -1878,6 +1878,281 @@ fn integer_crypto_lowering_rejects_malformed_opaque_ops() {
             format!("{error:?}").contains(expected),
             "unexpected malformed-op error: {error:?}"
         );
+    }
+}
+
+fn assert_production_cpu_equivalent(actual: &RiscVCpu, expected: &RiscVCpu) {
+    for register in 0..32u8 {
+        assert_eq!(actual.x(register), expected.x(register), "x{register}");
+        assert_eq!(actual.f(register), expected.f(register), "f{register}");
+        assert_eq!(
+            actual.vreg(register),
+            expected.vreg(register),
+            "v{register}"
+        );
+    }
+    assert_eq!(actual.pc(), expected.pc(), "PC");
+    assert_eq!(actual.fcsr(), expected.fcsr(), "FCSR");
+    assert_eq!(actual.vl(), expected.vl(), "vl");
+    assert_eq!(actual.vtype(), expected.vtype(), "vtype");
+    assert_eq!(actual.vstart(), expected.vstart(), "vstart");
+    assert_eq!(actual.vcsr(), expected.vcsr(), "vcsr");
+    assert_eq!(actual.privilege(), expected.privilege(), "privilege");
+    assert_eq!(actual.instret(), expected.instret(), "instret");
+    for csr in [0xc00, 0x341, 0x342, 0x343] {
+        assert_eq!(
+            actual.csr_read(csr),
+            expected.csr_read(csr),
+            "CSR {csr:#05x}"
+        );
+    }
+    let mut actual_memory = vec![0u8; MEMORY_LEN];
+    let mut expected_memory = vec![0u8; MEMORY_LEN];
+    actual
+        .read_memory(0, &mut actual_memory)
+        .expect("read JIT memory");
+    expected
+        .read_memory(0, &mut expected_memory)
+        .expect("read interpreter memory");
+    assert_eq!(actual_memory, expected_memory, "guest memory");
+}
+
+fn write_production_code(cpu: &mut RiscVCpu, instructions: &[u32]) {
+    let code = instructions
+        .iter()
+        .flat_map(|instruction| instruction.to_le_bytes())
+        .collect::<Vec<_>>();
+    cpu.write_memory(CODE, &code)
+        .expect("write production code");
+    cpu.set_pc(CODE);
+}
+
+#[test]
+fn production_jit_cache_keys_code_identity_and_optimization_level() {
+    let mut cpu = RiscVCpu::new(
+        RiscVConfig::rv64gc(),
+        Box::new(RvMemory::new(0, MEMORY_LEN)),
+    );
+    let add_five = i_type(5, 5, 0, 5, 0x13);
+    cpu.write_memory(CODE, &add_five.to_le_bytes())
+        .expect("write addi");
+    cpu.set_x(5, 10);
+
+    for expected in [15, 20] {
+        cpu.set_pc(CODE);
+        assert_eq!(cpu.step_jit(OptLevel::O2), RiscVExit::Continue);
+        assert_eq!(cpu.x(5), expected);
+    }
+    let stats = cpu.jit_stats();
+    assert_eq!(stats.cache_entries, 1);
+    assert_eq!(stats.cache_misses, 1);
+    assert_eq!(stats.cache_hits, 1);
+    assert_eq!(stats.native_executions, 2);
+    assert_eq!(stats.interpreter_fallbacks, 0);
+
+    let add_seven = i_type(7, 5, 0, 5, 0x13);
+    cpu.write_memory(CODE, &add_seven.to_le_bytes())
+        .expect("replace addi");
+    cpu.set_pc(CODE);
+    assert_eq!(cpu.step_jit(OptLevel::O2), RiscVExit::Continue);
+    assert_eq!(cpu.x(5), 27);
+    cpu.set_pc(CODE);
+    assert_eq!(cpu.step_jit(OptLevel::O0), RiscVExit::Continue);
+    assert_eq!(cpu.x(5), 34);
+    let stats = cpu.jit_stats();
+    assert_eq!(stats.cache_entries, 3);
+    assert_eq!(stats.cache_misses, 3);
+    assert_eq!(stats.cache_hits, 1);
+    assert_eq!(stats.native_executions, 4);
+
+    cpu.clear_jit_cache();
+    assert_eq!(cpu.jit_stats(), Default::default());
+    cpu.set_pc(CODE);
+    assert_eq!(cpu.run_jit(1, OptLevel::O1), RiscVExit::Continue);
+    assert_eq!(cpu.x(5), 41);
+    let stats = cpu.jit_stats();
+    assert_eq!(stats.cache_entries, 1);
+    assert_eq!(stats.cache_misses, 1);
+    assert_eq!(stats.native_executions, 1);
+}
+
+#[test]
+fn production_jit_matches_interpreter_for_helpers_and_vector_fallback() {
+    const E32_M1: u64 = 0x10;
+    let instructions = [
+        amo_type(0b00010, true, false, 0, 1, 0b010, 3), // lr.w x3,(x1)
+        amo_type(0b00011, false, true, 2, 1, 0b010, 4), // sc.w x4,x2,(x1)
+        amo_type(0b00000, true, true, 2, 1, 0b010, 5),  // amoadd.w x5,x2,(x1)
+        r_type_opcode(0, 2, 1, 0, 3, 0x53),             // fadd.s f3,f1,f2
+        v_type(0b000000, 1, 2, 3, 0, 1),                // vadd.vv v1,v2,v3
+    ];
+    let make_cpu = || {
+        RiscVCpu::new(
+            RiscVConfig::rv64gc(),
+            Box::new(RvMemory::new(0, MEMORY_LEN)),
+        )
+    };
+    let mut expected = make_cpu();
+    let mut actual = make_cpu();
+    for cpu in [&mut expected, &mut actual] {
+        write_production_code(cpu, &instructions);
+        cpu.set_x(1, DATA);
+        cpu.set_x(2, 7);
+        cpu.write_memory(DATA, &5u32.to_le_bytes())
+            .expect("seed atomic word");
+        cpu.set_f(1, 0xffff_ffff_3fc0_0000); // 1.5f32, NaN-boxed
+        cpu.set_f(2, 0xffff_ffff_4010_0000); // 2.25f32, NaN-boxed
+        cpu.set_vl_vtype(2, E32_M1);
+        let mut v2 = [0u8; 16];
+        v2[0..4].copy_from_slice(&1u32.to_le_bytes());
+        v2[4..8].copy_from_slice(&2u32.to_le_bytes());
+        let mut v3 = [0u8; 16];
+        v3[0..4].copy_from_slice(&10u32.to_le_bytes());
+        v3[4..8].copy_from_slice(&20u32.to_le_bytes());
+        cpu.set_vreg(2, &v2);
+        cpu.set_vreg(3, &v3);
+    }
+
+    for instruction in instructions {
+        assert_eq!(expected.step(), RiscVExit::Continue, "{instruction:08x}");
+        assert_eq!(
+            actual.step_jit(OptLevel::O2),
+            RiscVExit::Continue,
+            "{instruction:08x}"
+        );
+        assert_production_cpu_equivalent(&actual, &expected);
+    }
+    let stats = actual.jit_stats();
+    assert_eq!(stats.cache_entries, instructions.len());
+    assert_eq!(stats.cache_misses, instructions.len() as u64);
+    assert_eq!(stats.native_executions, 4);
+    assert_eq!(stats.interpreter_fallbacks, 1);
+}
+
+#[test]
+fn production_jit_delivers_precise_native_memory_faults_without_replay() {
+    let load = i_type(0, 1, 0b010, 5, 0x03); // lw x5,0(x1)
+    let make_cpu = || {
+        RiscVCpu::new(
+            RiscVConfig::rv64gc(),
+            Box::new(RvMemory::new(0, MEMORY_LEN)),
+        )
+    };
+    let mut expected = make_cpu();
+    let mut actual = make_cpu();
+    for cpu in [&mut expected, &mut actual] {
+        write_production_code(cpu, &[load]);
+        cpu.set_x(1, MEMORY_LEN as u64 - 2);
+        cpu.set_x(5, 0xfeed_face_cafe_beef);
+    }
+
+    let expected_exit = expected.step();
+    let actual_exit = actual.step_jit(OptLevel::O2);
+    assert_eq!(
+        actual_exit,
+        RiscVExit::Trap(rax::isa::riscv::Trap {
+            cause: 5,
+            tval: MEMORY_LEN as u64 - 2,
+        })
+    );
+    assert_eq!(actual_exit, expected_exit);
+    assert_production_cpu_equivalent(&actual, &expected);
+    let stats = actual.jit_stats();
+    assert_eq!(stats.native_executions, 1);
+    assert_eq!(stats.interpreter_fallbacks, 0);
+}
+
+#[test]
+fn production_jit_wraps_rv32_effective_addresses() {
+    let load = i_type(1, 1, 0b100, 5, 0x03); // lbu x5,1(x1)
+    let make_cpu = || {
+        RiscVCpu::new(
+            RiscVConfig::rv32(RvIsa::rv64gc()),
+            Box::new(RvMemory::new(0, MEMORY_LEN)),
+        )
+    };
+    let mut expected = make_cpu();
+    let mut actual = make_cpu();
+    for cpu in [&mut expected, &mut actual] {
+        write_production_code(cpu, &[load]);
+        cpu.set_x(1, 0xffff_ffff);
+        cpu.write_memory(0, &[0xab]).expect("seed wrapped byte");
+    }
+
+    assert_eq!(expected.step(), RiscVExit::Continue);
+    assert_eq!(actual.step_jit(OptLevel::O2), RiscVExit::Continue);
+    assert_production_cpu_equivalent(&actual, &expected);
+    assert_eq!(actual.x(5), 0xab);
+    assert_eq!(actual.jit_stats().native_executions, 1);
+}
+
+#[test]
+fn production_jit_falls_back_for_overlapping_zilsd_pair_encoding() {
+    let mut isa = RvIsa::rv64gc();
+    isa.zilsd = true;
+    let load_pair = (8u32 << 20) | (10 << 15) | (3 << 12) | (6 << 7) | 0x03;
+    let make_cpu = || {
+        RiscVCpu::new(
+            RiscVConfig::rv32(isa),
+            Box::new(RvMemory::new(0, MEMORY_LEN)),
+        )
+    };
+    let mut expected = make_cpu();
+    let mut actual = make_cpu();
+    for cpu in [&mut expected, &mut actual] {
+        write_production_code(cpu, &[load_pair]);
+        cpu.set_x(10, DATA);
+        cpu.write_memory(DATA + 8, &0xaabb_ccdd_1122_3344u64.to_le_bytes())
+            .expect("seed Zilsd pair");
+    }
+
+    assert_eq!(expected.step(), RiscVExit::Continue);
+    assert_eq!(actual.step_jit(OptLevel::O2), RiscVExit::Continue);
+    assert_production_cpu_equivalent(&actual, &expected);
+    assert_eq!(actual.x(6), 0x1122_3344);
+    assert_eq!(actual.x(7), 0xaabb_ccdd);
+    let stats = actual.jit_stats();
+    assert_eq!(stats.native_executions, 0);
+    assert_eq!(stats.interpreter_fallbacks, 1);
+}
+
+#[test]
+fn production_jit_falls_back_for_unmodeled_control_alignment_traps() {
+    let mut isa = RvIsa::rv64gc();
+    isa.c = false;
+    let make_cpu = || {
+        RiscVCpu::new(
+            RiscVConfig {
+                xlen: RvXlen::Rv64,
+                isa,
+            },
+            Box::new(RvMemory::new(0, MEMORY_LEN)),
+        )
+    };
+    for instruction in [
+        j_type(2, 1),           // jal x1,+2
+        b_type(2, 0, 0, 0b000), // beq x0,x0,+2
+    ] {
+        let mut expected = make_cpu();
+        let mut actual = make_cpu();
+        write_production_code(&mut expected, &[instruction]);
+        write_production_code(&mut actual, &[instruction]);
+
+        let expected_exit = expected.step();
+        let actual_exit = actual.step_jit(OptLevel::O2);
+        assert_eq!(
+            actual_exit,
+            RiscVExit::Trap(rax::isa::riscv::Trap {
+                cause: 0,
+                tval: CODE + 2,
+            })
+        );
+        assert_eq!(actual_exit, expected_exit);
+        assert_production_cpu_equivalent(&actual, &expected);
+        let stats = actual.jit_stats();
+        assert_eq!(stats.cache_entries, 1);
+        assert_eq!(stats.native_executions, 0);
+        assert_eq!(stats.interpreter_fallbacks, 1);
     }
 }
 
