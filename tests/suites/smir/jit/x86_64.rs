@@ -591,6 +591,51 @@ fn jit_bmi2_mulx_preserves_flags_and_all_register_aliases() {
     }
 }
 
+/// Legacy AH/BH sources cannot be named by any REX-prefixed MOVX encoding.
+/// The JIT therefore snapshots the full parent register and extends byte 1
+/// from the host stack. Source/destination aliasing and flag-dependent control
+/// flow exercise the semantic hazards that caused the former deoptimization.
+#[test]
+fn jit_legacy_high_byte_movx_preserves_aliases_and_flags() {
+    // test r8,r8; movzx eax,ah; movsx ebx,bh; jnz fail;
+    // dec ecx; jnz loop; hlt; fail: mov edx,1; hlt
+    let code = [
+        0x4D, 0x85, 0xC0, 0x0F, 0xB6, 0xC4, 0x0F, 0xBE, 0xDF, 0x75, 0x05, 0xFF, 0xC9, 0x75, 0xF1,
+        0xF4, 0xBA, 0x01, 0x00, 0x00, 0x00, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x1122_3344_5566_A5CD;
+        regs.rbx = 0x8877_6655_4433_80EF;
+        regs.rcx = 1;
+        regs.rdx = 0;
+        regs.r8 = 0;
+        regs.rflags = 0x2 | 0x0ED5;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interp = make_vcpu_code(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("jit legacy high-byte MOVZX/MOVSX"),
+        "legacy high-byte MOVX loop must enter the native tier"
+    );
+    run_interp(&mut jit);
+
+    let expected = interp.get_regs().unwrap();
+    let after = jit.get_regs().unwrap();
+    assert_eq!(after.rax, expected.rax, "MOVZX EAX,AH vs interpreter");
+    assert_eq!(after.rbx, expected.rbx, "MOVSX EBX,BH vs interpreter");
+    assert_eq!(after.rdx, 0, "preserved ZF must avoid the fail path");
+    assert_eq!(after.rax, 0xA5, "MOVZX source/destination alias");
+    assert_eq!(after.rbx, 0xFFFF_FF80, "MOVSX source/destination alias");
+}
+
 #[test]
 fn jit_apx_ndd_double_shift_handles_fill_cl_aliases_and_nf() {
     const STATUS_MASK: u64 = 0x0ED5;

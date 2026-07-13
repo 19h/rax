@@ -2038,7 +2038,12 @@ impl SmirInterpreter {
                 from_width,
                 to_width,
             } => {
-                let val = ctx.read_vreg(*src) & from_width.mask();
+                let raw = ctx.read_vreg(*src);
+                let val = if matches!(op.x86_hint, Some(X86OpHint::LegacyHighByteReg)) {
+                    (raw >> 8) & from_width.mask()
+                } else {
+                    raw & from_width.mask()
+                };
                 Self::write_x86_partial(ctx, *dst, val, *to_width);
             }
 
@@ -2048,7 +2053,12 @@ impl SmirInterpreter {
                 from_width,
                 to_width,
             } => {
-                let val = ctx.read_vreg(*src) & from_width.mask();
+                let raw = ctx.read_vreg(*src);
+                let val = if matches!(op.x86_hint, Some(X86OpHint::LegacyHighByteReg)) {
+                    (raw >> 8) & from_width.mask()
+                } else {
+                    raw & from_width.mask()
+                };
                 let sign_bit = from_width.sign_bit();
                 let extended = if (val & sign_bit) != 0 {
                     val | !from_width.mask()

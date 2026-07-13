@@ -36715,6 +36715,8 @@ impl X86_64Lifter {
                 let mut ops = Vec::new();
                 let next_pc = pc + prefix2.cursor as u64 + modrm.bytes_consumed as u64;
                 let src_is_rex_byte_reg = !modrm.is_memory && prefix2.has_rex();
+                let src_is_legacy_high_byte =
+                    !modrm.is_memory && !prefix2.has_rex() && (4..=7).contains(&(modrm.rm & 7));
 
                 let src = if modrm.is_memory {
                     let x86_addr = modrm.addr.as_ref().unwrap();
@@ -36733,8 +36735,10 @@ impl X86_64Lifter {
                         },
                     ));
                     tmp
+                } else if src_is_legacy_high_byte {
+                    self.gpr((modrm.rm & 7) - 4)
                 } else {
-                    self.read_byte_reg(modrm.rm, &prefix2, pc, ctx, &mut ops)
+                    self.gpr(modrm.rm)
                 };
 
                 let mut op = SmirOp::new(
@@ -36749,6 +36753,8 @@ impl X86_64Lifter {
                 );
                 if src_is_rex_byte_reg {
                     op.x86_hint = Some(X86OpHint::RexByteReg);
+                } else if src_is_legacy_high_byte {
+                    op.x86_hint = Some(X86OpHint::LegacyHighByteReg);
                 }
                 ops.push(op);
 
@@ -36818,6 +36824,8 @@ impl X86_64Lifter {
                 let mut ops = Vec::new();
                 let next_pc = pc + prefix2.cursor as u64 + modrm.bytes_consumed as u64;
                 let src_is_rex_byte_reg = !modrm.is_memory && prefix2.has_rex();
+                let src_is_legacy_high_byte =
+                    !modrm.is_memory && !prefix2.has_rex() && (4..=7).contains(&(modrm.rm & 7));
 
                 let src = if modrm.is_memory {
                     let x86_addr = modrm.addr.as_ref().unwrap();
@@ -36836,8 +36844,10 @@ impl X86_64Lifter {
                         },
                     ));
                     tmp
+                } else if src_is_legacy_high_byte {
+                    self.gpr((modrm.rm & 7) - 4)
                 } else {
-                    self.read_byte_reg(modrm.rm, &prefix2, pc, ctx, &mut ops)
+                    self.gpr(modrm.rm)
                 };
 
                 let mut op = SmirOp::new(
@@ -36852,6 +36862,8 @@ impl X86_64Lifter {
                 );
                 if src_is_rex_byte_reg {
                     op.x86_hint = Some(X86OpHint::RexByteReg);
+                } else if src_is_legacy_high_byte {
+                    op.x86_hint = Some(X86OpHint::LegacyHighByteReg);
                 }
                 ops.push(op);
 
@@ -38161,6 +38173,78 @@ mod tests {
                 assert_eq!(*got_width, width);
             }
             other => panic!("expected VEX MULX, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn lift_movx_legacy_high_byte_sources_without_virtual_capture() {
+        for (name, bytes, signed, dst, src, to_width) in [
+            (
+                "movzx eax,ah",
+                &[0x0F, 0xB6, 0xC4][..],
+                false,
+                x86_gpr(0),
+                x86_gpr(0),
+                OpWidth::W32,
+            ),
+            (
+                "movsx ecx,bh",
+                &[0x0F, 0xBE, 0xCF][..],
+                true,
+                x86_gpr(1),
+                x86_gpr(3),
+                OpWidth::W32,
+            ),
+            (
+                "movzx dx,ch",
+                &[0x66, 0x0F, 0xB6, 0xD5][..],
+                false,
+                x86_gpr(2),
+                x86_gpr(1),
+                OpWidth::W16,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap_or_else(|error| panic!("{name}: {error:?}"));
+            assert_eq!(result.ops.len(), 1, "{name}: no virtual byte capture");
+            assert_eq!(
+                result.ops[0].x86_hint,
+                Some(X86OpHint::LegacyHighByteReg),
+                "{name}"
+            );
+            match (&result.ops[0].kind, signed) {
+                (
+                    OpKind::ZeroExtend {
+                        dst: got_dst,
+                        src: got_src,
+                        from_width: OpWidth::W8,
+                        to_width: got_to_width,
+                    },
+                    false,
+                )
+                | (
+                    OpKind::SignExtend {
+                        dst: got_dst,
+                        src: got_src,
+                        from_width: OpWidth::W8,
+                        to_width: got_to_width,
+                    },
+                    true,
+                ) => {
+                    assert_eq!(*got_dst, dst, "{name}: destination");
+                    assert_eq!(*got_src, src, "{name}: high-byte parent");
+                    assert_eq!(*got_to_width, to_width, "{name}: width");
+                }
+                (other, _) => panic!("{name}: unexpected operation {other:?}"),
+            }
+        }
+
+        for bytes in [
+            &[0x40, 0x0F, 0xB6, 0xC4][..], // movzx eax,spl
+            &[0x40, 0x0F, 0xBE, 0xFE][..], // movsx edi,sil
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.ops.len(), 1);
+            assert_eq!(result.ops[0].x86_hint, Some(X86OpHint::RexByteReg));
         }
     }
 

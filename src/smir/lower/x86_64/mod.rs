@@ -3606,6 +3606,29 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    fn ensure_legacy_high_byte_movx_shape(
+        op: &'static str,
+        src: PhysReg,
+        from_width: OpWidth,
+        to_width: OpWidth,
+    ) -> Result<(), LowerError> {
+        if from_width != OpWidth::W8
+            || !matches!(to_width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+            || !matches!(
+                src,
+                PhysReg::Rax | PhysReg::Rcx | PhysReg::Rdx | PhysReg::Rbx
+            )
+        {
+            return Err(LowerError::InvalidOperand {
+                op: op.to_string(),
+                operand: format!(
+                    "legacy high-byte extension requires AH/CH/DH/BH and W16/W32/W64 destination; got {src:?} {from_width:?}->{to_width:?}"
+                ),
+            });
+        }
+        Ok(())
+    }
+
     fn emit_shift_reg_imm(&mut self, kind: ShiftRegOp, dst_reg: PhysReg, imm: u8, width: OpWidth) {
         let mut emitter = X86Emitter::new(&mut self.code);
         match kind {
@@ -7552,12 +7575,32 @@ impl X86_64Lowerer {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
 
-                let mut emitter = X86Emitter::new(&mut self.code);
-                if *from_width == OpWidth::W32 && *to_width == OpWidth::W64 {
-                    // 32-bit mov automatically zero-extends
-                    emitter.emit_mov_rr(dst_reg, src_reg, OpWidth::W32);
+                if matches!(op.x86_hint, Some(X86OpHint::LegacyHighByteReg)) {
+                    Self::ensure_legacy_high_byte_movx_shape(
+                        "MOVZX",
+                        src_reg,
+                        *from_width,
+                        *to_width,
+                    )?;
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_push(src_reg);
+                    emitter.emit_movzx_rm_disp(
+                        dst_reg,
+                        PhysReg::Rsp,
+                        1,
+                        DispSize::Auto,
+                        *from_width,
+                        *to_width,
+                    );
+                    emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 8);
                 } else {
-                    emitter.emit_movzx(dst_reg, src_reg, *from_width, *to_width);
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    if *from_width == OpWidth::W32 && *to_width == OpWidth::W64 {
+                        // 32-bit mov automatically zero-extends
+                        emitter.emit_mov_rr(dst_reg, src_reg, OpWidth::W32);
+                    } else {
+                        emitter.emit_movzx(dst_reg, src_reg, *from_width, *to_width);
+                    }
                 }
             }
 
@@ -7570,8 +7613,28 @@ impl X86_64Lowerer {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
 
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_movsx(dst_reg, src_reg, *from_width, *to_width);
+                if matches!(op.x86_hint, Some(X86OpHint::LegacyHighByteReg)) {
+                    Self::ensure_legacy_high_byte_movx_shape(
+                        "MOVSX",
+                        src_reg,
+                        *from_width,
+                        *to_width,
+                    )?;
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_push(src_reg);
+                    emitter.emit_movsx_rm_disp(
+                        dst_reg,
+                        PhysReg::Rsp,
+                        1,
+                        DispSize::Auto,
+                        *from_width,
+                        *to_width,
+                    );
+                    emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 8);
+                } else {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_movsx(dst_reg, src_reg, *from_width, *to_width);
+                }
             }
 
             OpKind::Cwd { dst, src, width } => {
@@ -13441,6 +13504,84 @@ mod tests {
             let mut lowerer = X86_64Lowerer::new();
             assert!(lowerer.lower_function(&func).is_err(), "{name}");
         }
+    }
+
+    #[test]
+    fn lower_movx_legacy_high_bytes_uses_stack_snapshot() {
+        let gpr = |reg| VReg::Arch(ArchReg::X86(reg));
+        for (name, kind, expected) in [
+            (
+                "movzx eax,ah",
+                OpKind::ZeroExtend {
+                    dst: gpr(X86Reg::Rax),
+                    src: gpr(X86Reg::Rax),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W32,
+                },
+                &[
+                    0x50, 0x0F, 0xB6, 0x44, 0x24, 0x01, 0x48, 0x8D, 0x64, 0x24, 0x08,
+                ][..],
+            ),
+            (
+                "movsx ecx,bh",
+                OpKind::SignExtend {
+                    dst: gpr(X86Reg::Rcx),
+                    src: gpr(X86Reg::Rbx),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W32,
+                },
+                &[
+                    0x53, 0x0F, 0xBE, 0x4C, 0x24, 0x01, 0x48, 0x8D, 0x64, 0x24, 0x08,
+                ][..],
+            ),
+            (
+                "movzx dx,ch",
+                OpKind::ZeroExtend {
+                    dst: gpr(X86Reg::Rdx),
+                    src: gpr(X86Reg::Rcx),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W16,
+                },
+                &[
+                    0x51, 0x66, 0x0F, 0xB6, 0x54, 0x24, 0x01, 0x48, 0x8D, 0x64, 0x24, 0x08,
+                ][..],
+            ),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut func = builder.finish();
+            func.blocks[0].ops[0].x86_hint = Some(X86OpHint::LegacyHighByteReg);
+            let mut lowerer = X86_64Lowerer::new();
+            let result = lowerer.lower_function(&func).expect(name);
+            assert!(result.relocations.is_empty(), "{name}");
+            let code = lowerer.finalize().expect(name);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_movx_legacy_high_byte_hint_rejects_invalid_parent() {
+        let gpr = |reg| VReg::Arch(ArchReg::X86(reg));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::ZeroExtend {
+                dst: gpr(X86Reg::Rax),
+                src: gpr(X86Reg::Rsi),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W32,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut func = builder.finish();
+        func.blocks[0].ops[0].x86_hint = Some(X86OpHint::LegacyHighByteReg);
+        let mut lowerer = X86_64Lowerer::new();
+        assert!(lowerer.lower_function(&func).is_err());
     }
 
     #[test]

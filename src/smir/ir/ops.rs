@@ -302,6 +302,10 @@ pub enum X86OpHint {
     /// codes 4..7 name SPL/BPL/SIL/DIL (or extended low-byte regs), not
     /// legacy AH/CH/DH/BH.
     RexByteReg,
+    /// Byte-register source was encoded without REX and ModR/M codes 4..7
+    /// select AH/CH/DH/BH. The associated extension operation names the full
+    /// parent GPR (RAX/RCX/RDX/RBX); lowering must read bits 15:8.
+    LegacyHighByteReg,
     /// SSE mov with explicit prefix/opcode
     SseMov { prefix: X86SsePrefix, opcode: u8 },
     /// SSE opcode with explicit prefix/opcode

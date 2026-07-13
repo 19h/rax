@@ -2195,6 +2195,11 @@ fn block_is_clobber_safe(
         if x86_movx_uses_ambiguous_high_byte_source(op) {
             return false;
         }
+        if matches!(op.x86_hint, Some(X86OpHint::LegacyHighByteReg))
+            && !x86_legacy_high_byte_movx_shape_valid(op)
+        {
+            return false;
+        }
         if matches!(op.x86_hint, Some(X86OpHint::Mulx)) && !x86_mulx_shape_valid(op) {
             return false;
         }
@@ -2275,7 +2280,10 @@ fn x86_movx_uses_ambiguous_high_byte_source(op: &crate::smir::ir::ops::SmirOp) -
     use crate::smir::ir::ops::{OpKind, X86OpHint};
     use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
 
-    if matches!(op.x86_hint, Some(X86OpHint::RexByteReg)) {
+    if matches!(
+        op.x86_hint,
+        Some(X86OpHint::RexByteReg | X86OpHint::LegacyHighByteReg)
+    ) {
         return false;
     }
 
@@ -2291,6 +2299,44 @@ fn x86_movx_uses_ambiguous_high_byte_source(op: &crate::smir::ir::ops::SmirOp) -
             ..
         }
     )
+}
+
+fn x86_legacy_high_byte_movx_shape_valid(op: &crate::smir::ir::ops::SmirOp) -> bool {
+    use crate::smir::ir::ops::{OpKind, X86OpHint};
+    use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
+
+    let parent = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Rax | X86Reg::Rcx | X86Reg::Rdx | X86Reg::Rbx
+            ))
+        )
+    };
+    let destination = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Rax | X86Reg::Rcx | X86Reg::Rdx | X86Reg::Rbx | X86Reg::Rsi | X86Reg::Rdi
+            ))
+        )
+    };
+
+    matches!(op.x86_hint, Some(X86OpHint::LegacyHighByteReg))
+        && matches!(
+            &op.kind,
+            OpKind::ZeroExtend {
+                dst,
+                src,
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W16 | OpWidth::W32,
+            } | OpKind::SignExtend {
+                dst,
+                src,
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W16 | OpWidth::W32,
+            } if parent(src) && destination(dst)
+        )
 }
 
 fn x86_ndd_double_shift_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
@@ -4286,7 +4332,7 @@ mod jit_gate_tests {
     }
 
     #[test]
-    fn clobber_gate_rejects_ambiguous_high_byte_movx_sources() {
+    fn clobber_gate_admits_explicit_legacy_high_byte_movx_shapes() {
         for src in [X86Reg::Rsi, X86Reg::Rdi] {
             assert!(
                 !x86_gate(OpKind::ZeroExtend {
@@ -4349,6 +4395,86 @@ mod jit_gate_tests {
             assert!(
                 is_native_clobber_safe(&func),
                 "REX-prefixed byte-register MOVX cannot be AH/CH/DH/BH and may JIT"
+            );
+        }
+
+        for (src, op) in [
+            (
+                X86Reg::Rax,
+                OpKind::ZeroExtend {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W32,
+                },
+            ),
+            (
+                X86Reg::Rcx,
+                OpKind::ZeroExtend {
+                    dst: x86(X86Reg::Rdx),
+                    src: x86(X86Reg::Rcx),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W16,
+                },
+            ),
+            (
+                X86Reg::Rdx,
+                OpKind::SignExtend {
+                    dst: x86(X86Reg::Rsi),
+                    src: x86(X86Reg::Rdx),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W32,
+                },
+            ),
+            (
+                X86Reg::Rbx,
+                OpKind::SignExtend {
+                    dst: x86(X86Reg::Rdi),
+                    src: x86(X86Reg::Rbx),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W16,
+                },
+            ),
+        ] {
+            let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
+            b.push_op(0x1000, op);
+            b.set_terminator(Terminator::Return { values: vec![] });
+            let mut func = b.finish();
+            func.blocks[0].ops[0].x86_hint = Some(X86OpHint::LegacyHighByteReg);
+            assert!(
+                is_native_clobber_safe(&func),
+                "explicit legacy high-byte parent {src:?} must JIT"
+            );
+        }
+
+        for op in [
+            OpKind::ZeroExtend {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rsi),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W32,
+            },
+            OpKind::SignExtend {
+                dst: x86(X86Reg::R8),
+                src: x86(X86Reg::Rbx),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W32,
+            },
+            OpKind::ZeroExtend {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rax),
+                from_width: OpWidth::W16,
+                to_width: OpWidth::W32,
+            },
+        ] {
+            let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
+            b.push_op(0x1000, op);
+            b.set_terminator(Terminator::Return { values: vec![] });
+            let mut func = b.finish();
+            func.blocks[0].ops[0].x86_hint = Some(X86OpHint::LegacyHighByteReg);
+            assert!(
+                !is_native_clobber_safe(&func),
+                "malformed legacy high-byte hint must deopt"
             );
         }
     }
