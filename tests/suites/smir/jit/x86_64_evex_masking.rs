@@ -117,6 +117,12 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vsm4key4 ymm4", &[0xc4, 0xe2, 0x56, 0xda, 0xe6]),
         ("vsm4rnds4 xmm7", &[0xc4, 0xc2, 0x3b, 0xda, 0xf9]),
         ("vsm4rnds4 ymm10", &[0xc4, 0x42, 0x27, 0xda, 0xd4]),
+        ("vpsrlw xmm1", &[0xc5, 0xf1, 0x71, 0xd2, 0x03]),
+        ("vpsraw ymm4", &[0xc5, 0xdd, 0x71, 0xe5, 0x04]),
+        ("vpslld zmm17", &[0x62, 0xb1, 0x75, 0x40, 0x72, 0xf2, 0x05]),
+        ("vpsraq xmm17", &[0x62, 0xb1, 0xf5, 0x00, 0x72, 0xe2, 0x09]),
+        ("vpslldq xmm9", &[0xc4, 0xc1, 0x31, 0x73, 0xfa, 0x07]),
+        ("vpsrldq ymm11", &[0xc4, 0xc1, 0x25, 0x73, 0xdc, 0x08]),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -869,6 +875,96 @@ fn hot_vsm4rnds4_jits_with_standard_vector_and_vex_upper_zeroing() {
     assert_eq!(get_zmm(&after, 1), expected);
     assert_eq!(get_zmm(&after, 2), plaintext);
     assert_eq!(get_zmm(&after, 3), round_keys);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_vpsraw_imm_jits_with_vex_lane_and_upper_zeroing_semantics() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx2")
+    {
+        return;
+    }
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0xC5, 0xDD, 0x71, 0xE5, 0x04]);
+    code.extend_from_slice(&[0xFF, 0xC9]);
+    code.extend_from_slice(&[0x75, 0xF7]);
+    code.push(0xF4);
+    let lanes = [
+        i16::MIN,
+        -32767,
+        -1025,
+        -17,
+        -16,
+        -1,
+        0,
+        1,
+        15,
+        16,
+        255,
+        256,
+        1024,
+        4096,
+        16384,
+        i16::MAX,
+    ];
+    let pack = |values: [i16; 16], upper: u64| {
+        let mut result = [0; 8];
+        result[4..].fill(upper);
+        for (lane, value) in values.into_iter().enumerate() {
+            result[lane / 4] |= u64::from(value as u16) << ((lane % 4) * 16);
+        }
+        result
+    };
+    let source = pack(lanes, 0xA5A5_A5A5_A5A5_A5A5);
+    let expected = pack(lanes.map(|value| value >> 4), 0);
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 4, [u64::MAX; 8]);
+    set_zmm(&mut regs, 5, source);
+    vcpu.set_regs(&regs).unwrap();
+    assert!(vcpu.jit_try_block().expect("jit VPSRAW immediate loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xFFFF_FFFF, 0);
+    assert_eq!(get_zmm(&after, 4), expected);
+    assert_eq!(get_zmm(&after, 5), source);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_vpsraq_imm_jits_with_evex_signed_lane_semantics() {
+    if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+        return;
+    }
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xB1, 0xF5, 0x40, 0x72, 0xE2, 0x09]);
+    code.extend_from_slice(&[0xFF, 0xC9]);
+    code.extend_from_slice(&[0x75, 0xF5]);
+    code.push(0xF4);
+    let source = [
+        i64::MIN as u64,
+        (-1i64) as u64,
+        (-513i64) as u64,
+        0,
+        1,
+        511,
+        512,
+        i64::MAX as u64,
+    ];
+    let expected = source.map(|value| ((value as i64) >> 9) as u64);
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 17, [u64::MAX; 8]);
+    set_zmm(&mut regs, 18, source);
+    vcpu.set_regs(&regs).unwrap();
+    assert!(vcpu.jit_try_block().expect("jit VPSRAQ immediate loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xFFFF_FFFF, 0);
+    assert_eq!(get_zmm(&after, 17), expected);
+    assert_eq!(get_zmm(&after, 18), source);
     run_to_hlt(&mut vcpu);
 }
 

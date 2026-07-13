@@ -374,6 +374,18 @@ impl Avx10Lowerer {
                 key_schedule,
             } => Some(self.lower_x86_sm4(code, dst, src1, src2, *width, *key_schedule)),
 
+            OpKind::X86PackedShiftImm {
+                dst,
+                src,
+                width,
+                elem,
+                shift,
+                amount,
+                byte_lane,
+            } => Some(self.lower_x86_packed_shift_imm(
+                code, dst, src, *width, *elem, *shift, *amount, *byte_lane,
+            )),
+
             // AVX10.1 BF16
             OpKind::VDotProductBF16 {
                 dst,
@@ -1358,6 +1370,84 @@ impl Avx10Lowerer {
     }
 
     #[allow(clippy::too_many_arguments)]
+    fn lower_x86_packed_shift_imm(
+        &self,
+        code: &mut CodeBuffer,
+        dst: &VReg,
+        src: &VReg,
+        width: VecWidth,
+        elem: VecElementType,
+        shift: ShiftOp,
+        amount: u8,
+        byte_lane: bool,
+    ) -> Avx10LowerResult<()> {
+        let (opcode, group, w, evex_only) = if byte_lane {
+            match (elem, shift) {
+                (VecElementType::I8, ShiftOp::Lsr) => (0x73, 3, false, false),
+                (VecElementType::I8, ShiftOp::Lsl) => (0x73, 7, false, false),
+                _ => {
+                    return Err(LowerError::UnsupportedOperation(
+                        "packed byte-lane immediate shifts require I8 LSL or LSR".to_string(),
+                    ));
+                }
+            }
+        } else {
+            match (elem, shift) {
+                (VecElementType::I16, ShiftOp::Lsr) => (0x71, 2, false, false),
+                (VecElementType::I16, ShiftOp::Asr) => (0x71, 4, false, false),
+                (VecElementType::I16, ShiftOp::Lsl) => (0x71, 6, false, false),
+                (VecElementType::I32, ShiftOp::Lsr) => (0x72, 2, false, false),
+                (VecElementType::I32, ShiftOp::Asr) => (0x72, 4, false, false),
+                (VecElementType::I32, ShiftOp::Lsl) => (0x72, 6, false, false),
+                (VecElementType::I64, ShiftOp::Lsr) => (0x73, 2, true, false),
+                (VecElementType::I64, ShiftOp::Asr) => (0x72, 4, true, true),
+                (VecElementType::I64, ShiftOp::Lsl) => (0x73, 6, true, false),
+                _ => {
+                    return Err(LowerError::UnsupportedOperation(
+                        "packed immediate shifts require I16/I32/I64 LSL/LSR or I16/I32/I64 ASR"
+                            .to_string(),
+                    ));
+                }
+            }
+        };
+        let vector = |reg: &VReg| match (reg, width) {
+            (VReg::Arch(ArchReg::X86(X86Reg::Xmm(n))), VecWidth::V128)
+            | (VReg::Arch(ArchReg::X86(X86Reg::Ymm(n))), VecWidth::V256)
+            | (VReg::Arch(ArchReg::X86(X86Reg::Zmm(n))), VecWidth::V512)
+                if *n <= 31 =>
+            {
+                Ok(*n)
+            }
+            _ => Err(LowerError::InvalidRegister(format!(
+                "packed immediate shift requires a vector register matching {width:?}: {reg:?}"
+            ))),
+        };
+        let dst_reg = vector(dst)?;
+        let src_reg = vector(src)?;
+        let evex = width == VecWidth::V512 || dst_reg > 15 || src_reg > 15 || evex_only;
+        if evex {
+            let mut enc = EvexEncoder::new(code);
+            enc.emit_evex(1, 1, w, width, group, dst_reg, src_reg, 0, false);
+            enc.emit_opcode(opcode);
+            enc.emit_modrm_rr(group, src_reg);
+            enc.emit_imm8(amount);
+        } else {
+            Self::emit_vex_rr(
+                code,
+                1,
+                1,
+                width,
+                group,
+                dst_reg,
+                src_reg,
+                opcode,
+                Some(amount),
+            );
+        }
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
     fn emit_vex_rr(
         code: &mut CodeBuffer,
         map: u8,
@@ -1374,9 +1464,14 @@ impl Avx10Lowerer {
         let r_inv = ((dst >> 3) & 1) ^ 1;
         let b_inv = ((src2 >> 3) & 1) ^ 1;
         let l = u8::from(width == VecWidth::V256);
-        code.emit_u8(0xC4);
-        code.emit_u8((r_inv << 7) | (1 << 6) | (b_inv << 5) | map);
-        code.emit_u8(((!src1 & 0x0F) << 3) | (l << 2) | (pp & 3));
+        if map == 1 && src2 < 8 {
+            code.emit_u8(0xC5);
+            code.emit_u8((r_inv << 7) | ((!src1 & 0x0F) << 3) | (l << 2) | (pp & 3));
+        } else {
+            code.emit_u8(0xC4);
+            code.emit_u8((r_inv << 7) | (1 << 6) | (b_inv << 5) | map);
+            code.emit_u8(((!src1 & 0x0F) << 3) | (l << 2) | (pp & 3));
+        }
         code.emit_u8(opcode);
         code.emit_u8(0xC0 | ((dst & 7) << 3) | (src2 & 7));
         if let Some(immediate) = immediate {
@@ -2989,6 +3084,161 @@ mod tests {
                 src2: xmm(3),
                 width: VecWidth::V128,
                 key_schedule: true,
+            },
+        ] {
+            let mut code = CodeBuffer::new();
+            let result = lowerer.try_lower(&invalid, &mut code).unwrap();
+            assert!(result.is_err(), "accepted malformed {invalid:?}");
+            assert_eq!(code.len(), 0);
+        }
+    }
+
+    #[test]
+    fn x86_packed_shift_imm_lowering_covers_all_groups_and_rejects_malformed_shapes() {
+        let lowerer = Avx10Lowerer::new();
+        let xmm1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        let xmm2 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)));
+        for (elem, shift, amount, byte_lane, expected) in [
+            (
+                VecElementType::I16,
+                ShiftOp::Lsr,
+                1,
+                false,
+                &[0xC5, 0xF1, 0x71, 0xD2, 0x01][..],
+            ),
+            (
+                VecElementType::I16,
+                ShiftOp::Asr,
+                2,
+                false,
+                &[0xC5, 0xF1, 0x71, 0xE2, 0x02][..],
+            ),
+            (
+                VecElementType::I16,
+                ShiftOp::Lsl,
+                3,
+                false,
+                &[0xC5, 0xF1, 0x71, 0xF2, 0x03][..],
+            ),
+            (
+                VecElementType::I32,
+                ShiftOp::Lsr,
+                4,
+                false,
+                &[0xC5, 0xF1, 0x72, 0xD2, 0x04][..],
+            ),
+            (
+                VecElementType::I32,
+                ShiftOp::Asr,
+                5,
+                false,
+                &[0xC5, 0xF1, 0x72, 0xE2, 0x05][..],
+            ),
+            (
+                VecElementType::I32,
+                ShiftOp::Lsl,
+                6,
+                false,
+                &[0xC5, 0xF1, 0x72, 0xF2, 0x06][..],
+            ),
+            (
+                VecElementType::I64,
+                ShiftOp::Lsr,
+                7,
+                false,
+                &[0xC5, 0xF1, 0x73, 0xD2, 0x07][..],
+            ),
+            (
+                VecElementType::I64,
+                ShiftOp::Asr,
+                8,
+                false,
+                &[0x62, 0xF1, 0xF5, 0x08, 0x72, 0xE2, 0x08][..],
+            ),
+            (
+                VecElementType::I64,
+                ShiftOp::Lsl,
+                9,
+                false,
+                &[0xC5, 0xF1, 0x73, 0xF2, 0x09][..],
+            ),
+            (
+                VecElementType::I8,
+                ShiftOp::Lsr,
+                10,
+                true,
+                &[0xC5, 0xF1, 0x73, 0xDA, 0x0A][..],
+            ),
+            (
+                VecElementType::I8,
+                ShiftOp::Lsl,
+                11,
+                true,
+                &[0xC5, 0xF1, 0x73, 0xFA, 0x0B][..],
+            ),
+        ] {
+            let op = OpKind::X86PackedShiftImm {
+                dst: xmm1,
+                src: xmm2,
+                width: VecWidth::V128,
+                elem,
+                shift,
+                amount,
+                byte_lane,
+            };
+            let mut code = CodeBuffer::new();
+            lowerer.try_lower(&op, &mut code).unwrap().unwrap();
+            assert_eq!(code.as_slice(), expected, "{op:?}");
+        }
+        let high = OpKind::X86PackedShiftImm {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+            src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+            width: VecWidth::V512,
+            elem: VecElementType::I32,
+            shift: ShiftOp::Lsl,
+            amount: 5,
+            byte_lane: false,
+        };
+        let mut code = CodeBuffer::new();
+        lowerer.try_lower(&high, &mut code).unwrap().unwrap();
+        assert_eq!(code.as_slice(), &[0x62, 0xB1, 0x75, 0x40, 0x72, 0xF2, 0x05]);
+
+        for invalid in [
+            OpKind::X86PackedShiftImm {
+                dst: xmm1,
+                src: xmm2,
+                width: VecWidth::V64,
+                elem: VecElementType::I16,
+                shift: ShiftOp::Lsr,
+                amount: 1,
+                byte_lane: false,
+            },
+            OpKind::X86PackedShiftImm {
+                dst: xmm1,
+                src: xmm2,
+                width: VecWidth::V128,
+                elem: VecElementType::F32,
+                shift: ShiftOp::Lsl,
+                amount: 1,
+                byte_lane: false,
+            },
+            OpKind::X86PackedShiftImm {
+                dst: xmm1,
+                src: xmm2,
+                width: VecWidth::V128,
+                elem: VecElementType::I16,
+                shift: ShiftOp::Asr,
+                amount: 1,
+                byte_lane: true,
+            },
+            OpKind::X86PackedShiftImm {
+                dst: xmm1,
+                src: VReg::Virtual(VirtualId(9)),
+                width: VecWidth::V128,
+                elem: VecElementType::I32,
+                shift: ShiftOp::Lsr,
+                amount: 1,
+                byte_lane: false,
             },
         ] {
             let mut code = CodeBuffer::new();

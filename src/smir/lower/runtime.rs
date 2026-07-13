@@ -966,6 +966,82 @@ pub fn is_native_clobber_safe_excluding(
 /// interpreter semantics and native EVEX encoding are both regression-covered.
 /// Every operand must be architectural: virtual vector values still require a
 /// separate vector allocator/spill discipline and therefore remain ineligible.
+fn x86_packed_shift_imm_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, ShiftOp, VReg, VecElementType, VecWidth, X86Reg};
+    let OpKind::X86PackedShiftImm {
+        dst,
+        src,
+        width,
+        elem,
+        shift,
+        byte_lane,
+        ..
+    } = op
+    else {
+        return false;
+    };
+    let valid_vector = |reg: &VReg| {
+        matches!(
+            (reg, width),
+            (
+                VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                VecWidth::V128
+            ) | (
+                VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                VecWidth::V256
+            ) | (
+                VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                VecWidth::V512
+            )
+        )
+    };
+    let valid_operation = if *byte_lane {
+        *elem == VecElementType::I8 && matches!(shift, ShiftOp::Lsl | ShiftOp::Lsr)
+    } else {
+        matches!(
+            elem,
+            VecElementType::I16 | VecElementType::I32 | VecElementType::I64
+        ) && matches!(shift, ShiftOp::Lsl | ShiftOp::Lsr | ShiftOp::Asr)
+    };
+    valid_vector(dst) && valid_vector(src) && valid_operation
+}
+
+fn x86_packed_shift_imm_feature_requirements(
+    op: &crate::smir::ir::ops::OpKind,
+) -> (bool, bool, bool) {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, ShiftOp, VReg, VecElementType, VecWidth, X86Reg};
+    let OpKind::X86PackedShiftImm {
+        dst,
+        src,
+        width,
+        elem,
+        shift,
+        ..
+    } = op
+    else {
+        return (false, false, false);
+    };
+    let high = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Xmm(16..=31) | X86Reg::Ymm(16..=31) | X86Reg::Zmm(16..=31)
+            ))
+        )
+    };
+    let evex = *width == VecWidth::V512
+        || high(dst)
+        || high(src)
+        || (*elem == VecElementType::I64 && *shift == ShiftOp::Asr);
+    if evex {
+        (false, false, *width != VecWidth::V512)
+    } else {
+        (*width == VecWidth::V128, *width == VecWidth::V256, false)
+    }
+}
+
 pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
@@ -988,6 +1064,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::X86Sm3Msg2 { .. }
             | OpKind::X86Sm3Rounds2 { .. }
             | OpKind::X86Sm4 { .. }
+            | OpKind::X86PackedShiftImm { .. }
             | OpKind::VDotProduct { .. }
             | OpKind::VDotProductBF16 { .. }
             | OpKind::VCvtFP32ToBF16 { .. }
@@ -999,6 +1076,10 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::X86PackedFunnelShift { .. }
             | OpKind::X86MultiShiftQB { .. }
     ) {
+        return false;
+    }
+
+    if matches!(op, OpKind::X86PackedShiftImm { .. }) && !x86_packed_shift_imm_shape_valid(op) {
         return false;
     }
 
@@ -1651,6 +1732,8 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_sha512 = false;
     let mut needs_sm3 = false;
     let mut needs_sm4 = false;
+    let mut needs_shift_avx = false;
+    let mut needs_shift_avx2 = false;
 
     for op in func
         .blocks
@@ -1671,6 +1754,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::VExpand { width, .. }
             | OpKind::X86NarrowInt { width, .. }
             | OpKind::X86Aes { width, .. }
+            | OpKind::X86PackedShiftImm { width, .. }
             | OpKind::VDotProduct { width, .. }
             | OpKind::VDotProductBF16 { width, .. }
             | OpKind::VCvtFP32ToBF16 { width, .. }
@@ -1691,8 +1775,10 @@ pub fn x86_native_vector_features_supported_excluding(
             _ => unreachable!("filtered to native vector operations"),
         };
         let (aes, vaes, aes_vl) = x86_aes_feature_requirements(op);
+        let (shift_avx, shift_avx2, shift_vl) = x86_packed_shift_imm_feature_requirements(op);
         needs_vl |= match op {
             OpKind::X86Aes { .. } => aes_vl,
+            OpKind::X86PackedShiftImm { .. } => shift_vl,
             OpKind::X86Sha512Msg1 { .. }
             | OpKind::X86Sha512Msg2 { .. }
             | OpKind::X86Sha512Rounds2 { .. }
@@ -1745,6 +1831,8 @@ pub fn x86_native_vector_features_supported_excluding(
         needs_sha512 |= x86_sha512_feature_required(op);
         needs_sm3 |= x86_sm3_feature_required(op);
         needs_sm4 |= x86_sm4_feature_required(op);
+        needs_shift_avx |= shift_avx;
+        needs_shift_avx2 |= shift_avx2;
     }
 
     if !any {
@@ -1774,6 +1862,8 @@ pub fn x86_native_vector_features_supported_excluding(
                 || (std::is_x86_feature_detected!("avx") && std::is_x86_feature_detected!("sm3")))
             && (!needs_sm4
                 || (std::is_x86_feature_detected!("avx2") && std::is_x86_feature_detected!("sm4")))
+            && (!needs_shift_avx || std::is_x86_feature_detected!("avx"))
+            && (!needs_shift_avx2 || std::is_x86_feature_detected!("avx2"))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
@@ -1794,6 +1884,8 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_sha512,
             needs_sm3,
             needs_sm4,
+            needs_shift_avx,
+            needs_shift_avx2,
         );
         false
     }
@@ -2439,6 +2531,59 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn x86_packed_shift_imm_requirements_select_vex_or_evex_exactly() {
+        let op = |dst, src, width, elem, shift| OpKind::X86PackedShiftImm {
+            dst,
+            src,
+            width,
+            elem,
+            shift,
+            amount: 3,
+            byte_lane: false,
+        };
+        assert_eq!(
+            x86_packed_shift_imm_feature_requirements(&op(
+                x86(X86Reg::Xmm(1)),
+                x86(X86Reg::Xmm(2)),
+                VecWidth::V128,
+                VecElementType::I32,
+                ShiftOp::Lsr
+            )),
+            (true, false, false)
+        );
+        assert_eq!(
+            x86_packed_shift_imm_feature_requirements(&op(
+                x86(X86Reg::Ymm(1)),
+                x86(X86Reg::Ymm(2)),
+                VecWidth::V256,
+                VecElementType::I32,
+                ShiftOp::Lsl
+            )),
+            (false, true, false)
+        );
+        assert_eq!(
+            x86_packed_shift_imm_feature_requirements(&op(
+                x86(X86Reg::Xmm(16)),
+                x86(X86Reg::Xmm(17)),
+                VecWidth::V128,
+                VecElementType::I32,
+                ShiftOp::Asr
+            )),
+            (false, false, true)
+        );
+        assert_eq!(
+            x86_packed_shift_imm_feature_requirements(&op(
+                x86(X86Reg::Zmm(1)),
+                x86(X86Reg::Zmm(2)),
+                VecWidth::V512,
+                VecElementType::I64,
+                ShiftOp::Asr
+            )),
+            (false, false, false)
+        );
+    }
+
+    #[test]
     fn x86_vector_guest_state_layout_matches_trampoline_offsets() {
         assert_eq!(
             std::mem::offset_of!(GuestRegs, zmm),
@@ -2605,6 +2750,15 @@ mod jit_gate_tests {
                 src2: ymm3,
                 width: VecWidth::V256,
                 key_schedule: false,
+            },
+            OpKind::X86PackedShiftImm {
+                dst: zmm1,
+                src: zmm2,
+                width: VecWidth::V512,
+                elem: VecElementType::I64,
+                shift: ShiftOp::Asr,
+                amount: 9,
+                byte_lane: false,
             },
             OpKind::VCompress {
                 dst: zmm1,
@@ -3059,6 +3213,48 @@ mod jit_gate_tests {
         ] {
             assert!(!is_x86_native_vector_op(&invalid_sm4));
             assert!(!x86_gate(invalid_sm4));
+        }
+
+        for invalid_shift_imm in [
+            OpKind::X86PackedShiftImm {
+                dst: xmm1,
+                src: xmm2,
+                width: VecWidth::V64,
+                elem: VecElementType::I16,
+                shift: ShiftOp::Lsr,
+                amount: 1,
+                byte_lane: false,
+            },
+            OpKind::X86PackedShiftImm {
+                dst: xmm1,
+                src: xmm2,
+                width: VecWidth::V128,
+                elem: VecElementType::F32,
+                shift: ShiftOp::Lsl,
+                amount: 1,
+                byte_lane: false,
+            },
+            OpKind::X86PackedShiftImm {
+                dst: xmm1,
+                src: xmm2,
+                width: VecWidth::V128,
+                elem: VecElementType::I16,
+                shift: ShiftOp::Asr,
+                amount: 1,
+                byte_lane: true,
+            },
+            OpKind::X86PackedShiftImm {
+                dst: xmm1,
+                src: VReg::Virtual(VirtualId(13)),
+                width: VecWidth::V128,
+                elem: VecElementType::I32,
+                shift: ShiftOp::Lsr,
+                amount: 1,
+                byte_lane: false,
+            },
+        ] {
+            assert!(!is_x86_native_vector_op(&invalid_shift_imm));
+            assert!(!x86_gate(invalid_shift_imm));
         }
 
         let invalid_bf16_output_width = OpKind::VCvtFP32ToBF16 {
