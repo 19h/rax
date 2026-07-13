@@ -2742,19 +2742,28 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
                     && matches!(width, OpWidth::W16)
                     && x86_aarch64_legacy_gpr(dst_lo))
         }
+        OpKind::Bsf {
+            dst, src, width, ..
+        }
+        | OpKind::Bsr {
+            dst, src, width, ..
+        }
+        | OpKind::Clz { dst, src, width }
+        | OpKind::Ctz { dst, src, width }
+        | OpKind::Popcnt { dst, src, width } => {
+            full_gpr_write(width)
+                || (matches!(width, OpWidth::W16)
+                    && x86_aarch64_legacy_gpr(dst)
+                    && x86_aarch64_legacy_gpr(src))
+        }
         OpKind::AndNot { width, .. }
         | OpKind::MulU { width, .. }
-        | OpKind::Bsf { width, .. }
-        | OpKind::Bsr { width, .. }
         | OpKind::Bextr { width, .. }
         | OpKind::Bzhi { width, .. }
         | OpKind::X86Bls { width, .. }
         | OpKind::X86Adx { width, .. }
         | OpKind::Pdep { width, .. }
         | OpKind::Pext { width, .. }
-        | OpKind::Clz { width, .. }
-        | OpKind::Ctz { width, .. }
-        | OpKind::Popcnt { width, .. }
         | OpKind::X86Count { width, .. }
         | OpKind::Bswap { width, .. } => full_gpr_write(width),
         OpKind::Mov { dst, width, .. } => {
@@ -4046,6 +4055,66 @@ mod jit_gate_tests {
             width: OpWidth::W16,
             flags: FlagUpdate::All,
         }));
+    }
+
+    #[test]
+    fn x86_aarch64_gate_accepts_w16_scan_and_unary_count_partial_writes() {
+        let rax = x86(X86Reg::Rax);
+        let rbx = x86(X86Reg::Rbx);
+        let zf_only = FlagUpdate::Specific(FlagSet::ZF);
+        for op in [
+            OpKind::Bsf {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W16,
+                flags: zf_only,
+            },
+            OpKind::Bsr {
+                dst: rax,
+                src: rax,
+                width: OpWidth::W16,
+                flags: zf_only,
+            },
+            OpKind::Clz {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W16,
+            },
+            OpKind::Ctz {
+                dst: rax,
+                src: rax,
+                width: OpWidth::W16,
+            },
+            OpKind::Popcnt {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W16,
+            },
+        ] {
+            assert!(x86_aarch64_gate(vec![op.clone()]), "supported {op:?}");
+        }
+
+        for op in [
+            OpKind::Bsf {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W16,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Bsr {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W8,
+                flags: zf_only,
+            },
+            OpKind::Popcnt {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W8,
+            },
+        ] {
+            assert!(!x86_aarch64_gate(vec![op.clone()]), "unsupported {op:?}");
+        }
     }
 
     #[test]

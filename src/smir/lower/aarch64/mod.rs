@@ -8138,6 +8138,17 @@ impl Aarch64Lowerer {
     }
 
     fn lower_clz(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+        if width == OpWidth::W16 {
+            if let Some((dst, result)) = Self::x86_partial_write_scratch(dst, width, &[src], &[])? {
+                let scratches = [result];
+                self.emit_scratch_save(&scratches);
+                self.lower_clz(Self::arm_x_reg(result), src, width)?;
+                self.emit_bitfield(dst, result, 0b01, 0, 15, OpWidth::W64)?;
+                self.emit_scratch_restore(&scratches);
+                return Ok(());
+            }
+        }
+
         if let VReg::Imm(value) = src {
             let emit_width = match width {
                 OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => OpWidth::W32,
@@ -8172,6 +8183,17 @@ impl Aarch64Lowerer {
     }
 
     fn lower_ctz(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+        if width == OpWidth::W16 {
+            if let Some((dst, result)) = Self::x86_partial_write_scratch(dst, width, &[src], &[])? {
+                let scratches = [result];
+                self.emit_scratch_save(&scratches);
+                self.lower_ctz(Self::arm_x_reg(result), src, width)?;
+                self.emit_bitfield(dst, result, 0b01, 0, 15, OpWidth::W64)?;
+                self.emit_scratch_restore(&scratches);
+                return Ok(());
+            }
+        }
+
         if let VReg::Imm(value) = src {
             let emit_width = match width {
                 OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => OpWidth::W32,
@@ -8214,6 +8236,17 @@ impl Aarch64Lowerer {
     }
 
     fn lower_popcnt(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+        if width == OpWidth::W16 {
+            if let Some((dst, result)) = Self::x86_partial_write_scratch(dst, width, &[src], &[])? {
+                let scratches = [result];
+                self.emit_scratch_save(&scratches);
+                self.lower_popcnt(Self::arm_x_reg(result), src, width)?;
+                self.emit_bitfield(dst, result, 0b01, 0, 15, OpWidth::W64)?;
+                self.emit_scratch_restore(&scratches);
+                return Ok(());
+            }
+        }
+
         let dst = Self::dst_gpr_arm_or_x86(dst)?;
         let src = Self::gpr_arm_or_x86(src)?;
         let emit_width = match width {
@@ -8282,6 +8315,17 @@ impl Aarch64Lowerer {
         width: OpWidth,
         flags: FlagUpdate,
     ) -> Result<(), LowerError> {
+        if width == OpWidth::W16 {
+            if let Some((dst, result)) = Self::x86_partial_write_scratch(dst, width, &[src], &[])? {
+                let scratches = [result];
+                self.emit_scratch_save(&scratches);
+                self.lower_bsf(Self::arm_x_reg(result), src, width, flags)?;
+                self.emit_bitfield(dst, result, 0b01, 0, 15, OpWidth::W64)?;
+                self.emit_scratch_restore(&scratches);
+                return Ok(());
+            }
+        }
+
         if let VReg::Imm(value) = src {
             let emit_width = match width {
                 OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => OpWidth::W32,
@@ -8299,9 +8343,7 @@ impl Aarch64Lowerer {
                 value.trailing_zeros()
             };
             let dst = Self::dst_gpr_arm_or_x86(dst)?;
-            if flags.updates_any() {
-                self.lower_bit_scan_zero_flags(dst, src, width, emit_width)?;
-            }
+            self.lower_bit_scan_flags(dst, src, width, emit_width, flags)?;
             return self.emit_mov_imm(dst, i64::from(result), emit_width);
         }
 
@@ -8335,10 +8377,12 @@ impl Aarch64Lowerer {
 
         self.lower_ctz(dst, src, width)?;
         self.lower_bfx(dst, dst, 0, mask_bits, false, mask_width)?;
-        if flags.updates_any() {
-            let flag_src = saved_src.first().copied().unwrap_or(src_reg);
-            self.emit_logic_flags_from_source(flag_src, width)?;
-        }
+        let flag_src = saved_src
+            .first()
+            .copied()
+            .map(Self::arm_x_reg)
+            .unwrap_or(src);
+        self.lower_bit_scan_flags(dst_reg, flag_src, width, mask_width, flags)?;
         self.emit_scratch_restore(&saved_src);
         Ok(())
     }
@@ -8350,6 +8394,17 @@ impl Aarch64Lowerer {
         width: OpWidth,
         flags: FlagUpdate,
     ) -> Result<(), LowerError> {
+        if width == OpWidth::W16 {
+            if let Some((dst, result)) = Self::x86_partial_write_scratch(dst, width, &[src], &[])? {
+                let scratches = [result];
+                self.emit_scratch_save(&scratches);
+                self.lower_bsr(Self::arm_x_reg(result), src, width, flags)?;
+                self.emit_bitfield(dst, result, 0b01, 0, 15, OpWidth::W64)?;
+                self.emit_scratch_restore(&scratches);
+                return Ok(());
+            }
+        }
+
         if let VReg::Imm(value) = src {
             let emit_width = match width {
                 OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => OpWidth::W32,
@@ -8367,9 +8422,7 @@ impl Aarch64Lowerer {
                 u64::BITS - 1 - value.leading_zeros()
             };
             let dst = Self::dst_gpr_arm_or_x86(dst)?;
-            if flags.updates_any() {
-                self.lower_bit_scan_zero_flags(dst, src, width, emit_width)?;
-            }
+            self.lower_bit_scan_flags(dst, src, width, emit_width, flags)?;
             return self.emit_mov_imm(dst, i64::from(result), emit_width);
         }
 
@@ -8405,10 +8458,12 @@ impl Aarch64Lowerer {
             self.emit_orr_imm_one(dst_reg, dst_reg, OpWidth::W32)?;
             self.emit_dp1(dst_reg, dst_reg, 0b000100, OpWidth::W32)?;
             self.emit_logic_imm(dst_reg, dst_reg, 0b10, 0, 0, 4, OpWidth::W32)?;
-            if flags.updates_any() {
-                let flag_src = saved_src.first().copied().unwrap_or(src_reg);
-                self.emit_logic_flags_from_source(flag_src, width)?;
-            }
+            let flag_src = saved_src
+                .first()
+                .copied()
+                .map(Self::arm_x_reg)
+                .unwrap_or(src);
+            self.lower_bit_scan_flags(dst_reg, flag_src, width, OpWidth::W32, flags)?;
             self.emit_scratch_restore(&saved_src);
             return Ok(());
         }
@@ -8422,11 +8477,59 @@ impl Aarch64Lowerer {
         self.emit_dp1(dst_reg, dst_reg, 0b000100, width)?;
         let n = Self::sf(width)?;
         self.emit_logic_imm(dst_reg, dst_reg, 0b10, n, 0, mask_imms, width)?;
-        if flags.updates_any() {
-            let flag_src = saved_src.first().copied().unwrap_or(src_reg);
-            self.emit_logic_flags_from_source(flag_src, width)?;
-        }
+        let flag_src = saved_src
+            .first()
+            .copied()
+            .map(Self::arm_x_reg)
+            .unwrap_or(src);
+        self.lower_bit_scan_flags(dst_reg, flag_src, width, width, flags)?;
         self.emit_scratch_restore(&saved_src);
+        Ok(())
+    }
+
+    fn lower_bit_scan_flags(
+        &mut self,
+        dst: u8,
+        src: VReg,
+        width: OpWidth,
+        emit_width: OpWidth,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        match flags {
+            FlagUpdate::None => return Ok(()),
+            FlagUpdate::All => {
+                return if matches!(src, VReg::Imm(_)) {
+                    self.lower_bit_scan_zero_flags(dst, src, width, emit_width)
+                } else {
+                    self.emit_logic_flags_from_source(Self::gpr_arm_or_x86(src)?, width)
+                };
+            }
+            FlagUpdate::Specific(set) if set == FlagSet::ZF => {}
+            other => {
+                return Err(LowerError::InvalidOperand {
+                    op: "AArch64 native bit scan".into(),
+                    operand: format!("flag contract {other:?}"),
+                });
+            }
+        }
+
+        let mut avoid = vec![dst];
+        if !matches!(src, VReg::Imm(_)) {
+            avoid.push(Self::gpr_arm_or_x86(src)?);
+        }
+        let scratches = Self::scratch_regs(&avoid, 3)?;
+        let saved = scratches[0];
+        let produced = scratches[1];
+        let temp = scratches[2];
+        self.emit_scratch_save(&scratches);
+        self.emit_sysreg(saved, ArmReg::Nzcv, true)?;
+        self.lower_bit_scan_zero_flags(temp, src, width, emit_width)?;
+        self.emit_sysreg(produced, ArmReg::Nzcv, true)?;
+        self.emit_logic_imm_mask(saved, saved, 0b00, !(NZCV_Z as u32) as i64, OpWidth::W32)?;
+        self.emit_logic_imm_mask(produced, produced, 0b00, NZCV_Z, OpWidth::W32)?;
+        self.emit_logic_shifted(saved, saved, produced, 0b01, false, 0, 0, OpWidth::W32)?;
+        self.emit_sysreg(saved, ArmReg::Nzcv, false)?;
+        self.emit_scratch_restore(&scratches);
         Ok(())
     }
 
@@ -8445,7 +8548,7 @@ impl Aarch64Lowerer {
             return self.emit_logic_reg_n(31, dst, dst, 0b11, false, emit_width);
         }
 
-        let src = Self::gpr(src)?;
+        let src = Self::gpr_arm_or_x86(src)?;
         match width {
             OpWidth::W8 | OpWidth::W16 => {
                 let (imm_n, immr, imms) =
@@ -18401,14 +18504,30 @@ mod tests {
     }
 
     fn expected_logic_source_nzcv(old_nzcv: u8, src: u64, width: OpWidth, flags: FlagUpdate) -> u8 {
-        if !flags.updates_any() {
-            return old_nzcv;
-        }
-
         let src = src & width_mask(width);
         let negative = ((src >> (width.bits() - 1)) & 1) != 0;
         let zero = src == 0;
-        ((negative as u8) << 3) | ((zero as u8) << 2)
+        let produced = ((negative as u8) << 3) | ((zero as u8) << 2);
+        match flags {
+            FlagUpdate::None => old_nzcv,
+            FlagUpdate::All => produced,
+            FlagUpdate::Specific(set) => {
+                let mut mask = 0;
+                if set.contains(FlagSet::SF) {
+                    mask |= 0b1000;
+                }
+                if set.contains(FlagSet::ZF) {
+                    mask |= 0b0100;
+                }
+                if set.contains(FlagSet::CF) {
+                    mask |= 0b0010;
+                }
+                if set.contains(FlagSet::OF) {
+                    mask |= 0b0001;
+                }
+                (old_nzcv & !mask) | (produced & mask)
+            }
+        }
     }
 
     fn ref_logic(src1: u64, src2: u64, opc: u32, n: bool, width: OpWidth) -> u64 {
@@ -55424,6 +55543,70 @@ mod tests {
     }
 
     #[test]
+    fn lowers_x86_w16_unary_count_partial_write_alias_matrix() {
+        let rax = x86(X86Reg::Rax);
+        let rbx = x86(X86Reg::Rbx);
+        let rax_value = 0xaaaa_bbbb_cccc_1000;
+        let rbx_value = 0xbbbb_cccc_dddd_00f0;
+        let cases = [
+            (
+                "clz-distinct",
+                OpKind::Clz {
+                    dst: rbx,
+                    src: rax,
+                    width: OpWidth::W16,
+                },
+                3,
+                (rbx_value & !0xffff) | 3,
+            ),
+            (
+                "ctz-in-place",
+                OpKind::Ctz {
+                    dst: rax,
+                    src: rax,
+                    width: OpWidth::W16,
+                },
+                0,
+                (rax_value & !0xffff) | 12,
+            ),
+            (
+                "popcnt-distinct",
+                OpKind::Popcnt {
+                    dst: rbx,
+                    src: rax,
+                    width: OpWidth::W16,
+                },
+                3,
+                (rbx_value & !0xffff) | 1,
+            ),
+        ];
+        let sentinels = [
+            (16, 0x1616_1616_1616_1616),
+            (17, 0x1717_1717_1717_1717),
+            (15, 0x1515_1515_1515_1515),
+            (14, 0x1414_1414_1414_1414),
+        ];
+
+        for (label, op, dst, expected) in cases {
+            let code = lower_single_op(op);
+            let mut regs = sentinels.to_vec();
+            regs.extend([(0, rax_value), (3, rbx_value)]);
+            let old_nzcv = 0b1011;
+            let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+
+            assert_eq!(out[dst], expected, "{label}: result");
+            if dst != 0 {
+                assert_eq!(out[0], rax_value, "{label}: source");
+            }
+            for (index, value) in sentinels {
+                assert_eq!(out[index as usize], value, "{label}: x{index} scratch");
+            }
+            assert_eq!(out_nzcv, old_nzcv, "{label}: NZCV");
+            assert_eq!(sp, 0x8000, "{label}: stack");
+        }
+    }
+
+    #[test]
     fn lowers_bsf_flag_setting_runtime() {
         assert_bit_scan_lowering(
             "bsf_x_flags_nonzero_negative_source",
@@ -55489,6 +55672,95 @@ mod tests {
             FlagUpdate::All,
             0b1111,
         );
+    }
+
+    #[test]
+    fn lowers_x86_w16_bit_scan_partial_writes_and_preserves_non_z_flags() {
+        let zf_only = FlagUpdate::Specific(FlagSet::ZF);
+        let cases = [
+            (
+                "bsf-w16-dst-src-alias",
+                false,
+                x86(X86Reg::Rax),
+                x86(X86Reg::Rax),
+                0xaaaa_bbbb_cccc_0100,
+                0xaaaa_bbbb_cccc_0100,
+                OpWidth::W16,
+                0b1111,
+            ),
+            (
+                "bsr-w16-zero-source",
+                true,
+                x86(X86Reg::Rax),
+                x86(X86Reg::Rbx),
+                0xaaaa_bbbb_cccc_7777,
+                0xbbbb_cccc_dddd_0000,
+                OpWidth::W16,
+                0b1011,
+            ),
+            (
+                "bsf-w32-preserves-cf-sf-of",
+                false,
+                x86(X86Reg::Rax),
+                x86(X86Reg::Rbx),
+                0xaaaa_bbbb_cccc_7777,
+                0xbbbb_cccc_8000_0000,
+                OpWidth::W32,
+                0b0011,
+            ),
+        ];
+        let sentinels = [
+            (16, 0x1616_1616_1616_1616),
+            (17, 0x1717_1717_1717_1717),
+            (15, 0x1515_1515_1515_1515),
+            (14, 0x1414_1414_1414_1414),
+        ];
+
+        for (label, reverse, dst, src, dst_value, src_value, width, old_nzcv) in cases {
+            let op = if reverse {
+                OpKind::Bsr {
+                    dst,
+                    src,
+                    width,
+                    flags: zf_only,
+                }
+            } else {
+                OpKind::Bsf {
+                    dst,
+                    src,
+                    width,
+                    flags: zf_only,
+                }
+            };
+            let code = lower_single_op(op);
+            let low = if reverse {
+                ref_bsr(src_value, width)
+            } else {
+                ref_bsf(src_value, width)
+            };
+            let expected = if width == OpWidth::W16 {
+                (dst_value & !0xffff) | low
+            } else {
+                low
+            };
+            let expected_nzcv = expected_logic_source_nzcv(old_nzcv, src_value, width, zf_only);
+            let mut regs = sentinels.to_vec();
+            regs.push((0, dst_value));
+            if src != dst {
+                regs.push((3, src_value));
+            }
+            let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+
+            assert_eq!(out[0], expected, "{label}: result");
+            if src != dst {
+                assert_eq!(out[3], src_value, "{label}: source");
+            }
+            for (index, value) in sentinels {
+                assert_eq!(out[index as usize], value, "{label}: x{index} scratch");
+            }
+            assert_eq!(out_nzcv, expected_nzcv, "{label}: NZCV");
+            assert_eq!(sp, 0x8000, "{label}: stack");
+        }
     }
 
     #[test]

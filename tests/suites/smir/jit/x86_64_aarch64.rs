@@ -763,6 +763,44 @@ fn x86_apx_nf_w16_signed_multiply_merges_partial_registers() {
 }
 
 #[test]
+fn x86_w16_bit_scans_merge_partial_registers_and_only_update_zf() {
+    // LLVM 23 encodings: BSR ax,bx; BSF cx,cx. Both sources are nonzero, so
+    // ZF clears and JZ falls through. CF/SF/OF and all non-NZCV RFLAGS bits
+    // must survive the Specific(ZF) SMIR contract.
+    let code = [
+        0x66, 0x0F, 0xBD, 0xC3, 0x66, 0x0F, 0xBC, 0xC9, 0x74, 0xF6, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xAAAA_BBBB_CCCC_7777;
+        regs.rcx = 0x1111_2222_3333_0100;
+        regs.rbx = 0xBBBB_CCCC_DDDD_8000;
+        regs.rflags = 0xCD7;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block().expect("W16 bit-scan JIT attempt"),
+        "W16 bit scans must enter the AArch64 tier"
+    );
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "W16 bit scans");
+    assert_eq!(actual.rax, 0xAAAA_BBBB_CCCC_000F, "BSR ax upper merge");
+    assert_eq!(actual.rcx, 0x1111_2222_3333_0008, "BSF cx alias");
+    assert_eq!(actual.rbx, 0xBBBB_CCCC_DDDD_8000, "source preserved");
+    assert_eq!(actual.rflags, 0xC97, "only ZF clears");
+}
+
+#[test]
 fn x86_aarch64_jit_rejects_live_pf_af_definitions_without_execution() {
     // add rax,rbx; jnz start; hlt. ADD's live PF/AF outputs cannot be represented
     // in NZCV, so the architecture-specific gate must retain interpreter fallback.
