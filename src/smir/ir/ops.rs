@@ -3646,6 +3646,9 @@ impl OpKind {
                 | OpKind::CMove { .. }
                 | OpKind::Bsf { .. }
                 | OpKind::Bsr { .. }
+                | OpKind::Clz { .. }
+                | OpKind::Ctz { .. }
+                | OpKind::Popcnt { .. }
                 // Register-only address arithmetic (no memory dereference).
                 // BSF/BSR have dedicated SMIR variants; F3-prefixed TZCNT/LZCNT
                 // lift to Ctz/Clz and cannot alias this native lowering.

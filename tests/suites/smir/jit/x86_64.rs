@@ -322,6 +322,63 @@ fn jit_bit_scans_preserve_undefined_flags_and_handle_zero_sources() {
     // excluded from the cross-tier equality contract.
 }
 
+/// APX NF count instructions have no architectural flag side effects. The JIT
+/// re-encodes them as legacy host count instructions wrapped by PUSHFQ/POPFQ,
+/// so each instruction must retain incoming CF while producing the same count
+/// result as the interpreter.
+#[test]
+fn jit_apx_nf_counts_preserve_flags_and_enter_native_tier() {
+    if !(std::is_x86_feature_detected!("popcnt")
+        && std::is_x86_feature_detected!("bmi1")
+        && std::is_x86_feature_detected!("lzcnt"))
+    {
+        return;
+    }
+
+    // loop:
+    //   {nf} popcnt r8,rax; jnc fail
+    //   {nf} lzcnt  r8,rax; jnc fail
+    //   {nf} tzcnt  r8,rax; jnc fail
+    //   dec ecx; jnz loop
+    //   hlt
+    // fail: mov edi,1; hlt
+    let code = [
+        0x62, 0x74, 0xFC, 0x0C, 0x88, 0xC0, 0x73, 0x15, 0x62, 0x74, 0xFC, 0x0C, 0xF5, 0xC0, 0x73,
+        0x0D, 0x62, 0x74, 0xFC, 0x0C, 0xF4, 0xC0, 0x73, 0x05, 0xFF, 0xC9, 0x75, 0xE4, 0xF4, 0xBF,
+        0x01, 0x00, 0x00, 0x00, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        vcpu.set_apx_enabled(true);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x100;
+        regs.rcx = 200;
+        regs.rdi = 0;
+        regs.r8 = u64::MAX;
+        regs.rflags = 0x2 | 0x1 | 0x4 | 0x10 | 0x40 | 0x80 | 0x800;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interp = make_vcpu_code(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block().expect("JIT APX NF count hot region"),
+        "well-formed APX NF register counts must enter the native tier"
+    );
+    run_interp(&mut jit);
+
+    let expected = interp.get_regs().unwrap();
+    let after = jit.get_regs().unwrap();
+    assert_eq!(after.r8, expected.r8, "count result vs interpreter");
+    assert_eq!(after.r8, 8, "final TZCNT result");
+    assert_eq!(after.rcx & 0xffff_ffff, 0, "loop count");
+    assert_eq!(after.rdi, 0, "each NF count must preserve incoming CF");
+    assert_ne!(after.rflags & 1, 0, "DEC and every NF count preserve CF");
+}
+
 /// APX NDD carry operations whose destination aliases source 2 must remain in
 /// the native tier. ADC can commute its register sources; SBB preserves the old
 /// source 2 on the host stack without disturbing incoming or result flags.

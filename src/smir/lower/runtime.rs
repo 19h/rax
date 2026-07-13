@@ -964,30 +964,54 @@ pub fn is_native_clobber_safe_excluding(
 
 /// Verify host support for scalar x86 extensions emitted directly by the
 /// identity-register native JIT. Generic scalar lowerings use baseline x86-64;
-/// encoding-hinted MULX is the first admitted scalar operation requiring an
-/// additional CPUID feature.
+/// Encoding-hinted MULX and native count operations require additional CPUID
+/// features. Excluded exit blocks do not execute natively and therefore do not
+/// contribute feature requirements.
 pub fn x86_native_scalar_features_supported_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
 ) -> bool {
-    use crate::smir::ir::ops::X86OpHint;
-
-    let needs_bmi2 = func
-        .blocks
-        .iter()
-        .filter(|block| !excluded.contains_key(&block.id))
-        .flat_map(|block| &block.ops)
-        .any(|op| matches!(op.x86_hint, Some(X86OpHint::Mulx)));
+    let (needs_bmi2, needs_bmi1, needs_lzcnt, needs_popcnt) =
+        x86_native_scalar_feature_requirements_excluding(func, excluded);
 
     #[cfg(target_arch = "x86_64")]
     {
-        !needs_bmi2 || std::is_x86_feature_detected!("bmi2")
+        (!needs_bmi2 || std::is_x86_feature_detected!("bmi2"))
+            && (!needs_bmi1 || std::is_x86_feature_detected!("bmi1"))
+            && (!needs_lzcnt || std::is_x86_feature_detected!("lzcnt"))
+            && (!needs_popcnt || std::is_x86_feature_detected!("popcnt"))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
     {
-        !needs_bmi2
+        !(needs_bmi2 || needs_bmi1 || needs_lzcnt || needs_popcnt)
     }
+}
+
+fn x86_native_scalar_feature_requirements_excluding(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> (bool, bool, bool, bool) {
+    use crate::smir::ir::ops::X86OpHint;
+
+    use crate::smir::ir::ops::OpKind;
+
+    let mut needs_bmi2 = false;
+    let mut needs_bmi1 = false;
+    let mut needs_lzcnt = false;
+    let mut needs_popcnt = false;
+    for op in func
+        .blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .flat_map(|block| &block.ops)
+    {
+        needs_bmi2 |= matches!(op.x86_hint, Some(X86OpHint::Mulx));
+        needs_bmi1 |= matches!(op.kind, OpKind::Ctz { .. });
+        needs_lzcnt |= matches!(op.kind, OpKind::Clz { .. });
+        needs_popcnt |= matches!(op.kind, OpKind::Popcnt { .. });
+    }
+    (needs_bmi2, needs_bmi1, needs_lzcnt, needs_popcnt)
 }
 
 /// Return whether `op` is one of the register-only x86 vector operations whose
@@ -2208,6 +2232,13 @@ fn block_is_clobber_safe(
         {
             return false;
         }
+        if matches!(
+            op.kind,
+            OpKind::Clz { .. } | OpKind::Ctz { .. } | OpKind::Popcnt { .. }
+        ) && !x86_count_shape_valid(&op.kind)
+        {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86NddDoubleShift { .. })
             && !x86_ndd_double_shift_shape_valid(&op.kind)
         {
@@ -2279,6 +2310,50 @@ fn x86_bit_scan_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
             src,
             width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
             flags: FlagUpdate::Specific(FlagSet::ZF),
+        } if native_gpr(dst) && native_gpr(src)
+    )
+}
+
+fn x86_count_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
+
+    let native_gpr = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Rax
+                    | X86Reg::Rcx
+                    | X86Reg::Rdx
+                    | X86Reg::Rbx
+                    | X86Reg::Rsi
+                    | X86Reg::Rdi
+                    | X86Reg::R8
+                    | X86Reg::R9
+                    | X86Reg::R10
+                    | X86Reg::R11
+                    | X86Reg::R12
+                    | X86Reg::R13
+                    | X86Reg::R14
+                    | X86Reg::R15
+            ))
+        )
+    };
+
+    matches!(
+        op,
+        OpKind::Clz {
+            dst,
+            src,
+            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+        } | OpKind::Ctz {
+            dst,
+            src,
+            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+        } | OpKind::Popcnt {
+            dst,
+            src,
+            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
         } if native_gpr(dst) && native_gpr(src)
     )
 }
@@ -3955,6 +4030,134 @@ mod jit_gate_tests {
                 _ => unreachable!(),
             }
             assert!(!is_native_clobber_safe(&malformed), "{name}");
+        }
+    }
+
+    #[test]
+    fn scalar_count_gate_tracks_features_and_rejects_malformed_shapes() {
+        let valid = [
+            OpKind::Popcnt {
+                dst: x86(X86Reg::R8),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W16,
+            },
+            OpKind::Ctz {
+                dst: x86(X86Reg::R9),
+                src: x86(X86Reg::Rbx),
+                width: OpWidth::W32,
+            },
+            OpKind::Clz {
+                dst: x86(X86Reg::R15),
+                src: x86(X86Reg::R14),
+                width: OpWidth::W64,
+            },
+        ];
+        for (op, expected) in valid.iter().cloned().zip([
+            (false, false, false, true),
+            (false, true, false, false),
+            (false, false, true, false),
+        ]) {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            assert_eq!(
+                x86_native_scalar_feature_requirements_excluding(
+                    &builder.finish(),
+                    &std::collections::HashMap::new()
+                ),
+                expected,
+                "each count operation must request exactly its own host extension"
+            );
+        }
+        for op in &valid {
+            assert!(op.is_jit_safe(), "count op must be on the scalar whitelist");
+            assert!(
+                x86_gate(op.clone()),
+                "well-formed count op must pass the clobber gate"
+            );
+        }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        for (index, op) in valid.into_iter().enumerate() {
+            builder.push_op(0x1000 + index as u64, op);
+        }
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let mut excluded = std::collections::HashMap::new();
+        excluded.insert(func.entry, 0x1000);
+        assert!(
+            x86_native_scalar_features_supported_excluding(&func, &excluded),
+            "an excluded count block has no host feature requirement"
+        );
+
+        #[cfg(target_arch = "x86_64")]
+        assert_eq!(
+            x86_native_scalar_features_supported_excluding(
+                &func,
+                &std::collections::HashMap::new()
+            ),
+            std::is_x86_feature_detected!("popcnt")
+                && std::is_x86_feature_detected!("bmi1")
+                && std::is_x86_feature_detected!("lzcnt")
+        );
+        #[cfg(not(target_arch = "x86_64"))]
+        assert!(!x86_native_scalar_features_supported_excluding(
+            &func,
+            &std::collections::HashMap::new()
+        ));
+
+        for (name, op) in [
+            (
+                "byte width",
+                OpKind::Popcnt {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rcx),
+                    width: OpWidth::W8,
+                },
+            ),
+            (
+                "guest stack source",
+                OpKind::Ctz {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rsp),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "guest frame destination",
+                OpKind::Clz {
+                    dst: x86(X86Reg::Rbp),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "extended guest register",
+                OpKind::Popcnt {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W32,
+                },
+            ),
+            (
+                "virtual source",
+                OpKind::Ctz {
+                    dst: x86(X86Reg::Rax),
+                    src: VReg::Virtual(VirtualId(0)),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "foreign architecture source",
+                OpKind::Clz {
+                    dst: x86(X86Reg::Rax),
+                    src: arm_x(0),
+                    width: OpWidth::W64,
+                },
+            ),
+        ] {
+            assert!(!x86_gate(op), "malformed {name} count must deopt");
         }
     }
 
