@@ -2261,6 +2261,9 @@ fn block_is_clobber_safe(
         {
             return false;
         }
+        if matches!(op.kind, OpKind::Cwd { .. }) && !x86_cwd_shape_valid(&op.kind) {
+            return false;
+        }
         if matches!(
             op.kind,
             OpKind::Bextr { .. } | OpKind::Bzhi { .. } | OpKind::Pdep { .. } | OpKind::Pext { .. }
@@ -2356,6 +2359,20 @@ fn x86_bit_scan_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
             width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
             flags: FlagUpdate::Specific(FlagSet::ZF),
         } if native_gpr(dst) && native_gpr(src)
+    )
+}
+
+fn x86_cwd_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
+
+    matches!(
+        op,
+        OpKind::Cwd {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
+            src: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+        }
     )
 }
 
@@ -4632,6 +4649,76 @@ mod jit_gate_tests {
                 op.is_jit_safe(),
                 "malformed shape remains class-whitelisted"
             );
+            assert!(!x86_gate(op), "malformed {name} must deopt");
+        }
+    }
+
+    #[test]
+    fn cwd_gate_accepts_only_implicit_architectural_registers_and_widths() {
+        for width in [OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+            let op = OpKind::Cwd {
+                dst: x86(X86Reg::Rdx),
+                src: x86(X86Reg::Rax),
+                width,
+            };
+            assert!(
+                op.is_jit_safe(),
+                "{width:?} must be on the scalar whitelist"
+            );
+            assert!(x86_gate(op), "{width:?} must pass the exact-shape gate");
+        }
+
+        for (name, op) in [
+            (
+                "byte width",
+                OpKind::Cwd {
+                    dst: x86(X86Reg::Rdx),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W8,
+                },
+            ),
+            (
+                "wide width",
+                OpKind::Cwd {
+                    dst: x86(X86Reg::Rdx),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W128,
+                },
+            ),
+            (
+                "wrong source",
+                OpKind::Cwd {
+                    dst: x86(X86Reg::Rdx),
+                    src: x86(X86Reg::Rcx),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "wrong destination",
+                OpKind::Cwd {
+                    dst: x86(X86Reg::Rcx),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "virtual source",
+                OpKind::Cwd {
+                    dst: x86(X86Reg::Rdx),
+                    src: VReg::Virtual(VirtualId(0)),
+                    width: OpWidth::W32,
+                },
+            ),
+            (
+                "foreign destination",
+                OpKind::Cwd {
+                    dst: arm_x(0),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W16,
+                },
+            ),
+        ] {
+            assert!(op.is_jit_safe(), "{name} remains class-whitelisted");
             assert!(!x86_gate(op), "malformed {name} must deopt");
         }
     }

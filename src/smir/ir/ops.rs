@@ -3664,6 +3664,7 @@ impl OpKind {
                 | OpKind::Mov { .. }
                 | OpKind::ZeroExtend { .. }
                 | OpKind::SignExtend { .. }
+                | OpKind::Cwd { .. }
                 | OpKind::SetCC { .. }
                 | OpKind::TestCondition { .. }
                 | OpKind::CMove { .. }

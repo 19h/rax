@@ -16566,6 +16566,39 @@ mod tests {
     }
 
     #[test]
+    fn lifted_cwd_cdq_cqo_execute_partial_writes_and_preserve_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        const STATUS: u64 = 0x08D5;
+
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0x08D7);
+        ctx.flags.lazy = None;
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_8001);
+        ctx.write_vreg(rdx, 0xAABB_CCDD_EEFF_1234);
+        execute_lifted_x86(&[0x66, 0x99], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_8001, "CWD RAX");
+        assert_eq!(ctx.read_vreg(rdx), 0xAABB_CCDD_EEFF_FFFF, "CWD RDX");
+
+        ctx.write_vreg(rax, 0x1122_3344_8000_0001);
+        ctx.write_vreg(rdx, u64::MAX);
+        execute_lifted_x86(&[0x99], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_8000_0001, "CDQ RAX");
+        assert_eq!(ctx.read_vreg(rdx), 0x0000_0000_FFFF_FFFF, "CDQ RDX");
+
+        ctx.write_vreg(rax, 0x8000_0000_0000_0001);
+        ctx.write_vreg(rdx, 0);
+        execute_lifted_x86(&[0x48, 0x99], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x8000_0000_0000_0001, "CQO RAX");
+        assert_eq!(ctx.read_vreg(rdx), u64::MAX, "CQO RDX");
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags() & STATUS, 0x08D5);
+    }
+
+    #[test]
     fn lifted_popcnt_tzcnt_lzcnt_execute_results_aliases_and_flags() {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));

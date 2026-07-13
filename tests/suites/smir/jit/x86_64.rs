@@ -610,6 +610,73 @@ fn jit_xchg_preserves_width_semantics_and_flags() {
     }
 }
 
+/// CWD/CDQ/CQO have no explicit operands in machine code but lower from an
+/// exact RAX-to-RDX IR shape. Exercise every architectural width, including
+/// x86 partial-register writes and preservation of the preceding DEC flags.
+#[test]
+fn jit_cwd_cdq_cqo_preserve_partial_writes_source_and_flags() {
+    const STATUS_MASK: u64 = 0x08D5;
+
+    for (name, instruction, rax, rdx, expected_rdx) in [
+        (
+            "cwd",
+            &[0x66, 0x99][..],
+            0x1122_3344_5566_8001,
+            0xAABB_CCDD_EEFF_1234,
+            0xAABB_CCDD_EEFF_FFFF,
+        ),
+        (
+            "cdq",
+            &[0x99][..],
+            0x1122_3344_8000_0001,
+            u64::MAX,
+            0x0000_0000_FFFF_FFFF,
+        ),
+        ("cqo", &[0x48, 0x99][..], 0x8000_0000_0000_0001, 0, u64::MAX),
+    ] {
+        // loop: dec r8d; jnz loop; CWD/CDQ/CQO; hlt
+        let mut code = vec![0x41, 0xFF, 0xC8, 0x75, 0xFB];
+        code.extend_from_slice(instruction);
+        code.push(0xF4);
+
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = rax;
+            regs.rdx = rdx;
+            regs.r8 = 200;
+            regs.rflags = 0xCD7;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp);
+        run_interp(&mut interp);
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("JIT {name}: {error:?}")),
+            "{name} loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+
+        let expected = interp.get_regs().unwrap();
+        let after = jit.get_regs().unwrap();
+        assert_eq!(after.rax, expected.rax, "{name}: RAX vs interpreter");
+        assert_eq!(after.rdx, expected.rdx, "{name}: RDX vs interpreter");
+        assert_eq!(after.rax, rax, "{name}: RAX is unchanged");
+        assert_eq!(after.rdx, expected_rdx, "{name}: architectural RDX");
+        assert_eq!(after.r8 & 0xFFFF_FFFF, 0, "{name}: loop count");
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            expected.rflags & STATUS_MASK,
+            "{name}: status flags vs interpreter"
+        );
+        assert_eq!(after.rflags & STATUS_MASK, 0x45, "{name}: status flags");
+    }
+}
+
 /// Register-only BMI1/BMI2 operations are native-JIT eligible at both scalar
 /// widths. The matrix covers zero extension, boundary counts, defined versus
 /// preserved flags, and destination aliasing with every explicit source role.

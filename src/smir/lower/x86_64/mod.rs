@@ -13871,6 +13871,62 @@ mod tests {
     }
 
     #[test]
+    fn lower_cwd_cdq_cqo_emits_exact_encodings_and_rejects_malformed_shapes() {
+        let gpr = |reg| VReg::Arch(ArchReg::X86(reg));
+
+        for (name, width, expected) in [
+            ("CWD", OpWidth::W16, &[0x66, 0x99][..]),
+            ("CDQ", OpWidth::W32, &[0x99][..]),
+            ("CQO", OpWidth::W64, &[0x48, 0x99][..]),
+        ] {
+            let code = lower_single_op(OpKind::Cwd {
+                dst: gpr(X86Reg::Rdx),
+                src: gpr(X86Reg::Rax),
+                width,
+            });
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        for (name, op) in [
+            (
+                "wrong source",
+                OpKind::Cwd {
+                    dst: gpr(X86Reg::Rdx),
+                    src: gpr(X86Reg::Rcx),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "wrong destination",
+                OpKind::Cwd {
+                    dst: gpr(X86Reg::Rcx),
+                    src: gpr(X86Reg::Rax),
+                    width: OpWidth::W32,
+                },
+            ),
+            (
+                "unsupported width",
+                OpKind::Cwd {
+                    dst: gpr(X86Reg::Rdx),
+                    src: gpr(X86Reg::Rax),
+                    width: OpWidth::W8,
+                },
+            ),
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(op),
+                    LowerError::InvalidOperand { .. } | LowerError::UnsupportedOp { .. }
+                ),
+                "{name}"
+            );
+        }
+    }
+
+    #[test]
     fn lower_mulx_hint_emits_native_bmi2_with_aliasing() {
         let gpr = |reg| VReg::Arch(ArchReg::X86(reg));
 
