@@ -2272,25 +2272,10 @@ fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ir::ops::OpKind
 
     matches!(
         op,
-        OpKind::Add {
-            flags: FlagUpdate::None,
-            ..
-        } | OpKind::Sub {
-            flags: FlagUpdate::None,
-            ..
-        } | OpKind::Adc {
+        OpKind::Adc {
             flags: FlagUpdate::None,
             ..
         } | OpKind::Sbb {
-            flags: FlagUpdate::None,
-            ..
-        } | OpKind::And {
-            flags: FlagUpdate::None,
-            ..
-        } | OpKind::Or {
-            flags: FlagUpdate::None,
-            ..
-        } | OpKind::Xor {
             flags: FlagUpdate::None,
             ..
         } | OpKind::Shld {
@@ -3760,26 +3745,6 @@ mod jit_gate_tests {
     fn clobber_gate_rejects_flag_preserving_x86_native_flag_clobber_ops() {
         for (name, op) in [
             (
-                "add",
-                OpKind::Add {
-                    dst: x86(X86Reg::Rax),
-                    src1: x86(X86Reg::Rax),
-                    src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ),
-            (
-                "sub",
-                OpKind::Sub {
-                    dst: x86(X86Reg::Rax),
-                    src1: x86(X86Reg::Rax),
-                    src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ),
-            (
                 "adc",
                 OpKind::Adc {
                     dst: x86(X86Reg::Rax),
@@ -3792,36 +3757,6 @@ mod jit_gate_tests {
             (
                 "sbb",
                 OpKind::Sbb {
-                    dst: x86(X86Reg::Rax),
-                    src1: x86(X86Reg::Rax),
-                    src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ),
-            (
-                "and",
-                OpKind::And {
-                    dst: x86(X86Reg::Rax),
-                    src1: x86(X86Reg::Rax),
-                    src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ),
-            (
-                "or",
-                OpKind::Or {
-                    dst: x86(X86Reg::Rax),
-                    src1: x86(X86Reg::Rax),
-                    src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ),
-            (
-                "xor",
-                OpKind::Xor {
                     dst: x86(X86Reg::Rax),
                     src1: x86(X86Reg::Rax),
                     src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
@@ -3939,6 +3874,69 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn clobber_gate_admits_flag_preserving_binary_alu_including_ndd_aliases() {
+        let rax = x86(X86Reg::Rax);
+        let r8 = x86(X86Reg::R8);
+        for (name, op) in [
+            (
+                "add",
+                OpKind::Add {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "sub",
+                OpKind::Sub {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "and",
+                OpKind::And {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "or",
+                OpKind::Or {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "xor",
+                OpKind::Xor {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+        ] {
+            assert!(
+                x86_gate(op),
+                "NF APX NDD {name} must remain native-eligible"
+            );
+        }
+    }
+
+    #[test]
     fn clobber_gate_allows_dead_flag_preserving_x86_native_flag_clobber_ops() {
         let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
         b.push_op(
@@ -3968,7 +3966,7 @@ mod jit_gate_tests {
     }
 
     #[test]
-    fn clobber_gate_rejects_live_flag_preserving_x86_native_flag_clobber_ops() {
+    fn clobber_gate_allows_live_flags_across_natively_preserved_binary_alu() {
         let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
         b.push_op(
             0x1000,
@@ -3999,8 +3997,8 @@ mod jit_gate_tests {
         b.set_terminator(Terminator::Return { values: vec![] });
 
         assert!(
-            !is_native_clobber_safe(&b.finish()),
-            "the flag-preserving add would clobber flags still live into setcc"
+            is_native_clobber_safe(&b.finish()),
+            "the lowerer now preserves flags across ADD flags=None before setcc"
         );
     }
 

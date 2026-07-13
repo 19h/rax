@@ -4240,36 +4240,61 @@ impl X86_64Lowerer {
                 src1,
                 src2,
                 width,
-                ..
+                flags,
             } => {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
+                let preserve_flags = !flags.updates_any();
 
                 match src2 {
                     SrcOperand::Reg(r) => {
                         let src2_reg = self.get_reg(*r)?;
-                        let mut emitter = X86Emitter::new(&mut self.code);
+                        if preserve_flags {
+                            Self::ensure_flag_stack_operands_safe(
+                                "Add",
+                                &[dst_reg, src1_reg, src2_reg],
+                            )?;
+                        }
                         let encoding = alu_hint.unwrap_or(X86AluEncoding::RmReg);
-                        if dst_reg != src1_reg && dst_reg == src2_reg {
-                            emitter.emit_alu_rr_dir(0x00, dst_reg, src1_reg, *width, encoding);
+                        let operand = if dst_reg != src1_reg && dst_reg == src2_reg {
+                            src1_reg
                         } else {
                             if dst_reg != src1_reg {
+                                let mut emitter = X86Emitter::new(&mut self.code);
                                 emitter.emit_mov_rr(dst_reg, src1_reg, *width);
                             }
-                            emitter.emit_alu_rr_dir(0x00, dst_reg, src2_reg, *width, encoding);
+                            src2_reg
+                        };
+                        if preserve_flags {
+                            self.code.emit_u8(0x9C); // pushfq
+                        }
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_alu_rr_dir(0x00, dst_reg, operand, *width, encoding);
+                        if preserve_flags {
+                            self.code.emit_u8(0x9D); // popfq
                         }
                     }
                     SrcOperand::Imm(val) => {
+                        if preserve_flags {
+                            Self::ensure_flag_stack_operands_safe("Add", &[dst_reg, src1_reg])?;
+                        }
                         let mut emitter = X86Emitter::new(&mut self.code);
                         if dst_reg != src1_reg {
                             emitter.emit_mov_rr(dst_reg, src1_reg, *width);
                         }
+                        if preserve_flags {
+                            self.code.emit_u8(0x9C); // pushfq
+                        }
+                        let mut emitter = X86Emitter::new(&mut self.code);
                         if matches!(alu_hint, Some(X86AluEncoding::AccImm))
                             && dst_reg == PhysReg::Rax
                         {
                             emitter.emit_alu_acc_imm(0x04, *val, *width);
                         } else {
                             emitter.emit_add_ri(dst_reg, *val, *width);
+                        }
+                        if preserve_flags {
+                            self.code.emit_u8(0x9D); // popfq
                         }
                     }
                     _ => {
@@ -4285,14 +4310,24 @@ impl X86_64Lowerer {
                 src1,
                 src2,
                 width,
-                ..
+                flags,
             } => {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
+                let preserve_flags = !flags.updates_any();
 
                 match src2 {
                     SrcOperand::Reg(r) => {
                         let src2_reg = self.get_reg(*r)?;
+                        if preserve_flags {
+                            Self::ensure_flag_stack_operands_safe(
+                                "Sub",
+                                &[dst_reg, src1_reg, src2_reg],
+                            )?;
+                        }
+                        if preserve_flags {
+                            self.code.emit_u8(0x9C); // pushfq
+                        }
                         if dst_reg != src1_reg && dst_reg == src2_reg {
                             self.emit_noncommutative_alu_alias(
                                 "Sub alias",
@@ -4310,18 +4345,31 @@ impl X86_64Lowerer {
                             let encoding = alu_hint.unwrap_or(X86AluEncoding::RmReg);
                             emitter.emit_alu_rr_dir(0x28, dst_reg, src2_reg, *width, encoding);
                         }
+                        if preserve_flags {
+                            self.code.emit_u8(0x9D); // popfq
+                        }
                     }
                     SrcOperand::Imm(val) => {
+                        if preserve_flags {
+                            Self::ensure_flag_stack_operands_safe("Sub", &[dst_reg, src1_reg])?;
+                        }
                         let mut emitter = X86Emitter::new(&mut self.code);
                         if dst_reg != src1_reg {
                             emitter.emit_mov_rr(dst_reg, src1_reg, *width);
                         }
+                        if preserve_flags {
+                            self.code.emit_u8(0x9C); // pushfq
+                        }
+                        let mut emitter = X86Emitter::new(&mut self.code);
                         if matches!(alu_hint, Some(X86AluEncoding::AccImm))
                             && dst_reg == PhysReg::Rax
                         {
                             emitter.emit_alu_acc_imm(0x2C, *val, *width);
                         } else {
                             emitter.emit_sub_ri(dst_reg, *val, *width);
+                        }
+                        if preserve_flags {
+                            self.code.emit_u8(0x9D); // popfq
                         }
                     }
                     _ => {
@@ -4980,36 +5028,61 @@ impl X86_64Lowerer {
                 src1,
                 src2,
                 width,
-                ..
+                flags,
             } => {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
+                let preserve_flags = !flags.updates_any();
 
                 match src2 {
                     SrcOperand::Reg(r) => {
                         let src2_reg = self.get_reg(*r)?;
-                        let mut emitter = X86Emitter::new(&mut self.code);
+                        if preserve_flags {
+                            Self::ensure_flag_stack_operands_safe(
+                                "And",
+                                &[dst_reg, src1_reg, src2_reg],
+                            )?;
+                        }
                         let encoding = alu_hint.unwrap_or(X86AluEncoding::RmReg);
-                        if dst_reg != src1_reg && dst_reg == src2_reg {
-                            emitter.emit_alu_rr_dir(0x20, dst_reg, src1_reg, *width, encoding);
+                        let operand = if dst_reg != src1_reg && dst_reg == src2_reg {
+                            src1_reg
                         } else {
                             if dst_reg != src1_reg {
+                                let mut emitter = X86Emitter::new(&mut self.code);
                                 emitter.emit_mov_rr(dst_reg, src1_reg, *width);
                             }
-                            emitter.emit_alu_rr_dir(0x20, dst_reg, src2_reg, *width, encoding);
+                            src2_reg
+                        };
+                        if preserve_flags {
+                            self.code.emit_u8(0x9C); // pushfq
+                        }
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_alu_rr_dir(0x20, dst_reg, operand, *width, encoding);
+                        if preserve_flags {
+                            self.code.emit_u8(0x9D); // popfq
                         }
                     }
                     SrcOperand::Imm(val) => {
+                        if preserve_flags {
+                            Self::ensure_flag_stack_operands_safe("And", &[dst_reg, src1_reg])?;
+                        }
                         let mut emitter = X86Emitter::new(&mut self.code);
                         if dst_reg != src1_reg {
                             emitter.emit_mov_rr(dst_reg, src1_reg, *width);
                         }
+                        if preserve_flags {
+                            self.code.emit_u8(0x9C); // pushfq
+                        }
+                        let mut emitter = X86Emitter::new(&mut self.code);
                         if matches!(alu_hint, Some(X86AluEncoding::AccImm))
                             && dst_reg == PhysReg::Rax
                         {
                             emitter.emit_alu_acc_imm(0x24, *val, *width);
                         } else {
                             emitter.emit_and_ri(dst_reg, *val, *width);
+                        }
+                        if preserve_flags {
+                            self.code.emit_u8(0x9D); // popfq
                         }
                     }
                     _ => {
@@ -5025,36 +5098,61 @@ impl X86_64Lowerer {
                 src1,
                 src2,
                 width,
-                ..
+                flags,
             } => {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
+                let preserve_flags = !flags.updates_any();
 
                 match src2 {
                     SrcOperand::Reg(r) => {
                         let src2_reg = self.get_reg(*r)?;
-                        let mut emitter = X86Emitter::new(&mut self.code);
+                        if preserve_flags {
+                            Self::ensure_flag_stack_operands_safe(
+                                "Or",
+                                &[dst_reg, src1_reg, src2_reg],
+                            )?;
+                        }
                         let encoding = alu_hint.unwrap_or(X86AluEncoding::RmReg);
-                        if dst_reg != src1_reg && dst_reg == src2_reg {
-                            emitter.emit_alu_rr_dir(0x08, dst_reg, src1_reg, *width, encoding);
+                        let operand = if dst_reg != src1_reg && dst_reg == src2_reg {
+                            src1_reg
                         } else {
                             if dst_reg != src1_reg {
+                                let mut emitter = X86Emitter::new(&mut self.code);
                                 emitter.emit_mov_rr(dst_reg, src1_reg, *width);
                             }
-                            emitter.emit_alu_rr_dir(0x08, dst_reg, src2_reg, *width, encoding);
+                            src2_reg
+                        };
+                        if preserve_flags {
+                            self.code.emit_u8(0x9C); // pushfq
+                        }
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_alu_rr_dir(0x08, dst_reg, operand, *width, encoding);
+                        if preserve_flags {
+                            self.code.emit_u8(0x9D); // popfq
                         }
                     }
                     SrcOperand::Imm(val) => {
+                        if preserve_flags {
+                            Self::ensure_flag_stack_operands_safe("Or", &[dst_reg, src1_reg])?;
+                        }
                         let mut emitter = X86Emitter::new(&mut self.code);
                         if dst_reg != src1_reg {
                             emitter.emit_mov_rr(dst_reg, src1_reg, *width);
                         }
+                        if preserve_flags {
+                            self.code.emit_u8(0x9C); // pushfq
+                        }
+                        let mut emitter = X86Emitter::new(&mut self.code);
                         if matches!(alu_hint, Some(X86AluEncoding::AccImm))
                             && dst_reg == PhysReg::Rax
                         {
                             emitter.emit_alu_acc_imm(0x0C, *val, *width);
                         } else {
                             emitter.emit_or_ri(dst_reg, *val, *width);
+                        }
+                        if preserve_flags {
+                            self.code.emit_u8(0x9D); // popfq
                         }
                     }
                     _ => {
@@ -5070,36 +5168,61 @@ impl X86_64Lowerer {
                 src1,
                 src2,
                 width,
-                ..
+                flags,
             } => {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
+                let preserve_flags = !flags.updates_any();
 
                 match src2 {
                     SrcOperand::Reg(r) => {
                         let src2_reg = self.get_reg(*r)?;
-                        let mut emitter = X86Emitter::new(&mut self.code);
+                        if preserve_flags {
+                            Self::ensure_flag_stack_operands_safe(
+                                "Xor",
+                                &[dst_reg, src1_reg, src2_reg],
+                            )?;
+                        }
                         let encoding = alu_hint.unwrap_or(X86AluEncoding::RmReg);
-                        if dst_reg != src1_reg && dst_reg == src2_reg {
-                            emitter.emit_alu_rr_dir(0x30, dst_reg, src1_reg, *width, encoding);
+                        let operand = if dst_reg != src1_reg && dst_reg == src2_reg {
+                            src1_reg
                         } else {
                             if dst_reg != src1_reg {
+                                let mut emitter = X86Emitter::new(&mut self.code);
                                 emitter.emit_mov_rr(dst_reg, src1_reg, *width);
                             }
-                            emitter.emit_alu_rr_dir(0x30, dst_reg, src2_reg, *width, encoding);
+                            src2_reg
+                        };
+                        if preserve_flags {
+                            self.code.emit_u8(0x9C); // pushfq
+                        }
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_alu_rr_dir(0x30, dst_reg, operand, *width, encoding);
+                        if preserve_flags {
+                            self.code.emit_u8(0x9D); // popfq
                         }
                     }
                     SrcOperand::Imm(val) => {
+                        if preserve_flags {
+                            Self::ensure_flag_stack_operands_safe("Xor", &[dst_reg, src1_reg])?;
+                        }
                         let mut emitter = X86Emitter::new(&mut self.code);
                         if dst_reg != src1_reg {
                             emitter.emit_mov_rr(dst_reg, src1_reg, *width);
                         }
+                        if preserve_flags {
+                            self.code.emit_u8(0x9C); // pushfq
+                        }
+                        let mut emitter = X86Emitter::new(&mut self.code);
                         if matches!(alu_hint, Some(X86AluEncoding::AccImm))
                             && dst_reg == PhysReg::Rax
                         {
                             emitter.emit_alu_acc_imm(0x34, *val, *width);
                         } else {
                             emitter.emit_xor_ri(dst_reg, *val, *width);
+                        }
+                        if preserve_flags {
+                            self.code.emit_u8(0x9D); // popfq
                         }
                     }
                     _ => {
@@ -12651,6 +12774,168 @@ mod tests {
             assert!(
                 code.windows(expected.len()).any(|bytes| bytes == expected),
                 "missing flag-safe alias SUB {width:?} {expected:02X?}: {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_apx_nf_binary_alu_preserves_flags_for_aliases_and_immediates() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        for (name, op, expected) in [
+            (
+                "add",
+                OpKind::Add {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                &[0x9C, 0x49, 0x01, 0xC0, 0x9D][..],
+            ),
+            (
+                "or",
+                OpKind::Or {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                &[0x9C, 0x49, 0x09, 0xC0, 0x9D][..],
+            ),
+            (
+                "and",
+                OpKind::And {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                &[0x9C, 0x49, 0x21, 0xC0, 0x9D][..],
+            ),
+            (
+                "sub",
+                OpKind::Sub {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                &[
+                    0x9C, 0x41, 0x50, 0x49, 0x89, 0xC0, 0x4C, 0x2B, 0x04, 0x24, 0x48, 0x8D, 0x64,
+                    0x24, 0x08, 0x9D,
+                ][..],
+            ),
+            (
+                "xor",
+                OpKind::Xor {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                &[0x9C, 0x49, 0x31, 0xC0, 0x9D][..],
+            ),
+        ] {
+            let code = lower_single_op(op);
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "NF alias {name} must preserve flags: {code:02X?}"
+            );
+        }
+
+        for (name, op, digit) in [
+            (
+                "add",
+                OpKind::Add {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Imm(7),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                0u8,
+            ),
+            (
+                "or",
+                OpKind::Or {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Imm(7),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                1,
+            ),
+            (
+                "and",
+                OpKind::And {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Imm(7),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                4,
+            ),
+            (
+                "sub",
+                OpKind::Sub {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Imm(7),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                5,
+            ),
+            (
+                "xor",
+                OpKind::Xor {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Imm(7),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                6,
+            ),
+        ] {
+            let code = lower_single_op(op);
+            let expected = [
+                0x49,
+                0x89,
+                0xC0,
+                0x9C,
+                0x49,
+                0x83,
+                0xC0 | digit << 3,
+                0x07,
+                0x9D,
+            ];
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "NF immediate {name} must preserve flags: {code:02X?}"
+            );
+        }
+
+        for width in [OpWidth::W8, OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+            let code = lower_single_op(OpKind::Add {
+                dst: r8,
+                src1: rax,
+                src2: SrcOperand::Reg(r8),
+                width,
+                flags: FlagUpdate::None,
+            });
+            let push = code.iter().position(|byte| *byte == 0x9C).unwrap();
+            assert!(
+                code[push + 1..].contains(&0x9D),
+                "NF ADD {width:?} must bracket its ALU instruction"
             );
         }
     }

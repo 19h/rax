@@ -386,6 +386,65 @@ fn jit_apx_ndd_binary_alu_alias_second_source_preserves_full_semantics() {
 }
 
 #[test]
+fn jit_apx_nf_binary_alu_alias_second_source_preserves_all_flags() {
+    const STATUS_MASK: u64 = 0x0ED5;
+    for (name, instruction, rax, r8, expected_r8) in [
+        ("add", &[0x62, 0x74, 0xBC, 0x1C, 0x01, 0xC0][..], 3, 5, 605),
+        (
+            "or",
+            &[0x62, 0x74, 0xBC, 0x1C, 0x09, 0xC0][..],
+            0xF0F0,
+            0x000F,
+            0xF0FF,
+        ),
+        (
+            "and",
+            &[0x62, 0x74, 0xBC, 0x1C, 0x21, 0xC0][..],
+            0xFF00,
+            0xF0F0,
+            0xF000,
+        ),
+        ("sub", &[0x62, 0x74, 0xBC, 0x1C, 0x29, 0xC0][..], 10, 3, 3),
+        (
+            "xor",
+            &[0x62, 0x74, 0xBC, 0x1C, 0x31, 0xC0][..],
+            0xA5A5,
+            0x1234,
+            0x1234,
+        ),
+    ] {
+        let mut code = instruction.to_vec();
+        code.extend_from_slice(&[0xFF, 0xC9]); // dec ecx (preserves CF)
+        code.extend_from_slice(&[0x75, 0xF6]); // jnz to APX instruction
+        code.push(0xF4);
+
+        let mut jit = make_vcpu_code(&code);
+        let mut regs = jit.get_regs().unwrap();
+        regs.rax = rax;
+        regs.r8 = r8;
+        regs.rcx = 200;
+        regs.rflags = 0x3;
+        jit.set_regs(&regs).unwrap();
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("jit APX NF {name} alias: {error:?}")),
+            "APX NF {name} alias loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+        let after = jit.get_regs().unwrap();
+
+        assert_eq!(after.rax, rax, "{name}: source 1");
+        assert_eq!(after.r8, expected_r8, "{name}: closed-form result");
+        assert_eq!(after.rcx & 0xFFFF_FFFF, 0, "{name}: loop count");
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            0x45,
+            "{name}: NF must preserve CF while DEC defines the other status flags"
+        );
+    }
+}
+
+#[test]
 fn jit_apx_ndd_imul_alias_second_source_preserves_product_and_nf_flags() {
     const STATUS_MASK: u64 = 0x0ED5;
     for (name, instruction, expected_status) in [
