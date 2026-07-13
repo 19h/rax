@@ -511,6 +511,93 @@ fn x86_subword_integer_alu_executes_natively_with_partial_register_merges() {
 }
 
 #[test]
+fn x86_subword_shift_rotate_executes_natively_with_partial_register_merges() {
+    // LLVM 23 APX encodings: {nf} SHL ax,3; {nf} SHR dl,2;
+    // {nf} SAR r8w,4; {nf} ROR r9b,3; {nf} ROL r10w,5.
+    // Every operation preserves RFLAGS, including seeded ZF=1, so the
+    // syntactic JNZ backedge remains untaken.
+    let code = [
+        0x62, 0xF4, 0x7D, 0x0C, 0xC1, 0xE0, 0x03, // {nf} SHL ax,3
+        0x62, 0xF4, 0x7C, 0x0C, 0xC0, 0xEA, 0x02, // {nf} SHR dl,2
+        0x62, 0xD4, 0x7D, 0x0C, 0xC1, 0xF8, 0x04, // {nf} SAR r8w,4
+        0x62, 0xD4, 0x7C, 0x0C, 0xC0, 0xC9, 0x03, // {nf} ROR r9b,3
+        0x62, 0xD4, 0x7D, 0x0C, 0xC1, 0xC2, 0x05, // {nf} ROL r10w,5
+        0x75, 0xDB, // JNZ start
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        vcpu.set_apx_enabled(true);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xAAAA_BBBB_CCCC_1234;
+        regs.rdx = 0xDEAD_BEEF_1234_56F0;
+        regs.r8 = 0x8888_7777_6666_8000;
+        regs.r9 = 0x9999_8888_7777_6681;
+        regs.r10 = 0xAAAA_9999_8888_8001;
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("subword shift/rotate JIT attempt"),
+        "APX NF subword shift/rotate block must enter the AArch64 tier"
+    );
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "subword shift/rotate");
+    assert_eq!(actual.rax, 0xAAAA_BBBB_CCCC_91A0);
+    assert_eq!(actual.rdx, 0xDEAD_BEEF_1234_563C);
+    assert_eq!(actual.r8, 0x8888_7777_6666_F800);
+    assert_eq!(actual.r9, 0x9999_8888_7777_6630);
+    assert_eq!(actual.r10, 0xAAAA_9999_8888_0030);
+    assert_eq!(actual.rflags, 0xCD6, "APX NF preserves complete RFLAGS");
+}
+
+#[test]
+fn x86_subword_rotates_bridge_defined_flags_and_preserve_upper_bits() {
+    // rol ax,1; ror dl,1; jnz start; hlt. Rotates define only CF/OF and
+    // preserve seeded ZF/PF/AF, so all architecturally defined flag effects are
+    // representable by the x86/AArch64 bridge.
+    let code = [
+        0x66, 0xD1, 0xC0, // ROL ax,1
+        0xD0, 0xCA, // ROR dl,1
+        0x75, 0xF9, // JNZ start
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xAAAA_BBBB_CCCC_8001;
+        regs.rdx = 0xDEAD_BEEF_1234_5681;
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(jit.jit_try_block().expect("subword rotate JIT attempt"));
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "subword flag-setting rotates");
+    assert_eq!(actual.rax, 0xAAAA_BBBB_CCCC_0003);
+    assert_eq!(actual.rdx, 0xDEAD_BEEF_1234_56C0);
+    assert_eq!(actual.rflags & STATUS, expected.rflags & STATUS);
+}
+
+#[test]
 fn x86_aarch64_jit_rejects_live_pf_af_definitions_without_execution() {
     // add rax,rbx; jnz start; hlt. ADD's live PF/AF outputs cannot be represented
     // in NZCV, so the architecture-specific gate must retain interpreter fallback.

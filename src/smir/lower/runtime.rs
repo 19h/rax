@@ -1016,8 +1016,9 @@ pub fn merge_aarch64_nzcv_into_x86_rflags(prior_rflags: u64, nzcv: u64) -> u64 {
 ///   is dead before any use or native exit; parity consumers always bail.
 /// - NZV and carry-producing operations use the canonical CF→C mapping.
 /// - AArch64 subtraction exposes no-borrow in C, the inverse of x86 CF. A live
-///   CF definition by SUB/CMP/NEG therefore bails, as does SBB (whose carry input
-///   convention is inverted). CF-based conditions bail for the same reason.
+///   CF definition by SUB/CMP/NEG therefore bails. SBB is admitted because its
+///   x86-register lowering explicitly inverts C before and after SBC. Generic
+///   CF-based unsigned conditions still bail pending equivalent normalization.
 pub fn is_x86_aarch64_native_clobber_safe_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
@@ -2455,14 +2456,15 @@ fn x86_aarch64_block_flags_are_representable(
         }
 
         // Canonical bridge state stores x86 CF directly in NZCV.C. ADC and the
-        // rotate/ADX carry chains consume that representation directly. SBB and
-        // unsigned condition evaluation instead expect AArch64's no-borrow C
-        // convention and therefore cannot consume canonical CF without an
-        // explicit normalization sequence.
+        // rotate/ADX carry chains consume that representation directly. The
+        // x86-register SBB lowering normalizes CF around SBC. Unsigned condition
+        // evaluation still expects AArch64's no-borrow convention and therefore
+        // cannot consume canonical x86 CF without an equivalent normalization.
         if !uses.intersection(FlagSet::CF).is_empty()
             && !matches!(
                 op.kind,
                 OpKind::Adc { .. }
+                    | OpKind::Sbb { .. }
                     | OpKind::Rcl { .. }
                     | OpKind::Rcr { .. }
                     | OpKind::X86Adx {
@@ -2482,7 +2484,7 @@ fn x86_aarch64_block_flags_are_representable(
         if !defs.intersection(FlagSet::CF).intersection(live).is_empty()
             && matches!(
                 op.kind,
-                OpKind::Sub { .. } | OpKind::Sbb { .. } | OpKind::Neg { .. } | OpKind::Cmp { .. }
+                OpKind::Sub { .. } | OpKind::Neg { .. } | OpKind::Cmp { .. }
             )
         {
             return false;
@@ -2679,25 +2681,25 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         OpKind::Add { dst, width, .. }
         | OpKind::Sub { dst, width, .. }
         | OpKind::Adc { dst, width, .. }
+        | OpKind::Sbb { dst, width, .. }
         | OpKind::Neg { dst, width, .. }
         | OpKind::Inc { dst, width, .. }
         | OpKind::Dec { dst, width, .. }
         | OpKind::And { dst, width, .. }
         | OpKind::Or { dst, width, .. }
-        | OpKind::Xor { dst, width, .. } => {
+        | OpKind::Xor { dst, width, .. }
+        | OpKind::Shl { dst, width, .. }
+        | OpKind::Shr { dst, width, .. }
+        | OpKind::Sar { dst, width, .. }
+        | OpKind::Rol { dst, width, .. }
+        | OpKind::Ror { dst, width, .. } => {
             full_gpr_write(width)
                 || (x86_aarch64_legacy_gpr(dst) && matches!(width, OpWidth::W8 | OpWidth::W16))
         }
-        OpKind::Sbb { width, .. }
-        | OpKind::AndNot { width, .. }
-        | OpKind::Shl { width, .. }
-        | OpKind::Shr { width, .. }
-        | OpKind::Sar { width, .. }
+        OpKind::AndNot { width, .. }
         | OpKind::Shld { width, .. }
         | OpKind::Shrd { width, .. }
         | OpKind::X86NddDoubleShift { width, .. }
-        | OpKind::Rol { width, .. }
-        | OpKind::Ror { width, .. }
         | OpKind::Rcl { width, .. }
         | OpKind::Rcr { width, .. }
         | OpKind::MulU { width, .. }
@@ -3689,6 +3691,13 @@ mod jit_gate_tests {
                 width: OpWidth::W16,
                 flags: FlagUpdate::None,
             },
+            OpKind::Sbb {
+                dst: x86(X86Reg::R9),
+                src1: x86(X86Reg::R9),
+                src2: SrcOperand::Reg(x86(X86Reg::R10)),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
             OpKind::Neg {
                 dst: x86(X86Reg::R10),
                 src: x86(X86Reg::R10),
@@ -3777,6 +3786,99 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn x86_aarch64_gate_accepts_no_flag_sbb_complete_width_matrix() {
+        for width in [OpWidth::W8, OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+            for src2 in [SrcOperand::Reg(x86(X86Reg::Rcx)), SrcOperand::Imm64(-1)] {
+                assert!(
+                    x86_aarch64_gate(vec![OpKind::Sbb {
+                        dst: x86(X86Reg::Rax),
+                        src1: x86(X86Reg::Rax),
+                        src2,
+                        width,
+                        flags: FlagUpdate::None,
+                    }]),
+                    "no-flag SBB {width:?} must be eligible"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn x86_aarch64_gate_accepts_subword_shift_rotate_matrix() {
+        for width in [OpWidth::W8, OpWidth::W16] {
+            for amount in [SrcOperand::Imm(3), SrcOperand::Reg(x86(X86Reg::Rcx))] {
+                for op in [
+                    OpKind::Shl {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        amount: amount.clone(),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    OpKind::Shr {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        amount: amount.clone(),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    OpKind::Sar {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        amount: amount.clone(),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    OpKind::Rol {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        amount: amount.clone(),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    OpKind::Ror {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        amount: amount.clone(),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                ] {
+                    assert!(
+                        x86_aarch64_gate(vec![op]),
+                        "subword shift/rotate {width:?} amount {amount:?} must be eligible"
+                    );
+                }
+            }
+        }
+
+        let rotate_flags = FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF));
+        for width in [OpWidth::W8, OpWidth::W16] {
+            for op in [
+                OpKind::Rol {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Imm(1),
+                    width,
+                    flags: rotate_flags,
+                },
+                OpKind::Ror {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width,
+                    flags: rotate_flags,
+                },
+            ] {
+                assert!(
+                    x86_aarch64_gate(vec![op]),
+                    "flag-setting subword rotate {width:?} must be eligible"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn x86_aarch64_gate_rejects_unrepresentable_flags_registers_and_shapes() {
         let full_flag_add = OpKind::Add {
             dst: x86(X86Reg::Rax),
@@ -3787,12 +3889,13 @@ mod jit_gate_tests {
         };
         assert!(!x86_aarch64_gate(vec![full_flag_add]));
 
+        // Flag-setting SBB defines PF/AF, which cannot cross the NZCV bridge.
         assert!(!x86_aarch64_gate(vec![OpKind::Sbb {
             dst: x86(X86Reg::Rax),
             src1: x86(X86Reg::Rax),
             src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
             width: OpWidth::W64,
-            flags: FlagUpdate::None,
+            flags: FlagUpdate::All,
         }]));
 
         assert!(!x86_aarch64_gate(vec![OpKind::SetCC {
@@ -3817,16 +3920,7 @@ mod jit_gate_tests {
             width: OpWidth::W64,
         }]));
 
-        // SBB still cannot consume canonical x86 CF without normalizing it to
-        // AArch64's no-borrow convention. Other unmerged subword destination
-        // families remain fail-closed.
-        assert!(!x86_aarch64_gate(vec![OpKind::Sbb {
-            dst: x86(X86Reg::Rax),
-            src1: x86(X86Reg::Rax),
-            src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
-            width: OpWidth::W16,
-            flags: FlagUpdate::None,
-        }]));
+        // Other unmerged subword destination families remain fail-closed.
         assert!(!x86_aarch64_gate(vec![OpKind::AndNot {
             dst: x86(X86Reg::Rax),
             src1: x86(X86Reg::Rax),

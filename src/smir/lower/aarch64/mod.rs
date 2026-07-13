@@ -5856,6 +5856,32 @@ impl Aarch64Lowerer {
         }
     }
 
+    /// Lower SBB while reconciling the source architecture's carry convention.
+    ///
+    /// AArch64 SBC consumes and produces C as "no borrow". x86 SBB instead
+    /// consumes and produces CF as "borrow", while the x86/AArch64 trampoline
+    /// deliberately stores canonical x86 CF directly in NZCV.C. Surround an
+    /// x86-register SBB with CFINV so the shared SBC lowering sees its native
+    /// convention and the surrounding region continues to see canonical x86
+    /// CF. With `FlagUpdate::None`, the second inversion also restores the
+    /// input CF exactly; N/Z/V are untouched by both inversions.
+    fn lower_sbb(
+        &mut self,
+        dst: VReg,
+        src1: VReg,
+        src2: &SrcOperand,
+        set_flags: bool,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
+        if !matches!(dst, VReg::Arch(ArchReg::X86(_))) {
+            return self.lower_addsub_carry(dst, src1, src2, true, set_flags, width);
+        }
+
+        self.lower_cfinv()?;
+        self.lower_addsub_carry(dst, src1, src2, true, set_flags, width)?;
+        self.lower_cfinv()
+    }
+
     fn lower_subword_addsub_carry(
         &mut self,
         dst: VReg,
@@ -12713,6 +12739,24 @@ impl Aarch64Lowerer {
         set_flags: bool,
         width: OpWidth,
     ) -> Result<(), LowerError> {
+        if let Some((dst_reg, result)) =
+            Self::x86_partial_write_scratch(dst, width, &[src], &[amount])?
+        {
+            let scratches = [result];
+            self.emit_scratch_save(&scratches);
+            self.lower_shift(
+                Self::arm_x_reg(result),
+                src,
+                amount,
+                shift,
+                set_flags,
+                width,
+            )?;
+            self.emit_bitfield(dst_reg, result, 0b01, 0, width.bits() - 1, OpWidth::W64)?;
+            self.emit_scratch_restore(&scratches);
+            return Ok(());
+        }
+
         if set_flags {
             let dst = Self::dst_gpr_arm_or_x86(dst)?;
             let src = Self::gpr_arm_or_x86(src)?;
@@ -13073,6 +13117,17 @@ impl Aarch64Lowerer {
         set_flags: bool,
         width: OpWidth,
     ) -> Result<(), LowerError> {
+        if let Some((dst_reg, result)) =
+            Self::x86_partial_write_scratch(dst, width, &[src], &[amount])?
+        {
+            let scratches = [result];
+            self.emit_scratch_save(&scratches);
+            self.lower_rol(Self::arm_x_reg(result), src, amount, set_flags, width)?;
+            self.emit_bitfield(dst_reg, result, 0b01, 0, width.bits() - 1, OpWidth::W64)?;
+            self.emit_scratch_restore(&scratches);
+            return Ok(());
+        }
+
         if set_flags {
             let dst = Self::dst_gpr_arm_or_x86(dst)?;
             let src = Self::gpr_arm_or_x86(src)?;
@@ -15674,7 +15729,7 @@ impl Aarch64Lowerer {
                 src2,
                 width,
                 flags,
-            } => self.lower_addsub_carry(*dst, *src1, src2, true, flags.updates_any(), *width),
+            } => self.lower_sbb(*dst, *src1, src2, flags.updates_any(), *width),
             OpKind::And {
                 dst,
                 src1,
@@ -18376,6 +18431,28 @@ mod tests {
         };
 
         ((negative as u8) << 3) | ((zero as u8) << 2) | ((carry as u8) << 1) | (overflow as u8)
+    }
+
+    fn ref_x86_sbb(src1: u64, src2: u64, borrow_in: bool, width: OpWidth) -> u64 {
+        let mask = width_mask(width);
+        (src1 & mask)
+            .wrapping_sub(src2 & mask)
+            .wrapping_sub(u64::from(borrow_in))
+            & mask
+    }
+
+    fn expected_x86_sbb_nzcv(src1: u64, src2: u64, borrow_in: bool, width: OpWidth) -> u8 {
+        let mask = width_mask(width);
+        let src1 = src1 & mask;
+        let src2 = src2 & mask;
+        let result = ref_x86_sbb(src1, src2, borrow_in, width);
+        let sign = 1_u64 << (width.bits() - 1);
+        let negative = (result & sign) != 0;
+        let zero = result == 0;
+        let borrow = u128::from(src1) < u128::from(src2) + u128::from(borrow_in);
+        let overflow = ((src1 ^ src2) & (src1 ^ result) & sign) != 0;
+
+        ((negative as u8) << 3) | ((zero as u8) << 2) | ((borrow as u8) << 1) | (overflow as u8)
     }
 
     fn sign_extend_width(value: u64, width: OpWidth) -> i64 {
@@ -22257,6 +22334,355 @@ mod tests {
     }
 
     #[test]
+    fn lowers_x86_sbb_borrow_normalization_complete_width_matrix() {
+        const DST_UPPER: u64 = 0xAAAA_BBBB_CCCC_0000;
+        const SRC_UPPER: u64 = 0x1111_2222_3333_0000;
+        const SCRATCH16: u64 = 0x1616_1616_1616_1616;
+        const SCRATCH17: u64 = 0x1717_1717_1717_1717;
+
+        for flagm in [false, true] {
+            for width in [OpWidth::W8, OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+                for borrow_in in [false, true] {
+                    for immediate in [false, true] {
+                        let mask = width.mask();
+                        let dst_initial = (DST_UPPER & !mask) | 0;
+                        let src_value = (SRC_UPPER & !mask) | 1;
+                        let src2 = if immediate {
+                            SrcOperand::Imm64(1)
+                        } else {
+                            SrcOperand::Reg(x86(X86Reg::Rcx))
+                        };
+                        let code = lower_ops_with_flagm_features(
+                            vec![OpKind::Sbb {
+                                dst: x86(X86Reg::Rax),
+                                src1: x86(X86Reg::Rax),
+                                src2,
+                                width,
+                                flags: FlagUpdate::None,
+                            }],
+                            flagm,
+                            false,
+                        );
+                        let initial_nzcv = 0b1101 | (u8::from(borrow_in) << 1);
+                        let result = ref_x86_sbb(0, 1, borrow_in, width);
+                        let expected = if matches!(width, OpWidth::W8 | OpWidth::W16) {
+                            (dst_initial & !mask) | result
+                        } else {
+                            result
+                        };
+                        let (out, nzcv, sp) = run_aarch64_code(
+                            &code,
+                            &[
+                                (0, dst_initial),
+                                (1, src_value),
+                                (16, SCRATCH16),
+                                (17, SCRATCH17),
+                            ],
+                            initial_nzcv,
+                        );
+
+                        assert_eq!(
+                            out[0], expected,
+                            "SBB {width:?} flagm={flagm} borrow={borrow_in} immediate={immediate} result"
+                        );
+                        assert_eq!(out[1], src_value, "SBB {width:?} source");
+                        assert_eq!(out[16], SCRATCH16, "SBB {width:?} x16 scratch");
+                        assert_eq!(out[17], SCRATCH17, "SBB {width:?} x17 scratch");
+                        assert_eq!(
+                            nzcv, initial_nzcv,
+                            "no-flag SBB {width:?} must preserve canonical x86 flags"
+                        );
+                        assert_eq!(sp, 0x8000, "SBB {width:?} stack");
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn lowers_x86_sbb_flag_outputs_as_canonical_borrow_cf() {
+        const UPPER: u64 = 0xAAAA_BBBB_CCCC_0000;
+        const SCRATCH16: u64 = 0x1616_1616_1616_1616;
+        const SCRATCH17: u64 = 0x1717_1717_1717_1717;
+
+        for flagm in [false, true] {
+            for width in [OpWidth::W8, OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+                for (src1, src2, borrow_in) in
+                    [(1_u64 << (width.bits() - 1), 1, false), (0, 0, true)]
+                {
+                    let mask = width.mask();
+                    let dst_initial = (UPPER & !mask) | src1;
+                    let code = lower_ops_with_flagm_features(
+                        vec![OpKind::Sbb {
+                            dst: x86(X86Reg::Rax),
+                            src1: x86(X86Reg::Rax),
+                            src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                            width,
+                            flags: FlagUpdate::All,
+                        }],
+                        flagm,
+                        false,
+                    );
+                    let result = ref_x86_sbb(src1, src2, borrow_in, width);
+                    let expected = if matches!(width, OpWidth::W8 | OpWidth::W16) {
+                        (dst_initial & !mask) | result
+                    } else {
+                        result
+                    };
+                    let initial_nzcv = 0b1101 | (u8::from(borrow_in) << 1);
+                    let (out, nzcv, sp) = run_aarch64_code(
+                        &code,
+                        &[
+                            (0, dst_initial),
+                            (1, src2),
+                            (16, SCRATCH16),
+                            (17, SCRATCH17),
+                        ],
+                        initial_nzcv,
+                    );
+
+                    assert_eq!(out[0], expected, "SBB {width:?} flag-setting result");
+                    assert_eq!(
+                        nzcv,
+                        expected_x86_sbb_nzcv(src1, src2, borrow_in, width),
+                        "SBB {width:?} must expose x86 borrow in NZCV.C"
+                    );
+                    assert_eq!(out[1], src2, "SBB {width:?} source");
+                    assert_eq!(out[16], SCRATCH16, "SBB {width:?} x16 scratch");
+                    assert_eq!(out[17], SCRATCH17, "SBB {width:?} x17 scratch");
+                    assert_eq!(sp, 0x8000, "SBB {width:?} stack");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn lowers_x86_subword_shift_rotate_partial_write_matrix() {
+        const UPPER: u64 = 0xAAAA_BBBB_CCCC_0000;
+        const SCRATCH16: u64 = 0x1616_1616_1616_1616;
+        const SCRATCH17: u64 = 0x1717_1717_1717_1717;
+
+        for width in [OpWidth::W8, OpWidth::W16] {
+            let source_low = if width == OpWidth::W8 { 0x95 } else { 0x8123 };
+            let source = (UPPER & !width.mask()) | source_low;
+            for (name, shift) in [
+                ("shl", ShiftOp::Lsl),
+                ("shr", ShiftOp::Lsr),
+                ("sar", ShiftOp::Asr),
+                ("ror", ShiftOp::Ror),
+            ] {
+                for register_count in [false, true] {
+                    let amount = if register_count {
+                        SrcOperand::Reg(x86(X86Reg::Rcx))
+                    } else {
+                        SrcOperand::Imm(3)
+                    };
+                    let op = match shift {
+                        ShiftOp::Lsl => OpKind::Shl {
+                            dst: x86(X86Reg::Rax),
+                            src: x86(X86Reg::Rax),
+                            amount,
+                            width,
+                            flags: FlagUpdate::None,
+                        },
+                        ShiftOp::Lsr => OpKind::Shr {
+                            dst: x86(X86Reg::Rax),
+                            src: x86(X86Reg::Rax),
+                            amount,
+                            width,
+                            flags: FlagUpdate::None,
+                        },
+                        ShiftOp::Asr => OpKind::Sar {
+                            dst: x86(X86Reg::Rax),
+                            src: x86(X86Reg::Rax),
+                            amount,
+                            width,
+                            flags: FlagUpdate::None,
+                        },
+                        ShiftOp::Ror => OpKind::Ror {
+                            dst: x86(X86Reg::Rax),
+                            src: x86(X86Reg::Rax),
+                            amount,
+                            width,
+                            flags: FlagUpdate::None,
+                        },
+                        ShiftOp::Rrx => unreachable!(),
+                    };
+                    let code = lower_ops(vec![op]);
+                    let expected_low = ref_shift_reg(source, 3, shift, width);
+                    let (out, nzcv, sp) = run_aarch64_code(
+                        &code,
+                        &[(0, source), (1, 3), (16, SCRATCH16), (17, SCRATCH17)],
+                        0b1011,
+                    );
+
+                    assert_eq!(
+                        out[0],
+                        (source & !width.mask()) | expected_low,
+                        "{name} {width:?} register_count={register_count} result"
+                    );
+                    assert_eq!(out[1], 3, "{name} {width:?} count");
+                    assert_eq!(out[16], SCRATCH16, "{name} {width:?} x16 scratch");
+                    assert_eq!(out[17], SCRATCH17, "{name} {width:?} x17 scratch");
+                    assert_eq!(nzcv, 0b1011, "{name} {width:?} flags");
+                    assert_eq!(sp, 0x8000, "{name} {width:?} stack");
+                }
+            }
+
+            for register_count in [false, true] {
+                let amount = if register_count {
+                    SrcOperand::Reg(x86(X86Reg::Rcx))
+                } else {
+                    SrcOperand::Imm(3)
+                };
+                let code = lower_ops(vec![OpKind::Rol {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    amount,
+                    width,
+                    flags: FlagUpdate::None,
+                }]);
+                let expected_low = ref_rol_reg(source, 3, width);
+                let (out, nzcv, sp) = run_aarch64_code(
+                    &code,
+                    &[(0, source), (1, 3), (16, SCRATCH16), (17, SCRATCH17)],
+                    0b0110,
+                );
+
+                assert_eq!(
+                    out[0],
+                    (source & !width.mask()) | expected_low,
+                    "rol {width:?} register_count={register_count} result"
+                );
+                assert_eq!(out[1], 3, "rol {width:?} count");
+                assert_eq!(out[16], SCRATCH16, "rol {width:?} x16 scratch");
+                assert_eq!(out[17], SCRATCH17, "rol {width:?} x17 scratch");
+                assert_eq!(nzcv, 0b0110, "rol {width:?} flags");
+                assert_eq!(sp, 0x8000, "rol {width:?} stack");
+            }
+        }
+    }
+
+    #[test]
+    fn lowers_x86_subword_shift_rotate_flags_before_partial_merge() {
+        const UPPER: u64 = 0xAAAA_BBBB_CCCC_0000;
+        const SCRATCH16: u64 = 0x1616_1616_1616_1616;
+        const SCRATCH17: u64 = 0x1717_1717_1717_1717;
+
+        for width in [OpWidth::W8, OpWidth::W16] {
+            let source_low = 1_u64 << (width.bits() - 1);
+            let source = (UPPER & !width.mask()) | source_low;
+            for (name, shift) in [
+                ("shl", ShiftOp::Lsl),
+                ("shr", ShiftOp::Lsr),
+                ("sar", ShiftOp::Asr),
+            ] {
+                let op = match shift {
+                    ShiftOp::Lsl => OpKind::Shl {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        amount: SrcOperand::Imm(1),
+                        width,
+                        flags: FlagUpdate::All,
+                    },
+                    ShiftOp::Lsr => OpKind::Shr {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        amount: SrcOperand::Imm(1),
+                        width,
+                        flags: FlagUpdate::All,
+                    },
+                    ShiftOp::Asr => OpKind::Sar {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        amount: SrcOperand::Imm(1),
+                        width,
+                        flags: FlagUpdate::All,
+                    },
+                    ShiftOp::Ror | ShiftOp::Rrx => unreachable!(),
+                };
+                let code = lower_ops(vec![op]);
+                let expected_low = ref_shift_reg(source, 1, shift, width);
+                let expected_nzcv =
+                    expected_shift_nzcv(0b1011, source, 1, shift, width, FlagUpdate::All);
+                let (out, nzcv, sp) = run_aarch64_code(
+                    &code,
+                    &[(0, source), (16, SCRATCH16), (17, SCRATCH17)],
+                    0b1011,
+                );
+
+                assert_eq!(
+                    out[0],
+                    (source & !width.mask()) | expected_low,
+                    "{name} {width:?} result"
+                );
+                assert_eq!(nzcv, expected_nzcv, "{name} {width:?} flags");
+                assert_eq!(out[16], SCRATCH16, "{name} {width:?} x16 scratch");
+                assert_eq!(out[17], SCRATCH17, "{name} {width:?} x17 scratch");
+                assert_eq!(sp, 0x8000, "{name} {width:?} stack");
+            }
+
+            let rotate_flags = FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF));
+            for (right, register_count) in
+                [(false, false), (false, true), (true, false), (true, true)]
+            {
+                let amount = if register_count {
+                    SrcOperand::Reg(x86(X86Reg::Rcx))
+                } else {
+                    SrcOperand::Imm(1)
+                };
+                let op = if right {
+                    OpKind::Ror {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        amount,
+                        width,
+                        flags: rotate_flags,
+                    }
+                } else {
+                    OpKind::Rol {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        amount,
+                        width,
+                        flags: rotate_flags,
+                    }
+                };
+                let code = lower_ops(vec![op]);
+                let expected_low = if right {
+                    ref_ror_reg(source, 1, width)
+                } else {
+                    ref_rol_reg(source, 1, width)
+                };
+                let expected_nzcv =
+                    expected_rotate_nzcv(0b1100, expected_low, 1, width, rotate_flags, right);
+                let (out, nzcv, sp) = run_aarch64_code(
+                    &code,
+                    &[(0, source), (1, 1), (16, SCRATCH16), (17, SCRATCH17)],
+                    0b1100,
+                );
+
+                assert_eq!(
+                    out[0],
+                    (source & !width.mask()) | expected_low,
+                    "{} {width:?} register_count={register_count} result",
+                    if right { "ror" } else { "rol" }
+                );
+                assert_eq!(
+                    nzcv,
+                    expected_nzcv,
+                    "{} {width:?} register_count={register_count} flags",
+                    if right { "ror" } else { "rol" }
+                );
+                assert_eq!(out[1], 1, "rotate {width:?} count");
+                assert_eq!(out[16], SCRATCH16, "rotate {width:?} x16 scratch");
+                assert_eq!(out[17], SCRATCH17, "rotate {width:?} x17 scratch");
+                assert_eq!(sp, 0x8000, "rotate {width:?} stack");
+            }
+        }
+    }
+
+    #[test]
     fn lowers_x86_subword_integer_alu_flags_before_partial_register_merge() {
         let add = lower_ops(vec![OpKind::Add {
             dst: x86(X86Reg::Rax),
@@ -24612,6 +25038,7 @@ mod tests {
         ];
         let old_nzcv = 0b0010;
         let carry_in = true;
+        let borrow_in = true;
         let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
 
         assert_eq!(
@@ -24627,10 +25054,7 @@ mod tests {
             out[19],
             ref_addsub_carry(0x100, 0x10, carry_in, false, OpWidth::W64)
         );
-        assert_eq!(
-            out[22],
-            ref_addsub_carry(0x80f5, 0x34, carry_in, true, OpWidth::W16)
-        );
+        assert_eq!(out[22], ref_x86_sbb(0x80f5, 0x34, borrow_in, OpWidth::W16));
         assert_eq!(out[25], ref_addsub(0x8000_0000, 1, true, OpWidth::W32));
         assert_eq!(
             out_nzcv,
