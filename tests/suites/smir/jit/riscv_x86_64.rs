@@ -3,17 +3,21 @@
 
 use std::collections::HashMap;
 
-use rax::isa::riscv::{FlatMemory as RvMemory, RiscVConfig, RiscVCpu, RiscVExit};
-use rax::smir::RiscVLifter;
-use rax::smir::ir::types::{BlockId, FunctionId, OpId, SourceArch};
+use rax::isa::riscv::{
+    FlatMemory as RvMemory, Isa as RvIsa, Op as RvOp, RiscVConfig, RiscVCpu, RiscVExit,
+};
+use rax::smir::ir::types::{ArchReg, BlockId, FunctionId, OpId, RiscVReg, SourceArch, VReg};
 use rax::smir::ir::{CallingConv, SmirBlock, SmirFunction, Terminator};
+use rax::smir::lift::riscv::RiscVExtensions;
 use rax::smir::lift::{ControlFlow, LiftContext, SmirLifter};
 use rax::smir::lower::SmirLowerer;
 use rax::smir::lower::cross::riscv_guest_to_x86_64_host::RiscVX86_64Lowerer;
 use rax::smir::lower::runtime::{
-    ExecMem, RiscVAtomicCasResult, RiscVAtomicOpCode, RiscVGuestRegs, RiscVMemoryOrderCode,
+    ExecMem, RiscVAtomicCasResult, RiscVAtomicOpCode, RiscVGuestRegs, RiscVIntCryptoOpCode,
+    RiscVMemoryOrderCode,
 };
 use rax::smir::optimize::{OptLevel, optimize_function};
+use rax::smir::{OpKind, RiscVLifter, SmirOp};
 
 const CODE: u64 = 0x1000;
 const DATA: u64 = 0x2000;
@@ -186,6 +190,45 @@ unsafe extern "sysv64" fn clear_exclusive(ctx: u64) {
     memory.reservation_valid = 0;
 }
 
+unsafe extern "sysv64" fn int_crypto(
+    op_code: u64,
+    src1: u64,
+    src2: u64,
+    imm: u64,
+    xlen: u64,
+) -> u64 {
+    let op = match op_code {
+        value if value == RiscVIntCryptoOpCode::Clmul as u64 => RvOp::Clmul,
+        value if value == RiscVIntCryptoOpCode::Clmulh as u64 => RvOp::Clmulh,
+        value if value == RiscVIntCryptoOpCode::Clmulr as u64 => RvOp::Clmulr,
+        value if value == RiscVIntCryptoOpCode::Xperm4 as u64 => RvOp::Xperm4,
+        value if value == RiscVIntCryptoOpCode::Xperm8 as u64 => RvOp::Xperm8,
+        value if value == RiscVIntCryptoOpCode::Sha512Sig0l as u64 => RvOp::Sha512Sig0l,
+        value if value == RiscVIntCryptoOpCode::Sha512Sig0h as u64 => RvOp::Sha512Sig0h,
+        value if value == RiscVIntCryptoOpCode::Sha512Sig1l as u64 => RvOp::Sha512Sig1l,
+        value if value == RiscVIntCryptoOpCode::Sha512Sig1h as u64 => RvOp::Sha512Sig1h,
+        value if value == RiscVIntCryptoOpCode::Sha512Sum0r as u64 => RvOp::Sha512Sum0r,
+        value if value == RiscVIntCryptoOpCode::Sha512Sum1r as u64 => RvOp::Sha512Sum1r,
+        value if value == RiscVIntCryptoOpCode::Sm4ed as u64 => RvOp::Sm4ed,
+        value if value == RiscVIntCryptoOpCode::Sm4ks as u64 => RvOp::Sm4ks,
+        value if value == RiscVIntCryptoOpCode::Aes32esi as u64 => RvOp::Aes32esi,
+        value if value == RiscVIntCryptoOpCode::Aes32esmi as u64 => RvOp::Aes32esmi,
+        value if value == RiscVIntCryptoOpCode::Aes32dsi as u64 => RvOp::Aes32dsi,
+        value if value == RiscVIntCryptoOpCode::Aes32dsmi as u64 => RvOp::Aes32dsmi,
+        value if value == RiscVIntCryptoOpCode::Aes64es as u64 => RvOp::Aes64es,
+        value if value == RiscVIntCryptoOpCode::Aes64esm as u64 => RvOp::Aes64esm,
+        value if value == RiscVIntCryptoOpCode::Aes64ds as u64 => RvOp::Aes64ds,
+        value if value == RiscVIntCryptoOpCode::Aes64dsm as u64 => RvOp::Aes64dsm,
+        value if value == RiscVIntCryptoOpCode::Aes64im as u64 => RvOp::Aes64im,
+        value if value == RiscVIntCryptoOpCode::Aes64ks1i as u64 => RvOp::Aes64ks1i,
+        value if value == RiscVIntCryptoOpCode::Aes64ks2 as u64 => RvOp::Aes64ks2,
+        _ => panic!("invalid integer-crypto operation code {op_code}"),
+    };
+    assert!(matches!(xlen, 32 | 64));
+    rax::isa::riscv::crypto::eval_int_crypto(op, src1, src2, imm as u8, xlen as u32)
+        .expect("helper operation must be in eval_int_crypto")
+}
+
 fn jit_state(
     memory: &mut TestMemory,
     x: [u64; 32],
@@ -206,6 +249,7 @@ fn jit_state(
         load_exclusive_fn: load_exclusive as *const () as usize as u64,
         store_exclusive_fn: store_exclusive as *const () as usize as u64,
         clear_exclusive_fn: clear_exclusive as *const () as usize as u64,
+        int_crypto_fn: int_crypto as *const () as usize as u64,
         ..Default::default()
     }
 }
@@ -367,6 +411,10 @@ fn run_case(bytes: &[u8], initial_x: [u64; 32], initial_memory: [u8; MEMORY_LEN]
     run_case_with_fp(bytes, initial_x, [0; 32], 0, initial_memory);
 }
 
+fn run_case_rv32(bytes: &[u8], initial_x: [u64; 32], initial_memory: [u8; MEMORY_LEN]) {
+    run_case_for_xlen(bytes, initial_x, [0; 32], 0, initial_memory, true);
+}
+
 fn run_case_with_fp(
     bytes: &[u8],
     initial_x: [u64; 32],
@@ -374,10 +422,38 @@ fn run_case_with_fp(
     initial_fcsr: u32,
     initial_memory: [u8; MEMORY_LEN],
 ) {
+    run_case_for_xlen(
+        bytes,
+        initial_x,
+        initial_f,
+        initial_fcsr,
+        initial_memory,
+        false,
+    );
+}
+
+fn run_case_for_xlen(
+    bytes: &[u8],
+    initial_x: [u64; 32],
+    initial_f: [u64; 32],
+    initial_fcsr: u32,
+    initial_memory: [u8; MEMORY_LEN],
+    rv32: bool,
+) {
+    let initial_x = if rv32 {
+        std::array::from_fn(|index| initial_x[index] & 0xffff_ffff)
+    } else {
+        initial_x
+    };
     let mut reference_memory = RvMemory::new(0, MEMORY_LEN);
     rax::isa::riscv::Memory::write(&mut reference_memory, 0, &initial_memory)
         .expect("seed reference memory");
-    let mut cpu = RiscVCpu::new(RiscVConfig::rv64gc(), Box::new(reference_memory));
+    let config = if rv32 {
+        RiscVConfig::rv32(RvIsa::rv64gc())
+    } else {
+        RiscVConfig::rv64gc()
+    };
+    let mut cpu = RiscVCpu::new(config, Box::new(reference_memory));
     for register in 1..32u8 {
         cpu.set_x(register, initial_x[register as usize]);
     }
@@ -401,8 +477,17 @@ fn run_case_with_fp(
     cpu.read_memory(DATA, &mut expected_data)
         .expect("read reference data");
 
-    let mut lifter = RiscVLifter::rv64gc();
-    let mut context = LiftContext::new(SourceArch::RiscV64);
+    let mut lifter = if rv32 {
+        RiscVLifter::new_rv32(RiscVExtensions::rv64gc())
+    } else {
+        RiscVLifter::rv64gc()
+    };
+    let source_arch = if rv32 {
+        SourceArch::RiscV32
+    } else {
+        SourceArch::RiscV64
+    };
+    let mut context = LiftContext::new(source_arch);
     let lifted = lifter
         .lift_insn(CODE, bytes, &mut context)
         .expect("lift RISC-V instruction");
@@ -804,6 +889,111 @@ fn lifted_rv64_atomics_execute_through_helper_abi() {
 }
 
 #[test]
+fn lifted_rv64_integer_crypto_executes_through_helper_abi() {
+    let mut x = [0u64; 32];
+    x[1] = 0x0123_4567_89ab_cdef;
+    x[2] = 0xfedc_ba98_7654_3210;
+    let memory = [0u8; MEMORY_LEN];
+
+    for instruction in [
+        r_type(0x05, 2, 1, 1, 5),         // clmul
+        r_type(0x05, 2, 1, 2, 5),         // clmulr
+        r_type(0x05, 2, 1, 3, 5),         // clmulh
+        r_type(0x14, 2, 1, 2, 5),         // xperm4
+        r_type(0x14, 2, 1, 4, 5),         // xperm8
+        r_type(0x19, 2, 1, 0, 5),         // aes64es
+        r_type(0x1b, 2, 1, 0, 5),         // aes64esm
+        r_type(0x1d, 2, 1, 0, 5),         // aes64ds
+        r_type(0x1f, 2, 1, 0, 5),         // aes64dsm
+        r_type(0x3f, 2, 1, 0, 5),         // aes64ks2
+        i_type(0x18 << 5, 1, 1, 5, 0x13), // aes64im
+    ] {
+        run_case(&instruction.to_le_bytes(), x, memory);
+    }
+
+    for bs in 0..4u32 {
+        for instruction in [
+            r_type((bs << 5) | 0x18, 2, 1, 0, 5), // sm4ed
+            r_type((bs << 5) | 0x1a, 2, 1, 0, 5), // sm4ks
+        ] {
+            run_case(&instruction.to_le_bytes(), x, memory);
+        }
+    }
+    for round in 0..=0xau32 {
+        let instruction = i_type((0x18 << 5) | 0x10 | round as i32, 1, 1, 5, 0x13);
+        run_case(&instruction.to_le_bytes(), x, memory);
+    }
+}
+
+#[test]
+fn lifted_rv32_integer_crypto_executes_through_helper_abi() {
+    let mut x = [0u64; 32];
+    x[1] = 0x89ab_cdef;
+    x[2] = 0x7654_3210;
+    let memory = [0u8; MEMORY_LEN];
+
+    for instruction in [
+        r_type(0x05, 2, 1, 1, 5), // clmul
+        r_type(0x05, 2, 1, 2, 5), // clmulr
+        r_type(0x05, 2, 1, 3, 5), // clmulh
+        r_type(0x14, 2, 1, 2, 5), // xperm4
+        r_type(0x14, 2, 1, 4, 5), // xperm8
+        r_type(0x28, 2, 1, 0, 5), // sha512sum0r
+        r_type(0x29, 2, 1, 0, 5), // sha512sum1r
+        r_type(0x2a, 2, 1, 0, 5), // sha512sig0l
+        r_type(0x2b, 2, 1, 0, 5), // sha512sig1l
+        r_type(0x2e, 2, 1, 0, 5), // sha512sig0h
+        r_type(0x2f, 2, 1, 0, 5), // sha512sig1h
+    ] {
+        run_case_rv32(&instruction.to_le_bytes(), x, memory);
+    }
+
+    for bs in 0..4u32 {
+        for low_funct7 in [0x11, 0x13, 0x15, 0x17] {
+            let instruction = r_type((bs << 5) | low_funct7, 2, 1, 0, 5);
+            run_case_rv32(&instruction.to_le_bytes(), x, memory);
+        }
+        for instruction in [
+            r_type((bs << 5) | 0x18, 2, 1, 0, 5), // sm4ed
+            r_type((bs << 5) | 0x1a, 2, 1, 0, 5), // sm4ks
+        ] {
+            run_case_rv32(&instruction.to_le_bytes(), x, memory);
+        }
+    }
+}
+
+#[test]
+fn integer_crypto_lowering_rejects_malformed_opaque_ops() {
+    for (op, xlen, expected) in [
+        (RvOp::Add, 64, "helper operation Add"),
+        (RvOp::Clmul, 16, "XLEN 16"),
+    ] {
+        let opaque = SmirOp::new(
+            OpId(0),
+            CODE,
+            OpKind::RvIntCrypto {
+                dst: VReg::Arch(ArchReg::RiscV(RiscVReg::X(5))),
+                src1: VReg::Imm(1),
+                src2: VReg::Imm(2),
+                op,
+                imm: 0,
+                xlen,
+            },
+        );
+        let (function, return_pcs) = function_for_lift(ControlFlow::NextInsn, vec![opaque], 4);
+        let mut lowerer = RiscVX86_64Lowerer::new();
+        lowerer.set_return_pcs(return_pcs);
+        let error = lowerer
+            .lower_function(&function)
+            .expect_err("malformed opaque crypto op must fail closed");
+        assert!(
+            format!("{error:?}").contains(expected),
+            "unexpected malformed-op error: {error:?}"
+        );
+    }
+}
+
+#[test]
 fn runtime_layout_matches_codegen_offsets() {
     assert_eq!(RiscVGuestRegs::X_OFFSET, 0);
     assert_eq!(RiscVGuestRegs::F_OFFSET, 32 * 8);
@@ -818,5 +1008,6 @@ fn runtime_layout_matches_codegen_offsets() {
     assert_eq!(RiscVGuestRegs::LOAD_EXCLUSIVE_FN_OFFSET, 72 * 8);
     assert_eq!(RiscVGuestRegs::STORE_EXCLUSIVE_FN_OFFSET, 73 * 8);
     assert_eq!(RiscVGuestRegs::CLEAR_EXCLUSIVE_FN_OFFSET, 74 * 8);
-    assert_eq!(std::mem::size_of::<RiscVGuestRegs>(), 75 * 8);
+    assert_eq!(RiscVGuestRegs::INT_CRYPTO_FN_OFFSET, 75 * 8);
+    assert_eq!(std::mem::size_of::<RiscVGuestRegs>(), 76 * 8);
 }

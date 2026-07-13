@@ -190,8 +190,9 @@ The former SMIR-op-set gaps are represented by explicit RISC-V operations:
 - `RvVector` evaluates RVV while explicitly threading the scalar x/f/CSR
   register state required by vector/scalar transfer operations.
 
-These operations are exact in `SmirInterpreter`; they are also the bounded
-native-lowering frontier for the x86-64 cross-JIT described below.
+These operations are exact in `SmirInterpreter`; `RvIntCrypto` also has the
+bounded helper-backed x86-64 lowering described below. `RvFp` arithmetic and
+`RvVector` remain at the native-lowering frontier.
 
 ---
 
@@ -199,11 +200,17 @@ native-lowering frontier for the x86-64 cross-JIT described below.
 
 `RiscVX86_64Lowerer` uses an explicit
 `extern "sysv64" fn(*mut RiscVGuestRegs)` ABI;
-it does not reuse the x86-guest identity-register ABI. The 600-byte state holds
+it does not reuse the x86-guest identity-register ABI. The 608-byte state holds
 `x[32]`, `f[32]`, PC, FCSR, exit classification, memory context, and scalar
-load/store plus atomic helper pointers. Reads of x0 are hard-wired to zero,
-writes are discarded, and the externally visible x0 backing slot is
-canonicalized on entry.
+load/store, atomic, and pure scalar integer-crypto helper pointers. Reads of x0
+are hard-wired to zero, writes are discarded, and the externally visible x0
+backing slot is canonicalized on entry.
+
+When the x86-64 test/runtime binary is translated by Rosetta, released JIT
+mappings are changed to `PROT_NONE` and advised for physical-page discard while
+their virtual addresses remain reserved. This prevents Rosetta from aliasing a
+stale translated block when parallel lowerings rapidly recycle executable
+addresses; native x86-64 and non-macOS execution still unmap normally.
 
 Implemented native scalar families:
 
@@ -229,9 +236,11 @@ M-extension high/low multiply and signed/unsigned divide/remainder (including
 `/0` and `MIN/-1`), Zbb rotate/count operations, word operations, JAL/JALR,
 compressed PC advance, FP bit operations and FCSR access, every RV32/RV64 AMO
 operation and ordering code, AMOCAS success/failure, and LR/SC
-success/reservation-failure paths. The generated count sequence is baseline
-x86-64 and does not require host `POPCNT`. Remaining native gaps are
-fault-precise memory exits, `RvIntCrypto`, arithmetic `RvFp`, and `RvVector`.
+success/reservation-failure paths. It also covers all 24 `RvIntCrypto` operation
+codes across RV32/RV64, every SM4/AES32 byte selector, and every legal AES64KS1I
+round immediate. The generated count sequence is baseline x86-64 and does not
+require host `POPCNT`. Remaining native gaps are fault-precise memory exits,
+arithmetic `RvFp`, and `RvVector`.
 
 The LR/SC reservation is owned by the helper context. Cross-hart or device writes
 must invalidate it in the memory backend; the in-tree differential helper models

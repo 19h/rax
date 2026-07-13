@@ -8,6 +8,7 @@
 
 use std::collections::{HashMap, HashSet};
 
+use crate::isa::riscv::Op as RvOp;
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, SmirOp};
 use crate::smir::ir::types::{
@@ -15,7 +16,9 @@ use crate::smir::ir::types::{
     ShiftOp, SignExtend, SrcOperand, VReg, VirtualId,
 };
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
-use crate::smir::lower::cross::riscv_x86_64_abi::{RiscVAtomicOpCode, RiscVMemoryOrderCode};
+use crate::smir::lower::cross::riscv_x86_64_abi::{
+    RiscVAtomicOpCode, RiscVIntCryptoOpCode, RiscVMemoryOrderCode,
+};
 use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::x86_64::{X86Cond, X86Emitter};
 use crate::smir::lower::{CodeBuffer, LowerError, LowerResult, RelocKind, Relocation, SmirLowerer};
@@ -46,6 +49,7 @@ const RV_CAS_FN_OFFSET: i32 = RV_ATOMIC_RMW_FN_OFFSET + 8;
 const RV_LOAD_EXCLUSIVE_FN_OFFSET: i32 = RV_CAS_FN_OFFSET + 8;
 const RV_STORE_EXCLUSIVE_FN_OFFSET: i32 = RV_LOAD_EXCLUSIVE_FN_OFFSET + 8;
 const RV_CLEAR_EXCLUSIVE_FN_OFFSET: i32 = RV_STORE_EXCLUSIVE_FN_OFFSET + 8;
+const RV_INT_CRYPTO_FN_OFFSET: i32 = RV_CLEAR_EXCLUSIVE_FN_OFFSET + 8;
 
 const EXIT_RETURN: i64 = 0;
 const EXIT_TRAP: i64 = 1;
@@ -826,6 +830,75 @@ impl RiscVX86_64Lowerer {
         }
     }
 
+    fn int_crypto_op_code(op: RvOp) -> Result<i64, LowerError> {
+        let code = match op {
+            RvOp::Clmul => RiscVIntCryptoOpCode::Clmul,
+            RvOp::Clmulh => RiscVIntCryptoOpCode::Clmulh,
+            RvOp::Clmulr => RiscVIntCryptoOpCode::Clmulr,
+            RvOp::Xperm4 => RiscVIntCryptoOpCode::Xperm4,
+            RvOp::Xperm8 => RiscVIntCryptoOpCode::Xperm8,
+            RvOp::Sha512Sig0l => RiscVIntCryptoOpCode::Sha512Sig0l,
+            RvOp::Sha512Sig0h => RiscVIntCryptoOpCode::Sha512Sig0h,
+            RvOp::Sha512Sig1l => RiscVIntCryptoOpCode::Sha512Sig1l,
+            RvOp::Sha512Sig1h => RiscVIntCryptoOpCode::Sha512Sig1h,
+            RvOp::Sha512Sum0r => RiscVIntCryptoOpCode::Sha512Sum0r,
+            RvOp::Sha512Sum1r => RiscVIntCryptoOpCode::Sha512Sum1r,
+            RvOp::Sm4ed => RiscVIntCryptoOpCode::Sm4ed,
+            RvOp::Sm4ks => RiscVIntCryptoOpCode::Sm4ks,
+            RvOp::Aes32esi => RiscVIntCryptoOpCode::Aes32esi,
+            RvOp::Aes32esmi => RiscVIntCryptoOpCode::Aes32esmi,
+            RvOp::Aes32dsi => RiscVIntCryptoOpCode::Aes32dsi,
+            RvOp::Aes32dsmi => RiscVIntCryptoOpCode::Aes32dsmi,
+            RvOp::Aes64es => RiscVIntCryptoOpCode::Aes64es,
+            RvOp::Aes64esm => RiscVIntCryptoOpCode::Aes64esm,
+            RvOp::Aes64ds => RiscVIntCryptoOpCode::Aes64ds,
+            RvOp::Aes64dsm => RiscVIntCryptoOpCode::Aes64dsm,
+            RvOp::Aes64im => RiscVIntCryptoOpCode::Aes64im,
+            RvOp::Aes64ks1i => RiscVIntCryptoOpCode::Aes64ks1i,
+            RvOp::Aes64ks2 => RiscVIntCryptoOpCode::Aes64ks2,
+            other => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("RISC-V integer-crypto helper operation {other:?}"),
+                });
+            }
+        };
+        Ok(code as i64)
+    }
+
+    fn lower_int_crypto(
+        &mut self,
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        op: RvOp,
+        imm: u8,
+        xlen: u8,
+    ) -> Result<(), LowerError> {
+        if !matches!(xlen, 32 | 64) {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("RISC-V integer-crypto XLEN {xlen}"),
+            });
+        }
+        let op_code = Self::int_crypto_op_code(op)?;
+        self.load_vreg_to(src1, ADDR, OpWidth::W64)?;
+        self.load_vreg_to(src2, HI, OpWidth::W64)?;
+        {
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_mov_ri(RHS, i64::from(imm), OpWidth::W64);
+            e.emit_mov_ri(TMP0, i64::from(xlen), OpWidth::W64);
+            e.emit_mov_rm(TARGET, STATE, RV_INT_CRYPTO_FN_OFFSET, OpWidth::W64);
+            // Preserve the state pointer and retain 16-byte stack alignment at
+            // the SysV call boundary.  RDI is then free for helper argument 0.
+            e.emit_push(STATE);
+            e.emit_sub_ri(PhysReg::Rsp, 8, OpWidth::W64);
+            e.emit_mov_ri(STATE, op_code, OpWidth::W64);
+            e.emit_call_reg(TARGET);
+            e.emit_add_ri(PhysReg::Rsp, 8, OpWidth::W64);
+            e.emit_pop(STATE);
+        }
+        self.store_reg_to(dst, ACC, OpWidth::W64)
+    }
+
     fn lower_atomic_rmw(
         &mut self,
         dst: VReg,
@@ -1197,6 +1270,14 @@ impl RiscVX86_64Lowerer {
                 width,
             } => self.lower_store_exclusive(*status, *src, addr, *width)?,
             OpKind::ClearExclusive => self.lower_clear_exclusive(),
+            OpKind::RvIntCrypto {
+                dst,
+                src1,
+                src2,
+                op,
+                imm,
+                xlen,
+            } => self.lower_int_crypto(*dst, *src1, *src2, *op, *imm, *xlen)?,
             OpKind::Breakpoint => self.emit_arch_exit(op.guest_pc, EXIT_BREAKPOINT),
             OpKind::Syscall { .. } => self.emit_arch_exit(op.guest_pc, EXIT_SYSCALL),
             other => {

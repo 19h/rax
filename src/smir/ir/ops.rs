@@ -3526,8 +3526,9 @@ pub enum OpKind {
     /// MixColumns, crossbar gather), which would need 256-entry table lookups to
     /// express as plain SMIR. `src1`=rs1, `src2`=rs2 (ignored by the unary
     /// `aes64im`/`aes64ks1i`); `imm` carries the SM4/AES32 `bs` or
-    /// `aes64ks1i` round number. `dst` receives the rd value. Self-contained like [`OpKind::RvFp`];
-    /// NOT JIT-whitelisted.
+    /// `aes64ks1i` round number. `dst` receives the rd value. Self-contained like
+    /// [`OpKind::RvFp`]. The state-backed RISC-V-to-x86-64 lowerer executes this
+    /// operation through an explicit pure helper ABI.
     RvIntCrypto {
         dst: VReg,
         src1: VReg,

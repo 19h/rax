@@ -31,11 +31,29 @@ use super::{
 /// Apple I-cache invalidation (libSystem). Required after writing a `MAP_JIT`
 /// region and before executing it: on AArch64 the instruction cache is not
 /// coherent with the data cache, so freshly written code may otherwise execute
-/// stale bytes (intermittently — only on region reuse / SMC — which x86-hosted
-/// test harnesses can never catch).
+/// stale bytes.
 #[cfg(all(target_arch = "aarch64", target_os = "macos"))]
 unsafe extern "C" {
     fn sys_icache_invalidate(start: *mut core::ffi::c_void, len: usize);
+}
+
+#[cfg(all(target_arch = "x86_64", target_os = "macos"))]
+fn running_under_rosetta() -> bool {
+    static TRANSLATED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *TRANSLATED.get_or_init(|| {
+        let mut translated = 0i32;
+        let mut size = core::mem::size_of_val(&translated);
+        let result = unsafe {
+            libc::sysctlbyname(
+                c"sysctl.proc_translated".as_ptr(),
+                (&mut translated as *mut i32).cast(),
+                &mut size,
+                core::ptr::null_mut(),
+                0,
+            )
+        };
+        result == 0 && translated == 1
+    })
 }
 
 /// compiler-rt instruction-cache flush (Linux/aarch64), same purpose as the
@@ -238,7 +256,9 @@ impl Aarch64GuestRegs {
     pub const VEC_STORE_FN_OFFSET: i32 = Self::VEC_LOAD_FN_OFFSET + 8;
 }
 
-pub use super::cross::riscv_x86_64_abi::{RiscVAtomicOpCode, RiscVMemoryOrderCode};
+pub use super::cross::riscv_x86_64_abi::{
+    RiscVAtomicOpCode, RiscVIntCryptoOpCode, RiscVMemoryOrderCode,
+};
 
 /// Two-register SysV result of [`RiscVGuestRegs::cas_fn`].
 #[repr(C)]
@@ -256,8 +276,9 @@ pub struct RiscVAtomicCasResult {
 /// offsets. `load_fn` has signature
 /// `extern "sysv64" fn(ctx, addr, size, signed) -> value`; `store_fn` has
 /// signature `extern "sysv64" fn(ctx, addr, value, size) -> success`. Atomic
-/// helpers use the same ABI, share
-/// the same context and must implement one indivisible transaction per call.
+/// helpers use the same ABI, share the same context, and must implement one
+/// indivisible transaction per call. The integer-crypto helper is pure and has
+/// signature `extern "sysv64" fn(op_code, src1, src2, imm, xlen) -> value`.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RiscVGuestRegs {
@@ -290,6 +311,8 @@ pub struct RiscVGuestRegs {
     pub store_exclusive_fn: u64,
     /// `extern "sysv64" fn(ctx)`; clears the reservation without storing.
     pub clear_exclusive_fn: u64,
+    /// `extern "sysv64" fn(op_code, src1, src2, imm, xlen) -> value`.
+    pub int_crypto_fn: u64,
 }
 
 impl Default for RiscVGuestRegs {
@@ -308,6 +331,7 @@ impl Default for RiscVGuestRegs {
             load_exclusive_fn: 0,
             store_exclusive_fn: 0,
             clear_exclusive_fn: 0,
+            int_crypto_fn: 0,
         }
     }
 }
@@ -326,6 +350,7 @@ impl RiscVGuestRegs {
     pub const LOAD_EXCLUSIVE_FN_OFFSET: i32 = Self::CAS_FN_OFFSET + 8;
     pub const STORE_EXCLUSIVE_FN_OFFSET: i32 = Self::LOAD_EXCLUSIVE_FN_OFFSET + 8;
     pub const CLEAR_EXCLUSIVE_FN_OFFSET: i32 = Self::STORE_EXCLUSIVE_FN_OFFSET + 8;
+    pub const INT_CRYPTO_FN_OFFSET: i32 = Self::CLEAR_EXCLUSIVE_FN_OFFSET + 8;
 }
 
 // enter_native(rdi = entry ptr, rsi = *mut GuestRegs):
@@ -794,7 +819,9 @@ pub const GS_BASE_OFFSET: i32 = X86_GUEST_GS_BASE_OFFSET;
 pub const CALL_FN_OFFSET: i32 = X86_GUEST_CALL_FN_OFFSET;
 
 /// W^X executable memory holding a finalized lowered block. Maps RW, copies the
-/// code in, then flips to RX; unmaps on drop.
+/// code in, then flips to RX. Drop normally unmaps it; x86-64 code running under
+/// Rosetta retains an inaccessible virtual-address reservation to prevent stale
+/// translated-code aliasing.
 pub struct ExecMem {
     ptr: *mut u8,
     len: usize,
@@ -816,7 +843,7 @@ impl ExecMem {
         Ok(ExecMem { ptr, len })
     }
 
-    /// RW map → copy → `mprotect` RX. Used on x86-64 and any non-aarch64 unix.
+    /// RW map → copy → `mprotect` RX. Used on x86-64 and any non-aarch64 Unix.
     #[cfg(not(target_arch = "aarch64"))]
     fn map_code(code: &[u8], len: usize) -> Result<*mut u8, ExecMemError> {
         let ptr = unsafe {
@@ -991,6 +1018,18 @@ impl ExecMem {
 
 impl Drop for ExecMem {
     fn drop(&mut self) {
+        #[cfg(all(target_arch = "x86_64", target_os = "macos"))]
+        if running_under_rosetta() {
+            // Rosetta can retain a translated block after munmap and reuse it
+            // if another thread immediately receives the same executable
+            // virtual address. Keep the address reserved for this process while
+            // releasing its physical pages, which prevents stale-code aliasing.
+            unsafe {
+                libc::mprotect(self.ptr as *mut libc::c_void, self.len, libc::PROT_NONE);
+                libc::madvise(self.ptr as *mut libc::c_void, self.len, libc::MADV_DONTNEED);
+            }
+            return;
+        }
         unsafe { libc::munmap(self.ptr as *mut libc::c_void, self.len) };
     }
 }
