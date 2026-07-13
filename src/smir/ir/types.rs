@@ -776,6 +776,18 @@ pub enum MemoryOrder {
     SeqCst,
 }
 
+impl MemoryOrder {
+    /// Ordering retained by a failed compare-and-swap operation. A failed CAS
+    /// performs no release, while its acquire component remains observable.
+    pub const fn cas_failure(self) -> Self {
+        match self {
+            Self::Relaxed | Self::Release => Self::Relaxed,
+            Self::Acquire | Self::AcqRel => Self::Acquire,
+            Self::SeqCst => Self::SeqCst,
+        }
+    }
+}
+
 /// Fence kind
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum FenceKind {
@@ -1341,6 +1353,15 @@ mod tests {
         assert_eq!(OpWidth::W32.mask(), 0xFFFF_FFFF);
 
         assert_eq!(OpWidth::W64.sign_bit(), 0x8000_0000_0000_0000);
+    }
+
+    #[test]
+    fn cas_failure_order_removes_release_semantics() {
+        assert_eq!(MemoryOrder::Relaxed.cas_failure(), MemoryOrder::Relaxed);
+        assert_eq!(MemoryOrder::Acquire.cas_failure(), MemoryOrder::Acquire);
+        assert_eq!(MemoryOrder::Release.cas_failure(), MemoryOrder::Relaxed);
+        assert_eq!(MemoryOrder::AcqRel.cas_failure(), MemoryOrder::Acquire);
+        assert_eq!(MemoryOrder::SeqCst.cas_failure(), MemoryOrder::SeqCst);
     }
 
     #[test]

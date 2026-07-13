@@ -159,6 +159,7 @@ impl RiscVCpu {
         state.store_fn = jit_store as *const () as usize as u64;
         state.atomic_rmw_fn = jit_atomic_rmw as *const () as usize as u64;
         state.cas_fn = jit_compare_and_swap as *const () as usize as u64;
+        state.cas_pair_fn = jit_compare_and_swap_pair as *const () as usize as u64;
         state.load_exclusive_fn = jit_load_exclusive as *const () as usize as u64;
         state.store_exclusive_fn = jit_store_exclusive as *const () as usize as u64;
         state.clear_exclusive_fn = jit_clear_exclusive as *const () as usize as u64;
@@ -335,6 +336,7 @@ fn admit_lifted_instruction(lifted: &LiftResult) -> bool {
             | OpKind::Store { .. }
             | OpKind::AtomicRmw { .. }
             | OpKind::Cas { .. }
+            | OpKind::CasPair { .. }
             | OpKind::LoadExclusive { .. }
             | OpKind::StoreExclusive { .. } => memory_accesses += 1,
             _ => {}
@@ -592,7 +594,6 @@ unsafe extern "sysv64" fn jit_atomic_rmw(
         context.record_fault(cause::STORE_MISALIGNED, addr);
         return RiscVAtomicResult::default();
     }
-    fence_before(order);
     let mut bytes = [0u8; 8];
     if unsafe { context.memory() }
         .read(addr, &mut bytes[..size as usize])
@@ -686,6 +687,7 @@ unsafe extern "sysv64" fn jit_compare_and_swap(
             status: RiscVAtomicCasStatus::CompareFailed as u64,
         };
     }
+    fence_before(order);
     if unsafe { context.memory() }
         .write(addr, &(new_value & mask).to_le_bytes()[..size as usize])
         .is_err()
@@ -697,6 +699,67 @@ unsafe extern "sysv64" fn jit_compare_and_swap(
     RiscVAtomicCasResult {
         old,
         status: RiscVAtomicCasStatus::Swapped as u64,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+unsafe extern "sysv64" fn jit_compare_and_swap_pair(
+    ctx: u64,
+    addr: u64,
+    expected_lo: u64,
+    expected_hi: u64,
+    new_lo: u64,
+    new_hi: u64,
+    order: u64,
+    failure_order: u64,
+    out_old_hi: *mut u64,
+) -> RiscVAtomicCasResult {
+    let Some(context) = (unsafe { JitContext::from_abi(ctx) }) else {
+        return RiscVAtomicCasResult::default();
+    };
+    let addr = context.normalize_addr(addr);
+    let required_failure_order = if matches!(order, 1 | 3 | 4) { 1 } else { 0 };
+    if addr % 16 != 0 {
+        context.record_fault(cause::STORE_MISALIGNED, addr);
+        return RiscVAtomicCasResult::default();
+    }
+    if decode_order(order).is_none() || failure_order != required_failure_order {
+        context.record_fault(cause::STORE_ACCESS_FAULT, addr);
+        return RiscVAtomicCasResult::default();
+    }
+    if out_old_hi.is_null() {
+        context.record_fault(cause::STORE_ACCESS_FAULT, addr);
+        return RiscVAtomicCasResult::default();
+    }
+    let mut bytes = [0u8; 16];
+    if unsafe { context.memory() }.read(addr, &mut bytes).is_err() {
+        context.record_fault(cause::LOAD_ACCESS_FAULT, addr);
+        return RiscVAtomicCasResult::default();
+    }
+    let old = [
+        u64::from_le_bytes(bytes[..8].try_into().unwrap()),
+        u64::from_le_bytes(bytes[8..].try_into().unwrap()),
+    ];
+    let status = if old == [expected_lo, expected_hi] {
+        fence_before(order);
+        bytes[..8].copy_from_slice(&new_lo.to_le_bytes());
+        bytes[8..].copy_from_slice(&new_hi.to_le_bytes());
+        if unsafe { context.memory() }.write(addr, &bytes).is_err() {
+            context.record_fault(cause::STORE_ACCESS_FAULT, addr);
+            return RiscVAtomicCasResult::default();
+        }
+        RiscVAtomicCasStatus::Swapped
+    } else {
+        fence_after(failure_order);
+        RiscVAtomicCasStatus::CompareFailed
+    };
+    if status == RiscVAtomicCasStatus::Swapped {
+        fence_after(order);
+    }
+    unsafe { out_old_hi.write(old[1]) };
+    RiscVAtomicCasResult {
+        old: old[0],
+        status: status as u64,
     }
 }
 

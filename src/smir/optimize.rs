@@ -2330,6 +2330,18 @@ impl OpKind {
                 result.push(*new_val);
             }
 
+            OpKind::CasPair {
+                addr,
+                expected_lo,
+                expected_hi,
+                new_lo,
+                new_hi,
+                ..
+            } => {
+                result.extend(addr.regs());
+                result.extend([*expected_lo, *expected_hi, *new_lo, *new_hi]);
+            }
+
             OpKind::AtomicCmpXadd { addr, cmp, add, .. } => {
                 result.extend(addr.regs());
                 result.push(*cmp);

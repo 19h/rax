@@ -1179,6 +1179,23 @@ pub enum OpKind {
         order: MemoryOrder,
     },
 
+    /// Double-register compare-and-swap on one 128-bit memory object.
+    ///
+    /// The low word occupies the lower-addressed eight bytes. Both destination
+    /// words receive the old memory value regardless of comparison success.
+    CasPair {
+        dst_lo: VReg,
+        dst_hi: VReg,
+        success: VReg,
+        addr: Address,
+        expected_lo: VReg,
+        expected_hi: VReg,
+        new_lo: VReg,
+        new_hi: VReg,
+        order: MemoryOrder,
+        failure_order: MemoryOrder,
+    },
+
     /// Atomic compare-and-conditional-add.
     ///
     /// Models x86 CMPccXADD: compare the old memory value with `cmp`, update
@@ -4099,6 +4116,13 @@ impl OpKind {
 
             OpKind::Cas { dst, success, .. } => vec![*dst, *success],
 
+            OpKind::CasPair {
+                dst_lo,
+                dst_hi,
+                success,
+                ..
+            } => vec![*dst_lo, *dst_hi, *success],
+
             OpKind::StoreExclusive { status, .. } => vec![*status],
 
             OpKind::Xchg { reg1, reg2, .. } => vec![*reg1, *reg2],
@@ -4172,6 +4196,7 @@ impl OpKind {
                     | OpKind::AtomicStore { .. }
                     | OpKind::AtomicRmw { .. }
                     | OpKind::Cas { .. }
+                    | OpKind::CasPair { .. }
                     | OpKind::AtomicCmpXadd { .. }
                     | OpKind::StoreExclusive { .. }
                     | OpKind::RvVector { .. }
@@ -4234,6 +4259,7 @@ impl OpKind {
                 | OpKind::AtomicLoad { .. }
                 | OpKind::AtomicRmw { .. }
                 | OpKind::Cas { .. }
+                | OpKind::CasPair { .. }
                 | OpKind::AtomicCmpXadd { .. }
                 | OpKind::LoadExclusive { .. }
                 | OpKind::RepMovs { .. }
@@ -4331,6 +4357,7 @@ impl OpKind {
                 | OpKind::AtomicStore { .. }
                 | OpKind::AtomicRmw { .. }
                 | OpKind::Cas { .. }
+                | OpKind::CasPair { .. }
                 | OpKind::AtomicCmpXadd { .. }
                 | OpKind::StoreExclusive { .. }
                 | OpKind::VStore { .. }
@@ -4377,6 +4404,40 @@ impl OpKind {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn cas_pair_metadata_tracks_all_results_and_memory_effects() {
+        let op = OpKind::CasPair {
+            dst_lo: VReg::virt(0),
+            dst_hi: VReg::virt(1),
+            success: VReg::virt(2),
+            addr: Address::Direct(VReg::virt(3)),
+            expected_lo: VReg::virt(4),
+            expected_hi: VReg::virt(5),
+            new_lo: VReg::virt(6),
+            new_hi: VReg::virt(7),
+            order: MemoryOrder::SeqCst,
+            failure_order: MemoryOrder::Acquire,
+        };
+
+        assert_eq!(
+            op.dests(),
+            vec![VReg::virt(0), VReg::virt(1), VReg::virt(2)]
+        );
+        assert_eq!(
+            op.source_vregs(),
+            vec![
+                VReg::virt(3),
+                VReg::virt(4),
+                VReg::virt(5),
+                VReg::virt(6),
+                VReg::virt(7),
+            ]
+        );
+        assert!(op.reads_memory());
+        assert!(op.writes_memory());
+        assert!(op.has_side_effects());
+    }
 
     #[test]
     fn x86_x87_control_metadata_tracks_hidden_state_and_memory_effects() {

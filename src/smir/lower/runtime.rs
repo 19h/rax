@@ -360,6 +360,11 @@ pub struct RiscVGuestRegs {
     /// `extern "sysv64" fn(ctx, addr, expected, new, size, order_code) ->
     /// {old, status}`, where status is [`RiscVAtomicCasStatus`].
     pub cas_fn: u64,
+    /// `extern "sysv64" fn(ctx, addr, expected_lo, expected_hi, new_lo,
+    /// new_hi, success_order_code, failure_order_code, out_old_hi) ->
+    /// {old_lo, status}`. `out_old_hi` receives the high word only for a
+    /// completed access.
+    pub cas_pair_fn: u64,
     /// `extern "sysv64" fn(ctx, addr, size) -> {value, access_success}`;
     /// establishes a reservation on success.
     pub load_exclusive_fn: u64,
@@ -400,6 +405,7 @@ impl Default for RiscVGuestRegs {
             store_fn: 0,
             atomic_rmw_fn: 0,
             cas_fn: 0,
+            cas_pair_fn: 0,
             load_exclusive_fn: 0,
             store_exclusive_fn: 0,
             clear_exclusive_fn: 0,
@@ -426,7 +432,8 @@ impl RiscVGuestRegs {
     pub const STORE_FN_OFFSET: i32 = Self::LOAD_FN_OFFSET + 8;
     pub const ATOMIC_RMW_FN_OFFSET: i32 = Self::STORE_FN_OFFSET + 8;
     pub const CAS_FN_OFFSET: i32 = Self::ATOMIC_RMW_FN_OFFSET + 8;
-    pub const LOAD_EXCLUSIVE_FN_OFFSET: i32 = Self::CAS_FN_OFFSET + 8;
+    pub const CAS_PAIR_FN_OFFSET: i32 = Self::CAS_FN_OFFSET + 8;
+    pub const LOAD_EXCLUSIVE_FN_OFFSET: i32 = Self::CAS_PAIR_FN_OFFSET + 8;
     pub const STORE_EXCLUSIVE_FN_OFFSET: i32 = Self::LOAD_EXCLUSIVE_FN_OFFSET + 8;
     pub const CLEAR_EXCLUSIVE_FN_OFFSET: i32 = Self::STORE_EXCLUSIVE_FN_OFFSET + 8;
     pub const INT_CRYPTO_FN_OFFSET: i32 = Self::CLEAR_EXCLUSIVE_FN_OFFSET + 8;

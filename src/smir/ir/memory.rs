@@ -158,6 +158,33 @@ pub trait SmirMemory: Send {
         Ok((old, success))
     }
 
+    /// Atomic 128-bit compare-and-swap without a failure writeback.
+    /// Concurrent memory backends should override this default with one
+    /// indivisible transaction; the default is exact for single-threaded
+    /// memory and performs a write only when both expected words match.
+    fn compare_and_swap_pair(
+        &mut self,
+        addr: GuestAddr,
+        expected: [u64; 2],
+        new: [u64; 2],
+        _success_order: MemoryOrder,
+        _failure_order: MemoryOrder,
+    ) -> Result<([u64; 2], bool), MemoryError> {
+        let mut bytes = [0u8; 16];
+        self.read(addr, &mut bytes)?;
+        let old = [
+            u64::from_le_bytes(bytes[..8].try_into().unwrap()),
+            u64::from_le_bytes(bytes[8..].try_into().unwrap()),
+        ];
+        let success = old == expected;
+        if success {
+            bytes[..8].copy_from_slice(&new[0].to_le_bytes());
+            bytes[8..].copy_from_slice(&new[1].to_le_bytes());
+            self.write(addr, &bytes)?;
+        }
+        Ok((old, success))
+    }
+
     /// Atomic read-modify-write
     fn atomic_rmw(
         &mut self,

@@ -47,7 +47,8 @@ const RV_LOAD_FN_OFFSET: i32 = RV_CTX_OFFSET + 8;
 const RV_STORE_FN_OFFSET: i32 = RV_LOAD_FN_OFFSET + 8;
 const RV_ATOMIC_RMW_FN_OFFSET: i32 = RV_STORE_FN_OFFSET + 8;
 const RV_CAS_FN_OFFSET: i32 = RV_ATOMIC_RMW_FN_OFFSET + 8;
-const RV_LOAD_EXCLUSIVE_FN_OFFSET: i32 = RV_CAS_FN_OFFSET + 8;
+const RV_CAS_PAIR_FN_OFFSET: i32 = RV_CAS_FN_OFFSET + 8;
+const RV_LOAD_EXCLUSIVE_FN_OFFSET: i32 = RV_CAS_PAIR_FN_OFFSET + 8;
 const RV_STORE_EXCLUSIVE_FN_OFFSET: i32 = RV_LOAD_EXCLUSIVE_FN_OFFSET + 8;
 const RV_CLEAR_EXCLUSIVE_FN_OFFSET: i32 = RV_STORE_EXCLUSIVE_FN_OFFSET + 8;
 const RV_INT_CRYPTO_FN_OFFSET: i32 = RV_CLEAR_EXCLUSIVE_FN_OFFSET + 8;
@@ -1163,6 +1164,78 @@ impl RiscVX86_64Lowerer {
         self.store_reg_to(success, HI, OpWidth::W64)
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn lower_cas_pair(
+        &mut self,
+        dst_lo: VReg,
+        dst_hi: VReg,
+        success: VReg,
+        addr: &Address,
+        expected_lo: VReg,
+        expected_hi: VReg,
+        new_lo: VReg,
+        new_hi: VReg,
+        order: MemoryOrder,
+        failure_order: MemoryOrder,
+        guest_pc: u64,
+    ) -> Result<(), LowerError> {
+        let required_failure_order = match order {
+            MemoryOrder::Relaxed | MemoryOrder::Release => MemoryOrder::Relaxed,
+            MemoryOrder::Acquire | MemoryOrder::AcqRel | MemoryOrder::SeqCst => {
+                MemoryOrder::Acquire
+            }
+        };
+        if failure_order != required_failure_order {
+            return Err(LowerError::UnsupportedOp {
+                op: format!(
+                    "RISC-V pair CAS failure order {failure_order:?} for success order {order:?}"
+                ),
+            });
+        }
+        self.load_addr_to(addr, ADDR)?;
+        self.load_vreg_to(expected_lo, HI, OpWidth::W64)?;
+        self.load_vreg_to(expected_hi, RHS, OpWidth::W64)?;
+        self.load_vreg_to(new_lo, TMP0, OpWidth::W64)?;
+        self.load_vreg_to(new_hi, TMP1, OpWidth::W64)?;
+        {
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_mov_rm(TARGET, STATE, RV_CAS_PAIR_FN_OFFSET, OpWidth::W64);
+
+            // The first six SysV arguments are already in RDI..R9 except for
+            // ctx. Arguments seven through nine are success order, failure
+            // order, and the high-result pointer. The 40-byte allocation plus
+            // the saved STATE word keeps RSP 16-byte aligned at CALL and
+            // reserves an independent result slot at [rsp+24].
+            e.emit_push(STATE);
+            e.emit_sub_ri(PhysReg::Rsp, 40, OpWidth::W64);
+            e.emit_mov_ri(TMP2, Self::memory_order_code(order), OpWidth::W64);
+            e.emit_mov_mr(PhysReg::Rsp, 0, TMP2, OpWidth::W64);
+            e.emit_mov_ri(TMP2, Self::memory_order_code(failure_order), OpWidth::W64);
+            e.emit_mov_mr(PhysReg::Rsp, 8, TMP2, OpWidth::W64);
+            e.emit_xor_rr(TMP2, TMP2, OpWidth::W32);
+            e.emit_mov_mr(PhysReg::Rsp, 24, TMP2, OpWidth::W64);
+            e.emit_lea(TMP2, PhysReg::Rsp, 24);
+            e.emit_mov_mr(PhysReg::Rsp, 16, TMP2, OpWidth::W64);
+            e.emit_mov_rm(STATE, STATE, RV_CTX_OFFSET, OpWidth::W64);
+            e.emit_call_reg(TARGET);
+
+            // RDX is 0=fault, 1=compare failed, 2=swapped. Convert completed
+            // outcomes to a Boolean and reject every other helper status before
+            // making either architectural destination visible.
+            e.emit_mov_rm(RHS, PhysReg::Rsp, 24, OpWidth::W64);
+            e.emit_add_ri(PhysReg::Rsp, 40, OpWidth::W64);
+            e.emit_pop(STATE);
+            e.emit_sub_ri(HI, 1, OpWidth::W64);
+            e.emit_cmp_ri(HI, 1, OpWidth::W64);
+        }
+        let valid = self.emit_jcc_placeholder(X86Cond::Be);
+        self.emit_arch_exit(guest_pc, EXIT_TRAP);
+        self.patch_rel32_to_current(valid)?;
+        self.store_reg_to(dst_lo, ACC, OpWidth::W64)?;
+        self.store_reg_to(dst_hi, RHS, OpWidth::W64)?;
+        self.store_reg_to(success, HI, OpWidth::W64)
+    }
+
     fn lower_load_exclusive(
         &mut self,
         dst: VReg,
@@ -1490,6 +1563,30 @@ impl RiscVX86_64Lowerer {
                 *new_val,
                 *width,
                 *order,
+                op.guest_pc,
+            )?,
+            OpKind::CasPair {
+                dst_lo,
+                dst_hi,
+                success,
+                addr,
+                expected_lo,
+                expected_hi,
+                new_lo,
+                new_hi,
+                order,
+                failure_order,
+            } => self.lower_cas_pair(
+                *dst_lo,
+                *dst_hi,
+                *success,
+                addr,
+                *expected_lo,
+                *expected_hi,
+                *new_lo,
+                *new_hi,
+                *order,
+                *failure_order,
                 op.guest_pc,
             )?,
             OpKind::LoadExclusive { dst, addr, width } => {

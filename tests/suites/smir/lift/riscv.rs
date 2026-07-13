@@ -814,23 +814,24 @@ fn lift_amocas_scalar() {
 }
 
 #[test]
-fn lift_amocas_q_remains_pair_cas_gap() {
+fn lift_amocas_q_pair_cas_matches_oracle() {
     let word = encode_amo(0b00101, 0b100, 4, 10, 6);
     let mut rng = Rng::new(0x5117_0013);
-    let mut st = rand_state(&mut rng);
-    st.x[10] = SCRATCH + 0x40;
-    st.scratch[8] = 0x0123_4567_89ab_cdef;
-    st.scratch[9] = 0xfedc_ba98_7654_3210;
-    st.x[4] = st.scratch[8];
-    st.x[5] = st.scratch[9];
-    st.x[6] = 0x1111_2222_3333_4444;
-    st.x[7] = 0x5555_6666_7777_8888;
-
-    assert!(run_ref(&word.to_le_bytes(), &st).is_some());
-    assert!(
-        matches!(run_smir(&word.to_le_bytes(), &st), Ok(None)),
-        "amocas.q should stay an explicit gap until SMIR has pair-wide CAS"
-    );
+    for success in [false, true] {
+        let mut st = rand_state(&mut rng);
+        st.x[10] = SCRATCH + 0x40;
+        st.scratch[8] = 0x0123_4567_89ab_cdef;
+        st.scratch[9] = 0xfedc_ba98_7654_3210;
+        st.x[4] = if success {
+            st.scratch[8]
+        } else {
+            !st.scratch[8]
+        };
+        st.x[5] = st.scratch[9];
+        st.x[6] = 0x1111_2222_3333_4444;
+        st.x[7] = 0x5555_6666_7777_8888;
+        assert_lift_matches_oracle("amocas.q", word, &st);
+    }
 }
 
 /// Sweep compressed (16-bit) instructions. Base registers x2 (sp) and x8..x15
@@ -1340,9 +1341,7 @@ fn lift_exhaustive_audit() {
     // harness: ECALL/EBREAK (environment trap), FENCE/FENCE.I (ordering no-op),
     // privileged MRET/SRET/WFI, and CSR access to UNMODELED CSRs (privileged
     // machine state + the nondeterministic cycle/time/instret counters — only
-    // the application FP/vector CSRs are modeled; see lift_csr). AMOCAS.Q is
-    // a precise IR boundary today: it is a 128-bit pair compare-and-swap, while
-    // SMIR's scalar CAS interface returns/stores one u64. Every other
+    // the application FP/vector CSRs are modeled; see lift_csr). Every other
     // computational / load-store / atomic / FP / vector / control-flow / app-CSR
     // instruction MUST lift.
     let allowed = |op: &str| {
@@ -1356,7 +1355,6 @@ fn lift_exhaustive_audit() {
                 | "Sret"
                 | "Wfi"
                 | "Pause"
-                | "AmocasQ"
                 | "c.Ebreak"
         ) || op.starts_with("Csrr")
     };

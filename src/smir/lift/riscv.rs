@@ -3808,12 +3808,7 @@ impl RiscVLifter {
         let width = match funct3 {
             0b010 => MemWidth::B4, // 32-bit
             0b011 => MemWidth::B8, // 64-bit
-            0b100 if self.xlen == 64 && self.extensions.zacas && funct5 == 0b00101 => {
-                return Err(LiftError::Unsupported {
-                    addr,
-                    mnemonic: "amocas.q".to_string(),
-                });
-            }
+            0b100 if self.xlen == 64 && self.extensions.zacas && funct5 == 0b00101 => MemWidth::B16,
             _ => {
                 return Err(LiftError::InvalidEncoding {
                     addr,
@@ -3831,6 +3826,54 @@ impl RiscVLifter {
 
         let mut ops = Vec::new();
         let address = Address::Direct(rs1);
+
+        if width == MemWidth::B16 {
+            if rd & 1 != 0 || rs2_reg & 1 != 0 {
+                return Err(LiftError::InvalidEncoding {
+                    addr,
+                    bytes: insn.to_le_bytes().to_vec(),
+                });
+            }
+            // Both architectural register pairs are now in range. A pair whose
+            // first register is x0 reads as two zero words; an rd=x0 result
+            // discards both words.
+            let dst_lo = self.def_x_reg(rd, ctx).unwrap_or_else(|| ctx.alloc_vreg());
+            let dst_hi = if rd == 0 {
+                ctx.alloc_vreg()
+            } else {
+                self.def_x_reg(rd + 1, ctx)
+                    .expect("nonzero AMOCAS.Q high destination cannot be x0")
+            };
+            ops.push(SmirOp::new(
+                ctx.next_op_id(),
+                addr,
+                OpKind::CasPair {
+                    dst_lo,
+                    dst_hi,
+                    success: ctx.alloc_vreg(),
+                    addr: address,
+                    expected_lo: rd_old,
+                    expected_hi: if rd == 0 {
+                        VReg::Imm(0)
+                    } else {
+                        self.get_x_reg(rd + 1, ctx)
+                    },
+                    new_lo: rs2,
+                    new_hi: if rs2_reg == 0 {
+                        VReg::Imm(0)
+                    } else {
+                        self.get_x_reg(rs2_reg + 1, ctx)
+                    },
+                    order,
+                    failure_order: if aq {
+                        MemoryOrder::Acquire
+                    } else {
+                        MemoryOrder::Relaxed
+                    },
+                },
+            ));
+            return Ok((ops, ControlFlow::NextInsn));
+        }
 
         {
             // AMO/SC have a memory side effect that must occur even when rd==x0
@@ -6409,6 +6452,61 @@ mod tests {
             // OK
         } else {
             panic!("Expected AtomicRmw Add");
+        }
+    }
+
+    #[test]
+    fn amocas_q_lifts_pair_operands_and_rejects_odd_pairs() {
+        let encode = |rd: u8, rs2: u8| {
+            (0b00101 << 27)
+                | (1 << 26) // aq
+                | (1 << 25) // rl
+                | (u32::from(rs2) << 20)
+                | (10 << 15)
+                | (0b100 << 12)
+                | (u32::from(rd) << 7)
+                | 0x2f
+        };
+        let mut lifter = RiscVLifter::rv64gc();
+        let mut context = test_ctx();
+        let result = lifter
+            .lift_insn(0x1000, &encode(6, 8).to_le_bytes(), &mut context)
+            .expect("lift AMOCAS.Q");
+        assert_eq!(result.ops.len(), 1);
+        assert!(matches!(
+            result.ops[0].kind,
+            OpKind::CasPair {
+                dst_lo: VReg::Arch(ArchReg::RiscV(RiscVReg::X(6))),
+                dst_hi: VReg::Arch(ArchReg::RiscV(RiscVReg::X(7))),
+                expected_lo: VReg::Arch(ArchReg::RiscV(RiscVReg::X(6))),
+                expected_hi: VReg::Arch(ArchReg::RiscV(RiscVReg::X(7))),
+                new_lo: VReg::Arch(ArchReg::RiscV(RiscVReg::X(8))),
+                new_hi: VReg::Arch(ArchReg::RiscV(RiscVReg::X(9))),
+                order: MemoryOrder::SeqCst,
+                failure_order: MemoryOrder::Acquire,
+                ..
+            }
+        ));
+
+        let mut context = test_ctx();
+        let x0_pairs = lifter
+            .lift_insn(0x1000, &encode(0, 0).to_le_bytes(), &mut context)
+            .expect("lift AMOCAS.Q with x0 pairs");
+        assert!(matches!(
+            x0_pairs.ops[0].kind,
+            OpKind::CasPair {
+                dst_lo: VReg::Virtual(_),
+                dst_hi: VReg::Virtual(_),
+                expected_lo: VReg::Imm(0),
+                expected_hi: VReg::Imm(0),
+                new_lo: VReg::Imm(0),
+                new_hi: VReg::Imm(0),
+                ..
+            }
+        ));
+
+        for invalid in [encode(7, 8), encode(6, 9), encode(31, 8)] {
+            assert_invalid_lift(RiscVLifter::rv64gc(), invalid);
         }
     }
 

@@ -1795,10 +1795,16 @@ impl RiscVCpu {
                         tval: addr,
                     });
                 }
-                let cmp =
-                    (self.x(insn.rd) as u128) | ((self.x(insn.rd.wrapping_add(1)) as u128) << 64);
-                let new =
-                    (self.x(insn.rs2) as u128) | ((self.x(insn.rs2.wrapping_add(1)) as u128) << 64);
+                let cmp = if insn.rd == 0 {
+                    0
+                } else {
+                    (self.x(insn.rd) as u128) | ((self.x(insn.rd.wrapping_add(1)) as u128) << 64)
+                };
+                let new = if insn.rs2 == 0 {
+                    0
+                } else {
+                    (self.x(insn.rs2) as u128) | ((self.x(insn.rs2.wrapping_add(1)) as u128) << 64)
+                };
                 let mut old_bytes = [0u8; 16];
                 self.mem
                     .read(addr, &mut old_bytes)
@@ -1809,8 +1815,10 @@ impl RiscVCpu {
                         .write(addr, &new.to_le_bytes())
                         .map_err(|_| acc_fault(true, addr))?;
                 }
-                self.set_x(insn.rd, old as u64);
-                self.set_x(insn.rd.wrapping_add(1), (old >> 64) as u64);
+                if insn.rd != 0 {
+                    self.set_x(insn.rd, old as u64);
+                    self.set_x(insn.rd.wrapping_add(1), (old >> 64) as u64);
+                }
             }
             _ => unreachable!(),
         }
@@ -5948,6 +5956,28 @@ mod tests {
         assert_eq!(c.x(7), old_hi);
         assert_eq!(c.mem_read_u64(0x5010).unwrap(), new_lo);
         assert_eq!(c.mem_read_u64(0x5018).unwrap(), new_hi);
+
+        // A pair beginning at x0 reads as 128 zero bits, and an rd=x0 pair
+        // discards both result words rather than writing the high word to x1.
+        c.write_memory(0x5020, &[0; 16]).unwrap();
+        c.set_x(10, 0x5020);
+        c.set_x(1, 0xfeed_face_cafe_beef);
+        let amocas_q_rd_x0 = (0b00101 << 27) | (8 << 20) | (10 << 15) | (0b100 << 12) | 0x2f;
+        assert_eq!(run_one(&mut c, amocas_q_rd_x0), RiscVExit::Continue);
+        assert_eq!(c.x(1), 0xfeed_face_cafe_beef);
+        assert_eq!(c.mem_read_u64(0x5020).unwrap(), new_lo);
+        assert_eq!(c.mem_read_u64(0x5028).unwrap(), new_hi);
+
+        // The same two-zero rule applies to a replacement pair beginning at x0.
+        c.write_memory(0x5030, &old_lo.to_le_bytes()).unwrap();
+        c.write_memory(0x5038, &old_hi.to_le_bytes()).unwrap();
+        c.set_x(10, 0x5030);
+        c.set_x(6, old_lo);
+        c.set_x(7, old_hi);
+        let amocas_q_rs2_x0 = (0b00101 << 27) | (10 << 15) | (0b100 << 12) | (6 << 7) | 0x2f;
+        assert_eq!(run_one(&mut c, amocas_q_rs2_x0), RiscVExit::Continue);
+        assert_eq!(c.mem_read_u64(0x5030).unwrap(), 0);
+        assert_eq!(c.mem_read_u64(0x5038).unwrap(), 0);
     }
 
     #[test]

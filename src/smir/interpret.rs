@@ -2568,16 +2568,51 @@ impl SmirInterpreter {
                 let effective_addr = self.compute_address(ctx, addr);
                 let exp = ctx.read_vreg(*expected);
                 let new = ctx.read_vreg(*new_val);
+                memory.probe(effective_addr, width.bytes() as usize, true)?;
                 let (old, succ) = memory.compare_and_swap(
                     effective_addr,
                     exp,
                     new,
                     *width,
                     *order,
-                    MemoryOrder::Relaxed,
+                    order.cas_failure(),
                 )?;
                 ctx.write_vreg(*dst, old);
                 ctx.write_vreg(*success, if succ { 1 } else { 0 });
+            }
+
+            OpKind::CasPair {
+                dst_lo,
+                dst_hi,
+                success,
+                addr,
+                expected_lo,
+                expected_hi,
+                new_lo,
+                new_hi,
+                order,
+                failure_order,
+            } => {
+                let effective_addr = self.compute_address(ctx, addr);
+                if effective_addr & 0xf != 0 {
+                    return Err(MemoryError::Alignment {
+                        addr: effective_addr,
+                        required: 16,
+                    });
+                }
+                memory.probe(effective_addr, 16, true)?;
+                let expected = [ctx.read_vreg(*expected_lo), ctx.read_vreg(*expected_hi)];
+                let new = [ctx.read_vreg(*new_lo), ctx.read_vreg(*new_hi)];
+                let (old, succ) = memory.compare_and_swap_pair(
+                    effective_addr,
+                    expected,
+                    new,
+                    *order,
+                    *failure_order,
+                )?;
+                ctx.write_vreg(*dst_lo, old[0]);
+                ctx.write_vreg(*dst_hi, old[1]);
+                ctx.write_vreg(*success, u64::from(succ));
             }
 
             OpKind::AtomicCmpXadd {
@@ -35346,6 +35381,66 @@ mod tests {
         fn probe(&self, addr: GuestAddr, size: usize, write: bool) -> Result<(), MemoryError> {
             self.inner.probe(addr, size, write)
         }
+    }
+
+    #[test]
+    fn cas_pair_failure_has_no_writeback_and_success_is_fault_precise() {
+        let addr = VReg::Arch(ArchReg::RiscV(RiscVReg::X(10)));
+        let lo = VReg::Arch(ArchReg::RiscV(RiscVReg::X(6)));
+        let hi = VReg::Arch(ArchReg::RiscV(RiscVReg::X(7)));
+        let new_lo = VReg::Arch(ArchReg::RiscV(RiscVReg::X(8)));
+        let new_hi = VReg::Arch(ArchReg::RiscV(RiscVReg::X(9)));
+        let success = VReg::Arch(ArchReg::RiscV(RiscVReg::X(11)));
+        let old = [0x0123_4567_89ab_cdefu64, 0xfedc_ba98_7654_3210u64];
+        let replacement = [0x1111_2222_3333_4444u64, 0x5555_6666_7777_8888u64];
+        let mut inner = FlatMemory::new(0x100);
+        inner.write(0x20, &old[0].to_le_bytes()).unwrap();
+        inner.write(0x28, &old[1].to_le_bytes()).unwrap();
+        let mut memory = StoreFaultMemory {
+            inner,
+            stores_before_fault: 0,
+        };
+        let mut ctx = SmirContext::new_riscv();
+        ctx.write_vreg(addr, 0x20);
+        ctx.write_vreg(lo, !old[0]);
+        ctx.write_vreg(hi, old[1]);
+        ctx.write_vreg(new_lo, replacement[0]);
+        ctx.write_vreg(new_hi, replacement[1]);
+        ctx.write_vreg(success, u64::MAX);
+        let op = SmirOp::new(
+            OpId(0),
+            0x1000,
+            OpKind::CasPair {
+                dst_lo: lo,
+                dst_hi: hi,
+                success,
+                addr: Address::Direct(addr),
+                expected_lo: lo,
+                expected_hi: hi,
+                new_lo,
+                new_hi,
+                order: MemoryOrder::SeqCst,
+                failure_order: MemoryOrder::Acquire,
+            },
+        );
+
+        SmirInterpreter::new()
+            .execute_op(&mut ctx, &mut memory, &op)
+            .expect("comparison failure must not attempt a write");
+        assert_eq!([ctx.read_vreg(lo), ctx.read_vreg(hi)], old);
+        assert_eq!(ctx.read_vreg(success), 0);
+
+        ctx.write_vreg(success, u64::MAX);
+        let error = SmirInterpreter::new()
+            .execute_op(&mut ctx, &mut memory, &op)
+            .expect_err("successful comparison must surface the store fault");
+        assert!(matches!(error, MemoryError::PageFault { write: true, .. }));
+        assert_eq!([ctx.read_vreg(lo), ctx.read_vreg(hi)], old);
+        assert_eq!(ctx.read_vreg(success), u64::MAX);
+        let mut bytes = [0u8; 16];
+        memory.inner.read(0x20, &mut bytes).unwrap();
+        assert_eq!(bytes[..8], old[0].to_le_bytes());
+        assert_eq!(bytes[8..], old[1].to_le_bytes());
     }
 
     /// Lift `xadd dword ptr [rax], ecx` (0F C1 08) and run it through the

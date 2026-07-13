@@ -34,6 +34,7 @@ struct TestMemory {
     reservation_size: u64,
     reservation_valid: u64,
     last_atomic_order: u64,
+    last_atomic_failure_order: u64,
 }
 
 impl TestMemory {
@@ -44,6 +45,7 @@ impl TestMemory {
             reservation_size: 0,
             reservation_valid: 0,
             last_atomic_order: u64::MAX,
+            last_atomic_failure_order: u64::MAX,
         }
     }
 
@@ -207,6 +209,50 @@ unsafe extern "sysv64" fn compare_and_swap(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
+unsafe extern "sysv64" fn compare_and_swap_pair(
+    ctx: u64,
+    addr: u64,
+    expected_lo: u64,
+    expected_hi: u64,
+    new_lo: u64,
+    new_hi: u64,
+    order: u64,
+    failure_order: u64,
+    out_old_hi: *mut u64,
+) -> RiscVAtomicCasResult {
+    let memory = unsafe { &mut *(ctx as *mut TestMemory) };
+    assert!(order <= RiscVMemoryOrderCode::SeqCst as u64);
+    assert!(failure_order <= RiscVMemoryOrderCode::SeqCst as u64);
+    assert_eq!(
+        failure_order,
+        if matches!(order, 1 | 3 | 4) { 1 } else { 0 }
+    );
+    memory.last_atomic_order = order;
+    memory.last_atomic_failure_order = failure_order;
+    if out_old_hi.is_null() || addr % 16 != 0 || !memory.can_access(addr, 16) {
+        return RiscVAtomicCasResult {
+            old: 0,
+            status: RiscVAtomicCasStatus::Fault as u64,
+        };
+    }
+    let old = [memory.read_value(addr, 8), memory.read_value(addr + 8, 8)];
+    let success = old == [expected_lo, expected_hi];
+    if success {
+        memory.write_value(addr, new_lo, 8);
+        memory.write_value(addr + 8, new_hi, 8);
+    }
+    unsafe { out_old_hi.write(old[1]) };
+    RiscVAtomicCasResult {
+        old: old[0],
+        status: if success {
+            RiscVAtomicCasStatus::Swapped
+        } else {
+            RiscVAtomicCasStatus::CompareFailed
+        } as u64,
+    }
+}
+
 unsafe extern "sysv64" fn noncanonical_atomic_rmw_status(
     _ctx: u64,
     _addr: u64,
@@ -229,6 +275,27 @@ unsafe extern "sysv64" fn noncanonical_cas_status(
     _size: u64,
     _order: u64,
 ) -> RiscVAtomicCasResult {
+    RiscVAtomicCasResult {
+        old: 0xfeed_face_feed_face,
+        status: 3,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+unsafe extern "sysv64" fn noncanonical_cas_pair_status(
+    _ctx: u64,
+    _addr: u64,
+    _expected_lo: u64,
+    _expected_hi: u64,
+    _new_lo: u64,
+    _new_hi: u64,
+    _order: u64,
+    _failure_order: u64,
+    out_old_hi: *mut u64,
+) -> RiscVAtomicCasResult {
+    if !out_old_hi.is_null() {
+        unsafe { out_old_hi.write(0xdead_beef_dead_beef) };
+    }
     RiscVAtomicCasResult {
         old: 0xfeed_face_feed_face,
         status: 3,
@@ -440,6 +507,7 @@ fn jit_state(
         store_fn: store as *const () as usize as u64,
         atomic_rmw_fn: atomic_rmw as *const () as usize as u64,
         cas_fn: compare_and_swap as *const () as usize as u64,
+        cas_pair_fn: compare_and_swap_pair as *const () as usize as u64,
         load_exclusive_fn: load_exclusive as *const () as usize as u64,
         store_exclusive_fn: store_exclusive as *const () as usize as u64,
         clear_exclusive_fn: clear_exclusive as *const () as usize as u64,
@@ -1023,6 +1091,19 @@ fn run_atomic_sequence(
                 "atomic ordering code divergence at {level:?}"
             );
         }
+        if let Some(instruction) = instructions.iter().rev().find(|instruction| {
+            (*instruction >> 27) & 0x1f == 0b00101 && (*instruction >> 12) & 0x7 == 0b100
+        }) {
+            let expected_failure_order = if instruction & (1 << 26) != 0 {
+                RiscVMemoryOrderCode::Acquire
+            } else {
+                RiscVMemoryOrderCode::Relaxed
+            };
+            assert_eq!(
+                test_memory.last_atomic_failure_order, expected_failure_order as u64,
+                "pair CAS failure ordering code divergence at {level:?}"
+            );
+        }
         assert_eq!(
             test_memory.reservation_valid, 0,
             "reservation leaked after atomic sequence at {level:?}"
@@ -1462,6 +1543,53 @@ fn lifted_rv64_atomics_execute_through_helper_abi() {
         Some(RiscVMemoryOrderCode::Acquire),
     );
 
+    // AMOCAS.Q success/failure covers the stack-passed order/result-pointer
+    // arguments and both returned old words at every RISC-V aq/rl setting.
+    for (index, (aq, rl, order)) in orders.into_iter().enumerate() {
+        let mut q = x;
+        q[6] = 0x8000_0005_8000_0005;
+        q[7] = if index % 2 == 0 {
+            0x0102_0304_0506_0708
+        } else {
+            0xfefe_fefe_fefe_fefe
+        };
+        q[8] = 0x1111_2222_3333_4444;
+        q[9] = 0x5555_6666_7777_8888;
+        run_atomic_sequence(
+            &[amo_type(0b00101, aq, rl, 8, 1, 0b100, 6)],
+            q,
+            memory,
+            Some(order),
+        );
+    }
+
+    // A pair beginning at rd=x0 compares against 128 zero bits and discards
+    // both returned words.
+    let mut q_x0 = x;
+    q_x0[10] = DATA;
+    q_x0[1] = 0x0102_0304_0506_0708;
+    q_x0[8] = 0x9999_aaaa_bbbb_cccc;
+    q_x0[9] = 0xdddd_eeee_ffff_0001;
+    let mut q_x0_memory = memory;
+    q_x0_memory[DATA as usize..DATA as usize + 16].fill(0);
+    run_atomic_sequence(
+        &[amo_type(0b00101, false, false, 8, 10, 0b100, 0)],
+        q_x0,
+        q_x0_memory,
+        Some(RiscVMemoryOrderCode::Relaxed),
+    );
+
+    // A replacement pair beginning at rs2=x0 supplies 128 zero bits.
+    let mut q_zero_new = x;
+    q_zero_new[6] = 0x8000_0005_8000_0005;
+    q_zero_new[7] = 0x0102_0304_0506_0708;
+    run_atomic_sequence(
+        &[amo_type(0b00101, false, true, 0, 1, 0b100, 6)],
+        q_zero_new,
+        memory,
+        Some(RiscVMemoryOrderCode::Release),
+    );
+
     // LR/SC success for both widths, missing/different reservations, and the
     // reference CPU's same-hart ordinary-store reservation behavior.
     for funct3 in [0b010, 0b011] {
@@ -1524,6 +1652,7 @@ fn atomic_memory_faults_exit_without_committing_results() {
     for instruction in [
         amo_type(0b00000, false, false, 2, 1, 0b011, 5), // amoadd.d
         amo_type(0b00101, false, false, 2, 1, 0b011, 5), // amocas.d
+        amo_type(0b00101, false, false, 2, 1, 0b100, 6), // amocas.q
         amo_type(0b00010, false, false, 0, 1, 0b011, 5), // lr.d
         amo_type(0b00011, false, false, 2, 1, 0b011, 6), // sc.d
     ] {
@@ -1564,11 +1693,16 @@ fn noncanonical_atomic_helper_statuses_fail_closed() {
     initial_x[1] = DATA;
     initial_x[2] = 0x1122_3344_5566_7788;
     initial_x[5] = 0x5555_5555_5555_5555;
+    initial_x[6] = 0x6666_6666_6666_6666;
+    initial_x[7] = 0x7777_7777_7777_7777;
+    initial_x[8] = 0x8888_8888_8888_8888;
+    initial_x[9] = 0x9999_9999_9999_9999;
     let initial_memory = [0xa5; MEMORY_LEN];
 
-    for (instruction, cas) in [
-        (amo_type(0b00000, false, false, 2, 1, 0b011, 5), false),
-        (amo_type(0b00101, false, false, 2, 1, 0b011, 5), true),
+    for (instruction, helper) in [
+        (amo_type(0b00000, false, false, 2, 1, 0b011, 5), 0),
+        (amo_type(0b00101, false, false, 2, 1, 0b011, 5), 1),
+        (amo_type(0b00101, false, false, 8, 1, 0b100, 6), 2),
     ] {
         let bytes = instruction.to_le_bytes();
         let mut lifter = RiscVLifter::rv64gc();
@@ -1591,10 +1725,16 @@ fn noncanonical_atomic_helper_statuses_fail_closed() {
             let executable = ExecMem::new(&code).expect("map malformed status path");
             let mut memory = TestMemory::new(initial_memory);
             let mut state = jit_state(&mut memory, initial_x, [0; 32], 0, CODE);
-            if cas {
-                state.cas_fn = noncanonical_cas_status as *const () as usize as u64;
-            } else {
-                state.atomic_rmw_fn = noncanonical_atomic_rmw_status as *const () as usize as u64;
+            match helper {
+                0 => {
+                    state.atomic_rmw_fn =
+                        noncanonical_atomic_rmw_status as *const () as usize as u64;
+                }
+                1 => state.cas_fn = noncanonical_cas_status as *const () as usize as u64,
+                2 => {
+                    state.cas_pair_fn = noncanonical_cas_pair_status as *const () as usize as u64;
+                }
+                _ => unreachable!(),
             }
             executable.run_riscv(lowered.entry_offset, &mut state);
 
@@ -2030,6 +2170,51 @@ fn production_jit_matches_interpreter_for_helpers_and_vector_fallback() {
 }
 
 #[test]
+fn production_jit_matches_interpreter_for_amocas_q() {
+    let instruction = amo_type(0b00101, true, true, 8, 10, 0b100, 6);
+    let old = [0x0123_4567_89ab_cdefu64, 0xfedc_ba98_7654_3210u64];
+    let new = [0x1111_2222_3333_4444u64, 0x5555_6666_7777_8888u64];
+
+    for (level, success) in [
+        (OptLevel::O0, false),
+        (OptLevel::O0, true),
+        (OptLevel::O2, false),
+        (OptLevel::O2, true),
+    ] {
+        let make_cpu = || {
+            RiscVCpu::new(
+                RiscVConfig::rv64gc(),
+                Box::new(RvMemory::new(0, MEMORY_LEN)),
+            )
+        };
+        let mut expected = make_cpu();
+        let mut actual = make_cpu();
+        for cpu in [&mut expected, &mut actual] {
+            write_production_code(cpu, &[instruction]);
+            cpu.set_x(10, DATA);
+            cpu.set_x(6, if success { old[0] } else { !old[0] });
+            cpu.set_x(7, old[1]);
+            cpu.set_x(8, new[0]);
+            cpu.set_x(9, new[1]);
+            cpu.write_memory(DATA, &old[0].to_le_bytes())
+                .expect("seed AMOCAS.Q low word");
+            cpu.write_memory(DATA + 8, &old[1].to_le_bytes())
+                .expect("seed AMOCAS.Q high word");
+        }
+
+        assert_eq!(expected.step(), RiscVExit::Continue);
+        assert_eq!(actual.step_jit(level), RiscVExit::Continue);
+        assert_production_cpu_equivalent(&actual, &expected);
+        let stats = actual.jit_stats();
+        assert_eq!(stats.native_executions, 1, "{level:?}, success={success}");
+        assert_eq!(
+            stats.interpreter_fallbacks, 0,
+            "{level:?}, success={success}"
+        );
+    }
+}
+
+#[test]
 fn production_jit_delivers_precise_native_memory_faults_without_replay() {
     let load = i_type(0, 1, 0b010, 5, 0x03); // lw x5,0(x1)
     let make_cpu = || {
@@ -2168,18 +2353,19 @@ fn runtime_layout_matches_codegen_offsets() {
     assert_eq!(RiscVGuestRegs::STORE_FN_OFFSET, 69 * 8);
     assert_eq!(RiscVGuestRegs::ATOMIC_RMW_FN_OFFSET, 70 * 8);
     assert_eq!(RiscVGuestRegs::CAS_FN_OFFSET, 71 * 8);
-    assert_eq!(RiscVGuestRegs::LOAD_EXCLUSIVE_FN_OFFSET, 72 * 8);
-    assert_eq!(RiscVGuestRegs::STORE_EXCLUSIVE_FN_OFFSET, 73 * 8);
-    assert_eq!(RiscVGuestRegs::CLEAR_EXCLUSIVE_FN_OFFSET, 74 * 8);
-    assert_eq!(RiscVGuestRegs::INT_CRYPTO_FN_OFFSET, 75 * 8);
-    assert_eq!(RiscVGuestRegs::FP_FN_OFFSET, 76 * 8);
-    assert_eq!(RiscVGuestRegs::V_OFFSET, 77 * 8);
-    assert_eq!(RiscVGuestRegs::VL_OFFSET, 141 * 8);
-    assert_eq!(RiscVGuestRegs::VTYPE_OFFSET, 142 * 8);
-    assert_eq!(RiscVGuestRegs::VSTART_OFFSET, 143 * 8);
-    assert_eq!(RiscVGuestRegs::VCSR_OFFSET, 144 * 8);
-    assert_eq!(RiscVGuestRegs::VECTOR_FN_OFFSET, 145 * 8);
-    assert_eq!(std::mem::size_of::<RiscVGuestRegs>(), 146 * 8);
+    assert_eq!(RiscVGuestRegs::CAS_PAIR_FN_OFFSET, 72 * 8);
+    assert_eq!(RiscVGuestRegs::LOAD_EXCLUSIVE_FN_OFFSET, 73 * 8);
+    assert_eq!(RiscVGuestRegs::STORE_EXCLUSIVE_FN_OFFSET, 74 * 8);
+    assert_eq!(RiscVGuestRegs::CLEAR_EXCLUSIVE_FN_OFFSET, 75 * 8);
+    assert_eq!(RiscVGuestRegs::INT_CRYPTO_FN_OFFSET, 76 * 8);
+    assert_eq!(RiscVGuestRegs::FP_FN_OFFSET, 77 * 8);
+    assert_eq!(RiscVGuestRegs::V_OFFSET, 78 * 8);
+    assert_eq!(RiscVGuestRegs::VL_OFFSET, 142 * 8);
+    assert_eq!(RiscVGuestRegs::VTYPE_OFFSET, 143 * 8);
+    assert_eq!(RiscVGuestRegs::VSTART_OFFSET, 144 * 8);
+    assert_eq!(RiscVGuestRegs::VCSR_OFFSET, 145 * 8);
+    assert_eq!(RiscVGuestRegs::VECTOR_FN_OFFSET, 146 * 8);
+    assert_eq!(std::mem::size_of::<RiscVGuestRegs>(), 147 * 8);
     assert_eq!(std::mem::size_of::<RiscVAtomicCasResult>(), 2 * 8);
     assert_eq!(std::mem::size_of::<RiscVAtomicResult>(), 2 * 8);
     assert_eq!(std::mem::size_of::<RiscVLoadResult>(), 2 * 8);
