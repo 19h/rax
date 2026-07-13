@@ -438,6 +438,79 @@ fn x86_subword_not_and_xchg_execute_natively_with_partial_register_merges() {
 }
 
 #[test]
+fn x86_subword_integer_alu_executes_natively_with_partial_register_merges() {
+    // {nf} add ax,cx; {nf} add dl,bl; {nf} sub si,di; {nf} neg r8w;
+    // {nf} inc r9b; {nf} dec r10w; {nf} and r11w,r12w;
+    // {nf} or r13b,r14b; {nf} xor r15w,r15w; jnz start; hlt.
+    // APX NF suppresses every flag update. Seeded ZF=1 therefore keeps the
+    // syntactic backedge untaken while the complete input RFLAGS survives.
+    let code = [
+        0x62, 0xF4, 0x7D, 0x0C, 0x01, 0xC8, // {nf} ADD ax,cx
+        0x62, 0xF4, 0x7C, 0x0C, 0x00, 0xDA, // {nf} ADD dl,bl
+        0x62, 0xF4, 0x7D, 0x0C, 0x29, 0xFE, // {nf} SUB si,di
+        0x62, 0xD4, 0x7D, 0x0C, 0xF7, 0xD8, // {nf} NEG r8w
+        0x62, 0xD4, 0x7C, 0x0C, 0xFE, 0xC1, // {nf} INC r9b
+        0x62, 0xD4, 0x7D, 0x0C, 0xFF, 0xCA, // {nf} DEC r10w
+        0x62, 0x54, 0x7D, 0x0C, 0x21, 0xE3, // {nf} AND r11w,r12w
+        0x62, 0x54, 0x7C, 0x0C, 0x08, 0xF5, // {nf} OR r13b,r14b
+        0x62, 0x54, 0x7D, 0x0C, 0x31, 0xFF, // {nf} XOR r15w,r15w
+        0x75, 0xC8, // JNZ start
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        vcpu.set_apx_enabled(true);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xAAAA_BBBB_CCCC_00FF;
+        regs.rcx = 0x1111_2222_3333_0001;
+        regs.rdx = 0xDEAD_BEEF_1234_56F0;
+        regs.rbx = 0xBBBB_CCCC_DDDD_EE20;
+        regs.rsi = 0x6666_7777_8888_1000;
+        regs.rdi = 0x1111_2222_3333_0001;
+        regs.r8 = 0x8888_7777_6666_0001;
+        regs.r9 = 0x9999_8888_7777_667F;
+        regs.r10 = 0xAAAA_9999_8888_0000;
+        regs.r11 = 0xBBBB_AAAA_9999_F0F0;
+        regs.r12 = 0xCCCC_BBBB_AAAA_0FF0;
+        regs.r13 = 0xDDDD_CCCC_BBBB_AA0F;
+        regs.r14 = 0xEEEE_DDDD_CCCC_BBF0;
+        regs.r15 = 0xFFFF_EEEE_DDDD_7777;
+        regs.rflags = 0xCD7;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("subword integer ALU JIT attempt"),
+        "representable low-byte/word ALU block must enter the AArch64 tier"
+    );
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "subword integer ALU");
+    assert_eq!(actual.rax, 0xAAAA_BBBB_CCCC_0100);
+    assert_eq!(actual.rdx, 0xDEAD_BEEF_1234_5610);
+    assert_eq!(actual.rsi, 0x6666_7777_8888_0FFF);
+    assert_eq!(actual.r8, 0x8888_7777_6666_FFFF);
+    assert_eq!(actual.r9, 0x9999_8888_7777_6680);
+    assert_eq!(actual.r10, 0xAAAA_9999_8888_FFFF);
+    assert_eq!(actual.r11, 0xBBBB_AAAA_9999_00F0);
+    assert_eq!(actual.r13, 0xDDDD_CCCC_BBBB_AAFF);
+    assert_eq!(actual.r15, 0xFFFF_EEEE_DDDD_0000);
+    assert_eq!(
+        actual.rflags & STATUS,
+        0x8D5,
+        "APX NF preserves status flags"
+    );
+}
+
+#[test]
 fn x86_aarch64_jit_rejects_live_pf_af_definitions_without_execution() {
     // add rax,rbx; jnz start; hlt. ADD's live PF/AF outputs cannot be represented
     // in NZCV, so the architecture-specific gate must retain interpreter fallback.

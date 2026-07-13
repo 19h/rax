@@ -2676,16 +2676,19 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     };
 
     match op {
-        OpKind::Add { width, .. }
-        | OpKind::Sub { width, .. }
-        | OpKind::Adc { width, .. }
-        | OpKind::Sbb { width, .. }
-        | OpKind::Neg { width, .. }
-        | OpKind::Inc { width, .. }
-        | OpKind::Dec { width, .. }
-        | OpKind::And { width, .. }
-        | OpKind::Or { width, .. }
-        | OpKind::Xor { width, .. }
+        OpKind::Add { dst, width, .. }
+        | OpKind::Sub { dst, width, .. }
+        | OpKind::Adc { dst, width, .. }
+        | OpKind::Neg { dst, width, .. }
+        | OpKind::Inc { dst, width, .. }
+        | OpKind::Dec { dst, width, .. }
+        | OpKind::And { dst, width, .. }
+        | OpKind::Or { dst, width, .. }
+        | OpKind::Xor { dst, width, .. } => {
+            full_gpr_write(width)
+                || (x86_aarch64_legacy_gpr(dst) && matches!(width, OpWidth::W8 | OpWidth::W16))
+        }
+        OpKind::Sbb { width, .. }
         | OpKind::AndNot { width, .. }
         | OpKind::Shl { width, .. }
         | OpKind::Shr { width, .. }
@@ -3665,6 +3668,66 @@ mod jit_gate_tests {
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
+            OpKind::Add {
+                dst: x86(X86Reg::Rax),
+                src1: x86(X86Reg::Rax),
+                src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Sub {
+                dst: x86(X86Reg::Rdx),
+                src1: x86(X86Reg::Rdx),
+                src2: SrcOperand::Reg(x86(X86Reg::Rbx)),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Adc {
+                dst: x86(X86Reg::R8),
+                src1: x86(X86Reg::R8),
+                src2: SrcOperand::Reg(x86(X86Reg::R9)),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Neg {
+                dst: x86(X86Reg::R10),
+                src: x86(X86Reg::R10),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Inc {
+                dst: x86(X86Reg::R11),
+                src: x86(X86Reg::R11),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Dec {
+                dst: x86(X86Reg::R12),
+                src: x86(X86Reg::R12),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+            OpKind::And {
+                dst: x86(X86Reg::R13),
+                src1: x86(X86Reg::R13),
+                src2: SrcOperand::Reg(x86(X86Reg::R14)),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Or {
+                dst: x86(X86Reg::R14),
+                src1: x86(X86Reg::R14),
+                src2: SrcOperand::Reg(x86(X86Reg::R15)),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Xor {
+                dst: x86(X86Reg::R15),
+                src1: x86(X86Reg::R15),
+                src2: SrcOperand::Reg(x86(X86Reg::Rax)),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
             OpKind::Mov {
                 dst: x86(X86Reg::Rax),
                 src: SrcOperand::Reg(x86(X86Reg::Rcx)),
@@ -3754,10 +3817,17 @@ mod jit_gate_tests {
             width: OpWidth::W64,
         }]));
 
-        // AArch64 W-register writes zero-extend, while x86 8/16-bit GPR
-        // destinations preserve their upper bits. Until a specific lowering
-        // implements that merge, these destination shapes must fail closed.
-        assert!(!x86_aarch64_gate(vec![OpKind::Add {
+        // SBB still cannot consume canonical x86 CF without normalizing it to
+        // AArch64's no-borrow convention. Other unmerged subword destination
+        // families remain fail-closed.
+        assert!(!x86_aarch64_gate(vec![OpKind::Sbb {
+            dst: x86(X86Reg::Rax),
+            src1: x86(X86Reg::Rax),
+            src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+            width: OpWidth::W16,
+            flags: FlagUpdate::None,
+        }]));
+        assert!(!x86_aarch64_gate(vec![OpKind::AndNot {
             dst: x86(X86Reg::Rax),
             src1: x86(X86Reg::Rax),
             src2: SrcOperand::Reg(x86(X86Reg::Rcx)),

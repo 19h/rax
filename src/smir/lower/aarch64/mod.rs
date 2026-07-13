@@ -5285,6 +5285,24 @@ impl Aarch64Lowerer {
         set_flags: bool,
         width: OpWidth,
     ) -> Result<(), LowerError> {
+        if let Some((dst_reg, result)) =
+            Self::x86_partial_write_scratch(dst, width, &[src1], &[src2])?
+        {
+            let scratches = [result];
+            self.emit_scratch_save(&scratches);
+            self.lower_addsub(
+                Self::arm_x_reg(result),
+                src1,
+                src2,
+                subtract,
+                set_flags,
+                width,
+            )?;
+            self.emit_bitfield(dst_reg, result, 0b01, 0, width.bits() - 1, OpWidth::W64)?;
+            self.emit_scratch_restore(&scratches);
+            return Ok(());
+        }
+
         if matches!(width, OpWidth::W8 | OpWidth::W16) {
             if set_flags {
                 return self.lower_subword_addsub_with_flags(dst, src1, src2, subtract, width);
@@ -5513,10 +5531,24 @@ impl Aarch64Lowerer {
                 if src1 == VReg::Imm(0) {
                     return self.emit_mov_imm(dst, 0, OpWidth::W32);
                 }
-                return self.emit_bitfield(dst, Self::gpr(src1)?, 0b10, 0, top_bit, OpWidth::W32);
+                return self.emit_bitfield(
+                    dst,
+                    Self::gpr_arm_or_x86(src1)?,
+                    0b10,
+                    0,
+                    top_bit,
+                    OpWidth::W32,
+                );
             }
             if !subtract && src1 == VReg::Imm(0) {
-                return self.emit_bitfield(dst, Self::gpr(*reg)?, 0b10, 0, top_bit, OpWidth::W32);
+                return self.emit_bitfield(
+                    dst,
+                    Self::gpr_arm_or_x86(*reg)?,
+                    0b10,
+                    0,
+                    top_bit,
+                    OpWidth::W32,
+                );
             }
         }
 
@@ -5556,7 +5588,7 @@ impl Aarch64Lowerer {
                     self.lower_addsub_materialized_ror_src2(
                         dst,
                         31,
-                        Self::gpr(*reg)?,
+                        Self::gpr_arm_or_x86(*reg)?,
                         *amount,
                         subtract,
                         false,
@@ -5594,7 +5626,7 @@ impl Aarch64Lowerer {
             }
         }
 
-        let rn = Self::gpr(src1)?;
+        let rn = Self::gpr_arm_or_x86(src1)?;
 
         match src2 {
             SrcOperand::Reg(reg) => {
@@ -5615,7 +5647,7 @@ impl Aarch64Lowerer {
                 self.lower_addsub_materialized_ror_src2(
                     dst,
                     rn,
-                    Self::gpr(*reg)?,
+                    Self::gpr_arm_or_x86(*reg)?,
                     *amount,
                     subtract,
                     false,
@@ -5754,6 +5786,24 @@ impl Aarch64Lowerer {
         set_flags: bool,
         width: OpWidth,
     ) -> Result<(), LowerError> {
+        if let Some((dst_reg, result)) =
+            Self::x86_partial_write_scratch(dst, width, &[src1], &[src2])?
+        {
+            let scratches = [result];
+            self.emit_scratch_save(&scratches);
+            self.lower_addsub_carry(
+                Self::arm_x_reg(result),
+                src1,
+                src2,
+                subtract,
+                set_flags,
+                width,
+            )?;
+            self.emit_bitfield(dst_reg, result, 0b01, 0, width.bits() - 1, OpWidth::W64)?;
+            self.emit_scratch_restore(&scratches);
+            return Ok(());
+        }
+
         if matches!(width, OpWidth::W8 | OpWidth::W16) {
             if set_flags {
                 return self
@@ -5981,6 +6031,25 @@ impl Aarch64Lowerer {
         set_flags: bool,
         width: OpWidth,
     ) -> Result<(), LowerError> {
+        if let Some((dst_reg, result)) =
+            Self::x86_partial_write_scratch(dst, width, &[src1], &[src2])?
+        {
+            let scratches = [result];
+            self.emit_scratch_save(&scratches);
+            self.lower_logic(
+                Self::arm_x_reg(result),
+                src1,
+                src2,
+                opc,
+                n,
+                set_flags,
+                width,
+            )?;
+            self.emit_bitfield(dst_reg, result, 0b01, 0, width.bits() - 1, OpWidth::W64)?;
+            self.emit_scratch_restore(&scratches);
+            return Ok(());
+        }
+
         if matches!(width, OpWidth::W8 | OpWidth::W16) {
             if set_flags && matches!(dst, VReg::Virtual(_)) {
                 return self.lower_subword_logic_with_flags(dst, src1, src2, opc, n, width);
@@ -6719,6 +6788,15 @@ impl Aarch64Lowerer {
         set_flags: bool,
         width: OpWidth,
     ) -> Result<(), LowerError> {
+        if let Some((dst_reg, result)) = Self::x86_partial_write_scratch(dst, width, &[src], &[])? {
+            let scratches = [result];
+            self.emit_scratch_save(&scratches);
+            self.lower_neg(Self::arm_x_reg(result), src, set_flags, width)?;
+            self.emit_bitfield(dst_reg, result, 0b01, 0, width.bits() - 1, OpWidth::W64)?;
+            self.emit_scratch_restore(&scratches);
+            return Ok(());
+        }
+
         if !set_flags {
             if let VReg::Imm(value) = src {
                 let emit_width = match width {
@@ -7456,6 +7534,15 @@ impl Aarch64Lowerer {
         set_flags: bool,
         width: OpWidth,
     ) -> Result<(), LowerError> {
+        if let Some((dst_reg, result)) = Self::x86_partial_write_scratch(dst, width, &[src], &[])? {
+            let scratches = [result];
+            self.emit_scratch_save(&scratches);
+            self.lower_inc_dec(Self::arm_x_reg(result), src, decrement, set_flags, width)?;
+            self.emit_bitfield(dst_reg, result, 0b01, 0, width.bits() - 1, OpWidth::W64)?;
+            self.emit_scratch_restore(&scratches);
+            return Ok(());
+        }
+
         if !set_flags {
             if let VReg::Imm(value) = src {
                 let emit_width = match width {
@@ -9364,6 +9451,40 @@ impl Aarch64Lowerer {
 
     fn arm_x_reg(reg: u8) -> VReg {
         VReg::Arch(ArchReg::Arm(ArmReg::X(reg)))
+    }
+
+    fn x86_partial_write_scratch(
+        dst: VReg,
+        width: OpWidth,
+        sources: &[VReg],
+        source_operands: &[&SrcOperand],
+    ) -> Result<Option<(u8, u8)>, LowerError> {
+        if !matches!(dst, VReg::Arch(ArchReg::X86(_)))
+            || !matches!(width, OpWidth::W8 | OpWidth::W16)
+        {
+            return Ok(None);
+        }
+
+        let dst = Self::dst_gpr_arm_or_x86(dst)?;
+        let mut avoid = vec![dst];
+        for source in sources {
+            if !matches!(source, VReg::Imm(_)) {
+                avoid.push(Self::gpr_arm_or_x86(*source)?);
+            }
+        }
+        for source in source_operands {
+            let source = match source {
+                SrcOperand::Reg(reg)
+                | SrcOperand::Shifted { reg, .. }
+                | SrcOperand::Extended { reg, .. } => Some(*reg),
+                SrcOperand::Imm(_) | SrcOperand::Imm64(_) => None,
+            };
+            if let Some(source) = source {
+                avoid.push(Self::gpr_arm_or_x86(source)?);
+            }
+        }
+
+        Ok(Some((dst, Self::scratch_regs(&avoid, 1)?[0])))
     }
 
     fn scratch_regs(avoid: &[u8], count: usize) -> Result<Vec<u8>, LowerError> {
@@ -21882,6 +22003,326 @@ mod tests {
         assert_eq!(out[7], 0x1111_2222_3333_9999);
         assert_eq!(out[16], 0x1616_1616_1616_1616);
         assert_eq!(nzcv, 0b0110);
+        assert_eq!(sp, 0x8000);
+    }
+
+    #[test]
+    fn lowers_x86_subword_integer_alu_with_partial_register_merges() {
+        let code = lower_ops(vec![
+            OpKind::Add {
+                dst: x86(X86Reg::Rax),
+                src1: x86(X86Reg::Rax),
+                src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Sub {
+                dst: x86(X86Reg::Rdx),
+                src1: x86(X86Reg::Rdx),
+                src2: SrcOperand::Reg(x86(X86Reg::Rbx)),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Adc {
+                dst: x86(X86Reg::R8),
+                src1: x86(X86Reg::R8),
+                src2: SrcOperand::Reg(x86(X86Reg::Rdi)),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Neg {
+                dst: x86(X86Reg::R9),
+                src: x86(X86Reg::R9),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Inc {
+                dst: x86(X86Reg::R10),
+                src: x86(X86Reg::R10),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Dec {
+                dst: x86(X86Reg::R11),
+                src: x86(X86Reg::R11),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+            OpKind::And {
+                dst: x86(X86Reg::R12),
+                src1: x86(X86Reg::R12),
+                src2: SrcOperand::Reg(x86(X86Reg::R15)),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Or {
+                dst: x86(X86Reg::R13),
+                src1: x86(X86Reg::R13),
+                src2: SrcOperand::Reg(x86(X86Reg::R15)),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Xor {
+                dst: x86(X86Reg::R14),
+                src1: x86(X86Reg::R14),
+                src2: SrcOperand::Reg(x86(X86Reg::R15)),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+        ]);
+        let regs = [
+            (0, 0xAAAA_BBBB_CCCC_00FF),
+            (1, 0x1111_2222_3333_0001),
+            (2, 0xDEAD_BEEF_1234_56F0),
+            (3, 0xBBBB_CCCC_DDDD_EE20),
+            (7, 0x7777_6666_5555_0000),
+            (8, 0x8888_7777_6666_FFFF),
+            (9, 0x9999_8888_7777_6601),
+            (10, 0xAAAA_9999_8888_FFFF),
+            (11, 0xBBBB_AAAA_9999_8800),
+            (12, 0xCCCC_BBBB_AAAA_F0F0),
+            (13, 0xDDDD_CCCC_BBBB_AA0F),
+            (14, 0xEEEE_DDDD_CCCC_AAAA),
+            (15, 0xFFFF_EEEE_DDDD_0FF0),
+            (16, 0x1616_1616_1616_1616),
+        ];
+        let (out, nzcv, sp) = run_aarch64_code(&code, &regs, 0b0110);
+
+        assert_eq!(out[0], 0xAAAA_BBBB_CCCC_0100);
+        assert_eq!(out[2], 0xDEAD_BEEF_1234_56D0);
+        assert_eq!(out[8], 0x8888_7777_6666_0000);
+        assert_eq!(out[9], 0x9999_8888_7777_66FF);
+        assert_eq!(out[10], 0xAAAA_9999_8888_0000);
+        assert_eq!(out[11], 0xBBBB_AAAA_9999_88FF);
+        assert_eq!(out[12], 0xCCCC_BBBB_AAAA_00F0);
+        assert_eq!(out[13], 0xDDDD_CCCC_BBBB_AAFF);
+        assert_eq!(out[14], 0xEEEE_DDDD_CCCC_A55A);
+        assert_eq!(out[15], 0xFFFF_EEEE_DDDD_0FF0);
+        assert_eq!(out[16], 0x1616_1616_1616_1616);
+        assert_eq!(nzcv, 0b0110, "flag-free ALU forms preserve NZCV");
+        assert_eq!(sp, 0x8000);
+    }
+
+    #[test]
+    fn lowers_x86_subword_integer_alu_complete_width_matrix() {
+        const UPPER: u64 = 0xAAAA_BBBB_CCCC_5A00;
+        const SRC_UPPER: u64 = 0x1111_2222_3333_A500;
+        const SCRATCH: u64 = 0x1616_1616_1616_1616;
+
+        for width in [OpWidth::W8, OpWidth::W16] {
+            let mask = width.mask();
+            let cases = vec![
+                (
+                    "add",
+                    OpKind::Add {
+                        dst: x86(X86Reg::Rax),
+                        src1: x86(X86Reg::Rax),
+                        src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    0x7f,
+                    1,
+                    0,
+                    0x80,
+                ),
+                (
+                    "sub",
+                    OpKind::Sub {
+                        dst: x86(X86Reg::Rax),
+                        src1: x86(X86Reg::Rax),
+                        src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    0,
+                    1,
+                    0,
+                    mask,
+                ),
+                (
+                    "adc",
+                    OpKind::Adc {
+                        dst: x86(X86Reg::Rax),
+                        src1: x86(X86Reg::Rax),
+                        src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    mask,
+                    0,
+                    0b0010,
+                    0,
+                ),
+                (
+                    "neg",
+                    OpKind::Neg {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    1,
+                    0,
+                    0,
+                    mask,
+                ),
+                (
+                    "inc",
+                    OpKind::Inc {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    mask,
+                    0,
+                    0b0110,
+                    0,
+                ),
+                (
+                    "dec",
+                    OpKind::Dec {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    0,
+                    0,
+                    0b1011,
+                    mask,
+                ),
+                (
+                    "and",
+                    OpKind::And {
+                        dst: x86(X86Reg::Rax),
+                        src1: x86(X86Reg::Rax),
+                        src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    0xF0F0,
+                    0x0FF0,
+                    0b0110,
+                    0x00F0,
+                ),
+                (
+                    "or",
+                    OpKind::Or {
+                        dst: x86(X86Reg::Rax),
+                        src1: x86(X86Reg::Rax),
+                        src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    0x000F,
+                    0x00F0,
+                    0b1001,
+                    0x00FF,
+                ),
+                (
+                    "xor",
+                    OpKind::Xor {
+                        dst: x86(X86Reg::Rax),
+                        src1: x86(X86Reg::Rax),
+                        src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                    0xAAAA,
+                    0x0FF0,
+                    0b0101,
+                    0xA55A,
+                ),
+            ];
+
+            for (name, op, dst_low, src_low, initial_nzcv, expected_low) in cases {
+                let code = lower_ops(vec![op]);
+                let dst = (UPPER & !mask) | (dst_low & mask);
+                let src = (SRC_UPPER & !mask) | (src_low & mask);
+                let (out, nzcv, sp) =
+                    run_aarch64_code(&code, &[(0, dst), (1, src), (16, SCRATCH)], initial_nzcv);
+                assert_eq!(
+                    out[0],
+                    (dst & !mask) | (expected_low & mask),
+                    "{name} {width:?} result"
+                );
+                assert_eq!(out[1], src, "{name} {width:?} source");
+                assert_eq!(out[16], SCRATCH, "{name} {width:?} scratch");
+                assert_eq!(nzcv, initial_nzcv, "{name} {width:?} flags");
+                assert_eq!(sp, 0x8000, "{name} {width:?} stack");
+            }
+        }
+    }
+
+    #[test]
+    fn lowers_x86_subword_integer_alu_flags_before_partial_register_merge() {
+        let add = lower_ops(vec![OpKind::Add {
+            dst: x86(X86Reg::Rax),
+            src1: x86(X86Reg::Rax),
+            src2: SrcOperand::Imm(1),
+            width: OpWidth::W8,
+            flags: FlagUpdate::All,
+        }]);
+        let (out, nzcv, sp) = run_aarch64_code(
+            &add,
+            &[(0, 0xAAAA_BBBB_CCCC_DD7F), (16, 0x1616_1616_1616_1616)],
+            0,
+        );
+        assert_eq!(out[0], 0xAAAA_BBBB_CCCC_DD80);
+        assert_eq!(out[16], 0x1616_1616_1616_1616);
+        assert_eq!(nzcv, 0b1001, "W8 0x7f + 1 sets N/V");
+        assert_eq!(sp, 0x8000);
+
+        let adc = lower_ops(vec![OpKind::Adc {
+            dst: x86(X86Reg::R8),
+            src1: x86(X86Reg::R8),
+            src2: SrcOperand::Imm(0),
+            width: OpWidth::W16,
+            flags: FlagUpdate::All,
+        }]);
+        let (out, nzcv, sp) = run_aarch64_code(
+            &adc,
+            &[(8, 0x8888_7777_6666_FFFF), (16, 0x1616_1616_1616_1616)],
+            0b0010,
+        );
+        assert_eq!(out[8], 0x8888_7777_6666_0000);
+        assert_eq!(out[16], 0x1616_1616_1616_1616);
+        assert_eq!(nzcv, 0b0110, "W16 0xffff + carry sets Z/C");
+        assert_eq!(sp, 0x8000);
+
+        let inc = lower_ops(vec![OpKind::Inc {
+            dst: x86(X86Reg::R9),
+            src: x86(X86Reg::R9),
+            width: OpWidth::W8,
+            flags: FlagUpdate::All,
+        }]);
+        let (out, nzcv, sp) = run_aarch64_code(
+            &inc,
+            &[(9, 0x9999_8888_7777_667F), (16, 0x1616_1616_1616_1616)],
+            0b0010,
+        );
+        assert_eq!(out[9], 0x9999_8888_7777_6680);
+        assert_eq!(out[16], 0x1616_1616_1616_1616);
+        assert_eq!(nzcv, 0b1011, "INC preserves C and sets N/V");
+        assert_eq!(sp, 0x8000);
+
+        let xor = lower_ops(vec![OpKind::Xor {
+            dst: x86(X86Reg::R10),
+            src1: x86(X86Reg::R10),
+            src2: SrcOperand::Reg(x86(X86Reg::R10)),
+            width: OpWidth::W16,
+            flags: FlagUpdate::All,
+        }]);
+        let (out, nzcv, sp) = run_aarch64_code(
+            &xor,
+            &[(10, 0xAAAA_9999_8888_7777), (16, 0x1616_1616_1616_1616)],
+            0b1011,
+        );
+        assert_eq!(out[10], 0xAAAA_9999_8888_0000);
+        assert_eq!(out[16], 0x1616_1616_1616_1616);
+        assert_eq!(nzcv, 0b0100, "logical zero sets only Z");
         assert_eq!(sp, 0x8000);
     }
 
