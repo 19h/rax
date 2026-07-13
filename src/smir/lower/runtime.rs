@@ -3950,6 +3950,66 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn clobber_gate_admits_apx_ndd_binary_alu_aliasing_second_source() {
+        let rax = x86(X86Reg::Rax);
+        let r8 = x86(X86Reg::R8);
+        for (name, op) in [
+            (
+                "add",
+                OpKind::Add {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "or",
+                OpKind::Or {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "and",
+                OpKind::And {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "sub",
+                OpKind::Sub {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "xor",
+                OpKind::Xor {
+                    dst: r8,
+                    src1: rax,
+                    src2: SrcOperand::Reg(r8),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+        ] {
+            assert!(x86_gate(op), "alias-safe APX NDD {name} must JIT");
+        }
+    }
+
+    #[test]
     fn clobber_gate_rejects_ambiguous_high_byte_movx_sources() {
         for src in [X86Reg::Rsi, X86Reg::Rdi] {
             assert!(

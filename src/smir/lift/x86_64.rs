@@ -29904,21 +29904,7 @@ impl X86_64Lifter {
         } else {
             legacy_dst
         };
-        let src2_operand = if prefix.nd && dst == src2 && !matches!(group, 2 | 3) {
-            let tmp = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Mov {
-                    dst: tmp,
-                    src: SrcOperand::Reg(src2),
-                    width,
-                },
-            ));
-            SrcOperand::Reg(tmp)
-        } else {
-            SrcOperand::Reg(src2)
-        };
+        let src2_operand = SrcOperand::Reg(src2);
         let op_kind = self.apx_alu_op(
             group,
             dst,
@@ -43533,41 +43519,79 @@ mod tests {
     }
 
     #[test]
-    fn lift_apx_ndd_captures_source_when_destination_aliases_src2_for_lowering() {
+    fn lift_apx_ndd_binary_alu_aliases_second_source_without_virtual_preservation() {
         let mut lifter = X86_64Lifter::strict();
         let mut ctx = LiftContext::new(SourceArch::X86_64);
 
-        // Legacy 03 /r has src1=ModR/M.reg and src2=r/m. Here vvvv selects rax,
-        // which aliases src2. The lifter captures rax before the result write.
-        let result = lifter
-            .lift_insn(0x1000, &[0x62, 0xF4, 0x7C, 0x18, 0x03, 0xD8], &mut ctx)
-            .unwrap();
-        assert_eq!(result.ops.len(), 2);
-        let tmp = match &result.ops[0].kind {
-            OpKind::Mov {
-                dst,
-                src: SrcOperand::Reg(src),
-                width: OpWidth::W32,
-            } => {
-                assert!(dst.is_virtual());
-                assert_eq!(*src, x86_gpr(0));
-                *dst
-            }
-            other => panic!("expected APX source alias capture, got {other:?}"),
-        };
-        match &result.ops[1].kind {
-            OpKind::Add {
-                dst,
-                src1,
-                src2: SrcOperand::Reg(src2),
-                width: OpWidth::W32,
-                flags: FlagUpdate::All,
-            } => {
-                assert_eq!(*dst, x86_gpr(0));
-                assert_eq!(*src1, x86_gpr(3));
-                assert_eq!(*src2, tmp);
-            }
-            other => panic!("expected APX alias-safe NDD add, got {other:?}"),
+        for (opcode, name) in [
+            (0x03, "add"),
+            (0x0B, "or"),
+            (0x23, "and"),
+            (0x2B, "sub"),
+            (0x33, "xor"),
+        ] {
+            // These APX NDD encodings select EAX as both destination and source
+            // 2, with EBX as source 1. Alias-safe lowering means the lifter can
+            // retain that architectural identity instead of introducing a
+            // virtual source-capture move that would disqualify the JIT block.
+            let result = lifter
+                .lift_insn(0x1000, &[0x62, 0xF4, 0x7C, 0x18, opcode, 0xD8], &mut ctx)
+                .unwrap();
+            assert_eq!(result.ops.len(), 1, "{name}");
+            let exact_shape = match (name, &result.ops[0].kind) {
+                (
+                    "add",
+                    OpKind::Add {
+                        dst,
+                        src1,
+                        src2: SrcOperand::Reg(src2),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::All,
+                    },
+                )
+                | (
+                    "or",
+                    OpKind::Or {
+                        dst,
+                        src1,
+                        src2: SrcOperand::Reg(src2),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::All,
+                    },
+                )
+                | (
+                    "and",
+                    OpKind::And {
+                        dst,
+                        src1,
+                        src2: SrcOperand::Reg(src2),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::All,
+                    },
+                )
+                | (
+                    "sub",
+                    OpKind::Sub {
+                        dst,
+                        src1,
+                        src2: SrcOperand::Reg(src2),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::All,
+                    },
+                )
+                | (
+                    "xor",
+                    OpKind::Xor {
+                        dst,
+                        src1,
+                        src2: SrcOperand::Reg(src2),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::All,
+                    },
+                ) => *dst == x86_gpr(0) && *src1 == x86_gpr(3) && *src2 == x86_gpr(0),
+                _ => false,
+            };
+            assert!(exact_shape, "unexpected direct APX NDD {name}: {result:?}");
         }
     }
 
