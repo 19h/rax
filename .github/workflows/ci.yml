@@ -131,6 +131,7 @@ jobs:
             --test realmode_boot \
             --test riscv_boot \
             --test smir_avx10_roundtrip \
+            --test smir_jit_vcpu \
             --test smir_jit_evex_masking \
             --test isa_oracle \
             -- --include-ignored

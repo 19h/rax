@@ -89,6 +89,21 @@ fn scheduled_kvm_keeps_host_dependent_differentials_informational() {
     }
 }
 
+#[test]
+fn push_ci_runs_scalar_and_evex_jit_regressions() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let workflow = root.join(".github/workflows/ci.yml");
+    let contents = fs::read_to_string(&workflow)
+        .unwrap_or_else(|err| panic!("failed to read {}: {err}", workflow.display()));
+
+    for target in ["--test smir_jit_vcpu", "--test smir_jit_evex_masking"] {
+        assert!(
+            contents.contains(target),
+            "push CI core slice must execute {target}"
+        );
+    }
+}
+
 fn collect_yaml_files(dir: &Path, files: &mut Vec<PathBuf>) {
     let entries =
         fs::read_dir(dir).unwrap_or_else(|err| panic!("failed to read {}: {err}", dir.display()));
