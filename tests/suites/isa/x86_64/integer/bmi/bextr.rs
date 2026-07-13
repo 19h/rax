@@ -469,6 +469,35 @@ fn test_bextr_flags_behavior() {
 }
 
 #[test]
+fn test_bextr_preserves_flags_from_preceding_lazy_dec() {
+    const STATUS: u64 = 0x08D5;
+    const PF: u64 = 1 << 2;
+    const AF: u64 = 1 << 4;
+    const SF: u64 = 1 << 7;
+    const OF: u64 = 1 << 11;
+    let code = [
+        0x41, 0xFF, 0xC8, // DEC R8D: 1 -> 0, producing PF|ZF lazily
+        0xC4, 0xE2, 0x70, 0xF7, 0xC3, // BEXTR EAX, EBX, ECX
+        0xF4,
+    ];
+    let mut regs = Registers::default();
+    regs.rbx = 0xF0F0;
+    regs.rcx = (8 << 8) | 4;
+    regs.r8 = 1;
+    regs.rflags = 0x2 | AF | SF | OF;
+
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rax, 0x0F);
+    assert_eq!(
+        regs.rflags & STATUS,
+        PF,
+        "BEXTR must preserve DEC's PF/SF/AF rather than stale input flags"
+    );
+}
+
+#[test]
 fn test_bextr_comprehensive_32bit() {
     // Comprehensive 32-bit test with various parameters
     let code = [

@@ -509,6 +509,33 @@ fn test_bzhi_cf_boundary_64bit() {
 }
 
 #[test]
+fn test_bzhi_preserves_flags_from_preceding_lazy_dec() {
+    const STATUS: u64 = 0x08D5;
+    const PF: u64 = 1 << 2;
+    const AF: u64 = 1 << 4;
+    let code = [
+        0x41, 0xFF, 0xC8, // DEC R8D: 0 -> 0xFFFF_FFFF, producing PF|AF|SF lazily
+        0xC4, 0xE2, 0x70, 0xF5, 0xC3, // BZHI EAX, EBX, ECX
+        0xF4,
+    ];
+    let mut regs = Registers::default();
+    regs.rbx = 0x7654_3210;
+    regs.rcx = 12;
+    regs.r8 = 0;
+    regs.rflags = 0x2;
+
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rax, 0x210);
+    assert_eq!(
+        regs.rflags & STATUS,
+        PF | AF,
+        "BZHI must preserve DEC's PF/AF rather than stale input flags"
+    );
+}
+
+#[test]
 fn test_bzhi_combines_with_shifts() {
     // BZHI can extract middle bits when combined with shifts
     let code = [

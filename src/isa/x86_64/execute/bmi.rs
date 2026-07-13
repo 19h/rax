@@ -167,6 +167,10 @@ pub fn bextr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<O
     };
     vcpu.set_reg(reg, result, ctx.op_size);
     let zf = if result == 0 { 1 } else { 0 };
+    // The emulator deterministically preserves BEXTR's undefined SF/PF/AF.
+    // Commit a pending lazy producer before updating the defined bits so the
+    // preserved values belong to the immediately preceding instruction.
+    vcpu.materialize_flags();
     vcpu.regs.rflags &= !(flags::bits::ZF | flags::bits::OF | flags::bits::CF);
     if zf != 0 {
         vcpu.regs.rflags |= flags::bits::ZF;
@@ -211,6 +215,8 @@ pub fn bzhi(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Op
     };
     let zf = if result == 0 { 1 } else { 0 };
     let cf = if index >= bits { 1 } else { 0 };
+    // BZHI deterministically preserves its undefined PF/AF in the emulator.
+    vcpu.materialize_flags();
     vcpu.regs.rflags &= !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);
     if sf != 0 {
         vcpu.regs.rflags |= flags::bits::SF;
