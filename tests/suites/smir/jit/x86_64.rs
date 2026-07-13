@@ -533,6 +533,83 @@ fn jit_bswap_and_apx_movbe_preserve_partial_registers_and_flags() {
     }
 }
 
+/// Register XCHG is flag-neutral. Word exchanges preserve both upper register
+/// portions, dword exchanges zero-extend, and full-width exchanges swap all bits.
+#[test]
+fn jit_xchg_preserves_width_semantics_and_flags() {
+    const STATUS_MASK: u64 = 0x08D5;
+    for (name, instruction, rax, r8, expected_rax, expected_r8) in [
+        (
+            "xchg ax,r8w",
+            &[0x66, 0x44, 0x87, 0xC0][..],
+            0x1122_3344_5566_1234,
+            0xAABB_CCDD_EEFF_7788,
+            0x1122_3344_5566_7788,
+            0xAABB_CCDD_EEFF_1234,
+        ),
+        (
+            "xchg eax,eax",
+            &[0x87, 0xC0][..],
+            0xAABB_CCDD_1234_5678,
+            0x0123_4567_89AB_CDEF,
+            0x1234_5678,
+            0x0123_4567_89AB_CDEF,
+        ),
+        (
+            "xchg rax,r8",
+            &[0x4C, 0x87, 0xC0][..],
+            0x1122_3344_5566_7788,
+            0xAABB_CCDD_EEFF_1234,
+            0xAABB_CCDD_EEFF_1234,
+            0x1122_3344_5566_7788,
+        ),
+    ] {
+        // loop: dec ecx; jnz loop
+        //       xor r9d,r9d       ; known status = ZF|PF
+        //       <exchange>
+        //       hlt
+        let mut code = vec![0xFF, 0xC9, 0x75, 0xFC, 0x45, 0x31, 0xC9];
+        code.extend_from_slice(instruction);
+        code.push(0xF4);
+
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = rax;
+            regs.rcx = 200;
+            regs.r8 = r8;
+            regs.rflags = 0xCD7;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp);
+        run_interp(&mut interp);
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("JIT {name}: {error:?}")),
+            "{name} loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+
+        let expected = interp.get_regs().unwrap();
+        let after = jit.get_regs().unwrap();
+        assert_eq!(after.rax, expected.rax, "{name}: RAX vs interpreter");
+        assert_eq!(after.r8, expected.r8, "{name}: R8 vs interpreter");
+        assert_eq!(after.rax, expected_rax, "{name}: architectural RAX");
+        assert_eq!(after.r8, expected_r8, "{name}: architectural R8");
+        assert_eq!(after.rcx & 0xFFFF_FFFF, 0, "{name}: loop count");
+        assert_eq!(after.rflags & STATUS_MASK, 0x44, "{name}: status flags");
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            expected.rflags & STATUS_MASK,
+            "{name}: native flags vs interpreter"
+        );
+    }
+}
+
 /// APX NDD carry operations whose destination aliases source 2 must remain in
 /// the native tier. ADC can commute its register sources; SBB preserves the old
 /// source 2 on the host stack without disturbing incoming or result flags.

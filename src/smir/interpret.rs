@@ -2166,8 +2166,8 @@ impl SmirInterpreter {
             OpKind::Xchg { reg1, reg2, width } => {
                 let v1 = ctx.read_vreg(*reg1) & width.mask();
                 let v2 = ctx.read_vreg(*reg2) & width.mask();
-                ctx.write_vreg(*reg1, v2);
-                ctx.write_vreg(*reg2, v1);
+                Self::write_x86_partial(ctx, *reg1, v2, *width);
+                Self::write_x86_partial(ctx, *reg2, v1, *width);
             }
 
             // ==================================================================
@@ -16405,6 +16405,28 @@ mod tests {
         func.blocks[0].ops = result.ops;
         SmirInterpreter::new().execute_block(ctx, memory, &func.blocks[0]);
         ctx.read_vreg(condition) != 0
+    }
+
+    #[test]
+    fn lifted_x86_xchg_preserves_word_uppers_and_zero_extends_dword_self_exchange() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_1234);
+        ctx.write_vreg(r8, 0xAABB_CCDD_EEFF_7788);
+        execute_lifted_x86(&[0x66, 0x44, 0x87, 0xC0], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_7788);
+        assert_eq!(ctx.read_vreg(r8), 0xAABB_CCDD_EEFF_1234);
+
+        ctx.write_vreg(rax, 0xAABB_CCDD_1234_5678);
+        execute_lifted_x86(&[0x87, 0xC0], &mut ctx, &mut memory);
+        assert_eq!(
+            ctx.read_vreg(rax),
+            0x1234_5678,
+            "XCHG EAX,EAX is a 32-bit write even though 90 is not"
+        );
     }
 
     #[test]

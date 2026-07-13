@@ -35600,6 +35600,10 @@ impl X86_64Lifter {
                 if opcode == 0x90 && prefix.rep_prefix == Some(0xF3) {
                     // PAUSE - treat as NOP for lifting
                     Ok(LiftResult::fallthrough(vec![], prefix.cursor + 1))
+                } else if opcode == 0x90 && prefix.rex_b() == 0 {
+                    // 90 (including 66/REX.W 90) is the architectural NOP
+                    // alias, not a 32-bit self-write that clears EAX[63:32].
+                    Ok(LiftResult::fallthrough(vec![], prefix.cursor + 1))
                 } else {
                     self.lift_xchg_rax(
                         opcode,
@@ -43705,6 +43709,17 @@ mod tests {
         let result = lifter.lift_insn(0x1000, &[0x90], &mut ctx).unwrap();
         assert_eq!(result.bytes_consumed, 1);
         assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+        assert!(
+            result.ops.is_empty(),
+            "90 must not become a W32 EAX self-write"
+        );
+
+        let result = lifter.lift_insn(0x1000, &[0x48, 0x90], &mut ctx).unwrap();
+        assert_eq!(result.bytes_consumed, 2);
+        assert!(
+            result.ops.is_empty(),
+            "REX.W 90 is also an architectural NOP"
+        );
     }
 
     #[test]

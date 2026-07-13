@@ -2267,6 +2267,9 @@ fn block_is_clobber_safe(
         if matches!(op.kind, OpKind::Bswap { .. }) && !x86_bswap_shape_valid(&op.kind) {
             return false;
         }
+        if matches!(op.kind, OpKind::Xchg { .. }) && !x86_xchg_shape_valid(&op.kind) {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86NddDoubleShift { .. })
             && !x86_ndd_double_shift_shape_valid(&op.kind)
         {
@@ -2436,6 +2439,42 @@ fn x86_bswap_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
             src,
             width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
         } if native_gpr(dst) && native_gpr(src)
+    )
+}
+
+fn x86_xchg_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
+
+    let native_gpr = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Rax
+                    | X86Reg::Rcx
+                    | X86Reg::Rdx
+                    | X86Reg::Rbx
+                    | X86Reg::Rsi
+                    | X86Reg::Rdi
+                    | X86Reg::R8
+                    | X86Reg::R9
+                    | X86Reg::R10
+                    | X86Reg::R11
+                    | X86Reg::R12
+                    | X86Reg::R13
+                    | X86Reg::R14
+                    | X86Reg::R15
+            ))
+        )
+    };
+
+    matches!(
+        op,
+        OpKind::Xchg {
+            reg1,
+            reg2,
+            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+        } if native_gpr(reg1) && native_gpr(reg2)
     )
 }
 
@@ -4383,6 +4422,83 @@ mod jit_gate_tests {
             ),
         ] {
             assert!(!x86_gate(op), "malformed {name} Bswap must deopt");
+        }
+    }
+
+    #[test]
+    fn xchg_gate_accepts_native_register_shapes_and_rejects_unsafe_ir() {
+        for op in [
+            OpKind::Xchg {
+                reg1: x86(X86Reg::Rax),
+                reg2: x86(X86Reg::R8),
+                width: OpWidth::W16,
+            },
+            OpKind::Xchg {
+                reg1: x86(X86Reg::R9),
+                reg2: x86(X86Reg::R9),
+                width: OpWidth::W32,
+            },
+            OpKind::Xchg {
+                reg1: x86(X86Reg::R15),
+                reg2: x86(X86Reg::R14),
+                width: OpWidth::W64,
+            },
+        ] {
+            assert!(op.is_jit_safe());
+            assert!(x86_gate(op));
+        }
+
+        for (name, op) in [
+            (
+                "byte width",
+                OpKind::Xchg {
+                    reg1: x86(X86Reg::Rax),
+                    reg2: x86(X86Reg::Rcx),
+                    width: OpWidth::W8,
+                },
+            ),
+            (
+                "guest stack register",
+                OpKind::Xchg {
+                    reg1: x86(X86Reg::Rax),
+                    reg2: x86(X86Reg::Rsp),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "guest frame register",
+                OpKind::Xchg {
+                    reg1: x86(X86Reg::Rbp),
+                    reg2: x86(X86Reg::Rax),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "extended guest register",
+                OpKind::Xchg {
+                    reg1: x86(X86Reg::R16),
+                    reg2: x86(X86Reg::Rax),
+                    width: OpWidth::W32,
+                },
+            ),
+            (
+                "virtual register",
+                OpKind::Xchg {
+                    reg1: x86(X86Reg::Rax),
+                    reg2: VReg::Virtual(VirtualId(0)),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "foreign architecture register",
+                OpKind::Xchg {
+                    reg1: x86(X86Reg::Rax),
+                    reg2: arm_x(0),
+                    width: OpWidth::W64,
+                },
+            ),
+        ] {
+            assert!(!x86_gate(op), "malformed {name} Xchg must deopt");
         }
     }
 

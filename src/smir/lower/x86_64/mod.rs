@@ -3270,11 +3270,12 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_pcrel(dst, disp)
     }
 
-    /// XCHG r64, r64
+    /// XCHG register, register.
     pub fn emit_xchg(&mut self, r1: PhysReg, r2: PhysReg, width: OpWidth) {
-        if width != OpWidth::W8 && (r1 == PhysReg::Rax || r2 == PhysReg::Rax) {
+        if width != OpWidth::W8 && r1 != r2 && (r1 == PhysReg::Rax || r2 == PhysReg::Rax) {
             let other = if r1 == PhysReg::Rax { r2 } else { r1 };
-            self.emit_rex_for_width(width, other, PhysReg::Rax);
+            // 90+rd extends its opcode-encoded register with REX.B, not REX.R.
+            self.emit_rex_for_width(width, PhysReg::Rax, other);
             self.code.emit_u8(0x90 + other.low3());
             return;
         }
@@ -4419,6 +4420,12 @@ impl X86_64Lowerer {
             }
 
             OpKind::Xchg { reg1, reg2, width } => {
+                if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {
+                    return Err(LowerError::InvalidOperand {
+                        op: "Xchg".to_string(),
+                        operand: format!("unsupported width {width:?}"),
+                    });
+                }
                 let reg1 = self.get_dst_reg(*reg1)?;
                 let reg2 = self.get_dst_reg(*reg2)?;
                 let mut emitter = X86Emitter::new(&mut self.code);
@@ -14149,6 +14156,47 @@ mod tests {
             lower_single_op_err(OpKind::Bswap {
                 dst: r8,
                 src: r8,
+                width: OpWidth::W8,
+            }),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[test]
+    fn lower_xchg_covers_partial_full_and_eax_self_exchange_encodings() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+
+        for (width, expected) in [
+            (OpWidth::W16, &[0x66, 0x41, 0x90][..]),
+            (OpWidth::W32, &[0x41, 0x90][..]),
+            (OpWidth::W64, &[0x49, 0x90][..]),
+        ] {
+            let code = lower_single_op(OpKind::Xchg {
+                reg1: rax,
+                reg2: r8,
+                width,
+            });
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "{width:?} accumulator Xchg encoding: {code:02X?}"
+            );
+        }
+
+        let eax_self = lower_single_op(OpKind::Xchg {
+            reg1: rax,
+            reg2: rax,
+            width: OpWidth::W32,
+        });
+        assert!(
+            eax_self.windows(2).any(|bytes| bytes == [0x87, 0xC0]),
+            "EAX self-exchange must retain its zero-extending write: {eax_self:02X?}"
+        );
+
+        assert!(matches!(
+            lower_single_op_err(OpKind::Xchg {
+                reg1: rax,
+                reg2: r8,
                 width: OpWidth::W8,
             }),
             LowerError::InvalidOperand { .. }
