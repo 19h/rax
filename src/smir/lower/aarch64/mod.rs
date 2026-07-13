@@ -8,7 +8,7 @@
 use std::collections::HashMap;
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
-use crate::smir::ir::ops::{OpKind, SmirOp, X86AdxKind, X86BlsKind};
+use crate::smir::ir::ops::{OpKind, SmirOp, X86AdxKind, X86BlsKind, X86CountKind};
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, AtomicOp, Avx10FP16Op, BlockId, Condition, ExtendOp, FenceKind,
     FpPrecision, FpRoundMode, MemWidth, MemoryOrder, OpWidth, ShiftOp, SignExtend, SrcOperand,
@@ -8304,6 +8304,139 @@ impl Aarch64Lowerer {
         }
         let (imm_n, immr, imms) = Self::logical_bitmask_imm(final_mask, emit_width)?;
         self.emit_logic_imm(dst, dst, 0b00, imm_n, immr, imms, emit_width)?;
+        self.emit_scratch_restore(&scratches);
+        Ok(())
+    }
+
+    fn lower_x86_count(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        kind: X86CountKind,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        let op = match kind {
+            X86CountKind::Popcnt => "AArch64 native X86Count::Popcnt",
+            X86CountKind::Tzcnt => "AArch64 native X86Count::Tzcnt",
+            X86CountKind::Lzcnt => "AArch64 native X86Count::Lzcnt",
+        };
+        if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: op.into(),
+                operand: format!("unsupported width {width:?}"),
+            });
+        }
+
+        let requested = flags.as_set();
+        let defined = match kind {
+            X86CountKind::Popcnt => FlagSet::ALL_X86,
+            X86CountKind::Tzcnt | X86CountKind::Lzcnt => FlagSet::CF.union(FlagSet::ZF),
+        };
+        if !requested.difference(defined).is_empty() {
+            return Err(LowerError::InvalidOperand {
+                op: op.into(),
+                operand: format!("unsupported flag update {flags:?}"),
+            });
+        }
+        if matches!(src, VReg::Imm(_)) {
+            return Err(LowerError::InvalidOperand {
+                op: op.into(),
+                operand: "immediate source".into(),
+            });
+        }
+
+        let lower_count = |this: &mut Self, source: VReg| match kind {
+            X86CountKind::Popcnt => this.lower_popcnt(dst, source, width),
+            X86CountKind::Tzcnt => this.lower_ctz(dst, source, width),
+            X86CountKind::Lzcnt => this.lower_clz(dst, source, width),
+        };
+        let mut output_mask = 0_i64;
+        if requested.contains(FlagSet::SF) {
+            output_mask |= NZCV_N;
+        }
+        if requested.contains(FlagSet::ZF) {
+            output_mask |= NZCV_Z;
+        }
+        if requested.contains(FlagSet::CF) {
+            output_mask |= NZCV_C;
+        }
+        if requested.contains(FlagSet::OF) {
+            output_mask |= NZCV_V;
+        }
+        if output_mask == 0 {
+            return lower_count(self, src);
+        }
+
+        let dst_reg = Self::dst_gpr_arm_or_x86(dst)?;
+        let src_reg = Self::gpr_arm_or_x86(src)?;
+        let scratches = Self::scratch_regs(&[dst_reg, src_reg], 3)?;
+        let original = scratches[0];
+        let saved_flags = scratches[1];
+        let produced = scratches[2];
+        self.emit_scratch_save(&scratches);
+        self.emit_sysreg(saved_flags, ArmReg::Nzcv, true)?;
+        match width {
+            OpWidth::W16 => {
+                self.emit_bitfield(original, src_reg, 0b10, 0, 15, OpWidth::W32)?;
+            }
+            OpWidth::W32 | OpWidth::W64 => {
+                self.emit_mov_reg(original, src_reg, width)?;
+            }
+            _ => unreachable!("x86 count width already validated"),
+        }
+        lower_count(self, Self::arm_x_reg(original))?;
+        self.emit_mov_imm(produced, 0, OpWidth::W32)?;
+
+        match kind {
+            X86CountKind::Popcnt => {
+                if requested.contains(FlagSet::ZF) {
+                    let skip_zero = self.code.position();
+                    self.emit(0xb500_0000 | u32::from(original));
+                    self.emit_logic_imm_mask(produced, produced, 0b01, NZCV_Z, OpWidth::W32)?;
+                    self.patch_compare_branch_to_current(skip_zero, original, true)?;
+                }
+            }
+            X86CountKind::Tzcnt | X86CountKind::Lzcnt => {
+                if requested.contains(FlagSet::CF) {
+                    let skip_zero = self.code.position();
+                    self.emit(0xb500_0000 | u32::from(original));
+                    self.emit_logic_imm_mask(produced, produced, 0b01, NZCV_C, OpWidth::W32)?;
+                    self.patch_compare_branch_to_current(skip_zero, original, true)?;
+                }
+                if requested.contains(FlagSet::ZF) {
+                    let bit = if kind == X86CountKind::Tzcnt {
+                        0
+                    } else {
+                        width.bits() - 1
+                    };
+                    let skip_clear = self.code.position();
+                    self.emit_test_branch(original, bit, false, 0)?;
+                    self.emit_logic_imm_mask(produced, produced, 0b01, NZCV_Z, OpWidth::W32)?;
+                    self.patch_test_branch_to_current(skip_clear, original, bit, false)?;
+                }
+            }
+        }
+
+        self.emit_logic_imm_mask(
+            saved_flags,
+            saved_flags,
+            0b00,
+            !(output_mask as u32) as i64,
+            OpWidth::W32,
+        )?;
+        self.emit_logic_imm_mask(produced, produced, 0b00, output_mask, OpWidth::W32)?;
+        self.emit_logic_shifted(
+            saved_flags,
+            saved_flags,
+            produced,
+            0b01,
+            false,
+            0,
+            0,
+            OpWidth::W32,
+        )?;
+        self.emit_sysreg(saved_flags, ArmReg::Nzcv, false)?;
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
@@ -16676,6 +16809,13 @@ impl Aarch64Lowerer {
             OpKind::Clz { dst, src, width } => self.lower_clz(*dst, *src, *width),
             OpKind::Ctz { dst, src, width } => self.lower_ctz(*dst, *src, *width),
             OpKind::Popcnt { dst, src, width } => self.lower_popcnt(*dst, *src, *width),
+            OpKind::X86Count {
+                dst,
+                src,
+                width,
+                kind,
+                flags,
+            } => self.lower_x86_count(*dst, *src, *width, *kind, *flags),
             OpKind::Bsf {
                 dst,
                 src,
@@ -55603,6 +55743,225 @@ mod tests {
             }
             assert_eq!(out_nzcv, old_nzcv, "{label}: NZCV");
             assert_eq!(sp, 0x8000, "{label}: stack");
+        }
+    }
+
+    #[test]
+    fn lowers_x86_count_w16_nf_partial_write_alias_matrix() {
+        let initial = [
+            0xaaaa_bbbb_cccc_f0f0,
+            0x1111_2222_3333_0100,
+            0xdddd_eeee_ffff_0000,
+            0xbbbb_cccc_dddd_8000,
+        ];
+        let reg = |index: u8| match index {
+            0 => x86(X86Reg::Rax),
+            1 => x86(X86Reg::Rcx),
+            2 => x86(X86Reg::Rdx),
+            3 => x86(X86Reg::Rbx),
+            _ => unreachable!("unexpected test register x{index}"),
+        };
+        let cases = [
+            ("popcnt-distinct", X86CountKind::Popcnt, 0, 3, 1),
+            ("tzcnt-dst-src-alias", X86CountKind::Tzcnt, 1, 1, 8),
+            ("lzcnt-distinct", X86CountKind::Lzcnt, 3, 0, 0),
+        ];
+        let sentinels = [
+            (16, 0x1616_1616_1616_1616),
+            (17, 0x1717_1717_1717_1717),
+            (15, 0x1515_1515_1515_1515),
+            (14, 0x1414_1414_1414_1414),
+        ];
+
+        for (label, kind, dst, src, result) in cases {
+            let code = lower_single_op(OpKind::X86Count {
+                dst: reg(dst),
+                src: reg(src),
+                width: OpWidth::W16,
+                kind,
+                flags: FlagUpdate::None,
+            });
+            let expected = (initial[dst as usize] & !0xffff) | result;
+            let mut regs = sentinels.to_vec();
+            regs.extend(
+                initial
+                    .iter()
+                    .enumerate()
+                    .map(|(index, value)| (index as u8, *value)),
+            );
+            let old_nzcv = 0b1011;
+            let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+
+            assert_eq!(out[dst as usize], expected, "{label}: result");
+            for index in 0..4 {
+                if index != dst {
+                    assert_eq!(
+                        out[index as usize], initial[index as usize],
+                        "{label}: x{index} preserved"
+                    );
+                }
+            }
+            for (index, value) in sentinels {
+                assert_eq!(out[index as usize], value, "{label}: x{index} scratch");
+            }
+            assert_eq!(out_nzcv, old_nzcv, "{label}: NZCV");
+            assert_eq!(sp, 0x8000, "{label}: stack");
+        }
+    }
+
+    #[test]
+    fn lowers_x86_count_architectural_flag_contracts() {
+        let defined_count = FlagSet::CF.union(FlagSet::ZF);
+        let cases = [
+            (
+                "popcnt-zero-all-flags",
+                X86CountKind::Popcnt,
+                OpWidth::W32,
+                FlagUpdate::All,
+                0_u64,
+                0b1111,
+            ),
+            (
+                "popcnt-nonzero-all-flags",
+                X86CountKind::Popcnt,
+                OpWidth::W64,
+                FlagUpdate::All,
+                0xf0,
+                0b1111,
+            ),
+            (
+                "tzcnt-zero-cf-zf",
+                X86CountKind::Tzcnt,
+                OpWidth::W32,
+                FlagUpdate::Specific(defined_count),
+                0,
+                0b1001,
+            ),
+            (
+                "tzcnt-w16-alias-result-zero",
+                X86CountKind::Tzcnt,
+                OpWidth::W16,
+                FlagUpdate::Specific(defined_count),
+                0xaaaa_bbbb_cccc_0001,
+                0b1001,
+            ),
+            (
+                "lzcnt-high-bit-cf-zf",
+                X86CountKind::Lzcnt,
+                OpWidth::W64,
+                FlagUpdate::Specific(defined_count),
+                1 << 63,
+                0b1011,
+            ),
+            (
+                "lzcnt-zero-zf-only",
+                X86CountKind::Lzcnt,
+                OpWidth::W64,
+                FlagUpdate::Specific(FlagSet::ZF),
+                0,
+                0b1011,
+            ),
+        ];
+        let sentinels = [
+            (16, 0x1616_1616_1616_1616),
+            (17, 0x1717_1717_1717_1717),
+            (15, 0x1515_1515_1515_1515),
+            (14, 0x1414_1414_1414_1414),
+            (13, 0x1313_1313_1313_1313),
+        ];
+
+        for (label, kind, width, flags, value, old_nzcv) in cases {
+            let code = lower_single_op(OpKind::X86Count {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rax),
+                width,
+                kind,
+                flags,
+            });
+            let masked = value & width.mask();
+            let result = match kind {
+                X86CountKind::Popcnt => u64::from(masked.count_ones()),
+                X86CountKind::Tzcnt => {
+                    if masked == 0 {
+                        u64::from(width.bits())
+                    } else {
+                        u64::from(masked.trailing_zeros())
+                    }
+                }
+                X86CountKind::Lzcnt => u64::from(masked.leading_zeros() - (64 - width.bits())),
+            };
+            let expected = if width == OpWidth::W16 {
+                (value & !0xffff) | result
+            } else {
+                result
+            };
+            let produced = match kind {
+                X86CountKind::Popcnt => ((masked == 0) as u8) << 2,
+                X86CountKind::Tzcnt | X86CountKind::Lzcnt => {
+                    (((result == 0) as u8) << 2) | (((masked == 0) as u8) << 1)
+                }
+            };
+            let requested = flags.as_set();
+            let mut mask = 0_u8;
+            if requested.contains(FlagSet::SF) {
+                mask |= 0b1000;
+            }
+            if requested.contains(FlagSet::ZF) {
+                mask |= 0b0100;
+            }
+            if requested.contains(FlagSet::CF) {
+                mask |= 0b0010;
+            }
+            if requested.contains(FlagSet::OF) {
+                mask |= 0b0001;
+            }
+            let expected_nzcv = (old_nzcv & !mask) | (produced & mask);
+            let mut regs = sentinels.to_vec();
+            regs.push((0, value));
+            let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+
+            assert_eq!(out[0], expected, "{label}: result");
+            assert_eq!(out_nzcv, expected_nzcv, "{label}: NZCV");
+            for (index, sentinel) in sentinels {
+                assert_eq!(out[index as usize], sentinel, "{label}: x{index} scratch");
+            }
+            assert_eq!(sp, 0x8000, "{label}: stack");
+        }
+    }
+
+    #[test]
+    fn rejects_malformed_x86_count_shapes() {
+        for op in [
+            OpKind::X86Count {
+                dst: x(0),
+                src: x(1),
+                width: OpWidth::W8,
+                kind: X86CountKind::Popcnt,
+                flags: FlagUpdate::None,
+            },
+            OpKind::X86Count {
+                dst: x(0),
+                src: x(1),
+                width: OpWidth::W64,
+                kind: X86CountKind::Tzcnt,
+                flags: FlagUpdate::All,
+            },
+            OpKind::X86Count {
+                dst: x(0),
+                src: x(1),
+                width: OpWidth::W32,
+                kind: X86CountKind::Lzcnt,
+                flags: FlagUpdate::Specific(FlagSet::OF),
+            },
+            OpKind::X86Count {
+                dst: x(0),
+                src: VReg::Imm(1),
+                width: OpWidth::W32,
+                kind: X86CountKind::Tzcnt,
+                flags: FlagUpdate::None,
+            },
+        ] {
+            assert!(try_lower_single_op(op).is_err());
         }
     }
 

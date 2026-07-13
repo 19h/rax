@@ -2756,6 +2756,14 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
                     && x86_aarch64_legacy_gpr(dst)
                     && x86_aarch64_legacy_gpr(src))
         }
+        OpKind::X86Count {
+            dst, src, width, ..
+        } => {
+            full_gpr_write(width)
+                || (matches!(width, OpWidth::W16)
+                    && x86_aarch64_legacy_gpr(dst)
+                    && x86_aarch64_legacy_gpr(src))
+        }
         OpKind::AndNot { width, .. }
         | OpKind::MulU { width, .. }
         | OpKind::Bextr { width, .. }
@@ -2764,7 +2772,6 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         | OpKind::X86Adx { width, .. }
         | OpKind::Pdep { width, .. }
         | OpKind::Pext { width, .. }
-        | OpKind::X86Count { width, .. }
         | OpKind::Bswap { width, .. } => full_gpr_write(width),
         OpKind::Mov { dst, width, .. } => {
             full_gpr_write(width)
@@ -4111,6 +4118,73 @@ mod jit_gate_tests {
                 dst: rax,
                 src: rbx,
                 width: OpWidth::W8,
+            },
+        ] {
+            assert!(!x86_aarch64_gate(vec![op.clone()]), "unsupported {op:?}");
+        }
+    }
+
+    #[test]
+    fn x86_aarch64_gate_accepts_x86_count_full_and_w16_contracts() {
+        let rax = x86(X86Reg::Rax);
+        let rbx = x86(X86Reg::Rbx);
+        for kind in [
+            X86CountKind::Popcnt,
+            X86CountKind::Tzcnt,
+            X86CountKind::Lzcnt,
+        ] {
+            for width in [OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+                assert!(
+                    x86_aarch64_gate(vec![OpKind::X86Count {
+                        dst: rax,
+                        src: rbx,
+                        width,
+                        kind,
+                        flags: FlagUpdate::None,
+                    }]),
+                    "APX NF {kind:?} {width:?}"
+                );
+            }
+        }
+
+        let count_flags = FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF));
+        for kind in [X86CountKind::Tzcnt, X86CountKind::Lzcnt] {
+            assert!(x86_aarch64_gate(vec![OpKind::X86Count {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W16,
+                kind,
+                flags: count_flags,
+            }]));
+        }
+
+        let popcnt_all = OpKind::X86Count {
+            dst: rax,
+            src: rbx,
+            width: OpWidth::W16,
+            kind: X86CountKind::Popcnt,
+            flags: FlagUpdate::All,
+        };
+        assert!(x86_aarch64_scalar_shape_valid(&popcnt_all));
+        assert!(
+            !x86_aarch64_gate(vec![popcnt_all]),
+            "terminal POPCNT has live PF/AF outputs unavailable in NZCV"
+        );
+
+        for op in [
+            OpKind::X86Count {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W8,
+                kind: X86CountKind::Popcnt,
+                flags: FlagUpdate::None,
+            },
+            OpKind::X86Count {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W64,
+                kind: X86CountKind::Tzcnt,
+                flags: FlagUpdate::All,
             },
         ] {
             assert!(!x86_aarch64_gate(vec![op.clone()]), "unsupported {op:?}");

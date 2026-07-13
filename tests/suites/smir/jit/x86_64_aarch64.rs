@@ -801,6 +801,85 @@ fn x86_w16_bit_scans_merge_partial_registers_and_only_update_zf() {
 }
 
 #[test]
+fn x86_apx_nf_w16_counts_merge_partial_registers_and_preserve_flags() {
+    // LLVM 23 encodings: {nf} POPCNT r8w,ax; {nf} LZCNT r9w,r9w;
+    // {nf} TZCNT r11w,r10w. JNZ detects any unintended NF flag mutation.
+    let code = [
+        0x62, 0x74, 0x7D, 0x0C, 0x88, 0xC0, 0x62, 0x54, 0x7D, 0x0C, 0xF5, 0xC9, 0x62, 0x54, 0x7D,
+        0x0C, 0xF4, 0xDA, 0x75, 0xEC, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        vcpu.set_apx_enabled(true);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xAAAA_BBBB_CCCC_F0F0;
+        regs.r8 = 0x8888_7777_6666_7777;
+        regs.r9 = 0x9999_8888_7777_0100;
+        regs.r10 = 0xAAAA_9999_8888_8000;
+        regs.r11 = 0xBBBB_AAAA_9999_7777;
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block().expect("APX NF W16 count JIT attempt"),
+        "APX NF W16 counts must enter the AArch64 tier"
+    );
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "APX NF W16 counts");
+    assert_eq!(actual.r8, 0x8888_7777_6666_0008, "POPCNT upper merge");
+    assert_eq!(actual.r9, 0x9999_8888_7777_0007, "LZCNT alias");
+    assert_eq!(actual.r10, 0xAAAA_9999_8888_8000, "TZCNT source");
+    assert_eq!(actual.r11, 0xBBBB_AAAA_9999_000F, "TZCNT upper merge");
+    assert_eq!(actual.rflags, 0xCD6, "APX NF preserves complete RFLAGS");
+}
+
+#[test]
+fn x86_w16_tzcnt_lzcnt_merge_cf_zf_and_preserve_other_flags() {
+    // LLVM 23 encodings: TZCNT cx,cx; LZCNT si,dx. The final high-bit LZCNT
+    // result is zero, so ZF=1/CF=0 and JNZ falls through.
+    let code = [
+        0x66, 0xF3, 0x0F, 0xBC, 0xC9, 0x66, 0xF3, 0x0F, 0xBD, 0xF2, 0x75, 0xF4, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 0x1111_2222_3333_0000;
+        regs.rdx = 0xDDDD_EEEE_FFFF_8000;
+        regs.rsi = 0x6666_5555_4444_7777;
+        regs.rflags = 0xC97;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block().expect("W16 TZCNT/LZCNT JIT attempt"),
+        "W16 TZCNT/LZCNT must enter the AArch64 tier"
+    );
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "W16 TZCNT/LZCNT");
+    assert_eq!(actual.rcx, 0x1111_2222_3333_0010, "TZCNT alias");
+    assert_eq!(actual.rdx, 0xDDDD_EEEE_FFFF_8000, "LZCNT source");
+    assert_eq!(actual.rsi, 0x6666_5555_4444_0000, "LZCNT upper merge");
+    assert_eq!(actual.rflags, 0xCD6, "only CF/ZF replaced");
+}
+
+#[test]
 fn x86_aarch64_jit_rejects_live_pf_af_definitions_without_execution() {
     // add rax,rbx; jnz start; hlt. ADD's live PF/AF outputs cannot be represented
     // in NZCV, so the architecture-specific gate must retain interpreter fallback.
