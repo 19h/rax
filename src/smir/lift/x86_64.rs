@@ -31413,21 +31413,7 @@ impl X86_64Lifter {
         } else {
             src1
         };
-        let src2_operand = if prefix.nd && dst == src2 && dst != src1 {
-            let tmp = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Mov {
-                    dst: tmp,
-                    src: SrcOperand::Reg(src2),
-                    width,
-                },
-            ));
-            SrcOperand::Reg(tmp)
-        } else {
-            SrcOperand::Reg(src2)
-        };
+        let src2_operand = SrcOperand::Reg(src2);
 
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
@@ -41300,7 +41286,7 @@ mod tests {
     }
 
     #[test]
-    fn lift_apx_ndd_imul_alias_preserves_r_m_source_like_llvm() {
+    fn lift_apx_ndd_imul_alias_uses_direct_architectural_sources() {
         let mut lifter = X86_64Lifter::strict();
         let mut ctx = LiftContext::new(SourceArch::X86_64);
 
@@ -41309,20 +41295,8 @@ mod tests {
             .lift_insn(0x1000, &[0x62, 0xF4, 0xE4, 0x18, 0xAF, 0xC3], &mut ctx)
             .unwrap();
         assert_eq!(result.bytes_consumed, 6);
-        assert_eq!(result.ops.len(), 2);
-        let captured_src = match &result.ops[0].kind {
-            OpKind::Mov {
-                dst,
-                src: SrcOperand::Reg(src),
-                width: OpWidth::W64,
-            } => {
-                assert!(matches!(dst, VReg::Virtual(_)));
-                assert_eq!(*src, x86_gpr(3));
-                *dst
-            }
-            other => panic!("expected APX IMUL r/m source capture, got {other:?}"),
-        };
-        match &result.ops[1].kind {
+        assert_eq!(result.ops.len(), 1);
+        match &result.ops[0].kind {
             OpKind::MulS {
                 dst_lo,
                 dst_hi: None,
@@ -41333,10 +41307,26 @@ mod tests {
             } => {
                 assert_eq!(*dst_lo, x86_gpr(3));
                 assert_eq!(*src1, x86_gpr(0));
-                assert_eq!(*src2, captured_src);
+                assert_eq!(*src2, x86_gpr(3));
             }
-            other => panic!("expected APX NDD IMUL with captured source, got {other:?}"),
+            other => panic!("expected direct APX NDD IMUL alias, got {other:?}"),
         }
+
+        let nf = lifter
+            .lift_insn(0x1000, &[0x62, 0xF4, 0xE4, 0x1C, 0xAF, 0xC3], &mut ctx)
+            .unwrap();
+        assert_eq!(nf.ops.len(), 1);
+        assert!(matches!(
+            nf.ops[0].kind,
+            OpKind::MulS {
+                dst_lo,
+                dst_hi: None,
+                src1,
+                src2: SrcOperand::Reg(src2),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            } if dst_lo == x86_gpr(3) && src1 == x86_gpr(0) && src2 == x86_gpr(3)
+        ));
     }
 
     #[test]

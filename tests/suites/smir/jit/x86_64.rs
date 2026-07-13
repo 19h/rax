@@ -385,6 +385,44 @@ fn jit_apx_ndd_binary_alu_alias_second_source_preserves_full_semantics() {
     }
 }
 
+#[test]
+fn jit_apx_ndd_imul_alias_second_source_preserves_product_and_nf_flags() {
+    const STATUS_MASK: u64 = 0x0ED5;
+    for (name, instruction, expected_status) in [
+        ("imul", &[0x62, 0xF4, 0xE4, 0x18, 0xAF, 0xC3][..], 0x44),
+        ("{nf} imul", &[0x62, 0xF4, 0xE4, 0x1C, 0xAF, 0xC3][..], 0x45),
+    ] {
+        let mut code = instruction.to_vec();
+        code.extend_from_slice(&[0xFF, 0xC9]); // dec ecx (preserves CF)
+        code.extend_from_slice(&[0x75, 0xF6]); // jnz to APX instruction
+        code.push(0xF4);
+
+        let mut jit = make_vcpu_code(&code);
+        let mut regs = jit.get_regs().unwrap();
+        regs.rax = 1;
+        regs.rbx = 7;
+        regs.rcx = 200;
+        regs.rflags = 0x3; // incoming CF distinguishes regular IMUL from NF
+        jit.set_regs(&regs).unwrap();
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("jit APX NDD {name} alias: {error:?}")),
+            "APX NDD {name} alias loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+        let after = jit.get_regs().unwrap();
+
+        assert_eq!(after.rax, 1, "{name}: source 1 must be preserved");
+        assert_eq!(after.rbx, 7, "{name}: exact non-overflowing product");
+        assert_eq!(after.rcx & 0xFFFF_FFFF, 0, "{name}: loop count");
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            expected_status,
+            "{name}: NF must preserve incoming CF while regular IMUL clears it"
+        );
+    }
+}
+
 /// Variable shift by CL (`shl edx,cl`) in a hot loop — the pattern the kernel's
 /// __free_pages_memory bootmem loop uses. Must JIT bit-exactly vs the interpreter.
 #[test]

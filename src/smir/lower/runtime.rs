@@ -4010,6 +4010,25 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn clobber_gate_admits_apx_ndd_imul_aliasing_second_source_with_or_without_nf() {
+        let rax = x86(X86Reg::Rax);
+        let rbx = x86(X86Reg::Rbx);
+        for flags in [FlagUpdate::All, FlagUpdate::None] {
+            assert!(
+                x86_gate(OpKind::MulS {
+                    dst_lo: rbx,
+                    dst_hi: None,
+                    src1: rax,
+                    src2: SrcOperand::Reg(rbx),
+                    width: OpWidth::W64,
+                    flags,
+                }),
+                "alias-safe APX NDD IMUL {flags:?} must JIT"
+            );
+        }
+    }
+
+    #[test]
     fn clobber_gate_rejects_ambiguous_high_byte_movx_sources() {
         for src in [X86Reg::Rsi, X86Reg::Rdi] {
             assert!(

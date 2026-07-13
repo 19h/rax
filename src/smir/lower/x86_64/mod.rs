@@ -4467,18 +4467,32 @@ impl X86_64Lowerer {
                                     &[dst_reg, src1_reg, src2_reg],
                                 )?;
                             }
-                            // Move src1 to dst, then IMUL dst, src2
-                            if dst_reg != src1_reg {
+                            if dst_reg != src1_reg && dst_reg == src2_reg {
+                                if preserve_flags {
+                                    self.code.emit_u8(0x9C); // pushfq
+                                }
                                 let mut emitter = X86Emitter::new(&mut self.code);
-                                emitter.emit_mov_rr(dst_reg, src1_reg, *width);
-                            }
-                            if preserve_flags {
-                                self.code.emit_u8(0x9C); // pushfq
-                            }
-                            let mut emitter = X86Emitter::new(&mut self.code);
-                            emitter.emit_imul_rr(dst_reg, src2_reg, *width);
-                            if preserve_flags {
-                                self.code.emit_u8(0x9D); // popfq
+                                // Two-operand IMUL is commutative. Consume src1
+                                // directly when an APX NDD destination aliases
+                                // source 2, preserving the old destination.
+                                emitter.emit_imul_rr(dst_reg, src1_reg, *width);
+                                if preserve_flags {
+                                    self.code.emit_u8(0x9D); // popfq
+                                }
+                            } else {
+                                // Move src1 to dst, then IMUL dst, src2.
+                                if dst_reg != src1_reg {
+                                    let mut emitter = X86Emitter::new(&mut self.code);
+                                    emitter.emit_mov_rr(dst_reg, src1_reg, *width);
+                                }
+                                if preserve_flags {
+                                    self.code.emit_u8(0x9C); // pushfq
+                                }
+                                let mut emitter = X86Emitter::new(&mut self.code);
+                                emitter.emit_imul_rr(dst_reg, src2_reg, *width);
+                                if preserve_flags {
+                                    self.code.emit_u8(0x9D); // popfq
+                                }
                             }
                         }
                         SrcOperand::Imm(val) => {
@@ -12479,6 +12493,45 @@ mod tests {
                 "missing flag-safe alias SUB {width:?} {expected:02X?}: {code:02X?}"
             );
         }
+    }
+
+    #[test]
+    fn lower_apx_ndd_imul_alias_second_source_covers_widths_and_nf() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        for (width, expected) in [
+            (OpWidth::W16, &[0x66, 0x0F, 0xAF, 0xD8][..]),
+            (OpWidth::W32, &[0x0F, 0xAF, 0xD8][..]),
+            (OpWidth::W64, &[0x48, 0x0F, 0xAF, 0xD8][..]),
+        ] {
+            let code = lower_single_op(OpKind::MulS {
+                dst_lo: rbx,
+                dst_hi: None,
+                src1: rax,
+                src2: SrcOperand::Reg(rbx),
+                width,
+                flags: FlagUpdate::All,
+            });
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "missing direct alias IMUL {width:?} {expected:02X?}: {code:02X?}"
+            );
+        }
+
+        let nf = lower_single_op(OpKind::MulS {
+            dst_lo: rbx,
+            dst_hi: None,
+            src1: rax,
+            src2: SrcOperand::Reg(rbx),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        });
+        let expected_nf = [0x9C, 0x48, 0x0F, 0xAF, 0xD8, 0x9D];
+        assert!(
+            nf.windows(expected_nf.len())
+                .any(|bytes| bytes == expected_nf),
+            "NF alias IMUL must preserve flags around the direct multiply: {nf:02X?}"
+        );
     }
 
     #[test]
