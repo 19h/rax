@@ -5026,16 +5026,33 @@ impl Aarch64Lowerer {
             }
         }
 
+        let x86_partial_dst = matches!(dst, VReg::Arch(ArchReg::X86(_)))
+            && matches!(width, OpWidth::W8 | OpWidth::W16);
         let dst = Self::dst_gpr_arm_or_x86(dst)?;
         match src {
             SrcOperand::Reg(reg) => {
                 let src = Self::gpr_arm_or_x86(*reg)?;
+                if x86_partial_dst {
+                    if dst == src {
+                        return Ok(());
+                    }
+                    return self.emit_bitfield(dst, src, 0b01, 0, width.bits() - 1, OpWidth::W64);
+                }
                 if width == OpWidth::W64 && dst == src {
                     return Ok(());
                 }
                 self.emit_mov_reg(dst, src, width)
             }
             SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => {
+                if x86_partial_dst {
+                    let scratches = Self::scratch_regs(&[dst], 1)?;
+                    let value = (*imm as u64) & width.mask();
+                    self.emit_scratch_save(&scratches);
+                    self.emit_mov_imm_best(scratches[0], value as i64, OpWidth::W32)?;
+                    self.emit_bitfield(dst, scratches[0], 0b01, 0, width.bits() - 1, OpWidth::W64)?;
+                    self.emit_scratch_restore(&scratches);
+                    return Ok(());
+                }
                 self.emit_mov_imm_best(dst, *imm, width)
             }
             other => Err(LowerError::UnsupportedOp {
@@ -7558,8 +7575,24 @@ impl Aarch64Lowerer {
     }
 
     fn lower_xchg(&mut self, reg1: VReg, reg2: VReg, width: OpWidth) -> Result<(), LowerError> {
+        let x86_partial = matches!(reg1, VReg::Arch(ArchReg::X86(_)))
+            && matches!(reg2, VReg::Arch(ArchReg::X86(_)))
+            && matches!(width, OpWidth::W8 | OpWidth::W16);
         let reg1 = Self::dst_gpr_arm_or_x86(reg1)?;
         let reg2 = Self::dst_gpr_arm_or_x86(reg2)?;
+        if x86_partial {
+            if reg1 == reg2 {
+                return Ok(());
+            }
+            let scratches = Self::scratch_regs(&[reg1, reg2], 1)?;
+            let top_bit = width.bits() - 1;
+            self.emit_scratch_save(&scratches);
+            self.emit_bitfield(scratches[0], reg1, 0b10, 0, top_bit, OpWidth::W32)?;
+            self.emit_bitfield(reg1, reg2, 0b01, 0, top_bit, OpWidth::W64)?;
+            self.emit_bitfield(reg2, scratches[0], 0b01, 0, top_bit, OpWidth::W64)?;
+            self.emit_scratch_restore(&scratches);
+            return Ok(());
+        }
         if matches!(width, OpWidth::W8 | OpWidth::W16) {
             let top_bit = width.bits() - 1;
             if reg1 == reg2 {
@@ -7585,6 +7618,32 @@ impl Aarch64Lowerer {
     }
 
     fn lower_not(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+        if matches!(dst, VReg::Arch(ArchReg::X86(_))) && matches!(width, OpWidth::W8 | OpWidth::W16)
+        {
+            let dst_reg = Self::dst_gpr_arm_or_x86(dst)?;
+            let mut avoid = vec![dst_reg];
+            if !matches!(src, VReg::Imm(_)) {
+                avoid.push(Self::gpr_arm_or_x86(src)?);
+            }
+            let scratches = Self::scratch_regs(&avoid, 1)?;
+            self.emit_scratch_save(&scratches);
+            self.lower_not(
+                VReg::Arch(ArchReg::Arm(ArmReg::X(scratches[0]))),
+                src,
+                width,
+            )?;
+            self.emit_bitfield(
+                dst_reg,
+                scratches[0],
+                0b01,
+                0,
+                width.bits() - 1,
+                OpWidth::W64,
+            )?;
+            self.emit_scratch_restore(&scratches);
+            return Ok(());
+        }
+
         let dst = Self::dst_gpr_arm_or_x86(dst)?;
         if let VReg::Imm(value) = src {
             let emit_width = match width {
@@ -13738,7 +13797,22 @@ impl Aarch64Lowerer {
     ) -> Result<(), LowerError> {
         match width {
             OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64 => {
-                self.lower_test_condition(dst, cond)
+                if matches!(dst, VReg::Arch(ArchReg::X86(_)))
+                    && matches!(width, OpWidth::W8 | OpWidth::W16)
+                {
+                    let dst = Self::dst_gpr_arm_or_x86(dst)?;
+                    let scratches = Self::scratch_regs(&[dst], 1)?;
+                    self.emit_scratch_save(&scratches);
+                    self.lower_test_condition(
+                        VReg::Arch(ArchReg::Arm(ArmReg::X(scratches[0]))),
+                        cond,
+                    )?;
+                    self.emit_bitfield(dst, scratches[0], 0b01, 0, width.bits() - 1, OpWidth::W64)?;
+                    self.emit_scratch_restore(&scratches);
+                    Ok(())
+                } else {
+                    self.lower_test_condition(dst, cond)
+                }
             }
             other => Err(LowerError::UnsupportedOp {
                 op: format!("AArch64 native SetCC width {other:?}"),
@@ -21734,6 +21808,80 @@ mod tests {
         assert_eq!(out[16], 0xfeed_face_cafe_beef);
         assert_eq!(out[17], 0xfeed_face_cafe_beef);
         assert_eq!(out_nzcv, 0b1010);
+        assert_eq!(sp, 0x8000);
+    }
+
+    #[test]
+    fn lowers_x86_subword_mov_with_partial_register_merge() {
+        let code = lower_ops(vec![
+            OpKind::Mov {
+                dst: x86(X86Reg::Rax),
+                src: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                width: OpWidth::W16,
+            },
+            OpKind::Mov {
+                dst: x86(X86Reg::Rdx),
+                src: SrcOperand::Imm(0xab),
+                width: OpWidth::W8,
+            },
+            OpKind::Mov {
+                dst: x86(X86Reg::R8),
+                src: SrcOperand::Imm64(-2),
+                width: OpWidth::W16,
+            },
+        ]);
+        let regs = [
+            (0, 0xAAAA_BBBB_CCCC_DDDD),
+            (1, 0x1111_2222_3333_5678),
+            (2, 0xDEAD_BEEF_1234_5600),
+            (8, 0x8888_7777_6666_5555),
+            (16, 0x1616_1616_1616_1616),
+        ];
+        let (out, nzcv, sp) = run_aarch64_code(&code, &regs, 0b1010);
+
+        assert_eq!(out[0], 0xAAAA_BBBB_CCCC_5678);
+        assert_eq!(out[1], 0x1111_2222_3333_5678);
+        assert_eq!(out[2], 0xDEAD_BEEF_1234_56AB);
+        assert_eq!(out[8], 0x8888_7777_6666_FFFE);
+        assert_eq!(out[16], 0x1616_1616_1616_1616);
+        assert_eq!(nzcv, 0b1010);
+        assert_eq!(sp, 0x8000);
+    }
+
+    #[test]
+    fn lowers_x86_subword_not_and_xchg_with_partial_register_merges() {
+        let code = lower_ops(vec![
+            OpKind::Not {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W16,
+            },
+            OpKind::Not {
+                dst: x86(X86Reg::Rdx),
+                src: x86(X86Reg::Rdx),
+                width: OpWidth::W8,
+            },
+            OpKind::Xchg {
+                reg1: x86(X86Reg::Rsi),
+                reg2: x86(X86Reg::Rdi),
+                width: OpWidth::W16,
+            },
+        ]);
+        let regs = [
+            (0, 0xAAAA_BBBB_CCCC_00F0),
+            (2, 0xDEAD_BEEF_1234_56A5),
+            (6, 0x6666_7777_8888_9999),
+            (7, 0x1111_2222_3333_4444),
+            (16, 0x1616_1616_1616_1616),
+        ];
+        let (out, nzcv, sp) = run_aarch64_code(&code, &regs, 0b0110);
+
+        assert_eq!(out[0], 0xAAAA_BBBB_CCCC_FF0F);
+        assert_eq!(out[2], 0xDEAD_BEEF_1234_565A);
+        assert_eq!(out[6], 0x6666_7777_8888_4444);
+        assert_eq!(out[7], 0x1111_2222_3333_9999);
+        assert_eq!(out[16], 0x1616_1616_1616_1616);
+        assert_eq!(nzcv, 0b0110);
         assert_eq!(sp, 0x8000);
     }
 
@@ -34934,9 +35082,9 @@ mod tests {
 
         assert_eq!(out[16], 0x1717_1717_1717_1717);
         assert_eq!(out[17], 0x1616_1616_1616_1616);
-        assert_eq!(out[18], 0x1234);
-        assert_eq!(out[19], 0xabcd);
-        assert_eq!(out[20], 0xf0);
+        assert_eq!(out[18], 0x1111_2222_3333_1234);
+        assert_eq!(out[19], 0x9999_8888_7777_abcd);
+        assert_eq!(out[20], 0xffff_ffff_ffff_00f0);
         assert_eq!(out[21], 0x2121_2121_2121_2121);
         assert_eq!(out_nzcv, old_nzcv);
         assert_eq!(sp, 0x8000);
@@ -47182,6 +47330,34 @@ mod tests {
         expected.extend_from_slice(&enc_csel_regs(1, 0, 1, 31, 31, 0, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_x86_setcc_with_partial_register_merge() {
+        let code = lower_ops(vec![
+            OpKind::SetCC {
+                dst: x86(X86Reg::Rbx),
+                cond: Condition::Eq,
+                width: OpWidth::W8,
+            },
+            OpKind::SetCC {
+                dst: x86(X86Reg::Rdx),
+                cond: Condition::Ne,
+                width: OpWidth::W8,
+            },
+        ]);
+        let regs = [
+            (2, 0x2222_3333_4444_55AA),
+            (3, 0xBBBB_CCCC_DDDD_EEFF),
+            (16, 0x1616_1616_1616_1616),
+        ];
+        let (out, nzcv, sp) = run_aarch64_code(&code, &regs, 0b0100);
+
+        assert_eq!(out[3], 0xBBBB_CCCC_DDDD_EE01);
+        assert_eq!(out[2], 0x2222_3333_4444_5500);
+        assert_eq!(out[16], 0x1616_1616_1616_1616);
+        assert_eq!(nzcv, 0b0100);
+        assert_eq!(sp, 0x8000);
     }
 
     #[test]

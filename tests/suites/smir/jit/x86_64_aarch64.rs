@@ -337,6 +337,107 @@ fn x86_clc_cmc_feed_native_adcx_without_clobbering_other_flags() {
 }
 
 #[test]
+fn x86_subword_mov_and_setcc_execute_natively_with_partial_register_merges() {
+    // mov ax,cx; mov dl,0xab; setz bl; cmovz si,di; jnz start; hlt. These
+    // operations preserve all flags; seeded ZF=1 selects SETZ/CMOVZ and makes
+    // the backedge false.
+    let code = [
+        0x66, 0x89, 0xC8, // MOV ax,cx
+        0xB2, 0xAB, // MOV dl,0xab
+        0x0F, 0x94, 0xC3, // SETZ bl
+        0x66, 0x0F, 0x44, 0xF7, // CMOVZ si,di
+        0x75, 0xF2, // JNZ start
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xAAAA_BBBB_CCCC_DDDD;
+        regs.rcx = 0x1111_2222_3333_5678;
+        regs.rdx = 0xDEAD_BEEF_1234_5600;
+        regs.rbx = 0xBBBB_CCCC_DDDD_EEFF;
+        regs.rsi = 0x6666_7777_8888_9999;
+        regs.rdi = 0x1111_2222_3333_4444;
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(jit.jit_try_block().expect("subword MOV/SETcc JIT attempt"));
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "subword MOV/SETcc");
+    assert_eq!(actual.rax, 0xAAAA_BBBB_CCCC_5678);
+    assert_eq!(actual.rdx, 0xDEAD_BEEF_1234_56AB);
+    assert_eq!(actual.rbx, 0xBBBB_CCCC_DDDD_EE01);
+    assert_eq!(actual.rsi, 0x6666_7777_8888_4444);
+}
+
+#[test]
+fn x86_legacy_high_byte_setcc_remains_interpreter_only() {
+    // SETZ AH lifts through a virtual byte and a high-lane merge. The identity
+    // bridge has no AH/CH/DH/BH lane mapping, so the block must fail closed.
+    let code = [0x0F, 0x94, 0xC4, 0x75, 0xFB, 0xF4]; // SETZ ah; JNZ start; HLT
+    let mut vcpu = make_vcpu_code(&code);
+    let mut before = vcpu.get_regs().unwrap();
+    before.rax = 0xAAAA_BBBB_CCCC_DDDD;
+    before.rflags = 0xCD6;
+    vcpu.set_regs(&before).unwrap();
+
+    assert!(!vcpu.jit_try_block().expect("high-byte SETcc eligibility"));
+    assert_mapped_state_eq(
+        &vcpu.get_regs().unwrap(),
+        &before,
+        "SETZ AH must not execute natively",
+    );
+}
+
+#[test]
+fn x86_subword_not_and_xchg_execute_natively_with_partial_register_merges() {
+    // not ax; not dl; xchg si,di; jnz start; hlt. None modifies flags, so
+    // seeded ZF=1 keeps the syntactic backedge untaken.
+    let code = [
+        0x66, 0xF7, 0xD0, // NOT ax
+        0xF6, 0xD2, // NOT dl
+        0x66, 0x87, 0xFE, // XCHG si,di
+        0x75, 0xF6, // JNZ start
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xAAAA_BBBB_CCCC_00F0;
+        regs.rdx = 0xDEAD_BEEF_1234_56A5;
+        regs.rsi = 0x6666_7777_8888_9999;
+        regs.rdi = 0x1111_2222_3333_4444;
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(jit.jit_try_block().expect("subword NOT/XCHG JIT attempt"));
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "subword NOT/XCHG");
+    assert_eq!(actual.rax, 0xAAAA_BBBB_CCCC_FF0F);
+    assert_eq!(actual.rdx, 0xDEAD_BEEF_1234_565A);
+    assert_eq!(actual.rsi, 0x6666_7777_8888_4444);
+    assert_eq!(actual.rdi, 0x1111_2222_3333_9999);
+}
+
+#[test]
 fn x86_aarch64_jit_rejects_live_pf_af_definitions_without_execution() {
     // add rax,rbx; jnz start; hlt. ADD's live PF/AF outputs cannot be represented
     // in NZCV, so the architecture-specific gate must retain interpreter fallback.

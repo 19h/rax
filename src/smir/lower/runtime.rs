@@ -2686,7 +2686,6 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         | OpKind::And { width, .. }
         | OpKind::Or { width, .. }
         | OpKind::Xor { width, .. }
-        | OpKind::Not { width, .. }
         | OpKind::AndNot { width, .. }
         | OpKind::Shl { width, .. }
         | OpKind::Shr { width, .. }
@@ -2700,9 +2699,6 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         | OpKind::Rcr { width, .. }
         | OpKind::MulU { width, .. }
         | OpKind::MulS { width, .. }
-        | OpKind::Mov { width, .. }
-        | OpKind::SetCC { width, .. }
-        | OpKind::CMove { width, .. }
         | OpKind::Bsf { width, .. }
         | OpKind::Bsr { width, .. }
         | OpKind::Bextr { width, .. }
@@ -2715,8 +2711,39 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         | OpKind::Ctz { width, .. }
         | OpKind::Popcnt { width, .. }
         | OpKind::X86Count { width, .. }
-        | OpKind::Bswap { width, .. }
-        | OpKind::Xchg { width, .. } => full_gpr_write(width),
+        | OpKind::Bswap { width, .. } => full_gpr_write(width),
+        OpKind::Mov { dst, width, .. } => {
+            full_gpr_write(width)
+                || (x86_aarch64_legacy_gpr(dst) && matches!(width, OpWidth::W8 | OpWidth::W16))
+        }
+        // Register SETcc is architecturally byte-sized. Legacy high-byte
+        // destinations lift through virtual merge temporaries and are rejected
+        // by the register/hint checks below; this arm admits low-byte forms.
+        OpKind::SetCC { dst, width, .. } => {
+            x86_aarch64_legacy_gpr(dst) && matches!(width, OpWidth::W8)
+        }
+        OpKind::CMove {
+            dst, src, width, ..
+        } => {
+            full_gpr_write(width)
+                || (matches!(width, OpWidth::W16)
+                    && x86_aarch64_legacy_gpr(dst)
+                    && x86_aarch64_legacy_gpr(src))
+        }
+        OpKind::Not {
+            dst, src, width, ..
+        } => {
+            full_gpr_write(width)
+                || (matches!(width, OpWidth::W8 | OpWidth::W16)
+                    && dst == src
+                    && x86_aarch64_legacy_gpr(dst))
+        }
+        OpKind::Xchg { reg1, reg2, width } => {
+            full_gpr_write(width)
+                || (matches!(width, OpWidth::W16)
+                    && x86_aarch64_legacy_gpr(reg1)
+                    && x86_aarch64_legacy_gpr(reg2))
+        }
         OpKind::ZeroExtend { to_width, .. } | OpKind::SignExtend { to_width, .. } => {
             full_gpr_write(to_width)
         }
@@ -3638,6 +3665,32 @@ mod jit_gate_tests {
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
+            OpKind::Mov {
+                dst: x86(X86Reg::Rax),
+                src: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                width: OpWidth::W16,
+            },
+            OpKind::SetCC {
+                dst: x86(X86Reg::Rdx),
+                cond: crate::smir::ir::types::Condition::Eq,
+                width: OpWidth::W8,
+            },
+            OpKind::CMove {
+                dst: x86(X86Reg::Rsi),
+                src: x86(X86Reg::Rdi),
+                cond: crate::smir::ir::types::Condition::Eq,
+                width: OpWidth::W16,
+            },
+            OpKind::Not {
+                dst: x86(X86Reg::Rbx),
+                src: x86(X86Reg::Rbx),
+                width: OpWidth::W8,
+            },
+            OpKind::Xchg {
+                reg1: x86(X86Reg::Rsi),
+                reg2: x86(X86Reg::Rdi),
+                width: OpWidth::W16,
+            },
             OpKind::Bt {
                 src: x86(X86Reg::R8),
                 index: SrcOperand::Reg(x86(X86Reg::R9)),
@@ -3704,15 +3757,17 @@ mod jit_gate_tests {
         // AArch64 W-register writes zero-extend, while x86 8/16-bit GPR
         // destinations preserve their upper bits. Until a specific lowering
         // implements that merge, these destination shapes must fail closed.
-        assert!(!x86_aarch64_gate(vec![OpKind::Mov {
+        assert!(!x86_aarch64_gate(vec![OpKind::Add {
             dst: x86(X86Reg::Rax),
-            src: SrcOperand::Reg(x86(X86Reg::Rcx)),
+            src1: x86(X86Reg::Rax),
+            src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
             width: OpWidth::W16,
+            flags: FlagUpdate::None,
         }]));
         assert!(!x86_aarch64_gate(vec![OpKind::SetCC {
             dst: x86(X86Reg::Rax),
             cond: crate::smir::ir::types::Condition::Eq,
-            width: OpWidth::W8,
+            width: OpWidth::W16,
         }]));
         assert!(!x86_aarch64_gate(vec![OpKind::Bts {
             dst: x86(X86Reg::Rax),
