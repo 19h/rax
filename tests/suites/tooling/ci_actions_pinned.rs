@@ -44,19 +44,25 @@ fn external_github_actions_are_pinned_to_full_commit_shas() {
 }
 
 #[test]
-fn scheduled_differential_excludes_diagnostic_only_evex_inventory() {
+fn scheduled_differential_separates_oracles_diagnostics_and_assembler_capabilities() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let workflow = root.join(".github/workflows/differential.yml");
     let contents = fs::read_to_string(&workflow)
         .unwrap_or_else(|err| panic!("failed to read {}: {err}", workflow.display()));
     let normalized = contents.split_whitespace().collect::<Vec<_>>().join(" ");
 
-    assert!(
-        normalized.contains(
-            "--include-ignored \\ --skip report_evex_spec_forms_rejected_by_smir_lifter \\ --nocapture"
-        ),
-        "scheduled differential tests must run ignored oracle coverage while excluding the intentionally failing EVEX diagnostic"
-    );
+    for required in [
+        "--include-ignored",
+        "--skip report_evex_spec_forms_rejected_by_smir_lifter",
+        "--skip qemu_evex_unimplemented_avx512_corpus_matches_rax_when_enabled",
+        "evex_generated_corpus_covers_supported_selectors_and_forms \\ -- --exact --nocapture",
+        "skips=--skip evex_generated_corpus_covers_supported_selectors_and_forms --skip qemu_evex_generated_corpus_matches_rax",
+    ] {
+        assert!(
+            normalized.contains(required),
+            "scheduled differential workflow is missing required policy fragment: {required}"
+        );
+    }
 }
 
 fn collect_yaml_files(dir: &Path, files: &mut Vec<PathBuf>) {
