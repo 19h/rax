@@ -58,6 +58,9 @@ const RV_VTYPE_OFFSET: i32 = RV_VL_OFFSET + 8;
 const RV_VSTART_OFFSET: i32 = RV_VTYPE_OFFSET + 8;
 const RV_VCSR_OFFSET: i32 = RV_VSTART_OFFSET + 8;
 const RV_VECTOR_FN_OFFSET: i32 = RV_VCSR_OFFSET + 8;
+/// `vlenb` is a read-only architectural constant for the 128-bit RVV state
+/// represented by [`RiscVGuestRegs`](crate::smir::lower::runtime::RiscVGuestRegs).
+const RV_VLENB: i64 = 16;
 
 const EXIT_RETURN: i64 = 0;
 const EXIT_TRAP: i64 = 1;
@@ -223,7 +226,9 @@ impl RiscVX86_64Lowerer {
                 e.emit_mov_rm(dst, PhysReg::Rbp, offset, OpWidth::W64);
             }
             VReg::Arch(ArchReg::RiscV(rv)) => {
-                if let Some(offset) = Self::arch_offset(rv)? {
+                if rv == RiscVReg::Csr(0xc22) {
+                    self.emit_mov_imm(dst, RV_VLENB, width);
+                } else if let Some(offset) = Self::arch_offset(rv)? {
                     let mut e = X86Emitter::new(&mut self.code);
                     e.emit_mov_rm(dst, STATE, offset, OpWidth::W64);
                 } else {

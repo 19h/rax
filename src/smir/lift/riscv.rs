@@ -4138,14 +4138,6 @@ impl RiscVLifter {
                 let modeled_ro = matches!(csr, 0xc20 | 0xc21 | 0xc22);
                 let w = self.op_width();
                 let mk = |ctx: &mut LiftContext, k: OpKind| SmirOp::new(ctx.next_op_id(), addr, k);
-                let src_operand = |slf: &Self, ctx: &mut LiftContext| -> SrcOperand {
-                    if is_imm {
-                        SrcOperand::Imm(zimm)
-                    } else {
-                        SrcOperand::Reg(slf.get_x_reg(rs1_reg, ctx))
-                    }
-                };
-
                 if let Some((shift, mask)) = fcsr_field {
                     // Read the whole fcsr, extract the addressed field → rd.
                     let fcsr_cur = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003)));
@@ -4185,9 +4177,25 @@ impl RiscVLifter {
                             flags: FlagUpdate::None,
                         },
                     ));
-                    // Read rs1 BEFORE writing rd (CSR reads the source first; rd may alias rs1).
+                    // Snapshot rs1 BEFORE writing rd. Retaining an architectural
+                    // VReg here is insufficient: if rd aliases rs1, the later
+                    // CSR update would observe the newly written old-CSR value.
                     let src = if writes {
-                        Some(src_operand(self, ctx))
+                        if is_imm {
+                            Some(SrcOperand::Imm(zimm))
+                        } else {
+                            let snapshot = ctx.alloc_vreg();
+                            let source = self.get_x_reg(rs1_reg, ctx);
+                            ops.push(mk(
+                                ctx,
+                                OpKind::Mov {
+                                    dst: snapshot,
+                                    src: SrcOperand::Reg(source),
+                                    width: w,
+                                },
+                            ));
+                            Some(SrcOperand::Reg(snapshot))
+                        }
                     } else {
                         None
                     };

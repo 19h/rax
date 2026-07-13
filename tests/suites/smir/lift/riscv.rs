@@ -12,15 +12,33 @@
 //! are generated directly. The test FAILS on any divergence and prints a
 //! per-`Op` breakdown of remaining lift gaps.
 
-#![cfg(target_os = "linux")]
+#![cfg(any(target_os = "linux", all(target_os = "macos", target_arch = "x86_64")))]
 
 use std::collections::BTreeMap;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use std::collections::{BTreeSet, HashMap};
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use std::sync::{Mutex, OnceLock};
 
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use rax::isa::riscv::decode::decode_compressed;
 use rax::isa::riscv::{
     FlatMemory as RvMem, Isa, Memory as RvMemory, Op, RiscVConfig, RiscVCpu, RiscVExit, Xlen,
     decode, decode_at,
 };
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use rax::smir::ir::types::FunctionId;
 use rax::smir::ir::types::{ArchReg, BlockId, OpId, RiscVReg, SourceArch};
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use rax::smir::ir::{CallingConv, SmirFunction};
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use rax::smir::lift::ControlFlow;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use rax::smir::lower::SmirLowerer;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use rax::smir::lower::cross::riscv_guest_to_x86_64_host::RiscVX86_64Lowerer;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use rax::smir::optimize::{OptLevel, optimize_function};
 use rax::smir::{
     ArchRegState, FlatMemory as SmirMem, LiftContext, LiftError, RiscVLifter, SmirBlock,
     SmirContext, SmirInterpreter, SmirLifter, Terminator, TrapKind,
@@ -29,6 +47,177 @@ use rax::smir::{
 const CODE_ADDR: u64 = 0x1000;
 const SCRATCH: u64 = 0x4000; // base for memory operands
 const MEM_SIZE: u64 = 0x10000;
+
+/// Collapse operand identities and literal values while retaining operation,
+/// width, addressing-mode, and control-flow structure. This keeps the native
+/// lowerability audit finite without conflating `I32` with `I64`, or distinct
+/// architectural operations whose names contain digits.
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn normalized_smir_shape(debug: &str) -> String {
+    let bytes = debug.as_bytes();
+    let mut normalized = String::with_capacity(debug.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index].is_ascii_digit() {
+            let attached_to_identifier =
+                index > 0 && (bytes[index - 1].is_ascii_alphabetic() || bytes[index - 1] == b'_');
+            if attached_to_identifier {
+                while index < bytes.len() && bytes[index].is_ascii_digit() {
+                    normalized.push(bytes[index] as char);
+                    index += 1;
+                }
+            } else {
+                normalized.push('#');
+                if bytes[index] == b'0'
+                    && index + 1 < bytes.len()
+                    && matches!(bytes[index + 1], b'x' | b'X')
+                {
+                    index += 2;
+                    while index < bytes.len() && bytes[index].is_ascii_hexdigit() {
+                        index += 1;
+                    }
+                } else {
+                    while index < bytes.len() && bytes[index].is_ascii_digit() {
+                        index += 1;
+                    }
+                }
+            }
+        } else {
+            normalized.push(bytes[index] as char);
+            index += 1;
+        }
+    }
+    normalized
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn lowerability_function(
+    control: &ControlFlow,
+    ops: &[rax::smir::SmirOp],
+    instruction_len: usize,
+) -> (SmirFunction, HashMap<BlockId, u64>) {
+    let entry = BlockId(0);
+    let mut return_pcs = HashMap::new();
+    let mut blocks = Vec::new();
+    let terminator = match control {
+        ControlFlow::Fallthrough | ControlFlow::NextInsn => {
+            return_pcs.insert(entry, CODE_ADDR + instruction_len as u64);
+            Terminator::Return { values: vec![] }
+        }
+        ControlFlow::Branch { target } | ControlFlow::DirectBranch(target) => {
+            return_pcs.insert(entry, *target);
+            Terminator::Return { values: vec![] }
+        }
+        ControlFlow::CondBranchReg {
+            cond,
+            taken,
+            not_taken,
+        } => {
+            let taken_id = BlockId(1);
+            let not_taken_id = BlockId(2);
+            return_pcs.insert(taken_id, *taken);
+            return_pcs.insert(not_taken_id, *not_taken);
+            blocks.push(SmirBlock {
+                id: taken_id,
+                guest_pc: *taken,
+                phis: vec![],
+                ops: vec![],
+                terminator: Terminator::Return { values: vec![] },
+                exec_count: 0,
+            });
+            blocks.push(SmirBlock {
+                id: not_taken_id,
+                guest_pc: *not_taken,
+                phis: vec![],
+                ops: vec![],
+                terminator: Terminator::Return { values: vec![] },
+                exec_count: 0,
+            });
+            Terminator::CondBranch {
+                cond: *cond,
+                true_target: taken_id,
+                false_target: not_taken_id,
+            }
+        }
+        ControlFlow::IndirectBranch { target } => Terminator::IndirectBranch {
+            target: *target,
+            possible_targets: vec![],
+        },
+        other => panic!("RISC-V lift emitted unsupported x86 JIT control flow: {other:?}"),
+    };
+    let mut ops = ops.to_vec();
+    for (index, op) in ops.iter_mut().enumerate() {
+        op.id = OpId(index as u16);
+    }
+    blocks.insert(
+        0,
+        SmirBlock {
+            id: entry,
+            guest_pc: CODE_ADDR,
+            phis: vec![],
+            ops,
+            terminator,
+            exec_count: 0,
+        },
+    );
+
+    let mut function = SmirFunction::new(FunctionId(0), entry, CODE_ADDR);
+    function.blocks = blocks;
+    function.guest_range = (CODE_ADDR, CODE_ADDR + instruction_len as u64);
+    function.calling_convention = CallingConv::RiscVStd;
+    (function, return_pcs)
+}
+
+/// Prove that every structurally distinct successful lift encountered by this
+/// differential corpus lowers and finalizes at both optimization boundaries.
+/// The global set is synchronization-safe because this test module is executed
+/// concurrently by the Rust test harness.
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn assert_x86_lowerable_once(insn: &[u8], lifted: &rax::smir::LiftResult) {
+    static LOWERED_SHAPES: OnceLock<Mutex<BTreeSet<String>>> = OnceLock::new();
+
+    let decoded = match insn {
+        [a, b] => decode_compressed(u16::from_le_bytes([*a, *b]), Xlen::Rv64, &Isa::rv64gc()),
+        [a, b, c, d] => decode(
+            u32::from_le_bytes([*a, *b, *c, *d]),
+            Xlen::Rv64,
+            &Isa::rv64gc(),
+        ),
+        _ => panic!(
+            "RISC-V instruction has unsupported byte length {}",
+            insn.len()
+        ),
+    };
+    let shape = normalized_smir_shape(&format!(
+        "{:?}/len={}/control={:?}/ops={:?}",
+        decoded.op, decoded.len, lifted.control_flow, lifted.ops
+    ));
+    if !LOWERED_SHAPES
+        .get_or_init(|| Mutex::new(BTreeSet::new()))
+        .lock()
+        .expect("lowerability shape registry poisoned")
+        .insert(shape.clone())
+    {
+        return;
+    }
+
+    let (function, return_pcs) =
+        lowerability_function(&lifted.control_flow, &lifted.ops, lifted.bytes_consumed);
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let mut optimized = function.clone();
+        optimize_function(&mut optimized, level);
+        let mut lowerer = RiscVX86_64Lowerer::new();
+        lowerer.set_return_pcs(return_pcs.clone());
+        lowerer.lower_function(&optimized).unwrap_or_else(|error| {
+            panic!("RISC-V SMIR shape failed x86 lowering at {level:?}: {error:?}\nshape={shape}")
+        });
+        lowerer.finalize().unwrap_or_else(|error| {
+            panic!(
+                "RISC-V SMIR shape failed x86 finalization at {level:?}: {error:?}\nshape={shape}"
+            )
+        });
+    }
+}
 
 #[derive(Clone, Copy)]
 struct State {
@@ -211,6 +400,8 @@ fn run_smir(insn: &[u8], init: &State) -> Result<Option<State>, String> {
         }
         Err(e) => return Err(format!("lift error: {e:?}")),
     };
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    assert_x86_lowerable_once(insn, &res);
     let mut ops = res.ops;
     for (i, op) in ops.iter_mut().enumerate() {
         op.id = OpId(i as u16);
@@ -332,6 +523,8 @@ fn run_smir_cf(insn: &[u8], init: &State) -> Result<Option<(State, u64)>, String
         }
         Err(e) => return Err(format!("lift error: {e:?}")),
     };
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    assert_x86_lowerable_once(insn, &res);
     let cf = res.control_flow;
     let bytes = res.bytes_consumed as u64;
     let mut ops = res.ops;

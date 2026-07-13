@@ -1198,6 +1198,7 @@ fn compressed_fallthrough_uses_exact_two_byte_resume_pc() {
 fn lifted_fp_bit_operations_and_fcsr_access_execute_natively() {
     let mut x = [0u64; 32];
     x[1] = 0x0123_4567_89ab_cdef;
+    x[5] = 0xa5;
     let mut f = [0u64; 32];
     f[1] = 0x8000_0000_0000_0001;
     f[2] = 0x7ff8_1234_5678_9abc;
@@ -1213,6 +1214,9 @@ fn lifted_fp_bit_operations_and_fcsr_access_execute_natively() {
         fp_type(0x10, 2, 1, 0, 5),    // fsgnj.s f5,f1,f2
         fp_type(0x70, 0, 1, 1, 5),    // fclass.s x5,f1
         i_type(0x003, 1, 1, 5, 0x73), // csrrw x5,fcsr,x1
+        i_type(0x003, 5, 1, 5, 0x73), // csrrw x5,fcsr,x5 (rd/rs1 alias)
+        i_type(0x003, 5, 3, 5, 0x73), // csrrc x5,fcsr,x5 (rd/rs1 alias)
+        i_type(0xc22, 0, 2, 5, 0x73), // csrrs x5,vlenb,x0
     ] {
         run_case_with_fp(&instruction.to_le_bytes(), x, f, 0x61, memory);
     }
