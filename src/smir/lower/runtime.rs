@@ -2692,7 +2692,9 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         | OpKind::Shr { dst, width, .. }
         | OpKind::Sar { dst, width, .. }
         | OpKind::Rol { dst, width, .. }
-        | OpKind::Ror { dst, width, .. } => {
+        | OpKind::Ror { dst, width, .. }
+        | OpKind::Rcl { dst, width, .. }
+        | OpKind::Rcr { dst, width, .. } => {
             full_gpr_write(width)
                 || (x86_aarch64_legacy_gpr(dst) && matches!(width, OpWidth::W8 | OpWidth::W16))
         }
@@ -2700,8 +2702,6 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         | OpKind::Shld { width, .. }
         | OpKind::Shrd { width, .. }
         | OpKind::X86NddDoubleShift { width, .. }
-        | OpKind::Rcl { width, .. }
-        | OpKind::Rcr { width, .. }
         | OpKind::MulU { width, .. }
         | OpKind::MulS { width, .. }
         | OpKind::Bsf { width, .. }
@@ -3873,6 +3873,37 @@ mod jit_gate_tests {
                 assert!(
                     x86_aarch64_gate(vec![op]),
                     "flag-setting subword rotate {width:?} must be eligible"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn x86_aarch64_gate_accepts_subword_carry_rotate_partial_writes() {
+        let flags = FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF));
+        for width in [OpWidth::W8, OpWidth::W16] {
+            for right in [false, true] {
+                let op = if right {
+                    OpKind::Rcr {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        amount: SrcOperand::Imm(1),
+                        width,
+                        flags,
+                    }
+                } else {
+                    OpKind::Rcl {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rax),
+                        amount: SrcOperand::Imm(1),
+                        width,
+                        flags,
+                    }
+                };
+                assert!(
+                    x86_aarch64_gate(vec![op]),
+                    "{} {width:?} must be eligible",
+                    if right { "RCR" } else { "RCL" }
                 );
             }
         }

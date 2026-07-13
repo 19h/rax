@@ -598,6 +598,42 @@ fn x86_subword_rotates_bridge_defined_flags_and_preserve_upper_bits() {
 }
 
 #[test]
+fn x86_subword_carry_rotates_execute_natively_with_partial_register_merges() {
+    // rcl al,1; rcr cx,1; jnz start; hlt. Both rotates consume and define CF,
+    // define OF for count one, and preserve seeded ZF/PF/AF. The final JNZ is
+    // therefore not taken while both byte/word upper-register merges execute.
+    let code = [
+        0xD0, 0xD0, // RCL al,1
+        0x66, 0xD1, 0xD9, // RCR cx,1
+        0x75, 0xF9, // JNZ start
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xAAAA_BBBB_CCCC_DD81;
+        regs.rcx = 0x1111_2222_3333_0001;
+        regs.rflags = 0xCD7;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(jit.jit_try_block().expect("subword RCL/RCR JIT attempt"));
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "subword RCL/RCR");
+    assert_eq!(actual.rax, 0xAAAA_BBBB_CCCC_DD03, "RCL al upper merge");
+    assert_eq!(actual.rcx, 0x1111_2222_3333_8000, "RCR cx upper merge");
+    assert_eq!(actual.rflags & STATUS, expected.rflags & STATUS);
+}
+
+#[test]
 fn x86_aarch64_jit_rejects_live_pf_af_definitions_without_execution() {
     // add rax,rbx; jnz start; hlt. ADD's live PF/AF outputs cannot be represented
     // in NZCV, so the architecture-specific gate must retain interpreter fallback.

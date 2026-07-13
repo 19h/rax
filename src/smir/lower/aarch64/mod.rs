@@ -9768,6 +9768,17 @@ impl Aarch64Lowerer {
         flags: FlagUpdate,
         right: bool,
     ) -> Result<(), LowerError> {
+        if let Some((dst_reg, result)) =
+            Self::x86_partial_write_scratch(dst, width, &[src], &[amount])?
+        {
+            let scratches = [result];
+            self.emit_scratch_save(&scratches);
+            self.lower_rotate_carry(Self::arm_x_reg(result), src, amount, width, flags, right)?;
+            self.emit_bitfield(dst_reg, result, 0b01, 0, width.bits() - 1, OpWidth::W64)?;
+            self.emit_scratch_restore(&scratches);
+            return Ok(());
+        }
+
         let dst_reg = Self::dst_gpr_arm_or_x86(dst)?;
         let src_reg = Self::gpr_arm_or_x86(src)?;
         let amount_reg = match amount {
@@ -54265,6 +54276,76 @@ mod tests {
             0,
             Some(2),
         );
+    }
+
+    #[test]
+    fn lowers_x86_subword_carry_rotate_partial_write_matrix() {
+        let flags = FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF));
+        for width in [OpWidth::W8, OpWidth::W16] {
+            for right in [false, true] {
+                for carry_in in [false, true] {
+                    let initial = match width {
+                        OpWidth::W8 => 0xaaaa_bbbb_cccc_dd81,
+                        OpWidth::W16 => 0xaaaa_bbbb_cccc_8001,
+                        _ => unreachable!(),
+                    };
+                    let kind = if right {
+                        OpKind::Rcr {
+                            dst: x86(X86Reg::Rax),
+                            src: x86(X86Reg::Rax),
+                            amount: SrcOperand::Imm(1),
+                            width,
+                            flags,
+                        }
+                    } else {
+                        OpKind::Rcl {
+                            dst: x86(X86Reg::Rax),
+                            src: x86(X86Reg::Rax),
+                            amount: SrcOperand::Imm(1),
+                            width,
+                            flags,
+                        }
+                    };
+                    let code = lower_single_op(kind);
+                    let old_nzcv = 0b1101 | (u8::from(carry_in) << 1);
+                    let (expected_low, expected_carry, effective) =
+                        ref_rotate_carry(initial, 1, carry_in, width, right);
+                    let expected =
+                        (initial & !width_mask(width)) | (expected_low & width_mask(width));
+                    let expected_nzcv = expected_rotate_carry_nzcv(
+                        old_nzcv,
+                        expected_low,
+                        expected_carry,
+                        effective,
+                        width,
+                        flags,
+                        right,
+                    );
+
+                    let (out, out_nzcv, sp) = run_aarch64_code(
+                        &code,
+                        &[
+                            (0, initial),
+                            (16, 0x1616_1616_1616_1616),
+                            (17, 0x1717_1717_1717_1717),
+                        ],
+                        old_nzcv,
+                    );
+                    let op = if right { "RCR" } else { "RCL" };
+                    assert_eq!(
+                        out[0], expected,
+                        "{op} {width:?} carry={carry_in} partial write"
+                    );
+                    assert_eq!(
+                        out_nzcv, expected_nzcv,
+                        "{op} {width:?} carry={carry_in} flags"
+                    );
+                    assert_eq!(out[16], 0x1616_1616_1616_1616, "{op} x16 scratch");
+                    assert_eq!(out[17], 0x1717_1717_1717_1717, "{op} x17 scratch");
+                    assert_eq!(sp, 0x8000, "{op} stack");
+                }
+            }
+        }
     }
 
     #[test]
