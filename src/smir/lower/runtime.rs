@@ -2985,8 +2985,21 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
                     && x86_aarch64_legacy_gpr(reg1)
                     && x86_aarch64_legacy_gpr(reg2))
         }
-        OpKind::ZeroExtend { to_width, .. } | OpKind::SignExtend { to_width, .. } => {
+        OpKind::ZeroExtend {
+            dst,
+            from_width,
+            to_width,
+            ..
+        }
+        | OpKind::SignExtend {
+            dst,
+            from_width,
+            to_width,
+            ..
+        } => {
             full_gpr_write(to_width)
+                || (matches!((from_width, to_width), (OpWidth::W8, OpWidth::W16))
+                    && x86_aarch64_legacy_gpr(dst))
         }
         // CWD/CDQ/CQO has dedicated x86 partial-write lowering and native
         // machine regressions for its W8/W16 merge behavior.
@@ -4394,6 +4407,63 @@ mod jit_gate_tests {
             },
         ] {
             assert!(!x86_aarch64_gate(vec![op.clone()]), "unsupported {op:?}");
+        }
+    }
+
+    #[test]
+    fn x86_aarch64_gate_accepts_only_architectural_w16_extend_partial_writes() {
+        let rax = x86(X86Reg::Rax);
+        let rbx = x86(X86Reg::Rbx);
+        for op in [
+            OpKind::ZeroExtend {
+                dst: rax,
+                src: rbx,
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W16,
+            },
+            OpKind::SignExtend {
+                dst: rax,
+                src: rax,
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W16,
+            },
+        ] {
+            assert!(
+                x86_aarch64_gate(vec![op.clone()]),
+                "architectural W16 extension must JIT: {op:?}"
+            );
+        }
+
+        for op in [
+            OpKind::ZeroExtend {
+                dst: rax,
+                src: rbx,
+                from_width: OpWidth::W16,
+                to_width: OpWidth::W16,
+            },
+            OpKind::SignExtend {
+                dst: rax,
+                src: rbx,
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W8,
+            },
+            OpKind::ZeroExtend {
+                dst: x86(X86Reg::R16),
+                src: rbx,
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W16,
+            },
+            OpKind::SignExtend {
+                dst: rax,
+                src: VReg::Virtual(VirtualId(9)),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W16,
+            },
+        ] {
+            assert!(
+                !x86_aarch64_gate(vec![op.clone()]),
+                "non-architectural W16 extension must deopt: {op:?}"
+            );
         }
     }
 

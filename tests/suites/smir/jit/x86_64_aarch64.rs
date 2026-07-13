@@ -380,6 +380,56 @@ fn x86_subword_mov_and_setcc_execute_natively_with_partial_register_merges() {
 }
 
 #[test]
+fn x86_w16_movx_and_cbw_execute_natively_with_partial_register_merges() {
+    // movzx dx,cl; movsx si,bl; cbw; movzx bx,dil; jnz start; hlt. Each
+    // instruction replaces only the destination's low word. The REX-prefixed
+    // DIL source also proves it is not decoded as the legacy BH byte lane.
+    // Seeded ZF=1 is preserved, so the syntactic backedge is not taken.
+    let code = [
+        0x66, 0x0F, 0xB6, 0xD1, // MOVZX dx,cl
+        0x66, 0x0F, 0xBE, 0xF3, // MOVSX si,bl
+        0x66, 0x98, // CBW
+        0x66, 0x40, 0x0F, 0xB6, 0xDF, // MOVZX bx,dil
+        0x75, 0xEF, // JNZ start
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xAAAA_BBBB_CCCC_0081;
+        regs.rcx = 0x1111_2222_3333_44AB;
+        regs.rdx = 0xDEAD_BEEF_1234_5678;
+        regs.rbx = 0xBBBB_CCCC_DDDD_FF80;
+        regs.rsi = 0x6666_7777_8888_9999;
+        regs.rdi = 0x1111_2222_3333_447E;
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block().expect("W16 MOVX/CBW JIT attempt"),
+        "W16 MOVSX/MOVZX and CBW must enter the AArch64 tier"
+    );
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "W16 MOVX/CBW");
+    assert_eq!(actual.rax, 0xAAAA_BBBB_CCCC_FF81, "CBW alias merge");
+    assert_eq!(actual.rcx, 0x1111_2222_3333_44AB, "MOVZX source");
+    assert_eq!(actual.rdx, 0xDEAD_BEEF_1234_00AB, "MOVZX dx,cl");
+    assert_eq!(actual.rbx, 0xBBBB_CCCC_DDDD_007E, "REX MOVZX bx,dil");
+    assert_eq!(actual.rsi, 0x6666_7777_8888_FF80, "MOVSX si,bl");
+    assert_eq!(actual.rdi, 0x1111_2222_3333_447E, "REX byte source");
+    assert_eq!(actual.rflags, 0xCD6, "extensions preserve RFLAGS");
+}
+
+#[test]
 fn x86_legacy_high_byte_setcc_remains_interpreter_only() {
     // SETZ AH lifts through a virtual byte and a high-lane merge. The identity
     // bridge has no AH/CH/DH/BH lane mapping, so the block must fail closed.

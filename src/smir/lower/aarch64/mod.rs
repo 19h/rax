@@ -10727,6 +10727,33 @@ impl Aarch64Lowerer {
             });
         }
 
+        // An x86 byte/word destination is a partial register write: the
+        // extended value replaces only the low 8/16 bits and the rest of the
+        // architectural GPR survives. Compute the narrow result in a scratch
+        // register before merging it so destructive forms such as CBW
+        // (dst == src) still read the original source byte.
+        if matches!(dst, VReg::Arch(ArchReg::X86(_)))
+            && matches!(to_width, OpWidth::W8 | OpWidth::W16)
+        {
+            let dst_reg = Self::dst_gpr_arm_or_x86(dst)?;
+            let mut avoid = vec![dst_reg];
+            if !matches!(src, VReg::Imm(_)) {
+                avoid.push(Self::gpr_arm_or_x86(src)?);
+            }
+            let scratches = Self::scratch_regs(&avoid, 1)?;
+            self.emit_scratch_save(&scratches);
+            self.lower_extend(
+                VReg::Arch(ArchReg::Arm(ArmReg::X(scratches[0]))),
+                src,
+                from_width,
+                to_width,
+                sign_extend,
+            )?;
+            self.emit_bitfield(dst_reg, scratches[0], 0b01, 0, to_bits - 1, OpWidth::W64)?;
+            self.emit_scratch_restore(&scratches);
+            return Ok(());
+        }
+
         if let VReg::Imm(value) = src {
             let emit_width = if to_width == OpWidth::W64 {
                 OpWidth::W64
@@ -48234,6 +48261,56 @@ mod tests {
         expected.extend_from_slice(&enc_mov_wide(0, 0b10, 0, 0xff80, 0).to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn lowers_x86_w16_extends_as_partial_register_merges_runtime() {
+        let rax = 0xaaaa_bbbb_cccc_dd00;
+        let rcx = 0x1111_2222_3333_44ab;
+        let rdx = 0xdddd_eeee_ffff_0080;
+        let rbx = 0xbbbb_cccc_dddd_1234;
+        let code = lower_ops(vec![
+            OpKind::ZeroExtend {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rcx),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W16,
+            },
+            OpKind::SignExtend {
+                dst: x86(X86Reg::Rdx),
+                src: x86(X86Reg::Rdx),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W16,
+            },
+            // O2 constant propagation may replace an architectural source
+            // with an immediate even though MOVSX/MOVZX encode r/m inputs.
+            OpKind::ZeroExtend {
+                dst: x86(X86Reg::Rbx),
+                src: VReg::Imm(0x12ab),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W16,
+            },
+        ]);
+        let old_nzcv = 0b1010;
+        let (out, out_nzcv, sp) = run_aarch64_code(
+            &code,
+            &[
+                (0, rax),
+                (1, rcx),
+                (2, rdx),
+                (3, rbx),
+                (15, 0x1515_1515_1515_1515),
+            ],
+            old_nzcv,
+        );
+
+        assert_eq!(out[0], 0xaaaa_bbbb_cccc_00ab, "MOVZX ax,cl merge");
+        assert_eq!(out[1], rcx, "MOVZX source");
+        assert_eq!(out[2], 0xdddd_eeee_ffff_ff80, "CBW-style alias merge");
+        assert_eq!(out[3], 0xbbbb_cccc_dddd_00ab, "constant-folded merge");
+        assert_eq!(out[15], 0x1515_1515_1515_1515, "mapped sentinel");
+        assert_eq!(out_nzcv, old_nzcv, "extensions preserve flags");
+        assert_eq!(sp, 0x8000, "scratch spills balance the stack");
     }
 
     #[test]
