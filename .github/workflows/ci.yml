@@ -130,6 +130,7 @@ jobs:
             --test arm \
             --test realmode_boot \
             --test riscv_boot \
+            --test riscv_smir_x86_jit \
             --test smir_avx10_roundtrip \
             --test smir_jit_vcpu \
             --test smir_jit_x86_aarch64 \

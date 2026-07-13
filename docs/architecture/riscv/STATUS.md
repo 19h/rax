@@ -4,8 +4,9 @@ This document records the state of RISC-V support in rax across two layers:
 
 1. **The interpreter** (`src/isa/riscv/`) — a self-contained, spec-faithful RV64
    software interpreter, differentially verified against `qemu-riscv64`.
-2. **The SMIR lifter** (`src/smir/lift/riscv.rs`) — translation of RISC-V machine
-   code to rax's SMIR (the hot-block JIT IR), verified against the interpreter.
+2. **The SMIR lifter and x86-64 cross-JIT** (`src/smir/lift/riscv.rs`,
+   `src/smir/lower/cross/riscv_guest_to_x86_64_host.rs`) — translation of
+   RISC-V machine code to rax's SMIR and state-backed native x86-64 code.
 
 Companion docs: [`REMAINING.md`](REMAINING.md) (interpreter roadmap — privileged
 arch / MMU). The two verification harnesses are the backbone of the "provably
@@ -127,12 +128,13 @@ is the golden oracle, so no external toolchain is needed and encodings are
 generated directly. **The test fails on any divergence**; an op the lifter doesn't
 implement is reported as an honest *gap*, never silently mis-lifted.
 
-> Critical harness detail: the RISC-V lifter writes results to SSA virtual regs
-> (`ctx.define_arch_reg`), with the arch→vreg map held in the *lifter's*
-> allocator. Results are read back via `ctx.read_vreg(lctx.get_arch_reg(…))`, not
-> `ctx.arch_regs` (which only holds the seed).
+> Architectural x/f/PC/CSR operands remain explicit `VReg::Arch` values. This
+> matches the x86 and AArch64 lifters and is required by state-backed cross-JIT
+> lowering: architectural destinations are committed directly to the persistent
+> guest state, while instruction-local intermediates remain SSA virtual regs.
 
-Five sweeps; latest run (**zero divergence across all of them**):
+Historical five-sweep snapshot (**zero divergence across all of them**; counts
+predate the opaque `RvFp`/`RvIntCrypto` additions):
 
 | Sweep | matched | gap-ops | diverged |
 |-------|---------|---------|----------|
@@ -178,23 +180,54 @@ Five sweeps; latest run (**zero divergence across all of them**):
    so the lifter **never emits a wrong op** — it lifts correctly or returns
    `Unsupported`.
 
-### Gaps — blocked by SMIR's op-set (not by RISC-V), intentional
+### Opaque architecture-exact operations
 
-Every remaining op needs a **shared SMIR-core change** (`ir/ops.rs`/`interpret.rs` + the
-exhaustive matches), which is out of the RISC-V-specific scope and actively
-churned by concurrent agents:
+The former SMIR-op-set gaps are represented by explicit RISC-V operations:
 
-- **FP arithmetic / convert / compare / min-max / round (~99 ops)** — SMIR's FP
-  interp is native `a+b` with no fflags tracking, no NaN canonicalization, no
-  dynamic rounding; the harness compares `fcsr`, so lifting these would diverge.
-  Needs an FP-with-flags overhaul.
-- **AES (`Aes32*`/`Aes64*`) / SM4 (`Sm4ks/Sm4ed`)** — need a 256-entry S-box table-lookup op.
-- **Clmul/Clmulh/Clmulr** — need a carry-less-multiply primitive.
-- **Xperm4/8** — crossbar byte/nibble gather.
+- `RvFp` evaluates scalar FP/FMA with RISC-V rounding, NaN canonicalization,
+  and FCSR/fflags updates;
+- `RvIntCrypto` evaluates AES, SM4, carry-less multiply, and XPERM families;
+- `RvVector` evaluates RVV while explicitly threading the scalar x/f/CSR
+  register state required by vector/scalar transfer operations.
+
+These operations are exact in `SmirInterpreter`; they are also the bounded
+native-lowering frontier for the x86-64 cross-JIT described below.
 
 ---
 
-## 3. Commit index (this session, RISC-V-specific)
+## 3. x86-64 cross-JIT lowering
+
+`RiscVX86_64Lowerer` uses an explicit `extern "C" fn(*mut RiscVGuestRegs)` ABI;
+it does not reuse the x86-guest identity-register ABI. The 560-byte state holds
+`x[32]`, `f[32]`, PC, FCSR, exit classification, memory context, and scalar
+load/store helper pointers. Reads of x0 are hard-wired to zero and writes are
+discarded.
+
+Implemented native scalar families:
+
+- RV32/RV64 integer move, add/sub, Boolean operations, shifts and rotates;
+- compare/SETcc/select, zero/sign extension, CLZ/CTZ/CPOP, byte/bit reversal;
+- M-extension low/high multiply and quotient/remainder, including totalized
+  divide-by-zero and signed-overflow paths that cannot raise host `#DE`;
+- f-register bit moves/sign injection/classification and FCSR CSR access (the
+  generic, rounding-free scalar-FP subset);
+- scalar loads/stores through the guest-memory helper ABI (successful-access
+  path; the current helper result does not encode a precise guest fault);
+- direct conditional native CFG, indirect dispatcher exits, exact caller-supplied
+  resume PCs for 16-bit compressed instructions, and classified trap/syscall/
+  breakpoint exits.
+
+`tests/suites/smir/jit/riscv_x86_64.rs` performs the complete machine-code →
+lift → lower → W^X execute path and compares x-registers, PC, and memory against
+`RiscVCpu` at both O0 and O2. The corpus covers RV64I ALU/branch/load/store, M-extension high/low
+multiply and signed/unsigned divide/remainder (including `/0` and `MIN/-1`),
+Zbb rotate/count operations, word operations, JAL/JALR, and compressed PC
+advance, plus FP bit operations and FCSR access. The generated count sequence is
+baseline x86-64 and does not require host `POPCNT`. Remaining native gaps are
+fault-precise memory exits, atomic/exclusive helpers, `RvIntCrypto`, arithmetic
+`RvFp`, and `RvVector`.
+
+## 4. Commit index (this session, RISC-V-specific)
 
 **Vector data path (interpreter):** `521d6ff` config · `5a1825f` basic ld/st +
 int arith · `f4ac4a3` min/max/shift/merge · `3d5aec9` compares · `4dedf44`
@@ -222,10 +255,10 @@ moves/sign · `684f5d5` compressed FP load/store · `a3fc2d5` `.S`/`.H` sign-inj
 
 The **unprivileged RV64GCV ISA is comprehensively implemented and verified** in
 the interpreter (29 scalar + 32 vector differential suites + ~300k fuzz
-comparisons/run, all at zero divergence vs qemu). The **SMIR lift covers
-everything expressible with the current SMIR op-set** — the complete integer ISA,
-all loads/stores/AMO, 100% of compressed, all Zb*/Zicond/Zk-hash, and the entire
-fflags-free FP subset — also at zero divergence (~150k+ instructions/run). The
-remaining gaps in both layers are precisely characterized and bounded: the
-interpreter needs privileged arch / Sv39 (a qemu-*system* oracle), and the lifter
-needs SMIR-core primitives (FP-with-flags, S-box, carry-less multiply).
+comparisons/run, all at zero divergence vs qemu). The **SMIR lift covers the
+scalar, compressed, atomic, FP, crypto, and vector families**, using explicit
+architecture-exact opaque ops where generic SMIR primitives cannot carry the
+required RISC-V state. The state-backed x86-64 cross-JIT now executes the scalar
+integer/control/memory and rounding-free FP-bit subset end-to-end; atomics,
+arithmetic scalar-FP/crypto, and RVV native lowering remain. Privileged translation/MMU execution remains a separate
+interpreter/VMM scope described in `REMAINING.md`.

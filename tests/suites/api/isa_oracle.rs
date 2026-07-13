@@ -199,6 +199,23 @@ fn emits_structured_smir_ops() {
 }
 
 #[test]
+fn emits_riscv_architectural_smir_destinations() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::RiscV;
+    opts.riscv_xlen = Xlen::Rv64;
+    opts.riscv_isa = RiscVIsaProfile::Rv64Gc;
+
+    // addi x1, x0, 1
+    let value = decode_to_json(&[0x93, 0x00, 0x10, 0x00], &opts).unwrap();
+    let op = &value["smir"]["ops"][0];
+
+    assert_eq!(op["kind"]["dst"]["kind"], "arch");
+    assert_eq!(op["kind"]["dst"]["arch"], "riscv");
+    assert_eq!(op["kind"]["dst"]["name"], "x1");
+    assert_eq!(value["smir"]["arch_outputs"], serde_json::json!([]));
+}
+
+#[test]
 fn reports_seeded_side_effects() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;
@@ -216,6 +233,25 @@ fn reports_seeded_side_effects() {
         value["side_effects"]["changed_regs"]["rax"]["after"],
         "0x1234"
     );
+}
+
+#[test]
+fn reports_seeded_riscv_side_effects() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::RiscV;
+    opts.riscv_xlen = Xlen::Rv64;
+    opts.riscv_isa = RiscVIsaProfile::Rv64Gc;
+
+    let seed = OracleSeed {
+        regs: vec![("x1".to_string(), 5)],
+        memory: vec![],
+        memory_size: None,
+    };
+    // addi x1, x1, 1
+    let value = decode_to_json_with_seed(&[0x93, 0x80, 0x10, 0x00], &opts, Some(&seed)).unwrap();
+
+    assert_eq!(value["side_effects"]["available"], true);
+    assert_eq!(value["side_effects"]["changed_regs"]["x1"]["after"], "0x6");
 }
 
 #[test]

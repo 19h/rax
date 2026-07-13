@@ -236,6 +236,63 @@ impl Aarch64GuestRegs {
     pub const VEC_STORE_FN_OFFSET: i32 = Self::VEC_LOAD_FN_OFFSET + 8;
 }
 
+/// State ABI for RISC-V SMIR lowered to an x86-64 host.
+///
+/// The state-backed cross-lowerer accesses every field through the pointer
+/// passed in RDI.  All scalar fields use eight-byte slots, including `fcsr`, so
+/// the ABI is identical for RV32 and RV64 and has mechanically checkable
+/// offsets.  `load_fn` has signature
+/// `extern "C" fn(ctx, addr, size, signed) -> value`; `store_fn` has signature
+/// `extern "C" fn(ctx, addr, value, size) -> success`.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RiscVGuestRegs {
+    /// Integer registers x0-x31.  The lowerer hard-wires reads of x0 to zero and
+    /// discards writes, independently of this backing slot.
+    pub x: [u64; 32],
+    /// Floating-point registers f0-f31 as raw IEEE-754/NaN-boxed bits.
+    pub f: [u64; 32],
+    /// Program counter at dispatcher re-entry.
+    pub pc: u64,
+    /// FCSR in bits 7:0; upper bits are reserved and kept zero by the guest ISA.
+    pub fcsr: u64,
+    /// Native exit classification: 0=return/branch, 1=trap, 2=syscall,
+    /// 3=breakpoint.
+    pub exit_reason: u64,
+    /// Opaque memory-helper context.
+    pub ctx: u64,
+    /// Address of the scalar load helper.
+    pub load_fn: u64,
+    /// Address of the scalar store helper.
+    pub store_fn: u64,
+}
+
+impl Default for RiscVGuestRegs {
+    fn default() -> Self {
+        Self {
+            x: [0; 32],
+            f: [0; 32],
+            pc: 0,
+            fcsr: 0,
+            exit_reason: 0,
+            ctx: 0,
+            load_fn: 0,
+            store_fn: 0,
+        }
+    }
+}
+
+impl RiscVGuestRegs {
+    pub const X_OFFSET: i32 = 0;
+    pub const F_OFFSET: i32 = 32 * 8;
+    pub const PC_OFFSET: i32 = Self::F_OFFSET + 32 * 8;
+    pub const FCSR_OFFSET: i32 = Self::PC_OFFSET + 8;
+    pub const EXIT_REASON_OFFSET: i32 = Self::FCSR_OFFSET + 8;
+    pub const CTX_OFFSET: i32 = Self::EXIT_REASON_OFFSET + 8;
+    pub const LOAD_FN_OFFSET: i32 = Self::CTX_OFFSET + 8;
+    pub const STORE_FN_OFFSET: i32 = Self::LOAD_FN_OFFSET + 8;
+}
+
 // enter_native(rdi = entry ptr, rsi = *mut GuestRegs):
 //   preserve host callee-saved -> load guest GPRs+RFLAGS and, for an admitted
 //   vector region, ZMM0-ZMM31+K0-K7 into the identical host regs -> `call` the
@@ -850,6 +907,19 @@ impl ExecMem {
         let entry = unsafe { self.ptr.add(entry_offset) } as *const u8;
         let entry: Entry = unsafe { core::mem::transmute(entry) };
         unsafe { entry(regs as *mut Aarch64GuestRegs) };
+    }
+
+    /// Execute a state-backed RISC-V-on-x86-64 lowered block.
+    ///
+    /// # Safety
+    /// The mapped code must have been emitted for the
+    /// `extern "C" fn(*mut RiscVGuestRegs)` ABI and must preserve the host ABI.
+    #[cfg(target_arch = "x86_64")]
+    pub fn run_riscv(&self, entry_offset: usize, regs: &mut RiscVGuestRegs) {
+        type Entry = unsafe extern "C" fn(*mut RiscVGuestRegs);
+        let entry = unsafe { self.ptr.add(entry_offset) } as *const u8;
+        let entry: Entry = unsafe { core::mem::transmute(entry) };
+        unsafe { entry(regs as *mut RiscVGuestRegs) };
     }
 
     /// Execute an identity-register-mapped AArch64 block on an AArch64 host.

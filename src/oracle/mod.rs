@@ -993,12 +993,13 @@ fn lift_smir(source: SourceArch, bytes: &[u8], opts: &OracleOptions) -> Value {
         Ok(result) => {
             let ops = result.ops.iter().map(smir_op_json).collect::<Vec<_>>();
             let control_flow = control_flow_json(&result.control_flow);
-            // Some lifters (notably RISC-V and Hexagon) model architectural
-            // writes by rebinding an architecture register to a fresh SSA
-            // VReg instead of putting the architecture register directly in
-            // `OpKind::dests()`.  Publish that final mapping as additive oracle
-            // metadata so stateless effect consumers can faithfully recover
-            // architectural writes. Sort by the stable textual register name;
+            // Lifters may model architectural writes by rebinding an
+            // architecture register to a fresh SSA VReg instead of putting the
+            // architecture register directly in `OpKind::dests()`. Publish
+            // that final mapping as additive oracle metadata so stateless
+            // effect consumers can recover those writes. RISC-V, x86-64, and
+            // AArch64 use explicit architecture destinations; Hexagon still
+            // uses this binding path. Sort by stable textual register name;
             // VRegAllocator is backed by a HashMap and has no iteration-order
             // guarantee.
             let mut arch_outputs = ctx

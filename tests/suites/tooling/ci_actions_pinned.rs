@@ -100,6 +100,7 @@ fn push_ci_runs_host_specific_scalar_and_evex_jit_regressions() {
         "--test smir_jit_vcpu",
         "--test smir_jit_x86_aarch64",
         "--test smir_jit_evex_masking",
+        "--test riscv_smir_x86_jit",
     ] {
         assert!(
             contents.contains(target),

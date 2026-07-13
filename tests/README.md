@@ -52,6 +52,7 @@ listed below is declared explicitly with a `[[test]]` entry in the root
 | `riscv_boot` | `suites/machine/riscv_virt/boot.rs` |
 | `riscv_diff` | `suites/differential/riscv/scalar.rs` |
 | `riscv_smir_lift` | `suites/smir/lift/riscv.rs` |
+| `riscv_smir_x86_jit` | `suites/smir/jit/riscv_x86_64.rs` |
 | `riscv_vector` | `suites/differential/riscv/vector.rs` |
 | `smir_avx10_roundtrip` | `suites/smir/roundtrip/avx10.rs` |
 | `smir_jit_evex_masking` | `suites/smir/jit/x86_64_evex_masking.rs` |

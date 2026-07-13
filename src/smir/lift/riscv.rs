@@ -284,31 +284,31 @@ impl RiscVLifter {
     }
 
     /// Get a VReg for an integer register (x0 returns Imm(0))
-    fn get_x_reg(&self, reg: u8, ctx: &mut LiftContext) -> VReg {
+    fn get_x_reg(&self, reg: u8, _ctx: &mut LiftContext) -> VReg {
         if reg == 0 {
             VReg::Imm(0)
         } else {
-            ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::X(reg)))
+            VReg::Arch(ArchReg::RiscV(RiscVReg::X(reg)))
         }
     }
 
     /// Define a new value for an integer register (x0 writes are ignored)
-    fn def_x_reg(&self, reg: u8, ctx: &mut LiftContext) -> Option<VReg> {
+    fn def_x_reg(&self, reg: u8, _ctx: &mut LiftContext) -> Option<VReg> {
         if reg == 0 {
             None
         } else {
-            Some(ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::X(reg))))
+            Some(VReg::Arch(ArchReg::RiscV(RiscVReg::X(reg))))
         }
     }
 
     /// Get the PC register
-    fn get_pc(&self, ctx: &mut LiftContext) -> VReg {
-        ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Pc))
+    fn get_pc(&self, _ctx: &mut LiftContext) -> VReg {
+        VReg::Arch(ArchReg::RiscV(RiscVReg::Pc))
     }
 
     /// Define a new PC value
-    fn def_pc(&self, ctx: &mut LiftContext) -> VReg {
-        ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Pc))
+    fn def_pc(&self, _ctx: &mut LiftContext) -> VReg {
+        VReg::Arch(ArchReg::RiscV(RiscVReg::Pc))
     }
 
     // ========================================================================
@@ -2554,7 +2554,7 @@ impl RiscVLifter {
             }
         };
         if is_load {
-            let fd = ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::F(d.rd)));
+            let fd = VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rd)));
             if boxmask == 0 {
                 ops.push(mk(
                     ctx,
@@ -2588,7 +2588,7 @@ impl RiscVLifter {
                 ));
             }
         } else {
-            let fs = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::F(d.rs2)));
+            let fs = VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rs2)));
             ops.push(mk(
                 ctx,
                 OpKind::Store {
@@ -2626,8 +2626,8 @@ impl RiscVLifter {
     }
 
     /// Emit an opaque [`OpKind::RvVector`] for one RVV instruction. The vector
-    /// engine is opaque to SMIR, so scalar x/f/CSR state is snapshotted through
-    /// the current SSA mapping before the op and freshly defined after the op.
+    /// engine is opaque to SMIR, so scalar x/f/CSR state is explicitly listed
+    /// as both input and output architectural registers on the op.
     fn emit_rv_vector(
         &mut self,
         insn: u32,
@@ -2637,12 +2637,12 @@ impl RiscVLifter {
     ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
         let x_srcs: [VReg; 32] = std::array::from_fn(|i| self.get_x_reg(i as u8, ctx));
         let f_srcs: [VReg; 32] =
-            std::array::from_fn(|i| ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::F(i as u8))));
-        let fcsr_src = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x003)));
-        let vl_src = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc20)));
-        let vtype_src = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc21)));
-        let vstart_src = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x008)));
-        let vcsr_src = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x00f)));
+            std::array::from_fn(|i| VReg::Arch(ArchReg::RiscV(RiscVReg::F(i as u8))));
+        let fcsr_src = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003)));
+        let vl_src = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc20)));
+        let vtype_src = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc21)));
+        let vstart_src = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x008)));
+        let vcsr_src = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x00f)));
         let rs1 = x_srcs[d.rs1 as usize];
         let rs2 = x_srcs[d.rs2 as usize];
 
@@ -2650,26 +2650,26 @@ impl RiscVLifter {
             if i == 0 {
                 VReg::Imm(0)
             } else {
-                ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::X(i as u8)))
+                VReg::Arch(ArchReg::RiscV(RiscVReg::X(i as u8)))
             }
         });
         let f_dsts: [VReg; 32] =
-            std::array::from_fn(|i| ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::F(i as u8))));
+            std::array::from_fn(|i| VReg::Arch(ArchReg::RiscV(RiscVReg::F(i as u8))));
         let state = Box::new(RvVectorState {
             x_srcs,
             x_dsts,
             f_srcs,
             f_dsts,
             fcsr_src,
-            fcsr_dst: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x003))),
+            fcsr_dst: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003))),
             vl_src,
-            vl_dst: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc20))),
+            vl_dst: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc20))),
             vtype_src,
-            vtype_dst: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc21))),
+            vtype_dst: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0xc21))),
             vstart_src,
-            vstart_dst: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x008))),
+            vstart_dst: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x008))),
             vcsr_src,
-            vcsr_dst: ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x00f))),
+            vcsr_dst: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x00f))),
         });
         let ops = vec![SmirOp::new(
             ctx.next_op_id(),
@@ -2702,8 +2702,7 @@ impl RiscVLifter {
         let mut ops = Vec::new();
         let mk = |ctx: &mut LiftContext, k: OpKind| SmirOp::new(ctx.next_op_id(), addr, k);
         let w = OpWidth::W64;
-        let getf =
-            |reg: u8, ctx: &mut LiftContext| ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::F(reg)));
+        let getf = |reg: u8, _ctx: &mut LiftContext| VReg::Arch(ArchReg::RiscV(RiscVReg::F(reg)));
 
         // Sign-injection helper: fd = nanbox | (fs1 & ~signbit) | sign(fs1, fs2).
         // mode 0 = fsgnj (sign of fs2), 1 = fsgnjn (~sign of fs2), 2 = fsgnjx
@@ -2868,7 +2867,7 @@ impl RiscVLifter {
                     flags: FlagUpdate::None,
                 },
             ));
-            let fd = ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::F(d.rd)));
+            let fd = VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rd)));
             if boxmask == 0 {
                 ops.push(mk(
                     ctx,
@@ -2952,7 +2951,7 @@ impl RiscVLifter {
                         flags: FlagUpdate::None,
                     },
                 ));
-                let fd = ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::F(d.rd)));
+                let fd = VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rd)));
                 ops.push(mk(
                     ctx,
                     OpKind::Or {
@@ -2977,7 +2976,7 @@ impl RiscVLifter {
                         flags: FlagUpdate::None,
                     },
                 ));
-                let fd = ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::F(d.rd)));
+                let fd = VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rd)));
                 ops.push(mk(
                     ctx,
                     OpKind::Or {
@@ -2991,7 +2990,7 @@ impl RiscVLifter {
             }
             RvOp::FmvDX => {
                 let xs = self.get_x_reg(d.rs1, ctx);
-                let fd = ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::F(d.rd)));
+                let fd = VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rd)));
                 ops.push(mk(
                     ctx,
                     OpKind::Mov {
@@ -3085,7 +3084,7 @@ impl RiscVLifter {
                     RvOp::FliH => (ff::fli(ff::F16, d.rs1) as u16 as i64, BOX_H),
                     _ => (ff::fli(ff::F64, d.rs1) as i64, 0),
                 };
-                let fd = ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::F(d.rd)));
+                let fd = VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rd)));
                 ops.push(mk(
                     ctx,
                     OpKind::Mov {
@@ -3157,18 +3156,18 @@ impl RiscVLifter {
         let src1 = if fp_uses_int_src1(op) {
             self.get_x_reg(d.rs1, ctx)
         } else {
-            ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::F(d.rs1)))
+            VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rs1)))
         };
-        let src2 = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::F(d.rs2)));
-        let src3 = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::F(d.rs3)));
-        let fcsr_src = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x003)));
-        let fcsr_dst = ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x003)));
+        let src2 = VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rs2)));
+        let src3 = VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rs3)));
+        let fcsr_src = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003)));
+        let fcsr_dst = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003)));
         let dst = if fp_writes_int_dst(op) {
             // rd == x0 discards the result but `fcsr` must still update.
             self.def_x_reg(d.rd, ctx)
                 .unwrap_or_else(|| ctx.alloc_vreg())
         } else {
-            ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::F(d.rd)))
+            VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rd)))
         };
         ops.push(SmirOp::new(
             ctx.next_op_id(),
@@ -4147,7 +4146,7 @@ impl RiscVLifter {
 
                 if let Some((shift, mask)) = fcsr_field {
                     // Read the whole fcsr, extract the addressed field → rd.
-                    let fcsr_cur = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x003)));
+                    let fcsr_cur = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003)));
                     let old_full = ctx.alloc_vreg();
                     ops.push(mk(
                         ctx,
@@ -4283,7 +4282,7 @@ impl RiscVLifter {
                                 flags: FlagUpdate::None,
                             },
                         ));
-                        let csr_dst = ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0x003)));
+                        let csr_dst = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003)));
                         ops.push(mk(
                             ctx,
                             OpKind::Mov {
@@ -4295,7 +4294,7 @@ impl RiscVLifter {
                     }
                 } else if modeled_ro && !writes {
                     // Read-only CSR: rd = csr value (a write would trap on hardware).
-                    let cur = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::Csr(csr as u16)));
+                    let cur = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(csr as u16)));
                     if let Some(dst) = self.def_x_reg(rd, ctx) {
                         ops.push(mk(
                             ctx,
@@ -4411,7 +4410,7 @@ impl RiscVLifter {
         let mut ops = Vec::new();
         match d.op {
             RvOp::Fld => {
-                let fd = ctx.define_arch_reg(ArchReg::RiscV(RiscVReg::F(d.rd)));
+                let fd = VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rd)));
                 ops.push(mk(
                     ctx,
                     OpKind::Load {
@@ -4423,7 +4422,7 @@ impl RiscVLifter {
                 ));
             }
             RvOp::Fsd => {
-                let fs = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::F(d.rs2)));
+                let fs = VReg::Arch(ArchReg::RiscV(RiscVReg::F(d.rs2)));
                 ops.push(mk(
                     ctx,
                     OpKind::Store {
@@ -6153,17 +6152,21 @@ mod tests {
         assert_eq!(result.ops.len(), 1);
 
         if let OpKind::Mov {
+            dst,
             src: SrcOperand::Imm(42),
             ..
         } = &result.ops[0].kind
         {
             // x0 + 42 optimizes to mov 42
+            assert_eq!(*dst, VReg::Arch(ArchReg::RiscV(RiscVReg::X(1))));
         } else if let OpKind::Add {
+            dst,
             src2: SrcOperand::Imm(42),
             ..
         } = &result.ops[0].kind
         {
             // Or add x0, 42
+            assert_eq!(*dst, VReg::Arch(ArchReg::RiscV(RiscVReg::X(1))));
         } else {
             panic!(
                 "Expected ADDI to generate Mov or Add: {:?}",
@@ -6186,7 +6189,10 @@ mod tests {
             OpKind::RvVector { state, .. } => state.x_dsts[11],
             other => panic!("expected RvVector, got {other:?}"),
         };
-        assert!(x11_after_vector.is_virtual());
+        assert_eq!(
+            x11_after_vector,
+            VReg::Arch(ArchReg::RiscV(RiscVReg::X(11)))
+        );
 
         // addi a2,a1,1
         let addi: u32 = (1 << 20) | (11 << 15) | (12 << 7) | 0x13;
@@ -6218,8 +6224,7 @@ mod tests {
         lifter
             .lift_insn(0x1000, &addi.to_le_bytes(), &mut ctx)
             .unwrap();
-        let a0_after_addi = ctx.get_arch_reg(ArchReg::RiscV(RiscVReg::X(10)));
-        assert!(a0_after_addi.is_virtual());
+        let a0_after_addi = VReg::Arch(ArchReg::RiscV(RiscVReg::X(10)));
 
         // vle32.v v1,(a0)
         let vle32_v1_a0: u32 = (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07;

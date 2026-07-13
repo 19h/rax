@@ -126,6 +126,10 @@ name = "riscv_smir_lift"
 path = "tests/suites/smir/lift/riscv.rs"
 
 [[test]]
+name = "riscv_smir_x86_jit"
+path = "tests/suites/smir/jit/riscv_x86_64.rs"
+
+[[test]]
 name = "riscv_vector"
 path = "tests/suites/differential/riscv/vector.rs"
 
