@@ -345,6 +345,17 @@ pub enum X86RepMode {
     Repne,
 }
 
+/// x86 scalar bit-count instruction with its architectural status-flag
+/// contract. Keeping this distinct from the cross-architecture `Clz`, `Ctz`,
+/// and `Popcnt` operations prevents x86-only flag effects from leaking into
+/// architectures whose count instructions do not update x86 RFLAGS.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86CountKind {
+    Popcnt,
+    Tzcnt,
+    Lzcnt,
+}
+
 // ============================================================================
 // OpKind Enum
 // ============================================================================
@@ -883,6 +894,18 @@ pub enum OpKind {
         dst: VReg,
         src: VReg,
         width: OpWidth,
+    },
+
+    /// x86 POPCNT/TZCNT/LZCNT, including legacy flag effects or APX NF flag
+    /// suppression. POPCNT defines all six arithmetic status flags;
+    /// TZCNT/LZCNT define CF and ZF while the remaining four are retained by
+    /// the deterministic interpreter model.
+    X86Count {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        kind: X86CountKind,
+        flags: FlagUpdate,
     },
 
     /// Byte swap (endian conversion)
@@ -3649,9 +3672,10 @@ impl OpKind {
                 | OpKind::Clz { .. }
                 | OpKind::Ctz { .. }
                 | OpKind::Popcnt { .. }
+                | OpKind::X86Count { .. }
                 // Register-only address arithmetic (no memory dereference).
-                // BSF/BSR have dedicated SMIR variants; F3-prefixed TZCNT/LZCNT
-                // lift to Ctz/Clz and cannot alias this native lowering.
+                // Dedicated x86 scan/count variants carry their flag contracts;
+                // generic count ops remain flag-neutral across architectures.
                 | OpKind::Lea { .. }
                 | OpKind::Nop
         )
@@ -3697,6 +3721,7 @@ impl OpKind {
             | OpKind::Clz { dst, .. }
             | OpKind::Ctz { dst, .. }
             | OpKind::Popcnt { dst, .. }
+            | OpKind::X86Count { dst, .. }
             | OpKind::Bswap { dst, .. }
             | OpKind::Rbit { dst, .. }
             | OpKind::Bfx { dst, .. }

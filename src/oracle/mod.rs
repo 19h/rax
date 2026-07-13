@@ -12,6 +12,7 @@ use crate::isa::riscv::{Isa as RvIsa, Op as RvOp, Xlen};
 use crate::smir::ir::ops::HexFpOp;
 use crate::smir::ir::ops::HexFpRecipKind;
 use crate::smir::ir::ops::X86CacheControlKind;
+use crate::smir::ir::ops::X86CountKind;
 use crate::smir::ir::ops::X86X87CompareSource;
 use crate::smir::ir::ops::X86X87Constant;
 use crate::smir::ir::ops::X86X87ControlKind;
@@ -1124,6 +1125,7 @@ debug_name_json!(
     HexFpOp,
     HexFpRecipKind,
     X86CacheControlKind,
+    X86CountKind,
     X86X87Constant,
     X86X87CompareSource,
     X86X87ControlKind,
@@ -1586,6 +1588,13 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::Clz { dst, src, width } => op_json!("clz", dst, src, width),
         OpKind::Ctz { dst, src, width } => op_json!("ctz", dst, src, width),
         OpKind::Popcnt { dst, src, width } => op_json!("popcnt", dst, src, width),
+        OpKind::X86Count {
+            dst,
+            src,
+            width,
+            kind,
+            flags,
+        } => op_json!("x86_count", dst, src, width, kind, flags),
         OpKind::Bswap { dst, src, width } => op_json!("bswap", dst, src, width),
         OpKind::Rbit { dst, src, width } => op_json!("rbit", dst, src, width),
         OpKind::Bfx {

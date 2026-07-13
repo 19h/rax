@@ -24,6 +24,11 @@ pub fn tzcnt(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         value.trailing_zeros() as u64
     };
 
+    // TZCNT defines only CF/ZF. Materialize any preceding lazy arithmetic
+    // result before retaining PF/AF/SF/OF; otherwise those four bits would be
+    // copied from stale pre-lazy RFLAGS state. Keep this after the memory read
+    // so a source fault has no architectural flag side effect.
+    vcpu.materialize_flags();
     vcpu.set_reg(reg, result, op_size);
 
     // TZCNT flags: CF=1 if source is 0, ZF=1 if result is 0
@@ -67,6 +72,9 @@ pub fn lzcnt(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         leading_zeros as u64
     };
 
+    // LZCNT has the same partial CF/ZF contract as TZCNT. Resolve prior lazy
+    // flags before retaining its undefined PF/AF/SF/OF values.
+    vcpu.materialize_flags();
     vcpu.set_reg(reg, result, op_size);
 
     // LZCNT flags: CF=1 if source is 0, ZF=1 if result is 0

@@ -8,10 +8,10 @@ use std::collections::HashSet;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AluEncoding, X86CacheControlKind, X86OpHint, X86RepMode, X86SsePrefix,
-    X86StringKind, X86VecAlign, X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource,
-    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
-    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+    OpKind, SmirOp, X86AluEncoding, X86CacheControlKind, X86CountKind, X86OpHint, X86RepMode,
+    X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap, X86X87ArithmeticDestination,
+    X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
+    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -6109,41 +6109,17 @@ impl X86_64Lifter {
             self.gpr(modrm.rm)
         };
 
-        // Snapshot the source because destination/source aliasing is legal.
-        let saved_source = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Mov {
-                dst: saved_source,
-                src: SrcOperand::Reg(source),
-                width,
-            },
-        ));
-        let old_flags = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::ReadFlags { dst: old_flags },
-        ));
-
         let dst = self.gpr(modrm.reg);
-        let count = match opcode {
-            0xB8 => OpKind::Popcnt {
-                dst,
-                src: saved_source,
-                width,
-            },
-            0xBC => OpKind::Ctz {
-                dst,
-                src: saved_source,
-                width,
-            },
-            0xBD => OpKind::Clz {
-                dst,
-                src: saved_source,
-                width,
-            },
+        let (kind, flags) = match opcode {
+            0xB8 => (X86CountKind::Popcnt, FlagUpdate::All),
+            0xBC => (
+                X86CountKind::Tzcnt,
+                FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF)),
+            ),
+            0xBD => (
+                X86CountKind::Lzcnt,
+                FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF)),
+            ),
             _ => {
                 return Err(LiftError::InvalidEncoding {
                     addr: pc,
@@ -6151,128 +6127,16 @@ impl X86_64Lifter {
                 });
             }
         };
-        ops.push(SmirOp::new(OpId(ops.len() as u16), pc, count));
-
-        let cf = if opcode == 0xB8 {
-            None
-        } else {
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Cmp {
-                    src1: saved_source,
-                    src2: SrcOperand::Imm(0),
-                    width,
-                },
-            ));
-            let cf = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::SetCC {
-                    dst: cf,
-                    cond: Condition::Eq,
-                    width: OpWidth::W64,
-                },
-            ));
-            Some(cf)
-        };
-
-        // POPCNT's ZF is source==0; TZCNT/LZCNT's ZF is result==0.
-        let zf_input = if opcode == 0xB8 { saved_source } else { dst };
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
-            OpKind::Cmp {
-                src1: zf_input,
-                src2: SrcOperand::Imm(0),
+            OpKind::X86Count {
+                dst,
+                src: source,
                 width,
+                kind,
+                flags,
             },
-        ));
-        let zf = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::SetCC {
-                dst: zf,
-                cond: Condition::Eq,
-                width: OpWidth::W64,
-            },
-        ));
-        let zf_bit = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Shl {
-                dst: zf_bit,
-                src: zf,
-                amount: SrcOperand::Imm(6),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            },
-        ));
-
-        let preserved_flags = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::And {
-                dst: preserved_flags,
-                src1: old_flags,
-                src2: SrcOperand::Imm(if opcode == 0xB8 {
-                    1 << 10
-                } else {
-                    !((1 << 0) | (1 << 6))
-                }),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            },
-        ));
-        let status = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Or {
-                dst: status,
-                src1: preserved_flags,
-                src2: SrcOperand::Reg(zf_bit),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            },
-        ));
-        let status = if let Some(cf) = cf {
-            let with_cf = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Or {
-                    dst: with_cf,
-                    src1: status,
-                    src2: SrcOperand::Reg(cf),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            with_cf
-        } else {
-            status
-        };
-        let final_flags = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Or {
-                dst: final_flags,
-                src1: status,
-                src2: SrcOperand::Imm(2),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            },
-        ));
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::WriteFlags { src: final_flags },
         ));
 
         Ok(LiftResult::fallthrough(
@@ -30938,12 +30802,22 @@ impl X86_64Lifter {
         };
         let dst = self.gpr(modrm.reg);
         let kind = match opcode {
-            0x88 => OpKind::Popcnt { dst, src, width },
-            0xF4 => OpKind::Ctz { dst, src, width },
-            0xF5 => OpKind::Clz { dst, src, width },
+            0x88 => X86CountKind::Popcnt,
+            0xF4 => X86CountKind::Tzcnt,
+            0xF5 => X86CountKind::Lzcnt,
             _ => unreachable!(),
         };
-        ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86Count {
+                dst,
+                src,
+                width,
+                kind,
+                flags: FlagUpdate::None,
+            },
+        ));
 
         Ok(LiftResult::fallthrough(
             ops,
@@ -42296,33 +42170,23 @@ mod tests {
             let result = lifter.lift_insn(0x1000, &bytes, &mut ctx).unwrap();
             assert_eq!(result.bytes_consumed, 6, "{name}");
             assert_eq!(result.ops.len(), 1, "{name}");
-            match (name, &result.ops[0].kind) {
-                (
-                    "popcnt",
-                    OpKind::Popcnt {
-                        dst,
-                        src,
-                        width: OpWidth::W64,
-                    },
-                )
-                | (
-                    "lzcnt",
-                    OpKind::Clz {
-                        dst,
-                        src,
-                        width: OpWidth::W64,
-                    },
-                )
-                | (
-                    "tzcnt",
-                    OpKind::Ctz {
-                        dst,
-                        src,
-                        width: OpWidth::W64,
-                    },
-                ) => {
+            let expected_kind = match name {
+                "popcnt" => X86CountKind::Popcnt,
+                "lzcnt" => X86CountKind::Lzcnt,
+                "tzcnt" => X86CountKind::Tzcnt,
+                _ => unreachable!(),
+            };
+            match &result.ops[0].kind {
+                OpKind::X86Count {
+                    dst,
+                    src,
+                    width: OpWidth::W64,
+                    kind,
+                    flags: FlagUpdate::None,
+                } => {
                     assert_eq!(*dst, x86_gpr(8), "{name}");
                     assert_eq!(*src, x86_gpr(0), "{name}");
+                    assert_eq!(*kind, expected_kind, "{name}");
                 }
                 other => panic!("expected APX {name} count op, got {other:?}"),
             }
@@ -42341,10 +42205,12 @@ mod tests {
         assert_eq!(result.bytes_consumed, 6);
         assert_eq!(result.ops.len(), 1);
         match &result.ops[0].kind {
-            OpKind::Popcnt {
+            OpKind::X86Count {
                 dst,
                 src,
                 width: OpWidth::W16,
+                kind: X86CountKind::Popcnt,
+                flags: FlagUpdate::None,
             } => {
                 assert_eq!(*dst, x86_gpr(8));
                 assert_eq!(*src, x86_gpr(0));
@@ -42372,10 +42238,12 @@ mod tests {
             other => panic!("expected APX LZCNT memory load, got {other:?}"),
         };
         match &result.ops[1].kind {
-            OpKind::Clz {
+            OpKind::X86Count {
                 dst,
                 src,
                 width: OpWidth::W64,
+                kind: X86CountKind::Lzcnt,
+                flags: FlagUpdate::None,
             } => {
                 assert_eq!(*dst, x86_gpr(8));
                 assert_eq!(*src, tmp);
@@ -44033,44 +43901,66 @@ mod tests {
     fn lift_popcnt_tzcnt_lzcnt_forms_flags_and_invalid_prefixes() {
         let popcnt = lift_single(&[0xF3, 0x0F, 0xB8, 0xC3]).unwrap();
         assert_eq!(popcnt.bytes_consumed, 4);
-        assert!(popcnt.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::Popcnt {
-                dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
-                width: OpWidth::W32,
-                ..
-            }
-        )));
         assert!(matches!(
-            popcnt.ops.last().unwrap().kind,
-            OpKind::WriteFlags { .. }
+            popcnt.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::X86Count {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Rbx)),
+                    width: OpWidth::W32,
+                    kind: X86CountKind::Popcnt,
+                    flags: FlagUpdate::All,
+                },
+                ..
+            }]
         ));
 
         let tzcnt_alias = lift_single(&[0xF3, 0x48, 0x0F, 0xBC, 0xC0]).unwrap();
-        assert!(tzcnt_alias.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::Ctz {
+        assert!(matches!(
+            tzcnt_alias.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::X86Count {
                 dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
-                src: VReg::Virtual(_),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
                 width: OpWidth::W64,
-            }
-        )));
+                kind: X86CountKind::Tzcnt,
+                flags: FlagUpdate::Specific(set),
+            },
+                ..
+            }] if *set == FlagSet::CF.union(FlagSet::ZF)
+        ));
 
         let lzcnt_mem16 = lift_single(&[0xF3, 0x66, 0x0F, 0xBD, 0x03]).unwrap();
-        assert!(lzcnt_mem16.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::Load {
-                width: MemWidth::B2,
-                ..
-            }
-        )));
-        assert!(lzcnt_mem16.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::Clz {
+        assert!(matches!(
+            lzcnt_mem16.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::Load {
+                        dst: loaded,
+                        width: MemWidth::B2,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86Count {
+                        src,
                 width: OpWidth::W16,
-                ..
-            }
-        )));
+                        kind: X86CountKind::Lzcnt,
+                        flags: FlagUpdate::Specific(set),
+                        ..
+                    },
+                    ..
+                }
+            ] if loaded == src && *set == FlagSet::CF.union(FlagSet::ZF)
+        ));
+        assert!(
+            !popcnt.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::ReadFlags { .. } | OpKind::WriteFlags { .. }
+            )),
+            "legacy count flags must remain intrinsic to one x86 count op"
+        );
 
         let bsf = lift_single(&[0x0F, 0xBC, 0xC3]).unwrap();
         assert!(bsf.ops.iter().any(|op| matches!(

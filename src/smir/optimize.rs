@@ -164,6 +164,7 @@ fn op_out_width(kind: &OpKind) -> Option<OpWidth> {
         | OpKind::Clz { width, .. }
         | OpKind::Ctz { width, .. }
         | OpKind::Popcnt { width, .. }
+        | OpKind::X86Count { width, .. }
         | OpKind::Bswap { width, .. }
         | OpKind::Bt { width, .. }
         | OpKind::Bts { width, .. }
@@ -1263,6 +1264,7 @@ fn rewrite_pure_src_vregs(kind: &mut OpKind, f: &dyn Fn(VReg) -> VReg) -> usize 
         | OpKind::Clz { src, .. }
         | OpKind::Ctz { src, .. }
         | OpKind::Popcnt { src, .. }
+        | OpKind::X86Count { src, .. }
         | OpKind::Bswap { src, .. }
         | OpKind::Rbit { src, .. }
         | OpKind::ZeroExtend { src, .. }
@@ -1889,6 +1891,7 @@ impl OpKind {
             | OpKind::Rcr { flags, .. }
             | OpKind::Bsf { flags, .. }
             | OpKind::Bsr { flags, .. }
+            | OpKind::X86Count { flags, .. }
             | OpKind::Bextr { flags, .. }
             | OpKind::Bzhi { flags, .. }
             | OpKind::MulU { flags, .. }
@@ -1917,6 +1920,7 @@ impl OpKind {
             | OpKind::X86NddDoubleShift { flags, .. }
             | OpKind::Bsf { flags, .. }
             | OpKind::Bsr { flags, .. }
+            | OpKind::X86Count { flags, .. }
             | OpKind::Bextr { flags, .. }
             | OpKind::Bzhi { flags, .. }
             | OpKind::MulU { flags, .. }
@@ -2137,6 +2141,7 @@ impl OpKind {
             | OpKind::Clz { src, .. }
             | OpKind::Ctz { src, .. }
             | OpKind::Popcnt { src, .. }
+            | OpKind::X86Count { src, .. }
             | OpKind::Bswap { src, .. }
             | OpKind::Rbit { src, .. } => {
                 result.push(*src);
@@ -3630,7 +3635,9 @@ impl OpKind {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::smir::ir::ops::{OpKind, X86CacheControlKind, X86X87ControlKind, X86X87DataKind};
+    use crate::smir::ir::ops::{
+        OpKind, X86CacheControlKind, X86CountKind, X86X87ControlKind, X86X87DataKind,
+    };
     use crate::smir::ir::types::{
         Avx10FP16Op, Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType, X86AesOp,
         X86NarrowMode,
@@ -3665,6 +3672,50 @@ mod tests {
             assert_eq!(repeated.flags_written(), FlagSet::ALL_X86);
             assert_eq!(repeated.flags_must_write(), FlagSet::EMPTY);
         }
+    }
+
+    #[test]
+    fn x86_count_metadata_tracks_results_sources_and_dead_flags() {
+        let dst = VReg::virt(0);
+        let src = VReg::virt(1);
+        let popcnt = OpKind::X86Count {
+            dst,
+            src,
+            width: OpWidth::W32,
+            kind: X86CountKind::Popcnt,
+            flags: FlagUpdate::All,
+        };
+        assert_eq!(popcnt.dests(), vec![dst]);
+        assert_eq!(popcnt.source_vregs(), vec![src]);
+        assert_eq!(popcnt.flags_written(), FlagSet::ALL_X86);
+        assert_eq!(popcnt.flags_must_write(), FlagSet::ALL_X86);
+        assert!(op_fully_defines(&popcnt));
+
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(0, popcnt));
+        block.set_terminator(Terminator::Return { values: vec![] });
+        assert_eq!(dead_flag_elimination(&mut block), 1);
+        assert!(matches!(
+            block.ops[0].kind,
+            OpKind::X86Count {
+                flags: FlagUpdate::None,
+                ..
+            }
+        ));
+
+        let defined = FlagSet::CF.union(FlagSet::ZF);
+        let arch_dst = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let arch_src = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let lzcnt = OpKind::X86Count {
+            dst: arch_dst,
+            src: arch_src,
+            width: OpWidth::W16,
+            kind: X86CountKind::Lzcnt,
+            flags: FlagUpdate::Specific(defined),
+        };
+        assert_eq!(lzcnt.flags_written(), defined);
+        assert_eq!(lzcnt.flags_must_write(), defined);
+        assert!(!op_fully_defines(&lzcnt));
     }
 
     #[test]

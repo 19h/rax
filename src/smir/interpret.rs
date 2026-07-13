@@ -6,13 +6,13 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext, VecValue};
-use crate::smir::ir::flags::{LazyFlagOp, LazyFlags};
+use crate::smir::ir::flags::{FlagSet, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
-    HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86CacheControlKind, X86OpHint,
-    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
-    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
-    X86XSaveKind,
+    HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86CacheControlKind, X86CountKind,
+    X86OpHint, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
+    X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
+    X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -1938,6 +1938,69 @@ impl SmirInterpreter {
             OpKind::Popcnt { dst, src, width } => {
                 let val = ctx.read_vreg(*src) & width.mask();
                 Self::write_gpr(ctx, *dst, val.count_ones() as u64, *width);
+            }
+
+            OpKind::X86Count {
+                dst,
+                src,
+                width,
+                kind,
+                flags,
+            } => {
+                // Read before writing so architectural source/destination
+                // aliasing remains exact for all three legacy forms.
+                let val = ctx.read_vreg(*src) & width.mask();
+                let result = match kind {
+                    X86CountKind::Popcnt => val.count_ones() as u64,
+                    X86CountKind::Tzcnt => {
+                        if val == 0 {
+                            width.bits() as u64
+                        } else {
+                            val.trailing_zeros() as u64
+                        }
+                    }
+                    X86CountKind::Lzcnt => {
+                        let extra_bits = 64 - width.bits();
+                        (val.leading_zeros() - extra_bits) as u64
+                    }
+                };
+                Self::write_gpr(ctx, *dst, result, *width);
+
+                let requested = flags.as_set();
+                if !requested.is_empty() {
+                    ctx.flags.materialize_all();
+                    ctx.flags.lazy = None;
+                    match kind {
+                        X86CountKind::Popcnt => {
+                            if requested.contains(FlagSet::CF) {
+                                ctx.flags.materialized.cf = false;
+                            }
+                            if requested.contains(FlagSet::ZF) {
+                                ctx.flags.materialized.zf = val == 0;
+                            }
+                            if requested.contains(FlagSet::SF) {
+                                ctx.flags.materialized.sf = false;
+                            }
+                            if requested.contains(FlagSet::OF) {
+                                ctx.flags.materialized.of = false;
+                            }
+                            if requested.contains(FlagSet::PF) {
+                                ctx.flags.materialized.pf = false;
+                            }
+                            if requested.contains(FlagSet::AF) {
+                                ctx.flags.materialized.af = false;
+                            }
+                        }
+                        X86CountKind::Tzcnt | X86CountKind::Lzcnt => {
+                            if requested.contains(FlagSet::CF) {
+                                ctx.flags.materialized.cf = val == 0;
+                            }
+                            if requested.contains(FlagSet::ZF) {
+                                ctx.flags.materialized.zf = result == 0;
+                            }
+                        }
+                    }
+                }
             }
 
             OpKind::Bswap { dst, src, width } => {
@@ -16518,6 +16581,75 @@ mod tests {
         ctx.flags.materialize_all();
         assert_eq!(ctx.read_vreg(rax), 0, "LZCNT high bit");
         assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD6, "LZCNT ZF");
+    }
+
+    #[test]
+    fn x86_count_ir_honors_full_partial_and_suppressed_flag_updates() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+
+        let (result, flags) = exec_x86_rax_op(
+            OpKind::X86Count {
+                dst: rax,
+                src: rcx,
+                width: OpWidth::W64,
+                kind: X86CountKind::Popcnt,
+                flags: FlagUpdate::All,
+            },
+            0,
+            0xF0,
+            0xCD7,
+        );
+        assert_eq!(result, 4);
+        assert_eq!(flags, 0x402, "POPCNT clears every arithmetic status flag");
+
+        let (result, flags) = exec_x86_rax_op(
+            OpKind::X86Count {
+                dst: rax,
+                src: rcx,
+                width: OpWidth::W32,
+                kind: X86CountKind::Tzcnt,
+                flags: FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF)),
+            },
+            u64::MAX,
+            0,
+            0xCD7,
+        );
+        assert_eq!(result, 32);
+        assert_eq!(
+            flags, 0xC97,
+            "TZCNT replaces CF/ZF and retains undefined flags"
+        );
+
+        let (result, flags) = exec_x86_rax_op(
+            OpKind::X86Count {
+                dst: rax,
+                src: rcx,
+                width: OpWidth::W64,
+                kind: X86CountKind::Lzcnt,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
+            },
+            0,
+            1 << 63,
+            0xC97,
+        );
+        assert_eq!(result, 0);
+        assert_eq!(flags, 0xCD7, "partial update changes ZF only");
+
+        let (result, flags) = exec_x86_rax_op(
+            OpKind::X86Count {
+                dst: rax,
+                src: rcx,
+                width: OpWidth::W16,
+                kind: X86CountKind::Popcnt,
+                flags: FlagUpdate::None,
+            },
+            0x1122_3344_5566_7788,
+            0,
+            0xCD7,
+        );
+        assert_eq!(result, 0x1122_3344_5566_0000);
+        assert_eq!(flags, 0xCD7, "APX NF suppresses every flag update");
     }
 
     #[test]

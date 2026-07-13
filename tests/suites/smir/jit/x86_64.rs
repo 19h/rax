@@ -379,6 +379,91 @@ fn jit_apx_nf_counts_preserve_flags_and_enter_native_tier() {
     assert_ne!(after.rflags & 1, 0, "DEC and every NF count preserve CF");
 }
 
+/// Legacy POPCNT/TZCNT/LZCNT must enter the native tier with their distinct
+/// flag contracts. A dependency-free XOR after the loop establishes known
+/// incoming status flags; the final count operation then either replaces all
+/// status flags (POPCNT) or merges only CF/ZF while retaining the undefined
+/// flags (TZCNT/LZCNT).
+#[test]
+fn jit_legacy_counts_match_interpreter_results_and_exact_status_flags() {
+    const STATUS_MASK: u64 = 0x08D5;
+    for (name, opcode, input, expected_result, expected_status, supported) in [
+        (
+            "popcnt",
+            0xB8,
+            0,
+            0,
+            0x40,
+            std::is_x86_feature_detected!("popcnt"),
+        ),
+        (
+            "tzcnt",
+            0xBC,
+            0,
+            64,
+            0x05,
+            std::is_x86_feature_detected!("bmi1"),
+        ),
+        (
+            "lzcnt",
+            0xBD,
+            1u64 << 63,
+            0,
+            0x44,
+            std::is_x86_feature_detected!("lzcnt"),
+        ),
+    ] {
+        if !supported {
+            continue;
+        }
+
+        // loop: dec ecx; jnz loop
+        //       xor r9d,r9d
+        //       <count> r8,rax
+        //       hlt
+        let code = [
+            0xFF, 0xC9, 0x75, 0xFC, 0x45, 0x31, 0xC9, 0xF3, 0x4C, 0x0F, opcode, 0xC0, 0xF4,
+        ];
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = input;
+            regs.rcx = 200;
+            regs.r8 = u64::MAX;
+            regs.rflags = 0xCD7;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp);
+        run_interp(&mut interp);
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("JIT legacy {name}: {error:?}")),
+            "legacy {name} loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+
+        let expected = interp.get_regs().unwrap();
+        let after = jit.get_regs().unwrap();
+        assert_eq!(after.r8, expected.r8, "{name}: result vs interpreter");
+        assert_eq!(after.r8, expected_result, "{name}: architectural result");
+        assert_eq!(after.rcx & 0xFFFF_FFFF, 0, "{name}: loop count");
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            expected.rflags & STATUS_MASK,
+            "{name}: native status flags vs interpreter"
+        );
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            expected_status,
+            "{name}: exact architectural status flags"
+        );
+    }
+}
+
 /// APX NDD carry operations whose destination aliases source 2 must remain in
 /// the native tier. ADC can commute its register sources; SBB preserves the old
 /// source 2 on the host stack without disturbing incoming or result flags.

@@ -994,7 +994,7 @@ fn x86_native_scalar_feature_requirements_excluding(
 ) -> (bool, bool, bool, bool) {
     use crate::smir::ir::ops::X86OpHint;
 
-    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::ops::{OpKind, X86CountKind};
 
     let mut needs_bmi2 = false;
     let mut needs_bmi1 = false;
@@ -1007,9 +1007,30 @@ fn x86_native_scalar_feature_requirements_excluding(
         .flat_map(|block| &block.ops)
     {
         needs_bmi2 |= matches!(op.x86_hint, Some(X86OpHint::Mulx));
-        needs_bmi1 |= matches!(op.kind, OpKind::Ctz { .. });
-        needs_lzcnt |= matches!(op.kind, OpKind::Clz { .. });
-        needs_popcnt |= matches!(op.kind, OpKind::Popcnt { .. });
+        needs_bmi1 |= matches!(
+            op.kind,
+            OpKind::Ctz { .. }
+                | OpKind::X86Count {
+                    kind: X86CountKind::Tzcnt,
+                    ..
+                }
+        );
+        needs_lzcnt |= matches!(
+            op.kind,
+            OpKind::Clz { .. }
+                | OpKind::X86Count {
+                    kind: X86CountKind::Lzcnt,
+                    ..
+                }
+        );
+        needs_popcnt |= matches!(
+            op.kind,
+            OpKind::Popcnt { .. }
+                | OpKind::X86Count {
+                    kind: X86CountKind::Popcnt,
+                    ..
+                }
+        );
     }
     (needs_bmi2, needs_bmi1, needs_lzcnt, needs_popcnt)
 }
@@ -2138,7 +2159,8 @@ fn x86_flag_defs(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::F
         | OpKind::Rcl { flags, .. }
         | OpKind::Rcr { flags, .. }
         | OpKind::Bsf { flags, .. }
-        | OpKind::Bsr { flags, .. } => flags.as_set(),
+        | OpKind::Bsr { flags, .. }
+        | OpKind::X86Count { flags, .. } => flags.as_set(),
         OpKind::Cmp { .. } | OpKind::Test { .. } => FlagSet::ALL_X86,
         _ => FlagSet::EMPTY,
     }
@@ -2234,7 +2256,10 @@ fn block_is_clobber_safe(
         }
         if matches!(
             op.kind,
-            OpKind::Clz { .. } | OpKind::Ctz { .. } | OpKind::Popcnt { .. }
+            OpKind::Clz { .. }
+                | OpKind::Ctz { .. }
+                | OpKind::Popcnt { .. }
+                | OpKind::X86Count { .. }
         ) && !x86_count_shape_valid(&op.kind)
         {
             return false;
@@ -2315,7 +2340,8 @@ fn x86_bit_scan_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
 }
 
 fn x86_count_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
-    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::flags::FlagSet;
+    use crate::smir::ir::ops::{OpKind, X86CountKind};
     use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
 
     let native_gpr = |reg: &VReg| {
@@ -2340,22 +2366,38 @@ fn x86_count_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         )
     };
 
-    matches!(
-        op,
-        OpKind::Clz {
+    let (dst, src, width, flags_valid) = match op {
+        OpKind::Clz { dst, src, width }
+        | OpKind::Ctz { dst, src, width }
+        | OpKind::Popcnt { dst, src, width } => (dst, src, width, true),
+        OpKind::X86Count {
             dst,
             src,
-            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
-        } | OpKind::Ctz {
-            dst,
-            src,
-            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
-        } | OpKind::Popcnt {
-            dst,
-            src,
-            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
-        } if native_gpr(dst) && native_gpr(src)
-    )
+            width,
+            kind,
+            flags,
+        } => {
+            let architecturally_defined = match kind {
+                X86CountKind::Popcnt => FlagSet::ALL_X86,
+                X86CountKind::Tzcnt | X86CountKind::Lzcnt => FlagSet::CF.union(FlagSet::ZF),
+            };
+            (
+                dst,
+                src,
+                width,
+                flags
+                    .as_set()
+                    .difference(architecturally_defined)
+                    .is_empty(),
+            )
+        }
+        _ => return false,
+    };
+
+    matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+        && native_gpr(dst)
+        && native_gpr(src)
+        && flags_valid
 }
 
 fn x86_mulx_shape_valid(op: &crate::smir::ir::ops::SmirOp) -> bool {
@@ -2713,7 +2755,7 @@ mod jit_gate_tests {
     use super::*;
 
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
-    use crate::smir::ir::ops::{OpKind, X86OpHint};
+    use crate::smir::ir::ops::{OpKind, X86CountKind, X86OpHint};
     use crate::smir::ir::types::{
         Address, ArchReg, ArmReg, FpPrecision, FunctionId, MemWidth, OpWidth, ShiftOp, SignExtend,
         SrcOperand, VReg, VecElementType, VecWidth, VirtualId, X86AesOp, X86Reg,
@@ -4077,6 +4119,53 @@ mod jit_gate_tests {
             );
         }
 
+        let x86_valid = [
+            (
+                OpKind::X86Count {
+                    dst: x86(X86Reg::R8),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W16,
+                    kind: X86CountKind::Popcnt,
+                    flags: FlagUpdate::All,
+                },
+                (false, false, false, true),
+            ),
+            (
+                OpKind::X86Count {
+                    dst: x86(X86Reg::R9),
+                    src: x86(X86Reg::Rbx),
+                    width: OpWidth::W32,
+                    kind: X86CountKind::Tzcnt,
+                    flags: FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF)),
+                },
+                (false, true, false, false),
+            ),
+            (
+                OpKind::X86Count {
+                    dst: x86(X86Reg::R15),
+                    src: x86(X86Reg::R14),
+                    width: OpWidth::W64,
+                    kind: X86CountKind::Lzcnt,
+                    flags: FlagUpdate::None,
+                },
+                (false, false, true, false),
+            ),
+        ];
+        for (op, expected) in &x86_valid {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, op.clone());
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            assert_eq!(
+                x86_native_scalar_feature_requirements_excluding(
+                    &builder.finish(),
+                    &std::collections::HashMap::new()
+                ),
+                *expected
+            );
+            assert!(op.is_jit_safe());
+            assert!(x86_gate(op.clone()));
+        }
+
         let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
         for (index, op) in valid.into_iter().enumerate() {
             builder.push_op(0x1000 + index as u64, op);
@@ -4154,6 +4243,26 @@ mod jit_gate_tests {
                     dst: x86(X86Reg::Rax),
                     src: arm_x(0),
                     width: OpWidth::W64,
+                },
+            ),
+            (
+                "TZCNT undefined flag request",
+                OpKind::X86Count {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rcx),
+                    width: OpWidth::W64,
+                    kind: X86CountKind::Tzcnt,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "LZCNT overflow flag request",
+                OpKind::X86Count {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rcx),
+                    width: OpWidth::W64,
+                    kind: X86CountKind::Lzcnt,
+                    flags: FlagUpdate::Specific(FlagSet::OF),
                 },
             ),
         ] {

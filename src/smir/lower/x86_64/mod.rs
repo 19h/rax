@@ -8,8 +8,8 @@ use std::collections::HashMap;
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AluEncoding, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind,
-    X86VecAlign, X86VecMap,
+    OpKind, SmirOp, X86AluEncoding, X86CountKind, X86OpHint, X86RepMode, X86SsePrefix,
+    X86StringKind, X86VecAlign, X86VecMap,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, BlockId, Condition, DispSize, FpRoundMode, GuestAddr, MemWidth, OpWidth,
@@ -3790,6 +3790,130 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    fn x86_status_rflags_mask(flags: FlagSet) -> i64 {
+        let mut mask = 0i64;
+        if flags.contains(FlagSet::CF) {
+            mask |= 1 << 0;
+        }
+        if flags.contains(FlagSet::PF) {
+            mask |= 1 << 2;
+        }
+        if flags.contains(FlagSet::AF) {
+            mask |= 1 << 4;
+        }
+        if flags.contains(FlagSet::ZF) {
+            mask |= 1 << 6;
+        }
+        if flags.contains(FlagSet::SF) {
+            mask |= 1 << 7;
+        }
+        if flags.contains(FlagSet::OF) {
+            mask |= 1 << 11;
+        }
+        mask
+    }
+
+    fn lower_x86_count(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        kind: X86CountKind,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        let op = match kind {
+            X86CountKind::Popcnt => "X86Count::Popcnt",
+            X86CountKind::Tzcnt => "X86Count::Tzcnt",
+            X86CountKind::Lzcnt => "X86Count::Lzcnt",
+        };
+        if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: op.to_string(),
+                operand: format!("unsupported width {width:?}"),
+            });
+        }
+
+        let requested = flags.as_set();
+        let defined = match kind {
+            X86CountKind::Popcnt => FlagSet::ALL_X86,
+            X86CountKind::Tzcnt | X86CountKind::Lzcnt => FlagSet::CF.union(FlagSet::ZF),
+        };
+        if !requested.difference(defined).is_empty() {
+            return Err(LowerError::InvalidOperand {
+                op: op.to_string(),
+                operand: format!("unsupported flag update {flags:?}"),
+            });
+        }
+
+        let dst_reg = self.get_dst_reg(dst)?;
+        let src_reg = self.get_reg(src)?;
+        Self::ensure_count_native_stack_safe(op, dst_reg, src_reg)?;
+        let emit_count = |emitter: &mut X86Emitter<'_>| match kind {
+            X86CountKind::Popcnt => emitter.emit_popcnt(dst_reg, src_reg, width),
+            X86CountKind::Tzcnt => emitter.emit_tzcnt(dst_reg, src_reg, width),
+            X86CountKind::Lzcnt => emitter.emit_lzcnt(dst_reg, src_reg, width),
+        };
+
+        if requested.is_empty() {
+            self.code.emit_u8(0x9C); // pushfq: APX NF/preserved status
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emit_count(&mut emitter);
+            self.code.emit_u8(0x9D); // popfq
+            return Ok(());
+        }
+
+        if kind == X86CountKind::Popcnt && requested == FlagSet::ALL_X86 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emit_count(&mut emitter);
+            return Ok(());
+        }
+
+        // Execute the host instruction, then merge only its requested,
+        // architecturally defined status bits into the old RFLAGS. The saved
+        // result occupies [rsp], old flags [rsp+8], while the new flags are
+        // transiently at the top of the stack.
+        let rflags_mask = Self::x86_status_rflags_mask(requested);
+        self.code.emit_u8(0x9C); // pushfq (old)
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emit_count(&mut emitter);
+            emitter.emit_push(dst_reg);
+        }
+        self.code.emit_u8(0x9C); // pushfq (new)
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_alu_mi_disp(
+                4,
+                PhysReg::Rsp,
+                0,
+                DispSize::Auto,
+                rflags_mask,
+                OpWidth::W64,
+            );
+            emitter.emit_pop(dst_reg); // requested new status bits
+            emitter.emit_alu_mi_disp(
+                4,
+                PhysReg::Rsp,
+                8,
+                DispSize::Auto,
+                !rflags_mask,
+                OpWidth::W64,
+            );
+            emitter.emit_alu_mem_disp(
+                0x08,
+                dst_reg,
+                PhysReg::Rsp,
+                8,
+                DispSize::Auto,
+                OpWidth::W64,
+                X86AluEncoding::RmReg,
+            );
+            emitter.emit_pop(dst_reg); // restore count result
+        }
+        self.code.emit_u8(0x9D); // popfq (merged)
+        Ok(())
+    }
+
     fn lower_bit_scan(
         &mut self,
         dst: VReg,
@@ -5588,6 +5712,14 @@ impl X86_64Lowerer {
                 emitter.emit_popcnt(dst_reg, src_reg, *width);
                 self.code.emit_u8(0x9D); // popfq
             }
+
+            OpKind::X86Count {
+                dst,
+                src,
+                width,
+                kind,
+                flags,
+            } => self.lower_x86_count(*dst, *src, *width, *kind, *flags)?,
 
             // ================================================================
             // Shifts
@@ -13894,6 +14026,86 @@ mod tests {
             "count lowering must preserve flags"
         );
         assert!(lowered.contains(&0x9D), "count lowering must restore flags");
+    }
+
+    #[test]
+    fn lower_x86_count_honors_flag_contracts_and_rejects_malformed_ir() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+
+        let popcnt_all = lower_single_op(OpKind::X86Count {
+            dst: rax,
+            src: rbx,
+            width: OpWidth::W64,
+            kind: X86CountKind::Popcnt,
+            flags: FlagUpdate::All,
+        });
+        assert!(
+            popcnt_all
+                .windows(5)
+                .any(|bytes| bytes == [0xF3, 0x48, 0x0F, 0xB8, 0xC3]),
+            "full legacy POPCNT must lower directly: {popcnt_all:02X?}"
+        );
+        assert!(!popcnt_all.contains(&0x9C));
+        assert!(!popcnt_all.contains(&0x9D));
+
+        let popcnt_nf = lower_single_op(OpKind::X86Count {
+            dst: rax,
+            src: rbx,
+            width: OpWidth::W64,
+            kind: X86CountKind::Popcnt,
+            flags: FlagUpdate::None,
+        });
+        assert!(
+            popcnt_nf
+                .windows(7)
+                .any(|bytes| { bytes == [0x9C, 0xF3, 0x48, 0x0F, 0xB8, 0xC3, 0x9D] })
+        );
+
+        let tzcnt_flags = lower_single_op(OpKind::X86Count {
+            dst: rax,
+            src: rbx,
+            width: OpWidth::W64,
+            kind: X86CountKind::Tzcnt,
+            flags: FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF)),
+        });
+        assert!(
+            tzcnt_flags
+                .windows(5)
+                .any(|bytes| bytes == [0xF3, 0x48, 0x0F, 0xBC, 0xC3])
+        );
+        assert_eq!(
+            tzcnt_flags.iter().filter(|byte| **byte == 0x9C).count(),
+            2,
+            "merged TZCNT must save old and new RFLAGS: {tzcnt_flags:02X?}"
+        );
+        assert_eq!(tzcnt_flags.iter().filter(|byte| **byte == 0x9D).count(), 1);
+        assert!(
+            tzcnt_flags.contains(&0x41),
+            "merge mask must select exactly CF and ZF"
+        );
+
+        for malformed in [
+            OpKind::X86Count {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W64,
+                kind: X86CountKind::Tzcnt,
+                flags: FlagUpdate::All,
+            },
+            OpKind::X86Count {
+                dst: rax,
+                src: rbx,
+                width: OpWidth::W8,
+                kind: X86CountKind::Popcnt,
+                flags: FlagUpdate::All,
+            },
+        ] {
+            assert!(matches!(
+                lower_single_op_err(malformed),
+                LowerError::InvalidOperand { .. }
+            ));
+        }
     }
 
     #[test]
