@@ -113,6 +113,10 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vsm3msg1 xmm9", &[0xc4, 0x42, 0x20, 0xda, 0xca]),
         ("vsm3msg2 xmm9", &[0xc4, 0x42, 0x21, 0xda, 0xca]),
         ("vsm3rnds2 xmm9", &[0xc4, 0x43, 0x21, 0xde, 0xca, 0x3e]),
+        ("vsm4key4 xmm1", &[0xc4, 0xe2, 0x6a, 0xda, 0xcb]),
+        ("vsm4key4 ymm4", &[0xc4, 0xe2, 0x56, 0xda, 0xe6]),
+        ("vsm4rnds4 xmm7", &[0xc4, 0xc2, 0x3b, 0xda, 0xf9]),
+        ("vsm4rnds4 ymm10", &[0xc4, 0x42, 0x27, 0xda, 0xd4]),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -814,6 +818,57 @@ fn hot_vsm3msg1_jits_with_schedule_and_vex_upper_zeroing_semantics() {
     assert_eq!(get_zmm(&after, 1), expected);
     assert_eq!(get_zmm(&after, 2), first);
     assert_eq!(get_zmm(&after, 3), second);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_vsm4rnds4_jits_with_standard_vector_and_vex_upper_zeroing() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx2")
+        || !std::is_x86_feature_detected!("sm4")
+    {
+        return;
+    }
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x6B, 0xDA, 0xCB]);
+    code.extend_from_slice(&[0xFF, 0xC9]);
+    code.extend_from_slice(&[0x75, 0xF7]);
+    code.push(0xF4);
+    let pack = |words: [u32; 4], upper: u64| {
+        [
+            u64::from(words[0]) | (u64::from(words[1]) << 32),
+            u64::from(words[2]) | (u64::from(words[3]) << 32),
+            upper,
+            upper,
+            upper,
+            upper,
+            upper,
+            upper,
+        ]
+    };
+    let plaintext = pack(
+        [0x0123_4567, 0x89AB_CDEF, 0xFEDC_BA98, 0x7654_3210],
+        0xA5A5_A5A5_A5A5_A5A5,
+    );
+    let round_keys = pack(
+        [0xF121_86F9, 0x4166_2B61, 0x5A6A_B19A, 0x7BA9_2077],
+        0x5A5A_5A5A_5A5A_5A5A,
+    );
+    let expected = pack([0x27FA_D345, 0xA18B_4CB2, 0x11C1_E22A, 0xCC13_E2EE], 0);
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, [u64::MAX; 8]);
+    set_zmm(&mut regs, 2, plaintext);
+    set_zmm(&mut regs, 3, round_keys);
+    vcpu.set_regs(&regs).unwrap();
+    assert!(vcpu.jit_try_block().expect("jit VSM4RNDS4 loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xFFFF_FFFF, 0);
+    assert_eq!(get_zmm(&after, 1), expected);
+    assert_eq!(get_zmm(&after, 2), plaintext);
+    assert_eq!(get_zmm(&after, 3), round_keys);
     run_to_hlt(&mut vcpu);
 }
 

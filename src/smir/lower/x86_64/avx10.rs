@@ -366,6 +366,14 @@ impl Avx10Lowerer {
                 imm,
             } => Some(self.lower_x86_sm3(code, 3, 1, 0xDE, dst, state, words, Some(*imm))),
 
+            OpKind::X86Sm4 {
+                dst,
+                src1,
+                src2,
+                width,
+                key_schedule,
+            } => Some(self.lower_x86_sm4(code, dst, src1, src2, *width, *key_schedule)),
+
             // AVX10.1 BF16
             OpKind::VDotProductBF16 {
                 dst,
@@ -1308,6 +1316,43 @@ impl Avx10Lowerer {
             src2_reg,
             opcode,
             immediate,
+        );
+        Ok(())
+    }
+
+    fn lower_x86_sm4(
+        &self,
+        code: &mut CodeBuffer,
+        dst: &VReg,
+        src1: &VReg,
+        src2: &VReg,
+        width: VecWidth,
+        key_schedule: bool,
+    ) -> Avx10LowerResult<()> {
+        let vector = |reg: &VReg| match (reg, width) {
+            (VReg::Arch(ArchReg::X86(X86Reg::Xmm(n))), VecWidth::V128)
+            | (VReg::Arch(ArchReg::X86(X86Reg::Ymm(n))), VecWidth::V256)
+                if *n <= 15 =>
+            {
+                Ok(*n)
+            }
+            _ => Err(LowerError::InvalidRegister(format!(
+                "SM4 requires XMM0..XMM15 or YMM0..YMM15 matching {width:?}: {reg:?}"
+            ))),
+        };
+        let dst_reg = vector(dst)?;
+        let src1_reg = vector(src1)?;
+        let src2_reg = vector(src2)?;
+        Self::emit_vex_rr(
+            code,
+            2,
+            if key_schedule { 2 } else { 3 },
+            width,
+            dst_reg,
+            src1_reg,
+            src2_reg,
+            0xDA,
+            None,
         );
         Ok(())
     }
@@ -2863,6 +2908,87 @@ mod tests {
                 state: xmm(2),
                 words: xmm(16),
                 imm: 0xFF,
+            },
+        ] {
+            let mut code = CodeBuffer::new();
+            let result = lowerer.try_lower(&invalid, &mut code).unwrap();
+            assert!(result.is_err(), "accepted malformed {invalid:?}");
+            assert_eq!(code.len(), 0);
+        }
+    }
+
+    #[test]
+    fn x86_sm4_lowering_covers_operations_widths_and_rejects_malformed_shapes() {
+        let lowerer = Avx10Lowerer::new();
+        let xmm = |n| VReg::Arch(ArchReg::X86(X86Reg::Xmm(n)));
+        let ymm = |n| VReg::Arch(ArchReg::X86(X86Reg::Ymm(n)));
+        for (op, expected) in [
+            (
+                OpKind::X86Sm4 {
+                    dst: xmm(1),
+                    src1: xmm(2),
+                    src2: xmm(3),
+                    width: VecWidth::V128,
+                    key_schedule: true,
+                },
+                &[0xC4, 0xE2, 0x6A, 0xDA, 0xCB][..],
+            ),
+            (
+                OpKind::X86Sm4 {
+                    dst: ymm(4),
+                    src1: ymm(5),
+                    src2: ymm(6),
+                    width: VecWidth::V256,
+                    key_schedule: true,
+                },
+                &[0xC4, 0xE2, 0x56, 0xDA, 0xE6][..],
+            ),
+            (
+                OpKind::X86Sm4 {
+                    dst: xmm(7),
+                    src1: xmm(8),
+                    src2: xmm(9),
+                    width: VecWidth::V128,
+                    key_schedule: false,
+                },
+                &[0xC4, 0xC2, 0x3B, 0xDA, 0xF9][..],
+            ),
+            (
+                OpKind::X86Sm4 {
+                    dst: ymm(10),
+                    src1: ymm(11),
+                    src2: ymm(12),
+                    width: VecWidth::V256,
+                    key_schedule: false,
+                },
+                &[0xC4, 0x42, 0x27, 0xDA, 0xD4][..],
+            ),
+        ] {
+            let mut code = CodeBuffer::new();
+            lowerer.try_lower(&op, &mut code).unwrap().unwrap();
+            assert_eq!(code.as_slice(), expected, "{op:?}");
+        }
+        for invalid in [
+            OpKind::X86Sm4 {
+                dst: xmm(1),
+                src1: ymm(2),
+                src2: xmm(3),
+                width: VecWidth::V128,
+                key_schedule: false,
+            },
+            OpKind::X86Sm4 {
+                dst: ymm(1),
+                src1: ymm(2),
+                src2: ymm(3),
+                width: VecWidth::V512,
+                key_schedule: true,
+            },
+            OpKind::X86Sm4 {
+                dst: xmm(16),
+                src1: xmm(2),
+                src2: xmm(3),
+                width: VecWidth::V128,
+                key_schedule: true,
             },
         ] {
             let mut code = CodeBuffer::new();
