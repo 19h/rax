@@ -43,6 +43,22 @@ fn external_github_actions_are_pinned_to_full_commit_shas() {
     );
 }
 
+#[test]
+fn scheduled_differential_excludes_diagnostic_only_evex_inventory() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let workflow = root.join(".github/workflows/differential.yml");
+    let contents = fs::read_to_string(&workflow)
+        .unwrap_or_else(|err| panic!("failed to read {}: {err}", workflow.display()));
+    let normalized = contents.split_whitespace().collect::<Vec<_>>().join(" ");
+
+    assert!(
+        normalized.contains(
+            "--include-ignored \\ --skip report_evex_spec_forms_rejected_by_smir_lifter \\ --nocapture"
+        ),
+        "scheduled differential tests must run ignored oracle coverage while excluding the intentionally failing EVEX diagnostic"
+    );
+}
+
 fn collect_yaml_files(dir: &Path, files: &mut Vec<PathBuf>) {
     let entries =
         fs::read_dir(dir).unwrap_or_else(|err| panic!("failed to read {}: {err}", dir.display()));

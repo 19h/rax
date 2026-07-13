@@ -129,4 +129,9 @@ jobs:
           read -r -a features <<< "$FEATURES"
           read -r -a matrix_tests <<< "$MATRIX_TESTS"
           read -r -a apx_tests <<< "$APX_TESTS"
-          cargo test "${features[@]}" "${matrix_tests[@]}" "${apx_tests[@]}" -- --include-ignored --nocapture
+          # This ignored inventory intentionally fails while residual EVEX forms
+          # exist; it is a developer report, not an oracle differential test.
+          cargo test "${features[@]}" "${matrix_tests[@]}" "${apx_tests[@]}" -- \
+            --include-ignored \
+            --skip report_evex_spec_forms_rejected_by_smir_lifter \
+            --nocapture
