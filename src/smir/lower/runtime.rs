@@ -962,6 +962,76 @@ pub fn is_native_clobber_safe_excluding(
         })
 }
 
+/// Convert the four x86 status flags representable by AArch64 PSTATE into
+/// architectural NZCV bit positions. PF/AF and every control flag remain in the
+/// x86 state object and are deliberately not encoded here.
+pub fn x86_rflags_to_aarch64_nzcv(rflags: u64) -> u64 {
+    const X86_CF: u64 = 1 << 0;
+    const X86_ZF: u64 = 1 << 6;
+    const X86_SF: u64 = 1 << 7;
+    const X86_OF: u64 = 1 << 11;
+    const A64_N: u64 = 1 << 31;
+    const A64_Z: u64 = 1 << 30;
+    const A64_C: u64 = 1 << 29;
+    const A64_V: u64 = 1 << 28;
+
+    (u64::from(rflags & X86_SF != 0) * A64_N)
+        | (u64::from(rflags & X86_ZF != 0) * A64_Z)
+        | (u64::from(rflags & X86_CF != 0) * A64_C)
+        | (u64::from(rflags & X86_OF != 0) * A64_V)
+}
+
+/// Merge architectural NZCV back into an x86 RFLAGS snapshot. Exactly
+/// CF/ZF/SF/OF are replaced; PF/AF, control flags, reserved bits, and all other
+/// state are preserved from `prior_rflags`.
+pub fn merge_aarch64_nzcv_into_x86_rflags(prior_rflags: u64, nzcv: u64) -> u64 {
+    const X86_CF: u64 = 1 << 0;
+    const X86_ZF: u64 = 1 << 6;
+    const X86_SF: u64 = 1 << 7;
+    const X86_OF: u64 = 1 << 11;
+    const X86_NZCV: u64 = X86_CF | X86_ZF | X86_SF | X86_OF;
+    const A64_N: u64 = 1 << 31;
+    const A64_Z: u64 = 1 << 30;
+    const A64_C: u64 = 1 << 29;
+    const A64_V: u64 = 1 << 28;
+
+    (prior_rflags & !X86_NZCV)
+        | (u64::from(nzcv & A64_C != 0) * X86_CF)
+        | (u64::from(nzcv & A64_Z != 0) * X86_ZF)
+        | (u64::from(nzcv & A64_N != 0) * X86_SF)
+        | (u64::from(nzcv & A64_V != 0) * X86_OF)
+}
+
+/// Decide whether x86-lifted SMIR can execute through the AArch64 identity-map
+/// trampoline without changing architectural meaning. This is intentionally a
+/// separate gate from [`is_aarch64_native_clobber_safe_excluding`], which models
+/// an AArch64 guest and therefore has different register and flag semantics.
+///
+/// The initial production bridge is register-only and maps legacy x86 GPRs
+/// RAX..R15 to X0..X15. It admits only operations already in the scalar JIT
+/// whitelist (plus validated BMI/ADX scalar forms), rejects virtual writes and
+/// non-legacy register operands, and applies an x86-specific flag-liveness pass:
+///
+/// - PF/AF have no NZCV representation, so a definition is allowed only when it
+///   is dead before any use or native exit; parity consumers always bail.
+/// - NZV and carry-producing operations use the canonical CF→C mapping.
+/// - AArch64 subtraction exposes no-borrow in C, the inverse of x86 CF. A live
+///   CF definition by SUB/CMP/NEG therefore bails, as does SBB (whose carry input
+///   convention is inverted). CF-based conditions bail for the same reason.
+pub fn is_x86_aarch64_native_clobber_safe_excluding(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> bool {
+    let flag_live_in = x86_flag_live_in(func, excluded);
+    func.blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .all(|block| {
+            let flags_live_out = x86_block_flag_live_out(block, excluded, &flag_live_in);
+            x86_aarch64_block_is_clobber_safe(block, flags_live_out)
+        })
+}
+
 /// Verify host support for scalar x86 extensions emitted directly by the
 /// identity-register native JIT. Generic scalar lowerings use baseline x86-64;
 /// Encoding-hinted MULX, scalar BMI/ADX operations, and native count operations
@@ -2363,6 +2433,209 @@ fn block_is_clobber_safe(
     true
 }
 
+fn x86_aarch64_block_flags_are_representable(
+    block: &crate::smir::ir::SmirBlock,
+    mut live: crate::smir::ir::flags::FlagSet,
+) -> bool {
+    use crate::smir::ir::flags::FlagSet;
+    use crate::smir::ir::ops::{OpKind, X86AdxKind};
+
+    let unavailable = FlagSet::PF.union(FlagSet::AF);
+    for op in block.ops.iter().rev() {
+        let uses = x86_flag_uses(&op.kind);
+        if !uses.intersection(unavailable).is_empty() {
+            return false;
+        }
+
+        // Canonical bridge state stores x86 CF directly in NZCV.C. ADC and the
+        // rotate/ADX carry chains consume that representation directly. SBB and
+        // unsigned condition evaluation instead expect AArch64's no-borrow C
+        // convention and therefore cannot consume canonical CF without an
+        // explicit normalization sequence.
+        if !uses.intersection(FlagSet::CF).is_empty()
+            && !matches!(
+                op.kind,
+                OpKind::Adc { .. }
+                    | OpKind::Rcl { .. }
+                    | OpKind::Rcr { .. }
+                    | OpKind::X86Adx {
+                        kind: X86AdxKind::Adcx,
+                        ..
+                    }
+            )
+        {
+            return false;
+        }
+
+        let defs = x86_flag_defs(&op.kind);
+        if !defs.intersection(unavailable).intersection(live).is_empty() {
+            return false;
+        }
+        if !defs.intersection(FlagSet::CF).intersection(live).is_empty()
+            && matches!(
+                op.kind,
+                OpKind::Sub { .. } | OpKind::Sbb { .. } | OpKind::Neg { .. } | OpKind::Cmp { .. }
+            )
+        {
+            return false;
+        }
+
+        live = live.difference(defs).union(uses);
+    }
+    true
+}
+
+fn x86_aarch64_block_is_clobber_safe(
+    block: &crate::smir::ir::SmirBlock,
+    flags_live_out: crate::smir::ir::flags::FlagSet,
+) -> bool {
+    use crate::smir::ir::Terminator;
+    use crate::smir::ir::ops::{OpKind, X86OpHint};
+    use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
+
+    if !x86_aarch64_block_flags_are_representable(block, flags_live_out) {
+        return false;
+    }
+
+    let legacy_gpr = |vreg: &VReg| {
+        matches!(
+            vreg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Rax
+                    | X86Reg::Rcx
+                    | X86Reg::Rdx
+                    | X86Reg::Rbx
+                    | X86Reg::Rsp
+                    | X86Reg::Rbp
+                    | X86Reg::Rsi
+                    | X86Reg::Rdi
+                    | X86Reg::R8
+                    | X86Reg::R9
+                    | X86Reg::R10
+                    | X86Reg::R11
+                    | X86Reg::R12
+                    | X86Reg::R13
+                    | X86Reg::R14
+                    | X86Reg::R15
+            ))
+        )
+    };
+
+    let folded_branch_cond = matches!(
+        (&block.terminator, block.ops.last().map(|op| &op.kind)),
+        (
+            Terminator::CondBranch { cond, .. },
+            Some(OpKind::TestCondition { dst, .. })
+        ) if cond == dst
+    );
+
+    let n = block.ops.len();
+    for (index, op) in block.ops.iter().enumerate() {
+        if index + 1 == n {
+            if let (Terminator::CondBranch { cond, .. }, OpKind::TestCondition { dst, .. }) =
+                (&block.terminator, &op.kind)
+            {
+                if dst == cond {
+                    // The lowerer folds this virtual condition result directly
+                    // into B.cond, so it does not consume a mapped host GPR.
+                    continue;
+                }
+            }
+        }
+
+        let scalar_extension = matches!(
+            op.kind,
+            OpKind::AndNot { .. } | OpKind::X86Bls { .. } | OpKind::X86Adx { .. }
+        );
+        if !op.is_jit_safe() && !scalar_extension {
+            return false;
+        }
+        // AH/CH/DH/BH require x86 byte-lane extraction. The generic AArch64
+        // register map sees only the parent GPR and cannot infer that lane from
+        // the encoding hint, so retain interpreter fallback for these forms.
+        if matches!(op.x86_hint, Some(X86OpHint::LegacyHighByteReg)) {
+            return false;
+        }
+        if matches!(op.x86_hint, Some(X86OpHint::Mulx)) && !x86_mulx_shape_valid(op) {
+            return false;
+        }
+        if matches!(op.kind, OpKind::Bsf { .. } | OpKind::Bsr { .. })
+            && !x86_bit_scan_shape_valid(&op.kind)
+        {
+            return false;
+        }
+        if matches!(op.kind, OpKind::Cwd { .. }) && !x86_cwd_shape_valid(&op.kind) {
+            return false;
+        }
+        if matches!(op.kind, OpKind::Rcl { .. } | OpKind::Rcr { .. })
+            && !x86_carry_rotate_shape_valid(&op.kind)
+        {
+            return false;
+        }
+        if matches!(
+            op.kind,
+            OpKind::AndNot { .. }
+                | OpKind::Bextr { .. }
+                | OpKind::Bzhi { .. }
+                | OpKind::X86Bls { .. }
+                | OpKind::Pdep { .. }
+                | OpKind::Pext { .. }
+        ) && !x86_bmi_shape_valid(&op.kind)
+        {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86Adx { .. }) && !x86_adx_shape_valid(&op.kind) {
+            return false;
+        }
+        if matches!(
+            op.kind,
+            OpKind::Clz { .. }
+                | OpKind::Ctz { .. }
+                | OpKind::Popcnt { .. }
+                | OpKind::X86Count { .. }
+        ) && !x86_count_shape_valid(&op.kind)
+        {
+            return false;
+        }
+        if matches!(op.kind, OpKind::Bswap { .. }) && !x86_bswap_shape_valid(&op.kind) {
+            return false;
+        }
+        if matches!(op.kind, OpKind::Xchg { .. }) && !x86_xchg_shape_valid(&op.kind) {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86NddDoubleShift { .. })
+            && !x86_ndd_double_shift_shape_valid(&op.kind)
+        {
+            return false;
+        }
+
+        if op.kind.dests().iter().any(|dst| !legacy_gpr(dst))
+            || op
+                .kind
+                .source_vregs()
+                .iter()
+                .any(|source| !legacy_gpr(source))
+        {
+            return false;
+        }
+    }
+
+    // Terminator operands bypass `OpKind::{dests,source_vregs}`. Validate them
+    // explicitly so an APX/virtual condition or switch index cannot read an
+    // un-marshalled host X16+ register. The trailing TestCondition exception is
+    // safe because the lowerer folds it directly into B.cond and never reads
+    // its virtual destination.
+    match &block.terminator {
+        Terminator::Branch { .. } => true,
+        Terminator::CondBranch { cond, .. } => {
+            folded_branch_cond || matches!(cond, VReg::Imm(_)) || legacy_gpr(cond)
+        }
+        Terminator::Switch { index, .. } => matches!(index, VReg::Imm(_)) || legacy_gpr(index),
+        Terminator::Return { values } => values.is_empty(),
+        _ => false,
+    }
+}
+
 fn x86_bit_scan_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
     use crate::smir::ir::ops::OpKind;
@@ -3141,6 +3414,186 @@ mod jit_gate_tests {
             &std::collections::HashMap::new(),
             allow_mem,
         )
+    }
+
+    fn x86_aarch64_gate(ops: Vec<OpKind>) -> bool {
+        let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
+        for (i, op) in ops.into_iter().enumerate() {
+            b.push_op(0x1000 + i as u64, op);
+        }
+        b.set_terminator(Terminator::Return { values: vec![] });
+        is_x86_aarch64_native_clobber_safe_excluding(&b.finish(), &std::collections::HashMap::new())
+    }
+
+    #[test]
+    fn x86_aarch64_nzcv_bridge_is_exhaustive_and_preserves_unrepresented_rflags() {
+        const CF: u64 = 1 << 0;
+        const PF: u64 = 1 << 2;
+        const AF: u64 = 1 << 4;
+        const ZF: u64 = 1 << 6;
+        const SF: u64 = 1 << 7;
+        const IF: u64 = 1 << 9;
+        const OF: u64 = 1 << 11;
+        const STATUS4: u64 = CF | ZF | SF | OF;
+        let preserved = PF | AF | IF | (1 << 1) | (1 << 21);
+
+        for bits in 0_u64..16 {
+            let rflags = preserved
+                | ((bits & 0b0001 != 0) as u64 * CF)
+                | ((bits & 0b0010 != 0) as u64 * ZF)
+                | ((bits & 0b0100 != 0) as u64 * SF)
+                | ((bits & 0b1000 != 0) as u64 * OF);
+            let nzcv = x86_rflags_to_aarch64_nzcv(rflags);
+            assert_eq!(
+                (nzcv >> 28) & 0xf,
+                (bits & 0b0100) << 1
+                    | (bits & 0b0010) << 1
+                    | (bits & 0b0001) << 1
+                    | (bits & 0b1000) >> 3
+            );
+
+            let prior = preserved | STATUS4;
+            let merged =
+                merge_aarch64_nzcv_into_x86_rflags(prior, nzcv | u64::MAX.wrapping_shl(32));
+            assert_eq!(
+                merged & STATUS4,
+                rflags & STATUS4,
+                "status pattern {bits:#06b}"
+            );
+            assert_eq!(
+                merged & !STATUS4,
+                prior & !STATUS4,
+                "preserved pattern {bits:#06b}"
+            );
+        }
+    }
+
+    #[test]
+    fn x86_aarch64_gate_accepts_representable_bls_adx_and_nf_alu() {
+        let bls_flags = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+        assert!(x86_aarch64_gate(vec![
+            OpKind::X86Bls {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rcx),
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsi,
+                flags: FlagUpdate::Specific(bls_flags),
+            },
+            OpKind::X86Adx {
+                dst: x86(X86Reg::Rdx),
+                src1: x86(X86Reg::Rdx),
+                src2: x86(X86Reg::Rbx),
+                width: OpWidth::W64,
+                kind: X86AdxKind::Adcx,
+                flags: FlagUpdate::Specific(FlagSet::CF),
+            },
+            OpKind::Add {
+                dst: x86(X86Reg::Rsp),
+                src1: x86(X86Reg::Rsp),
+                src2: SrcOperand::Imm(16),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ]));
+    }
+
+    #[test]
+    fn x86_aarch64_gate_rejects_unrepresentable_flags_registers_and_shapes() {
+        let full_flag_add = OpKind::Add {
+            dst: x86(X86Reg::Rax),
+            src1: x86(X86Reg::Rax),
+            src2: SrcOperand::Imm(1),
+            width: OpWidth::W64,
+            flags: FlagUpdate::All,
+        };
+        assert!(!x86_aarch64_gate(vec![full_flag_add]));
+
+        assert!(!x86_aarch64_gate(vec![OpKind::Sbb {
+            dst: x86(X86Reg::Rax),
+            src1: x86(X86Reg::Rax),
+            src2: SrcOperand::Reg(x86(X86Reg::Rcx)),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        }]));
+
+        assert!(!x86_aarch64_gate(vec![OpKind::SetCC {
+            dst: x86(X86Reg::Rax),
+            cond: crate::smir::ir::types::Condition::Parity,
+            width: OpWidth::W8,
+        }]));
+        assert!(!x86_aarch64_gate(vec![OpKind::SetCC {
+            dst: x86(X86Reg::Rax),
+            cond: crate::smir::ir::types::Condition::Ult,
+            width: OpWidth::W8,
+        }]));
+
+        assert!(!x86_aarch64_gate(vec![OpKind::Mov {
+            dst: x86(X86Reg::R18),
+            src: SrcOperand::Reg(x86(X86Reg::Rax)),
+            width: OpWidth::W64,
+        }]));
+        assert!(!x86_aarch64_gate(vec![OpKind::Mov {
+            dst: VReg::virt(0),
+            src: SrcOperand::Reg(x86(X86Reg::Rax)),
+            width: OpWidth::W64,
+        }]));
+    }
+
+    #[test]
+    fn x86_aarch64_gate_validates_terminator_register_operands() {
+        let mut cond = FunctionBuilder::new(FunctionId(0), 0x1000);
+        let cond_true = cond.create_block(0x1010);
+        let cond_false = cond.create_block(0x1020);
+        cond.set_terminator(Terminator::CondBranch {
+            cond: x86(X86Reg::R18),
+            true_target: cond_true,
+            false_target: cond_false,
+        });
+        cond.switch_to_block(cond_true);
+        cond.set_terminator(Terminator::Return { values: vec![] });
+        cond.switch_to_block(cond_false);
+        cond.set_terminator(Terminator::Return { values: vec![] });
+        assert!(!is_x86_aarch64_native_clobber_safe_excluding(
+            &cond.finish(),
+            &std::collections::HashMap::new()
+        ));
+
+        let mut switch = FunctionBuilder::new(FunctionId(1), 0x2000);
+        let case = switch.create_block(0x2010);
+        let default = switch.create_block(0x2020);
+        switch.set_terminator(Terminator::Switch {
+            index: VReg::virt(7),
+            targets: vec![case],
+            default,
+        });
+        switch.switch_to_block(case);
+        switch.set_terminator(Terminator::Return { values: vec![] });
+        switch.switch_to_block(default);
+        switch.set_terminator(Terminator::Return { values: vec![] });
+        assert!(!is_x86_aarch64_native_clobber_safe_excluding(
+            &switch.finish(),
+            &std::collections::HashMap::new()
+        ));
+
+        let mut legacy = FunctionBuilder::new(FunctionId(2), 0x3000);
+        let legacy_true = legacy.create_block(0x3010);
+        let legacy_false = legacy.create_block(0x3020);
+        legacy.set_terminator(Terminator::CondBranch {
+            cond: x86(X86Reg::Rcx),
+            true_target: legacy_true,
+            false_target: legacy_false,
+        });
+        legacy.switch_to_block(legacy_true);
+        legacy.set_terminator(Terminator::Return { values: vec![] });
+        legacy.switch_to_block(legacy_false);
+        legacy.set_terminator(Terminator::Return { values: vec![] });
+        assert!(is_x86_aarch64_native_clobber_safe_excluding(
+            &legacy.finish(),
+            &std::collections::HashMap::new()
+        ));
     }
 
     #[test]

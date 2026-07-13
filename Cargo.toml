@@ -142,6 +142,10 @@ name = "smir_jit_vcpu"
 path = "tests/suites/smir/jit/x86_64.rs"
 
 [[test]]
+name = "smir_jit_x86_aarch64"
+path = "tests/suites/smir/jit/x86_64_aarch64.rs"
+
+[[test]]
 name = "x86_64"
 path = "tests/suites/isa/x86_64/main.rs"
 required-features = ["x86_64-suite"]
@@ -183,12 +187,13 @@ debug = []
 profiling = []
 x86_64-suite = []
 x86-suite = ["x86_64-suite"]
-# SMIR native hot-block JIT tier (x86-64 host only). ON by default: it is
-# fail-safe (a region that is not register-only / touches RSP-RBP / memory bails
-# to the interpreter) and boots Linux to userspace bit-exact vs the interpreter
-# (verified with RAX_JIT_VERIFY=1). Brings in the W^X exec-mmap runtime (libc,
-# always available on unix) + the X86_64Vcpu integration. Disable promotion at
-# runtime with RAX_NO_JIT=1.
+# SMIR native hot-block JIT tier (x86-64 and AArch64 hosts). ON by default: it is
+# fail-safe: each host backend admits only operations covered by its register,
+# flag, memory, and feature gates, otherwise execution remains interpreted. The
+# x86-64 host supports helper-backed memory/call regions and verification mode;
+# the initial x86-on-AArch64 path is legacy-GPR scalar-only with an exact
+# CF/ZF/SF/OF bridge. Brings in the Unix W^X exec-mmap runtime and X86_64Vcpu
+# integration. Disable promotion at runtime with RAX_NO_JIT=1.
 smir-jit = []
 
 [lints.rust]

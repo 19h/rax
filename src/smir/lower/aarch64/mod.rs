@@ -64,6 +64,10 @@ pub struct Aarch64Lowerer {
     /// their native guest control transfer (e.g. RET → `ret`), as used by the
     /// standalone byte/exec tests.
     native_exits: HashMap<BlockId, u64>,
+    /// In-region source/target edges that cross the compiled frontier. Unlike
+    /// `native_exits`, these do not replace a target block globally: only the
+    /// selected edge records its resume PC and returns to the trampoline.
+    native_exit_edges: HashMap<(BlockId, BlockId), u64>,
     /// When true, memory ops lower to runtime-helper call-outs (MMU-translated)
     /// instead of inline native LDR/STR against the raw guest address. Set via
     /// [`Self::set_mem_helpers`].
@@ -106,6 +110,7 @@ impl Aarch64Lowerer {
             branch_fixups: Vec::new(),
             relocations: Vec::new(),
             native_exits: HashMap::new(),
+            native_exit_edges: HashMap::new(),
             mem_helpers: false,
             flagm_available: Self::detect_flagm_available(),
             flagm2_available: Self::detect_flagm2_available(),
@@ -158,6 +163,12 @@ impl Aarch64Lowerer {
     /// Call before `lower_function`. See [`Aarch64Lowerer::native_exits`].
     pub fn set_native_exits(&mut self, exits: HashMap<BlockId, u64>) {
         self.native_exits = exits;
+    }
+
+    /// Mark frontier-crossing control-flow edges as native-exit stubs
+    /// (`(source, target)` → resume guest PC). Call before `lower_function`.
+    pub fn set_native_exit_edges(&mut self, exits: HashMap<(BlockId, BlockId), u64>) {
+        self.native_exit_edges = exits;
     }
 
     /// Route memory ops through MMU-translated runtime helpers rather than
@@ -16370,38 +16381,66 @@ impl Aarch64Lowerer {
 
     fn lower_cond_branch(
         &mut self,
+        source: BlockId,
         cond: VReg,
         true_target: BlockId,
         false_target: BlockId,
         folded_cond: Option<Condition>,
     ) -> Result<(), LowerError> {
         if true_target == false_target {
-            self.emit_branch_placeholder(true_target);
-            return Ok(());
+            return self.lower_branch_edge(source, true_target);
         }
 
         if let Some(cond) = folded_cond {
             if cond == Condition::Always {
-                self.emit_branch_placeholder(true_target);
-                return Ok(());
+                return self.lower_branch_edge(source, true_target);
             }
-            self.emit_cond_branch_placeholder(Self::arm_cond_code(cond)?, true_target);
-            self.emit_branch_placeholder(false_target);
-            return Ok(());
+            let native_cond = Self::arm_cond_code(cond)?;
+            if let Some(resume_pc) = self.native_exit_edges.get(&(source, true_target)).copied() {
+                // If the true edge exits, invert the condition to skip the
+                // inline exit stub on the false path.
+                let skip_exit = self.code.position();
+                self.emit(0x5400_0000 | ((native_cond ^ 1) & 0xf));
+                self.emit_native_exit(resume_pc)?;
+                self.patch_cond_branch_to_current(skip_exit, native_cond ^ 1)?;
+            } else {
+                self.emit_cond_branch_placeholder(native_cond, true_target);
+            }
+            return self.lower_branch_edge(source, false_target);
         }
 
         if let VReg::Imm(value) = cond {
-            self.emit_branch_placeholder(if value == 0 {
-                false_target
-            } else {
-                true_target
-            });
-            return Ok(());
+            return self.lower_branch_edge(
+                source,
+                if value == 0 {
+                    false_target
+                } else {
+                    true_target
+                },
+            );
         }
 
-        self.emit_compare_branch_placeholder(Self::gpr_arm_or_x86(cond)?, true, true_target);
-        self.emit_branch_placeholder(false_target);
-        Ok(())
+        let cond_reg = Self::gpr_arm_or_x86(cond)?;
+        if let Some(resume_pc) = self.native_exit_edges.get(&(source, true_target)).copied() {
+            // CBZ skips the true-edge exit stub when the materialized
+            // condition is false.
+            let skip_exit = self.code.position();
+            self.emit(0xb400_0000 | (cond_reg as u32));
+            self.emit_native_exit(resume_pc)?;
+            self.patch_compare_branch_to_current(skip_exit, cond_reg, false)?;
+        } else {
+            self.emit_compare_branch_placeholder(cond_reg, true, true_target);
+        }
+        self.lower_branch_edge(source, false_target)
+    }
+
+    fn lower_branch_edge(&mut self, source: BlockId, target: BlockId) -> Result<(), LowerError> {
+        if let Some(resume_pc) = self.native_exit_edges.get(&(source, target)).copied() {
+            self.emit_native_exit(resume_pc)
+        } else {
+            self.emit_branch_placeholder(target);
+            Ok(())
+        }
     }
 
     fn lower_switch(
@@ -16456,15 +16495,12 @@ impl Aarch64Lowerer {
         folded_cond: Option<Condition>,
     ) -> Result<(), LowerError> {
         match &block.terminator {
-            Terminator::Branch { target } => {
-                self.emit_branch_placeholder(*target);
-                Ok(())
-            }
+            Terminator::Branch { target } => self.lower_branch_edge(block.id, *target),
             Terminator::CondBranch {
                 cond,
                 true_target,
                 false_target,
-            } => self.lower_cond_branch(*cond, *true_target, *false_target, folded_cond),
+            } => self.lower_cond_branch(block.id, *cond, *true_target, *false_target, folded_cond),
             Terminator::Switch {
                 index,
                 targets,
@@ -48281,6 +48317,53 @@ mod tests {
     }
 
     #[test]
+    fn native_exit_edge_unconditional_records_pc_and_preserves_state() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        let source = builder.current_block();
+        let target = builder.create_block(0x1004);
+        builder.set_terminator(Terminator::Branch { target });
+        builder.switch_to_block(target);
+        builder.push_op(
+            0x1004,
+            OpKind::Mov {
+                dst: x(0),
+                src: SrcOperand::Imm(0x55),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let resume_pc = 0x1234_5678_9abc_def0;
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.set_native_exit_edges(HashMap::from([((source, target), resume_pc)]));
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let state_base = 0x6000;
+        let state_pc = state_base + u64::from(A64_GUEST_PC_OFFSET);
+        let prior_pc = 0x0fed_cba9_8765_4321;
+        let x9 = 0x0909_0909_0909_0909;
+        let x0 = 0x1111_2222_3333_4444;
+        let old_nzcv = 0b1011;
+        let (out, out_nzcv, sp, recorded_pc) = run_aarch64_code_with_memory(
+            &code,
+            &[(0, x0), (9, x9), (28, state_base)],
+            old_nzcv,
+            state_pc,
+            prior_pc,
+            MemWidth::B8,
+        );
+
+        assert_eq!(recorded_pc, resume_pc);
+        assert_eq!(out[0], x0, "frontier target body must not execute");
+        assert_eq!(out[9], x9, "native-exit scratch must be restored");
+        assert_eq!(out[28], state_base, "guest-state pointer must be preserved");
+        assert_eq!(out_nzcv, old_nzcv);
+        assert_eq!(sp, 0x8000, "native-exit stack spill must balance");
+    }
+
+    #[test]
     fn lowers_test_condition_cond_branch_as_b_cond() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         let true_target = builder.create_block(4);
@@ -48317,6 +48400,88 @@ mod tests {
     }
 
     #[test]
+    fn native_exit_edge_folded_true_condition_exits_only_taken_path() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x2000);
+        let source = builder.current_block();
+        let true_target = builder.create_block(0x2010);
+        let false_target = builder.create_block(0x2020);
+        let cond = builder.alloc_vreg();
+        builder.push_op(
+            0x2000,
+            OpKind::TestCondition {
+                dst: cond,
+                cond: Condition::Eq,
+            },
+        );
+        builder.set_terminator(Terminator::CondBranch {
+            cond,
+            true_target,
+            false_target,
+        });
+        builder.switch_to_block(true_target);
+        builder.push_op(
+            0x2010,
+            OpKind::Mov {
+                dst: x(0),
+                src: SrcOperand::Imm(0x1111),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        builder.switch_to_block(false_target);
+        builder.push_op(
+            0x2020,
+            OpKind::Mov {
+                dst: x(0),
+                src: SrcOperand::Imm(0x2222),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let resume_pc = 0xaaaa_bbbb_cccc_dddd;
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.set_native_exit_edges(HashMap::from([((source, true_target), resume_pc)]));
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let state_base = 0x6000;
+        let state_pc = state_base + u64::from(A64_GUEST_PC_OFFSET);
+        let prior_pc = 0x1357_9bdf_2468_ace0;
+        let x9 = 0x0909_0909_0909_0909;
+        let x0 = 0x7777_8888_9999_aaaa;
+
+        let (taken, taken_nzcv, taken_sp, taken_pc) = run_aarch64_code_with_memory(
+            &code,
+            &[(0, x0), (9, x9), (28, state_base)],
+            0b0100,
+            state_pc,
+            prior_pc,
+            MemWidth::B8,
+        );
+        assert_eq!(taken_pc, resume_pc);
+        assert_eq!(taken[0], x0, "exiting true target must not execute");
+        assert_eq!(taken[9], x9);
+        assert_eq!(taken_nzcv, 0b0100);
+        assert_eq!(taken_sp, 0x8000);
+
+        let (not_taken, not_taken_nzcv, not_taken_sp, not_taken_pc) = run_aarch64_code_with_memory(
+            &code,
+            &[(0, x0), (9, x9), (28, state_base)],
+            0b1011,
+            state_pc,
+            prior_pc,
+            MemWidth::B8,
+        );
+        assert_eq!(not_taken_pc, prior_pc);
+        assert_eq!(not_taken[0], 0x2222, "false target must execute normally");
+        assert_eq!(not_taken[9], x9);
+        assert_eq!(not_taken_nzcv, 0b1011);
+        assert_eq!(not_taken_sp, 0x8000);
+    }
+
+    #[test]
     fn lowers_register_cond_branch_as_cbnz() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         let true_target = builder.create_block(4);
@@ -48342,6 +48507,81 @@ mod tests {
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
         assert_eq!(code, expected);
+    }
+
+    #[test]
+    fn native_exit_edge_register_false_condition_exits_only_false_path() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x3000);
+        let source = builder.current_block();
+        let true_target = builder.create_block(0x3010);
+        let false_target = builder.create_block(0x3020);
+        builder.set_terminator(Terminator::CondBranch {
+            cond: x(1),
+            true_target,
+            false_target,
+        });
+        builder.switch_to_block(true_target);
+        builder.push_op(
+            0x3010,
+            OpKind::Mov {
+                dst: x(0),
+                src: SrcOperand::Imm(0x3333),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        builder.switch_to_block(false_target);
+        builder.push_op(
+            0x3020,
+            OpKind::Mov {
+                dst: x(0),
+                src: SrcOperand::Imm(0x4444),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        let resume_pc = 0x1111_aaaa_2222_bbbb;
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.set_native_exit_edges(HashMap::from([((source, false_target), resume_pc)]));
+        lowerer.lower_function(&func).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        let state_base = 0x6000;
+        let state_pc = state_base + u64::from(A64_GUEST_PC_OFFSET);
+        let prior_pc = 0x5555_6666_7777_8888;
+        let x9 = 0x0909_0909_0909_0909;
+        let x0 = 0x9999_aaaa_bbbb_cccc;
+        let old_nzcv = 0b1101;
+
+        let (taken, taken_nzcv, taken_sp, taken_pc) = run_aarch64_code_with_memory(
+            &code,
+            &[(0, x0), (1, 1), (9, x9), (28, state_base)],
+            old_nzcv,
+            state_pc,
+            prior_pc,
+            MemWidth::B8,
+        );
+        assert_eq!(taken_pc, prior_pc);
+        assert_eq!(taken[0], 0x3333, "true target must execute normally");
+        assert_eq!(taken[9], x9);
+        assert_eq!(taken_nzcv, old_nzcv);
+        assert_eq!(taken_sp, 0x8000);
+
+        let (not_taken, not_taken_nzcv, not_taken_sp, not_taken_pc) = run_aarch64_code_with_memory(
+            &code,
+            &[(0, x0), (1, 0), (9, x9), (28, state_base)],
+            old_nzcv,
+            state_pc,
+            prior_pc,
+            MemWidth::B8,
+        );
+        assert_eq!(not_taken_pc, resume_pc);
+        assert_eq!(not_taken[0], x0, "exiting false target must not execute");
+        assert_eq!(not_taken[9], x9);
+        assert_eq!(not_taken_nzcv, old_nzcv);
+        assert_eq!(not_taken_sp, 0x8000);
     }
 
     #[test]

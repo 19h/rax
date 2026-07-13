@@ -66,7 +66,9 @@ Guest RSP is not loaded into host RSP. The block runs on the host stack.
 
 ## 6. AArch64 trampolines
 
-`rax_a64_enter_native` marshals AArch64 GPRs and NZCV for identity-mapped AArch64 native blocks. `rax_a64_enter_native_fp` additionally marshals V0-V31 plus FPCR/FPSR for scalar FP/SIMD regions and restores host FPCR/FPSR afterward.
+`rax_a64_enter_native` marshals GPRs and NZCV for identity-mapped AArch64 native blocks. `rax_a64_enter_native_fp` additionally marshals V0-V31 plus FPCR/FPSR for scalar FP/SIMD regions and restores host FPCR/FPSR afterward.
+
+The x86 VCPU also uses the scalar AArch64 trampoline for eligible x86-lifted SMIR. Legacy x86 GPR encodings RAX-R15 map to X0-X15. The bridge maps x86 CF/ZF/SF/OF to PSTATE.C/Z/N/V and merges only those four flags back into RFLAGS; PF, AF, control flags, and reserved bits remain from the pre-region snapshot. Eligibility rejects live PF/AF definitions or consumers, unsupported registers/virtual temporaries, memory, and flag contracts whose AArch64 carry convention is not normalized (notably live subtraction-borrow outputs and SBB).
 
 Guest SP/X18/X28/X30 restrictions are part of the identity-map contract and must be enforced by clobber gates or lowerer rejection.
 
@@ -93,11 +95,11 @@ run_aarch64_identity_fp AArch64 identity mapped FP/SIMD block through FP trampol
 
 ## 9. Hot-block policy
 
-The root README describes the x86-64 hot-block JIT as on by default: hot loops are promoted, lifted to SMIR, optimized at O2, lowered, cached, and run through W^X executable memory. A verification mode re-runs native regions in the interpreter and diffs state.
+The x86 VCPU hot-block JIT is on by default on supported x86-64 and AArch64 hosts: hot loops are promoted, lifted to SMIR, optimized at O2, lowered through the selected host backend, cached, and run through W^X executable memory. The x86-64 backend's verification mode re-runs native regions in the interpreter and diffs state. AArch64 production regressions directly compare the bridged native result with the interpreter.
 
 ## 10. Native exits
 
-A native exit records a resume PC in runtime state and returns to the host dispatcher. This is used for loop exits, helper faults, call-helper bails, and unsupported frontiers.
+A native exit records a resume PC in runtime state and returns to the host dispatcher. Exits can replace a complete frontier block or a specific `(source block, target block)` edge. Edge exits let auto-promoted regions yield on backward edges without globally replacing the target block. Native exits are also used for helper faults, call-helper bails, and unsupported frontiers.
 
 ## 11. Cache invalidation
 

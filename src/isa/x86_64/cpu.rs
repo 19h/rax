@@ -46,7 +46,10 @@ use super::decode::Decoder;
 use super::execute;
 use super::mmu::Mmu;
 use crate::isa::x86_64::flags;
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 use crate::smir::ir::types::BlockId;
 use crate::vm::vcpu::{CpuState, Registers, SystemRegisters, VCpu, VcpuExit, X86_64CpuState};
 
@@ -348,11 +351,17 @@ pub struct X86_64Vcpu {
     /// SMIR hot-block JIT: compiled native regions keyed by (RIP, mode_tag);
     /// `Some` = runnable, `None` = known-ineligible (don't recompile). Evicted
     /// when the guest writes the corresponding code page (SMC).
-    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
     jit_cache: std::collections::HashMap<(u64, u64), Option<std::sync::Arc<JitRegion>>>,
     /// SMIR hot-block JIT: per-loop-head backward-branch hit counter; a head is
     /// promoted (compiled) once it crosses the hotness threshold.
-    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
     jit_hot: std::collections::HashMap<u64, u32>,
     /// SMIR hot-block JIT: known-ineligible heads memoized as `(head, mode_tag)
     /// -> code fingerprint`. UNLIKE `jit_cache`, this is NOT wiped by SMC: when a
@@ -364,7 +373,10 @@ pub struct X86_64Vcpu {
     /// and re-triggers compilation; an unchanged head is skipped cheaply. Only
     /// ineligible verdicts are memoized here — compiled regions stay in
     /// `jit_cache` and are still SMC-invalidated for correctness.
-    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
     jit_ineligible: std::collections::HashMap<(u64, u64), u64>,
     /// JIT of memory-touching regions (Load/Store via MMU helper calls). Enabled
     /// by default; `RAX_JIT_NO_MEM` disables it. Independently settable in tests.
@@ -378,7 +390,10 @@ pub struct X86_64Vcpu {
     /// Set by [`rax_jit_call`] (the lift-through-calls helper) when a callee
     /// yields a VMM-bound exit (I/O, HLT, …): `jit_run_region_native` recovers it
     /// and propagates it so the run loop returns it to the VMM. `None` otherwise.
-    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
     jit_callout_exit: Option<VcpuExit>,
     /// When `Some`, the memory-JIT store helper logs each store's `(addr, size,
     /// old_value)` here so verify mode can UNDO the region's writes and re-run
@@ -963,17 +978,29 @@ impl X86_64Vcpu {
             debug_breakpoints: std::collections::HashSet::new(),
             bios_cdrom: None,
             bios_mem_bytes: 0,
-            #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+            #[cfg(all(
+                feature = "smir-jit",
+                any(target_arch = "x86_64", target_arch = "aarch64")
+            ))]
             jit_cache: std::collections::HashMap::new(),
-            #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+            #[cfg(all(
+                feature = "smir-jit",
+                any(target_arch = "x86_64", target_arch = "aarch64")
+            ))]
             jit_hot: std::collections::HashMap::new(),
-            #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+            #[cfg(all(
+                feature = "smir-jit",
+                any(target_arch = "x86_64", target_arch = "aarch64")
+            ))]
             jit_ineligible: std::collections::HashMap::new(),
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
             jit_mem: jit_mem_enabled() || jit_call_enabled(),
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
             jit_call: jit_call_enabled(),
-            #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+            #[cfg(all(
+                feature = "smir-jit",
+                any(target_arch = "x86_64", target_arch = "aarch64")
+            ))]
             jit_callout_exit: None,
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
             jit_mem_log: None,
@@ -1067,7 +1094,10 @@ impl X86_64Vcpu {
         self.debug_breakpoints.contains(&rip).then_some(rip)
     }
 
-    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
     #[inline]
     fn jit_disabled_for_debugger(&self) -> bool {
         #[cfg(feature = "debug")]
@@ -2135,7 +2165,10 @@ impl X86_64Vcpu {
             }
         }
 
-        #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+        #[cfg(all(
+            feature = "smir-jit",
+            any(target_arch = "x86_64", target_arch = "aarch64")
+        ))]
         if !self.jit_cache.is_empty() || !self.jit_hot.is_empty() {
             let prev_page = page_base.wrapping_sub(0x1000);
             let overlaps = |rip: u64| {
@@ -3083,7 +3116,10 @@ impl X86_64Vcpu {
             e.rip = 0;
             e.bytes_len = 0;
         });
-        #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+        #[cfg(all(
+            feature = "smir-jit",
+            any(target_arch = "x86_64", target_arch = "aarch64")
+        ))]
         {
             self.jit_cache.clear();
             self.jit_hot.clear();
@@ -3149,7 +3185,10 @@ impl VCpu for X86_64Vcpu {
             // Cheap O(1) guard keeps the interpreter path untouched until any
             // region has actually been promoted. `_jit_rip_before` snapshots RIP
             // so the post-step back-edge sampler can spot loop heads.
-            #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+            #[cfg(all(
+                feature = "smir-jit",
+                any(target_arch = "x86_64", target_arch = "aarch64")
+            ))]
             let _jit_rip_before = {
                 let rip = self.regs.rip;
                 if !self.jit_disabled_for_debugger() && !self.jit_cache.is_empty() {
@@ -3177,7 +3216,10 @@ impl VCpu for X86_64Vcpu {
                     return Ok(exit);
                 }
                 Ok(None) => {
-                    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+                    #[cfg(all(
+                        feature = "smir-jit",
+                        any(target_arch = "x86_64", target_arch = "aarch64")
+                    ))]
                     {
                         if !self.jit_disabled_for_debugger() {
                             self.jit_sample_backedge(_jit_rip_before);
@@ -3433,7 +3475,10 @@ impl VCpu for X86_64Vcpu {
     fn set_debugger_active(&mut self, active: bool) {
         self.debugger_active = active;
 
-        #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+        #[cfg(all(
+            feature = "smir-jit",
+            any(target_arch = "x86_64", target_arch = "aarch64")
+        ))]
         if active {
             self.jit_cache.clear();
             self.jit_hot.clear();
@@ -3566,16 +3611,21 @@ pub fn publish_instruction_count(count: u64) {
 // touches the `step()` hot path. Given a self-contained basic-block region at
 // the current RIP (a hot loop / ALU chain that exits via HLT), it lifts the
 // region to SMIR, verifies it is clobber-safe under the 1:1 identity register
-// map, lowers it to native x86-64, and runs it through the native trampoline.
+// map, lowers it through the current host backend (x86-64 or AArch64), and runs
+// it through that host's native trampoline. The AArch64 host path is initially
+// limited to scalar legacy x86 GPRs and representable flag contracts.
 // Explicit `jit_try_block` calls keep internal branches native; run-loop auto
 // promotion lowers backward edges as exits so housekeeping can run between loop
-// iterations. Validated bit-exact vs KVM by the `smir_native_*` differential
-// tests.
+// iterations. Host-specific regression suites compare complete architectural
+// state against the interpreter; x86-64 additionally has KVM differentials.
 // ============================================================================
 /// Backward-branch hits at a loop head before the JIT promotes (compiles) it.
 /// Low enough to catch real hot loops quickly, high enough to skip loops that
 /// run only a handful of times (where lift+lower would not pay off).
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 const JIT_HOT_THRESHOLD: u32 = 64;
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64", not(test)))]
@@ -3594,17 +3644,24 @@ const JIT_VERIFY_MEM_TRACE_LIMIT: usize = 4;
 /// independent (it marshals guest state in/out per run), so one `JitRegion` is
 /// cached by (RIP, mode_tag) and re-run for every later entry to that RIP until
 /// the underlying guest code page is written (SMC invalidation).
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 pub(super) struct JitRegion {
     exec: crate::smir::lower::runtime::ExecMem,
     entry_offset: usize,
     /// Whether the entry trampoline must marshal ZMM0-ZMM31 and K0-K7.
+    #[cfg(target_arch = "x86_64")]
     uses_vector: bool,
 }
 
 /// RAX_JIT_BAIL=1 logs why each hot region is rejected by the JIT (diagnostic
 /// for expanding the whitelist toward the highest-frequency bail reasons).
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 fn jit_bail_log() -> bool {
     use std::sync::OnceLock;
     static ON: OnceLock<bool> = OnceLock::new();
@@ -4038,7 +4095,10 @@ fn jit_classify_bail(
     "?".to_string()
 }
 
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 impl X86_64Vcpu {
     /// Attempt to JIT-compile and natively execute the hot region at the current
     /// RIP, handing control back to the interpreter at the region's exit.
@@ -4147,16 +4207,24 @@ impl X86_64Vcpu {
     ) -> Result<Option<JitRegion>> {
         use crate::smir::ir::Terminator;
         use crate::smir::ir::memory::MemoryError;
+        #[cfg(target_arch = "x86_64")]
         use crate::smir::ir::ops::OpKind;
         use crate::smir::ir::types::SourceArch;
         use crate::smir::lift::x86_64::X86_64Lifter;
         use crate::smir::lift::{LiftContext, MemoryReader, SmirLifter};
         use crate::smir::lower::SmirLowerer;
+        #[cfg(target_arch = "aarch64")]
+        use crate::smir::lower::aarch64::Aarch64Lowerer;
+        use crate::smir::lower::runtime::ExecMem;
+        #[cfg(target_arch = "aarch64")]
+        use crate::smir::lower::runtime::is_x86_aarch64_native_clobber_safe_excluding;
+        #[cfg(target_arch = "x86_64")]
         use crate::smir::lower::runtime::{
-            ExecMem, is_native_clobber_safe_excluding, uses_x86_native_vectors_excluding,
+            is_native_clobber_safe_excluding, uses_x86_native_vectors_excluding,
             x86_native_scalar_features_supported_excluding,
             x86_native_vector_features_supported_excluding,
         };
+        #[cfg(target_arch = "x86_64")]
         use crate::smir::lower::x86_64::X86_64Lowerer;
         use crate::smir::optimize::{OptLevel, optimize_function};
         use std::collections::HashMap;
@@ -4193,7 +4261,10 @@ impl X86_64Vcpu {
         // ineligible, retry WITHOUT call-mode (the smaller call-as-frontier
         // region). This makes lift-through-calls STRICTLY ADDITIVE — never worse
         // than the baseline mem/register JIT coverage.
+        #[cfg(target_arch = "x86_64")]
         let want_call = self.jit_call;
+        #[cfg(target_arch = "aarch64")]
+        let want_call = false;
         let modes: &[bool] = if want_call { &[true, false] } else { &[false] };
         'modes: for &cm in modes {
             let mut lifter = X86_64Lifter::strict();
@@ -4298,24 +4369,26 @@ impl X86_64Vcpu {
                 continue 'modes;
             }
             // Fail-safe gate over the EXECUTED (non-exit) blocks.
+            #[cfg(target_arch = "x86_64")]
             let allow_mem = self.jit_mem;
-            if !x86_native_scalar_features_supported_excluding(&func, &exits) {
-                if jit_bail_log() {
-                    eprintln!("[JIT-BAIL] host-scalar-features @ {entry:#x} (call={cm})");
+            #[cfg(target_arch = "x86_64")]
+            let uses_vector = {
+                if !x86_native_scalar_features_supported_excluding(&func, &exits) {
+                    if jit_bail_log() {
+                        eprintln!("[JIT-BAIL] host-scalar-features @ {entry:#x} (call={cm})");
+                    }
+                    continue 'modes;
                 }
-                continue 'modes;
-            }
-            let uses_vector = uses_x86_native_vectors_excluding(&func, &exits);
-            if uses_vector && !x86_native_vector_features_supported_excluding(&func, &exits) {
-                if jit_bail_log() {
-                    eprintln!("[JIT-BAIL] host-vector-features @ {entry:#x} (call={cm})");
+                let uses_vector = uses_x86_native_vectors_excluding(&func, &exits);
+                if uses_vector && !x86_native_vector_features_supported_excluding(&func, &exits) {
+                    if jit_bail_log() {
+                        eprintln!("[JIT-BAIL] host-vector-features @ {entry:#x} (call={cm})");
+                    }
+                    continue 'modes;
                 }
-                continue 'modes;
-            }
-            // MMU and call helpers are safe to mix with vector regions: the
-            // lowerer synchronizes the full architectural ZMM/K file through
-            // GuestRegs around each callout, and the interpreter call helper
-            // copies any callee-produced vector state back before native resume.
+                uses_vector
+            };
+            #[cfg(target_arch = "x86_64")]
             let uses_mem_helpers = allow_mem
                 && func
                     .blocks
@@ -4323,13 +4396,23 @@ impl X86_64Vcpu {
                     .filter(|block| !exits.contains_key(&block.id))
                     .flat_map(|block| &block.ops)
                     .any(|op| matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. }));
-            if !is_native_clobber_safe_excluding(&func, &exits, allow_mem) {
+            #[cfg(target_arch = "x86_64")]
+            {
+                if !is_native_clobber_safe_excluding(&func, &exits, allow_mem) {
+                    if jit_bail_log() {
+                        eprintln!(
+                            "[JIT-BAIL] gate:{} @ {:#x} (call={cm})",
+                            jit_classify_bail(&func, &exits, allow_mem),
+                            entry
+                        );
+                    }
+                    continue 'modes;
+                }
+            }
+            #[cfg(target_arch = "aarch64")]
+            if !is_x86_aarch64_native_clobber_safe_excluding(&func, &exits) {
                 if jit_bail_log() {
-                    eprintln!(
-                        "[JIT-BAIL] gate:{} @ {:#x} (call={cm})",
-                        jit_classify_bail(&func, &exits, allow_mem),
-                        entry
-                    );
+                    eprintln!("[JIT-BAIL] x86-aarch64-gate @ {entry:#x}");
                 }
                 continue 'modes;
             }
@@ -4340,13 +4423,18 @@ impl X86_64Vcpu {
                 HashMap::new()
             };
 
+            #[cfg(target_arch = "aarch64")]
+            let mut lowerer = Aarch64Lowerer::new();
+            #[cfg(target_arch = "x86_64")]
             let mut lowerer = X86_64Lowerer::new();
             lowerer.set_native_exits(exits);
             lowerer.set_native_exit_edges(edge_exits);
+            #[cfg(target_arch = "x86_64")]
             if allow_mem {
                 lowerer.set_mem_helpers(true);
                 lowerer.set_preserve_vector_mem_helpers(uses_vector && uses_mem_helpers);
             }
+            #[cfg(target_arch = "x86_64")]
             if cm {
                 // Lower CALL terminators as runtime call-outs (rax_jit_call).
                 lowerer.set_call_helpers(true);
@@ -4382,6 +4470,7 @@ impl X86_64Vcpu {
             return Ok(Some(JitRegion {
                 exec,
                 entry_offset: res.entry_offset,
+                #[cfg(target_arch = "x86_64")]
                 uses_vector,
             }));
         }
@@ -4401,6 +4490,7 @@ impl X86_64Vcpu {
         // the diverging registers) and abort — this pinpoints a miscompiled hot
         // region on a live boot. Register-only regions touch no memory/RSP/RBP,
         // so re-executing the interpreter from the snapshot is side-effect-free.
+        #[cfg(target_arch = "x86_64")]
         {
             use std::sync::OnceLock;
             static VERIFY: OnceLock<bool> = OnceLock::new();
@@ -4413,6 +4503,7 @@ impl X86_64Vcpu {
     }
 
     /// Native-only execution of a compiled region (the production path).
+    #[cfg(target_arch = "x86_64")]
     pub(super) fn jit_run_region_native(&mut self, region: &JitRegion) {
         use crate::smir::lower::runtime::GuestRegs;
 
@@ -4606,7 +4697,47 @@ impl X86_64Vcpu {
         };
     }
 
+    /// Execute x86-lifted scalar SMIR as AArch64 identity-mapped code. Legacy
+    /// x86 GPR encodings map one-to-one onto X0-X15; the AArch64 trampoline keeps
+    /// its state pointer/link/stack in X28/X30/SP, outside that guest set.
+    #[cfg(target_arch = "aarch64")]
+    pub(super) fn jit_run_region_native(&mut self, region: &JitRegion) {
+        use crate::smir::lower::runtime::{
+            Aarch64GuestRegs, merge_aarch64_nzcv_into_x86_rflags, x86_rflags_to_aarch64_nzcv,
+        };
+
+        // The interpreter defers flag computation. Materialize before exporting
+        // CF/ZF/SF/OF into NZCV and retain the complete snapshot so PF/AF and all
+        // control/reserved bits survive the four-flag bridge exactly.
+        self.materialize_flags();
+        let pre_rflags = self.regs.rflags;
+
+        let mut state = Aarch64GuestRegs {
+            pc: self.regs.rip,
+            nzcv: x86_rflags_to_aarch64_nzcv(pre_rflags),
+            ..Default::default()
+        };
+        for index in 0_u8..16 {
+            state.x[usize::from(index)] = self.get_reg(index, 8);
+        }
+
+        region
+            .exec
+            .run_aarch64_identity(region.entry_offset, &mut state);
+
+        for index in 0_u8..16 {
+            self.set_reg(index, state.x[usize::from(index)], 8);
+        }
+        self.regs.rflags = merge_aarch64_nzcv_into_x86_rflags(pre_rflags, state.nzcv);
+        self.regs.rip = state.pc;
+        self.lazy_flags = LazyFlags {
+            op: LazyFlagOp::None,
+            ..Default::default()
+        };
+    }
+
     /// Verify a compiled region against the interpreter (RAX_JIT_VERIFY=1).
+    #[cfg(target_arch = "x86_64")]
     fn jit_run_region_verified(&mut self, region: &JitRegion) {
         let entry_pc = self.regs.rip;
         let snap = self.regs.clone();
@@ -5030,7 +5161,6 @@ impl X86_64Vcpu {
     /// genuine code edit shifts the fingerprint and re-triggers compilation. Reads
     /// are pure RAM fetches (no SMC marking); an unmapped head folds to a stable
     /// sentinel so its deterministic-fault verdict is still memoized.
-    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
     fn jit_head_fingerprint(&mut self, head: u64) -> u64 {
         let lo = self.mmu.read_u64(head, &self.sregs).unwrap_or(head);
         let hi = self
@@ -5048,6 +5178,7 @@ impl X86_64Vcpu {
 
     /// Enable/disable JIT of memory-touching regions (Load/Store via MMU helper
     /// calls). For tests; production defaults on unless `RAX_JIT_NO_MEM` is set.
+    #[cfg(target_arch = "x86_64")]
     pub fn set_jit_mem(&mut self, on: bool) {
         self.jit_mem = on;
     }
@@ -5055,6 +5186,7 @@ impl X86_64Vcpu {
     /// Enable lift-through-calls for tests. Callouts require the MMU helper path
     /// for the guest return-address push, so enabling calls also enables memory
     /// helpers.
+    #[cfg(target_arch = "x86_64")]
     pub fn set_jit_call(&mut self, on: bool) {
         self.jit_call = on;
         if on {
