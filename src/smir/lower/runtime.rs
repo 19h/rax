@@ -2293,25 +2293,10 @@ fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ir::ops::OpKind
         } | OpKind::Xor {
             flags: FlagUpdate::None,
             ..
-        } | OpKind::Shl {
-            flags: FlagUpdate::None,
-            ..
-        } | OpKind::Shr {
-            flags: FlagUpdate::None,
-            ..
-        } | OpKind::Sar {
-            flags: FlagUpdate::None,
-            ..
         } | OpKind::Shld {
             flags: FlagUpdate::None,
             ..
         } | OpKind::Shrd {
-            flags: FlagUpdate::None,
-            ..
-        } | OpKind::Rol {
-            flags: FlagUpdate::None,
-            ..
-        } | OpKind::Ror {
             flags: FlagUpdate::None,
             ..
         }
@@ -3845,36 +3830,6 @@ mod jit_gate_tests {
                 },
             ),
             (
-                "shl",
-                OpKind::Shl {
-                    dst: x86(X86Reg::Rax),
-                    src: x86(X86Reg::Rax),
-                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ),
-            (
-                "shr",
-                OpKind::Shr {
-                    dst: x86(X86Reg::Rax),
-                    src: x86(X86Reg::Rax),
-                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ),
-            (
-                "sar",
-                OpKind::Sar {
-                    dst: x86(X86Reg::Rax),
-                    src: x86(X86Reg::Rax),
-                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ),
-            (
                 "shld",
                 OpKind::Shld {
                     dst: x86(X86Reg::Rax),
@@ -3894,12 +3849,56 @@ mod jit_gate_tests {
                     flags: FlagUpdate::None,
                 },
             ),
+        ] {
+            assert!(op.is_jit_safe(), "{name} remains on the generic whitelist");
+            assert!(
+                !x86_gate(op),
+                "{name} must preserve guest flags by deopting"
+            );
+        }
+    }
+
+    #[test]
+    fn clobber_gate_admits_flag_preserving_shifts_and_direct_cl_aliases() {
+        let rax = x86(X86Reg::Rax);
+        let rcx = x86(X86Reg::Rcx);
+        for (name, op) in [
+            (
+                "shl",
+                OpKind::Shl {
+                    dst: rax,
+                    src: rax,
+                    amount: SrcOperand::Imm(4),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "shr",
+                OpKind::Shr {
+                    dst: rax,
+                    src: rax,
+                    amount: SrcOperand::Imm(4),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "sar",
+                OpKind::Sar {
+                    dst: rax,
+                    src: rax,
+                    amount: SrcOperand::Imm(4),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
             (
                 "rol",
                 OpKind::Rol {
-                    dst: x86(X86Reg::Rax),
-                    src: x86(X86Reg::Rax),
-                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    dst: rax,
+                    src: rax,
+                    amount: SrcOperand::Imm(4),
                     width: OpWidth::W64,
                     flags: FlagUpdate::None,
                 },
@@ -3907,19 +3906,35 @@ mod jit_gate_tests {
             (
                 "ror",
                 OpKind::Ror {
-                    dst: x86(X86Reg::Rax),
-                    src: x86(X86Reg::Rax),
-                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    dst: rax,
+                    src: rax,
+                    amount: SrcOperand::Imm(4),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "CL-alias shl",
+                OpKind::Shl {
+                    dst: rcx,
+                    src: rax,
+                    amount: SrcOperand::Reg(rcx),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "NF CL-alias shl",
+                OpKind::Shl {
+                    dst: rcx,
+                    src: rax,
+                    amount: SrcOperand::Reg(rcx),
                     width: OpWidth::W64,
                     flags: FlagUpdate::None,
                 },
             ),
         ] {
-            assert!(op.is_jit_safe(), "{name} remains on the generic whitelist");
-            assert!(
-                !x86_gate(op),
-                "{name} must preserve guest flags by deopting"
-            );
+            assert!(x86_gate(op), "{name} must remain native-eligible");
         }
     }
 

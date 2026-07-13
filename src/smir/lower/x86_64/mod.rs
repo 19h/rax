@@ -3639,9 +3639,12 @@ impl X86_64Lowerer {
         src: VReg,
         amount: &SrcOperand,
         width: OpWidth,
+        flags: FlagUpdate,
     ) -> Result<(), LowerError> {
         let dst_reg = self.get_dst_reg(dst)?;
         let src_reg = self.get_reg(src)?;
+        let preserve_flags = !flags.updates_any();
+        Self::ensure_flag_stack_operands_safe(kind.name(), &[dst_reg, src_reg])?;
 
         match amount {
             SrcOperand::Imm(val) => {
@@ -3649,13 +3652,23 @@ impl X86_64Lowerer {
                     let mut emitter = X86Emitter::new(&mut self.code);
                     emitter.emit_mov_rr(dst_reg, src_reg, width);
                 }
+                if preserve_flags {
+                    self.code.emit_u8(0x9C); // pushfq
+                }
                 self.emit_shift_reg_imm(kind, dst_reg, *val as u8, width);
+                if preserve_flags {
+                    self.code.emit_u8(0x9D); // popfq
+                }
             }
             SrcOperand::Reg(r) => {
                 let amt_reg = self.get_reg(*r)?;
+                Self::ensure_flag_stack_operands_safe(kind.name(), &[dst_reg, src_reg, amt_reg])?;
 
                 if dst_reg == PhysReg::Rcx && amt_reg != PhysReg::Rcx {
                     {
+                        if preserve_flags {
+                            self.code.emit_u8(0x9C); // pushfq
+                        }
                         let mut emitter = X86Emitter::new(&mut self.code);
                         if dst_reg != src_reg {
                             emitter.emit_mov_rr(dst_reg, src_reg, width);
@@ -3674,16 +3687,39 @@ impl X86_64Lowerer {
                         if width == OpWidth::W32 {
                             emitter.emit_mov_rr(dst_reg, dst_reg, OpWidth::W32);
                         }
+                        if preserve_flags {
+                            self.code.emit_u8(0x9D); // popfq
+                        }
                     }
                     return Ok(());
                 }
 
                 if dst_reg == PhysReg::Rcx && amt_reg == PhysReg::Rcx && src_reg != dst_reg {
-                    return Err(LowerError::InvalidOperand {
-                        op: kind.name().to_string(),
-                        operand: "dst RCX with non-RCX source and CL count requires captured count"
-                            .to_string(),
-                    });
+                    if preserve_flags {
+                        self.code.emit_u8(0x9C); // pushfq
+                    }
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    // Keep the old RCX live as CL while shifting a stack-resident
+                    // destination seeded from src. Starting with old RCX retains
+                    // the destination's upper bits for W8/W16 partial writes.
+                    emitter.emit_push(dst_reg);
+                    emitter.emit_mov_mr(PhysReg::Rsp, 0, src_reg, width);
+                    emitter.emit_shift_m_disp(
+                        kind.digit(),
+                        PhysReg::Rsp,
+                        0,
+                        DispSize::Auto,
+                        width,
+                        ShiftCount::Cl,
+                    );
+                    emitter.emit_pop(dst_reg);
+                    if width == OpWidth::W32 {
+                        emitter.emit_mov_rr(dst_reg, dst_reg, OpWidth::W32);
+                    }
+                    if preserve_flags {
+                        self.code.emit_u8(0x9D); // popfq
+                    }
+                    return Ok(());
                 }
 
                 if dst_reg != src_reg {
@@ -3695,7 +3731,13 @@ impl X86_64Lowerer {
                     let mut emitter = X86Emitter::new(&mut self.code);
                     emitter.emit_mov_rr(PhysReg::Rcx, amt_reg, OpWidth::W8);
                 }
+                if preserve_flags {
+                    self.code.emit_u8(0x9C); // pushfq
+                }
                 self.emit_shift_reg_cl(kind, dst_reg, width);
+                if preserve_flags {
+                    self.code.emit_u8(0x9D); // popfq
+                }
             }
             _ => {
                 return Err(LowerError::UnsupportedOp {
@@ -5274,56 +5316,56 @@ impl X86_64Lowerer {
                 src,
                 amount,
                 width,
-                ..
-            } => self.lower_shift_reg_op(ShiftRegOp::Shl, *dst, *src, amount, *width)?,
+                flags,
+            } => self.lower_shift_reg_op(ShiftRegOp::Shl, *dst, *src, amount, *width, *flags)?,
 
             OpKind::Shr {
                 dst,
                 src,
                 amount,
                 width,
-                ..
-            } => self.lower_shift_reg_op(ShiftRegOp::Shr, *dst, *src, amount, *width)?,
+                flags,
+            } => self.lower_shift_reg_op(ShiftRegOp::Shr, *dst, *src, amount, *width, *flags)?,
 
             OpKind::Sar {
                 dst,
                 src,
                 amount,
                 width,
-                ..
-            } => self.lower_shift_reg_op(ShiftRegOp::Sar, *dst, *src, amount, *width)?,
+                flags,
+            } => self.lower_shift_reg_op(ShiftRegOp::Sar, *dst, *src, amount, *width, *flags)?,
 
             OpKind::Rol {
                 dst,
                 src,
                 amount,
                 width,
-                ..
-            } => self.lower_shift_reg_op(ShiftRegOp::Rol, *dst, *src, amount, *width)?,
+                flags,
+            } => self.lower_shift_reg_op(ShiftRegOp::Rol, *dst, *src, amount, *width, *flags)?,
 
             OpKind::Ror {
                 dst,
                 src,
                 amount,
                 width,
-                ..
-            } => self.lower_shift_reg_op(ShiftRegOp::Ror, *dst, *src, amount, *width)?,
+                flags,
+            } => self.lower_shift_reg_op(ShiftRegOp::Ror, *dst, *src, amount, *width, *flags)?,
 
             OpKind::Rcl {
                 dst,
                 src,
                 amount,
                 width,
-                ..
-            } => self.lower_shift_reg_op(ShiftRegOp::Rcl, *dst, *src, amount, *width)?,
+                flags,
+            } => self.lower_shift_reg_op(ShiftRegOp::Rcl, *dst, *src, amount, *width, *flags)?,
 
             OpKind::Rcr {
                 dst,
                 src,
                 amount,
                 width,
-                ..
-            } => self.lower_shift_reg_op(ShiftRegOp::Rcr, *dst, *src, amount, *width)?,
+                flags,
+            } => self.lower_shift_reg_op(ShiftRegOp::Rcr, *dst, *src, amount, *width, *flags)?,
 
             OpKind::Shld {
                 dst,
@@ -12783,6 +12825,173 @@ mod tests {
                     .contains("X86NddDoubleShift")
             );
         }
+    }
+
+    #[test]
+    fn lower_apx_ndd_single_shift_cl_alias_covers_all_groups_widths_and_nf() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        for (name, op, digit) in [
+            (
+                "rol",
+                OpKind::Rol {
+                    dst: rcx,
+                    src: rax,
+                    amount: SrcOperand::Reg(rcx),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                0u8,
+            ),
+            (
+                "ror",
+                OpKind::Ror {
+                    dst: rcx,
+                    src: rax,
+                    amount: SrcOperand::Reg(rcx),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                1,
+            ),
+            (
+                "rcl",
+                OpKind::Rcl {
+                    dst: rcx,
+                    src: rax,
+                    amount: SrcOperand::Reg(rcx),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                2,
+            ),
+            (
+                "rcr",
+                OpKind::Rcr {
+                    dst: rcx,
+                    src: rax,
+                    amount: SrcOperand::Reg(rcx),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                3,
+            ),
+            (
+                "shl",
+                OpKind::Shl {
+                    dst: rcx,
+                    src: rax,
+                    amount: SrcOperand::Reg(rcx),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                4,
+            ),
+            (
+                "shr",
+                OpKind::Shr {
+                    dst: rcx,
+                    src: rax,
+                    amount: SrcOperand::Reg(rcx),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                5,
+            ),
+            (
+                "sar",
+                OpKind::Sar {
+                    dst: rcx,
+                    src: rax,
+                    amount: SrcOperand::Reg(rcx),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                7,
+            ),
+        ] {
+            let code = lower_single_op(op);
+            let expected = [
+                0x51,
+                0x48,
+                0x89,
+                0x04,
+                0x24,
+                0x48,
+                0xD3,
+                digit << 3 | 0x04,
+                0x24,
+                0x59,
+            ];
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "missing direct CL-alias {name} {expected:02X?}: {code:02X?}"
+            );
+        }
+
+        for (width, expected) in [
+            (
+                OpWidth::W8,
+                &[0x51, 0x40, 0x88, 0x04, 0x24, 0xD2, 0x24, 0x24, 0x59][..],
+            ),
+            (
+                OpWidth::W16,
+                &[0x51, 0x66, 0x89, 0x04, 0x24, 0x66, 0xD3, 0x24, 0x24, 0x59][..],
+            ),
+            (
+                OpWidth::W32,
+                &[0x51, 0x89, 0x04, 0x24, 0xD3, 0x24, 0x24, 0x59, 0x89, 0xC9][..],
+            ),
+            (
+                OpWidth::W64,
+                &[0x51, 0x48, 0x89, 0x04, 0x24, 0x48, 0xD3, 0x24, 0x24, 0x59][..],
+            ),
+        ] {
+            let code = lower_single_op(OpKind::Shl {
+                dst: rcx,
+                src: rax,
+                amount: SrcOperand::Reg(rcx),
+                width,
+                flags: FlagUpdate::All,
+            });
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "missing CL-alias SHL {width:?} {expected:02X?}: {code:02X?}"
+            );
+        }
+
+        let nf_alias = lower_single_op(OpKind::Shl {
+            dst: rcx,
+            src: rax,
+            amount: SrcOperand::Reg(rcx),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        });
+        let expected_nf_alias = [
+            0x9C, 0x51, 0x48, 0x89, 0x04, 0x24, 0x48, 0xD3, 0x24, 0x24, 0x59, 0x9D,
+        ];
+        assert!(
+            nf_alias
+                .windows(expected_nf_alias.len())
+                .any(|bytes| bytes == expected_nf_alias),
+            "NF CL-alias SHL must preserve flags: {nf_alias:02X?}"
+        );
+
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let nf_imm = lower_single_op(OpKind::Shl {
+            dst: r8,
+            src: rax,
+            amount: SrcOperand::Imm(4),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        });
+        let expected_nf_imm = [0x49, 0x89, 0xC0, 0x9C, 0x49, 0xC1, 0xE0, 0x04, 0x9D];
+        assert!(
+            nf_imm
+                .windows(expected_nf_imm.len())
+                .any(|bytes| bytes == expected_nf_imm),
+            "NF immediate SHL must preserve flags: {nf_imm:02X?}"
+        );
     }
 
     #[test]

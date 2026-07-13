@@ -31660,26 +31660,6 @@ impl X86_64Lifter {
         } else {
             legacy_dst
         };
-        let amount = if prefix.nd && dst == self.gpr(1) {
-            match amount {
-                SrcOperand::Reg(reg) if reg == self.gpr(1) => {
-                    let tmp = ctx.alloc_vreg();
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::Mov {
-                            dst: tmp,
-                            src: SrcOperand::Reg(reg),
-                            width: OpWidth::W8,
-                        },
-                    ));
-                    SrcOperand::Reg(tmp)
-                }
-                other => other,
-            }
-        } else {
-            amount
-        };
         let op_kind =
             self.apx_shift_op(group, dst, legacy_dst, amount, width, prefix.flags(), pc)?;
         ops.push(SmirOp::new(OpId(ops.len() as u16), pc, op_kind));
@@ -40940,24 +40920,14 @@ mod tests {
             other => panic!("expected APX memory-source shift, got {other:?}"),
         }
 
-        // LLVM 20: `shl rcx, rax, cl` => 62 f4 f4 18 d3 e0. Capture CL before
-        // the NDD result can overwrite RCX.
+        // LLVM 20: `shl rcx, rax, cl` => 62 f4 f4 18 d3 e0. The lowerer keeps
+        // CL live while using a stack-resident destination, so no virtual count
+        // capture is needed.
         let alias = lifter
             .lift_insn(0x1000, &[0x62, 0xF4, 0xF4, 0x18, 0xD3, 0xE0], &mut ctx)
             .unwrap();
-        assert_eq!(alias.ops.len(), 2);
-        let tmp = match &alias.ops[0].kind {
-            OpKind::Mov {
-                dst,
-                src: SrcOperand::Reg(src),
-                width: OpWidth::W8,
-            } => {
-                assert_eq!(*src, x86_gpr(1));
-                *dst
-            }
-            other => panic!("expected CL capture before NDD shift, got {other:?}"),
-        };
-        match &alias.ops[1].kind {
+        assert_eq!(alias.ops.len(), 1);
+        match &alias.ops[0].kind {
             OpKind::Shl {
                 dst,
                 src,
@@ -40967,9 +40937,9 @@ mod tests {
             } => {
                 assert_eq!(*dst, x86_gpr(1));
                 assert_eq!(*src, x86_gpr(0));
-                assert_eq!(*amount, tmp);
+                assert_eq!(*amount, x86_gpr(1));
             }
-            other => panic!("expected APX NDD shift with captured CL, got {other:?}"),
+            other => panic!("expected direct APX NDD shift/CL alias, got {other:?}"),
         }
     }
 

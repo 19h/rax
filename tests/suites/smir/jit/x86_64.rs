@@ -504,6 +504,50 @@ fn jit_apx_ndd_double_shift_handles_fill_cl_aliases_and_nf() {
     assert_eq!(after.rflags & STATUS_MASK, 0x44);
 }
 
+#[test]
+fn jit_apx_ndd_single_shift_destination_cl_alias_preserves_count_and_nf() {
+    const STATUS_MASK: u64 = 0x0ED5;
+    for (name, instruction, expected_status) in [
+        ("shl", &[0x62, 0xF4, 0xF4, 0x18, 0xD3, 0xE0][..], 0x44),
+        ("{nf} shl", &[0x62, 0xF4, 0xF4, 0x1C, 0xD3, 0xE0][..], 0x45),
+    ] {
+        let mut code = instruction.to_vec();
+        code.extend_from_slice(&[0x41, 0xFF, 0xC9]); // dec r9d (preserves CF)
+        code.extend_from_slice(&[0x75, 0xF5]); // jnz to six-byte APX instruction
+        code.push(0xF4);
+
+        let mut expected = 4u64;
+        for _ in 0..200 {
+            expected = 1u64.wrapping_shl((expected & 0x3F) as u32);
+        }
+        let mut jit = make_vcpu_code(&code);
+        let mut regs = jit.get_regs().unwrap();
+        regs.rax = 1;
+        regs.rcx = 4;
+        regs.r9 = 200;
+        regs.rflags = 0x3;
+        jit.set_regs(&regs).unwrap();
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("jit APX NDD {name} CL alias: {error:?}")),
+            "APX NDD {name} destination/CL alias loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+        let after = jit.get_regs().unwrap();
+        assert_eq!(after.rax, 1, "{name}: source");
+        assert_eq!(
+            after.rcx, expected,
+            "{name}: aliased count/result recurrence"
+        );
+        assert_eq!(after.r9 & 0xFFFF_FFFF, 0, "{name}: loop count");
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            expected_status,
+            "{name}: normal shift CF versus NF-preserved CF"
+        );
+    }
+}
+
 /// Variable shift by CL (`shl edx,cl`) in a hot loop — the pattern the kernel's
 /// __free_pages_memory bootmem loop uses. Must JIT bit-exactly vs the interpreter.
 #[test]

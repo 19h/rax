@@ -16392,6 +16392,59 @@ mod tests {
     }
 
     #[test]
+    fn lifted_apx_ndd_single_shift_cl_alias_executes_widths_and_nf_exactly() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_x86_64();
+        let source = 0x0123_4567_89AB_C081u64;
+
+        for (bytes, width, old_rcx) in [
+            (
+                &[0x62, 0xF4, 0x74, 0x18, 0xD2, 0xE0][..],
+                OpWidth::W8,
+                0xAABB_CCDD_EEFF_0004u64,
+            ),
+            (
+                &[0x62, 0xF4, 0x75, 0x18, 0xD3, 0xE0][..],
+                OpWidth::W16,
+                0xAABB_CCDD_EEFF_0004,
+            ),
+            (
+                &[0x62, 0xF4, 0x74, 0x18, 0xD3, 0xE0][..],
+                OpWidth::W32,
+                0xAABB_CCDD_0000_0004,
+            ),
+            (&[0x62, 0xF4, 0xF4, 0x18, 0xD3, 0xE0][..], OpWidth::W64, 4),
+        ] {
+            ctx.write_vreg(rax, source);
+            ctx.write_vreg(rcx, old_rcx);
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            let low = (source << 4) & width.mask();
+            let expected = match width {
+                OpWidth::W8 | OpWidth::W16 => (old_rcx & !width.mask()) | low,
+                OpWidth::W32 | OpWidth::W64 => low,
+                OpWidth::W128 => unreachable!(),
+            };
+            assert_eq!(ctx.read_vreg(rcx), expected, "{width:?}");
+        }
+
+        const STATUS_MASK: u64 = 0x08D5;
+        let seed_flags = 0x08D7;
+        ctx.write_vreg(rax, source);
+        ctx.write_vreg(rcx, 4);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(seed_flags);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(&[0x62, 0xF4, 0xF4, 0x1C, 0xD3, 0xE0], &mut ctx, &mut memory);
+        ctx.flags.materialize_all();
+        assert_eq!(
+            ctx.flags.materialized.to_rflags() & STATUS_MASK,
+            seed_flags & STATUS_MASK,
+            "APX NF single shift must preserve every status flag"
+        );
+    }
+
+    #[test]
     fn lifted_cbw_cwde_cdqe_execute_with_x86_partial_write_semantics() {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
 
