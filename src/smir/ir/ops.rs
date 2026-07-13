@@ -3550,12 +3550,15 @@ pub enum OpKind {
     /// (x/f/fcsr + the `RiscVRegState` vector file + vl/vtype/vstart/vcsr) into a
     /// transient `RiscVCpu` over a memory bridge to the SMIR memory, runs this one
     /// decoded instruction, and reads the full result state back. `insn` is the
-    /// raw 32-bit encoding; `rs1`/`rs2` are retained for compact oracle/debug
-    /// output, while `state` carries the full scalar/CSR SSA snapshot. Vector
-    /// results still live in `ctx.arch_regs`; scalar/CSR results are also written
-    /// through the recorded destination VRegs. Self-contained; NOT JIT-whitelisted.
+    /// raw 32-bit encoding; `xlen` is 32 or 64; `rs1`/`rs2` are retained for
+    /// compact oracle/debug output, while `state` carries the full scalar/CSR
+    /// SSA snapshot. Vector results still live in the architectural vector
+    /// state; scalar/CSR results are also written through the recorded
+    /// destination VRegs. The x86-64 cross-lowerer implements the same boundary
+    /// through the state ABI's transactional vector helper.
     RvVector {
         insn: u32,
+        xlen: u8,
         rs1: VReg,
         rs2: VReg,
         state: Box<RvVectorState>,

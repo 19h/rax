@@ -3152,8 +3152,10 @@ impl SmirInterpreter {
                 }
             }
 
-            OpKind::RvVector { insn, state, .. } => {
-                exec_rv_vector(ctx, memory, *insn, state);
+            OpKind::RvVector {
+                insn, xlen, state, ..
+            } => {
+                exec_rv_vector(ctx, memory, *insn, *xlen, op.guest_pc, state);
             }
 
             OpKind::IntToFp {
@@ -35148,7 +35150,7 @@ mod tests {
         // vle32.v v1,(a0)
         let insn = (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07;
         let state = rv_vector_test_state(current_x10);
-        exec_rv_vector(&mut ctx, &mut memory, insn, &state);
+        exec_rv_vector(&mut ctx, &mut memory, insn, 64, 0, &state);
 
         let ArchRegState::RiscV(rv) = &ctx.arch_regs else {
             panic!("expected RISC-V context");
@@ -45836,16 +45838,19 @@ fn forward_rv_vector_scalar_state(ctx: &mut SmirContext, state: &RvVectorState) 
 /// into a transient `RiscVCpu` (over a bridge to the SMIR memory), running the
 /// qemu-verified vector engine, and reading the full result state back. RVV
 /// element width/count are runtime `vtype`/`vl` state, so this opaque delegation
-/// is the only faithful lift. On a trap (illegal vtype / access fault) the
-/// machine state is left unchanged — matching the reference, which traps and
-/// makes no architectural change.
+/// is the only faithful lift. On a trap, scalar/vector results are not committed
+/// and the interpreter exits at the instruction PC. The direct memory bridge
+/// retains any lane writes performed by the vector engine before a fault;
+/// detailed partial-completion and `vstart` reporting remain a dispatcher gap.
 fn exec_rv_vector(
     ctx: &mut SmirContext,
     memory: &mut dyn SmirMemory,
     insn: u32,
+    xlen: u8,
+    guest_pc: u64,
     state: &RvVectorState,
 ) {
-    let pc = ctx.pc;
+    let pc = guest_pc;
     let v = match &ctx.arch_regs {
         ArchRegState::RiscV(rv) => rv.v,
         _ => return,
@@ -45857,10 +45862,25 @@ fn exec_rv_vector(
     let memptr: *mut dyn SmirMemory =
         unsafe { std::mem::transmute::<*mut dyn SmirMemory, *mut dyn SmirMemory>(memory) };
     let bridge = RvVecMemBridge { mem: memptr };
-    let mut cpu = crate::isa::riscv::RiscVCpu::new(
-        crate::isa::riscv::RiscVConfig::rv64gc(),
-        Box::new(bridge),
-    );
+    let (config, decode_xlen) = match xlen {
+        32 => (
+            crate::isa::riscv::RiscVConfig::rv32(crate::isa::riscv::Isa::rv64gc()),
+            crate::isa::riscv::Xlen::Rv32,
+        ),
+        64 => (
+            crate::isa::riscv::RiscVConfig::rv64gc(),
+            crate::isa::riscv::Xlen::Rv64,
+        ),
+        _ => {
+            forward_rv_vector_scalar_state(ctx, state);
+            ctx.request_exit(ExitReason::Undefined {
+                addr: guest_pc,
+                opcode: insn,
+            });
+            return;
+        }
+    };
+    let mut cpu = crate::isa::riscv::RiscVCpu::new(config, Box::new(bridge));
     for i in 1..32u8 {
         cpu.set_x(i, ctx.read_vreg(state.x_srcs[i as usize]));
     }
@@ -45876,9 +45896,18 @@ fn exec_rv_vector(
     cpu.set_vcsr(ctx.read_vreg(state.vcsr_src));
 
     let isa = crate::isa::riscv::Isa::rv64gc();
-    let d = crate::isa::riscv::decode(insn, crate::isa::riscv::Xlen::Rv64, &isa);
-    if d.is_illegal() || cpu.execute_insn(&d, pc).is_err() {
+    let d = crate::isa::riscv::decode(insn, decode_xlen, &isa);
+    if d.is_illegal()
+        || !matches!(
+            cpu.execute_insn(&d, pc),
+            Ok(crate::isa::riscv::RiscVExit::Continue)
+        )
+    {
         forward_rv_vector_scalar_state(ctx, state);
+        ctx.request_exit(ExitReason::Undefined {
+            addr: guest_pc,
+            opcode: insn,
+        });
         return;
     }
 

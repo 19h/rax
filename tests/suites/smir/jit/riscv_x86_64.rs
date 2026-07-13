@@ -5,8 +5,11 @@ use std::collections::HashMap;
 
 use rax::isa::riscv::{
     FlatMemory as RvMemory, Isa as RvIsa, Op as RvOp, RiscVConfig, RiscVCpu, RiscVExit,
+    Xlen as RvXlen,
 };
-use rax::smir::ir::types::{ArchReg, BlockId, FunctionId, OpId, RiscVReg, SourceArch, VReg};
+use rax::smir::ir::types::{
+    ArchReg, BlockId, FunctionId, OpId, OpWidth, RiscVReg, SourceArch, SrcOperand, VReg, VirtualId,
+};
 use rax::smir::ir::{CallingConv, SmirBlock, SmirFunction, Terminator};
 use rax::smir::lift::riscv::RiscVExtensions;
 use rax::smir::lift::{ControlFlow, LiftContext, SmirLifter};
@@ -353,6 +356,73 @@ unsafe extern "sysv64" fn scalar_fp(
     }
 }
 
+unsafe extern "sysv64" fn vector(state: *mut RiscVGuestRegs, insn: u64, xlen: u64) -> u64 {
+    if state.is_null() || insn > u64::from(u32::MAX) {
+        return 0;
+    }
+    let state = unsafe { &mut *state };
+    if state.ctx == 0 {
+        return 0;
+    }
+    let memory = unsafe { &mut *(state.ctx as *mut TestMemory) };
+    let (config, decode_xlen) = match xlen {
+        32 => (RiscVConfig::rv32(RvIsa::rv64gc()), RvXlen::Rv32),
+        64 => (RiscVConfig::rv64gc(), RvXlen::Rv64),
+        _ => return 0,
+    };
+
+    // Execute against a private memory image. State and guest memory are copied
+    // back only after exact success, satisfying the helper ABI's transactional
+    // failure contract even for vector stores that fault after earlier lanes.
+    let mut private_memory = RvMemory::new(0, MEMORY_LEN);
+    rax::isa::riscv::Memory::write(&mut private_memory, 0, &memory.bytes)
+        .expect("private vector memory has the fixed test extent");
+    let mut cpu = RiscVCpu::new(config, Box::new(private_memory));
+    for register in 1..32u8 {
+        cpu.set_x(register, state.x[register as usize]);
+    }
+    for register in 0..32u8 {
+        cpu.set_f(register, state.f[register as usize]);
+        cpu.set_vreg(register, &state.v[register as usize]);
+    }
+    cpu.set_fcsr(state.fcsr as u32);
+    cpu.set_vl_vtype(state.vl, state.vtype);
+    cpu.set_vstart(state.vstart);
+    cpu.set_vcsr(state.vcsr);
+
+    let decoded = rax::isa::riscv::decode(insn as u32, decode_xlen, &RvIsa::rv64gc());
+    if decoded.is_illegal()
+        || !matches!(
+            cpu.execute_insn(&decoded, state.pc),
+            Ok(RiscVExit::Continue)
+        )
+    {
+        return 0;
+    }
+
+    for register in 0..32u8 {
+        state.x[register as usize] = cpu.x(register);
+        state.f[register as usize] = cpu.f(register);
+        state.v[register as usize] = cpu.vreg(register);
+    }
+    state.fcsr = u64::from(cpu.fcsr());
+    state.vl = cpu.vl();
+    state.vtype = cpu.vtype();
+    state.vstart = cpu.vstart();
+    state.vcsr = cpu.vcsr();
+    cpu.read_memory(0, &mut memory.bytes)
+        .expect("private vector memory has the fixed test extent");
+    1
+}
+
+unsafe extern "sysv64" fn noncanonical_vector_status(
+    _state: *mut RiscVGuestRegs,
+    _insn: u64,
+    _xlen: u64,
+) -> u64 {
+    2
+}
+
 fn jit_state(
     memory: &mut TestMemory,
     x: [u64; 32],
@@ -375,6 +445,7 @@ fn jit_state(
         clear_exclusive_fn: clear_exclusive as *const () as usize as u64,
         int_crypto_fn: int_crypto as *const () as usize as u64,
         fp_fn: scalar_fp as *const () as usize as u64,
+        vector_fn: vector as *const () as usize as u64,
         ..Default::default()
     }
 }
@@ -455,6 +526,10 @@ fn amo_type(funct5: u32, aq: bool, rl: bool, rs2: u8, rs1: u8, funct3: u32, rd: 
         | (funct3 << 12)
         | (u32::from(rd) << 7)
         | 0x2f
+}
+
+fn v_type(funct6: u32, vm: u32, vs2: u32, src: u32, funct3: u32, vd: u32) -> u32 {
+    (funct6 << 26) | (vm << 25) | (vs2 << 20) | (src << 15) | (funct3 << 12) | (vd << 7) | 0x57
 }
 
 fn function_for_lift(
@@ -686,6 +761,114 @@ fn run_case_for_xlen(
             &expected_data,
             "memory divergence at {level:?} for {bytes:02x?}"
         );
+    }
+}
+
+fn run_vector_case(
+    instruction: u32,
+    mut initial_state: RiscVGuestRegs,
+    mut initial_memory: [u8; MEMORY_LEN],
+    rv32: bool,
+) {
+    initial_memory[CODE as usize..CODE as usize + 4].copy_from_slice(&instruction.to_le_bytes());
+    initial_state.x[0] = 0;
+    if rv32 {
+        for value in &mut initial_state.x {
+            *value &= 0xffff_ffff;
+        }
+    }
+
+    let mut reference_memory = RvMemory::new(0, MEMORY_LEN);
+    rax::isa::riscv::Memory::write(&mut reference_memory, 0, &initial_memory)
+        .expect("seed vector reference memory");
+    let config = if rv32 {
+        RiscVConfig::rv32(RvIsa::rv64gc())
+    } else {
+        RiscVConfig::rv64gc()
+    };
+    let mut cpu = RiscVCpu::new(config, Box::new(reference_memory));
+    for register in 1..32u8 {
+        cpu.set_x(register, initial_state.x[register as usize]);
+    }
+    for register in 0..32u8 {
+        cpu.set_f(register, initial_state.f[register as usize]);
+        cpu.set_vreg(register, &initial_state.v[register as usize]);
+    }
+    cpu.set_fcsr(initial_state.fcsr as u32);
+    cpu.set_vl_vtype(initial_state.vl, initial_state.vtype);
+    cpu.set_vstart(initial_state.vstart);
+    cpu.set_vcsr(initial_state.vcsr);
+    cpu.set_pc(CODE);
+    assert_eq!(
+        cpu.step(),
+        RiscVExit::Continue,
+        "reference vector instruction {instruction:08x} trapped"
+    );
+    let expected_x: [u64; 32] = std::array::from_fn(|index| cpu.x(index as u8));
+    let expected_f: [u64; 32] = std::array::from_fn(|index| cpu.f(index as u8));
+    let expected_v: [[u8; 16]; 32] = std::array::from_fn(|index| cpu.vreg(index as u8));
+    let mut expected_memory = [0u8; MEMORY_LEN];
+    cpu.read_memory(0, &mut expected_memory)
+        .expect("read vector reference memory");
+
+    let bytes = instruction.to_le_bytes();
+    let mut lifter = if rv32 {
+        RiscVLifter::new_rv32(RiscVExtensions::rv64gc())
+    } else {
+        RiscVLifter::rv64gc()
+    };
+    let mut context = LiftContext::new(if rv32 {
+        SourceArch::RiscV32
+    } else {
+        SourceArch::RiscV64
+    });
+    let lifted = lifter
+        .lift_insn(CODE, &bytes, &mut context)
+        .expect("lift vector instruction");
+    let (function, return_pcs) =
+        function_for_lift(lifted.control_flow, lifted.ops, lifted.bytes_consumed);
+
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let mut optimized = function.clone();
+        optimize_function(&mut optimized, level);
+        let mut lowerer = RiscVX86_64Lowerer::new();
+        lowerer.set_return_pcs(return_pcs.clone());
+        let lowered = lowerer
+            .lower_function(&optimized)
+            .unwrap_or_else(|error| panic!("lower vector instruction at {level:?}: {error:?}"));
+        let code = lowerer.finalize().expect("finalize vector native code");
+        let executable = ExecMem::new(&code).expect("map vector native code");
+
+        let mut memory = TestMemory::new(initial_memory);
+        let mut state = jit_state(
+            &mut memory,
+            initial_state.x,
+            initial_state.f,
+            initial_state.fcsr as u32,
+            CODE,
+        );
+        state.v = initial_state.v;
+        state.vl = initial_state.vl;
+        state.vtype = initial_state.vtype;
+        state.vstart = initial_state.vstart;
+        state.vcsr = initial_state.vcsr;
+        executable.run_riscv(lowered.entry_offset, &mut state);
+
+        assert_eq!(state.x, expected_x, "vector x state at {level:?}");
+        assert_eq!(state.f, expected_f, "vector f state at {level:?}");
+        assert_eq!(
+            state.fcsr,
+            u64::from(cpu.fcsr()),
+            "vector FCSR at {level:?}"
+        );
+        assert_eq!(state.v, expected_v, "vector register state at {level:?}");
+        assert_eq!(state.vl, cpu.vl(), "vector vl at {level:?}");
+        assert_eq!(state.vtype, cpu.vtype(), "vector vtype at {level:?}");
+        assert_eq!(state.vstart, cpu.vstart(), "vector vstart at {level:?}");
+        assert_eq!(state.vcsr, cpu.vcsr(), "vector vcsr at {level:?}");
+        assert_eq!(state.pc, CODE + 4, "vector resume PC at {level:?}");
+        assert_eq!(state.exit_reason, 0, "vector exit status at {level:?}");
+        assert_eq!(memory.bytes, expected_memory, "vector memory at {level:?}");
     }
 }
 
@@ -1420,6 +1603,176 @@ fn noncanonical_atomic_helper_statuses_fail_closed() {
 }
 
 #[test]
+fn lifted_rv_vector_executes_through_complete_state_helper_abi() {
+    const E32_M1: u64 = 0x10;
+    let mut initial = RiscVGuestRegs {
+        fcsr: 0x10,
+        vl: 4,
+        vtype: E32_M1,
+        vcsr: 5,
+        ..Default::default()
+    };
+    initial.x[10] = DATA;
+    initial.x[12] = 3;
+    initial.x[13] = 7;
+    initial.f[13] = 0xffff_ffff_3f80_0000;
+    for lane in 0..4usize {
+        initial.v[1][lane * 4..lane * 4 + 4]
+            .copy_from_slice(&(0x1020_3040u32 + lane as u32).to_le_bytes());
+        initial.v[2][lane * 4..lane * 4 + 4].copy_from_slice(&(lane as u32 + 1).to_le_bytes());
+        initial.v[3][lane * 4..lane * 4 + 4]
+            .copy_from_slice(&((lane as u32 + 1) * 10).to_le_bytes());
+    }
+    let mut memory = [0u8; MEMORY_LEN];
+    for lane in 0..4usize {
+        memory[DATA as usize + lane * 4..DATA as usize + lane * 4 + 4]
+            .copy_from_slice(&(0xa0b0_c000u32 + lane as u32).to_le_bytes());
+    }
+
+    let instructions = [
+        // Configuration writes x11, vl, and vtype.
+        (E32_M1 as u32) << 20 | (12 << 15) | (7 << 12) | (11 << 7) | 0x57,
+        // Vector-register result.
+        v_type(0b000000, 1, 2, 3, 0, 1), // vadd.vv v1,v2,v3
+        // Integer and floating scalar outputs.
+        v_type(0b010000, 1, 2, 0, 2, 11), // vmv.x.s x11,v2
+        v_type(0b010000, 1, 2, 0, 1, 11), // vfmv.f.s f11,v2
+        // Memory read and write effects.
+        (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07, // vle32.v
+        (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x27, // vse32.v
+    ];
+    for rv32 in [false, true] {
+        for instruction in instructions {
+            run_vector_case(instruction, initial, memory, rv32);
+        }
+    }
+}
+
+#[test]
+fn rv_vector_flushes_current_virtual_scalar_sources() {
+    const E32_M1: u64 = 0x10;
+    let instruction: u32 = (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07;
+    let bytes = instruction.to_le_bytes();
+    let mut lifter = RiscVLifter::rv64gc();
+    let mut context = LiftContext::new(SourceArch::RiscV64);
+    let mut lifted = lifter
+        .lift_insn(CODE, &bytes, &mut context)
+        .expect("lift vector load");
+    let current_x10 = VReg::Virtual(VirtualId(0xfeed));
+    let OpKind::RvVector { rs1, state, .. } = &mut lifted.ops[0].kind else {
+        panic!("vector load did not lift to RvVector");
+    };
+    *rs1 = current_x10;
+    state.x_srcs[10] = current_x10;
+    lifted.ops.insert(
+        0,
+        SmirOp::new(
+            OpId(0),
+            CODE,
+            OpKind::Mov {
+                dst: current_x10,
+                src: SrcOperand::Imm64(DATA as i64),
+                width: OpWidth::W64,
+            },
+        ),
+    );
+    let (function, return_pcs) =
+        function_for_lift(lifted.control_flow, lifted.ops, lifted.bytes_consumed);
+
+    let stale_address = DATA + 0x40;
+    let current_lane = 0xaabb_ccddu32.to_le_bytes();
+    let stale_lane = 0x1122_3344u32.to_le_bytes();
+    let mut initial_memory = [0u8; MEMORY_LEN];
+    initial_memory[DATA as usize..DATA as usize + 4].copy_from_slice(&current_lane);
+    initial_memory[stale_address as usize..stale_address as usize + 4].copy_from_slice(&stale_lane);
+    let mut initial_x = [0u64; 32];
+    initial_x[10] = stale_address;
+
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let mut optimized = function.clone();
+        optimize_function(&mut optimized, level);
+        let mut lowerer = RiscVX86_64Lowerer::new();
+        lowerer.set_return_pcs(return_pcs.clone());
+        let lowered = lowerer
+            .lower_function(&optimized)
+            .expect("lower vector load with virtual base");
+        let code = lowerer
+            .finalize()
+            .expect("finalize vector virtual-source code");
+        let executable = ExecMem::new(&code).expect("map vector virtual-source code");
+        let mut memory = TestMemory::new(initial_memory);
+        let mut state = jit_state(&mut memory, initial_x, [0; 32], 0, CODE);
+        state.vl = 1;
+        state.vtype = E32_M1;
+        executable.run_riscv(lowered.entry_offset, &mut state);
+
+        assert_eq!(&state.v[1][0..4], &current_lane, "fresh base at {level:?}");
+        assert_ne!(&state.v[1][0..4], &stale_lane, "stale base at {level:?}");
+        assert_eq!(state.x[10], DATA, "scalar state forwarding at {level:?}");
+        assert_eq!(state.pc, CODE + 4);
+        assert_eq!(state.exit_reason, 0);
+    }
+}
+
+#[test]
+fn vector_faults_and_noncanonical_statuses_fail_transactionally() {
+    const E32_M1: u64 = 0x10;
+    let instruction: u32 = (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07;
+    let bytes = instruction.to_le_bytes();
+    let mut lifter = RiscVLifter::rv64gc();
+    let mut context = LiftContext::new(SourceArch::RiscV64);
+    let lifted = lifter
+        .lift_insn(CODE, &bytes, &mut context)
+        .expect("lift faulting vector load");
+    let (function, return_pcs) =
+        function_for_lift(lifted.control_flow, lifted.ops, lifted.bytes_consumed);
+
+    let mut initial_x = [0u64; 32];
+    initial_x[10] = MEMORY_LEN as u64 - 2;
+    let initial_v = [[0x5au8; 16]; 32];
+    let initial_memory = [0xa5u8; MEMORY_LEN];
+    for (malformed, expected_reason) in [(false, 1), (true, 1)] {
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let mut optimized = function.clone();
+            optimize_function(&mut optimized, level);
+            let mut lowerer = RiscVX86_64Lowerer::new();
+            lowerer.set_return_pcs(return_pcs.clone());
+            let lowered = lowerer
+                .lower_function(&optimized)
+                .expect("lower vector failure path");
+            let code = lowerer.finalize().expect("finalize vector failure path");
+            let executable = ExecMem::new(&code).expect("map vector failure path");
+            let mut memory = TestMemory::new(initial_memory);
+            let mut state = jit_state(&mut memory, initial_x, [0; 32], 0x11, CODE);
+            state.v = initial_v;
+            state.vl = 1;
+            state.vtype = E32_M1;
+            state.vstart = 0;
+            state.vcsr = 6;
+            if malformed {
+                state.vector_fn = noncanonical_vector_status as *const () as usize as u64;
+            }
+            executable.run_riscv(lowered.entry_offset, &mut state);
+
+            assert_eq!(state.x, initial_x, "vector failure x state at {level:?}");
+            assert_eq!(state.f, [0; 32], "vector failure f state at {level:?}");
+            assert_eq!(state.fcsr, 0x11, "vector failure FCSR at {level:?}");
+            assert_eq!(state.v, initial_v, "vector failure v state at {level:?}");
+            assert_eq!(state.vl, 1);
+            assert_eq!(state.vtype, E32_M1);
+            assert_eq!(state.vstart, 0);
+            assert_eq!(state.vcsr, 6);
+            assert_eq!(state.pc, CODE, "vector failure PC at {level:?}");
+            assert_eq!(state.exit_reason, expected_reason);
+            assert_eq!(
+                memory.bytes, initial_memory,
+                "vector partial memory at {level:?}"
+            );
+        }
+    }
+}
+
+#[test]
 fn lifted_rv64_integer_crypto_executes_through_helper_abi() {
     let mut x = [0u64; 32];
     x[1] = 0x0123_4567_89ab_cdef;
@@ -1541,7 +1894,13 @@ fn runtime_layout_matches_codegen_offsets() {
     assert_eq!(RiscVGuestRegs::CLEAR_EXCLUSIVE_FN_OFFSET, 74 * 8);
     assert_eq!(RiscVGuestRegs::INT_CRYPTO_FN_OFFSET, 75 * 8);
     assert_eq!(RiscVGuestRegs::FP_FN_OFFSET, 76 * 8);
-    assert_eq!(std::mem::size_of::<RiscVGuestRegs>(), 77 * 8);
+    assert_eq!(RiscVGuestRegs::V_OFFSET, 77 * 8);
+    assert_eq!(RiscVGuestRegs::VL_OFFSET, 141 * 8);
+    assert_eq!(RiscVGuestRegs::VTYPE_OFFSET, 142 * 8);
+    assert_eq!(RiscVGuestRegs::VSTART_OFFSET, 143 * 8);
+    assert_eq!(RiscVGuestRegs::VCSR_OFFSET, 144 * 8);
+    assert_eq!(RiscVGuestRegs::VECTOR_FN_OFFSET, 145 * 8);
+    assert_eq!(std::mem::size_of::<RiscVGuestRegs>(), 146 * 8);
     assert_eq!(std::mem::size_of::<RiscVAtomicCasResult>(), 2 * 8);
     assert_eq!(std::mem::size_of::<RiscVAtomicResult>(), 2 * 8);
     assert_eq!(std::mem::size_of::<RiscVLoadResult>(), 2 * 8);

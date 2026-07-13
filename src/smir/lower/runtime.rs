@@ -313,6 +313,9 @@ pub struct RiscVFpResult {
 /// indivisible transaction per call. The integer-crypto and scalar-FP helpers
 /// are pure; the latter has signature
 /// `extern "sysv64" fn(op_code, rm, fcsr, a, b, c) -> {value, fcsr_status}`.
+/// `vector_fn` has signature
+/// `extern "sysv64" fn(state, insn, xlen) -> success`; exact success is one.
+/// On any other status it must leave both this state and guest memory unchanged.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RiscVGuestRegs {
@@ -353,6 +356,19 @@ pub struct RiscVGuestRegs {
     pub int_crypto_fn: u64,
     /// `extern "sysv64" fn(op_code, rm, fcsr, a, b, c) -> {value, fcsr_status}`.
     pub fp_fn: u64,
+    /// Raw 128-bit RVV register file, v0-v31.
+    pub v: [[u8; 16]; 32],
+    /// RVV vector length CSR (`vl`).
+    pub vl: u64,
+    /// RVV vector type CSR (`vtype`).
+    pub vtype: u64,
+    /// RVV vector restart CSR (`vstart`).
+    pub vstart: u64,
+    /// RVV fixed-point control/status CSR (`vcsr`).
+    pub vcsr: u64,
+    /// `extern "sysv64" fn(state, insn, xlen) -> success`.
+    /// Non-success must be transactional with respect to state and memory.
+    pub vector_fn: u64,
 }
 
 impl Default for RiscVGuestRegs {
@@ -373,6 +389,12 @@ impl Default for RiscVGuestRegs {
             clear_exclusive_fn: 0,
             int_crypto_fn: 0,
             fp_fn: 0,
+            v: [[0; 16]; 32],
+            vl: 0,
+            vtype: 0,
+            vstart: 0,
+            vcsr: 0,
+            vector_fn: 0,
         }
     }
 }
@@ -393,6 +415,12 @@ impl RiscVGuestRegs {
     pub const CLEAR_EXCLUSIVE_FN_OFFSET: i32 = Self::STORE_EXCLUSIVE_FN_OFFSET + 8;
     pub const INT_CRYPTO_FN_OFFSET: i32 = Self::CLEAR_EXCLUSIVE_FN_OFFSET + 8;
     pub const FP_FN_OFFSET: i32 = Self::INT_CRYPTO_FN_OFFSET + 8;
+    pub const V_OFFSET: i32 = Self::FP_FN_OFFSET + 8;
+    pub const VL_OFFSET: i32 = Self::V_OFFSET + 32 * 16;
+    pub const VTYPE_OFFSET: i32 = Self::VL_OFFSET + 8;
+    pub const VSTART_OFFSET: i32 = Self::VTYPE_OFFSET + 8;
+    pub const VCSR_OFFSET: i32 = Self::VSTART_OFFSET + 8;
+    pub const VECTOR_FN_OFFSET: i32 = Self::VCSR_OFFSET + 8;
 }
 
 // enter_native(rdi = entry ptr, rsi = *mut GuestRegs):

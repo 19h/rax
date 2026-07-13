@@ -52,6 +52,12 @@ const RV_STORE_EXCLUSIVE_FN_OFFSET: i32 = RV_LOAD_EXCLUSIVE_FN_OFFSET + 8;
 const RV_CLEAR_EXCLUSIVE_FN_OFFSET: i32 = RV_STORE_EXCLUSIVE_FN_OFFSET + 8;
 const RV_INT_CRYPTO_FN_OFFSET: i32 = RV_CLEAR_EXCLUSIVE_FN_OFFSET + 8;
 const RV_FP_FN_OFFSET: i32 = RV_INT_CRYPTO_FN_OFFSET + 8;
+const RV_V_OFFSET: i32 = RV_FP_FN_OFFSET + 8;
+const RV_VL_OFFSET: i32 = RV_V_OFFSET + 32 * 16;
+const RV_VTYPE_OFFSET: i32 = RV_VL_OFFSET + 8;
+const RV_VSTART_OFFSET: i32 = RV_VTYPE_OFFSET + 8;
+const RV_VCSR_OFFSET: i32 = RV_VSTART_OFFSET + 8;
+const RV_VECTOR_FN_OFFSET: i32 = RV_VCSR_OFFSET + 8;
 
 const EXIT_RETURN: i64 = 0;
 const EXIT_TRAP: i64 = 1;
@@ -198,6 +204,10 @@ impl RiscVX86_64Lowerer {
             RiscVReg::F(n @ 0..=31) => Ok(Some(RV_F_OFFSET + i32::from(n) * 8)),
             RiscVReg::Pc => Ok(Some(RV_PC_OFFSET)),
             RiscVReg::Csr(0x003) => Ok(Some(RV_FCSR_OFFSET)),
+            RiscVReg::Csr(0xc20) => Ok(Some(RV_VL_OFFSET)),
+            RiscVReg::Csr(0xc21) => Ok(Some(RV_VTYPE_OFFSET)),
+            RiscVReg::Csr(0x008) => Ok(Some(RV_VSTART_OFFSET)),
+            RiscVReg::Csr(0x00f) => Ok(Some(RV_VCSR_OFFSET)),
             other => Err(LowerError::InvalidRegister(format!(
                 "unsupported state-backed RISC-V register {other:?}"
             ))),
@@ -980,6 +990,112 @@ impl RiscVX86_64Lowerer {
         self.store_reg_to(fcsr_dst, HI, OpWidth::W64)
     }
 
+    fn lower_rv_vector(
+        &mut self,
+        insn: u32,
+        xlen: u8,
+        state: &crate::smir::ir::ops::RvVectorState,
+        guest_pc: u64,
+    ) -> Result<(), LowerError> {
+        if !matches!(xlen, 32 | 64) {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("RISC-V Vector XLEN {xlen}"),
+            });
+        }
+
+        // Materialize the complete scalar/CSR SSA snapshot before the opaque
+        // helper observes it. This is required when optimization has kept a
+        // newer value in a virtual register rather than its architectural slot.
+        for (index, src) in state.x_srcs.iter().copied().enumerate() {
+            self.load_vreg_to(src, ACC, OpWidth::W64)?;
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_mov_mr(
+                STATE,
+                RV_X_OFFSET + i32::try_from(index).expect("32 registers") * 8,
+                ACC,
+                OpWidth::W64,
+            );
+        }
+        for (index, src) in state.f_srcs.iter().copied().enumerate() {
+            self.load_vreg_to(src, ACC, OpWidth::W64)?;
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_mov_mr(
+                STATE,
+                RV_F_OFFSET + i32::try_from(index).expect("32 registers") * 8,
+                ACC,
+                OpWidth::W64,
+            );
+        }
+        for (src, offset) in [
+            (state.fcsr_src, RV_FCSR_OFFSET),
+            (state.vl_src, RV_VL_OFFSET),
+            (state.vtype_src, RV_VTYPE_OFFSET),
+            (state.vstart_src, RV_VSTART_OFFSET),
+            (state.vcsr_src, RV_VCSR_OFFSET),
+        ] {
+            self.load_vreg_to(src, ACC, OpWidth::W64)?;
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_mov_mr(STATE, offset, ACC, OpWidth::W64);
+        }
+
+        // SysV arguments are (state, insn, xlen). RDI already contains state.
+        // Preserve it across the Rust helper and retain 16-byte call alignment.
+        {
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_mov_rm(TARGET, STATE, RV_VECTOR_FN_OFFSET, OpWidth::W64);
+            e.emit_mov_ri_imm64(ADDR, i64::from(insn));
+            e.emit_mov_ri(HI, i64::from(xlen), OpWidth::W64);
+            e.emit_push(STATE);
+            e.emit_sub_ri(PhysReg::Rsp, 8, OpWidth::W64);
+            e.emit_call_reg(TARGET);
+            e.emit_add_ri(PhysReg::Rsp, 8, OpWidth::W64);
+            e.emit_pop(STATE);
+        }
+        self.emit_trap_unless_one(ACC, guest_pc)?;
+
+        // The helper owns the external vector-file mutation. Re-import every
+        // scalar/CSR result into its recorded SSA destination only after exact
+        // success, so malformed/fault statuses cannot partially commit results.
+        for (index, dst) in state.x_dsts.iter().copied().enumerate().skip(1) {
+            {
+                let mut e = X86Emitter::new(&mut self.code);
+                e.emit_mov_rm(
+                    ACC,
+                    STATE,
+                    RV_X_OFFSET + i32::try_from(index).expect("32 registers") * 8,
+                    OpWidth::W64,
+                );
+            }
+            self.store_reg_to(dst, ACC, OpWidth::W64)?;
+        }
+        for (index, dst) in state.f_dsts.iter().copied().enumerate() {
+            {
+                let mut e = X86Emitter::new(&mut self.code);
+                e.emit_mov_rm(
+                    ACC,
+                    STATE,
+                    RV_F_OFFSET + i32::try_from(index).expect("32 registers") * 8,
+                    OpWidth::W64,
+                );
+            }
+            self.store_reg_to(dst, ACC, OpWidth::W64)?;
+        }
+        for (dst, offset) in [
+            (state.fcsr_dst, RV_FCSR_OFFSET),
+            (state.vl_dst, RV_VL_OFFSET),
+            (state.vtype_dst, RV_VTYPE_OFFSET),
+            (state.vstart_dst, RV_VSTART_OFFSET),
+            (state.vcsr_dst, RV_VCSR_OFFSET),
+        ] {
+            {
+                let mut e = X86Emitter::new(&mut self.code);
+                e.emit_mov_rm(ACC, STATE, offset, OpWidth::W64);
+            }
+            self.store_reg_to(dst, ACC, OpWidth::W64)?;
+        }
+        Ok(())
+    }
+
     fn lower_atomic_rmw(
         &mut self,
         dst: VReg,
@@ -1411,6 +1527,9 @@ impl RiscVX86_64Lowerer {
                 *xlen,
                 op.guest_pc,
             )?,
+            OpKind::RvVector {
+                insn, xlen, state, ..
+            } => self.lower_rv_vector(*insn, *xlen, state, op.guest_pc)?,
             OpKind::Breakpoint => self.emit_arch_exit(op.guest_pc, EXIT_BREAKPOINT),
             OpKind::Syscall { .. } => self.emit_arch_exit(op.guest_pc, EXIT_SYSCALL),
             other => {

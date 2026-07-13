@@ -2676,6 +2676,7 @@ impl RiscVLifter {
             addr,
             OpKind::RvVector {
                 insn,
+                xlen: self.xlen,
                 rs1,
                 rs2,
                 state,

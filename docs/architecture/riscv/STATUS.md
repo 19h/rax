@@ -190,9 +190,10 @@ The former SMIR-op-set gaps are represented by explicit RISC-V operations:
 - `RvVector` evaluates RVV while explicitly threading the scalar x/f/CSR
   register state required by vector/scalar transfer operations.
 
-These operations are exact in `SmirInterpreter`; `RvIntCrypto` and scalar
-`RvFp` also have the bounded helper-backed x86-64 lowering described below.
-`RvVector` remains at the native-lowering frontier.
+These operations are exact in `SmirInterpreter`; `RvIntCrypto`, scalar `RvFp`,
+and `RvVector` also have the bounded helper-backed x86-64 lowering described
+below. The vector boundary transfers the complete scalar, floating-point,
+128-bit vector-register, and vector-CSR state for one instruction.
 
 ---
 
@@ -200,11 +201,13 @@ These operations are exact in `SmirInterpreter`; `RvIntCrypto` and scalar
 
 `RiscVX86_64Lowerer` uses an explicit
 `extern "sysv64" fn(*mut RiscVGuestRegs)` ABI;
-it does not reuse the x86-guest identity-register ABI. The 616-byte state holds
-`x[32]`, `f[32]`, PC, FCSR, exit classification, memory context, and scalar
-load/store, atomic, pure scalar integer-crypto, and pure scalar floating-point
-helper pointers. Reads of x0 are hard-wired to zero, writes are discarded, and
-the externally visible x0 backing slot is canonicalized on entry.
+it does not reuse the x86-guest identity-register ABI. The 1168-byte state holds
+`x[32]`, `f[32]`, PC, FCSR, exit classification, memory context, scalar
+load/store and atomic helper pointers, pure scalar integer-crypto and
+floating-point helper pointers, `v[32][16]`, `vl`, `vtype`, `vstart`, `vcsr`,
+and the vector helper pointer. Reads of x0 are hard-wired to zero, writes are
+discarded, and the externally visible x0 backing slot is canonicalized on
+entry.
 
 When the x86-64 test/runtime binary is translated by Rosetta, released JIT
 mappings are changed to `PROT_NONE` and advised for physical-page discard while
@@ -249,12 +252,15 @@ codes across RV32/RV64, every SM4/AES32 byte selector, and every legal AES64KS1I
 round immediate. The scalar-FP corpus round-trips all 91 helper ABI selectors at
 O0/O2 and separately lifts representative arithmetic, FMA, min, compare, and
 integer/float conversion encodings, including dynamic rounding and invalid-mode
-trap paths. Scalar and atomic out-of-range accesses are forced through every
-two-register status path and checked for no register or memory commit. The
+trap paths. RVV tests cover RV32/RV64 vector configuration, arithmetic,
+integer/floating scalar transfers, vector loads/stores, current SSA scalar
+sources, and the complete vector state round-trip at O0/O2. Scalar, atomic, and
+vector out-of-range accesses are forced through their status paths and checked
+for no register or memory commit; noncanonical statuses fail closed. The
 generated count sequence is baseline x86-64 and does not require host `POPCNT`.
-Remaining native gaps are detailed fault-cause reporting, the production
-dispatcher/helper provider, and `RvVector` (including vector memory restart
-semantics).
+Remaining native gaps are detailed fault-cause reporting, a production
+dispatcher/helper provider, and architectural vector memory restart/partial-
+completion reporting beyond the current transactional helper failure contract.
 
 The LR/SC reservation is owned by the helper context. Cross-hart or device writes
 must invalidate it in the memory backend; the in-tree differential helper models
@@ -292,8 +298,9 @@ the interpreter (29 scalar + 32 vector differential suites + ~300k fuzz
 comparisons/run, all at zero divergence vs qemu). The **SMIR lift covers the
 scalar, compressed, atomic, FP, crypto, and vector families**, using explicit
 architecture-exact opaque ops where generic SMIR primitives cannot carry the
-required RISC-V state. The state-backed x86-64 cross-JIT now executes the scalar
-integer/control/memory, atomic, and rounding-free FP-bit subsets end-to-end;
-arithmetic scalar-FP/crypto and RVV native lowering remain. Privileged
-translation/MMU execution remains a separate interpreter/VMM scope described in
-`REMAINING.md`.
+required RISC-V state. The state-backed x86-64 cross-JIT executes the admitted
+scalar integer/control/memory and atomic families directly, and crosses bounded
+helper ABIs for every scalar-FP, integer-crypto, and RVV opaque operation.
+Production dispatcher/helper integration, detailed fault causes, and RVV
+partial-completion/restart reporting remain. Privileged translation/MMU
+execution remains a separate interpreter/VMM scope described in `REMAINING.md`.
