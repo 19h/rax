@@ -981,6 +981,9 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::VExpand { .. }
             | OpKind::X86NarrowInt { .. }
             | OpKind::X86Aes { .. }
+            | OpKind::X86Sha512Msg1 { .. }
+            | OpKind::X86Sha512Msg2 { .. }
+            | OpKind::X86Sha512Rounds2 { .. }
             | OpKind::VDotProduct { .. }
             | OpKind::VDotProductBF16 { .. }
             | OpKind::VCvtFP32ToBF16 { .. }
@@ -1317,6 +1320,26 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         }
     }
 
+    let valid_sha512 = match op {
+        OpKind::X86Sha512Msg1 { dst, src } => {
+            matches!(dst, VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=15))))
+                && matches!(src, VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=15))))
+        }
+        OpKind::X86Sha512Msg2 { dst, src } => {
+            matches!(dst, VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=15))))
+                && matches!(src, VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=15))))
+        }
+        OpKind::X86Sha512Rounds2 { dst, state, wk } => {
+            matches!(dst, VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=15))))
+                && matches!(state, VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=15))))
+                && matches!(wk, VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=15))))
+        }
+        _ => true,
+    };
+    if !valid_sha512 {
+        return false;
+    }
+
     if let OpKind::VMultiplyAdd52 {
         dst,
         acc,
@@ -1532,6 +1555,17 @@ fn x86_aes_feature_requirements(op: &crate::smir::ir::ops::OpKind) -> (bool, boo
     }
 }
 
+fn x86_sha512_feature_required(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+
+    matches!(
+        op,
+        OpKind::X86Sha512Msg1 { .. }
+            | OpKind::X86Sha512Msg2 { .. }
+            | OpKind::X86Sha512Rounds2 { .. }
+    )
+}
+
 /// Verify that this host can execute every admitted vector opcode in `func`.
 /// The trampoline itself uses 512-bit VMOVDQU64 and 64-bit KMOVQ, so AVX-512F
 /// and AVX-512BW are unconditional requirements for every vector region.
@@ -1555,6 +1589,7 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_fp16 = false;
     let mut needs_aes = false;
     let mut needs_vaes = false;
+    let mut needs_sha512 = false;
 
     for op in func
         .blocks
@@ -1585,13 +1620,18 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86TernaryLogic { width, .. }
             | OpKind::X86PackedFunnelShift { width, .. }
             | OpKind::X86MultiShiftQB { width, .. } => *width,
+            OpKind::X86Sha512Msg1 { .. }
+            | OpKind::X86Sha512Msg2 { .. }
+            | OpKind::X86Sha512Rounds2 { .. } => VecWidth::V256,
             _ => unreachable!("filtered to native vector operations"),
         };
         let (aes, vaes, aes_vl) = x86_aes_feature_requirements(op);
-        needs_vl |= if matches!(op, OpKind::X86Aes { .. }) {
-            aes_vl
-        } else {
-            width != VecWidth::V512
+        needs_vl |= match op {
+            OpKind::X86Aes { .. } => aes_vl,
+            OpKind::X86Sha512Msg1 { .. }
+            | OpKind::X86Sha512Msg2 { .. }
+            | OpKind::X86Sha512Rounds2 { .. } => false,
+            _ => width != VecWidth::V512,
         };
         needs_vbmi |= matches!(
             op,
@@ -1633,6 +1673,7 @@ pub fn x86_native_vector_features_supported_excluding(
         needs_fp16 |= matches!(op, OpKind::VFP16Arith { .. });
         needs_aes |= aes;
         needs_vaes |= vaes;
+        needs_sha512 |= x86_sha512_feature_required(op);
     }
 
     if !any {
@@ -1655,6 +1696,9 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_fp16 || std::is_x86_feature_detected!("avx512fp16"))
             && (!needs_aes || std::is_x86_feature_detected!("aes"))
             && (!needs_vaes || std::is_x86_feature_detected!("vaes"))
+            && (!needs_sha512
+                || (std::is_x86_feature_detected!("avx2")
+                    && std::is_x86_feature_detected!("sha512")))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
@@ -1672,6 +1716,7 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_fp16,
             needs_aes,
             needs_vaes,
+            needs_sha512,
         );
         false
     }
@@ -2266,6 +2311,24 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn x86_sha512_feature_requirement_is_exact_to_the_three_native_ops() {
+        assert!(x86_sha512_feature_required(&OpKind::X86Sha512Msg1 {
+            dst: x86(X86Reg::Ymm(1)),
+            src: x86(X86Reg::Xmm(2)),
+        }));
+        assert!(x86_sha512_feature_required(&OpKind::X86Sha512Msg2 {
+            dst: x86(X86Reg::Ymm(1)),
+            src: x86(X86Reg::Ymm(2)),
+        }));
+        assert!(x86_sha512_feature_required(&OpKind::X86Sha512Rounds2 {
+            dst: x86(X86Reg::Ymm(1)),
+            state: x86(X86Reg::Ymm(2)),
+            wk: x86(X86Reg::Xmm(3)),
+        }));
+        assert!(!x86_sha512_feature_required(&OpKind::Nop));
+    }
+
+    #[test]
     fn x86_vector_guest_state_layout_matches_trampoline_offsets() {
         assert_eq!(
             std::mem::offset_of!(GuestRegs, zmm),
@@ -2305,8 +2368,11 @@ mod jit_gate_tests {
         let zmm2 = x86(X86Reg::Zmm(2));
         let zmm3 = x86(X86Reg::Zmm(3));
         let ymm1 = x86(X86Reg::Ymm(1));
+        let ymm2 = x86(X86Reg::Ymm(2));
+        let ymm3 = x86(X86Reg::Ymm(3));
         let xmm1 = x86(X86Reg::Xmm(1));
         let xmm2 = x86(X86Reg::Xmm(2));
+        let xmm3 = x86(X86Reg::Xmm(3));
         let k4 = x86(X86Reg::K(4));
         let k5 = x86(X86Reg::K(5));
         let native_ops = [
@@ -2393,6 +2459,19 @@ mod jit_gate_tests {
                 width: VecWidth::V128,
                 op: X86AesOp::KeygenAssist,
                 imm: 0x5A,
+            },
+            OpKind::X86Sha512Msg1 {
+                dst: ymm1,
+                src: xmm2,
+            },
+            OpKind::X86Sha512Msg2 {
+                dst: ymm1,
+                src: ymm2,
+            },
+            OpKind::X86Sha512Rounds2 {
+                dst: ymm1,
+                state: ymm2,
+                wk: xmm3,
             },
             OpKind::VCompress {
                 dst: zmm1,
@@ -2766,6 +2845,38 @@ mod jit_gate_tests {
         ] {
             assert!(!is_x86_native_vector_op(&invalid_aes));
             assert!(!x86_gate(invalid_aes));
+        }
+
+        for invalid_sha512 in [
+            OpKind::X86Sha512Msg1 {
+                dst: ymm1,
+                src: VReg::Virtual(VirtualId(11)),
+            },
+            OpKind::X86Sha512Msg1 {
+                dst: xmm1,
+                src: xmm2,
+            },
+            OpKind::X86Sha512Msg2 {
+                dst: ymm1,
+                src: xmm2,
+            },
+            OpKind::X86Sha512Rounds2 {
+                dst: ymm1,
+                state: xmm2,
+                wk: xmm3,
+            },
+            OpKind::X86Sha512Rounds2 {
+                dst: ymm1,
+                state: ymm2,
+                wk: ymm3,
+            },
+            OpKind::X86Sha512Msg2 {
+                dst: x86(X86Reg::Ymm(16)),
+                src: ymm2,
+            },
+        ] {
+            assert!(!is_x86_native_vector_op(&invalid_sha512));
+            assert!(!x86_gate(invalid_sha512));
         }
 
         let invalid_bf16_output_width = OpKind::VCvtFP32ToBF16 {

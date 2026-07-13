@@ -107,6 +107,9 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
             "vaeskeygenassist xmm11",
             &[0xc4, 0x43, 0x79, 0xdf, 0xda, 0x5a],
         ),
+        ("vsha512msg1 ymm9", &[0xc4, 0x42, 0x7f, 0xcc, 0xca]),
+        ("vsha512msg2 ymm9", &[0xc4, 0x42, 0x7f, 0xcd, 0xca]),
+        ("vsha512rnds2 ymm9", &[0xc4, 0x42, 0x27, 0xcb, 0xca]),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -679,6 +682,71 @@ fn hot_vaeskeygenassist_jits_with_vex_upper_zeroing_semantics() {
         ]
     );
     assert_eq!(get_zmm(&after, 2), [0; 8]);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_vsha512msg1_jits_with_schedule_and_vex_upper_zeroing_semantics() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx2")
+        || !std::is_x86_feature_detected!("sha512")
+    {
+        return;
+    }
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x7F, 0xCC, 0xCA]);
+    code.extend_from_slice(&[0xFF, 0xC9]);
+    code.extend_from_slice(&[0x75, 0xF7]);
+    code.push(0xF4);
+
+    let source = [
+        0x0123_4567_89AB_CDEF,
+        0xFEDC_BA98_7654_3210,
+        0xA5A5_A5A5_A5A5_A5A5,
+        0x5A5A_5A5A_5A5A_5A5A,
+        1,
+        2,
+        3,
+        4,
+    ];
+    let initial = [
+        0x6A09_E667_F3BC_C908,
+        0xBB67_AE85_84CA_A73B,
+        0x3C6E_F372_FE94_F82B,
+        0xA54F_F53A_5F1D_36F1,
+        u64::MAX,
+        u64::MAX,
+        u64::MAX,
+        u64::MAX,
+    ];
+    let sigma0 = |value: u64| value.rotate_right(1) ^ value.rotate_right(8) ^ (value >> 7);
+    let mut expected = initial;
+    for _ in 0..200 {
+        expected = [
+            expected[0].wrapping_add(sigma0(expected[1])),
+            expected[1].wrapping_add(sigma0(expected[2])),
+            expected[2].wrapping_add(sigma0(expected[3])),
+            expected[3].wrapping_add(sigma0(source[0])),
+            0,
+            0,
+            0,
+            0,
+        ];
+    }
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, initial);
+    set_zmm(&mut regs, 2, source);
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(vcpu.jit_try_block().expect("jit VSHA512MSG1 loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xFFFF_FFFF, 0);
+    assert_eq!(get_zmm(&after, 1), expected);
+    assert_eq!(get_zmm(&after, 2), source);
     run_to_hlt(&mut vcpu);
 }
 

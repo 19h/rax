@@ -343,6 +343,16 @@ impl Avx10Lowerer {
                 imm,
             } => Some(self.lower_x86_aes(code, dst, src1, src2.as_ref(), *width, *op, *imm)),
 
+            OpKind::X86Sha512Msg1 { dst, src } => {
+                Some(self.lower_x86_sha512(code, 0xCC, dst, None, src))
+            }
+            OpKind::X86Sha512Msg2 { dst, src } => {
+                Some(self.lower_x86_sha512(code, 0xCD, dst, None, src))
+            }
+            OpKind::X86Sha512Rounds2 { dst, state, wk } => {
+                Some(self.lower_x86_sha512(code, 0xCB, dst, Some(state), wk))
+            }
+
             // AVX10.1 BF16
             OpKind::VDotProductBF16 {
                 dst,
@@ -1157,7 +1167,7 @@ impl Avx10Lowerer {
                     _ => unreachable!(),
                 };
                 if width != VecWidth::V512 && dst_reg <= 15 && src1_reg <= 15 && src2_reg <= 15 {
-                    Self::emit_vex_aes(code, 2, width, dst_reg, src1_reg, src2_reg, opcode, None);
+                    Self::emit_vex_rr(code, 2, 1, width, dst_reg, src1_reg, src2_reg, opcode, None);
                 } else {
                     let mut enc = EvexEncoder::new(code);
                     enc.emit_evex(2, 1, false, width, dst_reg, src1_reg, src2_reg, 0, false);
@@ -1182,16 +1192,83 @@ impl Avx10Lowerer {
                     X86AesOp::KeygenAssist => (3, 0xDF, Some(imm)),
                     _ => unreachable!(),
                 };
-                Self::emit_vex_aes(code, map, width, dst_reg, 0, src1_reg, opcode, immediate);
+                Self::emit_vex_rr(code, map, 1, width, dst_reg, 0, src1_reg, opcode, immediate);
             }
         }
         Ok(())
     }
 
+    fn lower_x86_sha512(
+        &self,
+        code: &mut CodeBuffer,
+        opcode: u8,
+        dst: &VReg,
+        state: Option<&VReg>,
+        source: &VReg,
+    ) -> Avx10LowerResult<()> {
+        let ymm = |reg: &VReg| match reg {
+            VReg::Arch(ArchReg::X86(X86Reg::Ymm(n))) if *n <= 15 => Ok(*n),
+            _ => Err(LowerError::InvalidRegister(format!(
+                "SHA-512 requires an architectural YMM0..YMM15 operand: {reg:?}"
+            ))),
+        };
+        let xmm = |reg: &VReg| match reg {
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(n))) if *n <= 15 => Ok(*n),
+            _ => Err(LowerError::InvalidRegister(format!(
+                "SHA-512 requires an architectural XMM0..XMM15 operand: {reg:?}"
+            ))),
+        };
+        let dst_reg = ymm(dst)?;
+        let (state_reg, source_reg) = match opcode {
+            0xCC => {
+                if state.is_some() {
+                    return Err(LowerError::UnsupportedOperation(
+                        "VSHA512MSG1 has no VEX.vvvv source".to_string(),
+                    ));
+                }
+                (0, xmm(source)?)
+            }
+            0xCD => {
+                if state.is_some() {
+                    return Err(LowerError::UnsupportedOperation(
+                        "VSHA512MSG2 has no VEX.vvvv source".to_string(),
+                    ));
+                }
+                (0, ymm(source)?)
+            }
+            0xCB => {
+                let state = state.ok_or_else(|| {
+                    LowerError::UnsupportedOperation(
+                        "VSHA512RNDS2 requires a YMM state source".to_string(),
+                    )
+                })?;
+                (ymm(state)?, xmm(source)?)
+            }
+            _ => {
+                return Err(LowerError::UnsupportedOperation(format!(
+                    "unknown SHA-512 opcode {opcode:#04x}"
+                )));
+            }
+        };
+        Self::emit_vex_rr(
+            code,
+            2,
+            3,
+            VecWidth::V256,
+            dst_reg,
+            state_reg,
+            source_reg,
+            opcode,
+            None,
+        );
+        Ok(())
+    }
+
     #[allow(clippy::too_many_arguments)]
-    fn emit_vex_aes(
+    fn emit_vex_rr(
         code: &mut CodeBuffer,
         map: u8,
+        pp: u8,
         width: VecWidth,
         dst: u8,
         src1: u8,
@@ -1206,7 +1283,7 @@ impl Avx10Lowerer {
         let l = u8::from(width == VecWidth::V256);
         code.emit_u8(0xC4);
         code.emit_u8((r_inv << 7) | (1 << 6) | (b_inv << 5) | map);
-        code.emit_u8(((!src1 & 0x0F) << 3) | (l << 2) | 1);
+        code.emit_u8(((!src1 & 0x0F) << 3) | (l << 2) | (pp & 3));
         code.emit_u8(opcode);
         code.emit_u8(0xC0 | ((dst & 7) << 3) | (src2 & 7));
         if let Some(immediate) = immediate {
@@ -2608,6 +2685,75 @@ mod tests {
                 width: VecWidth::V64,
                 op: X86AesOp::EncLast,
                 imm: 0,
+            },
+        ] {
+            let mut code = CodeBuffer::new();
+            let result = lowerer.try_lower(&invalid, &mut code).unwrap();
+            assert!(result.is_err(), "accepted malformed {invalid:?}");
+            assert_eq!(code.len(), 0);
+        }
+    }
+
+    #[test]
+    fn x86_sha512_lowering_covers_all_mixed_width_forms_and_rejects_malformed_shapes() {
+        let lowerer = Avx10Lowerer::new();
+        let xmm = |n| VReg::Arch(ArchReg::X86(X86Reg::Xmm(n)));
+        let ymm = |n| VReg::Arch(ArchReg::X86(X86Reg::Ymm(n)));
+        for (op, expected) in [
+            (
+                OpKind::X86Sha512Msg1 {
+                    dst: ymm(9),
+                    src: xmm(10),
+                },
+                &[0xC4, 0x42, 0x7F, 0xCC, 0xCA][..],
+            ),
+            (
+                OpKind::X86Sha512Msg2 {
+                    dst: ymm(3),
+                    src: ymm(4),
+                },
+                &[0xC4, 0xE2, 0x7F, 0xCD, 0xDC][..],
+            ),
+            (
+                OpKind::X86Sha512Rounds2 {
+                    dst: ymm(9),
+                    state: ymm(11),
+                    wk: xmm(10),
+                },
+                &[0xC4, 0x42, 0x27, 0xCB, 0xCA][..],
+            ),
+        ] {
+            let mut code = CodeBuffer::new();
+            lowerer.try_lower(&op, &mut code).unwrap().unwrap();
+            assert_eq!(code.as_slice(), expected, "{op:?}");
+        }
+
+        for invalid in [
+            OpKind::X86Sha512Msg1 {
+                dst: xmm(1),
+                src: xmm(2),
+            },
+            OpKind::X86Sha512Msg1 {
+                dst: ymm(1),
+                src: ymm(2),
+            },
+            OpKind::X86Sha512Msg2 {
+                dst: ymm(1),
+                src: xmm(2),
+            },
+            OpKind::X86Sha512Rounds2 {
+                dst: ymm(1),
+                state: xmm(2),
+                wk: xmm(3),
+            },
+            OpKind::X86Sha512Rounds2 {
+                dst: ymm(1),
+                state: ymm(2),
+                wk: ymm(3),
+            },
+            OpKind::X86Sha512Msg2 {
+                dst: ymm(16),
+                src: ymm(2),
             },
         ] {
             let mut code = CodeBuffer::new();
