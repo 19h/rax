@@ -133,6 +133,7 @@ jobs:
             --test riscv_smir_x86_jit \
             --test smir_avx10_roundtrip \
             --test smir_jit_vcpu \
+            --test smir_jit_aarch32_aarch64 \
             --test smir_jit_x86_aarch64 \
             --test smir_jit_evex_masking \
             --test isa_oracle \

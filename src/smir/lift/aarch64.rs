@@ -734,7 +734,7 @@ impl Aarch64Lifter {
     // ========================================================================
 
     /// Lift a single instruction to SMIR ops
-    fn lift_insn_inner(
+    pub(super) fn lift_insn_inner(
         &self,
         insn: &DecodedInsn,
         pc: u64,

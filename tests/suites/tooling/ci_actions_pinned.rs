@@ -98,6 +98,7 @@ fn push_ci_runs_host_specific_scalar_and_evex_jit_regressions() {
 
     for target in [
         "--test smir_jit_vcpu",
+        "--test smir_jit_aarch32_aarch64",
         "--test smir_jit_x86_aarch64",
         "--test smir_jit_evex_masking",
         "--test riscv_smir_x86_jit",
@@ -118,6 +119,7 @@ fn scheduled_full_suite_runs_every_host_specific_jit_regression_binary() {
 
     for target in [
         "--test smir_jit_vcpu",
+        "--test smir_jit_aarch32_aarch64",
         "--test smir_jit_x86_aarch64",
         "--test smir_jit_evex_masking",
         "--test riscv_smir_x86_jit",

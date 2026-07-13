@@ -256,6 +256,22 @@ impl Aarch64GuestRegs {
     pub const VEC_STORE_FN_OFFSET: i32 = Self::VEC_LOAD_FN_OFFSET + 8;
 }
 
+/// AArch32 scalar register file used by the A32-on-AArch64 identity JIT.
+///
+/// A32 r0-r15 map to host W0-W15 for admitted register-only regions.  CPSR is
+/// retained in its complete architectural representation; only NZCV (bits
+/// 31:28) is imported into host PSTATE and merged back after execution.  The
+/// remaining CPSR fields (Q, GE, endianness, interrupt masks, T, and mode) are
+/// therefore stable across a scalar native region.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Aarch32GuestRegs {
+    /// A32 r0-r15, with r15 holding the dispatcher PC snapshot.
+    pub r: [u32; 16],
+    /// Complete AArch32 CPSR.
+    pub cpsr: u32,
+}
+
 pub use super::cross::riscv_x86_64_abi::{
     RISCV_FP_RESULT_INVALID, RiscVAtomicCasStatus, RiscVAtomicOpCode, RiscVFpOpCode,
     RiscVIntCryptoOpCode, RiscVMemoryOrderCode,
@@ -1070,6 +1086,29 @@ impl ExecMem {
     pub fn run_aarch64_identity(&self, entry_offset: usize, regs: &mut Aarch64GuestRegs) {
         let entry = unsafe { self.ptr.add(entry_offset) } as *const u8;
         unsafe { rax_a64_enter_native(entry, regs as *mut Aarch64GuestRegs) };
+    }
+
+    /// Execute an admitted register-only AArch32 region on an AArch64 host.
+    ///
+    /// The native block uses the same identity mapping as the AArch64 scalar
+    /// trampoline, but every architectural value is narrowed to 32 bits at the
+    /// ABI boundary.  [`is_aarch32_aarch64_native_clobber_safe_excluding`]
+    /// guarantees that the block cannot observe AArch64-only registers, host
+    /// SP, or the guest PC pipeline value.
+    #[cfg(target_arch = "aarch64")]
+    pub fn run_aarch32_identity(&self, entry_offset: usize, regs: &mut Aarch32GuestRegs) {
+        const NZCV: u32 = 0xf000_0000;
+
+        let mut state = Aarch64GuestRegs::default();
+        for (dst, src) in state.x[..16].iter_mut().zip(regs.r) {
+            *dst = u64::from(src);
+        }
+        state.nzcv = u64::from(regs.cpsr & NZCV);
+        self.run_aarch64_identity(entry_offset, &mut state);
+        for (dst, src) in regs.r.iter_mut().zip(state.x[..16].iter()) {
+            *dst = *src as u32;
+        }
+        regs.cpsr = (regs.cpsr & !NZCV) | (state.nzcv as u32 & NZCV);
     }
 
     /// As [`Self::run_aarch64_identity`] but for a region that uses scalar FP /
@@ -3725,6 +3764,255 @@ fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ir::ops::OpKind
     )
 }
 
+/// Decide whether AArch32-lifted scalar SMIR can execute through the AArch64
+/// identity trampoline without exposing host-only state.
+///
+/// The initial contract is deliberately register-only and A32-state specific:
+/// r0-r14 map to W0-W14, r15 is rejected because architectural PC reads are
+/// pipeline-relative and writes are control flow, and every data result is
+/// W32.  Flag-discarding comparison temporaries are accepted because the
+/// lowerer maps them to WZR; all materialized virtual registers are rejected.
+/// Predication, memory, Thumb IT state, SIMD/VFP, and CPSR fields outside NZCV
+/// remain interpreter-only.
+pub fn is_aarch32_aarch64_native_clobber_safe_excluding(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> bool {
+    use crate::smir::ir::Terminator;
+
+    func.blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .all(|block| {
+            matches!(block.terminator, Terminator::Return { ref values } if values.is_empty())
+                && block
+                    .ops
+                    .iter()
+                    .all(|op| aarch32_aarch64_native_op_shape_valid(&op.kind))
+        })
+}
+
+fn aarch32_aarch64_native_op_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, ArmReg, OpWidth, ShiftOp, SrcOperand, VReg};
+
+    let gpr = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::Arm(ArmReg::X(index))) if *index < 15);
+    let source = |src: &SrcOperand| match src {
+        SrcOperand::Imm(_) | SrcOperand::Imm64(_) => true,
+        SrcOperand::Reg(reg) => gpr(reg),
+        SrcOperand::Shifted { reg, shift, amount } => {
+            gpr(reg)
+                && *amount < 32
+                && !matches!(shift, ShiftOp::Rrx)
+                && !(*amount == 0 && matches!(shift, ShiftOp::Lsr | ShiftOp::Asr))
+        }
+        SrcOperand::Extended { .. } => false,
+    };
+    let arithmetic_dst = |dst: &VReg, flags: &FlagUpdate| {
+        gpr(dst) || (matches!(dst, VReg::Virtual(_)) && flags.updates_any())
+    };
+
+    match op {
+        OpKind::Nop => true,
+        OpKind::Mov {
+            dst,
+            src,
+            width: OpWidth::W32,
+        } => gpr(dst) && source(src),
+        OpKind::Add {
+            dst,
+            src1,
+            src2,
+            width: OpWidth::W32,
+            flags,
+        }
+        | OpKind::Sub {
+            dst,
+            src1,
+            src2,
+            width: OpWidth::W32,
+            flags,
+        }
+        | OpKind::Adc {
+            dst,
+            src1,
+            src2,
+            width: OpWidth::W32,
+            flags,
+        }
+        | OpKind::Sbb {
+            dst,
+            src1,
+            src2,
+            width: OpWidth::W32,
+            flags,
+        } => arithmetic_dst(dst, flags) && gpr(src1) && source(src2),
+        OpKind::And {
+            dst,
+            src1,
+            src2,
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        }
+        | OpKind::Or {
+            dst,
+            src1,
+            src2,
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        }
+        | OpKind::Xor {
+            dst,
+            src1,
+            src2,
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        }
+        | OpKind::AndNot {
+            dst,
+            src1,
+            src2,
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        } => gpr(dst) && gpr(src1) && source(src2),
+        OpKind::Not {
+            dst,
+            src,
+            width: OpWidth::W32,
+        }
+        | OpKind::Neg {
+            dst,
+            src,
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        }
+        | OpKind::Clz {
+            dst,
+            src,
+            width: OpWidth::W32,
+        }
+        | OpKind::Rbit {
+            dst,
+            src,
+            width: OpWidth::W32,
+        }
+        | OpKind::Bswap {
+            dst,
+            src,
+            width: OpWidth::W32,
+        } => gpr(dst) && gpr(src),
+        OpKind::Shl {
+            dst,
+            src,
+            amount: SrcOperand::Imm(amount),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        }
+        | OpKind::Shr {
+            dst,
+            src,
+            amount: SrcOperand::Imm(amount),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        }
+        | OpKind::Sar {
+            dst,
+            src,
+            amount: SrcOperand::Imm(amount),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        }
+        | OpKind::Ror {
+            dst,
+            src,
+            amount: SrcOperand::Imm(amount),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        } => gpr(dst) && gpr(src) && (1..32).contains(amount),
+        OpKind::MulU {
+            dst_lo,
+            dst_hi,
+            src1,
+            src2,
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        }
+        | OpKind::MulS {
+            dst_lo,
+            dst_hi,
+            src1,
+            src2,
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        } => {
+            gpr(dst_lo)
+                && dst_hi.as_ref().is_none_or(gpr)
+                && gpr(src1)
+                && source(src2)
+                && dst_hi.as_ref() != Some(dst_lo)
+        }
+        OpKind::MulAdd {
+            dst,
+            acc,
+            src1,
+            src2,
+            width: OpWidth::W32,
+        }
+        | OpKind::MulSub {
+            dst,
+            acc,
+            src1,
+            src2,
+            width: OpWidth::W32,
+        } => gpr(dst) && gpr(acc) && gpr(src1) && gpr(src2),
+        OpKind::DivU {
+            quot,
+            rem: None,
+            src1,
+            src2,
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        }
+        | OpKind::DivS {
+            quot,
+            rem: None,
+            src1,
+            src2,
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        } => gpr(quot) && gpr(src1) && source(src2),
+        OpKind::Bfx {
+            dst,
+            src,
+            lsb,
+            width_bits,
+            op_width: OpWidth::W32,
+            ..
+        } => {
+            gpr(dst)
+                && gpr(src)
+                && *width_bits != 0
+                && u16::from(*lsb) + u16::from(*width_bits) <= 32
+        }
+        OpKind::Bfi {
+            dst,
+            dst_in,
+            src,
+            lsb,
+            width_bits,
+            op_width: OpWidth::W32,
+        } => {
+            gpr(dst)
+                && gpr(dst_in)
+                && gpr(src)
+                && *width_bits != 0
+                && u16::from(*lsb) + u16::from(*width_bits) <= 32
+        }
+        _ => false,
+    }
+}
+
 /// AArch64 analogue of [`is_native_clobber_safe_excluding`]: decide whether the
 /// EXECUTED (non-exit) blocks of `func` are safe to run through the identity-map
 /// AArch64 entry trampoline (`rax_a64_enter_native`). `excluded` holds the
@@ -3946,6 +4234,105 @@ mod jit_gate_tests {
             &std::collections::HashMap::new(),
             allow_mem,
         )
+    }
+
+    fn aarch32_gate(ops: Vec<OpKind>) -> bool {
+        let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
+        for (i, op) in ops.into_iter().enumerate() {
+            b.push_op(0x1000 + i as u64 * 4, op);
+        }
+        b.set_terminator(Terminator::Return { values: vec![] });
+        is_aarch32_aarch64_native_clobber_safe_excluding(
+            &b.finish(),
+            &std::collections::HashMap::new(),
+        )
+    }
+
+    #[test]
+    fn aarch32_aarch64_gate_accepts_scalar_w32_matrix_and_rejects_hidden_state() {
+        assert!(aarch32_gate(vec![
+            OpKind::Mov {
+                dst: arm_x(0),
+                src: SrcOperand::Imm(0x1234),
+                width: OpWidth::W32,
+            },
+            OpKind::Add {
+                dst: arm_x(1),
+                src1: arm_x(2),
+                src2: SrcOperand::Shifted {
+                    reg: arm_x(3),
+                    shift: ShiftOp::Lsl,
+                    amount: 7,
+                },
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Sub {
+                dst: VReg::Virtual(VirtualId(0)),
+                src1: arm_x(4),
+                src2: SrcOperand::Reg(arm_x(5)),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+            OpKind::MulAdd {
+                dst: arm_x(6),
+                acc: arm_x(7),
+                src1: arm_x(8),
+                src2: arm_x(9),
+                width: OpWidth::W32,
+            },
+            OpKind::Clz {
+                dst: arm_x(10),
+                src: arm_x(11),
+                width: OpWidth::W32,
+            },
+            OpKind::Bswap {
+                dst: arm_x(12),
+                src: arm_x(14),
+                width: OpWidth::W32,
+            },
+        ]));
+
+        for rejected in [
+            OpKind::Mov {
+                dst: arm_x(15),
+                src: SrcOperand::Reg(arm_x(0)),
+                width: OpWidth::W32,
+            },
+            OpKind::Mov {
+                dst: arm_x(0),
+                src: SrcOperand::Reg(arm_x(15)),
+                width: OpWidth::W32,
+            },
+            OpKind::Mov {
+                dst: arm_x(0),
+                src: SrcOperand::Reg(arm_x(1)),
+                width: OpWidth::W64,
+            },
+            OpKind::Mov {
+                dst: VReg::Virtual(VirtualId(0)),
+                src: SrcOperand::Reg(arm_x(1)),
+                width: OpWidth::W32,
+            },
+            OpKind::And {
+                dst: arm_x(0),
+                src1: arm_x(1),
+                src2: SrcOperand::Reg(arm_x(2)),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Mov {
+                dst: arm_x(0),
+                src: SrcOperand::Shifted {
+                    reg: arm_x(1),
+                    shift: ShiftOp::Rrx,
+                    amount: 0,
+                },
+                width: OpWidth::W32,
+            },
+        ] {
+            assert!(!aarch32_gate(vec![rejected.clone()]), "{rejected:?}");
+        }
     }
 
     fn x86_aarch64_gate(ops: Vec<OpKind>) -> bool {

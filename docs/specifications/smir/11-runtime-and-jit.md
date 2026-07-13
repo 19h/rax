@@ -50,6 +50,19 @@ vec_store_fn
 
 The vector array stores V0-V31 as two `u64` words each.
 
+### 4.1. AArch32GuestRegs
+
+`Aarch32GuestRegs` is the AArch32 scalar identity-bridge state:
+
+```text
+r[16]
+cpsr
+```
+
+On an AArch64 host, the bridge zero-extends AArch32 R0-R15 into W0-W15 of a temporary `Aarch64GuestRegs` state, imports CPSR.NZCV into PSTATE.NZCV, executes the lowered block through the existing AArch64 identity trampoline, and narrows W0-W15 back to 32 bits. Only CPSR bits N, Z, C, and V are replaced on return; every other CPSR field is preserved from the entry snapshot.
+
+Native admission is fail-closed. The current AArch32-to-AArch64 scalar gate accepts terminal, register-only W32 regions over R0-R14 with exact integer operations covered by the lowerer: moves, add/subtract with carry or borrow, integer comparisons and flag-setting arithmetic, logical operations without flag updates, immediate shifts and rotates, multiply and multiply-add/subtract, signed/unsigned division, count-leading-zero, bit reverse, byte reverse, and bitfield operations. R15 is excluded because AArch32 reads of the program counter have pipeline and alignment semantics rather than ordinary W15 identity semantics. Predicated execution, Thumb IT state, RRX, encoded LSR/ASR by 32, memory, VFP/NEON, system state, logical flag updates, non-terminal control flow, and materialized virtual-register results retain interpreter fallback until their full architectural state contracts are implemented.
+
 ## 5. x86-64 trampoline
 
 `rax_smir_enter_native`:
@@ -95,6 +108,7 @@ run                  x86 identity mapped block through GuestRegs
 run_aarch64          state-backed AArch64-on-x86 ABI fn(*mut Aarch64GuestRegs)
 run_aarch64_identity AArch64 identity mapped block through AArch64 trampoline
 run_aarch64_identity_fp AArch64 identity mapped FP/SIMD block through FP trampoline
+run_aarch32_identity AArch32 scalar state through the AArch64 identity trampoline
 ```
 
 ## 9. Hot-block policy
