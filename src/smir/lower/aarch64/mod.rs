@@ -10861,6 +10861,11 @@ impl Aarch64Lowerer {
                 op: "AArch64 native flag-setting multiply".into(),
             });
         }
+        if let Some(dst_hi) = dst_hi {
+            if matches!(width, OpWidth::W16 | OpWidth::W32) {
+                return self.lower_mul_full_sub64(dst_lo, dst_hi, src1, src2, width, signed);
+            }
+        }
         if dst_hi.is_none() {
             if let (VReg::Imm(imm), SrcOperand::Reg(reg)) = (src1, src2) {
                 if !matches!(*reg, VReg::Imm(_)) {
@@ -11046,13 +11051,13 @@ impl Aarch64Lowerer {
             let dst_lo = Self::dst_gpr_arm_or_x86(dst_lo)?;
             let lo_aliases_source = dst_lo == rn || dst_lo == rm;
             let hi_aliases_source = dst_hi == rn || dst_hi == rm;
+            if dst_lo == dst_hi {
+                // SMIR writes the low destination first and the high destination
+                // second. MULX permits both architectural destinations to name
+                // the same register, so only the final high half is observable.
+                return self.emit_dp3(dst_hi, rn, rm, 31, op31, 0, width);
+            }
             if lo_aliases_source && hi_aliases_source {
-                if dst_lo == dst_hi {
-                    return Err(LowerError::UnsupportedOp {
-                        op: "AArch64 native full-width multiply with shared outputs".into(),
-                    });
-                }
-
                 let scratches = Self::scratch_regs(&[dst_lo, dst_hi, rn, rm], 1)?;
                 let scratch = scratches[0];
                 let copy_source = if dst_hi == rn {
@@ -11091,6 +11096,95 @@ impl Aarch64Lowerer {
             0,
             width,
         )
+    }
+
+    fn lower_mul_full_sub64(
+        &mut self,
+        dst_lo: VReg,
+        dst_hi: VReg,
+        src1: VReg,
+        src2: &SrcOperand,
+        width: OpWidth,
+        signed: bool,
+    ) -> Result<(), LowerError> {
+        if !matches!(width, OpWidth::W16 | OpWidth::W32) {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 native sub-64 full multiply width {width:?}"),
+            });
+        }
+
+        let dst_lo = Self::dst_gpr_arm_or_x86(dst_lo)?;
+        let dst_hi = Self::dst_gpr_arm_or_x86(dst_hi)?;
+        let src1_reg = match src1 {
+            VReg::Imm(_) => None,
+            reg => Some(Self::gpr_arm_or_x86(reg)?),
+        };
+        let (src2_reg, src2_imm) = match src2 {
+            SrcOperand::Reg(VReg::Imm(imm)) => (None, Some(*imm)),
+            SrcOperand::Reg(reg) => (Some(Self::gpr_arm_or_x86(*reg)?), None),
+            SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => (None, Some(*imm)),
+            other => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("AArch64 native sub-64 full multiply source {other:?}"),
+                });
+            }
+        };
+
+        let mut avoid = vec![dst_lo, dst_hi];
+        if let Some(reg) = src1_reg {
+            avoid.push(reg);
+        }
+        if let Some(reg) = src2_reg {
+            avoid.push(reg);
+        }
+        let scratches = Self::scratch_regs(&avoid, 4)?;
+        let lhs = scratches[0];
+        let rhs = scratches[1];
+        let product = scratches[2];
+        let high = scratches[3];
+
+        self.emit_scratch_save(&scratches);
+        match (src1, src1_reg) {
+            (VReg::Imm(imm), None) => {
+                self.emit_mov_imm(lhs, ((imm as u64) & width.mask()) as i64, OpWidth::W32)?;
+            }
+            (_, Some(reg)) => self.emit_mov_reg(lhs, reg, OpWidth::W32)?,
+            _ => unreachable!("sub-64 full multiply lhs already classified"),
+        }
+        match (src2_reg, src2_imm) {
+            (Some(reg), None) => self.emit_mov_reg(rhs, reg, OpWidth::W32)?,
+            (None, Some(imm)) => {
+                self.emit_mov_imm(rhs, ((imm as u64) & width.mask()) as i64, OpWidth::W32)?;
+            }
+            _ => unreachable!("sub-64 full multiply rhs already classified"),
+        }
+
+        if width == OpWidth::W16 {
+            let opc = if signed { 0b00 } else { 0b10 };
+            self.emit_bitfield(lhs, lhs, opc, 0, 15, OpWidth::W32)?;
+            self.emit_bitfield(rhs, rhs, opc, 0, 15, OpWidth::W32)?;
+        }
+
+        // SMADDL/UMADDL with XZR as the accumulator are the signed/unsigned
+        // widening multiplies. They retain the complete W32 product so both
+        // architectural halves can be committed after every source is consumed.
+        let op31 = if signed { 0b001 } else { 0b101 };
+        self.emit_dp3(product, lhs, rhs, 31, op31, 0, OpWidth::W64)?;
+        if width == OpWidth::W16 {
+            self.emit_bitfield(high, product, 0b10, 16, 31, OpWidth::W32)?;
+            if dst_lo != dst_hi {
+                self.emit_bitfield(dst_lo, product, 0b01, 0, 15, OpWidth::W64)?;
+            }
+            self.emit_bitfield(dst_hi, high, 0b01, 0, 15, OpWidth::W64)?;
+        } else {
+            self.emit_bitfield(high, product, 0b10, 32, 63, OpWidth::W64)?;
+            if dst_lo != dst_hi {
+                self.emit_mov_reg(dst_lo, product, OpWidth::W32)?;
+            }
+            self.emit_mov_reg(dst_hi, high, OpWidth::W32)?;
+        }
+        self.emit_scratch_restore(&scratches);
+        Ok(())
     }
 
     fn lower_mul_imm(
@@ -11146,11 +11240,9 @@ impl Aarch64Lowerer {
         } else {
             Some(Self::dst_gpr_arm_or_x86(dst_lo)?)
         };
-        if dst_lo == Some(dst_hi) {
-            return Err(LowerError::UnsupportedOp {
-                op: "AArch64 native full-width multiply with shared outputs".into(),
-            });
-        }
+        // SMIR commits the high output after the low output. When both name the
+        // same architectural register (valid for MULX), the low half is dead.
+        let dst_lo = dst_lo.filter(|dst_lo| *dst_lo != dst_hi);
 
         let mut avoid = vec![dst_hi, rn];
         if let Some(dst_lo) = dst_lo {
@@ -20050,7 +20142,9 @@ mod tests {
 
         let old_nzcv = 0b1010;
         let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
-        assert_eq!(out[dst_lo as usize], expected_lo, "{label}: low half");
+        if dst_lo != dst_hi {
+            assert_eq!(out[dst_lo as usize], expected_lo, "{label}: low half");
+        }
         assert_eq!(out[dst_hi as usize], expected_hi, "{label}: high half");
         assert_eq!(out_nzcv, old_nzcv, "{label}: NZCV preserved");
         assert_eq!(sp, 0x8000, "{label}: stack restored");
@@ -20116,6 +20210,87 @@ mod tests {
         for (reg, value) in sentinels {
             if reg != dst_lo && reg != dst_hi && reg != src1_reg {
                 assert_eq!(out[reg as usize], value, "{label}: x{reg} restored");
+            }
+        }
+    }
+
+    fn assert_sub64_full_mul_lowering(
+        label: &str,
+        signed: bool,
+        width: OpWidth,
+        dst_lo: u8,
+        dst_hi: u8,
+        src1_reg: u8,
+        src2_reg: u8,
+        src1_value: u64,
+        src2_value: u64,
+    ) {
+        assert!(matches!(width, OpWidth::W16 | OpWidth::W32));
+        let op = if signed {
+            OpKind::MulS {
+                dst_lo: x(dst_lo),
+                dst_hi: Some(x(dst_hi)),
+                src1: x(src1_reg),
+                src2: SrcOperand::Reg(x(src2_reg)),
+                width,
+                flags: FlagUpdate::None,
+            }
+        } else {
+            OpKind::MulU {
+                dst_lo: x(dst_lo),
+                dst_hi: Some(x(dst_hi)),
+                src1: x(src1_reg),
+                src2: SrcOperand::Reg(x(src2_reg)),
+                width,
+                flags: FlagUpdate::None,
+            }
+        };
+        let code = lower_single_op(op);
+
+        let mut initial = [0_u64; 31];
+        for reg in 0..18_u8 {
+            initial[reg as usize] = 0xA000_0000_0000_0000 | u64::from(reg) * 0x0101_0101_0101;
+        }
+        initial[src1_reg as usize] = src1_value;
+        initial[src2_reg as usize] = src2_value;
+        let mask = width.mask();
+        let product = if signed {
+            let shift = 64 - width.bits();
+            let lhs = (((src1_value & mask) << shift) as i64) >> shift;
+            let rhs = (((src2_value & mask) << shift) as i64) >> shift;
+            (i128::from(lhs) * i128::from(rhs)) as u128
+        } else {
+            u128::from(src1_value & mask) * u128::from(src2_value & mask)
+        };
+        let low = product as u64 & mask;
+        let high = (product >> width.bits()) as u64 & mask;
+        let merge = |old: u64, half: u64| {
+            if width == OpWidth::W16 {
+                (old & !mask) | half
+            } else {
+                half
+            }
+        };
+        let expected_lo = merge(initial[dst_lo as usize], low);
+        let expected_hi = merge(initial[dst_hi as usize], high);
+        let regs = (0..18_u8)
+            .map(|reg| (reg, initial[reg as usize]))
+            .collect::<Vec<_>>();
+
+        let old_nzcv = 0b1010;
+        let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+        if dst_lo != dst_hi {
+            assert_eq!(out[dst_lo as usize], expected_lo, "{label}: low half");
+        }
+        assert_eq!(out[dst_hi as usize], expected_hi, "{label}: high half");
+        assert_eq!(out_nzcv, old_nzcv, "{label}: NZCV preserved");
+        assert_eq!(sp, 0x8000, "{label}: stack restored");
+        for reg in 0..18_u8 {
+            if reg != dst_lo && reg != dst_hi {
+                assert_eq!(
+                    out[reg as usize], initial[reg as usize],
+                    "{label}: x{reg} restored"
+                );
             }
         }
     }
@@ -27084,6 +27259,79 @@ mod tests {
             2,
             0xffff_ffff_ffff_f123,
             0x0000_0000_0000_1357,
+        );
+    }
+
+    #[test]
+    fn lowers_sub64_full_multiply_with_all_architectural_alias_topologies() {
+        assert_sub64_full_mul_lowering(
+            "mulu_w32_outputs_alias_both_sources",
+            false,
+            OpWidth::W32,
+            1,
+            2,
+            1,
+            2,
+            0xffff_ffff,
+            0x8000_0003,
+        );
+        assert_sub64_full_mul_lowering(
+            "muls_w32_high_aliases_lhs",
+            true,
+            OpWidth::W32,
+            3,
+            1,
+            1,
+            2,
+            0x8000_0001,
+            7,
+        );
+        assert_sub64_full_mul_lowering(
+            "mulu_w32_shared_mulx_destination_keeps_high_half",
+            false,
+            OpWidth::W32,
+            1,
+            1,
+            1,
+            2,
+            0xffff_fffe,
+            0x8000_0003,
+        );
+        assert_sub64_full_mul_lowering(
+            "mulu_w16_source_aliases_implicit_high_destination",
+            false,
+            OpWidth::W16,
+            0,
+            2,
+            0,
+            2,
+            0xaaaa_bbbb_cccc_1234,
+            0xdddd_eeee_ffff_0003,
+        );
+        assert_sub64_full_mul_lowering(
+            "muls_w16_preserves_both_destination_upper_parts",
+            true,
+            OpWidth::W16,
+            0,
+            2,
+            0,
+            1,
+            0xaaaa_bbbb_cccc_fffd,
+            0x1111_2222_3333_0004,
+        );
+    }
+
+    #[test]
+    fn lowers_w64_mulx_shared_destination_as_observable_high_half() {
+        assert_full_width_mul_lowering(
+            "mulu_w64_shared_mulx_destination",
+            false,
+            1,
+            1,
+            1,
+            2,
+            0xffff_ffff_ffff_fffe,
+            0x8000_0000_0000_0003,
         );
     }
 

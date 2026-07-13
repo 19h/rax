@@ -880,6 +880,104 @@ fn x86_w16_tzcnt_lzcnt_merge_cf_zf_and_preserve_other_flags() {
 }
 
 #[test]
+fn x86_full_multiply_sub64_and_shared_mulx_aliases_execute_natively() {
+    let cases = [
+        (
+            "MULX r32 distinct destinations",
+            vec![0xC4, 0xE2, 0x73, 0xF6, 0xC3, 0x75, 0xF9, 0xF4],
+            false,
+        ),
+        (
+            "MULX r64 shared destination",
+            vec![0xC4, 0xE2, 0xF3, 0xF6, 0xCA, 0x75, 0xF9, 0xF4],
+            false,
+        ),
+        (
+            "APX NF MUL r16 implicit pair",
+            vec![0x62, 0xF4, 0x7D, 0x0C, 0xF7, 0xE1, 0x75, 0xF8, 0xF4],
+            true,
+        ),
+        (
+            "APX NF IMUL r16 implicit pair",
+            vec![0x62, 0xF4, 0x7D, 0x0C, 0xF7, 0xE9, 0x75, 0xF8, 0xF4],
+            true,
+        ),
+    ];
+
+    for (label, code, apx) in cases {
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            vcpu.set_apx_enabled(apx);
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rflags = 0xCD6;
+            match label {
+                "MULX r32 distinct destinations" => {
+                    regs.rax = 0xAAAA_BBBB_CCCC_DDDD;
+                    regs.rcx = 0x1111_2222_3333_4444;
+                    regs.rdx = 0xDDDD_EEEE_FFFF_FFFE;
+                    regs.rbx = 0xBBBB_CCCC_8000_0003;
+                }
+                "MULX r64 shared destination" => {
+                    regs.rcx = 0x1111_2222_3333_4444;
+                    regs.rdx = 0xF000_0000_0000_0003;
+                }
+                "APX NF MUL r16 implicit pair" => {
+                    regs.rax = 0xAAAA_BBBB_CCCC_1234;
+                    regs.rdx = 0xDDDD_EEEE_FFFF_5678;
+                    regs.rcx = 0x1111_2222_3333_0003;
+                }
+                "APX NF IMUL r16 implicit pair" => {
+                    regs.rax = 0xAAAA_BBBB_CCCC_FFFD;
+                    regs.rdx = 0xDDDD_EEEE_FFFF_5678;
+                    regs.rcx = 0x1111_2222_3333_0004;
+                }
+                _ => unreachable!(),
+            }
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let mut interpreter = make_vcpu_code(&code);
+        setup(&mut interpreter);
+        run_to_hlt(&mut interpreter);
+        let expected = interpreter.get_regs().unwrap();
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{label}: JIT attempt: {error:?}")),
+            "{label}: block must enter the AArch64 tier"
+        );
+        run_to_hlt(&mut jit);
+        let actual = jit.get_regs().unwrap();
+
+        assert_mapped_state_eq(&actual, &expected, label);
+        assert_eq!(actual.rflags, 0xCD6, "{label}: flags preserved");
+        match label {
+            "MULX r32 distinct destinations" => {
+                let product = u64::from(0xFFFF_FFFEu32) * u64::from(0x8000_0003u32);
+                assert_eq!(actual.rax, product >> 32, "{label}: high EAX");
+                assert_eq!(actual.rcx, product & 0xFFFF_FFFF, "{label}: low ECX");
+                assert_eq!(actual.rdx, 0xDDDD_EEEE_FFFF_FFFE, "{label}: RDX");
+                assert_eq!(actual.rbx, 0xBBBB_CCCC_8000_0003, "{label}: RBX");
+            }
+            "MULX r64 shared destination" => {
+                let source = 0xF000_0000_0000_0003_u128;
+                assert_eq!(actual.rcx, ((source * source) >> 64) as u64, "{label}");
+            }
+            "APX NF MUL r16 implicit pair" => {
+                assert_eq!(actual.rax, 0xAAAA_BBBB_CCCC_369C, "{label}: AX");
+                assert_eq!(actual.rdx, 0xDDDD_EEEE_FFFF_0000, "{label}: DX");
+            }
+            "APX NF IMUL r16 implicit pair" => {
+                assert_eq!(actual.rax, 0xAAAA_BBBB_CCCC_FFF4, "{label}: AX");
+                assert_eq!(actual.rdx, 0xDDDD_EEEE_FFFF_FFFF, "{label}: DX");
+            }
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[test]
 fn x86_aarch64_jit_rejects_live_pf_af_definitions_without_execution() {
     // add rax,rbx; jnz start; hlt. ADD's live PF/AF outputs cannot be represented
     // in NZCV, so the architecture-specific gate must retain interpreter fallback.

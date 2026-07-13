@@ -2470,6 +2470,21 @@ fn block_is_clobber_safe(
         if matches!(op.x86_hint, Some(X86OpHint::Mulx)) && !x86_mulx_shape_valid(op) {
             return false;
         }
+        if matches!(
+            op.kind,
+            OpKind::MulU {
+                dst_hi: Some(_),
+                width: crate::smir::ir::types::OpWidth::W16,
+                ..
+            } | OpKind::MulS {
+                dst_hi: Some(_),
+                width: crate::smir::ir::types::OpWidth::W16,
+                ..
+            }
+        ) && !x86_word_full_mul_shape_valid(&op.kind)
+        {
+            return false;
+        }
         if matches!(op.kind, OpKind::Bsf { .. } | OpKind::Bsr { .. })
             && !x86_bit_scan_shape_valid(&op.kind)
         {
@@ -2644,6 +2659,21 @@ fn x86_aarch64_block_is_clobber_safe(
             return false;
         }
         if matches!(op.x86_hint, Some(X86OpHint::Mulx)) && !x86_mulx_shape_valid(op) {
+            return false;
+        }
+        if matches!(
+            op.kind,
+            OpKind::MulU {
+                dst_hi: Some(_),
+                width: crate::smir::ir::types::OpWidth::W16,
+                ..
+            } | OpKind::MulS {
+                dst_hi: Some(_),
+                width: crate::smir::ir::types::OpWidth::W16,
+                ..
+            }
+        ) && !x86_word_full_mul_shape_valid(&op.kind)
+        {
             return false;
         }
         if matches!(op.kind, OpKind::Bsf { .. } | OpKind::Bsr { .. })
@@ -2843,10 +2873,16 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
             ..
         } => {
             full_gpr_write(width)
-                || (dst_hi.is_none()
-                    && matches!(width, OpWidth::W16)
-                    && x86_aarch64_legacy_gpr(dst_lo))
+                || (matches!(width, OpWidth::W16)
+                    && x86_aarch64_legacy_gpr(dst_lo)
+                    && dst_hi.as_ref().is_none_or(x86_aarch64_legacy_gpr))
         }
+        OpKind::MulU {
+            dst_lo,
+            dst_hi: Some(dst_hi),
+            width: OpWidth::W16,
+            ..
+        } => x86_aarch64_legacy_gpr(dst_lo) && x86_aarch64_legacy_gpr(dst_hi),
         OpKind::Bsf {
             dst, src, width, ..
         }
@@ -3395,6 +3431,32 @@ fn x86_mulx_shape_valid(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 flags: FlagUpdate::None,
             } if native_gpr(dst_lo) && native_gpr(dst_hi) && native_gpr(src2)
         )
+}
+
+fn x86_word_full_mul_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
+
+    matches!(
+        op,
+        OpKind::MulU {
+            dst_lo: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+            dst_hi: Some(VReg::Arch(ArchReg::X86(X86Reg::Rdx))),
+            src1: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+            src2: SrcOperand::Reg(src2),
+            width: OpWidth::W16,
+            flags: FlagUpdate::None,
+        }
+            | OpKind::MulS {
+                dst_lo: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                dst_hi: Some(VReg::Arch(ArchReg::X86(X86Reg::Rdx))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                src2: SrcOperand::Reg(src2),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            } if x86_aarch64_legacy_gpr(src2)
+    )
 }
 
 fn x86_movx_uses_ambiguous_high_byte_source(op: &crate::smir::ir::ops::SmirOp) -> bool {
@@ -7167,9 +7229,10 @@ mod jit_gate_tests {
     }
 
     #[test]
-    fn x86_aarch64_gate_accepts_w16_single_result_signed_multiply_partial_writes() {
+    fn x86_aarch64_gate_accepts_sub64_multiply_contracts_and_partial_writes() {
         let rax = x86(X86Reg::Rax);
         let rbx = x86(X86Reg::Rbx);
+        let rdx = x86(X86Reg::Rdx);
         for src2 in [SrcOperand::Reg(rbx), SrcOperand::Imm(0x1234)] {
             assert!(
                 x86_aarch64_gate(vec![OpKind::MulS {
@@ -7208,20 +7271,49 @@ mod jit_gate_tests {
         );
 
         for op in [
+            OpKind::MulU {
+                dst_lo: rax,
+                dst_hi: Some(rdx),
+                src1: rax,
+                src2: SrcOperand::Reg(rbx),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::MulS {
+                dst_lo: rax,
+                dst_hi: Some(rdx),
+                src1: rax,
+                src2: SrcOperand::Reg(rdx),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::MulU {
+                dst_lo: rbx,
+                dst_hi: Some(rbx),
+                src1: rdx,
+                src2: SrcOperand::Reg(rax),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            OpKind::MulU {
+                dst_lo: rbx,
+                dst_hi: Some(rbx),
+                src1: rdx,
+                src2: SrcOperand::Reg(rax),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ] {
+            assert!(x86_aarch64_gate(vec![op.clone()]), "supported {op:?}");
+        }
+
+        for op in [
             OpKind::MulS {
                 dst_lo: rax,
                 dst_hi: None,
                 src1: rax,
                 src2: SrcOperand::Reg(rbx),
                 width: OpWidth::W8,
-                flags: FlagUpdate::None,
-            },
-            OpKind::MulS {
-                dst_lo: rax,
-                dst_hi: Some(x86(X86Reg::Rdx)),
-                src1: rax,
-                src2: SrcOperand::Reg(rbx),
-                width: OpWidth::W16,
                 flags: FlagUpdate::None,
             },
             OpKind::MulU {
@@ -7234,6 +7326,39 @@ mod jit_gate_tests {
             },
         ] {
             assert!(!x86_aarch64_scalar_shape_valid(&op), "unsupported {op:?}");
+        }
+
+        for op in [
+            OpKind::MulS {
+                dst_lo: rbx,
+                dst_hi: Some(rdx),
+                src1: rax,
+                src2: SrcOperand::Reg(rbx),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::MulU {
+                dst_lo: rax,
+                dst_hi: Some(rdx),
+                src1: rax,
+                src2: SrcOperand::Imm(3),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::MulU {
+                dst_lo: rax,
+                dst_hi: Some(rdx),
+                src1: rax,
+                src2: SrcOperand::Reg(rbx),
+                width: OpWidth::W16,
+                flags: FlagUpdate::All,
+            },
+        ] {
+            assert!(
+                x86_aarch64_scalar_shape_valid(&op),
+                "lowerer-capable but non-architectural shape {op:?}"
+            );
+            assert!(!x86_aarch64_gate(vec![op.clone()]), "rejected {op:?}");
         }
     }
 
