@@ -238,34 +238,7 @@ impl Aarch64GuestRegs {
     pub const VEC_STORE_FN_OFFSET: i32 = Self::VEC_LOAD_FN_OFFSET + 8;
 }
 
-/// Operation codes accepted by [`RiscVGuestRegs::atomic_rmw_fn`].
-#[repr(u64)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RiscVAtomicOpCode {
-    Add = 0,
-    Sub = 1,
-    Neg = 2,
-    And = 3,
-    Or = 4,
-    Xor = 5,
-    Nand = 6,
-    Max = 7,
-    Min = 8,
-    Umax = 9,
-    Umin = 10,
-    Swap = 11,
-}
-
-/// Ordering codes accepted by the RISC-V atomic helper ABI.
-#[repr(u64)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RiscVMemoryOrderCode {
-    Relaxed = 0,
-    Acquire = 1,
-    Release = 2,
-    AcqRel = 3,
-    SeqCst = 4,
-}
+pub use super::cross::riscv_x86_64_abi::{RiscVAtomicOpCode, RiscVMemoryOrderCode};
 
 /// Two-register SysV result of [`RiscVGuestRegs::cas_fn`].
 #[repr(C)]

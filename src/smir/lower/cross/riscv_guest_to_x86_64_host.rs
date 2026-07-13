@@ -15,8 +15,8 @@ use crate::smir::ir::types::{
     ShiftOp, SignExtend, SrcOperand, VReg, VirtualId,
 };
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
+use crate::smir::lower::cross::riscv_x86_64_abi::{RiscVAtomicOpCode, RiscVMemoryOrderCode};
 use crate::smir::lower::regalloc::PhysReg;
-use crate::smir::lower::runtime::{RiscVAtomicOpCode, RiscVMemoryOrderCode};
 use crate::smir::lower::x86_64::{X86Cond, X86Emitter};
 use crate::smir::lower::{CodeBuffer, LowerError, LowerResult, RelocKind, Relocation, SmirLowerer};
 
