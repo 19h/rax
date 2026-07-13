@@ -1095,19 +1095,18 @@ fn jit_adcx_adox_preserve_carry_chains_flags_and_apx_ndd_sources() {
         );
     }
 
-    // dec r9d; jnz repeat; mov r10d,0x7fffffff; add r10d,1;
-    // adox rax,rbx; jmp hlt; repeat: jmp dec; hlt.
-    // The terminal ADD supplies OF=1, PF=1, AF=1, SF=1. ADOX consumes OF,
-    // produces 9 with OF=0, and must preserve the other status bits (0x94).
+    // mov r10d,0x80000000; add r10d,r10d; adox rax,rbx; jnz loop; hlt.
+    // The ADD supplies OF=1 and ZF=1. ADOX consumes OF, produces 9 with
+    // OF=0, and preserves ZF so JNZ exits after one native iteration. The
+    // syntactic backedge makes this a stable hot region on every host.
     let code = [
-        0x41, 0xFF, 0xC9, 0x75, 0x12, 0x41, 0xBA, 0xFF, 0xFF, 0xFF, 0x7F, 0x41, 0x83, 0xC2, 0x01,
-        0xF3, 0x48, 0x0F, 0x38, 0xF6, 0xC3, 0xEB, 0x02, 0xEB, 0xE7, 0xF4,
+        0x41, 0xBA, 0x00, 0x00, 0x00, 0x80, 0x45, 0x01, 0xD2, 0xF3, 0x48, 0x0F, 0x38, 0xF6, 0xC3,
+        0x75, 0xEF, 0xF4,
     ];
     let setup = |vcpu: &mut X86_64Vcpu| {
         let mut regs = vcpu.get_regs().unwrap();
         regs.rax = 5;
         regs.rbx = 3;
-        regs.r9 = 1;
         regs.r10 = 0;
         regs.rflags = 0x2;
         vcpu.set_regs(&regs).unwrap();
@@ -1121,15 +1120,15 @@ fn jit_adcx_adox_preserve_carry_chains_flags_and_apx_ndd_sources() {
     let mut jit = make_vcpu_code(&code);
     setup(&mut jit);
     assert!(
-        jit.jit_try_block().expect("JIT terminal ADOX"),
-        "terminal ADOX region must enter the native tier"
+        jit.jit_try_block().expect("JIT ADOX loop"),
+        "ADOX loop must enter the native tier"
     );
     run_interp(&mut jit);
     let after = jit.get_regs().unwrap();
     assert_eq!(after.rax, 9);
     assert_eq!(after.rbx, 3);
-    assert_eq!(after.r10 & u64::from(u32::MAX), 0x8000_0000);
-    assert_eq!(after.rflags & STATUS_MASK, 0x94);
+    assert_eq!(after.r10, 0);
+    assert_eq!(after.rflags & STATUS_MASK, 0x45);
     assert_eq!(after.rax, reference.rax);
     assert_eq!(after.r10, reference.r10);
     assert_eq!(after.rflags & STATUS_MASK, reference.rflags & STATUS_MASK);
