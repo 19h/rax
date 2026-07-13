@@ -147,6 +147,7 @@ fn op_out_width(kind: &OpKind) -> Option<OpWidth> {
         | OpKind::Sar { width, .. }
         | OpKind::Shld { width, .. }
         | OpKind::Shrd { width, .. }
+        | OpKind::X86NddDoubleShift { width, .. }
         | OpKind::Rol { width, .. }
         | OpKind::Ror { width, .. }
         | OpKind::Rcl { width, .. }
@@ -1283,6 +1284,13 @@ fn rewrite_pure_src_vregs(kind: &mut OpKind, f: &dyn Fn(VReg) -> VReg) -> usize 
             do_v(src, &mut n);
             do_s(amount, &mut n);
         }
+        OpKind::X86NddDoubleShift {
+            base, fill, amount, ..
+        } => {
+            do_v(base, &mut n);
+            do_v(fill, &mut n);
+            do_s(amount, &mut n);
+        }
         OpKind::CMove { src, .. } => do_v(src, &mut n),
         OpKind::Bt { src, index, .. }
         | OpKind::Bts { src, index, .. }
@@ -1874,6 +1882,7 @@ impl OpKind {
             | OpKind::Sar { flags, .. }
             | OpKind::Shld { flags, .. }
             | OpKind::Shrd { flags, .. }
+            | OpKind::X86NddDoubleShift { flags, .. }
             | OpKind::Rol { flags, .. }
             | OpKind::Ror { flags, .. }
             | OpKind::Rcl { flags, .. }
@@ -1905,6 +1914,7 @@ impl OpKind {
             | OpKind::Sar { flags, .. }
             | OpKind::Shld { flags, .. }
             | OpKind::Shrd { flags, .. }
+            | OpKind::X86NddDoubleShift { flags, .. }
             | OpKind::Bsf { flags, .. }
             | OpKind::Bsr { flags, .. }
             | OpKind::Bextr { flags, .. }
@@ -1971,6 +1981,7 @@ impl OpKind {
             | OpKind::Sar { .. }
             | OpKind::Shld { .. }
             | OpKind::Shrd { .. }
+            | OpKind::X86NddDoubleShift { .. }
             | OpKind::Rol { .. }
             | OpKind::Ror { .. }
             | OpKind::Rcl { .. }
@@ -2066,6 +2077,16 @@ impl OpKind {
                 result.push(*src1);
                 result.push(*src3);
                 if let SrcOperand::Reg(r) = src2 {
+                    result.push(*r);
+                }
+            }
+
+            OpKind::X86NddDoubleShift {
+                base, fill, amount, ..
+            } => {
+                result.push(*base);
+                result.push(*fill);
+                if let SrcOperand::Reg(r) = amount {
                     result.push(*r);
                 }
             }

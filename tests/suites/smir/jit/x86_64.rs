@@ -423,6 +423,87 @@ fn jit_apx_ndd_imul_alias_second_source_preserves_product_and_nf_flags() {
     }
 }
 
+#[test]
+fn jit_apx_ndd_double_shift_handles_fill_cl_aliases_and_nf() {
+    const STATUS_MASK: u64 = 0x0ED5;
+    let base = 0xF123_4567_89AB_CDEFu64;
+    let initial_fill = 0x0FED_CBA9_8765_4321u64;
+    for (name, instruction, expected_status) in [
+        (
+            "shld fill alias",
+            &[0x62, 0xF4, 0xE4, 0x18, 0x24, 0xD8, 0x04][..],
+            0x45,
+        ),
+        (
+            "{nf} shld fill alias",
+            &[0x62, 0xF4, 0xE4, 0x1C, 0x24, 0xD8, 0x04][..],
+            0x44,
+        ),
+    ] {
+        let mut code = instruction.to_vec();
+        code.extend_from_slice(&[0x41, 0xFF, 0xC9]); // dec r9d (preserves CF)
+        code.extend_from_slice(&[0x75, 0xF4]); // jnz to seven-byte APX instruction
+        code.push(0xF4);
+
+        let mut expected = initial_fill;
+        for _ in 0..200 {
+            expected = (base << 4) | (expected >> 60);
+        }
+        let mut jit = make_vcpu_code(&code);
+        let mut regs = jit.get_regs().unwrap();
+        regs.rax = base;
+        regs.rbx = initial_fill;
+        regs.r9 = 200;
+        regs.rflags = 0x2;
+        jit.set_regs(&regs).unwrap();
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("jit APX NDD {name}: {error:?}")),
+            "APX NDD {name} loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+        let after = jit.get_regs().unwrap();
+        assert_eq!(after.rax, base, "{name}: base source");
+        assert_eq!(after.rbx, expected, "{name}: aliased fill/result");
+        assert_eq!(after.r9 & 0xFFFF_FFFF, 0, "{name}: loop count");
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            expected_status,
+            "{name}: regular CF versus NF-preserved CF"
+        );
+    }
+
+    // Choose base bits 4..11 = 4 so the SHRD result retains CL=4 on every
+    // iteration even though RCX is both the count and destination.
+    let base = 0x0123_4567_89AB_C040u64;
+    let fill = 0xFEDC_BA98_7654_3210u64;
+    let expected = (base >> 4) | (fill << 60);
+    let mut code = vec![0x62, 0xF4, 0xF4, 0x18, 0xAD, 0xD8];
+    code.extend_from_slice(&[0x41, 0xFF, 0xC9]); // dec r9d
+    code.extend_from_slice(&[0x75, 0xF5]); // jnz to six-byte APX instruction
+    code.push(0xF4);
+    let mut jit = make_vcpu_code(&code);
+    let mut regs = jit.get_regs().unwrap();
+    regs.rax = base;
+    regs.rbx = fill;
+    regs.rcx = 4;
+    regs.r9 = 200;
+    regs.rflags = 0x2;
+    jit.set_regs(&regs).unwrap();
+    assert!(
+        jit.jit_try_block()
+            .expect("jit APX NDD SHRD destination/CL alias"),
+        "APX NDD SHRD destination/CL alias loop must enter the native tier"
+    );
+    run_interp(&mut jit);
+    let after = jit.get_regs().unwrap();
+    assert_eq!(after.rax, base);
+    assert_eq!(after.rbx, fill);
+    assert_eq!(after.rcx, expected);
+    assert_eq!(after.r9 & 0xFFFF_FFFF, 0);
+    assert_eq!(after.rflags & STATUS_MASK, 0x44);
+}
+
 /// Variable shift by CL (`shl edx,cl`) in a hot loop — the pattern the kernel's
 /// __free_pages_memory bootmem loop uses. Must JIT bit-exactly vs the interpreter.
 #[test]

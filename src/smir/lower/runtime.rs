@@ -2080,6 +2080,7 @@ fn x86_flag_defs(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::F
         | OpKind::Sar { flags, .. }
         | OpKind::Shld { flags, .. }
         | OpKind::Shrd { flags, .. }
+        | OpKind::X86NddDoubleShift { flags, .. }
         | OpKind::Rol { flags, .. }
         | OpKind::Ror { flags, .. }
         | OpKind::Rcl { flags, .. }
@@ -2166,6 +2167,11 @@ fn block_is_clobber_safe(
         if x86_movx_uses_ambiguous_high_byte_source(op) {
             return false;
         }
+        if matches!(op.kind, OpKind::X86NddDoubleShift { .. })
+            && !x86_ndd_double_shift_shape_valid(&op.kind)
+        {
+            return false;
+        }
         // (2) no virtual-temp writes (would clobber a guest GPR).
         if op
             .kind
@@ -2213,6 +2219,51 @@ fn x86_movx_uses_ambiguous_high_byte_source(op: &crate::smir::ir::ops::SmirOp) -
             ..
         }
     )
+}
+
+fn x86_ndd_double_shift_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
+    let OpKind::X86NddDoubleShift {
+        dst,
+        base,
+        fill,
+        amount,
+        width,
+        ..
+    } = op
+    else {
+        return false;
+    };
+    let native_gpr = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Rax
+                    | X86Reg::Rcx
+                    | X86Reg::Rdx
+                    | X86Reg::Rbx
+                    | X86Reg::Rsi
+                    | X86Reg::Rdi
+                    | X86Reg::R8
+                    | X86Reg::R9
+                    | X86Reg::R10
+                    | X86Reg::R11
+                    | X86Reg::R12
+                    | X86Reg::R13
+                    | X86Reg::R14
+                    | X86Reg::R15
+            ))
+        )
+    };
+    native_gpr(dst)
+        && native_gpr(base)
+        && native_gpr(fill)
+        && matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+        && matches!(
+            amount,
+            SrcOperand::Imm(_) | SrcOperand::Reg(VReg::Arch(ArchReg::X86(X86Reg::Rcx)))
+        )
 }
 
 fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ir::ops::OpKind) -> bool {
@@ -4025,6 +4076,76 @@ mod jit_gate_tests {
                 }),
                 "alias-safe APX NDD IMUL {flags:?} must JIT"
             );
+        }
+    }
+
+    #[test]
+    fn clobber_gate_admits_only_exact_architectural_apx_ndd_double_shift_shapes() {
+        let rax = x86(X86Reg::Rax);
+        let rcx = x86(X86Reg::Rcx);
+        let rbx = x86(X86Reg::Rbx);
+        for op in [
+            OpKind::X86NddDoubleShift {
+                dst: rbx,
+                base: rax,
+                fill: rbx,
+                amount: SrcOperand::Imm(4),
+                width: OpWidth::W64,
+                left: true,
+                flags: FlagUpdate::All,
+            },
+            OpKind::X86NddDoubleShift {
+                dst: rcx,
+                base: rax,
+                fill: rbx,
+                amount: SrcOperand::Reg(rcx),
+                width: OpWidth::W64,
+                left: false,
+                flags: FlagUpdate::None,
+            },
+        ] {
+            assert!(x86_gate(op), "valid APX NDD double shift must JIT");
+        }
+
+        for op in [
+            OpKind::X86NddDoubleShift {
+                dst: rbx,
+                base: VReg::Virtual(VirtualId(21)),
+                fill: rbx,
+                amount: SrcOperand::Imm(4),
+                width: OpWidth::W64,
+                left: true,
+                flags: FlagUpdate::All,
+            },
+            OpKind::X86NddDoubleShift {
+                dst: rbx,
+                base: rax,
+                fill: rbx,
+                amount: SrcOperand::Reg(x86(X86Reg::Rdx)),
+                width: OpWidth::W64,
+                left: false,
+                flags: FlagUpdate::All,
+            },
+            OpKind::X86NddDoubleShift {
+                dst: rbx,
+                base: rax,
+                fill: rbx,
+                amount: SrcOperand::Imm(4),
+                width: OpWidth::W8,
+                left: true,
+                flags: FlagUpdate::All,
+            },
+            OpKind::X86NddDoubleShift {
+                dst: x86(X86Reg::R16),
+                base: rax,
+                fill: rbx,
+                amount: SrcOperand::Imm(4),
+                width: OpWidth::W64,
+                left: true,
+                flags: FlagUpdate::All,
+            },
+        ] {
+            assert!(!x86_gate(op), "malformed APX NDD double shift must deopt");
         }
     }
 

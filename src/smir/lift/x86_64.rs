@@ -31756,6 +31756,26 @@ impl X86_64Lifter {
             (self.gpr(modrm.rm), None)
         };
 
+        if prefix.nd {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86NddDoubleShift {
+                    dst: self.gpr(prefix.vvvv_reg()),
+                    base: legacy_dst,
+                    fill: self.gpr(modrm.reg),
+                    amount,
+                    width,
+                    left: is_shld,
+                    flags: prefix.flags(),
+                },
+            ));
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.bytes + 1 + modrm.bytes_consumed + imm_size,
+            ));
+        }
+
         let architectural_dst = if prefix.nd {
             self.gpr(prefix.vvvv_reg())
         } else {
@@ -40967,28 +40987,20 @@ mod tests {
             )
             .unwrap();
         assert_eq!(shld.bytes_consumed, 7);
-        assert_eq!(shld.ops.len(), 2);
+        assert_eq!(shld.ops.len(), 1);
         match &shld.ops[0].kind {
-            OpKind::Mov {
+            OpKind::X86NddDoubleShift {
                 dst,
-                src: SrcOperand::Reg(src),
-                width: OpWidth::W64,
-            } => {
-                assert_eq!(*dst, x86_gpr(8));
-                assert_eq!(*src, x86_gpr(0));
-            }
-            other => panic!("expected APX SHLD source1 seed, got {other:?}"),
-        }
-        match &shld.ops[1].kind {
-            OpKind::Shld {
-                dst,
-                src,
+                base,
+                fill,
                 amount: SrcOperand::Imm(4),
                 width: OpWidth::W64,
+                left: true,
                 flags: FlagUpdate::All,
             } => {
                 assert_eq!(*dst, x86_gpr(8));
-                assert_eq!(*src, x86_gpr(3));
+                assert_eq!(*base, x86_gpr(0));
+                assert_eq!(*fill, x86_gpr(3));
             }
             other => panic!("expected APX NDD shld, got {other:?}"),
         }
@@ -40998,28 +41010,20 @@ mod tests {
             .lift_insn(0x1000, &[0x62, 0xF4, 0xBC, 0x18, 0xAD, 0xD8], &mut ctx)
             .unwrap();
         assert_eq!(shrd.bytes_consumed, 6);
-        assert_eq!(shrd.ops.len(), 2);
+        assert_eq!(shrd.ops.len(), 1);
         match &shrd.ops[0].kind {
-            OpKind::Mov {
+            OpKind::X86NddDoubleShift {
                 dst,
-                src: SrcOperand::Reg(src),
-                width: OpWidth::W64,
-            } => {
-                assert_eq!(*dst, x86_gpr(8));
-                assert_eq!(*src, x86_gpr(0));
-            }
-            other => panic!("expected APX SHRD source1 seed, got {other:?}"),
-        }
-        match &shrd.ops[1].kind {
-            OpKind::Shrd {
-                dst,
-                src,
+                base,
+                fill,
                 amount: SrcOperand::Reg(amount),
                 width: OpWidth::W64,
+                left: false,
                 flags: FlagUpdate::All,
             } => {
                 assert_eq!(*dst, x86_gpr(8));
-                assert_eq!(*src, x86_gpr(3));
+                assert_eq!(*base, x86_gpr(0));
+                assert_eq!(*fill, x86_gpr(3));
                 assert_eq!(*amount, x86_gpr(1));
             }
             other => panic!("expected APX NDD shrd, got {other:?}"),
@@ -41034,24 +41038,27 @@ mod tests {
             )
             .unwrap();
         assert_eq!(nf.bytes_consumed, 7);
-        assert_eq!(nf.ops.len(), 2);
-        match &nf.ops[1].kind {
-            OpKind::Shld {
+        assert_eq!(nf.ops.len(), 1);
+        match &nf.ops[0].kind {
+            OpKind::X86NddDoubleShift {
                 dst,
-                src,
+                base,
+                fill,
                 amount: SrcOperand::Imm(4),
                 width: OpWidth::W64,
+                left: true,
                 flags: FlagUpdate::None,
             } => {
                 assert_eq!(*dst, x86_gpr(8));
-                assert_eq!(*src, x86_gpr(3));
+                assert_eq!(*base, x86_gpr(0));
+                assert_eq!(*fill, x86_gpr(3));
             }
             other => panic!("expected APX NF NDD shld, got {other:?}"),
         }
     }
 
     #[test]
-    fn lift_apx_ndd_double_shift_aliases_preserve_inputs_like_llvm() {
+    fn lift_apx_ndd_double_shift_aliases_use_one_direct_smir_op() {
         let mut lifter = X86_64Lifter::strict();
         let mut ctx = LiftContext::new(SourceArch::X86_64);
 
@@ -41064,42 +41071,22 @@ mod tests {
             )
             .unwrap();
         assert_eq!(src_alias.bytes_consumed, 7);
-        assert_eq!(src_alias.ops.len(), 3);
-        let captured_src = match &src_alias.ops[0].kind {
-            OpKind::Mov {
+        assert_eq!(src_alias.ops.len(), 1);
+        match &src_alias.ops[0].kind {
+            OpKind::X86NddDoubleShift {
                 dst,
-                src: SrcOperand::Reg(src),
-                width: OpWidth::W64,
-            } => {
-                assert!(matches!(dst, VReg::Virtual(_)));
-                assert_eq!(*src, x86_gpr(3));
-                *dst
-            }
-            other => panic!("expected APX SHLD source2 capture, got {other:?}"),
-        };
-        match &src_alias.ops[1].kind {
-            OpKind::Mov {
-                dst,
-                src: SrcOperand::Reg(src),
-                width: OpWidth::W64,
-            } => {
-                assert_eq!(*dst, x86_gpr(3));
-                assert_eq!(*src, x86_gpr(0));
-            }
-            other => panic!("expected APX SHLD source1 seed, got {other:?}"),
-        }
-        match &src_alias.ops[2].kind {
-            OpKind::Shld {
-                dst,
-                src,
+                base,
+                fill,
                 amount: SrcOperand::Imm(4),
                 width: OpWidth::W64,
+                left: true,
                 flags: FlagUpdate::All,
             } => {
                 assert_eq!(*dst, x86_gpr(3));
-                assert_eq!(*src, captured_src);
+                assert_eq!(*base, x86_gpr(0));
+                assert_eq!(*fill, x86_gpr(3));
             }
-            other => panic!("expected APX NDD shld with captured source2, got {other:?}"),
+            other => panic!("expected direct APX NDD shld alias, got {other:?}"),
         }
 
         // LLVM 20: `shrdq %cl, %rbx, %rax, %rcx` => 62 f4 f4 18 ad d8.
@@ -41107,43 +41094,23 @@ mod tests {
             .lift_insn(0x1000, &[0x62, 0xF4, 0xF4, 0x18, 0xAD, 0xD8], &mut ctx)
             .unwrap();
         assert_eq!(cl_alias.bytes_consumed, 6);
-        assert_eq!(cl_alias.ops.len(), 3);
-        let tmp_dst = match &cl_alias.ops[0].kind {
-            OpKind::Mov {
+        assert_eq!(cl_alias.ops.len(), 1);
+        match &cl_alias.ops[0].kind {
+            OpKind::X86NddDoubleShift {
                 dst,
-                src: SrcOperand::Reg(src),
-                width: OpWidth::W64,
-            } => {
-                assert!(matches!(dst, VReg::Virtual(_)));
-                assert_eq!(*src, x86_gpr(0));
-                *dst
-            }
-            other => panic!("expected APX SHRD temp destination seed, got {other:?}"),
-        };
-        match &cl_alias.ops[1].kind {
-            OpKind::Shrd {
-                dst,
-                src,
+                base,
+                fill,
                 amount: SrcOperand::Reg(amount),
                 width: OpWidth::W64,
+                left: false,
                 flags: FlagUpdate::All,
             } => {
-                assert_eq!(*dst, tmp_dst);
-                assert_eq!(*src, x86_gpr(3));
+                assert_eq!(*dst, x86_gpr(1));
+                assert_eq!(*base, x86_gpr(0));
+                assert_eq!(*fill, x86_gpr(3));
                 assert_eq!(*amount, x86_gpr(1));
             }
-            other => panic!("expected APX NDD shrd on temp destination, got {other:?}"),
-        }
-        match &cl_alias.ops[2].kind {
-            OpKind::Mov {
-                dst,
-                src: SrcOperand::Reg(src),
-                width: OpWidth::W64,
-            } => {
-                assert_eq!(*dst, x86_gpr(1));
-                assert_eq!(*src, tmp_dst);
-            }
-            other => panic!("expected APX SHRD result move into RCX, got {other:?}"),
+            other => panic!("expected direct APX NDD shrd CL alias, got {other:?}"),
         }
     }
 

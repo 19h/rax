@@ -1480,6 +1480,24 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             width,
             flags,
         } => op_json!("shrd", dst, src, amount, width, flags),
+        OpKind::X86NddDoubleShift {
+            dst,
+            base,
+            fill,
+            amount,
+            width,
+            left,
+            flags,
+        } => op_json!(
+            "x86_ndd_double_shift",
+            dst,
+            base,
+            fill,
+            amount,
+            width,
+            left,
+            flags
+        ),
         OpKind::Rol {
             dst,
             src,

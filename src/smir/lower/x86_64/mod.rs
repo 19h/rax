@@ -3769,6 +3769,112 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn lower_x86_ndd_double_shift(
+        &mut self,
+        dst: VReg,
+        base: VReg,
+        fill: VReg,
+        amount: &SrcOperand,
+        width: OpWidth,
+        left: bool,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: "X86NddDoubleShift".to_string(),
+                operand: format!("unsupported width {width:?}"),
+            });
+        }
+        let dst_reg = self.get_dst_reg(dst)?;
+        let base_reg = self.get_reg(base)?;
+        let fill_reg = self.get_reg(fill)?;
+        let (amount_reg, amount_imm) = match amount {
+            SrcOperand::Imm(value) => (None, Some(*value as u8)),
+            SrcOperand::Reg(reg) => {
+                let reg = self.get_reg(*reg)?;
+                if reg != PhysReg::Rcx {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86NddDoubleShift".to_string(),
+                        operand: "register count must be architectural CL".to_string(),
+                    });
+                }
+                (Some(reg), None)
+            }
+            _ => {
+                return Err(LowerError::UnsupportedOp {
+                    op: "X86NddDoubleShift with shifted count".to_string(),
+                });
+            }
+        };
+        let mut regs = vec![dst_reg, base_reg, fill_reg];
+        if let Some(reg) = amount_reg {
+            regs.push(reg);
+        }
+        Self::ensure_flag_stack_operands_safe("X86NddDoubleShift", &regs)?;
+
+        let preserve_flags = !flags.updates_any();
+        let needs_stack_destination = dst_reg != base_reg
+            && (dst_reg == fill_reg || amount_reg.is_some_and(|reg| dst_reg == reg));
+        if needs_stack_destination {
+            if preserve_flags {
+                self.code.emit_u8(0x9C); // pushfq
+            }
+            let mut emitter = X86Emitter::new(&mut self.code);
+            // Seed a stack-resident destination from `base` while leaving an
+            // aliased fill register or CL untouched until the shift consumes it.
+            // Starting from the old destination preserves upper bits for W16.
+            emitter.emit_push(dst_reg);
+            emitter.emit_mov_mr(PhysReg::Rsp, 0, base_reg, width);
+            if left {
+                emitter.emit_shld_mr_disp(
+                    PhysReg::Rsp,
+                    0,
+                    DispSize::Auto,
+                    fill_reg,
+                    amount_imm,
+                    width,
+                );
+            } else {
+                emitter.emit_shrd_mr_disp(
+                    PhysReg::Rsp,
+                    0,
+                    DispSize::Auto,
+                    fill_reg,
+                    amount_imm,
+                    width,
+                );
+            }
+            emitter.emit_pop(dst_reg);
+            if width == OpWidth::W32 {
+                emitter.emit_mov_rr(dst_reg, dst_reg, OpWidth::W32);
+            }
+            if preserve_flags {
+                self.code.emit_u8(0x9D); // popfq
+            }
+            return Ok(());
+        }
+
+        if dst_reg != base_reg {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(dst_reg, base_reg, width);
+        }
+        if preserve_flags {
+            self.code.emit_u8(0x9C); // pushfq
+        }
+        let mut emitter = X86Emitter::new(&mut self.code);
+        match (left, amount_imm) {
+            (true, Some(imm)) => emitter.emit_shld_rr_imm(dst_reg, fill_reg, imm, width),
+            (true, None) => emitter.emit_shld_rr_cl(dst_reg, fill_reg, width),
+            (false, Some(imm)) => emitter.emit_shrd_rr_imm(dst_reg, fill_reg, imm, width),
+            (false, None) => emitter.emit_shrd_rr_cl(dst_reg, fill_reg, width),
+        }
+        if preserve_flags {
+            self.code.emit_u8(0x9D); // popfq
+        }
+        Ok(())
+    }
+
     fn emit_jcc_placeholder(&mut self, cond: X86Cond) -> usize {
         let off = self.code.position();
         let mut emitter = X86Emitter::new(&mut self.code);
@@ -5285,6 +5391,18 @@ impl X86_64Lowerer {
                         });
                     }
                 }
+            }
+
+            OpKind::X86NddDoubleShift {
+                dst,
+                base,
+                fill,
+                amount,
+                width,
+                left,
+                flags,
+            } => {
+                self.lower_x86_ndd_double_shift(*dst, *base, *fill, amount, *width, *left, *flags)?
             }
 
             // ================================================================
@@ -12532,6 +12650,139 @@ mod tests {
                 .any(|bytes| bytes == expected_nf),
             "NF alias IMUL must preserve flags around the direct multiply: {nf:02X?}"
         );
+    }
+
+    #[test]
+    fn lower_apx_ndd_double_shift_covers_direct_alias_cl_partial_width_and_nf_paths() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+
+        for (name, op, expected) in [
+            (
+                "direct shld",
+                OpKind::X86NddDoubleShift {
+                    dst: r8,
+                    base: rax,
+                    fill: rbx,
+                    amount: SrcOperand::Imm(4),
+                    width: OpWidth::W64,
+                    left: true,
+                    flags: FlagUpdate::All,
+                },
+                &[0x49, 0x89, 0xC0, 0x49, 0x0F, 0xA4, 0xD8, 0x04][..],
+            ),
+            (
+                "fill-alias shld",
+                OpKind::X86NddDoubleShift {
+                    dst: rbx,
+                    base: rax,
+                    fill: rbx,
+                    amount: SrcOperand::Imm(4),
+                    width: OpWidth::W64,
+                    left: true,
+                    flags: FlagUpdate::All,
+                },
+                &[
+                    0x53, 0x48, 0x89, 0x04, 0x24, 0x48, 0x0F, 0xA4, 0x1C, 0x24, 0x04, 0x5B,
+                ][..],
+            ),
+            (
+                "CL-alias shrd",
+                OpKind::X86NddDoubleShift {
+                    dst: rcx,
+                    base: rax,
+                    fill: rbx,
+                    amount: SrcOperand::Reg(rcx),
+                    width: OpWidth::W64,
+                    left: false,
+                    flags: FlagUpdate::All,
+                },
+                &[
+                    0x51, 0x48, 0x89, 0x04, 0x24, 0x48, 0x0F, 0xAD, 0x1C, 0x24, 0x59,
+                ][..],
+            ),
+            (
+                "NF fill-alias shld",
+                OpKind::X86NddDoubleShift {
+                    dst: rbx,
+                    base: rax,
+                    fill: rbx,
+                    amount: SrcOperand::Imm(4),
+                    width: OpWidth::W64,
+                    left: true,
+                    flags: FlagUpdate::None,
+                },
+                &[
+                    0x9C, 0x53, 0x48, 0x89, 0x04, 0x24, 0x48, 0x0F, 0xA4, 0x1C, 0x24, 0x04, 0x5B,
+                    0x9D,
+                ][..],
+            ),
+            (
+                "word fill-alias shld",
+                OpKind::X86NddDoubleShift {
+                    dst: rbx,
+                    base: rax,
+                    fill: rbx,
+                    amount: SrcOperand::Imm(4),
+                    width: OpWidth::W16,
+                    left: true,
+                    flags: FlagUpdate::All,
+                },
+                &[
+                    0x53, 0x66, 0x89, 0x04, 0x24, 0x66, 0x0F, 0xA4, 0x1C, 0x24, 0x04, 0x5B,
+                ][..],
+            ),
+            (
+                "dword fill-alias shld",
+                OpKind::X86NddDoubleShift {
+                    dst: rbx,
+                    base: rax,
+                    fill: rbx,
+                    amount: SrcOperand::Imm(4),
+                    width: OpWidth::W32,
+                    left: true,
+                    flags: FlagUpdate::All,
+                },
+                &[
+                    0x53, 0x89, 0x04, 0x24, 0x0F, 0xA4, 0x1C, 0x24, 0x04, 0x5B, 0x89, 0xDB,
+                ][..],
+            ),
+        ] {
+            let code = lower_single_op(op);
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "missing {name} lowering {expected:02X?}: {code:02X?}"
+            );
+        }
+
+        for invalid in [
+            OpKind::X86NddDoubleShift {
+                dst: rbx,
+                base: rax,
+                fill: rbx,
+                amount: SrcOperand::Imm(4),
+                width: OpWidth::W8,
+                left: true,
+                flags: FlagUpdate::All,
+            },
+            OpKind::X86NddDoubleShift {
+                dst: rbx,
+                base: rax,
+                fill: rbx,
+                amount: SrcOperand::Reg(VReg::Arch(ArchReg::X86(X86Reg::Rdx))),
+                width: OpWidth::W64,
+                left: false,
+                flags: FlagUpdate::All,
+            },
+        ] {
+            assert!(
+                lower_single_op_err(invalid)
+                    .to_string()
+                    .contains("X86NddDoubleShift")
+            );
+        }
     }
 
     #[test]

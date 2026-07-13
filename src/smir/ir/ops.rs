@@ -600,6 +600,17 @@ pub enum OpKind {
         flags: FlagUpdate,
     },
 
+    /// APX NDD double shift with independent destination, base, and fill.
+    X86NddDoubleShift {
+        dst: VReg,
+        base: VReg,
+        fill: VReg,
+        amount: SrcOperand,
+        width: OpWidth,
+        left: bool,
+        flags: FlagUpdate,
+    },
+
     /// Rotate left
     Rol {
         dst: VReg,
@@ -3621,6 +3632,7 @@ impl OpKind {
                 | OpKind::Sar { .. }
                 | OpKind::Shld { .. }
                 | OpKind::Shrd { .. }
+                | OpKind::X86NddDoubleShift { .. }
                 | OpKind::Rol { .. }
                 | OpKind::Ror { .. }
                 | OpKind::MulU { .. }
@@ -3661,6 +3673,7 @@ impl OpKind {
             | OpKind::Sar { dst, .. }
             | OpKind::Shld { dst, .. }
             | OpKind::Shrd { dst, .. }
+            | OpKind::X86NddDoubleShift { dst, .. }
             | OpKind::Rol { dst, .. }
             | OpKind::Ror { dst, .. }
             | OpKind::Rcl { dst, .. }
