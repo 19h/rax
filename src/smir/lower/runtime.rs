@@ -962,6 +962,34 @@ pub fn is_native_clobber_safe_excluding(
         })
 }
 
+/// Verify host support for scalar x86 extensions emitted directly by the
+/// identity-register native JIT. Generic scalar lowerings use baseline x86-64;
+/// encoding-hinted MULX is the first admitted scalar operation requiring an
+/// additional CPUID feature.
+pub fn x86_native_scalar_features_supported_excluding(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> bool {
+    use crate::smir::ir::ops::X86OpHint;
+
+    let needs_bmi2 = func
+        .blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .flat_map(|block| &block.ops)
+        .any(|op| matches!(op.x86_hint, Some(X86OpHint::Mulx)));
+
+    #[cfg(target_arch = "x86_64")]
+    {
+        !needs_bmi2 || std::is_x86_feature_detected!("bmi2")
+    }
+
+    #[cfg(not(target_arch = "x86_64"))]
+    {
+        !needs_bmi2
+    }
+}
+
 /// Return whether `op` is one of the register-only x86 vector operations whose
 /// interpreter semantics and native EVEX encoding are both regression-covered.
 /// Every operand must be architectural: virtual vector values still require a
@@ -2118,7 +2146,7 @@ fn block_is_clobber_safe(
     flags_live_out: crate::smir::ir::flags::FlagSet,
 ) -> bool {
     use crate::smir::ir::Terminator;
-    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::ops::{OpKind, X86OpHint};
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
 
     if !x86_block_preserves_live_flags(block, flags_live_out) {
@@ -2167,6 +2195,9 @@ fn block_is_clobber_safe(
         if x86_movx_uses_ambiguous_high_byte_source(op) {
             return false;
         }
+        if matches!(op.x86_hint, Some(X86OpHint::Mulx)) && !x86_mulx_shape_valid(op) {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86NddDoubleShift { .. })
             && !x86_ndd_double_shift_shape_valid(&op.kind)
         {
@@ -2197,6 +2228,47 @@ fn block_is_clobber_safe(
         }
     }
     true
+}
+
+fn x86_mulx_shape_valid(op: &crate::smir::ir::ops::SmirOp) -> bool {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::{OpKind, X86OpHint};
+    use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
+
+    let native_gpr = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Rax
+                    | X86Reg::Rcx
+                    | X86Reg::Rdx
+                    | X86Reg::Rbx
+                    | X86Reg::Rsi
+                    | X86Reg::Rdi
+                    | X86Reg::R8
+                    | X86Reg::R9
+                    | X86Reg::R10
+                    | X86Reg::R11
+                    | X86Reg::R12
+                    | X86Reg::R13
+                    | X86Reg::R14
+                    | X86Reg::R15
+            ))
+        )
+    };
+
+    matches!(op.x86_hint, Some(X86OpHint::Mulx))
+        && matches!(
+            &op.kind,
+            OpKind::MulU {
+                dst_lo,
+                dst_hi: Some(dst_hi),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
+                src2: SrcOperand::Reg(src2),
+                width: OpWidth::W32 | OpWidth::W64,
+                flags: FlagUpdate::None,
+            } if native_gpr(dst_lo) && native_gpr(dst_hi) && native_gpr(src2)
+        )
 }
 
 fn x86_movx_uses_ambiguous_high_byte_source(op: &crate::smir::ir::ops::SmirOp) -> bool {
@@ -3715,7 +3787,7 @@ mod jit_gate_tests {
     }
 
     #[test]
-    fn clobber_gate_rejects_mulx_hint() {
+    fn clobber_gate_accepts_valid_mulx_and_rejects_malformed_shapes() {
         let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
         b.push_op(
             0x1000,
@@ -3736,9 +3808,60 @@ mod jit_gate_tests {
         op.x86_hint = Some(X86OpHint::Mulx);
 
         assert!(
-            !is_native_clobber_safe(&func),
-            "MULX-shaped MulU must not enter the destructive native MUL lowering"
+            is_native_clobber_safe(&func),
+            "well-formed MULX must enter its non-destructive BMI2 lowering"
         );
+
+        let mut excluded = std::collections::HashMap::new();
+        excluded.insert(func.entry, 0x1000);
+        assert!(
+            x86_native_scalar_features_supported_excluding(&func, &excluded),
+            "an excluded MULX block has no host BMI2 requirement"
+        );
+
+        #[cfg(target_arch = "x86_64")]
+        assert_eq!(
+            x86_native_scalar_features_supported_excluding(
+                &func,
+                &std::collections::HashMap::new()
+            ),
+            std::is_x86_feature_detected!("bmi2")
+        );
+        #[cfg(not(target_arch = "x86_64"))]
+        assert!(!x86_native_scalar_features_supported_excluding(
+            &func,
+            &std::collections::HashMap::new()
+        ));
+
+        for (name, mutate) in [
+            ("missing high destination", 0u8),
+            ("wrong implicit source", 1),
+            ("immediate source", 2),
+            ("unsupported width", 3),
+            ("flag-writing form", 4),
+        ] {
+            let mut malformed = func.clone();
+            let OpKind::MulU {
+                dst_hi,
+                src1,
+                src2,
+                width,
+                flags,
+                ..
+            } = &mut malformed.blocks[0].ops[0].kind
+            else {
+                unreachable!()
+            };
+            match mutate {
+                0 => *dst_hi = None,
+                1 => *src1 = x86(X86Reg::Rax),
+                2 => *src2 = SrcOperand::Imm(7),
+                3 => *width = OpWidth::W16,
+                4 => *flags = FlagUpdate::All,
+                _ => unreachable!(),
+            }
+            assert!(!is_native_clobber_safe(&malformed), "{name}");
+        }
     }
 
     #[test]

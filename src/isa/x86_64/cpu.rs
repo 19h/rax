@@ -4154,6 +4154,7 @@ impl X86_64Vcpu {
         use crate::smir::lower::SmirLowerer;
         use crate::smir::lower::runtime::{
             ExecMem, is_native_clobber_safe_excluding, uses_x86_native_vectors_excluding,
+            x86_native_scalar_features_supported_excluding,
             x86_native_vector_features_supported_excluding,
         };
         use crate::smir::lower::x86_64::X86_64Lowerer;
@@ -4298,6 +4299,12 @@ impl X86_64Vcpu {
             }
             // Fail-safe gate over the EXECUTED (non-exit) blocks.
             let allow_mem = self.jit_mem;
+            if !x86_native_scalar_features_supported_excluding(&func, &exits) {
+                if jit_bail_log() {
+                    eprintln!("[JIT-BAIL] host-scalar-features @ {entry:#x} (call={cm})");
+                }
+                continue 'modes;
+            }
             let uses_vector = uses_x86_native_vectors_excluding(&func, &exits);
             if uses_vector && !x86_native_vector_features_supported_excluding(&func, &exits) {
                 if jit_bail_log() {

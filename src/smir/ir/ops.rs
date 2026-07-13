@@ -46,9 +46,6 @@ impl SmirOp {
     /// Fail-safe native-JIT eligibility for an operation, including encoding
     /// hints that affect lowering semantics.
     pub fn is_jit_safe(&self) -> bool {
-        if matches!(self.x86_hint, Some(X86OpHint::Mulx)) {
-            return false;
-        }
         self.kind.is_jit_safe()
     }
 }

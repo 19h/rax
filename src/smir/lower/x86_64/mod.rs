@@ -4737,77 +4737,124 @@ impl X86_64Lowerer {
                 flags,
             } => {
                 if matches!(op.x86_hint, Some(X86OpHint::Mulx)) {
-                    return Err(LowerError::UnsupportedOp {
-                        op: "MULX requires non-destructive lowering".to_string(),
-                    });
-                }
-
-                let preserve_flags = !flags.updates_any();
-                // Unsigned multiply always uses RAX
-                // MUL r/m -> RDX:RAX = RAX * r/m
-                let src1_reg = self.get_reg(*src1)?;
-
-                match src2 {
-                    SrcOperand::Reg(r) => {
-                        let src2_reg = self.get_reg(*r)?;
-                        if preserve_flags {
-                            Self::ensure_flag_stack_operands_safe("MulU", &[src1_reg, src2_reg])?;
-                        }
-                        {
-                            let mut emitter = X86Emitter::new(&mut self.code);
-                            emitter.emit_mov_rr(PhysReg::Rax, src1_reg, *width);
-                        }
-                        if preserve_flags {
-                            self.code.emit_u8(0x9C); // pushfq
-                        }
-                        let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter.emit_mul(src2_reg, *width);
-                        if preserve_flags {
-                            self.code.emit_u8(0x9D); // popfq
-                        }
-                    }
-                    SrcOperand::Imm(val) => {
-                        let temp = self.regalloc.get_scratch()?;
-                        if preserve_flags {
-                            Self::ensure_flag_stack_operands_safe("MulU", &[src1_reg, temp])?;
-                        }
-                        {
-                            let mut emitter = X86Emitter::new(&mut self.code);
-                            emitter.emit_mov_rr(PhysReg::Rax, src1_reg, *width);
-                        }
-                        {
-                            let mut emitter = X86Emitter::new(&mut self.code);
-                            emitter.emit_mov_ri(temp, *val, *width);
-                        }
-                        if preserve_flags {
-                            self.code.emit_u8(0x9C); // pushfq
-                        }
-                        let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter.emit_mul(temp, *width);
-                        if preserve_flags {
-                            self.code.emit_u8(0x9D); // popfq
-                        }
-                        self.regalloc.free_temp(temp);
-                    }
-                    _ => {
-                        return Err(LowerError::UnsupportedOp {
-                            op: "MulU with shifted operand".to_string(),
+                    if !matches!(width, OpWidth::W32 | OpWidth::W64)
+                        || *flags != FlagUpdate::None
+                        || *src1 != VReg::Arch(ArchReg::X86(X86Reg::Rdx))
+                    {
+                        return Err(LowerError::InvalidOperand {
+                            op: "MULX".to_string(),
+                            operand: format!(
+                                "requires W32/W64, FlagUpdate::None, and implicit RDX; got {width:?}, {flags:?}, {src1:?}"
+                            ),
                         });
                     }
-                }
+                    let Some(dst_hi) = dst_hi else {
+                        return Err(LowerError::InvalidOperand {
+                            op: "MULX".to_string(),
+                            operand: "missing upper-half destination".to_string(),
+                        });
+                    };
+                    let SrcOperand::Reg(src2) = src2 else {
+                        return Err(LowerError::InvalidOperand {
+                            op: "MULX".to_string(),
+                            operand: "source must be a register after lifting".to_string(),
+                        });
+                    };
 
-                // Move results to destination registers
-                let dst_lo_reg = self.get_dst_reg(*dst_lo)?;
-                if dst_lo_reg != PhysReg::Rax {
+                    let dst_lo_reg = self.get_dst_reg(*dst_lo)?;
+                    let dst_hi_reg = self.get_dst_reg(*dst_hi)?;
+                    let src2_reg = self.get_reg(*src2)?;
+                    Self::ensure_flag_stack_operands_safe(
+                        "MULX",
+                        &[dst_lo_reg, dst_hi_reg, PhysReg::Rdx, src2_reg],
+                    )?;
+
+                    // MULX dest_hi, dest_lo, src encodes the upper destination
+                    // in ModR/M.reg and the lower destination in VEX.vvvv. The
+                    // instruction reads implicit RDX and all explicit sources
+                    // before either destination is committed, so every source/
+                    // destination alias is natively safe. If both destinations
+                    // alias, the ISA specifies that the upper half survives.
                     let mut emitter = X86Emitter::new(&mut self.code);
-                    emitter.emit_mov_rr(dst_lo_reg, PhysReg::Rax, *width);
-                }
+                    emitter.emit_vex_bmi_rr_pp(
+                        0xF6,
+                        X86SsePrefix::Repne,
+                        dst_hi_reg,
+                        src2_reg,
+                        dst_lo_reg,
+                        *width,
+                    );
+                } else {
+                    let preserve_flags = !flags.updates_any();
+                    // Unsigned multiply always uses RAX
+                    // MUL r/m -> RDX:RAX = RAX * r/m
+                    let src1_reg = self.get_reg(*src1)?;
 
-                if let Some(hi) = dst_hi {
-                    let dst_hi_reg = self.get_dst_reg(*hi)?;
-                    if dst_hi_reg != PhysReg::Rdx {
+                    match src2 {
+                        SrcOperand::Reg(r) => {
+                            let src2_reg = self.get_reg(*r)?;
+                            if preserve_flags {
+                                Self::ensure_flag_stack_operands_safe(
+                                    "MulU",
+                                    &[src1_reg, src2_reg],
+                                )?;
+                            }
+                            {
+                                let mut emitter = X86Emitter::new(&mut self.code);
+                                emitter.emit_mov_rr(PhysReg::Rax, src1_reg, *width);
+                            }
+                            if preserve_flags {
+                                self.code.emit_u8(0x9C); // pushfq
+                            }
+                            let mut emitter = X86Emitter::new(&mut self.code);
+                            emitter.emit_mul(src2_reg, *width);
+                            if preserve_flags {
+                                self.code.emit_u8(0x9D); // popfq
+                            }
+                        }
+                        SrcOperand::Imm(val) => {
+                            let temp = self.regalloc.get_scratch()?;
+                            if preserve_flags {
+                                Self::ensure_flag_stack_operands_safe("MulU", &[src1_reg, temp])?;
+                            }
+                            {
+                                let mut emitter = X86Emitter::new(&mut self.code);
+                                emitter.emit_mov_rr(PhysReg::Rax, src1_reg, *width);
+                            }
+                            {
+                                let mut emitter = X86Emitter::new(&mut self.code);
+                                emitter.emit_mov_ri(temp, *val, *width);
+                            }
+                            if preserve_flags {
+                                self.code.emit_u8(0x9C); // pushfq
+                            }
+                            let mut emitter = X86Emitter::new(&mut self.code);
+                            emitter.emit_mul(temp, *width);
+                            if preserve_flags {
+                                self.code.emit_u8(0x9D); // popfq
+                            }
+                            self.regalloc.free_temp(temp);
+                        }
+                        _ => {
+                            return Err(LowerError::UnsupportedOp {
+                                op: "MulU with shifted operand".to_string(),
+                            });
+                        }
+                    }
+
+                    // Move results to destination registers
+                    let dst_lo_reg = self.get_dst_reg(*dst_lo)?;
+                    if dst_lo_reg != PhysReg::Rax {
                         let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter.emit_mov_rr(dst_hi_reg, PhysReg::Rdx, *width);
+                        emitter.emit_mov_rr(dst_lo_reg, PhysReg::Rax, *width);
+                    }
+
+                    if let Some(hi) = dst_hi {
+                        let dst_hi_reg = self.get_dst_reg(*hi)?;
+                        if dst_hi_reg != PhysReg::Rdx {
+                            let mut emitter = X86Emitter::new(&mut self.code);
+                            emitter.emit_mov_rr(dst_hi_reg, PhysReg::Rdx, *width);
+                        }
                     }
                 }
             }
@@ -13397,37 +13444,131 @@ mod tests {
     }
 
     #[test]
-    fn lower_mulx_hint_rejects_destructive_legacy_mul() {
-        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
-        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
-        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
-        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+    fn lower_mulx_hint_emits_native_bmi2_with_aliasing() {
+        let gpr = |reg| VReg::Arch(ArchReg::X86(reg));
 
-        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
-        builder.push_op(
-            0x1000,
-            OpKind::MulU {
-                dst_lo: rbx,
-                dst_hi: Some(rcx),
-                src1: rdx,
-                src2: SrcOperand::Reg(rax),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            },
-        );
-        builder.set_terminator(Terminator::Return { values: vec![] });
+        for (name, dst_lo, dst_hi, src2, width, expected) in [
+            (
+                "64-bit",
+                X86Reg::Rbx,
+                X86Reg::Rcx,
+                X86Reg::Rax,
+                OpWidth::W64,
+                &[0xC4, 0xE2, 0xE3, 0xF6, 0xC8][..],
+            ),
+            (
+                "32-bit extended",
+                X86Reg::R8,
+                X86Reg::R9,
+                X86Reg::R10,
+                OpWidth::W32,
+                &[0xC4, 0x42, 0x3B, 0xF6, 0xCA][..],
+            ),
+            (
+                "same destination keeps upper half",
+                X86Reg::Rcx,
+                X86Reg::Rcx,
+                X86Reg::Rax,
+                OpWidth::W64,
+                &[0xC4, 0xE2, 0xF3, 0xF6, 0xC8][..],
+            ),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::MulU {
+                    dst_lo: gpr(dst_lo),
+                    dst_hi: Some(gpr(dst_hi)),
+                    src1: gpr(X86Reg::Rdx),
+                    src2: SrcOperand::Reg(gpr(src2)),
+                    width,
+                    flags: FlagUpdate::None,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut func = builder.finish();
+            func.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
 
-        let mut func = builder.finish();
-        func.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+            let mut lowerer = X86_64Lowerer::new();
+            let result = lowerer.lower_function(&func).expect(name);
+            assert!(result.relocations.is_empty(), "{name}");
+            let code = lowerer.finalize().expect(name);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing MULX {expected:02X?} in {code:02X?}"
+            );
+        }
+    }
 
-        let mut lowerer = X86_64Lowerer::new();
-        let err = lowerer
-            .lower_function(&func)
-            .expect_err("MULX must not lower through legacy MUL");
-        assert!(
-            matches!(err, LowerError::UnsupportedOp { ref op } if op.contains("MULX")),
-            "{err:?}"
-        );
+    #[test]
+    fn lower_mulx_hint_rejects_malformed_shapes() {
+        let gpr = |reg| VReg::Arch(ArchReg::X86(reg));
+        for (name, kind) in [
+            (
+                "non-RDX implicit source",
+                OpKind::MulU {
+                    dst_lo: gpr(X86Reg::Rbx),
+                    dst_hi: Some(gpr(X86Reg::Rcx)),
+                    src1: gpr(X86Reg::Rax),
+                    src2: SrcOperand::Reg(gpr(X86Reg::Rsi)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "missing upper destination",
+                OpKind::MulU {
+                    dst_lo: gpr(X86Reg::Rbx),
+                    dst_hi: None,
+                    src1: gpr(X86Reg::Rdx),
+                    src2: SrcOperand::Reg(gpr(X86Reg::Rsi)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "immediate source",
+                OpKind::MulU {
+                    dst_lo: gpr(X86Reg::Rbx),
+                    dst_hi: Some(gpr(X86Reg::Rcx)),
+                    src1: gpr(X86Reg::Rdx),
+                    src2: SrcOperand::Imm(7),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "16-bit width",
+                OpKind::MulU {
+                    dst_lo: gpr(X86Reg::Rbx),
+                    dst_hi: Some(gpr(X86Reg::Rcx)),
+                    src1: gpr(X86Reg::Rdx),
+                    src2: SrcOperand::Reg(gpr(X86Reg::Rsi)),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "flag-writing form",
+                OpKind::MulU {
+                    dst_lo: gpr(X86Reg::Rbx),
+                    dst_hi: Some(gpr(X86Reg::Rcx)),
+                    src1: gpr(X86Reg::Rdx),
+                    src2: SrcOperand::Reg(gpr(X86Reg::Rsi)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut func = builder.finish();
+            func.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+            let mut lowerer = X86_64Lowerer::new();
+            assert!(lowerer.lower_function(&func).is_err(), "{name}");
+        }
     }
 
     #[test]

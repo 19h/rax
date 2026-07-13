@@ -482,6 +482,115 @@ fn jit_apx_ndd_imul_alias_second_source_preserves_product_and_nf_flags() {
     }
 }
 
+/// BMI2 MULX must remain non-destructive, preserve flags for the following
+/// branch, and commit the upper half when both destinations alias. The cases
+/// cover distinct destinations, implicit-RDX aliasing, explicit-source
+/// aliasing, same-destination ordering, and 32-bit zero extension.
+#[test]
+fn jit_bmi2_mulx_preserves_flags_and_all_register_aliases() {
+    if !std::is_x86_feature_detected!("bmi2") {
+        return;
+    }
+
+    let multiplicand = 0xFEDC_BA98_7654_3211u64;
+    let multiplier = 0x1234_5678_9ABC_DEF3u64;
+    let product = (multiplicand as u128) * (multiplier as u128);
+    let lo = product as u64;
+    let hi = (product >> 64) as u64;
+    let product32 = ((multiplicand as u32 as u64) * (multiplier as u32 as u64)) as u64;
+    let lo32 = product32 & 0xFFFF_FFFF;
+    let hi32 = product32 >> 32;
+
+    for (name, instruction, expected_rax, expected_rbx, expected_rdx, expected_rsi) in [
+        (
+            "distinct",
+            &[0xC4, 0xE2, 0xCB, 0xF6, 0xD8][..], // mulx rbx,rsi,rax
+            multiplier,
+            hi,
+            multiplicand,
+            lo,
+        ),
+        (
+            "implicit source aliases high destination",
+            &[0xC4, 0xE2, 0xE3, 0xF6, 0xD0][..], // mulx rdx,rbx,rax
+            multiplier,
+            lo,
+            hi,
+            0,
+        ),
+        (
+            "explicit source aliases low destination",
+            &[0xC4, 0xE2, 0xFB, 0xF6, 0xD8][..], // mulx rbx,rax,rax
+            lo,
+            hi,
+            multiplicand,
+            0,
+        ),
+        (
+            "same destination keeps upper half",
+            &[0xC4, 0xE2, 0xE3, 0xF6, 0xD8][..], // mulx rbx,rbx,rax
+            multiplier,
+            hi,
+            multiplicand,
+            0,
+        ),
+        (
+            "32-bit destinations zero extend",
+            &[0xC4, 0xE2, 0x4B, 0xF6, 0xD8][..], // mulx ebx,esi,eax
+            multiplier,
+            hi32,
+            multiplicand,
+            lo32,
+        ),
+    ] {
+        // test r8,r8 sets ZF; MULX; jnz fail; dec rcx; jnz loop; hlt;
+        // fail: mov edi,1; hlt. A flag-clobbering MULX takes the fail path.
+        let mut code = vec![0x4D, 0x85, 0xC0];
+        code.extend_from_slice(instruction);
+        code.extend_from_slice(&[
+            0x75, 0x06, 0x48, 0xFF, 0xC9, 0x75, 0xF1, 0xF4, 0xBF, 0x01, 0x00, 0x00, 0x00, 0xF4,
+        ]);
+
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = multiplier;
+            regs.rbx = 0;
+            regs.rcx = 1;
+            regs.rdx = multiplicand;
+            regs.rsi = 0;
+            regs.rdi = 0;
+            regs.r8 = 0;
+            regs.rflags = 0x2 | 0x0ED5;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp);
+        run_interp(&mut interp);
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("jit BMI2 MULX {name}: {error:?}")),
+            "{name}: MULX loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+
+        let expected = interp.get_regs().unwrap();
+        let after = jit.get_regs().unwrap();
+        assert_eq!(after.rax, expected.rax, "{name}: rax vs interpreter");
+        assert_eq!(after.rbx, expected.rbx, "{name}: rbx vs interpreter");
+        assert_eq!(after.rdx, expected.rdx, "{name}: rdx vs interpreter");
+        assert_eq!(after.rsi, expected.rsi, "{name}: rsi vs interpreter");
+        assert_eq!(after.rdi, 0, "{name}: preserved ZF must avoid fail path");
+        assert_eq!(after.rax, expected_rax, "{name}: closed-form rax");
+        assert_eq!(after.rbx, expected_rbx, "{name}: closed-form rbx");
+        assert_eq!(after.rdx, expected_rdx, "{name}: closed-form rdx");
+        assert_eq!(after.rsi, expected_rsi, "{name}: closed-form rsi");
+    }
+}
+
 #[test]
 fn jit_apx_ndd_double_shift_handles_fill_cl_aliases_and_nf() {
     const STATUS_MASK: u64 = 0x0ED5;
