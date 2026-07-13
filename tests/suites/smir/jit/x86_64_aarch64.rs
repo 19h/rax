@@ -679,6 +679,47 @@ fn x86_apx_ndd_double_shifts_execute_natively_across_widths_and_aliases() {
 }
 
 #[test]
+fn x86_apx_nf_w16_destructive_double_shifts_merge_partial_registers() {
+    // LLVM 23 encodings: {nf} SHLD ax,bx,4; {nf} SHRD cx,dx,cl.
+    // The second operation consumes the original CL while committing only the
+    // low 16 destination bits. APX NF preserves the complete RFLAGS snapshot.
+    let code = [
+        0x62, 0xF4, 0x7D, 0x0C, 0x24, 0xD8, 0x04, 0x62, 0xF4, 0x7D, 0x0C, 0xAD, 0xD1, 0x75, 0xF1,
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        vcpu.set_apx_enabled(true);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xAAAA_BBBB_CCCC_8123;
+        regs.rcx = 0x1111_2222_3333_0005;
+        regs.rdx = 0xDDDD_EEEE_FFFF_ABCD;
+        regs.rbx = 0xBBBB_CCCC_DDDD_5AA5;
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("APX NF W16 destructive double-shift JIT attempt"),
+        "APX NF W16 destructive double shifts must enter the AArch64 tier"
+    );
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "APX NF W16 destructive double shifts");
+    assert_eq!(actual.rax, 0xAAAA_BBBB_CCCC_1235, "SHLD ax upper merge");
+    assert_eq!(actual.rcx, 0x1111_2222_3333_6800, "SHRD cx/CL alias");
+    assert_eq!(actual.rflags, 0xCD6, "APX NF preserves complete RFLAGS");
+}
+
+#[test]
 fn x86_aarch64_jit_rejects_live_pf_af_definitions_without_execution() {
     // add rax,rbx; jnz start; hlt. ADD's live PF/AF outputs cannot be represented
     // in NZCV, so the architecture-specific gate must retain interpreter fallback.

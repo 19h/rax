@@ -13774,6 +13774,27 @@ impl Aarch64Lowerer {
         set_flags: bool,
         width: OpWidth,
     ) -> Result<(), LowerError> {
+        if width == OpWidth::W16 {
+            if let Some((dst_reg, result)) =
+                Self::x86_partial_write_scratch(dst, width, &[src], &[amount])?
+            {
+                let scratches = [result];
+                self.emit_scratch_save(&scratches);
+                self.emit_bitfield(result, dst_reg, 0b10, 0, 15, OpWidth::W32)?;
+                self.lower_double_shift(
+                    Self::arm_x_reg(result),
+                    src,
+                    amount,
+                    left,
+                    set_flags,
+                    width,
+                )?;
+                self.emit_bitfield(dst_reg, result, 0b01, 0, 15, OpWidth::W64)?;
+                self.emit_scratch_restore(&scratches);
+                return Ok(());
+            }
+        }
+
         if set_flags {
             let dst_reg = Self::dst_gpr_arm_or_x86(dst)?;
             let src_reg = Self::gpr_arm_or_x86(src)?;
@@ -53707,6 +53728,190 @@ mod tests {
         ] {
             let error = try_lower_single_op(op).expect_err("unsupported APX NDD double shift");
             assert!(error.to_string().contains("APX NDD double shift"));
+        }
+    }
+
+    #[test]
+    fn lowers_x86_w16_destructive_double_shift_partial_write_alias_matrix() {
+        let reg = |index: u8| match index {
+            0 => x86(X86Reg::Rax),
+            1 => x86(X86Reg::Rcx),
+            2 => x86(X86Reg::Rdx),
+            3 => x86(X86Reg::Rbx),
+            _ => unreachable!("unexpected test register x{index}"),
+        };
+        let initial = |index: u8| match index {
+            0 => 0xaaaa_bbbb_cccc_8123,
+            1 => 0x1111_2222_3333_0005,
+            2 => 0xdddd_eeee_ffff_abcd,
+            3 => 0xbbbb_cccc_dddd_5aa5,
+            _ => unreachable!("unexpected test register x{index}"),
+        };
+        let aliases = [
+            ("distinct-imm", 0, 3, false),
+            ("distinct-cl", 0, 3, true),
+            ("dst-src-imm", 3, 3, false),
+            ("dst-src-cl", 3, 3, true),
+            ("dst-count", 1, 2, true),
+            ("src-count", 0, 1, true),
+        ];
+        let sentinels = [
+            (16, 0x1616_1616_1616_1616),
+            (17, 0x1717_1717_1717_1717),
+            (15, 0x1515_1515_1515_1515),
+            (14, 0x1414_1414_1414_1414),
+        ];
+
+        for left in [false, true] {
+            for (alias, dst, src, register_count) in aliases {
+                let amount = if register_count {
+                    SrcOperand::Reg(x86(X86Reg::Rcx))
+                } else {
+                    SrcOperand::Imm(4)
+                };
+                let kind = if left {
+                    OpKind::Shld {
+                        dst: reg(dst),
+                        src: reg(src),
+                        amount,
+                        width: OpWidth::W16,
+                        flags: FlagUpdate::None,
+                    }
+                } else {
+                    OpKind::Shrd {
+                        dst: reg(dst),
+                        src: reg(src),
+                        amount,
+                        width: OpWidth::W16,
+                        flags: FlagUpdate::None,
+                    }
+                };
+                let code = lower_single_op(kind);
+                let expected_low = if register_count {
+                    ref_double_shift_reg(initial(dst), initial(src), initial(1), left, OpWidth::W16)
+                } else {
+                    ref_double_shift_imm(initial(dst), initial(src), 4, left, OpWidth::W16)
+                };
+                let expected = (initial(dst) & !0xffff) | expected_low;
+                let mut regs = sentinels.to_vec();
+                regs.extend([0, 1, 2, 3].map(|index| (index, initial(index))));
+                let old_nzcv = 0b1011;
+                let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+                let op = if left { "SHLD" } else { "SHRD" };
+
+                assert_eq!(out[dst as usize], expected, "x86 {op} W16 {alias} result");
+                for index in [0, 1, 2, 3] {
+                    if index != dst {
+                        assert_eq!(
+                            out[index as usize],
+                            initial(index),
+                            "x86 {op} W16 {alias} x{index} preserved"
+                        );
+                    }
+                }
+                for (index, value) in sentinels {
+                    assert_eq!(
+                        out[index as usize], value,
+                        "x86 {op} W16 {alias} x{index} scratch"
+                    );
+                }
+                assert_eq!(out_nzcv, old_nzcv, "x86 {op} W16 {alias} NZCV");
+                assert_eq!(sp, 0x8000, "x86 {op} W16 {alias} stack");
+            }
+        }
+    }
+
+    #[test]
+    fn lowers_x86_w16_destructive_double_shift_flags_before_partial_merge() {
+        let dst = 0xaaaa_bbbb_cccc_8001;
+        let src = 0xbbbb_cccc_dddd_5aa5;
+        for left in [false, true] {
+            for amount in [1_u64, 16] {
+                let kind = if left {
+                    OpKind::Shld {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rbx),
+                        amount: SrcOperand::Imm(amount as i64),
+                        width: OpWidth::W16,
+                        flags: FlagUpdate::All,
+                    }
+                } else {
+                    OpKind::Shrd {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rbx),
+                        amount: SrcOperand::Imm(amount as i64),
+                        width: OpWidth::W16,
+                        flags: FlagUpdate::All,
+                    }
+                };
+                let code = lower_single_op(kind);
+                let expected_low =
+                    ref_double_shift_flags_value(dst, src, amount, left, OpWidth::W16);
+                let old_nzcv = 0b1101;
+                let expected_nzcv = expected_double_shift_nzcv(
+                    old_nzcv,
+                    dst,
+                    expected_low,
+                    amount,
+                    left,
+                    OpWidth::W16,
+                    FlagUpdate::All,
+                );
+                let (out, out_nzcv, sp) = run_aarch64_code(
+                    &code,
+                    &[
+                        (0, dst),
+                        (3, src),
+                        (16, 0x1616_1616_1616_1616),
+                        (17, 0x1717_1717_1717_1717),
+                    ],
+                    old_nzcv,
+                );
+                let op = if left { "SHLD" } else { "SHRD" };
+
+                assert_eq!(
+                    out[0],
+                    (dst & !0xffff) | expected_low,
+                    "x86 {op} W16 count {amount} result"
+                );
+                assert_eq!(out[3], src, "x86 {op} W16 count {amount} source");
+                assert_eq!(out_nzcv, expected_nzcv, "x86 {op} W16 count {amount} NZCV");
+                assert_eq!(out[16], 0x1616_1616_1616_1616, "x86 {op} x16");
+                assert_eq!(out[17], 0x1717_1717_1717_1717, "x86 {op} x17");
+                assert_eq!(sp, 0x8000, "x86 {op} W16 count {amount} stack");
+            }
+        }
+    }
+
+    #[test]
+    fn rejects_unrepresentable_x86_w16_destructive_double_shift_flags() {
+        for (op, expected) in [
+            (
+                OpKind::Shld {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rbx),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::All,
+                },
+                "flag-setting register-count double shift width W16",
+            ),
+            (
+                OpKind::Shrd {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rbx),
+                    amount: SrcOperand::Imm(17),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::All,
+                },
+                "count greater than width",
+            ),
+        ] {
+            let error = try_lower_single_op(op).expect_err("unrepresentable W16 flags");
+            assert!(
+                error.to_string().contains(expected),
+                "unexpected lowerer error: {error}"
+            );
         }
     }
 

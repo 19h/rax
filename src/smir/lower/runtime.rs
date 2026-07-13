@@ -2711,9 +2711,27 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
                     && (!flags.updates_any()
                         || matches!(amount, SrcOperand::Imm(value) if (*value as u64 & 0x1f) <= 16)))
         }
+        OpKind::Shld {
+            dst,
+            amount,
+            width,
+            flags,
+            ..
+        }
+        | OpKind::Shrd {
+            dst,
+            amount,
+            width,
+            flags,
+            ..
+        } => {
+            full_gpr_write(width)
+                || (matches!(width, OpWidth::W16)
+                    && x86_aarch64_legacy_gpr(dst)
+                    && (!flags.updates_any()
+                        || matches!(amount, SrcOperand::Imm(value) | SrcOperand::Imm64(value) if (*value as u64 & 0x1f) <= 16)))
+        }
         OpKind::AndNot { width, .. }
-        | OpKind::Shld { width, .. }
-        | OpKind::Shrd { width, .. }
         | OpKind::MulU { width, .. }
         | OpKind::MulS { width, .. }
         | OpKind::Bsf { width, .. }
@@ -3968,6 +3986,56 @@ mod jit_gate_tests {
                 "W16 flag-setting APX NDD immediate count {amount}"
             );
         }
+    }
+
+    #[test]
+    fn x86_aarch64_gate_accepts_w16_destructive_double_shift_partial_writes() {
+        for left in [false, true] {
+            for amount in [SrcOperand::Imm(4), SrcOperand::Reg(x86(X86Reg::Rcx))] {
+                let op = if left {
+                    OpKind::Shld {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rbx),
+                        amount,
+                        width: OpWidth::W16,
+                        flags: FlagUpdate::None,
+                    }
+                } else {
+                    OpKind::Shrd {
+                        dst: x86(X86Reg::Rax),
+                        src: x86(X86Reg::Rbx),
+                        amount,
+                        width: OpWidth::W16,
+                        flags: FlagUpdate::None,
+                    }
+                };
+                assert!(
+                    x86_aarch64_gate(vec![op]),
+                    "APX NF destructive W16 double shift left={left}"
+                );
+            }
+        }
+
+        for (amount, expected) in [(16, true), (17, false), (31, false), (32, true)] {
+            assert_eq!(
+                x86_aarch64_scalar_shape_valid(&OpKind::Shld {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rbx),
+                    amount: SrcOperand::Imm(amount),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::All,
+                }),
+                expected,
+                "W16 flag-setting SHLD immediate count {amount}"
+            );
+        }
+        assert!(!x86_aarch64_scalar_shape_valid(&OpKind::Shrd {
+            dst: x86(X86Reg::Rax),
+            src: x86(X86Reg::Rbx),
+            amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+            width: OpWidth::W16,
+            flags: FlagUpdate::All,
+        }));
     }
 
     #[test]
