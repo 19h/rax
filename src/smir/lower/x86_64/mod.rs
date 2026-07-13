@@ -5552,7 +5552,12 @@ impl X86_64Lowerer {
                         let mut emitter = X86Emitter::new(&mut self.code);
                         emitter.emit_bswap(dst_reg, *width);
                     }
-                    _ => {}
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "Bswap".to_string(),
+                            operand: format!("unsupported width {width:?}"),
+                        });
+                    }
                 }
             }
 
@@ -14106,6 +14111,48 @@ mod tests {
                 LowerError::InvalidOperand { .. }
             ));
         }
+    }
+
+    #[test]
+    fn lower_bswap_covers_native_widths_and_rejects_silent_noops() {
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+
+        let word = lower_single_op(OpKind::Bswap {
+            dst: r8,
+            src: r8,
+            width: OpWidth::W16,
+        });
+        assert!(word.contains(&0x9C), "word swap must preserve RFLAGS");
+        assert!(word.contains(&0x9D), "word swap must restore RFLAGS");
+        assert!(
+            word.windows(5)
+                .any(|bytes| bytes == [0x66, 0x41, 0xC1, 0xC0, 0x08]),
+            "word swap must lower as ROL r8w,8: {word:02X?}"
+        );
+
+        for (width, expected) in [
+            (OpWidth::W32, &[0x41, 0x0F, 0xC8][..]),
+            (OpWidth::W64, &[0x49, 0x0F, 0xC8][..]),
+        ] {
+            let code = lower_single_op(OpKind::Bswap {
+                dst: r8,
+                src: r8,
+                width,
+            });
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "{width:?} Bswap encoding: {code:02X?}"
+            );
+        }
+
+        assert!(matches!(
+            lower_single_op_err(OpKind::Bswap {
+                dst: r8,
+                src: r8,
+                width: OpWidth::W8,
+            }),
+            LowerError::InvalidOperand { .. }
+        ));
     }
 
     #[test]

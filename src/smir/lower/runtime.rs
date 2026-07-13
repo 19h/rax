@@ -2264,6 +2264,9 @@ fn block_is_clobber_safe(
         {
             return false;
         }
+        if matches!(op.kind, OpKind::Bswap { .. }) && !x86_bswap_shape_valid(&op.kind) {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86NddDoubleShift { .. })
             && !x86_ndd_double_shift_shape_valid(&op.kind)
         {
@@ -2398,6 +2401,42 @@ fn x86_count_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         && native_gpr(dst)
         && native_gpr(src)
         && flags_valid
+}
+
+fn x86_bswap_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
+
+    let native_gpr = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Rax
+                    | X86Reg::Rcx
+                    | X86Reg::Rdx
+                    | X86Reg::Rbx
+                    | X86Reg::Rsi
+                    | X86Reg::Rdi
+                    | X86Reg::R8
+                    | X86Reg::R9
+                    | X86Reg::R10
+                    | X86Reg::R11
+                    | X86Reg::R12
+                    | X86Reg::R13
+                    | X86Reg::R14
+                    | X86Reg::R15
+            ))
+        )
+    };
+
+    matches!(
+        op,
+        OpKind::Bswap {
+            dst,
+            src,
+            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+        } if native_gpr(dst) && native_gpr(src)
+    )
 }
 
 fn x86_mulx_shape_valid(op: &crate::smir::ir::ops::SmirOp) -> bool {
@@ -4267,6 +4306,83 @@ mod jit_gate_tests {
             ),
         ] {
             assert!(!x86_gate(op), "malformed {name} count must deopt");
+        }
+    }
+
+    #[test]
+    fn bswap_gate_accepts_native_gpr_widths_and_rejects_alias_hazards() {
+        for op in [
+            OpKind::Bswap {
+                dst: x86(X86Reg::R8),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W16,
+            },
+            OpKind::Bswap {
+                dst: x86(X86Reg::R9),
+                src: x86(X86Reg::R9),
+                width: OpWidth::W32,
+            },
+            OpKind::Bswap {
+                dst: x86(X86Reg::R15),
+                src: x86(X86Reg::R14),
+                width: OpWidth::W64,
+            },
+        ] {
+            assert!(op.is_jit_safe());
+            assert!(x86_gate(op));
+        }
+
+        for (name, op) in [
+            (
+                "byte width",
+                OpKind::Bswap {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rcx),
+                    width: OpWidth::W8,
+                },
+            ),
+            (
+                "guest stack source",
+                OpKind::Bswap {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rsp),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "guest frame destination",
+                OpKind::Bswap {
+                    dst: x86(X86Reg::Rbp),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "extended guest register",
+                OpKind::Bswap {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W32,
+                },
+            ),
+            (
+                "virtual source",
+                OpKind::Bswap {
+                    dst: x86(X86Reg::Rax),
+                    src: VReg::Virtual(VirtualId(0)),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "foreign architecture source",
+                OpKind::Bswap {
+                    dst: x86(X86Reg::Rax),
+                    src: arm_x(0),
+                    width: OpWidth::W64,
+                },
+            ),
+        ] {
+            assert!(!x86_gate(op), "malformed {name} Bswap must deopt");
         }
     }
 

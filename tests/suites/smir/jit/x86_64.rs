@@ -464,6 +464,75 @@ fn jit_legacy_counts_match_interpreter_results_and_exact_status_flags() {
     }
 }
 
+/// Register byte swaps are flag-neutral and must remain native for both the
+/// legacy in-place BSWAP encoding and APX MOVBE's two-register word form.
+#[test]
+fn jit_bswap_and_apx_movbe_preserve_partial_registers_and_flags() {
+    const STATUS_MASK: u64 = 0x08D5;
+    for (name, instruction, apx, rax, r8, expected_r8) in [
+        (
+            "legacy bswap r8",
+            &[0x49, 0x0F, 0xC8][..],
+            false,
+            0,
+            0x0123_4567_89AB_CDEF,
+            0xEFCD_AB89_6745_2301,
+        ),
+        (
+            "APX movbe r8w,ax",
+            &[0x62, 0xD4, 0x7D, 0x08, 0x61, 0xC0][..],
+            true,
+            0x1122_3344_5566_1234,
+            0xAABB_CCDD_EEFF_7788,
+            0xAABB_CCDD_EEFF_3412,
+        ),
+    ] {
+        // loop: dec ecx; jnz loop
+        //       xor r9d,r9d       ; known status = ZF|PF
+        //       <byte swap>
+        //       hlt
+        let mut code = vec![0xFF, 0xC9, 0x75, 0xFC, 0x45, 0x31, 0xC9];
+        code.extend_from_slice(instruction);
+        code.push(0xF4);
+
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            vcpu.set_apx_enabled(apx);
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = rax;
+            regs.rcx = 200;
+            regs.r8 = r8;
+            regs.rflags = 0xCD7;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp);
+        run_interp(&mut interp);
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("JIT {name}: {error:?}")),
+            "{name} loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+
+        let expected = interp.get_regs().unwrap();
+        let after = jit.get_regs().unwrap();
+        assert_eq!(after.r8, expected.r8, "{name}: result vs interpreter");
+        assert_eq!(after.r8, expected_r8, "{name}: architectural result");
+        assert_eq!(after.rax, rax, "{name}: independent source preservation");
+        assert_eq!(after.rcx & 0xFFFF_FFFF, 0, "{name}: loop count");
+        assert_eq!(after.rflags & STATUS_MASK, 0x44, "{name}: status flags");
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            expected.rflags & STATUS_MASK,
+            "{name}: native flags vs interpreter"
+        );
+    }
+}
+
 /// APX NDD carry operations whose destination aliases source 2 must remain in
 /// the native tier. ADC can commute its register sources; SBB preserves the old
 /// source 2 on the host stack without disturbing incoming or result flags.

@@ -3673,6 +3673,7 @@ impl OpKind {
                 | OpKind::Ctz { .. }
                 | OpKind::Popcnt { .. }
                 | OpKind::X86Count { .. }
+                | OpKind::Bswap { .. }
                 // Register-only address arithmetic (no memory dereference).
                 // Dedicated x86 scan/count variants carry their flag contracts;
                 // generic count ops remain flag-neutral across architectures.
