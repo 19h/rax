@@ -114,7 +114,7 @@ mod tests {
 
     #[test]
     fn test_parse_packet_with_data() {
-        let buf = b"$m1000,10#a5";
+        let buf = b"$m1000,10#bb";
         let (packet, consumed) = parse_packet(buf).unwrap();
         assert_eq!(packet, "m1000,10");
         assert_eq!(consumed, 12);
