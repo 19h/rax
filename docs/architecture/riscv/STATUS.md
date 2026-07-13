@@ -190,9 +190,9 @@ The former SMIR-op-set gaps are represented by explicit RISC-V operations:
 - `RvVector` evaluates RVV while explicitly threading the scalar x/f/CSR
   register state required by vector/scalar transfer operations.
 
-These operations are exact in `SmirInterpreter`; `RvIntCrypto` also has the
-bounded helper-backed x86-64 lowering described below. `RvFp` arithmetic and
-`RvVector` remain at the native-lowering frontier.
+These operations are exact in `SmirInterpreter`; `RvIntCrypto` and scalar
+`RvFp` also have the bounded helper-backed x86-64 lowering described below.
+`RvVector` remains at the native-lowering frontier.
 
 ---
 
@@ -200,11 +200,11 @@ bounded helper-backed x86-64 lowering described below. `RvFp` arithmetic and
 
 `RiscVX86_64Lowerer` uses an explicit
 `extern "sysv64" fn(*mut RiscVGuestRegs)` ABI;
-it does not reuse the x86-guest identity-register ABI. The 608-byte state holds
+it does not reuse the x86-guest identity-register ABI. The 616-byte state holds
 `x[32]`, `f[32]`, PC, FCSR, exit classification, memory context, and scalar
-load/store, atomic, and pure scalar integer-crypto helper pointers. Reads of x0
-are hard-wired to zero, writes are discarded, and the externally visible x0
-backing slot is canonicalized on entry.
+load/store, atomic, pure scalar integer-crypto, and pure scalar floating-point
+helper pointers. Reads of x0 are hard-wired to zero, writes are discarded, and
+the externally visible x0 backing slot is canonicalized on entry.
 
 When the x86-64 test/runtime binary is translated by Rosetta, released JIT
 mappings are changed to `PROT_NONE` and advised for physical-page discard while
@@ -220,6 +220,10 @@ Implemented native scalar families:
   divide-by-zero and signed-overflow paths that cannot raise host `#DE`;
 - f-register bit moves/sign injection/classification and FCSR CSR access (the
   generic, rounding-free scalar-FP subset);
+- all 91 scalar `RvFp` operations through a two-register helper result that
+  preserves exact NaN boxing/canonicalization, five rounding modes, accrued
+  `fflags`, half precision, and traps before architectural writes for invalid
+  static or dynamic rounding modes;
 - scalar loads/stores through the guest-memory helper ABI (successful-access
   path; the current helper result does not encode a precise guest fault);
 - A-extension AMO, AMOCAS, and LR/SC through indivisible helper calls; the ABI
@@ -238,9 +242,12 @@ compressed PC advance, FP bit operations and FCSR access, every RV32/RV64 AMO
 operation and ordering code, AMOCAS success/failure, and LR/SC
 success/reservation-failure paths. It also covers all 24 `RvIntCrypto` operation
 codes across RV32/RV64, every SM4/AES32 byte selector, and every legal AES64KS1I
-round immediate. The generated count sequence is baseline x86-64 and does not
-require host `POPCNT`. Remaining native gaps are fault-precise memory exits,
-arithmetic `RvFp`, and `RvVector`.
+round immediate. The scalar-FP corpus round-trips all 91 helper ABI selectors at
+O0/O2 and separately lifts representative arithmetic, FMA, min, compare, and
+integer/float conversion encodings, including dynamic rounding and invalid-mode
+trap paths. The generated count sequence is baseline x86-64 and does not require
+host `POPCNT`. Remaining native gaps are fault-precise memory exits and
+`RvVector`.
 
 The LR/SC reservation is owned by the helper context. Cross-hart or device writes
 must invalidate it in the memory backend; the in-tree differential helper models

@@ -3181,6 +3181,7 @@ impl RiscVLifter {
                 fcsr_src,
                 op,
                 rm_field: d.rm(),
+                xlen: self.xlen,
             },
         ));
     }

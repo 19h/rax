@@ -3504,8 +3504,12 @@ pub enum OpKind {
     /// for compares / fp->int / `fcvtmod`); `fcsr_dst` receives `fcsr` with this
     /// op's exception flags accrued. `op` is the RISC-V opcode and `rm_field` the
     /// instruction's 3-bit rounding-mode field (resolved against `frm` for `Dyn`).
-    /// Self-contained, like [`OpKind::HexFp`]; NOT JIT-whitelisted (falls back to
-    /// the interpreter).
+    /// `xlen` is 32 or 64 and canonicalizes integer destinations to the guest
+    /// register width after the architectural 32-bit sign-extension rule.
+    /// Self-contained, like [`OpKind::HexFp`]. The state-backed
+    /// RISC-V-to-x86-64 lowerer executes this through an explicit pure helper
+    /// ABI and traps before committing either destination if the helper reports
+    /// an illegal static or dynamic rounding mode.
     RvFp {
         dst: VReg,
         fcsr_dst: VReg,
@@ -3515,6 +3519,7 @@ pub enum OpKind {
         fcsr_src: VReg,
         op: crate::isa::riscv::Op,
         rm_field: u8,
+        xlen: u8,
     },
 
     /// RISC-V scalar bit-manip / crypto op with no clean SMIR primitive:

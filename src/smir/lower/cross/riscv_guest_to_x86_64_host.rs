@@ -17,7 +17,8 @@ use crate::smir::ir::types::{
 };
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 use crate::smir::lower::cross::riscv_x86_64_abi::{
-    RiscVAtomicOpCode, RiscVIntCryptoOpCode, RiscVMemoryOrderCode,
+    RISCV_FP_RESULT_INVALID, RiscVAtomicOpCode, RiscVFpOpCode, RiscVIntCryptoOpCode,
+    RiscVMemoryOrderCode,
 };
 use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::x86_64::{X86Cond, X86Emitter};
@@ -50,6 +51,7 @@ const RV_LOAD_EXCLUSIVE_FN_OFFSET: i32 = RV_CAS_FN_OFFSET + 8;
 const RV_STORE_EXCLUSIVE_FN_OFFSET: i32 = RV_LOAD_EXCLUSIVE_FN_OFFSET + 8;
 const RV_CLEAR_EXCLUSIVE_FN_OFFSET: i32 = RV_STORE_EXCLUSIVE_FN_OFFSET + 8;
 const RV_INT_CRYPTO_FN_OFFSET: i32 = RV_CLEAR_EXCLUSIVE_FN_OFFSET + 8;
+const RV_FP_FN_OFFSET: i32 = RV_INT_CRYPTO_FN_OFFSET + 8;
 
 const EXIT_RETURN: i64 = 0;
 const EXIT_TRAP: i64 = 1;
@@ -899,6 +901,70 @@ impl RiscVX86_64Lowerer {
         self.store_reg_to(dst, ACC, OpWidth::W64)
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn lower_rv_fp(
+        &mut self,
+        dst: VReg,
+        fcsr_dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        src3: VReg,
+        fcsr_src: VReg,
+        op: RvOp,
+        rm_field: u8,
+        xlen: u8,
+        guest_pc: u64,
+    ) -> Result<(), LowerError> {
+        if !matches!(xlen, 32 | 64) {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("RISC-V scalar-FP XLEN {xlen}"),
+            });
+        }
+        if rm_field > 7 {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("RISC-V scalar-FP rounding field {rm_field}"),
+            });
+        }
+        if xlen == 32 && crate::isa::riscv::float::fp_requires_rv64(op) {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("RISC-V scalar-FP RV64-only operation {op:?} with XLEN 32"),
+            });
+        }
+        let op_code = RiscVFpOpCode::from_op(op).ok_or_else(|| LowerError::UnsupportedOp {
+            op: format!("RISC-V scalar-FP helper operation {op:?}"),
+        })? as i64;
+
+        // SysV argument order: op, rm, fcsr, a, b, c. RDI remains the state
+        // pointer until every state-backed source and the helper address load.
+        self.load_vreg_to(src1, RHS, OpWidth::W64)?;
+        self.load_vreg_to(src2, TMP0, OpWidth::W64)?;
+        self.load_vreg_to(src3, TMP1, OpWidth::W64)?;
+        self.load_vreg_to(fcsr_src, HI, OpWidth::W64)?;
+        {
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_mov_ri(ADDR, i64::from(rm_field), OpWidth::W64);
+            e.emit_mov_rm(TARGET, STATE, RV_FP_FN_OFFSET, OpWidth::W64);
+            e.emit_push(STATE);
+            e.emit_sub_ri(PhysReg::Rsp, 8, OpWidth::W64);
+            e.emit_mov_ri(STATE, op_code, OpWidth::W64);
+            e.emit_call_reg(TARGET);
+            e.emit_add_ri(PhysReg::Rsp, 8, OpWidth::W64);
+            e.emit_pop(STATE);
+            // The two-register result is RAX=value, RDX=fcsr/status. An
+            // invalid status must trap before either destination is written.
+            e.emit_cmp_ri(HI, RISCV_FP_RESULT_INVALID as i64, OpWidth::W64);
+        }
+        let valid = self.emit_jcc_placeholder(X86Cond::Ne);
+        self.emit_arch_exit(guest_pc, EXIT_TRAP);
+        self.patch_rel32_to_current(valid)?;
+        if xlen == 32 && crate::isa::riscv::float::fp_writes_int_dst(op) {
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_mov_rr(ACC, ACC, OpWidth::W32);
+        }
+        self.store_reg_to(dst, ACC, OpWidth::W64)?;
+        self.store_reg_to(fcsr_dst, HI, OpWidth::W64)
+    }
+
     fn lower_atomic_rmw(
         &mut self,
         dst: VReg,
@@ -1278,6 +1344,28 @@ impl RiscVX86_64Lowerer {
                 imm,
                 xlen,
             } => self.lower_int_crypto(*dst, *src1, *src2, *op, *imm, *xlen)?,
+            OpKind::RvFp {
+                dst,
+                fcsr_dst,
+                src1,
+                src2,
+                src3,
+                fcsr_src,
+                op: fp_op,
+                rm_field,
+                xlen,
+            } => self.lower_rv_fp(
+                *dst,
+                *fcsr_dst,
+                *src1,
+                *src2,
+                *src3,
+                *fcsr_src,
+                *fp_op,
+                *rm_field,
+                *xlen,
+                op.guest_pc,
+            )?,
             OpKind::Breakpoint => self.emit_arch_exit(op.guest_pc, EXIT_BREAKPOINT),
             OpKind::Syscall { .. } => self.emit_arch_exit(op.guest_pc, EXIT_SYSCALL),
             other => {

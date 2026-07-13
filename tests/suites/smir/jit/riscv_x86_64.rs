@@ -13,8 +13,8 @@ use rax::smir::lift::{ControlFlow, LiftContext, SmirLifter};
 use rax::smir::lower::SmirLowerer;
 use rax::smir::lower::cross::riscv_guest_to_x86_64_host::RiscVX86_64Lowerer;
 use rax::smir::lower::runtime::{
-    ExecMem, RiscVAtomicCasResult, RiscVAtomicOpCode, RiscVGuestRegs, RiscVIntCryptoOpCode,
-    RiscVMemoryOrderCode,
+    ExecMem, RISCV_FP_RESULT_INVALID, RiscVAtomicCasResult, RiscVAtomicOpCode, RiscVFpOpCode,
+    RiscVFpResult, RiscVGuestRegs, RiscVIntCryptoOpCode, RiscVMemoryOrderCode,
 };
 use rax::smir::optimize::{OptLevel, optimize_function};
 use rax::smir::{OpKind, RiscVLifter, SmirOp};
@@ -229,6 +229,39 @@ unsafe extern "sysv64" fn int_crypto(
         .expect("helper operation must be in eval_int_crypto")
 }
 
+unsafe extern "sysv64" fn scalar_fp(
+    op_code: u64,
+    rm_field: u64,
+    fcsr: u64,
+    a: u64,
+    b: u64,
+    c: u64,
+) -> RiscVFpResult {
+    let Some(op_code) = RiscVFpOpCode::from_code(op_code) else {
+        return RiscVFpResult {
+            value: 0,
+            fcsr_status: RISCV_FP_RESULT_INVALID,
+        };
+    };
+    let Some((value, new_fcsr)) = rax::isa::riscv::float::eval_scalar_fp(
+        op_code.into_op(),
+        rm_field as u8,
+        fcsr as u32,
+        a,
+        b,
+        c,
+    ) else {
+        return RiscVFpResult {
+            value: 0,
+            fcsr_status: RISCV_FP_RESULT_INVALID,
+        };
+    };
+    RiscVFpResult {
+        value,
+        fcsr_status: u64::from(new_fcsr),
+    }
+}
+
 fn jit_state(
     memory: &mut TestMemory,
     x: [u64; 32],
@@ -250,6 +283,7 @@ fn jit_state(
         store_exclusive_fn: store_exclusive as *const () as usize as u64,
         clear_exclusive_fn: clear_exclusive as *const () as usize as u64,
         int_crypto_fn: int_crypto as *const () as usize as u64,
+        fp_fn: scalar_fp as *const () as usize as u64,
         ..Default::default()
     }
 }
@@ -263,6 +297,16 @@ fn r_type_opcode(funct7: u32, rs2: u8, rs1: u8, funct3: u32, rd: u8, opcode: u32
         | (u32::from(rs2) << 20)
         | (u32::from(rs1) << 15)
         | (funct3 << 12)
+        | (u32::from(rd) << 7)
+        | opcode
+}
+
+fn r4_type(fmt: u32, rs3: u8, rs2: u8, rs1: u8, rm: u32, rd: u8, opcode: u32) -> u32 {
+    (u32::from(rs3) << 27)
+        | (fmt << 25)
+        | (u32::from(rs2) << 20)
+        | (u32::from(rs1) << 15)
+        | (rm << 12)
         | (u32::from(rd) << 7)
         | opcode
 }
@@ -415,6 +459,23 @@ fn run_case_rv32(bytes: &[u8], initial_x: [u64; 32], initial_memory: [u8; MEMORY
     run_case_for_xlen(bytes, initial_x, [0; 32], 0, initial_memory, true);
 }
 
+fn run_case_rv32_with_fp(
+    bytes: &[u8],
+    initial_x: [u64; 32],
+    initial_f: [u64; 32],
+    initial_fcsr: u32,
+    initial_memory: [u8; MEMORY_LEN],
+) {
+    run_case_for_xlen(
+        bytes,
+        initial_x,
+        initial_f,
+        initial_fcsr,
+        initial_memory,
+        true,
+    );
+}
+
 fn run_case_with_fp(
     bytes: &[u8],
     initial_x: [u64; 32],
@@ -534,6 +595,79 @@ fn run_case_for_xlen(
             &expected_data,
             "memory divergence at {level:?} for {bytes:02x?}"
         );
+    }
+}
+
+fn run_opaque_fp_case(op: RvOp) {
+    use rax::isa::riscv::float::{fp_uses_int_src1, fp_writes_int_dst};
+
+    let writes_int = fp_writes_int_dst(op);
+    let dst = if writes_int {
+        VReg::Arch(ArchReg::RiscV(RiscVReg::X(5)))
+    } else {
+        VReg::Arch(ArchReg::RiscV(RiscVReg::F(5)))
+    };
+    let src1 = if fp_uses_int_src1(op) {
+        VReg::Arch(ArchReg::RiscV(RiscVReg::X(1)))
+    } else {
+        VReg::Arch(ArchReg::RiscV(RiscVReg::F(1)))
+    };
+    let fcsr_reg = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003)));
+    let opaque = SmirOp::new(
+        OpId(0),
+        CODE,
+        OpKind::RvFp {
+            dst,
+            fcsr_dst: fcsr_reg,
+            src1,
+            src2: VReg::Arch(ArchReg::RiscV(RiscVReg::F(2))),
+            src3: VReg::Arch(ArchReg::RiscV(RiscVReg::F(3))),
+            fcsr_src: fcsr_reg,
+            op,
+            rm_field: 0,
+            xlen: 64,
+        },
+    );
+    let (function, return_pcs) = function_for_lift(ControlFlow::NextInsn, vec![opaque], 4);
+
+    let mut x = [0u64; 32];
+    x[1] = 0x8000_0001_0000_0003;
+    x[5] = 0x5555_5555_5555_5555;
+    let mut f = [0u64; 32];
+    f[1] = 0xffff_ffff_3fc0_0000;
+    f[2] = 0xffff_ffff_4020_0000;
+    f[3] = 0xffff_ffff_bf00_0000;
+    f[5] = 0x5555_5555_5555_5555;
+    let fcsr = 0x10;
+    let a = if fp_uses_int_src1(op) { x[1] } else { f[1] };
+    let (expected_value, expected_fcsr) =
+        rax::isa::riscv::float::eval_scalar_fp(op, 0, fcsr, a, f[2], f[3])
+            .expect("ABI-listed FP operation must evaluate with RNE");
+
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let mut optimized = function.clone();
+        optimize_function(&mut optimized, level);
+        let mut lowerer = RiscVX86_64Lowerer::new();
+        lowerer.set_return_pcs(return_pcs.clone());
+        let lowered = lowerer
+            .lower_function(&optimized)
+            .unwrap_or_else(|error| panic!("lower opaque {op:?} at {level:?}: {error:?}"));
+        let code = lowerer.finalize().expect("finalize opaque FP code");
+        let executable = ExecMem::new(&code).expect("map opaque FP code");
+        let mut memory = TestMemory::new([0; MEMORY_LEN]);
+        let mut state = jit_state(&mut memory, x, f, fcsr, CODE);
+        executable.run_riscv(lowered.entry_offset, &mut state);
+
+        if writes_int {
+            assert_eq!(state.x[5], expected_value, "{op:?} result at {level:?}");
+            assert_eq!(state.f[5], f[5], "{op:?} wrote the wrong register file");
+        } else {
+            assert_eq!(state.f[5], expected_value, "{op:?} result at {level:?}");
+            assert_eq!(state.x[5], x[5], "{op:?} wrote the wrong register file");
+        }
+        assert_eq!(state.fcsr, u64::from(expected_fcsr), "{op:?} FCSR");
+        assert_eq!(state.pc, CODE + 4, "{op:?} resume PC");
+        assert_eq!(state.exit_reason, 0, "{op:?} exit classification");
     }
 }
 
@@ -782,6 +916,175 @@ fn lifted_fp_bit_operations_and_fcsr_access_execute_natively() {
 }
 
 #[test]
+fn lifted_rv64_scalar_fp_executes_through_helper_abi() {
+    let memory = [0u8; MEMORY_LEN];
+
+    let mut f32_regs = [0u64; 32];
+    f32_regs[1] = 0xffff_ffff_3fc0_0000; // 1.5
+    f32_regs[2] = 0xffff_ffff_4020_0000; // 2.5
+    for instruction in [
+        fp_type(0x00, 2, 1, 0, 5), // fadd.s f5,f1,f2
+        fp_type(0x00, 2, 1, 0, 1), // fadd.s f1,f1,f2 (source/destination alias)
+        fp_type(0x50, 2, 1, 2, 5), // feq.s x5,f1,f2
+    ] {
+        run_case_with_fp(&instruction.to_le_bytes(), [0; 32], f32_regs, 0, memory);
+    }
+
+    let mut f64_regs = [0u64; 32];
+    f64_regs[1] = 1.0f64.to_bits();
+    f64_regs[2] = 10.0f64.to_bits();
+    f64_regs[3] = (-0.5f64).to_bits();
+    for (instruction, fcsr) in [
+        (fp_type(0x0d, 2, 1, 7, 5), 2 << 5),  // fdiv.d f5,f1,f2,dyn (RDN)
+        (fp_type(0x15, 2, 1, 0, 5), 0),       // fmin.d f5,f1,f2
+        (r4_type(1, 3, 2, 1, 0, 5, 0x43), 0), // fmadd.d f5,f1,f2,f3
+        (fp_type(0x61, 0, 1, 1, 5), 0),       // fcvt.w.d x5,f1,rtz
+    ] {
+        run_case_with_fp(&instruction.to_le_bytes(), [0; 32], f64_regs, fcsr, memory);
+    }
+
+    let mut x = [0u64; 32];
+    x[1] = 0x0020_0000_0000_0001;
+    run_case_with_fp(
+        &fp_type(0x69, 2, 1, 0, 5).to_le_bytes(), // fcvt.d.l f5,x1
+        x,
+        [0; 32],
+        0,
+        memory,
+    );
+
+    let mut discard_f = [0u64; 32];
+    discard_f[1] = 1.5f64.to_bits();
+    run_case_with_fp(
+        &fp_type(0x61, 0, 1, 1, 0).to_le_bytes(), // fcvt.w.d x0,f1,rtz
+        [0; 32],
+        discard_f,
+        0,
+        memory,
+    );
+
+    let mut rv32_f = [0u64; 32];
+    rv32_f[1] = 0xffff_ffff_bfc0_0000; // -1.5f
+    run_case_rv32_with_fp(
+        &fp_type(0x60, 0, 1, 1, 5).to_le_bytes(), // fcvt.w.s x5,f1,rtz
+        [0; 32],
+        rv32_f,
+        0,
+        memory,
+    );
+    rv32_f[1] = 0xffff_ffff_7fc0_0000; // canonical qNaN
+    run_case_rv32_with_fp(
+        &fp_type(0x60, 1, 1, 0, 5).to_le_bytes(), // fcvt.wu.s x5,f1,rne
+        [0; 32],
+        rv32_f,
+        0,
+        memory,
+    );
+}
+
+#[test]
+fn scalar_fp_helper_abi_covers_every_operation_code() {
+    for code in 0..=90u64 {
+        let abi_op = RiscVFpOpCode::from_code(code).expect("dense FP ABI code");
+        let op = abi_op.into_op();
+        assert_eq!(RiscVFpOpCode::from_op(op), Some(abi_op));
+        assert_eq!(abi_op as u64, code);
+        run_opaque_fp_case(op);
+    }
+    assert_eq!(RiscVFpOpCode::from_code(91), None);
+    assert_eq!(RiscVFpOpCode::from_code(u64::MAX), None);
+    assert_eq!(RiscVFpOpCode::from_op(RvOp::Add), None);
+}
+
+#[test]
+fn scalar_fp_invalid_rounding_traps_without_architectural_writes() {
+    for (rm_field, fcsr) in [(5, 0), (6, 0), (7, 5 << 5), (7, 6 << 5), (7, 7 << 5)] {
+        let fcsr_reg = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003)));
+        let opaque = SmirOp::new(
+            OpId(0),
+            CODE,
+            OpKind::RvFp {
+                dst: VReg::Arch(ArchReg::RiscV(RiscVReg::F(5))),
+                fcsr_dst: fcsr_reg,
+                src1: VReg::Arch(ArchReg::RiscV(RiscVReg::F(1))),
+                src2: VReg::Arch(ArchReg::RiscV(RiscVReg::F(2))),
+                src3: VReg::Arch(ArchReg::RiscV(RiscVReg::F(3))),
+                fcsr_src: fcsr_reg,
+                op: RvOp::FaddS,
+                rm_field,
+                xlen: 64,
+            },
+        );
+        let (function, return_pcs) = function_for_lift(ControlFlow::NextInsn, vec![opaque], 4);
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let mut optimized = function.clone();
+            optimize_function(&mut optimized, level);
+            let mut lowerer = RiscVX86_64Lowerer::new();
+            lowerer.set_return_pcs(return_pcs.clone());
+            let lowered = lowerer
+                .lower_function(&optimized)
+                .expect("lower invalid-rounding trap path");
+            let code = lowerer.finalize().expect("finalize invalid-rounding path");
+            let executable = ExecMem::new(&code).expect("map invalid-rounding path");
+            let mut memory = TestMemory::new([0; MEMORY_LEN]);
+            let mut f = [0u64; 32];
+            f[1] = 0xffff_ffff_3f80_0000;
+            f[2] = 0xffff_ffff_4000_0000;
+            f[5] = 0x5555_5555_5555_5555;
+            let mut state = jit_state(&mut memory, [0; 32], f, fcsr, CODE);
+            executable.run_riscv(lowered.entry_offset, &mut state);
+
+            assert_eq!(state.f[5], f[5], "rm={rm_field}, fcsr={fcsr:#x}");
+            assert_eq!(state.fcsr, u64::from(fcsr));
+            assert_eq!(state.pc, CODE);
+            assert_eq!(state.exit_reason, 1);
+        }
+    }
+}
+
+#[test]
+fn scalar_fp_lowering_rejects_malformed_opaque_operations() {
+    let fcsr = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x003)));
+    for (op, rm_field, xlen, expected) in [
+        (RvOp::Add, 0, 64, "scalar-FP helper operation Add"),
+        (RvOp::FaddS, 0, 16, "scalar-FP XLEN 16"),
+        (RvOp::FaddS, 8, 64, "scalar-FP rounding field 8"),
+        (
+            RvOp::FcvtLD,
+            0,
+            32,
+            "RV64-only operation FcvtLD with XLEN 32",
+        ),
+    ] {
+        let opaque = SmirOp::new(
+            OpId(0),
+            CODE,
+            OpKind::RvFp {
+                dst: VReg::Arch(ArchReg::RiscV(RiscVReg::F(5))),
+                fcsr_dst: fcsr,
+                src1: VReg::Imm(1),
+                src2: VReg::Imm(2),
+                src3: VReg::Imm(3),
+                fcsr_src: fcsr,
+                op,
+                rm_field,
+                xlen,
+            },
+        );
+        let (function, return_pcs) = function_for_lift(ControlFlow::NextInsn, vec![opaque], 4);
+        let mut lowerer = RiscVX86_64Lowerer::new();
+        lowerer.set_return_pcs(return_pcs);
+        let error = lowerer
+            .lower_function(&function)
+            .expect_err("malformed RvFp operation must fail closed");
+        assert!(
+            format!("{error:?}").contains(expected),
+            "unexpected malformed-op error: {error:?}"
+        );
+    }
+}
+
+#[test]
 fn lifted_rv64_atomics_execute_through_helper_abi() {
     let mut x = [0u64; 32];
     x[1] = DATA;
@@ -1009,5 +1312,7 @@ fn runtime_layout_matches_codegen_offsets() {
     assert_eq!(RiscVGuestRegs::STORE_EXCLUSIVE_FN_OFFSET, 73 * 8);
     assert_eq!(RiscVGuestRegs::CLEAR_EXCLUSIVE_FN_OFFSET, 74 * 8);
     assert_eq!(RiscVGuestRegs::INT_CRYPTO_FN_OFFSET, 75 * 8);
-    assert_eq!(std::mem::size_of::<RiscVGuestRegs>(), 76 * 8);
+    assert_eq!(RiscVGuestRegs::FP_FN_OFFSET, 76 * 8);
+    assert_eq!(std::mem::size_of::<RiscVGuestRegs>(), 77 * 8);
+    assert_eq!(std::mem::size_of::<RiscVFpResult>(), 2 * 8);
 }

@@ -1947,6 +1947,27 @@ pub fn fp_uses_int_src1(op: RvFpInsn) -> bool {
     )
 }
 
+/// Whether this scalar FP operation consumes or produces a 64-bit integer and
+/// is therefore illegal when XLEN is 32.
+pub fn fp_requires_rv64(op: RvFpInsn) -> bool {
+    use RvFpInsn::*;
+    matches!(
+        op,
+        FcvtLS
+            | FcvtLuS
+            | FcvtLD
+            | FcvtLuD
+            | FcvtLH
+            | FcvtLuH
+            | FcvtSL
+            | FcvtSLu
+            | FcvtDL
+            | FcvtDLu
+            | FcvtHL
+            | FcvtHLu
+    )
+}
+
 /// Pure evaluation of a scalar OP-FP / FMA RISC-V instruction. `a`/`b`/`c` carry
 /// the raw 64-bit source register values — the raw f-register bits for
 /// FP-source operands (NaN-boxed exactly as stored), or the raw x-register value

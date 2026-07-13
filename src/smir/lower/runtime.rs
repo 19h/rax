@@ -257,7 +257,8 @@ impl Aarch64GuestRegs {
 }
 
 pub use super::cross::riscv_x86_64_abi::{
-    RiscVAtomicOpCode, RiscVIntCryptoOpCode, RiscVMemoryOrderCode,
+    RISCV_FP_RESULT_INVALID, RiscVAtomicOpCode, RiscVFpOpCode, RiscVIntCryptoOpCode,
+    RiscVMemoryOrderCode,
 };
 
 /// Two-register SysV result of [`RiscVGuestRegs::cas_fn`].
@@ -266,6 +267,19 @@ pub use super::cross::riscv_x86_64_abi::{
 pub struct RiscVAtomicCasResult {
     pub old: u64,
     pub success: u64,
+}
+
+/// Two-register SysV result of [`RiscVGuestRegs::fp_fn`].
+///
+/// A valid operation returns the raw destination in `value` and the updated
+/// FCSR in `fcsr_status`. An illegal operation or rounding mode returns
+/// [`RISCV_FP_RESULT_INVALID`] in `fcsr_status`; generated code then traps
+/// without committing either destination.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RiscVFpResult {
+    pub value: u64,
+    pub fcsr_status: u64,
 }
 
 /// State ABI for RISC-V SMIR lowered to an x86-64 host.
@@ -277,8 +291,9 @@ pub struct RiscVAtomicCasResult {
 /// `extern "sysv64" fn(ctx, addr, size, signed) -> value`; `store_fn` has
 /// signature `extern "sysv64" fn(ctx, addr, value, size) -> success`. Atomic
 /// helpers use the same ABI, share the same context, and must implement one
-/// indivisible transaction per call. The integer-crypto helper is pure and has
-/// signature `extern "sysv64" fn(op_code, src1, src2, imm, xlen) -> value`.
+/// indivisible transaction per call. The integer-crypto and scalar-FP helpers
+/// are pure; the latter has signature
+/// `extern "sysv64" fn(op_code, rm, fcsr, a, b, c) -> {value, fcsr_status}`.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RiscVGuestRegs {
@@ -313,6 +328,8 @@ pub struct RiscVGuestRegs {
     pub clear_exclusive_fn: u64,
     /// `extern "sysv64" fn(op_code, src1, src2, imm, xlen) -> value`.
     pub int_crypto_fn: u64,
+    /// `extern "sysv64" fn(op_code, rm, fcsr, a, b, c) -> {value, fcsr_status}`.
+    pub fp_fn: u64,
 }
 
 impl Default for RiscVGuestRegs {
@@ -332,6 +349,7 @@ impl Default for RiscVGuestRegs {
             store_exclusive_fn: 0,
             clear_exclusive_fn: 0,
             int_crypto_fn: 0,
+            fp_fn: 0,
         }
     }
 }
@@ -351,6 +369,7 @@ impl RiscVGuestRegs {
     pub const STORE_EXCLUSIVE_FN_OFFSET: i32 = Self::LOAD_EXCLUSIVE_FN_OFFSET + 8;
     pub const CLEAR_EXCLUSIVE_FN_OFFSET: i32 = Self::STORE_EXCLUSIVE_FN_OFFSET + 8;
     pub const INT_CRYPTO_FN_OFFSET: i32 = Self::CLEAR_EXCLUSIVE_FN_OFFSET + 8;
+    pub const FP_FN_OFFSET: i32 = Self::INT_CRYPTO_FN_OFFSET + 8;
 }
 
 // enter_native(rdi = entry ptr, rsi = *mut GuestRegs):

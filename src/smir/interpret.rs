@@ -3098,14 +3098,29 @@ impl SmirInterpreter {
                 fcsr_src,
                 op: fp_op,
                 rm_field,
+                xlen,
             } => {
                 let a = ctx.read_vreg(*src1);
                 let b = ctx.read_vreg(*src2);
                 let c = ctx.read_vreg(*src3);
                 let fcsr = ctx.read_vreg(*fcsr_src) as u32;
+                let malformed = !matches!(*xlen, 32 | 64)
+                    || *rm_field > 7
+                    || (*xlen == 32 && crate::isa::riscv::float::fp_requires_rv64(*fp_op));
                 // Bit-exact against the qemu-verified RISC-V interpreter.
-                match crate::isa::riscv::float::eval_scalar_fp(*fp_op, *rm_field, fcsr, a, b, c) {
+                let evaluated = if malformed {
+                    None
+                } else {
+                    crate::isa::riscv::float::eval_scalar_fp(*fp_op, *rm_field, fcsr, a, b, c)
+                };
+                match evaluated {
                     Some((res, new_fcsr)) => {
+                        let res =
+                            if *xlen == 32 && crate::isa::riscv::float::fp_writes_int_dst(*fp_op) {
+                                res & 0xffff_ffff
+                            } else {
+                                res
+                            };
                         ctx.write_vreg(*dst, res);
                         ctx.write_vreg(*fcsr_dst, new_fcsr as u64);
                     }
@@ -26939,6 +26954,7 @@ mod tests {
                     fcsr_src,
                     op: crate::isa::riscv::Op::FaddS,
                     rm_field: 0b101,
+                    xlen: 64,
                 },
             )],
             terminator: Terminator::Trap {
@@ -26961,6 +26977,47 @@ mod tests {
         assert_eq!(ctx.read_vreg(dst), 0x1111);
         assert_eq!(ctx.read_vreg(fcsr_dst), 0x2222);
         assert!(ctx.exit_reason.is_none());
+    }
+
+    #[test]
+    fn rvfp_rv32_integer_destination_is_zero_extended_to_xlen() {
+        let dst = VReg::Virtual(VirtualId(1));
+        let src1 = VReg::Virtual(VirtualId(2));
+        let src2 = VReg::Virtual(VirtualId(3));
+        let src3 = VReg::Virtual(VirtualId(4));
+        let fcsr = VReg::Virtual(VirtualId(5));
+        let mut ctx = SmirContext::new_riscv();
+        ctx.write_vreg(src1, 0xffff_ffff_bfc0_0000); // boxed -1.5f
+        ctx.write_vreg(src2, 0);
+        ctx.write_vreg(src3, 0);
+        ctx.write_vreg(fcsr, 0);
+
+        let interp = SmirInterpreter::new();
+        let mut memory = FlatMemory::new(0x1000);
+        interp
+            .execute_op(
+                &mut ctx,
+                &mut memory,
+                &SmirOp::new(
+                    OpId(0),
+                    0x1000,
+                    OpKind::RvFp {
+                        dst,
+                        fcsr_dst: fcsr,
+                        src1,
+                        src2,
+                        src3,
+                        fcsr_src: fcsr,
+                        op: crate::isa::riscv::Op::FcvtWS,
+                        rm_field: 1,
+                        xlen: 32,
+                    },
+                ),
+            )
+            .unwrap();
+
+        assert_eq!(ctx.read_vreg(dst), 0xffff_ffff);
+        assert_eq!(ctx.read_vreg(fcsr) & 1, 1);
     }
 
     #[test]
