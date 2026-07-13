@@ -678,9 +678,17 @@ mod tests {
         assert!(d.tick());
         assert_eq!(d.pending_timers() & 0b10, 0b10);
 
-        // Comparator must have advanced past the current counter (re-armed).
+        // `tick_at_counter` records the exact counter sample used for re-arm.
+        // Compare against that sample rather than calling `main_counter()`
+        // again: on a loaded runner a 10 us period can elapse between those
+        // calls, making a correct comparator appear stale.
         let comp = read64(&mut d, cfg_off + 0x08);
-        assert!(comp > d.core().main_counter() - 100 * 2);
+        let sampled_counter = d.core().last_counter;
+        let ticks_until_next = comp.wrapping_sub(sampled_counter);
+        assert!(
+            (1..=100).contains(&ticks_until_next),
+            "next comparator must be within one period: comp={comp}, sample={sampled_counter}"
+        );
         assert!(comp > 100, "comparator should have advanced by >=1 period");
 
         // Clear status, advance again, and confirm it fires once more.

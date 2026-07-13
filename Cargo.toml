@@ -191,9 +191,10 @@ x86-suite = ["x86_64-suite"]
 # fail-safe: each host backend admits only operations covered by its register,
 # flag, memory, and feature gates, otherwise execution remains interpreted. The
 # x86-64 host supports helper-backed memory/call regions and verification mode;
-# the initial x86-on-AArch64 path is legacy-GPR scalar-only with an exact
-# CF/ZF/SF/OF bridge. Brings in the Unix W^X exec-mmap runtime and X86_64Vcpu
-# integration. Disable promotion at runtime with RAX_NO_JIT=1.
+# the x86-on-AArch64 path is legacy-GPR scalar-only with an exact CF/ZF/SF/OF
+# bridge and architecture-specific width/flag-contract validation. Brings in
+# the Unix W^X exec-mmap runtime and X86_64Vcpu integration. Disable promotion
+# at runtime with RAX_NO_JIT=1.
 smir-jit = []
 
 [lints.rust]

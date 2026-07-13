@@ -7204,21 +7204,25 @@ impl Aarch64Lowerer {
         bit: u32,
         action: BitTestAction,
         width: OpWidth,
+        action_width: OpWidth,
+        finish_subword: bool,
     ) -> Result<(), LowerError> {
         let Some(dst) = dst else {
             return Ok(());
         };
-        let emit_width = Self::bit_test_emit_width(width)?;
-        let bit_mask = Self::bit_test_single_bit_imm(bit, emit_width);
+        let bit_mask = Self::bit_test_single_bit_imm(bit, action_width);
         let (opc, imm) = match action {
             BitTestAction::Test => return Ok(()),
             BitTestAction::Set => (0b01, bit_mask),
-            BitTestAction::Reset => (0b00, Self::inverted_logical_imm(bit_mask, emit_width)?),
+            BitTestAction::Reset => (0b00, Self::inverted_logical_imm(bit_mask, action_width)?),
             BitTestAction::Toggle => (0b10, bit_mask),
         };
-        let (imm_n, immr, imms) = Self::logical_bitmask_imm(imm, emit_width)?;
-        self.emit_logic_imm(dst, src, opc, imm_n, immr, imms, emit_width)?;
-        self.finish_bit_test_result_width(dst, width)
+        let (imm_n, immr, imms) = Self::logical_bitmask_imm(imm, action_width)?;
+        self.emit_logic_imm(dst, src, opc, imm_n, immr, imms, action_width)?;
+        if finish_subword {
+            self.finish_bit_test_result_width(dst, width)?;
+        }
+        Ok(())
     }
 
     fn apply_bit_test_reg_action(
@@ -7228,24 +7232,28 @@ impl Aarch64Lowerer {
         mask: u8,
         action: BitTestAction,
         width: OpWidth,
+        action_width: OpWidth,
+        finish_subword: bool,
     ) -> Result<(), LowerError> {
         let Some(dst) = dst else {
             return Ok(());
         };
-        let emit_width = Self::bit_test_emit_width(width)?;
         match action {
             BitTestAction::Test => return Ok(()),
             BitTestAction::Set => {
-                self.emit_logic_reg_n(dst, src, mask, 0b01, false, emit_width)?;
+                self.emit_logic_reg_n(dst, src, mask, 0b01, false, action_width)?;
             }
             BitTestAction::Reset => {
-                self.emit_logic_reg_n(dst, src, mask, 0b00, true, emit_width)?;
+                self.emit_logic_reg_n(dst, src, mask, 0b00, true, action_width)?;
             }
             BitTestAction::Toggle => {
-                self.emit_logic_reg_n(dst, src, mask, 0b10, false, emit_width)?;
+                self.emit_logic_reg_n(dst, src, mask, 0b10, false, action_width)?;
             }
         }
-        self.finish_bit_test_result_width(dst, width)
+        if finish_subword {
+            self.finish_bit_test_result_width(dst, width)?;
+        }
+        Ok(())
     }
 
     fn lower_bit_test(
@@ -7257,6 +7265,8 @@ impl Aarch64Lowerer {
         width: OpWidth,
     ) -> Result<(), LowerError> {
         Self::bit_test_emit_width(width)?;
+        let x86_partial_dst = matches!(dst, Some(VReg::Arch(ArchReg::X86(_))))
+            && matches!(width, OpWidth::W8 | OpWidth::W16);
         let src = Self::gpr_arm_or_x86(src)?;
         let dst = match dst {
             Some(dst) => Some(Self::dst_gpr_arm_or_x86(dst)?),
@@ -7265,11 +7275,16 @@ impl Aarch64Lowerer {
 
         match index {
             SrcOperand::Imm(value) | SrcOperand::Imm64(value) => {
-                self.lower_bit_test_imm(dst, src, *value, action, width)
+                self.lower_bit_test_imm(dst, src, *value, action, width, x86_partial_dst)
             }
-            SrcOperand::Reg(index) => {
-                self.lower_bit_test_reg(dst, src, Self::gpr_arm_or_x86(*index)?, action, width)
-            }
+            SrcOperand::Reg(index) => self.lower_bit_test_reg(
+                dst,
+                src,
+                Self::gpr_arm_or_x86(*index)?,
+                action,
+                width,
+                x86_partial_dst,
+            ),
             other => Err(LowerError::UnsupportedOp {
                 op: format!("AArch64 native bit test index {other:?}"),
             }),
@@ -7283,6 +7298,7 @@ impl Aarch64Lowerer {
         index: i64,
         action: BitTestAction,
         width: OpWidth,
+        x86_partial_dst: bool,
     ) -> Result<(), LowerError> {
         let emit_width = Self::bit_test_emit_width(width)?;
         let bit = ((index as u64) & u64::from(width.bits() - 1)) as u32;
@@ -7290,13 +7306,32 @@ impl Aarch64Lowerer {
         if let Some(dst) = dst {
             avoid.push(dst);
         }
-        let scratches = Self::scratch_regs(&avoid, 2)?;
+        let needs_merge = x86_partial_dst && dst.is_some_and(|dst| dst != src);
+        let scratches = Self::scratch_regs(&avoid, 2 + usize::from(needs_merge))?;
         let flags = scratches[0];
         let bit_reg = scratches[1];
+        let result = scratches.get(2).copied();
+        let action_dst = result.or(dst);
+        let action_width = if x86_partial_dst && !needs_merge {
+            OpWidth::W64
+        } else {
+            emit_width
+        };
 
         self.emit_scratch_save(&scratches);
         self.emit_bitfield(bit_reg, src, 0b10, bit, bit, emit_width)?;
-        self.apply_bit_test_imm_action(dst, src, bit, action, width)?;
+        self.apply_bit_test_imm_action(
+            action_dst,
+            src,
+            bit,
+            action,
+            width,
+            action_width,
+            !x86_partial_dst || needs_merge,
+        )?;
+        if let (Some(dst), Some(result)) = (dst, result) {
+            self.emit_bitfield(dst, result, 0b01, 0, width.bits() - 1, OpWidth::W64)?;
+        }
         self.emit_write_c_from_low_bit(flags, bit_reg)?;
         self.emit_scratch_restore(&scratches);
         Ok(())
@@ -7309,6 +7344,7 @@ impl Aarch64Lowerer {
         index: u8,
         action: BitTestAction,
         width: OpWidth,
+        x86_partial_dst: bool,
     ) -> Result<(), LowerError> {
         let emit_width = Self::bit_test_emit_width(width)?;
         let amount_width = if width == OpWidth::W64 {
@@ -7321,11 +7357,22 @@ impl Aarch64Lowerer {
             avoid.push(dst);
         }
         let needs_mask = !matches!(action, BitTestAction::Test);
-        let scratches = Self::scratch_regs(&avoid, 3 + usize::from(needs_mask))?;
+        let needs_merge = x86_partial_dst && dst.is_some_and(|dst| dst != src);
+        let scratches = Self::scratch_regs(
+            &avoid,
+            3 + usize::from(needs_mask) + usize::from(needs_merge),
+        )?;
         let flags = scratches[0];
         let bit_reg = scratches[1];
         let amount = scratches[2];
         let mask = scratches.get(3).copied();
+        let result = scratches.get(3 + usize::from(needs_mask)).copied();
+        let action_dst = result.or(dst);
+        let action_width = if x86_partial_dst && !needs_merge {
+            OpWidth::W64
+        } else {
+            emit_width
+        };
 
         self.emit_scratch_save(&scratches);
         let (imm_n, immr, imms) =
@@ -7335,9 +7382,20 @@ impl Aarch64Lowerer {
         let (imm_n, immr, imms) = Self::logical_bitmask_imm(1, OpWidth::W32)?;
         self.emit_logic_imm(bit_reg, bit_reg, 0b00, imm_n, immr, imms, OpWidth::W32)?;
         if let Some(mask) = mask {
-            self.emit_mov_imm(mask, 1, emit_width)?;
-            self.emit_dp2(mask, mask, amount, 0b1000, emit_width)?;
-            self.apply_bit_test_reg_action(dst, src, mask, action, width)?;
+            self.emit_mov_imm(mask, 1, action_width)?;
+            self.emit_dp2(mask, mask, amount, 0b1000, action_width)?;
+            self.apply_bit_test_reg_action(
+                action_dst,
+                src,
+                mask,
+                action,
+                width,
+                action_width,
+                !x86_partial_dst || needs_merge,
+            )?;
+        }
+        if let (Some(dst), Some(result)) = (dst, result) {
+            self.emit_bitfield(dst, result, 0b01, 0, width.bits() - 1, OpWidth::W64)?;
         }
         self.emit_write_c_from_low_bit(flags, bit_reg)?;
         self.emit_scratch_restore(&scratches);
@@ -42239,6 +42297,48 @@ mod tests {
             OpWidth::W64,
             0b0100,
         );
+    }
+
+    #[test]
+    fn lowers_x86_subword_bit_updates_with_partial_register_merge() {
+        let alias = lower_single_op(OpKind::Bts {
+            dst: x86(X86Reg::Rax),
+            src: x86(X86Reg::Rax),
+            index: SrcOperand::Imm(15),
+            width: OpWidth::W16,
+        });
+        let (out, nzcv, sp) = run_aarch64_code(
+            &alias,
+            &[(0, 0xABCD_EF01_2345_0001), (16, 0x1616_1616_1616_1616)],
+            0b1100,
+        );
+        assert_eq!(out[0], 0xABCD_EF01_2345_8001);
+        assert_eq!(nzcv, 0b1100, "tested bit was clear; only C is replaced");
+        assert_eq!(out[16], 0x1616_1616_1616_1616);
+        assert_eq!(sp, 0x8000);
+
+        let distinct = lower_single_op(OpKind::Btr {
+            dst: x86(X86Reg::Rax),
+            src: x86(X86Reg::Rcx),
+            index: SrcOperand::Reg(x86(X86Reg::Rdx)),
+            width: OpWidth::W16,
+        });
+        let (out, nzcv, sp) = run_aarch64_code(
+            &distinct,
+            &[
+                (0, 0xABCD_EF01_2345_5555),
+                (1, 0xFEDC_BA98_7654_FFFF),
+                (2, 17),
+                (16, 0x1616_1616_1616_1616),
+            ],
+            0b1001,
+        );
+        assert_eq!(out[0], 0xABCD_EF01_2345_FFFD);
+        assert_eq!(out[1], 0xFEDC_BA98_7654_FFFF);
+        assert_eq!(out[2], 17);
+        assert_eq!(nzcv, 0b1011, "bit 1 was set; only C is replaced");
+        assert_eq!(out[16], 0x1616_1616_1616_1616);
+        assert_eq!(sp, 0x8000);
     }
 
     #[test]

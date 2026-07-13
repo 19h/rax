@@ -204,6 +204,139 @@ fn x86_blsi_executes_natively_with_exact_defined_and_preserved_flags() {
 }
 
 #[test]
+fn x86_bit_test_family_executes_natively_with_exact_width_and_cf_semantics() {
+    // bts eax,ecx; btr rdx,rbx; btc r8,63; bt r9,r10; jnz start; hlt.
+    // BT preserves seeded ZF=1, so the syntactic backedge is not taken.
+    // W32 proves architectural zero-extension; W64 exercises both register and
+    // immediate indexes plus index masking. PF/AF and all non-CF flags survive.
+    let code = [
+        0x0F, 0xAB, 0xC8, // BTS eax,ecx
+        0x48, 0x0F, 0xB3, 0xDA, // BTR rdx,rbx
+        0x49, 0x0F, 0xBA, 0xF8, 0x3F, // BTC r8,63
+        0x4D, 0x0F, 0xA3, 0xD1, // BT r9,r10
+        0x75, 0xEE, // JNZ start (not taken: ZF=1)
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xFFFF_FFFF_0000_0001;
+        regs.rcx = 33; // W32 index masks to bit 1.
+        regs.rdx = u64::MAX;
+        regs.rbx = 68; // W64 index masks to bit 4.
+        regs.r8 = 0x8000_0000_0000_0001;
+        regs.r9 = 1 << 7;
+        regs.r10 = 71; // W64 index masks to bit 7.
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block().expect("bit-test family JIT attempt"),
+        "32/64-bit register-only bit-test block must enter the AArch64 tier"
+    );
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "BT/BTS/BTR/BTC");
+    assert_eq!(actual.rax, 3, "BTS r32 must set and zero-extend");
+    assert_eq!(actual.rdx, u64::MAX & !(1 << 4), "BTR r64");
+    assert_eq!(actual.r8, 1, "BTC r64 immediate index");
+    assert_eq!(actual.rflags & STATUS, 0x8D5, "only CF changes");
+}
+
+#[test]
+fn x86_bt_and_bit_update_w16_execute_natively_with_partial_register_merge() {
+    // BT has no GPR destination, so its W16 form is exact under the identity
+    // bridge. BT preserves seeded ZF=1, so JNZ is not taken.
+    let bt = [0x66, 0x0F, 0xA3, 0xC8, 0x75, 0xFA, 0xF4]; // BT ax,cx
+    let setup_bt = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 1 << 15;
+        regs.rcx = 31; // W16 index masks to bit 15.
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+    let mut interpreter = make_vcpu_code(&bt);
+    setup_bt(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&bt);
+    setup_bt(&mut jit);
+    assert!(jit.jit_try_block().expect("BT W16 JIT attempt"));
+    run_to_hlt(&mut jit);
+    assert_mapped_state_eq(&jit.get_regs().unwrap(), &expected, "BT W16");
+
+    // BTS ax,cx merges the updated low word into RAX and preserves bits 16-63.
+    let bts = [0x66, 0x0F, 0xAB, 0xC8, 0x75, 0xFA, 0xF4];
+    let setup_bts = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xABCD_EF01_2345_0001;
+        regs.rcx = 17; // W16 index masks to bit 1.
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+    let mut interpreter = make_vcpu_code(&bts);
+    setup_bts(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&bts);
+    setup_bts(&mut jit);
+    assert!(jit.jit_try_block().expect("BTS W16 eligibility"));
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+    assert_mapped_state_eq(&actual, &expected, "BTS W16 partial merge");
+    assert_eq!(actual.rax, 0xABCD_EF01_2345_0003);
+}
+
+#[test]
+fn x86_clc_cmc_feed_native_adcx_without_clobbering_other_flags() {
+    // CLC; CMC creates CF=1, which ADCX consumes. ZF remains set, making the
+    // JNZ backedge not taken. The final carry is exposed through RFLAGS.
+    let code = [
+        0xF8, // CLC
+        0xF5, // CMC
+        0x66, 0x48, 0x0F, 0x38, 0xF6, 0xC3, // ADCX rax,rbx
+        0x75, 0xF6, // JNZ start
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = u64::MAX;
+        regs.rbx = 0;
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(jit.jit_try_block().expect("CLC/CMC/ADCX JIT attempt"));
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "CLC/CMC/ADCX");
+    assert_eq!(actual.rax, 0);
+    assert_eq!(
+        actual.rflags & STATUS,
+        0x8D5,
+        "CF set; other status preserved"
+    );
+}
+
+#[test]
 fn x86_aarch64_jit_rejects_live_pf_af_definitions_without_execution() {
     // add rax,rbx; jnz start; hlt. ADD's live PF/AF outputs cannot be represented
     // in NZCV, so the architecture-specific gate must retain interpreter fallback.

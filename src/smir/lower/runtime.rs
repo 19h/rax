@@ -2209,6 +2209,7 @@ fn x86_flag_uses(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::F
             X86AdxKind::Adcx => FlagSet::CF,
             X86AdxKind::Adox => FlagSet::OF,
         },
+        OpKind::CmcCF => FlagSet::CF,
         _ => FlagSet::EMPTY,
     }
 }
@@ -2249,6 +2250,12 @@ fn x86_flag_defs(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::F
         | OpKind::X86Adx { flags, .. }
         | OpKind::X86Count { flags, .. } => flags.as_set(),
         OpKind::Cmp { .. } | OpKind::Test { .. } => FlagSet::ALL_X86,
+        OpKind::Bt { .. }
+        | OpKind::Bts { .. }
+        | OpKind::Btr { .. }
+        | OpKind::Btc { .. }
+        | OpKind::SetCF { .. }
+        | OpKind::CmcCF => FlagSet::CF,
         _ => FlagSet::EMPTY,
     }
 }
@@ -2462,6 +2469,7 @@ fn x86_aarch64_block_flags_are_representable(
                         kind: X86AdxKind::Adcx,
                         ..
                     }
+                    | OpKind::CmcCF
             )
         {
             return false;
@@ -2491,35 +2499,11 @@ fn x86_aarch64_block_is_clobber_safe(
 ) -> bool {
     use crate::smir::ir::Terminator;
     use crate::smir::ir::ops::{OpKind, X86OpHint};
-    use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
+    use crate::smir::ir::types::VReg;
 
     if !x86_aarch64_block_flags_are_representable(block, flags_live_out) {
         return false;
     }
-
-    let legacy_gpr = |vreg: &VReg| {
-        matches!(
-            vreg,
-            VReg::Arch(ArchReg::X86(
-                X86Reg::Rax
-                    | X86Reg::Rcx
-                    | X86Reg::Rdx
-                    | X86Reg::Rbx
-                    | X86Reg::Rsp
-                    | X86Reg::Rbp
-                    | X86Reg::Rsi
-                    | X86Reg::Rdi
-                    | X86Reg::R8
-                    | X86Reg::R9
-                    | X86Reg::R10
-                    | X86Reg::R11
-                    | X86Reg::R12
-                    | X86Reg::R13
-                    | X86Reg::R14
-                    | X86Reg::R15
-            ))
-        )
-    };
 
     let folded_branch_cond = matches!(
         (&block.terminator, block.ops.last().map(|op| &op.kind)),
@@ -2543,11 +2527,7 @@ fn x86_aarch64_block_is_clobber_safe(
             }
         }
 
-        let scalar_extension = matches!(
-            op.kind,
-            OpKind::AndNot { .. } | OpKind::X86Bls { .. } | OpKind::X86Adx { .. }
-        );
-        if !op.is_jit_safe() && !scalar_extension {
+        if !x86_aarch64_scalar_shape_valid(&op.kind) {
             return false;
         }
         // AH/CH/DH/BH require x86 byte-lane extraction. The generic AArch64
@@ -2589,6 +2569,13 @@ fn x86_aarch64_block_is_clobber_safe(
         }
         if matches!(
             op.kind,
+            OpKind::Bt { .. } | OpKind::Bts { .. } | OpKind::Btr { .. } | OpKind::Btc { .. }
+        ) && !x86_aarch64_bit_test_shape_valid(&op.kind)
+        {
+            return false;
+        }
+        if matches!(
+            op.kind,
             OpKind::Clz { .. }
                 | OpKind::Ctz { .. }
                 | OpKind::Popcnt { .. }
@@ -2609,12 +2596,16 @@ fn x86_aarch64_block_is_clobber_safe(
             return false;
         }
 
-        if op.kind.dests().iter().any(|dst| !legacy_gpr(dst))
+        if op
+            .kind
+            .dests()
+            .iter()
+            .any(|dst| !x86_aarch64_legacy_gpr(dst))
             || op
                 .kind
                 .source_vregs()
                 .iter()
-                .any(|source| !legacy_gpr(source))
+                .any(|source| !x86_aarch64_legacy_gpr(source))
         {
             return false;
         }
@@ -2628,10 +2619,160 @@ fn x86_aarch64_block_is_clobber_safe(
     match &block.terminator {
         Terminator::Branch { .. } => true,
         Terminator::CondBranch { cond, .. } => {
-            folded_branch_cond || matches!(cond, VReg::Imm(_)) || legacy_gpr(cond)
+            folded_branch_cond || matches!(cond, VReg::Imm(_)) || x86_aarch64_legacy_gpr(cond)
         }
-        Terminator::Switch { index, .. } => matches!(index, VReg::Imm(_)) || legacy_gpr(index),
+        Terminator::Switch { index, .. } => {
+            matches!(index, VReg::Imm(_)) || x86_aarch64_legacy_gpr(index)
+        }
         Terminator::Return { values } => values.is_empty(),
+        _ => false,
+    }
+}
+
+fn x86_aarch64_legacy_gpr(vreg: &crate::smir::ir::types::VReg) -> bool {
+    use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
+
+    matches!(
+        vreg,
+        VReg::Arch(ArchReg::X86(
+            X86Reg::Rax
+                | X86Reg::Rcx
+                | X86Reg::Rdx
+                | X86Reg::Rbx
+                | X86Reg::Rsp
+                | X86Reg::Rbp
+                | X86Reg::Rsi
+                | X86Reg::Rdi
+                | X86Reg::R8
+                | X86Reg::R9
+                | X86Reg::R10
+                | X86Reg::R11
+                | X86Reg::R12
+                | X86Reg::R13
+                | X86Reg::R14
+                | X86Reg::R15
+        ))
+    )
+}
+
+/// Architecture-specific scalar whitelist for the x86 VCPU identity bridge.
+///
+/// AArch64 W-register writes zero-extend. That is exact for x86 32-bit GPR
+/// destinations, but not for 8/16-bit destinations, which preserve the upper
+/// bits. Keep every destination-producing operation at W32/W64 unless its
+/// lowering has a separately validated x86 partial-write implementation. This
+/// explicit match also makes future additions to the shared x86-host whitelist
+/// fail closed until their AArch64-host shape is reviewed.
+fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::OpWidth;
+
+    let full_gpr_write = |width: &OpWidth| matches!(width, OpWidth::W32 | OpWidth::W64);
+    let scalar_read_width = |width: &OpWidth| {
+        matches!(
+            width,
+            OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+        )
+    };
+
+    match op {
+        OpKind::Add { width, .. }
+        | OpKind::Sub { width, .. }
+        | OpKind::Adc { width, .. }
+        | OpKind::Sbb { width, .. }
+        | OpKind::Neg { width, .. }
+        | OpKind::Inc { width, .. }
+        | OpKind::Dec { width, .. }
+        | OpKind::And { width, .. }
+        | OpKind::Or { width, .. }
+        | OpKind::Xor { width, .. }
+        | OpKind::Not { width, .. }
+        | OpKind::AndNot { width, .. }
+        | OpKind::Shl { width, .. }
+        | OpKind::Shr { width, .. }
+        | OpKind::Sar { width, .. }
+        | OpKind::Shld { width, .. }
+        | OpKind::Shrd { width, .. }
+        | OpKind::X86NddDoubleShift { width, .. }
+        | OpKind::Rol { width, .. }
+        | OpKind::Ror { width, .. }
+        | OpKind::Rcl { width, .. }
+        | OpKind::Rcr { width, .. }
+        | OpKind::MulU { width, .. }
+        | OpKind::MulS { width, .. }
+        | OpKind::Mov { width, .. }
+        | OpKind::SetCC { width, .. }
+        | OpKind::CMove { width, .. }
+        | OpKind::Bsf { width, .. }
+        | OpKind::Bsr { width, .. }
+        | OpKind::Bextr { width, .. }
+        | OpKind::Bzhi { width, .. }
+        | OpKind::X86Bls { width, .. }
+        | OpKind::X86Adx { width, .. }
+        | OpKind::Pdep { width, .. }
+        | OpKind::Pext { width, .. }
+        | OpKind::Clz { width, .. }
+        | OpKind::Ctz { width, .. }
+        | OpKind::Popcnt { width, .. }
+        | OpKind::X86Count { width, .. }
+        | OpKind::Bswap { width, .. }
+        | OpKind::Xchg { width, .. } => full_gpr_write(width),
+        OpKind::ZeroExtend { to_width, .. } | OpKind::SignExtend { to_width, .. } => {
+            full_gpr_write(to_width)
+        }
+        // CWD/CDQ/CQO has dedicated x86 partial-write lowering and native
+        // machine regressions for its W8/W16 merge behavior.
+        OpKind::Cwd { width, .. } => scalar_read_width(width),
+        OpKind::Cmp { width, .. } | OpKind::Test { width, .. } => scalar_read_width(width),
+        OpKind::Bt { .. } | OpKind::Bts { .. } | OpKind::Btr { .. } | OpKind::Btc { .. } => {
+            x86_aarch64_bit_test_shape_valid(op)
+        }
+        OpKind::TestCondition { .. }
+        | OpKind::Lea { .. }
+        | OpKind::SetCF { .. }
+        | OpKind::CmcCF
+        | OpKind::Nop => true,
+        _ => false,
+    }
+}
+
+fn x86_aarch64_bit_test_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{OpWidth, SrcOperand};
+
+    let index_valid = |index: &SrcOperand| {
+        matches!(index, SrcOperand::Imm(_) | SrcOperand::Imm64(_))
+            || matches!(index, SrcOperand::Reg(reg) if x86_aarch64_legacy_gpr(reg))
+    };
+    match op {
+        OpKind::Bt { src, index, width } => {
+            x86_aarch64_legacy_gpr(src)
+                && index_valid(index)
+                && matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+        }
+        OpKind::Bts {
+            dst,
+            src,
+            index,
+            width,
+        }
+        | OpKind::Btr {
+            dst,
+            src,
+            index,
+            width,
+        }
+        | OpKind::Btc {
+            dst,
+            src,
+            index,
+            width,
+        } => {
+            dst == src
+                && x86_aarch64_legacy_gpr(dst)
+                && index_valid(index)
+                && matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+        }
         _ => false,
     }
 }
@@ -3469,7 +3610,7 @@ mod jit_gate_tests {
     }
 
     #[test]
-    fn x86_aarch64_gate_accepts_representable_bls_adx_and_nf_alu() {
+    fn x86_aarch64_gate_accepts_representable_bls_adx_bit_tests_and_nf_alu() {
         let bls_flags = FlagSet::CF
             .union(FlagSet::ZF)
             .union(FlagSet::SF)
@@ -3497,6 +3638,25 @@ mod jit_gate_tests {
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
+            OpKind::Bt {
+                src: x86(X86Reg::R8),
+                index: SrcOperand::Reg(x86(X86Reg::R9)),
+                width: OpWidth::W16,
+            },
+            OpKind::Bts {
+                dst: x86(X86Reg::R10),
+                src: x86(X86Reg::R10),
+                index: SrcOperand::Imm(15),
+                width: OpWidth::W16,
+            },
+            OpKind::Btc {
+                dst: x86(X86Reg::R11),
+                src: x86(X86Reg::R11),
+                index: SrcOperand::Imm64(63),
+                width: OpWidth::W64,
+            },
+            OpKind::SetCF { value: true },
+            OpKind::CmcCF,
         ]));
     }
 
@@ -3538,6 +3698,37 @@ mod jit_gate_tests {
         assert!(!x86_aarch64_gate(vec![OpKind::Mov {
             dst: VReg::virt(0),
             src: SrcOperand::Reg(x86(X86Reg::Rax)),
+            width: OpWidth::W64,
+        }]));
+
+        // AArch64 W-register writes zero-extend, while x86 8/16-bit GPR
+        // destinations preserve their upper bits. Until a specific lowering
+        // implements that merge, these destination shapes must fail closed.
+        assert!(!x86_aarch64_gate(vec![OpKind::Mov {
+            dst: x86(X86Reg::Rax),
+            src: SrcOperand::Reg(x86(X86Reg::Rcx)),
+            width: OpWidth::W16,
+        }]));
+        assert!(!x86_aarch64_gate(vec![OpKind::SetCC {
+            dst: x86(X86Reg::Rax),
+            cond: crate::smir::ir::types::Condition::Eq,
+            width: OpWidth::W8,
+        }]));
+        assert!(!x86_aarch64_gate(vec![OpKind::Bts {
+            dst: x86(X86Reg::Rax),
+            src: x86(X86Reg::Rax),
+            index: SrcOperand::Imm(7),
+            width: OpWidth::W8,
+        }]));
+        assert!(!x86_aarch64_gate(vec![OpKind::Btr {
+            dst: x86(X86Reg::Rax),
+            src: x86(X86Reg::Rcx),
+            index: SrcOperand::Imm(0),
+            width: OpWidth::W64,
+        }]));
+        assert!(!x86_aarch64_gate(vec![OpKind::Bt {
+            src: x86(X86Reg::Rax),
+            index: SrcOperand::Reg(VReg::virt(2)),
             width: OpWidth::W64,
         }]));
     }
