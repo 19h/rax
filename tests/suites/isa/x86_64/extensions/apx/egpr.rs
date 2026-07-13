@@ -600,3 +600,18 @@ fn test_apx_movbe_reg_reg_16_preserves_upper_match_llvm() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.r8, 0xAABB_CCDD_EEFF_2211);
 }
+
+#[test]
+fn test_apx_movrs_word_preserves_upper_match_llvm() {
+    // LLVM 23 assembles "movrs r16w, word ptr [rax]" as
+    // 62 e4 7d 08 8b 00. The EVEX pp=66 field selects a 2-byte load.
+    let mut regs = Registers::default();
+    regs.rax = DATA_ADDR;
+    regs.r16 = 0x1122_3344_5566_7788;
+    let code = [0x62, 0xE4, 0x7D, 0x08, 0x8B, 0x00, 0xF4];
+
+    let (mut vcpu, mem) = setup_apx_vm(&code, Some(regs));
+    write_mem_at_u16(&mem, DATA_ADDR, 0xABCD);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.r16, 0x1122_3344_5566_ABCD);
+}

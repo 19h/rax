@@ -581,6 +581,109 @@ fn test_nf_add_32bit() {
     let _ = run_until_hlt(&mut vcpu);
 }
 
+#[test]
+fn test_nf_word_scalar_families_preserve_upper_bits_and_flags_match_llvm() {
+    // LLVM 23 encodings exercise MAP4 word-size selection, including the
+    // imm16 payloads of group-1 ADD and opcode-69 IMUL.
+    const FLAG_MASK: u64 = 0x8D5;
+    let code = [
+        0x62, 0xD4, 0x7D, 0x0C, 0x81, 0xC0, 0x34, 0x12, // {nf} add r8w,0x1234
+        0x62, 0xD4, 0x7D, 0x0C, 0xC1, 0xE1, 0x04, // {nf} shl r9w,4
+        0x62, 0xD4, 0x7D, 0x0C, 0xD3, 0xEA, // {nf} shr r10w,cl
+        0x62, 0x54, 0x7D, 0x0C, 0xAF, 0xDC, // {nf} imul r11w,r12w
+        0x62, 0x54, 0x7D, 0x0C, 0x69, 0xEE, 0x34, 0x12, // {nf} imul r13w,r14w,0x1234
+        0x62, 0xD4, 0x7D, 0x0C, 0x24, 0xC7, 0x04, // {nf} shld r15w,ax,4
+        0x62, 0xF4, 0x7D, 0x0C, 0xAD, 0xD3, // {nf} shrd bx,dx,cl
+        0xF4,
+    ];
+    let mut regs = Registers::default();
+    regs.rax = 0xAAAA_BBBB_CCCC_ABCD;
+    regs.rcx = 0x1111_2222_3333_0004;
+    regs.rdx = 0xDDDD_EEEE_FFFF_ABCD;
+    regs.rbx = 0xBBBB_CCCC_DDDD_1234;
+    regs.r8 = 0x8888_7777_6666_0100;
+    regs.r9 = 0x9999_8888_7777_1234;
+    regs.r10 = 0xAAAA_9999_8888_8000;
+    regs.r11 = 0xBBBB_AAAA_9999_FFFE;
+    regs.r12 = 0xCCCC_BBBB_AAAA_0003;
+    regs.r13 = 0xDDDD_CCCC_BBBB_7777;
+    regs.r14 = 0xEEEE_DDDD_CCCC_0002;
+    regs.r15 = 0xFFFF_EEEE_DDDD_1234;
+    regs.rflags = 0x2 | FLAG_MASK;
+
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.r8, 0x8888_7777_6666_1334);
+    assert_eq!(regs.r9, 0x9999_8888_7777_2340);
+    assert_eq!(regs.r10, 0xAAAA_9999_8888_0800);
+    assert_eq!(regs.r11, 0xBBBB_AAAA_9999_FFFA);
+    assert_eq!(regs.r13, 0xDDDD_CCCC_BBBB_2468);
+    assert_eq!(regs.r15, 0xFFFF_EEEE_DDDD_234A);
+    assert_eq!(regs.rbx, 0xBBBB_CCCC_DDDD_D123);
+    assert_eq!(regs.rflags & FLAG_MASK, FLAG_MASK);
+}
+
+#[test]
+fn test_nf_word_implicit_mul_div_preserve_upper_bits_and_flags_match_llvm() {
+    const FLAG_MASK: u64 = 0x8D5;
+    const RAX_UPPER: u64 = 0xAAAA_BBBB_CCCC_0000;
+    const RDX_UPPER: u64 = 0xDDDD_EEEE_FFFF_0000;
+
+    let cases = [
+        (
+            "mul",
+            [0x62, 0xF4, 0x7D, 0x0C, 0xF7, 0xE1, 0xF4],
+            0x1234,
+            0,
+            3,
+            0x369C,
+            0,
+        ),
+        (
+            "imul",
+            [0x62, 0xF4, 0x7D, 0x0C, 0xF7, 0xE9, 0xF4],
+            0xFFFD,
+            0,
+            4,
+            0xFFF4,
+            0xFFFF,
+        ),
+        (
+            "div",
+            [0x62, 0xF4, 0x7D, 0x0C, 0xF7, 0xF1, 0xF4],
+            100,
+            0,
+            7,
+            14,
+            2,
+        ),
+        (
+            "idiv",
+            [0x62, 0xF4, 0x7D, 0x0C, 0xF7, 0xF9, 0xF4],
+            0xFF9C,
+            0xFFFF,
+            7,
+            0xFFF2,
+            0xFFFE,
+        ),
+    ];
+
+    for (name, code, ax, dx, cx, expected_ax, expected_dx) in cases {
+        let mut regs = Registers::default();
+        regs.rax = RAX_UPPER | ax;
+        regs.rdx = RDX_UPPER | dx;
+        regs.rcx = 0x1111_2222_3333_0000 | cx;
+        regs.rflags = 0x2 | FLAG_MASK;
+
+        let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+        let regs = run_until_hlt(&mut vcpu).unwrap();
+        assert_eq!(regs.rax, RAX_UPPER | expected_ax, "{name} AX");
+        assert_eq!(regs.rdx, RDX_UPPER | expected_dx, "{name} DX");
+        assert_eq!(regs.rflags & FLAG_MASK, FLAG_MASK, "{name} flags");
+    }
+}
+
 // ============================================================================
 // NF flag preservation test sequence
 // ============================================================================

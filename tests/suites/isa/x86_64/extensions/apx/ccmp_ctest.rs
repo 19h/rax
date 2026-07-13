@@ -467,6 +467,38 @@ fn test_ccmpnz_r16_r16_operands() {
     let _ = run_until_hlt(&mut vcpu);
 }
 
+#[test]
+fn test_ccmpno_word_uses_low_16_bits_match_llvm() {
+    // LLVM 23: ccmpno {dfv=cf,zf} ax,bx. OF starts clear, so the
+    // comparison executes. Low words are equal while low dwords are not.
+    const ZF: u64 = 1 << 6;
+    let code = [0x62, 0xF4, 0x1D, 0x01, 0x39, 0xD8, 0xF4];
+    let mut regs = Registers::default();
+    regs.rax = 0x0000_0000_0001_0000;
+    regs.rbx = 0;
+    regs.rflags = 0x2;
+
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_ne!(regs.rflags & ZF, 0);
+}
+
+#[test]
+fn test_ctestno_word_uses_low_16_bits_match_llvm() {
+    // LLVM 23: ctestno {dfv=cf,zf} ax,bx. The low-word AND is zero,
+    // whereas an erroneous 32-bit execution would clear ZF.
+    const ZF: u64 = 1 << 6;
+    let code = [0x62, 0xF4, 0x1D, 0x01, 0x85, 0xD8, 0xF4];
+    let mut regs = Registers::default();
+    regs.rax = 0x0000_0000_0001_0000;
+    regs.rbx = 0x0000_0000_0001_0000;
+    regs.rflags = 0x2;
+
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_ne!(regs.rflags & ZF, 0);
+}
+
 /// CTEST with 8-bit operands
 #[test]
 fn test_ctestb_r8_imm8() {

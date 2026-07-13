@@ -4847,10 +4847,8 @@ impl X86_64Vcpu {
         let is_byte = (opcode & 0x01) == 0;
         let op_size = if is_byte {
             1
-        } else if ctx.evex_w() {
-            8
         } else {
-            4
+            Self::apx_scalar_op_size(ctx)
         };
 
         // Determine direction (reg->rm or rm->reg)
@@ -4984,10 +4982,8 @@ impl X86_64Vcpu {
         let is_byte = (opcode & 0x01) == 0;
         let op_size = if is_byte {
             1
-        } else if ctx.evex_w() {
-            8
         } else {
-            4
+            Self::apx_scalar_op_size(ctx)
         };
         let reg_is_src = (opcode & 0x02) == 0;
         let (cc, dfv) = Self::apx_ccmp_condition_and_default_flags(ctx)?;
@@ -5034,10 +5030,8 @@ impl X86_64Vcpu {
         let is_byte = opcode == 0x84;
         let op_size = if is_byte {
             1
-        } else if ctx.evex_w() {
-            8
         } else {
-            4
+            Self::apx_scalar_op_size(ctx)
         };
         let (cc, dfv) = Self::apx_ccmp_condition_and_default_flags(ctx)?;
 
@@ -5201,10 +5195,8 @@ impl X86_64Vcpu {
         let is_byte = (opcode & 0x01) == 0;
         let op_size = if is_byte {
             1
-        } else if ctx.evex_w() {
-            8
         } else {
-            4
+            Self::apx_scalar_op_size(ctx)
         };
         let reg_is_src = (opcode & 0x02) == 0;
 
@@ -5344,7 +5336,7 @@ impl X86_64Vcpu {
 
     /// APX LEA operation
     fn execute_apx_lea(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-        let op_size = if ctx.evex_w() { 8 } else { 4 };
+        let op_size = Self::apx_scalar_op_size(ctx);
         let modrm_start = ctx.cursor;
         let (reg, _, is_memory, _, _) = self.decode_modrm(ctx)?;
 
@@ -5413,7 +5405,7 @@ impl X86_64Vcpu {
         nf: bool,
         imm32: bool,
     ) -> Result<Option<VcpuExit>> {
-        let op_size = if ctx.evex_w() { 8 } else { 4 };
+        let op_size = Self::apx_scalar_op_size(ctx);
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let reg = reg | ctx.evex_dest_reg();
 
@@ -5424,16 +5416,19 @@ impl X86_64Vcpu {
             self.get_reg(rm, op_size)
         };
 
-        let imm = if imm32 {
+        let imm = if imm32 && op_size == 2 {
+            ctx.consume_u16()? as i16 as i64 as u64
+        } else if imm32 {
             ctx.consume_u32()? as i32 as i64 as u64
         } else {
             ctx.consume_u8()? as i8 as i64 as u64
         };
 
-        let result = if op_size == 8 {
-            (src as i64).wrapping_mul(imm as i64) as u64
-        } else {
-            ((src as i32).wrapping_mul(imm as i32)) as u64
+        let result = match op_size {
+            2 => (src as i16).wrapping_mul(imm as i16) as u16 as u64,
+            4 => (src as i32).wrapping_mul(imm as i32) as u32 as u64,
+            8 => (src as i64).wrapping_mul(imm as i64) as u64,
+            _ => unreachable!(),
         };
 
         let dest_reg = if ndd { ctx.evex_vvvv() } else { reg };
@@ -5441,10 +5436,11 @@ impl X86_64Vcpu {
 
         if !nf {
             // Set OF/CF if result overflowed
-            let sign_extended = if op_size == 8 {
-                (result as i64) as i128 == (src as i64 as i128) * (imm as i64 as i128)
-            } else {
-                (result as i32) as i64 == (src as i32 as i64) * (imm as i32 as i64)
+            let sign_extended = match op_size {
+                2 => (result as i16) as i32 == (src as i16 as i32) * (imm as i16 as i32),
+                4 => (result as i32) as i64 == (src as i32 as i64) * (imm as i32 as i64),
+                8 => (result as i64) as i128 == (src as i64 as i128) * (imm as i64 as i128),
+                _ => unreachable!(),
             };
             let flags = self.regs.rflags & !(0x801); // Clear OF, CF
             self.regs.rflags = if sign_extended { flags } else { flags | 0x801 };
@@ -5462,7 +5458,7 @@ impl X86_64Vcpu {
         ndd: bool,
         nf: bool,
     ) -> Result<Option<VcpuExit>> {
-        let op_size = if ctx.evex_w() { 8 } else { 4 };
+        let op_size = Self::apx_scalar_op_size(ctx);
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let reg = reg | ctx.evex_dest_reg();
 
@@ -5474,14 +5470,23 @@ impl X86_64Vcpu {
             self.get_reg(rm, op_size)
         };
 
-        let (result, overflow) = if op_size == 8 {
-            let product = (src1 as i64 as i128) * (src2 as i64 as i128);
-            let result = product as i64 as u64;
-            (result, product != result as i64 as i128)
-        } else {
-            let product = (src1 as i32 as i64) * (src2 as i32 as i64);
-            let result = product as i32 as u64;
-            (result, product != result as i32 as i64)
+        let (result, overflow) = match op_size {
+            2 => {
+                let product = (src1 as i16 as i32) * (src2 as i16 as i32);
+                let result = product as i16 as u16 as u64;
+                (result, product != result as i16 as i32)
+            }
+            4 => {
+                let product = (src1 as i32 as i64) * (src2 as i32 as i64);
+                let result = product as i32 as u32 as u64;
+                (result, product != result as i32 as i64)
+            }
+            8 => {
+                let product = (src1 as i64 as i128) * (src2 as i64 as i128);
+                let result = product as i64 as u64;
+                (result, product != result as i64 as i128)
+            }
+            _ => unreachable!(),
         };
 
         let dest_reg = if ndd { ctx.evex_vvvv() } else { reg };
@@ -5505,7 +5510,7 @@ impl X86_64Vcpu {
         ndd: bool,
         nf: bool,
     ) -> Result<Option<VcpuExit>> {
-        let op_size = if ctx.evex_w() { 8 } else { 4 };
+        let op_size = Self::apx_scalar_op_size(ctx);
         let width = op_size as u32 * 8;
         let mask = if op_size == 8 {
             u64::MAX
@@ -5570,10 +5575,8 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let op_size = if matches!(opcode, 0x80 | 0x82) {
             1
-        } else if ctx.evex_w() {
-            8
         } else {
-            4
+            Self::apx_scalar_op_size(ctx)
         };
 
         let (op, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -5587,6 +5590,7 @@ impl X86_64Vcpu {
 
         let imm = match opcode {
             0x80 | 0x82 => ctx.consume_u8()? as u64,
+            0x81 if op_size == 2 => ctx.consume_u16()? as u64,
             0x81 if op_size == 8 => ctx.consume_u32()? as i32 as i64 as u64,
             0x81 => ctx.consume_u32()? as u64,
             0x83 => ctx.consume_u8()? as i8 as i64 as u64,
@@ -5651,10 +5655,8 @@ impl X86_64Vcpu {
         let is_byte = opcode == 0xC0;
         let op_size = if is_byte {
             1
-        } else if ctx.evex_w() {
-            8
         } else {
-            4
+            Self::apx_scalar_op_size(ctx)
         };
 
         let modrm = ctx.peek_u8()?;
@@ -5704,10 +5706,8 @@ impl X86_64Vcpu {
         let is_byte = (opcode & 0x01) == 0;
         let op_size = if is_byte {
             1
-        } else if ctx.evex_w() {
-            8
         } else {
-            4
+            Self::apx_scalar_op_size(ctx)
         };
         let by_one = (opcode & 0x02) == 0;
 
@@ -5760,10 +5760,8 @@ impl X86_64Vcpu {
     ) -> Result<Option<VcpuExit>> {
         let op_size = if opcode == 0xF6 {
             1
-        } else if ctx.evex_w() {
-            8
         } else {
-            4
+            Self::apx_scalar_op_size(ctx)
         };
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let op_type = reg & 0x07;
@@ -5826,6 +5824,11 @@ impl X86_64Vcpu {
                 let result = (self.regs.rax as u8 as u16) * (src as u8 as u16);
                 self.set_reg(0, result as u64, 2);
             }
+            (4, 2) => {
+                let result = (self.regs.rax as u16 as u32) * (src as u16 as u32);
+                self.set_reg(0, result as u16 as u64, 2);
+                self.set_reg(2, (result >> 16) as u16 as u64, 2);
+            }
             (4, 4) => {
                 let result = (self.regs.rax as u32 as u64) * (src as u32 as u64);
                 self.set_reg(0, result as u32 as u64, 4);
@@ -5839,6 +5842,11 @@ impl X86_64Vcpu {
             (5, 1) => {
                 let result = (self.regs.rax as u8 as i8 as i16) * (src as u8 as i8 as i16);
                 self.set_reg(0, result as u16 as u64, 2);
+            }
+            (5, 2) => {
+                let result = (self.regs.rax as u16 as i16 as i32) * (src as u16 as i16 as i32);
+                self.set_reg(0, result as u16 as u64, 2);
+                self.set_reg(2, (result >> 16) as u16 as u64, 2);
             }
             (5, 4) => {
                 let result = (self.regs.rax as u32 as i32 as i64) * (src as u32 as i32 as i64);
@@ -5864,6 +5872,23 @@ impl X86_64Vcpu {
                     return Ok(false);
                 }
                 self.set_reg(0, ((remainder << 8) | quotient) as u64, 2);
+            }
+            (6, 2) => {
+                let divisor = src as u16 as u32;
+                if divisor == 0 {
+                    self.inject_exception(0, None)?;
+                    return Ok(false);
+                }
+                let dividend =
+                    ((self.regs.rdx as u16 as u32) << 16) | (self.regs.rax as u16 as u32);
+                let quotient = dividend / divisor;
+                let remainder = dividend % divisor;
+                if quotient > u16::MAX as u32 {
+                    self.inject_exception(0, None)?;
+                    return Ok(false);
+                }
+                self.set_reg(0, quotient as u16 as u64, 2);
+                self.set_reg(2, remainder as u16 as u64, 2);
             }
             (6, 4) => {
                 let divisor = src as u32 as u64;
@@ -5919,6 +5944,29 @@ impl X86_64Vcpu {
                 }
                 let ax = ((remainder as i8 as u8 as u16) << 8) | (quotient as i8 as u8 as u16);
                 self.set_reg(0, ax as u64, 2);
+            }
+            (7, 2) => {
+                let divisor = src as u16 as i16 as i32;
+                if divisor == 0 {
+                    self.inject_exception(0, None)?;
+                    return Ok(false);
+                }
+                let dividend =
+                    (((self.regs.rdx as u16 as u32) << 16) | (self.regs.rax as u16 as u32)) as i32;
+                let (quotient, remainder) =
+                    match (dividend.checked_div(divisor), dividend.checked_rem(divisor)) {
+                        (Some(q), Some(r)) => (q, r),
+                        _ => {
+                            self.inject_exception(0, None)?;
+                            return Ok(false);
+                        }
+                    };
+                if quotient < i16::MIN as i32 || quotient > i16::MAX as i32 {
+                    self.inject_exception(0, None)?;
+                    return Ok(false);
+                }
+                self.set_reg(0, quotient as u16 as u64, 2);
+                self.set_reg(2, remainder as u16 as u64, 2);
             }
             (7, 4) => {
                 let divisor = src as u32 as i32 as i64;
@@ -6007,10 +6055,8 @@ impl X86_64Vcpu {
         let is_byte = opcode == 0xFE;
         let op_size = if is_byte {
             1
-        } else if ctx.evex_w() {
-            8
         } else {
-            4
+            Self::apx_scalar_op_size(ctx)
         };
 
         let modrm = ctx.peek_u8()?;
