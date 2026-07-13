@@ -95,6 +95,8 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vpermb {k4}{z}", &[0x62, 0xf2, 0x6d, 0xcc, 0x8d, 0xcb]),
         ("vpcompressd {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0x8b, 0xd1]),
         ("vpexpandd {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0x89, 0xca]),
+        ("vpcompressb {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0x63, 0xd1]),
+        ("vpexpandw {k3}{z}", &[0x62, 0xd2, 0xfd, 0x8b, 0x62, 0xf9]),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -488,6 +490,51 @@ fn hot_masked_vpcompressd_jits_with_packed_lane_semantics() {
     let after = vcpu.get_regs().unwrap();
     assert_eq!(after.rcx & 0xffff_ffff, 0);
     assert_eq!(get_zmm(&after, 1), expected);
+    assert_eq!(get_zmm(&after, 2), source);
+    assert_eq!(after.k[4], mask);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_masked_vpcompressb_jits_with_vbmi2_packed_lane_semantics() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512vbmi2")
+    {
+        return;
+    }
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf2, 0x7d, 0xcc, 0x63, 0xd1]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf6]);
+    code.push(0xf4);
+    let bytes = std::array::from_fn::<_, 64, _>(|lane| (lane as u8).wrapping_mul(5) ^ 0xA3);
+    let pack = |input: &[u8; 64]| {
+        std::array::from_fn::<_, 8, _>(|word| {
+            u64::from_le_bytes(input[word * 8..word * 8 + 8].try_into().unwrap())
+        })
+    };
+    let source = pack(&bytes);
+    let mask = 0xA55A_9669_F00F_5AA5u64;
+    let mut expected_bytes = [0u8; 64];
+    let mut output = 0;
+    for (lane, value) in bytes.iter().copied().enumerate() {
+        if ((mask >> lane) & 1) != 0 {
+            expected_bytes[output] = value;
+            output += 1;
+        }
+    }
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, [u64::MAX; 8]);
+    set_zmm(&mut regs, 2, source);
+    regs.k[4] = mask;
+    vcpu.set_regs(&regs).unwrap();
+    assert!(vcpu.jit_try_block().expect("jit masked VPCOMPRESSB loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xffff_ffff, 0);
+    assert_eq!(get_zmm(&after, 1), pack(&expected_bytes));
     assert_eq!(get_zmm(&after, 2), source);
     assert_eq!(after.k[4], mask);
     run_to_hlt(&mut vcpu);

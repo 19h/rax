@@ -981,17 +981,21 @@ impl Avx10Lowerer {
             ));
         }
         let (opcode, w) = match (compress, elem) {
+            (true, VecElementType::I8) => (0x63, false),
+            (true, VecElementType::I16) => (0x63, true),
             (true, VecElementType::I32) => (0x8B, false),
             (true, VecElementType::I64) => (0x8B, true),
             (true, VecElementType::F32) => (0x8A, false),
             (true, VecElementType::F64) => (0x8A, true),
+            (false, VecElementType::I8) => (0x62, false),
+            (false, VecElementType::I16) => (0x62, true),
             (false, VecElementType::I32) => (0x89, false),
             (false, VecElementType::I64) => (0x89, true),
             (false, VecElementType::F32) => (0x88, false),
             (false, VecElementType::F64) => (0x88, true),
             _ => {
                 return Err(LowerError::UnsupportedOperation(
-                    "native AVX-512F compress/expand requires I32/I64/F32/F64 elements".to_string(),
+                    "native compress/expand requires I8/I16/I32/I64/F32/F64 elements".to_string(),
                 ));
             }
         };
@@ -2144,7 +2148,7 @@ mod tests {
                 dst: zmm1,
                 src: zmm2,
                 mask: None,
-                elem: VecElementType::I16,
+                elem: VecElementType::F16,
                 width: VecWidth::V512,
                 zeroing: false,
             },
@@ -2536,6 +2540,50 @@ mod tests {
                     zeroing: true,
                 },
                 &[0x62, 0xD2, 0xFD, 0x8B, 0x88, 0xF9][..],
+            ),
+            (
+                OpKind::VCompress {
+                    dst: zmm1,
+                    src: zmm2,
+                    mask: Some(k4),
+                    elem: VecElementType::I8,
+                    width: VecWidth::V512,
+                    zeroing: true,
+                },
+                &[0x62, 0xF2, 0x7D, 0xCC, 0x63, 0xD1][..],
+            ),
+            (
+                OpKind::VCompress {
+                    dst: zmm17,
+                    src: zmm18,
+                    mask: Some(k7),
+                    elem: VecElementType::I16,
+                    width: VecWidth::V512,
+                    zeroing: false,
+                },
+                &[0x62, 0xA2, 0xFD, 0x4F, 0x63, 0xD1][..],
+            ),
+            (
+                OpKind::VExpand {
+                    dst: ymm4,
+                    src: ymm6,
+                    mask: Some(k2),
+                    elem: VecElementType::I8,
+                    width: VecWidth::V256,
+                    zeroing: false,
+                },
+                &[0x62, 0xF2, 0x7D, 0x2A, 0x62, 0xE6][..],
+            ),
+            (
+                OpKind::VExpand {
+                    dst: xmm7,
+                    src: xmm9,
+                    mask: Some(k3),
+                    elem: VecElementType::I16,
+                    width: VecWidth::V128,
+                    zeroing: true,
+                },
+                &[0x62, 0xD2, 0xFD, 0x8B, 0x62, 0xF9][..],
             ),
             (
                 OpKind::VDotProductBF16 {

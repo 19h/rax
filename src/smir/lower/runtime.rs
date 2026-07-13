@@ -1191,7 +1191,9 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             || !valid_vector(src)
             || !matches!(
                 elem,
-                crate::smir::ir::types::VecElementType::I32
+                crate::smir::ir::types::VecElementType::I8
+                    | crate::smir::ir::types::VecElementType::I16
+                    | crate::smir::ir::types::VecElementType::I32
                     | crate::smir::ir::types::VecElementType::I64
                     | crate::smir::ir::types::VecElementType::F32
                     | crate::smir::ir::types::VecElementType::F64
@@ -1436,7 +1438,19 @@ pub fn x86_native_vector_features_supported_excluding(
             op,
             OpKind::X86MultiShiftQB { .. } | OpKind::X86PermuteBytesWords { .. }
         );
-        needs_vbmi2 |= matches!(op, OpKind::X86PackedFunnelShift { .. });
+        needs_vbmi2 |= matches!(op, OpKind::X86PackedFunnelShift { .. })
+            || matches!(
+                op,
+                OpKind::VCompress {
+                    elem: crate::smir::ir::types::VecElementType::I8
+                        | crate::smir::ir::types::VecElementType::I16,
+                    ..
+                } | OpKind::VExpand {
+                    elem: crate::smir::ir::types::VecElementType::I8
+                        | crate::smir::ir::types::VecElementType::I16,
+                    ..
+                }
+            );
         if let OpKind::VPopcnt { elem, .. } = op {
             needs_bitalg |= matches!(
                 elem,
@@ -2128,6 +2142,22 @@ mod jit_gate_tests {
                 src: zmm2,
                 mask: Some(k4),
                 elem: VecElementType::F64,
+                width: VecWidth::V512,
+                zeroing: false,
+            },
+            OpKind::VCompress {
+                dst: zmm1,
+                src: zmm2,
+                mask: Some(k4),
+                elem: VecElementType::I8,
+                width: VecWidth::V512,
+                zeroing: true,
+            },
+            OpKind::VExpand {
+                dst: zmm1,
+                src: zmm2,
+                mask: Some(k4),
+                elem: VecElementType::I16,
                 width: VecWidth::V512,
                 zeroing: false,
             },
