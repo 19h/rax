@@ -3511,6 +3511,22 @@ impl Aarch32Decoder {
             Ok(insn)
         };
 
+        // Integer divide (ARMv7 with the divide extension):
+        // cccc 0111 00x1 Rd 1111 Rm 0001 Rn, where x selects UDIV/SDIV.
+        // Unlike most media encodings, Rd occupies bits 19:16 and the two
+        // sources occupy bits 3:0 (dividend) and 11:8 (divisor).
+        let divide = match raw & 0x0ff0_f0f0 {
+            0x0730_f010 => Some(Mnemonic::UDIV),
+            0x0710_f010 => Some(Mnemonic::SDIV),
+            _ => None,
+        };
+        if let Some(mnemonic) = divide {
+            let div_rd = ((raw >> 16) & 0xf) as u8;
+            let div_rn = (raw & 0xf) as u8;
+            let div_rm = ((raw >> 8) & 0xf) as u8;
+            return mk(mnemonic, &[div_rd, div_rn, div_rm]);
+        }
+
         // Parallel add/sub (signed & unsigned): bits[27:23] == 0b01100.
         if (raw >> 23) & 0x1F == 0b01100 {
             return mk(Mnemonic::A32_PARALLEL, &[rd, rn, rm]);
@@ -3762,5 +3778,30 @@ mod tests {
         // CLZ R0, R1: e16f0f11
         let insn = decode_bytes(&[0x11, 0x0f, 0x6f, 0xe1]).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::CLZ);
+    }
+
+    #[test]
+    fn test_integer_divide_operands() {
+        let udiv = decode_bytes(&[0x11, 0xfa, 0x30, 0xe7]).unwrap();
+        assert_eq!(udiv.mnemonic, Mnemonic::UDIV);
+        assert_eq!(
+            udiv.operands,
+            vec![
+                Operand::Reg(Register::raw(0, false, false)),
+                Operand::Reg(Register::raw(1, false, false)),
+                Operand::Reg(Register::raw(10, false, false)),
+            ]
+        );
+
+        let sdiv = decode_bytes(&[0x14, 0xfb, 0x13, 0xe7]).unwrap();
+        assert_eq!(sdiv.mnemonic, Mnemonic::SDIV);
+        assert_eq!(
+            sdiv.operands,
+            vec![
+                Operand::Reg(Register::raw(3, false, false)),
+                Operand::Reg(Register::raw(4, false, false)),
+                Operand::Reg(Register::raw(11, false, false)),
+            ]
+        );
     }
 }

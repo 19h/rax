@@ -14,7 +14,7 @@ use rax::smir::lower::runtime::{
     Aarch32GuestRegs, ExecMem, is_aarch32_aarch64_native_clobber_safe_excluding,
 };
 
-const PROGRAM: [u32; 27] = [
+const PROGRAM: [u32; 29] = [
     0xe081_0002, // add   r0,r1,r2
     0xe054_3385, // subs  r3,r4,r5,lsl #7
     0xe2a7_60ff, // adc   r6,r7,#255
@@ -38,6 +38,8 @@ const PROGRAM: [u32; 27] = [
     0xe7cf_1412, // bfi   r1,r2,#8,#8
     0xe7e6_3654, // ubfx  r3,r4,#12,#7
     0xe7a7_5856, // sbfx  r5,r6,#16,#8
+    0xe730_fa11, // udiv  r0,r1,r10
+    0xe713_fb14, // sdiv  r3,r4,r11
     0xe30b_aeef, // movw  r10,#0xbeef
     0xe34c_aafe, // movt  r10,#0xcafe
     0xe15a_000b, // cmp   r10,r11
@@ -173,4 +175,36 @@ fn a32_bitfield_full_width_and_destructive_aliases_match_interpreter() {
     assert_eq!(actual.r[7], 0, "full-width BFC clears all 32 bits");
     assert_eq!(actual.r[3], initial.r[4], "full-width UBFX is exact");
     assert_eq!(actual.r[5], initial.r[6], "full-width SBFX is exact");
+}
+
+#[test]
+fn a32_division_zero_and_signed_overflow_match_interpreter() {
+    let zero_divisors = [
+        0xe3a0_a000, // mov  r10,#0
+        0xe730_fa11, // udiv r0,r1,r10
+        0xe713_fb14, // sdiv r3,r4,r11 (nonzero control)
+        0xe713_fa14, // sdiv r3,r4,r10
+    ];
+    let initial = initial_state();
+    let expected = reference(&zero_divisors, initial);
+    let (exec, entry) = lower(&zero_divisors);
+    let mut actual = initial;
+    exec.run_aarch32_identity(entry, &mut actual);
+    assert_eq!(actual, expected);
+    assert_eq!(actual.r[0], 0, "UDIV by zero returns zero");
+    assert_eq!(actual.r[3], 0, "SDIV by zero returns zero");
+
+    let signed_overflow = [
+        0xe300_4000, // movw r4,#0
+        0xe348_4000, // movt r4,#0x8000
+        0xe30f_afff, // movw r10,#0xffff
+        0xe34f_afff, // movt r10,#0xffff
+        0xe713_fa14, // sdiv r3,r4,r10
+    ];
+    let expected = reference(&signed_overflow, initial);
+    let (exec, entry) = lower(&signed_overflow);
+    let mut actual = initial;
+    exec.run_aarch32_identity(entry, &mut actual);
+    assert_eq!(actual, expected);
+    assert_eq!(actual.r[3], i32::MIN as u32);
 }

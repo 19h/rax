@@ -719,6 +719,8 @@ mod tests {
             (0xe7cf_1412, "bfi"),
             (0xe7e6_3654, "ubfx"),
             (0xe7a7_5856, "sbfx"),
+            (0xe730_fa11, "udiv"),
+            (0xe713_fb14, "sdiv"),
             (0xe30b_aeef, "movw"),
             (0xe34c_aafe, "movt"),
         ];
