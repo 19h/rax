@@ -5445,6 +5445,28 @@ mod tests {
         );
         builder.push_op(
             0x1006,
+            OpKind::VCompress {
+                dst: arch(X86Reg::Zmm(15)),
+                src: arch(X86Reg::Zmm(16)),
+                mask: None,
+                elem: VecElementType::I32,
+                width: VecWidth::V512,
+                zeroing: false,
+            },
+        );
+        builder.push_op(
+            0x1007,
+            OpKind::VExpand {
+                dst: arch(X86Reg::Zmm(17)),
+                src: arch(X86Reg::Zmm(18)),
+                mask: None,
+                elem: VecElementType::F64,
+                width: VecWidth::V512,
+                zeroing: false,
+            },
+        );
+        builder.push_op(
+            0x1008,
             OpKind::VCvtBF16ToFP32 {
                 dst: arch(X86Reg::Zmm(8)),
                 src: arch(X86Reg::Zmm(9)),

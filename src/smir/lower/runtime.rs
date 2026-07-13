@@ -977,6 +977,8 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::VConflict { .. }
             | OpKind::VLeadingZeros { .. }
             | OpKind::X86PermuteBytesWords { .. }
+            | OpKind::VCompress { .. }
+            | OpKind::VExpand { .. }
             | OpKind::VDotProduct { .. }
             | OpKind::VDotProductBF16 { .. }
             | OpKind::VCvtFP32ToBF16 { .. }
@@ -1146,6 +1148,54 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
                     | crate::smir::ir::types::VecElementType::I16
             )
             || !valid_alias
+            || (*zeroing && mask.is_none())
+            || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
+        {
+            return false;
+        }
+    }
+
+    if let OpKind::VCompress {
+        dst,
+        src,
+        mask,
+        elem,
+        width,
+        zeroing,
+    }
+    | OpKind::VExpand {
+        dst,
+        src,
+        mask,
+        elem,
+        width,
+        zeroing,
+    } = op
+    {
+        let valid_vector = |reg: &VReg| {
+            matches!(
+                (reg, width),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V256
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V512
+                )
+            )
+        };
+        if !valid_vector(dst)
+            || !valid_vector(src)
+            || !matches!(
+                elem,
+                crate::smir::ir::types::VecElementType::I32
+                    | crate::smir::ir::types::VecElementType::I64
+                    | crate::smir::ir::types::VecElementType::F32
+                    | crate::smir::ir::types::VecElementType::F64
+            )
             || (*zeroing && mask.is_none())
             || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
         {
@@ -1367,6 +1417,8 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::VConflict { width, .. }
             | OpKind::VLeadingZeros { width, .. }
             | OpKind::X86PermuteBytesWords { width, .. }
+            | OpKind::VCompress { width, .. }
+            | OpKind::VExpand { width, .. }
             | OpKind::VDotProduct { width, .. }
             | OpKind::VDotProductBF16 { width, .. }
             | OpKind::VCvtFP32ToBF16 { width, .. }
@@ -2062,6 +2114,22 @@ mod jit_gate_tests {
                 width: VecWidth::V512,
                 overwrite_table: false,
                 zeroing: true,
+            },
+            OpKind::VCompress {
+                dst: zmm1,
+                src: zmm2,
+                mask: Some(k4),
+                elem: VecElementType::I32,
+                width: VecWidth::V512,
+                zeroing: true,
+            },
+            OpKind::VExpand {
+                dst: zmm1,
+                src: zmm2,
+                mask: Some(k4),
+                elem: VecElementType::F64,
+                width: VecWidth::V512,
+                zeroing: false,
             },
             OpKind::VDotProduct {
                 dst: zmm1,

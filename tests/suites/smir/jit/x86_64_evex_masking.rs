@@ -93,6 +93,8 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vplzcntd {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0x44, 0xca]),
         // vpermb %zmm3,%zmm2,%zmm1{%k4}{z}
         ("vpermb {k4}{z}", &[0x62, 0xf2, 0x6d, 0xcc, 0x8d, 0xcb]),
+        ("vpcompressd {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0x8b, 0xd1]),
+        ("vpexpandd {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0x89, 0xca]),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -445,6 +447,48 @@ fn hot_masked_vpermb_jits_with_direct_table_and_index_roles() {
     assert_eq!(get_zmm(&after, 1), expected);
     assert_eq!(get_zmm(&after, 2), indices);
     assert_eq!(get_zmm(&after, 3), table);
+    assert_eq!(after.k[4], mask);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_masked_vpcompressd_jits_with_packed_lane_semantics() {
+    if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+        return;
+    }
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xf2, 0x7d, 0xcc, 0x8b, 0xd1]);
+    code.extend_from_slice(&[0xff, 0xc9]);
+    code.extend_from_slice(&[0x75, 0xf6]);
+    code.push(0xf4);
+    let lanes = std::array::from_fn::<_, 16, _>(|lane| 0x1000_0000u32 + lane as u32);
+    let mut source = [0u64; 8];
+    for (lane, value) in lanes.iter().copied().enumerate() {
+        source[lane / 2] |= u64::from(value) << ((lane % 2) * 32);
+    }
+    let mask = 0xA55Au64;
+    let selected = lanes
+        .iter()
+        .copied()
+        .enumerate()
+        .filter_map(|(lane, value)| ((mask >> lane) & 1 != 0).then_some(value))
+        .collect::<Vec<_>>();
+    let mut expected = [0u64; 8];
+    for (lane, value) in selected.into_iter().enumerate() {
+        expected[lane / 2] |= u64::from(value) << ((lane % 2) * 32);
+    }
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, [u64::MAX; 8]);
+    set_zmm(&mut regs, 2, source);
+    regs.k[4] = mask;
+    vcpu.set_regs(&regs).unwrap();
+    assert!(vcpu.jit_try_block().expect("jit masked VPCOMPRESSD loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xffff_ffff, 0);
+    assert_eq!(get_zmm(&after, 1), expected);
+    assert_eq!(get_zmm(&after, 2), source);
     assert_eq!(after.k[4], mask);
     run_to_hlt(&mut vcpu);
 }
