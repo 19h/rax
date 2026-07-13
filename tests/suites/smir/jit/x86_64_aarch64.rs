@@ -430,6 +430,91 @@ fn x86_w16_movx_and_cbw_execute_natively_with_partial_register_merges() {
 }
 
 #[test]
+fn x86_crc32c_executes_natively_across_widths_aliases_and_preserves_flags() {
+    // CRC32 eax,cl; CRC32 edx,si; CRC32 r8d,r9d; CRC32 r10,r11;
+    // CRC32 r12d,r12b; jnz start; hlt. The sequence covers every data width,
+    // extended registers, a same-register accumulator/data alias, and the
+    // architecturally mandatory zero-extension. CRC32 preserves seeded ZF=1,
+    // so the syntactic backedge is not taken.
+    let code = [
+        0xF2, 0x0F, 0x38, 0xF0, 0xC1, // CRC32 eax,cl
+        0x66, 0xF2, 0x0F, 0x38, 0xF1, 0xD6, // CRC32 edx,si
+        0xF2, 0x45, 0x0F, 0x38, 0xF1, 0xC1, // CRC32 r8d,r9d
+        0xF2, 0x4D, 0x0F, 0x38, 0xF1, 0xD3, // CRC32 r10,r11
+        0xF2, 0x45, 0x0F, 0x38, 0xF0, 0xE4, // CRC32 r12d,r12b
+        0x75, 0xE1, // JNZ start (not taken: ZF=1)
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = u64::MAX;
+        regs.rcx = 0x1111_2222_3333_4431;
+        regs.rdx = 0xFFFF_FFFF_1234_5678;
+        regs.rsi = 0x0606_0606_0606_ABCD;
+        regs.r8 = 0xFFFF_FFFF_89AB_CDEF;
+        regs.r9 = 0x9999_AAAA_0123_4567;
+        regs.r10 = 0xFFFF_FFFF_DEAD_BEEF;
+        regs.r11 = 0x0123_4567_89AB_CDEF;
+        regs.r12 = 0xA5A5_5A5A_DEAD_BEEF;
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    let before = jit.get_regs().unwrap();
+    if !std::arch::is_aarch64_feature_detected!("crc") {
+        assert!(!jit.jit_try_block().expect("CRC32C feature fallback"));
+        assert_mapped_state_eq(&jit.get_regs().unwrap(), &before, "CRC32C fallback");
+        return;
+    }
+    assert!(
+        jit.jit_try_block().expect("CRC32C JIT attempt"),
+        "register-only CRC32C block must enter the AArch64 native tier"
+    );
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "CRC32C widths/alias");
+    assert_eq!(actual.rax, 0x6F0A_661C, "byte CRC and zero-extension");
+    assert_eq!(actual.rdx, 0xAAE3_2043, "halfword CRC");
+    assert_eq!(actual.r8, 0x796A_B9A9, "word CRC");
+    assert_eq!(actual.r10, 0x3AB0_1437, "doubleword CRC");
+    assert_eq!(actual.r12 >> 32, 0, "aliased byte CRC zero-extension");
+    assert_eq!(actual.rflags, 0xCD6, "CRC32C preserves RFLAGS");
+}
+
+#[test]
+fn x86_crc32c_legacy_high_byte_source_remains_interpreter_only() {
+    // CRC32 edx,ch lifts CH through a virtual extraction temporary. The
+    // identity bridge cannot map that high byte lane directly, so it must
+    // reject the region without executing any instruction.
+    let code = [
+        0xF2, 0x0F, 0x38, 0xF0, 0xD5, // CRC32 edx,ch
+        0x75, 0xF9, // JNZ start (would be not taken because ZF=1)
+        0xF4,
+    ];
+    let mut vcpu = make_vcpu_code(&code);
+    let mut before = vcpu.get_regs().unwrap();
+    before.rcx = 0x1111_2222_3333_AB44;
+    before.rdx = 0xFFFF_FFFF_1234_5678;
+    before.rflags = 0xCD6;
+    vcpu.set_regs(&before).unwrap();
+
+    assert!(!vcpu.jit_try_block().expect("high-byte CRC32C eligibility"));
+    assert_mapped_state_eq(
+        &vcpu.get_regs().unwrap(),
+        &before,
+        "CRC32C CH must not execute natively",
+    );
+}
+
+#[test]
 fn x86_legacy_high_byte_setcc_remains_interpreter_only() {
     // SETZ AH lifts through a virtual byte and a high-lane merge. The identity
     // bridge has no AH/CH/DH/BH lane mapping, so the block must fail closed.

@@ -3014,6 +3014,20 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
                     && x86_aarch64_legacy_gpr(dst)
                     && x86_aarch64_legacy_gpr(src))
         }
+        OpKind::Crc32C {
+            dst,
+            crc,
+            data,
+            data_width,
+        } => {
+            dst == crc
+                && x86_aarch64_legacy_gpr(dst)
+                && x86_aarch64_legacy_gpr(data)
+                && matches!(
+                    data_width,
+                    OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+                )
+        }
         OpKind::AndNot { width, .. }
         | OpKind::MulU { width, .. }
         | OpKind::Bextr { width, .. }
@@ -4410,6 +4424,49 @@ mod jit_gate_tests {
             },
         ] {
             assert!(!x86_aarch64_gate(vec![op.clone()]), "unsupported {op:?}");
+        }
+    }
+
+    #[test]
+    fn x86_aarch64_gate_accepts_crc32c_widths_and_rejects_malformed_shapes() {
+        let rax = x86(X86Reg::Rax);
+        let rbx = x86(X86Reg::Rbx);
+        for width in [OpWidth::W8, OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+            assert!(x86_aarch64_gate(vec![OpKind::Crc32C {
+                dst: rax,
+                crc: rax,
+                data: rbx,
+                data_width: width,
+            }]));
+            assert!(x86_aarch64_gate(vec![OpKind::Crc32C {
+                dst: rax,
+                crc: rax,
+                data: rax,
+                data_width: width,
+            }]));
+        }
+
+        for op in [
+            OpKind::Crc32C {
+                dst: rax,
+                crc: rbx,
+                data: rbx,
+                data_width: OpWidth::W32,
+            },
+            OpKind::Crc32C {
+                dst: rax,
+                crc: rax,
+                data: VReg::virt(0),
+                data_width: OpWidth::W8,
+            },
+            OpKind::Crc32C {
+                dst: rax,
+                crc: rax,
+                data: rbx,
+                data_width: OpWidth::W128,
+            },
+        ] {
+            assert!(!x86_aarch64_gate(vec![op.clone()]), "malformed {op:?}");
         }
     }
 

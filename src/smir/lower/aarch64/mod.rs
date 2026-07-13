@@ -78,6 +78,8 @@ pub struct Aarch64Lowerer {
     flagm2_available: bool,
     /// Host support for FEAT_FP16 (half-precision Advanced SIMD / scalar FP).
     fp16_available: bool,
+    /// Host support for FEAT_CRC32 (CRC32C scalar instructions).
+    crc_available: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -115,7 +117,23 @@ impl Aarch64Lowerer {
             flagm_available: Self::detect_flagm_available(),
             flagm2_available: Self::detect_flagm2_available(),
             fp16_available: Self::detect_fp16_available(),
+            crc_available: Self::detect_crc_available(),
         }
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    fn detect_crc_available() -> bool {
+        std::arch::is_aarch64_feature_detected!("crc")
+    }
+
+    #[cfg(not(target_arch = "aarch64"))]
+    fn detect_crc_available() -> bool {
+        true
+    }
+
+    #[cfg(test)]
+    fn set_crc_available_for_test(&mut self, available: bool) {
+        self.crc_available = available;
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -8305,6 +8323,43 @@ impl Aarch64Lowerer {
         let (imm_n, immr, imms) = Self::logical_bitmask_imm(final_mask, emit_width)?;
         self.emit_logic_imm(dst, dst, 0b00, imm_n, immr, imms, emit_width)?;
         self.emit_scratch_restore(&scratches);
+        Ok(())
+    }
+
+    fn lower_crc32c(
+        &mut self,
+        dst: VReg,
+        crc: VReg,
+        data: VReg,
+        data_width: OpWidth,
+    ) -> Result<(), LowerError> {
+        if !self.crc_available {
+            return Err(LowerError::UnsupportedOp {
+                op: "AArch64 native CRC32C requires FEAT_CRC32".into(),
+            });
+        }
+
+        // CRC32C{B,H,W,X} reads the low 32 bits of Wn as the accumulator,
+        // consumes the selected low part of Rm, and writes Wd. The Wd write
+        // provides the architectural zero-extension required by x86 CRC32,
+        // including its r64 source form. These encodings are naturally safe
+        // for every dst/crc/data alias because all sources are read before Wd
+        // is committed.
+        let base = match data_width {
+            OpWidth::W8 => 0x1ac0_5000,  // CRC32CB Wd, Wn, Wm
+            OpWidth::W16 => 0x1ac0_5400, // CRC32CH Wd, Wn, Wm
+            OpWidth::W32 => 0x1ac0_5800, // CRC32CW Wd, Wn, Wm
+            OpWidth::W64 => 0x9ac0_5c00, // CRC32CX Wd, Wn, Xm
+            other => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("AArch64 native CRC32C data width {other:?}"),
+                });
+            }
+        };
+        let rd = Self::dst_gpr_arm_or_x86(dst)?;
+        let rn = Self::gpr_arm_or_x86(crc)?;
+        let rm = Self::gpr_arm_or_x86(data)?;
+        self.emit(base | (u32::from(rm) << 16) | (u32::from(rn) << 5) | u32::from(rd));
         Ok(())
     }
 
@@ -16928,6 +16983,12 @@ impl Aarch64Lowerer {
             OpKind::Clz { dst, src, width } => self.lower_clz(*dst, *src, *width),
             OpKind::Ctz { dst, src, width } => self.lower_ctz(*dst, *src, *width),
             OpKind::Popcnt { dst, src, width } => self.lower_popcnt(*dst, *src, *width),
+            OpKind::Crc32C {
+                dst,
+                crc,
+                data,
+                data_width,
+            } => self.lower_crc32c(*dst, *crc, *data, *data_width),
             OpKind::X86Count {
                 dst,
                 src,
@@ -17710,6 +17771,18 @@ mod tests {
         lowerer.set_flagm_features_for_test(flagm, flagm2);
         lowerer.lower_function(&func).unwrap();
         lowerer.finalize().unwrap()
+    }
+
+    fn try_lower_ops_with_crc_feature(
+        kinds: Vec<OpKind>,
+        available: bool,
+    ) -> Result<Vec<u8>, LowerError> {
+        let func = func_with_ops(kinds);
+
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.set_crc_available_for_test(available);
+        lowerer.lower_function(&func)?;
+        lowerer.finalize()
     }
 
     fn code_words(code: &[u8]) -> Vec<u32> {
@@ -56068,6 +56141,126 @@ mod tests {
             }
             assert_eq!(out_nzcv, old_nzcv, "{label}: NZCV");
             assert_eq!(sp, 0x8000, "{label}: stack");
+        }
+    }
+
+    #[test]
+    fn lowers_crc32c_exact_encodings_widths_aliases_and_feature_gate() {
+        let rax = x86(X86Reg::Rax);
+        let rcx = x86(X86Reg::Rcx);
+        let rdx = x86(X86Reg::Rdx);
+        let rbx = x86(X86Reg::Rbx);
+        for (width, dst, crc, data, expected) in [
+            (OpWidth::W8, rax, rcx, rdx, 0x1ac2_5020),
+            (OpWidth::W16, rbx, rdx, rcx, 0x1ac1_5443),
+            (OpWidth::W32, rax, rax, rbx, 0x1ac3_5800),
+            (OpWidth::W64, rcx, rdx, rcx, 0x9ac1_5c41),
+        ] {
+            let code = try_lower_ops_with_crc_feature(
+                vec![OpKind::Crc32C {
+                    dst,
+                    crc,
+                    data,
+                    data_width: width,
+                }],
+                true,
+            )
+            .unwrap();
+            assert_eq!(code_words(&code)[0], expected, "CRC32C {width:?}");
+        }
+
+        let op = OpKind::Crc32C {
+            dst: rax,
+            crc: rax,
+            data: rbx,
+            data_width: OpWidth::W64,
+        };
+        assert!(try_lower_ops_with_crc_feature(vec![op.clone()], false).is_err());
+        assert!(
+            try_lower_ops_with_crc_feature(
+                vec![OpKind::Crc32C {
+                    dst: rax,
+                    crc: rax,
+                    data: rbx,
+                    data_width: OpWidth::W128,
+                }],
+                true,
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn lowers_crc32c_runtime_known_answers_zero_extension_and_flags() {
+        let reference = |mut crc: u32, data: u64, width: OpWidth| {
+            for byte in 0..(width.bits() / 8) {
+                crc ^= ((data >> (byte * 8)) & 0xff) as u32;
+                for _ in 0..8 {
+                    crc = (crc >> 1) ^ (0x82f6_3b78 & 0_u32.wrapping_sub(crc & 1));
+                }
+            }
+            u64::from(crc)
+        };
+        let rax = x86(X86Reg::Rax);
+        let rbx = x86(X86Reg::Rbx);
+        let cases = [
+            (OpWidth::W8, u64::MAX, 0x31, 0x6f0a_661c),
+            (OpWidth::W16, 0x1234_5678, 0xabcd, 0xaae3_2043),
+            (OpWidth::W32, 0x89ab_cdef, 0x0123_4567, 0x796a_b9a9),
+            (
+                OpWidth::W64,
+                0xffff_ffff_dead_beef,
+                0x0123_4567_89ab_cdef,
+                0x3ab0_1437,
+            ),
+        ];
+        for (width, crc, data, expected) in cases {
+            let code = try_lower_ops_with_crc_feature(
+                vec![OpKind::Crc32C {
+                    dst: rax,
+                    crc: rax,
+                    data: rbx,
+                    data_width: width,
+                }],
+                true,
+            )
+            .unwrap();
+            let old_nzcv = 0b1011;
+            let (out, out_nzcv, sp) = run_aarch64_code(
+                &code,
+                &[
+                    (0, crc),
+                    (3, data),
+                    (16, 0x1616_1616_1616_1616),
+                    (17, 0x1717_1717_1717_1717),
+                ],
+                old_nzcv,
+            );
+            assert_eq!(out[0], expected, "CRC32C {width:?} result");
+            assert_eq!(expected, reference(crc as u32, data, width));
+            assert_eq!(out[3], data, "CRC32C {width:?} data source");
+            assert_eq!(out[16], 0x1616_1616_1616_1616, "scratch x16");
+            assert_eq!(out[17], 0x1717_1717_1717_1717, "scratch x17");
+            assert_eq!(out_nzcv, old_nzcv, "CRC32C {width:?} NZCV");
+            assert_eq!(sp, 0x8000, "CRC32C {width:?} stack");
+        }
+
+        for width in [OpWidth::W8, OpWidth::W64] {
+            let value = 0xa5a5_5a5a_dead_beef;
+            let code = try_lower_ops_with_crc_feature(
+                vec![OpKind::Crc32C {
+                    dst: rax,
+                    crc: rax,
+                    data: rax,
+                    data_width: width,
+                }],
+                true,
+            )
+            .unwrap();
+            let (out, out_nzcv, sp) = run_aarch64_code(&code, &[(0, value)], 0b0110);
+            assert_eq!(out[0], reference(value as u32, value, width));
+            assert_eq!(out_nzcv, 0b0110, "aliased CRC32C {width:?} NZCV");
+            assert_eq!(sp, 0x8000, "aliased CRC32C {width:?} stack");
         }
     }
 
