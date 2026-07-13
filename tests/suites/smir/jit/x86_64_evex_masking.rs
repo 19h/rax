@@ -110,6 +110,9 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vsha512msg1 ymm9", &[0xc4, 0x42, 0x7f, 0xcc, 0xca]),
         ("vsha512msg2 ymm9", &[0xc4, 0x42, 0x7f, 0xcd, 0xca]),
         ("vsha512rnds2 ymm9", &[0xc4, 0x42, 0x27, 0xcb, 0xca]),
+        ("vsm3msg1 xmm9", &[0xc4, 0x42, 0x20, 0xda, 0xca]),
+        ("vsm3msg2 xmm9", &[0xc4, 0x42, 0x21, 0xda, 0xca]),
+        ("vsm3rnds2 xmm9", &[0xc4, 0x43, 0x21, 0xde, 0xca, 0x3e]),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -747,6 +750,70 @@ fn hot_vsha512msg1_jits_with_schedule_and_vex_upper_zeroing_semantics() {
     assert_eq!(after.rcx & 0xFFFF_FFFF, 0);
     assert_eq!(get_zmm(&after, 1), expected);
     assert_eq!(get_zmm(&after, 2), source);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_vsm3msg1_jits_with_schedule_and_vex_upper_zeroing_semantics() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx")
+        || !std::is_x86_feature_detected!("sm3")
+    {
+        return;
+    }
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0xC4, 0xE2, 0x68, 0xDA, 0xCB]);
+    code.extend_from_slice(&[0xFF, 0xC9]);
+    code.extend_from_slice(&[0x75, 0xF7]);
+    code.push(0xF4);
+
+    let initial_words = [0x0123_4567u32, 0x89AB_CDEF, 0x0F1E_2D3C, 0x4B5A_6978];
+    let first_words = [0x1122_3344u32, 0x5566_7788, 0x99AA_BBCC, 0xDDEE_FF00];
+    let second_words = [0x1357_9BDFu32, 0x2468_ACE0, 0xF0E1_D2C3, 0xB4A5_9687];
+    let pack = |words: [u32; 4], upper: u64| {
+        [
+            u64::from(words[0]) | (u64::from(words[1]) << 32),
+            u64::from(words[2]) | (u64::from(words[3]) << 32),
+            upper,
+            upper,
+            upper,
+            upper,
+            upper,
+            upper,
+        ]
+    };
+    let mut expected_words = initial_words;
+    let p1 = |value: u32| value ^ value.rotate_left(15) ^ value.rotate_left(23);
+    for _ in 0..200 {
+        let old = expected_words;
+        expected_words = std::array::from_fn(|index| {
+            let mut value = old[index] ^ second_words[index];
+            if index < 3 {
+                value ^= first_words[index].rotate_left(15);
+            }
+            p1(value)
+        });
+    }
+    let initial = pack(initial_words, u64::MAX);
+    let first = pack(first_words, 0xA5A5_A5A5_A5A5_A5A5);
+    let second = pack(second_words, 0x5A5A_5A5A_5A5A_5A5A);
+    let expected = pack(expected_words, 0);
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, initial);
+    set_zmm(&mut regs, 2, first);
+    set_zmm(&mut regs, 3, second);
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(vcpu.jit_try_block().expect("jit VSM3MSG1 loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xFFFF_FFFF, 0);
+    assert_eq!(get_zmm(&after, 1), expected);
+    assert_eq!(get_zmm(&after, 2), first);
+    assert_eq!(get_zmm(&after, 3), second);
     run_to_hlt(&mut vcpu);
 }
 

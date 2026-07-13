@@ -353,6 +353,19 @@ impl Avx10Lowerer {
                 Some(self.lower_x86_sha512(code, 0xCB, dst, Some(state), wk))
             }
 
+            OpKind::X86Sm3Msg1 { dst, src1, src2 } => {
+                Some(self.lower_x86_sm3(code, 2, 0, 0xDA, dst, src1, src2, None))
+            }
+            OpKind::X86Sm3Msg2 { dst, src1, src2 } => {
+                Some(self.lower_x86_sm3(code, 2, 1, 0xDA, dst, src1, src2, None))
+            }
+            OpKind::X86Sm3Rounds2 {
+                dst,
+                state,
+                words,
+                imm,
+            } => Some(self.lower_x86_sm3(code, 3, 1, 0xDE, dst, state, words, Some(*imm))),
+
             // AVX10.1 BF16
             OpKind::VDotProductBF16 {
                 dst,
@@ -1260,6 +1273,41 @@ impl Avx10Lowerer {
             source_reg,
             opcode,
             None,
+        );
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn lower_x86_sm3(
+        &self,
+        code: &mut CodeBuffer,
+        map: u8,
+        pp: u8,
+        opcode: u8,
+        dst: &VReg,
+        src1: &VReg,
+        src2: &VReg,
+        immediate: Option<u8>,
+    ) -> Avx10LowerResult<()> {
+        let xmm = |reg: &VReg| match reg {
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(n))) if *n <= 15 => Ok(*n),
+            _ => Err(LowerError::InvalidRegister(format!(
+                "SM3 requires an architectural XMM0..XMM15 operand: {reg:?}"
+            ))),
+        };
+        let dst_reg = xmm(dst)?;
+        let src1_reg = xmm(src1)?;
+        let src2_reg = xmm(src2)?;
+        Self::emit_vex_rr(
+            code,
+            map,
+            pp,
+            VecWidth::V128,
+            dst_reg,
+            src1_reg,
+            src2_reg,
+            opcode,
+            immediate,
         );
         Ok(())
     }
@@ -2754,6 +2802,67 @@ mod tests {
             OpKind::X86Sha512Msg2 {
                 dst: ymm(16),
                 src: ymm(2),
+            },
+        ] {
+            let mut code = CodeBuffer::new();
+            let result = lowerer.try_lower(&invalid, &mut code).unwrap();
+            assert!(result.is_err(), "accepted malformed {invalid:?}");
+            assert_eq!(code.len(), 0);
+        }
+    }
+
+    #[test]
+    fn x86_sm3_lowering_covers_message_round_forms_and_rejects_malformed_registers() {
+        let lowerer = Avx10Lowerer::new();
+        let xmm = |n| VReg::Arch(ArchReg::X86(X86Reg::Xmm(n)));
+        for (op, expected) in [
+            (
+                OpKind::X86Sm3Msg1 {
+                    dst: xmm(9),
+                    src1: xmm(11),
+                    src2: xmm(10),
+                },
+                &[0xC4, 0x42, 0x20, 0xDA, 0xCA][..],
+            ),
+            (
+                OpKind::X86Sm3Msg2 {
+                    dst: xmm(9),
+                    src1: xmm(11),
+                    src2: xmm(10),
+                },
+                &[0xC4, 0x42, 0x21, 0xDA, 0xCA][..],
+            ),
+            (
+                OpKind::X86Sm3Rounds2 {
+                    dst: xmm(9),
+                    state: xmm(11),
+                    words: xmm(10),
+                    imm: 0x3E,
+                },
+                &[0xC4, 0x43, 0x21, 0xDE, 0xCA, 0x3E][..],
+            ),
+        ] {
+            let mut code = CodeBuffer::new();
+            lowerer.try_lower(&op, &mut code).unwrap().unwrap();
+            assert_eq!(code.as_slice(), expected, "{op:?}");
+        }
+
+        for invalid in [
+            OpKind::X86Sm3Msg1 {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                src1: xmm(2),
+                src2: xmm(3),
+            },
+            OpKind::X86Sm3Msg2 {
+                dst: xmm(1),
+                src1: VReg::Virtual(VirtualId(7)),
+                src2: xmm(3),
+            },
+            OpKind::X86Sm3Rounds2 {
+                dst: xmm(1),
+                state: xmm(2),
+                words: xmm(16),
+                imm: 0xFF,
             },
         ] {
             let mut code = CodeBuffer::new();
