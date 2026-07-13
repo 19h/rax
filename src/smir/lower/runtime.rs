@@ -980,6 +980,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::VCompress { .. }
             | OpKind::VExpand { .. }
             | OpKind::X86NarrowInt { .. }
+            | OpKind::X86Aes { .. }
             | OpKind::VDotProduct { .. }
             | OpKind::VDotProductBF16 { .. }
             | OpKind::VCvtFP32ToBF16 { .. }
@@ -1268,6 +1269,54 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         }
     }
 
+    if let OpKind::X86Aes {
+        dst,
+        src1,
+        src2,
+        width,
+        op,
+        imm,
+    } = op
+    {
+        let valid_vector = |reg: &VReg| {
+            matches!(
+                (reg, width),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V256
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                    crate::smir::ir::types::VecWidth::V512
+                )
+            )
+        };
+        let valid = match op {
+            crate::smir::ir::types::X86AesOp::Enc
+            | crate::smir::ir::types::X86AesOp::EncLast
+            | crate::smir::ir::types::X86AesOp::Dec
+            | crate::smir::ir::types::X86AesOp::DecLast => {
+                *imm == 0
+                    && valid_vector(dst)
+                    && valid_vector(src1)
+                    && src2.is_some_and(|reg| valid_vector(&reg))
+            }
+            crate::smir::ir::types::X86AesOp::InvMixColumns
+            | crate::smir::ir::types::X86AesOp::KeygenAssist => {
+                *width == crate::smir::ir::types::VecWidth::V128
+                    && matches!(dst, VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=15))))
+                    && matches!(src1, VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=15))))
+                    && src2.is_none()
+                    && (*op == crate::smir::ir::types::X86AesOp::KeygenAssist || *imm == 0)
+            }
+        };
+        if !valid {
+            return false;
+        }
+    }
+
     if let OpKind::VMultiplyAdd52 {
         dst,
         acc,
@@ -1445,6 +1494,44 @@ pub fn uses_x86_native_vectors_excluding(
         .any(|op| is_x86_native_vector_op(&op.kind))
 }
 
+/// Return `(AES-NI, VAES, AVX-512VL)` requirements contributed by an admitted
+/// `X86Aes` operation. Low-register 128/256-bit rounds are re-encoded with VEX;
+/// high registers require EVEX.VL, while 512-bit rounds use EVEX without VL.
+fn x86_aes_feature_requirements(op: &crate::smir::ir::ops::OpKind) -> (bool, bool, bool) {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86AesOp, X86Reg};
+
+    let OpKind::X86Aes {
+        dst,
+        src1,
+        src2,
+        width,
+        op,
+        ..
+    } = op
+    else {
+        return (false, false, false);
+    };
+    match op {
+        X86AesOp::InvMixColumns | X86AesOp::KeygenAssist => (true, false, false),
+        X86AesOp::Enc | X86AesOp::EncLast | X86AesOp::Dec | X86AesOp::DecLast => {
+            let high_vector = |reg: &VReg| {
+                matches!(
+                    reg,
+                    VReg::Arch(ArchReg::X86(
+                        X86Reg::Xmm(16..=31) | X86Reg::Ymm(16..=31) | X86Reg::Zmm(16..=31)
+                    ))
+                )
+            };
+            let needs_vl = *width != VecWidth::V512
+                && (high_vector(dst)
+                    || high_vector(src1)
+                    || src2.is_some_and(|reg| high_vector(&reg)));
+            (false, true, needs_vl)
+        }
+    }
+}
+
 /// Verify that this host can execute every admitted vector opcode in `func`.
 /// The trampoline itself uses 512-bit VMOVDQU64 and 64-bit KMOVQ, so AVX-512F
 /// and AVX-512BW are unconditional requirements for every vector region.
@@ -1466,6 +1553,8 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_bf16 = false;
     let mut needs_cd = false;
     let mut needs_fp16 = false;
+    let mut needs_aes = false;
+    let mut needs_vaes = false;
 
     for op in func
         .blocks
@@ -1485,6 +1574,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::VCompress { width, .. }
             | OpKind::VExpand { width, .. }
             | OpKind::X86NarrowInt { width, .. }
+            | OpKind::X86Aes { width, .. }
             | OpKind::VDotProduct { width, .. }
             | OpKind::VDotProductBF16 { width, .. }
             | OpKind::VCvtFP32ToBF16 { width, .. }
@@ -1497,7 +1587,12 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86MultiShiftQB { width, .. } => *width,
             _ => unreachable!("filtered to native vector operations"),
         };
-        needs_vl |= width != VecWidth::V512;
+        let (aes, vaes, aes_vl) = x86_aes_feature_requirements(op);
+        needs_vl |= if matches!(op, OpKind::X86Aes { .. }) {
+            aes_vl
+        } else {
+            width != VecWidth::V512
+        };
         needs_vbmi |= matches!(
             op,
             OpKind::X86MultiShiftQB { .. } | OpKind::X86PermuteBytesWords { .. }
@@ -1536,6 +1631,8 @@ pub fn x86_native_vector_features_supported_excluding(
         );
         needs_cd |= matches!(op, OpKind::VConflict { .. } | OpKind::VLeadingZeros { .. });
         needs_fp16 |= matches!(op, OpKind::VFP16Arith { .. });
+        needs_aes |= aes;
+        needs_vaes |= vaes;
     }
 
     if !any {
@@ -1556,6 +1653,8 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_bf16 || std::is_x86_feature_detected!("avx512bf16"))
             && (!needs_cd || std::is_x86_feature_detected!("avx512cd"))
             && (!needs_fp16 || std::is_x86_feature_detected!("avx512fp16"))
+            && (!needs_aes || std::is_x86_feature_detected!("aes"))
+            && (!needs_vaes || std::is_x86_feature_detected!("vaes"))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
@@ -1571,6 +1670,8 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_bf16,
             needs_cd,
             needs_fp16,
+            needs_aes,
+            needs_vaes,
         );
         false
     }
@@ -2072,7 +2173,7 @@ mod jit_gate_tests {
     use crate::smir::ir::ops::{OpKind, X86OpHint};
     use crate::smir::ir::types::{
         Address, ArchReg, ArmReg, FpPrecision, FunctionId, MemWidth, OpWidth, ShiftOp, SignExtend,
-        SrcOperand, VReg, VecElementType, VecWidth, VirtualId, X86Reg,
+        SrcOperand, VReg, VecElementType, VecWidth, VirtualId, X86AesOp, X86Reg,
     };
     use crate::smir::ir::{FunctionBuilder, Terminator};
 
@@ -2106,6 +2207,62 @@ mod jit_gate_tests {
             &std::collections::HashMap::new(),
             allow_mem,
         )
+    }
+
+    #[test]
+    fn x86_aes_feature_requirements_distinguish_vex_evex_vl_and_aes_ni() {
+        let aes = |dst, src1, src2, width, op| OpKind::X86Aes {
+            dst,
+            src1,
+            src2,
+            width,
+            op,
+            imm: 0,
+        };
+        assert_eq!(
+            x86_aes_feature_requirements(&aes(
+                x86(X86Reg::Xmm(1)),
+                x86(X86Reg::Xmm(2)),
+                Some(x86(X86Reg::Xmm(3))),
+                VecWidth::V128,
+                X86AesOp::Enc,
+            )),
+            (false, true, false)
+        );
+        assert_eq!(
+            x86_aes_feature_requirements(&aes(
+                x86(X86Reg::Xmm(16)),
+                x86(X86Reg::Xmm(17)),
+                Some(x86(X86Reg::Xmm(18))),
+                VecWidth::V128,
+                X86AesOp::EncLast,
+            )),
+            (false, true, true)
+        );
+        assert_eq!(
+            x86_aes_feature_requirements(&aes(
+                x86(X86Reg::Zmm(16)),
+                x86(X86Reg::Zmm(17)),
+                Some(x86(X86Reg::Zmm(18))),
+                VecWidth::V512,
+                X86AesOp::Dec,
+            )),
+            (false, true, false)
+        );
+        assert_eq!(
+            x86_aes_feature_requirements(&aes(
+                x86(X86Reg::Xmm(9)),
+                x86(X86Reg::Xmm(8)),
+                None,
+                VecWidth::V128,
+                X86AesOp::InvMixColumns,
+            )),
+            (true, false, false)
+        );
+        assert_eq!(
+            x86_aes_feature_requirements(&OpKind::Nop),
+            (false, false, false)
+        );
     }
 
     #[test]
@@ -2148,6 +2305,8 @@ mod jit_gate_tests {
         let zmm2 = x86(X86Reg::Zmm(2));
         let zmm3 = x86(X86Reg::Zmm(3));
         let ymm1 = x86(X86Reg::Ymm(1));
+        let xmm1 = x86(X86Reg::Xmm(1));
+        let xmm2 = x86(X86Reg::Xmm(2));
         let k4 = x86(X86Reg::K(4));
         let k5 = x86(X86Reg::K(5));
         let native_ops = [
@@ -2218,6 +2377,22 @@ mod jit_gate_tests {
                 width: VecWidth::V512,
                 mode: crate::smir::ir::types::X86NarrowMode::Truncate,
                 zeroing: true,
+            },
+            OpKind::X86Aes {
+                dst: zmm1,
+                src1: zmm2,
+                src2: Some(zmm3),
+                width: VecWidth::V512,
+                op: X86AesOp::Enc,
+                imm: 0,
+            },
+            OpKind::X86Aes {
+                dst: xmm1,
+                src1: xmm2,
+                src2: None,
+                width: VecWidth::V128,
+                op: X86AesOp::KeygenAssist,
+                imm: 0x5A,
             },
             OpKind::VCompress {
                 dst: zmm1,
@@ -2537,6 +2712,60 @@ mod jit_gate_tests {
         ] {
             assert!(!is_x86_native_vector_op(&invalid_narrow));
             assert!(!x86_gate(invalid_narrow));
+        }
+
+        for invalid_aes in [
+            OpKind::X86Aes {
+                dst: zmm1,
+                src1: zmm2,
+                src2: None,
+                width: VecWidth::V512,
+                op: X86AesOp::Enc,
+                imm: 0,
+            },
+            OpKind::X86Aes {
+                dst: zmm1,
+                src1: zmm2,
+                src2: Some(zmm3),
+                width: VecWidth::V512,
+                op: X86AesOp::DecLast,
+                imm: 1,
+            },
+            OpKind::X86Aes {
+                dst: xmm1,
+                src1: xmm2,
+                src2: Some(xmm1),
+                width: VecWidth::V128,
+                op: X86AesOp::KeygenAssist,
+                imm: 0,
+            },
+            OpKind::X86Aes {
+                dst: x86(X86Reg::Xmm(16)),
+                src1: xmm2,
+                src2: None,
+                width: VecWidth::V128,
+                op: X86AesOp::InvMixColumns,
+                imm: 0,
+            },
+            OpKind::X86Aes {
+                dst: xmm1,
+                src1: xmm2,
+                src2: None,
+                width: VecWidth::V128,
+                op: X86AesOp::InvMixColumns,
+                imm: 1,
+            },
+            OpKind::X86Aes {
+                dst: xmm1,
+                src1: xmm2,
+                src2: Some(xmm1),
+                width: VecWidth::V256,
+                op: X86AesOp::EncLast,
+                imm: 0,
+            },
+        ] {
+            assert!(!is_x86_native_vector_op(&invalid_aes));
+            assert!(!x86_gate(invalid_aes));
         }
 
         let invalid_bf16_output_width = OpKind::VCvtFP32ToBF16 {

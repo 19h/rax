@@ -334,6 +334,15 @@ impl Avx10Lowerer {
                 *zeroing,
             )),
 
+            OpKind::X86Aes {
+                dst,
+                src1,
+                src2,
+                width,
+                op,
+                imm,
+            } => Some(self.lower_x86_aes(code, dst, src1, src2.as_ref(), *width, *op, *imm)),
+
             // AVX10.1 BF16
             OpKind::VDotProductBF16 {
                 dst,
@@ -1100,6 +1109,109 @@ impl Avx10Lowerer {
         enc.emit_opcode(opcode);
         enc.emit_modrm_rr(src_reg, dst_reg);
         Ok(())
+    }
+
+    fn lower_x86_aes(
+        &self,
+        code: &mut CodeBuffer,
+        dst: &VReg,
+        src1: &VReg,
+        src2: Option<&VReg>,
+        width: VecWidth,
+        op: X86AesOp,
+        imm: u8,
+    ) -> Avx10LowerResult<()> {
+        let vector_reg = |reg: &VReg| match (reg, width) {
+            (VReg::Arch(ArchReg::X86(X86Reg::Xmm(n))), VecWidth::V128)
+            | (VReg::Arch(ArchReg::X86(X86Reg::Ymm(n))), VecWidth::V256)
+            | (VReg::Arch(ArchReg::X86(X86Reg::Zmm(n))), VecWidth::V512)
+                if *n <= 31 =>
+            {
+                Ok(*n)
+            }
+            _ => Err(LowerError::InvalidRegister(format!(
+                "X86Aes requires an architectural vector register matching {width:?}: {reg:?}"
+            ))),
+        };
+        let dst_reg = vector_reg(dst)?;
+        let src1_reg = vector_reg(src1)?;
+
+        match op {
+            X86AesOp::Enc | X86AesOp::EncLast | X86AesOp::Dec | X86AesOp::DecLast => {
+                if imm != 0 {
+                    return Err(LowerError::UnsupportedOperation(
+                        "AES round operations require an unused zero immediate field".to_string(),
+                    ));
+                }
+                let src2 = src2.ok_or_else(|| {
+                    LowerError::UnsupportedOperation(
+                        "AES round operations require a round-key source".to_string(),
+                    )
+                })?;
+                let src2_reg = vector_reg(src2)?;
+                let opcode = match op {
+                    X86AesOp::Enc => 0xDC,
+                    X86AesOp::EncLast => 0xDD,
+                    X86AesOp::Dec => 0xDE,
+                    X86AesOp::DecLast => 0xDF,
+                    _ => unreachable!(),
+                };
+                if width != VecWidth::V512 && dst_reg <= 15 && src1_reg <= 15 && src2_reg <= 15 {
+                    Self::emit_vex_aes(code, 2, width, dst_reg, src1_reg, src2_reg, opcode, None);
+                } else {
+                    let mut enc = EvexEncoder::new(code);
+                    enc.emit_evex(2, 1, false, width, dst_reg, src1_reg, src2_reg, 0, false);
+                    enc.emit_opcode(opcode);
+                    enc.emit_modrm_rr(dst_reg, src2_reg);
+                }
+            }
+            X86AesOp::InvMixColumns | X86AesOp::KeygenAssist => {
+                if width != VecWidth::V128 || dst_reg > 15 || src1_reg > 15 || src2.is_some() {
+                    return Err(LowerError::UnsupportedOperation(
+                        "VAESIMC and VAESKEYGENASSIST require XMM0..XMM15, 128-bit width, and no second source"
+                            .to_string(),
+                    ));
+                }
+                if op == X86AesOp::InvMixColumns && imm != 0 {
+                    return Err(LowerError::UnsupportedOperation(
+                        "VAESIMC requires an unused zero immediate field".to_string(),
+                    ));
+                }
+                let (map, opcode, immediate) = match op {
+                    X86AesOp::InvMixColumns => (2, 0xDB, None),
+                    X86AesOp::KeygenAssist => (3, 0xDF, Some(imm)),
+                    _ => unreachable!(),
+                };
+                Self::emit_vex_aes(code, map, width, dst_reg, 0, src1_reg, opcode, immediate);
+            }
+        }
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn emit_vex_aes(
+        code: &mut CodeBuffer,
+        map: u8,
+        width: VecWidth,
+        dst: u8,
+        src1: u8,
+        src2: u8,
+        opcode: u8,
+        immediate: Option<u8>,
+    ) {
+        debug_assert!(matches!(width, VecWidth::V128 | VecWidth::V256));
+        debug_assert!(dst <= 15 && src1 <= 15 && src2 <= 15);
+        let r_inv = ((dst >> 3) & 1) ^ 1;
+        let b_inv = ((src2 >> 3) & 1) ^ 1;
+        let l = u8::from(width == VecWidth::V256);
+        code.emit_u8(0xC4);
+        code.emit_u8((r_inv << 7) | (1 << 6) | (b_inv << 5) | map);
+        code.emit_u8(((!src1 & 0x0F) << 3) | (l << 2) | 1);
+        code.emit_u8(opcode);
+        code.emit_u8(0xC0 | ((dst & 7) << 3) | (src2 & 7));
+        if let Some(immediate) = immediate {
+            code.emit_u8(immediate);
+        }
     }
 
     // ========================================================================
@@ -2349,6 +2461,153 @@ mod tests {
                 width: VecWidth::V512,
                 mode: X86NarrowMode::Truncate,
                 zeroing: false,
+            },
+        ] {
+            let mut code = CodeBuffer::new();
+            let result = lowerer.try_lower(&invalid, &mut code).unwrap();
+            assert!(result.is_err(), "accepted malformed {invalid:?}");
+            assert_eq!(code.len(), 0);
+        }
+    }
+
+    #[test]
+    fn x86_aes_lowering_covers_round_unary_keygen_vex_evex_and_malformed_shapes() {
+        let lowerer = Avx10Lowerer::new();
+        let xmm = |n| VReg::Arch(ArchReg::X86(X86Reg::Xmm(n)));
+        let ymm = |n| VReg::Arch(ArchReg::X86(X86Reg::Ymm(n)));
+        let zmm = |n| VReg::Arch(ArchReg::X86(X86Reg::Zmm(n)));
+        for (op, expected) in [
+            (
+                OpKind::X86Aes {
+                    dst: zmm(16),
+                    src1: zmm(17),
+                    src2: Some(zmm(18)),
+                    width: VecWidth::V512,
+                    op: X86AesOp::Enc,
+                    imm: 0,
+                },
+                &[0x62, 0xA2, 0x75, 0x40, 0xDC, 0xC2][..],
+            ),
+            (
+                OpKind::X86Aes {
+                    dst: zmm(1),
+                    src1: zmm(2),
+                    src2: Some(zmm(3)),
+                    width: VecWidth::V512,
+                    op: X86AesOp::EncLast,
+                    imm: 0,
+                },
+                &[0x62, 0xF2, 0x6D, 0x48, 0xDD, 0xCB][..],
+            ),
+            (
+                OpKind::X86Aes {
+                    dst: ymm(4),
+                    src1: ymm(5),
+                    src2: Some(ymm(6)),
+                    width: VecWidth::V256,
+                    op: X86AesOp::Dec,
+                    imm: 0,
+                },
+                &[0xC4, 0xE2, 0x55, 0xDE, 0xE6][..],
+            ),
+            (
+                OpKind::X86Aes {
+                    dst: xmm(7),
+                    src1: xmm(8),
+                    src2: Some(xmm(9)),
+                    width: VecWidth::V128,
+                    op: X86AesOp::DecLast,
+                    imm: 0,
+                },
+                &[0xC4, 0xC2, 0x39, 0xDF, 0xF9][..],
+            ),
+            (
+                OpKind::X86Aes {
+                    dst: xmm(16),
+                    src1: xmm(17),
+                    src2: Some(xmm(18)),
+                    width: VecWidth::V128,
+                    op: X86AesOp::Enc,
+                    imm: 0,
+                },
+                &[0x62, 0xA2, 0x75, 0x00, 0xDC, 0xC2][..],
+            ),
+            (
+                OpKind::X86Aes {
+                    dst: xmm(9),
+                    src1: xmm(8),
+                    src2: None,
+                    width: VecWidth::V128,
+                    op: X86AesOp::InvMixColumns,
+                    imm: 0,
+                },
+                &[0xC4, 0x42, 0x79, 0xDB, 0xC8][..],
+            ),
+            (
+                OpKind::X86Aes {
+                    dst: xmm(11),
+                    src1: xmm(10),
+                    src2: None,
+                    width: VecWidth::V128,
+                    op: X86AesOp::KeygenAssist,
+                    imm: 0x5A,
+                },
+                &[0xC4, 0x43, 0x79, 0xDF, 0xDA, 0x5A][..],
+            ),
+        ] {
+            let mut code = CodeBuffer::new();
+            lowerer.try_lower(&op, &mut code).unwrap().unwrap();
+            assert_eq!(code.as_slice(), expected, "{op:?}");
+        }
+
+        for invalid in [
+            OpKind::X86Aes {
+                dst: zmm(1),
+                src1: zmm(2),
+                src2: None,
+                width: VecWidth::V512,
+                op: X86AesOp::Enc,
+                imm: 0,
+            },
+            OpKind::X86Aes {
+                dst: zmm(1),
+                src1: zmm(2),
+                src2: Some(zmm(3)),
+                width: VecWidth::V512,
+                op: X86AesOp::Dec,
+                imm: 1,
+            },
+            OpKind::X86Aes {
+                dst: xmm(1),
+                src1: xmm(2),
+                src2: Some(xmm(3)),
+                width: VecWidth::V128,
+                op: X86AesOp::InvMixColumns,
+                imm: 0,
+            },
+            OpKind::X86Aes {
+                dst: xmm(16),
+                src1: xmm(2),
+                src2: None,
+                width: VecWidth::V128,
+                op: X86AesOp::KeygenAssist,
+                imm: 0,
+            },
+            OpKind::X86Aes {
+                dst: ymm(1),
+                src1: ymm(2),
+                src2: None,
+                width: VecWidth::V256,
+                op: X86AesOp::InvMixColumns,
+                imm: 0,
+            },
+            OpKind::X86Aes {
+                dst: xmm(1),
+                src1: xmm(2),
+                src2: Some(xmm(3)),
+                width: VecWidth::V64,
+                op: X86AesOp::EncLast,
+                imm: 0,
             },
         ] {
             let mut code = CodeBuffer::new();

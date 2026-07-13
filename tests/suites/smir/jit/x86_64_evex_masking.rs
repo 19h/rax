@@ -98,6 +98,15 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         ("vpcompressb {k4}{z}", &[0x62, 0xf2, 0x7d, 0xcc, 0x63, 0xd1]),
         ("vpexpandw {k3}{z}", &[0x62, 0xd2, 0xfd, 0x8b, 0x62, 0xf9]),
         ("vpmovusdb {k4}{z}", &[0x62, 0xf2, 0x7e, 0xcc, 0x11, 0xd1]),
+        ("vaesenc zmm16", &[0x62, 0xa2, 0x75, 0x40, 0xdc, 0xc2]),
+        ("vaesenclast zmm1", &[0x62, 0xf2, 0x6d, 0x48, 0xdd, 0xcb]),
+        ("vaesdec ymm4", &[0xc4, 0xe2, 0x55, 0xde, 0xe6]),
+        ("vaesdeclast xmm7", &[0xc4, 0xc2, 0x39, 0xdf, 0xf9]),
+        ("vaesimc xmm9", &[0xc4, 0x42, 0x79, 0xdb, 0xc8]),
+        (
+            "vaeskeygenassist xmm11",
+            &[0xc4, 0x43, 0x79, 0xdf, 0xda, 0x5a],
+        ),
     ];
     for (name, bytes) in modeled {
         assert!(
@@ -598,6 +607,78 @@ fn hot_masked_vpmovusdb_jits_with_saturating_narrow_semantics() {
     assert_eq!(get_zmm(&after, 1), expected);
     assert_eq!(get_zmm(&after, 2), source);
     assert_eq!(after.k[4], mask);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_vaesenc_jits_with_independent_128_bit_lane_semantics() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("vaes")
+    {
+        return;
+    }
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x62, 0xF2, 0x6D, 0x48, 0xDC, 0xCB]);
+    code.extend_from_slice(&[0xFF, 0xC9]);
+    code.extend_from_slice(&[0x75, 0xF6]);
+    code.push(0xF4);
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, [u64::MAX; 8]);
+    set_zmm(&mut regs, 2, [0; 8]);
+    set_zmm(&mut regs, 3, [0; 8]);
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(vcpu.jit_try_block().expect("jit VAESENC loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xFFFF_FFFF, 0);
+    assert_eq!(get_zmm(&after, 1), [0x6363_6363_6363_6363; 8]);
+    assert_eq!(get_zmm(&after, 2), [0; 8]);
+    assert_eq!(get_zmm(&after, 3), [0; 8]);
+    run_to_hlt(&mut vcpu);
+}
+
+#[test]
+fn hot_vaeskeygenassist_jits_with_vex_upper_zeroing_semantics() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("aes")
+    {
+        return;
+    }
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0xC4, 0xE3, 0x79, 0xDF, 0xCA, 0x00]);
+    code.extend_from_slice(&[0xFF, 0xC9]);
+    code.extend_from_slice(&[0x75, 0xF6]);
+    code.push(0xF4);
+
+    let mut vcpu = make_vcpu(&code);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 200;
+    set_zmm(&mut regs, 1, [u64::MAX; 8]);
+    set_zmm(&mut regs, 2, [0; 8]);
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(vcpu.jit_try_block().expect("jit VAESKEYGENASSIST loop"));
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rcx & 0xFFFF_FFFF, 0);
+    assert_eq!(
+        get_zmm(&after, 1),
+        [
+            0x6363_6363_6363_6363,
+            0x6363_6363_6363_6363,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ]
+    );
+    assert_eq!(get_zmm(&after, 2), [0; 8]);
     run_to_hlt(&mut vcpu);
 }
 
