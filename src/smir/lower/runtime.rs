@@ -964,9 +964,9 @@ pub fn is_native_clobber_safe_excluding(
 
 /// Verify host support for scalar x86 extensions emitted directly by the
 /// identity-register native JIT. Generic scalar lowerings use baseline x86-64;
-/// Encoding-hinted MULX and native count operations require additional CPUID
-/// features. Excluded exit blocks do not execute natively and therefore do not
-/// contribute feature requirements.
+/// Encoding-hinted MULX, scalar BMI operations, and native count operations
+/// require additional CPUID features. Excluded exit blocks do not execute
+/// natively and therefore do not contribute feature requirements.
 pub fn x86_native_scalar_features_supported_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
@@ -1006,10 +1006,15 @@ fn x86_native_scalar_feature_requirements_excluding(
         .filter(|block| !excluded.contains_key(&block.id))
         .flat_map(|block| &block.ops)
     {
-        needs_bmi2 |= matches!(op.x86_hint, Some(X86OpHint::Mulx));
+        needs_bmi2 |= matches!(op.x86_hint, Some(X86OpHint::Mulx))
+            || matches!(
+                op.kind,
+                OpKind::Bzhi { .. } | OpKind::Pdep { .. } | OpKind::Pext { .. }
+            );
         needs_bmi1 |= matches!(
             op.kind,
-            OpKind::Ctz { .. }
+            OpKind::Bextr { .. }
+                | OpKind::Ctz { .. }
                 | OpKind::X86Count {
                     kind: X86CountKind::Tzcnt,
                     ..
@@ -2160,6 +2165,8 @@ fn x86_flag_defs(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::F
         | OpKind::Rcr { flags, .. }
         | OpKind::Bsf { flags, .. }
         | OpKind::Bsr { flags, .. }
+        | OpKind::Bextr { flags, .. }
+        | OpKind::Bzhi { flags, .. }
         | OpKind::X86Count { flags, .. } => flags.as_set(),
         OpKind::Cmp { .. } | OpKind::Test { .. } => FlagSet::ALL_X86,
         _ => FlagSet::EMPTY,
@@ -2256,6 +2263,13 @@ fn block_is_clobber_safe(
         }
         if matches!(
             op.kind,
+            OpKind::Bextr { .. } | OpKind::Bzhi { .. } | OpKind::Pdep { .. } | OpKind::Pext { .. }
+        ) && !x86_bmi_shape_valid(&op.kind)
+        {
+            return false;
+        }
+        if matches!(
+            op.kind,
             OpKind::Clz { .. }
                 | OpKind::Ctz { .. }
                 | OpKind::Popcnt { .. }
@@ -2343,6 +2357,79 @@ fn x86_bit_scan_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
             flags: FlagUpdate::Specific(FlagSet::ZF),
         } if native_gpr(dst) && native_gpr(src)
     )
+}
+
+fn x86_bmi_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::flags::{FlagSet, FlagUpdate};
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
+
+    let native_gpr = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Rax
+                    | X86Reg::Rcx
+                    | X86Reg::Rdx
+                    | X86Reg::Rbx
+                    | X86Reg::Rsi
+                    | X86Reg::Rdi
+                    | X86Reg::R8
+                    | X86Reg::R9
+                    | X86Reg::R10
+                    | X86Reg::R11
+                    | X86Reg::R12
+                    | X86Reg::R13
+                    | X86Reg::R14
+                    | X86Reg::R15
+            ))
+        )
+    };
+    let bextr_flags = FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF);
+    let bzhi_flags = FlagSet::CF
+        .union(FlagSet::ZF)
+        .union(FlagSet::SF)
+        .union(FlagSet::OF);
+
+    match op {
+        OpKind::Bextr {
+            dst,
+            src,
+            control,
+            width: OpWidth::W32 | OpWidth::W64,
+            flags,
+        } => {
+            native_gpr(dst)
+                && native_gpr(src)
+                && native_gpr(control)
+                && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(bextr_flags))
+        }
+        OpKind::Bzhi {
+            dst,
+            src,
+            index,
+            width: OpWidth::W32 | OpWidth::W64,
+            flags,
+        } => {
+            native_gpr(dst)
+                && native_gpr(src)
+                && native_gpr(index)
+                && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(bzhi_flags))
+        }
+        OpKind::Pdep {
+            dst,
+            src,
+            mask,
+            width: OpWidth::W32 | OpWidth::W64,
+        }
+        | OpKind::Pext {
+            dst,
+            src,
+            mask,
+            width: OpWidth::W32 | OpWidth::W64,
+        } => native_gpr(dst) && native_gpr(src) && native_gpr(mask),
+        _ => false,
+    }
 }
 
 fn x86_count_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
@@ -4345,6 +4432,207 @@ mod jit_gate_tests {
             ),
         ] {
             assert!(!x86_gate(op), "malformed {name} count must deopt");
+        }
+    }
+
+    #[test]
+    fn bmi_gate_and_feature_requirements_cover_exact_native_shapes() {
+        let bextr_flags = FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF);
+        let bzhi_flags = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+        let valid = [
+            (
+                OpKind::Bextr {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rdx),
+                    control: x86(X86Reg::Rcx),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::Specific(bextr_flags),
+                },
+                (false, true, false, false),
+            ),
+            (
+                OpKind::Bextr {
+                    dst: x86(X86Reg::R15),
+                    src: x86(X86Reg::R15),
+                    control: x86(X86Reg::R15),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                (false, true, false, false),
+            ),
+            (
+                OpKind::Bzhi {
+                    dst: x86(X86Reg::R8),
+                    src: x86(X86Reg::R9),
+                    index: x86(X86Reg::R10),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::Specific(bzhi_flags),
+                },
+                (true, false, false, false),
+            ),
+            (
+                OpKind::Bzhi {
+                    dst: x86(X86Reg::R11),
+                    src: x86(X86Reg::R11),
+                    index: x86(X86Reg::R11),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                (true, false, false, false),
+            ),
+            (
+                OpKind::Pdep {
+                    dst: x86(X86Reg::R12),
+                    src: x86(X86Reg::R12),
+                    mask: x86(X86Reg::R13),
+                    width: OpWidth::W32,
+                },
+                (true, false, false, false),
+            ),
+            (
+                OpKind::Pext {
+                    dst: x86(X86Reg::R14),
+                    src: x86(X86Reg::R15),
+                    mask: x86(X86Reg::R14),
+                    width: OpWidth::W64,
+                },
+                (true, false, false, false),
+            ),
+        ];
+
+        for (op, expected_features) in &valid {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, op.clone());
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let func = builder.finish();
+            assert!(op.is_jit_safe(), "{op:?} must be on the scalar whitelist");
+            assert!(
+                is_native_clobber_safe(&func),
+                "{op:?} must pass the x86 gate"
+            );
+            assert_eq!(
+                x86_native_scalar_feature_requirements_excluding(
+                    &func,
+                    &std::collections::HashMap::new()
+                ),
+                *expected_features,
+                "{op:?} host feature requirement"
+            );
+        }
+        assert_eq!(x86_flag_defs(&valid[0].0), bextr_flags);
+        assert_eq!(x86_flag_defs(&valid[2].0), bzhi_flags);
+        assert_eq!(x86_flag_defs(&valid[1].0), FlagSet::EMPTY);
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(0x1000, valid[0].0.clone());
+        builder.push_op(0x1001, valid[2].0.clone());
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+        let mut excluded = std::collections::HashMap::new();
+        excluded.insert(func.entry, 0x1000);
+        assert!(x86_native_scalar_features_supported_excluding(
+            &func, &excluded
+        ));
+        #[cfg(target_arch = "x86_64")]
+        assert_eq!(
+            x86_native_scalar_features_supported_excluding(
+                &func,
+                &std::collections::HashMap::new()
+            ),
+            std::is_x86_feature_detected!("bmi1") && std::is_x86_feature_detected!("bmi2")
+        );
+        #[cfg(not(target_arch = "x86_64"))]
+        assert!(!x86_native_scalar_features_supported_excluding(
+            &func,
+            &std::collections::HashMap::new()
+        ));
+
+        for (name, op) in [
+            (
+                "BEXTR word width",
+                OpKind::Bextr {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rdx),
+                    control: x86(X86Reg::Rcx),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::Specific(bextr_flags),
+                },
+            ),
+            (
+                "BEXTR undefined flag request",
+                OpKind::Bextr {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rdx),
+                    control: x86(X86Reg::Rcx),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "BZHI incomplete flag request",
+                OpKind::Bzhi {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rdx),
+                    index: x86(X86Reg::Rcx),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(FlagSet::ZF),
+                },
+            ),
+            (
+                "PDEP guest stack mask",
+                OpKind::Pdep {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rdx),
+                    mask: x86(X86Reg::Rsp),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "PEXT guest frame destination",
+                OpKind::Pext {
+                    dst: x86(X86Reg::Rbp),
+                    src: x86(X86Reg::Rdx),
+                    mask: x86(X86Reg::Rcx),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "PDEP extended guest register",
+                OpKind::Pdep {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rdx),
+                    mask: x86(X86Reg::Rcx),
+                    width: OpWidth::W32,
+                },
+            ),
+            (
+                "PEXT virtual source",
+                OpKind::Pext {
+                    dst: x86(X86Reg::Rax),
+                    src: VReg::Virtual(VirtualId(0)),
+                    mask: x86(X86Reg::Rcx),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "BZHI foreign index",
+                OpKind::Bzhi {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rdx),
+                    index: arm_x(0),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(bzhi_flags),
+                },
+            ),
+        ] {
+            assert!(
+                op.is_jit_safe(),
+                "malformed shape remains class-whitelisted"
+            );
+            assert!(!x86_gate(op), "malformed {name} must deopt");
         }
     }
 

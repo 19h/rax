@@ -4024,6 +4024,39 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    /// Complete a BMI operation after its pre-instruction PUSHFQ. `None`
+    /// restores every incoming flag (APX NF). A mask merges the native defined
+    /// flags into the saved value while retaining the interpreter's explicit
+    /// preservation of architecturally undefined flags.
+    fn finish_bmi_flags(&mut self, dst: PhysReg, defined_rflags_mask: Option<i64>) {
+        let Some(mask) = defined_rflags_mask else {
+            self.code.emit_u8(0x9D); // popfq
+            return;
+        };
+
+        // Stack before this sequence: [old RFLAGS]. Save the result, capture
+        // native BMI flags, use dst as a temporary merge register, restore the
+        // result, then install the merged architectural flags.
+        let mut emitter = X86Emitter::new(&mut self.code);
+        emitter.emit_push(dst);
+        emitter.code.emit_u8(0x9C); // pushfq
+        emitter.emit_pop(dst);
+        emitter.emit_and_ri(dst, mask, OpWidth::W64);
+        emitter.emit_alu_mi_disp(4, PhysReg::Rsp, 8, DispSize::Auto, !mask, OpWidth::W64);
+        emitter.emit_alu_mem_disp(
+            0x08,
+            dst,
+            PhysReg::Rsp,
+            8,
+            DispSize::Auto,
+            OpWidth::W64,
+            X86AluEncoding::RegRm,
+        );
+        emitter.emit_mov_mr(PhysReg::Rsp, 8, dst, OpWidth::W64);
+        emitter.emit_pop(dst);
+        emitter.code.emit_u8(0x9D); // popfq
+    }
+
     fn emit_noncommutative_alu_alias(
         &mut self,
         op: &'static str,
@@ -5594,21 +5627,28 @@ impl X86_64Lowerer {
                         op: format!("Bextr width {width:?}"),
                     });
                 }
+                let defined_rflags_mask = match flags {
+                    FlagUpdate::None => None,
+                    FlagUpdate::Specific(set)
+                        if *set == FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF) =>
+                    {
+                        Some(0x841)
+                    }
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "Bextr".to_string(),
+                            operand: format!("unsupported flag update {flags:?}"),
+                        });
+                    }
+                };
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
                 let control_reg = self.get_reg(*control)?;
-                if !flags.updates_any() {
-                    Self::ensure_flag_stack_operands_safe(
-                        "Bextr",
-                        &[dst_reg, src_reg, control_reg],
-                    )?;
-                    self.code.emit_u8(0x9C); // pushfq
-                }
+                Self::ensure_flag_stack_operands_safe("Bextr", &[dst_reg, src_reg, control_reg])?;
+                self.code.emit_u8(0x9C); // pushfq
                 let mut emitter = X86Emitter::new(&mut self.code);
                 emitter.emit_vex_bmi_rr(0xF7, dst_reg, src_reg, control_reg, *width);
-                if !flags.updates_any() {
-                    self.code.emit_u8(0x9D); // popfq
-                }
+                self.finish_bmi_flags(dst_reg, defined_rflags_mask);
             }
 
             OpKind::Bzhi {
@@ -5623,18 +5663,32 @@ impl X86_64Lowerer {
                         op: format!("Bzhi width {width:?}"),
                     });
                 }
+                let defined_rflags_mask = match flags {
+                    FlagUpdate::None => None,
+                    FlagUpdate::Specific(set)
+                        if *set
+                            == FlagSet::CF
+                                .union(FlagSet::ZF)
+                                .union(FlagSet::SF)
+                                .union(FlagSet::OF) =>
+                    {
+                        Some(0x8C1)
+                    }
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "Bzhi".to_string(),
+                            operand: format!("unsupported flag update {flags:?}"),
+                        });
+                    }
+                };
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
                 let index_reg = self.get_reg(*index)?;
-                if !flags.updates_any() {
-                    Self::ensure_flag_stack_operands_safe("Bzhi", &[dst_reg, src_reg, index_reg])?;
-                    self.code.emit_u8(0x9C); // pushfq
-                }
+                Self::ensure_flag_stack_operands_safe("Bzhi", &[dst_reg, src_reg, index_reg])?;
+                self.code.emit_u8(0x9C); // pushfq
                 let mut emitter = X86Emitter::new(&mut self.code);
                 emitter.emit_vex_bmi_rr(0xF5, dst_reg, src_reg, index_reg, *width);
-                if !flags.updates_any() {
-                    self.code.emit_u8(0x9D); // popfq
-                }
+                self.finish_bmi_flags(dst_reg, defined_rflags_mask);
             }
 
             OpKind::Pdep {
@@ -14234,7 +14288,7 @@ mod tests {
     }
 
     #[test]
-    fn lower_bextr_bzhi_honors_flag_update_mode() {
+    fn lower_bextr_bzhi_preserves_undefined_or_all_flags_by_update_mode() {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
         let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
@@ -14253,8 +14307,9 @@ mod tests {
             "flagful BEXTR should lower to native VEX BMI"
         );
         assert!(
-            !flagful_bextr.contains(&0x9C) && !flagful_bextr.contains(&0x9D),
-            "flagful BEXTR must not preserve flags around the native instruction"
+            flagful_bextr.iter().filter(|byte| **byte == 0x9C).count() >= 2
+                && flagful_bextr.contains(&0x9D),
+            "flagful BEXTR must merge defined native flags with saved undefined flags"
         );
 
         let flagful_bzhi = lower_single_op(OpKind::Bzhi {
@@ -14276,8 +14331,9 @@ mod tests {
             "flagful BZHI should lower to native VEX BMI"
         );
         assert!(
-            !flagful_bzhi.contains(&0x9C) && !flagful_bzhi.contains(&0x9D),
-            "flagful BZHI must not preserve flags around the native instruction"
+            flagful_bzhi.iter().filter(|byte| **byte == 0x9C).count() >= 2
+                && flagful_bzhi.contains(&0x9D),
+            "flagful BZHI must merge defined native flags with saved undefined flags"
         );
 
         let flagless_bextr = lower_single_op(OpKind::Bextr {
@@ -14315,6 +14371,116 @@ mod tests {
             flagless_bzhi.contains(&0x9C) && flagless_bzhi.contains(&0x9D),
             "flagless BZHI must preserve flags around the native instruction"
         );
+
+        for (name, op) in [
+            (
+                "BEXTR unsupported width",
+                OpKind::Bextr {
+                    dst: rax,
+                    src: rdx,
+                    control: rcx,
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "BEXTR undefined flag request",
+                OpKind::Bextr {
+                    dst: rax,
+                    src: rdx,
+                    control: rcx,
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "BZHI incomplete flag request",
+                OpKind::Bzhi {
+                    dst: rax,
+                    src: rdx,
+                    index: rcx,
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(FlagSet::ZF),
+                },
+            ),
+            (
+                "PDEP unsupported width",
+                OpKind::Pdep {
+                    dst: rax,
+                    src: rdx,
+                    mask: rcx,
+                    width: OpWidth::W16,
+                },
+            ),
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(op),
+                    LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+                ),
+                "{name}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_pdep_pext_preserves_flags_and_register_aliases() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+
+        for (name, op, expected) in [
+            (
+                "PDEP distinct",
+                OpKind::Pdep {
+                    dst: rax,
+                    src: rcx,
+                    mask: rdx,
+                    width: OpWidth::W64,
+                },
+                &[0xC4, 0xE2, 0xF3, 0xF5, 0xC2][..],
+            ),
+            (
+                "PEXT distinct",
+                OpKind::Pext {
+                    dst: rax,
+                    src: rcx,
+                    mask: rdx,
+                    width: OpWidth::W64,
+                },
+                &[0xC4, 0xE2, 0xF2, 0xF5, 0xC2][..],
+            ),
+            (
+                "PDEP destination aliases source",
+                OpKind::Pdep {
+                    dst: rcx,
+                    src: rcx,
+                    mask: rdx,
+                    width: OpWidth::W64,
+                },
+                &[0xC4, 0xE2, 0xF3, 0xF5, 0xCA][..],
+            ),
+            (
+                "PEXT destination aliases mask",
+                OpKind::Pext {
+                    dst: rdx,
+                    src: rcx,
+                    mask: rdx,
+                    width: OpWidth::W64,
+                },
+                &[0xC4, 0xE2, 0xF2, 0xF5, 0xD2][..],
+            ),
+        ] {
+            let code = lower_single_op(op);
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "{name}: {code:02X?}"
+            );
+            assert!(
+                code.contains(&0x9C) && code.contains(&0x9D),
+                "{name} must preserve all incoming flags"
+            );
+        }
     }
 
     #[test]

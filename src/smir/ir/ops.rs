@@ -3669,6 +3669,10 @@ impl OpKind {
                 | OpKind::CMove { .. }
                 | OpKind::Bsf { .. }
                 | OpKind::Bsr { .. }
+                | OpKind::Bextr { .. }
+                | OpKind::Bzhi { .. }
+                | OpKind::Pdep { .. }
+                | OpKind::Pext { .. }
                 | OpKind::Clz { .. }
                 | OpKind::Ctz { .. }
                 | OpKind::Popcnt { .. }

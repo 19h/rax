@@ -610,6 +610,230 @@ fn jit_xchg_preserves_width_semantics_and_flags() {
     }
 }
 
+/// Register-only BMI1/BMI2 operations are native-JIT eligible at both scalar
+/// widths. The matrix covers zero extension, boundary counts, defined versus
+/// preserved flags, and destination aliasing with every explicit source role.
+#[test]
+fn jit_bmi_bit_extract_deposit_preserves_semantics_flags_and_aliases() {
+    const STATUS_MASK: u64 = 0x08D5;
+    let bmi1 = std::is_x86_feature_detected!("bmi1");
+    let bmi2 = std::is_x86_feature_detected!("bmi2");
+
+    for (
+        name,
+        instruction,
+        supported,
+        rax,
+        rcx,
+        rdx,
+        expected_rax,
+        expected_rcx,
+        expected_rdx,
+        expected_status,
+    ) in [
+        (
+            "bextr eax,edx,ecx",
+            &[0xC4, 0xE2, 0x70, 0xF7, 0xC2][..],
+            bmi1,
+            u64::MAX,
+            (8 << 8) | 4,
+            0xAABB_CCDD_0000_F0F0,
+            0x0F,
+            (8 << 8) | 4,
+            0xAABB_CCDD_0000_F0F0,
+            0x04,
+        ),
+        (
+            "bextr rax,rdx,rcx",
+            &[0xC4, 0xE2, 0xF0, 0xF7, 0xC2][..],
+            bmi1,
+            u64::MAX,
+            (8 << 8) | 60,
+            0xF123_4567_89AB_CDEF,
+            0x0F,
+            (8 << 8) | 60,
+            0xF123_4567_89AB_CDEF,
+            0x04,
+        ),
+        (
+            "bextr rcx,rdx,rcx (dst=control)",
+            &[0xC4, 0xE2, 0xF0, 0xF7, 0xCA][..],
+            bmi1,
+            0x1122_3344_5566_7788,
+            (16 << 8) | 8,
+            0xAABB_CCDD_EEFF_1234,
+            0x1122_3344_5566_7788,
+            0xFF12,
+            0xAABB_CCDD_EEFF_1234,
+            0x04,
+        ),
+        (
+            "bzhi eax,edx,ecx",
+            &[0xC4, 0xE2, 0x70, 0xF5, 0xC2][..],
+            bmi2,
+            u64::MAX,
+            12,
+            0xFEDC_BA98_7654_3210,
+            0x210,
+            12,
+            0xFEDC_BA98_7654_3210,
+            0x04,
+        ),
+        (
+            "bzhi rax,rdx,rcx",
+            &[0xC4, 0xE2, 0xF0, 0xF5, 0xC2][..],
+            bmi2,
+            u64::MAX,
+            64,
+            0xFEDC_BA98_7654_3210,
+            0xFEDC_BA98_7654_3210,
+            64,
+            0xFEDC_BA98_7654_3210,
+            0x85,
+        ),
+        (
+            "bzhi rdx,rdx,rcx (dst=src)",
+            &[0xC4, 0xE2, 0xF0, 0xF5, 0xD2][..],
+            bmi2,
+            0x1122_3344_5566_7788,
+            20,
+            0xAABB_CCDD_EEFF_1234,
+            0x1122_3344_5566_7788,
+            20,
+            0xF_1234,
+            0x04,
+        ),
+        (
+            "pdep eax,ecx,edx",
+            &[0xC4, 0xE2, 0x73, 0xF5, 0xC2][..],
+            bmi2,
+            u64::MAX,
+            0x0B,
+            0x55,
+            0x45,
+            0x0B,
+            0x55,
+            0x45,
+        ),
+        (
+            "pdep rax,rcx,rdx",
+            &[0xC4, 0xE2, 0xF3, 0xF5, 0xC2][..],
+            bmi2,
+            u64::MAX,
+            0x1B,
+            0x8000_0000_0000_0055,
+            0x8000_0000_0000_0045,
+            0x1B,
+            0x8000_0000_0000_0055,
+            0x45,
+        ),
+        (
+            "pdep rcx,rcx,rdx (dst=src)",
+            &[0xC4, 0xE2, 0xF3, 0xF5, 0xCA][..],
+            bmi2,
+            0x1122_3344_5566_7788,
+            0x0B,
+            0x55,
+            0x1122_3344_5566_7788,
+            0x45,
+            0x55,
+            0x45,
+        ),
+        (
+            "pext eax,ecx,edx",
+            &[0xC4, 0xE2, 0x72, 0xF5, 0xC2][..],
+            bmi2,
+            u64::MAX,
+            0x45,
+            0x55,
+            0x0B,
+            0x45,
+            0x55,
+            0x45,
+        ),
+        (
+            "pext rax,rcx,rdx",
+            &[0xC4, 0xE2, 0xF2, 0xF5, 0xC2][..],
+            bmi2,
+            u64::MAX,
+            0x8000_0000_0000_0045,
+            0x8000_0000_0000_0055,
+            0x1B,
+            0x8000_0000_0000_0045,
+            0x8000_0000_0000_0055,
+            0x45,
+        ),
+        (
+            "pext rdx,rcx,rdx (dst=mask)",
+            &[0xC4, 0xE2, 0xF2, 0xF5, 0xD2][..],
+            bmi2,
+            0x1122_3344_5566_7788,
+            0x45,
+            0x55,
+            0x1122_3344_5566_7788,
+            0x45,
+            0x0B,
+            0x45,
+        ),
+    ] {
+        if !supported {
+            continue;
+        }
+
+        // loop: dec r8d; jnz loop
+        //       <BMI operation>; hlt
+        // The terminal DEC establishes CF|PF|ZF before BMI. BEXTR/BZHI merge
+        // their defined outputs while preserving undefined PF/AF; PDEP/PEXT
+        // preserve the complete status word.
+        let mut code = vec![0x41, 0xFF, 0xC8, 0x75, 0xFB];
+        code.extend_from_slice(instruction);
+        code.push(0xF4);
+
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = rax;
+            regs.rcx = rcx;
+            regs.rdx = rdx;
+            regs.r8 = 200;
+            regs.rflags = 0xCD7;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp);
+        run_interp(&mut interp);
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("JIT {name}: {error:?}")),
+            "{name} loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+
+        let expected = interp.get_regs().unwrap();
+        let after = jit.get_regs().unwrap();
+        assert_eq!(after.rax, expected.rax, "{name}: RAX vs interpreter");
+        assert_eq!(after.rcx, expected.rcx, "{name}: RCX vs interpreter");
+        assert_eq!(after.rdx, expected.rdx, "{name}: RDX vs interpreter");
+        assert_eq!(after.rax, expected_rax, "{name}: architectural RAX");
+        assert_eq!(after.rcx, expected_rcx, "{name}: architectural RCX");
+        assert_eq!(after.rdx, expected_rdx, "{name}: architectural RDX");
+        assert_eq!(after.r8 & 0xFFFF_FFFF, 0, "{name}: loop count");
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            expected.rflags & STATUS_MASK,
+            "{name}: status flags vs interpreter"
+        );
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            expected_status,
+            "{name}: architectural status flags"
+        );
+    }
+}
+
 /// APX NDD carry operations whose destination aliases source 2 must remain in
 /// the native tier. ADC can commute its register sources; SBB preserves the old
 /// source 2 on the host stack without disturbing incoming or result flags.
