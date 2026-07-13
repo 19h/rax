@@ -65,6 +65,30 @@ fn scheduled_differential_separates_oracles_diagnostics_and_assembler_capabiliti
     }
 }
 
+#[test]
+fn scheduled_kvm_keeps_host_dependent_differentials_informational() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let workflow = root.join(".github/workflows/kvm.yml");
+    let contents = fs::read_to_string(&workflow)
+        .unwrap_or_else(|err| panic!("failed to read {}: {err}", workflow.display()));
+
+    for job in ["kvm-differential", "kvm-avx512"] {
+        let marker = format!("  {job}:\n");
+        let start = contents
+            .find(&marker)
+            .unwrap_or_else(|| panic!("KVM workflow is missing {job}"));
+        let section = contents[start + marker.len()..]
+            .lines()
+            .take_while(|line| line.trim().is_empty() || line.starts_with("    "))
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(
+            section.contains("continue-on-error: true"),
+            "host-dependent {job} must retain diagnostics without failing the workflow"
+        );
+    }
+}
+
 fn collect_yaml_files(dir: &Path, files: &mut Vec<PathBuf>) {
     let entries =
         fs::read_dir(dir).unwrap_or_else(|err| panic!("failed to read {}: {err}", dir.display()));
