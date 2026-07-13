@@ -2118,7 +2118,7 @@ fn block_is_clobber_safe(
 ) -> bool {
     use crate::smir::ir::Terminator;
     use crate::smir::ir::ops::OpKind;
-    use crate::smir::ir::types::{ArchReg, SrcOperand, VReg, X86Reg};
+    use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
 
     if !x86_block_preserves_live_flags(block, flags_live_out) {
         return false;
@@ -2187,19 +2187,6 @@ fn block_is_clobber_safe(
             return false;
         }
         if !mem_ok && op.kind.source_vregs().iter().any(touches_sp_bp) {
-            return false;
-        }
-        // (4) An APX NDD ADC/SBB whose destination aliases its SECOND source. The
-        // lowerer emits `mov dst, src1; adc/sbb dst, src2`, which destroys src2
-        // before reading it when dst == src2 (e.g. `adcq %r8, %rax, %r8` becomes
-        // `mov r8, rax; adc r8, r8`). The lifter inserts a preservation temp, but
-        // O2 copy-propagation + DCE can remove it, producing this alias. The
-        // interpreter reads src2 first and is correct, so deopt these forms. (#14)
-        if matches!(
-            &op.kind,
-            OpKind::Adc { dst, src2: SrcOperand::Reg(r), .. }
-            | OpKind::Sbb { dst, src2: SrcOperand::Reg(r), .. } if dst == r
-        ) {
             return false;
         }
     }
@@ -4030,12 +4017,10 @@ mod jit_gate_tests {
         }
     }
 
-    // Regression for issue #14: an APX NDD ADC/SBB whose destination aliases its
-    // SECOND source must not be JIT'd — the destructive `mov dst,src1; adc/sbb
-    // dst,src2` lowering would clobber src2 (e.g. `adc r8, rax, r8` -> rax+rax+CF).
-    // Such forms must deopt to the interpreter, which is correct.
+    // Regression for issue #14: alias-safe ADC/SBB lowering removes the former
+    // deliberate deopt for APX NDD operations whose destination is source 2.
     #[test]
-    fn clobber_gate_rejects_adc_sbb_dst_aliasing_src2() {
+    fn clobber_gate_admits_adc_sbb_dst_aliasing_src2() {
         fn gate(op: OpKind) -> bool {
             let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
             b.push_op(0x1000, op);
@@ -4060,8 +4045,8 @@ mod jit_gate_tests {
             },
         ] {
             assert!(
-                !gate(op),
-                "ADC/SBB with dst==src2 must deopt to the interpreter"
+                gate(op),
+                "alias-safe ADC/SBB with dst==src2 must remain native-eligible"
             );
         }
 

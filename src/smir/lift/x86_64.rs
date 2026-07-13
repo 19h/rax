@@ -29904,7 +29904,7 @@ impl X86_64Lifter {
         } else {
             legacy_dst
         };
-        let src2_operand = if prefix.nd && dst == src2 {
+        let src2_operand = if prefix.nd && dst == src2 && !matches!(group, 2 | 3) {
             let tmp = ctx.alloc_vreg();
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
@@ -40655,6 +40655,53 @@ mod tests {
                     assert_eq!(*src2, x86_gpr(3), "{name}");
                 }
                 other => panic!("expected APX NDD {name}, got {other:?}"),
+            }
+        }
+    }
+
+    #[test]
+    fn lift_apx_ndd_adc_sbb_alias_second_source_without_virtual_preservation() {
+        let mut lifter = X86_64Lifter::strict();
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+
+        for (bytes, name) in [
+            ([0x62, 0x74, 0xBC, 0x18, 0x11, 0xC0], "adc"),
+            ([0x62, 0x74, 0xBC, 0x18, 0x19, 0xC0], "sbb"),
+        ] {
+            // LLVM 20:
+            //   adcq %r8, %rax, %r8 => 62 74 bc 18 11 c0
+            //   sbbq %r8, %rax, %r8 => 62 74 bc 18 19 c0
+            // The native lowerer handles this alias directly, so retaining a
+            // virtual preservation move here would unnecessarily block JIT.
+            let result = lifter.lift_insn(0x1000, &bytes, &mut ctx).unwrap();
+            assert_eq!(result.bytes_consumed, 6, "{name}");
+            assert_eq!(result.ops.len(), 1, "{name}");
+            match (name, &result.ops[0].kind) {
+                (
+                    "adc",
+                    OpKind::Adc {
+                        dst,
+                        src1,
+                        src2: SrcOperand::Reg(src2),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::All,
+                    },
+                )
+                | (
+                    "sbb",
+                    OpKind::Sbb {
+                        dst,
+                        src1,
+                        src2: SrcOperand::Reg(src2),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::All,
+                    },
+                ) => {
+                    assert_eq!(*dst, x86_gpr(8), "{name}");
+                    assert_eq!(*src1, x86_gpr(0), "{name}");
+                    assert_eq!(*src2, x86_gpr(8), "{name}");
+                }
+                other => panic!("expected direct APX NDD {name} alias, got {other:?}"),
             }
         }
     }

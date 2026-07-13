@@ -4151,20 +4151,29 @@ impl X86_64Lowerer {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
 
-                if dst_reg != src1_reg {
-                    let mut emitter = X86Emitter::new(&mut self.code);
-                    emitter.emit_mov_rr(dst_reg, src1_reg, *width);
-                }
-
                 match src2 {
                     SrcOperand::Reg(r) => {
                         let src2_reg = self.get_reg(*r)?;
                         let mut emitter = X86Emitter::new(&mut self.code);
                         let encoding = alu_hint.unwrap_or(X86AluEncoding::RmReg);
-                        emitter.emit_alu_rr_dir(0x10, dst_reg, src2_reg, *width, encoding);
+                        if dst_reg != src1_reg && dst_reg == src2_reg {
+                            // ADC is commutative (including its carry-in), so an
+                            // APX NDD destination that aliases source 2 can use
+                            // the old destination directly instead of destroying
+                            // it with `mov dst, src1` first.
+                            emitter.emit_alu_rr_dir(0x10, dst_reg, src1_reg, *width, encoding);
+                        } else {
+                            if dst_reg != src1_reg {
+                                emitter.emit_mov_rr(dst_reg, src1_reg, *width);
+                            }
+                            emitter.emit_alu_rr_dir(0x10, dst_reg, src2_reg, *width, encoding);
+                        }
                     }
                     SrcOperand::Imm(val) => {
                         let mut emitter = X86Emitter::new(&mut self.code);
+                        if dst_reg != src1_reg {
+                            emitter.emit_mov_rr(dst_reg, src1_reg, *width);
+                        }
                         if matches!(alu_hint, Some(X86AluEncoding::AccImm))
                             && dst_reg == PhysReg::Rax
                         {
@@ -4191,20 +4200,45 @@ impl X86_64Lowerer {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
 
-                if dst_reg != src1_reg {
-                    let mut emitter = X86Emitter::new(&mut self.code);
-                    emitter.emit_mov_rr(dst_reg, src1_reg, *width);
-                }
-
                 match src2 {
                     SrcOperand::Reg(r) => {
                         let src2_reg = self.get_reg(*r)?;
-                        let mut emitter = X86Emitter::new(&mut self.code);
-                        let encoding = alu_hint.unwrap_or(X86AluEncoding::RmReg);
-                        emitter.emit_alu_rr_dir(0x18, dst_reg, src2_reg, *width, encoding);
+                        if dst_reg != src1_reg && dst_reg == src2_reg {
+                            Self::ensure_flag_stack_operands_safe(
+                                "Sbb alias",
+                                &[dst_reg, src1_reg, src2_reg],
+                            )?;
+                            let mut emitter = X86Emitter::new(&mut self.code);
+                            // SBB is not commutative. Preserve source 2 on the
+                            // host stack, form dst=src1, consume the saved value
+                            // through a memory operand, then restore RSP with
+                            // LEA so both incoming CF and result flags survive.
+                            emitter.emit_push(src2_reg);
+                            emitter.emit_mov_rr(dst_reg, src1_reg, *width);
+                            emitter.emit_alu_mem_disp(
+                                0x18,
+                                dst_reg,
+                                PhysReg::Rsp,
+                                0,
+                                DispSize::Auto,
+                                *width,
+                                X86AluEncoding::RegRm,
+                            );
+                            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 8);
+                        } else {
+                            let mut emitter = X86Emitter::new(&mut self.code);
+                            if dst_reg != src1_reg {
+                                emitter.emit_mov_rr(dst_reg, src1_reg, *width);
+                            }
+                            let encoding = alu_hint.unwrap_or(X86AluEncoding::RmReg);
+                            emitter.emit_alu_rr_dir(0x18, dst_reg, src2_reg, *width, encoding);
+                        }
                     }
                     SrcOperand::Imm(val) => {
                         let mut emitter = X86Emitter::new(&mut self.code);
+                        if dst_reg != src1_reg {
+                            emitter.emit_mov_rr(dst_reg, src1_reg, *width);
+                        }
                         if matches!(alu_hint, Some(X86AluEncoding::AccImm))
                             && dst_reg == PhysReg::Rax
                         {
@@ -12209,7 +12243,82 @@ mod tests {
             0x62, 0x74, 0xBC, 0x18, 0x11, 0xC0, 0x62, 0x74, 0xBC, 0x18, 0x19, 0xC0, 0xF4,
         ]);
         assert!(entry < lowered.len());
-        assert!(!lowered.is_empty());
+        assert!(
+            lowered.windows(3).any(|bytes| bytes == [0x49, 0x11, 0xC0]),
+            "alias ADC must commute its sources instead of overwriting r8: {lowered:02X?}"
+        );
+        assert!(
+            lowered.windows(14).any(|bytes| bytes
+                == [
+                    0x41, 0x50, 0x49, 0x89, 0xC0, 0x4C, 0x1B, 0x04, 0x24, 0x48, 0x8D, 0x64, 0x24,
+                    0x08,
+                ]),
+            "alias SBB must consume the saved second source and preserve result flags: {lowered:02X?}"
+        );
+    }
+
+    #[test]
+    fn lower_adc_sbb_alias_second_source_covers_all_integer_widths() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        for (width, adc, sbb) in [
+            (
+                OpWidth::W8,
+                &[0x41, 0x10, 0xC0][..],
+                &[
+                    0x41, 0x50, 0x41, 0x88, 0xC0, 0x44, 0x1A, 0x04, 0x24, 0x48, 0x8D, 0x64, 0x24,
+                    0x08,
+                ][..],
+            ),
+            (
+                OpWidth::W16,
+                &[0x66, 0x41, 0x11, 0xC0][..],
+                &[
+                    0x41, 0x50, 0x66, 0x41, 0x89, 0xC0, 0x66, 0x44, 0x1B, 0x04, 0x24, 0x48, 0x8D,
+                    0x64, 0x24, 0x08,
+                ][..],
+            ),
+            (
+                OpWidth::W32,
+                &[0x41, 0x11, 0xC0][..],
+                &[
+                    0x41, 0x50, 0x41, 0x89, 0xC0, 0x44, 0x1B, 0x04, 0x24, 0x48, 0x8D, 0x64, 0x24,
+                    0x08,
+                ][..],
+            ),
+            (
+                OpWidth::W64,
+                &[0x49, 0x11, 0xC0][..],
+                &[
+                    0x41, 0x50, 0x49, 0x89, 0xC0, 0x4C, 0x1B, 0x04, 0x24, 0x48, 0x8D, 0x64, 0x24,
+                    0x08,
+                ][..],
+            ),
+        ] {
+            let adc_code = lower_single_op(OpKind::Adc {
+                dst: r8,
+                src1: rax,
+                src2: SrcOperand::Reg(r8),
+                width,
+                flags: FlagUpdate::All,
+            });
+            assert!(
+                adc_code.windows(adc.len()).any(|bytes| bytes == adc),
+                "missing alias-safe {width:?} ADC {adc:02X?}: {adc_code:02X?}"
+            );
+
+            let sbb_code = lower_single_op(OpKind::Sbb {
+                dst: r8,
+                src1: rax,
+                src2: SrcOperand::Reg(r8),
+                width,
+                flags: FlagUpdate::All,
+            });
+            assert!(
+                sbb_code.windows(sbb.len()).any(|bytes| bytes == sbb),
+                "missing alias-safe {width:?} SBB {sbb:02X?}: {sbb_code:02X?}"
+            );
+        }
     }
 
     #[test]

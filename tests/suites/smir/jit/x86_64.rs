@@ -267,6 +267,65 @@ fn jit_lea_sib_matches_interpreter() {
     assert_eq!(jr.rdx & 0xffff_ffff, 902, "lea result of last iteration");
 }
 
+/// APX NDD carry operations whose destination aliases source 2 must remain in
+/// the native tier. ADC can commute its register sources; SBB preserves the old
+/// source 2 on the host stack without disturbing incoming or result flags.
+#[test]
+fn jit_apx_ndd_adc_sbb_alias_second_source_preserves_carry_semantics() {
+    const STATUS_MASK: u64 = 0x0ED5;
+    for (name, instruction, rax, r8, expected_r8, expected_status) in [
+        (
+            "adc",
+            &[0x62, 0x74, 0xBC, 0x18, 0x11, 0xC0][..],
+            1,
+            u64::MAX,
+            201,
+            0x44,
+        ),
+        (
+            "sbb",
+            &[0x62, 0x74, 0xBC, 0x18, 0x19, 0xC0][..],
+            0,
+            1,
+            1,
+            0x45,
+        ),
+    ] {
+        let mut code = instruction.to_vec();
+        code.extend_from_slice(&[0xFF, 0xC9]); // dec ecx (preserves CF)
+        code.extend_from_slice(&[0x75, 0xF6]); // jnz to APX instruction
+        code.push(0xF4);
+
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = rax;
+            regs.r8 = r8;
+            regs.rcx = 200;
+            regs.rflags = 0x3; // architectural bit 1 + incoming CF
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("jit APX NDD {name} alias: {error:?}")),
+            "APX NDD {name} alias loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+        let jit_regs = jit.get_regs().unwrap();
+
+        assert_eq!(jit_regs.rax, rax, "{name}: source 1 must be preserved");
+        assert_eq!(jit_regs.r8, expected_r8, "{name}: closed-form result");
+        assert_eq!(jit_regs.rcx & 0xFFFF_FFFF, 0, "{name}: loop count");
+        assert_eq!(
+            jit_regs.rflags & STATUS_MASK,
+            expected_status,
+            "{name}: final DEC flags plus carry/borrow from the NDD operation"
+        );
+    }
+}
+
 /// Variable shift by CL (`shl edx,cl`) in a hot loop — the pattern the kernel's
 /// __free_pages_memory bootmem loop uses. Must JIT bit-exactly vs the interpreter.
 #[test]
