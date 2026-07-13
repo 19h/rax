@@ -197,11 +197,13 @@ native-lowering frontier for the x86-64 cross-JIT described below.
 
 ## 3. x86-64 cross-JIT lowering
 
-`RiscVX86_64Lowerer` uses an explicit `extern "C" fn(*mut RiscVGuestRegs)` ABI;
-it does not reuse the x86-guest identity-register ABI. The 560-byte state holds
+`RiscVX86_64Lowerer` uses an explicit
+`extern "sysv64" fn(*mut RiscVGuestRegs)` ABI;
+it does not reuse the x86-guest identity-register ABI. The 600-byte state holds
 `x[32]`, `f[32]`, PC, FCSR, exit classification, memory context, and scalar
-load/store helper pointers. Reads of x0 are hard-wired to zero and writes are
-discarded.
+load/store plus atomic helper pointers. Reads of x0 are hard-wired to zero,
+writes are discarded, and the externally visible x0 backing slot is
+canonicalized on entry.
 
 Implemented native scalar families:
 
@@ -213,19 +215,28 @@ Implemented native scalar families:
   generic, rounding-free scalar-FP subset);
 - scalar loads/stores through the guest-memory helper ABI (successful-access
   path; the current helper result does not encode a precise guest fault);
+- A-extension AMO, AMOCAS, and LR/SC through indivisible helper calls; the ABI
+  carries exact operation, width, and memory-order codes and preserves the
+  two-register CAS result (`old`, `success`);
 - direct conditional native CFG, indirect dispatcher exits, exact caller-supplied
   resume PCs for 16-bit compressed instructions, and classified trap/syscall/
   breakpoint exits.
 
 `tests/suites/smir/jit/riscv_x86_64.rs` performs the complete machine-code →
 lift → lower → W^X execute path and compares x-registers, PC, and memory against
-`RiscVCpu` at both O0 and O2. The corpus covers RV64I ALU/branch/load/store, M-extension high/low
-multiply and signed/unsigned divide/remainder (including `/0` and `MIN/-1`),
-Zbb rotate/count operations, word operations, JAL/JALR, and compressed PC
-advance, plus FP bit operations and FCSR access. The generated count sequence is
-baseline x86-64 and does not require host `POPCNT`. Remaining native gaps are
-fault-precise memory exits, atomic/exclusive helpers, `RvIntCrypto`, arithmetic
-`RvFp`, and `RvVector`.
+`RiscVCpu` at both O0 and O2. The corpus covers RV64I ALU/branch/load/store,
+M-extension high/low multiply and signed/unsigned divide/remainder (including
+`/0` and `MIN/-1`), Zbb rotate/count operations, word operations, JAL/JALR,
+compressed PC advance, FP bit operations and FCSR access, every RV32/RV64 AMO
+operation and ordering code, AMOCAS success/failure, and LR/SC
+success/reservation-failure paths. The generated count sequence is baseline
+x86-64 and does not require host `POPCNT`. Remaining native gaps are
+fault-precise memory exits, `RvIntCrypto`, arithmetic `RvFp`, and `RvVector`.
+
+The LR/SC reservation is owned by the helper context. Cross-hart or device writes
+must invalidate it in the memory backend; the in-tree differential helper models
+the current single-hart `RiscVCpu` behavior and verifies reservation replacement,
+missing reservations, width/address mismatch, and clearing after SC.
 
 ## 4. Commit index (this session, RISC-V-specific)
 
@@ -259,6 +270,7 @@ comparisons/run, all at zero divergence vs qemu). The **SMIR lift covers the
 scalar, compressed, atomic, FP, crypto, and vector families**, using explicit
 architecture-exact opaque ops where generic SMIR primitives cannot carry the
 required RISC-V state. The state-backed x86-64 cross-JIT now executes the scalar
-integer/control/memory and rounding-free FP-bit subset end-to-end; atomics,
-arithmetic scalar-FP/crypto, and RVV native lowering remain. Privileged translation/MMU execution remains a separate
-interpreter/VMM scope described in `REMAINING.md`.
+integer/control/memory, atomic, and rounding-free FP-bit subsets end-to-end;
+arithmetic scalar-FP/crypto and RVV native lowering remain. Privileged
+translation/MMU execution remains a separate interpreter/VMM scope described in
+`REMAINING.md`.

@@ -10,7 +10,9 @@ use rax::smir::ir::{CallingConv, SmirBlock, SmirFunction, Terminator};
 use rax::smir::lift::{ControlFlow, LiftContext, SmirLifter};
 use rax::smir::lower::SmirLowerer;
 use rax::smir::lower::cross::riscv_guest_to_x86_64_host::RiscVX86_64Lowerer;
-use rax::smir::lower::runtime::{ExecMem, RiscVGuestRegs};
+use rax::smir::lower::runtime::{
+    ExecMem, RiscVAtomicCasResult, RiscVAtomicOpCode, RiscVGuestRegs, RiscVMemoryOrderCode,
+};
 use rax::smir::optimize::{OptLevel, optimize_function};
 
 const CODE: u64 = 0x1000;
@@ -20,19 +22,53 @@ const MEMORY_LEN: usize = 0x4000;
 #[repr(C)]
 struct TestMemory {
     bytes: [u8; MEMORY_LEN],
+    reservation_addr: u64,
+    reservation_size: u64,
+    reservation_valid: u64,
+    last_atomic_order: u64,
 }
 
-unsafe extern "C" fn load(ctx: u64, addr: u64, size: u64, signed: u64) -> u64 {
-    let memory = unsafe { &*(ctx as *const TestMemory) };
-    let addr = addr as usize;
-    let size = size as usize;
-    assert!(addr.checked_add(size).is_some_and(|end| end <= MEMORY_LEN));
-    let mut value = 0u64;
-    for index in 0..size {
-        value |= u64::from(memory.bytes[addr + index]) << (index * 8);
+impl TestMemory {
+    fn new(bytes: [u8; MEMORY_LEN]) -> Self {
+        Self {
+            bytes,
+            reservation_addr: 0,
+            reservation_size: 0,
+            reservation_valid: 0,
+            last_atomic_order: u64::MAX,
+        }
     }
+
+    fn read_value(&self, addr: u64, size: u64) -> u64 {
+        let addr = addr as usize;
+        let size = size as usize;
+        assert!(addr.checked_add(size).is_some_and(|end| end <= MEMORY_LEN));
+        let mut value = 0u64;
+        for index in 0..size {
+            value |= u64::from(self.bytes[addr + index]) << (index * 8);
+        }
+        value
+    }
+
+    fn write_value(&mut self, addr: u64, value: u64, size: u64) {
+        let host_addr = addr as usize;
+        let host_size = size as usize;
+        assert!(
+            host_addr
+                .checked_add(host_size)
+                .is_some_and(|host_end| host_end <= MEMORY_LEN)
+        );
+        for index in 0..host_size {
+            self.bytes[host_addr + index] = (value >> (index * 8)) as u8;
+        }
+    }
+}
+
+unsafe extern "sysv64" fn load(ctx: u64, addr: u64, size: u64, signed: u64) -> u64 {
+    let memory = unsafe { &*(ctx as *const TestMemory) };
+    let mut value = memory.read_value(addr, size);
     if signed != 0 && size < 8 {
-        let bits = size * 8;
+        let bits = size as usize * 8;
         let sign_bit = 1u64 << (bits - 1);
         if value & sign_bit != 0 {
             value |= u64::MAX << bits;
@@ -41,15 +77,137 @@ unsafe extern "C" fn load(ctx: u64, addr: u64, size: u64, signed: u64) -> u64 {
     value
 }
 
-unsafe extern "C" fn store(ctx: u64, addr: u64, value: u64, size: u64) -> u64 {
+unsafe extern "sysv64" fn store(ctx: u64, addr: u64, value: u64, size: u64) -> u64 {
     let memory = unsafe { &mut *(ctx as *mut TestMemory) };
-    let addr = addr as usize;
-    let size = size as usize;
-    assert!(addr.checked_add(size).is_some_and(|end| end <= MEMORY_LEN));
-    for index in 0..size {
-        memory.bytes[addr + index] = (value >> (index * 8)) as u8;
-    }
+    memory.write_value(addr, value, size);
     1
+}
+
+unsafe extern "sysv64" fn atomic_rmw(
+    ctx: u64,
+    addr: u64,
+    operand: u64,
+    size: u64,
+    op: u64,
+    order: u64,
+) -> u64 {
+    let memory = unsafe { &mut *(ctx as *mut TestMemory) };
+    assert!(order <= RiscVMemoryOrderCode::SeqCst as u64);
+    memory.last_atomic_order = order;
+    let bits = size * 8;
+    let mask = if bits == 64 {
+        u64::MAX
+    } else {
+        (1u64 << bits) - 1
+    };
+    let old = memory.read_value(addr, size) & mask;
+    let operand = operand & mask;
+    let signed = |value: u64| -> i64 {
+        if bits == 64 {
+            value as i64
+        } else {
+            ((value << (64 - bits)) as i64) >> (64 - bits)
+        }
+    };
+    let new = match op {
+        value if value == RiscVAtomicOpCode::Add as u64 => old.wrapping_add(operand),
+        value if value == RiscVAtomicOpCode::Sub as u64 => old.wrapping_sub(operand),
+        value if value == RiscVAtomicOpCode::Neg as u64 => 0u64.wrapping_sub(old),
+        value if value == RiscVAtomicOpCode::And as u64 => old & operand,
+        value if value == RiscVAtomicOpCode::Or as u64 => old | operand,
+        value if value == RiscVAtomicOpCode::Xor as u64 => old ^ operand,
+        value if value == RiscVAtomicOpCode::Nand as u64 => !(old & operand),
+        value if value == RiscVAtomicOpCode::Max as u64 => {
+            std::cmp::max(signed(old), signed(operand)) as u64
+        }
+        value if value == RiscVAtomicOpCode::Min as u64 => {
+            std::cmp::min(signed(old), signed(operand)) as u64
+        }
+        value if value == RiscVAtomicOpCode::Umax as u64 => std::cmp::max(old, operand),
+        value if value == RiscVAtomicOpCode::Umin as u64 => std::cmp::min(old, operand),
+        value if value == RiscVAtomicOpCode::Swap as u64 => operand,
+        _ => panic!("invalid atomic RMW operation code {op}"),
+    } & mask;
+    memory.write_value(addr, new, size);
+    old
+}
+
+unsafe extern "sysv64" fn compare_and_swap(
+    ctx: u64,
+    addr: u64,
+    expected: u64,
+    new_value: u64,
+    size: u64,
+    order: u64,
+) -> RiscVAtomicCasResult {
+    let memory = unsafe { &mut *(ctx as *mut TestMemory) };
+    assert!(order <= RiscVMemoryOrderCode::SeqCst as u64);
+    memory.last_atomic_order = order;
+    let bits = size * 8;
+    let mask = if bits == 64 {
+        u64::MAX
+    } else {
+        (1u64 << bits) - 1
+    };
+    let old = memory.read_value(addr, size) & mask;
+    let success = old == expected & mask;
+    if success {
+        memory.write_value(addr, new_value & mask, size);
+    }
+    RiscVAtomicCasResult {
+        old,
+        success: u64::from(success),
+    }
+}
+
+unsafe extern "sysv64" fn load_exclusive(ctx: u64, addr: u64, size: u64) -> u64 {
+    let memory = unsafe { &mut *(ctx as *mut TestMemory) };
+    let value = memory.read_value(addr, size);
+    memory.reservation_addr = addr;
+    memory.reservation_size = size;
+    memory.reservation_valid = 1;
+    value
+}
+
+unsafe extern "sysv64" fn store_exclusive(ctx: u64, addr: u64, value: u64, size: u64) -> u64 {
+    let memory = unsafe { &mut *(ctx as *mut TestMemory) };
+    let success = memory.reservation_valid != 0
+        && memory.reservation_addr == addr
+        && memory.reservation_size == size;
+    if success {
+        memory.write_value(addr, value, size);
+    }
+    memory.reservation_valid = 0;
+    u64::from(success)
+}
+
+unsafe extern "sysv64" fn clear_exclusive(ctx: u64) {
+    let memory = unsafe { &mut *(ctx as *mut TestMemory) };
+    memory.reservation_valid = 0;
+}
+
+fn jit_state(
+    memory: &mut TestMemory,
+    x: [u64; 32],
+    f: [u64; 32],
+    fcsr: u32,
+    pc: u64,
+) -> RiscVGuestRegs {
+    RiscVGuestRegs {
+        x,
+        f,
+        fcsr: u64::from(fcsr),
+        pc,
+        ctx: (memory as *mut TestMemory) as u64,
+        load_fn: load as *const () as usize as u64,
+        store_fn: store as *const () as usize as u64,
+        atomic_rmw_fn: atomic_rmw as *const () as usize as u64,
+        cas_fn: compare_and_swap as *const () as usize as u64,
+        load_exclusive_fn: load_exclusive as *const () as usize as u64,
+        store_exclusive_fn: store_exclusive as *const () as usize as u64,
+        clear_exclusive_fn: clear_exclusive as *const () as usize as u64,
+        ..Default::default()
+    }
 }
 
 fn r_type(funct7: u32, rs2: u8, rs1: u8, funct3: u32, rd: u8) -> u32 {
@@ -109,7 +267,27 @@ fn j_type(offset: i32, rd: u8) -> u32 {
         | 0x6f
 }
 
+fn amo_type(funct5: u32, aq: bool, rl: bool, rs2: u8, rs1: u8, funct3: u32, rd: u8) -> u32 {
+    (funct5 << 27)
+        | (u32::from(aq) << 26)
+        | (u32::from(rl) << 25)
+        | (u32::from(rs2) << 20)
+        | (u32::from(rs1) << 15)
+        | (funct3 << 12)
+        | (u32::from(rd) << 7)
+        | 0x2f
+}
+
 fn function_for_lift(
+    control: ControlFlow,
+    ops: Vec<rax::smir::ir::ops::SmirOp>,
+    instruction_len: usize,
+) -> (SmirFunction, HashMap<BlockId, u64>) {
+    function_for_lift_at(CODE, control, ops, instruction_len)
+}
+
+fn function_for_lift_at(
+    pc: u64,
     control: ControlFlow,
     mut ops: Vec<rax::smir::ir::ops::SmirOp>,
     instruction_len: usize,
@@ -122,7 +300,7 @@ fn function_for_lift(
     let mut blocks = Vec::new();
     let terminator = match control {
         ControlFlow::Fallthrough | ControlFlow::NextInsn => {
-            return_pcs.insert(entry, CODE + instruction_len as u64);
+            return_pcs.insert(entry, pc + instruction_len as u64);
             Terminator::Return { values: vec![] }
         }
         ControlFlow::Branch { target } | ControlFlow::DirectBranch(target) => {
@@ -170,7 +348,7 @@ fn function_for_lift(
         0,
         SmirBlock {
             id: entry,
-            guest_pc: CODE,
+            guest_pc: pc,
             phis: vec![],
             ops,
             terminator,
@@ -178,9 +356,9 @@ fn function_for_lift(
         },
     );
 
-    let mut function = SmirFunction::new(FunctionId(0), entry, CODE);
+    let mut function = SmirFunction::new(FunctionId(0), entry, pc);
     function.blocks = blocks;
-    function.guest_range = (CODE, CODE + instruction_len as u64);
+    function.guest_range = (pc, pc + instruction_len as u64);
     function.calling_convention = CallingConv::RiscVStd;
     (function, return_pcs)
 }
@@ -241,19 +419,8 @@ fn run_case_with_fp(
         let code = lowerer.finalize().expect("finalize native code");
         let executable = ExecMem::new(&code).expect("map native code");
 
-        let mut test_memory = TestMemory {
-            bytes: initial_memory,
-        };
-        let mut state = RiscVGuestRegs {
-            x: initial_x,
-            f: initial_f,
-            fcsr: u64::from(initial_fcsr),
-            pc: CODE,
-            ctx: (&mut test_memory as *mut TestMemory) as u64,
-            load_fn: load as *const () as usize as u64,
-            store_fn: store as *const () as usize as u64,
-            ..Default::default()
-        };
+        let mut test_memory = TestMemory::new(initial_memory);
+        let mut state = jit_state(&mut test_memory, initial_x, initial_f, initial_fcsr, CODE);
         executable.run_riscv(lowered.entry_offset, &mut state);
 
         assert_eq!(
@@ -281,6 +448,91 @@ fn run_case_with_fp(
             &test_memory.bytes[DATA as usize..DATA as usize + 64],
             &expected_data,
             "memory divergence at {level:?} for {bytes:02x?}"
+        );
+    }
+}
+
+fn run_atomic_sequence(
+    instructions: &[u32],
+    initial_x: [u64; 32],
+    initial_memory: [u8; MEMORY_LEN],
+    expected_order: Option<RiscVMemoryOrderCode>,
+) {
+    let mut reference_memory = RvMemory::new(0, MEMORY_LEN);
+    rax::isa::riscv::Memory::write(&mut reference_memory, 0, &initial_memory)
+        .expect("seed reference memory");
+    let mut cpu = RiscVCpu::new(RiscVConfig::rv64gc(), Box::new(reference_memory));
+    for register in 1..32u8 {
+        cpu.set_x(register, initial_x[register as usize]);
+    }
+    let code = instructions
+        .iter()
+        .flat_map(|instruction| instruction.to_le_bytes())
+        .collect::<Vec<_>>();
+    cpu.write_memory(CODE, &code).expect("write reference code");
+    cpu.set_pc(CODE);
+    for instruction in instructions {
+        assert_eq!(
+            cpu.step(),
+            RiscVExit::Continue,
+            "reference atomic instruction {instruction:08x} trapped"
+        );
+    }
+
+    let expected_x: [u64; 32] = std::array::from_fn(|index| cpu.x(index as u8));
+    let expected_pc = cpu.pc();
+    let mut expected_data = [0u8; 64];
+    cpu.read_memory(DATA, &mut expected_data)
+        .expect("read reference atomic data");
+
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let mut test_memory = TestMemory::new(initial_memory);
+        let mut state = jit_state(&mut test_memory, initial_x, [0; 32], 0, CODE);
+        let mut lifter = RiscVLifter::rv64gc();
+
+        for (index, instruction) in instructions.iter().enumerate() {
+            let pc = CODE + index as u64 * 4;
+            assert_eq!(state.pc, pc, "unexpected dispatcher PC before atomic lift");
+            let mut context = LiftContext::new(SourceArch::RiscV64);
+            let lifted = lifter
+                .lift_insn(pc, &instruction.to_le_bytes(), &mut context)
+                .unwrap_or_else(|error| panic!("lift atomic {instruction:08x}: {error:?}"));
+            let (mut function, return_pcs) =
+                function_for_lift_at(pc, lifted.control_flow, lifted.ops, lifted.bytes_consumed);
+            optimize_function(&mut function, level);
+            let mut lowerer = RiscVX86_64Lowerer::new();
+            lowerer.set_return_pcs(return_pcs);
+            let lowered = lowerer.lower_function(&function).unwrap_or_else(|error| {
+                panic!("lower atomic {instruction:08x} at {level:?}: {error:?}")
+            });
+            let code = lowerer.finalize().expect("finalize atomic native code");
+            let executable = ExecMem::new(&code).expect("map atomic native code");
+            executable.run_riscv(lowered.entry_offset, &mut state);
+        }
+
+        assert_eq!(
+            state.x, expected_x,
+            "atomic register divergence at {level:?} for {instructions:08x?}"
+        );
+        assert_eq!(
+            state.pc, expected_pc,
+            "atomic PC divergence at {level:?} for {instructions:08x?}"
+        );
+        assert_eq!(state.exit_reason, 0, "unexpected atomic JIT exit");
+        assert_eq!(
+            &test_memory.bytes[DATA as usize..DATA as usize + 64],
+            &expected_data,
+            "atomic memory divergence at {level:?} for {instructions:08x?}"
+        );
+        if let Some(order) = expected_order {
+            assert_eq!(
+                test_memory.last_atomic_order, order as u64,
+                "atomic ordering code divergence at {level:?}"
+            );
+        }
+        assert_eq!(
+            test_memory.reservation_valid, 0,
+            "reservation leaked after atomic sequence at {level:?}"
         );
     }
 }
@@ -445,6 +697,113 @@ fn lifted_fp_bit_operations_and_fcsr_access_execute_natively() {
 }
 
 #[test]
+fn lifted_rv64_atomics_execute_through_helper_abi() {
+    let mut x = [0u64; 32];
+    x[1] = DATA;
+    x[2] = 0x7000_0003_7fff_fffd;
+    x[3] = 0x1122_3344_5566_7788;
+    x[4] = DATA + 8;
+    let mut memory = [0u8; MEMORY_LEN];
+    memory[DATA as usize..DATA as usize + 8]
+        .copy_from_slice(&0x8000_0005_8000_0005u64.to_le_bytes());
+    memory[DATA as usize + 8..DATA as usize + 16]
+        .copy_from_slice(&0x0102_0304_0506_0708u64.to_le_bytes());
+
+    let operations = [
+        0b00001, // amoswap
+        0b00000, // amoadd
+        0b00100, // amoxor
+        0b01100, // amoand
+        0b01000, // amoor
+        0b10000, // amomin
+        0b10100, // amomax
+        0b11000, // amominu
+        0b11100, // amomaxu
+    ];
+    let orders = [
+        (false, false, RiscVMemoryOrderCode::Relaxed),
+        (true, false, RiscVMemoryOrderCode::Acquire),
+        (false, true, RiscVMemoryOrderCode::Release),
+        (true, true, RiscVMemoryOrderCode::AcqRel),
+    ];
+    for (index, funct5) in operations.into_iter().enumerate() {
+        let (aq, rl, order) = orders[index % orders.len()];
+        for funct3 in [0b010, 0b011] {
+            let instruction = amo_type(funct5, aq, rl, 2, 1, funct3, 5);
+            run_atomic_sequence(&[instruction], x, memory, Some(order));
+        }
+    }
+
+    // AMOCAS.D success and AMOCAS.W failure exercise both SysV return
+    // registers (`old`, `success`) and word-result sign extension.
+    let mut cas_success = x;
+    cas_success[5] = 0x8000_0005_8000_0005;
+    run_atomic_sequence(
+        &[amo_type(0b00101, true, true, 2, 1, 0b011, 5)],
+        cas_success,
+        memory,
+        Some(RiscVMemoryOrderCode::AcqRel),
+    );
+    let mut cas_failure = x;
+    cas_failure[5] = 0x1234;
+    run_atomic_sequence(
+        &[amo_type(0b00101, true, false, 2, 1, 0b010, 5)],
+        cas_failure,
+        memory,
+        Some(RiscVMemoryOrderCode::Acquire),
+    );
+
+    // LR/SC success for both widths, missing/different reservations, and the
+    // reference CPU's same-hart ordinary-store reservation behavior.
+    for funct3 in [0b010, 0b011] {
+        run_atomic_sequence(
+            &[
+                amo_type(0b00010, true, false, 0, 1, funct3, 5),
+                amo_type(0b00011, false, true, 2, 1, funct3, 6),
+            ],
+            x,
+            memory,
+            None,
+        );
+    }
+    run_atomic_sequence(
+        &[amo_type(0b00011, false, false, 2, 1, 0b011, 6)],
+        x,
+        memory,
+        None,
+    );
+    run_atomic_sequence(
+        &[
+            amo_type(0b00010, false, false, 0, 1, 0b011, 5),
+            s_type(0, 3, 1, 0b011),
+            amo_type(0b00011, false, false, 2, 1, 0b011, 6),
+        ],
+        x,
+        memory,
+        None,
+    );
+    run_atomic_sequence(
+        &[
+            amo_type(0b00010, false, false, 0, 1, 0b011, 5),
+            amo_type(0b00011, false, false, 2, 4, 0b011, 6),
+        ],
+        x,
+        memory,
+        None,
+    );
+    run_atomic_sequence(
+        &[
+            amo_type(0b00010, false, false, 0, 1, 0b011, 5),
+            amo_type(0b00010, false, false, 0, 4, 0b011, 7),
+            amo_type(0b00011, false, false, 2, 1, 0b011, 6),
+        ],
+        x,
+        memory,
+        None,
+    );
+}
+
+#[test]
 fn runtime_layout_matches_codegen_offsets() {
     assert_eq!(RiscVGuestRegs::X_OFFSET, 0);
     assert_eq!(RiscVGuestRegs::F_OFFSET, 32 * 8);
@@ -454,5 +813,10 @@ fn runtime_layout_matches_codegen_offsets() {
     assert_eq!(RiscVGuestRegs::CTX_OFFSET, 67 * 8);
     assert_eq!(RiscVGuestRegs::LOAD_FN_OFFSET, 68 * 8);
     assert_eq!(RiscVGuestRegs::STORE_FN_OFFSET, 69 * 8);
-    assert_eq!(std::mem::size_of::<RiscVGuestRegs>(), 70 * 8);
+    assert_eq!(RiscVGuestRegs::ATOMIC_RMW_FN_OFFSET, 70 * 8);
+    assert_eq!(RiscVGuestRegs::CAS_FN_OFFSET, 71 * 8);
+    assert_eq!(RiscVGuestRegs::LOAD_EXCLUSIVE_FN_OFFSET, 72 * 8);
+    assert_eq!(RiscVGuestRegs::STORE_EXCLUSIVE_FN_OFFSET, 73 * 8);
+    assert_eq!(RiscVGuestRegs::CLEAR_EXCLUSIVE_FN_OFFSET, 74 * 8);
+    assert_eq!(std::mem::size_of::<RiscVGuestRegs>(), 75 * 8);
 }

@@ -1,6 +1,6 @@
 //! State-backed RISC-V-to-x86-64 SMIR lowerer.
 //!
-//! Lowered code uses the SysV `extern "C" fn(*mut RiscVGuestRegs)` ABI.  RDI
+//! Lowered code uses the `extern "sysv64" fn(*mut RiscVGuestRegs)` ABI. RDI
 //! remains the persistent guest-state pointer, architectural registers are
 //! loaded/stored through that state, and SSA temporaries occupy stack slots.
 //! This is intentionally separate from [`crate::smir::lower::x86_64`], whose
@@ -11,11 +11,12 @@ use std::collections::{HashMap, HashSet};
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, SmirOp};
 use crate::smir::ir::types::{
-    Address, ArchReg, BlockId, Condition, MemWidth, OpWidth, RiscVReg, ShiftOp, SignExtend,
-    SrcOperand, VReg, VirtualId,
+    Address, ArchReg, AtomicOp, BlockId, Condition, MemWidth, MemoryOrder, OpWidth, RiscVReg,
+    ShiftOp, SignExtend, SrcOperand, VReg, VirtualId,
 };
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 use crate::smir::lower::regalloc::PhysReg;
+use crate::smir::lower::runtime::{RiscVAtomicOpCode, RiscVMemoryOrderCode};
 use crate::smir::lower::x86_64::{X86Cond, X86Emitter};
 use crate::smir::lower::{CodeBuffer, LowerError, LowerResult, RelocKind, Relocation, SmirLowerer};
 
@@ -40,6 +41,11 @@ const RV_EXIT_REASON_OFFSET: i32 = RV_FCSR_OFFSET + 8;
 const RV_CTX_OFFSET: i32 = RV_EXIT_REASON_OFFSET + 8;
 const RV_LOAD_FN_OFFSET: i32 = RV_CTX_OFFSET + 8;
 const RV_STORE_FN_OFFSET: i32 = RV_LOAD_FN_OFFSET + 8;
+const RV_ATOMIC_RMW_FN_OFFSET: i32 = RV_STORE_FN_OFFSET + 8;
+const RV_CAS_FN_OFFSET: i32 = RV_ATOMIC_RMW_FN_OFFSET + 8;
+const RV_LOAD_EXCLUSIVE_FN_OFFSET: i32 = RV_CAS_FN_OFFSET + 8;
+const RV_STORE_EXCLUSIVE_FN_OFFSET: i32 = RV_LOAD_EXCLUSIVE_FN_OFFSET + 8;
+const RV_CLEAR_EXCLUSIVE_FN_OFFSET: i32 = RV_STORE_EXCLUSIVE_FN_OFFSET + 8;
 
 const EXIT_RETURN: i64 = 0;
 const EXIT_TRAP: i64 = 1;
@@ -793,6 +799,132 @@ impl RiscVX86_64Lowerer {
         Ok(())
     }
 
+    fn atomic_op_code(op: AtomicOp) -> i64 {
+        match op {
+            AtomicOp::Add => RiscVAtomicOpCode::Add as i64,
+            AtomicOp::Sub => RiscVAtomicOpCode::Sub as i64,
+            AtomicOp::Neg => RiscVAtomicOpCode::Neg as i64,
+            AtomicOp::And => RiscVAtomicOpCode::And as i64,
+            AtomicOp::Or => RiscVAtomicOpCode::Or as i64,
+            AtomicOp::Xor => RiscVAtomicOpCode::Xor as i64,
+            AtomicOp::Nand => RiscVAtomicOpCode::Nand as i64,
+            AtomicOp::Max => RiscVAtomicOpCode::Max as i64,
+            AtomicOp::Min => RiscVAtomicOpCode::Min as i64,
+            AtomicOp::Umax => RiscVAtomicOpCode::Umax as i64,
+            AtomicOp::Umin => RiscVAtomicOpCode::Umin as i64,
+            AtomicOp::Swap => RiscVAtomicOpCode::Swap as i64,
+        }
+    }
+
+    fn memory_order_code(order: MemoryOrder) -> i64 {
+        match order {
+            MemoryOrder::Relaxed => RiscVMemoryOrderCode::Relaxed as i64,
+            MemoryOrder::Acquire => RiscVMemoryOrderCode::Acquire as i64,
+            MemoryOrder::Release => RiscVMemoryOrderCode::Release as i64,
+            MemoryOrder::AcqRel => RiscVMemoryOrderCode::AcqRel as i64,
+            MemoryOrder::SeqCst => RiscVMemoryOrderCode::SeqCst as i64,
+        }
+    }
+
+    fn lower_atomic_rmw(
+        &mut self,
+        dst: VReg,
+        addr: &Address,
+        src: VReg,
+        op: AtomicOp,
+        width: MemWidth,
+        order: MemoryOrder,
+    ) -> Result<(), LowerError> {
+        let (op_width, size) = Self::scalar_mem_width(width)?;
+        self.load_addr_to(addr, ADDR)?;
+        self.load_vreg_to(src, HI, op_width)?;
+        {
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_mov_ri(RHS, size, OpWidth::W64);
+            e.emit_mov_ri(TMP0, Self::atomic_op_code(op), OpWidth::W64);
+            e.emit_mov_ri(TMP1, Self::memory_order_code(order), OpWidth::W64);
+            e.emit_mov_rm(TARGET, STATE, RV_ATOMIC_RMW_FN_OFFSET, OpWidth::W64);
+        }
+        self.emit_mem_helper_call(TARGET);
+        self.store_reg_to(dst, ACC, OpWidth::W64)
+    }
+
+    fn lower_cas(
+        &mut self,
+        dst: VReg,
+        success: VReg,
+        addr: &Address,
+        expected: VReg,
+        new_val: VReg,
+        width: MemWidth,
+        order: MemoryOrder,
+    ) -> Result<(), LowerError> {
+        let (op_width, size) = Self::scalar_mem_width(width)?;
+        self.load_addr_to(addr, ADDR)?;
+        self.load_vreg_to(expected, HI, op_width)?;
+        self.load_vreg_to(new_val, RHS, op_width)?;
+        {
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_mov_ri(TMP0, size, OpWidth::W64);
+            e.emit_mov_ri(TMP1, Self::memory_order_code(order), OpWidth::W64);
+            e.emit_mov_rm(TARGET, STATE, RV_CAS_FN_OFFSET, OpWidth::W64);
+        }
+        self.emit_mem_helper_call(TARGET);
+        // A two-u64 repr(C) result is returned in RAX/RDX by the SysV ABI.
+        self.store_reg_to(dst, ACC, OpWidth::W64)?;
+        self.store_reg_to(success, HI, OpWidth::W64)
+    }
+
+    fn lower_load_exclusive(
+        &mut self,
+        dst: VReg,
+        addr: &Address,
+        width: MemWidth,
+    ) -> Result<(), LowerError> {
+        let (_, size) = Self::scalar_mem_width(width)?;
+        self.load_addr_to(addr, ADDR)?;
+        {
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_mov_ri(HI, size, OpWidth::W64);
+            e.emit_mov_rm(TARGET, STATE, RV_LOAD_EXCLUSIVE_FN_OFFSET, OpWidth::W64);
+        }
+        self.emit_mem_helper_call(TARGET);
+        self.store_reg_to(dst, ACC, OpWidth::W64)
+    }
+
+    fn lower_store_exclusive(
+        &mut self,
+        status: VReg,
+        src: VReg,
+        addr: &Address,
+        width: MemWidth,
+    ) -> Result<(), LowerError> {
+        let (op_width, size) = Self::scalar_mem_width(width)?;
+        self.load_addr_to(addr, ADDR)?;
+        self.load_vreg_to(src, HI, op_width)?;
+        {
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_mov_ri(RHS, size, OpWidth::W64);
+            e.emit_mov_rm(TARGET, STATE, RV_STORE_EXCLUSIVE_FN_OFFSET, OpWidth::W64);
+        }
+        self.emit_mem_helper_call(TARGET);
+        {
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_test_rr(ACC, ACC, OpWidth::W64);
+            e.emit_setcc(X86Cond::E, ACC);
+            e.emit_movzx(ACC, ACC, OpWidth::W8, OpWidth::W64);
+        }
+        self.store_reg_to(status, ACC, OpWidth::W64)
+    }
+
+    fn lower_clear_exclusive(&mut self) {
+        {
+            let mut e = X86Emitter::new(&mut self.code);
+            e.emit_mov_rm(TARGET, STATE, RV_CLEAR_EXCLUSIVE_FN_OFFSET, OpWidth::W64);
+        }
+        self.emit_mem_helper_call(TARGET);
+    }
+
     fn lower_op(&mut self, op: &SmirOp) -> Result<(), LowerError> {
         match &op.kind {
             OpKind::Nop | OpKind::Fence { .. } => {
@@ -1038,6 +1170,33 @@ impl RiscVX86_64Lowerer {
                 sign,
             } => self.lower_load(*dst, addr, *width, *sign)?,
             OpKind::Store { src, addr, width } => self.lower_store(*src, addr, *width)?,
+            OpKind::AtomicRmw {
+                dst,
+                addr,
+                src,
+                op,
+                width,
+                order,
+            } => self.lower_atomic_rmw(*dst, addr, *src, *op, *width, *order)?,
+            OpKind::Cas {
+                dst,
+                success,
+                addr,
+                expected,
+                new_val,
+                width,
+                order,
+            } => self.lower_cas(*dst, *success, addr, *expected, *new_val, *width, *order)?,
+            OpKind::LoadExclusive { dst, addr, width } => {
+                self.lower_load_exclusive(*dst, addr, *width)?
+            }
+            OpKind::StoreExclusive {
+                status,
+                src,
+                addr,
+                width,
+            } => self.lower_store_exclusive(*status, *src, addr, *width)?,
+            OpKind::ClearExclusive => self.lower_clear_exclusive(),
             OpKind::Breakpoint => self.emit_arch_exit(op.guest_pc, EXIT_BREAKPOINT),
             OpKind::Syscall { .. } => self.emit_arch_exit(op.guest_pc, EXIT_SYSCALL),
             other => {

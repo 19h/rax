@@ -8,9 +8,11 @@
 //!    assembly) marshalling the x86 [`GuestRegs`] file in/out.
 //!  * aarch64: entry trampoline `rax_a64_enter_native` (AArch64 assembly)
 //!    marshalling the [`Aarch64GuestRegs`] file in/out.
-//! Both rely on the lowerer's 1:1 identity register map (guest GPR `N` ⇒ the
-//! same-named host GPR), so a lowered block reads and writes guest state
-//! directly; the only marshalling is once on entry and once on exit.
+//!  * RISC-V on x86-64: a state-backed `extern "sysv64"` entry point that reads
+//!    and writes [`RiscVGuestRegs`] directly.
+//! The first two paths rely on the lowerer's 1:1 identity register map (guest
+//! GPR `N` ⇒ the same-named host GPR), so their only marshalling is once on
+//! entry and once on exit.
 //!
 //! The x86-64 path is validated bit-exact against KVM by the differential
 //! harness in `tests/suites/differential/x86_64/fuzz.rs` (`smir_native_*` tests). The AArch64 path is
@@ -236,14 +238,53 @@ impl Aarch64GuestRegs {
     pub const VEC_STORE_FN_OFFSET: i32 = Self::VEC_LOAD_FN_OFFSET + 8;
 }
 
+/// Operation codes accepted by [`RiscVGuestRegs::atomic_rmw_fn`].
+#[repr(u64)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RiscVAtomicOpCode {
+    Add = 0,
+    Sub = 1,
+    Neg = 2,
+    And = 3,
+    Or = 4,
+    Xor = 5,
+    Nand = 6,
+    Max = 7,
+    Min = 8,
+    Umax = 9,
+    Umin = 10,
+    Swap = 11,
+}
+
+/// Ordering codes accepted by the RISC-V atomic helper ABI.
+#[repr(u64)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RiscVMemoryOrderCode {
+    Relaxed = 0,
+    Acquire = 1,
+    Release = 2,
+    AcqRel = 3,
+    SeqCst = 4,
+}
+
+/// Two-register SysV result of [`RiscVGuestRegs::cas_fn`].
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct RiscVAtomicCasResult {
+    pub old: u64,
+    pub success: u64,
+}
+
 /// State ABI for RISC-V SMIR lowered to an x86-64 host.
 ///
 /// The state-backed cross-lowerer accesses every field through the pointer
 /// passed in RDI.  All scalar fields use eight-byte slots, including `fcsr`, so
 /// the ABI is identical for RV32 and RV64 and has mechanically checkable
-/// offsets.  `load_fn` has signature
-/// `extern "C" fn(ctx, addr, size, signed) -> value`; `store_fn` has signature
-/// `extern "C" fn(ctx, addr, value, size) -> success`.
+/// offsets. `load_fn` has signature
+/// `extern "sysv64" fn(ctx, addr, size, signed) -> value`; `store_fn` has
+/// signature `extern "sysv64" fn(ctx, addr, value, size) -> success`. Atomic
+/// helpers use the same ABI, share
+/// the same context and must implement one indivisible transaction per call.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RiscVGuestRegs {
@@ -265,6 +306,17 @@ pub struct RiscVGuestRegs {
     pub load_fn: u64,
     /// Address of the scalar store helper.
     pub store_fn: u64,
+    /// `extern "sysv64" fn(ctx, addr, operand, size, op_code, order_code) -> old`.
+    pub atomic_rmw_fn: u64,
+    /// `extern "sysv64" fn(ctx, addr, expected, new, size, order_code) ->
+    /// {old, success}`, where `success` is 0 or 1.
+    pub cas_fn: u64,
+    /// `extern "sysv64" fn(ctx, addr, size) -> value`; establishes a reservation.
+    pub load_exclusive_fn: u64,
+    /// `extern "sysv64" fn(ctx, addr, value, size) -> success`; returns 0 or 1.
+    pub store_exclusive_fn: u64,
+    /// `extern "sysv64" fn(ctx)`; clears the reservation without storing.
+    pub clear_exclusive_fn: u64,
 }
 
 impl Default for RiscVGuestRegs {
@@ -278,6 +330,11 @@ impl Default for RiscVGuestRegs {
             ctx: 0,
             load_fn: 0,
             store_fn: 0,
+            atomic_rmw_fn: 0,
+            cas_fn: 0,
+            load_exclusive_fn: 0,
+            store_exclusive_fn: 0,
+            clear_exclusive_fn: 0,
         }
     }
 }
@@ -291,6 +348,11 @@ impl RiscVGuestRegs {
     pub const CTX_OFFSET: i32 = Self::EXIT_REASON_OFFSET + 8;
     pub const LOAD_FN_OFFSET: i32 = Self::CTX_OFFSET + 8;
     pub const STORE_FN_OFFSET: i32 = Self::LOAD_FN_OFFSET + 8;
+    pub const ATOMIC_RMW_FN_OFFSET: i32 = Self::STORE_FN_OFFSET + 8;
+    pub const CAS_FN_OFFSET: i32 = Self::ATOMIC_RMW_FN_OFFSET + 8;
+    pub const LOAD_EXCLUSIVE_FN_OFFSET: i32 = Self::CAS_FN_OFFSET + 8;
+    pub const STORE_EXCLUSIVE_FN_OFFSET: i32 = Self::LOAD_EXCLUSIVE_FN_OFFSET + 8;
+    pub const CLEAR_EXCLUSIVE_FN_OFFSET: i32 = Self::STORE_EXCLUSIVE_FN_OFFSET + 8;
 }
 
 // enter_native(rdi = entry ptr, rsi = *mut GuestRegs):
@@ -913,10 +975,10 @@ impl ExecMem {
     ///
     /// # Safety
     /// The mapped code must have been emitted for the
-    /// `extern "C" fn(*mut RiscVGuestRegs)` ABI and must preserve the host ABI.
+    /// `extern "sysv64" fn(*mut RiscVGuestRegs)` ABI and must preserve it.
     #[cfg(target_arch = "x86_64")]
     pub fn run_riscv(&self, entry_offset: usize, regs: &mut RiscVGuestRegs) {
-        type Entry = unsafe extern "C" fn(*mut RiscVGuestRegs);
+        type Entry = unsafe extern "sysv64" fn(*mut RiscVGuestRegs);
         let entry = unsafe { self.ptr.add(entry_offset) } as *const u8;
         let entry: Entry = unsafe { core::mem::transmute(entry) };
         unsafe { entry(regs as *mut RiscVGuestRegs) };
