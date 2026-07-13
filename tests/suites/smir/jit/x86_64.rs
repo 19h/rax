@@ -685,10 +685,11 @@ fn jit_cwd_cdq_cqo_preserve_partial_writes_source_and_flags() {
 fn jit_carry_rotates_immediate_one_preserve_width_alias_and_flags() {
     const STATUS_MASK: u64 = 0x08D5;
 
-    for (name, instruction, rax, r8, expected_rax, expected_r8, expected_status) in [
+    for (name, instruction, apx, rax, r8, expected_rax, expected_r8, expected_status) in [
         (
             "rcl al,1",
             &[0xD0, 0xD0][..],
+            false,
             0x1122_3344_5566_0042,
             0xAABB_CCDD_EEFF_0011,
             0x1122_3344_5566_0085,
@@ -698,6 +699,7 @@ fn jit_carry_rotates_immediate_one_preserve_width_alias_and_flags() {
         (
             "rcr ax,1",
             &[0x66, 0xD1, 0xD8][..],
+            false,
             0x1122_3344_5566_0001,
             0xAABB_CCDD_EEFF_0011,
             0x1122_3344_5566_8000,
@@ -707,6 +709,7 @@ fn jit_carry_rotates_immediate_one_preserve_width_alias_and_flags() {
         (
             "rcl eax,1",
             &[0xD1, 0xD0][..],
+            false,
             0xAABB_CCDD_4000_0000,
             0xAABB_CCDD_EEFF_0011,
             0x0000_0000_8000_0001,
@@ -716,6 +719,7 @@ fn jit_carry_rotates_immediate_one_preserve_width_alias_and_flags() {
         (
             "rcr rax,1",
             &[0x48, 0xD1, 0xD8][..],
+            false,
             1,
             0xAABB_CCDD_EEFF_0011,
             0x8000_0000_0000_0000,
@@ -725,6 +729,7 @@ fn jit_carry_rotates_immediate_one_preserve_width_alias_and_flags() {
         (
             "APX NDD rcl rax,r8,1",
             &[0x62, 0xF4, 0xBC, 0x18, 0xD1, 0xD0][..],
+            true,
             0x4000_0000_0000_0000,
             0xAABB_CCDD_EEFF_0011,
             0x4000_0000_0000_0000,
@@ -738,6 +743,7 @@ fn jit_carry_rotates_immediate_one_preserve_width_alias_and_flags() {
         code.push(0xF4);
 
         let setup = |vcpu: &mut X86_64Vcpu| {
+            vcpu.set_apx_enabled(apx);
             let mut regs = vcpu.get_regs().unwrap();
             regs.rax = rax;
             regs.r8 = r8;
