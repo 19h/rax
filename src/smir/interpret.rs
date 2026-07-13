@@ -7701,9 +7701,7 @@ impl SmirInterpreter {
                                 let high = (1i128 << (dst_bits - 1)) - 1;
                                 signed.clamp(low, high) as u64 & dst_mask
                             }
-                            X86NarrowMode::UnsignedSaturate => {
-                                signed.clamp(0, i128::from(dst_mask)) as u64
-                            }
+                            X86NarrowMode::UnsignedSaturate => raw.min(dst_mask),
                         };
                         Self::set_lane(&mut result, lane, dst_bits, value);
                     } else if !zeroing {
@@ -29944,7 +29942,7 @@ mod tests {
                         let shift = 128 - src_bits;
                         let signed = (i128::from(raw) << shift) >> shift;
                         let narrowed = match high {
-                            0x10 => signed.clamp(0, i128::from(dst_mask)) as u64,
+                            0x10 => raw.min(dst_mask),
                             0x20 => {
                                 let low = -(1i128 << (dst_bits - 1));
                                 let high = (1i128 << (dst_bits - 1)) - 1;
@@ -30197,6 +30195,52 @@ mod tests {
         assert!(!ctx.flags.materialized.zf);
         assert!(!ctx.flags.materialized.of);
         assert!(!ctx.flags.materialized.pf);
+    }
+
+    #[test]
+    fn x86_unsigned_narrow_treats_high_bit_sources_as_unsigned() {
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        let src = VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)));
+        let mut source = [0u64; 16];
+        for (lane, value) in [u32::MAX, 0, 255, 256].into_iter().enumerate() {
+            SmirInterpreter::set_lane(&mut source, lane as u8, 32, u64::from(value));
+        }
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = source;
+        }
+        let mut memory = FlatMemory::new(0x1000);
+        SmirInterpreter::new()
+            .execute_op(
+                &mut ctx,
+                &mut memory,
+                &SmirOp::new(
+                    OpId(0),
+                    0x1000,
+                    OpKind::X86NarrowInt {
+                        dst,
+                        src,
+                        mask: None,
+                        src_elem: VecElementType::I32,
+                        dst_elem: VecElementType::I8,
+                        width: VecWidth::V128,
+                        mode: X86NarrowMode::UnsignedSaturate,
+                        zeroing: false,
+                    },
+                ),
+            )
+            .unwrap();
+
+        let result = if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            x86.xmm[1]
+        } else {
+            unreachable!()
+        };
+        assert_eq!(
+            result[0].to_le_bytes()[..4],
+            [0xFF, 0x00, 0xFF, 0xFF],
+            "unsigned saturation maps 0xffffffff to 0xff, not 0"
+        );
     }
 
     #[test]

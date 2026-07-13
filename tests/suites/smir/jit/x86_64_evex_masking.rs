@@ -581,6 +581,17 @@ fn hot_masked_vpmovusdb_jits_with_saturating_narrow_semantics() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         return;
     }
+    // Rosetta 2 currently applies signed-to-unsigned saturation to this opcode,
+    // while the ISA defines an unsigned source. Keep the silicon regression
+    // active and avoid treating that translation discrepancy as x86 behavior.
+    #[cfg(target_os = "macos")]
+    if std::process::Command::new("/usr/sbin/sysctl")
+        .args(["-in", "sysctl.proc_translated"])
+        .output()
+        .is_ok_and(|output| output.stdout == b"1\n")
+    {
+        return;
+    }
     let mut code = Vec::new();
     code.extend_from_slice(&[0x62, 0xf2, 0x7e, 0xcc, 0x11, 0xd1]);
     code.extend_from_slice(&[0xff, 0xc9]);
@@ -614,7 +625,7 @@ fn hot_masked_vpmovusdb_jits_with_saturating_narrow_semantics() {
         expected_bytes[lane] = if ((mask >> lane) & 1) == 0 {
             0
         } else {
-            value.clamp(0, 255) as u8
+            (value as u32).min(255) as u8
         };
     }
     let expected = std::array::from_fn::<_, 8, _>(|word| {
@@ -1584,9 +1595,14 @@ fn vector_region_mmu_fault_preserves_complete_zmm_and_k_state() {
         return;
     }
 
+    // Keep a syntactic back-edge so the HLT is a separate frontier block and
+    // the pre-fault body is a native region. A straight-line load/vector/HLT
+    // block is itself the frontier and is correctly ineligible for promotion.
     let code = [
         0x8b, 0x07, // mov eax,[rdi] -- faults
         0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07, // vprold (must not execute)
+        0xff, 0xc9, // dec ecx
+        0x75, 0xf3, // jnz loop
         0xf4,
     ];
     let sentinels: [[u64; 8]; 32] = std::array::from_fn(|reg| {
@@ -1602,6 +1618,7 @@ fn vector_region_mmu_fault_preserves_complete_zmm_and_k_state() {
     let mut vcpu = make_vcpu(&code);
     vcpu.set_jit_mem(true);
     let mut regs = vcpu.get_regs().unwrap();
+    regs.rcx = 1;
     regs.rdi = MEM_SIZE + 0x1000;
     for (index, value) in sentinels.iter().copied().enumerate() {
         set_zmm(&mut regs, index, value);
