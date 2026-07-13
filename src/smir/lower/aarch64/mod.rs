@@ -7,8 +7,8 @@
 
 use std::collections::HashMap;
 
-use crate::smir::ir::flags::FlagUpdate;
-use crate::smir::ir::ops::{OpKind, SmirOp};
+use crate::smir::ir::flags::{FlagSet, FlagUpdate};
+use crate::smir::ir::ops::{OpKind, SmirOp, X86AdxKind, X86BlsKind};
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, AtomicOp, Avx10FP16Op, BlockId, Condition, ExtendOp, FenceKind,
     FpPrecision, FpRoundMode, MemWidth, MemoryOrder, OpWidth, ShiftOp, SignExtend, SrcOperand,
@@ -8326,6 +8326,186 @@ impl Aarch64Lowerer {
         }
     }
 
+    fn lower_x86_bls(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        kind: X86BlsKind,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        let defined_flags = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+        let set_flags = match flags {
+            FlagUpdate::None => false,
+            FlagUpdate::Specific(set) if set == defined_flags => true,
+            other => {
+                return Err(LowerError::InvalidOperand {
+                    op: "AArch64 native X86Bls".into(),
+                    operand: format!("flag contract {other:?}"),
+                });
+            }
+        };
+        if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 native X86Bls width {width:?}"),
+            });
+        }
+
+        let dst = Self::dst_gpr_arm_or_x86(dst)?;
+        let src = Self::gpr_arm_or_x86(src)?;
+        let scratches = Self::scratch_regs(&[dst, src], 2)?;
+        let original = scratches[0];
+        let transformed = scratches[1];
+        self.emit_scratch_save(&scratches);
+
+        // Preserve the source independently of destination aliasing. The saved
+        // value also drives the dynamic x86 CF definition after the result has
+        // replaced an aliased source register.
+        self.emit_mov_reg(original, src, width)?;
+        match kind {
+            X86BlsKind::Blsr | X86BlsKind::Blsmsk => {
+                self.emit_addsub_imm(transformed, original, 1, true, false, width)?;
+                self.emit_logic_reg_n(
+                    dst,
+                    original,
+                    transformed,
+                    if kind == X86BlsKind::Blsr { 0b00 } else { 0b10 },
+                    false,
+                    width,
+                )?;
+            }
+            X86BlsKind::Blsi => {
+                self.emit_addsub_reg(transformed, 31, original, true, false, width)?;
+                self.emit_logic_reg_n(dst, original, transformed, 0b00, false, width)?;
+            }
+        }
+
+        if set_flags {
+            // ANDS XZR/WZR,result,result establishes x86 SF/ZF and clears C/V.
+            // BLSR/BLSMSK then set CF iff src==0; BLSI sets CF iff src!=0.
+            self.emit_logic_reg_n(31, dst, dst, 0b11, false, width)?;
+            let skip_carry_set = self.code.position();
+            let skip_when_nonzero = !matches!(kind, X86BlsKind::Blsi);
+            self.emit(
+                if skip_when_nonzero {
+                    0xb500_0000
+                } else {
+                    0xb400_0000
+                } | u32::from(original),
+            );
+            self.lower_cfinv()?;
+            self.patch_compare_branch_to_current(skip_carry_set, original, skip_when_nonzero)?;
+        }
+
+        self.emit_scratch_restore(&scratches);
+        Ok(())
+    }
+
+    fn lower_x86_adx(
+        &mut self,
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: OpWidth,
+        kind: X86AdxKind,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        let selected_flag = match kind {
+            X86AdxKind::Adcx => FlagSet::CF,
+            X86AdxKind::Adox => FlagSet::OF,
+        };
+        let set_flags = match flags {
+            FlagUpdate::None => false,
+            FlagUpdate::Specific(set) if set == selected_flag => true,
+            other => {
+                return Err(LowerError::InvalidOperand {
+                    op: "AArch64 native X86Adx".into(),
+                    operand: format!("flag contract {other:?}"),
+                });
+            }
+        };
+        if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 native X86Adx width {width:?}"),
+            });
+        }
+        if matches!(src1, VReg::Imm(_)) || matches!(src2, VReg::Imm(_)) {
+            return Err(LowerError::InvalidOperand {
+                op: "AArch64 native X86Adx".into(),
+                operand: "immediate carry-chain source".into(),
+            });
+        }
+
+        let dst = Self::dst_gpr_arm_or_x86(dst)?;
+        let src1 = Self::gpr_arm_or_x86(src1)?;
+        let src2 = Self::gpr_arm_or_x86(src2)?;
+        let scratches = Self::scratch_regs(&[dst, src1, src2], 3)?;
+        let saved_flags = scratches[0];
+        let work = scratches[1];
+        let temp = scratches[2];
+        self.emit_scratch_save(&scratches);
+        self.emit_sysreg(saved_flags, ArmReg::Nzcv, true)?;
+
+        if kind == X86AdxKind::Adox {
+            // AArch64 ADC consumes C. Re-map the saved x86 OF representation
+            // (NZCV.V) into C without changing the saved snapshot used below.
+            self.emit_logic_imm_mask(
+                work,
+                saved_flags,
+                0b00,
+                !(NZCV_C as u32) as i64,
+                OpWidth::W32,
+            )?;
+            self.emit_logic_imm_mask(temp, saved_flags, 0b00, NZCV_V, OpWidth::W32)?;
+            self.lower_shift_imm(temp, temp, 1, ShiftOp::Lsl, OpWidth::W32)?;
+            self.emit_logic_shifted(work, work, temp, 0b01, false, 0, 0, OpWidth::W32)?;
+            self.emit_sysreg(work, ArmReg::Nzcv, false)?;
+        }
+
+        self.emit_addsub_carry(dst, src1, src2, false, set_flags, width)?;
+        if !set_flags {
+            self.emit_sysreg(saved_flags, ArmReg::Nzcv, false)?;
+            self.emit_scratch_restore(&scratches);
+            return Ok(());
+        }
+
+        // ADCS places the unsigned carry-out in C. Merge only the selected x86
+        // chain output into the pre-op NZCV snapshot: ADCX replaces C, whereas
+        // ADOX shifts C down one bit to replace V. N/Z and the other chain are
+        // bit-for-bit preserved.
+        self.emit_sysreg(work, ArmReg::Nzcv, true)?;
+        self.emit_logic_imm_mask(work, work, 0b00, NZCV_C, OpWidth::W32)?;
+        let output_mask = if kind == X86AdxKind::Adcx {
+            NZCV_C
+        } else {
+            self.lower_shift_imm(work, work, 1, ShiftOp::Lsr, OpWidth::W32)?;
+            NZCV_V
+        };
+        self.emit_logic_imm_mask(
+            saved_flags,
+            saved_flags,
+            0b00,
+            !(output_mask as u32) as i64,
+            OpWidth::W32,
+        )?;
+        self.emit_logic_shifted(
+            saved_flags,
+            saved_flags,
+            work,
+            0b01,
+            false,
+            0,
+            0,
+            OpWidth::W32,
+        )?;
+        self.emit_sysreg(saved_flags, ArmReg::Nzcv, false)?;
+        self.emit_scratch_restore(&scratches);
+        Ok(())
+    }
+
     fn lower_bzhi(
         &mut self,
         dst: VReg,
@@ -15974,6 +16154,21 @@ impl Aarch64Lowerer {
                 width,
                 flags,
             } => self.lower_bzhi(*dst, *src, *index, *width, *flags),
+            OpKind::X86Bls {
+                dst,
+                src,
+                width,
+                kind,
+                flags,
+            } => self.lower_x86_bls(*dst, *src, *width, *kind, *flags),
+            OpKind::X86Adx {
+                dst,
+                src1,
+                src2,
+                width,
+                kind,
+                flags,
+            } => self.lower_x86_adx(*dst, *src1, *src2, *width, *kind, *flags),
             OpKind::Pdep {
                 dst,
                 src,
@@ -16606,6 +16801,22 @@ mod tests {
 
     fn rotate_flags() -> FlagUpdate {
         FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF))
+    }
+
+    fn bls_flags() -> FlagUpdate {
+        FlagUpdate::Specific(
+            FlagSet::CF
+                .union(FlagSet::ZF)
+                .union(FlagSet::SF)
+                .union(FlagSet::OF),
+        )
+    }
+
+    fn adx_flags(kind: X86AdxKind) -> FlagUpdate {
+        FlagUpdate::Specific(match kind {
+            X86AdxKind::Adcx => FlagSet::CF,
+            X86AdxKind::Adox => FlagSet::OF,
+        })
     }
 
     fn lower_single_op(kind: OpKind) -> Vec<u8> {
@@ -41351,6 +41562,345 @@ mod tests {
         assert_eq!(out_nzcv, old_nzcv);
         assert_eq!(sp, 0x8000);
         assert_eq!(mem, mem_value);
+    }
+
+    #[test]
+    fn lowers_x86_bls_widths_flags_aliases_and_preserves_scratch_state() {
+        let cases = [
+            (X86BlsKind::Blsr, OpWidth::W64, 0_u64, 0b1011_u8),
+            (X86BlsKind::Blsmsk, OpWidth::W32, 0_u64, 0b0101_u8),
+            (
+                X86BlsKind::Blsi,
+                OpWidth::W64,
+                0x8000_0000_0000_0000,
+                0b0100_u8,
+            ),
+            (X86BlsKind::Blsr, OpWidth::W32, 0x8000_0018, 0b1111_u8),
+            (X86BlsKind::Blsmsk, OpWidth::W64, 0x1200, 0b0001_u8),
+            (X86BlsKind::Blsi, OpWidth::W32, 0x8000_0018, 0b1100_u8),
+        ];
+        for (kind, width, source, old_nzcv) in cases {
+            let code = lower_single_op(OpKind::X86Bls {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rcx),
+                width,
+                kind,
+                flags: bls_flags(),
+            });
+            let mask = width.mask();
+            let source = source & mask;
+            let result = match kind {
+                X86BlsKind::Blsr => source & source.wrapping_sub(1),
+                X86BlsKind::Blsmsk => source ^ source.wrapping_sub(1),
+                X86BlsKind::Blsi => source.wrapping_neg() & source,
+            } & mask;
+            let carry = match kind {
+                X86BlsKind::Blsr | X86BlsKind::Blsmsk => source == 0,
+                X86BlsKind::Blsi => source != 0,
+            };
+            let expected_nzcv = ((((result & width.sign_bit()) != 0) as u8) << 3)
+                | (((result == 0) as u8) << 2)
+                | ((carry as u8) << 1);
+            let sentinels = [
+                (16, 0x1616_1616_1616_1616),
+                (17, 0x1717_1717_1717_1717),
+                (15, 0x1515_1515_1515_1515),
+            ];
+            let mut regs = sentinels.to_vec();
+            regs.push((1, source));
+            let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+            assert_eq!(out[0], result, "{kind:?} {width:?} result");
+            assert_eq!(out[1], source, "{kind:?} {width:?} source preserved");
+            assert_eq!(out_nzcv, expected_nzcv, "{kind:?} {width:?} NZCV");
+            assert_eq!(sp, 0x8000, "{kind:?} {width:?} stack restored");
+            for (reg, value) in sentinels {
+                assert_eq!(out[reg as usize], value, "{kind:?} restored x{reg}");
+            }
+        }
+
+        let code = lower_ops_with_flagm_features(
+            vec![OpKind::X86Bls {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rcx),
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsi,
+                flags: bls_flags(),
+            }],
+            false,
+            false,
+        );
+        assert!(!code_has_flagm(&code, 0b000));
+        let (out, out_nzcv, sp) = run_aarch64_code(
+            &code,
+            &[
+                (1, 0x18),
+                (16, 0x1616_1616_1616_1616),
+                (17, 0x1717_1717_1717_1717),
+            ],
+            0b1101,
+        );
+        assert_eq!(out[0], 0x8, "baseline-AArch64 BLSI result");
+        assert_eq!(out_nzcv, 0b0010, "baseline-AArch64 BLSI flags");
+        assert_eq!(out[16], 0x1616_1616_1616_1616);
+        assert_eq!(out[17], 0x1717_1717_1717_1717);
+        assert_eq!(sp, 0x8000);
+
+        let old_nzcv = 0b1011;
+        let code = lower_single_op(OpKind::X86Bls {
+            dst: x86(X86Reg::Rax),
+            src: x86(X86Reg::Rax),
+            width: OpWidth::W64,
+            kind: X86BlsKind::Blsi,
+            flags: FlagUpdate::None,
+        });
+        let (out, out_nzcv, sp) = run_aarch64_code(
+            &code,
+            &[
+                (0, 0x18),
+                (16, 0x1616_1616_1616_1616),
+                (17, 0x1717_1717_1717_1717),
+            ],
+            old_nzcv,
+        );
+        assert_eq!(out[0], 0x8, "aliased NF BLSI result");
+        assert_eq!(out_nzcv, old_nzcv, "NF BLSI preserves every NZCV bit");
+        assert_eq!(out[16], 0x1616_1616_1616_1616);
+        assert_eq!(out[17], 0x1717_1717_1717_1717);
+        assert_eq!(sp, 0x8000);
+    }
+
+    #[test]
+    fn lowers_x86_adx_both_chains_widths_aliases_and_exact_flag_updates() {
+        let cases = [
+            (X86AdxKind::Adcx, OpWidth::W64, u64::MAX, 0, 0b1011_u8),
+            (
+                X86AdxKind::Adcx,
+                OpWidth::W32,
+                u64::from(u32::MAX),
+                1,
+                0b1001_u8,
+            ),
+            (X86AdxKind::Adox, OpWidth::W64, u64::MAX, 1, 0b1000_u8),
+            (X86AdxKind::Adox, OpWidth::W32, 5, 7, 0b0111_u8),
+        ];
+        for (kind, width, lhs, rhs, old_nzcv) in cases {
+            let code = lower_single_op(OpKind::X86Adx {
+                dst: x86(X86Reg::Rax),
+                src1: x86(X86Reg::Rcx),
+                src2: x86(X86Reg::Rdx),
+                width,
+                kind,
+                flags: adx_flags(kind),
+            });
+            let carry_in = match kind {
+                X86AdxKind::Adcx => (old_nzcv & 0b0010) != 0,
+                X86AdxKind::Adox => (old_nzcv & 0b0001) != 0,
+            };
+            let mask = width.mask();
+            let sum = u128::from(lhs & mask) + u128::from(rhs & mask) + u128::from(carry_in);
+            let expected = (sum as u64) & mask;
+            let carry_out = (sum >> width.bits()) != 0;
+            let selected_bit = if kind == X86AdxKind::Adcx {
+                0b0010
+            } else {
+                0b0001
+            };
+            let expected_nzcv = (old_nzcv & !selected_bit) | (u8::from(carry_out) * selected_bit);
+            let sentinels = [
+                (16, 0x1616_1616_1616_1616),
+                (17, 0x1717_1717_1717_1717),
+                (15, 0x1515_1515_1515_1515),
+            ];
+            let mut regs = sentinels.to_vec();
+            regs.extend([(1, lhs), (2, rhs)]);
+            let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+            assert_eq!(out[0], expected, "{kind:?} {width:?} result");
+            assert_eq!(out[1], lhs, "{kind:?} lhs preserved");
+            assert_eq!(out[2], rhs, "{kind:?} rhs preserved");
+            assert_eq!(out_nzcv, expected_nzcv, "{kind:?} selected chain output");
+            assert_eq!(sp, 0x8000, "{kind:?} stack restored");
+            for (reg, value) in sentinels {
+                assert_eq!(out[reg as usize], value, "{kind:?} restored x{reg}");
+            }
+        }
+
+        for (kind, width, dst, dst_index, lhs, rhs, old_nzcv, expected_nzcv) in [
+            (
+                X86AdxKind::Adcx,
+                OpWidth::W64,
+                X86Reg::Rcx,
+                1_usize,
+                u64::MAX,
+                1_u64,
+                0b1001_u8,
+                0b1011_u8,
+            ),
+            (
+                X86AdxKind::Adox,
+                OpWidth::W32,
+                X86Reg::Rdx,
+                2_usize,
+                u64::from(u32::MAX),
+                1_u64,
+                0b1010_u8,
+                0b1011_u8,
+            ),
+        ] {
+            let code = lower_single_op(OpKind::X86Adx {
+                dst: x86(dst),
+                src1: x86(X86Reg::Rcx),
+                src2: x86(X86Reg::Rdx),
+                width,
+                kind,
+                flags: adx_flags(kind),
+            });
+            let (out, out_nzcv, sp) = run_aarch64_code(
+                &code,
+                &[
+                    (1, lhs),
+                    (2, rhs),
+                    (16, 0x1616_1616_1616_1616),
+                    (17, 0x1717_1717_1717_1717),
+                    (15, 0x1515_1515_1515_1515),
+                ],
+                old_nzcv,
+            );
+            assert_eq!(out[dst_index], 0, "{kind:?} aliased destination result");
+            assert_eq!(out_nzcv, expected_nzcv, "{kind:?} aliased flag update");
+            assert_eq!(out[16], 0x1616_1616_1616_1616);
+            assert_eq!(out[17], 0x1717_1717_1717_1717);
+            assert_eq!(out[15], 0x1515_1515_1515_1515);
+            assert_eq!(sp, 0x8000);
+        }
+
+        let code = lower_single_op(OpKind::X86Adx {
+            dst: x86(X86Reg::Rdx),
+            src1: x86(X86Reg::Rax),
+            src2: x86(X86Reg::Rdx),
+            width: OpWidth::W64,
+            kind: X86AdxKind::Adox,
+            flags: FlagUpdate::None,
+        });
+        let old_nzcv = 0b1111;
+        let (out, out_nzcv, sp) = run_aarch64_code(
+            &code,
+            &[
+                (0, 5),
+                (2, 7),
+                (16, 0x1616_1616_1616_1616),
+                (17, 0x1717_1717_1717_1717),
+                (15, 0x1515_1515_1515_1515),
+            ],
+            old_nzcv,
+        );
+        assert_eq!(out[2], 13, "aliased NF ADOX consumes OF as carry-in");
+        assert_eq!(out[0], 5);
+        assert_eq!(out_nzcv, old_nzcv, "NF ADOX preserves every NZCV bit");
+        assert_eq!(out[16], 0x1616_1616_1616_1616);
+        assert_eq!(out[17], 0x1717_1717_1717_1717);
+        assert_eq!(out[15], 0x1515_1515_1515_1515);
+        assert_eq!(sp, 0x8000);
+    }
+
+    #[test]
+    fn rejects_malformed_x86_bls_and_adx_shapes() {
+        for (name, op) in [
+            (
+                "BLS subword width",
+                OpKind::X86Bls {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rcx),
+                    width: OpWidth::W16,
+                    kind: X86BlsKind::Blsr,
+                    flags: bls_flags(),
+                },
+            ),
+            (
+                "BLS flag contract",
+                OpKind::X86Bls {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rcx),
+                    width: OpWidth::W64,
+                    kind: X86BlsKind::Blsi,
+                    flags: FlagUpdate::Specific(FlagSet::ZF),
+                },
+            ),
+            (
+                "BLS virtual source",
+                OpKind::X86Bls {
+                    dst: x86(X86Reg::Rax),
+                    src: VReg::virt(0),
+                    width: OpWidth::W64,
+                    kind: X86BlsKind::Blsmsk,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "BLS reserved destination",
+                OpKind::X86Bls {
+                    dst: x86(X86Reg::R30),
+                    src: x86(X86Reg::Rcx),
+                    width: OpWidth::W64,
+                    kind: X86BlsKind::Blsr,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "ADX subword width",
+                OpKind::X86Adx {
+                    dst: x86(X86Reg::Rax),
+                    src1: x86(X86Reg::Rcx),
+                    src2: x86(X86Reg::Rdx),
+                    width: OpWidth::W16,
+                    kind: X86AdxKind::Adcx,
+                    flags: adx_flags(X86AdxKind::Adcx),
+                },
+            ),
+            (
+                "ADOX flag contract",
+                OpKind::X86Adx {
+                    dst: x86(X86Reg::Rax),
+                    src1: x86(X86Reg::Rcx),
+                    src2: x86(X86Reg::Rdx),
+                    width: OpWidth::W64,
+                    kind: X86AdxKind::Adox,
+                    flags: FlagUpdate::Specific(FlagSet::CF),
+                },
+            ),
+            (
+                "ADX immediate source",
+                OpKind::X86Adx {
+                    dst: x86(X86Reg::Rax),
+                    src1: VReg::Imm(0),
+                    src2: x86(X86Reg::Rdx),
+                    width: OpWidth::W64,
+                    kind: X86AdxKind::Adcx,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "ADX reserved destination",
+                OpKind::X86Adx {
+                    dst: x86(X86Reg::R30),
+                    src1: x86(X86Reg::Rcx),
+                    src2: x86(X86Reg::Rdx),
+                    width: OpWidth::W64,
+                    kind: X86AdxKind::Adox,
+                    flags: FlagUpdate::None,
+                },
+            ),
+        ] {
+            let err = try_lower_single_op(op).expect_err(name);
+            assert!(
+                matches!(
+                    err,
+                    LowerError::InvalidOperand { .. }
+                        | LowerError::InvalidRegister(_)
+                        | LowerError::UnsupportedOp { .. }
+                ),
+                "{name}: unexpected error {err:?}"
+            );
+        }
     }
 
     #[test]
