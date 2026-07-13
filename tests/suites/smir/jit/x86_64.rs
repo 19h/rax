@@ -267,6 +267,61 @@ fn jit_lea_sib_matches_interpreter() {
     assert_eq!(jr.rdx & 0xffff_ffff, 902, "lea result of last iteration");
 }
 
+/// BSF/BSR define only ZF. The native tier must retain CF across each scan,
+/// handle both zero and nonzero sources, preserve source/destination aliasing,
+/// and produce the same defined results as the interpreter in a hot region.
+#[test]
+fn jit_bit_scans_preserve_undefined_flags_and_handle_zero_sources() {
+    // loop:
+    //   bsf r8,rax;  jnc fail; jz fail
+    //   bsr r9,rbx;  jnc fail; jz fail
+    //   bsf r10,rdx; jnc fail; jnz fail   (zero source)
+    //   dec ecx; jnz loop
+    //   hlt
+    // fail: mov edi,1; hlt
+    let code = [
+        0x4C, 0x0F, 0xBC, 0xC0, 0x73, 0x17, 0x74, 0x15, 0x4C, 0x0F, 0xBD, 0xCB, 0x73, 0x0F, 0x74,
+        0x0D, 0x4C, 0x0F, 0xBC, 0xD2, 0x73, 0x07, 0x75, 0x05, 0xFF, 0xC9, 0x75, 0xE4, 0xF4, 0xBF,
+        0x01, 0x00, 0x00, 0x00, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x100;
+        regs.rbx = 1u64 << 63;
+        regs.rcx = 200;
+        regs.rdx = 0;
+        regs.rdi = 0;
+        regs.r8 = u64::MAX;
+        regs.r9 = u64::MAX;
+        regs.r10 = 0xA5A5_A5A5_A5A5_A5A5;
+        regs.rflags = 0x2 | 0x1 | 0x4 | 0x10 | 0x80 | 0x800;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interp = make_vcpu_code(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block().expect("JIT BSF/BSR hot region"),
+        "well-formed register bit scans must enter the native tier"
+    );
+    run_interp(&mut jit);
+
+    let expected = interp.get_regs().unwrap();
+    let after = jit.get_regs().unwrap();
+    assert_eq!(after.r8, expected.r8, "BSF nonzero result vs interpreter");
+    assert_eq!(after.r9, expected.r9, "BSR nonzero result vs interpreter");
+    assert_eq!(after.r8, 8, "lowest set-bit index");
+    assert_eq!(after.r9, 63, "highest set-bit index");
+    assert_eq!(after.rcx & 0xffff_ffff, 0, "loop count");
+    assert_eq!(after.rdi, 0, "ZF/CF checks must avoid fail path");
+    // R10 is architecturally undefined for a zero source and is intentionally
+    // excluded from the cross-tier equality contract.
+}
+
 /// APX NDD carry operations whose destination aliases source 2 must remain in
 /// the native tier. ADC can commute its register sources; SBB preserves the old
 /// source 2 on the host stack without disturbing incoming or result flags.

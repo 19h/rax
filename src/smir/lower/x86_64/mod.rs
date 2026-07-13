@@ -6,7 +6,7 @@ pub mod avx10;
 
 use std::collections::HashMap;
 
-use crate::smir::ir::flags::FlagUpdate;
+use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AluEncoding, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind,
     X86VecAlign, X86VecMap,
@@ -3790,6 +3790,98 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    fn lower_bit_scan(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        flags: FlagUpdate,
+        reverse: bool,
+    ) -> Result<(), LowerError> {
+        let op = if reverse { "Bsr" } else { "Bsf" };
+        if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: op.to_string(),
+                operand: format!("unsupported width {width:?}"),
+            });
+        }
+        let dst_reg = self.get_dst_reg(dst)?;
+        let src_reg = self.get_reg(src)?;
+        Self::ensure_flag_stack_operands_safe(op, &[dst_reg, src_reg])?;
+
+        let emit_scan = |emitter: &mut X86Emitter<'_>| {
+            if reverse {
+                emitter.emit_bsr(dst_reg, src_reg, width);
+            } else {
+                emitter.emit_bsf(dst_reg, src_reg, width);
+            }
+        };
+
+        match flags {
+            FlagUpdate::All => {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emit_scan(&mut emitter);
+            }
+            FlagUpdate::None => {
+                self.code.emit_u8(0x9C); // pushfq: preserve every guest flag
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emit_scan(&mut emitter);
+                self.code.emit_u8(0x9D); // popfq
+            }
+            FlagUpdate::Specific(set) if set == FlagSet::ZF => {
+                // BSF/BSR define only ZF. Execute the host instruction, then
+                // merge its ZF into the pre-instruction RFLAGS while keeping
+                // the result register and every undefined status flag intact:
+                //   [rsp+8] = old flags, [rsp] = saved result.
+                self.code.emit_u8(0x9C); // pushfq (old)
+                {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emit_scan(&mut emitter);
+                    emitter.emit_push(dst_reg);
+                }
+                self.code.emit_u8(0x9C); // pushfq (new)
+                {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_alu_mi_disp(
+                        4,
+                        PhysReg::Rsp,
+                        0,
+                        DispSize::Auto,
+                        1 << 6,
+                        OpWidth::W64,
+                    );
+                    emitter.emit_pop(dst_reg); // masked new ZF
+                    emitter.emit_alu_mi_disp(
+                        4,
+                        PhysReg::Rsp,
+                        8,
+                        DispSize::Auto,
+                        !(1i64 << 6),
+                        OpWidth::W64,
+                    );
+                    emitter.emit_alu_mem_disp(
+                        0x08,
+                        dst_reg,
+                        PhysReg::Rsp,
+                        8,
+                        DispSize::Auto,
+                        OpWidth::W64,
+                        X86AluEncoding::RmReg,
+                    );
+                    emitter.emit_pop(dst_reg); // restore scan result
+                }
+                self.code.emit_u8(0x9D); // popfq (merged)
+            }
+            FlagUpdate::Specific(set) => {
+                return Err(LowerError::InvalidOperand {
+                    op: op.to_string(),
+                    operand: format!("unsupported flag update {set:?}"),
+                });
+            }
+        }
+        Ok(())
+    }
+
     fn ensure_flag_stack_operands_safe(
         op: &'static str,
         regs: &[PhysReg],
@@ -5341,22 +5433,18 @@ impl X86_64Lowerer {
             }
 
             OpKind::Bsf {
-                dst, src, width, ..
-            } => {
-                let dst_reg = self.get_dst_reg(*dst)?;
-                let src_reg = self.get_reg(*src)?;
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_bsf(dst_reg, src_reg, *width);
-            }
+                dst,
+                src,
+                width,
+                flags,
+            } => self.lower_bit_scan(*dst, *src, *width, *flags, false)?,
 
             OpKind::Bsr {
-                dst, src, width, ..
-            } => {
-                let dst_reg = self.get_dst_reg(*dst)?;
-                let src_reg = self.get_reg(*src)?;
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_bsr(dst_reg, src_reg, *width);
-            }
+                dst,
+                src,
+                width,
+                flags,
+            } => self.lower_bit_scan(*dst, *src, *width, *flags, true)?,
 
             OpKind::Bextr {
                 dst,
@@ -14066,6 +14154,143 @@ mod tests {
 
             let mut lowerer = X86_64Lowerer::new();
             assert!(lowerer.lower_function(&func).is_err(), "{name}");
+        }
+    }
+
+    #[test]
+    fn lower_bit_scans_emit_zf_merge_and_validate_flag_contracts() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let r14 = VReg::Arch(ArchReg::X86(X86Reg::R14));
+        let r15 = VReg::Arch(ArchReg::X86(X86Reg::R15));
+        let zf_only = FlagUpdate::Specific(FlagSet::ZF);
+
+        let bsf = lower_single_op(OpKind::Bsf {
+            dst: r8,
+            src: rax,
+            width: OpWidth::W64,
+            flags: zf_only,
+        });
+        let expected_bsf = [
+            0x9C, 0x4C, 0x0F, 0xBC, 0xC0, 0x41, 0x50, 0x9C, 0x48, 0x83, 0x24, 0x24, 0x40, 0x41,
+            0x58, 0x48, 0x83, 0x64, 0x24, 0x08, 0xBF, 0x4C, 0x09, 0x44, 0x24, 0x08, 0x41, 0x58,
+            0x9D,
+        ];
+        assert!(
+            bsf.windows(expected_bsf.len())
+                .any(|bytes| bytes == expected_bsf),
+            "missing ZF-only BSF merge {expected_bsf:02X?}: {bsf:02X?}"
+        );
+
+        let bsr = lower_single_op(OpKind::Bsr {
+            dst: r15,
+            src: r14,
+            width: OpWidth::W16,
+            flags: zf_only,
+        });
+        assert!(
+            bsr.windows(5)
+                .any(|bytes| bytes == [0x66, 0x45, 0x0F, 0xBD, 0xFE]),
+            "missing W16 extended-register BSR encoding: {bsr:02X?}"
+        );
+
+        let preserving = lower_single_op(OpKind::Bsf {
+            dst: r8,
+            src: rax,
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        });
+        assert!(
+            preserving
+                .windows(6)
+                .any(|bytes| bytes == [0x9C, 0x44, 0x0F, 0xBC, 0xC0, 0x9D]),
+            "flag-suppressed BSF must be wrapped by PUSHFQ/POPFQ: {preserving:02X?}"
+        );
+
+        let err = lower_single_op_err(OpKind::Bsr {
+            dst: r8,
+            src: rax,
+            width: OpWidth::W64,
+            flags: FlagUpdate::Specific(FlagSet::CF),
+        });
+        assert!(matches!(err, LowerError::InvalidOperand { .. }), "{err:?}");
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_bit_scans_preserve_every_non_zf_status_flag() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let zf_only = FlagUpdate::Specific(FlagSet::ZF);
+        const STATUS: u64 = 0x8D5; // CF, PF, AF, ZF, SF, OF
+        for (name, kind, source, expected_result, expected_zf) in [
+            (
+                "bsf nonzero",
+                OpKind::Bsf {
+                    dst: r8,
+                    src: rax,
+                    width: OpWidth::W64,
+                    flags: zf_only,
+                },
+                0x100,
+                Some(8),
+                false,
+            ),
+            (
+                "bsr nonzero",
+                OpKind::Bsr {
+                    dst: r8,
+                    src: rax,
+                    width: OpWidth::W32,
+                    flags: zf_only,
+                },
+                0x8000_0000,
+                Some(31),
+                false,
+            ),
+            (
+                "bsf zero",
+                OpKind::Bsf {
+                    dst: r8,
+                    src: rax,
+                    width: OpWidth::W16,
+                    flags: zf_only,
+                },
+                0,
+                None,
+                true,
+            ),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("lower {name}: {error:?}"));
+            let code = lowerer.finalize().expect("finalize bit scan");
+            let exec = ExecMem::new(&code).expect("map bit scan");
+            let mut regs = GuestRegs::default();
+            regs.gpr[0] = source;
+            regs.gpr[8] = 0xA5A5_A5A5_A5A5_A5A5;
+            regs.rflags = 0x2 | STATUS;
+            exec.run(lowered.entry_offset, &mut regs);
+
+            if let Some(expected) = expected_result {
+                assert_eq!(regs.gpr[8], expected, "{name}: result");
+            }
+            let expected_status = if expected_zf {
+                STATUS | (1 << 6)
+            } else {
+                STATUS & !(1 << 6)
+            };
+            assert_eq!(
+                regs.rflags & STATUS,
+                expected_status,
+                "{name}: only ZF may change"
+            );
         }
     }
 

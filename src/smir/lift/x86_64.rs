@@ -5665,14 +5665,14 @@ impl X86_64Lifter {
                 dst: self.gpr(modrm.reg),
                 src,
                 width,
-                flags: FlagUpdate::All,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
             }
         } else {
             OpKind::Bsr {
                 dst: self.gpr(modrm.reg),
                 src,
                 width,
-                flags: FlagUpdate::All,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
             }
         };
 
@@ -44073,16 +44073,29 @@ mod tests {
         )));
 
         let bsf = lift_single(&[0x0F, 0xBC, 0xC3]).unwrap();
-        assert!(
-            bsf.ops
-                .iter()
-                .any(|op| matches!(op.kind, OpKind::Bsf { .. }))
-        );
+        assert!(bsf.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Bsf {
+                flags: FlagUpdate::Specific(FlagSet::ZF),
+                ..
+            }
+        )));
         assert!(
             !bsf.ops
                 .iter()
                 .any(|op| matches!(op.kind, OpKind::Ctz { .. }))
         );
+
+        let bsr = lift_single(&[0x48, 0x0F, 0xBD, 0xCB]).unwrap();
+        assert!(bsr.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Bsr {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rcx)),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Rbx)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
+            }
+        )));
 
         assert!(matches!(
             lift_single(&[0x0F, 0xB8, 0xC3]),

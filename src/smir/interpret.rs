@@ -1793,7 +1793,10 @@ impl SmirInterpreter {
                 Self::write_gpr(ctx, *dst, result, *width);
 
                 if flags.updates_any() {
-                    ctx.flags.set_lazy_logic(val, *width);
+                    // BSF defines only ZF; retain the emulator's deterministic
+                    // values for architecturally undefined status flags.
+                    ctx.flags.materialize_all();
+                    ctx.flags.materialized.zf = val == 0;
                 }
             }
 
@@ -1813,7 +1816,10 @@ impl SmirInterpreter {
                 Self::write_gpr(ctx, *dst, result, *width);
 
                 if flags.updates_any() {
-                    ctx.flags.set_lazy_logic(val, *width);
+                    // BSR has the same ZF-only architectural flag contract as
+                    // BSF. Preserve every other materialized status flag.
+                    ctx.flags.materialize_all();
+                    ctx.flags.materialized.zf = val == 0;
                 }
             }
 
@@ -30354,6 +30360,74 @@ mod tests {
         );
         assert_eq!(value, 0xffff_1234_5678_9abc);
         assert_eq!(got_flags, flags);
+    }
+
+    #[test]
+    fn smir_bit_scan_updates_only_zf_and_preserves_undefined_status_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        const CF: u64 = 1 << 0;
+        const PF: u64 = 1 << 2;
+        const AF: u64 = 1 << 4;
+        const ZF: u64 = 1 << 6;
+        const SF: u64 = 1 << 7;
+        const OF: u64 = 1 << 11;
+        const STATUS: u64 = CF | PF | AF | ZF | SF | OF;
+        let initial = 0x2 | STATUS;
+        let zf_only = FlagUpdate::Specific(FlagSet::ZF);
+
+        let (value, flags) = exec_x86_rax_op(
+            OpKind::Bsf {
+                dst: rax,
+                src: rax,
+                width: OpWidth::W64,
+                flags: zf_only,
+            },
+            0x100,
+            0,
+            initial,
+        );
+        assert_eq!(value, 8);
+        assert_eq!(flags & ZF, 0, "nonzero BSF clears ZF");
+        assert_eq!(
+            flags & (STATUS & !ZF),
+            initial & (STATUS & !ZF),
+            "BSF must retain deterministic values for undefined flags"
+        );
+
+        let (value, flags) = exec_x86_rax_op(
+            OpKind::Bsr {
+                dst: rax,
+                src: rax,
+                width: OpWidth::W32,
+                flags: zf_only,
+            },
+            0,
+            0,
+            initial & !ZF,
+        );
+        assert_eq!(value, 0, "interpreter's deterministic zero-source result");
+        assert_ne!(flags & ZF, 0, "zero BSR sets ZF");
+        assert_eq!(
+            flags & (STATUS & !ZF),
+            initial & (STATUS & !ZF),
+            "BSR must retain deterministic values for undefined flags"
+        );
+
+        let (_, flags) = exec_x86_rax_op(
+            OpKind::Bsf {
+                dst: rax,
+                src: rax,
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            1,
+            0,
+            initial,
+        );
+        assert_eq!(
+            flags, initial,
+            "flag-suppressed generic BSF preserves RFLAGS"
+        );
     }
 
     #[test]

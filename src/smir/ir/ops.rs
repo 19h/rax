@@ -3644,11 +3644,11 @@ impl OpKind {
                 | OpKind::SetCC { .. }
                 | OpKind::TestCondition { .. }
                 | OpKind::CMove { .. }
+                | OpKind::Bsf { .. }
+                | OpKind::Bsr { .. }
                 // Register-only address arithmetic (no memory dereference).
-                // NOTE: BSF/BSR are intentionally excluded — the lifter maps the
-                // F3-prefixed TZCNT/LZCNT onto the same opcode, and those have
-                // different zero/flag semantics, so JIT-compiling them as BSF/BSR
-                // mis-executes the kernel bootmem TZCNT loop.
+                // BSF/BSR have dedicated SMIR variants; F3-prefixed TZCNT/LZCNT
+                // lift to Ctz/Clz and cannot alias this native lowering.
                 | OpKind::Lea { .. }
                 | OpKind::Nop
         )
