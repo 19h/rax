@@ -3814,6 +3814,77 @@ impl X86_64Lowerer {
         mask
     }
 
+    fn lower_and_not(
+        &mut self,
+        dst: VReg,
+        src1: VReg,
+        src2: &SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: "AndNot".to_string(),
+                operand: format!("unsupported width {width:?}"),
+            });
+        }
+        let SrcOperand::Reg(src2) = src2 else {
+            return Err(LowerError::InvalidOperand {
+                op: "AndNot".to_string(),
+                operand: "x86 native lowering requires a register second source".to_string(),
+            });
+        };
+        let defined = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+        if !matches!(flags, FlagUpdate::None | FlagUpdate::All)
+            && flags != FlagUpdate::Specific(defined)
+        {
+            return Err(LowerError::InvalidOperand {
+                op: "AndNot".to_string(),
+                operand: format!("unsupported flag update {flags:?}"),
+            });
+        }
+
+        let dst_reg = self.get_dst_reg(dst)?;
+        let src1_reg = self.get_reg(src1)?;
+        let src2_reg = self.get_reg(*src2)?;
+        Self::ensure_flag_stack_operands_safe("AndNot", &[dst_reg, src1_reg, src2_reg])?;
+
+        if flags != FlagUpdate::All {
+            self.code.emit_u8(0x9C); // pushfq: old flags
+        }
+        {
+            // Saving src1 on the host stack makes every destination/source
+            // alias shape exact without reserving a guest GPR as scratch.
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_push(src1_reg);
+            emitter.emit_mov_rr(dst_reg, src2_reg, width);
+            emitter.emit_not(dst_reg, width);
+            emitter.emit_alu_mem_disp(
+                0x20,
+                dst_reg,
+                PhysReg::Rsp,
+                0,
+                DispSize::Auto,
+                width,
+                X86AluEncoding::RegRm,
+            );
+            // Discard the saved source without changing the AND result flags.
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 8);
+        }
+
+        match flags {
+            FlagUpdate::None => self.code.emit_u8(0x9D), // popfq
+            FlagUpdate::Specific(_) => {
+                self.finish_bmi_flags(dst_reg, Some(Self::x86_status_rflags_mask(defined)));
+            }
+            FlagUpdate::All => {}
+        }
+        Ok(())
+    }
+
     fn lower_x86_count(
         &mut self,
         dst: VReg,
@@ -5418,6 +5489,14 @@ impl X86_64Lowerer {
                     }
                 }
             }
+
+            OpKind::AndNot {
+                dst,
+                src1,
+                src2,
+                width,
+                flags,
+            } => self.lower_and_not(*dst, *src1, src2, *width, *flags)?,
 
             OpKind::Or {
                 dst,
@@ -14372,6 +14451,81 @@ mod tests {
             }),
             LowerError::InvalidOperand { .. }
         ));
+    }
+
+    #[test]
+    fn lower_and_not_preserves_aliases_and_partial_flag_contracts() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let defined = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+
+        let flagful = lower_single_op(OpKind::AndNot {
+            dst: r8,
+            src1: rax,
+            src2: SrcOperand::Reg(rbx),
+            width: OpWidth::W64,
+            flags: FlagUpdate::Specific(defined),
+        });
+        let core = [
+            0x9C, 0x50, 0x49, 0x89, 0xD8, 0x49, 0xF7, 0xD0, 0x4C, 0x23, 0x04, 0x24, 0x48, 0x8D,
+            0x64, 0x24, 0x08,
+        ];
+        assert!(
+            flagful.windows(core.len()).any(|window| window == core),
+            "flagful ANDN core lowering: {flagful:02X?}"
+        );
+
+        let nf_alias = lower_single_op(OpKind::AndNot {
+            dst: rax,
+            src1: rax,
+            src2: SrcOperand::Reg(rcx),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        });
+        let alias_core = [
+            0x9C, 0x50, 0x89, 0xC8, 0xF7, 0xD0, 0x23, 0x04, 0x24, 0x48, 0x8D, 0x64, 0x24, 0x08,
+            0x9D,
+        ];
+        assert!(
+            nf_alias
+                .windows(alias_core.len())
+                .any(|window| window == alias_core),
+            "NF aliased ANDN lowering: {nf_alias:02X?}"
+        );
+
+        for malformed in [
+            OpKind::AndNot {
+                dst: rax,
+                src1: rcx,
+                src2: SrcOperand::Reg(rbx),
+                width: OpWidth::W16,
+                flags: FlagUpdate::Specific(defined),
+            },
+            OpKind::AndNot {
+                dst: rax,
+                src1: rcx,
+                src2: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::Specific(defined),
+            },
+            OpKind::AndNot {
+                dst: rax,
+                src1: rcx,
+                src2: SrcOperand::Reg(rbx),
+                width: OpWidth::W64,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
+            },
+        ] {
+            assert!(matches!(
+                lower_single_op_err(malformed),
+                LowerError::InvalidOperand { .. }
+            ));
+        }
     }
 
     #[test]

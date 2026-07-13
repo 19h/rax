@@ -106,6 +106,8 @@ pub enum LazyFlagOp {
     Sbb,
     /// Logical (AND, OR, XOR): clears CF and OF; sets ZF, SF from result
     Logic,
+    /// BMI1 ANDN: defines CF/ZF/SF/OF like logic, preserves undefined PF/AF.
+    Andn,
     /// Increment: preserves CF
     Inc,
     /// Decrement: preserves CF
@@ -222,6 +224,18 @@ impl LazyFlags {
     pub fn logic(result: u64, width: OpWidth) -> Self {
         LazyFlags {
             op: LazyFlagOp::Logic,
+            result,
+            left: 0,
+            right: 0,
+            width,
+            high: 0,
+        }
+    }
+
+    /// Create lazy flags for BMI1 ANDN's partial flag definition.
+    pub fn andn(result: u64, width: OpWidth) -> Self {
+        LazyFlags {
+            op: LazyFlagOp::Andn,
             result,
             left: 0,
             right: 0,
@@ -428,6 +442,13 @@ impl FlagState {
         self.lazy = Some(LazyFlags::logic(result, width));
     }
 
+    /// Set lazy flags from BMI1 ANDN while retaining deterministic values for
+    /// its architecturally undefined PF and AF.
+    pub fn set_lazy_andn(&mut self, result: u64, width: OpWidth) {
+        self.materialize_all();
+        self.lazy = Some(LazyFlags::andn(result, width));
+    }
+
     /// Set lazy flags from a BEXTR operation.
     pub fn set_lazy_bextr(&mut self, result: u64, width: OpWidth) {
         // BEXTR leaves SF/PF/AF undefined; the interpreter's deterministic
@@ -522,7 +543,7 @@ impl FlagState {
                 // CF = borrow: left < right + carry_in
                 ((lazy.left & mask) as u128) < (lazy.right & mask) as u128 + lazy.high as u128
             }
-            LazyFlagOp::Logic => false,
+            LazyFlagOp::Logic | LazyFlagOp::Andn => false,
             LazyFlagOp::Inc | LazyFlagOp::Dec => {
                 // Preserve previous CF
                 self.materialized.cf
@@ -639,7 +660,7 @@ impl FlagState {
                 let result_sign = (lazy.result & sign_bit) != 0;
                 left_sign != right_sign && result_sign != left_sign
             }
-            LazyFlagOp::Logic => false,
+            LazyFlagOp::Logic | LazyFlagOp::Andn => false,
             LazyFlagOp::Inc => (lazy.result & lazy.width.mask()) == sign_bit,
             LazyFlagOp::Dec => (lazy.result & lazy.width.mask()) == (sign_bit - 1),
             LazyFlagOp::Neg => (lazy.left & lazy.width.mask()) == sign_bit,
@@ -728,6 +749,7 @@ impl FlagState {
             | LazyFlagOp::Rcl
             | LazyFlagOp::Rcr
             | LazyFlagOp::Bt
+            | LazyFlagOp::Andn
             | LazyFlagOp::Bextr
             | LazyFlagOp::Bzhi => self.materialized.pf,
             _ => {
@@ -865,6 +887,18 @@ mod tests {
 
     #[test]
     fn bmi_partial_flag_definitions_materialize_the_preceding_lazy_producer() {
+        let mut andn = FlagState::new();
+        andn.set_lazy_sub(0, 1, u32::MAX.into(), OpWidth::W32);
+        andn.set_lazy_andn(0x8000_0000, OpWidth::W32);
+        andn.materialize_all();
+
+        assert!(!andn.materialized.cf, "ANDN defines CF=0");
+        assert!(!andn.materialized.zf, "nonzero ANDN result clears ZF");
+        assert!(andn.materialized.sf, "ANDN defines SF from its result");
+        assert!(!andn.materialized.of, "ANDN defines OF=0");
+        assert!(andn.materialized.pf, "ANDN preserves preceding SUB PF");
+        assert!(andn.materialized.af, "ANDN preserves preceding SUB AF");
+
         let mut bextr = FlagState::new();
         bextr.materialized.sf = true;
         bextr.materialized.af = true;

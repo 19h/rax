@@ -249,6 +249,31 @@ fn test_andn_clears_stale_lazy_zf_setz() {
 }
 
 #[test]
+fn test_andn_preserves_lazy_undefined_pf_af() {
+    // SUB produces PF=AF=1 lazily. ANDN's result has odd parity and a native
+    // logical lowering would clear AF, so both assertions detect stale-state
+    // loss before ANDN updates only its architecturally defined flags.
+    let code = [
+        0x83, 0xea, 0x01, // SUB EDX,1: 0 - 1 = 0xffff_ffff (PF=AF=1)
+        0xc4, 0xe2, 0x60, 0xf2, 0xc1, // ANDN EAX,EBX,ECX: ~0 & 1 = 1
+        0xf4, // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rdx = 0;
+    regs.rbx = 0;
+    regs.rcx = 1;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFFFF_FFFF, 1);
+    assert_ne!(regs.rflags & (1 << 2), 0, "ANDN must preserve lazy PF");
+    assert_ne!(regs.rflags & (1 << 4), 0, "ANDN must preserve lazy AF");
+    assert_eq!(
+        regs.rflags & ((1 << 0) | (1 << 6) | (1 << 7) | (1 << 11)),
+        0
+    );
+}
+
+#[test]
 fn test_blsr_clears_stale_lazy_zf_jz() {
     // BLSR EAX,EBX with EBX=1 -> result 0, ZF=1.
     let code = [

@@ -6,7 +6,7 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext, VecValue};
-use crate::smir::ir::flags::{FlagSet, LazyFlagOp, LazyFlags};
+use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86CacheControlKind, X86CountKind,
@@ -1041,8 +1041,10 @@ impl SmirInterpreter {
 
                 Self::write_gpr(ctx, *dst, result, *width);
 
-                if flags.updates_any() {
-                    ctx.flags.set_lazy_logic(result, *width);
+                match flags {
+                    FlagUpdate::None => {}
+                    FlagUpdate::All => ctx.flags.set_lazy_logic(result, *width),
+                    FlagUpdate::Specific(_) => ctx.flags.set_lazy_andn(result, *width),
                 }
             }
 
@@ -30716,6 +30718,58 @@ mod tests {
         assert_ne!(got_flags & PF, 0, "BZHI preserves undefined PF");
         assert_ne!(got_flags & AF, 0, "BZHI preserves undefined AF");
         assert_eq!(got_flags & OF, 0, "BZHI clears OF");
+    }
+
+    #[test]
+    fn smir_andn_updates_only_defined_x86_flags() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        const CF: u64 = 1 << 0;
+        const PF: u64 = 1 << 2;
+        const AF: u64 = 1 << 4;
+        const ZF: u64 = 1 << 6;
+        const SF: u64 = 1 << 7;
+        const OF: u64 = 1 << 11;
+        let defined = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+        let initial = 0x2 | CF | PF | AF | ZF | OF;
+
+        let (value, got_flags) = exec_x86_rax_op(
+            OpKind::AndNot {
+                dst: rax,
+                src1: rax,
+                src2: SrcOperand::Reg(rcx),
+                width: OpWidth::W64,
+                flags: FlagUpdate::Specific(defined),
+            },
+            0x8000_0000_0000_0000,
+            0,
+            initial,
+        );
+        assert_eq!(value, 0x8000_0000_0000_0000);
+        assert_eq!(got_flags & CF, 0, "ANDN clears CF");
+        assert_eq!(got_flags & ZF, 0, "nonzero ANDN clears ZF");
+        assert_ne!(got_flags & SF, 0, "ANDN sets SF from its result");
+        assert_eq!(got_flags & OF, 0, "ANDN clears OF");
+        assert_ne!(got_flags & PF, 0, "ANDN preserves undefined PF");
+        assert_ne!(got_flags & AF, 0, "ANDN preserves undefined AF");
+
+        let (value, got_flags) = exec_x86_rax_op(
+            OpKind::AndNot {
+                dst: rax,
+                src1: rax,
+                src2: SrcOperand::Reg(rcx),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+            0xffff_ffff,
+            0xffff_fff0,
+            initial,
+        );
+        assert_eq!(value, 0x0f);
+        assert_eq!(got_flags, initial, "APX NF ANDN preserves every flag");
     }
 
     #[test]

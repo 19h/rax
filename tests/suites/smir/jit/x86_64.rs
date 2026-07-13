@@ -785,6 +785,121 @@ fn jit_carry_rotates_immediate_one_preserve_width_alias_and_flags() {
     }
 }
 
+/// VEX ANDN defines CF/ZF/SF/OF while retaining the emulator's deterministic
+/// values for undefined PF/AF. APX NF ANDN preserves every flag. Native
+/// lowering must also retain all three destination/source alias relationships.
+#[test]
+fn jit_andn_vex_and_apx_nf_preserve_aliases_and_exact_flags() {
+    const STATUS_MASK: u64 = 0x08D5;
+
+    for (name, instruction, apx, direct_reference, initial, expected) in [
+        (
+            "VEX andn rax,rcx,rdx",
+            &[0xC4, 0xE2, 0xF0, 0xF2, 0xC2][..],
+            false,
+            true,
+            (0x1111, 0x2222, 0x7FFF_FFFF_FFFF_FFFF, u64::MAX, 0x8888),
+            (
+                0x8000_0000_0000_0000,
+                0x2222,
+                0x7FFF_FFFF_FFFF_FFFF,
+                u64::MAX,
+                0x8888,
+                0x44,
+            ),
+        ),
+        (
+            "VEX andn ecx,ecx,edx",
+            &[0xC4, 0xE2, 0x70, 0xF2, 0xCA][..],
+            false,
+            true,
+            (0x1111, 0x2222, 0xAAAA_BBBB_FFFF_FFFF, u64::MAX, 0x8888),
+            (0x1111, 0x2222, u64::from(u32::MAX), u64::MAX, 0x8888, 0x44),
+        ),
+        (
+            "APX NF andn rax,rbx,rax",
+            &[0x62, 0xF2, 0xE4, 0x0C, 0xF2, 0xC0][..],
+            true,
+            false,
+            (u64::MAX, 0xFFFF_0000_FFFF_0000, 0x3333, 0x4444, 0x8888),
+            (
+                0x0000_FFFF_0000_FFFF,
+                0xFFFF_0000_FFFF_0000,
+                0x3333,
+                0x4444,
+                0x8888,
+                0x45,
+            ),
+        ),
+    ] {
+        // loop: ANDN; dec r9d; jnz loop; hlt
+        let mut code = instruction.to_vec();
+        code.extend_from_slice(&[0x41, 0xFF, 0xC9]);
+        let backedge = -i8::try_from(instruction.len() + 5).unwrap();
+        code.extend_from_slice(&[0x75, backedge as u8]);
+        code.push(0xF4);
+
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            vcpu.set_apx_enabled(apx);
+            let mut regs = vcpu.get_regs().unwrap();
+            (regs.rax, regs.rbx, regs.rcx, regs.rdx, regs.r8) = initial;
+            regs.r9 = 200;
+            regs.rflags = 0xCD7;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        // The direct decoder does not yet execute APX NF ANDN. Its closed-form
+        // oracle below remains independent of the SMIR lifter/lowerer, while
+        // legacy VEX forms additionally receive full interpreter comparison.
+        let reference = direct_reference.then(|| {
+            let mut interp = make_vcpu_code(&code);
+            setup(&mut interp);
+            run_interp(&mut interp);
+            interp.get_regs().unwrap()
+        });
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("JIT {name}: {error:?}")),
+            "{name} loop must enter the native tier"
+        );
+        run_interp(&mut jit);
+
+        let after = jit.get_regs().unwrap();
+        if let Some(reference) = reference {
+            assert_eq!(
+                (after.rax, after.rbx, after.rcx, after.rdx, after.r8),
+                (
+                    reference.rax,
+                    reference.rbx,
+                    reference.rcx,
+                    reference.rdx,
+                    reference.r8,
+                ),
+                "{name}: registers vs interpreter"
+            );
+            assert_eq!(
+                after.rflags & STATUS_MASK,
+                reference.rflags & STATUS_MASK,
+                "{name}: status flags vs interpreter"
+            );
+        }
+        assert_eq!(
+            (after.rax, after.rbx, after.rcx, after.rdx, after.r8),
+            (expected.0, expected.1, expected.2, expected.3, expected.4),
+            "{name}: architectural registers"
+        );
+        assert_eq!(after.r9 & 0xFFFF_FFFF, 0, "{name}: loop count");
+        assert_eq!(
+            after.rflags & STATUS_MASK,
+            expected.5,
+            "{name}: exact architectural status flags"
+        );
+    }
+}
+
 /// Register-only BMI1/BMI2 operations are native-JIT eligible at both scalar
 /// widths. The matrix covers zero extension, boundary counts, defined versus
 /// preserved flags, and destination aliasing with every explicit source role.

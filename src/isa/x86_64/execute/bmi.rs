@@ -15,7 +15,7 @@ use crate::isa::x86_64::flags;
 // =============================================================================
 
 /// ANDN - Logical AND NOT (VEX.LZ.0F38 F2 /r)
-/// dest = src1 AND (NOT src2)
+/// dest = (NOT src1) AND src2
 pub fn andn(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Option<VcpuExit>> {
     let mask = if ctx.op_size == 8 {
         !0u64
@@ -39,6 +39,9 @@ pub fn andn(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext, vvvv: u8) -> Result<Op
         (result >> 31) & 1
     };
     let zf = if result == 0 { 1 } else { 0 };
+    // The emulator deterministically preserves ANDN's undefined PF/AF.
+    // Commit any pending lazy producer before updating the defined bits.
+    vcpu.materialize_flags();
     vcpu.regs.rflags &= !(flags::bits::SF | flags::bits::ZF | flags::bits::OF | flags::bits::CF);
     if sf != 0 {
         vcpu.regs.rflags |= flags::bits::SF;

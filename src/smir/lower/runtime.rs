@@ -2237,12 +2237,13 @@ fn block_is_clobber_safe(
         // JIT is enabled, register-destination Load/Store are additionally
         // allowed (they lower to MMU helper calls with fault-bail); RMW forms
         // still bail via the virtual-temp check below, and RSP/RBP-based
-        // addresses via check (3). The explicitly admitted native vector family
-        // is register-only and receives a separate host-feature gate before
-        // execution.
+        // addresses via check (3). Explicitly admitted x86 scalar/vector
+        // families receive exact shape checks below and, where needed, separate
+        // host-feature gates before execution.
         let mem_ok = allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. });
+        let scalar_ok = matches!(op.kind, OpKind::AndNot { .. });
         let vector_ok = is_x86_native_vector_op(&op.kind);
-        if !op.is_jit_safe() && !mem_ok && !vector_ok {
+        if !op.is_jit_safe() && !mem_ok && !scalar_ok && !vector_ok {
             return false;
         }
         if x86_movx_uses_ambiguous_high_byte_source(op) {
@@ -2271,7 +2272,11 @@ fn block_is_clobber_safe(
         }
         if matches!(
             op.kind,
-            OpKind::Bextr { .. } | OpKind::Bzhi { .. } | OpKind::Pdep { .. } | OpKind::Pext { .. }
+            OpKind::AndNot { .. }
+                | OpKind::Bextr { .. }
+                | OpKind::Bzhi { .. }
+                | OpKind::Pdep { .. }
+                | OpKind::Pext { .. }
         ) && !x86_bmi_shape_valid(&op.kind)
         {
             return false;
@@ -2431,7 +2436,7 @@ fn x86_carry_rotate_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
 fn x86_bmi_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
     use crate::smir::ir::ops::OpKind;
-    use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
+    use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
 
     let native_gpr = |reg: &VReg| {
         matches!(
@@ -2454,6 +2459,10 @@ fn x86_bmi_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
             ))
         )
     };
+    let andn_flags = FlagSet::CF
+        .union(FlagSet::ZF)
+        .union(FlagSet::SF)
+        .union(FlagSet::OF);
     let bextr_flags = FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF);
     let bzhi_flags = FlagSet::CF
         .union(FlagSet::ZF)
@@ -2461,6 +2470,18 @@ fn x86_bmi_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         .union(FlagSet::OF);
 
     match op {
+        OpKind::AndNot {
+            dst,
+            src1,
+            src2: SrcOperand::Reg(src2),
+            width: OpWidth::W32 | OpWidth::W64,
+            flags,
+        } => {
+            native_gpr(dst)
+                && native_gpr(src1)
+                && native_gpr(src2)
+                && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(andn_flags))
+        }
         OpKind::Bextr {
             dst,
             src,
@@ -4501,6 +4522,112 @@ mod jit_gate_tests {
             ),
         ] {
             assert!(!x86_gate(op), "malformed {name} count must deopt");
+        }
+    }
+
+    #[test]
+    fn andn_gate_accepts_only_register_bmi_and_apx_nf_shapes() {
+        let defined = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+        for (name, op) in [
+            (
+                "VEX flagful",
+                OpKind::AndNot {
+                    dst: x86(X86Reg::R8),
+                    src1: x86(X86Reg::Rax),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rbx)),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::Specific(defined),
+                },
+            ),
+            (
+                "APX NF aliased",
+                OpKind::AndNot {
+                    dst: x86(X86Reg::Rax),
+                    src1: x86(X86Reg::Rax),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rbx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+        ] {
+            assert!(
+                !op.is_jit_safe(),
+                "{name} must remain scoped to the x86 exact-shape gate"
+            );
+            assert!(x86_gate(op.clone()), "{name} must pass the exact gate");
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            assert_eq!(
+                x86_native_scalar_feature_requirements_excluding(
+                    &builder.finish(),
+                    &std::collections::HashMap::new()
+                ),
+                (false, false, false, false),
+                "generic lowering must not require host BMI1"
+            );
+        }
+
+        for (name, op) in [
+            (
+                "word width",
+                OpKind::AndNot {
+                    dst: x86(X86Reg::Rax),
+                    src1: x86(X86Reg::Rcx),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rdx)),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::Specific(defined),
+                },
+            ),
+            (
+                "overbroad flags",
+                OpKind::AndNot {
+                    dst: x86(X86Reg::Rax),
+                    src1: x86(X86Reg::Rcx),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rdx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "immediate source",
+                OpKind::AndNot {
+                    dst: x86(X86Reg::Rax),
+                    src1: x86(X86Reg::Rcx),
+                    src2: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(defined),
+                },
+            ),
+            (
+                "extended guest destination",
+                OpKind::AndNot {
+                    dst: x86(X86Reg::R16),
+                    src1: x86(X86Reg::Rcx),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rdx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "virtual source",
+                OpKind::AndNot {
+                    dst: x86(X86Reg::Rax),
+                    src1: VReg::Virtual(VirtualId(0)),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rdx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+        ] {
+            assert!(
+                !op.is_jit_safe(),
+                "{name} must remain outside the shared architecture whitelist"
+            );
+            assert!(!x86_gate(op), "malformed {name} must deopt");
         }
     }
 
