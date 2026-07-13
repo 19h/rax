@@ -634,6 +634,51 @@ fn x86_subword_carry_rotates_execute_natively_with_partial_register_merges() {
 }
 
 #[test]
+fn x86_apx_ndd_double_shifts_execute_natively_across_widths_and_aliases() {
+    // LLVM 23 encodings: {nf} SHLD r8w,ax,bx,4;
+    // {nf} SHRD ecx,eax,ebx,cl; {nf} SHLD rbx,rax,rbx,4.
+    // The sequence covers W16 partial-register merge, W32 zero-extension,
+    // dst==CL, and dst==fill while preserving every status flag.
+    let code = [
+        0x62, 0xF4, 0x3D, 0x1C, 0x24, 0xD8, 0x04, 0x62, 0xF4, 0x74, 0x1C, 0xAD, 0xD8, 0x62, 0xF4,
+        0xE4, 0x1C, 0x24, 0xD8, 0x04, 0x75,
+        0xEA, // JNZ start (not taken because APX NF preserves ZF=1)
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        vcpu.set_apx_enabled(true);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xAAAA_BBBB_CCCC_8123;
+        regs.rcx = 0x1111_2222_3333_0005;
+        regs.rbx = 0xBBBB_CCCC_DDDD_5AA5;
+        regs.r8 = 0x8888_7777_6666_2468;
+        regs.rflags = 0xCD6;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("APX NDD double-shift JIT attempt"),
+        "APX NF NDD double shifts must enter the AArch64 native tier"
+    );
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "APX NDD double shifts");
+    assert_eq!(actual.r8, 0x8888_7777_6666_1235, "W16 upper merge");
+    assert_eq!(actual.rcx, 0x2E66_6409, "W32 count alias");
+    assert_eq!(actual.rbx, 0xAAAB_BBBC_CCC8_123B, "W64 fill alias");
+    assert_eq!(actual.rflags, 0xCD6, "APX NF preserves complete RFLAGS");
+}
+
+#[test]
 fn x86_aarch64_jit_rejects_live_pf_af_definitions_without_execution() {
     // add rax,rbx; jnz start; hlt. ADD's live PF/AF outputs cannot be represented
     // in NZCV, so the architecture-specific gate must retain interpreter fallback.

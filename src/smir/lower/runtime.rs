@@ -2667,7 +2667,7 @@ fn x86_aarch64_legacy_gpr(vreg: &crate::smir::ir::types::VReg) -> bool {
 /// fail closed until their AArch64-host shape is reviewed.
 fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
-    use crate::smir::ir::types::OpWidth;
+    use crate::smir::ir::types::{OpWidth, SrcOperand};
 
     let full_gpr_write = |width: &OpWidth| matches!(width, OpWidth::W32 | OpWidth::W64);
     let scalar_read_width = |width: &OpWidth| {
@@ -2698,10 +2698,22 @@ fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
             full_gpr_write(width)
                 || (x86_aarch64_legacy_gpr(dst) && matches!(width, OpWidth::W8 | OpWidth::W16))
         }
+        OpKind::X86NddDoubleShift {
+            dst,
+            amount,
+            width,
+            flags,
+            ..
+        } => {
+            full_gpr_write(width)
+                || (matches!(width, OpWidth::W16)
+                    && x86_aarch64_legacy_gpr(dst)
+                    && (!flags.updates_any()
+                        || matches!(amount, SrcOperand::Imm(value) if (*value as u64 & 0x1f) <= 16)))
+        }
         OpKind::AndNot { width, .. }
         | OpKind::Shld { width, .. }
         | OpKind::Shrd { width, .. }
-        | OpKind::X86NddDoubleShift { width, .. }
         | OpKind::MulU { width, .. }
         | OpKind::MulS { width, .. }
         | OpKind::Bsf { width, .. }
@@ -3906,6 +3918,55 @@ mod jit_gate_tests {
                     if right { "RCR" } else { "RCL" }
                 );
             }
+        }
+    }
+
+    #[test]
+    fn x86_aarch64_gate_accepts_apx_ndd_double_shift_width_direction_and_count_matrix() {
+        for width in [OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+            for left in [false, true] {
+                for amount in [SrcOperand::Imm(4), SrcOperand::Reg(x86(X86Reg::Rcx))] {
+                    assert!(
+                        x86_aarch64_gate(vec![OpKind::X86NddDoubleShift {
+                            dst: x86(X86Reg::Rbx),
+                            base: x86(X86Reg::Rax),
+                            fill: x86(X86Reg::Rbx),
+                            amount: amount.clone(),
+                            width,
+                            left,
+                            flags: FlagUpdate::None,
+                        }]),
+                        "APX NF NDD double shift {width:?} left={left} amount={amount:?}"
+                    );
+                }
+            }
+        }
+
+        assert!(!x86_aarch64_scalar_shape_valid(
+            &OpKind::X86NddDoubleShift {
+                dst: x86(X86Reg::Rbx),
+                base: x86(X86Reg::Rax),
+                fill: x86(X86Reg::Rdx),
+                amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                width: OpWidth::W16,
+                left: true,
+                flags: FlagUpdate::All,
+            }
+        ));
+        for (amount, expected) in [(16, true), (17, false), (31, false), (32, true)] {
+            assert_eq!(
+                x86_aarch64_scalar_shape_valid(&OpKind::X86NddDoubleShift {
+                    dst: x86(X86Reg::Rbx),
+                    base: x86(X86Reg::Rax),
+                    fill: x86(X86Reg::Rdx),
+                    amount: SrcOperand::Imm(amount),
+                    width: OpWidth::W16,
+                    left: false,
+                    flags: FlagUpdate::All,
+                }),
+                expected,
+                "W16 flag-setting APX NDD immediate count {amount}"
+            );
         }
     }
 

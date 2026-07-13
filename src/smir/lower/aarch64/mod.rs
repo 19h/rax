@@ -13961,6 +13961,79 @@ impl Aarch64Lowerer {
         self.emit_extract(dst_reg, rn, rm, lsb, width)
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn lower_x86_ndd_double_shift(
+        &mut self,
+        dst: VReg,
+        base: VReg,
+        fill: VReg,
+        amount: &SrcOperand,
+        width: OpWidth,
+        left: bool,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 native APX NDD double shift width {width:?}"),
+            });
+        }
+        if width == OpWidth::W16 && flags.updates_any() && matches!(amount, SrcOperand::Reg(_)) {
+            return Err(LowerError::UnsupportedOp {
+                op: "AArch64 native flag-setting W16 APX NDD double shift with register count"
+                    .into(),
+            });
+        }
+
+        let dst_reg = Self::dst_gpr_arm_or_x86(dst)?;
+        let base_reg = Self::gpr_arm_or_x86(base)?;
+        let fill_reg = Self::gpr_arm_or_x86(fill)?;
+        let amount_reg = match amount {
+            SrcOperand::Imm(_) => None,
+            SrcOperand::Reg(amount) => {
+                let amount = Self::gpr_arm_or_x86(*amount)?;
+                if amount != 1 {
+                    return Err(LowerError::UnsupportedOp {
+                        op: "AArch64 native APX NDD double shift register count must be CL".into(),
+                    });
+                }
+                Some(amount)
+            }
+            other => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("AArch64 native APX NDD double shift amount {other:?}"),
+                });
+            }
+        };
+        let mut avoid = vec![dst_reg, base_reg, fill_reg];
+        if let Some(amount) = amount_reg {
+            avoid.push(amount);
+        }
+        let result = Self::scratch_regs(&avoid, 1)?[0];
+        let scratches = [result];
+
+        self.emit_scratch_save(&scratches);
+        if width == OpWidth::W16 {
+            self.emit_bitfield(result, base_reg, 0b10, 0, 15, OpWidth::W32)?;
+        } else {
+            self.emit_mov_reg(result, base_reg, width)?;
+        }
+        self.lower_double_shift(
+            Self::arm_x_reg(result),
+            fill,
+            amount,
+            left,
+            flags.updates_any(),
+            width,
+        )?;
+        if width == OpWidth::W16 {
+            self.emit_bitfield(dst_reg, result, 0b01, 0, 15, OpWidth::W64)?;
+        } else {
+            self.emit_mov_reg(dst_reg, result, width)?;
+        }
+        self.emit_scratch_restore(&scratches);
+        Ok(())
+    }
+
     fn lower_test_condition(&mut self, dst: VReg, cond: Condition) -> Result<(), LowerError> {
         if cond == Condition::Always {
             return self.emit_mov_imm(Self::dst_gpr_arm_or_x86(dst)?, 1, OpWidth::W64);
@@ -16612,6 +16685,15 @@ impl Aarch64Lowerer {
                 width,
                 flags,
             } => self.lower_double_shift(*dst, *src, amount, false, flags.updates_any(), *width),
+            OpKind::X86NddDoubleShift {
+                dst,
+                base,
+                fill,
+                amount,
+                width,
+                left,
+                flags,
+            } => self.lower_x86_ndd_double_shift(*dst, *base, *fill, amount, *width, *left, *flags),
             OpKind::Ror {
                 dst,
                 src,
@@ -53424,6 +53506,208 @@ mod tests {
             5,
             OpWidth::W16,
         );
+    }
+
+    #[test]
+    fn lowers_x86_ndd_double_shift_alias_width_direction_and_count_matrix() {
+        let initial = |reg: u8| match reg {
+            0 => 0xaaaa_bbbb_cccc_8123,
+            1 => 0x1111_2222_3333_0005,
+            3 => 0xbbbb_cccc_dddd_5aa5,
+            8 => 0x8888_7777_6666_2468,
+            _ => unreachable!("unexpected test register x{reg}"),
+        };
+        let sentinels = [
+            (16, 0x1616_1616_1616_1616),
+            (17, 0x1717_1717_1717_1717),
+            (15, 0x1515_1515_1515_1515),
+            (14, 0x1414_1414_1414_1414),
+        ];
+        let aliases = [
+            ("distinct", 8, 0, 3, false),
+            ("dst-fill", 3, 0, 3, false),
+            ("dst-base", 0, 0, 3, false),
+            ("dst-count", 1, 0, 3, true),
+            ("fill-count", 8, 0, 1, true),
+            ("base-count", 8, 1, 3, true),
+        ];
+
+        for width in [OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+            for left in [false, true] {
+                for (alias, dst, base, fill, register_count) in aliases {
+                    let amount = if register_count {
+                        SrcOperand::Reg(x86(X86Reg::Rcx))
+                    } else {
+                        SrcOperand::Imm(4)
+                    };
+                    let code = lower_single_op(OpKind::X86NddDoubleShift {
+                        dst: x(dst),
+                        base: x(base),
+                        fill: x(fill),
+                        amount,
+                        width,
+                        left,
+                        flags: FlagUpdate::None,
+                    });
+                    let expected_low = if register_count {
+                        ref_double_shift_reg(initial(base), initial(fill), initial(1), left, width)
+                    } else {
+                        ref_double_shift_imm(initial(base), initial(fill), 4, left, width)
+                    };
+                    let expected = match width {
+                        OpWidth::W16 => (initial(dst) & !width_mask(width)) | expected_low,
+                        OpWidth::W32 | OpWidth::W64 => expected_low,
+                        _ => unreachable!(),
+                    };
+                    let mut regs = sentinels.to_vec();
+                    regs.extend([0, 1, 3, 8].map(|reg| (reg, initial(reg))));
+                    let old_nzcv = 0b1011;
+                    let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+                    let op = if left { "SHLD" } else { "SHRD" };
+
+                    assert_eq!(
+                        out[dst as usize], expected,
+                        "APX NDD {op} {width:?} {alias} result"
+                    );
+                    for reg in [0, 1, 3, 8] {
+                        if reg != dst {
+                            assert_eq!(
+                                out[reg as usize],
+                                initial(reg),
+                                "APX NDD {op} {width:?} {alias} x{reg} preserved"
+                            );
+                        }
+                    }
+                    for (reg, value) in sentinels {
+                        assert_eq!(
+                            out[reg as usize], value,
+                            "APX NDD {op} {width:?} {alias} x{reg} scratch"
+                        );
+                    }
+                    assert_eq!(out_nzcv, old_nzcv, "APX NDD {op} {width:?} {alias} NZCV");
+                    assert_eq!(sp, 0x8000, "APX NDD {op} {width:?} {alias} stack");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn lowers_x86_ndd_double_shift_flags_before_destination_commit() {
+        let initial = |reg: u8| match reg {
+            0 => 0xaaaa_bbbb_cccc_4001,
+            1 => 0x1111_2222_3333_0001,
+            3 => 0xbbbb_cccc_dddd_8001,
+            8 => 0x8888_7777_6666_2468,
+            _ => unreachable!("unexpected test register x{reg}"),
+        };
+        let cases = [
+            ("word-fill-alias", OpWidth::W16, true, 3, 0, 3, false),
+            ("dword-count-alias", OpWidth::W32, false, 1, 0, 3, true),
+            ("qword-register", OpWidth::W64, true, 8, 0, 3, true),
+        ];
+
+        for (label, width, left, dst, base, fill, register_count) in cases {
+            let amount_value = 1;
+            let amount = if register_count {
+                SrcOperand::Reg(x86(X86Reg::Rcx))
+            } else {
+                SrcOperand::Imm(amount_value as i64)
+            };
+            let code = lower_single_op(OpKind::X86NddDoubleShift {
+                dst: x(dst),
+                base: x(base),
+                fill: x(fill),
+                amount,
+                width,
+                left,
+                flags: FlagUpdate::All,
+            });
+            let expected_low = ref_double_shift_flags_value(
+                initial(base),
+                initial(fill),
+                amount_value,
+                left,
+                width,
+            );
+            let expected = if width == OpWidth::W16 {
+                (initial(dst) & !width_mask(width)) | expected_low
+            } else {
+                expected_low
+            };
+            let old_nzcv = 0b1101;
+            let expected_nzcv = expected_double_shift_nzcv(
+                old_nzcv,
+                initial(base),
+                expected_low,
+                amount_value,
+                left,
+                width,
+                FlagUpdate::All,
+            );
+            let (out, out_nzcv, sp) = run_aarch64_code(
+                &code,
+                &[
+                    (0, initial(0)),
+                    (1, initial(1)),
+                    (3, initial(3)),
+                    (8, initial(8)),
+                    (16, 0x1616_1616_1616_1616),
+                    (17, 0x1717_1717_1717_1717),
+                ],
+                old_nzcv,
+            );
+
+            assert_eq!(out[dst as usize], expected, "{label} result");
+            assert_eq!(out_nzcv, expected_nzcv, "{label} NZCV");
+            assert_eq!(out[16], 0x1616_1616_1616_1616, "{label} x16 scratch");
+            assert_eq!(out[17], 0x1717_1717_1717_1717, "{label} x17 scratch");
+            assert_eq!(sp, 0x8000, "{label} stack");
+        }
+    }
+
+    #[test]
+    fn rejects_unsupported_x86_ndd_double_shift_shapes() {
+        for op in [
+            OpKind::X86NddDoubleShift {
+                dst: x(0),
+                base: x(1),
+                fill: x(2),
+                amount: SrcOperand::Imm(1),
+                width: OpWidth::W8,
+                left: true,
+                flags: FlagUpdate::None,
+            },
+            OpKind::X86NddDoubleShift {
+                dst: x(0),
+                base: x(1),
+                fill: x(2),
+                amount: SrcOperand::Reg(x(3)),
+                width: OpWidth::W16,
+                left: false,
+                flags: FlagUpdate::All,
+            },
+            OpKind::X86NddDoubleShift {
+                dst: x(0),
+                base: x(1),
+                fill: x(2),
+                amount: SrcOperand::Reg(x(2)),
+                width: OpWidth::W64,
+                left: false,
+                flags: FlagUpdate::None,
+            },
+            OpKind::X86NddDoubleShift {
+                dst: x(0),
+                base: x(1),
+                fill: x(2),
+                amount: SrcOperand::Imm64(1),
+                width: OpWidth::W64,
+                left: true,
+                flags: FlagUpdate::None,
+            },
+        ] {
+            let error = try_lower_single_op(op).expect_err("unsupported APX NDD double shift");
+            assert!(error.to_string().contains("APX NDD double shift"));
+        }
     }
 
     #[test]
