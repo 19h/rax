@@ -231,10 +231,10 @@ execution tier lowers `step_jit` as one instruction and `run_jit` as cache-keyed
 of up to 16 instructions to state-backed native blocks on both x86-64 and AArch64 hosts. Regions stop
 at memory, control-flow, fence, and replay-sensitive boundaries; cache identity covers every 16- or
 32-bit encoding in the region, and a faulting final memory operation retires only its completed prefix.
-Scalar integer, memory, control flow, A/Zacas atomics (including AMOCAS.Q), integer crypto, scalar
-floating point, and memory-free RVV OP-V arithmetic/configuration execute natively. RVV memory
-operations and other unsupported boundaries remain on the interpreter path without speculative
-guest-state commits.
+Scalar integer, memory (including RV32 Zilsd/Zclsd register-pair transfers), control flow, A/Zacas
+atomics (including AMOCAS.Q), integer crypto, scalar floating point, and memory-free RVV OP-V
+arithmetic/configuration execute natively. RVV memory operations and other unsupported boundaries
+remain on the interpreter path without speculative guest-state commits.
 
 ---
 

@@ -3,7 +3,9 @@
 //! This module lifts RISC-V instructions to SMIR operations.
 //! Supports RV64I base, M (multiply/divide), A (atomics), and C (compressed) extensions.
 
-use crate::isa::riscv::{Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode};
+use crate::isa::riscv::{
+    Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode, rvc::decode_rvc as rv_decode_rvc,
+};
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, RvVectorState, SmirOp};
 use crate::smir::ir::types::*;
@@ -669,6 +671,16 @@ impl RiscVLifter {
         let funct3 = Self::funct3(insn);
         let imm = Self::imm_i(insn);
 
+        if self.xlen == 32 && funct3 == 0b011 {
+            if self.extensions.zilsd && rd & 1 == 0 {
+                return self.lift_load_pair(rd, rs1_reg, imm, addr, ctx);
+            }
+            return Err(LiftError::InvalidEncoding {
+                addr,
+                bytes: insn.to_le_bytes().to_vec(),
+            });
+        }
+
         let rs1 = self.get_x_reg(rs1_reg, ctx);
 
         let (width, sign) = match funct3 {
@@ -722,6 +734,16 @@ impl RiscVLifter {
         let funct3 = Self::funct3(insn);
         let imm = Self::imm_s(insn);
 
+        if self.xlen == 32 && funct3 == 0b011 {
+            if self.extensions.zilsd && rs2_reg & 1 == 0 {
+                return self.lift_store_pair(rs2_reg, rs1_reg, imm, addr, ctx);
+            }
+            return Err(LiftError::InvalidEncoding {
+                addr,
+                bytes: insn.to_le_bytes().to_vec(),
+            });
+        }
+
         let rs1 = self.get_x_reg(rs1_reg, ctx);
         let rs2 = self.get_x_reg(rs2_reg, ctx);
 
@@ -755,6 +777,165 @@ impl RiscVLifter {
             },
         ));
 
+        Ok((ops, ControlFlow::NextInsn))
+    }
+
+    /// RV32 Zilsd/Zclsd `ld`: one 64-bit memory access followed by an exact
+    /// low/high split into the aligned destination pair. `rd=x0` discards the
+    /// complete result and does not access or write x1.
+    fn lift_load_pair(
+        &mut self,
+        rd: u8,
+        rs1: u8,
+        imm: i64,
+        addr: GuestAddr,
+        ctx: &mut LiftContext,
+    ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
+        if self.xlen != 32 || rd & 1 != 0 {
+            return Err(LiftError::Internal(format!(
+                "RV32 pair lift received invalid destination x{rd}"
+            )));
+        }
+        let packed = ctx.alloc_vreg();
+        let mut ops = vec![SmirOp::new(
+            ctx.next_op_id(),
+            addr,
+            OpKind::Load {
+                dst: packed,
+                addr: Address::BaseOffset {
+                    base: self.get_x_reg(rs1, ctx),
+                    offset: imm,
+                    disp_size: DispSize::Auto,
+                },
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        )];
+
+        if rd != 0 {
+            let low = self
+                .def_x_reg(rd, ctx)
+                .expect("nonzero aligned pair destination");
+            let high = self
+                .def_x_reg(rd + 1, ctx)
+                .expect("aligned pair high destination");
+            let shifted = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                ctx.next_op_id(),
+                addr,
+                OpKind::ZeroExtend {
+                    dst: low,
+                    src: packed,
+                    from_width: OpWidth::W32,
+                    to_width: OpWidth::W64,
+                },
+            ));
+            ops.push(SmirOp::new(
+                ctx.next_op_id(),
+                addr,
+                OpKind::Shr {
+                    dst: shifted,
+                    src: packed,
+                    amount: SrcOperand::Imm(32),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            ops.push(SmirOp::new(
+                ctx.next_op_id(),
+                addr,
+                OpKind::ZeroExtend {
+                    dst: high,
+                    src: shifted,
+                    from_width: OpWidth::W32,
+                    to_width: OpWidth::W64,
+                },
+            ));
+        }
+        Ok((ops, ControlFlow::NextInsn))
+    }
+
+    /// RV32 Zilsd/Zclsd `sd`: concatenate the aligned source pair and perform
+    /// one 64-bit memory access. `rs2=x0` stores 64 zero bits without reading
+    /// x1, as required by the extension.
+    fn lift_store_pair(
+        &mut self,
+        rs2: u8,
+        rs1: u8,
+        imm: i64,
+        addr: GuestAddr,
+        ctx: &mut LiftContext,
+    ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
+        if self.xlen != 32 || rs2 & 1 != 0 {
+            return Err(LiftError::Internal(format!(
+                "RV32 pair lift received invalid source x{rs2}"
+            )));
+        }
+        let mut ops = Vec::new();
+        let packed = if rs2 == 0 {
+            VReg::Imm(0)
+        } else {
+            let low = ctx.alloc_vreg();
+            let high = ctx.alloc_vreg();
+            let shifted = ctx.alloc_vreg();
+            let packed = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                ctx.next_op_id(),
+                addr,
+                OpKind::ZeroExtend {
+                    dst: low,
+                    src: self.get_x_reg(rs2, ctx),
+                    from_width: OpWidth::W32,
+                    to_width: OpWidth::W64,
+                },
+            ));
+            ops.push(SmirOp::new(
+                ctx.next_op_id(),
+                addr,
+                OpKind::ZeroExtend {
+                    dst: high,
+                    src: self.get_x_reg(rs2 + 1, ctx),
+                    from_width: OpWidth::W32,
+                    to_width: OpWidth::W64,
+                },
+            ));
+            ops.push(SmirOp::new(
+                ctx.next_op_id(),
+                addr,
+                OpKind::Shl {
+                    dst: shifted,
+                    src: high,
+                    amount: SrcOperand::Imm(32),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            ops.push(SmirOp::new(
+                ctx.next_op_id(),
+                addr,
+                OpKind::Or {
+                    dst: packed,
+                    src1: shifted,
+                    src2: SrcOperand::Reg(low),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ));
+            packed
+        };
+        ops.push(SmirOp::new(
+            ctx.next_op_id(),
+            addr,
+            OpKind::Store {
+                src: packed,
+                addr: Address::BaseOffset {
+                    base: self.get_x_reg(rs1, ctx),
+                    offset: imm,
+                    disp_size: DispSize::Auto,
+                },
+                width: MemWidth::B8,
+            },
+        ));
         Ok((ops, ControlFlow::NextInsn))
     }
 
@@ -4415,6 +4596,18 @@ impl RiscVLifter {
         addr: GuestAddr,
         ctx: &mut LiftContext,
     ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
+        if self.xlen == 32 && self.extensions.zclsd {
+            let decoded = rv_decode_rvc(insn, RvXlen::Rv32, &self.decoder_isa());
+            match decoded.op {
+                RvOp::LdPair => {
+                    return self.lift_load_pair(decoded.rd, decoded.rs1, decoded.imm, addr, ctx);
+                }
+                RvOp::SdPair => {
+                    return self.lift_store_pair(decoded.rs2, decoded.rs1, decoded.imm, addr, ctx);
+                }
+                _ => {}
+            }
+        }
         let op = insn & 0x3;
         let funct3 = (insn >> 13) & 0x7;
 

@@ -368,6 +368,153 @@ fn production_rv32_wraps_addresses_and_scalar_atomics_are_native() {
 }
 
 #[test]
+fn production_rv32_zilsd_pairs_are_native_at_every_optimization_level() {
+    let mut isa = Isa::rv64gc();
+    isa.zilsd = true;
+    let config = RiscVConfig::rv32(isa);
+    let instructions = [
+        i_type(8, 10, 0b011, 6, 0x03), // ld x6,8(x10)
+        s_type(16, 6, 10, 0b011),      // sd x6,16(x10)
+        i_type(8, 10, 0b011, 0, 0x03), // ld x0,8(x10), discard x1 too
+        s_type(24, 0, 10, 0b011),      // sd x0,24(x10), ignore x1
+    ];
+    for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+        let mut expected = make_cpu(config);
+        let mut actual = make_cpu(config);
+        for cpu in [&mut expected, &mut actual] {
+            install(cpu, &instructions);
+            cpu.set_x(1, 0xfeed_face);
+            cpu.set_x(10, DATA);
+            cpu.write_memory(DATA + 8, &0xaabb_ccdd_1122_3344u64.to_le_bytes())
+                .expect("seed Zilsd pair");
+            cpu.write_memory(DATA + 24, &u64::MAX.to_le_bytes())
+                .expect("seed zero-store destination");
+        }
+
+        assert_eq!(expected.run(4), RiscVExit::Continue);
+        assert_eq!(actual.run_jit(4, level), RiscVExit::Continue);
+        assert_equivalent(&actual, &expected);
+        assert_eq!(actual.x(1), 0xfeed_face, "{level:?}");
+        assert_eq!(actual.x(6), 0x1122_3344, "{level:?}");
+        assert_eq!(actual.x(7), 0xaabb_ccdd, "{level:?}");
+        let mut stored = [0; 8];
+        actual
+            .read_memory(DATA + 16, &mut stored)
+            .expect("read stored pair");
+        assert_eq!(u64::from_le_bytes(stored), 0xaabb_ccdd_1122_3344);
+        actual
+            .read_memory(DATA + 24, &mut stored)
+            .expect("read x0 pair store");
+        assert_eq!(u64::from_le_bytes(stored), 0);
+        let stats = actual.jit_stats();
+        assert_eq!(stats.native_executions, 4, "{level:?}");
+        assert_eq!(stats.interpreter_fallbacks, 0, "{level:?}");
+    }
+}
+
+#[test]
+fn production_rv32_zilsd_load_fault_and_base_overlap_are_precise() {
+    let mut isa = Isa::rv64gc();
+    isa.zilsd = true;
+    let config = RiscVConfig::rv32(isa);
+    let overlap = i_type(0, 10, 0b011, 10, 0x03); // ld x10,0(x10)
+    let mut expected = make_cpu(config);
+    let mut actual = make_cpu(config);
+    for cpu in [&mut expected, &mut actual] {
+        install(cpu, &[overlap]);
+        cpu.set_x(10, DATA);
+        cpu.set_x(11, 0xfeed_face);
+        cpu.write_memory(DATA, &0xaabb_ccdd_1122_3344u64.to_le_bytes())
+            .expect("seed overlapping pair load");
+    }
+    assert_eq!(expected.step(), RiscVExit::Continue);
+    assert_eq!(actual.step_jit(OptLevel::O2), RiscVExit::Continue);
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(10), 0x1122_3344);
+    assert_eq!(actual.x(11), 0xaabb_ccdd);
+    assert_eq!(actual.jit_stats().native_executions, 1);
+
+    let faulting = i_type(0, 10, 0b011, 6, 0x03); // ld x6,0(x10)
+    let mut expected = make_cpu(config);
+    let mut actual = make_cpu(config);
+    for cpu in [&mut expected, &mut actual] {
+        install(cpu, &[faulting]);
+        cpu.set_x(10, MEMORY_LEN as u64 - 4);
+        cpu.set_x(6, 0x1111_2222);
+        cpu.set_x(7, 0x3333_4444);
+    }
+    let expected_exit = expected.step();
+    let actual_exit = actual.step_jit(OptLevel::O2);
+    assert_eq!(actual_exit, expected_exit);
+    assert_eq!(
+        actual_exit,
+        RiscVExit::Trap(Trap {
+            cause: 5,
+            tval: MEMORY_LEN as u64 - 4,
+        })
+    );
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(6), 0x1111_2222);
+    assert_eq!(actual.x(7), 0x3333_4444);
+    assert_eq!(actual.jit_stats().native_executions, 1);
+    assert_eq!(actual.jit_stats().interpreter_fallbacks, 0);
+
+    let faulting = s_type(0, 6, 10, 0b011); // sd x6,0(x10)
+    let mut expected = make_cpu(config);
+    let mut actual = make_cpu(config);
+    for cpu in [&mut expected, &mut actual] {
+        install(cpu, &[faulting]);
+        cpu.set_x(10, MEMORY_LEN as u64 - 4);
+        cpu.set_x(6, 0x1111_2222);
+        cpu.set_x(7, 0x3333_4444);
+    }
+    let expected_exit = expected.step();
+    let actual_exit = actual.step_jit(OptLevel::O2);
+    assert_eq!(actual_exit, expected_exit);
+    assert_eq!(
+        actual_exit,
+        RiscVExit::Trap(Trap {
+            cause: 7,
+            tval: MEMORY_LEN as u64 - 4,
+        })
+    );
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.jit_stats().native_executions, 1);
+    assert_eq!(actual.jit_stats().interpreter_fallbacks, 0);
+}
+
+#[test]
+fn production_rv32_zclsd_compressed_pairs_are_native() {
+    let mut isa = Isa::rv64gc();
+    isa.zilsd = true;
+    isa.zclsd = true;
+    let config = RiscVConfig::rv32(isa);
+    let c_sd = ((0b111 << 13) | (2 << 7) | 0b00) as u16; // c.sd x8,0(x10)
+    let c_ld = ((0b011 << 13) | (2 << 7) | 0b00) as u16; // c.ld x8,0(x10)
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(&c_sd.to_le_bytes());
+    bytes.extend_from_slice(&c_ld.to_le_bytes());
+    let mut expected = make_cpu(config);
+    let mut actual = make_cpu(config);
+    for cpu in [&mut expected, &mut actual] {
+        install_bytes(cpu, &bytes);
+        cpu.set_x(8, 0x1122_3344);
+        cpu.set_x(9, 0xaabb_ccdd);
+        cpu.set_x(10, DATA);
+    }
+
+    assert_eq!(expected.run(2), RiscVExit::Continue);
+    assert_eq!(actual.run_jit(2, OptLevel::O2), RiscVExit::Continue);
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(8), 0x1122_3344);
+    assert_eq!(actual.x(9), 0xaabb_ccdd);
+    assert_eq!(actual.pc(), CODE + 4);
+    let stats = actual.jit_stats();
+    assert_eq!(stats.native_executions, 2);
+    assert_eq!(stats.interpreter_fallbacks, 0);
+}
+
+#[test]
 fn production_cache_reuses_native_aarch64_blocks() {
     let mut cpu = make_cpu(RiscVConfig {
         xlen: Xlen::Rv64,

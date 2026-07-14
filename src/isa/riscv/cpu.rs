@@ -1397,14 +1397,23 @@ impl RiscVCpu {
             cause: cause::LOAD_ACCESS_FAULT,
             tval: addr,
         })?;
-        self.set_x(rd, val as u32 as u64);
-        self.set_x(rd.wrapping_add(1), (val >> 32) as u32 as u64);
+        // Zilsd defines rd=x0 as discarding the complete 64-bit result; x1 is
+        // not the high destination in this special case.
+        if rd != 0 {
+            self.set_x(rd, val as u32 as u64);
+            self.set_x(rd.wrapping_add(1), (val >> 32) as u32 as u64);
+        }
         Ok(())
     }
 
     fn store_pair(&mut self, base: u64, imm: u64, rs2: u8) -> Result<(), Trap> {
         let addr = base.wrapping_add(imm) & self.xmask();
-        let val = (self.x(rs2) as u32 as u64) | ((self.x(rs2.wrapping_add(1)) as u32 as u64) << 32);
+        // Zilsd/Zclsd define an x0 source pair as 64 zero bits; x1 is not read.
+        let val = if rs2 == 0 {
+            0
+        } else {
+            (self.x(rs2) as u32 as u64) | ((self.x(rs2.wrapping_add(1)) as u32 as u64) << 32)
+        };
         self.mem.write_u64(addr, val).map_err(|_| Trap {
             cause: cause::STORE_ACCESS_FAULT,
             tval: addr,

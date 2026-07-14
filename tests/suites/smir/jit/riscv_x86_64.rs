@@ -2370,33 +2370,51 @@ fn production_jit_wraps_rv32_effective_addresses() {
 }
 
 #[test]
-fn production_jit_falls_back_for_overlapping_zilsd_pair_encoding() {
+fn production_jit_executes_zilsd_pairs_natively() {
     let mut isa = RvIsa::rv64gc();
     isa.zilsd = true;
     let load_pair = (8u32 << 20) | (10 << 15) | (3 << 12) | (6 << 7) | 0x03;
-    let make_cpu = || {
-        RiscVCpu::new(
-            RiscVConfig::rv32(isa),
-            Box::new(RvMemory::new(0, MEMORY_LEN)),
-        )
-    };
-    let mut expected = make_cpu();
-    let mut actual = make_cpu();
-    for cpu in [&mut expected, &mut actual] {
-        write_production_code(cpu, &[load_pair]);
-        cpu.set_x(10, DATA);
-        cpu.write_memory(DATA + 8, &0xaabb_ccdd_1122_3344u64.to_le_bytes())
-            .expect("seed Zilsd pair");
-    }
+    let store_pair = s_type(16, 6, 10, 3);
+    let discard_pair = (8u32 << 20) | (10 << 15) | (3 << 12) | 0x03;
+    let store_zero_pair = s_type(24, 0, 10, 3);
+    for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+        let make_cpu = || {
+            RiscVCpu::new(
+                RiscVConfig::rv32(isa),
+                Box::new(RvMemory::new(0, MEMORY_LEN)),
+            )
+        };
+        let mut expected = make_cpu();
+        let mut actual = make_cpu();
+        for cpu in [&mut expected, &mut actual] {
+            write_production_code(cpu, &[load_pair, store_pair, discard_pair, store_zero_pair]);
+            cpu.set_x(1, 0xfeed_face);
+            cpu.set_x(10, DATA);
+            cpu.write_memory(DATA + 8, &0xaabb_ccdd_1122_3344u64.to_le_bytes())
+                .expect("seed Zilsd pair");
+            cpu.write_memory(DATA + 24, &u64::MAX.to_le_bytes())
+                .expect("seed zero-store destination");
+        }
 
-    assert_eq!(expected.step(), RiscVExit::Continue);
-    assert_eq!(actual.step_jit(OptLevel::O2), RiscVExit::Continue);
-    assert_production_cpu_equivalent(&actual, &expected);
-    assert_eq!(actual.x(6), 0x1122_3344);
-    assert_eq!(actual.x(7), 0xaabb_ccdd);
-    let stats = actual.jit_stats();
-    assert_eq!(stats.native_executions, 0);
-    assert_eq!(stats.interpreter_fallbacks, 1);
+        assert_eq!(expected.run(4), RiscVExit::Continue);
+        assert_eq!(actual.run_jit(4, level), RiscVExit::Continue);
+        assert_production_cpu_equivalent(&actual, &expected);
+        assert_eq!(actual.x(1), 0xfeed_face, "{level:?}");
+        assert_eq!(actual.x(6), 0x1122_3344, "{level:?}");
+        assert_eq!(actual.x(7), 0xaabb_ccdd, "{level:?}");
+        let mut stored = [0; 8];
+        actual
+            .read_memory(DATA + 16, &mut stored)
+            .expect("read stored Zilsd pair");
+        assert_eq!(u64::from_le_bytes(stored), 0xaabb_ccdd_1122_3344);
+        actual
+            .read_memory(DATA + 24, &mut stored)
+            .expect("read x0 pair store");
+        assert_eq!(u64::from_le_bytes(stored), 0);
+        let stats = actual.jit_stats();
+        assert_eq!(stats.native_executions, 4, "{level:?}");
+        assert_eq!(stats.interpreter_fallbacks, 0, "{level:?}");
+    }
 }
 
 #[test]

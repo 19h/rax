@@ -354,14 +354,11 @@ impl RiscVCpu {
 }
 
 fn decoded_native_boundary(cfg: RiscVConfig, insn: &Insn) -> bool {
-    // These decoded operations do not yet have an exact dedicated lift. Pair
-    // loads/stores and Zc* macro instructions overlap encodings otherwise
-    // consumed by the base scalar/compressed lift paths.
+    // These Zc* macro instructions do not yet have an exact dedicated lift and
+    // overlap compressed encodings otherwise consumed by scalar lift paths.
     if matches!(
         insn.op,
-        Op::LdPair
-            | Op::SdPair
-            | Op::CmPush
+        Op::CmPush
             | Op::CmPop
             | Op::CmPopRetz
             | Op::CmPopRet
