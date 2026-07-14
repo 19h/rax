@@ -310,19 +310,21 @@ pub enum X86OpHint {
     SseMov { prefix: X86SsePrefix, opcode: u8 },
     /// SSE opcode with explicit prefix/opcode
     SseOp { prefix: X86SsePrefix, opcode: u8 },
-    /// VEX-encoded opcode (map/pp/opcode/width)
+    /// VEX-encoded opcode (map/pp/opcode/width/W)
     VexOp {
         map: X86VecMap,
         pp: X86SsePrefix,
         opcode: u8,
         width: VecWidth,
+        w: bool,
     },
-    /// EVEX-encoded opcode (map/pp/opcode/width)
+    /// EVEX-encoded opcode (map/pp/opcode/width/W)
     EvexOp {
         map: X86VecMap,
         pp: X86SsePrefix,
         opcode: u8,
         width: VecWidth,
+        w: bool,
     },
     /// Alignment hint for default vector moves
     VecAlign(X86VecAlign),

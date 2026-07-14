@@ -1728,6 +1728,10 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     if !matches!(
         op,
         OpKind::VMov { .. }
+            | OpKind::VAnd { .. }
+            | OpKind::VAndNot { .. }
+            | OpKind::VOr { .. }
+            | OpKind::VXor { .. }
             | OpKind::VPopcnt { .. }
             | OpKind::VShuffleBitQM { .. }
             | OpKind::VConflict { .. }
@@ -1777,6 +1781,51 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             )
         };
         if !vector_matches_width(dst) || !vector_matches_width(src) {
+            return false;
+        }
+    }
+
+    if let OpKind::VAnd {
+        dst,
+        src1,
+        src2,
+        width,
+    }
+    | OpKind::VAndNot {
+        dst,
+        src1,
+        src2,
+        width,
+    }
+    | OpKind::VOr {
+        dst,
+        src1,
+        src2,
+        width,
+    }
+    | OpKind::VXor {
+        dst,
+        src1,
+        src2,
+        width,
+    } = op
+    {
+        let vector_matches_width = |reg: &VReg| {
+            matches!(
+                (reg, width),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    VecWidth::V256
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                    VecWidth::V512
+                )
+            )
+        };
+        if ![dst, src1, src2].into_iter().all(vector_matches_width) {
             return false;
         }
     }
@@ -2355,9 +2404,44 @@ fn x86_vector_move_encoding_valid(
     }
 }
 
+fn x86_vector_logic_encoding_valid(
+    kind: &crate::smir::ir::ops::OpKind,
+    prefix: crate::smir::ir::ops::X86SsePrefix,
+    opcode: u8,
+    evex: bool,
+    w: bool,
+) -> bool {
+    use crate::smir::ir::ops::{OpKind, X86SsePrefix};
+
+    let opcode_matches_kind = matches!(
+        (kind, opcode),
+        (OpKind::VAnd { .. }, 0x54 | 0xDB)
+            | (OpKind::VAndNot { .. }, 0x55 | 0xDF)
+            | (OpKind::VOr { .. }, 0x56 | 0xEB)
+            | (OpKind::VXor { .. }, 0x57 | 0xEF)
+    );
+    if !opcode_matches_kind {
+        return false;
+    }
+
+    match opcode {
+        0x54..=0x57 => {
+            matches!(prefix, X86SsePrefix::None | X86SsePrefix::OpSize)
+                && (!evex
+                    || matches!(
+                        (prefix, w),
+                        (X86SsePrefix::None, false) | (X86SsePrefix::OpSize, true)
+                    ))
+        }
+        0xDB | 0xDF | 0xEB | 0xEF => prefix == X86SsePrefix::OpSize,
+        _ => false,
+    }
+}
+
 /// Validate encoding metadata that can change the native opcode selected for
-/// an otherwise well-formed architectural `VMov`. This keeps malformed SMIR
-/// from using the move admission to execute an arbitrary hinted vector opcode.
+/// an otherwise well-formed architectural vector operation. This keeps
+/// malformed SMIR from using native-vector admission to execute an arbitrary
+/// hinted opcode.
 fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
     use crate::smir::ir::ops::{OpKind, X86OpHint, X86VecMap};
     use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86Reg};
@@ -2365,9 +2449,6 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
     if !is_x86_native_vector_op(&op.kind) {
         return false;
     }
-    let OpKind::VMov { dst, src, width } = &op.kind else {
-        return true;
-    };
     let low_vector = |reg: &VReg| {
         matches!(
             reg,
@@ -2377,35 +2458,101 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
         )
     };
 
+    if let OpKind::VMov { dst, src, width } = &op.kind {
+        return match op.x86_hint {
+            Some(X86OpHint::SseMov { prefix, opcode }) => {
+                *width == VecWidth::V128
+                    && low_vector(dst)
+                    && low_vector(src)
+                    && x86_vector_move_encoding_valid(prefix, opcode, false)
+            }
+            Some(X86OpHint::VexOp {
+                map,
+                pp,
+                opcode,
+                width: encoded_width,
+                ..
+            }) => {
+                map == X86VecMap::Map0F
+                    && encoded_width == *width
+                    && *width != VecWidth::V512
+                    && low_vector(dst)
+                    && low_vector(src)
+                    && x86_vector_move_encoding_valid(pp, opcode, false)
+            }
+            Some(X86OpHint::EvexOp {
+                map,
+                pp,
+                opcode,
+                width: encoded_width,
+                ..
+            }) => {
+                map == X86VecMap::Map0F
+                    && encoded_width == *width
+                    && x86_vector_move_encoding_valid(pp, opcode, true)
+            }
+            _ => false,
+        };
+    }
+
+    let (dst, src1, src2, width) = match &op.kind {
+        OpKind::VAnd {
+            dst,
+            src1,
+            src2,
+            width,
+        }
+        | OpKind::VAndNot {
+            dst,
+            src1,
+            src2,
+            width,
+        }
+        | OpKind::VOr {
+            dst,
+            src1,
+            src2,
+            width,
+        }
+        | OpKind::VXor {
+            dst,
+            src1,
+            src2,
+            width,
+        } => (dst, src1, src2, width),
+        _ => return true,
+    };
+
     match op.x86_hint {
-        Some(X86OpHint::SseMov { prefix, opcode }) => {
+        Some(X86OpHint::SseOp { prefix, opcode }) => {
             *width == VecWidth::V128
-                && low_vector(dst)
-                && low_vector(src)
-                && x86_vector_move_encoding_valid(prefix, opcode, false)
+                && dst == src1
+                && [dst, src1, src2].into_iter().all(low_vector)
+                && x86_vector_logic_encoding_valid(&op.kind, prefix, opcode, false, false)
         }
         Some(X86OpHint::VexOp {
             map,
             pp,
             opcode,
             width: encoded_width,
+            w,
         }) => {
             map == X86VecMap::Map0F
                 && encoded_width == *width
                 && *width != VecWidth::V512
-                && low_vector(dst)
-                && low_vector(src)
-                && x86_vector_move_encoding_valid(pp, opcode, false)
+                && [dst, src1, src2].into_iter().all(low_vector)
+                && x86_vector_logic_encoding_valid(&op.kind, pp, opcode, false, w)
         }
         Some(X86OpHint::EvexOp {
             map,
             pp,
             opcode,
             width: encoded_width,
+            w,
         }) => {
             map == X86VecMap::Map0F
                 && encoded_width == *width
-                && x86_vector_move_encoding_valid(pp, opcode, true)
+                && x86_vector_logic_encoding_valid(&op.kind, pp, opcode, true, w)
         }
         _ => false,
     }
@@ -2430,6 +2577,39 @@ fn x86_vector_move_needs_vl(op: &crate::smir::ir::ops::SmirOp) -> bool {
         )
     };
     high_vector(dst) || high_vector(src) || matches!(op.x86_hint, Some(X86OpHint::EvexOp { .. }))
+}
+
+/// Return `(AVX, AVX2, AVX-512DQ, AVX-512VL)` requirements for an admitted
+/// architectural vector-logic operation. VEX integer logic needs AVX2 only at
+/// 256 bits; EVEX floating logical encodings are in AVX-512DQ, while EVEX
+/// integer D/Q encodings are in AVX-512F.
+fn x86_vector_logic_feature_requirements(
+    op: &crate::smir::ir::ops::SmirOp,
+) -> (bool, bool, bool, bool) {
+    use crate::smir::ir::ops::{OpKind, X86OpHint};
+    use crate::smir::ir::types::VecWidth;
+
+    if !matches!(
+        op.kind,
+        OpKind::VAnd { .. } | OpKind::VAndNot { .. } | OpKind::VOr { .. } | OpKind::VXor { .. }
+    ) {
+        return (false, false, false, false);
+    }
+
+    match op.x86_hint {
+        Some(X86OpHint::VexOp { opcode, width, .. }) => {
+            let integer_256 =
+                width == VecWidth::V256 && matches!(opcode, 0xDB | 0xDF | 0xEB | 0xEF);
+            (true, integer_256, false, false)
+        }
+        Some(X86OpHint::EvexOp { opcode, width, .. }) => (
+            false,
+            false,
+            matches!(opcode, 0x54..=0x57),
+            width != VecWidth::V512,
+        ),
+        _ => (false, false, false, false),
+    }
 }
 
 /// Whether any executable (non-exit) block contains an admitted native vector
@@ -2535,6 +2715,9 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_sm4 = false;
     let mut needs_shift_avx = false;
     let mut needs_shift_avx2 = false;
+    let mut needs_logic_avx = false;
+    let mut needs_logic_avx2 = false;
+    let mut needs_dq = false;
 
     for op in func
         .blocks
@@ -2547,6 +2730,10 @@ pub fn x86_native_vector_features_supported_excluding(
         let kind = &op.kind;
         let width = match kind {
             OpKind::VMov { width, .. }
+            | OpKind::VAnd { width, .. }
+            | OpKind::VAndNot { width, .. }
+            | OpKind::VOr { width, .. }
+            | OpKind::VXor { width, .. }
             | OpKind::VPopcnt { width, .. }
             | OpKind::VShuffleBitQM { width, .. }
             | OpKind::VConflict { width, .. }
@@ -2582,8 +2769,13 @@ pub fn x86_native_vector_features_supported_excluding(
         let (aes, vaes, aes_vl) = x86_aes_feature_requirements(kind);
         let (shift_avx, shift_avx2, shift_vl) = x86_packed_shift_imm_feature_requirements(kind);
         let (count_avx, count_avx2, count_vl) = x86_packed_shift_feature_requirements(kind);
+        let (logic_avx, logic_avx2, logic_dq, logic_vl) = x86_vector_logic_feature_requirements(op);
         needs_vl |= match kind {
             OpKind::VMov { .. } => x86_vector_move_needs_vl(op),
+            OpKind::VAnd { .. }
+            | OpKind::VAndNot { .. }
+            | OpKind::VOr { .. }
+            | OpKind::VXor { .. } => logic_vl,
             OpKind::X86Aes { .. } => aes_vl,
             OpKind::X86PackedShiftImm { .. } => shift_vl,
             OpKind::X86PackedShift { .. } => count_vl,
@@ -2646,6 +2838,9 @@ pub fn x86_native_vector_features_supported_excluding(
         needs_sm4 |= x86_sm4_feature_required(kind);
         needs_shift_avx |= shift_avx || count_avx;
         needs_shift_avx2 |= shift_avx2 || count_avx2;
+        needs_logic_avx |= logic_avx;
+        needs_logic_avx2 |= logic_avx2;
+        needs_dq |= logic_dq;
     }
 
     if !any {
@@ -2666,6 +2861,7 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_bf16 || std::is_x86_feature_detected!("avx512bf16"))
             && (!needs_cd || std::is_x86_feature_detected!("avx512cd"))
             && (!needs_fp16 || std::is_x86_feature_detected!("avx512fp16"))
+            && (!needs_dq || std::is_x86_feature_detected!("avx512dq"))
             && (!needs_aes || std::is_x86_feature_detected!("aes"))
             && (!needs_vaes || std::is_x86_feature_detected!("vaes"))
             && (!needs_sha512
@@ -2677,6 +2873,8 @@ pub fn x86_native_vector_features_supported_excluding(
                 || (std::is_x86_feature_detected!("avx2") && std::is_x86_feature_detected!("sm4")))
             && (!needs_shift_avx || std::is_x86_feature_detected!("avx"))
             && (!needs_shift_avx2 || std::is_x86_feature_detected!("avx2"))
+            && (!needs_logic_avx || std::is_x86_feature_detected!("avx"))
+            && (!needs_logic_avx2 || std::is_x86_feature_detected!("avx2"))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
@@ -2699,6 +2897,9 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_sm4,
             needs_shift_avx,
             needs_shift_avx2,
+            needs_logic_avx,
+            needs_logic_avx2,
+            needs_dq,
         );
         false
     }
@@ -7680,6 +7881,7 @@ mod jit_gate_tests {
                     pp: X86SsePrefix::None,
                     opcode: 0x28,
                     width: VecWidth::V256,
+                    w: false,
                 },
             ),
             (
@@ -7693,6 +7895,7 @@ mod jit_gate_tests {
                     pp: X86SsePrefix::None,
                     opcode: 0x28,
                     width: VecWidth::V512,
+                    w: false,
                 },
             ),
         ] {
@@ -7767,6 +7970,7 @@ mod jit_gate_tests {
             pp: X86SsePrefix::OpSize,
             opcode: 0x40,
             width: VecWidth::V128,
+            w: false,
         });
         assert!(!x86_native_vector_smir_op(&malformed_hint.blocks[0].ops[0]));
         assert!(!is_native_clobber_safe(&malformed_hint));
@@ -7794,6 +7998,7 @@ mod jit_gate_tests {
                 pp: X86SsePrefix::None,
                 opcode: 0x28,
                 width: VecWidth::V128,
+                w: false,
             },
         );
         assert!(x86_native_vector_smir_op(&evex_move));
@@ -7811,10 +8016,201 @@ mod jit_gate_tests {
                 pp: X86SsePrefix::None,
                 opcode: 0x28,
                 width: VecWidth::V256,
+                w: false,
             },
         );
         assert!(x86_native_vector_smir_op(&high_move));
         assert!(x86_vector_move_needs_vl(&high_move));
+
+        for (logic_kind, hint, feature_requirements) in [
+            (
+                OpKind::VAnd {
+                    dst: xmm1,
+                    src1: xmm1,
+                    src2: xmm2,
+                    width: VecWidth::V128,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x54,
+                },
+                (false, false, false, false),
+            ),
+            (
+                OpKind::VAndNot {
+                    dst: xmm1,
+                    src1: xmm2,
+                    src2: xmm3,
+                    width: VecWidth::V128,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x55,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+                (true, false, false, false),
+            ),
+            (
+                OpKind::VOr {
+                    dst: ymm1,
+                    src1: ymm2,
+                    src2: ymm3,
+                    width: VecWidth::V256,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xEB,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                (true, true, false, false),
+            ),
+            (
+                OpKind::VXor {
+                    dst: zmm1,
+                    src1: zmm2,
+                    src2: zmm3,
+                    width: VecWidth::V512,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x57,
+                    width: VecWidth::V512,
+                    w: true,
+                },
+                (false, false, true, false),
+            ),
+            (
+                OpKind::VAnd {
+                    dst: x86(X86Reg::Ymm(16)),
+                    src1: x86(X86Reg::Ymm(17)),
+                    src2: x86(X86Reg::Ymm(18)),
+                    width: VecWidth::V256,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xDB,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                (false, false, false, true),
+            ),
+        ] {
+            let smir_op = crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                logic_kind.clone(),
+                hint,
+            );
+            assert!(is_x86_native_vector_op(&logic_kind), "{logic_kind:?}");
+            assert!(x86_native_vector_smir_op(&smir_op), "{smir_op:?}");
+            assert_eq!(
+                x86_vector_logic_feature_requirements(&smir_op),
+                feature_requirements,
+                "{smir_op:?}"
+            );
+
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, logic_kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(hint);
+            assert!(is_native_clobber_safe(&function), "{smir_op:?}");
+        }
+
+        let unhinted_logic = crate::smir::ir::ops::SmirOp::new(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            OpKind::VXor {
+                dst: xmm1,
+                src1: xmm1,
+                src2: xmm2,
+                width: VecWidth::V128,
+            },
+        );
+        assert!(is_x86_native_vector_op(&unhinted_logic.kind));
+        assert!(!x86_native_vector_smir_op(&unhinted_logic));
+
+        for malformed_logic_kind in [
+            OpKind::VOr {
+                dst: xmm1,
+                src1: xmm2,
+                src2: VReg::Virtual(VirtualId(10)),
+                width: VecWidth::V128,
+            },
+            OpKind::VXor {
+                dst: xmm1,
+                src1: xmm2,
+                src2: ymm3,
+                width: VecWidth::V128,
+            },
+            OpKind::VAndNot {
+                dst: x86(X86Reg::Xmm(32)),
+                src1: xmm2,
+                src2: xmm3,
+                width: VecWidth::V128,
+            },
+        ] {
+            assert!(!is_x86_native_vector_op(&malformed_logic_kind));
+        }
+
+        for malformed_logic in [
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                OpKind::VAnd {
+                    dst: xmm1,
+                    src1: xmm2,
+                    src2: xmm3,
+                    width: VecWidth::V128,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x54,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                OpKind::VAnd {
+                    dst: xmm1,
+                    src1: xmm2,
+                    src2: xmm3,
+                    width: VecWidth::V128,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x57,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                OpKind::VXor {
+                    dst: zmm1,
+                    src1: zmm2,
+                    src2: zmm3,
+                    width: VecWidth::V512,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x57,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(!x86_native_vector_smir_op(&malformed_logic));
+        }
 
         for invalid_vplzcnt in [
             OpKind::VLeadingZeros {

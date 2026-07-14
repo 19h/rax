@@ -196,6 +196,7 @@ struct VecEncoding {
     pp: X86SsePrefix,
     opcode: u8,
     width: VecWidth,
+    w: bool,
 }
 
 // ============================================================================
@@ -1660,6 +1661,7 @@ impl<'a> X86Emitter<'a> {
         map: X86VecMap,
         pp: X86SsePrefix,
         width: VecWidth,
+        w: bool,
         opcode: u8,
         dst: PhysReg,
         src1: PhysReg,
@@ -1668,7 +1670,7 @@ impl<'a> X86Emitter<'a> {
         let r = dst.vec_ext();
         let b = src2.vec_ext();
         let vvvv = src1.encoding() & 0x1F;
-        self.emit_vex_prefix(map, pp, width, false, r, 0, b, vvvv);
+        self.emit_vex_prefix(map, pp, width, w, r, 0, b, vvvv);
         self.code.emit_u8(opcode);
         self.emit_modrm_rr(dst, src2);
     }
@@ -1678,6 +1680,7 @@ impl<'a> X86Emitter<'a> {
         map: X86VecMap,
         pp: X86SsePrefix,
         width: VecWidth,
+        w: bool,
         opcode: u8,
         dst: PhysReg,
         src1: PhysReg,
@@ -1688,7 +1691,7 @@ impl<'a> X86Emitter<'a> {
         let b = src2.vec_ext();
         let b2 = src2.vec_ext2();
         let vvvv = src1.encoding() & 0x1F;
-        self.emit_evex_prefix(map, pp, width, false, r, 0, b, r2, 0, b2, vvvv);
+        self.emit_evex_prefix(map, pp, width, w, r, 0, b, r2, 0, b2, vvvv);
         self.code.emit_u8(opcode);
         self.emit_modrm_rr(dst, src2);
     }
@@ -6544,6 +6547,7 @@ impl X86_64Lowerer {
                             pp,
                             opcode,
                             width: VecWidth::V128,
+                            w: *elem == VecElementType::F64,
                         },
                         src1_reg,
                         src2_reg,
@@ -7016,6 +7020,7 @@ impl X86_64Lowerer {
                         pp,
                         opcode,
                         width,
+                        w: *elem == VecElementType::F64,
                     };
                     self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
                 } else {
@@ -7090,6 +7095,7 @@ impl X86_64Lowerer {
                         pp,
                         opcode,
                         width,
+                        w: *elem == VecElementType::F64,
                     };
                     self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
                 } else {
@@ -7163,6 +7169,7 @@ impl X86_64Lowerer {
                         pp,
                         opcode,
                         width,
+                        w: *elem == VecElementType::F64,
                     };
                     self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
                 } else {
@@ -7250,6 +7257,7 @@ impl X86_64Lowerer {
                             pp,
                             opcode,
                             width,
+                            w: *elem == VecElementType::F64,
                         },
                         dst_reg,
                         src1_reg,
@@ -7323,6 +7331,7 @@ impl X86_64Lowerer {
                             pp,
                             opcode: 0x5E,
                             width,
+                            w: *elem == VecElementType::F64,
                         },
                         dst_reg,
                         src1_reg,
@@ -7448,6 +7457,7 @@ impl X86_64Lowerer {
                         pp,
                         opcode,
                         width,
+                        w: *elem == VecElementType::F64,
                     };
                     self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
                 } else {
@@ -7488,6 +7498,12 @@ impl X86_64Lowerer {
                 src2,
                 width,
             }
+            | OpKind::VAndNot {
+                dst,
+                src1,
+                src2,
+                width,
+            }
             | OpKind::VOr {
                 dst,
                 src1,
@@ -7511,6 +7527,7 @@ impl X86_64Lowerer {
                 }
                 let default_opcode = match &op.kind {
                     OpKind::VAnd { .. } => 0x54,
+                    OpKind::VAndNot { .. } => 0x55,
                     OpKind::VOr { .. } => 0x56,
                     OpKind::VXor { .. } => 0x57,
                     _ => unreachable!(),
@@ -7539,6 +7556,7 @@ impl X86_64Lowerer {
                             pp: X86SsePrefix::None,
                             opcode: default_opcode,
                             width: *width,
+                            w: false,
                         },
                         dst_reg,
                         src1_reg,
@@ -7618,6 +7636,7 @@ impl X86_64Lowerer {
                         pp: X86SsePrefix::OpSize,
                         opcode: 0x72,
                         width,
+                        w: false,
                     };
                     self.emit_vec_shift_imm(enc, dst_reg, src_reg, imm);
                 } else {
@@ -8921,24 +8940,28 @@ impl X86_64Lowerer {
                 pp,
                 opcode,
                 width,
+                w,
             }) => Some(VecEncoding {
                 kind: VecEncodingKind::Vex,
                 map,
                 pp,
                 opcode,
                 width,
+                w,
             }),
             Some(X86OpHint::EvexOp {
                 map,
                 pp,
                 opcode,
                 width,
+                w,
             }) => Some(VecEncoding {
                 kind: VecEncodingKind::Evex,
                 map,
                 pp,
                 opcode,
                 width,
+                w,
             }),
             _ => None,
         }
@@ -8958,13 +8981,6 @@ impl X86_64Lowerer {
             encoding.kind = VecEncodingKind::Evex;
         }
         encoding
-    }
-
-    fn vec_encoding_w(encoding: VecEncoding) -> bool {
-        matches!(encoding.kind, VecEncodingKind::Evex)
-            && encoding.map == X86VecMap::Map0F
-            && matches!(encoding.opcode, 0x10 | 0x11 | 0x28 | 0x29)
-            && encoding.pp == X86SsePrefix::OpSize
     }
 
     fn vec_move_pp(&self, hint: Option<X86OpHint>) -> X86SsePrefix {
@@ -8996,6 +9012,7 @@ impl X86_64Lowerer {
             pp: self.vec_move_pp(hint),
             opcode,
             width,
+            w: false,
         }
     }
 
@@ -9222,7 +9239,7 @@ impl X86_64Lowerer {
         let vvvv = vvvv_reg.map_or(0, |vreg| vreg.encoding() & 0x1F);
         let r = reg.vec_ext();
         let r2 = reg.vec_ext2();
-        let w = Self::vec_encoding_w(encoding);
+        let w = encoding.w;
 
         match addr {
             Address::Direct(base) => {
@@ -9473,6 +9490,7 @@ impl X86_64Lowerer {
                     encoding.map,
                     encoding.pp,
                     encoding.width,
+                    encoding.w,
                     encoding.opcode,
                     dst,
                     src1,
@@ -9484,6 +9502,7 @@ impl X86_64Lowerer {
                     encoding.map,
                     encoding.pp,
                     encoding.width,
+                    encoding.w,
                     encoding.opcode,
                     dst,
                     src1,
@@ -9499,7 +9518,7 @@ impl X86_64Lowerer {
         let r2 = reg.vec_ext2();
         let b = rm.vec_ext();
         let b2 = rm.vec_ext2();
-        let w = Self::vec_encoding_w(encoding);
+        let w = encoding.w;
         let mut emitter = X86Emitter::new(&mut self.code);
         match encoding.kind {
             VecEncodingKind::Vex => {
@@ -9546,7 +9565,7 @@ impl X86_64Lowerer {
                     encoding.map,
                     encoding.pp,
                     encoding.width,
-                    false,
+                    encoding.w,
                     0,
                     0,
                     b,
@@ -9558,7 +9577,7 @@ impl X86_64Lowerer {
                     encoding.map,
                     encoding.pp,
                     encoding.width,
-                    false,
+                    encoding.w,
                     0,
                     0,
                     b,
@@ -13452,6 +13471,22 @@ mod tests {
                 &[0x62, 0xA1, 0x7C, 0x28, 0x28, 0xE3][..],
                 &[0x62, 0xA1, 0x7C, 0x28, 0x28, 0xE3][..],
             ),
+            (&[0x0F, 0x54, 0xCA][..], &[0x0F, 0x54, 0xCA][..]),
+            (&[0x66, 0x0F, 0xDF, 0xDC][..], &[0x66, 0x0F, 0xDF, 0xDC][..]),
+            (&[0xC5, 0xE8, 0x57, 0xCB][..], &[0xC5, 0xE8, 0x57, 0xCB][..]),
+            (&[0xC5, 0xD5, 0xDF, 0xE6][..], &[0xC5, 0xD5, 0xDF, 0xE6][..]),
+            (
+                &[0x62, 0xA1, 0xD5, 0x40, 0x54, 0xE6][..],
+                &[0x62, 0xA1, 0xD5, 0x40, 0x54, 0xE6][..],
+            ),
+            (
+                &[0x62, 0xA1, 0xD5, 0x40, 0xEB, 0xE6][..],
+                &[0x62, 0xA1, 0xD5, 0x40, 0xEB, 0xE6][..],
+            ),
+            (
+                &[0x62, 0xA1, 0x55, 0x20, 0xEF, 0xE6][..],
+                &[0x62, 0xA1, 0x55, 0x20, 0xEF, 0xE6][..],
+            ),
             (
                 &[0x62, 0xF2, 0x7D, 0xCC, 0xC4, 0xCA][..],
                 &[0x62, 0xF2, 0x7D, 0xCC, 0xC4, 0xCA][..],
@@ -14068,6 +14103,7 @@ mod tests {
                     pp: X86SsePrefix::None,
                     opcode: 0x5A,
                     width: VecWidth::V256,
+                    w: false,
                 },
                 &[0xC5, 0xFC, 0x5A, 0xC1][..],
             ),
@@ -14090,6 +14126,7 @@ mod tests {
                     pp: X86SsePrefix::OpSize,
                     opcode: 0x5A,
                     width: VecWidth::V256,
+                    w: false,
                 },
                 &[0xC5, 0xFD, 0x5A, 0xC1][..],
             ),
@@ -14186,6 +14223,7 @@ mod tests {
                     },
                     opcode: 0x5A,
                     width: VecWidth::V512,
+                    w: name.contains("PD2PS"),
                 },
             );
             assert!(
@@ -16776,6 +16814,7 @@ mod tests {
                 pp: X86SsePrefix::Rep,
                 opcode: 0x6F,
                 width: VecWidth::V256,
+                w: false,
             }),
         )
         .expect("lower helper-backed YMM load");

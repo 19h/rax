@@ -17317,12 +17317,14 @@ impl X86_64Lifter {
                 pp: prefix.pp,
                 opcode,
                 width: prefix.width,
+                w: prefix.w,
             },
             VecEncodingKind::Evex => X86OpHint::EvexOp {
                 map: prefix.map,
                 pp: prefix.pp,
                 opcode,
                 width: prefix.width,
+                w: prefix.w,
             },
         }
     }
@@ -27780,6 +27782,7 @@ impl X86_64Lifter {
                             pp: prefix.pp,
                             opcode,
                             width: instruction_width,
+                            w: prefix.w,
                         }
                     } else {
                         hint
@@ -44153,6 +44156,7 @@ mod tests {
                         pp: X86SsePrefix::None,
                         opcode: 0xAE,
                         width: VecWidth::V128,
+                        ..
                     })
                 ));
             }

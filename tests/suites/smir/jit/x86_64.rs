@@ -2939,6 +2939,159 @@ fn jit_vector_register_moves_match_legacy_preservation_and_vex_zeroing() {
 }
 
 #[test]
+fn jit_vector_logic_matches_legacy_and_vex_evex_lane_semantics() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx2")
+    {
+        return;
+    }
+
+    // loop: andps xmm1,xmm2; vxorps xmm4,xmm5,xmm6;
+    //       vpandn ymm7,ymm8,ymm9; dec ecx; jnz loop; hlt
+    let code = [
+        0x0F, 0x54, 0xCA, 0xC5, 0xD0, 0x57, 0xE6, 0xC4, 0xC1, 0x3D, 0xDF, 0xF9, 0xFF, 0xC9, 0x75,
+        0xF0, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+
+        regs.xmm[1] = [0xFFFF_0000_F0F0_0F0F, 0x1234_5678_9ABC_DEF0];
+        regs.xmm[2] = [0x0FF0_FF00_3333_CCCC, 0xFFFF_0000_FFFF_0000];
+        regs.ymm_high[1] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        regs.zmm_high[1] = [0x9999, 0xAAAA, 0xBBBB, 0xCCCC];
+
+        regs.xmm[5] = [0x0123_4567_89AB_CDEF, 0xFEDC_BA98_7654_3210];
+        regs.xmm[6] = [0xFFFF_0000_AAAA_5555, 0x1357_9BDF_2468_ACE0];
+        regs.ymm_high[4] = [0xDEAD_BEEF_DEAD_BEEF, 0xCAFE_BABE_CAFE_BABE];
+        regs.zmm_high[4] = [1, 2, 3, 4];
+
+        regs.xmm[8] = [0xFFFF_0000_FFFF_0000, 0xAAAA_AAAA_5555_5555];
+        regs.ymm_high[8] = [0x0123_4567_89AB_CDEF, 0x0F0F_F0F0_3333_CCCC];
+        regs.xmm[9] = [0x1234_5678_9ABC_DEF0, 0xFFFF_FFFF_0000_0000];
+        regs.ymm_high[9] = [0xFFFF_0000_AAAA_5555, 0xF0F0_0F0F_FFFF_0000];
+        regs.zmm_high[7] = [5, 6, 7, 8];
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(jit.jit_try_block().expect("vector logic JIT eligibility"));
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(
+        jit_regs.xmm[1],
+        [
+            initial.xmm[1][0] & initial.xmm[2][0],
+            initial.xmm[1][1] & initial.xmm[2][1],
+        ],
+        "legacy ANDPS result"
+    );
+    assert_eq!(jit_regs.ymm_high[1], initial.ymm_high[1]);
+    assert_eq!(jit_regs.zmm_high[1], initial.zmm_high[1]);
+    assert_eq!(
+        jit_regs.xmm[4],
+        [
+            initial.xmm[5][0] ^ initial.xmm[6][0],
+            initial.xmm[5][1] ^ initial.xmm[6][1],
+        ],
+        "VEX VXORPS result"
+    );
+    assert_eq!(jit_regs.ymm_high[4], [0; 2]);
+    assert_eq!(jit_regs.zmm_high[4], [0; 4]);
+    assert_eq!(
+        jit_regs.xmm[7],
+        [
+            !initial.xmm[8][0] & initial.xmm[9][0],
+            !initial.xmm[8][1] & initial.xmm[9][1],
+        ],
+        "VEX VPANDN low lane"
+    );
+    assert_eq!(
+        jit_regs.ymm_high[7],
+        [
+            !initial.ymm_high[8][0] & initial.ymm_high[9][0],
+            !initial.ymm_high[8][1] & initial.ymm_high[9][1],
+        ],
+        "VEX VPANDN high lane"
+    );
+    assert_eq!(jit_regs.zmm_high[7], [0; 4]);
+
+    if !std::is_x86_feature_detected!("avx512dq") {
+        return;
+    }
+
+    // loop: vandpd zmm4,zmm5,zmm6; dec ecx; jnz loop; hlt
+    let evex_code = [
+        0x62, 0xF1, 0xD5, 0x48, 0x54, 0xE6, 0xFF, 0xC9, 0x75, 0xF6, 0xF4,
+    ];
+    let setup_evex = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.xmm[5] = [0xFFFF_0000_F0F0_0F0F, 0x1234_5678_9ABC_DEF0];
+        regs.ymm_high[5] = [0xAAAA_5555_AAAA_5555, 0x0F0F_F0F0_3333_CCCC];
+        regs.zmm_high[5] = [1, 2, 3, 4];
+        regs.xmm[6] = [0x0FF0_FF00_3333_CCCC, 0xFFFF_0000_FFFF_0000];
+        regs.ymm_high[6] = [0xFFFF_0000_AAAA_5555, 0xF0F0_0F0F_FFFF_0000];
+        regs.zmm_high[6] = [5, 6, 7, 8];
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+    let (mut interp, _) = make_vcpu_mem(&evex_code);
+    let initial = setup_evex(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&evex_code);
+    setup_evex(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("EVEX vector logic JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+    assert_eq!(jit_regs.xmm[4], interp_regs.xmm[4]);
+    assert_eq!(jit_regs.ymm_high[4], interp_regs.ymm_high[4]);
+    assert_eq!(jit_regs.zmm_high[4], interp_regs.zmm_high[4]);
+    assert_eq!(
+        jit_regs.xmm[4],
+        [
+            initial.xmm[5][0] & initial.xmm[6][0],
+            initial.xmm[5][1] & initial.xmm[6][1],
+        ],
+        "EVEX VANDPD low 128 bits"
+    );
+    assert_eq!(
+        jit_regs.ymm_high[4],
+        [
+            initial.ymm_high[5][0] & initial.ymm_high[6][0],
+            initial.ymm_high[5][1] & initial.ymm_high[6][1],
+        ],
+        "EVEX VANDPD bits 255:128"
+    );
+    assert_eq!(
+        jit_regs.zmm_high[4],
+        [
+            initial.zmm_high[5][0] & initial.zmm_high[6][0],
+            initial.zmm_high[5][1] & initial.zmm_high[6][1],
+            initial.zmm_high[5][2] & initial.zmm_high[6][2],
+            initial.zmm_high[5][3] & initial.zmm_high[6][3],
+        ],
+        "EVEX VANDPD bits 511:256"
+    );
+}
+
+#[test]
 fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         return;
