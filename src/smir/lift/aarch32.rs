@@ -16,12 +16,16 @@
 
 use std::collections::HashSet;
 
-use crate::isa::arm::decoder::{Aarch32Decoder, DecodedInsn, Mnemonic, Operand, ShiftType};
+use crate::isa::arm::decoder::{
+    Aarch32Decoder, AddressingMode, DecodedInsn, MemOffset, MemOperand, Mnemonic, Operand,
+    ShiftType,
+};
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{OpKind, SmirOp};
 use crate::smir::ir::types::{
-    ArchReg, ArmReg, BlockId, FunctionId, GuestAddr, OpId, OpWidth, SourceArch, SrcOperand, VReg,
+    Address, ArchReg, ArmReg, BlockId, DispSize, FunctionId, GuestAddr, MemWidth, OpId, OpWidth,
+    ShiftOp, SignExtend, SourceArch, SrcOperand, VReg,
 };
 use crate::smir::ir::{
     CallTarget, CallingConv, FunctionAttrs, SmirBlock, SmirFunction, Terminator, TrapKind,
@@ -93,8 +97,191 @@ impl Aarch32Lifter {
                     || (shifted.amount == 0
                         && matches!(shifted.shift_type, ShiftType::LSR | ShiftType::ASR))
             }
+            Operand::Mem(mem) => {
+                mem.base.num >= 15
+                    || match &mem.offset {
+                        MemOffset::None | MemOffset::Imm(_) => false,
+                        MemOffset::Reg(reg) => reg.num >= 15,
+                        MemOffset::ShiftedReg(shifted) => {
+                            shifted.reg.num >= 15
+                                || shifted.shift_type == ShiftType::RRX
+                                || (shifted.amount == 0
+                                    && matches!(
+                                        shifted.shift_type,
+                                        ShiftType::LSR | ShiftType::ASR | ShiftType::ROR
+                                    ))
+                        }
+                        MemOffset::ExtendedReg(extended) => extended.reg.num >= 15,
+                    }
+            }
             _ => false,
         })
+    }
+
+    fn memory_kind(mnemonic: Mnemonic) -> Option<(bool, MemWidth, SignExtend)> {
+        match mnemonic {
+            Mnemonic::LDR => Some((true, MemWidth::B4, SignExtend::Zero)),
+            Mnemonic::LDRB => Some((true, MemWidth::B1, SignExtend::Zero)),
+            Mnemonic::LDRH => Some((true, MemWidth::B2, SignExtend::Zero)),
+            Mnemonic::LDRSB => Some((true, MemWidth::B1, SignExtend::Sign)),
+            Mnemonic::LDRSH => Some((true, MemWidth::B2, SignExtend::Sign)),
+            Mnemonic::STR => Some((false, MemWidth::B4, SignExtend::Zero)),
+            Mnemonic::STRB => Some((false, MemWidth::B1, SignExtend::Zero)),
+            Mnemonic::STRH => Some((false, MemWidth::B2, SignExtend::Zero)),
+            _ => None,
+        }
+    }
+
+    fn shift_op(shift: ShiftType) -> Result<ShiftOp, LiftError> {
+        match shift {
+            ShiftType::LSL => Ok(ShiftOp::Lsl),
+            ShiftType::LSR => Ok(ShiftOp::Lsr),
+            ShiftType::ASR => Ok(ShiftOp::Asr),
+            ShiftType::ROR => Ok(ShiftOp::Ror),
+            ShiftType::RRX => Err(LiftError::Internal(
+                "A32 memory RRX escaped the hidden-state gate".to_string(),
+            )),
+        }
+    }
+
+    fn memory_writeback(insn: &DecodedInsn, mem: &MemOperand) -> Result<Option<OpKind>, LiftError> {
+        if mem.mode == AddressingMode::Offset {
+            return Ok(None);
+        }
+
+        let base = Self::reg(mem.base.num);
+        let (subtract, src2) = match &mem.offset {
+            MemOffset::None => return Ok(None),
+            MemOffset::Imm(offset) if *offset < 0 => (true, SrcOperand::Imm(offset.wrapping_neg())),
+            MemOffset::Imm(offset) => (false, SrcOperand::Imm(*offset)),
+            MemOffset::Reg(index) => (
+                ((insn.raw >> 23) & 1) == 0,
+                SrcOperand::Reg(Self::reg(index.num)),
+            ),
+            MemOffset::ShiftedReg(shifted) => (
+                ((insn.raw >> 23) & 1) == 0,
+                SrcOperand::Shifted {
+                    reg: Self::reg(shifted.reg.num),
+                    shift: Self::shift_op(shifted.shift_type)?,
+                    amount: shifted.amount,
+                },
+            ),
+            MemOffset::ExtendedReg(_) => {
+                return Err(LiftError::Internal(
+                    "A32 memory extended-register offset".to_string(),
+                ));
+            }
+        };
+        let kind = if subtract {
+            OpKind::Sub {
+                dst: base,
+                src1: base,
+                src2,
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            }
+        } else {
+            OpKind::Add {
+                dst: base,
+                src1: base,
+                src2,
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            }
+        };
+        Ok(Some(kind))
+    }
+
+    fn memory_address(
+        insn: &DecodedInsn,
+        mem: &MemOperand,
+        pc: GuestAddr,
+    ) -> Result<Address, LiftError> {
+        let base = Self::reg(mem.base.num);
+        if mem.mode == AddressingMode::PostIndex {
+            return Ok(Address::Direct(base));
+        }
+
+        match &mem.offset {
+            MemOffset::None | MemOffset::Imm(0) => Ok(Address::Direct(base)),
+            MemOffset::Imm(offset) => Ok(Address::BaseOffset {
+                base,
+                offset: *offset,
+                disp_size: DispSize::Auto,
+            }),
+            MemOffset::Reg(index) if ((insn.raw >> 23) & 1) != 0 => Ok(Address::BaseIndexScale {
+                base: Some(base),
+                index: Self::reg(index.num),
+                scale: 1,
+                disp: 0,
+                disp_size: DispSize::Auto,
+            }),
+            MemOffset::ShiftedReg(shifted)
+                if ((insn.raw >> 23) & 1) != 0
+                    && shifted.shift_type == ShiftType::LSL
+                    && shifted.amount <= 3 =>
+            {
+                Ok(Address::BaseIndexScale {
+                    base: Some(base),
+                    index: Self::reg(shifted.reg.num),
+                    scale: 1 << shifted.amount,
+                    disp: 0,
+                    disp_size: DispSize::Auto,
+                })
+            }
+            _ => Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "A32 pre/offset register address not representable without a temporary"
+                    .to_string(),
+            }),
+        }
+    }
+
+    fn lift_memory(
+        &self,
+        insn: &DecodedInsn,
+        pc: GuestAddr,
+        ops: &mut Vec<SmirOp>,
+    ) -> Result<(), LiftError> {
+        let Some((is_load, width, sign)) = Self::memory_kind(insn.mnemonic) else {
+            return Err(LiftError::Internal(
+                "invalid A32 scalar memory mnemonic".to_string(),
+            ));
+        };
+        let [Operand::Reg(rt), Operand::Mem(mem)] = insn.operands.as_slice() else {
+            return Err(LiftError::Internal(
+                "invalid A32 scalar memory operands".to_string(),
+            ));
+        };
+        let writeback = Self::memory_writeback(insn, mem)?;
+        if is_load && writeback.is_some() && rt.num == mem.base.num {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "A32 load writeback aliases its destination".to_string(),
+            });
+        }
+        let addr = Self::memory_address(insn, mem, pc)?;
+        let kind = if is_load {
+            OpKind::Load {
+                dst: Self::reg(rt.num),
+                addr,
+                width,
+                sign,
+            }
+        } else {
+            OpKind::Store {
+                src: Self::reg(rt.num),
+                addr,
+                width,
+            }
+        };
+        Self::push(ops, pc, kind);
+        // Both pre- and post-index writeback follow the helper access. A helper
+        // fault exits from the memory op, so the writeback remains uncommitted.
+        if let Some(writeback) = writeback {
+            Self::push(ops, pc, writeback);
+        }
+        Ok(())
     }
 
     fn shared_scalar_mnemonic(insn: &DecodedInsn) -> bool {
@@ -146,6 +333,17 @@ impl Aarch32Lifter {
 
         let mut ops = Vec::new();
         let control = match insn.mnemonic {
+            Mnemonic::LDR
+            | Mnemonic::LDRB
+            | Mnemonic::LDRH
+            | Mnemonic::LDRSB
+            | Mnemonic::LDRSH
+            | Mnemonic::STR
+            | Mnemonic::STRB
+            | Mnemonic::STRH => {
+                self.lift_memory(insn, pc, &mut ops)?;
+                ControlFlow::Fallthrough
+            }
             Mnemonic::MOV if !insn.sets_flags => {
                 let [Operand::Reg(rd), Operand::ShiftedReg(shifted)] = insn.operands.as_slice()
                 else {
@@ -731,6 +929,125 @@ mod tests {
                 "{label} must produce a concrete SMIR operation"
             );
             assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+        }
+    }
+
+    #[test]
+    fn lifts_a32_scalar_memory_width_sign_and_store_matrix() {
+        let cases = [
+            (0xe591_0004, MemWidth::B4, SignExtend::Zero, true), // ldr r0,[r1,#4]
+            (0xe5d3_2002, MemWidth::B1, SignExtend::Zero, true), // ldrb r2,[r3,#2]
+            (0xe1d5_40b2, MemWidth::B2, SignExtend::Zero, true), // ldrh r4,[r5,#2]
+            (0xe1d7_60d1, MemWidth::B1, SignExtend::Sign, true), // ldrsb r6,[r7,#1]
+            (0xe1d9_80f2, MemWidth::B2, SignExtend::Sign, true), // ldrsh r8,[r9,#2]
+            (0xe58b_0004, MemWidth::B4, SignExtend::Zero, false), // str r0,[r11,#4]
+            (0xe5ca_2001, MemWidth::B1, SignExtend::Zero, false), // strb r2,[r10,#1]
+            (0xe1cc_40b2, MemWidth::B2, SignExtend::Zero, false), // strh r4,[r12,#2]
+        ];
+
+        for (raw, width, sign, is_load) in cases {
+            let result = lift(raw);
+            assert_eq!(result.ops.len(), 1, "{raw:#010x}");
+            match &result.ops[0].kind {
+                OpKind::Load {
+                    width: actual_width,
+                    sign: actual_sign,
+                    ..
+                } if is_load => {
+                    assert_eq!(*actual_width, width, "{raw:#010x}");
+                    assert_eq!(*actual_sign, sign, "{raw:#010x}");
+                }
+                OpKind::Store {
+                    width: actual_width,
+                    ..
+                } if !is_load => assert_eq!(*actual_width, width, "{raw:#010x}"),
+                other => panic!("unexpected memory lift for {raw:#010x}: {other:?}"),
+            }
+        }
+    }
+
+    #[test]
+    fn memory_writeback_follows_access_and_register_offsets_fail_closed() {
+        let pre = lift(0xe5b1_0004); // ldr r0,[r1,#4]!
+        assert!(matches!(
+            pre.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::Load {
+                        addr: Address::BaseOffset { offset: 4, .. },
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::Add {
+                        dst,
+                        src1,
+                        src2: SrcOperand::Imm(4),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                    },
+                    ..
+                }
+            ] if dst == src1 && *dst == Aarch32Lifter::reg(1)
+        ));
+
+        let post_sub = lift(0xe611_0002); // ldr r0,[r1],-r2
+        assert!(matches!(
+            post_sub.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::Load {
+                        addr: Address::Direct(base),
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::Sub {
+                        dst,
+                        src1,
+                        src2: SrcOperand::Reg(index),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                    },
+                    ..
+                }
+            ] if *base == Aarch32Lifter::reg(1)
+                && dst == src1
+                && *dst == Aarch32Lifter::reg(1)
+                && *index == Aarch32Lifter::reg(2)
+        ));
+
+        let scaled = lift(0xe791_0102); // ldr r0,[r1,r2,lsl #2]
+        assert!(matches!(
+            &scaled.ops[0].kind,
+            OpKind::Load {
+                addr: Address::BaseIndexScale {
+                    base: Some(base),
+                    index,
+                    scale: 4,
+                    ..
+                },
+                ..
+            } if *base == Aarch32Lifter::reg(1) && *index == Aarch32Lifter::reg(2)
+        ));
+
+        for raw in [
+            0xe711_0002u32, // ldr r0,[r1,-r2] needs a non-clobbering address temp
+            0xe7b1_0122,    // ldr r0,[r1,r2,lsr #2]! needs an address temp
+            0xe5b1_1004,    // ldr r1,[r1,#4]! has constrained alias semantics
+            0xe59f_0004,    // ldr r0,[pc,#4] requires the A32 pipeline PC
+        ] {
+            let mut lifter = Aarch32Lifter::new();
+            let mut ctx = LiftContext::new(SourceArch::Aarch32);
+            assert!(
+                matches!(
+                    lifter.lift_insn(0x1000, &raw.to_le_bytes(), &mut ctx),
+                    Err(LiftError::Unsupported { .. })
+                ),
+                "{raw:#010x}"
+            );
         }
     }
 

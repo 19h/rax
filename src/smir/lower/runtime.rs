@@ -272,6 +272,24 @@ pub struct Aarch32GuestRegs {
     pub cpsr: u32,
 }
 
+/// Runtime-helper configuration for an AArch32 region lowered through the
+/// AArch64 identity trampoline.
+///
+/// The callbacks use the same AAPCS64 contract as [`Aarch64GuestRegs`]. The
+/// load helper returns a `#[repr(C)] { value: u64, ok: u64 }`; the store helper
+/// returns non-zero on success. A zero `ok` value exits the region at the
+/// faulting SMIR operation without committing its destination or writeback.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Aarch32MemHelpers {
+    /// Opaque helper context pointer.
+    pub ctx: u64,
+    /// Address of `extern "C" fn(ctx, addr, size, signed) -> (value, ok)`.
+    pub load_fn: u64,
+    /// Address of `extern "C" fn(ctx, addr, value, size) -> ok`.
+    pub store_fn: u64,
+}
+
 pub use super::cross::riscv_x86_64_abi::{
     RISCV_FP_RESULT_INVALID, RiscVAtomicCasStatus, RiscVAtomicOpCode, RiscVFpOpCode,
     RiscVIntCryptoOpCode, RiscVMemoryOrderCode,
@@ -1104,6 +1122,32 @@ impl ExecMem {
     /// SP, or the guest PC pipeline value.
     #[cfg(target_arch = "aarch64")]
     pub fn run_aarch32_identity(&self, entry_offset: usize, regs: &mut Aarch32GuestRegs) {
+        let _ = self.run_aarch32_identity_configured(entry_offset, regs, None);
+    }
+
+    /// Execute an admitted AArch32 region with MMU memory-helper call-outs.
+    ///
+    /// Returns the guest PC recorded by a helper fault or native frontier exit;
+    /// zero means that a self-contained region returned without recording an
+    /// exit. The caller must lower the region with memory helpers enabled and
+    /// 32-bit helper-address arithmetic.
+    #[cfg(target_arch = "aarch64")]
+    pub fn run_aarch32_identity_with_mem(
+        &self,
+        entry_offset: usize,
+        regs: &mut Aarch32GuestRegs,
+        helpers: Aarch32MemHelpers,
+    ) -> u64 {
+        self.run_aarch32_identity_configured(entry_offset, regs, Some(helpers))
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    fn run_aarch32_identity_configured(
+        &self,
+        entry_offset: usize,
+        regs: &mut Aarch32GuestRegs,
+        helpers: Option<Aarch32MemHelpers>,
+    ) -> u64 {
         const NZCV: u32 = 0xf000_0000;
 
         let mut state = Aarch64GuestRegs::default();
@@ -1111,11 +1155,17 @@ impl ExecMem {
             *dst = u64::from(src);
         }
         state.nzcv = u64::from(regs.cpsr & NZCV);
+        if let Some(helpers) = helpers {
+            state.ctx = helpers.ctx;
+            state.load_fn = helpers.load_fn;
+            state.store_fn = helpers.store_fn;
+        }
         self.run_aarch64_identity(entry_offset, &mut state);
         for (dst, src) in regs.r.iter_mut().zip(state.x[..16].iter()) {
             *dst = *src as u32;
         }
         regs.cpsr = (regs.cpsr & !NZCV) | (state.nzcv as u32 & NZCV);
+        state.pc
     }
 
     /// As [`Self::run_aarch64_identity`] but for a region that uses scalar FP /
@@ -3774,17 +3824,34 @@ fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ir::ops::OpKind
 /// Decide whether AArch32-lifted scalar SMIR can execute through the AArch64
 /// identity trampoline without exposing host-only state.
 ///
-/// The initial contract is deliberately register-only and AArch32-state
+/// The default contract is deliberately register-only and AArch32-state
 /// specific (A32 or unpredicated T16/T32):
 /// r0-r14 map to W0-W14, r15 is rejected because architectural PC reads are
 /// pipeline-relative and writes are control flow, and every data result is
 /// W32.  Flag-discarding comparison temporaries are accepted because the
 /// lowerer maps them to WZR; all materialized virtual registers are rejected.
-/// Predication, memory, Thumb IT state, SIMD/VFP, and CPSR fields outside NZCV
-/// remain interpreter-only.
+/// Predication, Thumb IT state, SIMD/VFP, and CPSR fields outside NZCV remain
+/// interpreter-only. Use
+/// [`is_aarch32_aarch64_native_clobber_safe_excluding_with_mem`] to admit the
+/// validated scalar memory-helper shapes.
 pub fn is_aarch32_aarch64_native_clobber_safe_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> bool {
+    is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(func, excluded, false)
+}
+
+/// Memory-aware form of
+/// [`is_aarch32_aarch64_native_clobber_safe_excluding`].
+///
+/// When `allow_mem` is true, scalar B1/B2/B4 loads and stores are admitted only
+/// when every address component and value register is AArch32 r0-r14. Callers
+/// must pair this gate with `Aarch64Lowerer::set_mem_helpers(true)` and
+/// `Aarch64Lowerer::set_mem_helper_addr_width(OpWidth::W32)`.
+pub fn is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+    allow_mem: bool,
 ) -> bool {
     use crate::smir::ir::Terminator;
 
@@ -3796,14 +3863,19 @@ pub fn is_aarch32_aarch64_native_clobber_safe_excluding(
                 && block
                     .ops
                     .iter()
-                    .all(|op| aarch32_aarch64_native_op_shape_valid(&op.kind))
+                    .all(|op| aarch32_aarch64_native_op_shape_valid(&op.kind, allow_mem))
         })
 }
 
-fn aarch32_aarch64_native_op_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+fn aarch32_aarch64_native_op_shape_valid(
+    op: &crate::smir::ir::ops::OpKind,
+    allow_mem: bool,
+) -> bool {
     use crate::smir::ir::flags::FlagUpdate;
     use crate::smir::ir::ops::OpKind;
-    use crate::smir::ir::types::{ArchReg, ArmReg, OpWidth, ShiftOp, SrcOperand, VReg};
+    use crate::smir::ir::types::{
+        Address, ArchReg, ArmReg, MemWidth, OpWidth, ShiftOp, SignExtend, SrcOperand, VReg,
+    };
 
     let gpr = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::Arm(ArmReg::X(index))) if *index < 15);
     let source = |src: &SrcOperand| match src {
@@ -3819,6 +3891,16 @@ fn aarch32_aarch64_native_op_shape_valid(op: &crate::smir::ir::ops::OpKind) -> b
     };
     let arithmetic_dst = |dst: &VReg, flags: &FlagUpdate| {
         gpr(dst) || (matches!(dst, VReg::Virtual(_)) && flags.updates_any())
+    };
+    let address = |addr: &Address| match addr {
+        Address::Direct(base) | Address::BaseOffset { base, .. } => gpr(base),
+        Address::BaseIndexScale {
+            base: Some(base),
+            index,
+            scale: 1 | 2 | 4 | 8,
+            ..
+        } => gpr(base) && gpr(index),
+        _ => false,
     };
 
     match op {
@@ -4037,6 +4119,28 @@ fn aarch32_aarch64_native_op_shape_valid(op: &crate::smir::ir::ops::OpKind) -> b
                 && *width_bits != 0
                 && u16::from(*lsb) + u16::from(*width_bits) <= 32
         }
+        OpKind::Load {
+            dst,
+            addr,
+            width,
+            sign,
+        } => {
+            allow_mem
+                && gpr(dst)
+                && address(addr)
+                && matches!(
+                    (width, sign),
+                    (
+                        MemWidth::B1 | MemWidth::B2,
+                        SignExtend::Zero | SignExtend::Sign
+                    ) | (MemWidth::B4, SignExtend::Zero)
+                )
+        }
+        OpKind::Store {
+            src,
+            addr,
+            width: MemWidth::B1 | MemWidth::B2 | MemWidth::B4,
+        } => allow_mem && gpr(src) && address(addr),
         _ => false,
     }
 }
@@ -4227,8 +4331,8 @@ mod jit_gate_tests {
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
     use crate::smir::ir::ops::{OpKind, X86AdxKind, X86BlsKind, X86CountKind, X86OpHint};
     use crate::smir::ir::types::{
-        Address, ArchReg, ArmReg, FpPrecision, FunctionId, MemWidth, OpWidth, ShiftOp, SignExtend,
-        SrcOperand, VReg, VecElementType, VecWidth, VirtualId, X86AesOp, X86Reg,
+        Address, ArchReg, ArmReg, DispSize, FpPrecision, FunctionId, MemWidth, OpWidth, ShiftOp,
+        SignExtend, SrcOperand, VReg, VecElementType, VecWidth, VirtualId, X86AesOp, X86Reg,
     };
     use crate::smir::ir::{FunctionBuilder, Terminator};
 
@@ -4264,16 +4368,21 @@ mod jit_gate_tests {
         )
     }
 
-    fn aarch32_gate(ops: Vec<OpKind>) -> bool {
+    fn aarch32_gate_with_mem(ops: Vec<OpKind>, allow_mem: bool) -> bool {
         let mut b = FunctionBuilder::new(FunctionId(0), 0x1000);
         for (i, op) in ops.into_iter().enumerate() {
             b.push_op(0x1000 + i as u64 * 4, op);
         }
         b.set_terminator(Terminator::Return { values: vec![] });
-        is_aarch32_aarch64_native_clobber_safe_excluding(
+        is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
             &b.finish(),
             &std::collections::HashMap::new(),
+            allow_mem,
         )
+    }
+
+    fn aarch32_gate(ops: Vec<OpKind>) -> bool {
+        aarch32_gate_with_mem(ops, false)
     }
 
     #[test]
@@ -4395,6 +4504,77 @@ mod jit_gate_tests {
             },
         ] {
             assert!(!aarch32_gate(vec![rejected.clone()]), "{rejected:?}");
+        }
+    }
+
+    #[test]
+    fn aarch32_aarch64_gate_admits_only_bounded_scalar_memory_shapes() {
+        let valid = vec![
+            OpKind::Load {
+                dst: arm_x(0),
+                addr: Address::BaseOffset {
+                    base: arm_x(13),
+                    offset: -4,
+                    disp_size: DispSize::Auto,
+                },
+                width: MemWidth::B4,
+                sign: SignExtend::Zero,
+            },
+            OpKind::Load {
+                dst: arm_x(1),
+                addr: Address::BaseIndexScale {
+                    base: Some(arm_x(2)),
+                    index: arm_x(3),
+                    scale: 4,
+                    disp: 0,
+                    disp_size: DispSize::Auto,
+                },
+                width: MemWidth::B1,
+                sign: SignExtend::Sign,
+            },
+            OpKind::Store {
+                src: arm_x(14),
+                addr: Address::Direct(arm_x(4)),
+                width: MemWidth::B2,
+            },
+        ];
+        assert!(!aarch32_gate_with_mem(valid.clone(), false));
+        assert!(aarch32_gate_with_mem(valid, true));
+
+        for invalid in [
+            OpKind::Load {
+                dst: arm_x(15),
+                addr: Address::Direct(arm_x(1)),
+                width: MemWidth::B4,
+                sign: SignExtend::Zero,
+            },
+            OpKind::Load {
+                dst: arm_x(0),
+                addr: Address::Direct(arm_x(15)),
+                width: MemWidth::B1,
+                sign: SignExtend::Zero,
+            },
+            OpKind::Load {
+                dst: arm_x(0),
+                addr: Address::Direct(arm_x(1)),
+                width: MemWidth::B4,
+                sign: SignExtend::Sign,
+            },
+            OpKind::Store {
+                src: arm_x(0),
+                addr: Address::Absolute(0x1000),
+                width: MemWidth::B4,
+            },
+            OpKind::Store {
+                src: arm_x(0),
+                addr: Address::Direct(arm_x(1)),
+                width: MemWidth::B8,
+            },
+        ] {
+            assert!(
+                !aarch32_gate_with_mem(vec![invalid.clone()], true),
+                "{invalid:?}"
+            );
         }
     }
 

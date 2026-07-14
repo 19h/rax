@@ -72,6 +72,10 @@ pub struct Aarch64Lowerer {
     /// instead of inline native LDR/STR against the raw guest address. Set via
     /// [`Self::set_mem_helpers`].
     mem_helpers: bool,
+    /// Width used for helper effective-address arithmetic. AArch64 guests use
+    /// the default W64 semantics; AArch32-on-AArch64 callers select W32 so
+    /// additions wrap modulo 2^32 before the helper observes the address.
+    mem_helper_addr_width: OpWidth,
     /// Host support for FEAT_FLAGM (`CFINV`).
     flagm_available: bool,
     /// Host support for FEAT_FLAGM2 (`AXFLAG`/`XAFLAG`).
@@ -114,6 +118,7 @@ impl Aarch64Lowerer {
             native_exits: HashMap::new(),
             native_exit_edges: HashMap::new(),
             mem_helpers: false,
+            mem_helper_addr_width: OpWidth::W64,
             flagm_available: Self::detect_flagm_available(),
             flagm2_available: Self::detect_flagm2_available(),
             fp16_available: Self::detect_fp16_available(),
@@ -193,6 +198,16 @@ impl Aarch64Lowerer {
     /// inline native loads/stores. Call before `lower_function`.
     pub fn set_mem_helpers(&mut self, enable: bool) {
         self.mem_helpers = enable;
+    }
+
+    /// Select the arithmetic width used to form MMU-helper addresses.
+    ///
+    /// `W64` is the AArch64 default. Cross-lowered AArch32 regions must select
+    /// `W32`, which both wraps additions modulo 2^32 and zero-extends the
+    /// resulting helper argument according to AAPCS64 register semantics.
+    /// Other widths are rejected when a helper address is emitted.
+    pub fn set_mem_helper_addr_width(&mut self, width: OpWidth) {
+        self.mem_helper_addr_width = width;
     }
 
     fn emit(&mut self, word: u32) {
@@ -280,6 +295,12 @@ impl Aarch64Lowerer {
     fn emit_mem_helper_addr(&mut self, addr: &Address) -> Result<(), LowerError> {
         const A: u8 = 1; // x1 = address arg
         const T: u8 = 9; // scratch
+        let width = self.mem_helper_addr_width;
+        if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 mem-helper address width {width:?}"),
+            });
+        }
         match addr {
             Address::Direct(base) => {
                 let slot = Self::arm_struct_slot(*base)?;
@@ -289,7 +310,7 @@ impl Aarch64Lowerer {
                 let slot = Self::arm_struct_slot(*base)?;
                 self.emit_ldst_unsigned(A, A64_STATE_REG, 3, 0b01, slot / 8);
                 if *offset != 0 {
-                    self.emit_add_signed_imm(A, A, *offset, OpWidth::W64)?;
+                    self.emit_add_signed_imm(A, A, *offset, width)?;
                 }
             }
             Address::BaseIndexScale {
@@ -303,7 +324,7 @@ impl Aarch64Lowerer {
                     let bslot = Self::arm_struct_slot(*b)?;
                     self.emit_ldst_unsigned(A, A64_STATE_REG, 3, 0b01, bslot / 8);
                 } else {
-                    self.emit_mov_imm(A, 0, OpWidth::W64)?;
+                    self.emit_mov_imm(A, 0, width)?;
                 }
                 let islot = Self::arm_struct_slot(*index)?;
                 self.emit_ldst_unsigned(T, A64_STATE_REG, 3, 0b01, islot / 8);
@@ -318,16 +339,19 @@ impl Aarch64Lowerer {
                         });
                     }
                 };
-                // add x1, x1, x9, lsl #shift  (ADD shifted register, 64-bit)
+                // add {w,x}1, {w,x}1, {w,x}9, lsl #shift
                 self.emit(
-                    0x8b00_0000
-                        | ((T as u32) << 16)
+                    if width == OpWidth::W64 {
+                        0x8b00_0000
+                    } else {
+                        0x0b00_0000
+                    } | ((T as u32) << 16)
                         | (shift << 10)
                         | ((A as u32) << 5)
                         | (A as u32),
                 );
                 if *disp != 0 {
-                    self.emit_add_signed_imm(A, A, *disp as i64, OpWidth::W64)?;
+                    self.emit_add_signed_imm(A, A, *disp as i64, width)?;
                 }
             }
             other => {
@@ -371,6 +395,13 @@ impl Aarch64Lowerer {
         self.emit(0xb400_0000 | 1); // cbz x1, <fault>  (back-patched)
         // OK: stash value (x0) into the dst slot, then bulk-reload so the dst
         // register ends up with the value and every other reg is restored.
+        // AArch32 architectural registers are W32 values. Signed B1/B2 helpers
+        // return a sign-extended u64, so canonicalize through W0 before storing
+        // the state slot; a later direct-address use must observe 0x00000000_x,
+        // not stale sign bits in the upper half of X0.
+        if self.mem_helper_addr_width == OpWidth::W32 {
+            self.emit_mov_reg(0, 0, OpWidth::W32)?;
+        }
         self.emit_ldst_unsigned(0, A64_STATE_REG, 3, 0b00, dst as u32);
         self.emit_mem_helper_reload()?;
         let done_off = self.code.position();
@@ -17678,6 +17709,51 @@ mod tests {
 
     fn x(n: u8) -> VReg {
         VReg::Arch(ArchReg::Arm(ArmReg::X(n)))
+    }
+
+    #[test]
+    fn mem_helper_address_width_selects_w32_wrapping_arithmetic() {
+        let address = Address::BaseIndexScale {
+            base: Some(x(1)),
+            index: x(2),
+            scale: 4,
+            disp: 8,
+            disp_size: DispSize::Auto,
+        };
+
+        let mut w32 = Aarch64Lowerer::new();
+        w32.set_mem_helper_addr_width(OpWidth::W32);
+        w32.emit_mem_helper_addr(&address).expect("W32 address");
+        let w32_words: Vec<u32> = w32
+            .code
+            .as_slice()
+            .chunks_exact(4)
+            .map(|bytes| u32::from_le_bytes(bytes.try_into().unwrap()))
+            .collect();
+
+        let mut w64 = Aarch64Lowerer::new();
+        w64.emit_mem_helper_addr(&address).expect("W64 address");
+        let w64_words: Vec<u32> = w64
+            .code
+            .as_slice()
+            .chunks_exact(4)
+            .map(|bytes| u32::from_le_bytes(bytes.try_into().unwrap()))
+            .collect();
+
+        assert_eq!(w32_words.len(), 4);
+        assert_eq!(w64_words.len(), 4);
+        assert_eq!(w32_words[0], w64_words[0], "base state load is W64");
+        assert_eq!(w32_words[1], w64_words[1], "index state load is W64");
+        assert_eq!(
+            w32_words[2] ^ w64_words[2],
+            1 << 31,
+            "scaled addition differs only by the sf width bit"
+        );
+        assert_eq!(
+            w32_words[3] ^ w64_words[3],
+            1 << 31,
+            "displacement addition differs only by the sf width bit"
+        );
     }
 
     fn x86(reg: X86Reg) -> VReg {
