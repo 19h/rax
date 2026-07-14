@@ -3845,13 +3845,17 @@ fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ir::ops::OpKind
 /// pipeline-relative and writes are control flow, and every data result is
 /// W32.  Flag-discarding comparison temporaries are accepted because the
 /// lowerer maps them to WZR; all materialized virtual registers are rejected.
-/// Direct internal branches are admitted. Conditional branches require a
-/// final `TestCondition` whose virtual destination is consumed only by the
-/// terminator; the AArch64 lowerer folds that pair into `B.cond`. CFG targets
-/// must exist, phi nodes and locals are rejected, and frontier blocks named in
-/// `excluded` must still be present for native-exit lowering. Predicated data
-/// instructions, Thumb IT state, SIMD/VFP, and CPSR fields outside NZCV remain
-/// interpreter-only. Use
+/// Direct internal branches are admitted. Conditional branches accept either
+/// an AArch32 r0-r14 zero test (Thumb CBZ/CBNZ) or a final `TestCondition` whose
+/// virtual destination is consumed only by the terminator; the AArch64 lowerer
+/// respectively emits `CBZ`/`CBNZ` or folds the pair into `B.cond`. A direct
+/// guest call is admitted only when its final operation writes the exact A32
+/// or Thumb link value to r14; callers must pair this gate with
+/// `Aarch64Lowerer::set_guest_call_exits(true)` so the call becomes a native
+/// frontier exit. CFG targets must exist, phi nodes and locals are rejected,
+/// and frontier blocks named in `excluded` must still be present for
+/// native-exit lowering. Predicated data instructions, Thumb IT state,
+/// SIMD/VFP, and CPSR fields outside NZCV remain interpreter-only. Use
 /// [`is_aarch32_aarch64_native_clobber_safe_excluding_with_mem`] to admit the
 /// validated scalar memory-helper shapes.
 pub fn is_aarch32_aarch64_native_clobber_safe_excluding(
@@ -3874,9 +3878,9 @@ pub fn is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
     allow_mem: bool,
 ) -> bool {
-    use crate::smir::ir::Terminator;
     use crate::smir::ir::ops::OpKind;
-    use crate::smir::ir::types::{Condition, VReg};
+    use crate::smir::ir::types::{ArchReg, ArmReg, Condition, OpWidth, SrcOperand, VReg};
+    use crate::smir::ir::{CallTarget, Terminator};
 
     if !func.locals.is_empty()
         || func.get_block(func.entry).is_none()
@@ -3891,6 +3895,7 @@ pub fn is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
     }
 
     let target_exists = |target| func.get_block(target).is_some();
+    let gpr = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::Arm(ArmReg::X(index))) if *index < 15);
     func.blocks
         .iter()
         .filter(|block| !excluded.contains_key(&block.id))
@@ -3916,6 +3921,11 @@ pub fn is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
                     true_target,
                     false_target,
                 } => {
+                    if gpr(cond) {
+                        return target_exists(*true_target)
+                            && target_exists(*false_target)
+                            && ordinary_ops_valid(&block.ops);
+                    }
                     let Some((test, prefix)) = block.ops.split_last() else {
                         return false;
                     };
@@ -3931,6 +3941,39 @@ pub fn is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
                         && !matches!(condition, Condition::Parity | Condition::NoParity)
                         && target_exists(*true_target)
                         && target_exists(*false_target)
+                        && ordinary_ops_valid(prefix)
+                }
+                Terminator::Call {
+                    target: CallTarget::GuestAddr(target),
+                    args,
+                    continuation,
+                } => {
+                    let Some(continuation_pc) = func
+                        .get_block(*continuation)
+                        .map(|continuation| continuation.guest_pc)
+                    else {
+                        return false;
+                    };
+                    let Some((link, prefix)) = block.ops.split_last() else {
+                        return false;
+                    };
+                    let OpKind::Mov {
+                        dst,
+                        src: SrcOperand::Imm(link_pc),
+                        width: OpWidth::W32,
+                    } = &link.kind
+                    else {
+                        return false;
+                    };
+                    let arm_link = continuation_pc;
+                    let thumb_link = continuation_pc | 1;
+                    args.is_empty()
+                        && *target <= u64::from(u32::MAX)
+                        && *target & 1 == 0
+                        && continuation_pc <= u64::from(u32::MAX)
+                        && continuation_pc & 1 == 0
+                        && *dst == VReg::Arch(ArchReg::Arm(ArmReg::X(14)))
+                        && (*link_pc == arm_link as i64 || *link_pc == thumb_link as i64)
                         && ordinary_ops_valid(prefix)
                 }
                 Terminator::Switch { .. }
@@ -4424,7 +4467,7 @@ mod jit_gate_tests {
         MemWidth, OpWidth, ShiftOp, SignExtend, SrcOperand, VReg, VecElementType, VecWidth,
         VirtualId, X86AesOp, X86Reg,
     };
-    use crate::smir::ir::{FunctionBuilder, LocalSlot, PhiNode, Terminator};
+    use crate::smir::ir::{CallTarget, FunctionBuilder, LocalSlot, PhiNode, Terminator};
 
     fn x86(reg: X86Reg) -> VReg {
         VReg::Arch(ArchReg::X86(reg))
@@ -4506,6 +4549,34 @@ mod jit_gate_tests {
         builder.finish()
     }
 
+    fn aarch32_call_cfg(
+        target: CallTarget,
+        link_dst: VReg,
+        link_pc: i64,
+        link_width: OpWidth,
+        args: Vec<VReg>,
+        continuation_pc: u64,
+    ) -> crate::smir::ir::SmirFunction {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        let continuation = builder.create_block(continuation_pc);
+        builder.push_op(
+            0x1000,
+            OpKind::Mov {
+                dst: link_dst,
+                src: SrcOperand::Imm(link_pc),
+                width: link_width,
+            },
+        );
+        builder.set_terminator(Terminator::Call {
+            target,
+            args,
+            continuation,
+        });
+        builder.switch_to_block(continuation);
+        builder.set_terminator(Terminator::Return { values: Vec::new() });
+        builder.finish()
+    }
+
     #[test]
     fn aarch32_aarch64_gate_accepts_closed_direct_cfg_and_exact_folded_condition() {
         let mut branch = FunctionBuilder::new(FunctionId(0), 0x1000);
@@ -4532,6 +4603,38 @@ mod jit_gate_tests {
         assert!(is_aarch32_aarch64_native_clobber_safe_excluding(
             &function, &excluded,
         ));
+
+        let mut zero_test = FunctionBuilder::new(FunctionId(0), 0x1000);
+        let nonzero = zero_test.create_block(0x1002);
+        let zero = zero_test.create_block(0x1006);
+        zero_test.set_terminator(Terminator::CondBranch {
+            cond: arm_x(7),
+            true_target: nonzero,
+            false_target: zero,
+        });
+        zero_test.switch_to_block(nonzero);
+        zero_test.set_terminator(Terminator::Return { values: Vec::new() });
+        zero_test.switch_to_block(zero);
+        zero_test.set_terminator(Terminator::Return { values: Vec::new() });
+        assert!(is_aarch32_aarch64_native_clobber_safe_excluding(
+            &zero_test.finish(),
+            &std::collections::HashMap::new(),
+        ));
+
+        for link_pc in [0x1004, 0x1005] {
+            let call = aarch32_call_cfg(
+                CallTarget::GuestAddr(0x2000),
+                arm_x(14),
+                link_pc,
+                OpWidth::W32,
+                Vec::new(),
+                0x1004,
+            );
+            assert!(is_aarch32_aarch64_native_clobber_safe_excluding(
+                &call,
+                &std::collections::HashMap::new(),
+            ));
+        }
     }
 
     #[test]
@@ -4547,6 +4650,71 @@ mod jit_gate_tests {
         ] {
             assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
                 &function,
+                &std::collections::HashMap::new(),
+            ));
+        }
+
+        let malformed_calls = [
+            aarch32_call_cfg(
+                CallTarget::GuestAddr(0x2000),
+                arm_x(14),
+                0x1006,
+                OpWidth::W32,
+                Vec::new(),
+                0x1004,
+            ),
+            aarch32_call_cfg(
+                CallTarget::GuestAddr(0x2000),
+                arm_x(13),
+                0x1004,
+                OpWidth::W32,
+                Vec::new(),
+                0x1004,
+            ),
+            aarch32_call_cfg(
+                CallTarget::GuestAddr(0x2000),
+                arm_x(14),
+                0x1004,
+                OpWidth::W64,
+                Vec::new(),
+                0x1004,
+            ),
+            aarch32_call_cfg(
+                CallTarget::GuestAddr(0x2000),
+                arm_x(14),
+                0x1004,
+                OpWidth::W32,
+                vec![arm_x(0)],
+                0x1004,
+            ),
+            aarch32_call_cfg(
+                CallTarget::GuestAddr(0x2001),
+                arm_x(14),
+                0x1004,
+                OpWidth::W32,
+                Vec::new(),
+                0x1004,
+            ),
+            aarch32_call_cfg(
+                CallTarget::GuestAddr(u64::from(u32::MAX) + 1),
+                arm_x(14),
+                0x1004,
+                OpWidth::W32,
+                Vec::new(),
+                0x1004,
+            ),
+            aarch32_call_cfg(
+                CallTarget::Direct(FunctionId(9)),
+                arm_x(14),
+                0x1004,
+                OpWidth::W32,
+                Vec::new(),
+                0x1004,
+            ),
+        ];
+        for call in malformed_calls {
+            assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
+                &call,
                 &std::collections::HashMap::new(),
             ));
         }

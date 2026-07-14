@@ -14,7 +14,7 @@ use crate::smir::ir::types::{
     FpPrecision, FpRoundMode, MemWidth, MemoryOrder, OpWidth, ShiftOp, SignExtend, SrcOperand,
     VLaneOp, VReg, VecElementType, VecPermuteKind, VecReduceOp, VecUnaryOp, VecWidth,
 };
-use crate::smir::ir::{SmirBlock, SmirFunction, Terminator, TrapKind};
+use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
@@ -68,6 +68,11 @@ pub struct Aarch64Lowerer {
     /// `native_exits`, these do not replace a target block globally: only the
     /// selected edge records its resume PC and returns to the trampoline.
     native_exit_edges: HashMap<(BlockId, BlockId), u64>,
+    /// When true, a direct argument-free guest call lowers as a native-region
+    /// exit to its guest target after the block's link-register operation has
+    /// executed. This mode requires the runtime state pointer in X28 and must
+    /// be enabled only after the AArch32 structural gate validates the call.
+    guest_call_exits: bool,
     /// When true, memory ops lower to runtime-helper call-outs (MMU-translated)
     /// instead of inline native LDR/STR against the raw guest address. Set via
     /// [`Self::set_mem_helpers`].
@@ -117,6 +122,7 @@ impl Aarch64Lowerer {
             relocations: Vec::new(),
             native_exits: HashMap::new(),
             native_exit_edges: HashMap::new(),
+            guest_call_exits: false,
             mem_helpers: false,
             mem_helper_addr_width: OpWidth::W64,
             flagm_available: Self::detect_flagm_available(),
@@ -192,6 +198,17 @@ impl Aarch64Lowerer {
     /// (`(source, target)` → resume guest PC). Call before `lower_function`.
     pub fn set_native_exit_edges(&mut self, exits: HashMap<(BlockId, BlockId), u64>) {
         self.native_exit_edges = exits;
+    }
+
+    /// Lower direct, argument-free guest calls as native frontier exits.
+    ///
+    /// The call block's ordinary operations execute first (including guest
+    /// link-register materialization), then the exit stub records the direct
+    /// target PC and returns to the runtime trampoline. This requires X28 to
+    /// hold the runtime state pointer. Cross-lowered AArch32/Thumb callers must
+    /// validate the function with the AArch32 native clobber gate first.
+    pub fn set_guest_call_exits(&mut self, enable: bool) {
+        self.guest_call_exits = enable;
     }
 
     /// Route memory ops through MMU-translated runtime helpers rather than
@@ -17558,6 +17575,11 @@ impl Aarch64Lowerer {
                      interpreter"
                     .into(),
             }),
+            Terminator::Call {
+                target: CallTarget::GuestAddr(target),
+                args,
+                ..
+            } if self.guest_call_exits && args.is_empty() => self.emit_native_exit(*target),
             Terminator::Return { .. } => {
                 self.emit(0xd65f_03c0);
                 Ok(())
@@ -50447,6 +50469,62 @@ mod tests {
         let mut lowerer = Aarch64Lowerer::new();
         let err = lowerer.lower_function(&func).unwrap_err();
         assert!(matches!(err, LowerError::UnsupportedOp { .. }));
+    }
+
+    #[test]
+    fn direct_guest_calls_require_explicit_frontier_exit_mode() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        let continuation = builder.create_block(0x1004);
+        builder.set_terminator(Terminator::Call {
+            target: CallTarget::GuestAddr(0x2345_6780),
+            args: Vec::new(),
+            continuation,
+        });
+        builder.switch_to_block(continuation);
+        builder.set_terminator(Terminator::Return { values: Vec::new() });
+        let func = builder.finish();
+
+        let mut disabled = Aarch64Lowerer::new();
+        assert!(matches!(
+            disabled.lower_function(&func),
+            Err(LowerError::UnsupportedOp { .. })
+        ));
+
+        let mut enabled = Aarch64Lowerer::new();
+        enabled.set_guest_call_exits(true);
+        enabled
+            .lower_function(&func)
+            .expect("direct guest call must lower as a configured native exit");
+        let code = enabled.finalize().expect("finalize direct call exit");
+        assert!(!code.is_empty());
+        assert!(
+            code.windows(4)
+                .any(|word| word == 0xd65f_03c0u32.to_le_bytes())
+        );
+    }
+
+    #[test]
+    fn guest_call_exit_mode_rejects_nonempty_arguments_and_non_guest_targets() {
+        for (target, args) in [
+            (CallTarget::GuestAddr(0x2000), vec![x(0)]),
+            (CallTarget::Direct(FunctionId(9)), Vec::new()),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            let continuation = builder.create_block(0x1004);
+            builder.set_terminator(Terminator::Call {
+                target,
+                args,
+                continuation,
+            });
+            builder.switch_to_block(continuation);
+            builder.set_terminator(Terminator::Return { values: Vec::new() });
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.set_guest_call_exits(true);
+            assert!(matches!(
+                lowerer.lower_function(&builder.finish()),
+                Err(LowerError::UnsupportedOp { .. })
+            ));
+        }
     }
 
     #[test]

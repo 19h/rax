@@ -967,6 +967,7 @@ fn thumb_native_cfg(bytes: &[u8], level: OptLevel) -> (ExecMem, usize) {
 
     let mut lowerer = Aarch64Lowerer::new();
     lowerer.set_native_exits(exits);
+    lowerer.set_guest_call_exits(true);
     let lowered = lowerer
         .lower_function(&function)
         .expect("lower Thumb control-flow region");
@@ -993,6 +994,28 @@ fn thumb_reference_branch_exit(bytes: &[u8], initial: Aarch32GuestRegs) -> u64 {
         ExecResult::Branch(target) => u64::from(target),
         other => panic!("reference Thumb branch execution failed: {other:?}"),
     }
+}
+
+fn thumb_reference_call(bytes: &[u8], initial: Aarch32GuestRegs) -> (u64, Aarch32GuestRegs) {
+    let mut cpu = Armv7Cpu::new();
+    cpu.regs = initial.r;
+    cpu.cpsr = Psr::from_u32(initial.cpsr);
+    let mut memory = FlatMemory::new(0x10_000, 0);
+    let mut executor = Executor::new(&mut cpu, &mut memory);
+    let decoded = Decoder::new(ExecutionState::Thumb)
+        .decode(bytes)
+        .expect("reference Thumb call decode");
+    let exit = match executor.execute(&decoded) {
+        ExecResult::Branch(target) => u64::from(target),
+        other => panic!("reference Thumb call execution failed: {other:?}"),
+    };
+    (
+        exit,
+        Aarch32GuestRegs {
+            r: executor.cpu.regs,
+            cpsr: executor.cpu.cpsr.to_u32(),
+        },
+    )
 }
 
 fn thumb_reference_loop(bytes: &[u8], initial: Aarch32GuestRegs, exit_pc: u64) -> Aarch32GuestRegs {
@@ -1074,6 +1097,61 @@ fn t32_conditional_branch_matches_interpreter_for_all_nzcv_at_o0_and_o2() {
             let actual_exit = exec.run_aarch32_identity_until_exit(entry, &mut actual);
             assert_eq!(actual_exit, expected_exit, "NZCV={nzcv:#x} {level:?}");
             assert_eq!(actual, initial, "NZCV={nzcv:#x} {level:?}");
+        }
+    }
+}
+
+#[test]
+fn t16_cbz_cbnz_match_interpreter_for_all_low_regs_values_nzcv_at_o0_and_o2() {
+    const NZCV_MASK: u32 = 0xf000_0000;
+
+    for rn in 0_u16..8 {
+        for base in [0xb100_u16, 0xb900_u16] {
+            let bytes = (base | (1 << 3) | rn).to_le_bytes(); // target = 0x8006.
+            for level in [OptLevel::O0, OptLevel::O2] {
+                let (exec, entry) = thumb_native_cfg(&bytes, level);
+                for value in [0_u32, 1, u32::MAX] {
+                    for nzcv in 0_u32..16 {
+                        let mut initial = initial_state();
+                        initial.r[rn as usize] = value;
+                        initial.cpsr = (initial.cpsr & !NZCV_MASK) | (nzcv << 28);
+                        let expected_exit = thumb_reference_branch_exit(&bytes, initial);
+                        let mut actual = initial;
+                        let actual_exit = exec.run_aarch32_identity_until_exit(entry, &mut actual);
+                        assert_eq!(
+                            actual_exit,
+                            expected_exit,
+                            "raw={:#06x} r{rn}={value:#010x} NZCV={nzcv:#x} {level:?}",
+                            u16::from_le_bytes(bytes),
+                        );
+                        assert_eq!(
+                            actual,
+                            initial,
+                            "raw={:#06x} r{rn}={value:#010x} NZCV={nzcv:#x} {level:?}",
+                            u16::from_le_bytes(bytes),
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn thumb_direct_bl_frontier_exit_matches_interpreter_for_all_nzcv_at_o0_and_o2() {
+    const BL_PLUS_ZERO: [u8; 4] = [0x00, 0xf0, 0x00, 0xf8];
+    const NZCV_MASK: u32 = 0xf000_0000;
+
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let (exec, entry) = thumb_native_cfg(&BL_PLUS_ZERO, level);
+        for nzcv in 0_u32..16 {
+            let mut initial = initial_state();
+            initial.cpsr = (initial.cpsr & !NZCV_MASK) | (nzcv << 28);
+            let (expected_exit, expected) = thumb_reference_call(&BL_PLUS_ZERO, initial);
+            let mut actual = initial;
+            let actual_exit = exec.run_aarch32_identity_until_exit(entry, &mut actual);
+            assert_eq!(actual_exit, expected_exit, "NZCV={nzcv:#x} {level:?}");
+            assert_eq!(actual, expected, "NZCV={nzcv:#x} {level:?}");
         }
     }
 }

@@ -635,15 +635,10 @@ impl ThumbDecoder {
                 let rn = (raw & 0x7) as u8;
                 let imm = ((i << 6) | (imm5 << 1)) as i64;
 
-                let mnemonic = if op == 0b0001 {
-                    Mnemonic::CBZ
-                } else {
-                    Mnemonic::CBZ
-                };
                 Ok(
-                    DecodedInsn::new(mnemonic, ExecutionState::Thumb, raw as u32, 2)
+                    DecodedInsn::new(Mnemonic::CBZ, ExecutionState::Thumb, raw as u32, 2)
                         .with_operand(Operand::Reg(Self::low_reg(rn)))
-                        .with_operand(Operand::Imm(Immediate::new(imm))),
+                        .with_operand(Operand::Label(imm)),
                 )
             }
             // 0010: SXTH, SXTB, UXTH, UXTB
@@ -686,7 +681,7 @@ impl ThumbDecoder {
                 Ok(
                     DecodedInsn::new(Mnemonic::CBNZ, ExecutionState::Thumb, raw as u32, 2)
                         .with_operand(Operand::Reg(Self::low_reg(rn)))
-                        .with_operand(Operand::Imm(Immediate::new(imm))),
+                        .with_operand(Operand::Label(imm)),
                 )
             }
             // 1010: REV, REV16, REVSH
@@ -1926,6 +1921,25 @@ mod tests {
         let insn = ThumbDecoder::decode_16bit(0xd004).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::BCC);
         assert_eq!(insn.cond, Some(Condition::EQ));
+    }
+
+    #[test]
+    fn test_16bit_cbz_cbnz_decode_displacements_as_branch_labels() {
+        for (raw, mnemonic, rn, offset) in [
+            (0xb108, Mnemonic::CBZ, 0, 2),
+            (0xb90f, Mnemonic::CBNZ, 7, 2),
+            (0xb3f8, Mnemonic::CBZ, 0, 126),
+            (0xbbff, Mnemonic::CBNZ, 7, 126),
+        ] {
+            let insn = ThumbDecoder::decode_16bit(raw).unwrap();
+            assert_eq!(insn.mnemonic, mnemonic);
+            assert_eq!(insn.size, 2);
+            assert!(matches!(
+                insn.operands.as_slice(),
+                [Operand::Reg(reg), Operand::Label(actual)]
+                    if reg.num == rn && *actual == offset
+            ));
+        }
     }
 
     #[test]

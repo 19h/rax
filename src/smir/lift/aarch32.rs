@@ -15,7 +15,8 @@
 //! - immediate/scaled-register LDRD/STRD forms over an even R0-R13 pair use
 //!   pair memory IR so a second-word load fault cannot publish either result;
 //! - unconditional and condition-code A32 branch targets use the architectural
-//!   `PC + 8` base and become explicit SMIR control-flow edges;
+//!   `PC + 8` base and become explicit SMIR control-flow edges; all PC
+//!   arithmetic wraps modulo 2^32;
 //! - A32-only reverse-subtract, multiply-accumulate, and MOVW/MOVT forms are
 //!   translated explicitly.
 
@@ -59,6 +60,30 @@ impl Aarch32Lifter {
 
     fn push(ops: &mut Vec<SmirOp>, pc: GuestAddr, kind: OpKind) {
         ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+    }
+
+    fn pc32(pc: GuestAddr) -> Result<u32, LiftError> {
+        u32::try_from(pc).map_err(|_| LiftError::Unsupported {
+            addr: pc,
+            mnemonic: "A32 guest PC outside the 32-bit address space".to_string(),
+        })
+    }
+
+    fn add_pc_offset(
+        pc: GuestAddr,
+        pipeline_bias: u32,
+        offset: i64,
+    ) -> Result<GuestAddr, LiftError> {
+        let pc = Self::pc32(pc)?;
+        Ok(u64::from(
+            pc.wrapping_add(pipeline_bias).wrapping_add(offset as u32),
+        ))
+    }
+
+    fn next_pc(pc: GuestAddr, bytes: usize) -> Result<GuestAddr, LiftError> {
+        let bytes = u32::try_from(bytes)
+            .map_err(|_| LiftError::Internal("A32 instruction length exceeds u32".to_string()))?;
+        Ok(u64::from(Self::pc32(pc)?.wrapping_add(bytes)))
     }
 
     fn operand_src(operand: &Operand) -> Result<SrcOperand, LiftError> {
@@ -897,12 +922,12 @@ impl Aarch32Lifter {
                 let Some(Operand::Label(offset)) = insn.operands.first() else {
                     return Err(LiftError::Internal("invalid A32 B operands".to_string()));
                 };
-                let target = (pc as i64).wrapping_add(8).wrapping_add(*offset) as u64;
+                let target = Self::add_pc_offset(pc, 8, *offset)?;
                 if let Some(cond) = insn.cond {
                     ControlFlow::CondBranch {
                         cond: Self::branch_condition(cond, pc)?,
                         target,
-                        fallthrough: pc.wrapping_add(4),
+                        fallthrough: Self::next_pc(pc, 4)?,
                     }
                 } else {
                     ControlFlow::Branch { target }
@@ -917,14 +942,12 @@ impl Aarch32Lifter {
                     pc,
                     OpKind::Mov {
                         dst: Self::reg(14),
-                        src: SrcOperand::Imm(pc.wrapping_add(4) as i64),
+                        src: SrcOperand::Imm(Self::next_pc(pc, 4)? as i64),
                         width: OpWidth::W32,
                     },
                 );
                 ControlFlow::Call {
-                    target: CallTarget::GuestAddr(
-                        (pc as i64).wrapping_add(8).wrapping_add(*offset) as u64,
-                    ),
+                    target: CallTarget::GuestAddr(Self::add_pc_offset(pc, 8, *offset)?),
                 }
             }
             _ => {
@@ -980,6 +1003,7 @@ impl SmirLifter for Aarch32Lifter {
         bytes: &[u8],
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
+        Self::pc32(addr)?;
         if bytes.len() < 4 {
             return Err(LiftError::Incomplete {
                 addr,
@@ -1013,7 +1037,7 @@ impl SmirLifter for Aarch32Lifter {
                 .map_err(|error| LiftError::MemoryError { addr: pc, error })?;
             let result = self.lift_insn(pc, &bytes, ctx)?;
             let insn_pc = pc;
-            pc = pc.wrapping_add(result.bytes_consumed as u64);
+            pc = Self::next_pc(pc, result.bytes_consumed)?;
             for mut op in result.ops {
                 op.id = OpId(ops.len() as u16);
                 ops.push(op);
@@ -1474,6 +1498,62 @@ mod tests {
             ControlFlow::Branch { target: 0x1010 }
         ));
         assert_eq!(result.branch_targets, vec![0x1010]);
+    }
+
+    #[test]
+    fn a32_branch_and_link_pc_arithmetic_wraps_modulo_2_pow_32() {
+        let mut lifter = Aarch32Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch32);
+
+        let branch = lifter
+            .lift_insn(0xffff_fffc, &0xea00_0000u32.to_le_bytes(), &mut ctx)
+            .unwrap(); // B +0: 0xffff_fffc + 8 wraps to 4.
+        assert!(matches!(
+            branch.control_flow,
+            ControlFlow::Branch { target: 4 }
+        ));
+
+        let cond = lifter
+            .lift_insn(0xffff_fffc, &0x0a00_0000u32.to_le_bytes(), &mut ctx)
+            .unwrap(); // BEQ +0; fallthrough wraps to 0.
+        assert!(matches!(
+            cond.control_flow,
+            ControlFlow::CondBranch {
+                target: 4,
+                fallthrough: 0,
+                ..
+            }
+        ));
+
+        let call = lifter
+            .lift_insn(0xffff_fffc, &0xeb00_0000u32.to_le_bytes(), &mut ctx)
+            .unwrap(); // BL +0; target 4, link 0.
+        assert!(matches!(
+            call.control_flow,
+            ControlFlow::Call {
+                target: CallTarget::GuestAddr(4)
+            }
+        ));
+        assert!(matches!(
+            call.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::Mov {
+                    dst: VReg::Arch(ArchReg::Arm(ArmReg::X(14))),
+                    src: SrcOperand::Imm(0),
+                    width: OpWidth::W32,
+                },
+                ..
+            }]
+        ));
+
+        assert!(matches!(
+            lifter.lift_insn(
+                u64::from(u32::MAX) + 1,
+                &0xea00_0000u32.to_le_bytes(),
+                &mut ctx,
+            ),
+            Err(LiftError::Unsupported { .. })
+        ));
     }
 
     #[test]

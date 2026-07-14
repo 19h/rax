@@ -10,7 +10,8 @@
 //!   flag-setting logical/move/shift forms fail closed;
 //! - unconditional and explicit condition-code Thumb branches use the
 //!   architectural `PC + 4` base and become explicit SMIR control-flow edges;
-//!   BL writes `(next_pc | 1)` to r14;
+//!   CBZ/CBNZ become explicit register-conditioned edges, BL writes
+//!   `(next_pc | 1)` to r14, and all PC arithmetic wraps modulo 2^32;
 //! - T16/T32 scalar single- and multiple-transfer memory uses the W32 helper
 //!   contract; PC-bearing, empty-list, and constrained base/list forms fail
 //!   closed;
@@ -59,6 +60,30 @@ impl ThumbLifter {
 
     fn push(ops: &mut Vec<SmirOp>, pc: GuestAddr, kind: OpKind) {
         ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+    }
+
+    fn pc32(pc: GuestAddr) -> Result<u32, LiftError> {
+        u32::try_from(pc).map_err(|_| LiftError::Unsupported {
+            addr: pc,
+            mnemonic: "Thumb guest PC outside the 32-bit address space".to_string(),
+        })
+    }
+
+    fn add_pc_offset(
+        pc: GuestAddr,
+        pipeline_bias: u32,
+        offset: i64,
+    ) -> Result<GuestAddr, LiftError> {
+        let pc = Self::pc32(pc)?;
+        Ok(u64::from(
+            pc.wrapping_add(pipeline_bias).wrapping_add(offset as u32),
+        ))
+    }
+
+    fn next_pc(pc: GuestAddr, bytes: usize) -> Result<GuestAddr, LiftError> {
+        let bytes = u32::try_from(bytes)
+            .map_err(|_| LiftError::Internal("Thumb instruction length exceeds u32".to_string()))?;
+        Ok(u64::from(Self::pc32(pc)?.wrapping_add(bytes)))
     }
 
     /// The generic AArch64 lifter interprets `Register::is_sp` as architectural
@@ -900,7 +925,7 @@ impl ThumbLifter {
                     return Err(LiftError::Internal("invalid Thumb B operands".to_string()));
                 };
                 ControlFlow::Branch {
-                    target: (pc as i64).wrapping_add(4).wrapping_add(*offset) as u64,
+                    target: Self::add_pc_offset(pc, 4, *offset)?,
                 }
             }
             Mnemonic::BCC => {
@@ -916,8 +941,31 @@ impl ThumbLifter {
                 };
                 ControlFlow::CondBranch {
                     cond: Self::branch_condition(cond, pc)?,
-                    target: (pc as i64).wrapping_add(4).wrapping_add(*offset) as u64,
-                    fallthrough: pc.wrapping_add(u64::from(normalized.size)),
+                    target: Self::add_pc_offset(pc, 4, *offset)?,
+                    fallthrough: Self::next_pc(pc, usize::from(normalized.size))?,
+                }
+            }
+            Mnemonic::CBZ | Mnemonic::CBNZ => {
+                let [Operand::Reg(rn), Operand::Label(offset)] = normalized.operands.as_slice()
+                else {
+                    return Err(LiftError::Internal(
+                        "invalid Thumb CBZ/CBNZ operands".to_string(),
+                    ));
+                };
+                let target = Self::add_pc_offset(pc, 4, *offset)?;
+                let fallthrough = Self::next_pc(pc, usize::from(normalized.size))?;
+                if normalized.mnemonic == Mnemonic::CBNZ {
+                    ControlFlow::CondBranchReg {
+                        cond: Self::reg(rn.num),
+                        taken: target,
+                        not_taken: fallthrough,
+                    }
+                } else {
+                    ControlFlow::CondBranchReg {
+                        cond: Self::reg(rn.num),
+                        taken: fallthrough,
+                        not_taken: target,
+                    }
                 }
             }
             Mnemonic::BL => {
@@ -929,14 +977,12 @@ impl ThumbLifter {
                     pc,
                     OpKind::Mov {
                         dst: Self::reg(14),
-                        src: SrcOperand::Imm((pc.wrapping_add(4) | 1) as i64),
+                        src: SrcOperand::Imm((Self::next_pc(pc, 4)? | 1) as i64),
                         width: OpWidth::W32,
                     },
                 );
                 ControlFlow::Call {
-                    target: CallTarget::GuestAddr(
-                        (pc as i64).wrapping_add(4).wrapping_add(*offset) as u64,
-                    ),
+                    target: CallTarget::GuestAddr(Self::add_pc_offset(pc, 4, *offset)?),
                 }
             }
             _ => {
@@ -1021,6 +1067,7 @@ impl SmirLifter for ThumbLifter {
         bytes: &[u8],
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
+        Self::pc32(addr)?;
         let insn = Self::decode(bytes, addr)?;
         ctx.guest_pc = addr;
         let bytes_consumed = insn.size as usize;
@@ -1051,7 +1098,7 @@ impl SmirLifter for ThumbLifter {
             };
             let result = self.lift_insn(pc, &bytes, ctx)?;
             let insn_pc = pc;
-            pc = pc.wrapping_add(result.bytes_consumed as u64);
+            pc = Self::next_pc(pc, result.bytes_consumed)?;
             for mut op in result.ops {
                 op.id = OpId(ops.len() as u16);
                 ops.push(op);
@@ -1091,14 +1138,21 @@ impl SmirLifter for ThumbLifter {
                         false_target: ctx.get_or_create_block(fallthrough),
                     }
                 }
+                ControlFlow::CondBranchReg {
+                    cond,
+                    taken,
+                    not_taken,
+                } => Terminator::CondBranch {
+                    cond,
+                    true_target: ctx.get_or_create_block(taken),
+                    false_target: ctx.get_or_create_block(not_taken),
+                },
                 ControlFlow::Return => Terminator::Return { values: Vec::new() },
                 ControlFlow::Trap { kind } => Terminator::Trap { kind },
                 ControlFlow::Syscall => Terminator::Trap {
                     kind: TrapKind::SystemCall,
                 },
-                ControlFlow::CondBranchReg { .. }
-                | ControlFlow::IndirectBranch { .. }
-                | ControlFlow::IndirectBranchMem { .. } => {
+                ControlFlow::IndirectBranch { .. } | ControlFlow::IndirectBranchMem { .. } => {
                     return Err(LiftError::Unsupported {
                         addr: insn_pc,
                         mnemonic: "Thumb block terminator".to_string(),
@@ -1548,6 +1602,111 @@ mod tests {
     }
 
     #[test]
+    fn lifts_t16_cbz_cbnz_for_every_low_register_and_max_forward_offset() {
+        for rn in 0_u16..8 {
+            for (base, zero) in [(0xb100_u16, true), (0xb900_u16, false)] {
+                let raw = base | (1 << 3) | rn; // forward offset = 2.
+                let result = lift(&raw.to_le_bytes());
+                let reg = ThumbLifter::reg(rn as u8);
+                assert_eq!(result.bytes_consumed, 2);
+                assert!(result.ops.is_empty());
+                assert!(matches!(
+                    result.control_flow,
+                    ControlFlow::CondBranchReg {
+                        cond,
+                        taken,
+                        not_taken,
+                    } if cond == reg
+                        && if zero {
+                            taken == 0x1002 && not_taken == 0x1006
+                        } else {
+                            taken == 0x1006 && not_taken == 0x1002
+                        }
+                ));
+            }
+        }
+
+        for (raw, zero) in [(0xb3f8_u16, true), (0xbbf8_u16, false)] {
+            let result = lift(&raw.to_le_bytes()); // r0, forward offset = 126.
+            assert!(matches!(
+                result.control_flow,
+                ControlFlow::CondBranchReg {
+                    taken,
+                    not_taken,
+                    ..
+                } if if zero {
+                    taken == 0x1002 && not_taken == 0x1082
+                } else {
+                    taken == 0x1082 && not_taken == 0x1002
+                }
+            ));
+        }
+    }
+
+    #[test]
+    fn thumb_control_flow_pc_arithmetic_wraps_modulo_2_pow_32() {
+        let mut lifter = ThumbLifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Thumb);
+
+        let branch = lifter
+            .lift_insn(0xffff_fffe, &[0x00, 0xe0], &mut ctx)
+            .unwrap(); // B +0: PC + 4 wraps to 2.
+        assert!(matches!(
+            branch.control_flow,
+            ControlFlow::Branch { target: 2 }
+        ));
+
+        let cond = lifter
+            .lift_insn(0xffff_fffe, &[0x00, 0xd0], &mut ctx)
+            .unwrap(); // BEQ +0; fallthrough wraps to 0.
+        assert!(matches!(
+            cond.control_flow,
+            ControlFlow::CondBranch {
+                target: 2,
+                fallthrough: 0,
+                ..
+            }
+        ));
+
+        let cbz = lifter
+            .lift_insn(0xffff_fffe, &[0x00, 0xb1], &mut ctx)
+            .unwrap();
+        assert!(matches!(
+            cbz.control_flow,
+            ControlFlow::CondBranchReg {
+                taken: 0,
+                not_taken: 2,
+                ..
+            }
+        ));
+
+        let call = lifter
+            .lift_insn(0xffff_fffc, &[0x00, 0xf0, 0x00, 0xf8], &mut ctx)
+            .unwrap(); // BL +0; target 0, Thumb link 1.
+        assert!(matches!(
+            call.control_flow,
+            ControlFlow::Call {
+                target: CallTarget::GuestAddr(0)
+            }
+        ));
+        assert!(matches!(
+            call.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::Mov {
+                    src: SrcOperand::Imm(1),
+                    ..
+                },
+                ..
+            }]
+        ));
+
+        assert!(matches!(
+            lifter.lift_insn(u64::from(u32::MAX) + 1, &[0x00, 0xe0], &mut ctx),
+            Err(LiftError::Unsupported { .. })
+        ));
+    }
+
+    #[test]
     fn lifts_every_t16_branch_condition_with_exact_fallthrough() {
         let conditions = [
             Condition::Eq,
@@ -1718,6 +1877,42 @@ mod tests {
                 true_target,
                 false_target,
             } if true_target == taken && false_target == not_taken
+        ));
+    }
+
+    #[test]
+    fn thumb_block_keeps_cbz_as_a_register_condition_without_flag_materialization() {
+        struct Memory([u8; 2]);
+
+        impl MemoryReader for Memory {
+            fn read(
+                &self,
+                addr: GuestAddr,
+                size: usize,
+            ) -> Result<Vec<u8>, crate::smir::ir::memory::MemoryError> {
+                if addr != 0x1000 || size != 2 {
+                    return Err(crate::smir::ir::memory::MemoryError::OutOfBounds { addr });
+                }
+                Ok(self.0.to_vec())
+            }
+        }
+
+        let mut lifter = ThumbLifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Thumb);
+        let block = lifter
+            .lift_block(0x1000, &Memory([0x08, 0xb1]), &mut ctx)
+            .unwrap(); // CBZ r0,+2.
+        let nonzero = ctx.get_or_create_block(0x1002);
+        let zero = ctx.get_or_create_block(0x1006);
+
+        assert!(block.ops.is_empty());
+        assert!(matches!(
+            block.terminator,
+            Terminator::CondBranch {
+                cond: VReg::Arch(ArchReg::Arm(ArmReg::X(0))),
+                true_target,
+                false_target,
+            } if true_target == nonzero && false_target == zero
         ));
     }
 }
