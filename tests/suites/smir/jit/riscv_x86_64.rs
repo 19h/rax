@@ -2185,7 +2185,7 @@ fn production_jit_cache_keys_code_identity_and_optimization_level() {
 }
 
 #[test]
-fn production_jit_matches_interpreter_for_helpers_and_vector_fallback() {
+fn production_jit_matches_interpreter_for_helpers_and_native_op_v() {
     const E32_M1: u64 = 0x10;
     let instructions = [
         amo_type(0b00010, true, false, 0, 1, 0b010, 3), // lr.w x3,(x1)
@@ -2233,7 +2233,37 @@ fn production_jit_matches_interpreter_for_helpers_and_vector_fallback() {
     let stats = actual.jit_stats();
     assert_eq!(stats.cache_entries, instructions.len());
     assert_eq!(stats.cache_misses, instructions.len() as u64);
-    assert_eq!(stats.native_executions, 4);
+    assert_eq!(stats.native_executions, instructions.len() as u64);
+    assert_eq!(stats.interpreter_fallbacks, 0);
+}
+
+#[test]
+fn production_jit_keeps_vector_memory_on_the_interpreter_boundary() {
+    const E32_M1: u64 = 0x10;
+    let instruction = (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07; // vle32.v
+    let make_cpu = || {
+        RiscVCpu::new(
+            RiscVConfig::rv64gc(),
+            Box::new(RvMemory::new(0, MEMORY_LEN)),
+        )
+    };
+    let mut expected = make_cpu();
+    let mut actual = make_cpu();
+    for cpu in [&mut expected, &mut actual] {
+        write_production_code(cpu, &[instruction]);
+        cpu.set_x(10, DATA);
+        cpu.set_vl_vtype(2, E32_M1);
+        cpu.write_memory(DATA, &0x1122_3344u32.to_le_bytes())
+            .expect("seed vector lane zero");
+        cpu.write_memory(DATA + 4, &0x5566_7788u32.to_le_bytes())
+            .expect("seed vector lane one");
+    }
+
+    assert_eq!(expected.step(), RiscVExit::Continue);
+    assert_eq!(actual.step_jit(OptLevel::O2), RiscVExit::Continue);
+    assert_production_cpu_equivalent(&actual, &expected);
+    let stats = actual.jit_stats();
+    assert_eq!(stats.native_executions, 0);
     assert_eq!(stats.interpreter_fallbacks, 1);
 }
 

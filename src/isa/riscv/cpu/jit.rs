@@ -241,7 +241,7 @@ impl RiscVCpu {
         state.clear_exclusive_fn = jit_clear_exclusive as *const () as usize as u64;
         state.int_crypto_fn = jit_int_crypto as *const () as usize as u64;
         state.fp_fn = jit_scalar_fp as *const () as usize as u64;
-        state.vector_fn = jit_vector_unsupported as *const () as usize as u64;
+        state.vector_fn = jit_vector as *const () as usize as u64;
 
         block.executable.run_riscv(block.entry_offset, &mut state);
         self.jit.native_executions = self.jit.native_executions.wrapping_add(1);
@@ -576,7 +576,12 @@ fn admit_lifted_instruction(lifted: &LiftResult) -> bool {
     let mut memory_accesses = 0usize;
     for op in &lifted.ops {
         match op.kind {
-            OpKind::RvVector { .. } | OpKind::Syscall { .. } | OpKind::Breakpoint => return false,
+            // OP-V arithmetic/configuration is transactionally executed by the
+            // vector helper without guest-memory access. Vector loads/stores
+            // remain interpreter-only because the generic Memory interface
+            // cannot roll back partial lane effects after a later fault.
+            OpKind::RvVector { insn, .. } if insn & 0x7f != 0x57 => return false,
+            OpKind::Syscall { .. } | OpKind::Breakpoint => return false,
             OpKind::Load { .. }
             | OpKind::Store { .. }
             | OpKind::AtomicRmw { .. }
@@ -1141,8 +1146,71 @@ unsafe fn jit_scalar_fp_impl(
     }
 }
 
-unsafe fn jit_vector_unsupported_impl(_state: *mut RiscVGuestRegs, _insn: u64, _xlen: u64) -> u64 {
-    0
+unsafe fn jit_vector_impl(state: *mut RiscVGuestRegs, insn: u64, xlen: u64) -> u64 {
+    let Some(state) = (unsafe { state.as_mut() }) else {
+        return 0;
+    };
+    let Ok(insn) = u32::try_from(insn) else {
+        return 0;
+    };
+    // Only memory-free OP-V is admitted by the production dispatcher. Keep the
+    // helper independently fail-closed if malformed lowered IR calls it with a
+    // vector load/store or another opcode.
+    if insn & 0x7f != 0x57 {
+        return 0;
+    }
+    let (config, decode_xlen) = match xlen {
+        32 => (RiscVConfig::rv32(Isa::rv64gc()), Xlen::Rv32),
+        64 => (RiscVConfig::rv64gc(), Xlen::Rv64),
+        _ => return 0,
+    };
+    let decoded = super::super::decode::decode(insn, decode_xlen, &config.isa);
+    if decoded.is_illegal() {
+        return 0;
+    }
+
+    // Execute over an empty memory object: an admitted OP-V instruction must
+    // not observe or mutate guest memory. All architectural results remain in
+    // this transient hart until exact success, making a zero return fully
+    // transactional with respect to the caller's state ABI.
+    let mut cpu = RiscVCpu::new(
+        config,
+        Box::new(super::super::memory::FlatMemory::new(0, 0)),
+    );
+    cpu.set_pc(state.pc);
+    for register in 1..32u8 {
+        cpu.set_x(register, state.x[register as usize]);
+    }
+    for register in 0..32u8 {
+        cpu.set_f(register, state.f[register as usize]);
+        cpu.set_vreg(register, &state.v[register as usize]);
+    }
+    cpu.set_fcsr(state.fcsr as u32);
+    cpu.set_vl_vtype(state.vl, state.vtype);
+    cpu.set_vstart(state.vstart);
+    cpu.set_vcsr(state.vcsr);
+
+    if !matches!(
+        cpu.execute_insn(&decoded, state.pc),
+        Ok(RiscVExit::Continue)
+    ) {
+        return 0;
+    }
+
+    state.x[0] = 0;
+    for register in 1..32u8 {
+        state.x[register as usize] = cpu.x(register);
+    }
+    for register in 0..32u8 {
+        state.f[register as usize] = cpu.f(register);
+        state.v[register as usize] = cpu.vreg(register);
+    }
+    state.fcsr = u64::from(cpu.fcsr());
+    state.vl = cpu.vl();
+    state.vtype = cpu.vtype();
+    state.vstart = cpu.vstart();
+    state.vcsr = cpu.vcsr();
+    1
 }
 
 // The x86-64 code generator intentionally uses the SysV ABI even on targets
@@ -1173,4 +1241,4 @@ define_jit_abi!(jit_store_exclusive, jit_store_exclusive_impl, (ctx: u64, addr: 
 define_jit_abi!(jit_clear_exclusive, jit_clear_exclusive_impl, (ctx: u64) -> ());
 define_jit_abi!(jit_int_crypto, jit_int_crypto_impl, (op_code: u64, src1: u64, src2: u64, imm: u64, xlen: u64) -> u64);
 define_jit_abi!(jit_scalar_fp, jit_scalar_fp_impl, (op_code: u64, rm_field: u64, fcsr: u64, a: u64, b: u64, c: u64) -> RiscVFpResult);
-define_jit_abi!(jit_vector_unsupported, jit_vector_unsupported_impl, (state: *mut RiscVGuestRegs, insn: u64, xlen: u64) -> u64);
+define_jit_abi!(jit_vector, jit_vector_impl, (state: *mut RiscVGuestRegs, insn: u64, xlen: u64) -> u64);

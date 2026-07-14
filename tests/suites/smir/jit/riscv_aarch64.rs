@@ -60,6 +60,10 @@ fn amo_type(funct5: u32, rs2: u8, rs1: u8, funct3: u32, rd: u8) -> u32 {
         | 0x2f
 }
 
+fn v_type(funct6: u32, vm: u32, vs2: u32, src: u32, funct3: u32, vd: u32) -> u32 {
+    (funct6 << 26) | (vm << 25) | (vs2 << 20) | (src << 15) | (funct3 << 12) | (vd << 7) | 0x57
+}
+
 fn make_cpu(config: RiscVConfig) -> RiscVCpu {
     RiscVCpu::new(config, Box::new(FlatMemory::new(0, MEMORY_LEN)))
 }
@@ -90,6 +94,17 @@ fn assert_equivalent(actual: &RiscVCpu, expected: &RiscVCpu) {
     }
     assert_eq!(actual.pc(), expected.pc(), "PC");
     assert_eq!(actual.fcsr(), expected.fcsr(), "FCSR");
+    assert_eq!(actual.vl(), expected.vl(), "vl");
+    assert_eq!(actual.vtype(), expected.vtype(), "vtype");
+    assert_eq!(actual.vstart(), expected.vstart(), "vstart");
+    assert_eq!(actual.vcsr(), expected.vcsr(), "vcsr");
+    for register in 0..32u8 {
+        assert_eq!(
+            actual.vreg(register),
+            expected.vreg(register),
+            "v{register}"
+        );
+    }
     assert_eq!(actual.instret(), expected.instret(), "instret");
     for csr in [0xc00, 0x341, 0x342, 0x343] {
         assert_eq!(actual.csr_read(csr), expected.csr_read(csr), "CSR {csr:#x}");
@@ -230,6 +245,64 @@ fn production_integer_crypto_and_scalar_fp_helpers_are_native() {
 }
 
 #[test]
+fn production_rvv_op_v_is_native_and_transactional() {
+    const E32_M1: u64 = 0x10;
+    let instructions = [
+        v_type(0b000000, 1, 2, 3, 0, 1),  // vadd.vv v1,v2,v3
+        v_type(0b010000, 1, 1, 0, 2, 11), // vmv.x.s x11,v1
+    ];
+    for config in [RiscVConfig::rv64gc(), RiscVConfig::rv32(Isa::rv64gc())] {
+        for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+            let mut expected = make_cpu(config);
+            let mut actual = make_cpu(config);
+            for cpu in [&mut expected, &mut actual] {
+                install(cpu, &instructions);
+                cpu.set_vl_vtype(2, E32_M1);
+                let mut v2 = [0u8; 16];
+                v2[0..4].copy_from_slice(&1u32.to_le_bytes());
+                v2[4..8].copy_from_slice(&2u32.to_le_bytes());
+                let mut v3 = [0u8; 16];
+                v3[0..4].copy_from_slice(&10u32.to_le_bytes());
+                v3[4..8].copy_from_slice(&20u32.to_le_bytes());
+                cpu.set_vreg(2, &v2);
+                cpu.set_vreg(3, &v3);
+            }
+
+            assert_eq!(expected.run(2), RiscVExit::Continue);
+            assert_eq!(actual.run_jit(2, level), RiscVExit::Continue);
+            assert_equivalent(&actual, &expected);
+            assert_eq!(actual.x(11), 11, "{config:?}, {level:?}");
+            let stats = actual.jit_stats();
+            assert_eq!(stats.native_executions, 2, "{config:?}, {level:?}");
+            assert_eq!(stats.interpreter_fallbacks, 0, "{config:?}, {level:?}");
+        }
+    }
+}
+
+#[test]
+fn production_rvv_op_v_failure_replays_only_the_isolated_instruction() {
+    let instruction = v_type(0b000000, 1, 2, 3, 0, 1); // vadd.vv v1,v2,v3
+    let mut expected = make_cpu(RiscVConfig::rv64gc());
+    let mut actual = make_cpu(RiscVConfig::rv64gc());
+    for cpu in [&mut expected, &mut actual] {
+        install(cpu, &[instruction]);
+        cpu.set_vl_vtype(2, 1 << 63); // vill=1
+        let v1 = [0xa5; 16];
+        cpu.set_vreg(1, &v1);
+    }
+
+    let expected_exit = expected.step();
+    let actual_exit = actual.step_jit(OptLevel::O2);
+    assert_eq!(actual_exit, expected_exit);
+    assert!(matches!(actual_exit, RiscVExit::Trap(_)));
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.vreg(1), [0xa5; 16]);
+    let stats = actual.jit_stats();
+    assert_eq!(stats.native_executions, 1);
+    assert_eq!(stats.interpreter_fallbacks, 1);
+}
+
+#[test]
 fn production_rv32_wraps_addresses_and_scalar_atomics_are_native() {
     let mut expected = make_cpu(RiscVConfig::rv32(Isa::rv64gc()));
     let mut actual = make_cpu(RiscVConfig::rv32(Isa::rv64gc()));
@@ -314,6 +387,9 @@ fn production_cache_reuses_native_aarch64_blocks() {
     assert_eq!(stats.cache_hits, 1);
     assert_eq!(stats.native_executions, 2);
     assert_eq!(stats.interpreter_fallbacks, 0);
+
+    cpu.reset(CODE);
+    assert_eq!(cpu.jit_stats(), Default::default());
 }
 
 #[test]

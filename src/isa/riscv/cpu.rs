@@ -320,7 +320,10 @@ impl RiscVCpu {
         self.vxsat = 0;
         self.v = [0; 32 * VLENB as usize];
         self.ext_csr.clear();
-        #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+        #[cfg(all(
+            feature = "smir-jit",
+            any(target_arch = "x86_64", target_arch = "aarch64")
+        ))]
         self.jit.clear();
     }
 

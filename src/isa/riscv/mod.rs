@@ -40,7 +40,10 @@ pub mod memory;
 /// Compatibility alias for the former compressed-decoder module name.
 pub use compressed as rvc;
 
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 pub use cpu::RiscVJitStats;
 pub use cpu::{RiscVConfig, RiscVCpu, RiscVExit, Trap};
 pub use csr::{Csr, csr_name};
