@@ -3861,6 +3861,7 @@ impl OpKind {
                 | OpKind::Popcnt { .. }
                 | OpKind::Crc32C { .. }
                 | OpKind::Fence { .. }
+                | OpKind::X86Random { .. }
                 | OpKind::X86ReadPid { .. }
                 | OpKind::X86XGetBv { .. }
                 | OpKind::X86XSetBv { .. }

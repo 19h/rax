@@ -583,6 +583,73 @@ fn jit_rdpid_reads_guest_tsc_aux_matches_interpreter() {
     assert_eq!(actual.rflags, expected.rflags);
 }
 
+/// Native RDRAND/RDSEED retain architectural readiness retry behavior, exact
+/// status flags, and 16/32/64-bit destination write semantics.
+#[test]
+fn jit_x86_random_all_widths_and_sources_reach_native_tier() {
+    const STATUS: u64 = (1 << 0) | (1 << 2) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 11);
+
+    for (name, seed, width, random) in [
+        ("rdrand16", false, 16, &[0x66, 0x41, 0x0F, 0xC7, 0xF1][..]),
+        ("rdrand32", false, 32, &[0x41, 0x0F, 0xC7, 0xF1][..]),
+        ("rdrand64", false, 64, &[0x49, 0x0F, 0xC7, 0xF1][..]),
+        ("rdseed16", true, 16, &[0x66, 0x41, 0x0F, 0xC7, 0xF9][..]),
+        ("rdseed32", true, 32, &[0x41, 0x0F, 0xC7, 0xF9][..]),
+        ("rdseed64", true, 64, &[0x49, 0x0F, 0xC7, 0xF9][..]),
+    ] {
+        if (seed && !std::is_x86_feature_detected!("rdseed"))
+            || (!seed && !std::is_x86_feature_detected!("rdrand"))
+        {
+            continue;
+        }
+
+        // retry: rdrand/rdseed r9{w,d,}; jnc retry; hlt
+        let mut code = random.to_vec();
+        code.extend_from_slice(&[0x73, (-(random.len() as i8 + 2)) as u8, 0xF4]);
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.r9 = 0xA5A5_5A5A_C3C3_3C3C;
+            regs.rflags = 0x2 | STATUS;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp);
+        run_interp(&mut interp);
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block().expect("JIT hardware-random retry loop"),
+            "{name}: host-supported X86Random must enter the native tier"
+        );
+        let actual = jit.get_regs().unwrap();
+        let expected = interp.get_regs().unwrap();
+        assert_eq!(actual.rip, LOAD_ADDR + random.len() as u64 + 2, "{name}");
+        assert_eq!(
+            actual.rflags & STATUS,
+            1,
+            "{name}: CF=1, other status clear"
+        );
+        assert_eq!(
+            actual.rflags, expected.rflags,
+            "{name}: architectural flags"
+        );
+        match width {
+            16 => {
+                assert_eq!(actual.r9 >> 16, 0xA5A_5A5A_C3C3);
+                assert_eq!(expected.r9 >> 16, actual.r9 >> 16);
+            }
+            32 => {
+                assert_eq!(actual.r9 >> 32, 0);
+                assert_eq!(expected.r9 >> 32, 0);
+            }
+            64 => {}
+            _ => unreachable!(),
+        }
+    }
+}
+
 /// XGETBV must consume the emulated XCR state, preserve RFLAGS/RCX, and enter
 /// the native tier without exposing the host thread's XCR0.
 #[test]

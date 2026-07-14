@@ -1452,7 +1452,8 @@ pub fn is_x86_aarch64_native_clobber_safe_excluding(
 /// Verify host support for scalar x86 extensions emitted directly by the
 /// identity-register native JIT. Generic scalar lowerings use baseline x86-64;
 /// Encoding-hinted MULX, scalar BMI/ADX operations, and native count operations
-/// require additional CPUID features; CRC32C requires SSE4.2. Excluded exit
+/// require additional CPUID features; CRC32C requires SSE4.2, while RDRAND and
+/// RDSEED retain their independent architectural feature gates. Excluded exit
 /// blocks do not execute natively and therefore do not contribute feature
 /// requirements.
 pub fn x86_native_scalar_features_supported_excluding(
@@ -1467,6 +1468,17 @@ pub fn x86_native_scalar_features_supported_excluding(
         .filter(|block| !excluded.contains_key(&block.id))
         .flat_map(|block| &block.ops)
         .any(|op| matches!(op.kind, crate::smir::ir::ops::OpKind::Crc32C { .. }));
+    let (needs_rdrand, needs_rdseed) = func
+        .blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .flat_map(|block| &block.ops)
+        .fold((false, false), |(rdrand, rdseed), op| match op.kind {
+            crate::smir::ir::ops::OpKind::X86Random { seed, .. } => {
+                (rdrand || !seed, rdseed || seed)
+            }
+            _ => (rdrand, rdseed),
+        });
 
     #[cfg(target_arch = "x86_64")]
     {
@@ -1476,11 +1488,20 @@ pub fn x86_native_scalar_features_supported_excluding(
             && (!needs_popcnt || std::is_x86_feature_detected!("popcnt"))
             && (!needs_adx || std::is_x86_feature_detected!("adx"))
             && (!needs_sse42 || std::is_x86_feature_detected!("sse4.2"))
+            && (!needs_rdrand || std::is_x86_feature_detected!("rdrand"))
+            && (!needs_rdseed || std::is_x86_feature_detected!("rdseed"))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
     {
-        !(needs_bmi2 || needs_bmi1 || needs_lzcnt || needs_popcnt || needs_adx || needs_sse42)
+        !(needs_bmi2
+            || needs_bmi1
+            || needs_lzcnt
+            || needs_popcnt
+            || needs_adx
+            || needs_sse42
+            || needs_rdrand
+            || needs_rdseed)
     }
 }
 
@@ -2675,6 +2696,7 @@ fn x86_flag_defs(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::F
         | OpKind::X86Adx { flags, .. }
         | OpKind::X86Count { flags, .. } => flags.as_set(),
         OpKind::Cmp { .. } | OpKind::Test { .. } => FlagSet::ALL_X86,
+        OpKind::X86Random { .. } => FlagSet::ALL_X86,
         OpKind::Bt { .. }
         | OpKind::Bts { .. }
         | OpKind::Btr { .. }
@@ -2725,6 +2747,20 @@ fn x86_native_rdpid_gpr(reg: &crate::smir::ir::types::VReg) -> bool {
     use crate::smir::ir::types::{ArchReg, VReg};
 
     matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 31 && !matches!(index, 4 | 5)))
+}
+
+fn x86_random_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::OpWidth;
+
+    matches!(
+        op,
+        OpKind::X86Random {
+            dst,
+            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+            ..
+        } if x86_native_identity_gpr(dst)
+    )
 }
 
 fn x86_xgetbv_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
@@ -2988,6 +3024,9 @@ fn block_is_clobber_safe(
             if !x86_native_rdpid_gpr(dst) {
                 return false;
             }
+        }
+        if matches!(op.kind, OpKind::X86Random { .. }) && !x86_random_shape_valid(&op.kind) {
+            return false;
         }
         if matches!(op.kind, OpKind::X86XGetBv { .. }) && !x86_xgetbv_shape_valid(&op.kind) {
             return false;
@@ -9414,6 +9453,66 @@ mod jit_gate_tests {
             &function,
             &std::collections::HashMap::new()
         ));
+    }
+
+    #[test]
+    fn x86_random_gate_validates_width_destination_and_host_feature() {
+        for seed in [false, true] {
+            for width in [OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+                let op = OpKind::X86Random {
+                    dst: x86(X86Reg::R9),
+                    width,
+                    seed,
+                };
+                assert!(op.is_jit_safe());
+                assert!(x86_gate(op), "valid X86Random shape must enter the gate");
+            }
+
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::X86Random {
+                    dst: x86(X86Reg::R9),
+                    width: OpWidth::W64,
+                    seed,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let function = builder.finish();
+            #[cfg(target_arch = "x86_64")]
+            assert_eq!(
+                x86_native_scalar_features_supported_excluding(
+                    &function,
+                    &std::collections::HashMap::new()
+                ),
+                if seed {
+                    std::is_x86_feature_detected!("rdseed")
+                } else {
+                    std::is_x86_feature_detected!("rdrand")
+                }
+            );
+            #[cfg(not(target_arch = "x86_64"))]
+            assert!(!x86_native_scalar_features_supported_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+
+        for (dst, width) in [
+            (x86(X86Reg::Rsp), OpWidth::W64),
+            (x86(X86Reg::Rbp), OpWidth::W32),
+            (x86(X86Reg::R16), OpWidth::W16),
+            (VReg::Virtual(VirtualId(9)), OpWidth::W64),
+            (x86(X86Reg::R9), OpWidth::W8),
+        ] {
+            let malformed = OpKind::X86Random {
+                dst,
+                width,
+                seed: false,
+            };
+            assert!(malformed.is_jit_safe());
+            assert!(!x86_gate(malformed), "malformed X86Random must deopt");
+        }
     }
 
     #[test]

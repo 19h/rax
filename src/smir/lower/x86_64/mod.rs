@@ -3391,6 +3391,18 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(dst, data);
     }
 
+    /// RDRAND/RDSEED r16/r32/r64. The instructions define CF as the readiness
+    /// result and clear OF/SF/ZF/AF/PF; every other RFLAGS bit is unchanged.
+    fn emit_x86_random(&mut self, dst: PhysReg, width: OpWidth, seed: bool) {
+        if width == OpWidth::W16 {
+            self.code.emit_u8(0x66);
+        }
+        self.emit_rex(width == OpWidth::W64, PhysReg::Rax, None, dst);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0xC7);
+        self.emit_modrm_digit(0b11, if seed { 7 } else { 6 }, dst);
+    }
+
     /// CRC32 r32/r64, [base + disp] (SSE4.2).
     fn emit_crc32_rm(&mut self, dst: PhysReg, base: PhysReg, disp: i32, data_width: OpWidth) {
         self.code.emit_u8(0xF2);
@@ -8196,6 +8208,19 @@ impl X86_64Lowerer {
                 }
                 self.code.emit_u8(0x0F);
                 self.code.emit_u8(0x31);
+            }
+
+            OpKind::X86Random { dst, width, seed } => {
+                if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86Random".to_string(),
+                        operand: format!("unsupported width {width:?}"),
+                    });
+                }
+                let dst = self.get_dst_reg(*dst)?;
+                Self::ensure_flag_stack_operands_safe("X86Random", &[dst])?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_x86_random(dst, *width, *seed);
             }
 
             OpKind::X86ReadPid { dst } => {
@@ -16222,6 +16247,116 @@ mod tests {
                 lower_single_op_err(OpKind::Fence { kind }),
                 LowerError::UnsupportedOp { .. }
             ));
+        }
+    }
+
+    #[test]
+    fn lower_x86_random_emits_all_widths_sources_and_rejects_malformed_shapes() {
+        let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        for (seed, width, expected) in [
+            (false, OpWidth::W16, &[0x66, 0x41, 0x0F, 0xC7, 0xF1][..]),
+            (false, OpWidth::W32, &[0x41, 0x0F, 0xC7, 0xF1][..]),
+            (false, OpWidth::W64, &[0x49, 0x0F, 0xC7, 0xF1][..]),
+            (true, OpWidth::W16, &[0x66, 0x41, 0x0F, 0xC7, 0xF9][..]),
+            (true, OpWidth::W32, &[0x41, 0x0F, 0xC7, 0xF9][..]),
+            (true, OpWidth::W64, &[0x49, 0x0F, 0xC7, 0xF9][..]),
+        ] {
+            let code = lower_single_op(OpKind::X86Random {
+                dst: r9,
+                width,
+                seed,
+            });
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "missing native random encoding {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        for (dst, width) in [
+            (VReg::Arch(ArchReg::X86(X86Reg::Rsp)), OpWidth::W64),
+            (VReg::Arch(ArchReg::X86(X86Reg::Rbp)), OpWidth::W32),
+            (VReg::Arch(ArchReg::X86(X86Reg::R16)), OpWidth::W16),
+            (r9, OpWidth::W8),
+        ] {
+            let error = lower_single_op_err(OpKind::X86Random {
+                dst,
+                width,
+                seed: false,
+            });
+            assert!(
+                matches!(
+                    error,
+                    LowerError::UnsupportedOp { .. }
+                        | LowerError::InvalidRegister(_)
+                        | LowerError::RegisterAllocationFailed { .. }
+                        | LowerError::InvalidOperand { .. }
+                ),
+                "malformed destination={dst:?} width={width:?}: {error:?}"
+            );
+        }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_x86_random_preserves_width_semantics_and_defines_exact_status_flags() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        const STATUS: u64 = (1 << 0) | (1 << 2) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 11);
+        const NON_CF_STATUS: u64 = STATUS & !(1 << 0);
+        let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        for seed in [false, true] {
+            if (seed && !std::is_x86_feature_detected!("rdseed"))
+                || (!seed && !std::is_x86_feature_detected!("rdrand"))
+            {
+                continue;
+            }
+            for width in [OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+                let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+                builder.push_op(
+                    0x1000,
+                    OpKind::X86Random {
+                        dst: r9,
+                        width,
+                        seed,
+                    },
+                );
+                builder.set_terminator(Terminator::Return { values: vec![] });
+                let mut lowerer = X86_64Lowerer::new();
+                let lowered = lowerer
+                    .lower_function(&builder.finish())
+                    .expect("lower native X86Random");
+                let exec = ExecMem::new(&lowerer.finalize().expect("finalize native X86Random"))
+                    .expect("map native X86Random");
+                let input = 0xA5A5_5A5A_C3C3_3C3C;
+                let mut regs = GuestRegs::default();
+                regs.gpr[9] = input;
+                regs.rflags = 0x2 | STATUS;
+                exec.run(lowered.entry_offset, &mut regs);
+
+                let success = regs.rflags & 1 != 0;
+                assert_eq!(regs.rflags & NON_CF_STATUS, 0, "seed={seed} {width:?}");
+                assert_ne!(regs.rflags & 0x2, 0, "reserved RFLAGS bit must survive");
+                match width {
+                    OpWidth::W16 => {
+                        assert_eq!(regs.gpr[9] >> 16, input >> 16);
+                        if !success {
+                            assert_eq!(regs.gpr[9] & 0xFFFF, 0);
+                        }
+                    }
+                    OpWidth::W32 => {
+                        assert_eq!(regs.gpr[9] >> 32, 0);
+                        if !success {
+                            assert_eq!(regs.gpr[9], 0);
+                        }
+                    }
+                    OpWidth::W64 => {
+                        if !success {
+                            assert_eq!(regs.gpr[9], 0);
+                        }
+                    }
+                    _ => unreachable!(),
+                }
+            }
         }
     }
 
