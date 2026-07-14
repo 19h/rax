@@ -12,8 +12,8 @@ use crate::smir::ir::ops::{
     X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap,
 };
 use crate::smir::ir::types::{
-    Address, ArchReg, BlockId, Condition, DispSize, FpRoundMode, GuestAddr, MemWidth, OpWidth,
-    ShiftOp, SignExtend, SrcOperand, VReg, VecElementType, VecWidth, X86Reg,
+    Address, ArchReg, BlockId, Condition, DispSize, FenceKind, FpRoundMode, GuestAddr, MemWidth,
+    OpWidth, ShiftOp, SignExtend, SrcOperand, VReg, VecElementType, VecWidth, X86Reg,
 };
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 
@@ -3375,6 +3375,34 @@ impl<'a> X86Emitter<'a> {
         self.code.emit_u8(index);
     }
 
+    /// CRC32 r32/r64, r/m8/r/m16/r/m32/r/m64 (SSE4.2).
+    fn emit_crc32_rr(&mut self, dst: PhysReg, data: PhysReg, data_width: OpWidth) {
+        self.code.emit_u8(0xF2);
+        self.emit_rex_for_width(data_width, dst, data);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0x38);
+        self.code.emit_u8(if data_width == OpWidth::W8 {
+            0xF0
+        } else {
+            0xF1
+        });
+        self.emit_modrm_rr(dst, data);
+    }
+
+    /// CRC32 r32/r64, [base + disp] (SSE4.2).
+    fn emit_crc32_rm(&mut self, dst: PhysReg, base: PhysReg, disp: i32, data_width: OpWidth) {
+        self.code.emit_u8(0xF2);
+        self.emit_rex_for_width_mem_reg(data_width, dst, base, None);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0x38);
+        self.code.emit_u8(if data_width == OpWidth::W8 {
+            0xF0
+        } else {
+            0xF1
+        });
+        self.emit_modrm_mem_disp(dst, base, disp, DispSize::Auto);
+    }
+
     /// BSF r, r/m
     pub fn emit_bsf(&mut self, dst: PhysReg, src: PhysReg, width: OpWidth) {
         self.emit_rex_for_width(width, dst, src);
@@ -4353,6 +4381,47 @@ impl X86_64Lowerer {
             }
         }
         self.finish_bmi_flags(operand, Some(1 << 0));
+        Ok(())
+    }
+
+    /// Lower the register-source SSE4.2 CRC32 family. The architectural
+    /// instruction is destructive (`dst == crc`) and does not modify RFLAGS.
+    /// W8/W16/W32 sources write a 32-bit destination; W64 selects the r64
+    /// encoding, whose CRC result is still zero-extended from 32 bits.
+    fn lower_crc32c(
+        &mut self,
+        dst: VReg,
+        crc: VReg,
+        data: VReg,
+        data_width: OpWidth,
+    ) -> Result<(), LowerError> {
+        if dst != crc {
+            return Err(LowerError::InvalidOperand {
+                op: "Crc32C".to_string(),
+                operand: "x86 CRC32 requires dst == crc".to_string(),
+            });
+        }
+        if !matches!(
+            data_width,
+            OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+        ) {
+            return Err(LowerError::InvalidOperand {
+                op: "Crc32C".to_string(),
+                operand: format!("unsupported data width {data_width:?}"),
+            });
+        }
+        if Self::x86_gpr_index(dst).is_none() || Self::x86_gpr_index(data).is_none() {
+            return Err(LowerError::InvalidOperand {
+                op: "Crc32C".to_string(),
+                operand: "operands must be architectural x86 GPRs".to_string(),
+            });
+        }
+
+        let dst = self.get_dst_reg(dst)?;
+        let data = self.get_reg(data)?;
+        Self::ensure_flag_stack_operands_safe("Crc32C", &[dst, data])?;
+        let mut emitter = X86Emitter::new(&mut self.code);
+        emitter.emit_crc32_rr(dst, data, data_width);
         Ok(())
     }
 
@@ -5983,6 +6052,13 @@ impl X86_64Lowerer {
                 width,
             } => self.lower_bit_test(BitTestRegOp::Complement, Some(*dst), *src, index, *width)?,
 
+            OpKind::Crc32C {
+                dst,
+                crc,
+                data,
+                data_width,
+            } => self.lower_crc32c(*dst, *crc, *data, *data_width)?,
+
             OpKind::Bsf {
                 dst,
                 src,
@@ -7543,6 +7619,7 @@ impl X86_64Lowerer {
                         addr,
                         *width,
                         *sign,
+                        0,
                     );
                 }
                 let dst_reg = self.get_dst_reg(*dst)?;
@@ -7749,6 +7826,7 @@ impl X86_64Lowerer {
                         addr,
                         *width,
                         SignExtend::Zero,
+                        0,
                     );
                 }
                 let op_width = width.to_op_width().unwrap_or(OpWidth::W64);
@@ -8348,6 +8426,17 @@ impl X86_64Lowerer {
             // ================================================================
             // Misc
             // ================================================================
+            OpKind::Fence { kind } => match kind {
+                FenceKind::LoadLoad => self.code.emit_bytes(&[0x0F, 0xAE, 0xE8]),
+                FenceKind::Full => self.code.emit_bytes(&[0x0F, 0xAE, 0xF0]),
+                FenceKind::StoreStore => self.code.emit_bytes(&[0x0F, 0xAE, 0xF8]),
+                other => {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("x86 native fence {other:?}"),
+                    });
+                }
+            },
+
             OpKind::Nop => {
                 let mut emitter = X86Emitter::new(&mut self.code);
                 emitter.emit_nop();
@@ -11520,12 +11609,101 @@ impl X86_64Lowerer {
         }
     }
 
+    /// Fuse the x86 lifter's `Load virtual; Crc32C dst,dst,virtual` memory
+    /// source into one MMU helper call followed by native CRC32. The identity
+    /// bridge has no free guest GPR for the virtual load result, so the helper
+    /// temporarily commits the input to `dst`; two stack slots retain the old
+    /// CRC accumulator and preserve SysV call alignment. Flag-neutral MOVs then
+    /// place the loaded value in the padding slot and restore the accumulator.
+    fn try_lower_jit_mem_crc32c(
+        &mut self,
+        ops: &[crate::smir::ir::ops::SmirOp],
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let (load_pc, temporary, addr, mem_width) = match ops.get(idx) {
+            Some(crate::smir::ir::ops::SmirOp {
+                guest_pc,
+                kind:
+                    OpKind::Load {
+                        dst: VReg::Virtual(temporary),
+                        addr,
+                        width,
+                        sign: SignExtend::Zero,
+                    },
+                ..
+            }) => (*guest_pc, VReg::Virtual(*temporary), addr, *width),
+            _ => return Ok(None),
+        };
+        let data_width = match mem_width.to_op_width() {
+            Some(width @ (OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64)) => width,
+            _ => return Ok(None),
+        };
+        let (dst, crc) = match ops.get(idx + 1) {
+            Some(crate::smir::ir::ops::SmirOp {
+                guest_pc,
+                kind:
+                    OpKind::Crc32C {
+                        dst,
+                        crc,
+                        data,
+                        data_width: crc_width,
+                    },
+                ..
+            }) if *guest_pc == load_pc && *data == temporary && *crc_width == data_width => {
+                (*dst, *crc)
+            }
+            _ => return Ok(None),
+        };
+        if dst != crc {
+            return Ok(None);
+        }
+
+        // Refuse malformed/non-SSA input in which the elided virtual value is
+        // redefined or observed outside the immediately following CRC op.
+        if virtual_definitions.get(&temporary) != Some(&1)
+            || virtual_uses.get(&temporary) != Some(&1)
+        {
+            return Ok(None);
+        }
+
+        let dst_reg = self.get_dst_reg(dst)?;
+        Self::ensure_flag_stack_operands_safe("Crc32C memory", &[dst_reg])?;
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_push(dst_reg); // old accumulator at [rsp+8]
+            emitter.emit_push(dst_reg); // alignment/padding at [rsp]
+        }
+        self.emit_jit_mem_op(
+            load_pc,
+            true,
+            Some(dst),
+            None,
+            None,
+            addr,
+            mem_width,
+            SignExtend::Zero,
+            16,
+        )?;
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rsp, 0, dst_reg, OpWidth::W64);
+            emitter.emit_mov_rm(dst_reg, PhysReg::Rsp, 8, OpWidth::W64);
+            emitter.emit_crc32_rm(dst_reg, PhysReg::Rsp, 0, data_width);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+        Ok(Some(2))
+    }
+
     /// Lower a guest `Load`/`Store` as a call into the MMU via the helper
     /// function pointers in `GuestRegs`. Spills all guest GPRs to the struct,
     /// computes the effective guest address, calls the helper, and on a fault/MMIO return (`ok==0`)
     /// records `exit_pc=guest_pc` and returns to the interpreter WITHOUT
-    /// committing the op (precise restart). Only reached when `mem_helpers` is
-    /// set and the address uses no RSP/RBP/virtual base.
+    /// committing the op (precise restart). `fault_stack_cleanup` removes any
+    /// flag-neutral caller-owned temporary stack space before the fault exit.
+    /// Only reached when `mem_helpers` is set and every address component is
+    /// representable by the GuestRegs-backed address builder.
     fn emit_jit_mem_op(
         &mut self,
         guest_pc: u64,
@@ -11536,6 +11714,7 @@ impl X86_64Lowerer {
         addr: &Address,
         mem_width: MemWidth,
         sign: SignExtend,
+        fault_stack_cleanup: i32,
     ) -> Result<(), LowerError> {
         let size: i32 = match mem_width {
             MemWidth::B1 => 1,
@@ -11807,6 +11986,10 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x64);
         self.code.emit_u8(0x24);
         self.code.emit_u8(0x08);
+        if fault_stack_cleanup != 0 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, fault_stack_cleanup);
+        }
         // exit stub: record exit_pc = guest_pc, return to trampoline.
         self.code.emit_u8(0x50); // push rax
         self.code.emit_u8(0x48);
@@ -12057,6 +12240,23 @@ impl X86_64Lowerer {
             }
         }
 
+        // Count virtual definitions and uses once. Helper-backed fusion shape
+        // checks are then O(1) each and block lowering remains O(N).
+        let mut virtual_definitions = HashMap::new();
+        let mut virtual_uses = HashMap::new();
+        for op in &block.ops {
+            for reg in op.kind.dests() {
+                if matches!(reg, VReg::Virtual(_)) {
+                    *virtual_definitions.entry(reg).or_insert(0usize) += 1;
+                }
+            }
+            for reg in op.kind.source_vregs() {
+                if matches!(reg, VReg::Virtual(_)) {
+                    *virtual_uses.entry(reg).or_insert(0usize) += 1;
+                }
+            }
+        }
+
         // Lower each operation
         let mut idx = 0;
         while idx < end_idx {
@@ -12064,8 +12264,19 @@ impl X86_64Lowerer {
             // The memory-fusion peepholes emit direct host-pointer accesses,
             // which are invalid under the JIT's MMU helper-call mode. In that
             // mode each Load/Store is lowered individually via the helper path
-            // (see `emit_jit_mem_op`), so skip the fusions.
-            if !self.mem_helpers {
+            // (see `emit_jit_mem_op`). The CRC32 fusion below is explicitly
+            // helper-backed and therefore runs only in that mode.
+            if self.mem_helpers {
+                if let Some(consumed) = self.try_lower_jit_mem_crc32c(
+                    &block.ops,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+            } else {
                 if let Some(consumed) = self.try_lower_mem_extend(&block.ops, idx)? {
                     idx += consumed;
                     continue;
@@ -15543,6 +15754,207 @@ mod tests {
                 expected_status,
                 "{name}: only CF may change"
             );
+        }
+    }
+
+    #[test]
+    fn lower_crc32c_emits_every_source_width_and_rejects_malformed_shapes() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rsi = VReg::Arch(ArchReg::X86(X86Reg::Rsi));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        let r10 = VReg::Arch(ArchReg::X86(X86Reg::R10));
+        let r11 = VReg::Arch(ArchReg::X86(X86Reg::R11));
+        let r12 = VReg::Arch(ArchReg::X86(X86Reg::R12));
+        let r13 = VReg::Arch(ArchReg::X86(X86Reg::R13));
+
+        for (name, op, expected) in [
+            (
+                "crc32 r32,r8",
+                OpKind::Crc32C {
+                    dst: rax,
+                    crc: rax,
+                    data: rsi,
+                    data_width: OpWidth::W8,
+                },
+                &[0xF2, 0x40, 0x0F, 0x38, 0xF0, 0xC6][..],
+            ),
+            (
+                "crc32 r32,r16",
+                OpKind::Crc32C {
+                    dst: r8,
+                    crc: r8,
+                    data: r9,
+                    data_width: OpWidth::W16,
+                },
+                &[0xF2, 0x66, 0x45, 0x0F, 0x38, 0xF1, 0xC1][..],
+            ),
+            (
+                "crc32 r32,r32",
+                OpKind::Crc32C {
+                    dst: r10,
+                    crc: r10,
+                    data: r11,
+                    data_width: OpWidth::W32,
+                },
+                &[0xF2, 0x45, 0x0F, 0x38, 0xF1, 0xD3][..],
+            ),
+            (
+                "crc32 r64,r64",
+                OpKind::Crc32C {
+                    dst: r12,
+                    crc: r12,
+                    data: r13,
+                    data_width: OpWidth::W64,
+                },
+                &[0xF2, 0x4D, 0x0F, 0x38, 0xF1, 0xE5][..],
+            ),
+        ] {
+            let code = lower_single_op(op);
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        for malformed in [
+            OpKind::Crc32C {
+                dst: r8,
+                crc: r9,
+                data: r10,
+                data_width: OpWidth::W64,
+            },
+            OpKind::Crc32C {
+                dst: r8,
+                crc: r8,
+                data: r9,
+                data_width: OpWidth::W128,
+            },
+            OpKind::Crc32C {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+                crc: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+                data: r9,
+                data_width: OpWidth::W32,
+            },
+            OpKind::Crc32C {
+                dst: r8,
+                crc: r8,
+                data: VReg::Virtual(crate::smir::ir::types::VirtualId(99)),
+                data_width: OpWidth::W16,
+            },
+        ] {
+            let error = lower_single_op_err(malformed);
+            assert!(
+                matches!(
+                    error,
+                    LowerError::InvalidRegister(_)
+                        | LowerError::RegisterAllocationFailed { .. }
+                        | LowerError::InvalidOperand { .. }
+                        | LowerError::UnsupportedOp { .. }
+                ),
+                "malformed CRC32 must fail lowering"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_x86_fences_emits_exact_baseline_encodings() {
+        for (kind, expected) in [
+            (FenceKind::LoadLoad, [0x0F, 0xAE, 0xE8]),
+            (FenceKind::Full, [0x0F, 0xAE, 0xF0]),
+            (FenceKind::StoreStore, [0x0F, 0xAE, 0xF8]),
+        ] {
+            let code = lower_single_op(OpKind::Fence { kind });
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "{kind:?}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+        for kind in [
+            FenceKind::LoadStore,
+            FenceKind::StoreLoad,
+            FenceKind::ISync,
+            FenceKind::DSync,
+        ] {
+            assert!(matches!(
+                lower_single_op_err(OpKind::Fence { kind }),
+                LowerError::UnsupportedOp { .. }
+            ));
+        }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_crc32c_matches_castagnoli_recurrence_and_preserves_flags() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        if !std::is_x86_feature_detected!("sse4.2") {
+            return;
+        }
+        fn crc32c(mut crc: u32, data: u64, width: OpWidth) -> u32 {
+            const POLY: u32 = 0x82F6_3B78;
+            for byte in 0..(width.bits() / 8) {
+                crc ^= ((data >> (byte * 8)) & 0xff) as u32;
+                for _ in 0..8 {
+                    crc = (crc >> 1) ^ (POLY & 0u32.wrapping_sub(crc & 1));
+                }
+            }
+            crc
+        }
+
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        const FLAGS: u64 = 0x8D5;
+        for (name, width, accumulator, data, alias) in [
+            ("byte", OpWidth::W8, 0x1234_5678, 0xA5, false),
+            ("word", OpWidth::W16, 0x89AB_CDEF, 0xBEEF, false),
+            ("dword", OpWidth::W32, 0x1020_3040, 0xDEAD_BEEF, false),
+            (
+                "qword",
+                OpWidth::W64,
+                0x7654_3210,
+                0x0123_4567_89AB_CDEF,
+                false,
+            ),
+            (
+                "aliased dword",
+                OpWidth::W32,
+                0xA5A5_5A5A,
+                0xA5A5_5A5A,
+                true,
+            ),
+        ] {
+            let data_reg = if alias { r8 } else { r9 };
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::Crc32C {
+                    dst: r8,
+                    crc: r8,
+                    data: data_reg,
+                    data_width: width,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("lower {name}: {error:?}"));
+            let code = lowerer.finalize().expect("finalize CRC32");
+            let exec = ExecMem::new(&code).expect("map CRC32");
+            let mut regs = GuestRegs::default();
+            regs.gpr[8] = accumulator;
+            regs.gpr[9] = data;
+            regs.rflags = 0x2 | FLAGS;
+            exec.run(lowered.entry_offset, &mut regs);
+
+            let source = if alias { accumulator } else { data };
+            assert_eq!(
+                regs.gpr[8],
+                u64::from(crc32c(accumulator as u32, source, width)),
+                "{name}: result"
+            );
+            assert_eq!(regs.rflags & FLAGS, FLAGS, "{name}: flags");
         }
     }
 

@@ -386,6 +386,149 @@ fn jit_register_bit_tests_match_interpreter_across_widths_and_indices() {
     assert_eq!(after.r15 & 0xFF, 1, "BT extracts set bit into CF");
 }
 
+/// SSE4.2 CRC32 register accumulators with B1/B2/B4/B8 memory sources must be
+/// fused through the MMU helper path without materializing the lifter's virtual
+/// load value in a guest GPR. This exercises every architectural source width,
+/// repeated helper calls, precise upper-bit clearing, and loop-carried CRCs.
+#[test]
+fn jit_memory_crc32c_all_widths_matches_interpreter() {
+    if !std::is_x86_feature_detected!("sse4.2") {
+        return;
+    }
+
+    // loop:
+    //   crc32 r8d, byte  [rbx]
+    //   crc32 r9d, word  [rbx+1]
+    //   crc32 r10d,dword [rbx+3]
+    //   crc32 r11, qword [rbx+7]
+    //   dec ecx; jnz loop; hlt
+    let code = [
+        0xF2, 0x44, 0x0F, 0x38, 0xF0, 0x03, 0xF2, 0x66, 0x44, 0x0F, 0x38, 0xF1, 0x4B, 0x01, 0xF2,
+        0x44, 0x0F, 0x38, 0xF1, 0x53, 0x03, 0xF2, 0x4C, 0x0F, 0x38, 0xF1, 0x5B, 0x07, 0xFF, 0xC9,
+        0x75, 0xE0, 0xF4,
+    ];
+    const DATA_ADDR: u64 = 0x20_0000;
+    const ITERATIONS: u64 = 7;
+    let data = [
+        0xA5, 0x34, 0x12, 0xEF, 0xBE, 0xAD, 0xDE, 0xEF, 0xCD, 0xAB, 0x89, 0x67, 0x45, 0x23, 0x01,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu, memory: &Arc<GuestMemoryMmap>| {
+        memory.write_slice(&data, GuestAddress(DATA_ADDR)).unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rbx = DATA_ADDR;
+        regs.rcx = ITERATIONS;
+        regs.r8 = 0xFFFF_FFFF_1020_3040;
+        regs.r9 = 0xFFFF_FFFF_5060_7080;
+        regs.r10 = 0xFFFF_FFFF_90A0_B0C0;
+        regs.r11 = 0xFFFF_FFFF_D0E0_F001;
+        regs.rflags = 0x2 | 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let (mut interp, interp_memory) = make_vcpu_mem(&code);
+    setup(&mut interp, &interp_memory);
+    run_interp(&mut interp);
+
+    let (mut jit, jit_memory) = make_vcpu_mem(&code);
+    setup(&mut jit, &jit_memory);
+    assert!(
+        jit.jit_try_block().expect("JIT memory CRC32 region"),
+        "all memory-source CRC32 widths must enter the helper-backed native tier"
+    );
+    run_interp(&mut jit);
+
+    let expected = interp.get_regs().unwrap();
+    let actual = jit.get_regs().unwrap();
+    assert_eq!(actual.r8, expected.r8, "CRC32 byte source");
+    assert_eq!(actual.r9, expected.r9, "CRC32 word source");
+    assert_eq!(actual.r10, expected.r10, "CRC32 dword source");
+    assert_eq!(actual.r11, expected.r11, "CRC32 qword source");
+    assert_eq!(actual.rcx, 0, "loop counter");
+    assert_eq!(actual.r8 >> 32, 0, "byte-source destination zero extension");
+    assert_eq!(actual.r9 >> 32, 0, "word-source destination zero extension");
+    assert_eq!(
+        actual.r10 >> 32,
+        0,
+        "dword-source destination zero extension"
+    );
+    assert_eq!(
+        actual.r11 >> 32,
+        0,
+        "qword-source destination zero extension"
+    );
+}
+
+/// A failed CRC32 memory read must unwind both fusion-owned stack slots and
+/// return to the exact guest instruction without committing the accumulator.
+#[test]
+fn jit_memory_crc32c_fault_is_precise_and_noncommitting() {
+    if !std::is_x86_feature_detected!("sse4.2") {
+        return;
+    }
+
+    // loop: crc32 r8d, dword ptr [rbx]; dec ecx; jnz loop; hlt
+    let mut vcpu = make_vcpu_code(&[
+        0xF2, 0x44, 0x0F, 0x38, 0xF1, 0x03, 0xFF, 0xC9, 0x75, 0xF6, 0xF4,
+    ]);
+    let mut before = vcpu.get_regs().unwrap();
+    before.rbx = MEM_SIZE + 0x1000;
+    before.rcx = 1;
+    before.r8 = 0xA5A5_A5A5_1234_5678;
+    before.r9 = 0x1122_3344_5566_7788;
+    before.rflags = 0x2 | 0x8D5;
+    vcpu.set_regs(&before).unwrap();
+
+    assert!(
+        vcpu.jit_try_block().expect("JIT faulting memory CRC32"),
+        "faulting memory CRC32 must compile before taking the guest-memory fault"
+    );
+    let after = vcpu.get_regs().unwrap();
+    assert_eq!(after.rip, LOAD_ADDR, "restart at faulting CRC32");
+    assert_eq!(after.r8, before.r8, "CRC accumulator must not commit");
+    assert_eq!(after.r9, before.r9, "unrelated GPR must survive unwind");
+    assert_eq!(after.rcx, before.rcx, "post-load DEC must not execute");
+    assert_eq!(after.rbx, before.rbx, "faulting address register");
+    assert_eq!(after.rflags, before.rflags, "CRC32/fault path flags");
+}
+
+/// LFENCE/MFENCE/SFENCE are architectural side effects but have no GPR/RFLAGS
+/// outputs. They must remain in optimized hot loops and execute natively.
+#[test]
+fn jit_x86_fence_family_matches_interpreter() {
+    // loop: lfence; mfence; sfence; dec ecx; jnz loop; hlt
+    let code = [
+        0x0F, 0xAE, 0xE8, 0x0F, 0xAE, 0xF0, 0x0F, 0xAE, 0xF8, 0xFF, 0xC9, 0x75, 0xF3, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x0123_4567_89AB_CDEF;
+        regs.rcx = 100;
+        regs.r8 = 0xFEDC_BA98_7654_3210;
+        regs.rflags = 0x2 | 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interp = make_vcpu_code(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block().expect("JIT x86 fence family"),
+        "LFENCE/MFENCE/SFENCE loop must enter the native tier"
+    );
+    run_interp(&mut jit);
+
+    let expected = interp.get_regs().unwrap();
+    let actual = jit.get_regs().unwrap();
+    assert_eq!(actual.rax, expected.rax);
+    assert_eq!(actual.rcx, expected.rcx);
+    assert_eq!(actual.r8, expected.r8);
+    assert_eq!(actual.rflags, expected.rflags);
+    assert_eq!(actual.rcx, 0);
+}
+
 /// APX NF count instructions have no architectural flag side effects. The JIT
 /// re-encodes them as legacy host count instructions wrapped by PUSHFQ/POPFQ,
 /// so each instruction must retain incoming CF while producing the same count

@@ -174,6 +174,9 @@ fn op_out_width(kind: &OpKind) -> Option<OpWidth> {
         | OpKind::Bts { width, .. }
         | OpKind::Btr { width, .. }
         | OpKind::Btc { width, .. } => Some(*width),
+        // CRC32 always commits a zero-extended 32-bit Castagnoli residue,
+        // including the r64,r/m64 encoding, so it fully defines the GPR.
+        OpKind::Crc32C { .. } => Some(OpWidth::W64),
         // ZeroExtend / SignExtend write the *destination* (to) width.
         OpKind::ZeroExtend { to_width, .. } | OpKind::SignExtend { to_width, .. } => {
             Some(*to_width)
@@ -594,8 +597,53 @@ pub fn constant_propagation(block: &mut SmirBlock) -> usize {
     fn trackable(w: OpWidth) -> bool {
         matches!(w, OpWidth::W32 | OpWidth::W64)
     }
+    fn crc32c(mut crc: u32, data: u64, width: OpWidth) -> Option<u32> {
+        if !matches!(
+            width,
+            OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+        ) {
+            return None;
+        }
+        const POLY_REFLECTED: u32 = 0x82F6_3B78;
+        for byte in 0..(width.bits() / 8) {
+            crc ^= ((data >> (byte * 8)) & 0xff) as u32;
+            for _ in 0..8 {
+                crc = (crc >> 1) ^ (POLY_REFLECTED & 0u32.wrapping_sub(crc & 1));
+            }
+        }
+        Some(crc)
+    }
 
     for op in &mut block.ops {
+        // CRC32 has no flag effects. When both explicit input registers are
+        // known, evaluate the Castagnoli recurrence at compile time and expose
+        // the zero-extended result to subsequent propagation.
+        let folded_crc =
+            match &op.kind {
+                OpKind::Crc32C {
+                    dst,
+                    crc,
+                    data,
+                    data_width,
+                } => constants.get(crc).zip(constants.get(data)).and_then(
+                    |(&crc_value, &data_value)| {
+                        crc32c(crc_value as u32, data_value as u64, *data_width)
+                            .map(|value| (*dst, value))
+                    },
+                ),
+                _ => None,
+            };
+        if let Some((dst, value)) = folded_crc {
+            op.kind = OpKind::Mov {
+                dst,
+                src: SrcOperand::Imm(i64::from(value)),
+                width: OpWidth::W64,
+            };
+            constants.insert(dst, i64::from(value));
+            propagated += 1;
+            continue;
+        }
+
         // Discriminants read before the mutable borrow of `op.kind` below.
         let alu = alu_tag(&op.kind);
         let is_shl = matches!(op.kind, OpKind::Shl { .. });
@@ -9137,6 +9185,72 @@ mod tests {
         if let OpKind::Add { src2, .. } = &block.ops[2].kind {
             assert!(matches!(src2, SrcOperand::Imm(10)));
         }
+    }
+
+    #[test]
+    fn constant_propagation_folds_crc32c_and_propagates_zero_extended_result() {
+        let crc = VReg::virt(0);
+        let data = VReg::virt(1);
+        let result = VReg::virt(2);
+        let copy = VReg::virt(3);
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: crc,
+                src: SrcOperand::Imm(0x89AB_CDEF_u32 as i64),
+                width: OpWidth::W32,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::Mov {
+                dst: data,
+                src: SrcOperand::Imm(0x0123_4567),
+                width: OpWidth::W32,
+            },
+        ));
+        block.push_op(make_op(
+            2,
+            OpKind::Crc32C {
+                dst: result,
+                crc,
+                data,
+                data_width: OpWidth::W32,
+            },
+        ));
+        block.push_op(make_op(
+            3,
+            OpKind::Mov {
+                dst: copy,
+                src: SrcOperand::Reg(result),
+                width: OpWidth::W64,
+            },
+        ));
+
+        assert_eq!(constant_propagation(&mut block), 2);
+        assert!(matches!(
+            block.ops[2].kind,
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Imm(0x796A_B9A9),
+                width: OpWidth::W64,
+            } if dst == result
+        ));
+        assert!(matches!(
+            block.ops[3].kind,
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Imm(0x796A_B9A9),
+                width: OpWidth::W64,
+            } if dst == copy
+        ));
+        assert!(op_fully_defines(&OpKind::Crc32C {
+            dst: result,
+            crc,
+            data,
+            data_width: OpWidth::W64,
+        }));
     }
 
     #[test]

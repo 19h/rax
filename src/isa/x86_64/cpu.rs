@@ -4114,9 +4114,10 @@ impl X86_64Vcpu {
     /// `exit_pc`; the JIT runs UP TO but not THROUGH it, so the interpreter
     /// resumes there and re-executes that block. Eligibility: the entry block
     /// must not itself be a frontier (else there is no native work), every
-    /// block must be clobber-safe (writes only architectural registers — a
-    /// virtual temporary would corrupt a guest GPR under the identity register
-    /// map), and the region must lower with no unresolved relocations.
+    /// block must be clobber-safe (writes only architectural registers, except
+    /// for virtuals eliminated by a validated lowering fusion), and the region
+    /// must lower with no unresolved relocations. An uneliminated virtual
+    /// temporary would corrupt a guest GPR under the identity register map.
     ///
     /// CAVEAT: a guest infinite loop with no reachable frontier would spin in
     /// native code uninterruptibly — callers should only invoke this for

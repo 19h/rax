@@ -1315,9 +1315,11 @@ impl std::error::Error for ExecMemError {}
 /// state on write-back. Such a block must NOT be promoted; the interpreter runs
 /// it instead.
 ///
-/// Exempt: a trailing `TestCondition` whose `dst` feeds the block's
-/// `CondBranch` — the lowerer folds it into a direct `Jcc` off the live flags
-/// and never materializes the temporary (see `X86_64Lowerer::lower_block`).
+/// Exemptions are virtual values that the lowerer proves it never
+/// materializes: a trailing `TestCondition` whose `dst` feeds the block's
+/// `CondBranch`, and (when MMU helpers are enabled) the single-use load
+/// temporary in an adjacent x86 memory-source CRC32 pair. The former folds to
+/// a direct `Jcc`; the latter folds to a helper-backed memory CRC operation.
 ///
 /// Pure architectural-register blocks (counter/pointer loops, ALU chains,
 /// guest-conditional branches) pass — which is the bulk of hot code.
@@ -1419,14 +1421,21 @@ pub fn is_x86_aarch64_native_clobber_safe_excluding(
 /// Verify host support for scalar x86 extensions emitted directly by the
 /// identity-register native JIT. Generic scalar lowerings use baseline x86-64;
 /// Encoding-hinted MULX, scalar BMI/ADX operations, and native count operations
-/// require additional CPUID features. Excluded exit blocks do not execute
-/// natively and therefore do not contribute feature requirements.
+/// require additional CPUID features; CRC32C requires SSE4.2. Excluded exit
+/// blocks do not execute natively and therefore do not contribute feature
+/// requirements.
 pub fn x86_native_scalar_features_supported_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
 ) -> bool {
     let (needs_bmi2, needs_bmi1, needs_lzcnt, needs_popcnt, needs_adx) =
         x86_native_scalar_feature_requirements_excluding(func, excluded);
+    let needs_sse42 = func
+        .blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .flat_map(|block| &block.ops)
+        .any(|op| matches!(op.kind, crate::smir::ir::ops::OpKind::Crc32C { .. }));
 
     #[cfg(target_arch = "x86_64")]
     {
@@ -1435,11 +1444,12 @@ pub fn x86_native_scalar_features_supported_excluding(
             && (!needs_lzcnt || std::is_x86_feature_detected!("lzcnt"))
             && (!needs_popcnt || std::is_x86_feature_detected!("popcnt"))
             && (!needs_adx || std::is_x86_feature_detected!("adx"))
+            && (!needs_sse42 || std::is_x86_feature_detected!("sse4.2"))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
     {
-        !(needs_bmi2 || needs_bmi1 || needs_lzcnt || needs_popcnt || needs_adx)
+        !(needs_bmi2 || needs_bmi1 || needs_lzcnt || needs_popcnt || needs_adx || needs_sse42)
     }
 }
 
@@ -2674,13 +2684,127 @@ fn x86_block_preserves_live_flags(
     true
 }
 
+fn x86_native_crc32_gpr(reg: &crate::smir::ir::types::VReg) -> bool {
+    use crate::smir::ir::types::{ArchReg, VReg};
+
+    matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 15 && !matches!(index, 4 | 5)))
+}
+
+fn x86_crc32_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::OpWidth;
+
+    matches!(
+        op,
+        OpKind::Crc32C {
+            dst,
+            crc,
+            data,
+            data_width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+        } if dst == crc && x86_native_crc32_gpr(dst) && x86_native_crc32_gpr(data)
+    )
+}
+
+fn x86_jit_mem_address_shape_valid(addr: &crate::smir::ir::types::Address) -> bool {
+    use crate::smir::ir::types::{Address, ArchReg, VReg, X86Reg};
+
+    let state_gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
+    let scale = |value: &u8| matches!(value, 1 | 2 | 4 | 8);
+    match addr {
+        Address::Direct(base) | Address::BaseOffset { base, .. } => state_gpr(base),
+        Address::BaseIndexScale {
+            base,
+            index,
+            scale: amount,
+            ..
+        } => base.as_ref().is_none_or(state_gpr) && state_gpr(index) && scale(amount),
+        Address::PcRel { base, .. } => base.is_some(),
+        Address::Absolute(_) => true,
+        Address::SegmentRel {
+            segment,
+            base,
+            index,
+            scale: amount,
+            ..
+        } => {
+            matches!(
+                segment,
+                VReg::Arch(ArchReg::X86(X86Reg::FsBase | X86Reg::GsBase))
+            ) && base.as_ref().is_none_or(state_gpr)
+                && index.as_ref().is_none_or(state_gpr)
+                && scale(amount)
+        }
+        Address::GpRel { .. } => false,
+    }
+}
+
+/// Validate the exact two-op shape emitted for a memory-source x86 CRC32.
+/// The virtual load result must be single-definition/single-use so native
+/// lowering can eliminate it without creating an identity-map GPR alias.
+fn x86_mem_crc32_pair_valid(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{MemWidth, OpWidth, SignExtend, VReg};
+
+    if !allow_mem {
+        return false;
+    }
+    let (load_pc, temporary, addr, width) = match block.ops.get(index) {
+        Some(op) => match &op.kind {
+            OpKind::Load {
+                dst: VReg::Virtual(temporary),
+                addr,
+                width,
+                sign: SignExtend::Zero,
+            } => (op.guest_pc, VReg::Virtual(*temporary), addr, *width),
+            _ => return false,
+        },
+        None => return false,
+    };
+    let data_width = match width {
+        MemWidth::B1 => OpWidth::W8,
+        MemWidth::B2 => OpWidth::W16,
+        MemWidth::B4 => OpWidth::W32,
+        MemWidth::B8 => OpWidth::W64,
+        _ => return false,
+    };
+    let crc = match block.ops.get(index + 1) {
+        Some(op) if op.guest_pc == load_pc => op,
+        _ => return false,
+    };
+    let accumulator_valid = matches!(
+        &crc.kind,
+        OpKind::Crc32C {
+            dst,
+            crc,
+            data,
+            data_width: crc_width,
+        } if dst == crc
+            && *data == temporary
+            && *crc_width == data_width
+            && x86_native_crc32_gpr(dst)
+    );
+    if !accumulator_valid || !x86_jit_mem_address_shape_valid(addr) {
+        return false;
+    }
+
+    virtual_definitions.get(&temporary) == Some(&1) && virtual_uses.get(&temporary) == Some(&1)
+}
+
 /// True if every op in `block` is safe to execute natively under the JIT:
 ///   (1) it is on the fail-safe register-only whitelist (`SmirOp::is_jit_safe`)
 ///       — so it touches no memory and is validated bit-exact vs KVM; and
 ///   (2) it writes only architectural registers (no virtual temp, which would
 ///       alias a guest GPR under the identity register map).
-/// A trailing `TestCondition` feeding the block's `CondBranch` is exempt (the
-/// lowerer folds it into a direct `Jcc` and never materializes its dst).
+/// A trailing `TestCondition` feeding the block's `CondBranch`, and the
+/// single-use virtual load in an adjacent helper-backed memory CRC32 pair, are
+/// exempt because the lowerer never materializes their destinations.
 fn block_is_clobber_safe(
     block: &crate::smir::ir::SmirBlock,
     allow_mem: bool,
@@ -2710,12 +2834,36 @@ fn block_is_clobber_safe(
     };
 
     let n = block.ops.len();
-    for (i, op) in block.ops.iter().enumerate() {
+    // Count virtual definitions and uses once. Exact CRC pair validation then
+    // remains O(1) per candidate and the complete gate remains O(N).
+    let mut virtual_definitions = std::collections::HashMap::new();
+    let mut virtual_uses = std::collections::HashMap::new();
+    for op in &block.ops {
+        for reg in op.kind.dests() {
+            if matches!(reg, VReg::Virtual(_)) {
+                *virtual_definitions.entry(reg).or_insert(0usize) += 1;
+            }
+        }
+        for reg in op.kind.source_vregs() {
+            if matches!(reg, VReg::Virtual(_)) {
+                *virtual_uses.entry(reg).or_insert(0usize) += 1;
+            }
+        }
+    }
+
+    let mut i = 0;
+    while i < n {
+        if x86_mem_crc32_pair_valid(block, i, allow_mem, &virtual_definitions, &virtual_uses) {
+            i += 2;
+            continue;
+        }
+        let op = &block.ops[i];
         if i + 1 == n {
             if let (Terminator::CondBranch { cond, .. }, OpKind::TestCondition { dst, .. }) =
                 (&block.terminator, &op.kind)
             {
                 if dst == cond {
+                    i += 1;
                     continue;
                 }
             }
@@ -2767,6 +2915,19 @@ fn block_is_clobber_safe(
             && !x86_bit_scan_shape_valid(&op.kind)
         {
             return false;
+        }
+        if matches!(op.kind, OpKind::Crc32C { .. }) && !x86_crc32_shape_valid(&op.kind) {
+            return false;
+        }
+        if let OpKind::Fence { kind } = &op.kind {
+            if !matches!(
+                *kind,
+                crate::smir::ir::types::FenceKind::LoadLoad
+                    | crate::smir::ir::types::FenceKind::Full
+                    | crate::smir::ir::types::FenceKind::StoreStore
+            ) {
+                return false;
+            }
         }
         if matches!(
             op.kind,
@@ -2842,6 +3003,7 @@ fn block_is_clobber_safe(
         if !mem_ok && op.kind.source_vregs().iter().any(touches_sp_bp) {
             return false;
         }
+        i += 1;
     }
     true
 }
@@ -4756,9 +4918,9 @@ mod jit_gate_tests {
         ArmDpRegShiftKind, OpKind, X86AdxKind, X86BlsKind, X86CountKind, X86OpHint,
     };
     use crate::smir::ir::types::{
-        Address, ArchReg, ArmReg, BlockId, Condition, DispSize, FpPrecision, FunctionId, LocalId,
-        MemWidth, OpWidth, ShiftOp, SignExtend, SrcOperand, VReg, VecElementType, VecWidth,
-        VirtualId, X86AesOp, X86Reg,
+        Address, ArchReg, ArmReg, BlockId, Condition, DispSize, FenceKind, FpPrecision, FunctionId,
+        LocalId, MemWidth, OpWidth, ShiftOp, SignExtend, SrcOperand, VReg, VecElementType,
+        VecWidth, VirtualId, X86AesOp, X86Reg,
     };
     use crate::smir::ir::{CallTarget, FunctionBuilder, LocalSlot, PhiNode, Terminator};
 
@@ -8996,6 +9158,170 @@ mod jit_gate_tests {
         ] {
             assert!(op.is_jit_safe(), "{name} remains class-whitelisted");
             assert!(!x86_gate(op), "malformed {name} bit test must deopt");
+        }
+    }
+
+    #[test]
+    fn x86_crc32_gate_covers_register_and_single_use_memory_shapes() {
+        for width in [OpWidth::W8, OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+            let op = OpKind::Crc32C {
+                dst: x86(X86Reg::R8),
+                crc: x86(X86Reg::R8),
+                data: x86(X86Reg::R9),
+                data_width: width,
+            };
+            assert!(op.is_jit_safe(), "CRC32 must be class-whitelisted");
+            assert!(x86_gate(op), "{width:?} register CRC32 must JIT");
+        }
+
+        for (name, op) in [
+            (
+                "non-destructive destination",
+                OpKind::Crc32C {
+                    dst: x86(X86Reg::R8),
+                    crc: x86(X86Reg::R9),
+                    data: x86(X86Reg::R10),
+                    data_width: OpWidth::W64,
+                },
+            ),
+            (
+                "stack destination",
+                OpKind::Crc32C {
+                    dst: x86(X86Reg::Rsp),
+                    crc: x86(X86Reg::Rsp),
+                    data: x86(X86Reg::R10),
+                    data_width: OpWidth::W32,
+                },
+            ),
+            (
+                "virtual source",
+                OpKind::Crc32C {
+                    dst: x86(X86Reg::R8),
+                    crc: x86(X86Reg::R8),
+                    data: VReg::Virtual(VirtualId(1)),
+                    data_width: OpWidth::W16,
+                },
+            ),
+            (
+                "invalid width",
+                OpKind::Crc32C {
+                    dst: x86(X86Reg::R8),
+                    crc: x86(X86Reg::R8),
+                    data: x86(X86Reg::R9),
+                    data_width: OpWidth::W128,
+                },
+            ),
+        ] {
+            assert!(op.is_jit_safe(), "{name} remains class-whitelisted");
+            assert!(!x86_gate(op), "malformed {name} CRC32 must deopt");
+        }
+
+        let memory_crc = |extra_use: bool, signed: SignExtend, crc_width: OpWidth| {
+            let temporary = VReg::Virtual(VirtualId(7));
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::Load {
+                    dst: temporary,
+                    addr: Address::BaseIndexScale {
+                        base: Some(x86(X86Reg::Rsp)),
+                        index: x86(X86Reg::R16),
+                        scale: 2,
+                        disp: 8,
+                        disp_size: DispSize::Disp8,
+                    },
+                    width: MemWidth::B4,
+                    sign: signed,
+                },
+            );
+            builder.push_op(
+                0x1000,
+                OpKind::Crc32C {
+                    dst: x86(X86Reg::R10),
+                    crc: x86(X86Reg::R10),
+                    data: temporary,
+                    data_width: crc_width,
+                },
+            );
+            if extra_use {
+                builder.push_op(
+                    0x1001,
+                    OpKind::Mov {
+                        dst: x86(X86Reg::R11),
+                        src: SrcOperand::Reg(temporary),
+                        width: OpWidth::W64,
+                    },
+                );
+            }
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            builder.finish()
+        };
+
+        let valid = memory_crc(false, SignExtend::Zero, OpWidth::W32);
+        assert!(is_native_clobber_safe_excluding(
+            &valid,
+            &std::collections::HashMap::new(),
+            true
+        ));
+        assert!(
+            !is_native_clobber_safe_excluding(&valid, &std::collections::HashMap::new(), false),
+            "memory CRC32 requires MMU-helper mode"
+        );
+        for invalid in [
+            memory_crc(true, SignExtend::Zero, OpWidth::W32),
+            memory_crc(false, SignExtend::Sign, OpWidth::W32),
+            memory_crc(false, SignExtend::Zero, OpWidth::W64),
+        ] {
+            assert!(!is_native_clobber_safe_excluding(
+                &invalid,
+                &std::collections::HashMap::new(),
+                true
+            ));
+        }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Crc32C {
+                dst: x86(X86Reg::R8),
+                crc: x86(X86Reg::R8),
+                data: x86(X86Reg::R9),
+                data_width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let function = builder.finish();
+        #[cfg(target_arch = "x86_64")]
+        assert_eq!(
+            x86_native_scalar_features_supported_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ),
+            std::is_x86_feature_detected!("sse4.2")
+        );
+        #[cfg(not(target_arch = "x86_64"))]
+        assert!(!x86_native_scalar_features_supported_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+    }
+
+    #[test]
+    fn x86_fence_gate_admits_exact_lfence_mfence_sfence_semantics() {
+        for kind in [FenceKind::LoadLoad, FenceKind::Full, FenceKind::StoreStore] {
+            let op = OpKind::Fence { kind };
+            assert!(op.is_jit_safe(), "{kind:?} must be class-whitelisted");
+            assert!(x86_gate(op), "{kind:?} must enter the native tier");
+        }
+        for kind in [
+            FenceKind::LoadStore,
+            FenceKind::StoreLoad,
+            FenceKind::ISync,
+            FenceKind::DSync,
+        ] {
+            let op = OpKind::Fence { kind };
+            assert!(op.is_jit_safe(), "{kind:?} remains class-whitelisted");
+            assert!(!x86_gate(op), "non-x86 fence {kind:?} must deopt");
         }
     }
 

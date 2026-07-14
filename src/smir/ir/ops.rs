@@ -3859,6 +3859,8 @@ impl OpKind {
                 | OpKind::Clz { .. }
                 | OpKind::Ctz { .. }
                 | OpKind::Popcnt { .. }
+                | OpKind::Crc32C { .. }
+                | OpKind::Fence { .. }
                 | OpKind::X86Count { .. }
                 | OpKind::Bswap { .. }
                 | OpKind::Xchg { .. }
