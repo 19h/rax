@@ -8871,8 +8871,12 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let result = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
+        let result = if modrm.is_memory {
+            ctx.alloc_vreg()
+        } else {
+            dst
+        };
+        ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
             OpKind::VCmp {
@@ -8883,8 +8887,14 @@ impl X86_64Lifter {
                 elem,
                 lanes: VecWidth::V128.lanes(elem) as u8,
             },
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::OpSize,
+                opcode,
+            },
         ));
-        self.append_legacy_packed_result(dst, result, elem, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            self.append_legacy_packed_result(dst, result, elem, pc, ctx, &mut ops);
+        }
 
         Ok(LiftResult::fallthrough(
             ops,
@@ -18374,7 +18384,7 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm, prefix.width)
         };
-        ops.push(SmirOp::new(
+        ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
             OpKind::VCmp {
@@ -18385,6 +18395,7 @@ impl X86_64Lifter {
                 elem,
                 lanes: prefix.width.lanes(elem) as u8,
             },
+            self.vec_hint(prefix, opcode),
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
@@ -50741,6 +50752,7 @@ mod tests {
             assert!(legacy.ops.iter().any(|op| matches!(
                 op.kind,
                 OpKind::VCmp {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
                     src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
                     src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
                     cond: actual_cond,
@@ -50750,6 +50762,24 @@ mod tests {
                 } if actual_cond == cond
                     && actual_elem == elem
                     && u32::from(lanes) == VecWidth::V128.lanes(elem)
+            )));
+            assert!(matches!(
+                legacy
+                    .ops
+                    .iter()
+                    .find(|op| matches!(op.kind, OpKind::VCmp { .. }))
+                    .and_then(|op| op.x86_hint),
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: actual,
+                }) if actual == opcode
+            ));
+            assert!(!legacy.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VMov {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    ..
+                }
             )));
 
             let vex128 = lift_single(&[0xC5, 0xF1, opcode, 0xC2]).unwrap();
@@ -50764,6 +50794,16 @@ mod tests {
                     ..
                 } if actual_cond == cond && actual_elem == elem
             )));
+            assert!(matches!(
+                vex128.ops.last().and_then(|op| op.x86_hint),
+                Some(X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: actual,
+                    width: VecWidth::V128,
+                    ..
+                }) if actual == opcode
+            ));
 
             let vex256 = lift_single(&[0xC5, 0xF5, opcode, 0x00]).unwrap();
             assert!(matches!(
@@ -50785,12 +50825,25 @@ mod tests {
             assert!(legacy.ops.iter().any(|op| matches!(
                 op.kind,
                 OpKind::VCmp {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
                     cond: actual,
                     elem: VecElementType::I64,
                     lanes: 2,
                     ..
                 } if actual == cond
             )));
+            assert!(matches!(
+                legacy
+                    .ops
+                    .iter()
+                    .find(|op| matches!(op.kind, OpKind::VCmp { .. }))
+                    .and_then(|op| op.x86_hint),
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: actual,
+                }) if actual == opcode
+            ));
             let vex = lift_single(&[0xC4, 0xE2, 0x71, opcode, 0xC2]).unwrap();
             assert!(matches!(
                 vex.ops.last().unwrap().kind,
@@ -50803,7 +50856,34 @@ mod tests {
                     lanes: 2,
                 } if actual == cond
             ));
+            assert!(matches!(
+                vex.ops.last().and_then(|op| op.x86_hint),
+                Some(X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: actual,
+                    width: VecWidth::V128,
+                    ..
+                }) if actual == opcode
+            ));
         }
+
+        let legacy_memory = lift_single(&[0x66, 0x0F, 0x74, 0x00]).unwrap();
+        assert!(legacy_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VCmp {
+                dst: VReg::Virtual(_),
+                src2: VReg::Virtual(_),
+                ..
+            }
+        )));
+        assert!(legacy_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                ..
+            }
+        )));
 
         for (opcode, elem, cond) in [
             (0x64, VecElementType::I8, VecCmpCond::Gt),

@@ -3862,6 +3862,130 @@ fn jit_packed_integer_absolute_matches_twos_complement_and_upper_state() {
 }
 
 #[test]
+fn jit_fixed_packed_integer_compares_match_predicates_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx2")
+        || !std::is_x86_feature_detected!("sse4.2")
+    {
+        return;
+    }
+
+    // loop: pcmpgtb xmm1,xmm2; vpcmpeqw ymm3,ymm4,ymm5;
+    //       vpcmpgtq xmm6,xmm7,xmm8; dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0x64, 0xCA, 0xC5, 0xDD, 0x75, 0xDD, 0xC4, 0xC2, 0x41, 0x37, 0xF0, 0xFF, 0xC9,
+        0x75, 0xEF, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+
+        regs.xmm[1] = [0x7E81_0201_00FF_7F80, 0xFF00_807F_8182_0101];
+        regs.xmm[2] = [0x7F82_0101_00FE_807F, 0xFE01_7F80_8281_0102];
+        regs.ymm_high[1] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        regs.zmm_high[1] = [1, 2, 3, 4];
+
+        regs.xmm[4] = [0x8000_7FFF_FFFF_0001, 0x1234_EDCC_0000_8001];
+        regs.ymm_high[4] = [0xFFFF_8000_0001_7FFF, 0xAAAA_5555_8000_7FFF];
+        regs.xmm[5] = [0x8000_7FFE_FFFF_0002, 0x1234_EDCC_0001_8001];
+        regs.ymm_high[5] = [0xFFFF_7FFF_0001_7FFF, 0xAAAA_5555_7FFF_8000];
+        regs.zmm_high[3] = [5, 6, 7, 8];
+
+        regs.xmm[7] = [i64::MIN as u64, 7];
+        regs.xmm[8] = [i64::MAX as u64, (-3i64) as u64];
+        regs.ymm_high[6] = [0xDEAD_BEEF_DEAD_BEEF, 0xCAFE_BABE_CAFE_BABE];
+        regs.zmm_high[6] = [9, 10, 11, 12];
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+    let signed_byte_gt = |lhs: u64, rhs: u64| {
+        let mut result = 0u64;
+        for lane in 0..8 {
+            let shift = lane * 8;
+            let lhs = (lhs >> shift) as u8 as i8;
+            let rhs = (rhs >> shift) as u8 as i8;
+            if lhs > rhs {
+                result |= 0xFFu64 << shift;
+            }
+        }
+        result
+    };
+    let word_eq = |lhs: u64, rhs: u64| {
+        let mut result = 0u64;
+        for lane in 0..4 {
+            let shift = lane * 16;
+            if (lhs >> shift) as u16 == (rhs >> shift) as u16 {
+                result |= 0xFFFFu64 << shift;
+            }
+        }
+        result
+    };
+    let signed_qword_gt = |lhs: u64, rhs: u64| {
+        if (lhs as i64) > (rhs as i64) {
+            u64::MAX
+        } else {
+            0
+        }
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("fixed packed integer compare JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(jit_regs.rflags, interp_regs.rflags, "architectural flags");
+    assert_eq!(
+        jit_regs.xmm[1],
+        [
+            signed_byte_gt(initial.xmm[1][0], initial.xmm[2][0]),
+            signed_byte_gt(initial.xmm[1][1], initial.xmm[2][1]),
+        ],
+        "legacy signed byte comparison"
+    );
+    assert_eq!(jit_regs.ymm_high[1], initial.ymm_high[1]);
+    assert_eq!(jit_regs.zmm_high[1], initial.zmm_high[1]);
+    assert_eq!(
+        jit_regs.xmm[3],
+        [
+            word_eq(initial.xmm[4][0], initial.xmm[5][0]),
+            word_eq(initial.xmm[4][1], initial.xmm[5][1]),
+        ],
+        "VEX.256 word equality low half"
+    );
+    assert_eq!(
+        jit_regs.ymm_high[3],
+        [
+            word_eq(initial.ymm_high[4][0], initial.ymm_high[5][0]),
+            word_eq(initial.ymm_high[4][1], initial.ymm_high[5][1]),
+        ],
+        "VEX.256 word equality high half"
+    );
+    assert_eq!(jit_regs.zmm_high[3], [0; 4]);
+    assert_eq!(
+        jit_regs.xmm[6],
+        [
+            signed_qword_gt(initial.xmm[7][0], initial.xmm[8][0]),
+            signed_qword_gt(initial.xmm[7][1], initial.xmm[8][1]),
+        ],
+        "VEX.128 signed qword comparison"
+    );
+    assert_eq!(jit_regs.ymm_high[6], [0; 2]);
+    assert_eq!(jit_regs.zmm_high[6], [0; 4]);
+}
+
+#[test]
 fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         return;

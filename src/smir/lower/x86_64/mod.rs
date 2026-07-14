@@ -13,7 +13,8 @@ use crate::smir::ir::ops::{
 };
 use crate::smir::ir::types::{
     Address, ArchReg, BlockId, Condition, DispSize, FenceKind, FpRoundMode, GuestAddr, MemWidth,
-    OpWidth, ShiftOp, SignExtend, SrcOperand, VReg, VecElementType, VecUnaryOp, VecWidth, X86Reg,
+    OpWidth, ShiftOp, SignExtend, SrcOperand, VReg, VecCmpCond, VecElementType, VecUnaryOp,
+    VecWidth, X86Reg,
 };
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 
@@ -7446,6 +7447,113 @@ impl X86_64Lowerer {
                 }
             }
 
+            OpKind::VCmp {
+                dst,
+                src1,
+                src2,
+                cond,
+                elem,
+                lanes,
+            } if matches!(
+                (elem, cond),
+                (
+                    VecElementType::I8
+                        | VecElementType::I16
+                        | VecElementType::I32
+                        | VecElementType::I64,
+                    VecCmpCond::Eq | VecCmpCond::Gt
+                )
+            ) =>
+            {
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
+                        op: format!("VCmp {:?} {:?}x{}", cond, elem, lanes),
+                    }
+                })?;
+                if !matches!(width, VecWidth::V128 | VecWidth::V256) {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("VCmp {:?} {:?}x{}", cond, elem, lanes),
+                    });
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                let vector_matches_width = |reg: PhysReg| match (width, reg) {
+                    (VecWidth::V128, PhysReg::Xmm(index))
+                    | (VecWidth::V256, PhysReg::Ymm(index)) => index < 16,
+                    _ => false,
+                };
+                if ![dst_reg, src1_reg, src2_reg]
+                    .into_iter()
+                    .all(vector_matches_width)
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VCmp".to_string(),
+                        operand: "requires matching low vector registers".to_string(),
+                    });
+                }
+                let (expected_map, expected_opcode) = match (*elem, *cond) {
+                    (VecElementType::I8, VecCmpCond::Gt) => (X86VecMap::Map0F, 0x64),
+                    (VecElementType::I16, VecCmpCond::Gt) => (X86VecMap::Map0F, 0x65),
+                    (VecElementType::I32, VecCmpCond::Gt) => (X86VecMap::Map0F, 0x66),
+                    (VecElementType::I8, VecCmpCond::Eq) => (X86VecMap::Map0F, 0x74),
+                    (VecElementType::I16, VecCmpCond::Eq) => (X86VecMap::Map0F, 0x75),
+                    (VecElementType::I32, VecCmpCond::Eq) => (X86VecMap::Map0F, 0x76),
+                    (VecElementType::I64, VecCmpCond::Eq) => (X86VecMap::Map0F38, 0x29),
+                    (VecElementType::I64, VecCmpCond::Gt) => (X86VecMap::Map0F38, 0x37),
+                    _ => unreachable!(),
+                };
+
+                match op.x86_hint {
+                    Some(X86OpHint::SseOp { prefix, opcode })
+                        if width == VecWidth::V128
+                            && dst_reg == src1_reg
+                            && prefix == X86SsePrefix::OpSize
+                            && opcode == expected_opcode =>
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        if expected_map == X86VecMap::Map0F38 {
+                            emitter.emit_sse_op38_rr(Some(0x66), opcode, dst_reg, src2_reg);
+                        } else {
+                            emitter.emit_sse_mov_rr(Some(0x66), opcode, dst_reg, src2_reg);
+                        }
+                    }
+                    Some(X86OpHint::VexOp {
+                        map,
+                        pp,
+                        opcode,
+                        width: encoded_width,
+                        w,
+                    }) if map == expected_map
+                        && pp == X86SsePrefix::OpSize
+                        && opcode == expected_opcode
+                        && encoded_width == width =>
+                    {
+                        self.emit_vec_rrr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Vex,
+                                map,
+                                pp,
+                                opcode,
+                                width,
+                                w,
+                            },
+                            dst_reg,
+                            src1_reg,
+                            src2_reg,
+                        );
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!(
+                                "unhinted or malformed VCmp {:?} {:?}x{}",
+                                cond, elem, lanes
+                            ),
+                        });
+                    }
+                }
+            }
+
             OpKind::VUnary {
                 dst,
                 src,
@@ -13472,6 +13580,19 @@ mod tests {
             .expect_err("single op should fail to lower")
     }
 
+    fn lower_single_hinted_op_err(kind: OpKind, hint: X86OpHint) -> LowerError {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(0x1000, kind);
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut func = builder.finish();
+        func.blocks[0].ops[0].x86_hint = Some(hint);
+
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer
+            .lower_function(&func)
+            .expect_err("single hinted op should fail to lower")
+    }
+
     #[test]
     fn vector_mem_helper_preservation_uses_canonical_full_state_encodings() {
         let mut lowerer = X86_64Lowerer::new();
@@ -13752,6 +13873,36 @@ mod tests {
                 &[0x62, 0x02, 0xFD, 0x08, 0x1F, 0xE5][..],
                 &[0x62, 0x02, 0xFD, 0x08, 0x1F, 0xE5][..],
             ),
+            (&[0x66, 0x0F, 0x64, 0xCA][..], &[0x66, 0x0F, 0x64, 0xCA][..]),
+            (&[0x66, 0x0F, 0x65, 0xDC][..], &[0x66, 0x0F, 0x65, 0xDC][..]),
+            (&[0x66, 0x0F, 0x66, 0xEE][..], &[0x66, 0x0F, 0x66, 0xEE][..]),
+            (&[0x66, 0x0F, 0x74, 0xCA][..], &[0x66, 0x0F, 0x74, 0xCA][..]),
+            (&[0x66, 0x0F, 0x75, 0xDC][..], &[0x66, 0x0F, 0x75, 0xDC][..]),
+            (&[0x66, 0x0F, 0x76, 0xEE][..], &[0x66, 0x0F, 0x76, 0xEE][..]),
+            (
+                &[0x66, 0x0F, 0x38, 0x29, 0xCA][..],
+                &[0x66, 0x0F, 0x38, 0x29, 0xCA][..],
+            ),
+            (
+                &[0x66, 0x0F, 0x38, 0x37, 0xDC][..],
+                &[0x66, 0x0F, 0x38, 0x37, 0xDC][..],
+            ),
+            (&[0xC5, 0xF1, 0x74, 0xC2][..], &[0xC5, 0xF1, 0x74, 0xC2][..]),
+            (&[0xC5, 0xED, 0x65, 0xCB][..], &[0xC5, 0xED, 0x65, 0xCB][..]),
+            (&[0xC5, 0xDD, 0x76, 0xDD][..], &[0xC5, 0xDD, 0x76, 0xDD][..]),
+            (
+                &[0xC4, 0xE2, 0x71, 0x29, 0xC2][..],
+                &[0xC4, 0xE2, 0x71, 0x29, 0xC2][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0xF1, 0x29, 0xC2][..],
+                &[0xC4, 0xE2, 0xF1, 0x29, 0xC2][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0x6D, 0x37, 0xCB][..],
+                &[0xC4, 0xE2, 0x6D, 0x37, 0xCB][..],
+            ),
+            (&[0xC5, 0x31, 0x76, 0xC2][..], &[0xC5, 0x31, 0x76, 0xC2][..]),
             (
                 &[0x62, 0xF2, 0x7D, 0xCC, 0xC4, 0xCA][..],
                 &[0x62, 0xF2, 0x7D, 0xCC, 0xC4, 0xCA][..],
@@ -13972,6 +14123,112 @@ mod tests {
                     .any(|window| window == expected),
                 "lift/JIT round trip omitted {instruction:02X?}: {lowered:02X?}"
             );
+        }
+    }
+
+    #[test]
+    fn lower_fixed_integer_compare_rejects_unhinted_and_malformed_encodings() {
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let ymm = |index| VReg::Arch(ArchReg::X86(X86Reg::Ymm(index)));
+
+        let unhinted = OpKind::VCmp {
+            dst: xmm(1),
+            src1: xmm(1),
+            src2: xmm(2),
+            cond: VecCmpCond::Eq,
+            elem: VecElementType::I32,
+            lanes: 4,
+        };
+        assert!(matches!(
+            lower_single_op_err(unhinted),
+            LowerError::UnsupportedOp { .. }
+        ));
+
+        for (kind, hint) in [
+            (
+                OpKind::VCmp {
+                    dst: xmm(1),
+                    src1: xmm(2),
+                    src2: xmm(3),
+                    cond: VecCmpCond::Eq,
+                    elem: VecElementType::I8,
+                    lanes: 16,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x74,
+                },
+            ),
+            (
+                OpKind::VCmp {
+                    dst: xmm(1),
+                    src1: xmm(1),
+                    src2: xmm(2),
+                    cond: VecCmpCond::Gt,
+                    elem: VecElementType::I16,
+                    lanes: 8,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x64,
+                },
+            ),
+            (
+                OpKind::VCmp {
+                    dst: ymm(1),
+                    src1: ymm(2),
+                    src2: ymm(3),
+                    cond: VecCmpCond::Eq,
+                    elem: VecElementType::I64,
+                    lanes: 4,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x29,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                OpKind::VCmp {
+                    dst: xmm(16),
+                    src1: xmm(17),
+                    src2: xmm(18),
+                    cond: VecCmpCond::Gt,
+                    elem: VecElementType::I32,
+                    lanes: 4,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x66,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                OpKind::VCmp {
+                    dst: ymm(1),
+                    src1: ymm(2),
+                    src2: ymm(3),
+                    cond: VecCmpCond::Eq,
+                    elem: VecElementType::I16,
+                    lanes: 16,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x75,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
         }
     }
 

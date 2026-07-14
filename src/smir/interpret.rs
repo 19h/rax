@@ -7158,6 +7158,7 @@ impl SmirInterpreter {
                 elem,
                 lanes,
             } => {
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, x86_hint);
                 let a = Self::read_vec(ctx, *src1);
                 let b = Self::read_vec(ctx, *src2);
                 let bits = elem.bytes() * 8;
@@ -7235,6 +7236,7 @@ impl SmirInterpreter {
                     }
                 }
                 Self::write_vec(ctx, *dst, result);
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
             }
 
             OpKind::VShuffle {

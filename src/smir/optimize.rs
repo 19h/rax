@@ -4750,6 +4750,7 @@ mod tests {
                 matches!(
                     op.kind,
                     OpKind::VCmp {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
                         src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
                         src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
                         cond: VecCmpCond::Gt,
@@ -4759,23 +4760,17 @@ mod tests {
                 )
             })
             .expect("same-register PCMPGTD source compare must survive optimization");
-        let destination_write = ops
-            .iter()
-            .position(|op| {
-                matches!(
-                    op.kind,
-                    OpKind::VInsertLane {
-                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                        elem: VecElementType::I32,
-                        ..
-                    }
-                )
-            })
-            .expect("legacy PCMPGTD destination merge must survive optimization");
-        assert!(
-            compare < destination_write,
-            "legacy packed compare must capture aliased inputs before destination writes"
+        assert_eq!(
+            compare, 0,
+            "direct legacy PCMPGTD must remain one atomic op"
         );
+        assert!(!ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                ..
+            }
+        )));
 
         let evex_compare = optimized(&[0x62, 0xF1, 0x75, 0x09, 0x76, 0x10]);
         let ops = &evex_compare.blocks[0].ops;
