@@ -17494,6 +17494,9 @@ impl Aarch64Lowerer {
                 width,
                 signed,
             } => self.lower_vcvt_fp_to_int_sat(*dst, *src, *fp_elem, *int_elem, *width, *signed),
+            OpKind::VInterleave { .. } => Err(LowerError::UnsupportedOp {
+                op: "x86 lane-block integer interleave".into(),
+            }),
             OpKind::VShuffleBitQM { .. } => Err(LowerError::UnsupportedOp {
                 op: "VShuffleBitQM requires x86 opmask K-register state".into(),
             }),

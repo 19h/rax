@@ -3986,6 +3986,128 @@ fn jit_fixed_packed_integer_compares_match_predicates_and_upper_state() {
 }
 
 #[test]
+fn jit_packed_integer_interleaves_match_lane_blocks_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512vl")
+        || !std::is_x86_feature_detected!("avx2")
+    {
+        return;
+    }
+
+    // loop: punpckhbw xmm1,xmm2; vpunpckldq ymm3,ymm4,ymm5;
+    //       vpunpckhqdq zmm6,zmm7,zmm8; {evex} vpunpcklbw xmm9,xmm10,xmm11;
+    //       dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0x68, 0xCA, 0xC5, 0xDD, 0x62, 0xDD, 0x62, 0xD1, 0xC5, 0x48, 0x6D, 0xF0, 0x62,
+        0x51, 0x2D, 0x08, 0x60, 0xCB, 0xFF, 0xC9, 0x75, 0xE8, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+
+        regs.xmm[1] = [0x1111_2222_3333_4444, 0x807F_00FF_A55A_0102];
+        regs.xmm[2] = [0x5555_6666_7777_8888, 0x7F80_FF00_5AA5_0304];
+        regs.ymm_high[1] = [0x0123_4567_89AB_CDEF, 0xFEDC_BA98_7654_3210];
+        regs.zmm_high[1] = [1, 2, 3, 4];
+
+        regs.xmm[4] = [0x1111_1111_0000_0000, 0x3333_3333_2222_2222];
+        regs.xmm[5] = [0xBBBB_BBBB_AAAA_AAAA, 0xDDDD_DDDD_CCCC_CCCC];
+        regs.ymm_high[4] = [0x5555_5555_4444_4444, 0x7777_7777_6666_6666];
+        regs.ymm_high[5] = [0xFFFF_FFFF_EEEE_EEEE, 0x9999_9999_8888_8888];
+        regs.zmm_high[3] = [5, 6, 7, 8];
+
+        regs.xmm[7] = [0x7000, 0x7001];
+        regs.xmm[8] = [0x8000, 0x8001];
+        regs.ymm_high[7] = [0x7002, 0x7003];
+        regs.ymm_high[8] = [0x8002, 0x8003];
+        regs.zmm_high[7] = [0x7004, 0x7005, 0x7006, 0x7007];
+        regs.zmm_high[8] = [0x8004, 0x8005, 0x8006, 0x8007];
+
+        regs.xmm[10] = [0x1716_1514_1312_1110, 0x1F1E_1D1C_1B1A_1918];
+        regs.xmm[11] = [0x2726_2524_2322_2120, 0x2F2E_2D2C_2B2A_2928];
+        regs.ymm_high[9] = [0x9999_9999_9999_9999, 0x9999_9999_9999_9999];
+        regs.zmm_high[9] = [9, 9, 9, 9];
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+    let interleave_bytes = |lhs: u64, rhs: u64| {
+        let mut result = [0u64; 2];
+        for lane in 0..8 {
+            let lhs_byte = (lhs >> (lane * 8)) & 0xFF;
+            let rhs_byte = (rhs >> (lane * 8)) & 0xFF;
+            let output = lane * 2;
+            result[output / 8] |= lhs_byte << ((output % 8) * 8);
+            result[(output + 1) / 8] |= rhs_byte << (((output + 1) % 8) * 8);
+        }
+        result
+    };
+    let unpack_low_dwords = |lhs: u64, rhs: u64| {
+        [
+            ((rhs & 0xFFFF_FFFF) << 32) | (lhs & 0xFFFF_FFFF),
+            (rhs & 0xFFFF_FFFF_0000_0000) | (lhs >> 32),
+        ]
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("packed integer interleave JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(jit_regs.rflags, interp_regs.rflags, "architectural flags");
+    assert_eq!(
+        jit_regs.xmm[1],
+        interleave_bytes(initial.xmm[1][1], initial.xmm[2][1]),
+        "legacy high-byte interleave"
+    );
+    assert_eq!(jit_regs.ymm_high[1], initial.ymm_high[1]);
+    assert_eq!(jit_regs.zmm_high[1], initial.zmm_high[1]);
+    assert_eq!(
+        jit_regs.xmm[3],
+        unpack_low_dwords(initial.xmm[4][0], initial.xmm[5][0]),
+        "VEX.256 low-dword interleave low block"
+    );
+    assert_eq!(
+        jit_regs.ymm_high[3],
+        unpack_low_dwords(initial.ymm_high[4][0], initial.ymm_high[5][0]),
+        "VEX.256 low-dword interleave high block"
+    );
+    assert_eq!(jit_regs.zmm_high[3], [0; 4]);
+    assert_eq!(jit_regs.xmm[6], [initial.xmm[7][1], initial.xmm[8][1]]);
+    assert_eq!(
+        jit_regs.ymm_high[6],
+        [initial.ymm_high[7][1], initial.ymm_high[8][1]]
+    );
+    assert_eq!(
+        jit_regs.zmm_high[6],
+        [
+            initial.zmm_high[7][1],
+            initial.zmm_high[8][1],
+            initial.zmm_high[7][3],
+            initial.zmm_high[8][3],
+        ]
+    );
+    assert_eq!(
+        jit_regs.xmm[9],
+        interleave_bytes(initial.xmm[10][0], initial.xmm[11][0]),
+        "EVEX.128 low-byte interleave"
+    );
+    assert_eq!(jit_regs.ymm_high[9], [0; 2]);
+    assert_eq!(jit_regs.zmm_high[9], [0; 4]);
+}
+
+#[test]
 fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         return;

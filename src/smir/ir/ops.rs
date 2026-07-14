@@ -2804,6 +2804,20 @@ pub enum OpKind {
         lanes: u8,
     },
 
+    /// Lane-block-local interleave. Each output block alternates elements from
+    /// `src1` and `src2`, selecting either the low or high half of the
+    /// corresponding input block. `block_lanes` is the number of elements in
+    /// one independently interleaved block and must be even.
+    VInterleave {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        block_lanes: u8,
+        high: bool,
+    },
+
     /// Lane-local byte table shuffle with x86 PSHUFB semantics.
     ///
     /// For output byte `i`, the corresponding control byte selects within the
@@ -3990,6 +4004,7 @@ impl OpKind {
             | OpKind::VInsertLane { dst, .. }
             | OpKind::VExtractLane { dst, .. }
             | OpKind::VShuffle { dst, .. }
+            | OpKind::VInterleave { dst, .. }
             | OpKind::VByteShuffle { dst, .. }
             | OpKind::VHorizontalBin { dst, .. }
             | OpKind::VLoad { dst, .. }

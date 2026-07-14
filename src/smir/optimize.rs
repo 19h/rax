@@ -3345,6 +3345,11 @@ impl OpKind {
                 result.push(*indices);
             }
 
+            OpKind::VInterleave { src1, src2, .. } => {
+                result.push(*src1);
+                result.push(*src2);
+            }
+
             OpKind::VByteShuffle { src, control, .. } => {
                 result.push(*src);
                 result.push(*control);
@@ -3862,7 +3867,7 @@ mod tests {
     use crate::smir::ir::FunctionBuilder;
     use crate::smir::ir::ops::{
         ArmDpRegShiftKind, OpKind, X86AdxKind, X86BlsKind, X86CacheControlKind, X86CountKind,
-        X86X87ControlKind, X86X87DataKind,
+        X86SsePrefix, X86X87ControlKind, X86X87DataKind,
     };
     use crate::smir::ir::types::{
         Avx10FP16Op, Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType, X86AesOp,
@@ -4772,6 +4777,28 @@ mod tests {
             }
         )));
 
+        let legacy_interleave = optimized(&[0x66, 0x0F, 0x68, 0xC0]);
+        let ops = &legacy_interleave.blocks[0].ops;
+        assert!(matches!(
+            ops.first().map(|op| (&op.kind, op.x86_hint)),
+            Some((
+                OpKind::VInterleave {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    elem: VecElementType::I8,
+                    lanes: 16,
+                    block_lanes: 16,
+                    high: true,
+                },
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x68,
+                })
+            ))
+        ));
+        assert_eq!(ops.len(), 1, "legacy unpack must remain one atomic op");
+
         let evex_compare = optimized(&[0x62, 0xF1, 0x75, 0x09, 0x76, 0x10]);
         let ops = &evex_compare.blocks[0].ops;
         let first_pred_load = ops
@@ -4832,22 +4859,25 @@ mod tests {
                 )
             })
             .expect("faulting VPUNPCKLBW source load must survive optimization");
-        let shuffle = ops
+        let interleave = ops
             .iter()
             .position(|op| {
                 matches!(
                     op.kind,
-                    OpKind::VShuffle {
+                    OpKind::VInterleave {
                         dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                        src2: VReg::Virtual(_),
                         elem: VecElementType::I8,
                         lanes: 32,
+                        block_lanes: 16,
+                        high: false,
                         ..
                     }
                 )
             })
-            .expect("VPUNPCKLBW architectural shuffle write must survive optimization");
+            .expect("VPUNPCKLBW architectural interleave write must survive optimization");
         assert!(
-            load < shuffle,
+            load < interleave,
             "VPUNPCKLBW changed its destination before the memory fault boundary"
         );
 

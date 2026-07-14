@@ -2824,6 +2824,24 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             elem,
             lanes,
         } => op_json!("vshuffle", dst, src1, src2, indices, elem, lanes),
+        OpKind::VInterleave {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            block_lanes,
+            high,
+        } => op_json!(
+            "vinterleave",
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            block_lanes,
+            high
+        ),
         OpKind::VByteShuffle {
             dst,
             src,

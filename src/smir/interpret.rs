@@ -7271,6 +7271,39 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::VInterleave {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                block_lanes,
+                high,
+            } => {
+                debug_assert!(*block_lanes != 0 && *block_lanes % 2 == 0);
+                debug_assert!(*lanes % *block_lanes == 0);
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, x86_hint);
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let bits = elem.bytes() * 8;
+                let half = *block_lanes / 2;
+                let mut result = [0u64; 16];
+                for lane in 0..*lanes {
+                    let within_block = lane % *block_lanes;
+                    let block_base = lane - within_block;
+                    let source_lane = block_base + if *high { half } else { 0 } + within_block / 2;
+                    let source = if within_block & 1 == 0 {
+                        &first
+                    } else {
+                        &second
+                    };
+                    let selected = Self::get_lane(source, source_lane, bits);
+                    Self::set_lane(&mut result, lane, bits, selected);
+                }
+                Self::write_vec(ctx, *dst, result);
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
+            }
+
             OpKind::VByteShuffle {
                 dst,
                 src,
@@ -33896,6 +33929,62 @@ mod tests {
         if let ArchRegState::Hexagon(hex) = &ctx.arch_regs {
             assert_eq!(hex.get_v(2)[0], 0x0023_0013_0020_0010);
             assert!(hex.get_v(2)[1..].iter().all(|word| *word == 0));
+        }
+    }
+
+    #[test]
+    fn vinterleave_selects_halves_independently_in_each_lane_block() {
+        let mkv = |n| VReg::Arch(ArchReg::Hexagon(HexagonReg::V(n)));
+        let mut first = [0u64; 16];
+        first[..4].copy_from_slice(&[
+            0x1111_1111_0000_0000,
+            0x3333_3333_2222_2222,
+            0x5555_5555_4444_4444,
+            0x7777_7777_6666_6666,
+        ]);
+        let mut second = [0u64; 16];
+        second[..4].copy_from_slice(&[
+            0xBBBB_BBBB_AAAA_AAAA,
+            0xDDDD_DDDD_CCCC_CCCC,
+            0xFFFF_FFFF_EEEE_EEEE,
+            0x9999_9999_8888_8888,
+        ]);
+
+        for (high, expected) in [
+            (
+                false,
+                [
+                    0xAAAA_AAAA_0000_0000,
+                    0xBBBB_BBBB_1111_1111,
+                    0xEEEE_EEEE_4444_4444,
+                    0xFFFF_FFFF_5555_5555,
+                ],
+            ),
+            (
+                true,
+                [
+                    0xCCCC_CCCC_2222_2222,
+                    0xDDDD_DDDD_3333_3333,
+                    0x8888_8888_6666_6666,
+                    0x9999_9999_7777_7777,
+                ],
+            ),
+        ] {
+            let out = run_vec2(
+                first,
+                second,
+                OpKind::VInterleave {
+                    dst: mkv(2),
+                    src1: mkv(0),
+                    src2: mkv(1),
+                    elem: VecElementType::I32,
+                    lanes: 8,
+                    block_lanes: 4,
+                    high,
+                },
+            );
+            assert_eq!(out[..4], expected);
+            assert!(out[4..].iter().all(|word| *word == 0));
         }
     }
 

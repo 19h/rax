@@ -7554,6 +7554,146 @@ impl X86_64Lowerer {
                 }
             }
 
+            OpKind::VInterleave {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                block_lanes,
+                high,
+            } if matches!(
+                elem,
+                VecElementType::I8
+                    | VecElementType::I16
+                    | VecElementType::I32
+                    | VecElementType::I64
+            ) =>
+            {
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
+                        op: format!("VInterleave {:?}x{}", elem, lanes),
+                    }
+                })?;
+                if *block_lanes != (16 / elem.bytes()) as u8 {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VInterleave".to_string(),
+                        operand: "requires 128-bit lane blocks".to_string(),
+                    });
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                let vector_matches_width = |reg: PhysReg| match (width, reg) {
+                    (VecWidth::V128, PhysReg::Xmm(index))
+                    | (VecWidth::V256, PhysReg::Ymm(index))
+                    | (VecWidth::V512, PhysReg::Zmm(index)) => index < 32,
+                    _ => false,
+                };
+                if ![dst_reg, src1_reg, src2_reg]
+                    .into_iter()
+                    .all(vector_matches_width)
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VInterleave".to_string(),
+                        operand: "requires matching vector registers".to_string(),
+                    });
+                }
+                let opcode = match (*elem, *high) {
+                    (VecElementType::I8, false) => 0x60,
+                    (VecElementType::I16, false) => 0x61,
+                    (VecElementType::I32, false) => 0x62,
+                    (VecElementType::I64, false) => 0x6C,
+                    (VecElementType::I8, true) => 0x68,
+                    (VecElementType::I16, true) => 0x69,
+                    (VecElementType::I32, true) => 0x6A,
+                    (VecElementType::I64, true) => 0x6D,
+                    _ => unreachable!(),
+                };
+                let low_vector = |reg: PhysReg| match reg {
+                    PhysReg::Xmm(index) | PhysReg::Ymm(index) | PhysReg::Zmm(index) => index < 16,
+                    _ => false,
+                };
+
+                match op.x86_hint {
+                    Some(X86OpHint::SseOp {
+                        prefix,
+                        opcode: encoded_opcode,
+                    }) if width == VecWidth::V128
+                        && dst_reg == src1_reg
+                        && [dst_reg, src1_reg, src2_reg].into_iter().all(low_vector)
+                        && prefix == X86SsePrefix::OpSize
+                        && encoded_opcode == opcode =>
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_mov_rr(Some(0x66), opcode, dst_reg, src2_reg);
+                    }
+                    Some(X86OpHint::VexOp {
+                        map,
+                        pp,
+                        opcode: encoded_opcode,
+                        width: encoded_width,
+                        w,
+                    }) if map == X86VecMap::Map0F
+                        && pp == X86SsePrefix::OpSize
+                        && encoded_opcode == opcode
+                        && encoded_width == width
+                        && width != VecWidth::V512
+                        && [dst_reg, src1_reg, src2_reg].into_iter().all(low_vector) =>
+                    {
+                        self.emit_vec_rrr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Vex,
+                                map,
+                                pp,
+                                opcode,
+                                width,
+                                w,
+                            },
+                            dst_reg,
+                            src1_reg,
+                            src2_reg,
+                        );
+                    }
+                    Some(X86OpHint::EvexOp {
+                        map,
+                        pp,
+                        opcode: encoded_opcode,
+                        width: encoded_width,
+                        w,
+                    }) if map == X86VecMap::Map0F
+                        && pp == X86SsePrefix::OpSize
+                        && encoded_opcode == opcode
+                        && encoded_width == width
+                        && match elem {
+                            VecElementType::I8 | VecElementType::I16 => true,
+                            VecElementType::I32 => !w,
+                            VecElementType::I64 => w,
+                            _ => false,
+                        } =>
+                    {
+                        self.emit_vec_rrr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Evex,
+                                map,
+                                pp,
+                                opcode,
+                                width,
+                                w,
+                            },
+                            dst_reg,
+                            src1_reg,
+                            src2_reg,
+                        );
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("unhinted or malformed VInterleave {:?}x{}", elem, lanes),
+                        });
+                    }
+                }
+            }
+
             OpKind::VUnary {
                 dst,
                 src,
@@ -13903,6 +14043,41 @@ mod tests {
                 &[0xC4, 0xE2, 0x6D, 0x37, 0xCB][..],
             ),
             (&[0xC5, 0x31, 0x76, 0xC2][..], &[0xC5, 0x31, 0x76, 0xC2][..]),
+            (&[0x66, 0x0F, 0x60, 0xCA][..], &[0x66, 0x0F, 0x60, 0xCA][..]),
+            (&[0x66, 0x0F, 0x61, 0xDC][..], &[0x66, 0x0F, 0x61, 0xDC][..]),
+            (&[0x66, 0x0F, 0x62, 0xEE][..], &[0x66, 0x0F, 0x62, 0xEE][..]),
+            (&[0x66, 0x0F, 0x6C, 0xCA][..], &[0x66, 0x0F, 0x6C, 0xCA][..]),
+            (&[0x66, 0x0F, 0x68, 0xCA][..], &[0x66, 0x0F, 0x68, 0xCA][..]),
+            (&[0x66, 0x0F, 0x69, 0xDC][..], &[0x66, 0x0F, 0x69, 0xDC][..]),
+            (&[0x66, 0x0F, 0x6A, 0xEE][..], &[0x66, 0x0F, 0x6A, 0xEE][..]),
+            (&[0x66, 0x0F, 0x6D, 0xCA][..], &[0x66, 0x0F, 0x6D, 0xCA][..]),
+            (&[0xC5, 0xF1, 0x60, 0xC2][..], &[0xC5, 0xF1, 0x60, 0xC2][..]),
+            (&[0xC5, 0xED, 0x69, 0xCB][..], &[0xC5, 0xED, 0x69, 0xCB][..]),
+            (
+                &[0xC4, 0xE1, 0xF1, 0x61, 0xC2][..],
+                &[0xC4, 0xE1, 0xF1, 0x61, 0xC2][..],
+            ),
+            (&[0xC5, 0x31, 0x6A, 0xC2][..], &[0xC5, 0x31, 0x6A, 0xC2][..]),
+            (
+                &[0x62, 0xA1, 0x75, 0x00, 0x60, 0xC2][..],
+                &[0x62, 0xA1, 0x75, 0x00, 0x60, 0xC2][..],
+            ),
+            (
+                &[0x62, 0xA1, 0xF5, 0x00, 0x61, 0xC2][..],
+                &[0x62, 0xA1, 0xF5, 0x00, 0x61, 0xC2][..],
+            ),
+            (
+                &[0x62, 0xF1, 0x75, 0x48, 0x62, 0xC2][..],
+                &[0x62, 0xF1, 0x75, 0x48, 0x62, 0xC2][..],
+            ),
+            (
+                &[0x62, 0xF1, 0xF5, 0x48, 0x6D, 0xC2][..],
+                &[0x62, 0xF1, 0xF5, 0x48, 0x6D, 0xC2][..],
+            ),
+            (
+                &[0x62, 0xF1, 0x75, 0x28, 0x69, 0xC2][..],
+                &[0x62, 0xF1, 0x75, 0x28, 0x69, 0xC2][..],
+            ),
             (
                 &[0x62, 0xF2, 0x7D, 0xCC, 0xC4, 0xCA][..],
                 &[0x62, 0xF2, 0x7D, 0xCC, 0xC4, 0xCA][..],
@@ -14221,6 +14396,134 @@ mod tests {
                     pp: X86SsePrefix::OpSize,
                     opcode: 0x75,
                     width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_integer_interleave_rejects_unhinted_and_malformed_encodings() {
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let ymm = |index| VReg::Arch(ArchReg::X86(X86Reg::Ymm(index)));
+        let zmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Zmm(index)));
+
+        let unhinted = OpKind::VInterleave {
+            dst: xmm(1),
+            src1: xmm(1),
+            src2: xmm(2),
+            elem: VecElementType::I8,
+            lanes: 16,
+            block_lanes: 16,
+            high: false,
+        };
+        assert!(matches!(
+            lower_single_op_err(unhinted),
+            LowerError::UnsupportedOp { .. }
+        ));
+
+        for (kind, hint) in [
+            (
+                OpKind::VInterleave {
+                    dst: xmm(1),
+                    src1: xmm(1),
+                    src2: xmm(2),
+                    elem: VecElementType::I8,
+                    lanes: 16,
+                    block_lanes: 8,
+                    high: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x60,
+                },
+            ),
+            (
+                OpKind::VInterleave {
+                    dst: xmm(1),
+                    src1: xmm(2),
+                    src2: xmm(3),
+                    elem: VecElementType::I8,
+                    lanes: 16,
+                    block_lanes: 16,
+                    high: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x60,
+                },
+            ),
+            (
+                OpKind::VInterleave {
+                    dst: xmm(1),
+                    src1: xmm(1),
+                    src2: xmm(2),
+                    elem: VecElementType::I16,
+                    lanes: 8,
+                    block_lanes: 8,
+                    high: true,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x68,
+                },
+            ),
+            (
+                OpKind::VInterleave {
+                    dst: ymm(16),
+                    src1: ymm(17),
+                    src2: ymm(18),
+                    elem: VecElementType::I32,
+                    lanes: 8,
+                    block_lanes: 4,
+                    high: false,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x62,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                OpKind::VInterleave {
+                    dst: zmm(16),
+                    src1: zmm(17),
+                    src2: zmm(18),
+                    elem: VecElementType::I32,
+                    lanes: 16,
+                    block_lanes: 4,
+                    high: false,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x62,
+                    width: VecWidth::V512,
+                    w: true,
+                },
+            ),
+            (
+                OpKind::VInterleave {
+                    dst: zmm(16),
+                    src1: zmm(17),
+                    src2: zmm(18),
+                    elem: VecElementType::I64,
+                    lanes: 8,
+                    block_lanes: 2,
+                    high: true,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x6D,
+                    width: VecWidth::V512,
                     w: false,
                 },
             ),

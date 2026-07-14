@@ -8983,6 +8983,34 @@ impl X86_64Lifter {
         ));
     }
 
+    fn append_integer_interleave(
+        &self,
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        width: VecWidth,
+        high: bool,
+        hint: X86OpHint,
+        pc: u64,
+        ops: &mut Vec<SmirOp>,
+    ) {
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VInterleave {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes: width.lanes(elem) as u8,
+                block_lanes: (16 / elem.bytes()) as u8,
+                high,
+            },
+            hint,
+        ));
+    }
+
     /// Lift SSE2 PUNPCKL*/PUNPCKH* XMM interleaves. Prefix-free forms target
     /// MMX state and are intentionally reported separately.
     fn lift_sse_integer_unpack(
@@ -9038,19 +9066,28 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let result = ctx.alloc_vreg();
-        self.append_unpack_shuffle(
+        let result = if modrm.is_memory {
+            ctx.alloc_vreg()
+        } else {
+            dst
+        };
+        self.append_integer_interleave(
             result,
             dst,
             src2,
             elem,
             VecWidth::V128,
             high,
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::OpSize,
+                opcode,
+            },
             pc,
-            ctx,
             &mut ops,
         );
-        self.append_legacy_packed_result(dst, result, elem, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            self.append_legacy_packed_result(dst, result, elem, pc, ctx, &mut ops);
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -18452,15 +18489,15 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm, prefix.width)
         };
-        self.append_unpack_shuffle(
+        self.append_integer_interleave(
             self.vec_reg(modrm.reg, prefix.width),
             self.vec_reg(prefix.vvvv, prefix.width),
             src2,
             elem,
             prefix.width,
             high,
+            self.vec_hint(prefix, opcode),
             pc,
-            ctx,
             &mut ops,
         );
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
@@ -24774,7 +24811,8 @@ impl X86_64Lifter {
             || prefix.l_bits == 3
             || prefix.b
             || (prefix.zeroing && prefix.aaa == 0)
-            || (elem == VecElementType::I64) != prefix.w
+            || matches!(elem, VecElementType::I32) && prefix.w
+            || matches!(elem, VecElementType::I64) && !prefix.w
         {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
@@ -24810,8 +24848,16 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width)
         };
-        let raw = ctx.alloc_vreg();
-        self.append_unpack_shuffle(
+        let dst = self.vec_reg(
+            modrm.reg + if prefix.reg_high { 16 } else { 0 },
+            prefix.width,
+        );
+        let raw = if prefix.aaa == 0 {
+            dst
+        } else {
+            ctx.alloc_vreg()
+        };
+        self.append_integer_interleave(
             raw,
             self.vec_reg(
                 prefix.vvvv + if prefix.v_high { 16 } else { 0 },
@@ -24821,15 +24867,13 @@ impl X86_64Lifter {
             elem,
             prefix.width,
             high,
+            self.vec_hint(prefix, opcode),
             pc,
-            ctx,
             &mut ops,
         );
-        let dst = self.vec_reg(
-            modrm.reg + if prefix.reg_high { 16 } else { 0 },
-            prefix.width,
-        );
-        self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+        if prefix.aaa != 0 {
+            self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -51004,7 +51048,7 @@ mod tests {
     }
 
     #[test]
-    fn lift_legacy_and_vex_packed_integer_unpack_covers_all_elements_and_halves() {
+    fn lift_legacy_vex_and_evex_packed_integer_unpack_covers_all_elements_and_halves() {
         for (opcode, elem, high) in [
             (0x60, VecElementType::I8, false),
             (0x61, VecElementType::I16, false),
@@ -51017,26 +51061,46 @@ mod tests {
         ] {
             let legacy = lift_single(&[0x66, 0x0F, opcode, 0xC1]).unwrap();
             assert!(legacy.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VShuffle {
+                (op.kind.clone(), op.x86_hint),
+                (OpKind::VInterleave {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
                     src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                    src2: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
                     elem: actual,
                     lanes,
-                    ..
-                } if actual == elem && u32::from(lanes) == VecWidth::V128.lanes(elem)
+                    block_lanes,
+                    high: actual_high,
+                }, Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: actual_opcode,
+                })) if actual == elem
+                    && u32::from(lanes) == VecWidth::V128.lanes(elem)
+                    && u32::from(block_lanes) == 16 / elem.bytes()
+                    && actual_high == high
+                    && actual_opcode == opcode
             )));
+            assert_eq!(legacy.ops.len(), 1, "register legacy unpack is atomic");
 
             let vex128 = lift_single(&[0xC5, 0xF1, opcode, 0xC2]).unwrap();
             assert!(matches!(
-                vex128.ops.last().unwrap().kind,
-                OpKind::VShuffle {
+                (
+                    vex128.ops.last().unwrap().kind.clone(),
+                    vex128.ops.last().unwrap().x86_hint
+                ),
+                (OpKind::VInterleave {
                     dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
                     src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
-                    src2: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
                     elem: actual,
+                    high: actual_high,
                     ..
-                } if actual == elem
+                }, Some(X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: actual_opcode,
+                    width: VecWidth::V128,
+                    ..
+                })) if actual == elem && actual_high == high && actual_opcode == opcode
             ));
             let vex256 = lift_single(&[0xC5, 0xF5, opcode, 0x00]).unwrap();
             assert!(vex256.ops.iter().any(|op| matches!(
@@ -51047,35 +51111,50 @@ mod tests {
                 }
             )));
             assert!(matches!(
-                vex256.ops.last().unwrap().kind,
-                OpKind::VShuffle {
+                (
+                    vex256.ops.last().unwrap().kind.clone(),
+                    vex256.ops.last().unwrap().x86_hint
+                ),
+                (OpKind::VInterleave {
                     dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                    src2: VReg::Virtual(_),
                     lanes,
+                    block_lanes,
+                    high: actual_high,
                     ..
-                } if u32::from(lanes) == VecWidth::V256.lanes(elem)
+                }, Some(X86OpHint::VexOp {
+                    opcode: actual_opcode,
+                    width: VecWidth::V256,
+                    ..
+                })) if u32::from(lanes) == VecWidth::V256.lanes(elem)
+                    && u32::from(block_lanes) == 16 / elem.bytes()
+                    && actual_high == high
+                    && actual_opcode == opcode
             ));
-
-            let shuffle = legacy
-                .ops
-                .iter()
-                .find_map(|op| match op.kind {
-                    OpKind::VShuffle { indices, .. } => Some(indices),
-                    _ => None,
-                })
-                .unwrap();
-            let selectors = legacy
-                .ops
-                .iter()
-                .filter_map(|op| match op.kind {
-                    OpKind::VInsertLane {
-                        dst, scalar, lane, ..
-                    } if dst == shuffle => Some((lane, scalar)),
-                    _ => None,
-                })
-                .collect::<Vec<_>>();
-            assert_eq!(selectors.len() as u32, VecWidth::V128.lanes(elem));
-            assert_eq!(high, matches!(opcode, 0x68 | 0x69 | 0x6A | 0x6D));
         }
+
+        let legacy_memory = lift_single(&[0x66, 0x0F, 0x60, 0x00]).unwrap();
+        assert!(legacy_memory.ops.iter().any(|op| matches!(
+            (op.kind.clone(), op.x86_hint),
+            (
+                OpKind::VInterleave {
+                    dst: VReg::Virtual(_),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src2: VReg::Virtual(_),
+                    elem: VecElementType::I8,
+                    high: false,
+                    ..
+                },
+                Some(X86OpHint::SseOp { opcode: 0x60, .. })
+            )
+        )));
+        assert!(legacy_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                ..
+            }
+        )));
 
         for bytes in [
             &[0x0F, 0x60, 0xC1][..],             // MMX form
@@ -51107,13 +51186,20 @@ mod tests {
         ] {
             let evex = lift_single(&[0x62, 0xF1, w, 0x09, opcode, 0xC2]).unwrap();
             assert!(evex.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VShuffle {
+                (op.kind.clone(), op.x86_hint),
+                (OpKind::VInterleave {
+                    dst: VReg::Virtual(_),
                     src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
-                    src2: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
                     elem: actual,
                     ..
-                } if actual == elem
+                }, Some(X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: actual_opcode,
+                    width: VecWidth::V128,
+                    ..
+                })) if actual == elem && actual_opcode == opcode
             )));
             assert!(evex.ops.iter().any(|op| matches!(
                 op.kind,
@@ -51146,25 +51232,34 @@ mod tests {
         );
 
         let high_regs = lift_single(&[0x62, 0xA1, 0x75, 0x00, 0x60, 0xC2]).unwrap();
-        assert!(high_regs.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::VShuffle {
-                src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
-                src2: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(18)))),
-                ..
-            }
-        )));
         assert!(matches!(
-            high_regs.ops.last().unwrap().kind,
-            OpKind::VMov {
-                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(16))),
-                width: VecWidth::V128,
-                ..
-            }
+            (
+                high_regs.ops.last().unwrap().kind.clone(),
+                high_regs.ops.last().unwrap().x86_hint
+            ),
+            (
+                OpKind::VInterleave {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(16))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+                    ..
+                },
+                Some(X86OpHint::EvexOp {
+                    opcode: 0x60,
+                    width: VecWidth::V128,
+                    ..
+                })
+            )
+        ));
+
+        let byte_wig = lift_single(&[0x62, 0xF1, 0xF5, 0x08, 0x60, 0xC1]).unwrap();
+        assert!(matches!(
+            byte_wig.ops.last().and_then(|op| op.x86_hint),
+            Some(X86OpHint::EvexOp { w: true, .. })
         ));
 
         for bytes in [
-            &[0x62, 0xF1, 0xF5, 0x08, 0x60, 0xC1][..], // byte form W=1
+            &[0x62, 0xF1, 0xF5, 0x08, 0x62, 0xC1][..], // dword form W=1
             &[0x62, 0xF1, 0x75, 0x08, 0x6C, 0xC1][..], // qword form W=0
             &[0x62, 0xF1, 0x75, 0x88, 0x60, 0xC1][..], // {z} with k0
             &[0x62, 0xF1, 0x75, 0x18, 0x60, 0xC1][..], // EVEX.b reserved
