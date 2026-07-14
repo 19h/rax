@@ -196,6 +196,14 @@ pub struct FunctionAttrs {
     pub is_entry: bool,
     /// Exception handler
     pub is_exception_handler: bool,
+    /// Permit forwarding repeated ordinary loads within a basic block.
+    ///
+    /// This may be set only when every [`OpKind::Load`](crate::smir::ir::ops::OpKind::Load)
+    /// in the function is non-faulting and non-volatile (no MMIO/device read),
+    /// and an equal address, width, and extension mode returns the same value
+    /// until an intervening SMIR memory write. Guest-memory JIT regions must
+    /// normally leave this false because each read is architecturally visible.
+    pub allow_redundant_load_elimination: bool,
 }
 
 // ============================================================================

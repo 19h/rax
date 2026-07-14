@@ -1513,9 +1513,17 @@ pub fn block_merging(func: &mut SmirFunction) -> usize {
 ///
 /// When a value is loaded from memory and the same address is loaded again
 /// (without an intervening store), replace the second load with a move.
+/// This transform is disabled unless
+/// [`FunctionAttrs::allow_redundant_load_elimination`](crate::smir::ir::FunctionAttrs::allow_redundant_load_elimination)
+/// explicitly proves that ordinary loads cannot fault or perform volatile/MMIO
+/// reads. The load extension mode is part of the identity key.
 ///
 /// Returns the number of redundant loads eliminated.
 pub fn redundant_load_elimination(func: &mut SmirFunction) -> usize {
+    if !func.attrs.allow_redundant_load_elimination {
+        return 0;
+    }
+
     let mut eliminated = 0;
 
     for block in &mut func.blocks {
@@ -1765,8 +1773,8 @@ fn gcd(mut a: usize, mut b: usize) -> usize {
 
 fn redundant_load_elimination_block(block: &mut SmirBlock) -> usize {
     // Track what's currently in registers from memory
-    // Key: (base_vreg, offset, width), Value: VReg holding the loaded value
-    let mut mem_to_reg: HashMap<(Option<VReg>, i64, MemWidth), VReg> = HashMap::new();
+    // Key: (base_vreg, offset, width, extension), Value: loaded VReg.
+    let mut mem_to_reg: HashMap<(Option<VReg>, i64, MemWidth, SignExtend), VReg> = HashMap::new();
     let mut eliminated = 0;
 
     let mut new_ops = Vec::new();
@@ -1777,14 +1785,14 @@ fn redundant_load_elimination_block(block: &mut SmirBlock) -> usize {
                 dst,
                 addr,
                 width,
-                sign: _,
+                sign,
             } => {
                 // Only loads from a key-able address (Direct/BaseOffset/Absolute)
                 // are candidates. Complex addresses (BaseIndexScale, PcRel) are
                 // NOT tracked — a single sentinel key would make distinct
                 // addresses (e.g. [rsi+rdx-16] vs [rsi+rdx-8]) collide and
                 // wrongly forward one load's value to the other.
-                if let Some(key) = address_key(addr, *width) {
+                if let Some(key) = address_key(addr, *width, *sign) {
                     if let Some(&existing) = mem_to_reg.get(&key) {
                         new_ops.push(SmirOp {
                             id: op.id,
@@ -1853,11 +1861,15 @@ fn redundant_load_elimination_block(block: &mut SmirBlock) -> usize {
 /// track (complex forms whose equality we cannot cheaply decide). Returning
 /// `None` — never a shared sentinel — is what keeps distinct untracked
 /// addresses from aliasing each other.
-fn address_key(addr: &Address, width: MemWidth) -> Option<(Option<VReg>, i64, MemWidth)> {
+fn address_key(
+    addr: &Address,
+    width: MemWidth,
+    sign: SignExtend,
+) -> Option<(Option<VReg>, i64, MemWidth, SignExtend)> {
     match addr {
-        Address::Direct(r) => Some((Some(*r), 0, width)),
-        Address::BaseOffset { base, offset, .. } => Some((Some(*base), *offset, width)),
-        Address::Absolute(a) => Some((None, *a as i64, width)),
+        Address::Direct(r) => Some((Some(*r), 0, width, sign)),
+        Address::BaseOffset { base, offset, .. } => Some((Some(*base), *offset, width, sign)),
+        Address::Absolute(a) => Some((None, *a as i64, width, sign)),
         _ => None,
     }
 }
@@ -8730,6 +8742,7 @@ mod tests {
             kind: crate::smir::ir::TrapKind::Halt,
         });
         let mut func = builder.finish();
+        func.attrs.allow_redundant_load_elimination = true;
 
         let eliminated = redundant_load_elimination(&mut func);
         assert_eq!(
@@ -8745,6 +8758,102 @@ mod tests {
             load_count, 2,
             "both loads must survive across a PredStore (none rewritten to a Mov)",
         );
+    }
+
+    #[test]
+    fn o2_preserves_repeated_observable_loads_without_explicit_proof() {
+        use crate::smir::ir::FunctionBuilder;
+
+        let base = VReg::Arch(ArchReg::Arm(ArmReg::X(0)));
+        let dst1 = VReg::Arch(ArchReg::Arm(ArmReg::X(1)));
+        let dst2 = VReg::Arch(ArchReg::Arm(ArmReg::X(2)));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        for (pc, dst) in [(0x1000, dst1), (0x1004, dst2)] {
+            builder.push_op(
+                pc,
+                OpKind::Load {
+                    dst,
+                    addr: Address::Direct(base),
+                    width: MemWidth::B4,
+                    sign: SignExtend::Zero,
+                },
+            );
+        }
+        builder.set_terminator(Terminator::Trap {
+            kind: crate::smir::ir::TrapKind::Halt,
+        });
+        let mut func = builder.finish();
+
+        let stats = optimize_function(&mut func, OptLevel::O2);
+        assert_eq!(stats.redundant_loads_eliminated, 0);
+        assert_eq!(
+            func.blocks[0]
+                .ops
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::Load { .. }))
+                .count(),
+            2,
+            "each faulting/MMIO-capable read remains observable",
+        );
+    }
+
+    #[test]
+    fn proven_load_forwarding_keys_signedness_and_width() {
+        use crate::smir::ir::FunctionBuilder;
+
+        let base = VReg::Arch(ArchReg::Arm(ArmReg::X(0)));
+        let zero1 = VReg::Arch(ArchReg::Arm(ArmReg::X(1)));
+        let signed = VReg::Arch(ArchReg::Arm(ArmReg::X(2)));
+        let zero2 = VReg::Arch(ArchReg::Arm(ArmReg::X(3)));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        for (pc, dst, sign) in [
+            (0x1000, zero1, SignExtend::Zero),
+            (0x1004, signed, SignExtend::Sign),
+            (0x1008, zero2, SignExtend::Zero),
+        ] {
+            builder.push_op(
+                pc,
+                OpKind::Load {
+                    dst,
+                    addr: Address::BaseOffset {
+                        base,
+                        offset: 4,
+                        disp_size: crate::smir::ir::types::DispSize::Auto,
+                    },
+                    width: MemWidth::B4,
+                    sign,
+                },
+            );
+        }
+        builder.set_terminator(Terminator::Trap {
+            kind: crate::smir::ir::TrapKind::Halt,
+        });
+        let mut func = builder.finish();
+        func.attrs.allow_redundant_load_elimination = true;
+
+        assert_eq!(redundant_load_elimination(&mut func), 1);
+        assert!(matches!(
+            func.blocks[0].ops[0].kind,
+            OpKind::Load {
+                sign: SignExtend::Zero,
+                ..
+            }
+        ));
+        assert!(matches!(
+            func.blocks[0].ops[1].kind,
+            OpKind::Load {
+                sign: SignExtend::Sign,
+                ..
+            }
+        ));
+        assert!(matches!(
+            func.blocks[0].ops[2].kind,
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Reg(src),
+                width: OpWidth::W32,
+            } if dst == zero2 && src == zero1
+        ));
     }
 
     #[test]

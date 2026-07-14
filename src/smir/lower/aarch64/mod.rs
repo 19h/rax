@@ -462,6 +462,138 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
+    fn mem_pair_second_addr(addr: &Address, stride: u32) -> Result<Address, LowerError> {
+        match addr {
+            Address::Direct(base) => Ok(Address::BaseOffset {
+                base: *base,
+                offset: i64::from(stride),
+                disp_size: crate::smir::ir::types::DispSize::Auto,
+            }),
+            Address::BaseOffset {
+                base,
+                offset,
+                disp_size,
+            } => Ok(Address::BaseOffset {
+                base: *base,
+                offset: offset.checked_add(i64::from(stride)).ok_or_else(|| {
+                    LowerError::InvalidOperand {
+                        op: "AArch64 mem-helper pair address".into(),
+                        operand: format!("offset {offset} plus stride {stride}"),
+                    }
+                })?,
+                disp_size: *disp_size,
+            }),
+            Address::BaseIndexScale {
+                base,
+                index,
+                scale,
+                disp,
+                disp_size,
+            } => Ok(Address::BaseIndexScale {
+                base: *base,
+                index: *index,
+                scale: *scale,
+                disp: disp.checked_add(stride as i32).ok_or_else(|| {
+                    LowerError::InvalidOperand {
+                        op: "AArch64 mem-helper pair address".into(),
+                        operand: format!("displacement {disp} plus stride {stride}"),
+                    }
+                })?,
+                disp_size: *disp_size,
+            }),
+            other => Err(LowerError::UnsupportedOp {
+                op: format!("AArch64 mem-helper pair address {other:?}"),
+            }),
+        }
+    }
+
+    /// Route a `LoadPair` through two scalar helpers while retaining the pair's
+    /// all-or-nothing destination contract. The first value is held on the host
+    /// stack until the second helper succeeds; either fault restores the frozen
+    /// guest state without publishing either destination.
+    fn emit_jit_mem_load_pair_op(
+        &mut self,
+        guest_pc: u64,
+        dst1: VReg,
+        dst2: VReg,
+        addr: &Address,
+        width: MemWidth,
+    ) -> Result<(), LowerError> {
+        let dst1 = Self::dst_gpr(dst1)?;
+        let dst2 = Self::dst_gpr(dst2)?;
+        if dst1 == dst2 {
+            return Err(LowerError::InvalidOperand {
+                op: "AArch64 mem-helper LoadPair".into(),
+                operand: format!("aliased destination X{dst1}"),
+            });
+        }
+        let size = Self::mem_width_bytes(width)?;
+        let second_addr = Self::mem_pair_second_addr(addr, size)?;
+
+        self.emit_mem_helper_spill()?;
+        self.emit_push_scratch(30); // preserve trampoline LR across both calls
+
+        self.emit_mem_helper_addr(addr)?;
+        self.emit_ldst_unsigned(0, A64_STATE_REG, 3, 0b01, A64_GUEST_CTX_OFFSET / 8);
+        self.emit_mov_imm(2, size as i64, OpWidth::W32)?;
+        self.emit_mov_imm(3, 0, OpWidth::W32)?;
+        self.emit_ldst_unsigned(9, A64_STATE_REG, 3, 0b01, A64_GUEST_LOAD_FN_OFFSET / 8);
+        self.emit_blr_reg(9);
+        let first_fault = self.code.position();
+        self.emit(0xb400_0000 | 1); // cbz x1, <first_fault>
+
+        self.emit_push_scratch(0); // retain first value; SP remains 16-byte aligned
+        self.emit_mem_helper_addr(&second_addr)?;
+        self.emit_ldst_unsigned(0, A64_STATE_REG, 3, 0b01, A64_GUEST_CTX_OFFSET / 8);
+        self.emit_mov_imm(2, size as i64, OpWidth::W32)?;
+        self.emit_mov_imm(3, 0, OpWidth::W32)?;
+        self.emit_ldst_unsigned(9, A64_STATE_REG, 3, 0b01, A64_GUEST_LOAD_FN_OFFSET / 8);
+        self.emit_blr_reg(9);
+        let second_fault = self.code.position();
+        self.emit(0xb400_0000 | 1); // cbz x1, <second_fault>
+
+        if self.mem_helper_addr_width == OpWidth::W32 {
+            self.emit_mov_reg(0, 0, OpWidth::W32)?;
+        }
+        self.emit_ldst_unsigned(0, A64_STATE_REG, 3, 0b00, dst2 as u32);
+        self.emit_pop_scratch(9); // first value
+        if self.mem_helper_addr_width == OpWidth::W32 {
+            self.emit_mov_reg(9, 9, OpWidth::W32)?;
+        }
+        self.emit_ldst_unsigned(9, A64_STATE_REG, 3, 0b00, dst1 as u32);
+        self.emit_pop_scratch(30);
+        self.emit_mem_helper_reload()?;
+        let done = self.code.position();
+        self.emit(0x1400_0000); // b <done>
+
+        self.patch_compare_branch_to_current(second_fault, 1, false)?;
+        self.emit_pop_scratch(9); // discard unpublished first value
+        self.emit_pop_scratch(30);
+        self.emit_mem_helper_reload()?;
+        self.emit_native_exit(guest_pc)?;
+
+        self.patch_compare_branch_to_current(first_fault, 1, false)?;
+        self.emit_pop_scratch(30);
+        self.emit_mem_helper_reload()?;
+        self.emit_native_exit(guest_pc)?;
+
+        self.patch_branch_to_current(done)?;
+        Ok(())
+    }
+
+    fn emit_jit_mem_store_pair_op(
+        &mut self,
+        guest_pc: u64,
+        src1: VReg,
+        src2: VReg,
+        addr: &Address,
+        width: MemWidth,
+    ) -> Result<(), LowerError> {
+        let second_addr = Self::mem_pair_second_addr(addr, Self::mem_width_bytes(width)?)?;
+        self.emit_jit_mem_store_op(guest_pc, src1, addr, width)?;
+        self.emit_jit_mem_store_op(guest_pc, src2, &second_addr, width)
+    }
+
     /// Spill all 32 host V registers into the state struct's V slots. A C
     /// vector-helper `blr` may clobber any caller-saved V register (V0-V7,
     /// V16-V31) — including the live operands of surrounding vector ops — so the
@@ -17001,13 +17133,25 @@ impl Aarch64Lowerer {
                 dst2,
                 addr,
                 width,
-            } => self.lower_load_pair(*dst1, *dst2, addr, *width),
+            } => {
+                if self.mem_helpers {
+                    self.emit_jit_mem_load_pair_op(op.guest_pc, *dst1, *dst2, addr, *width)
+                } else {
+                    self.lower_load_pair(*dst1, *dst2, addr, *width)
+                }
+            }
             OpKind::StorePair {
                 src1,
                 src2,
                 addr,
                 width,
-            } => self.lower_store_pair(*src1, *src2, addr, *width),
+            } => {
+                if self.mem_helpers {
+                    self.emit_jit_mem_store_pair_op(op.guest_pc, *src1, *src2, addr, *width)
+                } else {
+                    self.lower_store_pair(*src1, *src2, addr, *width)
+                }
+            }
             OpKind::Not { dst, src, width } => self.lower_not(*dst, *src, *width),
             OpKind::Cmp { src1, src2, width } => self.lower_cmp(*src1, src2, *width),
             OpKind::Test { src1, src2, width } => self.lower_test(*src1, src2, *width),

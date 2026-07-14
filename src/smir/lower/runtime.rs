@@ -3844,9 +3844,10 @@ pub fn is_aarch32_aarch64_native_clobber_safe_excluding(
 /// Memory-aware form of
 /// [`is_aarch32_aarch64_native_clobber_safe_excluding`].
 ///
-/// When `allow_mem` is true, scalar B1/B2/B4 loads and stores are admitted only
-/// when every address component and value register is AArch32 r0-r14. Callers
-/// must pair this gate with `Aarch64Lowerer::set_mem_helpers(true)` and
+/// When `allow_mem` is true, scalar B1/B2/B4 loads/stores and B4 load/store
+/// pairs are admitted only when every address component and value register is
+/// AArch32 r0-r14. Pair destinations must be distinct. Callers must pair this
+/// gate with `Aarch64Lowerer::set_mem_helpers(true)` and
 /// `Aarch64Lowerer::set_mem_helper_addr_width(OpWidth::W32)`.
 pub fn is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
     func: &crate::smir::ir::SmirFunction,
@@ -4141,6 +4142,18 @@ fn aarch32_aarch64_native_op_shape_valid(
             addr,
             width: MemWidth::B1 | MemWidth::B2 | MemWidth::B4,
         } => allow_mem && gpr(src) && address(addr),
+        OpKind::LoadPair {
+            dst1,
+            dst2,
+            addr,
+            width: MemWidth::B4,
+        } => allow_mem && dst1 != dst2 && gpr(dst1) && gpr(dst2) && address(addr),
+        OpKind::StorePair {
+            src1,
+            src2,
+            addr,
+            width: MemWidth::B4,
+        } => allow_mem && gpr(src1) && gpr(src2) && address(addr),
         _ => false,
     }
 }
@@ -4537,6 +4550,22 @@ mod jit_gate_tests {
                 addr: Address::Direct(arm_x(4)),
                 width: MemWidth::B2,
             },
+            OpKind::LoadPair {
+                dst1: arm_x(5),
+                dst2: arm_x(6),
+                addr: Address::BaseOffset {
+                    base: arm_x(7),
+                    offset: -8,
+                    disp_size: DispSize::Auto,
+                },
+                width: MemWidth::B4,
+            },
+            OpKind::StorePair {
+                src1: arm_x(8),
+                src2: arm_x(9),
+                addr: Address::Direct(arm_x(10)),
+                width: MemWidth::B4,
+            },
         ];
         assert!(!aarch32_gate_with_mem(valid.clone(), false));
         assert!(aarch32_gate_with_mem(valid, true));
@@ -4568,6 +4597,24 @@ mod jit_gate_tests {
             OpKind::Store {
                 src: arm_x(0),
                 addr: Address::Direct(arm_x(1)),
+                width: MemWidth::B8,
+            },
+            OpKind::LoadPair {
+                dst1: arm_x(0),
+                dst2: arm_x(0),
+                addr: Address::Direct(arm_x(1)),
+                width: MemWidth::B4,
+            },
+            OpKind::LoadPair {
+                dst1: arm_x(0),
+                dst2: arm_x(15),
+                addr: Address::Direct(arm_x(1)),
+                width: MemWidth::B4,
+            },
+            OpKind::StorePair {
+                src1: arm_x(0),
+                src2: arm_x(1),
+                addr: Address::Direct(arm_x(2)),
                 width: MemWidth::B8,
             },
         ] {

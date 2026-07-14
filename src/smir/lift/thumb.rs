@@ -10,8 +10,11 @@
 //!   flag-setting logical/move/shift forms fail closed;
 //! - direct Thumb branches use the architectural `PC + 4` base and BL writes
 //!   `(next_pc | 1)` to r14;
-//! - T16/T32 scalar single-transfer memory uses the W32 helper contract, while
-//!   literal-PC and multiple transfers fail closed;
+//! - T16/T32 scalar single- and multiple-transfer memory uses the W32 helper
+//!   contract; PC-bearing, empty-list, and constrained base/list forms fail
+//!   closed;
+//! - T32 LDRD/STRD over validated adjacent even register pairs retain atomic
+//!   load-destination and ordered-store fault behavior through pair memory IR;
 //! - T32 MOVT and bitfield encodings are translated using their T32 layouts;
 //! - both 16-bit and 32-bit instruction lengths are retained by block lifting.
 
@@ -113,7 +116,7 @@ impl ThumbLifter {
                         MemOffset::ExtendedReg(_) => true,
                     }
             }
-            Operand::RegList(_) => true,
+            Operand::RegList(_) => false,
             _ => false,
         })
     }
@@ -245,6 +248,179 @@ impl ThumbLifter {
         Ok(())
     }
 
+    fn lift_double_memory(
+        &self,
+        insn: &DecodedInsn,
+        pc: GuestAddr,
+        ops: &mut Vec<SmirOp>,
+    ) -> Result<(), LiftError> {
+        let [Operand::Reg(rt), Operand::Reg(rt2), Operand::Mem(mem)] = insn.operands.as_slice()
+        else {
+            return Err(LiftError::Internal(
+                "invalid Thumb double-transfer operands".to_string(),
+            ));
+        };
+        if rt.num >= 14 || rt.num & 1 != 0 || rt2.num != rt.num + 1 {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "Thumb double transfer requires an adjacent even R0-R13 pair".to_string(),
+            });
+        }
+        let is_load = insn.mnemonic == Mnemonic::LDP;
+        let writeback = Self::memory_writeback(mem);
+        if writeback.is_some() && (mem.base.num == rt.num || mem.base.num == rt2.num) {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "Thumb double transfer has a constrained base/pair alias".to_string(),
+            });
+        }
+        let addr = Self::memory_address(mem)?;
+        Self::push(
+            ops,
+            pc,
+            if is_load {
+                OpKind::LoadPair {
+                    dst1: Self::reg(rt.num),
+                    dst2: Self::reg(rt2.num),
+                    addr,
+                    width: MemWidth::B4,
+                }
+            } else {
+                OpKind::StorePair {
+                    src1: Self::reg(rt.num),
+                    src2: Self::reg(rt2.num),
+                    addr,
+                    width: MemWidth::B4,
+                }
+            },
+        );
+        if let Some(writeback) = writeback {
+            Self::push(ops, pc, writeback);
+        }
+        Ok(())
+    }
+
+    fn multiple_kind(mnemonic: Mnemonic) -> Option<(bool, bool, bool)> {
+        use Mnemonic::*;
+
+        match mnemonic {
+            LDM | LDMIA | POP => Some((true, true, false)),
+            LDMIB => Some((true, true, true)),
+            LDMDA => Some((true, false, false)),
+            LDMDB => Some((true, false, true)),
+            STM | STMIA => Some((false, true, false)),
+            STMIB => Some((false, true, true)),
+            STMDA => Some((false, false, false)),
+            STMDB | PUSH => Some((false, false, true)),
+            _ => None,
+        }
+    }
+
+    fn lift_multiple_memory(
+        &self,
+        insn: &DecodedInsn,
+        pc: GuestAddr,
+        ops: &mut Vec<SmirOp>,
+    ) -> Result<(), LiftError> {
+        let Some((is_load, increment, before)) = Self::multiple_kind(insn.mnemonic) else {
+            return Err(LiftError::Internal(
+                "invalid Thumb multiple-transfer mnemonic".to_string(),
+            ));
+        };
+        let push_pop = matches!(insn.mnemonic, Mnemonic::PUSH | Mnemonic::POP);
+        let (base_num, list) = match insn.operands.as_slice() {
+            [Operand::RegList(list)] if push_pop => (13, list),
+            [Operand::Reg(base), Operand::RegList(list)] if !push_pop => (base.num, list),
+            _ => {
+                return Err(LiftError::Internal(
+                    "invalid Thumb multiple-transfer operands".to_string(),
+                ));
+            }
+        };
+        let writeback =
+            push_pop || insn.state == ExecutionState::Thumb || ((insn.raw >> 21) & 1) != 0;
+
+        if base_num >= 15 || list.mask == 0 || list.contains(15) {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "Thumb multiple transfer requires PC or empty-list semantics".to_string(),
+            });
+        }
+        if (is_load && list.contains(base_num))
+            || (!is_load && writeback && list.contains(base_num))
+        {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "Thumb multiple transfer has a constrained base/list alias".to_string(),
+            });
+        }
+
+        let base = Self::reg(base_num);
+        let count = i64::from(list.count());
+        let low_offset = match (increment, before) {
+            (true, false) => 0,
+            (true, true) => 4,
+            (false, false) => 4 - count * 4,
+            (false, true) => -count * 4,
+        };
+        for (ordinal, reg_num) in list.iter().enumerate() {
+            let offset = low_offset + ordinal as i64 * 4;
+            let addr = if offset == 0 {
+                Address::Direct(base)
+            } else {
+                Address::BaseOffset {
+                    base,
+                    offset,
+                    disp_size: DispSize::Auto,
+                }
+            };
+            Self::push(
+                ops,
+                pc,
+                if is_load {
+                    OpKind::Load {
+                        dst: Self::reg(reg_num),
+                        addr,
+                        width: MemWidth::B4,
+                        sign: SignExtend::Zero,
+                    }
+                } else {
+                    OpKind::Store {
+                        src: Self::reg(reg_num),
+                        addr,
+                        width: MemWidth::B4,
+                    }
+                },
+            );
+        }
+
+        if writeback {
+            let delta = count * 4;
+            Self::push(
+                ops,
+                pc,
+                if increment {
+                    OpKind::Add {
+                        dst: base,
+                        src1: base,
+                        src2: SrcOperand::Imm(delta),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                    }
+                } else {
+                    OpKind::Sub {
+                        dst: base,
+                        src1: base,
+                        src2: SrcOperand::Imm(delta),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                    }
+                },
+            );
+        }
+        Ok(())
+    }
+
     fn shared_scalar_mnemonic(insn: &DecodedInsn) -> bool {
         use Mnemonic::*;
 
@@ -338,6 +514,25 @@ impl ThumbLifter {
             | Mnemonic::STRB
             | Mnemonic::STRH => {
                 self.lift_memory(&normalized, pc, &mut ops)?;
+                ControlFlow::Fallthrough
+            }
+            Mnemonic::LDP | Mnemonic::STP => {
+                self.lift_double_memory(&normalized, pc, &mut ops)?;
+                ControlFlow::Fallthrough
+            }
+            Mnemonic::LDM
+            | Mnemonic::LDMIA
+            | Mnemonic::LDMIB
+            | Mnemonic::LDMDA
+            | Mnemonic::LDMDB
+            | Mnemonic::STM
+            | Mnemonic::STMIA
+            | Mnemonic::STMIB
+            | Mnemonic::STMDA
+            | Mnemonic::STMDB
+            | Mnemonic::PUSH
+            | Mnemonic::POP => {
+                self.lift_multiple_memory(&normalized, pc, &mut ops)?;
                 ControlFlow::Fallthrough
             }
             Mnemonic::MVN if !normalized.sets_flags => {
@@ -1067,6 +1262,162 @@ mod tests {
                     "writeback follows access for {bytes:02x?}"
                 );
             }
+        }
+    }
+
+    #[test]
+    fn lifts_t16_t32_multiple_transfers_with_ordered_writeback() {
+        fn offset(op: &SmirOp) -> i64 {
+            let addr = match &op.kind {
+                OpKind::Load { addr, .. } | OpKind::Store { addr, .. } => addr,
+                other => panic!("expected transfer, got {other:?}"),
+            };
+            match addr {
+                Address::Direct(_) => 0,
+                Address::BaseOffset { offset, .. } => *offset,
+                other => panic!("unexpected multiple-transfer address {other:?}"),
+            }
+        }
+
+        let push = lift(&[0x31, 0xb5]); // push {r0,r4,r5,lr}
+        assert_eq!(push.bytes_consumed, 2);
+        assert_eq!(
+            push.ops[..4].iter().map(offset).collect::<Vec<_>>(),
+            vec![-16, -12, -8, -4]
+        );
+        assert!(matches!(
+            &push.ops[4].kind,
+            OpKind::Sub {
+                dst,
+                src1,
+                src2: SrcOperand::Imm(16),
+                ..
+            } if dst == src1 && *dst == ThumbLifter::reg(13)
+        ));
+
+        let ldm = lift(&[0x07, 0xcf]); // ldmia r7!,{r0-r2}
+        assert_eq!(ldm.bytes_consumed, 2);
+        assert_eq!(
+            ldm.ops[..3].iter().map(offset).collect::<Vec<_>>(),
+            vec![0, 4, 8]
+        );
+        assert!(matches!(
+            &ldm.ops[3].kind,
+            OpKind::Add {
+                dst,
+                src1,
+                src2: SrcOperand::Imm(12),
+                ..
+            } if dst == src1 && *dst == ThumbLifter::reg(7)
+        ));
+
+        let push_w = lift(&[0x2d, 0xe9, 0x00, 0x4f]); // push.w {r8-r11,lr}
+        assert_eq!(push_w.bytes_consumed, 4);
+        assert_eq!(push_w.ops.len(), 6);
+        assert_eq!(
+            push_w.ops[..5].iter().map(offset).collect::<Vec<_>>(),
+            vec![-20, -16, -12, -8, -4]
+        );
+
+        let stmdb_w = lift(&[0x2a, 0xe9, 0x05, 0x01]); // stmdb r10!,{r0,r2,r8}
+        assert_eq!(stmdb_w.bytes_consumed, 4);
+        assert_eq!(
+            stmdb_w.ops[..3].iter().map(offset).collect::<Vec<_>>(),
+            vec![-12, -8, -4]
+        );
+    }
+
+    #[test]
+    fn thumb_multiple_transfers_reject_pc_empty_and_base_aliases() {
+        let cases: &[&[u8]] = &[
+            &[0x01, 0xbd],             // pop {r0,pc}: interworking control flow
+            &[0x00, 0xb4],             // push {}: constrained empty list
+            &[0x02, 0xc9],             // ldmia r1!,{r1}: load/base alias
+            &[0x02, 0xc1],             // stmia r1!,{r1}: store/writeback alias
+            &[0xbd, 0xe8, 0x00, 0x80], // pop.w {pc}
+        ];
+        for bytes in cases {
+            let mut lifter = ThumbLifter::new();
+            let mut ctx = LiftContext::new(SourceArch::Thumb);
+            assert!(
+                matches!(
+                    lifter.lift_insn(0x1000, bytes, &mut ctx),
+                    Err(LiftError::Unsupported { .. })
+                ),
+                "{bytes:02x?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lifts_t32_double_transfers_with_pair_atomicity_and_writeback() {
+        let load = lift(&[0xd2, 0xe9, 0x02, 0x01]); // ldrd r0,r1,[r2,#8]
+        assert!(matches!(
+            load.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::LoadPair {
+                    dst1,
+                    dst2,
+                    addr: Address::BaseOffset {
+                        base,
+                        offset: 8,
+                        ..
+                    },
+                    width: MemWidth::B4,
+                },
+                ..
+            }] if *dst1 == ThumbLifter::reg(0)
+                && *dst2 == ThumbLifter::reg(1)
+                && *base == ThumbLifter::reg(2)
+        ));
+
+        let store = lift(&[0xe4, 0xe9, 0x02, 0x23]); // strd r2,r3,[r4,#8]!
+        assert!(matches!(
+            store.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::StorePair {
+                        src1,
+                        src2,
+                        addr: Address::BaseOffset { offset: 8, .. },
+                        width: MemWidth::B4,
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::Add {
+                        dst,
+                        src1: base,
+                        src2: SrcOperand::Imm(8),
+                        ..
+                    },
+                    ..
+                }
+            ] if *src1 == ThumbLifter::reg(2)
+                && *src2 == ThumbLifter::reg(3)
+                && dst == base
+                && *dst == ThumbLifter::reg(4)
+        ));
+    }
+
+    #[test]
+    fn thumb_double_transfers_reject_nonadjacent_pc_and_writeback_alias_pairs() {
+        let cases: &[&[u8]] = &[
+            &[0xd2, 0xe9, 0x02, 0x12], // ldrd r1,r2,[r2,#8]: odd first register
+            &[0xd2, 0xe9, 0x02, 0x02], // ldrd r0,r2,[r2,#8]: nonadjacent pair
+            &[0xd2, 0xe9, 0x02, 0xef], // ldrd r14,pc,[r2,#8]
+            &[0xf0, 0xe9, 0x02, 0x01], // ldrd r0,r1,[r0,#8]!: base alias
+        ];
+        for bytes in cases {
+            let mut lifter = ThumbLifter::new();
+            let mut ctx = LiftContext::new(SourceArch::Thumb);
+            assert!(
+                matches!(
+                    lifter.lift_insn(0x1000, bytes, &mut ctx),
+                    Err(LiftError::Unsupported { .. })
+                ),
+                "{bytes:02x?}"
+            );
         }
     }
 

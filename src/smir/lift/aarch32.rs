@@ -10,6 +10,10 @@
 //! - r15 reads/writes, predication, RRX, and the LSR/ASR-#0 encodings remain
 //!   fail-closed until their pipeline/conditional/shifter semantics can be
 //!   represented without hidden native state;
+//! - scalar LDM/STM and PUSH/POP forms without r15, user-bank transfer, or
+//!   constrained base/list aliases expand into ordered B4 helper operations;
+//! - immediate/scaled-register LDRD/STRD forms over an even R0-R13 pair use
+//!   pair memory IR so a second-word load fault cannot publish either result;
 //! - A32 branch targets use the architectural `PC + 8` base;
 //! - A32-only reverse-subtract, multiply-accumulate, and MOVW/MOVT forms are
 //!   translated explicitly.
@@ -284,6 +288,181 @@ impl Aarch32Lifter {
         Ok(())
     }
 
+    fn lift_double_memory(
+        &self,
+        insn: &DecodedInsn,
+        pc: GuestAddr,
+        ops: &mut Vec<SmirOp>,
+    ) -> Result<(), LiftError> {
+        let [Operand::Reg(rt), Operand::Mem(mem)] = insn.operands.as_slice() else {
+            return Err(LiftError::Internal(
+                "invalid A32 double-transfer operands".to_string(),
+            ));
+        };
+        if rt.num >= 14 || rt.num & 1 != 0 {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "A32 double transfer requires an even R0-R13 pair".to_string(),
+            });
+        }
+        let is_load = insn.mnemonic == Mnemonic::LDP;
+        let rt2 = rt.num + 1;
+        let writeback = Self::memory_writeback(insn, mem)?;
+        if writeback.is_some() && (mem.base.num == rt.num || mem.base.num == rt2) {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "A32 double transfer has a constrained base/pair alias".to_string(),
+            });
+        }
+        let addr = Self::memory_address(insn, mem, pc)?;
+        Self::push(
+            ops,
+            pc,
+            if is_load {
+                OpKind::LoadPair {
+                    dst1: Self::reg(rt.num),
+                    dst2: Self::reg(rt2),
+                    addr,
+                    width: MemWidth::B4,
+                }
+            } else {
+                OpKind::StorePair {
+                    src1: Self::reg(rt.num),
+                    src2: Self::reg(rt2),
+                    addr,
+                    width: MemWidth::B4,
+                }
+            },
+        );
+        if let Some(writeback) = writeback {
+            Self::push(ops, pc, writeback);
+        }
+        Ok(())
+    }
+
+    fn multiple_kind(mnemonic: Mnemonic) -> Option<(bool, bool, bool)> {
+        use Mnemonic::*;
+
+        match mnemonic {
+            LDM | LDMIA | POP => Some((true, true, false)),
+            LDMIB => Some((true, true, true)),
+            LDMDA => Some((true, false, false)),
+            LDMDB => Some((true, false, true)),
+            STM | STMIA => Some((false, true, false)),
+            STMIB => Some((false, true, true)),
+            STMDA => Some((false, false, false)),
+            STMDB | PUSH => Some((false, false, true)),
+            _ => None,
+        }
+    }
+
+    fn lift_multiple_memory(
+        &self,
+        insn: &DecodedInsn,
+        pc: GuestAddr,
+        ops: &mut Vec<SmirOp>,
+    ) -> Result<(), LiftError> {
+        let Some((is_load, increment, before)) = Self::multiple_kind(insn.mnemonic) else {
+            return Err(LiftError::Internal(
+                "invalid A32 multiple-transfer mnemonic".to_string(),
+            ));
+        };
+        let push_pop = matches!(insn.mnemonic, Mnemonic::PUSH | Mnemonic::POP);
+        let (base_num, list) = match insn.operands.as_slice() {
+            [Operand::RegList(list)] if push_pop => (13, list),
+            [Operand::Reg(base), Operand::RegList(list)] if !push_pop => (base.num, list),
+            _ => {
+                return Err(LiftError::Internal(
+                    "invalid A32 multiple-transfer operands".to_string(),
+                ));
+            }
+        };
+        let mask = list.mask;
+        let writeback = push_pop || ((insn.raw >> 21) & 1) != 0;
+
+        if base_num >= 15 || mask == 0 || list.contains(15) || ((insn.raw >> 22) & 1) != 0 {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "A32 multiple transfer requires PC, user-bank, or empty-list semantics"
+                    .to_string(),
+            });
+        }
+        if (is_load && list.contains(base_num))
+            || (!is_load && writeback && list.contains(base_num))
+        {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "A32 multiple transfer has a constrained base/list alias".to_string(),
+            });
+        }
+
+        let base = Self::reg(base_num);
+        let count = i64::from(list.count());
+        let low_offset = match (increment, before) {
+            (true, false) => 0,
+            (true, true) => 4,
+            (false, false) => 4 - count * 4,
+            (false, true) => -count * 4,
+        };
+
+        for (ordinal, reg_num) in list.iter().enumerate() {
+            let offset = low_offset + ordinal as i64 * 4;
+            let addr = if offset == 0 {
+                Address::Direct(base)
+            } else {
+                Address::BaseOffset {
+                    base,
+                    offset,
+                    disp_size: DispSize::Auto,
+                }
+            };
+            Self::push(
+                ops,
+                pc,
+                if is_load {
+                    OpKind::Load {
+                        dst: Self::reg(reg_num),
+                        addr,
+                        width: MemWidth::B4,
+                        sign: SignExtend::Zero,
+                    }
+                } else {
+                    OpKind::Store {
+                        src: Self::reg(reg_num),
+                        addr,
+                        width: MemWidth::B4,
+                    }
+                },
+            );
+        }
+
+        if writeback {
+            let delta = count * 4;
+            Self::push(
+                ops,
+                pc,
+                if increment {
+                    OpKind::Add {
+                        dst: base,
+                        src1: base,
+                        src2: SrcOperand::Imm(delta),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                    }
+                } else {
+                    OpKind::Sub {
+                        dst: base,
+                        src1: base,
+                        src2: SrcOperand::Imm(delta),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                    }
+                },
+            );
+        }
+        Ok(())
+    }
+
     fn shared_scalar_mnemonic(insn: &DecodedInsn) -> bool {
         use Mnemonic::*;
 
@@ -342,6 +521,25 @@ impl Aarch32Lifter {
             | Mnemonic::STRB
             | Mnemonic::STRH => {
                 self.lift_memory(insn, pc, &mut ops)?;
+                ControlFlow::Fallthrough
+            }
+            Mnemonic::LDP | Mnemonic::STP => {
+                self.lift_double_memory(insn, pc, &mut ops)?;
+                ControlFlow::Fallthrough
+            }
+            Mnemonic::LDM
+            | Mnemonic::LDMIA
+            | Mnemonic::LDMIB
+            | Mnemonic::LDMDA
+            | Mnemonic::LDMDB
+            | Mnemonic::STM
+            | Mnemonic::STMIA
+            | Mnemonic::STMIB
+            | Mnemonic::STMDA
+            | Mnemonic::STMDB
+            | Mnemonic::PUSH
+            | Mnemonic::POP => {
+                self.lift_multiple_memory(insn, pc, &mut ops)?;
                 ControlFlow::Fallthrough
             }
             Mnemonic::MOV if !insn.sets_flags => {
@@ -1038,6 +1236,167 @@ mod tests {
             0xe7b1_0122,    // ldr r0,[r1,r2,lsr #2]! needs an address temp
             0xe5b1_1004,    // ldr r1,[r1,#4]! has constrained alias semantics
             0xe59f_0004,    // ldr r0,[pc,#4] requires the A32 pipeline PC
+        ] {
+            let mut lifter = Aarch32Lifter::new();
+            let mut ctx = LiftContext::new(SourceArch::Aarch32);
+            assert!(
+                matches!(
+                    lifter.lift_insn(0x1000, &raw.to_le_bytes(), &mut ctx),
+                    Err(LiftError::Unsupported { .. })
+                ),
+                "{raw:#010x}"
+            );
+        }
+    }
+
+    #[test]
+    fn lifts_a32_multiple_transfers_in_register_and_address_order() {
+        fn offset(op: &SmirOp) -> i64 {
+            let addr = match &op.kind {
+                OpKind::Load { addr, .. } | OpKind::Store { addr, .. } => addr,
+                other => panic!("expected transfer, got {other:?}"),
+            };
+            match addr {
+                Address::Direct(_) => 0,
+                Address::BaseOffset { offset, .. } => *offset,
+                other => panic!("unexpected multiple-transfer address {other:?}"),
+            }
+        }
+
+        for (raw, expected_offsets, label) in [
+            (0xe8aa_0005, [0, 4], "stmia r10!,{r0,r2}"),
+            (0xe9aa_0005, [4, 8], "stmib r10!,{r0,r2}"),
+            (0xe82a_0005, [-4, 0], "stmda r10!,{r0,r2}"),
+            (0xe92a_0005, [-8, -4], "stmdb r10!,{r0,r2}"),
+        ] {
+            let result = lift(raw);
+            assert_eq!(result.ops.len(), 3, "{label}");
+            assert_eq!(offset(&result.ops[0]), expected_offsets[0], "{label}");
+            assert_eq!(offset(&result.ops[1]), expected_offsets[1], "{label}");
+            assert!(matches!(
+                &result.ops[0].kind,
+                OpKind::Store { src, .. } if *src == Aarch32Lifter::reg(0)
+            ));
+            assert!(matches!(
+                &result.ops[1].kind,
+                OpKind::Store { src, .. } if *src == Aarch32Lifter::reg(2)
+            ));
+        }
+
+        let load = lift(0xe8ba_002a); // ldmia r10!,{r1,r3,r5}
+        assert_eq!(load.ops.len(), 4);
+        assert_eq!(
+            load.ops[..3].iter().map(offset).collect::<Vec<_>>(),
+            vec![0, 4, 8]
+        );
+        assert!(matches!(
+            &load.ops[3].kind,
+            OpKind::Add {
+                dst,
+                src1,
+                src2: SrcOperand::Imm(12),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            } if dst == src1 && *dst == Aarch32Lifter::reg(10)
+        ));
+
+        let push = lift(0xe92d_4011); // push {r0,r4,lr}
+        assert_eq!(
+            push.ops[..3].iter().map(offset).collect::<Vec<_>>(),
+            vec![-12, -8, -4]
+        );
+        assert!(matches!(
+            &push.ops[3].kind,
+            OpKind::Sub {
+                dst,
+                src1,
+                src2: SrcOperand::Imm(12),
+                ..
+            } if dst == src1 && *dst == Aarch32Lifter::reg(13)
+        ));
+    }
+
+    #[test]
+    fn a32_multiple_transfers_reject_hidden_and_constrained_forms() {
+        for raw in [
+            0xe8bd_8001u32, // pop {r0,pc}: interworking control flow
+            0xe8fd_0003,    // ldmia sp!,{r0,r1}^: user-bank transfer
+            0xe8b1_0000,    // ldmia r1!,{}: architecturally constrained empty list
+            0xe8b1_0002,    // ldmia r1!,{r1}: load/base alias
+            0xe8a1_0002,    // stmia r1!,{r1}: store/writeback alias
+            0xe8bf_0001,    // ldmia pc!,{r0}: pipeline PC base
+        ] {
+            let mut lifter = Aarch32Lifter::new();
+            let mut ctx = LiftContext::new(SourceArch::Aarch32);
+            assert!(
+                matches!(
+                    lifter.lift_insn(0x1000, &raw.to_le_bytes(), &mut ctx),
+                    Err(LiftError::Unsupported { .. })
+                ),
+                "{raw:#010x}"
+            );
+        }
+    }
+
+    #[test]
+    fn lifts_a32_double_transfers_with_pair_atomicity_and_writeback() {
+        let load = lift(0xe1c2_00d8); // ldrd r0,r1,[r2,#8]
+        assert!(matches!(
+            load.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::LoadPair {
+                    dst1,
+                    dst2,
+                    addr: Address::BaseOffset {
+                        base,
+                        offset: 8,
+                        ..
+                    },
+                    width: MemWidth::B4,
+                },
+                ..
+            }] if *dst1 == Aarch32Lifter::reg(0)
+                && *dst2 == Aarch32Lifter::reg(1)
+                && *base == Aarch32Lifter::reg(2)
+        ));
+
+        let store = lift(0xe1e4_20f8); // strd r2,r3,[r4,#8]!
+        assert!(matches!(
+            store.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::StorePair {
+                        src1,
+                        src2,
+                        addr: Address::BaseOffset { offset: 8, .. },
+                        width: MemWidth::B4,
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::Add {
+                        dst,
+                        src1: base,
+                        src2: SrcOperand::Imm(8),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                    },
+                    ..
+                }
+            ] if *src1 == Aarch32Lifter::reg(2)
+                && *src2 == Aarch32Lifter::reg(3)
+                && dst == base
+                && *dst == Aarch32Lifter::reg(4)
+        ));
+    }
+
+    #[test]
+    fn a32_double_transfers_reject_odd_pc_and_writeback_alias_pairs() {
+        for raw in [
+            0xe1c2_10d8u32, // ldrd odd r1 pair
+            0xe1c2_e0d8,    // ldrd r14,r15 pair
+            0xe1e0_00d8,    // ldrd r0,r1,[r0,#8]!: base aliases pair
+            0xe1ef_20f8,    // strd r2,r3,[pc,#8]!: pipeline PC base
         ] {
             let mut lifter = Aarch32Lifter::new();
             let mut ctx = LiftContext::new(SourceArch::Aarch32);

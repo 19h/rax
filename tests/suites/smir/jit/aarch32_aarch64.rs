@@ -14,6 +14,7 @@ use rax::smir::lower::runtime::{
     Aarch32GuestRegs, Aarch32MemHelpers, ExecMem, is_aarch32_aarch64_native_clobber_safe_excluding,
     is_aarch32_aarch64_native_clobber_safe_excluding_with_mem,
 };
+use rax::smir::optimize::{OptLevel, optimize_function};
 
 const PROGRAM: [u32; 29] = [
     0xe081_0002, // add   r0,r1,r2
@@ -123,14 +124,19 @@ fn lower(program: &[u32]) -> (ExecMem, usize) {
 }
 
 fn lower_with_mem(program: &[u32]) -> (ExecMem, usize) {
-    let function = lift_program(program);
+    lower_with_mem_at(program, OptLevel::O0)
+}
+
+fn lower_with_mem_at(program: &[u32], level: OptLevel) -> (ExecMem, usize) {
+    let mut function = lift_program(program);
+    optimize_function(&mut function, level);
     assert!(
         is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
             &function,
             &std::collections::HashMap::new(),
             true,
         ),
-        "complete A32 memory program must satisfy the production native gate"
+        "complete A32 memory program at {level:?} must satisfy the production native gate"
     );
 
     let mut lowerer = Aarch64Lowerer::new();
@@ -327,9 +333,18 @@ fn reference_memory(
 fn run_memory_native(
     program: &[u32],
     initial: Aarch32GuestRegs,
-    mut memory: TestMemory,
+    memory: TestMemory,
 ) -> (Aarch32GuestRegs, TestMemory, u64) {
-    let (exec, entry) = lower_with_mem(program);
+    run_memory_native_at(program, initial, memory, OptLevel::O0)
+}
+
+fn run_memory_native_at(
+    program: &[u32],
+    initial: Aarch32GuestRegs,
+    mut memory: TestMemory,
+    level: OptLevel,
+) -> (Aarch32GuestRegs, TestMemory, u64) {
+    let (exec, entry) = lower_with_mem_at(program, level);
     let mut regs = initial;
     let helpers = Aarch32MemHelpers {
         ctx: (&mut memory as *mut TestMemory) as u64,
@@ -564,4 +579,235 @@ fn a32_signed_load_result_is_canonical_before_direct_address_reuse() {
     assert_eq!(actual_regs.r[1], 0xffff_ffc1);
     assert_eq!(actual_mem.last_helper_addr, 0xffff_ffc1);
     assert_eq!(exit_pc, 0);
+}
+
+#[test]
+fn a32_ldm_stm_addressing_modes_match_interpreter() {
+    let stores = [
+        0xe8a8_0015, // stmia r8!,{r0,r2,r4}
+        0xe9a9_002a, // stmib r9!,{r1,r3,r5}
+        0xe82a_0015, // stmda r10!,{r0,r2,r4}
+        0xe92b_002a, // stmdb r11!,{r1,r3,r5}
+    ];
+    let mut initial = initial_state();
+    initial.r[8] = 0x20;
+    initial.r[9] = 0x50;
+    initial.r[10] = 0x80;
+    initial.r[11] = 0xb0;
+    let memory = TestMemory::patterned();
+    let (expected_regs, expected_mem, fault) = reference_memory(&stores, initial, memory.clone());
+    assert_eq!(fault, None);
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let (actual_regs, actual_mem, exit_pc) =
+            run_memory_native_at(&stores, initial, memory.clone(), level);
+        assert_eq!(actual_regs, expected_regs, "{level:?}");
+        assert_eq!(actual_mem.data, expected_mem.data, "{level:?}");
+        assert_eq!(actual_mem.helper_stores, 12, "{level:?}");
+        assert_eq!(actual_regs.r[8], 0x2c, "{level:?}");
+        assert_eq!(actual_regs.r[9], 0x5c, "{level:?}");
+        assert_eq!(actual_regs.r[10], 0x74, "{level:?}");
+        assert_eq!(actual_regs.r[11], 0xa4, "{level:?}");
+        assert_eq!(exit_pc, 0, "{level:?}");
+    }
+
+    let loads = [
+        0xe8b8_0007, // ldmia r8!,{r0-r2}
+        0xe9b9_0070, // ldmib r9!,{r4-r6}
+        0xe83a_0007, // ldmda r10!,{r0-r2}
+        0xe93b_0070, // ldmdb r11!,{r4-r6}
+    ];
+    let mut initial = initial_state();
+    initial.r[8] = 0x20;
+    initial.r[9] = 0x50;
+    initial.r[10] = 0x80;
+    initial.r[11] = 0xb0;
+    let memory = TestMemory::patterned();
+    let (expected_regs, _, fault) = reference_memory(&loads, initial, memory.clone());
+    assert_eq!(fault, None);
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let (actual_regs, actual_mem, exit_pc) =
+            run_memory_native_at(&loads, initial, memory.clone(), level);
+        assert_eq!(actual_regs, expected_regs, "{level:?}");
+        assert_eq!(actual_mem.helper_loads, 12, "{level:?}");
+        assert_eq!(actual_regs.r[8], 0x2c, "{level:?}");
+        assert_eq!(actual_regs.r[9], 0x5c, "{level:?}");
+        assert_eq!(actual_regs.r[10], 0x74, "{level:?}");
+        assert_eq!(actual_regs.r[11], 0xa4, "{level:?}");
+        assert_eq!(exit_pc, 0, "{level:?}");
+    }
+}
+
+#[test]
+fn a32_push_pop_and_multiple_fault_commit_order_match_interpreter() {
+    let stack = [
+        0xe92d_4030, // push {r4,r5,lr}
+        0xe3a0_4000, // mov r4,#0
+        0xe3a0_5000, // mov r5,#0
+        0xe3a0_e000, // mov lr,#0
+        0xe8bd_4030, // pop {r4,r5,lr}
+    ];
+    let mut initial = initial_state();
+    initial.r[13] = 0x90;
+    let memory = TestMemory::patterned();
+    let (expected_regs, expected_mem, fault) = reference_memory(&stack, initial, memory.clone());
+    assert_eq!(fault, None);
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let (actual_regs, actual_mem, exit_pc) =
+            run_memory_native_at(&stack, initial, memory.clone(), level);
+        assert_eq!(actual_regs, expected_regs, "{level:?}");
+        assert_eq!(actual_mem.data, expected_mem.data, "{level:?}");
+        assert_eq!(actual_regs.r[4], initial.r[4], "{level:?}");
+        assert_eq!(actual_regs.r[5], initial.r[5], "{level:?}");
+        assert_eq!(actual_regs.r[14], initial.r[14], "{level:?}");
+        assert_eq!(actual_regs.r[13], initial.r[13], "{level:?}");
+        assert_eq!(actual_mem.helper_stores, 3, "{level:?}");
+        assert_eq!(actual_mem.helper_loads, 3, "{level:?}");
+        assert_eq!(exit_pc, 0, "{level:?}");
+    }
+
+    for (raw, label) in [
+        (0xe8a8_0007, "stmia r8!,{r0-r2}"),
+        (0xe8b8_0007, "ldmia r8!,{r0-r2}"),
+    ] {
+        let program = [raw];
+        let mut initial = initial_state();
+        initial.r[8] = 0x20;
+        let mut memory = TestMemory::patterned();
+        memory.fault_enabled = 1;
+        memory.fault_addr = 0x24;
+        let (expected_regs, expected_mem, fault) =
+            reference_memory(&program, initial, memory.clone());
+        assert_eq!(fault, Some(0), "{label}");
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let (actual_regs, actual_mem, exit_pc) =
+                run_memory_native_at(&program, initial, memory.clone(), level);
+            assert_eq!(actual_regs, expected_regs, "{label} {level:?}");
+            assert_eq!(actual_mem.data, expected_mem.data, "{label} {level:?}");
+            assert_eq!(
+                actual_regs.r[8], initial.r[8],
+                "{label} {level:?} writeback"
+            );
+            assert_eq!(exit_pc, 0x8000, "{label} {level:?} fault PC");
+            if raw & (1 << 20) == 0 {
+                assert_eq!(actual_mem.helper_stores, 2, "{label} {level:?}");
+            } else {
+                assert_eq!(actual_mem.helper_loads, 2, "{label} {level:?}");
+                assert_ne!(
+                    actual_regs.r[0], initial.r[0],
+                    "{label} {level:?} first load committed"
+                );
+                assert_eq!(
+                    actual_regs.r[1], initial.r[1],
+                    "{label} {level:?} faulting load did not commit"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn a32_multiple_transfer_addresses_wrap_modulo_2_pow_32() {
+    let program = [0xe928_0003]; // stmdb r8!,{r0,r1}
+    let mut initial = initial_state();
+    initial.r[8] = 4;
+    let memory = TestMemory::patterned();
+    let (expected_regs, expected_mem, fault) = reference_memory(&program, initial, memory.clone());
+    assert_eq!(fault, None);
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let (actual_regs, actual_mem, exit_pc) =
+            run_memory_native_at(&program, initial, memory.clone(), level);
+        assert_eq!(actual_regs, expected_regs, "{level:?}");
+        assert_eq!(actual_mem.data, expected_mem.data, "{level:?}");
+        assert_eq!(actual_regs.r[8], 0xffff_fffc, "{level:?}");
+        assert_eq!(actual_mem.last_helper_addr, 0, "{level:?}");
+        assert_eq!(actual_mem.helper_stores, 2, "{level:?}");
+        assert_eq!(exit_pc, 0, "{level:?}");
+    }
+}
+
+#[test]
+fn a32_double_transfers_match_interpreter_at_o0_and_o2() {
+    let program = [
+        0xe18c_00dd, // ldrd r0,r1,[r12,r13]
+        0xe00c_00fd, // strd r0,r1,[r12],-r13
+        0xe1c8_00d8, // ldrd r0,r1,[r8,#8]
+        0xe1e9_00f8, // strd r0,r1,[r9,#8]!
+        0xe0ca_20d8, // ldrd r2,r3,[r10],#8
+        0xe14b_20f8, // strd r2,r3,[r11,#-8]
+    ];
+    let mut initial = initial_state();
+    initial.r[8] = 0x20;
+    initial.r[9] = 0x50;
+    initial.r[10] = 0x80;
+    initial.r[11] = 0xb0;
+    initial.r[12] = 0x20;
+    initial.r[13] = 8;
+    let memory = TestMemory::patterned();
+    let (expected_regs, expected_mem, fault) = reference_memory(&program, initial, memory.clone());
+    assert_eq!(fault, None);
+
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let (actual_regs, actual_mem, exit_pc) =
+            run_memory_native_at(&program, initial, memory.clone(), level);
+        assert_eq!(actual_regs, expected_regs, "{level:?}");
+        assert_eq!(actual_mem.data, expected_mem.data, "{level:?}");
+        assert_eq!(actual_mem.helper_loads, 6, "{level:?}");
+        assert_eq!(actual_mem.helper_stores, 6, "{level:?}");
+        assert_eq!(actual_regs.r[9], 0x58, "pre-index writeback {level:?}");
+        assert_eq!(actual_regs.r[10], 0x88, "post-index writeback {level:?}");
+        assert_eq!(actual_regs.r[12], 0x18, "register post-index {level:?}");
+        assert_eq!(exit_pc, 0, "{level:?}");
+    }
+}
+
+#[test]
+fn a32_double_transfer_second_fault_preserves_load_pair_and_writeback() {
+    for (raw, base, is_load, label) in [
+        (0xe1e8_00d8, 0x18, true, "ldrd r0,r1,[r8,#8]!"),
+        (0xe1e8_00f8, 0x18, false, "strd r0,r1,[r8,#8]!"),
+    ] {
+        let program = [raw];
+        let mut initial = initial_state();
+        initial.r[8] = base;
+        let mut memory = TestMemory::patterned();
+        memory.fault_enabled = 1;
+        memory.fault_addr = 0x24;
+        let (expected_regs, expected_mem, fault) =
+            reference_memory(&program, initial, memory.clone());
+        assert_eq!(fault, Some(0), "{label}");
+
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let (actual_regs, actual_mem, exit_pc) =
+                run_memory_native_at(&program, initial, memory.clone(), level);
+            assert_eq!(actual_regs, expected_regs, "{label} {level:?}");
+            assert_eq!(actual_mem.data, expected_mem.data, "{label} {level:?}");
+            assert_eq!(actual_regs.r[8], base, "writeback {label} {level:?}");
+            assert_eq!(exit_pc, 0x8000, "{label} {level:?}");
+            if is_load {
+                assert_eq!(actual_mem.helper_loads, 2, "{label} {level:?}");
+                assert_eq!(actual_regs.r[0], initial.r[0], "dst1 {label} {level:?}");
+                assert_eq!(actual_regs.r[1], initial.r[1], "dst2 {label} {level:?}");
+            } else {
+                assert_eq!(actual_mem.helper_stores, 2, "{label} {level:?}");
+            }
+        }
+    }
+}
+
+#[test]
+fn a32_double_transfer_second_address_wraps_modulo_2_pow_32() {
+    let program = [0xe1c8_00d0]; // ldrd r0,r1,[r8]
+    let mut initial = initial_state();
+    initial.r[8] = 0xffff_fffc;
+    let memory = TestMemory::patterned();
+    let (expected_regs, _, fault) = reference_memory(&program, initial, memory.clone());
+    assert_eq!(fault, None);
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let (actual_regs, actual_mem, exit_pc) =
+            run_memory_native_at(&program, initial, memory.clone(), level);
+        assert_eq!(actual_regs, expected_regs, "{level:?}");
+        assert_eq!(actual_mem.last_helper_addr, 0, "{level:?}");
+        assert_eq!(actual_mem.helper_loads, 2, "{level:?}");
+        assert_eq!(exit_pc, 0, "{level:?}");
+    }
 }

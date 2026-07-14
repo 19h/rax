@@ -55,6 +55,10 @@ DCE must preserve:
 
 Branch folding may remove unreachable blocks only when terminator condition semantics are known and all removed blocks are not externally reachable region exits.
 
-## 9. Complexity
+## 9. Redundant-load elimination
+
+Ordinary guest-memory reads are observable: they can fault, access MMIO, or return a changing device value even when their effective address is unchanged. O2 therefore preserves repeated loads by default. Load forwarding is enabled only when `FunctionAttrs::allow_redundant_load_elimination` explicitly establishes that all ordinary loads in the function are non-faulting, non-volatile, and stable until an intervening SMIR memory write. Address, width, and signed/zero-extension mode are all part of the forwarding key.
+
+## 10. Complexity
 
 Let `B` be blocks, `E` edges, `N` operations, and `R` live registers/flags. The implemented frontier liveness fixpoint is bounded by approximately `B + 2` iterations and costs `O((B + 2)·(N + E + R))` time with `O(B·R)` live-set space.
