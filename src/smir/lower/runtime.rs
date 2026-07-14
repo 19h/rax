@@ -1741,6 +1741,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         OpKind::VMov { .. }
             | OpKind::VAdd { .. }
             | OpKind::VSub { .. }
+            | OpKind::VAddSubSat { .. }
             | OpKind::VAnd { .. }
             | OpKind::VAndNot { .. }
             | OpKind::VOr { .. }
@@ -1856,15 +1857,32 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         src2,
         elem,
         lanes,
+    }
+    | OpKind::VAddSubSat {
+        dst,
+        src1,
+        src2,
+        elem,
+        lanes,
+        ..
     } = op
     {
-        if !matches!(
-            elem,
-            crate::smir::ir::types::VecElementType::I8
-                | crate::smir::ir::types::VecElementType::I16
-                | crate::smir::ir::types::VecElementType::I32
-                | crate::smir::ir::types::VecElementType::I64
-        ) {
+        let elem_valid = if matches!(op, OpKind::VAddSubSat { .. }) {
+            matches!(
+                elem,
+                crate::smir::ir::types::VecElementType::I8
+                    | crate::smir::ir::types::VecElementType::I16
+            )
+        } else {
+            matches!(
+                elem,
+                crate::smir::ir::types::VecElementType::I8
+                    | crate::smir::ir::types::VecElementType::I16
+                    | crate::smir::ir::types::VecElementType::I32
+                    | crate::smir::ir::types::VecElementType::I64
+            )
+        };
+        if !elem_valid {
             return false;
         }
         let Some(width) = x86_vector_width_from_lanes(*elem, *lanes) else {
@@ -2498,7 +2516,7 @@ fn x86_vector_logic_encoding_valid(
     }
 }
 
-fn x86_vector_int_add_sub_encoding_valid(
+fn x86_vector_integer_arithmetic_encoding_valid(
     kind: &crate::smir::ir::ops::OpKind,
     prefix: crate::smir::ir::ops::X86SsePrefix,
     opcode: u8,
@@ -2526,6 +2544,25 @@ fn x86_vector_int_add_sub_encoding_valid(
                 VecElementType::I16 => 0xF9,
                 VecElementType::I32 => 0xFA,
                 VecElementType::I64 => 0xFB,
+                _ => return false,
+            },
+        ),
+        OpKind::VAddSubSat {
+            elem,
+            subtract,
+            signed,
+            ..
+        } => (
+            *elem,
+            match (*elem, *subtract, *signed) {
+                (VecElementType::I8, false, true) => 0xEC,
+                (VecElementType::I16, false, true) => 0xED,
+                (VecElementType::I8, false, false) => 0xDC,
+                (VecElementType::I16, false, false) => 0xDD,
+                (VecElementType::I8, true, true) => 0xE8,
+                (VecElementType::I16, true, true) => 0xE9,
+                (VecElementType::I8, true, false) => 0xD8,
+                (VecElementType::I16, true, false) => 0xD9,
                 _ => return false,
             },
         ),
@@ -2676,6 +2713,14 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
             src2,
             elem,
             lanes,
+        }
+        | OpKind::VAddSubSat {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            ..
         } => (dst, src1, src2, elem, lanes),
         _ => return true,
     };
@@ -2688,7 +2733,9 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
             width == VecWidth::V128
                 && dst == src1
                 && [dst, src1, src2].into_iter().all(low_vector)
-                && x86_vector_int_add_sub_encoding_valid(&op.kind, prefix, opcode, false, false)
+                && x86_vector_integer_arithmetic_encoding_valid(
+                    &op.kind, prefix, opcode, false, false,
+                )
         }
         Some(X86OpHint::VexOp {
             map,
@@ -2701,7 +2748,7 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 && encoded_width == width
                 && width != VecWidth::V512
                 && [dst, src1, src2].into_iter().all(low_vector)
-                && x86_vector_int_add_sub_encoding_valid(&op.kind, pp, opcode, false, w)
+                && x86_vector_integer_arithmetic_encoding_valid(&op.kind, pp, opcode, false, w)
         }
         Some(X86OpHint::EvexOp {
             map,
@@ -2712,7 +2759,7 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
         }) => {
             map == X86VecMap::Map0F
                 && encoded_width == width
-                && x86_vector_int_add_sub_encoding_valid(&op.kind, pp, opcode, true, w)
+                && x86_vector_integer_arithmetic_encoding_valid(&op.kind, pp, opcode, true, w)
         }
         _ => false,
     }
@@ -2772,15 +2819,18 @@ fn x86_vector_logic_feature_requirements(
     }
 }
 
-/// Return `(AVX, AVX2, AVX-512VL)` requirements for an admitted wrapping
-/// packed-integer add/subtract operation.
-fn x86_vector_int_add_sub_feature_requirements(
+/// Return `(AVX, AVX2, AVX-512VL)` requirements for an admitted wrapping or
+/// saturating packed-integer add/subtract operation.
+fn x86_vector_integer_arithmetic_feature_requirements(
     op: &crate::smir::ir::ops::SmirOp,
 ) -> (bool, bool, bool) {
     use crate::smir::ir::ops::{OpKind, X86OpHint};
     use crate::smir::ir::types::VecWidth;
 
-    if !matches!(op.kind, OpKind::VAdd { .. } | OpKind::VSub { .. }) {
+    if !matches!(
+        op.kind,
+        OpKind::VAdd { .. } | OpKind::VSub { .. } | OpKind::VAddSubSat { .. }
+    ) {
         return (false, false, false);
     }
     match op.x86_hint {
@@ -2937,10 +2987,10 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86MultiShiftQB { width, .. }
             | OpKind::VLoad { width, .. }
             | OpKind::VStore { width, .. } => *width,
-            OpKind::VAdd { elem, lanes, .. } | OpKind::VSub { elem, lanes, .. } => {
-                x86_vector_width_from_lanes(*elem, *lanes)
-                    .expect("admitted integer vector arithmetic has exact lanes")
-            }
+            OpKind::VAdd { elem, lanes, .. }
+            | OpKind::VSub { elem, lanes, .. }
+            | OpKind::VAddSubSat { elem, lanes, .. } => x86_vector_width_from_lanes(*elem, *lanes)
+                .expect("admitted integer vector arithmetic has exact lanes"),
             OpKind::X86Sha512Msg1 { .. }
             | OpKind::X86Sha512Msg2 { .. }
             | OpKind::X86Sha512Rounds2 { .. } => VecWidth::V256,
@@ -2955,14 +3005,14 @@ pub fn x86_native_vector_features_supported_excluding(
         let (count_avx, count_avx2, count_vl) = x86_packed_shift_feature_requirements(kind);
         let (logic_avx, logic_avx2, logic_dq, logic_vl) = x86_vector_logic_feature_requirements(op);
         let (int_arith_avx, int_arith_avx2, int_arith_vl) =
-            x86_vector_int_add_sub_feature_requirements(op);
+            x86_vector_integer_arithmetic_feature_requirements(op);
         needs_vl |= match kind {
             OpKind::VMov { .. } => x86_vector_move_needs_vl(op),
             OpKind::VAnd { .. }
             | OpKind::VAndNot { .. }
             | OpKind::VOr { .. }
             | OpKind::VXor { .. } => logic_vl,
-            OpKind::VAdd { .. } | OpKind::VSub { .. } => int_arith_vl,
+            OpKind::VAdd { .. } | OpKind::VSub { .. } | OpKind::VAddSubSat { .. } => int_arith_vl,
             OpKind::X86Aes { .. } => aes_vl,
             OpKind::X86PackedShiftImm { .. } => shift_vl,
             OpKind::X86PackedShift { .. } => count_vl,
@@ -8488,6 +8538,79 @@ mod jit_gate_tests {
                 },
                 (false, false, true),
             ),
+            (
+                OpKind::VAddSubSat {
+                    dst: xmm1,
+                    src1: xmm1,
+                    src2: xmm2,
+                    elem: VecElementType::I8,
+                    lanes: 16,
+                    subtract: false,
+                    signed: true,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xEC,
+                },
+                (false, false, false),
+            ),
+            (
+                OpKind::VAddSubSat {
+                    dst: ymm1,
+                    src1: ymm2,
+                    src2: ymm3,
+                    elem: VecElementType::I16,
+                    lanes: 16,
+                    subtract: true,
+                    signed: false,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xD9,
+                    width: VecWidth::V256,
+                    w: true,
+                },
+                (true, true, false),
+            ),
+            (
+                OpKind::VAddSubSat {
+                    dst: zmm1,
+                    src1: zmm2,
+                    src2: zmm3,
+                    elem: VecElementType::I8,
+                    lanes: 64,
+                    subtract: false,
+                    signed: false,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xDC,
+                    width: VecWidth::V512,
+                    w: true,
+                },
+                (false, false, false),
+            ),
+            (
+                OpKind::VAddSubSat {
+                    dst: x86(X86Reg::Ymm(16)),
+                    src1: x86(X86Reg::Ymm(17)),
+                    src2: x86(X86Reg::Ymm(18)),
+                    elem: VecElementType::I16,
+                    lanes: 16,
+                    subtract: true,
+                    signed: true,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE9,
+                    width: VecWidth::V256,
+                    w: true,
+                },
+                (false, false, true),
+            ),
         ] {
             let smir_op = crate::smir::ir::ops::SmirOp::with_hint(
                 crate::smir::ir::types::OpId(0),
@@ -8501,7 +8624,7 @@ mod jit_gate_tests {
             );
             assert!(x86_native_vector_smir_op(&smir_op), "{smir_op:?}");
             assert_eq!(
-                x86_vector_int_add_sub_feature_requirements(&smir_op),
+                x86_vector_integer_arithmetic_feature_requirements(&smir_op),
                 feature_requirements,
                 "{smir_op:?}"
             );
@@ -8528,6 +8651,22 @@ mod jit_gate_tests {
         assert!(is_x86_native_vector_op(&unhinted_arithmetic.kind));
         assert!(!x86_native_vector_smir_op(&unhinted_arithmetic));
 
+        let unhinted_saturating = crate::smir::ir::ops::SmirOp::new(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            OpKind::VAddSubSat {
+                dst: xmm1,
+                src1: xmm1,
+                src2: xmm2,
+                elem: VecElementType::I8,
+                lanes: 16,
+                subtract: false,
+                signed: true,
+            },
+        );
+        assert!(is_x86_native_vector_op(&unhinted_saturating.kind));
+        assert!(!x86_native_vector_smir_op(&unhinted_saturating));
+
         for malformed_arithmetic_kind in [
             OpKind::VAdd {
                 dst: xmm1,
@@ -8549,6 +8688,24 @@ mod jit_gate_tests {
                 src2: ymm3,
                 elem: VecElementType::I32,
                 lanes: 4,
+            },
+            OpKind::VAddSubSat {
+                dst: xmm1,
+                src1: xmm1,
+                src2: xmm2,
+                elem: VecElementType::I32,
+                lanes: 4,
+                subtract: false,
+                signed: true,
+            },
+            OpKind::VAddSubSat {
+                dst: ymm1,
+                src1: ymm2,
+                src2: ymm3,
+                elem: VecElementType::I8,
+                lanes: 31,
+                subtract: true,
+                signed: false,
             },
         ] {
             assert!(!is_x86_native_vector_op(&malformed_arithmetic_kind));
@@ -8602,6 +8759,43 @@ mod jit_gate_tests {
                     map: X86VecMap::Map0F,
                     pp: X86SsePrefix::OpSize,
                     opcode: 0xD4,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                OpKind::VAddSubSat {
+                    dst: xmm1,
+                    src1: xmm1,
+                    src2: xmm2,
+                    elem: VecElementType::I8,
+                    lanes: 16,
+                    subtract: false,
+                    signed: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xEC,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                OpKind::VAddSubSat {
+                    dst: zmm1,
+                    src1: zmm2,
+                    src2: zmm3,
+                    elem: VecElementType::I16,
+                    lanes: 32,
+                    subtract: true,
+                    signed: true,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::Rep,
+                    opcode: 0xE9,
                     width: VecWidth::V512,
                     w: false,
                 },

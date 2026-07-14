@@ -3262,6 +3262,262 @@ fn jit_packed_integer_add_sub_matches_lane_wrapping_and_upper_state() {
 }
 
 #[test]
+fn jit_saturating_integer_add_sub_matches_lane_clamps_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx2")
+    {
+        return;
+    }
+
+    // loop: paddsb xmm1,xmm2; psubusw xmm3,xmm4;
+    //       vpaddusb xmm5,xmm6,xmm7; vpsubsw ymm8,ymm9,ymm10;
+    //       dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0xEC, 0xCA, 0x66, 0x0F, 0xD9, 0xDC, 0xC5, 0xC9, 0xDC, 0xEF, 0xC4, 0x41, 0x35,
+        0xE9, 0xC2, 0xFF, 0xC9, 0x75, 0xEB, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+
+        regs.xmm[1] = [0x8878_817F_80F0_1078, 0x7F80_7F80_7F80_7F80];
+        regs.xmm[2] = [0xF614_FF01_FF20_7878, 0x017F_FF80_4010_C080];
+        regs.ymm_high[1] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        regs.zmm_high[1] = [1, 2, 3, 4];
+
+        regs.xmm[3] = [0x0001_0000_FFFF_8000, 0x1234_5678_9ABC_DEF0];
+        regs.xmm[4] = [0x0002_0001_0001_7FFF, 0x2345_1111_ABCD_EF01];
+        regs.ymm_high[3] = [0x9999_AAAA_BBBB_CCCC, 0xDDDD_EEEE_FFFF_0000];
+        regs.zmm_high[3] = [5, 6, 7, 8];
+
+        regs.xmm[6] = [0xFFFE_FDFC_807F_0100, 0xF0E0_D0C0_B0A0_9080];
+        regs.xmm[7] = [0x0203_0405_FF02_01FF, 0x2030_4050_6070_8090];
+        regs.ymm_high[5] = [0xDEAD_BEEF_DEAD_BEEF, 0xCAFE_BABE_CAFE_BABE];
+        regs.zmm_high[5] = [9, 10, 11, 12];
+
+        regs.xmm[9] = [0x7FFF_8000_7000_9000, 0x0001_FFFF_4000_C000];
+        regs.xmm[10] = [0xFFFF_0001_F000_1000, 0x8000_7FFF_C000_4000];
+        regs.ymm_high[9] = [0x7FFF_8000_1234_EDCC, 0x6000_A000_0000_FFFF];
+        regs.ymm_high[10] = [0xFFFF_0001_8000_7FFF, 0xE000_2000_0001_8000];
+        regs.zmm_high[8] = [13, 14, 15, 16];
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+
+    let add_signed_bytes = |first: u64, second: u64| {
+        let mut result = 0u64;
+        for byte in 0..8 {
+            let shift = byte * 8;
+            let lhs = (first >> shift) as u8 as i8;
+            let rhs = (second >> shift) as u8 as i8;
+            result |= u64::from(lhs.saturating_add(rhs) as u8) << shift;
+        }
+        result
+    };
+    let add_unsigned_bytes = |first: u64, second: u64| {
+        let mut result = 0u64;
+        for byte in 0..8 {
+            let shift = byte * 8;
+            let lhs = (first >> shift) as u8;
+            let rhs = (second >> shift) as u8;
+            result |= u64::from(lhs.saturating_add(rhs)) << shift;
+        }
+        result
+    };
+    let sub_unsigned_bytes = |first: u64, second: u64| {
+        let mut result = 0u64;
+        for byte in 0..8 {
+            let shift = byte * 8;
+            let lhs = (first >> shift) as u8;
+            let rhs = (second >> shift) as u8;
+            result |= u64::from(lhs.saturating_sub(rhs)) << shift;
+        }
+        result
+    };
+    let add_signed_words = |first: u64, second: u64| {
+        let mut result = 0u64;
+        for word in 0..4 {
+            let shift = word * 16;
+            let lhs = (first >> shift) as u16 as i16;
+            let rhs = (second >> shift) as u16 as i16;
+            result |= u64::from(lhs.saturating_add(rhs) as u16) << shift;
+        }
+        result
+    };
+    let sub_signed_words = |first: u64, second: u64| {
+        let mut result = 0u64;
+        for word in 0..4 {
+            let shift = word * 16;
+            let lhs = (first >> shift) as u16 as i16;
+            let rhs = (second >> shift) as u16 as i16;
+            result |= u64::from(lhs.saturating_sub(rhs) as u16) << shift;
+        }
+        result
+    };
+    let sub_unsigned_words = |first: u64, second: u64| {
+        let mut result = 0u64;
+        for word in 0..4 {
+            let shift = word * 16;
+            let lhs = (first >> shift) as u16;
+            let rhs = (second >> shift) as u16;
+            result |= u64::from(lhs.saturating_sub(rhs)) << shift;
+        }
+        result
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("saturating integer add/sub JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(
+        jit_regs.xmm[1],
+        [
+            add_signed_bytes(initial.xmm[1][0], initial.xmm[2][0]),
+            add_signed_bytes(initial.xmm[1][1], initial.xmm[2][1]),
+        ],
+        "legacy PADDSB clamps"
+    );
+    assert_eq!(jit_regs.ymm_high[1], initial.ymm_high[1]);
+    assert_eq!(jit_regs.zmm_high[1], initial.zmm_high[1]);
+    assert_eq!(
+        jit_regs.xmm[3],
+        [
+            sub_unsigned_words(initial.xmm[3][0], initial.xmm[4][0]),
+            sub_unsigned_words(initial.xmm[3][1], initial.xmm[4][1]),
+        ],
+        "legacy PSUBUSW clamps"
+    );
+    assert_eq!(jit_regs.ymm_high[3], initial.ymm_high[3]);
+    assert_eq!(jit_regs.zmm_high[3], initial.zmm_high[3]);
+    assert_eq!(
+        jit_regs.xmm[5],
+        [
+            add_unsigned_bytes(initial.xmm[6][0], initial.xmm[7][0]),
+            add_unsigned_bytes(initial.xmm[6][1], initial.xmm[7][1]),
+        ],
+        "VEX VPADDUSB clamps"
+    );
+    assert_eq!(jit_regs.ymm_high[5], [0; 2]);
+    assert_eq!(jit_regs.zmm_high[5], [0; 4]);
+    assert_eq!(
+        jit_regs.xmm[8],
+        [
+            sub_signed_words(initial.xmm[9][0], initial.xmm[10][0]),
+            sub_signed_words(initial.xmm[9][1], initial.xmm[10][1]),
+        ],
+        "VEX VPSUBSW low lane clamps"
+    );
+    assert_eq!(
+        jit_regs.ymm_high[8],
+        [
+            sub_signed_words(initial.ymm_high[9][0], initial.ymm_high[10][0]),
+            sub_signed_words(initial.ymm_high[9][1], initial.ymm_high[10][1]),
+        ],
+        "VEX VPSUBSW high lane clamps"
+    );
+    assert_eq!(jit_regs.zmm_high[8], [0; 4]);
+
+    // loop: vpaddsw zmm4,zmm5,zmm6; vpsubusb zmm7,zmm8,zmm9;
+    //       dec ecx; jnz loop; hlt
+    let evex_code = [
+        0x62, 0xF1, 0x55, 0x48, 0xED, 0xE6, 0x62, 0xD1, 0x3D, 0x48, 0xD8, 0xF9, 0xFF, 0xC9, 0x75,
+        0xF0, 0xF4,
+    ];
+    let setup_evex = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.xmm[5] = [0x7FFF_8000_7000_9000, 0x1111_EEEE_4000_C000];
+        regs.ymm_high[5] = [0x7FFF_8000_0001_FFFF, 0x6000_A000_1234_EDCC];
+        regs.zmm_high[5] = [0x4000_C000_7FFE_8001, 1, u64::MAX, 0x5555_AAAA_0000_FFFF];
+        regs.xmm[6] = [0x0001_FFFF_1000_F000, 0x7000_9000_4000_C000];
+        regs.ymm_high[6] = [0x7FFF_8000_FFFF_0001, 0x3000_D000_EDCC_1234];
+        regs.zmm_high[6] = [0x4000_C000_0002_FFFE, u64::MAX, 1, 0x5555_AAAA_FFFF_0001];
+
+        regs.xmm[8] = [0x0001_0203_FFFE_FDFC, 0x1020_3040_5060_7080];
+        regs.ymm_high[8] = [0xFF00_807F_0102_0304, 0xA0B0_C0D0_E0F0_FFFF];
+        regs.zmm_high[8] = [0, 1, u64::MAX, 0x5555_AAAA_00FF_FF00];
+        regs.xmm[9] = [0x0102_0104_0203_FFFF, 0x2010_4030_6050_8070];
+        regs.ymm_high[9] = [0x01FF_7F80_0201_0403, 0xB0A0_D0C0_F0E0_01FF];
+        regs.zmm_high[9] = [1, u64::MAX, 1, 0xAAAA_5555_FF00_00FF];
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+    let (mut interp, _) = make_vcpu_mem(&evex_code);
+    let initial = setup_evex(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&evex_code);
+    setup_evex(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("EVEX saturating integer add/sub JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "EVEX low XMM state");
+    assert_eq!(
+        jit_regs.ymm_high, interp_regs.ymm_high,
+        "EVEX YMM upper state"
+    );
+    assert_eq!(
+        jit_regs.zmm_high, interp_regs.zmm_high,
+        "EVEX ZMM upper state"
+    );
+    for (result, first, second, operation) in [
+        (
+            4usize,
+            5usize,
+            6usize,
+            add_signed_words as fn(u64, u64) -> u64,
+        ),
+        (
+            7usize,
+            8usize,
+            9usize,
+            sub_unsigned_bytes as fn(u64, u64) -> u64,
+        ),
+    ] {
+        assert_eq!(
+            jit_regs.xmm[result],
+            [
+                operation(initial.xmm[first][0], initial.xmm[second][0]),
+                operation(initial.xmm[first][1], initial.xmm[second][1]),
+            ]
+        );
+        assert_eq!(
+            jit_regs.ymm_high[result],
+            [
+                operation(initial.ymm_high[first][0], initial.ymm_high[second][0],),
+                operation(initial.ymm_high[first][1], initial.ymm_high[second][1],),
+            ]
+        );
+        assert_eq!(
+            jit_regs.zmm_high[result],
+            [
+                operation(initial.zmm_high[first][0], initial.zmm_high[second][0],),
+                operation(initial.zmm_high[first][1], initial.zmm_high[second][1],),
+                operation(initial.zmm_high[first][2], initial.zmm_high[second][2],),
+                operation(initial.zmm_high[first][3], initial.zmm_high[second][3],),
+            ]
+        );
+    }
+}
+
+#[test]
 fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         return;

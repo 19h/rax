@@ -7124,6 +7124,90 @@ impl X86_64Lowerer {
                 }
             }
 
+            OpKind::VAddSubSat {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                subtract,
+                signed,
+            } => {
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
+                        op: format!(
+                            "VAddSubSat {:?}x{} subtract={} signed={}",
+                            elem, lanes, subtract, signed
+                        ),
+                    }
+                })?;
+                let opcode = match (*elem, *subtract, *signed) {
+                    (VecElementType::I8, false, true) => 0xEC,
+                    (VecElementType::I16, false, true) => 0xED,
+                    (VecElementType::I8, false, false) => 0xDC,
+                    (VecElementType::I16, false, false) => 0xDD,
+                    (VecElementType::I8, true, true) => 0xE8,
+                    (VecElementType::I16, true, true) => 0xE9,
+                    (VecElementType::I8, true, false) => 0xD8,
+                    (VecElementType::I16, true, false) => 0xD9,
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!(
+                                "VAddSubSat {:?}x{} subtract={} signed={}",
+                                elem, lanes, subtract, signed
+                            ),
+                        });
+                    }
+                };
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                if !dst_reg.is_vec() || !src1_reg.is_vec() || !src2_reg.is_vec() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VAddSubSat".to_string(),
+                        operand: "requires vector registers".to_string(),
+                    });
+                }
+
+                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                    let enc = self.coerce_vec_encoding(
+                        VecEncoding { width, ..enc_hint },
+                        &[dst_reg, src1_reg, src2_reg],
+                    );
+                    self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
+                } else if width != VecWidth::V128
+                    || self.vec_requires_vex(&[dst_reg, src1_reg, src2_reg])
+                {
+                    let kind = if self.vec_requires_evex(width, &[dst_reg, src1_reg, src2_reg]) {
+                        VecEncodingKind::Evex
+                    } else {
+                        VecEncodingKind::Vex
+                    };
+                    self.emit_vec_rrr(
+                        VecEncoding {
+                            kind,
+                            map: X86VecMap::Map0F,
+                            pp: X86SsePrefix::OpSize,
+                            opcode,
+                            width,
+                            w: false,
+                        },
+                        dst_reg,
+                        src1_reg,
+                        src2_reg,
+                    );
+                } else {
+                    let prefix = self.sse_prefix(op.x86_hint).or(Some(0x66));
+                    let opcode = self.sse_opcode(op.x86_hint, opcode);
+                    if dst_reg != src1_reg {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_mov_rr(prefix, 0x6F, dst_reg, src1_reg);
+                    }
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_sse_mov_rr(prefix, opcode, dst_reg, src2_reg);
+                }
+            }
+
             OpKind::VMax {
                 dst,
                 src1,
@@ -13504,6 +13588,30 @@ mod tests {
             (
                 &[0x62, 0xA1, 0x55, 0x20, 0xFA, 0xE6][..],
                 &[0x62, 0xA1, 0x55, 0x20, 0xFA, 0xE6][..],
+            ),
+            (&[0x66, 0x0F, 0xEC, 0xCA][..], &[0x66, 0x0F, 0xEC, 0xCA][..]),
+            (&[0x66, 0x0F, 0xDD, 0xDC][..], &[0x66, 0x0F, 0xDD, 0xDC][..]),
+            (&[0xC5, 0xE9, 0xE8, 0xCB][..], &[0xC5, 0xE9, 0xE8, 0xCB][..]),
+            (&[0xC5, 0xD5, 0xD9, 0xE6][..], &[0xC5, 0xD5, 0xD9, 0xE6][..]),
+            (
+                &[0x62, 0xA1, 0x55, 0x40, 0xDC, 0xE6][..],
+                &[0x62, 0xA1, 0x55, 0x40, 0xDC, 0xE6][..],
+            ),
+            (
+                &[0x62, 0xA1, 0x55, 0x20, 0xED, 0xE6][..],
+                &[0x62, 0xA1, 0x55, 0x20, 0xED, 0xE6][..],
+            ),
+            (
+                &[0x62, 0x01, 0x35, 0x00, 0xD8, 0xC2][..],
+                &[0x62, 0x01, 0x35, 0x00, 0xD8, 0xC2][..],
+            ),
+            (
+                &[0x62, 0x01, 0x15, 0x40, 0xE9, 0xE6][..],
+                &[0x62, 0x01, 0x15, 0x40, 0xE9, 0xE6][..],
+            ),
+            (
+                &[0x62, 0xF1, 0xFD, 0x48, 0xEC, 0xC1][..],
+                &[0x62, 0xF1, 0xFD, 0x48, 0xEC, 0xC1][..],
             ),
             (
                 &[0x62, 0xF2, 0x7D, 0xCC, 0xC4, 0xCA][..],
