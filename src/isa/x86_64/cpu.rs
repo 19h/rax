@@ -3842,6 +3842,97 @@ unsafe extern "C" fn rax_jit_mem_store(
     }
 }
 
+/// JIT architectural vector-load helper. The complete memory operand is read
+/// before the destination slot is modified, preserving precise restart on an
+/// MMU fault. Legacy SSE retains bits 511:128 of the overlapping ZMM slot;
+/// VEX/EVEX forms pass `zero_upper != 0` and clear every bit above the transfer.
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+unsafe extern "C" fn rax_jit_vec_load(
+    state: *mut crate::smir::lower::runtime::GuestRegs,
+    addr: u64,
+    dst_idx: u32,
+    size: u32,
+    zero_upper: u32,
+) -> u64 {
+    if dst_idx >= 32 || !matches!(size, 16 | 32 | 64) {
+        return 0;
+    }
+    let Some(state) = (unsafe { state.as_mut() }) else {
+        return 0;
+    };
+    let Some(vcpu) = (unsafe { (state.ctx as *mut X86_64Vcpu).as_mut() }) else {
+        return 0;
+    };
+    let Ok(bytes) = vcpu.read_bytes(addr, size as usize) else {
+        return 0;
+    };
+
+    let mut value = if zero_upper != 0 {
+        [0u64; 8]
+    } else {
+        state.zmm[dst_idx as usize]
+    };
+    for (word, chunk) in value.iter_mut().zip(bytes.chunks_exact(8)) {
+        *word = u64::from_le_bytes(chunk.try_into().expect("8-byte vector chunk"));
+    }
+    state.zmm[dst_idx as usize] = value;
+    1
+}
+
+/// JIT architectural vector-store helper. Source bytes are copied from the
+/// canonical ZMM slot before entering the MMU. Code-page destinations bail to
+/// the interpreter so decode/JIT invalidation retains its instruction-boundary
+/// ordering. Verify-mode undo records use the existing 64-bit memory-log ABI.
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+unsafe extern "C" fn rax_jit_vec_store(
+    state: *mut crate::smir::lower::runtime::GuestRegs,
+    addr: u64,
+    src_idx: u32,
+    size: u32,
+) -> u64 {
+    if src_idx >= 32 || !matches!(size, 16 | 32 | 64) {
+        return 0;
+    }
+    let Some(state) = (unsafe { state.as_mut() }) else {
+        return 0;
+    };
+    let Some(vcpu) = (unsafe { (state.ctx as *mut X86_64Vcpu).as_mut() }) else {
+        return 0;
+    };
+    let last = addr.wrapping_add(u64::from(size) - 1);
+    if vcpu.mmu.is_code_page(addr) || vcpu.mmu.is_code_page(last) {
+        return 0;
+    }
+
+    let mut bytes = [0u8; 64];
+    for (chunk, word) in bytes[..size as usize]
+        .chunks_exact_mut(8)
+        .zip(state.zmm[src_idx as usize])
+    {
+        chunk.copy_from_slice(&word.to_le_bytes());
+    }
+
+    if vcpu.jit_mem_log.is_some() {
+        match vcpu.read_bytes(addr, size as usize) {
+            Ok(old) => {
+                for (offset, chunk) in old.chunks_exact(8).enumerate() {
+                    vcpu.push_jit_mem_log((
+                        addr.wrapping_add((offset * 8) as u64),
+                        8,
+                        u64::from_le_bytes(chunk.try_into().expect("8-byte vector chunk")),
+                    ));
+                    if vcpu.jit_mem_log.is_none() {
+                        break;
+                    }
+                }
+            }
+            Err(_) => vcpu.jit_mem_log = None,
+        }
+    }
+
+    u64::from(vcpu.write_bytes(addr, &bytes[..size as usize]).is_ok())
+}
+
 /// Lift-through-calls helper: run the interpreter for a guest CALL's callee.
 ///
 /// Called from a lowered JIT region at a guest `CALL` site (the `RAX_JIT_CALL`
@@ -4047,7 +4138,7 @@ fn jit_classify_bail(
     allow_mem: bool,
 ) -> String {
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
-    use crate::smir::lower::runtime::is_x86_native_vector_op;
+    use crate::smir::lower::runtime::{is_x86_native_vector_op, x86_jit_vector_mem_shape_valid};
     let is_sp_bp = |v: &VReg| {
         matches!(
             v,
@@ -4077,7 +4168,9 @@ fn jit_classify_bail(
                     }
                 }
             }
-            let mem_ok = allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. });
+            let mem_ok = allow_mem
+                && (matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. })
+                    || x86_jit_vector_mem_shape_valid(&op.kind));
             let vector_ok = is_x86_native_vector_op(&op.kind);
             if !op.is_jit_safe() && !mem_ok && !vector_ok {
                 return variant(&op.kind);
@@ -4091,7 +4184,7 @@ fn jit_classify_bail(
                 return format!("virtual-dst:{}", variant(&op.kind));
             }
             if op.kind.dests().iter().any(is_sp_bp)
-                || op.kind.source_vregs().iter().any(|v| is_sp_bp(v))
+                || (!mem_ok && op.kind.source_vregs().iter().any(|v| is_sp_bp(v)))
             {
                 return format!("rsp/rbp:{}", variant(&op.kind));
             }
@@ -4407,7 +4500,15 @@ impl X86_64Vcpu {
                     .iter()
                     .filter(|block| !exits.contains_key(&block.id))
                     .flat_map(|block| &block.ops)
-                    .any(|op| matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. }));
+                    .any(|op| {
+                        matches!(
+                            op.kind,
+                            OpKind::Load { .. }
+                                | OpKind::Store { .. }
+                                | OpKind::VLoad { .. }
+                                | OpKind::VStore { .. }
+                        )
+                    });
             #[cfg(target_arch = "x86_64")]
             {
                 if !is_native_clobber_safe_excluding(&func, &exits, allow_mem) {
@@ -4567,6 +4668,8 @@ impl X86_64Vcpu {
         gr.ctx = self as *mut X86_64Vcpu as u64;
         gr.load_fn = rax_jit_mem_load as usize as u64;
         gr.store_fn = rax_jit_mem_store as usize as u64;
+        gr.vec_load_fn = rax_jit_vec_load as usize as u64;
+        gr.vec_store_fn = rax_jit_vec_store as usize as u64;
         // Lift-through-calls channel (RAX_JIT_CALL): a guest CALL in the region
         // calls out here to run its callee in the interpreter, then resumes.
         gr.call_fn = rax_jit_call as usize as u64;
@@ -5523,6 +5626,94 @@ mod tests {
     fn jit_memory_and_call_capabilities_default_on_with_explicit_opt_out() {
         assert!(jit_default_enabled(false));
         assert!(!jit_default_enabled(true));
+    }
+
+    #[test]
+    fn jit_vector_memory_helpers_preserve_lane_semantics_fault_atomicity_and_store_undo() {
+        use crate::smir::lower::runtime::GuestRegs;
+
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+        let mut vcpu = X86_64Vcpu::new(0, mem.clone());
+        let source: Vec<u8> = (0..64).map(|byte| byte as u8 ^ 0xA5).collect();
+        mem.write_slice(&source, GuestAddress(0x2000)).unwrap();
+
+        let mut state = GuestRegs::default();
+        state.ctx = (&mut vcpu as *mut X86_64Vcpu) as u64;
+        state.zmm[3] = [0xDEAD_BEEF_CAFE_BABE; 8];
+        assert_eq!(unsafe { rax_jit_vec_load(&mut state, 0x2000, 3, 16, 0) }, 1);
+        assert_eq!(
+            state.zmm[3][0],
+            u64::from_le_bytes(source[0..8].try_into().unwrap())
+        );
+        assert_eq!(
+            state.zmm[3][1],
+            u64::from_le_bytes(source[8..16].try_into().unwrap())
+        );
+        assert_eq!(state.zmm[3][2..], [0xDEAD_BEEF_CAFE_BABE; 6]);
+
+        state.zmm[3] = [u64::MAX; 8];
+        assert_eq!(unsafe { rax_jit_vec_load(&mut state, 0x2000, 3, 32, 1) }, 1);
+        for (word, chunk) in state.zmm[3][..4].iter().zip(source[..32].chunks_exact(8)) {
+            assert_eq!(*word, u64::from_le_bytes(chunk.try_into().unwrap()));
+        }
+        assert_eq!(state.zmm[3][4..], [0; 4]);
+
+        let before_fault = state.zmm[3];
+        assert_eq!(unsafe { rax_jit_vec_load(&mut state, 0xFFFF, 3, 64, 1) }, 0);
+        assert_eq!(state.zmm[3], before_fault, "faulting load must not commit");
+        assert_eq!(
+            unsafe { rax_jit_vec_load(&mut state, 0x2000, 32, 16, 0) },
+            0
+        );
+        assert_eq!(unsafe { rax_jit_vec_load(&mut state, 0x2000, 3, 8, 0) }, 0);
+
+        state.zmm[31] = [
+            0x0706_0504_0302_0100,
+            0x0F0E_0D0C_0B0A_0908,
+            0x1716_1514_1312_1110,
+            0x1F1E_1D1C_1B1A_1918,
+            0x2726_2524_2322_2120,
+            0x2F2E_2D2C_2B2A_2928,
+            0x3736_3534_3332_3130,
+            0x3F3E_3D3C_3B3A_3938,
+        ];
+        let old = vec![0xCC; 64];
+        mem.write_slice(&old, GuestAddress(0x3000)).unwrap();
+        assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 31, 64) }, 1);
+        let mut stored = [0u8; 64];
+        mem.read_slice(&mut stored, GuestAddress(0x3000)).unwrap();
+        assert_eq!(stored, std::array::from_fn::<_, 64, _>(|index| index as u8));
+
+        mem.write_slice(&old[..32], GuestAddress(0x3000)).unwrap();
+        vcpu.jit_mem_log = Some(Vec::new());
+        assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 31, 32) }, 1);
+        let log = vcpu.jit_mem_log.take().unwrap();
+        assert_eq!(log.len(), 4);
+        for (index, &(addr, size, value)) in log.iter().enumerate() {
+            assert_eq!(addr, 0x3000 + index as u64 * 8);
+            assert_eq!(size, 8);
+            assert_eq!(value, 0xCCCC_CCCC_CCCC_CCCC);
+        }
+
+        vcpu.mmu.mark_code_page(0x6000);
+        let protected = [0x55u8; 16];
+        mem.write_slice(&protected, GuestAddress(0x5FF8)).unwrap();
+        assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x5FF8, 31, 16) }, 0);
+        let mut unchanged = [0u8; 16];
+        mem.read_slice(&mut unchanged, GuestAddress(0x5FF8))
+            .unwrap();
+        assert_eq!(unchanged, protected, "either covered code page must deopt");
+        assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 32, 16) }, 0);
+        assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 0, 8) }, 0);
+        assert_eq!(
+            unsafe { rax_jit_vec_load(std::ptr::null_mut(), 0, 0, 16, 0) },
+            0
+        );
+        assert_eq!(
+            unsafe { rax_jit_vec_store(std::ptr::null_mut(), 0, 0, 16) },
+            0
+        );
     }
 
     #[test]

@@ -90,6 +90,10 @@ pub const X86_GUEST_CR0_OFFSET: i32 = X86_GUEST_CR4_OFFSET + 8;
 pub const X86_GUEST_CPL_OFFSET: i32 = X86_GUEST_CR0_OFFSET + 8;
 /// Byte offset of the emulator's APX enable policy used to validate XCR0.APX_F.
 pub const X86_GUEST_APX_ENABLED_OFFSET: i32 = X86_GUEST_CPL_OFFSET + 8;
+/// Byte offset of the helper-backed vector-load function pointer.
+pub const X86_GUEST_VEC_LOAD_FN_OFFSET: i32 = X86_GUEST_APX_ENABLED_OFFSET + 8;
+/// Byte offset of the helper-backed vector-store function pointer.
+pub const X86_GUEST_VEC_STORE_FN_OFFSET: i32 = X86_GUEST_VEC_LOAD_FN_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

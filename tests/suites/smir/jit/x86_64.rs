@@ -2872,6 +2872,95 @@ fn make_vcpu_mem(code: &[u8]) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
     (vcpu, memory)
 }
 
+#[test]
+fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
+    if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+        return;
+    }
+
+    const SRC: u64 = 0x20_0000;
+    const DST: u64 = 0x21_0000;
+    // loop: movaps xmm0,[rbx]; movaps [rdi],xmm0; add rbx,16;
+    //       add rdi,16; dec ecx; jnz loop; hlt
+    let code = [
+        0x0F, 0x28, 0x03, 0x0F, 0x29, 0x07, 0x48, 0x83, 0xC3, 0x10, 0x48, 0x83, 0xC7, 0x10, 0xFF,
+        0xC9, 0x75, 0xEE, 0xF4,
+    ];
+    let seed: [u8; 32] = std::array::from_fn(|index| (index as u8).wrapping_mul(13) ^ 0xA7);
+    let setup = |vcpu: &mut X86_64Vcpu, mem: &Arc<GuestMemoryMmap>| {
+        mem.write_slice(&seed, GuestAddress(SRC)).unwrap();
+        mem.write_slice(&[0xCC; 32], GuestAddress(DST)).unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rbx = SRC;
+        regs.rdi = DST;
+        regs.rcx = 2;
+        regs.xmm[0] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        regs.ymm_high[0] = [0x9999_AAAA_BBBB_CCCC, 0xDDDD_EEEE_FFFF_0001];
+        regs.zmm_high[0] = [2, 3, 4, 5];
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let (mut interp, imem) = make_vcpu_mem(&code);
+    setup(&mut interp, &imem);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let mut interp_dst = [0u8; 32];
+    imem.read_slice(&mut interp_dst, GuestAddress(DST)).unwrap();
+
+    let (mut jit, jmem) = make_vcpu_mem(&code);
+    setup(&mut jit, &jmem);
+    jit.set_jit_mem(true);
+    assert!(
+        jit.jit_try_block().expect("vector-memory jit_try_block"),
+        "architectural XMM memory loop should JIT"
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+    let mut jit_dst = [0u8; 32];
+    jmem.read_slice(&mut jit_dst, GuestAddress(DST)).unwrap();
+
+    assert_eq!(jit_dst, seed);
+    assert_eq!(jit_dst, interp_dst);
+    assert_eq!(jit_regs.xmm, interp_regs.xmm);
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high);
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high);
+    assert_eq!(jit_regs.zmm_ext, interp_regs.zmm_ext);
+    assert_eq!(jit_regs.rbx, interp_regs.rbx);
+    assert_eq!(jit_regs.rdi, interp_regs.rdi);
+    assert_eq!(jit_regs.rcx, interp_regs.rcx);
+    assert_eq!(jit_regs.rip, interp_regs.rip);
+
+    for (name, opcode, address) in [
+        ("misaligned MOVAPS", [0x0F, 0x28, 0x03], SRC + 1),
+        ("faulting MOVUPS", [0x0F, 0x10, 0x03], MEM_SIZE + 0x1000),
+    ] {
+        let fault_code = [
+            opcode[0], opcode[1], opcode[2], 0xFF, 0xC9, 0x75, 0xF9, 0xF4,
+        ];
+        let (mut vcpu, _) = make_vcpu_mem(&fault_code);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rbx = address;
+        regs.rcx = 1;
+        regs.xmm[0] = [0xA5A5_A5A5_A5A5_A5A5; 2];
+        regs.ymm_high[0] = [0x5A5A_5A5A_5A5A_5A5A; 2];
+        vcpu.set_regs(&regs).unwrap();
+        vcpu.set_jit_mem(true);
+        assert!(
+            vcpu.jit_try_block()
+                .unwrap_or_else(|error| panic!("{name}: {error:?}")),
+            "{name}: region should compile before precise deopt"
+        );
+        let after = vcpu.get_regs().unwrap();
+        assert_eq!(after.rip, LOAD_ADDR, "{name}: current-PC restart");
+        assert_eq!(after.xmm[0], regs.xmm[0], "{name}: non-committing load");
+        assert_eq!(
+            after.ymm_high[0], regs.ymm_high[0],
+            "{name}: upper-lane preservation"
+        );
+        assert_eq!(after.rcx, 1, "{name}: later loop ops must not commit");
+    }
+}
+
 /// Memory-operand JIT (RAX_JIT_MEM path): a loop that LOADS from a scratch array
 /// and STORES each element into a second array runs natively via the MMU helper
 /// calls and reproduces the interpreter's GPRs AND memory bit-exact.

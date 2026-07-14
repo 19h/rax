@@ -7017,13 +7017,9 @@ impl X86_64Lifter {
             opcode,
         };
 
-        if matches!(prefix_kind, X86SsePrefix::Rep | X86SsePrefix::Repne) {
-            if !matches!(opcode, 0x10 | 0x11) {
-                return Err(LiftError::InvalidEncoding {
-                    addr: pc,
-                    bytes: vec![0x0F, opcode],
-                });
-            }
+        if matches!(prefix_kind, X86SsePrefix::Rep | X86SsePrefix::Repne)
+            && matches!(opcode, 0x10 | 0x11)
+        {
             let elem = if prefix_kind == X86SsePrefix::Rep {
                 VecElementType::F32
             } else {
@@ -7173,6 +7169,14 @@ impl X86_64Lifter {
                 prefix.cursor + modrm.bytes_consumed,
             ));
         }
+        if prefix_kind == X86SsePrefix::Repne
+            || prefix_kind == X86SsePrefix::Rep && !matches!(opcode, 0x6F | 0x7F)
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![0x0F, opcode],
+            });
+        }
 
         match opcode {
             0x10 | 0x28 | 0x6F => {
@@ -7180,6 +7184,18 @@ impl X86_64Lifter {
                     let x86_addr = modrm.addr.as_ref().unwrap();
                     let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
                     ops.extend(pre_ops);
+                    if matches!(opcode, 0x28)
+                        || opcode == 0x6F && prefix_kind == X86SsePrefix::OpSize
+                    {
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::X86CheckAlignment {
+                                addr: addr.clone(),
+                                alignment: 16,
+                            },
+                        ));
+                    }
                     ops.push(SmirOp::with_hint(
                         OpId(ops.len() as u16),
                         pc,
@@ -7208,6 +7224,18 @@ impl X86_64Lifter {
                     let x86_addr = modrm.addr.as_ref().unwrap();
                     let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
                     ops.extend(pre_ops);
+                    if matches!(opcode, 0x29)
+                        || opcode == 0x7F && prefix_kind == X86SsePrefix::OpSize
+                    {
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::X86CheckAlignment {
+                                addr: addr.clone(),
+                                alignment: 16,
+                            },
+                        ));
+                    }
                     ops.push(SmirOp::with_hint(
                         OpId(ops.len() as u16),
                         pc,
@@ -28566,19 +28594,81 @@ impl X86_64Lifter {
                     Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
                 }
 
-                // VMOVAPS (0F 28/29) and VMOVDQA (0F 6F/7F with 66)
+                // Unmasked full-register VMOVAPS/VMOVAPD and
+                // VMOVDQA/VMOVDQU. Aligned forms emit an explicit precondition;
+                // EVEX compressed displacements scale by the full vector width.
                 0x28 | 0x29 | 0x6F | 0x7F => {
+                    let valid_prefix = match opcode {
+                        0x28 | 0x29 => {
+                            matches!(prefix.pp, X86SsePrefix::None | X86SsePrefix::OpSize)
+                        }
+                        0x6F | 0x7F => {
+                            matches!(prefix.pp, X86SsePrefix::OpSize | X86SsePrefix::Rep)
+                                || prefix.encoding == VecEncodingKind::Evex
+                                    && prefix.pp == X86SsePrefix::Repne
+                        }
+                        _ => unreachable!(),
+                    };
+                    let wrong_evex_w = prefix.encoding == VecEncodingKind::Evex
+                        && matches!(opcode, 0x28 | 0x29)
+                        && (prefix.w != (prefix.pp == X86SsePrefix::OpSize));
+                    if !valid_prefix
+                        || prefix.l_bits == 3
+                        || prefix.vvvv != 0
+                        || prefix.v_high
+                        || prefix.aaa != 0
+                        || prefix.zeroing
+                        || prefix.b
+                        || wrong_evex_w
+                    {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
                     let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
                     let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
-                    let dst_reg = self.vec_reg(modrm.reg, prefix.width);
-                    let rm_reg = self.vec_reg(modrm.rm, prefix.width);
+                    let dst_reg = self.vec_reg(
+                        modrm.reg
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
+                                16
+                            } else {
+                                0
+                            },
+                        prefix.width,
+                    );
+                    let rm_reg = self.vec_reg(
+                        modrm.rm
+                            + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
+                                16
+                            } else {
+                                0
+                            },
+                        prefix.width,
+                    );
+                    let aligned =
+                        matches!(opcode, 0x28 | 0x29) || prefix.pp == X86SsePrefix::OpSize;
 
                     match opcode {
                         0x28 | 0x6F => {
                             if modrm.is_memory {
                                 let x86_addr = modrm.addr.as_ref().unwrap();
-                                let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+                                let (addr, pre_ops) = if prefix.encoding == VecEncodingKind::Evex {
+                                    self.vec_full_addr_to_smir(prefix, x86_addr, next_pc, ctx)
+                                } else {
+                                    self.x86_addr_to_smir(x86_addr, next_pc, ctx)
+                                };
                                 ops.extend(pre_ops);
+                                if aligned {
+                                    ops.push(SmirOp::new(
+                                        OpId(ops.len() as u16),
+                                        pc,
+                                        OpKind::X86CheckAlignment {
+                                            addr: addr.clone(),
+                                            alignment: prefix.width.bytes() as u8,
+                                        },
+                                    ));
+                                }
                                 ops.push(SmirOp::with_hint(
                                     OpId(ops.len() as u16),
                                     pc,
@@ -28605,8 +28695,22 @@ impl X86_64Lifter {
                         0x29 | 0x7F => {
                             if modrm.is_memory {
                                 let x86_addr = modrm.addr.as_ref().unwrap();
-                                let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+                                let (addr, pre_ops) = if prefix.encoding == VecEncodingKind::Evex {
+                                    self.vec_full_addr_to_smir(prefix, x86_addr, next_pc, ctx)
+                                } else {
+                                    self.x86_addr_to_smir(x86_addr, next_pc, ctx)
+                                };
                                 ops.extend(pre_ops);
+                                if aligned {
+                                    ops.push(SmirOp::new(
+                                        OpId(ops.len() as u16),
+                                        pc,
+                                        OpKind::X86CheckAlignment {
+                                            addr: addr.clone(),
+                                            alignment: prefix.width.bytes() as u8,
+                                        },
+                                    ));
+                                }
                                 ops.push(SmirOp::with_hint(
                                     OpId(ops.len() as u16),
                                     pc,
@@ -60066,6 +60170,126 @@ mod tests {
             lift_single(&[0x0F, 0xE7, 0x08]),
             Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "MMX MOVNTQ"
         ));
+    }
+
+    #[test]
+    fn lift_full_vector_moves_preserves_alignment_width_high_registers_and_evex_disp8() {
+        for (bytes, aligned) in [
+            (&[0x0F, 0x28, 0x18][..], true),
+            (&[0x0F, 0x10, 0x18][..], false),
+            (&[0x66, 0x0F, 0x6F, 0x18][..], true),
+            (&[0xF3, 0x0F, 0x6F, 0x18][..], false),
+        ] {
+            let lifted = lift_single(bytes).unwrap();
+            assert!(lifted.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VLoad {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    width: VecWidth::V128,
+                    ..
+                }
+            )));
+            assert_eq!(
+                lifted
+                    .ops
+                    .iter()
+                    .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. })),
+                aligned,
+                "legacy move alignment classification: {bytes:02X?}"
+            );
+        }
+
+        for (bytes, aligned) in [
+            (&[0xC5, 0x7C, 0x28, 0x4B, 0x20][..], true),
+            (&[0xC5, 0x7D, 0x6F, 0x4B, 0x20][..], true),
+            (&[0xC5, 0x7E, 0x6F, 0x4B, 0x20][..], false),
+        ] {
+            let lifted = lift_single(bytes).unwrap();
+            assert!(lifted.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VLoad {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(9))),
+                    addr: Address::BaseOffset { offset: 32, .. },
+                    width: VecWidth::V256,
+                }
+            )));
+            assert_eq!(
+                lifted
+                    .ops
+                    .iter()
+                    .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 32, .. })),
+                aligned,
+                "VEX move alignment classification: {bytes:02X?}"
+            );
+        }
+
+        for (bytes, dst, aligned) in [
+            (
+                &[0x62, 0xE1, 0x7C, 0x48, 0x28, 0x60, 0x01][..],
+                X86Reg::Zmm(20),
+                true,
+            ),
+            (
+                &[0x62, 0xE1, 0x7D, 0x48, 0x6F, 0x68, 0x01][..],
+                X86Reg::Zmm(21),
+                true,
+            ),
+            (
+                &[0x62, 0xE1, 0xFE, 0x48, 0x6F, 0x70, 0x01][..],
+                X86Reg::Zmm(22),
+                false,
+            ),
+            (
+                &[0x62, 0xE1, 0xFF, 0x48, 0x6F, 0x78, 0x01][..],
+                X86Reg::Zmm(23),
+                false,
+            ),
+        ] {
+            let lifted = lift_single(bytes).unwrap();
+            assert!(lifted.ops.iter().any(|op| matches!(
+                &op.kind,
+                OpKind::VLoad {
+                    dst: VReg::Arch(ArchReg::X86(actual)),
+                    addr: Address::BaseOffset { offset: 64, .. },
+                    width: VecWidth::V512,
+                } if *actual == dst
+            )));
+            assert_eq!(
+                lifted
+                    .ops
+                    .iter()
+                    .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 64, .. })),
+                aligned,
+                "EVEX move alignment classification: {bytes:02X?}"
+            );
+        }
+
+        let store = lift_single(&[0x62, 0xE1, 0x7C, 0x48, 0x29, 0x60, 0x02]).unwrap();
+        assert!(store.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VStore {
+                src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(20))),
+                addr: Address::BaseOffset { offset: 128, .. },
+                width: VecWidth::V512,
+            }
+        )));
+        assert!(
+            store
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 64, .. }))
+        );
+
+        for invalid in [
+            &[0x62, 0xE1, 0x7C, 0x49, 0x28, 0x20][..], // writemask ignored
+            &[0x62, 0xE1, 0x74, 0x48, 0x28, 0x20][..], // reserved vvvv
+            &[0x62, 0xE1, 0x7C, 0x58, 0x28, 0x20][..], // EVEX.b reserved
+        ] {
+            assert!(matches!(
+                lift_single(invalid),
+                Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+            ));
+        }
     }
 
     #[test]

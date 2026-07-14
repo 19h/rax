@@ -24,8 +24,9 @@ use super::{
     X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
     X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_RFLAGS_OFFSET,
-    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_XCR0_OFFSET,
-    X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET,
+    X86_GUEST_VEC_STORE_FN_OFFSET, X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET,
+    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 // ============================================================================
@@ -6829,6 +6830,16 @@ impl X86_64Lowerer {
             // Memory Operations
             // ================================================================
             OpKind::VLoad { dst, addr, width } => {
+                if self.mem_helpers {
+                    return self.emit_jit_vector_mem_op(
+                        op.guest_pc,
+                        true,
+                        *dst,
+                        addr,
+                        *width,
+                        op.x86_hint,
+                    );
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 if !dst_reg.is_vec() {
                     return Err(LowerError::InvalidOperand {
@@ -6862,6 +6873,16 @@ impl X86_64Lowerer {
             }
 
             OpKind::VStore { src, addr, width } => {
+                if self.mem_helpers {
+                    return self.emit_jit_vector_mem_op(
+                        op.guest_pc,
+                        false,
+                        *src,
+                        addr,
+                        *width,
+                        op.x86_hint,
+                    );
+                }
                 let src_reg = self.get_reg(*src)?;
                 if !src_reg.is_vec() {
                     return Err(LowerError::InvalidOperand {
@@ -11994,6 +12015,110 @@ impl X86_64Lowerer {
         }
     }
 
+    fn x86_vector_state_index(reg: VReg, width: VecWidth) -> Option<u8> {
+        match (reg, width) {
+            (VReg::Arch(ArchReg::X86(X86Reg::Xmm(index @ 0..=31))), VecWidth::V128)
+            | (VReg::Arch(ArchReg::X86(X86Reg::Ymm(index @ 0..=31))), VecWidth::V256)
+            | (VReg::Arch(ArchReg::X86(X86Reg::Zmm(index @ 0..=31))), VecWidth::V512) => {
+                Some(index)
+            }
+            _ => None,
+        }
+    }
+
+    /// Lower one architectural XMM/YMM/ZMM memory transfer through the vCPU
+    /// MMU. The complete vector file is published before the helper call because
+    /// SysV permits the callee to clobber every vector/opmask register. A failed
+    /// helper leaves the addressed ZMM slot unchanged and exits at `guest_pc`,
+    /// allowing the interpreter to deliver the precise memory exception.
+    fn emit_jit_vector_mem_op(
+        &mut self,
+        guest_pc: u64,
+        is_load: bool,
+        vector: VReg,
+        addr: &Address,
+        width: VecWidth,
+        hint: Option<X86OpHint>,
+    ) -> Result<(), LowerError> {
+        let index = Self::x86_vector_state_index(vector, width).ok_or_else(|| {
+            LowerError::InvalidOperand {
+                op: if is_load { "VLoad" } else { "VStore" }.to_string(),
+                operand: "architectural vector register class must match transfer width"
+                    .to_string(),
+            }
+        })?;
+        let size = match width {
+            VecWidth::V128 => 16u32,
+            VecWidth::V256 => 32,
+            VecWidth::V512 => 64,
+            _ => {
+                return Err(LowerError::InvalidOperand {
+                    op: if is_load { "VLoad" } else { "VStore" }.to_string(),
+                    operand: format!("unsupported vector-memory width {width:?}"),
+                });
+            }
+        };
+        // Legacy SSE loads update only XMM[127:0]. VEX/EVEX loads clear every
+        // architectural bit above the encoded vector length. The helper starts
+        // from the old slot only for the legacy form, then commits atomically
+        // after the complete MMU read succeeds.
+        let zero_upper = is_load && !matches!(hint, Some(X86OpHint::SseMov { .. }));
+
+        self.code.emit_u8(0x50); // push guest RAX
+        self.emit_load_state_ptr_rax();
+        self.code.emit_u8(0x9C); // pushfq; stack remains 16-byte aligned
+        self.emit_spill_legacy_gprs_to_state_from_rax(8);
+        self.emit_helper_vector_state(PhysReg::Rax, true);
+        self.emit_x86_state_address_rsi(addr)?;
+
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0x89);
+        self.code.emit_u8(0xC7); // mov rdi, rax (GuestRegs state)
+        self.code.emit_u8(0xBA); // mov edx, vector index
+        self.code.emit_u32(u32::from(index));
+        self.code.emit_u8(0xB9); // mov ecx, byte size
+        self.code.emit_u32(size);
+        if is_load {
+            self.code.emit_u8(0x41);
+            self.code.emit_u8(0xB8); // mov r8d, zero_upper
+            self.code.emit_u32(u32::from(zero_upper));
+        }
+        self.code.emit_u8(0xFF);
+        self.code.emit_u8(0x90); // call qword [rax+helper]
+        self.code.emit_u32(if is_load {
+            X86_GUEST_VEC_LOAD_FN_OFFSET as u32
+        } else {
+            X86_GUEST_VEC_STORE_FN_OFFSET as u32
+        });
+
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0x8B);
+        self.code.emit_u8(0x4D);
+        self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8); // mov rcx,[rbp+state_ptr]
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0x85);
+        self.code.emit_u8(0xC0); // test rax,rax
+        let fault = self.emit_jcc_placeholder(X86Cond::E);
+
+        self.emit_helper_vector_state(PhysReg::Rcx, false);
+        self.emit_reload_all(PhysReg::Rcx);
+        self.code.emit_u8(0x9D); // popfq
+        self.emit_flag_preserving_stack_pop8();
+        self.code.emit_u8(0xE9);
+        let done = self.code.position();
+        self.code.emit_u32(0);
+
+        self.patch_rel32_to_current(fault)?;
+        self.emit_helper_vector_state(PhysReg::Rcx, false);
+        self.emit_reload_all(PhysReg::Rcx);
+        self.code.emit_u8(0x9D);
+        self.emit_flag_preserving_stack_pop8();
+        self.emit_native_exit(guest_pc);
+
+        self.patch_rel32_to_current(done)?;
+        Ok(())
+    }
+
     /// Fuse the x86 lifter's `Load virtual; Crc32C dst,dst,virtual` memory
     /// source into one MMU helper call followed by native CRC32. The identity
     /// bridge has no free guest GPR for the virtual load result, so the helper
@@ -16585,6 +16710,123 @@ mod tests {
                         | LowerError::RegisterAllocationFailed { .. }
                 ),
                 "malformed alignment check must fail lowering"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_helper_backed_vector_memory_uses_state_abi_and_rejects_malformed_ir() {
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let lower = |kind: OpKind, hint: Option<X86OpHint>| -> Result<Vec<u8>, LowerError> {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = hint;
+            let mut lowerer = X86_64Lowerer::new();
+            lowerer.set_mem_helpers(true);
+            lowerer.lower_function(&function)?;
+            lowerer.finalize()
+        };
+
+        let load = lower(
+            OpKind::VLoad {
+                dst: x86(X86Reg::Ymm(17)),
+                addr: Address::BaseOffset {
+                    base: x86(X86Reg::Rsp),
+                    offset: 32,
+                    disp_size: DispSize::Disp8,
+                },
+                width: VecWidth::V256,
+            },
+            Some(X86OpHint::VexOp {
+                map: X86VecMap::Map0F,
+                pp: X86SsePrefix::Rep,
+                opcode: 0x6F,
+                width: VecWidth::V256,
+            }),
+        )
+        .expect("lower helper-backed YMM load");
+        let mut load_call = vec![0xFF, 0x90];
+        load_call.extend_from_slice(&(X86_GUEST_VEC_LOAD_FN_OFFSET as u32).to_le_bytes());
+        assert!(
+            load.windows(load_call.len())
+                .any(|bytes| bytes == load_call)
+        );
+        assert!(
+            load.windows(6)
+                .any(|bytes| bytes == [0x41, 0xB8, 1, 0, 0, 0]),
+            "VEX load must request upper-lane zeroing: {load:02X?}"
+        );
+
+        let legacy = lower(
+            OpKind::VLoad {
+                dst: x86(X86Reg::Xmm(3)),
+                addr: Address::Absolute(0x2000),
+                width: VecWidth::V128,
+            },
+            Some(X86OpHint::SseMov {
+                prefix: X86SsePrefix::OpSize,
+                opcode: 0x6F,
+            }),
+        )
+        .expect("lower helper-backed legacy XMM load");
+        assert!(
+            legacy
+                .windows(6)
+                .any(|bytes| bytes == [0x41, 0xB8, 0, 0, 0, 0]),
+            "legacy SSE load must preserve upper lanes: {legacy:02X?}"
+        );
+
+        let store = lower(
+            OpKind::VStore {
+                src: x86(X86Reg::Zmm(31)),
+                addr: Address::SegmentRel {
+                    segment: x86(X86Reg::GsBase),
+                    base: Some(x86(X86Reg::Rbp)),
+                    index: Some(x86(X86Reg::R16)),
+                    scale: 4,
+                    disp: i64::MAX,
+                },
+                width: VecWidth::V512,
+            },
+            None,
+        )
+        .expect("lower helper-backed ZMM store");
+        let mut store_call = vec![0xFF, 0x90];
+        store_call.extend_from_slice(&(X86_GUEST_VEC_STORE_FN_OFFSET as u32).to_le_bytes());
+        assert!(
+            store
+                .windows(store_call.len())
+                .any(|bytes| bytes == store_call)
+        );
+
+        for malformed in [
+            OpKind::VLoad {
+                dst: x86(X86Reg::Xmm(0)),
+                addr: Address::Direct(x86(X86Reg::Rax)),
+                width: VecWidth::V256,
+            },
+            OpKind::VStore {
+                src: VReg::Virtual(crate::smir::ir::types::VirtualId(7)),
+                addr: Address::Direct(x86(X86Reg::Rax)),
+                width: VecWidth::V128,
+            },
+            OpKind::VLoad {
+                dst: x86(X86Reg::Xmm(0)),
+                addr: Address::GpRel { offset: 0 },
+                width: VecWidth::V128,
+            },
+        ] {
+            assert!(
+                matches!(
+                    lower(malformed, None),
+                    Err(LowerError::InvalidOperand { .. }
+                        | LowerError::UnsupportedOp { .. }
+                        | LowerError::InvalidRegister(_)
+                        | LowerError::RegisterAllocationFailed { .. })
+                ),
+                "malformed vector-memory IR must fail lowering"
             );
         }
     }

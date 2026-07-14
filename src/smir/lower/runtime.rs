@@ -25,9 +25,9 @@ use super::{
     X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
     X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_RFLAGS_OFFSET,
-    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET,
-    X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET,
-    X86_STATE_PTR_AT_RBP,
+    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET,
+    X86_GUEST_VEC_STORE_FN_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_XCR0_OFFSET,
+    X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 /// Apple I-cache invalidation (libSystem). Required after writing a `MAP_JIT`
@@ -143,6 +143,12 @@ pub struct GuestRegs {
     pub cpl: u64,
     /// Non-zero when the emulator exposes APX and permits XCR0.APX_F.
     pub apx_enabled: u64,
+    /// Address of `extern "C" fn(state, addr, dst_idx, size, zero_upper) -> ok`.
+    /// The helper writes a complete post-load ZMM slot in `state.zmm[dst_idx]`.
+    pub vec_load_fn: u64,
+    /// Address of `extern "C" fn(state, addr, src_idx, size) -> ok`.
+    /// The helper reads the source bytes from `state.zmm[src_idx]`.
+    pub vec_store_fn: u64,
 }
 
 impl Default for GuestRegs {
@@ -169,6 +175,8 @@ impl Default for GuestRegs {
             cr0: 0,
             cpl: 0,
             apx_enabled: 0,
+            vec_load_fn: 0,
+            vec_store_fn: 0,
         }
     }
 }
@@ -2316,7 +2324,7 @@ pub fn uses_x86_native_vectors_excluding(
         .iter()
         .filter(|block| !excluded.contains_key(&block.id))
         .flat_map(|block| &block.ops)
-        .any(|op| is_x86_native_vector_op(&op.kind))
+        .any(|op| is_x86_native_vector_op(&op.kind) || x86_jit_vector_mem_shape_valid(&op.kind))
 }
 
 /// Return `(AES-NI, VAES, AVX-512VL)` requirements contributed by an admitted
@@ -2416,7 +2424,7 @@ pub fn x86_native_vector_features_supported_excluding(
         .filter(|block| !excluded.contains_key(&block.id))
         .flat_map(|block| &block.ops)
         .map(|op| &op.kind)
-        .filter(|op| is_x86_native_vector_op(op))
+        .filter(|op| is_x86_native_vector_op(op) || x86_jit_vector_mem_shape_valid(op))
     {
         any = true;
         let width = match op {
@@ -2440,7 +2448,9 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86PackedRotate { width, .. }
             | OpKind::X86TernaryLogic { width, .. }
             | OpKind::X86PackedFunnelShift { width, .. }
-            | OpKind::X86MultiShiftQB { width, .. } => *width,
+            | OpKind::X86MultiShiftQB { width, .. }
+            | OpKind::VLoad { width, .. }
+            | OpKind::VStore { width, .. } => *width,
             OpKind::X86Sha512Msg1 { .. }
             | OpKind::X86Sha512Msg2 { .. }
             | OpKind::X86Sha512Rounds2 { .. } => VecWidth::V256,
@@ -2463,7 +2473,9 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86Sm3Msg1 { .. }
             | OpKind::X86Sm3Msg2 { .. }
             | OpKind::X86Sm3Rounds2 { .. }
-            | OpKind::X86Sm4 { .. } => false,
+            | OpKind::X86Sm4 { .. }
+            | OpKind::VLoad { .. }
+            | OpKind::VStore { .. } => false,
             _ => width != VecWidth::V512,
         };
         needs_vbmi |= matches!(
@@ -2840,6 +2852,40 @@ fn x86_jit_mem_address_shape_valid(addr: &crate::smir::ir::types::Address) -> bo
     }
 }
 
+/// Admit only architectural vector moves whose register class exactly matches
+/// the transfer width. Virtual vector temporaries remain ineligible because the
+/// identity bridge has no stable state slot for them across an MMU helper call.
+pub(crate) fn x86_jit_vector_mem_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86Reg};
+
+    let vector_matches_width = |reg: &VReg, width: VecWidth| {
+        matches!(
+            (reg, width),
+            (
+                VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                VecWidth::V128
+            ) | (
+                VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                VecWidth::V256
+            ) | (
+                VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                VecWidth::V512
+            )
+        )
+    };
+
+    match op {
+        OpKind::VLoad { dst, addr, width } => {
+            vector_matches_width(dst, *width) && x86_jit_mem_address_shape_valid(addr)
+        }
+        OpKind::VStore { src, addr, width } => {
+            vector_matches_width(src, *width) && x86_jit_mem_address_shape_valid(addr)
+        }
+        _ => false,
+    }
+}
+
 /// Validate the exact two-op shape emitted for a memory-source x86 CRC32.
 /// The virtual load result must be single-definition/single-use so native
 /// lowering can eliminate it without creating an identity-map GPR alias.
@@ -2989,9 +3035,11 @@ fn block_is_clobber_safe(
             OpKind::X86CheckAlignment { addr, alignment }
                 if matches!(alignment, 16 | 32 | 64) && x86_jit_mem_address_shape_valid(addr)
         );
+        let vector_mem_ok = allow_mem && x86_jit_vector_mem_shape_valid(&op.kind);
         let mem_ok = (allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. }))
             || cldemote_ok
-            || alignment_ok;
+            || alignment_ok
+            || vector_mem_ok;
         let scalar_ok = matches!(
             op.kind,
             OpKind::AndNot { .. } | OpKind::X86Bls { .. } | OpKind::X86Adx { .. }
@@ -3046,6 +3094,9 @@ fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86CheckAlignment { .. }) && !alignment_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::VLoad { .. } | OpKind::VStore { .. }) && !vector_mem_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86XGetBv { .. }) && !x86_xgetbv_shape_valid(&op.kind) {
@@ -7180,6 +7231,14 @@ mod jit_gate_tests {
             std::mem::offset_of!(GuestRegs, apx_enabled),
             X86_GUEST_APX_ENABLED_OFFSET as usize
         );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, vec_load_fn),
+            X86_GUEST_VEC_LOAD_FN_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, vec_store_fn),
+            X86_GUEST_VEC_STORE_FN_OFFSET as usize
+        );
         assert_eq!(std::mem::align_of::<GuestRegs>(), 64);
 
         let mut regs = GuestRegs::default();
@@ -9678,6 +9737,104 @@ mod jit_gate_tests {
         ] {
             assert!(!x86_gate(malformed), "malformed alignment check must deopt");
         }
+    }
+
+    #[test]
+    fn x86_vector_memory_gate_requires_memory_mode_and_exact_architectural_shapes() {
+        let gate = |op: OpKind, allow_mem: bool| {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let function = builder.finish();
+            is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                allow_mem,
+            )
+        };
+
+        let addresses = [
+            Address::Direct(x86(X86Reg::Rsp)),
+            Address::BaseIndexScale {
+                base: Some(x86(X86Reg::Rbp)),
+                index: x86(X86Reg::R16),
+                scale: 8,
+                disp: -64,
+                disp_size: DispSize::Disp8,
+            },
+            Address::SegmentRel {
+                segment: x86(X86Reg::FsBase),
+                base: Some(x86(X86Reg::R31)),
+                index: None,
+                scale: 1,
+                disp: i64::MIN,
+            },
+        ];
+        let shapes = [
+            (x86(X86Reg::Xmm(0)), VecWidth::V128),
+            (x86(X86Reg::Ymm(16)), VecWidth::V256),
+            (x86(X86Reg::Zmm(31)), VecWidth::V512),
+        ];
+        for (index, (vector, width)) in shapes.into_iter().enumerate() {
+            let addr = addresses[index].clone();
+            for op in [
+                OpKind::VLoad {
+                    dst: vector,
+                    addr: addr.clone(),
+                    width,
+                },
+                OpKind::VStore {
+                    src: vector,
+                    addr: addr.clone(),
+                    width,
+                },
+            ] {
+                assert!(x86_jit_vector_mem_shape_valid(&op));
+                assert!(!gate(op.clone(), false));
+                assert!(gate(op, true));
+            }
+        }
+
+        for malformed in [
+            OpKind::VLoad {
+                dst: x86(X86Reg::Xmm(1)),
+                addr: Address::Direct(x86(X86Reg::Rax)),
+                width: VecWidth::V256,
+            },
+            OpKind::VStore {
+                src: VReg::Virtual(VirtualId(4)),
+                addr: Address::Direct(x86(X86Reg::Rax)),
+                width: VecWidth::V128,
+            },
+            OpKind::VLoad {
+                dst: x86(X86Reg::Zmm(32)),
+                addr: Address::Direct(x86(X86Reg::Rax)),
+                width: VecWidth::V512,
+            },
+            OpKind::VStore {
+                src: x86(X86Reg::Ymm(2)),
+                addr: Address::GpRel { offset: 0 },
+                width: VecWidth::V256,
+            },
+        ] {
+            assert!(!x86_jit_vector_mem_shape_valid(&malformed));
+            assert!(!gate(malformed, true));
+        }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::VLoad {
+                dst: x86(X86Reg::Ymm(17)),
+                addr: Address::Absolute(0x2000),
+                width: VecWidth::V256,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        assert!(uses_x86_native_vectors_excluding(
+            &builder.finish(),
+            &std::collections::HashMap::new(),
+        ));
     }
 
     #[test]
