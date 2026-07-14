@@ -9624,12 +9624,20 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                 (v, self.thumb_imm_carry(insn, v))
             }
             Some(Operand::Reg(r)) => (self.reg(r.num as usize), self.cpu.cpsr.c),
-            Some(Operand::ShiftedReg(sr)) => shift_c(
-                self.reg(sr.reg.num as usize),
-                sr.shift_type,
-                sr.amount as u32,
-                self.cpu.cpsr.c,
-            ),
+            Some(Operand::ShiftedReg(sr)) => {
+                let amount = match sr.amount {
+                    crate::isa::arm::decoder::ShiftAmount::Immediate(amount) => u32::from(amount),
+                    crate::isa::arm::decoder::ShiftAmount::Register(reg) => {
+                        self.reg(reg.num as usize) & 0xff
+                    }
+                };
+                shift_c(
+                    self.reg(sr.reg.num as usize),
+                    sr.shift_type,
+                    amount,
+                    self.cpu.cpsr.c,
+                )
+            }
             _ => (0, self.cpu.cpsr.c),
         };
         self.cpu.carry_out = carry;
@@ -9872,10 +9880,11 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             MemOffset::Imm(i) => *i,
             MemOffset::Reg(r) => self.reg(r.num as usize) as i64,
             MemOffset::ShiftedReg(sr) => {
+                let amount = sr.immediate_amount()?;
                 shift_c(
                     self.reg(sr.reg.num as usize),
                     sr.shift_type,
-                    sr.amount as u32,
+                    u32::from(amount),
                     false,
                 )
                 .0 as i64

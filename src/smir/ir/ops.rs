@@ -400,6 +400,80 @@ pub struct RvVectorState {
     pub vcsr_dst: VReg,
 }
 
+/// A32 data-processing opcode with a register-specified shifter operand.
+///
+/// The discriminants match the architectural four-bit opcode field.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(u8)]
+pub enum ArmDpRegShiftKind {
+    And = 0b0000,
+    Eor = 0b0001,
+    Sub = 0b0010,
+    Rsb = 0b0011,
+    Add = 0b0100,
+    Adc = 0b0101,
+    Sbc = 0b0110,
+    Rsc = 0b0111,
+    Tst = 0b1000,
+    Teq = 0b1001,
+    Cmp = 0b1010,
+    Cmn = 0b1011,
+    Orr = 0b1100,
+    Mov = 0b1101,
+    Bic = 0b1110,
+    Mvn = 0b1111,
+}
+
+impl ArmDpRegShiftKind {
+    pub fn from_opcode(opcode: u8) -> Option<Self> {
+        Some(match opcode {
+            0b0000 => Self::And,
+            0b0001 => Self::Eor,
+            0b0010 => Self::Sub,
+            0b0011 => Self::Rsb,
+            0b0100 => Self::Add,
+            0b0101 => Self::Adc,
+            0b0110 => Self::Sbc,
+            0b0111 => Self::Rsc,
+            0b1000 => Self::Tst,
+            0b1001 => Self::Teq,
+            0b1010 => Self::Cmp,
+            0b1011 => Self::Cmn,
+            0b1100 => Self::Orr,
+            0b1101 => Self::Mov,
+            0b1110 => Self::Bic,
+            0b1111 => Self::Mvn,
+            _ => return None,
+        })
+    }
+
+    pub fn is_logical(self) -> bool {
+        matches!(
+            self,
+            Self::And
+                | Self::Eor
+                | Self::Tst
+                | Self::Teq
+                | Self::Orr
+                | Self::Mov
+                | Self::Bic
+                | Self::Mvn
+        )
+    }
+
+    pub fn reads_carry(self) -> bool {
+        matches!(self, Self::Adc | Self::Sbc | Self::Rsc)
+    }
+
+    pub fn uses_rn(self) -> bool {
+        !matches!(self, Self::Mov | Self::Mvn)
+    }
+
+    pub fn writes_result(self) -> bool {
+        !matches!(self, Self::Tst | Self::Teq | Self::Cmp | Self::Cmn)
+    }
+}
+
 /// All SMIR operation kinds
 #[derive(Clone, Debug)]
 pub enum OpKind {
@@ -678,6 +752,22 @@ pub enum OpKind {
         amount: SrcOperand,
         shift: ShiftOp,
         width: OpWidth,
+        flags: FlagUpdate,
+    },
+
+    /// A32 data processing with a register-specified shifter operand.
+    ///
+    /// `rm` is shifted by `rs[7:0]` using the exact A32 saturating/modulo
+    /// rules before `kind` combines it with optional `rn`. Logical flag forms
+    /// update N/Z from the result and C from the shifter while preserving V;
+    /// arithmetic flag forms update N/Z/C/V from the arithmetic result.
+    ArmDpRegShift {
+        kind: ArmDpRegShiftKind,
+        dst: Option<VReg>,
+        rn: Option<VReg>,
+        rm: VReg,
+        rs: VReg,
+        shift: ShiftOp,
         flags: FlagUpdate,
     },
 
@@ -3934,6 +4024,8 @@ impl OpKind {
             | OpKind::TestCondition { dst, .. }
             | OpKind::SetCC { dst, .. }
             | OpKind::ReadSysReg { dst, .. } => vec![*dst],
+
+            OpKind::ArmDpRegShift { dst, .. } => dst.iter().copied().collect(),
 
             OpKind::X86ReadTsc { dst_lo, dst_hi } => vec![*dst_lo, *dst_hi],
 

@@ -10,6 +10,9 @@
 //! - r15 data-register reads/writes, predicated data operations, RRX, and the
 //!   LSR/ASR-#0 encodings remain fail-closed until their pipeline/conditional/
 //!   shifter semantics can be represented without hidden native state;
+//! - the complete 16-opcode A32 data-processing register-shifted-register
+//!   space uses one compound SMIR operation with an exact low-byte count,
+//!   read-before-write aliasing, shifter carry, and arithmetic NZCV contract;
 //! - scalar LDM/STM and PUSH/POP forms without r15, user-bank transfer, or
 //!   constrained base/list aliases expand into ordered B4 helper operations;
 //! - literal scalar loads freeze the architectural `PC + 8` effective address
@@ -35,7 +38,7 @@ use crate::isa::arm::decoder::{
 };
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::memory::MemoryError;
-use crate::smir::ir::ops::{OpKind, SmirOp};
+use crate::smir::ir::ops::{ArmDpRegShiftKind, OpKind, SmirOp};
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, BlockId, Condition, DispSize, FunctionId, GuestAddr, MemWidth, OpId,
     OpWidth, ShiftOp, SignExtend, SourceArch, SrcOperand, VReg,
@@ -100,9 +103,16 @@ impl Aarch32Lifter {
             Operand::ShiftedReg(shifted)
                 if shifted.reg.num < 15
                     && shifted.shift_type != ShiftType::RRX
-                    && !(shifted.amount == 0
-                        && matches!(shifted.shift_type, ShiftType::LSR | ShiftType::ASR)) =>
+                    && matches!(
+                        shifted.immediate_amount(),
+                        Some(amount)
+                            if !(amount == 0
+                                && matches!(shifted.shift_type, ShiftType::LSR | ShiftType::ASR))
+                    ) =>
             {
+                let amount = shifted
+                    .immediate_amount()
+                    .expect("guard requires immediate A32 scalar shift");
                 let shift = match shifted.shift_type {
                     ShiftType::LSL => crate::smir::ir::types::ShiftOp::Lsl,
                     ShiftType::LSR => crate::smir::ir::types::ShiftOp::Lsr,
@@ -113,7 +123,7 @@ impl Aarch32Lifter {
                 Ok(SrcOperand::Shifted {
                     reg: Self::reg(shifted.reg.num),
                     shift,
-                    amount: shifted.amount,
+                    amount,
                 })
             }
             _ => Err(LiftError::Internal(
@@ -134,8 +144,11 @@ impl Aarch32Lifter {
             Operand::ShiftedReg(shifted) => {
                 shifted.reg.num >= 15
                     || shifted.shift_type == ShiftType::RRX
-                    || (shifted.amount == 0
-                        && matches!(shifted.shift_type, ShiftType::LSR | ShiftType::ASR))
+                    || matches!(shifted.amount_register(), Some(reg) if reg.num >= 15)
+                    || matches!(
+                        shifted.immediate_amount(),
+                        Some(0) if matches!(shifted.shift_type, ShiftType::LSR | ShiftType::ASR)
+                    )
             }
             Operand::Mem(mem) => {
                 mem.base.num >= 15
@@ -145,17 +158,171 @@ impl Aarch32Lifter {
                         MemOffset::ShiftedReg(shifted) => {
                             shifted.reg.num >= 15
                                 || shifted.shift_type == ShiftType::RRX
-                                || (shifted.amount == 0
-                                    && matches!(
-                                        shifted.shift_type,
-                                        ShiftType::LSR | ShiftType::ASR | ShiftType::ROR
-                                    ))
+                                || shifted.amount_register().is_some()
+                                || matches!(
+                                    shifted.immediate_amount(),
+                                    Some(0)
+                                        if matches!(
+                                            shifted.shift_type,
+                                            ShiftType::LSR | ShiftType::ASR | ShiftType::ROR
+                                        )
+                                )
                         }
                         MemOffset::ExtendedReg(extended) => extended.reg.num >= 15,
                     }
             }
             _ => false,
         })
+    }
+
+    /// Lift the complete A32 data-processing register-shifted-register space.
+    fn lift_dp_register_shift(
+        insn: &DecodedInsn,
+        pc: GuestAddr,
+        ops: &mut Vec<SmirOp>,
+    ) -> Result<bool, LiftError> {
+        if insn.state != crate::isa::arm::ExecutionState::Aarch32
+            || (insn.raw >> 25) & 0x7 != 0
+            || (insn.raw >> 4) & 1 == 0
+            || (insn.raw >> 7) & 1 != 0
+        {
+            return Ok(false);
+        }
+
+        let opcode = ((insn.raw >> 21) & 0xf) as u8;
+        let kind =
+            ArmDpRegShiftKind::from_opcode(opcode).expect("four-bit A32 data-processing opcode");
+        let encoded_s = (insn.raw >> 20) & 1 != 0;
+        let expected_mnemonic = match (kind, encoded_s) {
+            (ArmDpRegShiftKind::And, false) => Mnemonic::AND,
+            (ArmDpRegShiftKind::And, true) => Mnemonic::ANDS,
+            (ArmDpRegShiftKind::Eor, false) => Mnemonic::EOR,
+            (ArmDpRegShiftKind::Eor, true) => Mnemonic::EORS,
+            (ArmDpRegShiftKind::Sub, false) => Mnemonic::SUB,
+            (ArmDpRegShiftKind::Sub, true) => Mnemonic::SUBS,
+            (ArmDpRegShiftKind::Rsb, false) => Mnemonic::RSB,
+            (ArmDpRegShiftKind::Rsb, true) => Mnemonic::RSBS,
+            (ArmDpRegShiftKind::Add, false) => Mnemonic::ADD,
+            (ArmDpRegShiftKind::Add, true) => Mnemonic::ADDS,
+            (ArmDpRegShiftKind::Adc, false) => Mnemonic::ADC,
+            (ArmDpRegShiftKind::Adc, true) => Mnemonic::ADCS,
+            (ArmDpRegShiftKind::Sbc, false) => Mnemonic::SBC,
+            (ArmDpRegShiftKind::Sbc, true) => Mnemonic::SBCS,
+            (ArmDpRegShiftKind::Rsc, false) => Mnemonic::RSC,
+            (ArmDpRegShiftKind::Rsc, true) => Mnemonic::RSCS,
+            (ArmDpRegShiftKind::Tst, _) => Mnemonic::TST,
+            (ArmDpRegShiftKind::Teq, _) => Mnemonic::TEQ,
+            (ArmDpRegShiftKind::Cmp, _) => Mnemonic::CMP,
+            (ArmDpRegShiftKind::Cmn, _) => Mnemonic::CMN,
+            (ArmDpRegShiftKind::Orr, false) => Mnemonic::ORR,
+            (ArmDpRegShiftKind::Orr, true) => Mnemonic::ORRS,
+            (ArmDpRegShiftKind::Mov, false) => Mnemonic::MOV,
+            (ArmDpRegShiftKind::Mov, true) => Mnemonic::MOVS,
+            (ArmDpRegShiftKind::Bic, false) => Mnemonic::BIC,
+            (ArmDpRegShiftKind::Bic, true) => Mnemonic::BICS,
+            (ArmDpRegShiftKind::Mvn, false) => Mnemonic::MVN,
+            (ArmDpRegShiftKind::Mvn, true) => Mnemonic::MVNS,
+        };
+        if insn.mnemonic != expected_mnemonic {
+            return Ok(false);
+        }
+        let encoded_rn = ((insn.raw >> 16) & 0xf) as u8;
+        let encoded_rd = ((insn.raw >> 12) & 0xf) as u8;
+
+        let (dst, rn, shifted) = match (kind.writes_result(), kind.uses_rn()) {
+            (true, true) => {
+                let [
+                    Operand::Reg(rd),
+                    Operand::Reg(rn),
+                    Operand::ShiftedReg(shifted),
+                ] = insn.operands.as_slice()
+                else {
+                    return Err(LiftError::Internal(
+                        "malformed A32 register-shifted data-processing operands".to_string(),
+                    ));
+                };
+                (Some(rd), Some(rn), shifted)
+            }
+            (true, false) => {
+                let [Operand::Reg(rd), Operand::ShiftedReg(shifted)] = insn.operands.as_slice()
+                else {
+                    return Err(LiftError::Internal(
+                        "malformed A32 register-shifted move operands".to_string(),
+                    ));
+                };
+                (Some(rd), None, shifted)
+            }
+            (false, true) => {
+                let [Operand::Reg(rn), Operand::ShiftedReg(shifted)] = insn.operands.as_slice()
+                else {
+                    return Err(LiftError::Internal(
+                        "malformed A32 register-shifted test operands".to_string(),
+                    ));
+                };
+                (None, Some(rn), shifted)
+            }
+            (false, false) => unreachable!(),
+        };
+
+        let Some(rs) = shifted.amount_register() else {
+            return Ok(false);
+        };
+        let fixed_fields_valid =
+            (kind.writes_result() || encoded_rd == 0) && (kind.uses_rn() || encoded_rn == 0);
+        let flags_valid = if kind.writes_result() {
+            insn.sets_flags == encoded_s
+        } else {
+            encoded_s && insn.sets_flags
+        };
+        if !fixed_fields_valid
+            || !flags_valid
+            || dst.is_some_and(|reg| reg.num >= 15)
+            || rn.is_some_and(|reg| reg.num >= 15)
+            || shifted.reg.num >= 15
+            || rs.num >= 15
+            || shifted.shift_type == ShiftType::RRX
+        {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "A32 register-shifted data processing uses reserved fields or PC"
+                    .to_string(),
+            });
+        }
+
+        let shift = match shifted.shift_type {
+            ShiftType::LSL => crate::smir::ir::types::ShiftOp::Lsl,
+            ShiftType::LSR => crate::smir::ir::types::ShiftOp::Lsr,
+            ShiftType::ASR => crate::smir::ir::types::ShiftOp::Asr,
+            ShiftType::ROR => crate::smir::ir::types::ShiftOp::Ror,
+            ShiftType::RRX => unreachable!(),
+        };
+        let flags = if encoded_s || !kind.writes_result() {
+            if kind.is_logical() {
+                FlagUpdate::Specific(
+                    crate::smir::ir::flags::FlagSet::SF
+                        .union(crate::smir::ir::flags::FlagSet::ZF)
+                        .union(crate::smir::ir::flags::FlagSet::CF),
+                )
+            } else {
+                FlagUpdate::Specific(crate::smir::ir::flags::FlagSet::NZCV)
+            }
+        } else {
+            FlagUpdate::None
+        };
+        Self::push(
+            ops,
+            pc,
+            OpKind::ArmDpRegShift {
+                kind,
+                dst: dst.map(|reg| Self::reg(reg.num)),
+                rn: rn.map(|reg| Self::reg(reg.num)),
+                rm: Self::reg(shifted.reg.num),
+                rs: Self::reg(rs.num),
+                shift,
+                flags,
+            },
+        );
+        Ok(true)
     }
 
     fn branch_condition(cond: ArmCondition, pc: GuestAddr) -> Result<Condition, LiftError> {
@@ -257,14 +424,21 @@ impl Aarch32Lifter {
                 ((insn.raw >> 23) & 1) == 0,
                 SrcOperand::Reg(Self::reg(index.num)),
             ),
-            MemOffset::ShiftedReg(shifted) => (
-                ((insn.raw >> 23) & 1) == 0,
-                SrcOperand::Shifted {
-                    reg: Self::reg(shifted.reg.num),
-                    shift: Self::shift_op(shifted.shift_type)?,
-                    amount: shifted.amount,
-                },
-            ),
+            MemOffset::ShiftedReg(shifted) => {
+                let amount = shifted.immediate_amount().ok_or_else(|| {
+                    LiftError::Internal(
+                        "A32 memory offset has register-specified shift".to_string(),
+                    )
+                })?;
+                (
+                    ((insn.raw >> 23) & 1) == 0,
+                    SrcOperand::Shifted {
+                        reg: Self::reg(shifted.reg.num),
+                        shift: Self::shift_op(shifted.shift_type)?,
+                        amount,
+                    },
+                )
+            }
             MemOffset::ExtendedReg(_) => {
                 return Err(LiftError::Internal(
                     "A32 memory extended-register offset".to_string(),
@@ -318,12 +492,15 @@ impl Aarch32Lifter {
             MemOffset::ShiftedReg(shifted)
                 if ((insn.raw >> 23) & 1) != 0
                     && shifted.shift_type == ShiftType::LSL
-                    && shifted.amount <= 3 =>
+                    && matches!(shifted.immediate_amount(), Some(amount) if amount <= 3) =>
             {
+                let amount = shifted
+                    .immediate_amount()
+                    .expect("guard requires immediate A32 memory shift");
                 Ok(Address::BaseIndexScale {
                     base: Some(base),
                     index: Self::reg(shifted.reg.num),
-                    scale: 1 << shifted.amount,
+                    scale: 1 << amount,
                     disp: 0,
                     disp_size: DispSize::Auto,
                 })
@@ -606,11 +783,14 @@ impl Aarch32Lifter {
             });
         }
 
+        let mut ops = Vec::new();
+        if Self::lift_dp_register_shift(insn, pc, &mut ops)? {
+            return Ok((ops, ControlFlow::Fallthrough));
+        }
         if Self::shared_scalar_mnemonic(insn) {
             return self.shared.lift_insn_inner(insn, pc, ctx);
         }
 
-        let mut ops = Vec::new();
         let control = match insn.mnemonic {
             Mnemonic::LDR
             | Mnemonic::LDRB
@@ -651,7 +831,12 @@ impl Aarch32Lifter {
                 };
                 let dst = Self::reg(rd.num);
                 let src = Self::reg(shifted.reg.num);
-                let amount = SrcOperand::Imm(i64::from(shifted.amount));
+                let amount =
+                    SrcOperand::Imm(i64::from(shifted.immediate_amount().ok_or_else(|| {
+                        LiftError::Internal(
+                            "A32 MOV register shift escaped dedicated lifting".to_string(),
+                        )
+                    })?));
                 let flags = FlagUpdate::None;
                 let kind = match shifted.shift_type {
                     ShiftType::LSL => OpKind::Shl {
@@ -1273,6 +1458,7 @@ impl SmirLifter for Aarch32Lifter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::smir::ir::flags::FlagSet;
 
     fn lift(raw: u32) -> LiftResult {
         let mut lifter = Aarch32Lifter::new();
@@ -1319,6 +1505,120 @@ mod tests {
                 "{label} must produce a concrete SMIR operation"
             );
             assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+        }
+    }
+
+    fn encode_dp_register_shift(
+        opcode: u8,
+        set_flags: bool,
+        rd: u8,
+        rn: u8,
+        rm: u8,
+        rs: u8,
+        shift: u8,
+    ) -> u32 {
+        0xe000_0000
+            | (u32::from(opcode) << 21)
+            | (u32::from(set_flags) << 20)
+            | (u32::from(rn) << 16)
+            | (u32::from(rd) << 12)
+            | (u32::from(rs) << 8)
+            | (u32::from(shift) << 5)
+            | (1 << 4)
+            | u32::from(rm)
+    }
+
+    #[test]
+    fn lifts_complete_a32_data_processing_register_shift_opcode_space() {
+        let nzc = FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF);
+        for opcode in 0_u8..16 {
+            let kind = ArmDpRegShiftKind::from_opcode(opcode).unwrap();
+            let rd = if kind.writes_result() { 2 } else { 0 };
+            let rn = if kind.uses_rn() { 1 } else { 0 };
+            let flag_modes: &[bool] = if kind.writes_result() {
+                &[false, true]
+            } else {
+                &[true]
+            };
+            for &set_flags in flag_modes {
+                for (shift_bits, expected_shift) in [
+                    (0_u8, ShiftOp::Lsl),
+                    (1, ShiftOp::Lsr),
+                    (2, ShiftOp::Asr),
+                    (3, ShiftOp::Ror),
+                ] {
+                    let raw = encode_dp_register_shift(opcode, set_flags, rd, rn, 4, 3, shift_bits);
+                    let result = lift(raw);
+                    assert_eq!(result.ops.len(), 1, "raw={raw:#010x}");
+                    assert!(
+                        matches!(
+                            result.ops[0].kind,
+                            OpKind::ArmDpRegShift {
+                                kind: actual_kind,
+                                dst,
+                                rn: actual_rn,
+                                rm,
+                                rs,
+                                shift,
+                                flags,
+                            } if actual_kind == kind
+                                && dst == kind.writes_result().then(|| Aarch32Lifter::reg(2))
+                                && actual_rn == kind.uses_rn().then(|| Aarch32Lifter::reg(1))
+                                && rm == Aarch32Lifter::reg(4)
+                                && rs == Aarch32Lifter::reg(3)
+                                && shift == expected_shift
+                                && flags == if set_flags {
+                                    FlagUpdate::Specific(if kind.is_logical() { nzc } else { FlagSet::NZCV })
+                                } else {
+                                    FlagUpdate::None
+                                }
+                        ),
+                        "raw={raw:#010x}: {:?}",
+                        result.ops[0].kind
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn a32_data_processing_register_shift_rejects_pc_and_noncanonical_fixed_fields() {
+        let cases = [
+            encode_dp_register_shift(4, false, 15, 1, 2, 3, 0),
+            encode_dp_register_shift(4, false, 0, 15, 2, 3, 0),
+            encode_dp_register_shift(4, false, 0, 1, 15, 3, 0),
+            encode_dp_register_shift(4, false, 0, 1, 2, 15, 0),
+            encode_dp_register_shift(8, true, 1, 1, 2, 3, 0),
+            encode_dp_register_shift(13, false, 1, 1, 2, 3, 0),
+        ];
+        for raw in cases {
+            let mut lifter = Aarch32Lifter::new();
+            let mut ctx = LiftContext::new(SourceArch::Aarch32);
+            assert!(
+                matches!(
+                    lifter.lift_insn(0x1000, &raw.to_le_bytes(), &mut ctx),
+                    Err(LiftError::Unsupported { .. })
+                ),
+                "raw={raw:#010x}"
+            );
+        }
+    }
+
+    #[test]
+    fn a32_register_shift_recognition_does_not_steal_miscellaneous_encodings() {
+        for raw in [
+            0xe16f_2f13_u32, // CLZ r2,r3
+            0xe12f_ff1e,     // BX lr
+            0xe12f_ff3e,     // BLX lr
+        ] {
+            let result = lift(raw);
+            assert!(
+                result
+                    .ops
+                    .iter()
+                    .all(|op| !matches!(op.kind, OpKind::ArmDpRegShift { .. })),
+                "raw={raw:#010x}"
+            );
         }
     }
 

@@ -4746,7 +4746,7 @@ mod tests {
                 matches!(insn.operands.get(1), Some(Operand::Reg(reg)) if *reg == Register::zr(true))
             );
             assert!(
-                matches!(insn.operands.get(2), Some(Operand::ShiftedReg(shifted)) if shifted.amount == 0)
+                matches!(insn.operands.get(2), Some(Operand::ShiftedReg(shifted)) if shifted.immediate_amount() == Some(0))
             );
         }
     }

@@ -99,7 +99,8 @@ impl ThumbLifter {
         for operand in &mut normalized.operands {
             match operand {
                 Operand::ShiftedReg(shifted)
-                    if shifted.shift_type == ShiftType::LSL && shifted.amount == 0 =>
+                    if shifted.shift_type == ShiftType::LSL
+                        && shifted.immediate_amount() == Some(0) =>
                 {
                     let reg = shifted.reg;
                     *operand = Operand::Reg(if reg.num == 13 {
@@ -136,7 +137,7 @@ impl ThumbLifter {
             Operand::ShiftedReg(shifted) => {
                 shifted.reg.num >= 15
                     || shifted.shift_type == ShiftType::RRX
-                    || shifted.amount >= 32
+                    || !matches!(shifted.immediate_amount(), Some(amount) if amount < 32)
             }
             Operand::ExtendedReg(extended) => extended.reg.num >= 15,
             Operand::Mem(mem) => {
@@ -147,7 +148,7 @@ impl ThumbLifter {
                         MemOffset::ShiftedReg(shifted) => {
                             shifted.reg.num >= 15
                                 || shifted.shift_type != ShiftType::LSL
-                                || shifted.amount > 3
+                                || !matches!(shifted.immediate_amount(), Some(amount) if amount <= 3)
                         }
                         MemOffset::ExtendedReg(_) => true,
                     }
@@ -250,12 +251,16 @@ impl ThumbLifter {
                 disp_size: DispSize::Auto,
             }),
             MemOffset::ShiftedReg(shifted)
-                if shifted.shift_type == ShiftType::LSL && shifted.amount <= 3 =>
+                if shifted.shift_type == ShiftType::LSL
+                    && matches!(shifted.immediate_amount(), Some(amount) if amount <= 3) =>
             {
+                let amount = shifted
+                    .immediate_amount()
+                    .expect("guard requires immediate Thumb memory shift");
                 Ok(Address::BaseIndexScale {
                     base: Some(base),
                     index: Self::reg(shifted.reg.num),
-                    scale: 1 << shifted.amount,
+                    scale: 1 << amount,
                     disp: 0,
                     disp_size: DispSize::Auto,
                 })
@@ -766,8 +771,11 @@ impl ThumbLifter {
             Operand::ShiftedReg(shifted)
                 if shifted.reg.num < 15
                     && shifted.shift_type != ShiftType::RRX
-                    && shifted.amount < 32 =>
+                    && matches!(shifted.immediate_amount(), Some(amount) if amount < 32) =>
             {
+                let amount = shifted
+                    .immediate_amount()
+                    .expect("guard requires immediate Thumb scalar shift");
                 let shift = match shifted.shift_type {
                     ShiftType::LSL => crate::smir::ir::types::ShiftOp::Lsl,
                     ShiftType::LSR => crate::smir::ir::types::ShiftOp::Lsr,
@@ -778,7 +786,7 @@ impl ThumbLifter {
                 Ok(SrcOperand::Shifted {
                     reg: Self::reg(shifted.reg.num),
                     shift,
-                    amount: shifted.amount,
+                    amount,
                 })
             }
             _ => Err(LiftError::Internal(
@@ -875,7 +883,8 @@ impl ThumbLifter {
                 let source = match source {
                     Operand::Reg(rm) => rm,
                     Operand::ShiftedReg(shifted)
-                        if shifted.shift_type == ShiftType::LSL && shifted.amount == 0 =>
+                        if shifted.shift_type == ShiftType::LSL
+                            && shifted.immediate_amount() == Some(0) =>
                     {
                         &shifted.reg
                     }
@@ -907,7 +916,12 @@ impl ThumbLifter {
                 };
                 let dst = Self::reg(rd.num);
                 let src = Self::reg(shifted.reg.num);
-                let amount = SrcOperand::Imm(i64::from(shifted.amount));
+                let amount =
+                    SrcOperand::Imm(i64::from(shifted.immediate_amount().ok_or_else(|| {
+                        LiftError::Internal(
+                            "Thumb MOV has register-specified shifted operand".to_string(),
+                        )
+                    })?));
                 let flags = FlagUpdate::None;
                 let kind = match shifted.shift_type {
                     ShiftType::LSL => OpKind::Shl {

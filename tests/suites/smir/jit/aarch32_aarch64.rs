@@ -108,13 +108,18 @@ fn lift_program(program: &[u32]) -> SmirFunction {
 }
 
 fn lower(program: &[u32]) -> (ExecMem, usize) {
-    let function = lift_program(program);
+    lower_at(program, OptLevel::O0)
+}
+
+fn lower_at(program: &[u32], level: OptLevel) -> (ExecMem, usize) {
+    let mut function = lift_program(program);
+    optimize_function(&mut function, level);
     assert!(
         is_aarch32_aarch64_native_clobber_safe_excluding(
             &function,
             &std::collections::HashMap::new(),
         ),
-        "complete A32 scalar program must satisfy the production native gate"
+        "complete A32 scalar program at {level:?} must satisfy the production native gate"
     );
 
     let mut lowerer = Aarch64Lowerer::new();
@@ -377,6 +382,116 @@ fn a32_scalar_integer_program_executes_natively_with_interpreter_parity() {
         initial.cpsr & 0x0fff_ffff,
         "non-NZCV CPSR fields remain stable"
     );
+}
+
+fn encode_a32_dp_register_shift(
+    opcode: u8,
+    set_flags: bool,
+    rd: u8,
+    rn: u8,
+    rm: u8,
+    rs: u8,
+    shift: u8,
+) -> u32 {
+    0xe000_0000
+        | (u32::from(opcode) << 21)
+        | (u32::from(set_flags) << 20)
+        | (u32::from(rn) << 16)
+        | (u32::from(rd) << 12)
+        | (u32::from(rs) << 8)
+        | (u32::from(shift) << 5)
+        | (1 << 4)
+        | u32::from(rm)
+}
+
+#[test]
+fn a32_data_processing_register_shift_matrix_matches_interpreter_at_o0_and_o2() {
+    const NZCV_MASK: u32 = 0xf000_0000;
+    let boundaries = [
+        (0x8000_0001_u32, 0_u32),
+        (0x8000_0001, 1),
+        (0x7fff_ffff, 31),
+        (0x8000_0000, 32),
+        (u32::MAX, 33),
+        (0x4000_0001, 255),
+        (0x8000_0001, 256),
+        (0x7fff_ffff, 257),
+    ];
+
+    for opcode in 0_u8..16 {
+        let writes_result = !matches!(opcode, 8..=11);
+        let uses_rn = !matches!(opcode, 13 | 15);
+        let flag_modes: &[bool] = if writes_result {
+            &[false, true]
+        } else {
+            &[true]
+        };
+        for &set_flags in flag_modes {
+            for shift in 0_u8..4 {
+                let rd = 0;
+                let rn = if uses_rn { 1 } else { 0 };
+                let raw = encode_a32_dp_register_shift(opcode, set_flags, rd, rn, 2, 3, shift);
+                for level in [OptLevel::O0, OptLevel::O2] {
+                    let (exec, entry) = lower_at(&[raw], level);
+                    for &(rm, count) in &boundaries {
+                        for nzcv in 0_u32..16 {
+                            let mut initial = initial_state();
+                            initial.r[0] = 0xaaaa_aaaa;
+                            initial.r[1] = 0x7fff_ffff;
+                            initial.r[2] = rm;
+                            initial.r[3] = count;
+                            initial.cpsr = (initial.cpsr & !NZCV_MASK) | (nzcv << 28);
+                            let expected = reference(&[raw], initial);
+                            let mut actual = initial;
+                            exec.run_aarch32_identity(entry, &mut actual);
+                            assert_eq!(
+                                actual, expected,
+                                "opcode={opcode:#x} shift={shift} S={set_flags} rm={rm:#x} count={count:#x} NZCV={nzcv:#x} {level:?}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Exercise every Rd/Rn/Rm/Rs equality partition and the highest admitted
+    // A32 register numbers through both optimization levels.
+    for &(encoded_rd, encoded_rn, rm, rs) in &[
+        (0_u8, 1_u8, 2_u8, 3_u8),
+        (0, 0, 2, 3),
+        (0, 1, 0, 3),
+        (0, 1, 2, 0),
+        (0, 1, 1, 3),
+        (0, 1, 2, 1),
+        (0, 1, 2, 2),
+        (0, 0, 0, 0),
+        (14, 13, 12, 11),
+    ] {
+        for opcode in 0_u8..16 {
+            let writes_result = !matches!(opcode, 8..=11);
+            let uses_rn = !matches!(opcode, 13 | 15);
+            let rd = if writes_result { encoded_rd } else { 0 };
+            let rn = if uses_rn { encoded_rn } else { 0 };
+            let raw = encode_a32_dp_register_shift(opcode, true, rd, rn, rm, rs, 3);
+            for level in [OptLevel::O0, OptLevel::O2] {
+                let (exec, entry) = lower_at(&[raw], level);
+                for nzcv in 0_u32..16 {
+                    let mut initial = initial_state();
+                    initial.r[rm as usize] = 0x8000_0021;
+                    initial.r[rs as usize] = 33;
+                    initial.cpsr = (initial.cpsr & !NZCV_MASK) | (nzcv << 28);
+                    let expected = reference(&[raw], initial);
+                    let mut actual = initial;
+                    exec.run_aarch32_identity(entry, &mut actual);
+                    assert_eq!(
+                        actual, expected,
+                        "opcode={opcode:#x} aliases=({rd},{rn},{rm},{rs}) NZCV={nzcv:#x} {level:?}"
+                    );
+                }
+            }
+        }
+    }
 }
 
 #[test]

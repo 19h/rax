@@ -325,6 +325,15 @@ impl Immediate {
     }
 }
 
+/// Shift amount encoded by an instruction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ShiftAmount {
+    /// Immediate shift amount.
+    Immediate(u8),
+    /// Register whose bottom byte supplies the shift amount.
+    Register(Register),
+}
+
 /// Register with shift applied.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ShiftedRegister {
@@ -332,8 +341,8 @@ pub struct ShiftedRegister {
     pub reg: Register,
     /// The shift type.
     pub shift_type: ShiftType,
-    /// The shift amount.
-    pub amount: u8,
+    /// The immediate or register-specified shift amount.
+    pub amount: ShiftAmount,
 }
 
 impl ShiftedRegister {
@@ -342,7 +351,32 @@ impl ShiftedRegister {
         ShiftedRegister {
             reg,
             shift_type,
-            amount,
+            amount: ShiftAmount::Immediate(amount),
+        }
+    }
+
+    /// Create a register shifted by the bottom byte of another register.
+    pub fn by_register(reg: Register, shift_type: ShiftType, amount: Register) -> Self {
+        ShiftedRegister {
+            reg,
+            shift_type,
+            amount: ShiftAmount::Register(amount),
+        }
+    }
+
+    /// Return the immediate amount, or `None` for a register-specified shift.
+    pub fn immediate_amount(&self) -> Option<u8> {
+        match self.amount {
+            ShiftAmount::Immediate(amount) => Some(amount),
+            ShiftAmount::Register(_) => None,
+        }
+    }
+
+    /// Return the amount register, or `None` for an immediate shift.
+    pub fn amount_register(&self) -> Option<Register> {
+        match self.amount {
+            ShiftAmount::Immediate(_) => None,
+            ShiftAmount::Register(reg) => Some(reg),
         }
     }
 }

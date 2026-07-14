@@ -130,6 +130,7 @@ impl OptStats {
 /// single integer result width (vectors, memory, etc.).
 fn op_out_width(kind: &OpKind) -> Option<OpWidth> {
     match kind {
+        OpKind::ArmDpRegShift { .. } => Some(OpWidth::W32),
         OpKind::Add { width, .. }
         | OpKind::Sub { width, .. }
         | OpKind::Adc { width, .. }
@@ -1975,6 +1976,7 @@ impl OpKind {
             | OpKind::Rol { flags, .. }
             | OpKind::Ror { flags, .. }
             | OpKind::ArmRegShift { flags, .. }
+            | OpKind::ArmDpRegShift { flags, .. }
             | OpKind::Rcl { flags, .. }
             | OpKind::Rcr { flags, .. }
             | OpKind::Bsf { flags, .. }
@@ -2006,6 +2008,7 @@ impl OpKind {
             | OpKind::Shr { flags, .. }
             | OpKind::Sar { flags, .. }
             | OpKind::ArmRegShift { flags, .. }
+            | OpKind::ArmDpRegShift { flags, .. }
             | OpKind::Shld { flags, .. }
             | OpKind::Shrd { flags, .. }
             | OpKind::X86NddDoubleShift { flags, .. }
@@ -2115,6 +2118,15 @@ impl OpKind {
             // dead-flag-eliminated shifts do not consume the incoming carry.
             OpKind::ArmRegShift { flags, .. } => {
                 if flags.as_set().contains(FlagSet::CF) {
+                    FlagSet::CF
+                } else {
+                    FlagSet::EMPTY
+                }
+            }
+
+            OpKind::ArmDpRegShift { kind, flags, .. } => {
+                if kind.reads_carry() || (kind.is_logical() && flags.as_set().contains(FlagSet::CF))
+                {
                     FlagSet::CF
                 } else {
                     FlagSet::EMPTY
@@ -2281,6 +2293,14 @@ impl OpKind {
                 if let SrcOperand::Reg(r) = amount {
                     result.push(*r);
                 }
+            }
+
+            OpKind::ArmDpRegShift { rn, rm, rs, .. } => {
+                if let Some(rn) = rn {
+                    result.push(*rn);
+                }
+                result.push(*rm);
+                result.push(*rs);
             }
 
             // Bidirectional shift: both `src` and `amount` are SrcOperand.
@@ -3767,8 +3787,8 @@ impl OpKind {
 mod tests {
     use super::*;
     use crate::smir::ir::ops::{
-        OpKind, X86AdxKind, X86BlsKind, X86CacheControlKind, X86CountKind, X86X87ControlKind,
-        X86X87DataKind,
+        ArmDpRegShiftKind, OpKind, X86AdxKind, X86BlsKind, X86CacheControlKind, X86CountKind,
+        X86X87ControlKind, X86X87DataKind,
     };
     use crate::smir::ir::types::{
         Avx10FP16Op, Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType, X86AesOp,
@@ -9234,6 +9254,98 @@ mod tests {
                 ..
             }
         ));
+    }
+
+    #[test]
+    fn a32_data_processing_register_shift_metadata_and_dead_flags_are_exact() {
+        let dst = VReg::virt(0);
+        let rn = VReg::virt(1);
+        let rm = VReg::virt(2);
+        let rs = VReg::virt(3);
+        let nzc = FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF);
+
+        for opcode in 0_u8..16 {
+            let kind = ArmDpRegShiftKind::from_opcode(opcode).unwrap();
+            let flags = FlagUpdate::Specific(if kind.is_logical() {
+                nzc
+            } else {
+                FlagSet::NZCV
+            });
+            let op = OpKind::ArmDpRegShift {
+                kind,
+                dst: kind.writes_result().then_some(dst),
+                rn: kind.uses_rn().then_some(rn),
+                rm,
+                rs,
+                shift: ShiftOp::Ror,
+                flags,
+            };
+            assert_eq!(
+                op.dests(),
+                if kind.writes_result() {
+                    vec![dst]
+                } else {
+                    vec![]
+                }
+            );
+            let mut expected_sources = Vec::new();
+            if kind.uses_rn() {
+                expected_sources.push(rn);
+            }
+            expected_sources.extend([rm, rs]);
+            assert_eq!(op.source_vregs(), expected_sources);
+            assert_eq!(op.flags_written(), flags.as_set());
+            assert_eq!(op.flags_must_write(), flags.as_set());
+            assert_eq!(
+                op.flags_read(),
+                if kind.reads_carry() || kind.is_logical() {
+                    FlagSet::CF
+                } else {
+                    FlagSet::EMPTY
+                }
+            );
+        }
+
+        for (kind, still_reads_carry) in [
+            (ArmDpRegShiftKind::And, false),
+            (ArmDpRegShiftKind::Adc, true),
+        ] {
+            let flags = FlagUpdate::Specific(if kind.is_logical() {
+                nzc
+            } else {
+                FlagSet::NZCV
+            });
+            let mut block = SmirBlock::new(BlockId(0), 0x1000);
+            block.push_op(make_op(
+                0,
+                OpKind::ArmDpRegShift {
+                    kind,
+                    dst: Some(dst),
+                    rn: Some(rn),
+                    rm,
+                    rs,
+                    shift: ShiftOp::Lsl,
+                    flags,
+                },
+            ));
+            block.set_terminator(Terminator::Return { values: vec![dst] });
+            assert_eq!(dead_flag_elimination(&mut block), 1);
+            assert!(matches!(
+                block.ops[0].kind,
+                OpKind::ArmDpRegShift {
+                    flags: FlagUpdate::None,
+                    ..
+                }
+            ));
+            assert_eq!(
+                block.ops[0].kind.flags_read(),
+                if still_reads_carry {
+                    FlagSet::CF
+                } else {
+                    FlagSet::EMPTY
+                }
+            );
+        }
     }
 
     #[test]

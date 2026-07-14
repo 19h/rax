@@ -2560,13 +2560,15 @@ impl Aarch32Decoder {
         let rd = ((raw >> 12) & 0xF) as u8;
         let shift_imm = ((raw >> 7) & 0x1F) as u8;
         let shift_type = ShiftType::from_bits(((raw >> 5) & 0x3) as u8);
+        let register_shift = (raw >> 4) & 1 != 0;
+        let rs = ((raw >> 8) & 0xF) as u8;
         let rm = (raw & 0xF) as u8;
 
         let (mnemonic, uses_rn, writes_rd) = Self::dp_opcode_to_mnemonic(opcode, s == 1);
 
         let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch32, raw, 4);
 
-        if s == 1 && writes_rd {
+        if s == 1 {
             insn.sets_flags = true;
         }
 
@@ -2581,7 +2583,13 @@ impl Aarch32Decoder {
         // Add shifted register operand
         let rm_reg = Register::raw(rm, false, false);
 
-        if shift_imm == 0 && shift_type == ShiftType::LSL {
+        if register_shift {
+            insn = insn.with_operand(Operand::ShiftedReg(ShiftedRegister::by_register(
+                rm_reg,
+                shift_type,
+                Register::raw(rs, false, false),
+            )));
+        } else if shift_imm == 0 && shift_type == ShiftType::LSL {
             insn = insn.with_operand(Operand::Reg(rm_reg));
         } else if shift_imm == 0 && shift_type == ShiftType::ROR {
             // RRX
@@ -3807,6 +3815,47 @@ mod tests {
         let insn = decode_bytes(&[0x02, 0x01, 0x81, 0xe0]).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::ADD);
         assert_eq!(insn.operands.len(), 3);
+    }
+
+    #[test]
+    fn data_processing_register_shift_decodes_rs_for_every_opcode_and_shift() {
+        for opcode in 0_u32..16 {
+            let writes_result = !matches!(opcode, 8..=11);
+            let uses_rn = !matches!(opcode, 13 | 15);
+            let s_values: &[u32] = if writes_result { &[0, 1] } else { &[1] };
+            for &s in s_values {
+                for shift_bits in 0_u32..4 {
+                    let rn = if uses_rn { 1 } else { 0 };
+                    let rd = if writes_result { 2 } else { 0 };
+                    let raw = 0xe000_0000
+                        | (opcode << 21)
+                        | (s << 20)
+                        | (rn << 16)
+                        | (rd << 12)
+                        | (3 << 8)
+                        | (shift_bits << 5)
+                        | (1 << 4)
+                        | 4;
+                    let insn = Aarch32Decoder::decode(raw).unwrap();
+                    assert_eq!(insn.sets_flags, s != 0, "raw={raw:#010x}");
+                    assert_eq!(
+                        insn.operands.len(),
+                        usize::from(writes_result) + usize::from(uses_rn) + 1
+                    );
+                    assert!(
+                        matches!(
+                            insn.operands.last(),
+                            Some(Operand::ShiftedReg(ShiftedRegister {
+                                reg: Register { num: 4, .. },
+                                shift_type,
+                                amount: ShiftAmount::Register(Register { num: 3, .. }),
+                            })) if *shift_type == ShiftType::from_bits(shift_bits as u8)
+                        ),
+                        "raw={raw:#010x}: {insn:?}"
+                    );
+                }
+            }
+        }
     }
 
     #[test]

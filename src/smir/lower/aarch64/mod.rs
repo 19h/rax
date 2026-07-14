@@ -8,7 +8,9 @@
 use std::collections::HashMap;
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
-use crate::smir::ir::ops::{OpKind, SmirOp, X86AdxKind, X86BlsKind, X86CountKind};
+use crate::smir::ir::ops::{
+    ArmDpRegShiftKind, OpKind, SmirOp, X86AdxKind, X86BlsKind, X86CountKind,
+};
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, AtomicOp, Avx10FP16Op, BlockId, Condition, ExtendOp, FenceKind,
     FpPrecision, FpRoundMode, MemWidth, MemoryOrder, OpWidth, ShiftOp, SignExtend, SrcOperand,
@@ -13486,7 +13488,192 @@ impl Aarch64Lowerer {
         }
     }
 
-    /// Lower AArch32's register-controlled W32 shift contract.  Unlike generic
+    /// Emit the exact AArch32 W32 register-controlled shift result. The caller
+    /// has already truncated `count` to the architectural low eight bits.
+    fn emit_arm_w32_reg_shift_result(
+        &mut self,
+        result: u8,
+        original: u8,
+        count: u8,
+        shift: ShiftOp,
+    ) -> Result<(), LowerError> {
+        // A64 variable shifts mask their count modulo 32. Branch around that
+        // behavior for AArch32's saturating logical/arithmetic cases; ROR is
+        // intentionally modulo 32 for every nonzero low-byte count.
+        match shift {
+            ShiftOp::Lsl | ShiftOp::Lsr => {
+                self.emit_addsub_imm(31, count, 32, true, true, OpWidth::W32)?;
+                let large = self.code.position();
+                let uge = Self::arm_cond_code(Condition::Uge)?;
+                self.emit(0x5400_0000 | uge);
+                self.lower_shift_reg(result, original, count, shift, OpWidth::W32)?;
+                let done = self.code.position();
+                self.emit(0x1400_0000);
+                self.patch_cond_branch_to_current(large, uge)?;
+                self.emit_mov_imm(result, 0, OpWidth::W32)?;
+                self.patch_branch_to_current(done)
+            }
+            ShiftOp::Asr => {
+                self.emit_addsub_imm(31, count, 32, true, true, OpWidth::W32)?;
+                let large = self.code.position();
+                let uge = Self::arm_cond_code(Condition::Uge)?;
+                self.emit(0x5400_0000 | uge);
+                self.lower_shift_reg(result, original, count, shift, OpWidth::W32)?;
+                let done = self.code.position();
+                self.emit(0x1400_0000);
+                self.patch_cond_branch_to_current(large, uge)?;
+                self.lower_shift_imm(result, original, 31, ShiftOp::Asr, OpWidth::W32)?;
+                self.patch_branch_to_current(done)
+            }
+            ShiftOp::Ror => {
+                self.lower_shift_reg(result, original, count, ShiftOp::Ror, OpWidth::W32)
+            }
+            ShiftOp::Rrx => Err(LowerError::InvalidOperand {
+                op: "AArch64 native AArch32 register shift".into(),
+                operand: "RRX is not a register-specified shift".into(),
+            }),
+        }
+    }
+
+    /// Add the AArch32 register-shifter carry output to an already initialized
+    /// NZCV word. Count zero passes through the incoming architectural carry.
+    fn emit_arm_w32_reg_shift_carry(
+        &mut self,
+        produced: u8,
+        temp: u8,
+        saved_flags: u8,
+        original: u8,
+        count: u8,
+        result: u8,
+        shift: ShiftOp,
+    ) -> Result<(), LowerError> {
+        let nonzero = self.code.position();
+        self.emit(0xb500_0000 | u32::from(count));
+        let old_c_clear = self.code.position();
+        self.emit_test_branch(saved_flags, 29, false, 0)?;
+        self.emit_or_nzcv_const(produced, temp, NZCV_C)?;
+        self.patch_test_branch_to_current(old_c_clear, saved_flags, 29, false)?;
+        let carry_done = self.code.position();
+        self.emit(0x1400_0000);
+
+        self.patch_compare_branch_to_current(nonzero, count, true)?;
+        match shift {
+            ShiftOp::Lsl | ShiftOp::Lsr => {
+                self.emit_shift_carry_reg(produced, temp, original, count, shift, OpWidth::W32)?
+            }
+            ShiftOp::Asr => {
+                self.emit_addsub_imm(31, count, 32, true, true, OpWidth::W32)?;
+                let small = self.code.position();
+                let ult = Self::arm_cond_code(Condition::Ult)?;
+                self.emit(0x5400_0000 | ult);
+                let sign_clear = self.code.position();
+                self.emit_test_branch(original, 31, false, 0)?;
+                self.emit_or_nzcv_const(produced, temp, NZCV_C)?;
+                self.patch_test_branch_to_current(sign_clear, original, 31, false)?;
+                let asr_done = self.code.position();
+                self.emit(0x1400_0000);
+                self.patch_cond_branch_to_current(small, ult)?;
+                self.emit_shift_carry_reg(
+                    produced,
+                    temp,
+                    original,
+                    count,
+                    ShiftOp::Asr,
+                    OpWidth::W32,
+                )?;
+                self.patch_branch_to_current(asr_done)?;
+            }
+            ShiftOp::Ror => {
+                let carry_clear = self.code.position();
+                self.emit_test_branch(result, 31, false, 0)?;
+                self.emit_or_nzcv_const(produced, temp, NZCV_C)?;
+                self.patch_test_branch_to_current(carry_clear, result, 31, false)?;
+            }
+            ShiftOp::Rrx => {
+                return Err(LowerError::InvalidOperand {
+                    op: "AArch64 native AArch32 register shift carry".into(),
+                    operand: "RRX is not a register-specified shift".into(),
+                });
+            }
+        }
+        self.patch_branch_to_current(carry_done)
+    }
+
+    /// Merge exactly the requested architectural NZCV outputs while retaining
+    /// every other incoming flag bit verbatim.
+    fn emit_merge_requested_nzcv(
+        &mut self,
+        saved: u8,
+        produced: u8,
+        requested: FlagSet,
+    ) -> Result<(), LowerError> {
+        if !requested.difference(FlagSet::NZCV).is_empty() {
+            return Err(LowerError::InvalidOperand {
+                op: "AArch64 native NZCV merge".into(),
+                operand: format!("non-NZCV flag set {requested:?}"),
+            });
+        }
+        if requested.is_empty() {
+            return self.emit_sysreg(saved, ArmReg::Nzcv, false);
+        }
+        if requested == FlagSet::NZCV {
+            return self.emit_sysreg(produced, ArmReg::Nzcv, false);
+        }
+
+        let mut mask = 0_i64;
+        if requested.contains(FlagSet::SF) {
+            mask |= NZCV_N;
+        }
+        if requested.contains(FlagSet::ZF) {
+            mask |= NZCV_Z;
+        }
+        if requested.contains(FlagSet::CF) {
+            mask |= NZCV_C;
+        }
+        if requested.contains(FlagSet::OF) {
+            mask |= NZCV_V;
+        }
+        self.emit_logic_imm_mask(saved, saved, 0b00, !(mask as u32) as i64, OpWidth::W32)?;
+        self.emit_logic_imm_mask(produced, produced, 0b00, mask, OpWidth::W32)?;
+        self.emit_logic_shifted(saved, saved, produced, 0b01, false, 0, 0, OpWidth::W32)?;
+        self.emit_sysreg(saved, ArmReg::Nzcv, false)
+    }
+
+    fn emit_arm_dp_reg_shift_result(
+        &mut self,
+        kind: ArmDpRegShiftKind,
+        dst: u8,
+        rn: u8,
+        shifted: u8,
+        set_flags: bool,
+    ) -> Result<(), LowerError> {
+        use ArmDpRegShiftKind as Kind;
+
+        match kind {
+            Kind::And | Kind::Tst => {
+                self.emit_logic_shifted(dst, rn, shifted, 0b00, false, 0, 0, OpWidth::W32)
+            }
+            Kind::Eor | Kind::Teq => {
+                self.emit_logic_shifted(dst, rn, shifted, 0b10, false, 0, 0, OpWidth::W32)
+            }
+            Kind::Sub | Kind::Cmp => {
+                self.emit_addsub_reg(dst, rn, shifted, true, set_flags, OpWidth::W32)
+            }
+            Kind::Rsb => self.emit_addsub_reg(dst, shifted, rn, true, set_flags, OpWidth::W32),
+            Kind::Add | Kind::Cmn => {
+                self.emit_addsub_reg(dst, rn, shifted, false, set_flags, OpWidth::W32)
+            }
+            Kind::Adc => self.emit_addsub_carry(dst, rn, shifted, false, set_flags, OpWidth::W32),
+            Kind::Sbc => self.emit_addsub_carry(dst, rn, shifted, true, set_flags, OpWidth::W32),
+            Kind::Rsc => self.emit_addsub_carry(dst, shifted, rn, true, set_flags, OpWidth::W32),
+            Kind::Orr => self.emit_logic_shifted(dst, rn, shifted, 0b01, false, 0, 0, OpWidth::W32),
+            Kind::Mov => self.emit_logic_shifted(dst, 31, shifted, 0b01, false, 0, 0, OpWidth::W32),
+            Kind::Bic => self.emit_logic_shifted(dst, rn, shifted, 0b00, true, 0, 0, OpWidth::W32),
+            Kind::Mvn => self.emit_logic_shifted(dst, 31, shifted, 0b01, true, 0, 0, OpWidth::W32),
+        }
+    }
+
+    /// Lower AArch32's register-controlled W32 shift contract. Unlike generic
     /// SMIR shifts, the count is `amount[7:0]`; N/Z are always produced, C is
     /// either the last bit shifted out or the incoming C for count zero, and V
     /// is preserved.
@@ -13548,120 +13735,127 @@ impl Aarch64Lowerer {
             }
             SrcOperand::Reg(_) => {
                 self.emit_mov_reg(count, amount_reg.expect("register count"), OpWidth::W32)?;
-                let (imm_n, immr, imms) = Self::logical_bitmask_imm(0xff, OpWidth::W32)?;
-                self.emit_logic_imm(count, count, 0b00, imm_n, immr, imms, OpWidth::W32)?;
+                self.emit_logic_imm_mask(count, count, 0b00, 0xff, OpWidth::W32)?;
             }
             SrcOperand::Shifted { .. } | SrcOperand::Extended { .. } => unreachable!(),
         }
         self.emit_sysreg(saved_flags, ArmReg::Nzcv, true)?;
-
-        // A64 variable shifts mask their count modulo 32.  Branch around that
-        // behavior for AArch32's saturating logical/arithmetic cases; ROR is
-        // intentionally modulo 32 for every nonzero low-byte count.
-        match shift {
-            ShiftOp::Lsl | ShiftOp::Lsr => {
-                self.emit_addsub_imm(31, count, 32, true, true, OpWidth::W32)?;
-                let large = self.code.position();
-                let uge = Self::arm_cond_code(Condition::Uge)?;
-                self.emit(0x5400_0000 | uge);
-                self.lower_shift_reg(dst, original, count, shift, OpWidth::W32)?;
-                let done = self.code.position();
-                self.emit(0x1400_0000);
-                self.patch_cond_branch_to_current(large, uge)?;
-                self.emit_mov_imm(dst, 0, OpWidth::W32)?;
-                self.patch_branch_to_current(done)?;
-            }
-            ShiftOp::Asr => {
-                self.emit_addsub_imm(31, count, 32, true, true, OpWidth::W32)?;
-                let large = self.code.position();
-                let uge = Self::arm_cond_code(Condition::Uge)?;
-                self.emit(0x5400_0000 | uge);
-                self.lower_shift_reg(dst, original, count, shift, OpWidth::W32)?;
-                let done = self.code.position();
-                self.emit(0x1400_0000);
-                self.patch_cond_branch_to_current(large, uge)?;
-                self.lower_shift_imm(dst, original, 31, ShiftOp::Asr, OpWidth::W32)?;
-                self.patch_branch_to_current(done)?;
-            }
-            ShiftOp::Ror => {
-                self.lower_shift_reg(dst, original, count, ShiftOp::Ror, OpWidth::W32)?;
-            }
-            ShiftOp::Rrx => unreachable!(),
-        }
+        self.emit_arm_w32_reg_shift_result(dst, original, count, shift)?;
 
         if flags == FlagUpdate::None {
-            self.emit_sysreg(saved_flags, ArmReg::Nzcv, false)?;
+            self.emit_merge_requested_nzcv(saved_flags, produced_flags, FlagSet::EMPTY)?;
             self.emit_scratch_restore(&scratches);
             return Ok(());
         }
 
         self.emit_init_shift_nz_flags(produced_flags, temp, dst, OpWidth::W32)?;
-
-        // Count zero passes the incoming architectural carry through.
-        let nonzero = self.code.position();
-        self.emit(0xb500_0000 | u32::from(count));
-        let old_c_clear = self.code.position();
-        self.emit_test_branch(saved_flags, 29, false, 0)?;
-        self.emit_or_nzcv_const(produced_flags, temp, NZCV_C)?;
-        self.patch_test_branch_to_current(old_c_clear, saved_flags, 29, false)?;
-        let carry_done = self.code.position();
-        self.emit(0x1400_0000);
-
-        self.patch_compare_branch_to_current(nonzero, count, true)?;
-        match shift {
-            ShiftOp::Lsl | ShiftOp::Lsr => self.emit_shift_carry_reg(
-                produced_flags,
-                temp,
-                original,
-                count,
-                shift,
-                OpWidth::W32,
-            )?,
-            ShiftOp::Asr => {
-                self.emit_addsub_imm(31, count, 32, true, true, OpWidth::W32)?;
-                let small = self.code.position();
-                let ult = Self::arm_cond_code(Condition::Ult)?;
-                self.emit(0x5400_0000 | ult);
-                let sign_clear = self.code.position();
-                self.emit_test_branch(original, 31, false, 0)?;
-                self.emit_or_nzcv_const(produced_flags, temp, NZCV_C)?;
-                self.patch_test_branch_to_current(sign_clear, original, 31, false)?;
-                let asr_done = self.code.position();
-                self.emit(0x1400_0000);
-                self.patch_cond_branch_to_current(small, ult)?;
-                self.emit_shift_carry_reg(
-                    produced_flags,
-                    temp,
-                    original,
-                    count,
-                    ShiftOp::Asr,
-                    OpWidth::W32,
-                )?;
-                self.patch_branch_to_current(asr_done)?;
-            }
-            ShiftOp::Ror => {
-                let carry_clear = self.code.position();
-                self.emit_test_branch(dst, 31, false, 0)?;
-                self.emit_or_nzcv_const(produced_flags, temp, NZCV_C)?;
-                self.patch_test_branch_to_current(carry_clear, dst, 31, false)?;
-            }
-            ShiftOp::Rrx => unreachable!(),
-        }
-        self.patch_branch_to_current(carry_done)?;
-
-        // Only N/Z/C are selected by this operation; retain V verbatim.
-        self.emit_ubfx_bit_to_low(temp, saved_flags, 28, OpWidth::W32)?;
-        self.emit_logic_shifted(
-            produced_flags,
+        self.emit_arm_w32_reg_shift_carry(
             produced_flags,
             temp,
-            0b01,
-            false,
-            0,
-            28,
-            OpWidth::W32,
+            saved_flags,
+            original,
+            count,
+            dst,
+            shift,
         )?;
-        self.emit_sysreg(produced_flags, ArmReg::Nzcv, false)?;
+        self.emit_merge_requested_nzcv(saved_flags, produced_flags, nzc)?;
+        self.emit_scratch_restore(&scratches);
+        Ok(())
+    }
+
+    /// Lower the complete A32 data-processing register-shifted-register
+    /// opcode space as one alias-safe compound operation.
+    fn lower_arm_dp_reg_shift(
+        &mut self,
+        kind: ArmDpRegShiftKind,
+        dst: Option<VReg>,
+        rn: Option<VReg>,
+        rm: VReg,
+        rs: VReg,
+        shift: ShiftOp,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        let nzc = FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF);
+        let expected_flags = if kind.is_logical() {
+            nzc
+        } else {
+            FlagSet::NZCV
+        };
+        if (dst.is_some() != kind.writes_result())
+            || (rn.is_some() != kind.uses_rn())
+            || (flags != FlagUpdate::None && flags != FlagUpdate::Specific(expected_flags))
+            || !matches!(
+                shift,
+                ShiftOp::Lsl | ShiftOp::Lsr | ShiftOp::Asr | ShiftOp::Ror
+            )
+        {
+            return Err(LowerError::InvalidOperand {
+                op: "AArch64 native A32 data-processing register shift".into(),
+                operand: format!(
+                    "kind={kind:?}, dst={dst:?}, rn={rn:?}, flags={flags:?}, shift={shift:?}"
+                ),
+            });
+        }
+
+        let dst_reg = dst.map(Self::dst_gpr_arm_or_x86).transpose()?;
+        let rn_reg = rn.map(Self::gpr_arm_or_x86).transpose()?.unwrap_or(31);
+        let rm_reg = Self::gpr_arm_or_x86(rm)?;
+        let rs_reg = Self::gpr_arm_or_x86(rs)?;
+        let mut avoid = vec![rn_reg, rm_reg, rs_reg];
+        if let Some(reg) = dst_reg {
+            avoid.push(reg);
+        }
+        let scratches = Self::scratch_regs(&avoid, 7)?;
+        let original = scratches[0];
+        let count = scratches[1];
+        let shifted = scratches[2];
+        let saved_flags = scratches[3];
+        let produced = scratches[4];
+        let temp = scratches[5];
+        let discarded = scratches[6];
+        let result = dst_reg.unwrap_or(discarded);
+        self.emit_scratch_save(&scratches);
+
+        // Snapshot both shifter operands before any guest destination write;
+        // this covers every Rd/Rn/Rm/Rs equality partition.
+        self.emit_mov_reg(original, rm_reg, OpWidth::W32)?;
+        self.emit_mov_reg(count, rs_reg, OpWidth::W32)?;
+        self.emit_logic_imm_mask(count, count, 0b00, 0xff, OpWidth::W32)?;
+        self.emit_sysreg(saved_flags, ArmReg::Nzcv, true)?;
+        self.emit_arm_w32_reg_shift_result(shifted, original, count, shift)?;
+
+        // ADC/SBC/RSC consume the incoming A32 C bit. Internal shifter
+        // comparisons have changed host PSTATE, so restore it immediately
+        // before the carry-consuming final instruction.
+        if kind.reads_carry() {
+            self.emit_sysreg(saved_flags, ArmReg::Nzcv, false)?;
+        }
+        self.emit_arm_dp_reg_shift_result(
+            kind,
+            result,
+            rn_reg,
+            shifted,
+            !kind.is_logical() && flags.updates_any(),
+        )?;
+
+        if flags == FlagUpdate::None {
+            self.emit_merge_requested_nzcv(saved_flags, produced, FlagSet::EMPTY)?;
+        } else if kind.is_logical() {
+            self.emit_init_shift_nz_flags(produced, temp, result, OpWidth::W32)?;
+            self.emit_arm_w32_reg_shift_carry(
+                produced,
+                temp,
+                saved_flags,
+                original,
+                count,
+                shifted,
+                shift,
+            )?;
+            self.emit_merge_requested_nzcv(saved_flags, produced, nzc)?;
+        } else {
+            self.emit_sysreg(produced, ArmReg::Nzcv, true)?;
+            self.emit_merge_requested_nzcv(saved_flags, produced, FlagSet::NZCV)?;
+        }
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
@@ -17778,6 +17972,15 @@ impl Aarch64Lowerer {
                 width,
                 flags,
             } => self.lower_arm_reg_shift(*dst, *src, amount, *shift, *width, *flags),
+            OpKind::ArmDpRegShift {
+                kind,
+                dst,
+                rn,
+                rm,
+                rs,
+                shift,
+                flags,
+            } => self.lower_arm_dp_reg_shift(*kind, *dst, *rn, *rm, *rs, *shift, *flags),
             OpKind::Rol {
                 dst,
                 src,
@@ -23883,6 +24086,300 @@ mod tests {
     }
 
     #[test]
+    fn lowers_all_a32_data_processing_register_shifts_with_exact_flags_and_aliasing() {
+        use ArmDpRegShiftKind as Kind;
+
+        fn shifted(value: u32, raw_count: u64, shift: ShiftOp, carry: bool) -> (u32, bool) {
+            let count = (raw_count & 0xff) as u32;
+            if count == 0 {
+                return (value, carry);
+            }
+            match shift {
+                ShiftOp::Lsl if count < 32 => (value << count, value >> (32 - count) & 1 != 0),
+                ShiftOp::Lsl if count == 32 => (0, value & 1 != 0),
+                ShiftOp::Lsl => (0, false),
+                ShiftOp::Lsr if count < 32 => (value >> count, value >> (count - 1) & 1 != 0),
+                ShiftOp::Lsr if count == 32 => (0, value >> 31 != 0),
+                ShiftOp::Lsr => (0, false),
+                ShiftOp::Asr if count < 32 => (
+                    ((value as i32) >> count) as u32,
+                    value >> (count - 1) & 1 != 0,
+                ),
+                ShiftOp::Asr => {
+                    let sign = value >> 31 != 0;
+                    (if sign { u32::MAX } else { 0 }, sign)
+                }
+                ShiftOp::Ror => {
+                    let result = value.rotate_right(count % 32);
+                    (result, result >> 31 != 0)
+                }
+                ShiftOp::Rrx => unreachable!(),
+            }
+        }
+
+        fn add_carry(a: u32, b: u32, carry: bool) -> (u32, bool, bool) {
+            let unsigned = u64::from(a) + u64::from(b) + u64::from(carry);
+            let signed = i64::from(a as i32) + i64::from(b as i32) + i64::from(carry);
+            (
+                unsigned as u32,
+                unsigned > u64::from(u32::MAX),
+                signed < i64::from(i32::MIN) || signed > i64::from(i32::MAX),
+            )
+        }
+
+        fn result(kind: Kind, lhs: u32, rhs: u32, carry: bool) -> (u32, Option<(bool, bool)>) {
+            match kind {
+                Kind::And | Kind::Tst => (lhs & rhs, None),
+                Kind::Eor | Kind::Teq => (lhs ^ rhs, None),
+                Kind::Sub | Kind::Cmp => {
+                    let (result, c, v) = add_carry(lhs, !rhs, true);
+                    (result, Some((c, v)))
+                }
+                Kind::Rsb => {
+                    let (result, c, v) = add_carry(rhs, !lhs, true);
+                    (result, Some((c, v)))
+                }
+                Kind::Add | Kind::Cmn => {
+                    let (result, c, v) = add_carry(lhs, rhs, false);
+                    (result, Some((c, v)))
+                }
+                Kind::Adc => {
+                    let (result, c, v) = add_carry(lhs, rhs, carry);
+                    (result, Some((c, v)))
+                }
+                Kind::Sbc => {
+                    let (result, c, v) = add_carry(lhs, !rhs, carry);
+                    (result, Some((c, v)))
+                }
+                Kind::Rsc => {
+                    let (result, c, v) = add_carry(rhs, !lhs, carry);
+                    (result, Some((c, v)))
+                }
+                Kind::Orr => (lhs | rhs, None),
+                Kind::Mov => (rhs, None),
+                Kind::Bic => (lhs & !rhs, None),
+                Kind::Mvn => (!rhs, None),
+            }
+        }
+
+        fn expected_nzcv(
+            kind: Kind,
+            result: u32,
+            shifter_carry: bool,
+            arithmetic: Option<(bool, bool)>,
+            old: u8,
+            set_flags: bool,
+        ) -> u8 {
+            if !set_flags {
+                return old;
+            }
+            let nz = ((result >> 31) as u8) << 3 | (u8::from(result == 0) << 2);
+            if let Some((carry, overflow)) = arithmetic {
+                nz | (u8::from(carry) << 1) | u8::from(overflow)
+            } else {
+                debug_assert!(kind.is_logical());
+                nz | (u8::from(shifter_carry) << 1) | (old & 1)
+            }
+        }
+
+        fn op(
+            kind: Kind,
+            rd: u8,
+            rn: u8,
+            rm: u8,
+            rs: u8,
+            shift: ShiftOp,
+            flags: FlagUpdate,
+        ) -> OpKind {
+            OpKind::ArmDpRegShift {
+                kind,
+                dst: kind.writes_result().then(|| x(rd)),
+                rn: kind.uses_rn().then(|| x(rn)),
+                rm: x(rm),
+                rs: x(rs),
+                shift,
+                flags,
+            }
+        }
+
+        let shifts = [ShiftOp::Lsl, ShiftOp::Lsr, ShiftOp::Asr, ShiftOp::Ror];
+        let inputs = [
+            (0_u64, 0x8000_0001_u64, 0_u64),
+            (1, 0x8000_0001, 1),
+            (0x7fff_ffff, 0x8000_0001, 31),
+            (0x8000_0000, 0x7fff_ffff, 32),
+            (0xffff_ffff, 0x8000_0000, 33),
+            (0x4000_0001, 0xffff_ffff, 255),
+            (0x8000_0001, 1, 256),
+            (0x7fff_ffff, 0x8000_0001, 257),
+        ];
+        let scratch_sentinels = [
+            (11_u8, 0x1111_1111_1111_1111_u64),
+            (12, 0x1212_1212_1212_1212),
+            (13, 0x1313_1313_1313_1313),
+            (14, 0x1414_1414_1414_1414),
+            (15, 0x1515_1515_1515_1515),
+            (16, 0x1616_1616_1616_1616),
+            (17, 0x1717_1717_1717_1717),
+        ];
+
+        for opcode in 0_u8..16 {
+            let kind = Kind::from_opcode(opcode).unwrap();
+            let flag_update = FlagUpdate::Specific(if kind.is_logical() {
+                FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF)
+            } else {
+                FlagSet::NZCV
+            });
+            for shift in shifts {
+                let code = lower_single_op(op(kind, 0, 1, 2, 3, shift, flag_update));
+                for &(lhs, rm, count) in &inputs {
+                    for old_nzcv in 0_u8..16 {
+                        let carry_in = old_nzcv & 0b0010 != 0;
+                        let (rhs, shifter_carry) = shifted(rm as u32, count, shift, carry_in);
+                        let (expected, arithmetic) = result(kind, lhs as u32, rhs, carry_in);
+                        let mut regs =
+                            vec![(0, 0xaaaa_aaaa_aaaa_aaaa), (1, lhs), (2, rm), (3, count)];
+                        regs.extend_from_slice(&scratch_sentinels);
+                        let (out, nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+                        if kind.writes_result() {
+                            assert_eq!(out[0], u64::from(expected));
+                        } else {
+                            assert_eq!(out[0], 0xaaaa_aaaa_aaaa_aaaa);
+                        }
+                        assert_eq!(out[1], lhs);
+                        assert_eq!(out[2], rm);
+                        assert_eq!(out[3], count);
+                        assert_eq!(
+                            nzcv,
+                            expected_nzcv(
+                                kind,
+                                expected,
+                                shifter_carry,
+                                arithmetic,
+                                old_nzcv,
+                                true,
+                            ),
+                            "{kind:?} {shift:?} lhs={lhs:#x} rm={rm:#x} count={count:#x} old={old_nzcv:#x}"
+                        );
+                        for &(reg, sentinel) in &scratch_sentinels {
+                            assert_eq!(out[usize::from(reg)], sentinel, "x{reg}");
+                        }
+                        assert_eq!(sp, 0x8000);
+                    }
+                }
+
+                let flagless = lower_single_op(op(kind, 0, 1, 2, 3, shift, FlagUpdate::None));
+                for &count in &[0_u64, 33] {
+                    for old_nzcv in 0_u8..16 {
+                        let carry_in = old_nzcv & 0b0010 != 0;
+                        let (rhs, shifter_carry) = shifted(0x8000_0001, count, shift, carry_in);
+                        let (expected, arithmetic) = result(kind, 0x7fff_ffff, rhs, carry_in);
+                        let (out, nzcv, sp) = run_aarch64_code(
+                            &flagless,
+                            &[
+                                (0, 0xaaaa_aaaa_aaaa_aaaa),
+                                (1, 0x7fff_ffff),
+                                (2, 0x8000_0001),
+                                (3, count),
+                            ],
+                            old_nzcv,
+                        );
+                        if kind.writes_result() {
+                            assert_eq!(out[0], u64::from(expected));
+                        }
+                        assert_eq!(
+                            nzcv,
+                            expected_nzcv(
+                                kind,
+                                expected,
+                                shifter_carry,
+                                arithmetic,
+                                old_nzcv,
+                                false,
+                            )
+                        );
+                        assert_eq!(sp, 0x8000);
+                    }
+                }
+            }
+        }
+
+        // Every equality partition plus the highest admitted A32 registers.
+        for &(rd, rn, rm, rs) in &[
+            (0_u8, 1_u8, 2_u8, 3_u8),
+            (0, 0, 2, 3),
+            (0, 1, 0, 3),
+            (0, 1, 2, 0),
+            (0, 1, 1, 3),
+            (0, 1, 2, 1),
+            (0, 1, 2, 2),
+            (0, 0, 0, 0),
+            (14, 13, 12, 11),
+        ] {
+            for opcode in 0_u8..16 {
+                let kind = Kind::from_opcode(opcode).unwrap();
+                let flags = FlagUpdate::Specific(if kind.is_logical() {
+                    FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF)
+                } else {
+                    FlagSet::NZCV
+                });
+                for shift in shifts {
+                    let code = lower_single_op(op(kind, rd, rn, rm, rs, shift, flags));
+                    let max_reg = usize::from(rd.max(rn).max(rm).max(rs));
+                    let mut initial = vec![0_u64; max_reg + 1];
+                    for (index, value) in initial.iter_mut().enumerate() {
+                        *value = 0x1111_1111_u64.wrapping_mul(index as u64 + 1);
+                    }
+                    initial[usize::from(rm)] = 0x8000_0021;
+                    initial[usize::from(rs)] = 33;
+                    for old_nzcv in [0_u8, 0b0011] {
+                        let carry_in = old_nzcv & 0b0010 != 0;
+                        let (rhs, shifter_carry) = shifted(
+                            initial[usize::from(rm)] as u32,
+                            initial[usize::from(rs)],
+                            shift,
+                            carry_in,
+                        );
+                        let lhs = if kind.uses_rn() {
+                            initial[usize::from(rn)] as u32
+                        } else {
+                            0
+                        };
+                        let (expected, arithmetic) = result(kind, lhs, rhs, carry_in);
+                        let regs = initial
+                            .iter()
+                            .enumerate()
+                            .map(|(reg, value)| (reg as u8, *value))
+                            .collect::<Vec<_>>();
+                        let (out, nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+                        if kind.writes_result() {
+                            assert_eq!(out[usize::from(rd)], u64::from(expected));
+                        }
+                        for reg in 0..initial.len() {
+                            if !kind.writes_result() || reg != usize::from(rd) {
+                                assert_eq!(out[reg], initial[reg]);
+                            }
+                        }
+                        assert_eq!(
+                            nzcv,
+                            expected_nzcv(
+                                kind,
+                                expected,
+                                shifter_carry,
+                                arithmetic,
+                                old_nzcv,
+                                true,
+                            ),
+                            "{kind:?} {shift:?} regs=({rd},{rn},{rm},{rs})"
+                        );
+                        assert_eq!(sp, 0x8000);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn rejects_invalid_aarch32_register_shift_contracts() {
         let nzc = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF));
         for kind in [
@@ -23921,6 +24418,56 @@ mod tests {
                 shift: ShiftOp::Asr,
                 width: OpWidth::W32,
                 flags: FlagUpdate::All,
+            },
+        ] {
+            assert!(try_lower_single_op(kind).is_err());
+        }
+
+        for kind in [
+            OpKind::ArmDpRegShift {
+                kind: ArmDpRegShiftKind::Add,
+                dst: None,
+                rn: Some(x(1)),
+                rm: x(2),
+                rs: x(3),
+                shift: ShiftOp::Lsl,
+                flags: FlagUpdate::Specific(FlagSet::NZCV),
+            },
+            OpKind::ArmDpRegShift {
+                kind: ArmDpRegShiftKind::Tst,
+                dst: Some(x(0)),
+                rn: Some(x(1)),
+                rm: x(2),
+                rs: x(3),
+                shift: ShiftOp::Lsr,
+                flags: nzc,
+            },
+            OpKind::ArmDpRegShift {
+                kind: ArmDpRegShiftKind::Mov,
+                dst: Some(x(0)),
+                rn: Some(x(1)),
+                rm: x(2),
+                rs: x(3),
+                shift: ShiftOp::Ror,
+                flags: nzc,
+            },
+            OpKind::ArmDpRegShift {
+                kind: ArmDpRegShiftKind::And,
+                dst: Some(x(0)),
+                rn: Some(x(1)),
+                rm: x(2),
+                rs: x(3),
+                shift: ShiftOp::Asr,
+                flags: FlagUpdate::Specific(FlagSet::NZCV),
+            },
+            OpKind::ArmDpRegShift {
+                kind: ArmDpRegShiftKind::Cmp,
+                dst: None,
+                rn: Some(x(1)),
+                rm: x(2),
+                rs: x(3),
+                shift: ShiftOp::Rrx,
+                flags: FlagUpdate::Specific(FlagSet::NZCV),
             },
         ] {
             assert!(try_lower_single_op(kind).is_err());

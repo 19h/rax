@@ -4165,6 +4165,7 @@ fn aarch32_aarch64_native_op_shape_valid(
     };
     let partial_nz = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF));
     let partial_nzc = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF));
+    let nzcv = FlagUpdate::Specific(FlagSet::NZCV);
     let register_address = |addr: &Address| match addr {
         Address::Direct(base) | Address::BaseOffset { base, .. } => gpr(base),
         Address::BaseIndexScale {
@@ -4300,6 +4301,29 @@ fn aarch32_aarch64_native_op_shape_valid(
                     SrcOperand::Reg(reg) => gpr(reg),
                     SrcOperand::Shifted { .. } | SrcOperand::Extended { .. } => false,
                 }
+        }
+        OpKind::ArmDpRegShift {
+            kind,
+            dst,
+            rn,
+            rm,
+            rs,
+            shift,
+            flags,
+        } => {
+            (dst.is_some() == kind.writes_result())
+                && dst.as_ref().is_none_or(gpr)
+                && (rn.is_some() == kind.uses_rn())
+                && rn.as_ref().is_none_or(gpr)
+                && gpr(rm)
+                && gpr(rs)
+                && matches!(
+                    shift,
+                    ShiftOp::Lsl | ShiftOp::Lsr | ShiftOp::Asr | ShiftOp::Ror
+                )
+                && (*flags == FlagUpdate::None
+                    || (kind.is_logical() && *flags == partial_nzc)
+                    || (!kind.is_logical() && *flags == nzcv))
         }
         OpKind::Neg {
             dst,
@@ -4656,7 +4680,9 @@ mod jit_gate_tests {
     use super::*;
 
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
-    use crate::smir::ir::ops::{OpKind, X86AdxKind, X86BlsKind, X86CountKind, X86OpHint};
+    use crate::smir::ir::ops::{
+        ArmDpRegShiftKind, OpKind, X86AdxKind, X86BlsKind, X86CountKind, X86OpHint,
+    };
     use crate::smir::ir::types::{
         Address, ArchReg, ArmReg, BlockId, Condition, DispSize, FpPrecision, FunctionId, LocalId,
         MemWidth, OpWidth, ShiftOp, SignExtend, SrcOperand, VReg, VecElementType, VecWidth,
@@ -5504,6 +5530,108 @@ mod jit_gate_tests {
             },
         ] {
             assert!(!aarch32_gate(vec![rejected.clone()]), "{rejected:?}");
+        }
+    }
+
+    #[test]
+    fn aarch32_aarch64_gate_exactly_validates_data_processing_register_shifts() {
+        let nzc = FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF);
+        let mut accepted = Vec::new();
+        for opcode in 0_u8..16 {
+            let kind = ArmDpRegShiftKind::from_opcode(opcode).unwrap();
+            for shift in [ShiftOp::Lsl, ShiftOp::Lsr, ShiftOp::Asr, ShiftOp::Ror] {
+                for flags in [
+                    FlagUpdate::None,
+                    FlagUpdate::Specific(if kind.is_logical() {
+                        nzc
+                    } else {
+                        FlagSet::NZCV
+                    }),
+                ] {
+                    accepted.push(OpKind::ArmDpRegShift {
+                        kind,
+                        dst: kind.writes_result().then(|| arm_x(14)),
+                        rn: kind.uses_rn().then(|| arm_x(13)),
+                        rm: arm_x(12),
+                        rs: arm_x(11),
+                        shift,
+                        flags,
+                    });
+                }
+            }
+        }
+        assert!(aarch32_gate(accepted));
+
+        let valid_add = || OpKind::ArmDpRegShift {
+            kind: ArmDpRegShiftKind::Add,
+            dst: Some(arm_x(0)),
+            rn: Some(arm_x(1)),
+            rm: arm_x(2),
+            rs: arm_x(3),
+            shift: ShiftOp::Lsl,
+            flags: FlagUpdate::Specific(FlagSet::NZCV),
+        };
+        let mut rejected = Vec::new();
+        for mutate in 0..10 {
+            let mut op = valid_add();
+            let OpKind::ArmDpRegShift {
+                dst,
+                rn,
+                rm,
+                rs,
+                shift,
+                flags,
+                ..
+            } = &mut op
+            else {
+                unreachable!()
+            };
+            match mutate {
+                0 => *dst = None,
+                1 => *dst = Some(arm_x(15)),
+                2 => *rn = None,
+                3 => *rn = Some(arm_x(15)),
+                4 => *rm = arm_x(15),
+                5 => *rs = arm_x(15),
+                6 => *shift = ShiftOp::Rrx,
+                7 => *flags = FlagUpdate::Specific(nzc),
+                8 => *flags = FlagUpdate::All,
+                9 => *dst = Some(VReg::virt(0)),
+                _ => unreachable!(),
+            }
+            rejected.push(op);
+        }
+        rejected.extend([
+            OpKind::ArmDpRegShift {
+                kind: ArmDpRegShiftKind::Tst,
+                dst: Some(arm_x(15)),
+                rn: Some(arm_x(1)),
+                rm: arm_x(2),
+                rs: arm_x(3),
+                shift: ShiftOp::Lsr,
+                flags: FlagUpdate::Specific(nzc),
+            },
+            OpKind::ArmDpRegShift {
+                kind: ArmDpRegShiftKind::Mov,
+                dst: Some(arm_x(0)),
+                rn: Some(arm_x(15)),
+                rm: arm_x(2),
+                rs: arm_x(3),
+                shift: ShiftOp::Ror,
+                flags: FlagUpdate::Specific(nzc),
+            },
+            OpKind::ArmDpRegShift {
+                kind: ArmDpRegShiftKind::And,
+                dst: Some(arm_x(0)),
+                rn: Some(arm_x(1)),
+                rm: arm_x(2),
+                rs: arm_x(3),
+                shift: ShiftOp::Asr,
+                flags: FlagUpdate::Specific(FlagSet::NZCV),
+            },
+        ]);
+        for op in rejected {
+            assert!(!aarch32_gate(vec![op.clone()]), "{op:?}");
         }
     }
 

@@ -271,6 +271,9 @@ impl Aarch64Lifter {
                 let tmp_shift = ctx.alloc_vreg();
                 let tmp_addr = ctx.alloc_vreg();
                 let width = self.reg_width(&mem.base);
+                let amount = sr
+                    .immediate_amount()
+                    .expect("A64 memory shifts use an immediate amount");
 
                 pre_ops.push(SmirOp::new(
                     OpId(0),
@@ -278,7 +281,7 @@ impl Aarch64Lifter {
                     OpKind::Shl {
                         dst: tmp_shift,
                         src: self.arm_reg(&sr.reg),
-                        amount: SrcOperand::Imm(sr.amount as i64),
+                        amount: SrcOperand::Imm(i64::from(amount)),
                         width,
                         flags: FlagUpdate::None,
                     },
@@ -3143,11 +3146,16 @@ impl Aarch64Lifter {
         match insn.operands.get(idx) {
             Some(Operand::Reg(r)) => Ok(SrcOperand::Reg(self.arm_reg(r))),
             Some(Operand::Imm(imm)) => Ok(SrcOperand::Imm(imm.effective_value())),
-            Some(Operand::ShiftedReg(sr)) => Ok(SrcOperand::Shifted {
-                reg: self.arm_reg(&sr.reg),
-                shift: self.arm_shift(sr.shift_type),
-                amount: sr.amount,
-            }),
+            Some(Operand::ShiftedReg(sr)) => {
+                let amount = sr.immediate_amount().ok_or_else(|| {
+                    LiftError::Internal("A64 operand has register-specified shift".to_string())
+                })?;
+                Ok(SrcOperand::Shifted {
+                    reg: self.arm_reg(&sr.reg),
+                    shift: self.arm_shift(sr.shift_type),
+                    amount,
+                })
+            }
             Some(Operand::ExtendedReg(er)) => Ok(SrcOperand::Extended {
                 reg: self.arm_reg(&er.reg),
                 extend: self.arm_extend(er.extend_type),
@@ -3165,11 +3173,16 @@ impl Aarch64Lifter {
         match op {
             Operand::Reg(r) => Ok(SrcOperand::Reg(self.arm_reg(r))),
             Operand::Imm(imm) => Ok(SrcOperand::Imm(imm.effective_value())),
-            Operand::ShiftedReg(sr) => Ok(SrcOperand::Shifted {
-                reg: self.arm_reg(&sr.reg),
-                shift: self.arm_shift(sr.shift_type),
-                amount: sr.amount,
-            }),
+            Operand::ShiftedReg(sr) => {
+                let amount = sr.immediate_amount().ok_or_else(|| {
+                    LiftError::Internal("A64 operand has register-specified shift".to_string())
+                })?;
+                Ok(SrcOperand::Shifted {
+                    reg: self.arm_reg(&sr.reg),
+                    shift: self.arm_shift(sr.shift_type),
+                    amount,
+                })
+            }
             Operand::ExtendedReg(er) => Ok(SrcOperand::Extended {
                 reg: self.arm_reg(&er.reg),
                 extend: self.arm_extend(er.extend_type),

@@ -9,6 +9,7 @@ use crate::isa::hexagon::decode::{self as hex_decode, DecodedInsn as HexInsn};
 use crate::isa::hexagon::opcode as hex_opcode;
 use crate::isa::riscv::decode as rv_decode;
 use crate::isa::riscv::{Isa as RvIsa, Op as RvOp, Xlen};
+use crate::smir::ir::ops::ArmDpRegShiftKind;
 use crate::smir::ir::ops::HexFpOp;
 use crate::smir::ir::ops::HexFpRecipKind;
 use crate::smir::ir::ops::X86AdxKind;
@@ -1102,6 +1103,7 @@ macro_rules! debug_name_json {
 }
 
 debug_name_json!(
+    ArmDpRegShiftKind,
     OpWidth,
     MemWidth,
     SignExtend,
@@ -1527,6 +1529,15 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             width,
             flags,
         } => op_json!("arm_reg_shift", dst, src, amount, shift, width, flags),
+        OpKind::ArmDpRegShift {
+            kind,
+            dst,
+            rn,
+            rm,
+            rs,
+            shift,
+            flags,
+        } => op_json!("arm_dp_reg_shift", kind, dst, rn, rm, rs, shift, flags),
         OpKind::Rcl {
             dst,
             src,

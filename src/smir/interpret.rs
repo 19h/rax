@@ -1365,6 +1365,93 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::ArmDpRegShift {
+                kind,
+                dst,
+                rn,
+                rm,
+                rs,
+                shift,
+                flags,
+            } => {
+                use crate::isa::arm::aarch32::cpu::{add_with_carry, shift_c};
+                use crate::isa::arm::decoder::ShiftType;
+                use crate::smir::ir::ops::ArmDpRegShiftKind;
+
+                ctx.flags.materialize_all();
+                let carry_in = ctx.flags.materialized.cf;
+                let value = ctx.read_vreg(*rm) as u32;
+                let count = (ctx.read_vreg(*rs) & 0xff) as u32;
+                let shift_type = match shift {
+                    crate::smir::ir::types::ShiftOp::Lsl => ShiftType::LSL,
+                    crate::smir::ir::types::ShiftOp::Lsr => ShiftType::LSR,
+                    crate::smir::ir::types::ShiftOp::Asr => ShiftType::ASR,
+                    crate::smir::ir::types::ShiftOp::Ror => ShiftType::ROR,
+                    crate::smir::ir::types::ShiftOp::Rrx => ShiftType::RRX,
+                };
+                let (shifted, shifter_carry) = shift_c(value, shift_type, count, carry_in);
+                let lhs = rn.map(|reg| ctx.read_vreg(reg) as u32).unwrap_or(0);
+
+                let (result, arithmetic_flags) = match kind {
+                    ArmDpRegShiftKind::And | ArmDpRegShiftKind::Tst => (lhs & shifted, None),
+                    ArmDpRegShiftKind::Eor | ArmDpRegShiftKind::Teq => (lhs ^ shifted, None),
+                    ArmDpRegShiftKind::Orr => (lhs | shifted, None),
+                    ArmDpRegShiftKind::Mov => (shifted, None),
+                    ArmDpRegShiftKind::Bic => (lhs & !shifted, None),
+                    ArmDpRegShiftKind::Mvn => (!shifted, None),
+                    ArmDpRegShiftKind::Sub | ArmDpRegShiftKind::Cmp => {
+                        let (result, carry, overflow) = add_with_carry(lhs, !shifted, 1);
+                        (result, Some((carry, overflow)))
+                    }
+                    ArmDpRegShiftKind::Rsb => {
+                        let (result, carry, overflow) = add_with_carry(shifted, !lhs, 1);
+                        (result, Some((carry, overflow)))
+                    }
+                    ArmDpRegShiftKind::Add | ArmDpRegShiftKind::Cmn => {
+                        let (result, carry, overflow) = add_with_carry(lhs, shifted, 0);
+                        (result, Some((carry, overflow)))
+                    }
+                    ArmDpRegShiftKind::Adc => {
+                        let (result, carry, overflow) =
+                            add_with_carry(lhs, shifted, u32::from(carry_in));
+                        (result, Some((carry, overflow)))
+                    }
+                    ArmDpRegShiftKind::Sbc => {
+                        let (result, carry, overflow) =
+                            add_with_carry(lhs, !shifted, u32::from(carry_in));
+                        (result, Some((carry, overflow)))
+                    }
+                    ArmDpRegShiftKind::Rsc => {
+                        let (result, carry, overflow) =
+                            add_with_carry(shifted, !lhs, u32::from(carry_in));
+                        (result, Some((carry, overflow)))
+                    }
+                };
+
+                if let Some(dst) = dst {
+                    Self::write_gpr(ctx, *dst, u64::from(result), OpWidth::W32);
+                }
+
+                let updated = flags.as_set();
+                if updated.contains(FlagSet::SF) {
+                    ctx.flags.materialized.sf = result & 0x8000_0000 != 0;
+                }
+                if updated.contains(FlagSet::ZF) {
+                    ctx.flags.materialized.zf = result == 0;
+                }
+                if updated.contains(FlagSet::CF) {
+                    ctx.flags.materialized.cf = arithmetic_flags
+                        .map(|(carry, _)| carry)
+                        .unwrap_or(shifter_carry);
+                }
+                if updated.contains(FlagSet::OF) {
+                    debug_assert!(arithmetic_flags.is_some());
+                    if let Some((_, overflow)) = arithmetic_flags {
+                        ctx.flags.materialized.of = overflow;
+                    }
+                }
+            }
+
             OpKind::Rcl {
                 dst,
                 src,
@@ -16596,6 +16683,27 @@ mod tests {
         SmirInterpreter::new().execute_block(ctx, &mut FlatMemory::new(0x1000), &func.blocks[0])
     }
 
+    fn lifted_a32_block(raw: u32) -> SmirBlock {
+        use crate::smir::ir::types::SourceArch;
+        use crate::smir::lift::aarch32::Aarch32Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        let mut lifter = Aarch32Lifter::new();
+        let mut lctx = LiftContext::new(SourceArch::Aarch32);
+        let result = lifter
+            .lift_insn(0x1000, &raw.to_le_bytes(), &mut lctx)
+            .unwrap();
+        assert_eq!(result.bytes_consumed, 4);
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        let mut func = builder.finish();
+        func.blocks[0].ops = result.ops;
+        func.blocks.remove(0)
+    }
+
     #[test]
     fn lifted_t16_selective_nzcv_ops_interpret_all_prior_flag_states() {
         let r0 = VReg::Arch(ArchReg::Arm(ArmReg::X(0)));
@@ -16881,6 +16989,230 @@ mod tests {
                             assert!(ctx.flags.materialized.pf);
                             assert!(ctx.flags.materialized.af);
                             assert!(ctx.flags.materialized.df);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn lifted_a32_data_processing_register_shifts_cover_all_semantics_and_aliases() {
+        use crate::smir::ir::ops::ArmDpRegShiftKind as Kind;
+
+        fn encode(kind: Kind, set_flags: bool, rd: u8, rn: u8, rm: u8, rs: u8, shift: u8) -> u32 {
+            0xe000_0000
+                | ((kind as u32) << 21)
+                | (u32::from(set_flags) << 20)
+                | (u32::from(rn) << 16)
+                | (u32::from(rd) << 12)
+                | (u32::from(rs) << 8)
+                | (u32::from(shift) << 5)
+                | (1 << 4)
+                | u32::from(rm)
+        }
+
+        fn shift_expected(value: u32, raw_count: u64, shift: ShiftOp, carry: bool) -> (u32, bool) {
+            let count = (raw_count & 0xff) as u32;
+            if count == 0 {
+                return (value, carry);
+            }
+            match shift {
+                ShiftOp::Lsl if count < 32 => (value << count, value >> (32 - count) & 1 != 0),
+                ShiftOp::Lsl if count == 32 => (0, value & 1 != 0),
+                ShiftOp::Lsl => (0, false),
+                ShiftOp::Lsr if count < 32 => (value >> count, value >> (count - 1) & 1 != 0),
+                ShiftOp::Lsr if count == 32 => (0, value >> 31 != 0),
+                ShiftOp::Lsr => (0, false),
+                ShiftOp::Asr if count < 32 => (
+                    ((value as i32) >> count) as u32,
+                    value >> (count - 1) & 1 != 0,
+                ),
+                ShiftOp::Asr => {
+                    let sign = value >> 31 != 0;
+                    (if sign { u32::MAX } else { 0 }, sign)
+                }
+                ShiftOp::Ror => {
+                    let result = value.rotate_right(count % 32);
+                    (result, result >> 31 != 0)
+                }
+                ShiftOp::Rrx => unreachable!(),
+            }
+        }
+
+        fn add_carry(a: u32, b: u32, carry: bool) -> (u32, bool, bool) {
+            let unsigned = u64::from(a) + u64::from(b) + u64::from(carry);
+            let signed = i64::from(a as i32) + i64::from(b as i32) + i64::from(carry);
+            (
+                unsigned as u32,
+                unsigned > u64::from(u32::MAX),
+                signed < i64::from(i32::MIN) || signed > i64::from(i32::MAX),
+            )
+        }
+
+        fn expected(
+            kind: Kind,
+            lhs: u32,
+            shifted: u32,
+            carry: bool,
+        ) -> (u32, Option<(bool, bool)>) {
+            match kind {
+                Kind::And | Kind::Tst => (lhs & shifted, None),
+                Kind::Eor | Kind::Teq => (lhs ^ shifted, None),
+                Kind::Sub | Kind::Cmp => {
+                    let (r, c, v) = add_carry(lhs, !shifted, true);
+                    (r, Some((c, v)))
+                }
+                Kind::Rsb => {
+                    let (r, c, v) = add_carry(shifted, !lhs, true);
+                    (r, Some((c, v)))
+                }
+                Kind::Add | Kind::Cmn => {
+                    let (r, c, v) = add_carry(lhs, shifted, false);
+                    (r, Some((c, v)))
+                }
+                Kind::Adc => {
+                    let (r, c, v) = add_carry(lhs, shifted, carry);
+                    (r, Some((c, v)))
+                }
+                Kind::Sbc => {
+                    let (r, c, v) = add_carry(lhs, !shifted, carry);
+                    (r, Some((c, v)))
+                }
+                Kind::Rsc => {
+                    let (r, c, v) = add_carry(shifted, !lhs, carry);
+                    (r, Some((c, v)))
+                }
+                Kind::Orr => (lhs | shifted, None),
+                Kind::Mov => (shifted, None),
+                Kind::Bic => (lhs & !shifted, None),
+                Kind::Mvn => (!shifted, None),
+            }
+        }
+
+        let kinds = (0_u8..16)
+            .map(|opcode| Kind::from_opcode(opcode).unwrap())
+            .collect::<Vec<_>>();
+        let shifts = [ShiftOp::Lsl, ShiftOp::Lsr, ShiftOp::Asr, ShiftOp::Ror];
+        let aliases = [
+            (0_u8, 1_u8, 2_u8, 3_u8),
+            (0, 0, 2, 3),
+            (0, 1, 0, 3),
+            (0, 1, 2, 0),
+            (0, 1, 1, 3),
+            (0, 1, 2, 1),
+            (0, 1, 2, 2),
+            (0, 0, 0, 0),
+        ];
+        let inputs = [
+            (0x8000_0001_u64, 0_u64),
+            (0x8000_0001, 1),
+            (0x7fff_ffff, 31),
+            (0x8000_0000, 32),
+            (0xffff_ffff, 33),
+            (0x4000_0001, 255),
+            (0x8000_0001, 256),
+            (0x7fff_ffff, 257),
+        ];
+        let regs = [
+            VReg::Arch(ArchReg::Arm(ArmReg::X(0))),
+            VReg::Arch(ArchReg::Arm(ArmReg::X(1))),
+            VReg::Arch(ArchReg::Arm(ArmReg::X(2))),
+            VReg::Arch(ArchReg::Arm(ArmReg::X(3))),
+        ];
+
+        for kind in kinds {
+            let flag_modes: &[bool] = if kind.writes_result() {
+                &[false, true]
+            } else {
+                &[true]
+            };
+            for (shift_bits, shift) in shifts.into_iter().enumerate() {
+                for &(encoded_rd, encoded_rn, rm, rs) in &aliases {
+                    let rd = if kind.writes_result() { encoded_rd } else { 0 };
+                    let rn = if kind.uses_rn() { encoded_rn } else { 0 };
+                    for &set_flags in flag_modes {
+                        let raw = encode(kind, set_flags, rd, rn, rm, rs, shift_bits as u8);
+                        let block = lifted_a32_block(raw);
+                        for &(value, raw_count) in &inputs {
+                            let mut initial =
+                                [0x1111_1111_u64, 0x2222_2222, 0x3333_3333, 0x4444_4444];
+                            initial[usize::from(rm)] = value;
+                            initial[usize::from(rs)] = raw_count;
+                            for old_nzcv in 0_u8..16 {
+                                let carry_in = old_nzcv & 0b0010 != 0;
+                                let (shifted, shifter_carry) = shift_expected(
+                                    initial[usize::from(rm)] as u32,
+                                    initial[usize::from(rs)],
+                                    shift,
+                                    carry_in,
+                                );
+                                let lhs = if kind.uses_rn() {
+                                    initial[usize::from(rn)] as u32
+                                } else {
+                                    0
+                                };
+                                let (result, arithmetic) = expected(kind, lhs, shifted, carry_in);
+                                let expected_nzcv = if !set_flags {
+                                    old_nzcv
+                                } else if let Some((carry, overflow)) = arithmetic {
+                                    ((result >> 31) as u8) << 3
+                                        | (u8::from(result == 0) << 2)
+                                        | (u8::from(carry) << 1)
+                                        | u8::from(overflow)
+                                } else {
+                                    ((result >> 31) as u8) << 3
+                                        | (u8::from(result == 0) << 2)
+                                        | (u8::from(shifter_carry) << 1)
+                                        | (old_nzcv & 1)
+                                };
+
+                                let mut ctx = SmirContext::new_aarch64();
+                                for (reg, value) in regs.into_iter().zip(initial) {
+                                    ctx.write_vreg(reg, value);
+                                }
+                                ctx.flags.materialized = MaterializedFlags {
+                                    sf: old_nzcv & 0b1000 != 0,
+                                    zf: old_nzcv & 0b0100 != 0,
+                                    cf: carry_in,
+                                    of: old_nzcv & 0b0001 != 0,
+                                    pf: true,
+                                    af: true,
+                                    df: true,
+                                };
+                                ctx.flags.lazy = None;
+                                let exit = SmirInterpreter::new().execute_block(
+                                    &mut ctx,
+                                    &mut FlatMemory::new(0x1000),
+                                    &block,
+                                );
+                                assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+                                if kind.writes_result() {
+                                    assert_eq!(
+                                        ctx.read_vreg(regs[usize::from(rd)]),
+                                        u64::from(result)
+                                    );
+                                }
+                                for reg in 0_u8..4 {
+                                    if !kind.writes_result() || reg != rd {
+                                        assert_eq!(
+                                            ctx.read_vreg(regs[usize::from(reg)]),
+                                            initial[usize::from(reg)]
+                                        );
+                                    }
+                                }
+                                let actual_nzcv = (u8::from(ctx.flags.materialized.sf) << 3)
+                                    | (u8::from(ctx.flags.materialized.zf) << 2)
+                                    | (u8::from(ctx.flags.materialized.cf) << 1)
+                                    | u8::from(ctx.flags.materialized.of);
+                                assert_eq!(
+                                    actual_nzcv, expected_nzcv,
+                                    "{kind:?} {shift:?} S={set_flags} regs=({rd},{rn},{rm},{rs}) old={old_nzcv:#x}"
+                                );
+                                assert!(ctx.flags.materialized.pf);
+                                assert!(ctx.flags.materialized.af);
+                                assert!(ctx.flags.materialized.df);
+                            }
                         }
                     }
                 }
