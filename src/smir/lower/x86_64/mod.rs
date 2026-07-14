@@ -7025,7 +7025,10 @@ impl X86_64Lowerer {
                     self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
                 } else {
                     let (prefix, opcode) = match elem {
+                        VecElementType::I8 => (Some(0x66), 0xFC),
+                        VecElementType::I16 => (Some(0x66), 0xFD),
                         VecElementType::I32 => (Some(0x66), 0xFE),
+                        VecElementType::I64 => (Some(0x66), 0xD4),
                         VecElementType::F32 => (None, 0x58),
                         VecElementType::F64 => (Some(0x66), 0x58),
                         _ => {
@@ -7100,7 +7103,10 @@ impl X86_64Lowerer {
                     self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
                 } else {
                     let (prefix, opcode) = match elem {
+                        VecElementType::I8 => (Some(0x66), 0xF8),
+                        VecElementType::I16 => (Some(0x66), 0xF9),
                         VecElementType::I32 => (Some(0x66), 0xFA),
+                        VecElementType::I64 => (Some(0x66), 0xFB),
                         VecElementType::F32 => (None, 0x5C),
                         VecElementType::F64 => (Some(0x66), 0x5C),
                         _ => {
@@ -13486,6 +13492,18 @@ mod tests {
             (
                 &[0x62, 0xA1, 0x55, 0x20, 0xEF, 0xE6][..],
                 &[0x62, 0xA1, 0x55, 0x20, 0xEF, 0xE6][..],
+            ),
+            (&[0x66, 0x0F, 0xFC, 0xCA][..], &[0x66, 0x0F, 0xFC, 0xCA][..]),
+            (&[0x66, 0x0F, 0xFB, 0xDC][..], &[0x66, 0x0F, 0xFB, 0xDC][..]),
+            (&[0xC5, 0xE9, 0xFE, 0xCB][..], &[0xC5, 0xE9, 0xFE, 0xCB][..]),
+            (&[0xC5, 0xD5, 0xF9, 0xE6][..], &[0xC5, 0xD5, 0xF9, 0xE6][..]),
+            (
+                &[0x62, 0xA1, 0xD5, 0x40, 0xD4, 0xE6][..],
+                &[0x62, 0xA1, 0xD5, 0x40, 0xD4, 0xE6][..],
+            ),
+            (
+                &[0x62, 0xA1, 0x55, 0x20, 0xFA, 0xE6][..],
+                &[0x62, 0xA1, 0x55, 0x20, 0xFA, 0xE6][..],
             ),
             (
                 &[0x62, 0xF2, 0x7D, 0xCC, 0xC4, 0xCA][..],

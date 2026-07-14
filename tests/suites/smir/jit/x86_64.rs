@@ -3092,6 +3092,176 @@ fn jit_vector_logic_matches_legacy_and_vex_evex_lane_semantics() {
 }
 
 #[test]
+fn jit_packed_integer_add_sub_matches_lane_wrapping_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx2")
+    {
+        return;
+    }
+
+    // loop: paddb xmm1,xmm2; vpaddd xmm4,xmm5,xmm6;
+    //       vpsubw ymm7,ymm8,ymm9; dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0xFC, 0xCA, 0xC5, 0xD1, 0xFE, 0xE6, 0xC4, 0xC1, 0x3D, 0xF9, 0xF9, 0xFF, 0xC9,
+        0x75, 0xEF, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.xmm[1] = [0xFF01_7F80_10F0_00FE, 0xABCD_EF01_2345_6789];
+        regs.xmm[2] = [0x0203_0180_F020_FF05, 0x9977_5533_11FF_DDBB];
+        regs.ymm_high[1] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        regs.zmm_high[1] = [0x9999, 0xAAAA, 0xBBBB, 0xCCCC];
+
+        regs.xmm[5] = [0xFFFF_FFFF_7FFF_FFFF, 0x8000_0000_0123_4567];
+        regs.xmm[6] = [0x0000_0001_0000_0002, 0x8000_0000_FEDC_BA99];
+        regs.ymm_high[4] = [0xDEAD_BEEF_DEAD_BEEF, 0xCAFE_BABE_CAFE_BABE];
+        regs.zmm_high[4] = [1, 2, 3, 4];
+
+        regs.xmm[8] = [0x0000_FFFF_8000_7FFF, 0xAAAA_5555_0001_FFFE];
+        regs.ymm_high[8] = [0x1234_5678_9ABC_DEF0, 0xFFFF_0000_8000_7FFF];
+        regs.xmm[9] = [0x0001_0002_7FFF_8000, 0x5555_AAAA_FFFF_0002];
+        regs.ymm_high[9] = [0x4321_8765_CBA9_0FED, 0x0001_FFFF_7FFF_8000];
+        regs.zmm_high[7] = [5, 6, 7, 8];
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+
+    let add_bytes = |first: u64, second: u64| {
+        let mut result = 0u64;
+        for byte in 0..8 {
+            let shift = byte * 8;
+            let value = ((first >> shift) as u8).wrapping_add((second >> shift) as u8);
+            result |= u64::from(value) << shift;
+        }
+        result
+    };
+    let add_dwords = |first: u64, second: u64| {
+        u64::from((first as u32).wrapping_add(second as u32))
+            | (u64::from(((first >> 32) as u32).wrapping_add((second >> 32) as u32)) << 32)
+    };
+    let sub_words = |first: u64, second: u64| {
+        let mut result = 0u64;
+        for word in 0..4 {
+            let shift = word * 16;
+            let value = ((first >> shift) as u16).wrapping_sub((second >> shift) as u16);
+            result |= u64::from(value) << shift;
+        }
+        result
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("packed integer add/sub JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(
+        jit_regs.xmm[1],
+        [
+            add_bytes(initial.xmm[1][0], initial.xmm[2][0]),
+            add_bytes(initial.xmm[1][1], initial.xmm[2][1]),
+        ],
+        "legacy PADDB wrapping"
+    );
+    assert_eq!(jit_regs.ymm_high[1], initial.ymm_high[1]);
+    assert_eq!(jit_regs.zmm_high[1], initial.zmm_high[1]);
+    assert_eq!(
+        jit_regs.xmm[4],
+        [
+            add_dwords(initial.xmm[5][0], initial.xmm[6][0]),
+            add_dwords(initial.xmm[5][1], initial.xmm[6][1]),
+        ],
+        "VEX VPADDD wrapping"
+    );
+    assert_eq!(jit_regs.ymm_high[4], [0; 2]);
+    assert_eq!(jit_regs.zmm_high[4], [0; 4]);
+    assert_eq!(
+        jit_regs.xmm[7],
+        [
+            sub_words(initial.xmm[8][0], initial.xmm[9][0]),
+            sub_words(initial.xmm[8][1], initial.xmm[9][1]),
+        ],
+        "VEX VPSUBW low lane"
+    );
+    assert_eq!(
+        jit_regs.ymm_high[7],
+        [
+            sub_words(initial.ymm_high[8][0], initial.ymm_high[9][0]),
+            sub_words(initial.ymm_high[8][1], initial.ymm_high[9][1]),
+        ],
+        "VEX VPSUBW high lane"
+    );
+    assert_eq!(jit_regs.zmm_high[7], [0; 4]);
+
+    // loop: vpaddq zmm4,zmm5,zmm6; dec ecx; jnz loop; hlt
+    let evex_code = [
+        0x62, 0xF1, 0xD5, 0x48, 0xD4, 0xE6, 0xFF, 0xC9, 0x75, 0xF6, 0xF4,
+    ];
+    let setup_evex = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.xmm[5] = [u64::MAX, 0x7FFF_FFFF_FFFF_FFFF];
+        regs.ymm_high[5] = [0x8000_0000_0000_0000, 0x0123_4567_89AB_CDEF];
+        regs.zmm_high[5] = [1, 2, u64::MAX, 0xAAAA_AAAA_AAAA_AAAA];
+        regs.xmm[6] = [2, 1];
+        regs.ymm_high[6] = [0x8000_0000_0000_0000, 0xFEDC_BA98_7654_3211];
+        regs.zmm_high[6] = [3, u64::MAX, 7, 0x5555_5555_5555_5556];
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+    let (mut interp, _) = make_vcpu_mem(&evex_code);
+    let initial = setup_evex(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&evex_code);
+    setup_evex(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("EVEX packed integer add JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+    assert_eq!(jit_regs.xmm[4], interp_regs.xmm[4]);
+    assert_eq!(jit_regs.ymm_high[4], interp_regs.ymm_high[4]);
+    assert_eq!(jit_regs.zmm_high[4], interp_regs.zmm_high[4]);
+    assert_eq!(
+        jit_regs.xmm[4],
+        [
+            initial.xmm[5][0].wrapping_add(initial.xmm[6][0]),
+            initial.xmm[5][1].wrapping_add(initial.xmm[6][1]),
+        ]
+    );
+    assert_eq!(
+        jit_regs.ymm_high[4],
+        [
+            initial.ymm_high[5][0].wrapping_add(initial.ymm_high[6][0]),
+            initial.ymm_high[5][1].wrapping_add(initial.ymm_high[6][1]),
+        ]
+    );
+    assert_eq!(
+        jit_regs.zmm_high[4],
+        [
+            initial.zmm_high[5][0].wrapping_add(initial.zmm_high[6][0]),
+            initial.zmm_high[5][1].wrapping_add(initial.zmm_high[6][1]),
+            initial.zmm_high[5][2].wrapping_add(initial.zmm_high[6][2]),
+            initial.zmm_high[5][3].wrapping_add(initial.zmm_high[6][3]),
+        ]
+    );
+}
+
+#[test]
 fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         return;
