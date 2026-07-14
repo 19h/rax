@@ -2467,6 +2467,70 @@ fn production_jit_executes_zcmp_double_moves_natively() {
 }
 
 #[test]
+fn production_jit_executes_zcmp_stack_macros_natively() {
+    let mut isa = RvIsa::rv64gc();
+    isa.zcmp = true;
+    let stack = |funct5: u16| (0b101 << 13) | (funct5 << 8) | (5 << 4) | (0 << 2) | 0b10;
+    let push = stack(0x18); // cm.push {ra,s0-s1},-32/-16
+    let popretz = stack(0x1c);
+
+    for config in [
+        RiscVConfig::rv32(isa),
+        RiscVConfig {
+            xlen: RvXlen::Rv64,
+            isa,
+        },
+    ] {
+        for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+            let make_cpu = || RiscVCpu::new(config, Box::new(RvMemory::new(0, MEMORY_LEN)));
+            let mut expected = make_cpu();
+            let mut actual = make_cpu();
+            for cpu in [&mut expected, &mut actual] {
+                cpu.write_memory(CODE, &push.to_le_bytes())
+                    .expect("write Zcmp push");
+                cpu.set_pc(CODE);
+                cpu.set_x(1, CODE + 0x101);
+                cpu.set_x(2, DATA + 0x200);
+                cpu.set_x(8, 0x1111_2222_3333_4444);
+                cpu.set_x(9, 0x5555_6666_7777_8888);
+                cpu.set_x(10, 0xfeed_face);
+            }
+            assert_eq!(expected.step(), RiscVExit::Continue);
+            assert_eq!(actual.step_jit(level), RiscVExit::Continue);
+            assert_production_cpu_equivalent(&actual, &expected);
+
+            for cpu in [&mut expected, &mut actual] {
+                cpu.write_memory(CODE, &popretz.to_le_bytes())
+                    .expect("write Zcmp popretz");
+                cpu.set_pc(CODE);
+                cpu.set_x(1, 1);
+                cpu.set_x(8, 2);
+                cpu.set_x(9, 3);
+            }
+            assert_eq!(expected.step(), RiscVExit::Continue);
+            assert_eq!(actual.step_jit(level), RiscVExit::Continue);
+            assert_production_cpu_equivalent(&actual, &expected);
+            assert_eq!(actual.pc(), CODE + 0x100);
+            assert_eq!(actual.x(10), 0);
+            let mask = if config.xlen == RvXlen::Rv32 {
+                u64::from(u32::MAX)
+            } else {
+                u64::MAX
+            };
+            assert_eq!(actual.x(8), 0x1111_2222_3333_4444 & mask);
+            assert_eq!(actual.x(9), 0x5555_6666_7777_8888 & mask);
+            let stats = actual.jit_stats();
+            assert_eq!(stats.native_executions, 2, "{:?} {level:?}", config.xlen);
+            assert_eq!(
+                stats.interpreter_fallbacks, 0,
+                "{:?} {level:?}",
+                config.xlen
+            );
+        }
+    }
+}
+
+#[test]
 fn production_jit_falls_back_for_unmodeled_control_alignment_traps() {
     let mut isa = RvIsa::rv64gc();
     isa.c = false;

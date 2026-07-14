@@ -979,6 +979,140 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
+    /// Expand one Zcmp PUSH/POP macro into its architecturally ordered memory
+    /// sequence. Earlier stores or register loads intentionally remain visible
+    /// if a later access faults; the final SP/a0/control-flow updates occur only
+    /// after every access succeeds.
+    fn lift_zcmp_stack(
+        &mut self,
+        decoded: &crate::isa::riscv::Insn,
+        addr: GuestAddr,
+        ctx: &mut LiftContext,
+    ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
+        let count = match decoded.rd {
+            4 => 1,
+            5 | 6 => 3,
+            7..=14 => usize::from(decoded.rd - 3),
+            15 => 13,
+            _ => {
+                return Err(LiftError::Internal(format!(
+                    "Zcmp stack lift received invalid register list {}",
+                    decoded.rd
+                )));
+            }
+        };
+        const REGS: [u8; 13] = [1, 8, 9, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
+        let slot_size = i64::from(self.xlen / 8);
+        let stack_adj = decoded.imm;
+        let sp = self.get_x_reg(2, ctx);
+        let width = self.op_width();
+        let mem_width = if self.xlen == 32 {
+            MemWidth::B4
+        } else {
+            MemWidth::B8
+        };
+        let mut ops = Vec::with_capacity(count + 3);
+
+        match decoded.op {
+            RvOp::CmPush => {
+                for (slot, register) in REGS[..count].iter().rev().copied().enumerate() {
+                    ops.push(SmirOp::new(
+                        ctx.next_op_id(),
+                        addr,
+                        OpKind::Store {
+                            src: self.get_x_reg(register, ctx),
+                            addr: Address::BaseOffset {
+                                base: sp,
+                                offset: -((slot as i64 + 1) * slot_size),
+                                disp_size: DispSize::Auto,
+                            },
+                            width: mem_width,
+                        },
+                    ));
+                }
+                ops.push(SmirOp::new(
+                    ctx.next_op_id(),
+                    addr,
+                    OpKind::Sub {
+                        dst: self
+                            .def_x_reg(2, ctx)
+                            .expect("the stack pointer is nonzero"),
+                        src1: sp,
+                        src2: SrcOperand::Imm(stack_adj),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                Ok((ops, ControlFlow::NextInsn))
+            }
+            RvOp::CmPop | RvOp::CmPopRet | RvOp::CmPopRetz => {
+                for (slot, register) in REGS[..count].iter().rev().copied().enumerate() {
+                    ops.push(SmirOp::new(
+                        ctx.next_op_id(),
+                        addr,
+                        OpKind::Load {
+                            dst: self
+                                .def_x_reg(register, ctx)
+                                .expect("Zcmp stack registers are nonzero"),
+                            addr: Address::BaseOffset {
+                                base: sp,
+                                offset: stack_adj - (slot as i64 + 1) * slot_size,
+                                disp_size: DispSize::Auto,
+                            },
+                            width: mem_width,
+                            sign: SignExtend::Zero,
+                        },
+                    ));
+                }
+                ops.push(SmirOp::new(
+                    ctx.next_op_id(),
+                    addr,
+                    OpKind::Add {
+                        dst: self
+                            .def_x_reg(2, ctx)
+                            .expect("the stack pointer is nonzero"),
+                        src1: sp,
+                        src2: SrcOperand::Imm(stack_adj),
+                        width,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                if decoded.op == RvOp::CmPopRetz {
+                    ops.push(SmirOp::new(
+                        ctx.next_op_id(),
+                        addr,
+                        OpKind::Mov {
+                            dst: self.def_x_reg(10, ctx).expect("a0 is a nonzero register"),
+                            src: SrcOperand::Imm(0),
+                            width,
+                        },
+                    ));
+                }
+                if matches!(decoded.op, RvOp::CmPopRet | RvOp::CmPopRetz) {
+                    let target = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        ctx.next_op_id(),
+                        addr,
+                        OpKind::And {
+                            dst: target,
+                            src1: self.get_x_reg(1, ctx),
+                            src2: SrcOperand::Imm(!1i64),
+                            width,
+                            flags: FlagUpdate::None,
+                        },
+                    ));
+                    Ok((ops, ControlFlow::IndirectBranch { target }))
+                } else {
+                    Ok((ops, ControlFlow::NextInsn))
+                }
+            }
+            _ => Err(LiftError::Internal(format!(
+                "Zcmp stack lift received unexpected operation {:?}",
+                decoded.op
+            ))),
+        }
+    }
+
     /// Hypervisor memory instructions (HLV*/HSV*) are modeled like direct
     /// loads/stores in the local RISC-V interpreter.
     fn lift_hypervisor_mem(
@@ -4647,6 +4781,9 @@ impl RiscVLifter {
                 }
                 RvOp::CmMvsa01 | RvOp::CmMva01s => {
                     return self.lift_zcmp_move(decoded.op, decoded.rd, decoded.rs1, addr, ctx);
+                }
+                RvOp::CmPush | RvOp::CmPop | RvOp::CmPopRet | RvOp::CmPopRetz => {
+                    return self.lift_zcmp_stack(&decoded, addr, ctx);
                 }
                 _ => {}
             }

@@ -92,6 +92,12 @@ fn cm_zcmp_move(r1s: u16, r2s: u16, funct2: u16) -> u16 {
     (0b101 << 13) | (0b011 << 10) | (r1s << 7) | (funct2 << 5) | (r2s << 2) | 0b10
 }
 
+fn cm_zcmp_stack(funct5: u16, rlist: u16, spimm: u16) -> u16 {
+    assert!(matches!(funct5, 0x18 | 0x1a | 0x1c | 0x1e));
+    assert!((4..=15).contains(&rlist) && spimm < 4);
+    (0b101 << 13) | (funct5 << 8) | (rlist << 4) | (spimm << 2) | 0b10
+}
+
 fn assert_equivalent(actual: &RiscVCpu, expected: &RiscVCpu) {
     for register in 0..32u8 {
         assert_eq!(actual.x(register), expected.x(register), "x{register}");
@@ -561,6 +567,181 @@ fn production_zcmp_double_moves_are_native_for_rv32_and_rv64() {
                 config.xlen
             );
         }
+    }
+}
+
+#[test]
+fn production_zcmp_stack_macros_are_native_for_rv32_and_rv64() {
+    const SAVED: [u8; 13] = [1, 8, 9, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
+    let mut isa = Isa::rv64gc();
+    isa.zcmp = true;
+    let push = cm_zcmp_stack(0x18, 15, 3);
+    let pop = cm_zcmp_stack(0x1a, 15, 3);
+
+    for config in [
+        RiscVConfig::rv32(isa),
+        RiscVConfig {
+            xlen: Xlen::Rv64,
+            isa,
+        },
+    ] {
+        for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+            let mut expected = make_cpu(config);
+            let mut actual = make_cpu(config);
+            for cpu in [&mut expected, &mut actual] {
+                install_bytes(cpu, &push.to_le_bytes());
+                cpu.set_x(2, DATA + 0x400);
+                for (index, register) in SAVED.into_iter().enumerate() {
+                    cpu.set_x(register, 0x1111_2222_0000_0000 | index as u64);
+                }
+            }
+
+            assert_eq!(expected.step(), RiscVExit::Continue);
+            assert_eq!(actual.step_jit(level), RiscVExit::Continue);
+            assert_equivalent(&actual, &expected);
+            let pushed_sp = actual.x(2);
+
+            for cpu in [&mut expected, &mut actual] {
+                install_bytes(cpu, &pop.to_le_bytes());
+                for register in SAVED {
+                    cpu.set_x(register, 0xdead_beef);
+                }
+            }
+            assert_eq!(expected.step(), RiscVExit::Continue);
+            assert_eq!(actual.step_jit(level), RiscVExit::Continue);
+            assert_equivalent(&actual, &expected);
+            assert!(actual.x(2) > pushed_sp, "{:?} {level:?}", config.xlen);
+            for (index, register) in SAVED.into_iter().enumerate() {
+                let mask = if config.xlen == Xlen::Rv32 {
+                    u64::from(u32::MAX)
+                } else {
+                    u64::MAX
+                };
+                assert_eq!(
+                    actual.x(register),
+                    (0x1111_2222_0000_0000 | index as u64) & mask,
+                    "x{register} {:?} {level:?}",
+                    config.xlen
+                );
+            }
+            let stats = actual.jit_stats();
+            assert_eq!(stats.native_executions, 2, "{:?} {level:?}", config.xlen);
+            assert_eq!(
+                stats.interpreter_fallbacks, 0,
+                "{:?} {level:?}",
+                config.xlen
+            );
+        }
+    }
+}
+
+#[test]
+fn production_zcmp_stack_partial_faults_match_interpreter() {
+    let mut isa = Isa::rv64gc();
+    isa.zcmp = true;
+    let config = RiscVConfig {
+        xlen: Xlen::Rv64,
+        isa,
+    };
+
+    let push = cm_zcmp_stack(0x18, 5, 0); // ra,s0-s1; 32-byte adjustment
+    let mut expected = make_cpu(config);
+    let mut actual = make_cpu(config);
+    for cpu in [&mut expected, &mut actual] {
+        install_bytes(cpu, &push.to_le_bytes());
+        cpu.set_x(1, 0x0123_4567_89ab_cdef);
+        cpu.set_x(8, 0x1111_2222_3333_4444);
+        cpu.set_x(9, 0x5555_6666_7777_8888);
+        cpu.set_x(2, 8); // s1 store at 0 succeeds; s0 store wraps and faults
+    }
+    let expected_exit = expected.step();
+    let actual_exit = actual.step_jit(OptLevel::O2);
+    assert_eq!(actual_exit, expected_exit);
+    assert_eq!(
+        actual_exit,
+        RiscVExit::Trap(Trap {
+            cause: 7,
+            tval: u64::MAX - 7,
+        })
+    );
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(2), 8, "SP must not commit after a partial push");
+    let mut stored = [0; 8];
+    actual
+        .read_memory(0, &mut stored)
+        .expect("read completed prefix store");
+    assert_eq!(u64::from_le_bytes(stored), 0x5555_6666_7777_8888);
+    assert_eq!(actual.jit_stats().native_executions, 1);
+    assert_eq!(actual.jit_stats().interpreter_fallbacks, 0);
+
+    let pop = cm_zcmp_stack(0x1a, 5, 0);
+    let mut expected = make_cpu(config);
+    let mut actual = make_cpu(config);
+    for cpu in [&mut expected, &mut actual] {
+        install_bytes(cpu, &pop.to_le_bytes());
+        cpu.set_x(1, 1);
+        cpu.set_x(8, 2);
+        cpu.set_x(9, 3);
+        cpu.set_x(2, u64::MAX - 15);
+        cpu.write_memory(8, &0xaabb_ccdd_eeff_0011u64.to_le_bytes())
+            .expect("seed restored s1");
+        cpu.write_memory(0, &0x1122_3344_5566_7788u64.to_le_bytes())
+            .expect("seed restored s0");
+    }
+    let expected_exit = expected.step();
+    let actual_exit = actual.step_jit(OptLevel::O2);
+    assert_eq!(actual_exit, expected_exit);
+    assert_eq!(
+        actual_exit,
+        RiscVExit::Trap(Trap {
+            cause: 5,
+            tval: u64::MAX - 7,
+        })
+    );
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(1), 1);
+    assert_eq!(actual.x(8), 0x1122_3344_5566_7788);
+    assert_eq!(actual.x(9), 0xaabb_ccdd_eeff_0011);
+    assert_eq!(actual.x(2), u64::MAX - 15);
+    assert_eq!(actual.jit_stats().native_executions, 1);
+    assert_eq!(actual.jit_stats().interpreter_fallbacks, 0);
+}
+
+#[test]
+fn production_zcmp_popret_variants_commit_final_control_updates() {
+    let mut isa = Isa::rv64gc();
+    isa.zcmp = true;
+    let config = RiscVConfig {
+        xlen: Xlen::Rv64,
+        isa,
+    };
+    let push = cm_zcmp_stack(0x18, 4, 0); // {ra}, 16-byte adjustment
+
+    for (pop_funct5, zero_a0) in [(0x1e, false), (0x1c, true)] {
+        let pop = cm_zcmp_stack(pop_funct5, 4, 0);
+        let mut expected = make_cpu(config);
+        let mut actual = make_cpu(config);
+        for cpu in [&mut expected, &mut actual] {
+            install_bytes(cpu, &push.to_le_bytes());
+            cpu.set_x(1, CODE + 0x101); // POPRET clears target bit zero.
+            cpu.set_x(2, DATA + 0x400);
+            cpu.set_x(10, 0xfeed_face);
+        }
+        assert_eq!(expected.step(), RiscVExit::Continue);
+        assert_eq!(actual.step_jit(OptLevel::O2), RiscVExit::Continue);
+
+        for cpu in [&mut expected, &mut actual] {
+            install_bytes(cpu, &pop.to_le_bytes());
+        }
+        assert_eq!(expected.step(), RiscVExit::Continue);
+        assert_eq!(actual.step_jit(OptLevel::O2), RiscVExit::Continue);
+        assert_equivalent(&actual, &expected);
+        assert_eq!(actual.pc(), CODE + 0x100);
+        assert_eq!(actual.x(2), DATA + 0x400);
+        assert_eq!(actual.x(10), if zero_a0 { 0 } else { 0xfeed_face });
+        let stats = actual.jit_stats();
+        assert_eq!(stats.native_executions, 2);
+        assert_eq!(stats.interpreter_fallbacks, 0);
     }
 }
 

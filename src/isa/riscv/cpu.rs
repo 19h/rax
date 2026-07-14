@@ -1860,7 +1860,8 @@ impl RiscVCpu {
                 let old_sp = self.x(2);
                 let new_sp = old_sp.wrapping_sub(stack_adj) & self.xmask();
                 for slot in 0..count {
-                    let reg = zcmp_reg_at(slot).expect("slot checked by zcmp_reg_count");
+                    let reg =
+                        zcmp_reg_at(count - 1 - slot).expect("slot checked by zcmp_reg_count");
                     let off = stack_adj.wrapping_sub(((slot + 1) * slotsize) as u64);
                     self.store(new_sp, off, self.x(reg), slotsize)?;
                 }
@@ -1870,7 +1871,8 @@ impl RiscVCpu {
                 let sp = self.x(2);
                 let mut restored_ra = self.x(1);
                 for slot in 0..count {
-                    let reg = zcmp_reg_at(slot).expect("slot checked by zcmp_reg_count");
+                    let reg =
+                        zcmp_reg_at(count - 1 - slot).expect("slot checked by zcmp_reg_count");
                     let off = stack_adj.wrapping_sub(((slot + 1) * slotsize) as u64);
                     let addr = sp.wrapping_add(off) & self.xmask();
                     let val = if slotsize == 8 {
@@ -6359,9 +6361,9 @@ mod tests {
         let cm_push = ((0b101 << 13) | (0x18 << 8) | (5 << 4) | 0b10) as u16;
         run_half(&mut c, cm_push);
         assert_eq!(c.x(2), 0x7fe0);
-        assert_eq!(c.mem_read_u64(0x7ff8).unwrap(), 0x1235);
+        assert_eq!(c.mem_read_u64(0x7ff8).unwrap(), 0x9999);
         assert_eq!(c.mem_read_u64(0x7ff0).unwrap(), 0x8888);
-        assert_eq!(c.mem_read_u64(0x7fe8).unwrap(), 0x9999);
+        assert_eq!(c.mem_read_u64(0x7fe8).unwrap(), 0x1235);
 
         c.set_x(1, 0);
         c.set_x(8, 0);

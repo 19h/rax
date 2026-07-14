@@ -356,10 +356,7 @@ impl RiscVCpu {
 fn decoded_native_boundary(cfg: RiscVConfig, insn: &Insn) -> bool {
     // These Zc* macro instructions do not yet have an exact dedicated lift and
     // overlap compressed encodings otherwise consumed by scalar lift paths.
-    if matches!(
-        insn.op,
-        Op::CmPush | Op::CmPop | Op::CmPopRetz | Op::CmPopRet | Op::CmJt | Op::CmJalt
-    ) {
+    if matches!(insn.op, Op::CmJt | Op::CmJalt) {
         return false;
     }
     // Control-flow instruction-alignment traps without C are currently an
@@ -409,7 +406,7 @@ fn prepare_native_region(
         let Ok(lifted) = lifter.lift_insn(pc, bytes, &mut context) else {
             break;
         };
-        if !admit_lifted_instruction(&lifted)
+        if !admit_lifted_instruction(&insn, &lifted)
             || (!instructions.is_empty() && !safe_after_region_prefix(&lifted))
         {
             break;
@@ -562,7 +559,7 @@ fn function_for_region(
     Some((function, return_pcs))
 }
 
-fn admit_lifted_instruction(lifted: &LiftResult) -> bool {
+fn admit_lifted_instruction(insn: &Insn, lifted: &LiftResult) -> bool {
     let mut memory_accesses = 0usize;
     for op in &lifted.ops {
         match op.kind {
@@ -582,10 +579,15 @@ fn admit_lifted_instruction(lifted: &LiftResult) -> bool {
             _ => {}
         }
     }
-    // Multiple helper calls can expose partial device reads/writes or an
-    // instruction-specific partial-fault policy that the generic Memory trait
-    // cannot roll back. Single-access instructions retain precise restart.
+    // Zcmp stack macros architecturally expose ordered partial stores/loads if
+    // a later access faults; their primitive expansion implements that policy.
+    // Other multi-access instructions remain excluded because the generic
+    // Memory trait cannot infer or roll back their instruction-specific policy.
     memory_accesses <= 1
+        || matches!(
+            insn.op,
+            Op::CmPush | Op::CmPop | Op::CmPopRet | Op::CmPopRetz
+        )
 }
 
 fn function_for_lift(pc: u64, lifted: LiftResult) -> Option<(SmirFunction, HashMap<BlockId, u64>)> {
