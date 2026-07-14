@@ -3863,6 +3863,7 @@ impl OpKind {
                 | OpKind::Fence { .. }
                 | OpKind::X86ReadPid { .. }
                 | OpKind::X86XGetBv { .. }
+                | OpKind::X86XSetBv { .. }
                 | OpKind::X86Count { .. }
                 | OpKind::Bswap { .. }
                 | OpKind::Xchg { .. }

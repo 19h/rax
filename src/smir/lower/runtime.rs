@@ -21,7 +21,8 @@
 #![cfg(feature = "smir-jit")]
 
 use super::{
-    X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
+    X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CPL_OFFSET,
+    X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
     X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_RFLAGS_OFFSET,
     X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET,
@@ -136,6 +137,12 @@ pub struct GuestRegs {
     /// Guest CR4. XGETBV deoptimizes unless OSXSAVE (bit 18) is set, allowing
     /// the interpreter to deliver the architectural #UD precisely.
     pub cr4: u64,
+    /// Guest CR0. XSETBV checks PE before enforcing CPL=0.
+    pub cr0: u64,
+    /// Current privilege level derived from CS.RPL.
+    pub cpl: u64,
+    /// Non-zero when the emulator exposes APX and permits XCR0.APX_F.
+    pub apx_enabled: u64,
 }
 
 impl Default for GuestRegs {
@@ -159,6 +166,9 @@ impl Default for GuestRegs {
             xcr0: 1,
             xgetbv1: 0,
             cr4: 0,
+            cr0: 0,
+            cpl: 0,
+            apx_enabled: 0,
         }
     }
 }
@@ -2731,6 +2741,20 @@ fn x86_xgetbv_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     )
 }
 
+fn x86_xsetbv_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
+
+    matches!(
+        op,
+        OpKind::X86XSetBv {
+            selector: VReg::Arch(ArchReg::X86(X86Reg::Rcx)),
+            src_low: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+            src_high: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
+        }
+    )
+}
+
 fn x86_crc32_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::OpWidth;
@@ -2968,10 +2992,14 @@ fn block_is_clobber_safe(
         if matches!(op.kind, OpKind::X86XGetBv { .. }) && !x86_xgetbv_shape_valid(&op.kind) {
             return false;
         }
-        // XSETBV remains interpreter-only: the native tier must not admit it
-        // until its privilege checks and XCR0 writeback ABI are implemented.
         if matches!(op.kind, OpKind::X86XSetBv { .. }) {
-            return false;
+            if !x86_xsetbv_shape_valid(&op.kind)
+                || !block.ops[i + 1..]
+                    .iter()
+                    .any(|next| next.guest_pc != op.guest_pc)
+            {
+                return false;
+            }
         }
         if let OpKind::Fence { kind } = &op.kind {
             if !matches!(
@@ -7079,6 +7107,18 @@ mod jit_gate_tests {
             std::mem::offset_of!(GuestRegs, cr4),
             X86_GUEST_CR4_OFFSET as usize
         );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, cr0),
+            X86_GUEST_CR0_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, cpl),
+            X86_GUEST_CPL_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, apx_enabled),
+            X86_GUEST_APX_ENABLED_OFFSET as usize
+        );
         assert_eq!(std::mem::align_of::<GuestRegs>(), 64);
 
         let mut regs = GuestRegs::default();
@@ -9421,7 +9461,7 @@ mod jit_gate_tests {
     }
 
     #[test]
-    fn x86_xgetbv_gate_admits_only_fixed_implicit_register_shape() {
+    fn x86_xcr_gate_admits_only_fixed_implicit_register_shapes() {
         let valid = OpKind::X86XGetBv {
             dst_low: x86(X86Reg::Rax),
             dst_high: x86(X86Reg::Rdx),
@@ -9459,11 +9499,42 @@ mod jit_gate_tests {
             src_low: x86(X86Reg::Rax),
             src_high: x86(X86Reg::Rdx),
         };
-        assert!(!xsetbv.is_jit_safe(), "XSETBV is not class-whitelisted");
+        assert!(xsetbv.is_jit_safe(), "XSETBV must be class-whitelisted");
         assert!(
-            !x86_gate(xsetbv),
-            "XSETBV must remain a native frontier until writeback is implemented"
+            !x86_gate(xsetbv.clone()),
+            "XSETBV without a known handoff PC must deopt"
         );
+        let xset_gate = |op| {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, op);
+            builder.push_op(0x1003, OpKind::Nop);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            is_native_clobber_safe(&builder.finish())
+        };
+        assert!(
+            xset_gate(xsetbv),
+            "architectural XSETBV with a handoff PC must enter native tier"
+        );
+        for malformed in [
+            OpKind::X86XSetBv {
+                selector: x86(X86Reg::R8),
+                src_low: x86(X86Reg::Rax),
+                src_high: x86(X86Reg::Rdx),
+            },
+            OpKind::X86XSetBv {
+                selector: x86(X86Reg::Rcx),
+                src_low: x86(X86Reg::R9),
+                src_high: x86(X86Reg::Rdx),
+            },
+            OpKind::X86XSetBv {
+                selector: x86(X86Reg::Rcx),
+                src_low: x86(X86Reg::Rax),
+                src_high: x86(X86Reg::R10),
+            },
+        ] {
+            assert!(malformed.is_jit_safe());
+            assert!(!xset_gate(malformed), "malformed XSETBV must deopt");
+        }
     }
 
     #[test]

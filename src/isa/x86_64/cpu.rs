@@ -4018,6 +4018,9 @@ unsafe extern "C" fn rax_jit_call(
     gr.xcr0 = vcpu.xcr0;
     gr.xgetbv1 = vcpu.xgetbv1_value;
     gr.cr4 = vcpu.sregs.cr4;
+    gr.cr0 = vcpu.sregs.cr0;
+    gr.cpl = u64::from(vcpu.sregs.cs.selector & 3);
+    gr.apx_enabled = u64::from(vcpu.apx_enabled());
     if ok == 0 {
         gr.exit_pc = vcpu.regs.rip;
     }
@@ -4574,6 +4577,9 @@ impl X86_64Vcpu {
         gr.xcr0 = self.xcr0;
         gr.xgetbv1 = self.xgetbv1_value;
         gr.cr4 = self.sregs.cr4;
+        gr.cr0 = self.sregs.cr0;
+        gr.cpl = u64::from(self.sregs.cs.selector & 3);
+        gr.apx_enabled = u64::from(self.apx_enabled());
         gr.gpr[0] = self.regs.rax;
         gr.gpr[1] = self.regs.rcx;
         gr.gpr[2] = self.regs.rdx;
@@ -4646,6 +4652,10 @@ impl X86_64Vcpu {
             };
             return;
         }
+
+        // Stateful control instructions such as XSETBV commit through the
+        // marshalled ABI before returning at a precise next-instruction PC.
+        self.xcr0 = gr.xcr0;
 
         self.regs.rax = gr.gpr[0];
         self.regs.rcx = gr.gpr[1];

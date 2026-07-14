@@ -84,6 +84,12 @@ pub const X86_GUEST_XCR0_OFFSET: i32 = X86_GUEST_TSC_AUX_OFFSET + 8;
 pub const X86_GUEST_XGETBV1_OFFSET: i32 = X86_GUEST_XCR0_OFFSET + 8;
 /// Byte offset of guest CR4, whose OSXSAVE bit gates XGETBV.
 pub const X86_GUEST_CR4_OFFSET: i32 = X86_GUEST_XGETBV1_OFFSET + 8;
+/// Byte offset of guest CR0, whose PE bit participates in XSETBV privilege checks.
+pub const X86_GUEST_CR0_OFFSET: i32 = X86_GUEST_CR4_OFFSET + 8;
+/// Byte offset of the current privilege level (CS.RPL) used by XSETBV.
+pub const X86_GUEST_CPL_OFFSET: i32 = X86_GUEST_CR0_OFFSET + 8;
+/// Byte offset of the emulator's APX enable policy used to validate XCR0.APX_F.
+pub const X86_GUEST_APX_ENABLED_OFFSET: i32 = X86_GUEST_CPL_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

@@ -20,7 +20,8 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 use super::regalloc::{PhysReg, RegAlloc, RegLocation};
 use super::{
     CodeBuffer, LowerError, LowerResult, RelocKind, RelocTarget, Relocation, SmirLowerer,
-    X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
+    X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CPL_OFFSET,
+    X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
     X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_RFLAGS_OFFSET,
     X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_XCR0_OFFSET,
@@ -12317,6 +12318,179 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    /// Lower XSETBV as a state-backed control update followed by an immediate
+    /// native-region handoff. Returning at `resume_pc` is required: changing
+    /// XCR0 can enable or disable subsequent vector instructions, so code that
+    /// was admitted under the entry state must not continue in the same region.
+    /// Invalid state restores every input and returns at the XSETBV PC, letting
+    /// the interpreter deliver #UD or #GP(0) with precise restart semantics.
+    fn emit_xsetbv(&mut self, op: &SmirOp, resume_pc: u64) -> Result<(), LowerError> {
+        let (selector, src_low, src_high) = match &op.kind {
+            OpKind::X86XSetBv {
+                selector,
+                src_low,
+                src_high,
+            } => (*selector, *src_low, *src_high),
+            _ => unreachable!("emit_xsetbv requires X86XSetBv"),
+        };
+        if self.get_reg(selector)? != PhysReg::Rcx
+            || self.get_reg(src_low)? != PhysReg::Rax
+            || self.get_reg(src_high)? != PhysReg::Rdx
+        {
+            return Err(LowerError::InvalidOperand {
+                op: "X86XSetBv".to_string(),
+                operand: "requires ECX selector and EDX:EAX source".to_string(),
+            });
+        }
+
+        // [rsp+0]=RDX, [rsp+8]=RCX, [rsp+16]=RAX, [rsp+24]=RFLAGS.
+        // The architectural instruction preserves every one of these values on
+        // both success and fault, so all scratch computation is stack-backed.
+        self.code.emit_u8(0x9C); // pushfq
+        self.code.emit_u8(0x50); // push rax
+        self.code.emit_u8(0x51); // push rcx
+        self.code.emit_u8(0x52); // push rdx
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0x8B);
+        self.code.emit_u8(0x45);
+        self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8); // mov rax,[rbp+state]
+
+        let mut fault_branches = Vec::new();
+
+        // CR4.OSXSAVE=0 raises #UD before selector/value validation.
+        self.code.emit_u8(0xF7);
+        self.code.emit_u8(0x80);
+        self.code.emit_u32(X86_GUEST_CR4_OFFSET as u32);
+        self.code.emit_u32(1 << 18); // test dword [rax+cr4],1<<18
+        fault_branches.push(self.emit_jcc_placeholder(X86Cond::E));
+
+        // In protected mode XSETBV requires CPL=0. Real mode ignores CS.RPL.
+        self.code.emit_u8(0xF7);
+        self.code.emit_u8(0x80);
+        self.code.emit_u32(X86_GUEST_CR0_OFFSET as u32);
+        self.code.emit_u32(1); // test dword [rax+cr0],CR0.PE
+        let privilege_ok = self.emit_jcc_placeholder(X86Cond::E);
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0x83);
+        self.code.emit_u8(0xB8);
+        self.code.emit_u32(X86_GUEST_CPL_OFFSET as u32);
+        self.code.emit_u8(0); // cmp qword [rax+cpl],0
+        fault_branches.push(self.emit_jcc_placeholder(X86Cond::Ne));
+        self.patch_rel32_to_current(privilege_ok)?;
+
+        // Only XCR0 (ECX=0) is writable.
+        self.code.emit_u8(0x83);
+        self.code.emit_u8(0x7C);
+        self.code.emit_u8(0x24);
+        self.code.emit_u8(0x08);
+        self.code.emit_u8(0); // cmp dword [rsp+8],0
+        fault_branches.push(self.emit_jcc_placeholder(X86Cond::Ne));
+
+        // RCX = zero-extended EDX:EAX candidate, reconstructed from snapshots.
+        self.code.emit_u8(0x8B);
+        self.code.emit_u8(0x4C);
+        self.code.emit_u8(0x24);
+        self.code.emit_u8(0x10); // mov ecx,[rsp+16]
+        self.code.emit_u8(0x8B);
+        self.code.emit_u8(0x14);
+        self.code.emit_u8(0x24); // mov edx,[rsp]
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0xC1);
+        self.code.emit_u8(0xE2);
+        self.code.emit_u8(0x20); // shl rdx,32
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0x09);
+        self.code.emit_u8(0xD1); // or rcx,rdx
+
+        // X87 must remain enabled.
+        self.code.emit_u8(0xF6);
+        self.code.emit_u8(0xC1);
+        self.code.emit_u8(0x01); // test cl,1
+        fault_branches.push(self.emit_jcc_placeholder(X86Cond::E));
+
+        // Supported state is x87/SSE/AVX/AVX-512 plus APX_F only when the
+        // emulator exposes APX. TEST r64,imm32 sign-extends the immediate, and
+        // both complements have identical ones in bits 63:32.
+        self.code.emit_u8(0x83);
+        self.code.emit_u8(0xB8);
+        self.code.emit_u32(X86_GUEST_APX_ENABLED_OFFSET as u32);
+        self.code.emit_u8(0); // cmp dword [rax+apx_enabled],0
+        let no_apx = self.emit_jcc_placeholder(X86Cond::E);
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0xF7);
+        self.code.emit_u8(0xC1);
+        self.code.emit_u32(!(0xE7u32 | (1 << 19))); // test rcx,!supported_with_apx
+        fault_branches.push(self.emit_jcc_placeholder(X86Cond::Ne));
+        self.code.emit_u8(0xE9);
+        let supported = self.code.position();
+        self.code.emit_u32(0);
+        self.patch_rel32_to_current(no_apx)?;
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0xF7);
+        self.code.emit_u8(0xC1);
+        self.code.emit_u32(!0xE7u32); // test rcx,!supported_without_apx
+        fault_branches.push(self.emit_jcc_placeholder(X86Cond::Ne));
+        self.patch_rel32_to_current(supported)?;
+
+        // AVX (bit 2) depends on SSE (bit 1).
+        self.code.emit_u8(0xF6);
+        self.code.emit_u8(0xC1);
+        self.code.emit_u8(0x04); // test cl,4
+        let avx_dependency_ok = self.emit_jcc_placeholder(X86Cond::E);
+        self.code.emit_u8(0xF6);
+        self.code.emit_u8(0xC1);
+        self.code.emit_u8(0x02); // test cl,2
+        fault_branches.push(self.emit_jcc_placeholder(X86Cond::E));
+        self.patch_rel32_to_current(avx_dependency_ok)?;
+
+        // AVX-512 bits 7:5 are all-or-none and require SSE+AVX.
+        self.code.emit_u8(0x89);
+        self.code.emit_u8(0xCA); // mov edx,ecx
+        self.code.emit_u8(0x81);
+        self.code.emit_u8(0xE2);
+        self.code.emit_u32(0xE0); // and edx,0xE0
+        let avx512_ok = self.emit_jcc_placeholder(X86Cond::E);
+        self.code.emit_u8(0x81);
+        self.code.emit_u8(0xFA);
+        self.code.emit_u32(0xE0); // cmp edx,0xE0
+        fault_branches.push(self.emit_jcc_placeholder(X86Cond::Ne));
+        self.code.emit_u8(0x89);
+        self.code.emit_u8(0xCA); // mov edx,ecx
+        self.code.emit_u8(0x83);
+        self.code.emit_u8(0xE2);
+        self.code.emit_u8(0x06); // and edx,6
+        self.code.emit_u8(0x83);
+        self.code.emit_u8(0xFA);
+        self.code.emit_u8(0x06); // cmp edx,6
+        fault_branches.push(self.emit_jcc_placeholder(X86Cond::Ne));
+        self.patch_rel32_to_current(avx512_ok)?;
+
+        // Commit XCR0, restore the complete architectural input state, and
+        // force a new region at the next instruction under the new policy.
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0x89);
+        self.code.emit_u8(0x88);
+        self.code.emit_u32(X86_GUEST_XCR0_OFFSET as u32); // mov [rax+xcr0],rcx
+        self.code.emit_u8(0x5A);
+        self.code.emit_u8(0x59);
+        self.code.emit_u8(0x58);
+        self.code.emit_u8(0x9D);
+        self.emit_native_exit(resume_pc);
+
+        // Every invalid path is non-committing and restarts at XSETBV.
+        let fault = self.code.position();
+        for branch in fault_branches {
+            self.code
+                .patch_i32(branch, (fault as i64 - (branch as i64 + 4)) as i32);
+        }
+        self.code.emit_u8(0x5A);
+        self.code.emit_u8(0x59);
+        self.code.emit_u8(0x58);
+        self.code.emit_u8(0x9D);
+        self.emit_native_exit(op.guest_pc);
+        Ok(())
+    }
+
     fn lower_block(&mut self, block: &SmirBlock) -> Result<(), LowerError> {
         // Record block offset
         self.block_offsets.insert(block.id, self.code.position());
@@ -12416,6 +12590,19 @@ impl X86_64Lowerer {
         let mut idx = 0;
         while idx < end_idx {
             self.regalloc.set_current_idx(idx);
+            if matches!(block.ops[idx].kind, OpKind::X86XSetBv { .. }) {
+                let resume_pc = block.ops[idx + 1..]
+                    .iter()
+                    .find(|next| next.guest_pc != block.ops[idx].guest_pc)
+                    .map(|next| next.guest_pc)
+                    .ok_or_else(|| LowerError::UnsupportedOp {
+                        op: "X86XSetBv without a next-instruction handoff PC".to_string(),
+                    })?;
+                self.emit_xsetbv(&block.ops[idx], resume_pc)?;
+                // Both success and fault paths return through an exit stub.
+                // No following op or terminator in this block is reachable.
+                return Ok(());
+            }
             // The memory-fusion peepholes emit direct host-pointer accesses,
             // which are invalid under the JIT's MMU helper-call mode. In that
             // mode each Load/Store is lowered individually via the helper path
@@ -16243,6 +16430,91 @@ mod tests {
             assert_eq!(fault.gpr[1], selector, "{name}: RCX");
             assert_eq!(fault.gpr[2], 0x5555_6666_7777_8888, "{name}: RDX");
             assert_eq!(fault.rflags & 0x8D5, flags & 0x8D5, "{name}: flags");
+        }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_xsetbv_validates_state_commits_and_hands_off_precisely() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1234_5000);
+        builder.push_op(
+            0x1234_5000,
+            OpKind::X86XSetBv {
+                selector: rcx,
+                src_low: rax,
+                src_high: rdx,
+            },
+        );
+        builder.push_op(0x1234_5003, OpKind::Nop);
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&builder.finish())
+            .expect("lower state-backed XSETBV");
+        let exec = ExecMem::new(&lowerer.finalize().expect("finalize state-backed XSETBV"))
+            .expect("map state-backed XSETBV");
+
+        let flags = 0x2 | 0x8D5;
+        let run = |value: u64, cr4: u64, cr0: u64, cpl: u64, apx_enabled: bool, selector: u32| {
+            let mut regs = GuestRegs::default();
+            regs.cr4 = cr4;
+            regs.cr0 = cr0;
+            regs.cpl = cpl;
+            regs.apx_enabled = u64::from(apx_enabled);
+            regs.xcr0 = 3;
+            regs.gpr[0] = 0xA5A5_A5A5_0000_0000 | (value as u32 as u64);
+            regs.gpr[1] = 0x5A5A_5A5A_0000_0000 | u64::from(selector);
+            regs.gpr[2] = 0xC3C3_C3C3_0000_0000 | ((value >> 32) as u32 as u64);
+            regs.rflags = flags;
+            regs.exit_pc = 0;
+            let inputs = (regs.gpr[0], regs.gpr[1], regs.gpr[2]);
+            exec.run(lowered.entry_offset, &mut regs);
+            assert_eq!(
+                (regs.gpr[0], regs.gpr[1], regs.gpr[2]),
+                inputs,
+                "XSETBV must preserve EDX:EAX and ECX"
+            );
+            assert_eq!(regs.rflags & 0x8D5, flags & 0x8D5);
+            regs
+        };
+
+        for (name, value, apx_enabled) in [
+            ("x87", 1, false),
+            ("x87+sse", 3, false),
+            ("avx", 7, false),
+            ("avx512", 0xE7, false),
+            ("apx", 0x0008_00E7, true),
+        ] {
+            let regs = run(value, 1 << 18, 1, 0, apx_enabled, 0);
+            assert_eq!(regs.xcr0, value, "{name}: committed XCR0");
+            assert_eq!(regs.exit_pc, 0x1234_5003, "{name}: next PC handoff");
+        }
+
+        // CPL is ignored outside protected mode.
+        let real_mode = run(7, 1 << 18, 0, 3, false, 0);
+        assert_eq!(real_mode.xcr0, 7);
+        assert_eq!(real_mode.exit_pc, 0x1234_5003);
+
+        for (name, value, cr4, cr0, cpl, apx_enabled, selector) in [
+            ("OSXSAVE clear", 7, 0, 1, 0, false, 0),
+            ("protected CPL3", 7, 1 << 18, 1, 3, false, 0),
+            ("selector one", 7, 1 << 18, 1, 0, false, 1),
+            ("x87 disabled", 0, 1 << 18, 1, 0, false, 0),
+            ("unsupported bit", 9, 1 << 18, 1, 0, false, 0),
+            ("AVX without SSE", 5, 1 << 18, 1, 0, false, 0),
+            ("partial AVX512", 0x27, 1 << 18, 1, 0, false, 0),
+            ("AVX512 without AVX", 0xE3, 1 << 18, 1, 0, false, 0),
+            ("APX disabled", 0x0008_0001, 1 << 18, 1, 0, false, 0),
+            ("high unsupported", (1u64 << 63) | 1, 1 << 18, 1, 0, true, 0),
+        ] {
+            let regs = run(value, cr4, cr0, cpl, apx_enabled, selector);
+            assert_eq!(regs.xcr0, 3, "{name}: XCR0 must not commit");
+            assert_eq!(regs.exit_pc, 0x1234_5000, "{name}: fault restart PC");
         }
     }
 

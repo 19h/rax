@@ -651,6 +651,74 @@ fn jit_xgetbv_reads_guest_xinuse_state_matches_interpreter() {
     assert_eq!(actual.rflags, expected.rflags);
 }
 
+/// XSETBV validates and commits guest XCR0 in native code, then returns at the
+/// following instruction so the remainder is decoded/compiled under the new
+/// extended-state policy. EDX:EAX, ECX, and RFLAGS remain unchanged.
+#[test]
+fn jit_xsetbv_commits_guest_state_and_forces_next_instruction_handoff() {
+    // xsetbv; loop: xgetbv; dec r8d; jnz loop; hlt
+    //
+    // The conditional edge makes the entry a compilable region rather than a
+    // straight-line trap frontier. XSETBV must nevertheless terminate native
+    // execution before XGETBV because changing XCR0 changes decode policy.
+    let code = [
+        0x0F, 0x01, 0xD1, // xsetbv
+        0x0F, 0x01, 0xD0, // xgetbv
+        0x41, 0xFF, 0xC8, // dec r8d
+        0x75, 0xF8, // jnz xgetbv
+        0xF4,
+    ];
+
+    for (name, value, apx_enabled) in [
+        ("x87", 1u64, false),
+        ("avx", 7, false),
+        ("avx512", 0xE7, false),
+        ("apx", 0x0008_00E7, true),
+    ] {
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            vcpu.set_apx_enabled(apx_enabled);
+            let mut sregs = vcpu.get_sregs().unwrap();
+            sregs.cr4 |= 1 << 18;
+            vcpu.set_sregs(&sregs).unwrap();
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = 0xA5A5_A5A5_0000_0000 | value as u32 as u64;
+            regs.rcx = 0x5A5A_5A5A_0000_0000;
+            regs.rdx = 0xC3C3_C3C3_0000_0000 | (value >> 32) as u32 as u64;
+            regs.r8 = 1;
+            regs.rflags = 0x2 | 0x8D5;
+            vcpu.set_regs(&regs).unwrap();
+            regs
+        };
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp);
+        run_interp(&mut interp);
+
+        let mut jit = make_vcpu_code(&code);
+        let inputs = setup(&mut jit);
+        assert!(
+            jit.jit_try_block().expect("JIT XSETBV region"),
+            "{name}: state-backed XSETBV must enter the native tier"
+        );
+        let handoff = jit.get_regs().unwrap();
+        assert_eq!(handoff.rip, LOAD_ADDR + 3, "{name}: next-instruction PC");
+        assert_eq!(handoff.rax, inputs.rax, "{name}: RAX preserved");
+        assert_eq!(handoff.rcx, inputs.rcx, "{name}: RCX preserved");
+        assert_eq!(handoff.rdx, inputs.rdx, "{name}: RDX preserved");
+        assert_eq!(handoff.rflags, inputs.rflags, "{name}: RFLAGS preserved");
+
+        assert!(jit.step().expect("post-XSETBV XGETBV").is_none());
+        let actual = jit.get_regs().unwrap();
+        let expected = interp.get_regs().unwrap();
+        assert_eq!(actual.rax, value as u32 as u64, "{name}: XCR0 low");
+        assert_eq!(actual.rdx, (value >> 32) as u32 as u64, "{name}: XCR0 high");
+        assert_eq!(actual.rcx, inputs.rcx, "{name}: selector preserved");
+        assert_eq!(actual.rflags, inputs.rflags, "{name}: flags preserved");
+        assert_eq!(actual.rax, expected.rax, "{name}: interpreter low");
+        assert_eq!(actual.rdx, expected.rdx, "{name}: interpreter high");
+    }
+}
+
 /// APX NF count instructions have no architectural flag side effects. The JIT
 /// re-encodes them as legacy host count instructions wrapped by PUSHFQ/POPFQ,
 /// so each instruction must retain incoming CF while producing the same count
