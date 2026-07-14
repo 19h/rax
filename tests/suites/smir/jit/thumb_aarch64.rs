@@ -4,17 +4,18 @@
 use std::collections::HashMap;
 
 use rax::isa::arm::ExecutionState;
-use rax::isa::arm::aarch32::cpu::{Armv7Cpu, FlatMemory, Psr};
+use rax::isa::arm::aarch32::cpu::{ArmMemory, Armv7Cpu, FlatMemory, MemoryError, Psr};
 use rax::isa::arm::aarch32::instructions::{ExecResult, Executor};
 use rax::isa::arm::decoder::Decoder;
-use rax::smir::ir::types::{FunctionId, SourceArch};
+use rax::smir::ir::types::{FunctionId, OpWidth, SourceArch};
 use rax::smir::ir::{FunctionBuilder, Terminator};
 use rax::smir::lift::thumb::ThumbLifter;
 use rax::smir::lift::{LiftContext, SmirLifter};
 use rax::smir::lower::SmirLowerer;
 use rax::smir::lower::aarch64::Aarch64Lowerer;
 use rax::smir::lower::runtime::{
-    Aarch32GuestRegs, ExecMem, is_aarch32_aarch64_native_clobber_safe_excluding,
+    Aarch32GuestRegs, Aarch32MemHelpers, ExecMem,
+    is_aarch32_aarch64_native_clobber_safe_excluding_with_mem,
 };
 
 #[derive(Clone, Copy)]
@@ -245,6 +246,14 @@ fn reference(program: &[ThumbInsn], initial: Aarch32GuestRegs) -> Aarch32GuestRe
 }
 
 fn lower(program: &[ThumbInsn]) -> (ExecMem, usize) {
+    lower_configured(program, false)
+}
+
+fn lower_with_mem(program: &[ThumbInsn]) -> (ExecMem, usize) {
+    lower_configured(program, true)
+}
+
+fn lower_configured(program: &[ThumbInsn], allow_mem: bool) -> (ExecMem, usize) {
     let mut lifter = ThumbLifter::new();
     let mut context = LiftContext::new(SourceArch::Thumb);
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x8000);
@@ -270,9 +279,10 @@ fn lower(program: &[ThumbInsn]) -> (ExecMem, usize) {
         }
         instruction.set_terminator(Terminator::Return { values: Vec::new() });
         assert!(
-            is_aarch32_aarch64_native_clobber_safe_excluding(
+            is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
                 &instruction.finish(),
                 &HashMap::new(),
+                allow_mem,
             ),
             "{} must satisfy the production native gate: {:?}",
             item.asm,
@@ -286,17 +296,226 @@ fn lower(program: &[ThumbInsn]) -> (ExecMem, usize) {
     builder.set_terminator(Terminator::Return { values: Vec::new() });
     let function = builder.finish();
     assert!(
-        is_aarch32_aarch64_native_clobber_safe_excluding(&function, &HashMap::new()),
+        is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
+            &function,
+            &HashMap::new(),
+            allow_mem,
+        ),
         "complete Thumb scalar program must satisfy the production native gate"
     );
 
     let mut lowerer = Aarch64Lowerer::new();
+    if allow_mem {
+        lowerer.set_mem_helpers(true);
+        lowerer.set_mem_helper_addr_width(OpWidth::W32);
+    }
     let lowered = lowerer.lower_function(&function).expect("AArch64 lower");
     let code = lowerer.finalize().expect("AArch64 finalize");
     (
         ExecMem::new(&code).expect("map Thumb native region"),
         lowered.entry_offset,
     )
+}
+
+const TEST_MEM_SIZE: usize = 256;
+
+#[repr(C)]
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct TestMemory {
+    data: [u8; TEST_MEM_SIZE],
+    fault_addr: u32,
+    fault_enabled: u64,
+    last_helper_addr: u64,
+    helper_loads: u64,
+    helper_stores: u64,
+}
+
+impl TestMemory {
+    fn patterned() -> Self {
+        let mut data = [0u8; TEST_MEM_SIZE];
+        for (index, byte) in data.iter_mut().enumerate() {
+            *byte = index as u8 ^ 0x80;
+        }
+        Self {
+            data,
+            fault_addr: 0,
+            fault_enabled: 0,
+            last_helper_addr: u64::MAX,
+            helper_loads: 0,
+            helper_stores: 0,
+        }
+    }
+
+    fn check(&self, addr: u32) -> Result<(), MemoryError> {
+        if self.fault_enabled != 0 && addr == self.fault_addr {
+            Err(MemoryError::BusError(addr))
+        } else {
+            Ok(())
+        }
+    }
+
+    fn byte(&self, addr: u32) -> u8 {
+        self.data[addr as usize & (TEST_MEM_SIZE - 1)]
+    }
+
+    fn set_byte(&mut self, addr: u32, value: u8) {
+        self.data[addr as usize & (TEST_MEM_SIZE - 1)] = value;
+    }
+}
+
+impl ArmMemory for TestMemory {
+    fn read_word(&self, addr: u32) -> Result<u32, MemoryError> {
+        self.check(addr)?;
+        Ok(u32::from_le_bytes([
+            self.byte(addr),
+            self.byte(addr.wrapping_add(1)),
+            self.byte(addr.wrapping_add(2)),
+            self.byte(addr.wrapping_add(3)),
+        ]))
+    }
+
+    fn write_word(&mut self, addr: u32, value: u32) -> Result<(), MemoryError> {
+        self.check(addr)?;
+        for (offset, byte) in value.to_le_bytes().into_iter().enumerate() {
+            self.set_byte(addr.wrapping_add(offset as u32), byte);
+        }
+        Ok(())
+    }
+
+    fn read_halfword(&self, addr: u32) -> Result<u16, MemoryError> {
+        self.check(addr)?;
+        Ok(u16::from_le_bytes([
+            self.byte(addr),
+            self.byte(addr.wrapping_add(1)),
+        ]))
+    }
+
+    fn write_halfword(&mut self, addr: u32, value: u16) -> Result<(), MemoryError> {
+        self.check(addr)?;
+        for (offset, byte) in value.to_le_bytes().into_iter().enumerate() {
+            self.set_byte(addr.wrapping_add(offset as u32), byte);
+        }
+        Ok(())
+    }
+
+    fn read_byte(&self, addr: u32) -> Result<u8, MemoryError> {
+        self.check(addr)?;
+        Ok(self.byte(addr))
+    }
+
+    fn write_byte(&mut self, addr: u32, value: u8) -> Result<(), MemoryError> {
+        self.check(addr)?;
+        self.set_byte(addr, value);
+        Ok(())
+    }
+}
+
+#[repr(C)]
+struct LoadRet {
+    value: u64,
+    ok: u64,
+}
+
+extern "C" fn test_load(ctx: *mut TestMemory, addr: u64, size: u32, signed: u32) -> LoadRet {
+    let memory = unsafe { &mut *ctx };
+    memory.last_helper_addr = addr;
+    memory.helper_loads += 1;
+    let Ok(addr) = u32::try_from(addr) else {
+        return LoadRet { value: 0, ok: 0 };
+    };
+    let value = match size {
+        1 => memory.read_byte(addr).map(|value| {
+            if signed != 0 {
+                value as i8 as i64 as u64
+            } else {
+                u64::from(value)
+            }
+        }),
+        2 => memory.read_halfword(addr).map(|value| {
+            if signed != 0 {
+                value as i16 as i64 as u64
+            } else {
+                u64::from(value)
+            }
+        }),
+        4 => memory.read_word(addr).map(u64::from),
+        _ => Err(MemoryError::BusError(addr)),
+    };
+    match value {
+        Ok(value) => LoadRet { value, ok: 1 },
+        Err(_) => LoadRet { value: 0, ok: 0 },
+    }
+}
+
+extern "C" fn test_store(ctx: *mut TestMemory, addr: u64, value: u64, size: u32) -> u64 {
+    let memory = unsafe { &mut *ctx };
+    memory.last_helper_addr = addr;
+    memory.helper_stores += 1;
+    let Ok(addr) = u32::try_from(addr) else {
+        return 0;
+    };
+    let result = match size {
+        1 => memory.write_byte(addr, value as u8),
+        2 => memory.write_halfword(addr, value as u16),
+        4 => memory.write_word(addr, value as u32),
+        _ => Err(MemoryError::BusError(addr)),
+    };
+    u64::from(result.is_ok())
+}
+
+fn reference_memory(
+    program: &[ThumbInsn],
+    initial: Aarch32GuestRegs,
+    mut memory: TestMemory,
+) -> (Aarch32GuestRegs, TestMemory, Option<usize>) {
+    let mut cpu = Armv7Cpu::new();
+    cpu.regs = initial.r;
+    cpu.cpsr = Psr::from_u32(initial.cpsr);
+    let decoder = Decoder::new(ExecutionState::Thumb);
+    let mut fault_index = None;
+    {
+        let mut executor = Executor::new(&mut cpu, &mut memory);
+        for (index, item) in program.iter().enumerate() {
+            let decoded = decoder
+                .decode(item.bytes)
+                .unwrap_or_else(|error| panic!("reference decode {}: {error}", item.asm));
+            match executor.execute(&decoded) {
+                ExecResult::Continue => {}
+                ExecResult::MemoryFault(_) => {
+                    fault_index = Some(index);
+                    break;
+                }
+                other => panic!(
+                    "reference memory execution failed for {}: {other:?}",
+                    item.asm
+                ),
+            }
+        }
+    }
+    (
+        Aarch32GuestRegs {
+            r: cpu.regs,
+            cpsr: cpu.cpsr.to_u32(),
+        },
+        memory,
+        fault_index,
+    )
+}
+
+fn run_memory_native(
+    program: &[ThumbInsn],
+    initial: Aarch32GuestRegs,
+    mut memory: TestMemory,
+) -> (Aarch32GuestRegs, TestMemory, u64) {
+    let (exec, entry) = lower_with_mem(program);
+    let mut regs = initial;
+    let helpers = Aarch32MemHelpers {
+        ctx: (&mut memory as *mut TestMemory) as u64,
+        load_fn: test_load as usize as u64,
+        store_fn: test_store as usize as u64,
+    };
+    let exit_pc = exec.run_aarch32_identity_with_mem(entry, &mut regs, helpers);
+    (regs, memory, exit_pc)
 }
 
 fn assert_native_parity(program: &[ThumbInsn], initial: Aarch32GuestRegs) -> Aarch32GuestRegs {
@@ -374,4 +593,89 @@ fn thumb_identity_bridge_preserves_thumb_and_non_nzcv_cpsr_state() {
     let actual = assert_native_parity(&program, initial);
     assert_ne!(actual.cpsr & 0xf000_0000, initial.cpsr & 0xf000_0000);
     assert_eq!(actual.cpsr & (1 << 5), 1 << 5, "CPSR.T remains set");
+}
+
+#[test]
+fn mixed_t16_t32_scalar_memory_matches_interpreter() {
+    let program = [
+        insn(&[0x88, 0x56], "ldrsb r0,[r1,r2]"),
+        insn(&[0x63, 0x5f], "ldrsh r3,[r4,r5]"),
+        insn(&[0x01, 0x9e], "ldr r6,[sp,#4]"),
+        insn(&[0xf8, 0x70], "strb r0,[r7,#3]"),
+        insn(&[0xbb, 0x80], "strh r3,[r7,#4]"),
+        insn(&[0xbe, 0x60], "str r6,[r7,#8]"),
+        insn(&[0x59, 0xf8, 0x04, 0x8f], "ldr.w r8,[r9,#4]!"),
+        insn(&[0x4a, 0xf8, 0x08, 0x89], "str.w r8,[r10],#-8"),
+        insn(&[0x9c, 0xf9, 0x07, 0xb0], "ldrsb.w r11,[r12,#7]"),
+        insn(&[0x8d, 0xf8, 0x0c, 0xb0], "strb.w r11,[sp,#12]"),
+    ];
+    let mut initial = initial_state();
+    initial.r[1] = 0x10;
+    initial.r[2] = 1;
+    initial.r[4] = 0x20;
+    initial.r[5] = 2;
+    initial.r[7] = 0x40;
+    initial.r[9] = 0x50;
+    initial.r[10] = 0x70;
+    initial.r[12] = 0x60;
+    initial.r[13] = 0x30;
+    let memory = TestMemory::patterned();
+
+    let (expected_regs, expected_mem, fault) = reference_memory(&program, initial, memory.clone());
+    assert_eq!(fault, None);
+    let (actual_regs, actual_mem, exit_pc) = run_memory_native(&program, initial, memory);
+
+    assert_eq!(actual_regs, expected_regs);
+    assert_eq!(actual_mem.data, expected_mem.data);
+    assert_eq!(actual_regs.r[0], 0xffff_ff91, "T16 LDRSB");
+    assert_eq!(actual_regs.r[3], 0xffff_a3a2, "T16 LDRSH");
+    assert_eq!(actual_regs.r[9], 0x54, "T32 pre-index writeback");
+    assert_eq!(actual_regs.r[10], 0x68, "T32 post-index writeback");
+    assert_eq!(actual_mem.helper_loads, 5);
+    assert_eq!(actual_mem.helper_stores, 5);
+    assert_eq!(exit_pc, 0);
+}
+
+#[test]
+fn thumb_helper_fault_is_precise_and_writeback_atomic() {
+    for (program, label) in [
+        ([insn(&[0x51, 0xf8, 0x04, 0x0f], "ldr r0,[r1,#4]!")], "load"),
+        (
+            [insn(&[0x41, 0xf8, 0x04, 0x0f], "str r0,[r1,#4]!")],
+            "store",
+        ),
+    ] {
+        let mut initial = initial_state();
+        initial.r[0] = 0x1122_3344;
+        initial.r[1] = 0x20;
+        let mut memory = TestMemory::patterned();
+        memory.fault_enabled = 1;
+        memory.fault_addr = 0x24;
+
+        let (expected_regs, expected_mem, fault) =
+            reference_memory(&program, initial, memory.clone());
+        assert_eq!(fault, Some(0), "{label}");
+        let (actual_regs, actual_mem, exit_pc) = run_memory_native(&program, initial, memory);
+
+        assert_eq!(actual_regs, expected_regs, "{label} state");
+        assert_eq!(actual_mem.data, expected_mem.data, "{label} memory");
+        assert_eq!(actual_regs.r[1], initial.r[1], "{label} writeback");
+        assert_eq!(exit_pc, 0x8000, "{label} fault PC");
+    }
+}
+
+#[test]
+fn thumb_helper_effective_address_wraps_modulo_2_pow_32() {
+    let program = [insn(&[0xd1, 0xf8, 0x08, 0x00], "ldr.w r0,[r1,#8]")];
+    let mut initial = initial_state();
+    initial.r[1] = 0xffff_fffc;
+    let memory = TestMemory::patterned();
+
+    let (expected_regs, _, fault) = reference_memory(&program, initial, memory.clone());
+    assert_eq!(fault, None);
+    let (actual_regs, actual_mem, exit_pc) = run_memory_native(&program, initial, memory);
+
+    assert_eq!(actual_regs, expected_regs);
+    assert_eq!(actual_mem.last_helper_addr, 4);
+    assert_eq!(exit_pc, 0);
 }

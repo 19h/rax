@@ -10,6 +10,8 @@
 //!   flag-setting logical/move/shift forms fail closed;
 //! - direct Thumb branches use the architectural `PC + 4` base and BL writes
 //!   `(next_pc | 1)` to r14;
+//! - T16/T32 scalar single-transfer memory uses the W32 helper contract, while
+//!   literal-PC and multiple transfers fail closed;
 //! - T32 MOVT and bitfield encodings are translated using their T32 layouts;
 //! - both 16-bit and 32-bit instruction lengths are retained by block lifting.
 
@@ -17,12 +19,14 @@ use std::collections::HashSet;
 
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::decoder::{
-    DecodedInsn, Decoder, Mnemonic, Operand, Register, ShiftType, ThumbDecoder,
+    AddressingMode, DecodedInsn, Decoder, MemOffset, MemOperand, Mnemonic, Operand, Register,
+    ShiftType, ThumbDecoder,
 };
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, SmirOp};
 use crate::smir::ir::types::{
-    ArchReg, ArmReg, FunctionId, GuestAddr, OpId, OpWidth, SourceArch, SrcOperand, VReg,
+    Address, ArchReg, ArmReg, DispSize, FunctionId, GuestAddr, MemWidth, OpId, OpWidth, SignExtend,
+    SourceArch, SrcOperand, VReg,
 };
 use crate::smir::ir::{
     CallTarget, CallingConv, FunctionAttrs, SmirBlock, SmirFunction, Terminator, TrapKind,
@@ -96,9 +100,149 @@ impl ThumbLifter {
                     || shifted.amount >= 32
             }
             Operand::ExtendedReg(extended) => extended.reg.num >= 15,
-            Operand::Mem(_) | Operand::RegList(_) => true,
+            Operand::Mem(mem) => {
+                mem.base.num >= 15
+                    || match &mem.offset {
+                        MemOffset::None | MemOffset::Imm(_) => false,
+                        MemOffset::Reg(reg) => reg.num >= 15,
+                        MemOffset::ShiftedReg(shifted) => {
+                            shifted.reg.num >= 15
+                                || shifted.shift_type != ShiftType::LSL
+                                || shifted.amount > 3
+                        }
+                        MemOffset::ExtendedReg(_) => true,
+                    }
+            }
+            Operand::RegList(_) => true,
             _ => false,
         })
+    }
+
+    fn memory_kind(mnemonic: Mnemonic) -> Option<(bool, MemWidth, SignExtend)> {
+        match mnemonic {
+            Mnemonic::LDR => Some((true, MemWidth::B4, SignExtend::Zero)),
+            Mnemonic::LDRB => Some((true, MemWidth::B1, SignExtend::Zero)),
+            Mnemonic::LDRH => Some((true, MemWidth::B2, SignExtend::Zero)),
+            Mnemonic::LDRSB => Some((true, MemWidth::B1, SignExtend::Sign)),
+            Mnemonic::LDRSH => Some((true, MemWidth::B2, SignExtend::Sign)),
+            Mnemonic::STR => Some((false, MemWidth::B4, SignExtend::Zero)),
+            Mnemonic::STRB => Some((false, MemWidth::B1, SignExtend::Zero)),
+            Mnemonic::STRH => Some((false, MemWidth::B2, SignExtend::Zero)),
+            _ => None,
+        }
+    }
+
+    fn memory_address(mem: &MemOperand) -> Result<Address, LiftError> {
+        let base = Self::reg(mem.base.num);
+        if mem.mode == AddressingMode::PostIndex {
+            return Ok(Address::Direct(base));
+        }
+        match &mem.offset {
+            MemOffset::None | MemOffset::Imm(0) => Ok(Address::Direct(base)),
+            MemOffset::Imm(offset) => Ok(Address::BaseOffset {
+                base,
+                offset: *offset,
+                disp_size: DispSize::Auto,
+            }),
+            MemOffset::Reg(index) => Ok(Address::BaseIndexScale {
+                base: Some(base),
+                index: Self::reg(index.num),
+                scale: 1,
+                disp: 0,
+                disp_size: DispSize::Auto,
+            }),
+            MemOffset::ShiftedReg(shifted)
+                if shifted.shift_type == ShiftType::LSL && shifted.amount <= 3 =>
+            {
+                Ok(Address::BaseIndexScale {
+                    base: Some(base),
+                    index: Self::reg(shifted.reg.num),
+                    scale: 1 << shifted.amount,
+                    disp: 0,
+                    disp_size: DispSize::Auto,
+                })
+            }
+            _ => Err(LiftError::Internal(
+                "unsupported Thumb memory address escaped the hidden-state gate".to_string(),
+            )),
+        }
+    }
+
+    fn memory_writeback(mem: &MemOperand) -> Option<OpKind> {
+        if mem.mode == AddressingMode::Offset {
+            return None;
+        }
+        let MemOffset::Imm(offset) = &mem.offset else {
+            return None;
+        };
+        let offset = *offset;
+        let base = Self::reg(mem.base.num);
+        Some(if offset < 0 {
+            OpKind::Sub {
+                dst: base,
+                src1: base,
+                src2: SrcOperand::Imm(offset.wrapping_neg()),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            }
+        } else {
+            OpKind::Add {
+                dst: base,
+                src1: base,
+                src2: SrcOperand::Imm(offset),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            }
+        })
+    }
+
+    fn lift_memory(
+        &self,
+        insn: &DecodedInsn,
+        pc: GuestAddr,
+        ops: &mut Vec<SmirOp>,
+    ) -> Result<(), LiftError> {
+        let Some((is_load, width, sign)) = Self::memory_kind(insn.mnemonic) else {
+            return Err(LiftError::Internal(
+                "invalid Thumb scalar memory mnemonic".to_string(),
+            ));
+        };
+        let [Operand::Reg(rt), Operand::Mem(mem)] = insn.operands.as_slice() else {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "Thumb literal or malformed scalar memory operand".to_string(),
+            });
+        };
+        let writeback = Self::memory_writeback(mem);
+        if is_load && writeback.is_some() && rt.num == mem.base.num {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "Thumb load writeback aliases its destination".to_string(),
+            });
+        }
+        let addr = Self::memory_address(mem)?;
+        Self::push(
+            ops,
+            pc,
+            if is_load {
+                OpKind::Load {
+                    dst: Self::reg(rt.num),
+                    addr,
+                    width,
+                    sign,
+                }
+            } else {
+                OpKind::Store {
+                    src: Self::reg(rt.num),
+                    addr,
+                    width,
+                }
+            },
+        );
+        if let Some(writeback) = writeback {
+            Self::push(ops, pc, writeback);
+        }
+        Ok(())
     }
 
     fn shared_scalar_mnemonic(insn: &DecodedInsn) -> bool {
@@ -172,7 +316,7 @@ impl ThumbLifter {
             return Err(LiftError::Unsupported {
                 addr: pc,
                 mnemonic: format!(
-                    "Thumb {:?} requires IT, PC, memory, or special shifter state",
+                    "Thumb {:?} requires IT, PC, register-list, or special shifter state",
                     insn.mnemonic
                 ),
             });
@@ -185,6 +329,17 @@ impl ThumbLifter {
 
         let mut ops = Vec::new();
         let control = match normalized.mnemonic {
+            Mnemonic::LDR
+            | Mnemonic::LDRB
+            | Mnemonic::LDRH
+            | Mnemonic::LDRSB
+            | Mnemonic::LDRSH
+            | Mnemonic::STR
+            | Mnemonic::STRB
+            | Mnemonic::STRH => {
+                self.lift_memory(&normalized, pc, &mut ops)?;
+                ControlFlow::Fallthrough
+            }
             Mnemonic::MVN if !normalized.sets_flags => {
                 let (Some(Operand::Reg(rd)), Some(source)) =
                     (normalized.operands.first(), normalized.operands.get(1))
@@ -791,6 +946,131 @@ mod tests {
     }
 
     #[test]
+    fn lifts_t16_scalar_memory_width_sign_and_address_matrix() {
+        let cases: &[(&[u8], MemWidth, SignExtend, bool)] = &[
+            (&[0x88, 0x50], MemWidth::B4, SignExtend::Zero, false), // str r0,[r1,r2]
+            (&[0x88, 0x52], MemWidth::B2, SignExtend::Zero, false), // strh r0,[r1,r2]
+            (&[0x88, 0x54], MemWidth::B1, SignExtend::Zero, false), // strb r0,[r1,r2]
+            (&[0x88, 0x56], MemWidth::B1, SignExtend::Sign, true),  // ldrsb r0,[r1,r2]
+            (&[0x88, 0x58], MemWidth::B4, SignExtend::Zero, true),  // ldr r0,[r1,r2]
+            (&[0x88, 0x5a], MemWidth::B2, SignExtend::Zero, true),  // ldrh r0,[r1,r2]
+            (&[0x88, 0x5c], MemWidth::B1, SignExtend::Zero, true),  // ldrb r0,[r1,r2]
+            (&[0x88, 0x5e], MemWidth::B2, SignExtend::Sign, true),  // ldrsh r0,[r1,r2]
+            (&[0x48, 0x68], MemWidth::B4, SignExtend::Zero, true),  // ldr r0,[r1,#4]
+            (&[0x88, 0x78], MemWidth::B1, SignExtend::Zero, true),  // ldrb r0,[r1,#2]
+            (&[0x48, 0x88], MemWidth::B2, SignExtend::Zero, true),  // ldrh r0,[r1,#2]
+            (&[0x01, 0x98], MemWidth::B4, SignExtend::Zero, true),  // ldr r0,[sp,#4]
+        ];
+
+        for (bytes, width, sign, is_load) in cases {
+            let result = lift(bytes);
+            assert_eq!(result.bytes_consumed, 2);
+            assert_eq!(result.ops.len(), 1);
+            match &result.ops[0].kind {
+                OpKind::Load {
+                    width: actual_width,
+                    sign: actual_sign,
+                    ..
+                } if *is_load => {
+                    assert_eq!(actual_width, width, "{bytes:02x?}");
+                    assert_eq!(actual_sign, sign, "{bytes:02x?}");
+                }
+                OpKind::Store {
+                    width: actual_width,
+                    ..
+                } if !*is_load => assert_eq!(actual_width, width, "{bytes:02x?}"),
+                other => panic!("unexpected T16 memory lift {bytes:02x?}: {other:?}"),
+            }
+        }
+    }
+
+    #[test]
+    fn lifts_t32_memory_writeback_after_access_and_scaled_offsets() {
+        let cases: &[(&[u8], MemWidth, SignExtend, bool, usize)] = &[
+            (
+                &[0x51, 0xf8, 0x04, 0x0f],
+                MemWidth::B4,
+                SignExtend::Zero,
+                true,
+                2,
+            ), // ldr r0,[r1,#4]!
+            (
+                &[0x43, 0xf8, 0x08, 0x29],
+                MemWidth::B4,
+                SignExtend::Zero,
+                false,
+                2,
+            ), // str r2,[r3],#-8
+            (
+                &[0x95, 0xf9, 0x07, 0x40],
+                MemWidth::B1,
+                SignExtend::Sign,
+                true,
+                1,
+            ), // ldrsb.w r4,[r5,#7]
+            (
+                &[0x37, 0xf9, 0x00, 0x60],
+                MemWidth::B2,
+                SignExtend::Sign,
+                true,
+                1,
+            ), // ldrsh.w r6,[r7,r0]
+            (
+                &[0x8d, 0xf8, 0x0c, 0x80],
+                MemWidth::B1,
+                SignExtend::Zero,
+                false,
+                1,
+            ), // strb.w r8,[sp,#12]
+            (
+                &[0x2a, 0xf8, 0x04, 0x9d],
+                MemWidth::B2,
+                SignExtend::Zero,
+                false,
+                2,
+            ), // strh r9,[r10,#-4]!
+        ];
+
+        for (bytes, width, sign, is_load, op_count) in cases {
+            let result = lift(bytes);
+            assert_eq!(result.bytes_consumed, 4, "{bytes:02x?}");
+            assert_eq!(result.ops.len(), *op_count, "{bytes:02x?}");
+            match &result.ops[0].kind {
+                OpKind::Load {
+                    width: actual_width,
+                    sign: actual_sign,
+                    ..
+                } if *is_load => {
+                    assert_eq!(actual_width, width, "{bytes:02x?}");
+                    assert_eq!(actual_sign, sign, "{bytes:02x?}");
+                }
+                OpKind::Store {
+                    width: actual_width,
+                    ..
+                } if !*is_load => assert_eq!(actual_width, width, "{bytes:02x?}"),
+                other => panic!("unexpected T32 memory lift {bytes:02x?}: {other:?}"),
+            }
+            if result.ops.len() == 2 {
+                assert!(
+                    matches!(
+                        result.ops[1].kind,
+                        OpKind::Add {
+                            width: OpWidth::W32,
+                            flags: FlagUpdate::None,
+                            ..
+                        } | OpKind::Sub {
+                            width: OpWidth::W32,
+                            flags: FlagUpdate::None,
+                            ..
+                        }
+                    ),
+                    "writeback follows access for {bytes:02x?}"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn uses_thumb_pc_plus_four_and_sets_thumb_link_bit() {
         let branch = lift(&[0x04, 0xe0]); // B +8; target = 0x100c.
         assert!(matches!(
@@ -819,14 +1099,15 @@ mod tests {
     }
 
     #[test]
-    fn rejects_it_pc_memory_and_partial_flag_contracts() {
+    fn rejects_it_pc_literal_memory_aliases_and_partial_flag_contracts() {
         let cases: &[&[u8]] = &[
             &[0x08, 0xbf],             // IT EQ
             &[0x00, 0x20],             // MOVS r0,#0: N/Z only
             &[0x08, 0x40],             // ANDS r0,r1: N/Z, preserve C/V
             &[0x48, 0x00],             // LSLS r0,r1,#1: N/Z/C, preserve V
             &[0x78, 0x46],             // MOV r0,pc
-            &[0x08, 0x68],             // LDR r0,[r1]
+            &[0x00, 0x48],             // LDR r0,[PC,#0] requires aligned PC+4
+            &[0x51, 0xf8, 0x04, 0x1f], // LDR r1,[r1,#4]! aliases writeback
             &[0x4f, 0xea, 0x31, 0x00], // RRX r0,r1
             &[0x00, 0xd0],             // BEQ +0: explicit predication
             &[0x01, 0xfa, 0x02, 0xf0], // LSL.W r0,r1,r2: low-8 count semantics
