@@ -23321,11 +23321,8 @@ impl X86_64Lifter {
                 },
             prefix.width,
         );
-        let raw = if prefix.encoding == VecEncodingKind::Evex {
-            ctx.alloc_vreg()
-        } else {
-            dst
-        };
+        let masked = prefix.encoding == VecEncodingKind::Evex && prefix.aaa != 0;
+        let raw = if masked { ctx.alloc_vreg() } else { dst };
         ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
@@ -23338,7 +23335,7 @@ impl X86_64Lifter {
             },
             self.vec_hint(prefix, opcode),
         ));
-        if prefix.encoding == VecEncodingKind::Evex {
+        if masked {
             self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))

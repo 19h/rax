@@ -1742,6 +1742,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::VAdd { .. }
             | OpKind::VSub { .. }
             | OpKind::VAddSubSat { .. }
+            | OpKind::VMul { .. }
             | OpKind::VAnd { .. }
             | OpKind::VAndNot { .. }
             | OpKind::VOr { .. }
@@ -1865,6 +1866,13 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         elem,
         lanes,
         ..
+    }
+    | OpKind::VMul {
+        dst,
+        src1,
+        src2,
+        elem,
+        lanes,
     } = op
     {
         let elem_valid = if matches!(op, OpKind::VAddSubSat { .. }) {
@@ -1872,6 +1880,13 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
                 elem,
                 crate::smir::ir::types::VecElementType::I8
                     | crate::smir::ir::types::VecElementType::I16
+            )
+        } else if matches!(op, OpKind::VMul { .. }) {
+            matches!(
+                elem,
+                crate::smir::ir::types::VecElementType::I16
+                    | crate::smir::ir::types::VecElementType::I32
+                    | crate::smir::ir::types::VecElementType::I64
             )
         } else {
             matches!(
@@ -2566,6 +2581,14 @@ fn x86_vector_integer_arithmetic_encoding_valid(
                 _ => return false,
             },
         ),
+        OpKind::VMul { elem, .. } => (
+            *elem,
+            match elem {
+                VecElementType::I16 => 0xD5,
+                VecElementType::I32 | VecElementType::I64 => 0x40,
+                _ => return false,
+            },
+        ),
         _ => return false,
     };
     prefix == X86SsePrefix::OpSize
@@ -2577,6 +2600,22 @@ fn x86_vector_integer_arithmetic_encoding_valid(
                 VecElementType::I8 | VecElementType::I16 => true,
                 _ => false,
             })
+}
+
+fn x86_vector_integer_arithmetic_map_valid(
+    kind: &crate::smir::ir::ops::OpKind,
+    map: crate::smir::ir::ops::X86VecMap,
+) -> bool {
+    use crate::smir::ir::ops::{OpKind, X86VecMap};
+    use crate::smir::ir::types::VecElementType;
+
+    match kind {
+        OpKind::VMul {
+            elem: VecElementType::I32 | VecElementType::I64,
+            ..
+        } => map == X86VecMap::Map0F38,
+        _ => map == X86VecMap::Map0F,
+    }
 }
 
 /// Validate encoding metadata that can change the native opcode selected for
@@ -2721,6 +2760,13 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
             elem,
             lanes,
             ..
+        }
+        | OpKind::VMul {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
         } => (dst, src1, src2, elem, lanes),
         _ => return true,
     };
@@ -2733,6 +2779,13 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
             width == VecWidth::V128
                 && dst == src1
                 && [dst, src1, src2].into_iter().all(low_vector)
+                && !matches!(
+                    op.kind,
+                    OpKind::VMul {
+                        elem: crate::smir::ir::types::VecElementType::I64,
+                        ..
+                    }
+                )
                 && x86_vector_integer_arithmetic_encoding_valid(
                     &op.kind, prefix, opcode, false, false,
                 )
@@ -2744,10 +2797,17 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
             width: encoded_width,
             w,
         }) => {
-            map == X86VecMap::Map0F
+            x86_vector_integer_arithmetic_map_valid(&op.kind, map)
                 && encoded_width == width
                 && width != VecWidth::V512
                 && [dst, src1, src2].into_iter().all(low_vector)
+                && !matches!(
+                    op.kind,
+                    OpKind::VMul {
+                        elem: crate::smir::ir::types::VecElementType::I64,
+                        ..
+                    }
+                )
                 && x86_vector_integer_arithmetic_encoding_valid(&op.kind, pp, opcode, false, w)
         }
         Some(X86OpHint::EvexOp {
@@ -2757,7 +2817,7 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
             width: encoded_width,
             w,
         }) => {
-            map == X86VecMap::Map0F
+            x86_vector_integer_arithmetic_map_valid(&op.kind, map)
                 && encoded_width == width
                 && x86_vector_integer_arithmetic_encoding_valid(&op.kind, pp, opcode, true, w)
         }
@@ -2837,6 +2897,34 @@ fn x86_vector_integer_arithmetic_feature_requirements(
         Some(X86OpHint::VexOp { width, .. }) => (true, width == VecWidth::V256, false),
         Some(X86OpHint::EvexOp { width, .. }) => (false, false, width != VecWidth::V512),
         _ => (false, false, false),
+    }
+}
+
+/// Return `(SSE4.1, AVX, AVX2, AVX-512DQ, AVX-512VL)` requirements for an
+/// admitted low-product packed-integer multiply operation. AVX-512F/BW are
+/// already unconditional trampoline requirements.
+fn x86_vector_integer_multiply_feature_requirements(
+    op: &crate::smir::ir::ops::SmirOp,
+) -> (bool, bool, bool, bool, bool) {
+    use crate::smir::ir::ops::{OpKind, X86OpHint};
+    use crate::smir::ir::types::{VecElementType, VecWidth};
+
+    let OpKind::VMul { elem, .. } = op.kind else {
+        return (false, false, false, false, false);
+    };
+    match op.x86_hint {
+        Some(X86OpHint::SseOp { .. }) => (elem == VecElementType::I32, false, false, false, false),
+        Some(X86OpHint::VexOp { width, .. }) => {
+            (false, true, width == VecWidth::V256, false, false)
+        }
+        Some(X86OpHint::EvexOp { width, .. }) => (
+            false,
+            false,
+            false,
+            elem == VecElementType::I64,
+            width != VecWidth::V512,
+        ),
+        _ => (false, false, false, false, false),
     }
 }
 
@@ -2948,6 +3036,10 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_dq = false;
     let mut needs_int_arith_avx = false;
     let mut needs_int_arith_avx2 = false;
+    let mut needs_mul_sse41 = false;
+    let mut needs_mul_avx = false;
+    let mut needs_mul_avx2 = false;
+    let mut needs_mul_dq = false;
 
     for op in func
         .blocks
@@ -2989,7 +3081,8 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::VStore { width, .. } => *width,
             OpKind::VAdd { elem, lanes, .. }
             | OpKind::VSub { elem, lanes, .. }
-            | OpKind::VAddSubSat { elem, lanes, .. } => x86_vector_width_from_lanes(*elem, *lanes)
+            | OpKind::VAddSubSat { elem, lanes, .. }
+            | OpKind::VMul { elem, lanes, .. } => x86_vector_width_from_lanes(*elem, *lanes)
                 .expect("admitted integer vector arithmetic has exact lanes"),
             OpKind::X86Sha512Msg1 { .. }
             | OpKind::X86Sha512Msg2 { .. }
@@ -3006,6 +3099,8 @@ pub fn x86_native_vector_features_supported_excluding(
         let (logic_avx, logic_avx2, logic_dq, logic_vl) = x86_vector_logic_feature_requirements(op);
         let (int_arith_avx, int_arith_avx2, int_arith_vl) =
             x86_vector_integer_arithmetic_feature_requirements(op);
+        let (mul_sse41, mul_avx, mul_avx2, mul_dq, mul_vl) =
+            x86_vector_integer_multiply_feature_requirements(op);
         needs_vl |= match kind {
             OpKind::VMov { .. } => x86_vector_move_needs_vl(op),
             OpKind::VAnd { .. }
@@ -3013,6 +3108,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::VOr { .. }
             | OpKind::VXor { .. } => logic_vl,
             OpKind::VAdd { .. } | OpKind::VSub { .. } | OpKind::VAddSubSat { .. } => int_arith_vl,
+            OpKind::VMul { .. } => mul_vl,
             OpKind::X86Aes { .. } => aes_vl,
             OpKind::X86PackedShiftImm { .. } => shift_vl,
             OpKind::X86PackedShift { .. } => count_vl,
@@ -3080,6 +3176,10 @@ pub fn x86_native_vector_features_supported_excluding(
         needs_dq |= logic_dq;
         needs_int_arith_avx |= int_arith_avx;
         needs_int_arith_avx2 |= int_arith_avx2;
+        needs_mul_sse41 |= mul_sse41;
+        needs_mul_avx |= mul_avx;
+        needs_mul_avx2 |= mul_avx2;
+        needs_mul_dq |= mul_dq;
     }
 
     if !any {
@@ -3100,7 +3200,7 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_bf16 || std::is_x86_feature_detected!("avx512bf16"))
             && (!needs_cd || std::is_x86_feature_detected!("avx512cd"))
             && (!needs_fp16 || std::is_x86_feature_detected!("avx512fp16"))
-            && (!needs_dq || std::is_x86_feature_detected!("avx512dq"))
+            && (!(needs_dq || needs_mul_dq) || std::is_x86_feature_detected!("avx512dq"))
             && (!needs_aes || std::is_x86_feature_detected!("aes"))
             && (!needs_vaes || std::is_x86_feature_detected!("vaes"))
             && (!needs_sha512
@@ -3116,6 +3216,9 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_logic_avx2 || std::is_x86_feature_detected!("avx2"))
             && (!needs_int_arith_avx || std::is_x86_feature_detected!("avx"))
             && (!needs_int_arith_avx2 || std::is_x86_feature_detected!("avx2"))
+            && (!needs_mul_sse41 || std::is_x86_feature_detected!("sse4.1"))
+            && (!needs_mul_avx || std::is_x86_feature_detected!("avx"))
+            && (!needs_mul_avx2 || std::is_x86_feature_detected!("avx2"))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
@@ -3143,6 +3246,10 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_dq,
             needs_int_arith_avx,
             needs_int_arith_avx2,
+            needs_mul_sse41,
+            needs_mul_avx,
+            needs_mul_avx2,
+            needs_mul_dq,
         );
         false
     }
@@ -8802,6 +8909,307 @@ mod jit_gate_tests {
             ),
         ] {
             assert!(!x86_native_vector_smir_op(&malformed_arithmetic));
+        }
+
+        for (multiply_kind, hint, feature_requirements) in [
+            (
+                OpKind::VMul {
+                    dst: xmm1,
+                    src1: xmm1,
+                    src2: xmm2,
+                    elem: VecElementType::I16,
+                    lanes: 8,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xD5,
+                },
+                (false, false, false, false, false),
+            ),
+            (
+                OpKind::VMul {
+                    dst: xmm1,
+                    src1: xmm1,
+                    src2: xmm2,
+                    elem: VecElementType::I32,
+                    lanes: 4,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x40,
+                },
+                (true, false, false, false, false),
+            ),
+            (
+                OpKind::VMul {
+                    dst: xmm1,
+                    src1: xmm2,
+                    src2: xmm3,
+                    elem: VecElementType::I16,
+                    lanes: 8,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xD5,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                (false, true, false, false, false),
+            ),
+            (
+                OpKind::VMul {
+                    dst: ymm1,
+                    src1: ymm2,
+                    src2: ymm3,
+                    elem: VecElementType::I32,
+                    lanes: 8,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x40,
+                    width: VecWidth::V256,
+                    w: true,
+                },
+                (false, true, true, false, false),
+            ),
+            (
+                OpKind::VMul {
+                    dst: zmm1,
+                    src1: zmm2,
+                    src2: zmm3,
+                    elem: VecElementType::I32,
+                    lanes: 16,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x40,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+                (false, false, false, false, false),
+            ),
+            (
+                OpKind::VMul {
+                    dst: zmm1,
+                    src1: zmm2,
+                    src2: zmm3,
+                    elem: VecElementType::I64,
+                    lanes: 8,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x40,
+                    width: VecWidth::V512,
+                    w: true,
+                },
+                (false, false, false, true, false),
+            ),
+            (
+                OpKind::VMul {
+                    dst: x86(X86Reg::Ymm(16)),
+                    src1: x86(X86Reg::Ymm(17)),
+                    src2: x86(X86Reg::Ymm(18)),
+                    elem: VecElementType::I64,
+                    lanes: 4,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x40,
+                    width: VecWidth::V256,
+                    w: true,
+                },
+                (false, false, false, true, true),
+            ),
+        ] {
+            let smir_op = crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                multiply_kind.clone(),
+                hint,
+            );
+            assert!(is_x86_native_vector_op(&multiply_kind), "{multiply_kind:?}");
+            assert!(x86_native_vector_smir_op(&smir_op), "{smir_op:?}");
+            assert_eq!(
+                x86_vector_integer_multiply_feature_requirements(&smir_op),
+                feature_requirements,
+                "{smir_op:?}"
+            );
+
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, multiply_kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(hint);
+            assert!(is_native_clobber_safe(&function), "{smir_op:?}");
+        }
+
+        let unhinted_multiply = crate::smir::ir::ops::SmirOp::new(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            OpKind::VMul {
+                dst: xmm1,
+                src1: xmm1,
+                src2: xmm2,
+                elem: VecElementType::I16,
+                lanes: 8,
+            },
+        );
+        assert!(is_x86_native_vector_op(&unhinted_multiply.kind));
+        assert!(!x86_native_vector_smir_op(&unhinted_multiply));
+
+        for malformed_multiply_kind in [
+            OpKind::VMul {
+                dst: xmm1,
+                src1: xmm1,
+                src2: xmm2,
+                elem: VecElementType::I8,
+                lanes: 16,
+            },
+            OpKind::VMul {
+                dst: xmm1,
+                src1: xmm1,
+                src2: xmm2,
+                elem: VecElementType::F32,
+                lanes: 4,
+            },
+            OpKind::VMul {
+                dst: ymm1,
+                src1: ymm2,
+                src2: ymm3,
+                elem: VecElementType::I32,
+                lanes: 7,
+            },
+            OpKind::VMul {
+                dst: xmm1,
+                src1: xmm2,
+                src2: ymm3,
+                elem: VecElementType::I32,
+                lanes: 4,
+            },
+            OpKind::VMul {
+                dst: xmm1,
+                src1: xmm1,
+                src2: VReg::Virtual(VirtualId(11)),
+                elem: VecElementType::I16,
+                lanes: 8,
+            },
+        ] {
+            assert!(!is_x86_native_vector_op(&malformed_multiply_kind));
+        }
+
+        for malformed_multiply in [
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                OpKind::VMul {
+                    dst: xmm1,
+                    src1: xmm2,
+                    src2: xmm3,
+                    elem: VecElementType::I16,
+                    lanes: 8,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xD5,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                OpKind::VMul {
+                    dst: xmm1,
+                    src1: xmm2,
+                    src2: xmm3,
+                    elem: VecElementType::I16,
+                    lanes: 8,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x40,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                OpKind::VMul {
+                    dst: ymm1,
+                    src1: ymm2,
+                    src2: ymm3,
+                    elem: VecElementType::I32,
+                    lanes: 8,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x40,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                OpKind::VMul {
+                    dst: ymm1,
+                    src1: ymm2,
+                    src2: ymm3,
+                    elem: VecElementType::I64,
+                    lanes: 4,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x40,
+                    width: VecWidth::V256,
+                    w: true,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                OpKind::VMul {
+                    dst: zmm1,
+                    src1: zmm2,
+                    src2: zmm3,
+                    elem: VecElementType::I32,
+                    lanes: 16,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x40,
+                    width: VecWidth::V512,
+                    w: true,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                OpKind::VMul {
+                    dst: zmm1,
+                    src1: zmm2,
+                    src2: zmm3,
+                    elem: VecElementType::I64,
+                    lanes: 8,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x40,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(!x86_native_vector_smir_op(&malformed_multiply));
         }
 
         for invalid_vplzcnt in [

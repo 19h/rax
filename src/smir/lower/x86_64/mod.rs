@@ -7523,11 +7523,14 @@ impl X86_64Lowerer {
                         &[dst_reg, src1_reg, src2_reg],
                     );
                     self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
-                } else if width != VecWidth::V128
+                } else if *elem == VecElementType::I64
+                    || width != VecWidth::V128
                     || self.vec_requires_vex(&[dst_reg, src1_reg, src2_reg])
                 {
                     let (map, pp, opcode) = match elem {
+                        VecElementType::I16 => (X86VecMap::Map0F, X86SsePrefix::OpSize, 0xD5),
                         VecElementType::I32 => (X86VecMap::Map0F38, X86SsePrefix::OpSize, 0x40),
+                        VecElementType::I64 => (X86VecMap::Map0F38, X86SsePrefix::OpSize, 0x40),
                         VecElementType::F32 => (X86VecMap::Map0F, X86SsePrefix::None, 0x59),
                         VecElementType::F64 => (X86VecMap::Map0F, X86SsePrefix::OpSize, 0x59),
                         _ => {
@@ -7536,7 +7539,9 @@ impl X86_64Lowerer {
                             });
                         }
                     };
-                    let kind = if self.vec_requires_evex(width, &[dst_reg, src1_reg, src2_reg]) {
+                    let kind = if *elem == VecElementType::I64
+                        || self.vec_requires_evex(width, &[dst_reg, src1_reg, src2_reg])
+                    {
                         VecEncodingKind::Evex
                     } else {
                         VecEncodingKind::Vex
@@ -7547,11 +7552,19 @@ impl X86_64Lowerer {
                         pp,
                         opcode,
                         width,
-                        w: *elem == VecElementType::F64,
+                        w: matches!(elem, VecElementType::I64 | VecElementType::F64),
                     };
                     self.emit_vec_rrr(enc, dst_reg, src1_reg, src2_reg);
                 } else {
                     match elem {
+                        VecElementType::I16 => {
+                            if dst_reg != src1_reg {
+                                let mut emitter = X86Emitter::new(&mut self.code);
+                                emitter.emit_sse_mov_rr(Some(0x66), 0x6F, dst_reg, src1_reg);
+                            }
+                            let mut emitter = X86Emitter::new(&mut self.code);
+                            emitter.emit_sse_mov_rr(Some(0x66), 0xD5, dst_reg, src2_reg);
+                        }
                         VecElementType::I32 => {
                             if dst_reg != src1_reg {
                                 let mut emitter = X86Emitter::new(&mut self.code);
@@ -13612,6 +13625,36 @@ mod tests {
             (
                 &[0x62, 0xF1, 0xFD, 0x48, 0xEC, 0xC1][..],
                 &[0x62, 0xF1, 0xFD, 0x48, 0xEC, 0xC1][..],
+            ),
+            (&[0x66, 0x0F, 0xD5, 0xCA][..], &[0x66, 0x0F, 0xD5, 0xCA][..]),
+            (
+                &[0x66, 0x0F, 0x38, 0x40, 0xDC][..],
+                &[0x66, 0x0F, 0x38, 0x40, 0xDC][..],
+            ),
+            (&[0xC5, 0xE9, 0xD5, 0xCB][..], &[0xC5, 0xE9, 0xD5, 0xCB][..]),
+            (
+                &[0xC4, 0xE1, 0xF1, 0xD5, 0xC2][..],
+                &[0xC4, 0xE1, 0xF1, 0xD5, 0xC2][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0x55, 0x40, 0xE6][..],
+                &[0xC4, 0xE2, 0x55, 0x40, 0xE6][..],
+            ),
+            (
+                &[0x62, 0xA1, 0x55, 0x40, 0xD5, 0xE6][..],
+                &[0x62, 0xA1, 0x55, 0x40, 0xD5, 0xE6][..],
+            ),
+            (
+                &[0x62, 0xA2, 0x55, 0x20, 0x40, 0xE6][..],
+                &[0x62, 0xA2, 0x55, 0x20, 0x40, 0xE6][..],
+            ),
+            (
+                &[0x62, 0x02, 0xB5, 0x40, 0x40, 0xC2][..],
+                &[0x62, 0x02, 0xB5, 0x40, 0x40, 0xC2][..],
+            ),
+            (
+                &[0x62, 0x02, 0x95, 0x00, 0x40, 0xE6][..],
+                &[0x62, 0x02, 0x95, 0x00, 0x40, 0xE6][..],
             ),
             (
                 &[0x62, 0xF2, 0x7D, 0xCC, 0xC4, 0xCA][..],
