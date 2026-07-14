@@ -75,6 +75,8 @@ pub const X86_GUEST_VECTOR_ACTIVE_OFFSET: i32 = X86_GUEST_K_OFFSET + 8 * 8;
 pub const X86_GUEST_MXCSR_OFFSET: i32 = X86_GUEST_VECTOR_ACTIVE_OFFSET + 8;
 /// Byte offset of the host MXCSR value saved by the native trampoline.
 pub const X86_HOST_MXCSR_OFFSET: i32 = X86_GUEST_MXCSR_OFFSET + 4;
+/// Byte offset of the guest IA32_TSC_AUX value consumed by RDPID.
+pub const X86_GUEST_TSC_AUX_OFFSET: i32 = X86_HOST_MXCSR_OFFSET + 4;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

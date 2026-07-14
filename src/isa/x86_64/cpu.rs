@@ -4568,6 +4568,7 @@ impl X86_64Vcpu {
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
+        gr.tsc_aux = self.tsc_aux;
         gr.gpr[0] = self.regs.rax;
         gr.gpr[1] = self.regs.rcx;
         gr.gpr[2] = self.regs.rdx;

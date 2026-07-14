@@ -24,8 +24,8 @@ use super::{
     X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
     X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_RFLAGS_OFFSET,
-    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_ZMM_OFFSET,
-    X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET,
+    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 /// Apple I-cache invalidation (libSystem). Required after writing a `MAP_JIT`
@@ -124,6 +124,9 @@ pub struct GuestRegs {
     /// Host-thread MXCSR saved by the trampoline. Helper call boundaries switch
     /// to this value so Rust code never executes under guest FP control state.
     pub host_mxcsr: u32,
+    /// Guest IA32_TSC_AUX MSR. RDPID reads this state-backed value rather than
+    /// exposing the host thread's processor identifier.
+    pub tsc_aux: u32,
 }
 
 impl Default for GuestRegs {
@@ -143,6 +146,7 @@ impl Default for GuestRegs {
             vector_active: 0,
             mxcsr: 0x1F80,
             host_mxcsr: 0,
+            tsc_aux: 0,
         }
     }
 }
@@ -2684,10 +2688,16 @@ fn x86_block_preserves_live_flags(
     true
 }
 
-fn x86_native_crc32_gpr(reg: &crate::smir::ir::types::VReg) -> bool {
+fn x86_native_identity_gpr(reg: &crate::smir::ir::types::VReg) -> bool {
     use crate::smir::ir::types::{ArchReg, VReg};
 
     matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 15 && !matches!(index, 4 | 5)))
+}
+
+fn x86_native_rdpid_gpr(reg: &crate::smir::ir::types::VReg) -> bool {
+    use crate::smir::ir::types::{ArchReg, VReg};
+
+    matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 31 && !matches!(index, 4 | 5)))
 }
 
 fn x86_crc32_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
@@ -2701,7 +2711,7 @@ fn x86_crc32_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
             crc,
             data,
             data_width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
-        } if dst == crc && x86_native_crc32_gpr(dst) && x86_native_crc32_gpr(data)
+        } if dst == crc && x86_native_identity_gpr(dst) && x86_native_identity_gpr(data)
     )
 }
 
@@ -2788,7 +2798,7 @@ fn x86_mem_crc32_pair_valid(
         } if dst == crc
             && *data == temporary
             && *crc_width == data_width
-            && x86_native_crc32_gpr(dst)
+            && x86_native_identity_gpr(dst)
     );
     if !accumulator_valid || !x86_jit_mem_address_shape_valid(addr) {
         return false;
@@ -2918,6 +2928,11 @@ fn block_is_clobber_safe(
         }
         if matches!(op.kind, OpKind::Crc32C { .. }) && !x86_crc32_shape_valid(&op.kind) {
             return false;
+        }
+        if let OpKind::X86ReadPid { dst } = &op.kind {
+            if !x86_native_rdpid_gpr(dst) {
+                return false;
+            }
         }
         if let OpKind::Fence { kind } = &op.kind {
             if !matches!(
@@ -7009,6 +7024,10 @@ mod jit_gate_tests {
             std::mem::offset_of!(GuestRegs, host_mxcsr),
             X86_HOST_MXCSR_OFFSET as usize
         );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, tsc_aux),
+            X86_GUEST_TSC_AUX_OFFSET as usize
+        );
         assert_eq!(std::mem::align_of::<GuestRegs>(), 64);
 
         let mut regs = GuestRegs::default();
@@ -9323,6 +9342,31 @@ mod jit_gate_tests {
             assert!(op.is_jit_safe(), "{kind:?} remains class-whitelisted");
             assert!(!x86_gate(op), "non-x86 fence {kind:?} must deopt");
         }
+    }
+
+    #[test]
+    fn x86_rdpid_gate_admits_physical_and_state_backed_destinations() {
+        let valid = OpKind::X86ReadPid {
+            dst: x86(X86Reg::R9),
+        };
+        assert!(valid.is_jit_safe(), "RDPID must be class-whitelisted");
+        assert!(x86_gate(valid), "state-backed RDPID must enter native tier");
+
+        for (name, dst) in [
+            ("host stack", x86(X86Reg::Rsp)),
+            ("frame pointer", x86(X86Reg::Rbp)),
+            ("virtual", VReg::Virtual(VirtualId(1))),
+        ] {
+            let op = OpKind::X86ReadPid { dst };
+            assert!(op.is_jit_safe(), "{name} remains class-whitelisted");
+            assert!(!x86_gate(op), "malformed {name} RDPID must deopt");
+        }
+        assert!(
+            x86_gate(OpKind::X86ReadPid {
+                dst: x86(X86Reg::R16),
+            }),
+            "APX RDPID must update the state-backed EGPR slot"
+        );
     }
 
     #[test]

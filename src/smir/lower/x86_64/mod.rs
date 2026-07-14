@@ -23,7 +23,8 @@ use super::{
     X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
     X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_RFLAGS_OFFSET,
-    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_ZMM_OFFSET,
+    X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 // ============================================================================
@@ -8196,6 +8197,58 @@ impl X86_64Lowerer {
                 self.code.emit_u8(0x31);
             }
 
+            OpKind::X86ReadPid { dst } => {
+                let index =
+                    Self::x86_gpr_index(*dst).ok_or_else(|| LowerError::InvalidOperand {
+                        op: "X86ReadPid".to_string(),
+                        operand: "destination must be an architectural x86 GPR".to_string(),
+                    })?;
+                if matches!(index, 4 | 5) || index > 31 {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86ReadPid".to_string(),
+                        operand: "RSP/RBP cannot be an RDPID destination in native code"
+                            .to_string(),
+                    });
+                }
+                if index <= 15 {
+                    let dst = self.get_dst_reg(*dst)?;
+                    Self::ensure_flag_stack_operands_safe("X86ReadPid", &[dst])?;
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    // RDPID reports guest IA32_TSC_AUX, not the host thread's
+                    // TSC_AUX. The destination is architecturally overwritten,
+                    // so it is also the flag-neutral state-pointer scratch.
+                    emitter.emit_mov_rm(dst, PhysReg::Rbp, X86_STATE_PTR_AT_RBP, OpWidth::W64);
+                    emitter.emit_mov_rm(dst, dst, X86_GUEST_TSC_AUX_OFFSET, OpWidth::W32);
+                } else {
+                    // APX EGPRs have no physical host counterpart. Preserve two
+                    // legacy scratches, zero-extend TSC_AUX through ECX, and
+                    // commit it directly to GuestRegs.gpr[index].
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_push(PhysReg::Rax);
+                    emitter.emit_push(PhysReg::Rcx);
+                    emitter.emit_mov_rm(
+                        PhysReg::Rax,
+                        PhysReg::Rbp,
+                        X86_STATE_PTR_AT_RBP,
+                        OpWidth::W64,
+                    );
+                    emitter.emit_mov_rm(
+                        PhysReg::Rcx,
+                        PhysReg::Rax,
+                        X86_GUEST_TSC_AUX_OFFSET,
+                        OpWidth::W32,
+                    );
+                    emitter.emit_mov_mr(
+                        PhysReg::Rax,
+                        i32::from(index) * 8,
+                        PhysReg::Rcx,
+                        OpWidth::W64,
+                    );
+                    emitter.emit_pop(PhysReg::Rcx);
+                    emitter.emit_pop(PhysReg::Rax);
+                }
+            }
+
             OpKind::IoIn { dst, port, width } => {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 if dst_reg != PhysReg::Rax {
@@ -15881,6 +15934,93 @@ mod tests {
                 LowerError::UnsupportedOp { .. }
             ));
         }
+    }
+
+    #[test]
+    fn lower_rdpid_reads_guest_tsc_aux_and_rejects_frame_registers() {
+        let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        let code = lower_single_op(OpKind::X86ReadPid { dst: r9 });
+        let expected = [
+            0x4C, 0x8B, 0x4D, 0x18, // mov r9,[rbp+24] (GuestRegs pointer)
+            0x45, 0x8B, 0x89, 0x90, 0x09, 0x00, 0x00, // mov r9d,[r9+2448]
+        ];
+        assert!(
+            code.windows(expected.len()).any(|bytes| bytes == expected),
+            "RDPID state load missing {expected:02X?} in {code:02X?}"
+        );
+
+        let r16 = VReg::Arch(ArchReg::X86(X86Reg::R16));
+        let egpr_code = lower_single_op(OpKind::X86ReadPid { dst: r16 });
+        let r16_slot = (16u32 * 8).to_le_bytes();
+        assert!(
+            egpr_code
+                .windows(r16_slot.len())
+                .any(|bytes| bytes == r16_slot),
+            "APX RDPID must address GuestRegs.gpr[16]"
+        );
+
+        for dst in [
+            VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+            VReg::Arch(ArchReg::X86(X86Reg::Rbp)),
+            VReg::Virtual(crate::smir::ir::types::VirtualId(99)),
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(OpKind::X86ReadPid { dst }),
+                    LowerError::InvalidRegister(_)
+                        | LowerError::RegisterAllocationFailed { .. }
+                        | LowerError::InvalidOperand { .. }
+                ),
+                "malformed RDPID destination must fail lowering: {dst:?}"
+            );
+        }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_rdpid_returns_emulated_tsc_aux_and_preserves_flags() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(0x1000, OpKind::X86ReadPid { dst: r9 });
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&builder.finish())
+            .expect("lower state-backed RDPID");
+        let code = lowerer.finalize().expect("finalize state-backed RDPID");
+        let exec = ExecMem::new(&code).expect("map state-backed RDPID");
+        let mut regs = GuestRegs::default();
+        regs.gpr[9] = u64::MAX;
+        regs.rflags = 0x2 | 0x8D5;
+        regs.tsc_aux = 0xA5C3_7E91;
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.gpr[9], 0xA5C3_7E91, "RDPID zero-extends TSC_AUX");
+        assert_eq!(regs.rflags & 0x8D5, 0x8D5, "RDPID preserves RFLAGS");
+
+        let r16 = VReg::Arch(ArchReg::X86(X86Reg::R16));
+        let mut builder = FunctionBuilder::new(FunctionId(1), 0x2000);
+        builder.push_op(0x2000, OpKind::X86ReadPid { dst: r16 });
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&builder.finish())
+            .expect("lower state-backed APX RDPID");
+        let exec = ExecMem::new(&lowerer.finalize().expect("finalize APX RDPID"))
+            .expect("map state-backed APX RDPID");
+        let mut regs = GuestRegs::default();
+        regs.gpr[0] = 0x1111_2222_3333_4444;
+        regs.gpr[1] = 0x5555_6666_7777_8888;
+        regs.gpr[16] = u64::MAX;
+        regs.rflags = 0x2 | 0x8D5;
+        regs.tsc_aux = 0xA5C3_7E91;
+        exec.run(lowered.entry_offset, &mut regs);
+        assert_eq!(regs.gpr[16], 0xA5C3_7E91);
+        assert_eq!(regs.gpr[0], 0x1111_2222_3333_4444);
+        assert_eq!(regs.gpr[1], 0x5555_6666_7777_8888);
+        assert_eq!(regs.rflags & 0x8D5, 0x8D5);
     }
 
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
