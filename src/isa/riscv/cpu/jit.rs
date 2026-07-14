@@ -267,6 +267,19 @@ impl RiscVCpu {
                         // retirement frontier if lowerer metadata is malformed.
                         block.guest_pcs.len() - 1
                     });
+                // A Zcmt table entry is architecturally a second instruction
+                // fetch. The shared byte-read helper reports ordinary load
+                // faults, so reclassify this isolated table access here.
+                let trap = if matches!(first_insn.op, Op::CmJt | Op::CmJalt)
+                    && trap.cause == cause::LOAD_ACCESS_FAULT
+                {
+                    Trap {
+                        cause: cause::INSTR_ACCESS_FAULT,
+                        tval: trap.tval,
+                    }
+                } else {
+                    trap
+                };
                 // State writes from earlier instructions precede the helper
                 // exit, while the faulting instruction's destination write is
                 // guarded by the helper success result. Import those retired
@@ -327,6 +340,7 @@ impl RiscVCpu {
             vtype: self.vtype,
             vstart: self.vstart,
             vcsr: self.vcsr(),
+            jvt: self.jvt,
             ..Default::default()
         };
         for register in 0..32 {
@@ -346,6 +360,7 @@ impl RiscVCpu {
         self.vtype = state.vtype;
         self.vstart = state.vstart;
         self.set_vcsr(state.vcsr);
+        self.jvt = state.jvt & !0x3f & self.xmask();
         for register in 0..32 {
             let start = register * VLENB as usize;
             self.v[start..start + VLENB as usize].copy_from_slice(&state.v[register]);
@@ -354,11 +369,6 @@ impl RiscVCpu {
 }
 
 fn decoded_native_boundary(cfg: RiscVConfig, insn: &Insn) -> bool {
-    // These Zc* macro instructions do not yet have an exact dedicated lift and
-    // overlap compressed encodings otherwise consumed by scalar lift paths.
-    if matches!(insn.op, Op::CmJt | Op::CmJalt) {
-        return false;
-    }
     // Control-flow instruction-alignment traps without C are currently an
     // interpreter-only boundary: the scalar lifter represents only the target.
     if !cfg.isa.c

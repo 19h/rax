@@ -615,6 +615,8 @@ pub struct RiscVRegState {
     pub vstart: u64,
     /// Packed `vcsr` = {vxrm[2:1], vxsat[0]} (fixed-point rounding/saturation).
     pub vcsr: u64,
+    /// Zcmt jump-vector-table CSR (`jvt`).
+    pub jvt: u64,
 }
 
 impl Default for RiscVRegState {
@@ -635,6 +637,7 @@ impl RiscVRegState {
             vtype: 0,
             vstart: 0,
             vcsr: 0,
+            jvt: 0,
         }
     }
 
@@ -813,6 +816,7 @@ impl SmirContext {
                 RiscVReg::Csr(0x009) => rv.vcsr & 1, // vxsat
                 RiscVReg::Csr(0x00a) => (rv.vcsr >> 1) & 3, // vxrm
                 RiscVReg::Csr(0x00f) => rv.vcsr,     // vcsr
+                RiscVReg::Csr(0x017) => rv.jvt,      // jvt
                 RiscVReg::Csr(0xc20) => rv.vl,       // vl
                 RiscVReg::Csr(0xc21) => rv.vtype,    // vtype
                 RiscVReg::Csr(0xc22) => 16,          // vlenb = VLEN/8 (VLEN=128)
@@ -878,6 +882,7 @@ impl SmirContext {
                 // Vector CSRs.
                 RiscVReg::Csr(0x008) => rv.vstart = value,
                 RiscVReg::Csr(0x00f) => rv.vcsr = value,
+                RiscVReg::Csr(0x017) => rv.jvt = value & !0x3f,
                 RiscVReg::Csr(0xc20) => rv.vl = value,
                 RiscVReg::Csr(0xc21) => rv.vtype = value,
                 _ => {}

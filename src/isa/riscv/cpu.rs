@@ -1914,19 +1914,19 @@ impl RiscVCpu {
             & self.xmask();
         let target = if entry_size == 8 {
             self.mem.read_u64(addr).map_err(|_| Trap {
-                cause: cause::LOAD_ACCESS_FAULT,
+                cause: cause::INSTR_ACCESS_FAULT,
                 tval: addr,
             })?
         } else {
             self.mem.read_u32(addr).map_err(|_| Trap {
-                cause: cause::LOAD_ACCESS_FAULT,
+                cause: cause::INSTR_ACCESS_FAULT,
                 tval: addr,
             })? as u64
         };
         if matches!(insn.op, Op::CmJalt) {
             self.set_x(1, pc.wrapping_add(insn.len as u64));
         }
-        self.pc = target & self.xmask();
+        self.pc = target & !1 & self.xmask();
         Ok(())
     }
 
@@ -2041,7 +2041,9 @@ impl RiscVCpu {
             Csr::Fflags => self.fcsr = (self.fcsr & !0x1f) | (value as u32 & 0x1f),
             Csr::Frm => self.fcsr = (self.fcsr & !0xe0) | (((value as u32) & 0x7) << 5),
             Csr::Fcsr => self.fcsr = value as u32 & 0xff,
-            Csr::Jvt => self.jvt = value & self.xmask(),
+            // Jump-table mode zero is the only currently defined/implemented
+            // WARL mode; BASE is consequently always 64-byte aligned.
+            Csr::Jvt => self.jvt = value & !0x3f & self.xmask(),
             Csr::Mstatus => self.mstatus = value,
             Csr::Sstatus => {
                 let mask = self.sstatus_mask();
@@ -6409,7 +6411,7 @@ mod tests {
         assert_eq!(c.x(11), 0x1919);
 
         c.csr_write(0x017, 0x4000).unwrap();
-        c.write_memory(0x4000 + 17 * 8, &0x5000u64.to_le_bytes())
+        c.write_memory(0x4000 + 17 * 8, &0x5001u64.to_le_bytes())
             .unwrap();
         let cm_jt = ((0b101 << 13) | (17 << 2) | 0b10) as u16;
         run_half(&mut c, cm_jt);
@@ -6425,7 +6427,9 @@ mod tests {
 
         c.set_pc(0x300);
         c.csr_write(0x017, 0x4001).unwrap();
-        assert!(matches!(run_half(&mut c, cm_jt), RiscVExit::Trap(_)));
+        assert_eq!(c.csr_read(0x017), Ok(0x4000));
+        assert_eq!(run_half(&mut c, cm_jt), RiscVExit::Continue);
+        assert_eq!(c.pc(), 0x5000);
     }
 
     /// Encode an OP-V vector instruction (funct6/vm/vs2/vs1|rs1/funct3/vd).

@@ -59,6 +59,7 @@ const RV_VTYPE_OFFSET: i32 = RV_VL_OFFSET + 8;
 const RV_VSTART_OFFSET: i32 = RV_VTYPE_OFFSET + 8;
 const RV_VCSR_OFFSET: i32 = RV_VSTART_OFFSET + 8;
 const RV_VECTOR_FN_OFFSET: i32 = RV_VCSR_OFFSET + 8;
+const RV_JVT_OFFSET: i32 = RV_VECTOR_FN_OFFSET + 8;
 /// `vlenb` is a read-only architectural constant for the 128-bit RVV state
 /// represented by [`RiscVGuestRegs`](crate::smir::lower::runtime::RiscVGuestRegs).
 const RV_VLENB: i64 = 16;
@@ -214,6 +215,7 @@ impl RiscVX86_64Lowerer {
             RiscVReg::Csr(0xc21) => Ok(Some(RV_VTYPE_OFFSET)),
             RiscVReg::Csr(0x008) => Ok(Some(RV_VSTART_OFFSET)),
             RiscVReg::Csr(0x00f) => Ok(Some(RV_VCSR_OFFSET)),
+            RiscVReg::Csr(0x017) => Ok(Some(RV_JVT_OFFSET)),
             other => Err(LowerError::InvalidRegister(format!(
                 "unsupported state-backed RISC-V register {other:?}"
             ))),

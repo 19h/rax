@@ -233,9 +233,9 @@ at memory, control-flow, fence, and replay-sensitive boundaries; cache identity 
 32-bit encoding in the region, and a faulting final memory operation retires only its completed prefix.
 Scalar integer, memory (including RV32 Zilsd/Zclsd register-pair transfers), control flow, A/Zacas
 atomics (including AMOCAS.Q), integer crypto, scalar floating point, and memory-free RVV OP-V
-arithmetic/configuration and Zcmp stack/double-move macros execute natively. RVV memory operations
-and other unsupported boundaries remain on the interpreter path without speculative guest-state
-commits.
+arithmetic/configuration, Zcmp stack/double-move macros, and Zcmt table jumps execute natively. RVV
+memory operations and other unsupported boundaries remain on the interpreter path without
+speculative guest-state commits.
 
 ---
 

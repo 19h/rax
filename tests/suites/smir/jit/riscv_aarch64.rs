@@ -98,6 +98,11 @@ fn cm_zcmp_stack(funct5: u16, rlist: u16, spimm: u16) -> u16 {
     (0b101 << 13) | (funct5 << 8) | (rlist << 4) | (spimm << 2) | 0b10
 }
 
+fn cm_zcmt(index: u16) -> u16 {
+    assert!(index < 256);
+    (0b101 << 13) | (index << 2) | 0b10
+}
+
 fn assert_equivalent(actual: &RiscVCpu, expected: &RiscVCpu) {
     for register in 0..32u8 {
         assert_eq!(actual.x(register), expected.x(register), "x{register}");
@@ -117,7 +122,7 @@ fn assert_equivalent(actual: &RiscVCpu, expected: &RiscVCpu) {
         );
     }
     assert_eq!(actual.instret(), expected.instret(), "instret");
-    for csr in [0xc00, 0x341, 0x342, 0x343] {
+    for csr in [0x017, 0xc00, 0x341, 0x342, 0x343] {
         assert_eq!(actual.csr_read(csr), expected.csr_read(csr), "CSR {csr:#x}");
     }
     let mut actual_memory = vec![0; MEMORY_LEN];
@@ -743,6 +748,116 @@ fn production_zcmp_popret_variants_commit_final_control_updates() {
         assert_eq!(stats.native_executions, 2);
         assert_eq!(stats.interpreter_fallbacks, 0);
     }
+}
+
+#[test]
+fn production_zcmt_table_jumps_are_native_and_fault_as_fetches() {
+    let mut isa = Isa::rv64gc();
+    isa.zcmt = true;
+    let cm_jt = cm_zcmt(17);
+    let cm_jalt = cm_zcmt(32);
+
+    for config in [
+        RiscVConfig::rv32(isa),
+        RiscVConfig {
+            xlen: Xlen::Rv64,
+            isa,
+        },
+    ] {
+        for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+            let mut expected = make_cpu(config);
+            let mut actual = make_cpu(config);
+            let entry_size = if config.xlen == Xlen::Rv32 { 4 } else { 8 };
+            for cpu in [&mut expected, &mut actual] {
+                install_bytes(cpu, &cm_jt.to_le_bytes());
+                cpu.csr_write(0x017, DATA | 0x3f).expect("write WARL jvt");
+                cpu.set_x(1, 0xfeed_face);
+                let target = CODE + 0x201;
+                cpu.write_memory(
+                    DATA + 17 * entry_size,
+                    &target.to_le_bytes()[..entry_size as usize],
+                )
+                .expect("write cm.jt table target");
+            }
+            assert_eq!(expected.csr_read(0x017), Ok(DATA));
+            assert_eq!(actual.csr_read(0x017), Ok(DATA));
+            assert_eq!(expected.step(), RiscVExit::Continue);
+            assert_eq!(actual.step_jit(level), RiscVExit::Continue);
+            assert_equivalent(&actual, &expected);
+            assert_eq!(actual.pc(), CODE + 0x200);
+            assert_eq!(actual.x(1), 0xfeed_face);
+
+            for cpu in [&mut expected, &mut actual] {
+                install_bytes(cpu, &cm_jalt.to_le_bytes());
+                let target = CODE + 0x301;
+                cpu.write_memory(
+                    DATA + 32 * entry_size,
+                    &target.to_le_bytes()[..entry_size as usize],
+                )
+                .expect("write cm.jalt table target");
+            }
+            assert_eq!(expected.step(), RiscVExit::Continue);
+            assert_eq!(actual.step_jit(level), RiscVExit::Continue);
+            assert_equivalent(&actual, &expected);
+            assert_eq!(actual.pc(), CODE + 0x300);
+            assert_eq!(actual.x(1), CODE + 2);
+            let stats = actual.jit_stats();
+            assert_eq!(stats.native_executions, 2, "{:?} {level:?}", config.xlen);
+            assert_eq!(
+                stats.interpreter_fallbacks, 0,
+                "{:?} {level:?}",
+                config.xlen
+            );
+        }
+    }
+
+    let config = RiscVConfig {
+        xlen: Xlen::Rv64,
+        isa,
+    };
+    let csrrw_jvt = i_type(0x017, 5, 0b001, 6, 0x73);
+    let mut code = csrrw_jvt.to_le_bytes().to_vec();
+    code.extend_from_slice(&cm_jt.to_le_bytes());
+    let mut expected = make_cpu(config);
+    let mut actual = make_cpu(config);
+    for cpu in [&mut expected, &mut actual] {
+        install_bytes(cpu, &code);
+        cpu.set_x(5, DATA | 0x3f);
+        cpu.set_x(6, 0xfeed_face);
+        cpu.write_memory(DATA + 17 * 8, &(CODE + 0x400).to_le_bytes())
+            .expect("write CSR-configured cm.jt target");
+    }
+    assert_eq!(expected.run(2), RiscVExit::Continue);
+    assert_eq!(actual.run_jit(2, OptLevel::O2), RiscVExit::Continue);
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(6), 0, "CSRRW must return the old jvt value");
+    assert_eq!(actual.csr_read(0x017), Ok(DATA));
+    assert_eq!(actual.pc(), CODE + 0x400);
+    assert_eq!(actual.jit_stats().native_executions, 2);
+    assert_eq!(actual.jit_stats().interpreter_fallbacks, 0);
+
+    let mut expected = make_cpu(config);
+    let mut actual = make_cpu(config);
+    for cpu in [&mut expected, &mut actual] {
+        install_bytes(cpu, &cm_jalt.to_le_bytes());
+        cpu.csr_write(0x017, MEMORY_LEN as u64 - 64)
+            .expect("write out-of-range jvt base");
+        cpu.set_x(1, 0xfeed_face);
+    }
+    let expected_exit = expected.step();
+    let actual_exit = actual.step_jit(OptLevel::O2);
+    assert_eq!(actual_exit, expected_exit);
+    assert_eq!(
+        actual_exit,
+        RiscVExit::Trap(Trap {
+            cause: 1,
+            tval: MEMORY_LEN as u64 - 64 + 32 * 8,
+        })
+    );
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(1), 0xfeed_face, "faulting JALT must not link");
+    assert_eq!(actual.jit_stats().native_executions, 1);
+    assert_eq!(actual.jit_stats().interpreter_fallbacks, 0);
 }
 
 #[test]

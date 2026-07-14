@@ -432,6 +432,9 @@ pub struct RiscVGuestRegs {
     /// `extern "sysv64" fn(state, insn, xlen) -> success`.
     /// Non-success must be transactional with respect to state and memory.
     pub vector_fn: u64,
+    /// Zcmt jump-vector-table CSR. Bits 5:0 are the WARL mode field and are
+    /// zero for the only currently defined mode.
+    pub jvt: u64,
 }
 
 impl Default for RiscVGuestRegs {
@@ -459,6 +462,7 @@ impl Default for RiscVGuestRegs {
             vstart: 0,
             vcsr: 0,
             vector_fn: 0,
+            jvt: 0,
         }
     }
 }
@@ -486,6 +490,7 @@ impl RiscVGuestRegs {
     pub const VSTART_OFFSET: i32 = Self::VTYPE_OFFSET + 8;
     pub const VCSR_OFFSET: i32 = Self::VSTART_OFFSET + 8;
     pub const VECTOR_FN_OFFSET: i32 = Self::VCSR_OFFSET + 8;
+    pub const JVT_OFFSET: i32 = Self::VECTOR_FN_OFFSET + 8;
 }
 
 // enter_native(rdi = entry ptr, rsi = *mut GuestRegs):

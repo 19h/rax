@@ -1113,6 +1113,76 @@ impl RiscVLifter {
         }
     }
 
+    /// Zcmt table jumps fetch one XLEN-wide target from instruction memory.
+    /// The generic SMIR memory bridge supplies the bytes; the production
+    /// dispatcher reclassifies a failed helper read as an instruction-access
+    /// fault, matching the architectural second-fetch semantics.
+    fn lift_zcmt(
+        &mut self,
+        decoded: &crate::isa::riscv::Insn,
+        addr: GuestAddr,
+        ctx: &mut LiftContext,
+    ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
+        if !matches!(decoded.op, RvOp::CmJt | RvOp::CmJalt) {
+            return Err(LiftError::Internal(format!(
+                "Zcmt lift received unexpected operation {:?}",
+                decoded.op
+            )));
+        }
+        let width = self.op_width();
+        let target = ctx.alloc_vreg();
+        let aligned = ctx.alloc_vreg();
+        let mut ops = vec![SmirOp::new(
+            ctx.next_op_id(),
+            addr,
+            OpKind::Load {
+                dst: target,
+                addr: Address::BaseOffset {
+                    base: VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x017))),
+                    offset: decoded.imm * i64::from(self.xlen / 8),
+                    disp_size: DispSize::Auto,
+                },
+                width: if self.xlen == 32 {
+                    MemWidth::B4
+                } else {
+                    MemWidth::B8
+                },
+                sign: SignExtend::Zero,
+            },
+        )];
+        if decoded.op == RvOp::CmJalt {
+            let return_addr = addr.wrapping_add(2)
+                & if self.xlen == 32 {
+                    u64::from(u32::MAX)
+                } else {
+                    u64::MAX
+                };
+            ops.push(SmirOp::new(
+                ctx.next_op_id(),
+                addr,
+                OpKind::Mov {
+                    dst: self
+                        .def_x_reg(1, ctx)
+                        .expect("the link register is nonzero"),
+                    src: SrcOperand::Imm64(return_addr as i64),
+                    width,
+                },
+            ));
+        }
+        ops.push(SmirOp::new(
+            ctx.next_op_id(),
+            addr,
+            OpKind::And {
+                dst: aligned,
+                src1: target,
+                src2: SrcOperand::Imm(!1i64),
+                width,
+                flags: FlagUpdate::None,
+            },
+        ));
+        Ok((ops, ControlFlow::IndirectBranch { target: aligned }))
+    }
+
     /// Hypervisor memory instructions (HLV*/HSV*) are modeled like direct
     /// loads/stores in the local RISC-V interpreter.
     fn lift_hypervisor_mem(
@@ -4562,6 +4632,7 @@ impl RiscVLifter {
                     0x002 => Some((5, 0x7)),  // frm
                     _ => None,
                 };
+                let modeled_jvt = csr == 0x017 && self.extensions.zcmt;
                 let modeled_ro = matches!(csr, 0xc20 | 0xc21 | 0xc22);
                 let w = self.op_width();
                 let mk = |ctx: &mut LiftContext, k: OpKind| SmirOp::new(ctx.next_op_id(), addr, k);
@@ -4729,6 +4800,98 @@ impl RiscVLifter {
                             },
                         ));
                     }
+                } else if modeled_jvt {
+                    let current = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(0x017)));
+                    let old = ctx.alloc_vreg();
+                    ops.push(mk(
+                        ctx,
+                        OpKind::Mov {
+                            dst: old,
+                            src: SrcOperand::Reg(current),
+                            width: w,
+                        },
+                    ));
+                    let src = if writes {
+                        if is_imm {
+                            Some(SrcOperand::Imm(zimm))
+                        } else {
+                            let snapshot = ctx.alloc_vreg();
+                            let source = self.get_x_reg(rs1_reg, ctx);
+                            ops.push(mk(
+                                ctx,
+                                OpKind::Mov {
+                                    dst: snapshot,
+                                    src: SrcOperand::Reg(source),
+                                    width: w,
+                                },
+                            ));
+                            Some(SrcOperand::Reg(snapshot))
+                        }
+                    } else {
+                        None
+                    };
+                    if let Some(dst) = self.def_x_reg(rd, ctx) {
+                        ops.push(mk(
+                            ctx,
+                            OpKind::Mov {
+                                dst,
+                                src: SrcOperand::Reg(old),
+                                width: w,
+                            },
+                        ));
+                    }
+                    if let Some(src) = src {
+                        let new_value = ctx.alloc_vreg();
+                        match op {
+                            1 => ops.push(mk(
+                                ctx,
+                                OpKind::Mov {
+                                    dst: new_value,
+                                    src,
+                                    width: w,
+                                },
+                            )),
+                            2 => ops.push(mk(
+                                ctx,
+                                OpKind::Or {
+                                    dst: new_value,
+                                    src1: old,
+                                    src2: src,
+                                    width: w,
+                                    flags: FlagUpdate::None,
+                                },
+                            )),
+                            _ => ops.push(mk(
+                                ctx,
+                                OpKind::AndNot {
+                                    dst: new_value,
+                                    src1: old,
+                                    src2: src,
+                                    width: w,
+                                    flags: FlagUpdate::None,
+                                },
+                            )),
+                        }
+                        let aligned = ctx.alloc_vreg();
+                        ops.push(mk(
+                            ctx,
+                            OpKind::And {
+                                dst: aligned,
+                                src1: new_value,
+                                src2: SrcOperand::Imm(!0x3fi64),
+                                width: w,
+                                flags: FlagUpdate::None,
+                            },
+                        ));
+                        ops.push(mk(
+                            ctx,
+                            OpKind::Mov {
+                                dst: current,
+                                src: SrcOperand::Reg(aligned),
+                                width: w,
+                            },
+                        ));
+                    }
                 } else if modeled_ro && !writes {
                     // Read-only CSR: rd = csr value (a write would trap on hardware).
                     let cur = VReg::Arch(ArchReg::RiscV(RiscVReg::Csr(csr as u16)));
@@ -4770,7 +4933,10 @@ impl RiscVLifter {
         addr: GuestAddr,
         ctx: &mut LiftContext,
     ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
-        if (self.xlen == 32 && self.extensions.zclsd) || self.extensions.zcmp {
+        if (self.xlen == 32 && self.extensions.zclsd)
+            || self.extensions.zcmp
+            || self.extensions.zcmt
+        {
             let decoded = rv_decode_rvc(insn, self.rv_xlen(), &self.decoder_isa());
             match decoded.op {
                 RvOp::LdPair => {
@@ -4785,6 +4951,7 @@ impl RiscVLifter {
                 RvOp::CmPush | RvOp::CmPop | RvOp::CmPopRet | RvOp::CmPopRetz => {
                     return self.lift_zcmp_stack(&decoded, addr, ctx);
                 }
+                RvOp::CmJt | RvOp::CmJalt => return self.lift_zcmt(&decoded, addr, ctx),
                 _ => {}
             }
         }
