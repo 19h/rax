@@ -2068,6 +2068,74 @@ fn write_production_code(cpu: &mut RiscVCpu, instructions: &[u32]) {
 }
 
 #[test]
+fn production_run_jit_regions_match_interpreter_x86_64() {
+    let instructions = vec![i_type(1, 5, 0, 5, 0x13); 20]; // addi x5,x5,1
+    for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+        let make_cpu = || {
+            RiscVCpu::new(
+                RiscVConfig::rv64gc(),
+                Box::new(RvMemory::new(0, MEMORY_LEN)),
+            )
+        };
+        let mut expected = make_cpu();
+        let mut actual = make_cpu();
+        write_production_code(&mut expected, &instructions);
+        write_production_code(&mut actual, &instructions);
+
+        assert_eq!(expected.run(instructions.len() as u64), RiscVExit::Continue);
+        assert_eq!(
+            actual.run_jit(instructions.len() as u64, level),
+            RiscVExit::Continue
+        );
+        assert_production_cpu_equivalent(&actual, &expected);
+        assert_eq!(actual.x(5), 20);
+        assert_eq!(actual.pc(), CODE + 80);
+        let stats = actual.jit_stats();
+        assert_eq!(stats.cache_entries, 2, "{level:?}");
+        assert_eq!(stats.native_executions, 2, "{level:?}");
+        assert_eq!(stats.interpreter_fallbacks, 0, "{level:?}");
+    }
+}
+
+#[test]
+fn production_run_jit_region_fault_is_precise_x86_64() {
+    let instructions = [
+        i_type(7, 5, 0, 5, 0x13),     // addi x5,x5,7
+        i_type(0, 1, 0b011, 5, 0x03), // ld x5,0(x1)
+    ];
+    let make_cpu = || {
+        RiscVCpu::new(
+            RiscVConfig::rv64gc(),
+            Box::new(RvMemory::new(0, MEMORY_LEN)),
+        )
+    };
+    let mut expected = make_cpu();
+    let mut actual = make_cpu();
+    for cpu in [&mut expected, &mut actual] {
+        write_production_code(cpu, &instructions);
+        cpu.set_x(1, MEMORY_LEN as u64 - 4);
+        cpu.set_x(5, 10);
+    }
+
+    let expected_exit = expected.run(2);
+    let actual_exit = actual.run_jit(2, OptLevel::O2);
+    assert_eq!(
+        actual_exit,
+        RiscVExit::Trap(rax::isa::riscv::Trap {
+            cause: 5,
+            tval: MEMORY_LEN as u64 - 4,
+        })
+    );
+    assert_eq!(actual_exit, expected_exit);
+    assert_production_cpu_equivalent(&actual, &expected);
+    assert_eq!(actual.x(5), 17);
+    assert_eq!(actual.instret(), 1);
+    assert_eq!(actual.csr_read(0xc00), Ok(2));
+    assert_eq!(actual.jit_stats().native_executions, 1);
+    assert_eq!(actual.jit_stats().interpreter_fallbacks, 0);
+}
+
+#[test]
 fn production_jit_cache_keys_code_identity_and_optimization_level() {
     let mut cpu = RiscVCpu::new(
         RiscVConfig::rv64gc(),

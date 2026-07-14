@@ -1,11 +1,12 @@
 //! Opt-in production RISC-V SMIR native execution path.
 //!
-//! One decoded guest instruction is lifted, optimized, lowered, and cached by
-//! `(PC, encoding, length, optimization level)`. Unsupported boundaries remain
-//! interpreter-exact: they execute through `RiscVCpu::execute` using the already
-//! fetched instruction. Native memory helpers record precise synchronous traps
-//! in a stack-owned context, so faulting operations are not replayed and device
-//! accesses are not duplicated.
+//! [`RiscVCpu::step_jit`] preserves a one-instruction execution contract.
+//! [`RiscVCpu::run_jit`] additionally forms bounded straight-line regions from
+//! side-effect-free fallthrough instructions, ending a region at memory,
+//! control-flow, fence, or replay-sensitive boundaries. Cache identity covers
+//! every instruction parcel in the region. Native memory helpers record precise
+//! synchronous traps in a stack-owned context, allowing earlier instructions in
+//! a region to retire without replaying a faulting access.
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -29,26 +30,62 @@ use crate::smir::lower::runtime::{
 use crate::smir::optimize::{OptLevel, optimize_function};
 
 const MAX_CACHE_ENTRIES: usize = 1024;
+const MAX_REGION_INSNS: usize = 16;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 struct JitKey {
     pc: u64,
-    raw: u32,
-    len: u8,
+    raw: [u32; MAX_REGION_INSNS],
+    len: [u8; MAX_REGION_INSNS],
+    count: u8,
     opt_level: u8,
 }
 
 impl JitKey {
-    fn new(pc: u64, insn: &Insn, level: OptLevel) -> Self {
+    fn new(region: &PreparedRegion, level: OptLevel) -> Self {
+        let mut key = Self {
+            pc: region.start_pc,
+            raw: [0; MAX_REGION_INSNS],
+            len: [0; MAX_REGION_INSNS],
+            count: region.instructions.len() as u8,
+            opt_level: opt_level_code(level),
+        };
+        for (index, prepared) in region.instructions.iter().enumerate() {
+            key.raw[index] = prepared.insn.raw;
+            key.len[index] = prepared.insn.len;
+        }
+        key
+    }
+}
+
+fn opt_level_code(level: OptLevel) -> u8 {
+    match level {
+        OptLevel::O0 => 0,
+        OptLevel::O1 => 1,
+        OptLevel::O2 => 2,
+    }
+}
+
+struct PreparedInstruction {
+    pc: u64,
+    insn: Insn,
+    lifted: Option<LiftResult>,
+}
+
+struct PreparedRegion {
+    start_pc: u64,
+    instructions: Vec<PreparedInstruction>,
+}
+
+impl PreparedRegion {
+    fn interpreter_only(start_pc: u64, insn: Insn) -> Self {
         Self {
-            pc,
-            raw: insn.raw,
-            len: insn.len,
-            opt_level: match level {
-                OptLevel::O0 => 0,
-                OptLevel::O1 => 1,
-                OptLevel::O2 => 2,
-            },
+            start_pc,
+            instructions: vec![PreparedInstruction {
+                pc: start_pc,
+                insn,
+                lifted: None,
+            }],
         }
     }
 }
@@ -56,6 +93,7 @@ impl JitKey {
 struct NativeBlock {
     executable: ExecMem,
     entry_offset: usize,
+    guest_pcs: Vec<u64>,
 }
 
 #[derive(Clone)]
@@ -89,21 +127,14 @@ impl RiscVJitCache {
         }
     }
 
-    fn resolve(
-        &mut self,
-        key: JitKey,
-        cfg: RiscVConfig,
-        insn: &Insn,
-        bytes: &[u8],
-        level: OptLevel,
-    ) -> CacheEntry {
+    fn resolve(&mut self, key: JitKey, region: PreparedRegion, level: OptLevel) -> CacheEntry {
         if let Some(entry) = self.entries.get(&key) {
             self.cache_hits = self.cache_hits.wrapping_add(1);
             return entry.clone();
         }
 
         self.cache_misses = self.cache_misses.wrapping_add(1);
-        let entry = compile_native_block(cfg, insn, key.pc, bytes, level)
+        let entry = compile_native_region(region, level)
             .map_or(CacheEntry::InterpreterOnly, CacheEntry::Native);
         if self.entries.len() >= MAX_CACHE_ENTRIES {
             self.entries.clear();
@@ -122,9 +153,36 @@ impl RiscVCpu {
     /// already-decoded instruction. The ordinary [`Self::step`] path never
     /// enters native code.
     pub fn step_jit(&mut self, level: OptLevel) -> RiscVExit {
+        self.step_jit_region(level, 1).0
+    }
+
+    /// Run bounded straight-line native regions until a non-`Continue` exit or
+    /// the architectural instruction budget is exhausted.
+    ///
+    /// Interrupts are sampled between regions. A region contains only
+    /// fallthrough instructions and terminates at operations capable of
+    /// changing memory or other state external to the exclusively borrowed
+    /// hart, so no newly observable interrupt source is skipped within a
+    /// region.
+    pub fn run_jit(&mut self, max_insns: u64, level: OptLevel) -> RiscVExit {
+        let mut remaining = max_insns;
+        while remaining != 0 {
+            let region_limit = remaining.min(MAX_REGION_INSNS as u64) as usize;
+            let (exit, consumed) = self.step_jit_region(level, region_limit);
+            debug_assert!(consumed > 0 && consumed <= remaining);
+            remaining -= consumed;
+            if exit != RiscVExit::Continue {
+                return exit;
+            }
+        }
+        RiscVExit::Continue
+    }
+
+    fn step_jit_region(&mut self, level: OptLevel, max_insns: usize) -> (RiscVExit, u64) {
+        debug_assert!((1..=MAX_REGION_INSNS).contains(&max_insns));
         if let Some(trap) = self.pending_machine_interrupt() {
             self.deliver_trap(trap, self.pc);
-            return RiscVExit::Continue;
+            return (RiscVExit::Continue, 1);
         }
 
         let pc = self.pc;
@@ -136,17 +194,32 @@ impl RiscVCpu {
                     tval: pc,
                 };
                 self.deliver_trap(trap, pc);
-                return RiscVExit::Trap(trap);
+                return (RiscVExit::Trap(trap), 1);
             }
         };
-        let raw = insn.raw.to_le_bytes();
-        let bytes = &raw[..usize::from(insn.len)];
-        let key = JitKey::new(pc, &insn, level);
-        let entry = self.jit.resolve(key, self.cfg, &insn, bytes, level);
+        let region = prepare_native_region(
+            self.cfg,
+            self.mem.as_ref(),
+            pc,
+            insn,
+            max_insns.min(MAX_REGION_INSNS),
+        );
+        let key = JitKey::new(&region, level);
+        let entry = self.jit.resolve(key, region, level);
         let CacheEntry::Native(block) = entry else {
-            return self.execute_jit_fallback(&insn, pc);
+            return (self.execute_jit_fallback(&insn, pc), 1);
         };
 
+        self.execute_native_region(&block, &insn, pc)
+    }
+
+    fn execute_native_region(
+        &mut self,
+        block: &NativeBlock,
+        first_insn: &Insn,
+        start_pc: u64,
+    ) -> (RiscVExit, u64) {
+        let instruction_count = block.guest_pcs.len() as u64;
         let reservation_before = self.reservation;
         let memory = self.mem.as_mut() as *mut dyn Memory;
         let reservation = &mut self.reservation as *mut Option<u64>;
@@ -176,35 +249,47 @@ impl RiscVCpu {
         match (state.exit_reason, context.fault) {
             (0, None) => {
                 self.import_jit_state(&state);
-                self.cycle = self.cycle.wrapping_add(1);
-                self.instret = self.instret.wrapping_add(1);
-                RiscVExit::Continue
+                self.cycle = self.cycle.wrapping_add(instruction_count);
+                self.instret = self.instret.wrapping_add(instruction_count);
+                (RiscVExit::Continue, instruction_count)
             }
             (1, Some(trap)) => {
-                self.cycle = self.cycle.wrapping_add(1);
-                self.deliver_trap(trap, pc);
-                RiscVExit::Trap(trap)
+                let fault_pc = state.pc & self.xmask();
+                let fault_index = block
+                    .guest_pcs
+                    .iter()
+                    .position(|candidate| *candidate == fault_pc)
+                    .unwrap_or_else(|| {
+                        debug_assert!(false, "native helper reported an unrecognized guest PC");
+                        // A region admits at most one memory instruction and makes
+                        // it final. Never replay an access after a reported fault;
+                        // the final index is therefore the only conservative
+                        // retirement frontier if lowerer metadata is malformed.
+                        block.guest_pcs.len() - 1
+                    });
+                // State writes from earlier instructions precede the helper
+                // exit, while the faulting instruction's destination write is
+                // guarded by the helper success result. Import those retired
+                // writes before architectural trap delivery.
+                self.import_jit_state(&state);
+                self.cycle = self.cycle.wrapping_add(fault_index as u64 + 1);
+                self.instret = self.instret.wrapping_add(fault_index as u64);
+                self.deliver_trap(trap, fault_pc);
+                (RiscVExit::Trap(trap), fault_index as u64 + 1)
             }
             _ => {
-                // Helper-free native failures (for example an illegal dynamic
-                // FP rounding mode) are replay-safe. Restore non-state ABI data
-                // before executing the decoded interpreter path.
+                // Non-memory native failures (for example an illegal dynamic
+                // FP rounding mode) are replay-safe only for deliberately
+                // isolated single-instruction blocks. Restore non-state ABI
+                // data before executing the decoded interpreter path.
+                assert_eq!(
+                    instruction_count, 1,
+                    "a multi-instruction native region requested unsafe replay"
+                );
                 self.reservation = reservation_before;
-                self.execute_jit_fallback(&insn, pc)
+                (self.execute_jit_fallback(first_insn, start_pc), 1)
             }
         }
-    }
-
-    /// Run through [`Self::step_jit`] until a non-`Continue` exit or the
-    /// instruction budget is exhausted.
-    pub fn run_jit(&mut self, max_insns: u64, level: OptLevel) -> RiscVExit {
-        for _ in 0..max_insns {
-            match self.step_jit(level) {
-                RiscVExit::Continue => {}
-                exit => return exit,
-            }
-        }
-        RiscVExit::Continue
     }
 
     /// Current JIT cache and execution counters.
@@ -268,13 +353,7 @@ impl RiscVCpu {
     }
 }
 
-fn compile_native_block(
-    cfg: RiscVConfig,
-    insn: &Insn,
-    pc: u64,
-    bytes: &[u8],
-    level: OptLevel,
-) -> Option<Arc<NativeBlock>> {
+fn decoded_native_boundary(cfg: RiscVConfig, insn: &Insn) -> bool {
     // These decoded operations do not yet have an exact dedicated lift. Pair
     // loads/stores and Zc* macro instructions overlap encodings otherwise
     // consumed by the base scalar/compressed lift paths.
@@ -291,7 +370,7 @@ fn compile_native_block(
             | Op::CmJt
             | Op::CmJalt
     ) {
-        return None;
+        return false;
     }
     // Control-flow instruction-alignment traps without C are currently an
     // interpreter-only boundary: the scalar lifter represents only the target.
@@ -301,8 +380,18 @@ fn compile_native_block(
             Op::Jal | Op::Jalr | Op::Beq | Op::Bne | Op::Blt | Op::Bge | Op::Bltu | Op::Bgeu
         )
     {
-        return None;
+        return false;
     }
+    true
+}
+
+fn prepare_native_region(
+    cfg: RiscVConfig,
+    memory: &dyn Memory,
+    start_pc: u64,
+    first_insn: Insn,
+    max_insns: usize,
+) -> PreparedRegion {
     let extensions = extensions_for_isa(&cfg.isa);
     let mut lifter = match cfg.xlen {
         Xlen::Rv32 => RiscVLifter::new_rv32(extensions),
@@ -313,11 +402,114 @@ fn compile_native_block(
         Xlen::Rv64 => SourceArch::RiscV64,
     };
     let mut context = LiftContext::new(source_arch);
-    let lifted = lifter.lift_insn(pc, bytes, &mut context).ok()?;
-    if !admit_lifted_instruction(&lifted) {
-        return None;
+    let mut instructions = Vec::with_capacity(max_insns);
+    let mut pc = start_pc;
+    let mut insn = first_insn;
+    let address_mask = match cfg.xlen {
+        Xlen::Rv32 => u64::from(u32::MAX),
+        Xlen::Rv64 => u64::MAX,
+    };
+
+    while instructions.len() < max_insns {
+        if !decoded_native_boundary(cfg, &insn) {
+            break;
+        }
+        let raw = insn.raw.to_le_bytes();
+        let bytes = &raw[..usize::from(insn.len)];
+        let Ok(lifted) = lifter.lift_insn(pc, bytes, &mut context) else {
+            break;
+        };
+        if !admit_lifted_instruction(&lifted)
+            || (!instructions.is_empty() && !safe_after_region_prefix(&lifted))
+        {
+            break;
+        }
+
+        let can_continue = region_can_continue(&lifted);
+        let bytes_consumed = lifted.bytes_consumed as u64;
+        instructions.push(PreparedInstruction {
+            pc,
+            insn,
+            lifted: Some(lifted),
+        });
+        if instructions.len() == max_insns || !can_continue {
+            break;
+        }
+
+        pc = pc.wrapping_add(bytes_consumed) & address_mask;
+        // The Memory interface does not distinguish normal executable RAM
+        // from read-sensitive device space. Region formation therefore assumes
+        // instruction fetches are observationally pure, as required for any
+        // ahead-of-execution decode cache; architectural state is still left
+        // untouched until the native region runs.
+        let Ok(next) = decode_at(memory, pc, cfg.xlen, &cfg.isa) else {
+            break;
+        };
+        insn = next;
     }
-    let (mut function, return_pcs) = function_for_lift(pc, lifted)?;
+
+    if instructions.is_empty() {
+        PreparedRegion::interpreter_only(start_pc, first_insn)
+    } else {
+        PreparedRegion {
+            start_pc,
+            instructions,
+        }
+    }
+}
+
+fn safe_after_region_prefix(lifted: &LiftResult) -> bool {
+    matches!(
+        lifted.control_flow,
+        ControlFlow::Fallthrough | ControlFlow::NextInsn
+    ) && !lifted.ops.iter().any(|op| {
+        matches!(
+            op.kind,
+            OpKind::RvFp { .. }
+                | OpKind::RvVector { .. }
+                | OpKind::Syscall { .. }
+                | OpKind::Breakpoint
+                | OpKind::Undefined { .. }
+        )
+    })
+}
+
+fn region_can_continue(lifted: &LiftResult) -> bool {
+    matches!(
+        lifted.control_flow,
+        ControlFlow::Fallthrough | ControlFlow::NextInsn
+    ) && !lifted.ops.iter().any(|op| {
+        matches!(
+            op.kind,
+            OpKind::Load { .. }
+                | OpKind::Store { .. }
+                | OpKind::PredLoad { .. }
+                | OpKind::PredStore { .. }
+                | OpKind::AtomicLoad { .. }
+                | OpKind::AtomicStore { .. }
+                | OpKind::AtomicRmw { .. }
+                | OpKind::Cas { .. }
+                | OpKind::CasPair { .. }
+                | OpKind::LoadExclusive { .. }
+                | OpKind::StoreExclusive { .. }
+                | OpKind::ClearExclusive
+                | OpKind::Fence { .. }
+                | OpKind::RvFp { .. }
+                | OpKind::RvVector { .. }
+                | OpKind::Syscall { .. }
+                | OpKind::Breakpoint
+                | OpKind::Undefined { .. }
+        )
+    })
+}
+
+fn compile_native_region(region: PreparedRegion, level: OptLevel) -> Option<Arc<NativeBlock>> {
+    let guest_pcs = region
+        .instructions
+        .iter()
+        .map(|prepared| prepared.pc)
+        .collect::<Vec<_>>();
+    let (mut function, return_pcs) = function_for_region(region)?;
     optimize_function(&mut function, level);
     #[cfg(target_arch = "x86_64")]
     let mut lowerer = RiscVX86_64Lowerer::new();
@@ -330,7 +522,54 @@ fn compile_native_block(
     Some(Arc::new(NativeBlock {
         executable,
         entry_offset: lowered.entry_offset,
+        guest_pcs,
     }))
+}
+
+fn function_for_region(
+    mut region: PreparedRegion,
+) -> Option<(SmirFunction, HashMap<BlockId, u64>)> {
+    if region.instructions.len() == 1 {
+        let prepared = region.instructions.pop()?;
+        return function_for_lift(prepared.pc, prepared.lifted?);
+    }
+
+    let entry = BlockId(0);
+    let end_pc = region.instructions.last().and_then(|prepared| {
+        prepared
+            .lifted
+            .as_ref()
+            .map(|lifted| prepared.pc.wrapping_add(lifted.bytes_consumed as u64))
+    })?;
+    let mut ops = Vec::new();
+    for prepared in region.instructions {
+        let lifted = prepared.lifted?;
+        if !matches!(
+            lifted.control_flow,
+            ControlFlow::Fallthrough | ControlFlow::NextInsn
+        ) {
+            return None;
+        }
+        ops.extend(lifted.ops);
+    }
+    for (index, op) in ops.iter_mut().enumerate() {
+        op.id = OpId(index as u16);
+    }
+
+    let mut return_pcs = HashMap::new();
+    return_pcs.insert(entry, end_pc);
+    let mut function = SmirFunction::new(FunctionId(0), entry, region.start_pc);
+    function.blocks = vec![SmirBlock {
+        id: entry,
+        guest_pc: region.start_pc,
+        phis: vec![],
+        ops,
+        terminator: Terminator::Return { values: vec![] },
+        exec_count: 0,
+    }];
+    function.guest_range = (region.start_pc, end_pc);
+    function.calling_convention = CallingConv::RiscVStd;
+    Some((function, return_pcs))
 }
 
 fn admit_lifted_instruction(lifted: &LiftResult) -> bool {

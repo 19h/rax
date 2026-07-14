@@ -217,8 +217,8 @@ pub struct RiscVCpu {
     /// Guest memory.
     mem: Box<dyn Memory>,
 
-    /// Opt-in single-instruction SMIR JIT cache. The ordinary [`step`](Self::step)
-    /// and [`run`](Self::run) paths never consult it.
+    /// Opt-in SMIR JIT cache for single-step blocks and bounded run regions. The
+    /// ordinary [`step`](Self::step) and [`run`](Self::run) paths never consult it.
     #[cfg(all(
         feature = "smir-jit",
         any(target_arch = "x86_64", target_arch = "aarch64")

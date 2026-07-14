@@ -69,8 +69,18 @@ fn install(cpu: &mut RiscVCpu, instructions: &[u32]) {
         .iter()
         .flat_map(|instruction| instruction.to_le_bytes())
         .collect::<Vec<_>>();
+    install_bytes(cpu, &bytes);
+}
+
+fn install_bytes(cpu: &mut RiscVCpu, bytes: &[u8]) {
     cpu.write_memory(CODE, &bytes).expect("write RISC-V code");
     cpu.set_pc(CODE);
+}
+
+fn c_addi(rd: u8, imm: i8) -> u16 {
+    assert!(rd < 32 && (-32..=31).contains(&imm) && imm != 0);
+    let immediate = imm as u16 & 0x3f;
+    ((immediate >> 5) << 12) | (u16::from(rd) << 7) | ((immediate & 0x1f) << 2) | 0b01
 }
 
 fn assert_equivalent(actual: &RiscVCpu, expected: &RiscVCpu) {
@@ -303,5 +313,295 @@ fn production_cache_reuses_native_aarch64_blocks() {
     assert_eq!(stats.cache_misses, 1);
     assert_eq!(stats.cache_hits, 1);
     assert_eq!(stats.native_executions, 2);
+    assert_eq!(stats.interpreter_fallbacks, 0);
+}
+
+#[test]
+fn production_run_jit_forms_bounded_regions_at_every_optimization_level() {
+    let instructions = vec![i_type(1, 5, 0, 5, 0x13); 20]; // addi x5,x5,1
+    for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+        let mut expected = make_cpu(RiscVConfig::rv64gc());
+        let mut actual = make_cpu(RiscVConfig::rv64gc());
+        install(&mut expected, &instructions);
+        install(&mut actual, &instructions);
+
+        assert_eq!(expected.run(instructions.len() as u64), RiscVExit::Continue);
+        assert_eq!(
+            actual.run_jit(instructions.len() as u64, level),
+            RiscVExit::Continue
+        );
+        assert_equivalent(&actual, &expected);
+        assert_eq!(actual.x(5), 20);
+        assert_eq!(actual.pc(), CODE + 80);
+
+        let stats = actual.jit_stats();
+        assert_eq!(stats.cache_entries, 2, "{level:?}");
+        assert_eq!(stats.cache_misses, 2, "{level:?}");
+        assert_eq!(stats.native_executions, 2, "{level:?}");
+        assert_eq!(stats.interpreter_fallbacks, 0, "{level:?}");
+    }
+}
+
+#[test]
+fn production_run_jit_obeys_the_exact_remaining_instruction_budget() {
+    let instructions = vec![i_type(1, 5, 0, 5, 0x13); 8]; // addi x5,x5,1
+    let mut expected = make_cpu(RiscVConfig::rv64gc());
+    let mut actual = make_cpu(RiscVConfig::rv64gc());
+    install(&mut expected, &instructions);
+    install(&mut actual, &instructions);
+
+    assert_eq!(expected.run(3), RiscVExit::Continue);
+    assert_eq!(actual.run_jit(3, OptLevel::O2), RiscVExit::Continue);
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(5), 3);
+    assert_eq!(actual.pc(), CODE + 12);
+    assert_eq!(actual.jit_stats().native_executions, 1);
+
+    assert_eq!(expected.run(5), RiscVExit::Continue);
+    assert_eq!(actual.run_jit(5, OptLevel::O2), RiscVExit::Continue);
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(5), 8);
+    assert_eq!(actual.pc(), CODE + 32);
+    assert_eq!(actual.jit_stats().native_executions, 2);
+}
+
+#[test]
+fn production_region_cache_identity_covers_every_instruction() {
+    let mut cpu = make_cpu(RiscVConfig::rv64gc());
+    let mut instructions = [
+        i_type(1, 5, 0, 5, 0x13),
+        i_type(2, 5, 0, 5, 0x13),
+        i_type(3, 5, 0, 5, 0x13),
+    ];
+    install(&mut cpu, &instructions);
+
+    assert_eq!(cpu.run_jit(3, OptLevel::O2), RiscVExit::Continue);
+    assert_eq!(cpu.x(5), 6);
+    instructions[2] = i_type(7, 5, 0, 5, 0x13);
+    cpu.write_memory(CODE + 8, &instructions[2].to_le_bytes())
+        .expect("replace region tail");
+    cpu.set_pc(CODE);
+    assert_eq!(cpu.run_jit(3, OptLevel::O2), RiscVExit::Continue);
+    assert_eq!(cpu.x(5), 16);
+
+    let stats = cpu.jit_stats();
+    assert_eq!(stats.cache_entries, 2);
+    assert_eq!(stats.cache_misses, 2);
+    assert_eq!(stats.cache_hits, 0);
+    assert_eq!(stats.native_executions, 2);
+}
+
+#[test]
+fn production_regions_end_after_memory_side_effects() {
+    let instructions = [
+        i_type(0x55, 0, 0, 5, 0x13), // addi x5,x0,0x55
+        s_type(0, 5, 1, 0b010),      // sw x5,0(x1)
+        i_type(9, 5, 0, 6, 0x13),    // addi x6,x5,9
+    ];
+    let mut expected = make_cpu(RiscVConfig::rv64gc());
+    let mut actual = make_cpu(RiscVConfig::rv64gc());
+    for cpu in [&mut expected, &mut actual] {
+        install(cpu, &instructions);
+        cpu.set_x(1, DATA);
+    }
+
+    assert_eq!(expected.run(3), RiscVExit::Continue);
+    assert_eq!(actual.run_jit(3, OptLevel::O2), RiscVExit::Continue);
+    assert_equivalent(&actual, &expected);
+    let stats = actual.jit_stats();
+    assert_eq!(stats.native_executions, 2);
+    assert_eq!(stats.cache_entries, 2);
+    assert_eq!(stats.interpreter_fallbacks, 0);
+}
+
+#[test]
+fn production_store_boundary_observes_a_self_modified_successor() {
+    let original_tail = i_type(2, 5, 0, 5, 0x13); // addi x5,x5,2
+    let replacement_tail = i_type(7, 5, 0, 5, 0x13); // addi x5,x5,7
+    let instructions = [
+        i_type(1, 5, 0, 5, 0x13), // addi x5,x5,1
+        s_type(8, 2, 1, 0b010),   // sw x2,8(x1)
+        original_tail,
+    ];
+    let mut expected = make_cpu(RiscVConfig::rv64gc());
+    let mut actual = make_cpu(RiscVConfig::rv64gc());
+    for cpu in [&mut expected, &mut actual] {
+        install(cpu, &instructions);
+        cpu.set_x(1, CODE);
+        cpu.set_x(2, u64::from(replacement_tail));
+    }
+
+    assert_eq!(expected.run(3), RiscVExit::Continue);
+    assert_eq!(actual.run_jit(3, OptLevel::O2), RiscVExit::Continue);
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(5), 8);
+    assert_eq!(actual.pc(), CODE + 12);
+    assert_eq!(actual.jit_stats().native_executions, 2);
+    assert_eq!(actual.jit_stats().interpreter_fallbacks, 0);
+}
+
+#[test]
+fn production_region_fault_retires_only_preceding_instructions() {
+    let instructions = [
+        i_type(7, 5, 0, 5, 0x13),     // addi x5,x5,7
+        i_type(0, 1, 0b011, 5, 0x03), // ld x5,0(x1)
+    ];
+    let mut expected = make_cpu(RiscVConfig::rv64gc());
+    let mut actual = make_cpu(RiscVConfig::rv64gc());
+    for cpu in [&mut expected, &mut actual] {
+        install(cpu, &instructions);
+        cpu.set_x(1, MEMORY_LEN as u64 - 4);
+        cpu.set_x(5, 10);
+    }
+
+    let expected_exit = expected.run(2);
+    let actual_exit = actual.run_jit(2, OptLevel::O2);
+    assert_eq!(
+        actual_exit,
+        RiscVExit::Trap(Trap {
+            cause: 5,
+            tval: MEMORY_LEN as u64 - 4,
+        })
+    );
+    assert_eq!(actual_exit, expected_exit);
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(5), 17);
+    assert_eq!(actual.instret(), 1);
+    assert_eq!(actual.csr_read(0xc00), Ok(2));
+    assert_eq!(actual.jit_stats().native_executions, 1);
+    assert_eq!(actual.jit_stats().interpreter_fallbacks, 0);
+}
+
+#[test]
+fn production_region_store_fault_preserves_preceding_retirement() {
+    let instructions = [
+        i_type(3, 5, 0, 5, 0x13), // addi x5,x5,3
+        s_type(0, 5, 1, 0b011),   // sd x5,0(x1)
+    ];
+    let mut expected = make_cpu(RiscVConfig::rv64gc());
+    let mut actual = make_cpu(RiscVConfig::rv64gc());
+    for cpu in [&mut expected, &mut actual] {
+        install(cpu, &instructions);
+        cpu.set_x(1, MEMORY_LEN as u64 - 4);
+        cpu.set_x(5, 20);
+    }
+
+    let expected_exit = expected.run(2);
+    let actual_exit = actual.run_jit(2, OptLevel::O1);
+    assert_eq!(
+        actual_exit,
+        RiscVExit::Trap(Trap {
+            cause: 7,
+            tval: MEMORY_LEN as u64 - 4,
+        })
+    );
+    assert_eq!(actual_exit, expected_exit);
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(5), 23);
+    assert_eq!(actual.instret(), 1);
+    assert_eq!(actual.csr_read(0xc00), Ok(2));
+    assert_eq!(actual.jit_stats().native_executions, 1);
+    assert_eq!(actual.jit_stats().interpreter_fallbacks, 0);
+}
+
+#[test]
+fn production_regions_isolate_control_flow() {
+    let instructions = [
+        i_type(1, 5, 0, 5, 0x13),   // addi x5,x5,1
+        b_type(8, 0, 0, 0),         // beq x0,x0,+8
+        i_type(100, 5, 0, 5, 0x13), // skipped
+        i_type(2, 5, 0, 5, 0x13),   // addi x5,x5,2
+    ];
+    let mut expected = make_cpu(RiscVConfig::rv64gc());
+    let mut actual = make_cpu(RiscVConfig::rv64gc());
+    install(&mut expected, &instructions);
+    install(&mut actual, &instructions);
+
+    assert_eq!(expected.run(3), RiscVExit::Continue);
+    assert_eq!(actual.run_jit(3, OptLevel::O2), RiscVExit::Continue);
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(5), 3);
+    assert_eq!(actual.pc(), CODE + 16);
+    assert_eq!(actual.jit_stats().native_executions, 3);
+    assert_eq!(actual.jit_stats().interpreter_fallbacks, 0);
+}
+
+#[test]
+fn production_regions_isolate_replay_sensitive_fp_failures() {
+    let invalid_rm_fadd = r_type_opcode(0x00, 2, 1, 0b101, 3, 0x53);
+    let instructions = [
+        i_type(1, 5, 0, 5, 0x13), // addi x5,x5,1
+        invalid_rm_fadd,          // reserved static rounding mode
+    ];
+    let mut expected = make_cpu(RiscVConfig::rv64gc());
+    let mut actual = make_cpu(RiscVConfig::rv64gc());
+    for cpu in [&mut expected, &mut actual] {
+        install(cpu, &instructions);
+        cpu.set_x(5, 10);
+        cpu.set_f(1, 0xffff_ffff_3f80_0000);
+        cpu.set_f(2, 0xffff_ffff_4000_0000);
+    }
+
+    let expected_exit = expected.run(2);
+    let actual_exit = actual.run_jit(2, OptLevel::O2);
+    assert_eq!(actual_exit, expected_exit);
+    assert!(matches!(actual_exit, RiscVExit::Trap(_)));
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(5), 11);
+    assert_eq!(actual.instret(), 1);
+    let stats = actual.jit_stats();
+    assert_eq!(stats.native_executions, 2);
+    assert_eq!(stats.interpreter_fallbacks, 1);
+}
+
+#[test]
+fn production_run_jit_preserves_interrupt_budget_accounting() {
+    const MSTATUS_MIE: u64 = 1 << 3;
+    const MIP_MEIP: u64 = 1 << 11;
+    let instructions = vec![i_type(1, 5, 0, 5, 0x13); 3];
+    let mut expected = make_cpu(RiscVConfig::rv64gc());
+    let mut actual = make_cpu(RiscVConfig::rv64gc());
+    for cpu in [&mut expected, &mut actual] {
+        install(cpu, &instructions);
+        cpu.csr_write(0x305, CODE).expect("set mtvec");
+        cpu.csr_write(0x304, MIP_MEIP).expect("enable MEIP");
+        cpu.csr_write(0x300, MSTATUS_MIE)
+            .expect("enable machine interrupts");
+        cpu.set_interrupt_pending(MIP_MEIP, true);
+    }
+
+    assert_eq!(expected.run(3), RiscVExit::Continue);
+    assert_eq!(actual.run_jit(3, OptLevel::O2), RiscVExit::Continue);
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(5), 2);
+    assert_eq!(actual.instret(), 2);
+    assert_eq!(actual.csr_read(0xc00), Ok(2));
+    assert_eq!(actual.jit_stats().native_executions, 1);
+}
+
+#[test]
+fn production_regions_track_mixed_compressed_instruction_lengths() {
+    let mut bytes = Vec::new();
+    for instruction in [c_addi(5, 1), c_addi(5, -2), c_addi(5, 7)] {
+        bytes.extend_from_slice(&instruction.to_le_bytes());
+    }
+    bytes.extend_from_slice(&i_type(9, 5, 0, 6, 0x13).to_le_bytes());
+
+    let mut expected = make_cpu(RiscVConfig::rv64gc());
+    let mut actual = make_cpu(RiscVConfig::rv64gc());
+    install_bytes(&mut expected, &bytes);
+    install_bytes(&mut actual, &bytes);
+    expected.set_x(5, 11);
+    actual.set_x(5, 11);
+
+    assert_eq!(expected.run(4), RiscVExit::Continue);
+    assert_eq!(actual.run_jit(4, OptLevel::O1), RiscVExit::Continue);
+    assert_equivalent(&actual, &expected);
+    assert_eq!(actual.x(5), 17);
+    assert_eq!(actual.x(6), 26);
+    assert_eq!(actual.pc(), CODE + 10);
+    let stats = actual.jit_stats();
+    assert_eq!(stats.cache_entries, 1);
+    assert_eq!(stats.native_executions, 1);
     assert_eq!(stats.interpreter_fallbacks, 0);
 }
