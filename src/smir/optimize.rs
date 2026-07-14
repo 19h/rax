@@ -535,6 +535,27 @@ pub fn dead_flag_elimination_with(block: &mut SmirBlock, live_out: FlagSet) -> u
     let mut eliminated = 0;
     for i in 0..block.ops.len() {
         let live = liveness[i];
+        // These operations exist only to define status flags. Unlike the ALU
+        // families below they have no FlagUpdate field to suppress, so replace
+        // the entire pure operation when none of its defined flags are live.
+        // A memory-source instruction has already lifted its access into a
+        // separate Load; removing the flag-only consumer therefore retains
+        // precise fault/MMIO behavior.
+        if matches!(
+            block.ops[i].kind,
+            OpKind::Cmp { .. }
+                | OpKind::Test { .. }
+                | OpKind::Bt { .. }
+                | OpKind::SetCF { .. }
+                | OpKind::CmcCF
+        ) && live
+            .intersection(block.ops[i].kind.flags_written())
+            .is_empty()
+        {
+            block.ops[i].kind = OpKind::Nop;
+            eliminated += 1;
+            continue;
+        }
         if let Some(flags) = block.ops[i].kind.flags_written_mut() {
             let written = flags.as_set();
             if !written.is_empty() && live.intersection(written).is_empty() {
@@ -1175,7 +1196,11 @@ pub fn dead_code_elimination_with(block: &mut SmirBlock, live_out: &HashSet<VReg
     // Backward pass to find all used values.
     for op in block.ops.iter().rev() {
         let dests = op.kind.dests();
-        let dest_live = dests.is_empty() || dests.iter().any(|d| used.contains(d));
+        // Destination-less operations are conservatively live unless their
+        // variant is the explicitly side-effect-free Nop produced by earlier
+        // simplification passes.
+        let dest_live = !matches!(op.kind, OpKind::Nop)
+            && (dests.is_empty() || dests.iter().any(|d| used.contains(d)));
         let keep = dest_live || op.kind.has_side_effects() || !op.kind.flags_written().is_empty();
 
         if keep {
@@ -1195,8 +1220,8 @@ pub fn dead_code_elimination_with(block: &mut SmirBlock, live_out: &HashSet<VReg
     let before = block.ops.len();
     block.ops.retain(|op| {
         let dests = op.kind.dests();
-        dests.is_empty()
-            || dests.iter().any(|d| used.contains(d))
+        (!matches!(op.kind, OpKind::Nop)
+            && (dests.is_empty() || dests.iter().any(|d| used.contains(d))))
             || op.kind.has_side_effects()
             || !op.kind.flags_written().is_empty()
     });
@@ -3786,6 +3811,7 @@ impl OpKind {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::smir::ir::FunctionBuilder;
     use crate::smir::ir::ops::{
         ArmDpRegShiftKind, OpKind, X86AdxKind, X86BlsKind, X86CacheControlKind, X86CountKind,
         X86X87ControlKind, X86X87DataKind,
@@ -3987,6 +4013,104 @@ mod tests {
         assert_eq!(complement.flags_written(), FlagSet::CF);
         assert_eq!(complement.flags_must_write(), FlagSet::CF);
         assert_eq!(complement.flags_read(), FlagSet::CF);
+    }
+
+    #[test]
+    fn dead_flag_elimination_removes_pure_fixed_flag_definitions() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let pure = [
+            OpKind::Cmp {
+                src1: rax,
+                src2: SrcOperand::Reg(rcx),
+                width: OpWidth::W64,
+            },
+            OpKind::Test {
+                src1: rax,
+                src2: SrcOperand::Reg(rcx),
+                width: OpWidth::W64,
+            },
+            OpKind::Bt {
+                src: rax,
+                index: SrcOperand::Reg(rcx),
+                width: OpWidth::W64,
+            },
+            OpKind::SetCF { value: true },
+            OpKind::CmcCF,
+        ];
+
+        for kind in pure {
+            let mut block = SmirBlock::new(BlockId(0), 0x1000);
+            block.push_op(make_op(0, kind));
+            assert_eq!(dead_flag_elimination_with(&mut block, FlagSet::EMPTY), 1);
+            assert!(matches!(block.ops[0].kind, OpKind::Nop));
+        }
+
+        let mut live_bt = SmirBlock::new(BlockId(0), 0x1000);
+        live_bt.push_op(make_op(
+            0,
+            OpKind::Bt {
+                src: rax,
+                index: SrcOperand::Imm(7),
+                width: OpWidth::W64,
+            },
+        ));
+        assert_eq!(dead_flag_elimination_with(&mut live_bt, FlagSet::CF), 0);
+        assert!(matches!(live_bt.ops[0].kind, OpKind::Bt { .. }));
+
+        // Update forms still produce a GPR value even when CF is dead.
+        let mut update = SmirBlock::new(BlockId(0), 0x1000);
+        update.push_op(make_op(
+            0,
+            OpKind::Bts {
+                dst: rax,
+                src: rax,
+                index: SrcOperand::Imm(7),
+                width: OpWidth::W64,
+            },
+        ));
+        assert_eq!(dead_flag_elimination_with(&mut update, FlagSet::EMPTY), 0);
+        assert!(matches!(update.ops[0].kind, OpKind::Bts { .. }));
+    }
+
+    #[test]
+    fn o2_removes_internal_bit_test_overwritten_before_frontier() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Bt {
+                src: rax,
+                index: SrcOperand::Imm(7),
+                width: OpWidth::W64,
+            },
+        );
+        builder.push_op(
+            0x1001,
+            OpKind::Cmp {
+                src1: rax,
+                src2: SrcOperand::Reg(rcx),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+
+        let stats = optimize_function_with_stats(&mut function, OptLevel::O2);
+        assert_eq!(stats.dead_flags_eliminated, 1);
+        assert!(
+            !function.blocks[0]
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::Bt { .. } | OpKind::Nop))
+        );
+        assert!(
+            function.blocks[0]
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::Cmp { .. }))
+        );
     }
 
     #[test]

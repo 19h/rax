@@ -117,6 +117,43 @@ enum ShiftRegOp {
     Sar,
 }
 
+#[derive(Clone, Copy, Debug)]
+enum BitTestRegOp {
+    Test,
+    Set,
+    Reset,
+    Complement,
+}
+
+impl BitTestRegOp {
+    fn name(self) -> &'static str {
+        match self {
+            Self::Test => "Bt",
+            Self::Set => "Bts",
+            Self::Reset => "Btr",
+            Self::Complement => "Btc",
+        }
+    }
+
+    fn register_opcode(self) -> u8 {
+        match self {
+            Self::Test => 0xA3,
+            Self::Set => 0xAB,
+            Self::Reset => 0xB3,
+            Self::Complement => 0xBB,
+        }
+    }
+
+    fn immediate_digit(self) -> u8 {
+        match self {
+            Self::Test => 4,
+            Self::Set => 5,
+            Self::Reset => 6,
+            Self::Complement => 7,
+        }
+    }
+}
+
 impl ShiftRegOp {
     fn digit(self) -> u8 {
         match self {
@@ -3309,6 +3346,35 @@ impl<'a> X86Emitter<'a> {
         }
     }
 
+    /// BT/BTS/BTR/BTC r/m, r. The register operand supplies the bit index.
+    fn emit_bit_test_rr(
+        &mut self,
+        kind: BitTestRegOp,
+        operand: PhysReg,
+        index: PhysReg,
+        width: OpWidth,
+    ) {
+        self.emit_rex_for_width(width, index, operand);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(kind.register_opcode());
+        self.emit_modrm_rr(index, operand);
+    }
+
+    /// Group-8 BT/BTS/BTR/BTC r/m, imm8.
+    fn emit_bit_test_ri(
+        &mut self,
+        kind: BitTestRegOp,
+        operand: PhysReg,
+        index: u8,
+        width: OpWidth,
+    ) {
+        self.emit_rex_for_width(width, PhysReg::Rax, operand);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0xBA);
+        self.emit_modrm_digit(0b11, kind.immediate_digit(), operand);
+        self.code.emit_u8(index);
+    }
+
     /// BSF r, r/m
     pub fn emit_bsf(&mut self, dst: PhysReg, src: PhysReg, width: OpWidth) {
         self.emit_rex_for_width(width, dst, src);
@@ -4222,6 +4288,71 @@ impl X86_64Lowerer {
                 });
             }
         }
+        Ok(())
+    }
+
+    /// Lower register-only BT/BTS/BTR/BTC while retaining the emulator's
+    /// deterministic policy for architecturally undefined status flags. Native
+    /// x86 supplies CF directly; [`Self::finish_bmi_flags`] merges only that bit
+    /// into the saved incoming RFLAGS image.
+    fn lower_bit_test(
+        &mut self,
+        kind: BitTestRegOp,
+        dst: Option<VReg>,
+        src: VReg,
+        index: &SrcOperand,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
+        if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: kind.name().to_string(),
+                operand: format!("unsupported width {width:?}"),
+            });
+        }
+        if dst.is_some_and(|dst| dst != src) {
+            return Err(LowerError::InvalidOperand {
+                op: kind.name().to_string(),
+                operand: "register update requires dst == src".to_string(),
+            });
+        }
+
+        let operand = if let Some(dst) = dst {
+            self.get_dst_reg(dst)?
+        } else {
+            self.get_reg(src)?
+        };
+
+        let index_reg = match index {
+            SrcOperand::Reg(reg) => Some(self.get_reg(*reg)?),
+            SrcOperand::Imm(_) | SrcOperand::Imm64(_) => None,
+            _ => {
+                return Err(LowerError::InvalidOperand {
+                    op: kind.name().to_string(),
+                    operand: format!("unsupported bit index {index:?}"),
+                });
+            }
+        };
+        let mut operands = vec![operand];
+        operands.extend(index_reg);
+        Self::ensure_flag_stack_operands_safe(kind.name(), &operands)?;
+
+        self.code.emit_u8(0x9C); // pushfq: preserve undefined status flags.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            match (index, index_reg) {
+                (SrcOperand::Reg(_), Some(index)) => {
+                    emitter.emit_bit_test_rr(kind, operand, index, width)
+                }
+                (SrcOperand::Imm(index), None) => {
+                    emitter.emit_bit_test_ri(kind, operand, *index as u8, width)
+                }
+                (SrcOperand::Imm64(index), None) => {
+                    emitter.emit_bit_test_ri(kind, operand, *index as u8, width)
+                }
+                _ => unreachable!(),
+            }
+        }
+        self.finish_bmi_flags(operand, Some(1 << 0));
         Ok(())
     }
 
@@ -5826,6 +5957,31 @@ impl X86_64Lowerer {
                     }
                 }
             }
+
+            OpKind::Bt { src, index, width } => {
+                self.lower_bit_test(BitTestRegOp::Test, None, *src, index, *width)?
+            }
+
+            OpKind::Bts {
+                dst,
+                src,
+                index,
+                width,
+            } => self.lower_bit_test(BitTestRegOp::Set, Some(*dst), *src, index, *width)?,
+
+            OpKind::Btr {
+                dst,
+                src,
+                index,
+                width,
+            } => self.lower_bit_test(BitTestRegOp::Reset, Some(*dst), *src, index, *width)?,
+
+            OpKind::Btc {
+                dst,
+                src,
+                index,
+                width,
+            } => self.lower_bit_test(BitTestRegOp::Complement, Some(*dst), *src, index, *width)?,
 
             OpKind::Bsf {
                 dst,
@@ -15227,6 +15383,166 @@ mod tests {
 
             let mut lowerer = X86_64Lowerer::new();
             assert!(lowerer.lower_function(&func).is_err(), "{name}");
+        }
+    }
+
+    #[test]
+    fn lower_register_bit_tests_emit_all_widths_and_reject_malformed_shapes() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        let r10 = VReg::Arch(ArchReg::X86(X86Reg::R10));
+
+        let bt = lower_single_op(OpKind::Bt {
+            src: rax,
+            index: SrcOperand::Reg(rcx),
+            width: OpWidth::W32,
+        });
+        assert!(
+            bt.windows(4).any(|bytes| bytes == [0x9C, 0x0F, 0xA3, 0xC8]),
+            "missing BT r32,r32 encoding: {bt:02X?}"
+        );
+
+        let btr = lower_single_op(OpKind::Btr {
+            dst: r8,
+            src: r8,
+            index: SrcOperand::Imm(31),
+            width: OpWidth::W32,
+        });
+        assert!(
+            btr.windows(6)
+                .any(|bytes| bytes == [0x9C, 0x41, 0x0F, 0xBA, 0xF0, 0x1F]),
+            "missing BTR r32,imm8 encoding: {btr:02X?}"
+        );
+
+        let btc = lower_single_op(OpKind::Btc {
+            dst: r9,
+            src: r9,
+            index: SrcOperand::Reg(r10),
+            width: OpWidth::W16,
+        });
+        assert!(
+            btc.windows(6)
+                .any(|bytes| bytes == [0x9C, 0x66, 0x45, 0x0F, 0xBB, 0xD1]),
+            "missing BTC r16,r16 encoding: {btc:02X?}"
+        );
+
+        for malformed in [
+            OpKind::Bts {
+                dst: rax,
+                src: rcx,
+                index: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+            },
+            OpKind::Bt {
+                src: rax,
+                index: SrcOperand::Imm(1),
+                width: OpWidth::W8,
+            },
+            OpKind::Bt {
+                src: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+                index: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+            },
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(malformed),
+                    LowerError::InvalidOperand { .. }
+                        | LowerError::InvalidRegister(_)
+                        | LowerError::RegisterAllocationFailed { .. }
+                ),
+                "malformed register bit test must fail lowering"
+            );
+        }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_register_bit_tests_preserve_undefined_flags_and_partial_writes() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        const STATUS: u64 = 0x8D5; // CF, PF, AF, ZF, SF, OF
+        let cases = [
+            (
+                "bt r64,r64",
+                OpKind::Bt {
+                    src: r8,
+                    index: SrcOperand::Reg(r9),
+                    width: OpWidth::W64,
+                },
+                1u64 << 63,
+                63,
+                1u64 << 63,
+                true,
+            ),
+            (
+                "bts r16,imm8",
+                OpKind::Bts {
+                    dst: r8,
+                    src: r8,
+                    index: SrcOperand::Imm(15),
+                    width: OpWidth::W16,
+                },
+                0xA5A5_A5A5_A5A5_0000,
+                0,
+                0xA5A5_A5A5_A5A5_8000,
+                false,
+            ),
+            (
+                "btr r32,imm8",
+                OpKind::Btr {
+                    dst: r8,
+                    src: r8,
+                    index: SrcOperand::Imm64(31),
+                    width: OpWidth::W32,
+                },
+                u64::MAX,
+                0,
+                0x7FFF_FFFF,
+                true,
+            ),
+            (
+                "btc r64,r64",
+                OpKind::Btc {
+                    dst: r8,
+                    src: r8,
+                    index: SrcOperand::Reg(r9),
+                    width: OpWidth::W64,
+                },
+                0,
+                63,
+                1u64 << 63,
+                false,
+            ),
+        ];
+
+        for (name, kind, source, index, expected, expected_cf) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("lower {name}: {error:?}"));
+            let code = lowerer.finalize().expect("finalize register bit test");
+            let exec = ExecMem::new(&code).expect("map register bit test");
+            let mut regs = GuestRegs::default();
+            regs.gpr[8] = source;
+            regs.gpr[9] = index;
+            regs.rflags = 0x2 | STATUS;
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr[8], expected, "{name}: result");
+            let expected_status = (STATUS & !1) | u64::from(expected_cf);
+            assert_eq!(
+                regs.rflags & STATUS,
+                expected_status,
+                "{name}: only CF may change"
+            );
         }
     }
 

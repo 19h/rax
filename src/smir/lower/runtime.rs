@@ -2760,6 +2760,13 @@ fn block_is_clobber_safe(
         {
             return false;
         }
+        if matches!(
+            op.kind,
+            OpKind::Bt { .. } | OpKind::Bts { .. } | OpKind::Btr { .. } | OpKind::Btc { .. }
+        ) && !x86_bit_test_shape_valid(&op.kind)
+        {
+            return false;
+        }
         if matches!(op.kind, OpKind::Cwd { .. }) && !x86_cwd_shape_valid(&op.kind) {
             return false;
         }
@@ -3344,6 +3351,63 @@ fn x86_bit_scan_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
             flags: FlagUpdate::Specific(FlagSet::ZF),
         } if native_gpr(dst) && native_gpr(src)
     )
+}
+
+fn x86_bit_test_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
+
+    let native_gpr = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Rax
+                    | X86Reg::Rcx
+                    | X86Reg::Rdx
+                    | X86Reg::Rbx
+                    | X86Reg::Rsi
+                    | X86Reg::Rdi
+                    | X86Reg::R8
+                    | X86Reg::R9
+                    | X86Reg::R10
+                    | X86Reg::R11
+                    | X86Reg::R12
+                    | X86Reg::R13
+                    | X86Reg::R14
+                    | X86Reg::R15
+            ))
+        )
+    };
+    let index_valid = |index: &SrcOperand| {
+        matches!(index, SrcOperand::Imm(_) | SrcOperand::Imm64(_))
+            || matches!(index, SrcOperand::Reg(reg) if native_gpr(reg))
+    };
+    let width_valid = |width: &OpWidth| matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64);
+
+    match op {
+        OpKind::Bt { src, index, width } => {
+            native_gpr(src) && index_valid(index) && width_valid(width)
+        }
+        OpKind::Bts {
+            dst,
+            src,
+            index,
+            width,
+        }
+        | OpKind::Btr {
+            dst,
+            src,
+            index,
+            width,
+        }
+        | OpKind::Btc {
+            dst,
+            src,
+            index,
+            width,
+        } => dst == src && native_gpr(dst) && index_valid(index) && width_valid(width),
+        _ => false,
+    }
 }
 
 fn x86_cwd_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
@@ -8851,6 +8915,79 @@ mod jit_gate_tests {
             ),
         ] {
             assert!(!x86_gate(op), "malformed {name} Xchg must deopt");
+        }
+    }
+
+    #[test]
+    fn x86_bit_test_gate_accepts_exact_register_shapes_and_rejects_unsafe_ir() {
+        for op in [
+            OpKind::Bt {
+                src: x86(X86Reg::R8),
+                index: SrcOperand::Reg(x86(X86Reg::R9)),
+                width: OpWidth::W16,
+            },
+            OpKind::Bts {
+                dst: x86(X86Reg::R10),
+                src: x86(X86Reg::R10),
+                index: SrcOperand::Imm(31),
+                width: OpWidth::W32,
+            },
+            OpKind::Btr {
+                dst: x86(X86Reg::R14),
+                src: x86(X86Reg::R14),
+                index: SrcOperand::Imm64(63),
+                width: OpWidth::W64,
+            },
+            OpKind::Btc {
+                dst: x86(X86Reg::R15),
+                src: x86(X86Reg::R15),
+                index: SrcOperand::Reg(x86(X86Reg::Rax)),
+                width: OpWidth::W64,
+            },
+        ] {
+            assert!(op.is_jit_safe(), "register bit test must be whitelisted");
+            assert!(x86_gate(op), "well-formed register bit test must JIT");
+        }
+
+        for (name, op) in [
+            (
+                "byte width",
+                OpKind::Bt {
+                    src: x86(X86Reg::Rax),
+                    index: SrcOperand::Imm(0),
+                    width: OpWidth::W8,
+                },
+            ),
+            (
+                "non-destructive update",
+                OpKind::Bts {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rcx),
+                    index: SrcOperand::Imm(0),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "guest stack operand",
+                OpKind::Btr {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rsp),
+                    index: SrcOperand::Imm(0),
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "virtual index",
+                OpKind::Btc {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rax),
+                    index: SrcOperand::Reg(VReg::Virtual(VirtualId(0))),
+                    width: OpWidth::W64,
+                },
+            ),
+        ] {
+            assert!(op.is_jit_safe(), "{name} remains class-whitelisted");
+            assert!(!x86_gate(op), "malformed {name} bit test must deopt");
         }
     }
 

@@ -322,6 +322,70 @@ fn jit_bit_scans_preserve_undefined_flags_and_handle_zero_sources() {
     // excluded from the cross-tier equality contract.
 }
 
+/// Register BT/BTS/BTR/BTC forms must enter the x86-64 native tier across
+/// W16/W32/W64, preserve the emulator's deterministic values for undefined
+/// status flags, and retain exact partial-register write semantics.
+#[test]
+fn jit_register_bit_tests_match_interpreter_across_widths_and_indices() {
+    // bts ax,cx; btr r8d,31; btc r9,r10; bt ebx,edx
+    // seto r11b; setz r12b; sets r13b; setp r14b; setc r15b
+    // dec esi; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0xAB, 0xC8, 0x41, 0x0F, 0xBA, 0xF0, 0x1F, 0x4D, 0x0F, 0xBB, 0xD1, 0x0F, 0xA3,
+        0xD3, 0x41, 0x0F, 0x90, 0xC3, 0x41, 0x0F, 0x94, 0xC4, 0x41, 0x0F, 0x98, 0xC5, 0x41, 0x0F,
+        0x9A, 0xC6, 0x41, 0x0F, 0x92, 0xC7, 0xFF, 0xCE, 0x75, 0xD8, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xA5A5_A5A5_A5A5_0000;
+        regs.rcx = 20; // W16 register index masks to bit 4.
+        regs.r8 = u64::MAX;
+        regs.r9 = 0;
+        regs.r10 = 63;
+        regs.rbx = 1 << 3;
+        regs.rdx = 3;
+        regs.rsi = 1;
+        regs.r11 = u64::MAX;
+        regs.r12 = u64::MAX;
+        regs.r13 = u64::MAX;
+        regs.r14 = u64::MAX;
+        regs.r15 = u64::MAX;
+        regs.rflags = 0x2 | 0x8D5; // all arithmetic status flags set.
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interp = make_vcpu_code(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block().expect("JIT register bit-test region"),
+        "register bit-test loop must enter the native tier"
+    );
+    run_interp(&mut jit);
+
+    let expected = interp.get_regs().unwrap();
+    let after = jit.get_regs().unwrap();
+    assert_eq!(after.rax, expected.rax, "BTS W16 partial write");
+    assert_eq!(after.r8, expected.r8, "BTR W32 zero extension");
+    assert_eq!(after.r9, expected.r9, "BTC W64 register index");
+    assert_eq!(after.r11, expected.r11, "OF after final BT");
+    assert_eq!(after.r12, expected.r12, "ZF after final BT");
+    assert_eq!(after.r13, expected.r13, "SF after final BT");
+    assert_eq!(after.r14, expected.r14, "PF after final BT");
+    assert_eq!(after.r15, expected.r15, "CF after final BT");
+    assert_eq!(after.rax, 0xA5A5_A5A5_A5A5_0010);
+    assert_eq!(after.r8, 0x7FFF_FFFF);
+    assert_eq!(after.r9, 1u64 << 63);
+    assert_eq!(after.r11 & 0xFF, 1, "undefined OF preserved by policy");
+    assert_eq!(after.r12 & 0xFF, 1, "undefined ZF preserved by policy");
+    assert_eq!(after.r13 & 0xFF, 1, "undefined SF preserved by policy");
+    assert_eq!(after.r14 & 0xFF, 1, "undefined PF preserved by policy");
+    assert_eq!(after.r15 & 0xFF, 1, "BT extracts set bit into CF");
+}
+
 /// APX NF count instructions have no architectural flag side effects. The JIT
 /// re-encodes them as legacy host count instructions wrapped by PUSHFQ/POPFQ,
 /// so each instruction must retain incoming CF while producing the same count

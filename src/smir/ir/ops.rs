@@ -3799,9 +3799,10 @@ pub enum HexDfOp {
 
 impl OpKind {
     /// Fail-safe whitelist for the SMIR native hot-block JIT: returns true ONLY
-    /// for register/immediate-only integer ops that have been validated
-    /// bit-exact against KVM (the `smir_native_*` differentials) and that touch
-    /// NO memory (their operands are `VReg`/`SrcOperand`, never an `Address`).
+    /// for register/immediate-only integer ops that have been validated by
+    /// native-execution differentials (including KVM-backed suites where
+    /// available) and that touch NO memory (their operands are
+    /// `VReg`/`SrcOperand`, never an `Address`).
     /// Everything else — memory/stack ops (Load/Store/Push/Pop/string/atomic),
     /// DivU/DivS (the shared single-width div IR mismodels x86's RDX:RAX
     /// dividend → wrong results), FP/SIMD, flags-register plumbing, syscalls,
@@ -3845,6 +3846,10 @@ impl OpKind {
                 | OpKind::SetCC { .. }
                 | OpKind::TestCondition { .. }
                 | OpKind::CMove { .. }
+                | OpKind::Bt { .. }
+                | OpKind::Bts { .. }
+                | OpKind::Btr { .. }
+                | OpKind::Btc { .. }
                 | OpKind::Bsf { .. }
                 | OpKind::Bsr { .. }
                 | OpKind::Bextr { .. }
