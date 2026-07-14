@@ -7,29 +7,30 @@
 //!
 //! - r13 and r14 remain ordinary identity-mapped GPRs (`X13`/`X14`), not the
 //!   AArch64 host SP/LR aliases;
-//! - r15 reads/writes, predication, RRX, and the LSR/ASR-#0 encodings remain
-//!   fail-closed until their pipeline/conditional/shifter semantics can be
-//!   represented without hidden native state;
+//! - r15 reads/writes, predicated data operations, RRX, and the LSR/ASR-#0
+//!   encodings remain fail-closed until their pipeline/conditional/shifter
+//!   semantics can be represented without hidden native state;
 //! - scalar LDM/STM and PUSH/POP forms without r15, user-bank transfer, or
 //!   constrained base/list aliases expand into ordered B4 helper operations;
 //! - immediate/scaled-register LDRD/STRD forms over an even R0-R13 pair use
 //!   pair memory IR so a second-word load fault cannot publish either result;
-//! - A32 branch targets use the architectural `PC + 8` base;
+//! - unconditional and condition-code A32 branch targets use the architectural
+//!   `PC + 8` base and become explicit SMIR control-flow edges;
 //! - A32-only reverse-subtract, multiply-accumulate, and MOVW/MOVT forms are
 //!   translated explicitly.
 
 use std::collections::HashSet;
 
 use crate::isa::arm::decoder::{
-    Aarch32Decoder, AddressingMode, DecodedInsn, MemOffset, MemOperand, Mnemonic, Operand,
-    ShiftType,
+    Aarch32Decoder, AddressingMode, Condition as ArmCondition, DecodedInsn, MemOffset, MemOperand,
+    Mnemonic, Operand, ShiftType,
 };
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{OpKind, SmirOp};
 use crate::smir::ir::types::{
-    Address, ArchReg, ArmReg, BlockId, DispSize, FunctionId, GuestAddr, MemWidth, OpId, OpWidth,
-    ShiftOp, SignExtend, SourceArch, SrcOperand, VReg,
+    Address, ArchReg, ArmReg, BlockId, Condition, DispSize, FunctionId, GuestAddr, MemWidth, OpId,
+    OpWidth, ShiftOp, SignExtend, SourceArch, SrcOperand, VReg,
 };
 use crate::smir::ir::{
     CallTarget, CallingConv, FunctionAttrs, SmirBlock, SmirFunction, Terminator, TrapKind,
@@ -90,7 +91,10 @@ impl Aarch32Lifter {
     }
 
     fn rejects_hidden_state(insn: &DecodedInsn) -> bool {
-        if insn.cond.is_some() {
+        // A condition-code B has no predicated data effects: it is represented
+        // directly as a two-edge SMIR terminator. Every other conditional A32
+        // instruction still requires instruction-level commit suppression.
+        if insn.cond.is_some() && insn.mnemonic != Mnemonic::B {
             return true;
         }
         insn.operands.iter().any(|operand| match operand {
@@ -120,6 +124,32 @@ impl Aarch32Lifter {
             }
             _ => false,
         })
+    }
+
+    fn branch_condition(cond: ArmCondition, pc: GuestAddr) -> Result<Condition, LiftError> {
+        let cond = match cond {
+            ArmCondition::EQ => Condition::Eq,
+            ArmCondition::NE => Condition::Ne,
+            ArmCondition::CS => Condition::Uge,
+            ArmCondition::CC => Condition::Ult,
+            ArmCondition::MI => Condition::Negative,
+            ArmCondition::PL => Condition::Positive,
+            ArmCondition::VS => Condition::Overflow,
+            ArmCondition::VC => Condition::NoOverflow,
+            ArmCondition::HI => Condition::Ugt,
+            ArmCondition::LS => Condition::Ule,
+            ArmCondition::GE => Condition::Sge,
+            ArmCondition::LT => Condition::Slt,
+            ArmCondition::GT => Condition::Sgt,
+            ArmCondition::LE => Condition::Sle,
+            ArmCondition::AL | ArmCondition::NV => {
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: "A32 conditional branch uses reserved AL/NV condition".to_string(),
+                });
+            }
+        };
+        Ok(cond)
     }
 
     fn memory_kind(mnemonic: Mnemonic) -> Option<(bool, MemWidth, SignExtend)> {
@@ -867,8 +897,15 @@ impl Aarch32Lifter {
                 let Some(Operand::Label(offset)) = insn.operands.first() else {
                     return Err(LiftError::Internal("invalid A32 B operands".to_string()));
                 };
-                ControlFlow::Branch {
-                    target: (pc as i64).wrapping_add(8).wrapping_add(*offset) as u64,
+                let target = (pc as i64).wrapping_add(8).wrapping_add(*offset) as u64;
+                if let Some(cond) = insn.cond {
+                    ControlFlow::CondBranch {
+                        cond: Self::branch_condition(cond, pc)?,
+                        target,
+                        fallthrough: pc.wrapping_add(4),
+                    }
+                } else {
+                    ControlFlow::Branch { target }
                 }
             }
             Mnemonic::BL => {
@@ -996,13 +1033,32 @@ impl SmirLifter for Aarch32Lifter {
                     args: Vec::new(),
                     continuation: ctx.get_or_create_block(pc),
                 },
+                ControlFlow::CondBranch {
+                    cond,
+                    target,
+                    fallthrough,
+                } => {
+                    let cond_vreg = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        insn_pc,
+                        OpKind::TestCondition {
+                            dst: cond_vreg,
+                            cond,
+                        },
+                    ));
+                    Terminator::CondBranch {
+                        cond: cond_vreg,
+                        true_target: ctx.get_or_create_block(target),
+                        false_target: ctx.get_or_create_block(fallthrough),
+                    }
+                }
                 ControlFlow::Return => Terminator::Return { values: Vec::new() },
                 ControlFlow::Trap { kind } => Terminator::Trap { kind },
                 ControlFlow::Syscall => Terminator::Trap {
                     kind: TrapKind::SystemCall,
                 },
-                ControlFlow::CondBranch { .. }
-                | ControlFlow::CondBranchReg { .. }
+                ControlFlow::CondBranchReg { .. }
                 | ControlFlow::IndirectBranch { .. }
                 | ControlFlow::IndirectBranchMem { .. } => {
                     return Err(LiftError::Unsupported {
@@ -1418,6 +1474,85 @@ mod tests {
             ControlFlow::Branch { target: 0x1010 }
         ));
         assert_eq!(result.branch_targets, vec![0x1010]);
+    }
+
+    #[test]
+    fn lifts_every_a32_branch_condition_with_pc_plus_eight_and_fallthrough() {
+        let conditions = [
+            Condition::Eq,
+            Condition::Ne,
+            Condition::Uge,
+            Condition::Ult,
+            Condition::Negative,
+            Condition::Positive,
+            Condition::Overflow,
+            Condition::NoOverflow,
+            Condition::Ugt,
+            Condition::Ule,
+            Condition::Sge,
+            Condition::Slt,
+            Condition::Sgt,
+            Condition::Sle,
+        ];
+
+        for (bits, expected) in conditions.into_iter().enumerate() {
+            let raw = ((bits as u32) << 28) | 0x0a00_0002;
+            let result = lift(raw);
+            assert!(matches!(
+                result.control_flow,
+                ControlFlow::CondBranch {
+                    cond,
+                    target: 0x1010,
+                    fallthrough: 0x1004,
+                } if cond == expected
+            ));
+            assert_eq!(result.branch_targets, vec![0x1010, 0x1004]);
+        }
+    }
+
+    #[test]
+    fn a32_block_materializes_only_a_foldable_branch_condition() {
+        struct Memory([u8; 4]);
+
+        impl MemoryReader for Memory {
+            fn read(
+                &self,
+                addr: GuestAddr,
+                size: usize,
+            ) -> Result<Vec<u8>, crate::smir::ir::memory::MemoryError> {
+                if addr != 0x1000 || size != 4 {
+                    return Err(crate::smir::ir::memory::MemoryError::OutOfBounds { addr });
+                }
+                Ok(self.0.to_vec())
+            }
+        }
+
+        let memory = Memory(0x1a00_0000u32.to_le_bytes()); // BNE +0.
+        let mut lifter = Aarch32Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch32);
+        let block = lifter.lift_block(0x1000, &memory, &mut ctx).unwrap();
+        let taken = ctx.get_or_create_block(0x1008);
+        let not_taken = ctx.get_or_create_block(0x1004);
+
+        assert!(matches!(
+            block.ops.as_slice(),
+            [SmirOp {
+                guest_pc: 0x1000,
+                kind: OpKind::TestCondition {
+                    dst,
+                    cond: Condition::Ne,
+                },
+                ..
+            }] if matches!(dst, VReg::Virtual(_))
+        ));
+        assert!(matches!(
+            block.terminator,
+            Terminator::CondBranch {
+                cond: VReg::Virtual(_),
+                true_target,
+                false_target,
+            } if true_target == taken && false_target == not_taken
+        ));
     }
 
     #[test]

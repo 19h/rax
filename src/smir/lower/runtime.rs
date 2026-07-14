@@ -1122,7 +1122,22 @@ impl ExecMem {
     /// SP, or the guest PC pipeline value.
     #[cfg(target_arch = "aarch64")]
     pub fn run_aarch32_identity(&self, entry_offset: usize, regs: &mut Aarch32GuestRegs) {
-        let _ = self.run_aarch32_identity_configured(entry_offset, regs, None);
+        let _ = self.run_aarch32_identity_until_exit(entry_offset, regs);
+    }
+
+    /// Execute an admitted register-only AArch32 control-flow region.
+    ///
+    /// This is the control-flow-aware form of [`Self::run_aarch32_identity`].
+    /// It returns the guest PC recorded by a native frontier-exit stub; zero
+    /// means that the region reached an ordinary empty `Return`. The function
+    /// must be lowered with matching native-exit block or edge metadata.
+    #[cfg(target_arch = "aarch64")]
+    pub fn run_aarch32_identity_until_exit(
+        &self,
+        entry_offset: usize,
+        regs: &mut Aarch32GuestRegs,
+    ) -> u64 {
+        self.run_aarch32_identity_configured(entry_offset, regs, None)
     }
 
     /// Execute an admitted AArch32 region with MMU memory-helper call-outs.
@@ -3825,12 +3840,17 @@ fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ir::ops::OpKind
 /// identity trampoline without exposing host-only state.
 ///
 /// The default contract is deliberately register-only and AArch32-state
-/// specific (A32 or unpredicated T16/T32):
+/// specific (A32 or T16/T32 without hidden instruction predication):
 /// r0-r14 map to W0-W14, r15 is rejected because architectural PC reads are
 /// pipeline-relative and writes are control flow, and every data result is
 /// W32.  Flag-discarding comparison temporaries are accepted because the
 /// lowerer maps them to WZR; all materialized virtual registers are rejected.
-/// Predication, Thumb IT state, SIMD/VFP, and CPSR fields outside NZCV remain
+/// Direct internal branches are admitted. Conditional branches require a
+/// final `TestCondition` whose virtual destination is consumed only by the
+/// terminator; the AArch64 lowerer folds that pair into `B.cond`. CFG targets
+/// must exist, phi nodes and locals are rejected, and frontier blocks named in
+/// `excluded` must still be present for native-exit lowering. Predicated data
+/// instructions, Thumb IT state, SIMD/VFP, and CPSR fields outside NZCV remain
 /// interpreter-only. Use
 /// [`is_aarch32_aarch64_native_clobber_safe_excluding_with_mem`] to admit the
 /// validated scalar memory-helper shapes.
@@ -3855,16 +3875,72 @@ pub fn is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
     allow_mem: bool,
 ) -> bool {
     use crate::smir::ir::Terminator;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{Condition, VReg};
 
+    if !func.locals.is_empty()
+        || func.get_block(func.entry).is_none()
+        || excluded.keys().any(|id| func.get_block(*id).is_none())
+    {
+        return false;
+    }
+
+    let mut block_ids = std::collections::HashSet::with_capacity(func.blocks.len());
+    if func.blocks.iter().any(|block| !block_ids.insert(block.id)) {
+        return false;
+    }
+
+    let target_exists = |target| func.get_block(target).is_some();
     func.blocks
         .iter()
         .filter(|block| !excluded.contains_key(&block.id))
         .all(|block| {
-            matches!(block.terminator, Terminator::Return { ref values } if values.is_empty())
-                && block
-                    .ops
-                    .iter()
+            if !block.phis.is_empty() {
+                return false;
+            }
+
+            let ordinary_ops_valid = |ops: &[crate::smir::ir::ops::SmirOp]| {
+                ops.iter()
                     .all(|op| aarch32_aarch64_native_op_shape_valid(&op.kind, allow_mem))
+            };
+
+            match &block.terminator {
+                Terminator::Return { values } => {
+                    values.is_empty() && ordinary_ops_valid(&block.ops)
+                }
+                Terminator::Branch { target } => {
+                    target_exists(*target) && ordinary_ops_valid(&block.ops)
+                }
+                Terminator::CondBranch {
+                    cond,
+                    true_target,
+                    false_target,
+                } => {
+                    let Some((test, prefix)) = block.ops.split_last() else {
+                        return false;
+                    };
+                    let OpKind::TestCondition {
+                        dst,
+                        cond: condition,
+                    } = &test.kind
+                    else {
+                        return false;
+                    };
+                    matches!(cond, VReg::Virtual(_))
+                        && dst == cond
+                        && !matches!(condition, Condition::Parity | Condition::NoParity)
+                        && target_exists(*true_target)
+                        && target_exists(*false_target)
+                        && ordinary_ops_valid(prefix)
+                }
+                Terminator::Switch { .. }
+                | Terminator::IndirectBranch { .. }
+                | Terminator::IndirectBranchMem { .. }
+                | Terminator::Call { .. }
+                | Terminator::TailCall { .. }
+                | Terminator::Trap { .. }
+                | Terminator::Unreachable => false,
+            }
         })
 }
 
@@ -4344,10 +4420,11 @@ mod jit_gate_tests {
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
     use crate::smir::ir::ops::{OpKind, X86AdxKind, X86BlsKind, X86CountKind, X86OpHint};
     use crate::smir::ir::types::{
-        Address, ArchReg, ArmReg, DispSize, FpPrecision, FunctionId, MemWidth, OpWidth, ShiftOp,
-        SignExtend, SrcOperand, VReg, VecElementType, VecWidth, VirtualId, X86AesOp, X86Reg,
+        Address, ArchReg, ArmReg, BlockId, Condition, DispSize, FpPrecision, FunctionId, LocalId,
+        MemWidth, OpWidth, ShiftOp, SignExtend, SrcOperand, VReg, VecElementType, VecWidth,
+        VirtualId, X86AesOp, X86Reg,
     };
-    use crate::smir::ir::{FunctionBuilder, Terminator};
+    use crate::smir::ir::{FunctionBuilder, LocalSlot, PhiNode, Terminator};
 
     fn x86(reg: X86Reg) -> VReg {
         VReg::Arch(ArchReg::X86(reg))
@@ -4396,6 +4473,158 @@ mod jit_gate_tests {
 
     fn aarch32_gate(ops: Vec<OpKind>) -> bool {
         aarch32_gate_with_mem(ops, false)
+    }
+
+    fn aarch32_cond_cfg(
+        test_dst: VReg,
+        branch_cond: VReg,
+        condition: Condition,
+        op_after_test: Option<OpKind>,
+    ) -> crate::smir::ir::SmirFunction {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        let true_target = builder.create_block(0x2000);
+        let false_target = builder.create_block(0x1004);
+        builder.push_op(
+            0x1000,
+            OpKind::TestCondition {
+                dst: test_dst,
+                cond: condition,
+            },
+        );
+        if let Some(op) = op_after_test {
+            builder.push_op(0x1000, op);
+        }
+        builder.set_terminator(Terminator::CondBranch {
+            cond: branch_cond,
+            true_target,
+            false_target,
+        });
+        builder.switch_to_block(true_target);
+        builder.set_terminator(Terminator::Return { values: Vec::new() });
+        builder.switch_to_block(false_target);
+        builder.set_terminator(Terminator::Return { values: Vec::new() });
+        builder.finish()
+    }
+
+    #[test]
+    fn aarch32_aarch64_gate_accepts_closed_direct_cfg_and_exact_folded_condition() {
+        let mut branch = FunctionBuilder::new(FunctionId(0), 0x1000);
+        let exit = branch.create_block(0x2000);
+        branch.set_terminator(Terminator::Branch { target: exit });
+        branch.switch_to_block(exit);
+        branch.set_terminator(Terminator::Return { values: Vec::new() });
+        assert!(is_aarch32_aarch64_native_clobber_safe_excluding(
+            &branch.finish(),
+            &std::collections::HashMap::new(),
+        ));
+
+        let cond = VReg::Virtual(VirtualId(7));
+        let function = aarch32_cond_cfg(cond, cond, Condition::Ne, None);
+        assert!(is_aarch32_aarch64_native_clobber_safe_excluding(
+            &function,
+            &std::collections::HashMap::new(),
+        ));
+
+        let excluded = std::collections::HashMap::from([
+            (function.blocks[1].id, function.blocks[1].guest_pc),
+            (function.blocks[2].id, function.blocks[2].guest_pc),
+        ]);
+        assert!(is_aarch32_aarch64_native_clobber_safe_excluding(
+            &function, &excluded,
+        ));
+    }
+
+    #[test]
+    fn aarch32_aarch64_gate_rejects_malformed_or_stateful_cfg_shapes() {
+        let cond = VReg::Virtual(VirtualId(7));
+        let other = VReg::Virtual(VirtualId(8));
+        for function in [
+            aarch32_cond_cfg(other, cond, Condition::Eq, None),
+            aarch32_cond_cfg(cond, arm_x(0), Condition::Eq, None),
+            aarch32_cond_cfg(cond, cond, Condition::Parity, None),
+            aarch32_cond_cfg(cond, cond, Condition::NoParity, None),
+            aarch32_cond_cfg(cond, cond, Condition::Eq, Some(OpKind::Nop)),
+        ] {
+            assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+            ));
+        }
+
+        let mut missing_test = FunctionBuilder::new(FunctionId(0), 0x1000);
+        let true_target = missing_test.create_block(0x2000);
+        let false_target = missing_test.create_block(0x1004);
+        missing_test.set_terminator(Terminator::CondBranch {
+            cond,
+            true_target,
+            false_target,
+        });
+        missing_test.switch_to_block(true_target);
+        missing_test.set_terminator(Terminator::Return { values: Vec::new() });
+        missing_test.switch_to_block(false_target);
+        missing_test.set_terminator(Terminator::Return { values: Vec::new() });
+        assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
+            &missing_test.finish(),
+            &std::collections::HashMap::new(),
+        ));
+
+        let mut missing_target = FunctionBuilder::new(FunctionId(0), 0x1000);
+        missing_target.set_terminator(Terminator::Branch {
+            target: BlockId(u32::MAX),
+        });
+        assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
+            &missing_target.finish(),
+            &std::collections::HashMap::new(),
+        ));
+
+        let mut nonempty_return = FunctionBuilder::new(FunctionId(0), 0x1000);
+        nonempty_return.set_terminator(Terminator::Return {
+            values: vec![arm_x(0)],
+        });
+        assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
+            &nonempty_return.finish(),
+            &std::collections::HashMap::new(),
+        ));
+
+        let mut structural = aarch32_cond_cfg(cond, cond, Condition::Eq, None);
+        let predecessor = structural.blocks[1].id;
+        structural.blocks[0].phis.push(PhiNode {
+            dst: cond,
+            sources: vec![(predecessor, arm_x(0))],
+        });
+        assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
+            &structural,
+            &std::collections::HashMap::new(),
+        ));
+        structural.blocks[0].phis.clear();
+        structural.locals.push(LocalSlot {
+            id: LocalId(0),
+            size: 4,
+            align: 4,
+        });
+        assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
+            &structural,
+            &std::collections::HashMap::new(),
+        ));
+        structural.locals.clear();
+        structural.blocks.push(structural.blocks[0].clone());
+        assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
+            &structural,
+            &std::collections::HashMap::new(),
+        ));
+
+        let function = aarch32_cond_cfg(cond, cond, Condition::Eq, None);
+        let nonexistent_exit = std::collections::HashMap::from([(BlockId(u32::MAX), 0x3000)]);
+        assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
+            &function,
+            &nonexistent_exit,
+        ));
+        let mut missing_entry = function;
+        missing_entry.entry = BlockId(u32::MAX);
+        assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
+            &missing_entry,
+            &std::collections::HashMap::new(),
+        ));
     }
 
     #[test]

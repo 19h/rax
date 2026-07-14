@@ -6,10 +6,11 @@
 //!
 //! - r13 and r14 are identity-mapped AArch32 GPRs (`X13`/`X14`), not the
 //!   AArch64 SP/LR aliases;
-//! - r15, IT-state predication, explicit conditional instructions, RRX, and
+//! - r15, IT-state predication, predicated data instructions, RRX, and
 //!   flag-setting logical/move/shift forms fail closed;
-//! - direct Thumb branches use the architectural `PC + 4` base and BL writes
-//!   `(next_pc | 1)` to r14;
+//! - unconditional and explicit condition-code Thumb branches use the
+//!   architectural `PC + 4` base and become explicit SMIR control-flow edges;
+//!   BL writes `(next_pc | 1)` to r14;
 //! - T16/T32 scalar single- and multiple-transfer memory uses the W32 helper
 //!   contract; PC-bearing, empty-list, and constrained base/list forms fail
 //!   closed;
@@ -22,14 +23,14 @@ use std::collections::HashSet;
 
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::decoder::{
-    AddressingMode, DecodedInsn, Decoder, MemOffset, MemOperand, Mnemonic, Operand, Register,
-    ShiftType, ThumbDecoder,
+    AddressingMode, Condition as ArmCondition, DecodedInsn, Decoder, MemOffset, MemOperand,
+    Mnemonic, Operand, Register, ShiftType, ThumbDecoder,
 };
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, SmirOp};
 use crate::smir::ir::types::{
-    Address, ArchReg, ArmReg, DispSize, FunctionId, GuestAddr, MemWidth, OpId, OpWidth, SignExtend,
-    SourceArch, SrcOperand, VReg,
+    Address, ArchReg, ArmReg, Condition, DispSize, FunctionId, GuestAddr, MemWidth, OpId, OpWidth,
+    SignExtend, SourceArch, SrcOperand, VReg,
 };
 use crate::smir::ir::{
     CallTarget, CallingConv, FunctionAttrs, SmirBlock, SmirFunction, Terminator, TrapKind,
@@ -92,7 +93,11 @@ impl ThumbLifter {
     }
 
     fn rejects_hidden_state(insn: &DecodedInsn) -> bool {
-        if insn.cond.is_some() || insn.mnemonic == Mnemonic::IT {
+        // BCC carries an explicit condition but has no predicated data effects;
+        // represent it as a two-edge SMIR terminator. IT and every other
+        // condition-bearing instruction still need instruction-level gating.
+        if (insn.cond.is_some() && insn.mnemonic != Mnemonic::BCC) || insn.mnemonic == Mnemonic::IT
+        {
             return true;
         }
         insn.operands.iter().any(|operand| match operand {
@@ -119,6 +124,32 @@ impl ThumbLifter {
             Operand::RegList(_) => false,
             _ => false,
         })
+    }
+
+    fn branch_condition(cond: ArmCondition, pc: GuestAddr) -> Result<Condition, LiftError> {
+        let cond = match cond {
+            ArmCondition::EQ => Condition::Eq,
+            ArmCondition::NE => Condition::Ne,
+            ArmCondition::CS => Condition::Uge,
+            ArmCondition::CC => Condition::Ult,
+            ArmCondition::MI => Condition::Negative,
+            ArmCondition::PL => Condition::Positive,
+            ArmCondition::VS => Condition::Overflow,
+            ArmCondition::VC => Condition::NoOverflow,
+            ArmCondition::HI => Condition::Ugt,
+            ArmCondition::LS => Condition::Ule,
+            ArmCondition::GE => Condition::Sge,
+            ArmCondition::LT => Condition::Slt,
+            ArmCondition::GT => Condition::Sgt,
+            ArmCondition::LE => Condition::Sle,
+            ArmCondition::AL | ArmCondition::NV => {
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: "Thumb conditional branch uses reserved AL/NV condition".to_string(),
+                });
+            }
+        };
+        Ok(cond)
     }
 
     fn memory_kind(mnemonic: Mnemonic) -> Option<(bool, MemWidth, SignExtend)> {
@@ -872,6 +903,23 @@ impl ThumbLifter {
                     target: (pc as i64).wrapping_add(4).wrapping_add(*offset) as u64,
                 }
             }
+            Mnemonic::BCC => {
+                let Some(Operand::Label(offset)) = normalized.operands.first() else {
+                    return Err(LiftError::Internal(
+                        "invalid Thumb BCC operands".to_string(),
+                    ));
+                };
+                let Some(cond) = normalized.cond else {
+                    return Err(LiftError::Internal(
+                        "Thumb BCC is missing its condition".to_string(),
+                    ));
+                };
+                ControlFlow::CondBranch {
+                    cond: Self::branch_condition(cond, pc)?,
+                    target: (pc as i64).wrapping_add(4).wrapping_add(*offset) as u64,
+                    fallthrough: pc.wrapping_add(u64::from(normalized.size)),
+                }
+            }
             Mnemonic::BL => {
                 let Some(Operand::Label(offset)) = normalized.operands.first() else {
                     return Err(LiftError::Internal("invalid Thumb BL operands".to_string()));
@@ -905,6 +953,14 @@ impl ThumbLifter {
     fn result(ops: Vec<SmirOp>, bytes_consumed: usize, control_flow: ControlFlow) -> LiftResult {
         let branch_targets = match &control_flow {
             ControlFlow::Branch { target } | ControlFlow::DirectBranch(target) => vec![*target],
+            ControlFlow::CondBranch {
+                target,
+                fallthrough,
+                ..
+            } => vec![*target, *fallthrough],
+            ControlFlow::CondBranchReg {
+                taken, not_taken, ..
+            } => vec![*taken, *not_taken],
             ControlFlow::Call {
                 target: CallTarget::GuestAddr(target),
             } => vec![*target],
@@ -1015,13 +1071,32 @@ impl SmirLifter for ThumbLifter {
                     args: Vec::new(),
                     continuation: ctx.get_or_create_block(pc),
                 },
+                ControlFlow::CondBranch {
+                    cond,
+                    target,
+                    fallthrough,
+                } => {
+                    let cond_vreg = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        insn_pc,
+                        OpKind::TestCondition {
+                            dst: cond_vreg,
+                            cond,
+                        },
+                    ));
+                    Terminator::CondBranch {
+                        cond: cond_vreg,
+                        true_target: ctx.get_or_create_block(target),
+                        false_target: ctx.get_or_create_block(fallthrough),
+                    }
+                }
                 ControlFlow::Return => Terminator::Return { values: Vec::new() },
                 ControlFlow::Trap { kind } => Terminator::Trap { kind },
                 ControlFlow::Syscall => Terminator::Trap {
                     kind: TrapKind::SystemCall,
                 },
-                ControlFlow::CondBranch { .. }
-                | ControlFlow::CondBranchReg { .. }
+                ControlFlow::CondBranchReg { .. }
                 | ControlFlow::IndirectBranch { .. }
                 | ControlFlow::IndirectBranchMem { .. } => {
                     return Err(LiftError::Unsupported {
@@ -1429,6 +1504,29 @@ mod tests {
             ControlFlow::Branch { target: 0x100c }
         ));
 
+        let t16_cond = lift(&[0x01, 0xd0]); // BEQ +2.
+        assert!(matches!(
+            t16_cond.control_flow,
+            ControlFlow::CondBranch {
+                cond: Condition::Eq,
+                target: 0x1006,
+                fallthrough: 0x1002,
+            }
+        ));
+        assert_eq!(t16_cond.branch_targets, vec![0x1006, 0x1002]);
+
+        let t32_cond = lift(&[0x40, 0xf0, 0x02, 0x80]); // BNE.W +4.
+        assert_eq!(t32_cond.bytes_consumed, 4);
+        assert!(matches!(
+            t32_cond.control_flow,
+            ControlFlow::CondBranch {
+                cond: Condition::Ne,
+                target: 0x1008,
+                fallthrough: 0x1004,
+            }
+        ));
+        assert_eq!(t32_cond.branch_targets, vec![0x1008, 0x1004]);
+
         let call = lift(&[0x00, 0xf0, 0x00, 0xf8]); // BL +0.
         assert!(matches!(
             call.control_flow,
@@ -1450,6 +1548,40 @@ mod tests {
     }
 
     #[test]
+    fn lifts_every_t16_branch_condition_with_exact_fallthrough() {
+        let conditions = [
+            Condition::Eq,
+            Condition::Ne,
+            Condition::Uge,
+            Condition::Ult,
+            Condition::Negative,
+            Condition::Positive,
+            Condition::Overflow,
+            Condition::NoOverflow,
+            Condition::Ugt,
+            Condition::Ule,
+            Condition::Sge,
+            Condition::Slt,
+            Condition::Sgt,
+            Condition::Sle,
+        ];
+
+        for (bits, expected) in conditions.into_iter().enumerate() {
+            let raw = 0xd001u16 | ((bits as u16) << 8);
+            let result = lift(&raw.to_le_bytes());
+            assert!(matches!(
+                result.control_flow,
+                ControlFlow::CondBranch {
+                    cond,
+                    target: 0x1006,
+                    fallthrough: 0x1002,
+                } if cond == expected
+            ));
+            assert_eq!(result.branch_targets, vec![0x1006, 0x1002]);
+        }
+    }
+
+    #[test]
     fn rejects_it_pc_literal_memory_aliases_and_partial_flag_contracts() {
         let cases: &[&[u8]] = &[
             &[0x08, 0xbf],             // IT EQ
@@ -1460,7 +1592,6 @@ mod tests {
             &[0x00, 0x48],             // LDR r0,[PC,#0] requires aligned PC+4
             &[0x51, 0xf8, 0x04, 0x1f], // LDR r1,[r1,#4]! aliases writeback
             &[0x4f, 0xea, 0x31, 0x00], // RRX r0,r1
-            &[0x00, 0xd0],             // BEQ +0: explicit predication
             &[0x01, 0xfa, 0x02, 0xf0], // LSL.W r0,r1,r2: low-8 count semantics
             &[0x4f, 0xfa, 0x93, 0xf2], // SXTB.W r2,r3,ROR #8
         ];
@@ -1535,6 +1666,58 @@ mod tests {
         assert!(matches!(
             block.terminator,
             Terminator::Branch { target } if target == ctx.get_or_create_block(0x100a)
+        ));
+    }
+
+    #[test]
+    fn thumb_block_materializes_only_a_foldable_branch_condition() {
+        struct Memory {
+            base: GuestAddr,
+            bytes: Vec<u8>,
+        }
+
+        impl MemoryReader for Memory {
+            fn read(
+                &self,
+                addr: GuestAddr,
+                size: usize,
+            ) -> Result<Vec<u8>, crate::smir::ir::memory::MemoryError> {
+                let offset = (addr - self.base) as usize;
+                if offset + size > self.bytes.len() {
+                    return Err(crate::smir::ir::memory::MemoryError::OutOfBounds { addr });
+                }
+                Ok(self.bytes[offset..offset + size].to_vec())
+            }
+        }
+
+        let memory = Memory {
+            base: 0x1000,
+            bytes: vec![0x01, 0xd1], // BNE +2.
+        };
+        let mut lifter = ThumbLifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Thumb);
+        let block = lifter.lift_block(0x1000, &memory, &mut ctx).unwrap();
+        let taken = ctx.get_or_create_block(0x1006);
+        let not_taken = ctx.get_or_create_block(0x1002);
+
+        assert!(matches!(
+            block.ops.as_slice(),
+            [SmirOp {
+                guest_pc: 0x1000,
+                kind: OpKind::TestCondition {
+                    dst,
+                    cond: Condition::Ne,
+                },
+                ..
+            }] if matches!(dst, VReg::Virtual(_))
+        ));
+        assert!(matches!(
+            block.terminator,
+            Terminator::CondBranch {
+                cond: VReg::Virtual(_),
+                true_target,
+                false_target,
+            } if true_target == taken && false_target == not_taken
         ));
     }
 }

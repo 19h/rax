@@ -1,13 +1,16 @@
 //! End-to-end A32 instruction → SMIR → native AArch64 regressions.
 #![cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
 
+use std::collections::HashMap;
+
 use rax::isa::arm::aarch32::cpu::{ArmMemory, Armv7Cpu, FlatMemory, MemoryError, Psr};
 use rax::isa::arm::aarch32::instructions::{ExecResult, Executor};
 use rax::isa::arm::decoder::Aarch32Decoder;
-use rax::smir::ir::types::{FunctionId, OpWidth, SourceArch};
-use rax::smir::ir::{FunctionBuilder, SmirFunction, Terminator};
+use rax::smir::ir::memory::MemoryError as SmirMemoryError;
+use rax::smir::ir::types::{BlockId, FunctionId, OpWidth, SourceArch};
+use rax::smir::ir::{FunctionBuilder, SmirBlock, SmirFunction, Terminator};
 use rax::smir::lift::aarch32::Aarch32Lifter;
-use rax::smir::lift::{LiftContext, SmirLifter};
+use rax::smir::lift::{LiftContext, MemoryReader, SmirLifter};
 use rax::smir::lower::SmirLowerer;
 use rax::smir::lower::aarch64::Aarch64Lowerer;
 use rax::smir::lower::runtime::{
@@ -809,5 +812,178 @@ fn a32_double_transfer_second_address_wraps_modulo_2_pow_32() {
         assert_eq!(actual_mem.last_helper_addr, 0, "{level:?}");
         assert_eq!(actual_mem.helper_loads, 2, "{level:?}");
         assert_eq!(exit_pc, 0, "{level:?}");
+    }
+}
+
+struct A32Code {
+    base: u64,
+    bytes: Vec<u8>,
+}
+
+impl A32Code {
+    fn new(base: u64, words: &[u32]) -> Self {
+        Self {
+            base,
+            bytes: words.iter().flat_map(|word| word.to_le_bytes()).collect(),
+        }
+    }
+}
+
+impl MemoryReader for A32Code {
+    fn read(&self, addr: u64, size: usize) -> Result<Vec<u8>, SmirMemoryError> {
+        let Some(offset) = addr
+            .checked_sub(self.base)
+            .and_then(|offset| usize::try_from(offset).ok())
+        else {
+            return Err(SmirMemoryError::OutOfBounds { addr });
+        };
+        let Some(end) = offset.checked_add(size) else {
+            return Err(SmirMemoryError::OutOfBounds { addr });
+        };
+        self.bytes
+            .get(offset..end)
+            .map(<[u8]>::to_vec)
+            .ok_or(SmirMemoryError::OutOfBounds { addr })
+    }
+}
+
+fn a32_native_cfg(words: &[u32], level: OptLevel) -> (ExecMem, usize) {
+    const BASE: u64 = 0x8000;
+
+    let memory = A32Code::new(BASE, words);
+    let mut lifter = Aarch32Lifter::new();
+    let mut context = LiftContext::new(SourceArch::Aarch32);
+    let entry_block = lifter
+        .lift_block(BASE, &memory, &mut context)
+        .expect("lift A32 control-flow block");
+    let entry = entry_block.id;
+    let successors = entry_block.successors();
+    let mut function = SmirFunction::new(FunctionId(0), entry, BASE);
+    function.add_block(entry_block);
+    let mut exits = HashMap::<BlockId, u64>::new();
+    for successor in successors {
+        if successor == entry || exits.contains_key(&successor) {
+            continue;
+        }
+        let guest_pc = context
+            .block_cache
+            .iter()
+            .find_map(|(&guest_pc, &id)| (id == successor).then_some(guest_pc))
+            .expect("successor must have a guest address");
+        let mut exit = SmirBlock::new(successor, guest_pc);
+        exit.set_terminator(Terminator::Return { values: Vec::new() });
+        function.add_block(exit);
+        exits.insert(successor, guest_pc);
+    }
+    optimize_function(&mut function, level);
+    assert!(
+        is_aarch32_aarch64_native_clobber_safe_excluding(&function, &exits),
+        "A32 control-flow region at {level:?} must satisfy the production native gate"
+    );
+
+    let mut lowerer = Aarch64Lowerer::new();
+    lowerer.set_native_exits(exits);
+    let lowered = lowerer
+        .lower_function(&function)
+        .expect("lower A32 control-flow region");
+    let code = lowerer
+        .finalize()
+        .expect("finalize A32 control-flow region");
+    (
+        ExecMem::new(&code).expect("map A32 control-flow region"),
+        lowered.entry_offset,
+    )
+}
+
+fn a32_reference_branch_exit(raw: u32, initial: Aarch32GuestRegs) -> u64 {
+    let mut cpu = Armv7Cpu::new();
+    cpu.regs = initial.r;
+    cpu.cpsr = Psr::from_u32(initial.cpsr);
+    let mut memory = FlatMemory::new(0x10_000, 0);
+    let mut executor = Executor::new(&mut cpu, &mut memory);
+    let decoded = Aarch32Decoder::decode(raw).expect("reference branch decode");
+    match executor.execute(&decoded) {
+        ExecResult::Continue => 0x8004,
+        ExecResult::Branch(target) => u64::from(target),
+        other => panic!("reference branch execution failed: {other:?}"),
+    }
+}
+
+fn a32_reference_loop(words: &[u32], initial: Aarch32GuestRegs, exit_pc: u64) -> Aarch32GuestRegs {
+    const BASE: u64 = 0x8000;
+    const MAX_STEPS: usize = 64;
+
+    let mut cpu = Armv7Cpu::new();
+    cpu.regs = initial.r;
+    cpu.cpsr = Psr::from_u32(initial.cpsr);
+    let mut memory = FlatMemory::new(0x10_000, 0);
+    let mut executor = Executor::new(&mut cpu, &mut memory);
+    let mut pc = BASE;
+    for _ in 0..MAX_STEPS {
+        if pc == exit_pc {
+            executor.cpu.regs[15] = initial.r[15];
+            return Aarch32GuestRegs {
+                r: executor.cpu.regs,
+                cpsr: executor.cpu.cpsr.to_u32(),
+            };
+        }
+        let index = usize::try_from((pc - BASE) / 4).expect("A32 loop index");
+        let raw = *words.get(index).expect("A32 loop PC must be in region");
+        executor.cpu.regs[15] = pc as u32;
+        let decoded = Aarch32Decoder::decode(raw).expect("reference loop decode");
+        pc = match executor.execute(&decoded) {
+            ExecResult::Continue => pc + 4,
+            ExecResult::Branch(target) => u64::from(target),
+            other => panic!("reference loop execution failed: {other:?}"),
+        };
+    }
+    panic!("A32 reference loop exceeded {MAX_STEPS} steps");
+}
+
+#[test]
+fn a32_all_direct_branch_conditions_match_interpreter_for_all_nzcv_at_o0_and_o2() {
+    const NZCV_MASK: u32 = 0xf000_0000;
+
+    for condition in 0_u32..14 {
+        let raw = (condition << 28) | 0x0a00_0000;
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let (exec, entry) = a32_native_cfg(&[raw], level);
+            for nzcv in 0_u32..16 {
+                let mut initial = initial_state();
+                initial.cpsr = (initial.cpsr & !NZCV_MASK) | (nzcv << 28);
+                let expected_exit = a32_reference_branch_exit(raw, initial);
+                let mut actual = initial;
+                let actual_exit = exec.run_aarch32_identity_until_exit(entry, &mut actual);
+                assert_eq!(
+                    actual_exit, expected_exit,
+                    "cond={condition:#x} NZCV={nzcv:#x} {level:?}"
+                );
+                assert_eq!(
+                    actual, initial,
+                    "cond={condition:#x} NZCV={nzcv:#x} {level:?}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn a32_countdown_loop_and_frontier_exit_match_interpreter_at_o0_and_o2() {
+    const PROGRAM: [u32; 2] = [
+        0xe250_0001, // subs r0,r0,#1
+        0x1aff_fffd, // bne  0x8000
+    ];
+    const EXIT_PC: u64 = 0x8008;
+
+    let mut initial = initial_state();
+    initial.r[0] = 4;
+    let expected = a32_reference_loop(&PROGRAM, initial, EXIT_PC);
+    assert_eq!(expected.r[0], 0);
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let (exec, entry) = a32_native_cfg(&PROGRAM, level);
+        let mut actual = initial;
+        let actual_exit = exec.run_aarch32_identity_until_exit(entry, &mut actual);
+        assert_eq!(actual_exit, EXIT_PC, "{level:?}");
+        assert_eq!(actual, expected, "{level:?}");
     }
 }

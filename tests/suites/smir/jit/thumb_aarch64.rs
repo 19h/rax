@@ -7,10 +7,11 @@ use rax::isa::arm::ExecutionState;
 use rax::isa::arm::aarch32::cpu::{ArmMemory, Armv7Cpu, FlatMemory, MemoryError, Psr};
 use rax::isa::arm::aarch32::instructions::{ExecResult, Executor};
 use rax::isa::arm::decoder::Decoder;
-use rax::smir::ir::types::{FunctionId, OpWidth, SourceArch};
-use rax::smir::ir::{FunctionBuilder, Terminator};
+use rax::smir::ir::memory::MemoryError as SmirMemoryError;
+use rax::smir::ir::types::{BlockId, FunctionId, OpWidth, SourceArch};
+use rax::smir::ir::{FunctionBuilder, SmirBlock, SmirFunction, Terminator};
 use rax::smir::lift::thumb::ThumbLifter;
-use rax::smir::lift::{LiftContext, SmirLifter};
+use rax::smir::lift::{LiftContext, MemoryReader, SmirLifter};
 use rax::smir::lower::SmirLowerer;
 use rax::smir::lower::aarch64::Aarch64Lowerer;
 use rax::smir::lower::runtime::{
@@ -895,5 +896,205 @@ fn t32_double_transfer_second_address_wraps_modulo_2_pow_32() {
         assert_eq!(actual_mem.last_helper_addr, 0, "{level:?}");
         assert_eq!(actual_mem.helper_loads, 2, "{level:?}");
         assert_eq!(exit_pc, 0, "{level:?}");
+    }
+}
+
+struct ThumbCode {
+    base: u64,
+    bytes: Vec<u8>,
+}
+
+impl ThumbCode {
+    fn new(base: u64, bytes: &[u8]) -> Self {
+        Self {
+            base,
+            bytes: bytes.to_vec(),
+        }
+    }
+}
+
+impl MemoryReader for ThumbCode {
+    fn read(&self, addr: u64, size: usize) -> Result<Vec<u8>, SmirMemoryError> {
+        let Some(offset) = addr
+            .checked_sub(self.base)
+            .and_then(|offset| usize::try_from(offset).ok())
+        else {
+            return Err(SmirMemoryError::OutOfBounds { addr });
+        };
+        let Some(end) = offset.checked_add(size) else {
+            return Err(SmirMemoryError::OutOfBounds { addr });
+        };
+        self.bytes
+            .get(offset..end)
+            .map(<[u8]>::to_vec)
+            .ok_or(SmirMemoryError::OutOfBounds { addr })
+    }
+}
+
+fn thumb_native_cfg(bytes: &[u8], level: OptLevel) -> (ExecMem, usize) {
+    const BASE: u64 = 0x8000;
+
+    let memory = ThumbCode::new(BASE, bytes);
+    let mut lifter = ThumbLifter::new();
+    let mut context = LiftContext::new(SourceArch::Thumb);
+    let entry_block = lifter
+        .lift_block(BASE, &memory, &mut context)
+        .expect("lift Thumb control-flow block");
+    let entry = entry_block.id;
+    let successors = entry_block.successors();
+    let mut function = SmirFunction::new(FunctionId(0), entry, BASE);
+    function.add_block(entry_block);
+    let mut exits = HashMap::<BlockId, u64>::new();
+    for successor in successors {
+        if successor == entry || exits.contains_key(&successor) {
+            continue;
+        }
+        let guest_pc = context
+            .block_cache
+            .iter()
+            .find_map(|(&guest_pc, &id)| (id == successor).then_some(guest_pc))
+            .expect("successor must have a guest address");
+        let mut exit = SmirBlock::new(successor, guest_pc);
+        exit.set_terminator(Terminator::Return { values: Vec::new() });
+        function.add_block(exit);
+        exits.insert(successor, guest_pc);
+    }
+    optimize_function(&mut function, level);
+    assert!(
+        is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(&function, &exits, false),
+        "Thumb control-flow region at {level:?} must satisfy the production native gate"
+    );
+
+    let mut lowerer = Aarch64Lowerer::new();
+    lowerer.set_native_exits(exits);
+    let lowered = lowerer
+        .lower_function(&function)
+        .expect("lower Thumb control-flow region");
+    let code = lowerer
+        .finalize()
+        .expect("finalize Thumb control-flow region");
+    (
+        ExecMem::new(&code).expect("map Thumb control-flow region"),
+        lowered.entry_offset,
+    )
+}
+
+fn thumb_reference_branch_exit(bytes: &[u8], initial: Aarch32GuestRegs) -> u64 {
+    let mut cpu = Armv7Cpu::new();
+    cpu.regs = initial.r;
+    cpu.cpsr = Psr::from_u32(initial.cpsr);
+    let mut memory = FlatMemory::new(0x10_000, 0);
+    let mut executor = Executor::new(&mut cpu, &mut memory);
+    let decoded = Decoder::new(ExecutionState::Thumb)
+        .decode(bytes)
+        .expect("reference Thumb branch decode");
+    match executor.execute(&decoded) {
+        ExecResult::Continue => 0x8000 + u64::from(decoded.size),
+        ExecResult::Branch(target) => u64::from(target),
+        other => panic!("reference Thumb branch execution failed: {other:?}"),
+    }
+}
+
+fn thumb_reference_loop(bytes: &[u8], initial: Aarch32GuestRegs, exit_pc: u64) -> Aarch32GuestRegs {
+    const BASE: u64 = 0x8000;
+    const MAX_STEPS: usize = 64;
+
+    let mut cpu = Armv7Cpu::new();
+    cpu.regs = initial.r;
+    cpu.cpsr = Psr::from_u32(initial.cpsr);
+    let mut memory = FlatMemory::new(0x10_000, 0);
+    let mut executor = Executor::new(&mut cpu, &mut memory);
+    let decoder = Decoder::new(ExecutionState::Thumb);
+    let mut pc = BASE;
+    for _ in 0..MAX_STEPS {
+        if pc == exit_pc {
+            executor.cpu.regs[15] = initial.r[15];
+            return Aarch32GuestRegs {
+                r: executor.cpu.regs,
+                cpsr: executor.cpu.cpsr.to_u32(),
+            };
+        }
+        let offset = usize::try_from(pc - BASE).expect("Thumb loop index");
+        let encoded = bytes
+            .get(offset..)
+            .expect("Thumb loop PC must be in region");
+        executor.cpu.regs[15] = pc as u32;
+        let decoded = decoder
+            .decode(encoded)
+            .expect("reference Thumb loop decode");
+        pc = match executor.execute(&decoded) {
+            ExecResult::Continue => pc + u64::from(decoded.size),
+            ExecResult::Branch(target) => u64::from(target),
+            other => panic!("reference Thumb loop execution failed: {other:?}"),
+        };
+    }
+    panic!("Thumb reference loop exceeded {MAX_STEPS} steps");
+}
+
+#[test]
+fn t16_all_direct_branch_conditions_match_interpreter_for_all_nzcv_at_o0_and_o2() {
+    const NZCV_MASK: u32 = 0xf000_0000;
+
+    for condition in 0_u16..14 {
+        let raw = 0xd001 | (condition << 8);
+        let bytes = raw.to_le_bytes();
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let (exec, entry) = thumb_native_cfg(&bytes, level);
+            for nzcv in 0_u32..16 {
+                let mut initial = initial_state();
+                initial.cpsr = (initial.cpsr & !NZCV_MASK) | (nzcv << 28);
+                let expected_exit = thumb_reference_branch_exit(&bytes, initial);
+                let mut actual = initial;
+                let actual_exit = exec.run_aarch32_identity_until_exit(entry, &mut actual);
+                assert_eq!(
+                    actual_exit, expected_exit,
+                    "cond={condition:#x} NZCV={nzcv:#x} {level:?}"
+                );
+                assert_eq!(
+                    actual, initial,
+                    "cond={condition:#x} NZCV={nzcv:#x} {level:?}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn t32_conditional_branch_matches_interpreter_for_all_nzcv_at_o0_and_o2() {
+    const BNE_W_PLUS_4: [u8; 4] = [0x40, 0xf0, 0x02, 0x80];
+    const NZCV_MASK: u32 = 0xf000_0000;
+
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let (exec, entry) = thumb_native_cfg(&BNE_W_PLUS_4, level);
+        for nzcv in 0_u32..16 {
+            let mut initial = initial_state();
+            initial.cpsr = (initial.cpsr & !NZCV_MASK) | (nzcv << 28);
+            let expected_exit = thumb_reference_branch_exit(&BNE_W_PLUS_4, initial);
+            let mut actual = initial;
+            let actual_exit = exec.run_aarch32_identity_until_exit(entry, &mut actual);
+            assert_eq!(actual_exit, expected_exit, "NZCV={nzcv:#x} {level:?}");
+            assert_eq!(actual, initial, "NZCV={nzcv:#x} {level:?}");
+        }
+    }
+}
+
+#[test]
+fn thumb_countdown_loop_and_frontier_exit_match_interpreter_at_o0_and_o2() {
+    const PROGRAM: [u8; 4] = [
+        0x40, 0x1e, // subs r0,r0,#1
+        0xfd, 0xd1, // bne  0x8000
+    ];
+    const EXIT_PC: u64 = 0x8004;
+
+    let mut initial = initial_state();
+    initial.r[0] = 4;
+    let expected = thumb_reference_loop(&PROGRAM, initial, EXIT_PC);
+    assert_eq!(expected.r[0], 0);
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let (exec, entry) = thumb_native_cfg(&PROGRAM, level);
+        let mut actual = initial;
+        let actual_exit = exec.run_aarch32_identity_until_exit(entry, &mut actual);
+        assert_eq!(actual_exit, EXIT_PC, "{level:?}");
+        assert_eq!(actual, expected, "{level:?}");
     }
 }
