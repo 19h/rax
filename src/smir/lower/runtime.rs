@@ -21,11 +21,12 @@
 #![cfg(feature = "smir-jit")]
 
 use super::{
-    X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
+    X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
     X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_RFLAGS_OFFSET,
     X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET,
-    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET,
+    X86_STATE_PTR_AT_RBP,
 };
 
 /// Apple I-cache invalidation (libSystem). Required after writing a `MAP_JIT`
@@ -127,6 +128,14 @@ pub struct GuestRegs {
     /// Guest IA32_TSC_AUX MSR. RDPID reads this state-backed value rather than
     /// exposing the host thread's processor identifier.
     pub tsc_aux: u32,
+    /// Guest XCR0 extended-state enable bitmap.
+    pub xcr0: u64,
+    /// Guest XGETBV(ECX=1) XINUSE bitmap. The lowered instruction masks it by
+    /// XCR0, matching the architectural definition of enabled in-use state.
+    pub xgetbv1: u64,
+    /// Guest CR4. XGETBV deoptimizes unless OSXSAVE (bit 18) is set, allowing
+    /// the interpreter to deliver the architectural #UD precisely.
+    pub cr4: u64,
 }
 
 impl Default for GuestRegs {
@@ -147,6 +156,9 @@ impl Default for GuestRegs {
             mxcsr: 0x1F80,
             host_mxcsr: 0,
             tsc_aux: 0,
+            xcr0: 1,
+            xgetbv1: 0,
+            cr4: 0,
         }
     }
 }
@@ -2705,6 +2717,20 @@ fn x86_native_rdpid_gpr(reg: &crate::smir::ir::types::VReg) -> bool {
     matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 31 && !matches!(index, 4 | 5)))
 }
 
+fn x86_xgetbv_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
+
+    matches!(
+        op,
+        OpKind::X86XGetBv {
+            dst_low: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+            dst_high: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
+            selector: VReg::Arch(ArchReg::X86(X86Reg::Rcx)),
+        }
+    )
+}
+
 fn x86_crc32_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::OpWidth;
@@ -2938,6 +2964,14 @@ fn block_is_clobber_safe(
             if !x86_native_rdpid_gpr(dst) {
                 return false;
             }
+        }
+        if matches!(op.kind, OpKind::X86XGetBv { .. }) && !x86_xgetbv_shape_valid(&op.kind) {
+            return false;
+        }
+        // XSETBV remains interpreter-only: the native tier must not admit it
+        // until its privilege checks and XCR0 writeback ABI are implemented.
+        if matches!(op.kind, OpKind::X86XSetBv { .. }) {
+            return false;
         }
         if let OpKind::Fence { kind } = &op.kind {
             if !matches!(
@@ -7033,6 +7067,18 @@ mod jit_gate_tests {
             std::mem::offset_of!(GuestRegs, tsc_aux),
             X86_GUEST_TSC_AUX_OFFSET as usize
         );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, xcr0),
+            X86_GUEST_XCR0_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, xgetbv1),
+            X86_GUEST_XGETBV1_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, cr4),
+            X86_GUEST_CR4_OFFSET as usize
+        );
         assert_eq!(std::mem::align_of::<GuestRegs>(), 64);
 
         let mut regs = GuestRegs::default();
@@ -9371,6 +9417,52 @@ mod jit_gate_tests {
                 dst: x86(X86Reg::R16),
             }),
             "APX RDPID must update the state-backed EGPR slot"
+        );
+    }
+
+    #[test]
+    fn x86_xgetbv_gate_admits_only_fixed_implicit_register_shape() {
+        let valid = OpKind::X86XGetBv {
+            dst_low: x86(X86Reg::Rax),
+            dst_high: x86(X86Reg::Rdx),
+            selector: x86(X86Reg::Rcx),
+        };
+        assert!(valid.is_jit_safe(), "XGETBV must be class-whitelisted");
+        assert!(
+            x86_gate(valid),
+            "architectural XGETBV must enter native tier"
+        );
+
+        for malformed in [
+            OpKind::X86XGetBv {
+                dst_low: x86(X86Reg::R8),
+                dst_high: x86(X86Reg::Rdx),
+                selector: x86(X86Reg::Rcx),
+            },
+            OpKind::X86XGetBv {
+                dst_low: x86(X86Reg::Rax),
+                dst_high: x86(X86Reg::R9),
+                selector: x86(X86Reg::Rcx),
+            },
+            OpKind::X86XGetBv {
+                dst_low: x86(X86Reg::Rax),
+                dst_high: x86(X86Reg::Rdx),
+                selector: x86(X86Reg::R10),
+            },
+        ] {
+            assert!(malformed.is_jit_safe());
+            assert!(!x86_gate(malformed), "malformed XGETBV must deopt");
+        }
+
+        let xsetbv = OpKind::X86XSetBv {
+            selector: x86(X86Reg::Rcx),
+            src_low: x86(X86Reg::Rax),
+            src_high: x86(X86Reg::Rdx),
+        };
+        assert!(!xsetbv.is_jit_safe(), "XSETBV is not class-whitelisted");
+        assert!(
+            !x86_gate(xsetbv),
+            "XSETBV must remain a native frontier until writeback is implemented"
         );
     }
 

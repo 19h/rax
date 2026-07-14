@@ -20,11 +20,11 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 use super::regalloc::{PhysReg, RegAlloc, RegLocation};
 use super::{
     CodeBuffer, LowerError, LowerResult, RelocKind, RelocTarget, Relocation, SmirLowerer,
-    X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
+    X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
     X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_RFLAGS_OFFSET,
-    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_ZMM_OFFSET,
-    X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_XCR0_OFFSET,
+    X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 // ============================================================================
@@ -8249,6 +8249,108 @@ impl X86_64Lowerer {
                 }
             }
 
+            OpKind::X86XGetBv {
+                dst_low,
+                dst_high,
+                selector,
+            } => {
+                let low = self.get_dst_reg(*dst_low)?;
+                let high = self.get_dst_reg(*dst_high)?;
+                let selector = self.get_reg(*selector)?;
+                if low != PhysReg::Rax || high != PhysReg::Rdx || selector != PhysReg::Rcx {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86XGetBv".to_string(),
+                        operand: "requires EAX/EDX destinations and ECX selector".to_string(),
+                    });
+                }
+
+                // Preserve all architectural flags and the old RAX until both
+                // fault conditions have been ruled out. A deoptimization must
+                // restart XGETBV in the interpreter with byte-exact input state.
+                self.code.emit_u8(0x9C); // pushfq
+                self.code.emit_u8(0x50); // push rax
+                self.code.emit_u8(0x48);
+                self.code.emit_u8(0x8B);
+                self.code.emit_u8(0x45);
+                self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8); // mov rax,[rbp+state]
+
+                // test dword [rax+cr4], CR4.OSXSAVE
+                self.code.emit_u8(0xF7);
+                self.code.emit_u8(0x80);
+                self.code.emit_u32(X86_GUEST_CR4_OFFSET as u32);
+                self.code.emit_u32(1 << 18);
+                // jz .fault (#UD in the interpreter)
+                self.code.emit_u8(0x0F);
+                self.code.emit_u8(0x84);
+                let osxsave_fault = self.code.position();
+                self.code.emit_u32(0);
+
+                // Only XCR0 (ECX=0) and XINUSE (ECX=1) exist in this model.
+                self.code.emit_u8(0x83);
+                self.code.emit_u8(0xF9);
+                self.code.emit_u8(0x01); // cmp ecx,1
+                // ja .fault (#GP(0) in the interpreter)
+                self.code.emit_u8(0x0F);
+                self.code.emit_u8(0x87);
+                let selector_fault = self.code.position();
+                self.code.emit_u32(0);
+
+                // rdx = XCR0; ECX=1 selects XINUSE & XCR0.
+                self.code.emit_u8(0x48);
+                self.code.emit_u8(0x8B);
+                self.code.emit_u8(0x90);
+                self.code.emit_u32(X86_GUEST_XCR0_OFFSET as u32);
+                self.code.emit_u8(0x85);
+                self.code.emit_u8(0xC9); // test ecx,ecx
+                self.code.emit_u8(0x0F);
+                self.code.emit_u8(0x84); // jz .selected
+                let xcr0_selected = self.code.position();
+                self.code.emit_u32(0);
+                self.code.emit_u8(0x48);
+                self.code.emit_u8(0x23);
+                self.code.emit_u8(0x90);
+                self.code.emit_u32(X86_GUEST_XGETBV1_OFFSET as u32); // and rdx,[rax+xgetbv1]
+                let selected = self.code.position();
+                self.code.patch_i32(
+                    xcr0_selected,
+                    (selected as i64 - (xcr0_selected as i64 + 4)) as i32,
+                );
+
+                // Split the selected 64-bit value into zero-extended EDX:EAX.
+                self.code.emit_u8(0x48);
+                self.code.emit_u8(0x89);
+                self.code.emit_u8(0xD0); // mov rax,rdx
+                self.code.emit_u8(0x48);
+                self.code.emit_u8(0xC1);
+                self.code.emit_u8(0xEA);
+                self.code.emit_u8(0x20); // shr rdx,32
+                self.code.emit_u8(0x89);
+                self.code.emit_u8(0xC0); // mov eax,eax (zero-extend low half)
+                {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 8); // discard saved RAX
+                }
+                self.code.emit_u8(0x9D); // popfq
+                self.code.emit_u8(0xE9); // jmp .done
+                let success_done = self.code.position();
+                self.code.emit_u32(0);
+
+                let fault = self.code.position();
+                for branch in [osxsave_fault, selector_fault] {
+                    self.code
+                        .patch_i32(branch, (fault as i64 - (branch as i64 + 4)) as i32);
+                }
+                self.code.emit_u8(0x58); // restore old RAX
+                self.code.emit_u8(0x9D); // restore flags
+                self.emit_native_exit(op.guest_pc);
+
+                let done = self.code.position();
+                self.code.patch_i32(
+                    success_done,
+                    (done as i64 - (success_done as i64 + 4)) as i32,
+                );
+            }
+
             OpKind::IoIn { dst, port, width } => {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 if dst_reg != PhysReg::Rax {
@@ -16021,6 +16123,127 @@ mod tests {
         assert_eq!(regs.gpr[0], 0x1111_2222_3333_4444);
         assert_eq!(regs.gpr[1], 0x5555_6666_7777_8888);
         assert_eq!(regs.rflags & 0x8D5, 0x8D5);
+    }
+
+    #[test]
+    fn lower_xgetbv_requires_architectural_implicit_registers() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let code = lower_single_op(OpKind::X86XGetBv {
+            dst_low: rax,
+            dst_high: rdx,
+            selector: rcx,
+        });
+        let xcr0_offset = (X86_GUEST_XCR0_OFFSET as u32).to_le_bytes();
+        let xgetbv1_offset = (X86_GUEST_XGETBV1_OFFSET as u32).to_le_bytes();
+        assert!(
+            code.windows(4).any(|bytes| bytes == xcr0_offset),
+            "XGETBV must read the state-backed XCR0 slot"
+        );
+        assert!(
+            code.windows(4).any(|bytes| bytes == xgetbv1_offset),
+            "XGETBV(1) must read the state-backed XINUSE slot"
+        );
+
+        for malformed in [
+            OpKind::X86XGetBv {
+                dst_low: VReg::Arch(ArchReg::X86(X86Reg::R8)),
+                dst_high: rdx,
+                selector: rcx,
+            },
+            OpKind::X86XGetBv {
+                dst_low: rax,
+                dst_high: VReg::Arch(ArchReg::X86(X86Reg::R9)),
+                selector: rcx,
+            },
+            OpKind::X86XGetBv {
+                dst_low: rax,
+                dst_high: rdx,
+                selector: VReg::Arch(ArchReg::X86(X86Reg::R10)),
+            },
+        ] {
+            assert!(matches!(
+                lower_single_op_err(malformed),
+                LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_xgetbv_selects_guest_state_and_deopts_faults_precisely() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1234_5678);
+        builder.push_op(
+            0x1234_5678,
+            OpKind::X86XGetBv {
+                dst_low: rax,
+                dst_high: rdx,
+                selector: rcx,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&builder.finish())
+            .expect("lower state-backed XGETBV");
+        let exec = ExecMem::new(&lowerer.finalize().expect("finalize state-backed XGETBV"))
+            .expect("map state-backed XGETBV");
+
+        let flags = 0x2 | 0x8D5;
+        let mut regs = GuestRegs::default();
+        regs.cr4 = 1 << 18;
+        regs.xcr0 = 0xFEDC_BA98_7654_3217;
+        regs.xgetbv1 = 0x00F0_00F0_FFFF_00F5;
+        regs.gpr[0] = u64::MAX;
+        regs.gpr[1] = 0;
+        regs.gpr[2] = u64::MAX;
+        regs.rflags = flags;
+        regs.exit_pc = 0xAAAA_BBBB_CCCC_DDDD;
+        exec.run(lowered.entry_offset, &mut regs);
+        assert_eq!(regs.gpr[0], 0x7654_3217);
+        assert_eq!(regs.gpr[2], 0xFEDC_BA98);
+        assert_eq!(regs.gpr[1], 0, "XGETBV preserves RCX");
+        assert_eq!(regs.rflags & 0x8D5, flags & 0x8D5);
+        assert_eq!(regs.exit_pc, 0xAAAA_BBBB_CCCC_DDDD);
+
+        regs.gpr[0] = u64::MAX;
+        regs.gpr[1] = 1;
+        regs.gpr[2] = u64::MAX;
+        regs.rflags = flags;
+        exec.run(lowered.entry_offset, &mut regs);
+        let xinuse = regs.xgetbv1 & regs.xcr0;
+        assert_eq!(regs.gpr[0], xinuse as u32 as u64);
+        assert_eq!(regs.gpr[2], (xinuse >> 32) as u32 as u64);
+        assert_eq!(regs.gpr[1], 1);
+        assert_eq!(regs.rflags & 0x8D5, flags & 0x8D5);
+
+        for (name, cr4, selector) in [
+            ("OSXSAVE clear", 0, 0),
+            ("invalid selector", 1 << 18, 2),
+            ("large low-32 selector", 1 << 18, 0xFFFF_FFFF),
+        ] {
+            let mut fault = GuestRegs::default();
+            fault.cr4 = cr4;
+            fault.xcr0 = regs.xcr0;
+            fault.xgetbv1 = regs.xgetbv1;
+            fault.gpr[0] = 0x1111_2222_3333_4444;
+            fault.gpr[1] = selector;
+            fault.gpr[2] = 0x5555_6666_7777_8888;
+            fault.rflags = flags;
+            fault.exit_pc = 0;
+            exec.run(lowered.entry_offset, &mut fault);
+            assert_eq!(fault.exit_pc, 0x1234_5678, "{name}: precise restart PC");
+            assert_eq!(fault.gpr[0], 0x1111_2222_3333_4444, "{name}: RAX");
+            assert_eq!(fault.gpr[1], selector, "{name}: RCX");
+            assert_eq!(fault.gpr[2], 0x5555_6666_7777_8888, "{name}: RDX");
+            assert_eq!(fault.rflags & 0x8D5, flags & 0x8D5, "{name}: flags");
+        }
     }
 
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]

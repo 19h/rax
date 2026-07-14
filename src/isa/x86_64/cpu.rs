@@ -3917,7 +3917,6 @@ unsafe extern "C" fn rax_jit_call(
         vcpu.regs.k = gr.k;
         vcpu.mxcsr = gr.mxcsr;
     }
-
     // Simulate the CALL's stack effect (the block's own ops already ran
     // natively; only the call's push+transfer remain), then enter the callee.
     let _ = vcpu.push64(return_pc);
@@ -4016,6 +4015,9 @@ unsafe extern "C" fn rax_jit_call(
     gr.gpr[30] = vcpu.regs.r30;
     gr.gpr[31] = vcpu.regs.r31;
     gr.rflags = vcpu.regs.rflags;
+    gr.xcr0 = vcpu.xcr0;
+    gr.xgetbv1 = vcpu.xgetbv1_value;
+    gr.cr4 = vcpu.sregs.cr4;
     if ok == 0 {
         gr.exit_pc = vcpu.regs.rip;
     }
@@ -4569,6 +4571,9 @@ impl X86_64Vcpu {
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
         gr.tsc_aux = self.tsc_aux;
+        gr.xcr0 = self.xcr0;
+        gr.xgetbv1 = self.xgetbv1_value;
+        gr.cr4 = self.sregs.cr4;
         gr.gpr[0] = self.regs.rax;
         gr.gpr[1] = self.regs.rcx;
         gr.gpr[2] = self.regs.rdx;
@@ -5714,6 +5719,24 @@ mod tests {
         assert_eq!(gr.k[4], mask);
         assert_eq!(gr.k[7], 0x7777_7777_7777_7777);
         assert_eq!(gr.mxcsr, 0x5f80, "callee MXCSR was not returned");
+
+        // A successful callout can change XCR0 before native execution resumes.
+        // Publish that control state into GuestRegs so a later lowered XGETBV
+        // in the same region observes the callee's value rather than the entry
+        // snapshot.
+        let xsetbv_callee = [
+            0xB9, 0, 0, 0, 0, // mov ecx,0
+            0xB8, 0xE7, 0, 0, 0, // mov eax,0xE7 (x87|SSE|AVX|AVX-512)
+            0x31, 0xD2, // xor edx,edx
+            0x0F, 0x01, 0xD1, // xsetbv
+            0xC3, // ret
+        ];
+        mem.write_slice(&xsetbv_callee, GuestAddress(0x500))
+            .unwrap();
+        let ok = unsafe { rax_jit_call(&mut gr, 0x500, 0x600) };
+        assert_eq!(ok, 1);
+        assert_eq!(gr.xcr0, 0xE7, "callee XCR0 was not returned");
+        assert_eq!(gr.cr4, vcpu.sregs.cr4, "callee CR4 was not returned");
 
         // A callee that mutates vector state and then yields HLT must publish
         // that state before returning `ok=0`; the run loop consumes the stashed

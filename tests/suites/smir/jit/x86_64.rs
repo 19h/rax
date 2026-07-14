@@ -583,6 +583,74 @@ fn jit_rdpid_reads_guest_tsc_aux_matches_interpreter() {
     assert_eq!(actual.rflags, expected.rflags);
 }
 
+/// XGETBV must consume the emulated XCR state, preserve RFLAGS/RCX, and enter
+/// the native tier without exposing the host thread's XCR0.
+#[test]
+fn jit_xgetbv_reads_guest_xinuse_state_matches_interpreter() {
+    const XCR0: u32 = 0xE7;
+    const XINUSE: u64 = 0x25;
+    const ITERATIONS: u32 = 100;
+
+    // setup: mov ecx,0; mov eax,XCR0; xor edx,edx; xsetbv
+    // loop setup: mov ecx,1; mov r8d,ITERATIONS
+    // loop: xgetbv; dec r8d; jnz loop; hlt
+    let mut code = vec![0xB9, 0, 0, 0, 0, 0xB8];
+    code.extend_from_slice(&XCR0.to_le_bytes());
+    code.extend_from_slice(&[
+        0x31, 0xD2, // xor edx,edx
+        0x0F, 0x01, 0xD1, // xsetbv
+        0xB9, 0x01, 0, 0, 0, // mov ecx,1
+        0x41, 0xB8,
+    ]);
+    code.extend_from_slice(&ITERATIONS.to_le_bytes());
+    code.extend_from_slice(&[
+        0x0F, 0x01, 0xD0, // xgetbv
+        0x41, 0xFF, 0xC8, // dec r8d
+        0x75, 0xF8, // jnz loop
+        0xF4,
+    ]);
+
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cr4 |= 1 << 18;
+        vcpu.set_sregs(&sregs).unwrap();
+        vcpu.set_xgetbv1_value(XINUSE);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = u64::MAX;
+        regs.rdx = u64::MAX;
+        regs.rflags = 0x2 | 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interp = make_vcpu_code(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    // Execute the straight-line XSETBV setup in the interpreter so the hot
+    // region begins at the selector/counter setup and loops over XGETBV.
+    for _ in 0..4 {
+        assert!(jit.step().expect("XGETBV setup instruction").is_none());
+    }
+    assert!(
+        jit.jit_try_block().expect("JIT XGETBV loop"),
+        "state-backed XGETBV loop must enter the native tier"
+    );
+    run_interp(&mut jit);
+
+    let expected = interp.get_regs().unwrap();
+    let actual = jit.get_regs().unwrap();
+    assert_eq!(actual.rax, XINUSE);
+    assert_eq!(actual.rdx, 0);
+    assert_eq!(actual.rcx, 1, "XGETBV preserves the selector");
+    assert_eq!(actual.r8 & 0xFFFF_FFFF, 0);
+    assert_eq!(actual.rax, expected.rax);
+    assert_eq!(actual.rdx, expected.rdx);
+    assert_eq!(actual.rcx, expected.rcx);
+    assert_eq!(actual.rflags, expected.rflags);
+}
+
 /// APX NF count instructions have no architectural flag side effects. The JIT
 /// re-encodes them as legacy host count instructions wrapped by PUSHFQ/POPFQ,
 /// so each instruction must retain incoming CF while producing the same count

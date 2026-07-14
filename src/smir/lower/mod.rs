@@ -77,6 +77,13 @@ pub const X86_GUEST_MXCSR_OFFSET: i32 = X86_GUEST_VECTOR_ACTIVE_OFFSET + 8;
 pub const X86_HOST_MXCSR_OFFSET: i32 = X86_GUEST_MXCSR_OFFSET + 4;
 /// Byte offset of the guest IA32_TSC_AUX value consumed by RDPID.
 pub const X86_GUEST_TSC_AUX_OFFSET: i32 = X86_HOST_MXCSR_OFFSET + 4;
+/// Byte offset of the guest XCR0 value consumed by XGETBV.
+/// `tsc_aux` is 32 bits, so the C layout inserts four bytes before this u64.
+pub const X86_GUEST_XCR0_OFFSET: i32 = X86_GUEST_TSC_AUX_OFFSET + 8;
+/// Byte offset of the guest XGETBV(ECX=1) XINUSE bitmap.
+pub const X86_GUEST_XGETBV1_OFFSET: i32 = X86_GUEST_XCR0_OFFSET + 8;
+/// Byte offset of guest CR4, whose OSXSAVE bit gates XGETBV.
+pub const X86_GUEST_CR4_OFFSET: i32 = X86_GUEST_XGETBV1_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 
