@@ -884,6 +884,7 @@ fn a32_native_cfg(words: &[u32], level: OptLevel) -> (ExecMem, usize) {
     let mut lowerer = Aarch64Lowerer::new();
     lowerer.set_native_exits(exits);
     lowerer.set_guest_call_exits(true);
+    lowerer.set_guest_indirect_exits(true);
     let lowered = lowerer
         .lower_function(&function)
         .expect("lower A32 control-flow region");
@@ -920,6 +921,26 @@ fn a32_reference_call(raw: u32, initial: Aarch32GuestRegs) -> (u64, Aarch32Guest
     let exit = match executor.execute(&decoded) {
         ExecResult::Branch(target) => u64::from(target),
         other => panic!("reference call execution failed: {other:?}"),
+    };
+    (
+        exit,
+        Aarch32GuestRegs {
+            r: executor.cpu.regs,
+            cpsr: executor.cpu.cpsr.to_u32(),
+        },
+    )
+}
+
+fn a32_reference_bx(raw: u32, initial: Aarch32GuestRegs) -> (u64, Aarch32GuestRegs) {
+    let mut cpu = Armv7Cpu::new();
+    cpu.regs = initial.r;
+    cpu.cpsr = Psr::from_u32(initial.cpsr);
+    let mut memory = FlatMemory::new(0x10_000, 0);
+    let mut executor = Executor::new(&mut cpu, &mut memory);
+    let decoded = Aarch32Decoder::decode(raw).expect("reference BX decode");
+    let exit = match executor.execute(&decoded) {
+        ExecResult::Branch(target) => u64::from(target),
+        other => panic!("reference BX execution failed: {other:?}"),
     };
     (
         exit,
@@ -989,6 +1010,23 @@ fn a32_all_direct_branch_conditions_match_interpreter_for_all_nzcv_at_o0_and_o2(
 }
 
 #[test]
+fn a32_direct_branch_to_zero_has_an_unambiguous_native_exit_at_o0_and_o2() {
+    const BEQ_TO_ZERO: u32 = 0x0aff_dffe;
+
+    let mut initial = initial_state();
+    initial.cpsr |= 1 << 30;
+    assert_eq!(a32_reference_branch_exit(BEQ_TO_ZERO, initial), 0);
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let (exec, entry) = a32_native_cfg(&[BEQ_TO_ZERO], level);
+        let mut actual = initial;
+        let exit = exec.run_aarch32_identity_exit(entry, &mut actual);
+        assert_eq!(exit.pc, 0, "{level:?}");
+        assert!(exit.exited, "{level:?}");
+        assert_eq!(actual, initial, "{level:?}");
+    }
+}
+
+#[test]
 fn a32_direct_bl_frontier_exit_matches_interpreter_for_all_nzcv_at_o0_and_o2() {
     const NZCV_MASK: u32 = 0xf000_0000;
 
@@ -1000,12 +1038,51 @@ fn a32_direct_bl_frontier_exit_matches_interpreter_for_all_nzcv_at_o0_and_o2() {
                 initial.cpsr = (initial.cpsr & !NZCV_MASK) | (nzcv << 28);
                 let (expected_exit, expected) = a32_reference_call(raw, initial);
                 let mut actual = initial;
-                let actual_exit = exec.run_aarch32_identity_until_exit(entry, &mut actual);
+                let actual_exit = exec.run_aarch32_identity_exit(entry, &mut actual);
+                assert!(
+                    actual_exit.exited,
+                    "raw={raw:#010x} NZCV={nzcv:#x} {level:?}"
+                );
                 assert_eq!(
-                    actual_exit, expected_exit,
+                    actual_exit.pc, expected_exit,
                     "raw={raw:#010x} NZCV={nzcv:#x} {level:?}"
                 );
                 assert_eq!(actual, expected, "raw={raw:#010x} NZCV={nzcv:#x} {level:?}");
+            }
+        }
+    }
+}
+
+#[test]
+fn a32_bx_interworking_exit_matches_interpreter_for_all_regs_targets_nzcv_at_o0_and_o2() {
+    const NZCV_MASK: u32 = 0xf000_0000;
+    const TARGETS: [u32; 6] = [0, 1, 0x0000_9000, 0x0000_9001, 0xffff_fffc, 0xffff_fffd];
+
+    for rm in 0_u32..15 {
+        let raw = 0xe12f_ff10 | rm;
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let (exec, entry) = a32_native_cfg(&[raw], level);
+            for target in TARGETS {
+                for nzcv in 0_u32..16 {
+                    let mut initial = initial_state();
+                    initial.r[rm as usize] = target;
+                    initial.cpsr = (initial.cpsr & !NZCV_MASK) | (nzcv << 28);
+                    let (expected_exit, expected) = a32_reference_bx(raw, initial);
+                    let mut actual = initial;
+                    let actual_exit = exec.run_aarch32_identity_exit(entry, &mut actual);
+                    assert!(
+                        actual_exit.exited,
+                        "r{rm}={target:#010x} NZCV={nzcv:#x} {level:?}"
+                    );
+                    assert_eq!(
+                        actual_exit.pc, expected_exit,
+                        "r{rm}={target:#010x} NZCV={nzcv:#x} {level:?}"
+                    );
+                    assert_eq!(
+                        actual, expected,
+                        "r{rm}={target:#010x} NZCV={nzcv:#x} {level:?}"
+                    );
+                }
             }
         }
     }

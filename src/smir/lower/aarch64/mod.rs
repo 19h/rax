@@ -48,6 +48,9 @@ const A64_GUEST_LOAD_FN_OFFSET: u32 = 808;
 const A64_GUEST_STORE_FN_OFFSET: u32 = 816;
 const A64_GUEST_VEC_LOAD_FN_OFFSET: u32 = 848;
 const A64_GUEST_VEC_STORE_FN_OFFSET: u32 = 856;
+const A64_GUEST_EXIT_FLAGS_OFFSET: u32 = 864;
+const A64_EXIT_VALID: i64 = 1 << 0;
+const A64_EXIT_AARCH32_T_VALID: i64 = 1 << 2;
 
 /// Native AArch64 lowerer for identity-mapped AArch64 scalar SMIR.
 pub struct Aarch64Lowerer {
@@ -73,6 +76,11 @@ pub struct Aarch64Lowerer {
     /// executed. This mode requires the runtime state pointer in X28 and must
     /// be enabled only after the AArch32 structural gate validates the call.
     guest_call_exits: bool,
+    /// When true, a register indirect branch is converted to an AArch32
+    /// interworking dispatcher exit: the zero-extended `(target & !1)` is
+    /// recorded as PC and target bit 0 is exported as CPSR.T. This must only be
+    /// enabled after the AArch32 structural gate validates the terminator.
+    guest_indirect_exits: bool,
     /// When true, memory ops lower to runtime-helper call-outs (MMU-translated)
     /// instead of inline native LDR/STR against the raw guest address. Set via
     /// [`Self::set_mem_helpers`].
@@ -123,6 +131,7 @@ impl Aarch64Lowerer {
             native_exits: HashMap::new(),
             native_exit_edges: HashMap::new(),
             guest_call_exits: false,
+            guest_indirect_exits: false,
             mem_helpers: false,
             mem_helper_addr_width: OpWidth::W64,
             flagm_available: Self::detect_flagm_available(),
@@ -211,6 +220,12 @@ impl Aarch64Lowerer {
         self.guest_call_exits = enable;
     }
 
+    /// Lower a validated AArch32 register-indirect branch as an interworking
+    /// dispatcher exit, never as a native branch to the guest-controlled value.
+    pub fn set_guest_indirect_exits(&mut self, enable: bool) {
+        self.guest_indirect_exits = enable;
+    }
+
     /// Route memory ops through MMU-translated runtime helpers rather than
     /// inline native loads/stores. Call before `lower_function`.
     pub fn set_mem_helpers(&mut self, enable: bool) {
@@ -242,8 +257,53 @@ impl Aarch64Lowerer {
         self.emit_mov_imm(SCRATCH, resume_pc as i64, OpWidth::W64);
         // str x9, [x28, #A64_GUEST_PC_OFFSET]  (64-bit unsigned scaled offset)
         self.emit_ldst_unsigned(SCRATCH, A64_STATE_REG, 3, 0b00, A64_GUEST_PC_OFFSET / 8);
+        self.emit_mov_imm(SCRATCH, A64_EXIT_VALID, OpWidth::W64);
+        self.emit_ldst_unsigned(
+            SCRATCH,
+            A64_STATE_REG,
+            3,
+            0b00,
+            A64_GUEST_EXIT_FLAGS_OFFSET / 8,
+        );
         self.emit_pop_scratch(SCRATCH); // ldr x9, [sp], #16
         self.emit(0xd65f_03c0); // ret
+        Ok(())
+    }
+
+    /// Emit an AArch32 BX-style interworking exit. The target is consumed as a
+    /// W register, so both PC and state selection follow 32-bit AArch32
+    /// semantics even when the host X register has non-zero upper bits.
+    fn emit_guest_indirect_exit(&mut self, target: VReg) -> Result<(), LowerError> {
+        let target = match target {
+            VReg::Arch(ArchReg::Arm(ArmReg::X(index))) if index < 15 => index,
+            other => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("AArch32 interworking exit target {other:?}"),
+                });
+            }
+        };
+        let scratch = Self::scratch_regs(&[target], 1)?[0];
+        self.emit_push_scratch(scratch);
+
+        let (n, immr, imms) = Self::logical_bitmask_imm(0xffff_fffe, OpWidth::W32)?;
+        self.emit_logic_imm(scratch, target, 0b00, n, immr, imms, OpWidth::W32)?;
+        self.emit_ldst_unsigned(scratch, A64_STATE_REG, 3, 0b00, A64_GUEST_PC_OFFSET / 8);
+
+        // flags = EXIT_VALID | T_VALID | ((target & 1) << 1). None of these
+        // instructions updates NZCV, so guest condition flags remain live.
+        self.emit_bitfield(scratch, target, 0b10, 0, 0, OpWidth::W32)?;
+        self.emit_bitfield(scratch, scratch, 0b10, 31, 30, OpWidth::W32)?;
+        let fixed = A64_EXIT_VALID | A64_EXIT_AARCH32_T_VALID;
+        self.emit_addsub_imm(scratch, scratch, fixed, false, false, OpWidth::W32)?;
+        self.emit_ldst_unsigned(
+            scratch,
+            A64_STATE_REG,
+            3,
+            0b00,
+            A64_GUEST_EXIT_FLAGS_OFFSET / 8,
+        );
+        self.emit_pop_scratch(scratch);
+        self.emit(0xd65f_03c0); // ret to the identity trampoline
         Ok(())
     }
 
@@ -17564,12 +17624,17 @@ impl Aarch64Lowerer {
                 targets,
                 default,
             } => self.lower_switch(*index, targets, *default),
+            Terminator::IndirectBranch {
+                target,
+                possible_targets,
+            } if self.guest_indirect_exits && possible_targets.is_empty() => {
+                self.emit_guest_indirect_exit(*target)
+            }
             // Do NOT emit a native `br Xn`: the lowerer is identity-mapped, so the
             // register holds GUEST-controlled data, and branching through it is a
-            // host control-flow hijack (or a reliable crash). The interpreter
-            // resolves the computed guest target safely (translating it to guest
-            // code, never executing it as a host address), so bail out — the prior,
-            // fail-closed behavior. (#18)
+            // host control-flow hijack (or a reliable crash). The only admitted
+            // exception above records an AArch32 dispatcher exit; it does not
+            // execute the target as a host address. (#18)
             Terminator::IndirectBranch { .. } => Err(LowerError::UnsupportedOp {
                 op: "AArch64 native indirect branch to a guest-controlled target; deopt to \
                      interpreter"
@@ -51080,8 +51145,8 @@ mod tests {
     // Regression for issue #18: a SMIR IndirectBranch (guest `BR Xn` / `RET`) must
     // NOT lower to a native `br Xn` — the identity-mapped register holds
     // guest-controlled data, so branching through it is a host control-flow hijack.
-    // Every form must bail to the interpreter, which resolves the guest target
-    // safely.
+    // The default remains fail-closed; a separately gated AArch32 mode records
+    // a dispatcher exit without executing the guest value as a host address.
     #[test]
     fn rejects_indirect_branch_to_deopt() {
         for target in [x(3), x86(X86Reg::R16), VReg::Imm(0), x86(X86Reg::R31)] {
@@ -51097,6 +51162,76 @@ mod tests {
                 lowerer.lower_function(&func).is_err(),
                 "IndirectBranch to {target:?} must bail to the interpreter, not emit a native br"
             );
+        }
+    }
+
+    #[test]
+    fn configured_aarch32_indirect_exit_records_w32_pc_t_state_and_preserves_host_state() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+        builder.set_terminator(Terminator::IndirectBranch {
+            target: x(3),
+            possible_targets: Vec::new(),
+        });
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.set_guest_indirect_exits(true);
+        lowerer.lower_function(&builder.finish()).unwrap();
+        let code = lowerer.finalize().unwrap();
+
+        assert!(
+            code.chunks_exact(4).all(|bytes| {
+                let word = u32::from_le_bytes(bytes.try_into().unwrap());
+                word & 0xffff_fc1f != 0xd61f_0000
+            }),
+            "AArch32 dispatcher exit must not contain BR Xn"
+        );
+
+        let state_base = 0x6000;
+        let target = 0xdead_beef_1234_5679;
+        let scratch_sentinel = 0x1616_1616_1616_1616;
+        let old_nzcv = 0b1011;
+        let (out, out_nzcv, sp, pc) = run_aarch64_code_with_memory(
+            &code,
+            &[(3, target), (16, scratch_sentinel), (28, state_base)],
+            old_nzcv,
+            state_base + u64::from(A64_GUEST_PC_OFFSET),
+            u64::MAX,
+            MemWidth::B8,
+        );
+        assert_eq!(pc, 0x1234_5678, "PC must use zero-extended W32 target & !1");
+        assert_eq!(out[3], target);
+        assert_eq!(out[16], scratch_sentinel);
+        assert_eq!(out[28], state_base);
+        assert_eq!(out_nzcv, old_nzcv);
+        assert_eq!(sp, 0x8000);
+
+        let (_, _, _, flags) = run_aarch64_code_with_memory(
+            &code,
+            &[(3, target), (16, scratch_sentinel), (28, state_base)],
+            old_nzcv,
+            state_base + u64::from(A64_GUEST_EXIT_FLAGS_OFFSET),
+            0,
+            MemWidth::B8,
+        );
+        assert_eq!(
+            flags,
+            (A64_EXIT_VALID | A64_EXIT_AARCH32_T_VALID | (1 << 1)) as u64
+        );
+    }
+
+    #[test]
+    fn configured_aarch32_indirect_exit_rejects_unvalidated_shapes() {
+        for (target, possible_targets) in [(VReg::Imm(0), Vec::new()), (x(0), vec![BlockId(1)])] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0);
+            builder.set_terminator(Terminator::IndirectBranch {
+                target,
+                possible_targets,
+            });
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.set_guest_indirect_exits(true);
+            assert!(matches!(
+                lowerer.lower_function(&builder.finish()),
+                Err(LowerError::UnsupportedOp { .. }) | Err(LowerError::InvalidRegister(_))
+            ));
         }
     }
 

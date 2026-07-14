@@ -17,6 +17,8 @@
 //! - unconditional and condition-code A32 branch targets use the architectural
 //!   `PC + 8` base and become explicit SMIR control-flow edges; all PC
 //!   arithmetic wraps modulo 2^32;
+//! - BX over r0-r14 becomes a register-indirect SMIR terminator whose
+//!   interworking state change is handled by the gated runtime exit path;
 //! - A32-only reverse-subtract, multiply-accumulate, and MOVW/MOVT forms are
 //!   translated explicitly.
 
@@ -950,6 +952,14 @@ impl Aarch32Lifter {
                     target: CallTarget::GuestAddr(Self::add_pc_offset(pc, 8, *offset)?),
                 }
             }
+            Mnemonic::BX => {
+                let Some(Operand::Reg(rm)) = insn.operands.first() else {
+                    return Err(LiftError::Internal("invalid A32 BX operands".to_string()));
+                };
+                ControlFlow::IndirectBranch {
+                    target: Self::reg(rm.num),
+                }
+            }
             _ => {
                 return Err(LiftError::Unsupported {
                     addr: pc,
@@ -1078,13 +1088,15 @@ impl SmirLifter for Aarch32Lifter {
                     }
                 }
                 ControlFlow::Return => Terminator::Return { values: Vec::new() },
+                ControlFlow::IndirectBranch { target } => Terminator::IndirectBranch {
+                    target,
+                    possible_targets: Vec::new(),
+                },
                 ControlFlow::Trap { kind } => Terminator::Trap { kind },
                 ControlFlow::Syscall => Terminator::Trap {
                     kind: TrapKind::SystemCall,
                 },
-                ControlFlow::CondBranchReg { .. }
-                | ControlFlow::IndirectBranch { .. }
-                | ControlFlow::IndirectBranchMem { .. } => {
+                ControlFlow::CondBranchReg { .. } | ControlFlow::IndirectBranchMem { .. } => {
                     return Err(LiftError::Unsupported {
                         addr: insn_pc,
                         mnemonic: "A32 block terminator".to_string(),
@@ -1498,6 +1510,54 @@ mod tests {
             ControlFlow::Branch { target: 0x1010 }
         ));
         assert_eq!(result.branch_targets, vec![0x1010]);
+    }
+
+    #[test]
+    fn lifts_a32_bx_for_every_non_pc_register_and_block_terminator() {
+        for rm in 0_u32..15 {
+            let result = lift(0xe12f_ff10 | rm);
+            assert!(result.ops.is_empty());
+            assert!(result.branch_targets.is_empty());
+            assert!(matches!(
+                result.control_flow,
+                ControlFlow::IndirectBranch { target }
+                    if target == Aarch32Lifter::reg(rm as u8)
+            ));
+        }
+        let mut lifter = Aarch32Lifter::new();
+        let mut reject_ctx = LiftContext::new(SourceArch::Aarch32);
+        assert!(matches!(
+            lifter.lift_insn(0x1000, &0xe12f_ff1fu32.to_le_bytes(), &mut reject_ctx),
+            Err(LiftError::Unsupported { .. })
+        ));
+
+        struct Memory([u8; 4]);
+        impl MemoryReader for Memory {
+            fn read(
+                &self,
+                addr: GuestAddr,
+                size: usize,
+            ) -> Result<Vec<u8>, crate::smir::ir::memory::MemoryError> {
+                if addr != 0x1000 || size != 4 {
+                    return Err(crate::smir::ir::memory::MemoryError::OutOfBounds { addr });
+                }
+                Ok(self.0.to_vec())
+            }
+        }
+
+        let mut lifter = Aarch32Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch32);
+        let block = lifter
+            .lift_block(0x1000, &Memory(0xe12f_ff1eu32.to_le_bytes()), &mut ctx)
+            .unwrap();
+        assert!(block.ops.is_empty());
+        assert!(matches!(
+            block.terminator,
+            Terminator::IndirectBranch {
+                target: VReg::Arch(ArchReg::Arm(ArmReg::X(14))),
+                ref possible_targets,
+            } if possible_targets.is_empty()
+        ));
     }
 
     #[test]

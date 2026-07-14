@@ -11,7 +11,8 @@
 //! - unconditional and explicit condition-code Thumb branches use the
 //!   architectural `PC + 4` base and become explicit SMIR control-flow edges;
 //!   CBZ/CBNZ become explicit register-conditioned edges, BL writes
-//!   `(next_pc | 1)` to r14, and all PC arithmetic wraps modulo 2^32;
+//!   `(next_pc | 1)` to r14, BX becomes a gated interworking dispatcher exit,
+//!   and all PC arithmetic wraps modulo 2^32;
 //! - T16/T32 scalar single- and multiple-transfer memory uses the W32 helper
 //!   contract; PC-bearing, empty-list, and constrained base/list forms fail
 //!   closed;
@@ -985,6 +986,14 @@ impl ThumbLifter {
                     target: CallTarget::GuestAddr(Self::add_pc_offset(pc, 4, *offset)?),
                 }
             }
+            Mnemonic::BX => {
+                let Some(Operand::Reg(rm)) = normalized.operands.first() else {
+                    return Err(LiftError::Internal("invalid Thumb BX operands".to_string()));
+                };
+                ControlFlow::IndirectBranch {
+                    target: Self::reg(rm.num),
+                }
+            }
             _ => {
                 return Err(LiftError::Unsupported {
                     addr: pc,
@@ -1147,12 +1156,16 @@ impl SmirLifter for ThumbLifter {
                     true_target: ctx.get_or_create_block(taken),
                     false_target: ctx.get_or_create_block(not_taken),
                 },
+                ControlFlow::IndirectBranch { target } => Terminator::IndirectBranch {
+                    target,
+                    possible_targets: Vec::new(),
+                },
                 ControlFlow::Return => Terminator::Return { values: Vec::new() },
                 ControlFlow::Trap { kind } => Terminator::Trap { kind },
                 ControlFlow::Syscall => Terminator::Trap {
                     kind: TrapKind::SystemCall,
                 },
-                ControlFlow::IndirectBranch { .. } | ControlFlow::IndirectBranchMem { .. } => {
+                ControlFlow::IndirectBranchMem { .. } => {
                     return Err(LiftError::Unsupported {
                         addr: insn_pc,
                         mnemonic: "Thumb block terminator".to_string(),
@@ -1641,6 +1654,54 @@ mod tests {
                 }
             ));
         }
+    }
+
+    #[test]
+    fn lifts_t16_bx_for_every_non_pc_register_and_block_terminator() {
+        for rm in 0_u16..15 {
+            let result = lift(&(0x4700 | (rm << 3)).to_le_bytes());
+            assert!(result.ops.is_empty());
+            assert!(result.branch_targets.is_empty());
+            assert!(matches!(
+                result.control_flow,
+                ControlFlow::IndirectBranch { target }
+                    if target == ThumbLifter::reg(rm as u8)
+            ));
+        }
+        let mut lifter = ThumbLifter::new();
+        let mut reject_ctx = LiftContext::new(SourceArch::Thumb);
+        assert!(matches!(
+            lifter.lift_insn(0x1000, &[0x78, 0x47], &mut reject_ctx),
+            Err(LiftError::Unsupported { .. })
+        ));
+
+        struct Memory([u8; 2]);
+        impl MemoryReader for Memory {
+            fn read(
+                &self,
+                addr: GuestAddr,
+                size: usize,
+            ) -> Result<Vec<u8>, crate::smir::ir::memory::MemoryError> {
+                if addr != 0x1000 || size != 2 {
+                    return Err(crate::smir::ir::memory::MemoryError::OutOfBounds { addr });
+                }
+                Ok(self.0.to_vec())
+            }
+        }
+
+        let mut lifter = ThumbLifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Thumb);
+        let block = lifter
+            .lift_block(0x1000, &Memory([0x70, 0x47]), &mut ctx)
+            .unwrap();
+        assert!(block.ops.is_empty());
+        assert!(matches!(
+            block.terminator,
+            Terminator::IndirectBranch {
+                target: VReg::Arch(ArchReg::Arm(ArmReg::X(14))),
+                ref possible_targets,
+            } if possible_targets.is_empty()
+        ));
     }
 
     #[test]

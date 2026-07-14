@@ -214,6 +214,10 @@ pub struct Aarch64GuestRegs {
     /// (which the lowered code has just written from the source V register) and
     /// stores `size` bytes to guest memory.
     pub vec_store_fn: u64,
+    /// Native-region exit metadata. Bit 0 records that an exit occurred; the
+    /// remaining bits carry architecture-specific state changes that cannot be
+    /// represented by `pc` alone (currently AArch32 CPSR.T interworking).
+    pub exit_flags: u64,
 }
 
 impl Default for Aarch64GuestRegs {
@@ -234,6 +238,7 @@ impl Default for Aarch64GuestRegs {
             exclusive_valid: 0,
             vec_load_fn: 0,
             vec_store_fn: 0,
+            exit_flags: 0,
         }
     }
 }
@@ -254,6 +259,14 @@ impl Aarch64GuestRegs {
     pub const EXCLUSIVE_VALID_OFFSET: i32 = Self::EXCLUSIVE_SIZE_OFFSET + 8;
     pub const VEC_LOAD_FN_OFFSET: i32 = Self::EXCLUSIVE_VALID_OFFSET + 8;
     pub const VEC_STORE_FN_OFFSET: i32 = Self::VEC_LOAD_FN_OFFSET + 8;
+    pub const EXIT_FLAGS_OFFSET: i32 = Self::VEC_STORE_FN_OFFSET + 8;
+
+    /// A native exit, rather than an ordinary `Return`, recorded `pc`.
+    pub const EXIT_VALID: u64 = 1 << 0;
+    /// The AArch32 exit selected Thumb state.
+    pub const EXIT_AARCH32_T: u64 = 1 << 1;
+    /// [`Self::EXIT_AARCH32_T`] contains a CPSR.T update.
+    pub const EXIT_AARCH32_T_VALID: u64 = 1 << 2;
 }
 
 /// AArch32 scalar register file used by the A32-on-AArch64 identity JIT.
@@ -262,7 +275,8 @@ impl Aarch64GuestRegs {
 /// retained in its complete architectural representation; only NZCV (bits
 /// 31:28) is imported into host PSTATE and merged back after execution.  The
 /// remaining CPSR fields (Q, GE, endianness, interrupt masks, T, and mode) are
-/// therefore stable across a scalar native region.
+/// stable across a scalar native region except that a validated interworking
+/// exit can explicitly replace T from the branch target's low bit.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Aarch32GuestRegs {
@@ -270,6 +284,17 @@ pub struct Aarch32GuestRegs {
     pub r: [u32; 16],
     /// Complete AArch32 CPSR.
     pub cpsr: u32,
+}
+
+/// Control-flow result from an A32-on-AArch64 native region.
+///
+/// `exited` distinguishes a valid exit to guest address zero from an ordinary
+/// SMIR `Return`; `pc` is the zero-extended 32-bit dispatcher target when an
+/// exit occurred.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Aarch32NativeExit {
+    pub exited: bool,
+    pub pc: u64,
 }
 
 /// Runtime-helper configuration for an AArch32 region lowered through the
@@ -1128,15 +1153,29 @@ impl ExecMem {
     /// Execute an admitted register-only AArch32 control-flow region.
     ///
     /// This is the control-flow-aware form of [`Self::run_aarch32_identity`].
-    /// It returns the guest PC recorded by a native frontier-exit stub; zero
-    /// means that the region reached an ordinary empty `Return`. The function
-    /// must be lowered with matching native-exit block or edge metadata.
+    /// It returns the guest PC recorded by a native exit. This compatibility
+    /// form cannot distinguish an exit to guest address zero from an ordinary
+    /// empty `Return`; use [`Self::run_aarch32_identity_exit`] when that
+    /// distinction matters. The function must be lowered with matching exit
+    /// metadata and modes.
     #[cfg(target_arch = "aarch64")]
     pub fn run_aarch32_identity_until_exit(
         &self,
         entry_offset: usize,
         regs: &mut Aarch32GuestRegs,
     ) -> u64 {
+        self.run_aarch32_identity_exit(entry_offset, regs).pc
+    }
+
+    /// Execute an admitted AArch32 control-flow region and return an
+    /// unambiguous exit record. Unlike [`Self::run_aarch32_identity_until_exit`],
+    /// this distinguishes an exit to address zero from an ordinary return.
+    #[cfg(target_arch = "aarch64")]
+    pub fn run_aarch32_identity_exit(
+        &self,
+        entry_offset: usize,
+        regs: &mut Aarch32GuestRegs,
+    ) -> Aarch32NativeExit {
         self.run_aarch32_identity_configured(entry_offset, regs, None)
     }
 
@@ -1154,6 +1193,7 @@ impl ExecMem {
         helpers: Aarch32MemHelpers,
     ) -> u64 {
         self.run_aarch32_identity_configured(entry_offset, regs, Some(helpers))
+            .pc
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -1162,8 +1202,9 @@ impl ExecMem {
         entry_offset: usize,
         regs: &mut Aarch32GuestRegs,
         helpers: Option<Aarch32MemHelpers>,
-    ) -> u64 {
+    ) -> Aarch32NativeExit {
         const NZCV: u32 = 0xf000_0000;
+        const CPSR_T: u32 = 1 << 5;
 
         let mut state = Aarch64GuestRegs::default();
         for (dst, src) in state.x[..16].iter_mut().zip(regs.r) {
@@ -1180,7 +1221,16 @@ impl ExecMem {
             *dst = *src as u32;
         }
         regs.cpsr = (regs.cpsr & !NZCV) | (state.nzcv as u32 & NZCV);
-        state.pc
+        if state.exit_flags & Aarch64GuestRegs::EXIT_AARCH32_T_VALID != 0 {
+            regs.cpsr &= !CPSR_T;
+            if state.exit_flags & Aarch64GuestRegs::EXIT_AARCH32_T != 0 {
+                regs.cpsr |= CPSR_T;
+            }
+        }
+        Aarch32NativeExit {
+            exited: state.exit_flags & Aarch64GuestRegs::EXIT_VALID != 0,
+            pc: state.pc,
+        }
     }
 
     /// As [`Self::run_aarch64_identity`] but for a region that uses scalar FP /
@@ -3852,10 +3902,14 @@ fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ir::ops::OpKind
 /// guest call is admitted only when its final operation writes the exact A32
 /// or Thumb link value to r14; callers must pair this gate with
 /// `Aarch64Lowerer::set_guest_call_exits(true)` so the call becomes a native
-/// frontier exit. CFG targets must exist, phi nodes and locals are rejected,
-/// and frontier blocks named in `excluded` must still be present for
-/// native-exit lowering. Predicated data instructions, Thumb IT state,
-/// SIMD/VFP, and CPSR fields outside NZCV remain interpreter-only. Use
+/// frontier exit. A register-indirect terminator is admitted only for an
+/// AArch32 r0-r14 target with no speculative target list; callers must pair it
+/// with `Aarch64Lowerer::set_guest_indirect_exits(true)`, which records an
+/// interworking dispatcher exit and exports target bit 0 as CPSR.T. CFG targets
+/// must exist, phi nodes and locals are rejected, and frontier blocks named in
+/// `excluded` must still be present for native-exit lowering. Predicated data
+/// instructions, Thumb IT state, SIMD/VFP, and other CPSR fields remain
+/// interpreter-only. Use
 /// [`is_aarch32_aarch64_native_clobber_safe_excluding_with_mem`] to admit the
 /// validated scalar memory-helper shapes.
 pub fn is_aarch32_aarch64_native_clobber_safe_excluding(
@@ -3976,8 +4030,11 @@ pub fn is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
                         && (*link_pc == arm_link as i64 || *link_pc == thumb_link as i64)
                         && ordinary_ops_valid(prefix)
                 }
+                Terminator::IndirectBranch {
+                    target,
+                    possible_targets,
+                } => possible_targets.is_empty() && gpr(target) && ordinary_ops_valid(&block.ops),
                 Terminator::Switch { .. }
-                | Terminator::IndirectBranch { .. }
                 | Terminator::IndirectBranchMem { .. }
                 | Terminator::Call { .. }
                 | Terminator::TailCall { .. }
@@ -4577,6 +4634,39 @@ mod jit_gate_tests {
         builder.finish()
     }
 
+    fn aarch32_indirect_cfg(
+        target: VReg,
+        possible_targets: Vec<BlockId>,
+    ) -> crate::smir::ir::SmirFunction {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.set_terminator(Terminator::IndirectBranch {
+            target,
+            possible_targets,
+        });
+        builder.finish()
+    }
+
+    #[test]
+    fn aarch64_guest_state_layout_matches_native_exit_offsets() {
+        assert_eq!(
+            std::mem::offset_of!(Aarch64GuestRegs, pc),
+            Aarch64GuestRegs::PC_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(Aarch64GuestRegs, vec_store_fn),
+            Aarch64GuestRegs::VEC_STORE_FN_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(Aarch64GuestRegs, exit_flags),
+            Aarch64GuestRegs::EXIT_FLAGS_OFFSET as usize
+        );
+        assert_eq!(Aarch64GuestRegs::EXIT_FLAGS_OFFSET, 864);
+        assert_eq!(std::mem::size_of::<Aarch64GuestRegs>(), 872);
+        assert_eq!(Aarch64GuestRegs::EXIT_VALID, 1);
+        assert_eq!(Aarch64GuestRegs::EXIT_AARCH32_T, 2);
+        assert_eq!(Aarch64GuestRegs::EXIT_AARCH32_T_VALID, 4);
+    }
+
     #[test]
     fn aarch32_aarch64_gate_accepts_closed_direct_cfg_and_exact_folded_condition() {
         let mut branch = FunctionBuilder::new(FunctionId(0), 0x1000);
@@ -4632,6 +4722,14 @@ mod jit_gate_tests {
             );
             assert!(is_aarch32_aarch64_native_clobber_safe_excluding(
                 &call,
+                &std::collections::HashMap::new(),
+            ));
+        }
+
+        for target in [arm_x(0), arm_x(7), arm_x(14)] {
+            let indirect = aarch32_indirect_cfg(target, Vec::new());
+            assert!(is_aarch32_aarch64_native_clobber_safe_excluding(
+                &indirect,
                 &std::collections::HashMap::new(),
             ));
         }
@@ -4715,6 +4813,17 @@ mod jit_gate_tests {
         for call in malformed_calls {
             assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
                 &call,
+                &std::collections::HashMap::new(),
+            ));
+        }
+
+        for indirect in [
+            aarch32_indirect_cfg(arm_x(15), Vec::new()),
+            aarch32_indirect_cfg(VReg::Virtual(VirtualId(9)), Vec::new()),
+            aarch32_indirect_cfg(arm_x(0), vec![BlockId(1)]),
+        ] {
+            assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
+                &indirect,
                 &std::collections::HashMap::new(),
             ));
         }
@@ -9195,6 +9304,21 @@ mod tests_aarch64 {
         let mut regs = Aarch64GuestRegs::default();
         mem.run_aarch64_identity(0, &mut regs);
         assert_eq!(regs.x[0], 42, "X0 should be 42");
+    }
+
+    #[test]
+    fn aarch32_exit_result_distinguishes_ordinary_return() {
+        let code = 0xd65f_03c0u32.to_le_bytes(); // ret
+        let mem = ExecMem::new(&code).expect("ExecMem map");
+        let mut regs = Aarch32GuestRegs::default();
+        let result = mem.run_aarch32_identity_exit(0, &mut regs);
+        assert_eq!(
+            result,
+            Aarch32NativeExit {
+                exited: false,
+                pc: 0
+            }
+        );
     }
 
     // add x0, x1, x2 ; ret  → guest GPR marshal IN as well as OUT.
