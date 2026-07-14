@@ -13,7 +13,7 @@ use crate::smir::ir::ops::{
 };
 use crate::smir::ir::types::{
     Address, ArchReg, BlockId, Condition, DispSize, FenceKind, FpRoundMode, GuestAddr, MemWidth,
-    OpWidth, ShiftOp, SignExtend, SrcOperand, VReg, VecElementType, VecWidth, X86Reg,
+    OpWidth, ShiftOp, SignExtend, SrcOperand, VReg, VecElementType, VecUnaryOp, VecWidth, X86Reg,
 };
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 
@@ -7447,11 +7447,63 @@ impl X86_64Lowerer {
             }
 
             OpKind::VUnary {
+                dst,
+                src,
+                elem,
+                lanes,
+                op: VecUnaryOp::Abs,
+            } if matches!(
+                elem,
+                VecElementType::I8
+                    | VecElementType::I16
+                    | VecElementType::I32
+                    | VecElementType::I64
+            ) =>
+            {
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
+                        op: format!("VUnary Abs {:?}x{}", elem, lanes),
+                    }
+                })?;
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                if !dst_reg.is_vec() || !src_reg.is_vec() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VUnary Abs".to_string(),
+                        operand: "requires vector registers".to_string(),
+                    });
+                }
+
+                if let Some(enc) = self.vec_hint(op.x86_hint) {
+                    self.emit_vec_rr(VecEncoding { width, ..enc }, dst_reg, src_reg, 0);
+                } else if matches!(op.x86_hint, Some(X86OpHint::SseOp { .. })) {
+                    if *elem == VecElementType::I64 || width != VecWidth::V128 {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("legacy VUnary Abs {:?}x{}", elem, lanes),
+                        });
+                    }
+                    let prefix = self.sse_prefix(op.x86_hint).or(Some(0x66));
+                    let opcode = self.sse_opcode(
+                        op.x86_hint,
+                        match elem {
+                            VecElementType::I8 => 0x1C,
+                            VecElementType::I16 => 0x1D,
+                            VecElementType::I32 => 0x1E,
+                            _ => unreachable!(),
+                        },
+                    );
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_sse_op38_rr(prefix, opcode, dst_reg, src_reg);
+                } else {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("unhinted VUnary Abs {:?}x{}", elem, lanes),
+                    });
+                }
+            }
+
+            OpKind::VUnary {
                 elem, lanes, op, ..
             } => {
-                // Vector per-lane unary (FABS/FNEG/FSQRT/NEG/ABS) is currently
-                // emitted only by the AArch64 lifter; the x86 struct-lowerer
-                // does not implement it yet, so bail rather than mis-lower.
                 return Err(LowerError::UnsupportedOp {
                     op: format!("VUnary {:?} {:?}x{} (x86)", op, elem, lanes),
                 });
@@ -13655,6 +13707,50 @@ mod tests {
             (
                 &[0x62, 0x02, 0x95, 0x00, 0x40, 0xE6][..],
                 &[0x62, 0x02, 0x95, 0x00, 0x40, 0xE6][..],
+            ),
+            (
+                &[0x66, 0x0F, 0x38, 0x1C, 0xCA][..],
+                &[0x66, 0x0F, 0x38, 0x1C, 0xCA][..],
+            ),
+            (
+                &[0x66, 0x0F, 0x38, 0x1D, 0xDC][..],
+                &[0x66, 0x0F, 0x38, 0x1D, 0xDC][..],
+            ),
+            (
+                &[0x66, 0x0F, 0x38, 0x1E, 0xEE][..],
+                &[0x66, 0x0F, 0x38, 0x1E, 0xEE][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0x79, 0x1C, 0xCA][..],
+                &[0xC4, 0xE2, 0x79, 0x1C, 0xCA][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0x7D, 0x1D, 0xDC][..],
+                &[0xC4, 0xE2, 0x7D, 0x1D, 0xDC][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0x7D, 0x1E, 0xEE][..],
+                &[0xC4, 0xE2, 0x7D, 0x1E, 0xEE][..],
+            ),
+            (
+                &[0x62, 0xA2, 0x7D, 0x48, 0x1C, 0xE5][..],
+                &[0x62, 0xA2, 0x7D, 0x48, 0x1C, 0xE5][..],
+            ),
+            (
+                &[0x62, 0xA2, 0x7D, 0x28, 0x1D, 0xF7][..],
+                &[0x62, 0xA2, 0x7D, 0x28, 0x1D, 0xF7][..],
+            ),
+            (
+                &[0x62, 0x02, 0x7D, 0x48, 0x1E, 0xC1][..],
+                &[0x62, 0x02, 0x7D, 0x48, 0x1E, 0xC1][..],
+            ),
+            (
+                &[0x62, 0x02, 0xFD, 0x48, 0x1F, 0xD3][..],
+                &[0x62, 0x02, 0xFD, 0x48, 0x1F, 0xD3][..],
+            ),
+            (
+                &[0x62, 0x02, 0xFD, 0x08, 0x1F, 0xE5][..],
+                &[0x62, 0x02, 0xFD, 0x08, 0x1F, 0xE5][..],
             ),
             (
                 &[0x62, 0xF2, 0x7D, 0xCC, 0xC4, 0xCA][..],

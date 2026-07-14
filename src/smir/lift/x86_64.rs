@@ -13873,8 +13873,12 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let raw = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
+        let raw = if modrm.is_memory {
+            ctx.alloc_vreg()
+        } else {
+            dst
+        };
+        ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
             OpKind::VUnary {
@@ -13884,8 +13888,14 @@ impl X86_64Lifter {
                 lanes: VecWidth::V128.lanes(elem) as u8,
                 op: VecUnaryOp::Abs,
             },
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::OpSize,
+                opcode,
+            },
         ));
-        self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -19034,7 +19044,7 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm, prefix.width)
         };
-        ops.push(SmirOp::new(
+        ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
             OpKind::VUnary {
@@ -19044,6 +19054,7 @@ impl X86_64Lifter {
                 lanes: prefix.width.lanes(elem) as u8,
                 op: VecUnaryOp::Abs,
             },
+            self.vec_hint(prefix, opcode),
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
@@ -24236,8 +24247,13 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width)
         };
-        let raw = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
+        let dst = self.vec_reg(
+            modrm.reg + if prefix.reg_high { 16 } else { 0 },
+            prefix.width,
+        );
+        let masked = prefix.aaa != 0;
+        let raw = if masked { ctx.alloc_vreg() } else { dst };
+        ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
             OpKind::VUnary {
@@ -24247,12 +24263,11 @@ impl X86_64Lifter {
                 lanes,
                 op: VecUnaryOp::Abs,
             },
+            self.vec_hint(prefix, opcode),
         ));
-        let dst = self.vec_reg(
-            modrm.reg + if prefix.reg_high { 16 } else { 0 },
-            prefix.width,
-        );
-        self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+        if masked {
+            self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -52140,12 +52155,13 @@ mod tests {
         assert!(high_d.ops.iter().any(|op| matches!(
             op.kind,
             OpKind::VUnary {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
                 src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
                 elem: VecElementType::I32,
                 ..
             }
         )));
-        assert!(high_d.ops.iter().any(|op| matches!(
+        assert!(!high_d.ops.iter().any(|op| matches!(
             op.kind,
             OpKind::VMov {
                 dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),

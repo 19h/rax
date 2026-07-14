@@ -560,6 +560,7 @@ impl SmirInterpreter {
         memory: &mut dyn SmirMemory,
         op: &SmirOp,
     ) -> Result<(), MemoryError> {
+        let x86_hint = op.x86_hint;
         match &op.kind {
             // ==================================================================
             // INTEGER ARITHMETIC
@@ -4088,6 +4089,7 @@ impl SmirInterpreter {
                     });
                 }
                 (VecUnaryOp::Abs, _) => {
+                    let old = Self::legacy_xmm_snapshot(ctx, *dst, x86_hint);
                     let bits = elem.bytes() * 8;
                     self.vec_unary_op(ctx, *dst, *src, *elem, *lanes, |a| {
                         // Sign-extend the lane, take abs, re-truncate.
@@ -4100,6 +4102,7 @@ impl SmirInterpreter {
                             abs & ((1u64 << bits) - 1)
                         }
                     });
+                    Self::restore_legacy_xmm_upper(ctx, *dst, old);
                 }
                 (VecUnaryOp::Clz, _) => {
                     let bits = elem.bytes() * 8;
