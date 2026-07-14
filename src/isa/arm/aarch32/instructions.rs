@@ -9844,6 +9844,27 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             Operand::Mem(m) => Some(m),
             _ => None,
         })?;
+        // T32 LDR/LDRB/LDRH/LDRSB/LDRSH literal forms carry Rn=PC in a Mem
+        // operand (unlike T16 LDR literal's Label operand).  Their base is
+        // Align(current instruction address + 4, 4), not the A32 PC+8 value
+        // returned by `reg(15)`.
+        if mem.base.num == 15
+            && mem.mode == AddressingMode::Offset
+            && matches!(
+                insn.mnemonic,
+                crate::isa::arm::decoder::Mnemonic::LDR
+                    | crate::isa::arm::decoder::Mnemonic::LDRB
+                    | crate::isa::arm::decoder::Mnemonic::LDRH
+                    | crate::isa::arm::decoder::Mnemonic::LDRSB
+                    | crate::isa::arm::decoder::Mnemonic::LDRSH
+            )
+        {
+            let MemOffset::Imm(offset) = mem.offset else {
+                return None;
+            };
+            let base = self.cpu.regs[15].wrapping_add(4) & !0x3;
+            return Some((t, base.wrapping_add(offset as u32), None));
+        }
         let n = mem.base.num as usize;
         let base = self.reg(n);
         let offset: i64 = match &mem.offset {
@@ -10131,6 +10152,24 @@ mod tests {
 
         assert!(matches!(result, ExecResult::Continue));
         assert_eq!(cpu.regs[0], 150);
+    }
+
+    #[test]
+    fn t32_literal_load_uses_aligned_pc_plus_four_and_signed_u_offset() {
+        for (raw, rt, address, value) in [
+            (0xf8df_0123, 0, 0x1127, 0x1122_3344),
+            (0xf85f_1123, 1, 0x0ee1, 0x5566_7788),
+        ] {
+            let mut cpu = make_cpu();
+            cpu.regs[15] = 0x1002;
+            cpu.cpsr.t = true;
+            let mut mem = make_mem();
+            mem.write_word(address, value).unwrap();
+            let insn = crate::isa::arm::decoder::ThumbDecoder::decode_32bit(raw).unwrap();
+            let result = Executor::new(&mut cpu, &mut mem).execute(&insn);
+            assert!(matches!(result, ExecResult::Continue), "{raw:#010x}");
+            assert_eq!(cpu.regs[rt], value, "{raw:#010x}");
+        }
     }
 
     #[test]

@@ -491,6 +491,98 @@ fn a32_memory_width_sign_store_and_r13_base_match_interpreter() {
 }
 
 #[test]
+fn a32_literal_load_matrix_matches_interpreter_at_o0_and_o2() {
+    for (raw, address, dst, label) in [
+        (0xe59f_0004, 0x800c, 0, "LDR +imm12"),
+        (0xe51f_1004, 0x8004, 1, "LDR -imm12"),
+        (0xe5df_2003, 0x800b, 2, "LDRB +imm12"),
+        (0xe55f_3003, 0x8005, 3, "LDRB -imm12"),
+        (0xe1df_40b2, 0x800a, 4, "LDRH +imm8"),
+        (0xe15f_50d1, 0x8007, 5, "LDRSB -imm8"),
+        (0xe1df_60f2, 0x800a, 6, "LDRSH +imm8"),
+    ] {
+        let program = [raw];
+        let initial = initial_state();
+        let memory = TestMemory::patterned();
+        let (expected_regs, expected_mem, fault) =
+            reference_memory(&program, initial, memory.clone());
+        assert_eq!(fault, None, "{label}");
+
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let (actual_regs, actual_mem, exit_pc) =
+                run_memory_native_at(&program, initial, memory.clone(), level);
+            assert_eq!(actual_regs, expected_regs, "{label} {level:?}");
+            assert_eq!(actual_mem.data, expected_mem.data, "{label} {level:?}");
+            assert_eq!(
+                actual_regs.r[dst], expected_regs.r[dst],
+                "{label} destination"
+            );
+            assert_eq!(actual_mem.last_helper_addr, address, "{label} {level:?}");
+            assert_eq!(actual_mem.helper_loads, 1, "{label} {level:?}");
+            assert_eq!(actual_mem.helper_stores, 0, "{label} {level:?}");
+            assert_eq!(exit_pc, 0, "{label} {level:?}");
+        }
+    }
+}
+
+#[test]
+fn a32_literal_load_fault_is_precise_at_o0_and_o2() {
+    let program = [0xe59f_0004]; // ldr r0,[pc,#4] => 0x800c
+    let initial = initial_state();
+    let mut memory = TestMemory::patterned();
+    memory.fault_enabled = 1;
+    memory.fault_addr = 0x800c;
+    let (expected_regs, expected_mem, fault) = reference_memory(&program, initial, memory.clone());
+    assert_eq!(fault, Some(0));
+
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let (actual_regs, actual_mem, exit_pc) =
+            run_memory_native_at(&program, initial, memory.clone(), level);
+        assert_eq!(actual_regs, expected_regs, "{level:?}");
+        assert_eq!(actual_mem.data, expected_mem.data, "{level:?}");
+        assert_eq!(
+            actual_regs.r[0], initial.r[0],
+            "faulting load did not commit"
+        );
+        assert_eq!(actual_mem.last_helper_addr, 0x800c, "{level:?}");
+        assert_eq!(actual_mem.helper_loads, 1, "{level:?}");
+        assert_eq!(exit_pc, 0x8000, "faulting guest PC {level:?}");
+    }
+}
+
+#[test]
+fn a32_literal_all_gprs_nzcv_and_directions_match_interpreter_at_o0_and_o2() {
+    for rt in 0_u32..15 {
+        for (base, address, direction) in [
+            (0xe59f_0004_u32, 0x800c, "add"),
+            (0xe51f_0004_u32, 0x8004, "subtract"),
+        ] {
+            let raw = base | (rt << 12);
+            let program = [raw];
+            for nzcv in 0_u32..16 {
+                let mut initial = initial_state();
+                initial.cpsr = (initial.cpsr & 0x0fff_ffff) | (nzcv << 28);
+                let memory = TestMemory::patterned();
+                let (expected_regs, _, fault) = reference_memory(&program, initial, memory.clone());
+                assert_eq!(fault, None, "r{rt} {direction} NZCV={nzcv:#x}");
+                for level in [OptLevel::O0, OptLevel::O2] {
+                    let (actual_regs, actual_mem, exit_pc) =
+                        run_memory_native_at(&program, initial, memory.clone(), level);
+                    assert_eq!(
+                        actual_regs, expected_regs,
+                        "r{rt} {direction} NZCV={nzcv:#x} {level:?}"
+                    );
+                    assert_eq!(actual_mem.last_helper_addr, address);
+                    assert_eq!(actual_mem.helper_loads, 1);
+                    assert_eq!(actual_mem.helper_stores, 0);
+                    assert_eq!(exit_pc, 0);
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn a32_immediate_register_scaled_and_postindex_writeback_match_interpreter() {
     let program = [
         0xe5b1_0004, // ldr r0,[r1,#4]!

@@ -21,12 +21,12 @@ use rax::smir::lower::runtime::{
 use rax::smir::optimize::{OptLevel, optimize_function};
 
 #[derive(Clone, Copy)]
-struct ThumbInsn {
-    bytes: &'static [u8],
-    asm: &'static str,
+struct ThumbInsn<'a> {
+    bytes: &'a [u8],
+    asm: &'a str,
 }
 
-const PROGRAM: &[ThumbInsn] = &[
+const PROGRAM: &[ThumbInsn<'static>] = &[
     ThumbInsn {
         bytes: &[0x88, 0x18],
         asm: "adds r0,r1,r2",
@@ -197,7 +197,7 @@ const PROGRAM: &[ThumbInsn] = &[
     },
 ];
 
-fn insn(bytes: &'static [u8], asm: &'static str) -> ThumbInsn {
+fn insn(bytes: &'static [u8], asm: &'static str) -> ThumbInsn<'static> {
     ThumbInsn { bytes, asm }
 }
 
@@ -216,7 +216,7 @@ fn initial_state() -> Aarch32GuestRegs {
     }
 }
 
-fn reference(program: &[ThumbInsn], initial: Aarch32GuestRegs) -> Aarch32GuestRegs {
+fn reference(program: &[ThumbInsn<'_>], initial: Aarch32GuestRegs) -> Aarch32GuestRegs {
     let mut cpu = Armv7Cpu::new();
     cpu.regs = initial.r;
     cpu.cpsr = Psr::from_u32(initial.cpsr);
@@ -247,24 +247,24 @@ fn reference(program: &[ThumbInsn], initial: Aarch32GuestRegs) -> Aarch32GuestRe
     }
 }
 
-fn lower(program: &[ThumbInsn]) -> (ExecMem, usize) {
+fn lower(program: &[ThumbInsn<'_>]) -> (ExecMem, usize) {
     lower_configured(program, false)
 }
 
-fn lower_with_mem(program: &[ThumbInsn]) -> (ExecMem, usize) {
+fn lower_with_mem(program: &[ThumbInsn<'_>]) -> (ExecMem, usize) {
     lower_configured(program, true)
 }
 
-fn lower_configured(program: &[ThumbInsn], allow_mem: bool) -> (ExecMem, usize) {
+fn lower_configured(program: &[ThumbInsn<'_>], allow_mem: bool) -> (ExecMem, usize) {
     lower_configured_at(program, allow_mem, OptLevel::O0)
 }
 
-fn lower_with_mem_at(program: &[ThumbInsn], level: OptLevel) -> (ExecMem, usize) {
+fn lower_with_mem_at(program: &[ThumbInsn<'_>], level: OptLevel) -> (ExecMem, usize) {
     lower_configured_at(program, true, level)
 }
 
 fn lower_configured_at(
-    program: &[ThumbInsn],
+    program: &[ThumbInsn<'_>],
     allow_mem: bool,
     level: OptLevel,
 ) -> (ExecMem, usize) {
@@ -479,7 +479,7 @@ extern "C" fn test_store(ctx: *mut TestMemory, addr: u64, value: u64, size: u32)
 }
 
 fn reference_memory(
-    program: &[ThumbInsn],
+    program: &[ThumbInsn<'_>],
     initial: Aarch32GuestRegs,
     mut memory: TestMemory,
 ) -> (Aarch32GuestRegs, TestMemory, Option<usize>) {
@@ -518,7 +518,7 @@ fn reference_memory(
 }
 
 fn run_memory_native(
-    program: &[ThumbInsn],
+    program: &[ThumbInsn<'_>],
     initial: Aarch32GuestRegs,
     memory: TestMemory,
 ) -> (Aarch32GuestRegs, TestMemory, u64) {
@@ -526,7 +526,7 @@ fn run_memory_native(
 }
 
 fn run_memory_native_at(
-    program: &[ThumbInsn],
+    program: &[ThumbInsn<'_>],
     initial: Aarch32GuestRegs,
     mut memory: TestMemory,
     level: OptLevel,
@@ -542,7 +542,7 @@ fn run_memory_native_at(
     (regs, memory, exit_pc)
 }
 
-fn assert_native_parity(program: &[ThumbInsn], initial: Aarch32GuestRegs) -> Aarch32GuestRegs {
+fn assert_native_parity(program: &[ThumbInsn<'_>], initial: Aarch32GuestRegs) -> Aarch32GuestRegs {
     let expected = reference(program, initial);
     let (exec, entry) = lower(program);
     let mut actual = initial;
@@ -658,6 +658,146 @@ fn mixed_t16_t32_scalar_memory_matches_interpreter() {
     assert_eq!(actual_mem.helper_loads, 5);
     assert_eq!(actual_mem.helper_stores, 5);
     assert_eq!(exit_pc, 0);
+}
+
+#[test]
+fn thumb_literal_load_matrix_matches_interpreter_at_o0_and_o2() {
+    for (item, address, dst) in [
+        (insn(&[0x00, 0x48], "ldr r0,[pc,#0]"), 0x8004, 0),
+        (
+            insn(&[0xdf, 0xf8, 0x23, 0x01], "ldr.w r0,[pc,#0x123]"),
+            0x8127,
+            0,
+        ),
+        (
+            insn(&[0x5f, 0xf8, 0x23, 0x11], "ldr.w r1,[pc,#-0x123]"),
+            0x7ee1,
+            1,
+        ),
+        (
+            insn(&[0x9f, 0xf8, 0x34, 0x22], "ldrb.w r2,[pc,#0x234]"),
+            0x8238,
+            2,
+        ),
+        (
+            insn(&[0x1f, 0xf8, 0x34, 0x32], "ldrb.w r3,[pc,#-0x234]"),
+            0x7dd0,
+            3,
+        ),
+        (
+            insn(&[0xbf, 0xf8, 0x56, 0x44], "ldrh.w r4,[pc,#0x456]"),
+            0x845a,
+            4,
+        ),
+        (
+            insn(&[0x1f, 0xf9, 0x56, 0x54], "ldrsb.w r5,[pc,#-0x456]"),
+            0x7bae,
+            5,
+        ),
+        (
+            insn(&[0xbf, 0xf9, 0x78, 0x66], "ldrsh.w r6,[pc,#0x678]"),
+            0x867c,
+            6,
+        ),
+        (
+            insn(&[0x3f, 0xf9, 0x78, 0x76], "ldrsh.w r7,[pc,#-0x678]"),
+            0x798c,
+            7,
+        ),
+    ] {
+        let program = [item];
+        let initial = initial_state();
+        let memory = TestMemory::patterned();
+        let (expected_regs, expected_mem, fault) =
+            reference_memory(&program, initial, memory.clone());
+        assert_eq!(fault, None, "{}", item.asm);
+
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let (actual_regs, actual_mem, exit_pc) =
+                run_memory_native_at(&program, initial, memory.clone(), level);
+            assert_eq!(actual_regs, expected_regs, "{} {level:?}", item.asm);
+            assert_eq!(actual_mem.data, expected_mem.data, "{} {level:?}", item.asm);
+            assert_eq!(
+                actual_regs.r[dst], expected_regs.r[dst],
+                "{} destination",
+                item.asm
+            );
+            assert_eq!(
+                actual_mem.last_helper_addr, address,
+                "{} {level:?}",
+                item.asm
+            );
+            assert_eq!(actual_mem.helper_loads, 1, "{} {level:?}", item.asm);
+            assert_eq!(actual_mem.helper_stores, 0, "{} {level:?}", item.asm);
+            assert_eq!(exit_pc, 0, "{} {level:?}", item.asm);
+        }
+    }
+}
+
+#[test]
+fn thumb_literal_load_fault_is_precise_at_o0_and_o2() {
+    let program = [insn(&[0xdf, 0xf8, 0x23, 0x01], "ldr.w r0,[pc,#0x123]")];
+    let initial = initial_state();
+    let mut memory = TestMemory::patterned();
+    memory.fault_enabled = 1;
+    memory.fault_addr = 0x8127;
+    let (expected_regs, expected_mem, fault) = reference_memory(&program, initial, memory.clone());
+    assert_eq!(fault, Some(0));
+
+    for level in [OptLevel::O0, OptLevel::O2] {
+        let (actual_regs, actual_mem, exit_pc) =
+            run_memory_native_at(&program, initial, memory.clone(), level);
+        assert_eq!(actual_regs, expected_regs, "{level:?}");
+        assert_eq!(actual_mem.data, expected_mem.data, "{level:?}");
+        assert_eq!(
+            actual_regs.r[0], initial.r[0],
+            "faulting load did not commit"
+        );
+        assert_eq!(actual_mem.last_helper_addr, 0x8127, "{level:?}");
+        assert_eq!(actual_mem.helper_loads, 1, "{level:?}");
+        assert_eq!(exit_pc, 0x8000, "faulting guest PC {level:?}");
+    }
+}
+
+#[test]
+fn thumb_literal_all_gprs_nzcv_and_directions_match_interpreter_at_o0_and_o2() {
+    for rt in 0_u32..15 {
+        for (base, address, direction) in [
+            (0xf8df_0004_u32, 0x8008, "add"),
+            (0xf85f_0004_u32, 0x8000, "subtract"),
+        ] {
+            let raw = base | (rt << 12);
+            let hw1 = (raw >> 16) as u16;
+            let hw2 = raw as u16;
+            let [h10, h11] = hw1.to_le_bytes();
+            let [h20, h21] = hw2.to_le_bytes();
+            let bytes = [h10, h11, h20, h21];
+            let item = ThumbInsn {
+                bytes: &bytes,
+                asm: direction,
+            };
+            let program = [item];
+            for nzcv in 0_u32..16 {
+                let mut initial = initial_state();
+                initial.cpsr = (initial.cpsr & 0x0fff_ffff) | (nzcv << 28);
+                let memory = TestMemory::patterned();
+                let (expected_regs, _, fault) = reference_memory(&program, initial, memory.clone());
+                assert_eq!(fault, None, "r{rt} {direction} NZCV={nzcv:#x}");
+                for level in [OptLevel::O0, OptLevel::O2] {
+                    let (actual_regs, actual_mem, exit_pc) =
+                        run_memory_native_at(&program, initial, memory.clone(), level);
+                    assert_eq!(
+                        actual_regs, expected_regs,
+                        "r{rt} {direction} NZCV={nzcv:#x} {level:?}"
+                    );
+                    assert_eq!(actual_mem.last_helper_addr, address);
+                    assert_eq!(actual_mem.helper_loads, 1);
+                    assert_eq!(actual_mem.helper_stores, 0);
+                    assert_eq!(exit_pc, 0);
+                }
+            }
+        }
+    }
 }
 
 #[test]

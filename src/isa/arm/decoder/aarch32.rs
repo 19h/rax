@@ -25,7 +25,7 @@ impl Aarch32Decoder {
         // variants): cccc 0001 1xxL Rn Rd 1111 1001 Rm. Same bits[7:4]=1001
         // as the multiply space, so peel them off first. The executor reads
         // the registers straight from `raw` (A32 layout).
-        if raw & 0x0F80_0F90 == 0x0180_0F90 {
+        if raw & 0x0F80_0FF0 == 0x0180_0F90 {
             let op = (raw >> 20) & 0x7; // L:sz
             let mnemonic = match op {
                 0b000 => Some(Mnemonic::STXR),
@@ -3706,6 +3706,49 @@ mod tests {
         // LDR R0, [R1]: e5910000
         let insn = decode_bytes(&[0x00, 0x00, 0x91, 0xe5]).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::LDR);
+    }
+
+    #[test]
+    fn extra_literal_imm8_high_nibble_does_not_alias_exclusive_decode() {
+        for (raw, mnemonic, rt, offset) in [
+            (0xe1df_0fbf_u32, Mnemonic::LDRH, 0, 0xff),
+            (0xe15f_1fbf, Mnemonic::LDRH, 1, -0xff),
+            (0xe1df_2fdf, Mnemonic::LDRSB, 2, 0xff),
+            (0xe15f_3fdf, Mnemonic::LDRSB, 3, -0xff),
+            (0xe1df_4fff, Mnemonic::LDRSH, 4, 0xff),
+            (0xe15f_5fff, Mnemonic::LDRSH, 5, -0xff),
+        ] {
+            let insn = Aarch32Decoder::decode(raw).unwrap();
+            assert_eq!(insn.mnemonic, mnemonic, "{raw:#010x}");
+            assert!(
+                matches!(
+                    insn.operands.as_slice(),
+                    [Operand::Reg(reg), Operand::Mem(MemOperand {
+                        base,
+                        offset: MemOffset::Imm(actual),
+                        mode: AddressingMode::Offset,
+                    })] if reg.num == rt && base.num == 15 && *actual == offset
+                ),
+                "{raw:#010x}: {insn:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn exclusive_family_still_requires_and_accepts_fixed_1001_nibble() {
+        for (op, mnemonic) in [
+            (0_u32, Mnemonic::STXR),
+            (1, Mnemonic::LDXR),
+            (2, Mnemonic::STXP),
+            (3, Mnemonic::LDXP),
+            (4, Mnemonic::STXRB),
+            (5, Mnemonic::LDXRB),
+            (6, Mnemonic::STXRH),
+            (7, Mnemonic::LDXRH),
+        ] {
+            let raw = 0xe180_0f90 | (op << 20);
+            assert_eq!(Aarch32Decoder::decode(raw).unwrap().mnemonic, mnemonic);
+        }
     }
 
     #[test]

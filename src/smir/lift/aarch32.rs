@@ -7,11 +7,13 @@
 //!
 //! - r13 and r14 remain ordinary identity-mapped GPRs (`X13`/`X14`), not the
 //!   AArch64 host SP/LR aliases;
-//! - r15 reads/writes, predicated data operations, RRX, and the LSR/ASR-#0
-//!   encodings remain fail-closed until their pipeline/conditional/shifter
-//!   semantics can be represented without hidden native state;
+//! - r15 data-register reads/writes, predicated data operations, RRX, and the
+//!   LSR/ASR-#0 encodings remain fail-closed until their pipeline/conditional/
+//!   shifter semantics can be represented without hidden native state;
 //! - scalar LDM/STM and PUSH/POP forms without r15, user-bank transfer, or
 //!   constrained base/list aliases expand into ordered B4 helper operations;
+//! - literal scalar loads freeze the architectural `PC + 8` effective address
+//!   into W32 absolute-address IR, including subtracting and wrapping forms;
 //! - immediate/scaled-register LDRD/STRD forms over an even R0-R13 pair use
 //!   pair memory IR so a second-word load fault cannot publish either result;
 //! - unconditional and condition-code A32 branch targets use the architectural
@@ -194,6 +196,39 @@ impl Aarch32Lifter {
             Mnemonic::STRH => Some((false, MemWidth::B2, SignExtend::Zero)),
             _ => None,
         }
+    }
+
+    fn literal_load(insn: &DecodedInsn, pc: GuestAddr) -> Result<Option<OpKind>, LiftError> {
+        let Some((true, width, sign)) = Self::memory_kind(insn.mnemonic) else {
+            return Ok(None);
+        };
+        let [Operand::Reg(rt), Operand::Mem(mem)] = insn.operands.as_slice() else {
+            return Ok(None);
+        };
+        let MemOperand {
+            base,
+            offset: MemOffset::Imm(offset),
+            mode: AddressingMode::Offset,
+        } = mem
+        else {
+            return Ok(None);
+        };
+        if rt.num >= 15 || base.num != 15 {
+            return Ok(None);
+        }
+        if insn.cond.is_some() {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "predicated A32 literal load".to_string(),
+            });
+        }
+        let address = Self::pc32(pc)?.wrapping_add(8).wrapping_add(*offset as u32);
+        Ok(Some(OpKind::Load {
+            dst: Self::reg(rt.num),
+            addr: Address::Absolute(u64::from(address)),
+            width,
+            sign,
+        }))
     }
 
     fn shift_op(shift: ShiftType) -> Result<ShiftOp, LiftError> {
@@ -556,6 +591,11 @@ impl Aarch32Lifter {
         pc: GuestAddr,
         ctx: &mut LiftContext,
     ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
+        if let Some(literal) = Self::literal_load(insn, pc)? {
+            let mut ops = Vec::new();
+            Self::push(&mut ops, pc, literal);
+            return Ok((ops, ControlFlow::Fallthrough));
+        }
         if Self::rejects_hidden_state(insn) {
             return Err(LiftError::Unsupported {
                 addr: pc,
@@ -1387,7 +1427,6 @@ mod tests {
             0xe711_0002u32, // ldr r0,[r1,-r2] needs a non-clobbering address temp
             0xe7b1_0122,    // ldr r0,[r1,r2,lsr #2]! needs an address temp
             0xe5b1_1004,    // ldr r1,[r1,#4]! has constrained alias semantics
-            0xe59f_0004,    // ldr r0,[pc,#4] requires the A32 pipeline PC
         ] {
             let mut lifter = Aarch32Lifter::new();
             let mut ctx = LiftContext::new(SourceArch::Aarch32);
@@ -1399,6 +1438,91 @@ mod tests {
                 "{raw:#010x}"
             );
         }
+    }
+
+    #[test]
+    fn lifts_a32_literal_load_width_sign_add_subtract_and_wrap_matrix() {
+        for (raw, dst, address, width, sign) in [
+            (0xe59f_0004, 0, 0x100c, MemWidth::B4, SignExtend::Zero),
+            (0xe51f_1004, 1, 0x1004, MemWidth::B4, SignExtend::Zero),
+            (0xe5df_2003, 2, 0x100b, MemWidth::B1, SignExtend::Zero),
+            (0xe55f_3003, 3, 0x1005, MemWidth::B1, SignExtend::Zero),
+            (0xe1df_40b2, 4, 0x100a, MemWidth::B2, SignExtend::Zero),
+            (0xe15f_50d1, 5, 0x1007, MemWidth::B1, SignExtend::Sign),
+            (0xe1df_60f2, 6, 0x100a, MemWidth::B2, SignExtend::Sign),
+            (0xe59f_7fff, 7, 0x2007, MemWidth::B4, SignExtend::Zero),
+            (0xe51f_8fff, 8, 0x0009, MemWidth::B4, SignExtend::Zero),
+            (0xe1df_9fbf, 9, 0x1107, MemWidth::B2, SignExtend::Zero),
+            (0xe15f_afbf, 10, 0x0f09, MemWidth::B2, SignExtend::Zero),
+            (0xe1df_bfdf, 11, 0x1107, MemWidth::B1, SignExtend::Sign),
+            (0xe15f_cfdf, 12, 0x0f09, MemWidth::B1, SignExtend::Sign),
+            (0xe1df_dfff, 13, 0x1107, MemWidth::B2, SignExtend::Sign),
+            (0xe15f_efff, 14, 0x0f09, MemWidth::B2, SignExtend::Sign),
+        ] {
+            let result = lift(raw);
+            assert!(
+                matches!(
+                    result.ops.as_slice(),
+                    [SmirOp {
+                        kind: OpKind::Load {
+                            dst: actual_dst,
+                            addr: Address::Absolute(actual_address),
+                            width: actual_width,
+                            sign: actual_sign,
+                        },
+                        ..
+                    }] if *actual_dst == Aarch32Lifter::reg(dst)
+                        && *actual_address == address
+                        && *actual_width == width
+                        && *actual_sign == sign
+                ),
+                "{raw:#010x}: {result:?}"
+            );
+            assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+        }
+
+        let mut lifter = Aarch32Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch32);
+        for (pc, raw, expected) in [
+            (0xffff_fffc, 0xe59f_0004u32, 8),
+            (0xffff_fffc, 0xe51f_0008u32, 0xffff_fffc),
+        ] {
+            let result = lifter.lift_insn(pc, &raw.to_le_bytes(), &mut ctx).unwrap();
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::Load {
+                        addr: Address::Absolute(address),
+                        ..
+                    },
+                    ..
+                }] if *address == expected
+            ));
+        }
+
+        for raw in [
+            0x059f_0004u32, // predicated literal load needs conditional commit
+            0xe59f_f004,    // load-to-PC is control flow
+            0xe58f_0004,    // PC-relative store is outside the literal-load subset
+            0xe5bf_0004,    // writeback from PC is invalid for this subset
+            0xe79f_0001,    // register-offset PC base is not a literal form
+        ] {
+            assert!(
+                matches!(
+                    lifter.lift_insn(0x1000, &raw.to_le_bytes(), &mut ctx),
+                    Err(LiftError::Unsupported { .. })
+                ),
+                "{raw:#010x}"
+            );
+        }
+        assert!(matches!(
+            lifter.lift_insn(
+                u64::from(u32::MAX) + 1,
+                &0xe59f_0004u32.to_le_bytes(),
+                &mut ctx,
+            ),
+            Err(LiftError::Unsupported { .. })
+        ));
     }
 
     #[test]

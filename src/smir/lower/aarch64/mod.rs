@@ -430,9 +430,10 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-    /// Compute a guest effective address into x1 (helper arg1) from the spilled
-    /// state-struct slots — never the live host regs, which the spill froze and
-    /// the upcoming `blr` will clobber. Uses x9 as scratch.
+    /// Compute a guest effective address into x1 (helper arg1) from either a
+    /// bounded absolute literal or the spilled state-struct slots — never the
+    /// live host regs, which the spill froze and the upcoming `blr` will
+    /// clobber. Uses x9 as scratch.
     fn emit_mem_helper_addr(&mut self, addr: &Address) -> Result<(), LowerError> {
         const A: u8 = 1; // x1 = address arg
         const T: u8 = 9; // scratch
@@ -494,6 +495,15 @@ impl Aarch64Lowerer {
                 if *disp != 0 {
                     self.emit_add_signed_imm(A, A, *disp as i64, width)?;
                 }
+            }
+            Address::Absolute(address) => {
+                if width == OpWidth::W32 && *address > u64::from(u32::MAX) {
+                    return Err(LowerError::InvalidOperand {
+                        op: "AArch64 W32 mem-helper absolute address".into(),
+                        operand: format!("{address:#x}"),
+                    });
+                }
+                self.emit_mov_imm(A, *address as i64, width)?;
             }
             other => {
                 return Err(LowerError::UnsupportedOp {
@@ -18132,6 +18142,38 @@ mod tests {
             1 << 31,
             "displacement addition differs only by the sf width bit"
         );
+    }
+
+    #[test]
+    fn mem_helper_w32_absolute_address_is_materialized_and_range_checked() {
+        let mut lowerer = Aarch64Lowerer::new();
+        lowerer.set_mem_helper_addr_width(OpWidth::W32);
+        lowerer
+            .emit_mem_helper_addr(&Address::Absolute(0xfedc_ba98))
+            .expect("bounded W32 absolute address");
+        let words: Vec<u32> = lowerer
+            .code
+            .as_slice()
+            .chunks_exact(4)
+            .map(|bytes| u32::from_le_bytes(bytes.try_into().unwrap()))
+            .collect();
+        assert_eq!(
+            words.len(),
+            2,
+            "MOVZ+MOVK materialize the complete W32 address"
+        );
+        assert!(
+            words.iter().all(|word| word & 0x1f == 1),
+            "address is written to W1"
+        );
+
+        let mut out_of_range = Aarch64Lowerer::new();
+        out_of_range.set_mem_helper_addr_width(OpWidth::W32);
+        assert!(matches!(
+            out_of_range.emit_mem_helper_addr(&Address::Absolute(u64::from(u32::MAX) + 1)),
+            Err(LowerError::InvalidOperand { .. })
+        ));
+        assert!(out_of_range.code.is_empty());
     }
 
     fn x86(reg: X86Reg) -> VReg {

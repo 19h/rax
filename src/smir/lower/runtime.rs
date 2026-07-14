@@ -3928,8 +3928,10 @@ pub fn is_aarch32_aarch64_native_clobber_safe_excluding(
 ///
 /// When `allow_mem` is true, scalar B1/B2/B4 loads/stores and B4 load/store
 /// pairs are admitted only when every address component and value register is
-/// AArch32 r0-r14. Pair destinations must be distinct. Callers must pair this
-/// gate with `Aarch64Lowerer::set_mem_helpers(true)` and
+/// AArch32 r0-r14. Scalar loads additionally admit a frozen absolute address in
+/// the 32-bit guest domain for validated A32/T16/T32 literal forms; absolute
+/// stores and pairs remain rejected. Pair destinations must be distinct.
+/// Callers must pair this gate with `Aarch64Lowerer::set_mem_helpers(true)` and
 /// `Aarch64Lowerer::set_mem_helper_addr_width(OpWidth::W32)`.
 pub fn is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
     func: &crate::smir::ir::SmirFunction,
@@ -4161,7 +4163,7 @@ fn aarch32_aarch64_native_op_shape_valid(
     let arithmetic_dst = |dst: &VReg, flags: &FlagUpdate| {
         gpr(dst) || (matches!(dst, VReg::Virtual(_)) && flags.updates_any())
     };
-    let address = |addr: &Address| match addr {
+    let register_address = |addr: &Address| match addr {
         Address::Direct(base) | Address::BaseOffset { base, .. } => gpr(base),
         Address::BaseIndexScale {
             base: Some(base),
@@ -4170,6 +4172,10 @@ fn aarch32_aarch64_native_op_shape_valid(
             ..
         } => gpr(base) && gpr(index),
         _ => false,
+    };
+    let load_address = |addr: &Address| {
+        register_address(addr)
+            || matches!(addr, Address::Absolute(address) if *address <= u64::from(u32::MAX))
     };
 
     match op {
@@ -4396,7 +4402,7 @@ fn aarch32_aarch64_native_op_shape_valid(
         } => {
             allow_mem
                 && gpr(dst)
-                && address(addr)
+                && load_address(addr)
                 && matches!(
                     (width, sign),
                     (
@@ -4409,19 +4415,19 @@ fn aarch32_aarch64_native_op_shape_valid(
             src,
             addr,
             width: MemWidth::B1 | MemWidth::B2 | MemWidth::B4,
-        } => allow_mem && gpr(src) && address(addr),
+        } => allow_mem && gpr(src) && register_address(addr),
         OpKind::LoadPair {
             dst1,
             dst2,
             addr,
             width: MemWidth::B4,
-        } => allow_mem && dst1 != dst2 && gpr(dst1) && gpr(dst2) && address(addr),
+        } => allow_mem && dst1 != dst2 && gpr(dst1) && gpr(dst2) && register_address(addr),
         OpKind::StorePair {
             src1,
             src2,
             addr,
             width: MemWidth::B4,
-        } => allow_mem && gpr(src1) && gpr(src2) && address(addr),
+        } => allow_mem && gpr(src1) && gpr(src2) && register_address(addr),
         _ => false,
     }
 }
@@ -5263,6 +5269,12 @@ mod jit_gate_tests {
     fn aarch32_aarch64_gate_admits_only_bounded_scalar_memory_shapes() {
         let valid = vec![
             OpKind::Load {
+                dst: arm_x(12),
+                addr: Address::Absolute(0xffff_fffc),
+                width: MemWidth::B2,
+                sign: SignExtend::Sign,
+            },
+            OpKind::Load {
                 dst: arm_x(0),
                 addr: Address::BaseOffset {
                     base: arm_x(13),
@@ -5327,6 +5339,12 @@ mod jit_gate_tests {
                 addr: Address::Direct(arm_x(1)),
                 width: MemWidth::B4,
                 sign: SignExtend::Sign,
+            },
+            OpKind::Load {
+                dst: arm_x(0),
+                addr: Address::Absolute(u64::from(u32::MAX) + 1),
+                width: MemWidth::B4,
+                sign: SignExtend::Zero,
             },
             OpKind::Store {
                 src: arm_x(0),

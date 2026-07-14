@@ -1721,6 +1721,16 @@ impl ThumbDecoder {
         let hw1 = (raw >> 16) as u16;
         let hw2 = raw as u16;
         let base = Self::any_reg((hw1 & 0xF) as u8);
+        if base.num == 15 {
+            // T32 literal loads use Rn=PC and encode U in hw1 bit 7 plus a
+            // full imm12 in hw2.  They are not T4/register-offset forms: in
+            // particular, a subtracting literal with imm12[11]=0 previously
+            // fell through to the register-offset decoder and treated the low
+            // nibble of the displacement as Rm.
+            let imm12 = (hw2 & 0xFFF) as i64;
+            let offset = if (hw1 >> 7) & 1 == 1 { imm12 } else { -imm12 };
+            return MemOperand::imm_offset(base, offset);
+        }
         if (hw1 >> 7) & 1 == 1 {
             // T3: positive 12-bit immediate offset.
             MemOperand::imm_offset(base, (hw2 & 0xFFF) as i64)
@@ -1994,6 +2004,38 @@ mod tests {
         let raw = 0xf8d1_0000u32;
         let insn = ThumbDecoder::decode_32bit(raw).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::LDR);
+    }
+
+    #[test]
+    fn test_32bit_literal_loads_decode_full_positive_and_negative_imm12() {
+        for (raw, mnemonic, rt, offset) in [
+            (0xf8df_0123, Mnemonic::LDR, 0, 0x123),
+            (0xf85f_1123, Mnemonic::LDR, 1, -0x123),
+            (0xf89f_2234, Mnemonic::LDRB, 2, 0x234),
+            (0xf81f_3234, Mnemonic::LDRB, 3, -0x234),
+            (0xf8bf_4456, Mnemonic::LDRH, 4, 0x456),
+            (0xf83f_5456, Mnemonic::LDRH, 5, -0x456),
+            (0xf99f_6678, Mnemonic::LDRSB, 6, 0x678),
+            (0xf91f_7678, Mnemonic::LDRSB, 7, -0x678),
+            (0xf9bf_889a, Mnemonic::LDRSH, 8, 0x89a),
+            (0xf93f_989a, Mnemonic::LDRSH, 9, -0x89a),
+            (0xf8df_afff, Mnemonic::LDR, 10, 0xfff),
+            (0xf85f_bfff, Mnemonic::LDR, 11, -0xfff),
+        ] {
+            let insn = ThumbDecoder::decode_32bit(raw).unwrap();
+            assert_eq!(insn.mnemonic, mnemonic, "{raw:#010x}");
+            assert!(
+                matches!(
+                    insn.operands.as_slice(),
+                    [Operand::Reg(reg), Operand::Mem(MemOperand {
+                        base,
+                        offset: MemOffset::Imm(actual),
+                        mode: AddressingMode::Offset,
+                    })] if reg.num == rt && base.num == 15 && *actual == offset
+                ),
+                "{raw:#010x}: {insn:?}"
+            );
+        }
     }
 
     #[test]

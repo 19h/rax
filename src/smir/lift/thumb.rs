@@ -6,8 +6,8 @@
 //!
 //! - r13 and r14 are identity-mapped AArch32 GPRs (`X13`/`X14`), not the
 //!   AArch64 SP/LR aliases;
-//! - r15, IT-state predication, predicated data instructions, RRX, and
-//!   flag-setting logical/move/shift forms fail closed;
+//! - r15 data-register operands, IT-state predication, predicated data
+//!   instructions, RRX, and flag-setting logical/move/shift forms fail closed;
 //! - unconditional and explicit condition-code Thumb branches use the
 //!   architectural `PC + 4` base and become explicit SMIR control-flow edges;
 //!   CBZ/CBNZ become explicit register-conditioned edges, BL writes
@@ -15,8 +15,9 @@
 //!   BLX preserves the Thumb return-state bit while exporting the ARM/register
 //!   target state, and all PC arithmetic wraps modulo 2^32;
 //! - T16/T32 scalar single- and multiple-transfer memory uses the W32 helper
-//!   contract; PC-bearing, empty-list, and constrained base/list forms fail
-//!   closed;
+//!   contract; literal loads freeze `Align(PC + 4, 4)` into absolute-address
+//!   IR, while other PC-bearing, empty-list, and constrained base/list forms
+//!   fail closed;
 //! - T32 LDRD/STRD over validated adjacent even register pairs retain atomic
 //!   load-destination and ordered-store fault behavior through pair memory IR;
 //! - T32 MOVT and bitfield encodings are translated using their T32 layouts;
@@ -191,6 +192,39 @@ impl ThumbLifter {
             Mnemonic::STRH => Some((false, MemWidth::B2, SignExtend::Zero)),
             _ => None,
         }
+    }
+
+    fn literal_load(insn: &DecodedInsn, pc: GuestAddr) -> Result<Option<OpKind>, LiftError> {
+        let Some((true, width, sign)) = Self::memory_kind(insn.mnemonic) else {
+            return Ok(None);
+        };
+        let (rt, offset) = match insn.operands.as_slice() {
+            [Operand::Reg(rt), Operand::Label(offset)]
+                if insn.mnemonic == Mnemonic::LDR && insn.size == 2 =>
+            {
+                (rt, *offset)
+            }
+            [
+                Operand::Reg(rt),
+                Operand::Mem(MemOperand {
+                    base,
+                    offset: MemOffset::Imm(offset),
+                    mode: AddressingMode::Offset,
+                }),
+            ] if base.num == 15 => (rt, *offset),
+            _ => return Ok(None),
+        };
+        if rt.num >= 15 || insn.cond.is_some() {
+            return Ok(None);
+        }
+        let base = Self::pc32(pc)?.wrapping_add(4) & !0x3;
+        let address = base.wrapping_add(offset as u32);
+        Ok(Some(OpKind::Load {
+            dst: Self::reg(rt.num),
+            addr: Address::Absolute(u64::from(address)),
+            width,
+            sign,
+        }))
     }
 
     fn memory_address(mem: &MemOperand) -> Result<Address, LiftError> {
@@ -546,6 +580,11 @@ impl ThumbLifter {
         pc: GuestAddr,
         ctx: &mut LiftContext,
     ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
+        if let Some(literal) = Self::literal_load(insn, pc)? {
+            let mut ops = Vec::new();
+            Self::push(&mut ops, pc, literal);
+            return Ok((ops, ControlFlow::Fallthrough));
+        }
         if Self::rejects_hidden_state(insn) {
             return Err(LiftError::Unsupported {
                 addr: pc,
@@ -2005,7 +2044,6 @@ mod tests {
             &[0x08, 0x40],             // ANDS r0,r1: N/Z, preserve C/V
             &[0x48, 0x00],             // LSLS r0,r1,#1: N/Z/C, preserve V
             &[0x78, 0x46],             // MOV r0,pc
-            &[0x00, 0x48],             // LDR r0,[PC,#0] requires aligned PC+4
             &[0x51, 0xf8, 0x04, 0x1f], // LDR r1,[r1,#4]! aliases writeback
             &[0x4f, 0xea, 0x31, 0x00], // RRX r0,r1
             &[0x01, 0xfa, 0x02, 0xf0], // LSL.W r0,r1,r2: low-8 count semantics
@@ -2019,6 +2057,165 @@ mod tests {
                 Err(LiftError::Unsupported { .. })
             ));
         }
+    }
+
+    #[test]
+    fn lifts_t16_t32_literal_load_alignment_width_sign_add_subtract_and_wrap_matrix() {
+        let t16 = lift(&[0x00, 0x48]);
+        assert!(matches!(
+            t16.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::Load {
+                    dst,
+                    addr: Address::Absolute(0x1004),
+                    width: MemWidth::B4,
+                    sign: SignExtend::Zero,
+                },
+                ..
+            }] if *dst == ThumbLifter::reg(0)
+        ));
+        assert!(matches!(
+            lift(&[0xff, 0x48]).ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::Load {
+                    addr: Address::Absolute(0x1400),
+                    ..
+                },
+                ..
+            }]
+        ));
+
+        let cases: &[(&[u8], u8, u64, MemWidth, SignExtend)] = &[
+            (
+                &[0xdf, 0xf8, 0x23, 0x01],
+                0,
+                0x1127,
+                MemWidth::B4,
+                SignExtend::Zero,
+            ),
+            (
+                &[0x5f, 0xf8, 0x23, 0x11],
+                1,
+                0x0ee1,
+                MemWidth::B4,
+                SignExtend::Zero,
+            ),
+            (
+                &[0x9f, 0xf8, 0x34, 0x22],
+                2,
+                0x1238,
+                MemWidth::B1,
+                SignExtend::Zero,
+            ),
+            (
+                &[0x1f, 0xf8, 0x34, 0x32],
+                3,
+                0x0dd0,
+                MemWidth::B1,
+                SignExtend::Zero,
+            ),
+            (
+                &[0xbf, 0xf8, 0x56, 0x44],
+                4,
+                0x145a,
+                MemWidth::B2,
+                SignExtend::Zero,
+            ),
+            (
+                &[0x1f, 0xf9, 0x56, 0x54],
+                5,
+                0x0bae,
+                MemWidth::B1,
+                SignExtend::Sign,
+            ),
+            (
+                &[0xbf, 0xf9, 0x78, 0x66],
+                6,
+                0x167c,
+                MemWidth::B2,
+                SignExtend::Sign,
+            ),
+            (
+                &[0x3f, 0xf9, 0x78, 0x76],
+                7,
+                0x098c,
+                MemWidth::B2,
+                SignExtend::Sign,
+            ),
+            (
+                &[0xdf, 0xf8, 0xff, 0x8f],
+                8,
+                0x2003,
+                MemWidth::B4,
+                SignExtend::Zero,
+            ),
+            (
+                &[0x5f, 0xf8, 0xff, 0x9f],
+                9,
+                0x0005,
+                MemWidth::B4,
+                SignExtend::Zero,
+            ),
+        ];
+        for (bytes, dst, address, width, sign) in cases {
+            let result = lift(bytes);
+            assert!(
+                matches!(
+                    result.ops.as_slice(),
+                    [SmirOp {
+                        kind: OpKind::Load {
+                            dst: actual_dst,
+                            addr: Address::Absolute(actual_address),
+                            width: actual_width,
+                            sign: actual_sign,
+                        },
+                        ..
+                    }] if *actual_dst == ThumbLifter::reg(*dst)
+                        && *actual_address == *address
+                        && *actual_width == *width
+                        && *actual_sign == *sign
+                ),
+                "{bytes:02x?}: {result:?}"
+            );
+        }
+
+        let mut lifter = ThumbLifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Thumb);
+        for (pc, bytes, expected) in [
+            (0x1002, &[0x00, 0x48][..], 0x1004),
+            (0xffff_fffe, &[0x01, 0x48][..], 4),
+            (0xffff_fffe, &[0xdf, 0xf8, 0x04, 0x00][..], 4),
+            (0xffff_fffe, &[0x5f, 0xf8, 0x04, 0x00][..], 0xffff_fffc),
+        ] {
+            let result = lifter.lift_insn(pc, bytes, &mut ctx).unwrap();
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::Load {
+                        addr: Address::Absolute(address),
+                        ..
+                    },
+                    ..
+                }] if *address == expected
+            ));
+        }
+
+        for bytes in [
+            &[0xdf, 0xf8, 0x00, 0xf0][..], // literal load to PC is control flow
+            &[0xcf, 0xf8, 0x00, 0x00][..], // PC-relative store is not admitted
+        ] {
+            assert!(
+                matches!(
+                    lifter.lift_insn(0x1000, bytes, &mut ctx),
+                    Err(LiftError::Unsupported { .. })
+                ),
+                "{bytes:02x?}"
+            );
+        }
+        assert!(matches!(
+            lifter.lift_insn(u64::from(u32::MAX) + 1, &[0x00, 0x48], &mut ctx,),
+            Err(LiftError::Unsupported { .. })
+        ));
     }
 
     #[test]
