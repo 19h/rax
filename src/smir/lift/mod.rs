@@ -7,6 +7,7 @@ pub mod aarch64;
 pub mod avx10;
 pub mod hexagon;
 pub mod riscv;
+pub mod thumb;
 pub mod x86_64;
 
 use std::collections::HashMap;

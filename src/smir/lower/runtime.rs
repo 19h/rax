@@ -3774,7 +3774,8 @@ fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ir::ops::OpKind
 /// Decide whether AArch32-lifted scalar SMIR can execute through the AArch64
 /// identity trampoline without exposing host-only state.
 ///
-/// The initial contract is deliberately register-only and A32-state specific:
+/// The initial contract is deliberately register-only and AArch32-state
+/// specific (A32 or unpredicated T16/T32):
 /// r0-r14 map to W0-W14, r15 is rejected because architectural PC reads are
 /// pipeline-relative and writes are control flow, and every data result is
 /// W32.  Flag-discarding comparison temporaries are accepted because the
@@ -3840,8 +3841,8 @@ fn aarch32_aarch64_native_op_shape_valid(op: &crate::smir::ir::ops::OpKind) -> b
             src2,
             width: OpWidth::W32,
             flags,
-        }
-        | OpKind::Adc {
+        } => arithmetic_dst(dst, flags) && gpr(src1) && source(src2),
+        OpKind::Adc {
             dst,
             src1,
             src2,
@@ -3854,7 +3855,15 @@ fn aarch32_aarch64_native_op_shape_valid(op: &crate::smir::ir::ops::OpKind) -> b
             src2,
             width: OpWidth::W32,
             flags,
-        } => arithmetic_dst(dst, flags) && gpr(src1) && source(src2),
+        } => {
+            arithmetic_dst(dst, flags)
+                && gpr(src1)
+                && match src2 {
+                    SrcOperand::Imm(_) | SrcOperand::Imm64(_) => true,
+                    SrcOperand::Reg(reg) => gpr(reg),
+                    SrcOperand::Shifted { .. } | SrcOperand::Extended { .. } => false,
+                }
+        }
         OpKind::And {
             dst,
             src1,
@@ -3888,12 +3897,6 @@ fn aarch32_aarch64_native_op_shape_valid(op: &crate::smir::ir::ops::OpKind) -> b
             src,
             width: OpWidth::W32,
         }
-        | OpKind::Neg {
-            dst,
-            src,
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
-        }
         | OpKind::Clz {
             dst,
             src,
@@ -3908,6 +3911,24 @@ fn aarch32_aarch64_native_op_shape_valid(op: &crate::smir::ir::ops::OpKind) -> b
             dst,
             src,
             width: OpWidth::W32,
+        } => gpr(dst) && gpr(src),
+        OpKind::Neg {
+            dst,
+            src,
+            width: OpWidth::W32,
+            flags,
+        } => arithmetic_dst(dst, flags) && gpr(src),
+        OpKind::SignExtend {
+            dst,
+            src,
+            from_width: OpWidth::W8 | OpWidth::W16,
+            to_width: OpWidth::W32,
+        }
+        | OpKind::ZeroExtend {
+            dst,
+            src,
+            from_width: OpWidth::W8 | OpWidth::W16,
+            to_width: OpWidth::W32,
         } => gpr(dst) && gpr(src),
         OpKind::Shl {
             dst,
@@ -4298,6 +4319,24 @@ mod jit_gate_tests {
                 src: arm_x(14),
                 width: OpWidth::W32,
             },
+            OpKind::Neg {
+                dst: arm_x(4),
+                src: arm_x(5),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+            OpKind::SignExtend {
+                dst: arm_x(0),
+                src: arm_x(1),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W32,
+            },
+            OpKind::ZeroExtend {
+                dst: arm_x(2),
+                src: arm_x(3),
+                from_width: OpWidth::W16,
+                to_width: OpWidth::W32,
+            },
         ]));
 
         for rejected in [
@@ -4336,6 +4375,23 @@ mod jit_gate_tests {
                     amount: 0,
                 },
                 width: OpWidth::W32,
+            },
+            OpKind::SignExtend {
+                dst: arm_x(0),
+                src: arm_x(1),
+                from_width: OpWidth::W32,
+                to_width: OpWidth::W64,
+            },
+            OpKind::Adc {
+                dst: arm_x(0),
+                src1: arm_x(1),
+                src2: SrcOperand::Shifted {
+                    reg: arm_x(2),
+                    shift: ShiftOp::Lsl,
+                    amount: 0,
+                },
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
             },
         ] {
             assert!(!aarch32_gate(vec![rejected.clone()]), "{rejected:?}");

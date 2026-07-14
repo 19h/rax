@@ -1566,6 +1566,26 @@ impl ThumbDecoder {
             }
         } else if op1 & 0b1000 == 0 {
             // Register extends (op1 in 0..5).
+            if rn == 15 {
+                let mnemonic = match op1 {
+                    0 => Some(Mnemonic::SXTH),
+                    1 => Some(Mnemonic::UXTH),
+                    4 => Some(Mnemonic::SXTB),
+                    5 => Some(Mnemonic::UXTB),
+                    _ => None,
+                };
+                if let Some(mnemonic) = mnemonic {
+                    let rotate = ((op2 & 0x3) * 8) as u8;
+                    let source = if rotate == 0 {
+                        Operand::Reg(any(rm))
+                    } else {
+                        Operand::ShiftedReg(ShiftedRegister::new(any(rm), ShiftType::ROR, rotate))
+                    };
+                    return Ok(DecodedInsn::new(mnemonic, ExecutionState::Thumb2, raw, 4)
+                        .with_operand(Operand::Reg(any(rd)))
+                        .with_operand(source));
+                }
+            }
             return Ok(mk(Mnemonic::A32_EXTEND, &[rd, rn, rm], false));
         } else {
             // Miscellaneous operations, keyed by op1[2:0] and op2[1:0].
@@ -1968,5 +1988,28 @@ mod tests {
         let raw = 0xe92d_4ff0u32;
         let insn = ThumbDecoder::decode_32bit(raw).unwrap();
         assert_eq!(insn.mnemonic, Mnemonic::PUSH);
+    }
+
+    #[test]
+    fn test_32bit_register_extends_preserve_exact_operation() {
+        let cases = [
+            (0xfa4f_f283, Mnemonic::SXTB, 2, 3),
+            (0xfa0f_f485, Mnemonic::SXTH, 4, 5),
+            (0xfa5f_f687, Mnemonic::UXTB, 6, 7),
+            (0xfa1f_f889, Mnemonic::UXTH, 8, 9),
+        ];
+
+        for (raw, mnemonic, rd, rm) in cases {
+            let insn = ThumbDecoder::decode_32bit(raw).unwrap();
+            assert_eq!(insn.mnemonic, mnemonic);
+            assert_eq!(insn.size, 4);
+            assert_eq!(
+                insn.operands,
+                vec![
+                    Operand::Reg(Register::arm32(rd)),
+                    Operand::Reg(Register::arm32(rm))
+                ]
+            );
+        }
     }
 }

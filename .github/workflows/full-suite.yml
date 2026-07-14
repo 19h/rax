@@ -66,9 +66,9 @@ jobs:
           # exercised in differential.yml, NOT selectable as standalone `--test`s.
           - { name: arm,       tests: "--test arm --test arm_vfp_a32 --test asm_instructions" }
           # Host-specific SMIR JIT binaries are cfg-gated internally: the x86
-          # native/RISC-V-cross targets run on x86_64, while the AArch64 native
-          # and x86-to-AArch64 cross targets run on arm64.
-          - { name: smir-host, tests: "--test smir_jit_vcpu --test smir_jit_evex_masking --test riscv_smir_x86_jit --test smir_jit_aarch32_aarch64 --test smir_jit_x86_aarch64 --test aarch64_smir_native" }
+          # native/RISC-V-cross targets run on x86_64, while the AArch64 native,
+          # AArch32/Thumb-to-AArch64, and x86-to-AArch64 targets run on arm64.
+          - { name: smir-host, tests: "--test smir_jit_vcpu --test smir_jit_evex_masking --test riscv_smir_x86_jit --test smir_jit_aarch32_aarch64 --test smir_jit_thumb_aarch64 --test smir_jit_x86_aarch64 --test aarch64_smir_native" }
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - uses: ./.github/actions/setup-rust

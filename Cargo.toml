@@ -154,6 +154,10 @@ name = "smir_jit_aarch32_aarch64"
 path = "tests/suites/smir/jit/aarch32_aarch64.rs"
 
 [[test]]
+name = "smir_jit_thumb_aarch64"
+path = "tests/suites/smir/jit/thumb_aarch64.rs"
+
+[[test]]
 name = "x86_64"
 path = "tests/suites/isa/x86_64/main.rs"
 required-features = ["x86_64-suite"]
