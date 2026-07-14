@@ -87,6 +87,11 @@ fn c_addi(rd: u8, imm: i8) -> u16 {
     ((immediate >> 5) << 12) | (u16::from(rd) << 7) | ((immediate & 0x1f) << 2) | 0b01
 }
 
+fn cm_zcmp_move(r1s: u16, r2s: u16, funct2: u16) -> u16 {
+    assert!(r1s < 8 && r2s < 8 && matches!(funct2, 0b01 | 0b11));
+    (0b101 << 13) | (0b011 << 10) | (r1s << 7) | (funct2 << 5) | (r2s << 2) | 0b10
+}
+
 fn assert_equivalent(actual: &RiscVCpu, expected: &RiscVCpu) {
     for register in 0..32u8 {
         assert_eq!(actual.x(register), expected.x(register), "x{register}");
@@ -512,6 +517,51 @@ fn production_rv32_zclsd_compressed_pairs_are_native() {
     let stats = actual.jit_stats();
     assert_eq!(stats.native_executions, 2);
     assert_eq!(stats.interpreter_fallbacks, 0);
+}
+
+#[test]
+fn production_zcmp_double_moves_are_native_for_rv32_and_rv64() {
+    let mut isa = Isa::rv64gc();
+    isa.zcmp = true;
+    let cm_mvsa01 = cm_zcmp_move(0, 2, 0b01); // cm.mvsa01 x8,x18
+    let cm_mva01s = cm_zcmp_move(0, 2, 0b11); // cm.mva01s x8,x18
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(&cm_mvsa01.to_le_bytes());
+    bytes.extend_from_slice(&cm_mva01s.to_le_bytes());
+
+    for config in [
+        RiscVConfig::rv32(isa),
+        RiscVConfig {
+            xlen: Xlen::Rv64,
+            isa,
+        },
+    ] {
+        for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+            let mut expected = make_cpu(config);
+            let mut actual = make_cpu(config);
+            for cpu in [&mut expected, &mut actual] {
+                install_bytes(cpu, &bytes);
+                cpu.set_x(8, 0x1111_2222_3333_4444);
+                cpu.set_x(18, 0x5555_6666_7777_8888);
+                cpu.set_x(10, 0x0123_4567_89ab_cdef);
+                cpu.set_x(11, 0xfedc_ba98_7654_3210);
+            }
+
+            assert_eq!(expected.run(2), RiscVExit::Continue);
+            assert_eq!(actual.run_jit(2, level), RiscVExit::Continue);
+            assert_equivalent(&actual, &expected);
+            assert_eq!(actual.x(8), actual.x(10), "{:?} {level:?}", config.xlen);
+            assert_eq!(actual.x(18), actual.x(11), "{:?} {level:?}", config.xlen);
+            assert_eq!(actual.pc(), CODE + 4);
+            let stats = actual.jit_stats();
+            assert_eq!(stats.native_executions, 1, "{:?} {level:?}", config.xlen);
+            assert_eq!(
+                stats.interpreter_fallbacks, 0,
+                "{:?} {level:?}",
+                config.xlen
+            );
+        }
+    }
 }
 
 #[test]

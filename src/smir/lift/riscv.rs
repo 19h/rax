@@ -939,6 +939,46 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
+    /// Zcmp double moves have two architecturally simultaneous register
+    /// assignments. The s-register encoding maps only to x8, x9, and x18-x23,
+    /// so neither assignment aliases a0/x10 or a1/x11.
+    fn lift_zcmp_move(
+        &mut self,
+        op: RvOp,
+        r1s: u8,
+        r2s: u8,
+        addr: GuestAddr,
+        ctx: &mut LiftContext,
+    ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
+        let (dst1, src1, dst2, src2) = match op {
+            RvOp::CmMvsa01 => (r1s, 10, r2s, 11),
+            RvOp::CmMva01s => (10, r1s, 11, r2s),
+            _ => {
+                return Err(LiftError::Internal(format!(
+                    "Zcmp move lift received unexpected operation {op:?}"
+                )));
+            }
+        };
+        let width = self.op_width();
+        let ops = [(dst1, src1), (dst2, src2)]
+            .into_iter()
+            .map(|(dst, src)| {
+                SmirOp::new(
+                    ctx.next_op_id(),
+                    addr,
+                    OpKind::Mov {
+                        dst: self
+                            .def_x_reg(dst, ctx)
+                            .expect("Zcmp move destinations are nonzero"),
+                        src: SrcOperand::Reg(self.get_x_reg(src, ctx)),
+                        width,
+                    },
+                )
+            })
+            .collect();
+        Ok((ops, ControlFlow::NextInsn))
+    }
+
     /// Hypervisor memory instructions (HLV*/HSV*) are modeled like direct
     /// loads/stores in the local RISC-V interpreter.
     fn lift_hypervisor_mem(
@@ -4596,14 +4636,17 @@ impl RiscVLifter {
         addr: GuestAddr,
         ctx: &mut LiftContext,
     ) -> Result<(Vec<SmirOp>, ControlFlow), LiftError> {
-        if self.xlen == 32 && self.extensions.zclsd {
-            let decoded = rv_decode_rvc(insn, RvXlen::Rv32, &self.decoder_isa());
+        if (self.xlen == 32 && self.extensions.zclsd) || self.extensions.zcmp {
+            let decoded = rv_decode_rvc(insn, self.rv_xlen(), &self.decoder_isa());
             match decoded.op {
                 RvOp::LdPair => {
                     return self.lift_load_pair(decoded.rd, decoded.rs1, decoded.imm, addr, ctx);
                 }
                 RvOp::SdPair => {
                     return self.lift_store_pair(decoded.rs2, decoded.rs1, decoded.imm, addr, ctx);
+                }
+                RvOp::CmMvsa01 | RvOp::CmMva01s => {
+                    return self.lift_zcmp_move(decoded.op, decoded.rd, decoded.rs1, addr, ctx);
                 }
                 _ => {}
             }

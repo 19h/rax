@@ -2418,6 +2418,55 @@ fn production_jit_executes_zilsd_pairs_natively() {
 }
 
 #[test]
+fn production_jit_executes_zcmp_double_moves_natively() {
+    let mut isa = RvIsa::rv64gc();
+    isa.zcmp = true;
+    let cm_move =
+        |funct2: u16| (0b101 << 13) | (0b011 << 10) | (0 << 7) | (funct2 << 5) | (2 << 2) | 0b10;
+    let instructions = [cm_move(0b01), cm_move(0b11)]; // x10/x11 <-> x8/x18
+    let bytes = instructions
+        .into_iter()
+        .flat_map(u16::to_le_bytes)
+        .collect::<Vec<_>>();
+
+    for config in [
+        RiscVConfig::rv32(isa),
+        RiscVConfig {
+            xlen: RvXlen::Rv64,
+            isa,
+        },
+    ] {
+        for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+            let make_cpu = || RiscVCpu::new(config, Box::new(RvMemory::new(0, MEMORY_LEN)));
+            let mut expected = make_cpu();
+            let mut actual = make_cpu();
+            for cpu in [&mut expected, &mut actual] {
+                cpu.write_memory(CODE, &bytes).expect("write Zcmp code");
+                cpu.set_pc(CODE);
+                cpu.set_x(8, 0x1111_2222_3333_4444);
+                cpu.set_x(18, 0x5555_6666_7777_8888);
+                cpu.set_x(10, 0x0123_4567_89ab_cdef);
+                cpu.set_x(11, 0xfedc_ba98_7654_3210);
+            }
+
+            assert_eq!(expected.run(2), RiscVExit::Continue);
+            assert_eq!(actual.run_jit(2, level), RiscVExit::Continue);
+            assert_production_cpu_equivalent(&actual, &expected);
+            assert_eq!(actual.x(8), actual.x(10), "{:?} {level:?}", config.xlen);
+            assert_eq!(actual.x(18), actual.x(11), "{:?} {level:?}", config.xlen);
+            assert_eq!(actual.pc(), CODE + 4);
+            let stats = actual.jit_stats();
+            assert_eq!(stats.native_executions, 1, "{:?} {level:?}", config.xlen);
+            assert_eq!(
+                stats.interpreter_fallbacks, 0,
+                "{:?} {level:?}",
+                config.xlen
+            );
+        }
+    }
+}
+
+#[test]
 fn production_jit_falls_back_for_unmodeled_control_alignment_traps() {
     let mut isa = RvIsa::rv64gc();
     isa.c = false;

@@ -358,14 +358,7 @@ fn decoded_native_boundary(cfg: RiscVConfig, insn: &Insn) -> bool {
     // overlap compressed encodings otherwise consumed by scalar lift paths.
     if matches!(
         insn.op,
-        Op::CmPush
-            | Op::CmPop
-            | Op::CmPopRetz
-            | Op::CmPopRet
-            | Op::CmMvsa01
-            | Op::CmMva01s
-            | Op::CmJt
-            | Op::CmJalt
+        Op::CmPush | Op::CmPop | Op::CmPopRetz | Op::CmPopRet | Op::CmJt | Op::CmJalt
     ) {
         return false;
     }
