@@ -2977,7 +2977,15 @@ fn block_is_clobber_safe(
         // addresses via check (3). Explicitly admitted x86 scalar/vector
         // families receive exact shape checks below and, where needed, separate
         // host-feature gates before execution.
-        let mem_ok = allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. });
+        let cldemote_ok = matches!(
+            &op.kind,
+            OpKind::X86CacheControl {
+                addr,
+                kind: crate::smir::ir::ops::X86CacheControlKind::Cldemote,
+            } if x86_jit_mem_address_shape_valid(addr)
+        );
+        let mem_ok = (allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. }))
+            || cldemote_ok;
         let scalar_ok = matches!(
             op.kind,
             OpKind::AndNot { .. } | OpKind::X86Bls { .. } | OpKind::X86Adx { .. }
@@ -3026,6 +3034,9 @@ fn block_is_clobber_safe(
             }
         }
         if matches!(op.kind, OpKind::X86Random { .. }) && !x86_random_shape_valid(&op.kind) {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86CacheControl { .. }) && !cldemote_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86XGetBv { .. }) && !x86_xgetbv_shape_valid(&op.kind) {
@@ -3114,10 +3125,10 @@ fn block_is_clobber_safe(
         // both — see note above) → bail. A READ is fine ONLY as an operand of a
         // mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the correct frozen
-        // guest RSP/RBP — not the host RSP/RBP. Any OTHER op reading RSP/RBP
-        // would use the host frame pointer / host stack (wrong) → bail. (When
-        // `allow_mem` is off, `mem_ok` is always false, so this is identical to
-        // the prior "no RSP/RBP reads or writes" rule — the validated default.)
+        // guest RSP/RBP — not the host RSP/RBP. CLDEMOTE is also safe because
+        // its architecturally ignorable hint never materializes the address.
+        // Any OTHER op reading RSP/RBP would use the host frame pointer / host
+        // stack (wrong) → bail.
         if op.kind.dests().iter().any(touches_sp_bp) {
             return false;
         }
@@ -5036,7 +5047,8 @@ mod jit_gate_tests {
 
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
     use crate::smir::ir::ops::{
-        ArmDpRegShiftKind, OpKind, X86AdxKind, X86BlsKind, X86CountKind, X86OpHint,
+        ArmDpRegShiftKind, OpKind, X86AdxKind, X86BlsKind, X86CacheControlKind, X86CountKind,
+        X86OpHint,
     };
     use crate::smir::ir::types::{
         Address, ArchReg, ArmReg, BlockId, Condition, DispSize, FenceKind, FpPrecision, FunctionId,
@@ -9512,6 +9524,63 @@ mod jit_gate_tests {
             };
             assert!(malformed.is_jit_safe());
             assert!(!x86_gate(malformed), "malformed X86Random must deopt");
+        }
+    }
+
+    #[test]
+    fn x86_cldemote_gate_admits_only_the_ignorable_cache_hint() {
+        for addr in [
+            Address::Direct(x86(X86Reg::Rbx)),
+            Address::BaseOffset {
+                base: x86(X86Reg::Rsp),
+                offset: -64,
+                disp_size: DispSize::Disp8,
+            },
+            Address::SegmentRel {
+                segment: x86(X86Reg::FsBase),
+                base: Some(x86(X86Reg::Rbp)),
+                index: Some(x86(X86Reg::R9)),
+                scale: 4,
+                disp: 32,
+            },
+        ] {
+            let op = OpKind::X86CacheControl {
+                addr,
+                kind: X86CacheControlKind::Cldemote,
+            };
+            assert!(
+                !op.is_jit_safe(),
+                "cache hints remain outside the ALU whitelist"
+            );
+            assert!(x86_gate(op), "CLDEMOTE must be admitted without memory JIT");
+        }
+
+        let malformed = OpKind::X86CacheControl {
+            addr: Address::Direct(VReg::Virtual(VirtualId(12))),
+            kind: X86CacheControlKind::Cldemote,
+        };
+        assert!(!x86_gate(malformed));
+
+        for kind in [
+            X86CacheControlKind::Clflush,
+            X86CacheControlKind::Clflushopt,
+            X86CacheControlKind::Clwb,
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::X86CacheControl {
+                    addr: Address::Direct(x86(X86Reg::Rbx)),
+                    kind,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let function = builder.finish();
+            assert!(!is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                true
+            ));
         }
     }
 

@@ -529,6 +529,43 @@ fn jit_x86_fence_family_matches_interpreter() {
     assert_eq!(actual.rcx, 0);
 }
 
+/// CLDEMOTE is a non-faulting cache-placement hint and may be ignored. The JIT
+/// therefore admits even an otherwise invalid guest address without exposing
+/// it as a host memory access.
+#[test]
+fn jit_cldemote_ignored_hint_matches_interpreter_without_memory_jit() {
+    // loop: cldemote byte ptr [rsp]; dec ecx; jnz loop; hlt
+    let code = [0x0F, 0x1C, 0x04, 0x24, 0xFF, 0xC9, 0x75, 0xF8, 0xF4];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rsp = 0x0000_8000_0000_0000;
+        regs.rcx = 100;
+        regs.r8 = 0xA5A5_5A5A_C3C3_3C3C;
+        regs.rflags = 0x2 | 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+        vcpu.set_jit_mem(false);
+    };
+
+    let mut interp = make_vcpu_code(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block().expect("JIT CLDEMOTE loop"),
+        "CLDEMOTE must not require memory-helper mode"
+    );
+    run_interp(&mut jit);
+
+    let expected = interp.get_regs().unwrap();
+    let actual = jit.get_regs().unwrap();
+    assert_eq!(actual.rcx, 0);
+    assert_eq!(actual.rsp, expected.rsp);
+    assert_eq!(actual.r8, expected.r8);
+    assert_eq!(actual.rflags, expected.rflags);
+}
+
 /// RDPID must read the emulated IA32_TSC_AUX field rather than the host
 /// thread's processor identifier, zero-extend the 32-bit result, and leave
 /// RFLAGS unchanged before the loop's DEC.

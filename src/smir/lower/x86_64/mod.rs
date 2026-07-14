@@ -8,8 +8,8 @@ use std::collections::HashMap;
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CountKind, X86OpHint, X86RepMode,
-    X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap,
+    OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
+    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, BlockId, Condition, DispSize, FenceKind, FpRoundMode, GuestAddr, MemWidth,
@@ -7613,6 +7613,13 @@ impl X86_64Lowerer {
                     emitter.emit_modrm_digit(0b11, 6, dst_reg);
                     emitter.code.emit_u8(imm);
                 }
+            }
+
+            OpKind::X86CacheControl { kind, .. } if *kind == X86CacheControlKind::Cldemote => {
+                // CLDEMOTE is an architecturally ignorable cache-placement
+                // hint and raises no memory-address exception. Executing no
+                // host instruction therefore preserves guest semantics without
+                // exposing the guest linear address to the host cache hierarchy.
             }
 
             OpKind::Load {
@@ -16293,6 +16300,33 @@ mod tests {
                 ),
                 "malformed destination={dst:?} width={width:?}: {error:?}"
             );
+        }
+    }
+
+    #[test]
+    fn lower_cldemote_is_an_exact_noop_and_rejects_fault_capable_cache_forms() {
+        let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let cldemote = lower_single_op(OpKind::X86CacheControl {
+            addr: Address::Direct(rbx),
+            kind: X86CacheControlKind::Cldemote,
+        });
+        assert!(
+            !cldemote.windows(2).any(|bytes| bytes == [0x0F, 0x1C]),
+            "ignored CLDEMOTE must not expose a guest address to the host cache"
+        );
+
+        for kind in [
+            X86CacheControlKind::Clflush,
+            X86CacheControlKind::Clflushopt,
+            X86CacheControlKind::Clwb,
+        ] {
+            assert!(matches!(
+                lower_single_op_err(OpKind::X86CacheControl {
+                    addr: Address::Direct(rbx),
+                    kind,
+                }),
+                LowerError::UnsupportedOp { .. }
+            ));
         }
     }
 
