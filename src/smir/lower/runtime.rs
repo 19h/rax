@@ -2984,8 +2984,14 @@ fn block_is_clobber_safe(
                 kind: crate::smir::ir::ops::X86CacheControlKind::Cldemote,
             } if x86_jit_mem_address_shape_valid(addr)
         );
+        let alignment_ok = matches!(
+            &op.kind,
+            OpKind::X86CheckAlignment { addr, alignment }
+                if matches!(alignment, 16 | 32 | 64) && x86_jit_mem_address_shape_valid(addr)
+        );
         let mem_ok = (allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. }))
-            || cldemote_ok;
+            || cldemote_ok
+            || alignment_ok;
         let scalar_ok = matches!(
             op.kind,
             OpKind::AndNot { .. } | OpKind::X86Bls { .. } | OpKind::X86Adx { .. }
@@ -3037,6 +3043,9 @@ fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86CacheControl { .. }) && !cldemote_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86CheckAlignment { .. }) && !alignment_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86XGetBv { .. }) && !x86_xgetbv_shape_valid(&op.kind) {
@@ -3126,7 +3135,8 @@ fn block_is_clobber_safe(
         // mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the correct frozen
         // guest RSP/RBP — not the host RSP/RBP. CLDEMOTE is also safe because
-        // its architecturally ignorable hint never materializes the address.
+        // its architecturally ignorable hint never materializes the address;
+        // X86CheckAlignment snapshots live GPRs and computes from GuestRegs.
         // Any OTHER op reading RSP/RBP would use the host frame pointer / host
         // stack (wrong) → bail.
         if op.kind.dests().iter().any(touches_sp_bp) {
@@ -9581,6 +9591,92 @@ mod jit_gate_tests {
                 &std::collections::HashMap::new(),
                 true
             ));
+        }
+    }
+
+    #[test]
+    fn x86_alignment_gate_admits_exact_state_backed_shapes_without_memory_mode() {
+        for (alignment, addr) in [
+            (16, Address::Direct(x86(X86Reg::Rax))),
+            (
+                32,
+                Address::BaseOffset {
+                    base: x86(X86Reg::Rsp),
+                    offset: i64::MIN,
+                    disp_size: DispSize::Disp32,
+                },
+            ),
+            (
+                64,
+                Address::BaseIndexScale {
+                    base: Some(x86(X86Reg::Rbp)),
+                    index: x86(X86Reg::R16),
+                    scale: 8,
+                    disp: -64,
+                    disp_size: DispSize::Disp8,
+                },
+            ),
+            (
+                16,
+                Address::PcRel {
+                    offset: -32,
+                    disp_size: DispSize::Disp32,
+                    base: Some(0x1020),
+                },
+            ),
+            (32, Address::Absolute(0x2000)),
+            (
+                64,
+                Address::SegmentRel {
+                    segment: x86(X86Reg::GsBase),
+                    base: Some(x86(X86Reg::Rsp)),
+                    index: Some(x86(X86Reg::R31)),
+                    scale: 4,
+                    disp: i64::MAX,
+                },
+            ),
+        ] {
+            let op = OpKind::X86CheckAlignment { addr, alignment };
+            assert!(!op.is_jit_safe(), "alignment checks are control operations");
+            assert!(
+                x86_gate(op),
+                "validated alignment check must not require MMU-helper mode"
+            );
+        }
+
+        for malformed in [
+            OpKind::X86CheckAlignment {
+                addr: Address::Direct(x86(X86Reg::Rax)),
+                alignment: 8,
+            },
+            OpKind::X86CheckAlignment {
+                addr: Address::Direct(VReg::Virtual(VirtualId(4))),
+                alignment: 16,
+            },
+            OpKind::X86CheckAlignment {
+                addr: Address::BaseIndexScale {
+                    base: None,
+                    index: x86(X86Reg::Rax),
+                    scale: 3,
+                    disp: 0,
+                    disp_size: DispSize::Auto,
+                },
+                alignment: 32,
+            },
+            OpKind::X86CheckAlignment {
+                addr: Address::PcRel {
+                    offset: 0,
+                    disp_size: DispSize::Auto,
+                    base: None,
+                },
+                alignment: 64,
+            },
+            OpKind::X86CheckAlignment {
+                addr: Address::GpRel { offset: 0 },
+                alignment: 16,
+            },
+        ] {
+            assert!(!x86_gate(malformed), "malformed alignment check must deopt");
         }
     }
 

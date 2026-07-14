@@ -7615,6 +7615,10 @@ impl X86_64Lowerer {
                 }
             }
 
+            OpKind::X86CheckAlignment { addr, alignment } => {
+                self.emit_x86_check_alignment(op.guest_pc, addr, *alignment)?;
+            }
+
             OpKind::X86CacheControl { kind, .. } if *kind == X86CacheControlKind::Cldemote => {
                 // CLDEMOTE is an architecturally ignorable cache-placement
                 // hint and raises no memory-address exception. Executing no
@@ -11694,6 +11698,28 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    /// Add a wrapping signed 64-bit displacement to RSI. The generic memory
+    /// helper path accepts only architectural x86 disp32 values, but a lifted
+    /// FS/GS RIP-relative address may already have folded a 64-bit next-RIP
+    /// into `SegmentRel::disp`; alignment evaluation must reproduce that full
+    /// wrapping calculation without dereferencing the resulting host address.
+    fn emit_add_rsi_wrapping_i64(&mut self, value: i64) {
+        if value == 0 {
+            return;
+        }
+        if i32::try_from(value).is_ok() {
+            self.code.emit_u8(0x48);
+            self.code.emit_u8(0x81);
+            self.code.emit_u8(0xC6); // add rsi, imm32
+            self.code.emit_u32(value as u32);
+        } else {
+            self.emit_movabs(7, value as u64); // rdi = sign-preserving displacement bits
+            self.code.emit_u8(0x48);
+            self.code.emit_u8(0x01);
+            self.code.emit_u8(0xFE); // add rsi, rdi
+        }
+    }
+
     /// `movabs <reg64 enc>, imm64`.
     fn emit_movabs(&mut self, reg_enc: u8, imm: u64) {
         let mut rex = 0x48u8;
@@ -11714,6 +11740,177 @@ impl X86_64Lowerer {
             self.emit_struct_mov(base, enc, (enc as i32) * 8, false);
         }
         self.emit_struct_mov(base, 1, 8, false); // RCX last
+    }
+
+    /// Materialize one validated x86 guest effective address into RSI from the
+    /// coherent GuestRegs snapshot at RAX. RDI is scratch. Arithmetic is
+    /// intentionally wrapping modulo 2^64, matching SMIR interpretation.
+    fn emit_x86_state_address_rsi(&mut self, addr: &Address) -> Result<(), LowerError> {
+        let load_gpr = |this: &mut Self, dst_enc: u8, reg: VReg| -> Result<(), LowerError> {
+            let index = Self::x86_gpr_index(reg).ok_or_else(|| LowerError::UnsupportedOp {
+                op: "X86CheckAlignment with non-GPR address operand".to_string(),
+            })?;
+            this.emit_struct_mov(PhysReg::Rax, dst_enc, i32::from(index) * 8, false);
+            Ok(())
+        };
+        let add_rdi_to_rsi = |this: &mut Self| {
+            this.code.emit_u8(0x48);
+            this.code.emit_u8(0x01);
+            this.code.emit_u8(0xFE); // add rsi, rdi
+        };
+        let shift_rdi = |this: &mut Self, scale: u8| -> Result<(), LowerError> {
+            let shift = match scale {
+                1 => 0,
+                2 => 1,
+                4 => 2,
+                8 => 3,
+                _ => {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86CheckAlignment".to_string(),
+                        operand: format!("invalid address scale {scale}"),
+                    });
+                }
+            };
+            if shift != 0 {
+                this.code.emit_u8(0x48);
+                this.code.emit_u8(0xC1);
+                this.code.emit_u8(0xE7);
+                this.code.emit_u8(shift); // shl rdi, imm8
+            }
+            Ok(())
+        };
+
+        match addr {
+            Address::Direct(base) => load_gpr(self, 6, *base)?,
+            Address::BaseOffset { base, offset, .. } => {
+                load_gpr(self, 6, *base)?;
+                self.emit_add_rsi_wrapping_i64(*offset);
+            }
+            Address::BaseIndexScale {
+                base,
+                index,
+                scale,
+                disp,
+                ..
+            } => {
+                if let Some(base) = base {
+                    load_gpr(self, 6, *base)?;
+                } else {
+                    self.code.emit_u8(0x48);
+                    self.code.emit_u8(0x31);
+                    self.code.emit_u8(0xF6); // xor rsi, rsi
+                }
+                load_gpr(self, 7, *index)?;
+                shift_rdi(self, *scale)?;
+                add_rdi_to_rsi(self);
+                self.emit_add_rsi_wrapping_i64(i64::from(*disp));
+            }
+            Address::PcRel {
+                offset,
+                base: Some(base),
+                ..
+            } => self.emit_movabs(6, base.wrapping_add(*offset as u64)),
+            Address::Absolute(address) => self.emit_movabs(6, *address),
+            Address::SegmentRel {
+                segment,
+                base,
+                index,
+                scale,
+                disp,
+            } => {
+                let segment_offset = match segment {
+                    VReg::Arch(ArchReg::X86(X86Reg::FsBase)) => X86_GUEST_FS_BASE_OFFSET,
+                    VReg::Arch(ArchReg::X86(X86Reg::GsBase)) => X86_GUEST_GS_BASE_OFFSET,
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86CheckAlignment".to_string(),
+                            operand: "segment must be FS_BASE or GS_BASE".to_string(),
+                        });
+                    }
+                };
+                self.emit_struct_mov(PhysReg::Rax, 6, segment_offset, false);
+                if let Some(base) = base {
+                    load_gpr(self, 7, *base)?;
+                    add_rdi_to_rsi(self);
+                }
+                if let Some(index) = index {
+                    load_gpr(self, 7, *index)?;
+                    shift_rdi(self, *scale)?;
+                    add_rdi_to_rsi(self);
+                } else if !matches!(scale, 1 | 2 | 4 | 8) {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86CheckAlignment".to_string(),
+                        operand: format!("invalid address scale {scale}"),
+                    });
+                }
+                self.emit_add_rsi_wrapping_i64(*disp);
+            }
+            Address::PcRel { base: None, .. } | Address::GpRel { .. } => {
+                return Err(LowerError::UnsupportedOp {
+                    op: "X86CheckAlignment with unresolved address".to_string(),
+                });
+            }
+        }
+        Ok(())
+    }
+
+    /// Evaluate the explicit alignment precondition emitted for aligned x86
+    /// SIMD memory operands. No guest address is dereferenced here. A mismatch
+    /// returns at the instruction's current PC so the interpreter can deliver
+    /// #GP(0) before the following memory access; success restores all GPRs and
+    /// RFLAGS bit-for-bit and continues in the native region.
+    fn emit_x86_check_alignment(
+        &mut self,
+        guest_pc: u64,
+        addr: &Address,
+        alignment: u8,
+    ) -> Result<(), LowerError> {
+        if !matches!(alignment, 16 | 32 | 64) {
+            return Err(LowerError::InvalidOperand {
+                op: "X86CheckAlignment".to_string(),
+                operand: format!("unsupported alignment {alignment}"),
+            });
+        }
+
+        // Snapshot live legacy GPRs before evaluating the address. Guest RSP
+        // and RBP are deliberately absent from the spill and retain their
+        // frozen values in GuestRegs; EGPRs are already state-backed.
+        self.code.emit_u8(0x50); // push rax
+        self.emit_load_state_ptr_rax();
+        self.code.emit_u8(0x9C); // pushfq
+        self.emit_spill_legacy_gprs_to_state_from_rax(8);
+        self.emit_x86_state_address_rsi(addr)?;
+
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0xF7);
+        self.code.emit_u8(0xC6); // test rsi, imm32
+        self.code.emit_u32(u32::from(alignment - 1));
+        let fault = self.emit_jcc_placeholder(X86Cond::Ne);
+
+        // Aligned path: restore the snapshot and continue.
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0x89);
+        self.code.emit_u8(0xC1); // mov rcx, rax (state pointer)
+        self.emit_reload_all(PhysReg::Rcx);
+        self.code.emit_u8(0x9D); // popfq
+        self.emit_flag_preserving_stack_pop8();
+        self.code.emit_u8(0xE9);
+        let done = self.code.position();
+        self.code.emit_u32(0);
+
+        // Misaligned path: restore first, then hand the current instruction to
+        // the interpreter. Its existing X86CheckAlignment implementation emits
+        // the architecturally precise #GP(0) without committing later ops.
+        self.patch_rel32_to_current(fault)?;
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0x89);
+        self.code.emit_u8(0xC1); // mov rcx, rax
+        self.emit_reload_all(PhysReg::Rcx);
+        self.code.emit_u8(0x9D); // popfq
+        self.emit_flag_preserving_stack_pop8();
+        self.emit_native_exit(guest_pc);
+        self.patch_rel32_to_current(done)?;
+        Ok(())
     }
 
     /// Spill or reload every architectural vector/opmask register through the
@@ -16328,6 +16525,267 @@ mod tests {
                 LowerError::UnsupportedOp { .. }
             ));
         }
+    }
+
+    #[test]
+    fn lower_x86_alignment_check_emits_precise_deopt_and_rejects_malformed_ir() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let code = lower_single_op(OpKind::X86CheckAlignment {
+            addr: Address::Direct(rax),
+            alignment: 64,
+        });
+        assert!(
+            code.windows(7)
+                .any(|bytes| bytes == [0x48, 0xF7, 0xC6, 0x3F, 0, 0, 0]),
+            "alignment mask test missing from {code:02X?}"
+        );
+        assert!(
+            code.windows(2).any(|bytes| bytes == [0x0F, 0x85]),
+            "misalignment must branch to the current-PC exit"
+        );
+
+        for malformed in [
+            OpKind::X86CheckAlignment {
+                addr: Address::Direct(rax),
+                alignment: 8,
+            },
+            OpKind::X86CheckAlignment {
+                addr: Address::Direct(VReg::Virtual(crate::smir::ir::types::VirtualId(7))),
+                alignment: 16,
+            },
+            OpKind::X86CheckAlignment {
+                addr: Address::BaseIndexScale {
+                    base: None,
+                    index: rax,
+                    scale: 3,
+                    disp: 0,
+                    disp_size: DispSize::Auto,
+                },
+                alignment: 32,
+            },
+            OpKind::X86CheckAlignment {
+                addr: Address::PcRel {
+                    offset: 0,
+                    disp_size: DispSize::Auto,
+                    base: None,
+                },
+                alignment: 64,
+            },
+            OpKind::X86CheckAlignment {
+                addr: Address::GpRel { offset: 0 },
+                alignment: 16,
+            },
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(malformed),
+                    LowerError::InvalidOperand { .. }
+                        | LowerError::UnsupportedOp { .. }
+                        | LowerError::InvalidRegister(_)
+                        | LowerError::RegisterAllocationFailed { .. }
+                ),
+                "malformed alignment check must fail lowering"
+            );
+        }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_x86_alignment_check_covers_addresses_preserves_state_and_deopts_precisely() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let marker = 0xD1CE_BA5E_F00D_CAFEu64;
+        let sentinel_pc = 0xABCD_EF01_2345_6789u64;
+        let status = 0x8D5u64; // CF, PF, AF, ZF, SF, OF
+
+        let mut cases = Vec::new();
+
+        let mut direct = GuestRegs::default();
+        direct.gpr[0] = 0x1000;
+        cases.push((
+            "direct/aligned16",
+            Address::Direct(x86(X86Reg::Rax)),
+            16,
+            direct,
+            false,
+        ));
+
+        let mut stack = GuestRegs::default();
+        stack.gpr[4] = 0x2011;
+        cases.push((
+            "rsp+disp/misaligned32",
+            Address::BaseOffset {
+                base: x86(X86Reg::Rsp),
+                offset: -16,
+                disp_size: DispSize::Disp8,
+            },
+            32,
+            stack,
+            true,
+        ));
+
+        let mut sib = GuestRegs::default();
+        sib.gpr[5] = 0x3000;
+        sib.gpr[9] = 8;
+        cases.push((
+            "rbp+r9*8-64/aligned64",
+            Address::BaseIndexScale {
+                base: Some(x86(X86Reg::Rbp)),
+                index: x86(X86Reg::R9),
+                scale: 8,
+                disp: -64,
+                disp_size: DispSize::Disp8,
+            },
+            64,
+            sib,
+            false,
+        ));
+
+        cases.push((
+            "pcrel/misaligned64",
+            Address::PcRel {
+                offset: -1,
+                disp_size: DispSize::Disp8,
+                base: Some(0x4000),
+            },
+            64,
+            GuestRegs::default(),
+            true,
+        ));
+        cases.push((
+            "absolute/aligned32",
+            Address::Absolute(0x5000),
+            32,
+            GuestRegs::default(),
+            false,
+        ));
+
+        let mut segmented = GuestRegs::default();
+        segmented.fs_base = 0x5F00;
+        segmented.gpr[4] = 0x80;
+        segmented.gpr[16] = 0x20;
+        cases.push((
+            "fs+rsp+r16*4/aligned64",
+            Address::SegmentRel {
+                segment: x86(X86Reg::FsBase),
+                base: Some(x86(X86Reg::Rsp)),
+                index: Some(x86(X86Reg::R16)),
+                scale: 4,
+                disp: 0,
+            },
+            64,
+            segmented,
+            false,
+        ));
+
+        let mut wide_disp = GuestRegs::default();
+        wide_disp.gs_base = 0x8000_0000_0000_6001;
+        cases.push((
+            "gs+wide-disp/aligned16",
+            Address::SegmentRel {
+                segment: x86(X86Reg::GsBase),
+                base: None,
+                index: None,
+                scale: 1,
+                disp: i64::MIN,
+            },
+            16,
+            wide_disp,
+            true,
+        ));
+
+        for (name, addr, alignment, mut regs, should_fault) in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, OpKind::X86CheckAlignment { addr, alignment });
+            builder.push_op(
+                0x1001,
+                OpKind::Mov {
+                    dst: x86(X86Reg::R11),
+                    src: SrcOperand::Imm64(marker as i64),
+                    width: OpWidth::W64,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("lower {name}: {error:?}"));
+            let exec = ExecMem::new(&lowerer.finalize().expect("finalize alignment check"))
+                .expect("map alignment check");
+
+            regs.gpr[11] = 0x1111_2222_3333_4444;
+            regs.rflags = 0x2 | status;
+            regs.exit_pc = sentinel_pc;
+            let before = regs;
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.rflags & status, status, "{name}: status flags");
+            for index in 0..32 {
+                let expected = if index == 11 && !should_fault {
+                    marker
+                } else {
+                    before.gpr[index]
+                };
+                assert_eq!(regs.gpr[index], expected, "{name}: gpr[{index}]");
+            }
+            assert_eq!(
+                regs.exit_pc,
+                if should_fault { 0x1000 } else { sentinel_pc },
+                "{name}: precise resume PC"
+            );
+        }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_x86_alignment_check_snapshots_prior_native_register_writes() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let r11 = VReg::Arch(ArchReg::X86(X86Reg::R11));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x2000);
+        builder.push_op(
+            0x2000,
+            OpKind::Mov {
+                dst: rax,
+                src: SrcOperand::Imm64(0x4000),
+                width: OpWidth::W64,
+            },
+        );
+        builder.push_op(
+            0x2001,
+            OpKind::X86CheckAlignment {
+                addr: Address::Direct(rax),
+                alignment: 64,
+            },
+        );
+        builder.push_op(
+            0x2002,
+            OpKind::Mov {
+                dst: r11,
+                src: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&builder.finish())
+            .expect("lower prior-write alignment check");
+        let exec = ExecMem::new(
+            &lowerer
+                .finalize()
+                .expect("finalize prior-write alignment check"),
+        )
+        .expect("map prior-write alignment check");
+        let mut regs = GuestRegs::default();
+        regs.gpr[0] = 0x4001; // stale entry value is intentionally misaligned
+        regs.exit_pc = 0xDEAD;
+        exec.run(lowered.entry_offset, &mut regs);
+        assert_eq!(regs.gpr[0], 0x4000);
+        assert_eq!(regs.gpr[11], 1, "aligned continuation must execute");
+        assert_eq!(regs.exit_pc, 0xDEAD, "must not deopt from stale state");
     }
 
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
