@@ -543,8 +543,16 @@ fn run_memory_native_at(
 }
 
 fn assert_native_parity(program: &[ThumbInsn<'_>], initial: Aarch32GuestRegs) -> Aarch32GuestRegs {
+    assert_native_parity_at(program, initial, OptLevel::O0)
+}
+
+fn assert_native_parity_at(
+    program: &[ThumbInsn<'_>],
+    initial: Aarch32GuestRegs,
+    level: OptLevel,
+) -> Aarch32GuestRegs {
     let expected = reference(program, initial);
-    let (exec, entry) = lower(program);
+    let (exec, entry) = lower_configured_at(program, false, level);
     let mut actual = initial;
     exec.run_aarch32_identity(entry, &mut actual);
     assert_eq!(actual.r, expected.r, "complete Thumb GPR file");
@@ -566,6 +574,71 @@ fn mixed_t16_t32_scalar_program_executes_natively_with_interpreter_parity() {
         actual.r[12], actual.r[13],
         "r13 is identity-mapped, not host SP"
     );
+}
+
+#[test]
+fn t32_register_shifts_match_interpreter_for_aliases_counts_flags_and_optimization() {
+    fn encode(kind: u16, setflags: bool, dst: u8, src: u8, amount: u8) -> [u8; 4] {
+        let op1 = (kind << 1) | u16::from(setflags);
+        let hw1 = 0xfa00_u16 | (op1 << 4) | u16::from(src);
+        let hw2 = 0xf000_u16 | (u16::from(dst) << 8) | u16::from(amount);
+        let [a, b] = hw1.to_le_bytes();
+        let [c, d] = hw2.to_le_bytes();
+        [a, b, c, d]
+    }
+
+    for kind in 0_u16..4 {
+        for setflags in [false, true] {
+            for &(dst, src, amount) in &[
+                (12_usize, 13_usize, 14_usize),
+                (13, 13, 14),
+                (14, 13, 14),
+                (12, 13, 13),
+                (13, 13, 13),
+            ] {
+                let bytes = encode(kind, setflags, dst as u8, src as u8, amount as u8);
+                let program = [ThumbInsn {
+                    bytes: &bytes,
+                    asm: "T32 register-controlled shift",
+                }];
+                for level in [OptLevel::O0, OptLevel::O2] {
+                    let (exec, entry) = lower_configured_at(&program, false, level);
+                    for &(value, raw_count) in &[
+                        (0x8000_0001_u32, 0_u32),
+                        (0x8000_0001, 1),
+                        (0x8000_0001, 31),
+                        (0x8000_0001, 32),
+                        (0x8000_0001, 33),
+                        (0x8000_0001, 255),
+                        (0x8000_0001, 256),
+                        (0x7fff_ffff, 257),
+                    ] {
+                        for nzcv in 0_u32..16 {
+                            let mut initial = initial_state();
+                            initial.r[src] = value;
+                            initial.r[amount] = raw_count;
+                            initial.cpsr = (initial.cpsr & !0xf000_0000) | (nzcv << 28);
+                            let expected = reference(&program, initial);
+                            let mut actual = initial;
+                            exec.run_aarch32_identity(entry, &mut actual);
+                            assert_eq!(
+                                actual, expected,
+                                "kind={kind} S={setflags} aliases=({dst},{src},{amount}) count={raw_count:#x} NZCV={nzcv:#x} {level:?}"
+                            );
+                            for reg in 0..15 {
+                                if reg != dst {
+                                    assert_eq!(
+                                        actual.r[reg], initial.r[reg],
+                                        "kind={kind} S={setflags} aliases=({dst},{src},{amount}) {level:?} r{reg}"
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 #[test]

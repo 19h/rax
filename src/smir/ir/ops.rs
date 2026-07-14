@@ -666,10 +666,12 @@ pub enum OpKind {
     /// The effective count is the low 8 bits of `amount`, not the generic
     /// SMIR/x86 six-bit count.  For W32 operands, LSL/LSR counts above 32
     /// produce zero, ASR counts at or above 32 produce the sign fill, and ROR
-    /// uses the count modulo 32.  A zero count preserves carry while N/Z are
-    /// still updated from the result. Current producers use W32, one of
-    /// LSL/LSR/ASR/ROR, and `Specific(N|Z|C)`; optimization may erase the flag
-    /// update to `None` when all three outputs are dead.
+    /// uses the count modulo 32. A zero count preserves carry when C is
+    /// requested while N/Z are updated from the result. Current producers use
+    /// W32 and one of LSL/LSR/ASR/ROR. T16 uses a destructive destination and
+    /// `Specific(N|Z|C)`; T32 independently encodes all three registers and
+    /// selects either `Specific(N|Z|C)` or `None`. Optimization may erase the
+    /// flag update to `None` when all three outputs are dead.
     ArmRegShift {
         dst: VReg,
         src: VReg,

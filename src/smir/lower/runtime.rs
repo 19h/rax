@@ -4288,8 +4288,8 @@ fn aarch32_aarch64_native_op_shape_valid(
             width: OpWidth::W32,
             flags,
         } => {
-            *dst == *src
-                && gpr(dst)
+            gpr(dst)
+                && gpr(src)
                 && matches!(
                     shift,
                     ShiftOp::Lsl | ShiftOp::Lsr | ShiftOp::Asr | ShiftOp::Ror
@@ -5306,7 +5306,7 @@ mod jit_gate_tests {
     }
 
     #[test]
-    fn aarch32_aarch64_gate_admits_exact_t16_selective_nzcv_shapes_only() {
+    fn aarch32_aarch64_gate_admits_selective_nzcv_and_independent_register_shifts() {
         let nz = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF));
         let nzc = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF));
         let mut accepted = Vec::new();
@@ -5389,7 +5389,7 @@ mod jit_gate_tests {
         }
         accepted.push(OpKind::ArmRegShift {
             dst: arm_x(2),
-            src: arm_x(2),
+            src: arm_x(4),
             amount: SrcOperand::Reg(arm_x(3)),
             shift: ShiftOp::Lsl,
             width: OpWidth::W32,
@@ -5444,17 +5444,25 @@ mod jit_gate_tests {
             },
             OpKind::ArmRegShift {
                 dst: arm_x(0),
-                src: arm_x(1),
+                src: arm_x(0),
+                amount: SrcOperand::Reg(arm_x(2)),
+                shift: ShiftOp::Rrx,
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+            OpKind::ArmRegShift {
+                dst: arm_x(0),
+                src: arm_x(15),
                 amount: SrcOperand::Reg(arm_x(2)),
                 shift: ShiftOp::Lsl,
                 width: OpWidth::W32,
                 flags: nzc,
             },
             OpKind::ArmRegShift {
-                dst: arm_x(0),
+                dst: arm_x(15),
                 src: arm_x(0),
                 amount: SrcOperand::Reg(arm_x(2)),
-                shift: ShiftOp::Rrx,
+                shift: ShiftOp::Lsl,
                 width: OpWidth::W32,
                 flags: nzc,
             },

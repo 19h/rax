@@ -2110,9 +2110,16 @@ impl OpKind {
                 FlagSet::CF
             }
 
-            // A zero low-byte count preserves C, so the architectural carry
-            // value is an input even though C is also part of the output set.
-            OpKind::ArmRegShift { .. } => FlagSet::CF,
+            // A zero low-byte count preserves C only when C is among the
+            // requested architectural outputs. Flagless T32 forms and
+            // dead-flag-eliminated shifts do not consume the incoming carry.
+            OpKind::ArmRegShift { flags, .. } => {
+                if flags.as_set().contains(FlagSet::CF) {
+                    FlagSet::CF
+                } else {
+                    FlagSet::EMPTY
+                }
+            }
 
             OpKind::X86Adx { kind, .. } => match kind {
                 X86AdxKind::Adcx => FlagSet::CF,
@@ -9106,6 +9113,16 @@ mod tests {
         assert_eq!(metadata.flags_must_write(), nzc.as_set());
         assert_eq!(metadata.flags_read(), FlagSet::CF);
 
+        let flagless_metadata = OpKind::ArmRegShift {
+            dst: copy,
+            src: data,
+            amount: SrcOperand::Reg(count),
+            shift: ShiftOp::Ror,
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        };
+        assert_eq!(flagless_metadata.flags_read(), FlagSet::EMPTY);
+
         for (shift, expected) in [
             (ShiftOp::Lsl, 0_i64),
             (ShiftOp::Lsr, 0),
@@ -9191,6 +9208,28 @@ mod tests {
         assert!(matches!(
             dead_flags.ops[0].kind,
             OpKind::ArmRegShift {
+                flags: FlagUpdate::None,
+                ..
+            }
+        ));
+
+        let mut flagless_consumer = SmirBlock::new(BlockId(0), 0x1000);
+        flagless_consumer.push_op(make_op(
+            0,
+            OpKind::And {
+                dst: data,
+                src1: VReg::Imm(0x8000_0001),
+                src2: SrcOperand::Imm(-1),
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+        ));
+        flagless_consumer.push_op(make_op(1, flagless_metadata));
+        flagless_consumer.set_terminator(Terminator::Return { values: vec![copy] });
+        assert_eq!(dead_flag_elimination(&mut flagless_consumer), 1);
+        assert!(matches!(
+            flagless_consumer.ops[0].kind,
+            OpKind::And {
                 flags: FlagUpdate::None,
                 ..
             }

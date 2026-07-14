@@ -9,7 +9,8 @@
 //! - r15 data-register operands, IT-state predication, predicated data
 //!   instructions and RRX fail closed; T16 move/logical/multiply/shift forms
 //!   use selective NZCV contracts so architecturally preserved flags remain
-//!   unchanged, including exact low-byte register-controlled shift counts;
+//!   unchanged; T16 and T32 register-controlled shifts use exact low-byte
+//!   counts and admit independent T32 destination/value/count registers;
 //! - unconditional and explicit condition-code Thumb branches use the
 //!   architectural `PC + 4` base and become explicit SMIR control-flow edges;
 //!   CBZ/CBNZ become explicit register-conditioned edges, BL writes
@@ -539,14 +540,68 @@ impl ThumbLifter {
         FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF))
     }
 
-    fn t16_partial_nzc_flags() -> FlagUpdate {
+    fn partial_nzc_flags() -> FlagUpdate {
         FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF))
     }
 
+    /// Lift T16/T32 register-controlled shifts through the AArch32-specific
+    /// low-byte-count operation. T16 has a destructive low-register encoding;
+    /// T32 independently encodes destination, value, and count registers and
+    /// optionally updates N/Z/C while preserving V.
+    fn lift_register_shift(insn: &DecodedInsn, pc: GuestAddr, ops: &mut Vec<SmirOp>) -> bool {
+        let (shift, setflags) = match insn.mnemonic {
+            Mnemonic::LSL => (crate::smir::ir::types::ShiftOp::Lsl, false),
+            Mnemonic::LSLS => (crate::smir::ir::types::ShiftOp::Lsl, true),
+            Mnemonic::LSR => (crate::smir::ir::types::ShiftOp::Lsr, false),
+            Mnemonic::LSRS => (crate::smir::ir::types::ShiftOp::Lsr, true),
+            Mnemonic::ASR => (crate::smir::ir::types::ShiftOp::Asr, false),
+            Mnemonic::ASRS => (crate::smir::ir::types::ShiftOp::Asr, true),
+            Mnemonic::ROR => (crate::smir::ir::types::ShiftOp::Ror, false),
+            Mnemonic::RORS => (crate::smir::ir::types::ShiftOp::Ror, true),
+            _ => return false,
+        };
+        let [Operand::Reg(rd), Operand::Reg(rn), Operand::Reg(rs)] = insn.operands.as_slice()
+        else {
+            return false;
+        };
+        if insn.sets_flags != setflags {
+            return false;
+        }
+
+        let valid_encoding = match (insn.state, insn.size) {
+            (ExecutionState::Thumb, 2) => {
+                setflags && rd.num < 8 && rn.num < 8 && rs.num < 8 && rd.num == rn.num
+            }
+            (ExecutionState::Thumb2, 4) => rd.num < 15 && rn.num < 15 && rs.num < 15,
+            _ => false,
+        };
+        if !valid_encoding {
+            return false;
+        }
+
+        Self::push(
+            ops,
+            pc,
+            OpKind::ArmRegShift {
+                dst: Self::reg(rd.num),
+                src: Self::reg(rn.num),
+                amount: SrcOperand::Reg(Self::reg(rs.num)),
+                shift,
+                width: OpWidth::W32,
+                flags: if setflags {
+                    Self::partial_nzc_flags()
+                } else {
+                    FlagUpdate::None
+                },
+            },
+        );
+        true
+    }
+
     /// Lift the T16 operations whose flag contract updates only N/Z or N/Z/C.
-    /// T32 S-bit forms deliberately do not enter this path. T16 register-
-    /// controlled shifts use a dedicated IR operation because their low-byte
-    /// count contract differs from generic SMIR/x86 shifts.
+    /// T32 S-bit forms deliberately do not enter this path. Register-controlled
+    /// shifts are handled separately because their low-byte count contract
+    /// differs from generic SMIR/x86 shifts.
     fn lift_t16_partial_flags(
         insn: &DecodedInsn,
         pc: GuestAddr,
@@ -558,7 +613,7 @@ impl ThumbLifter {
         }
 
         let nz = Self::t16_partial_nz_flags();
-        let nzc = Self::t16_partial_nzc_flags();
+        let nzc = Self::partial_nzc_flags();
         if let (Mnemonic::MOVS, [Operand::Reg(rd), Operand::Imm(imm)]) =
             (insn.mnemonic, insn.operands.as_slice())
         {
@@ -697,26 +752,6 @@ impl ThumbLifter {
                     _ => unreachable!(),
                 }
             }
-            (
-                mnemonic @ (Mnemonic::LSLS | Mnemonic::LSRS | Mnemonic::ASRS | Mnemonic::RORS),
-                [Operand::Reg(rd), Operand::Reg(rn), Operand::Reg(rs)],
-            ) if rd.num < 15 && rn.num < 15 && rs.num < 15 && rd.num == rn.num => {
-                let shift = match mnemonic {
-                    Mnemonic::LSLS => crate::smir::ir::types::ShiftOp::Lsl,
-                    Mnemonic::LSRS => crate::smir::ir::types::ShiftOp::Lsr,
-                    Mnemonic::ASRS => crate::smir::ir::types::ShiftOp::Asr,
-                    Mnemonic::RORS => crate::smir::ir::types::ShiftOp::Ror,
-                    _ => unreachable!(),
-                };
-                OpKind::ArmRegShift {
-                    dst: Self::reg(rd.num),
-                    src: Self::reg(rn.num),
-                    amount: SrcOperand::Reg(Self::reg(rs.num)),
-                    shift,
-                    width: OpWidth::W32,
-                    flags: nzc,
-                }
-            }
             _ => return Ok(false),
         };
 
@@ -788,6 +823,9 @@ impl ThumbLifter {
 
         let normalized = Self::normalize_regs(insn);
         let mut ops = Vec::new();
+        if Self::lift_register_shift(&normalized, pc, &mut ops) {
+            return Ok((ops, ControlFlow::Fallthrough));
+        }
         if Self::lift_t16_partial_flags(&normalized, pc, ctx, &mut ops)? {
             return Ok((ops, ControlFlow::Fallthrough));
         }
@@ -2234,7 +2272,7 @@ mod tests {
     #[test]
     fn lifts_t16_selective_flag_move_logic_multiply_and_immediate_shift_matrix() {
         let nz = ThumbLifter::t16_partial_nz_flags();
-        let nzc = ThumbLifter::t16_partial_nzc_flags();
+        let nzc = ThumbLifter::partial_nzc_flags();
 
         assert!(matches!(
             lift(&[0x00, 0x20]).ops.as_slice(),
@@ -2373,7 +2411,7 @@ mod tests {
 
     #[test]
     fn lifts_all_t16_register_shift_encodings_with_exact_low_byte_contract() {
-        let nzc = ThumbLifter::t16_partial_nzc_flags();
+        let nzc = ThumbLifter::partial_nzc_flags();
         for (op, expected_shift) in [
             (0b0010_u16, ShiftOp::Lsl),
             (0b0011, ShiftOp::Lsr),
@@ -2412,13 +2450,76 @@ mod tests {
     }
 
     #[test]
+    fn lifts_all_t32_register_shift_encodings_with_independent_registers_and_flags() {
+        let nzc = ThumbLifter::partial_nzc_flags();
+        for (kind, expected_shift) in [
+            (0_u16, ShiftOp::Lsl),
+            (1, ShiftOp::Lsr),
+            (2, ShiftOp::Asr),
+            (3, ShiftOp::Ror),
+        ] {
+            for setflags in [false, true] {
+                let op1 = (kind << 1) | u16::from(setflags);
+                for rd in 0_u8..16 {
+                    for rn in 0_u8..16 {
+                        for rs in 0_u8..16 {
+                            let hw1 = 0xfa00_u16 | (op1 << 4) | u16::from(rn);
+                            let hw2 = 0xf000_u16 | (u16::from(rd) << 8) | u16::from(rs);
+                            let [a, b] = hw1.to_le_bytes();
+                            let [c, d] = hw2.to_le_bytes();
+                            let bytes = [a, b, c, d];
+                            let mut lifter = ThumbLifter::new();
+                            let mut ctx = LiftContext::new(SourceArch::Thumb);
+                            let lifted = lifter.lift_insn(0x1000, &bytes, &mut ctx);
+
+                            if rd == 15 || rn == 15 || rs == 15 {
+                                assert!(
+                                    matches!(lifted, Err(LiftError::Unsupported { .. })),
+                                    "PC-bearing T32 shift escaped: {bytes:02x?} {lifted:?}"
+                                );
+                                continue;
+                            }
+
+                            let result = lifted.unwrap_or_else(|error| {
+                                panic!("T32 shift {bytes:02x?} failed: {error}")
+                            });
+                            let expected_flags = if setflags { nzc } else { FlagUpdate::None };
+                            assert_eq!(result.bytes_consumed, 4, "raw={bytes:02x?}");
+                            assert!(
+                                matches!(
+                                    result.ops.as_slice(),
+                                    [SmirOp {
+                                        kind: OpKind::ArmRegShift {
+                                            dst,
+                                            src,
+                                            amount: SrcOperand::Reg(amount),
+                                            shift,
+                                            width: OpWidth::W32,
+                                            flags,
+                                        },
+                                        ..
+                                    }] if *dst == ThumbLifter::reg(rd)
+                                        && *src == ThumbLifter::reg(rn)
+                                        && *amount == ThumbLifter::reg(rs)
+                                        && *shift == expected_shift
+                                        && *flags == expected_flags
+                                ),
+                                "raw={bytes:02x?}: {result:?}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn rejects_it_pc_memory_aliases_and_unmodeled_shifter_contracts() {
         let cases: &[&[u8]] = &[
             &[0x08, 0xbf],             // IT EQ
             &[0x78, 0x46],             // MOV r0,pc
             &[0x51, 0xf8, 0x04, 0x1f], // LDR r1,[r1,#4]! aliases writeback
             &[0x4f, 0xea, 0x31, 0x00], // RRX r0,r1
-            &[0x01, 0xfa, 0x02, 0xf0], // LSL.W r0,r1,r2: low-8 count semantics
             &[0x4f, 0xfa, 0x93, 0xf2], // SXTB.W r2,r3,ROR #8
         ];
         for bytes in cases {

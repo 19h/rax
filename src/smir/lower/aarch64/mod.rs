@@ -13538,8 +13538,9 @@ impl Aarch64Lowerer {
         let temp = scratches[4];
         self.emit_scratch_save(&scratches);
 
-        // Snapshot both operands before writing the destination.  This is
-        // required for the legal T16 alias `Rdn == Rm`.
+        // Snapshot both operands before writing the destination. This covers
+        // the destructive T16 form and every legal T32 destination/value/count
+        // alias, including all three architectural registers being identical.
         self.emit_mov_reg(original, src, OpWidth::W32)?;
         match amount {
             SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => {
@@ -23670,7 +23671,7 @@ mod tests {
     }
 
     #[test]
-    fn lowers_t16_register_shifts_with_exact_low_byte_flags_and_aliasing() {
+    fn lowers_t16_t32_register_shifts_with_exact_low_byte_flags_and_aliasing() {
         fn expected(value: u32, raw_count: u64, shift: ShiftOp, carry_in: bool) -> (u32, bool) {
             let count = (raw_count & 0xff) as u32;
             if count == 0 {
@@ -23812,6 +23813,71 @@ mod tests {
                 assert_eq!(out[0], u64::from(result));
                 assert_eq!(out_nzcv, old_nzcv);
                 assert_eq!(sp, 0x8000);
+            }
+
+            // T32 independently encodes Rd, Rn (value), and Rm (count). Cover
+            // every equality partition, both architectural flag modes, all
+            // prior NZCV states, and the count boundaries that differ from
+            // A64's modulo-32 variable shifts.
+            for &(dst, src, amount_reg) in &[
+                (0_u8, 1_u8, 2_u8),
+                (0, 0, 2),
+                (0, 1, 0),
+                (0, 1, 1),
+                (0, 0, 0),
+            ] {
+                for flags in [FlagUpdate::None, nzc] {
+                    let code = lower_single_op(OpKind::ArmRegShift {
+                        dst: x(dst),
+                        src: x(src),
+                        amount: SrcOperand::Reg(x(amount_reg)),
+                        shift,
+                        width: OpWidth::W32,
+                        flags,
+                    });
+                    for &(value, raw_count) in &[
+                        (0x8000_0001_u64, 0_u64),
+                        (0x8000_0001, 1),
+                        (0x8000_0001, 31),
+                        (0x8000_0001, 32),
+                        (0x8000_0001, 33),
+                        (0x8000_0001, 255),
+                        (0x8000_0001, 256),
+                        (0x7fff_ffff, 257),
+                    ] {
+                        let mut input = [0xaaaa_aaaa_u64, 0xbbbb_bbbb, 0xcccc_cccc];
+                        input[usize::from(src)] = value;
+                        input[usize::from(amount_reg)] = raw_count;
+                        let actual_value = input[usize::from(src)] as u32;
+                        let actual_count = input[usize::from(amount_reg)];
+                        for old_nzcv in 0_u8..16 {
+                            let (result, carry) =
+                                expected(actual_value, actual_count, shift, old_nzcv & 0b0010 != 0);
+                            let regs = [(0, input[0]), (1, input[1]), (2, input[2])];
+                            let (out, out_nzcv, sp) = run_aarch64_code(&code, &regs, old_nzcv);
+                            assert_eq!(
+                                out[usize::from(dst)],
+                                u64::from(result),
+                                "{shift:?} aliases=({dst},{src},{amount_reg}) count={actual_count:#x}"
+                            );
+                            let expected_nzcv = if flags == FlagUpdate::None {
+                                old_nzcv
+                            } else {
+                                ((result >> 31) as u8) << 3
+                                    | ((result == 0) as u8) << 2
+                                    | (carry as u8) << 1
+                                    | (old_nzcv & 1)
+                            };
+                            assert_eq!(out_nzcv, expected_nzcv);
+                            for reg in 0_u8..3 {
+                                if reg != dst {
+                                    assert_eq!(out[usize::from(reg)], input[usize::from(reg)]);
+                                }
+                            }
+                            assert_eq!(sp, 0x8000);
+                        }
+                    }
+                }
             }
         }
     }

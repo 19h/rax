@@ -16758,6 +16758,136 @@ mod tests {
         }
     }
 
+    #[test]
+    fn lifted_t32_register_shifts_interpret_independent_aliases_and_flag_modes() {
+        fn expected(value: u32, raw_count: u64, shift: ShiftOp, carry_in: bool) -> (u32, bool) {
+            let count = (raw_count & 0xff) as u32;
+            if count == 0 {
+                return (value, carry_in);
+            }
+            match shift {
+                ShiftOp::Lsl if count < 32 => (value << count, (value >> (32 - count)) & 1 != 0),
+                ShiftOp::Lsl if count == 32 => (0, value & 1 != 0),
+                ShiftOp::Lsl => (0, false),
+                ShiftOp::Lsr if count < 32 => (value >> count, (value >> (count - 1)) & 1 != 0),
+                ShiftOp::Lsr if count == 32 => (0, value >> 31 != 0),
+                ShiftOp::Lsr => (0, false),
+                ShiftOp::Asr if count < 32 => (
+                    ((value as i32) >> count) as u32,
+                    (value >> (count - 1)) & 1 != 0,
+                ),
+                ShiftOp::Asr => {
+                    let sign = value >> 31 != 0;
+                    (if sign { u32::MAX } else { 0 }, sign)
+                }
+                ShiftOp::Ror => {
+                    let result = value.rotate_right(count % 32);
+                    (result, result >> 31 != 0)
+                }
+                ShiftOp::Rrx => unreachable!(),
+            }
+        }
+
+        fn encode(kind: u16, setflags: bool, dst: u8, src: u8, amount: u8) -> [u8; 4] {
+            let op1 = (kind << 1) | u16::from(setflags);
+            let hw1 = 0xfa00_u16 | (op1 << 4) | u16::from(src);
+            let hw2 = 0xf000_u16 | (u16::from(dst) << 8) | u16::from(amount);
+            let [a, b] = hw1.to_le_bytes();
+            let [c, d] = hw2.to_le_bytes();
+            [a, b, c, d]
+        }
+
+        let regs = [
+            VReg::Arch(ArchReg::Arm(ArmReg::X(0))),
+            VReg::Arch(ArchReg::Arm(ArmReg::X(1))),
+            VReg::Arch(ArchReg::Arm(ArmReg::X(2))),
+        ];
+        for (kind, shift) in [
+            (0_u16, ShiftOp::Lsl),
+            (1, ShiftOp::Lsr),
+            (2, ShiftOp::Asr),
+            (3, ShiftOp::Ror),
+        ] {
+            for setflags in [false, true] {
+                for &(dst, src, amount) in &[
+                    (0_usize, 1_usize, 2_usize),
+                    (0, 0, 2),
+                    (0, 1, 0),
+                    (0, 1, 1),
+                    (0, 0, 0),
+                ] {
+                    let bytes = encode(kind, setflags, dst as u8, src as u8, amount as u8);
+                    for &(value, raw_count) in &[
+                        (0x8000_0001_u64, 0_u64),
+                        (0x8000_0001, 1),
+                        (0x8000_0001, 31),
+                        (0x8000_0001, 32),
+                        (0x8000_0001, 33),
+                        (0x8000_0001, 255),
+                        (0x8000_0001, 256),
+                        (0x7fff_ffff, 257),
+                    ] {
+                        let mut input = [0xaaaa_aaaa_u64, 0xbbbb_bbbb, 0xcccc_cccc];
+                        input[src] = value;
+                        input[amount] = raw_count;
+                        for old_nzcv in 0_u8..16 {
+                            let (result, carry) = expected(
+                                input[src] as u32,
+                                input[amount],
+                                shift,
+                                old_nzcv & 0b0010 != 0,
+                            );
+                            let mut ctx = SmirContext::new_aarch64();
+                            for (reg, initial) in regs.into_iter().zip(input) {
+                                ctx.write_vreg(reg, initial);
+                            }
+                            ctx.flags.materialized = MaterializedFlags {
+                                sf: old_nzcv & 0b1000 != 0,
+                                zf: old_nzcv & 0b0100 != 0,
+                                cf: old_nzcv & 0b0010 != 0,
+                                of: old_nzcv & 0b0001 != 0,
+                                pf: true,
+                                af: true,
+                                df: true,
+                            };
+                            ctx.flags.lazy = None;
+
+                            assert!(matches!(
+                                execute_lifted_thumb(&bytes, &mut ctx),
+                                BlockResult::Exit(ExitReason::Halt)
+                            ));
+                            assert_eq!(ctx.read_vreg(regs[dst]), u64::from(result));
+                            for reg in 0..3 {
+                                if reg != dst {
+                                    assert_eq!(ctx.read_vreg(regs[reg]), input[reg]);
+                                }
+                            }
+                            let actual_nzcv = (u8::from(ctx.flags.materialized.sf) << 3)
+                                | (u8::from(ctx.flags.materialized.zf) << 2)
+                                | (u8::from(ctx.flags.materialized.cf) << 1)
+                                | u8::from(ctx.flags.materialized.of);
+                            let expected_nzcv = if setflags {
+                                ((result >> 31) as u8) << 3
+                                    | (u8::from(result == 0) << 2)
+                                    | (u8::from(carry) << 1)
+                                    | (old_nzcv & 1)
+                            } else {
+                                old_nzcv
+                            };
+                            assert_eq!(
+                                actual_nzcv, expected_nzcv,
+                                "{shift:?} S={setflags} aliases=({dst},{src},{amount}) count={raw_count:#x}"
+                            );
+                            assert!(ctx.flags.materialized.pf);
+                            assert!(ctx.flags.materialized.af);
+                            assert!(ctx.flags.materialized.df);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fn execute_lifted_x86_condition(
         bytes: &[u8],
         ctx: &mut SmirContext,
