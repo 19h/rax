@@ -11,8 +11,8 @@ use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86OpHint, X86RepMode, X86StringKind, X86VecAlign, X86X87DataKind,
 };
 use crate::smir::ir::types::{
-    Address, ArchReg, ArmReg, BlockId, HexagonReg, MemWidth, OpWidth, SignExtend, SrcOperand, VReg,
-    VecElementType, VecWidth, X86Reg,
+    Address, ArchReg, ArmReg, BlockId, HexagonReg, MemWidth, OpWidth, ShiftOp, SignExtend,
+    SrcOperand, VReg, VecElementType, VecWidth, X86Reg,
 };
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 
@@ -150,6 +150,7 @@ fn op_out_width(kind: &OpKind) -> Option<OpWidth> {
         | OpKind::X86NddDoubleShift { width, .. }
         | OpKind::Rol { width, .. }
         | OpKind::Ror { width, .. }
+        | OpKind::ArmRegShift { width, .. }
         | OpKind::Rcl { width, .. }
         | OpKind::Rcr { width, .. }
         | OpKind::MulU { width, .. }
@@ -729,6 +730,55 @@ pub fn constant_propagation(block: &mut SmirBlock) -> usize {
                     _ => {
                         constants.remove(dst);
                     }
+                }
+            }
+
+            OpKind::ArmRegShift {
+                dst,
+                src,
+                amount,
+                shift,
+                width,
+                ..
+            } => {
+                if let SrcOperand::Reg(r) = amount {
+                    if let Some(&val) = constants.get(r) {
+                        *amount = SrcOperand::Imm(val);
+                        propagated += 1;
+                    }
+                }
+                let folded = if *width == OpWidth::W32 {
+                    if let (Some(&value), SrcOperand::Imm(raw_count)) =
+                        (constants.get(src), &*amount)
+                    {
+                        let value = value as u32;
+                        let count = (*raw_count as u64 & 0xff) as u32;
+                        match shift {
+                            ShiftOp::Lsl if count < 32 => Some(value.wrapping_shl(count) as i64),
+                            ShiftOp::Lsl => Some(0),
+                            ShiftOp::Lsr if count < 32 => Some(value.wrapping_shr(count) as i64),
+                            ShiftOp::Lsr => Some(0),
+                            ShiftOp::Asr if count < 32 => {
+                                Some(((value as i32) >> count) as u32 as i64)
+                            }
+                            ShiftOp::Asr => Some(if value & 0x8000_0000 != 0 {
+                                i64::from(u32::MAX)
+                            } else {
+                                0
+                            }),
+                            ShiftOp::Ror => Some(value.rotate_right(count % 32) as i64),
+                            ShiftOp::Rrx => None,
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+                if let Some(value) = folded {
+                    constants.insert(*dst, value);
+                } else {
+                    constants.remove(dst);
                 }
             }
 
@@ -1924,6 +1974,7 @@ impl OpKind {
             | OpKind::X86NddDoubleShift { flags, .. }
             | OpKind::Rol { flags, .. }
             | OpKind::Ror { flags, .. }
+            | OpKind::ArmRegShift { flags, .. }
             | OpKind::Rcl { flags, .. }
             | OpKind::Rcr { flags, .. }
             | OpKind::Bsf { flags, .. }
@@ -1954,6 +2005,7 @@ impl OpKind {
             | OpKind::Shl { flags, .. }
             | OpKind::Shr { flags, .. }
             | OpKind::Sar { flags, .. }
+            | OpKind::ArmRegShift { flags, .. }
             | OpKind::Shld { flags, .. }
             | OpKind::Shrd { flags, .. }
             | OpKind::X86NddDoubleShift { flags, .. }
@@ -2057,6 +2109,10 @@ impl OpKind {
             OpKind::Adc { .. } | OpKind::Sbb { .. } | OpKind::Rcl { .. } | OpKind::Rcr { .. } => {
                 FlagSet::CF
             }
+
+            // A zero low-byte count preserves C, so the architectural carry
+            // value is an input even though C is also part of the output set.
+            OpKind::ArmRegShift { .. } => FlagSet::CF,
 
             OpKind::X86Adx { kind, .. } => match kind {
                 X86AdxKind::Adcx => FlagSet::CF,
@@ -2211,6 +2267,7 @@ impl OpKind {
             | OpKind::Sar { src, amount, .. }
             | OpKind::Rol { src, amount, .. }
             | OpKind::Ror { src, amount, .. }
+            | OpKind::ArmRegShift { src, amount, .. }
             | OpKind::Rcl { src, amount, .. }
             | OpKind::Rcr { src, amount, .. } => {
                 result.push(*src);
@@ -9023,6 +9080,118 @@ mod tests {
             block.ops[5].kind,
             OpKind::Mov {
                 src: SrcOperand::Imm(0xffff_ffff),
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn aarch32_register_shift_metadata_and_low_byte_constants_are_exact() {
+        let nzc = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF));
+        let data = VReg::virt(0);
+        let count = VReg::virt(1);
+        let copy = VReg::virt(2);
+
+        let metadata = OpKind::ArmRegShift {
+            dst: data,
+            src: data,
+            amount: SrcOperand::Reg(count),
+            shift: ShiftOp::Lsl,
+            width: OpWidth::W32,
+            flags: nzc,
+        };
+        assert_eq!(metadata.dests(), vec![data]);
+        assert_eq!(metadata.source_vregs(), vec![data, count]);
+        assert_eq!(metadata.flags_written(), nzc.as_set());
+        assert_eq!(metadata.flags_must_write(), nzc.as_set());
+        assert_eq!(metadata.flags_read(), FlagSet::CF);
+
+        for (shift, expected) in [
+            (ShiftOp::Lsl, 0_i64),
+            (ShiftOp::Lsr, 0),
+            (ShiftOp::Asr, i64::from(u32::MAX)),
+            (ShiftOp::Ror, i64::from(0x8000_0001_u32)),
+        ] {
+            let mut block = SmirBlock::new(BlockId(0), 0x1000);
+            block.push_op(make_op(
+                0,
+                OpKind::Mov {
+                    dst: data,
+                    src: SrcOperand::Imm(i64::from(0x8000_0001_u32)),
+                    width: OpWidth::W32,
+                },
+            ));
+            block.push_op(make_op(
+                1,
+                OpKind::Mov {
+                    dst: count,
+                    src: SrcOperand::Imm(0x120),
+                    width: OpWidth::W32,
+                },
+            ));
+            block.push_op(make_op(
+                2,
+                OpKind::ArmRegShift {
+                    dst: data,
+                    src: data,
+                    amount: SrcOperand::Reg(count),
+                    shift,
+                    width: OpWidth::W32,
+                    flags: nzc,
+                },
+            ));
+            block.push_op(make_op(
+                3,
+                OpKind::Mov {
+                    dst: copy,
+                    src: SrcOperand::Reg(data),
+                    width: OpWidth::W32,
+                },
+            ));
+            block.set_terminator(Terminator::Return { values: vec![copy] });
+
+            assert!(constant_propagation(&mut block) >= 2);
+            assert!(matches!(
+                block.ops[2].kind,
+                OpKind::ArmRegShift {
+                    amount: SrcOperand::Imm(0x120),
+                    flags,
+                    ..
+                } if flags == nzc
+            ));
+            assert!(matches!(
+                block.ops[3].kind,
+                OpKind::Mov {
+                    src: SrcOperand::Imm(value),
+                    ..
+                } if value == expected
+            ));
+        }
+
+        let mut live_flags = SmirBlock::new(BlockId(0), 0x1000);
+        live_flags.push_op(make_op(0, metadata));
+        live_flags.set_terminator(Terminator::Return { values: vec![] });
+        assert_eq!(dead_code_elimination(&mut live_flags), 0);
+        assert_eq!(live_flags.ops.len(), 1);
+
+        let mut dead_flags = SmirBlock::new(BlockId(0), 0x1000);
+        dead_flags.push_op(make_op(
+            0,
+            OpKind::ArmRegShift {
+                dst: data,
+                src: data,
+                amount: SrcOperand::Reg(count),
+                shift: ShiftOp::Lsr,
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+        ));
+        dead_flags.set_terminator(Terminator::Return { values: vec![data] });
+        assert_eq!(dead_flag_elimination(&mut dead_flags), 1);
+        assert!(matches!(
+            dead_flags.ops[0].kind,
+            OpKind::ArmRegShift {
+                flags: FlagUpdate::None,
                 ..
             }
         ));

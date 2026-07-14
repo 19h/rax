@@ -661,6 +661,24 @@ pub enum OpKind {
         flags: FlagUpdate,
     },
 
+    /// AArch32 register-controlled shift/rotate.
+    ///
+    /// The effective count is the low 8 bits of `amount`, not the generic
+    /// SMIR/x86 six-bit count.  For W32 operands, LSL/LSR counts above 32
+    /// produce zero, ASR counts at or above 32 produce the sign fill, and ROR
+    /// uses the count modulo 32.  A zero count preserves carry while N/Z are
+    /// still updated from the result. Current producers use W32, one of
+    /// LSL/LSR/ASR/ROR, and `Specific(N|Z|C)`; optimization may erase the flag
+    /// update to `None` when all three outputs are dead.
+    ArmRegShift {
+        dst: VReg,
+        src: VReg,
+        amount: SrcOperand,
+        shift: ShiftOp,
+        width: OpWidth,
+        flags: FlagUpdate,
+    },
+
     /// Rotate through carry left
     Rcl {
         dst: VReg,
@@ -3778,6 +3796,7 @@ impl OpKind {
             | OpKind::X86NddDoubleShift { dst, .. }
             | OpKind::Rol { dst, .. }
             | OpKind::Ror { dst, .. }
+            | OpKind::ArmRegShift { dst, .. }
             | OpKind::Rcl { dst, .. }
             | OpKind::Rcr { dst, .. }
             | OpKind::BidirShift { dst, .. }

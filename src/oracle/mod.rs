@@ -1519,6 +1519,14 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             width,
             flags,
         } => op_json!("ror", dst, src, amount, width, flags),
+        OpKind::ArmRegShift {
+            dst,
+            src,
+            amount,
+            shift,
+            width,
+            flags,
+        } => op_json!("arm_reg_shift", dst, src, amount, shift, width, flags),
         OpKind::Rcl {
             dst,
             src,

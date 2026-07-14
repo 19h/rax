@@ -4280,6 +4280,27 @@ fn aarch32_aarch64_native_op_shape_valid(
             src,
             width: OpWidth::W32,
         } => gpr(dst) && gpr(src),
+        OpKind::ArmRegShift {
+            dst,
+            src,
+            amount,
+            shift,
+            width: OpWidth::W32,
+            flags,
+        } => {
+            *dst == *src
+                && gpr(dst)
+                && matches!(
+                    shift,
+                    ShiftOp::Lsl | ShiftOp::Lsr | ShiftOp::Asr | ShiftOp::Ror
+                )
+                && (*flags == FlagUpdate::None || *flags == partial_nzc)
+                && match amount {
+                    SrcOperand::Imm(_) | SrcOperand::Imm64(_) => true,
+                    SrcOperand::Reg(reg) => gpr(reg),
+                    SrcOperand::Shifted { .. } | SrcOperand::Extended { .. } => false,
+                }
+        }
         OpKind::Neg {
             dst,
             src,
@@ -5352,6 +5373,28 @@ mod jit_gate_tests {
                 flags: nzc,
             },
         ]);
+        for shift in [ShiftOp::Lsl, ShiftOp::Lsr, ShiftOp::Asr, ShiftOp::Ror] {
+            accepted.push(OpKind::ArmRegShift {
+                dst: arm_x(0),
+                src: arm_x(0),
+                amount: if shift == ShiftOp::Ror {
+                    SrcOperand::Imm(0x120)
+                } else {
+                    SrcOperand::Reg(arm_x(1))
+                },
+                shift,
+                width: OpWidth::W32,
+                flags: nzc,
+            });
+        }
+        accepted.push(OpKind::ArmRegShift {
+            dst: arm_x(2),
+            src: arm_x(2),
+            amount: SrcOperand::Reg(arm_x(3)),
+            shift: ShiftOp::Lsl,
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        });
         assert!(aarch32_gate(accepted));
 
         let bad_nz = FlagUpdate::Specific(FlagSet::ZF);
@@ -5398,6 +5441,58 @@ mod jit_gate_tests {
                 amount: SrcOperand::Imm(1),
                 width: OpWidth::W32,
                 flags: nzc,
+            },
+            OpKind::ArmRegShift {
+                dst: arm_x(0),
+                src: arm_x(1),
+                amount: SrcOperand::Reg(arm_x(2)),
+                shift: ShiftOp::Lsl,
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+            OpKind::ArmRegShift {
+                dst: arm_x(0),
+                src: arm_x(0),
+                amount: SrcOperand::Reg(arm_x(2)),
+                shift: ShiftOp::Rrx,
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+            OpKind::ArmRegShift {
+                dst: arm_x(0),
+                src: arm_x(0),
+                amount: SrcOperand::Shifted {
+                    reg: arm_x(2),
+                    shift: ShiftOp::Lsl,
+                    amount: 1,
+                },
+                shift: ShiftOp::Lsr,
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+            OpKind::ArmRegShift {
+                dst: arm_x(0),
+                src: arm_x(0),
+                amount: SrcOperand::Reg(arm_x(15)),
+                shift: ShiftOp::Asr,
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+            OpKind::ArmRegShift {
+                dst: arm_x(0),
+                src: arm_x(0),
+                amount: SrcOperand::Imm(1),
+                shift: ShiftOp::Ror,
+                width: OpWidth::W64,
+                flags: nzc,
+            },
+            OpKind::ArmRegShift {
+                dst: arm_x(0),
+                src: arm_x(0),
+                amount: SrcOperand::Imm(1),
+                shift: ShiftOp::Ror,
+                width: OpWidth::W32,
+                flags: bad_nz,
             },
         ] {
             assert!(!aarch32_gate(vec![rejected.clone()]), "{rejected:?}");

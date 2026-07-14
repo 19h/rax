@@ -1327,6 +1327,44 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::ArmRegShift {
+                dst,
+                src,
+                amount,
+                shift,
+                width,
+                flags,
+            } => {
+                use crate::isa::arm::aarch32::cpu::shift_c;
+                use crate::isa::arm::decoder::ShiftType;
+
+                debug_assert_eq!(*width, OpWidth::W32);
+                let value = ctx.read_vreg(*src) as u32;
+                let count = (self.read_src_operand(ctx, amount) & 0xff) as u32;
+                ctx.flags.materialize_all();
+                let carry_in = ctx.flags.materialized.cf;
+                let shift_type = match shift {
+                    crate::smir::ir::types::ShiftOp::Lsl => ShiftType::LSL,
+                    crate::smir::ir::types::ShiftOp::Lsr => ShiftType::LSR,
+                    crate::smir::ir::types::ShiftOp::Asr => ShiftType::ASR,
+                    crate::smir::ir::types::ShiftOp::Ror => ShiftType::ROR,
+                    crate::smir::ir::types::ShiftOp::Rrx => ShiftType::RRX,
+                };
+                let (result, carry) = shift_c(value, shift_type, count, carry_in);
+                Self::write_gpr(ctx, *dst, u64::from(result), OpWidth::W32);
+
+                let updated = flags.as_set();
+                if updated.contains(FlagSet::SF) {
+                    ctx.flags.materialized.sf = result & 0x8000_0000 != 0;
+                }
+                if updated.contains(FlagSet::ZF) {
+                    ctx.flags.materialized.zf = result == 0;
+                }
+                if updated.contains(FlagSet::CF) {
+                    ctx.flags.materialized.cf = carry;
+                }
+            }
+
             OpKind::Rcl {
                 dst,
                 src,
@@ -16455,6 +16493,7 @@ mod tests {
     use crate::smir::ir::FunctionBuilder;
     use crate::smir::ir::flags::{FlagSet, FlagUpdate, MaterializedFlags};
     use crate::smir::ir::memory::{FlatMemory, SmirMemory};
+    use crate::smir::ir::types::ShiftOp;
 
     #[test]
     fn interworking_call_targets_use_explicit_pc_and_w32_indirect_masking() {
@@ -16605,6 +16644,116 @@ mod tests {
                 assert!(ctx.flags.materialized.pf, "PF is outside T16 NZCV writes");
                 assert!(ctx.flags.materialized.af, "AF is outside T16 NZCV writes");
                 assert!(ctx.flags.materialized.df, "DF is outside T16 NZCV writes");
+            }
+        }
+    }
+
+    #[test]
+    fn lifted_t16_register_shifts_interpret_low_byte_boundaries_and_aliases() {
+        fn expected(value: u32, raw_count: u64, shift: ShiftOp, carry_in: bool) -> (u32, bool) {
+            let count = (raw_count & 0xff) as u32;
+            if count == 0 {
+                return (value, carry_in);
+            }
+            match shift {
+                ShiftOp::Lsl if count < 32 => (value << count, (value >> (32 - count)) & 1 != 0),
+                ShiftOp::Lsl if count == 32 => (0, value & 1 != 0),
+                ShiftOp::Lsl => (0, false),
+                ShiftOp::Lsr if count < 32 => (value >> count, (value >> (count - 1)) & 1 != 0),
+                ShiftOp::Lsr if count == 32 => (0, value >> 31 != 0),
+                ShiftOp::Lsr => (0, false),
+                ShiftOp::Asr if count < 32 => (
+                    ((value as i32) >> count) as u32,
+                    (value >> (count - 1)) & 1 != 0,
+                ),
+                ShiftOp::Asr => {
+                    let sign = value >> 31 != 0;
+                    (if sign { u32::MAX } else { 0 }, sign)
+                }
+                ShiftOp::Ror => {
+                    let result = value.rotate_right(count % 32);
+                    (result, result >> 31 != 0)
+                }
+                ShiftOp::Rrx => unreachable!(),
+            }
+        }
+
+        let r0 = VReg::Arch(ArchReg::Arm(ArmReg::X(0)));
+        let r1 = VReg::Arch(ArchReg::Arm(ArmReg::X(1)));
+        let values = [0_u32, 1, 0x7fff_ffff, 0x8000_0000, 0x8000_0001, u32::MAX];
+        let counts = [
+            0_u64,
+            1,
+            2,
+            31,
+            32,
+            33,
+            63,
+            64,
+            127,
+            128,
+            255,
+            256,
+            257,
+            u64::MAX,
+        ];
+
+        for (op, shift) in [
+            (0b0010_u16, ShiftOp::Lsl),
+            (0b0011, ShiftOp::Lsr),
+            (0b0100, ShiftOp::Asr),
+            (0b0111, ShiftOp::Ror),
+        ] {
+            let raw = 0x4000_u16 | (op << 6) | (1 << 3); // Rdn=r0, Rs=r1
+            for &value in &values {
+                for &count in &counts {
+                    for old_nzcv in 0_u8..16 {
+                        let carry_in = old_nzcv & 0b0010 != 0;
+                        let (result, carry) = expected(value, count, shift, carry_in);
+                        let mut ctx = SmirContext::new_aarch64();
+                        ctx.write_vreg(r0, u64::from(value));
+                        ctx.write_vreg(r1, count);
+                        ctx.flags.materialized = MaterializedFlags {
+                            sf: old_nzcv & 0b1000 != 0,
+                            zf: old_nzcv & 0b0100 != 0,
+                            cf: carry_in,
+                            of: old_nzcv & 0b0001 != 0,
+                            pf: true,
+                            af: true,
+                            df: true,
+                        };
+                        ctx.flags.lazy = None;
+
+                        assert!(matches!(
+                            execute_lifted_thumb(&raw.to_le_bytes(), &mut ctx),
+                            BlockResult::Exit(ExitReason::Halt)
+                        ));
+                        assert_eq!(ctx.read_vreg(r0), u64::from(result));
+                        assert_eq!(ctx.flags.materialized.sf, result >> 31 != 0);
+                        assert_eq!(ctx.flags.materialized.zf, result == 0);
+                        assert_eq!(ctx.flags.materialized.cf, carry);
+                        assert_eq!(ctx.flags.materialized.of, old_nzcv & 1 != 0);
+                        assert!(ctx.flags.materialized.pf);
+                        assert!(ctx.flags.materialized.af);
+                        assert!(ctx.flags.materialized.df);
+                    }
+                }
+            }
+
+            // Rdn==Rs is legal: both the source value and count must be read
+            // before the destination is overwritten.
+            let alias_raw = 0x4000_u16 | (op << 6);
+            for &value in &values {
+                let (result, carry) = expected(value, u64::from(value), shift, true);
+                let mut ctx = SmirContext::new_aarch64();
+                ctx.write_vreg(r0, u64::from(value));
+                ctx.flags.materialized.cf = true;
+                assert!(matches!(
+                    execute_lifted_thumb(&alias_raw.to_le_bytes(), &mut ctx),
+                    BlockResult::Exit(ExitReason::Halt)
+                ));
+                assert_eq!(ctx.read_vreg(r0), u64::from(result));
+                assert_eq!(ctx.flags.materialized.cf, carry);
             }
         }
     }

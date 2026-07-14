@@ -7,9 +7,9 @@
 //! - r13 and r14 are identity-mapped AArch32 GPRs (`X13`/`X14`), not the
 //!   AArch64 SP/LR aliases;
 //! - r15 data-register operands, IT-state predication, predicated data
-//!   instructions and RRX fail closed; T16 move/logical/multiply/immediate-shift
-//!   forms use selective NZCV contracts so architecturally preserved flags
-//!   remain unchanged;
+//!   instructions and RRX fail closed; T16 move/logical/multiply/shift forms
+//!   use selective NZCV contracts so architecturally preserved flags remain
+//!   unchanged, including exact low-byte register-controlled shift counts;
 //! - unconditional and explicit condition-code Thumb branches use the
 //!   architectural `PC + 4` base and become explicit SMIR control-flow edges;
 //!   CBZ/CBNZ become explicit register-conditioned edges, BL writes
@@ -544,8 +544,9 @@ impl ThumbLifter {
     }
 
     /// Lift the T16 operations whose flag contract updates only N/Z or N/Z/C.
-    /// T32 S-bit forms and T16 register-controlled shifts deliberately do not
-    /// enter this path: their shifter/count contracts require separate handling.
+    /// T32 S-bit forms deliberately do not enter this path. T16 register-
+    /// controlled shifts use a dedicated IR operation because their low-byte
+    /// count contract differs from generic SMIR/x86 shifts.
     fn lift_t16_partial_flags(
         insn: &DecodedInsn,
         pc: GuestAddr,
@@ -694,6 +695,26 @@ impl ThumbLifter {
                         flags: nzc,
                     },
                     _ => unreachable!(),
+                }
+            }
+            (
+                mnemonic @ (Mnemonic::LSLS | Mnemonic::LSRS | Mnemonic::ASRS | Mnemonic::RORS),
+                [Operand::Reg(rd), Operand::Reg(rn), Operand::Reg(rs)],
+            ) if rd.num < 15 && rn.num < 15 && rs.num < 15 && rd.num == rn.num => {
+                let shift = match mnemonic {
+                    Mnemonic::LSLS => crate::smir::ir::types::ShiftOp::Lsl,
+                    Mnemonic::LSRS => crate::smir::ir::types::ShiftOp::Lsr,
+                    Mnemonic::ASRS => crate::smir::ir::types::ShiftOp::Asr,
+                    Mnemonic::RORS => crate::smir::ir::types::ShiftOp::Ror,
+                    _ => unreachable!(),
+                };
+                OpKind::ArmRegShift {
+                    dst: Self::reg(rd.num),
+                    src: Self::reg(rn.num),
+                    amount: SrcOperand::Reg(Self::reg(rs.num)),
+                    shift,
+                    width: OpWidth::W32,
+                    flags: nzc,
                 }
             }
             _ => return Ok(false),
@@ -1514,6 +1535,7 @@ impl SmirLifter for ThumbLifter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::smir::ir::types::ShiftOp;
 
     fn lift(bytes: &[u8]) -> LiftResult {
         let mut lifter = ThumbLifter::new();
@@ -2350,11 +2372,49 @@ mod tests {
     }
 
     #[test]
+    fn lifts_all_t16_register_shift_encodings_with_exact_low_byte_contract() {
+        let nzc = ThumbLifter::t16_partial_nzc_flags();
+        for (op, expected_shift) in [
+            (0b0010_u16, ShiftOp::Lsl),
+            (0b0011, ShiftOp::Lsr),
+            (0b0100, ShiftOp::Asr),
+            (0b0111, ShiftOp::Ror),
+        ] {
+            for rdn in 0_u8..8 {
+                for rs in 0_u8..8 {
+                    let raw = 0x4000_u16 | (op << 6) | (u16::from(rs) << 3) | u16::from(rdn);
+                    let result = lift(&raw.to_le_bytes());
+                    assert_eq!(result.bytes_consumed, 2, "raw={raw:#06x}");
+                    assert!(
+                        matches!(
+                            result.ops.as_slice(),
+                            [SmirOp {
+                                kind: OpKind::ArmRegShift {
+                                    dst,
+                                    src,
+                                    amount: SrcOperand::Reg(amount),
+                                    shift,
+                                    width: OpWidth::W32,
+                                    flags,
+                                },
+                                ..
+                            }] if *dst == ThumbLifter::reg(rdn)
+                                && *src == ThumbLifter::reg(rdn)
+                                && *amount == ThumbLifter::reg(rs)
+                                && *shift == expected_shift
+                                && *flags == nzc
+                        ),
+                        "raw={raw:#06x}: {result:?}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn rejects_it_pc_memory_aliases_and_unmodeled_shifter_contracts() {
         let cases: &[&[u8]] = &[
             &[0x08, 0xbf],             // IT EQ
-            &[0x88, 0x40],             // LSLS r0,r1: low-8 register count
-            &[0xc8, 0x41],             // RORS r0,r1: low-8 register count
             &[0x78, 0x46],             // MOV r0,pc
             &[0x51, 0xf8, 0x04, 0x1f], // LDR r1,[r1,#4]! aliases writeback
             &[0x4f, 0xea, 0x31, 0x00], // RRX r0,r1
