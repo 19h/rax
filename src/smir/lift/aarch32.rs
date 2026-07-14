@@ -19,6 +19,9 @@
 //!   arithmetic wraps modulo 2^32;
 //! - BX over r0-r14 becomes a register-indirect SMIR terminator whose
 //!   interworking state change is handled by the gated runtime exit path;
+//! - BLX immediate/register forms preserve the return-state link bit and carry
+//!   the callee execution state explicitly; BLX LR snapshots old LR before the
+//!   link write;
 //! - A32-only reverse-subtract, multiply-accumulate, and MOVW/MOVT forms are
 //!   translated explicitly.
 
@@ -952,6 +955,60 @@ impl Aarch32Lifter {
                     target: CallTarget::GuestAddr(Self::add_pc_offset(pc, 8, *offset)?),
                 }
             }
+            Mnemonic::BLX => match insn.operands.first() {
+                Some(Operand::Label(offset)) => {
+                    Self::push(
+                        &mut ops,
+                        pc,
+                        OpKind::Mov {
+                            dst: Self::reg(14),
+                            src: SrcOperand::Imm(Self::next_pc(pc, 4)? as i64),
+                            width: OpWidth::W32,
+                        },
+                    );
+                    ControlFlow::Call {
+                        target: CallTarget::GuestAddrInterworking {
+                            addr: Self::add_pc_offset(pc, 8, *offset)?,
+                            thumb: true,
+                        },
+                    }
+                }
+                Some(Operand::Reg(rm)) => {
+                    // BLX LR must consume the old LR before installing its return
+                    // address. Preserve that data dependency explicitly in SMIR;
+                    // other registers remain unchanged by the link write.
+                    let target = if rm.num == 14 {
+                        let snapshot = ctx.alloc_vreg();
+                        Self::push(
+                            &mut ops,
+                            pc,
+                            OpKind::Mov {
+                                dst: snapshot,
+                                src: SrcOperand::Reg(Self::reg(14)),
+                                width: OpWidth::W32,
+                            },
+                        );
+                        snapshot
+                    } else {
+                        Self::reg(rm.num)
+                    };
+                    Self::push(
+                        &mut ops,
+                        pc,
+                        OpKind::Mov {
+                            dst: Self::reg(14),
+                            src: SrcOperand::Imm(Self::next_pc(pc, 4)? as i64),
+                            width: OpWidth::W32,
+                        },
+                    );
+                    ControlFlow::Call {
+                        target: CallTarget::IndirectInterworking(target),
+                    }
+                }
+                _ => {
+                    return Err(LiftError::Internal("invalid A32 BLX operands".to_string()));
+                }
+            },
             Mnemonic::BX => {
                 let Some(Operand::Reg(rm)) = insn.operands.first() else {
                     return Err(LiftError::Internal("invalid A32 BX operands".to_string()));
@@ -985,6 +1042,9 @@ impl Aarch32Lifter {
             ControlFlow::Call {
                 target: CallTarget::GuestAddr(target),
             } => vec![*target],
+            ControlFlow::Call {
+                target: CallTarget::GuestAddrInterworking { addr, .. },
+            } => vec![*addr],
             _ => Vec::new(),
         };
         LiftResult {
@@ -1561,6 +1621,100 @@ mod tests {
     }
 
     #[test]
+    fn lifts_a32_blx_immediate_and_every_register_with_old_lr_snapshot() {
+        for (raw, target) in [(0xfa00_0000_u32, 0x1008), (0xfb00_0000, 0x100a)] {
+            let result = lift(raw);
+            assert_eq!(result.branch_targets, vec![target]);
+            assert!(matches!(
+                result.control_flow,
+                ControlFlow::Call {
+                    target: CallTarget::GuestAddrInterworking {
+                        addr,
+                        thumb: true,
+                    }
+                } if addr == target
+            ));
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::Mov {
+                        dst: VReg::Arch(ArchReg::Arm(ArmReg::X(14))),
+                        src: SrcOperand::Imm(0x1004),
+                        width: OpWidth::W32,
+                    },
+                    ..
+                }]
+            ));
+        }
+
+        for rm in 0_u32..15 {
+            let result = lift(0xe12f_ff30 | rm);
+            assert!(result.branch_targets.is_empty());
+            match (rm, result.ops.as_slice(), result.control_flow) {
+                (
+                    14,
+                    [
+                        SmirOp {
+                            kind:
+                                OpKind::Mov {
+                                    dst: snapshot,
+                                    src: SrcOperand::Reg(source),
+                                    width: OpWidth::W32,
+                                },
+                            ..
+                        },
+                        SmirOp {
+                            kind:
+                                OpKind::Mov {
+                                    dst: link,
+                                    src: SrcOperand::Imm(0x1004),
+                                    width: OpWidth::W32,
+                                },
+                            ..
+                        },
+                    ],
+                    ControlFlow::Call {
+                        target: CallTarget::IndirectInterworking(target),
+                    },
+                ) => {
+                    assert!(matches!(snapshot, VReg::Virtual(_)));
+                    assert_eq!(*source, Aarch32Lifter::reg(14));
+                    assert_eq!(*link, Aarch32Lifter::reg(14));
+                    assert_eq!(target, *snapshot);
+                }
+                (
+                    _,
+                    [
+                        SmirOp {
+                            kind:
+                                OpKind::Mov {
+                                    dst,
+                                    src: SrcOperand::Imm(0x1004),
+                                    width: OpWidth::W32,
+                                },
+                            ..
+                        },
+                    ],
+                    ControlFlow::Call {
+                        target: CallTarget::IndirectInterworking(target),
+                    },
+                ) => {
+                    assert_eq!(*dst, Aarch32Lifter::reg(14));
+                    assert_eq!(target, Aarch32Lifter::reg(rm as u8));
+                }
+                other => panic!("unexpected BLX r{rm} lift: {other:?}"),
+            }
+        }
+
+        let mut lifter = Aarch32Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Aarch32);
+        assert!(matches!(
+            lifter.lift_insn(0x1000, &0xe12f_ff3fu32.to_le_bytes(), &mut ctx),
+            Err(LiftError::Unsupported { .. })
+        ));
+    }
+
+    #[test]
     fn a32_branch_and_link_pc_arithmetic_wraps_modulo_2_pow_32() {
         let mut lifter = Aarch32Lifter::new();
         let mut ctx = LiftContext::new(SourceArch::Aarch32);
@@ -1601,6 +1755,29 @@ mod tests {
                     dst: VReg::Arch(ArchReg::Arm(ArmReg::X(14))),
                     src: SrcOperand::Imm(0),
                     width: OpWidth::W32,
+                },
+                ..
+            }]
+        ));
+
+        let exchange = lifter
+            .lift_insn(0xffff_fffc, &0xfb00_0000u32.to_le_bytes(), &mut ctx)
+            .unwrap(); // BLX +2; target 6, ARM link 0.
+        assert!(matches!(
+            exchange.control_flow,
+            ControlFlow::Call {
+                target: CallTarget::GuestAddrInterworking {
+                    addr: 6,
+                    thumb: true,
+                }
+            }
+        ));
+        assert!(matches!(
+            exchange.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::Mov {
+                    src: SrcOperand::Imm(0),
+                    ..
                 },
                 ..
             }]

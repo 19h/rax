@@ -386,8 +386,15 @@ pub enum CallTarget {
     Direct(FunctionId),
     /// Direct call to guest address
     GuestAddr(GuestAddr),
+    /// Direct AArch32 interworking call. `addr` is the architectural target PC
+    /// (with no state tag in bit 0), while `thumb` is the execution state the
+    /// dispatcher must install before resuming the guest.
+    GuestAddrInterworking { addr: GuestAddr, thumb: bool },
     /// Indirect call through register
     Indirect(VReg),
+    /// AArch32 register interworking call. Bit 0 of the W32 target selects the
+    /// execution state and is cleared from the architectural target PC.
+    IndirectInterworking(VReg),
     /// Indirect call through memory
     IndirectMem(Address),
     /// External runtime function

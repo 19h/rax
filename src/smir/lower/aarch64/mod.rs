@@ -50,6 +50,7 @@ const A64_GUEST_VEC_LOAD_FN_OFFSET: u32 = 848;
 const A64_GUEST_VEC_STORE_FN_OFFSET: u32 = 856;
 const A64_GUEST_EXIT_FLAGS_OFFSET: u32 = 864;
 const A64_EXIT_VALID: i64 = 1 << 0;
+const A64_EXIT_AARCH32_T: i64 = 1 << 1;
 const A64_EXIT_AARCH32_T_VALID: i64 = 1 << 2;
 
 /// Native AArch64 lowerer for identity-mapped AArch64 scalar SMIR.
@@ -76,6 +77,11 @@ pub struct Aarch64Lowerer {
     /// executed. This mode requires the runtime state pointer in X28 and must
     /// be enabled only after the AArch32 structural gate validates the call.
     guest_call_exits: bool,
+    /// When true, validated AArch32 BLX calls lower to dispatcher exits that
+    /// additionally export the callee execution state. Register targets are
+    /// consumed as W32 interworking pointers; direct targets carry an explicit
+    /// Thumb-state tag in SMIR.
+    guest_interworking_call_exits: bool,
     /// When true, a register indirect branch is converted to an AArch32
     /// interworking dispatcher exit: the zero-extended `(target & !1)` is
     /// recorded as PC and target bit 0 is exported as CPSR.T. This must only be
@@ -131,6 +137,7 @@ impl Aarch64Lowerer {
             native_exits: HashMap::new(),
             native_exit_edges: HashMap::new(),
             guest_call_exits: false,
+            guest_interworking_call_exits: false,
             guest_indirect_exits: false,
             mem_helpers: false,
             mem_helper_addr_width: OpWidth::W64,
@@ -220,6 +227,13 @@ impl Aarch64Lowerer {
         self.guest_call_exits = enable;
     }
 
+    /// Lower structurally validated AArch32 direct/register BLX calls as
+    /// interworking dispatcher exits. This mode must be paired with the
+    /// AArch32 native clobber gate.
+    pub fn set_guest_interworking_call_exits(&mut self, enable: bool) {
+        self.guest_interworking_call_exits = enable;
+    }
+
     /// Lower a validated AArch32 register-indirect branch as an interworking
     /// dispatcher exit, never as a native branch to the guest-controlled value.
     pub fn set_guest_indirect_exits(&mut self, enable: bool) {
@@ -270,6 +284,42 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
+    /// Emit a direct AArch32 BLX dispatcher exit with an explicit destination
+    /// execution state. The SMIR target is an architectural PC, not a tagged
+    /// function pointer, so it is stored without further masking.
+    fn emit_guest_direct_interworking_exit(
+        &mut self,
+        resume_pc: u64,
+        thumb: bool,
+    ) -> Result<(), LowerError> {
+        if resume_pc > u64::from(u32::MAX)
+            || (thumb && resume_pc & 1 != 0)
+            || (!thumb && resume_pc & 3 != 0)
+        {
+            return Err(LowerError::InvalidOperand {
+                op: "AArch32 direct interworking exit".into(),
+                operand: format!("PC={resume_pc:#x}, Thumb={thumb}"),
+            });
+        }
+        const SCRATCH: u8 = 9;
+        self.emit_push_scratch(SCRATCH);
+        self.emit_mov_imm(SCRATCH, resume_pc as i64, OpWidth::W64);
+        self.emit_ldst_unsigned(SCRATCH, A64_STATE_REG, 3, 0b00, A64_GUEST_PC_OFFSET / 8);
+        let flags =
+            A64_EXIT_VALID | A64_EXIT_AARCH32_T_VALID | if thumb { A64_EXIT_AARCH32_T } else { 0 };
+        self.emit_mov_imm(SCRATCH, flags, OpWidth::W64);
+        self.emit_ldst_unsigned(
+            SCRATCH,
+            A64_STATE_REG,
+            3,
+            0b00,
+            A64_GUEST_EXIT_FLAGS_OFFSET / 8,
+        );
+        self.emit_pop_scratch(SCRATCH);
+        self.emit(0xd65f_03c0);
+        Ok(())
+    }
+
     /// Emit an AArch32 BX-style interworking exit. The target is consumed as a
     /// W register, so both PC and state selection follow 32-bit AArch32
     /// semantics even when the host X register has non-zero upper bits.
@@ -282,6 +332,17 @@ impl Aarch64Lowerer {
                 });
             }
         };
+        self.emit_guest_indirect_exit_reg(target, false)
+    }
+
+    /// Physical-register form used by the BLX-LR snapshot path. When
+    /// `restore_target` is set, the caller has already saved `target` on the
+    /// host stack and this routine restores it immediately before returning.
+    fn emit_guest_indirect_exit_reg(
+        &mut self,
+        target: u8,
+        restore_target: bool,
+    ) -> Result<(), LowerError> {
         let scratch = Self::scratch_regs(&[target], 1)?[0];
         self.emit_push_scratch(scratch);
 
@@ -303,6 +364,9 @@ impl Aarch64Lowerer {
             A64_GUEST_EXIT_FLAGS_OFFSET / 8,
         );
         self.emit_pop_scratch(scratch);
+        if restore_target {
+            self.emit_pop_scratch(target);
+        }
         self.emit(0xd65f_03c0); // ret to the identity trampoline
         Ok(())
     }
@@ -17641,6 +17705,26 @@ impl Aarch64Lowerer {
                     .into(),
             }),
             Terminator::Call {
+                target: CallTarget::GuestAddrInterworking { addr, thumb },
+                args,
+                ..
+            } if self.guest_interworking_call_exits && args.is_empty() => {
+                self.emit_guest_direct_interworking_exit(*addr, *thumb)
+            }
+            Terminator::Call {
+                target: CallTarget::IndirectInterworking(target),
+                args,
+                ..
+            } if self.guest_interworking_call_exits
+                && args.is_empty()
+                && matches!(
+                    target,
+                    VReg::Arch(ArchReg::Arm(ArmReg::X(index))) if *index < 14
+                ) =>
+            {
+                self.emit_guest_indirect_exit(*target)
+            }
+            Terminator::Call {
                 target: CallTarget::GuestAddr(target),
                 args,
                 ..
@@ -17704,19 +17788,11 @@ impl Aarch64Lowerer {
         }
     }
 
-    fn lower_block(&mut self, block: &SmirBlock) -> Result<(), LowerError> {
-        self.block_offsets.insert(block.id, self.code.position());
-        // Frontier block: emit an exit stub instead of its body. Branches from
-        // interior blocks land on the stub; the interpreter resumes at the
-        // block's guest PC. (The block's ops are never executed natively — which
-        // is why the clobber gate excludes native-exit blocks.)
-        if let Some(&resume_pc) = self.native_exits.get(&block.id) {
-            return self.emit_native_exit(resume_pc);
-        }
-        let (op_end, folded_cond) = Self::folded_branch_condition(block);
+    fn lower_ops(&mut self, block_ops: &[SmirOp]) -> Result<(), LowerError> {
+        let op_end = block_ops.len();
         let mut idx = 0;
         while idx < op_end {
-            let ops = &block.ops[idx..op_end];
+            let ops = &block_ops[idx..op_end];
             // Memory-fusion peepholes emit INLINE native loads/stores at the raw
             // guest address — correct only when NOT routing memory through the
             // MMU helpers. Skip them in mem_helpers mode so Load/Store reach the
@@ -17799,9 +17875,80 @@ impl Aarch64Lowerer {
                 idx += consumed;
                 continue;
             }
-            self.lower_op(&block.ops[idx])?;
+            self.lower_op(&block_ops[idx])?;
             idx += 1;
         }
+        Ok(())
+    }
+
+    /// Lower the one BLX shape that cannot be expressed as an ordinary
+    /// architectural-register terminator use: `BLX LR` snapshots old LR into
+    /// a virtual W32 value before writing the return address. The snapshot is
+    /// assigned a spilled host scratch register for the duration of the exit.
+    fn try_lower_guest_blx_lr_exit(&mut self, block: &SmirBlock) -> Result<bool, LowerError> {
+        let Terminator::Call {
+            target: CallTarget::IndirectInterworking(VReg::Virtual(snapshot)),
+            args,
+            ..
+        } = &block.terminator
+        else {
+            return Ok(false);
+        };
+        if !self.guest_interworking_call_exits || !args.is_empty() {
+            return Err(LowerError::UnsupportedOp {
+                op: "AArch32 BLX-LR dispatcher exit is not enabled or has arguments".into(),
+            });
+        }
+        let [prefix @ .., snapshot_op, link_op] = block.ops.as_slice() else {
+            return Err(LowerError::UnsupportedOp {
+                op: "AArch32 BLX-LR exit is missing snapshot/link operations".into(),
+            });
+        };
+        let valid_snapshot = matches!(
+            snapshot_op.kind,
+            OpKind::Mov {
+                dst: VReg::Virtual(id),
+                src: SrcOperand::Reg(VReg::Arch(ArchReg::Arm(ArmReg::X(14)))),
+                width: OpWidth::W32,
+            } if id == *snapshot
+        );
+        let valid_link = matches!(
+            link_op.kind,
+            OpKind::Mov {
+                dst: VReg::Arch(ArchReg::Arm(ArmReg::X(14))),
+                src: SrcOperand::Imm(_),
+                width: OpWidth::W32,
+            }
+        );
+        if !valid_snapshot || !valid_link {
+            return Err(LowerError::UnsupportedOp {
+                op: "malformed AArch32 BLX-LR snapshot/link sequence".into(),
+            });
+        }
+
+        self.lower_ops(prefix)?;
+        let target = Self::scratch_regs(&[14, A64_STATE_REG], 1)?[0];
+        self.emit_push_scratch(target);
+        self.emit_mov_reg(target, 14, OpWidth::W32)?;
+        self.lower_op(link_op)?;
+        self.emit_guest_indirect_exit_reg(target, true)?;
+        Ok(true)
+    }
+
+    fn lower_block(&mut self, block: &SmirBlock) -> Result<(), LowerError> {
+        self.block_offsets.insert(block.id, self.code.position());
+        // Frontier block: emit an exit stub instead of its body. Branches from
+        // interior blocks land on the stub; the interpreter resumes at the
+        // block's guest PC. (The block's ops are never executed natively — which
+        // is why the clobber gate excludes native-exit blocks.)
+        if let Some(&resume_pc) = self.native_exits.get(&block.id) {
+            return self.emit_native_exit(resume_pc);
+        }
+        if self.try_lower_guest_blx_lr_exit(block)? {
+            return Ok(());
+        }
+        let (op_end, folded_cond) = Self::folded_branch_condition(block);
+        self.lower_ops(&block.ops[..op_end])?;
         self.lower_terminator(block, folded_cond)
     }
 }
@@ -50593,6 +50740,112 @@ mod tests {
     }
 
     #[test]
+    fn configured_direct_interworking_calls_record_pc_t_and_preserve_native_state() {
+        for (thumb, target, link, expected_flags) in [
+            (
+                true,
+                0x2345_6782_u64,
+                0x1004_i64,
+                A64_EXIT_VALID | A64_EXIT_AARCH32_T_VALID | A64_EXIT_AARCH32_T,
+            ),
+            (
+                false,
+                0x2345_6780,
+                0x1005,
+                A64_EXIT_VALID | A64_EXIT_AARCH32_T_VALID,
+            ),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            let continuation = builder.create_block(0x1004);
+            builder.push_op(
+                0x1000,
+                OpKind::Mov {
+                    dst: x(14),
+                    src: SrcOperand::Imm(link),
+                    width: OpWidth::W32,
+                },
+            );
+            builder.set_terminator(Terminator::Call {
+                target: CallTarget::GuestAddrInterworking {
+                    addr: target,
+                    thumb,
+                },
+                args: Vec::new(),
+                continuation,
+            });
+            builder.switch_to_block(continuation);
+            builder.set_terminator(Terminator::Return { values: Vec::new() });
+            let function = builder.finish();
+
+            let mut disabled = Aarch64Lowerer::new();
+            assert!(matches!(
+                disabled.lower_function(&function),
+                Err(LowerError::UnsupportedOp { .. })
+            ));
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.set_guest_interworking_call_exits(true);
+            lowerer.lower_function(&function).unwrap();
+            let code = lowerer.finalize().unwrap();
+            let state_base = 0x6000;
+            let scratch = 0x9999_aaaa_bbbb_cccc;
+            let old_nzcv = 0b1101;
+            let (out, out_nzcv, sp, pc) = run_aarch64_code_with_memory(
+                &code,
+                &[(9, scratch), (14, 0xeeee_eeee), (28, state_base)],
+                old_nzcv,
+                state_base + u64::from(A64_GUEST_PC_OFFSET),
+                u64::MAX,
+                MemWidth::B8,
+            );
+            assert_eq!(pc, target);
+            assert_eq!(out[9], scratch);
+            assert_eq!(out[14], link as u64);
+            assert_eq!(out[28], state_base);
+            assert_eq!(out_nzcv, old_nzcv);
+            assert_eq!(sp, 0x8000);
+            let (_, _, _, flags) = run_aarch64_code_with_memory(
+                &code,
+                &[(9, scratch), (14, 0xeeee_eeee), (28, state_base)],
+                old_nzcv,
+                state_base + u64::from(A64_GUEST_EXIT_FLAGS_OFFSET),
+                0,
+                MemWidth::B8,
+            );
+            assert_eq!(flags, expected_flags as u64);
+        }
+    }
+
+    #[test]
+    fn configured_direct_interworking_calls_reject_invalid_pc_or_arguments() {
+        for (target, thumb, args) in [
+            (0x2001, true, Vec::new()),
+            (0x2002, false, Vec::new()),
+            (u64::from(u32::MAX) + 1, true, Vec::new()),
+            (0x2000, true, vec![x(0)]),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            let continuation = builder.create_block(0x1004);
+            builder.set_terminator(Terminator::Call {
+                target: CallTarget::GuestAddrInterworking {
+                    addr: target,
+                    thumb,
+                },
+                args,
+                continuation,
+            });
+            builder.switch_to_block(continuation);
+            builder.set_terminator(Terminator::Return { values: Vec::new() });
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.set_guest_interworking_call_exits(true);
+            assert!(matches!(
+                lowerer.lower_function(&builder.finish()),
+                Err(LowerError::InvalidOperand { .. }) | Err(LowerError::UnsupportedOp { .. })
+            ));
+        }
+    }
+
+    #[test]
     fn lowers_branch_terminator_as_b() {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0);
         let target = builder.create_block(4);
@@ -51214,7 +51467,7 @@ mod tests {
         );
         assert_eq!(
             flags,
-            (A64_EXIT_VALID | A64_EXIT_AARCH32_T_VALID | (1 << 1)) as u64
+            (A64_EXIT_VALID | A64_EXIT_AARCH32_T_VALID | A64_EXIT_AARCH32_T) as u64
         );
     }
 
@@ -51228,6 +51481,140 @@ mod tests {
             });
             let mut lowerer = Aarch64Lowerer::new();
             lowerer.set_guest_indirect_exits(true);
+            assert!(matches!(
+                lowerer.lower_function(&builder.finish()),
+                Err(LowerError::UnsupportedOp { .. }) | Err(LowerError::InvalidRegister(_))
+            ));
+        }
+    }
+
+    #[test]
+    fn configured_register_blx_and_blx_lr_record_old_target_after_link_write() {
+        for (target_reg, snapshot) in [(3_u8, None), (14, Some(VReg::virt(77)))] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            let continuation = builder.create_block(0x1004);
+            let target = if let Some(snapshot) = snapshot {
+                builder.push_op(
+                    0x1000,
+                    OpKind::Mov {
+                        dst: snapshot,
+                        src: SrcOperand::Reg(x(14)),
+                        width: OpWidth::W32,
+                    },
+                );
+                snapshot
+            } else {
+                x(target_reg)
+            };
+            builder.push_op(
+                0x1000,
+                OpKind::Mov {
+                    dst: x(14),
+                    src: SrcOperand::Imm(0x1004),
+                    width: OpWidth::W32,
+                },
+            );
+            builder.set_terminator(Terminator::Call {
+                target: CallTarget::IndirectInterworking(target),
+                args: Vec::new(),
+                continuation,
+            });
+            builder.switch_to_block(continuation);
+            builder.set_terminator(Terminator::Return { values: Vec::new() });
+
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.set_guest_interworking_call_exits(true);
+            lowerer.lower_function(&builder.finish()).unwrap();
+            let code = lowerer.finalize().unwrap();
+            assert!(code.chunks_exact(4).all(|bytes| {
+                let word = u32::from_le_bytes(bytes.try_into().unwrap());
+                let masked = word & 0xffff_fc1f;
+                masked != 0xd61f_0000 && masked != 0xd63f_0000
+            }));
+
+            let state_base = 0x6000;
+            let guest_target = 0xdead_beef_1234_5679;
+            let scratch_sentinel = 0x1616_1616_1616_1616;
+            let work_sentinel = 0x1717_1717_1717_1717;
+            let initial = if target_reg == 14 {
+                vec![
+                    (14, guest_target),
+                    (16, scratch_sentinel),
+                    (17, work_sentinel),
+                    (28, state_base),
+                ]
+            } else {
+                vec![(3, guest_target), (14, 0xeeee_eeee), (28, state_base)]
+            };
+            let (out, out_nzcv, sp, pc) = run_aarch64_code_with_memory(
+                &code,
+                &initial,
+                0b1010,
+                state_base + u64::from(A64_GUEST_PC_OFFSET),
+                u64::MAX,
+                MemWidth::B8,
+            );
+            assert_eq!(pc, 0x1234_5678);
+            assert_eq!(out[14], 0x1004);
+            if target_reg == 14 {
+                assert_eq!(out[16], scratch_sentinel);
+                assert_eq!(out[17], work_sentinel);
+            } else {
+                assert_eq!(out[3], guest_target);
+            }
+            assert_eq!(out_nzcv, 0b1010);
+            assert_eq!(sp, 0x8000);
+            let (_, _, _, flags) = run_aarch64_code_with_memory(
+                &code,
+                &initial,
+                0b1010,
+                state_base + u64::from(A64_GUEST_EXIT_FLAGS_OFFSET),
+                0,
+                MemWidth::B8,
+            );
+            assert_eq!(
+                flags,
+                (A64_EXIT_VALID | A64_EXIT_AARCH32_T_VALID | A64_EXIT_AARCH32_T) as u64
+            );
+        }
+    }
+
+    #[test]
+    fn configured_register_blx_rejects_unsnapshotted_lr_and_malformed_virtual_target() {
+        for (target, snapshot_op) in [
+            (x(14), None),
+            (x(15), None),
+            (
+                VReg::virt(77),
+                Some(OpKind::Mov {
+                    dst: VReg::virt(77),
+                    src: SrcOperand::Reg(x(13)),
+                    width: OpWidth::W32,
+                }),
+            ),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            let continuation = builder.create_block(0x1004);
+            if let Some(op) = snapshot_op {
+                builder.push_op(0x1000, op);
+            }
+            builder.push_op(
+                0x1000,
+                OpKind::Mov {
+                    dst: x(14),
+                    src: SrcOperand::Imm(0x1004),
+                    width: OpWidth::W32,
+                },
+            );
+            builder.set_terminator(Terminator::Call {
+                target: CallTarget::IndirectInterworking(target),
+                args: Vec::new(),
+                continuation,
+            });
+            builder.switch_to_block(continuation);
+            builder.set_terminator(Terminator::Return { values: Vec::new() });
+            let mut lowerer = Aarch64Lowerer::new();
+            lowerer.set_guest_interworking_call_exits(true);
             assert!(matches!(
                 lowerer.lower_function(&builder.finish()),
                 Err(LowerError::UnsupportedOp { .. }) | Err(LowerError::InvalidRegister(_))

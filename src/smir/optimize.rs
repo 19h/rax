@@ -218,7 +218,7 @@ fn terminator_reg_uses(term: &Terminator) -> Vec<VReg> {
         Terminator::IndirectBranchMem { addr, .. } => v.extend(addr.regs()),
         Terminator::Return { values } => v.extend(values.iter().copied()),
         Terminator::Call { target, args, .. } | Terminator::TailCall { target, args } => {
-            if let CallTarget::Indirect(reg) = target {
+            if let CallTarget::Indirect(reg) | CallTarget::IndirectInterworking(reg) = target {
                 v.push(*reg);
             }
             if let CallTarget::IndirectMem(addr) = target {
@@ -9363,6 +9363,61 @@ mod tests {
         block.set_terminator(Terminator::Return { values: vec![v1] });
         let n = copy_propagation(&mut block);
         assert_eq!(n, 0); // not propagated
+    }
+
+    #[test]
+    fn o2_preserves_aarch32_blx_lr_snapshot_and_link_write() {
+        let snapshot = VReg::virt(0);
+        let lr = VReg::Arch(ArchReg::Arm(ArmReg::X(14)));
+        let entry = BlockId(0);
+        let continuation = BlockId(1);
+        let mut block = SmirBlock::new(entry, 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: snapshot,
+                src: SrcOperand::Reg(lr),
+                width: OpWidth::W32,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::Mov {
+                dst: lr,
+                src: SrcOperand::Imm(0x1004),
+                width: OpWidth::W32,
+            },
+        ));
+        block.set_terminator(Terminator::Call {
+            target: CallTarget::IndirectInterworking(snapshot),
+            args: Vec::new(),
+            continuation,
+        });
+        let mut continuation_block = SmirBlock::new(continuation, 0x1004);
+        continuation_block.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), entry, 0x1000);
+        function.add_block(block);
+        function.add_block(continuation_block);
+
+        optimize_function(&mut function, OptLevel::O2);
+        let block = function.get_block(entry).unwrap();
+        assert_eq!(block.ops.len(), 2);
+        assert!(matches!(
+            block.ops[0].kind,
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Reg(source),
+                width: OpWidth::W32,
+            } if dst == snapshot && source == lr
+        ));
+        assert!(matches!(
+            block.ops[1].kind,
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Imm(0x1004),
+                width: OpWidth::W32,
+            } if dst == lr
+        ));
     }
 
     #[test]

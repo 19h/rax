@@ -4355,7 +4355,13 @@ impl X86_64Vcpu {
                                 let tk = match target {
                                     crate::smir::ir::CallTarget::Direct(_) => "DirectFn",
                                     crate::smir::ir::CallTarget::GuestAddr(_) => "GuestAddr",
+                                    crate::smir::ir::CallTarget::GuestAddrInterworking {
+                                        ..
+                                    } => "GuestAddrInterworking",
                                     crate::smir::ir::CallTarget::Indirect(_) => "IndirectReg",
+                                    crate::smir::ir::CallTarget::IndirectInterworking(_) => {
+                                        "IndirectInterworking"
+                                    }
                                     crate::smir::ir::CallTarget::IndirectMem(_) => "IndirectMem",
                                     crate::smir::ir::CallTarget::Runtime(_) => "Runtime",
                                 };

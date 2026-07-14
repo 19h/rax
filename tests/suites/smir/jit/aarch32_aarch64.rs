@@ -884,6 +884,7 @@ fn a32_native_cfg(words: &[u32], level: OptLevel) -> (ExecMem, usize) {
     let mut lowerer = Aarch64Lowerer::new();
     lowerer.set_native_exits(exits);
     lowerer.set_guest_call_exits(true);
+    lowerer.set_guest_interworking_call_exits(true);
     lowerer.set_guest_indirect_exits(true);
     let lowered = lowerer
         .lower_function(&function)
@@ -1048,6 +1049,69 @@ fn a32_direct_bl_frontier_exit_matches_interpreter_for_all_nzcv_at_o0_and_o2() {
                     "raw={raw:#010x} NZCV={nzcv:#x} {level:?}"
                 );
                 assert_eq!(actual, expected, "raw={raw:#010x} NZCV={nzcv:#x} {level:?}");
+            }
+        }
+    }
+}
+
+#[test]
+fn a32_immediate_blx_interworking_exit_matches_interpreter_including_zero_target() {
+    const NZCV_MASK: u32 = 0xf000_0000;
+    // +0 (word target), +2 (halfword target), and wrapped targets 0/2.
+    for raw in [0xfa00_0000_u32, 0xfb00_0000, 0xfaff_dffe, 0xfbff_dffe] {
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let (exec, entry) = a32_native_cfg(&[raw], level);
+            for nzcv in 0_u32..16 {
+                let mut initial = initial_state();
+                initial.cpsr = (initial.cpsr & !NZCV_MASK) | (nzcv << 28);
+                let (expected_exit, expected) = a32_reference_call(raw, initial);
+                let mut actual = initial;
+                let actual_exit = exec.run_aarch32_identity_exit(entry, &mut actual);
+                assert!(
+                    actual_exit.exited,
+                    "raw={raw:#010x} NZCV={nzcv:#x} {level:?}"
+                );
+                assert_eq!(
+                    actual_exit.pc, expected_exit,
+                    "raw={raw:#010x} NZCV={nzcv:#x} {level:?}"
+                );
+                assert_eq!(actual, expected, "raw={raw:#010x} NZCV={nzcv:#x} {level:?}");
+                assert_ne!(actual.cpsr & (1 << 5), 0, "BLX immediate must enter Thumb");
+            }
+        }
+    }
+}
+
+#[test]
+fn a32_register_blx_matches_interpreter_for_all_regs_targets_nzcv_at_o0_and_o2() {
+    const NZCV_MASK: u32 = 0xf000_0000;
+    const TARGETS: [u32; 6] = [0, 1, 0x0000_9000, 0x0000_9001, 0xffff_fffc, 0xffff_fffd];
+
+    for rm in 0_u32..15 {
+        let raw = 0xe12f_ff30 | rm;
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let (exec, entry) = a32_native_cfg(&[raw], level);
+            for target in TARGETS {
+                for nzcv in 0_u32..16 {
+                    let mut initial = initial_state();
+                    initial.r[rm as usize] = target;
+                    initial.cpsr = (initial.cpsr & !NZCV_MASK) | (nzcv << 28);
+                    let (expected_exit, expected) = a32_reference_call(raw, initial);
+                    let mut actual = initial;
+                    let actual_exit = exec.run_aarch32_identity_exit(entry, &mut actual);
+                    assert!(
+                        actual_exit.exited,
+                        "r{rm}={target:#010x} NZCV={nzcv:#x} {level:?}"
+                    );
+                    assert_eq!(
+                        actual_exit.pc, expected_exit,
+                        "r{rm}={target:#010x} NZCV={nzcv:#x} {level:?}"
+                    );
+                    assert_eq!(
+                        actual, expected,
+                        "r{rm}={target:#010x} NZCV={nzcv:#x} {level:?}"
+                    );
+                }
             }
         }
     }

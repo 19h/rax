@@ -13874,12 +13874,16 @@ impl SmirInterpreter {
             } => {
                 let target_addr = match target {
                     CallTarget::GuestAddr(addr) => *addr,
+                    CallTarget::GuestAddrInterworking { addr, .. } => *addr,
                     CallTarget::Direct(fid) => self
                         .func_cache
                         .get(&(fid.0 as u64))
                         .map(|f| f.guest_range.0)
                         .unwrap_or(0),
                     CallTarget::Indirect(reg) => ctx.read_vreg(*reg),
+                    CallTarget::IndirectInterworking(reg) => {
+                        u64::from(ctx.read_vreg(*reg) as u32) & !1
+                    }
                     CallTarget::IndirectMem(addr) => {
                         let target_addr = self.compute_address(ctx, addr);
                         self.load_memory(memory, target_addr, MemWidth::B8, SignExtend::Zero)
@@ -13901,12 +13905,16 @@ impl SmirInterpreter {
             Terminator::TailCall { target, args: _ } => {
                 let target_addr = match target {
                     CallTarget::GuestAddr(addr) => *addr,
+                    CallTarget::GuestAddrInterworking { addr, .. } => *addr,
                     CallTarget::Direct(fid) => self
                         .func_cache
                         .get(&(fid.0 as u64))
                         .map(|f| f.guest_range.0)
                         .unwrap_or(0),
                     CallTarget::Indirect(reg) => ctx.read_vreg(*reg),
+                    CallTarget::IndirectInterworking(reg) => {
+                        u64::from(ctx.read_vreg(*reg) as u32) & !1
+                    }
                     CallTarget::IndirectMem(addr) => {
                         let target_addr = self.compute_address(ctx, addr);
                         self.load_memory(memory, target_addr, MemWidth::B8, SignExtend::Zero)
@@ -16438,6 +16446,40 @@ mod tests {
     use crate::smir::ir::FunctionBuilder;
     use crate::smir::ir::flags::{FlagSet, FlagUpdate, MaterializedFlags};
     use crate::smir::ir::memory::{FlatMemory, SmirMemory};
+
+    #[test]
+    fn interworking_call_targets_use_explicit_pc_and_w32_indirect_masking() {
+        let interpreter = SmirInterpreter::new();
+        let mut memory = FlatMemory::new(0x1000);
+        let mut ctx = SmirContext::new_aarch64();
+        let continuation = BlockId(1);
+
+        let mut direct = SmirBlock::new(BlockId(0), 0x1000);
+        direct.set_terminator(Terminator::Call {
+            target: CallTarget::GuestAddrInterworking {
+                addr: 0x2002,
+                thumb: true,
+            },
+            args: Vec::new(),
+            continuation,
+        });
+        assert!(matches!(
+            interpreter.execute_block(&mut ctx, &mut memory, &direct),
+            BlockResult::Continue(0x2002)
+        ));
+
+        let target = VReg::Arch(ArchReg::Arm(ArmReg::X(3)));
+        ctx.write_vreg(target, 0xdead_beef_1234_5679);
+        let mut indirect = SmirBlock::new(BlockId(0), 0x1000);
+        indirect.set_terminator(Terminator::TailCall {
+            target: CallTarget::IndirectInterworking(target),
+            args: Vec::new(),
+        });
+        assert!(matches!(
+            interpreter.execute_block(&mut ctx, &mut memory, &indirect),
+            BlockResult::Continue(0x1234_5678)
+        ));
+    }
 
     fn exec_x86_rax_op(op: OpKind, rax_value: u64, rcx_value: u64, rflags: u64) -> (u64, u64) {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));

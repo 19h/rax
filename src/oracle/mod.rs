@@ -3805,8 +3805,18 @@ fn call_target_json(target: &CallTarget) -> Value {
     match target {
         CallTarget::Direct(id) => json!({"kind": "direct_function", "id": id.0}),
         CallTarget::GuestAddr(addr) => json!({"kind": "direct", "addr": hex_u64(*addr)}),
+        CallTarget::GuestAddrInterworking { addr, thumb } => json!({
+            "kind": "direct_interworking",
+            "addr": hex_u64(*addr),
+            "thumb": thumb,
+        }),
         CallTarget::Indirect(reg) => json!({
             "kind": "indirect",
+            "reg": format!("{reg:?}"),
+            "reg_value": reg.oracle_json(),
+        }),
+        CallTarget::IndirectInterworking(reg) => json!({
+            "kind": "indirect_interworking",
             "reg": format!("{reg:?}"),
             "reg_value": reg.oracle_json(),
         }),

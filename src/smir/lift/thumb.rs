@@ -12,7 +12,8 @@
 //!   architectural `PC + 4` base and become explicit SMIR control-flow edges;
 //!   CBZ/CBNZ become explicit register-conditioned edges, BL writes
 //!   `(next_pc | 1)` to r14, BX becomes a gated interworking dispatcher exit,
-//!   and all PC arithmetic wraps modulo 2^32;
+//!   BLX preserves the Thumb return-state bit while exporting the ARM/register
+//!   target state, and all PC arithmetic wraps modulo 2^32;
 //! - T16/T32 scalar single- and multiple-transfer memory uses the W32 helper
 //!   contract; PC-bearing, empty-list, and constrained base/list forms fail
 //!   closed;
@@ -986,6 +987,66 @@ impl ThumbLifter {
                     target: CallTarget::GuestAddr(Self::add_pc_offset(pc, 4, *offset)?),
                 }
             }
+            Mnemonic::BLX => match normalized.operands.first() {
+                Some(Operand::Label(offset)) => {
+                    let aligned_pc = Self::pc32(pc)?.wrapping_add(4) & !3;
+                    let target = u64::from(aligned_pc.wrapping_add(*offset as u32));
+                    Self::push(
+                        &mut ops,
+                        pc,
+                        OpKind::Mov {
+                            dst: Self::reg(14),
+                            src: SrcOperand::Imm((Self::next_pc(pc, 4)? | 1) as i64),
+                            width: OpWidth::W32,
+                        },
+                    );
+                    ControlFlow::Call {
+                        target: CallTarget::GuestAddrInterworking {
+                            addr: target,
+                            thumb: false,
+                        },
+                    }
+                }
+                Some(Operand::Reg(rm)) => {
+                    // The T16 register form is 2 bytes. BLX LR must snapshot the
+                    // old LR before the architectural Thumb return address is
+                    // written back to LR.
+                    let target = if rm.num == 14 {
+                        let snapshot = ctx.alloc_vreg();
+                        Self::push(
+                            &mut ops,
+                            pc,
+                            OpKind::Mov {
+                                dst: snapshot,
+                                src: SrcOperand::Reg(Self::reg(14)),
+                                width: OpWidth::W32,
+                            },
+                        );
+                        snapshot
+                    } else {
+                        Self::reg(rm.num)
+                    };
+                    Self::push(
+                        &mut ops,
+                        pc,
+                        OpKind::Mov {
+                            dst: Self::reg(14),
+                            src: SrcOperand::Imm(
+                                (Self::next_pc(pc, usize::from(normalized.size))? | 1) as i64,
+                            ),
+                            width: OpWidth::W32,
+                        },
+                    );
+                    ControlFlow::Call {
+                        target: CallTarget::IndirectInterworking(target),
+                    }
+                }
+                _ => {
+                    return Err(LiftError::Internal(
+                        "invalid Thumb BLX operands".to_string(),
+                    ));
+                }
+            },
             Mnemonic::BX => {
                 let Some(Operand::Reg(rm)) = normalized.operands.first() else {
                     return Err(LiftError::Internal("invalid Thumb BX operands".to_string()));
@@ -1019,6 +1080,9 @@ impl ThumbLifter {
             ControlFlow::Call {
                 target: CallTarget::GuestAddr(target),
             } => vec![*target],
+            ControlFlow::Call {
+                target: CallTarget::GuestAddrInterworking { addr, .. },
+            } => vec![*addr],
             _ => Vec::new(),
         };
         LiftResult {
@@ -1705,6 +1769,115 @@ mod tests {
     }
 
     #[test]
+    fn lifts_thumb_blx_immediate_and_every_register_with_old_lr_snapshot() {
+        let direct = lift(&[0x00, 0xf0, 0x00, 0xe8]); // BLX +0: Thumb -> ARM.
+        assert_eq!(direct.bytes_consumed, 4);
+        assert_eq!(direct.branch_targets, vec![0x1004]);
+        assert!(matches!(
+            direct.control_flow,
+            ControlFlow::Call {
+                target: CallTarget::GuestAddrInterworking {
+                    addr: 0x1004,
+                    thumb: false,
+                }
+            }
+        ));
+        assert!(matches!(
+            direct.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::Mov {
+                    dst: VReg::Arch(ArchReg::Arm(ArmReg::X(14))),
+                    src: SrcOperand::Imm(0x1005),
+                    width: OpWidth::W32,
+                },
+                ..
+            }]
+        ));
+
+        let mut unaligned_lifter = ThumbLifter::new();
+        let mut unaligned_ctx = LiftContext::new(SourceArch::Thumb);
+        let unaligned = unaligned_lifter
+            .lift_insn(0x1002, &[0x00, 0xf0, 0x00, 0xe8], &mut unaligned_ctx)
+            .unwrap();
+        assert!(matches!(
+            unaligned.control_flow,
+            ControlFlow::Call {
+                target: CallTarget::GuestAddrInterworking {
+                    addr: 0x1004,
+                    thumb: false,
+                }
+            }
+        ));
+
+        for rm in 0_u16..15 {
+            let result = lift(&(0x4780 | (rm << 3)).to_le_bytes());
+            assert_eq!(result.bytes_consumed, 2);
+            assert!(result.branch_targets.is_empty());
+            match (rm, result.ops.as_slice(), result.control_flow) {
+                (
+                    14,
+                    [
+                        SmirOp {
+                            kind:
+                                OpKind::Mov {
+                                    dst: snapshot,
+                                    src: SrcOperand::Reg(source),
+                                    width: OpWidth::W32,
+                                },
+                            ..
+                        },
+                        SmirOp {
+                            kind:
+                                OpKind::Mov {
+                                    dst: link,
+                                    src: SrcOperand::Imm(0x1003),
+                                    width: OpWidth::W32,
+                                },
+                            ..
+                        },
+                    ],
+                    ControlFlow::Call {
+                        target: CallTarget::IndirectInterworking(target),
+                    },
+                ) => {
+                    assert!(matches!(snapshot, VReg::Virtual(_)));
+                    assert_eq!(*source, ThumbLifter::reg(14));
+                    assert_eq!(*link, ThumbLifter::reg(14));
+                    assert_eq!(target, *snapshot);
+                }
+                (
+                    _,
+                    [
+                        SmirOp {
+                            kind:
+                                OpKind::Mov {
+                                    dst,
+                                    src: SrcOperand::Imm(0x1003),
+                                    width: OpWidth::W32,
+                                },
+                            ..
+                        },
+                    ],
+                    ControlFlow::Call {
+                        target: CallTarget::IndirectInterworking(target),
+                    },
+                ) => {
+                    assert_eq!(*dst, ThumbLifter::reg(14));
+                    assert_eq!(target, ThumbLifter::reg(rm as u8));
+                }
+                other => panic!("unexpected BLX r{rm} lift: {other:?}"),
+            }
+        }
+
+        let mut lifter = ThumbLifter::new();
+        let mut ctx = LiftContext::new(SourceArch::Thumb);
+        assert!(matches!(
+            lifter.lift_insn(0x1000, &[0xf8, 0x47], &mut ctx),
+            Err(LiftError::Unsupported { .. })
+        ));
+    }
+
+    #[test]
     fn thumb_control_flow_pc_arithmetic_wraps_modulo_2_pow_32() {
         let mut lifter = ThumbLifter::new();
         let mut ctx = LiftContext::new(SourceArch::Thumb);
@@ -1755,6 +1928,29 @@ mod tests {
             [SmirOp {
                 kind: OpKind::Mov {
                     src: SrcOperand::Imm(1),
+                    ..
+                },
+                ..
+            }]
+        ));
+
+        let exchange = lifter
+            .lift_insn(0xffff_fffe, &[0x00, 0xf0, 0x00, 0xe8], &mut ctx)
+            .unwrap(); // BLX +0; aligned PC base wraps to 0, Thumb link wraps to 3.
+        assert!(matches!(
+            exchange.control_flow,
+            ControlFlow::Call {
+                target: CallTarget::GuestAddrInterworking {
+                    addr: 0,
+                    thumb: false,
+                }
+            }
+        ));
+        assert!(matches!(
+            exchange.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::Mov {
+                    src: SrcOperand::Imm(3),
                     ..
                 },
                 ..

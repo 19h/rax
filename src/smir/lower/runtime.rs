@@ -3902,7 +3902,11 @@ fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ir::ops::OpKind
 /// guest call is admitted only when its final operation writes the exact A32
 /// or Thumb link value to r14; callers must pair this gate with
 /// `Aarch64Lowerer::set_guest_call_exits(true)` so the call becomes a native
-/// frontier exit. A register-indirect terminator is admitted only for an
+/// frontier exit. Direct and register BLX calls additionally carry an explicit
+/// interworking target; callers must enable
+/// `Aarch64Lowerer::set_guest_interworking_call_exits(true)`. BLX LR has an
+/// exact W32 virtual snapshot before the r14 link write so the old target is
+/// consumed in architectural order. A register-indirect terminator is admitted only for an
 /// AArch32 r0-r14 target with no speculative target list; callers must pair it
 /// with `Aarch64Lowerer::set_guest_indirect_exits(true)`, which records an
 /// interworking dispatcher exit and exports target bit 0 as CPSR.T. CFG targets
@@ -4029,6 +4033,94 @@ pub fn is_aarch32_aarch64_native_clobber_safe_excluding_with_mem(
                         && *dst == VReg::Arch(ArchReg::Arm(ArmReg::X(14)))
                         && (*link_pc == arm_link as i64 || *link_pc == thumb_link as i64)
                         && ordinary_ops_valid(prefix)
+                }
+                Terminator::Call {
+                    target: CallTarget::GuestAddrInterworking { addr, thumb },
+                    args,
+                    continuation,
+                } => {
+                    let Some(continuation_pc) = func
+                        .get_block(*continuation)
+                        .map(|continuation| continuation.guest_pc)
+                    else {
+                        return false;
+                    };
+                    let Some((link, prefix)) = block.ops.split_last() else {
+                        return false;
+                    };
+                    let OpKind::Mov {
+                        dst,
+                        src: SrcOperand::Imm(link_pc),
+                        width: OpWidth::W32,
+                    } = &link.kind
+                    else {
+                        return false;
+                    };
+                    let expected_link = continuation_pc | u64::from(!*thumb);
+                    args.is_empty()
+                        && *addr <= u64::from(u32::MAX)
+                        && if *thumb {
+                            *addr & 1 == 0
+                        } else {
+                            *addr & 3 == 0
+                        }
+                        && continuation_pc <= u64::from(u32::MAX)
+                        && continuation_pc & 1 == 0
+                        && *dst == VReg::Arch(ArchReg::Arm(ArmReg::X(14)))
+                        && *link_pc == expected_link as i64
+                        && ordinary_ops_valid(prefix)
+                }
+                Terminator::Call {
+                    target: CallTarget::IndirectInterworking(target),
+                    args,
+                    continuation,
+                } => {
+                    let Some(continuation_pc) = func
+                        .get_block(*continuation)
+                        .map(|continuation| continuation.guest_pc)
+                    else {
+                        return false;
+                    };
+                    if !args.is_empty()
+                        || continuation_pc > u64::from(u32::MAX)
+                        || continuation_pc & 1 != 0
+                    {
+                        return false;
+                    }
+                    let link_valid = |link: &crate::smir::ir::ops::SmirOp| {
+                        matches!(
+                            &link.kind,
+                            OpKind::Mov {
+                                dst: VReg::Arch(ArchReg::Arm(ArmReg::X(14))),
+                                src: SrcOperand::Imm(link_pc),
+                                width: OpWidth::W32,
+                            } if *link_pc == continuation_pc as i64
+                                || *link_pc == (continuation_pc | 1) as i64
+                        )
+                    };
+                    match target {
+                        VReg::Arch(ArchReg::Arm(ArmReg::X(index))) if *index < 14 => {
+                            let Some((link, prefix)) = block.ops.split_last() else {
+                                return false;
+                            };
+                            link_valid(link) && ordinary_ops_valid(prefix)
+                        }
+                        VReg::Virtual(snapshot) => {
+                            let [prefix @ .., snapshot_op, link] = block.ops.as_slice() else {
+                                return false;
+                            };
+                            matches!(
+                                &snapshot_op.kind,
+                                OpKind::Mov {
+                                    dst: VReg::Virtual(id),
+                                    src: SrcOperand::Reg(VReg::Arch(ArchReg::Arm(ArmReg::X(14)))),
+                                    width: OpWidth::W32,
+                                } if id == snapshot
+                            ) && link_valid(link)
+                                && ordinary_ops_valid(prefix)
+                        }
+                        _ => false,
+                    }
                 }
                 Terminator::IndirectBranch {
                     target,
@@ -4646,6 +4738,41 @@ mod jit_gate_tests {
         builder.finish()
     }
 
+    fn aarch32_blx_lr_cfg(
+        snapshot_dst: VReg,
+        snapshot_src: VReg,
+        call_target: VReg,
+        link_pc: i64,
+        args: Vec<VReg>,
+    ) -> crate::smir::ir::SmirFunction {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        let continuation = builder.create_block(0x1004);
+        builder.push_op(
+            0x1000,
+            OpKind::Mov {
+                dst: snapshot_dst,
+                src: SrcOperand::Reg(snapshot_src),
+                width: OpWidth::W32,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::Mov {
+                dst: arm_x(14),
+                src: SrcOperand::Imm(link_pc),
+                width: OpWidth::W32,
+            },
+        );
+        builder.set_terminator(Terminator::Call {
+            target: CallTarget::IndirectInterworking(call_target),
+            args,
+            continuation,
+        });
+        builder.switch_to_block(continuation);
+        builder.set_terminator(Terminator::Return { values: Vec::new() });
+        builder.finish()
+    }
+
     #[test]
     fn aarch64_guest_state_layout_matches_native_exit_offsets() {
         assert_eq!(
@@ -4725,6 +4852,35 @@ mod jit_gate_tests {
                 &std::collections::HashMap::new(),
             ));
         }
+
+        for (target, link_pc) in [
+            (
+                CallTarget::GuestAddrInterworking {
+                    addr: 0x2002,
+                    thumb: true,
+                },
+                0x1004,
+            ),
+            (
+                CallTarget::GuestAddrInterworking {
+                    addr: 0x2000,
+                    thumb: false,
+                },
+                0x1005,
+            ),
+            (CallTarget::IndirectInterworking(arm_x(0)), 0x1004),
+            (CallTarget::IndirectInterworking(arm_x(13)), 0x1005),
+        ] {
+            assert!(is_aarch32_aarch64_native_clobber_safe_excluding(
+                &aarch32_call_cfg(target, arm_x(14), link_pc, OpWidth::W32, Vec::new(), 0x1004,),
+                &std::collections::HashMap::new(),
+            ));
+        }
+        let snapshot = VReg::Virtual(VirtualId(11));
+        assert!(is_aarch32_aarch64_native_clobber_safe_excluding(
+            &aarch32_blx_lr_cfg(snapshot, arm_x(14), snapshot, 0x1004, Vec::new()),
+            &std::collections::HashMap::new(),
+        ));
 
         for target in [arm_x(0), arm_x(7), arm_x(14)] {
             let indirect = aarch32_indirect_cfg(target, Vec::new());
@@ -4811,6 +4967,83 @@ mod jit_gate_tests {
             ),
         ];
         for call in malformed_calls {
+            assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
+                &call,
+                &std::collections::HashMap::new(),
+            ));
+        }
+
+        let malformed_interworking_calls = [
+            aarch32_call_cfg(
+                CallTarget::GuestAddrInterworking {
+                    addr: 0x2001,
+                    thumb: true,
+                },
+                arm_x(14),
+                0x1004,
+                OpWidth::W32,
+                Vec::new(),
+                0x1004,
+            ),
+            aarch32_call_cfg(
+                CallTarget::GuestAddrInterworking {
+                    addr: 0x2002,
+                    thumb: false,
+                },
+                arm_x(14),
+                0x1005,
+                OpWidth::W32,
+                Vec::new(),
+                0x1004,
+            ),
+            aarch32_call_cfg(
+                CallTarget::GuestAddrInterworking {
+                    addr: 0x2000,
+                    thumb: true,
+                },
+                arm_x(14),
+                0x1005,
+                OpWidth::W32,
+                Vec::new(),
+                0x1004,
+            ),
+            aarch32_call_cfg(
+                CallTarget::IndirectInterworking(arm_x(14)),
+                arm_x(14),
+                0x1004,
+                OpWidth::W32,
+                Vec::new(),
+                0x1004,
+            ),
+            aarch32_call_cfg(
+                CallTarget::IndirectInterworking(arm_x(15)),
+                arm_x(14),
+                0x1004,
+                OpWidth::W32,
+                Vec::new(),
+                0x1004,
+            ),
+        ];
+        for call in malformed_interworking_calls {
+            assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
+                &call,
+                &std::collections::HashMap::new(),
+            ));
+        }
+
+        let snapshot = VReg::Virtual(VirtualId(11));
+        for call in [
+            aarch32_blx_lr_cfg(snapshot, arm_x(13), snapshot, 0x1004, Vec::new()),
+            aarch32_blx_lr_cfg(
+                snapshot,
+                arm_x(14),
+                VReg::Virtual(VirtualId(12)),
+                0x1004,
+                Vec::new(),
+            ),
+            aarch32_blx_lr_cfg(snapshot, arm_x(14), snapshot, 0x1006, Vec::new()),
+            aarch32_blx_lr_cfg(snapshot, arm_x(14), snapshot, 0x1004, vec![arm_x(0)]),
+        ] {
             assert!(!is_aarch32_aarch64_native_clobber_safe_excluding(
                 &call,
                 &std::collections::HashMap::new(),

@@ -968,6 +968,7 @@ fn thumb_native_cfg(bytes: &[u8], level: OptLevel) -> (ExecMem, usize) {
     let mut lowerer = Aarch64Lowerer::new();
     lowerer.set_native_exits(exits);
     lowerer.set_guest_call_exits(true);
+    lowerer.set_guest_interworking_call_exits(true);
     lowerer.set_guest_indirect_exits(true);
     let lowered = lowerer
         .lower_function(&function)
@@ -1176,6 +1177,90 @@ fn thumb_direct_bl_frontier_exit_matches_interpreter_for_all_nzcv_at_o0_and_o2()
             assert!(actual_exit.exited, "NZCV={nzcv:#x} {level:?}");
             assert_eq!(actual_exit.pc, expected_exit, "NZCV={nzcv:#x} {level:?}");
             assert_eq!(actual, expected, "NZCV={nzcv:#x} {level:?}");
+        }
+    }
+}
+
+fn encode_t32_blx(offset: i32) -> [u8; 4] {
+    assert_eq!(offset & 3, 0, "T32 BLX immediate must be word aligned");
+    assert!((-(1 << 24)..(1 << 24)).contains(&offset));
+    let imm = offset as u32 & 0x01ff_fffc;
+    let s = (imm >> 24) & 1;
+    let i1 = (imm >> 23) & 1;
+    let i2 = (imm >> 22) & 1;
+    let j1 = ((!i1) & 1) ^ s;
+    let j2 = ((!i2) & 1) ^ s;
+    let imm10 = (imm >> 12) & 0x3ff;
+    let imm11 = (imm >> 1) & 0x7ff;
+    let hw1 = 0xf000_u16 | ((s as u16) << 10) | imm10 as u16;
+    let hw2 = 0xc000_u16 | ((j1 as u16) << 13) | ((j2 as u16) << 11) | imm11 as u16;
+    let [a, b] = hw1.to_le_bytes();
+    let [c, d] = hw2.to_le_bytes();
+    [a, b, c, d]
+}
+
+#[test]
+fn t32_immediate_blx_interworking_exit_matches_interpreter_including_zero_target() {
+    const NZCV_MASK: u32 = 0xf000_0000;
+    for offset in [0_i32, 4, -0x8004] {
+        let bytes = encode_t32_blx(offset);
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let (exec, entry) = thumb_native_cfg(&bytes, level);
+            for nzcv in 0_u32..16 {
+                let mut initial = initial_state();
+                initial.cpsr = (initial.cpsr & !NZCV_MASK) | (nzcv << 28);
+                let (expected_exit, expected) = thumb_reference_call(&bytes, initial);
+                let mut actual = initial;
+                let actual_exit = exec.run_aarch32_identity_exit(entry, &mut actual);
+                assert!(
+                    actual_exit.exited,
+                    "offset={offset:#x} NZCV={nzcv:#x} {level:?}"
+                );
+                assert_eq!(
+                    actual_exit.pc, expected_exit,
+                    "offset={offset:#x} NZCV={nzcv:#x} {level:?}"
+                );
+                assert_eq!(
+                    actual, expected,
+                    "offset={offset:#x} NZCV={nzcv:#x} {level:?}"
+                );
+                assert_eq!(actual.cpsr & (1 << 5), 0, "BLX immediate must enter ARM");
+            }
+        }
+    }
+}
+
+#[test]
+fn t16_register_blx_matches_interpreter_for_all_regs_targets_nzcv_at_o0_and_o2() {
+    const NZCV_MASK: u32 = 0xf000_0000;
+    const TARGETS: [u32; 6] = [0, 1, 0x0000_9000, 0x0000_9001, 0xffff_fffc, 0xffff_fffd];
+
+    for rm in 0_u16..15 {
+        let bytes = (0x4780 | (rm << 3)).to_le_bytes();
+        for level in [OptLevel::O0, OptLevel::O2] {
+            let (exec, entry) = thumb_native_cfg(&bytes, level);
+            for target in TARGETS {
+                for nzcv in 0_u32..16 {
+                    let mut initial = initial_state();
+                    initial.r[rm as usize] = target;
+                    initial.cpsr = (initial.cpsr & !NZCV_MASK) | (nzcv << 28);
+                    let (expected_exit, expected) = thumb_reference_call(&bytes, initial);
+                    let mut actual = initial;
+                    let actual_exit = exec.run_aarch32_identity_exit(entry, &mut actual);
+                    assert!(
+                        actual_exit.exited,
+                        "r{rm}={target:#010x} NZCV={nzcv:#x} {level:?}"
+                    );
+                    assert_eq!(
+                        actual_exit.pc, expected_exit,
+                        "r{rm}={target:#010x} NZCV={nzcv:#x} {level:?}"
+                    );
+                    assert_eq!(
+                        actual, expected,
+                        "r{rm}={target:#010x} NZCV={nzcv:#x} {level:?}"
+                    );
+                }
+            }
         }
     }
 }
