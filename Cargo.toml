@@ -130,6 +130,10 @@ name = "riscv_smir_x86_jit"
 path = "tests/suites/smir/jit/riscv_x86_64.rs"
 
 [[test]]
+name = "riscv_smir_aarch64_jit"
+path = "tests/suites/smir/jit/riscv_aarch64.rs"
+
+[[test]]
 name = "riscv_vector"
 path = "tests/suites/differential/riscv/vector.rs"
 
@@ -204,9 +208,10 @@ x86-suite = ["x86_64-suite"]
 # flag, memory, and feature gates, otherwise execution remains interpreted. The
 # x86-64 host supports helper-backed memory/call regions and verification mode;
 # the x86-on-AArch64 path is legacy-GPR scalar-only with an exact CF/ZF/SF/OF
-# bridge and architecture-specific width/flag-contract validation. Brings in
-# the Unix W^X exec-mmap runtime and X86_64Vcpu integration. Disable promotion
-# at runtime with RAX_NO_JIT=1.
+# bridge and architecture-specific width/flag-contract validation. RISC-V uses
+# a state-backed scalar/helper ABI on both x86-64 and AArch64 hosts. Brings in
+# the Unix W^X exec-mmap runtime and vCPU integration. Disable x86 hot-region
+# promotion at runtime with RAX_NO_JIT=1.
 smir-jit = []
 
 [lints.rust]

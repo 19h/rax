@@ -226,7 +226,11 @@ every load/store mode, at VLEN=128. The floating-point core computes the
 round-to-nearest result, recovers the exact residual (2Sum / FMA / Newton), and uses it to deliver
 correctly-rounded answers in all five rounding modes with all five IEEE flags. It is checked against
 qemu-riscv64 by fuzzers that exercise the whole non-control-flow opcode space, and by a dedicated RVV
-harness that diffs the full vector register file and `vl`/`vtype` case by case.
+harness that diffs the full vector register file and `vl`/`vtype` case by case. Its opt-in SMIR
+execution tier lowers one lifted instruction at a time to a state-backed native block on both x86-64
+and AArch64 hosts. Scalar integer, memory, control flow, A/Zacas atomics (including AMOCAS.Q), integer
+crypto, and scalar floating point execute natively; unsupported boundaries remain on the interpreter
+path without speculative guest-state commits.
 
 ---
 
@@ -252,6 +256,7 @@ pseudo-random states, so each test function exercises many cases.
 | `tests/suites/differential/riscv/vector.rs` | RVV 1.0 (vector data path) | `qemu-riscv64` | v0-v31, vl/vtype, x/f registers, fcsr/vcsr, scratch |
 | `tests/suites/differential/x86_64/fuzz.rs` | x86-64 interp (randomized encodings) + SMIR mirror (lift → interp / native) | KVM | GPRs, masked RFLAGS, scratch memory / XMM |
 | `tests/suites/smir/lift/riscv.rs` | RISC-V → SMIR lift | rax RISC-V interp | x/f/v/fcsr (incl. RVV, zero divergence) |
+| `tests/suites/smir/jit/riscv_{x86_64,aarch64}.rs` | RISC-V → SMIR → native host JIT | rax RISC-V interp | x/f/PC/CSR/memory, native/fallback counters |
 | `tests/suites/smir/lift/hexagon.rs` | Hexagon → SMIR lift | rax Hexagon interp | R/P/USR/V/Q (entire ISA: scalar + HVX) |
 | `tests/suites/smir/lower/aarch64_native.rs` | AArch64 → SMIR lift + native ARM64 lower | rax AArch64 interp | X0-X30, V0-V31, memory (scalar int/FP + NEON) |
 | `tests/suites/smir/jit/x86_64.rs` | x86 vCPU → native x86-64 JIT | rax x86 interpreter | registers, flags, memory, throughput |
@@ -549,8 +554,8 @@ make test-sde      # run the usermode x86-64 build under Intel SDE
 | **x86-64 (software)** | boots Linux to a BusyBox shell; full modern ISA; differential-tested vs. KVM; native JIT on x86-64 and AArch64 hosts |
 | **AArch64 / ARM** | boots Linux (HVF near-native on Apple Silicon, or full EL0/EL1 software emulation); AArch64 and AArch32 bit-exact vs. qemu; the ARMv6/S5L8900 machine boots iBoot and runs into early iOS XNU/IOKit bringup |
 | **Hexagon** | every opcode (scalar + HVX) verified vs. qemu-hexagon; bootable bare-metal backend |
-| **RISC-V** | full RVA23 scalar set + crypto + RVV 1.0; bootable `--arch riscv64` backend; verified vs. qemu-riscv64 |
-| **SMIR** | JIT on by default, auto-triggered, fail-safe; x86-64 hosts admit integer, memory, and eligible FP/SIMD regions; AArch64 hosts admit register-only scalar x86 regions with an exact RFLAGS↔NZCV bridge; RISC-V (incl. RVV) and Hexagon lifts complete |
+| **RISC-V** | full RVA23 scalar set + crypto + RVV 1.0; bootable `--arch riscv64` backend; verified vs. qemu-riscv64; opt-in SMIR JIT on x86-64 and AArch64 hosts |
+| **SMIR** | JIT on by default, auto-triggered, fail-safe; x86-64 hosts admit integer, memory, and eligible FP/SIMD regions; AArch64 hosts admit register-only scalar x86 regions with an exact RFLAGS↔NZCV bridge and state-backed RISC-V scalar/helper blocks; RISC-V (incl. RVV) and Hexagon lifts complete |
 | **Platform** | legacy PC devices wired; PCI host bridge + `--pci-devices` (e1000 `eth0`, AHCI/NVMe/UHCI/AC97); interactive console and full `.rxc` machine checkpoint/resume |
 | **Legacy boot** | real-mode mini-BIOS + El-Torito CD boot; **TempleOS V5.03** boots real to long mode, mounts its CD, runs its HolyC compiler |
 

@@ -12,32 +12,58 @@
 //! are generated directly. The test FAILS on any divergence and prints a
 //! per-`Op` breakdown of remaining lift gaps.
 
-#![cfg(any(target_os = "linux", all(target_os = "macos", target_arch = "x86_64")))]
+#![cfg(any(target_os = "linux", target_os = "macos"))]
 
 use std::collections::BTreeMap;
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 use std::collections::{BTreeSet, HashMap};
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 use std::sync::{Mutex, OnceLock};
 
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 use rax::isa::riscv::decode::decode_compressed;
 use rax::isa::riscv::{
     FlatMemory as RvMem, Isa, Memory as RvMemory, Op, RiscVConfig, RiscVCpu, RiscVExit, Xlen,
     decode, decode_at,
 };
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 use rax::smir::ir::types::FunctionId;
 use rax::smir::ir::types::{ArchReg, BlockId, OpId, RiscVReg, SourceArch};
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 use rax::smir::ir::{CallingConv, SmirFunction};
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 use rax::smir::lift::ControlFlow;
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 use rax::smir::lower::SmirLowerer;
+#[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
+use rax::smir::lower::cross::riscv_guest_to_aarch64_host::RiscVAarch64Lowerer as NativeRiscVLowerer;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-use rax::smir::lower::cross::riscv_guest_to_x86_64_host::RiscVX86_64Lowerer;
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use rax::smir::lower::cross::riscv_guest_to_x86_64_host::RiscVX86_64Lowerer as NativeRiscVLowerer;
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 use rax::smir::optimize::{OptLevel, optimize_function};
 use rax::smir::{
     ArchRegState, FlatMemory as SmirMem, LiftContext, LiftError, RiscVLifter, SmirBlock,
@@ -52,7 +78,10 @@ const MEM_SIZE: u64 = 0x10000;
 /// width, addressing-mode, and control-flow structure. This keeps the native
 /// lowerability audit finite without conflating `I32` with `I64`, or distinct
 /// architectural operations whose names contain digits.
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 fn normalized_smir_shape(debug: &str) -> String {
     let bytes = debug.as_bytes();
     let mut normalized = String::with_capacity(debug.len());
@@ -90,7 +119,10 @@ fn normalized_smir_shape(debug: &str) -> String {
     normalized
 }
 
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 fn lowerability_function(
     control: &ControlFlow,
     ops: &[rax::smir::SmirOp],
@@ -172,8 +204,11 @@ fn lowerability_function(
 /// differential corpus lowers and finalizes at both optimization boundaries.
 /// The global set is synchronization-safe because this test module is executed
 /// concurrently by the Rust test harness.
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-fn assert_x86_lowerable_once(insn: &[u8], lifted: &rax::smir::LiftResult) {
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
+fn assert_native_lowerable_once(insn: &[u8], lifted: &rax::smir::LiftResult) {
     static LOWERED_SHAPES: OnceLock<Mutex<BTreeSet<String>>> = OnceLock::new();
 
     let decoded = match insn {
@@ -206,14 +241,16 @@ fn assert_x86_lowerable_once(insn: &[u8], lifted: &rax::smir::LiftResult) {
     for level in [OptLevel::O0, OptLevel::O2] {
         let mut optimized = function.clone();
         optimize_function(&mut optimized, level);
-        let mut lowerer = RiscVX86_64Lowerer::new();
+        let mut lowerer = NativeRiscVLowerer::new();
         lowerer.set_return_pcs(return_pcs.clone());
         lowerer.lower_function(&optimized).unwrap_or_else(|error| {
-            panic!("RISC-V SMIR shape failed x86 lowering at {level:?}: {error:?}\nshape={shape}")
+            panic!(
+                "RISC-V SMIR shape failed native lowering at {level:?}: {error:?}\nshape={shape}"
+            )
         });
         lowerer.finalize().unwrap_or_else(|error| {
             panic!(
-                "RISC-V SMIR shape failed x86 finalization at {level:?}: {error:?}\nshape={shape}"
+                "RISC-V SMIR shape failed native finalization at {level:?}: {error:?}\nshape={shape}"
             )
         });
     }
@@ -400,8 +437,11 @@ fn run_smir(insn: &[u8], init: &State) -> Result<Option<State>, String> {
         }
         Err(e) => return Err(format!("lift error: {e:?}")),
     };
-    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-    assert_x86_lowerable_once(insn, &res);
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
+    assert_native_lowerable_once(insn, &res);
     let mut ops = res.ops;
     for (i, op) in ops.iter_mut().enumerate() {
         op.id = OpId(i as u16);
@@ -523,8 +563,11 @@ fn run_smir_cf(insn: &[u8], init: &State) -> Result<Option<(State, u64)>, String
         }
         Err(e) => return Err(format!("lift error: {e:?}")),
     };
-    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-    assert_x86_lowerable_once(insn, &res);
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
+    assert_native_lowerable_once(insn, &res);
     let cf = res.control_flow;
     let bytes = res.bytes_consumed as u64;
     let mut ops = res.ops;

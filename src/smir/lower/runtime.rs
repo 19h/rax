@@ -8,7 +8,7 @@
 //!    assembly) marshalling the x86 [`GuestRegs`] file in/out.
 //!  * aarch64: entry trampoline `rax_a64_enter_native` (AArch64 assembly)
 //!    marshalling the [`Aarch64GuestRegs`] file in/out.
-//!  * RISC-V on x86-64: a state-backed `extern "sysv64"` entry point that reads
+//!  * RISC-V on x86-64/AArch64: a state-backed native entry point that reads
 //!    and writes [`RiscVGuestRegs`] directly.
 //! The first two paths rely on the lowerer's 1:1 identity register map (guest
 //! GPR `N` ⇒ the same-named host GPR), so their only marshalling is once on
@@ -347,7 +347,7 @@ pub struct RiscVLoadResult {
     pub success: u64,
 }
 
-/// Two-register SysV result of [`RiscVGuestRegs::fp_fn`].
+/// Two-register native-ABI result of [`RiscVGuestRegs::fp_fn`].
 ///
 /// A valid operation returns the raw destination in `value` and the updated
 /// FCSR in `fcsr_status`. An illegal operation or rounding mode returns
@@ -360,21 +360,16 @@ pub struct RiscVFpResult {
     pub fcsr_status: u64,
 }
 
-/// State ABI for RISC-V SMIR lowered to an x86-64 host.
+/// State ABI for RISC-V SMIR lowered to an x86-64 or AArch64 host.
 ///
-/// The state-backed cross-lowerer accesses every field through the pointer
-/// passed in RDI.  All scalar fields use eight-byte slots, including `fcsr`, so
-/// the ABI is identical for RV32 and RV64 and has mechanically checkable
-/// offsets. `load_fn` has signature
-/// `extern "sysv64" fn(ctx, addr, size, signed) -> {value, success}`; `store_fn` has
-/// signature `extern "sysv64" fn(ctx, addr, value, size) -> success`. Atomic
-/// helpers use the same ABI, share the same context, and must implement one
-/// indivisible transaction per call. The integer-crypto and scalar-FP helpers
-/// are pure; the latter has signature
-/// `extern "sysv64" fn(op_code, rm, fcsr, a, b, c) -> {value, fcsr_status}`.
-/// `vector_fn` has signature
-/// `extern "sysv64" fn(state, insn, xlen) -> success`; exact success is one.
-/// On any other status it must leave both this state and guest memory unchanged.
+/// The state-backed cross-lowerer accesses every field through the first native
+/// ABI argument (RDI under x86-64 SysV; X0 under AAPCS64). All scalar fields use
+/// eight-byte slots, including `fcsr`, so the layout is identical for RV32 and
+/// RV64. Helper signatures follow the host ABI: x86-64 SysV or AAPCS64.
+/// Atomic helpers share `ctx` and implement one indivisible transaction per
+/// call. Integer-crypto and scalar-FP helpers are pure. `vector_fn(state, insn,
+/// xlen)` returns exact success as one; every other status must leave both this
+/// state and guest memory unchanged.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RiscVGuestRegs {
@@ -1115,6 +1110,19 @@ impl ExecMem {
     #[cfg(target_arch = "x86_64")]
     pub fn run_riscv(&self, entry_offset: usize, regs: &mut RiscVGuestRegs) {
         type Entry = unsafe extern "sysv64" fn(*mut RiscVGuestRegs);
+        let entry = unsafe { self.ptr.add(entry_offset) } as *const u8;
+        let entry: Entry = unsafe { core::mem::transmute(entry) };
+        unsafe { entry(regs as *mut RiscVGuestRegs) };
+    }
+
+    /// Execute a state-backed RISC-V-on-AArch64 lowered block.
+    ///
+    /// # Safety
+    /// The mapped code must have been emitted for the
+    /// `extern "C" fn(*mut RiscVGuestRegs)` AAPCS64 ABI and must preserve it.
+    #[cfg(target_arch = "aarch64")]
+    pub fn run_riscv(&self, entry_offset: usize, regs: &mut RiscVGuestRegs) {
+        type Entry = unsafe extern "C" fn(*mut RiscVGuestRegs);
         let entry = unsafe { self.ptr.add(entry_offset) } as *const u8;
         let entry: Entry = unsafe { core::mem::transmute(entry) };
         unsafe { entry(regs as *mut RiscVGuestRegs) };

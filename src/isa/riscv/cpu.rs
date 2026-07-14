@@ -15,7 +15,10 @@ use super::float::RoundingMode;
 use super::memory::{MemError, Memory};
 use super::{Isa, Xlen};
 
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 mod jit;
 
 /// Privilege level of the hart.
@@ -138,8 +141,11 @@ impl RiscVConfig {
     }
 }
 
-/// Observable counters for the opt-in RISC-V SMIR-to-x86-64 execution path.
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+/// Observable counters for the opt-in host-native RISC-V SMIR execution path.
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct RiscVJitStats {
     /// Compiled and interpreter-only entries currently retained in the cache.
@@ -213,7 +219,10 @@ pub struct RiscVCpu {
 
     /// Opt-in single-instruction SMIR JIT cache. The ordinary [`step`](Self::step)
     /// and [`run`](Self::run) paths never consult it.
-    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
     jit: jit::RiscVJitCache,
 }
 
@@ -272,7 +281,10 @@ impl RiscVCpu {
             v: [0; 32 * VLENB as usize],
             ext_csr: HashMap::new(),
             mem,
-            #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+            #[cfg(all(
+                feature = "smir-jit",
+                any(target_arch = "x86_64", target_arch = "aarch64")
+            ))]
             jit: jit::RiscVJitCache::default(),
         }
     }

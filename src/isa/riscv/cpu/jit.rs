@@ -1,4 +1,4 @@
-//! Opt-in production RISC-V SMIR-to-x86-64 execution path.
+//! Opt-in production RISC-V SMIR native execution path.
 //!
 //! One decoded guest instruction is lifted, optimized, lowered, and cached by
 //! `(PC, encoding, length, optimization level)`. Unsupported boundaries remain
@@ -18,6 +18,9 @@ use crate::smir::ir::{CallingConv, SmirBlock, SmirFunction, Terminator};
 use crate::smir::lift::riscv::RiscVExtensions;
 use crate::smir::lift::{ControlFlow, LiftContext, LiftResult, SmirLifter};
 use crate::smir::lower::SmirLowerer;
+#[cfg(target_arch = "aarch64")]
+use crate::smir::lower::cross::riscv_guest_to_aarch64_host::RiscVAarch64Lowerer;
+#[cfg(target_arch = "x86_64")]
 use crate::smir::lower::cross::riscv_guest_to_x86_64_host::RiscVX86_64Lowerer;
 use crate::smir::lower::runtime::{
     ExecMem, RISCV_FP_RESULT_INVALID, RiscVAtomicCasResult, RiscVAtomicCasStatus,
@@ -111,7 +114,7 @@ impl RiscVJitCache {
 }
 
 impl RiscVCpu {
-    /// Fetch and execute one instruction through the RISC-V SMIR-to-x86-64 JIT
+    /// Fetch and execute one instruction through the host-native RISC-V SMIR JIT
     /// when the instruction lies inside the admitted native boundary.
     ///
     /// Unsupported instructions, vector operations, environmental operations,
@@ -316,7 +319,10 @@ fn compile_native_block(
     }
     let (mut function, return_pcs) = function_for_lift(pc, lifted)?;
     optimize_function(&mut function, level);
+    #[cfg(target_arch = "x86_64")]
     let mut lowerer = RiscVX86_64Lowerer::new();
+    #[cfg(target_arch = "aarch64")]
+    let mut lowerer = RiscVAarch64Lowerer::new();
     lowerer.set_return_pcs(return_pcs);
     let lowered = lowerer.lower_function(&function).ok()?;
     let code = lowerer.finalize().ok()?;
@@ -509,7 +515,7 @@ fn valid_size(size: u64) -> Option<usize> {
     }
 }
 
-unsafe extern "sysv64" fn jit_load(ctx: u64, addr: u64, size: u64, signed: u64) -> RiscVLoadResult {
+unsafe fn jit_load_impl(ctx: u64, addr: u64, size: u64, signed: u64) -> RiscVLoadResult {
     let Some(context) = (unsafe { JitContext::from_abi(ctx) }) else {
         return RiscVLoadResult::default();
     };
@@ -537,7 +543,7 @@ unsafe extern "sysv64" fn jit_load(ctx: u64, addr: u64, size: u64, signed: u64) 
     }
 }
 
-unsafe extern "sysv64" fn jit_store(ctx: u64, addr: u64, value: u64, size: u64) -> u64 {
+unsafe fn jit_store_impl(ctx: u64, addr: u64, value: u64, size: u64) -> u64 {
     let Some(context) = (unsafe { JitContext::from_abi(ctx) }) else {
         return 0;
     };
@@ -578,7 +584,7 @@ fn fence_after(order: u64) {
     }
 }
 
-unsafe extern "sysv64" fn jit_atomic_rmw(
+unsafe fn jit_atomic_rmw_impl(
     ctx: u64,
     addr: u64,
     operand: u64,
@@ -590,10 +596,11 @@ unsafe extern "sysv64" fn jit_atomic_rmw(
         return RiscVAtomicResult::default();
     };
     let addr = context.normalize_addr(addr);
-    if !matches!(size, 4 | 8) || addr % size != 0 || decode_order(order).is_none() {
+    if !matches!(size, 4 | 8) || addr % size != 0 || decode_order(order).is_none() || op > 11 {
         context.record_fault(cause::STORE_MISALIGNED, addr);
         return RiscVAtomicResult::default();
     }
+    fence_before(order);
     let mut bytes = [0u8; 8];
     if unsafe { context.memory() }
         .read(addr, &mut bytes[..size as usize])
@@ -649,7 +656,7 @@ unsafe extern "sysv64" fn jit_atomic_rmw(
     }
 }
 
-unsafe extern "sysv64" fn jit_compare_and_swap(
+unsafe fn jit_compare_and_swap_impl(
     ctx: u64,
     addr: u64,
     expected: u64,
@@ -703,7 +710,7 @@ unsafe extern "sysv64" fn jit_compare_and_swap(
 }
 
 #[allow(clippy::too_many_arguments)]
-unsafe extern "sysv64" fn jit_compare_and_swap_pair(
+unsafe fn jit_compare_and_swap_pair_impl(
     ctx: u64,
     addr: u64,
     expected_lo: u64,
@@ -763,7 +770,7 @@ unsafe extern "sysv64" fn jit_compare_and_swap_pair(
     }
 }
 
-unsafe extern "sysv64" fn jit_load_exclusive(ctx: u64, addr: u64, size: u64) -> RiscVAtomicResult {
+unsafe fn jit_load_exclusive_impl(ctx: u64, addr: u64, size: u64) -> RiscVAtomicResult {
     let Some(context) = (unsafe { JitContext::from_abi(ctx) }) else {
         return RiscVAtomicResult::default();
     };
@@ -787,7 +794,7 @@ unsafe extern "sysv64" fn jit_load_exclusive(ctx: u64, addr: u64, size: u64) -> 
     }
 }
 
-unsafe extern "sysv64" fn jit_store_exclusive(
+unsafe fn jit_store_exclusive_impl(
     ctx: u64,
     addr: u64,
     value: u64,
@@ -816,7 +823,7 @@ unsafe extern "sysv64" fn jit_store_exclusive(
     }
 }
 
-unsafe extern "sysv64" fn jit_clear_exclusive(ctx: u64) {
+unsafe fn jit_clear_exclusive_impl(ctx: u64) {
     if let Some(context) = unsafe { JitContext::from_abi(ctx) } {
         unsafe { *context.reservation() = None };
     }
@@ -852,13 +859,7 @@ fn int_crypto_op(code: u64) -> Option<Op> {
     })
 }
 
-unsafe extern "sysv64" fn jit_int_crypto(
-    op_code: u64,
-    src1: u64,
-    src2: u64,
-    imm: u64,
-    xlen: u64,
-) -> u64 {
+unsafe fn jit_int_crypto_impl(op_code: u64, src1: u64, src2: u64, imm: u64, xlen: u64) -> u64 {
     let Some(op) = int_crypto_op(op_code) else {
         return 0;
     };
@@ -868,7 +869,7 @@ unsafe extern "sysv64" fn jit_int_crypto(
     super::super::crypto::eval_int_crypto(op, src1, src2, imm as u8, xlen).unwrap_or(0)
 }
 
-unsafe extern "sysv64" fn jit_scalar_fp(
+unsafe fn jit_scalar_fp_impl(
     op_code: u64,
     rm_field: u64,
     fcsr: u64,
@@ -901,10 +902,36 @@ unsafe extern "sysv64" fn jit_scalar_fp(
     }
 }
 
-unsafe extern "sysv64" fn jit_vector_unsupported(
-    _state: *mut RiscVGuestRegs,
-    _insn: u64,
-    _xlen: u64,
-) -> u64 {
+unsafe fn jit_vector_unsupported_impl(_state: *mut RiscVGuestRegs, _insn: u64, _xlen: u64) -> u64 {
     0
 }
+
+// The x86-64 code generator intentionally uses the SysV ABI even on targets
+// whose platform C ABI differs. AArch64 uses AAPCS64, which is its C ABI.
+// Keep one semantic implementation per helper and expose architecture-correct
+// entry wrappers to generated code.
+macro_rules! define_jit_abi {
+    ($name:ident, $implementation:ident, ($($arg:ident: $ty:ty),* $(,)?) -> $ret:ty) => {
+        #[cfg(target_arch = "x86_64")]
+        unsafe extern "sysv64" fn $name($($arg: $ty),*) -> $ret {
+            unsafe { $implementation($($arg),*) }
+        }
+
+        #[cfg(target_arch = "aarch64")]
+        unsafe extern "C" fn $name($($arg: $ty),*) -> $ret {
+            unsafe { $implementation($($arg),*) }
+        }
+    };
+}
+
+define_jit_abi!(jit_load, jit_load_impl, (ctx: u64, addr: u64, size: u64, signed: u64) -> RiscVLoadResult);
+define_jit_abi!(jit_store, jit_store_impl, (ctx: u64, addr: u64, value: u64, size: u64) -> u64);
+define_jit_abi!(jit_atomic_rmw, jit_atomic_rmw_impl, (ctx: u64, addr: u64, operand: u64, size: u64, op: u64, order: u64) -> RiscVAtomicResult);
+define_jit_abi!(jit_compare_and_swap, jit_compare_and_swap_impl, (ctx: u64, addr: u64, expected: u64, new_value: u64, size: u64, order: u64) -> RiscVAtomicCasResult);
+define_jit_abi!(jit_compare_and_swap_pair, jit_compare_and_swap_pair_impl, (ctx: u64, addr: u64, expected_lo: u64, expected_hi: u64, new_lo: u64, new_hi: u64, order: u64, failure_order: u64, out_old_hi: *mut u64) -> RiscVAtomicCasResult);
+define_jit_abi!(jit_load_exclusive, jit_load_exclusive_impl, (ctx: u64, addr: u64, size: u64) -> RiscVAtomicResult);
+define_jit_abi!(jit_store_exclusive, jit_store_exclusive_impl, (ctx: u64, addr: u64, value: u64, size: u64) -> RiscVAtomicResult);
+define_jit_abi!(jit_clear_exclusive, jit_clear_exclusive_impl, (ctx: u64) -> ());
+define_jit_abi!(jit_int_crypto, jit_int_crypto_impl, (op_code: u64, src1: u64, src2: u64, imm: u64, xlen: u64) -> u64);
+define_jit_abi!(jit_scalar_fp, jit_scalar_fp_impl, (op_code: u64, rm_field: u64, fcsr: u64, a: u64, b: u64, c: u64) -> RiscVFpResult);
+define_jit_abi!(jit_vector_unsupported, jit_vector_unsupported_impl, (state: *mut RiscVGuestRegs, insn: u64, xlen: u64) -> u64);

@@ -103,6 +103,7 @@ fn push_ci_runs_host_specific_scalar_and_evex_jit_regressions() {
         "--test smir_jit_x86_aarch64",
         "--test smir_jit_evex_masking",
         "--test riscv_smir_x86_jit",
+        "--test riscv_smir_aarch64_jit",
     ] {
         assert!(
             contents.contains(target),
@@ -125,6 +126,7 @@ fn scheduled_full_suite_runs_every_host_specific_jit_regression_binary() {
         "--test smir_jit_x86_aarch64",
         "--test smir_jit_evex_masking",
         "--test riscv_smir_x86_jit",
+        "--test riscv_smir_aarch64_jit",
         "--test aarch64_smir_native",
     ] {
         assert!(

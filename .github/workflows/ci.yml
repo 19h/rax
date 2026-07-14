@@ -131,6 +131,7 @@ jobs:
             --test realmode_boot \
             --test riscv_boot \
             --test riscv_smir_x86_jit \
+            --test riscv_smir_aarch64_jit \
             --test smir_avx10_roundtrip \
             --test smir_jit_vcpu \
             --test smir_jit_aarch32_aarch64 \
