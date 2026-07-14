@@ -746,16 +746,17 @@ impl SmirInterpreter {
                     }
                 }
 
-                if flags.updates_any() {
-                    ctx.flags.lazy = Some(LazyFlags {
+                ctx.flags.set_lazy_with_update(
+                    LazyFlags {
                         op: LazyFlagOp::Mul,
                         result: result_lo,
                         left: a,
                         right: b,
                         width: *width,
                         high: result_hi,
-                    });
-                }
+                    },
+                    *flags,
+                );
             }
 
             OpKind::MulS {
@@ -803,8 +804,8 @@ impl SmirInterpreter {
                     }
                 }
 
-                if flags.updates_any() {
-                    ctx.flags.lazy = Some(LazyFlags {
+                ctx.flags.set_lazy_with_update(
+                    LazyFlags {
                         // Signed: CF/OF iff the product isn't the sign-extension
                         // of the low half (distinct from unsigned Mul's high!=0).
                         op: LazyFlagOp::Imul,
@@ -813,8 +814,9 @@ impl SmirInterpreter {
                         right: b as u64,
                         width: *width,
                         high: result_hi,
-                    });
-                }
+                    },
+                    *flags,
+                );
             }
 
             OpKind::MulAdd {
@@ -973,9 +975,8 @@ impl SmirInterpreter {
 
                 Self::write_gpr(ctx, *dst, result, *width);
 
-                if flags.updates_any() {
-                    ctx.flags.set_lazy_logic(result, *width);
-                }
+                ctx.flags
+                    .set_lazy_with_update(LazyFlags::logic(result, *width), *flags);
             }
 
             OpKind::Or {
@@ -991,9 +992,8 @@ impl SmirInterpreter {
 
                 Self::write_gpr(ctx, *dst, result, *width);
 
-                if flags.updates_any() {
-                    ctx.flags.set_lazy_logic(result, *width);
-                }
+                ctx.flags
+                    .set_lazy_with_update(LazyFlags::logic(result, *width), *flags);
             }
 
             OpKind::Xor {
@@ -1009,9 +1009,8 @@ impl SmirInterpreter {
 
                 Self::write_gpr(ctx, *dst, result, *width);
 
-                if flags.updates_any() {
-                    ctx.flags.set_lazy_logic(result, *width);
-                }
+                ctx.flags
+                    .set_lazy_with_update(LazyFlags::logic(result, *width), *flags);
             }
 
             OpKind::Not { dst, src, width } => {
@@ -1041,11 +1040,12 @@ impl SmirInterpreter {
 
                 Self::write_gpr(ctx, *dst, result, *width);
 
-                match flags {
-                    FlagUpdate::None => {}
-                    FlagUpdate::All => ctx.flags.set_lazy_logic(result, *width),
-                    FlagUpdate::Specific(_) => ctx.flags.set_lazy_andn(result, *width),
-                }
+                let lazy = if matches!(flags, FlagUpdate::Specific(_)) {
+                    LazyFlags::andn(result, *width)
+                } else {
+                    LazyFlags::logic(result, *width)
+                };
+                ctx.flags.set_lazy_with_update(lazy, *flags);
             }
 
             // ==================================================================
@@ -1068,15 +1068,18 @@ impl SmirInterpreter {
 
                 Self::write_gpr(ctx, *dst, result, *width);
 
-                if amt != 0 && flags.updates_any() {
-                    ctx.flags.lazy = Some(LazyFlags {
-                        op: LazyFlagOp::Shl,
-                        result,
-                        left: val,
-                        right: amt,
-                        width: *width,
-                        high: 0,
-                    });
+                if amt != 0 {
+                    ctx.flags.set_lazy_with_update(
+                        LazyFlags {
+                            op: LazyFlagOp::Shl,
+                            result,
+                            left: val,
+                            right: amt,
+                            width: *width,
+                            high: 0,
+                        },
+                        *flags,
+                    );
                 }
             }
 
@@ -1097,15 +1100,18 @@ impl SmirInterpreter {
 
                 Self::write_gpr(ctx, *dst, result, *width);
 
-                if amt != 0 && flags.updates_any() {
-                    ctx.flags.lazy = Some(LazyFlags {
-                        op: LazyFlagOp::Shr,
-                        result,
-                        left: val,
-                        right: amt,
-                        width: *width,
-                        high: 0,
-                    });
+                if amt != 0 {
+                    ctx.flags.set_lazy_with_update(
+                        LazyFlags {
+                            op: LazyFlagOp::Shr,
+                            result,
+                            left: val,
+                            right: amt,
+                            width: *width,
+                            high: 0,
+                        },
+                        *flags,
+                    );
                 }
             }
 
@@ -1129,15 +1135,18 @@ impl SmirInterpreter {
                 Self::write_gpr(ctx, *dst, result, *width);
 
                 // A masked shift count of 0 leaves all status flags unchanged.
-                if amt != 0 && flags.updates_any() {
-                    ctx.flags.lazy = Some(LazyFlags {
-                        op: LazyFlagOp::Sar,
-                        result,
-                        left: val as u64,
-                        right: amt,
-                        width: *width,
-                        high: 0,
-                    });
+                if amt != 0 {
+                    ctx.flags.set_lazy_with_update(
+                        LazyFlags {
+                            op: LazyFlagOp::Sar,
+                            result,
+                            left: val as u64,
+                            right: amt,
+                            width: *width,
+                            high: 0,
+                        },
+                        *flags,
+                    );
                 }
             }
 
@@ -16527,6 +16536,77 @@ mod tests {
         let mut func = builder.finish();
         func.blocks[0].ops = result.ops;
         SmirInterpreter::new().execute_block(ctx, memory, &func.blocks[0])
+    }
+
+    fn execute_lifted_thumb(bytes: &[u8], ctx: &mut SmirContext) -> BlockResult {
+        use crate::smir::ir::types::SourceArch;
+        use crate::smir::lift::thumb::ThumbLifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        let mut lifter = ThumbLifter::new();
+        let mut lctx = LiftContext::new(SourceArch::Thumb);
+        let result = lifter.lift_insn(0x1000, bytes, &mut lctx).unwrap();
+        assert_eq!(result.bytes_consumed, bytes.len());
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.set_terminator(Terminator::Trap {
+            kind: TrapKind::Halt,
+        });
+        let mut func = builder.finish();
+        func.blocks[0].ops = result.ops;
+        SmirInterpreter::new().execute_block(ctx, &mut FlatMemory::new(0x1000), &func.blocks[0])
+    }
+
+    #[test]
+    fn lifted_t16_selective_nzcv_ops_interpret_all_prior_flag_states() {
+        let r0 = VReg::Arch(ArchReg::Arm(ArmReg::X(0)));
+        let r1 = VReg::Arch(ArchReg::Arm(ArmReg::X(1)));
+        for (bytes, expected, updates_c) in [
+            (&[0x00, 0x20][..], 0_u32, None),             // MOVS r0,#0
+            (&[0x08, 0x40][..], 0x8000_0001, None),       // ANDS r0,r1
+            (&[0x48, 0x43][..], 0x7fff_ffff, None),       // MULS r0,r1
+            (&[0x48, 0x00][..], 0xffff_fffe, Some(true)), // LSLS r0,r1,#1
+            (&[0x08, 0x08][..], 0, Some(true)),           // LSRS r0,r1,#32
+            (&[0x08, 0x10][..], u32::MAX, Some(true)),    // ASRS r0,r1,#32
+        ] {
+            for old_nzcv in 0_u8..16 {
+                let mut ctx = SmirContext::new_aarch64();
+                ctx.write_vreg(r0, 0x8000_0001);
+                ctx.write_vreg(r1, u64::from(u32::MAX));
+                ctx.flags.materialized = MaterializedFlags {
+                    sf: old_nzcv & 0b1000 != 0,
+                    zf: old_nzcv & 0b0100 != 0,
+                    cf: old_nzcv & 0b0010 != 0,
+                    of: old_nzcv & 0b0001 != 0,
+                    pf: true,
+                    af: true,
+                    df: true,
+                };
+                ctx.flags.lazy = None;
+
+                assert!(matches!(
+                    execute_lifted_thumb(bytes, &mut ctx),
+                    BlockResult::Exit(ExitReason::Halt)
+                ));
+                ctx.flags.materialize_all();
+                assert_eq!(ctx.read_vreg(r0), u64::from(expected), "{bytes:02x?}");
+                assert_eq!(ctx.flags.materialized.sf, expected & 0x8000_0000 != 0);
+                assert_eq!(ctx.flags.materialized.zf, expected == 0);
+                assert_eq!(
+                    ctx.flags.materialized.cf,
+                    updates_c.unwrap_or(old_nzcv & 0b0010 != 0),
+                    "{bytes:02x?} old={old_nzcv:#x}"
+                );
+                assert_eq!(
+                    ctx.flags.materialized.of,
+                    old_nzcv & 0b0001 != 0,
+                    "{bytes:02x?} old={old_nzcv:#x}"
+                );
+                assert!(ctx.flags.materialized.pf, "PF is outside T16 NZCV writes");
+                assert!(ctx.flags.materialized.af, "AF is outside T16 NZCV writes");
+                assert!(ctx.flags.materialized.df, "DF is outside T16 NZCV writes");
+            }
+        }
     }
 
     fn execute_lifted_x86_condition(

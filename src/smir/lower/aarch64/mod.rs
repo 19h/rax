@@ -16511,6 +16511,140 @@ impl Aarch64Lowerer {
         }
     }
 
+    fn native_nzcv_mask(set: FlagSet) -> Result<i64, LowerError> {
+        if !set.difference(FlagSet::NZCV).is_empty() {
+            return Err(LowerError::InvalidOperand {
+                op: "AArch64 selective NZCV update".into(),
+                operand: format!("non-NZCV flag set {set:?}"),
+            });
+        }
+        let mut mask = 0;
+        if set.contains(FlagSet::SF) {
+            mask |= NZCV_N;
+        }
+        if set.contains(FlagSet::ZF) {
+            mask |= NZCV_Z;
+        }
+        if set.contains(FlagSet::CF) {
+            mask |= NZCV_C;
+        }
+        if set.contains(FlagSet::OF) {
+            mask |= NZCV_V;
+        }
+        Ok(mask)
+    }
+
+    fn lower_with_selected_nzcv<F>(&mut self, set: FlagSet, produce: F) -> Result<(), LowerError>
+    where
+        F: FnOnce(&mut Self) -> Result<(), LowerError>,
+    {
+        let mask = Self::native_nzcv_mask(set)?;
+        if mask == 0 {
+            return produce(self);
+        }
+
+        // X16/X17 are outside the admitted AArch32 R0-R14 identity set. Nested
+        // lowerers may select the same scratch registers, but every nested use
+        // is stack-saved and restores this outer snapshot before returning.
+        let scratches = Self::scratch_regs(&[], 2)?;
+        let saved = scratches[0];
+        let produced = scratches[1];
+        self.emit_scratch_save(&scratches);
+        self.emit_sysreg(saved, ArmReg::Nzcv, true)?;
+        produce(self)?;
+        self.emit_sysreg(produced, ArmReg::Nzcv, true)?;
+        self.emit_logic_imm_mask(saved, saved, 0b00, !(mask as u32) as i64, OpWidth::W32)?;
+        self.emit_logic_imm_mask(produced, produced, 0b00, mask, OpWidth::W32)?;
+        self.emit_logic_shifted(saved, saved, produced, 0b01, false, 0, 0, OpWidth::W32)?;
+        self.emit_sysreg(saved, ArmReg::Nzcv, false)?;
+        self.emit_scratch_restore(&scratches);
+        Ok(())
+    }
+
+    fn lower_logic_flag_contract(
+        &mut self,
+        dst: VReg,
+        src1: VReg,
+        src2: &SrcOperand,
+        opc_without_flags: u32,
+        n: bool,
+        flags: FlagUpdate,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
+        let partial_nz = FlagSet::SF.union(FlagSet::ZF);
+        if flags == FlagUpdate::Specific(partial_nz) {
+            return self.lower_with_selected_nzcv(partial_nz, |lowerer| {
+                let opc = if opc_without_flags == 0b00 {
+                    0b11
+                } else {
+                    opc_without_flags
+                };
+                lowerer.lower_logic(dst, src1, src2, opc, n, true, width)
+            });
+        }
+
+        let set_flags = flags.updates_any();
+        let opc = if set_flags && opc_without_flags == 0b00 {
+            0b11
+        } else {
+            opc_without_flags
+        };
+        self.lower_logic(dst, src1, src2, opc, n, set_flags, width)
+    }
+
+    fn lower_shift_flag_contract(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        amount: &SrcOperand,
+        shift: ShiftOp,
+        flags: FlagUpdate,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
+        let partial_nzc = FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF);
+        if flags == FlagUpdate::Specific(partial_nzc) {
+            return self.lower_with_selected_nzcv(partial_nzc, |lowerer| {
+                lowerer.lower_shift(dst, src, amount, shift, true, width)
+            });
+        }
+        self.lower_shift(dst, src, amount, shift, flags.updates_any(), width)
+    }
+
+    fn lower_mul_flag_contract(
+        &mut self,
+        dst_lo: VReg,
+        dst_hi: Option<VReg>,
+        src1: VReg,
+        src2: &SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+        signed: bool,
+    ) -> Result<(), LowerError> {
+        let partial_nz = FlagSet::SF.union(FlagSet::ZF);
+        if flags == FlagUpdate::Specific(partial_nz) {
+            if dst_hi.is_some() {
+                return Err(LowerError::InvalidOperand {
+                    op: "AArch64 selective-NZ multiply".into(),
+                    operand: "high-half destination".into(),
+                });
+            }
+            let result = Self::dst_gpr_arm_or_x86(dst_lo)?;
+            return self.lower_with_selected_nzcv(partial_nz, |lowerer| {
+                lowerer.lower_mul(dst_lo, None, src1, src2, width, false, signed)?;
+                lowerer.emit_logic_reg_n(31, result, result, 0b11, false, width)
+            });
+        }
+        self.lower_mul(
+            dst_lo,
+            dst_hi,
+            src1,
+            src2,
+            width,
+            flags.updates_any(),
+            signed,
+        )
+    }
+
     fn lower_op(&mut self, op: &SmirOp) -> Result<(), LowerError> {
         match &op.kind {
             OpKind::Nop => {
@@ -16586,34 +16720,28 @@ impl Aarch64Lowerer {
                 src2,
                 width,
                 flags,
-            } => {
-                let opc = if flags.updates_any() { 0b11 } else { 0b00 };
-                self.lower_logic(*dst, *src1, src2, opc, false, flags.updates_any(), *width)
-            }
+            } => self.lower_logic_flag_contract(*dst, *src1, src2, 0b00, false, *flags, *width),
             OpKind::AndNot {
                 dst,
                 src1,
                 src2,
                 width,
                 flags,
-            } => {
-                let opc = if flags.updates_any() { 0b11 } else { 0b00 };
-                self.lower_logic(*dst, *src1, src2, opc, true, flags.updates_any(), *width)
-            }
+            } => self.lower_logic_flag_contract(*dst, *src1, src2, 0b00, true, *flags, *width),
             OpKind::Or {
                 dst,
                 src1,
                 src2,
                 width,
                 flags,
-            } => self.lower_logic(*dst, *src1, src2, 0b01, false, flags.updates_any(), *width),
+            } => self.lower_logic_flag_contract(*dst, *src1, src2, 0b01, false, *flags, *width),
             OpKind::Xor {
                 dst,
                 src1,
                 src2,
                 width,
                 flags,
-            } => self.lower_logic(*dst, *src1, src2, 0b10, false, flags.updates_any(), *width),
+            } => self.lower_logic_flag_contract(*dst, *src1, src2, 0b10, false, *flags, *width),
             OpKind::Neg {
                 dst,
                 src,
@@ -16639,15 +16767,7 @@ impl Aarch64Lowerer {
                 src2,
                 width,
                 flags,
-            } => self.lower_mul(
-                *dst_lo,
-                *dst_hi,
-                *src1,
-                src2,
-                *width,
-                flags.updates_any(),
-                false,
-            ),
+            } => self.lower_mul_flag_contract(*dst_lo, *dst_hi, *src1, src2, *width, *flags, false),
             OpKind::MulS {
                 dst_lo,
                 dst_hi,
@@ -16655,15 +16775,7 @@ impl Aarch64Lowerer {
                 src2,
                 width,
                 flags,
-            } => self.lower_mul(
-                *dst_lo,
-                *dst_hi,
-                *src1,
-                src2,
-                *width,
-                flags.updates_any(),
-                true,
-            ),
+            } => self.lower_mul_flag_contract(*dst_lo, *dst_hi, *src1, src2, *width, *flags, true),
             OpKind::MulAdd {
                 dst,
                 acc,
@@ -17426,42 +17538,21 @@ impl Aarch64Lowerer {
                 amount,
                 width,
                 flags,
-            } => self.lower_shift(
-                *dst,
-                *src,
-                amount,
-                ShiftOp::Lsl,
-                flags.updates_any(),
-                *width,
-            ),
+            } => self.lower_shift_flag_contract(*dst, *src, amount, ShiftOp::Lsl, *flags, *width),
             OpKind::Shr {
                 dst,
                 src,
                 amount,
                 width,
                 flags,
-            } => self.lower_shift(
-                *dst,
-                *src,
-                amount,
-                ShiftOp::Lsr,
-                flags.updates_any(),
-                *width,
-            ),
+            } => self.lower_shift_flag_contract(*dst, *src, amount, ShiftOp::Lsr, *flags, *width),
             OpKind::Sar {
                 dst,
                 src,
                 amount,
                 width,
                 flags,
-            } => self.lower_shift(
-                *dst,
-                *src,
-                amount,
-                ShiftOp::Asr,
-                flags.updates_any(),
-                *width,
-            ),
+            } => self.lower_shift_flag_contract(*dst, *src, amount, ShiftOp::Asr, *flags, *width),
             OpKind::Shld {
                 dst,
                 src,
@@ -23172,6 +23263,223 @@ mod tests {
         assert_eq!(out[17], 0xfeed_face_cafe_beef);
         assert_eq!(out_nzcv, 0b1010);
         assert_eq!(sp, 0x8000);
+    }
+
+    #[test]
+    fn lowers_t16_selective_nzcv_logic_multiply_and_immediate_shifts_exhaustively() {
+        let nz = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF));
+        let nzc = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF));
+        let values = [0_u64, 1, 0x4000_0001, 0x7fff_ffff, 0x8000_0000, 0xffff_ffff];
+        let scratch16 = 0x1616_1616_1616_1616;
+        let scratch17 = 0x1717_1717_1717_1717;
+
+        for logic in 0..4 {
+            let op = match logic {
+                0 => OpKind::And {
+                    dst: x(0),
+                    src1: x(1),
+                    src2: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                },
+                1 => OpKind::Or {
+                    dst: x(0),
+                    src1: x(1),
+                    src2: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                },
+                2 => OpKind::Xor {
+                    dst: x(0),
+                    src1: x(1),
+                    src2: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                },
+                _ => OpKind::AndNot {
+                    dst: x(0),
+                    src1: x(1),
+                    src2: SrcOperand::Reg(x(2)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                },
+            };
+            let code = lower_single_op(op);
+            for &lhs in &values {
+                for &rhs in &values {
+                    let expected = match logic {
+                        0 => lhs & rhs,
+                        1 => lhs | rhs,
+                        2 => lhs ^ rhs,
+                        _ => lhs & !rhs,
+                    } & u64::from(u32::MAX);
+                    for old_nzcv in 0_u8..16 {
+                        let (out, out_nzcv, sp) = run_aarch64_code(
+                            &code,
+                            &[(1, lhs), (2, rhs), (16, scratch16), (17, scratch17)],
+                            old_nzcv,
+                        );
+                        assert_eq!(out[0], expected, "logic={logic} lhs={lhs:#x} rhs={rhs:#x}");
+                        assert_eq!(
+                            out_nzcv,
+                            expected_logic_source_nzcv(old_nzcv, expected, OpWidth::W32, nz),
+                            "logic={logic} lhs={lhs:#x} rhs={rhs:#x} old={old_nzcv:#x}"
+                        );
+                        assert_eq!(out[16], scratch16);
+                        assert_eq!(out[17], scratch17);
+                        assert_eq!(sp, 0x8000);
+                    }
+                }
+            }
+        }
+
+        let movs_code = lower_ops(vec![
+            OpKind::Mov {
+                dst: x(0),
+                src: SrcOperand::Imm(0x80),
+                width: OpWidth::W32,
+            },
+            OpKind::And {
+                dst: x(0),
+                src1: x(0),
+                src2: SrcOperand::Imm(-1),
+                width: OpWidth::W32,
+                flags: nz,
+            },
+        ]);
+        let tst_code = lower_single_op(OpKind::And {
+            dst: VReg::virt(0),
+            src1: x(1),
+            src2: SrcOperand::Reg(x(2)),
+            width: OpWidth::W32,
+            flags: nz,
+        });
+        for (name, code, expected) in [
+            ("movs-immediate", &movs_code, 0x80),
+            ("tst-flag-only", &tst_code, 0),
+        ] {
+            for old_nzcv in 0_u8..16 {
+                let (out, out_nzcv, sp) = run_aarch64_code(
+                    code,
+                    &[
+                        (1, 0xffff_0000),
+                        (2, 0x0000_ffff),
+                        (16, scratch16),
+                        (17, scratch17),
+                    ],
+                    old_nzcv,
+                );
+                assert_eq!(
+                    out_nzcv,
+                    expected_logic_source_nzcv(old_nzcv, expected, OpWidth::W32, nz),
+                    "{name} old={old_nzcv:#x}"
+                );
+                if name == "movs-immediate" {
+                    assert_eq!(out[0], expected);
+                }
+                assert_eq!(out[16], scratch16);
+                assert_eq!(out[17], scratch17);
+                assert_eq!(sp, 0x8000);
+            }
+        }
+
+        let mul_code = lower_single_op(OpKind::MulU {
+            dst_lo: x(0),
+            dst_hi: None,
+            src1: x(1),
+            src2: SrcOperand::Reg(x(0)),
+            width: OpWidth::W32,
+            flags: nz,
+        });
+        for &lhs in &values {
+            for &rhs in &values {
+                let expected = lhs.wrapping_mul(rhs) & u64::from(u32::MAX);
+                for old_nzcv in 0_u8..16 {
+                    let (out, out_nzcv, sp) = run_aarch64_code(
+                        &mul_code,
+                        &[(0, rhs), (1, lhs), (16, scratch16), (17, scratch17)],
+                        old_nzcv,
+                    );
+                    assert_eq!(out[0], expected, "mul {lhs:#x}*{rhs:#x}");
+                    assert_eq!(
+                        out_nzcv,
+                        expected_logic_source_nzcv(old_nzcv, expected, OpWidth::W32, nz),
+                        "mul {lhs:#x}*{rhs:#x} old={old_nzcv:#x}"
+                    );
+                    assert_eq!(out[16], scratch16);
+                    assert_eq!(out[17], scratch17);
+                    assert_eq!(sp, 0x8000);
+                }
+            }
+        }
+
+        for shift in [ShiftOp::Lsl, ShiftOp::Lsr, ShiftOp::Asr] {
+            let amounts: &[i64] = if shift == ShiftOp::Lsl {
+                &[1, 2, 31]
+            } else {
+                &[1, 2, 31, 32]
+            };
+            for &amount in amounts {
+                let kind = match shift {
+                    ShiftOp::Lsl => OpKind::Shl {
+                        dst: x(0),
+                        src: x(1),
+                        amount: SrcOperand::Imm(amount),
+                        width: OpWidth::W32,
+                        flags: nzc,
+                    },
+                    ShiftOp::Lsr => OpKind::Shr {
+                        dst: x(0),
+                        src: x(1),
+                        amount: SrcOperand::Imm(amount),
+                        width: OpWidth::W32,
+                        flags: nzc,
+                    },
+                    ShiftOp::Asr => OpKind::Sar {
+                        dst: x(0),
+                        src: x(1),
+                        amount: SrcOperand::Imm(amount),
+                        width: OpWidth::W32,
+                        flags: nzc,
+                    },
+                    _ => unreachable!(),
+                };
+                let code = lower_single_op(kind);
+                for &source in &values {
+                    let source = source as u32;
+                    let result = match shift {
+                        ShiftOp::Lsl => source.wrapping_shl(amount as u32),
+                        ShiftOp::Lsr if amount >= 32 => 0,
+                        ShiftOp::Lsr => source >> amount,
+                        ShiftOp::Asr => ((source as i32) >> amount.min(31)) as u32,
+                        _ => unreachable!(),
+                    };
+                    let carry = match shift {
+                        ShiftOp::Lsl => (source >> (32 - amount)) & 1,
+                        ShiftOp::Lsr | ShiftOp::Asr => (source >> (amount - 1)) & 1,
+                        _ => unreachable!(),
+                    } as u8;
+                    let produced =
+                        (((result >> 31) & 1) as u8) << 3 | ((result == 0) as u8) << 2 | carry << 1;
+                    for old_nzcv in 0_u8..16 {
+                        let (out, out_nzcv, sp) = run_aarch64_code(
+                            &code,
+                            &[(1, u64::from(source)), (16, scratch16), (17, scratch17)],
+                            old_nzcv,
+                        );
+                        assert_eq!(out[0], u64::from(result), "{shift:?} #{amount} {source:#x}");
+                        assert_eq!(
+                            out_nzcv,
+                            produced | (old_nzcv & 1),
+                            "{shift:?} #{amount} {source:#x} old={old_nzcv:#x}"
+                        );
+                        assert_eq!(out[16], scratch16);
+                        assert_eq!(out[17], scratch17);
+                        assert_eq!(sp, 0x8000);
+                    }
+                }
+            }
+        }
     }
 
     #[test]

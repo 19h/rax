@@ -576,6 +576,7 @@ pub fn constant_propagation(block: &mut SmirBlock) -> usize {
         // Discriminants read before the mutable borrow of `op.kind` below.
         let alu = alu_tag(&op.kind);
         let is_shl = matches!(op.kind, OpKind::Shl { .. });
+        let is_sar = matches!(op.kind, OpKind::Sar { .. });
         match &mut op.kind {
             OpKind::Mov { dst, src, width } => {
                 if let SrcOperand::Imm(imm) = src {
@@ -682,6 +683,13 @@ pub fn constant_propagation(block: &mut SmirBlock) -> usize {
                 amount,
                 width,
                 ..
+            }
+            | OpKind::Sar {
+                dst,
+                src,
+                amount,
+                width,
+                ..
             } => {
                 if let SrcOperand::Reg(r) = amount {
                     if let Some(&val) = constants.get(r) {
@@ -691,10 +699,25 @@ pub fn constant_propagation(block: &mut SmirBlock) -> usize {
                 }
                 let folded = if let (Some(&v), SrcOperand::Imm(a)) = (constants.get(src), &*amount)
                 {
-                    let count_mask = (width.bits() - 1) as u64;
-                    let cnt = (*a as u64) & count_mask;
+                    // Generic SMIR shifts retain a six-bit count. Counts at or
+                    // above the operand width saturate the result; they are not
+                    // implicitly x86-masked to width-1. This is observable for
+                    // AArch32 LSR/ASR #32.
+                    let cnt = (*a as u64) & 0x3f;
                     let base = (v as u64) & width.mask();
-                    let r = if is_shl { base << cnt } else { base >> cnt } & width.mask();
+                    let r = if cnt >= u64::from(width.bits()) {
+                        if is_sar && (base & width.sign_bit()) != 0 {
+                            width.mask()
+                        } else {
+                            0
+                        }
+                    } else if is_shl {
+                        base << cnt
+                    } else if is_sar {
+                        ((base as i64) << (64 - width.bits()) >> (64 - width.bits()) >> cnt) as u64
+                    } else {
+                        base >> cnt
+                    } & width.mask();
                     Some(r as i64)
                 } else {
                     None
@@ -8906,6 +8929,103 @@ mod tests {
         if let OpKind::Add { src2, .. } = &block.ops[2].kind {
             assert!(matches!(src2, SrcOperand::Imm(10)));
         }
+    }
+
+    #[test]
+    fn aarch32_selective_flags_and_shift_32_survive_and_propagate_exactly() {
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        let src = VReg::virt(0);
+        let movs = VReg::virt(1);
+        let lsr = VReg::virt(2);
+        let asr = VReg::virt(3);
+        let lsr_copy = VReg::virt(4);
+        let asr_copy = VReg::virt(5);
+        let nz = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF));
+        let nzc = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF));
+
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: src,
+                src: SrcOperand::Imm(0x8000_0001_u32 as i64),
+                width: OpWidth::W32,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::And {
+                dst: movs,
+                src1: src,
+                src2: SrcOperand::Imm(-1),
+                width: OpWidth::W32,
+                flags: nz,
+            },
+        ));
+        block.push_op(make_op(
+            2,
+            OpKind::Shr {
+                dst: lsr,
+                src,
+                amount: SrcOperand::Imm(32),
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+        ));
+        block.push_op(make_op(
+            3,
+            OpKind::Sar {
+                dst: asr,
+                src,
+                amount: SrcOperand::Imm(32),
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+        ));
+        block.push_op(make_op(
+            4,
+            OpKind::Mov {
+                dst: lsr_copy,
+                src: SrcOperand::Reg(lsr),
+                width: OpWidth::W32,
+            },
+        ));
+        block.push_op(make_op(
+            5,
+            OpKind::Mov {
+                dst: asr_copy,
+                src: SrcOperand::Reg(asr),
+                width: OpWidth::W32,
+            },
+        ));
+
+        assert!(constant_propagation(&mut block) >= 2);
+        assert_eq!(constant_folding(&mut block), 0);
+        assert!(matches!(
+            block.ops[1].kind,
+            OpKind::And { flags, .. } if flags == nz
+        ));
+        assert!(matches!(
+            block.ops[2].kind,
+            OpKind::Shr { flags, .. } if flags == nzc
+        ));
+        assert!(matches!(
+            block.ops[3].kind,
+            OpKind::Sar { flags, .. } if flags == nzc
+        ));
+        assert!(matches!(
+            block.ops[4].kind,
+            OpKind::Mov {
+                src: SrcOperand::Imm(0),
+                ..
+            }
+        ));
+        assert!(matches!(
+            block.ops[5].kind,
+            OpKind::Mov {
+                src: SrcOperand::Imm(0xffff_ffff),
+                ..
+            }
+        ));
     }
 
     #[test]

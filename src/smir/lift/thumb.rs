@@ -7,7 +7,9 @@
 //! - r13 and r14 are identity-mapped AArch32 GPRs (`X13`/`X14`), not the
 //!   AArch64 SP/LR aliases;
 //! - r15 data-register operands, IT-state predication, predicated data
-//!   instructions, RRX, and flag-setting logical/move/shift forms fail closed;
+//!   instructions and RRX fail closed; T16 move/logical/multiply/immediate-shift
+//!   forms use selective NZCV contracts so architecturally preserved flags
+//!   remain unchanged;
 //! - unconditional and explicit condition-code Thumb branches use the
 //!   architectural `PC + 4` base and become explicit SMIR control-flow edges;
 //!   CBZ/CBNZ become explicit register-conditioned edges, BL writes
@@ -30,7 +32,7 @@ use crate::isa::arm::decoder::{
     AddressingMode, Condition as ArmCondition, DecodedInsn, Decoder, MemOffset, MemOperand,
     Mnemonic, Operand, Register, ShiftType, ThumbDecoder,
 };
-use crate::smir::ir::flags::FlagUpdate;
+use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{OpKind, SmirOp};
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, Condition, DispSize, FunctionId, GuestAddr, MemWidth, OpId, OpWidth,
@@ -533,6 +535,174 @@ impl ThumbLifter {
         }
     }
 
+    fn t16_partial_nz_flags() -> FlagUpdate {
+        FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF))
+    }
+
+    fn t16_partial_nzc_flags() -> FlagUpdate {
+        FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF))
+    }
+
+    /// Lift the T16 operations whose flag contract updates only N/Z or N/Z/C.
+    /// T32 S-bit forms and T16 register-controlled shifts deliberately do not
+    /// enter this path: their shifter/count contracts require separate handling.
+    fn lift_t16_partial_flags(
+        insn: &DecodedInsn,
+        pc: GuestAddr,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) -> Result<bool, LiftError> {
+        if insn.state != ExecutionState::Thumb || insn.size != 2 || !insn.sets_flags {
+            return Ok(false);
+        }
+
+        let nz = Self::t16_partial_nz_flags();
+        let nzc = Self::t16_partial_nzc_flags();
+        if let (Mnemonic::MOVS, [Operand::Reg(rd), Operand::Imm(imm)]) =
+            (insn.mnemonic, insn.operands.as_slice())
+        {
+            if rd.num >= 15 {
+                return Ok(false);
+            }
+            let dst = Self::reg(rd.num);
+            Self::push(
+                ops,
+                pc,
+                OpKind::Mov {
+                    dst,
+                    src: SrcOperand::Imm(imm.effective_value()),
+                    width: OpWidth::W32,
+                },
+            );
+            Self::push(
+                ops,
+                pc,
+                OpKind::And {
+                    dst,
+                    src1: dst,
+                    src2: SrcOperand::Imm(-1),
+                    width: OpWidth::W32,
+                    flags: nz,
+                },
+            );
+            return Ok(true);
+        }
+
+        let kind = match (insn.mnemonic, insn.operands.as_slice()) {
+            (Mnemonic::MOVS, [Operand::Reg(rd), Operand::Reg(rm)])
+                if rd.num < 15 && rm.num < 15 =>
+            {
+                OpKind::And {
+                    dst: Self::reg(rd.num),
+                    src1: Self::reg(rm.num),
+                    src2: SrcOperand::Imm(-1),
+                    width: OpWidth::W32,
+                    flags: nz,
+                }
+            }
+            (
+                mnemonic @ (Mnemonic::ANDS | Mnemonic::EORS | Mnemonic::ORRS | Mnemonic::BICS),
+                [Operand::Reg(rd), Operand::Reg(rn), Operand::Reg(rm)],
+            ) if rd.num < 15 && rn.num < 15 && rm.num < 15 => match mnemonic {
+                Mnemonic::ANDS => OpKind::And {
+                    dst: Self::reg(rd.num),
+                    src1: Self::reg(rn.num),
+                    src2: SrcOperand::Reg(Self::reg(rm.num)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                },
+                Mnemonic::EORS => OpKind::Xor {
+                    dst: Self::reg(rd.num),
+                    src1: Self::reg(rn.num),
+                    src2: SrcOperand::Reg(Self::reg(rm.num)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                },
+                Mnemonic::ORRS => OpKind::Or {
+                    dst: Self::reg(rd.num),
+                    src1: Self::reg(rn.num),
+                    src2: SrcOperand::Reg(Self::reg(rm.num)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                },
+                Mnemonic::BICS => OpKind::AndNot {
+                    dst: Self::reg(rd.num),
+                    src1: Self::reg(rn.num),
+                    src2: SrcOperand::Reg(Self::reg(rm.num)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                },
+                _ => unreachable!(),
+            },
+            (Mnemonic::MVNS, [Operand::Reg(rd), Operand::Reg(rm)])
+                if rd.num < 15 && rm.num < 15 =>
+            {
+                OpKind::AndNot {
+                    dst: Self::reg(rd.num),
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Reg(Self::reg(rm.num)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                }
+            }
+            (Mnemonic::TST, [Operand::Reg(rn), Operand::Reg(rm)]) if rn.num < 15 && rm.num < 15 => {
+                OpKind::And {
+                    dst: ctx.alloc_vreg(),
+                    src1: Self::reg(rn.num),
+                    src2: SrcOperand::Reg(Self::reg(rm.num)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                }
+            }
+            (Mnemonic::MULS, [Operand::Reg(rd), Operand::Reg(rn), Operand::Reg(rm)])
+                if rd.num < 15 && rn.num < 15 && rm.num < 15 =>
+            {
+                OpKind::MulU {
+                    dst_lo: Self::reg(rd.num),
+                    dst_hi: None,
+                    src1: Self::reg(rn.num),
+                    src2: SrcOperand::Reg(Self::reg(rm.num)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                }
+            }
+            (
+                mnemonic @ (Mnemonic::LSLS | Mnemonic::LSRS | Mnemonic::ASRS),
+                [Operand::Reg(rd), Operand::Reg(rm), Operand::Imm(amount)],
+            ) if rd.num < 15 && rm.num < 15 => {
+                let amount = SrcOperand::Imm(amount.effective_value());
+                match mnemonic {
+                    Mnemonic::LSLS => OpKind::Shl {
+                        dst: Self::reg(rd.num),
+                        src: Self::reg(rm.num),
+                        amount,
+                        width: OpWidth::W32,
+                        flags: nzc,
+                    },
+                    Mnemonic::LSRS => OpKind::Shr {
+                        dst: Self::reg(rd.num),
+                        src: Self::reg(rm.num),
+                        amount,
+                        width: OpWidth::W32,
+                        flags: nzc,
+                    },
+                    Mnemonic::ASRS => OpKind::Sar {
+                        dst: Self::reg(rd.num),
+                        src: Self::reg(rm.num),
+                        amount,
+                        width: OpWidth::W32,
+                        flags: nzc,
+                    },
+                    _ => unreachable!(),
+                }
+            }
+            _ => return Ok(false),
+        };
+
+        Self::push(ops, pc, kind);
+        Ok(true)
+    }
+
     fn operand_src(operand: &Operand) -> Result<SrcOperand, LiftError> {
         match operand {
             Operand::Reg(reg) if reg.num < 15 => Ok(SrcOperand::Reg(Self::reg(reg.num))),
@@ -596,11 +766,14 @@ impl ThumbLifter {
         }
 
         let normalized = Self::normalize_regs(insn);
+        let mut ops = Vec::new();
+        if Self::lift_t16_partial_flags(&normalized, pc, ctx, &mut ops)? {
+            return Ok((ops, ControlFlow::Fallthrough));
+        }
         if Self::shared_scalar_mnemonic(&normalized) {
             return self.shared.lift_insn_inner(&normalized, pc, ctx);
         }
 
-        let mut ops = Vec::new();
         let control = match normalized.mnemonic {
             Mnemonic::LDR
             | Mnemonic::LDRB
@@ -2037,12 +2210,151 @@ mod tests {
     }
 
     #[test]
-    fn rejects_it_pc_literal_memory_aliases_and_partial_flag_contracts() {
+    fn lifts_t16_selective_flag_move_logic_multiply_and_immediate_shift_matrix() {
+        let nz = ThumbLifter::t16_partial_nz_flags();
+        let nzc = ThumbLifter::t16_partial_nzc_flags();
+
+        assert!(matches!(
+            lift(&[0x00, 0x20]).ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::Mov {
+                        dst,
+                        src: SrcOperand::Imm(0),
+                        width: OpWidth::W32,
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::And {
+                        dst: flags_dst,
+                        src1,
+                        src2: SrcOperand::Imm(-1),
+                        width: OpWidth::W32,
+                        flags,
+                    },
+                    ..
+                }
+            ] if *dst == ThumbLifter::reg(0)
+                && *flags_dst == *dst
+                && *src1 == *dst
+                && *flags == nz
+        ));
+        assert!(matches!(
+            lift(&[0x08, 0x00]).ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::And {
+                    dst,
+                    src1,
+                    src2: SrcOperand::Imm(-1),
+                    width: OpWidth::W32,
+                    flags,
+                },
+                ..
+            }] if *dst == ThumbLifter::reg(0)
+                && *src1 == ThumbLifter::reg(1)
+                && *flags == nz
+        ));
+
+        for (bytes, expected) in [
+            ([0x08, 0x40], "and"),
+            ([0x48, 0x40], "xor"),
+            ([0x08, 0x43], "or"),
+            ([0x88, 0x43], "and-not"),
+        ] {
+            let result = lift(&bytes);
+            let matched = match (&result.ops[0].kind, expected) {
+                (OpKind::And { flags, .. }, "and")
+                | (OpKind::Xor { flags, .. }, "xor")
+                | (OpKind::Or { flags, .. }, "or")
+                | (OpKind::AndNot { flags, .. }, "and-not") => *flags == nz,
+                _ => false,
+            };
+            assert!(matched, "{bytes:02x?}: {result:?}");
+        }
+
+        assert!(matches!(
+            lift(&[0xc8, 0x43]).ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::AndNot {
+                    dst,
+                    src1: VReg::Imm(-1),
+                    flags,
+                    ..
+                },
+                ..
+            }] if *dst == ThumbLifter::reg(0) && *flags == nz
+        ));
+        assert!(matches!(
+            lift(&[0x08, 0x42]).ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::And {
+                    dst: VReg::Virtual(_),
+                    flags,
+                    ..
+                },
+                ..
+            }] if *flags == nz
+        ));
+        assert!(matches!(
+            lift(&[0x48, 0x43]).ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::MulU {
+                    dst_lo,
+                    dst_hi: None,
+                    width: OpWidth::W32,
+                    flags,
+                    ..
+                },
+                ..
+            }] if *dst_lo == ThumbLifter::reg(0) && *flags == nz
+        ));
+
+        for (bytes, expected_amount, expected) in [
+            ([0x48, 0x00], 1, "lsl"),
+            ([0xc8, 0x0f], 31, "lsr"),
+            ([0x08, 0x08], 32, "lsr"),
+            ([0xc8, 0x17], 31, "asr"),
+            ([0x08, 0x10], 32, "asr"),
+        ] {
+            let result = lift(&bytes);
+            let matched = match (&result.ops[0].kind, expected) {
+                (
+                    OpKind::Shl {
+                        amount: SrcOperand::Imm(amount),
+                        flags,
+                        ..
+                    },
+                    "lsl",
+                )
+                | (
+                    OpKind::Shr {
+                        amount: SrcOperand::Imm(amount),
+                        flags,
+                        ..
+                    },
+                    "lsr",
+                )
+                | (
+                    OpKind::Sar {
+                        amount: SrcOperand::Imm(amount),
+                        flags,
+                        ..
+                    },
+                    "asr",
+                ) => *amount == expected_amount && *flags == nzc,
+                _ => false,
+            };
+            assert!(matched, "{bytes:02x?}: {result:?}");
+        }
+    }
+
+    #[test]
+    fn rejects_it_pc_memory_aliases_and_unmodeled_shifter_contracts() {
         let cases: &[&[u8]] = &[
             &[0x08, 0xbf],             // IT EQ
-            &[0x00, 0x20],             // MOVS r0,#0: N/Z only
-            &[0x08, 0x40],             // ANDS r0,r1: N/Z, preserve C/V
-            &[0x48, 0x00],             // LSLS r0,r1,#1: N/Z/C, preserve V
+            &[0x88, 0x40],             // LSLS r0,r1: low-8 register count
+            &[0xc8, 0x41],             // RORS r0,r1: low-8 register count
             &[0x78, 0x46],             // MOV r0,pc
             &[0x51, 0xf8, 0x04, 0x1f], // LDR r1,[r1,#4]! aliases writeback
             &[0x4f, 0xea, 0x31, 0x00], // RRX r0,r1

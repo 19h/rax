@@ -3690,7 +3690,7 @@ fn x86_xchg_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
 }
 
 fn x86_mulx_shape_valid(op: &crate::smir::ir::ops::SmirOp) -> bool {
-    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::flags::{FlagSet, FlagUpdate};
     use crate::smir::ir::ops::{OpKind, X86OpHint};
     use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
 
@@ -4142,7 +4142,7 @@ fn aarch32_aarch64_native_op_shape_valid(
     op: &crate::smir::ir::ops::OpKind,
     allow_mem: bool,
 ) -> bool {
-    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::flags::{FlagSet, FlagUpdate};
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{
         Address, ArchReg, ArmReg, MemWidth, OpWidth, ShiftOp, SignExtend, SrcOperand, VReg,
@@ -4163,6 +4163,8 @@ fn aarch32_aarch64_native_op_shape_valid(
     let arithmetic_dst = |dst: &VReg, flags: &FlagUpdate| {
         gpr(dst) || (matches!(dst, VReg::Virtual(_)) && flags.updates_any())
     };
+    let partial_nz = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF));
+    let partial_nzc = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF));
     let register_address = |addr: &Address| match addr {
         Address::Direct(base) | Address::BaseOffset { base, .. } => gpr(base),
         Address::BaseIndexScale {
@@ -4226,29 +4228,38 @@ fn aarch32_aarch64_native_op_shape_valid(
             src1,
             src2,
             width: OpWidth::W32,
-            flags: FlagUpdate::None,
+            flags,
         }
         | OpKind::Or {
             dst,
             src1,
             src2,
             width: OpWidth::W32,
-            flags: FlagUpdate::None,
+            flags,
         }
         | OpKind::Xor {
             dst,
             src1,
             src2,
             width: OpWidth::W32,
-            flags: FlagUpdate::None,
+            flags,
         }
         | OpKind::AndNot {
             dst,
             src1,
             src2,
             width: OpWidth::W32,
-            flags: FlagUpdate::None,
-        } => gpr(dst) && gpr(src1) && source(src2),
+            flags,
+        } => {
+            (*flags == FlagUpdate::None || *flags == partial_nz)
+                && (gpr(dst) || (*flags == partial_nz && matches!(dst, VReg::Virtual(_))))
+                && (gpr(src1)
+                    || (*flags == partial_nz
+                        && matches!(op, OpKind::AndNot { .. })
+                        && matches!(src1, VReg::Imm(-1))
+                        && matches!(src2, SrcOperand::Reg(_))))
+                && source(src2)
+        }
         OpKind::Not {
             dst,
             src,
@@ -4292,36 +4303,43 @@ fn aarch32_aarch64_native_op_shape_valid(
             src,
             amount: SrcOperand::Imm(amount),
             width: OpWidth::W32,
-            flags: FlagUpdate::None,
+            flags,
         }
         | OpKind::Shr {
             dst,
             src,
             amount: SrcOperand::Imm(amount),
             width: OpWidth::W32,
-            flags: FlagUpdate::None,
+            flags,
         }
         | OpKind::Sar {
             dst,
             src,
             amount: SrcOperand::Imm(amount),
             width: OpWidth::W32,
-            flags: FlagUpdate::None,
+            flags,
         }
         | OpKind::Ror {
             dst,
             src,
             amount: SrcOperand::Imm(amount),
             width: OpWidth::W32,
-            flags: FlagUpdate::None,
-        } => gpr(dst) && gpr(src) && (1..32).contains(amount),
+            flags,
+        } => {
+            gpr(dst)
+                && gpr(src)
+                && ((*flags == FlagUpdate::None && (1..32).contains(amount))
+                    || (*flags == partial_nzc
+                        && !matches!(op, OpKind::Ror { .. })
+                        && (1..=32).contains(amount)))
+        }
         OpKind::MulU {
             dst_lo,
             dst_hi,
             src1,
             src2,
             width: OpWidth::W32,
-            flags: FlagUpdate::None,
+            flags,
         }
         | OpKind::MulS {
             dst_lo,
@@ -4329,13 +4347,14 @@ fn aarch32_aarch64_native_op_shape_valid(
             src1,
             src2,
             width: OpWidth::W32,
-            flags: FlagUpdate::None,
+            flags,
         } => {
-            gpr(dst_lo)
-                && dst_hi.as_ref().is_none_or(gpr)
+            ((*flags == FlagUpdate::None && dst_hi.as_ref().is_none_or(gpr))
+                || (*flags == partial_nz && dst_hi.is_none()))
+                && gpr(dst_lo)
                 && gpr(src1)
                 && source(src2)
-                && dst_hi.as_ref() != Some(dst_lo)
+                && (*flags == partial_nz || dst_hi.as_ref() != Some(dst_lo))
         }
         OpKind::MulAdd {
             dst,
@@ -5259,6 +5278,126 @@ mod jit_gate_tests {
                 },
                 width: OpWidth::W32,
                 flags: FlagUpdate::None,
+            },
+        ] {
+            assert!(!aarch32_gate(vec![rejected.clone()]), "{rejected:?}");
+        }
+    }
+
+    #[test]
+    fn aarch32_aarch64_gate_admits_exact_t16_selective_nzcv_shapes_only() {
+        let nz = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF));
+        let nzc = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF));
+        let mut accepted = Vec::new();
+        for kind in 0..4 {
+            accepted.push(match kind {
+                0 => OpKind::And {
+                    dst: arm_x(0),
+                    src1: arm_x(0),
+                    src2: SrcOperand::Imm(-1),
+                    width: OpWidth::W32,
+                    flags: nz,
+                },
+                1 => OpKind::Or {
+                    dst: arm_x(1),
+                    src1: arm_x(1),
+                    src2: SrcOperand::Reg(arm_x(2)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                },
+                2 => OpKind::Xor {
+                    dst: VReg::Virtual(VirtualId(9)),
+                    src1: arm_x(3),
+                    src2: SrcOperand::Reg(arm_x(4)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                },
+                _ => OpKind::AndNot {
+                    dst: arm_x(5),
+                    src1: VReg::Imm(-1),
+                    src2: SrcOperand::Reg(arm_x(6)),
+                    width: OpWidth::W32,
+                    flags: nz,
+                },
+            });
+        }
+        accepted.extend([
+            OpKind::MulU {
+                dst_lo: arm_x(7),
+                dst_hi: None,
+                src1: arm_x(7),
+                src2: SrcOperand::Reg(arm_x(0)),
+                width: OpWidth::W32,
+                flags: nz,
+            },
+            OpKind::Shl {
+                dst: arm_x(8),
+                src: arm_x(9),
+                amount: SrcOperand::Imm(1),
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+            OpKind::Shr {
+                dst: arm_x(10),
+                src: arm_x(11),
+                amount: SrcOperand::Imm(32),
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+            OpKind::Sar {
+                dst: arm_x(12),
+                src: arm_x(13),
+                amount: SrcOperand::Imm(32),
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+        ]);
+        assert!(aarch32_gate(accepted));
+
+        let bad_nz = FlagUpdate::Specific(FlagSet::ZF);
+        for rejected in [
+            OpKind::And {
+                dst: arm_x(0),
+                src1: VReg::Imm(-1),
+                src2: SrcOperand::Reg(arm_x(2)),
+                width: OpWidth::W32,
+                flags: nz,
+            },
+            OpKind::And {
+                dst: arm_x(0),
+                src1: arm_x(1),
+                src2: SrcOperand::Reg(arm_x(2)),
+                width: OpWidth::W32,
+                flags: bad_nz,
+            },
+            OpKind::MulU {
+                dst_lo: arm_x(0),
+                dst_hi: Some(arm_x(1)),
+                src1: arm_x(2),
+                src2: SrcOperand::Reg(arm_x(3)),
+                width: OpWidth::W32,
+                flags: nz,
+            },
+            OpKind::Shl {
+                dst: arm_x(0),
+                src: arm_x(1),
+                amount: SrcOperand::Imm(0),
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+            OpKind::Shr {
+                dst: arm_x(0),
+                src: arm_x(1),
+                amount: SrcOperand::Imm(33),
+                width: OpWidth::W32,
+                flags: nzc,
+            },
+            OpKind::Ror {
+                dst: arm_x(0),
+                src: arm_x(1),
+                amount: SrcOperand::Imm(1),
+                width: OpWidth::W32,
+                flags: nzc,
             },
         ] {
             assert!(!aarch32_gate(vec![rejected.clone()]), "{rejected:?}");

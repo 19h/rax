@@ -465,6 +465,45 @@ impl FlagState {
         self.lazy = Some(LazyFlags::logic(result, width));
     }
 
+    /// Install a lazy producer while honoring a selective flag-write contract.
+    ///
+    /// A selective update must commit any preceding lazy producer before it is
+    /// replaced, evaluate the new producer once, and merge only the requested
+    /// status bits. DF is never part of [`FlagSet`] and is therefore preserved.
+    pub fn set_lazy_with_update(&mut self, lazy: LazyFlags, update: FlagUpdate) {
+        match update {
+            FlagUpdate::None => {}
+            FlagUpdate::All => self.lazy = Some(lazy),
+            FlagUpdate::Specific(set) => {
+                self.materialize_all();
+                let prior = self.materialized;
+                self.lazy = Some(lazy);
+                self.materialize_all();
+                let produced = self.materialized;
+                self.materialized = prior;
+
+                if set.contains(FlagSet::CF) {
+                    self.materialized.cf = produced.cf;
+                }
+                if set.contains(FlagSet::ZF) {
+                    self.materialized.zf = produced.zf;
+                }
+                if set.contains(FlagSet::SF) {
+                    self.materialized.sf = produced.sf;
+                }
+                if set.contains(FlagSet::OF) {
+                    self.materialized.of = produced.of;
+                }
+                if set.contains(FlagSet::PF) {
+                    self.materialized.pf = produced.pf;
+                }
+                if set.contains(FlagSet::AF) {
+                    self.materialized.af = produced.af;
+                }
+            }
+        }
+    }
+
     /// Set lazy flags from BMI1 ANDN while retaining deterministic values for
     /// its architecturally undefined PF and AF.
     pub fn set_lazy_andn(&mut self, result: u64, width: OpWidth) {
@@ -934,6 +973,61 @@ mod tests {
         assert!(flags.get_zf()); // Zero
         assert!(!flags.get_sf()); // Not negative
         assert!(!flags.get_of()); // Cleared
+    }
+
+    #[test]
+    fn selective_lazy_updates_exhaustively_merge_requested_status_bits() {
+        let nz = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF));
+        let nzc = FlagUpdate::Specific(FlagSet::SF.union(FlagSet::ZF).union(FlagSet::CF));
+
+        for old in 0_u8..64 {
+            let prior = MaterializedFlags {
+                cf: old & 0x01 != 0,
+                zf: old & 0x02 != 0,
+                sf: old & 0x04 != 0,
+                of: old & 0x08 != 0,
+                pf: old & 0x10 != 0,
+                af: old & 0x20 != 0,
+                df: true,
+            };
+
+            let mut logic = FlagState {
+                lazy: None,
+                materialized: prior,
+            };
+            logic.set_lazy_with_update(LazyFlags::logic(0, OpWidth::W32), nz);
+            assert!(logic.lazy.is_none(), "selective update is committed");
+            assert!(!logic.materialized.sf, "old={old:#04x}");
+            assert!(logic.materialized.zf, "old={old:#04x}");
+            assert_eq!(logic.materialized.cf, prior.cf, "old={old:#04x}");
+            assert_eq!(logic.materialized.of, prior.of, "old={old:#04x}");
+            assert_eq!(logic.materialized.pf, prior.pf, "old={old:#04x}");
+            assert_eq!(logic.materialized.af, prior.af, "old={old:#04x}");
+            assert!(logic.materialized.df, "old={old:#04x}");
+
+            let mut shift = FlagState {
+                lazy: None,
+                materialized: prior,
+            };
+            shift.set_lazy_with_update(
+                LazyFlags {
+                    op: LazyFlagOp::Shl,
+                    result: 0x8000_0000,
+                    left: 0x4000_0000,
+                    right: 1,
+                    width: OpWidth::W32,
+                    high: 0,
+                },
+                nzc,
+            );
+            assert!(shift.materialized.sf, "old={old:#04x}");
+            assert!(!shift.materialized.zf, "old={old:#04x}");
+            assert!(!shift.materialized.cf, "old={old:#04x}");
+            assert_eq!(shift.materialized.of, prior.of, "old={old:#04x}");
+            assert_eq!(shift.materialized.pf, prior.pf, "old={old:#04x}");
+            assert_eq!(shift.materialized.af, prior.af, "old={old:#04x}");
+            assert!(shift.materialized.df, "old={old:#04x}");
+        }
     }
 
     #[test]
