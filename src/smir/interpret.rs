@@ -7043,6 +7043,15 @@ impl SmirInterpreter {
                     let words = width.bytes() as usize / 8;
                     result[..words].copy_from_slice(&val[..words]);
                     Self::write_vec(ctx, *dst, result);
+                } else if matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::VexOp { .. } | X86OpHint::EvexOp { .. })
+                ) && matches!(dst, VReg::Arch(ArchReg::X86(_)))
+                {
+                    let mut result = [0; 16];
+                    let words = width.bytes() as usize / 8;
+                    result[..words].copy_from_slice(&val[..words]);
+                    Self::write_vec(ctx, *dst, result);
                 } else {
                     Self::write_vec(ctx, *dst, val);
                 }

@@ -2873,6 +2873,72 @@ fn make_vcpu_mem(code: &[u8]) -> (X86_64Vcpu, Arc<GuestMemoryMmap>) {
 }
 
 #[test]
+fn jit_vector_register_moves_match_legacy_preservation_and_vex_zeroing() {
+    if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+        return;
+    }
+
+    for (name, code, preserves_upper) in [
+        (
+            "MOVAPS xmm1,xmm0",
+            &[0x0F, 0x28, 0xC8, 0xFF, 0xC9, 0x75, 0xF9, 0xF4][..],
+            true,
+        ),
+        (
+            "VMOVAPS xmm1,xmm0",
+            &[0xC5, 0xF8, 0x28, 0xC8, 0xFF, 0xC9, 0x75, 0xF8, 0xF4][..],
+            false,
+        ),
+    ] {
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rcx = 1;
+            regs.xmm[0] = [0x0123_4567_89AB_CDEF, 0xFEDC_BA98_7654_3210];
+            regs.ymm_high[0] = [0x1010_2020_3030_4040, 0x5050_6060_7070_8080];
+            regs.zmm_high[0] = [0x1111, 0x2222, 0x3333, 0x4444];
+            regs.xmm[1] = [0xAAAA_AAAA_AAAA_AAAA, 0xBBBB_BBBB_BBBB_BBBB];
+            regs.ymm_high[1] = [0xCCCC_CCCC_CCCC_CCCC, 0xDDDD_DDDD_DDDD_DDDD];
+            regs.zmm_high[1] = [0xEEEE, 0xFFFF, 0xABCD, 0xDCBA];
+            vcpu.set_regs(&regs).unwrap();
+            regs
+        };
+
+        let (mut interp, _) = make_vcpu_mem(code);
+        let initial = setup(&mut interp);
+        run_interp(&mut interp);
+        let interp_regs = interp.get_regs().unwrap();
+
+        let (mut jit, _) = make_vcpu_mem(code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{name}: {error:?}")),
+            "{name}: architectural register move should JIT"
+        );
+        run_interp(&mut jit);
+        let jit_regs = jit.get_regs().unwrap();
+
+        assert_eq!(jit_regs.xmm, interp_regs.xmm, "{name}: low XMM state");
+        assert_eq!(
+            jit_regs.ymm_high, interp_regs.ymm_high,
+            "{name}: YMM upper state"
+        );
+        assert_eq!(
+            jit_regs.zmm_high, interp_regs.zmm_high,
+            "{name}: ZMM upper state"
+        );
+        assert_eq!(jit_regs.xmm[1], initial.xmm[0], "{name}: low transfer");
+        if preserves_upper {
+            assert_eq!(jit_regs.ymm_high[1], initial.ymm_high[1], "{name}");
+            assert_eq!(jit_regs.zmm_high[1], initial.zmm_high[1], "{name}");
+        } else {
+            assert_eq!(jit_regs.ymm_high[1], [0; 2], "{name}");
+            assert_eq!(jit_regs.zmm_high[1], [0; 4], "{name}");
+        }
+    }
+}
+
+#[test]
 fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         return;
@@ -2880,11 +2946,11 @@ fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
 
     const SRC: u64 = 0x20_0000;
     const DST: u64 = 0x21_0000;
-    // loop: movaps xmm0,[rbx]; movaps [rdi],xmm0; add rbx,16;
-    //       add rdi,16; dec ecx; jnz loop; hlt
+    // loop: movaps xmm0,[rbx]; movaps xmm1,xmm0; movaps [rdi],xmm1;
+    //       add rbx,16; add rdi,16; dec ecx; jnz loop; hlt
     let code = [
-        0x0F, 0x28, 0x03, 0x0F, 0x29, 0x07, 0x48, 0x83, 0xC3, 0x10, 0x48, 0x83, 0xC7, 0x10, 0xFF,
-        0xC9, 0x75, 0xEE, 0xF4,
+        0x0F, 0x28, 0x03, 0x0F, 0x28, 0xC8, 0x0F, 0x29, 0x0F, 0x48, 0x83, 0xC3, 0x10, 0x48, 0x83,
+        0xC7, 0x10, 0xFF, 0xC9, 0x75, 0xEB, 0xF4,
     ];
     let seed: [u8; 32] = std::array::from_fn(|index| (index as u8).wrapping_mul(13) ^ 0xA7);
     let setup = |vcpu: &mut X86_64Vcpu, mem: &Arc<GuestMemoryMmap>| {
@@ -2897,6 +2963,8 @@ fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
         regs.xmm[0] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
         regs.ymm_high[0] = [0x9999_AAAA_BBBB_CCCC, 0xDDDD_EEEE_FFFF_0001];
         regs.zmm_high[0] = [2, 3, 4, 5];
+        regs.ymm_high[1] = [0x0123_4567_89AB_CDEF, 0xFEDC_BA98_7654_3210];
+        regs.zmm_high[1] = [6, 7, 8, 9];
         vcpu.set_regs(&regs).unwrap();
     };
 

@@ -1723,11 +1723,12 @@ fn x86_packed_shift_feature_requirements(op: &crate::smir::ir::ops::OpKind) -> (
 
 pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
-    use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
+    use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86Reg};
 
     if !matches!(
         op,
-        OpKind::VPopcnt { .. }
+        OpKind::VMov { .. }
+            | OpKind::VPopcnt { .. }
             | OpKind::VShuffleBitQM { .. }
             | OpKind::VConflict { .. }
             | OpKind::VLeadingZeros { .. }
@@ -1757,6 +1758,27 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::X86MultiShiftQB { .. }
     ) {
         return false;
+    }
+
+    if let OpKind::VMov { dst, src, width } = op {
+        let vector_matches_width = |reg: &VReg| {
+            matches!(
+                (reg, width),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    VecWidth::V256
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                    VecWidth::V512
+                )
+            )
+        };
+        if !vector_matches_width(dst) || !vector_matches_width(src) {
+            return false;
+        }
     }
 
     if matches!(op, OpKind::X86PackedShiftImm { .. }) && !x86_packed_shift_imm_shape_valid(op) {
@@ -2314,6 +2336,102 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     })
 }
 
+fn x86_vector_move_encoding_valid(
+    prefix: crate::smir::ir::ops::X86SsePrefix,
+    opcode: u8,
+    evex: bool,
+) -> bool {
+    use crate::smir::ir::ops::X86SsePrefix;
+
+    match opcode {
+        0x10 | 0x11 | 0x28 | 0x29 => {
+            matches!(prefix, X86SsePrefix::None | X86SsePrefix::OpSize)
+        }
+        0x6F | 0x7F => {
+            matches!(prefix, X86SsePrefix::OpSize | X86SsePrefix::Rep)
+                || evex && prefix == X86SsePrefix::Repne
+        }
+        _ => false,
+    }
+}
+
+/// Validate encoding metadata that can change the native opcode selected for
+/// an otherwise well-formed architectural `VMov`. This keeps malformed SMIR
+/// from using the move admission to execute an arbitrary hinted vector opcode.
+fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
+    use crate::smir::ir::ops::{OpKind, X86OpHint, X86VecMap};
+    use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86Reg};
+
+    if !is_x86_native_vector_op(&op.kind) {
+        return false;
+    }
+    let OpKind::VMov { dst, src, width } = &op.kind else {
+        return true;
+    };
+    let low_vector = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Xmm(0..=15) | X86Reg::Ymm(0..=15) | X86Reg::Zmm(0..=15)
+            ))
+        )
+    };
+
+    match op.x86_hint {
+        Some(X86OpHint::SseMov { prefix, opcode }) => {
+            *width == VecWidth::V128
+                && low_vector(dst)
+                && low_vector(src)
+                && x86_vector_move_encoding_valid(prefix, opcode, false)
+        }
+        Some(X86OpHint::VexOp {
+            map,
+            pp,
+            opcode,
+            width: encoded_width,
+        }) => {
+            map == X86VecMap::Map0F
+                && encoded_width == *width
+                && *width != VecWidth::V512
+                && low_vector(dst)
+                && low_vector(src)
+                && x86_vector_move_encoding_valid(pp, opcode, false)
+        }
+        Some(X86OpHint::EvexOp {
+            map,
+            pp,
+            opcode,
+            width: encoded_width,
+        }) => {
+            map == X86VecMap::Map0F
+                && encoded_width == *width
+                && x86_vector_move_encoding_valid(pp, opcode, true)
+        }
+        _ => false,
+    }
+}
+
+fn x86_vector_move_needs_vl(op: &crate::smir::ir::ops::SmirOp) -> bool {
+    use crate::smir::ir::ops::{OpKind, X86OpHint};
+    use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86Reg};
+
+    let OpKind::VMov { dst, src, width } = &op.kind else {
+        return false;
+    };
+    if *width == VecWidth::V512 {
+        return false;
+    }
+    let high_vector = |reg: &VReg| {
+        matches!(
+            reg,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Xmm(16..=31) | X86Reg::Ymm(16..=31) | X86Reg::Zmm(16..=31)
+            ))
+        )
+    };
+    high_vector(dst) || high_vector(src) || matches!(op.x86_hint, Some(X86OpHint::EvexOp { .. }))
+}
+
 /// Whether any executable (non-exit) block contains an admitted native vector
 /// operation. This controls vector-state marshalling in the entry trampoline.
 pub fn uses_x86_native_vectors_excluding(
@@ -2324,7 +2442,7 @@ pub fn uses_x86_native_vectors_excluding(
         .iter()
         .filter(|block| !excluded.contains_key(&block.id))
         .flat_map(|block| &block.ops)
-        .any(|op| is_x86_native_vector_op(&op.kind) || x86_jit_vector_mem_shape_valid(&op.kind))
+        .any(|op| x86_native_vector_smir_op(op) || x86_jit_vector_mem_shape_valid(&op.kind))
 }
 
 /// Return `(AES-NI, VAES, AVX-512VL)` requirements contributed by an admitted
@@ -2423,12 +2541,13 @@ pub fn x86_native_vector_features_supported_excluding(
         .iter()
         .filter(|block| !excluded.contains_key(&block.id))
         .flat_map(|block| &block.ops)
-        .map(|op| &op.kind)
-        .filter(|op| is_x86_native_vector_op(op) || x86_jit_vector_mem_shape_valid(op))
+        .filter(|op| x86_native_vector_smir_op(op) || x86_jit_vector_mem_shape_valid(&op.kind))
     {
         any = true;
-        let width = match op {
-            OpKind::VPopcnt { width, .. }
+        let kind = &op.kind;
+        let width = match kind {
+            OpKind::VMov { width, .. }
+            | OpKind::VPopcnt { width, .. }
             | OpKind::VShuffleBitQM { width, .. }
             | OpKind::VConflict { width, .. }
             | OpKind::VLeadingZeros { width, .. }
@@ -2460,10 +2579,11 @@ pub fn x86_native_vector_features_supported_excluding(
             OpKind::X86Sm4 { width, .. } => *width,
             _ => unreachable!("filtered to native vector operations"),
         };
-        let (aes, vaes, aes_vl) = x86_aes_feature_requirements(op);
-        let (shift_avx, shift_avx2, shift_vl) = x86_packed_shift_imm_feature_requirements(op);
-        let (count_avx, count_avx2, count_vl) = x86_packed_shift_feature_requirements(op);
-        needs_vl |= match op {
+        let (aes, vaes, aes_vl) = x86_aes_feature_requirements(kind);
+        let (shift_avx, shift_avx2, shift_vl) = x86_packed_shift_imm_feature_requirements(kind);
+        let (count_avx, count_avx2, count_vl) = x86_packed_shift_feature_requirements(kind);
+        needs_vl |= match kind {
+            OpKind::VMov { .. } => x86_vector_move_needs_vl(op),
             OpKind::X86Aes { .. } => aes_vl,
             OpKind::X86PackedShiftImm { .. } => shift_vl,
             OpKind::X86PackedShift { .. } => count_vl,
@@ -2479,12 +2599,12 @@ pub fn x86_native_vector_features_supported_excluding(
             _ => width != VecWidth::V512,
         };
         needs_vbmi |= matches!(
-            op,
+            kind,
             OpKind::X86MultiShiftQB { .. } | OpKind::X86PermuteBytesWords { .. }
         );
-        needs_vbmi2 |= matches!(op, OpKind::X86PackedFunnelShift { .. })
+        needs_vbmi2 |= matches!(kind, OpKind::X86PackedFunnelShift { .. })
             || matches!(
-                op,
+                kind,
                 OpKind::VCompress {
                     elem: crate::smir::ir::types::VecElementType::I8
                         | crate::smir::ir::types::VecElementType::I16,
@@ -2495,7 +2615,7 @@ pub fn x86_native_vector_features_supported_excluding(
                     ..
                 }
             );
-        if let OpKind::VPopcnt { elem, .. } = op {
+        if let OpKind::VPopcnt { elem, .. } = kind {
             needs_bitalg |= matches!(
                 elem,
                 crate::smir::ir::types::VecElementType::I8
@@ -2507,20 +2627,23 @@ pub fn x86_native_vector_features_supported_excluding(
                     | crate::smir::ir::types::VecElementType::I64
             );
         }
-        needs_bitalg |= matches!(op, OpKind::VShuffleBitQM { .. });
-        needs_vnni |= matches!(op, OpKind::VDotProduct { .. });
-        needs_ifma |= matches!(op, OpKind::VMultiplyAdd52 { .. });
+        needs_bitalg |= matches!(kind, OpKind::VShuffleBitQM { .. });
+        needs_vnni |= matches!(kind, OpKind::VDotProduct { .. });
+        needs_ifma |= matches!(kind, OpKind::VMultiplyAdd52 { .. });
         needs_bf16 |= matches!(
-            op,
+            kind,
             OpKind::VDotProductBF16 { .. } | OpKind::VCvtFP32ToBF16 { .. }
         );
-        needs_cd |= matches!(op, OpKind::VConflict { .. } | OpKind::VLeadingZeros { .. });
-        needs_fp16 |= matches!(op, OpKind::VFP16Arith { .. });
+        needs_cd |= matches!(
+            kind,
+            OpKind::VConflict { .. } | OpKind::VLeadingZeros { .. }
+        );
+        needs_fp16 |= matches!(kind, OpKind::VFP16Arith { .. });
         needs_aes |= aes;
         needs_vaes |= vaes;
-        needs_sha512 |= x86_sha512_feature_required(op);
-        needs_sm3 |= x86_sm3_feature_required(op);
-        needs_sm4 |= x86_sm4_feature_required(op);
+        needs_sha512 |= x86_sha512_feature_required(kind);
+        needs_sm3 |= x86_sm3_feature_required(kind);
+        needs_sm4 |= x86_sm4_feature_required(kind);
         needs_shift_avx |= shift_avx || count_avx;
         needs_shift_avx2 |= shift_avx2 || count_avx2;
     }
@@ -3044,7 +3167,7 @@ fn block_is_clobber_safe(
             op.kind,
             OpKind::AndNot { .. } | OpKind::X86Bls { .. } | OpKind::X86Adx { .. }
         );
-        let vector_ok = is_x86_native_vector_op(&op.kind);
+        let vector_ok = x86_native_vector_smir_op(op);
         if !op.is_jit_safe() && !mem_ok && !scalar_ok && !vector_ok {
             return false;
         }
@@ -5109,7 +5232,7 @@ mod jit_gate_tests {
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
     use crate::smir::ir::ops::{
         ArmDpRegShiftKind, OpKind, X86AdxKind, X86BlsKind, X86CacheControlKind, X86CountKind,
-        X86OpHint,
+        X86OpHint, X86SsePrefix, X86VecMap,
     };
     use crate::smir::ir::types::{
         Address, ArchReg, ArmReg, BlockId, Condition, DispSize, FenceKind, FpPrecision, FunctionId,
@@ -7534,6 +7657,63 @@ mod jit_gate_tests {
             &std::collections::HashMap::new()
         ));
 
+        for (move_kind, hint) in [
+            (
+                OpKind::VMov {
+                    dst: xmm1,
+                    src: xmm2,
+                    width: VecWidth::V128,
+                },
+                X86OpHint::SseMov {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x28,
+                },
+            ),
+            (
+                OpKind::VMov {
+                    dst: ymm1,
+                    src: ymm2,
+                    width: VecWidth::V256,
+                },
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x28,
+                    width: VecWidth::V256,
+                },
+            ),
+            (
+                OpKind::VMov {
+                    dst: zmm1,
+                    src: zmm2,
+                    width: VecWidth::V512,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x28,
+                    width: VecWidth::V512,
+                },
+            ),
+        ] {
+            assert!(is_x86_native_vector_op(&move_kind));
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, move_kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(hint);
+            assert!(x86_native_vector_smir_op(&function.blocks[0].ops[0]));
+            assert!(is_native_clobber_safe(&function));
+        }
+
+        let unhinted_move = OpKind::VMov {
+            dst: xmm1,
+            src: xmm2,
+            width: VecWidth::V128,
+        };
+        assert!(is_x86_native_vector_op(&unhinted_move));
+        assert!(!x86_gate(unhinted_move));
+
         let virtual_source = OpKind::X86PackedShiftVariable {
             dst: zmm1,
             src: VReg::Virtual(VirtualId(7)),
@@ -7546,6 +7726,95 @@ mod jit_gate_tests {
         };
         assert!(!is_x86_native_vector_op(&virtual_source));
         assert!(!x86_gate(virtual_source));
+
+        for malformed_move in [
+            OpKind::VMov {
+                dst: xmm1,
+                src: ymm2,
+                width: VecWidth::V128,
+            },
+            OpKind::VMov {
+                dst: ymm1,
+                src: ymm2,
+                width: VecWidth::V128,
+            },
+            OpKind::VMov {
+                dst: zmm1,
+                src: VReg::Virtual(VirtualId(9)),
+                width: VecWidth::V512,
+            },
+            OpKind::VMov {
+                dst: x86(X86Reg::Xmm(32)),
+                src: xmm2,
+                width: VecWidth::V128,
+            },
+        ] {
+            assert!(!is_x86_native_vector_op(&malformed_move));
+            assert!(!x86_gate(malformed_move));
+        }
+
+        let move_kind = OpKind::VMov {
+            dst: xmm1,
+            src: xmm2,
+            width: VecWidth::V128,
+        };
+        let mut malformed_hint = FunctionBuilder::new(FunctionId(0), 0x1000);
+        malformed_hint.push_op(0x1000, move_kind);
+        malformed_hint.set_terminator(Terminator::Return { values: vec![] });
+        let mut malformed_hint = malformed_hint.finish();
+        malformed_hint.blocks[0].ops[0].x86_hint = Some(X86OpHint::VexOp {
+            map: X86VecMap::Map0F38,
+            pp: X86SsePrefix::OpSize,
+            opcode: 0x40,
+            width: VecWidth::V128,
+        });
+        assert!(!x86_native_vector_smir_op(&malformed_hint.blocks[0].ops[0]));
+        assert!(!is_native_clobber_safe(&malformed_hint));
+
+        let low_move = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            OpKind::VMov {
+                dst: xmm1,
+                src: xmm2,
+                width: VecWidth::V128,
+            },
+            X86OpHint::SseMov {
+                prefix: X86SsePrefix::None,
+                opcode: 0x28,
+            },
+        );
+        assert!(!x86_vector_move_needs_vl(&low_move));
+        let evex_move = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            low_move.kind.clone(),
+            X86OpHint::EvexOp {
+                map: X86VecMap::Map0F,
+                pp: X86SsePrefix::None,
+                opcode: 0x28,
+                width: VecWidth::V128,
+            },
+        );
+        assert!(x86_native_vector_smir_op(&evex_move));
+        assert!(x86_vector_move_needs_vl(&evex_move));
+        let high_move = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            OpKind::VMov {
+                dst: x86(X86Reg::Ymm(16)),
+                src: x86(X86Reg::Ymm(31)),
+                width: VecWidth::V256,
+            },
+            X86OpHint::EvexOp {
+                map: X86VecMap::Map0F,
+                pp: X86SsePrefix::None,
+                opcode: 0x28,
+                width: VecWidth::V256,
+            },
+        );
+        assert!(x86_native_vector_smir_op(&high_move));
+        assert!(x86_vector_move_needs_vl(&high_move));
 
         for invalid_vplzcnt in [
             OpKind::VLeadingZeros {

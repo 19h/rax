@@ -1575,11 +1575,13 @@ impl<'a> X86Emitter<'a> {
         let vvvv_inv = (!vvvv_low) & 0x0F;
         let vprime_inv = if vvvv_high != 0 { 0 } else { 1 };
         let r_inv = if r != 0 { 0 } else { 1 };
-        let x_inv = if x != 0 { 0 } else { 1 };
+        // EVEX.P0 bit 6 extends an address index, or the ModR/M.rm vector
+        // register in register-direct encodings. Callers provide those as `x`
+        // and `b2`, respectively.
+        let x_or_b2_inv = if x != 0 || b2 != 0 { 0 } else { 1 };
         let b_inv = if b != 0 { 0 } else { 1 };
         let r2_inv = if r2 != 0 { 0 } else { 1 };
-        let x2_inv = if x2 != 0 { 0 } else { 1 };
-        let b2_inv = if b2 != 0 { 0 } else { 1 };
+        let _ = x2;
 
         let l_bits = match width {
             VecWidth::V128 => 0,
@@ -1590,7 +1592,7 @@ impl<'a> X86Emitter<'a> {
 
         self.code.emit_u8(0x62);
         let map_bits = Self::vex_map_bits(map) & 0x0F;
-        let byte2 = (r2_inv << 7) | (x2_inv << 6) | (b2_inv << 5) | (r_inv << 4) | map_bits;
+        let byte2 = (r_inv << 7) | (x_or_b2_inv << 6) | (b_inv << 5) | (r2_inv << 4) | map_bits;
         let byte3 = ((w as u8) << 7) | (vvvv_inv << 3) | 0x04 | pp_bits;
         let byte4 = (l_bits << 5) | (vprime_inv << 3);
         self.code.emit_u8(byte2);
@@ -6532,7 +6534,7 @@ impl X86_64Lowerer {
                         },
                         src1_reg,
                         src2_reg,
-                        0x1F,
+                        0,
                     );
                 } else if src1_reg.vec_ext2() != 0 || src2_reg.vec_ext2() != 0 {
                     self.emit_vec_rr(
@@ -6545,7 +6547,7 @@ impl X86_64Lowerer {
                         },
                         src1_reg,
                         src2_reg,
-                        0x1F,
+                        0,
                     );
                 } else {
                     let prefix = if pp == X86SsePrefix::OpSize {
@@ -6938,14 +6940,14 @@ impl X86_64Lowerer {
                     } else {
                         (dst_reg, src_reg)
                     };
-                    self.emit_vec_rr(enc, reg, rm, 0x1F);
+                    self.emit_vec_rr(enc, reg, rm, 0);
                 } else {
                     if *width != VecWidth::V128 || self.vec_requires_vex(&[dst_reg, src_reg]) {
                         let enc = self.coerce_vec_encoding(
                             self.default_vec_mov_encoding(*width, 0x6F, op.x86_hint),
                             &[dst_reg, src_reg],
                         );
-                        self.emit_vec_rr(enc, dst_reg, src_reg, 0x1F);
+                        self.emit_vec_rr(enc, dst_reg, src_reg, 0);
                     } else {
                         let prefix = self
                             .sse_prefix(op.x86_hint)
@@ -8958,6 +8960,13 @@ impl X86_64Lowerer {
         encoding
     }
 
+    fn vec_encoding_w(encoding: VecEncoding) -> bool {
+        matches!(encoding.kind, VecEncodingKind::Evex)
+            && encoding.map == X86VecMap::Map0F
+            && matches!(encoding.opcode, 0x10 | 0x11 | 0x28 | 0x29)
+            && encoding.pp == X86SsePrefix::OpSize
+    }
+
     fn vec_move_pp(&self, hint: Option<X86OpHint>) -> X86SsePrefix {
         match hint {
             Some(X86OpHint::VecAlign(X86VecAlign::Aligned)) => X86SsePrefix::OpSize,
@@ -9207,9 +9216,13 @@ impl X86_64Lowerer {
             Some(vreg) => self.coerce_vec_encoding(encoding, &[reg, vreg]),
             None => self.coerce_vec_encoding(encoding, &[reg]),
         };
-        let vvvv = vvvv_reg.map_or(0x1F, |vreg| vreg.encoding() & 0x1F);
+        // The emitter accepts the logical register number and performs the
+        // architectural VEX/EVEX inversion. Reserved vvvv=1111b encodes from
+        // logical zero, not from register 31.
+        let vvvv = vvvv_reg.map_or(0, |vreg| vreg.encoding() & 0x1F);
         let r = reg.vec_ext();
         let r2 = reg.vec_ext2();
+        let w = Self::vec_encoding_w(encoding);
 
         match addr {
             Address::Direct(base) => {
@@ -9223,7 +9236,7 @@ impl X86_64Lowerer {
                             encoding.map,
                             encoding.pp,
                             encoding.width,
-                            false,
+                            w,
                             r,
                             0,
                             b,
@@ -9235,7 +9248,7 @@ impl X86_64Lowerer {
                             encoding.map,
                             encoding.pp,
                             encoding.width,
-                            false,
+                            w,
                             r,
                             0,
                             b,
@@ -9264,7 +9277,7 @@ impl X86_64Lowerer {
                             encoding.map,
                             encoding.pp,
                             encoding.width,
-                            false,
+                            w,
                             r,
                             0,
                             b,
@@ -9276,7 +9289,7 @@ impl X86_64Lowerer {
                             encoding.map,
                             encoding.pp,
                             encoding.width,
-                            false,
+                            w,
                             r,
                             0,
                             b,
@@ -9311,7 +9324,7 @@ impl X86_64Lowerer {
                             encoding.map,
                             encoding.pp,
                             encoding.width,
-                            false,
+                            w,
                             r,
                             x,
                             b,
@@ -9323,7 +9336,7 @@ impl X86_64Lowerer {
                             encoding.map,
                             encoding.pp,
                             encoding.width,
-                            false,
+                            w,
                             r,
                             x,
                             b,
@@ -9346,7 +9359,7 @@ impl X86_64Lowerer {
                                 encoding.map,
                                 encoding.pp,
                                 encoding.width,
-                                false,
+                                w,
                                 r,
                                 0,
                                 0,
@@ -9358,7 +9371,7 @@ impl X86_64Lowerer {
                                 encoding.map,
                                 encoding.pp,
                                 encoding.width,
-                                false,
+                                w,
                                 r,
                                 0,
                                 0,
@@ -9415,7 +9428,7 @@ impl X86_64Lowerer {
                             encoding.map,
                             encoding.pp,
                             encoding.width,
-                            false,
+                            w,
                             r,
                             0,
                             0,
@@ -9427,7 +9440,7 @@ impl X86_64Lowerer {
                             encoding.map,
                             encoding.pp,
                             encoding.width,
-                            false,
+                            w,
                             r,
                             0,
                             0,
@@ -9486,6 +9499,7 @@ impl X86_64Lowerer {
         let r2 = reg.vec_ext2();
         let b = rm.vec_ext();
         let b2 = rm.vec_ext2();
+        let w = Self::vec_encoding_w(encoding);
         let mut emitter = X86Emitter::new(&mut self.code);
         match encoding.kind {
             VecEncodingKind::Vex => {
@@ -9493,7 +9507,7 @@ impl X86_64Lowerer {
                     encoding.map,
                     encoding.pp,
                     encoding.width,
-                    false,
+                    w,
                     r,
                     0,
                     b,
@@ -9505,7 +9519,7 @@ impl X86_64Lowerer {
                     encoding.map,
                     encoding.pp,
                     encoding.width,
-                    false,
+                    w,
                     r,
                     0,
                     b,
@@ -13420,6 +13434,24 @@ mod tests {
     #[test]
     fn lifted_native_vector_instructions_reach_native_jit_lowering() {
         for (instruction, expected) in [
+            (&[0x0F, 0x28, 0xC1][..], &[0x0F, 0x28, 0xC1][..]),
+            (&[0xC5, 0xFC, 0x28, 0xC1][..], &[0xC5, 0xFC, 0x28, 0xC1][..]),
+            (
+                &[0x62, 0xE1, 0x7C, 0x48, 0x28, 0xE3][..],
+                &[0x62, 0xE1, 0x7C, 0x48, 0x28, 0xE3][..],
+            ),
+            (
+                &[0x62, 0xB1, 0x7C, 0x48, 0x28, 0xE3][..],
+                &[0x62, 0xB1, 0x7C, 0x48, 0x28, 0xE3][..],
+            ),
+            (
+                &[0x62, 0xA1, 0xFD, 0x48, 0x28, 0xE3][..],
+                &[0x62, 0xA1, 0xFD, 0x48, 0x28, 0xE3][..],
+            ),
+            (
+                &[0x62, 0xA1, 0x7C, 0x28, 0x28, 0xE3][..],
+                &[0x62, 0xA1, 0x7C, 0x28, 0x28, 0xE3][..],
+            ),
             (
                 &[0x62, 0xF2, 0x7D, 0xCC, 0xC4, 0xCA][..],
                 &[0x62, 0xF2, 0x7D, 0xCC, 0xC4, 0xCA][..],
