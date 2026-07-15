@@ -1778,7 +1778,8 @@ pub enum OpKind {
     /// path so it works on Hexagon HVX V registers (and virtual regs). `op`
     /// selects the per-lane operation and `signed` its signedness where it
     /// matters (min/max/avg/saturate/absdiff). This is the lift target for HVX
-    /// integer elementwise instructions.
+    /// integer elementwise instructions and compact x86 packed-integer
+    /// operations with identical lane semantics.
     VLane {
         dst: VReg,
         src1: VReg,

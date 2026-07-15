@@ -4547,6 +4547,7 @@ impl SmirInterpreter {
                 signed,
                 set_ovf,
             } => {
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, x86_hint);
                 let a = Self::read_vec(ctx, *src1);
                 let b = Self::read_vec(ctx, *src2);
                 let elem_bits = elem.bytes() * 8;
@@ -4565,6 +4566,7 @@ impl SmirInterpreter {
                     Self::set_lane(&mut result, lane, elem_bits, rv);
                 }
                 Self::write_vec(ctx, *dst, result);
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
                 if *set_ovf && ovf {
                     Self::set_hex_ovf(ctx);
                 }

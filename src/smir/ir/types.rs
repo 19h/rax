@@ -1064,7 +1064,8 @@ pub enum VShiftVKind {
 /// and, for the bitwise ops, virtual-register-only), `VLane` operates on any
 /// vector register (including 1024-bit Hexagon HVX V regs) over `lanes`
 /// elements of a given `VecElementType`, with signedness selected per op. This
-/// is the lifting target for HVX integer elementwise instructions.
+/// is the lifting target for HVX integer elementwise instructions and compact
+/// x86 packed-integer families whose semantics exactly match a lane operation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum VLaneOp {
     /// Wrapping add (signedness-agnostic).

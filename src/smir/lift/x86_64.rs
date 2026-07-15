@@ -2786,96 +2786,23 @@ impl X86_64Lifter {
         ));
     }
 
-    fn append_packed_unsigned_average(
-        &self,
+    fn packed_unsigned_average_kind(
         dst: VReg,
         src1: VReg,
         src2: VReg,
         width: VecWidth,
         elem: VecElementType,
-        pc: u64,
-        ctx: &mut LiftContext,
-        ops: &mut Vec<SmirOp>,
-    ) {
-        let lanes = width.lanes(elem) as u8;
-        let mut averages = Vec::with_capacity(lanes as usize);
-        for lane in 0..lanes {
-            let a = ctx.alloc_vreg();
-            let b = ctx.alloc_vreg();
-            let sum = ctx.alloc_vreg();
-            let rounded = ctx.alloc_vreg();
-            let average = ctx.alloc_vreg();
-            for (scalar, source) in [(a, src1), (b, src2)] {
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VExtractLane {
-                        dst: scalar,
-                        vec: source,
-                        lane,
-                        elem,
-                        sign: SignExtend::Zero,
-                    },
-                ));
-            }
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Add {
-                    dst: sum,
-                    src1: a,
-                    src2: SrcOperand::Reg(b),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Add {
-                    dst: rounded,
-                    src1: sum,
-                    src2: SrcOperand::Imm(1),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Shr {
-                    dst: average,
-                    src: rounded,
-                    amount: SrcOperand::Imm(1),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            averages.push(average);
+    ) -> OpKind {
+        OpKind::VLane {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes: width.lanes(elem) as u8,
+            op: VLaneOp::AvgRnd,
+            signed: false,
+            set_ovf: false,
         }
-        let output = self.append_zero_vector(width, elem, pc, ctx, ops);
-        for (lane, average) in averages.into_iter().enumerate() {
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VInsertLane {
-                    dst: output,
-                    vec: output,
-                    scalar: average,
-                    lane: lane as u8,
-                    elem,
-                },
-            ));
-        }
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VMov {
-                dst,
-                src: output,
-                width,
-            },
-        ));
     }
 
     fn pmaddwd_kind(dst: VReg, src1: VReg, src2: VReg, width: VecWidth) -> OpKind {
@@ -14611,18 +14538,27 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let raw = ctx.alloc_vreg();
-        self.append_packed_unsigned_average(
-            raw,
-            dst,
-            src2,
-            VecWidth::V128,
-            elem,
-            pc,
-            ctx,
-            &mut ops,
-        );
-        self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            // Keep the computation detached from the architectural destination
+            // until the aligned source load has completed successfully.
+            let raw = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                Self::packed_unsigned_average_kind(raw, dst, src2, VecWidth::V128, elem),
+            ));
+            self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                Self::packed_unsigned_average_kind(dst, dst, src2, VecWidth::V128, elem),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode,
+                },
+            ));
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -23636,14 +23572,27 @@ impl X86_64Lifter {
                 },
             prefix.width,
         );
-        let raw = if prefix.encoding == VecEncodingKind::Evex {
-            ctx.alloc_vreg()
-        } else {
-            dst
-        };
-        self.append_packed_unsigned_average(raw, src1, src2, prefix.width, elem, pc, ctx, &mut ops);
-        if prefix.encoding == VecEncodingKind::Evex {
+        if !modrm.is_memory && (prefix.encoding == VecEncodingKind::Vex || prefix.aaa == 0) {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                Self::packed_unsigned_average_kind(dst, src1, src2, prefix.width, elem),
+                self.vec_hint(prefix, opcode),
+            ));
+        } else if prefix.encoding == VecEncodingKind::Evex {
+            let raw = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                Self::packed_unsigned_average_kind(raw, src1, src2, prefix.width, elem),
+            ));
             self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+        } else {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                Self::packed_unsigned_average_kind(dst, src1, src2, prefix.width, elem),
+            ));
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
@@ -57175,14 +57124,18 @@ mod tests {
 
     #[test]
     fn lift_pavgb_pavgw_covers_rounding_widths_masks_alignment_and_invalids() {
-        for (bytes, elem, lanes, dst, src1, src2) in [
+        for (bytes, elem, lanes, dst, src1, src2, hint) in [
             (
                 &[0x66, 0x0F, 0xE0, 0xD1][..],
                 VecElementType::I8,
-                16usize,
+                16,
                 X86Reg::Xmm(2),
                 X86Reg::Xmm(2),
                 X86Reg::Xmm(1),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE0,
+                },
             ),
             (
                 &[0x66, 0x0F, 0xE3, 0xE3][..],
@@ -57191,6 +57144,10 @@ mod tests {
                 X86Reg::Xmm(4),
                 X86Reg::Xmm(4),
                 X86Reg::Xmm(3),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE3,
+                },
             ),
             (
                 &[0xC4, 0x41, 0x35, 0xE0, 0xC2][..],
@@ -57199,6 +57156,13 @@ mod tests {
                 X86Reg::Ymm(8),
                 X86Reg::Ymm(9),
                 X86Reg::Ymm(10),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE0,
+                    width: VecWidth::V256,
+                    w: false,
+                },
             ),
             (
                 &[0x62, 0xA1, 0x75, 0x40, 0xE3, 0xC2][..],
@@ -57207,73 +57171,36 @@ mod tests {
                 X86Reg::Zmm(16),
                 X86Reg::Zmm(17),
                 X86Reg::Zmm(18),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE3,
+                    width: VecWidth::V512,
+                    w: false,
+                },
             ),
         ] {
             let result = lift_single(bytes).unwrap();
             assert_eq!(result.bytes_consumed, bytes.len());
-            for reg in [src1, src2] {
-                assert_eq!(
-                    result
-                        .ops
-                        .iter()
-                        .filter(|op| matches!(
-                            op.kind,
-                            OpKind::VExtractLane {
-                                vec: VReg::Arch(ArchReg::X86(actual)),
-                                elem: actual_elem,
-                                sign: SignExtend::Zero,
-                                ..
-                            } if actual == reg && actual_elem == elem
-                        ))
-                        .count(),
-                    lanes,
-                );
-            }
-            assert_eq!(
-                result
-                    .ops
-                    .iter()
-                    .filter(|op| matches!(
-                        op.kind,
-                        OpKind::Add {
-                            width: OpWidth::W64,
-                            flags: FlagUpdate::None,
-                            ..
-                        }
-                    ))
-                    .count(),
-                lanes * 2,
-            );
-            assert_eq!(
-                result
-                    .ops
-                    .iter()
-                    .filter(|op| matches!(
-                        op.kind,
-                        OpKind::Shr {
-                            amount: SrcOperand::Imm(1),
-                            flags: FlagUpdate::None,
-                            ..
-                        }
-                    ))
-                    .count(),
-                lanes,
-            );
-            assert!(
-                result.ops.iter().any(|op| matches!(
-                    op.kind,
-                    OpKind::VMov {
-                        dst: VReg::Arch(ArchReg::X86(actual)),
-                        ..
-                    } if actual == dst
-                )) || result.ops.iter().any(|op| matches!(
-                    op.kind,
-                    OpKind::VInsertLane {
-                        dst: VReg::Arch(ArchReg::X86(actual)),
-                        ..
-                    } if actual == dst
-                ))
-            );
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::VLane {
+                        dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                        src1: VReg::Arch(ArchReg::X86(actual_src1)),
+                        src2: VReg::Arch(ArchReg::X86(actual_src2)),
+                        elem: actual_elem,
+                        lanes: actual_lanes,
+                        op: VLaneOp::AvgRnd,
+                        signed: false,
+                        set_ovf: false,
+                    },
+                    x86_hint: Some(actual_hint),
+                    ..
+                }] if *actual_dst == dst && *actual_src1 == src1 && *actual_src2 == src2
+                    && *actual_elem == elem && usize::from(*actual_lanes) == lanes
+                    && *actual_hint == hint
+            ));
         }
 
         for opcode in [0xE0, 0xE3] {
@@ -57284,6 +57211,15 @@ mod tests {
                     .iter()
                     .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
             );
+            assert!(legacy_memory.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VLane {
+                    op: VLaneOp::AvgRnd,
+                    signed: false,
+                    set_ovf: false,
+                    ..
+                }
+            )));
         }
         let masked_memory = lift_single(&[0x62, 0xF1, 0x75, 0xC9, 0xE0, 0x40, 0x01]).unwrap();
         assert_eq!(
@@ -57308,6 +57244,9 @@ mod tests {
             lift_single(&[0x0F, 0xE3, 0xC1]),
             Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "MMX PAVGW"
         ));
+        // VEX.W and EVEX.W are ignored for VPAVG[BW].
+        assert!(lift_single(&[0xC4, 0xE1, 0xF1, 0xE0, 0xC2]).is_ok());
+        assert!(lift_single(&[0x62, 0xF1, 0xF5, 0x48, 0xE3, 0xC2]).is_ok());
         for bytes in [
             &[0xF3, 0x66, 0x0F, 0xE0, 0xC1][..],
             &[0xC5, 0xF0, 0xE3, 0xC2][..],

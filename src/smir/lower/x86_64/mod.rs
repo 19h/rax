@@ -13,8 +13,8 @@ use crate::smir::ir::ops::{
 };
 use crate::smir::ir::types::{
     Address, ArchReg, BlockId, Condition, DispSize, FenceKind, FpRoundMode, GuestAddr, MemWidth,
-    OpWidth, ShiftOp, SignExtend, SrcOperand, VReg, VecCmpCond, VecElementType, VecUnaryOp,
-    VecWidth, X86Reg,
+    OpWidth, ShiftOp, SignExtend, SrcOperand, VLaneOp, VReg, VecCmpCond, VecElementType,
+    VecUnaryOp, VecWidth, X86Reg,
 };
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
 
@@ -8069,6 +8069,121 @@ impl X86_64Lowerer {
                 }
             }
 
+            OpKind::VLane {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                op: VLaneOp::AvgRnd,
+                signed: false,
+                set_ovf: false,
+            } if matches!(elem, VecElementType::I8 | VecElementType::I16) => {
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
+                        op: format!("VLane AvgRnd {:?}x{}", elem, lanes),
+                    }
+                })?;
+                let opcode = match elem {
+                    VecElementType::I8 => 0xE0,
+                    VecElementType::I16 => 0xE3,
+                    _ => unreachable!("guarded PAVG element width"),
+                };
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                let vector_matches_width = |reg: PhysReg| match (width, reg) {
+                    (VecWidth::V128, PhysReg::Xmm(index))
+                    | (VecWidth::V256, PhysReg::Ymm(index))
+                    | (VecWidth::V512, PhysReg::Zmm(index)) => index < 32,
+                    _ => false,
+                };
+                if ![dst_reg, src1_reg, src2_reg]
+                    .into_iter()
+                    .all(vector_matches_width)
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VLane AvgRnd PAVG[BW]".to_string(),
+                        operand: "requires matching XMM/YMM/ZMM registers".to_string(),
+                    });
+                }
+                let low_vector = |reg: PhysReg| match reg {
+                    PhysReg::Xmm(index) | PhysReg::Ymm(index) | PhysReg::Zmm(index) => index < 16,
+                    _ => false,
+                };
+                match op.x86_hint {
+                    Some(X86OpHint::SseOp {
+                        prefix,
+                        opcode: encoded_opcode,
+                    }) if width == VecWidth::V128
+                        && dst_reg == src1_reg
+                        && [dst_reg, src1_reg, src2_reg].into_iter().all(low_vector)
+                        && prefix == X86SsePrefix::OpSize
+                        && encoded_opcode == opcode =>
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_mov_rr(Some(0x66), opcode, dst_reg, src2_reg);
+                    }
+                    Some(X86OpHint::VexOp {
+                        map,
+                        pp,
+                        opcode: encoded_opcode,
+                        width: encoded_width,
+                        w,
+                    }) if map == X86VecMap::Map0F
+                        && pp == X86SsePrefix::OpSize
+                        && encoded_opcode == opcode
+                        && encoded_width == width
+                        && width != VecWidth::V512
+                        && [dst_reg, src1_reg, src2_reg].into_iter().all(low_vector) =>
+                    {
+                        self.emit_vec_rrr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Vex,
+                                map,
+                                pp,
+                                opcode,
+                                width,
+                                w,
+                            },
+                            dst_reg,
+                            src1_reg,
+                            src2_reg,
+                        );
+                    }
+                    Some(X86OpHint::EvexOp {
+                        map,
+                        pp,
+                        opcode: encoded_opcode,
+                        width: encoded_width,
+                        w,
+                    }) if map == X86VecMap::Map0F
+                        && pp == X86SsePrefix::OpSize
+                        && encoded_opcode == opcode
+                        && encoded_width == width =>
+                    {
+                        self.emit_vec_rrr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Evex,
+                                map,
+                                pp,
+                                opcode,
+                                width,
+                                w,
+                            },
+                            dst_reg,
+                            src1_reg,
+                            src2_reg,
+                        );
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("unhinted or malformed PAVG[BW] {width:?}"),
+                        });
+                    }
+                }
+            }
+
             OpKind::VDotProduct {
                 dst,
                 acc: VReg::Imm(0),
@@ -14934,6 +15049,21 @@ mod tests {
                 &[0xC4, 0xE2, 0xE9, 0x01, 0xCB][..],
                 &[0xC4, 0xE2, 0xE9, 0x01, 0xCB][..],
             ),
+            (&[0x66, 0x0F, 0xE0, 0xCA][..], &[0x66, 0x0F, 0xE0, 0xCA][..]),
+            (&[0x66, 0x0F, 0xE3, 0xDC][..], &[0x66, 0x0F, 0xE3, 0xDC][..]),
+            (
+                &[0xC4, 0xE1, 0xF1, 0xE0, 0xC2][..],
+                &[0xC4, 0xE1, 0xF1, 0xE0, 0xC2][..],
+            ),
+            (&[0xC5, 0xED, 0xE3, 0xCB][..], &[0xC5, 0xED, 0xE3, 0xCB][..]),
+            (
+                &[0x62, 0xA1, 0x75, 0x40, 0xE0, 0xC2][..],
+                &[0x62, 0xA1, 0x75, 0x40, 0xE0, 0xC2][..],
+            ),
+            (
+                &[0x62, 0xA1, 0xF5, 0x00, 0xE3, 0xC2][..],
+                &[0x62, 0xA1, 0xF5, 0x00, 0xE3, 0xC2][..],
+            ),
             (
                 &[0x66, 0x0F, 0x38, 0x04, 0xCA][..],
                 &[0x66, 0x0F, 0x38, 0x04, 0xCA][..],
@@ -15533,6 +15663,167 @@ mod tests {
                     opcode: 0x01,
                     width: VecWidth::V512,
                     w: false,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_pavg_emits_exact_bytes_and_rejects_malformed_encodings() {
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let ymm = |index| VReg::Arch(ArchReg::X86(X86Reg::Ymm(index)));
+        let zmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Zmm(index)));
+        let average = |dst, src1, src2, elem, lanes| OpKind::VLane {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            op: VLaneOp::AvgRnd,
+            signed: false,
+            set_ovf: false,
+        };
+
+        for (name, kind, hint, expected) in [
+            (
+                "PAVGB xmm1,xmm2",
+                average(xmm(1), xmm(1), xmm(2), VecElementType::I8, 16),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE0,
+                },
+                &[0x66, 0x0F, 0xE0, 0xCA][..],
+            ),
+            (
+                "VEX.W1 VPAVGW xmm1,xmm2,xmm3",
+                average(xmm(1), xmm(2), xmm(3), VecElementType::I16, 8),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE3,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0xC4, 0xE1, 0xE9, 0xE3, 0xCB][..],
+            ),
+            (
+                "VEX.256 VPAVGB ymm1,ymm2,ymm3",
+                average(ymm(1), ymm(2), ymm(3), VecElementType::I8, 32),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE0,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                &[0xC5, 0xED, 0xE0, 0xCB][..],
+            ),
+            (
+                "EVEX.W1 VPAVGW xmm16,xmm17,xmm18",
+                average(xmm(16), xmm(17), xmm(18), VecElementType::I16, 8),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE3,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0x62, 0xA1, 0xF5, 0x00, 0xE3, 0xC2][..],
+            ),
+            (
+                "EVEX.256 VPAVGB ymm16,ymm17,ymm18",
+                average(ymm(16), ymm(17), ymm(18), VecElementType::I8, 32),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE0,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                &[0x62, 0xA1, 0x75, 0x20, 0xE0, 0xC2][..],
+            ),
+            (
+                "EVEX.512 VPAVGW zmm16,zmm17,zmm18",
+                average(zmm(16), zmm(17), zmm(18), VecElementType::I16, 32),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE3,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+                &[0x62, 0xA1, 0x75, 0x40, 0xE3, 0xC2][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, hint);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        assert!(matches!(
+            lower_single_op_err(average(xmm(1), xmm(1), xmm(2), VecElementType::I8, 16,)),
+            LowerError::UnsupportedOp { .. }
+        ));
+        for (kind, hint) in [
+            (
+                average(xmm(1), xmm(2), xmm(3), VecElementType::I8, 16),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE0,
+                },
+            ),
+            (
+                average(ymm(16), ymm(17), ymm(18), VecElementType::I16, 16),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE3,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                average(zmm(16), zmm(17), zmm(18), VecElementType::I8, 64),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE3,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+            ),
+            (
+                average(ymm(16), ymm(17), ymm(18), VecElementType::I8, 32),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE0,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                OpKind::VLane {
+                    dst: xmm(1),
+                    src1: xmm(1),
+                    src2: xmm(2),
+                    elem: VecElementType::I8,
+                    lanes: 16,
+                    op: VLaneOp::AvgRnd,
+                    signed: true,
+                    set_ovf: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE0,
                 },
             ),
         ] {
