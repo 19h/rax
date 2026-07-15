@@ -1013,6 +1013,13 @@ impl ExecMem {
         Ok(ExecMem { ptr, len })
     }
 
+    /// Address range of the executable mapping, for async-signal-safe JIT
+    /// crash diagnostics. The returned span includes page-alignment padding.
+    #[cfg(target_arch = "x86_64")]
+    pub(crate) fn mapping_bounds(&self) -> (*const u8, usize) {
+        (self.ptr.cast_const(), self.len)
+    }
+
     /// RW map → copy → `mprotect` RX. Used on x86-64 and any non-aarch64 Unix.
     #[cfg(not(target_arch = "aarch64"))]
     fn map_code(code: &[u8], len: usize) -> Result<*mut u8, ExecMemError> {

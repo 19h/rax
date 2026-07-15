@@ -3697,6 +3697,14 @@ struct JitLoadRet {
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 static JIT_LAST_ENTRY: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
+/// Host executable mapping currently entered by the native JIT. These bounds
+/// let the crash handler report a stable native offset and nearby bytes without
+/// allocation, locking, or symbolization in signal context.
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+static JIT_LAST_HOST_BASE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+static JIT_LAST_HOST_LEN: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
 /// SIGSEGV/SIGBUS/SIGILL handler: a host fault inside native JIT code prints
 /// the guest region entry + faulting address, restores any raw terminal state,
 /// then restores the default disposition and re-raises.
@@ -3707,10 +3715,11 @@ extern "C" fn jit_crash_handler(
     _ctx: *mut libc::c_void,
 ) {
     use std::sync::atomic::Ordering;
-    // Build "[JIT-CRASH] sig=NN entry=0xHEX addr=0xHEX\n" into a fixed buffer.
-    let mut buf = [0u8; 128];
+    // Build the complete crash location and bounded byte window in a fixed
+    // buffer. libc::write is the only external operation on this path.
+    let mut buf = [0u8; 256];
     let mut n = 0usize;
-    let mut put = |s: &[u8], buf: &mut [u8; 128], n: &mut usize| {
+    let mut put = |s: &[u8], buf: &mut [u8; 256], n: &mut usize| {
         for &b in s {
             if *n < buf.len() {
                 buf[*n] = b;
@@ -3718,7 +3727,7 @@ extern "C" fn jit_crash_handler(
             }
         }
     };
-    let mut put_hex = |mut v: u64, buf: &mut [u8; 128], n: &mut usize| {
+    let mut put_hex = |mut v: u64, buf: &mut [u8; 256], n: &mut usize| {
         put(b"0x", buf, n);
         let mut started = false;
         for shift in (0..16).rev() {
@@ -3745,6 +3754,29 @@ extern "C" fn jit_crash_handler(
     put(b" addr=", &mut buf, &mut n);
     let addr = unsafe { (*info).si_addr() } as u64;
     put_hex(addr, &mut buf, &mut n);
+    let host_base = JIT_LAST_HOST_BASE.load(Ordering::Relaxed);
+    let host_len = JIT_LAST_HOST_LEN.load(Ordering::Relaxed);
+    let host_end = host_base.saturating_add(host_len);
+    if addr >= host_base && addr < host_end {
+        put(b" host_off=", &mut buf, &mut n);
+        put_hex(addr - host_base, &mut buf, &mut n);
+        put(b" bytes=", &mut buf, &mut n);
+        let start = addr.saturating_sub(8).max(host_base);
+        let end = addr.saturating_add(16).min(host_end);
+        for byte_addr in start..end {
+            let byte = unsafe { core::ptr::read_volatile(byte_addr as *const u8) };
+            for nibble in [byte >> 4, byte & 0x0F] {
+                if n < buf.len() {
+                    buf[n] = if nibble < 10 {
+                        b'0' + nibble
+                    } else {
+                        b'a' + nibble - 10
+                    };
+                    n += 1;
+                }
+            }
+        }
+    }
     put(b"\n", &mut buf, &mut n);
     unsafe {
         libc::write(2, buf.as_ptr() as *const libc::c_void, n);
@@ -4633,6 +4665,9 @@ impl X86_64Vcpu {
             if *TRACE.get_or_init(|| std::env::var_os("RAX_JIT_TRACE").is_some()) {
                 jit_install_crash_handler();
                 JIT_LAST_ENTRY.store(self.regs.rip, Ordering::Relaxed);
+                let (host_base, host_len) = region.exec.mapping_bounds();
+                JIT_LAST_HOST_BASE.store(host_base as u64, Ordering::Relaxed);
+                JIT_LAST_HOST_LEN.store(host_len as u64, Ordering::Relaxed);
                 static DUMP_AT: OnceLock<Option<u64>> = OnceLock::new();
                 let dump_at = *DUMP_AT.get_or_init(|| {
                     std::env::var("RAX_JIT_DUMP")
