@@ -1098,6 +1098,10 @@ pub enum VLaneOp {
     Avg,
     /// Rounding average `(a + b + 1) >> 1`.
     AvgRnd,
+    /// Preserve, zero, or wrapping-negate the first operand according to the
+    /// signed sign of the second operand. This is the per-lane semantic of x86
+    /// PSIGNB/PSIGNW/PSIGND.
+    Sign,
     /// Absolute difference `|a - b|` (signed/unsigned per the `signed` flag).
     AbsDiff,
 }

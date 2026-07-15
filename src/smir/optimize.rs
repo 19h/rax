@@ -4535,7 +4535,7 @@ mod tests {
     #[test]
     fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
         use crate::smir::ir::types::{
-            FpRoundMode, ShiftOp, SourceArch, VecCmpCond, VecUnaryOp, VecWidth, X86Reg,
+            FpRoundMode, ShiftOp, SourceArch, VLaneOp, VecCmpCond, VecUnaryOp, VecWidth, X86Reg,
         };
         use crate::smir::ir::{FunctionBuilder, SmirFunction};
         use crate::smir::lift::x86_64::X86_64Lifter;
@@ -5532,6 +5532,46 @@ mod tests {
             })
             .expect("masked EVEX VPMADDWD destination write must survive optimization");
         assert!(load < dot && dot < destination_write);
+
+        let legacy_psign_register = optimized(&[0x66, 0x0F, 0x38, 0x09, 0xC1]);
+        let ops = &legacy_psign_register.blocks[0].ops;
+        assert_eq!(ops.len(), 1, "register PSIGNW must remain one atomic op");
+        assert!(matches!(
+            (&ops[0].kind, ops[0].x86_hint),
+            (
+                OpKind::VLane {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    elem: VecElementType::I16,
+                    lanes: 8,
+                    op: VLaneOp::Sign,
+                    signed: true,
+                    set_ovf: false,
+                },
+                Some(X86OpHint::SseOp {
+                    prefix: crate::smir::ir::ops::X86SsePrefix::OpSize,
+                    opcode: 0x09,
+                })
+            )
+        ));
+
+        let vex_psign_register = optimized(&[0xC4, 0xE2, 0x75, 0x0A, 0xC2]);
+        let ops = &vex_psign_register.blocks[0].ops;
+        assert_eq!(ops.len(), 1, "register VPSIGND must remain one atomic op");
+        assert!(matches!(
+            ops[0].kind,
+            OpKind::VLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                elem: VecElementType::I32,
+                lanes: 8,
+                op: VLaneOp::Sign,
+                signed: true,
+                set_ovf: false,
+            }
+        ));
 
         let legacy_psign = optimized(&[0x66, 0x0F, 0x38, 0x09, 0x00]);
         let ops = &legacy_psign.blocks[0].ops;

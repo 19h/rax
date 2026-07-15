@@ -15266,6 +15266,15 @@ impl SmirInterpreter {
                     (((a & mask) as u128 + (b & mask) as u128 + 1) >> 1) as u64
                 }
             }
+            VLaneOp::Sign => {
+                if b & mask == 0 {
+                    0
+                } else if sx(b) < 0 {
+                    0u64.wrapping_sub(a)
+                } else {
+                    a
+                }
+            }
             VLaneOp::AbsDiff => {
                 if signed {
                     (sx(a) as i128 - sx(b) as i128).unsigned_abs() as u64

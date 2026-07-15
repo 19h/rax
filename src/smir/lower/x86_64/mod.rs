@@ -8249,6 +8249,100 @@ impl X86_64Lowerer {
                 src2,
                 elem,
                 lanes,
+                op: VLaneOp::Sign,
+                signed: true,
+                set_ovf: false,
+            } if matches!(
+                elem,
+                VecElementType::I8 | VecElementType::I16 | VecElementType::I32
+            ) =>
+            {
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
+                        op: format!("VLane Sign {:?}x{}", elem, lanes),
+                    }
+                })?;
+                if !matches!(width, VecWidth::V128 | VecWidth::V256) {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("VLane Sign {:?}x{}", elem, lanes),
+                    });
+                }
+                let opcode = match elem {
+                    VecElementType::I8 => 0x08,
+                    VecElementType::I16 => 0x09,
+                    VecElementType::I32 => 0x0A,
+                    _ => unreachable!("guarded PSIGN element width"),
+                };
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                let low_vector_matches_width = |reg: PhysReg| match (width, reg) {
+                    (VecWidth::V128, PhysReg::Xmm(index))
+                    | (VecWidth::V256, PhysReg::Ymm(index)) => index < 16,
+                    _ => false,
+                };
+                if ![dst_reg, src1_reg, src2_reg]
+                    .into_iter()
+                    .all(low_vector_matches_width)
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VLane Sign PSIGN[BWD]".to_string(),
+                        operand: "requires matching low XMM/YMM registers".to_string(),
+                    });
+                }
+                match op.x86_hint {
+                    Some(X86OpHint::SseOp {
+                        prefix,
+                        opcode: encoded_opcode,
+                    }) if width == VecWidth::V128
+                        && dst_reg == src1_reg
+                        && prefix == X86SsePrefix::OpSize
+                        && encoded_opcode == opcode =>
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_op38_rr(Some(0x66), opcode, dst_reg, src2_reg);
+                    }
+                    Some(X86OpHint::VexOp {
+                        map,
+                        pp,
+                        opcode: encoded_opcode,
+                        width: encoded_width,
+                        w: _,
+                    }) if map == X86VecMap::Map0F38
+                        && pp == X86SsePrefix::OpSize
+                        && encoded_opcode == opcode
+                        && encoded_width == width =>
+                    {
+                        self.emit_vec_rrr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Vex,
+                                map,
+                                pp,
+                                opcode,
+                                width,
+                                // VPSIGNB/W/D are WIG. Canonicalize guest W=1 to W=0
+                                // instead of replaying a noncanonical host encoding.
+                                w: false,
+                            },
+                            dst_reg,
+                            src1_reg,
+                            src2_reg,
+                        );
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("unhinted or malformed PSIGN[BWD] {width:?}"),
+                        });
+                    }
+                }
+            }
+
+            OpKind::VLane {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
                 op: VLaneOp::AvgRnd,
                 signed: false,
                 set_ovf: false,
@@ -15456,6 +15550,18 @@ mod tests {
                 &[0x62, 0xA2, 0xF5, 0x00, 0x0B, 0xC2][..],
                 &[0x62, 0xA2, 0x75, 0x00, 0x0B, 0xC2][..],
             ),
+            (
+                &[0x66, 0x0F, 0x38, 0x08, 0xCA][..],
+                &[0x66, 0x0F, 0x38, 0x08, 0xCA][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0xE9, 0x09, 0xCB][..],
+                &[0xC4, 0xE2, 0x69, 0x09, 0xCB][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0x6D, 0x0A, 0xCB][..],
+                &[0xC4, 0xE2, 0x6D, 0x0A, 0xCB][..],
+            ),
             (&[0x66, 0x0F, 0xE5, 0xCA][..], &[0x66, 0x0F, 0xE5, 0xCA][..]),
             (&[0x66, 0x0F, 0xE4, 0xEF][..], &[0x66, 0x0F, 0xE4, 0xEF][..]),
             (
@@ -16467,6 +16573,193 @@ mod tests {
                 X86OpHint::SseOp {
                     prefix: X86SsePrefix::OpSize,
                     opcode: 0xE5,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_psign_emits_exact_bytes_canonicalizes_wig_and_rejects_malformed_encodings() {
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let ymm = |index| VReg::Arch(ArchReg::X86(X86Reg::Ymm(index)));
+        let zmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Zmm(index)));
+        let sign = |dst, src1, src2, elem, lanes| OpKind::VLane {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            op: VLaneOp::Sign,
+            signed: true,
+            set_ovf: false,
+        };
+
+        for (name, kind, hint, expected) in [
+            (
+                "PSIGNB xmm1,xmm2",
+                sign(xmm(1), xmm(1), xmm(2), VecElementType::I8, 16),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x08,
+                },
+                &[0x66, 0x0F, 0x38, 0x08, 0xCA][..],
+            ),
+            (
+                "PSIGNB xmm8,xmm1",
+                sign(xmm(8), xmm(8), xmm(1), VecElementType::I8, 16),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x08,
+                },
+                &[0x66, 0x44, 0x0F, 0x38, 0x08, 0xC1][..],
+            ),
+            (
+                "VEX.W1-hinted VPSIGNW xmm1,xmm2,xmm3 canonicalized to W0",
+                sign(xmm(1), xmm(2), xmm(3), VecElementType::I16, 8),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x09,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0xC4, 0xE2, 0x69, 0x09, 0xCB][..],
+            ),
+            (
+                "VEX.256 VPSIGND ymm1,ymm2,ymm3",
+                sign(ymm(1), ymm(2), ymm(3), VecElementType::I32, 8),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x0A,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                &[0xC4, 0xE2, 0x6D, 0x0A, 0xCB][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, hint);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        assert!(matches!(
+            lower_single_op_err(sign(xmm(1), xmm(1), xmm(2), VecElementType::I8, 16,)),
+            LowerError::UnsupportedOp { .. }
+        ));
+        for (kind, hint) in [
+            (
+                sign(xmm(1), xmm(2), xmm(3), VecElementType::I8, 16),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x08,
+                },
+            ),
+            (
+                sign(ymm(16), ymm(1), ymm(2), VecElementType::I16, 16),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x09,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                sign(ymm(1), ymm(2), ymm(3), VecElementType::I32, 8),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x0A,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                sign(ymm(1), ymm(2), ymm(3), VecElementType::I32, 8),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x0A,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                sign(ymm(1), ymm(2), ymm(3), VecElementType::I32, 8),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x09,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                sign(ymm(1), ymm(2), ymm(3), VecElementType::I32, 8),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x0A,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                sign(zmm(1), zmm(2), zmm(3), VecElementType::I32, 16),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x0A,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+            ),
+            (
+                OpKind::VLane {
+                    dst: xmm(1),
+                    src1: xmm(1),
+                    src2: xmm(2),
+                    elem: VecElementType::I8,
+                    lanes: 16,
+                    op: VLaneOp::Sign,
+                    signed: false,
+                    set_ovf: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x08,
+                },
+            ),
+            (
+                OpKind::VLane {
+                    dst: xmm(1),
+                    src1: xmm(1),
+                    src2: xmm(2),
+                    elem: VecElementType::I8,
+                    lanes: 16,
+                    op: VLaneOp::Sign,
+                    signed: true,
+                    set_ovf: true,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x08,
+                },
+            ),
+            (
+                sign(xmm(1), xmm(1), xmm(2), VecElementType::I64, 2),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x08,
                 },
             ),
         ] {

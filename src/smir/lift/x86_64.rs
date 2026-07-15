@@ -13622,9 +13622,30 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let raw = ctx.alloc_vreg();
-        self.append_packed_sign(raw, dst, control, elem, VecWidth::V128, pc, ctx, &mut ops);
-        self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            let raw = ctx.alloc_vreg();
+            self.append_packed_sign(raw, dst, control, elem, VecWidth::V128, pc, ctx, &mut ops);
+            self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLane {
+                    dst,
+                    src1: dst,
+                    src2: control,
+                    elem,
+                    lanes: VecWidth::V128.lanes(elem) as u8,
+                    op: VLaneOp::Sign,
+                    signed: true,
+                    set_ovf: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode,
+                },
+            ));
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -18923,16 +18944,27 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm, prefix.width)
         };
-        self.append_packed_sign(
-            self.vec_reg(modrm.reg, prefix.width),
-            self.vec_reg(prefix.vvvv, prefix.width),
-            control,
-            elem,
-            prefix.width,
-            pc,
-            ctx,
-            &mut ops,
-        );
+        let dst = self.vec_reg(modrm.reg, prefix.width);
+        let value = self.vec_reg(prefix.vvvv, prefix.width);
+        if modrm.is_memory {
+            self.append_packed_sign(dst, value, control, elem, prefix.width, pc, ctx, &mut ops);
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLane {
+                    dst,
+                    src1: value,
+                    src2: control,
+                    elem,
+                    lanes: prefix.width.lanes(elem) as u8,
+                    op: VLaneOp::Sign,
+                    signed: true,
+                    set_ovf: false,
+                },
+                self.vec_hint(prefix, opcode),
+            ));
+        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -52307,34 +52339,28 @@ mod tests {
             (0x0A, VecElementType::I32),
         ] {
             let legacy = lift_single(&[0x66, 0x0F, 0x38, opcode, 0xC1]).unwrap();
-            assert!(legacy.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VUnary {
-                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                    elem: actual,
-                    op: VecUnaryOp::Neg,
-                    ..
-                } if actual == elem
-            )));
-            for cond in [VecCmpCond::Lt, VecCmpCond::Eq] {
-                assert!(legacy.ops.iter().any(|op| matches!(
-                    op.kind,
-                    OpKind::VCmp {
-                        src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
-                        cond: actual_cond,
+            assert_eq!(legacy.ops.len(), 1);
+            assert!(matches!(
+                (&legacy.ops[0].kind, legacy.ops[0].x86_hint),
+                (
+                    OpKind::VLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
                         elem: actual_elem,
-                        ..
-                    } if actual_cond == cond && actual_elem == elem
-                )));
-            }
-            assert!(legacy.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VInsertLane {
-                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                    elem: actual,
-                    ..
-                } if actual == elem
-            )));
+                        lanes,
+                        op: VLaneOp::Sign,
+                        signed: true,
+                        set_ovf: false,
+                    },
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::OpSize,
+                        opcode: actual_opcode,
+                    })
+                ) if *actual_elem == elem
+                    && *lanes == VecWidth::V128.lanes(elem) as u8
+                    && actual_opcode == opcode
+            ));
 
             for (bytes, width, dst, value, control) in [
                 (
@@ -52353,42 +52379,50 @@ mod tests {
                 ),
             ] {
                 let vex = lift_single(bytes).unwrap();
-                assert!(vex.ops.iter().any(|op| matches!(
-                    op.kind,
-                    OpKind::VUnary {
-                        src: VReg::Arch(ArchReg::X86(actual_value)),
-                        elem: actual_elem,
-                        op: VecUnaryOp::Neg,
-                        ..
-                    } if actual_value == value && actual_elem == elem
-                )));
-                assert!(vex.ops.iter().any(|op| matches!(
-                    op.kind,
-                    OpKind::VCmp {
-                        src1: VReg::Arch(ArchReg::X86(actual_control)),
-                        elem: actual_elem,
-                        ..
-                    } if actual_control == control && actual_elem == elem
-                )));
+                assert_eq!(vex.ops.len(), 1);
                 assert!(matches!(
-                    vex.ops.last().unwrap().kind,
-                    OpKind::VAndNot {
-                        dst: VReg::Arch(ArchReg::X86(actual_dst)),
-                        width: actual_width,
-                        ..
-                    } if actual_dst == dst && actual_width == width
+                    (&vex.ops[0].kind, vex.ops[0].x86_hint),
+                    (
+                        OpKind::VLane {
+                            dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                            src1: VReg::Arch(ArchReg::X86(actual_value)),
+                            src2: VReg::Arch(ArchReg::X86(actual_control)),
+                            elem: actual_elem,
+                            lanes,
+                            op: VLaneOp::Sign,
+                            signed: true,
+                            set_ovf: false,
+                        },
+                        Some(X86OpHint::VexOp {
+                            map: X86VecMap::Map0F38,
+                            pp: X86SsePrefix::OpSize,
+                            opcode: actual_opcode,
+                            width: actual_width,
+                            w: false,
+                        })
+                    ) if *actual_dst == dst
+                        && *actual_value == value
+                        && *actual_control == control
+                        && *actual_elem == elem
+                        && *lanes == width.lanes(elem) as u8
+                        && actual_opcode == opcode
+                        && actual_width == width
                 ));
             }
         }
 
         let rex = lift_single(&[0x66, 0x44, 0x0F, 0x38, 0x08, 0xC1]).unwrap();
-        assert!(rex.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::VUnary {
-                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(8))),
+        assert_eq!(rex.ops.len(), 1);
+        assert!(matches!(
+            rex.ops[0].kind,
+            OpKind::VLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(8))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(8))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                op: VLaneOp::Sign,
                 ..
             }
-        )));
+        ));
 
         let legacy_mem = lift_single(&[0x66, 0x0F, 0x38, 0x09, 0x00]).unwrap();
         let alignment = legacy_mem
@@ -52429,8 +52463,19 @@ mod tests {
                 .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
         );
 
-        // VEX.W is ignored for the family.
-        assert!(lift_single(&[0xC4, 0xE2, 0xF5, 0x08, 0xC2]).is_ok());
+        // VEX.W is ignored by the guest ISA but retained in the hint so the
+        // lowerer can prove that it canonicalizes the host instruction.
+        let wig = lift_single(&[0xC4, 0xE2, 0xF5, 0x08, 0xC2]).unwrap();
+        assert!(matches!(
+            wig.ops[0].x86_hint,
+            Some(X86OpHint::VexOp {
+                map: X86VecMap::Map0F38,
+                pp: X86SsePrefix::OpSize,
+                opcode: 0x08,
+                width: VecWidth::V256,
+                w: true,
+            })
+        ));
         for bytes in [
             &[0x0F, 0x38, 0x08, 0xC1][..],             // MMX state is not exposed
             &[0xF3, 0x66, 0x0F, 0x38, 0x09, 0xC1][..], // conflicting prefix

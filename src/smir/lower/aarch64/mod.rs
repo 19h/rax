@@ -4067,6 +4067,9 @@ impl Aarch64Lowerer {
             VLaneOp::AvgRnd => {
                 self.lower_vlane_three_same(dst, src1, src2, elem, lanes, signed, 0b00010, false)
             }
+            VLaneOp::Sign => Err(LowerError::UnsupportedOp {
+                op: "AArch64 native VLane Sign".to_string(),
+            }),
             VLaneOp::AbsDiff => {
                 self.lower_vlane_three_same(dst, src1, src2, elem, lanes, signed, 0b01110, false)
             }
@@ -33993,6 +33996,9 @@ mod tests {
                     VLaneOp::AvgRnd => {
                         (((av & mask) as u128 + (bv & mask) as u128 + 1) >> 1) as u64
                     }
+                    VLaneOp::Sign if bv & mask == 0 => 0,
+                    VLaneOp::Sign if sx(bv) < 0 => 0u64.wrapping_sub(av),
+                    VLaneOp::Sign => av,
                     VLaneOp::AbsDiff if signed => (sx(av) - sx(bv)).unsigned_abs() as u64,
                     VLaneOp::AbsDiff => {
                         let (x, y) = (av & mask, bv & mask);

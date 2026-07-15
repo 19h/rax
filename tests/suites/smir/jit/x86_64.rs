@@ -4798,6 +4798,211 @@ fn jit_pavg_matches_unsigned_rounding_aliases_wig_and_upper_state() {
 }
 
 #[test]
+fn jit_psign_matches_control_sign_aliases_wig_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx2")
+        || !std::is_x86_feature_detected!("ssse3")
+    {
+        return;
+    }
+
+    // loop: psignb xmm1,xmm2; {vex3,w1} vpsignw xmm3,xmm4,xmm3;
+    //       vpsignd ymm6,ymm6,ymm8; dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0x38, 0x08, 0xCA, 0xC4, 0xE2, 0xD9, 0x09, 0xDB, 0xC4, 0xC2, 0x4D, 0x0A, 0xF0,
+        0xFF, 0xC9, 0x75, 0xED, 0xF4,
+    ];
+
+    fn vector_bytes(regs: &Registers, index: usize) -> Vec<u8> {
+        regs.xmm[index]
+            .iter()
+            .chain(regs.ymm_high[index].iter())
+            .chain(regs.zmm_high[index].iter())
+            .flat_map(|word| word.to_le_bytes())
+            .collect()
+    }
+
+    fn set_vector_bytes(regs: &mut Registers, index: usize, bytes: &[u8]) {
+        let words = bytes
+            .chunks_exact(8)
+            .map(|chunk| u64::from_le_bytes(chunk.try_into().unwrap()))
+            .collect::<Vec<_>>();
+        assert_eq!(words.len(), 8);
+        regs.xmm[index].copy_from_slice(&words[..2]);
+        regs.ymm_high[index].copy_from_slice(&words[2..4]);
+        regs.zmm_high[index].copy_from_slice(&words[4..8]);
+    }
+
+    fn sign_bytes(values: &[u8], controls: &[u8], width: usize) -> Vec<u8> {
+        values[..width]
+            .iter()
+            .zip(&controls[..width])
+            .map(|(value, control)| match *control as i8 {
+                0 => 0,
+                control if control < 0 => 0u8.wrapping_sub(*value),
+                _ => *value,
+            })
+            .collect()
+    }
+
+    fn sign_words(values: &[u8], controls: &[u8], width: usize) -> Vec<u8> {
+        let mut result = Vec::with_capacity(width);
+        for lane in 0..width / 2 {
+            let base = lane * 2;
+            let value = i16::from_le_bytes(values[base..base + 2].try_into().unwrap());
+            let control = i16::from_le_bytes(controls[base..base + 2].try_into().unwrap());
+            let output = match control {
+                0 => 0,
+                control if control < 0 => value.wrapping_neg(),
+                _ => value,
+            };
+            result.extend_from_slice(&output.to_le_bytes());
+        }
+        result
+    }
+
+    fn sign_dwords(values: &[u8], controls: &[u8], width: usize) -> Vec<u8> {
+        let mut result = Vec::with_capacity(width);
+        for lane in 0..width / 4 {
+            let base = lane * 4;
+            let value = i32::from_le_bytes(values[base..base + 4].try_into().unwrap());
+            let control = i32::from_le_bytes(controls[base..base + 4].try_into().unwrap());
+            let output = match control {
+                0 => 0,
+                control if control < 0 => value.wrapping_neg(),
+                _ => value,
+            };
+            result.extend_from_slice(&output.to_le_bytes());
+        }
+        result
+    }
+
+    let byte_values = std::array::from_fn::<_, 64, _>(|lane| match lane & 7 {
+        0 => i8::MIN as u8,
+        1 => i8::MAX as u8,
+        2 => (-1i8) as u8,
+        3 => 0,
+        4 => 1,
+        5 => 2,
+        6 => (-2i8) as u8,
+        _ => 0x55,
+    });
+    let byte_controls = std::array::from_fn::<_, 64, _>(|lane| match lane % 3 {
+        0 => (-1i8) as u8,
+        1 => 0,
+        _ => 1,
+    });
+    let word_values = std::array::from_fn::<_, 32, _>(|lane| match lane & 7 {
+        0 => i16::MIN,
+        1 => i16::MAX,
+        2 => -1,
+        3 => 0,
+        4 => 1,
+        5 => 0x1234,
+        6 => -0x1234,
+        _ => 2,
+    })
+    .iter()
+    .flat_map(|lane| lane.to_le_bytes())
+    .collect::<Vec<_>>();
+    let word_controls = std::array::from_fn::<_, 32, _>(|lane| match lane % 3 {
+        0 => -1i16,
+        1 => 0,
+        _ => 1,
+    })
+    .iter()
+    .flat_map(|lane| lane.to_le_bytes())
+    .collect::<Vec<_>>();
+    let dword_values = std::array::from_fn::<_, 16, _>(|lane| match lane & 7 {
+        0 => i32::MIN,
+        1 => i32::MAX,
+        2 => -1,
+        3 => 0,
+        4 => 1,
+        5 => 0x1234_5678,
+        6 => -0x1234_5678,
+        _ => 2,
+    })
+    .iter()
+    .flat_map(|lane| lane.to_le_bytes())
+    .collect::<Vec<_>>();
+    let dword_controls = std::array::from_fn::<_, 16, _>(|lane| match lane % 3 {
+        0 => -1i32,
+        1 => 0,
+        _ => 1,
+    })
+    .iter()
+    .flat_map(|lane| lane.to_le_bytes())
+    .collect::<Vec<_>>();
+
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.rflags = 0xCD7;
+
+        set_vector_bytes(&mut regs, 1, &byte_values);
+        set_vector_bytes(&mut regs, 2, &byte_controls);
+        regs.ymm_high[1] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        regs.zmm_high[1] = [1, 2, 3, 4];
+
+        set_vector_bytes(&mut regs, 3, &word_controls);
+        set_vector_bytes(&mut regs, 4, &word_values);
+        regs.ymm_high[3] = [3; 2];
+        regs.zmm_high[3] = [3; 4];
+
+        set_vector_bytes(&mut regs, 6, &dword_values);
+        set_vector_bytes(&mut regs, 8, &dword_controls);
+        regs.zmm_high[6] = [6; 4];
+
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("PSIGNB/PSIGNW/PSIGND JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(jit_regs.rflags, interp_regs.rflags, "architectural flags");
+
+    let mut expected = sign_bytes(&byte_values, &byte_controls, 16);
+    expected.extend_from_slice(&vector_bytes(&initial, 1)[16..]);
+    assert_eq!(
+        vector_bytes(&jit_regs, 1),
+        expected,
+        "legacy signed-byte control, wrapping minimum negation, and upper preservation"
+    );
+
+    let mut expected = sign_words(&word_values, &word_controls, 16);
+    expected.resize(64, 0);
+    assert_eq!(
+        vector_bytes(&jit_regs, 3),
+        expected,
+        "VEX.W1 destination/control alias and narrow upper zeroing"
+    );
+
+    let mut expected = sign_dwords(&dword_values, &dword_controls, 32);
+    expected.resize(64, 0);
+    assert_eq!(
+        vector_bytes(&jit_regs, 6),
+        expected,
+        "VEX.256 destination/value alias and upper zeroing"
+    );
+}
+
+#[test]
 fn jit_psadbw_matches_unsigned_sums_aliases_wig_and_upper_state() {
     if !std::is_x86_feature_detected!("avx512f")
         || !std::is_x86_feature_detected!("avx512bw")
