@@ -312,22 +312,28 @@ the interpreter and bit-identical to it.
 
 Safety comes from a **fail-safe gate**: a region compiles only from operations proven equal to the
 reference, and anything else makes it bail back to the interpreter, so native code runs only for regions
-known to be correct. On x86-64 hosts the gate covers the scalar integer core (the ALU with its carry
+known to be correct.
+
+On x86-64 hosts the gate covers the scalar integer core (the ALU with its carry
 chains through ADC/SBB and ADCX/ADOX, shifts and rotates including RCL/RCR and SHLD/SHRD, multiply
 including MULX, mov/extend, CWD/CDQ/CQO, LEA, XCHG, BSWAP, bit scans and counts, the BMI sets, the APX
 NDD/NF forms, setcc/cmov, branches), memory, and a whitelisted vector tier — masked ternary logic,
 VNNI, IFMA, BF16/FP16 arithmetic, population count, conflict detection, compress/expand, byte permutes,
 integer narrowing, packed shifts and rotates, and the AES, SHA-512, SM3, and SM4 vector crypto
-families — each op gated on the host CPU's own features and run under the guest's MXCSR. FS/GS
-segment-relative loads and stores lower to MMU helper calls that bail cleanly on a page fault or a
+families — each op gated on the host CPU's own features and run under the guest's MXCSR.
+
+FS/GS segment-relative loads and stores lower to MMU helper calls that bail cleanly on a page fault or a
 write to a code page, and a guest CALL does not end a region: the call site lowers to an interpreter
 call-out that runs the callee and resumes the native body, so call-heavy loops stay native between
 callees (`RAX_JIT_NO_CALL=1` makes a CALL end the region again; `RAX_JIT_NO_MEM=1` alongside it
-restores the register-only JIT). On AArch64 hosts, the x86 vCPU currently admits register-only scalar regions
+restores the register-only JIT).
+
+On AArch64 hosts, the x86 vCPU currently admits register-only scalar regions
 over RAX-R15. It bridges CF/ZF/SF/OF to PSTATE.NZCV and preserves the remaining RFLAGS bits. It rejects
 unrepresentable flag contracts, memory, FP/SIMD, APX extended registers, and virtual temporaries.
 Still interpreter-only on both hosts are locked/RMW operations, plus the double-width DIV the IR cannot
 yet model.
+
 Self-modifying code evicts compiled blocks via the MMU's dirty-page journal, persistently-ineligible
 region heads are memoized so SMC-heavy guests like TempleOS do not thrash the compiler, and a
 frontier-less spin loop is refused so native code cannot trap the vCPU.
@@ -335,8 +341,11 @@ frontier-less spin loop is refused so native code cannot trap the vCPU.
 The lowerer is retargetable. Alongside the x86-64 host backend sits a full AArch64 host backend
 (`lower/aarch64/mod.rs`) that emits native ARM64 for the entire SMIR op set, x86-64 guest semantics included
 (APX, atomics, REP MOVS, vector/FP), plus an AArch64-guest-to-x86 lowerer: the groundwork for
-JIT-compiling a guest across host ISAs (x86 on ARM, ARM on x86). Live native execution now runs on both
-host ISAs: x86-64 guests run on x86-64 and AArch64 hosts, while AArch64 guests run on AArch64 hosts.
+JIT-compiling a guest across host ISAs (x86 on ARM, ARM on x86).
+
+Live native execution now runs on both host ISAs: x86-64 guests run on x86-64 and AArch64 hosts,
+while AArch64 guests run on AArch64 hosts.
+
 The production x86-on-ARM path uses a 1:1 RAX-R15 → X0-X15 register map and native edge exits, so the
 normal hot-loop policy can auto-promote, cache, and re-enter cross-ISA regions. ARM-on-x86 remains an
 emit-and-test path, not yet wired into a run loop.
