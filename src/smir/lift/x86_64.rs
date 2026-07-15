@@ -58,6 +58,13 @@ const APX_CCMP_FLAGS_MASK: i64 = 0x8D5; // CF, PF, AF, ZF, SF, OF
 pub struct X86_64Lifter {
     /// Whether to use strict mode (fail on unsupported instructions)
     strict: bool,
+    /// End a partially lifted block at an explicit interpreter frontier when
+    /// decoding reaches an unsupported, invalid, incomplete, or unreadable
+    /// instruction. This is intentionally independent of `strict`: individual
+    /// instruction lifting still reports the exact error, while region lifting
+    /// can retain all preceding native work and hand control back at the exact
+    /// faulting/unsupported guest PC.
+    interpreter_frontiers: bool,
     /// Lift-through-calls: when set, `lift_function` follows a `CALL`'s
     /// continuation (return address) and keeps lifting the caller's CFG past the
     /// call, instead of ending the function at the call. Used by the JIT's
@@ -80,6 +87,7 @@ impl X86_64Lifter {
     pub fn new() -> Self {
         X86_64Lifter {
             strict: false,
+            interpreter_frontiers: false,
             lift_through_calls: false,
             max_blocks: 0,
         }
@@ -89,9 +97,17 @@ impl X86_64Lifter {
     pub fn strict() -> Self {
         X86_64Lifter {
             strict: true,
+            interpreter_frontiers: false,
             lift_through_calls: false,
             max_blocks: 0,
         }
+    }
+
+    /// Retain a supported region prefix when a later instruction must execute
+    /// in the interpreter. The generated frontier contains no guest operation;
+    /// the JIT records its guest PC and exits before executing that instruction.
+    pub fn set_interpreter_frontiers(&mut self, enabled: bool) {
+        self.interpreter_frontiers = enabled;
     }
 
     /// Enable lift-through-calls with a block cap (see the field docs).
@@ -37169,6 +37185,36 @@ impl X86_64Lifter {
 // SmirLifter Implementation
 // ============================================================================
 
+fn x86_interpreter_frontier_error(error: &LiftError) -> bool {
+    matches!(
+        error,
+        LiftError::InvalidEncoding { .. }
+            | LiftError::Unsupported { .. }
+            | LiftError::MemoryError { .. }
+            | LiftError::Incomplete { .. }
+    )
+}
+
+fn terminate_at_interpreter_frontier(
+    block: &mut SmirBlock,
+    block_addr: GuestAddr,
+    frontier_pc: GuestAddr,
+    ctx: &mut LiftContext,
+) {
+    block.terminator = if frontier_pc == block_addr {
+        // No instruction in this block can execute natively. Represent it as a
+        // zero-op frontier so the runtime can reject an entry frontier or route
+        // an incoming native edge back to the interpreter at this exact PC.
+        Terminator::Return { values: vec![] }
+    } else {
+        // Preserve the supported prefix as executable native work. The target
+        // is subsequently lifted into the zero-op frontier above.
+        Terminator::Branch {
+            target: ctx.get_or_create_block(frontier_pc),
+        }
+    };
+}
+
 impl SmirLifter for X86_64Lifter {
     fn source_arch(&self) -> SourceArch {
         SourceArch::X86_64
@@ -37198,14 +37244,31 @@ impl SmirLifter for X86_64Lifter {
 
         loop {
             // Read instruction bytes
-            let bytes = mem
-                .read(pc, 15)
-                .map_err(|e| LiftError::MemoryError { addr: pc, error: e })?;
+            let bytes = match mem.read(pc, 15) {
+                Ok(bytes) => bytes,
+                Err(error) => {
+                    let error = LiftError::MemoryError { addr: pc, error };
+                    if self.interpreter_frontiers && x86_interpreter_frontier_error(&error) {
+                        terminate_at_interpreter_frontier(&mut block, addr, pc, ctx);
+                        break;
+                    }
+                    return Err(error);
+                }
+            };
 
             buf[..bytes.len()].copy_from_slice(&bytes);
 
             ctx.guest_pc = pc;
-            let result = self.lift_insn_inner(pc, &buf[..bytes.len()], ctx)?;
+            let result = match self.lift_insn_inner(pc, &buf[..bytes.len()], ctx) {
+                Ok(result) => result,
+                Err(error)
+                    if self.interpreter_frontiers && x86_interpreter_frontier_error(&error) =>
+                {
+                    terminate_at_interpreter_frontier(&mut block, addr, pc, ctx);
+                    break;
+                }
+                Err(error) => return Err(error),
+            };
 
             // Add ops to block
             block.ops.extend(result.ops);
@@ -37307,6 +37370,7 @@ impl SmirLifter for X86_64Lifter {
     ) -> Result<SmirFunction, LiftError> {
         let entry_block = ctx.get_or_create_block(entry);
         let mut func = SmirFunction::new(FunctionId(entry as u32), entry_block, entry);
+        func.attrs.preserve_interpreter_frontiers = self.interpreter_frontiers;
 
         // Work queue of blocks to lift
         let mut worklist = vec![entry];
@@ -61488,6 +61552,95 @@ mod tests {
         let result = lifter.lift_insn(0x1000, &[0xC3], &mut ctx).unwrap();
         assert_eq!(result.bytes_consumed, 1);
         assert!(matches!(result.control_flow, ControlFlow::Return));
+    }
+
+    #[test]
+    fn interpreter_frontiers_retain_supported_prefix_without_weakening_strict_insn_errors() {
+        // MOV EAX,0x12345678; SENDUIPI. SENDUIPI is valid and interpreted but
+        // intentionally has no SMIR operation yet.
+        let bytes = vec![0xB8, 0x78, 0x56, 0x34, 0x12, 0xF3, 0x0F, 0xC7, 0xF0];
+        let mem = TestMemory::new(0x1000, bytes);
+
+        let mut strict = X86_64Lifter::strict();
+        let mut strict_ctx = LiftContext::new(SourceArch::X86_64);
+        assert!(matches!(
+            strict.lift_function(0x1000, &mem, &mut strict_ctx),
+            Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "SENDUIPI"
+        ));
+
+        let mut partial = X86_64Lifter::strict();
+        partial.set_interpreter_frontiers(true);
+        let mut partial_ctx = LiftContext::new(SourceArch::X86_64);
+        let mut function = partial
+            .lift_function(0x1000, &mem, &mut partial_ctx)
+            .unwrap();
+        crate::smir::optimize::optimize_function(
+            &mut function,
+            crate::smir::optimize::OptLevel::O2,
+        );
+
+        let entry = function
+            .blocks
+            .iter()
+            .find(|block| block.guest_pc == 0x1000)
+            .unwrap();
+        let frontier = function
+            .blocks
+            .iter()
+            .find(|block| block.guest_pc == 0x1005)
+            .unwrap();
+        assert!(matches!(
+            entry.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::Mov {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                    src: SrcOperand::Imm(0x1234_5678),
+                    width: OpWidth::W32,
+                },
+                ..
+            }]
+        ));
+        assert!(matches!(
+            entry.terminator,
+            Terminator::Branch { target } if target == frontier.id
+        ));
+        assert!(frontier.ops.is_empty());
+        assert!(matches!(frontier.terminator, Terminator::Return { .. }));
+
+        // Frontier mode is a region-lifting policy. It must not turn exact
+        // single-instruction diagnostics into NOPs or successful lifts.
+        let mut insn_ctx = LiftContext::new(SourceArch::X86_64);
+        assert!(matches!(
+            partial.lift_insn(0x1005, &[0xF3, 0x0F, 0xC7, 0xF0], &mut insn_ctx),
+            Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "SENDUIPI"
+        ));
+    }
+
+    #[test]
+    fn interpreter_frontiers_retain_prefix_at_unreadable_boundary() {
+        let mem = TestMemory::new(0x2000, vec![0xB8, 0xEF, 0xBE, 0xAD, 0xDE]);
+        let mut lifter = X86_64Lifter::strict();
+        lifter.set_interpreter_frontiers(true);
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+        let function = lifter.lift_function(0x2000, &mem, &mut ctx).unwrap();
+
+        let entry = function
+            .blocks
+            .iter()
+            .find(|block| block.guest_pc == 0x2000)
+            .unwrap();
+        let frontier = function
+            .blocks
+            .iter()
+            .find(|block| block.guest_pc == 0x2005)
+            .unwrap();
+        assert_eq!(entry.ops.len(), 1);
+        assert!(matches!(
+            entry.terminator,
+            Terminator::Branch { target } if target == frontier.id
+        ));
+        assert!(frontier.ops.is_empty());
+        assert!(matches!(frontier.terminator, Terminator::Return { .. }));
     }
 
     #[test]

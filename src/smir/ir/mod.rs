@@ -204,6 +204,11 @@ pub struct FunctionAttrs {
     /// until an intervening SMIR memory write. Guest-memory JIT regions must
     /// normally leave this false because each read is architecturally visible.
     pub allow_redundant_load_elimination: bool,
+    /// Preserve zero-operation `Return` blocks used as explicit interpreter
+    /// handoff frontiers. Merging such a block into its predecessor would move
+    /// the frontier to the predecessor and make the native runtime reject or
+    /// re-execute otherwise valid work.
+    pub preserve_interpreter_frontiers: bool,
 }
 
 // ============================================================================

@@ -171,6 +171,60 @@ fn jit_bails_on_ineligible() {
     );
 }
 
+#[test]
+fn jit_executes_supported_prefix_before_unsupported_interpreter_frontier() {
+    // MOV EAX,0x12345678; SENDUIPI. The latter remains interpreter-only, but it
+    // must not discard the liftable/native prefix that precedes it.
+    let code = [0xB8, 0x78, 0x56, 0x34, 0x12, 0xF3, 0x0F, 0xC7, 0xF0];
+    let mut vcpu = make_vcpu_code(&code);
+    let before_flags = vcpu.get_regs().unwrap().rflags;
+    vcpu.set_mem_recording(true);
+
+    assert!(
+        vcpu.jit_try_block()
+            .expect("partial region before unsupported frontier"),
+        "a later unsupported instruction must not reject the supported prefix"
+    );
+
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rax, 0x1234_5678);
+    assert_eq!(regs.rflags, before_flags);
+    assert_eq!(
+        regs.rip,
+        LOAD_ADDR + 5,
+        "native exit must point at the unexecuted SENDUIPI"
+    );
+    let mut memory_records = Vec::new();
+    vcpu.drain_mem_records(&mut memory_records);
+    assert!(
+        memory_records.is_empty(),
+        "JIT compilation lookahead must not appear as retired guest memory: {memory_records:?}"
+    );
+}
+
+#[test]
+fn jit_uses_readable_prefix_when_fixed_window_crosses_unmapped_boundary() {
+    // Place the same sequence at the final mapped bytes. A fixed 512-byte
+    // snapshot crosses the region boundary; prefix probing must retain the nine
+    // readable bytes and the interpreter frontier must stop before SENDUIPI.
+    let code = [0xB8, 0xBE, 0xBA, 0xFE, 0xCA, 0xF3, 0x0F, 0xC7, 0xF0];
+    let (mut vcpu, memory) = make_vcpu_mem(&[]);
+    let entry = MEM_SIZE - code.len() as u64;
+    memory.write_slice(&code, GuestAddress(entry)).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rip = entry;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(
+        vcpu.jit_try_block().expect("partial readable JIT window"),
+        "an unmapped lookahead suffix must not reject readable native work"
+    );
+
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rax, 0xCAFE_BABE);
+    assert_eq!(regs.rip, entry + 5);
+}
+
 fn run_interp(vcpu: &mut X86_64Vcpu) {
     loop {
         match vcpu.step() {

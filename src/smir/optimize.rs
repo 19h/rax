@@ -1585,6 +1585,22 @@ pub fn block_merging(func: &mut SmirFunction) -> usize {
     // Build predecessor count
     let mut pred_count: HashMap<BlockId, usize> = HashMap::new();
 
+    let interpreter_frontiers: HashSet<BlockId> = if func.attrs.preserve_interpreter_frontiers {
+        func.blocks
+            .iter()
+            .filter(|block| {
+                block.ops.is_empty()
+                    && matches!(
+                        &block.terminator,
+                        Terminator::Return { values } if values.is_empty()
+                    )
+            })
+            .map(|block| block.id)
+            .collect()
+    } else {
+        HashSet::new()
+    };
+
     for block in &func.blocks {
         match &block.terminator {
             Terminator::Branch { target } => {
@@ -1616,7 +1632,10 @@ pub fn block_merging(func: &mut SmirFunction) -> usize {
     for block in &func.blocks {
         if let Terminator::Branch { target } = &block.terminator {
             // Only merge if target has single predecessor
-            if pred_count.get(target) == Some(&1) && *target != block.id {
+            if pred_count.get(target) == Some(&1)
+                && *target != block.id
+                && !interpreter_frontiers.contains(target)
+            {
                 merge_pairs.push((block.id, *target));
             }
         }

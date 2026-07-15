@@ -4287,6 +4287,38 @@ impl X86_64Vcpu {
         self.jit_compile_region_with_edge_exits(false)
     }
 
+    /// Read the largest contiguous guest-code prefix, up to `max_len`, that is
+    /// currently accessible. JIT compilation must not require an entire fixed
+    /// lookahead window to be mapped: the lifter can terminate at the readable
+    /// boundary and return to the interpreter there.
+    ///
+    /// Guest prefix readability is monotonic in `len`, so binary search needs
+    /// O(log(max_len)) MMU probes and retains the bytes from the largest
+    /// successful probe without an additional read.
+    fn jit_read_lift_window(&mut self, entry: u64, max_len: usize) -> Option<Vec<u8>> {
+        let mut readable = 0usize;
+        let mut unreadable = max_len;
+        let mut best = None;
+
+        // Compilation lookahead is not a retired guest data access. Suppress
+        // memory tracing for every probe, as the ordinary instruction-fetch
+        // path does around decoder lookahead.
+        self.mmu.set_fetch_active(true);
+        while readable < unreadable {
+            let len = readable + (unreadable - readable).div_ceil(2);
+            match self.read_bytes(entry, len) {
+                Ok(bytes) => {
+                    readable = len;
+                    best = Some(bytes);
+                }
+                Err(_) => unreadable = len - 1,
+            }
+        }
+        self.mmu.set_fetch_active(false);
+
+        best
+    }
+
     fn jit_backward_native_exit_edges(
         func: &crate::smir::ir::SmirFunction,
         exits: &std::collections::HashMap<BlockId, u64>,
@@ -4363,13 +4395,14 @@ impl X86_64Vcpu {
 
         let entry = self.regs.rip;
 
-        // Snapshot a window of guest code to lift from. 512B covers typical hot
-        // loops; lifting past it (or across an unmapped page) yields an error
-        // and we bail to the interpreter.
+        // Snapshot the largest readable prefix of a bounded guest-code window.
+        // 512 B covers typical hot loops; an unmapped suffix becomes an explicit
+        // interpreter frontier instead of rejecting an otherwise liftable
+        // prefix.
         const WINDOW: usize = 512;
-        let bytes = match self.read_bytes(entry, WINDOW) {
-            Ok(b) => b,
-            Err(_) => return Ok(None),
+        let bytes = match self.jit_read_lift_window(entry, WINDOW) {
+            Some(bytes) => bytes,
+            None => return Ok(None),
         };
 
         struct Win {
@@ -4400,6 +4433,7 @@ impl X86_64Vcpu {
         let modes: &[bool] = if want_call { &[true, false] } else { &[false] };
         'modes: for &cm in modes {
             let mut lifter = X86_64Lifter::strict();
+            lifter.set_interpreter_frontiers(true);
             if cm {
                 lifter.set_lift_through_calls(512);
             }
@@ -5181,9 +5215,9 @@ impl X86_64Vcpu {
         use crate::smir::lift::{LiftContext, MemoryReader, SmirLifter};
         use crate::smir::optimize::{OptLevel, optimize_function};
 
-        let bytes = match self.read_bytes(entry, 512) {
-            Ok(b) => b,
-            Err(_) => return "<unreadable>".to_string(),
+        let bytes = match self.jit_read_lift_window(entry, 512) {
+            Some(bytes) => bytes,
+            None => return "<unreadable>".to_string(),
         };
         struct Win {
             base: u64,
@@ -5201,6 +5235,7 @@ impl X86_64Vcpu {
         }
         let reader = Win { base: entry, bytes };
         let mut lifter = X86_64Lifter::strict();
+        lifter.set_interpreter_frontiers(true);
         let mut lctx = LiftContext::new(SourceArch::X86_64);
         let mut func = match lifter.lift_function(entry, &reader, &mut lctx) {
             Ok(f) => f,
