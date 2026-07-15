@@ -13758,25 +13758,49 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let raw = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VMulShiftSat {
-                dst: raw,
-                src1: dst,
-                src2,
-                src_elem: VecElementType::I16,
-                lanes: 8,
-                signed1: true,
-                signed2: true,
-                shift_left: 0,
-                round: true,
-                sat_bits: 0,
-                out_shift: 15,
-            },
-        ));
-        self.append_legacy_packed_result(dst, raw, VecElementType::I16, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            let raw = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VMulShiftSat {
+                    dst: raw,
+                    src1: dst,
+                    src2,
+                    src_elem: VecElementType::I16,
+                    lanes: 8,
+                    signed1: true,
+                    signed2: true,
+                    shift_left: 0,
+                    round: true,
+                    sat_bits: 0,
+                    out_shift: 15,
+                },
+            ));
+            self.append_legacy_packed_result(dst, raw, VecElementType::I16, pc, ctx, &mut ops);
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VMulShiftSat {
+                    dst,
+                    src1: dst,
+                    src2,
+                    src_elem: VecElementType::I16,
+                    lanes: 8,
+                    signed1: true,
+                    signed2: true,
+                    shift_left: 0,
+                    round: true,
+                    sat_bits: 0,
+                    out_shift: 15,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x0B,
+                },
+            ));
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -19022,23 +19046,29 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm, prefix.width)
         };
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VMulShiftSat {
-                dst: self.vec_reg(modrm.reg, prefix.width),
-                src1: self.vec_reg(prefix.vvvv, prefix.width),
-                src2,
-                src_elem: VecElementType::I16,
-                lanes: prefix.width.lanes(VecElementType::I16) as u8,
-                signed1: true,
-                signed2: true,
-                shift_left: 0,
-                round: true,
-                sat_bits: 0,
-                out_shift: 15,
-            },
-        ));
+        let kind = OpKind::VMulShiftSat {
+            dst: self.vec_reg(modrm.reg, prefix.width),
+            src1: self.vec_reg(prefix.vvvv, prefix.width),
+            src2,
+            src_elem: VecElementType::I16,
+            lanes: prefix.width.lanes(VecElementType::I16) as u8,
+            signed1: true,
+            signed2: true,
+            shift_left: 0,
+            round: true,
+            sat_bits: 0,
+            out_shift: 15,
+        };
+        if modrm.is_memory {
+            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                kind,
+                self.vec_hint(prefix, 0x0B),
+            ));
+        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -24112,40 +24142,62 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width)
         };
-        let raw = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VMulShiftSat {
-                dst: raw,
-                src1: self.vec_reg(
-                    prefix.vvvv + if prefix.v_high { 16 } else { 0 },
-                    prefix.width,
-                ),
-                src2,
-                src_elem: VecElementType::I16,
-                lanes,
-                signed1: true,
-                signed2: true,
-                shift_left: 0,
-                round: true,
-                sat_bits: 0,
-                out_shift: 15,
-            },
-        ));
         let dst = self.vec_reg(
             modrm.reg + if prefix.reg_high { 16 } else { 0 },
             prefix.width,
         );
-        self.append_evex_vector_mask_result(
-            prefix,
-            dst,
-            raw,
-            VecElementType::I16,
-            pc,
-            ctx,
-            &mut ops,
+        let src1 = self.vec_reg(
+            prefix.vvvv + if prefix.v_high { 16 } else { 0 },
+            prefix.width,
         );
+        if !modrm.is_memory && prefix.aaa == 0 {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VMulShiftSat {
+                    dst,
+                    src1,
+                    src2,
+                    src_elem: VecElementType::I16,
+                    lanes,
+                    signed1: true,
+                    signed2: true,
+                    shift_left: 0,
+                    round: true,
+                    sat_bits: 0,
+                    out_shift: 15,
+                },
+                self.vec_hint(prefix, 0x0B),
+            ));
+        } else {
+            let raw = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VMulShiftSat {
+                    dst: raw,
+                    src1,
+                    src2,
+                    src_elem: VecElementType::I16,
+                    lanes,
+                    signed1: true,
+                    signed2: true,
+                    shift_left: 0,
+                    round: true,
+                    sat_bits: 0,
+                    out_shift: 15,
+                },
+            ));
+            self.append_evex_vector_mask_result(
+                prefix,
+                dst,
+                raw,
+                VecElementType::I16,
+                pc,
+                ctx,
+                &mut ops,
+            );
+        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -52466,20 +52518,26 @@ mod tests {
     fn lift_pmulhrsw_covers_legacy_vex_evex_masks_memory_and_invalids() {
         let legacy = lift_single(&[0x66, 0x0F, 0x38, 0x0B, 0xC1]).unwrap();
         assert!(legacy.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::VMulShiftSat {
-                src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
-                src_elem: VecElementType::I16,
-                lanes: 8,
-                signed1: true,
-                signed2: true,
-                shift_left: 0,
-                round: true,
-                sat_bits: 0,
-                out_shift: 15,
-                ..
-            }
+            (&op.kind, op.x86_hint),
+            (
+                OpKind::VMulShiftSat {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    src_elem: VecElementType::I16,
+                    lanes: 8,
+                    signed1: true,
+                    signed2: true,
+                    shift_left: 0,
+                    round: true,
+                    sat_bits: 0,
+                    out_shift: 15,
+                },
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x0B,
+                })
+            )
         )));
 
         let legacy_mem = lift_single(&[0x66, 0x0F, 0x38, 0x0B, 0x00]).unwrap();
@@ -52538,25 +52596,38 @@ mod tests {
                     && actual_src2 == src2
                     && actual_lanes == lanes
             ));
+            assert!(matches!(
+                result.ops.last().unwrap().x86_hint,
+                Some(X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x0B,
+                    width: encoded_width,
+                    ..
+                }) if encoded_width == width
+            ));
             assert_eq!(width.lanes(VecElementType::I16) as u8, lanes);
         }
 
         let high = lift_single(&[0x62, 0xA2, 0x75, 0x40, 0x0B, 0xC2]).unwrap();
         assert!(high.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::VMulShiftSat {
-                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
-                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
-                lanes: 32,
-                ..
-            }
-        )));
-        assert!(high.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::VMov {
-                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
-                ..
-            }
+            (&op.kind, op.x86_hint),
+            (
+                OpKind::VMulShiftSat {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                    lanes: 32,
+                    ..
+                },
+                Some(X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x0B,
+                    width: VecWidth::V512,
+                    ..
+                })
+            )
         )));
 
         let masked_mem = lift_single(&[0x62, 0xF2, 0x75, 0xC9, 0x0B, 0x40, 0x01]).unwrap();

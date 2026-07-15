@@ -5425,6 +5425,174 @@ fn jit_maddwd_matches_wrapping_overflow_aliases_wig_and_upper_state() {
 }
 
 #[test]
+fn jit_mulhrs_matches_signed_rounding_aliases_wig_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512vl")
+        || !std::is_x86_feature_detected!("avx2")
+        || !std::is_x86_feature_detected!("ssse3")
+    {
+        return;
+    }
+
+    // loop: pmulhrsw xmm1,xmm2; {vex3,w1} vpmulhrsw xmm3,xmm4,xmm3;
+    //       vpmulhrsw ymm6,ymm6,ymm8; vpmulhrsw zmm16,zmm17,zmm18;
+    //       {evex,w1} vpmulhrsw xmm9,xmm10,xmm11;
+    //       dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0x38, 0x0B, 0xCA, 0xC4, 0xE2, 0xD9, 0x0B, 0xDB, 0xC4, 0xC2, 0x4D, 0x0B, 0xF0,
+        0x62, 0xA2, 0x75, 0x40, 0x0B, 0xC2, 0x62, 0x52, 0xAD, 0x08, 0x0B, 0xCB, 0xFF, 0xC9, 0x75,
+        0xE1, 0xF4,
+    ];
+
+    fn vector_bytes(regs: &Registers, index: usize) -> Vec<u8> {
+        if index < 16 {
+            regs.xmm[index]
+                .iter()
+                .chain(regs.ymm_high[index].iter())
+                .chain(regs.zmm_high[index].iter())
+                .flat_map(|word| word.to_le_bytes())
+                .collect()
+        } else {
+            regs.zmm_ext[index - 16]
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .collect()
+        }
+    }
+
+    fn set_vector_bytes(regs: &mut Registers, index: usize, bytes: &[u8]) {
+        let words = bytes
+            .chunks_exact(8)
+            .map(|chunk| u64::from_le_bytes(chunk.try_into().unwrap()))
+            .collect::<Vec<_>>();
+        assert_eq!(words.len(), 8);
+        if index < 16 {
+            regs.xmm[index].copy_from_slice(&words[..2]);
+            regs.ymm_high[index].copy_from_slice(&words[2..4]);
+            regs.zmm_high[index].copy_from_slice(&words[4..8]);
+        } else {
+            regs.zmm_ext[index - 16].copy_from_slice(&words);
+        }
+    }
+
+    fn word_bytes(words: &[i16; 32]) -> Vec<u8> {
+        words.iter().flat_map(|word| word.to_le_bytes()).collect()
+    }
+
+    fn mulhrs_reference(first: &[u8], second: &[u8], width: usize) -> Vec<u8> {
+        let word = |source: &[u8], lane: usize| {
+            i16::from_le_bytes(source[lane * 2..lane * 2 + 2].try_into().unwrap())
+        };
+        let mut result = Vec::with_capacity(width);
+        for lane in 0..width / 2 {
+            let product = i32::from(word(first, lane)) * i32::from(word(second, lane));
+            let rounded = (product + 0x4000) >> 15;
+            result.extend_from_slice(&(rounded as i16).to_le_bytes());
+        }
+        result
+    }
+
+    let first = std::array::from_fn::<_, 32, _>(|lane| match lane & 7 {
+        0 => i16::MIN,
+        1 => i16::MAX,
+        2 => 0x4000,
+        3 => -0x4000,
+        4 => 0x1234,
+        5 => -0x2345,
+        6 => 1,
+        _ => -1,
+    });
+    let second = std::array::from_fn::<_, 32, _>(|lane| match lane & 7 {
+        0 => i16::MIN,
+        1 => i16::MAX,
+        2 => 0x4000,
+        3 => 0x4000,
+        4 => -0x3456,
+        5 => -0x4567,
+        6 => i16::MAX,
+        _ => i16::MIN,
+    });
+    let first = word_bytes(&first);
+    let second = word_bytes(&second);
+    let sentinel = std::array::from_fn::<_, 64, _>(|lane| 0xC0u8.wrapping_add(lane as u8));
+    assert_eq!(
+        &mulhrs_reference(&first, &second, 2),
+        &i16::MIN.to_le_bytes(),
+        "INT16_MIN squared must wrap the rounded result to INT16_MIN"
+    );
+
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.rflags = 0xCD7;
+
+        set_vector_bytes(&mut regs, 1, &first);
+        set_vector_bytes(&mut regs, 2, &second);
+        regs.ymm_high[1] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        regs.zmm_high[1] = [1, 2, 3, 4];
+
+        set_vector_bytes(&mut regs, 3, &second);
+        set_vector_bytes(&mut regs, 4, &first);
+        regs.ymm_high[3] = [0x3333_3333_3333_3333; 2];
+        regs.zmm_high[3] = [3; 4];
+
+        set_vector_bytes(&mut regs, 6, &first);
+        set_vector_bytes(&mut regs, 8, &second);
+        regs.zmm_high[6] = [6; 4];
+
+        set_vector_bytes(&mut regs, 16, &sentinel);
+        set_vector_bytes(&mut regs, 17, &first);
+        set_vector_bytes(&mut regs, 18, &second);
+
+        set_vector_bytes(&mut regs, 9, &sentinel);
+        set_vector_bytes(&mut regs, 10, &first);
+        set_vector_bytes(&mut regs, 11, &second);
+
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("PMULHRSW/VPMULHRSW JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(jit_regs.zmm_ext, interp_regs.zmm_ext, "extended ZMM state");
+    assert_eq!(jit_regs.rflags, interp_regs.rflags, "architectural flags");
+
+    let mut expected = mulhrs_reference(&first, &second, 16);
+    expected.extend_from_slice(&vector_bytes(&initial, 1)[16..]);
+    assert_eq!(
+        vector_bytes(&jit_regs, 1),
+        expected,
+        "legacy rounding and preserved upper state"
+    );
+
+    for (dst, width, label) in [
+        (3, 16, "VEX.W1 destination/source-2 alias"),
+        (6, 32, "VEX.256 destination/source-1 alias"),
+        (16, 64, "EVEX.512 high registers"),
+        (9, 16, "EVEX.W1 narrow upper zeroing"),
+    ] {
+        let mut expected = mulhrs_reference(&first, &second, width);
+        expected.resize(64, 0);
+        assert_eq!(vector_bytes(&jit_regs, dst), expected, "{label}");
+    }
+}
+
+#[test]
 fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         return;
