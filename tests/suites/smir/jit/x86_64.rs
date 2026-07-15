@@ -130,12 +130,20 @@ fn jit_bails_on_ineligible() {
         "explicit call-mode disable must restore call-as-frontier fallback"
     );
 
-    // (b) A straight-line block ending in RET — entry block is a frontier exit,
-    //     so there is no internal native work; must bail.
+    // (b) A supported straight-line prefix ending in RET must run natively and
+    //     hand off at the exact RET PC; a bare RET still has no native work.
     let mut v = make_vcpu_code(&[0xB8, 0x05, 0x00, 0x00, 0x00, 0xC3]);
     assert!(
-        !v.jit_try_block().expect("jit_try_block"),
-        "an entry-is-frontier region must bail"
+        v.jit_try_block().expect("prefixed RET jit_try_block"),
+        "the supported prefix before RET must enter the native tier"
+    );
+    assert_eq!(v.get_regs().unwrap().rax, 5);
+    assert_eq!(v.get_regs().unwrap().rip, LOAD_ADDR + 5);
+
+    let mut v = make_vcpu_code(&[0xC3]);
+    assert!(
+        !v.jit_try_block().expect("bare RET jit_try_block"),
+        "a bare entry frontier must still bail"
     );
 
     // (c) A frontier-less spin loop `jmp $` (EB FE) — running it natively would

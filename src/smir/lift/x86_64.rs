@@ -37195,6 +37195,24 @@ fn x86_interpreter_frontier_error(error: &LiftError) -> bool {
     )
 }
 
+fn x86_interpreter_frontier_control_flow(
+    control_flow: &ControlFlow,
+    lift_through_calls: bool,
+) -> bool {
+    match control_flow {
+        ControlFlow::IndirectBranch { .. }
+        | ControlFlow::IndirectBranchMem { .. }
+        | ControlFlow::Return
+        | ControlFlow::Trap { .. }
+        | ControlFlow::Syscall => true,
+        ControlFlow::Call { target } => {
+            !lift_through_calls
+                || !matches!(target, CallTarget::GuestAddr(_) | CallTarget::Indirect(_))
+        }
+        _ => false,
+    }
+}
+
 fn terminate_at_interpreter_frontier(
     block: &mut SmirBlock,
     block_addr: GuestAddr,
@@ -37269,6 +37287,22 @@ impl SmirLifter for X86_64Lifter {
                 }
                 Err(error) => return Err(error),
             };
+
+            // Ordinary terminal instructions are interpreter frontiers too.
+            // Split them before appending their instruction-local ops so a
+            // supported straight-line prefix remains native while the exact
+            // terminal PC (RET/HLT/syscall/indirect/unsupported CALL form) is
+            // re-executed by the interpreter. Supported callout forms remain in
+            // the native block when lift-through-calls is enabled.
+            if self.interpreter_frontiers
+                && x86_interpreter_frontier_control_flow(
+                    &result.control_flow,
+                    self.lift_through_calls,
+                )
+            {
+                terminate_at_interpreter_frontier(&mut block, addr, pc, ctx);
+                break;
+            }
 
             // Add ops to block
             block.ops.extend(result.ops);
@@ -61622,6 +61656,119 @@ mod tests {
         assert!(matches!(
             partial.lift_insn(0x1005, &[0xF3, 0x0F, 0xC7, 0xF0], &mut insn_ctx),
             Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "SENDUIPI"
+        ));
+    }
+
+    #[test]
+    fn interpreter_frontiers_split_supported_prefix_before_terminal_control_flow() {
+        let prefix = [0xB8, 0x78, 0x56, 0x34, 0x12]; // mov eax,0x12345678
+        let terminals: &[(&str, &[u8])] = &[
+            ("ret", &[0xC3]),
+            ("hlt", &[0xF4]),
+            ("syscall", &[0x0F, 0x05]),
+            ("jmp-reg", &[0xFF, 0xE0]),
+            ("jmp-mem", &[0xFF, 0x20]),
+            ("call-rel", &[0xE8, 0, 0, 0, 0]),
+            ("call-reg", &[0xFF, 0xD0]),
+        ];
+
+        for &(name, terminal) in terminals {
+            let mut bytes = prefix.to_vec();
+            bytes.extend_from_slice(terminal);
+            let mem = TestMemory::new(0x1800, bytes);
+            let mut lifter = X86_64Lifter::strict();
+            lifter.set_interpreter_frontiers(true);
+            let mut ctx = LiftContext::new(SourceArch::X86_64);
+            let mut function = lifter.lift_function(0x1800, &mem, &mut ctx).unwrap();
+            crate::smir::optimize::optimize_function(
+                &mut function,
+                crate::smir::optimize::OptLevel::O2,
+            );
+
+            let entry = function
+                .blocks
+                .iter()
+                .find(|block| block.guest_pc == 0x1800)
+                .unwrap_or_else(|| panic!("{name}: missing supported prefix block"));
+            let frontier = function
+                .blocks
+                .iter()
+                .find(|block| block.guest_pc == 0x1805)
+                .unwrap_or_else(|| panic!("{name}: missing exact terminal frontier"));
+            assert!(
+                matches!(
+                    entry.ops.as_slice(),
+                    [SmirOp {
+                        kind: OpKind::Mov {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                            src: SrcOperand::Imm(0x1234_5678),
+                            width: OpWidth::W32,
+                        },
+                        ..
+                    }]
+                ),
+                "{name}: supported prefix was not retained"
+            );
+            assert!(matches!(
+                entry.terminator,
+                Terminator::Branch { target } if target == frontier.id
+            ));
+            assert!(
+                frontier.ops.is_empty(),
+                "{name}: frontier executed terminal ops"
+            );
+            assert!(matches!(frontier.terminator, Terminator::Return { .. }));
+        }
+    }
+
+    #[test]
+    fn interpreter_frontiers_keep_only_supported_callout_forms_in_native_blocks() {
+        let prefix = [0xB8, 0x78, 0x56, 0x34, 0x12];
+
+        // Register-indirect memory CALL is not supported by the runtime callout
+        // ABI and must remain an exact interpreter frontier even in call mode.
+        let mut unsupported = prefix.to_vec();
+        unsupported.extend_from_slice(&[0xFF, 0x10]); // call qword ptr [rax]
+        let mem = TestMemory::new(0x1900, unsupported);
+        let mut lifter = X86_64Lifter::strict();
+        lifter.set_interpreter_frontiers(true);
+        lifter.set_lift_through_calls(512);
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+        let function = lifter.lift_function(0x1900, &mem, &mut ctx).unwrap();
+        let entry = function
+            .blocks
+            .iter()
+            .find(|block| block.guest_pc == 0x1900)
+            .unwrap();
+        assert!(matches!(entry.terminator, Terminator::Branch { .. }));
+        assert!(function.blocks.iter().any(|block| {
+            block.guest_pc == 0x1905
+                && block.ops.is_empty()
+                && matches!(block.terminator, Terminator::Return { .. })
+        }));
+
+        // A direct guest CALL is supported: retain the prefix and CALL in one
+        // native block, with its HLT continuation lifted as a frontier.
+        let mut supported = prefix.to_vec();
+        supported.extend_from_slice(&[0xE8, 0, 0, 0, 0, 0xF4]);
+        let mem = TestMemory::new(0x1A00, supported);
+        let mut lifter = X86_64Lifter::strict();
+        lifter.set_interpreter_frontiers(true);
+        lifter.set_lift_through_calls(512);
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+        let function = lifter.lift_function(0x1A00, &mem, &mut ctx).unwrap();
+        let entry = function
+            .blocks
+            .iter()
+            .find(|block| block.guest_pc == 0x1A00)
+            .unwrap();
+        assert_eq!(entry.ops.len(), 1);
+        assert!(matches!(
+            entry.terminator,
+            Terminator::Call {
+                target: CallTarget::GuestAddr(0x1A0A),
+                ..
+            }
         ));
     }
 
