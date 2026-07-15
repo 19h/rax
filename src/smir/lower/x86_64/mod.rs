@@ -6957,9 +6957,7 @@ impl X86_64Lowerer {
                         );
                         self.emit_vec_mem(enc, dst_reg, None, addr)?;
                     } else {
-                        let prefix = self
-                            .sse_prefix(op.x86_hint)
-                            .or_else(|| self.vec_move_prefix(op.x86_hint));
+                        let prefix = self.legacy_vec_move_prefix(op.x86_hint);
                         self.emit_sse_mov_mem(prefix, 0x6F, dst_reg, addr)?;
                     }
                 }
@@ -7000,9 +6998,7 @@ impl X86_64Lowerer {
                         );
                         self.emit_vec_mem(enc, src_reg, None, addr)?;
                     } else {
-                        let prefix = self
-                            .sse_prefix(op.x86_hint)
-                            .or_else(|| self.vec_move_prefix(op.x86_hint));
+                        let prefix = self.legacy_vec_move_prefix(op.x86_hint);
                         self.emit_sse_mov_mem(prefix, 0x7F, src_reg, addr)?;
                     }
                 }
@@ -7040,9 +7036,7 @@ impl X86_64Lowerer {
                         );
                         self.emit_vec_rr(enc, dst_reg, src_reg, 0);
                     } else {
-                        let prefix = self
-                            .sse_prefix(op.x86_hint)
-                            .or_else(|| self.vec_move_prefix(op.x86_hint));
+                        let prefix = self.legacy_vec_move_prefix(op.x86_hint);
                         let opcode = self.sse_opcode(op.x86_hint, 0x6F);
                         let (reg, rm) = if opcode == 0x7F {
                             (src_reg, dst_reg)
@@ -10932,6 +10926,17 @@ impl X86_64Lowerer {
             X86SsePrefix::Rep => Some(0xF3),
             X86SsePrefix::Repne => Some(0xF2),
             X86SsePrefix::None => None,
+        }
+    }
+
+    /// Select the mandatory prefix for a legacy vector move without conflating
+    /// an explicit `SseMov { prefix: None }` with the absence of an encoding
+    /// hint. The former is the canonical MOVAPS/MOVUPS no-prefix form; only an
+    /// absent/non-SSE hint may fall back to the default MOVDQU-style prefix.
+    fn legacy_vec_move_prefix(&self, hint: Option<X86OpHint>) -> Option<u8> {
+        match hint {
+            Some(X86OpHint::SseMov { .. } | X86OpHint::SseOp { .. }) => self.sse_prefix(hint),
+            _ => self.vec_move_prefix(hint),
         }
     }
 
@@ -15316,6 +15321,32 @@ mod tests {
         lowerer
             .lower_function(&func)
             .expect_err("single hinted op should fail to lower")
+    }
+
+    #[test]
+    fn legacy_vector_move_preserves_explicit_no_prefix_encoding() {
+        let bytes = lower_single_hinted_op(
+            OpKind::VMov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                width: VecWidth::V128,
+            },
+            X86OpHint::SseMov {
+                prefix: X86SsePrefix::None,
+                opcode: 0x28,
+            },
+        );
+
+        assert!(
+            bytes.windows(3).any(|window| window == [0x0F, 0x28, 0xC8]),
+            "MOVAPS register transfer missing from {bytes:02X?}"
+        );
+        assert!(
+            !bytes
+                .windows(4)
+                .any(|window| window == [0xF3, 0x0F, 0x28, 0xC8]),
+            "explicit no-prefix MOVAPS was corrupted into a reserved F3 form: {bytes:02X?}"
+        );
     }
 
     #[test]
