@@ -8240,6 +8240,26 @@ impl SmirInterpreter {
                 Self::restore_legacy_xmm_upper(ctx, *dst, old);
             }
 
+            OpKind::X86Phminposuw { dst, src } => {
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, x86_hint);
+                // Snapshot before writing because the two-operand source may
+                // alias the destination in both legacy and VEX encodings.
+                let source = Self::read_vec(ctx, *src);
+                let mut minimum = Self::get_lane(&source, 0, 16) as u16;
+                let mut index = 0u8;
+                for lane in 1..8u8 {
+                    let candidate = Self::get_lane(&source, lane, 16) as u16;
+                    if candidate < minimum {
+                        minimum = candidate;
+                        index = lane;
+                    }
+                }
+                let mut result = [0u64; 16];
+                result[0] = u64::from(minimum) | (u64::from(index) << 16);
+                Self::write_vec(ctx, *dst, result);
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
+            }
+
             OpKind::X86Aes {
                 dst,
                 src1,

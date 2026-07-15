@@ -1943,6 +1943,20 @@ fn x86_vector_sad_bytes_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     [dst, src1, src2].into_iter().all(vector_matches_width)
 }
 
+/// Exact register-only PHMINPOSUW/VPHMINPOSUW semantic shape. Both encodings
+/// address only the architectural low 16 XMM registers; memory sources remain
+/// expanded so alignment and fault ordering stay explicit in SMIR.
+fn x86_phminposuw_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
+
+    let OpKind::X86Phminposuw { dst, src } = op else {
+        return false;
+    };
+    let low_xmm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=15))));
+    low_xmm(dst) && low_xmm(src)
+}
+
 /// Exact MPSADBW/VMPSADBW semantic shape for the legacy and VEX encodings.
 /// Each 128-bit lane produces eight unsigned-word sums from a four-byte
 /// stationary block and eight sliding four-byte windows. AVX10.2 masking and
@@ -2150,6 +2164,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::VMulShiftSat { .. }
             | OpKind::VLane { .. }
             | OpKind::VSadBytes { .. }
+            | OpKind::X86Phminposuw { .. }
             | OpKind::VMpsadbw { .. }
             | OpKind::VAnd { .. }
             | OpKind::VAndNot { .. }
@@ -2196,6 +2211,10 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     }
 
     if matches!(op, OpKind::VSadBytes { .. }) && !x86_vector_sad_bytes_shape_valid(op) {
+        return false;
+    }
+
+    if matches!(op, OpKind::X86Phminposuw { .. }) && !x86_phminposuw_shape_valid(op) {
         return false;
     }
 
@@ -4073,6 +4092,35 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
         };
     }
 
+    if x86_phminposuw_shape_valid(&op.kind) {
+        let OpKind::X86Phminposuw { dst, src } = &op.kind else {
+            unreachable!("validated PHMINPOSUW shape is X86Phminposuw");
+        };
+        return match op.x86_hint {
+            Some(X86OpHint::SseOp { prefix, opcode }) => {
+                prefix == crate::smir::ir::ops::X86SsePrefix::OpSize
+                    && opcode == 0x41
+                    && low_vector(dst)
+                    && low_vector(src)
+            }
+            Some(X86OpHint::VexOp {
+                map,
+                pp,
+                opcode,
+                width,
+                ..
+            }) => {
+                map == X86VecMap::Map0F38
+                    && pp == crate::smir::ir::ops::X86SsePrefix::OpSize
+                    && opcode == 0x41
+                    && width == VecWidth::V128
+                    && low_vector(dst)
+                    && low_vector(src)
+            }
+            _ => false,
+        };
+    }
+
     if x86_vector_mpsadbw_shape_valid(&op.kind) {
         let OpKind::VMpsadbw {
             dst,
@@ -4684,6 +4732,21 @@ fn x86_vector_sad_bytes_feature_requirements(
     }
 }
 
+/// Return `(SSE4.1, AVX)` requirements for an admitted register-only
+/// PHMINPOSUW/VPHMINPOSUW operation.
+fn x86_phminposuw_feature_requirements(op: &crate::smir::ir::ops::SmirOp) -> (bool, bool) {
+    use crate::smir::ir::ops::X86OpHint;
+
+    if !x86_phminposuw_shape_valid(&op.kind) {
+        return (false, false);
+    }
+    match op.x86_hint {
+        Some(X86OpHint::SseOp { .. }) => (true, false),
+        Some(X86OpHint::VexOp { .. }) => (false, true),
+        _ => (false, false),
+    }
+}
+
 /// Return `(SSE4.1, AVX, AVX2)` requirements for an admitted
 /// MPSADBW/VMPSADBW. VEX.128 requires AVX; VEX.256 additionally requires
 /// AVX2. AVX10.2 EVEX forms are not admitted by this classic path.
@@ -4888,6 +4951,8 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_minmax_avx2 = false;
     let mut needs_sad_bytes_avx = false;
     let mut needs_sad_bytes_avx2 = false;
+    let mut needs_phminposuw_sse41 = false;
+    let mut needs_phminposuw_avx = false;
     let mut needs_mpsadbw_sse41 = false;
     let mut needs_mpsadbw_avx = false;
     let mut needs_mpsadbw_avx2 = false;
@@ -4937,6 +5002,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86MultiShiftQB { width, .. }
             | OpKind::VLoad { width, .. }
             | OpKind::VStore { width, .. } => *width,
+            OpKind::X86Phminposuw { .. } => VecWidth::V128,
             OpKind::VAdd { elem, lanes, .. }
             | OpKind::VSub { elem, lanes, .. }
             | OpKind::VAddSubSat { elem, lanes, .. }
@@ -5000,6 +5066,7 @@ pub fn x86_native_vector_features_supported_excluding(
             x86_vector_integer_minmax_feature_requirements(op);
         let (sad_bytes_avx, sad_bytes_avx2, sad_bytes_vl) =
             x86_vector_sad_bytes_feature_requirements(op);
+        let (phminposuw_sse41, phminposuw_avx) = x86_phminposuw_feature_requirements(op);
         let (mpsadbw_sse41, mpsadbw_avx, mpsadbw_avx2) =
             x86_vector_mpsadbw_feature_requirements(op);
         let (maddubs_ssse3, maddubs_avx, maddubs_avx2, maddubs_vl) =
@@ -5034,6 +5101,7 @@ pub fn x86_native_vector_features_supported_excluding(
                 ..
             } => minmax_vl,
             OpKind::VSadBytes { .. } => sad_bytes_vl,
+            OpKind::X86Phminposuw { .. } => false,
             OpKind::VMpsadbw { .. } => false,
             OpKind::VDotProduct { .. } if x86_vector_integer_maddubs_shape_valid(kind) => {
                 maddubs_vl
@@ -5143,6 +5211,8 @@ pub fn x86_native_vector_features_supported_excluding(
         needs_minmax_avx2 |= minmax_avx2;
         needs_sad_bytes_avx |= sad_bytes_avx;
         needs_sad_bytes_avx2 |= sad_bytes_avx2;
+        needs_phminposuw_sse41 |= phminposuw_sse41;
+        needs_phminposuw_avx |= phminposuw_avx;
         needs_mpsadbw_sse41 |= mpsadbw_sse41;
         needs_mpsadbw_avx |= mpsadbw_avx;
         needs_mpsadbw_avx2 |= mpsadbw_avx2;
@@ -5221,6 +5291,8 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_minmax_avx2 || std::is_x86_feature_detected!("avx2"))
             && (!needs_sad_bytes_avx || std::is_x86_feature_detected!("avx"))
             && (!needs_sad_bytes_avx2 || std::is_x86_feature_detected!("avx2"))
+            && (!needs_phminposuw_sse41 || std::is_x86_feature_detected!("sse4.1"))
+            && (!needs_phminposuw_avx || std::is_x86_feature_detected!("avx"))
             && (!needs_mpsadbw_sse41 || std::is_x86_feature_detected!("sse4.1"))
             && (!needs_mpsadbw_avx || std::is_x86_feature_detected!("avx"))
             && (!needs_mpsadbw_avx2 || std::is_x86_feature_detected!("avx2"))
@@ -5288,6 +5360,8 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_minmax_avx2,
             needs_sad_bytes_avx,
             needs_sad_bytes_avx2,
+            needs_phminposuw_sse41,
+            needs_phminposuw_avx,
             needs_mpsadbw_sse41,
             needs_mpsadbw_avx,
             needs_mpsadbw_avx2,
@@ -14648,6 +14722,132 @@ mod jit_gate_tests {
             ),
         ] {
             assert!(!x86_native_vector_smir_op(&malformed), "{malformed:?}");
+        }
+    }
+
+    #[test]
+    fn x86_phminposuw_gate_validates_registers_encodings_wig_and_features() {
+        let xmm1 = x86(X86Reg::Xmm(1));
+        let xmm2 = x86(X86Reg::Xmm(2));
+        let minpos = |dst, src| OpKind::X86Phminposuw { dst, src };
+
+        for (kind, hint, requirements) in [
+            (
+                minpos(xmm1, xmm2),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                },
+                (true, false),
+            ),
+            (
+                minpos(xmm1, xmm1),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                (false, true),
+            ),
+        ] {
+            let smir_op = crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                kind.clone(),
+                hint,
+            );
+            assert!(x86_phminposuw_shape_valid(&kind), "{kind:?}");
+            assert!(is_x86_native_vector_op(&kind), "{kind:?}");
+            assert!(x86_native_vector_smir_op(&smir_op), "{smir_op:?}");
+            assert_eq!(
+                x86_phminposuw_feature_requirements(&smir_op),
+                requirements,
+                "{smir_op:?}"
+            );
+
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(hint);
+            assert!(is_native_clobber_safe(&function), "{smir_op:?}");
+        }
+
+        let unhinted = crate::smir::ir::ops::SmirOp::new(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            minpos(xmm1, xmm2),
+        );
+        assert!(is_x86_native_vector_op(&unhinted.kind));
+        assert!(!x86_native_vector_smir_op(&unhinted));
+
+        for malformed_kind in [
+            minpos(x86(X86Reg::Xmm(16)), xmm2),
+            minpos(xmm1, x86(X86Reg::Ymm(2))),
+            minpos(VReg::Virtual(VirtualId(62)), xmm2),
+        ] {
+            assert!(!x86_phminposuw_shape_valid(&malformed_kind));
+            assert!(!is_x86_native_vector_op(&malformed_kind));
+        }
+
+        for (hint, label) in [
+            (
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x41,
+                },
+                "legacy mandatory prefix",
+            ),
+            (
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F3A,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+                "VEX map",
+            ),
+            (
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x40,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+                "VEX opcode",
+            ),
+            (
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                "VEX.L",
+            ),
+            (
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+                "nonexistent EVEX form",
+            ),
+        ] {
+            let malformed = crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                minpos(xmm1, xmm2),
+                hint,
+            );
+            assert!(!x86_native_vector_smir_op(&malformed), "{label}");
         }
     }
 

@@ -2757,7 +2757,9 @@ impl OpKind {
                 result.extend(mask.iter().copied());
             }
 
-            OpKind::VUnary { src, .. } | OpKind::VReduce { src, .. } => {
+            OpKind::VUnary { src, .. }
+            | OpKind::VReduce { src, .. }
+            | OpKind::X86Phminposuw { src, .. } => {
                 result.push(*src);
             }
 
@@ -6670,6 +6672,26 @@ mod tests {
                 alignment_check < load && load < destination_write,
                 "{name}: optimizer violated check-before-load-before-write ordering: {ops:?}"
             );
+        }
+
+        for bytes in [
+            &[0x66, 0x0F, 0x38, 0x41, 0xC1][..],
+            &[0xC4, 0xE2, 0x79, 0x41, 0xC1][..],
+        ] {
+            let register = optimized(bytes);
+            let ops = &register.blocks[0].ops;
+            assert!(matches!(
+                ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86Phminposuw {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    },
+                    x86_hint: Some(_),
+                    ..
+                }]
+            ));
+            assert!(ops[0].kind.flags_written().is_empty());
         }
 
         let legacy_phminposuw = optimized(&[0x66, 0x0F, 0x38, 0x41, 0x00]);

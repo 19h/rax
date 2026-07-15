@@ -5362,6 +5362,83 @@ fn jit_packed_integer_minmax_matches_signedness_aliases_wig_and_upper_state() {
 }
 
 #[test]
+fn jit_phminposuw_matches_unsigned_first_tie_alias_wig_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("sse4.1")
+        || !std::is_x86_feature_detected!("avx")
+    {
+        return;
+    }
+
+    // loop: phminposuw xmm1,xmm2; {vex3,w1} vphminposuw xmm3,xmm3;
+    //       dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0x38, 0x41, 0xCA, 0xC4, 0xE2, 0xF9, 0x41, 0xDB, 0xFF, 0xC9, 0x75, 0xF2, 0xF4,
+    ];
+
+    fn packed_words(words: [u16; 8]) -> [u64; 2] {
+        let bytes = words
+            .iter()
+            .flat_map(|word| word.to_le_bytes())
+            .collect::<Vec<_>>();
+        [
+            u64::from_le_bytes(bytes[..8].try_into().unwrap()),
+            u64::from_le_bytes(bytes[8..].try_into().unwrap()),
+        ]
+    }
+
+    let legacy_source = packed_words([u16::MAX, 0x8000, 1, 2, 0xC000, 1, 3, 4]);
+    let vex_alias_source = packed_words([0x8000, u16::MAX, 0x7FFF, 0, 0, 1, 2, 3]);
+    let legacy_ymm_upper = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+    let legacy_zmm_upper = [1, 2, 3, 4];
+
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.rflags = 0xCD7;
+        regs.xmm[1] = [0xA1A2_A3A4_A5A6_A7A8, 0xB1B2_B3B4_B5B6_B7B8];
+        regs.xmm[2] = legacy_source;
+        regs.ymm_high[1] = legacy_ymm_upper;
+        regs.zmm_high[1] = legacy_zmm_upper;
+        regs.xmm[3] = vex_alias_source;
+        regs.ymm_high[3] = [0x3333_3333_3333_3333; 2];
+        regs.zmm_high[3] = [0x4444_4444_4444_4444; 4];
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("PHMINPOSUW/VPHMINPOSUW JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(jit_regs.zmm_ext, interp_regs.zmm_ext, "extended ZMM state");
+    assert_eq!(jit_regs.rflags, interp_regs.rflags, "architectural flags");
+
+    assert_eq!(jit_regs.xmm[1], [1 | (2 << 16), 0], "legacy first tie");
+    assert_eq!(jit_regs.ymm_high[1], legacy_ymm_upper);
+    assert_eq!(jit_regs.zmm_high[1], legacy_zmm_upper);
+    assert_eq!(
+        jit_regs.xmm[3],
+        [3 << 16, 0],
+        "VEX destination/source alias and first tie"
+    );
+    assert_eq!(jit_regs.ymm_high[3], [0; 2], "VEX upper-256 zeroing");
+    assert_eq!(jit_regs.zmm_high[3], [0; 4], "VEX upper-512 zeroing");
+}
+
+#[test]
 fn jit_psadbw_matches_unsigned_sums_aliases_wig_and_upper_state() {
     if !std::is_x86_feature_detected!("avx512f")
         || !std::is_x86_feature_detected!("avx512bw")

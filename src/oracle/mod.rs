@@ -3138,6 +3138,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src2,
             width,
         } => op_json!("vsad_bytes", dst, src1, src2, width),
+        OpKind::X86Phminposuw { dst, src } => op_json!("x86_phminposuw", dst, src),
         OpKind::X86Aes {
             dst,
             src1,

@@ -3164,6 +3164,14 @@ pub enum OpKind {
         width: VecWidth,
     },
 
+    /// Find the first unsigned minimum among eight packed 16-bit lanes and
+    /// return the minimum in bits 15:0 and its lane index in bits 18:16.
+    /// PHMINPOSUW, VPHMINPOSUW
+    X86Phminposuw {
+        dst: VReg,
+        src: VReg,
+    },
+
     /// AES-NI/VAES transformation, applied independently to each 128-bit lane.
     /// `src2` is the round key for round operations and absent for AESIMC and
     /// AESKEYGENASSIST. `imm` is used only by AESKEYGENASSIST.
@@ -4036,6 +4044,7 @@ impl OpKind {
             | OpKind::VMinMax { dst, .. }
             | OpKind::VMpsadbw { dst, .. }
             | OpKind::VSadBytes { dst, .. }
+            | OpKind::X86Phminposuw { dst, .. }
             | OpKind::X86Aes { dst, .. }
             | OpKind::X86Sha512Msg1 { dst, .. }
             | OpKind::X86Sha512Msg2 { dst, .. }

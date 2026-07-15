@@ -8714,6 +8714,55 @@ impl X86_64Lowerer {
                 }
             }
 
+            OpKind::X86Phminposuw { dst, src } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let low_xmm = |reg: PhysReg| matches!(reg, PhysReg::Xmm(0..=15));
+                if !low_xmm(dst_reg) || !low_xmm(src_reg) {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86Phminposuw".to_string(),
+                        operand: "requires low XMM registers".to_string(),
+                    });
+                }
+                match op.x86_hint {
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::OpSize,
+                        opcode: 0x41,
+                    }) => {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_op38_rr(Some(0x66), 0x41, dst_reg, src_reg);
+                    }
+                    Some(X86OpHint::VexOp {
+                        map: X86VecMap::Map0F38,
+                        pp: X86SsePrefix::OpSize,
+                        opcode: 0x41,
+                        width: VecWidth::V128,
+                        ..
+                    }) => {
+                        // VEX.W is ignored architecturally; emit canonical W0.
+                        // vvvv=0 is encoded inverted as the required 1111b.
+                        self.emit_vec_rr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Vex,
+                                map: X86VecMap::Map0F38,
+                                pp: X86SsePrefix::OpSize,
+                                opcode: 0x41,
+                                width: VecWidth::V128,
+                                w: false,
+                            },
+                            dst_reg,
+                            src_reg,
+                            0,
+                        );
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: "unhinted or malformed PHMINPOSUW".to_string(),
+                        });
+                    }
+                }
+            }
+
             OpKind::VMpsadbw {
                 dst,
                 src1,
@@ -15782,6 +15831,14 @@ mod tests {
                 &[0x62, 0xA1, 0xF5, 0x00, 0xF6, 0xC2][..],
             ),
             (
+                &[0x66, 0x0F, 0x38, 0x41, 0xCA][..],
+                &[0x66, 0x0F, 0x38, 0x41, 0xCA][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0xF9, 0x41, 0xCB][..],
+                &[0xC4, 0xE2, 0x79, 0x41, 0xCB][..],
+            ),
+            (
                 &[0x66, 0x45, 0x0F, 0x3A, 0x42, 0xCA, 0xE7][..],
                 &[0x66, 0x45, 0x0F, 0x3A, 0x42, 0xCA, 0xE7][..],
             ),
@@ -17628,6 +17685,117 @@ mod tests {
                 X86OpHint::SseOp {
                     prefix: X86SsePrefix::OpSize,
                     opcode: 0xF6,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_phminposuw_emits_exact_bytes_canonicalizes_wig_and_rejects_malformed() {
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let minpos = |dst, src| OpKind::X86Phminposuw { dst, src };
+
+        for (name, kind, hint, expected) in [
+            (
+                "PHMINPOSUW xmm1,xmm2",
+                minpos(xmm(1), xmm(2)),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                },
+                &[0x66, 0x0F, 0x38, 0x41, 0xCA][..],
+            ),
+            (
+                "VEX.W1-hinted VPHMINPOSUW xmm1,xmm1 canonicalized to W0",
+                minpos(xmm(1), xmm(1)),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0xC4, 0xE2, 0x79, 0x41, 0xC9][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, hint);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        assert!(matches!(
+            lower_single_op_err(minpos(xmm(1), xmm(2))),
+            LowerError::UnsupportedOp { .. }
+        ));
+
+        for (kind, hint) in [
+            (
+                minpos(xmm(16), xmm(2)),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                },
+            ),
+            (
+                minpos(xmm(1), VReg::Arch(ArchReg::X86(X86Reg::Ymm(2)))),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                },
+            ),
+            (
+                minpos(xmm(1), xmm(2)),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x41,
+                },
+            ),
+            (
+                minpos(xmm(1), xmm(2)),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F3A,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                minpos(xmm(1), xmm(2)),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x40,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                minpos(xmm(1), xmm(2)),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                minpos(xmm(1), xmm(2)),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                    width: VecWidth::V128,
+                    w: false,
                 },
             ),
         ] {

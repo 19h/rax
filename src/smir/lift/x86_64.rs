@@ -14693,9 +14693,23 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let raw = ctx.alloc_vreg();
-        self.append_phminposuw(raw, src, pc, ctx, &mut ops);
-        self.append_legacy_packed_result(dst, raw, VecElementType::I64, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            // Retain the explicit aligned load and generic reduction so a
+            // fault cannot partially update the architectural destination.
+            let raw = ctx.alloc_vreg();
+            self.append_phminposuw(raw, src, pc, ctx, &mut ops);
+            self.append_legacy_packed_result(dst, raw, VecElementType::I64, pc, ctx, &mut ops);
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86Phminposuw { dst, src },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                },
+            ));
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -19569,17 +19583,27 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm, VecWidth::V128)
         };
-        let raw = ctx.alloc_vreg();
-        self.append_phminposuw(raw, src, pc, ctx, &mut ops);
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VMov {
-                dst: self.vec_reg(modrm.reg, VecWidth::V128),
-                src: raw,
-                width: VecWidth::V128,
-            },
-        ));
+        let dst = self.vec_reg(modrm.reg, VecWidth::V128);
+        if modrm.is_memory {
+            let raw = ctx.alloc_vreg();
+            self.append_phminposuw(raw, src, pc, ctx, &mut ops);
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VMov {
+                    dst,
+                    src: raw,
+                    width: VecWidth::V128,
+                },
+            ));
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86Phminposuw { dst, src },
+                self.vec_hint(prefix, 0x41),
+            ));
+        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -57915,89 +57939,20 @@ mod tests {
     #[test]
     fn lift_phminposuw_covers_first_unsigned_minimum_alignment_and_invalids() {
         let legacy = lift_single(&[0x66, 0x0F, 0x38, 0x41, 0xCA]).unwrap();
-        assert_eq!(
-            legacy
-                .ops
-                .iter()
-                .filter(|op| matches!(
-                    op.kind,
-                    OpKind::VExtractLane {
-                        vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
-                        elem: VecElementType::I16,
-                        sign: SignExtend::Zero,
-                        ..
-                    }
-                ))
-                .count(),
-            8
-        );
-        assert_eq!(
-            legacy
-                .ops
-                .iter()
-                .filter(|op| matches!(
-                    op.kind,
-                    OpKind::Cmp {
-                        width: OpWidth::W16,
-                        ..
-                    }
-                ))
-                .count(),
-            7
-        );
-        assert_eq!(
-            legacy
-                .ops
-                .iter()
-                .filter(|op| matches!(
-                    op.kind,
-                    OpKind::SetCC {
-                        cond: Condition::Ult,
-                        ..
-                    }
-                ))
-                .count(),
-            7
-        );
-        assert_eq!(
-            legacy
-                .ops
-                .iter()
-                .filter(|op| matches!(op.kind, OpKind::Select { .. }))
-                .count(),
-            14
-        );
-        let read_flags = legacy
-            .ops
-            .iter()
-            .position(|op| matches!(op.kind, OpKind::ReadFlags { .. }))
-            .unwrap();
-        let first_compare = legacy
-            .ops
-            .iter()
-            .position(|op| matches!(op.kind, OpKind::Cmp { .. }))
-            .unwrap();
-        let write_flags = legacy
-            .ops
-            .iter()
-            .position(|op| matches!(op.kind, OpKind::WriteFlags { .. }))
-            .unwrap();
-        let destination_write = legacy
-            .ops
-            .iter()
-            .position(|op| {
-                matches!(
-                    op.kind,
-                    OpKind::VInsertLane {
-                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
-                        elem: VecElementType::I64,
-                        ..
-                    }
-                )
-            })
-            .unwrap();
-        assert!(read_flags < first_compare && first_compare < write_flags);
-        assert!(write_flags < destination_write);
+        assert!(matches!(
+            legacy.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::X86Phminposuw {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                },
+                x86_hint: Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                }),
+                ..
+            }]
+        ));
 
         let legacy_mem = lift_single(&[0x66, 0x44, 0x0F, 0x38, 0x41, 0x48, 0x20]).unwrap();
         let alignment = legacy_mem
@@ -58019,6 +57974,26 @@ mod tests {
             })
             .unwrap();
         assert!(alignment < load);
+        assert!(
+            !legacy_mem
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::X86Phminposuw { .. }))
+        );
+        assert_eq!(
+            legacy_mem
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::SetCC {
+                        cond: Condition::Ult,
+                        ..
+                    }
+                ))
+                .count(),
+            7
+        );
         assert!(legacy_mem.ops.iter().any(|op| matches!(
             op.kind,
             OpKind::VInsertLane {
@@ -58028,29 +58003,23 @@ mod tests {
         )));
 
         let vex_high = lift_single(&[0xC4, 0x42, 0x79, 0x41, 0xCA]).unwrap();
-        assert_eq!(
-            vex_high
-                .ops
-                .iter()
-                .filter(|op| matches!(
-                    op.kind,
-                    OpKind::VExtractLane {
-                        vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(10))),
-                        elem: VecElementType::I16,
-                        ..
-                    }
-                ))
-                .count(),
-            8
-        );
-        assert!(vex_high.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::VMov {
-                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
-                width: VecWidth::V128,
+        assert!(matches!(
+            vex_high.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::X86Phminposuw {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(9))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(10))),
+                },
+                x86_hint: Some(X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x41,
+                    width: VecWidth::V128,
+                    w: false,
+                }),
                 ..
-            }
-        )));
+            }]
+        ));
 
         let vex_mem = lift_single(&[0xC4, 0x62, 0x79, 0x41, 0x48, 0x20]).unwrap();
         assert!(vex_mem.ops.iter().any(|op| matches!(
@@ -58066,10 +58035,24 @@ mod tests {
                 .iter()
                 .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
         );
+        assert!(
+            !vex_mem
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::X86Phminposuw { .. }))
+        );
 
         // Both legacy REX.W and VEX.W are ignored.
         assert!(lift_single(&[0x66, 0x48, 0x0F, 0x38, 0x41, 0xCA]).is_ok());
-        assert!(lift_single(&[0xC4, 0x42, 0xF9, 0x41, 0xCA]).is_ok());
+        let vex_w1 = lift_single(&[0xC4, 0x42, 0xF9, 0x41, 0xCA]).unwrap();
+        assert!(matches!(
+            vex_w1.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::X86Phminposuw { .. },
+                x86_hint: Some(X86OpHint::VexOp { w: true, .. }),
+                ..
+            }]
+        ));
         for bytes in [
             &[0x0F, 0x38, 0x41, 0xCA][..],
             &[0xF0, 0x66, 0x0F, 0x38, 0x41, 0xCA][..],
