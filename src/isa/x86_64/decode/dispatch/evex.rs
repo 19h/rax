@@ -1380,8 +1380,8 @@ impl X86_64Vcpu {
             0x04 if evex.pp == 1 => {
                 execute::simd::evex_int_arith(self, ctx, execute::simd::IntOp::MaddUBSW)
             }
-            // VPMULHRSW (0x0B)
-            0x0B if evex.pp == 1 && !evex.w => {
+            // VPMULHRSW (0x0B). EVEX.W is architecturally ignored (WIG).
+            0x0B if evex.pp == 1 => {
                 execute::simd::evex_int_arith(self, ctx, execute::simd::IntOp::MulHighRoundSW)
             }
             // VCVTPH2PS.
@@ -6473,6 +6473,37 @@ mod tests {
     fn read_u8(vcpu: &mut X86_64Vcpu, addr: u64) -> u8 {
         let sregs = vcpu.sregs.clone();
         vcpu.mmu.read_u8(addr, &sregs).unwrap()
+    }
+
+    #[test]
+    fn evex_vpmulhrsw_wig_executes_w0_and_w1_identically() {
+        // vpmulhrsw %xmm11, %xmm10, %xmm9. Only EVEX.W differs.
+        let execute = |w: bool| {
+            let mut code = [0x62, 0x52, 0x2D, 0x08, 0x0B, 0xCB];
+            if w {
+                code[2] |= 0x80;
+            }
+            let mut vcpu = long_mode_vcpu(&code);
+            vcpu.regs.xmm[9] = [u64::MAX; 2];
+            vcpu.regs.ymm_high[9] = [u64::MAX; 2];
+            vcpu.regs.zmm_high[9] = [u64::MAX; 4];
+            vcpu.regs.xmm[10] = [0x4000_C000_7FFF_8000, 0x0001_FFFF_1234_EDCB];
+            vcpu.regs.xmm[11] = [0x4000_4000_7FFF_8000, 0x7FFF_8000_CDEF_3210];
+
+            step_ok(&mut vcpu);
+            (
+                vcpu.regs.xmm[9],
+                vcpu.regs.ymm_high[9],
+                vcpu.regs.zmm_high[9],
+                vcpu.regs.rip,
+            )
+        };
+
+        let w0 = execute(false);
+        let w1 = execute(true);
+        assert_eq!(w1, w0, "EVEX.W must not affect VPMULHRSW semantics");
+        assert_eq!(w0.1, [0; 2], "128-bit EVEX form clears YMM upper state");
+        assert_eq!(w0.2, [0; 4], "128-bit EVEX form clears ZMM upper state");
     }
 
     fn enable_paging_for_wrapped_stack_test(vcpu: &mut X86_64Vcpu) {
