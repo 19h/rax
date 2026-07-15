@@ -7315,6 +7315,7 @@ impl SmirInterpreter {
             } => {
                 debug_assert!(block_lanes.is_power_of_two());
                 debug_assert!(*block_lanes != 0 && *lanes % *block_lanes == 0);
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, x86_hint);
                 let source = Self::read_vec(ctx, *src);
                 let selectors = Self::read_vec(ctx, *control);
                 let mut result = [0u64; 16];
@@ -7330,6 +7331,7 @@ impl SmirInterpreter {
                     Self::set_lane(&mut result, lane, 8, selected);
                 }
                 Self::write_vec(ctx, *dst, result);
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
             }
 
             OpKind::VHorizontalBin {

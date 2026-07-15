@@ -4274,6 +4274,136 @@ fn jit_saturating_packs_match_lane_blocks_signedness_and_upper_state() {
 }
 
 #[test]
+fn jit_byte_shuffles_match_zeroing_lane_locality_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512vl")
+        || !std::is_x86_feature_detected!("avx2")
+        || !std::is_x86_feature_detected!("ssse3")
+    {
+        return;
+    }
+
+    // loop: pshufb xmm1,xmm2; vpshufb ymm3,ymm4,ymm5;
+    //       vpshufb zmm6,zmm7,zmm8; {evex} vpshufb xmm9,xmm10,xmm11;
+    //       dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0x38, 0x00, 0xCA, 0xC4, 0xE2, 0x5D, 0x00, 0xDD, 0x62, 0xD2, 0x45, 0x48, 0x00,
+        0xF0, 0x62, 0x52, 0x2D, 0x08, 0x00, 0xCB, 0xFF, 0xC9, 0x75, 0xE6, 0xF4,
+    ];
+
+    fn vector_bytes(regs: &Registers, index: usize) -> Vec<u8> {
+        regs.xmm[index]
+            .iter()
+            .chain(regs.ymm_high[index].iter())
+            .chain(regs.zmm_high[index].iter())
+            .flat_map(|word| word.to_le_bytes())
+            .collect()
+    }
+
+    fn set_vector_bytes(regs: &mut Registers, index: usize, bytes: &[u8]) {
+        let words = bytes
+            .chunks_exact(8)
+            .map(|chunk| u64::from_le_bytes(chunk.try_into().unwrap()))
+            .collect::<Vec<_>>();
+        regs.xmm[index].copy_from_slice(&words[..2]);
+        regs.ymm_high[index].copy_from_slice(&words[2..4]);
+        regs.zmm_high[index].copy_from_slice(&words[4..8]);
+    }
+
+    fn shuffle_reference(source: &[u8], control: &[u8], width: usize) -> Vec<u8> {
+        (0..width)
+            .map(|lane| {
+                let selector = control[lane];
+                if selector & 0x80 != 0 {
+                    0
+                } else {
+                    source[(lane & !15) + usize::from(selector & 15)]
+                }
+            })
+            .collect()
+    }
+
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.rflags = 0xCD7;
+        let source = std::array::from_fn::<_, 64, _>(|lane| {
+            (lane as u8).wrapping_mul(29).wrapping_add(0x31)
+        });
+        let control_pattern = [
+            0x80, 0x0F, 0x00, 0x1F, 0x10, 0x07, 0x08, 0xFF, 0x03, 0x0C, 0x11, 0x8F, 0x05, 0x0A,
+            0x0E, 0x01,
+        ];
+        let control = std::array::from_fn::<_, 64, _>(|lane| control_pattern[lane & 15]);
+
+        for (data, selectors) in [(1, 2), (4, 5), (7, 8), (10, 11)] {
+            set_vector_bytes(&mut regs, data, &source);
+            set_vector_bytes(&mut regs, selectors, &control);
+        }
+        regs.ymm_high[1] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        regs.zmm_high[1] = [1, 2, 3, 4];
+        regs.zmm_high[3] = [5, 6, 7, 8];
+        regs.ymm_high[9] = [0x9999_9999_9999_9999, 0xAAAA_AAAA_AAAA_AAAA];
+        regs.zmm_high[9] = [9, 10, 11, 12];
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("packed byte-shuffle JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(jit_regs.rflags, interp_regs.rflags, "architectural flags");
+
+    let initial1 = vector_bytes(&initial, 1);
+    let initial2 = vector_bytes(&initial, 2);
+    let mut expected = shuffle_reference(&initial1, &initial2, 16);
+    expected.extend_from_slice(&initial1[16..]);
+    assert_eq!(
+        vector_bytes(&jit_regs, 1),
+        expected,
+        "legacy PSHUFB and preserved upper state"
+    );
+
+    let mut expected =
+        shuffle_reference(&vector_bytes(&initial, 4), &vector_bytes(&initial, 5), 32);
+    expected.resize(64, 0);
+    assert_eq!(
+        vector_bytes(&jit_regs, 3),
+        expected,
+        "VEX.256 VPSHUFB lane locality and upper zeroing"
+    );
+
+    assert_eq!(
+        vector_bytes(&jit_regs, 6),
+        shuffle_reference(&vector_bytes(&initial, 7), &vector_bytes(&initial, 8), 64,),
+        "EVEX.512 VPSHUFB lane locality"
+    );
+
+    let mut expected =
+        shuffle_reference(&vector_bytes(&initial, 10), &vector_bytes(&initial, 11), 16);
+    expected.resize(64, 0);
+    assert_eq!(
+        vector_bytes(&jit_regs, 9),
+        expected,
+        "EVEX.128 VPSHUFB upper zeroing"
+    );
+}
+
+#[test]
 fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         return;

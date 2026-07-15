@@ -5075,6 +5075,26 @@ mod tests {
             "VPSHUFB changed its destination before the memory fault boundary"
         );
 
+        let legacy_pshufb_register = optimized(&[0x66, 0x0F, 0x38, 0x00, 0xC1]);
+        let ops = &legacy_pshufb_register.blocks[0].ops;
+        assert!(matches!(
+            ops.first().map(|op| (&op.kind, op.x86_hint)),
+            Some((
+                OpKind::VByteShuffle {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    control: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    lanes: 16,
+                    block_lanes: 16,
+                },
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x00,
+                })
+            ))
+        ));
+        assert_eq!(ops.len(), 1, "legacy PSHUFB must remain one atomic op");
+
         let legacy_pshufb = optimized(&[0x66, 0x0F, 0x38, 0x00, 0x00]);
         let ops = &legacy_pshufb.blocks[0].ops;
         let alignment = ops

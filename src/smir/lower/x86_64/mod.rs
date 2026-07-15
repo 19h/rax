@@ -7824,6 +7824,117 @@ impl X86_64Lowerer {
                 }
             }
 
+            OpKind::VByteShuffle {
+                dst,
+                src,
+                control,
+                lanes,
+                block_lanes,
+            } => {
+                let width = self
+                    .vec_width_from_lanes(VecElementType::I8, *lanes)
+                    .ok_or_else(|| LowerError::UnsupportedOp {
+                        op: format!("VByteShuffle I8x{lanes}"),
+                    })?;
+                if *block_lanes != 16 {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VByteShuffle".to_string(),
+                        operand: "requires 16-byte lane blocks".to_string(),
+                    });
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let control_reg = self.get_reg(*control)?;
+                let vector_matches_width = |reg: PhysReg| match (width, reg) {
+                    (VecWidth::V128, PhysReg::Xmm(index))
+                    | (VecWidth::V256, PhysReg::Ymm(index))
+                    | (VecWidth::V512, PhysReg::Zmm(index)) => index < 32,
+                    _ => false,
+                };
+                if ![dst_reg, src_reg, control_reg]
+                    .into_iter()
+                    .all(vector_matches_width)
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VByteShuffle".to_string(),
+                        operand: "requires matching vector registers".to_string(),
+                    });
+                }
+                let low_vector = |reg: PhysReg| match reg {
+                    PhysReg::Xmm(index) | PhysReg::Ymm(index) | PhysReg::Zmm(index) => index < 16,
+                    _ => false,
+                };
+                match op.x86_hint {
+                    Some(X86OpHint::SseOp { prefix, opcode })
+                        if width == VecWidth::V128
+                            && dst_reg == src_reg
+                            && [dst_reg, src_reg, control_reg].into_iter().all(low_vector)
+                            && prefix == X86SsePrefix::OpSize
+                            && opcode == 0x00 =>
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_op38_rr(Some(0x66), 0x00, dst_reg, control_reg);
+                    }
+                    Some(X86OpHint::VexOp {
+                        map,
+                        pp,
+                        opcode,
+                        width: encoded_width,
+                        w,
+                    }) if map == X86VecMap::Map0F38
+                        && pp == X86SsePrefix::OpSize
+                        && opcode == 0x00
+                        && encoded_width == width
+                        && width != VecWidth::V512
+                        && [dst_reg, src_reg, control_reg].into_iter().all(low_vector) =>
+                    {
+                        self.emit_vec_rrr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Vex,
+                                map,
+                                pp,
+                                opcode,
+                                width,
+                                w,
+                            },
+                            dst_reg,
+                            src_reg,
+                            control_reg,
+                        );
+                    }
+                    Some(X86OpHint::EvexOp {
+                        map,
+                        pp,
+                        opcode,
+                        width: encoded_width,
+                        w,
+                    }) if map == X86VecMap::Map0F38
+                        && pp == X86SsePrefix::OpSize
+                        && opcode == 0x00
+                        && encoded_width == width =>
+                    {
+                        self.emit_vec_rrr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Evex,
+                                map,
+                                pp,
+                                opcode,
+                                width,
+                                w,
+                            },
+                            dst_reg,
+                            src_reg,
+                            control_reg,
+                        );
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("unhinted or malformed VByteShuffle I8x{lanes}"),
+                        });
+                    }
+                }
+            }
+
             OpKind::VUnary {
                 dst,
                 src,
@@ -14459,6 +14570,38 @@ mod tests {
                 &[0x62, 0xA1, 0xF5, 0x40, 0x63, 0xC2][..],
                 &[0x62, 0xA1, 0xF5, 0x40, 0x63, 0xC2][..],
             ),
+            (
+                &[0x66, 0x0F, 0x38, 0x00, 0xCA][..],
+                &[0x66, 0x0F, 0x38, 0x00, 0xCA][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0x59, 0x00, 0xDD][..],
+                &[0xC4, 0xE2, 0x59, 0x00, 0xDD][..],
+            ),
+            (
+                &[0xC4, 0xC2, 0x45, 0x00, 0xF0][..],
+                &[0xC4, 0xC2, 0x45, 0x00, 0xF0][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0xD9, 0x00, 0xDD][..],
+                &[0xC4, 0xE2, 0xD9, 0x00, 0xDD][..],
+            ),
+            (
+                &[0x62, 0xA2, 0x75, 0x40, 0x00, 0xC2][..],
+                &[0x62, 0xA2, 0x75, 0x40, 0x00, 0xC2][..],
+            ),
+            (
+                &[0x62, 0x52, 0x2D, 0x08, 0x00, 0xCB][..],
+                &[0x62, 0x52, 0x2D, 0x08, 0x00, 0xCB][..],
+            ),
+            (
+                &[0x62, 0x52, 0x15, 0x28, 0x00, 0xE6][..],
+                &[0x62, 0x52, 0x15, 0x28, 0x00, 0xE6][..],
+            ),
+            (
+                &[0x62, 0xA2, 0xF5, 0x40, 0x00, 0xC2][..],
+                &[0x62, 0xA2, 0xF5, 0x40, 0x00, 0xC2][..],
+            ),
         ] {
             let mut block = instruction.to_vec();
             block.push(0xF4);
@@ -14786,6 +14929,94 @@ mod tests {
                     map: X86VecMap::Map0F,
                     pp: X86SsePrefix::OpSize,
                     opcode: 0x63,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_byte_shuffle_rejects_unhinted_and_malformed_encodings() {
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let ymm = |index| VReg::Arch(ArchReg::X86(X86Reg::Ymm(index)));
+        let zmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Zmm(index)));
+        let shuffle = |dst, src, control, lanes, block_lanes| OpKind::VByteShuffle {
+            dst,
+            src,
+            control,
+            lanes,
+            block_lanes,
+        };
+
+        assert!(matches!(
+            lower_single_op_err(shuffle(xmm(1), xmm(1), xmm(2), 16, 16)),
+            LowerError::UnsupportedOp { .. }
+        ));
+
+        for (kind, hint) in [
+            (
+                shuffle(xmm(1), xmm(1), xmm(2), 16, 8),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x00,
+                },
+            ),
+            (
+                shuffle(xmm(1), xmm(2), xmm(3), 16, 16),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x00,
+                },
+            ),
+            (
+                shuffle(xmm(1), xmm(1), xmm(2), 16, 16),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x00,
+                },
+            ),
+            (
+                shuffle(ymm(1), ymm(2), ymm(3), 32, 16),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x00,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                shuffle(ymm(16), ymm(17), ymm(18), 32, 16),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x00,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                shuffle(zmm(16), zmm(17), zmm(18), 64, 16),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x01,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+            ),
+            (
+                shuffle(ymm(16), ymm(17), ymm(18), 32, 16),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x00,
                     width: VecWidth::V128,
                     w: false,
                 },
