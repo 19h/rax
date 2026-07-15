@@ -364,20 +364,29 @@ pub struct X86_64Vcpu {
     ))]
     jit_hot: std::collections::HashMap<u64, u32>,
     /// SMIR hot-block JIT: known-ineligible heads memoized as `(head, mode_tag)
-    /// -> code fingerprint`. UNLIKE `jit_cache`, this is NOT wiped by SMC: when a
+    /// -> exact bounded code snapshot`. UNLIKE `jit_cache`, this is NOT wiped by SMC: when a
     /// guest writes a page that merely shares a 4 KiB frame with code (common in
     /// TempleOS, whose compiler keeps data beside code), the cache+hotness wipe
     /// would otherwise re-promote the same ineligible head thousands of times,
-    /// re-running the (futile) lift/optimize each time. The fingerprint (16 code
-    /// bytes at the head) self-corrects the memo: a genuine code change shifts it
-    /// and re-triggers compilation; an unchanged head is skipped cheaply. Only
+    /// re-running the (futile) lift/optimize each time. An exact snapshot of the
+    /// largest readable prefix in the JIT's lift window self-corrects the memo: a
+    /// genuine code change re-triggers compilation; an unchanged head is skipped
+    /// cheaply. Only
     /// ineligible verdicts are memoized here — compiled regions stay in
     /// `jit_cache` and are still SMC-invalidated for correctness.
     #[cfg(all(
         feature = "smir-jit",
         any(target_arch = "x86_64", target_arch = "aarch64")
     ))]
-    jit_ineligible: std::collections::HashMap<(u64, u64), u64>,
+    jit_ineligible: std::collections::HashMap<(u64, u64), Vec<u8>>,
+    /// Ineligible memo keys whose bounded code windows overlap an SMC-invalidated
+    /// page. Clean memos return in O(1); dirty memos compare their exact snapshot
+    /// once before either remaining memoized or becoming eligible for re-lifting.
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
+    jit_ineligible_dirty: std::collections::HashSet<(u64, u64)>,
     /// JIT of memory-touching regions (Load/Store via MMU helper calls). Enabled
     /// by default; `RAX_JIT_NO_MEM` disables it. Independently settable in tests.
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -993,6 +1002,11 @@ impl X86_64Vcpu {
                 any(target_arch = "x86_64", target_arch = "aarch64")
             ))]
             jit_ineligible: std::collections::HashMap::new(),
+            #[cfg(all(
+                feature = "smir-jit",
+                any(target_arch = "x86_64", target_arch = "aarch64")
+            ))]
+            jit_ineligible_dirty: std::collections::HashSet::new(),
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
             jit_mem: jit_mem_enabled() || jit_call_enabled(),
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -2169,14 +2183,21 @@ impl X86_64Vcpu {
             feature = "smir-jit",
             any(target_arch = "x86_64", target_arch = "aarch64")
         ))]
-        if !self.jit_cache.is_empty() || !self.jit_hot.is_empty() {
+        {
             let prev_page = page_base.wrapping_sub(0x1000);
             let overlaps = |rip: u64| {
                 let p = rip & !0xFFF;
                 p == page_base || p == prev_page
             };
-            self.jit_cache.retain(|&(rip, _), _| !overlaps(rip));
-            self.jit_hot.retain(|&rip, _| !overlaps(rip));
+            if !self.jit_cache.is_empty() || !self.jit_hot.is_empty() {
+                self.jit_cache.retain(|&(rip, _), _| !overlaps(rip));
+                self.jit_hot.retain(|&rip, _| !overlaps(rip));
+            }
+            for &(rip, mode_tag) in self.jit_ineligible.keys() {
+                if overlaps(rip) {
+                    self.jit_ineligible_dirty.insert((rip, mode_tag));
+                }
+            }
         }
     }
 
@@ -3124,6 +3145,7 @@ impl X86_64Vcpu {
             self.jit_cache.clear();
             self.jit_hot.clear();
             self.jit_ineligible.clear();
+            self.jit_ineligible_dirty.clear();
         }
     }
 }
@@ -3627,6 +3649,21 @@ pub fn publish_instruction_count(count: u64) {
     any(target_arch = "x86_64", target_arch = "aarch64")
 ))]
 const JIT_HOT_THRESHOLD: u32 = 64;
+
+/// Maximum guest-code prefix examined for one JIT region and retained for an
+/// exact ineligibility memo. The 8192-entry memo cap therefore bounds snapshot
+/// payload to 8192 * 512 B = 4,194,304 B, excluding map/vector metadata.
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
+const JIT_LIFT_WINDOW: usize = 512;
+
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
+const JIT_INELIGIBLE_CAP: usize = 8192;
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64", not(test)))]
 const JIT_VERIFY_MEM_LOG_LIMIT: usize = 1_000_000;
@@ -4399,8 +4436,7 @@ impl X86_64Vcpu {
         // 512 B covers typical hot loops; an unmapped suffix becomes an explicit
         // interpreter frontier instead of rejecting an otherwise liftable
         // prefix.
-        const WINDOW: usize = 512;
-        let bytes = match self.jit_read_lift_window(entry, WINDOW) {
+        let bytes = match self.jit_read_lift_window(entry, JIT_LIFT_WINDOW) {
             Some(bytes) => bytes,
             None => return Ok(None),
         };
@@ -5215,7 +5251,7 @@ impl X86_64Vcpu {
         use crate::smir::lift::{LiftContext, MemoryReader, SmirLifter};
         use crate::smir::optimize::{OptLevel, optimize_function};
 
-        let bytes = match self.jit_read_lift_window(entry, 512) {
+        let bytes = match self.jit_read_lift_window(entry, JIT_LIFT_WINDOW) {
             Some(bytes) => bytes,
             None => return "<unreadable>".to_string(),
         };
@@ -5301,11 +5337,8 @@ impl X86_64Vcpu {
             *ON.get_or_init(|| std::env::var_os("RAX_JIT_NOMEMO").is_none())
         };
         if memo_on {
-            if let Some(&fp) = self.jit_ineligible.get(&(head, mt)) {
-                if fp == self.jit_head_fingerprint(head) {
-                    return; // identical code, still ineligible — no work
-                }
-                self.jit_ineligible.remove(&(head, mt)); // code changed → re-evaluate
+            if self.jit_ineligible_unchanged((head, mt)) {
+                return;
             }
         }
         let hot = {
@@ -5339,32 +5372,54 @@ impl X86_64Vcpu {
                 self.jit_run_region(&r);
             }
             None => {
-                // Memoize the ineligible verdict keyed on the current code bytes.
-                // Soft-cap the table so a long-running guest can't grow it without
-                // bound (cleared wholesale — the fingerprints rebuild on demand).
-                if self.jit_ineligible.len() >= 8192 {
-                    self.jit_ineligible.clear();
+                if memo_on {
+                    // Soft-cap the table so a long-running guest cannot grow it
+                    // without bound (cleared wholesale; snapshots rebuild on
+                    // demand). `RAX_JIT_NOMEMO` bypasses both lookup and storage.
+                    if self.jit_ineligible.len() >= JIT_INELIGIBLE_CAP {
+                        self.jit_ineligible.clear();
+                        self.jit_ineligible_dirty.clear();
+                    }
+                    let key = (head, mt);
+                    let snapshot = self.jit_code_snapshot(head);
+                    self.jit_ineligible.insert(key, snapshot);
+                    self.jit_ineligible_dirty.remove(&key);
                 }
-                let fp = self.jit_head_fingerprint(head);
-                self.jit_ineligible.insert((head, mt), fp);
             }
         }
     }
 
-    /// Cheap fault-free fingerprint of the guest code bytes at `head`: 16 bytes
-    /// folded into a u64. Used to memoize an ineligible JIT verdict (see
-    /// [`Self::jit_ineligible`]) so a self-modifying-code page write doesn't force
-    /// a redundant re-lift when the head's instructions are actually unchanged. A
-    /// genuine code edit shifts the fingerprint and re-triggers compilation. Reads
-    /// are pure RAM fetches (no SMC marking); an unmapped head folds to a stable
-    /// sentinel so its deterministic-fault verdict is still memoized.
-    fn jit_head_fingerprint(&mut self, head: u64) -> u64 {
-        let lo = self.mmu.read_u64(head, &self.sregs).unwrap_or(head);
-        let hi = self
-            .mmu
-            .read_u64(head.wrapping_add(8), &self.sregs)
-            .unwrap_or(0);
-        lo ^ hi.rotate_left(17)
+    /// Return whether an existing ineligible memo still applies. A clean key has
+    /// observed no overlapping code-page write and returns without touching the
+    /// MMU. A dirty key compares the exact lift-window snapshot once, eliminating
+    /// both the former 16-byte blind suffix and hash-collision false matches.
+    fn jit_ineligible_unchanged(&mut self, key: (u64, u64)) -> bool {
+        if !self.jit_ineligible.contains_key(&key) {
+            self.jit_ineligible_dirty.remove(&key);
+            return false;
+        }
+        if !self.jit_ineligible_dirty.remove(&key) {
+            return true;
+        }
+
+        let current = self.jit_code_snapshot(key.0);
+        if self
+            .jit_ineligible
+            .get(&key)
+            .is_some_and(|saved| saved == &current)
+        {
+            return true;
+        }
+
+        self.jit_ineligible.remove(&key);
+        false
+    }
+
+    /// Snapshot the exact largest readable prefix used for JIT lifting. An empty
+    /// vector is the stable representation of an unreadable entry address.
+    fn jit_code_snapshot(&mut self, head: u64) -> Vec<u8> {
+        self.jit_read_lift_window(head, JIT_LIFT_WINDOW)
+            .unwrap_or_default()
     }
 
     /// Number of distinct regions the JIT has compiled (cache entries that
@@ -5554,6 +5609,59 @@ mod decode_cache_invalidation_tests {
             vcpu.regs.rax, 2,
             "decode-cache hit must validate against the current fetched bytes",
         );
+    }
+
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
+    #[test]
+    fn ineligible_jit_memo_tracks_exact_lift_window_after_smc() {
+        let (mut vcpu, mem) = test_vcpu_with_mem();
+        let head = 0x2000;
+        let key = (head, vcpu.jit_mode_tag());
+        let original = vcpu.jit_code_snapshot(head);
+        assert_eq!(original.len(), JIT_LIFT_WINDOW);
+        vcpu.jit_ineligible.insert(key, original);
+
+        // Clean memos are O(1): without an SMC invalidation, even a direct test
+        // mutation beyond the former 16-byte fingerprint is not re-read.
+        mem.write_slice(&[0xA5], GuestAddress(head + 32)).unwrap();
+        assert!(vcpu.jit_ineligible_unchanged(key));
+
+        // Once the page is invalidated, the exact snapshot observes that suffix
+        // edit and removes the stale verdict so the head can be re-lifted.
+        vcpu.invalidate_code_page(head & !0xFFF);
+        assert!(vcpu.jit_ineligible_dirty.contains(&key));
+        assert!(!vcpu.jit_ineligible_unchanged(key));
+        assert!(!vcpu.jit_ineligible.contains_key(&key));
+        assert!(!vcpu.jit_ineligible_dirty.contains(&key));
+
+        // A same-page write outside [head, head + 512) dirties the conservative
+        // page-level candidate but retains it after one exact comparison.
+        let unchanged_snapshot = vcpu.jit_code_snapshot(head);
+        vcpu.jit_ineligible.insert(key, unchanged_snapshot);
+        mem.write_slice(&[0x5A], GuestAddress(head + 0x800))
+            .unwrap();
+        vcpu.invalidate_code_page(head & !0xFFF);
+        assert!(vcpu.jit_ineligible_dirty.contains(&key));
+        assert!(vcpu.jit_ineligible_unchanged(key));
+        assert!(vcpu.jit_ineligible.contains_key(&key));
+        assert!(!vcpu.jit_ineligible_dirty.contains(&key));
+
+        // A head in the final 512 B of page P overlaps P+1; invalidating P+1
+        // must compare and reject a snapshot changed across that boundary.
+        vcpu.jit_ineligible.clear();
+        vcpu.jit_ineligible_dirty.clear();
+        let crossing_head = 0x2F00;
+        let crossing_key = (crossing_head, vcpu.jit_mode_tag());
+        let crossing_snapshot = vcpu.jit_code_snapshot(crossing_head);
+        vcpu.jit_ineligible.insert(crossing_key, crossing_snapshot);
+        mem.write_slice(&[0x3C], GuestAddress(0x3010)).unwrap();
+        vcpu.invalidate_code_page(0x3000);
+        assert!(vcpu.jit_ineligible_dirty.contains(&crossing_key));
+        assert!(!vcpu.jit_ineligible_unchanged(crossing_key));
+        assert!(!vcpu.jit_ineligible.contains_key(&crossing_key));
     }
 }
 
