@@ -16599,18 +16599,37 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let raw = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VSadBytes {
-                dst: raw,
-                src1: dst,
-                src2,
-                width: VecWidth::V128,
-            },
-        ));
-        self.append_legacy_packed_result(dst, raw, VecElementType::I64, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            // Keep the computation detached from the architectural destination
+            // until the aligned source load has completed successfully.
+            let raw = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VSadBytes {
+                    dst: raw,
+                    src1: dst,
+                    src2,
+                    width: VecWidth::V128,
+                },
+            ));
+            self.append_legacy_packed_result(dst, raw, VecElementType::I64, pc, ctx, &mut ops);
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VSadBytes {
+                    dst,
+                    src1: dst,
+                    src2,
+                    width: VecWidth::V128,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                },
+            ));
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -19739,16 +19758,22 @@ impl X86_64Lifter {
                 },
             prefix.width,
         );
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VSadBytes {
-                dst,
-                src1,
-                src2,
-                width: prefix.width,
-            },
-        ));
+        let kind = OpKind::VSadBytes {
+            dst,
+            src1,
+            src2,
+            width: prefix.width,
+        };
+        if modrm.is_memory {
+            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                kind,
+                self.vec_hint(prefix, 0xF6),
+            ));
+        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -60138,18 +60163,48 @@ mod tests {
             let result = lift_single(bytes).unwrap();
             assert_eq!(result.bytes_consumed, bytes.len());
             let legacy = bytes[0] == 0x66;
-            assert!(result.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VSadBytes {
-                    dst: actual_dst,
-                    src1: VReg::Arch(ArchReg::X86(actual_src1)),
-                    src2: VReg::Arch(ArchReg::X86(actual_src2)),
-                    width: actual_width,
-                } if (legacy || actual_dst == VReg::Arch(ArchReg::X86(dst)))
-                    && actual_src1 == src1
-                    && actual_src2 == src2
-                    && actual_width == width
-            )));
+            let sad = result
+                .ops
+                .iter()
+                .find(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::VSadBytes {
+                            dst: actual_dst,
+                            src1: VReg::Arch(ArchReg::X86(actual_src1)),
+                            src2: VReg::Arch(ArchReg::X86(actual_src2)),
+                            width: actual_width,
+                        } if (legacy || actual_dst == VReg::Arch(ArchReg::X86(dst)))
+                            && actual_src1 == src1
+                            && actual_src2 == src2
+                            && actual_width == width
+                    )
+                })
+                .expect("direct register PSADBW must be atomic");
+            let expected_hint = if legacy {
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                }
+            } else if bytes[0] == 0xC4 {
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                    width,
+                    w: false,
+                }
+            } else {
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                    width,
+                    w: false,
+                }
+            };
+            assert_eq!(sad.x86_hint, Some(expected_hint));
+            assert_eq!(result.ops.len(), 1);
             assert!(
                 result
                     .ops
@@ -60206,8 +60261,22 @@ mod tests {
         )));
 
         // W is ignored in VEX and EVEX encodings.
-        assert!(lift_single(&[0xC4, 0x41, 0xA1, 0xF6, 0xCA]).is_ok());
-        assert!(lift_single(&[0x62, 0xA1, 0xE5, 0x40, 0xF6, 0xCA]).is_ok());
+        let vex_w1 = lift_single(&[0xC4, 0x41, 0xA1, 0xF6, 0xCA]).unwrap();
+        assert!(matches!(
+            vex_w1.ops.as_slice(),
+            [SmirOp {
+                x86_hint: Some(X86OpHint::VexOp { w: true, .. }),
+                ..
+            }]
+        ));
+        let evex_w1 = lift_single(&[0x62, 0xA1, 0xE5, 0x40, 0xF6, 0xCA]).unwrap();
+        assert!(matches!(
+            evex_w1.ops.as_slice(),
+            [SmirOp {
+                x86_hint: Some(X86OpHint::EvexOp { w: true, .. }),
+                ..
+            }]
+        ));
 
         for bytes in [
             &[0x0F, 0xF6, 0xCA][..],

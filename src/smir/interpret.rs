@@ -8200,6 +8200,7 @@ impl SmirInterpreter {
                 src2,
                 width,
             } => {
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, x86_hint);
                 // Snapshot both inputs before writing: every register form may
                 // alias the destination architecturally.
                 let first = Self::read_vec(ctx, *src1);
@@ -8216,6 +8217,7 @@ impl SmirInterpreter {
                     Self::set_lane(&mut result, block, 64, u64::from(sum));
                 }
                 Self::write_vec(ctx, *dst, result);
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
             }
 
             OpKind::X86Aes {

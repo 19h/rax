@@ -1777,6 +1777,41 @@ fn x86_vector_integer_average_shape_valid(op: &crate::smir::ir::ops::OpKind) -> 
     [dst, src1, src2].into_iter().all(vector_matches_width)
 }
 
+/// Exact PSADBW/VPSADBW semantic shape. Every consecutive group of eight
+/// unsigned-byte absolute differences produces one zero-extended qword result.
+/// Restricting admission to architectural registers of the declared width
+/// excludes the width-general IR operation used by non-x86 source ISAs.
+fn x86_vector_sad_bytes_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86Reg};
+
+    let OpKind::VSadBytes {
+        dst,
+        src1,
+        src2,
+        width,
+    } = op
+    else {
+        return false;
+    };
+    let vector_matches_width = |reg: &VReg| {
+        matches!(
+            (reg, width),
+            (
+                VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                VecWidth::V128
+            ) | (
+                VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                VecWidth::V256
+            ) | (
+                VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                VecWidth::V512
+            )
+        )
+    };
+    [dst, src1, src2].into_iter().all(vector_matches_width)
+}
+
 /// Exact non-accumulating PMADDUBSW/VPMADDUBSW semantic shape. `VReg::Imm(0)`
 /// denotes the instruction's implicit all-zero word accumulator; unlike VNNI,
 /// the architectural destination is not an input except in the legacy
@@ -1894,6 +1929,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::VByteShuffle { .. }
             | OpKind::VHorizontalBin { .. }
             | OpKind::VLane { .. }
+            | OpKind::VSadBytes { .. }
             | OpKind::VAnd { .. }
             | OpKind::VAndNot { .. }
             | OpKind::VOr { .. }
@@ -1931,6 +1967,10 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     }
 
     if matches!(op, OpKind::VLane { .. }) && !x86_vector_integer_average_shape_valid(op) {
+        return false;
+    }
+
+    if matches!(op, OpKind::VSadBytes { .. }) && !x86_vector_sad_bytes_shape_valid(op) {
         return false;
     }
 
@@ -3580,6 +3620,54 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
         };
     }
 
+    if x86_vector_sad_bytes_shape_valid(&op.kind) {
+        let OpKind::VSadBytes {
+            dst,
+            src1,
+            src2,
+            width,
+        } = &op.kind
+        else {
+            unreachable!("validated PSADBW shape is VSadBytes");
+        };
+        return match op.x86_hint {
+            Some(X86OpHint::SseOp { prefix, opcode }) => {
+                *width == VecWidth::V128
+                    && dst == src1
+                    && [dst, src1, src2].into_iter().all(low_vector)
+                    && prefix == crate::smir::ir::ops::X86SsePrefix::OpSize
+                    && opcode == 0xF6
+            }
+            Some(X86OpHint::VexOp {
+                map,
+                pp,
+                opcode,
+                width: encoded_width,
+                ..
+            }) => {
+                map == X86VecMap::Map0F
+                    && pp == crate::smir::ir::ops::X86SsePrefix::OpSize
+                    && opcode == 0xF6
+                    && encoded_width == *width
+                    && *width != VecWidth::V512
+                    && [dst, src1, src2].into_iter().all(low_vector)
+            }
+            Some(X86OpHint::EvexOp {
+                map,
+                pp,
+                opcode,
+                width: encoded_width,
+                ..
+            }) => {
+                map == X86VecMap::Map0F
+                    && pp == crate::smir::ir::ops::X86SsePrefix::OpSize
+                    && opcode == 0xF6
+                    && encoded_width == *width
+            }
+            _ => false,
+        };
+    }
+
     if x86_vector_integer_maddubs_shape_valid(&op.kind) {
         let OpKind::VDotProduct {
             dst,
@@ -4072,6 +4160,26 @@ fn x86_vector_integer_average_feature_requirements(
     }
 }
 
+/// Return `(AVX, AVX2, AVX-512VL)` requirements for an admitted
+/// PSADBW/VPSADBW. Legacy PSADBW is baseline SSE2 on x86-64; EVEX.512 uses
+/// the trampoline's unconditional AVX-512BW requirement.
+fn x86_vector_sad_bytes_feature_requirements(
+    op: &crate::smir::ir::ops::SmirOp,
+) -> (bool, bool, bool) {
+    use crate::smir::ir::ops::X86OpHint;
+    use crate::smir::ir::types::VecWidth;
+
+    if !x86_vector_sad_bytes_shape_valid(&op.kind) {
+        return (false, false, false);
+    }
+    match op.x86_hint {
+        Some(X86OpHint::SseOp { .. }) => (false, false, false),
+        Some(X86OpHint::VexOp { width, .. }) => (true, width == VecWidth::V256, false),
+        Some(X86OpHint::EvexOp { width, .. }) => (false, false, width != VecWidth::V512),
+        _ => (false, false, false),
+    }
+}
+
 /// Return `(SSSE3, AVX, AVX2, AVX-512VL)` requirements for an admitted
 /// PMADDUBSW/VPMADDUBSW. EVEX.512 requires AVX-512BW, which the vector-state
 /// trampoline already requires unconditionally; EVEX.128/256 additionally
@@ -4246,6 +4354,8 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_horizontal_avx2 = false;
     let mut needs_average_avx = false;
     let mut needs_average_avx2 = false;
+    let mut needs_sad_bytes_avx = false;
+    let mut needs_sad_bytes_avx2 = false;
     let mut needs_maddubs_ssse3 = false;
     let mut needs_maddubs_avx = false;
     let mut needs_maddubs_avx2 = false;
@@ -4278,6 +4388,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86Aes { width, .. }
             | OpKind::X86PackedShiftImm { width, .. }
             | OpKind::X86PackedShift { width, .. }
+            | OpKind::VSadBytes { width, .. }
             | OpKind::VDotProduct { width, .. }
             | OpKind::VDotProductBF16 { width, .. }
             | OpKind::VCvtFP32ToBF16 { width, .. }
@@ -4341,6 +4452,8 @@ pub fn x86_native_vector_features_supported_excluding(
             x86_vector_integer_horizontal_feature_requirements(op);
         let (average_avx, average_avx2, average_vl) =
             x86_vector_integer_average_feature_requirements(op);
+        let (sad_bytes_avx, sad_bytes_avx2, sad_bytes_vl) =
+            x86_vector_sad_bytes_feature_requirements(op);
         let (maddubs_ssse3, maddubs_avx, maddubs_avx2, maddubs_vl) =
             x86_vector_integer_maddubs_feature_requirements(op);
         let (maddwd_avx, maddwd_avx2, maddwd_vl) =
@@ -4360,6 +4473,7 @@ pub fn x86_native_vector_features_supported_excluding(
             OpKind::VByteShuffle { .. } => byte_shuffle_vl,
             OpKind::VHorizontalBin { .. } => false,
             OpKind::VLane { .. } => average_vl,
+            OpKind::VSadBytes { .. } => sad_bytes_vl,
             OpKind::VDotProduct { .. } if x86_vector_integer_maddubs_shape_valid(kind) => {
                 maddubs_vl
             }
@@ -4457,6 +4571,8 @@ pub fn x86_native_vector_features_supported_excluding(
         needs_horizontal_avx2 |= horizontal_avx2;
         needs_average_avx |= average_avx;
         needs_average_avx2 |= average_avx2;
+        needs_sad_bytes_avx |= sad_bytes_avx;
+        needs_sad_bytes_avx2 |= sad_bytes_avx2;
         needs_maddubs_ssse3 |= maddubs_ssse3;
         needs_maddubs_avx |= maddubs_avx;
         needs_maddubs_avx2 |= maddubs_avx2;
@@ -4521,6 +4637,8 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_horizontal_avx2 || std::is_x86_feature_detected!("avx2"))
             && (!needs_average_avx || std::is_x86_feature_detected!("avx"))
             && (!needs_average_avx2 || std::is_x86_feature_detected!("avx2"))
+            && (!needs_sad_bytes_avx || std::is_x86_feature_detected!("avx"))
+            && (!needs_sad_bytes_avx2 || std::is_x86_feature_detected!("avx2"))
             && (!needs_maddubs_ssse3 || std::is_x86_feature_detected!("ssse3"))
             && (!needs_maddubs_avx || std::is_x86_feature_detected!("avx"))
             && (!needs_maddubs_avx2 || std::is_x86_feature_detected!("avx2"))
@@ -4577,6 +4695,8 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_horizontal_avx2,
             needs_average_avx,
             needs_average_avx2,
+            needs_sad_bytes_avx,
+            needs_sad_bytes_avx2,
             needs_maddubs_ssse3,
             needs_maddubs_avx,
             needs_maddubs_avx2,
@@ -12680,6 +12800,207 @@ mod jit_gate_tests {
                     pp: X86SsePrefix::OpSize,
                     opcode: 0xE3,
                     width: VecWidth::V512,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(!x86_native_vector_smir_op(&malformed), "{malformed:?}");
+        }
+    }
+
+    #[test]
+    fn x86_psadbw_gate_validates_widths_encodings_aliases_and_features() {
+        let xmm1 = x86(X86Reg::Xmm(1));
+        let xmm2 = x86(X86Reg::Xmm(2));
+        let xmm3 = x86(X86Reg::Xmm(3));
+        let ymm1 = x86(X86Reg::Ymm(1));
+        let ymm2 = x86(X86Reg::Ymm(2));
+        let ymm3 = x86(X86Reg::Ymm(3));
+        let sad = |dst, src1, src2, width| OpKind::VSadBytes {
+            dst,
+            src1,
+            src2,
+            width,
+        };
+
+        for (kind, hint, requirements) in [
+            (
+                sad(xmm1, xmm1, xmm2, VecWidth::V128),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                },
+                (false, false, false),
+            ),
+            (
+                sad(xmm1, xmm2, xmm3, VecWidth::V128),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                (true, false, false),
+            ),
+            (
+                sad(ymm1, ymm2, ymm3, VecWidth::V256),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                (true, true, false),
+            ),
+            (
+                sad(
+                    x86(X86Reg::Xmm(16)),
+                    x86(X86Reg::Xmm(17)),
+                    x86(X86Reg::Xmm(18)),
+                    VecWidth::V128,
+                ),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                (false, false, true),
+            ),
+            (
+                sad(
+                    x86(X86Reg::Zmm(16)),
+                    x86(X86Reg::Zmm(17)),
+                    x86(X86Reg::Zmm(18)),
+                    VecWidth::V512,
+                ),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+                (false, false, false),
+            ),
+        ] {
+            let smir_op = crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                kind.clone(),
+                hint,
+            );
+            assert!(x86_vector_sad_bytes_shape_valid(&kind), "{kind:?}");
+            assert!(is_x86_native_vector_op(&kind), "{kind:?}");
+            assert!(x86_native_vector_smir_op(&smir_op), "{smir_op:?}");
+            assert_eq!(
+                x86_vector_sad_bytes_feature_requirements(&smir_op),
+                requirements,
+                "{smir_op:?}"
+            );
+
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(hint);
+            assert!(is_native_clobber_safe(&function), "{smir_op:?}");
+        }
+
+        let valid = sad(xmm1, xmm1, xmm2, VecWidth::V128);
+        let unhinted = crate::smir::ir::ops::SmirOp::new(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            valid.clone(),
+        );
+        assert!(is_x86_native_vector_op(&unhinted.kind));
+        assert!(!x86_native_vector_smir_op(&unhinted));
+
+        for malformed_kind in [
+            sad(xmm1, xmm1, ymm2, VecWidth::V128),
+            sad(ymm1, ymm2, ymm3, VecWidth::V128),
+            sad(VReg::Virtual(VirtualId(61)), xmm1, xmm2, VecWidth::V128),
+        ] {
+            assert!(
+                !is_x86_native_vector_op(&malformed_kind),
+                "{malformed_kind:?}"
+            );
+        }
+
+        for malformed in [
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                sad(xmm1, xmm2, xmm3, VecWidth::V128),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                valid.clone(),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0xF6,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                valid,
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE0,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                sad(ymm1, ymm2, ymm3, VecWidth::V256),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                sad(
+                    x86(X86Reg::Ymm(16)),
+                    x86(X86Reg::Ymm(17)),
+                    x86(X86Reg::Ymm(18)),
+                    VecWidth::V256,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                sad(
+                    x86(X86Reg::Zmm(16)),
+                    x86(X86Reg::Zmm(17)),
+                    x86(X86Reg::Zmm(18)),
+                    VecWidth::V512,
+                ),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                    width: VecWidth::V256,
                     w: false,
                 },
             ),
