@@ -5439,6 +5439,106 @@ fn jit_phminposuw_matches_unsigned_first_tie_alias_wig_and_upper_state() {
 }
 
 #[test]
+fn jit_mov_mask_family_matches_lane_bits_extensions_wig_and_source_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx")
+        || !std::is_x86_feature_detected!("avx2")
+    {
+        return;
+    }
+
+    // loop: movmskps eax,xmm1; {rex.w} movmskpd rdx,xmm2;
+    //       pmovmskb r8d,xmm9; {vex3,w1} vmovmskps r9d,ymm10;
+    //       {vex3,w1} vmovmskpd r10d,ymm11;
+    //       {vex3,w1} vpmovmskb r11d,xmm12;
+    //       {vex3,w1} vpmovmskb r12d,ymm13; dec ecx; jnz loop; hlt
+    let code = [
+        0x0F, 0x50, 0xC1, 0x66, 0x48, 0x0F, 0x50, 0xD2, 0x66, 0x45, 0x0F, 0xD7, 0xC1, 0xC4, 0x41,
+        0xFC, 0x50, 0xCA, 0xC4, 0x41, 0xFD, 0x50, 0xD3, 0xC4, 0x41, 0xF9, 0xD7, 0xDC, 0xC4, 0x41,
+        0xFD, 0xD7, 0xE5, 0xFF, 0xC9, 0x75, 0xDB, 0xF4,
+    ];
+
+    fn packed_sign_lanes(mask: u32, lanes: usize, lane_bytes: usize) -> [u64; 4] {
+        let mut bytes = [0u8; 32];
+        for lane in 0..lanes {
+            bytes[lane * lane_bytes] = lane as u8;
+            if mask & (1 << lane) != 0 {
+                bytes[lane * lane_bytes + lane_bytes - 1] |= 0x80;
+            }
+        }
+        let mut words = [0u64; 4];
+        for (word, chunk) in words.iter_mut().zip(bytes.chunks_exact(8)) {
+            *word = u64::from_le_bytes(chunk.try_into().unwrap());
+        }
+        words
+    }
+
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.rax = u64::MAX;
+        regs.rdx = u64::MAX;
+        regs.r8 = u64::MAX;
+        regs.r9 = u64::MAX;
+        regs.r10 = u64::MAX;
+        regs.r11 = u64::MAX;
+        regs.r12 = u64::MAX;
+        regs.rflags = 0xCD7;
+
+        let movmskps = packed_sign_lanes(0b1010, 4, 4);
+        regs.xmm[1] = [movmskps[0], movmskps[1]];
+        let movmskpd = packed_sign_lanes(0b01, 2, 8);
+        regs.xmm[2] = [movmskpd[0], movmskpd[1]];
+        let pmovmskb = packed_sign_lanes(0xA55A, 16, 1);
+        regs.xmm[9] = [pmovmskb[0], pmovmskb[1]];
+
+        let vmovmskps = packed_sign_lanes(0xB3, 8, 4);
+        regs.xmm[10] = [vmovmskps[0], vmovmskps[1]];
+        regs.ymm_high[10] = [vmovmskps[2], vmovmskps[3]];
+        let vmovmskpd = packed_sign_lanes(0xD, 4, 8);
+        regs.xmm[11] = [vmovmskpd[0], vmovmskpd[1]];
+        regs.ymm_high[11] = [vmovmskpd[2], vmovmskpd[3]];
+        let vpmovmskb_xmm = packed_sign_lanes(0xC33C, 16, 1);
+        regs.xmm[12] = [vpmovmskb_xmm[0], vpmovmskb_xmm[1]];
+        let vpmovmskb_ymm = packed_sign_lanes(0xA55A_C33C, 32, 1);
+        regs.xmm[13] = [vpmovmskb_ymm[0], vpmovmskb_ymm[1]];
+        regs.ymm_high[13] = [vpmovmskb_ymm[2], vpmovmskb_ymm[3]];
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("MOVMSK/PMOVMSKB JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM source state");
+    assert_eq!(
+        jit_regs.ymm_high, interp_regs.ymm_high,
+        "YMM upper source state"
+    );
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(jit_regs.zmm_ext, interp_regs.zmm_ext, "extended ZMM state");
+    assert_eq!(jit_regs.rcx, interp_regs.rcx, "loop counter");
+    assert_eq!(jit_regs.rflags, interp_regs.rflags, "architectural flags");
+    assert_eq!(jit_regs.rax, 0b1010, "legacy MOVMSKPS");
+    assert_eq!(jit_regs.rdx, 0b01, "legacy REX.W MOVMSKPD");
+    assert_eq!(jit_regs.r8, 0xA55A, "legacy PMOVMSKB");
+    assert_eq!(jit_regs.r9, 0xB3, "VEX.W1 VMOVMSKPS");
+    assert_eq!(jit_regs.r10, 0xD, "VEX.W1 VMOVMSKPD");
+    assert_eq!(jit_regs.r11, 0xC33C, "VEX.W1 VPMOVMSKB xmm");
+    assert_eq!(jit_regs.r12, 0xA55A_C33C, "VEX.W1 VPMOVMSKB ymm");
+}
+
+#[test]
 fn jit_psadbw_matches_unsigned_sums_aliases_wig_and_upper_state() {
     if !std::is_x86_feature_detected!("avx512f")
         || !std::is_x86_feature_detected!("avx512bw")

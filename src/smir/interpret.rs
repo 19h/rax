@@ -8260,6 +8260,23 @@ impl SmirInterpreter {
                 Self::restore_legacy_xmm_upper(ctx, *dst, old);
             }
 
+            OpKind::X86MovMask {
+                dst,
+                src,
+                elem,
+                lanes,
+                dst_width,
+            } => {
+                let source = Self::read_vec(ctx, *src);
+                let lane_bits = elem.bytes() * 8;
+                let mut mask = 0u64;
+                for lane in 0..*lanes {
+                    let sign = Self::get_lane(&source, lane, lane_bits) >> (lane_bits - 1);
+                    mask |= (sign & 1) << lane;
+                }
+                Self::write_x86_partial(ctx, *dst, mask, *dst_width);
+            }
+
             OpKind::X86Aes {
                 dst,
                 src1,

@@ -2759,7 +2759,8 @@ impl OpKind {
 
             OpKind::VUnary { src, .. }
             | OpKind::VReduce { src, .. }
-            | OpKind::X86Phminposuw { src, .. } => {
+            | OpKind::X86Phminposuw { src, .. }
+            | OpKind::X86MovMask { src, .. } => {
                 result.push(*src);
             }
 
@@ -6690,6 +6691,71 @@ mod tests {
                     x86_hint: Some(_),
                     ..
                 }]
+            ));
+            assert!(ops[0].kind.flags_written().is_empty());
+        }
+
+        for (bytes, dst, src, elem, lanes, dst_width) in [
+            (
+                &[0x0F, 0x50, 0xC1][..],
+                X86Reg::Rax,
+                X86Reg::Xmm(1),
+                VecElementType::F32,
+                4,
+                OpWidth::W32,
+            ),
+            (
+                &[0x66, 0x48, 0x0F, 0x50, 0xD1][..],
+                X86Reg::Rdx,
+                X86Reg::Xmm(1),
+                VecElementType::F64,
+                2,
+                OpWidth::W64,
+            ),
+            (
+                &[0x66, 0x45, 0x0F, 0xD7, 0xCA][..],
+                X86Reg::R9,
+                X86Reg::Xmm(10),
+                VecElementType::I8,
+                16,
+                OpWidth::W32,
+            ),
+            (
+                &[0xC4, 0x41, 0xFC, 0x50, 0xC1][..],
+                X86Reg::R8,
+                X86Reg::Ymm(9),
+                VecElementType::F32,
+                8,
+                OpWidth::W32,
+            ),
+            (
+                &[0xC4, 0x41, 0xFD, 0xD7, 0xCA][..],
+                X86Reg::R9,
+                X86Reg::Ymm(10),
+                VecElementType::I8,
+                32,
+                OpWidth::W32,
+            ),
+        ] {
+            let register = optimized(bytes);
+            let ops = &register.blocks[0].ops;
+            assert!(matches!(
+                ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86MovMask {
+                        dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                        src: VReg::Arch(ArchReg::X86(actual_src)),
+                        elem: actual_elem,
+                        lanes: actual_lanes,
+                        dst_width: actual_dst_width,
+                    },
+                    x86_hint: Some(_),
+                    ..
+                }] if *actual_dst == dst
+                    && *actual_src == src
+                    && *actual_elem == elem
+                    && *actual_lanes == lanes
+                    && *actual_dst_width == dst_width
             ));
             assert!(ops[0].kind.flags_written().is_empty());
         }
@@ -10671,6 +10737,49 @@ mod tests {
 
         dead_code_elimination(&mut block);
         assert_eq!(block.ops.len(), 3, "VPopcnt source producer was removed");
+        assert!(block.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VBroadcast { dst, .. } if dst == source
+        )));
+    }
+
+    #[test]
+    fn x86_mov_mask_source_definition_survives_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let source = VReg::virt(1);
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(0x80),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::VBroadcast {
+                dst: source,
+                scalar,
+                elem: VecElementType::I8,
+                lanes: 16,
+            },
+        ));
+        block.push_op(make_op(
+            2,
+            OpKind::X86MovMask {
+                dst,
+                src: source,
+                elem: VecElementType::I8,
+                lanes: 16,
+                dst_width: OpWidth::W32,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(block.ops.len(), 3, "MOVMSK source producer was removed");
         assert!(block.ops.iter().any(|op| matches!(
             op.kind,
             OpKind::VBroadcast { dst, .. } if dst == source

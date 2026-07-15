@@ -1429,6 +1429,28 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(reg, rm);
     }
 
+    /// Emit a legacy 0F-map MOVMSK/PMOVMSKB register form. The ModR/M.reg
+    /// operand is a GPR while ModR/M.rm is XMM, but both extension bits use the
+    /// ordinary REX layout. `w` preserves the decoded legacy destination width.
+    fn emit_sse_mov_mask_rr(
+        &mut self,
+        prefix: Option<u8>,
+        opcode: u8,
+        reg: PhysReg,
+        rm: PhysReg,
+        w: bool,
+    ) {
+        if let Some(prefix) = prefix {
+            self.code.emit_u8(prefix);
+        }
+        if w || reg.is_extended() || rm.is_extended() {
+            self.emit_rex(w, reg, None, rm);
+        }
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(reg, rm);
+    }
+
     pub fn emit_sse_op3a_rr_imm(
         &mut self,
         prefix: Option<u8>,
@@ -8758,6 +8780,117 @@ impl X86_64Lowerer {
                     _ => {
                         return Err(LowerError::UnsupportedOp {
                             op: "unhinted or malformed PHMINPOSUW".to_string(),
+                        });
+                    }
+                }
+            }
+
+            OpKind::X86MovMask {
+                dst,
+                src,
+                elem,
+                lanes,
+                dst_width,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let valid_gpr = matches!(
+                    dst_reg,
+                    PhysReg::Rax
+                        | PhysReg::Rcx
+                        | PhysReg::Rdx
+                        | PhysReg::Rbx
+                        | PhysReg::Rsi
+                        | PhysReg::Rdi
+                        | PhysReg::R8
+                        | PhysReg::R9
+                        | PhysReg::R10
+                        | PhysReg::R11
+                        | PhysReg::R12
+                        | PhysReg::R13
+                        | PhysReg::R14
+                        | PhysReg::R15
+                );
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::InvalidOperand {
+                        op: "X86MovMask".to_string(),
+                        operand: format!("invalid {elem:?} lane count {lanes}"),
+                    }
+                })?;
+                let valid_source = matches!(
+                    (width, src_reg),
+                    (VecWidth::V128, PhysReg::Xmm(0..=15)) | (VecWidth::V256, PhysReg::Ymm(0..=15))
+                );
+                if !valid_gpr
+                    || !valid_source
+                    || !matches!(
+                        (elem, lanes),
+                        (VecElementType::I8, 16 | 32)
+                            | (VecElementType::F32, 4 | 8)
+                            | (VecElementType::F64, 2 | 4)
+                    )
+                    || !matches!(dst_width, OpWidth::W32 | OpWidth::W64)
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86MovMask".to_string(),
+                        operand: "requires a safe legacy GPR and matching low XMM/YMM source"
+                            .to_string(),
+                    });
+                }
+                let encoding_matches = |opcode: u8, pp: X86SsePrefix| match (opcode, pp, elem) {
+                    (0x50, X86SsePrefix::None, VecElementType::F32)
+                    | (0x50, X86SsePrefix::OpSize, VecElementType::F64)
+                    | (0xD7, X86SsePrefix::OpSize, VecElementType::I8) => true,
+                    _ => false,
+                };
+                match op.x86_hint {
+                    Some(X86OpHint::SseOp { prefix, opcode })
+                        if width == VecWidth::V128 && encoding_matches(opcode, prefix) =>
+                    {
+                        let legacy_prefix = match prefix {
+                            X86SsePrefix::None => None,
+                            X86SsePrefix::OpSize => Some(0x66),
+                            _ => unreachable!("validated MOVMSK legacy prefix"),
+                        };
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_mov_mask_rr(
+                            legacy_prefix,
+                            opcode,
+                            dst_reg,
+                            src_reg,
+                            *dst_width == OpWidth::W64,
+                        );
+                    }
+                    Some(X86OpHint::VexOp {
+                        map: X86VecMap::Map0F,
+                        pp,
+                        opcode,
+                        width: encoded_width,
+                        ..
+                    }) if *dst_width == OpWidth::W32
+                        && encoded_width == width
+                        && width != VecWidth::V512
+                        && encoding_matches(opcode, pp) =>
+                    {
+                        // Every family member is WIG; emit canonical VEX.W0.
+                        // vvvv=0 becomes the required encoded 1111b.
+                        self.emit_vec_rr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Vex,
+                                map: X86VecMap::Map0F,
+                                pp,
+                                opcode,
+                                width,
+                                w: false,
+                            },
+                            dst_reg,
+                            src_reg,
+                            0,
+                        );
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: "unhinted or malformed MOVMSK/PMOVMSKB".to_string(),
                         });
                     }
                 }
@@ -17802,6 +17935,277 @@ mod tests {
             assert!(matches!(
                 lower_single_hinted_op_err(kind, hint),
                 LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_mov_mask_family_emits_exact_bytes_canonicalizes_wig_and_rejects_malformed() {
+        let gpr = |reg| VReg::Arch(ArchReg::X86(reg));
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let ymm = |index| VReg::Arch(ArchReg::X86(X86Reg::Ymm(index)));
+        let mov_mask = |dst, src, elem, lanes, dst_width| OpKind::X86MovMask {
+            dst,
+            src,
+            elem,
+            lanes,
+            dst_width,
+        };
+
+        for (name, kind, hint, expected) in [
+            (
+                "MOVMSKPS eax,xmm2",
+                mov_mask(
+                    gpr(X86Reg::Rax),
+                    xmm(2),
+                    VecElementType::F32,
+                    4,
+                    OpWidth::W32,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x50,
+                },
+                &[0x0F, 0x50, 0xC2][..],
+            ),
+            (
+                "REX.W MOVMSKPD rdx,xmm1",
+                mov_mask(
+                    gpr(X86Reg::Rdx),
+                    xmm(1),
+                    VecElementType::F64,
+                    2,
+                    OpWidth::W64,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x50,
+                },
+                &[0x66, 0x48, 0x0F, 0x50, 0xD1][..],
+            ),
+            (
+                "PMOVMSKB r9d,xmm10",
+                mov_mask(
+                    gpr(X86Reg::R9),
+                    xmm(10),
+                    VecElementType::I8,
+                    16,
+                    OpWidth::W32,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xD7,
+                },
+                &[0x66, 0x45, 0x0F, 0xD7, 0xCA][..],
+            ),
+            (
+                "VEX.W1-hinted VMOVMSKPS r8d,ymm9 canonicalized to W0",
+                mov_mask(
+                    gpr(X86Reg::R8),
+                    ymm(9),
+                    VecElementType::F32,
+                    8,
+                    OpWidth::W32,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x50,
+                    width: VecWidth::V256,
+                    w: true,
+                },
+                &[0xC4, 0x41, 0x7C, 0x50, 0xC1][..],
+            ),
+            (
+                "VEX.W1-hinted VMOVMSKPD edx,ymm1 canonicalized to W0",
+                mov_mask(
+                    gpr(X86Reg::Rdx),
+                    ymm(1),
+                    VecElementType::F64,
+                    4,
+                    OpWidth::W32,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x50,
+                    width: VecWidth::V256,
+                    w: true,
+                },
+                &[0xC5, 0xFD, 0x50, 0xD1][..],
+            ),
+            (
+                "VEX.W1-hinted VPMOVMSKB eax,xmm1 canonicalized to W0",
+                mov_mask(
+                    gpr(X86Reg::Rax),
+                    xmm(1),
+                    VecElementType::I8,
+                    16,
+                    OpWidth::W32,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xD7,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0xC5, 0xF9, 0xD7, 0xC1][..],
+            ),
+            (
+                "VEX.W1-hinted VPMOVMSKB r9d,ymm10 canonicalized to W0",
+                mov_mask(
+                    gpr(X86Reg::R9),
+                    ymm(10),
+                    VecElementType::I8,
+                    32,
+                    OpWidth::W32,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xD7,
+                    width: VecWidth::V256,
+                    w: true,
+                },
+                &[0xC4, 0x41, 0x7D, 0xD7, 0xCA][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, hint);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        let base = mov_mask(
+            gpr(X86Reg::Rax),
+            xmm(1),
+            VecElementType::F32,
+            4,
+            OpWidth::W32,
+        );
+        assert!(matches!(
+            lower_single_op_err(base.clone()),
+            LowerError::UnsupportedOp { .. }
+        ));
+
+        for (kind, hint) in [
+            (
+                mov_mask(
+                    gpr(X86Reg::Rsp),
+                    xmm(1),
+                    VecElementType::F32,
+                    4,
+                    OpWidth::W32,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x50,
+                },
+            ),
+            (
+                mov_mask(
+                    gpr(X86Reg::Rax),
+                    xmm(16),
+                    VecElementType::F32,
+                    4,
+                    OpWidth::W32,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x50,
+                },
+            ),
+            (
+                mov_mask(
+                    gpr(X86Reg::Rax),
+                    ymm(1),
+                    VecElementType::F32,
+                    4,
+                    OpWidth::W32,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x50,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                mov_mask(
+                    gpr(X86Reg::Rax),
+                    xmm(1),
+                    VecElementType::I16,
+                    8,
+                    OpWidth::W32,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xD7,
+                },
+            ),
+            (
+                base.clone(),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x50,
+                },
+            ),
+            (
+                mov_mask(
+                    gpr(X86Reg::Rax),
+                    xmm(1),
+                    VecElementType::F32,
+                    4,
+                    OpWidth::W64,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x50,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                base.clone(),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x50,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                base.clone(),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x51,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                base.clone(),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x50,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. }
+                    | LowerError::InvalidOperand { .. }
+                    | LowerError::InvalidRegister(_)
             ));
         }
     }

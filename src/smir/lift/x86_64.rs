@@ -8213,7 +8213,7 @@ impl X86_64Lifter {
         bytes: &[u8],
         prefix: &X86Prefix,
         pc: u64,
-        ctx: &mut LiftContext,
+        _ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
         if prefix.lock || prefix.rep_prefix.is_some() {
             return Err(LiftError::InvalidEncoding {
@@ -8234,21 +8234,29 @@ impl X86_64Lifter {
             VecElementType::F32
         };
         let lanes = if elem == VecElementType::F32 { 4 } else { 2 };
-        let mut ops = Vec::new();
-        self.append_sse_movmask(
-            self.gpr(modrm.reg),
-            self.xmm(modrm.rm),
-            elem,
-            lanes,
-            if prefix.rex_w() {
-                OpWidth::W64
-            } else {
-                OpWidth::W32
-            },
+        let ops = vec![SmirOp::with_hint(
+            OpId(0),
             pc,
-            ctx,
-            &mut ops,
-        );
+            OpKind::X86MovMask {
+                dst: self.gpr(modrm.reg),
+                src: self.xmm(modrm.rm),
+                elem,
+                lanes,
+                dst_width: if prefix.rex_w() {
+                    OpWidth::W64
+                } else {
+                    OpWidth::W32
+                },
+            },
+            X86OpHint::SseOp {
+                prefix: if prefix.operand_size_override {
+                    X86SsePrefix::OpSize
+                } else {
+                    X86SsePrefix::None
+                },
+                opcode: 0x50,
+            },
+        )];
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -8260,7 +8268,7 @@ impl X86_64Lifter {
         bytes: &[u8],
         prefix: &X86Prefix,
         pc: u64,
-        ctx: &mut LiftContext,
+        _ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
         if !prefix.operand_size_override && prefix.rep_prefix.is_none() && !prefix.lock {
             return Err(LiftError::Unsupported {
@@ -8285,17 +8293,21 @@ impl X86_64Lifter {
                 bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
             });
         }
-        let mut ops = Vec::new();
-        self.append_sse_movmask(
-            self.gpr(modrm.reg),
-            self.xmm(modrm.rm),
-            VecElementType::I8,
-            16,
-            OpWidth::W32,
+        let ops = vec![SmirOp::with_hint(
+            OpId(0),
             pc,
-            ctx,
-            &mut ops,
-        );
+            OpKind::X86MovMask {
+                dst: self.gpr(modrm.reg),
+                src: self.xmm(modrm.rm),
+                elem: VecElementType::I8,
+                lanes: 16,
+                dst_width: OpWidth::W32,
+            },
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::OpSize,
+                opcode: 0xD7,
+            },
+        )];
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -8307,7 +8319,7 @@ impl X86_64Lifter {
         prefix: VecPrefix,
         bytes: &[u8],
         pc: u64,
-        ctx: &mut LiftContext,
+        _ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
         if prefix.encoding != VecEncodingKind::Vex
             || prefix.pp != X86SsePrefix::OpSize
@@ -8332,17 +8344,24 @@ impl X86_64Lifter {
                 bytes: bytes.to_vec(),
             });
         }
-        let mut ops = Vec::new();
-        self.append_sse_movmask(
-            self.gpr(modrm.reg),
-            self.vec_reg(modrm.rm, prefix.width),
-            VecElementType::I8,
-            prefix.width.lanes(VecElementType::I8) as u8,
-            OpWidth::W32,
+        let ops = vec![SmirOp::with_hint(
+            OpId(0),
             pc,
-            ctx,
-            &mut ops,
-        );
+            OpKind::X86MovMask {
+                dst: self.gpr(modrm.reg),
+                src: self.vec_reg(modrm.rm, prefix.width),
+                elem: VecElementType::I8,
+                lanes: prefix.width.lanes(VecElementType::I8) as u8,
+                dst_width: OpWidth::W32,
+            },
+            X86OpHint::VexOp {
+                map: X86VecMap::Map0F,
+                pp: X86SsePrefix::OpSize,
+                opcode: 0xD7,
+                width: prefix.width,
+                w: prefix.w,
+            },
+        )];
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -27192,16 +27211,24 @@ impl X86_64Lifter {
                         VecElementType::F32
                     };
                     let src = self.vec_reg(modrm.rm, prefix.width);
-                    self.append_sse_movmask(
-                        self.gpr(modrm.reg),
-                        src,
-                        elem,
-                        prefix.width.lanes(elem) as u8,
-                        OpWidth::W32,
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
                         pc,
-                        ctx,
-                        &mut ops,
-                    );
+                        OpKind::X86MovMask {
+                            dst: self.gpr(modrm.reg),
+                            src,
+                            elem,
+                            lanes: prefix.width.lanes(elem) as u8,
+                            dst_width: OpWidth::W32,
+                        },
+                        X86OpHint::VexOp {
+                            map: X86VecMap::Map0F,
+                            pp: prefix.pp,
+                            opcode: 0x50,
+                            width: prefix.width,
+                            w: prefix.w,
+                        },
+                    ));
                     Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
                 }
 
@@ -47108,7 +47135,7 @@ mod tests {
                 X86Reg::Rax,
                 X86Reg::Xmm(1),
                 VecElementType::F32,
-                4usize,
+                4u8,
                 OpWidth::W32,
             ),
             (
@@ -47162,32 +47189,23 @@ mod tests {
         ] {
             let result = lift_single(bytes).unwrap();
             assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
-            let extracts = result
-                .ops
-                .iter()
-                .filter_map(|op| match op.kind {
-                    OpKind::VExtractLane {
-                        vec: VReg::Arch(ArchReg::X86(actual_src)),
-                        lane,
-                        elem: actual_elem,
-                        sign: SignExtend::Zero,
-                        ..
-                    } if actual_src == src && actual_elem == elem => Some(lane),
-                    _ => None,
-                })
-                .collect::<Vec<_>>();
-            assert_eq!(
-                extracts,
-                (0..lanes as u8).collect::<Vec<_>>(),
-                "{bytes:02X?}"
-            );
             assert!(matches!(
-                result.ops.last().unwrap().kind,
-                OpKind::Mov {
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86MovMask {
                     dst: VReg::Arch(ArchReg::X86(actual_dst)),
-                    width: actual_width,
+                        src: VReg::Arch(ArchReg::X86(actual_src)),
+                        elem: actual_elem,
+                        lanes: actual_lanes,
+                        dst_width: actual_width,
+                    },
+                    x86_hint: Some(_),
                     ..
-                } if actual_dst == dst && actual_width == width
+                }] if *actual_dst == dst
+                    && *actual_src == src
+                    && *actual_elem == elem
+                    && *actual_lanes == lanes
+                    && *actual_width == width
             ));
             assert!(
                 result
@@ -47223,7 +47241,7 @@ mod tests {
                 &[0x66, 0x0F, 0xD7, 0xC1][..],
                 X86Reg::Rax,
                 X86Reg::Xmm(1),
-                16usize,
+                16u8,
             ),
             (
                 &[0x66, 0x45, 0x0F, 0xD7, 0xC1][..],
@@ -47252,28 +47270,19 @@ mod tests {
         ] {
             let result = lift_single(bytes).unwrap();
             assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
-            let extracts = result
-                .ops
-                .iter()
-                .filter_map(|op| match op.kind {
-                    OpKind::VExtractLane {
-                        vec: VReg::Arch(ArchReg::X86(actual_src)),
-                        lane,
-                        elem: VecElementType::I8,
-                        sign: SignExtend::Zero,
-                        ..
-                    } if actual_src == src => Some(lane),
-                    _ => None,
-                })
-                .collect::<Vec<_>>();
-            assert_eq!(extracts, (0..lanes as u8).collect::<Vec<_>>());
             assert!(matches!(
-                result.ops.last().unwrap().kind,
-                OpKind::Mov {
-                    dst: VReg::Arch(ArchReg::X86(actual_dst)),
-                    width: OpWidth::W32,
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86MovMask {
+                        dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                        src: VReg::Arch(ArchReg::X86(actual_src)),
+                        elem: VecElementType::I8,
+                        lanes: actual_lanes,
+                        dst_width: OpWidth::W32,
+                    },
+                    x86_hint: Some(_),
                     ..
-                } if actual_dst == dst
+                }] if *actual_dst == dst && *actual_src == src && *actual_lanes == lanes
             ));
             assert!(
                 result

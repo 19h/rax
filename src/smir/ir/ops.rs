@@ -3172,6 +3172,18 @@ pub enum OpKind {
         src: VReg,
     },
 
+    /// Extract one sign bit from every packed source lane into consecutive
+    /// low bits of a general-purpose destination. `dst_width` records the
+    /// architectural GPR write width selected by the legacy encoding.
+    /// MOVMSKPS, MOVMSKPD, PMOVMSKB and their VEX forms.
+    X86MovMask {
+        dst: VReg,
+        src: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        dst_width: OpWidth,
+    },
+
     /// AES-NI/VAES transformation, applied independently to each 128-bit lane.
     /// `src2` is the round key for round operations and absent for AESIMC and
     /// AESKEYGENASSIST. `imm` is used only by AESKEYGENASSIST.
@@ -4045,6 +4057,7 @@ impl OpKind {
             | OpKind::VMpsadbw { dst, .. }
             | OpKind::VSadBytes { dst, .. }
             | OpKind::X86Phminposuw { dst, .. }
+            | OpKind::X86MovMask { dst, .. }
             | OpKind::X86Aes { dst, .. }
             | OpKind::X86Sha512Msg1 { dst, .. }
             | OpKind::X86Sha512Msg2 { dst, .. }
