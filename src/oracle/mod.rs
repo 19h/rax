@@ -3127,9 +3127,11 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             dst,
             src1,
             src2,
+            mask,
             width,
             imm,
-        } => op_json!("vmpsadbw", dst, src1, src2, width, imm),
+            zeroing,
+        } => op_json!("vmpsadbw", dst, src1, src2, mask, width, imm, zeroing),
         OpKind::VSadBytes {
             dst,
             src1,

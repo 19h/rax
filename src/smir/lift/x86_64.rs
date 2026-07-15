@@ -652,6 +652,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
     let is_packed_abs =
         (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x1C..=0x1F));
     let is_palignr = (b1 & 0x07) == 3 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x0F));
+    let is_mpsadbw = (b1 & 0x07) == 3 && (b2 & 0x03) == 2 && matches!(bytes.get(4), Some(0x42));
     let is_packed_extend = (b1 & 0x07) == 2
         && (b2 & 0x03) == 1
         && matches!(bytes.get(4), Some(0x20..=0x25 | 0x30..=0x35));
@@ -758,6 +759,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
         || is_packed_mulhrsw
         || is_packed_abs
         || is_palignr
+        || is_mpsadbw
         || is_packed_extend
         || is_packed_minmax
         || is_packed_muldq
@@ -16467,8 +16469,10 @@ impl X86_64Lifter {
                     dst: raw,
                     src1: dst,
                     src2,
+                    mask: None,
                     width: VecWidth::V128,
                     imm: bytes[imm_offset],
+                    zeroing: false,
                 },
             ));
             self.append_legacy_packed_result(dst, raw, VecElementType::I16, pc, ctx, &mut ops);
@@ -16480,8 +16484,10 @@ impl X86_64Lifter {
                     dst,
                     src1: dst,
                     src2,
+                    mask: None,
                     width: VecWidth::V128,
                     imm: bytes[imm_offset],
+                    zeroing: false,
                 },
                 X86OpHint::SseOp {
                     prefix: X86SsePrefix::OpSize,
@@ -19634,17 +19640,27 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
-    fn lift_vex_mpsadbw(
+    fn lift_vec_mpsadbw(
         &self,
         prefix: VecPrefix,
         bytes: &[u8],
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if prefix.encoding != VecEncodingKind::Vex
-            || prefix.pp != X86SsePrefix::OpSize
-            || !matches!(prefix.width, VecWidth::V128 | VecWidth::V256)
-        {
+        let vex = prefix.encoding == VecEncodingKind::Vex
+            && prefix.pp == X86SsePrefix::OpSize
+            && matches!(prefix.width, VecWidth::V128 | VecWidth::V256);
+        let evex = prefix.encoding == VecEncodingKind::Evex
+            && prefix.pp == X86SsePrefix::Rep
+            && !prefix.w
+            && prefix.l_bits != 3
+            && matches!(
+                prefix.width,
+                VecWidth::V128 | VecWidth::V256 | VecWidth::V512
+            )
+            && !prefix.b
+            && (!prefix.zeroing || prefix.aaa != 0);
+        if !vex && !evex {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
@@ -19669,7 +19685,17 @@ impl X86_64Lifter {
         let next_pc = pc + imm_offset as u64 + 1;
         let mut ops = Vec::new();
         let src2 = if modrm.is_memory {
-            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            let (addr, pre_ops) = if evex {
+                self.vec_disp8_addr_to_smir(
+                    prefix,
+                    modrm.addr.as_ref().unwrap(),
+                    next_pc,
+                    prefix.width.bytes(),
+                    ctx,
+                )
+            } else {
+                self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx)
+            };
             ops.extend(pre_ops);
             let loaded = ctx.alloc_vreg();
             ops.push(SmirOp::with_hint(
@@ -19684,32 +19710,51 @@ impl X86_64Lifter {
             ));
             loaded
         } else {
-            self.vec_reg(modrm.rm, prefix.width)
+            self.vec_reg(
+                modrm.rm + if evex && prefix.rm_high { 16 } else { 0 },
+                prefix.width,
+            )
         };
+        let dst = self.vec_reg(
+            modrm.reg + if evex && prefix.reg_high { 16 } else { 0 },
+            prefix.width,
+        );
         let kind = OpKind::VMpsadbw {
-            dst: self.vec_reg(modrm.reg, prefix.width),
-            src1: self.vec_reg(prefix.vvvv, prefix.width),
+            dst,
+            src1: self.vec_reg(
+                prefix.vvvv + if evex && prefix.v_high { 16 } else { 0 },
+                prefix.width,
+            ),
             src2,
+            mask: (evex && prefix.aaa != 0)
+                .then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa)))),
             width: prefix.width,
             imm: bytes[imm_offset],
+            zeroing: evex && prefix.zeroing,
         };
         if modrm.is_memory {
             // The register-only native admission deliberately leaves memory
             // loads in the established fault-atomic fallback path.
             ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
         } else {
-            ops.push(SmirOp::with_hint(
-                OpId(ops.len() as u16),
-                pc,
-                kind,
+            let hint = if evex {
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F3A,
+                    pp: X86SsePrefix::Rep,
+                    opcode: 0x42,
+                    width: prefix.width,
+                    w: false,
+                }
+            } else {
                 X86OpHint::VexOp {
                     map: X86VecMap::Map0F3A,
                     pp: X86SsePrefix::OpSize,
                     opcode: 0x42,
                     width: prefix.width,
                     w: prefix.w,
-                },
-            ));
+                }
+            };
+            ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, kind, hint));
         }
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
@@ -29467,7 +29512,7 @@ impl X86_64Lifter {
                 0x14..=0x17 => self.lift_vec_extract_0f3a(prefix, opcode, bytes, pc, ctx),
                 0x20..=0x22 => self.lift_vec_insert_0f3a(prefix, opcode, bytes, pc, ctx),
                 0x40 | 0x41 => self.lift_vex_dot_product(prefix, opcode, bytes, pc, ctx),
-                0x42 => self.lift_vex_mpsadbw(prefix, bytes, pc, ctx),
+                0x42 => self.lift_vec_mpsadbw(prefix, bytes, pc, ctx),
                 0x44 => self.lift_vec_pclmulqdq(prefix, bytes, pc, ctx),
                 0xDF => self.lift_vec_aes_keygen(prefix, bytes, pc, ctx),
                 0x4A..=0x4C if prefix.encoding == VecEncodingKind::Vex => {
@@ -58840,8 +58885,10 @@ mod tests {
                     dst: actual_dst,
                     src1: VReg::Arch(ArchReg::X86(actual_src1)),
                     src2: VReg::Arch(ArchReg::X86(actual_src2)),
+                    mask: None,
                     width: actual_width,
                     imm: actual_imm,
+                    zeroing: false,
                 } if actual_dst == VReg::Arch(ArchReg::X86(dst))
                     && actual_src1 == src1
                     && actual_src2 == src2
@@ -58929,13 +58976,76 @@ mod tests {
         // REX.W/VEX.W are ignored, as are legacy imm[7:3] and VEX.256 imm[7:6].
         assert!(lift_single(&[0x66, 0x4D, 0x0F, 0x3A, 0x42, 0xCA, 0xFF]).is_ok());
         assert!(lift_single(&[0xC4, 0x43, 0xA5, 0x42, 0xCA, 0xFF]).is_ok());
+
+        // AVX10.2 changes the mandatory prefix to F3, fixes W=0, adds
+        // VL=512 and applies a word-granular destination writemask.
+        let evex = lift_single(&[0x62, 0xA3, 0x76, 0xC3, 0x42, 0xC2, 0x3F]).unwrap();
+        assert_eq!(evex.bytes_consumed, 7);
+        assert!(evex.ops.iter().any(|op| {
+            matches!(
+                op,
+                SmirOp {
+                    kind: OpKind::VMpsadbw {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
+                        width: VecWidth::V512,
+                        imm: 0x3F,
+                        zeroing: true,
+                    },
+                    x86_hint: Some(X86OpHint::EvexOp {
+                        map: X86VecMap::Map0F3A,
+                        pp: X86SsePrefix::Rep,
+                        opcode: 0x42,
+                        width: VecWidth::V512,
+                        w: false,
+                    }),
+                    ..
+                }
+            )
+        }));
+
+        // FULLMEM disp8 is scaled by the complete 64-byte VL. E4NF does not
+        // suppress memory faults, so the lifter emits an ordinary full load.
+        let evex_mem = lift_single(&[0x62, 0xF3, 0x66, 0x4A, 0x42, 0x48, 0x02, 0xE7]).unwrap();
+        assert!(evex_mem.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLoad {
+                addr: Address::BaseOffset { offset: 128, .. },
+                width: VecWidth::V512,
+                ..
+            }
+        )));
+        assert!(evex_mem.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VMpsadbw {
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                zeroing: false,
+                ..
+            }
+        )));
+        assert!(
+            evex_mem
+                .ops
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::VMpsadbw { .. }))
+                .all(|op| op.x86_hint.is_none())
+        );
+
         for bytes in [
             &[0x0F, 0x3A, 0x42, 0xCA, 0x07][..],
             &[0xF0, 0x66, 0x0F, 0x3A, 0x42, 0xCA, 0x07][..],
             &[0xF3, 0x66, 0x0F, 0x3A, 0x42, 0xCA, 0x07][..],
             &[0x66, 0x0F, 0x3A, 0x42, 0xCA][..],
             &[0xC4, 0x43, 0x20, 0x42, 0xCA, 0x07][..],
+            // AVX10.2 requires F3/W0, reserves L'L=3 and EVEX.b, and cannot
+            // request zeroing without a nonzero opmask.
             &[0x62, 0xF3, 0x65, 0x08, 0x42, 0xCA, 0x07][..],
+            &[0x62, 0xF3, 0xE6, 0x08, 0x42, 0xCA, 0x07][..],
+            &[0x62, 0xF3, 0x66, 0x68, 0x42, 0xCA, 0x07][..],
+            &[0x62, 0xF3, 0x66, 0x58, 0x42, 0xCA, 0x07][..],
+            &[0x62, 0xF3, 0x66, 0x88, 0x42, 0xCA, 0x07][..],
         ] {
             assert!(
                 matches!(

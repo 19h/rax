@@ -587,9 +587,20 @@ impl Avx10Lowerer {
                 dst,
                 src1,
                 src2,
+                mask,
                 width,
                 imm,
-            } => Some(self.lower_vmpsadbw(code, dst, src1, src2, *width, *imm)),
+                zeroing,
+            } => Some(self.lower_vmpsadbw(
+                code,
+                dst,
+                src1,
+                src2,
+                mask.as_ref(),
+                *width,
+                *imm,
+                *zeroing,
+            )),
 
             // AVX10.2 Media acceleration
             OpKind::VDotProductExt {
@@ -2034,19 +2045,52 @@ impl Avx10Lowerer {
         dst: &VReg,
         src1: &VReg,
         src2: &VReg,
+        mask: Option<&VReg>,
         width: VecWidth,
         imm: u8,
+        zeroing: bool,
     ) -> Avx10LowerResult<()> {
+        if width == VecWidth::V64 || (zeroing && mask.is_none()) {
+            return Err(LowerError::UnsupportedOperation(
+                "AVX10.2 VMPSADBW requires VL=128/256/512 and zeroing requires K1..K7".to_string(),
+            ));
+        }
+        let vector_matches_width = |reg: &VReg| {
+            matches!(
+                (reg, width),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    VecWidth::V256
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                    VecWidth::V512
+                )
+            )
+        };
+        if ![dst, src1, src2].into_iter().all(vector_matches_width) {
+            return Err(LowerError::InvalidRegister(
+                "AVX10.2 VMPSADBW vector registers must match VL and be numbered 0..31".to_string(),
+            ));
+        }
         let dst_reg = self.vreg_to_zmm(dst)?;
         let src1_reg = self.vreg_to_zmm(src1)?;
         let src2_reg = self.vreg_to_zmm(src2)?;
+        let mask_reg = mask.map_or(Ok(0), |mask| self.vreg_to_k(mask))?;
+        if mask.is_some() && !(1..=7).contains(&mask_reg) {
+            return Err(LowerError::InvalidRegister(
+                "AVX10.2 VMPSADBW explicit opmask must be K1..K7".to_string(),
+            ));
+        }
 
         let mut enc = EvexEncoder::new(code);
         enc.emit_evex(
             3,     // map 0F3A
-            1,     // pp = 66
+            2,     // pp = F3
             false, // W = 0
-            width, dst_reg, src1_reg, src2_reg, 0, false,
+            width, dst_reg, src1_reg, src2_reg, mask_reg, zeroing,
         );
         enc.emit_opcode(0x42);
         enc.emit_modrm_rr(dst_reg, src2_reg);
@@ -4311,6 +4355,86 @@ mod tests {
                 .expect("recognized EVEX bit-manipulation op")
                 .expect("lower EVEX bit-manipulation op");
             assert_eq!(code.as_slice(), expected, "{op:?}");
+        }
+    }
+
+    #[test]
+    fn lower_avx10_2_vmpsadbw_emits_f3_w0_masks_and_rejects_malformed_shapes() {
+        let lowerer = Avx10Lowerer::new();
+        let xmm = |n| VReg::Arch(ArchReg::X86(X86Reg::Xmm(n)));
+        let ymm = |n| VReg::Arch(ArchReg::X86(X86Reg::Ymm(n)));
+        let zmm = |n| VReg::Arch(ArchReg::X86(X86Reg::Zmm(n)));
+        let k = |n| VReg::Arch(ArchReg::X86(X86Reg::K(n)));
+        let op = |dst, src1, src2, mask, width, imm, zeroing| OpKind::VMpsadbw {
+            dst,
+            src1,
+            src2,
+            mask,
+            width,
+            imm,
+            zeroing,
+        };
+
+        for (kind, expected) in [
+            (
+                op(
+                    zmm(16),
+                    zmm(17),
+                    zmm(18),
+                    Some(k(3)),
+                    VecWidth::V512,
+                    0x3F,
+                    true,
+                ),
+                &[0x62, 0xA3, 0x76, 0xC3, 0x42, 0xC2, 0x3F][..],
+            ),
+            (
+                op(
+                    xmm(9),
+                    xmm(10),
+                    xmm(11),
+                    Some(k(2)),
+                    VecWidth::V128,
+                    0xE7,
+                    false,
+                ),
+                &[0x62, 0x53, 0x2E, 0x0A, 0x42, 0xCB, 0xE7][..],
+            ),
+            (
+                op(ymm(4), ymm(5), ymm(6), None, VecWidth::V256, 0x38, false),
+                &[0x62, 0xF3, 0x56, 0x28, 0x42, 0xE6, 0x38][..],
+            ),
+        ] {
+            let mut code = CodeBuffer::new();
+            lowerer
+                .try_lower(&kind, &mut code)
+                .expect("VMPSADBW must be recognized")
+                .unwrap();
+            assert_eq!(code.as_slice(), expected, "{kind:?}");
+        }
+
+        for malformed in [
+            op(xmm(1), xmm(2), xmm(3), None, VecWidth::V64, 0, false),
+            op(xmm(1), xmm(2), xmm(3), None, VecWidth::V128, 0, true),
+            op(ymm(1), ymm(2), ymm(3), None, VecWidth::V128, 0, false),
+            op(xmm(32), xmm(2), xmm(3), None, VecWidth::V128, 0, false),
+            op(xmm(1), xmm(2), xmm(3), Some(k(0)), VecWidth::V128, 0, false),
+            op(
+                xmm(1),
+                xmm(2),
+                xmm(3),
+                Some(VReg::Arch(ArchReg::X86(X86Reg::Rax))),
+                VecWidth::V128,
+                0,
+                false,
+            ),
+        ] {
+            let mut code = CodeBuffer::new();
+            assert!(matches!(
+                lowerer.try_lower(&malformed, &mut code).unwrap(),
+                Err(LowerError::InvalidRegister(_) | LowerError::UnsupportedOperation(_))
+            ));
+            assert!(code.as_slice().is_empty());
         }
     }
 }

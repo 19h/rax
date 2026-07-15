@@ -10,6 +10,7 @@
 
 #![cfg(test)]
 
+use rax::smir::ir::ops::OpKind;
 use rax::smir::ir::types::*;
 use rax::smir::lift::LiftContext;
 use rax::smir::lift::avx10::{Avx10Lifter, EvexPrefix};
@@ -392,9 +393,39 @@ fn test_vminmaxpd_zmm() {
 
 #[test]
 fn test_vmpsadbw_zmm() {
-    // VMPSADBW zmm1, zmm2, zmm3, 0x55: 62 F3 6D 48 42 CB 55
-    let bytes = [0x62, 0xF3, 0x6D, 0x48, 0x42, 0xCB, 0x55];
-    test_roundtrip(&bytes, "VMPSADBW zmm1, zmm2, zmm3, 0x55");
+    // AVX10.2 VMPSADBW zmm16{k3}{z}, zmm17, zmm18, 0x3F uses
+    // EVEX.512.F3.0F3A.W0 42 /r /ib.
+    let bytes = [0x62, 0xA3, 0x76, 0xC3, 0x42, 0xC2, 0x3F];
+    let lifter = Avx10Lifter::new();
+    let mut ctx = LiftContext::new(SourceArch::X86_64);
+    let lifted = lifter
+        .try_lift(&bytes, 0x1000, &mut ctx)
+        .expect("VMPSADBW must dispatch")
+        .expect("VMPSADBW must lift");
+    assert_eq!(lifted.bytes_consumed, bytes.len());
+    assert!(matches!(
+        lifted.ops.as_slice(),
+        [op] if matches!(
+            op.kind,
+            OpKind::VMpsadbw {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
+                width: VecWidth::V512,
+                imm: 0x3F,
+                zeroing: true,
+            }
+        )
+    ));
+
+    let lowerer = Avx10Lowerer::new();
+    let mut code = CodeBuffer::new();
+    lowerer
+        .try_lower(&lifted.ops[0].kind, &mut code)
+        .expect("VMPSADBW must be recognized by the lowerer")
+        .expect("VMPSADBW must lower");
+    assert_eq!(code.as_slice(), bytes);
 }
 
 // ============================================================================

@@ -318,7 +318,7 @@ impl Avx10Lifter {
     ) -> Option<Result<LiftResult, LiftError>> {
         match (evex.pp, opcode, evex.w) {
             // VMPSADBW
-            (1, 0x42, _) => Some(self.lift_vmpsadbw(evex, bytes, pc, ctx)),
+            (2, 0x42, false) => Some(self.lift_vmpsadbw(evex, bytes, pc, ctx)),
 
             // VMINMAX
             (0, 0x52, false) => Some(self.lift_vminmax(evex, bytes, pc, ctx, VecElementType::F32)),
@@ -977,7 +977,23 @@ impl Avx10Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
+        if evex.ll == 3 || evex.b_bit || (evex.z && evex.aaa == 0) {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
         let (modrm, consumed) = self.decode_modrm(bytes, pc)?;
+
+        // This standalone AVX10 decoder does not retain a decoded x86 address.
+        // Reject memory here rather than incorrectly treating ModR/M.rm as a
+        // vector register; the production x86 lifter supports FULLMEM forms.
+        if modrm.is_memory {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: "EVEX VMPSADBW memory operand in standalone AVX10 lifter".to_string(),
+            });
+        }
 
         if bytes.len() <= consumed {
             return Err(LiftError::Incomplete {
@@ -993,19 +1009,34 @@ impl Avx10Lifter {
         let src2_reg = evex.rm_reg(modrm.rm);
         let width = evex.vec_width();
 
-        let dst = self.zmm(dst_reg);
-        let src1 = self.zmm(src1_reg);
-        let src2 = self.zmm(src2_reg);
+        let vector = |reg| match width {
+            VecWidth::V128 => VReg::Arch(ArchReg::X86(X86Reg::Xmm(reg))),
+            VecWidth::V256 => VReg::Arch(ArchReg::X86(X86Reg::Ymm(reg))),
+            VecWidth::V512 => VReg::Arch(ArchReg::X86(X86Reg::Zmm(reg))),
+            VecWidth::V64 => unreachable!("EVEX VMPSADBW has no 64-bit vector form"),
+        };
+        let dst = vector(dst_reg);
+        let src1 = vector(src1_reg);
+        let src2 = vector(src2_reg);
 
-        let op = SmirOp::new(
+        let op = SmirOp::with_hint(
             ctx.next_op_id(),
             pc,
             OpKind::VMpsadbw {
                 dst,
                 src1,
                 src2,
+                mask: (evex.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(evex.aaa)))),
                 width,
                 imm,
+                zeroing: evex.z,
+            },
+            X86OpHint::EvexOp {
+                map: X86VecMap::Map0F3A,
+                pp: X86SsePrefix::Rep,
+                opcode: 0x42,
+                width,
+                w: false,
             },
         );
 
@@ -1223,6 +1254,72 @@ mod tests {
                 assert!(!saturate);
             }
             _ => panic!("Expected VDotProduct"),
+        }
+    }
+
+    #[test]
+    fn lift_avx10_2_vmpsadbw_uses_f3_w0_masks_exact_widths_and_rejects_reserved_forms() {
+        let lifter = Avx10Lifter::new();
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+        let bytes = [0x62, 0xA3, 0x76, 0xC3, 0x42, 0xC2, 0x3F];
+        let result = lifter
+            .try_lift(&bytes, 0x1000, &mut ctx)
+            .expect("AVX10.2 opcode must dispatch")
+            .unwrap();
+        assert_eq!(result.bytes_consumed, bytes.len());
+        assert!(matches!(
+            result.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VMpsadbw {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                    mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
+                    width: VecWidth::V512,
+                    imm: 0x3F,
+                    zeroing: true,
+                },
+                x86_hint: Some(X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F3A,
+                    pp: X86SsePrefix::Rep,
+                    opcode: 0x42,
+                    width: VecWidth::V512,
+                    w: false,
+                }),
+                ..
+            }]
+        ));
+
+        // The standalone decoder intentionally rejects memory until its
+        // simplified ModR/M representation can retain a decoded address.
+        assert!(matches!(
+            lifter
+                .try_lift(
+                    &[0x62, 0xF3, 0x66, 0x4A, 0x42, 0x48, 0x02, 0xE7],
+                    0x1000,
+                    &mut ctx,
+                )
+                .unwrap(),
+            Err(LiftError::Unsupported { .. })
+        ));
+
+        // Wrong mandatory prefix and W=1 do not dispatch; reserved L'L=3,
+        // EVEX.b and {z} without a mask dispatch then fail validation.
+        for bytes in [
+            &[0x62, 0xF3, 0x65, 0x08, 0x42, 0xCA, 0x07][..],
+            &[0x62, 0xF3, 0xE6, 0x08, 0x42, 0xCA, 0x07][..],
+        ] {
+            assert!(lifter.try_lift(bytes, 0x1000, &mut ctx).is_none());
+        }
+        for bytes in [
+            &[0x62, 0xF3, 0x66, 0x68, 0x42, 0xCA, 0x07][..],
+            &[0x62, 0xF3, 0x66, 0x58, 0x42, 0xCA, 0x07][..],
+            &[0x62, 0xF3, 0x66, 0x88, 0x42, 0xCA, 0x07][..],
+        ] {
+            assert!(matches!(
+                lifter.try_lift(bytes, 0x1000, &mut ctx).unwrap(),
+                Err(LiftError::InvalidEncoding { .. })
+            ));
         }
     }
 }

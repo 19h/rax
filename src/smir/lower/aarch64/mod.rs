@@ -17547,9 +17547,19 @@ impl Aarch64Lowerer {
                 dst,
                 src1,
                 src2,
+                mask,
                 width,
                 imm,
-            } => self.lower_vmpsadbw(*dst, *src1, *src2, *width, *imm),
+                zeroing,
+            } => {
+                if mask.is_some() || *zeroing {
+                    Err(LowerError::UnsupportedOp {
+                        op: "masked AVX10.2 VMPSADBW on AArch64".into(),
+                    })
+                } else {
+                    self.lower_vmpsadbw(*dst, *src1, *src2, *width, *imm)
+                }
+            }
             OpKind::VMinMax {
                 dst,
                 src1,
@@ -34684,22 +34694,28 @@ mod tests {
                 dst: v(0),
                 src1: v(1),
                 src2: v(2),
+                mask: None,
                 width: VecWidth::V128,
                 imm: 0b00_10,
+                zeroing: false,
             },
             OpKind::VMpsadbw {
                 dst: v(3),
                 src1: v(3),
                 src2: v(2),
+                mask: None,
                 width: VecWidth::V128,
                 imm: 0b11_01,
+                zeroing: false,
             },
             OpKind::VMpsadbw {
                 dst: v(4),
                 src1: v(1),
                 src2: v(4),
+                mask: None,
                 width: VecWidth::V128,
                 imm: 0b11_10,
+                zeroing: false,
             },
             OpKind::Mov {
                 dst: x(0),
@@ -35910,8 +35926,28 @@ mod tests {
             dst: v(0),
             src1: v(1),
             src2: v(2),
+            mask: None,
             width: VecWidth::V256,
             imm: 0,
+            zeroing: false,
+        });
+        assert_unsupported(OpKind::VMpsadbw {
+            dst: v(0),
+            src1: v(1),
+            src2: v(2),
+            mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+            width: VecWidth::V128,
+            imm: 0,
+            zeroing: false,
+        });
+        assert_unsupported(OpKind::VMpsadbw {
+            dst: v(0),
+            src1: v(1),
+            src2: v(2),
+            mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+            width: VecWidth::V128,
+            imm: 0,
+            zeroing: true,
         });
 
         assert_unsupported(OpKind::VMinMax {

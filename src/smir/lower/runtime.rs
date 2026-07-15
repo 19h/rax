@@ -1824,7 +1824,9 @@ fn x86_vector_mpsadbw_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         dst,
         src1,
         src2,
+        mask,
         width,
+        zeroing,
         ..
     } = op
     else {
@@ -1842,7 +1844,7 @@ fn x86_vector_mpsadbw_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
             )
         )
     };
-    [dst, src1, src2].into_iter().all(vector_matches_width)
+    mask.is_none() && !zeroing && [dst, src1, src2].into_iter().all(vector_matches_width)
 }
 
 /// Exact non-accumulating PMADDUBSW/VPMADDUBSW semantic shape. `VReg::Imm(0)`
@@ -13130,8 +13132,10 @@ mod jit_gate_tests {
             dst,
             src1,
             src2,
+            mask: None,
             width,
             imm,
+            zeroing: false,
         };
 
         for (kind, hint, requirements) in [
@@ -13209,6 +13213,24 @@ mod jit_gate_tests {
                 0,
             ),
             mpsad(VReg::Virtual(VirtualId(61)), xmm1, xmm2, VecWidth::V128, 0),
+            OpKind::VMpsadbw {
+                dst: xmm1,
+                src1: xmm2,
+                src2: xmm3,
+                mask: Some(x86(X86Reg::K(3))),
+                width: VecWidth::V128,
+                imm: 0,
+                zeroing: false,
+            },
+            OpKind::VMpsadbw {
+                dst: xmm1,
+                src1: xmm2,
+                src2: xmm3,
+                mask: None,
+                width: VecWidth::V128,
+                imm: 0,
+                zeroing: true,
+            },
         ] {
             assert!(
                 !is_x86_native_vector_op(&malformed_kind),

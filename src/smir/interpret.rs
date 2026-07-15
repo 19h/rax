@@ -8154,15 +8154,19 @@ impl SmirInterpreter {
                 dst,
                 src1,
                 src2,
+                mask,
                 width,
                 imm,
+                zeroing,
             } => {
                 let old = Self::legacy_xmm_snapshot(ctx, *dst, x86_hint);
                 // Snapshot both inputs before writing because both the legacy
                 // and non-destructive register forms may alias the destination.
+                // AVX10.2 merge masking also reads the pre-instruction dst.
                 let blocks = match width {
                     VecWidth::V128 => 1u8,
                     VecWidth::V256 => 2,
+                    VecWidth::V512 => 4,
                     _ => {
                         ctx.request_exit(ExitReason::Undefined {
                             addr: ctx.pc,
@@ -8171,15 +8175,17 @@ impl SmirInterpreter {
                         return Ok(());
                     }
                 };
+                let old_dst = Self::read_vec(ctx, *dst);
                 let first = Self::read_vec(ctx, *src1);
                 let second = Self::read_vec(ctx, *src2);
                 let mut result = [0u64; 16];
                 for block in 0..blocks {
-                    let (first_select, second_select) = if block == 0 {
-                        (((imm >> 2) & 1) * 4, (imm & 3) * 4)
-                    } else {
-                        (((imm >> 5) & 1) * 4, ((imm >> 3) & 3) * 4)
-                    };
+                    // The low imm3 controls even-numbered 128-bit lanes and
+                    // the high imm3 controls odd-numbered lanes. AVX10.2
+                    // repeats the pair for lanes 2 and 3 at VL=512.
+                    let control = if block & 1 == 0 { *imm } else { *imm >> 3 };
+                    let first_select = ((control >> 2) & 1) * 4;
+                    let second_select = (control & 3) * 4;
                     let block_base = block * 16;
                     for output in 0..8u8 {
                         let mut sum = 0u16;
@@ -8194,6 +8200,14 @@ impl SmirInterpreter {
                         Self::set_lane(&mut result, block * 8 + output, 16, u64::from(sum));
                     }
                 }
+                Self::apply_vector_mask(
+                    &mut result,
+                    &old_dst,
+                    mask.map(|mask| ctx.read_vreg(mask)),
+                    *zeroing,
+                    *width,
+                    VecElementType::I16,
+                );
                 Self::write_vec(ctx, *dst, result);
                 Self::restore_legacy_xmm_upper(ctx, *dst, old);
             }
@@ -43793,11 +43807,9 @@ mod tests {
             let blocks = first.len() / 16;
             let mut out = Vec::with_capacity(blocks * 8);
             for block in 0..blocks {
-                let (first_select, second_select) = if block == 0 {
-                    (((imm >> 2) & 1) * 4, (imm & 3) * 4)
-                } else {
-                    (((imm >> 5) & 1) * 4, ((imm >> 3) & 3) * 4)
-                };
+                let control = if block & 1 == 0 { imm } else { imm >> 3 };
+                let first_select = ((control >> 2) & 1) * 4;
+                let second_select = (control & 3) * 4;
                 let base = block * 16;
                 for output in 0..8usize {
                     let mut sum = 0u16;
@@ -43874,6 +43886,106 @@ mod tests {
         );
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(words(&x86.xmm[9], 16), reference(&first, &second, imm));
+        }
+
+        // EVEX.128 merge masking preserves inactive low words but clears all
+        // architectural destination state above the selected VL.
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        let xmm_mask = 0x55u64;
+        ctx.write_vreg(k2, xmm_mask);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[9] = sentinel;
+            x86.xmm[10] = vector(&first[..16], upper);
+            x86.xmm[11] = vector(&second[..16], upper);
+        }
+        execute_lifted_x86(
+            &[0x62, 0x53, 0x2E, 0x0A, 0x42, 0xCB, 0xE7],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = reference(&first[..16], &second[..16], 0xE7);
+            for lane in 0..8 {
+                if xmm_mask & (1u64 << lane) == 0 {
+                    expected[lane] = 0xCCCC;
+                }
+            }
+            assert_eq!(words(&x86.xmm[9], 8), expected);
+            assert!(x86.xmm[9][2..].iter().all(|word| *word == 0));
+        }
+
+        // AVX10.2 VL=512 repeats the low/high selector fields across even/odd
+        // 128-bit lanes and masks all 32 destination words. This merge case
+        // also aliases dst/src1, requiring both source and merge snapshots.
+        let first512 = (0..64).map(|i| (i * 29 + 7) as u8).collect::<Vec<_>>();
+        let second512 = (0..64)
+            .map(|i| (0xFBu16.wrapping_sub((i * 23) as u16)) as u8)
+            .collect::<Vec<_>>();
+        let mask_bits = 0xA55A_C33Cu64;
+        let k3 = VReg::Arch(ArchReg::X86(X86Reg::K(3)));
+        ctx.write_vreg(k3, mask_bits);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = vector(&first512, 0);
+            x86.xmm[18] = vector(&second512, 0);
+        }
+        execute_lifted_x86(
+            &[0x62, 0xA3, 0x7E, 0x43, 0x42, 0xC2, 0x3F],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = reference(&first512, &second512, 0x3F);
+            let old_words = words(&vector(&first512, 0), 32);
+            for lane in 0..32 {
+                if mask_bits & (1u64 << lane) == 0 {
+                    expected[lane] = old_words[lane];
+                }
+            }
+            assert_eq!(words(&x86.xmm[16], 32), expected);
+        }
+
+        // Zero masking clears inactive words. The result maximum remains
+        // bounded by 4 * |0 - 255| = 1020, representable in u16.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[16] = sentinel;
+            x86.xmm[17] = vector(&first512, 0);
+            x86.xmm[18] = vector(&second512, 0);
+        }
+        execute_lifted_x86(
+            &[0x62, 0xA3, 0x76, 0xC3, 0x42, 0xC2, 0x3F],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let mut expected = reference(&first512, &second512, 0x3F);
+            for lane in 0..32 {
+                if mask_bits & (1u64 << lane) == 0 {
+                    expected[lane] = 0;
+                }
+            }
+            assert_eq!(words(&x86.xmm[16], 32), expected);
+            assert!(expected.iter().all(|&word| word <= 1020));
+        }
+
+        // E4NF does not provide memory fault suppression. Even an all-zero
+        // write mask performs the complete 64-byte FULLMEM load before dst.
+        ctx.write_vreg(k2, 0);
+        ctx.write_vreg(rax, 0x3F0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[3] = vector(&first512, 0);
+        }
+        let fault = execute_lifted_x86(
+            &[0x62, 0xF3, 0x66, 0x4A, 0x42, 0x08, 0x3F],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
         }
 
         // The same address violates the legacy 16-byte alignment requirement

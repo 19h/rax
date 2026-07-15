@@ -3631,11 +3631,25 @@ impl OpKind {
                 }
             }
 
-            OpKind::VMinMax { src1, src2, .. }
-            | OpKind::VMpsadbw { src1, src2, .. }
-            | OpKind::VSadBytes { src1, src2, .. } => {
+            OpKind::VMinMax { src1, src2, .. } | OpKind::VSadBytes { src1, src2, .. } => {
                 result.push(*src1);
                 result.push(*src2);
+            }
+
+            OpKind::VMpsadbw {
+                dst,
+                src1,
+                src2,
+                mask,
+                zeroing,
+                ..
+            } => {
+                result.push(*src1);
+                result.push(*src2);
+                result.extend(mask.iter().copied());
+                if mask.is_some() && !zeroing {
+                    result.push(*dst);
+                }
             }
 
             OpKind::X86Aes { src1, src2, .. } => {
@@ -10877,6 +10891,63 @@ mod tests {
 
         dead_code_elimination(&mut block);
         assert_eq!(block.ops.len(), 5, "FP16 input producer was removed");
+    }
+
+    #[test]
+    fn vmpsadbw_mask_and_merge_destination_definitions_survive_dead_code_elimination() {
+        let scalar = VReg::virt(0);
+        let src1 = VReg::virt(1);
+        let src2 = VReg::virt(2);
+        let mask = VReg::virt(3);
+        let dst = VReg::virt(4);
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: scalar,
+                src: SrcOperand::Imm(0x55),
+                width: OpWidth::W64,
+            },
+        ));
+        for (id, vector) in [(1, src1), (2, src2), (3, dst)] {
+            block.push_op(make_op(
+                id,
+                OpKind::VBroadcast {
+                    dst: vector,
+                    scalar,
+                    elem: VecElementType::I8,
+                    lanes: 16,
+                },
+            ));
+        }
+        block.push_op(make_op(
+            4,
+            OpKind::Mov {
+                dst: mask,
+                src: SrcOperand::Imm(0x55),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            5,
+            OpKind::VMpsadbw {
+                dst,
+                src1,
+                src2,
+                mask: Some(mask),
+                width: VecWidth::V128,
+                imm: 0x07,
+                zeroing: false,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(
+            block.ops.len(),
+            6,
+            "VMPSADBW input, mask, or merge-destination producer was removed"
+        );
     }
 
     #[test]

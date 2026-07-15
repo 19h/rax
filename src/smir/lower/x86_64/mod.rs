@@ -8315,9 +8315,16 @@ impl X86_64Lowerer {
                 dst,
                 src1,
                 src2,
+                mask,
                 width,
                 imm,
+                zeroing,
             } => {
+                if mask.is_some() || *zeroing {
+                    return Err(LowerError::UnsupportedOp {
+                        op: "masked AVX10.2 VMPSADBW requires EVEX lowering".to_string(),
+                    });
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
                 let src2_reg = self.get_reg(*src2)?;
@@ -15323,6 +15330,14 @@ mod tests {
                 &[0xC4, 0x43, 0x25, 0x42, 0xCA, 0xE7][..],
             ),
             (
+                &[0x62, 0xA3, 0x76, 0xC3, 0x42, 0xC2, 0x3F][..],
+                &[0x62, 0xA3, 0x76, 0xC3, 0x42, 0xC2, 0x3F][..],
+            ),
+            (
+                &[0x62, 0x53, 0x2E, 0x0A, 0x42, 0xCB, 0xE7][..],
+                &[0x62, 0x53, 0x2E, 0x0A, 0x42, 0xCB, 0xE7][..],
+            ),
+            (
                 &[0x66, 0x0F, 0x38, 0x04, 0xCA][..],
                 &[0x66, 0x0F, 0x38, 0x04, 0xCA][..],
             ),
@@ -16248,8 +16263,10 @@ mod tests {
             dst,
             src1,
             src2,
+            mask: None,
             width,
             imm,
+            zeroing: false,
         };
 
         for (name, kind, hint, expected) in [
@@ -16306,6 +16323,26 @@ mod tests {
                 "{name}: missing {expected:02X?} in {code:02X?}"
             );
         }
+
+        let masked_classic = OpKind::VMpsadbw {
+            dst: xmm(1),
+            src1: xmm(1),
+            src2: xmm(2),
+            mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+            width: VecWidth::V128,
+            imm: 0,
+            zeroing: false,
+        };
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                masked_classic,
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                },
+            ),
+            LowerError::UnsupportedOp { .. }
+        ));
 
         for (kind, hint) in [
             (

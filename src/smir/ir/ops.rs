@@ -3145,8 +3145,12 @@ pub enum OpKind {
         dst: VReg,
         src1: VReg,
         src2: VReg,
+        /// Optional AVX10.2 word-granular write mask.
+        mask: Option<VReg>,
         width: VecWidth,
         imm: u8,
+        /// Zero inactive destination words instead of merging them.
+        zeroing: bool,
     },
 
     /// Packed sums of absolute byte differences. Each consecutive group of
