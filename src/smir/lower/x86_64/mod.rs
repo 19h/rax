@@ -4753,8 +4753,23 @@ impl X86_64Lowerer {
         // legacy scalar lowering below. Keep this dispatch in the production
         // path so the dedicated encoder is exercised by normal JIT lowering,
         // not only by its module-local unit tests.
-        if let Some(result) = avx10::Avx10Lowerer::new().try_lower(&op.kind, &mut self.code) {
-            return result;
+        let is_maddubs = matches!(
+            &op.kind,
+            OpKind::VDotProduct {
+                acc: VReg::Imm(0),
+                mask: None,
+                src_elem: VecElementType::I8,
+                acc_elem: VecElementType::I16,
+                src1_unsigned: true,
+                saturate: true,
+                zeroing: false,
+                ..
+            }
+        );
+        if !is_maddubs {
+            if let Some(result) = avx10::Avx10Lowerer::new().try_lower(&op.kind, &mut self.code) {
+                return result;
+            }
         }
 
         let alu_hint = match op.x86_hint {
@@ -8040,6 +8055,112 @@ impl X86_64Lowerer {
                                 "unhinted or malformed VHorizontalBin {:?}x{}",
                                 elem, lanes
                             ),
+                        });
+                    }
+                }
+            }
+
+            OpKind::VDotProduct {
+                dst,
+                acc: VReg::Imm(0),
+                src1,
+                src2,
+                mask: None,
+                src_elem: VecElementType::I8,
+                acc_elem: VecElementType::I16,
+                width,
+                src1_unsigned: true,
+                saturate: true,
+                zeroing: false,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                let vector_matches_width = |reg: PhysReg| match (width, reg) {
+                    (VecWidth::V128, PhysReg::Xmm(index))
+                    | (VecWidth::V256, PhysReg::Ymm(index))
+                    | (VecWidth::V512, PhysReg::Zmm(index)) => index < 32,
+                    _ => false,
+                };
+                if ![dst_reg, src1_reg, src2_reg]
+                    .into_iter()
+                    .all(vector_matches_width)
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VDotProduct PMADDUBSW".to_string(),
+                        operand: "requires matching vector registers".to_string(),
+                    });
+                }
+                let low_vector = |reg: PhysReg| match reg {
+                    PhysReg::Xmm(index) | PhysReg::Ymm(index) | PhysReg::Zmm(index) => index < 16,
+                    _ => false,
+                };
+                match op.x86_hint {
+                    Some(X86OpHint::SseOp { prefix, opcode })
+                        if *width == VecWidth::V128
+                            && dst_reg == src1_reg
+                            && [dst_reg, src1_reg, src2_reg].into_iter().all(low_vector)
+                            && prefix == X86SsePrefix::OpSize
+                            && opcode == 0x04 =>
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_op38_rr(Some(0x66), 0x04, dst_reg, src2_reg);
+                    }
+                    Some(X86OpHint::VexOp {
+                        map,
+                        pp,
+                        opcode,
+                        width: encoded_width,
+                        w,
+                    }) if map == X86VecMap::Map0F38
+                        && pp == X86SsePrefix::OpSize
+                        && opcode == 0x04
+                        && encoded_width == *width
+                        && *width != VecWidth::V512
+                        && [dst_reg, src1_reg, src2_reg].into_iter().all(low_vector) =>
+                    {
+                        self.emit_vec_rrr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Vex,
+                                map,
+                                pp,
+                                opcode,
+                                width: *width,
+                                w,
+                            },
+                            dst_reg,
+                            src1_reg,
+                            src2_reg,
+                        );
+                    }
+                    Some(X86OpHint::EvexOp {
+                        map,
+                        pp,
+                        opcode,
+                        width: encoded_width,
+                        w,
+                    }) if map == X86VecMap::Map0F38
+                        && pp == X86SsePrefix::OpSize
+                        && opcode == 0x04
+                        && encoded_width == *width =>
+                    {
+                        self.emit_vec_rrr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Evex,
+                                map,
+                                pp,
+                                opcode,
+                                width: *width,
+                                w,
+                            },
+                            dst_reg,
+                            src1_reg,
+                            src2_reg,
+                        );
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("unhinted or malformed PMADDUBSW {width:?}"),
                         });
                     }
                 }
@@ -14071,6 +14192,24 @@ mod tests {
             .expect_err("single op should fail to lower")
     }
 
+    fn lower_single_hinted_op(kind: OpKind, hint: X86OpHint) -> Vec<u8> {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(0x1000, kind);
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut func = builder.finish();
+        func.blocks[0].ops[0].x86_hint = Some(hint);
+
+        let mut lowerer = X86_64Lowerer::new();
+        let result = lowerer
+            .lower_function(&func)
+            .expect("lower single hinted op");
+        assert!(
+            result.relocations.is_empty(),
+            "single hinted op should not relocate"
+        );
+        lowerer.finalize().expect("finalize")
+    }
+
     fn lower_single_hinted_op_err(kind: OpKind, hint: X86OpHint) -> LowerError {
         let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
         builder.push_op(0x1000, kind);
@@ -14764,6 +14903,26 @@ mod tests {
                 &[0xC4, 0xE2, 0xE9, 0x01, 0xCB][..],
                 &[0xC4, 0xE2, 0xE9, 0x01, 0xCB][..],
             ),
+            (
+                &[0x66, 0x0F, 0x38, 0x04, 0xCA][..],
+                &[0x66, 0x0F, 0x38, 0x04, 0xCA][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0xD9, 0x04, 0xDB][..],
+                &[0xC4, 0xE2, 0xD9, 0x04, 0xDB][..],
+            ),
+            (
+                &[0xC4, 0xC2, 0x4D, 0x04, 0xF0][..],
+                &[0xC4, 0xC2, 0x4D, 0x04, 0xF0][..],
+            ),
+            (
+                &[0x62, 0xA2, 0x75, 0x40, 0x04, 0xC2][..],
+                &[0x62, 0xA2, 0x75, 0x40, 0x04, 0xC2][..],
+            ),
+            (
+                &[0x62, 0x52, 0xAD, 0x08, 0x04, 0xCB][..],
+                &[0x62, 0x52, 0xAD, 0x08, 0x04, 0xCB][..],
+            ),
         ] {
             let mut block = instruction.to_vec();
             block.push(0xF4);
@@ -15342,6 +15501,154 @@ mod tests {
                     pp: X86SsePrefix::OpSize,
                     opcode: 0x01,
                     width: VecWidth::V512,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_maddubs_emits_exact_bytes_and_rejects_malformed_encodings() {
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let ymm = |index| VReg::Arch(ArchReg::X86(X86Reg::Ymm(index)));
+        let zmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Zmm(index)));
+        let maddubs = |dst, src1, src2, width| OpKind::VDotProduct {
+            dst,
+            acc: VReg::Imm(0),
+            src1,
+            src2,
+            mask: None,
+            src_elem: VecElementType::I8,
+            acc_elem: VecElementType::I16,
+            width,
+            src1_unsigned: true,
+            saturate: true,
+            zeroing: false,
+        };
+
+        for (name, kind, hint, expected) in [
+            (
+                "PMADDUBSW xmm1,xmm2",
+                maddubs(xmm(1), xmm(1), xmm(2), VecWidth::V128),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                },
+                &[0x66, 0x0F, 0x38, 0x04, 0xCA][..],
+            ),
+            (
+                "VEX.W1 VPMADDUBSW xmm1,xmm2,xmm3",
+                maddubs(xmm(1), xmm(2), xmm(3), VecWidth::V128),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0xC4, 0xE2, 0xE9, 0x04, 0xCB][..],
+            ),
+            (
+                "VEX.256 VPMADDUBSW ymm1,ymm2,ymm3",
+                maddubs(ymm(1), ymm(2), ymm(3), VecWidth::V256),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                &[0xC4, 0xE2, 0x6D, 0x04, 0xCB][..],
+            ),
+            (
+                "EVEX.W1 VPMADDUBSW xmm16,xmm17,xmm18",
+                maddubs(xmm(16), xmm(17), xmm(18), VecWidth::V128),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0x62, 0xA2, 0xF5, 0x00, 0x04, 0xC2][..],
+            ),
+            (
+                "EVEX.256 VPMADDUBSW ymm16,ymm17,ymm18",
+                maddubs(ymm(16), ymm(17), ymm(18), VecWidth::V256),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                &[0x62, 0xA2, 0x75, 0x20, 0x04, 0xC2][..],
+            ),
+            (
+                "EVEX.512 VPMADDUBSW zmm16,zmm17,zmm18",
+                maddubs(zmm(16), zmm(17), zmm(18), VecWidth::V512),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+                &[0x62, 0xA2, 0x75, 0x40, 0x04, 0xC2][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, hint);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        assert!(matches!(
+            lower_single_op_err(maddubs(xmm(1), xmm(1), xmm(2), VecWidth::V128)),
+            LowerError::UnsupportedOp { .. }
+        ));
+        for (kind, hint) in [
+            (
+                maddubs(xmm(1), xmm(2), xmm(3), VecWidth::V128),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                },
+            ),
+            (
+                maddubs(ymm(16), ymm(17), ymm(18), VecWidth::V256),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                maddubs(zmm(16), zmm(17), zmm(18), VecWidth::V512),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+            ),
+            (
+                maddubs(ymm(16), ymm(17), ymm(18), VecWidth::V256),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                    width: VecWidth::V128,
                     w: false,
                 },
             ),

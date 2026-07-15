@@ -8092,6 +8092,7 @@ impl SmirInterpreter {
                     acc_elem,
                     VecElementType::I16 | VecElementType::I32
                 ));
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, x86_hint);
                 let src_bits = src_elem.bytes() * 8;
                 let acc_bits = acc_elem.bytes() * 8;
                 debug_assert!(acc_bits >= src_bits && acc_bits % src_bits == 0);
@@ -8144,6 +8145,7 @@ impl SmirInterpreter {
                     *acc_elem,
                 );
                 Self::write_vec(ctx, *dst, result);
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
             }
 
             OpKind::VMpsadbw {

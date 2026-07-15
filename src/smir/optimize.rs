@@ -5254,6 +5254,30 @@ mod tests {
             "VPHSUBD changed its destination before the memory fault boundary"
         );
 
+        let legacy_maddubs_register = optimized(&[0x66, 0x0F, 0x38, 0x04, 0xC1]);
+        assert!(matches!(
+            legacy_maddubs_register.blocks[0].ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VDotProduct {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    acc: VReg::Imm(0),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    src_elem: VecElementType::I8,
+                    acc_elem: VecElementType::I16,
+                    width: VecWidth::V128,
+                    src1_unsigned: true,
+                    saturate: true,
+                    ..
+                },
+                x86_hint: Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                }),
+                ..
+            }]
+        ));
+
         let legacy_maddubs = optimized(&[0x66, 0x0F, 0x38, 0x04, 0x00]);
         let ops = &legacy_maddubs.blocks[0].ops;
         let alignment = ops

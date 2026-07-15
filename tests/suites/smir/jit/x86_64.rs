@@ -4630,6 +4630,157 @@ fn jit_horizontal_integer_family_matches_grouping_wrap_saturation_and_upper_stat
 }
 
 #[test]
+fn jit_maddubs_matches_signed_saturation_aliases_wig_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512vl")
+        || !std::is_x86_feature_detected!("avx2")
+        || !std::is_x86_feature_detected!("ssse3")
+    {
+        return;
+    }
+
+    // loop: pmaddubsw xmm1,xmm2; {vex3,w1} vpmaddubsw xmm3,xmm4,xmm3;
+    //       vpmaddubsw ymm6,ymm6,ymm8; vpmaddubsw zmm16,zmm17,zmm18;
+    //       {evex,w1} vpmaddubsw xmm9,xmm10,xmm11;
+    //       dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0x38, 0x04, 0xCA, 0xC4, 0xE2, 0xD9, 0x04, 0xDB, 0xC4, 0xC2, 0x4D, 0x04, 0xF0,
+        0x62, 0xA2, 0x75, 0x40, 0x04, 0xC2, 0x62, 0x52, 0xAD, 0x08, 0x04, 0xCB, 0xFF, 0xC9, 0x75,
+        0xE1, 0xF4,
+    ];
+
+    fn vector_bytes(regs: &Registers, index: usize) -> Vec<u8> {
+        if index < 16 {
+            regs.xmm[index]
+                .iter()
+                .chain(regs.ymm_high[index].iter())
+                .chain(regs.zmm_high[index].iter())
+                .flat_map(|word| word.to_le_bytes())
+                .collect()
+        } else {
+            regs.zmm_ext[index - 16]
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .collect()
+        }
+    }
+
+    fn set_vector_bytes(regs: &mut Registers, index: usize, bytes: &[u8]) {
+        let words = bytes
+            .chunks_exact(8)
+            .map(|chunk| u64::from_le_bytes(chunk.try_into().unwrap()))
+            .collect::<Vec<_>>();
+        assert_eq!(words.len(), 8);
+        if index < 16 {
+            regs.xmm[index].copy_from_slice(&words[..2]);
+            regs.ymm_high[index].copy_from_slice(&words[2..4]);
+            regs.zmm_high[index].copy_from_slice(&words[4..8]);
+        } else {
+            regs.zmm_ext[index - 16].copy_from_slice(&words);
+        }
+    }
+
+    fn maddubs_reference(unsigned: &[u8], signed: &[u8], width: usize) -> Vec<u8> {
+        let mut result = Vec::with_capacity(width);
+        for pair in 0..width / 2 {
+            let base = pair * 2;
+            let sum = i32::from(unsigned[base]) * i32::from(signed[base] as i8)
+                + i32::from(unsigned[base + 1]) * i32::from(signed[base + 1] as i8);
+            let saturated = sum.clamp(i32::from(i16::MIN), i32::from(i16::MAX)) as i16;
+            result.extend_from_slice(&saturated.to_le_bytes());
+        }
+        result
+    }
+
+    let unsigned = std::array::from_fn::<_, 64, _>(|lane| match lane & 7 {
+        0..=3 => 255,
+        4 => 200,
+        5 => 100,
+        6 => 1,
+        _ => 2,
+    });
+    let signed = std::array::from_fn::<_, 64, _>(|lane| match lane & 7 {
+        0 | 1 => 127i8 as u8,
+        2 | 3 => (-128i8) as u8,
+        4 => 127i8 as u8,
+        5 => (-128i8) as u8,
+        6 => (-1i8) as u8,
+        _ => 127i8 as u8,
+    });
+    let sentinel = std::array::from_fn::<_, 64, _>(|lane| 0xA0u8.wrapping_add(lane as u8));
+
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.rflags = 0xCD7;
+
+        set_vector_bytes(&mut regs, 1, &unsigned);
+        set_vector_bytes(&mut regs, 2, &signed);
+        regs.ymm_high[1] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        regs.zmm_high[1] = [1, 2, 3, 4];
+
+        set_vector_bytes(&mut regs, 3, &signed);
+        set_vector_bytes(&mut regs, 4, &unsigned);
+        regs.ymm_high[3] = [0x3333_3333_3333_3333; 2];
+        regs.zmm_high[3] = [3; 4];
+
+        set_vector_bytes(&mut regs, 6, &unsigned);
+        set_vector_bytes(&mut regs, 8, &signed);
+        regs.zmm_high[6] = [6; 4];
+
+        set_vector_bytes(&mut regs, 16, &sentinel);
+        set_vector_bytes(&mut regs, 17, &unsigned);
+        set_vector_bytes(&mut regs, 18, &signed);
+
+        set_vector_bytes(&mut regs, 9, &sentinel);
+        set_vector_bytes(&mut regs, 10, &unsigned);
+        set_vector_bytes(&mut regs, 11, &signed);
+
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("PMADDUBSW/VPMADDUBSW JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(jit_regs.zmm_ext, interp_regs.zmm_ext, "extended ZMM state");
+    assert_eq!(jit_regs.rflags, interp_regs.rflags, "architectural flags");
+
+    let mut expected = maddubs_reference(&unsigned, &signed, 16);
+    expected.extend_from_slice(&vector_bytes(&initial, 1)[16..]);
+    assert_eq!(
+        vector_bytes(&jit_regs, 1),
+        expected,
+        "legacy positive/negative saturation and preserved upper state"
+    );
+
+    for (dst, width, label) in [
+        (3, 16, "VEX.W1 destination/source-2 alias"),
+        (6, 32, "VEX.256 destination/source-1 alias"),
+        (16, 64, "EVEX.512 high registers"),
+        (9, 16, "EVEX.W1 narrow upper zeroing"),
+    ] {
+        let mut expected = maddubs_reference(&unsigned, &signed, width);
+        expected.resize(64, 0);
+        assert_eq!(vector_bytes(&jit_regs, dst), expected, "{label}");
+    }
+}
+
+#[test]
 fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         return;

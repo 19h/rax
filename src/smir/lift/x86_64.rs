@@ -13717,26 +13717,56 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let zero = self.append_zero_vector(VecWidth::V128, VecElementType::I16, pc, ctx, &mut ops);
-        let raw = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VDotProduct {
-                dst: raw,
-                acc: zero,
-                src1: dst,
-                src2,
-                mask: None,
-                src_elem: VecElementType::I8,
-                acc_elem: VecElementType::I16,
-                width: VecWidth::V128,
-                src1_unsigned: true,
-                saturate: true,
-                zeroing: false,
-            },
-        ));
-        self.append_legacy_packed_result(dst, raw, VecElementType::I16, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            // Keep the computation detached from the architectural destination:
+            // the aligned source read must fault before PMADDUBSW changes XMM1,
+            // and the generic vector write would otherwise clear its legacy
+            // YMM/ZMM backing state above bit 127.
+            let raw = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VDotProduct {
+                    dst: raw,
+                    acc: VReg::Imm(0),
+                    src1: dst,
+                    src2,
+                    mask: None,
+                    src_elem: VecElementType::I8,
+                    acc_elem: VecElementType::I16,
+                    width: VecWidth::V128,
+                    src1_unsigned: true,
+                    saturate: true,
+                    zeroing: false,
+                },
+            ));
+            self.append_legacy_packed_result(dst, raw, VecElementType::I16, pc, ctx, &mut ops);
+        } else {
+            // A zero immediate is also the canonical all-zero vector for the
+            // interpreter. Keeping the register form atomic lets strict native
+            // admission reproduce the original SSSE3 instruction exactly.
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VDotProduct {
+                    dst,
+                    acc: VReg::Imm(0),
+                    src1: dst,
+                    src2,
+                    mask: None,
+                    src_elem: VecElementType::I8,
+                    acc_elem: VecElementType::I16,
+                    width: VecWidth::V128,
+                    src1_unsigned: true,
+                    saturate: true,
+                    zeroing: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                },
+            ));
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -18927,24 +18957,29 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm, prefix.width)
         };
-        let zero = self.append_zero_vector(prefix.width, VecElementType::I16, pc, ctx, &mut ops);
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VDotProduct {
-                dst: self.vec_reg(modrm.reg, prefix.width),
-                acc: zero,
-                src1: self.vec_reg(prefix.vvvv, prefix.width),
-                src2,
-                mask: None,
-                src_elem: VecElementType::I8,
-                acc_elem: VecElementType::I16,
-                width: prefix.width,
-                src1_unsigned: true,
-                saturate: true,
-                zeroing: false,
-            },
-        ));
+        let kind = OpKind::VDotProduct {
+            dst: self.vec_reg(modrm.reg, prefix.width),
+            acc: VReg::Imm(0),
+            src1: self.vec_reg(prefix.vvvv, prefix.width),
+            src2,
+            mask: None,
+            src_elem: VecElementType::I8,
+            acc_elem: VecElementType::I16,
+            width: prefix.width,
+            src1_unsigned: true,
+            saturate: true,
+            zeroing: false,
+        };
+        if modrm.is_memory {
+            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                kind,
+                self.vec_hint(prefix, 0x04),
+            ));
+        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -23882,41 +23917,62 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width)
         };
-        let zero = self.append_zero_vector(prefix.width, VecElementType::I16, pc, ctx, &mut ops);
-        let raw = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VDotProduct {
-                dst: raw,
-                acc: zero,
-                src1: self.vec_reg(
-                    prefix.vvvv + if prefix.v_high { 16 } else { 0 },
-                    prefix.width,
-                ),
-                src2,
-                mask: None,
-                src_elem: VecElementType::I8,
-                acc_elem: VecElementType::I16,
-                width: prefix.width,
-                src1_unsigned: true,
-                saturate: true,
-                zeroing: false,
-            },
-        ));
         let dst = self.vec_reg(
             modrm.reg + if prefix.reg_high { 16 } else { 0 },
             prefix.width,
         );
-        self.append_evex_vector_mask_result(
-            prefix,
-            dst,
-            raw,
-            VecElementType::I16,
-            pc,
-            ctx,
-            &mut ops,
+        let src1 = self.vec_reg(
+            prefix.vvvv + if prefix.v_high { 16 } else { 0 },
+            prefix.width,
         );
+        if !modrm.is_memory && prefix.aaa == 0 {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VDotProduct {
+                    dst,
+                    acc: VReg::Imm(0),
+                    src1,
+                    src2,
+                    mask: None,
+                    src_elem: VecElementType::I8,
+                    acc_elem: VecElementType::I16,
+                    width: prefix.width,
+                    src1_unsigned: true,
+                    saturate: true,
+                    zeroing: false,
+                },
+                self.vec_hint(prefix, 0x04),
+            ));
+        } else {
+            let raw = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VDotProduct {
+                    dst: raw,
+                    acc: VReg::Imm(0),
+                    src1,
+                    src2,
+                    mask: None,
+                    src_elem: VecElementType::I8,
+                    acc_elem: VecElementType::I16,
+                    width: prefix.width,
+                    src1_unsigned: true,
+                    saturate: true,
+                    zeroing: false,
+                },
+            ));
+            self.append_evex_vector_mask_result(
+                prefix,
+                dst,
+                raw,
+                VecElementType::I16,
+                pc,
+                ctx,
+                &mut ops,
+            );
+        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -51942,33 +51998,36 @@ mod tests {
     #[test]
     fn lift_pmaddubsw_covers_legacy_vex_evex_masks_memory_and_invalids() {
         let legacy = lift_single(&[0x66, 0x0F, 0x38, 0x04, 0xC1]).unwrap();
-        assert!(legacy.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::VDotProduct {
-                src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
-                src_elem: VecElementType::I8,
-                acc_elem: VecElementType::I16,
-                width: VecWidth::V128,
-                src1_unsigned: true,
-                saturate: true,
-                ..
-            }
-        )));
-        assert_eq!(
-            legacy
+        assert!(matches!(
+            (
+                &legacy.ops.last().unwrap().kind,
+                legacy.ops.last().unwrap().x86_hint
+            ),
+            (
+                OpKind::VDotProduct {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    acc: VReg::Imm(0),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    mask: None,
+                    src_elem: VecElementType::I8,
+                    acc_elem: VecElementType::I16,
+                    width: VecWidth::V128,
+                    src1_unsigned: true,
+                    saturate: true,
+                    zeroing: false,
+                },
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                })
+            )
+        ));
+        assert!(
+            !legacy
                 .ops
                 .iter()
-                .filter(|op| matches!(
-                    op.kind,
-                    OpKind::VInsertLane {
-                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                        elem: VecElementType::I16,
-                        ..
-                    }
-                ))
-                .count(),
-            8
+                .any(|op| matches!(op.kind, OpKind::VInsertLane { .. }))
         );
 
         let legacy_mem = lift_single(&[0x66, 0x0F, 0x38, 0x04, 0x00]).unwrap();
@@ -51994,6 +52053,22 @@ mod tests {
             })
             .unwrap();
         assert!(alignment < load);
+        assert_eq!(
+            legacy_mem
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I16,
+                        ..
+                    }
+                ))
+                .count(),
+            8,
+            "legacy memory form must merge without clearing upper vector state"
+        );
 
         for (bytes, width, dst, src1, src2) in [
             (
@@ -52013,42 +52088,115 @@ mod tests {
         ] {
             let result = lift_single(bytes).unwrap();
             assert!(matches!(
-                result.ops.last().unwrap().kind,
-                OpKind::VDotProduct {
-                    dst: VReg::Arch(ArchReg::X86(actual_dst)),
-                    src1: VReg::Arch(ArchReg::X86(actual_src1)),
-                    src2: VReg::Arch(ArchReg::X86(actual_src2)),
-                    src_elem: VecElementType::I8,
-                    acc_elem: VecElementType::I16,
-                    width: actual_width,
-                    src1_unsigned: true,
-                    saturate: true,
-                    ..
-                } if actual_width == width
-                    && actual_dst == dst
-                    && actual_src1 == src1
-                    && actual_src2 == src2
+                (&result.ops.last().unwrap().kind, result.ops.last().unwrap().x86_hint),
+                (
+                    OpKind::VDotProduct {
+                        dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                        acc: VReg::Imm(0),
+                        src1: VReg::Arch(ArchReg::X86(actual_src1)),
+                        src2: VReg::Arch(ArchReg::X86(actual_src2)),
+                        src_elem: VecElementType::I8,
+                        acc_elem: VecElementType::I16,
+                        width: actual_width,
+                        src1_unsigned: true,
+                        saturate: true,
+                        ..
+                    },
+                    Some(X86OpHint::VexOp {
+                        map: X86VecMap::Map0F38,
+                        pp: X86SsePrefix::OpSize,
+                        opcode: 0x04,
+                        width: encoded_width,
+                        ..
+                    })
+                ) if *actual_width == width
+                    && encoded_width == width
+                    && *actual_dst == dst
+                    && *actual_src1 == src1
+                    && *actual_src2 == src2
             ));
         }
 
         let high = lift_single(&[0x62, 0xA2, 0x75, 0x40, 0x04, 0xC2]).unwrap();
-        assert!(high.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::VDotProduct {
-                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
-                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
-                width: VecWidth::V512,
-                ..
-            }
-        )));
-        assert!(high.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::VMov {
-                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
-                width: VecWidth::V512,
-                ..
-            }
-        )));
+        assert!(matches!(
+            (
+                &high.ops.last().unwrap().kind,
+                high.ops.last().unwrap().x86_hint
+            ),
+            (
+                OpKind::VDotProduct {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
+                    acc: VReg::Imm(0),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                    width: VecWidth::V512,
+                    ..
+                },
+                Some(X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x04,
+                    width: VecWidth::V512,
+                    ..
+                })
+            )
+        ));
+        assert!(
+            !high
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::VMov { .. } | OpKind::VInsertLane { .. }))
+        );
+
+        for (p2, width, dst, src1, src2) in [
+            (
+                0x08,
+                VecWidth::V128,
+                X86Reg::Xmm(0),
+                X86Reg::Xmm(1),
+                X86Reg::Xmm(2),
+            ),
+            (
+                0x28,
+                VecWidth::V256,
+                X86Reg::Ymm(0),
+                X86Reg::Ymm(1),
+                X86Reg::Ymm(2),
+            ),
+            (
+                0x48,
+                VecWidth::V512,
+                X86Reg::Zmm(0),
+                X86Reg::Zmm(1),
+                X86Reg::Zmm(2),
+            ),
+        ] {
+            let result = lift_single(&[0x62, 0xF2, 0x75, p2, 0x04, 0xC2]).unwrap();
+            assert!(matches!(
+                (&result.ops.last().unwrap().kind, result.ops.last().unwrap().x86_hint),
+                (
+                    OpKind::VDotProduct {
+                        dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                        acc: VReg::Imm(0),
+                        src1: VReg::Arch(ArchReg::X86(actual_src1)),
+                        src2: VReg::Arch(ArchReg::X86(actual_src2)),
+                        width: actual_width,
+                        ..
+                    },
+                    Some(X86OpHint::EvexOp {
+                        map: X86VecMap::Map0F38,
+                        pp: X86SsePrefix::OpSize,
+                        opcode: 0x04,
+                        width: encoded_width,
+                        ..
+                    })
+                ) if *actual_dst == dst
+                    && *actual_src1 == src1
+                    && *actual_src2 == src2
+                    && *actual_width == width
+                    && encoded_width == width
+            ));
+        }
 
         for (p2, width, lanes) in [
             (0x09, VecWidth::V128, 8usize),
@@ -52099,9 +52247,28 @@ mod tests {
                 .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
         );
 
-        // W is ignored by every VEX/EVEX form.
-        assert!(lift_single(&[0xC4, 0xE2, 0xF5, 0x04, 0xC2]).is_ok());
-        assert!(lift_single(&[0x62, 0xF2, 0xF5, 0x48, 0x04, 0xC2]).is_ok());
+        // W is ignored by every VEX/EVEX form, but retained in the exact
+        // encoding hint so native lowering round-trips the guest bytes.
+        for bytes in [
+            &[0xC4, 0xE2, 0xF5, 0x04, 0xC2][..],
+            &[0x62, 0xF2, 0xF5, 0x48, 0x04, 0xC2][..],
+        ] {
+            let wig = lift_single(bytes).unwrap();
+            assert!(matches!(
+                wig.ops.last().and_then(|op| op.x86_hint),
+                Some(
+                    X86OpHint::VexOp {
+                        opcode: 0x04,
+                        w: true,
+                        ..
+                    } | X86OpHint::EvexOp {
+                        opcode: 0x04,
+                        w: true,
+                        ..
+                    }
+                )
+            ));
+        }
         for bytes in [
             &[0x0F, 0x38, 0x04, 0xC1][..],             // MMX state is not exposed
             &[0xF3, 0x66, 0x0F, 0x38, 0x04, 0xC1][..], // conflicting prefix
