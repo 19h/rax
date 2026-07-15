@@ -3697,9 +3697,9 @@ struct JitLoadRet {
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 static JIT_LAST_ENTRY: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
-/// SIGSEGV/SIGBUS handler: a host fault inside native JIT code prints the guest
-/// region entry + faulting address, restores any raw terminal state, then
-/// restores the default disposition and re-raises.
+/// SIGSEGV/SIGBUS/SIGILL handler: a host fault inside native JIT code prints
+/// the guest region entry + faulting address, restores any raw terminal state,
+/// then restores the default disposition and re-raises.
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 extern "C" fn jit_crash_handler(
     sig: libc::c_int,
@@ -3708,9 +3708,9 @@ extern "C" fn jit_crash_handler(
 ) {
     use std::sync::atomic::Ordering;
     // Build "[JIT-CRASH] sig=NN entry=0xHEX addr=0xHEX\n" into a fixed buffer.
-    let mut buf = [0u8; 64];
+    let mut buf = [0u8; 128];
     let mut n = 0usize;
-    let mut put = |s: &[u8], buf: &mut [u8; 64], n: &mut usize| {
+    let mut put = |s: &[u8], buf: &mut [u8; 128], n: &mut usize| {
         for &b in s {
             if *n < buf.len() {
                 buf[*n] = b;
@@ -3718,7 +3718,7 @@ extern "C" fn jit_crash_handler(
             }
         }
     };
-    let mut put_hex = |mut v: u64, buf: &mut [u8; 64], n: &mut usize| {
+    let mut put_hex = |mut v: u64, buf: &mut [u8; 128], n: &mut usize| {
         put(b"0x", buf, n);
         let mut started = false;
         for shift in (0..16).rev() {
@@ -3773,6 +3773,7 @@ fn jit_install_crash_handler() {
         libc::sigemptyset(&mut sa.sa_mask);
         libc::sigaction(libc::SIGSEGV, &sa, std::ptr::null_mut());
         libc::sigaction(libc::SIGBUS, &sa, std::ptr::null_mut());
+        libc::sigaction(libc::SIGILL, &sa, std::ptr::null_mut());
     });
 }
 
@@ -4621,7 +4622,7 @@ impl X86_64Vcpu {
         use crate::smir::lower::runtime::GuestRegs;
 
         // Crash diagnostic (RAX_JIT_TRACE=1): record the region entry about to run
-        // natively and install a SIGSEGV/SIGBUS handler that prints it + the
+        // natively and install a SIGSEGV/SIGBUS/SIGILL handler that prints it + the
         // faulting address. Lets a host crash IN native JIT code be traced to the
         // exact guest region. Opt-in, so default runs are untouched.
         #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]

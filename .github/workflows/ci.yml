@@ -147,10 +147,14 @@ jobs:
       - name: cargo test (native x86-64 JIT, serial)
         if: matrix.name == 'linux-x64'
         shell: bash
+        env:
+          # Preserve assertion output when a later native signal terminates the
+          # test process, and arm the async-signal-safe JIT crash diagnostic.
+          RAX_JIT_TRACE: "1"
         run: |
           cargo test ${{ matrix.features }} \
             --test smir_jit_vcpu \
-            -- --include-ignored --test-threads=1
+            -- --include-ignored --test-threads=1 --nocapture
 
   # Aggregate gate: a single required check that depends on the whole matrix.
   ci-success:
