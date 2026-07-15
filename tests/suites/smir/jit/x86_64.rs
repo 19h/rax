@@ -624,6 +624,7 @@ fn jit_rdpid_reads_guest_tsc_aux_matches_interpreter() {
 /// status flags, and 16/32/64-bit destination write semantics.
 #[test]
 fn jit_x86_random_all_widths_and_sources_reach_native_tier() {
+    const INPUT: u64 = 0xA5A5_5A5A_C3C3_3C3C;
     const STATUS: u64 = (1 << 0) | (1 << 2) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 11);
 
     for (name, seed, width, random) in [
@@ -645,7 +646,7 @@ fn jit_x86_random_all_widths_and_sources_reach_native_tier() {
         code.extend_from_slice(&[0x73, (-(random.len() as i8 + 2)) as u8, 0xF4]);
         let setup = |vcpu: &mut X86_64Vcpu| {
             let mut regs = vcpu.get_regs().unwrap();
-            regs.r9 = 0xA5A5_5A5A_C3C3_3C3C;
+            regs.r9 = INPUT;
             regs.rflags = 0x2 | STATUS;
             vcpu.set_regs(&regs).unwrap();
         };
@@ -674,7 +675,7 @@ fn jit_x86_random_all_widths_and_sources_reach_native_tier() {
         );
         match width {
             16 => {
-                assert_eq!(actual.r9 >> 16, 0xA5A_5A5A_C3C3);
+                assert_eq!(actual.r9 >> 16, INPUT >> 16);
                 assert_eq!(expected.r9 >> 16, actual.r9 >> 16);
             }
             32 => {
