@@ -4525,8 +4525,18 @@ impl X86_64Vcpu {
                     exits.insert(b.id, b.guest_pc);
                 }
             }
-            // No frontier reachable ⇒ the region never returns (spin loop). Bail.
-            if exits.is_empty() {
+            // Auto-promotion bounds every invocation by converting internal
+            // backward edges into native exits. This also makes a closed loop
+            // eligible even when it has no terminal frontier: the run loop
+            // regains control at each iteration for SMC/interrupt housekeeping.
+            // Explicit `jit_try_block` compilation does not request edge exits,
+            // so a frontier-less loop still declines instead of running forever.
+            let edge_exits = if yield_backward_edges {
+                Self::jit_backward_native_exit_edges(&func, &exits)
+            } else {
+                HashMap::new()
+            };
+            if exits.is_empty() && edge_exits.is_empty() {
                 if jit_bail_log() {
                     eprintln!("[JIT-BAIL] no-frontier @ {entry:#x} (call={cm})");
                 }
@@ -4632,12 +4642,6 @@ impl X86_64Vcpu {
                 }
                 continue 'modes;
             }
-
-            let edge_exits = if yield_backward_edges {
-                Self::jit_backward_native_exit_edges(&func, &exits)
-            } else {
-                HashMap::new()
-            };
 
             #[cfg(target_arch = "aarch64")]
             let mut lowerer = Aarch64Lowerer::new();
@@ -5662,6 +5666,39 @@ mod decode_cache_invalidation_tests {
         assert!(vcpu.jit_ineligible_dirty.contains(&crossing_key));
         assert!(!vcpu.jit_ineligible_unchanged(crossing_key));
         assert!(!vcpu.jit_ineligible.contains_key(&crossing_key));
+    }
+
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
+    #[test]
+    fn auto_promoted_closed_loop_exits_at_each_backedge() {
+        let (mut vcpu, mem) = test_vcpu_with_mem();
+        // inc eax; jmp 0. The CFG has no terminal frontier; its self-edge is the
+        // only safe point at which an auto-promoted native slice can return.
+        mem.write_slice(&[0xFF, 0xC0, 0xEB, 0xFC], GuestAddress(0))
+            .unwrap();
+        vcpu.sregs.efer = 1 << 10;
+        vcpu.sregs.cs.l = true;
+        vcpu.regs.rip = 0;
+        vcpu.regs.rax = 41;
+        vcpu.regs.rflags = 2;
+
+        assert!(
+            vcpu.jit_compile_region().unwrap().is_none(),
+            "explicit unbounded compilation must still reject a closed loop"
+        );
+
+        vcpu.jit_hot.insert(0, JIT_HOT_THRESHOLD - 1);
+        vcpu.jit_sample_backedge(2);
+
+        assert_eq!(vcpu.jit_region_count(), 1);
+        assert_eq!(vcpu.regs.rax, 42);
+        assert_eq!(
+            vcpu.regs.rip, 0,
+            "the synthesized backedge exit must resume at the loop head"
+        );
     }
 }
 
