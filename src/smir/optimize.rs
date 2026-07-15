@@ -6099,6 +6099,69 @@ mod tests {
             );
         }
 
+        for (name, bytes, expected) in [
+            (
+                "legacy PMINUB",
+                &[0x66, 0x0F, 0xDA, 0xC1][..],
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    VecElementType::I8,
+                    16,
+                    VLaneOp::Min,
+                    false,
+                ),
+            ),
+            (
+                "VEX.256 VPMAXSW",
+                &[0xC5, 0xED, 0xEE, 0xCB][..],
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
+                    VecElementType::I16,
+                    16,
+                    VLaneOp::Max,
+                    true,
+                ),
+            ),
+            (
+                "EVEX.512 VPMAXUQ",
+                &[0x62, 0xA2, 0xF5, 0x40, 0x3F, 0xC2][..],
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                    VecElementType::I64,
+                    8,
+                    VLaneOp::Max,
+                    false,
+                ),
+            ),
+        ] {
+            let function = optimized(bytes);
+            let ops = &function.blocks[0].ops;
+            assert_eq!(ops.len(), 1, "register {name} must remain one atomic op");
+            assert!(matches!(
+                ops[0].kind,
+                OpKind::VLane {
+                    dst,
+                    src1,
+                    src2,
+                    elem,
+                    lanes,
+                    op,
+                    signed,
+                    set_ovf: false,
+                } if (dst, src1, src2, elem, lanes, op, signed) == expected
+            ));
+            assert!(
+                ops[0].x86_hint.is_some(),
+                "register {name} lost its encoding hint"
+            );
+        }
+
         let legacy_pminsb = optimized(&[0x66, 0x0F, 0x38, 0x38, 0x00]);
         let ops = &legacy_pminsb.blocks[0].ops;
         let alignment = ops

@@ -5003,6 +5003,365 @@ fn jit_psign_matches_control_sign_aliases_wig_and_upper_state() {
 }
 
 #[test]
+fn jit_packed_integer_minmax_matches_signedness_aliases_wig_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512vl")
+        || !std::is_x86_feature_detected!("avx2")
+        || !std::is_x86_feature_detected!("sse4.1")
+    {
+        return;
+    }
+
+    // loop: pminub xmm1,xmm2; pmaxsd xmm8,xmm9;
+    //       {vex3,w1} vpminuw xmm3,xmm4,xmm3;
+    //       vpmaxsw ymm6,ymm6,ymm5;
+    //       {evex,w1} vpminsb zmm16,zmm17,zmm18;
+    //       vpmaxuq zmm19,zmm20,zmm21; vpminsd xmm22,xmm23,xmm24;
+    //       dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0xDA, 0xCA, 0x66, 0x45, 0x0F, 0x38, 0x3D, 0xC1, 0xC4, 0xE2, 0xD9, 0x3A, 0xDB,
+        0xC5, 0xCD, 0xEE, 0xF5, 0x62, 0xA2, 0xF5, 0x40, 0x38, 0xC2, 0x62, 0xA2, 0xDD, 0x40, 0x3F,
+        0xDD, 0x62, 0x82, 0x45, 0x00, 0x39, 0xF0, 0xFF, 0xC9, 0x75, 0xD7, 0xF4,
+    ];
+
+    fn vector_bytes(regs: &Registers, index: usize) -> Vec<u8> {
+        if index < 16 {
+            regs.xmm[index]
+                .iter()
+                .chain(regs.ymm_high[index].iter())
+                .chain(regs.zmm_high[index].iter())
+                .flat_map(|word| word.to_le_bytes())
+                .collect()
+        } else {
+            regs.zmm_ext[index - 16]
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .collect()
+        }
+    }
+
+    fn set_vector_bytes(regs: &mut Registers, index: usize, bytes: &[u8]) {
+        let words = bytes
+            .chunks_exact(8)
+            .map(|chunk| u64::from_le_bytes(chunk.try_into().unwrap()))
+            .collect::<Vec<_>>();
+        assert_eq!(words.len(), 8);
+        if index < 16 {
+            regs.xmm[index].copy_from_slice(&words[..2]);
+            regs.ymm_high[index].copy_from_slice(&words[2..4]);
+            regs.zmm_high[index].copy_from_slice(&words[4..8]);
+        } else {
+            regs.zmm_ext[index - 16].copy_from_slice(&words);
+        }
+    }
+
+    fn minmax_lanes(
+        first: &[u8],
+        second: &[u8],
+        width: usize,
+        elem_bytes: usize,
+        signed: bool,
+        maximum: bool,
+    ) -> Vec<u8> {
+        let bits = elem_bytes * 8;
+        let mut result = Vec::with_capacity(width);
+        for lane in 0..width / elem_bytes {
+            let base = lane * elem_bytes;
+            let read = |source: &[u8]| {
+                let mut bytes = [0u8; 8];
+                bytes[..elem_bytes].copy_from_slice(&source[base..base + elem_bytes]);
+                u64::from_le_bytes(bytes)
+            };
+            let first_value = read(first);
+            let second_value = read(second);
+            let take_first = if signed {
+                let shift = 64 - bits;
+                let first_signed = ((first_value << shift) as i64) >> shift;
+                let second_signed = ((second_value << shift) as i64) >> shift;
+                if maximum {
+                    first_signed >= second_signed
+                } else {
+                    first_signed <= second_signed
+                }
+            } else if maximum {
+                first_value >= second_value
+            } else {
+                first_value <= second_value
+            };
+            let selected = if take_first {
+                first_value
+            } else {
+                second_value
+            };
+            result.extend_from_slice(&selected.to_le_bytes()[..elem_bytes]);
+        }
+        result
+    }
+
+    let unsigned_bytes_a = std::array::from_fn::<_, 64, _>(|lane| match lane & 7 {
+        0 => 0,
+        1 => 1,
+        2 => 0x7F,
+        3 => 0x80,
+        4 => 0xFE,
+        5 => 0xFF,
+        6 => 0x55,
+        _ => 0xAA,
+    });
+    let unsigned_bytes_b = std::array::from_fn::<_, 64, _>(|lane| match lane & 7 {
+        0 => 0xFF,
+        1 => 1,
+        2 => 0x80,
+        3 => 0x7F,
+        4 => 2,
+        5 => 0,
+        6 => 0xAA,
+        _ => 0x55,
+    });
+    let signed_bytes_a = std::array::from_fn::<_, 64, _>(|lane| match lane & 7 {
+        0 => i8::MIN as u8,
+        1 => i8::MAX as u8,
+        2 => (-1i8) as u8,
+        3 => 0,
+        4 => 1,
+        5 => (-2i8) as u8,
+        6 => 0x55,
+        _ => 0xAA,
+    });
+    let signed_bytes_b = std::array::from_fn::<_, 64, _>(|lane| match lane & 7 {
+        0 => i8::MAX as u8,
+        1 => i8::MIN as u8,
+        2 => 1,
+        3 => 0,
+        4 => (-1i8) as u8,
+        5 => 2,
+        6 => 0xAA,
+        _ => 0x55,
+    });
+    let unsigned_words_a = std::array::from_fn::<_, 32, _>(|lane| match lane & 7 {
+        0 => 0u16,
+        1 => 1,
+        2 => u16::MAX,
+        3 => 0x8000,
+        4 => 0x7FFF,
+        5 => 2,
+        6 => 0x5555,
+        _ => 0xAAAA,
+    })
+    .iter()
+    .flat_map(|lane| lane.to_le_bytes())
+    .collect::<Vec<_>>();
+    let unsigned_words_b = std::array::from_fn::<_, 32, _>(|lane| match lane & 7 {
+        0 => u16::MAX,
+        1 => 1,
+        2 => 0,
+        3 => 0x7FFF,
+        4 => 0x8000,
+        5 => 3,
+        6 => 0xAAAA,
+        _ => 0x5555,
+    })
+    .iter()
+    .flat_map(|lane| lane.to_le_bytes())
+    .collect::<Vec<_>>();
+    let signed_words_a = std::array::from_fn::<_, 32, _>(|lane| match lane & 7 {
+        0 => i16::MIN,
+        1 => i16::MAX,
+        2 => -1,
+        3 => 0,
+        4 => 1,
+        5 => -2,
+        6 => 0x5555,
+        _ => -0x5556,
+    })
+    .iter()
+    .flat_map(|lane| lane.to_le_bytes())
+    .collect::<Vec<_>>();
+    let signed_words_b = std::array::from_fn::<_, 32, _>(|lane| match lane & 7 {
+        0 => i16::MAX,
+        1 => i16::MIN,
+        2 => 1,
+        3 => 0,
+        4 => -1,
+        5 => 2,
+        6 => -0x5556,
+        _ => 0x5555,
+    })
+    .iter()
+    .flat_map(|lane| lane.to_le_bytes())
+    .collect::<Vec<_>>();
+    let signed_dwords_a = std::array::from_fn::<_, 16, _>(|lane| match lane & 7 {
+        0 => i32::MIN,
+        1 => i32::MAX,
+        2 => -1,
+        3 => 0,
+        4 => 1,
+        5 => -2,
+        6 => 0x5555_5555,
+        _ => -0x5555_5556,
+    })
+    .iter()
+    .flat_map(|lane| lane.to_le_bytes())
+    .collect::<Vec<_>>();
+    let signed_dwords_b = std::array::from_fn::<_, 16, _>(|lane| match lane & 7 {
+        0 => i32::MAX,
+        1 => i32::MIN,
+        2 => 1,
+        3 => 0,
+        4 => -1,
+        5 => 2,
+        6 => -0x5555_5556,
+        _ => 0x5555_5555,
+    })
+    .iter()
+    .flat_map(|lane| lane.to_le_bytes())
+    .collect::<Vec<_>>();
+    let unsigned_qwords_a = [0, 1, u64::MAX, 1 << 63, i64::MAX as u64, 2, 0x5555, 0xAAAA]
+        .iter()
+        .flat_map(|lane| lane.to_le_bytes())
+        .collect::<Vec<_>>();
+    let unsigned_qwords_b = [u64::MAX, 1, 0, i64::MAX as u64, 1 << 63, 3, 0xAAAA, 0x5555]
+        .iter()
+        .flat_map(|lane| lane.to_le_bytes())
+        .collect::<Vec<_>>();
+    let sentinel = std::array::from_fn::<_, 64, _>(|lane| 0xC0u8.wrapping_add(lane as u8));
+
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.rflags = 0xCD7;
+
+        set_vector_bytes(&mut regs, 1, &unsigned_bytes_a);
+        set_vector_bytes(&mut regs, 2, &unsigned_bytes_b);
+        set_vector_bytes(&mut regs, 8, &signed_dwords_a);
+        set_vector_bytes(&mut regs, 9, &signed_dwords_b);
+        set_vector_bytes(&mut regs, 3, &unsigned_words_b);
+        set_vector_bytes(&mut regs, 4, &unsigned_words_a);
+        set_vector_bytes(&mut regs, 6, &signed_words_a);
+        set_vector_bytes(&mut regs, 5, &signed_words_b);
+        set_vector_bytes(&mut regs, 16, &sentinel);
+        set_vector_bytes(&mut regs, 17, &signed_bytes_a);
+        set_vector_bytes(&mut regs, 18, &signed_bytes_b);
+        set_vector_bytes(&mut regs, 19, &sentinel);
+        set_vector_bytes(&mut regs, 20, &unsigned_qwords_a);
+        set_vector_bytes(&mut regs, 21, &unsigned_qwords_b);
+        set_vector_bytes(&mut regs, 22, &sentinel);
+        set_vector_bytes(&mut regs, 23, &signed_dwords_a);
+        set_vector_bytes(&mut regs, 24, &signed_dwords_b);
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("packed integer min/max JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(jit_regs.zmm_ext, interp_regs.zmm_ext, "extended ZMM state");
+    assert_eq!(jit_regs.rflags, interp_regs.rflags, "architectural flags");
+
+    for (dst, first, second, width, elem_bytes, signed, maximum, legacy, label) in [
+        (
+            1,
+            &unsigned_bytes_a[..],
+            &unsigned_bytes_b[..],
+            16,
+            1,
+            false,
+            false,
+            true,
+            "legacy PMINUB",
+        ),
+        (
+            8,
+            &signed_dwords_a[..],
+            &signed_dwords_b[..],
+            16,
+            4,
+            true,
+            true,
+            true,
+            "legacy PMAXSD",
+        ),
+        (
+            3,
+            &unsigned_words_a[..],
+            &unsigned_words_b[..],
+            16,
+            2,
+            false,
+            false,
+            false,
+            "VEX.W1 VPMINUW destination/source-2 alias",
+        ),
+        (
+            6,
+            &signed_words_a[..],
+            &signed_words_b[..],
+            32,
+            2,
+            true,
+            true,
+            false,
+            "VEX.256 VPMAXSW destination/source-1 alias",
+        ),
+        (
+            16,
+            &signed_bytes_a[..],
+            &signed_bytes_b[..],
+            64,
+            1,
+            true,
+            false,
+            false,
+            "EVEX.W1 VPMINSB high registers",
+        ),
+        (
+            19,
+            &unsigned_qwords_a[..],
+            &unsigned_qwords_b[..],
+            64,
+            8,
+            false,
+            true,
+            false,
+            "EVEX.W1 VPMAXUQ",
+        ),
+        (
+            22,
+            &signed_dwords_a[..],
+            &signed_dwords_b[..],
+            16,
+            4,
+            true,
+            false,
+            false,
+            "EVEX.128 VPMINSD upper zeroing",
+        ),
+    ] {
+        let mut expected = minmax_lanes(first, second, width, elem_bytes, signed, maximum);
+        if legacy {
+            expected.extend_from_slice(&vector_bytes(&initial, dst)[width..]);
+        } else {
+            expected.resize(64, 0);
+        }
+        assert_eq!(vector_bytes(&jit_regs, dst), expected, "{label}");
+    }
+}
+
+#[test]
 fn jit_psadbw_matches_unsigned_sums_aliases_wig_and_upper_state() {
     if !std::is_x86_feature_detected!("avx512f")
         || !std::is_x86_feature_detected!("avx512bw")

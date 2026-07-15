@@ -8249,6 +8249,167 @@ impl X86_64Lowerer {
                 src2,
                 elem,
                 lanes,
+                op: lane_op @ (VLaneOp::Min | VLaneOp::Max),
+                signed,
+                set_ovf: false,
+            } if matches!(
+                elem,
+                VecElementType::I8
+                    | VecElementType::I16
+                    | VecElementType::I32
+                    | VecElementType::I64
+            ) =>
+            {
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
+                        op: format!("VLane {:?} {:?}x{}", lane_op, elem, lanes),
+                    }
+                })?;
+                let (map, opcode) = match (*elem, *lane_op, *signed) {
+                    (VecElementType::I8, VLaneOp::Min, false) => (X86VecMap::Map0F, 0xDA),
+                    (VecElementType::I8, VLaneOp::Max, false) => (X86VecMap::Map0F, 0xDE),
+                    (VecElementType::I16, VLaneOp::Min, true) => (X86VecMap::Map0F, 0xEA),
+                    (VecElementType::I16, VLaneOp::Max, true) => (X86VecMap::Map0F, 0xEE),
+                    (VecElementType::I8, VLaneOp::Min, true) => (X86VecMap::Map0F38, 0x38),
+                    (VecElementType::I32 | VecElementType::I64, VLaneOp::Min, true) => {
+                        (X86VecMap::Map0F38, 0x39)
+                    }
+                    (VecElementType::I16, VLaneOp::Min, false) => (X86VecMap::Map0F38, 0x3A),
+                    (VecElementType::I32 | VecElementType::I64, VLaneOp::Min, false) => {
+                        (X86VecMap::Map0F38, 0x3B)
+                    }
+                    (VecElementType::I8, VLaneOp::Max, true) => (X86VecMap::Map0F38, 0x3C),
+                    (VecElementType::I32 | VecElementType::I64, VLaneOp::Max, true) => {
+                        (X86VecMap::Map0F38, 0x3D)
+                    }
+                    (VecElementType::I16, VLaneOp::Max, false) => (X86VecMap::Map0F38, 0x3E),
+                    (VecElementType::I32 | VecElementType::I64, VLaneOp::Max, false) => {
+                        (X86VecMap::Map0F38, 0x3F)
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("VLane {:?} {:?}x{}", lane_op, elem, lanes),
+                        });
+                    }
+                };
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                let vector_matches_width = |reg: PhysReg| match (width, reg) {
+                    (VecWidth::V128, PhysReg::Xmm(index))
+                    | (VecWidth::V256, PhysReg::Ymm(index))
+                    | (VecWidth::V512, PhysReg::Zmm(index)) => index < 32,
+                    _ => false,
+                };
+                if ![dst_reg, src1_reg, src2_reg]
+                    .into_iter()
+                    .all(vector_matches_width)
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VLane packed integer min/max".to_string(),
+                        operand: "requires matching XMM/YMM/ZMM registers".to_string(),
+                    });
+                }
+                let low_vector = |reg: PhysReg| match reg {
+                    PhysReg::Xmm(index) | PhysReg::Ymm(index) | PhysReg::Zmm(index) => index < 16,
+                    _ => false,
+                };
+                match op.x86_hint {
+                    Some(X86OpHint::SseOp {
+                        prefix,
+                        opcode: encoded_opcode,
+                    }) if *elem != VecElementType::I64
+                        && width == VecWidth::V128
+                        && dst_reg == src1_reg
+                        && [dst_reg, src1_reg, src2_reg].into_iter().all(low_vector)
+                        && prefix == X86SsePrefix::OpSize
+                        && encoded_opcode == opcode =>
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        if map == X86VecMap::Map0F38 {
+                            emitter.emit_sse_op38_rr(Some(0x66), opcode, dst_reg, src2_reg);
+                        } else {
+                            emitter.emit_sse_mov_rr(Some(0x66), opcode, dst_reg, src2_reg);
+                        }
+                    }
+                    Some(X86OpHint::VexOp {
+                        map: encoded_map,
+                        pp,
+                        opcode: encoded_opcode,
+                        width: encoded_width,
+                        w: _,
+                    }) if *elem != VecElementType::I64
+                        && encoded_map == map
+                        && pp == X86SsePrefix::OpSize
+                        && encoded_opcode == opcode
+                        && encoded_width == width
+                        && width != VecWidth::V512
+                        && [dst_reg, src1_reg, src2_reg].into_iter().all(low_vector) =>
+                    {
+                        self.emit_vec_rrr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Vex,
+                                map,
+                                pp,
+                                opcode,
+                                width,
+                                // All packed-integer min/max VEX encodings are WIG.
+                                w: false,
+                            },
+                            dst_reg,
+                            src1_reg,
+                            src2_reg,
+                        );
+                    }
+                    Some(X86OpHint::EvexOp {
+                        map: encoded_map,
+                        pp,
+                        opcode: encoded_opcode,
+                        width: encoded_width,
+                        w,
+                    }) if encoded_map == map
+                        && pp == X86SsePrefix::OpSize
+                        && encoded_opcode == opcode
+                        && encoded_width == width
+                        && match elem {
+                            VecElementType::I8 | VecElementType::I16 => true,
+                            VecElementType::I32 => !w,
+                            VecElementType::I64 => w,
+                            _ => false,
+                        } =>
+                    {
+                        self.emit_vec_rrr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Evex,
+                                map,
+                                pp,
+                                opcode,
+                                width,
+                                // EVEX byte/word W is ignored; dword/qword use W0/W1.
+                                w: *elem == VecElementType::I64,
+                            },
+                            dst_reg,
+                            src1_reg,
+                            src2_reg,
+                        );
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!(
+                                "unhinted or malformed packed integer {:?} {:?}x{}",
+                                lane_op, elem, lanes
+                            ),
+                        });
+                    }
+                }
+            }
+
+            OpKind::VLane {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
                 op: VLaneOp::Sign,
                 signed: true,
                 set_ovf: false,
@@ -15562,6 +15723,20 @@ mod tests {
                 &[0xC4, 0xE2, 0x6D, 0x0A, 0xCB][..],
                 &[0xC4, 0xE2, 0x6D, 0x0A, 0xCB][..],
             ),
+            (&[0x66, 0x0F, 0xDA, 0xCA][..], &[0x66, 0x0F, 0xDA, 0xCA][..]),
+            (
+                &[0xC4, 0xE2, 0xE9, 0x3A, 0xCB][..],
+                &[0xC4, 0xE2, 0x69, 0x3A, 0xCB][..],
+            ),
+            (&[0xC5, 0xED, 0xEE, 0xCB][..], &[0xC5, 0xED, 0xEE, 0xCB][..]),
+            (
+                &[0x62, 0xA2, 0xF5, 0x40, 0x38, 0xC2][..],
+                &[0x62, 0xA2, 0x75, 0x40, 0x38, 0xC2][..],
+            ),
+            (
+                &[0x62, 0xA2, 0xF5, 0x40, 0x3F, 0xC2][..],
+                &[0x62, 0xA2, 0xF5, 0x40, 0x3F, 0xC2][..],
+            ),
             (&[0x66, 0x0F, 0xE5, 0xCA][..], &[0x66, 0x0F, 0xE5, 0xCA][..]),
             (&[0x66, 0x0F, 0xE4, 0xEF][..], &[0x66, 0x0F, 0xE4, 0xEF][..]),
             (
@@ -16573,6 +16748,390 @@ mod tests {
                 X86OpHint::SseOp {
                     prefix: X86SsePrefix::OpSize,
                     opcode: 0xE5,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_packed_integer_minmax_emits_exact_bytes_canonicalizes_wig_and_rejects_malformed() {
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let ymm = |index| VReg::Arch(ArchReg::X86(X86Reg::Ymm(index)));
+        let zmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Zmm(index)));
+        let minmax = |dst, src1, src2, elem, lanes, op, signed| OpKind::VLane {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            op,
+            signed,
+            set_ovf: false,
+        };
+
+        for (name, kind, hint, expected) in [
+            (
+                "PMINUB xmm1,xmm2",
+                minmax(
+                    xmm(1),
+                    xmm(1),
+                    xmm(2),
+                    VecElementType::I8,
+                    16,
+                    VLaneOp::Min,
+                    false,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xDA,
+                },
+                &[0x66, 0x0F, 0xDA, 0xCA][..],
+            ),
+            (
+                "PMAXSD xmm8,xmm9",
+                minmax(
+                    xmm(8),
+                    xmm(8),
+                    xmm(9),
+                    VecElementType::I32,
+                    4,
+                    VLaneOp::Max,
+                    true,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x3D,
+                },
+                &[0x66, 0x45, 0x0F, 0x38, 0x3D, 0xC1][..],
+            ),
+            (
+                "VEX.W1-hinted VPMINUW xmm1,xmm2,xmm3 canonicalized to W0",
+                minmax(
+                    xmm(1),
+                    xmm(2),
+                    xmm(3),
+                    VecElementType::I16,
+                    8,
+                    VLaneOp::Min,
+                    false,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x3A,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0xC4, 0xE2, 0x69, 0x3A, 0xCB][..],
+            ),
+            (
+                "VEX.256 VPMAXSW ymm1,ymm2,ymm3",
+                minmax(
+                    ymm(1),
+                    ymm(2),
+                    ymm(3),
+                    VecElementType::I16,
+                    16,
+                    VLaneOp::Max,
+                    true,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xEE,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                &[0xC5, 0xED, 0xEE, 0xCB][..],
+            ),
+            (
+                "EVEX.W1-hinted VPMINSB zmm16,zmm17,zmm18 canonicalized to W0",
+                minmax(
+                    zmm(16),
+                    zmm(17),
+                    zmm(18),
+                    VecElementType::I8,
+                    64,
+                    VLaneOp::Min,
+                    true,
+                ),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x38,
+                    width: VecWidth::V512,
+                    w: true,
+                },
+                &[0x62, 0xA2, 0x75, 0x40, 0x38, 0xC2][..],
+            ),
+            (
+                "EVEX.W1 VPMAXUQ zmm16,zmm17,zmm18",
+                minmax(
+                    zmm(16),
+                    zmm(17),
+                    zmm(18),
+                    VecElementType::I64,
+                    8,
+                    VLaneOp::Max,
+                    false,
+                ),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x3F,
+                    width: VecWidth::V512,
+                    w: true,
+                },
+                &[0x62, 0xA2, 0xF5, 0x40, 0x3F, 0xC2][..],
+            ),
+            (
+                "EVEX.128 VPMINSD xmm16,xmm17,xmm18",
+                minmax(
+                    xmm(16),
+                    xmm(17),
+                    xmm(18),
+                    VecElementType::I32,
+                    4,
+                    VLaneOp::Min,
+                    true,
+                ),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x39,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+                &[0x62, 0xA2, 0x75, 0x00, 0x39, 0xC2][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, hint);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        assert!(matches!(
+            lower_single_op_err(minmax(
+                xmm(1),
+                xmm(1),
+                xmm(2),
+                VecElementType::I8,
+                16,
+                VLaneOp::Min,
+                false,
+            )),
+            LowerError::UnsupportedOp { .. }
+        ));
+
+        for (kind, hint) in [
+            (
+                minmax(
+                    xmm(1),
+                    xmm(2),
+                    xmm(3),
+                    VecElementType::I8,
+                    16,
+                    VLaneOp::Min,
+                    false,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xDA,
+                },
+            ),
+            (
+                minmax(
+                    xmm(1),
+                    xmm(1),
+                    xmm(2),
+                    VecElementType::I8,
+                    16,
+                    VLaneOp::Min,
+                    true,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xDA,
+                },
+            ),
+            (
+                OpKind::VLane {
+                    dst: xmm(1),
+                    src1: xmm(1),
+                    src2: xmm(2),
+                    elem: VecElementType::I8,
+                    lanes: 16,
+                    op: VLaneOp::Min,
+                    signed: false,
+                    set_ovf: true,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xDA,
+                },
+            ),
+            (
+                minmax(
+                    xmm(1),
+                    xmm(1),
+                    xmm(2),
+                    VecElementType::I64,
+                    2,
+                    VLaneOp::Max,
+                    false,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x3F,
+                },
+            ),
+            (
+                minmax(
+                    ymm(1),
+                    ymm(2),
+                    ymm(3),
+                    VecElementType::I16,
+                    16,
+                    VLaneOp::Max,
+                    true,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xEE,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                minmax(
+                    ymm(16),
+                    ymm(17),
+                    ymm(18),
+                    VecElementType::I16,
+                    16,
+                    VLaneOp::Max,
+                    true,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xEE,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                minmax(
+                    zmm(1),
+                    zmm(2),
+                    zmm(3),
+                    VecElementType::I16,
+                    32,
+                    VLaneOp::Max,
+                    true,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xEE,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+            ),
+            (
+                minmax(
+                    xmm(16),
+                    xmm(17),
+                    xmm(18),
+                    VecElementType::I32,
+                    4,
+                    VLaneOp::Min,
+                    true,
+                ),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x39,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+            ),
+            (
+                minmax(
+                    zmm(16),
+                    zmm(17),
+                    zmm(18),
+                    VecElementType::I64,
+                    8,
+                    VLaneOp::Max,
+                    false,
+                ),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x3F,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+            ),
+            (
+                minmax(
+                    zmm(16),
+                    zmm(17),
+                    zmm(18),
+                    VecElementType::I64,
+                    8,
+                    VLaneOp::Max,
+                    false,
+                ),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x3F,
+                    width: VecWidth::V512,
+                    w: true,
+                },
+            ),
+            (
+                minmax(
+                    ymm(16),
+                    ymm(17),
+                    ymm(18),
+                    VecElementType::I8,
+                    32,
+                    VLaneOp::Min,
+                    true,
+                ),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x38,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                minmax(
+                    VReg::Virtual(crate::smir::ir::types::VirtualId(71)),
+                    xmm(1),
+                    xmm(2),
+                    VecElementType::I8,
+                    16,
+                    VLaneOp::Min,
+                    false,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xDA,
                 },
             ),
         ] {

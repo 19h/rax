@@ -13944,20 +13944,41 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let raw = ctx.alloc_vreg();
-        self.append_packed_minmax(
-            raw,
-            dst,
-            src2,
-            elem,
-            VecWidth::V128,
-            min,
-            signed,
-            pc,
-            ctx,
-            &mut ops,
-        );
-        self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            let raw = ctx.alloc_vreg();
+            self.append_packed_minmax(
+                raw,
+                dst,
+                src2,
+                elem,
+                VecWidth::V128,
+                min,
+                signed,
+                pc,
+                ctx,
+                &mut ops,
+            );
+            self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLane {
+                    dst,
+                    src1: dst,
+                    src2,
+                    elem,
+                    lanes: VecWidth::V128.lanes(elem) as u8,
+                    op: if min { VLaneOp::Min } else { VLaneOp::Max },
+                    signed,
+                    set_ovf: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode,
+                },
+            ));
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -19335,7 +19356,23 @@ impl X86_64Lifter {
                 },
             prefix.width,
         );
-        if prefix.encoding == VecEncodingKind::Evex {
+        if !modrm.is_memory && (prefix.encoding == VecEncodingKind::Vex || prefix.aaa == 0) {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLane {
+                    dst,
+                    src1,
+                    src2,
+                    elem,
+                    lanes: prefix.width.lanes(elem) as u8,
+                    op: if min { VLaneOp::Min } else { VLaneOp::Max },
+                    signed,
+                    set_ovf: false,
+                },
+                self.vec_hint(prefix, opcode),
+            ));
+        } else if prefix.encoding == VecEncodingKind::Evex {
             let raw = ctx.alloc_vreg();
             self.append_packed_minmax(
                 raw,
@@ -53209,42 +53246,41 @@ mod tests {
     #[test]
     fn lift_packed_minmax_covers_signedness_widths_masks_broadcasts_and_invalids() {
         let shapes = [
-            (0x38, VecElementType::I8, VecCmpCond::Lt),
-            (0x39, VecElementType::I32, VecCmpCond::Lt),
-            (0x3A, VecElementType::I16, VecCmpCond::Ltu),
-            (0x3B, VecElementType::I32, VecCmpCond::Ltu),
-            (0x3C, VecElementType::I8, VecCmpCond::Gt),
-            (0x3D, VecElementType::I32, VecCmpCond::Gt),
-            (0x3E, VecElementType::I16, VecCmpCond::Gtu),
-            (0x3F, VecElementType::I32, VecCmpCond::Gtu),
+            (0x38, VecElementType::I8, VLaneOp::Min, true),
+            (0x39, VecElementType::I32, VLaneOp::Min, true),
+            (0x3A, VecElementType::I16, VLaneOp::Min, false),
+            (0x3B, VecElementType::I32, VLaneOp::Min, false),
+            (0x3C, VecElementType::I8, VLaneOp::Max, true),
+            (0x3D, VecElementType::I32, VLaneOp::Max, true),
+            (0x3E, VecElementType::I16, VLaneOp::Max, false),
+            (0x3F, VecElementType::I32, VLaneOp::Max, false),
         ];
-        for (opcode, elem, cond) in shapes {
+        for (opcode, elem, lane_op, signed) in shapes {
             let legacy = lift_single(&[0x66, 0x0F, 0x38, opcode, 0xC1]).unwrap();
-            assert!(legacy.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VCmp {
-                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
-                    elem: actual_elem,
-                    cond: actual_cond,
-                    ..
-                } if actual_elem == elem && actual_cond == cond
-            )));
-            assert!(legacy.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VBitSelect {
-                    width: VecWidth::V128,
-                    ..
-                }
-            )));
-            assert!(legacy.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VInsertLane {
-                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                    elem: actual,
-                    ..
-                } if actual == elem
-            )));
+            assert_eq!(legacy.ops.len(), 1);
+            assert!(matches!(
+                (&legacy.ops[0].kind, legacy.ops[0].x86_hint),
+                (
+                    OpKind::VLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        elem: actual_elem,
+                        lanes,
+                        op: actual_op,
+                        signed: actual_signed,
+                        set_ovf: false,
+                    },
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::OpSize,
+                        opcode: actual_opcode,
+                    })
+                ) if *actual_elem == elem
+                    && *lanes == VecWidth::V128.lanes(elem) as u8
+                    && *actual_op == lane_op
+                    && *actual_signed == signed
+                    && actual_opcode == opcode
+            ));
 
             for (p2, width, dst, src1, src2) in [
                 (
@@ -53263,19 +53299,37 @@ mod tests {
                 ),
             ] {
                 let vex = lift_single(&[0xC4, 0xE2, p2, opcode, 0xC2]).unwrap();
-                assert!(vex.ops.iter().any(|op| matches!(
-                    op.kind,
-                    OpKind::VBitSelect {
-                        dst: VReg::Arch(ArchReg::X86(actual_dst)),
-                        src_true: VReg::Arch(ArchReg::X86(actual_src1)),
-                        src_false: VReg::Arch(ArchReg::X86(actual_src2)),
-                        width: actual_width,
-                        ..
-                    } if actual_dst == dst
-                        && actual_src1 == src1
-                        && actual_src2 == src2
+                assert_eq!(vex.ops.len(), 1);
+                assert!(matches!(
+                    (&vex.ops[0].kind, vex.ops[0].x86_hint),
+                    (
+                        OpKind::VLane {
+                            dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                            src1: VReg::Arch(ArchReg::X86(actual_src1)),
+                            src2: VReg::Arch(ArchReg::X86(actual_src2)),
+                            elem: actual_elem,
+                            lanes,
+                            op: actual_op,
+                            signed: actual_signed,
+                            set_ovf: false,
+                        },
+                        Some(X86OpHint::VexOp {
+                            map: X86VecMap::Map0F38,
+                            pp: X86SsePrefix::OpSize,
+                            opcode: actual_opcode,
+                            width: actual_width,
+                            ..
+                        })
+                    ) if *actual_dst == dst
+                        && *actual_src1 == src1
+                        && *actual_src2 == src2
+                        && *actual_elem == elem
+                        && *lanes == width.lanes(elem) as u8
+                        && *actual_op == lane_op
+                        && *actual_signed == signed
+                        && actual_opcode == opcode
                         && actual_width == width
-                )));
+                ));
             }
         }
 
@@ -53318,24 +53372,29 @@ mod tests {
         // EVEX.W selects dword/qword for odd opcodes and preserves all three
         // high-register extension paths.
         let high = lift_single(&[0x62, 0xA2, 0xF5, 0x40, 0x39, 0xC2]).unwrap();
-        assert!(high.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::VCmp {
-                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
-                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
-                elem: VecElementType::I64,
-                cond: VecCmpCond::Lt,
-                lanes: 8,
-                ..
-            }
-        )));
-        assert!(high.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::VMov {
-                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
-                ..
-            }
-        )));
+        assert_eq!(high.ops.len(), 1);
+        assert!(matches!(
+            (&high.ops[0].kind, high.ops[0].x86_hint),
+            (
+                OpKind::VLane {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                    elem: VecElementType::I64,
+                    lanes: 8,
+                    op: VLaneOp::Min,
+                    signed: true,
+                    set_ovf: false,
+                },
+                Some(X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x39,
+                    width: VecWidth::V512,
+                    w: true,
+                })
+            )
+        ));
 
         let qword_broadcast = lift_single(&[0x62, 0xF2, 0xF5, 0x59, 0x3F, 0x40, 0x01]).unwrap();
         assert!(qword_broadcast.ops.iter().any(|op| matches!(
@@ -53437,77 +53496,109 @@ mod tests {
 
     #[test]
     fn lift_original_packed_minmax_covers_legacy_vex_evex_e4_and_invalids() {
-        for (bytes, elem, cond, dst, src1, src2) in [
+        for (bytes, elem, lane_op, signed, dst, src1, src2, atomic) in [
             (
                 &[0x66, 0x0F, 0xDA, 0xD1][..],
                 VecElementType::I8,
-                VecCmpCond::Ltu,
+                VLaneOp::Min,
+                false,
                 X86Reg::Xmm(2),
                 X86Reg::Xmm(2),
                 X86Reg::Xmm(1),
+                true,
             ),
             (
                 &[0x66, 0x0F, 0xDE, 0xE3][..],
                 VecElementType::I8,
-                VecCmpCond::Gtu,
+                VLaneOp::Max,
+                false,
                 X86Reg::Xmm(4),
                 X86Reg::Xmm(4),
                 X86Reg::Xmm(3),
+                true,
             ),
             (
                 &[0xC4, 0x41, 0x35, 0xEA, 0xC2][..],
                 VecElementType::I16,
-                VecCmpCond::Lt,
+                VLaneOp::Min,
+                true,
                 X86Reg::Ymm(8),
                 X86Reg::Ymm(9),
                 X86Reg::Ymm(10),
+                true,
             ),
             (
                 &[0x62, 0xA1, 0x75, 0xC1, 0xEE, 0xC2][..],
                 VecElementType::I16,
-                VecCmpCond::Gt,
+                VLaneOp::Max,
+                true,
                 X86Reg::Zmm(16),
                 X86Reg::Zmm(17),
                 X86Reg::Zmm(18),
+                false,
             ),
         ] {
             let result = lift_single(bytes).unwrap();
             assert_eq!(result.bytes_consumed, bytes.len());
-            assert!(result.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VCmp {
-                    src1: VReg::Arch(ArchReg::X86(actual_src1)),
-                    src2: VReg::Arch(ArchReg::X86(actual_src2)),
-                    cond: actual_cond,
-                    elem: actual_elem,
-                    ..
-                } if actual_src1 == src1 && actual_src2 == src2
-                    && actual_cond == cond && actual_elem == elem
-            )));
-            assert!(result.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VBitSelect {
-                    src_true: VReg::Arch(ArchReg::X86(actual_src1)),
-                    src_false: VReg::Arch(ArchReg::X86(actual_src2)),
-                    ..
-                } if actual_src1 == src1 && actual_src2 == src2
-            )));
-            assert!(
-                result.ops.iter().any(|op| matches!(
-                    op.kind,
-                    OpKind::VInsertLane {
+            if atomic {
+                assert_eq!(result.ops.len(), 1);
+                assert!(matches!(
+                    result.ops[0].kind,
+                    OpKind::VLane {
                         dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                        src1: VReg::Arch(ArchReg::X86(actual_src1)),
+                        src2: VReg::Arch(ArchReg::X86(actual_src2)),
+                        elem: actual_elem,
+                        op: actual_op,
+                        signed: actual_signed,
+                        set_ovf: false,
+                        ..
+                    } if actual_dst == dst
+                        && actual_src1 == src1
+                        && actual_src2 == src2
+                        && actual_elem == elem
+                        && actual_op == lane_op
+                        && actual_signed == signed
+                ));
+                assert!(result.ops[0].x86_hint.is_some());
+            } else {
+                let cond = match (lane_op, signed) {
+                    (VLaneOp::Min, true) => VecCmpCond::Lt,
+                    (VLaneOp::Min, false) => VecCmpCond::Ltu,
+                    (VLaneOp::Max, true) => VecCmpCond::Gt,
+                    (VLaneOp::Max, false) => VecCmpCond::Gtu,
+                    _ => unreachable!(),
+                };
+                assert!(result.ops.iter().any(|op| matches!(
+                    op.kind,
+                    OpKind::VCmp {
+                        src1: VReg::Arch(ArchReg::X86(actual_src1)),
+                        src2: VReg::Arch(ArchReg::X86(actual_src2)),
+                        cond: actual_cond,
                         elem: actual_elem,
                         ..
-                    } if actual_dst == dst && actual_elem == elem
-                )) || result.ops.iter().any(|op| matches!(
+                    } if actual_src1 == src1 && actual_src2 == src2
+                        && actual_cond == cond && actual_elem == elem
+                )));
+                assert!(result.ops.iter().any(|op| matches!(
                     op.kind,
                     OpKind::VBitSelect {
+                        src_true: VReg::Arch(ArchReg::X86(actual_src1)),
+                        src_false: VReg::Arch(ArchReg::X86(actual_src2)),
+                        ..
+                    } if actual_src1 == src1 && actual_src2 == src2
+                )));
+                assert!(result.ops.iter().any(|op| matches!(
+                    op.kind,
+                    OpKind::VMov {
+                        dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                        ..
+                    } | OpKind::VInsertLane {
                         dst: VReg::Arch(ArchReg::X86(actual_dst)),
                         ..
                     } if actual_dst == dst
-                ))
-            );
+                )));
+            }
         }
 
         let legacy_memory = lift_single(&[0x66, 0x0F, 0xEA, 0x00]).unwrap();
