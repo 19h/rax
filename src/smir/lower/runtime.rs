@@ -1946,11 +1946,10 @@ fn x86_vector_integer_maddwd_shape_valid(op: &crate::smir::ir::ops::OpKind) -> b
         && [dst, src1, src2].into_iter().all(vector_matches_width)
 }
 
-/// Exact PMULHRSW/VPMULHRSW semantic shape. Each signed word product receives
-/// the architectural 0x4000 rounding bias before an arithmetic right shift by
-/// 15; the low 16 bits are retained, including the INT16_MIN * INT16_MIN edge
-/// result 0x8000.
-fn x86_vector_integer_mulhrs_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+/// Exact PMULHW/PMULHUW/PMULHRSW semantic shapes. The first two retain bits
+/// 31:16 of each signed or unsigned word product; PMULHRSW adds the
+/// architectural 0x4000 rounding bias before an arithmetic right shift by 15.
+fn x86_vector_integer_mul_shift_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, VReg, VecElementType, VecWidth, X86Reg};
 
@@ -1993,12 +1992,10 @@ fn x86_vector_integer_mulhrs_shape_valid(op: &crate::smir::ir::ops::OpKind) -> b
     };
 
     *src_elem == VecElementType::I16
-        && *signed1
-        && *signed2
         && *shift_left == 0
-        && *round
         && *sat_bits == 0
-        && *out_shift == 15
+        && ((*signed1 && *signed2 && *round && *out_shift == 15)
+            || (*signed1 == *signed2 && !*round && *out_shift == 16))
         && [dst, src1, src2].into_iter().all(vector_matches_width)
 }
 
@@ -2071,7 +2068,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         return false;
     }
 
-    if matches!(op, OpKind::VMulShiftSat { .. }) && !x86_vector_integer_mulhrs_shape_valid(op) {
+    if matches!(op, OpKind::VMulShiftSat { .. }) && !x86_vector_integer_mul_shift_shape_valid(op) {
         return false;
     }
 
@@ -3664,22 +3661,31 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
         };
     }
 
-    if x86_vector_integer_mulhrs_shape_valid(&op.kind) {
+    if x86_vector_integer_mul_shift_shape_valid(&op.kind) {
         let OpKind::VMulShiftSat {
             dst,
             src1,
             src2,
             lanes,
+            signed1,
+            round,
             ..
         } = &op.kind
         else {
-            unreachable!("validated PMULHRSW shape is VMulShiftSat");
+            unreachable!("validated PMULH[RU]SW shape is VMulShiftSat");
         };
         let width = match lanes {
             8 => VecWidth::V128,
             16 => VecWidth::V256,
             32 => VecWidth::V512,
-            _ => unreachable!("validated PMULHRSW lane count"),
+            _ => unreachable!("validated PMULH[RU]SW lane count"),
+        };
+        let (expected_map, expected_opcode) = if *round {
+            (X86VecMap::Map0F38, 0x0B)
+        } else if *signed1 {
+            (X86VecMap::Map0F, 0xE5)
+        } else {
+            (X86VecMap::Map0F, 0xE4)
         };
         return match op.x86_hint {
             Some(X86OpHint::SseOp { prefix, opcode }) => {
@@ -3687,7 +3693,7 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                     && dst == src1
                     && [dst, src1, src2].into_iter().all(low_vector)
                     && prefix == crate::smir::ir::ops::X86SsePrefix::OpSize
-                    && opcode == 0x0B
+                    && opcode == expected_opcode
             }
             Some(X86OpHint::VexOp {
                 map,
@@ -3696,9 +3702,9 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 width: encoded_width,
                 ..
             }) => {
-                map == X86VecMap::Map0F38
+                map == expected_map
                     && pp == crate::smir::ir::ops::X86SsePrefix::OpSize
-                    && opcode == 0x0B
+                    && opcode == expected_opcode
                     && encoded_width == width
                     && width != VecWidth::V512
                     && [dst, src1, src2].into_iter().all(low_vector)
@@ -3710,9 +3716,9 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 width: encoded_width,
                 ..
             }) => {
-                map == X86VecMap::Map0F38
+                map == expected_map
                     && pp == crate::smir::ir::ops::X86SsePrefix::OpSize
-                    && opcode == 0x0B
+                    && opcode == expected_opcode
                     && encoded_width == width
             }
             _ => false,
@@ -4333,19 +4339,21 @@ fn x86_vector_integer_horizontal_feature_requirements(
 }
 
 /// Return `(SSSE3, AVX, AVX2, AVX-512VL)` requirements for an admitted
-/// PMULHRSW/VPMULHRSW. EVEX.512 uses AVX-512BW, which the vector-state
-/// trampoline already requires; EVEX.128/256 additionally require AVX-512VL.
-fn x86_vector_integer_mulhrs_feature_requirements(
+/// PMULHW/PMULHUW/PMULHRSW operation. Legacy PMULHW/PMULHUW are baseline SSE2;
+/// legacy PMULHRSW requires SSSE3. EVEX.512 uses the trampoline's AVX-512BW;
+/// EVEX.128/256 additionally require AVX-512VL.
+fn x86_vector_integer_mul_shift_feature_requirements(
     op: &crate::smir::ir::ops::SmirOp,
 ) -> (bool, bool, bool, bool) {
-    use crate::smir::ir::ops::X86OpHint;
+    use crate::smir::ir::ops::{OpKind, X86OpHint};
     use crate::smir::ir::types::VecWidth;
 
-    if !x86_vector_integer_mulhrs_shape_valid(&op.kind) {
+    if !x86_vector_integer_mul_shift_shape_valid(&op.kind) {
         return (false, false, false, false);
     }
+    let legacy_needs_ssse3 = matches!(op.kind, OpKind::VMulShiftSat { round: true, .. });
     match op.x86_hint {
-        Some(X86OpHint::SseOp { .. }) => (true, false, false, false),
+        Some(X86OpHint::SseOp { .. }) => (legacy_needs_ssse3, false, false, false),
         Some(X86OpHint::VexOp { width, .. }) => (false, true, width == VecWidth::V256, false),
         Some(X86OpHint::EvexOp { width, .. }) => (false, false, false, width != VecWidth::V512),
         _ => (false, false, false, false),
@@ -4583,9 +4591,9 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_horizontal_ssse3 = false;
     let mut needs_horizontal_avx = false;
     let mut needs_horizontal_avx2 = false;
-    let mut needs_mulhrs_ssse3 = false;
-    let mut needs_mulhrs_avx = false;
-    let mut needs_mulhrs_avx2 = false;
+    let mut needs_mul_shift_ssse3 = false;
+    let mut needs_mul_shift_avx = false;
+    let mut needs_mul_shift_avx2 = false;
     let mut needs_average_avx = false;
     let mut needs_average_avx2 = false;
     let mut needs_sad_bytes_avx = false;
@@ -4693,8 +4701,8 @@ pub fn x86_native_vector_features_supported_excluding(
             x86_vector_byte_shuffle_feature_requirements(op);
         let (horizontal_ssse3, horizontal_avx, horizontal_avx2) =
             x86_vector_integer_horizontal_feature_requirements(op);
-        let (mulhrs_ssse3, mulhrs_avx, mulhrs_avx2, mulhrs_vl) =
-            x86_vector_integer_mulhrs_feature_requirements(op);
+        let (mul_shift_ssse3, mul_shift_avx, mul_shift_avx2, mul_shift_vl) =
+            x86_vector_integer_mul_shift_feature_requirements(op);
         let (average_avx, average_avx2, average_vl) =
             x86_vector_integer_average_feature_requirements(op);
         let (sad_bytes_avx, sad_bytes_avx2, sad_bytes_vl) =
@@ -4719,7 +4727,7 @@ pub fn x86_native_vector_features_supported_excluding(
             OpKind::VPackSat { .. } => pack_vl,
             OpKind::VByteShuffle { .. } => byte_shuffle_vl,
             OpKind::VHorizontalBin { .. } => false,
-            OpKind::VMulShiftSat { .. } => mulhrs_vl,
+            OpKind::VMulShiftSat { .. } => mul_shift_vl,
             OpKind::VLane { .. } => average_vl,
             OpKind::VSadBytes { .. } => sad_bytes_vl,
             OpKind::VMpsadbw { .. } => false,
@@ -4818,9 +4826,9 @@ pub fn x86_native_vector_features_supported_excluding(
         needs_horizontal_ssse3 |= horizontal_ssse3;
         needs_horizontal_avx |= horizontal_avx;
         needs_horizontal_avx2 |= horizontal_avx2;
-        needs_mulhrs_ssse3 |= mulhrs_ssse3;
-        needs_mulhrs_avx |= mulhrs_avx;
-        needs_mulhrs_avx2 |= mulhrs_avx2;
+        needs_mul_shift_ssse3 |= mul_shift_ssse3;
+        needs_mul_shift_avx |= mul_shift_avx;
+        needs_mul_shift_avx2 |= mul_shift_avx2;
         needs_average_avx |= average_avx;
         needs_average_avx2 |= average_avx2;
         needs_sad_bytes_avx |= sad_bytes_avx;
@@ -4890,9 +4898,9 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_horizontal_ssse3 || std::is_x86_feature_detected!("ssse3"))
             && (!needs_horizontal_avx || std::is_x86_feature_detected!("avx"))
             && (!needs_horizontal_avx2 || std::is_x86_feature_detected!("avx2"))
-            && (!needs_mulhrs_ssse3 || std::is_x86_feature_detected!("ssse3"))
-            && (!needs_mulhrs_avx || std::is_x86_feature_detected!("avx"))
-            && (!needs_mulhrs_avx2 || std::is_x86_feature_detected!("avx2"))
+            && (!needs_mul_shift_ssse3 || std::is_x86_feature_detected!("ssse3"))
+            && (!needs_mul_shift_avx || std::is_x86_feature_detected!("avx"))
+            && (!needs_mul_shift_avx2 || std::is_x86_feature_detected!("avx2"))
             && (!needs_average_avx || std::is_x86_feature_detected!("avx"))
             && (!needs_average_avx2 || std::is_x86_feature_detected!("avx2"))
             && (!needs_sad_bytes_avx || std::is_x86_feature_detected!("avx"))
@@ -12918,11 +12926,11 @@ mod jit_gate_tests {
                 kind.clone(),
                 hint,
             );
-            assert!(x86_vector_integer_mulhrs_shape_valid(&kind), "{kind:?}");
+            assert!(x86_vector_integer_mul_shift_shape_valid(&kind), "{kind:?}");
             assert!(is_x86_native_vector_op(&kind), "{kind:?}");
             assert!(x86_native_vector_smir_op(&smir_op), "{smir_op:?}");
             assert_eq!(
-                x86_vector_integer_mulhrs_feature_requirements(&smir_op),
+                x86_vector_integer_mul_shift_feature_requirements(&smir_op),
                 requirements,
                 "{smir_op:?}"
             );
@@ -13066,6 +13074,186 @@ mod jit_gate_tests {
         ] {
             assert!(!x86_native_vector_smir_op(&malformed), "{malformed:?}");
         }
+    }
+
+    #[test]
+    fn x86_mulhw_mulhuw_gate_validates_signedness_encodings_aliases_and_features() {
+        let xmm1 = x86(X86Reg::Xmm(1));
+        let xmm2 = x86(X86Reg::Xmm(2));
+        let xmm3 = x86(X86Reg::Xmm(3));
+        let ymm1 = x86(X86Reg::Ymm(1));
+        let ymm2 = x86(X86Reg::Ymm(2));
+        let ymm3 = x86(X86Reg::Ymm(3));
+        let mul_high = |dst, src1, src2, lanes, signed| OpKind::VMulShiftSat {
+            dst,
+            src1,
+            src2,
+            src_elem: VecElementType::I16,
+            lanes,
+            signed1: signed,
+            signed2: signed,
+            shift_left: 0,
+            round: false,
+            sat_bits: 0,
+            out_shift: 16,
+        };
+
+        for (kind, hint, requirements) in [
+            (
+                mul_high(xmm1, xmm1, xmm2, 8, true),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE5,
+                },
+                (false, false, false, false),
+            ),
+            (
+                mul_high(xmm1, xmm2, xmm3, 8, false),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE4,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                (false, true, false, false),
+            ),
+            (
+                mul_high(ymm1, ymm2, ymm3, 16, true),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE5,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                (false, true, true, false),
+            ),
+            (
+                mul_high(
+                    x86(X86Reg::Xmm(16)),
+                    x86(X86Reg::Xmm(17)),
+                    x86(X86Reg::Xmm(18)),
+                    8,
+                    true,
+                ),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE5,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                (false, false, false, true),
+            ),
+            (
+                mul_high(
+                    x86(X86Reg::Zmm(16)),
+                    x86(X86Reg::Zmm(17)),
+                    x86(X86Reg::Zmm(18)),
+                    32,
+                    false,
+                ),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE4,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+                (false, false, false, false),
+            ),
+        ] {
+            let smir_op = crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                kind.clone(),
+                hint,
+            );
+            assert!(x86_vector_integer_mul_shift_shape_valid(&kind), "{kind:?}");
+            assert!(is_x86_native_vector_op(&kind), "{kind:?}");
+            assert!(x86_native_vector_smir_op(&smir_op), "{smir_op:?}");
+            assert_eq!(
+                x86_vector_integer_mul_shift_feature_requirements(&smir_op),
+                requirements,
+                "{smir_op:?}"
+            );
+
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(hint);
+            assert!(is_native_clobber_safe(&function), "{smir_op:?}");
+        }
+
+        let valid = mul_high(xmm1, xmm1, xmm2, 8, true);
+        let unhinted = crate::smir::ir::ops::SmirOp::new(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            valid.clone(),
+        );
+        assert!(is_x86_native_vector_op(&unhinted.kind));
+        assert!(!x86_native_vector_smir_op(&unhinted));
+
+        for malformed in [
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                valid.clone(),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE4,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                mul_high(ymm1, ymm2, ymm3, 16, false),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE4,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                mul_high(
+                    x86(X86Reg::Ymm(16)),
+                    x86(X86Reg::Ymm(17)),
+                    x86(X86Reg::Ymm(18)),
+                    16,
+                    true,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE5,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(!x86_native_vector_smir_op(&malformed), "{malformed:?}");
+        }
+
+        let mixed_signedness = OpKind::VMulShiftSat {
+            dst: xmm1,
+            src1: xmm1,
+            src2: xmm2,
+            src_elem: VecElementType::I16,
+            lanes: 8,
+            signed1: true,
+            signed2: false,
+            shift_left: 0,
+            round: false,
+            sat_bits: 0,
+            out_shift: 16,
+        };
+        assert!(!is_x86_native_vector_op(&mixed_signedness));
     }
 
     #[test]

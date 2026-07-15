@@ -2692,100 +2692,26 @@ impl X86_64Lifter {
         ));
     }
 
-    fn append_pmul_high_word(
-        &self,
+    fn pmul_high_word_kind(
         dst: VReg,
         src1: VReg,
         src2: VReg,
         width: VecWidth,
         signed: bool,
-        pc: u64,
-        ctx: &mut LiftContext,
-        ops: &mut Vec<SmirOp>,
-    ) {
-        let lanes = width.lanes(VecElementType::I16) as u8;
-        let mut products = Vec::with_capacity(lanes as usize);
-        for lane in 0..lanes {
-            let a = ctx.alloc_vreg();
-            let b = ctx.alloc_vreg();
-            let product = ctx.alloc_vreg();
-            let high = ctx.alloc_vreg();
-            for (scalar, source) in [(a, src1), (b, src2)] {
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::VExtractLane {
-                        dst: scalar,
-                        vec: source,
-                        lane,
-                        elem: VecElementType::I16,
-                        sign: if signed {
-                            SignExtend::Sign
-                        } else {
-                            SignExtend::Zero
-                        },
-                    },
-                ));
-            }
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                if signed {
-                    OpKind::MulS {
-                        dst_lo: product,
-                        dst_hi: None,
-                        src1: a,
-                        src2: SrcOperand::Reg(b),
-                        width: OpWidth::W64,
-                        flags: FlagUpdate::None,
-                    }
-                } else {
-                    OpKind::MulU {
-                        dst_lo: product,
-                        dst_hi: None,
-                        src1: a,
-                        src2: SrcOperand::Reg(b),
-                        width: OpWidth::W64,
-                        flags: FlagUpdate::None,
-                    }
-                },
-            ));
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Shr {
-                    dst: high,
-                    src: product,
-                    amount: SrcOperand::Imm(16),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            products.push(high);
+    ) -> OpKind {
+        OpKind::VMulShiftSat {
+            dst,
+            src1,
+            src2,
+            src_elem: VecElementType::I16,
+            lanes: width.lanes(VecElementType::I16) as u8,
+            signed1: signed,
+            signed2: signed,
+            shift_left: 0,
+            round: false,
+            sat_bits: 0,
+            out_shift: 16,
         }
-        let output = self.append_zero_vector(width, VecElementType::I16, pc, ctx, ops);
-        for (lane, product) in products.into_iter().enumerate() {
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VInsertLane {
-                    dst: output,
-                    vec: output,
-                    scalar: product,
-                    lane: lane as u8,
-                    elem: VecElementType::I16,
-                },
-            ));
-        }
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VMov {
-                dst,
-                src: output,
-                width,
-            },
-        ));
     }
 
     fn packed_unsigned_average_kind(
@@ -14482,18 +14408,25 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let raw = ctx.alloc_vreg();
-        self.append_pmul_high_word(
-            raw,
-            dst,
-            src2,
-            VecWidth::V128,
-            opcode == 0xE5,
-            pc,
-            ctx,
-            &mut ops,
-        );
-        self.append_legacy_packed_result(dst, raw, VecElementType::I16, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            let raw = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                Self::pmul_high_word_kind(raw, dst, src2, VecWidth::V128, opcode == 0xE5),
+            ));
+            self.append_legacy_packed_result(dst, raw, VecElementType::I16, pc, ctx, &mut ops);
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                Self::pmul_high_word_kind(dst, dst, src2, VecWidth::V128, opcode == 0xE5),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode,
+                },
+            ));
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -23581,31 +23514,35 @@ impl X86_64Lifter {
                 },
             prefix.width,
         );
-        let raw = if prefix.encoding == VecEncodingKind::Evex {
-            ctx.alloc_vreg()
-        } else {
-            dst
-        };
-        self.append_pmul_high_word(
-            raw,
-            src1,
-            src2,
-            prefix.width,
-            opcode == 0xE5,
-            pc,
-            ctx,
-            &mut ops,
-        );
-        if prefix.encoding == VecEncodingKind::Evex {
-            self.append_evex_vector_mask_result(
-                prefix,
-                dst,
-                raw,
-                VecElementType::I16,
+        if !modrm.is_memory && mask.is_none() {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
                 pc,
-                ctx,
-                &mut ops,
-            );
+                Self::pmul_high_word_kind(dst, src1, src2, prefix.width, opcode == 0xE5),
+                self.vec_hint(prefix, opcode),
+            ));
+        } else {
+            let raw = if prefix.encoding == VecEncodingKind::Evex {
+                ctx.alloc_vreg()
+            } else {
+                dst
+            };
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                Self::pmul_high_word_kind(raw, src1, src2, prefix.width, opcode == 0xE5),
+            ));
+            if prefix.encoding == VecEncodingKind::Evex {
+                self.append_evex_vector_mask_result(
+                    prefix,
+                    dst,
+                    raw,
+                    VecElementType::I16,
+                    pc,
+                    ctx,
+                    &mut ops,
+                );
+            }
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
@@ -57145,14 +57082,18 @@ mod tests {
 
     #[test]
     fn lift_pmulhw_pmulhuw_covers_signedness_widths_masks_alignment_and_invalids() {
-        for (bytes, signed, lanes, dst, src1, src2) in [
+        for (bytes, signed, lanes, dst, src1, src2, hint) in [
             (
                 &[0x66, 0x0F, 0xE5, 0xD1][..],
                 true,
-                8usize,
+                8u8,
                 X86Reg::Xmm(2),
                 X86Reg::Xmm(2),
                 X86Reg::Xmm(1),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE5,
+                },
             ),
             (
                 &[0x66, 0x0F, 0xE4, 0xE3][..],
@@ -57161,6 +57102,10 @@ mod tests {
                 X86Reg::Xmm(4),
                 X86Reg::Xmm(4),
                 X86Reg::Xmm(3),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE4,
+                },
             ),
             (
                 &[0xC4, 0x41, 0x35, 0xE5, 0xC2][..],
@@ -57169,6 +57114,13 @@ mod tests {
                 X86Reg::Ymm(8),
                 X86Reg::Ymm(9),
                 X86Reg::Ymm(10),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE5,
+                    width: VecWidth::V256,
+                    w: false,
+                },
             ),
             (
                 &[0x62, 0xA1, 0x75, 0x40, 0xE4, 0xC2][..],
@@ -57177,6 +57129,13 @@ mod tests {
                 X86Reg::Zmm(16),
                 X86Reg::Zmm(17),
                 X86Reg::Zmm(18),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE4,
+                    width: VecWidth::V512,
+                    w: false,
+                },
             ),
         ] {
             let result = lift_single(bytes).unwrap();
@@ -57185,66 +57144,38 @@ mod tests {
                 result
                     .ops
                     .iter()
-                    .filter(|op| if signed {
-                        matches!(op.kind, OpKind::MulS { .. })
-                    } else {
-                        matches!(op.kind, OpKind::MulU { .. })
-                    })
-                    .count(),
-                lanes,
-            );
-            assert_eq!(
-                result
-                    .ops
-                    .iter()
                     .filter(|op| matches!(
-                        op.kind,
-                        OpKind::Shr {
-                            amount: SrcOperand::Imm(16),
-                            flags: FlagUpdate::None,
-                            ..
-                        }
+                        (&op.kind, op.x86_hint),
+                        (
+                            OpKind::VMulShiftSat {
+                                dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                                src1: VReg::Arch(ArchReg::X86(actual_src1)),
+                                src2: VReg::Arch(ArchReg::X86(actual_src2)),
+                                src_elem: VecElementType::I16,
+                                lanes: actual_lanes,
+                                signed1: actual_signed1,
+                                signed2: actual_signed2,
+                                shift_left: 0,
+                                round: false,
+                                sat_bits: 0,
+                                out_shift: 16,
+                            },
+                            Some(actual_hint),
+                        ) if *actual_dst == dst
+                            && *actual_src1 == src1
+                            && *actual_src2 == src2
+                            && *actual_lanes == lanes
+                            && *actual_signed1 == signed
+                            && *actual_signed2 == signed
+                            && actual_hint == hint
                     ))
                     .count(),
-                lanes,
+                1,
             );
-            for reg in [src1, src2] {
-                assert_eq!(
-                    result
-                        .ops
-                        .iter()
-                        .filter(|op| matches!(
-                            op.kind,
-                            OpKind::VExtractLane {
-                                vec: VReg::Arch(ArchReg::X86(actual)),
-                                elem: VecElementType::I16,
-                                sign,
-                                ..
-                            } if actual == reg && sign == if signed {
-                                SignExtend::Sign
-                            } else {
-                                SignExtend::Zero
-                            }
-                        ))
-                        .count(),
-                    lanes,
-                );
-            }
-            assert!(
-                result.ops.iter().any(|op| matches!(
-                    op.kind,
-                    OpKind::VMov {
-                        dst: VReg::Arch(ArchReg::X86(actual)),
-                        ..
-                    } if actual == dst
-                )) || result.ops.iter().any(|op| matches!(
-                    op.kind,
-                    OpKind::VInsertLane {
-                        dst: VReg::Arch(ArchReg::X86(actual)),
-                        ..
-                    } if actual == dst
-                ))
-            );
+            assert!(!result.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::MulS { .. } | OpKind::MulU { .. } | OpKind::Shr { .. }
+            )));
         }
 
         for opcode in [0xE4, 0xE5] {
@@ -57271,6 +57202,21 @@ mod tests {
                 .count(),
             32,
         );
+        assert!(masked_memory.ops.iter().any(|op| matches!(
+            (&op.kind, op.x86_hint),
+            (
+                OpKind::VMulShiftSat {
+                    signed1: true,
+                    signed2: true,
+                    round: false,
+                    out_shift: 16,
+                    ..
+                },
+                None
+            )
+        )));
+        assert!(lift_single(&[0xC4, 0xE1, 0xF1, 0xE5, 0xC2]).is_ok());
+        assert!(lift_single(&[0x62, 0xF1, 0xF5, 0x08, 0xE4, 0xC2]).is_ok());
         assert!(matches!(
             lift_single(&[0x0F, 0xE4, 0xC1]),
             Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "MMX PMULHUW"

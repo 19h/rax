@@ -8108,24 +8108,31 @@ impl X86_64Lowerer {
                 sat_bits,
                 out_shift,
             } => {
-                if *src_elem != VecElementType::I16
-                    || !*signed1
-                    || !*signed2
-                    || *shift_left != 0
-                    || !*round
-                    || *sat_bits != 0
-                    || *out_shift != 15
-                {
+                if *src_elem != VecElementType::I16 || *shift_left != 0 || *sat_bits != 0 {
                     return Err(LowerError::InvalidOperand {
-                        op: "VMulShiftSat PMULHRSW".to_string(),
-                        operand: "requires signed I16 multiply, 0x4000 rounding bias, and >>15"
+                        op: "VMulShiftSat PMULH[RU]SW".to_string(),
+                        operand: "requires I16 multiply, zero left shift, and no saturation"
                             .to_string(),
                     });
                 }
+                let (expected_map, expected_opcode, mnemonic) = match (
+                    *signed1, *signed2, *round, *out_shift,
+                ) {
+                    (true, true, true, 15) => (X86VecMap::Map0F38, 0x0B, "PMULHRSW"),
+                    (true, true, false, 16) => (X86VecMap::Map0F, 0xE5, "PMULHW"),
+                    (false, false, false, 16) => (X86VecMap::Map0F, 0xE4, "PMULHUW"),
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "VMulShiftSat PMULH[RU]SW".to_string(),
+                            operand: "requires signed rounded >>15, signed >>16, or unsigned >>16 semantics"
+                                .to_string(),
+                        });
+                    }
+                };
                 let width = self
                     .vec_width_from_lanes(VecElementType::I16, *lanes)
                     .ok_or_else(|| LowerError::UnsupportedOp {
-                        op: format!("VMulShiftSat PMULHRSW I16x{lanes}"),
+                        op: format!("VMulShiftSat {mnemonic} I16x{lanes}"),
                     })?;
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
@@ -8141,7 +8148,7 @@ impl X86_64Lowerer {
                     .all(vector_matches_width)
                 {
                     return Err(LowerError::InvalidOperand {
-                        op: "VMulShiftSat PMULHRSW".to_string(),
+                        op: format!("VMulShiftSat {mnemonic}"),
                         operand: "requires matching XMM/YMM/ZMM registers".to_string(),
                     });
                 }
@@ -8157,10 +8164,19 @@ impl X86_64Lowerer {
                         && dst_reg == src1_reg
                         && [dst_reg, src1_reg, src2_reg].into_iter().all(low_vector)
                         && prefix == X86SsePrefix::OpSize
-                        && encoded_opcode == 0x0B =>
+                        && encoded_opcode == expected_opcode =>
                     {
                         let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter.emit_sse_op38_rr(Some(0x66), 0x0B, dst_reg, src2_reg);
+                        if expected_map == X86VecMap::Map0F38 {
+                            emitter.emit_sse_op38_rr(
+                                Some(0x66),
+                                expected_opcode,
+                                dst_reg,
+                                src2_reg,
+                            );
+                        } else {
+                            emitter.emit_sse_mov_rr(Some(0x66), expected_opcode, dst_reg, src2_reg);
+                        }
                     }
                     Some(X86OpHint::VexOp {
                         map,
@@ -8168,9 +8184,9 @@ impl X86_64Lowerer {
                         opcode: encoded_opcode,
                         width: encoded_width,
                         w: _,
-                    }) if map == X86VecMap::Map0F38
+                    }) if map == expected_map
                         && pp == X86SsePrefix::OpSize
-                        && encoded_opcode == 0x0B
+                        && encoded_opcode == expected_opcode
                         && encoded_width == width
                         && width != VecWidth::V512
                         && [dst_reg, src1_reg, src2_reg].into_iter().all(low_vector) =>
@@ -8180,9 +8196,9 @@ impl X86_64Lowerer {
                                 kind: VecEncodingKind::Vex,
                                 map,
                                 pp,
-                                opcode: 0x0B,
+                                opcode: expected_opcode,
                                 width,
-                                // PMULHRSW is WIG. Canonicalize the native
+                                // The PMULH[RU]SW family is WIG. Canonicalize the native
                                 // encoding instead of replaying a noncanonical
                                 // guest W=1 payload on the host.
                                 w: false,
@@ -8198,9 +8214,9 @@ impl X86_64Lowerer {
                         opcode: encoded_opcode,
                         width: encoded_width,
                         w: _,
-                    }) if map == X86VecMap::Map0F38
+                    }) if map == expected_map
                         && pp == X86SsePrefix::OpSize
-                        && encoded_opcode == 0x0B
+                        && encoded_opcode == expected_opcode
                         && encoded_width == width =>
                     {
                         self.emit_vec_rrr(
@@ -8208,9 +8224,9 @@ impl X86_64Lowerer {
                                 kind: VecEncodingKind::Evex,
                                 map,
                                 pp,
-                                opcode: 0x0B,
+                                opcode: expected_opcode,
                                 width,
-                                // PMULHRSW is WIG; use the canonical host
+                                // The PMULH[RU]SW family is WIG; use the canonical host
                                 // encoding for both guest W values.
                                 w: false,
                             },
@@ -8221,7 +8237,7 @@ impl X86_64Lowerer {
                     }
                     _ => {
                         return Err(LowerError::UnsupportedOp {
-                            op: format!("unhinted or malformed PMULHRSW {width:?}"),
+                            op: format!("unhinted or malformed {mnemonic} {width:?}"),
                         });
                     }
                 }
@@ -15440,6 +15456,21 @@ mod tests {
                 &[0x62, 0xA2, 0xF5, 0x00, 0x0B, 0xC2][..],
                 &[0x62, 0xA2, 0x75, 0x00, 0x0B, 0xC2][..],
             ),
+            (&[0x66, 0x0F, 0xE5, 0xCA][..], &[0x66, 0x0F, 0xE5, 0xCA][..]),
+            (&[0x66, 0x0F, 0xE4, 0xEF][..], &[0x66, 0x0F, 0xE4, 0xEF][..]),
+            (
+                &[0xC4, 0xE1, 0xE9, 0xE5, 0xCB][..],
+                &[0xC5, 0xE9, 0xE5, 0xCB][..],
+            ),
+            (&[0xC5, 0xED, 0xE4, 0xCB][..], &[0xC5, 0xED, 0xE4, 0xCB][..]),
+            (
+                &[0x62, 0xA1, 0x75, 0x40, 0xE5, 0xC2][..],
+                &[0x62, 0xA1, 0x75, 0x40, 0xE5, 0xC2][..],
+            ),
+            (
+                &[0x62, 0xA1, 0xF5, 0x00, 0xE4, 0xC2][..],
+                &[0x62, 0xA1, 0x75, 0x00, 0xE4, 0xC2][..],
+            ),
             (&[0x66, 0x0F, 0xE0, 0xCA][..], &[0x66, 0x0F, 0xE0, 0xCA][..]),
             (&[0x66, 0x0F, 0xE3, 0xDC][..], &[0x66, 0x0F, 0xE3, 0xDC][..]),
             (
@@ -16265,6 +16296,177 @@ mod tests {
                 X86OpHint::SseOp {
                     prefix: X86SsePrefix::OpSize,
                     opcode: 0x0B,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_mulhw_mulhuw_emit_exact_bytes_and_reject_malformed_encodings() {
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let ymm = |index| VReg::Arch(ArchReg::X86(X86Reg::Ymm(index)));
+        let zmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Zmm(index)));
+        let mul_high = |dst, src1, src2, lanes, signed| OpKind::VMulShiftSat {
+            dst,
+            src1,
+            src2,
+            src_elem: VecElementType::I16,
+            lanes,
+            signed1: signed,
+            signed2: signed,
+            shift_left: 0,
+            round: false,
+            sat_bits: 0,
+            out_shift: 16,
+        };
+
+        for (name, kind, hint, expected) in [
+            (
+                "PMULHW xmm1,xmm2",
+                mul_high(xmm(1), xmm(1), xmm(2), 8, true),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE5,
+                },
+                &[0x66, 0x0F, 0xE5, 0xCA][..],
+            ),
+            (
+                "PMULHUW xmm1,xmm2",
+                mul_high(xmm(1), xmm(1), xmm(2), 8, false),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE4,
+                },
+                &[0x66, 0x0F, 0xE4, 0xCA][..],
+            ),
+            (
+                "VEX.W1-hinted VPMULHW xmm1,xmm2,xmm3 canonicalized to W0",
+                mul_high(xmm(1), xmm(2), xmm(3), 8, true),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE5,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0xC5, 0xE9, 0xE5, 0xCB][..],
+            ),
+            (
+                "VEX.256 VPMULHUW ymm1,ymm2,ymm3",
+                mul_high(ymm(1), ymm(2), ymm(3), 16, false),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE4,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                &[0xC5, 0xED, 0xE4, 0xCB][..],
+            ),
+            (
+                "EVEX.W1-hinted VPMULHW xmm16,xmm17,xmm18 canonicalized to W0",
+                mul_high(xmm(16), xmm(17), xmm(18), 8, true),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE5,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0x62, 0xA1, 0x75, 0x00, 0xE5, 0xC2][..],
+            ),
+            (
+                "EVEX.512 VPMULHUW zmm16,zmm17,zmm18",
+                mul_high(zmm(16), zmm(17), zmm(18), 32, false),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE4,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+                &[0x62, 0xA1, 0x75, 0x40, 0xE4, 0xC2][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, hint);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        assert!(matches!(
+            lower_single_op_err(mul_high(xmm(1), xmm(1), xmm(2), 8, true)),
+            LowerError::UnsupportedOp { .. }
+        ));
+        for (kind, hint) in [
+            (
+                mul_high(xmm(1), xmm(2), xmm(3), 8, true),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE5,
+                },
+            ),
+            (
+                mul_high(xmm(1), xmm(1), xmm(2), 8, true),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE4,
+                },
+            ),
+            (
+                mul_high(ymm(1), ymm(2), ymm(3), 16, false),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE4,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                mul_high(ymm(16), ymm(17), ymm(18), 16, true),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE5,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                mul_high(zmm(16), zmm(17), zmm(18), 32, false),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xE4,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                OpKind::VMulShiftSat {
+                    dst: xmm(1),
+                    src1: xmm(1),
+                    src2: xmm(2),
+                    src_elem: VecElementType::I16,
+                    lanes: 8,
+                    signed1: true,
+                    signed2: false,
+                    shift_left: 0,
+                    round: false,
+                    sat_bits: 0,
+                    out_shift: 16,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xE5,
                 },
             ),
         ] {
