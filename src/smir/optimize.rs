@@ -5400,6 +5400,125 @@ mod tests {
             .expect("masked EVEX VPMADDUBSW destination write must survive optimization");
         assert!(load < dot && dot < destination_write);
 
+        let legacy_maddwd_register = optimized(&[0x66, 0x0F, 0xF5, 0xC1]);
+        assert!(matches!(
+            legacy_maddwd_register.blocks[0].ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VDotProduct {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    acc: VReg::Imm(0),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    src_elem: VecElementType::I16,
+                    acc_elem: VecElementType::I32,
+                    width: VecWidth::V128,
+                    src1_unsigned: false,
+                    saturate: false,
+                    ..
+                },
+                x86_hint: Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xF5,
+                }),
+                ..
+            }]
+        ));
+
+        let legacy_maddwd = optimized(&[0x66, 0x0F, 0xF5, 0x00]);
+        let ops = &legacy_maddwd.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy PMADDWD alignment check must survive optimization");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMADDWD source load must survive optimization");
+        let dot = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VDotProduct {
+                        src_elem: VecElementType::I16,
+                        acc_elem: VecElementType::I32,
+                        saturate: false,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMADDWD computation must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I32,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy PMADDWD destination merge must survive optimization");
+        assert!(alignment < load && load < dot && dot < destination_write);
+
+        let evex_maddwd = optimized(&[0x62, 0xF1, 0x75, 0x49, 0xF5, 0x00]);
+        let ops = &evex_maddwd.blocks[0].ops;
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. })),
+            "E4NF EVEX.512 VPMADDWD must not predicate its memory read"
+        );
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V512,
+                        ..
+                    }
+                )
+            })
+            .expect("E4NF EVEX.512 VPMADDWD full source load must survive optimization");
+        let dot = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VDotProduct {
+                        src_elem: VecElementType::I16,
+                        acc_elem: VecElementType::I32,
+                        width: VecWidth::V512,
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX VPMADDWD computation must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        elem: VecElementType::I32,
+                        ..
+                    }
+                )
+            })
+            .expect("masked EVEX VPMADDWD destination write must survive optimization");
+        assert!(load < dot && dot < destination_write);
+
         let legacy_psign = optimized(&[0x66, 0x0F, 0x38, 0x09, 0x00]);
         let ops = &legacy_psign.blocks[0].ops;
         let alignment = ops

@@ -2919,7 +2919,8 @@ pub enum OpKind {
     ///
     /// VNNI uses I8/I16 sources with I32 accumulators. PMADDUBSW uses I8
     /// sources with an I16 zero accumulator, two products per result, and
-    /// signed saturation.
+    /// signed saturation. PMADDWD uses signed I16 sources with an I32 zero
+    /// accumulator and wraps the adjacent-product sum to 32 bits.
     /// VPDPBUSD: unsigned bytes * signed bytes -> dword accumulate
     /// VPDPBUSDS: same with saturation
     /// VPDPWSSD: signed words * signed words -> dword accumulate

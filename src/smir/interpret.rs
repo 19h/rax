@@ -8098,7 +8098,7 @@ impl SmirInterpreter {
                 debug_assert!(acc_bits >= src_bits && acc_bits % src_bits == 0);
 
                 // Snapshot every input before writing `dst`: VNNI normally aliases
-                // dst/acc, while PMADDUBSW can also alias either multiplicand.
+                // dst/acc, while PMADDUBSW and PMADDWD can alias either multiplicand.
                 let accumulator = Self::read_vec(ctx, *acc);
                 let first = Self::read_vec(ctx, *src1);
                 let second = Self::read_vec(ctx, *src2);
