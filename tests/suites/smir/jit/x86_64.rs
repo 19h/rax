@@ -4405,6 +4405,231 @@ fn jit_byte_shuffles_match_zeroing_lane_locality_and_upper_state() {
 }
 
 #[test]
+fn jit_horizontal_integer_family_matches_grouping_wrap_saturation_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx2")
+        || !std::is_x86_feature_detected!("ssse3")
+    {
+        return;
+    }
+
+    // loop: phaddw xmm1,xmm2; vphaddd ymm3,ymm4,ymm5;
+    //       vphaddsw ymm6,ymm7,ymm8; vphsubw ymm9,ymm10,ymm11;
+    //       vphsubd ymm12,ymm13,ymm14; vphsubsw xmm15,xmm0,xmm2;
+    //       dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0x38, 0x01, 0xCA, 0xC4, 0xE2, 0x5D, 0x02, 0xDD, 0xC4, 0xC2, 0x45, 0x03, 0xF0,
+        0xC4, 0x42, 0x2D, 0x05, 0xCB, 0xC4, 0x42, 0x15, 0x06, 0xE6, 0xC4, 0x62, 0x79, 0x07, 0xFA,
+        0xFF, 0xC9, 0x75, 0xDE, 0xF4,
+    ];
+
+    fn vector_bytes(regs: &Registers, index: usize) -> Vec<u8> {
+        regs.xmm[index]
+            .iter()
+            .chain(regs.ymm_high[index].iter())
+            .chain(regs.zmm_high[index].iter())
+            .flat_map(|word| word.to_le_bytes())
+            .collect()
+    }
+
+    fn set_vector_bytes(regs: &mut Registers, index: usize, bytes: &[u8]) {
+        let words = bytes
+            .chunks_exact(8)
+            .map(|chunk| u64::from_le_bytes(chunk.try_into().unwrap()))
+            .collect::<Vec<_>>();
+        regs.xmm[index].copy_from_slice(&words[..2]);
+        regs.ymm_high[index].copy_from_slice(&words[2..4]);
+        regs.zmm_high[index].copy_from_slice(&words[4..8]);
+    }
+
+    fn i16_bytes(values: &[i16; 32]) -> Vec<u8> {
+        values
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect()
+    }
+
+    fn i32_bytes(values: &[i32; 16]) -> Vec<u8> {
+        values
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect()
+    }
+
+    fn horizontal_i16(
+        first: &[u8],
+        second: &[u8],
+        width: usize,
+        subtract: bool,
+        saturating: bool,
+    ) -> Vec<u8> {
+        let lane = |source: &[u8], index: usize| {
+            i16::from_le_bytes(source[index * 2..index * 2 + 2].try_into().unwrap())
+        };
+        let mut result = Vec::with_capacity(width);
+        for block_byte in (0..width).step_by(16) {
+            let block_lane = block_byte / 2;
+            for source in [first, second] {
+                for pair in 0..4 {
+                    let lhs = lane(source, block_lane + pair * 2);
+                    let rhs = lane(source, block_lane + pair * 2 + 1);
+                    let value = if saturating {
+                        let wide = if subtract {
+                            i32::from(lhs) - i32::from(rhs)
+                        } else {
+                            i32::from(lhs) + i32::from(rhs)
+                        };
+                        wide.clamp(i32::from(i16::MIN), i32::from(i16::MAX)) as i16
+                    } else if subtract {
+                        lhs.wrapping_sub(rhs)
+                    } else {
+                        lhs.wrapping_add(rhs)
+                    };
+                    result.extend_from_slice(&value.to_le_bytes());
+                }
+            }
+        }
+        result
+    }
+
+    fn horizontal_i32(first: &[u8], second: &[u8], width: usize, subtract: bool) -> Vec<u8> {
+        let lane = |source: &[u8], index: usize| {
+            i32::from_le_bytes(source[index * 4..index * 4 + 4].try_into().unwrap())
+        };
+        let mut result = Vec::with_capacity(width);
+        for block_byte in (0..width).step_by(16) {
+            let block_lane = block_byte / 4;
+            for source in [first, second] {
+                for pair in 0..2 {
+                    let lhs = lane(source, block_lane + pair * 2);
+                    let rhs = lane(source, block_lane + pair * 2 + 1);
+                    let value = if subtract {
+                        lhs.wrapping_sub(rhs)
+                    } else {
+                        lhs.wrapping_add(rhs)
+                    };
+                    result.extend_from_slice(&value.to_le_bytes());
+                }
+            }
+        }
+        result
+    }
+
+    let words_a = std::array::from_fn::<_, 32, _>(|lane| match lane & 7 {
+        0 => i16::MAX,
+        1 => 1,
+        2 => i16::MIN,
+        3 => -1,
+        4 => 30_000,
+        5 => 10_000,
+        6 => -30_000,
+        _ => -10_000,
+    });
+    let words_b = std::array::from_fn::<_, 32, _>(|lane| match lane & 7 {
+        0 => i16::MIN,
+        1 => 1,
+        2 => i16::MAX,
+        3 => -1,
+        4 => -30_000,
+        5 => 10_000,
+        6 => 30_000,
+        _ => -10_000,
+    });
+    let dwords_a = std::array::from_fn::<_, 16, _>(|lane| match lane & 3 {
+        0 => i32::MAX,
+        1 => 1,
+        2 => i32::MIN,
+        _ => -1,
+    });
+    let dwords_b = std::array::from_fn::<_, 16, _>(|lane| match lane & 3 {
+        0 => 0x6000_0000,
+        1 => 0x3000_0000,
+        2 => -0x6000_0000,
+        _ => -0x3000_0000,
+    });
+    let words_a = i16_bytes(&words_a);
+    let words_b = i16_bytes(&words_b);
+    let dwords_a = i32_bytes(&dwords_a);
+    let dwords_b = i32_bytes(&dwords_b);
+
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.rflags = 0xCD7;
+        for (index, bytes) in [
+            (0, &words_a),
+            (1, &words_a),
+            (2, &words_b),
+            (4, &dwords_a),
+            (5, &dwords_b),
+            (7, &words_a),
+            (8, &words_b),
+            (10, &words_a),
+            (11, &words_b),
+            (13, &dwords_a),
+            (14, &dwords_b),
+        ] {
+            set_vector_bytes(&mut regs, index, bytes);
+        }
+        regs.zmm_high[3] = [3, 3, 3, 3];
+        regs.zmm_high[6] = [6, 6, 6, 6];
+        regs.zmm_high[9] = [9, 9, 9, 9];
+        regs.zmm_high[12] = [12, 12, 12, 12];
+        regs.ymm_high[15] = [15, 15];
+        regs.zmm_high[15] = [15, 15, 15, 15];
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("packed horizontal integer JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(jit_regs.rflags, interp_regs.rflags, "architectural flags");
+
+    let initial1 = vector_bytes(&initial, 1);
+    let initial2 = vector_bytes(&initial, 2);
+    let mut expected = horizontal_i16(&initial1, &initial2, 16, false, false);
+    expected.extend_from_slice(&initial1[16..]);
+    assert_eq!(vector_bytes(&jit_regs, 1), expected, "legacy PHADDW");
+
+    for (dst, first, second, elem_bytes, subtract, saturating, width) in [
+        (3, 4, 5, 4, false, false, 32),
+        (6, 7, 8, 2, false, true, 32),
+        (9, 10, 11, 2, true, false, 32),
+        (12, 13, 14, 4, true, false, 32),
+        (15, 0, 2, 2, true, true, 16),
+    ] {
+        let first = vector_bytes(&initial, first);
+        let second = vector_bytes(&initial, second);
+        let mut expected = if elem_bytes == 2 {
+            horizontal_i16(&first, &second, width, subtract, saturating)
+        } else {
+            horizontal_i32(&first, &second, width, subtract)
+        };
+        expected.resize(64, 0);
+        assert_eq!(
+            vector_bytes(&jit_regs, dst),
+            expected,
+            "horizontal destination {dst}"
+        );
+    }
+}
+
+#[test]
 fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         return;

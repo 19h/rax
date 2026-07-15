@@ -7935,6 +7935,116 @@ impl X86_64Lowerer {
                 }
             }
 
+            OpKind::VHorizontalBin {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                block_lanes,
+                subtract,
+                saturating,
+            } => {
+                let width = self.vec_width_from_lanes(*elem, *lanes).ok_or_else(|| {
+                    LowerError::UnsupportedOp {
+                        op: format!("VHorizontalBin {:?}x{}", elem, lanes),
+                    }
+                })?;
+                if !matches!(elem, VecElementType::I16 | VecElementType::I32)
+                    || *block_lanes != (16 / elem.bytes()) as u8
+                    || (*saturating && *elem != VecElementType::I16)
+                    || width == VecWidth::V512
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VHorizontalBin".to_string(),
+                        operand: "requires exact 128-bit I16/I32 lane blocks".to_string(),
+                    });
+                }
+                let opcode = match (elem, subtract, saturating) {
+                    (VecElementType::I16, false, false) => 0x01,
+                    (VecElementType::I32, false, false) => 0x02,
+                    (VecElementType::I16, false, true) => 0x03,
+                    (VecElementType::I16, true, false) => 0x05,
+                    (VecElementType::I32, true, false) => 0x06,
+                    (VecElementType::I16, true, true) => 0x07,
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "VHorizontalBin".to_string(),
+                            operand: "unsupported element/mode combination".to_string(),
+                        });
+                    }
+                };
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                let vector_matches_width = |reg: PhysReg| match (width, reg) {
+                    (VecWidth::V128, PhysReg::Xmm(index))
+                    | (VecWidth::V256, PhysReg::Ymm(index)) => index < 32,
+                    _ => false,
+                };
+                if ![dst_reg, src1_reg, src2_reg]
+                    .into_iter()
+                    .all(vector_matches_width)
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VHorizontalBin".to_string(),
+                        operand: "requires matching XMM/YMM registers".to_string(),
+                    });
+                }
+                let low_vector = |reg: PhysReg| match reg {
+                    PhysReg::Xmm(index) | PhysReg::Ymm(index) => index < 16,
+                    _ => false,
+                };
+                match op.x86_hint {
+                    Some(X86OpHint::SseOp {
+                        prefix,
+                        opcode: encoded_opcode,
+                    }) if width == VecWidth::V128
+                        && dst_reg == src1_reg
+                        && [dst_reg, src1_reg, src2_reg].into_iter().all(low_vector)
+                        && prefix == X86SsePrefix::OpSize
+                        && encoded_opcode == opcode =>
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_op38_rr(Some(0x66), opcode, dst_reg, src2_reg);
+                    }
+                    Some(X86OpHint::VexOp {
+                        map,
+                        pp,
+                        opcode: encoded_opcode,
+                        width: encoded_width,
+                        w,
+                    }) if map == X86VecMap::Map0F38
+                        && pp == X86SsePrefix::OpSize
+                        && encoded_opcode == opcode
+                        && encoded_width == width
+                        && [dst_reg, src1_reg, src2_reg].into_iter().all(low_vector) =>
+                    {
+                        self.emit_vec_rrr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Vex,
+                                map,
+                                pp,
+                                opcode,
+                                width,
+                                w,
+                            },
+                            dst_reg,
+                            src1_reg,
+                            src2_reg,
+                        );
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!(
+                                "unhinted or malformed VHorizontalBin {:?}x{}",
+                                elem, lanes
+                            ),
+                        });
+                    }
+                }
+            }
+
             OpKind::VUnary {
                 dst,
                 src,
@@ -14602,6 +14712,58 @@ mod tests {
                 &[0x62, 0xA2, 0xF5, 0x40, 0x00, 0xC2][..],
                 &[0x62, 0xA2, 0xF5, 0x40, 0x00, 0xC2][..],
             ),
+            (
+                &[0x66, 0x0F, 0x38, 0x01, 0xCA][..],
+                &[0x66, 0x0F, 0x38, 0x01, 0xCA][..],
+            ),
+            (
+                &[0x66, 0x0F, 0x38, 0x02, 0xDC][..],
+                &[0x66, 0x0F, 0x38, 0x02, 0xDC][..],
+            ),
+            (
+                &[0x66, 0x0F, 0x38, 0x03, 0xEE][..],
+                &[0x66, 0x0F, 0x38, 0x03, 0xEE][..],
+            ),
+            (
+                &[0x66, 0x41, 0x0F, 0x38, 0x05, 0xF8][..],
+                &[0x66, 0x41, 0x0F, 0x38, 0x05, 0xF8][..],
+            ),
+            (
+                &[0x66, 0x45, 0x0F, 0x38, 0x06, 0xCA][..],
+                &[0x66, 0x45, 0x0F, 0x38, 0x06, 0xCA][..],
+            ),
+            (
+                &[0x66, 0x45, 0x0F, 0x38, 0x07, 0xDC][..],
+                &[0x66, 0x45, 0x0F, 0x38, 0x07, 0xDC][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0x69, 0x01, 0xCB][..],
+                &[0xC4, 0xE2, 0x69, 0x01, 0xCB][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0x55, 0x02, 0xE6][..],
+                &[0xC4, 0xE2, 0x55, 0x02, 0xE6][..],
+            ),
+            (
+                &[0xC4, 0xC2, 0x3D, 0x03, 0xF9][..],
+                &[0xC4, 0xC2, 0x3D, 0x03, 0xF9][..],
+            ),
+            (
+                &[0xC4, 0x42, 0x25, 0x05, 0xD4][..],
+                &[0xC4, 0x42, 0x25, 0x05, 0xD4][..],
+            ),
+            (
+                &[0xC4, 0x42, 0x0D, 0x06, 0xEF][..],
+                &[0xC4, 0x42, 0x0D, 0x06, 0xEF][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0x71, 0x07, 0xC2][..],
+                &[0xC4, 0xE2, 0x71, 0x07, 0xC2][..],
+            ),
+            (
+                &[0xC4, 0xE2, 0xE9, 0x01, 0xCB][..],
+                &[0xC4, 0xE2, 0xE9, 0x01, 0xCB][..],
+            ),
         ] {
             let mut block = instruction.to_vec();
             block.push(0xF4);
@@ -15018,6 +15180,168 @@ mod tests {
                     pp: X86SsePrefix::OpSize,
                     opcode: 0x00,
                     width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_horizontal_integer_rejects_unhinted_and_malformed_encodings() {
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let ymm = |index| VReg::Arch(ArchReg::X86(X86Reg::Ymm(index)));
+        let zmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Zmm(index)));
+        let horizontal = |dst, src1, src2, elem, lanes, block_lanes, subtract, saturating| {
+            OpKind::VHorizontalBin {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                block_lanes,
+                subtract,
+                saturating,
+            }
+        };
+
+        assert!(matches!(
+            lower_single_op_err(horizontal(
+                xmm(1),
+                xmm(1),
+                xmm(2),
+                VecElementType::I16,
+                8,
+                8,
+                false,
+                false,
+            )),
+            LowerError::UnsupportedOp { .. }
+        ));
+
+        for (kind, hint) in [
+            (
+                horizontal(
+                    xmm(1),
+                    xmm(1),
+                    xmm(2),
+                    VecElementType::I16,
+                    8,
+                    4,
+                    false,
+                    false,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x01,
+                },
+            ),
+            (
+                horizontal(
+                    xmm(1),
+                    xmm(2),
+                    xmm(3),
+                    VecElementType::I16,
+                    8,
+                    8,
+                    false,
+                    false,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x01,
+                },
+            ),
+            (
+                horizontal(
+                    xmm(1),
+                    xmm(1),
+                    xmm(2),
+                    VecElementType::I32,
+                    4,
+                    4,
+                    false,
+                    true,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x02,
+                },
+            ),
+            (
+                horizontal(
+                    xmm(1),
+                    xmm(1),
+                    xmm(2),
+                    VecElementType::I16,
+                    8,
+                    8,
+                    false,
+                    false,
+                ),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x01,
+                },
+            ),
+            (
+                horizontal(
+                    ymm(1),
+                    ymm(2),
+                    ymm(3),
+                    VecElementType::I32,
+                    8,
+                    4,
+                    true,
+                    false,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x06,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                horizontal(
+                    ymm(16),
+                    ymm(17),
+                    ymm(18),
+                    VecElementType::I16,
+                    16,
+                    8,
+                    true,
+                    true,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x07,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                horizontal(
+                    zmm(1),
+                    zmm(2),
+                    zmm(3),
+                    VecElementType::I16,
+                    32,
+                    8,
+                    false,
+                    false,
+                ),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x01,
+                    width: VecWidth::V512,
                     w: false,
                 },
             ),

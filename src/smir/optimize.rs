@@ -5163,6 +5163,29 @@ mod tests {
             "EVEX VPSHUFB committed its destination before predicated control-byte accesses"
         );
 
+        let legacy_horizontal_register = optimized(&[0x66, 0x0F, 0x38, 0x03, 0xC1]);
+        let ops = &legacy_horizontal_register.blocks[0].ops;
+        assert!(matches!(
+            ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VHorizontalBin {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    elem: VecElementType::I16,
+                    lanes: 8,
+                    block_lanes: 8,
+                    subtract: false,
+                    saturating: true,
+                },
+                x86_hint: Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x03,
+                }),
+                ..
+            }]
+        ));
+
         let legacy_horizontal = optimized(&[0x66, 0x0F, 0x38, 0x03, 0x00]);
         let ops = &legacy_horizontal.blocks[0].ops;
         let alignment = ops

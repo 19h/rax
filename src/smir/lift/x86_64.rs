@@ -13631,9 +13631,13 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let raw = ctx.alloc_vreg();
+        let raw = if modrm.is_memory {
+            ctx.alloc_vreg()
+        } else {
+            dst
+        };
         let lanes = VecWidth::V128.lanes(elem) as u8;
-        ops.push(SmirOp::new(
+        ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
             OpKind::VHorizontalBin {
@@ -13646,8 +13650,14 @@ impl X86_64Lifter {
                 subtract: matches!(opcode, 0x05..=0x07),
                 saturating: matches!(opcode, 0x03 | 0x07),
             },
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::OpSize,
+                opcode,
+            },
         ));
-        self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -18856,7 +18866,7 @@ impl X86_64Lifter {
             self.vec_reg(modrm.rm, prefix.width)
         };
         let lanes = prefix.width.lanes(elem) as u8;
-        ops.push(SmirOp::new(
+        ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
             OpKind::VHorizontalBin {
@@ -18869,6 +18879,7 @@ impl X86_64Lifter {
                 subtract: matches!(opcode, 0x05..=0x07),
                 saturating: matches!(opcode, 0x03 | 0x07),
             },
+            self.vec_hint(prefix, opcode),
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
@@ -51777,45 +51788,55 @@ mod tests {
             (0x07, VecElementType::I16, true, true),
         ] {
             let legacy = lift_single(&[0x66, 0x0F, 0x38, opcode, 0xC1]).unwrap();
-            assert!(legacy.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VHorizontalBin {
-                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
-                    elem: actual_elem,
-                    lanes,
-                    block_lanes,
-                    subtract: actual_subtract,
-                    saturating: actual_saturating,
+            assert!(matches!(
+                legacy.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::VHorizontalBin {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        elem: actual_elem,
+                        lanes,
+                        block_lanes,
+                        subtract: actual_subtract,
+                        saturating: actual_saturating,
+                    },
+                    x86_hint: Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::OpSize,
+                        opcode: actual_opcode,
+                    }),
                     ..
-                } if actual_elem == elem
+                }] if *actual_elem == elem
                     && lanes == block_lanes
-                    && actual_subtract == subtract
-                    && actual_saturating == saturating
-            )));
-            assert!(legacy.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VInsertLane {
-                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                    elem: actual,
-                    ..
-                } if actual == elem
-            )));
+                    && *actual_subtract == subtract
+                    && *actual_saturating == saturating
+                    && *actual_opcode == opcode
+            ));
 
             let vex128 = lift_single(&[0xC4, 0xE2, 0x71, opcode, 0xC2]).unwrap();
             assert!(matches!(
-                vex128.ops.last().unwrap().kind,
-                OpKind::VHorizontalBin {
-                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
-                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
-                    elem: actual_elem,
-                    subtract: actual_subtract,
-                    saturating: actual_saturating,
-                    ..
-                } if actual_elem == elem
-                    && actual_subtract == subtract
-                    && actual_saturating == saturating
+                (&vex128.ops.last().unwrap().kind, vex128.ops.last().unwrap().x86_hint),
+                (
+                    OpKind::VHorizontalBin {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                        elem: actual_elem,
+                        subtract: actual_subtract,
+                        saturating: actual_saturating,
+                        ..
+                    },
+                    Some(X86OpHint::VexOp {
+                        map: X86VecMap::Map0F38,
+                        pp: X86SsePrefix::OpSize,
+                        opcode: actual_opcode,
+                        width: VecWidth::V128,
+                        w: false,
+                    })
+                ) if *actual_elem == elem
+                    && *actual_subtract == subtract
+                    && *actual_saturating == saturating
+                    && actual_opcode == opcode
             ));
 
             let vex256 = lift_single(&[0xC4, 0xE2, 0x75, opcode, 0xC2]).unwrap();
@@ -51832,6 +51853,16 @@ mod tests {
                 } if actual_elem == elem
                     && u32::from(lanes) == VecWidth::V256.lanes(elem)
                     && u32::from(block_lanes) == 16 / elem.bytes()
+            ));
+            assert!(matches!(
+                vex256.ops.last().unwrap().x86_hint,
+                Some(X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: actual_opcode,
+                    width: VecWidth::V256,
+                    w: false,
+                }) if actual_opcode == opcode
             ));
         }
 
@@ -51858,6 +51889,14 @@ mod tests {
             })
             .unwrap();
         assert!(alignment < load);
+        assert!(legacy_mem.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                elem: VecElementType::I16,
+                ..
+            }
+        )));
 
         let vex_mem = lift_single(&[0xC4, 0xE2, 0x75, 0x06, 0x00]).unwrap();
         assert!(vex_mem.ops.iter().any(|op| matches!(
@@ -51875,7 +51914,11 @@ mod tests {
         );
 
         // VEX.W is ignored for this family.
-        assert!(lift_single(&[0xC4, 0xE2, 0xF5, 0x01, 0xC2]).is_ok());
+        let wig = lift_single(&[0xC4, 0xE2, 0xF5, 0x01, 0xC2]).unwrap();
+        assert!(matches!(
+            wig.ops.last().and_then(|op| op.x86_hint),
+            Some(X86OpHint::VexOp { w: true, .. })
+        ));
         for bytes in [
             &[0x0F, 0x38, 0x01, 0xC1][..],             // MMX state is not exposed
             &[0xF3, 0x66, 0x0F, 0x38, 0x01, 0xC1][..], // conflicting prefix

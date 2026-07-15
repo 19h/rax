@@ -7348,6 +7348,7 @@ impl SmirInterpreter {
                 debug_assert!(*lanes % *block_lanes == 0);
                 debug_assert!(matches!(elem, VecElementType::I16 | VecElementType::I32));
                 debug_assert!(!*saturating || *elem == VecElementType::I16);
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, x86_hint);
                 let first = Self::read_vec(ctx, *src1);
                 let second = Self::read_vec(ctx, *src2);
                 let bits = elem.bytes() * 8;
@@ -7394,6 +7395,7 @@ impl SmirInterpreter {
                     }
                 }
                 Self::write_vec(ctx, *dst, result);
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
             }
 
             OpKind::VLoad { dst, addr, width } => {

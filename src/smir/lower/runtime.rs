@@ -1748,6 +1748,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::VInterleave { .. }
             | OpKind::VPackSat { .. }
             | OpKind::VByteShuffle { .. }
+            | OpKind::VHorizontalBin { .. }
             | OpKind::VAnd { .. }
             | OpKind::VAndNot { .. }
             | OpKind::VOr { .. }
@@ -2087,6 +2088,49 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             )
         };
         if ![dst, src, control].into_iter().all(vector_matches_width) {
+            return false;
+        }
+    }
+
+    if let OpKind::VHorizontalBin {
+        dst,
+        src1,
+        src2,
+        elem,
+        lanes,
+        block_lanes,
+        saturating,
+        ..
+    } = op
+    {
+        if !matches!(
+            elem,
+            crate::smir::ir::types::VecElementType::I16
+                | crate::smir::ir::types::VecElementType::I32
+        ) || *block_lanes != (16 / elem.bytes()) as u8
+            || (*saturating && *elem != crate::smir::ir::types::VecElementType::I16)
+        {
+            return false;
+        }
+        let Some(width) = x86_vector_width_from_lanes(*elem, *lanes) else {
+            return false;
+        };
+        if width == VecWidth::V512 {
+            return false;
+        }
+        let vector_matches_width = |reg: &VReg| {
+            matches!(
+                (reg, width),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    VecWidth::V256
+                )
+            )
+        };
+        if ![dst, src1, src2].into_iter().all(vector_matches_width) {
             return false;
         }
     }
@@ -2924,6 +2968,29 @@ fn x86_vector_integer_pack_encoding_valid(
             }
 }
 
+fn x86_vector_integer_horizontal_encoding_valid(
+    elem: crate::smir::ir::types::VecElementType,
+    subtract: bool,
+    saturating: bool,
+    prefix: crate::smir::ir::ops::X86SsePrefix,
+    opcode: u8,
+) -> bool {
+    use crate::smir::ir::ops::X86SsePrefix;
+    use crate::smir::ir::types::VecElementType;
+
+    prefix == X86SsePrefix::OpSize
+        && opcode
+            == match (elem, subtract, saturating) {
+                (VecElementType::I16, false, false) => 0x01,
+                (VecElementType::I32, false, false) => 0x02,
+                (VecElementType::I16, false, true) => 0x03,
+                (VecElementType::I16, true, false) => 0x05,
+                (VecElementType::I32, true, false) => 0x06,
+                (VecElementType::I16, true, true) => 0x07,
+                _ => return false,
+            }
+}
+
 /// Validate encoding metadata that can change the native opcode selected for
 /// an otherwise well-formed architectural vector operation. This keeps
 /// malformed SMIR from using native-vector admission to execute an arbitrary
@@ -3246,6 +3313,56 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                     && pp == crate::smir::ir::ops::X86SsePrefix::OpSize
                     && opcode == 0x00
                     && encoded_width == width
+            }
+            _ => false,
+        };
+    }
+
+    if let OpKind::VHorizontalBin {
+        dst,
+        src1,
+        src2,
+        elem,
+        lanes,
+        subtract,
+        saturating,
+        ..
+    } = &op.kind
+    {
+        let Some(width) = x86_vector_width_from_lanes(*elem, *lanes) else {
+            return false;
+        };
+        return match op.x86_hint {
+            Some(X86OpHint::SseOp { prefix, opcode }) => {
+                width == VecWidth::V128
+                    && dst == src1
+                    && [dst, src1, src2].into_iter().all(low_vector)
+                    && x86_vector_integer_horizontal_encoding_valid(
+                        *elem,
+                        *subtract,
+                        *saturating,
+                        prefix,
+                        opcode,
+                    )
+            }
+            Some(X86OpHint::VexOp {
+                map,
+                pp,
+                opcode,
+                width: encoded_width,
+                ..
+            }) => {
+                map == X86VecMap::Map0F38
+                    && encoded_width == width
+                    && width != VecWidth::V512
+                    && [dst, src1, src2].into_iter().all(low_vector)
+                    && x86_vector_integer_horizontal_encoding_valid(
+                        *elem,
+                        *subtract,
+                        *saturating,
+                        pp,
+                        opcode,
+                    )
             }
             _ => false,
         };
@@ -3607,6 +3724,24 @@ fn x86_vector_byte_shuffle_feature_requirements(
     }
 }
 
+/// Return `(SSSE3, AVX, AVX2)` requirements for an admitted packed-integer
+/// horizontal operation. VEX.128 uses AVX; VEX.256 uses AVX2.
+fn x86_vector_integer_horizontal_feature_requirements(
+    op: &crate::smir::ir::ops::SmirOp,
+) -> (bool, bool, bool) {
+    use crate::smir::ir::ops::{OpKind, X86OpHint};
+    use crate::smir::ir::types::VecWidth;
+
+    if !matches!(op.kind, OpKind::VHorizontalBin { .. }) {
+        return (false, false, false);
+    }
+    match op.x86_hint {
+        Some(X86OpHint::SseOp { .. }) => (true, false, false),
+        Some(X86OpHint::VexOp { width, .. }) => (false, true, width == VecWidth::V256),
+        _ => (false, false, false),
+    }
+}
+
 /// Whether any executable (non-exit) block contains an admitted native vector
 /// operation. This controls vector-state marshalling in the entry trampoline.
 pub fn uses_x86_native_vectors_excluding(
@@ -3734,6 +3869,9 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_byte_shuffle_ssse3 = false;
     let mut needs_byte_shuffle_avx = false;
     let mut needs_byte_shuffle_avx2 = false;
+    let mut needs_horizontal_ssse3 = false;
+    let mut needs_horizontal_avx = false;
+    let mut needs_horizontal_avx2 = false;
 
     for op in func
         .blocks
@@ -3779,8 +3917,11 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::VMul { elem, lanes, .. }
             | OpKind::VUnary { elem, lanes, .. }
             | OpKind::VCmp { elem, lanes, .. }
-            | OpKind::VInterleave { elem, lanes, .. } => x86_vector_width_from_lanes(*elem, *lanes)
-                .expect("admitted integer vector operation has exact lanes"),
+            | OpKind::VInterleave { elem, lanes, .. }
+            | OpKind::VHorizontalBin { elem, lanes, .. } => {
+                x86_vector_width_from_lanes(*elem, *lanes)
+                    .expect("admitted integer vector operation has exact lanes")
+            }
             OpKind::VPackSat {
                 src_elem,
                 src_lanes,
@@ -3818,6 +3959,8 @@ pub fn x86_native_vector_features_supported_excluding(
             x86_vector_integer_pack_feature_requirements(op);
         let (byte_shuffle_ssse3, byte_shuffle_avx, byte_shuffle_avx2, byte_shuffle_vl) =
             x86_vector_byte_shuffle_feature_requirements(op);
+        let (horizontal_ssse3, horizontal_avx, horizontal_avx2) =
+            x86_vector_integer_horizontal_feature_requirements(op);
         needs_vl |= match kind {
             OpKind::VMov { .. } => x86_vector_move_needs_vl(op),
             OpKind::VAnd { .. }
@@ -3831,6 +3974,7 @@ pub fn x86_native_vector_features_supported_excluding(
             OpKind::VInterleave { .. } => interleave_vl,
             OpKind::VPackSat { .. } => pack_vl,
             OpKind::VByteShuffle { .. } => byte_shuffle_vl,
+            OpKind::VHorizontalBin { .. } => false,
             OpKind::X86Aes { .. } => aes_vl,
             OpKind::X86PackedShiftImm { .. } => shift_vl,
             OpKind::X86PackedShift { .. } => count_vl,
@@ -3917,6 +4061,9 @@ pub fn x86_native_vector_features_supported_excluding(
         needs_byte_shuffle_ssse3 |= byte_shuffle_ssse3;
         needs_byte_shuffle_avx |= byte_shuffle_avx;
         needs_byte_shuffle_avx2 |= byte_shuffle_avx2;
+        needs_horizontal_ssse3 |= horizontal_ssse3;
+        needs_horizontal_avx |= horizontal_avx;
+        needs_horizontal_avx2 |= horizontal_avx2;
     }
 
     if !any {
@@ -3971,6 +4118,9 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_byte_shuffle_ssse3 || std::is_x86_feature_detected!("ssse3"))
             && (!needs_byte_shuffle_avx || std::is_x86_feature_detected!("avx"))
             && (!needs_byte_shuffle_avx2 || std::is_x86_feature_detected!("avx2"))
+            && (!needs_horizontal_ssse3 || std::is_x86_feature_detected!("ssse3"))
+            && (!needs_horizontal_avx || std::is_x86_feature_detected!("avx"))
+            && (!needs_horizontal_avx2 || std::is_x86_feature_detected!("avx2"))
     }
 
     #[cfg(not(target_arch = "x86_64"))]
@@ -4017,6 +4167,9 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_byte_shuffle_ssse3,
             needs_byte_shuffle_avx,
             needs_byte_shuffle_avx2,
+            needs_horizontal_ssse3,
+            needs_horizontal_avx,
+            needs_horizontal_avx2,
         );
         false
     }
@@ -11643,6 +11796,231 @@ mod jit_gate_tests {
                     map: X86VecMap::Map0F38,
                     pp: X86SsePrefix::OpSize,
                     opcode: 0x00,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(!x86_native_vector_smir_op(&malformed), "{malformed:?}");
+        }
+    }
+
+    #[test]
+    fn x86_horizontal_integer_gate_validates_modes_encodings_aliases_and_features() {
+        let xmm1 = x86(X86Reg::Xmm(1));
+        let xmm2 = x86(X86Reg::Xmm(2));
+        let xmm3 = x86(X86Reg::Xmm(3));
+        let ymm1 = x86(X86Reg::Ymm(1));
+        let ymm2 = x86(X86Reg::Ymm(2));
+        let ymm3 = x86(X86Reg::Ymm(3));
+        let horizontal = |dst, src1, src2, elem, lanes, block_lanes, subtract, saturating| {
+            OpKind::VHorizontalBin {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                block_lanes,
+                subtract,
+                saturating,
+            }
+        };
+
+        for (opcode, elem, subtract, saturating) in [
+            (0x01, VecElementType::I16, false, false),
+            (0x02, VecElementType::I32, false, false),
+            (0x03, VecElementType::I16, false, true),
+            (0x05, VecElementType::I16, true, false),
+            (0x06, VecElementType::I32, true, false),
+            (0x07, VecElementType::I16, true, true),
+        ] {
+            let block_lanes = (16 / elem.bytes()) as u8;
+            for (kind, hint, requirements) in [
+                (
+                    horizontal(
+                        xmm1,
+                        xmm1,
+                        xmm2,
+                        elem,
+                        VecWidth::V128.lanes(elem) as u8,
+                        block_lanes,
+                        subtract,
+                        saturating,
+                    ),
+                    X86OpHint::SseOp {
+                        prefix: X86SsePrefix::OpSize,
+                        opcode,
+                    },
+                    (true, false, false),
+                ),
+                (
+                    horizontal(
+                        ymm1,
+                        ymm2,
+                        ymm3,
+                        elem,
+                        VecWidth::V256.lanes(elem) as u8,
+                        block_lanes,
+                        subtract,
+                        saturating,
+                    ),
+                    X86OpHint::VexOp {
+                        map: X86VecMap::Map0F38,
+                        pp: X86SsePrefix::OpSize,
+                        opcode,
+                        width: VecWidth::V256,
+                        w: true,
+                    },
+                    (false, true, true),
+                ),
+            ] {
+                let smir_op = crate::smir::ir::ops::SmirOp::with_hint(
+                    crate::smir::ir::types::OpId(0),
+                    0x1000,
+                    kind.clone(),
+                    hint,
+                );
+                assert!(is_x86_native_vector_op(&kind), "{kind:?}");
+                assert!(x86_native_vector_smir_op(&smir_op), "{smir_op:?}");
+                assert_eq!(
+                    x86_vector_integer_horizontal_feature_requirements(&smir_op),
+                    requirements,
+                    "{smir_op:?}"
+                );
+
+                let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+                builder.push_op(0x1000, kind);
+                builder.set_terminator(Terminator::Return { values: vec![] });
+                let mut function = builder.finish();
+                function.blocks[0].ops[0].x86_hint = Some(hint);
+                assert!(is_native_clobber_safe(&function), "{smir_op:?}");
+            }
+        }
+
+        let vex128 = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            horizontal(xmm1, xmm2, xmm3, VecElementType::I16, 8, 8, false, false),
+            X86OpHint::VexOp {
+                map: X86VecMap::Map0F38,
+                pp: X86SsePrefix::OpSize,
+                opcode: 0x01,
+                width: VecWidth::V128,
+                w: true,
+            },
+        );
+        assert!(x86_native_vector_smir_op(&vex128));
+        assert_eq!(
+            x86_vector_integer_horizontal_feature_requirements(&vex128),
+            (false, true, false)
+        );
+
+        for malformed_kind in [
+            horizontal(xmm1, xmm1, xmm2, VecElementType::I16, 8, 4, false, false),
+            horizontal(xmm1, xmm1, xmm2, VecElementType::I32, 4, 4, false, true),
+            horizontal(
+                x86(X86Reg::Zmm(1)),
+                x86(X86Reg::Zmm(2)),
+                x86(X86Reg::Zmm(3)),
+                VecElementType::I16,
+                32,
+                8,
+                false,
+                false,
+            ),
+            horizontal(
+                xmm1,
+                VReg::Virtual(VirtualId(61)),
+                xmm2,
+                VecElementType::I16,
+                8,
+                8,
+                false,
+                false,
+            ),
+            horizontal(xmm1, xmm2, ymm3, VecElementType::I16, 8, 8, false, false),
+        ] {
+            assert!(!is_x86_native_vector_op(&malformed_kind));
+        }
+
+        let valid = horizontal(xmm1, xmm1, xmm2, VecElementType::I16, 8, 8, false, false);
+        let unhinted = crate::smir::ir::ops::SmirOp::new(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            valid.clone(),
+        );
+        assert!(is_x86_native_vector_op(&unhinted.kind));
+        assert!(!x86_native_vector_smir_op(&unhinted));
+
+        for malformed in [
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                horizontal(xmm1, xmm2, xmm3, VecElementType::I16, 8, 8, false, false),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x01,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                valid.clone(),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x01,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                valid,
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x02,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                horizontal(ymm1, ymm2, ymm3, VecElementType::I32, 8, 4, true, false),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x06,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                horizontal(
+                    x86(X86Reg::Ymm(16)),
+                    x86(X86Reg::Ymm(17)),
+                    x86(X86Reg::Ymm(18)),
+                    VecElementType::I16,
+                    16,
+                    8,
+                    false,
+                    true,
+                ),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x03,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0x1000,
+                horizontal(xmm1, xmm2, xmm3, VecElementType::I16, 8, 8, true, true),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x07,
                     width: VecWidth::V128,
                     w: false,
                 },
