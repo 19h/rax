@@ -2760,7 +2760,8 @@ impl OpKind {
             OpKind::VUnary { src, .. }
             | OpKind::VReduce { src, .. }
             | OpKind::X86Phminposuw { src, .. }
-            | OpKind::X86MovMask { src, .. } => {
+            | OpKind::X86MovMask { src, .. }
+            | OpKind::X86MovdQ { src, .. } => {
                 result.push(*src);
             }
 
@@ -6756,6 +6757,57 @@ mod tests {
                     && *actual_elem == elem
                     && *actual_lanes == lanes
                     && *actual_dst_width == dst_width
+            ));
+            assert!(ops[0].kind.flags_written().is_empty());
+        }
+
+        for (bytes, dst, src, width, zero_upper) in [
+            (
+                &[0x66, 0x0F, 0x6E, 0xC1][..],
+                X86Reg::Xmm(0),
+                X86Reg::Rcx,
+                OpWidth::W32,
+                false,
+            ),
+            (
+                &[0x66, 0x4D, 0x0F, 0x7E, 0xCA][..],
+                X86Reg::R10,
+                X86Reg::Xmm(9),
+                OpWidth::W64,
+                false,
+            ),
+            (
+                &[0xC5, 0xF9, 0x6E, 0xC1][..],
+                X86Reg::Xmm(0),
+                X86Reg::Rcx,
+                OpWidth::W32,
+                true,
+            ),
+            (
+                &[0x62, 0xC1, 0xFD, 0x08, 0x6E, 0xC8][..],
+                X86Reg::Xmm(17),
+                X86Reg::R8,
+                OpWidth::W64,
+                true,
+            ),
+        ] {
+            let register = optimized(bytes);
+            let ops = &register.blocks[0].ops;
+            assert!(matches!(
+                ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86MovdQ {
+                        dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                        src: VReg::Arch(ArchReg::X86(actual_src)),
+                        width: actual_width,
+                        zero_upper: actual_zero_upper,
+                    },
+                    x86_hint: Some(_),
+                    ..
+                }] if *actual_dst == dst
+                    && *actual_src == src
+                    && *actual_width == width
+                    && *actual_zero_upper == zero_upper
             ));
             assert!(ops[0].kind.flags_written().is_empty());
         }
@@ -10784,6 +10836,35 @@ mod tests {
             op.kind,
             OpKind::VBroadcast { dst, .. } if dst == source
         )));
+    }
+
+    #[test]
+    fn x86_movd_q_source_definition_survives_dead_code_elimination() {
+        let source = VReg::virt(0);
+        let dst = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        block.push_op(make_op(
+            0,
+            OpKind::Mov {
+                dst: source,
+                src: SrcOperand::Imm(0x1234_5678),
+                width: OpWidth::W64,
+            },
+        ));
+        block.push_op(make_op(
+            1,
+            OpKind::X86MovdQ {
+                dst,
+                src: source,
+                width: OpWidth::W32,
+                zero_upper: true,
+            },
+        ));
+        block.set_terminator(Terminator::Return { values: vec![dst] });
+
+        dead_code_elimination(&mut block);
+        assert_eq!(block.ops.len(), 2, "MOVD source producer was removed");
+        assert!(matches!(block.ops[0].kind, OpKind::Mov { dst: actual, .. } if actual == source));
     }
 
     #[test]

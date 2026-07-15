@@ -1451,6 +1451,20 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(reg, rm);
     }
 
+    /// Emit a legacy MOVD/MOVQ register transfer. ModR/M.reg always names the
+    /// XMM operand and ModR/M.rm always names the GPR operand, independently
+    /// of the transfer direction selected by opcode 6E or 7E.
+    fn emit_sse_movd_q_rr(&mut self, opcode: u8, xmm: PhysReg, gpr: PhysReg, width: OpWidth) {
+        self.code.emit_u8(0x66);
+        let w = width == OpWidth::W64;
+        if w || xmm.is_extended() || gpr.is_extended() {
+            self.emit_rex(w, xmm, None, gpr);
+        }
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(xmm, gpr);
+    }
+
     pub fn emit_sse_op3a_rr_imm(
         &mut self,
         prefix: Option<u8>,
@@ -8891,6 +8905,117 @@ impl X86_64Lowerer {
                     _ => {
                         return Err(LowerError::UnsupportedOp {
                             op: "unhinted or malformed MOVMSK/PMOVMSKB".to_string(),
+                        });
+                    }
+                }
+            }
+
+            OpKind::X86MovdQ {
+                dst,
+                src,
+                width,
+                zero_upper,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let safe_gpr = |reg: PhysReg| {
+                    matches!(
+                        reg,
+                        PhysReg::Rax
+                            | PhysReg::Rcx
+                            | PhysReg::Rdx
+                            | PhysReg::Rbx
+                            | PhysReg::Rsi
+                            | PhysReg::Rdi
+                            | PhysReg::R8
+                            | PhysReg::R9
+                            | PhysReg::R10
+                            | PhysReg::R11
+                            | PhysReg::R12
+                            | PhysReg::R13
+                            | PhysReg::R14
+                            | PhysReg::R15
+                    )
+                };
+                let (xmm, gpr, vector_dst) = match (dst_reg, src_reg) {
+                    (xmm @ PhysReg::Xmm(0..=31), gpr) if safe_gpr(gpr) => (xmm, gpr, true),
+                    (gpr, xmm @ PhysReg::Xmm(0..=31)) if safe_gpr(gpr) => (xmm, gpr, false),
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86MovdQ".to_string(),
+                            operand: "requires one safe GPR and one XMM register".to_string(),
+                        });
+                    }
+                };
+                if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86MovdQ".to_string(),
+                        operand: "width must be 32 or 64 bits".to_string(),
+                    });
+                }
+                let expected_opcode = if vector_dst { 0x6E } else { 0x7E };
+                match op.x86_hint {
+                    Some(X86OpHint::SseOp { prefix, opcode })
+                        if prefix == X86SsePrefix::OpSize
+                            && opcode == expected_opcode
+                            && xmm.encoding() < 16
+                            && !*zero_upper =>
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_movd_q_rr(opcode, xmm, gpr, *width);
+                    }
+                    Some(X86OpHint::VexOp {
+                        map: X86VecMap::Map0F,
+                        pp: X86SsePrefix::OpSize,
+                        opcode,
+                        width: VecWidth::V128,
+                        w,
+                    }) if opcode == expected_opcode
+                        && w == (*width == OpWidth::W64)
+                        && xmm.encoding() < 16
+                        && *zero_upper == vector_dst =>
+                    {
+                        self.emit_vec_rr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Vex,
+                                map: X86VecMap::Map0F,
+                                pp: X86SsePrefix::OpSize,
+                                opcode,
+                                width: VecWidth::V128,
+                                w,
+                            },
+                            xmm,
+                            gpr,
+                            0,
+                        );
+                    }
+                    Some(X86OpHint::EvexOp {
+                        map: X86VecMap::Map0F,
+                        pp: X86SsePrefix::OpSize,
+                        opcode,
+                        width: VecWidth::V128,
+                        w,
+                    }) if opcode == expected_opcode
+                        && w == (*width == OpWidth::W64)
+                        && *zero_upper == vector_dst =>
+                    {
+                        self.emit_vec_rr(
+                            VecEncoding {
+                                kind: VecEncodingKind::Evex,
+                                map: X86VecMap::Map0F,
+                                pp: X86SsePrefix::OpSize,
+                                opcode,
+                                width: VecWidth::V128,
+                                w,
+                            },
+                            xmm,
+                            gpr,
+                            0,
+                        );
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: "unhinted or malformed MOVD/MOVQ".to_string(),
                         });
                     }
                 }
@@ -17935,6 +18060,192 @@ mod tests {
             assert!(matches!(
                 lower_single_hinted_op_err(kind, hint),
                 LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_movd_q_register_forms_emit_exact_bytes_and_reject_malformed() {
+        let gpr = |reg| VReg::Arch(ArchReg::X86(reg));
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let movd_q = |dst, src, width, zero_upper| OpKind::X86MovdQ {
+            dst,
+            src,
+            width,
+            zero_upper,
+        };
+
+        for (name, kind, hint, expected) in [
+            (
+                "MOVD xmm1,eax",
+                movd_q(xmm(1), gpr(X86Reg::Rax), OpWidth::W32, false),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x6E,
+                },
+                &[0x66, 0x0F, 0x6E, 0xC8][..],
+            ),
+            (
+                "MOVQ xmm9,r10",
+                movd_q(xmm(9), gpr(X86Reg::R10), OpWidth::W64, false),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x6E,
+                },
+                &[0x66, 0x4D, 0x0F, 0x6E, 0xCA][..],
+            ),
+            (
+                "MOVD r8d,xmm9",
+                movd_q(gpr(X86Reg::R8), xmm(9), OpWidth::W32, false),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x7E,
+                },
+                &[0x66, 0x45, 0x0F, 0x7E, 0xC8][..],
+            ),
+            (
+                "VMOVD xmm1,eax",
+                movd_q(xmm(1), gpr(X86Reg::Rax), OpWidth::W32, true),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x6E,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+                &[0xC5, 0xF9, 0x6E, 0xC8][..],
+            ),
+            (
+                "VMOVQ xmm9,r10",
+                movd_q(xmm(9), gpr(X86Reg::R10), OpWidth::W64, true),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x6E,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0xC4, 0x41, 0xF9, 0x6E, 0xCA][..],
+            ),
+            (
+                "VMOVD r8d,xmm9",
+                movd_q(gpr(X86Reg::R8), xmm(9), OpWidth::W32, false),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x7E,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+                &[0xC4, 0x41, 0x79, 0x7E, 0xC8][..],
+            ),
+            (
+                "EVEX VMOVQ xmm17,r8",
+                movd_q(xmm(17), gpr(X86Reg::R8), OpWidth::W64, true),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x6E,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0x62, 0xC1, 0xFD, 0x08, 0x6E, 0xC8][..],
+            ),
+            (
+                "EVEX VMOVD r11d,xmm18",
+                movd_q(gpr(X86Reg::R11), xmm(18), OpWidth::W32, false),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x7E,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+                &[0x62, 0xC1, 0x7D, 0x08, 0x7E, 0xD3][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, hint);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        let base = movd_q(xmm(1), gpr(X86Reg::Rax), OpWidth::W32, true);
+        assert!(matches!(
+            lower_single_op_err(base.clone()),
+            LowerError::UnsupportedOp { .. }
+        ));
+
+        for (kind, hint) in [
+            (
+                movd_q(xmm(1), gpr(X86Reg::Rsp), OpWidth::W32, false),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x6E,
+                },
+            ),
+            (
+                movd_q(xmm(16), gpr(X86Reg::Rax), OpWidth::W32, false),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x6E,
+                },
+            ),
+            (
+                base.clone(),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x6E,
+                },
+            ),
+            (
+                base.clone(),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x7E,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                base.clone(),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x6E,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                base.clone(),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x6E,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+            ),
+            (
+                movd_q(gpr(X86Reg::Rax), xmm(1), OpWidth::W32, true),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x7E,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. }
+                    | LowerError::InvalidOperand { .. }
+                    | LowerError::InvalidRegister(_)
             ));
         }
     }

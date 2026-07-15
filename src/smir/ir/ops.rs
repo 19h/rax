@@ -3184,6 +3184,18 @@ pub enum OpKind {
         dst_width: OpWidth,
     },
 
+    /// Scalar integer transfer between a general-purpose register and the low
+    /// doubleword or quadword of an XMM register. A vector destination clears
+    /// bits 127:width; `zero_upper` additionally clears the shared backing
+    /// state above bit 127 for VEX/EVEX encodings.
+    /// MOVD, MOVQ, VMOVD, VMOVQ register forms (66 0F 6E/7E).
+    X86MovdQ {
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        zero_upper: bool,
+    },
+
     /// AES-NI/VAES transformation, applied independently to each 128-bit lane.
     /// `src2` is the round key for round operations and absent for AESIMC and
     /// AESKEYGENASSIST. `imm` is used only by AESKEYGENASSIST.
@@ -4058,6 +4070,7 @@ impl OpKind {
             | OpKind::VSadBytes { dst, .. }
             | OpKind::X86Phminposuw { dst, .. }
             | OpKind::X86MovMask { dst, .. }
+            | OpKind::X86MovdQ { dst, .. }
             | OpKind::X86Aes { dst, .. }
             | OpKind::X86Sha512Msg1 { dst, .. }
             | OpKind::X86Sha512Msg2 { dst, .. }

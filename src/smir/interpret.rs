@@ -8277,6 +8277,25 @@ impl SmirInterpreter {
                 Self::write_x86_partial(ctx, *dst, mask, *dst_width);
             }
 
+            OpKind::X86MovdQ {
+                dst,
+                src,
+                width,
+                zero_upper,
+            } => {
+                if matches!(dst, VReg::Arch(ArchReg::X86(X86Reg::Xmm(_)))) {
+                    let scalar = ctx.read_vreg(*src) & width.mask();
+                    let old = Self::read_vec(ctx, *dst);
+                    let mut result = if *zero_upper { [0; 16] } else { old };
+                    result[0] = scalar;
+                    result[1] = 0;
+                    Self::write_vec(ctx, *dst, result);
+                } else {
+                    let scalar = Self::read_vec(ctx, *src)[0] & width.mask();
+                    Self::write_x86_partial(ctx, *dst, scalar, *width);
+                }
+            }
+
             OpKind::X86Aes {
                 dst,
                 src1,

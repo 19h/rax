@@ -5439,6 +5439,131 @@ fn jit_phminposuw_matches_unsigned_first_tie_alias_wig_and_upper_state() {
 }
 
 #[test]
+fn jit_movd_q_register_forms_match_width_direction_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx")
+    {
+        return;
+    }
+
+    // loop: movd xmm1,eax; movq xmm2,rdx; movd r8d,xmm3; movq r9,xmm4;
+    //       vmovd xmm5,r10d; vmovq xmm6,r11; vmovd r12d,xmm7;
+    //       vmovq r13,xmm8; EVEX vmovd xmm17,r14d; EVEX vmovq xmm18,r15;
+    //       EVEX vmovd ebx,xmm19; EVEX vmovq rsi,xmm20;
+    //       dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0x6E, 0xC8, 0x66, 0x48, 0x0F, 0x6E, 0xD2, 0x66, 0x41, 0x0F, 0x7E, 0xD8, 0x66,
+        0x49, 0x0F, 0x7E, 0xE1, 0xC4, 0xC1, 0x79, 0x6E, 0xEA, 0xC4, 0xC1, 0xF9, 0x6E, 0xF3, 0xC4,
+        0xC1, 0x79, 0x7E, 0xFC, 0xC4, 0x41, 0xF9, 0x7E, 0xC5, 0x62, 0xC1, 0x7D, 0x08, 0x6E, 0xCE,
+        0x62, 0xC1, 0xFD, 0x08, 0x6E, 0xD7, 0x62, 0xE1, 0x7D, 0x08, 0x7E, 0xDB, 0x62, 0xE1, 0xFD,
+        0x08, 0x7E, 0xE6, 0xFF, 0xC9, 0x75, 0xBD, 0xF4,
+    ];
+
+    fn vector_bytes(regs: &Registers, index: usize) -> Vec<u8> {
+        if index < 16 {
+            regs.xmm[index]
+                .iter()
+                .chain(regs.ymm_high[index].iter())
+                .chain(regs.zmm_high[index].iter())
+                .flat_map(|word| word.to_le_bytes())
+                .collect()
+        } else {
+            regs.zmm_ext[index - 16]
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .collect()
+        }
+    }
+
+    fn set_vector_bytes(regs: &mut Registers, index: usize, bytes: &[u8; 64]) {
+        let words = bytes
+            .chunks_exact(8)
+            .map(|chunk| u64::from_le_bytes(chunk.try_into().unwrap()))
+            .collect::<Vec<_>>();
+        if index < 16 {
+            regs.xmm[index].copy_from_slice(&words[..2]);
+            regs.ymm_high[index].copy_from_slice(&words[2..4]);
+            regs.zmm_high[index].copy_from_slice(&words[4..8]);
+        } else {
+            regs.zmm_ext[index - 16].copy_from_slice(&words);
+        }
+    }
+
+    let sentinel = std::array::from_fn::<_, 64, _>(|index| 0x80u8.wrapping_add(index as u8));
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xFFFF_FFFF_89AB_CDEF;
+        regs.rdx = 0x0123_4567_89AB_CDEF;
+        regs.rcx = 1;
+        regs.r10 = 0xFFFF_FFFF_CAFE_BABE;
+        regs.r11 = 0x8877_6655_4433_2211;
+        regs.r14 = 0xFFFF_FFFF_7654_3210;
+        regs.r15 = 0xDEAD_BEEF_0123_4567;
+        regs.rflags = 0xCD7;
+
+        for index in [1usize, 2, 5, 6, 17, 18] {
+            set_vector_bytes(&mut regs, index, &sentinel);
+        }
+        regs.xmm[3][0] = 0x1122_3344_A1B2_C3D4;
+        regs.xmm[4][0] = 0x1020_3040_5060_7080;
+        regs.xmm[7][0] = 0x9988_7766_89AB_CDEF;
+        regs.xmm[8][0] = 0xF0E1_D2C3_B4A5_9687;
+        regs.zmm_ext[3][0] = 0xAABB_CCDD_1357_9BDF;
+        regs.zmm_ext[4][0] = 0x0F1E_2D3C_4B5A_6978;
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("MOVD/MOVQ/VMOVD/VMOVQ JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(jit_regs.zmm_ext, interp_regs.zmm_ext, "extended ZMM state");
+    assert_eq!(jit_regs.rflags, interp_regs.rflags, "architectural flags");
+
+    for (dst, scalar, width, label) in [
+        (1usize, initial.rax, 4usize, "legacy MOVD"),
+        (2, initial.rdx, 8, "legacy MOVQ"),
+    ] {
+        let mut expected = vector_bytes(&initial, dst);
+        expected[..16].fill(0);
+        expected[..width].copy_from_slice(&scalar.to_le_bytes()[..width]);
+        assert_eq!(vector_bytes(&jit_regs, dst), expected, "{label}");
+    }
+    for (dst, scalar, width, label) in [
+        (5usize, initial.r10, 4usize, "VEX VMOVD"),
+        (6, initial.r11, 8, "VEX VMOVQ"),
+        (17, initial.r14, 4, "EVEX VMOVD high XMM"),
+        (18, initial.r15, 8, "EVEX VMOVQ high XMM"),
+    ] {
+        let mut expected = vec![0u8; 64];
+        expected[..width].copy_from_slice(&scalar.to_le_bytes()[..width]);
+        assert_eq!(vector_bytes(&jit_regs, dst), expected, "{label}");
+    }
+
+    assert_eq!(jit_regs.r8, initial.xmm[3][0] as u32 as u64);
+    assert_eq!(jit_regs.r9, initial.xmm[4][0]);
+    assert_eq!(jit_regs.r12, initial.xmm[7][0] as u32 as u64);
+    assert_eq!(jit_regs.r13, initial.xmm[8][0]);
+    assert_eq!(jit_regs.rbx, initial.zmm_ext[3][0] as u32 as u64);
+    assert_eq!(jit_regs.rsi, initial.zmm_ext[4][0]);
+}
+
+#[test]
 fn jit_mov_mask_family_matches_lane_bits_extensions_wig_and_source_state() {
     if !std::is_x86_feature_detected!("avx512f")
         || !std::is_x86_feature_detected!("avx512bw")

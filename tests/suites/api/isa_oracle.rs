@@ -199,6 +199,48 @@ fn emits_structured_smir_ops() {
 }
 
 #[test]
+fn emits_atomic_register_movd_q_and_keeps_memory_effects_explicit() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    for (bytes, dst, src, width, zero_upper) in [
+        (&[0x66, 0x0F, 0x6E, 0xC1][..], "xmm0", "rcx", "W32", false),
+        (
+            &[0xC4, 0xE1, 0xF9, 0x7E, 0xC1][..],
+            "rcx",
+            "xmm0",
+            "W64",
+            false,
+        ),
+        (
+            &[0x62, 0xC1, 0x7D, 0x08, 0x6E, 0xC8][..],
+            "xmm17",
+            "r8",
+            "W32",
+            true,
+        ),
+    ] {
+        let value = decode_to_json(bytes, &opts).unwrap();
+        let kind = &value["smir"]["ops"][0]["kind"];
+        assert_eq!(kind["opcode"], "x86_movd_q");
+        assert_eq!(kind["dst"]["name"], dst);
+        assert_eq!(kind["src"]["name"], src);
+        assert_eq!(kind["width"], width);
+        assert_eq!(kind["zero_upper"], zero_upper);
+    }
+
+    let memory = decode_to_json(&[0x66, 0x0F, 0x6E, 0x00], &opts).unwrap();
+    let opcodes = memory["smir"]["ops"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|op| op["kind"]["opcode"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert!(opcodes.contains(&"load"));
+    assert!(!opcodes.contains(&"x86_movd_q"));
+}
+
+#[test]
 fn emits_riscv_architectural_smir_destinations() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::RiscV;

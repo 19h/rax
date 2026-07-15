@@ -3146,6 +3146,12 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             lanes,
             dst_width,
         } => op_json!("x86_mov_mask", dst, src, elem, lanes, dst_width),
+        OpKind::X86MovdQ {
+            dst,
+            src,
+            width,
+            zero_upper,
+        } => op_json!("x86_movd_q", dst, src, width, zero_upper),
         OpKind::X86Aes {
             dst,
             src1,
