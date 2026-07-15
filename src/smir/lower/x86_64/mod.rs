@@ -8167,7 +8167,7 @@ impl X86_64Lowerer {
                         pp,
                         opcode: encoded_opcode,
                         width: encoded_width,
-                        w,
+                        w: _,
                     }) if map == X86VecMap::Map0F38
                         && pp == X86SsePrefix::OpSize
                         && encoded_opcode == 0x0B
@@ -8182,7 +8182,10 @@ impl X86_64Lowerer {
                                 pp,
                                 opcode: 0x0B,
                                 width,
-                                w,
+                                // PMULHRSW is WIG. Canonicalize the native
+                                // encoding instead of replaying a noncanonical
+                                // guest W=1 payload on the host.
+                                w: false,
                             },
                             dst_reg,
                             src1_reg,
@@ -8194,7 +8197,7 @@ impl X86_64Lowerer {
                         pp,
                         opcode: encoded_opcode,
                         width: encoded_width,
-                        w,
+                        w: _,
                     }) if map == X86VecMap::Map0F38
                         && pp == X86SsePrefix::OpSize
                         && encoded_opcode == 0x0B
@@ -8207,7 +8210,9 @@ impl X86_64Lowerer {
                                 pp,
                                 opcode: 0x0B,
                                 width,
-                                w,
+                                // PMULHRSW is WIG; use the canonical host
+                                // encoding for both guest W values.
+                                w: false,
                             },
                             dst_reg,
                             src1_reg,
@@ -15421,7 +15426,7 @@ mod tests {
             ),
             (
                 &[0xC4, 0xE2, 0xE9, 0x0B, 0xCB][..],
-                &[0xC4, 0xE2, 0xE9, 0x0B, 0xCB][..],
+                &[0xC4, 0xE2, 0x69, 0x0B, 0xCB][..],
             ),
             (
                 &[0xC4, 0xE2, 0x6D, 0x0B, 0xCB][..],
@@ -15433,7 +15438,7 @@ mod tests {
             ),
             (
                 &[0x62, 0xA2, 0xF5, 0x00, 0x0B, 0xC2][..],
-                &[0x62, 0xA2, 0xF5, 0x00, 0x0B, 0xC2][..],
+                &[0x62, 0xA2, 0x75, 0x00, 0x0B, 0xC2][..],
             ),
             (&[0x66, 0x0F, 0xE0, 0xCA][..], &[0x66, 0x0F, 0xE0, 0xCA][..]),
             (&[0x66, 0x0F, 0xE3, 0xDC][..], &[0x66, 0x0F, 0xE3, 0xDC][..]),
@@ -16123,7 +16128,7 @@ mod tests {
                 &[0x66, 0x0F, 0x38, 0x0B, 0xCA][..],
             ),
             (
-                "VEX.W1 VPMULHRSW xmm1,xmm2,xmm3",
+                "VEX.W1-hinted VPMULHRSW xmm1,xmm2,xmm3 canonicalized to W0",
                 mulhrs(xmm(1), xmm(2), xmm(3), 8),
                 X86OpHint::VexOp {
                     map: X86VecMap::Map0F38,
@@ -16132,7 +16137,7 @@ mod tests {
                     width: VecWidth::V128,
                     w: true,
                 },
-                &[0xC4, 0xE2, 0xE9, 0x0B, 0xCB][..],
+                &[0xC4, 0xE2, 0x69, 0x0B, 0xCB][..],
             ),
             (
                 "VEX.256 VPMULHRSW ymm1,ymm2,ymm3",
@@ -16147,7 +16152,7 @@ mod tests {
                 &[0xC4, 0xE2, 0x6D, 0x0B, 0xCB][..],
             ),
             (
-                "EVEX.W1 VPMULHRSW xmm16,xmm17,xmm18",
+                "EVEX.W1-hinted VPMULHRSW xmm16,xmm17,xmm18 canonicalized to W0",
                 mulhrs(xmm(16), xmm(17), xmm(18), 8),
                 X86OpHint::EvexOp {
                     map: X86VecMap::Map0F38,
@@ -16156,7 +16161,7 @@ mod tests {
                     width: VecWidth::V128,
                     w: true,
                 },
-                &[0x62, 0xA2, 0xF5, 0x00, 0x0B, 0xC2][..],
+                &[0x62, 0xA2, 0x75, 0x00, 0x0B, 0xC2][..],
             ),
             (
                 "EVEX.256 VPMULHRSW ymm16,ymm17,ymm18",
