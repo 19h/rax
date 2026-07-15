@@ -5159,6 +5159,7 @@ impl SmirInterpreter {
                 src_lanes,
                 block_lanes,
             } => {
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, x86_hint);
                 let u = Self::read_vec(ctx, *src1);
                 let v = Self::read_vec(ctx, *src2);
                 let wbits = src_elem.bytes() * 8;
@@ -5194,6 +5195,7 @@ impl SmirInterpreter {
                     }
                 }
                 Self::write_vec(ctx, *dst, result);
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
             }
 
             OpKind::VWidenExt {

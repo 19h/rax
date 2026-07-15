@@ -4108,6 +4108,172 @@ fn jit_packed_integer_interleaves_match_lane_blocks_and_upper_state() {
 }
 
 #[test]
+fn jit_saturating_packs_match_lane_blocks_signedness_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx512vl")
+        || !std::is_x86_feature_detected!("avx2")
+    {
+        return;
+    }
+
+    // loop: packsswb xmm1,xmm2; vpackuswb ymm3,ymm4,ymm5;
+    //       vpackssdw zmm6,zmm7,zmm8; {evex} vpackusdw xmm9,xmm10,xmm11;
+    //       dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0x63, 0xCA, 0xC5, 0xDD, 0x67, 0xDD, 0x62, 0xD1, 0x45, 0x48, 0x6B, 0xF0, 0x62,
+        0x52, 0x2D, 0x08, 0x2B, 0xCB, 0xFF, 0xC9, 0x75, 0xE8, 0xF4,
+    ];
+
+    fn vector_bytes(regs: &Registers, index: usize) -> Vec<u8> {
+        regs.xmm[index]
+            .iter()
+            .chain(regs.ymm_high[index].iter())
+            .chain(regs.zmm_high[index].iter())
+            .flat_map(|word| word.to_le_bytes())
+            .collect()
+    }
+
+    fn pack_reference(
+        first: &[u8],
+        second: &[u8],
+        width: usize,
+        src_bytes: usize,
+        to_unsigned: bool,
+    ) -> Vec<u8> {
+        let dst_bytes = src_bytes / 2;
+        let block_lanes = 16 / src_bytes;
+        let source_lanes = width / src_bytes;
+        let read_signed = |source: &[u8], lane: usize| -> i64 {
+            let offset = lane * src_bytes;
+            match src_bytes {
+                2 => i64::from(i16::from_le_bytes(
+                    source[offset..offset + 2].try_into().unwrap(),
+                )),
+                4 => i64::from(i32::from_le_bytes(
+                    source[offset..offset + 4].try_into().unwrap(),
+                )),
+                _ => unreachable!(),
+            }
+        };
+        let clamp = |value: i64| -> i64 {
+            if to_unsigned {
+                value.clamp(0, (1i64 << (dst_bytes * 8)) - 1)
+            } else {
+                value.clamp(
+                    -(1i64 << (dst_bytes * 8 - 1)),
+                    (1i64 << (dst_bytes * 8 - 1)) - 1,
+                )
+            }
+        };
+
+        let mut result = Vec::with_capacity(width);
+        for block_base in (0..source_lanes).step_by(block_lanes) {
+            for source in [first, second] {
+                for lane in block_base..block_base + block_lanes {
+                    result.extend_from_slice(
+                        &clamp(read_signed(source, lane)).to_le_bytes()[..dst_bytes],
+                    );
+                }
+            }
+        }
+        result
+    }
+
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.rflags = 0xCD7;
+
+        regs.xmm[1] = [0x0080_007F_FFFF_FF80, 0x7FFF_0100_0001_8000];
+        regs.xmm[2] = [0xFF7F_00FF_0000_0081, 0xFE00_0200_FF00_1234];
+        regs.ymm_high[1] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        regs.zmm_high[1] = [1, 2, 3, 4];
+
+        regs.xmm[4] = [0x0080_007F_FFFF_FF80, 0x7FFF_0100_0001_8000];
+        regs.ymm_high[4] = [0x00FE_00FF_0100_FF00, 0x1234_0002_FFFE_0200];
+        regs.xmm[5] = [0x0002_0001_0000_FFFF, 0x0400_00FF_0080_FF7F];
+        regs.ymm_high[5] = [0x8000_7FFF_0101_00FD, 0xFFFF_0007_0008_0009];
+        regs.zmm_high[3] = [5, 6, 7, 8];
+
+        regs.xmm[7] = [0x0000_7FFF_FFFF_8000, 0x0000_8000_FFFF_7FFF];
+        regs.ymm_high[7] = [0x0001_0000_FFFE_FFFF, 0x7FFF_FFFF_8000_0000];
+        regs.zmm_high[7] = [0x0000_7FFE_FFFF_8001, 0x1234_5678_EDCB_A987, 0, u64::MAX];
+        regs.xmm[8] = [0x0001_0000_FFFE_FFFF, 0x7FFF_FFFF_8000_0000];
+        regs.ymm_high[8] = [0x0000_8001_FFFF_7FFE, 0x4000_0000_C000_0000];
+        regs.zmm_high[8] = [
+            0x0000_7FFF_FFFF_8000,
+            0x0001_0001_FFFE_FFFE,
+            1,
+            i64::MIN as u64,
+        ];
+
+        regs.xmm[10] = [0x0000_FFFF_FFFF_0000, 0x0001_0000_0000_FFFF];
+        regs.xmm[11] = [0x0000_8000_FFFF_7FFF, 0x7FFF_FFFF_8000_0000];
+        regs.ymm_high[9] = [0x9999_9999_9999_9999, 0xAAAA_AAAA_AAAA_AAAA];
+        regs.zmm_high[9] = [9, 10, 11, 12];
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("saturating packed-narrow JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(jit_regs.rflags, interp_regs.rflags, "architectural flags");
+
+    let initial1 = vector_bytes(&initial, 1);
+    let initial2 = vector_bytes(&initial, 2);
+    let mut expected = pack_reference(&initial1, &initial2, 16, 2, false);
+    expected.extend_from_slice(&initial1[16..]);
+    assert_eq!(
+        vector_bytes(&jit_regs, 1),
+        expected,
+        "legacy PACKSSWB and preserved upper state"
+    );
+
+    let initial4 = vector_bytes(&initial, 4);
+    let initial5 = vector_bytes(&initial, 5);
+    let mut expected = pack_reference(&initial4, &initial5, 32, 2, true);
+    expected.resize(64, 0);
+    assert_eq!(
+        vector_bytes(&jit_regs, 3),
+        expected,
+        "VEX.256 VPACKUSWB lane groups and upper zeroing"
+    );
+
+    let initial7 = vector_bytes(&initial, 7);
+    let initial8 = vector_bytes(&initial, 8);
+    assert_eq!(
+        vector_bytes(&jit_regs, 6),
+        pack_reference(&initial7, &initial8, 64, 4, false),
+        "EVEX.512 VPACKSSDW lane groups"
+    );
+
+    let initial10 = vector_bytes(&initial, 10);
+    let initial11 = vector_bytes(&initial, 11);
+    let mut expected = pack_reference(&initial10, &initial11, 16, 4, true);
+    expected.resize(64, 0);
+    assert_eq!(
+        vector_bytes(&jit_regs, 9),
+        expected,
+        "EVEX.128 VPACKUSDW unsigned saturation and upper zeroing"
+    );
+}
+
+#[test]
 fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
     if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
         return;

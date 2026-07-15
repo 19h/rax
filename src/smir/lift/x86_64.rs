@@ -12819,9 +12819,13 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let raw = ctx.alloc_vreg();
+        let raw = if modrm.is_memory {
+            ctx.alloc_vreg()
+        } else {
+            dst
+        };
         let src_lanes = VecWidth::V128.lanes(src_elem) as u8;
-        ops.push(SmirOp::new(
+        ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
             OpKind::VPackSat {
@@ -12835,8 +12839,14 @@ impl X86_64Lifter {
                 src_lanes,
                 block_lanes: src_lanes,
             },
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::OpSize,
+                opcode,
+            },
         ));
-        self.append_legacy_packed_result(dst, raw, dst_elem, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            self.append_legacy_packed_result(dst, raw, dst_elem, pc, ctx, &mut ops);
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -18711,7 +18721,7 @@ impl X86_64Lifter {
             self.vec_reg(modrm.rm, prefix.width)
         };
         let src_lanes = prefix.width.lanes(src_elem) as u8;
-        ops.push(SmirOp::new(
+        ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
             OpKind::VPackSat {
@@ -18723,6 +18733,7 @@ impl X86_64Lifter {
                 src_lanes,
                 block_lanes: (16 / src_elem.bytes()) as u8,
             },
+            self.vec_hint(prefix, opcode),
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
@@ -24766,8 +24777,16 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width)
         };
-        let raw = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
+        let dst = self.vec_reg(
+            modrm.reg + if prefix.reg_high { 16 } else { 0 },
+            prefix.width,
+        );
+        let raw = if prefix.aaa == 0 {
+            dst
+        } else {
+            ctx.alloc_vreg()
+        };
+        ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
             OpKind::VPackSat {
@@ -24782,12 +24801,11 @@ impl X86_64Lifter {
                 src_lanes,
                 block_lanes,
             },
+            self.vec_hint(prefix, opcode),
         ));
-        let dst = self.vec_reg(
-            modrm.reg + if prefix.reg_high { 16 } else { 0 },
-            prefix.width,
-        );
-        self.append_evex_vector_mask_result(prefix, dst, raw, dst_elem, pc, ctx, &mut ops);
+        if prefix.aaa != 0 {
+            self.append_evex_vector_mask_result(prefix, dst, raw, dst_elem, pc, ctx, &mut ops);
+        }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
@@ -51289,9 +51307,15 @@ mod tests {
         ];
         for (bytes, src_elem, to_unsigned) in legacy_cases {
             let lifted = lift_single(bytes).unwrap();
-            assert!(lifted.ops.iter().any(|op| matches!(
-                op.kind,
+            let pack = lifted
+                .ops
+                .iter()
+                .find(|op| matches!(op.kind, OpKind::VPackSat { .. }))
+                .expect("legacy saturating pack");
+            assert!(matches!(
+                pack.kind,
                 OpKind::VPackSat {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
                     src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
                     src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
                     src_elem: actual,
@@ -51302,14 +51326,15 @@ mod tests {
                 } if actual == src_elem
                     && actual_unsigned == to_unsigned
                     && src_lanes == block_lanes
-            )));
-            assert!(lifted.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::VInsertLane {
-                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
-                    ..
-                }
-            )));
+            ));
+            assert!(matches!(
+                pack.x86_hint,
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode,
+                }) if opcode == bytes[bytes.len() - 2]
+            ));
+            assert_eq!(lifted.ops.len(), 1, "register pack must remain atomic");
         }
 
         for (bytes, src_elem, to_unsigned) in [
@@ -51337,6 +51362,20 @@ mod tests {
                     && actual_unsigned == to_unsigned
                     && u32::from(src_lanes) == VecWidth::V256.lanes(src_elem)
                     && u32::from(block_lanes) == 16 / src_elem.bytes()
+            ));
+            assert!(matches!(
+                lifted.ops.last().unwrap().x86_hint,
+                Some(X86OpHint::VexOp {
+                    map,
+                    pp: X86SsePrefix::OpSize,
+                    opcode,
+                    width: VecWidth::V256,
+                    w: false,
+                }) if map == if src_elem == VecElementType::I32 && to_unsigned {
+                    X86VecMap::Map0F38
+                } else {
+                    X86VecMap::Map0F
+                } && opcode == bytes[bytes.len() - 2]
             ));
         }
 
@@ -51380,8 +51419,33 @@ mod tests {
             )));
         }
 
-        // LLVM 20 encodings: high-register merge/zero form, Full tuple
-        // disp8*N=64 bytes, and Full m32bcst tuple disp8*N=4 bytes.
+        // LLVM 20 encodings: unmasked high-register native form,
+        // high-register merge/zero fallback, Full tuple disp8*N=64 bytes,
+        // and Full m32bcst tuple disp8*N=4 bytes.
+        let high_unmasked = lift_single(&[0x62, 0xA1, 0x75, 0x40, 0x63, 0xC2]).unwrap();
+        assert!(matches!(
+            high_unmasked.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VPackSat {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(16))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    src_elem: VecElementType::I16,
+                    to_unsigned: false,
+                    src_lanes: 32,
+                    block_lanes: 8,
+                },
+                x86_hint: Some(X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x63,
+                    width: VecWidth::V512,
+                    w: false,
+                }),
+                ..
+            }]
+        ));
+
         let high = lift_single(&[0x62, 0xA1, 0x75, 0xC3, 0x6B, 0xC2]).unwrap();
         assert!(high.ops.iter().any(|op| matches!(
             op.kind,

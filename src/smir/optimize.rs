@@ -4799,6 +4799,28 @@ mod tests {
         ));
         assert_eq!(ops.len(), 1, "legacy unpack must remain one atomic op");
 
+        let legacy_pack = optimized(&[0x66, 0x0F, 0x63, 0xC1]);
+        let ops = &legacy_pack.blocks[0].ops;
+        assert!(matches!(
+            ops.first().map(|op| (&op.kind, op.x86_hint)),
+            Some((
+                OpKind::VPackSat {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src_elem: VecElementType::I16,
+                    to_unsigned: false,
+                    src_lanes: 8,
+                    block_lanes: 8,
+                },
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x63,
+                })
+            ))
+        ));
+        assert_eq!(ops.len(), 1, "legacy pack must remain one atomic op");
+
         let evex_compare = optimized(&[0x62, 0xF1, 0x75, 0x09, 0x76, 0x10]);
         let ops = &evex_compare.blocks[0].ops;
         let first_pred_load = ops
