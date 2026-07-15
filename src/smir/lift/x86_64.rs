@@ -37370,7 +37370,8 @@ impl SmirLifter for X86_64Lifter {
     ) -> Result<SmirFunction, LiftError> {
         let entry_block = ctx.get_or_create_block(entry);
         let mut func = SmirFunction::new(FunctionId(entry as u32), entry_block, entry);
-        func.attrs.preserve_interpreter_frontiers = self.interpreter_frontiers;
+        func.attrs.preserve_interpreter_frontiers =
+            self.interpreter_frontiers || (self.lift_through_calls && self.max_blocks != 0);
 
         // Work queue of blocks to lift
         let mut worklist = vec![entry];
@@ -37382,8 +37383,16 @@ impl SmirLifter for X86_64Lifter {
             }
             // Lift-through-calls: bound the lifted CFG so a large or call-chained
             // function can't lift unboundedly (the cap counts lifted blocks).
+            // Every queued address is already referenced by a lifted terminator;
+            // retain it as an exact-PC interpreter frontier instead of returning
+            // a function with a dangling BlockId. Continue draining the worklist
+            // so every other queued successor receives the same frontier.
             if self.lift_through_calls && self.max_blocks != 0 && visited.len() >= self.max_blocks {
-                break;
+                visited.insert(block_addr);
+                let mut frontier = SmirBlock::new(ctx.get_or_create_block(block_addr), block_addr);
+                frontier.set_terminator(Terminator::Return { values: vec![] });
+                func.add_block(frontier);
+                continue;
             }
             visited.insert(block_addr);
 
@@ -61641,6 +61650,48 @@ mod tests {
         ));
         assert!(frontier.ops.is_empty());
         assert!(matches!(frontier.terminator, Terminator::Return { .. }));
+    }
+
+    #[test]
+    fn lift_through_calls_block_cap_materializes_all_queued_edges_as_frontiers() {
+        // TEST EAX,EAX; JZ +2. With a one-block cap, both the fallthrough at
+        // 0x3004 and the taken target at 0x3006 are queued but cannot be lifted.
+        // They must remain explicit frontier blocks rather than dangling IDs.
+        let mem = TestMemory::new(0x3000, vec![0x85, 0xC0, 0x74, 0x02, 0x90, 0xC3, 0x90, 0xC3]);
+        let mut lifter = X86_64Lifter::strict();
+        lifter.set_lift_through_calls(1);
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+        let mut function = lifter.lift_function(0x3000, &mem, &mut ctx).unwrap();
+        crate::smir::optimize::optimize_function(
+            &mut function,
+            crate::smir::optimize::OptLevel::O2,
+        );
+
+        let entry = function
+            .blocks
+            .iter()
+            .find(|block| block.guest_pc == 0x3000)
+            .unwrap();
+        let Terminator::CondBranch {
+            true_target,
+            false_target,
+            ..
+        } = &entry.terminator
+        else {
+            panic!("capped entry must retain its conditional branch");
+        };
+
+        assert_eq!(function.blocks.len(), 3);
+        for (target, guest_pc) in [(*true_target, 0x3006), (*false_target, 0x3004)] {
+            let frontier = function
+                .blocks
+                .iter()
+                .find(|block| block.id == target)
+                .unwrap_or_else(|| panic!("missing capped frontier at {guest_pc:#x}"));
+            assert_eq!(frontier.guest_pc, guest_pc);
+            assert!(frontier.ops.is_empty());
+            assert!(matches!(frontier.terminator, Terminator::Return { .. }));
+        }
     }
 
     #[test]
