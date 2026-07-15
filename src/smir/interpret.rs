@@ -8157,6 +8157,9 @@ impl SmirInterpreter {
                 width,
                 imm,
             } => {
+                let old = Self::legacy_xmm_snapshot(ctx, *dst, x86_hint);
+                // Snapshot both inputs before writing because both the legacy
+                // and non-destructive register forms may alias the destination.
                 let blocks = match width {
                     VecWidth::V128 => 1u8,
                     VecWidth::V256 => 2,
@@ -8192,6 +8195,7 @@ impl SmirInterpreter {
                     }
                 }
                 Self::write_vec(ctx, *dst, result);
+                Self::restore_legacy_xmm_upper(ctx, *dst, old);
             }
 
             OpKind::VSadBytes {

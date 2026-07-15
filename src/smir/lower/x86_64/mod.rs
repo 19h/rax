@@ -1429,6 +1429,25 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(reg, rm);
     }
 
+    pub fn emit_sse_op3a_rr_imm(
+        &mut self,
+        prefix: Option<u8>,
+        opcode: u8,
+        reg: PhysReg,
+        rm: PhysReg,
+        imm: u8,
+    ) {
+        if let Some(prefix) = prefix {
+            self.code.emit_u8(prefix);
+        }
+        self.emit_rex_for_xmm(reg, rm);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0x3A);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(reg, rm);
+        self.code.emit_u8(imm);
+    }
+
     pub fn emit_sse_op38_rm_disp(
         &mut self,
         prefix: Option<u8>,
@@ -4775,7 +4794,14 @@ impl X86_64Lowerer {
                 ..
             }
         );
-        if !is_non_accumulating_madd {
+        let is_classic_mpsadbw = matches!(
+            (&op.kind, op.x86_hint),
+            (
+                OpKind::VMpsadbw { .. },
+                Some(X86OpHint::SseOp { .. } | X86OpHint::VexOp { .. })
+            )
+        );
+        if !is_non_accumulating_madd && !is_classic_mpsadbw {
             if let Some(result) = avx10::Avx10Lowerer::new().try_lower(&op.kind, &mut self.code) {
                 return result;
             }
@@ -8285,6 +8311,76 @@ impl X86_64Lowerer {
                 }
             }
 
+            OpKind::VMpsadbw {
+                dst,
+                src1,
+                src2,
+                width,
+                imm,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                let vector_matches_width = |reg: PhysReg| match (width, reg) {
+                    (VecWidth::V128, PhysReg::Xmm(index))
+                    | (VecWidth::V256, PhysReg::Ymm(index)) => index < 16,
+                    _ => false,
+                };
+                if ![dst_reg, src1_reg, src2_reg]
+                    .into_iter()
+                    .all(vector_matches_width)
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "VMpsadbw MPSADBW".to_string(),
+                        operand: "requires matching low XMM/YMM registers".to_string(),
+                    });
+                }
+                match op.x86_hint {
+                    Some(X86OpHint::SseOp {
+                        prefix,
+                        opcode: encoded_opcode,
+                    }) if *width == VecWidth::V128
+                        && dst_reg == src1_reg
+                        && prefix == X86SsePrefix::OpSize
+                        && encoded_opcode == 0x42 =>
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_sse_op3a_rr_imm(Some(0x66), 0x42, dst_reg, src2_reg, *imm);
+                    }
+                    Some(X86OpHint::VexOp {
+                        map,
+                        pp,
+                        opcode: encoded_opcode,
+                        width: encoded_width,
+                        w,
+                    }) if map == X86VecMap::Map0F3A
+                        && pp == X86SsePrefix::OpSize
+                        && encoded_opcode == 0x42
+                        && encoded_width == *width =>
+                    {
+                        self.emit_vec_rrr_imm(
+                            VecEncoding {
+                                kind: VecEncodingKind::Vex,
+                                map,
+                                pp,
+                                opcode: 0x42,
+                                width: *width,
+                                w,
+                            },
+                            dst_reg,
+                            src1_reg,
+                            src2_reg,
+                            *imm,
+                        );
+                    }
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: format!("unhinted or malformed MPSADBW {width:?}"),
+                        });
+                    }
+                }
+            }
+
             OpKind::VDotProduct {
                 dst,
                 acc: VReg::Imm(0),
@@ -10632,6 +10728,41 @@ impl X86_64Lowerer {
                 );
             }
         }
+    }
+
+    fn emit_vec_rrr_imm(
+        &mut self,
+        encoding: VecEncoding,
+        dst: PhysReg,
+        src1: PhysReg,
+        src2: PhysReg,
+        imm: u8,
+    ) {
+        let encoding = self.coerce_vec_encoding(encoding, &[dst, src1, src2]);
+        let mut emitter = X86Emitter::new(&mut self.code);
+        match encoding.kind {
+            VecEncodingKind::Vex => emitter.emit_vex_rrr(
+                encoding.map,
+                encoding.pp,
+                encoding.width,
+                encoding.w,
+                encoding.opcode,
+                dst,
+                src1,
+                src2,
+            ),
+            VecEncodingKind::Evex => emitter.emit_evex_rrr(
+                encoding.map,
+                encoding.pp,
+                encoding.width,
+                encoding.w,
+                encoding.opcode,
+                dst,
+                src1,
+                src2,
+            ),
+        }
+        emitter.code.emit_u8(imm);
     }
 
     fn emit_vec_rr(&mut self, encoding: VecEncoding, reg: PhysReg, rm: PhysReg, vvvv: u8) {
@@ -15180,6 +15311,18 @@ mod tests {
                 &[0x62, 0xA1, 0xF5, 0x00, 0xF6, 0xC2][..],
             ),
             (
+                &[0x66, 0x45, 0x0F, 0x3A, 0x42, 0xCA, 0xE7][..],
+                &[0x66, 0x45, 0x0F, 0x3A, 0x42, 0xCA, 0xE7][..],
+            ),
+            (
+                &[0xC4, 0x43, 0xA1, 0x42, 0xCA, 0xE7][..],
+                &[0xC4, 0x43, 0xA1, 0x42, 0xCA, 0xE7][..],
+            ),
+            (
+                &[0xC4, 0x43, 0x25, 0x42, 0xCA, 0xE7][..],
+                &[0xC4, 0x43, 0x25, 0x42, 0xCA, 0xE7][..],
+            ),
+            (
                 &[0x66, 0x0F, 0x38, 0x04, 0xCA][..],
                 &[0x66, 0x0F, 0x38, 0x04, 0xCA][..],
             ),
@@ -16087,6 +16230,133 @@ mod tests {
                 X86OpHint::SseOp {
                     prefix: X86SsePrefix::OpSize,
                     opcode: 0xF6,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_mpsadbw_emits_exact_bytes_and_rejects_malformed_classic_encodings() {
+        let xmm = |index| VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)));
+        let ymm = |index| VReg::Arch(ArchReg::X86(X86Reg::Ymm(index)));
+        let mpsad = |dst, src1, src2, width, imm| OpKind::VMpsadbw {
+            dst,
+            src1,
+            src2,
+            width,
+            imm,
+        };
+
+        for (name, kind, hint, expected) in [
+            (
+                "MPSADBW xmm1,xmm2,0xE7",
+                mpsad(xmm(1), xmm(1), xmm(2), VecWidth::V128, 0xE7),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                },
+                &[0x66, 0x0F, 0x3A, 0x42, 0xCA, 0xE7][..],
+            ),
+            (
+                "VEX.W1 VMPSADBW xmm1,xmm2,xmm3,0xFF",
+                mpsad(xmm(1), xmm(2), xmm(3), VecWidth::V128, 0xFF),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F3A,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0xC4, 0xE3, 0xE9, 0x42, 0xCB, 0xFF][..],
+            ),
+            (
+                "VEX.256 VMPSADBW ymm1,ymm2,ymm3,0x3F",
+                mpsad(ymm(1), ymm(2), ymm(3), VecWidth::V256, 0x3F),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F3A,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                &[0xC4, 0xE3, 0x6D, 0x42, 0xCB, 0x3F][..],
+            ),
+            (
+                "VEX.W1 VMPSADBW xmm9,xmm11,xmm10,0xE7",
+                mpsad(xmm(9), xmm(11), xmm(10), VecWidth::V128, 0xE7),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F3A,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0xC4, 0x43, 0xA1, 0x42, 0xCA, 0xE7][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, hint);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        for (kind, hint) in [
+            (
+                mpsad(xmm(1), xmm(2), xmm(3), VecWidth::V128, 0),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                },
+            ),
+            (
+                mpsad(xmm(1), xmm(1), xmm(2), VecWidth::V128, 0),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x42,
+                },
+            ),
+            (
+                mpsad(xmm(1), xmm(1), xmm(2), VecWidth::V128, 0),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xF6,
+                },
+            ),
+            (
+                mpsad(ymm(1), ymm(2), ymm(3), VecWidth::V256, 0),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            (
+                mpsad(ymm(1), ymm(2), ymm(3), VecWidth::V256, 0),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F3A,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                mpsad(ymm(16), ymm(17), ymm(18), VecWidth::V256, 0),
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F3A,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                    width: VecWidth::V256,
+                    w: false,
                 },
             ),
         ] {

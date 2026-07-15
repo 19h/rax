@@ -4941,6 +4941,172 @@ fn jit_psadbw_matches_unsigned_sums_aliases_wig_and_upper_state() {
 }
 
 #[test]
+fn jit_mpsadbw_matches_block_selectors_aliases_wig_and_upper_state() {
+    if !std::is_x86_feature_detected!("avx512f")
+        || !std::is_x86_feature_detected!("avx512bw")
+        || !std::is_x86_feature_detected!("avx2")
+        || !std::is_x86_feature_detected!("sse4.1")
+    {
+        return;
+    }
+
+    // loop: mpsadbw xmm1,xmm2,0xE7;
+    //       {vex3,w1} vmpsadbw xmm3,xmm4,xmm3,0xFF;
+    //       vmpsadbw ymm6,ymm6,ymm8,0x38;
+    //       {vex3,w1} vmpsadbw xmm9,xmm10,xmm11,0x02;
+    //       dec ecx; jnz loop; hlt
+    let code = [
+        0x66, 0x0F, 0x3A, 0x42, 0xCA, 0xE7, 0xC4, 0xE3, 0xD9, 0x42, 0xDB, 0xFF, 0xC4, 0xC3, 0x4D,
+        0x42, 0xF0, 0x38, 0xC4, 0x43, 0xA9, 0x42, 0xCB, 0x02, 0xFF, 0xC9, 0x75, 0xE4, 0xF4,
+    ];
+
+    fn vector_bytes(regs: &Registers, index: usize) -> Vec<u8> {
+        regs.xmm[index]
+            .iter()
+            .chain(regs.ymm_high[index].iter())
+            .chain(regs.zmm_high[index].iter())
+            .flat_map(|word| word.to_le_bytes())
+            .collect()
+    }
+
+    fn set_vector_bytes(regs: &mut Registers, index: usize, bytes: &[u8]) {
+        let words = bytes
+            .chunks_exact(8)
+            .map(|chunk| u64::from_le_bytes(chunk.try_into().unwrap()))
+            .collect::<Vec<_>>();
+        assert_eq!(words.len(), 8);
+        regs.xmm[index].copy_from_slice(&words[..2]);
+        regs.ymm_high[index].copy_from_slice(&words[2..4]);
+        regs.zmm_high[index].copy_from_slice(&words[4..8]);
+    }
+
+    fn mpsadbw(first: &[u8], second: &[u8], width: usize, imm: u8) -> Vec<u8> {
+        let mut result = Vec::with_capacity(width);
+        for block in 0..(width / 16) {
+            let (first_select, second_select) = if block == 0 {
+                ((((imm >> 2) & 1) * 4) as usize, ((imm & 3) * 4) as usize)
+            } else {
+                (
+                    (((imm >> 5) & 1) * 4) as usize,
+                    (((imm >> 3) & 3) * 4) as usize,
+                )
+            };
+            let base = block * 16;
+            for output in 0..8 {
+                let sum = (0..4)
+                    .map(|tap| {
+                        u16::from(
+                            first[base + first_select + output + tap]
+                                .abs_diff(second[base + second_select + tap]),
+                        )
+                    })
+                    .sum::<u16>();
+                result.extend_from_slice(&sum.to_le_bytes());
+            }
+        }
+        result
+    }
+
+    let mut first =
+        std::array::from_fn::<_, 64, _>(|lane| (lane as u8).wrapping_mul(37).wrapping_add(11));
+    let mut second =
+        std::array::from_fn::<_, 64, _>(|lane| 0xF7u8.wrapping_sub((lane as u8).wrapping_mul(19)));
+    // Include the architectural maximum: 4 * |0 - 255| = 1020.
+    first[4..8].fill(0);
+    second[12..16].fill(255);
+    let sentinel = std::array::from_fn::<_, 64, _>(|lane| 0xC0u8.wrapping_add(lane as u8));
+
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rcx = 1;
+        regs.rflags = 0xCD7;
+
+        set_vector_bytes(&mut regs, 1, &first);
+        set_vector_bytes(&mut regs, 2, &second);
+        regs.ymm_high[1] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        regs.zmm_high[1] = [1, 2, 3, 4];
+
+        set_vector_bytes(&mut regs, 3, &second);
+        set_vector_bytes(&mut regs, 4, &first);
+        regs.ymm_high[3] = [3; 2];
+        regs.zmm_high[3] = [3; 4];
+
+        set_vector_bytes(&mut regs, 6, &first);
+        set_vector_bytes(&mut regs, 8, &second);
+        regs.zmm_high[6] = [6; 4];
+
+        set_vector_bytes(&mut regs, 9, &sentinel);
+        set_vector_bytes(&mut regs, 10, &first);
+        set_vector_bytes(&mut regs, 11, &second);
+
+        vcpu.set_regs(&regs).unwrap();
+        regs
+    };
+
+    let (mut interp, _) = make_vcpu_mem(&code);
+    let initial = setup(&mut interp);
+    run_interp(&mut interp);
+    let interp_regs = interp.get_regs().unwrap();
+    let (mut jit, _) = make_vcpu_mem(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("MPSADBW/VMPSADBW JIT eligibility")
+    );
+    run_interp(&mut jit);
+    let jit_regs = jit.get_regs().unwrap();
+
+    assert_eq!(jit_regs.xmm, interp_regs.xmm, "low XMM state");
+    assert_eq!(jit_regs.ymm_high, interp_regs.ymm_high, "YMM upper state");
+    assert_eq!(jit_regs.zmm_high, interp_regs.zmm_high, "ZMM upper state");
+    assert_eq!(jit_regs.rflags, interp_regs.rflags, "architectural flags");
+
+    let mut expected = mpsadbw(&first, &second, 16, 0xE7);
+    expected.extend_from_slice(&vector_bytes(&initial, 1)[16..]);
+    assert_eq!(
+        vector_bytes(&jit_regs, 1),
+        expected,
+        "legacy selectors, ignored immediate bits, and preserved upper state"
+    );
+    assert_eq!(
+        u16::from_le_bytes(expected[..2].try_into().unwrap()),
+        1020,
+        "maximum unsigned four-byte sum"
+    );
+
+    for (dst, first, second, width, imm, label) in [
+        (
+            3,
+            &first[..],
+            &second[..],
+            16,
+            0xFF,
+            "VEX.W1 destination/source-2 alias",
+        ),
+        (
+            6,
+            &first[..],
+            &second[..],
+            32,
+            0x38,
+            "VEX.256 destination/source-1 alias and lane-specific selectors",
+        ),
+        (
+            9,
+            &first[..],
+            &second[..],
+            16,
+            0x02,
+            "VEX.W1 high registers and upper zeroing",
+        ),
+    ] {
+        let mut expected = mpsadbw(first, second, width, imm);
+        expected.resize(64, 0);
+        assert_eq!(vector_bytes(&jit_regs, dst), expected, "{label}");
+    }
+}
+
+#[test]
 fn jit_maddubs_matches_signed_saturation_aliases_wig_and_upper_state() {
     if !std::is_x86_feature_detected!("avx512f")
         || !std::is_x86_feature_detected!("avx512bw")

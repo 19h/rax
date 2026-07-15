@@ -16456,19 +16456,39 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let dst = self.xmm(modrm.reg);
-        let raw = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VMpsadbw {
-                dst: raw,
-                src1: dst,
-                src2,
-                width: VecWidth::V128,
-                imm: bytes[imm_offset],
-            },
-        ));
-        self.append_legacy_packed_result(dst, raw, VecElementType::I16, pc, ctx, &mut ops);
+        if modrm.is_memory {
+            // Keep the memory form detached so alignment/load faults occur
+            // before any architectural destination state is modified.
+            let raw = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VMpsadbw {
+                    dst: raw,
+                    src1: dst,
+                    src2,
+                    width: VecWidth::V128,
+                    imm: bytes[imm_offset],
+                },
+            ));
+            self.append_legacy_packed_result(dst, raw, VecElementType::I16, pc, ctx, &mut ops);
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VMpsadbw {
+                    dst,
+                    src1: dst,
+                    src2,
+                    width: VecWidth::V128,
+                    imm: bytes[imm_offset],
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                },
+            ));
+        }
         Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_offset + 1))
     }
 
@@ -19666,17 +19686,31 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm, prefix.width)
         };
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VMpsadbw {
-                dst: self.vec_reg(modrm.reg, prefix.width),
-                src1: self.vec_reg(prefix.vvvv, prefix.width),
-                src2,
-                width: prefix.width,
-                imm: bytes[imm_offset],
-            },
-        ));
+        let kind = OpKind::VMpsadbw {
+            dst: self.vec_reg(modrm.reg, prefix.width),
+            src1: self.vec_reg(prefix.vvvv, prefix.width),
+            src2,
+            width: prefix.width,
+            imm: bytes[imm_offset],
+        };
+        if modrm.is_memory {
+            // The register-only native admission deliberately leaves memory
+            // loads in the established fault-atomic fallback path.
+            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+        } else {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                kind,
+                X86OpHint::VexOp {
+                    map: X86VecMap::Map0F3A,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                    width: prefix.width,
+                    w: prefix.w,
+                },
+            ));
+        }
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
@@ -58795,7 +58829,12 @@ mod tests {
             let result = lift_single(bytes).unwrap();
             assert_eq!(result.bytes_consumed, bytes.len());
             let legacy = bytes[0] == 0x66;
-            assert!(result.ops.iter().any(|op| matches!(
+            let op = result
+                .ops
+                .iter()
+                .find(|op| matches!(op.kind, OpKind::VMpsadbw { .. }))
+                .unwrap();
+            assert!(matches!(
                 op.kind,
                 OpKind::VMpsadbw {
                     dst: actual_dst,
@@ -58803,12 +58842,32 @@ mod tests {
                     src2: VReg::Arch(ArchReg::X86(actual_src2)),
                     width: actual_width,
                     imm: actual_imm,
-                } if (legacy || actual_dst == VReg::Arch(ArchReg::X86(dst)))
+                } if actual_dst == VReg::Arch(ArchReg::X86(dst))
                     && actual_src1 == src1
                     && actual_src2 == src2
                     && actual_width == width
                     && actual_imm == imm
-            )));
+            ));
+            if legacy {
+                assert_eq!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::OpSize,
+                        opcode: 0x42,
+                    })
+                );
+            } else {
+                assert_eq!(
+                    op.x86_hint,
+                    Some(X86OpHint::VexOp {
+                        map: X86VecMap::Map0F3A,
+                        pp: X86SsePrefix::OpSize,
+                        opcode: 0x42,
+                        width,
+                        w: bytes[2] & 0x80 != 0,
+                    })
+                );
+            }
             assert!(
                 result
                     .ops
@@ -58837,6 +58896,13 @@ mod tests {
             })
             .unwrap();
         assert!(alignment < load);
+        assert!(
+            legacy_mem
+                .ops
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::VMpsadbw { .. }))
+                .all(|op| op.x86_hint.is_none())
+        );
 
         let vex_mem = lift_single(&[0xC4, 0x63, 0x25, 0x42, 0x48, 0x11, 0x38]).unwrap();
         assert!(vex_mem.ops.iter().any(|op| matches!(
@@ -58851,6 +58917,13 @@ mod tests {
                 .ops
                 .iter()
                 .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
+        );
+        assert!(
+            vex_mem
+                .ops
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::VMpsadbw { .. }))
+                .all(|op| op.x86_hint.is_none())
         );
 
         // REX.W/VEX.W are ignored, as are legacy imm[7:3] and VEX.256 imm[7:6].
