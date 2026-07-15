@@ -133,13 +133,24 @@ jobs:
             --test riscv_smir_x86_jit \
             --test riscv_smir_aarch64_jit \
             --test smir_avx10_roundtrip \
-            --test smir_jit_vcpu \
             --test smir_jit_aarch32_aarch64 \
             --test smir_jit_thumb_aarch64 \
             --test smir_jit_x86_aarch64 \
             --test smir_jit_evex_masking \
             --test isa_oracle \
             -- --include-ignored
+      # The x86-64 JIT suite executes transient native mappings and intentionally
+      # exercises host feature-specific encodings. Run it serially so a native
+      # signal is attributable to one test and concurrent JIT executions cannot
+      # interfere with this correctness gate. Other matrix hosts either compile
+      # this target in the build job or cfg it to an empty test binary.
+      - name: cargo test (native x86-64 JIT, serial)
+        if: matrix.name == 'linux-x64'
+        shell: bash
+        run: |
+          cargo test ${{ matrix.features }} \
+            --test smir_jit_vcpu \
+            -- --include-ignored --test-threads=1
 
   # Aggregate gate: a single required check that depends on the whole matrix.
   ci-success:
