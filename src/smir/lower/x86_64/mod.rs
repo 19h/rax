@@ -25043,13 +25043,15 @@ mod tests {
             }
         }
 
-        extern "C" fn store(
-            context: *mut MemoryContext,
-            _addr: u64,
-            value: u64,
-            _size: u64,
-        ) -> u64 {
+        extern "C" fn store(context: *mut MemoryContext, _addr: u64, value: u64, size: u64) -> u64 {
             let context = unsafe { &mut *context };
+            let value = match size {
+                1 => value & u64::from(u8::MAX),
+                2 => value & u64::from(u16::MAX),
+                4 => value & u64::from(u32::MAX),
+                8 => value,
+                _ => return 0,
+            };
             context.stores += 1;
             context.store_value = value;
             if context.store_ok != 0 {
