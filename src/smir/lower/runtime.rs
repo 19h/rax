@@ -8401,9 +8401,12 @@ fn block_is_clobber_safe(
         let stack_alu_ok = x86_state_backed_stack_alu_valid(&op.kind);
         let state_extend_ok = super::x86_64::x86_state_backed_gpr_extend_valid(op);
         let state_cmove_ok = super::x86_64::x86_state_backed_gpr_cmove_valid(op);
-        let stack_state_ok = stack_mov_ok || stack_alu_ok || state_extend_ok || state_cmove_ok;
+        let state_setcc_ok = super::x86_64::x86_state_backed_gpr_setcc_valid(op);
+        let stack_state_ok =
+            stack_mov_ok || stack_alu_ok || state_extend_ok || state_cmove_ok || state_setcc_ok;
         if (super::x86_64::x86_state_backed_gpr_extend_candidate(op) && !state_extend_ok)
             || (super::x86_64::x86_state_backed_gpr_cmove_candidate(op) && !state_cmove_ok)
+            || (super::x86_64::x86_state_backed_gpr_setcc_candidate(op) && !state_setcc_ok)
         {
             return false;
         }
@@ -8555,7 +8558,7 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/ADD/SUB reads/writes are state-backed.
+        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/ADD/SUB reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the current guest
@@ -24911,6 +24914,118 @@ mod jit_gate_tests {
                     dst: x86(X86Reg::Rax),
                     src: x86(X86Reg::R16),
                     cond: Condition::Ne,
+                    width: OpWidth::W64,
+                },
+                Some(X86OpHint::Mulx),
+            ),
+        ] {
+            assert!(!gate(op, hint), "{name} must fail closed");
+        }
+    }
+
+    #[test]
+    fn clobber_gate_admits_state_backed_gpr_setcc_and_fails_closed() {
+        let gate = |op: OpKind, hint: Option<X86OpHint>| {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = hint;
+            is_native_clobber_safe(&function)
+        };
+
+        for (name, op) in [
+            (
+                "SETNE SPL",
+                OpKind::SetCC {
+                    dst: x86(X86Reg::Rsp),
+                    cond: Condition::Ne,
+                    width: OpWidth::W8,
+                },
+            ),
+            (
+                "SETE BPL",
+                OpKind::SetCC {
+                    dst: x86(X86Reg::Rbp),
+                    cond: Condition::Eq,
+                    width: OpWidth::W8,
+                },
+            ),
+            (
+                "SETS R16B",
+                OpKind::SetCC {
+                    dst: x86(X86Reg::R16),
+                    cond: Condition::Negative,
+                    width: OpWidth::W8,
+                },
+            ),
+            (
+                "SETZUO R16",
+                OpKind::SetCC {
+                    dst: x86(X86Reg::R16),
+                    cond: Condition::Overflow,
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "SETZUNE RBP",
+                OpKind::SetCC {
+                    dst: x86(X86Reg::Rbp),
+                    cond: Condition::Ne,
+                    width: OpWidth::W64,
+                },
+            ),
+        ] {
+            assert!(gate(op, None), "{name} must enter the native tier");
+        }
+
+        for width in [OpWidth::W8, OpWidth::W64] {
+            assert!(
+                gate(
+                    OpKind::SetCC {
+                        dst: x86(X86Reg::Rax),
+                        cond: Condition::Eq,
+                        width,
+                    },
+                    None,
+                ),
+                "ordinary identity-register SETcc {width:?} must remain eligible"
+            );
+        }
+
+        for (name, op, hint) in [
+            (
+                "word width",
+                OpKind::SetCC {
+                    dst: x86(X86Reg::Rsp),
+                    cond: Condition::Ne,
+                    width: OpWidth::W16,
+                },
+                None,
+            ),
+            (
+                "dword width",
+                OpKind::SetCC {
+                    dst: x86(X86Reg::R16),
+                    cond: Condition::Eq,
+                    width: OpWidth::W32,
+                },
+                None,
+            ),
+            (
+                "unconditional condition",
+                OpKind::SetCC {
+                    dst: x86(X86Reg::Rbp),
+                    cond: Condition::Always,
+                    width: OpWidth::W8,
+                },
+                None,
+            ),
+            (
+                "irrelevant encoding hint",
+                OpKind::SetCC {
+                    dst: x86(X86Reg::R16),
+                    cond: Condition::Overflow,
                     width: OpWidth::W64,
                 },
                 Some(X86OpHint::Mulx),

@@ -128,6 +128,27 @@ pub(crate) fn x86_state_backed_gpr_cmove_valid(op: &SmirOp) -> bool {
     )
 }
 
+pub(crate) fn x86_state_backed_gpr_setcc_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::SetCC { dst, .. } if x86_state_backed_arch_gpr(dst)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_setcc_valid(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::SetCC {
+            dst,
+            cond,
+            width: OpWidth::W8 | OpWidth::W64,
+        } if x86_state_backed_gpr_setcc_candidate(op)
+            && op.x86_hint.is_none()
+            && *cond != Condition::Always
+            && matches!(dst, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some())
+    )
+}
+
 // ============================================================================
 // x86_64 Condition Codes
 // ============================================================================
@@ -4028,6 +4049,7 @@ impl X86_64Lowerer {
             || Self::alu_touches_state_backed_stack_gpr(&op.kind)
             || x86_state_backed_gpr_extend_valid(op)
             || x86_state_backed_gpr_cmove_valid(op)
+            || x86_state_backed_gpr_setcc_valid(op)
         {
             return Ok(());
         }
@@ -6825,6 +6847,15 @@ impl X86_64Lowerer {
             }
 
             OpKind::SetCC { dst, cond, width } => {
+                if x86_state_backed_gpr_setcc_candidate(op) {
+                    if !x86_state_backed_gpr_setcc_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed SETcc".to_string(),
+                            operand: format!("invalid x86 GPR conditional set {width:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_setcc(*dst, *cond, *width);
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let x86_cond = X86Cond::from_condition(*cond);
 
@@ -14227,6 +14258,44 @@ impl X86_64Lowerer {
             };
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_setcc(
+        &mut self,
+        dst: VReg,
+        cond: Condition,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: "state-backed SETcc".to_string(),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_setcc(X86Cond::from_condition(cond), PhysReg::Rdx);
+            if width == OpWidth::W64 {
+                emitter.emit_movzx(PhysReg::Rdx, PhysReg::Rdx, OpWidth::W8, OpWidth::W64);
+            }
+        }
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
+        if dst_idx == 5 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, width);
         }
 
         {
@@ -23141,6 +23210,71 @@ mod tests {
         ));
     }
 
+    #[test]
+    fn lower_state_backed_gpr_setcc_emits_state_commits_and_rejects_malformed_shapes() {
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let rsp = lower_single_op(OpKind::SetCC {
+            dst: x86(X86Reg::Rsp),
+            cond: Condition::Ne,
+            width: OpWidth::W8,
+        });
+        assert!(
+            rsp.windows(3).any(|bytes| bytes == [0x0F, 0x95, 0xC2]),
+            "SETNE SPL must evaluate into DL: {rsp:02X?}"
+        );
+        assert!(
+            rsp.windows(3).any(|bytes| bytes == [0x88, 0x50, 0x20]),
+            "SETNE SPL must partially commit GuestRegs.gpr[4]: {rsp:02X?}"
+        );
+
+        let r16 = lower_single_op(OpKind::SetCC {
+            dst: x86(X86Reg::R16),
+            cond: Condition::Overflow,
+            width: OpWidth::W64,
+        });
+        assert!(
+            r16.windows(4)
+                .any(|bytes| bytes == [0x48, 0x0F, 0xB6, 0xD2]),
+            "SETZUO R16 must zero-extend the predicate to 64 bits: {r16:02X?}"
+        );
+        assert!(
+            r16.windows(7)
+                .any(|bytes| bytes == [0x48, 0x89, 0x90, 0x80, 0x00, 0x00, 0x00]),
+            "SETZUO R16 must commit GuestRegs.gpr[16]: {r16:02X?}"
+        );
+
+        for malformed in [
+            OpKind::SetCC {
+                dst: x86(X86Reg::R16),
+                cond: Condition::Ne,
+                width: OpWidth::W16,
+            },
+            OpKind::SetCC {
+                dst: x86(X86Reg::R16),
+                cond: Condition::Always,
+                width: OpWidth::W64,
+            },
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(malformed),
+                    LowerError::InvalidOperand { .. }
+                ),
+                "malformed state-backed SETcc must fail lowering"
+            );
+        }
+
+        let hinted = OpKind::SetCC {
+            dst: x86(X86Reg::R16),
+            cond: Condition::Overflow,
+            width: OpWidth::W64,
+        };
+        assert!(matches!(
+            lower_single_hinted_op_err(hinted, X86OpHint::Mulx),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
     #[test]
     fn native_state_backed_rsp_rbp_moves_preserve_host_stack_and_guest_widths() {
@@ -23437,6 +23571,147 @@ mod tests {
                 rflags: ZF_CLEAR,
                 destination_index: 4,
                 expected_destination: 0x1234_5678_9ABC_80F2,
+            },
+        ];
+
+        for case in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, case.kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            regs.gpr[0] = 0x0123_4567_89AB_CDEF;
+            regs.gpr[1] = 0x1111_2222_3333_4444;
+            regs.gpr[2] = 0xA5A5_5A5A_1357_2468;
+            regs.gpr[3] = 0xFEDC_BA98_7654_80A7;
+            regs.gpr[4] = 0x1234_5678_9ABC_80F2;
+            regs.gpr[5] = 0x0FED_CBA9_8765_8001;
+            regs.gpr[6] = 0x99AA_BBCC_DDEE_FF00;
+            regs.gpr[7] = 0x0F1E_2D3C_4B5A_6978;
+            regs.gpr[16] = 0xA1A2_A3A4_A5A6_80F1;
+            regs.gpr[31] = 0xF1F2_F3F4_F5F6_F7F8;
+            regs.rflags = case.rflags;
+            let mut expected = regs;
+            expected.gpr[case.destination_index] = case.expected_destination;
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            assert_eq!(
+                regs.rflags & STATUS,
+                case.rflags & STATUS,
+                "{} status flags",
+                case.name
+            );
+        }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_gpr_setcc_preserves_widths_flags_and_host_stack() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        const STATUS: u64 = 0x8D5;
+        const ALL_SET: u64 = 0x2 | STATUS;
+        const ZF_CLEAR: u64 = ALL_SET & !(1 << 6);
+        const OF_CLEAR: u64 = ALL_SET & !(1 << 11);
+
+        struct Case {
+            name: &'static str,
+            kind: OpKind,
+            rflags: u64,
+            destination_index: usize,
+            expected_destination: u64,
+        }
+
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let cases = [
+            Case {
+                name: "SETNE SPL true partial destination",
+                kind: OpKind::SetCC {
+                    dst: x86(X86Reg::Rsp),
+                    cond: Condition::Ne,
+                    width: OpWidth::W8,
+                },
+                rflags: ZF_CLEAR,
+                destination_index: 4,
+                expected_destination: 0x1234_5678_9ABC_8001,
+            },
+            Case {
+                name: "SETNE SPL false partial destination",
+                kind: OpKind::SetCC {
+                    dst: x86(X86Reg::Rsp),
+                    cond: Condition::Ne,
+                    width: OpWidth::W8,
+                },
+                rflags: ALL_SET,
+                destination_index: 4,
+                expected_destination: 0x1234_5678_9ABC_8000,
+            },
+            Case {
+                name: "SETE BPL true partial destination",
+                kind: OpKind::SetCC {
+                    dst: x86(X86Reg::Rbp),
+                    cond: Condition::Eq,
+                    width: OpWidth::W8,
+                },
+                rflags: ALL_SET,
+                destination_index: 5,
+                expected_destination: 0x0FED_CBA9_8765_8001,
+            },
+            Case {
+                name: "SETNE R16B true state-backed EGPR destination",
+                kind: OpKind::SetCC {
+                    dst: x86(X86Reg::R16),
+                    cond: Condition::Ne,
+                    width: OpWidth::W8,
+                },
+                rflags: ZF_CLEAR,
+                destination_index: 16,
+                expected_destination: 0xA1A2_A3A4_A5A6_8001,
+            },
+            Case {
+                name: "SETZUO R16 true full destination",
+                kind: OpKind::SetCC {
+                    dst: x86(X86Reg::R16),
+                    cond: Condition::Overflow,
+                    width: OpWidth::W64,
+                },
+                rflags: ALL_SET,
+                destination_index: 16,
+                expected_destination: 1,
+            },
+            Case {
+                name: "SETZUO RSP false full destination",
+                kind: OpKind::SetCC {
+                    dst: x86(X86Reg::Rsp),
+                    cond: Condition::Overflow,
+                    width: OpWidth::W64,
+                },
+                rflags: OF_CLEAR,
+                destination_index: 4,
+                expected_destination: 0,
+            },
+            Case {
+                name: "SETZUNE RBP true full destination",
+                kind: OpKind::SetCC {
+                    dst: x86(X86Reg::Rbp),
+                    cond: Condition::Ne,
+                    width: OpWidth::W64,
+                },
+                rflags: ZF_CLEAR,
+                destination_index: 5,
+                expected_destination: 1,
             },
         ];
 

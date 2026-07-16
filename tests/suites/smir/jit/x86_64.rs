@@ -724,6 +724,155 @@ fn jit_state_backed_gpr_cmov_matches_interpreter_without_memory_helpers() {
     }
 }
 
+/// Standard SETcc performs a byte merge, while APX SETZUcc writes a complete
+/// zero-extended GPR. State-backed RSP/RBP and EGPR destinations must preserve
+/// those distinct semantics without exposing the host stack or frame pointer.
+#[test]
+fn jit_state_backed_gpr_setcc_matches_interpreter_without_memory_helpers() {
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        apx: bool,
+        rflags: u64,
+        destination_index: usize,
+        expected_destination: u64,
+    }
+
+    const ALL_SET: u64 = 0x2 | 0x8D5;
+    const ZF_CLEAR: u64 = ALL_SET & !(1 << 6);
+    const OF_CLEAR: u64 = ALL_SET & !(1 << 11);
+    let cases = [
+        Case {
+            name: "SETNE SPL true partial destination",
+            instruction: &[0x40, 0x0F, 0x95, 0xC4],
+            apx: false,
+            rflags: ZF_CLEAR,
+            destination_index: 4,
+            expected_destination: 0x1234_5678_9ABC_8001,
+        },
+        Case {
+            name: "SETNE SPL false partial destination",
+            instruction: &[0x40, 0x0F, 0x95, 0xC4],
+            apx: false,
+            rflags: ALL_SET,
+            destination_index: 4,
+            expected_destination: 0x1234_5678_9ABC_8000,
+        },
+        Case {
+            name: "SETE BPL true partial destination",
+            instruction: &[0x40, 0x0F, 0x94, 0xC5],
+            apx: false,
+            rflags: ALL_SET,
+            destination_index: 5,
+            expected_destination: 0x0FED_CBA9_8765_8001,
+        },
+        Case {
+            name: "REX2 SETNE R16B true state-backed EGPR destination",
+            instruction: &[0xD5, 0x90, 0x95, 0xC0],
+            apx: true,
+            rflags: ZF_CLEAR,
+            destination_index: 16,
+            expected_destination: 0xA1A2_A3A4_A5A6_8001,
+        },
+        Case {
+            name: "APX SETZUO R16 true full destination",
+            instruction: &[0x62, 0xFC, 0x7F, 0x18, 0x40, 0xC0],
+            apx: true,
+            rflags: ALL_SET,
+            destination_index: 16,
+            expected_destination: 1,
+        },
+        Case {
+            name: "APX SETZUO R16 false full destination",
+            instruction: &[0x62, 0xFC, 0x7F, 0x18, 0x40, 0xC0],
+            apx: true,
+            rflags: OF_CLEAR,
+            destination_index: 16,
+            expected_destination: 0,
+        },
+        Case {
+            name: "APX SETZUO SPL false full destination",
+            instruction: &[0x62, 0xF4, 0x7F, 0x18, 0x40, 0xC4],
+            apx: true,
+            rflags: OF_CLEAR,
+            destination_index: 4,
+            expected_destination: 0,
+        },
+        Case {
+            name: "APX SETZUNE BPL true full destination",
+            instruction: &[0x62, 0xF4, 0x7F, 0x18, 0x45, 0xC5],
+            apx: true,
+            rflags: ZF_CLEAR,
+            destination_index: 5,
+            expected_destination: 1,
+        },
+    ];
+
+    let gprs = |regs: &Registers| {
+        [
+            regs.rax, regs.rcx, regs.rdx, regs.rbx, regs.rsp, regs.rbp, regs.rsi, regs.rdi,
+            regs.r8, regs.r9, regs.r10, regs.r11, regs.r12, regs.r13, regs.r14, regs.r15, regs.r16,
+            regs.r17, regs.r18, regs.r19, regs.r20, regs.r21, regs.r22, regs.r23, regs.r24,
+            regs.r25, regs.r26, regs.r27, regs.r28, regs.r29, regs.r30, regs.r31,
+        ]
+    };
+    let setup = |vcpu: &mut X86_64Vcpu, case: &Case| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x0123_4567_89AB_CDEF;
+        regs.rcx = 0x1111_2222_3333_4444;
+        regs.rdx = 0xA5A5_5A5A_1357_2468;
+        regs.rbx = 0xFEDC_BA98_7654_80A7;
+        regs.rsp = 0x1234_5678_9ABC_80F2;
+        regs.rbp = 0x0FED_CBA9_8765_8001;
+        regs.rsi = 0x99AA_BBCC_DDEE_FF00;
+        regs.rdi = 0x0F1E_2D3C_4B5A_6978;
+        regs.r8 = 0x0102_0304_0506_0708;
+        regs.r9 = 0x1112_1314_1516_1718;
+        regs.r16 = 0xA1A2_A3A4_A5A6_80F1;
+        regs.r17 = 0xB1B2_B3B4_B5B6_B7B8;
+        regs.r31 = 0xF1F2_F3F4_F5F6_F7F8;
+        regs.rflags = case.rflags;
+        vcpu.set_regs(&regs).unwrap();
+        vcpu.set_apx_enabled(case.apx);
+    };
+
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp, &case);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+        assert_eq!(
+            gprs(&expected)[case.destination_index],
+            case.expected_destination,
+            "{} reference destination",
+            case.name
+        );
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit, &case);
+        jit.set_jit_call(false);
+        jit.set_jit_mem(false);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the register-only native tier:\n{}",
+            case.name,
+            jit.jit_dump_region(LOAD_ADDR)
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(gprs(&actual), gprs(&expected), "{} GPR file", case.name);
+        assert_eq!(actual.rflags, expected.rflags, "{} RFLAGS", case.name);
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+    }
+}
+
 #[test]
 fn jit_state_backed_rsp_rbp_add_sub_match_interpreter_without_memory_helpers() {
     // Exercise 8/16/32/64-bit arithmetic with stack registers in destination
