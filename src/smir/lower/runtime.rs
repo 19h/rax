@@ -8407,6 +8407,7 @@ fn block_is_clobber_safe(
         let state_inc_dec_ok = super::x86_64::x86_state_backed_gpr_inc_dec_valid(op);
         let state_count_ok = super::x86_64::x86_state_backed_gpr_count_valid(op);
         let state_bit_scan_ok = super::x86_64::x86_state_backed_gpr_bit_scan_valid(op);
+        let state_bit_test_ok = super::x86_64::x86_state_backed_gpr_bit_test_valid(op);
         let state_bswap_ok = super::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = super::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let stack_state_ok = stack_mov_ok
@@ -8419,6 +8420,7 @@ fn block_is_clobber_safe(
             || state_inc_dec_ok
             || state_count_ok
             || state_bit_scan_ok
+            || state_bit_test_ok
             || state_bswap_ok
             || state_xchg_ok;
         if (super::x86_64::x86_state_backed_gpr_extend_candidate(op) && !state_extend_ok)
@@ -8429,6 +8431,7 @@ fn block_is_clobber_safe(
             || (super::x86_64::x86_state_backed_gpr_inc_dec_candidate(op) && !state_inc_dec_ok)
             || (super::x86_64::x86_state_backed_gpr_count_candidate(op) && !state_count_ok)
             || (super::x86_64::x86_state_backed_gpr_bit_scan_candidate(op) && !state_bit_scan_ok)
+            || (super::x86_64::x86_state_backed_gpr_bit_test_candidate(op) && !state_bit_test_ok)
             || (super::x86_64::x86_state_backed_gpr_bswap_candidate(op) && !state_bswap_ok)
             || (super::x86_64::x86_state_backed_gpr_xchg_candidate(op) && !state_xchg_ok)
         {
@@ -8527,6 +8530,7 @@ fn block_is_clobber_safe(
             op.kind,
             OpKind::Bt { .. } | OpKind::Bts { .. } | OpKind::Btr { .. } | OpKind::Btc { .. }
         ) && !x86_bit_test_shape_valid(&op.kind)
+            && !state_bit_test_ok
         {
             return false;
         }
@@ -20366,6 +20370,23 @@ mod jit_gate_tests {
                 index: SrcOperand::Reg(x86(X86Reg::Rax)),
                 width: OpWidth::W64,
             },
+            OpKind::Btr {
+                dst: x86(X86Reg::Rsp),
+                src: x86(X86Reg::Rsp),
+                index: SrcOperand::Imm(63),
+                width: OpWidth::W64,
+            },
+            OpKind::Bt {
+                src: x86(X86Reg::R8),
+                index: SrcOperand::Reg(x86(X86Reg::Rbp)),
+                width: OpWidth::W32,
+            },
+            OpKind::Btc {
+                dst: x86(X86Reg::R31),
+                src: x86(X86Reg::R31),
+                index: SrcOperand::Reg(x86(X86Reg::R16)),
+                width: OpWidth::W64,
+            },
         ] {
             assert!(op.is_jit_safe(), "register bit test must be whitelisted");
             assert!(x86_gate(op), "well-formed register bit test must JIT");
@@ -20390,10 +20411,10 @@ mod jit_gate_tests {
                 },
             ),
             (
-                "guest stack operand",
+                "state-backed non-destructive update",
                 OpKind::Btr {
                     dst: x86(X86Reg::Rsp),
-                    src: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rbp),
                     index: SrcOperand::Imm(0),
                     width: OpWidth::W64,
                 },
@@ -20411,6 +20432,24 @@ mod jit_gate_tests {
             assert!(op.is_jit_safe(), "{name} remains class-whitelisted");
             assert!(!x86_gate(op), "malformed {name} bit test must deopt");
         }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Bts {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::R16),
+                index: SrcOperand::Imm(7),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut hinted = builder.finish();
+        hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+        assert!(
+            !is_native_clobber_safe(&hinted),
+            "hinted state-backed bit test must fail closed"
+        );
     }
 
     #[test]

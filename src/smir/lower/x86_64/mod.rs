@@ -283,6 +283,61 @@ pub(crate) fn x86_state_backed_gpr_bit_scan_valid(op: &SmirOp) -> bool {
     )
 }
 
+pub(crate) fn x86_state_backed_gpr_bit_test_candidate(op: &SmirOp) -> bool {
+    let state_index = |index: &SrcOperand| matches!(index, SrcOperand::Reg(reg) if x86_state_backed_arch_gpr(reg));
+
+    match &op.kind {
+        OpKind::Bt { src, index, .. } => x86_state_backed_arch_gpr(src) || state_index(index),
+        OpKind::Bts {
+            dst, src, index, ..
+        }
+        | OpKind::Btr {
+            dst, src, index, ..
+        }
+        | OpKind::Btc {
+            dst, src, index, ..
+        } => x86_state_backed_arch_gpr(dst) || x86_state_backed_arch_gpr(src) || state_index(index),
+        _ => false,
+    }
+}
+
+pub(crate) fn x86_state_backed_gpr_bit_test_valid(op: &SmirOp) -> bool {
+    let arch_gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
+    let index_valid = |index: &SrcOperand| {
+        matches!(index, SrcOperand::Imm(_) | SrcOperand::Imm64(_))
+            || matches!(index, SrcOperand::Reg(reg) if arch_gpr(reg))
+    };
+    let width_valid = |width: &OpWidth| matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64);
+
+    x86_state_backed_gpr_bit_test_candidate(op)
+        && op.x86_hint.is_none()
+        && match &op.kind {
+            OpKind::Bt { src, index, width } => {
+                arch_gpr(src) && index_valid(index) && width_valid(width)
+            }
+            OpKind::Bts {
+                dst,
+                src,
+                index,
+                width,
+            }
+            | OpKind::Btr {
+                dst,
+                src,
+                index,
+                width,
+            }
+            | OpKind::Btc {
+                dst,
+                src,
+                index,
+                width,
+            } => dst == src && arch_gpr(dst) && index_valid(index) && width_valid(width),
+            _ => false,
+        }
+}
+
 pub(crate) fn x86_state_backed_gpr_bswap_candidate(op: &SmirOp) -> bool {
     matches!(
         &op.kind,
@@ -4233,6 +4288,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_inc_dec_valid(op)
             || x86_state_backed_gpr_count_valid(op)
             || x86_state_backed_gpr_bit_scan_valid(op)
+            || x86_state_backed_gpr_bit_test_valid(op)
             || x86_state_backed_gpr_bswap_valid(op)
             || x86_state_backed_gpr_xchg_valid(op)
         {
@@ -6660,7 +6716,22 @@ impl X86_64Lowerer {
             }
 
             OpKind::Bt { src, index, width } => {
-                self.lower_bit_test(BitTestRegOp::Test, None, *src, index, *width)?
+                if x86_state_backed_gpr_bit_test_candidate(op) {
+                    if !x86_state_backed_gpr_bit_test_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Bt".to_string(),
+                            operand: format!("invalid x86 GPR bit test {width:?} {index:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_bit_test(
+                        BitTestRegOp::Test,
+                        None,
+                        *src,
+                        index,
+                        *width,
+                    );
+                }
+                self.lower_bit_test(BitTestRegOp::Test, None, *src, index, *width)?;
             }
 
             OpKind::Bts {
@@ -6668,21 +6739,72 @@ impl X86_64Lowerer {
                 src,
                 index,
                 width,
-            } => self.lower_bit_test(BitTestRegOp::Set, Some(*dst), *src, index, *width)?,
+            } => {
+                if x86_state_backed_gpr_bit_test_candidate(op) {
+                    if !x86_state_backed_gpr_bit_test_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Bts".to_string(),
+                            operand: format!("invalid x86 GPR bit test {width:?} {index:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_bit_test(
+                        BitTestRegOp::Set,
+                        Some(*dst),
+                        *src,
+                        index,
+                        *width,
+                    );
+                }
+                self.lower_bit_test(BitTestRegOp::Set, Some(*dst), *src, index, *width)?;
+            }
 
             OpKind::Btr {
                 dst,
                 src,
                 index,
                 width,
-            } => self.lower_bit_test(BitTestRegOp::Reset, Some(*dst), *src, index, *width)?,
+            } => {
+                if x86_state_backed_gpr_bit_test_candidate(op) {
+                    if !x86_state_backed_gpr_bit_test_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Btr".to_string(),
+                            operand: format!("invalid x86 GPR bit test {width:?} {index:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_bit_test(
+                        BitTestRegOp::Reset,
+                        Some(*dst),
+                        *src,
+                        index,
+                        *width,
+                    );
+                }
+                self.lower_bit_test(BitTestRegOp::Reset, Some(*dst), *src, index, *width)?;
+            }
 
             OpKind::Btc {
                 dst,
                 src,
                 index,
                 width,
-            } => self.lower_bit_test(BitTestRegOp::Complement, Some(*dst), *src, index, *width)?,
+            } => {
+                if x86_state_backed_gpr_bit_test_candidate(op) {
+                    if !x86_state_backed_gpr_bit_test_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Btc".to_string(),
+                            operand: format!("invalid x86 GPR bit test {width:?} {index:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_bit_test(
+                        BitTestRegOp::Complement,
+                        Some(*dst),
+                        *src,
+                        index,
+                        *width,
+                    );
+                }
+                self.lower_bit_test(BitTestRegOp::Complement, Some(*dst), *src, index, *width)?;
+            }
 
             OpKind::Crc32C {
                 dst,
@@ -14934,6 +15056,96 @@ impl X86_64Lowerer {
             };
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_bit_test(
+        &mut self,
+        kind: BitTestRegOp,
+        dst: Option<VReg>,
+        src: VReg,
+        index: &SrcOperand,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
+        let src_idx = Self::x86_gpr_index(src).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {}", kind.name()),
+            operand: "source is not an architectural x86 GPR".to_string(),
+        })?;
+        let dst_idx = dst
+            .map(|dst| {
+                Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+                    op: format!("state-backed {}", kind.name()),
+                    operand: "destination is not an architectural x86 GPR".to_string(),
+                })
+            })
+            .transpose()?;
+        let index_idx = match index {
+            SrcOperand::Reg(reg) => {
+                Some(
+                    Self::x86_gpr_index(*reg).ok_or_else(|| LowerError::InvalidOperand {
+                        op: format!("state-backed {}", kind.name()),
+                        operand: "index is not an architectural x86 GPR".to_string(),
+                    })?,
+                )
+            }
+            SrcOperand::Imm(_) | SrcOperand::Imm64(_) => None,
+            _ => {
+                return Err(LowerError::InvalidOperand {
+                    op: format!("state-backed {}", kind.name()),
+                    operand: format!("unsupported bit index {index:?}"),
+                });
+            }
+        };
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rax, i32::from(src_idx) * 8, width);
+            if let Some(index_idx) = index_idx {
+                emitter.emit_mov_rm(PhysReg::Rdi, PhysReg::Rax, i32::from(index_idx) * 8, width);
+            }
+        }
+
+        self.code.emit_u8(0x9C); // pushfq: preserve every undefined status flag
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            match (index, index_idx) {
+                (SrcOperand::Reg(_), Some(_)) => {
+                    emitter.emit_bit_test_rr(kind, PhysReg::Rdx, PhysReg::Rdi, width)
+                }
+                (SrcOperand::Imm(index), None) => {
+                    emitter.emit_bit_test_ri(kind, PhysReg::Rdx, *index as u8, width)
+                }
+                (SrcOperand::Imm64(index), None) => {
+                    emitter.emit_bit_test_ri(kind, PhysReg::Rdx, *index as u8, width)
+                }
+                _ => unreachable!(),
+            }
+        }
+        self.finish_bmi_flags(PhysReg::Rdx, Some(1 << 0));
+
+        if let Some(dst_idx) = dst_idx {
+            self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
+            if dst_idx == 5 {
+                let commit_width = if width == OpWidth::W16 {
+                    OpWidth::W16
+                } else {
+                    OpWidth::W64
+                };
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
+            }
         }
 
         {
@@ -29678,7 +29890,7 @@ mod tests {
             },
             OpKind::Bt {
                 src: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
-                index: SrcOperand::Imm(1),
+                index: SrcOperand::Reg(VReg::Virtual(crate::smir::ir::types::VirtualId(0))),
                 width: OpWidth::W64,
             },
         ] {
@@ -29778,6 +29990,259 @@ mod tests {
                 regs.rflags & STATUS,
                 expected_status,
                 "{name}: only CF may change"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_state_backed_gpr_bit_tests_emit_cf_merge_and_reject_malformed_shapes() {
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+
+        let bt = lower_single_op(OpKind::Bt {
+            src: x86(X86Reg::Rsp),
+            index: SrcOperand::Reg(x86(X86Reg::Rbp)),
+            width: OpWidth::W64,
+        });
+        assert!(
+            bt.windows(4).any(|bytes| bytes == [0x48, 0x0F, 0xA3, 0xFA]),
+            "state-backed BT must test RDX by RDI: {bt:02X?}"
+        );
+        assert_eq!(
+            bt.iter().filter(|byte| **byte == 0x9C).count(),
+            2,
+            "state-backed BT must save old and new RFLAGS: {bt:02X?}"
+        );
+        assert_eq!(bt.iter().filter(|byte| **byte == 0x9D).count(), 1);
+
+        let bts = lower_single_op(OpKind::Bts {
+            dst: x86(X86Reg::Rbp),
+            src: x86(X86Reg::Rbp),
+            index: SrcOperand::Imm(15),
+            width: OpWidth::W16,
+        });
+        assert!(
+            bts.windows(5)
+                .any(|bytes| bytes == [0x66, 0x0F, 0xBA, 0xEA, 0x0F]),
+            "state-backed BTS must update DX by immediate: {bts:02X?}"
+        );
+        assert!(
+            bts.windows(4)
+                .any(|bytes| bytes == [0x66, 0x89, 0x55, 0x00]),
+            "word BTS must partially synchronize guest RBP: {bts:02X?}"
+        );
+
+        let btr = lower_single_op(OpKind::Btr {
+            dst: x86(X86Reg::R16),
+            src: x86(X86Reg::R16),
+            index: SrcOperand::Reg(x86(X86Reg::R31)),
+            width: OpWidth::W32,
+        });
+        assert!(
+            btr.windows(3).any(|bytes| bytes == [0x0F, 0xB3, 0xFA]),
+            "state-backed BTR must update EDX by EDI: {btr:02X?}"
+        );
+        assert!(
+            btr.windows(7)
+                .any(|bytes| bytes == [0x48, 0x89, 0x90, 0x80, 0x00, 0x00, 0x00]),
+            "dword BTR must fully commit GuestRegs.gpr[16]: {btr:02X?}"
+        );
+
+        for malformed in [
+            OpKind::Bt {
+                src: x86(X86Reg::Rsp),
+                index: SrcOperand::Imm(0),
+                width: OpWidth::W8,
+            },
+            OpKind::Btc {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rsp),
+                index: SrcOperand::Imm(0),
+                width: OpWidth::W64,
+            },
+            OpKind::Bts {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::R16),
+                index: SrcOperand::Reg(VReg::Virtual(crate::smir::ir::types::VirtualId(0))),
+                width: OpWidth::W64,
+            },
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(malformed),
+                    LowerError::InvalidOperand { .. }
+                ),
+                "malformed state-backed bit test must fail lowering"
+            );
+        }
+
+        let hinted = OpKind::Btr {
+            dst: x86(X86Reg::R16),
+            src: x86(X86Reg::R16),
+            index: SrcOperand::Imm(7),
+            width: OpWidth::W64,
+        };
+        assert!(matches!(
+            lower_single_hinted_op_err(hinted, X86OpHint::Mulx),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_gpr_bit_tests_preserve_width_and_cf_contracts() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        const STATUS_MASK: u64 = 0x8D5;
+
+        struct Case {
+            name: &'static str,
+            kind: BitTestRegOp,
+            operand: X86Reg,
+            index: SrcOperand,
+            source: u64,
+            index_value: u64,
+            width: OpWidth,
+        }
+
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let cases = [
+            Case {
+                name: "BT RSP,RBP register index",
+                kind: BitTestRegOp::Test,
+                operand: X86Reg::Rsp,
+                index: SrcOperand::Reg(x86(X86Reg::Rbp)),
+                source: 1u64 << 63,
+                index_value: 63,
+                width: OpWidth::W64,
+            },
+            Case {
+                name: "BTS BP,15 partial destination",
+                kind: BitTestRegOp::Set,
+                operand: X86Reg::Rbp,
+                index: SrcOperand::Imm(15),
+                source: 0x3344_5566_8765_0000,
+                index_value: 15,
+                width: OpWidth::W16,
+            },
+            Case {
+                name: "BTR R16D,R31D zero-extending destination",
+                kind: BitTestRegOp::Reset,
+                operand: X86Reg::R16,
+                index: SrcOperand::Reg(x86(X86Reg::R31)),
+                source: u64::MAX,
+                index_value: 31,
+                width: OpWidth::W32,
+            },
+            Case {
+                name: "BTC R31,R16 extended destination and index",
+                kind: BitTestRegOp::Complement,
+                operand: X86Reg::R31,
+                index: SrcOperand::Reg(x86(X86Reg::R16)),
+                source: 0,
+                index_value: 63,
+                width: OpWidth::W64,
+            },
+            Case {
+                name: "BT R16W,SP masked register index",
+                kind: BitTestRegOp::Test,
+                operand: X86Reg::R16,
+                index: SrcOperand::Reg(x86(X86Reg::Rsp)),
+                source: 1,
+                index_value: 16,
+                width: OpWidth::W16,
+            },
+            Case {
+                name: "BTR RSP,63 full destination",
+                kind: BitTestRegOp::Reset,
+                operand: X86Reg::Rsp,
+                index: SrcOperand::Imm64(63),
+                source: 1u64 << 63,
+                index_value: 63,
+                width: OpWidth::W64,
+            },
+        ];
+
+        for case in cases {
+            let operand = x86(case.operand);
+            let kind = match case.kind {
+                BitTestRegOp::Test => OpKind::Bt {
+                    src: operand,
+                    index: case.index.clone(),
+                    width: case.width,
+                },
+                BitTestRegOp::Set => OpKind::Bts {
+                    dst: operand,
+                    src: operand,
+                    index: case.index.clone(),
+                    width: case.width,
+                },
+                BitTestRegOp::Reset => OpKind::Btr {
+                    dst: operand,
+                    src: operand,
+                    index: case.index.clone(),
+                    width: case.width,
+                },
+                BitTestRegOp::Complement => OpKind::Btc {
+                    dst: operand,
+                    src: operand,
+                    index: case.index.clone(),
+                    width: case.width,
+                },
+            };
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            for (index, value) in regs.gpr.iter_mut().enumerate() {
+                *value = 0xA1A2_0000_0000_8000u64
+                    .wrapping_add((index as u64).wrapping_mul(0x0101_1111_2222_0101));
+            }
+            let operand_idx = case.operand.gpr_index().unwrap() as usize;
+            regs.gpr[operand_idx] = case.source;
+            if let SrcOperand::Reg(index) = case.index {
+                let index_idx = X86_64Lowerer::x86_gpr_index(index).unwrap() as usize;
+                regs.gpr[index_idx] = case.index_value;
+            }
+            regs.rflags = STATUS_MASK;
+
+            let mut expected = regs;
+            let bit = case.index_value & (u64::from(case.width.bits()) - 1);
+            let value = case.source & case.width.mask();
+            let cf = (value >> bit) & 1;
+            let result = match case.kind {
+                BitTestRegOp::Test => None,
+                BitTestRegOp::Set => Some(value | (1u64 << bit)),
+                BitTestRegOp::Reset => Some(value & !(1u64 << bit)),
+                BitTestRegOp::Complement => Some(value ^ (1u64 << bit)),
+            };
+            if let Some(result) = result {
+                expected.gpr[operand_idx] = match case.width {
+                    OpWidth::W16 => (regs.gpr[operand_idx] & !case.width.mask()) | result,
+                    OpWidth::W32 | OpWidth::W64 => result,
+                    OpWidth::W8 | OpWidth::W128 => unreachable!(),
+                };
+            }
+            expected.rflags = (expected.rflags & !1) | cf;
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            assert_eq!(
+                regs.rflags & STATUS_MASK,
+                expected.rflags & STATUS_MASK,
+                "{} status flags",
+                case.name
             );
         }
     }

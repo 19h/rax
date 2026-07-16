@@ -5032,6 +5032,163 @@ fn jit_state_backed_gpr_bit_scan_executes_without_memory_helpers() {
     }
 }
 
+/// Register BT/BTS/BTR/BTC use state-backed operand and index staging when
+/// guest RSP/RBP or APX EGPRs participate. CF is merged exactly while every
+/// undefined status flag and every non-destination GPR remains unchanged.
+#[test]
+fn jit_state_backed_gpr_bit_test_executes_without_memory_helpers() {
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        apx: bool,
+        operand_index: usize,
+        index_index: Option<usize>,
+        source: u64,
+        bit_index: u64,
+        expected_operand: u64,
+    }
+
+    let cases = [
+        Case {
+            name: "BT RSP,RBP register index",
+            instruction: &[0x48, 0x0F, 0xA3, 0xEC],
+            apx: false,
+            operand_index: 4,
+            index_index: Some(5),
+            source: 1u64 << 63,
+            bit_index: 63,
+            expected_operand: 1u64 << 63,
+        },
+        Case {
+            name: "BTS BP,15 partial destination",
+            instruction: &[0x66, 0x0F, 0xBA, 0xED, 0x0F],
+            apx: false,
+            operand_index: 5,
+            index_index: None,
+            source: 0x3344_5566_8765_0000,
+            bit_index: 15,
+            expected_operand: 0x3344_5566_8765_8000,
+        },
+        Case {
+            name: "REX2 BTR R16D,R31D zero-extending destination",
+            instruction: &[0xD5, 0xD4, 0xB3, 0xF8],
+            apx: true,
+            operand_index: 16,
+            index_index: Some(31),
+            source: u64::MAX,
+            bit_index: 31,
+            expected_operand: 0x7FFF_FFFF,
+        },
+        Case {
+            name: "REX2 BTC R31,R16 extended destination and index",
+            instruction: &[0xD5, 0xD9, 0xBB, 0xC7],
+            apx: true,
+            operand_index: 31,
+            index_index: Some(16),
+            source: 0,
+            bit_index: 63,
+            expected_operand: 1u64 << 63,
+        },
+        Case {
+            name: "BTR RSP,63 full destination",
+            instruction: &[0x48, 0x0F, 0xBA, 0xF4, 0x3F],
+            apx: false,
+            operand_index: 4,
+            index_index: None,
+            source: 1u64 << 63,
+            bit_index: 63,
+            expected_operand: 0,
+        },
+        Case {
+            name: "REX2 BT R16W,SP masked register index",
+            instruction: &[0x66, 0xD5, 0x90, 0xA3, 0xE0],
+            apx: true,
+            operand_index: 16,
+            index_index: Some(4),
+            source: 1,
+            bit_index: 16,
+            expected_operand: 1,
+        },
+    ];
+
+    let gprs = |regs: &Registers| {
+        [
+            regs.rax, regs.rcx, regs.rdx, regs.rbx, regs.rsp, regs.rbp, regs.rsi, regs.rdi,
+            regs.r8, regs.r9, regs.r10, regs.r11, regs.r12, regs.r13, regs.r14, regs.r15, regs.r16,
+            regs.r17, regs.r18, regs.r19, regs.r20, regs.r21, regs.r22, regs.r23, regs.r24,
+            regs.r25, regs.r26, regs.r27, regs.r28, regs.r29, regs.r30, regs.r31,
+        ]
+    };
+    let setup = |vcpu: &mut X86_64Vcpu, case: &Case| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x0102_0304_0506_0708;
+        regs.rcx = 0x1122_3344_5566_1234;
+        regs.rdx = 0x99AA_BBCC_DDEE_FF00;
+        regs.rbx = 0x0F1E_2D3C_4B5A_6978;
+        regs.rsp = 0x2233_4455_6677_5678;
+        regs.rbp = 0x3344_5566_8765_9ABC;
+        regs.r8 = 0x8899_AABB_CCDD_EEFF;
+        regs.r16 = 0xAABB_CCDD_EEFF_7788;
+        regs.r17 = 0xBBCC_DDEE_5566_7788;
+        regs.r31 = 0xFFEE_DDCC_BBAA_1357;
+        match case.operand_index {
+            4 => regs.rsp = case.source,
+            5 => regs.rbp = case.source,
+            16 => regs.r16 = case.source,
+            31 => regs.r31 = case.source,
+            _ => unreachable!(),
+        }
+        if let Some(index) = case.index_index {
+            match index {
+                4 => regs.rsp = case.bit_index,
+                5 => regs.rbp = case.bit_index,
+                16 => regs.r16 = case.bit_index,
+                31 => regs.r31 = case.bit_index,
+                _ => unreachable!(),
+            }
+        }
+        regs.rflags = 0x2 | 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+        vcpu.set_apx_enabled(case.apx);
+    };
+
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp, &case);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+        assert_eq!(
+            gprs(&expected)[case.operand_index],
+            case.expected_operand,
+            "{} reference operand",
+            case.name
+        );
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit, &case);
+        jit.set_jit_call(false);
+        jit.set_jit_mem(false);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the register-only native tier:\n{}",
+            case.name,
+            jit.jit_dump_region(LOAD_ADDR)
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(gprs(&actual), gprs(&expected), "{} GPR file", case.name);
+        assert_eq!(actual.rflags, expected.rflags, "{} RFLAGS", case.name);
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+    }
+}
+
 /// State-backed register NOT uses the GuestRegs snapshot for guest RSP/RBP and
 /// APX EGPRs while retaining byte/word partial writes and dword zero extension.
 #[test]
