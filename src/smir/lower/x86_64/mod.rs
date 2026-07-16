@@ -14672,6 +14672,46 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
+    /// Merge selected incoming status bits into a native replay image at
+    /// `[rsp]`, optionally clearing deterministic undefined outputs. The caller
+    /// has already pushed the native RFLAGS image, so its saved incoming image
+    /// is at caller-frame offset 16 + the active 8-byte stack slot = 24.
+    #[cfg(feature = "smir-jit")]
+    fn emit_merge_jit_shift_status(&mut self, preserve_rflags: i64, clear_rflags: i64) {
+        let mut emitter = X86Emitter::new(&mut self.code);
+        if preserve_rflags != 0 {
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+            emitter.emit_and_ri(PhysReg::Rax, preserve_rflags, OpWidth::W64);
+            emitter.emit_alu_mi_disp(
+                4,
+                PhysReg::Rsp,
+                0,
+                DispSize::Auto,
+                !preserve_rflags,
+                OpWidth::W64,
+            );
+            emitter.emit_alu_mem_disp(
+                0x08,
+                PhysReg::Rax,
+                PhysReg::Rsp,
+                0,
+                DispSize::Auto,
+                OpWidth::W64,
+                X86AluEncoding::RmReg,
+            );
+        }
+        if clear_rflags != 0 {
+            emitter.emit_alu_mi_disp(
+                4,
+                PhysReg::Rsp,
+                0,
+                DispSize::Auto,
+                !clear_rflags,
+                OpWidth::W64,
+            );
+        }
+    }
+
     /// Fuse an exact fault-precise memory-destination shift/rotate sequence.
     /// The speculative scratch-RAX operation is wrapped by PUSHFQ/POPFQ, so
     /// store faults retain every incoming flag; only a successful store reaches
@@ -14719,27 +14759,30 @@ impl X86_64Lowerer {
             _ => unreachable!("validated scalar shift RMW consumer"),
         };
         let raw_count = match amount {
-            SrcOperand::Imm(value) => *value as u8,
-            _ => unreachable!("validated scalar shift RMW has an immediate count"),
+            SrcOperand::Imm(value) => Some(*value as u8),
+            SrcOperand::Reg(VReg::Arch(ArchReg::X86(X86Reg::Rcx))) => None,
+            _ => unreachable!("validated scalar shift RMW count"),
         };
         let count_mask = if width == OpWidth::W64 { 0x3f } else { 0x1f };
-        let count = raw_count & count_mask;
         const X86_STATUS_RFLAGS: i64 = 0x08D5;
         const ROTATE_UNCHANGED_RFLAGS: i64 = 0x00D4;
-        let (preserve_rflags, clear_rflags) = if count == 0 {
-            (X86_STATUS_RFLAGS, 0i64)
-        } else {
-            match kind {
-                ShiftRegOp::Rol | ShiftRegOp::Ror => (
-                    ROTATE_UNCHANGED_RFLAGS | if count == 1 { 0 } else { 1 << 11 },
-                    0,
-                ),
-                ShiftRegOp::Rcl | ShiftRegOp::Rcr => (ROTATE_UNCHANGED_RFLAGS, 0),
-                ShiftRegOp::Shl | ShiftRegOp::Shr | ShiftRegOp::Sar => {
-                    (1 << 4, if count == 1 { 0 } else { 1 << 11 })
+        let static_status_merge = raw_count.map(|raw_count| {
+            let count = raw_count & count_mask;
+            if count == 0 {
+                (X86_STATUS_RFLAGS, 0i64)
+            } else {
+                match kind {
+                    ShiftRegOp::Rol | ShiftRegOp::Ror => (
+                        ROTATE_UNCHANGED_RFLAGS | if count == 1 { 0 } else { 1 << 11 },
+                        0,
+                    ),
+                    ShiftRegOp::Rcl | ShiftRegOp::Rcr => (ROTATE_UNCHANGED_RFLAGS, 0),
+                    ShiftRegOp::Shl | ShiftRegOp::Shr | ShiftRegOp::Sar => {
+                        (1 << 4, if count == 1 { 0 } else { 1 << 11 })
+                    }
                 }
             }
-        };
+        });
 
         {
             let mut emitter = X86Emitter::new(&mut self.code);
@@ -14771,7 +14814,11 @@ impl X86_64Lowerer {
             emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 0, width);
         }
         self.code.emit_u8(0x9C); // pushfq
-        self.emit_shift_reg_imm(kind, PhysReg::Rax, raw_count, width);
+        if let Some(raw_count) = raw_count {
+            self.emit_shift_reg_imm(kind, PhysReg::Rax, raw_count, width);
+        } else {
+            self.emit_shift_reg_cl(kind, PhysReg::Rax, width);
+        }
         self.code.emit_u8(0x9D); // popfq
         {
             let mut emitter = X86Emitter::new(&mut self.code);
@@ -14797,48 +14844,59 @@ impl X86_64Lowerer {
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 0, width);
         }
-        self.emit_shift_reg_imm(kind, PhysReg::Rax, raw_count, width);
+        if let Some(raw_count) = raw_count {
+            self.emit_shift_reg_imm(kind, PhysReg::Rax, raw_count, width);
+        } else {
+            self.emit_shift_reg_cl(kind, PhysReg::Rax, width);
+        }
+
+        // Keep the native replay image on the stack while scratch RAX selects
+        // the exact incoming-bit policy. The branch tests may change live host
+        // flags, but every path edits the saved image and converges at POPFQ.
+        self.code.emit_u8(0x9C); // pushfq: native replay flags
+        if let Some((preserve_rflags, clear_rflags)) = static_status_merge {
+            self.emit_merge_jit_shift_status(preserve_rflags, clear_rflags);
+        } else {
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_rr(PhysReg::Rax, PhysReg::Rcx, OpWidth::W64);
+                emitter.emit_and_ri(PhysReg::Rax, i64::from(count_mask), OpWidth::W64);
+                emitter.emit_test_rr(PhysReg::Rax, PhysReg::Rax, OpWidth::W64);
+            }
+            let count_zero = self.emit_jcc_placeholder(X86Cond::E);
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_cmp_ri(PhysReg::Rax, 1, OpWidth::W64);
+            }
+            let count_one = self.emit_jcc_placeholder(X86Cond::E);
+
+            let (one_preserve, multi_preserve, multi_clear) = match kind {
+                ShiftRegOp::Rol | ShiftRegOp::Ror | ShiftRegOp::Rcl | ShiftRegOp::Rcr => (
+                    ROTATE_UNCHANGED_RFLAGS,
+                    ROTATE_UNCHANGED_RFLAGS | (1 << 11),
+                    0,
+                ),
+                ShiftRegOp::Shl | ShiftRegOp::Shr | ShiftRegOp::Sar => (1 << 4, 1 << 4, 1 << 11),
+            };
+            self.emit_merge_jit_shift_status(multi_preserve, multi_clear);
+            self.code.emit_u8(0xE9);
+            let multi_done = self.code.position();
+            self.code.emit_u32(0);
+
+            self.patch_rel32_to_current(count_one)?;
+            self.emit_merge_jit_shift_status(one_preserve, 0);
+            self.code.emit_u8(0xE9);
+            let one_done = self.code.position();
+            self.code.emit_u32(0);
+
+            self.patch_rel32_to_current(count_zero)?;
+            self.emit_merge_jit_shift_status(X86_STATUS_RFLAGS, 0);
+            self.patch_rel32_to_current(multi_done)?;
+            self.patch_rel32_to_current(one_done)?;
+        }
+        self.code.emit_u8(0x9D); // popfq: merged guest flags
         {
             let mut emitter = X86Emitter::new(&mut self.code);
-            if preserve_rflags != 0 || clear_rflags != 0 {
-                // Keep the native replay image on the stack and use scratch
-                // RAX for the saved incoming bits. This leaves one canonical
-                // merged image for POPFQ and avoids relying on host flags set
-                // by the merge instructions themselves.
-                emitter.code.emit_u8(0x9C); // pushfq: native replay flags
-                if preserve_rflags != 0 {
-                    emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
-                    emitter.emit_and_ri(PhysReg::Rax, preserve_rflags, OpWidth::W64);
-                    emitter.emit_alu_mi_disp(
-                        4,
-                        PhysReg::Rsp,
-                        0,
-                        DispSize::Auto,
-                        !preserve_rflags,
-                        OpWidth::W64,
-                    );
-                    emitter.emit_alu_mem_disp(
-                        0x08,
-                        PhysReg::Rax,
-                        PhysReg::Rsp,
-                        0,
-                        DispSize::Auto,
-                        OpWidth::W64,
-                        X86AluEncoding::RmReg,
-                    );
-                }
-                if clear_rflags != 0 {
-                    emitter.emit_alu_mi_disp(
-                        4,
-                        PhysReg::Rsp,
-                        0,
-                        DispSize::Auto,
-                        !clear_rflags,
-                        OpWidth::W64,
-                    );
-                }
-                emitter.code.emit_u8(0x9D); // popfq: merged guest flags
-            }
             emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
             emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 32);
         }
@@ -25006,6 +25064,71 @@ mod tests {
             "fault must preserve every arithmetic status flag"
         );
         assert_eq!(fault.exit_pc, 0x2000, "fault must restart current PC");
+    }
+
+    #[cfg(feature = "smir-jit")]
+    #[test]
+    fn helper_backed_memory_destination_cl_shift_emits_both_native_replays() {
+        let old = VReg::Virtual(crate::smir::ir::types::VirtualId(63));
+        let result = VReg::Virtual(crate::smir::ir::types::VirtualId(64));
+        let flags_result = VReg::Virtual(crate::smir::ir::types::VirtualId(65));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let address = Address::Absolute(0x7000);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x4000);
+        builder.push_op(
+            0x4000,
+            OpKind::Load {
+                dst: old,
+                addr: address.clone(),
+                width: MemWidth::B4,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.push_op(
+            0x4000,
+            OpKind::Shl {
+                dst: result,
+                src: old,
+                amount: SrcOperand::Reg(rcx),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0x4000,
+            OpKind::Store {
+                src: result,
+                addr: address,
+                width: MemWidth::B4,
+            },
+        );
+        builder.push_op(
+            0x4000,
+            OpKind::Shl {
+                dst: flags_result,
+                src: old,
+                amount: SrcOperand::Reg(rcx),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_mem_helpers(true);
+        lowerer
+            .lower_function(&builder.finish())
+            .expect("lower helper-backed CL shift RMW");
+        let code = lowerer
+            .finalize()
+            .expect("finalize helper-backed CL shift RMW");
+        assert_eq!(
+            code.windows(2)
+                .filter(|bytes| *bytes == [0xD3, 0xE0])
+                .count(),
+            2,
+            "SHL EAX,CL must execute once speculatively and once after store"
+        );
     }
 
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]

@@ -6396,9 +6396,10 @@ fn x86_shift_rmw_shape(
 
 /// Validate the exact four-op fault-precise memory-destination shift/rotate
 /// sequence emitted by the x86 lifter. Immediate counts are normalized exactly
-/// as x86 does. Counts at or above a sub-dword operand width and variable CL
-/// counts remain fail-closed until their undefined-flag policy can be selected
-/// without speculative guest-visible state.
+/// as x86 does. Variable CL operations are restricted to dword/qword widths,
+/// where the masked count cannot exceed the operand width or reach a second
+/// through-carry period. Subword counts remain fail-closed because their
+/// effective-count reduction changes deterministic undefined-OF classification.
 pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -6454,16 +6455,19 @@ pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
         x86_shift_rmw_shape(&compute.kind)?;
     let (replay_tag, flags_result, replay_old, replay_amount, replay_width, replay_flags) =
         x86_shift_rmw_shape(&replay.kind)?;
-    let count_valid = match amount {
-        SrcOperand::Imm(value) if (0..=i64::from(u8::MAX)).contains(&value) => {
+    let count_valid = match &amount {
+        SrcOperand::Imm(value) if (0..=i64::from(u8::MAX)).contains(value) => {
             let mask = if width == OpWidth::W64 { 0x3f } else { 0x1f };
-            let masked = (value as u8) & mask;
+            let masked = (*value as u8) & mask;
             match compute_tag {
                 2 | 3 => masked == 1,
                 0 | 1 | 4 | 5 | 7 => masked == 0 || u32::from(masked) < width.bits(),
                 _ => false,
             }
         }
+        SrcOperand::Reg(VReg::Arch(crate::smir::ir::types::ArchReg::X86(
+            crate::smir::ir::types::X86Reg::Rcx,
+        ))) => matches!(width, OpWidth::W32 | OpWidth::W64),
         _ => false,
     };
     let rotate_flags = FlagSet::CF.union(FlagSet::OF);
@@ -19589,6 +19593,13 @@ mod jit_gate_tests {
             (4, SrcOperand::Imm(0), MemWidth::B1),
             (5, SrcOperand::Imm(1), MemWidth::B4),
             (7, SrcOperand::Imm(255), MemWidth::B8),
+            (0, SrcOperand::Reg(x86(X86Reg::Rcx)), MemWidth::B4),
+            (1, SrcOperand::Reg(x86(X86Reg::Rcx)), MemWidth::B8),
+            (2, SrcOperand::Reg(x86(X86Reg::Rcx)), MemWidth::B4),
+            (3, SrcOperand::Reg(x86(X86Reg::Rcx)), MemWidth::B8),
+            (4, SrcOperand::Reg(x86(X86Reg::Rcx)), MemWidth::B4),
+            (5, SrcOperand::Reg(x86(X86Reg::Rcx)), MemWidth::B8),
+            (7, SrcOperand::Reg(x86(X86Reg::Rcx)), MemWidth::B4),
         ] {
             let replay_flags = if tag <= 3 {
                 rotate_flags
@@ -19642,7 +19653,7 @@ mod jit_gate_tests {
                 0,
                 SrcOperand::Reg(x86(X86Reg::Rcx)),
                 SrcOperand::Reg(x86(X86Reg::Rcx)),
-                MemWidth::B8,
+                MemWidth::B1,
                 FlagUpdate::None,
                 rotate_flags,
                 address(),
@@ -19650,11 +19661,23 @@ mod jit_gate_tests {
                 false,
             ),
             build(
-                5,
-                5,
+                1,
+                1,
                 SrcOperand::Reg(x86(X86Reg::Rcx)),
                 SrcOperand::Reg(x86(X86Reg::Rcx)),
-                MemWidth::B4,
+                MemWidth::B2,
+                FlagUpdate::None,
+                rotate_flags,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                4,
+                4,
+                SrcOperand::Reg(x86(X86Reg::Rcx)),
+                SrcOperand::Reg(x86(X86Reg::Rcx)),
+                MemWidth::B1,
                 FlagUpdate::None,
                 FlagUpdate::All,
                 address(),
@@ -19662,13 +19685,13 @@ mod jit_gate_tests {
                 false,
             ),
             build(
-                2,
-                2,
+                5,
+                5,
                 SrcOperand::Reg(x86(X86Reg::Rcx)),
                 SrcOperand::Reg(x86(X86Reg::Rcx)),
-                MemWidth::B8,
+                MemWidth::B2,
                 FlagUpdate::None,
-                rotate_flags,
+                FlagUpdate::All,
                 address(),
                 0x1000,
                 false,
