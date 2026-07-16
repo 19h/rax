@@ -31,6 +31,18 @@ use super::{
     X86_STATE_PTR_AT_RBP,
 };
 
+fn x86_state_backed_arch_gpr(reg: &VReg) -> bool {
+    matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index >= 16 || matches!(index, 4 | 5)))
+}
+
+pub(crate) fn x86_state_backed_gpr_extend_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::ZeroExtend { dst, src, .. } | OpKind::SignExtend { dst, src, .. }
+            if x86_state_backed_arch_gpr(dst) || x86_state_backed_arch_gpr(src)
+    )
+}
+
 pub(crate) fn x86_state_backed_gpr_extend_valid(op: &SmirOp) -> bool {
     let gpr_index = |reg: &VReg| match reg {
         VReg::Arch(ArchReg::X86(x86)) => x86.gpr_index(),
@@ -64,7 +76,9 @@ pub(crate) fn x86_state_backed_gpr_extend_valid(op: &SmirOp) -> bool {
     let (Some(dst_index), Some(src_index)) = (gpr_index(dst), gpr_index(src)) else {
         return false;
     };
-    if !widths_valid(from_width, to_width) || !(state_backed(dst_index) || state_backed(src_index))
+    if !x86_state_backed_gpr_extend_candidate(op)
+        || !widths_valid(from_width, to_width)
+        || !(state_backed(dst_index) || state_backed(src_index))
     {
         return false;
     }
@@ -80,6 +94,38 @@ pub(crate) fn x86_state_backed_gpr_extend_valid(op: &SmirOp) -> bool {
         }
         Some(_) => false,
     }
+}
+
+pub(crate) fn x86_state_backed_gpr_cmove_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::CMove { dst, src, .. }
+            if x86_state_backed_arch_gpr(dst) || x86_state_backed_arch_gpr(src)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_cmove_valid(op: &SmirOp) -> bool {
+    let gpr_index = |reg: &VReg| match reg {
+        VReg::Arch(ArchReg::X86(x86)) => x86.gpr_index(),
+        _ => None,
+    };
+    let state_backed = |index: u8| index >= 16 || matches!(index, 4 | 5);
+
+    matches!(
+        &op.kind,
+        OpKind::CMove {
+            dst,
+            src,
+            cond,
+            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+        } if x86_state_backed_gpr_cmove_candidate(op)
+            && op.x86_hint.is_none()
+            && *cond != Condition::Always
+            && gpr_index(dst).is_some()
+            && gpr_index(src).is_some()
+            && (gpr_index(dst).is_some_and(state_backed)
+                || gpr_index(src).is_some_and(state_backed))
+    )
 }
 
 // ============================================================================
@@ -3981,6 +4027,7 @@ impl X86_64Lowerer {
         if Self::mov_touches_state_backed_gpr(&op.kind)
             || Self::alu_touches_state_backed_stack_gpr(&op.kind)
             || x86_state_backed_gpr_extend_valid(op)
+            || x86_state_backed_gpr_cmove_valid(op)
         {
             return Ok(());
         }
@@ -5181,6 +5228,15 @@ impl X86_64Lowerer {
                 cond,
                 width,
             } => {
+                if x86_state_backed_gpr_cmove_candidate(op) {
+                    if !x86_state_backed_gpr_cmove_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed CMOVcc".to_string(),
+                            operand: format!("invalid x86 GPR conditional move {width:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_cmove(*dst, *src, *cond, *width);
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
                 let x86_cond = X86Cond::from_condition(*cond);
@@ -10710,7 +10766,7 @@ impl X86_64Lowerer {
                 from_width,
                 to_width,
             } => {
-                if Self::gpr_extend_touches_state_backed_gpr(&op.kind) {
+                if x86_state_backed_gpr_extend_candidate(op) {
                     if !x86_state_backed_gpr_extend_valid(op) {
                         return Err(LowerError::InvalidOperand {
                             op: "state-backed MOVZX".to_string(),
@@ -10766,7 +10822,7 @@ impl X86_64Lowerer {
                 from_width,
                 to_width,
             } => {
-                if Self::gpr_extend_touches_state_backed_gpr(&op.kind) {
+                if x86_state_backed_gpr_extend_candidate(op) {
                     if !x86_state_backed_gpr_extend_valid(op) {
                         return Err(LowerError::InvalidOperand {
                             op: "state-backed MOVSX".to_string(),
@@ -13840,14 +13896,6 @@ impl X86_64Lowerer {
         )
     }
 
-    fn gpr_extend_touches_state_backed_gpr(kind: &OpKind) -> bool {
-        matches!(
-            kind,
-            OpKind::ZeroExtend { dst, src, .. } | OpKind::SignExtend { dst, src, .. }
-                if Self::x86_state_backed_gpr(*dst) || Self::x86_state_backed_gpr(*src)
-        )
-    }
-
     fn alu_touches_state_backed_stack_gpr(kind: &OpKind) -> bool {
         let valid = |dst: VReg, src1: VReg, src2: &SrcOperand, width: OpWidth| {
             matches!(
@@ -14111,6 +14159,68 @@ impl X86_64Lowerer {
         self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, to_width)?;
         if dst_idx == 5 {
             let commit_width = if to_width == OpWidth::W16 {
+                OpWidth::W16
+            } else {
+                OpWidth::W64
+            };
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_cmove(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        cond: Condition,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: "state-backed CMOVcc".to_string(),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let src_idx = Self::x86_gpr_index(src).ok_or_else(|| LowerError::InvalidOperand {
+            op: "state-backed CMOVcc".to_string(),
+            operand: "source is not an architectural x86 GPR".to_string(),
+        })?;
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            let dst_seed_width = if width == OpWidth::W32 {
+                OpWidth::W32
+            } else {
+                OpWidth::W64
+            };
+            emitter.emit_mov_rm(
+                PhysReg::Rdx,
+                PhysReg::Rax,
+                i32::from(dst_idx) * 8,
+                dst_seed_width,
+            );
+            emitter.emit_mov_rm(PhysReg::Rdi, PhysReg::Rax, i32::from(src_idx) * 8, width);
+            emitter.emit_cmovcc(
+                X86Cond::from_condition(cond),
+                PhysReg::Rdx,
+                PhysReg::Rdi,
+                width,
+            );
+        }
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
+        if dst_idx == 5 {
+            let commit_width = if width == OpWidth::W16 {
                 OpWidth::W16
             } else {
                 OpWidth::W64
@@ -22960,6 +23070,77 @@ mod tests {
         }
     }
 
+    #[test]
+    fn lower_state_backed_gpr_cmov_emits_snapshot_cmov_and_rejects_malformed_shapes() {
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let rsp = lower_single_op(OpKind::CMove {
+            dst: x86(X86Reg::Rsp),
+            src: x86(X86Reg::Rbx),
+            cond: Condition::Ne,
+            width: OpWidth::W16,
+        });
+        for (name, expected) in [
+            (
+                "complete RSP destination seed",
+                &[0x48, 0x8B, 0x50, 0x20][..],
+            ),
+            ("RBX source snapshot", &[0x66, 0x8B, 0x78, 0x18][..]),
+            ("native CMOVNE DX,DI", &[0x66, 0x0F, 0x45, 0xD7][..]),
+            ("partial RSP slot commit", &[0x66, 0x89, 0x50, 0x20][..]),
+        ] {
+            assert!(
+                rsp.windows(expected.len()).any(|window| window == expected),
+                "CMOVNE SP,BX missing {name} {expected:02X?}: {rsp:02X?}"
+            );
+        }
+
+        let r16 = lower_single_op(OpKind::CMove {
+            dst: x86(X86Reg::R16),
+            src: x86(X86Reg::Rbp),
+            cond: Condition::Negative,
+            width: OpWidth::W64,
+        });
+        assert!(
+            r16.windows(7)
+                .any(|bytes| bytes == [0x48, 0x89, 0x90, 0x80, 0x00, 0x00, 0x00]),
+            "CMOVS R16,RBP must commit GuestRegs.gpr[16]: {r16:02X?}"
+        );
+
+        for malformed in [
+            OpKind::CMove {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rbx),
+                cond: Condition::Ne,
+                width: OpWidth::W8,
+            },
+            OpKind::CMove {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::R16),
+                cond: Condition::Always,
+                width: OpWidth::W64,
+            },
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(malformed),
+                    LowerError::InvalidOperand { .. }
+                ),
+                "malformed state-backed CMOVcc must fail lowering"
+            );
+        }
+
+        let hinted = OpKind::CMove {
+            dst: x86(X86Reg::Rax),
+            src: x86(X86Reg::R16),
+            cond: Condition::Ne,
+            width: OpWidth::W64,
+        };
+        assert!(matches!(
+            lower_single_hinted_op_err(hinted, X86OpHint::Mulx),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
     #[test]
     fn native_state_backed_rsp_rbp_moves_preserve_host_stack_and_guest_widths() {
@@ -23152,6 +23333,153 @@ mod tests {
             0x8D5,
             "MOVZX/MOVSX/MOVSXD preserve status flags"
         );
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_gpr_cmov_preserves_widths_flags_and_aliases() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        const STATUS: u64 = 0x8D5;
+        const ZF_SET: u64 = 0x2 | STATUS;
+        const ZF_CLEAR: u64 = 0x2 | (STATUS & !(1 << 6));
+
+        struct Case {
+            name: &'static str,
+            kind: OpKind,
+            rflags: u64,
+            destination_index: usize,
+            expected_destination: u64,
+        }
+
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let cases = [
+            Case {
+                name: "CMOVNE SP,BX true partial destination",
+                kind: OpKind::CMove {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rbx),
+                    cond: Condition::Ne,
+                    width: OpWidth::W16,
+                },
+                rflags: ZF_CLEAR,
+                destination_index: 4,
+                expected_destination: 0x1234_5678_9ABC_80A7,
+            },
+            Case {
+                name: "CMOVNE SP,BX false preserves complete destination",
+                kind: OpKind::CMove {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rbx),
+                    cond: Condition::Ne,
+                    width: OpWidth::W16,
+                },
+                rflags: ZF_SET,
+                destination_index: 4,
+                expected_destination: 0x1234_5678_9ABC_80F2,
+            },
+            Case {
+                name: "CMOVNE EBP,ESP false zeroes upper dword",
+                kind: OpKind::CMove {
+                    dst: x86(X86Reg::Rbp),
+                    src: x86(X86Reg::Rsp),
+                    cond: Condition::Ne,
+                    width: OpWidth::W32,
+                },
+                rflags: ZF_SET,
+                destination_index: 5,
+                expected_destination: 0x8765_8001,
+            },
+            Case {
+                name: "CMOVE EBP,ESP true zeroes upper dword",
+                kind: OpKind::CMove {
+                    dst: x86(X86Reg::Rbp),
+                    src: x86(X86Reg::Rsp),
+                    cond: Condition::Eq,
+                    width: OpWidth::W32,
+                },
+                rflags: ZF_SET,
+                destination_index: 5,
+                expected_destination: 0x9ABC_80F2,
+            },
+            Case {
+                name: "CMOVS R16,RBP state-backed destination",
+                kind: OpKind::CMove {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rbp),
+                    cond: Condition::Negative,
+                    width: OpWidth::W64,
+                },
+                rflags: ZF_SET,
+                destination_index: 16,
+                expected_destination: 0x0FED_CBA9_8765_8001,
+            },
+            Case {
+                name: "CMOVP RAX,R16 state-backed source",
+                kind: OpKind::CMove {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::R16),
+                    cond: Condition::Parity,
+                    width: OpWidth::W64,
+                },
+                rflags: ZF_SET,
+                destination_index: 0,
+                expected_destination: 0xA1A2_A3A4_A5A6_80F1,
+            },
+            Case {
+                name: "CMOVNE SP,SP alias",
+                kind: OpKind::CMove {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rsp),
+                    cond: Condition::Ne,
+                    width: OpWidth::W16,
+                },
+                rflags: ZF_CLEAR,
+                destination_index: 4,
+                expected_destination: 0x1234_5678_9ABC_80F2,
+            },
+        ];
+
+        for case in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, case.kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            regs.gpr[0] = 0x0123_4567_89AB_CDEF;
+            regs.gpr[1] = 0x1111_2222_3333_4444;
+            regs.gpr[2] = 0xA5A5_5A5A_1357_2468;
+            regs.gpr[3] = 0xFEDC_BA98_7654_80A7;
+            regs.gpr[4] = 0x1234_5678_9ABC_80F2;
+            regs.gpr[5] = 0x0FED_CBA9_8765_8001;
+            regs.gpr[6] = 0x99AA_BBCC_DDEE_FF00;
+            regs.gpr[7] = 0x0F1E_2D3C_4B5A_6978;
+            regs.gpr[16] = 0xA1A2_A3A4_A5A6_80F1;
+            regs.gpr[31] = 0xF1F2_F3F4_F5F6_F7F8;
+            regs.rflags = case.rflags;
+            let mut expected = regs;
+            expected.gpr[case.destination_index] = case.expected_destination;
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            assert_eq!(
+                regs.rflags & STATUS,
+                case.rflags & STATUS,
+                "{} status flags",
+                case.name
+            );
+        }
     }
 
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]

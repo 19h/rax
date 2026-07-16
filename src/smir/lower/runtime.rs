@@ -8400,7 +8400,13 @@ fn block_is_clobber_safe(
         let stack_mov_ok = x86_state_backed_stack_mov_valid(&op.kind);
         let stack_alu_ok = x86_state_backed_stack_alu_valid(&op.kind);
         let state_extend_ok = super::x86_64::x86_state_backed_gpr_extend_valid(op);
-        let stack_state_ok = stack_mov_ok || stack_alu_ok || state_extend_ok;
+        let state_cmove_ok = super::x86_64::x86_state_backed_gpr_cmove_valid(op);
+        let stack_state_ok = stack_mov_ok || stack_alu_ok || state_extend_ok || state_cmove_ok;
+        if (super::x86_64::x86_state_backed_gpr_extend_candidate(op) && !state_extend_ok)
+            || (super::x86_64::x86_state_backed_gpr_cmove_candidate(op) && !state_cmove_ok)
+        {
+            return false;
+        }
         let unsigned_div_ok = x86_jit_unsigned_div_register_shape_valid(op);
         let signed_div_ok = x86_jit_signed_div_register_shape_valid(op);
         let guarded_div_ok = unsigned_div_ok || signed_div_ok;
@@ -8549,7 +8555,7 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. Validated MOV/MOVX/ADD/SUB reads/writes are state-backed.
+        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/ADD/SUB reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the current guest
@@ -24788,6 +24794,126 @@ mod jit_gate_tests {
                     to_width: OpWidth::W64,
                 },
                 Some(X86OpHint::LegacyHighByteReg),
+            ),
+        ] {
+            assert!(!gate(op, hint), "{name} must fail closed");
+        }
+    }
+
+    #[test]
+    fn clobber_gate_admits_state_backed_gpr_cmov_and_fails_closed() {
+        let gate = |op: OpKind, hint: Option<X86OpHint>| {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = hint;
+            is_native_clobber_safe(&function)
+        };
+
+        for (name, op) in [
+            (
+                "CMOVNE SP,BX",
+                OpKind::CMove {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rbx),
+                    cond: Condition::Ne,
+                    width: OpWidth::W16,
+                },
+            ),
+            (
+                "CMOVE EBP,ESP",
+                OpKind::CMove {
+                    dst: x86(X86Reg::Rbp),
+                    src: x86(X86Reg::Rsp),
+                    cond: Condition::Eq,
+                    width: OpWidth::W32,
+                },
+            ),
+            (
+                "CMOVS R16,RBP",
+                OpKind::CMove {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rbp),
+                    cond: Condition::Negative,
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "CMOVP RAX,R16",
+                OpKind::CMove {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::R16),
+                    cond: Condition::Parity,
+                    width: OpWidth::W64,
+                },
+            ),
+            (
+                "CMOVNE SP,SP alias",
+                OpKind::CMove {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rsp),
+                    cond: Condition::Ne,
+                    width: OpWidth::W16,
+                },
+            ),
+        ] {
+            assert!(gate(op, None), "{name} must enter the native tier");
+        }
+
+        assert!(
+            gate(
+                OpKind::CMove {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rbx),
+                    cond: Condition::Eq,
+                    width: OpWidth::W64,
+                },
+                None,
+            ),
+            "ordinary identity-register CMOV must remain eligible"
+        );
+
+        for (name, op, hint) in [
+            (
+                "byte width",
+                OpKind::CMove {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rbx),
+                    cond: Condition::Ne,
+                    width: OpWidth::W8,
+                },
+                None,
+            ),
+            (
+                "virtual source",
+                OpKind::CMove {
+                    dst: x86(X86Reg::Rsp),
+                    src: VReg::Virtual(VirtualId(7)),
+                    cond: Condition::Eq,
+                    width: OpWidth::W16,
+                },
+                None,
+            ),
+            (
+                "unconditional condition",
+                OpKind::CMove {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rbx),
+                    cond: Condition::Always,
+                    width: OpWidth::W64,
+                },
+                None,
+            ),
+            (
+                "irrelevant encoding hint",
+                OpKind::CMove {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::R16),
+                    cond: Condition::Ne,
+                    width: OpWidth::W64,
+                },
+                Some(X86OpHint::Mulx),
             ),
         ] {
             assert!(!gate(op, hint), "{name} must fail closed");
