@@ -355,14 +355,74 @@ pub(crate) fn x86_state_backed_gpr_crc32_valid(op: &SmirOp) -> bool {
     x86_state_backed_gpr_crc32_candidate(op)
         && op.x86_hint.is_none()
         && matches!(
-            &op.kind,
-            OpKind::Crc32C {
-                dst,
-                crc,
-                data,
-                data_width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
-            } if dst == crc && arch_gpr(dst) && arch_gpr(data)
+                &op.kind,
+                OpKind::Crc32C {
+                    dst,
+                    crc,
+                    data,
+                    data_width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+                } if dst == crc && arch_gpr(dst) && arch_gpr(data)
         )
+}
+
+pub(crate) fn x86_state_backed_gpr_bextr_bzhi_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::Bextr {
+            dst, src, control, ..
+        } if x86_state_backed_arch_gpr(dst)
+            || x86_state_backed_arch_gpr(src)
+            || x86_state_backed_arch_gpr(control)
+    ) || matches!(
+        &op.kind,
+        OpKind::Bzhi {
+            dst, src, index, ..
+        } if x86_state_backed_arch_gpr(dst)
+            || x86_state_backed_arch_gpr(src)
+            || x86_state_backed_arch_gpr(index)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_bextr_bzhi_valid(op: &SmirOp) -> bool {
+    let arch_gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
+    let bextr_flags = FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF);
+    let bzhi_flags = FlagSet::CF
+        .union(FlagSet::ZF)
+        .union(FlagSet::SF)
+        .union(FlagSet::OF);
+
+    if !x86_state_backed_gpr_bextr_bzhi_candidate(op) || op.x86_hint.is_some() {
+        return false;
+    }
+
+    match &op.kind {
+        OpKind::Bextr {
+            dst,
+            src,
+            control,
+            width: OpWidth::W32 | OpWidth::W64,
+            flags,
+        } => {
+            arch_gpr(dst)
+                && arch_gpr(src)
+                && arch_gpr(control)
+                && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(bextr_flags))
+        }
+        OpKind::Bzhi {
+            dst,
+            src,
+            index,
+            width: OpWidth::W32 | OpWidth::W64,
+            flags,
+        } => {
+            arch_gpr(dst)
+                && arch_gpr(src)
+                && arch_gpr(index)
+                && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(bzhi_flags))
+        }
+        _ => false,
+    }
 }
 
 pub(crate) fn x86_state_backed_gpr_pdep_pext_candidate(op: &SmirOp) -> bool {
@@ -4354,6 +4414,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_bit_scan_valid(op)
             || x86_state_backed_gpr_bit_test_valid(op)
             || x86_state_backed_gpr_crc32_valid(op)
+            || x86_state_backed_gpr_bextr_bzhi_valid(op)
             || x86_state_backed_gpr_pdep_pext_valid(op)
             || x86_state_backed_gpr_bswap_valid(op)
             || x86_state_backed_gpr_xchg_valid(op)
@@ -6933,6 +6994,27 @@ impl X86_64Lowerer {
                 width,
                 flags,
             } => {
+                if x86_state_backed_gpr_bextr_bzhi_candidate(op) {
+                    if !x86_state_backed_gpr_bextr_bzhi_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Bextr".to_string(),
+                            operand: format!("invalid x86 GPR BEXTR {width:?} {flags:?}"),
+                        });
+                    }
+                    let defined_rflags_mask = match flags {
+                        FlagUpdate::None => None,
+                        FlagUpdate::Specific(_) => Some(0x841),
+                        _ => unreachable!(),
+                    };
+                    return self.lower_state_backed_gpr_bextr_bzhi(
+                        *dst,
+                        *src,
+                        *control,
+                        *width,
+                        defined_rflags_mask,
+                        false,
+                    );
+                }
                 if !matches!(width, OpWidth::W32 | OpWidth::W64) {
                     return Err(LowerError::UnsupportedOp {
                         op: format!("Bextr width {width:?}"),
@@ -6969,6 +7051,27 @@ impl X86_64Lowerer {
                 width,
                 flags,
             } => {
+                if x86_state_backed_gpr_bextr_bzhi_candidate(op) {
+                    if !x86_state_backed_gpr_bextr_bzhi_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Bzhi".to_string(),
+                            operand: format!("invalid x86 GPR BZHI {width:?} {flags:?}"),
+                        });
+                    }
+                    let defined_rflags_mask = match flags {
+                        FlagUpdate::None => None,
+                        FlagUpdate::Specific(_) => Some(0x8C1),
+                        _ => unreachable!(),
+                    };
+                    return self.lower_state_backed_gpr_bextr_bzhi(
+                        *dst,
+                        *src,
+                        *index,
+                        *width,
+                        defined_rflags_mask,
+                        true,
+                    );
+                }
                 if !matches!(width, OpWidth::W32 | OpWidth::W64) {
                     return Err(LowerError::UnsupportedOp {
                         op: format!("Bzhi width {width:?}"),
@@ -15307,6 +15410,73 @@ impl X86_64Lowerer {
         // Every CRC32 encoding produces a 32-bit Castagnoli remainder and
         // zero-extends it to the full architectural destination.
         self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, OpWidth::W32)?;
+        if dst_idx == 5 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, OpWidth::W64);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_bextr_bzhi(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        control: VReg,
+        width: OpWidth,
+        defined_rflags_mask: Option<i64>,
+        bzhi: bool,
+    ) -> Result<(), LowerError> {
+        let name = if bzhi { "Bzhi" } else { "Bextr" };
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let src_idx = Self::x86_gpr_index(src).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "source is not an architectural x86 GPR".to_string(),
+        })?;
+        let control_idx =
+            Self::x86_gpr_index(control).ok_or_else(|| LowerError::InvalidOperand {
+                op: format!("state-backed {name}"),
+                operand: "control is not an architectural x86 GPR".to_string(),
+            })?;
+        if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: format!("state-backed {name}"),
+                operand: format!("unsupported width {width:?}"),
+            });
+        }
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdi, PhysReg::Rax, i32::from(src_idx) * 8, width);
+            emitter.emit_mov_rm(PhysReg::R8, PhysReg::Rax, i32::from(control_idx) * 8, width);
+        }
+        self.code.emit_u8(0x9C); // pushfq: preserve undefined or all status flags
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_vex_bmi_rr(
+                if bzhi { 0xF5 } else { 0xF7 },
+                PhysReg::Rdx,
+                PhysReg::Rdi,
+                PhysReg::R8,
+                width,
+            );
+        }
+        self.finish_bmi_flags(PhysReg::Rdx, defined_rflags_mask);
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
         if dst_idx == 5 {
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, OpWidth::W64);
@@ -29849,6 +30019,56 @@ mod tests {
             "flagless BZHI must preserve flags around the native instruction"
         );
 
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
+        let r16 = VReg::Arch(ArchReg::X86(X86Reg::R16));
+        let r31 = VReg::Arch(ArchReg::X86(X86Reg::R31));
+        for (name, op, expected) in [
+            (
+                "state-backed BEXTR qword",
+                OpKind::Bextr {
+                    dst: rsp,
+                    src: rbp,
+                    control: r16,
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF)),
+                },
+                &[0xC4, 0xE2, 0xB8, 0xF7, 0xD7][..],
+            ),
+            (
+                "state-backed BZHI dword",
+                OpKind::Bzhi {
+                    dst: r31,
+                    src: rsp,
+                    index: rbp,
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+                &[0xC4, 0xE2, 0x38, 0xF5, 0xD7][..],
+            ),
+            (
+                "state-backed BEXTR all operands alias",
+                OpKind::Bextr {
+                    dst: r16,
+                    src: r16,
+                    control: r16,
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                &[0xC4, 0xE2, 0xB8, 0xF7, 0xD7][..],
+            ),
+        ] {
+            let code = lower_single_op(op);
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "{name}: missing scratch BMI encoding {expected:02X?} in {code:02X?}"
+            );
+            assert!(
+                code.contains(&0x9C) && code.contains(&0x9D),
+                "{name}: flags must be saved and restored or merged"
+            );
+        }
+
         for (name, op) in [
             (
                 "BEXTR unsupported width",
@@ -29889,6 +30109,36 @@ mod tests {
                     width: OpWidth::W16,
                 },
             ),
+            (
+                "state-backed BEXTR unsupported width",
+                OpKind::Bextr {
+                    dst: r16,
+                    src: rsp,
+                    control: rbp,
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "state-backed BZHI virtual source",
+                OpKind::Bzhi {
+                    dst: r31,
+                    src: VReg::Virtual(crate::smir::ir::types::VirtualId(7)),
+                    index: rbp,
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "state-backed BZHI incomplete flag request",
+                OpKind::Bzhi {
+                    dst: r31,
+                    src: rsp,
+                    index: rbp,
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(FlagSet::ZF),
+                },
+            ),
         ] {
             assert!(
                 matches!(
@@ -29896,6 +30146,202 @@ mod tests {
                     LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
                 ),
                 "{name}"
+            );
+        }
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                OpKind::Bextr {
+                    dst: r16,
+                    src: rsp,
+                    control: rbp,
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                X86OpHint::Mulx,
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_bextr_bzhi_preserve_gprs_flags_and_aliases() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        struct Case {
+            name: &'static str,
+            bzhi: bool,
+            flagful: bool,
+            dst: X86Reg,
+            src: X86Reg,
+            control: X86Reg,
+            width: OpWidth,
+            source: u64,
+            control_value: u64,
+        }
+        let cases = [
+            Case {
+                name: "BEXTR RSP,RBP,R16",
+                bzhi: false,
+                flagful: true,
+                dst: X86Reg::Rsp,
+                src: X86Reg::Rbp,
+                control: X86Reg::R16,
+                width: OpWidth::W64,
+                source: 0xFEDC_BA98_7654_3210,
+                control_value: (20 << 8) | 12,
+            },
+            Case {
+                name: "BZHI EBP,ESP,ECX",
+                bzhi: true,
+                flagful: true,
+                dst: X86Reg::Rbp,
+                src: X86Reg::Rsp,
+                control: X86Reg::Rcx,
+                width: OpWidth::W32,
+                source: 0xAABB_CCDD_DEAD_BEEF,
+                control_value: 40,
+            },
+            Case {
+                name: "NF BEXTR R31D,R16D,R31D destination-control alias",
+                bzhi: false,
+                flagful: false,
+                dst: X86Reg::R31,
+                src: X86Reg::R16,
+                control: X86Reg::R31,
+                width: OpWidth::W32,
+                source: 0x0123_4567_89AB_CDEF,
+                control_value: (12 << 8) | 7,
+            },
+            Case {
+                name: "NF BZHI R16,R16,R16 all operands alias",
+                bzhi: true,
+                flagful: false,
+                dst: X86Reg::R16,
+                src: X86Reg::R16,
+                control: X86Reg::R16,
+                width: OpWidth::W64,
+                source: 0,
+                control_value: 0xDEAD_BEEF_1357_2420,
+            },
+        ];
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        const STATUS: u64 = 0x8D5;
+
+        for case in cases {
+            if (case.bzhi && !std::is_x86_feature_detected!("bmi2"))
+                || (!case.bzhi && !std::is_x86_feature_detected!("bmi1"))
+            {
+                continue;
+            }
+            let flags = if case.flagful {
+                if case.bzhi {
+                    FlagUpdate::Specific(
+                        FlagSet::CF
+                            .union(FlagSet::ZF)
+                            .union(FlagSet::SF)
+                            .union(FlagSet::OF),
+                    )
+                } else {
+                    FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF))
+                }
+            } else {
+                FlagUpdate::None
+            };
+            let kind = if case.bzhi {
+                OpKind::Bzhi {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    index: x86(case.control),
+                    width: case.width,
+                    flags,
+                }
+            } else {
+                OpKind::Bextr {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    control: x86(case.control),
+                    width: case.width,
+                    flags,
+                }
+            };
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            for (index, value) in regs.gpr.iter_mut().enumerate() {
+                *value = 0x2468_0000_1357_0000u64
+                    .wrapping_add((index as u64).wrapping_mul(0x0101_1111_2222_0101));
+            }
+            let dst_idx = case.dst.gpr_index().unwrap() as usize;
+            let src_idx = case.src.gpr_index().unwrap() as usize;
+            let control_idx = case.control.gpr_index().unwrap() as usize;
+            regs.gpr[src_idx] = case.source;
+            regs.gpr[control_idx] = case.control_value;
+            regs.rflags = 0x2 | STATUS;
+
+            let mut expected = regs;
+            let bits = case.width.bits();
+            let operand_mask = case.width.mask();
+            let source = regs.gpr[src_idx] & operand_mask;
+            let control = regs.gpr[control_idx] & operand_mask;
+            let result = if case.bzhi {
+                let index = (control & 0xFF) as u32;
+                if index >= bits {
+                    source
+                } else {
+                    source & ((1u64 << index) - 1)
+                }
+            } else {
+                let start = (control & 0xFF) as u32;
+                let length = ((control >> 8) & 0xFF) as u32;
+                if start >= bits || length == 0 {
+                    0
+                } else {
+                    let field_bits = length.min(bits - start);
+                    let shifted = source >> start;
+                    if field_bits == 64 {
+                        shifted
+                    } else {
+                        shifted & ((1u64 << field_bits) - 1)
+                    }
+                }
+            };
+            expected.gpr[dst_idx] = result;
+            if case.flagful {
+                if case.bzhi {
+                    let index = (control & 0xFF) as u32;
+                    expected.rflags &= !0x8C1;
+                    expected.rflags |= u64::from(index >= bits);
+                    expected.rflags |= u64::from(result == 0) << 6;
+                    expected.rflags |= ((result >> (bits - 1)) & 1) << 7;
+                } else {
+                    expected.rflags &= !0x841;
+                    expected.rflags |= u64::from(result == 0) << 6;
+                }
+            }
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            if case.width == OpWidth::W32 {
+                assert_eq!(regs.gpr[dst_idx] >> 32, 0, "{} zero extension", case.name);
+            }
+            assert_eq!(
+                regs.rflags & STATUS,
+                expected.rflags & STATUS,
+                "{} status flags",
+                case.name
             );
         }
     }

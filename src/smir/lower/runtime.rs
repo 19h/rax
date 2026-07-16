@@ -8409,6 +8409,7 @@ fn block_is_clobber_safe(
         let state_bit_scan_ok = super::x86_64::x86_state_backed_gpr_bit_scan_valid(op);
         let state_bit_test_ok = super::x86_64::x86_state_backed_gpr_bit_test_valid(op);
         let state_crc32_ok = super::x86_64::x86_state_backed_gpr_crc32_valid(op);
+        let state_bextr_bzhi_ok = super::x86_64::x86_state_backed_gpr_bextr_bzhi_valid(op);
         let state_pdep_pext_ok = super::x86_64::x86_state_backed_gpr_pdep_pext_valid(op);
         let state_bswap_ok = super::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = super::x86_64::x86_state_backed_gpr_xchg_valid(op);
@@ -8424,6 +8425,7 @@ fn block_is_clobber_safe(
             || state_bit_scan_ok
             || state_bit_test_ok
             || state_crc32_ok
+            || state_bextr_bzhi_ok
             || state_pdep_pext_ok
             || state_bswap_ok
             || state_xchg_ok;
@@ -8437,6 +8439,8 @@ fn block_is_clobber_safe(
             || (super::x86_64::x86_state_backed_gpr_bit_scan_candidate(op) && !state_bit_scan_ok)
             || (super::x86_64::x86_state_backed_gpr_bit_test_candidate(op) && !state_bit_test_ok)
             || (super::x86_64::x86_state_backed_gpr_crc32_candidate(op) && !state_crc32_ok)
+            || (super::x86_64::x86_state_backed_gpr_bextr_bzhi_candidate(op)
+                && !state_bextr_bzhi_ok)
             || (super::x86_64::x86_state_backed_gpr_pdep_pext_candidate(op) && !state_pdep_pext_ok)
             || (super::x86_64::x86_state_backed_gpr_bswap_candidate(op) && !state_bswap_ok)
             || (super::x86_64::x86_state_backed_gpr_xchg_candidate(op) && !state_xchg_ok)
@@ -8560,6 +8564,7 @@ fn block_is_clobber_safe(
                 | OpKind::Pdep { .. }
                 | OpKind::Pext { .. }
         ) && !x86_bmi_shape_valid(&op.kind)
+            && !state_bextr_bzhi_ok
             && !state_pdep_pext_ok
         {
             return false;
@@ -19562,6 +19567,26 @@ mod jit_gate_tests {
                 (true, false, false, false, false),
             ),
             (
+                OpKind::Bextr {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rbp),
+                    control: x86(X86Reg::R16),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(bextr_flags),
+                },
+                (false, true, false, false, false),
+            ),
+            (
+                OpKind::Bzhi {
+                    dst: x86(X86Reg::R31),
+                    src: x86(X86Reg::R16),
+                    index: x86(X86Reg::Rsp),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+                (true, false, false, false, false),
+            ),
+            (
                 OpKind::Pdep {
                     dst: x86(X86Reg::R12),
                     src: x86(X86Reg::R12),
@@ -19696,6 +19721,36 @@ mod jit_gate_tests {
                 },
             ),
             (
+                "state-backed BEXTR word width",
+                OpKind::Bextr {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rsp),
+                    control: x86(X86Reg::Rbp),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "state-backed BZHI virtual source",
+                OpKind::Bzhi {
+                    dst: x86(X86Reg::R31),
+                    src: VReg::Virtual(VirtualId(0)),
+                    index: x86(X86Reg::Rbp),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "state-backed BZHI incomplete flag request",
+                OpKind::Bzhi {
+                    dst: x86(X86Reg::R31),
+                    src: x86(X86Reg::Rsp),
+                    index: x86(X86Reg::Rbp),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(FlagSet::ZF),
+                },
+            ),
+            (
                 "state-backed PDEP word width",
                 OpKind::Pdep {
                     dst: x86(X86Reg::R16),
@@ -19756,6 +19811,25 @@ mod jit_gate_tests {
         assert!(
             !is_native_clobber_safe(&hinted),
             "hinted state-backed PDEP must fail closed"
+        );
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Bextr {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rsp),
+                control: x86(X86Reg::Rbp),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut hinted = builder.finish();
+        hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+        assert!(
+            !is_native_clobber_safe(&hinted),
+            "hinted state-backed BEXTR must fail closed"
         );
     }
 
