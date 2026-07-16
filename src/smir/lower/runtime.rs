@@ -6811,6 +6811,157 @@ pub(crate) fn x86_jit_mem_bit_test_source_sequence_len(
     .then_some(2)
 }
 
+/// Validate the exact fault-precise immediate memory bit-update sequence
+/// emitted by the x86 lifter:
+///
+/// `Load old; Mov mask,1; Shl mask,imm; [Not mask]; Or/And/Xor new,old,mask;
+/// Store new; Bt old,imm`.
+///
+/// The optional `Not` and following `And` identify BTR; `Or` identifies BTS
+/// and `Xor` identifies BTC. Register-index bit-string forms perform signed
+/// address adjustment before this sequence and are intentionally excluded.
+/// Every temporary must have the exact SSA definition/use counts implied by
+/// the lifter so the native lowerer can eliminate the complete sequence.
+pub(crate) fn x86_jit_mem_bit_update_rmw_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{OpWidth, SignExtend, SrcOperand, VReg};
+
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (old, addr, mem_width) = match &load.kind {
+        OpKind::Load {
+            dst: old @ VReg::Virtual(_),
+            addr,
+            width,
+            sign: SignExtend::Zero,
+        } => (*old, addr, *width),
+        _ => return None,
+    };
+    let width = mem_width.to_op_width()?;
+    if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+        || !x86_jit_mem_address_shape_valid(addr)
+    {
+        return None;
+    }
+
+    let mask = match &block.ops.get(index + 1)?.kind {
+        OpKind::Mov {
+            dst: mask @ VReg::Virtual(_),
+            src: SrcOperand::Imm(1),
+            width: mov_width,
+        } if *mov_width == width => *mask,
+        _ => return None,
+    };
+    let bit = match &block.ops.get(index + 2)?.kind {
+        OpKind::Shl {
+            dst,
+            src,
+            amount: SrcOperand::Imm(bit),
+            width: shift_width,
+            flags: FlagUpdate::None,
+        } if *dst == mask
+            && *src == mask
+            && *shift_width == width
+            && (0..i64::from(width.bits())).contains(bit) =>
+        {
+            *bit
+        }
+        _ => return None,
+    };
+
+    // (action tag, compute index, sequence length, exact mask def/use count)
+    let (action, compute_index, consumed, mask_count) = match &block.ops.get(index + 3)?.kind {
+        OpKind::Or { .. } => (0u8, index + 3, 6usize, 2usize),
+        OpKind::Xor { .. } => (2u8, index + 3, 6usize, 2usize),
+        OpKind::Not {
+            dst,
+            src,
+            width: not_width,
+        } if *dst == mask && *src == mask && *not_width == width => {
+            (1u8, index + 4, 7usize, 3usize)
+        }
+        _ => return None,
+    };
+
+    let compute = block.ops.get(compute_index)?;
+    let (result, compute_old, compute_mask, compute_width, compute_flags) = match &compute.kind {
+        OpKind::Or {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        } if action == 0 => (*dst, *src1, src2, *width, *flags),
+        OpKind::And {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        } if action == 1 => (*dst, *src1, src2, *width, *flags),
+        OpKind::Xor {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        } if action == 2 => (*dst, *src1, src2, *width, *flags),
+        _ => return None,
+    };
+    let VReg::Virtual(_) = result else {
+        return None;
+    };
+    if compute_old != old
+        || !matches!(compute_mask, SrcOperand::Reg(reg) if *reg == mask)
+        || compute_width != width
+        || compute_flags != FlagUpdate::None
+    {
+        return None;
+    }
+
+    let store = block.ops.get(compute_index + 1)?;
+    let replay = block.ops.get(compute_index + 2)?;
+    if block.ops[index..index + consumed]
+        .iter()
+        .any(|op| op.guest_pc != load.guest_pc)
+        || !matches!(
+            &store.kind,
+            OpKind::Store {
+                src,
+                addr: store_addr,
+                width: store_width,
+            } if *src == result && *store_addr == *addr && *store_width == mem_width
+        )
+        || !matches!(
+            &replay.kind,
+            OpKind::Bt {
+                src,
+                index: SrcOperand::Imm(replay_bit),
+                width: replay_width,
+            } if *src == old && *replay_bit == bit && *replay_width == width
+        )
+        || virtual_definitions.get(&old) != Some(&1)
+        || virtual_uses.get(&old) != Some(&2)
+        || virtual_definitions.get(&mask) != Some(&mask_count)
+        || virtual_uses.get(&mask) != Some(&mask_count)
+        || virtual_definitions.get(&result) != Some(&1)
+        || virtual_uses.get(&result) != Some(&1)
+    {
+        return None;
+    }
+
+    Some(consumed)
+}
+
 /// Validate the exact two-op shape emitted for a memory-source x86 CRC32.
 /// The virtual load result must be single-definition/single-use so native
 /// lowering can eliminate it without creating an identity-map GPR alias.
@@ -7475,6 +7626,16 @@ fn block_is_clobber_safe(
             continue;
         }
         if let Some(consumed) = x86_jit_mem_alu_rmw_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
+        if let Some(consumed) = x86_jit_mem_bit_update_rmw_sequence_len(
             block,
             i,
             allow_mem,
@@ -19165,6 +19326,177 @@ mod jit_gate_tests {
         ] {
             assert!(op.is_jit_safe(), "{name} remains class-whitelisted");
             assert!(!x86_gate(op), "malformed {name} bit test must deopt");
+        }
+    }
+
+    #[test]
+    fn x86_immediate_memory_bit_update_gate_accepts_exact_rmw_and_fails_closed() {
+        let old = VReg::Virtual(VirtualId(20));
+        let mask = VReg::Virtual(VirtualId(21));
+        let result = VReg::Virtual(VirtualId(22));
+        let address = || Address::BaseIndexScale {
+            base: Some(x86(X86Reg::Rsp)),
+            index: x86(X86Reg::R16),
+            scale: 2,
+            disp: -8,
+            disp_size: DispSize::Disp8,
+        };
+        let build = |action: u8, mem_width: MemWidth, bit: i64| {
+            let width = mem_width.to_op_width().unwrap();
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::Load {
+                    dst: old,
+                    addr: address(),
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
+            );
+            builder.push_op(
+                0x1000,
+                OpKind::Mov {
+                    dst: mask,
+                    src: SrcOperand::Imm(1),
+                    width,
+                },
+            );
+            builder.push_op(
+                0x1000,
+                OpKind::Shl {
+                    dst: mask,
+                    src: mask,
+                    amount: SrcOperand::Imm(bit),
+                    width,
+                    flags: FlagUpdate::None,
+                },
+            );
+            if action == 1 {
+                builder.push_op(
+                    0x1000,
+                    OpKind::Not {
+                        dst: mask,
+                        src: mask,
+                        width,
+                    },
+                );
+            }
+            let compute = match action {
+                0 => OpKind::Or {
+                    dst: result,
+                    src1: old,
+                    src2: SrcOperand::Reg(mask),
+                    width,
+                    flags: FlagUpdate::None,
+                },
+                1 => OpKind::And {
+                    dst: result,
+                    src1: old,
+                    src2: SrcOperand::Reg(mask),
+                    width,
+                    flags: FlagUpdate::None,
+                },
+                2 => OpKind::Xor {
+                    dst: result,
+                    src1: old,
+                    src2: SrcOperand::Reg(mask),
+                    width,
+                    flags: FlagUpdate::None,
+                },
+                _ => unreachable!(),
+            };
+            builder.push_op(0x1000, compute);
+            builder.push_op(
+                0x1000,
+                OpKind::Store {
+                    src: result,
+                    addr: address(),
+                    width: mem_width,
+                },
+            );
+            builder.push_op(
+                0x1000,
+                OpKind::Bt {
+                    src: old,
+                    index: SrcOperand::Imm(bit),
+                    width,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            builder.finish()
+        };
+
+        for (action, mem_width, bit) in [
+            (0, MemWidth::B2, 15),
+            (1, MemWidth::B4, 31),
+            (2, MemWidth::B8, 63),
+        ] {
+            let function = build(action, mem_width, bit);
+            assert!(is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                true,
+            ));
+            assert!(!is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                false,
+            ));
+        }
+
+        let mut signed = build(0, MemWidth::B8, 5);
+        let OpKind::Load { sign, .. } = &mut signed.blocks[0].ops[0].kind else {
+            unreachable!()
+        };
+        *sign = SignExtend::Sign;
+
+        let mut register_index = build(0, MemWidth::B8, 5);
+        let OpKind::Shl { amount, .. } = &mut register_index.blocks[0].ops[2].kind else {
+            unreachable!()
+        };
+        *amount = SrcOperand::Reg(x86(X86Reg::Rcx));
+
+        let mut wrong_store = build(0, MemWidth::B8, 5);
+        let OpKind::Store { addr, .. } = &mut wrong_store.blocks[0].ops[4].kind else {
+            unreachable!()
+        };
+        *addr = Address::Absolute(0x2000);
+
+        let mut wrong_replay = build(2, MemWidth::B8, 5);
+        let OpKind::Bt { index, .. } = &mut wrong_replay.blocks[0].ops[5].kind else {
+            unreachable!()
+        };
+        *index = SrcOperand::Imm(6);
+
+        let mut wrong_reset = build(1, MemWidth::B8, 5);
+        let OpKind::Not { width, .. } = &mut wrong_reset.blocks[0].ops[3].kind else {
+            unreachable!()
+        };
+        *width = OpWidth::W32;
+
+        let mut flagged_compute = build(0, MemWidth::B8, 5);
+        let OpKind::Or { flags, .. } = &mut flagged_compute.blocks[0].ops[3].kind else {
+            unreachable!()
+        };
+        *flags = FlagUpdate::All;
+
+        let mut wrong_pc = build(0, MemWidth::B8, 5);
+        wrong_pc.blocks[0].ops[5].guest_pc = 0x1001;
+
+        for function in [
+            signed,
+            register_index,
+            wrong_store,
+            wrong_replay,
+            wrong_reset,
+            flagged_compute,
+            wrong_pc,
+        ] {
+            assert!(!is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                true,
+            ));
         }
     }
 

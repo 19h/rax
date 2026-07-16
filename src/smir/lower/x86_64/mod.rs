@@ -15329,6 +15329,127 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
+    /// Fuse the x86 lifter's exact non-locked immediate memory BTS/BTR/BTC
+    /// sequence. The original and updated operands remain in caller-owned
+    /// stack words across the MMU helpers. Speculative native modification is
+    /// flag-neutralized; only a successful store reaches the BT replay that
+    /// commits CF while retaining every other incoming status flag.
+    #[cfg(feature = "smir-jit")]
+    fn try_lower_jit_mem_bit_update_rmw(
+        &mut self,
+        block: &SmirBlock,
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(consumed) = super::runtime::x86_jit_mem_bit_update_rmw_sequence_len(
+            block,
+            idx,
+            true,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
+            return Ok(None);
+        };
+
+        let load = &block.ops[idx];
+        let (addr, mem_width) = match &load.kind {
+            OpKind::Load {
+                addr,
+                width,
+                sign: SignExtend::Zero,
+                ..
+            } => (addr, *width),
+            _ => unreachable!("validated memory bit update starts with Load"),
+        };
+        let kind = match &block.ops[idx + 3].kind {
+            OpKind::Or { .. } => BitTestRegOp::Set,
+            OpKind::Not { .. } => BitTestRegOp::Reset,
+            OpKind::Xor { .. } => BitTestRegOp::Complement,
+            _ => unreachable!("validated immediate memory bit-update action"),
+        };
+        let (index, width) = match &block.ops[idx + consumed - 1].kind {
+            OpKind::Bt {
+                index: SrcOperand::Imm(index),
+                width,
+                ..
+            } => (*index as u8, *width),
+            _ => unreachable!("validated immediate memory bit-update replay"),
+        };
+
+        // Caller-frame layout:
+        //   [rsp+0]  original zero-extended memory value
+        //   [rsp+8]  updated store value
+        //   [rsp+16] alignment word
+        //   [rsp+24] complete architectural RAX
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -32);
+            emitter.emit_mov_mr(PhysReg::Rsp, 24, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_jit_mem_op(
+            load.guest_pc,
+            true,
+            None,
+            Some(16),
+            None,
+            None,
+            None,
+            addr,
+            mem_width,
+            SignExtend::Zero,
+            32,
+        )?;
+
+        // Copy the complete staged load, then modify only the encoded operand
+        // width. PUSHFQ/POPFQ prevents the speculative CF from becoming guest
+        // state if the following helper-backed store faults.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 0, OpWidth::W64);
+            emitter.emit_mov_mr(PhysReg::Rsp, 8, PhysReg::Rax, OpWidth::W64);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+        }
+        self.code.emit_u8(0x9C); // pushfq (incoming)
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_bit_test_mi_disp(kind, PhysReg::Rsp, 16, index, width);
+        }
+        self.code.emit_u8(0x9D); // popfq (incoming)
+
+        // The store helper's 16-byte internal spill shifts caller [rsp+8] to
+        // active [rsp+24]. A fault removes the entire caller frame and restarts
+        // the instruction with memory, registers, and flags uncommitted.
+        self.emit_jit_mem_op(
+            load.guest_pc,
+            false,
+            None,
+            None,
+            None,
+            None,
+            Some(24),
+            addr,
+            mem_width,
+            SignExtend::Zero,
+            32,
+        )?;
+
+        // Replay non-modifying BT on the original word only after the store
+        // succeeds. `finish_bmi_flags` merges native CF into incoming RFLAGS.
+        self.code.emit_u8(0x9C); // pushfq (incoming)
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_bit_test_mi_disp(BitTestRegOp::Test, PhysReg::Rsp, 8, index, width);
+        }
+        self.finish_bmi_flags(PhysReg::Rax, Some(1 << 0));
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 32);
+        }
+        Ok(Some(consumed))
+    }
+
     /// Fuse the x86 lifter's exact non-modifying immediate memory bit test:
     /// `Load virtual; Bt virtual,imm`. The helper stages the operand in a
     /// caller-owned word; native BT then supplies CF, which is the only status
@@ -17063,6 +17184,16 @@ impl X86_64Lowerer {
                         validate_idx += consumed;
                         continue;
                     }
+                    if let Some(consumed) = super::runtime::x86_jit_mem_bit_update_rmw_sequence_len(
+                        block,
+                        validate_idx,
+                        true,
+                        &virtual_definitions,
+                        &virtual_uses,
+                    ) {
+                        validate_idx += consumed;
+                        continue;
+                    }
                     if let Some(consumed) = super::runtime::x86_jit_mem_alu_source_sequence_len(
                         block,
                         validate_idx,
@@ -17213,6 +17344,16 @@ impl X86_64Lowerer {
                 if let Some(consumed) =
                     self.try_lower_jit_mem_alu_rmw(block, idx, &virtual_definitions, &virtual_uses)?
                 {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_mem_bit_update_rmw(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
                     idx += consumed;
                     continue;
                 }
@@ -22112,18 +22253,30 @@ mod tests {
     }
 
     #[test]
-    fn emit_bit_test_memory_immediate_encodes_stack_sources_and_widths() {
+    fn emit_bit_test_memory_immediate_encodes_all_actions_and_widths() {
         let mut buf = CodeBuffer::new();
         {
             let mut emit = X86Emitter::new(&mut buf);
             emit.emit_bit_test_mi_disp(BitTestRegOp::Test, PhysReg::Rsp, 0, 15, OpWidth::W16);
             emit.emit_bit_test_mi_disp(BitTestRegOp::Test, PhysReg::Rsp, 8, 63, OpWidth::W64);
+            emit.emit_bit_test_mi_disp(BitTestRegOp::Set, PhysReg::Rsp, 0, 15, OpWidth::W16);
+            emit.emit_bit_test_mi_disp(BitTestRegOp::Reset, PhysReg::Rsp, 8, 7, OpWidth::W32);
+            emit.emit_bit_test_mi_disp(
+                BitTestRegOp::Complement,
+                PhysReg::Rsp,
+                16,
+                63,
+                OpWidth::W64,
+            );
         }
         assert_eq!(
             buf.data(),
             &[
                 0x66, 0x0F, 0xBA, 0x24, 0x24, 0x0F, // bt word [rsp],15
                 0x48, 0x0F, 0xBA, 0x64, 0x24, 0x08, 0x3F, // bt qword [rsp+8],63
+                0x66, 0x0F, 0xBA, 0x2C, 0x24, 0x0F, // bts word [rsp],15
+                0x0F, 0xBA, 0x74, 0x24, 0x08, 0x07, // btr dword [rsp+8],7
+                0x48, 0x0F, 0xBA, 0x7C, 0x24, 0x10, 0x3F, // btc qword [rsp+16],63
             ]
         );
     }
@@ -22151,6 +22304,42 @@ mod tests {
             1,
             "memory-source BT must issue exactly one load helper call"
         );
+    }
+
+    #[cfg(feature = "smir-jit")]
+    #[test]
+    fn lower_helper_backed_immediate_bit_update_stages_rmw_and_replays_cf() {
+        // btr qword ptr [rbx],5; hlt
+        let (lowered, entry) =
+            lower_rex2_block_with_mem_helpers(&[0x48, 0x0F, 0xBA, 0x33, 0x05, 0xF4], true);
+        assert!(entry < lowered.len());
+        assert!(
+            lowered
+                .windows(7)
+                .any(|bytes| bytes == [0x48, 0x0F, 0xBA, 0x74, 0x24, 0x10, 0x05]),
+            "helper-backed BTR must modify the staged store word: {lowered:02X?}"
+        );
+        assert!(
+            lowered
+                .windows(7)
+                .any(|bytes| bytes == [0x48, 0x0F, 0xBA, 0x64, 0x24, 0x08, 0x05]),
+            "helper-backed BTR must replay CF from the original word: {lowered:02X?}"
+        );
+        for (offset, name) in [
+            (X86_GUEST_LOAD_FN_OFFSET, "load"),
+            (X86_GUEST_STORE_FN_OFFSET, "store"),
+        ] {
+            let mut helper_call = vec![0xFF, 0x90];
+            helper_call.extend_from_slice(&(offset as u32).to_le_bytes());
+            assert_eq!(
+                lowered
+                    .windows(helper_call.len())
+                    .filter(|bytes| *bytes == helper_call)
+                    .count(),
+                1,
+                "memory-destination BTR must issue exactly one {name} helper call"
+            );
+        }
     }
 
     #[cfg(feature = "smir-jit")]
@@ -25415,6 +25604,199 @@ mod tests {
             assert_eq!(regs.xcr0, 3, "{name}: XCR0 must not commit");
             assert_eq!(regs.exit_pc, 0x1234_5000, "{name}: fault restart PC");
         }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_helper_backed_immediate_memory_bit_update_commits_cf_only_after_store() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        #[repr(C)]
+        struct LoadResult {
+            value: u64,
+            ok: u64,
+        }
+
+        #[derive(Default)]
+        struct MemoryContext {
+            load_value: u64,
+            store_value: u64,
+            committed_value: u64,
+            loads: u64,
+            stores: u64,
+            store_ok: u64,
+        }
+
+        extern "C" fn load(
+            context: *mut MemoryContext,
+            _addr: u64,
+            _size: u64,
+            _signed: u64,
+        ) -> LoadResult {
+            let context = unsafe { &mut *context };
+            context.loads += 1;
+            LoadResult {
+                value: context.load_value,
+                ok: 1,
+            }
+        }
+
+        extern "C" fn store(
+            context: *mut MemoryContext,
+            _addr: u64,
+            value: u64,
+            _size: u64,
+        ) -> u64 {
+            let context = unsafe { &mut *context };
+            context.stores += 1;
+            context.store_value = value;
+            if context.store_ok != 0 {
+                context.committed_value = value;
+            }
+            context.store_ok
+        }
+
+        let old = VReg::Virtual(crate::smir::ir::types::VirtualId(35));
+        let mask = VReg::Virtual(crate::smir::ir::types::VirtualId(36));
+        let result = VReg::Virtual(crate::smir::ir::types::VirtualId(37));
+        let address = Address::Absolute(0x4000);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: old,
+                addr: address.clone(),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::Mov {
+                dst: mask,
+                src: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::Shl {
+                dst: mask,
+                src: mask,
+                amount: SrcOperand::Imm(5),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::Not {
+                dst: mask,
+                src: mask,
+                width: OpWidth::W64,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::And {
+                dst: result,
+                src1: old,
+                src2: SrcOperand::Reg(mask),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::Store {
+                src: result,
+                addr: address,
+                width: MemWidth::B8,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::Bt {
+                src: old,
+                index: SrcOperand::Imm(5),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_mem_helpers(true);
+        let lowered = lowerer
+            .lower_function(&builder.finish())
+            .expect("lower helper-backed memory BTR");
+        let exec = ExecMem::new(&lowerer.finalize().expect("finalize memory BTR"))
+            .expect("map helper-backed memory BTR");
+
+        const STATUS_MASK: u64 = 0x8D5;
+        const INCOMING_FLAGS: u64 = 0x2 | 0x8D4; // CF clear
+        let initial_gprs = {
+            let mut gprs = [0u64; 32];
+            for (index, value) in gprs.iter_mut().enumerate() {
+                *value = 0xA500_0000_0000_0000 | index as u64;
+            }
+            gprs
+        };
+
+        let mut success_context = MemoryContext {
+            load_value: 1 << 5,
+            committed_value: 0xDEAD_BEEF_DEAD_BEEF,
+            store_ok: 1,
+            ..MemoryContext::default()
+        };
+        let mut success = GuestRegs::default();
+        success.gpr = initial_gprs;
+        success.rflags = INCOMING_FLAGS;
+        success.exit_pc = 0xAAAA_BBBB_CCCC_DDDD;
+        success.ctx = (&mut success_context as *mut MemoryContext) as u64;
+        success.load_fn = load as usize as u64;
+        success.store_fn = store as usize as u64;
+        exec.run(lowered.entry_offset, &mut success);
+
+        assert_eq!(success_context.loads, 1);
+        assert_eq!(success_context.stores, 1);
+        assert_eq!(success_context.store_value, 0, "BTR store value");
+        assert_eq!(success_context.committed_value, 0);
+        assert_eq!(success.gpr, initial_gprs, "success must preserve every GPR");
+        assert_eq!(
+            success.rflags & STATUS_MASK,
+            (INCOMING_FLAGS & STATUS_MASK) | 1,
+            "successful BTR must replace only CF"
+        );
+        assert_eq!(success.exit_pc, 0xAAAA_BBBB_CCCC_DDDD);
+
+        let mut fault_context = MemoryContext {
+            load_value: 1 << 5,
+            committed_value: 0xDEAD_BEEF_DEAD_BEEF,
+            store_ok: 0,
+            ..MemoryContext::default()
+        };
+        let mut fault = GuestRegs::default();
+        fault.gpr = initial_gprs;
+        fault.rflags = INCOMING_FLAGS;
+        fault.ctx = (&mut fault_context as *mut MemoryContext) as u64;
+        fault.load_fn = load as usize as u64;
+        fault.store_fn = store as usize as u64;
+        exec.run(lowered.entry_offset, &mut fault);
+
+        assert_eq!(fault_context.loads, 1);
+        assert_eq!(fault_context.stores, 1);
+        assert_eq!(fault_context.store_value, 0, "updated value reaches store");
+        assert_eq!(
+            fault_context.committed_value, 0xDEAD_BEEF_DEAD_BEEF,
+            "failed store must not commit memory"
+        );
+        assert_eq!(fault.gpr, initial_gprs, "fault must preserve every GPR");
+        assert_eq!(
+            fault.rflags & STATUS_MASK,
+            INCOMING_FLAGS & STATUS_MASK,
+            "fault must preserve every arithmetic status flag"
+        );
+        assert_eq!(fault.exit_pc, 0x1000, "fault must restart current PC");
     }
 
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
