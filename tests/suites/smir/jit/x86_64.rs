@@ -7234,6 +7234,304 @@ fn jit_vector_memory_moves_match_interpreter_and_fault_at_current_pc() {
     }
 }
 
+#[test]
+fn jit_scalar_memory_source_alu_matches_interpreter_aliases_flags_and_faults() {
+    const DATA: u64 = 0x20_0000;
+
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        rax: u64,
+        rbx: u64,
+        r16: u64,
+        rflags: u64,
+        apx: bool,
+    }
+
+    let cases = [
+        Case {
+            name: "ADD r64,r/m64",
+            instruction: &[0x48, 0x03, 0x03],
+            rax: 0x7FFF_FFFF_FFFF_FFF0,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x2,
+            apx: false,
+        },
+        Case {
+            name: "OR r64,r/m64",
+            instruction: &[0x48, 0x0B, 0x03],
+            rax: 0x00FF_0000_F0F0_0000,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x8D7,
+            apx: false,
+        },
+        Case {
+            name: "ADC r64,r/m64",
+            instruction: &[0x48, 0x13, 0x03],
+            rax: u64::MAX - 4,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0xA03,
+            apx: false,
+        },
+        Case {
+            name: "SBB r64,r/m64",
+            instruction: &[0x48, 0x1B, 0x03],
+            rax: 4,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0xA03,
+            apx: false,
+        },
+        Case {
+            name: "AND r64,r/m64",
+            instruction: &[0x48, 0x23, 0x03],
+            rax: 0xFFFF_0000_FFFF_0000,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x8D7,
+            apx: false,
+        },
+        Case {
+            name: "SUB r64,r/m64",
+            instruction: &[0x48, 0x2B, 0x03],
+            rax: i64::MIN as u64,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x202,
+            apx: false,
+        },
+        Case {
+            name: "XOR r64,r/m64",
+            instruction: &[0x48, 0x33, 0x03],
+            rax: 0xAAAA_5555_AAAA_5555,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x8D7,
+            apx: false,
+        },
+        Case {
+            name: "ADD r8,r/m8",
+            instruction: &[0x02, 0x03],
+            rax: 0x1122_3344_5566_77F0,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x2,
+            apx: false,
+        },
+        Case {
+            name: "ADD r16,r/m16",
+            instruction: &[0x66, 0x03, 0x03],
+            rax: 0x1122_3344_5566_FFF0,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x2,
+            apx: false,
+        },
+        Case {
+            name: "ADD r32,r/m32",
+            instruction: &[0x03, 0x03],
+            rax: 0xFFFF_FFFF_FFFF_FFF0,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x2,
+            apx: false,
+        },
+        Case {
+            name: "CMP r64,r/m64",
+            instruction: &[0x48, 0x3B, 0x03],
+            rax: 0x8000_0000_0000_0000,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x8D7,
+            apx: false,
+        },
+        Case {
+            name: "CMP r/m64,r64",
+            instruction: &[0x48, 0x39, 0x03],
+            rax: 0x8000_0000_0000_0000,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x8D7,
+            apx: false,
+        },
+        Case {
+            name: "CMP r/m64,imm8",
+            instruction: &[0x48, 0x83, 0x3B, 0x7F],
+            rax: 0xA5A5_5A5A_A5A5_5A5A,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x8D7,
+            apx: false,
+        },
+        Case {
+            name: "TEST r/m64,r64",
+            instruction: &[0x48, 0x85, 0x03],
+            rax: 0xF0F0_F0F0_F0F0_F0F0,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x8D7,
+            apx: false,
+        },
+        Case {
+            name: "TEST r/m64,imm32",
+            instruction: &[0x48, 0xF7, 0x03, 0x0F, 0x0F, 0x0F, 0x0F],
+            rax: 0xA5A5_5A5A_A5A5_5A5A,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x8D7,
+            apx: false,
+        },
+        Case {
+            name: "APX NDD ADD memory rhs",
+            instruction: &[0x62, 0xF4, 0x78, 0x18, 0x03, 0x1C, 0x40],
+            rax: DATA,
+            rbx: 0x7FFF_FFF0,
+            r16: 0,
+            rflags: 0x2,
+            apx: true,
+        },
+        Case {
+            name: "APX NF NDD ADD memory rhs",
+            instruction: &[0x62, 0xF4, 0x78, 0x1C, 0x03, 0x1C, 0x40],
+            rax: DATA,
+            rbx: 0x7FFF_FFF0,
+            r16: 0,
+            rflags: 0x8D7,
+            apx: true,
+        },
+        Case {
+            name: "APX NDD ADD memory lhs",
+            instruction: &[0x62, 0xF4, 0x7C, 0x18, 0x01, 0x18],
+            rax: DATA,
+            rbx: 0x7FFF_FFF0,
+            r16: 0,
+            rflags: 0x2,
+            apx: true,
+        },
+        Case {
+            name: "APX NF NDD ADD memory lhs with destination alias",
+            instruction: &[0x62, 0xF4, 0x7C, 0x1C, 0x01, 0x03],
+            rax: 0x7FFF_FFF0,
+            rbx: DATA,
+            r16: 0,
+            rflags: 0x8D7,
+            apx: true,
+        },
+    ];
+
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+        let setup = |vcpu: &mut X86_64Vcpu, memory: &Arc<GuestMemoryMmap>| {
+            memory
+                .write_obj(0x8000_0000_0000_0011u64, GuestAddress(DATA))
+                .unwrap();
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = case.rax;
+            regs.rbx = case.rbx;
+            regs.r16 = case.r16;
+            regs.rflags = case.rflags;
+            vcpu.set_regs(&regs).unwrap();
+            vcpu.set_apx_enabled(case.apx);
+        };
+
+        let (mut interp, interp_mem) = make_vcpu_mem(&code);
+        setup(&mut interp, &interp_mem);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+
+        let (mut jit, jit_mem) = make_vcpu_mem(&code);
+        setup(&mut jit, &jit_mem);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the helper-backed native tier",
+            case.name
+        );
+        let actual = jit.get_regs().unwrap();
+        let actual_gprs = [
+            actual.rax, actual.rcx, actual.rdx, actual.rbx, actual.rsp, actual.rbp, actual.rsi,
+            actual.rdi, actual.r8, actual.r9, actual.r10, actual.r11, actual.r12, actual.r13,
+            actual.r14, actual.r15, actual.r16, actual.r17, actual.r18, actual.r19, actual.r20,
+            actual.r21, actual.r22, actual.r23, actual.r24, actual.r25, actual.r26, actual.r27,
+            actual.r28, actual.r29, actual.r30, actual.r31,
+        ];
+        let expected_gprs = [
+            expected.rax,
+            expected.rcx,
+            expected.rdx,
+            expected.rbx,
+            expected.rsp,
+            expected.rbp,
+            expected.rsi,
+            expected.rdi,
+            expected.r8,
+            expected.r9,
+            expected.r10,
+            expected.r11,
+            expected.r12,
+            expected.r13,
+            expected.r14,
+            expected.r15,
+            expected.r16,
+            expected.r17,
+            expected.r18,
+            expected.r19,
+            expected.r20,
+            expected.r21,
+            expected.r22,
+            expected.r23,
+            expected.r24,
+            expected.r25,
+            expected.r26,
+            expected.r27,
+            expected.r28,
+            expected.r29,
+            expected.r30,
+            expected.r31,
+        ];
+        for (index, (actual, expected)) in actual_gprs.into_iter().zip(expected_gprs).enumerate() {
+            assert_eq!(actual, expected, "{} GPR index {index}", case.name);
+        }
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+        assert_eq!(
+            actual.rflags, expected.rflags,
+            "{} architectural flags",
+            case.name
+        );
+        assert_eq!(
+            jit_mem.read_obj::<u64>(GuestAddress(DATA)).unwrap(),
+            0x8000_0000_0000_0011,
+            "{} must not modify source memory",
+            case.name
+        );
+    }
+
+    let code = [0x48, 0x03, 0x03, 0xF4]; // add rax,[rbx]; hlt
+    let (mut fault, _) = make_vcpu_mem(&code);
+    let mut before = fault.get_regs().unwrap();
+    before.rax = 0xA5A5_5A5A_A5A5_5A5A;
+    before.rbx = MEM_SIZE + 0x1000;
+    before.rflags = 0x8D7;
+    fault.set_regs(&before).unwrap();
+    assert!(
+        fault.jit_try_block().expect("faulting scalar memory JIT"),
+        "a faulting helper access must compile before precise deoptimization"
+    );
+    let after = fault.get_regs().unwrap();
+    assert_eq!(after.rax, before.rax, "fault must not commit destination");
+    assert_eq!(after.rbx, before.rbx, "fault must preserve address base");
+    assert_eq!(after.rflags, before.rflags, "fault must preserve flags");
+    assert_eq!(after.rip, LOAD_ADDR, "fault must restart at current PC");
+}
+
 /// Memory-operand JIT (RAX_JIT_MEM path): a loop that LOADS from a scratch array
 /// and STORES each element into a second array runs natively via the MMU helper
 /// calls and reproduces the interpreter's GPRs AND memory bit-exact.

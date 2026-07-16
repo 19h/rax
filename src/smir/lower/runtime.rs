@@ -6030,6 +6030,137 @@ pub(crate) fn x86_jit_vector_mem_shape_valid(op: &crate::smir::ir::ops::OpKind) 
     }
 }
 
+/// Validate an exact scalar memory-source pair emitted by the x86 lifter:
+/// `Load virtual; ALU/CMP/TEST ... virtual`. The load result must be an SSA
+/// single-definition/single-use value, and every architectural operand must be
+/// representable by the native identity bridge. Native lowering replaces the
+/// pair with one fault-precise MMU helper load and a stack-backed scalar source,
+/// so the virtual never aliases a live guest GPR.
+pub(crate) fn x86_jit_mem_alu_source_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{OpWidth, SignExtend, SrcOperand, VReg};
+
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (temporary, addr, mem_width) = match &load.kind {
+        OpKind::Load {
+            dst: temporary @ VReg::Virtual(_),
+            addr,
+            width,
+            sign: SignExtend::Zero,
+        } => (*temporary, addr, *width),
+        _ => return None,
+    };
+    let width = mem_width.to_op_width()?;
+    if !matches!(
+        width,
+        OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+    ) || !x86_jit_mem_address_shape_valid(addr)
+        || virtual_definitions.get(&temporary) != Some(&1)
+        || virtual_uses.get(&temporary) != Some(&1)
+    {
+        return None;
+    }
+
+    let consumer = block.ops.get(index + 1)?;
+    if consumer.guest_pc != load.guest_pc {
+        return None;
+    }
+    let identity = |reg: &VReg| x86_native_identity_gpr(reg);
+    let imm_valid = |value: i64| width != OpWidth::W64 || i32::try_from(value).is_ok();
+    let binary_shape =
+        |dst: &VReg, src1: &VReg, src2: &SrcOperand, op_width: OpWidth, flags: FlagUpdate| {
+            op_width == width
+                && identity(dst)
+                && matches!(flags, FlagUpdate::None | FlagUpdate::All)
+                && match (src1, src2) {
+                    (lhs, SrcOperand::Reg(rhs)) if *rhs == temporary => identity(lhs),
+                    (lhs, SrcOperand::Reg(rhs)) if *lhs == temporary => identity(rhs),
+                    (lhs, SrcOperand::Imm(value)) if *lhs == temporary => imm_valid(*value),
+                    _ => false,
+                }
+        };
+
+    let valid = match &consumer.kind {
+        OpKind::Add {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        }
+        | OpKind::Sub {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        }
+        | OpKind::Adc {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        }
+        | OpKind::Sbb {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        }
+        | OpKind::And {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        }
+        | OpKind::Or {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        }
+        | OpKind::Xor {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        } => binary_shape(dst, src1, src2, *width, *flags),
+        OpKind::Cmp {
+            src1,
+            src2,
+            width: op_width,
+        }
+        | OpKind::Test {
+            src1,
+            src2,
+            width: op_width,
+        } if *op_width == width => match (src1, src2) {
+            (lhs, SrcOperand::Reg(rhs)) if *lhs == temporary => identity(rhs),
+            (lhs, SrcOperand::Reg(rhs)) if *rhs == temporary => identity(lhs),
+            (lhs, SrcOperand::Imm(value)) if *lhs == temporary => imm_valid(*value),
+            _ => false,
+        },
+        _ => false,
+    };
+
+    valid.then_some(2)
+}
+
 /// Validate the exact two-op shape emitted for a memory-source x86 CRC32.
 /// The virtual load result must be single-definition/single-use so native
 /// lowering can eliminate it without creating an identity-map GPR alias.
@@ -6652,6 +6783,16 @@ fn block_is_clobber_safe(
 
     let mut i = 0;
     while i < n {
+        if let Some(consumed) = x86_jit_mem_alu_source_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
         if let Some(consumed) =
             x86_jit_pop2_sequence_len(block, i, allow_mem, &virtual_definitions, &virtual_uses)
         {
@@ -18293,6 +18434,227 @@ mod jit_gate_tests {
         ] {
             assert!(op.is_jit_safe(), "{name} remains class-whitelisted");
             assert!(!x86_gate(op), "malformed {name} bit test must deopt");
+        }
+    }
+
+    #[test]
+    fn x86_scalar_memory_source_gate_accepts_exact_ssa_pairs_and_fails_closed() {
+        let temporary = VReg::Virtual(VirtualId(17));
+        let build = |consumer: OpKind,
+                     mem_width: MemWidth,
+                     sign: SignExtend,
+                     consumer_pc: u64,
+                     extra_use: bool,
+                     addr: Address| {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::Load {
+                    dst: temporary,
+                    addr,
+                    width: mem_width,
+                    sign,
+                },
+            );
+            builder.push_op(consumer_pc, consumer);
+            if extra_use {
+                builder.push_op(
+                    0x1001,
+                    OpKind::Mov {
+                        dst: x86(X86Reg::R11),
+                        src: SrcOperand::Reg(temporary),
+                        width: OpWidth::W64,
+                    },
+                );
+            }
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            builder.finish()
+        };
+        let address = || Address::BaseIndexScale {
+            base: Some(x86(X86Reg::Rsp)),
+            index: x86(X86Reg::R16),
+            scale: 2,
+            disp: -8,
+            disp_size: DispSize::Disp8,
+        };
+
+        let valid = [
+            (
+                OpKind::Add {
+                    dst: x86(X86Reg::R8),
+                    src1: x86(X86Reg::R9),
+                    src2: SrcOperand::Reg(temporary),
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::All,
+                },
+                MemWidth::B1,
+            ),
+            (
+                OpKind::Sub {
+                    dst: x86(X86Reg::R10),
+                    src1: temporary,
+                    src2: SrcOperand::Reg(x86(X86Reg::R10)),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::None,
+                },
+                MemWidth::B2,
+            ),
+            (
+                OpKind::Or {
+                    dst: x86(X86Reg::Rax),
+                    src1: temporary,
+                    src2: SrcOperand::Imm(0x1234),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::All,
+                },
+                MemWidth::B4,
+            ),
+            (
+                OpKind::Cmp {
+                    src1: x86(X86Reg::Rbx),
+                    src2: SrcOperand::Reg(temporary),
+                    width: OpWidth::W64,
+                },
+                MemWidth::B8,
+            ),
+            (
+                OpKind::Cmp {
+                    src1: temporary,
+                    src2: SrcOperand::Reg(x86(X86Reg::Rdi)),
+                    width: OpWidth::W32,
+                },
+                MemWidth::B4,
+            ),
+            (
+                OpKind::Cmp {
+                    src1: temporary,
+                    src2: SrcOperand::Imm(-1),
+                    width: OpWidth::W64,
+                },
+                MemWidth::B8,
+            ),
+            (
+                OpKind::Test {
+                    src1: temporary,
+                    src2: SrcOperand::Reg(x86(X86Reg::Rsi)),
+                    width: OpWidth::W16,
+                },
+                MemWidth::B2,
+            ),
+            (
+                OpKind::Test {
+                    src1: temporary,
+                    src2: SrcOperand::Imm(0x7F),
+                    width: OpWidth::W8,
+                },
+                MemWidth::B1,
+            ),
+        ];
+        for (consumer, mem_width) in valid {
+            let function = build(
+                consumer,
+                mem_width,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            );
+            assert!(is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                true,
+            ));
+            assert!(!is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                false,
+            ));
+        }
+
+        let binary = |dst, src1, flags| OpKind::Add {
+            dst,
+            src1,
+            src2: SrcOperand::Reg(temporary),
+            width: OpWidth::W64,
+            flags,
+        };
+        let base = binary(x86(X86Reg::R8), x86(X86Reg::R9), FlagUpdate::All);
+        let invalid = [
+            build(
+                base.clone(),
+                MemWidth::B8,
+                SignExtend::Sign,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                base.clone(),
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1001,
+                false,
+                address(),
+            ),
+            build(
+                base.clone(),
+                MemWidth::B4,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                base.clone(),
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                true,
+                address(),
+            ),
+            build(
+                binary(x86(X86Reg::R16), x86(X86Reg::R9), FlagUpdate::All),
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                binary(x86(X86Reg::R8), x86(X86Reg::Rsp), FlagUpdate::All),
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                binary(
+                    x86(X86Reg::R8),
+                    x86(X86Reg::R9),
+                    FlagUpdate::Specific(FlagSet::ZF),
+                ),
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                base,
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                Address::Direct(VReg::Virtual(VirtualId(99))),
+            ),
+        ];
+        for function in invalid {
+            assert!(!is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                true,
+            ));
         }
     }
 
