@@ -770,7 +770,9 @@ impl FlagState {
                     let msb = (lazy.result & sign_bit) != 0;
                     cf != msb
                 } else {
-                    false
+                    // x86 leaves OF undefined for multi-bit rotates. Preserve
+                    // the prior materialized value as Rax's deterministic policy.
+                    self.materialized.of
                 }
             }
             LazyFlagOp::Ror => {
@@ -780,7 +782,7 @@ impl FlagState {
                     let second = (lazy.result & (sign_bit >> 1)) != 0;
                     msb != second
                 } else {
-                    false
+                    self.materialized.of
                 }
             }
             LazyFlagOp::Rcl => {
@@ -789,7 +791,7 @@ impl FlagState {
                     let msb = (lazy.result & sign_bit) != 0;
                     cf != msb
                 } else {
-                    false
+                    self.materialized.of
                 }
             }
             LazyFlagOp::Rcr => {
@@ -798,7 +800,7 @@ impl FlagState {
                     let second = (lazy.result & (sign_bit >> 1)) != 0;
                     msb != second
                 } else {
-                    false
+                    self.materialized.of
                 }
             }
             // SHLD/SHRD OF (count==1 only): set iff the sign bit of dst changed.

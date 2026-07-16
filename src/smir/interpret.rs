@@ -1462,6 +1462,9 @@ impl SmirInterpreter {
             } => {
                 let val = ctx.read_vreg(*src) & width.mask();
                 let count = self.read_src_operand(ctx, amount);
+                let bits = width.bits() as u64;
+                let count_mask = if bits == 64 { 0x3F } else { 0x1F };
+                let masked = count & count_mask;
                 ctx.flags.materialize_all();
                 let (result, carry, effective) =
                     Self::x86_rcl(val, count, ctx.flags.materialized.cf, *width);
@@ -1473,7 +1476,7 @@ impl SmirInterpreter {
                         op: LazyFlagOp::Rcl,
                         result,
                         left: val,
-                        right: effective,
+                        right: masked,
                         width: *width,
                         high: u64::from(carry),
                     });
@@ -1489,6 +1492,9 @@ impl SmirInterpreter {
             } => {
                 let val = ctx.read_vreg(*src) & width.mask();
                 let count = self.read_src_operand(ctx, amount);
+                let bits = width.bits() as u64;
+                let count_mask = if bits == 64 { 0x3F } else { 0x1F };
+                let masked = count & count_mask;
                 ctx.flags.materialize_all();
                 let (result, carry, effective) =
                     Self::x86_rcr(val, count, ctx.flags.materialized.cf, *width);
@@ -1500,7 +1506,7 @@ impl SmirInterpreter {
                         op: LazyFlagOp::Rcr,
                         result,
                         left: val,
-                        right: effective,
+                        right: masked,
                         width: *width,
                         high: u64::from(carry),
                     });
@@ -32006,6 +32012,44 @@ mod tests {
     }
 
     #[test]
+    fn smir_x86_rol_ror_preserve_of_for_raw_multi_counts() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let preserved = 0x2 | 0x4 | 0x10 | 0x40 | 0x80 | 0x800;
+
+        // The masked count is 17 while the effective W16 rotation is 1. OF is
+        // undefined and follows Rax's deterministic preserve policy.
+        let (value, flags) = exec_x86_rax_op(
+            OpKind::Rol {
+                dst: rax,
+                src: rax,
+                amount: SrcOperand::Imm(17),
+                width: OpWidth::W16,
+                flags: FlagUpdate::All,
+            },
+            0x0001,
+            0,
+            preserved,
+        );
+        assert_eq!(value & 0xFFFF, 0x0002);
+        assert_eq!(flags & 0x8D5, preserved & 0x8D5);
+
+        let (value, flags) = exec_x86_rax_op(
+            OpKind::Ror {
+                dst: rax,
+                src: rax,
+                amount: SrcOperand::Imm(17),
+                width: OpWidth::W16,
+                flags: FlagUpdate::All,
+            },
+            0x0001,
+            0,
+            preserved,
+        );
+        assert_eq!(value & 0xFFFF, 0x8000);
+        assert_eq!(flags & 0x8D5, (preserved | 0x1) & 0x8D5);
+    }
+
+    #[test]
     fn smir_x86_rcl_rcr_match_rotate_through_carry_oracle_cases() {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
@@ -32061,6 +32105,40 @@ mod tests {
         );
         assert_eq!(value & 0xFF, 0xA5);
         assert_eq!(flags & 0x8D5, start_flags & 0x8D5);
+
+        // Raw count 10 has effective count 1 for an 8-bit rotate through carry,
+        // but OF is undefined and follows Rax's preserve policy because the raw
+        // masked count is greater than one.
+        let (value, flags) = exec_x86_rax_op(
+            OpKind::Rcl {
+                dst: rax,
+                src: rax,
+                amount: SrcOperand::Imm(10),
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+            },
+            0x40,
+            0,
+            preserved,
+        );
+        assert_eq!(value & 0xFF, 0x80);
+        assert_eq!(flags & 0x8D5, preserved & 0x8D5);
+
+        let start_flags = preserved | 0x800;
+        let (value, flags) = exec_x86_rax_op(
+            OpKind::Rcr {
+                dst: rax,
+                src: rax,
+                amount: SrcOperand::Imm(10),
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+            },
+            0x01,
+            0,
+            start_flags,
+        );
+        assert_eq!(value & 0xFF, 0x00);
+        assert_eq!(flags & 0x8D5, (start_flags | 0x1) & 0x8D5);
 
         // RCL RAX,32 and RCR RAX,CL mirror the legacy emulator's 64-bit cases.
         let (value, _) = exec_x86_rax_op(

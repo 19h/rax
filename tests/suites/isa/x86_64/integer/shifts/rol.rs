@@ -282,6 +282,25 @@ fn test_rol_ax_full_rotation() {
 }
 
 #[test]
+fn test_rol_ax_raw_multi_count_preserves_undefined_of() {
+    // The masked count is 17 while the effective 16-bit rotation is 1.
+    // OF is therefore undefined; Rax's deterministic policy preserves it.
+    let code = [
+        0x66, 0xc1, 0xc0, 0x11, // ROL AX, 17
+        0xf4,
+    ];
+    let mut regs = Registers::default();
+    regs.rax = 0x4000;
+    regs.rflags = 0x2; // OF clear
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rax & 0xFFFF, 0x8000, "AX: effective rotate count is 1");
+    assert!(!cf_set(regs.rflags), "CF: receives the original MSB (0)");
+    assert!(!of_set(regs.rflags), "OF: raw masked count 17 preserves OF");
+}
+
+#[test]
 fn test_rol_bx() {
     // ROL BX, 1
     let code = [

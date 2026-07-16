@@ -166,6 +166,25 @@ fn test_rcr_full_rotation_9bit() {
 }
 
 #[test]
+fn test_rcr_al_raw_multi_count_preserves_undefined_of() {
+    // The masked count is 10 while the effective 9-bit rotation is 1.
+    // OF is therefore undefined; Rax's deterministic policy preserves it.
+    let code = [
+        0xc0, 0xd8, 0x0a, // RCR AL, 10
+        0xf4,
+    ];
+    let mut regs = Registers::default();
+    regs.rax = 0x01;
+    regs.rflags = 0x2 | flags::bits::OF; // CF clear, OF set
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rax & 0xFF, 0x00, "AL: effective rotate count is 1");
+    assert!(cf_set(regs.rflags), "CF: receives the original LSB (1)");
+    assert!(of_set(regs.rflags), "OF: raw masked count 10 preserves OF");
+}
+
+#[test]
 fn test_rcr_count_zero_preserves_flags() {
     // Count of 0 should not affect flags
     let code = [

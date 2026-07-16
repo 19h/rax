@@ -7,10 +7,11 @@ use crate::isa::x86_64::flags;
 
 /// Execute 8-bit shift/rotate operation.
 pub fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Result<u8> {
+    let count = count & 0x1F;
     if count == 0 {
         return Ok(val);
     }
-    let count = count & 0x1F;
+    let masked_count = count;
     let cf_bit = flags::bits::CF;
     let of_bit = flags::bits::OF;
     vcpu.materialize_flags(); // Need CF for RCL/RCR
@@ -22,7 +23,7 @@ pub fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Resu
             // ROL
             let result = val.rotate_left(count as u32);
             let cf = (result & 1) != 0;
-            let of = if count == 1 {
+            let of = if masked_count == 1 {
                 Some(((result >> 7) ^ (result & 1)) != 0)
             } else {
                 None
@@ -33,7 +34,7 @@ pub fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Resu
             // ROR
             let result = val.rotate_right(count as u32);
             let cf = (result >> 7) != 0;
-            let of = if count == 1 {
+            let of = if masked_count == 1 {
                 Some(((result >> 7) ^ ((result >> 6) & 1)) != 0)
             } else {
                 None
@@ -56,7 +57,7 @@ pub fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Resu
             }
             let result = (wide & 0xFF) as u8;
             let new_cf = (wide >> 8) & 1 != 0;
-            let of = if count == 1 {
+            let of = if masked_count == 1 {
                 Some(((result >> 7) != 0) ^ new_cf)
             } else {
                 None
@@ -79,7 +80,7 @@ pub fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Resu
             }
             let result = (wide & 0xFF) as u8;
             let new_cf = (wide >> 8) & 1 != 0;
-            let of = if count == 1 {
+            let of = if masked_count == 1 {
                 Some(((result >> 7) ^ ((result >> 6) & 1)) != 0)
             } else {
                 None
@@ -166,10 +167,12 @@ pub fn execute_shift8(vcpu: &mut X86_64Vcpu, op: u8, val: u8, count: u8) -> Resu
 
 /// Execute shift/rotate operation for 16/32/64-bit operands.
 pub fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u8) -> Result<u64> {
+    let bits = size as u32 * 8;
+    let count = count & if bits == 64 { 0x3F } else { 0x1F };
     if count == 0 {
         return Ok(val);
     }
-    let bits = size as u32 * 8;
+    let masked_count = count;
     let mask = if bits == 64 {
         !0u64
     } else {
@@ -191,7 +194,7 @@ pub fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u
                 ((val << count) | (val >> (bits - count))) & mask
             };
             let cf = (result & 1) != 0;
-            let of = if count == 1 {
+            let of = if masked_count == 1 {
                 Some((((result >> (bits - 1)) ^ result) & 1) != 0)
             } else {
                 None
@@ -207,7 +210,7 @@ pub fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u
                 ((val >> count) | (val << (bits - count))) & mask
             };
             let cf = (result >> (bits - 1)) != 0;
-            let of = if count == 1 {
+            let of = if masked_count == 1 {
                 Some(((result >> (bits - 1)) ^ ((result >> (bits - 2)) & 1)) != 0)
             } else {
                 None
@@ -235,7 +238,7 @@ pub fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u
             }
 
             let new_cf = carry;
-            let of = if count == 1 {
+            let of = if masked_count == 1 {
                 Some(((result >> (bits - 1)) & 1 != 0) ^ new_cf)
             } else {
                 None
@@ -261,7 +264,7 @@ pub fn execute_shift(vcpu: &mut X86_64Vcpu, op: u8, val: u64, count: u8, size: u
             }
 
             let new_cf = carry;
-            let of = if count == 1 {
+            let of = if masked_count == 1 {
                 // OF = MSB XOR (MSB-1)
                 Some(((result >> (bits - 1)) ^ (result >> (bits - 2))) & 1 != 0)
             } else {
