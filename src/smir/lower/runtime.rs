@@ -5852,55 +5852,6 @@ pub(crate) fn x86_state_backed_stack_mov_valid(op: &crate::smir::ir::ops::OpKind
     )
 }
 
-pub(crate) fn x86_state_backed_gpr_extend_valid(op: &crate::smir::ir::ops::SmirOp) -> bool {
-    use crate::smir::ir::ops::{OpKind, X86OpHint};
-    use crate::smir::ir::types::{ArchReg, OpWidth, VReg};
-
-    let gpr_index = |reg: &VReg| match reg {
-        VReg::Arch(ArchReg::X86(x86)) => x86.gpr_index(),
-        _ => None,
-    };
-    let state_backed = |index: u8| index >= 16 || matches!(index, 4 | 5);
-    let widths_valid = |from: OpWidth, to: OpWidth| {
-        matches!(
-            (from, to),
-            (OpWidth::W8, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
-                | (OpWidth::W16, OpWidth::W32 | OpWidth::W64)
-                | (OpWidth::W32, OpWidth::W64)
-        )
-    };
-
-    let (dst, src, from_width, to_width) = match &op.kind {
-        OpKind::ZeroExtend {
-            dst,
-            src,
-            from_width,
-            to_width,
-        }
-        | OpKind::SignExtend {
-            dst,
-            src,
-            from_width,
-            to_width,
-        } => (dst, src, *from_width, *to_width),
-        _ => return false,
-    };
-    let (Some(dst_index), Some(src_index)) = (gpr_index(dst), gpr_index(src)) else {
-        return false;
-    };
-    if !widths_valid(from_width, to_width) || !(state_backed(dst_index) || state_backed(src_index))
-    {
-        return false;
-    }
-
-    match op.x86_hint {
-        None => !(from_width == OpWidth::W8 && matches!(src_index, 4..=7)),
-        Some(X86OpHint::RexByteReg) => from_width == OpWidth::W8,
-        Some(X86OpHint::LegacyHighByteReg) => x86_legacy_high_byte_movx_shape_valid(op),
-        Some(_) => false,
-    }
-}
-
 pub(crate) fn x86_state_backed_stack_alu_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg};
@@ -8448,7 +8399,7 @@ fn block_is_clobber_safe(
         let vector_mem_ok = allow_mem && x86_jit_vector_mem_shape_valid(&op.kind);
         let stack_mov_ok = x86_state_backed_stack_mov_valid(&op.kind);
         let stack_alu_ok = x86_state_backed_stack_alu_valid(&op.kind);
-        let state_extend_ok = x86_state_backed_gpr_extend_valid(op);
+        let state_extend_ok = super::x86_64::x86_state_backed_gpr_extend_valid(op);
         let stack_state_ok = stack_mov_ok || stack_alu_ok || state_extend_ok;
         let unsigned_div_ok = x86_jit_unsigned_div_register_shape_valid(op);
         let signed_div_ok = x86_jit_signed_div_register_shape_valid(op);
