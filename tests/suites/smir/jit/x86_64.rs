@@ -4606,6 +4606,137 @@ fn jit_xchg_preserves_width_semantics_and_flags() {
     }
 }
 
+/// State-backed operands cannot be mapped onto host RSP/RBP or nonexistent
+/// host EGPRs. Validate their 16/32/64-bit exchange semantics against the
+/// interpreter while memory and semantic-call JIT paths are disabled.
+#[test]
+fn jit_state_backed_gpr_xchg_matches_interpreter_without_memory_helpers() {
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        apx: bool,
+        reg1_index: usize,
+        reg2_index: usize,
+        expected_reg1: u64,
+        expected_reg2: u64,
+    }
+
+    let cases = [
+        Case {
+            name: "REX2 XCHG CX,R16W partial exchange",
+            instruction: &[0x66, 0xD5, 0x10, 0x87, 0xC8],
+            apx: true,
+            reg1_index: 1,
+            reg2_index: 16,
+            expected_reg1: 0x1122_3344_5566_7788,
+            expected_reg2: 0xAABB_CCDD_EEFF_1234,
+        },
+        Case {
+            name: "REX2 XCHG EBP,R17D zero-extending exchange",
+            instruction: &[0xD5, 0x10, 0x87, 0xE9],
+            apx: true,
+            reg1_index: 5,
+            reg2_index: 17,
+            expected_reg1: 0x0000_0000_5566_7788,
+            expected_reg2: 0x0000_0000_8765_9ABC,
+        },
+        Case {
+            name: "REX2 XCHG RSP,R31 full exchange",
+            instruction: &[0xD5, 0x19, 0x87, 0xE7],
+            apx: true,
+            reg1_index: 4,
+            reg2_index: 31,
+            expected_reg1: 0xFFEE_DDCC_BBAA_1357,
+            expected_reg2: 0x2233_4455_6677_5678,
+        },
+        Case {
+            name: "XCHG SP,BP partial state-to-state exchange",
+            instruction: &[0x66, 0x87, 0xE5],
+            apx: false,
+            reg1_index: 5,
+            reg2_index: 4,
+            expected_reg1: 0x3344_5566_8765_5678,
+            expected_reg2: 0x2233_4455_6677_9ABC,
+        },
+        Case {
+            name: "REX2 XCHG R16D,R16D zero-extending self exchange",
+            instruction: &[0xD5, 0x50, 0x87, 0xC0],
+            apx: true,
+            reg1_index: 16,
+            reg2_index: 16,
+            expected_reg1: 0x0000_0000_EEFF_7788,
+            expected_reg2: 0x0000_0000_EEFF_7788,
+        },
+    ];
+
+    let gprs = |regs: &Registers| {
+        [
+            regs.rax, regs.rcx, regs.rdx, regs.rbx, regs.rsp, regs.rbp, regs.rsi, regs.rdi,
+            regs.r8, regs.r9, regs.r10, regs.r11, regs.r12, regs.r13, regs.r14, regs.r15, regs.r16,
+            regs.r17, regs.r18, regs.r19, regs.r20, regs.r21, regs.r22, regs.r23, regs.r24,
+            regs.r25, regs.r26, regs.r27, regs.r28, regs.r29, regs.r30, regs.r31,
+        ]
+    };
+    let setup = |vcpu: &mut X86_64Vcpu, apx: bool| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x0102_0304_0506_0708;
+        regs.rcx = 0x1122_3344_5566_1234;
+        regs.rdx = 0x99AA_BBCC_DDEE_FF00;
+        regs.rbx = 0x0F1E_2D3C_4B5A_6978;
+        regs.rsp = 0x2233_4455_6677_5678;
+        regs.rbp = 0x3344_5566_8765_9ABC;
+        regs.r8 = 0x8899_AABB_CCDD_EEFF;
+        regs.r16 = 0xAABB_CCDD_EEFF_7788;
+        regs.r17 = 0xBBCC_DDEE_5566_7788;
+        regs.r31 = 0xFFEE_DDCC_BBAA_1357;
+        regs.rflags = 0x2 | 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+        vcpu.set_apx_enabled(apx);
+    };
+
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp, case.apx);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+        assert_eq!(
+            gprs(&expected)[case.reg1_index],
+            case.expected_reg1,
+            "{} reference first operand",
+            case.name
+        );
+        assert_eq!(
+            gprs(&expected)[case.reg2_index],
+            case.expected_reg2,
+            "{} reference second operand",
+            case.name
+        );
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit, case.apx);
+        jit.set_jit_call(false);
+        jit.set_jit_mem(false);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the register-only native tier:\n{}",
+            case.name,
+            jit.jit_dump_region(LOAD_ADDR)
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(gprs(&actual), gprs(&expected), "{} GPR file", case.name);
+        assert_eq!(actual.rflags, expected.rflags, "{} RFLAGS", case.name);
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+    }
+}
+
 /// CWD/CDQ/CQO have no explicit operands in machine code but lower from an
 /// exact RAX-to-RDX IR shape. Exercise every architectural width, including
 /// x86 partial-register writes and preservation of the preceding DEC flags.

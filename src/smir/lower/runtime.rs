@@ -8402,11 +8402,17 @@ fn block_is_clobber_safe(
         let state_extend_ok = super::x86_64::x86_state_backed_gpr_extend_valid(op);
         let state_cmove_ok = super::x86_64::x86_state_backed_gpr_cmove_valid(op);
         let state_setcc_ok = super::x86_64::x86_state_backed_gpr_setcc_valid(op);
-        let stack_state_ok =
-            stack_mov_ok || stack_alu_ok || state_extend_ok || state_cmove_ok || state_setcc_ok;
+        let state_xchg_ok = super::x86_64::x86_state_backed_gpr_xchg_valid(op);
+        let stack_state_ok = stack_mov_ok
+            || stack_alu_ok
+            || state_extend_ok
+            || state_cmove_ok
+            || state_setcc_ok
+            || state_xchg_ok;
         if (super::x86_64::x86_state_backed_gpr_extend_candidate(op) && !state_extend_ok)
             || (super::x86_64::x86_state_backed_gpr_cmove_candidate(op) && !state_cmove_ok)
             || (super::x86_64::x86_state_backed_gpr_setcc_candidate(op) && !state_setcc_ok)
+            || (super::x86_64::x86_state_backed_gpr_xchg_candidate(op) && !state_xchg_ok)
         {
             return false;
         }
@@ -8541,7 +8547,10 @@ fn block_is_clobber_safe(
         if matches!(op.kind, OpKind::Bswap { .. }) && !x86_bswap_shape_valid(&op.kind) {
             return false;
         }
-        if matches!(op.kind, OpKind::Xchg { .. }) && !x86_xchg_shape_valid(&op.kind) {
+        if matches!(op.kind, OpKind::Xchg { .. })
+            && !x86_xchg_shape_valid(&op.kind)
+            && !state_xchg_ok
+        {
             return false;
         }
         if matches!(op.kind, OpKind::X86NddDoubleShift { .. })
@@ -8558,7 +8567,7 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/ADD/SUB reads/writes are state-backed.
+        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/XCHG/ADD/SUB reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the current guest
@@ -19848,7 +19857,7 @@ mod jit_gate_tests {
     }
 
     #[test]
-    fn xchg_gate_accepts_native_register_shapes_and_rejects_unsafe_ir() {
+    fn xchg_gate_accepts_native_and_state_backed_register_shapes_and_rejects_unsafe_ir() {
         for op in [
             OpKind::Xchg {
                 reg1: x86(X86Reg::Rax),
@@ -19865,6 +19874,21 @@ mod jit_gate_tests {
                 reg2: x86(X86Reg::R14),
                 width: OpWidth::W64,
             },
+            OpKind::Xchg {
+                reg1: x86(X86Reg::Rax),
+                reg2: x86(X86Reg::Rsp),
+                width: OpWidth::W16,
+            },
+            OpKind::Xchg {
+                reg1: x86(X86Reg::Rbp),
+                reg2: x86(X86Reg::R16),
+                width: OpWidth::W32,
+            },
+            OpKind::Xchg {
+                reg1: x86(X86Reg::R31),
+                reg2: x86(X86Reg::R31),
+                width: OpWidth::W64,
+            },
         ] {
             assert!(op.is_jit_safe());
             assert!(x86_gate(op));
@@ -19877,30 +19901,6 @@ mod jit_gate_tests {
                     reg1: x86(X86Reg::Rax),
                     reg2: x86(X86Reg::Rcx),
                     width: OpWidth::W8,
-                },
-            ),
-            (
-                "guest stack register",
-                OpKind::Xchg {
-                    reg1: x86(X86Reg::Rax),
-                    reg2: x86(X86Reg::Rsp),
-                    width: OpWidth::W64,
-                },
-            ),
-            (
-                "guest frame register",
-                OpKind::Xchg {
-                    reg1: x86(X86Reg::Rbp),
-                    reg2: x86(X86Reg::Rax),
-                    width: OpWidth::W64,
-                },
-            ),
-            (
-                "extended guest register",
-                OpKind::Xchg {
-                    reg1: x86(X86Reg::R16),
-                    reg2: x86(X86Reg::Rax),
-                    width: OpWidth::W32,
                 },
             ),
             (
@@ -19922,6 +19922,23 @@ mod jit_gate_tests {
         ] {
             assert!(!x86_gate(op), "malformed {name} Xchg must deopt");
         }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Xchg {
+                reg1: x86(X86Reg::R16),
+                reg2: x86(X86Reg::Rax),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut hinted = builder.finish();
+        hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+        assert!(
+            !is_native_clobber_safe(&hinted),
+            "hinted state-backed Xchg must fail closed"
+        );
     }
 
     #[test]
