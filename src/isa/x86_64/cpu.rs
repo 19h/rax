@@ -5293,12 +5293,27 @@ impl X86_64Vcpu {
         s
     }
 
-    /// The decode/JIT cache key discriminator: address space (CR3) + CPU mode
-    /// (CS.L long-mode, CS.DB default-size). A cached region can never be reused
-    /// across a context or mode switch.
+    /// The JIT cache key discriminator: address space (CR3), CPU mode (CS.L
+    /// long-mode, CS.DB default-size), and every mutable runtime capability that
+    /// changes region eligibility or lowering. A compiled region or ineligible
+    /// memo can therefore never be reused after memory-helper or call-through
+    /// policy changes.
     #[inline]
     pub(super) fn jit_mode_tag(&self) -> u64 {
-        (self.sregs.cr3 & !0xFFF) | (self.sregs.cs.l as u64) | ((self.sregs.cs.db as u64) << 1)
+        let mode =
+            (self.sregs.cr3 & !0xFFF) | (self.sregs.cs.l as u64) | ((self.sregs.cs.db as u64) << 1);
+
+        // CR3's page-offset bits are masked above and are available as tag-only
+        // discriminators. These fields exist only for the native x86-64 JIT;
+        // the aarch64 lowering path has neither capability.
+        #[cfg(target_arch = "x86_64")]
+        {
+            mode | (u64::from(self.jit_mem) << 2) | (u64::from(self.jit_call) << 3)
+        }
+        #[cfg(target_arch = "aarch64")]
+        {
+            mode
+        }
     }
 
     /// Loop-head hotness sampling: called after an interpreted instruction. If
@@ -5613,6 +5628,54 @@ mod decode_cache_invalidation_tests {
             vcpu.regs.rax, 2,
             "decode-cache hit must validate against the current fetched bytes",
         );
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn jit_mode_tag_separates_runtime_capability_policies() {
+        let mut vcpu = test_vcpu();
+        vcpu.sregs.cr3 = 0x1234_5000;
+        vcpu.sregs.cs.l = true;
+        vcpu.sregs.cs.db = true;
+
+        vcpu.set_jit_call(false);
+        vcpu.set_jit_mem(false);
+        let register_only = vcpu.jit_mode_tag();
+        assert_eq!(register_only & !0xF, 0x1234_5000);
+        assert_eq!(register_only & 0x3, 0x3);
+
+        // Model both kinds of stale entry under the original policy. Enabling
+        // helpers must select a disjoint key without scanning or clearing either
+        // table, so the new capability can trigger a fresh compilation attempt.
+        let head = 0x2000;
+        let cached = JitRegion {
+            exec: crate::smir::lower::runtime::ExecMem::new(&[0xC3]).unwrap(),
+            entry_offset: 0,
+            uses_vector: false,
+        };
+        vcpu.jit_cache
+            .insert((head, register_only), Some(Arc::new(cached)));
+        vcpu.jit_ineligible
+            .insert((head, register_only), vec![0x90]);
+
+        vcpu.set_jit_mem(true);
+        let memory = vcpu.jit_mode_tag();
+        assert_eq!(register_only ^ memory, 1 << 2);
+        assert!(!vcpu.jit_cache.contains_key(&(head, memory)));
+        assert!(!vcpu.jit_ineligible.contains_key(&(head, memory)));
+
+        vcpu.set_jit_call(true);
+        let calls = vcpu.jit_mode_tag();
+        assert_eq!(memory ^ calls, 1 << 3);
+        assert!(!vcpu.jit_cache.contains_key(&(head, calls)));
+        assert!(!vcpu.jit_ineligible.contains_key(&(head, calls)));
+
+        // Restoring a policy must recover its original discriminator; this keeps
+        // cache reuse deterministic rather than leaking one tag per transition.
+        vcpu.set_jit_call(false);
+        assert_eq!(vcpu.jit_mode_tag(), memory);
+        vcpu.set_jit_mem(false);
+        assert_eq!(vcpu.jit_mode_tag(), register_only);
     }
 
     #[cfg(all(
