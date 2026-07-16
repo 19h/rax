@@ -137,6 +137,7 @@ jobs:
             --test smir_jit_thumb_aarch64 \
             --test smir_jit_x86_aarch64 \
             --test smir_jit_evex_masking \
+            --test x86_64_unimplemented_source_inventory \
             --test isa_oracle \
             -- --include-ignored
       # The x86-64 JIT suite executes transient native mappings and intentionally
