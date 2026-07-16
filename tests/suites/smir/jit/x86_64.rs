@@ -1471,6 +1471,152 @@ fn jit_legacy_counts_match_interpreter_results_and_exact_status_flags() {
     }
 }
 
+/// Memory-source count instructions use the MMU helper for the load and then
+/// consume a caller-owned stack word. This must preserve fault restart state,
+/// legacy 16-bit destination upper bits, and each instruction's distinct flag
+/// contract, including APX NF's complete flag preservation.
+#[test]
+fn jit_memory_source_counts_match_interpreter_partial_writes_flags_and_faults() {
+    const DATA: u64 = 0x20_0000;
+
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        apx: bool,
+        data: u64,
+        dst: u8,
+        initial_dst: u64,
+        expected_dst: u64,
+        supported: bool,
+    }
+
+    let cases = [
+        Case {
+            name: "POPCNT r8w,[rbx]",
+            instruction: &[0xF3, 0x66, 0x44, 0x0F, 0xB8, 0x03],
+            apx: false,
+            data: 0xF0F0,
+            dst: 8,
+            initial_dst: 0xAABB_CCDD_EEFF_7788,
+            expected_dst: 0xAABB_CCDD_EEFF_0008,
+            supported: std::is_x86_feature_detected!("popcnt"),
+        },
+        Case {
+            name: "TZCNT r9d,[rbx]",
+            instruction: &[0xF3, 0x44, 0x0F, 0xBC, 0x0B],
+            apx: false,
+            data: 0,
+            dst: 9,
+            initial_dst: u64::MAX,
+            expected_dst: 32,
+            supported: std::is_x86_feature_detected!("bmi1"),
+        },
+        Case {
+            name: "LZCNT r15,[rbx]",
+            instruction: &[0xF3, 0x4C, 0x0F, 0xBD, 0x3B],
+            apx: false,
+            data: 1,
+            dst: 15,
+            initial_dst: u64::MAX,
+            expected_dst: 63,
+            supported: std::is_x86_feature_detected!("lzcnt"),
+        },
+        Case {
+            name: "APX NF LZCNT r8,[rbx]",
+            instruction: &[0x62, 0x74, 0xFC, 0x0C, 0xF5, 0x03],
+            apx: true,
+            data: 1 << 63,
+            dst: 8,
+            initial_dst: u64::MAX,
+            expected_dst: 0,
+            supported: std::is_x86_feature_detected!("lzcnt"),
+        },
+    ];
+
+    let read_dst = |regs: &Registers, index: u8| match index {
+        8 => regs.r8,
+        9 => regs.r9,
+        15 => regs.r15,
+        _ => unreachable!(),
+    };
+    for case in cases {
+        if !case.supported {
+            continue;
+        }
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+        let setup = |vcpu: &mut X86_64Vcpu, memory: &Arc<GuestMemoryMmap>| {
+            memory.write_obj(case.data, GuestAddress(DATA)).unwrap();
+            vcpu.set_apx_enabled(case.apx);
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rbx = DATA;
+            match case.dst {
+                8 => regs.r8 = case.initial_dst,
+                9 => regs.r9 = case.initial_dst,
+                15 => regs.r15 = case.initial_dst,
+                _ => unreachable!(),
+            }
+            regs.rflags = 0xCD7;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let (mut interp, interp_mem) = make_vcpu_mem(&code);
+        setup(&mut interp, &interp_mem);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+
+        let (mut jit, jit_mem) = make_vcpu_mem(&code);
+        setup(&mut jit, &jit_mem);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the helper-backed native tier",
+            case.name
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(
+            read_dst(&actual, case.dst),
+            read_dst(&expected, case.dst),
+            "{} result vs interpreter",
+            case.name
+        );
+        assert_eq!(
+            read_dst(&actual, case.dst),
+            case.expected_dst,
+            "{} architectural result",
+            case.name
+        );
+        assert_eq!(actual.rbx, DATA, "{} address base", case.name);
+        assert_eq!(actual.rflags, expected.rflags, "{} RFLAGS", case.name);
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+    }
+
+    if std::is_x86_feature_detected!("popcnt") {
+        let code = [0xF3, 0x4C, 0x0F, 0xB8, 0x03, 0xF4]; // popcnt r8,[rbx]
+        let (mut fault, _) = make_vcpu_mem(&code);
+        let mut before = fault.get_regs().unwrap();
+        before.rbx = MEM_SIZE + 0x1000;
+        before.r8 = 0xA5A5_5A5A_A5A5_5A5A;
+        before.rflags = 0xCD7;
+        fault.set_regs(&before).unwrap();
+        assert!(
+            fault
+                .jit_try_block()
+                .expect("faulting scalar count memory-source JIT"),
+            "a count load must compile before precise deoptimization"
+        );
+        let after = fault.get_regs().unwrap();
+        assert_eq!(after.rbx, before.rbx, "fault must preserve address base");
+        assert_eq!(after.r8, before.r8, "fault must preserve destination");
+        assert_eq!(after.rflags, before.rflags, "fault must preserve RFLAGS");
+        assert_eq!(after.rip, LOAD_ADDR, "fault must restart current PC");
+    }
+}
+
 /// Register byte swaps are flag-neutral and must remain native for both the
 /// legacy in-place BSWAP encoding and APX MOVBE's two-register word form.
 #[test]

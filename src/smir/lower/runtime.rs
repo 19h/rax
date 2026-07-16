@@ -1374,8 +1374,8 @@ impl std::error::Error for ExecMemError {}
 ///
 /// Exemptions are virtual values that the lowerer proves it never
 /// materializes: a trailing `TestCondition` whose `dst` feeds the block's
-/// `CondBranch`, and (when MMU helpers are enabled) the single-use load
-/// temporary in an adjacent x86 memory-source CRC32 pair or pre-decrement RSP
+/// `CondBranch`, and (when MMU helpers are enabled) single-use load temporaries
+/// in exact x86 memory-source ALU/count/CRC32 pairs or the pre-decrement RSP
 /// snapshot in PUSH RSP. The former folds to a direct `Jcc`; the memory forms
 /// fold to exact helper-backed operations.
 ///
@@ -6634,6 +6634,67 @@ pub(crate) fn x86_jit_mem_alu_source_sequence_len(
     valid.then_some(2)
 }
 
+/// Validate the exact two-op scalar count memory-source shape emitted by the
+/// x86 lifter: `Load virtual; X86Count architectural_dst,virtual`. The helper-
+/// backed lowerer stages the loaded value on its own stack, so the SSA virtual
+/// must have exactly one definition and one use and never enters the identity
+/// register map.
+pub(crate) fn x86_jit_mem_count_source_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::flags::FlagSet;
+    use crate::smir::ir::ops::{OpKind, X86CountKind};
+    use crate::smir::ir::types::{OpWidth, SignExtend, VReg};
+
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (temporary, addr, mem_width) = match &load.kind {
+        OpKind::Load {
+            dst: temporary @ VReg::Virtual(_),
+            addr,
+            width,
+            sign: SignExtend::Zero,
+        } => (*temporary, addr, *width),
+        _ => return None,
+    };
+    let width = mem_width.to_op_width()?;
+    if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+        || !x86_jit_mem_address_shape_valid(addr)
+        || virtual_definitions.get(&temporary) != Some(&1)
+        || virtual_uses.get(&temporary) != Some(&1)
+    {
+        return None;
+    }
+
+    let consumer = block.ops.get(index + 1)?;
+    let OpKind::X86Count {
+        dst,
+        src,
+        width: count_width,
+        kind,
+        flags,
+    } = &consumer.kind
+    else {
+        return None;
+    };
+    let defined = match kind {
+        X86CountKind::Popcnt => FlagSet::ALL_X86,
+        X86CountKind::Tzcnt | X86CountKind::Lzcnt => FlagSet::CF.union(FlagSet::ZF),
+    };
+    (consumer.guest_pc == load.guest_pc
+        && *src == temporary
+        && *count_width == width
+        && x86_native_identity_gpr(dst)
+        && flags.as_set().difference(defined).is_empty())
+    .then_some(2)
+}
+
 /// Validate the exact two-op shape emitted for a memory-source x86 CRC32.
 /// The virtual load result must be single-definition/single-use so native
 /// lowering can eliminate it without creating an identity-map GPR alias.
@@ -7308,6 +7369,16 @@ fn block_is_clobber_safe(
             continue;
         }
         if let Some(consumed) = x86_jit_mem_alu_source_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
+        if let Some(consumed) = x86_jit_mem_count_source_sequence_len(
             block,
             i,
             allow_mem,
@@ -19981,6 +20052,36 @@ mod jit_gate_tests {
                 },
                 MemWidth::B1,
             ),
+            (
+                OpKind::X86Count {
+                    dst: x86(X86Reg::R8),
+                    src: temporary,
+                    width: OpWidth::W16,
+                    kind: X86CountKind::Popcnt,
+                    flags: FlagUpdate::All,
+                },
+                MemWidth::B2,
+            ),
+            (
+                OpKind::X86Count {
+                    dst: x86(X86Reg::R9),
+                    src: temporary,
+                    width: OpWidth::W32,
+                    kind: X86CountKind::Tzcnt,
+                    flags: FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF)),
+                },
+                MemWidth::B4,
+            ),
+            (
+                OpKind::X86Count {
+                    dst: x86(X86Reg::R15),
+                    src: temporary,
+                    width: OpWidth::W64,
+                    kind: X86CountKind::Lzcnt,
+                    flags: FlagUpdate::None,
+                },
+                MemWidth::B8,
+            ),
         ];
         for (consumer, mem_width) in valid {
             let function = build(
@@ -20079,6 +20180,48 @@ mod jit_gate_tests {
                 0x1000,
                 false,
                 Address::Direct(VReg::Virtual(VirtualId(99))),
+            ),
+            build(
+                OpKind::X86Count {
+                    dst: x86(X86Reg::R8),
+                    src: temporary,
+                    width: OpWidth::W64,
+                    kind: X86CountKind::Tzcnt,
+                    flags: FlagUpdate::All,
+                },
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                OpKind::X86Count {
+                    dst: x86(X86Reg::R16),
+                    src: temporary,
+                    width: OpWidth::W64,
+                    kind: X86CountKind::Popcnt,
+                    flags: FlagUpdate::All,
+                },
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                OpKind::X86Count {
+                    dst: x86(X86Reg::R8),
+                    src: temporary,
+                    width: OpWidth::W32,
+                    kind: X86CountKind::Lzcnt,
+                    flags: FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF)),
+                },
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
             ),
         ];
         for function in invalid {

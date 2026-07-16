@@ -3544,6 +3544,26 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(dst, src);
     }
 
+    /// POPCNT/TZCNT/LZCNT r, [base + disp].
+    fn emit_x86_count_rm(
+        &mut self,
+        kind: X86CountKind,
+        dst: PhysReg,
+        base: PhysReg,
+        disp: i32,
+        width: OpWidth,
+    ) {
+        self.code.emit_u8(0xF3);
+        self.emit_rex_for_width_mem_reg(width, dst, base, None);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(match kind {
+            X86CountKind::Popcnt => 0xB8,
+            X86CountKind::Tzcnt => 0xBC,
+            X86CountKind::Lzcnt => 0xBD,
+        });
+        self.emit_modrm_mem_disp(dst, base, disp, DispSize::Auto);
+    }
+
     /// VEX.LZ.0F38.W{0,1} BMI r, r/m, vvvv
     pub fn emit_vex_bmi_rr(
         &mut self,
@@ -15273,6 +15293,145 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
+    /// Fuse the x86 lifter's exact `Load virtual; X86Count dst,virtual` pair.
+    /// The MMU helper writes the zero-extended load into caller-owned stack
+    /// space, leaving every architectural GPR unchanged until the count
+    /// instruction executes. The 16-byte reservation retains call alignment;
+    /// helper reload restores the destination's pre-instruction value before
+    /// x86 16-bit partial-register semantics apply.
+    #[cfg(feature = "smir-jit")]
+    fn try_lower_jit_mem_count_source(
+        &mut self,
+        block: &SmirBlock,
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(consumed) = super::runtime::x86_jit_mem_count_source_sequence_len(
+            block,
+            idx,
+            true,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
+            return Ok(None);
+        };
+
+        let load = &block.ops[idx];
+        let (addr, mem_width) = match &load.kind {
+            OpKind::Load {
+                addr,
+                width,
+                sign: SignExtend::Zero,
+                ..
+            } => (addr, *width),
+            _ => unreachable!("validated scalar count memory source starts with Load"),
+        };
+        let (dst, width, kind, flags) = match block.ops[idx + 1].kind {
+            OpKind::X86Count {
+                dst,
+                width,
+                kind,
+                flags,
+                ..
+            } => (dst, width, kind, flags),
+            _ => unreachable!("validated scalar count memory-source consumer"),
+        };
+        let dst_reg = self.get_dst_reg(dst)?;
+        Self::ensure_flag_stack_operands_safe("scalar count memory-source", &[dst_reg])?;
+
+        // Reserve a helper-result word plus alignment padding. The fault path
+        // removes both words before returning to the trampoline.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_push(dst_reg);
+            emitter.emit_push(dst_reg);
+        }
+        self.emit_jit_mem_op(
+            load.guest_pc,
+            true,
+            None,
+            // `emit_jit_mem_op` has pushed RAX and RFLAGS while it stages the
+            // return value, so the caller-owned top word is at [rsp+16].
+            Some(16),
+            None,
+            None,
+            None,
+            addr,
+            mem_width,
+            SignExtend::Zero,
+            16,
+        )?;
+
+        let requested = flags.as_set();
+        if requested.is_empty() {
+            self.code.emit_u8(0x9C); // pushfq: APX NF/preserved status
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_x86_count_rm(kind, dst_reg, PhysReg::Rsp, 8, width);
+            }
+            self.code.emit_u8(0x9D); // popfq
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+            return Ok(Some(consumed));
+        }
+
+        if kind == X86CountKind::Popcnt && requested == FlagSet::ALL_X86 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_x86_count_rm(kind, dst_reg, PhysReg::Rsp, 0, width);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+            return Ok(Some(consumed));
+        }
+
+        // Merge only the requested, architecturally defined status bits. After
+        // saving old RFLAGS the staged memory source is at [rsp+8]. The result
+        // and flag-stack layout then matches `lower_x86_count` exactly.
+        let rflags_mask = Self::x86_status_rflags_mask(requested);
+        self.code.emit_u8(0x9C); // pushfq (old)
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_x86_count_rm(kind, dst_reg, PhysReg::Rsp, 8, width);
+            emitter.emit_push(dst_reg);
+        }
+        self.code.emit_u8(0x9C); // pushfq (new)
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_alu_mi_disp(
+                4,
+                PhysReg::Rsp,
+                0,
+                DispSize::Auto,
+                rflags_mask,
+                OpWidth::W64,
+            );
+            emitter.emit_pop(dst_reg);
+            emitter.emit_alu_mi_disp(
+                4,
+                PhysReg::Rsp,
+                8,
+                DispSize::Auto,
+                !rflags_mask,
+                OpWidth::W64,
+            );
+            emitter.emit_alu_mem_disp(
+                0x08,
+                dst_reg,
+                PhysReg::Rsp,
+                8,
+                DispSize::Auto,
+                OpWidth::W64,
+                X86AluEncoding::RmReg,
+            );
+            emitter.emit_pop(dst_reg);
+        }
+        self.code.emit_u8(0x9D); // popfq (merged)
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+        Ok(Some(consumed))
+    }
+
     /// Fuse the x86 lifter's `Load virtual; Crc32C dst,dst,virtual` memory
     /// source into one MMU helper call followed by native CRC32. The identity
     /// bridge has no free guest GPR for the virtual load result, so the helper
@@ -16685,6 +16844,16 @@ impl X86_64Lowerer {
                         validate_idx += consumed;
                         continue;
                     }
+                    if let Some(consumed) = super::runtime::x86_jit_mem_count_source_sequence_len(
+                        block,
+                        validate_idx,
+                        true,
+                        &virtual_definitions,
+                        &virtual_uses,
+                    ) {
+                        validate_idx += consumed;
+                        continue;
+                    }
                     if let Some(consumed) = super::runtime::x86_jit_pop2_sequence_len(
                         block,
                         validate_idx,
@@ -16800,6 +16969,16 @@ impl X86_64Lowerer {
                 }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_mem_alu_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_mem_count_source(
                     block,
                     idx,
                     &virtual_definitions,
@@ -21615,6 +21794,59 @@ mod tests {
         }
         // MOV R8, R9 = 4D 89 C8
         assert_eq!(buf.data(), &[0x4D, 0x89, 0xC8]);
+    }
+
+    #[test]
+    fn emit_scalar_count_memory_encodes_stack_sources_and_partial_widths() {
+        let mut buf = CodeBuffer::new();
+        {
+            let mut emit = X86Emitter::new(&mut buf);
+            emit.emit_x86_count_rm(
+                X86CountKind::Popcnt,
+                PhysReg::R8,
+                PhysReg::Rsp,
+                0,
+                OpWidth::W16,
+            );
+            emit.emit_x86_count_rm(
+                X86CountKind::Lzcnt,
+                PhysReg::R15,
+                PhysReg::Rsp,
+                8,
+                OpWidth::W64,
+            );
+        }
+        assert_eq!(
+            buf.data(),
+            &[
+                0xF3, 0x66, 0x44, 0x0F, 0xB8, 0x04, 0x24, // popcnt r8w,[rsp]
+                0xF3, 0x4C, 0x0F, 0xBD, 0x7C, 0x24, 0x08, // lzcnt r15,[rsp+8]
+            ]
+        );
+    }
+
+    #[test]
+    fn lower_helper_backed_scalar_count_consumes_staged_stack_source() {
+        // popcnt r8w, word ptr [rbx]; hlt
+        let (lowered, entry) =
+            lower_rex2_block_with_mem_helpers(&[0xF3, 0x66, 0x44, 0x0F, 0xB8, 0x03, 0xF4], true);
+        assert!(entry < lowered.len());
+        assert!(
+            lowered
+                .windows(7)
+                .any(|bytes| bytes == [0xF3, 0x66, 0x44, 0x0F, 0xB8, 0x04, 0x24]),
+            "helper-backed POPCNT must consume the caller-owned stack word: {lowered:02X?}"
+        );
+        let mut helper_call = vec![0xFF, 0x90];
+        helper_call.extend_from_slice(&(X86_GUEST_LOAD_FN_OFFSET as u32).to_le_bytes());
+        assert_eq!(
+            lowered
+                .windows(helper_call.len())
+                .filter(|bytes| *bytes == helper_call)
+                .count(),
+            1,
+            "memory-source count must issue exactly one load helper call"
+        );
     }
 
     #[test]
