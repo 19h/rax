@@ -14383,6 +14383,7 @@ impl X86_64Lowerer {
     /// stages the helper result after the call. This covers destructive legacy
     /// forms, APX NDD operand order/aliasing, and compare/test forms without
     /// assigning the SSA temporary to a live guest GPR.
+    #[cfg(feature = "smir-jit")]
     fn try_lower_jit_mem_alu_source(
         &mut self,
         block: &SmirBlock,
@@ -16097,6 +16098,7 @@ impl X86_64Lowerer {
             // helper-backed scalar/CRC fusions below are explicitly restricted
             // to that mode.
             if self.mem_helpers {
+                #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_mem_alu_source(
                     block,
                     idx,
