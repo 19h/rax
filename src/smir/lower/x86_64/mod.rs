@@ -2914,6 +2914,16 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(dst, src);
     }
 
+    fn emit_imul_immediate(&mut self, imm: i32, width: OpWidth, use_imm8: bool) {
+        if use_imm8 {
+            self.code.emit_i8(imm as i8);
+        } else if width == OpWidth::W16 {
+            self.code.emit_u16(imm as u16);
+        } else {
+            self.code.emit_i32(imm);
+        }
+    }
+
     /// IMUL r, r/m using a base-plus-displacement memory source.
     pub fn emit_imul_rm_disp(
         &mut self,
@@ -2932,16 +2942,10 @@ impl<'a> X86Emitter<'a> {
     /// IMUL r, r/m, imm (three-operand form)
     pub fn emit_imul_rri(&mut self, dst: PhysReg, src: PhysReg, imm: i32, width: OpWidth) {
         self.emit_rex_for_width(width, dst, src);
-
-        if imm >= -128 && imm <= 127 {
-            self.code.emit_u8(0x6B);
-            self.emit_modrm_rr(dst, src);
-            self.code.emit_i8(imm as i8);
-        } else {
-            self.code.emit_u8(0x69);
-            self.emit_modrm_rr(dst, src);
-            self.code.emit_i32(imm);
-        }
+        let use_imm8 = (-128..=127).contains(&imm);
+        self.code.emit_u8(if use_imm8 { 0x6B } else { 0x69 });
+        self.emit_modrm_rr(dst, src);
+        self.emit_imul_immediate(imm, width, use_imm8);
     }
 
     pub fn emit_imul_rri_force(
@@ -2953,15 +2957,9 @@ impl<'a> X86Emitter<'a> {
         use_imm8: bool,
     ) {
         self.emit_rex_for_width(width, dst, src);
-        if use_imm8 {
-            self.code.emit_u8(0x6B);
-            self.emit_modrm_rr(dst, src);
-            self.code.emit_i8(imm as i8);
-        } else {
-            self.code.emit_u8(0x69);
-            self.emit_modrm_rr(dst, src);
-            self.code.emit_i32(imm);
-        }
+        self.code.emit_u8(if use_imm8 { 0x6B } else { 0x69 });
+        self.emit_modrm_rr(dst, src);
+        self.emit_imul_immediate(imm, width, use_imm8);
     }
 
     pub fn emit_imul_rmi_disp(
@@ -2975,15 +2973,9 @@ impl<'a> X86Emitter<'a> {
         use_imm8: bool,
     ) {
         self.emit_rex_for_width_mem_reg(width, dst, base, None);
-        if use_imm8 {
-            self.code.emit_u8(0x6B);
-            self.emit_modrm_mem_disp(dst, base, disp, disp_size);
-            self.code.emit_i8(imm as i8);
-        } else {
-            self.code.emit_u8(0x69);
-            self.emit_modrm_mem_disp(dst, base, disp, disp_size);
-            self.code.emit_i32(imm);
-        }
+        self.code.emit_u8(if use_imm8 { 0x6B } else { 0x69 });
+        self.emit_modrm_mem_disp(dst, base, disp, disp_size);
+        self.emit_imul_immediate(imm, width, use_imm8);
     }
 
     pub fn emit_imul_rmi_sib_disp(
@@ -3000,15 +2992,9 @@ impl<'a> X86Emitter<'a> {
     ) {
         let base_reg = base.unwrap_or(PhysReg::Rbp);
         self.emit_rex_for_width_mem_reg(width, dst, base_reg, Some(index));
-        if use_imm8 {
-            self.code.emit_u8(0x6B);
-            self.emit_modrm_sib_disp(dst, base, index, scale, disp, disp_size);
-            self.code.emit_i8(imm as i8);
-        } else {
-            self.code.emit_u8(0x69);
-            self.emit_modrm_sib_disp(dst, base, index, scale, disp, disp_size);
-            self.code.emit_i32(imm);
-        }
+        self.code.emit_u8(if use_imm8 { 0x6B } else { 0x69 });
+        self.emit_modrm_sib_disp(dst, base, index, scale, disp, disp_size);
+        self.emit_imul_immediate(imm, width, use_imm8);
     }
 
     pub fn emit_imul_rmi_abs(
@@ -3020,15 +3006,9 @@ impl<'a> X86Emitter<'a> {
         use_imm8: bool,
     ) {
         self.emit_rex_for_width_mem_reg(width, dst, PhysReg::Rbp, None);
-        if use_imm8 {
-            self.code.emit_u8(0x6B);
-            self.emit_modrm_abs(dst, addr);
-            self.code.emit_i8(imm as i8);
-        } else {
-            self.code.emit_u8(0x69);
-            self.emit_modrm_abs(dst, addr);
-            self.code.emit_i32(imm);
-        }
+        self.code.emit_u8(if use_imm8 { 0x6B } else { 0x69 });
+        self.emit_modrm_abs(dst, addr);
+        self.emit_imul_immediate(imm, width, use_imm8);
     }
 
     pub fn emit_imul_rmi_pcrel(
@@ -3040,17 +3020,10 @@ impl<'a> X86Emitter<'a> {
         use_imm8: bool,
     ) -> usize {
         self.emit_rex_for_width_mem_reg(width, dst, PhysReg::Rbp, None);
-        if use_imm8 {
-            self.code.emit_u8(0x6B);
-            let offset = self.emit_modrm_pcrel(dst, disp);
-            self.code.emit_i8(imm as i8);
-            offset
-        } else {
-            self.code.emit_u8(0x69);
-            let offset = self.emit_modrm_pcrel(dst, disp);
-            self.code.emit_i32(imm);
-            offset
-        }
+        self.code.emit_u8(if use_imm8 { 0x6B } else { 0x69 });
+        let offset = self.emit_modrm_pcrel(dst, disp);
+        self.emit_imul_immediate(imm, width, use_imm8);
+        offset
     }
 
     /// MUL r/m (unsigned, RDX:RAX = RAX * r/m)
@@ -21796,6 +21769,116 @@ mod tests {
         }
         // ADD RAX, RBX = 48 01 D8
         assert_eq!(buf.data(), &[0x48, 0x01, 0xD8]);
+    }
+
+    #[test]
+    fn emit_imul_imm16_uses_operand_sized_immediate_for_every_address_form() {
+        let emitted = |f: &dyn Fn(&mut X86Emitter<'_>)| {
+            let mut buf = CodeBuffer::new();
+            {
+                let mut emit = X86Emitter::new(&mut buf);
+                f(&mut emit);
+            }
+            buf.data().to_vec()
+        };
+
+        assert_eq!(
+            emitted(&|emit| {
+                emit.emit_imul_rri(PhysReg::Rax, PhysReg::Rcx, 0x1234, OpWidth::W16)
+            }),
+            [0x66, 0x69, 0xC1, 0x34, 0x12]
+        );
+        assert_eq!(
+            emitted(&|emit| {
+                emit.emit_imul_rri_force(PhysReg::R8, PhysReg::R9, 0x1234, OpWidth::W16, false)
+            }),
+            [0x66, 0x45, 0x69, 0xC1, 0x34, 0x12]
+        );
+        assert_eq!(
+            emitted(&|emit| {
+                emit.emit_imul_rmi_disp(
+                    PhysReg::R8,
+                    PhysReg::Rsp,
+                    8,
+                    DispSize::Disp8,
+                    0x1234,
+                    OpWidth::W16,
+                    false,
+                )
+            }),
+            [0x66, 0x44, 0x69, 0x44, 0x24, 0x08, 0x34, 0x12]
+        );
+        assert_eq!(
+            emitted(&|emit| {
+                emit.emit_imul_rmi_sib_disp(
+                    PhysReg::R9,
+                    Some(PhysReg::Rbx),
+                    PhysReg::Rsi,
+                    4,
+                    0x1234_5678,
+                    DispSize::Disp32,
+                    0x1234,
+                    OpWidth::W16,
+                    false,
+                )
+            }),
+            [
+                0x66, 0x44, 0x69, 0x8C, 0xB3, 0x78, 0x56, 0x34, 0x12, 0x34, 0x12,
+            ]
+        );
+        assert_eq!(
+            emitted(&|emit| {
+                emit.emit_imul_rmi_abs(PhysReg::R10, 0x1234_5678, 0x1234, OpWidth::W16, false)
+            }),
+            [
+                0x66, 0x44, 0x69, 0x14, 0x25, 0x78, 0x56, 0x34, 0x12, 0x34, 0x12,
+            ]
+        );
+
+        let mut pcrel = CodeBuffer::new();
+        let disp_offset = {
+            let mut emit = X86Emitter::new(&mut pcrel);
+            emit.emit_imul_rmi_pcrel(PhysReg::R11, 0x1234_5678, 0x1234, OpWidth::W16, false)
+        };
+        assert_eq!(disp_offset, 4);
+        assert_eq!(
+            pcrel.data(),
+            &[0x66, 0x44, 0x69, 0x1D, 0x78, 0x56, 0x34, 0x12, 0x34, 0x12]
+        );
+
+        assert_eq!(
+            emitted(&|emit| {
+                emit.emit_imul_rri_force(PhysReg::Rax, PhysReg::Rcx, -128, OpWidth::W16, true)
+            }),
+            [0x66, 0x6B, 0xC1, 0x80],
+            "opcode 6B must retain its sign-extended imm8"
+        );
+        assert_eq!(
+            emitted(&|emit| {
+                emit.emit_imul_rri_force(
+                    PhysReg::Rax,
+                    PhysReg::Rcx,
+                    0x1234_5678,
+                    OpWidth::W32,
+                    false,
+                )
+            }),
+            [0x69, 0xC1, 0x78, 0x56, 0x34, 0x12],
+            "32-bit opcode 69 must retain imm32"
+        );
+        assert_eq!(
+            emitted(&|emit| {
+                emit.emit_imul_rri_force(
+                    PhysReg::Rax,
+                    PhysReg::Rcx,
+                    0x1234_5678,
+                    OpWidth::W64,
+                    false,
+                )
+            }),
+            [0x48, 0x69, 0xC1, 0x78, 0x56, 0x34, 0x12],
+            "64-bit opcode 69 must retain sign-extended imm32"
+        );
     }
 
     #[test]
