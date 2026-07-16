@@ -15752,6 +15752,388 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
+    /// Lower exact x86 `IDIV r/m` through zero-divisor and signed quotient-
+    /// range guards. The guard compares the unsigned magnitude of the signed
+    /// 2N-bit dividend against `|divisor| * 2^(N-1)` for a nonnegative
+    /// quotient, or `|divisor| * (2^(N-1) + 1)` for a negative quotient. A
+    /// value at or above the selected threshold cannot fit in the N-bit signed
+    /// quotient and deoptimizes at the current guest PC before native IDIV.
+    #[cfg(feature = "smir-jit")]
+    fn try_lower_jit_signed_div(
+        &mut self,
+        block: &SmirBlock,
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        if !self.jit_fault_deopt_guards {
+            return Ok(None);
+        }
+
+        enum DivisorSource {
+            Memory {
+                addr: Address,
+                mem_width: MemWidth,
+                guest_pc: u64,
+            },
+            Register(VReg),
+            LegacyHighByte(VReg),
+        }
+
+        let (source, consumer_idx, consumed) = if self.mem_helpers
+            && super::runtime::x86_jit_mem_signed_div_source_sequence_len(
+                block,
+                idx,
+                true,
+                virtual_definitions,
+                virtual_uses,
+            )
+            .is_some()
+        {
+            let OpKind::Load {
+                addr,
+                width,
+                sign: SignExtend::Zero,
+                ..
+            } = &block.ops[idx].kind
+            else {
+                unreachable!("validated signed memory IDIV starts with Load")
+            };
+            (
+                DivisorSource::Memory {
+                    addr: addr.clone(),
+                    mem_width: *width,
+                    guest_pc: block.ops[idx].guest_pc,
+                },
+                idx + 1,
+                2,
+            )
+        } else if super::runtime::x86_jit_high_byte_signed_div_source_sequence_len(
+            block,
+            idx,
+            virtual_definitions,
+            virtual_uses,
+        )
+        .is_some()
+        {
+            let OpKind::Shr {
+                src: parent,
+                width: OpWidth::W64,
+                ..
+            } = &block.ops[idx].kind
+            else {
+                unreachable!("validated high-byte signed IDIV starts with Shr")
+            };
+            (DivisorSource::LegacyHighByte(*parent), idx + 1, 2)
+        } else if super::runtime::x86_jit_signed_div_register_shape_valid(&block.ops[idx]) {
+            let OpKind::DivS {
+                src2: SrcOperand::Reg(source),
+                ..
+            } = &block.ops[idx].kind
+            else {
+                unreachable!("validated register signed IDIV")
+            };
+            (DivisorSource::Register(*source), idx, 1)
+        } else {
+            return Ok(None);
+        };
+
+        let consumer = &block.ops[consumer_idx];
+        let width = match &consumer.kind {
+            OpKind::DivS { width, .. } => *width,
+            _ => unreachable!("validated signed IDIV consumer"),
+        };
+
+        // The 48-byte caller frame remains 16-byte aligned across memory
+        // helper calls. After four snapshots the layout is:
+        // [rsp+0]=old RCX, [rsp+8]=old RDX, [rsp+16]=old RAX,
+        // [rsp+24]=old RFLAGS, [rsp+32]=raw divisor,
+        // [rsp+40]=|divisor|, [rsp+48]=|dividend| low,
+        // [rsp+56]=|dividend| high, [rsp+64]=quotient-sign bits.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -48);
+        }
+        match &source {
+            DivisorSource::Memory {
+                addr,
+                mem_width,
+                guest_pc,
+            } => self.emit_jit_mem_op(
+                *guest_pc,
+                true,
+                None,
+                Some(16),
+                None,
+                None,
+                None,
+                addr,
+                *mem_width,
+                SignExtend::Zero,
+                48,
+            )?,
+            DivisorSource::Register(source) | DivisorSource::LegacyHighByte(source) => {
+                self.emit_jit_stage_arch_gpr(*source, 0)?;
+            }
+        }
+
+        self.code.emit_u8(0x9C); // pushfq
+        self.code.emit_u8(0x50); // push rax
+        self.code.emit_u8(0x52); // push rdx
+        self.code.emit_u8(0x51); // push rcx
+
+        if matches!(source, DivisorSource::LegacyHighByte(_)) {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 32, OpWidth::W64);
+            emitter.emit_shr_ri(PhysReg::Rax, 8, OpWidth::W64);
+            emitter.emit_mov_mr(PhysReg::Rsp, 32, PhysReg::Rax, OpWidth::W64);
+        }
+
+        let mut fault_branches = Vec::with_capacity(4);
+
+        // Reject a zero divisor using the architected operand width.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            if matches!(width, OpWidth::W8 | OpWidth::W16) {
+                emitter.emit_xor_rr(PhysReg::Rax, PhysReg::Rax, OpWidth::W32);
+            }
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 32, width);
+            emitter.emit_test_rr(PhysReg::Rax, PhysReg::Rax, width);
+        }
+        fault_branches.push(self.emit_jcc_placeholder(X86Cond::E));
+
+        // Preserve the sign of the mathematical quotient as the sign bit of
+        // (dividend high half XOR divisor) at the operand width.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            if width == OpWidth::W8 {
+                emitter.emit_xor_rr(PhysReg::Rcx, PhysReg::Rcx, OpWidth::W32);
+                emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 16, OpWidth::W16);
+                emitter.emit_shr_ri(PhysReg::Rcx, 8, OpWidth::W16);
+            } else {
+                if width == OpWidth::W16 {
+                    emitter.emit_xor_rr(PhysReg::Rcx, PhysReg::Rcx, OpWidth::W32);
+                }
+                emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 8, width);
+            }
+            if matches!(width, OpWidth::W8 | OpWidth::W16) {
+                emitter.emit_xor_rr(PhysReg::Rax, PhysReg::Rax, OpWidth::W32);
+            }
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 32, width);
+            emitter.emit_xor_rr(PhysReg::Rcx, PhysReg::Rax, width);
+            emitter.emit_mov_mr(PhysReg::Rsp, 64, PhysReg::Rcx, OpWidth::W64);
+        }
+
+        // Convert the N-bit signed divisor to an exact unsigned magnitude.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            if matches!(width, OpWidth::W8 | OpWidth::W16) {
+                emitter.emit_xor_rr(PhysReg::Rax, PhysReg::Rax, OpWidth::W32);
+            }
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 32, width);
+            emitter.emit_test_rr(PhysReg::Rax, PhysReg::Rax, width);
+        }
+        let divisor_nonnegative = self.emit_jcc_placeholder(X86Cond::Ns);
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_neg(PhysReg::Rax, width);
+        }
+        let divisor_magnitude_ready = self.code.position();
+        self.code.patch_i32(
+            divisor_nonnegative,
+            (divisor_magnitude_ready as i64 - (divisor_nonnegative as i64 + 4)) as i32,
+        );
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rsp, 40, PhysReg::Rax, OpWidth::W64);
+        }
+
+        if width == OpWidth::W64 {
+            // Exact unsigned magnitude of the signed 128-bit RDX:RAX value.
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 16, OpWidth::W64);
+                emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rsp, 8, OpWidth::W64);
+                emitter.emit_test_rr(PhysReg::Rdx, PhysReg::Rdx, OpWidth::W64);
+            }
+            let dividend_nonnegative = self.emit_jcc_placeholder(X86Cond::Ns);
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_neg(PhysReg::Rax, OpWidth::W64);
+                emitter.emit_adc_ri(PhysReg::Rdx, 0, OpWidth::W64);
+                emitter.emit_neg(PhysReg::Rdx, OpWidth::W64);
+            }
+            let dividend_magnitude_ready = self.code.position();
+            self.code.patch_i32(
+                dividend_nonnegative,
+                (dividend_magnitude_ready as i64 - (dividend_nonnegative as i64 + 4)) as i32,
+            );
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_mr(PhysReg::Rsp, 48, PhysReg::Rax, OpWidth::W64);
+                emitter.emit_mov_mr(PhysReg::Rsp, 56, PhysReg::Rdx, OpWidth::W64);
+
+                // T = |d| << 63, represented as RDX:RAX.
+                emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 40, OpWidth::W64);
+                emitter.emit_mov_rr(PhysReg::Rdx, PhysReg::Rax, OpWidth::W64);
+                emitter.emit_shl_ri(PhysReg::Rax, 63, OpWidth::W64);
+                emitter.emit_shr_ri(PhysReg::Rdx, 1, OpWidth::W64);
+                emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 64, OpWidth::W64);
+                emitter.emit_test_rr(PhysReg::Rcx, PhysReg::Rcx, OpWidth::W64);
+            }
+            let quotient_nonnegative = self.emit_jcc_placeholder(X86Cond::Ns);
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                // Negative quotients admit magnitude 2^(N-1), so their first
+                // overflowing magnitude is |d| * (2^(N-1) + 1).
+                emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 40, OpWidth::W64);
+                emitter.emit_add_rr(PhysReg::Rax, PhysReg::Rcx, OpWidth::W64);
+                emitter.emit_adc_ri(PhysReg::Rdx, 0, OpWidth::W64);
+            }
+            let threshold_ready = self.code.position();
+            self.code.patch_i32(
+                quotient_nonnegative,
+                (threshold_ready as i64 - (quotient_nonnegative as i64 + 4)) as i32,
+            );
+
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 56, OpWidth::W64);
+                emitter.emit_cmp_rr(PhysReg::Rcx, PhysReg::Rdx, OpWidth::W64);
+            }
+            fault_branches.push(self.emit_jcc_placeholder(X86Cond::A));
+            let high_below_threshold = self.emit_jcc_placeholder(X86Cond::B);
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 48, OpWidth::W64);
+                emitter.emit_cmp_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+            }
+            fault_branches.push(self.emit_jcc_placeholder(X86Cond::Ae));
+            let range_guard_done = self.code.position();
+            self.code.patch_i32(
+                high_below_threshold,
+                (range_guard_done as i64 - (high_below_threshold as i64 + 4)) as i32,
+            );
+        } else {
+            let dividend_width = match width {
+                OpWidth::W8 => OpWidth::W16,
+                OpWidth::W16 => OpWidth::W32,
+                OpWidth::W32 => OpWidth::W64,
+                _ => unreachable!("signed division width validated above"),
+            };
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                match width {
+                    OpWidth::W8 => {
+                        emitter.emit_xor_rr(PhysReg::Rcx, PhysReg::Rcx, OpWidth::W32);
+                        emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 16, OpWidth::W16);
+                    }
+                    OpWidth::W16 => {
+                        emitter.emit_xor_rr(PhysReg::Rcx, PhysReg::Rcx, OpWidth::W32);
+                        emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 8, OpWidth::W16);
+                        emitter.emit_shl_ri(PhysReg::Rcx, 16, OpWidth::W32);
+                        emitter.emit_xor_rr(PhysReg::Rax, PhysReg::Rax, OpWidth::W32);
+                        emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 16, OpWidth::W16);
+                        emitter.emit_or_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W32);
+                    }
+                    OpWidth::W32 => {
+                        emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 8, OpWidth::W32);
+                        emitter.emit_shl_ri(PhysReg::Rcx, 32, OpWidth::W64);
+                        emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 16, OpWidth::W32);
+                        emitter.emit_or_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+                    }
+                    _ => unreachable!("signed division width validated above"),
+                }
+                emitter.emit_test_rr(PhysReg::Rcx, PhysReg::Rcx, dividend_width);
+            }
+            let dividend_nonnegative = self.emit_jcc_placeholder(X86Cond::Ns);
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_neg(PhysReg::Rcx, dividend_width);
+            }
+            let dividend_magnitude_ready = self.code.position();
+            self.code.patch_i32(
+                dividend_nonnegative,
+                (dividend_magnitude_ready as i64 - (dividend_nonnegative as i64 + 4)) as i32,
+            );
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_mr(PhysReg::Rsp, 48, PhysReg::Rcx, OpWidth::W64);
+                emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 40, OpWidth::W64);
+                emitter.emit_shl_ri(
+                    PhysReg::Rax,
+                    match width {
+                        OpWidth::W8 => 7,
+                        OpWidth::W16 => 15,
+                        OpWidth::W32 => 31,
+                        _ => unreachable!("signed division width validated above"),
+                    },
+                    OpWidth::W64,
+                );
+                emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 64, OpWidth::W64);
+                emitter.emit_test_rr(PhysReg::Rcx, PhysReg::Rcx, width);
+            }
+            let quotient_nonnegative = self.emit_jcc_placeholder(X86Cond::Ns);
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 40, OpWidth::W64);
+                emitter.emit_add_rr(PhysReg::Rax, PhysReg::Rcx, OpWidth::W64);
+            }
+            let threshold_ready = self.code.position();
+            self.code.patch_i32(
+                quotient_nonnegative,
+                (threshold_ready as i64 - (quotient_nonnegative as i64 + 4)) as i32,
+            );
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 48, OpWidth::W64);
+                emitter.emit_cmp_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+            }
+            fault_branches.push(self.emit_jcc_placeholder(X86Cond::Ae));
+        }
+
+        // Only the range-proven path restores the implicit dividend and runs
+        // native /7 against the unchanged raw signed divisor.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 0, OpWidth::W64);
+            emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rsp, 8, OpWidth::W64);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 16, OpWidth::W64);
+            emitter.emit_group3_m_disp(7, PhysReg::Rsp, 32, DispSize::Auto, width);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 24);
+        }
+        self.code.emit_u8(0x9D); // restore architecturally undefined flags deterministically
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 48);
+        }
+        self.code.emit_u8(0xE9);
+        let success_done = self.code.position();
+        self.code.emit_u32(0);
+
+        let fault = self.code.position();
+        for branch in fault_branches {
+            self.code
+                .patch_i32(branch, (fault as i64 - (branch as i64 + 4)) as i32);
+        }
+        self.code.emit_u8(0x59); // restore old RCX
+        self.code.emit_u8(0x5A); // restore old RDX
+        self.code.emit_u8(0x58); // restore old RAX
+        self.code.emit_u8(0x9D); // restore old RFLAGS
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 48);
+        }
+        self.emit_native_exit(consumer.guest_pc);
+
+        let done = self.code.position();
+        self.code.patch_i32(
+            success_done,
+            (done as i64 - (success_done as i64 + 4)) as i32,
+        );
+        Ok(Some(consumed))
+    }
+
     /// Fuse the x86 lifter's exact non-locked immediate memory BTS/BTR/BTC
     /// sequence. The original and updated operands remain in caller-owned
     /// stack words across the MMU helpers. Speculative native modification is
@@ -17653,6 +18035,18 @@ impl X86_64Lowerer {
                             validate_idx += consumed;
                             continue;
                         }
+                        if let Some(consumed) =
+                            super::runtime::x86_jit_mem_signed_div_source_sequence_len(
+                                block,
+                                validate_idx,
+                                true,
+                                &virtual_definitions,
+                                &virtual_uses,
+                            )
+                        {
+                            validate_idx += consumed;
+                            continue;
+                        }
                     }
                     if let Some(consumed) = super::runtime::x86_jit_mem_bit_test_source_sequence_len(
                         block,
@@ -17727,7 +18121,24 @@ impl X86_64Lowerer {
                         validate_idx += consumed;
                         continue;
                     }
+                    if let Some(consumed) =
+                        super::runtime::x86_jit_high_byte_signed_div_source_sequence_len(
+                            block,
+                            validate_idx,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += consumed;
+                        continue;
+                    }
                     if super::runtime::x86_jit_unsigned_div_register_shape_valid(
+                        &block.ops[validate_idx],
+                    ) {
+                        validate_idx += 1;
+                        continue;
+                    }
+                    if super::runtime::x86_jit_signed_div_register_shape_valid(
                         &block.ops[validate_idx],
                     ) {
                         validate_idx += 1;
@@ -17946,6 +18357,13 @@ impl X86_64Lowerer {
             #[cfg(feature = "smir-jit")]
             if let Some(consumed) =
                 self.try_lower_jit_unsigned_div(block, idx, &virtual_definitions, &virtual_uses)?
+            {
+                idx += consumed;
+                continue;
+            }
+            #[cfg(feature = "smir-jit")]
+            if let Some(consumed) =
+                self.try_lower_jit_signed_div(block, idx, &virtual_definitions, &virtual_uses)?
             {
                 idx += consumed;
                 continue;
@@ -23293,6 +23711,121 @@ mod tests {
                     .windows(expected_divide.len())
                     .any(|bytes| bytes == expected_divide),
                 "{name} must use the staged helper result: {memory:02X?}"
+            );
+        }
+    }
+
+    #[cfg(feature = "smir-jit")]
+    #[test]
+    fn lower_guarded_signed_division_stages_every_source_class() {
+        for (name, instruction, expected_divide) in [
+            (
+                "IDIV BL",
+                &[0xF6, 0xFB, 0xF4][..],
+                &[0xF6, 0x7C, 0x24, 0x20][..],
+            ),
+            (
+                "IDIV SP",
+                &[0x66, 0xF7, 0xFC, 0xF4][..],
+                &[0x66, 0xF7, 0x7C, 0x24, 0x20][..],
+            ),
+            (
+                "IDIV EBP",
+                &[0xF7, 0xFD, 0xF4][..],
+                &[0xF7, 0x7C, 0x24, 0x20][..],
+            ),
+            (
+                "IDIV R15",
+                &[0x49, 0xF7, 0xFF, 0xF4][..],
+                &[0x48, 0xF7, 0x7C, 0x24, 0x20][..],
+            ),
+            (
+                "IDIV R16",
+                &[0xD5, 0x18, 0xF7, 0xF8, 0xF4][..],
+                &[0x48, 0xF7, 0x7C, 0x24, 0x20][..],
+            ),
+            (
+                "APX NF IDIV RBX",
+                &[0x62, 0xF4, 0xFC, 0x0C, 0xF7, 0xFB, 0xF4][..],
+                &[0x48, 0xF7, 0x7C, 0x24, 0x20][..],
+            ),
+        ] {
+            let (lowered, entry) = lower_jit_guarded_x86_block(instruction, false);
+            assert!(entry < lowered.len(), "{name}");
+            assert!(
+                lowered
+                    .windows(expected_divide.len())
+                    .any(|bytes| bytes == expected_divide),
+                "{name} must divide by the unchanged staged signed source: {lowered:02X?}"
+            );
+            assert!(
+                lowered.windows(2).any(|bytes| bytes == [0x0F, 0x84]),
+                "{name} must guard a zero divisor: {lowered:02X?}"
+            );
+            assert!(
+                lowered.windows(2).any(|bytes| bytes == [0x0F, 0x83]),
+                "{name} must guard the signed quotient threshold: {lowered:02X?}"
+            );
+            assert!(
+                lowered.windows(2).any(|bytes| bytes == [0x0F, 0x89]),
+                "{name} must select the threshold by quotient sign: {lowered:02X?}"
+            );
+            if name == "IDIV R16" {
+                assert!(
+                    lowered
+                        .windows(7)
+                        .any(|bytes| bytes == [0x48, 0x8B, 0x88, 0x80, 0x00, 0x00, 0x00]),
+                    "REX2 B4 must select canonical GuestRegs.gpr[16]: {lowered:02X?}"
+                );
+            }
+        }
+
+        let (high, _) = lower_jit_guarded_x86_block(&[0xF6, 0xFD, 0xF4], false);
+        assert!(
+            high.windows(4)
+                .any(|bytes| bytes == [0x48, 0xC1, 0xE8, 0x08]),
+            "IDIV CH must extract the staged legacy high byte: {high:02X?}"
+        );
+        assert!(
+            high.windows(4)
+                .any(|bytes| bytes == [0xF6, 0x7C, 0x24, 0x20]),
+            "IDIV CH must consume the unchanged extracted stack byte: {high:02X?}"
+        );
+
+        for (name, instruction, expected_divide) in [
+            (
+                "IDIV byte [RBX]",
+                &[0xF6, 0x3B, 0xF4][..],
+                &[0xF6, 0x7C, 0x24, 0x20][..],
+            ),
+            (
+                "IDIV word [RBX]",
+                &[0x66, 0xF7, 0x3B, 0xF4][..],
+                &[0x66, 0xF7, 0x7C, 0x24, 0x20][..],
+            ),
+            (
+                "IDIV dword [RBX]",
+                &[0xF7, 0x3B, 0xF4][..],
+                &[0xF7, 0x7C, 0x24, 0x20][..],
+            ),
+            (
+                "IDIV qword [RBX]",
+                &[0x48, 0xF7, 0x3B, 0xF4][..],
+                &[0x48, 0xF7, 0x7C, 0x24, 0x20][..],
+            ),
+        ] {
+            let (memory, _) = lower_jit_guarded_x86_block(instruction, true);
+            assert!(
+                memory
+                    .windows(5)
+                    .any(|bytes| bytes == [0x48, 0x89, 0x44, 0x24, 0x10]),
+                "{name} must stage the zero-extended helper result: {memory:02X?}"
+            );
+            assert!(
+                memory
+                    .windows(expected_divide.len())
+                    .any(|bytes| bytes == expected_divide),
+                "{name} must use the raw staged helper result: {memory:02X?}"
             );
         }
     }

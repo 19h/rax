@@ -2789,6 +2789,638 @@ fn jit_guarded_unsigned_division_matches_all_widths_sources_and_faults() {
     assert_eq!(after.rip, LOAD_ADDR + 10, "restart at the DIV instruction");
 }
 
+/// Signed IDIV uses an exact magnitude threshold before native execution. The
+/// successful path covers every operand width, all quotient sign combinations,
+/// 128-bit dividend magnitudes, aliases, APX sources, and helper-backed memory;
+/// every architected #DE condition deoptimizes without committing IDIV.
+#[test]
+fn jit_guarded_signed_division_matches_all_widths_boundaries_and_faults() {
+    const DATA: u64 = 0x20_0000;
+    const INITIAL_RFLAGS: u64 = 0xCD7;
+
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        apx: bool,
+        rax: u64,
+        rcx: u64,
+        rdx: u64,
+        rbx: u64,
+        rsp: u64,
+        rbp: u64,
+        r16: u64,
+        memory: Option<u64>,
+        expected_rax: u64,
+        expected_rdx: u64,
+    }
+
+    let cases = [
+        Case {
+            name: "IDIV BL negative dividend",
+            instruction: &[0xF6, 0xFB],
+            apx: false,
+            rax: 0xA5A5_5A5A_1357_FFDF,
+            rcx: 0x8877_6655_4433_2211,
+            rdx: 0x1122_3344_5566_7788,
+            rbx: 5,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: 0xA5A5_5A5A_1357_FDFA,
+            expected_rdx: 0x1122_3344_5566_7788,
+        },
+        Case {
+            name: "IDIV CH negative divisor",
+            instruction: &[0xF6, 0xFD],
+            apx: false,
+            rax: 0xA5A5_5A5A_1357_0021,
+            rcx: 0x8877_6655_4433_FB11,
+            rdx: 0x1122_3344_5566_7788,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: 0xA5A5_5A5A_1357_03FA,
+            expected_rdx: 0x1122_3344_5566_7788,
+        },
+        Case {
+            name: "minimum byte quotient boundary",
+            instruction: &[0xF6, 0xFB],
+            apx: false,
+            rax: 0xA5A5_5A5A_1357_FF80,
+            rcx: 0x8877_6655_4433_2211,
+            rdx: 0x1122_3344_5566_7788,
+            rbx: 1,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: 0xA5A5_5A5A_1357_0080,
+            expected_rdx: 0x1122_3344_5566_7788,
+        },
+        Case {
+            name: "IDIV CX negative by positive",
+            instruction: &[0x66, 0xF7, 0xF9],
+            apx: false,
+            rax: 0xA5A5_5A5A_1357_7960,
+            rcx: 300,
+            rdx: 0x1122_3344_5566_FFFE,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: 0xA5A5_5A5A_1357_FEB3,
+            expected_rdx: 0x1122_3344_5566_FF9C,
+        },
+        Case {
+            name: "IDIV ECX negative by negative",
+            instruction: &[0xF7, 0xF9],
+            apx: false,
+            rax: 0xA5A5_5A5A_ABF4_1C00,
+            rcx: (-3000i64) as u64,
+            rdx: 0x1122_3344_FFFF_FFFD,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: 0x0032_DCD5,
+            expected_rdx: 0xFFFF_FC18,
+        },
+        Case {
+            name: "IDIV RCX positive 128-bit dividend",
+            instruction: &[0x48, 0xF7, 0xF9],
+            apx: false,
+            rax: 0,
+            rcx: 3,
+            rdx: 1,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: 0x5555_5555_5555_5555,
+            expected_rdx: 1,
+        },
+        Case {
+            name: "IDIV RCX negative 128-bit dividend low zero",
+            instruction: &[0x48, 0xF7, 0xF9],
+            apx: false,
+            rax: 0,
+            rcx: 3,
+            rdx: u64::MAX,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: 0xAAAA_AAAA_AAAA_AAAB,
+            expected_rdx: u64::MAX,
+        },
+        Case {
+            name: "IDIV RCX negative 128-bit dividend low nonzero",
+            instruction: &[0x48, 0xF7, 0xF9],
+            apx: false,
+            rax: u64::MAX,
+            rcx: 3,
+            rdx: u64::MAX - 1,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: 0xAAAA_AAAA_AAAA_AAAB,
+            expected_rdx: u64::MAX - 1,
+        },
+        Case {
+            name: "IDIV RAX alias",
+            instruction: &[0x48, 0xF7, 0xF8],
+            apx: false,
+            rax: 7,
+            rcx: 0x8877_6655_4433_2211,
+            rdx: 0,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: 1,
+            expected_rdx: 0,
+        },
+        Case {
+            name: "IDIV RDX alias",
+            instruction: &[0x48, 0xF7, 0xFA],
+            apx: false,
+            rax: (-100i64) as u64,
+            rcx: 0x8877_6655_4433_2211,
+            rdx: u64::MAX,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: 100,
+            expected_rdx: 0,
+        },
+        Case {
+            name: "IDIV RBP state source",
+            instruction: &[0x48, 0xF7, 0xFD],
+            apx: false,
+            rax: 22,
+            rcx: 0x8877_6655_4433_2211,
+            rdx: 0,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: (-3i64) as u64,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: (-7i64) as u64,
+            expected_rdx: 1,
+        },
+        Case {
+            name: "IDIV RSP state source",
+            instruction: &[0x48, 0xF7, 0xFC],
+            apx: false,
+            rax: 22,
+            rcx: 0x8877_6655_4433_2211,
+            rdx: 0,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: (-3i64) as u64,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: (-7i64) as u64,
+            expected_rdx: 1,
+        },
+        Case {
+            name: "APX NF IDIV RBX",
+            instruction: &[0x62, 0xF4, 0xFC, 0x0C, 0xF7, 0xFB],
+            apx: true,
+            rax: 22,
+            rcx: 0x8877_6655_4433_2211,
+            rdx: 0,
+            rbx: (-3i64) as u64,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: (-7i64) as u64,
+            expected_rdx: 1,
+        },
+        Case {
+            name: "IDIV R16 state source",
+            instruction: &[0xD5, 0x18, 0xF7, 0xF8],
+            apx: true,
+            rax: 22,
+            rcx: 0x8877_6655_4433_2211,
+            rdx: 0,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: (-3i64) as u64,
+            memory: None,
+            expected_rax: (-7i64) as u64,
+            expected_rdx: 1,
+        },
+        Case {
+            name: "IDIV byte [RBX] helper source",
+            instruction: &[0xF6, 0x3B],
+            apx: false,
+            rax: 0xA5A5_5A5A_1357_0021,
+            rcx: 0x8877_6655_4433_2211,
+            rdx: 0x1122_3344_5566_7788,
+            rbx: DATA,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: Some(0xFB),
+            expected_rax: 0xA5A5_5A5A_1357_03FA,
+            expected_rdx: 0x1122_3344_5566_7788,
+        },
+        Case {
+            name: "IDIV word [RBX] helper source",
+            instruction: &[0x66, 0xF7, 0x3B],
+            apx: false,
+            rax: 0xA5A5_5A5A_1357_86A0,
+            rcx: 0x8877_6655_4433_2211,
+            rdx: 0x1122_3344_5566_0001,
+            rbx: DATA,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: Some(0xFED4),
+            expected_rax: 0xA5A5_5A5A_1357_FEB3,
+            expected_rdx: 0x1122_3344_5566_0064,
+        },
+        Case {
+            name: "IDIV dword [RBX] helper source",
+            instruction: &[0xF7, 0x3B],
+            apx: false,
+            rax: 0xA5A5_5A5A_ABF4_1C00,
+            rcx: 0x8877_6655_4433_2211,
+            rdx: 0x1122_3344_FFFF_FFFD,
+            rbx: DATA,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: Some(0xFFFF_F448),
+            expected_rax: 0x0032_DCD5,
+            expected_rdx: 0xFFFF_FC18,
+        },
+        Case {
+            name: "IDIV qword [RBX] helper source",
+            instruction: &[0x48, 0xF7, 0x3B],
+            apx: false,
+            rax: (-100i64) as u64,
+            rcx: 0x8877_6655_4433_2211,
+            rdx: u64::MAX,
+            rbx: DATA,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: Some((-7i64) as u64),
+            expected_rax: 14,
+            expected_rdx: (-2i64) as u64,
+        },
+        Case {
+            name: "minimum quotient boundary",
+            instruction: &[0x48, 0xF7, 0xF9],
+            apx: false,
+            rax: i64::MIN as u64,
+            rcx: 1,
+            rdx: u64::MAX,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: i64::MIN as u64,
+            expected_rdx: 0,
+        },
+        Case {
+            name: "maximum quotient boundary",
+            instruction: &[0x48, 0xF7, 0xF9],
+            apx: false,
+            rax: i64::MAX as u64,
+            rcx: 1,
+            rdx: 0,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: i64::MAX as u64,
+            expected_rdx: 0,
+        },
+        Case {
+            name: "minimum divisor boundary",
+            instruction: &[0x48, 0xF7, 0xF9],
+            apx: false,
+            rax: i64::MIN as u64,
+            rcx: i64::MIN as u64,
+            rdx: u64::MAX,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            r16: 0xCAFE_BABE_DEAD_BEEF,
+            memory: None,
+            expected_rax: 1,
+            expected_rdx: 0,
+        },
+    ];
+
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+        let setup = |vcpu: &mut X86_64Vcpu, memory: &Arc<GuestMemoryMmap>| {
+            if let Some(value) = case.memory {
+                memory.write_obj(value, GuestAddress(DATA)).unwrap();
+            }
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = case.rax;
+            regs.rcx = case.rcx;
+            regs.rdx = case.rdx;
+            regs.rbx = case.rbx;
+            regs.rsp = case.rsp;
+            regs.rbp = case.rbp;
+            regs.r8 = 0x0F0E_0D0C_0B0A_0908;
+            regs.r16 = case.r16;
+            regs.rflags = INITIAL_RFLAGS;
+            vcpu.set_regs(&regs).unwrap();
+            vcpu.set_apx_enabled(case.apx);
+        };
+
+        let (mut interp, interp_mem) = make_vcpu_mem(&code);
+        setup(&mut interp, &interp_mem);
+        let expected = if case.instruction.first() == Some(&0xD5) {
+            // The classic step decoder does not expose REX2 Group-3 EGPR.
+            // The lowerer byte-shape test proves that this form selects R16.
+            let mut expected = interp.get_regs().unwrap();
+            expected.rax = case.expected_rax;
+            expected.rdx = case.expected_rdx;
+            expected.rip += case.instruction.len() as u64;
+            expected
+        } else {
+            assert!(
+                interp.step().unwrap().is_none(),
+                "{} interpreter",
+                case.name
+            );
+            interp.get_regs().unwrap()
+        };
+        assert_eq!(
+            expected.rax, case.expected_rax,
+            "{} reference RAX",
+            case.name
+        );
+        assert_eq!(
+            expected.rdx, case.expected_rdx,
+            "{} reference RDX",
+            case.name
+        );
+
+        let (mut jit, jit_mem) = make_vcpu_mem(&code);
+        setup(&mut jit, &jit_mem);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the guarded native tier:\n{}",
+            case.name,
+            jit.jit_dump_region(LOAD_ADDR)
+        );
+        let actual = jit.get_regs().unwrap();
+        let actual_gprs = [
+            actual.rax, actual.rcx, actual.rdx, actual.rbx, actual.rsp, actual.rbp, actual.rsi,
+            actual.rdi, actual.r8, actual.r9, actual.r10, actual.r11, actual.r12, actual.r13,
+            actual.r14, actual.r15, actual.r16, actual.r17, actual.r18, actual.r19, actual.r20,
+            actual.r21, actual.r22, actual.r23, actual.r24, actual.r25, actual.r26, actual.r27,
+            actual.r28, actual.r29, actual.r30, actual.r31,
+        ];
+        let expected_gprs = [
+            expected.rax,
+            expected.rcx,
+            expected.rdx,
+            expected.rbx,
+            expected.rsp,
+            expected.rbp,
+            expected.rsi,
+            expected.rdi,
+            expected.r8,
+            expected.r9,
+            expected.r10,
+            expected.r11,
+            expected.r12,
+            expected.r13,
+            expected.r14,
+            expected.r15,
+            expected.r16,
+            expected.r17,
+            expected.r18,
+            expected.r19,
+            expected.r20,
+            expected.r21,
+            expected.r22,
+            expected.r23,
+            expected.r24,
+            expected.r25,
+            expected.r26,
+            expected.r27,
+            expected.r28,
+            expected.r29,
+            expected.r30,
+            expected.r31,
+        ];
+        for (index, (actual, expected)) in actual_gprs.into_iter().zip(expected_gprs).enumerate() {
+            assert_eq!(actual, expected, "{} GPR index {index}", case.name);
+        }
+        assert_eq!(actual.rflags, expected.rflags, "{} RFLAGS", case.name);
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+        if let Some(value) = case.memory {
+            assert_eq!(
+                jit_mem.read_obj::<u64>(GuestAddress(DATA)).unwrap(),
+                value,
+                "{} source memory",
+                case.name
+            );
+        }
+    }
+
+    for (name, instruction, rax, rcx, rdx, rbx) in [
+        (
+            "zero divisor",
+            &[0x48, 0xF7, 0xF9, 0xF4][..],
+            0x0123_4567_89AB_CDEF,
+            0,
+            0,
+            0x8877_6655_4433_2211,
+        ),
+        (
+            "positive quotient overflow",
+            &[0x48, 0xF7, 0xF9, 0xF4][..],
+            0x8000_0000_0000_0000,
+            1,
+            0,
+            0x8877_6655_4433_2211,
+        ),
+        (
+            "negative quotient overflow",
+            &[0x48, 0xF7, 0xF9, 0xF4][..],
+            0x7FFF_FFFF_FFFF_FFFF,
+            1,
+            u64::MAX,
+            0x8877_6655_4433_2211,
+        ),
+        (
+            "minimum dividend divided by minus one",
+            &[0x48, 0xF7, 0xF9, 0xF4][..],
+            i64::MIN as u64,
+            u64::MAX,
+            u64::MAX,
+            0x8877_6655_4433_2211,
+        ),
+        (
+            "RDX divisor alias overflow",
+            &[0x48, 0xF7, 0xFA, 0xF4][..],
+            i64::MIN as u64,
+            0x7766_5544_3322_1100,
+            u64::MAX,
+            0x8877_6655_4433_2211,
+        ),
+        (
+            "AH divisor alias overflow",
+            &[0xF6, 0xFC, 0xF4][..],
+            0x0123_4567_89AB_8000,
+            0x7766_5544_3322_1100,
+            0x1122_3344_5566_7788,
+            0x8877_6655_4433_2211,
+        ),
+        (
+            "negative byte quotient overflow",
+            &[0xF6, 0xFB, 0xF4][..],
+            0x0123_4567_89AB_FF7F,
+            0x7766_5544_3322_1100,
+            0x1122_3344_5566_7788,
+            1,
+        ),
+        (
+            "memory load fault",
+            &[0x48, 0xF7, 0x3B, 0xF4][..],
+            0x0123_4567_89AB_CDEF,
+            0x7766_5544_3322_1100,
+            0,
+            MEM_SIZE + 0x1000,
+        ),
+    ] {
+        let (mut fault, _) = make_vcpu_mem(instruction);
+        let mut before = fault.get_regs().unwrap();
+        before.rax = rax;
+        before.rcx = rcx;
+        before.rdx = rdx;
+        before.rbx = rbx;
+        before.r8 = 0x0F0E_0D0C_0B0A_0908;
+        before.rflags = INITIAL_RFLAGS;
+        fault.set_regs(&before).unwrap();
+        assert!(
+            fault
+                .jit_try_block()
+                .unwrap_or_else(|error| panic!("{name}: {error:?}")),
+            "{name} must compile before precise deoptimization"
+        );
+        let after = fault.get_regs().unwrap();
+        assert_eq!(after.rax, before.rax, "{name}: RAX");
+        assert_eq!(after.rcx, before.rcx, "{name}: RCX");
+        assert_eq!(after.rdx, before.rdx, "{name}: RDX");
+        assert_eq!(after.rbx, before.rbx, "{name}: RBX");
+        assert_eq!(after.r8, before.r8, "{name}: unrelated GPR");
+        assert_eq!(after.rsp, before.rsp, "{name}: RSP");
+        assert_eq!(after.rbp, before.rbp, "{name}: RBP");
+        assert_eq!(after.rflags, before.rflags, "{name}: RFLAGS");
+        assert_eq!(after.rip, LOAD_ADDR, "{name}: restart PC");
+    }
+
+    for (name, divisor, rax, rdx) in [
+        ("mapped memory zero divisor", 0u64, 1u64, 0u64),
+        (
+            "mapped memory positive overflow",
+            1,
+            0x8000_0000_0000_0000,
+            0,
+        ),
+        (
+            "mapped memory negative overflow",
+            1,
+            0x7FFF_FFFF_FFFF_FFFF,
+            u64::MAX,
+        ),
+    ] {
+        let code = [0x48, 0xF7, 0x3B, 0xF4]; // idiv qword [rbx]; hlt
+        let (mut fault, memory) = make_vcpu_mem(&code);
+        memory.write_obj(divisor, GuestAddress(DATA)).unwrap();
+        let mut before = fault.get_regs().unwrap();
+        before.rax = rax;
+        before.rdx = rdx;
+        before.rbx = DATA;
+        before.r8 = 0x0F0E_0D0C_0B0A_0908;
+        before.rflags = INITIAL_RFLAGS;
+        fault.set_regs(&before).unwrap();
+        assert!(
+            fault
+                .jit_try_block()
+                .unwrap_or_else(|error| panic!("{name}: {error:?}")),
+            "{name} must compile through the helper before guarded deoptimization"
+        );
+        let after = fault.get_regs().unwrap();
+        assert_eq!(after.rax, before.rax, "{name}: RAX");
+        assert_eq!(after.rdx, before.rdx, "{name}: RDX");
+        assert_eq!(after.rbx, before.rbx, "{name}: address base");
+        assert_eq!(after.r8, before.r8, "{name}: unrelated GPR");
+        assert_eq!(after.rflags, before.rflags, "{name}: RFLAGS");
+        assert_eq!(after.rip, LOAD_ADDR, "{name}: restart PC");
+        assert_eq!(
+            memory.read_obj::<u64>(GuestAddress(DATA)).unwrap(),
+            divisor,
+            "{name}: source memory"
+        );
+    }
+
+    // Earlier writes are committed, while the current IDIV and later write
+    // remain uncommitted when the zero-divisor guard deoptimizes.
+    let prior_commit_code = [
+        0xB8, 0x78, 0x56, 0x34, 0x12, // mov eax,0x12345678
+        0xBA, 0x00, 0x00, 0x00, 0x00, // mov edx,0
+        0x48, 0xF7, 0xF9, // idiv rcx (zero divisor)
+        0x41, 0xB8, 0x01, 0x00, 0x00, 0x00, // mov r8d,1 (must not execute)
+        0xF4,
+    ];
+    let (mut prior_commit, _) = make_vcpu_mem(&prior_commit_code);
+    let mut before = prior_commit.get_regs().unwrap();
+    before.rax = u64::MAX;
+    before.rcx = 0;
+    before.rdx = u64::MAX;
+    before.r8 = 0x0F0E_0D0C_0B0A_0908;
+    before.rflags = INITIAL_RFLAGS;
+    prior_commit.set_regs(&before).unwrap();
+    assert!(
+        prior_commit
+            .jit_try_block()
+            .expect("guarded IDIV after prior native writes"),
+        "the region must compile before the guarded signed fault"
+    );
+    let after = prior_commit.get_regs().unwrap();
+    assert_eq!(after.rax, 0x1234_5678, "prior EAX write must commit");
+    assert_eq!(after.rdx, 0, "prior EDX write must commit");
+    assert_eq!(after.rcx, 0, "divisor must remain unchanged");
+    assert_eq!(after.r8, before.r8, "post-IDIV write must not execute");
+    assert_eq!(
+        after.rflags, before.rflags,
+        "MOVs and IDIV fault preserve flags"
+    );
+    assert_eq!(after.rip, LOAD_ADDR + 10, "restart at the IDIV instruction");
+}
+
 /// Register byte swaps are flag-neutral and must remain native for both the
 /// legacy in-place BSWAP encoding and APX MOVBE's two-register word form.
 #[test]

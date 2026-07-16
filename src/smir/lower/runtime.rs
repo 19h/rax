@@ -6757,11 +6757,12 @@ pub(crate) fn x86_jit_mem_widening_mul_source_sequence_len(
     valid.then_some(2)
 }
 
-fn x86_jit_unsigned_div_consumer_valid(
+fn x86_jit_div_consumer_valid(
     op: &crate::smir::ir::ops::SmirOp,
     source: crate::smir::ir::types::VReg,
     width: crate::smir::ir::types::OpWidth,
     allow_no_flags: bool,
+    signed: bool,
 ) -> bool {
     use crate::smir::ir::flags::FlagUpdate;
     use crate::smir::ir::ops::OpKind;
@@ -6769,27 +6770,44 @@ fn x86_jit_unsigned_div_consumer_valid(
 
     let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
     let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
-    matches!(
-        width,
-        OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
-    ) && op.x86_hint.is_none()
-        && matches!(
-            &op.kind,
-            OpKind::DivU {
-                quot,
-                rem,
-                src1,
-                src2: SrcOperand::Reg(divisor),
-                width: op_width,
-                flags,
-            } if *quot == rax
+    let exact_shape = match &op.kind {
+        OpKind::DivU {
+            quot,
+            rem,
+            src1,
+            src2: SrcOperand::Reg(divisor),
+            width: op_width,
+            flags,
+        } if !signed => {
+            *quot == rax
                 && *rem == (width != OpWidth::W8).then_some(rdx)
                 && *src1 == rax
                 && *divisor == source
                 && *op_width == width
-                && (*flags == FlagUpdate::All
-                    || (allow_no_flags && *flags == FlagUpdate::None))
-        )
+                && (*flags == FlagUpdate::All || (allow_no_flags && *flags == FlagUpdate::None))
+        }
+        OpKind::DivS {
+            quot,
+            rem,
+            src1,
+            src2: SrcOperand::Reg(divisor),
+            width: op_width,
+            flags,
+        } if signed => {
+            *quot == rax
+                && *rem == (width != OpWidth::W8).then_some(rdx)
+                && *src1 == rax
+                && *divisor == source
+                && *op_width == width
+                && (*flags == FlagUpdate::All || (allow_no_flags && *flags == FlagUpdate::None))
+        }
+        _ => false,
+    };
+    matches!(
+        width,
+        OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+    ) && op.x86_hint.is_none()
+        && exact_shape
 }
 
 /// Validate a register-source x86 `DIV r/m` shape. Guarded JIT lowering stages
@@ -6808,7 +6826,25 @@ pub(crate) fn x86_jit_unsigned_div_register_shape_valid(op: &crate::smir::ir::op
         } if reg.gpr_index().is_some() => (*source, *width),
         _ => return false,
     };
-    x86_jit_unsigned_div_consumer_valid(op, source, width, true)
+    x86_jit_div_consumer_valid(op, source, width, true, false)
+}
+
+/// Validate a register-source x86 `IDIV r/m` shape. Signed division uses the
+/// same staged-source and precise-deoptimization contract as unsigned DIV,
+/// with an exact signed quotient-range guard before native execution.
+pub(crate) fn x86_jit_signed_div_register_shape_valid(op: &crate::smir::ir::ops::SmirOp) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, SrcOperand, VReg};
+
+    let (source, width) = match &op.kind {
+        OpKind::DivS {
+            src2: SrcOperand::Reg(source @ VReg::Arch(ArchReg::X86(reg))),
+            width,
+            ..
+        } if reg.gpr_index().is_some() => (*source, *width),
+        _ => return false,
+    };
+    x86_jit_div_consumer_valid(op, source, width, true, true)
 }
 
 /// Validate `Load virtual; DivU RDX:RAX,RAX,virtual` from the x86 lifter. The
@@ -6849,7 +6885,49 @@ pub(crate) fn x86_jit_mem_unsigned_div_source_sequence_len(
 
     let consumer = block.ops.get(index + 1)?;
     (consumer.guest_pc == load.guest_pc
-        && x86_jit_unsigned_div_consumer_valid(consumer, temporary, width, true))
+        && x86_jit_div_consumer_valid(consumer, temporary, width, true, false))
+    .then_some(2)
+}
+
+/// Validate `Load virtual; DivS RDX:RAX,RAX,virtual` from the x86 lifter.
+/// Exact SSA ownership keeps the helper-loaded signed divisor out of the
+/// identity register map until guarded IDIV consumes it.
+pub(crate) fn x86_jit_mem_signed_div_source_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{OpWidth, SignExtend, VReg};
+
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (temporary, addr, width) = match &load.kind {
+        OpKind::Load {
+            dst: temporary @ VReg::Virtual(_),
+            addr,
+            width,
+            sign: SignExtend::Zero,
+        } => (*temporary, addr, width.to_op_width()?),
+        _ => return None,
+    };
+    if !matches!(
+        width,
+        OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+    ) || !x86_jit_mem_address_shape_valid(addr)
+        || virtual_definitions.get(&temporary) != Some(&1)
+        || virtual_uses.get(&temporary) != Some(&1)
+    {
+        return None;
+    }
+
+    let consumer = block.ops.get(index + 1)?;
+    (consumer.guest_pc == load.guest_pc
+        && x86_jit_div_consumer_valid(consumer, temporary, width, true, true))
     .then_some(2)
 }
 
@@ -6883,7 +6961,41 @@ pub(crate) fn x86_jit_high_byte_unsigned_div_source_sequence_len(
 
     let consumer = block.ops.get(index + 1)?;
     (consumer.guest_pc == extract.guest_pc
-        && x86_jit_unsigned_div_consumer_valid(consumer, temporary, OpWidth::W8, false))
+        && x86_jit_div_consumer_valid(consumer, temporary, OpWidth::W8, false, false))
+    .then_some(2)
+}
+
+/// Validate the legacy AH/CH/DH/BH extraction immediately consumed by IDIV.
+/// APX NF cannot encode a legacy high byte, so this exact shape requires the
+/// architectural `FlagUpdate::All` division form.
+pub(crate) fn x86_jit_high_byte_signed_div_source_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg};
+
+    let extract = block.ops.get(index)?;
+    let temporary = match &extract.kind {
+        OpKind::Shr {
+            dst: temporary @ VReg::Virtual(_),
+            src: VReg::Arch(ArchReg::X86(reg)),
+            amount: SrcOperand::Imm(8),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if reg.gpr_index().is_some_and(|index| index <= 3) => *temporary,
+        _ => return None,
+    };
+    if virtual_definitions.get(&temporary) != Some(&1) || virtual_uses.get(&temporary) != Some(&1) {
+        return None;
+    }
+
+    let consumer = block.ops.get(index + 1)?;
+    (consumer.guest_pc == extract.guest_pc
+        && x86_jit_div_consumer_valid(consumer, temporary, OpWidth::W8, false, true))
     .then_some(2)
 }
 
@@ -8006,7 +8118,26 @@ fn block_is_clobber_safe(
             i += consumed;
             continue;
         }
+        if let Some(consumed) = x86_jit_mem_signed_div_source_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
         if let Some(consumed) = x86_jit_high_byte_unsigned_div_source_sequence_len(
+            block,
+            i,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
+        if let Some(consumed) = x86_jit_high_byte_signed_div_source_sequence_len(
             block,
             i,
             &virtual_definitions,
@@ -8121,6 +8252,8 @@ fn block_is_clobber_safe(
         let stack_alu_ok = x86_state_backed_stack_alu_valid(&op.kind);
         let stack_state_ok = stack_mov_ok || stack_alu_ok;
         let unsigned_div_ok = x86_jit_unsigned_div_register_shape_valid(op);
+        let signed_div_ok = x86_jit_signed_div_register_shape_valid(op);
+        let guarded_div_ok = unsigned_div_ok || signed_div_ok;
         let mem_ok = (allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. }))
             || cldemote_ok
             || alignment_ok
@@ -8128,7 +8261,7 @@ fn block_is_clobber_safe(
         let scalar_ok = matches!(
             op.kind,
             OpKind::AndNot { .. } | OpKind::X86Bls { .. } | OpKind::X86Adx { .. }
-        ) || unsigned_div_ok;
+        ) || guarded_div_ok;
         let vector_ok = x86_native_vector_smir_op(op);
         if !op.is_jit_safe() && !mem_ok && !scalar_ok && !vector_ok {
             return false;
@@ -8280,7 +8413,7 @@ fn block_is_clobber_safe(
         }
         if !mem_ok
             && !stack_state_ok
-            && !unsigned_div_ok
+            && !guarded_div_ok
             && op.kind.source_vregs().iter().any(touches_sp_bp)
         {
             return false;
@@ -21975,17 +22108,6 @@ mod jit_gate_tests {
                     FlagUpdate::Specific(FlagSet::CF),
                 ),
             ),
-            (
-                "signed division remains separate",
-                OpKind::DivS {
-                    quot: rax,
-                    rem: Some(rdx),
-                    src1: rax,
-                    src2: SrcOperand::Reg(x86(X86Reg::Rbx)),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::All,
-                },
-            ),
         ] {
             assert!(!x86_gate(malformed), "{name}");
         }
@@ -22056,6 +22178,177 @@ mod jit_gate_tests {
         let high_uses = std::collections::HashMap::from([(high_byte, 1)]);
         assert_eq!(
             x86_jit_high_byte_unsigned_div_source_sequence_len(
+                &high.blocks[0],
+                0,
+                &high_definitions,
+                &high_uses,
+            ),
+            Some(2),
+        );
+        assert!(is_native_clobber_safe(&high));
+    }
+
+    #[test]
+    fn x86_signed_division_gate_accepts_exact_sources_and_fails_closed() {
+        let rax = x86(X86Reg::Rax);
+        let rdx = x86(X86Reg::Rdx);
+        let div = |source, width, flags| OpKind::DivS {
+            quot: rax,
+            rem: (width != OpWidth::W8).then_some(rdx),
+            src1: rax,
+            src2: SrcOperand::Reg(source),
+            width,
+            flags,
+        };
+
+        for (name, source, width, flags) in [
+            (
+                "byte legacy",
+                x86(X86Reg::Rbx),
+                OpWidth::W8,
+                FlagUpdate::All,
+            ),
+            (
+                "word stack",
+                x86(X86Reg::Rsp),
+                OpWidth::W16,
+                FlagUpdate::All,
+            ),
+            (
+                "dword frame",
+                x86(X86Reg::Rbp),
+                OpWidth::W32,
+                FlagUpdate::All,
+            ),
+            ("qword NF", x86(X86Reg::R15), OpWidth::W64, FlagUpdate::None),
+            (
+                "qword EGPR",
+                x86(X86Reg::R16),
+                OpWidth::W64,
+                FlagUpdate::None,
+            ),
+        ] {
+            assert!(x86_gate(div(source, width, flags)), "{name}");
+        }
+
+        for (name, malformed) in [
+            (
+                "wrong quotient",
+                OpKind::DivS {
+                    quot: x86(X86Reg::R8),
+                    rem: Some(rdx),
+                    src1: rax,
+                    src2: SrcOperand::Reg(x86(X86Reg::Rbx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "wrong remainder",
+                OpKind::DivS {
+                    quot: rax,
+                    rem: Some(x86(X86Reg::R8)),
+                    src1: rax,
+                    src2: SrcOperand::Reg(x86(X86Reg::Rbx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "byte RDX output",
+                OpKind::DivS {
+                    quot: rax,
+                    rem: Some(rdx),
+                    src1: rax,
+                    src2: SrcOperand::Reg(x86(X86Reg::Rbx)),
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "wrong low dividend",
+                OpKind::DivS {
+                    quot: rax,
+                    rem: Some(rdx),
+                    src1: x86(X86Reg::R8),
+                    src2: SrcOperand::Reg(x86(X86Reg::Rbx)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "partial flags",
+                div(
+                    x86(X86Reg::Rbx),
+                    OpWidth::W64,
+                    FlagUpdate::Specific(FlagSet::OF),
+                ),
+            ),
+        ] {
+            assert!(!x86_gate(malformed), "{name}");
+        }
+
+        let temporary = VReg::Virtual(VirtualId(33));
+        let mut memory = FunctionBuilder::new(FunctionId(0), 0x1000);
+        memory.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: temporary,
+                addr: Address::Direct(x86(X86Reg::Rbx)),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        );
+        memory.push_op(0x1000, div(temporary, OpWidth::W64, FlagUpdate::All));
+        memory.set_terminator(Terminator::Return { values: vec![] });
+        let memory = memory.finish();
+        let memory_definitions = std::collections::HashMap::from([(temporary, 1)]);
+        let memory_uses = std::collections::HashMap::from([(temporary, 1)]);
+        assert_eq!(
+            x86_jit_mem_signed_div_source_sequence_len(
+                &memory.blocks[0],
+                0,
+                true,
+                &memory_definitions,
+                &memory_uses,
+            ),
+            Some(2),
+        );
+        assert_eq!(
+            x86_jit_mem_signed_div_source_sequence_len(
+                &memory.blocks[0],
+                0,
+                false,
+                &memory_definitions,
+                &memory_uses,
+            ),
+            None,
+        );
+        assert!(is_native_clobber_safe_excluding(
+            &memory,
+            &std::collections::HashMap::new(),
+            true,
+        ));
+
+        let high_byte = VReg::Virtual(VirtualId(34));
+        let mut high = FunctionBuilder::new(FunctionId(0), 0x1000);
+        high.push_op(
+            0x1000,
+            OpKind::Shr {
+                dst: high_byte,
+                src: x86(X86Reg::Rcx),
+                amount: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        high.push_op(0x1000, div(high_byte, OpWidth::W8, FlagUpdate::All));
+        high.set_terminator(Terminator::Return { values: vec![] });
+        let high = high.finish();
+        let high_definitions = std::collections::HashMap::from([(high_byte, 1)]);
+        let high_uses = std::collections::HashMap::from([(high_byte, 1)]);
+        assert_eq!(
+            x86_jit_high_byte_signed_div_source_sequence_len(
                 &high.blocks[0],
                 0,
                 &high_definitions,
