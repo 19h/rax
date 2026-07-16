@@ -465,24 +465,27 @@ fn test_pit_dx_based_io() {
 
 #[test]
 fn test_pit_dx_based_read() {
-    // Use IN AL, DX for PIT read
+    // Use IN AL, DX for a deterministic PIT read. Channel 2 starts with GATE
+    // low, so its loaded count remains frozen while the variable-port I/O
+    // sequence executes; channel 0 would introduce unbounded wall-clock drift
+    // if the host preempted the test between the reload and latch exits.
     let code = [
-        // Configure
+        // Configure channel 2 for lobyte/hibyte mode 3.
         0x66, 0xBA, 0x43, 0x00, // MOV DX, 0x43
-        0xB0, 0x36, // MOV AL, 0x36
+        0xB0, 0xB6, // MOV AL, 0xB6
         0xEE, // OUT DX, AL
         // Write value 0xABCD
-        0x66, 0xBA, 0x40, 0x00, // MOV DX, 0x40
+        0x66, 0xBA, 0x42, 0x00, // MOV DX, 0x42
         0xB0, 0xCD, // MOV AL, 0xCD
         0xEE, // OUT DX, AL
         0xB0, 0xAB, // MOV AL, 0xAB
         0xEE, // OUT DX, AL
-        // Latch
+        // Latch channel 2.
         0x66, 0xBA, 0x43, 0x00, // MOV DX, 0x43
-        0xB0, 0x00, // MOV AL, 0x00
+        0xB0, 0x80, // MOV AL, 0x80
         0xEE, // OUT DX, AL
         // Read via DX
-        0x66, 0xBA, 0x40, 0x00, // MOV DX, 0x40
+        0x66, 0xBA, 0x42, 0x00, // MOV DX, 0x42
         0xEC, // IN AL, DX (low byte)
         0x88, 0xC4, // MOV AH, AL
         0xEC, // IN AL, DX (high byte)
@@ -492,7 +495,5 @@ fn test_pit_dx_based_read() {
     let regs = Registers::default();
     let (_writes, _reads, final_regs) = run_with_pit(&code, regs);
 
-    // ~0xABCD: the free-running counter may have decremented a few ticks since
-    // the reload value was written.
-    assert_count_near(final_regs.rax, 0xABCD);
+    assert_eq!(final_regs.rax & 0xFFFF, 0xABCD);
 }
