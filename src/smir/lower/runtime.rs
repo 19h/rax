@@ -8410,6 +8410,7 @@ fn block_is_clobber_safe(
         let state_bit_test_ok = super::x86_64::x86_state_backed_gpr_bit_test_valid(op);
         let state_crc32_ok = super::x86_64::x86_state_backed_gpr_crc32_valid(op);
         let state_bextr_bzhi_ok = super::x86_64::x86_state_backed_gpr_bextr_bzhi_valid(op);
+        let state_bls_ok = super::x86_64::x86_state_backed_gpr_bls_valid(op);
         let state_pdep_pext_ok = super::x86_64::x86_state_backed_gpr_pdep_pext_valid(op);
         let state_bswap_ok = super::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = super::x86_64::x86_state_backed_gpr_xchg_valid(op);
@@ -8426,6 +8427,7 @@ fn block_is_clobber_safe(
             || state_bit_test_ok
             || state_crc32_ok
             || state_bextr_bzhi_ok
+            || state_bls_ok
             || state_pdep_pext_ok
             || state_bswap_ok
             || state_xchg_ok;
@@ -8441,6 +8443,7 @@ fn block_is_clobber_safe(
             || (super::x86_64::x86_state_backed_gpr_crc32_candidate(op) && !state_crc32_ok)
             || (super::x86_64::x86_state_backed_gpr_bextr_bzhi_candidate(op)
                 && !state_bextr_bzhi_ok)
+            || (super::x86_64::x86_state_backed_gpr_bls_candidate(op) && !state_bls_ok)
             || (super::x86_64::x86_state_backed_gpr_pdep_pext_candidate(op) && !state_pdep_pext_ok)
             || (super::x86_64::x86_state_backed_gpr_bswap_candidate(op) && !state_bswap_ok)
             || (super::x86_64::x86_state_backed_gpr_xchg_candidate(op) && !state_xchg_ok)
@@ -8565,6 +8568,7 @@ fn block_is_clobber_safe(
                 | OpKind::Pext { .. }
         ) && !x86_bmi_shape_valid(&op.kind)
             && !state_bextr_bzhi_ok
+            && !state_bls_ok
             && !state_pdep_pext_ok
         {
             return false;
@@ -19354,6 +19358,27 @@ mod jit_gate_tests {
                 kind: X86BlsKind::Blsi,
                 flags: FlagUpdate::None,
             },
+            OpKind::X86Bls {
+                dst: x86(X86Reg::Rsp),
+                src: x86(X86Reg::Rbp),
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsr,
+                flags: FlagUpdate::Specific(defined),
+            },
+            OpKind::X86Bls {
+                dst: x86(X86Reg::R31),
+                src: x86(X86Reg::Rsp),
+                width: OpWidth::W32,
+                kind: X86BlsKind::Blsmsk,
+                flags: FlagUpdate::None,
+            },
+            OpKind::X86Bls {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::R16),
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsi,
+                flags: FlagUpdate::None,
+            },
         ] {
             assert!(
                 !op.is_jit_safe(),
@@ -19386,22 +19411,22 @@ mod jit_gate_tests {
                 flags: FlagUpdate::Specific(defined),
             },
             OpKind::X86Bls {
-                dst: x86(X86Reg::Rsp),
-                src: x86(X86Reg::Rbx),
-                width: OpWidth::W64,
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rsp),
+                width: OpWidth::W16,
                 kind: X86BlsKind::Blsr,
                 flags: FlagUpdate::None,
             },
             OpKind::X86Bls {
-                dst: x86(X86Reg::Rax),
+                dst: x86(X86Reg::R31),
                 src: VReg::Virtual(VirtualId(0)),
                 width: OpWidth::W64,
                 kind: X86BlsKind::Blsi,
                 flags: FlagUpdate::None,
             },
             OpKind::X86Bls {
-                dst: x86(X86Reg::Rax),
-                src: x86(X86Reg::Rbx),
+                dst: x86(X86Reg::Rsp),
+                src: x86(X86Reg::Rbp),
                 width: OpWidth::W64,
                 kind: X86BlsKind::Blsr,
                 flags: FlagUpdate::Specific(FlagSet::ZF),
@@ -19409,6 +19434,25 @@ mod jit_gate_tests {
         ] {
             assert!(!x86_gate(malformed), "malformed BLS shape must deopt");
         }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::X86Bls {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rsp),
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsr,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut hinted = builder.finish();
+        hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+        assert!(
+            !is_native_clobber_safe(&hinted),
+            "hinted state-backed BLS must fail closed"
+        );
     }
 
     #[test]

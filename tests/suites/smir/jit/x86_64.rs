@@ -5565,6 +5565,122 @@ fn jit_state_backed_gpr_bextr_bzhi_execute_without_memory_helpers() {
     }
 }
 
+/// Register BLSR/BLSMSK/BLSI stage guest RSP/RBP operands through GuestRegs
+/// while retaining native aliasing, dword zero-extension, and deterministic
+/// merging of the defined CF/ZF/SF/OF subset with preserved PF/AF.
+#[test]
+fn jit_state_backed_gpr_bls_execute_without_memory_helpers() {
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        dst_index: usize,
+        src_index: usize,
+        source: u64,
+        dword: bool,
+    }
+    let cases = [
+        Case {
+            name: "BLSR RSP,RBP",
+            instruction: &[0xC4, 0xE2, 0xD8, 0xF3, 0xCD],
+            dst_index: 4,
+            src_index: 5,
+            source: 0,
+            dword: false,
+        },
+        Case {
+            name: "BLSMSK RBP,RSP",
+            instruction: &[0xC4, 0xE2, 0xD0, 0xF3, 0xD4],
+            dst_index: 5,
+            src_index: 4,
+            source: 0,
+            dword: false,
+        },
+        Case {
+            name: "BLSI R8D,ESP",
+            instruction: &[0xC4, 0xE2, 0x38, 0xF3, 0xDC],
+            dst_index: 8,
+            src_index: 4,
+            source: 0xAABB_CCDD_8000_0018,
+            dword: true,
+        },
+        Case {
+            name: "BLSR EBP,EBP source-destination alias",
+            instruction: &[0xC4, 0xE2, 0x50, 0xF3, 0xCD],
+            dst_index: 5,
+            src_index: 5,
+            source: 0xDEAD_BEEF_1357_2418,
+            dword: true,
+        },
+    ];
+
+    let gprs = |regs: &Registers| {
+        [
+            regs.rax, regs.rcx, regs.rdx, regs.rbx, regs.rsp, regs.rbp, regs.rsi, regs.rdi,
+            regs.r8, regs.r9, regs.r10, regs.r11, regs.r12, regs.r13, regs.r14, regs.r15, regs.r16,
+            regs.r17, regs.r18, regs.r19, regs.r20, regs.r21, regs.r22, regs.r23, regs.r24,
+            regs.r25, regs.r26, regs.r27, regs.r28, regs.r29, regs.r30, regs.r31,
+        ]
+    };
+    let set_gpr = |regs: &mut Registers, index: usize, value: u64| match index {
+        4 => regs.rsp = value,
+        5 => regs.rbp = value,
+        _ => unreachable!(),
+    };
+    let setup = |vcpu: &mut X86_64Vcpu, case: &Case| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x0102_0304_0506_0708;
+        regs.rcx = 0x1122_3344_5566_1234;
+        regs.rdx = 0x99AA_BBCC_DDEE_FF00;
+        regs.rbx = 0x0F1E_2D3C_4B5A_6978;
+        regs.rsp = 0x2233_4455_6677_5678;
+        regs.rbp = 0x3344_5566_8765_9ABC;
+        regs.r8 = 0x8899_AABB_CCDD_EEFF;
+        regs.r16 = 0xAABB_CCDD_EEFF_7788;
+        regs.r31 = 0xFFEE_DDCC_BBAA_1357;
+        set_gpr(&mut regs, case.src_index, case.source);
+        regs.rflags = 0x2 | 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp, &case);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+        if case.dword {
+            assert_eq!(
+                gprs(&expected)[case.dst_index] >> 32,
+                0,
+                "{} reference result must zero-extend",
+                case.name
+            );
+        }
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit, &case);
+        jit.set_jit_call(false);
+        jit.set_jit_mem(false);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the register-only native tier:\n{}",
+            case.name,
+            jit.jit_dump_region(LOAD_ADDR)
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(gprs(&actual), gprs(&expected), "{} GPR file", case.name);
+        assert_eq!(actual.rflags, expected.rflags, "{} RFLAGS", case.name);
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+    }
+}
+
 /// State-backed register NOT uses the GuestRegs snapshot for guest RSP/RBP and
 /// APX EGPRs while retaining byte/word partial writes and dword zero extension.
 #[test]

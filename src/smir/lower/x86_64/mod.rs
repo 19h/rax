@@ -425,6 +425,38 @@ pub(crate) fn x86_state_backed_gpr_bextr_bzhi_valid(op: &SmirOp) -> bool {
     }
 }
 
+pub(crate) fn x86_state_backed_gpr_bls_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::X86Bls { dst, src, .. }
+            if x86_state_backed_arch_gpr(dst) || x86_state_backed_arch_gpr(src)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_bls_valid(op: &SmirOp) -> bool {
+    let arch_gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
+    let defined = FlagSet::CF
+        .union(FlagSet::ZF)
+        .union(FlagSet::SF)
+        .union(FlagSet::OF);
+
+    x86_state_backed_gpr_bls_candidate(op)
+        && op.x86_hint.is_none()
+        && matches!(
+            &op.kind,
+            OpKind::X86Bls {
+                dst,
+                src,
+                width: OpWidth::W32 | OpWidth::W64,
+                flags,
+                ..
+            } if arch_gpr(dst)
+                && arch_gpr(src)
+                && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(defined))
+        )
+}
+
 pub(crate) fn x86_state_backed_gpr_pdep_pext_candidate(op: &SmirOp) -> bool {
     matches!(
         &op.kind,
@@ -4415,6 +4447,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_bit_test_valid(op)
             || x86_state_backed_gpr_crc32_valid(op)
             || x86_state_backed_gpr_bextr_bzhi_valid(op)
+            || x86_state_backed_gpr_bls_valid(op)
             || x86_state_backed_gpr_pdep_pext_valid(op)
             || x86_state_backed_gpr_bswap_valid(op)
             || x86_state_backed_gpr_xchg_valid(op)
@@ -7111,7 +7144,29 @@ impl X86_64Lowerer {
                 width,
                 kind,
                 flags,
-            } => self.lower_x86_bls(*dst, *src, *width, *kind, *flags)?,
+            } => {
+                if x86_state_backed_gpr_bls_candidate(op) {
+                    if !x86_state_backed_gpr_bls_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed X86Bls".to_string(),
+                            operand: format!("invalid x86 GPR BLS {kind:?} {width:?} {flags:?}"),
+                        });
+                    }
+                    let defined_rflags_mask = match flags {
+                        FlagUpdate::None => None,
+                        FlagUpdate::Specific(_) => Some(0x8C1),
+                        _ => unreachable!(),
+                    };
+                    return self.lower_state_backed_gpr_bls(
+                        *dst,
+                        *src,
+                        *width,
+                        *kind,
+                        defined_rflags_mask,
+                    );
+                }
+                self.lower_x86_bls(*dst, *src, *width, *kind, *flags)?;
+            }
 
             OpKind::X86Adx {
                 dst,
@@ -15473,6 +15528,64 @@ impl X86_64Lowerer {
                 PhysReg::R8,
                 width,
             );
+        }
+        self.finish_bmi_flags(PhysReg::Rdx, defined_rflags_mask);
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
+        if dst_idx == 5 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, OpWidth::W64);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_bls(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        kind: X86BlsKind,
+        defined_rflags_mask: Option<i64>,
+    ) -> Result<(), LowerError> {
+        let name = match kind {
+            X86BlsKind::Blsr => "Blsr",
+            X86BlsKind::Blsmsk => "Blsmsk",
+            X86BlsKind::Blsi => "Blsi",
+        };
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let src_idx = Self::x86_gpr_index(src).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "source is not an architectural x86 GPR".to_string(),
+        })?;
+        if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: format!("state-backed {name}"),
+                operand: format!("unsupported width {width:?}"),
+            });
+        }
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdi, PhysReg::Rax, i32::from(src_idx) * 8, width);
+        }
+        self.code.emit_u8(0x9C); // pushfq: preserve undefined or all status flags
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_vex_bls_rr(kind, PhysReg::Rdx, PhysReg::Rdi, width);
         }
         self.finish_bmi_flags(PhysReg::Rdx, defined_rflags_mask);
 
@@ -29785,6 +29898,56 @@ mod tests {
             "APX NF BLSI must preserve every incoming flag"
         );
 
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
+        let r16 = VReg::Arch(ArchReg::X86(X86Reg::R16));
+        let r31 = VReg::Arch(ArchReg::X86(X86Reg::R31));
+        for (name, op, expected) in [
+            (
+                "state-backed BLSR qword",
+                OpKind::X86Bls {
+                    dst: rsp,
+                    src: rbp,
+                    width: OpWidth::W64,
+                    kind: X86BlsKind::Blsr,
+                    flags: FlagUpdate::Specific(defined),
+                },
+                &[0xC4, 0xE2, 0xE8, 0xF3, 0xCF][..],
+            ),
+            (
+                "state-backed BLSMSK dword",
+                OpKind::X86Bls {
+                    dst: r31,
+                    src: rsp,
+                    width: OpWidth::W32,
+                    kind: X86BlsKind::Blsmsk,
+                    flags: FlagUpdate::None,
+                },
+                &[0xC4, 0xE2, 0x68, 0xF3, 0xD7][..],
+            ),
+            (
+                "state-backed BLSI all operands alias",
+                OpKind::X86Bls {
+                    dst: r16,
+                    src: r16,
+                    width: OpWidth::W64,
+                    kind: X86BlsKind::Blsi,
+                    flags: FlagUpdate::None,
+                },
+                &[0xC4, 0xE2, 0xE8, 0xF3, 0xDF][..],
+            ),
+        ] {
+            let code = lower_single_op(op);
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "{name}: missing scratch BMI1 {expected:02X?} in {code:02X?}"
+            );
+            assert!(
+                code.contains(&0x9C) && code.contains(&0x9D),
+                "{name}: flags must be saved and restored or merged"
+            );
+        }
+
         for malformed in [
             OpKind::X86Bls {
                 dst: rax,
@@ -29807,11 +29970,180 @@ mod tests {
                 kind: X86BlsKind::Blsi,
                 flags: FlagUpdate::All,
             },
+            OpKind::X86Bls {
+                dst: r16,
+                src: rsp,
+                width: OpWidth::W16,
+                kind: X86BlsKind::Blsr,
+                flags: FlagUpdate::None,
+            },
+            OpKind::X86Bls {
+                dst: r31,
+                src: VReg::Virtual(crate::smir::ir::types::VirtualId(7)),
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsi,
+                flags: FlagUpdate::None,
+            },
+            OpKind::X86Bls {
+                dst: r31,
+                src: rbp,
+                width: OpWidth::W64,
+                kind: X86BlsKind::Blsmsk,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
+            },
         ] {
             assert!(matches!(
                 lower_single_op_err(malformed),
                 LowerError::InvalidOperand { .. }
             ));
+        }
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                OpKind::X86Bls {
+                    dst: r16,
+                    src: rsp,
+                    width: OpWidth::W64,
+                    kind: X86BlsKind::Blsr,
+                    flags: FlagUpdate::None,
+                },
+                X86OpHint::Mulx,
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_bls_preserves_gprs_flags_and_aliases() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        if !std::is_x86_feature_detected!("bmi1") {
+            return;
+        }
+        struct Case {
+            name: &'static str,
+            kind: X86BlsKind,
+            flagful: bool,
+            dst: X86Reg,
+            src: X86Reg,
+            width: OpWidth,
+            source: u64,
+        }
+        let cases = [
+            Case {
+                name: "BLSR RSP,RBP zero source",
+                kind: X86BlsKind::Blsr,
+                flagful: true,
+                dst: X86Reg::Rsp,
+                src: X86Reg::Rbp,
+                width: OpWidth::W64,
+                source: 0,
+            },
+            Case {
+                name: "BLSMSK EBP,ESP zero source",
+                kind: X86BlsKind::Blsmsk,
+                flagful: true,
+                dst: X86Reg::Rbp,
+                src: X86Reg::Rsp,
+                width: OpWidth::W32,
+                source: 0,
+            },
+            Case {
+                name: "BLSI R31D,R16D",
+                kind: X86BlsKind::Blsi,
+                flagful: true,
+                dst: X86Reg::R31,
+                src: X86Reg::R16,
+                width: OpWidth::W32,
+                source: 0xAABB_CCDD_8000_0018,
+            },
+            Case {
+                name: "NF BLSR R16,R16 source-destination alias",
+                kind: X86BlsKind::Blsr,
+                flagful: false,
+                dst: X86Reg::R16,
+                src: X86Reg::R16,
+                width: OpWidth::W64,
+                source: 0xDEAD_BEEF_1357_2418,
+            },
+        ];
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let defined = FlagSet::CF
+            .union(FlagSet::ZF)
+            .union(FlagSet::SF)
+            .union(FlagSet::OF);
+        const STATUS: u64 = 0x8D5;
+
+        for case in cases {
+            let flags = if case.flagful {
+                FlagUpdate::Specific(defined)
+            } else {
+                FlagUpdate::None
+            };
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::X86Bls {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    width: case.width,
+                    kind: case.kind,
+                    flags,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            for (index, value) in regs.gpr.iter_mut().enumerate() {
+                *value = 0x2468_0000_1357_0000u64
+                    .wrapping_add((index as u64).wrapping_mul(0x0101_1111_2222_0101));
+            }
+            let dst_idx = case.dst.gpr_index().unwrap() as usize;
+            let src_idx = case.src.gpr_index().unwrap() as usize;
+            regs.gpr[src_idx] = case.source;
+            regs.rflags = 0x2 | STATUS;
+
+            let mut expected = regs;
+            let source = regs.gpr[src_idx] & case.width.mask();
+            let result = match case.kind {
+                X86BlsKind::Blsr => source & source.wrapping_sub(1),
+                X86BlsKind::Blsmsk => source ^ source.wrapping_sub(1),
+                X86BlsKind::Blsi => source.wrapping_neg() & source,
+            } & case.width.mask();
+            expected.gpr[dst_idx] = result;
+            if case.flagful {
+                expected.rflags &= !0x8C1;
+                let carry = match case.kind {
+                    X86BlsKind::Blsr | X86BlsKind::Blsmsk => source == 0,
+                    X86BlsKind::Blsi => source != 0,
+                };
+                let zero = case.kind != X86BlsKind::Blsmsk && result == 0;
+                expected.rflags |= u64::from(carry);
+                expected.rflags |= u64::from(zero) << 6;
+                expected.rflags |= ((result >> (case.width.bits() - 1)) & 1) << 7;
+            }
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            if case.width == OpWidth::W32 {
+                assert_eq!(regs.gpr[dst_idx] >> 32, 0, "{} zero extension", case.name);
+            }
+            assert_eq!(
+                regs.rflags & STATUS,
+                expected.rflags & STATUS,
+                "{} status flags",
+                case.name
+            );
         }
     }
 
