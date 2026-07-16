@@ -3461,6 +3461,27 @@ impl<'a> X86Emitter<'a> {
         self.code.emit_u8(index);
     }
 
+    /// Group-8 BT/BTS/BTR/BTC [base + disp], imm8.
+    fn emit_bit_test_mi_disp(
+        &mut self,
+        kind: BitTestRegOp,
+        base: PhysReg,
+        disp: i32,
+        index: u8,
+        width: OpWidth,
+    ) {
+        self.emit_rex_for_width_mem(width, base, None);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0xBA);
+        self.emit_modrm_mem_disp(
+            Self::digit_reg(kind.immediate_digit()),
+            base,
+            disp,
+            DispSize::Auto,
+        );
+        self.code.emit_u8(index);
+    }
+
     /// CRC32 r32/r64, r/m8/r/m16/r/m32/r/m64 (SSE4.2).
     fn emit_crc32_rr(&mut self, dst: PhysReg, data: PhysReg, data_width: OpWidth) {
         self.code.emit_u8(0xF2);
@@ -15308,6 +15329,82 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
+    /// Fuse the x86 lifter's exact non-modifying immediate memory bit test:
+    /// `Load virtual; Bt virtual,imm`. The helper stages the operand in a
+    /// caller-owned word; native BT then supplies CF, which is the only status
+    /// bit merged into the saved guest RFLAGS image.
+    #[cfg(feature = "smir-jit")]
+    fn try_lower_jit_mem_bit_test_source(
+        &mut self,
+        block: &SmirBlock,
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(consumed) = super::runtime::x86_jit_mem_bit_test_source_sequence_len(
+            block,
+            idx,
+            true,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
+            return Ok(None);
+        };
+
+        let load = &block.ops[idx];
+        let (addr, mem_width) = match &load.kind {
+            OpKind::Load {
+                addr,
+                width,
+                sign: SignExtend::Zero,
+                ..
+            } => (addr, *width),
+            _ => unreachable!("validated memory bit test starts with Load"),
+        };
+        let (index, width) = match block.ops[idx + 1].kind {
+            OpKind::Bt {
+                index: SrcOperand::Imm(index),
+                width,
+                ..
+            } => (index as u8, width),
+            _ => unreachable!("validated immediate memory bit-test consumer"),
+        };
+
+        // Keep a 16-byte aligned caller frame. The top word receives the
+        // helper result, while RAX remains available as the flag-merge scratch
+        // and is preserved by `finish_bmi_flags`.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_push(PhysReg::Rax);
+            emitter.emit_push(PhysReg::Rax);
+        }
+        self.emit_jit_mem_op(
+            load.guest_pc,
+            true,
+            None,
+            Some(16),
+            None,
+            None,
+            None,
+            addr,
+            mem_width,
+            SignExtend::Zero,
+            16,
+        )?;
+
+        self.code.emit_u8(0x9C); // pushfq (old)
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_bit_test_mi_disp(BitTestRegOp::Test, PhysReg::Rsp, 8, index, width);
+        }
+        self.finish_bmi_flags(PhysReg::Rax, Some(1 << 0));
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+        Ok(Some(consumed))
+    }
+
     /// Fuse the x86 lifter's exact `Load virtual; Bsf/Bsr dst,virtual` pair.
     /// The helper stages the load in caller-owned stack storage, leaving the
     /// architectural destination intact until the native scan executes. Only
@@ -16976,6 +17073,16 @@ impl X86_64Lowerer {
                         validate_idx += consumed;
                         continue;
                     }
+                    if let Some(consumed) = super::runtime::x86_jit_mem_bit_test_source_sequence_len(
+                        block,
+                        validate_idx,
+                        true,
+                        &virtual_definitions,
+                        &virtual_uses,
+                    ) {
+                        validate_idx += consumed;
+                        continue;
+                    }
                     if let Some(consumed) = super::runtime::x86_jit_mem_bit_scan_source_sequence_len(
                         block,
                         validate_idx,
@@ -17111,6 +17218,16 @@ impl X86_64Lowerer {
                 }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_mem_alu_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_mem_bit_test_source(
                     block,
                     idx,
                     &virtual_definitions,
@@ -21991,6 +22108,48 @@ mod tests {
                 0x66, 0x44, 0x0F, 0xBC, 0x04, 0x24, // bsf r8w,[rsp]
                 0x4C, 0x0F, 0xBD, 0x7C, 0x24, 0x08, // bsr r15,[rsp+8]
             ]
+        );
+    }
+
+    #[test]
+    fn emit_bit_test_memory_immediate_encodes_stack_sources_and_widths() {
+        let mut buf = CodeBuffer::new();
+        {
+            let mut emit = X86Emitter::new(&mut buf);
+            emit.emit_bit_test_mi_disp(BitTestRegOp::Test, PhysReg::Rsp, 0, 15, OpWidth::W16);
+            emit.emit_bit_test_mi_disp(BitTestRegOp::Test, PhysReg::Rsp, 8, 63, OpWidth::W64);
+        }
+        assert_eq!(
+            buf.data(),
+            &[
+                0x66, 0x0F, 0xBA, 0x24, 0x24, 0x0F, // bt word [rsp],15
+                0x48, 0x0F, 0xBA, 0x64, 0x24, 0x08, 0x3F, // bt qword [rsp+8],63
+            ]
+        );
+    }
+
+    #[cfg(feature = "smir-jit")]
+    #[test]
+    fn lower_helper_backed_immediate_bit_test_consumes_staged_stack_source() {
+        // bt qword ptr [rbx],5; hlt
+        let (lowered, entry) =
+            lower_rex2_block_with_mem_helpers(&[0x48, 0x0F, 0xBA, 0x23, 0x05, 0xF4], true);
+        assert!(entry < lowered.len());
+        assert!(
+            lowered
+                .windows(7)
+                .any(|bytes| bytes == [0x48, 0x0F, 0xBA, 0x64, 0x24, 0x08, 0x05]),
+            "helper-backed BT must consume the caller-owned stack word: {lowered:02X?}"
+        );
+        let mut helper_call = vec![0xFF, 0x90];
+        helper_call.extend_from_slice(&(X86_GUEST_LOAD_FN_OFFSET as u32).to_le_bytes());
+        assert_eq!(
+            lowered
+                .windows(helper_call.len())
+                .filter(|bytes| *bytes == helper_call)
+                .count(),
+            1,
+            "memory-source BT must issue exactly one load helper call"
         );
     }
 

@@ -1751,6 +1751,87 @@ fn jit_memory_source_bit_scans_match_interpreter_partial_writes_flags_and_faults
     assert_eq!(after.rip, LOAD_ADDR, "fault must restart current PC");
 }
 
+/// Immediate memory BT is non-modifying: the helper-backed native path must
+/// merge only CF, retain every other status flag and GPR, leave memory intact,
+/// and restart precisely if the operand load faults.
+#[test]
+fn jit_memory_source_immediate_bit_tests_match_interpreter_flags_and_faults() {
+    const DATA: u64 = 0x20_0000;
+    for (name, instruction, data, expected_cf) in [
+        (
+            "BT word [rbx],15",
+            &[0x66, 0x0F, 0xBA, 0x23, 0x0F][..],
+            0x8000u64,
+            true,
+        ),
+        ("BT dword [rbx],7", &[0x0F, 0xBA, 0x23, 0x07][..], 0, false),
+        (
+            "BT qword [rbx],63",
+            &[0x48, 0x0F, 0xBA, 0x23, 0x3F][..],
+            1u64 << 63,
+            true,
+        ),
+    ] {
+        let mut code = instruction.to_vec();
+        code.push(0xF4);
+        let setup = |vcpu: &mut X86_64Vcpu, memory: &Arc<GuestMemoryMmap>| {
+            memory.write_obj(data, GuestAddress(DATA)).unwrap();
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = 0xA5A5_5A5A_1357_2468;
+            regs.rbx = DATA;
+            regs.r8 = 0x0123_4567_89AB_CDEF;
+            regs.rflags = 0xCD7;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let (mut interp, interp_mem) = make_vcpu_mem(&code);
+        setup(&mut interp, &interp_mem);
+        assert!(interp.step().unwrap().is_none(), "{name} interpreter");
+        let expected = interp.get_regs().unwrap();
+
+        let (mut jit, jit_mem) = make_vcpu_mem(&code);
+        setup(&mut jit, &jit_mem);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{name}: {error:?}")),
+            "{name} must enter the helper-backed native tier"
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(actual.rax, expected.rax, "{name}: RAX scratch preservation");
+        assert_eq!(actual.rbx, expected.rbx, "{name}: address base");
+        assert_eq!(actual.r8, expected.r8, "{name}: unrelated GPR");
+        assert_eq!(actual.rflags, expected.rflags, "{name}: RFLAGS");
+        assert_eq!(actual.rflags & 1 != 0, expected_cf, "{name}: CF");
+        assert_eq!(actual.rip, expected.rip, "{name}: RIP");
+        assert_eq!(
+            jit_mem.read_obj::<u64>(GuestAddress(DATA)).unwrap(),
+            data,
+            "{name}: memory must remain unchanged"
+        );
+    }
+
+    let code = [0x48, 0x0F, 0xBA, 0x23, 0x05, 0xF4]; // bt qword [rbx],5
+    let (mut fault, _) = make_vcpu_mem(&code);
+    let mut before = fault.get_regs().unwrap();
+    before.rax = 0xA5A5_5A5A_1357_2468;
+    before.rbx = MEM_SIZE + 0x1000;
+    before.r8 = 0x0123_4567_89AB_CDEF;
+    before.rflags = 0xCD7;
+    fault.set_regs(&before).unwrap();
+    assert!(
+        fault
+            .jit_try_block()
+            .expect("faulting immediate memory BT JIT"),
+        "BT must compile before its precise helper fault"
+    );
+    let after = fault.get_regs().unwrap();
+    assert_eq!(after.rax, before.rax, "fault must preserve RAX");
+    assert_eq!(after.rbx, before.rbx, "fault must preserve address base");
+    assert_eq!(after.r8, before.r8, "fault must preserve unrelated GPRs");
+    assert_eq!(after.rflags, before.rflags, "fault must preserve RFLAGS");
+    assert_eq!(after.rip, LOAD_ADDR, "fault must restart current PC");
+}
+
 /// Register byte swaps are flag-neutral and must remain native for both the
 /// legacy in-place BSWAP encoding and APX MOVBE's two-register word form.
 #[test]

@@ -6757,6 +6757,60 @@ pub(crate) fn x86_jit_mem_bit_scan_source_sequence_len(
     .then_some(2)
 }
 
+/// Validate the exact non-modifying immediate memory bit-test shape emitted by
+/// the x86 lifter: `Load virtual; Bt virtual,imm`. Register-index memory forms
+/// first perform signed bit-string address adjustment and therefore remain a
+/// distinct lowering problem. The loaded virtual must have one definition and
+/// one use and the already-normalized immediate must select a bit in the
+/// loaded operand.
+pub(crate) fn x86_jit_mem_bit_test_source_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{OpWidth, SignExtend, SrcOperand, VReg};
+
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (temporary, addr, mem_width) = match &load.kind {
+        OpKind::Load {
+            dst: temporary @ VReg::Virtual(_),
+            addr,
+            width,
+            sign: SignExtend::Zero,
+        } => (*temporary, addr, *width),
+        _ => return None,
+    };
+    let width = mem_width.to_op_width()?;
+    if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+        || !x86_jit_mem_address_shape_valid(addr)
+        || virtual_definitions.get(&temporary) != Some(&1)
+        || virtual_uses.get(&temporary) != Some(&1)
+    {
+        return None;
+    }
+
+    let consumer = block.ops.get(index + 1)?;
+    let OpKind::Bt {
+        src,
+        index: SrcOperand::Imm(bit),
+        width: bit_width,
+    } = &consumer.kind
+    else {
+        return None;
+    };
+    (consumer.guest_pc == load.guest_pc
+        && *src == temporary
+        && *bit_width == width
+        && (0..i64::from(width.bits())).contains(bit))
+    .then_some(2)
+}
+
 /// Validate the exact two-op shape emitted for a memory-source x86 CRC32.
 /// The virtual load result must be single-definition/single-use so native
 /// lowering can eliminate it without creating an identity-map GPR alias.
@@ -7431,6 +7485,16 @@ fn block_is_clobber_safe(
             continue;
         }
         if let Some(consumed) = x86_jit_mem_alu_source_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
+        if let Some(consumed) = x86_jit_mem_bit_test_source_sequence_len(
             block,
             i,
             allow_mem,
@@ -20172,6 +20236,14 @@ mod jit_gate_tests {
                 },
                 MemWidth::B8,
             ),
+            (
+                OpKind::Bt {
+                    src: temporary,
+                    index: SrcOperand::Imm(15),
+                    width: OpWidth::W16,
+                },
+                MemWidth::B2,
+            ),
         ];
         for (consumer, mem_width) in valid {
             let function = build(
@@ -20345,6 +20417,42 @@ mod jit_gate_tests {
                     src: temporary,
                     width: OpWidth::W32,
                     flags: FlagUpdate::Specific(FlagSet::ZF),
+                },
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                OpKind::Bt {
+                    src: temporary,
+                    index: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W64,
+                },
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                OpKind::Bt {
+                    src: temporary,
+                    index: SrcOperand::Imm(7),
+                    width: OpWidth::W32,
+                },
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                OpKind::Bt {
+                    src: temporary,
+                    index: SrcOperand::Imm(64),
+                    width: OpWidth::W64,
                 },
                 MemWidth::B8,
                 SignExtend::Zero,
