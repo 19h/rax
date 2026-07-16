@@ -15362,9 +15362,10 @@ impl X86_64Lowerer {
             } => (addr, *width),
             _ => unreachable!("validated memory bit update starts with Load"),
         };
-        let kind = match &block.ops[idx + 3].kind {
+        let action_index = if consumed == 4 { idx + 1 } else { idx + 3 };
+        let kind = match &block.ops[action_index].kind {
             OpKind::Or { .. } => BitTestRegOp::Set,
-            OpKind::Not { .. } => BitTestRegOp::Reset,
+            OpKind::And { .. } | OpKind::Not { .. } => BitTestRegOp::Reset,
             OpKind::Xor { .. } => BitTestRegOp::Complement,
             _ => unreachable!("validated immediate memory bit-update action"),
         };
@@ -22340,6 +22341,76 @@ mod tests {
                 "memory-destination BTR must issue exactly one {name} helper call"
             );
         }
+
+        // btc qword ptr [rbx],63; hlt
+        let (lowered, entry) =
+            lower_rex2_block_with_mem_helpers(&[0x48, 0x0F, 0xBA, 0x3B, 0x3F, 0xF4], true);
+        assert!(entry < lowered.len());
+        assert!(
+            lowered
+                .windows(7)
+                .any(|bytes| bytes == [0x48, 0x0F, 0xBA, 0x7C, 0x24, 0x10, 0x3F]),
+            "helper-backed BTC must modify the staged store word: {lowered:02X?}"
+        );
+        assert!(
+            lowered
+                .windows(7)
+                .any(|bytes| bytes == [0x48, 0x0F, 0xBA, 0x64, 0x24, 0x08, 0x3F]),
+            "helper-backed BTC must replay CF from the original word: {lowered:02X?}"
+        );
+    }
+
+    #[cfg(feature = "smir-jit")]
+    #[test]
+    fn lower_optimized_helper_backed_btc_accepts_folded_w64_mask() {
+        // btc qword ptr [rbx],63; hlt
+        let bytes = [0x48, 0x0F, 0xBA, 0x3B, 0x3F, 0xF4];
+        let reader = TestReader {
+            base: 0x1000,
+            bytes: bytes.to_vec(),
+        };
+        let mut lifter = X86_64Lifter::strict();
+        let mut lctx = LiftContext::new(SourceArch::X86_64);
+        let mut block = lifter
+            .lift_block(0x1000, &reader, &mut lctx)
+            .expect("lift BTC block");
+        block.set_terminator(Terminator::Return { values: vec![] });
+        let block_id = block.id;
+        let mut function = SmirFunction::new(FunctionId(0), block_id, 0x1000);
+        function.add_block(block);
+        crate::smir::optimize::optimize_function(
+            &mut function,
+            crate::smir::optimize::OptLevel::O2,
+        );
+        assert!(matches!(
+            function.blocks[0].ops[1].kind,
+            OpKind::Xor {
+                src2: SrcOperand::Imm(i64::MIN),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+                ..
+            }
+        ));
+
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_mem_helpers(true);
+        let result = lowerer
+            .lower_function(&function)
+            .expect("lower optimized BTC block");
+        assert!(result.relocations.is_empty());
+        let lowered = lowerer.finalize().expect("finalize optimized BTC");
+        assert!(
+            lowered
+                .windows(7)
+                .any(|bytes| bytes == [0x48, 0x0F, 0xBA, 0x7C, 0x24, 0x10, 0x3F]),
+            "optimized helper-backed BTC must modify the staged store word: {lowered:02X?}"
+        );
+        assert!(
+            lowered
+                .windows(7)
+                .any(|bytes| bytes == [0x48, 0x0F, 0xBA, 0x64, 0x24, 0x08, 0x3F]),
+            "optimized helper-backed BTC must replay CF from the original word: {lowered:02X?}"
+        );
     }
 
     #[cfg(feature = "smir-jit")]

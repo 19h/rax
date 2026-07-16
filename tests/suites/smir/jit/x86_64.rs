@@ -1886,10 +1886,13 @@ fn jit_memory_destination_immediate_bit_updates_match_interpreter_and_faults() {
 
         let (mut jit, jit_mem) = make_vcpu_mem(&code);
         setup(&mut jit, &jit_mem);
+        let ran_native = jit
+            .jit_try_block()
+            .unwrap_or_else(|error| panic!("{name}: {error:?}"));
         assert!(
-            jit.jit_try_block()
-                .unwrap_or_else(|error| panic!("{name}: {error:?}")),
-            "{name} must enter the helper-backed native tier"
+            ran_native,
+            "{name} must enter the helper-backed native tier:\n{}",
+            jit.jit_dump_region(LOAD_ADDR)
         );
         let actual = jit.get_regs().unwrap();
         assert_eq!(actual.rax, expected.rax, "{name}: RAX scratch preservation");

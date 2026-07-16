@@ -6815,7 +6815,9 @@ pub(crate) fn x86_jit_mem_bit_test_source_sequence_len(
 /// emitted by the x86 lifter:
 ///
 /// `Load old; Mov mask,1; Shl mask,imm; [Not mask]; Or/And/Xor new,old,mask;
-/// Store new; Bt old,imm`.
+/// Store new; Bt old,imm`. O2 may fold the W64 mask construction into an
+/// immediate `Or`/`And`/`Xor`, which is accepted only when its mask exactly
+/// corresponds to the final `Bt` index.
 ///
 /// The optional `Not` and following `And` identify BTR; `Or` identifies BTS
 /// and `Xor` identifies BTC. Register-index bit-string forms perform signed
@@ -6851,6 +6853,82 @@ pub(crate) fn x86_jit_mem_bit_update_rmw_sequence_len(
         || !x86_jit_mem_address_shape_valid(addr)
     {
         return None;
+    }
+
+    // O2 constant-folds the W64 mask producer into the update. Match that
+    // exact four-op form before checking the unfused lifter sequence below.
+    if width == OpWidth::W64 {
+        let compute = block.ops.get(index + 1)?;
+        let folded = match &compute.kind {
+            OpKind::Or {
+                dst,
+                src1,
+                src2: SrcOperand::Imm(mask),
+                width,
+                flags,
+            } => Some((0u8, *dst, *src1, *mask, *width, *flags)),
+            OpKind::And {
+                dst,
+                src1,
+                src2: SrcOperand::Imm(mask),
+                width,
+                flags,
+            } => Some((1u8, *dst, *src1, *mask, *width, *flags)),
+            OpKind::Xor {
+                dst,
+                src1,
+                src2: SrcOperand::Imm(mask),
+                width,
+                flags,
+            } => Some((2u8, *dst, *src1, *mask, *width, *flags)),
+            _ => None,
+        };
+        if let Some((action, result, compute_old, mask, compute_width, compute_flags)) = folded {
+            let VReg::Virtual(_) = result else {
+                return None;
+            };
+            let store = block.ops.get(index + 2)?;
+            let replay = block.ops.get(index + 3)?;
+            let bit = match &replay.kind {
+                OpKind::Bt {
+                    src,
+                    index: SrcOperand::Imm(bit),
+                    width: replay_width,
+                } if *src == old
+                    && *replay_width == width
+                    && (0..i64::from(width.bits())).contains(bit) =>
+                {
+                    *bit
+                }
+                _ => return None,
+            };
+            let bit_mask = 1u64 << (bit as u32);
+            let expected_mask = match action {
+                0 | 2 => bit_mask as i64,
+                1 => (!bit_mask) as i64,
+                _ => unreachable!(),
+            };
+            return (compute_old == old
+                && mask == expected_mask
+                && compute_width == width
+                && compute_flags == FlagUpdate::None
+                && block.ops[index..index + 4]
+                    .iter()
+                    .all(|op| op.guest_pc == load.guest_pc)
+                && matches!(
+                    &store.kind,
+                    OpKind::Store {
+                        src,
+                        addr: store_addr,
+                        width: store_width,
+                    } if *src == result && *store_addr == *addr && *store_width == mem_width
+                )
+                && virtual_definitions.get(&old) == Some(&1)
+                && virtual_uses.get(&old) == Some(&2)
+                && virtual_definitions.get(&result) == Some(&1)
+                && virtual_uses.get(&result) == Some(&1))
+            .then_some(4);
+        }
     }
 
     let mask = match &block.ops.get(index + 1)?.kind {
@@ -19425,6 +19503,61 @@ mod jit_gate_tests {
             builder.set_terminator(Terminator::Return { values: vec![] });
             builder.finish()
         };
+        let build_folded = |action: u8, bit: i64, mask: i64, flags: FlagUpdate| {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::Load {
+                    dst: old,
+                    addr: address(),
+                    width: MemWidth::B8,
+                    sign: SignExtend::Zero,
+                },
+            );
+            let compute = match action {
+                0 => OpKind::Or {
+                    dst: result,
+                    src1: old,
+                    src2: SrcOperand::Imm(mask),
+                    width: OpWidth::W64,
+                    flags,
+                },
+                1 => OpKind::And {
+                    dst: result,
+                    src1: old,
+                    src2: SrcOperand::Imm(mask),
+                    width: OpWidth::W64,
+                    flags,
+                },
+                2 => OpKind::Xor {
+                    dst: result,
+                    src1: old,
+                    src2: SrcOperand::Imm(mask),
+                    width: OpWidth::W64,
+                    flags,
+                },
+                _ => unreachable!(),
+            };
+            builder.push_op(0x1000, compute);
+            builder.push_op(
+                0x1000,
+                OpKind::Store {
+                    src: result,
+                    addr: address(),
+                    width: MemWidth::B8,
+                },
+            );
+            builder.push_op(
+                0x1000,
+                OpKind::Bt {
+                    src: old,
+                    index: SrcOperand::Imm(bit),
+                    width: OpWidth::W64,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            builder.finish()
+        };
 
         for (action, mem_width, bit) in [
             (0, MemWidth::B2, 15),
@@ -19441,6 +19574,38 @@ mod jit_gate_tests {
                 &function,
                 &std::collections::HashMap::new(),
                 false,
+            ));
+        }
+
+        for function in [
+            build_folded(0, 5, 1 << 5, FlagUpdate::None),
+            build_folded(1, 5, !(1 << 5), FlagUpdate::None),
+            build_folded(2, 63, i64::MIN, FlagUpdate::None),
+        ] {
+            assert!(is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                true,
+            ));
+            assert!(!is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                false,
+            ));
+        }
+
+        let folded_wrong_mask = build_folded(2, 63, 1, FlagUpdate::None);
+        let mut folded_wrong_replay = build_folded(0, 5, 1 << 5, FlagUpdate::None);
+        let OpKind::Bt { index, .. } = &mut folded_wrong_replay.blocks[0].ops[3].kind else {
+            unreachable!()
+        };
+        *index = SrcOperand::Imm(6);
+        let folded_flagged = build_folded(1, 5, !(1 << 5), FlagUpdate::All);
+        for function in [folded_wrong_mask, folded_wrong_replay, folded_flagged] {
+            assert!(!is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                true,
             ));
         }
 
