@@ -3732,6 +3732,11 @@ pub struct X86_64Lowerer {
     /// Whether to adjust PC-relative displacements for code layout
     pcrel_adjust: bool,
 
+    /// Emit guarded instruction-fault exits that restart the current guest PC
+    /// in the interpreter. These exits require the native JIT trampoline's
+    /// GuestRegs frame and must remain disabled for standalone lowerer users.
+    jit_fault_deopt_guards: bool,
+
     /// Materialize `LEA` with an explicit guest PC base as its absolute guest
     /// address instead of a native RIP-relative relocation. Native JIT code is
     /// allocated independently of guest virtual addresses, while x86 `LEA`
@@ -3782,6 +3787,7 @@ impl X86_64Lowerer {
             pending_jumps: Vec::new(),
             guest_base: 0,
             pcrel_adjust: true,
+            jit_fault_deopt_guards: false,
             guest_pcrel_lea_immediates: false,
             block_guest_pcs: HashMap::new(),
             pending_cond: None,
@@ -3832,6 +3838,12 @@ impl X86_64Lowerer {
 
     pub fn set_pcrel_adjust(&mut self, adjust: bool) {
         self.pcrel_adjust = adjust;
+    }
+
+    /// Enable precise JIT-only guarded exits for native instructions whose
+    /// host fault conditions must be handled by the guest interpreter.
+    pub fn set_jit_fault_deopt_guards(&mut self, on: bool) {
+        self.jit_fault_deopt_guards = on;
     }
 
     /// Materialize guest-anchored PC-relative `LEA` results as immediates. This
@@ -15496,6 +15508,250 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
+    /// Stage any architectural x86 GPR in caller-owned host-stack space. The
+    /// identity-mapped legacy registers are read directly; guest RSP/RBP and
+    /// APX EGPRs are read from their canonical GuestRegs slots because they do
+    /// not have a usable identity-mapped host register.
+    #[cfg(feature = "smir-jit")]
+    fn emit_jit_stage_arch_gpr(
+        &mut self,
+        source: VReg,
+        caller_stack_offset: i32,
+    ) -> Result<(), LowerError> {
+        let index = Self::x86_gpr_index(source).ok_or_else(|| LowerError::InvalidOperand {
+            op: "guarded x86 DIV".to_string(),
+            operand: "divisor must be an architectural x86 GPR".to_string(),
+        })?;
+        if index <= 15 && !matches!(index, 4 | 5) {
+            let source = self.get_reg(source)?;
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rsp, caller_stack_offset, source, OpWidth::W64);
+            return Ok(());
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_push(PhysReg::Rax);
+            emitter.emit_push(PhysReg::Rcx);
+            emitter.emit_mov_rm(
+                PhysReg::Rax,
+                PhysReg::Rbp,
+                X86_STATE_PTR_AT_RBP,
+                OpWidth::W64,
+            );
+            emitter.emit_mov_rm(
+                PhysReg::Rcx,
+                PhysReg::Rax,
+                i32::from(index) * 8,
+                OpWidth::W64,
+            );
+            emitter.emit_mov_mr(
+                PhysReg::Rsp,
+                caller_stack_offset + 16,
+                PhysReg::Rcx,
+                OpWidth::W64,
+            );
+            emitter.emit_pop(PhysReg::Rcx);
+            emitter.emit_pop(PhysReg::Rax);
+        }
+        Ok(())
+    }
+
+    /// Lower exact x86 `DIV r/m` through pre-fault guards. The divisor is
+    /// staged in a 16-byte caller frame, while the original RFLAGS/RAX/RDX are
+    /// snapshotted above it. A zero divisor or high-half overflow exits to the
+    /// interpreter at the current guest PC without committing either result;
+    /// only a proven-safe path executes native DIV, so host #DE is impossible.
+    #[cfg(feature = "smir-jit")]
+    fn try_lower_jit_unsigned_div(
+        &mut self,
+        block: &SmirBlock,
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        if !self.jit_fault_deopt_guards {
+            return Ok(None);
+        }
+
+        enum DivisorSource {
+            Memory {
+                addr: Address,
+                mem_width: MemWidth,
+                guest_pc: u64,
+            },
+            Register(VReg),
+            LegacyHighByte(VReg),
+        }
+
+        let (source, consumer_idx, consumed) = if self.mem_helpers
+            && super::runtime::x86_jit_mem_unsigned_div_source_sequence_len(
+                block,
+                idx,
+                true,
+                virtual_definitions,
+                virtual_uses,
+            )
+            .is_some()
+        {
+            let OpKind::Load {
+                addr,
+                width,
+                sign: SignExtend::Zero,
+                ..
+            } = &block.ops[idx].kind
+            else {
+                unreachable!("validated unsigned memory DIV starts with Load")
+            };
+            (
+                DivisorSource::Memory {
+                    addr: addr.clone(),
+                    mem_width: *width,
+                    guest_pc: block.ops[idx].guest_pc,
+                },
+                idx + 1,
+                2,
+            )
+        } else if super::runtime::x86_jit_high_byte_unsigned_div_source_sequence_len(
+            block,
+            idx,
+            virtual_definitions,
+            virtual_uses,
+        )
+        .is_some()
+        {
+            let OpKind::Shr {
+                src: parent,
+                width: OpWidth::W64,
+                ..
+            } = &block.ops[idx].kind
+            else {
+                unreachable!("validated high-byte unsigned DIV starts with Shr")
+            };
+            (DivisorSource::LegacyHighByte(*parent), idx + 1, 2)
+        } else if super::runtime::x86_jit_unsigned_div_register_shape_valid(&block.ops[idx]) {
+            let OpKind::DivU {
+                src2: SrcOperand::Reg(source),
+                ..
+            } = &block.ops[idx].kind
+            else {
+                unreachable!("validated register unsigned DIV")
+            };
+            (DivisorSource::Register(*source), idx, 1)
+        } else {
+            return Ok(None);
+        };
+
+        let consumer = &block.ops[consumer_idx];
+        let width = match &consumer.kind {
+            OpKind::DivU { width, .. } => *width,
+            _ => unreachable!("validated unsigned DIV consumer"),
+        };
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
+        }
+        match &source {
+            DivisorSource::Memory {
+                addr,
+                mem_width,
+                guest_pc,
+            } => self.emit_jit_mem_op(
+                *guest_pc,
+                true,
+                None,
+                Some(16),
+                None,
+                None,
+                None,
+                addr,
+                *mem_width,
+                SignExtend::Zero,
+                16,
+            )?,
+            DivisorSource::Register(source) | DivisorSource::LegacyHighByte(source) => {
+                self.emit_jit_stage_arch_gpr(*source, 0)?;
+            }
+        }
+
+        // Current layout after the snapshots:
+        // [rsp+0]=old RDX, [rsp+8]=old RAX, [rsp+16]=old RFLAGS,
+        // [rsp+24]=zero-extended/staged divisor, [rsp+32]=caller padding.
+        self.code.emit_u8(0x9C); // pushfq
+        self.code.emit_u8(0x50); // push rax
+        self.code.emit_u8(0x52); // push rdx
+
+        if matches!(source, DivisorSource::LegacyHighByte(_)) {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+            emitter.emit_shr_ri(PhysReg::Rax, 8, OpWidth::W64);
+            emitter.emit_mov_mr(PhysReg::Rsp, 24, PhysReg::Rax, OpWidth::W64);
+        }
+
+        let mut fault_branches = Vec::with_capacity(2);
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+            emitter.emit_test_rr(PhysReg::Rax, PhysReg::Rax, width);
+        }
+        fault_branches.push(self.emit_jcc_placeholder(X86Cond::E));
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            if width == OpWidth::W8 {
+                // AX is the complete 16-bit dividend; compare AH with the
+                // unsigned 8-bit divisor after moving AH into DL.
+                emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rsp, 8, OpWidth::W64);
+                emitter.emit_shr_ri(PhysReg::Rdx, 8, OpWidth::W64);
+                emitter.emit_cmp_rr(PhysReg::Rdx, PhysReg::Rax, OpWidth::W8);
+            } else {
+                emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rsp, 0, OpWidth::W64);
+                emitter.emit_cmp_rr(PhysReg::Rdx, PhysReg::Rax, width);
+            }
+        }
+        // For unsigned RDX:RAX / divisor, quotient overflow is equivalent to
+        // the high half being greater than or equal to the divisor.
+        fault_branches.push(self.emit_jcc_placeholder(X86Cond::Ae));
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rsp, 0, OpWidth::W64);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 8, OpWidth::W64);
+            emitter.emit_group3_m_disp(6, PhysReg::Rsp, 24, DispSize::Auto, width);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+        self.code.emit_u8(0x9D); // restore architecturally undefined flags deterministically
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+        self.code.emit_u8(0xE9);
+        let success_done = self.code.position();
+        self.code.emit_u32(0);
+
+        let fault = self.code.position();
+        for branch in fault_branches {
+            self.code
+                .patch_i32(branch, (fault as i64 - (branch as i64 + 4)) as i32);
+        }
+        self.code.emit_u8(0x5A); // restore old RDX
+        self.code.emit_u8(0x58); // restore old RAX
+        self.code.emit_u8(0x9D); // restore old RFLAGS
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+        self.emit_native_exit(consumer.guest_pc);
+
+        let done = self.code.position();
+        self.code.patch_i32(
+            success_done,
+            (done as i64 - (success_done as i64 + 4)) as i32,
+        );
+        Ok(Some(consumed))
+    }
+
     /// Fuse the x86 lifter's exact non-locked immediate memory BTS/BTR/BTC
     /// sequence. The original and updated operands remain in caller-owned
     /// stack words across the MMU helpers. Speculative native modification is
@@ -17384,6 +17640,20 @@ impl X86_64Lowerer {
                         validate_idx += consumed;
                         continue;
                     }
+                    if self.jit_fault_deopt_guards {
+                        if let Some(consumed) =
+                            super::runtime::x86_jit_mem_unsigned_div_source_sequence_len(
+                                block,
+                                validate_idx,
+                                true,
+                                &virtual_definitions,
+                                &virtual_uses,
+                            )
+                        {
+                            validate_idx += consumed;
+                            continue;
+                        }
+                    }
                     if let Some(consumed) = super::runtime::x86_jit_mem_bit_test_source_sequence_len(
                         block,
                         validate_idx,
@@ -17442,6 +17712,25 @@ impl X86_64Lowerer {
                         &virtual_uses,
                     ) {
                         validate_idx += consumed;
+                        continue;
+                    }
+                }
+                if self.jit_fault_deopt_guards {
+                    if let Some(consumed) =
+                        super::runtime::x86_jit_high_byte_unsigned_div_source_sequence_len(
+                            block,
+                            validate_idx,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += consumed;
+                        continue;
+                    }
+                    if super::runtime::x86_jit_unsigned_div_register_shape_valid(
+                        &block.ops[validate_idx],
+                    ) {
+                        validate_idx += 1;
                         continue;
                     }
                 }
@@ -17654,6 +17943,13 @@ impl X86_64Lowerer {
                     continue;
                 }
             }
+            #[cfg(feature = "smir-jit")]
+            if let Some(consumed) =
+                self.try_lower_jit_unsigned_div(block, idx, &virtual_definitions, &virtual_uses)?
+            {
+                idx += consumed;
+                continue;
+            }
             self.lower_op(&block.ops[idx])?;
             idx += 1;
         }
@@ -17862,7 +18158,11 @@ mod tests {
         }
     }
 
-    fn lower_rex2_block_with_mem_helpers(bytes: &[u8], mem_helpers: bool) -> (Vec<u8>, usize) {
+    fn lower_rex2_block_with_options(
+        bytes: &[u8],
+        mem_helpers: bool,
+        jit_fault_deopt_guards: bool,
+    ) -> (Vec<u8>, usize) {
         let reader = TestReader {
             base: 0x1000,
             bytes: bytes.to_vec(),
@@ -17880,11 +18180,20 @@ mod tests {
 
         let mut lowerer = X86_64Lowerer::new();
         lowerer.set_mem_helpers(mem_helpers);
+        lowerer.set_jit_fault_deopt_guards(jit_fault_deopt_guards);
         let res = lowerer.lower_function(&func).unwrap_or_else(|error| {
             panic!("lower REX2 block {bytes:02X?}: {error:?}; ops={ops_debug}")
         });
         assert!(res.relocations.is_empty(), "REX2 block should not relocate");
         (lowerer.finalize().expect("finalize"), res.entry_offset)
+    }
+
+    fn lower_rex2_block_with_mem_helpers(bytes: &[u8], mem_helpers: bool) -> (Vec<u8>, usize) {
+        lower_rex2_block_with_options(bytes, mem_helpers, false)
+    }
+
+    fn lower_jit_guarded_x86_block(bytes: &[u8], mem_helpers: bool) -> (Vec<u8>, usize) {
+        lower_rex2_block_with_options(bytes, mem_helpers, true)
     }
 
     fn lower_rex2_block(bytes: &[u8]) -> (Vec<u8>, usize) {
@@ -22875,6 +23184,117 @@ mod tests {
                 .any(|bytes| bytes == [0x48, 0x89, 0x44, 0x24, 0x10]),
             "load helper must stage the source above its saved flags and RAX: {lowered:02X?}"
         );
+    }
+
+    #[cfg(feature = "smir-jit")]
+    #[test]
+    fn lower_guarded_unsigned_division_stages_every_source_class() {
+        for (name, instruction, expected_divide) in [
+            (
+                "DIV BL",
+                &[0xF6, 0xF3, 0xF4][..],
+                &[0xF6, 0x74, 0x24, 0x18][..],
+            ),
+            (
+                "DIV SP",
+                &[0x66, 0xF7, 0xF4, 0xF4][..],
+                &[0x66, 0xF7, 0x74, 0x24, 0x18][..],
+            ),
+            (
+                "DIV EBP",
+                &[0xF7, 0xF5, 0xF4][..],
+                &[0xF7, 0x74, 0x24, 0x18][..],
+            ),
+            (
+                "DIV R15",
+                &[0x49, 0xF7, 0xF7, 0xF4][..],
+                &[0x48, 0xF7, 0x74, 0x24, 0x18][..],
+            ),
+            (
+                "DIV R16",
+                &[0xD5, 0x18, 0xF7, 0xF0, 0xF4][..],
+                &[0x48, 0xF7, 0x74, 0x24, 0x18][..],
+            ),
+            (
+                "APX NF DIV RBX",
+                &[0x62, 0xF4, 0xFC, 0x0C, 0xF7, 0xF3, 0xF4][..],
+                &[0x48, 0xF7, 0x74, 0x24, 0x18][..],
+            ),
+        ] {
+            let (lowered, entry) = lower_jit_guarded_x86_block(instruction, false);
+            assert!(entry < lowered.len(), "{name}");
+            assert!(
+                lowered
+                    .windows(expected_divide.len())
+                    .any(|bytes| bytes == expected_divide),
+                "{name} must divide by the staged stack snapshot: {lowered:02X?}"
+            );
+            assert!(
+                lowered.windows(2).any(|bytes| bytes == [0x0F, 0x84]),
+                "{name} must guard a zero divisor: {lowered:02X?}"
+            );
+            assert!(
+                lowered.windows(2).any(|bytes| bytes == [0x0F, 0x83]),
+                "{name} must guard quotient overflow: {lowered:02X?}"
+            );
+            if name == "DIV R16" {
+                assert!(
+                    lowered
+                        .windows(7)
+                        .any(|bytes| bytes == [0x48, 0x8B, 0x88, 0x80, 0x00, 0x00, 0x00]),
+                    "REX2 B4 must select canonical GuestRegs.gpr[16]: {lowered:02X?}"
+                );
+            }
+        }
+
+        let (high, _) = lower_jit_guarded_x86_block(&[0xF6, 0xF5, 0xF4], false);
+        assert!(
+            high.windows(4)
+                .any(|bytes| bytes == [0x48, 0xC1, 0xE8, 0x08]),
+            "DIV CH must extract the staged legacy high byte: {high:02X?}"
+        );
+        assert!(
+            high.windows(4)
+                .any(|bytes| bytes == [0xF6, 0x74, 0x24, 0x18]),
+            "DIV CH must consume the extracted stack byte: {high:02X?}"
+        );
+
+        for (name, instruction, expected_divide) in [
+            (
+                "DIV byte [RBX]",
+                &[0xF6, 0x33, 0xF4][..],
+                &[0xF6, 0x74, 0x24, 0x18][..],
+            ),
+            (
+                "DIV word [RBX]",
+                &[0x66, 0xF7, 0x33, 0xF4][..],
+                &[0x66, 0xF7, 0x74, 0x24, 0x18][..],
+            ),
+            (
+                "DIV dword [RBX]",
+                &[0xF7, 0x33, 0xF4][..],
+                &[0xF7, 0x74, 0x24, 0x18][..],
+            ),
+            (
+                "DIV qword [RBX]",
+                &[0x48, 0xF7, 0x33, 0xF4][..],
+                &[0x48, 0xF7, 0x74, 0x24, 0x18][..],
+            ),
+        ] {
+            let (memory, _) = lower_jit_guarded_x86_block(instruction, true);
+            assert!(
+                memory
+                    .windows(5)
+                    .any(|bytes| bytes == [0x48, 0x89, 0x44, 0x24, 0x10]),
+                "{name} must stage the zero-extended helper result: {memory:02X?}"
+            );
+            assert!(
+                memory
+                    .windows(expected_divide.len())
+                    .any(|bytes| bytes == expected_divide),
+                "{name} must use the staged helper result: {memory:02X?}"
+            );
+        }
     }
 
     #[cfg(feature = "smir-jit")]
