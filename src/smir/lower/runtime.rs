@@ -6396,11 +6396,12 @@ fn x86_shift_rmw_shape(
 
 /// Validate the exact four-op fault-precise memory-destination shift/rotate
 /// sequence emitted by the x86 lifter. Immediate counts are normalized exactly
-/// as x86 does; multi-bit/zero RCL/RCR and variable CL operations are restricted
-/// to dword/qword widths, where the masked count cannot exceed the operand width
-/// or reach a second through-carry period. Subword counts remain fail-closed
-/// unless already covered by an exact one-bit case because their effective-count
-/// reduction changes deterministic undefined-OF classification.
+/// as x86 does. Byte ROL/ROR accepts every immediate/CL count because value
+/// rotation wraps modulo eight while CF/OF classification still uses the raw
+/// masked count. Multi-bit/zero RCL/RCR and every other variable CL operation are
+/// restricted to dword/qword widths, where the masked count cannot reach a
+/// second through-carry period. Remaining subword shapes stay fail-closed unless
+/// covered by an exact count whose deterministic flag policy is representable.
 pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -6461,6 +6462,7 @@ pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
             let mask = if width == OpWidth::W64 { 0x3f } else { 0x1f };
             let masked = (*value as u8) & mask;
             match compute_tag {
+                0 | 1 if width == OpWidth::W8 => true,
                 2 | 3 => masked == 1 || matches!(width, OpWidth::W32 | OpWidth::W64),
                 0 | 1 | 4 | 5 | 7 => masked == 0 || u32::from(masked) < width.bits(),
                 _ => false,
@@ -6468,7 +6470,10 @@ pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
         }
         SrcOperand::Reg(VReg::Arch(crate::smir::ir::types::ArchReg::X86(
             crate::smir::ir::types::X86Reg::Rcx,
-        ))) => matches!(width, OpWidth::W32 | OpWidth::W64),
+        ))) => {
+            matches!(width, OpWidth::W32 | OpWidth::W64)
+                || (compute_tag <= 1 && width == OpWidth::W8)
+        }
         _ => false,
     };
     let rotate_flags = FlagSet::CF.union(FlagSet::OF);
@@ -19589,6 +19594,8 @@ mod jit_gate_tests {
         for (tag, amount, mem_width) in [
             (0, SrcOperand::Imm(7), MemWidth::B1),
             (1, SrcOperand::Imm(7), MemWidth::B2),
+            (0, SrcOperand::Imm(31), MemWidth::B1),
+            (1, SrcOperand::Imm(9), MemWidth::B1),
             (2, SrcOperand::Imm(1), MemWidth::B4),
             (3, SrcOperand::Imm(1), MemWidth::B8),
             (2, SrcOperand::Imm(32), MemWidth::B4),
@@ -19598,6 +19605,8 @@ mod jit_gate_tests {
             (4, SrcOperand::Imm(0), MemWidth::B1),
             (5, SrcOperand::Imm(1), MemWidth::B4),
             (7, SrcOperand::Imm(255), MemWidth::B8),
+            (0, SrcOperand::Reg(x86(X86Reg::Rcx)), MemWidth::B1),
+            (1, SrcOperand::Reg(x86(X86Reg::Rcx)), MemWidth::B1),
             (0, SrcOperand::Reg(x86(X86Reg::Rcx)), MemWidth::B4),
             (1, SrcOperand::Reg(x86(X86Reg::Rcx)), MemWidth::B8),
             (2, SrcOperand::Reg(x86(X86Reg::Rcx)), MemWidth::B4),
@@ -19658,7 +19667,7 @@ mod jit_gate_tests {
                 0,
                 SrcOperand::Reg(x86(X86Reg::Rcx)),
                 SrcOperand::Reg(x86(X86Reg::Rcx)),
-                MemWidth::B1,
+                MemWidth::B2,
                 FlagUpdate::None,
                 rotate_flags,
                 address(),
@@ -19697,6 +19706,30 @@ mod jit_gate_tests {
                 MemWidth::B2,
                 FlagUpdate::None,
                 FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                0,
+                0,
+                SrcOperand::Imm(17),
+                SrcOperand::Imm(17),
+                MemWidth::B2,
+                FlagUpdate::None,
+                rotate_flags,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                1,
+                1,
+                SrcOperand::Imm(17),
+                SrcOperand::Imm(17),
+                MemWidth::B2,
+                FlagUpdate::None,
+                rotate_flags,
                 address(),
                 0x1000,
                 false,
