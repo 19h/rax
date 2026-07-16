@@ -1368,7 +1368,9 @@ impl std::error::Error for ExecMemError {}
 /// a direct `Jcc`; the latter folds to a helper-backed memory CRC operation.
 ///
 /// Pure architectural-register blocks (counter/pointer loops, ALU chains,
-/// guest-conditional branches) pass — which is the bulk of hot code.
+/// guest-conditional branches) pass — which is the bulk of hot code. Validated
+/// MOV forms involving guest RSP/RBP use their state-backed slots rather than
+/// the corresponding host stack/frame registers.
 pub fn is_native_clobber_safe(func: &crate::smir::ir::SmirFunction) -> bool {
     is_native_clobber_safe_excluding(func, &std::collections::HashMap::new(), false)
 }
@@ -5805,6 +5807,35 @@ fn x86_native_identity_gpr(reg: &crate::smir::ir::types::VReg) -> bool {
     matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 15 && !matches!(index, 4 | 5)))
 }
 
+pub(crate) fn x86_state_backed_stack_mov_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg};
+
+    let gpr_index = |reg: &VReg| match reg {
+        VReg::Arch(ArchReg::X86(x86)) => x86.gpr_index(),
+        _ => None,
+    };
+    let is_stack = |reg: &VReg| gpr_index(reg).is_some_and(|index| matches!(index, 4 | 5));
+
+    matches!(
+        op,
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Reg(src),
+            width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+        } if gpr_index(dst).is_some()
+            && gpr_index(src).is_some()
+            && (is_stack(dst) || is_stack(src))
+    ) || matches!(
+        op,
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Imm(_) | SrcOperand::Imm64(_),
+            width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+        } if is_stack(dst)
+    )
+}
+
 fn x86_native_rdpid_gpr(reg: &crate::smir::ir::types::VReg) -> bool {
     use crate::smir::ir::types::{ArchReg, VReg};
 
@@ -6017,12 +6048,9 @@ fn block_is_clobber_safe(
 
     // The native trampoline runs the region on the HOST stack: guest RSP is
     // never loaded into the host RSP, and the lowerer's prologue repurposes RBP
-    // as the frame pointer (clobbering the guest RBP loaded in). So any op that
-    // reads OR writes guest RSP/RBP would compute against the host RSP/RBP
-    // instead of the guest value — silently wrong, and a write to RSP corrupts
-    // the host stack. Such stack-frame code must stay in the interpreter. (The
-    // differential fuzzers never generate RSP/RBP operands, so this gap was
-    // invisible until real kernel code — which uses them constantly — was JIT'd.)
+    // as the frame pointer. Validated MOV forms use GuestRegs slots and keep the
+    // prologue's saved guest RBP coherent; other RSP/RBP operations would still
+    // compute against host stack state and therefore remain ineligible.
     let touches_sp_bp = |v: &VReg| {
         matches!(
             v,
@@ -6086,6 +6114,7 @@ fn block_is_clobber_safe(
                 if matches!(alignment, 16 | 32 | 64) && x86_jit_mem_address_shape_valid(addr)
         );
         let vector_mem_ok = allow_mem && x86_jit_vector_mem_shape_valid(&op.kind);
+        let stack_mov_ok = x86_state_backed_stack_mov_valid(&op.kind);
         let mem_ok = (allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. }))
             || cldemote_ok
             || alignment_ok
@@ -6231,19 +6260,19 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. A WRITE is never modeled (the trampoline freezes
-        // both — see note above) → bail. A READ is fine ONLY as an operand of a
+        // (3) guest RSP/RBP. Validated MOV reads/writes are state-backed. Other
+        // writes are not modeled and bail. A read is additionally valid as an operand of a
         // mem-JIT Load/Store (an address base/index, or a stored value): the MMU
-        // helper reads the value from the GuestRegs struct — the correct frozen
-        // guest RSP/RBP — not the host RSP/RBP. CLDEMOTE is also safe because
+        // helper reads the value from the GuestRegs struct — the current guest
+        // RSP/RBP — not the host RSP/RBP. CLDEMOTE is also safe because
         // its architecturally ignorable hint never materializes the address;
         // X86CheckAlignment snapshots live GPRs and computes from GuestRegs.
         // Any OTHER op reading RSP/RBP would use the host frame pointer / host
         // stack (wrong) → bail.
-        if op.kind.dests().iter().any(touches_sp_bp) {
+        if !stack_mov_ok && op.kind.dests().iter().any(touches_sp_bp) {
             return false;
         }
-        if !mem_ok && op.kind.source_vregs().iter().any(touches_sp_bp) {
+        if !mem_ok && !stack_mov_ok && op.kind.source_vregs().iter().any(touches_sp_bp) {
             return false;
         }
         i += 1;

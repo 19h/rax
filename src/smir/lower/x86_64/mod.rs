@@ -3805,9 +3805,9 @@ impl X86_64Lowerer {
 
     /// Get the destination register for a VReg
     fn get_dst_reg(&mut self, vreg: VReg) -> Result<PhysReg, LowerError> {
-        // Reject guest writes to architectural RSP/RBP: a lowered block runs on
-        // the HOST stack (guest RSP is not loaded), so writing the host stack /
-        // frame pointer would let the guest pivot the host stack at the epilogue.
+        // Reject non-state-backed guest writes to architectural RSP/RBP: a
+        // lowered block runs on the HOST stack, so mapping either destination
+        // directly would let the guest pivot the host return path.
         Self::ensure_native_stack_dst_safe(vreg)?;
         let loc = self.regalloc.alloc_vreg(vreg)?;
         match loc {
@@ -3837,6 +3837,9 @@ impl X86_64Lowerer {
     }
 
     fn ensure_native_stack_dests_safe(op: &SmirOp) -> Result<(), LowerError> {
+        if Self::mov_touches_state_backed_gpr(&op.kind) {
+            return Ok(());
+        }
         for dst in op.kind.dests() {
             Self::ensure_native_stack_dst_safe(dst)?;
         }
@@ -4866,8 +4869,8 @@ impl X86_64Lowerer {
             // Data Movement
             // ================================================================
             OpKind::Mov { dst, src, width } => {
-                if Self::mov_touches_egpr(*dst, src) {
-                    return self.lower_egpr_mov(*dst, src, *width);
+                if Self::mov_touches_state_backed_gpr(&op.kind) {
+                    return self.lower_state_backed_gpr_mov(*dst, src, *width);
                 }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let use_modrm_imm = matches!(op.x86_hint, Some(X86OpHint::MovImmModRm));
@@ -13571,16 +13574,28 @@ impl X86_64Lowerer {
         }
     }
 
-    fn x86_egpr_index(v: VReg) -> Option<u8> {
-        match v {
-            VReg::Arch(ArchReg::X86(r)) if r.is_egpr() => r.gpr_index(),
-            _ => None,
-        }
+    fn x86_state_backed_gpr(v: VReg) -> bool {
+        Self::x86_gpr_index(v).is_some_and(|index| index >= 16 || matches!(index, 4 | 5))
     }
 
-    fn mov_touches_egpr(dst: VReg, src: &SrcOperand) -> bool {
-        Self::x86_egpr_index(dst).is_some()
-            || matches!(src, SrcOperand::Reg(r) if Self::x86_egpr_index(*r).is_some())
+    fn mov_touches_state_backed_gpr(kind: &OpKind) -> bool {
+        matches!(
+            kind,
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Reg(src),
+                width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+            } if Self::x86_gpr_index(*dst).is_some()
+                && Self::x86_gpr_index(*src).is_some()
+                && (Self::x86_state_backed_gpr(*dst) || Self::x86_state_backed_gpr(*src))
+        ) || matches!(
+            kind,
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Imm(_) | SrcOperand::Imm64(_),
+                width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+            } if Self::x86_state_backed_gpr(*dst)
+        )
     }
 
     /// `mov [base+off], r<reg_enc>` (store) or `mov r<reg_enc>, [base+off]` (load),
@@ -13655,7 +13670,7 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-    fn lower_egpr_mov(
+    fn lower_state_backed_gpr_mov(
         &mut self,
         dst: VReg,
         src: &SrcOperand,
@@ -13668,26 +13683,21 @@ impl X86_64Lowerer {
         }
 
         let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::UnsupportedOp {
-            op: "EGPR MOV destination is not an x86 GPR".to_string(),
+            op: "state-backed MOV destination is not an x86 GPR".to_string(),
         })?;
-        if matches!(dst_idx, 4 | 5) {
-            return Err(LowerError::UnsupportedOp {
-                op: "EGPR MOV to RSP/RBP is not native-safe".to_string(),
-            });
-        }
 
         let src_idx = match src {
             SrcOperand::Reg(r) => {
                 Some(
                     Self::x86_gpr_index(*r).ok_or_else(|| LowerError::UnsupportedOp {
-                        op: "EGPR MOV source is not an x86 GPR".to_string(),
+                        op: "state-backed MOV source is not an x86 GPR".to_string(),
                     })?,
                 )
             }
             SrcOperand::Imm(_) | SrcOperand::Imm64(_) => None,
             _ => {
                 return Err(LowerError::UnsupportedOp {
-                    op: "EGPR MOV with non-scalar source".to_string(),
+                    op: "state-backed MOV with non-scalar source".to_string(),
                 });
             }
         };
@@ -13722,6 +13732,21 @@ impl X86_64Lowerer {
         }
 
         self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
+
+        // The native function prologue saved the trampoline's guest RBP at
+        // [RBP]. Keep that saved copy coherent with the state-backed slot so
+        // the epilogue POP returns the updated guest value to the trampoline,
+        // which performs its ordinary architectural write-back. RSP remains
+        // entirely state-backed and never aliases the live host stack pointer.
+        if dst_idx == 5 {
+            if matches!(width, OpWidth::W8 | OpWidth::W16) {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, width);
+            } else {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, OpWidth::W64);
+            }
+        }
 
         {
             let mut emitter = X86Emitter::new(&mut self.code);
@@ -13791,6 +13816,16 @@ impl X86_64Lowerer {
             self.emit_struct_mov(base, enc, (enc as i32) * 8, false);
         }
         self.emit_struct_mov(base, 1, 8, false); // RCX last
+    }
+
+    /// Synchronize the guest-RBP word saved by the native prologue from the
+    /// state file. This is required after a semantic interpreter callout: the
+    /// callee may modify RBP, while hardware RBP must remain the trusted native
+    /// frame pointer until the epilogue POP.
+    fn emit_sync_saved_rbp_from_state(&mut self, base: PhysReg) {
+        let mut emitter = X86Emitter::new(&mut self.code);
+        emitter.emit_mov_rm(PhysReg::Rax, base, 5 * 8, OpWidth::W64);
+        emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rax, OpWidth::W64);
     }
 
     /// Materialize one validated x86 guest effective address into RSI from the
@@ -14664,6 +14699,7 @@ impl X86_64Lowerer {
         self.code.emit_u8(0xB1);
         self.code.emit_u32(X86_GUEST_RFLAGS_OFFSET as u32);
         self.code.emit_u8(0x9D); // popfq
+        self.emit_sync_saved_rbp_from_state(PhysReg::Rcx);
         self.emit_reload_all(PhysReg::Rcx);
         // lea rsp,[rsp+16]: pop the flags+RAX slots (flag-preserving).
         self.code.emit_u8(0x48);
@@ -14690,6 +14726,7 @@ impl X86_64Lowerer {
         self.code.emit_u8(0xB1);
         self.code.emit_u32(X86_GUEST_RFLAGS_OFFSET as u32);
         self.code.emit_u8(0x9D);
+        self.emit_sync_saved_rbp_from_state(PhysReg::Rcx);
         self.emit_reload_all(PhysReg::Rcx);
         // lea rsp,[rsp+16]
         self.code.emit_u8(0x48);
@@ -19061,21 +19098,12 @@ mod tests {
     }
 
     #[test]
-    fn rejects_guest_stack_frame_register_destinations() {
+    fn rejects_non_state_backed_guest_stack_frame_register_destinations() {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
         let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
 
         for (name, expected, kind) in [
-            (
-                "mov rsp, imm",
-                "Rsp",
-                OpKind::Mov {
-                    dst: rsp,
-                    src: SrcOperand::Imm(0x1234),
-                    width: OpWidth::W64,
-                },
-            ),
             (
                 "add rsp, rax",
                 "Rsp",
@@ -19102,6 +19130,106 @@ mod tests {
                 "{name} should reject {expected}, got {err:?}"
             );
         }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_rsp_rbp_moves_preserve_host_stack_and_guest_widths() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
+        let rsi = VReg::Arch(ArchReg::X86(X86Reg::Rsi));
+        let rdi = VReg::Arch(ArchReg::X86(X86Reg::Rdi));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Mov {
+                dst: rax,
+                src: SrcOperand::Reg(rsp),
+                width: OpWidth::W64,
+            },
+        );
+        builder.push_op(
+            0x1001,
+            OpKind::Mov {
+                dst: rsp,
+                src: SrcOperand::Imm64(0x1234_5678_9ABC_DEF0u64 as i64),
+                width: OpWidth::W64,
+            },
+        );
+        builder.push_op(
+            0x1002,
+            OpKind::Mov {
+                dst: rbp,
+                src: SrcOperand::Reg(rsp),
+                width: OpWidth::W64,
+            },
+        );
+        builder.push_op(
+            0x1003,
+            OpKind::Mov {
+                dst: rcx,
+                src: SrcOperand::Reg(rbp),
+                width: OpWidth::W64,
+            },
+        );
+        builder.push_op(
+            0x1004,
+            OpKind::Mov {
+                dst: rsp,
+                src: SrcOperand::Reg(rsi),
+                width: OpWidth::W32,
+            },
+        );
+        builder.push_op(
+            0x1005,
+            OpKind::Mov {
+                dst: rsp,
+                src: SrcOperand::Reg(rdx),
+                width: OpWidth::W16,
+            },
+        );
+        builder.push_op(
+            0x1006,
+            OpKind::Mov {
+                dst: rbp,
+                src: SrcOperand::Reg(rdi),
+                width: OpWidth::W8,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&builder.finish())
+            .expect("lower state-backed stack-register moves");
+        assert!(lowered.relocations.is_empty());
+        let exec = ExecMem::new(&lowerer.finalize().expect("finalize")).expect("exec memory");
+
+        let initial_rsp = 0x0FED_CBA9_8765_4321;
+        let mut regs = GuestRegs::default();
+        regs.gpr[2] = 0xA55A;
+        regs.gpr[4] = initial_rsp;
+        regs.gpr[5] = 0xDEAD_BEEF_CAFE_BABE;
+        regs.gpr[6] = 0x8765_4321;
+        regs.gpr[7] = 0x7B;
+        regs.rflags = 0x8D5;
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.gpr[0], initial_rsp, "MOV RAX,RSP source snapshot");
+        assert_eq!(regs.gpr[1], 0x1234_5678_9ABC_DEF0, "MOV RCX,RBP chain");
+        assert_eq!(regs.gpr[4], 0x8765_A55A, "MOV ESP,ESI then MOV SP,DX");
+        assert_eq!(regs.gpr[5], 0x1234_5678_9ABC_DE7B, "MOV BPL,DIL merge");
+        const STATUS: u64 = 0x8D5;
+        assert_eq!(
+            regs.rflags & STATUS,
+            STATUS,
+            "MOV sequence must preserve status flags"
+        );
     }
 
     #[test]
@@ -19672,15 +19800,22 @@ mod tests {
     }
 
     #[test]
-    fn lower_rejects_guest_rbp_write() {
-        // `mov rbp, 0x1234` (48 C7 C5 34 12 00 00). A guest write to RBP (the
-        // host frame pointer) must be rejected by the native lowerer so the
-        // epilogue's `pop rbp; ret` can never run on an attacker-controlled
-        // value. (RSP writes are covered by the PUSH2/POP2 test.)
-        let err = lower_rex2_block_err(&[0x48, 0xC7, 0xC5, 0x34, 0x12, 0x00, 0x00, 0xF4]);
+    fn lower_guest_rbp_mov_updates_state_and_saved_epilogue_value() {
+        // `mov rbp, 0x1234` (48 C7 C5 34 12 00 00) must write GuestRegs.gpr[5]
+        // and the prologue's saved guest-RBP word. Hardware RBP remains the
+        // trusted frame pointer until the epilogue POP consumes that saved word.
+        let (lowered, _) = lower_rex2_block(&[0x48, 0xC7, 0xC5, 0x34, 0x12, 0x00, 0x00, 0xF4]);
         assert!(
-            matches!(err, LowerError::InvalidRegister(ref reg) if reg.contains("Rbp")),
-            "a guest RBP write must be rejected by the native lowerer, got {err:?}"
+            lowered
+                .windows(4)
+                .any(|bytes| bytes == [0x48, 0x89, 0x50, 0x28]),
+            "state-backed guest RBP store missing: {lowered:02X?}"
+        );
+        assert!(
+            lowered
+                .windows(4)
+                .any(|bytes| bytes == [0x48, 0x89, 0x55, 0x00]),
+            "saved guest RBP update missing: {lowered:02X?}"
         );
     }
 

@@ -355,6 +355,113 @@ fn jit_rip_relative_lea_materializes_guest_address_without_memory_helpers() {
     assert_eq!(jit.get_regs().unwrap().rax, interp.get_regs().unwrap().rax);
 }
 
+/// Guest RSP/RBP are state-backed while native code retains the host stack and
+/// frame pointers. Register-only MOV forms must therefore remain JIT-eligible
+/// without ever loading guest RSP into the hardware stack pointer.
+#[test]
+fn jit_state_backed_rsp_rbp_moves_match_interpreter_without_memory_helpers() {
+    // Snapshot every source width into r8-r11, then exercise full and partial
+    // writes to both state-backed stack registers before HLT.
+    let code = [
+        0x41, 0x88, 0xE0, // mov r8b,spl
+        0x66, 0x41, 0x89, 0xE9, // mov r9w,bp
+        0x41, 0x89, 0xE2, // mov r10d,esp
+        0x49, 0x89, 0xEB, // mov r11,rbp
+        0x48, 0x89, 0xE0, // mov rax,rsp
+        0x48, 0xBC, 0xF0, 0xDE, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12, // mov rsp,imm64
+        0x48, 0x89, 0xE5, // mov rbp,rsp
+        0x48, 0x89, 0xE9, // mov rcx,rbp
+        0x89, 0xF4, // mov esp,esi
+        0x66, 0x89, 0xD4, // mov sp,dx
+        0x40, 0x88, 0xFD, // mov bpl,dil
+        0xBC, 0x44, 0x33, 0x22, 0x11, // mov esp,0x11223344
+        0x66, 0xBC, 0x66, 0x55, // mov sp,0x5566
+        0x40, 0xB4, 0x77, // mov spl,0x77
+        0xBD, 0xDD, 0xCC, 0xBB, 0xAA, // mov ebp,0xaabbccdd
+        0x66, 0xBD, 0xFF, 0xEE, // mov bp,0xeeff
+        0x40, 0xB5, 0x11, // mov bpl,0x11
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rdx = 0xA55A;
+        regs.rsp = 0x0FED_CBA9_8765_4321;
+        regs.rbp = 0xDEAD_BEEF_CAFE_BABE;
+        regs.rsi = 0x8765_4321;
+        regs.rdi = 0x7B;
+        regs.rflags = 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interp = make_vcpu_code(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+    let expected = interp.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    jit.set_jit_call(false);
+    jit.set_jit_mem(false);
+    assert!(
+        jit.jit_try_block().expect("state-backed RSP/RBP MOV JIT"),
+        "liftable stack-register MOV sequence must enter the native tier"
+    );
+    assert_eq!(
+        jit.get_regs().unwrap().rip,
+        LOAD_ADDR + code.len() as u64 - 1
+    );
+    run_interp(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_eq!(actual.rax, expected.rax, "MOV RAX,RSP");
+    assert_eq!(actual.rcx, expected.rcx, "MOV RCX,RBP");
+    assert_eq!(actual.r8, expected.r8, "MOV R8B,SPL");
+    assert_eq!(actual.r9, expected.r9, "MOV R9W,BP");
+    assert_eq!(actual.r10, expected.r10, "MOV R10D,ESP");
+    assert_eq!(actual.r11, expected.r11, "MOV R11,RBP");
+    assert_eq!(actual.rsp, expected.rsp, "MOV RSP partial/immediate merges");
+    assert_eq!(actual.rbp, expected.rbp, "MOV RBP partial/immediate merges");
+    assert_eq!(actual.rflags, expected.rflags, "MOV flags");
+}
+
+/// A lift-through-call interpreter helper can semantically change guest RBP.
+/// The native frame must retain hardware RBP as its trusted base while keeping
+/// the prologue's saved guest value coherent for the final trampoline write-back.
+#[test]
+fn jit_callout_rbp_update_remains_coherent_with_state_backed_moves() {
+    // call func; mov rax,rbp; hlt
+    // func: mov rbp,0x123456789abcdef0; ret
+    let code = [
+        0xE8, 0x04, 0x00, 0x00, 0x00, 0x48, 0x89, 0xE8, 0xF4, 0x48, 0xBD, 0xF0, 0xDE, 0xBC, 0x9A,
+        0x78, 0x56, 0x34, 0x12, 0xC3,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rbp = 0xDEAD_BEEF_CAFE_BABE;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interp = make_vcpu_code(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+    let expected = interp.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("callout plus state-backed RBP JIT"),
+        "supported direct call and continuation must enter the native tier"
+    );
+    run_interp(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_eq!(actual.rax, expected.rax, "post-call MOV RAX,RBP");
+    assert_eq!(actual.rbp, expected.rbp, "callee RBP result");
+    assert_eq!(actual.rsp, expected.rsp, "CALL/RET stack balance");
+    assert_eq!(actual.rflags, expected.rflags, "call continuation flags");
+}
+
 /// BSF/BSR define only ZF. The native tier must retain CF across each scan,
 /// handle both zero and nonzero sources, preserve source/destination aliasing,
 /// and produce the same defined results as the interpreter in a hot region.

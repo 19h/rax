@@ -4208,7 +4208,9 @@ fn jit_classify_bail(
     allow_mem: bool,
 ) -> String {
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
-    use crate::smir::lower::runtime::{is_x86_native_vector_op, x86_jit_vector_mem_shape_valid};
+    use crate::smir::lower::runtime::{
+        is_x86_native_vector_op, x86_jit_vector_mem_shape_valid, x86_state_backed_stack_mov_valid,
+    };
     let is_sp_bp = |v: &VReg| {
         matches!(
             v,
@@ -4242,6 +4244,7 @@ fn jit_classify_bail(
                 && (matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. })
                     || x86_jit_vector_mem_shape_valid(&op.kind));
             let vector_ok = is_x86_native_vector_op(&op.kind);
+            let stack_mov_ok = x86_state_backed_stack_mov_valid(&op.kind);
             if !op.is_jit_safe() && !mem_ok && !vector_ok {
                 return variant(&op.kind);
             }
@@ -4253,8 +4256,8 @@ fn jit_classify_bail(
             {
                 return format!("virtual-dst:{}", variant(&op.kind));
             }
-            if op.kind.dests().iter().any(is_sp_bp)
-                || (!mem_ok && op.kind.source_vregs().iter().any(|v| is_sp_bp(v)))
+            if (!stack_mov_ok && op.kind.dests().iter().any(is_sp_bp))
+                || (!mem_ok && !stack_mov_ok && op.kind.source_vregs().iter().any(|v| is_sp_bp(v)))
             {
                 return format!("rsp/rbp:{}", variant(&op.kind));
             }
@@ -4282,9 +4285,10 @@ impl X86_64Vcpu {
     /// `exit_pc`; the JIT runs UP TO but not THROUGH it, so the interpreter
     /// resumes there and re-executes that block. Eligibility: the entry block
     /// must not itself be a frontier (else there is no native work), every
-    /// block must be clobber-safe (writes only architectural registers, except
-    /// for virtuals eliminated by a validated lowering fusion), and the region
-    /// must lower with no unresolved relocations. An uneliminated virtual
+    /// block must be clobber-safe (writes only architectural registers, with
+    /// state-backed lowering for admitted RSP/RBP forms and validated fusions
+    /// for selected virtuals), and the region must lower with no unresolved
+    /// relocations. An uneliminated virtual
     /// temporary would corrupt a guest GPR under the identity register map.
     ///
     /// CAVEAT: a guest infinite loop with no reachable frontier would spin in
@@ -4702,15 +4706,15 @@ impl X86_64Vcpu {
     /// Execute a (possibly cached) compiled region with the current guest state,
     /// then resume at the recorded exit PC. Marshals guest GPRs+flags and, when
     /// required, the complete vector/opmask state into the native file, runs,
-    /// and bridges the result back. RSP is neither loaded nor written by the
-    /// trampoline (the block runs on the host stack).
+    /// and bridges the result back. The trampoline never loads guest RSP into
+    /// hardware RSP; admitted RSP updates occur through `GuestRegs`.
     pub(super) fn jit_run_region(&mut self, region: &JitRegion) {
         // Self-verifying mode (RAX_JIT_VERIFY=1): run the region natively, then
         // re-run the INTERPRETER from the identical entry state up to the JIT's
         // exit PC and diff the architectural state. On the first divergence,
         // dump the region (entry/exit PC, code bytes, lifted+optimized ops, and
         // the diverging registers) and abort — this pinpoints a miscompiled hot
-        // region on a live boot. Register-only regions touch no memory/RSP/RBP,
+        // region on a live boot. Register-only regions touch no guest memory,
         // so re-executing the interpreter from the snapshot is side-effect-free.
         #[cfg(target_arch = "x86_64")]
         {
@@ -4876,6 +4880,7 @@ impl X86_64Vcpu {
         self.regs.rcx = gr.gpr[1];
         self.regs.rdx = gr.gpr[2];
         self.regs.rbx = gr.gpr[3];
+        self.regs.rsp = gr.gpr[4];
         self.regs.rbp = gr.gpr[5];
         self.regs.rsi = gr.gpr[6];
         self.regs.rdi = gr.gpr[7];
