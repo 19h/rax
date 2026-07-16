@@ -5786,11 +5786,12 @@ fn x86_flag_defs(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::F
 fn x86_block_preserves_live_flags(
     block: &crate::smir::ir::SmirBlock,
     mut live: crate::smir::ir::flags::FlagSet,
+    preserved_clobber_exceptions: &std::collections::HashSet<usize>,
 ) -> bool {
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
     use crate::smir::ir::ops::{OpKind, X86AdxKind};
 
-    for op in block.ops.iter().rev() {
+    for (index, op) in block.ops.iter().enumerate().rev() {
         if let OpKind::X86Adx {
             kind,
             flags: FlagUpdate::None,
@@ -5805,7 +5806,10 @@ fn x86_block_preserves_live_flags(
                 return false;
             }
         }
-        if x86_native_op_would_clobber_preserved_flags(&op.kind) && !live.is_empty() {
+        if !preserved_clobber_exceptions.contains(&index)
+            && x86_native_op_would_clobber_preserved_flags(&op.kind)
+            && !live.is_empty()
+        {
             return false;
         }
         live = x86_flags_before_op(&op.kind, live);
@@ -6028,6 +6032,164 @@ pub(crate) fn x86_jit_vector_mem_shape_valid(op: &crate::smir::ir::ops::OpKind) 
         }
         _ => false,
     }
+}
+
+fn x86_binary_alu_shape(
+    kind: &crate::smir::ir::ops::OpKind,
+) -> Option<(
+    u8,
+    crate::smir::ir::types::VReg,
+    crate::smir::ir::types::VReg,
+    crate::smir::ir::types::SrcOperand,
+    crate::smir::ir::types::OpWidth,
+    crate::smir::ir::flags::FlagUpdate,
+)> {
+    use crate::smir::ir::ops::OpKind;
+
+    match kind {
+        OpKind::Add {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        } => Some((0, *dst, *src1, src2.clone(), *width, *flags)),
+        OpKind::Or {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        } => Some((1, *dst, *src1, src2.clone(), *width, *flags)),
+        OpKind::Adc {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        } => Some((2, *dst, *src1, src2.clone(), *width, *flags)),
+        OpKind::Sbb {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        } => Some((3, *dst, *src1, src2.clone(), *width, *flags)),
+        OpKind::And {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        } => Some((4, *dst, *src1, src2.clone(), *width, *flags)),
+        OpKind::Sub {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        } => Some((5, *dst, *src1, src2.clone(), *width, *flags)),
+        OpKind::Xor {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        } => Some((6, *dst, *src1, src2.clone(), *width, *flags)),
+        _ => None,
+    }
+}
+
+/// Validate the exact fault-precise scalar memory-destination sequence emitted
+/// by the x86 lifter: `Load old; ALU result,old,source` without flags; `Store
+/// result`; then the same ALU into a dead virtual with full flag updates. The
+/// post-store replay is architecturally significant: a failing store must leave
+/// the incoming flags unchanged.
+pub(crate) fn x86_jit_mem_alu_rmw_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, SignExtend, SrcOperand, VReg};
+
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (old, addr, mem_width) = match &load.kind {
+        OpKind::Load {
+            dst: old @ VReg::Virtual(_),
+            addr,
+            width,
+            sign: SignExtend::Zero,
+        } => (*old, addr, *width),
+        _ => return None,
+    };
+    let width = mem_width.to_op_width()?;
+    if !matches!(
+        width,
+        OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+    ) || !x86_jit_mem_address_shape_valid(addr)
+    {
+        return None;
+    }
+
+    let compute = block.ops.get(index + 1)?;
+    let store = block.ops.get(index + 2)?;
+    let replay = block.ops.get(index + 3)?;
+    if [compute, store, replay]
+        .into_iter()
+        .any(|op| op.guest_pc != load.guest_pc)
+    {
+        return None;
+    }
+    let (compute_tag, result, compute_old, source, compute_width, compute_flags) =
+        x86_binary_alu_shape(&compute.kind)?;
+    let (replay_tag, flags_result, replay_old, replay_source, replay_width, replay_flags) =
+        x86_binary_alu_shape(&replay.kind)?;
+    let VReg::Virtual(_) = result else {
+        return None;
+    };
+    let VReg::Virtual(_) = flags_result else {
+        return None;
+    };
+    let source_valid = match &source {
+        SrcOperand::Reg(VReg::Arch(ArchReg::X86(reg))) => reg.gpr_index().is_some(),
+        SrcOperand::Imm(value) => width != OpWidth::W64 || i32::try_from(*value).is_ok(),
+        _ => false,
+    };
+    if compute_tag != replay_tag
+        || compute_old != old
+        || replay_old != old
+        || source != replay_source
+        || compute_width != width
+        || replay_width != width
+        || compute_flags != FlagUpdate::None
+        || replay_flags != FlagUpdate::All
+        || !source_valid
+        || !matches!(
+            &store.kind,
+            OpKind::Store {
+                src,
+                addr: store_addr,
+                width: store_width,
+            } if *src == result && *store_addr == *addr && *store_width == mem_width
+        )
+        || virtual_definitions.get(&old) != Some(&1)
+        || virtual_uses.get(&old) != Some(&2)
+        || virtual_definitions.get(&result) != Some(&1)
+        || virtual_uses.get(&result) != Some(&1)
+        || virtual_definitions.get(&flags_result) != Some(&1)
+        || virtual_uses.contains_key(&flags_result)
+    {
+        return None;
+    }
+
+    Some(4)
 }
 
 /// Validate an exact scalar memory-source pair emitted by the x86 lifter:
@@ -6747,10 +6909,6 @@ fn block_is_clobber_safe(
     use crate::smir::ir::ops::{OpKind, X86OpHint};
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
 
-    if !x86_block_preserves_live_flags(block, flags_live_out) {
-        return false;
-    }
-
     // The native trampoline runs the region on the HOST stack: guest RSP is
     // never loaded into the host RSP, and the lowerer's prologue repurposes RBP
     // as the frame pointer. Validated MOV forms use GuestRegs slots and keep the
@@ -6781,8 +6939,43 @@ fn block_is_clobber_safe(
         }
     }
 
+    // Generic flag-suppressed ADC/SBB lowering cannot retain a live carry and
+    // is rejected by `x86_block_preserves_live_flags`. An exact helper-backed
+    // memory RMW sequence is different: its compute is wrapped by PUSHFQ/POPFQ
+    // and its post-store replay consumes the same incoming carry. Exempt only
+    // that validated compute index from the generic clobber check.
+    let mut preserved_clobber_exceptions = std::collections::HashSet::new();
+    let mut scan = 0;
+    while scan < n {
+        if let Some(consumed) = x86_jit_mem_alu_rmw_sequence_len(
+            block,
+            scan,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            preserved_clobber_exceptions.insert(scan + 1);
+            scan += consumed;
+        } else {
+            scan += 1;
+        }
+    }
+    if !x86_block_preserves_live_flags(block, flags_live_out, &preserved_clobber_exceptions) {
+        return false;
+    }
+
     let mut i = 0;
     while i < n {
+        if let Some(consumed) = x86_jit_mem_alu_rmw_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
         if let Some(consumed) = x86_jit_mem_alu_source_sequence_len(
             block,
             i,
@@ -18435,6 +18628,260 @@ mod jit_gate_tests {
             assert!(op.is_jit_safe(), "{name} remains class-whitelisted");
             assert!(!x86_gate(op), "malformed {name} bit test must deopt");
         }
+    }
+
+    #[test]
+    fn x86_scalar_memory_destination_alu_gate_accepts_exact_replay_and_fails_closed() {
+        let old = VReg::Virtual(VirtualId(30));
+        let result = VReg::Virtual(VirtualId(31));
+        let flags_result = VReg::Virtual(VirtualId(32));
+        let address = || Address::BaseIndexScale {
+            base: Some(x86(X86Reg::Rsp)),
+            index: x86(X86Reg::R16),
+            scale: 2,
+            disp: -8,
+            disp_size: DispSize::Disp8,
+        };
+        let alu = |tag: u8,
+                   dst: VReg,
+                   src1: VReg,
+                   src2: SrcOperand,
+                   width: OpWidth,
+                   flags: FlagUpdate| {
+            match tag {
+                0 => OpKind::Add {
+                    dst,
+                    src1,
+                    src2,
+                    width,
+                    flags,
+                },
+                1 => OpKind::Or {
+                    dst,
+                    src1,
+                    src2,
+                    width,
+                    flags,
+                },
+                2 => OpKind::Adc {
+                    dst,
+                    src1,
+                    src2,
+                    width,
+                    flags,
+                },
+                3 => OpKind::Sbb {
+                    dst,
+                    src1,
+                    src2,
+                    width,
+                    flags,
+                },
+                4 => OpKind::And {
+                    dst,
+                    src1,
+                    src2,
+                    width,
+                    flags,
+                },
+                5 => OpKind::Sub {
+                    dst,
+                    src1,
+                    src2,
+                    width,
+                    flags,
+                },
+                6 => OpKind::Xor {
+                    dst,
+                    src1,
+                    src2,
+                    width,
+                    flags,
+                },
+                _ => unreachable!(),
+            }
+        };
+        let build = |tag: u8,
+                     source: SrcOperand,
+                     mem_width: MemWidth,
+                     compute_flags: FlagUpdate,
+                     replay_flags: FlagUpdate,
+                     replay_tag: u8,
+                     store_addr: Address,
+                     replay_pc: u64,
+                     extra_old_use: bool| {
+            let width = mem_width.to_op_width().unwrap();
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::Load {
+                    dst: old,
+                    addr: address(),
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
+            );
+            builder.push_op(
+                0x1000,
+                alu(tag, result, old, source.clone(), width, compute_flags),
+            );
+            builder.push_op(
+                0x1000,
+                OpKind::Store {
+                    src: result,
+                    addr: store_addr,
+                    width: mem_width,
+                },
+            );
+            builder.push_op(
+                replay_pc,
+                alu(replay_tag, flags_result, old, source, width, replay_flags),
+            );
+            if extra_old_use {
+                builder.push_op(
+                    0x1001,
+                    OpKind::Mov {
+                        dst: x86(X86Reg::R11),
+                        src: SrcOperand::Reg(old),
+                        width,
+                    },
+                );
+            }
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            builder.finish()
+        };
+
+        for (tag, source, mem_width) in [
+            (0, SrcOperand::Reg(x86(X86Reg::Rax)), MemWidth::B1),
+            (1, SrcOperand::Reg(x86(X86Reg::Rsp)), MemWidth::B2),
+            (2, SrcOperand::Reg(x86(X86Reg::Rbp)), MemWidth::B4),
+            (3, SrcOperand::Reg(x86(X86Reg::R16)), MemWidth::B8),
+            (4, SrcOperand::Imm(0x7F), MemWidth::B1),
+            (5, SrcOperand::Imm(-0x1234), MemWidth::B8),
+            (6, SrcOperand::Reg(x86(X86Reg::R15)), MemWidth::B4),
+        ] {
+            let function = build(
+                tag,
+                source.clone(),
+                mem_width,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                tag,
+                address(),
+                0x1000,
+                false,
+            );
+            assert!(
+                is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    true,
+                ),
+                "tag={tag} source={source:?} width={mem_width:?}: {function:?}"
+            );
+            assert!(!is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                false,
+            ));
+        }
+
+        let invalid = [
+            build(
+                0,
+                SrcOperand::Reg(x86(X86Reg::Rax)),
+                MemWidth::B8,
+                FlagUpdate::All,
+                FlagUpdate::All,
+                0,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                0,
+                SrcOperand::Reg(x86(X86Reg::Rax)),
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::None,
+                0,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                0,
+                SrcOperand::Reg(x86(X86Reg::Rax)),
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                1,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                0,
+                SrcOperand::Reg(x86(X86Reg::Rax)),
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                0,
+                Address::Absolute(0x2000),
+                0x1000,
+                false,
+            ),
+            build(
+                0,
+                SrcOperand::Reg(x86(X86Reg::Rax)),
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                0,
+                address(),
+                0x1001,
+                false,
+            ),
+            build(
+                0,
+                SrcOperand::Reg(x86(X86Reg::Rax)),
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                0,
+                address(),
+                0x1000,
+                true,
+            ),
+        ];
+        for function in invalid {
+            assert!(!is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                true,
+            ));
+        }
+
+        let mut signed = build(
+            0,
+            SrcOperand::Imm(1),
+            MemWidth::B8,
+            FlagUpdate::None,
+            FlagUpdate::All,
+            0,
+            address(),
+            0x1000,
+            false,
+        );
+        let OpKind::Load { sign, .. } = &mut signed.blocks[0].ops[0].kind else {
+            unreachable!()
+        };
+        *sign = SignExtend::Sign;
+        assert!(!is_native_clobber_safe_excluding(
+            &signed,
+            &std::collections::HashMap::new(),
+            true,
+        ));
     }
 
     #[test]

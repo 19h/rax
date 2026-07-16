@@ -9683,6 +9683,7 @@ impl X86_64Lowerer {
                         None,
                         None,
                         None,
+                        None,
                         addr,
                         *width,
                         *sign,
@@ -9891,6 +9892,7 @@ impl X86_64Lowerer {
                         None,
                         src_reg,
                         src_imm,
+                        None,
                         addr,
                         *width,
                         SignExtend::Zero,
@@ -14376,6 +14378,174 @@ impl X86_64Lowerer {
         Ok(())
     }
 
+    /// Fuse the exact fault-precise memory-destination ALU sequence emitted by
+    /// the x86 lifter. A 32-byte caller frame retains the original memory
+    /// value, store value, arithmetic source, and guest RAX. Both helper calls
+    /// therefore observe coherent architectural registers, while the store can
+    /// consume its value without assigning either virtual result to a guest GPR.
+    #[cfg(feature = "smir-jit")]
+    fn try_lower_jit_mem_alu_rmw(
+        &mut self,
+        block: &SmirBlock,
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(consumed) = super::runtime::x86_jit_mem_alu_rmw_sequence_len(
+            block,
+            idx,
+            true,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
+            return Ok(None);
+        };
+
+        let load = &block.ops[idx];
+        let (addr, mem_width) = match &load.kind {
+            OpKind::Load {
+                addr,
+                width,
+                sign: SignExtend::Zero,
+                ..
+            } => (addr, *width),
+            _ => unreachable!("validated scalar RMW starts with Load"),
+        };
+        let width = mem_width
+            .to_op_width()
+            .expect("validated scalar RMW width has an integer width");
+        let (opcode, digit, source) = match &block.ops[idx + 1].kind {
+            OpKind::Add { src2, .. } => (0x00, 0, src2),
+            OpKind::Or { src2, .. } => (0x08, 1, src2),
+            OpKind::Adc { src2, .. } => (0x10, 2, src2),
+            OpKind::Sbb { src2, .. } => (0x18, 3, src2),
+            OpKind::And { src2, .. } => (0x20, 4, src2),
+            OpKind::Sub { src2, .. } => (0x28, 5, src2),
+            OpKind::Xor { src2, .. } => (0x30, 6, src2),
+            _ => unreachable!("validated scalar RMW consumer"),
+        };
+
+        // Caller-frame layout after the flag-neutral reservation:
+        //   [rsp+0]  original zero-extended memory value
+        //   [rsp+8]  computed store value
+        //   [rsp+16] staged register source (unused for immediate forms)
+        //   [rsp+24] complete architectural RAX
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -32);
+            emitter.emit_mov_mr(PhysReg::Rsp, 24, PhysReg::Rax, OpWidth::W64);
+        }
+        if let SrcOperand::Reg(source) = source {
+            let index = Self::x86_gpr_index(*source)
+                .expect("validated scalar RMW register source is an x86 GPR");
+            if index <= 15 && !matches!(index, 4 | 5) {
+                let source_reg = self.get_reg(*source)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_mr(PhysReg::Rsp, 16, source_reg, OpWidth::W64);
+            } else {
+                // RSP, RBP, and APX EGPRs are state-backed rather than identity
+                // mapped. Snapshot their coherent GuestRegs slot through saved
+                // RAX without exposing host RSP/RBP to guest semantics.
+                self.emit_load_state_ptr_rax();
+                self.emit_struct_mov(PhysReg::Rax, 0, i32::from(index) * 8, false);
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_mr(PhysReg::Rsp, 16, PhysReg::Rax, OpWidth::W64);
+                emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+            }
+        }
+
+        // The load helper writes to caller [rsp+0]: its own PUSH RAX/PUSHFQ
+        // make that slot [rsp+16] while the call-out is active.
+        self.emit_jit_mem_op(
+            load.guest_pc,
+            true,
+            None,
+            Some(16),
+            None,
+            None,
+            None,
+            addr,
+            mem_width,
+            SignExtend::Zero,
+            32,
+        )?;
+
+        // Compute the store value while preserving the incoming flags. PUSHFQ
+        // shifts the staged register source from caller +16 to active +24;
+        // ADC/SBB still read the incoming CF because PUSHFQ is flag-neutral.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 0, width);
+        }
+        self.code.emit_u8(0x9C); // pushfq
+        match source {
+            SrcOperand::Reg(_) => {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_alu_mem_disp(
+                    opcode,
+                    PhysReg::Rax,
+                    PhysReg::Rsp,
+                    24,
+                    DispSize::Auto,
+                    width,
+                    X86AluEncoding::RegRm,
+                );
+            }
+            SrcOperand::Imm(value) => {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_alu_ri(digit, PhysReg::Rax, *value, width);
+            }
+            _ => unreachable!("validated scalar RMW source"),
+        }
+        self.code.emit_u8(0x9D); // popfq
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rsp, 8, PhysReg::Rax, OpWidth::W64);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+        }
+
+        // The store helper's internal 16-byte spill shifts caller [rsp+8] to
+        // active [rsp+24]. A store fault removes the complete caller frame and
+        // exits at the current instruction without committing flags or GPRs.
+        self.emit_jit_mem_op(
+            load.guest_pc,
+            false,
+            None,
+            None,
+            None,
+            None,
+            Some(24),
+            addr,
+            mem_width,
+            SignExtend::Zero,
+            32,
+        )?;
+
+        // Only a successful store reaches the replay. It regenerates the exact
+        // architectural flags from the original memory/source operands, then
+        // restores RAX and releases the caller frame with flag-neutral MOV/LEA.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 0, width);
+            match source {
+                SrcOperand::Reg(_) => emitter.emit_alu_mem_disp(
+                    opcode,
+                    PhysReg::Rax,
+                    PhysReg::Rsp,
+                    16,
+                    DispSize::Auto,
+                    width,
+                    X86AluEncoding::RegRm,
+                ),
+                SrcOperand::Imm(value) => emitter.emit_alu_ri(digit, PhysReg::Rax, *value, width),
+                _ => unreachable!("validated scalar RMW replay source"),
+            }
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 32);
+        }
+        Ok(Some(consumed))
+    }
+
     /// Fuse one exact scalar `Load virtual; ALU/CMP/TEST ... virtual` pair into
     /// a fault-precise MMU helper load followed by a native operation using a
     /// caller-owned stack slot. The carrier register is saved twice: one word
@@ -14446,6 +14616,7 @@ impl X86_64Lowerer {
             load.guest_pc,
             true,
             Some(carrier),
+            None,
             None,
             None,
             None,
@@ -14715,6 +14886,7 @@ impl X86_64Lowerer {
             load_pc,
             true,
             Some(dst),
+            None,
             None,
             None,
             None,
@@ -15032,6 +15204,7 @@ impl X86_64Lowerer {
                 None,
                 None,
                 None,
+                None,
                 &Address::Direct(rsp),
                 mem_width,
                 SignExtend::Zero,
@@ -15085,6 +15258,7 @@ impl X86_64Lowerer {
                 load.guest_pc,
                 true,
                 Some(rsp),
+                None,
                 None,
                 None,
                 None,
@@ -15153,6 +15327,7 @@ impl X86_64Lowerer {
             true,
             None,
             Some(16),
+            None,
             None,
             None,
             &Address::Direct(rsp),
@@ -15281,6 +15456,7 @@ impl X86_64Lowerer {
             None,
             source_reg,
             source_imm,
+            None,
             &address,
             expected_width,
             SignExtend::Zero,
@@ -15313,6 +15489,7 @@ impl X86_64Lowerer {
         load_stack_dst: Option<i32>,
         store_src_reg: Option<VReg>,
         store_src_imm: Option<i64>,
+        store_stack_src: Option<i32>,
         addr: &Address,
         mem_width: MemWidth,
         sign: SignExtend,
@@ -15330,16 +15507,22 @@ impl X86_64Lowerer {
             }
         };
         let signed: i32 = matches!(sign, SignExtend::Sign) as i32;
-        if is_load && (load_dst.is_some() == load_stack_dst.is_some()) {
+        let store_sources = usize::from(store_src_reg.is_some())
+            + usize::from(store_src_imm.is_some())
+            + usize::from(store_stack_src.is_some());
+        if is_load && (load_dst.is_some() == load_stack_dst.is_some() || store_sources != 0) {
             return Err(LowerError::InvalidOperand {
                 op: "jit-mem load".to_string(),
-                operand: "exactly one register or host-stack destination is required".to_string(),
+                operand:
+                    "exactly one register or host-stack destination and no store source is required"
+                        .to_string(),
             });
         }
-        if !is_load && load_stack_dst.is_some() {
+        if !is_load && (load_dst.is_some() || load_stack_dst.is_some() || store_sources != 1) {
             return Err(LowerError::InvalidOperand {
                 op: "jit-mem store".to_string(),
-                operand: "host-stack load destination supplied for store".to_string(),
+                operand: "exactly one register, immediate, or host-stack source is required"
+                    .to_string(),
             });
         }
         let load_dst_enc = match load_dst {
@@ -15494,7 +15677,10 @@ impl X86_64Lowerer {
             self.code.emit_u8(0xB9); // mov ecx, signed
             self.code.emit_u32(signed as u32);
         } else {
-            if let Some(imm) = store_src_imm {
+            if let Some(stack_off) = store_stack_src {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rsp, stack_off, OpWidth::W64);
+            } else if let Some(imm) = store_src_imm {
                 self.emit_movabs(2, imm as u64); // movabs rdx, imm (value)
             } else if let Some(senc) = store_src_enc {
                 self.emit_struct_mov(PhysReg::Rax, 2, (senc as i32) * 8, false); // rdx = value
@@ -16001,6 +16187,16 @@ impl X86_64Lowerer {
             #[cfg(feature = "smir-jit")]
             {
                 if self.mem_helpers {
+                    if let Some(consumed) = super::runtime::x86_jit_mem_alu_rmw_sequence_len(
+                        block,
+                        validate_idx,
+                        true,
+                        &virtual_definitions,
+                        &virtual_uses,
+                    ) {
+                        validate_idx += consumed;
+                        continue;
+                    }
                     if let Some(consumed) = super::runtime::x86_jit_mem_alu_source_sequence_len(
                         block,
                         validate_idx,
@@ -16094,10 +16290,16 @@ impl X86_64Lowerer {
             // The memory-fusion peepholes emit direct host-pointer accesses,
             // which are invalid under the JIT's MMU helper-call mode. In that
             // mode each Load/Store is lowered individually via the helper path
-            // (see `emit_jit_mem_op`). The CRC32 fusion below is explicitly
-            // helper-backed scalar/CRC fusions below are explicitly restricted
-            // to that mode.
+            // (see `emit_jit_mem_op`). The helper-backed scalar/CRC fusions
+            // below are explicitly restricted to that mode.
             if self.mem_helpers {
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) =
+                    self.try_lower_jit_mem_alu_rmw(block, idx, &virtual_definitions, &virtual_uses)?
+                {
+                    idx += consumed;
+                    continue;
+                }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_mem_alu_source(
                     block,
@@ -24123,6 +24325,175 @@ mod tests {
             assert_eq!(regs.xcr0, 3, "{name}: XCR0 must not commit");
             assert_eq!(regs.exit_pc, 0x1234_5000, "{name}: fault restart PC");
         }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_helper_backed_memory_destination_alu_commits_flags_only_after_store() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        #[repr(C)]
+        struct LoadResult {
+            value: u64,
+            ok: u64,
+        }
+
+        #[derive(Default)]
+        struct MemoryContext {
+            load_value: u64,
+            store_value: u64,
+            committed_value: u64,
+            last_addr: u64,
+            last_size: u64,
+            loads: u64,
+            stores: u64,
+            store_ok: u64,
+        }
+
+        extern "C" fn load(
+            context: *mut MemoryContext,
+            addr: u64,
+            size: u64,
+            _signed: u64,
+        ) -> LoadResult {
+            let context = unsafe { &mut *context };
+            context.loads += 1;
+            context.last_addr = addr;
+            context.last_size = size;
+            LoadResult {
+                value: context.load_value,
+                ok: 1,
+            }
+        }
+
+        extern "C" fn store(context: *mut MemoryContext, addr: u64, value: u64, size: u64) -> u64 {
+            let context = unsafe { &mut *context };
+            context.stores += 1;
+            context.last_addr = addr;
+            context.last_size = size;
+            context.store_value = value;
+            if context.store_ok != 0 {
+                context.committed_value = value;
+            }
+            context.store_ok
+        }
+
+        let old = VReg::Virtual(crate::smir::ir::types::VirtualId(40));
+        let result = VReg::Virtual(crate::smir::ir::types::VirtualId(41));
+        let flags_result = VReg::Virtual(crate::smir::ir::types::VirtualId(42));
+        let source = VReg::Arch(ArchReg::X86(X86Reg::R16));
+        let address = Address::Absolute(0x4000);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: old,
+                addr: address.clone(),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::Add {
+                dst: result,
+                src1: old,
+                src2: SrcOperand::Reg(source),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::Store {
+                src: result,
+                addr: address,
+                width: MemWidth::B8,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::Add {
+                dst: flags_result,
+                src1: old,
+                src2: SrcOperand::Reg(source),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_mem_helpers(true);
+        let lowered = lowerer
+            .lower_function(&builder.finish())
+            .expect("lower helper-backed scalar RMW");
+        let exec = ExecMem::new(&lowerer.finalize().expect("finalize scalar RMW"))
+            .expect("map scalar RMW");
+
+        const INCOMING_FLAGS: u64 = 0x2 | 0x8D5;
+        let initial_gprs = {
+            let mut gprs = [0u64; 32];
+            for (index, value) in gprs.iter_mut().enumerate() {
+                *value = 0xA500_0000_0000_0000 | index as u64;
+            }
+            gprs[16] = 1;
+            gprs
+        };
+
+        let mut success_context = MemoryContext {
+            load_value: u64::MAX,
+            committed_value: 0xDEAD_BEEF_DEAD_BEEF,
+            store_ok: 1,
+            ..MemoryContext::default()
+        };
+        let mut success = GuestRegs::default();
+        success.gpr = initial_gprs;
+        success.rflags = INCOMING_FLAGS;
+        success.exit_pc = 0xAAAA_BBBB_CCCC_DDDD;
+        success.ctx = (&mut success_context as *mut MemoryContext) as u64;
+        success.load_fn = load as usize as u64;
+        success.store_fn = store as usize as u64;
+        exec.run(lowered.entry_offset, &mut success);
+
+        assert_eq!(success_context.loads, 1);
+        assert_eq!(success_context.stores, 1);
+        assert_eq!(success_context.last_addr, 0x4000);
+        assert_eq!(success_context.last_size, 8);
+        assert_eq!(success_context.store_value, 0);
+        assert_eq!(success_context.committed_value, 0);
+        assert_eq!(success.gpr, initial_gprs, "success must preserve every GPR");
+        assert_eq!(success.rflags & 0x8D5, 0x55, "ADD result flags");
+        assert_eq!(success.exit_pc, 0xAAAA_BBBB_CCCC_DDDD);
+
+        let mut fault_context = MemoryContext {
+            load_value: u64::MAX,
+            committed_value: 0xDEAD_BEEF_DEAD_BEEF,
+            store_ok: 0,
+            ..MemoryContext::default()
+        };
+        let mut fault = GuestRegs::default();
+        fault.gpr = initial_gprs;
+        fault.rflags = INCOMING_FLAGS;
+        fault.ctx = (&mut fault_context as *mut MemoryContext) as u64;
+        fault.load_fn = load as usize as u64;
+        fault.store_fn = store as usize as u64;
+        exec.run(lowered.entry_offset, &mut fault);
+
+        assert_eq!(fault_context.loads, 1);
+        assert_eq!(fault_context.stores, 1);
+        assert_eq!(fault_context.store_value, 0, "computed value reaches store");
+        assert_eq!(
+            fault_context.committed_value, 0xDEAD_BEEF_DEAD_BEEF,
+            "failed store must not commit memory"
+        );
+        assert_eq!(fault.gpr, initial_gprs, "fault must preserve every GPR");
+        assert_eq!(
+            fault.rflags & 0x8D5,
+            INCOMING_FLAGS & 0x8D5,
+            "fault must preserve every arithmetic status flag"
+        );
+        assert_eq!(fault.exit_pc, 0x1000, "fault must restart current PC");
     }
 
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
