@@ -1617,6 +1617,140 @@ fn jit_memory_source_counts_match_interpreter_partial_writes_flags_and_faults() 
     }
 }
 
+/// Memory-source BSF/BSR pairs use one precise MMU-helper load followed by a
+/// native scan of caller-owned stack storage. Defined ZF behavior, the
+/// emulator's retained undefined status flags, partial destination writes, and
+/// fault restart state must match the interpreter.
+#[test]
+fn jit_memory_source_bit_scans_match_interpreter_partial_writes_flags_and_faults() {
+    const DATA: u64 = 0x20_0000;
+
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        data: u64,
+        dst: u8,
+        initial_dst: u64,
+        expected_dst: Option<u64>,
+    }
+
+    let cases = [
+        Case {
+            name: "BSF r8w,[rbx]",
+            instruction: &[0x66, 0x44, 0x0F, 0xBC, 0x03],
+            data: 0x0100,
+            dst: 8,
+            initial_dst: 0xAABB_CCDD_EEFF_7788,
+            expected_dst: Some(0xAABB_CCDD_EEFF_0008),
+        },
+        Case {
+            name: "BSR r9d,[rbx]",
+            instruction: &[0x44, 0x0F, 0xBD, 0x0B],
+            data: 0x8000_0000,
+            dst: 9,
+            initial_dst: u64::MAX,
+            expected_dst: Some(31),
+        },
+        Case {
+            name: "BSF r15,[rbx]",
+            instruction: &[0x4C, 0x0F, 0xBC, 0x3B],
+            data: 1 << 63,
+            dst: 15,
+            initial_dst: u64::MAX,
+            expected_dst: Some(63),
+        },
+        Case {
+            name: "BSR r8,[rbx] zero source",
+            instruction: &[0x4C, 0x0F, 0xBD, 0x03],
+            data: 0,
+            dst: 8,
+            initial_dst: 0xA5A5_5A5A_1357_2468,
+            // The ISA leaves this result undefined; compare only with Rax's
+            // interpreter policy rather than assigning an architectural value.
+            expected_dst: None,
+        },
+    ];
+
+    let read_dst = |regs: &Registers, index: u8| match index {
+        8 => regs.r8,
+        9 => regs.r9,
+        15 => regs.r15,
+        _ => unreachable!(),
+    };
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+        let setup = |vcpu: &mut X86_64Vcpu, memory: &Arc<GuestMemoryMmap>| {
+            memory.write_obj(case.data, GuestAddress(DATA)).unwrap();
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rbx = DATA;
+            match case.dst {
+                8 => regs.r8 = case.initial_dst,
+                9 => regs.r9 = case.initial_dst,
+                15 => regs.r15 = case.initial_dst,
+                _ => unreachable!(),
+            }
+            regs.rflags = 0xCD7;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let (mut interp, interp_mem) = make_vcpu_mem(&code);
+        setup(&mut interp, &interp_mem);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+
+        let (mut jit, jit_mem) = make_vcpu_mem(&code);
+        setup(&mut jit, &jit_mem);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the helper-backed native tier",
+            case.name
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(
+            read_dst(&actual, case.dst),
+            read_dst(&expected, case.dst),
+            "{} result vs interpreter",
+            case.name
+        );
+        if let Some(architectural_result) = case.expected_dst {
+            assert_eq!(
+                read_dst(&actual, case.dst),
+                architectural_result,
+                "{} architectural result",
+                case.name
+            );
+        }
+        assert_eq!(actual.rbx, DATA, "{} address base", case.name);
+        assert_eq!(actual.rflags, expected.rflags, "{} RFLAGS", case.name);
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+    }
+
+    let code = [0x4C, 0x0F, 0xBC, 0x03, 0xF4]; // bsf r8,[rbx]
+    let (mut fault, _) = make_vcpu_mem(&code);
+    let mut before = fault.get_regs().unwrap();
+    before.rbx = MEM_SIZE + 0x1000;
+    before.r8 = 0xA5A5_5A5A_A5A5_5A5A;
+    before.rflags = 0xCD7;
+    fault.set_regs(&before).unwrap();
+    assert!(
+        fault
+            .jit_try_block()
+            .expect("faulting bit-scan memory-source JIT"),
+        "a bit-scan load must compile before precise deoptimization"
+    );
+    let after = fault.get_regs().unwrap();
+    assert_eq!(after.rbx, before.rbx, "fault must preserve address base");
+    assert_eq!(after.r8, before.r8, "fault must preserve destination");
+    assert_eq!(after.rflags, before.rflags, "fault must preserve RFLAGS");
+    assert_eq!(after.rip, LOAD_ADDR, "fault must restart current PC");
+}
+
 /// Register byte swaps are flag-neutral and must remain native for both the
 /// legacy in-place BSWAP encoding and APX MOVBE's two-register word form.
 #[test]

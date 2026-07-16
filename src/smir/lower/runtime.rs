@@ -6695,6 +6695,68 @@ pub(crate) fn x86_jit_mem_count_source_sequence_len(
     .then_some(2)
 }
 
+/// Validate the exact two-op bit-scan memory-source shape emitted by the x86
+/// lifter: `Load virtual; Bsf/Bsr architectural_dst,virtual`. The helper-backed
+/// lowerer consumes the load from caller-owned stack storage, so the virtual
+/// must remain a single-definition/single-use value and the scan must request
+/// only its architecturally defined ZF update.
+pub(crate) fn x86_jit_mem_bit_scan_source_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::flags::{FlagSet, FlagUpdate};
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{OpWidth, SignExtend, VReg};
+
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (temporary, addr, mem_width) = match &load.kind {
+        OpKind::Load {
+            dst: temporary @ VReg::Virtual(_),
+            addr,
+            width,
+            sign: SignExtend::Zero,
+        } => (*temporary, addr, *width),
+        _ => return None,
+    };
+    let width = mem_width.to_op_width()?;
+    if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+        || !x86_jit_mem_address_shape_valid(addr)
+        || virtual_definitions.get(&temporary) != Some(&1)
+        || virtual_uses.get(&temporary) != Some(&1)
+    {
+        return None;
+    }
+
+    let consumer = block.ops.get(index + 1)?;
+    let (dst, src, scan_width, flags) = match &consumer.kind {
+        OpKind::Bsf {
+            dst,
+            src,
+            width,
+            flags,
+        }
+        | OpKind::Bsr {
+            dst,
+            src,
+            width,
+            flags,
+        } => (dst, src, width, flags),
+        _ => return None,
+    };
+    (consumer.guest_pc == load.guest_pc
+        && *src == temporary
+        && *scan_width == width
+        && x86_native_identity_gpr(dst)
+        && *flags == FlagUpdate::Specific(FlagSet::ZF))
+    .then_some(2)
+}
+
 /// Validate the exact two-op shape emitted for a memory-source x86 CRC32.
 /// The virtual load result must be single-definition/single-use so native
 /// lowering can eliminate it without creating an identity-map GPR alias.
@@ -7369,6 +7431,16 @@ fn block_is_clobber_safe(
             continue;
         }
         if let Some(consumed) = x86_jit_mem_alu_source_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
+        if let Some(consumed) = x86_jit_mem_bit_scan_source_sequence_len(
             block,
             i,
             allow_mem,
@@ -20082,6 +20154,24 @@ mod jit_gate_tests {
                 },
                 MemWidth::B8,
             ),
+            (
+                OpKind::Bsf {
+                    dst: x86(X86Reg::R8),
+                    src: temporary,
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::Specific(FlagSet::ZF),
+                },
+                MemWidth::B2,
+            ),
+            (
+                OpKind::Bsr {
+                    dst: x86(X86Reg::R15),
+                    src: temporary,
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(FlagSet::ZF),
+                },
+                MemWidth::B8,
+            ),
         ];
         for (consumer, mem_width) in valid {
             let function = build(
@@ -20216,6 +20306,45 @@ mod jit_gate_tests {
                     width: OpWidth::W32,
                     kind: X86CountKind::Lzcnt,
                     flags: FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF)),
+                },
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                OpKind::Bsf {
+                    dst: x86(X86Reg::R8),
+                    src: temporary,
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                OpKind::Bsr {
+                    dst: x86(X86Reg::R16),
+                    src: temporary,
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(FlagSet::ZF),
+                },
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                OpKind::Bsf {
+                    dst: x86(X86Reg::R8),
+                    src: temporary,
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::Specific(FlagSet::ZF),
                 },
                 MemWidth::B8,
                 SignExtend::Zero,
