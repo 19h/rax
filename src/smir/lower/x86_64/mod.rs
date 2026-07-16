@@ -2914,6 +2914,21 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(dst, src);
     }
 
+    /// IMUL r, r/m using a base-plus-displacement memory source.
+    pub fn emit_imul_rm_disp(
+        &mut self,
+        dst: PhysReg,
+        base: PhysReg,
+        disp: i32,
+        disp_size: DispSize,
+        width: OpWidth,
+    ) {
+        self.emit_rex_for_width_mem_reg(width, dst, base, None);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0xAF);
+        self.emit_modrm_mem_disp(dst, base, disp, disp_size);
+    }
+
     /// IMUL r, r/m, imm (three-operand form)
     pub fn emit_imul_rri(&mut self, dst: PhysReg, src: PhysReg, imm: i32, width: OpWidth) {
         self.emit_rex_for_width(width, dst, src);
@@ -15059,7 +15074,7 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
-    /// Fuse one exact scalar `Load virtual; ALU/CMP/TEST ... virtual` pair into
+    /// Fuse one exact scalar `Load virtual; ALU/CMP/TEST/IMUL ... virtual` pair into
     /// a fault-precise MMU helper load followed by a native operation using a
     /// caller-owned stack slot. The carrier register is saved twice: one word
     /// preserves its architectural pre-instruction value, while the other
@@ -15107,6 +15122,7 @@ impl X86_64Lowerer {
             | OpKind::And { dst, .. }
             | OpKind::Or { dst, .. }
             | OpKind::Xor { dst, .. } => *dst,
+            OpKind::MulS { dst_lo, .. } => *dst_lo,
             OpKind::Cmp { src1, src2, .. } | OpKind::Test { src1, src2, .. } => {
                 match (src1, src2) {
                     (lhs, SrcOperand::Reg(rhs)) if *lhs == temporary => *rhs,
@@ -15154,6 +15170,33 @@ impl X86_64Lowerer {
             let mut emitter = X86Emitter::new(&mut this.code);
             emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
         };
+
+        if let OpKind::MulS {
+            dst_lo,
+            dst_hi: None,
+            src1,
+            src2: SrcOperand::Reg(source),
+            flags,
+            ..
+        } = consumer
+        {
+            debug_assert_eq!(*dst_lo, *src1);
+            debug_assert_eq!(*source, temporary);
+            let preserve_flags = *flags == FlagUpdate::None;
+            if preserve_flags {
+                self.code.emit_u8(0x9C); // pushfq
+            }
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_imul_rm_disp(
+                carrier_reg,
+                PhysReg::Rsp,
+                if preserve_flags { 8 } else { 0 },
+                DispSize::Auto,
+                width,
+            );
+            finish(self, preserve_flags);
+            return Ok(Some(consumed));
+        }
 
         let binary = match consumer {
             OpKind::Add {
@@ -22357,6 +22400,74 @@ mod tests {
                 .windows(7)
                 .any(|bytes| bytes == [0x48, 0x0F, 0xBA, 0x64, 0x24, 0x08, 0x3F]),
             "helper-backed BTC must replay CF from the original word: {lowered:02X?}"
+        );
+    }
+
+    #[cfg(feature = "smir-jit")]
+    #[test]
+    fn lower_helper_backed_two_operand_imul_uses_staged_memory_source() {
+        for (name, instruction, expected) in [
+            (
+                "W16 RAX",
+                &[0x66, 0x0F, 0xAF, 0x03, 0xF4][..],
+                &[0x66, 0x0F, 0xAF, 0x04, 0x24][..],
+            ),
+            (
+                "W32 R8",
+                &[0x44, 0x0F, 0xAF, 0x03, 0xF4][..],
+                &[0x44, 0x0F, 0xAF, 0x04, 0x24][..],
+            ),
+            (
+                "W64 R9",
+                &[0x4C, 0x0F, 0xAF, 0x0B, 0xF4][..],
+                &[0x4C, 0x0F, 0xAF, 0x0C, 0x24][..],
+            ),
+        ] {
+            let (lowered, entry) = lower_rex2_block_with_mem_helpers(instruction, true);
+            assert!(entry < lowered.len(), "{name}");
+            assert!(
+                lowered
+                    .windows(expected.len())
+                    .any(|bytes| bytes == expected),
+                "helper-backed {name} IMUL must consume the staged stack source: {lowered:02X?}"
+            );
+        }
+
+        let temporary = VReg::Virtual(crate::smir::ir::types::VirtualId(90));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let mut builder = FunctionBuilder::new(FunctionId(90), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: temporary,
+                addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rbx))),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::MulS {
+                dst_lo: r8,
+                dst_hi: None,
+                src1: r8,
+                src2: SrcOperand::Reg(temporary),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_mem_helpers(true);
+        lowerer
+            .lower_function(&builder.finish())
+            .expect("lower flag-preserving helper-backed IMUL");
+        let lowered = lowerer.finalize().expect("finalize flag-preserving IMUL");
+        assert!(
+            lowered
+                .windows(8)
+                .any(|bytes| bytes == [0x9C, 0x4C, 0x0F, 0xAF, 0x44, 0x24, 0x08, 0x9D]),
+            "NF IMUL must preserve flags around the staged stack source: {lowered:02X?}"
         );
     }
 

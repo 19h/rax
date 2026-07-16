@@ -6508,7 +6508,8 @@ pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
 /// single-definition/single-use value, and every architectural operand must be
 /// representable by the native identity bridge. Native lowering replaces the
 /// pair with one fault-precise MMU helper load and a stack-backed scalar source,
-/// so the virtual never aliases a live guest GPR.
+/// so the virtual never aliases a live guest GPR. This also admits the exact
+/// destructive two-operand `IMUL dst,virtual` shape.
 pub(crate) fn x86_jit_mem_alu_source_sequence_len(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -6628,6 +6629,22 @@ pub(crate) fn x86_jit_mem_alu_source_sequence_len(
             (lhs, SrcOperand::Imm(value)) if *lhs == temporary => imm_valid(*value),
             _ => false,
         },
+        OpKind::MulS {
+            dst_lo,
+            dst_hi: None,
+            src1,
+            src2: SrcOperand::Reg(source),
+            width: op_width,
+            flags,
+        } => {
+            *op_width == width
+                && matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+                && dst_lo == src1
+                && *source == temporary
+                && identity(dst_lo)
+                && matches!(flags, FlagUpdate::None | FlagUpdate::All)
+                && consumer.x86_hint.is_none()
+        }
         _ => false,
     };
 
@@ -20686,6 +20703,39 @@ mod jit_gate_tests {
                 MemWidth::B1,
             ),
             (
+                OpKind::MulS {
+                    dst_lo: x86(X86Reg::Rax),
+                    dst_hi: None,
+                    src1: x86(X86Reg::Rax),
+                    src2: SrcOperand::Reg(temporary),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::All,
+                },
+                MemWidth::B2,
+            ),
+            (
+                OpKind::MulS {
+                    dst_lo: x86(X86Reg::R8),
+                    dst_hi: None,
+                    src1: x86(X86Reg::R8),
+                    src2: SrcOperand::Reg(temporary),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::All,
+                },
+                MemWidth::B4,
+            ),
+            (
+                OpKind::MulS {
+                    dst_lo: x86(X86Reg::R15),
+                    dst_hi: None,
+                    src1: x86(X86Reg::R15),
+                    src2: SrcOperand::Reg(temporary),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                MemWidth::B8,
+            ),
+            (
                 OpKind::X86Count {
                     dst: x86(X86Reg::R8),
                     src: temporary,
@@ -20841,6 +20891,81 @@ mod jit_gate_tests {
                 Address::Direct(VReg::Virtual(VirtualId(99))),
             ),
             build(
+                OpKind::MulS {
+                    dst_lo: x86(X86Reg::R8),
+                    dst_hi: None,
+                    src1: x86(X86Reg::R9),
+                    src2: SrcOperand::Reg(temporary),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                OpKind::MulS {
+                    dst_lo: x86(X86Reg::Rax),
+                    dst_hi: Some(x86(X86Reg::Rdx)),
+                    src1: x86(X86Reg::Rax),
+                    src2: SrcOperand::Reg(temporary),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                OpKind::MulS {
+                    dst_lo: x86(X86Reg::R8),
+                    dst_hi: None,
+                    src1: x86(X86Reg::R8),
+                    src2: SrcOperand::Reg(temporary),
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::All,
+                },
+                MemWidth::B1,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                OpKind::MulS {
+                    dst_lo: x86(X86Reg::Rsp),
+                    dst_hi: None,
+                    src1: x86(X86Reg::Rsp),
+                    src2: SrcOperand::Reg(temporary),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
+                OpKind::MulS {
+                    dst_lo: x86(X86Reg::R8),
+                    dst_hi: None,
+                    src1: x86(X86Reg::R8),
+                    src2: SrcOperand::Reg(temporary),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF)),
+                },
+                MemWidth::B8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+                address(),
+            ),
+            build(
                 OpKind::X86Count {
                     dst: x86(X86Reg::R8),
                     src: temporary,
@@ -20958,13 +21083,38 @@ mod jit_gate_tests {
                 address(),
             ),
         ];
-        for function in invalid {
-            assert!(!is_native_clobber_safe_excluding(
-                &function,
-                &std::collections::HashMap::new(),
-                true,
-            ));
+        for (case, function) in invalid.into_iter().enumerate() {
+            assert!(
+                !is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    true,
+                ),
+                "invalid scalar memory-source case {case}: {function:?}"
+            );
         }
+
+        let mut hinted_imul = build(
+            OpKind::MulS {
+                dst_lo: x86(X86Reg::R8),
+                dst_hi: None,
+                src1: x86(X86Reg::R8),
+                src2: SrcOperand::Reg(temporary),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+            MemWidth::B8,
+            SignExtend::Zero,
+            0x1000,
+            false,
+            address(),
+        );
+        hinted_imul.blocks[0].ops[1].x86_hint = Some(X86OpHint::ImulImm8);
+        assert!(!is_native_clobber_safe_excluding(
+            &hinted_imul,
+            &std::collections::HashMap::new(),
+            true,
+        ));
     }
 
     #[test]
