@@ -4883,6 +4883,155 @@ fn jit_state_backed_gpr_count_executes_without_memory_helpers() {
     }
 }
 
+/// State-backed BSF/BSR execute through a GuestRegs snapshot so guest RSP/RBP
+/// and APX EGPRs never alias the native stack. Only ZF changes; zero sources
+/// retain the pre-instruction destination in parity with the interpreter.
+#[test]
+fn jit_state_backed_gpr_bit_scan_executes_without_memory_helpers() {
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        apx: bool,
+        destination_index: usize,
+        source_index: usize,
+        source: u64,
+        expected_destination: u64,
+    }
+
+    let cases = [
+        Case {
+            name: "BSF BP,SP partial destination",
+            instruction: &[0x66, 0x0F, 0xBC, 0xEC],
+            apx: false,
+            destination_index: 5,
+            source_index: 4,
+            source: 0x2233_4455_6677_8000,
+            expected_destination: 0x3344_5566_8765_000F,
+        },
+        Case {
+            name: "zero BSR RSP,RBP full destination",
+            instruction: &[0x48, 0x0F, 0xBD, 0xE5],
+            apx: false,
+            destination_index: 4,
+            source_index: 5,
+            source: 0,
+            expected_destination: 0x2233_4455_6677_5678,
+        },
+        Case {
+            name: "BSF RBP,RSP full destination",
+            instruction: &[0x48, 0x0F, 0xBC, 0xEC],
+            apx: false,
+            destination_index: 5,
+            source_index: 4,
+            source: 0x100,
+            expected_destination: 8,
+        },
+        Case {
+            name: "REX2 BSF R31,R16 extended destination",
+            instruction: &[0xD5, 0xDC, 0xBC, 0xF8],
+            apx: true,
+            destination_index: 31,
+            source_index: 16,
+            source: 0x100,
+            expected_destination: 8,
+        },
+        Case {
+            name: "REX2 BSR R16D,R31D zero-extending destination",
+            instruction: &[0xD5, 0xD1, 0xBD, 0xC7],
+            apx: true,
+            destination_index: 16,
+            source_index: 31,
+            source: 0x8000_0000,
+            expected_destination: 31,
+        },
+        Case {
+            name: "zero REX2 BSF R16W,SP partial destination",
+            instruction: &[0x66, 0xD5, 0xC0, 0xBC, 0xC4],
+            apx: true,
+            destination_index: 16,
+            source_index: 4,
+            source: 0,
+            expected_destination: 0xAABB_CCDD_EEFF_7788,
+        },
+    ];
+
+    let gprs = |regs: &Registers| {
+        [
+            regs.rax, regs.rcx, regs.rdx, regs.rbx, regs.rsp, regs.rbp, regs.rsi, regs.rdi,
+            regs.r8, regs.r9, regs.r10, regs.r11, regs.r12, regs.r13, regs.r14, regs.r15, regs.r16,
+            regs.r17, regs.r18, regs.r19, regs.r20, regs.r21, regs.r22, regs.r23, regs.r24,
+            regs.r25, regs.r26, regs.r27, regs.r28, regs.r29, regs.r30, regs.r31,
+        ]
+    };
+    let setup = |vcpu: &mut X86_64Vcpu, case: &Case| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x0102_0304_0506_0708;
+        regs.rcx = 0x1122_3344_5566_1234;
+        regs.rdx = 0x99AA_BBCC_DDEE_FF00;
+        regs.rbx = 0x0F1E_2D3C_4B5A_6978;
+        regs.rsp = 0x2233_4455_6677_5678;
+        regs.rbp = 0x3344_5566_8765_9ABC;
+        regs.r8 = 0x8899_AABB_CCDD_EEFF;
+        regs.r16 = 0xAABB_CCDD_EEFF_7788;
+        regs.r17 = 0xBBCC_DDEE_5566_7788;
+        regs.r31 = 0xFFEE_DDCC_BBAA_1357;
+        match case.source_index {
+            4 => regs.rsp = case.source,
+            5 => regs.rbp = case.source,
+            16 => regs.r16 = case.source,
+            31 => regs.r31 = case.source,
+            _ => unreachable!(),
+        }
+        regs.rflags = 0x2 | 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+        vcpu.set_apx_enabled(case.apx);
+    };
+
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp, &case);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+        assert_eq!(
+            gprs(&expected)[case.destination_index],
+            case.expected_destination,
+            "{} reference destination",
+            case.name
+        );
+        if case.destination_index != case.source_index {
+            assert_eq!(
+                gprs(&expected)[case.source_index],
+                case.source,
+                "{} reference source",
+                case.name
+            );
+        }
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit, &case);
+        jit.set_jit_call(false);
+        jit.set_jit_mem(false);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the register-only native tier:\n{}",
+            case.name,
+            jit.jit_dump_region(LOAD_ADDR)
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(gprs(&actual), gprs(&expected), "{} GPR file", case.name);
+        assert_eq!(actual.rflags, expected.rflags, "{} RFLAGS", case.name);
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+    }
+}
+
 /// State-backed register NOT uses the GuestRegs snapshot for guest RSP/RBP and
 /// APX EGPRs while retaining byte/word partial writes and dword zero extension.
 #[test]

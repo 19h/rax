@@ -254,6 +254,35 @@ pub(crate) fn x86_state_backed_gpr_count_valid(op: &SmirOp) -> bool {
         && flags.as_set().difference(defined).is_empty()
 }
 
+pub(crate) fn x86_state_backed_gpr_bit_scan_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::Bsf { dst, src, .. } | OpKind::Bsr { dst, src, .. }
+            if x86_state_backed_arch_gpr(dst) || x86_state_backed_arch_gpr(src)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_bit_scan_valid(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::Bsf {
+            dst: VReg::Arch(ArchReg::X86(dst)),
+            src: VReg::Arch(ArchReg::X86(src)),
+            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+            flags: FlagUpdate::None | FlagUpdate::Specific(FlagSet::ZF),
+        }
+        | OpKind::Bsr {
+            dst: VReg::Arch(ArchReg::X86(dst)),
+            src: VReg::Arch(ArchReg::X86(src)),
+            width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+            flags: FlagUpdate::None | FlagUpdate::Specific(FlagSet::ZF),
+        } if x86_state_backed_gpr_bit_scan_candidate(op)
+            && op.x86_hint.is_none()
+            && dst.gpr_index().is_some()
+            && src.gpr_index().is_some()
+    )
+}
+
 pub(crate) fn x86_state_backed_gpr_bswap_candidate(op: &SmirOp) -> bool {
     matches!(
         &op.kind,
@@ -4203,6 +4232,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_neg_valid(op)
             || x86_state_backed_gpr_inc_dec_valid(op)
             || x86_state_backed_gpr_count_valid(op)
+            || x86_state_backed_gpr_bit_scan_valid(op)
             || x86_state_backed_gpr_bswap_valid(op)
             || x86_state_backed_gpr_xchg_valid(op)
         {
@@ -6666,14 +6696,36 @@ impl X86_64Lowerer {
                 src,
                 width,
                 flags,
-            } => self.lower_bit_scan(*dst, *src, *width, *flags, false)?,
+            } => {
+                if x86_state_backed_gpr_bit_scan_candidate(op) {
+                    if !x86_state_backed_gpr_bit_scan_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Bsf".to_string(),
+                            operand: format!("invalid x86 GPR bit scan {width:?} {flags:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_bit_scan(*dst, *src, *width, *flags, false);
+                }
+                self.lower_bit_scan(*dst, *src, *width, *flags, false)?;
+            }
 
             OpKind::Bsr {
                 dst,
                 src,
                 width,
                 flags,
-            } => self.lower_bit_scan(*dst, *src, *width, *flags, true)?,
+            } => {
+                if x86_state_backed_gpr_bit_scan_candidate(op) {
+                    if !x86_state_backed_gpr_bit_scan_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Bsr".to_string(),
+                            operand: format!("invalid x86 GPR bit scan {width:?} {flags:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_bit_scan(*dst, *src, *width, *flags, true);
+                }
+                self.lower_bit_scan(*dst, *src, *width, *flags, true)?;
+            }
 
             OpKind::Bextr {
                 dst,
@@ -14769,6 +14821,109 @@ impl X86_64Lowerer {
             }
             self.code.emit_u8(0x9D); // popfq (merged)
         }
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
+        if dst_idx == 5 {
+            let commit_width = if width == OpWidth::W16 {
+                OpWidth::W16
+            } else {
+                OpWidth::W64
+            };
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_bit_scan(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        flags: FlagUpdate,
+        reverse: bool,
+    ) -> Result<(), LowerError> {
+        let op_name = if reverse { "Bsr" } else { "Bsf" };
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {op_name}"),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let src_idx = Self::x86_gpr_index(src).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {op_name}"),
+            operand: "source is not an architectural x86 GPR".to_string(),
+        })?;
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rax, i32::from(src_idx) * 8, width);
+        }
+        self.code.emit_u8(0x9C); // pushfq: preserve old flags for None/ZF merge
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            if reverse {
+                emitter.emit_bsr(PhysReg::Rdx, PhysReg::Rdx, width);
+            } else {
+                emitter.emit_bsf(PhysReg::Rdx, PhysReg::Rdx, width);
+            }
+        }
+
+        // x86 leaves the destination undefined for a zero source. Match the
+        // VCPU interpreter's retained-destination policy explicitly without
+        // changing the ZF produced by the native scan.
+        let nonzero = self.emit_jcc_placeholder(X86Cond::Ne);
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(
+                PhysReg::Rdx,
+                PhysReg::Rax,
+                i32::from(dst_idx) * 8,
+                OpWidth::W64,
+            );
+        }
+        self.patch_rel32_to_current(nonzero)?;
+
+        if flags.updates_any() {
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_push(PhysReg::Rdx);
+            }
+            self.code.emit_u8(0x9C); // pushfq (new)
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_alu_mi_disp(4, PhysReg::Rsp, 0, DispSize::Auto, 1 << 6, OpWidth::W64);
+                emitter.emit_pop(PhysReg::Rdx); // masked new ZF
+                emitter.emit_alu_mi_disp(
+                    4,
+                    PhysReg::Rsp,
+                    8,
+                    DispSize::Auto,
+                    !(1i64 << 6),
+                    OpWidth::W64,
+                );
+                emitter.emit_alu_mem_disp(
+                    0x08,
+                    PhysReg::Rdx,
+                    PhysReg::Rsp,
+                    8,
+                    DispSize::Auto,
+                    OpWidth::W64,
+                    X86AluEncoding::RmReg,
+                );
+                emitter.emit_pop(PhysReg::Rdx); // restore scan result
+            }
+        }
+        self.code.emit_u8(0x9D); // popfq (old or ZF-merged)
 
         self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
         if dst_idx == 5 {
@@ -27607,6 +27762,258 @@ mod tests {
                 let requested_mask = X86_64Lowerer::x86_status_rflags_mask(requested) as u64;
                 expected.rflags =
                     (expected.rflags & !requested_mask) | (new_status & requested_mask);
+            }
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            assert_eq!(
+                regs.rflags & STATUS_MASK,
+                expected.rflags & STATUS_MASK,
+                "{} status flags",
+                case.name
+            );
+        }
+    }
+
+    #[test]
+    fn lower_state_backed_gpr_bit_scan_restores_zero_destination_and_rejects_malformed_shapes() {
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let zf_only = FlagUpdate::Specific(FlagSet::ZF);
+
+        let flagful = lower_single_op(OpKind::Bsf {
+            dst: x86(X86Reg::Rsp),
+            src: x86(X86Reg::Rbp),
+            width: OpWidth::W64,
+            flags: zf_only,
+        });
+        assert!(
+            flagful
+                .windows(4)
+                .any(|bytes| bytes == [0x48, 0x0F, 0xBC, 0xD2]),
+            "state-backed BSF must scan RDX in place: {flagful:02X?}"
+        );
+        assert!(
+            flagful.windows(2).any(|bytes| bytes == [0x0F, 0x85]),
+            "state-backed BSF must branch around zero-source restoration: {flagful:02X?}"
+        );
+        assert_eq!(
+            flagful
+                .windows(4)
+                .filter(|bytes| *bytes == [0x48, 0x8B, 0x50, 0x28])
+                .count(),
+            1,
+            "BSF must load RBP source once: {flagful:02X?}"
+        );
+        assert_eq!(
+            flagful
+                .windows(4)
+                .filter(|bytes| *bytes == [0x48, 0x8B, 0x50, 0x20])
+                .count(),
+            1,
+            "zero-source BSF must restore the retained RSP destination: {flagful:02X?}"
+        );
+        assert_eq!(
+            flagful.iter().filter(|byte| **byte == 0x9C).count(),
+            2,
+            "ZF-only BSF must save old and new RFLAGS: {flagful:02X?}"
+        );
+        assert_eq!(flagful.iter().filter(|byte| **byte == 0x9D).count(), 1);
+
+        let flagless = lower_single_op(OpKind::Bsr {
+            dst: x86(X86Reg::R31),
+            src: x86(X86Reg::Rsp),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
+        });
+        assert!(
+            flagless.windows(3).any(|bytes| bytes == [0x0F, 0xBD, 0xD2]),
+            "state-backed BSR must scan EDX in place: {flagless:02X?}"
+        );
+        assert_eq!(
+            flagless.iter().filter(|byte| **byte == 0x9C).count(),
+            1,
+            "flag-suppressed BSR must save RFLAGS once: {flagless:02X?}"
+        );
+        assert_eq!(flagless.iter().filter(|byte| **byte == 0x9D).count(), 1);
+        assert!(
+            flagless
+                .windows(7)
+                .any(|bytes| bytes == [0x48, 0x89, 0x90, 0xF8, 0x00, 0x00, 0x00]),
+            "dword BSR must fully commit GuestRegs.gpr[31]: {flagless:02X?}"
+        );
+
+        for malformed in [
+            OpKind::Bsf {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W8,
+                flags: zf_only,
+            },
+            OpKind::Bsr {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Bsf {
+                dst: x86(X86Reg::R16),
+                src: VReg::Virtual(crate::smir::ir::types::VirtualId(0)),
+                width: OpWidth::W64,
+                flags: zf_only,
+            },
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(malformed),
+                    LowerError::InvalidOperand { .. }
+                ),
+                "malformed state-backed bit scan must fail lowering"
+            );
+        }
+
+        let hinted = OpKind::Bsr {
+            dst: x86(X86Reg::R16),
+            src: x86(X86Reg::Rax),
+            width: OpWidth::W64,
+            flags: zf_only,
+        };
+        assert!(matches!(
+            lower_single_hinted_op_err(hinted, X86OpHint::Mulx),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_gpr_bit_scan_preserves_width_zero_and_flag_contracts() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        const STATUS_MASK: u64 = 0x8D5;
+
+        struct Case {
+            name: &'static str,
+            dst: X86Reg,
+            src: X86Reg,
+            source: u64,
+            width: OpWidth,
+            reverse: bool,
+            flags: FlagUpdate,
+        }
+
+        let zf_only = FlagUpdate::Specific(FlagSet::ZF);
+        let cases = [
+            Case {
+                name: "BSF BP,SP partial destination",
+                dst: X86Reg::Rbp,
+                src: X86Reg::Rsp,
+                source: 0x2233_4455_6677_8000,
+                width: OpWidth::W16,
+                reverse: false,
+                flags: zf_only,
+            },
+            Case {
+                name: "BSR RSP,RBP full destination",
+                dst: X86Reg::Rsp,
+                src: X86Reg::Rbp,
+                source: 1u64 << 63,
+                width: OpWidth::W64,
+                reverse: true,
+                flags: zf_only,
+            },
+            Case {
+                name: "BSF R31,R16 extended destination",
+                dst: X86Reg::R31,
+                src: X86Reg::R16,
+                source: 0x100,
+                width: OpWidth::W64,
+                reverse: false,
+                flags: zf_only,
+            },
+            Case {
+                name: "flag-suppressed zero BSR R16D,R16D alias",
+                dst: X86Reg::R16,
+                src: X86Reg::R16,
+                source: 0,
+                width: OpWidth::W32,
+                reverse: true,
+                flags: FlagUpdate::None,
+            },
+            Case {
+                name: "zero BSF R16W,SP partial destination",
+                dst: X86Reg::R16,
+                src: X86Reg::Rsp,
+                source: 0,
+                width: OpWidth::W16,
+                reverse: false,
+                flags: zf_only,
+            },
+        ];
+
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        for case in cases {
+            let kind = if case.reverse {
+                OpKind::Bsr {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    width: case.width,
+                    flags: case.flags,
+                }
+            } else {
+                OpKind::Bsf {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    width: case.width,
+                    flags: case.flags,
+                }
+            };
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            for (index, value) in regs.gpr.iter_mut().enumerate() {
+                *value = 0xA1A2_0000_0000_8000u64
+                    .wrapping_add((index as u64).wrapping_mul(0x0101_1111_2222_0101));
+            }
+            regs.gpr[4] = 0x2233_4455_6677_5678;
+            regs.gpr[5] = 0x3344_5566_8765_9ABC;
+            regs.gpr[16] = 0xAABB_CCDD_EEFF_7788;
+            regs.gpr[31] = 0xFFEE_DDCC_BBAA_1357;
+            let src_idx = case.src.gpr_index().unwrap() as usize;
+            regs.gpr[src_idx] = case.source;
+            regs.rflags = STATUS_MASK;
+
+            let mut expected = regs;
+            let dst_idx = case.dst.gpr_index().unwrap() as usize;
+            let value = case.source & case.width.mask();
+            let result = if value == 0 {
+                None
+            } else if case.reverse {
+                Some(u64::from(case.width.bits() - 1 - value.leading_zeros()))
+            } else {
+                Some(u64::from(value.trailing_zeros()))
+            };
+            if let Some(result) = result {
+                expected.gpr[dst_idx] = match case.width {
+                    OpWidth::W16 => (regs.gpr[dst_idx] & !case.width.mask()) | result,
+                    OpWidth::W32 | OpWidth::W64 => result,
+                    OpWidth::W8 | OpWidth::W128 => unreachable!(),
+                };
+            }
+            if case.flags.updates_any() {
+                let zf = u64::from(value == 0) << 6;
+                expected.rflags = (expected.rflags & !(1 << 6)) | zf;
             }
 
             exec.run(lowered.entry_offset, &mut regs);

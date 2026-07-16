@@ -8406,6 +8406,7 @@ fn block_is_clobber_safe(
         let state_neg_ok = super::x86_64::x86_state_backed_gpr_neg_valid(op);
         let state_inc_dec_ok = super::x86_64::x86_state_backed_gpr_inc_dec_valid(op);
         let state_count_ok = super::x86_64::x86_state_backed_gpr_count_valid(op);
+        let state_bit_scan_ok = super::x86_64::x86_state_backed_gpr_bit_scan_valid(op);
         let state_bswap_ok = super::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = super::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let stack_state_ok = stack_mov_ok
@@ -8417,6 +8418,7 @@ fn block_is_clobber_safe(
             || state_neg_ok
             || state_inc_dec_ok
             || state_count_ok
+            || state_bit_scan_ok
             || state_bswap_ok
             || state_xchg_ok;
         if (super::x86_64::x86_state_backed_gpr_extend_candidate(op) && !state_extend_ok)
@@ -8426,6 +8428,7 @@ fn block_is_clobber_safe(
             || (super::x86_64::x86_state_backed_gpr_neg_candidate(op) && !state_neg_ok)
             || (super::x86_64::x86_state_backed_gpr_inc_dec_candidate(op) && !state_inc_dec_ok)
             || (super::x86_64::x86_state_backed_gpr_count_candidate(op) && !state_count_ok)
+            || (super::x86_64::x86_state_backed_gpr_bit_scan_candidate(op) && !state_bit_scan_ok)
             || (super::x86_64::x86_state_backed_gpr_bswap_candidate(op) && !state_bswap_ok)
             || (super::x86_64::x86_state_backed_gpr_xchg_candidate(op) && !state_xchg_ok)
         {
@@ -8474,6 +8477,7 @@ fn block_is_clobber_safe(
         }
         if matches!(op.kind, OpKind::Bsf { .. } | OpKind::Bsr { .. })
             && !x86_bit_scan_shape_valid(&op.kind)
+            && !state_bit_scan_ok
         {
             return false;
         }
@@ -9115,12 +9119,12 @@ fn x86_bit_scan_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
             dst,
             src,
             width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
-            flags: FlagUpdate::Specific(FlagSet::ZF),
+            flags: FlagUpdate::None | FlagUpdate::Specific(FlagSet::ZF),
         } | OpKind::Bsr {
             dst,
             src,
             width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
-            flags: FlagUpdate::Specific(FlagSet::ZF),
+            flags: FlagUpdate::None | FlagUpdate::Specific(FlagSet::ZF),
         } if native_gpr(dst) && native_gpr(src)
     )
 }
@@ -24323,6 +24327,12 @@ mod jit_gate_tests {
                 width: OpWidth::W64,
                 flags: valid_flags,
             },
+            OpKind::Bsf {
+                dst: x86(X86Reg::R8),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
         ] {
             assert!(op.is_jit_safe(), "bit scan must be on the scalar whitelist");
             assert!(x86_gate(op), "well-formed bit scan must enter native JIT");
@@ -24348,19 +24358,19 @@ mod jit_gate_tests {
                 },
             ),
             (
-                "guest stack source",
+                "virtual source",
                 OpKind::Bsf {
                     dst: x86(X86Reg::Rax),
-                    src: x86(X86Reg::Rsp),
+                    src: VReg::Virtual(VirtualId(0)),
                     width: OpWidth::W64,
                     flags: valid_flags,
                 },
             ),
             (
-                "extended guest register",
+                "foreign architecture source",
                 OpKind::Bsr {
-                    dst: x86(X86Reg::R16),
-                    src: x86(X86Reg::Rax),
+                    dst: x86(X86Reg::Rax),
+                    src: arm_x(0),
                     width: OpWidth::W32,
                     flags: valid_flags,
                 },
@@ -24368,6 +24378,102 @@ mod jit_gate_tests {
         ] {
             assert!(!x86_gate(op), "malformed {name} bit scan must deopt");
         }
+    }
+
+    #[test]
+    fn bit_scan_gate_accepts_state_backed_gprs_and_rejects_unsafe_ir() {
+        let zf_only = FlagUpdate::Specific(FlagSet::ZF);
+        for op in [
+            OpKind::Bsf {
+                dst: x86(X86Reg::Rbp),
+                src: x86(X86Reg::Rsp),
+                width: OpWidth::W16,
+                flags: zf_only,
+            },
+            OpKind::Bsr {
+                dst: x86(X86Reg::Rsp),
+                src: x86(X86Reg::Rbp),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Bsf {
+                dst: x86(X86Reg::R31),
+                src: x86(X86Reg::R16),
+                width: OpWidth::W32,
+                flags: zf_only,
+            },
+            OpKind::Bsr {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ] {
+            assert!(op.is_jit_safe());
+            assert!(x86_gate(op));
+        }
+
+        for (name, op) in [
+            (
+                "byte width",
+                OpKind::Bsf {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W8,
+                    flags: zf_only,
+                },
+            ),
+            (
+                "undefined flag request",
+                OpKind::Bsr {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "virtual source",
+                OpKind::Bsf {
+                    dst: x86(X86Reg::R16),
+                    src: VReg::Virtual(VirtualId(0)),
+                    width: OpWidth::W64,
+                    flags: zf_only,
+                },
+            ),
+            (
+                "foreign architecture source",
+                OpKind::Bsr {
+                    dst: x86(X86Reg::R16),
+                    src: arm_x(0),
+                    width: OpWidth::W64,
+                    flags: zf_only,
+                },
+            ),
+        ] {
+            assert!(
+                !x86_gate(op),
+                "malformed {name} state-backed bit scan must deopt"
+            );
+        }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Bsf {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W64,
+                flags: zf_only,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut hinted = builder.finish();
+        hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+        assert!(
+            !is_native_clobber_safe(&hinted),
+            "hinted state-backed bit scan must fail closed"
+        );
     }
 
     #[test]
