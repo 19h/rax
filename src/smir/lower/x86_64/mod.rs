@@ -21825,6 +21825,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "smir-jit")]
     #[test]
     fn lower_helper_backed_scalar_count_consumes_staged_stack_source() {
         // popcnt r8w, word ptr [rbx]; hlt
