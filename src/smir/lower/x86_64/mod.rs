@@ -149,6 +149,28 @@ pub(crate) fn x86_state_backed_gpr_setcc_valid(op: &SmirOp) -> bool {
     )
 }
 
+pub(crate) fn x86_state_backed_gpr_not_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::Not { dst, src, .. }
+            if x86_state_backed_arch_gpr(dst) || x86_state_backed_arch_gpr(src)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_not_valid(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::Not {
+            dst: VReg::Arch(ArchReg::X86(dst)),
+            src: VReg::Arch(ArchReg::X86(src)),
+            width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+        } if x86_state_backed_gpr_not_candidate(op)
+            && op.x86_hint.is_none()
+            && dst.gpr_index().is_some()
+            && src.gpr_index().is_some()
+    )
+}
+
 pub(crate) fn x86_state_backed_gpr_bswap_candidate(op: &SmirOp) -> bool {
     matches!(
         &op.kind,
@@ -4094,6 +4116,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_extend_valid(op)
             || x86_state_backed_gpr_cmove_valid(op)
             || x86_state_backed_gpr_setcc_valid(op)
+            || x86_state_backed_gpr_not_valid(op)
             || x86_state_backed_gpr_bswap_valid(op)
             || x86_state_backed_gpr_xchg_valid(op)
         {
@@ -6434,6 +6457,15 @@ impl X86_64Lowerer {
             }
 
             OpKind::Not { dst, src, width } => {
+                if x86_state_backed_gpr_not_candidate(op) {
+                    if !x86_state_backed_gpr_not_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Not".to_string(),
+                            operand: format!("invalid x86 GPR complement {width:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_not(*dst, *src, *width);
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
 
@@ -14360,6 +14392,51 @@ impl X86_64Lowerer {
         if dst_idx == 5 {
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, width);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_not(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: "state-backed Not".to_string(),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let src_idx = Self::x86_gpr_index(src).ok_or_else(|| LowerError::InvalidOperand {
+            op: "state-backed Not".to_string(),
+            operand: "source is not an architectural x86 GPR".to_string(),
+        })?;
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rax, i32::from(src_idx) * 8, width);
+            emitter.emit_not(PhysReg::Rdx, width);
+        }
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
+        if dst_idx == 5 {
+            let commit_width = if matches!(width, OpWidth::W8 | OpWidth::W16) {
+                width
+            } else {
+                OpWidth::W64
+            };
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
         }
 
         {
@@ -26935,6 +27012,166 @@ mod tests {
                 lower_single_op_err(malformed),
                 LowerError::InvalidOperand { .. }
             ));
+        }
+    }
+
+    #[test]
+    fn lower_state_backed_gpr_not_emits_slot_commits_and_rejects_malformed_shapes() {
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let byte = lower_single_op(OpKind::Not {
+            dst: x86(X86Reg::Rbp),
+            src: x86(X86Reg::R16),
+            width: OpWidth::W8,
+        });
+        assert!(
+            byte.windows(2).any(|bytes| bytes == [0xF6, 0xD2]),
+            "byte Not must complement DL: {byte:02X?}"
+        );
+        assert!(
+            byte.windows(3).any(|bytes| bytes == [0x88, 0x55, 0x00]),
+            "byte Not must partially synchronize guest RBP: {byte:02X?}"
+        );
+
+        let dword = lower_single_op(OpKind::Not {
+            dst: x86(X86Reg::R16),
+            src: x86(X86Reg::Rsp),
+            width: OpWidth::W32,
+        });
+        assert!(
+            dword.windows(2).any(|bytes| bytes == [0xF7, 0xD2]),
+            "dword Not must complement EDX: {dword:02X?}"
+        );
+        assert!(
+            dword
+                .windows(7)
+                .any(|bytes| bytes == [0x48, 0x89, 0x90, 0x80, 0x00, 0x00, 0x00]),
+            "dword Not must fully commit GuestRegs.gpr[16]: {dword:02X?}"
+        );
+
+        for malformed in [
+            OpKind::Not {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W128,
+            },
+            OpKind::Not {
+                dst: x86(X86Reg::R16),
+                src: VReg::Virtual(crate::smir::ir::types::VirtualId(0)),
+                width: OpWidth::W64,
+            },
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(malformed),
+                    LowerError::InvalidOperand { .. }
+                ),
+                "malformed state-backed Not must fail lowering"
+            );
+        }
+
+        let hinted = OpKind::Not {
+            dst: x86(X86Reg::R16),
+            src: x86(X86Reg::Rax),
+            width: OpWidth::W64,
+        };
+        assert!(matches!(
+            lower_single_hinted_op_err(hinted, X86OpHint::Mulx),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_gpr_not_preserves_widths_flags_and_host_stack() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        const STATUS: u64 = 0x8D5;
+
+        struct Case {
+            name: &'static str,
+            dst: X86Reg,
+            src: X86Reg,
+            width: OpWidth,
+        }
+
+        let cases = [
+            Case {
+                name: "NOT BPL,R16B partial destination",
+                dst: X86Reg::Rbp,
+                src: X86Reg::R16,
+                width: OpWidth::W8,
+            },
+            Case {
+                name: "NOT R16W,SP partial destination",
+                dst: X86Reg::R16,
+                src: X86Reg::Rsp,
+                width: OpWidth::W16,
+            },
+            Case {
+                name: "NOT RSP in-place full destination",
+                dst: X86Reg::Rsp,
+                src: X86Reg::Rsp,
+                width: OpWidth::W64,
+            },
+            Case {
+                name: "NOT R31D,EBP zero-extending destination",
+                dst: X86Reg::R31,
+                src: X86Reg::Rbp,
+                width: OpWidth::W32,
+            },
+            Case {
+                name: "NOT R16D in-place zero-extending destination",
+                dst: X86Reg::R16,
+                src: X86Reg::R16,
+                width: OpWidth::W32,
+            },
+        ];
+
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        for case in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::Not {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    width: case.width,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            for (index, value) in regs.gpr.iter_mut().enumerate() {
+                *value = 0xA1A2_0000_0000_8000u64
+                    .wrapping_add((index as u64).wrapping_mul(0x0101_1111_2222_0101));
+            }
+            regs.rflags = STATUS;
+            let mut expected = regs;
+            let dst_idx = case.dst.gpr_index().unwrap() as usize;
+            let src_idx = case.src.gpr_index().unwrap() as usize;
+            let source = regs.gpr[src_idx];
+            expected.gpr[dst_idx] = match case.width {
+                OpWidth::W8 => (regs.gpr[dst_idx] & !0xFF) | ((!source) & 0xFF),
+                OpWidth::W16 => (regs.gpr[dst_idx] & !0xFFFF) | ((!source) & 0xFFFF),
+                OpWidth::W32 => u64::from(!(source as u32)),
+                OpWidth::W64 => !source,
+                _ => unreachable!(),
+            };
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            assert_eq!(regs.rflags & STATUS, STATUS, "{} status flags", case.name);
         }
     }
 

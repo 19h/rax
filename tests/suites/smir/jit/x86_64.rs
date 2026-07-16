@@ -4460,6 +4460,145 @@ fn jit_memory_extensions_match_all_widths_addresses_and_faults() {
     assert_eq!(after.rip, LOAD_ADDR + 5, "fault restarts at MOVSX");
 }
 
+/// State-backed register NOT uses the GuestRegs snapshot for guest RSP/RBP and
+/// APX EGPRs while retaining byte/word partial writes and dword zero extension.
+#[test]
+fn jit_state_backed_gpr_not_executes_without_memory_helpers() {
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        apx: bool,
+        destination_index: usize,
+        source_index: usize,
+        expected_destination: u64,
+        expected_source: u64,
+    }
+
+    let cases = [
+        Case {
+            name: "NOT BPL partial in-place destination",
+            instruction: &[0x40, 0xF6, 0xD5],
+            apx: false,
+            destination_index: 5,
+            source_index: 5,
+            expected_destination: 0x3344_5566_8765_9A43,
+            expected_source: 0x3344_5566_8765_9A43,
+        },
+        Case {
+            name: "NOT RSP full in-place destination",
+            instruction: &[0x48, 0xF7, 0xD4],
+            apx: false,
+            destination_index: 4,
+            source_index: 4,
+            expected_destination: 0xDDCC_BBAA_9988_A987,
+            expected_source: 0xDDCC_BBAA_9988_A987,
+        },
+        Case {
+            name: "APX NOT BPL,R16B partial destination",
+            instruction: &[0x62, 0xFC, 0x54, 0x18, 0xF6, 0xD0],
+            apx: true,
+            destination_index: 5,
+            source_index: 16,
+            expected_destination: 0x3344_5566_8765_9A77,
+            expected_source: 0xAABB_CCDD_EEFF_7788,
+        },
+        Case {
+            name: "APX NOT R16W,SP partial destination",
+            instruction: &[0x62, 0xF4, 0x7D, 0x10, 0xF7, 0xD4],
+            apx: true,
+            destination_index: 16,
+            source_index: 4,
+            expected_destination: 0xAABB_CCDD_EEFF_A987,
+            expected_source: 0x2233_4455_6677_5678,
+        },
+        Case {
+            name: "APX NOT R31D,EBP zero-extending destination",
+            instruction: &[0x62, 0xF4, 0x04, 0x10, 0xF7, 0xD5],
+            apx: true,
+            destination_index: 31,
+            source_index: 5,
+            expected_destination: 0x0000_0000_789A_6543,
+            expected_source: 0x3344_5566_8765_9ABC,
+        },
+        Case {
+            name: "APX NOT R31,RSP full state-to-state destination",
+            instruction: &[0x62, 0xF4, 0x84, 0x10, 0xF7, 0xD4],
+            apx: true,
+            destination_index: 31,
+            source_index: 4,
+            expected_destination: 0xDDCC_BBAA_9988_A987,
+            expected_source: 0x2233_4455_6677_5678,
+        },
+    ];
+
+    let gprs = |regs: &Registers| {
+        [
+            regs.rax, regs.rcx, regs.rdx, regs.rbx, regs.rsp, regs.rbp, regs.rsi, regs.rdi,
+            regs.r8, regs.r9, regs.r10, regs.r11, regs.r12, regs.r13, regs.r14, regs.r15, regs.r16,
+            regs.r17, regs.r18, regs.r19, regs.r20, regs.r21, regs.r22, regs.r23, regs.r24,
+            regs.r25, regs.r26, regs.r27, regs.r28, regs.r29, regs.r30, regs.r31,
+        ]
+    };
+    let setup = |vcpu: &mut X86_64Vcpu, apx: bool| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x0102_0304_0506_0708;
+        regs.rcx = 0x1122_3344_5566_1234;
+        regs.rdx = 0x99AA_BBCC_DDEE_FF00;
+        regs.rbx = 0x0F1E_2D3C_4B5A_6978;
+        regs.rsp = 0x2233_4455_6677_5678;
+        regs.rbp = 0x3344_5566_8765_9ABC;
+        regs.r8 = 0x8899_AABB_CCDD_EEFF;
+        regs.r16 = 0xAABB_CCDD_EEFF_7788;
+        regs.r17 = 0xBBCC_DDEE_5566_7788;
+        regs.r31 = 0xFFEE_DDCC_BBAA_1357;
+        regs.rflags = 0x2 | 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+        vcpu.set_apx_enabled(apx);
+    };
+
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp, case.apx);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+        assert_eq!(
+            gprs(&expected)[case.destination_index],
+            case.expected_destination,
+            "{} reference destination",
+            case.name
+        );
+        assert_eq!(
+            gprs(&expected)[case.source_index],
+            case.expected_source,
+            "{} reference source",
+            case.name
+        );
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit, case.apx);
+        jit.set_jit_call(false);
+        jit.set_jit_mem(false);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the register-only native tier:\n{}",
+            case.name,
+            jit.jit_dump_region(LOAD_ADDR)
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(gprs(&actual), gprs(&expected), "{} GPR file", case.name);
+        assert_eq!(actual.rflags, expected.rflags, "{} RFLAGS", case.name);
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+    }
+}
+
 /// Register byte swaps are flag-neutral and must remain native for both the
 /// legacy in-place BSWAP encoding and APX MOVBE's two-register word form.
 #[test]
