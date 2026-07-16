@@ -8408,6 +8408,7 @@ fn block_is_clobber_safe(
         let state_count_ok = super::x86_64::x86_state_backed_gpr_count_valid(op);
         let state_bit_scan_ok = super::x86_64::x86_state_backed_gpr_bit_scan_valid(op);
         let state_bit_test_ok = super::x86_64::x86_state_backed_gpr_bit_test_valid(op);
+        let state_crc32_ok = super::x86_64::x86_state_backed_gpr_crc32_valid(op);
         let state_bswap_ok = super::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = super::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let stack_state_ok = stack_mov_ok
@@ -8421,6 +8422,7 @@ fn block_is_clobber_safe(
             || state_count_ok
             || state_bit_scan_ok
             || state_bit_test_ok
+            || state_crc32_ok
             || state_bswap_ok
             || state_xchg_ok;
         if (super::x86_64::x86_state_backed_gpr_extend_candidate(op) && !state_extend_ok)
@@ -8432,6 +8434,7 @@ fn block_is_clobber_safe(
             || (super::x86_64::x86_state_backed_gpr_count_candidate(op) && !state_count_ok)
             || (super::x86_64::x86_state_backed_gpr_bit_scan_candidate(op) && !state_bit_scan_ok)
             || (super::x86_64::x86_state_backed_gpr_bit_test_candidate(op) && !state_bit_test_ok)
+            || (super::x86_64::x86_state_backed_gpr_crc32_candidate(op) && !state_crc32_ok)
             || (super::x86_64::x86_state_backed_gpr_bswap_candidate(op) && !state_bswap_ok)
             || (super::x86_64::x86_state_backed_gpr_xchg_candidate(op) && !state_xchg_ok)
         {
@@ -8484,7 +8487,10 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        if matches!(op.kind, OpKind::Crc32C { .. }) && !x86_crc32_shape_valid(&op.kind) {
+        if matches!(op.kind, OpKind::Crc32C { .. })
+            && !x86_crc32_shape_valid(&op.kind)
+            && !state_crc32_ok
+        {
             return false;
         }
         if let OpKind::X86ReadPid { dst } = &op.kind {
@@ -8594,7 +8600,7 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/count/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
+        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/count/bit-scan/bit-test/CRC32/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the current guest
@@ -23456,6 +23462,22 @@ mod jit_gate_tests {
             assert!(x86_gate(op), "{width:?} register CRC32 must JIT");
         }
 
+        for (dst, data, width) in [
+            (X86Reg::Rsp, X86Reg::Rbp, OpWidth::W8),
+            (X86Reg::R8, X86Reg::Rbp, OpWidth::W16),
+            (X86Reg::Rbp, X86Reg::Rsp, OpWidth::W64),
+            (X86Reg::R31, X86Reg::R16, OpWidth::W32),
+        ] {
+            let dst = x86(dst);
+            let op = OpKind::Crc32C {
+                dst,
+                crc: dst,
+                data: x86(data),
+                data_width: width,
+            };
+            assert!(x86_gate(op), "state-backed {width:?} CRC32 must JIT");
+        }
+
         for (name, op) in [
             (
                 "non-destructive destination",
@@ -23467,10 +23489,10 @@ mod jit_gate_tests {
                 },
             ),
             (
-                "stack destination",
+                "state-backed non-destructive accumulator",
                 OpKind::Crc32C {
                     dst: x86(X86Reg::Rsp),
-                    crc: x86(X86Reg::Rsp),
+                    crc: x86(X86Reg::Rbp),
                     data: x86(X86Reg::R10),
                     data_width: OpWidth::W32,
                 },
@@ -23497,6 +23519,24 @@ mod jit_gate_tests {
             assert!(op.is_jit_safe(), "{name} remains class-whitelisted");
             assert!(!x86_gate(op), "malformed {name} CRC32 must deopt");
         }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Crc32C {
+                dst: x86(X86Reg::Rbp),
+                crc: x86(X86Reg::Rbp),
+                data: x86(X86Reg::Rsp),
+                data_width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut hinted = builder.finish();
+        hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+        assert!(
+            !is_native_clobber_safe(&hinted),
+            "hinted state-backed CRC32 must fail closed"
+        );
 
         let memory_crc = |extra_use: bool, signed: SignExtend, crc_width: OpWidth| {
             let temporary = VReg::Virtual(VirtualId(7));

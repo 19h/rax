@@ -338,6 +338,33 @@ pub(crate) fn x86_state_backed_gpr_bit_test_valid(op: &SmirOp) -> bool {
         }
 }
 
+pub(crate) fn x86_state_backed_gpr_crc32_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::Crc32C { dst, crc, data, .. }
+            if x86_state_backed_arch_gpr(dst)
+                || x86_state_backed_arch_gpr(crc)
+                || x86_state_backed_arch_gpr(data)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_crc32_valid(op: &SmirOp) -> bool {
+    let arch_gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
+
+    x86_state_backed_gpr_crc32_candidate(op)
+        && op.x86_hint.is_none()
+        && matches!(
+            &op.kind,
+            OpKind::Crc32C {
+                dst,
+                crc,
+                data,
+                data_width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+            } if dst == crc && arch_gpr(dst) && arch_gpr(data)
+        )
+}
+
 pub(crate) fn x86_state_backed_gpr_bswap_candidate(op: &SmirOp) -> bool {
     matches!(
         &op.kind,
@@ -4289,6 +4316,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_count_valid(op)
             || x86_state_backed_gpr_bit_scan_valid(op)
             || x86_state_backed_gpr_bit_test_valid(op)
+            || x86_state_backed_gpr_crc32_valid(op)
             || x86_state_backed_gpr_bswap_valid(op)
             || x86_state_backed_gpr_xchg_valid(op)
         {
@@ -6811,7 +6839,18 @@ impl X86_64Lowerer {
                 crc,
                 data,
                 data_width,
-            } => self.lower_crc32c(*dst, *crc, *data, *data_width)?,
+            } => {
+                if x86_state_backed_gpr_crc32_candidate(op) {
+                    if !x86_state_backed_gpr_crc32_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Crc32C".to_string(),
+                            operand: format!("invalid x86 GPR CRC32C {data_width:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_crc32c(*dst, *crc, *data, *data_width);
+                }
+                self.lower_crc32c(*dst, *crc, *data, *data_width)?;
+            }
 
             OpKind::Bsf {
                 dst,
@@ -15146,6 +15185,75 @@ impl X86_64Lowerer {
                 let mut emitter = X86Emitter::new(&mut self.code);
                 emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
             }
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_crc32c(
+        &mut self,
+        dst: VReg,
+        crc: VReg,
+        data: VReg,
+        data_width: OpWidth,
+    ) -> Result<(), LowerError> {
+        if dst != crc {
+            return Err(LowerError::InvalidOperand {
+                op: "state-backed Crc32C".to_string(),
+                operand: "x86 CRC32 requires dst == crc".to_string(),
+            });
+        }
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: "state-backed Crc32C".to_string(),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let data_idx = Self::x86_gpr_index(data).ok_or_else(|| LowerError::InvalidOperand {
+            op: "state-backed Crc32C".to_string(),
+            operand: "data source is not an architectural x86 GPR".to_string(),
+        })?;
+        if !matches!(
+            data_width,
+            OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+        ) {
+            return Err(LowerError::InvalidOperand {
+                op: "state-backed Crc32C".to_string(),
+                operand: format!("unsupported data width {data_width:?}"),
+            });
+        }
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(
+                PhysReg::Rdx,
+                PhysReg::Rax,
+                i32::from(dst_idx) * 8,
+                OpWidth::W64,
+            );
+            emitter.emit_mov_rm(
+                PhysReg::Rdi,
+                PhysReg::Rax,
+                i32::from(data_idx) * 8,
+                data_width,
+            );
+            emitter.emit_crc32_rr(PhysReg::Rdx, PhysReg::Rdi, data_width);
+        }
+
+        // Every CRC32 encoding produces a 32-bit Castagnoli remainder and
+        // zero-extends it to the full architectural destination.
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, OpWidth::W32)?;
+        if dst_idx == 5 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, OpWidth::W64);
         }
 
         {
@@ -30307,6 +30415,57 @@ mod tests {
             );
         }
 
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
+        for (name, op, expected) in [
+            (
+                "state-backed crc32 r32,r8",
+                OpKind::Crc32C {
+                    dst: rbp,
+                    crc: rbp,
+                    data: rbp,
+                    data_width: OpWidth::W8,
+                },
+                &[0xF2, 0x40, 0x0F, 0x38, 0xF0, 0xD7][..],
+            ),
+            (
+                "state-backed crc32 r32,r16",
+                OpKind::Crc32C {
+                    dst: rsp,
+                    crc: rsp,
+                    data: rbp,
+                    data_width: OpWidth::W16,
+                },
+                &[0xF2, 0x66, 0x0F, 0x38, 0xF1, 0xD7][..],
+            ),
+            (
+                "state-backed crc32 r32,r32",
+                OpKind::Crc32C {
+                    dst: rbp,
+                    crc: rbp,
+                    data: rsp,
+                    data_width: OpWidth::W32,
+                },
+                &[0xF2, 0x0F, 0x38, 0xF1, 0xD7][..],
+            ),
+            (
+                "state-backed crc32 r64,r64",
+                OpKind::Crc32C {
+                    dst: rsp,
+                    crc: rsp,
+                    data: rbp,
+                    data_width: OpWidth::W64,
+                },
+                &[0xF2, 0x48, 0x0F, 0x38, 0xF1, 0xD7][..],
+            ),
+        ] {
+            let code = lower_single_op(op);
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "{name}: missing scratch CRC32 {expected:02X?} in {code:02X?}"
+            );
+        }
+
         for malformed in [
             OpKind::Crc32C {
                 dst: r8,
@@ -30321,8 +30480,8 @@ mod tests {
                 data_width: OpWidth::W128,
             },
             OpKind::Crc32C {
-                dst: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
-                crc: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+                dst: rsp,
+                crc: rbp,
                 data: r9,
                 data_width: OpWidth::W32,
             },
@@ -30345,6 +30504,19 @@ mod tests {
                 "malformed CRC32 must fail lowering"
             );
         }
+
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                OpKind::Crc32C {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::R16)),
+                    crc: VReg::Arch(ArchReg::X86(X86Reg::R16)),
+                    data: rsp,
+                    data_width: OpWidth::W64,
+                },
+                X86OpHint::Mulx,
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
     }
 
     #[test]
@@ -32123,6 +32295,132 @@ mod tests {
                 "{name}: result"
             );
             assert_eq!(regs.rflags & FLAGS, FLAGS, "{name}: flags");
+        }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_crc32c_preserves_gprs_and_flags() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        if !std::is_x86_feature_detected!("sse4.2") {
+            return;
+        }
+        fn crc32c(mut crc: u32, data: u64, width: OpWidth) -> u32 {
+            const POLY: u32 = 0x82F6_3B78;
+            for byte in 0..(width.bits() / 8) {
+                crc ^= ((data >> (byte * 8)) & 0xff) as u32;
+                for _ in 0..8 {
+                    crc = (crc >> 1) ^ (POLY & 0u32.wrapping_sub(crc & 1));
+                }
+            }
+            crc
+        }
+
+        struct Case {
+            name: &'static str,
+            dst: X86Reg,
+            data: X86Reg,
+            width: OpWidth,
+            accumulator: u64,
+            source: u64,
+        }
+        let cases = [
+            Case {
+                name: "CRC32 EBP,BPL alias",
+                dst: X86Reg::Rbp,
+                data: X86Reg::Rbp,
+                width: OpWidth::W8,
+                accumulator: 0x1234_56A5,
+                source: 0x1234_56A5,
+            },
+            Case {
+                name: "CRC32 ESP,BP",
+                dst: X86Reg::Rsp,
+                data: X86Reg::Rbp,
+                width: OpWidth::W16,
+                accumulator: 0x89AB_CDEF,
+                source: 0x0123_4567_89AB_BEEF,
+            },
+            Case {
+                name: "CRC32 EBP,ESP",
+                dst: X86Reg::Rbp,
+                data: X86Reg::Rsp,
+                width: OpWidth::W32,
+                accumulator: 0x1020_3040,
+                source: 0xAABB_CCDD_DEAD_BEEF,
+            },
+            Case {
+                name: "CRC32 RSP,RBP",
+                dst: X86Reg::Rsp,
+                data: X86Reg::Rbp,
+                width: OpWidth::W64,
+                accumulator: 0x7654_3210,
+                source: 0x0123_4567_89AB_CDEF,
+            },
+            Case {
+                name: "state-backed CRC32 R31,R16",
+                dst: X86Reg::R31,
+                data: X86Reg::R16,
+                width: OpWidth::W64,
+                accumulator: 0xA5A5_5A5A,
+                source: 0xFEDC_BA98_7654_3210,
+            },
+        ];
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        const FLAGS: u64 = 0x8D5;
+
+        for case in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::Crc32C {
+                    dst: x86(case.dst),
+                    crc: x86(case.dst),
+                    data: x86(case.data),
+                    data_width: case.width,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            for (index, value) in regs.gpr.iter_mut().enumerate() {
+                *value = 0x1357_0000_2468_0000u64
+                    .wrapping_add((index as u64).wrapping_mul(0x0101_1111_2222_0101));
+            }
+            let dst_idx = case.dst.gpr_index().unwrap() as usize;
+            let data_idx = case.data.gpr_index().unwrap() as usize;
+            regs.gpr[dst_idx] = case.accumulator;
+            if data_idx != dst_idx {
+                regs.gpr[data_idx] = case.source;
+            }
+            regs.rflags = 0x2 | FLAGS;
+
+            let mut expected = regs;
+            expected.gpr[dst_idx] = u64::from(crc32c(
+                regs.gpr[dst_idx] as u32,
+                regs.gpr[data_idx],
+                case.width,
+            ));
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            assert_eq!(
+                regs.rflags & FLAGS,
+                expected.rflags & FLAGS,
+                "{} flags",
+                case.name
+            );
         }
     }
 
