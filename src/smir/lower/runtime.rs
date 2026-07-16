@@ -6509,7 +6509,8 @@ pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
 /// representable by the native identity bridge. Native lowering replaces the
 /// pair with one fault-precise MMU helper load and a stack-backed scalar source,
 /// so the virtual never aliases a live guest GPR. This also admits the exact
-/// destructive two-operand `IMUL dst,virtual` shape.
+/// destructive two-operand `IMUL dst,virtual` and hinted
+/// `IMUL dst,virtual,immediate` shapes.
 pub(crate) fn x86_jit_mem_alu_source_sequence_len(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -6518,7 +6519,7 @@ pub(crate) fn x86_jit_mem_alu_source_sequence_len(
     virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
 ) -> Option<usize> {
     use crate::smir::ir::flags::FlagUpdate;
-    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::ops::{OpKind, X86OpHint};
     use crate::smir::ir::types::{OpWidth, SignExtend, SrcOperand, VReg};
 
     if !allow_mem {
@@ -6551,6 +6552,15 @@ pub(crate) fn x86_jit_mem_alu_source_sequence_len(
     }
     let identity = |reg: &VReg| x86_native_identity_gpr(reg);
     let imm_valid = |value: i64| width != OpWidth::W64 || i32::try_from(value).is_ok();
+    let imul_imm_valid = |value: i64, hint: Option<X86OpHint>| match hint {
+        Some(X86OpHint::ImulImm8) => i8::try_from(value).is_ok(),
+        Some(X86OpHint::ImulImm32) => match width {
+            OpWidth::W16 => i16::try_from(value).is_ok(),
+            OpWidth::W32 | OpWidth::W64 => i32::try_from(value).is_ok(),
+            _ => false,
+        },
+        _ => false,
+    };
     let binary_shape =
         |dst: &VReg, src1: &VReg, src2: &SrcOperand, op_width: OpWidth, flags: FlagUpdate| {
             op_width == width
@@ -6644,6 +6654,21 @@ pub(crate) fn x86_jit_mem_alu_source_sequence_len(
                 && identity(dst_lo)
                 && matches!(flags, FlagUpdate::None | FlagUpdate::All)
                 && consumer.x86_hint.is_none()
+        }
+        OpKind::MulS {
+            dst_lo,
+            dst_hi: None,
+            src1,
+            src2: SrcOperand::Imm(value),
+            width: op_width,
+            flags,
+        } => {
+            *op_width == width
+                && matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+                && *src1 == temporary
+                && identity(dst_lo)
+                && matches!(flags, FlagUpdate::None | FlagUpdate::All)
+                && imul_imm_valid(*value, consumer.x86_hint)
         }
         _ => false,
     };
@@ -21115,6 +21140,276 @@ mod jit_gate_tests {
             &std::collections::HashMap::new(),
             true,
         ));
+    }
+
+    #[test]
+    fn x86_immediate_memory_imul_gate_enforces_width_hint_and_signed_range() {
+        let temporary = VReg::Virtual(VirtualId(18));
+        let build = |dst_lo: VReg,
+                     dst_hi: Option<VReg>,
+                     src1: VReg,
+                     value: i64,
+                     width: OpWidth,
+                     mem_width: MemWidth,
+                     flags: FlagUpdate,
+                     hint: Option<X86OpHint>| {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::Load {
+                    dst: temporary,
+                    addr: Address::Direct(x86(X86Reg::Rbx)),
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
+            );
+            builder.push_op(
+                0x1000,
+                OpKind::MulS {
+                    dst_lo,
+                    dst_hi,
+                    src1,
+                    src2: SrcOperand::Imm(value),
+                    width,
+                    flags,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[1].x86_hint = hint;
+            function
+        };
+
+        for (name, dst, value, width, mem_width, flags, hint) in [
+            (
+                "W16 imm8 lower bound",
+                x86(X86Reg::Rax),
+                i64::from(i8::MIN),
+                OpWidth::W16,
+                MemWidth::B2,
+                FlagUpdate::All,
+                X86OpHint::ImulImm8,
+            ),
+            (
+                "W16 imm16",
+                x86(X86Reg::R8),
+                0x1234,
+                OpWidth::W16,
+                MemWidth::B2,
+                FlagUpdate::All,
+                X86OpHint::ImulImm32,
+            ),
+            (
+                "W32 NF imm8 upper bound",
+                x86(X86Reg::R9),
+                i64::from(i8::MAX),
+                OpWidth::W32,
+                MemWidth::B4,
+                FlagUpdate::None,
+                X86OpHint::ImulImm8,
+            ),
+            (
+                "W32 imm32 lower bound",
+                x86(X86Reg::R10),
+                i64::from(i32::MIN),
+                OpWidth::W32,
+                MemWidth::B4,
+                FlagUpdate::All,
+                X86OpHint::ImulImm32,
+            ),
+            (
+                "W64 NF imm32 upper bound",
+                x86(X86Reg::R15),
+                i64::from(i32::MAX),
+                OpWidth::W64,
+                MemWidth::B8,
+                FlagUpdate::None,
+                X86OpHint::ImulImm32,
+            ),
+        ] {
+            let function = build(
+                dst,
+                None,
+                temporary,
+                value,
+                width,
+                mem_width,
+                flags,
+                Some(hint),
+            );
+            assert!(
+                is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    true,
+                ),
+                "{name}"
+            );
+            assert!(
+                !is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    false,
+                ),
+                "{name} must still require memory helpers"
+            );
+        }
+
+        for (name, dst_lo, dst_hi, src1, value, width, mem_width, flags, hint) in [
+            (
+                "W8 has no two/three-operand IMUL",
+                x86(X86Reg::R8),
+                None,
+                temporary,
+                1,
+                OpWidth::W8,
+                MemWidth::B1,
+                FlagUpdate::All,
+                Some(X86OpHint::ImulImm8),
+            ),
+            (
+                "imm8 overflow",
+                x86(X86Reg::R8),
+                None,
+                temporary,
+                i64::from(i8::MAX) + 1,
+                OpWidth::W16,
+                MemWidth::B2,
+                FlagUpdate::All,
+                Some(X86OpHint::ImulImm8),
+            ),
+            (
+                "imm16 overflow",
+                x86(X86Reg::R8),
+                None,
+                temporary,
+                i64::from(i16::MAX) + 1,
+                OpWidth::W16,
+                MemWidth::B2,
+                FlagUpdate::All,
+                Some(X86OpHint::ImulImm32),
+            ),
+            (
+                "W32 imm32 overflow",
+                x86(X86Reg::R8),
+                None,
+                temporary,
+                i64::from(i32::MAX) + 1,
+                OpWidth::W32,
+                MemWidth::B4,
+                FlagUpdate::All,
+                Some(X86OpHint::ImulImm32),
+            ),
+            (
+                "W64 imm32 underflow",
+                x86(X86Reg::R8),
+                None,
+                temporary,
+                i64::from(i32::MIN) - 1,
+                OpWidth::W64,
+                MemWidth::B8,
+                FlagUpdate::All,
+                Some(X86OpHint::ImulImm32),
+            ),
+            (
+                "unhinted",
+                x86(X86Reg::R8),
+                None,
+                temporary,
+                7,
+                OpWidth::W64,
+                MemWidth::B8,
+                FlagUpdate::All,
+                None,
+            ),
+            (
+                "wrong hint family",
+                x86(X86Reg::R8),
+                None,
+                temporary,
+                7,
+                OpWidth::W64,
+                MemWidth::B8,
+                FlagUpdate::All,
+                Some(X86OpHint::Mulx),
+            ),
+            (
+                "stack destination",
+                x86(X86Reg::Rsp),
+                None,
+                temporary,
+                7,
+                OpWidth::W64,
+                MemWidth::B8,
+                FlagUpdate::All,
+                Some(X86OpHint::ImulImm8),
+            ),
+            (
+                "extended destination",
+                x86(X86Reg::R16),
+                None,
+                temporary,
+                7,
+                OpWidth::W64,
+                MemWidth::B8,
+                FlagUpdate::All,
+                Some(X86OpHint::ImulImm8),
+            ),
+            (
+                "widening destination",
+                x86(X86Reg::Rax),
+                Some(x86(X86Reg::Rdx)),
+                temporary,
+                7,
+                OpWidth::W64,
+                MemWidth::B8,
+                FlagUpdate::All,
+                Some(X86OpHint::ImulImm8),
+            ),
+            (
+                "architectural first source",
+                x86(X86Reg::R8),
+                None,
+                x86(X86Reg::Rax),
+                7,
+                OpWidth::W64,
+                MemWidth::B8,
+                FlagUpdate::All,
+                Some(X86OpHint::ImulImm8),
+            ),
+            (
+                "partial flags",
+                x86(X86Reg::R8),
+                None,
+                temporary,
+                7,
+                OpWidth::W64,
+                MemWidth::B8,
+                FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF)),
+                Some(X86OpHint::ImulImm8),
+            ),
+            (
+                "memory width mismatch",
+                x86(X86Reg::R8),
+                None,
+                temporary,
+                7,
+                OpWidth::W64,
+                MemWidth::B4,
+                FlagUpdate::All,
+                Some(X86OpHint::ImulImm8),
+            ),
+        ] {
+            let function = build(dst_lo, dst_hi, src1, value, width, mem_width, flags, hint);
+            assert!(
+                !is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    true,
+                ),
+                "{name}: {function:?}"
+            );
+        }
     }
 
     #[test]

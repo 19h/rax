@@ -2052,6 +2052,127 @@ fn jit_two_operand_memory_imul_matches_interpreter_and_faults_precisely() {
     assert_eq!(after.rip, LOAD_ADDR, "fault must restart current PC");
 }
 
+/// Immediate IMUL with a memory source must retain its 69/6B encoding class,
+/// consume the helper-staged value, and commit no architectural state when the
+/// source load faults. Only CF and OF are defined after successful IMUL.
+#[test]
+fn jit_memory_immediate_imul_matches_interpreter_and_faults_precisely() {
+    const DATA: u64 = 0x20_0000;
+    const DEFINED_FLAGS: u64 = 1 | (1 << 11);
+    for (name, instruction, destination, initial, memory, expected_value) in [
+        (
+            "IMUL AX,word [RBX],imm16",
+            &[0x66, 0x69, 0x03, 0x34, 0x12][..],
+            0u8,
+            0xA5A5_5A5A_1357_2468u64,
+            3u64,
+            0xA5A5_5A5A_1357_369Cu64,
+        ),
+        (
+            "IMUL R8D,dword [RBX],imm8",
+            &[0x44, 0x6B, 0x03, 0xFD][..],
+            1,
+            0x1122_3344_5566_7788,
+            0x0000_0000_8000_0000,
+            0x0000_0000_8000_0000,
+        ),
+        (
+            "IMUL R9,qword [RBX],imm32",
+            &[0x4C, 0x69, 0x0B, 0x78, 0x56, 0x34, 0x12][..],
+            2,
+            0x8877_6655_4433_2211,
+            7,
+            0x0000_0000_7F6E_5D48,
+        ),
+    ] {
+        let mut code = instruction.to_vec();
+        code.push(0xF4);
+        let setup = |vcpu: &mut X86_64Vcpu, guest_mem: &Arc<GuestMemoryMmap>| {
+            guest_mem.write_obj(memory, GuestAddress(DATA)).unwrap();
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = 0x0123_4567_89AB_CDEF;
+            regs.r8 = 0x1122_3344_5566_7788;
+            regs.r9 = 0x8877_6655_4433_2211;
+            match destination {
+                0 => regs.rax = initial,
+                1 => regs.r8 = initial,
+                2 => regs.r9 = initial,
+                _ => unreachable!(),
+            }
+            regs.rbx = DATA;
+            regs.r10 = 0x0F0E_0D0C_0B0A_0908;
+            regs.rflags = 0xCD7;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let (mut interp, interp_mem) = make_vcpu_mem(&code);
+        setup(&mut interp, &interp_mem);
+        assert!(interp.step().unwrap().is_none(), "{name} interpreter");
+        let expected = interp.get_regs().unwrap();
+        let expected_destination = match destination {
+            0 => expected.rax,
+            1 => expected.r8,
+            2 => expected.r9,
+            _ => unreachable!(),
+        };
+        assert_eq!(
+            expected_destination, expected_value,
+            "{name}: reference value"
+        );
+
+        let (mut jit, jit_mem) = make_vcpu_mem(&code);
+        setup(&mut jit, &jit_mem);
+        let ran_native = jit
+            .jit_try_block()
+            .unwrap_or_else(|error| panic!("{name}: {error:?}"));
+        assert!(
+            ran_native,
+            "{name} must enter the helper-backed native tier:\n{}",
+            jit.jit_dump_region(LOAD_ADDR)
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(actual.rax, expected.rax, "{name}: RAX");
+        assert_eq!(actual.r8, expected.r8, "{name}: R8");
+        assert_eq!(actual.r9, expected.r9, "{name}: R9");
+        assert_eq!(actual.rbx, expected.rbx, "{name}: address base");
+        assert_eq!(actual.r10, expected.r10, "{name}: unrelated GPR");
+        assert_eq!(
+            actual.rflags & DEFINED_FLAGS,
+            expected.rflags & DEFINED_FLAGS,
+            "{name}: defined CF/OF"
+        );
+        assert_eq!(actual.rip, expected.rip, "{name}: RIP");
+        assert_eq!(
+            jit_mem.read_obj::<u64>(GuestAddress(DATA)).unwrap(),
+            memory,
+            "{name}: source memory is unchanged"
+        );
+    }
+
+    let code = [0x4C, 0x69, 0x03, 0x78, 0x56, 0x34, 0x12, 0xF4];
+    let (mut fault, _) = make_vcpu_mem(&code);
+    let mut before = fault.get_regs().unwrap();
+    before.rax = 0x0123_4567_89AB_CDEF;
+    before.rbx = MEM_SIZE + 0x1000;
+    before.r8 = 0x1122_3344_5566_7788;
+    before.r9 = 0x8877_6655_4433_2211;
+    before.rflags = 0xCD7;
+    fault.set_regs(&before).unwrap();
+    assert!(
+        fault
+            .jit_try_block()
+            .expect("faulting immediate memory IMUL JIT"),
+        "immediate IMUL must compile before its precise helper fault"
+    );
+    let after = fault.get_regs().unwrap();
+    assert_eq!(after.rax, before.rax, "fault must preserve RAX");
+    assert_eq!(after.rbx, before.rbx, "fault must preserve address base");
+    assert_eq!(after.r8, before.r8, "fault must preserve destination");
+    assert_eq!(after.r9, before.r9, "fault must preserve unrelated GPRs");
+    assert_eq!(after.rflags, before.rflags, "fault must preserve RFLAGS");
+    assert_eq!(after.rip, LOAD_ADDR, "fault must restart current PC");
+}
+
 /// Register byte swaps are flag-neutral and must remain native for both the
 /// legacy in-place BSWAP encoding and APX MOVBE's two-register word form.
 #[test]

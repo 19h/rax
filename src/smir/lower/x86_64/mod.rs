@@ -15148,6 +15148,40 @@ impl X86_64Lowerer {
             dst_lo,
             dst_hi: None,
             src1,
+            src2: SrcOperand::Imm(value),
+            flags,
+            ..
+        } = consumer
+        {
+            debug_assert_eq!(*dst_lo, carrier);
+            debug_assert_eq!(*src1, temporary);
+            let preserve_flags = *flags == FlagUpdate::None;
+            let use_imm8 = match block.ops[idx + 1].x86_hint {
+                Some(X86OpHint::ImulImm8) => true,
+                Some(X86OpHint::ImulImm32) => false,
+                _ => unreachable!("validated immediate memory IMUL hint"),
+            };
+            if preserve_flags {
+                self.code.emit_u8(0x9C); // pushfq
+            }
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_imul_rmi_disp(
+                carrier_reg,
+                PhysReg::Rsp,
+                if preserve_flags { 8 } else { 0 },
+                DispSize::Auto,
+                *value as i32,
+                width,
+                use_imm8,
+            );
+            finish(self, preserve_flags);
+            return Ok(Some(consumed));
+        }
+
+        if let OpKind::MulS {
+            dst_lo,
+            dst_hi: None,
+            src1,
             src2: SrcOperand::Reg(source),
             flags,
             ..
@@ -22551,6 +22585,78 @@ mod tests {
                 .windows(8)
                 .any(|bytes| bytes == [0x9C, 0x4C, 0x0F, 0xAF, 0x44, 0x24, 0x08, 0x9D]),
             "NF IMUL must preserve flags around the staged stack source: {lowered:02X?}"
+        );
+    }
+
+    #[cfg(feature = "smir-jit")]
+    #[test]
+    fn lower_helper_backed_immediate_imul_uses_hint_and_staged_memory_source() {
+        for (name, instruction, expected) in [
+            (
+                "W16 RAX imm16",
+                &[0x66, 0x69, 0x03, 0x34, 0x12, 0xF4][..],
+                &[0x66, 0x69, 0x04, 0x24, 0x34, 0x12][..],
+            ),
+            (
+                "W32 R8 imm8",
+                &[0x44, 0x6B, 0x03, 0xFD, 0xF4][..],
+                &[0x44, 0x6B, 0x04, 0x24, 0xFD][..],
+            ),
+            (
+                "W64 R9 imm32",
+                &[0x4C, 0x69, 0x0B, 0x78, 0x56, 0x34, 0x12, 0xF4][..],
+                &[0x4C, 0x69, 0x0C, 0x24, 0x78, 0x56, 0x34, 0x12][..],
+            ),
+        ] {
+            let (lowered, entry) = lower_rex2_block_with_mem_helpers(instruction, true);
+            assert!(entry < lowered.len(), "{name}");
+            assert!(
+                lowered
+                    .windows(expected.len())
+                    .any(|bytes| bytes == expected),
+                "helper-backed {name} must preserve the opcode hint and consume the staged source: {lowered:02X?}"
+            );
+        }
+
+        let temporary = VReg::Virtual(crate::smir::ir::types::VirtualId(91));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let mut builder = FunctionBuilder::new(FunctionId(91), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: temporary,
+                addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rbx))),
+                width: MemWidth::B2,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::MulS {
+                dst_lo: r8,
+                dst_hi: None,
+                src1: temporary,
+                src2: SrcOperand::Imm(0x1234),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[1].x86_hint = Some(X86OpHint::ImulImm32);
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_mem_helpers(true);
+        lowerer
+            .lower_function(&function)
+            .expect("lower flag-preserving helper-backed immediate IMUL");
+        let lowered = lowerer
+            .finalize()
+            .expect("finalize flag-preserving immediate IMUL");
+        assert!(
+            lowered.windows(10).any(|bytes| {
+                bytes == [0x9C, 0x66, 0x44, 0x69, 0x44, 0x24, 0x08, 0x34, 0x12, 0x9D]
+            }),
+            "NF immediate IMUL must preserve flags around the shifted staged source: {lowered:02X?}"
         );
     }
 
