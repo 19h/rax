@@ -6676,6 +6676,82 @@ pub(crate) fn x86_jit_mem_alu_source_sequence_len(
     valid.then_some(2)
 }
 
+/// Validate the exact implicit widening memory multiply emitted by the x86
+/// lifter: `Load virtual; MulU/MulS RDX:RAX,RAX,virtual`. Native lowering
+/// stages the source in an aligned caller-owned stack frame, lets the memory
+/// helper restore the original implicit registers, and only then executes the
+/// native group-3 multiply. The load temporary must remain exact SSA.
+pub(crate) fn x86_jit_mem_widening_mul_source_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, SignExtend, SrcOperand, VReg, X86Reg};
+
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (temporary, addr, mem_width) = match &load.kind {
+        OpKind::Load {
+            dst: temporary @ VReg::Virtual(_),
+            addr,
+            width,
+            sign: SignExtend::Zero,
+        } => (*temporary, addr, *width),
+        _ => return None,
+    };
+    let width = mem_width.to_op_width()?;
+    if !matches!(
+        width,
+        OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+    ) || !x86_jit_mem_address_shape_valid(addr)
+        || virtual_definitions.get(&temporary) != Some(&1)
+        || virtual_uses.get(&temporary) != Some(&1)
+    {
+        return None;
+    }
+
+    let consumer = block.ops.get(index + 1)?;
+    if consumer.guest_pc != load.guest_pc || consumer.x86_hint.is_some() {
+        return None;
+    }
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+    let valid = match &consumer.kind {
+        OpKind::MulU {
+            dst_lo,
+            dst_hi: Some(dst_hi),
+            src1,
+            src2: SrcOperand::Reg(source),
+            width: op_width,
+            flags,
+        }
+        | OpKind::MulS {
+            dst_lo,
+            dst_hi: Some(dst_hi),
+            src1,
+            src2: SrcOperand::Reg(source),
+            width: op_width,
+            flags,
+        } => {
+            *dst_lo == rax
+                && *dst_hi == rdx
+                && *src1 == rax
+                && *source == temporary
+                && *op_width == width
+                && matches!(flags, FlagUpdate::None | FlagUpdate::All)
+        }
+        _ => false,
+    };
+
+    valid.then_some(2)
+}
+
 /// Validate the exact two-op scalar count memory-source shape emitted by the
 /// x86 lifter: `Load virtual; X86Count architectural_dst,virtual`. The helper-
 /// backed lowerer stages the loaded value on its own stack, so the SSA virtual
@@ -7766,6 +7842,16 @@ fn block_is_clobber_safe(
             continue;
         }
         if let Some(consumed) = x86_jit_mem_alu_source_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
+        if let Some(consumed) = x86_jit_mem_widening_mul_source_sequence_len(
             block,
             i,
             allow_mem,
@@ -20932,21 +21018,6 @@ mod jit_gate_tests {
             ),
             build(
                 OpKind::MulS {
-                    dst_lo: x86(X86Reg::Rax),
-                    dst_hi: Some(x86(X86Reg::Rdx)),
-                    src1: x86(X86Reg::Rax),
-                    src2: SrcOperand::Reg(temporary),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::All,
-                },
-                MemWidth::B8,
-                SignExtend::Zero,
-                0x1000,
-                false,
-                address(),
-            ),
-            build(
-                OpKind::MulS {
                     dst_lo: x86(X86Reg::R8),
                     dst_hi: None,
                     src1: x86(X86Reg::R8),
@@ -21401,6 +21472,243 @@ mod jit_gate_tests {
             ),
         ] {
             let function = build(dst_lo, dst_hi, src1, value, width, mem_width, flags, hint);
+            assert!(
+                !is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    true,
+                ),
+                "{name}: {function:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn x86_widening_memory_multiply_gate_requires_exact_implicit_shape() {
+        let temporary = VReg::Virtual(VirtualId(19));
+        let build = |consumer: OpKind,
+                     mem_width: MemWidth,
+                     sign: SignExtend,
+                     extra_use: bool,
+                     hint: Option<X86OpHint>| {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::Load {
+                    dst: temporary,
+                    addr: Address::Direct(x86(X86Reg::Rbx)),
+                    width: mem_width,
+                    sign,
+                },
+            );
+            builder.push_op(0x1000, consumer);
+            if extra_use {
+                builder.push_op(
+                    0x1000,
+                    OpKind::Mov {
+                        dst: x86(X86Reg::R8),
+                        src: SrcOperand::Reg(temporary),
+                        width: OpWidth::W64,
+                    },
+                );
+            }
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[1].x86_hint = hint;
+            function
+        };
+        let multiply = |signed: bool,
+                        dst_lo: VReg,
+                        dst_hi: Option<VReg>,
+                        src1: VReg,
+                        src2: SrcOperand,
+                        width: OpWidth,
+                        flags: FlagUpdate| {
+            if signed {
+                OpKind::MulS {
+                    dst_lo,
+                    dst_hi,
+                    src1,
+                    src2,
+                    width,
+                    flags,
+                }
+            } else {
+                OpKind::MulU {
+                    dst_lo,
+                    dst_hi,
+                    src1,
+                    src2,
+                    width,
+                    flags,
+                }
+            }
+        };
+        let rax = x86(X86Reg::Rax);
+        let rdx = x86(X86Reg::Rdx);
+        let exact = |signed, width, flags| {
+            multiply(
+                signed,
+                rax,
+                Some(rdx),
+                rax,
+                SrcOperand::Reg(temporary),
+                width,
+                flags,
+            )
+        };
+
+        for (name, signed, width, mem_width, flags) in [
+            (
+                "MUL byte",
+                false,
+                OpWidth::W8,
+                MemWidth::B1,
+                FlagUpdate::All,
+            ),
+            (
+                "IMUL word NF",
+                true,
+                OpWidth::W16,
+                MemWidth::B2,
+                FlagUpdate::None,
+            ),
+            (
+                "MUL dword",
+                false,
+                OpWidth::W32,
+                MemWidth::B4,
+                FlagUpdate::All,
+            ),
+            (
+                "IMUL qword",
+                true,
+                OpWidth::W64,
+                MemWidth::B8,
+                FlagUpdate::All,
+            ),
+        ] {
+            let function = build(
+                exact(signed, width, flags),
+                mem_width,
+                SignExtend::Zero,
+                false,
+                None,
+            );
+            assert!(
+                is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    true,
+                ),
+                "{name}"
+            );
+            assert!(
+                !is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    false,
+                ),
+                "{name} must require memory helpers"
+            );
+        }
+
+        for (name, consumer, mem_width) in [
+            (
+                "non-RAX low destination",
+                multiply(
+                    false,
+                    x86(X86Reg::R8),
+                    Some(rdx),
+                    rax,
+                    SrcOperand::Reg(temporary),
+                    OpWidth::W64,
+                    FlagUpdate::All,
+                ),
+                MemWidth::B8,
+            ),
+            (
+                "non-RDX high destination",
+                multiply(
+                    false,
+                    rax,
+                    Some(x86(X86Reg::Rcx)),
+                    rax,
+                    SrcOperand::Reg(temporary),
+                    OpWidth::W64,
+                    FlagUpdate::All,
+                ),
+                MemWidth::B8,
+            ),
+            (
+                "non-RAX multiplicand",
+                multiply(
+                    true,
+                    rax,
+                    Some(rdx),
+                    x86(X86Reg::Rcx),
+                    SrcOperand::Reg(temporary),
+                    OpWidth::W64,
+                    FlagUpdate::All,
+                ),
+                MemWidth::B8,
+            ),
+            (
+                "non-memory source",
+                multiply(
+                    false,
+                    rax,
+                    Some(rdx),
+                    rax,
+                    SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    OpWidth::W64,
+                    FlagUpdate::All,
+                ),
+                MemWidth::B8,
+            ),
+            (
+                "width mismatch",
+                exact(true, OpWidth::W32, FlagUpdate::All),
+                MemWidth::B8,
+            ),
+            (
+                "partial flags",
+                exact(
+                    false,
+                    OpWidth::W64,
+                    FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF)),
+                ),
+                MemWidth::B8,
+            ),
+        ] {
+            let function = build(consumer, mem_width, SignExtend::Zero, false, None);
+            assert!(
+                !is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    true,
+                ),
+                "{name}: {function:?}"
+            );
+        }
+
+        for (name, sign, extra_use, hint) in [
+            ("signed load", SignExtend::Sign, false, None),
+            ("extra temporary use", SignExtend::Zero, true, None),
+            (
+                "unexpected hint",
+                SignExtend::Zero,
+                false,
+                Some(X86OpHint::Mulx),
+            ),
+        ] {
+            let function = build(
+                exact(true, OpWidth::W64, FlagUpdate::All),
+                MemWidth::B8,
+                sign,
+                extra_use,
+                hint,
+            );
             assert!(
                 !is_native_clobber_safe_excluding(
                     &function,

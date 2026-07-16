@@ -15379,6 +15379,89 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
+    /// Fuse the x86 lifter's exact implicit widening `MUL/IMUL r/m` pair. The
+    /// helper stages the source in a 16-byte aligned caller frame and restores
+    /// the original architectural `RAX:RDX` before the native group-3
+    /// instruction commits either result register.
+    #[cfg(feature = "smir-jit")]
+    fn try_lower_jit_mem_widening_mul_source(
+        &mut self,
+        block: &SmirBlock,
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(consumed) = super::runtime::x86_jit_mem_widening_mul_source_sequence_len(
+            block,
+            idx,
+            true,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
+            return Ok(None);
+        };
+
+        let load = &block.ops[idx];
+        let (addr, mem_width) = match &load.kind {
+            OpKind::Load {
+                addr,
+                width,
+                sign: SignExtend::Zero,
+                ..
+            } => (addr, *width),
+            _ => unreachable!("validated widening multiply starts with Load"),
+        };
+        let width = mem_width
+            .to_op_width()
+            .expect("validated widening multiply has an integer width");
+        let (digit, flags) = match &block.ops[idx + 1].kind {
+            OpKind::MulU { flags, .. } => (4, *flags),
+            OpKind::MulS { flags, .. } => (5, *flags),
+            _ => unreachable!("validated widening multiply consumer"),
+        };
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
+        }
+        self.emit_jit_mem_op(
+            load.guest_pc,
+            true,
+            None,
+            Some(16),
+            None,
+            None,
+            None,
+            addr,
+            mem_width,
+            SignExtend::Zero,
+            16,
+        )?;
+
+        let preserve_flags = flags == FlagUpdate::None;
+        if preserve_flags {
+            self.code.emit_u8(0x9C); // pushfq
+        }
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_group3_m_disp(
+                digit,
+                PhysReg::Rsp,
+                if preserve_flags { 8 } else { 0 },
+                DispSize::Auto,
+                width,
+            );
+        }
+        if preserve_flags {
+            self.code.emit_u8(0x9D); // popfq
+        }
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+        Ok(Some(consumed))
+    }
+
     /// Fuse the x86 lifter's exact non-locked immediate memory BTS/BTR/BTC
     /// sequence. The original and updated operands remain in caller-owned
     /// stack words across the MMU helpers. Speculative native modification is
@@ -17255,6 +17338,18 @@ impl X86_64Lowerer {
                         validate_idx += consumed;
                         continue;
                     }
+                    if let Some(consumed) =
+                        super::runtime::x86_jit_mem_widening_mul_source_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += consumed;
+                        continue;
+                    }
                     if let Some(consumed) = super::runtime::x86_jit_mem_bit_test_source_sequence_len(
                         block,
                         validate_idx,
@@ -17410,6 +17505,16 @@ impl X86_64Lowerer {
                 }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_mem_alu_source(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_mem_widening_mul_source(
                     block,
                     idx,
                     &virtual_definitions,
@@ -22657,6 +22762,84 @@ mod tests {
                 bytes == [0x9C, 0x66, 0x44, 0x69, 0x44, 0x24, 0x08, 0x34, 0x12, 0x9D]
             }),
             "NF immediate IMUL must preserve flags around the shifted staged source: {lowered:02X?}"
+        );
+    }
+
+    #[cfg(feature = "smir-jit")]
+    #[test]
+    fn lower_helper_backed_widening_multiply_uses_staged_memory_source() {
+        for (name, instruction, expected) in [
+            ("MUL byte", &[0xF6, 0x23, 0xF4][..], &[0xF6, 0x24, 0x24][..]),
+            (
+                "IMUL word",
+                &[0x66, 0xF7, 0x2B, 0xF4][..],
+                &[0x66, 0xF7, 0x2C, 0x24][..],
+            ),
+            (
+                "MUL dword",
+                &[0xF7, 0x23, 0xF4][..],
+                &[0xF7, 0x24, 0x24][..],
+            ),
+            (
+                "IMUL qword",
+                &[0x48, 0xF7, 0x2B, 0xF4][..],
+                &[0x48, 0xF7, 0x2C, 0x24][..],
+            ),
+        ] {
+            let (lowered, entry) = lower_rex2_block_with_mem_helpers(instruction, true);
+            assert!(entry < lowered.len(), "{name}");
+            assert!(
+                lowered
+                    .windows(expected.len())
+                    .any(|bytes| bytes == expected),
+                "helper-backed {name} must consume the staged stack source: {lowered:02X?}"
+            );
+        }
+
+        let temporary = VReg::Virtual(crate::smir::ir::types::VirtualId(92));
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let mut builder = FunctionBuilder::new(FunctionId(92), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: temporary,
+                addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rbx))),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::MulS {
+                dst_lo: rax,
+                dst_hi: Some(rdx),
+                src1: rax,
+                src2: SrcOperand::Reg(temporary),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_mem_helpers(true);
+        lowerer
+            .lower_function(&builder.finish())
+            .expect("lower flag-preserving helper-backed widening IMUL");
+        let lowered = lowerer
+            .finalize()
+            .expect("finalize flag-preserving widening IMUL");
+        assert!(
+            lowered
+                .windows(7)
+                .any(|bytes| bytes == [0x9C, 0x48, 0xF7, 0x6C, 0x24, 0x08, 0x9D]),
+            "NF widening IMUL must preserve flags around the shifted staged source: {lowered:02X?}"
+        );
+        assert!(
+            lowered
+                .windows(5)
+                .any(|bytes| bytes == [0x48, 0x89, 0x44, 0x24, 0x10]),
+            "load helper must stage the source above its saved flags and RAX: {lowered:02X?}"
         );
     }
 
