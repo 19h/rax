@@ -194,6 +194,35 @@ pub(crate) fn x86_state_backed_gpr_neg_valid(op: &SmirOp) -> bool {
     )
 }
 
+pub(crate) fn x86_state_backed_gpr_inc_dec_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::Inc { dst, src, .. } | OpKind::Dec { dst, src, .. }
+            if x86_state_backed_arch_gpr(dst) || x86_state_backed_arch_gpr(src)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_inc_dec_valid(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::Inc {
+            dst: VReg::Arch(ArchReg::X86(dst)),
+            src: VReg::Arch(ArchReg::X86(src)),
+            width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+            flags: FlagUpdate::None | FlagUpdate::All,
+        }
+        | OpKind::Dec {
+            dst: VReg::Arch(ArchReg::X86(dst)),
+            src: VReg::Arch(ArchReg::X86(src)),
+            width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+            flags: FlagUpdate::None | FlagUpdate::All,
+        } if x86_state_backed_gpr_inc_dec_candidate(op)
+            && op.x86_hint.is_none()
+            && dst.gpr_index().is_some()
+            && src.gpr_index().is_some()
+    )
+}
+
 pub(crate) fn x86_state_backed_gpr_bswap_candidate(op: &SmirOp) -> bool {
     matches!(
         &op.kind,
@@ -4141,6 +4170,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_setcc_valid(op)
             || x86_state_backed_gpr_not_valid(op)
             || x86_state_backed_gpr_neg_valid(op)
+            || x86_state_backed_gpr_inc_dec_valid(op)
             || x86_state_backed_gpr_bswap_valid(op)
             || x86_state_backed_gpr_xchg_valid(op)
         {
@@ -5702,6 +5732,15 @@ impl X86_64Lowerer {
                 width,
                 flags,
             } => {
+                if x86_state_backed_gpr_inc_dec_candidate(op) {
+                    if !x86_state_backed_gpr_inc_dec_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Inc".to_string(),
+                            operand: format!("invalid x86 GPR increment {width:?} {flags:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_inc_dec(*dst, *src, *width, *flags, false);
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
                 let preserve_flags = !flags.updates_any();
@@ -5730,6 +5769,15 @@ impl X86_64Lowerer {
                 width,
                 flags,
             } => {
+                if x86_state_backed_gpr_inc_dec_candidate(op) {
+                    if !x86_state_backed_gpr_inc_dec_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Dec".to_string(),
+                            operand: format!("invalid x86 GPR decrement {width:?} {flags:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_inc_dec(*dst, *src, *width, *flags, true);
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
                 let preserve_flags = !flags.updates_any();
@@ -14511,6 +14559,67 @@ impl X86_64Lowerer {
         {
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_neg(PhysReg::Rdx, width);
+        }
+        if !flags.updates_any() {
+            self.code.emit_u8(0x9D); // popfq
+        }
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
+        if dst_idx == 5 {
+            let commit_width = if matches!(width, OpWidth::W8 | OpWidth::W16) {
+                width
+            } else {
+                OpWidth::W64
+            };
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_inc_dec(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        flags: FlagUpdate,
+        decrement: bool,
+    ) -> Result<(), LowerError> {
+        let op_name = if decrement { "Dec" } else { "Inc" };
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {op_name}"),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let src_idx = Self::x86_gpr_index(src).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {op_name}"),
+            operand: "source is not an architectural x86 GPR".to_string(),
+        })?;
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rax, i32::from(src_idx) * 8, width);
+        }
+        if !flags.updates_any() {
+            self.code.emit_u8(0x9C); // pushfq: APX NF preserves every status flag
+        }
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            if decrement {
+                emitter.emit_dec(PhysReg::Rdx, width);
+            } else {
+                emitter.emit_inc(PhysReg::Rdx, width);
+            }
         }
         if !flags.updates_any() {
             self.code.emit_u8(0x9D); // popfq
@@ -27313,6 +27422,247 @@ mod tests {
     }
 
     #[test]
+    fn lower_state_backed_gpr_inc_dec_emits_flag_contracts_and_rejects_malformed_shapes() {
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let flagless_inc = lower_single_op(OpKind::Inc {
+            dst: x86(X86Reg::Rbp),
+            src: x86(X86Reg::R16),
+            width: OpWidth::W8,
+            flags: FlagUpdate::None,
+        });
+        assert!(
+            flagless_inc.contains(&0x9C) && flagless_inc.contains(&0x9D),
+            "APX NF Inc must preserve RFLAGS: {flagless_inc:02X?}"
+        );
+        assert!(
+            flagless_inc.windows(2).any(|bytes| bytes == [0xFE, 0xC2]),
+            "byte Inc must increment DL: {flagless_inc:02X?}"
+        );
+        assert!(
+            flagless_inc
+                .windows(3)
+                .any(|bytes| bytes == [0x88, 0x55, 0x00]),
+            "byte Inc must partially synchronize guest RBP: {flagless_inc:02X?}"
+        );
+
+        let flagful_dec = lower_single_op(OpKind::Dec {
+            dst: x86(X86Reg::R16),
+            src: x86(X86Reg::Rsp),
+            width: OpWidth::W32,
+            flags: FlagUpdate::All,
+        });
+        assert!(
+            !flagful_dec.contains(&0x9C) && !flagful_dec.contains(&0x9D),
+            "flag-setting Dec must leave native flags live: {flagful_dec:02X?}"
+        );
+        assert!(
+            flagful_dec.windows(2).any(|bytes| bytes == [0xFF, 0xCA]),
+            "dword Dec must decrement EDX: {flagful_dec:02X?}"
+        );
+        assert!(
+            flagful_dec
+                .windows(7)
+                .any(|bytes| bytes == [0x48, 0x89, 0x90, 0x80, 0x00, 0x00, 0x00]),
+            "dword Dec must fully commit GuestRegs.gpr[16]: {flagful_dec:02X?}"
+        );
+
+        for malformed in [
+            OpKind::Inc {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W128,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Dec {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W64,
+                flags: FlagUpdate::Specific(FlagSet::CF),
+            },
+            OpKind::Inc {
+                dst: x86(X86Reg::R16),
+                src: VReg::Virtual(crate::smir::ir::types::VirtualId(0)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(malformed),
+                    LowerError::InvalidOperand { .. }
+                ),
+                "malformed state-backed Inc/Dec must fail lowering"
+            );
+        }
+
+        let hinted = OpKind::Dec {
+            dst: x86(X86Reg::R16),
+            src: x86(X86Reg::Rax),
+            width: OpWidth::W64,
+            flags: FlagUpdate::All,
+        };
+        assert!(matches!(
+            lower_single_hinted_op_err(hinted, X86OpHint::Mulx),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_gpr_inc_dec_preserve_width_and_flag_contracts() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        const STATUS_MASK: u64 = 0x8D5;
+
+        struct Case {
+            name: &'static str,
+            decrement: bool,
+            dst: X86Reg,
+            src: X86Reg,
+            width: OpWidth,
+            flags: FlagUpdate,
+        }
+
+        let cases = [
+            Case {
+                name: "INC BPL,R16B partial flag-setting destination",
+                decrement: false,
+                dst: X86Reg::Rbp,
+                src: X86Reg::R16,
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+            },
+            Case {
+                name: "NF DEC R16W,SP partial destination",
+                decrement: true,
+                dst: X86Reg::R16,
+                src: X86Reg::Rsp,
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            Case {
+                name: "DEC RSP in-place full destination",
+                decrement: true,
+                dst: X86Reg::Rsp,
+                src: X86Reg::Rsp,
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+            Case {
+                name: "INC R31D,EBP zero-extending destination",
+                decrement: false,
+                dst: X86Reg::R31,
+                src: X86Reg::Rbp,
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+            Case {
+                name: "NF INC R16D in-place zero-extending destination",
+                decrement: false,
+                dst: X86Reg::R16,
+                src: X86Reg::R16,
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        ];
+
+        let inc_dec_status = |source: u64, width: OpWidth, decrement: bool, incoming: u64| {
+            let mask = width.mask();
+            let source = source & mask;
+            let result = if decrement {
+                source.wrapping_sub(1) & mask
+            } else {
+                source.wrapping_add(1) & mask
+            };
+            let sign_bit = width.sign_bit();
+            (incoming & 1)
+                | (u64::from((result as u8).count_ones().is_multiple_of(2)) << 2)
+                | (u64::from(if decrement {
+                    source & 0xF == 0
+                } else {
+                    source & 0xF == 0xF
+                }) << 4)
+                | (u64::from(result == 0) << 6)
+                | (u64::from(result & sign_bit != 0) << 7)
+                | (u64::from(if decrement {
+                    source == sign_bit
+                } else {
+                    source == sign_bit - 1
+                }) << 11)
+        };
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        for case in cases {
+            let kind = if case.decrement {
+                OpKind::Dec {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    width: case.width,
+                    flags: case.flags,
+                }
+            } else {
+                OpKind::Inc {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    width: case.width,
+                    flags: case.flags,
+                }
+            };
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            for (index, value) in regs.gpr.iter_mut().enumerate() {
+                *value = 0xA1A2_0000_0000_8000u64
+                    .wrapping_add((index as u64).wrapping_mul(0x0101_1111_2222_0101));
+            }
+            regs.gpr[4] = 0x2233_4455_6677_5678;
+            regs.gpr[5] = 0x3344_5566_8765_9ABD;
+            regs.gpr[16] = 0xAABB_CCDD_EEFF_778A;
+            regs.gpr[31] = 0xFFEE_DDCC_BBAA_1357;
+            regs.rflags = STATUS_MASK;
+            let mut expected = regs;
+            let dst_idx = case.dst.gpr_index().unwrap() as usize;
+            let src_idx = case.src.gpr_index().unwrap() as usize;
+            let source = regs.gpr[src_idx];
+            let result = if case.decrement {
+                source.wrapping_sub(1) & case.width.mask()
+            } else {
+                source.wrapping_add(1) & case.width.mask()
+            };
+            expected.gpr[dst_idx] = match case.width {
+                OpWidth::W8 | OpWidth::W16 => (regs.gpr[dst_idx] & !case.width.mask()) | result,
+                OpWidth::W32 | OpWidth::W64 => result,
+                OpWidth::W128 => unreachable!(),
+            };
+            if case.flags.updates_any() {
+                expected.rflags = (expected.rflags & !STATUS_MASK)
+                    | inc_dec_status(source, case.width, case.decrement, expected.rflags);
+            }
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            assert_eq!(
+                regs.rflags & STATUS_MASK,
+                expected.rflags & STATUS_MASK,
+                "{} status flags",
+                case.name
+            );
+        }
+    }
+
+    #[test]
     fn lower_state_backed_gpr_not_emits_slot_commits_and_rejects_malformed_shapes() {
         let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
         let byte = lower_single_op(OpKind::Not {
@@ -28402,41 +28752,6 @@ mod tests {
                     src_true: rax,
                     src_false: rbp,
                     width: OpWidth::W64,
-                },
-            ),
-        ] {
-            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
-            builder.push_op(0x1000, kind);
-            builder.set_terminator(Terminator::Return { values: vec![] });
-            let func = builder.finish();
-            let mut lowerer = X86_64Lowerer::new();
-            assert!(lowerer.lower_function(&func).is_err(), "{name}");
-        }
-    }
-
-    #[test]
-    fn lower_nf_inc_dec_reject_native_stack_operands() {
-        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
-        let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
-        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
-
-        for (name, kind) in [
-            (
-                "inc rbp",
-                OpKind::Inc {
-                    dst: rbp,
-                    src: rbp,
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ),
-            (
-                "dec rsp source",
-                OpKind::Dec {
-                    dst: rax,
-                    src: rsp,
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
                 },
             ),
         ] {
