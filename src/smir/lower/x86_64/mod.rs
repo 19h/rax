@@ -15425,6 +15425,152 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
+    /// Fuse `Load virtual; ZeroExtend/SignExtend architectural_dst,virtual`
+    /// into a fault-precise MMU helper load followed by a native extension from
+    /// caller-owned stack storage. Identity-mapped destinations use their host
+    /// register directly. Guest RSP/RBP and APX EGPR destinations commit only
+    /// after a successful helper return through their canonical state slots.
+    #[cfg(feature = "smir-jit")]
+    fn try_lower_jit_mem_extend(
+        &mut self,
+        block: &SmirBlock,
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(consumed) = super::runtime::x86_jit_mem_extend_source_sequence_len(
+            block,
+            idx,
+            true,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
+            return Ok(None);
+        };
+
+        let load = &block.ops[idx];
+        let (addr, mem_width, sign) = match &load.kind {
+            OpKind::Load {
+                addr, width, sign, ..
+            } => (addr, *width, *sign),
+            _ => unreachable!("validated memory extension starts with Load"),
+        };
+        let (dst, from_width, to_width, signed) = match &block.ops[idx + 1].kind {
+            OpKind::ZeroExtend {
+                dst,
+                from_width,
+                to_width,
+                ..
+            } => (*dst, *from_width, *to_width, false),
+            OpKind::SignExtend {
+                dst,
+                from_width,
+                to_width,
+                ..
+            } => (*dst, *from_width, *to_width, true),
+            _ => unreachable!("validated memory-extension consumer"),
+        };
+        let dst_index = self.jit_arch_enc(dst)?;
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
+        }
+        self.emit_jit_mem_op(
+            load.guest_pc,
+            true,
+            None,
+            Some(16),
+            None,
+            None,
+            None,
+            addr,
+            mem_width,
+            sign,
+            16,
+        )?;
+
+        if dst_index <= 15 && !matches!(dst_index, 4 | 5) {
+            let dst_reg = self.get_dst_reg(dst)?;
+            let mut emitter = X86Emitter::new(&mut self.code);
+            if signed {
+                emitter.emit_movsx_rm_disp(
+                    dst_reg,
+                    PhysReg::Rsp,
+                    0,
+                    DispSize::Auto,
+                    from_width,
+                    to_width,
+                );
+            } else {
+                emitter.emit_movzx_rm_disp(
+                    dst_reg,
+                    PhysReg::Rsp,
+                    0,
+                    DispSize::Auto,
+                    from_width,
+                    to_width,
+                );
+            }
+        } else {
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_push(PhysReg::Rax);
+                emitter.emit_push(PhysReg::Rdx);
+            }
+            self.emit_load_state_ptr_rax();
+            self.emit_struct_mov(
+                PhysReg::Rax,
+                PhysReg::Rdx.encoding(),
+                i32::from(dst_index) * 8,
+                false,
+            );
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                if signed {
+                    emitter.emit_movsx_rm_disp(
+                        PhysReg::Rdx,
+                        PhysReg::Rsp,
+                        16,
+                        DispSize::Auto,
+                        from_width,
+                        to_width,
+                    );
+                } else {
+                    emitter.emit_movzx_rm_disp(
+                        PhysReg::Rdx,
+                        PhysReg::Rsp,
+                        16,
+                        DispSize::Auto,
+                        from_width,
+                        to_width,
+                    );
+                }
+            }
+            self.emit_store_gpr_slot_from_reg(dst_index, PhysReg::Rdx, to_width)?;
+            if dst_index == 5 {
+                let commit_width = if to_width == OpWidth::W16 {
+                    OpWidth::W16
+                } else {
+                    OpWidth::W64
+                };
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
+            }
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_pop(PhysReg::Rdx);
+                emitter.emit_pop(PhysReg::Rax);
+            }
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+        Ok(Some(consumed))
+    }
+
     /// Fuse the x86 lifter's exact implicit widening `MUL/IMUL r/m` pair. The
     /// helper stages the source in a 16-byte aligned caller frame and restores
     /// the original architectural `RAX:RDX` before the native group-3
@@ -18010,6 +18156,16 @@ impl X86_64Lowerer {
                         validate_idx += consumed;
                         continue;
                     }
+                    if let Some(consumed) = super::runtime::x86_jit_mem_extend_source_sequence_len(
+                        block,
+                        validate_idx,
+                        true,
+                        &virtual_definitions,
+                        &virtual_uses,
+                    ) {
+                        validate_idx += consumed;
+                        continue;
+                    }
                     if let Some(consumed) =
                         super::runtime::x86_jit_mem_widening_mul_source_sequence_len(
                             block,
@@ -18244,6 +18400,13 @@ impl X86_64Lowerer {
                     &virtual_definitions,
                     &virtual_uses,
                 )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) =
+                    self.try_lower_jit_mem_extend(block, idx, &virtual_definitions, &virtual_uses)?
+                {
                     idx += consumed;
                     continue;
                 }
@@ -23523,6 +23686,110 @@ mod tests {
                 bytes == [0x9C, 0x66, 0x44, 0x69, 0x44, 0x24, 0x08, 0x34, 0x12, 0x9D]
             }),
             "NF immediate IMUL must preserve flags around the shifted staged source: {lowered:02X?}"
+        );
+    }
+
+    #[cfg(feature = "smir-jit")]
+    #[test]
+    fn lower_helper_backed_memory_extensions_use_staged_and_state_destinations() {
+        for (name, instruction, expected) in [
+            (
+                "MOVZX EAX,byte [RBX]",
+                &[0x0F, 0xB6, 0x03, 0xF4][..],
+                &[0x0F, 0xB6, 0x04, 0x24][..],
+            ),
+            (
+                "MOVZX R9,word [RBX]",
+                &[0x4C, 0x0F, 0xB7, 0x0B, 0xF4][..],
+                &[0x4C, 0x0F, 0xB7, 0x0C, 0x24][..],
+            ),
+            (
+                "MOVSX AX,byte [RBX]",
+                &[0x66, 0x0F, 0xBE, 0x03, 0xF4][..],
+                &[0x66, 0x0F, 0xBE, 0x04, 0x24][..],
+            ),
+            (
+                "MOVSX R10,word [RBX]",
+                &[0x4C, 0x0F, 0xBF, 0x13, 0xF4][..],
+                &[0x4C, 0x0F, 0xBF, 0x14, 0x24][..],
+            ),
+            (
+                "MOVSXD R12,dword [RBX]",
+                &[0x4C, 0x63, 0x23, 0xF4][..],
+                &[0x4C, 0x63, 0x24, 0x24][..],
+            ),
+        ] {
+            let (lowered, entry) = lower_rex2_block_with_mem_helpers(instruction, true);
+            assert!(entry < lowered.len(), "{name}");
+            assert!(
+                lowered
+                    .windows(expected.len())
+                    .any(|bytes| bytes == expected),
+                "{name} must extend the helper-staged stack source: {lowered:02X?}"
+            );
+            assert!(
+                lowered
+                    .windows(5)
+                    .any(|bytes| bytes == [0x48, 0x89, 0x44, 0x24, 0x10]),
+                "{name} helper must stage above saved flags and RAX: {lowered:02X?}"
+            );
+        }
+
+        let (rsp, _) = lower_rex2_block_with_mem_helpers(&[0x66, 0x0F, 0xB6, 0x23, 0xF4], true);
+        assert!(
+            rsp.windows(6)
+                .any(|bytes| bytes == [0x66, 0x0F, 0xB6, 0x54, 0x24, 0x10]),
+            "MOVZX SP must extend into a state-commit scratch: {rsp:02X?}"
+        );
+        assert!(
+            rsp.windows(4)
+                .any(|bytes| bytes == [0x66, 0x89, 0x50, 0x20]),
+            "MOVZX SP must partially commit GuestRegs.gpr[4]: {rsp:02X?}"
+        );
+
+        let (rbp, _) = lower_rex2_block_with_mem_helpers(&[0x0F, 0xBF, 0x2B, 0xF4], true);
+        assert!(
+            rbp.windows(4)
+                .any(|bytes| bytes == [0x48, 0x89, 0x50, 0x28]),
+            "MOVSX EBP must commit GuestRegs.gpr[5]: {rbp:02X?}"
+        );
+        assert!(
+            rbp.windows(4)
+                .any(|bytes| bytes == [0x48, 0x89, 0x55, 0x00]),
+            "MOVSX EBP must synchronize the prologue's saved guest RBP: {rbp:02X?}"
+        );
+
+        let temporary = VReg::Virtual(crate::smir::ir::types::VirtualId(93));
+        let mut builder = FunctionBuilder::new(FunctionId(93), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: temporary,
+                addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rbx))),
+                width: MemWidth::B2,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::ZeroExtend {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::R16)),
+                src: temporary,
+                from_width: OpWidth::W16,
+                to_width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_mem_helpers(true);
+        lowerer
+            .lower_function(&builder.finish())
+            .expect("lower helper-backed R16 MOVZX");
+        let r16 = lowerer.finalize().expect("finalize R16 MOVZX");
+        assert!(
+            r16.windows(7)
+                .any(|bytes| bytes == [0x48, 0x89, 0x90, 0x80, 0x00, 0x00, 0x00]),
+            "MOVZX R16 must commit canonical GuestRegs.gpr[16]: {r16:02X?}"
         );
     }
 

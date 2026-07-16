@@ -3421,6 +3421,280 @@ fn jit_guarded_signed_division_matches_all_widths_boundaries_and_faults() {
     assert_eq!(after.rip, LOAD_ADDR + 10, "restart at the IDIV instruction");
 }
 
+/// Memory-source MOVZX/MOVSX/MOVSXD pairs must remain in the native tier while
+/// preserving their destination-width write semantics. The helper snapshots
+/// the effective address before an aliased destination commits, and a helper
+/// fault restarts the current instruction without committing its extension.
+#[test]
+fn jit_memory_extensions_match_all_widths_addresses_and_faults() {
+    const DATA: u64 = 0x20_0000;
+    const FS_BASE: u64 = 0x30_0000;
+    const INITIAL_RFLAGS: u64 = 0xCD7;
+
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        apx: bool,
+        source_address: u64,
+        source: u64,
+        fs_base: u64,
+        rax: u64,
+        rcx: u64,
+        rbx: u64,
+        rsp: u64,
+        rbp: u64,
+        destination_index: usize,
+        expected_destination: u64,
+    }
+
+    let cases = [
+        Case {
+            name: "MOVZX AX,byte [RBX] partial destination",
+            instruction: &[0x66, 0x0F, 0xB6, 0x03],
+            apx: false,
+            source_address: DATA,
+            source: 0xFE,
+            fs_base: 0,
+            rax: 0xA5A5_5A5A_1357_2468,
+            rcx: 0x8877_6655_4433_2211,
+            rbx: DATA,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            destination_index: 0,
+            expected_destination: 0xA5A5_5A5A_1357_00FE,
+        },
+        Case {
+            name: "MOVSX ECX,byte [RBX+3]",
+            instruction: &[0x0F, 0xBE, 0x4B, 0x03],
+            apx: false,
+            source_address: DATA + 3,
+            source: 0x80,
+            fs_base: 0,
+            rax: 0xA5A5_5A5A_1357_2468,
+            rcx: 0x8877_6655_4433_2211,
+            rbx: DATA,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            destination_index: 1,
+            expected_destination: 0x0000_0000_FFFF_FF80,
+        },
+        Case {
+            name: "MOVZX R8,word [RBX+RCX*2+6]",
+            instruction: &[0x4C, 0x0F, 0xB7, 0x44, 0x4B, 0x06],
+            apx: false,
+            source_address: DATA + 10,
+            source: 0xFEDC,
+            fs_base: 0,
+            rax: 0xA5A5_5A5A_1357_2468,
+            rcx: 2,
+            rbx: DATA,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            destination_index: 8,
+            expected_destination: 0xFEDC,
+        },
+        Case {
+            name: "MOVSX R9,word FS:[RBX+2]",
+            instruction: &[0x64, 0x4C, 0x0F, 0xBF, 0x4B, 0x02],
+            apx: false,
+            source_address: FS_BASE + 0x102,
+            source: 0x8001,
+            fs_base: FS_BASE,
+            rax: 0xA5A5_5A5A_1357_2468,
+            rcx: 0x8877_6655_4433_2211,
+            rbx: 0x100,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            destination_index: 9,
+            expected_destination: 0xFFFF_FFFF_FFFF_8001,
+        },
+        Case {
+            name: "MOVSXD R10,dword [RAX]",
+            instruction: &[0x4C, 0x63, 0x10],
+            apx: false,
+            source_address: DATA,
+            source: 0x8000_0001,
+            fs_base: 0,
+            rax: DATA,
+            rcx: 0x8877_6655_4433_2211,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            destination_index: 10,
+            expected_destination: 0xFFFF_FFFF_8000_0001,
+        },
+        Case {
+            name: "MOVSX RAX,byte [RAX] address alias",
+            instruction: &[0x48, 0x0F, 0xBE, 0x00],
+            apx: false,
+            source_address: DATA,
+            source: 0x81,
+            fs_base: 0,
+            rax: DATA,
+            rcx: 0x8877_6655_4433_2211,
+            rbx: 0x0123_4567_89AB_CDEF,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            destination_index: 0,
+            expected_destination: 0xFFFF_FFFF_FFFF_FF81,
+        },
+        Case {
+            name: "MOVZX SP,byte [RBX] state-backed partial destination",
+            instruction: &[0x66, 0x0F, 0xB6, 0x23],
+            apx: false,
+            source_address: DATA,
+            source: 0x7F,
+            fs_base: 0,
+            rax: 0xA5A5_5A5A_1357_2468,
+            rcx: 0x8877_6655_4433_2211,
+            rbx: DATA,
+            rsp: 0x1234_5678_9ABC_DEF0,
+            rbp: 0x19_0000,
+            destination_index: 4,
+            expected_destination: 0x1234_5678_9ABC_007F,
+        },
+        Case {
+            name: "MOVSX EBP,word [RBX] state-backed dword destination",
+            instruction: &[0x0F, 0xBF, 0x2B],
+            apx: false,
+            source_address: DATA,
+            source: 0x8001,
+            fs_base: 0,
+            rax: 0xA5A5_5A5A_1357_2468,
+            rcx: 0x8877_6655_4433_2211,
+            rbx: DATA,
+            rsp: 0x18_0000,
+            rbp: 0x1234_5678_9ABC_DEF0,
+            destination_index: 5,
+            expected_destination: 0x0000_0000_FFFF_8001,
+        },
+        Case {
+            name: "REX2 MOVZX R16,byte [RBX] state-backed EGPR",
+            instruction: &[0xD5, 0xC8, 0xB6, 0x03],
+            apx: true,
+            source_address: DATA,
+            source: 0xA7,
+            fs_base: 0,
+            rax: 0xA5A5_5A5A_1357_2468,
+            rcx: 0x8877_6655_4433_2211,
+            rbx: DATA,
+            rsp: 0x18_0000,
+            rbp: 0x19_0000,
+            destination_index: 16,
+            expected_destination: 0xA7,
+        },
+    ];
+
+    let gprs = |regs: &Registers| {
+        [
+            regs.rax, regs.rcx, regs.rdx, regs.rbx, regs.rsp, regs.rbp, regs.rsi, regs.rdi,
+            regs.r8, regs.r9, regs.r10, regs.r11, regs.r12, regs.r13, regs.r14, regs.r15, regs.r16,
+            regs.r17, regs.r18, regs.r19, regs.r20, regs.r21, regs.r22, regs.r23, regs.r24,
+            regs.r25, regs.r26, regs.r27, regs.r28, regs.r29, regs.r30, regs.r31,
+        ]
+    };
+
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+        let setup = |vcpu: &mut X86_64Vcpu, memory: &Arc<GuestMemoryMmap>| {
+            memory
+                .write_obj(case.source, GuestAddress(case.source_address))
+                .unwrap();
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = case.rax;
+            regs.rcx = case.rcx;
+            regs.rdx = 0x1122_3344_5566_7788;
+            regs.rbx = case.rbx;
+            regs.rsp = case.rsp;
+            regs.rbp = case.rbp;
+            regs.rsi = 0x99AA_BBCC_DDEE_FF00;
+            regs.rdi = 0x0F1E_2D3C_4B5A_6978;
+            regs.r8 = 0x0102_0304_0506_0708;
+            regs.r9 = 0x1112_1314_1516_1718;
+            regs.r10 = 0x2122_2324_2526_2728;
+            regs.r16 = 0xA1A2_A3A4_A5A6_A7A8;
+            regs.r17 = 0xB1B2_B3B4_B5B6_B7B8;
+            regs.r31 = 0xF1F2_F3F4_F5F6_F7F8;
+            regs.rflags = INITIAL_RFLAGS;
+            vcpu.set_regs(&regs).unwrap();
+            if case.fs_base != 0 {
+                let mut sregs = vcpu.get_sregs().unwrap();
+                sregs.fs.base = case.fs_base;
+                vcpu.set_sregs(&sregs).unwrap();
+            }
+            vcpu.set_apx_enabled(case.apx);
+        };
+
+        let (mut interp, interp_mem) = make_vcpu_mem(&code);
+        setup(&mut interp, &interp_mem);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+        assert_eq!(
+            gprs(&expected)[case.destination_index],
+            case.expected_destination,
+            "{} reference destination",
+            case.name
+        );
+
+        let (mut jit, jit_mem) = make_vcpu_mem(&code);
+        setup(&mut jit, &jit_mem);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the helper-backed native tier:\n{}",
+            case.name,
+            jit.jit_dump_region(LOAD_ADDR)
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(gprs(&actual), gprs(&expected), "{} GPR file", case.name);
+        assert_eq!(actual.rflags, expected.rflags, "{} RFLAGS", case.name);
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+        assert_eq!(
+            jit_mem
+                .read_obj::<u64>(GuestAddress(case.source_address))
+                .unwrap(),
+            case.source,
+            "{} source memory",
+            case.name
+        );
+    }
+
+    // A prior architectural write commits; the current extension and a later
+    // write do not commit when the helper cannot read the source page.
+    let fault_code = [
+        0xB8, 0x78, 0x56, 0x34, 0x12, // mov eax,0x12345678
+        0x48, 0x0F, 0xBE, 0x0B, // movsx rcx,byte [rbx]
+        0x41, 0xB8, 0x01, 0x00, 0x00, 0x00, // mov r8d,1 (must not execute)
+        0xF4,
+    ];
+    let (mut fault, _) = make_vcpu_mem(&fault_code);
+    let mut before = fault.get_regs().unwrap();
+    before.rax = u64::MAX;
+    before.rcx = 0x8877_6655_4433_2211;
+    before.rbx = MEM_SIZE + 0x1000;
+    before.r8 = 0x0F0E_0D0C_0B0A_0908;
+    before.rflags = INITIAL_RFLAGS;
+    fault.set_regs(&before).unwrap();
+    assert!(
+        fault
+            .jit_try_block()
+            .expect("faulting helper-backed MOVSX JIT"),
+        "memory MOVSX must compile before its precise helper fault"
+    );
+    let after = fault.get_regs().unwrap();
+    assert_eq!(after.rax, 0x1234_5678, "prior EAX write must commit");
+    assert_eq!(after.rcx, before.rcx, "faulting MOVSX must not commit");
+    assert_eq!(after.rbx, before.rbx, "address base must remain unchanged");
+    assert_eq!(after.r8, before.r8, "post-fault write must not execute");
+    assert_eq!(after.rflags, before.rflags, "MOVSX fault preserves RFLAGS");
+    assert_eq!(after.rip, LOAD_ADDR + 5, "fault restarts at MOVSX");
+}
+
 /// Register byte swaps are flag-neutral and must remain native for both the
 /// legacy in-place BSWAP encoding and APX MOVBE's two-register word form.
 #[test]
