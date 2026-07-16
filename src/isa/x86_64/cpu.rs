@@ -4209,7 +4209,9 @@ fn jit_classify_bail(
 ) -> String {
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
     use crate::smir::lower::runtime::{
-        is_x86_native_vector_op, x86_jit_vector_mem_shape_valid, x86_state_backed_stack_mov_valid,
+        is_x86_native_vector_op, x86_jit_push_candidate, x86_jit_push_sequence_len,
+        x86_jit_vector_mem_shape_valid, x86_state_backed_stack_alu_valid,
+        x86_state_backed_stack_mov_valid,
     };
     let is_sp_bp = |v: &VReg| {
         matches!(
@@ -4228,7 +4230,32 @@ fn jit_classify_bail(
             continue;
         }
         let n = b.ops.len();
-        for (i, op) in b.ops.iter().enumerate() {
+        let mut virtual_definitions = std::collections::HashMap::new();
+        let mut virtual_uses = std::collections::HashMap::new();
+        for op in &b.ops {
+            for reg in op.kind.dests() {
+                if matches!(reg, VReg::Virtual(_)) {
+                    *virtual_definitions.entry(reg).or_insert(0usize) += 1;
+                }
+            }
+            for reg in op.kind.source_vregs() {
+                if matches!(reg, VReg::Virtual(_)) {
+                    *virtual_uses.entry(reg).or_insert(0usize) += 1;
+                }
+            }
+        }
+        let mut i = 0;
+        while i < n {
+            if let Some(consumed) =
+                x86_jit_push_sequence_len(b, i, allow_mem, &virtual_definitions, &virtual_uses)
+            {
+                i += consumed;
+                continue;
+            }
+            if x86_jit_push_candidate(b, i) {
+                return "push-shape".to_string();
+            }
+            let op = &b.ops[i];
             // Mirror block_is_clobber_safe: a trailing TestCondition feeding the
             // block's CondBranch is folded to a direct Jcc (exempt), not a bail.
             if i + 1 == n {
@@ -4236,6 +4263,7 @@ fn jit_classify_bail(
                     (&b.terminator, &op.kind)
                 {
                     if dst == cond {
+                        i += 1;
                         continue;
                     }
                 }
@@ -4245,6 +4273,8 @@ fn jit_classify_bail(
                     || x86_jit_vector_mem_shape_valid(&op.kind));
             let vector_ok = is_x86_native_vector_op(&op.kind);
             let stack_mov_ok = x86_state_backed_stack_mov_valid(&op.kind);
+            let stack_alu_ok = x86_state_backed_stack_alu_valid(&op.kind);
+            let stack_state_ok = stack_mov_ok || stack_alu_ok;
             if !op.is_jit_safe() && !mem_ok && !vector_ok {
                 return variant(&op.kind);
             }
@@ -4256,11 +4286,14 @@ fn jit_classify_bail(
             {
                 return format!("virtual-dst:{}", variant(&op.kind));
             }
-            if (!stack_mov_ok && op.kind.dests().iter().any(is_sp_bp))
-                || (!mem_ok && !stack_mov_ok && op.kind.source_vregs().iter().any(|v| is_sp_bp(v)))
+            if (!stack_state_ok && op.kind.dests().iter().any(is_sp_bp))
+                || (!mem_ok
+                    && !stack_state_ok
+                    && op.kind.source_vregs().iter().any(|v| is_sp_bp(v)))
             {
                 return format!("rsp/rbp:{}", variant(&op.kind));
             }
+            i += 1;
         }
     }
     "?".to_string()

@@ -424,6 +424,118 @@ fn jit_state_backed_rsp_rbp_moves_match_interpreter_without_memory_helpers() {
     assert_eq!(actual.rflags, expected.rflags, "MOV flags");
 }
 
+#[test]
+fn jit_state_backed_rsp_rbp_add_sub_match_interpreter_without_memory_helpers() {
+    // Exercise 8/16/32/64-bit arithmetic with stack registers in destination
+    // and source positions. The host stack/frame pointers must never be used as
+    // architectural inputs even though the generated arithmetic is native x86.
+    let code = [
+        0x40, 0x00, 0xC4, // add spl,al
+        0x66, 0x29, 0xD5, // sub bp,dx
+        0x44, 0x03, 0xC4, // add r8d,esp
+        0x4C, 0x29, 0xCD, // sub rbp,r9
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x20;
+        regs.rdx = 0x31;
+        regs.rsp = 0x1111_2222_3333_44F0;
+        regs.rbp = 0xAAAA_BBBB_CCCC_DD10;
+        regs.r8 = 0xFFFF_FFFF_0123_4567;
+        regs.r9 = 0x0102_0304_0506_0708;
+        regs.rflags = 0x2 | 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interp = make_vcpu_code(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+    let expected = interp.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    jit.set_jit_call(false);
+    jit.set_jit_mem(false);
+    assert!(
+        jit.jit_try_block()
+            .expect("state-backed stack arithmetic JIT"),
+        "register-only RSP/RBP ADD/SUB must enter the native tier"
+    );
+    run_interp(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_eq!(actual.rsp, expected.rsp, "ADD SPL,AL");
+    assert_eq!(actual.rbp, expected.rbp, "SUB BP,DX / SUB RBP,R9");
+    assert_eq!(actual.r8, expected.r8, "ADD R8D,ESP");
+    assert_eq!(actual.rflags, expected.rflags, "arithmetic status flags");
+}
+
+#[test]
+fn jit_helper_backed_push_pop_is_precise_and_uses_predecrement_rsp() {
+    // PUSH RSP; POP R8; PUSH RBP/RAX/imm8; POP R9/R10/R11;
+    // PUSH AX; POP BX; HLT.
+    let code = [
+        0x54, 0x41, 0x58, 0x55, 0x50, 0x6A, 0xFF, 0x41, 0x59, 0x41, 0x5A, 0x41, 0x5B, 0x66, 0x50,
+        0x66, 0x5B, 0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x0123_4567_89AB_CDEF;
+        regs.rbx = 0xFEDC_BA98_7654_3210;
+        regs.rbp = 0x8877_6655_4433_2211;
+        regs.rsp = 0x11_0000;
+        regs.rflags = 0x2 | 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interp = make_vcpu_code(&code);
+    setup(&mut interp);
+    run_interp(&mut interp);
+    let expected = interp.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    jit.set_jit_mem(true);
+    assert!(
+        jit.jit_try_block().expect("helper-backed PUSH/POP JIT"),
+        "ordinary and RSP-source PUSH/POP sequences must enter the native tier"
+    );
+    run_interp(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_eq!(actual.r8, 0x11_0000, "PUSH RSP uses pre-decrement value");
+    assert_eq!(actual.r9, expected.r9, "sign-extended PUSH imm8");
+    assert_eq!(actual.r10, expected.r10, "PUSH/POP RAX");
+    assert_eq!(actual.r11, expected.r11, "PUSH/POP RBP");
+    assert_eq!(actual.rbx, expected.rbx, "16-bit PUSH AX / POP BX");
+    assert_eq!(actual.rsp, expected.rsp, "balanced stack pointer");
+    assert_eq!(
+        actual.rflags, expected.rflags,
+        "stack operations preserve flags"
+    );
+
+    // A helper fault must occur before the state-backed SUB commits RSP.
+    let mut fault = make_vcpu_code(&[0x50, 0xB9, 0x01, 0x00, 0x00, 0x00, 0xF4]);
+    let mut before = fault.get_regs().unwrap();
+    before.rax = 0xA5A5_5A5A_1234_5678;
+    before.rcx = 0xDEAD_BEEF;
+    before.rsp = MEM_SIZE + 4;
+    before.rflags = 0x2 | 0x8D5;
+    fault.set_regs(&before).unwrap();
+    fault.set_jit_mem(true);
+    assert!(
+        fault.jit_try_block().expect("faulting PUSH JIT"),
+        "faulting PUSH must compile before taking the guest-memory fault"
+    );
+    let after = fault.get_regs().unwrap();
+    assert_eq!(after.rip, LOAD_ADDR, "restart at faulting PUSH");
+    assert_eq!(after.rsp, before.rsp, "fault must not commit RSP decrement");
+    assert_eq!(after.rax, before.rax, "PUSH source survives fault");
+    assert_eq!(after.rcx, before.rcx, "post-PUSH instruction must not run");
+    assert_eq!(after.rflags, before.rflags, "fault path flags");
+}
+
 /// A lift-through-call interpreter helper can semantically change guest RBP.
 /// The native frame must retain hardware RBP as its trusted base while keeping
 /// the prologue's saved guest value coherent for the final trampoline write-back.

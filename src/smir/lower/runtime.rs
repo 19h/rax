@@ -1364,13 +1364,14 @@ impl std::error::Error for ExecMemError {}
 /// Exemptions are virtual values that the lowerer proves it never
 /// materializes: a trailing `TestCondition` whose `dst` feeds the block's
 /// `CondBranch`, and (when MMU helpers are enabled) the single-use load
-/// temporary in an adjacent x86 memory-source CRC32 pair. The former folds to
-/// a direct `Jcc`; the latter folds to a helper-backed memory CRC operation.
+/// temporary in an adjacent x86 memory-source CRC32 pair or pre-decrement RSP
+/// snapshot in PUSH RSP. The former folds to a direct `Jcc`; the memory forms
+/// fold to exact helper-backed operations.
 ///
 /// Pure architectural-register blocks (counter/pointer loops, ALU chains,
 /// guest-conditional branches) pass — which is the bulk of hot code. Validated
-/// MOV forms involving guest RSP/RBP use their state-backed slots rather than
-/// the corresponding host stack/frame registers.
+/// Validated MOV/ADD/SUB forms involving guest RSP/RBP use their state-backed
+/// slots rather than the corresponding host stack/frame registers.
 pub fn is_native_clobber_safe(func: &crate::smir::ir::SmirFunction) -> bool {
     is_native_clobber_safe_excluding(func, &std::collections::HashMap::new(), false)
 }
@@ -5836,6 +5837,57 @@ pub(crate) fn x86_state_backed_stack_mov_valid(op: &crate::smir::ir::ops::OpKind
     )
 }
 
+pub(crate) fn x86_state_backed_stack_alu_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg};
+
+    let gpr_index = |reg: &VReg| match reg {
+        VReg::Arch(ArchReg::X86(x86)) => x86.gpr_index(),
+        _ => None,
+    };
+    let is_stack = |reg: &VReg| gpr_index(reg).is_some_and(|index| matches!(index, 4 | 5));
+    let valid = |dst: &VReg, src1: &VReg, src2: &SrcOperand, width: &OpWidth| {
+        matches!(
+            width,
+            OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+        ) && gpr_index(dst).is_some()
+            && gpr_index(src1).is_some()
+            && match src2 {
+                SrcOperand::Reg(src2) => gpr_index(src2).is_some(),
+                SrcOperand::Imm(value) => *width != OpWidth::W64 || i32::try_from(*value).is_ok(),
+                _ => false,
+            }
+            && (is_stack(dst)
+                || is_stack(src1)
+                || matches!(src2, SrcOperand::Reg(src2) if is_stack(src2)))
+    };
+
+    match op {
+        OpKind::Add {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        }
+        | OpKind::Sub {
+            dst,
+            src1,
+            src2,
+            width,
+            flags,
+        } => {
+            valid(dst, src1, src2, width)
+                && matches!(
+                    flags,
+                    crate::smir::ir::flags::FlagUpdate::None
+                        | crate::smir::ir::flags::FlagUpdate::All
+                )
+        }
+        _ => false,
+    }
+}
+
 fn x86_native_rdpid_gpr(reg: &crate::smir::ir::types::VReg) -> bool {
     use crate::smir::ir::types::{ArchReg, VReg};
 
@@ -6025,14 +6077,137 @@ fn x86_mem_crc32_pair_valid(
     virtual_definitions.get(&temporary) == Some(&1) && virtual_uses.get(&temporary) == Some(&1)
 }
 
+/// Validate the exact PUSH shapes emitted by the x86 lifter. Lowering performs
+/// the helper-backed store against `old_rsp - width` before committing RSP, so
+/// a fault restarts with the architectural stack pointer unchanged. PUSH RSP
+/// has an additional single-use virtual snapshot of the pre-decrement source.
+pub(crate) fn x86_jit_push_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{Address, ArchReg, MemWidth, OpWidth, SrcOperand, VReg, X86Reg};
+
+    if !allow_mem {
+        return None;
+    }
+    let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+    let (sub_index, store_index, snapshot) = match block.ops.get(index).map(|op| &op.kind) {
+        Some(OpKind::Mov {
+            dst: temporary @ VReg::Virtual(_),
+            src: SrcOperand::Reg(source),
+            width: OpWidth::W16 | OpWidth::W64,
+        }) if *source == rsp => (index + 1, index + 2, Some(*temporary)),
+        _ => (index, index + 1, None),
+    };
+    let sub = block.ops.get(sub_index)?;
+    let delta = match sub.kind {
+        OpKind::Sub {
+            dst,
+            src1,
+            src2: SrcOperand::Imm(delta @ (2 | 8)),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if dst == rsp && src1 == rsp => delta,
+        _ => return None,
+    };
+    let store = block.ops.get(store_index)?;
+    if sub.guest_pc != store.guest_pc
+        || snapshot.is_some_and(|_| block.ops[index].guest_pc != sub.guest_pc)
+    {
+        return None;
+    }
+    let source_valid = |source: VReg| {
+        matches!(source, VReg::Imm(_))
+            || matches!(source, VReg::Arch(ArchReg::X86(reg)) if reg.gpr_index().is_some())
+    };
+    let expected_width = if delta == 2 {
+        MemWidth::B2
+    } else {
+        MemWidth::B8
+    };
+    let store_source = match &store.kind {
+        OpKind::Store {
+            src,
+            addr: Address::Direct(base),
+            width,
+        } if *base == rsp && *width == expected_width => *src,
+        _ => return None,
+    };
+
+    match snapshot {
+        Some(temporary) => {
+            let expected_snapshot_width = if delta == 2 {
+                OpWidth::W16
+            } else {
+                OpWidth::W64
+            };
+            if store_source != temporary
+                || !matches!(block.ops[index].kind, OpKind::Mov { width, .. } if width == expected_snapshot_width)
+                || virtual_definitions.get(&temporary) != Some(&1)
+                || virtual_uses.get(&temporary) != Some(&1)
+            {
+                return None;
+            }
+            Some(3)
+        }
+        None => {
+            if store_source == rsp || !source_valid(store_source) {
+                return None;
+            }
+            Some(2)
+        }
+    }
+}
+
+pub(crate) fn x86_jit_push_candidate(block: &crate::smir::ir::SmirBlock, index: usize) -> bool {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{Address, ArchReg, MemWidth, OpWidth, SrcOperand, VReg, X86Reg};
+
+    let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+    let Some(sub) = block.ops.get(index) else {
+        return false;
+    };
+    let delta = match sub.kind {
+        OpKind::Sub {
+            dst,
+            src1,
+            src2: SrcOperand::Imm(delta @ (2 | 8)),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if dst == rsp && src1 == rsp => delta,
+        _ => return false,
+    };
+    matches!(
+        block.ops.get(index + 1),
+        Some(crate::smir::ir::ops::SmirOp {
+            guest_pc,
+            kind: OpKind::Store {
+                addr: Address::Direct(base),
+                width,
+                ..
+            },
+            ..
+        }) if *guest_pc == sub.guest_pc
+            && *base == rsp
+            && *width == if delta == 2 { MemWidth::B2 } else { MemWidth::B8 }
+    )
+}
+
 /// True if every op in `block` is safe to execute natively under the JIT:
 ///   (1) it is on the fail-safe register-only whitelist (`SmirOp::is_jit_safe`)
 ///       — so it touches no memory and is validated bit-exact vs KVM; and
 ///   (2) it writes only architectural registers (no virtual temp, which would
 ///       alias a guest GPR under the identity register map).
-/// A trailing `TestCondition` feeding the block's `CondBranch`, and the
-/// single-use virtual load in an adjacent helper-backed memory CRC32 pair, are
-/// exempt because the lowerer never materializes their destinations.
+/// A trailing `TestCondition` feeding the block's `CondBranch`, the single-use
+/// virtual load in an adjacent helper-backed memory CRC32 pair, and the exact
+/// pre-decrement RSP snapshot in PUSH RSP are exempt because the lowerer never
+/// materializes their destinations.
 fn block_is_clobber_safe(
     block: &crate::smir::ir::SmirBlock,
     allow_mem: bool,
@@ -6078,6 +6253,15 @@ fn block_is_clobber_safe(
 
     let mut i = 0;
     while i < n {
+        if let Some(consumed) =
+            x86_jit_push_sequence_len(block, i, allow_mem, &virtual_definitions, &virtual_uses)
+        {
+            i += consumed;
+            continue;
+        }
+        if x86_jit_push_candidate(block, i) {
+            return false;
+        }
         if x86_mem_crc32_pair_valid(block, i, allow_mem, &virtual_definitions, &virtual_uses) {
             i += 2;
             continue;
@@ -6115,6 +6299,8 @@ fn block_is_clobber_safe(
         );
         let vector_mem_ok = allow_mem && x86_jit_vector_mem_shape_valid(&op.kind);
         let stack_mov_ok = x86_state_backed_stack_mov_valid(&op.kind);
+        let stack_alu_ok = x86_state_backed_stack_alu_valid(&op.kind);
+        let stack_state_ok = stack_mov_ok || stack_alu_ok;
         let mem_ok = (allow_mem && matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. }))
             || cldemote_ok
             || alignment_ok
@@ -6260,19 +6446,19 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. Validated MOV reads/writes are state-backed. Other
-        // writes are not modeled and bail. A read is additionally valid as an operand of a
-        // mem-JIT Load/Store (an address base/index, or a stored value): the MMU
+        // (3) guest RSP/RBP. Validated MOV/ADD/SUB reads/writes are state-backed.
+        // Other writes are not modeled and bail. A read is additionally valid
+        // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the current guest
         // RSP/RBP — not the host RSP/RBP. CLDEMOTE is also safe because
         // its architecturally ignorable hint never materializes the address;
         // X86CheckAlignment snapshots live GPRs and computes from GuestRegs.
         // Any OTHER op reading RSP/RBP would use the host frame pointer / host
         // stack (wrong) → bail.
-        if !stack_mov_ok && op.kind.dests().iter().any(touches_sp_bp) {
+        if !stack_state_ok && op.kind.dests().iter().any(touches_sp_bp) {
             return false;
         }
-        if !mem_ok && !stack_mov_ok && op.kind.source_vregs().iter().any(touches_sp_bp) {
+        if !mem_ok && !stack_state_ok && op.kind.source_vregs().iter().any(touches_sp_bp) {
             return false;
         }
         i += 1;
@@ -18139,6 +18325,180 @@ mod jit_gate_tests {
             assert!(op.is_jit_safe(), "{kind:?} remains class-whitelisted");
             assert!(!x86_gate(op), "non-x86 fence {kind:?} must deopt");
         }
+    }
+
+    #[test]
+    fn x86_stack_arithmetic_gate_admits_only_exact_state_backed_shapes() {
+        for op in [
+            OpKind::Add {
+                dst: x86(X86Reg::Rsp),
+                src1: x86(X86Reg::Rsp),
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Sub {
+                dst: x86(X86Reg::R16),
+                src1: x86(X86Reg::Rbp),
+                src2: SrcOperand::Reg(x86(X86Reg::R31)),
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Add {
+                dst: x86(X86Reg::Rax),
+                src1: x86(X86Reg::Rcx),
+                src2: SrcOperand::Reg(x86(X86Reg::Rsp)),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+        ] {
+            assert!(x86_state_backed_stack_alu_valid(&op));
+            assert!(x86_gate(op), "validated stack arithmetic must enter JIT");
+        }
+
+        for malformed in [
+            OpKind::Add {
+                dst: x86(X86Reg::Rsp),
+                src1: VReg::Virtual(VirtualId(1)),
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Sub {
+                dst: x86(X86Reg::Rsp),
+                src1: x86(X86Reg::Rsp),
+                src2: SrcOperand::Imm64(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Add {
+                dst: x86(X86Reg::Rsp),
+                src1: x86(X86Reg::Rsp),
+                src2: SrcOperand::Imm(i64::from(i32::MAX) + 1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Add {
+                dst: x86(X86Reg::Rax),
+                src1: x86(X86Reg::Rcx),
+                src2: SrcOperand::Reg(x86(X86Reg::Rdx)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Sub {
+                dst: x86(X86Reg::Rbp),
+                src1: x86(X86Reg::Rbp),
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W128,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Add {
+                dst: x86(X86Reg::Rsp),
+                src1: x86(X86Reg::Rsp),
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
+            },
+        ] {
+            assert!(!x86_state_backed_stack_alu_valid(&malformed));
+        }
+    }
+
+    #[test]
+    fn x86_push_gate_requires_fault_precise_helper_fusion_and_exact_rsp_snapshot() {
+        let rsp = x86(X86Reg::Rsp);
+        let mut ordinary = FunctionBuilder::new(FunctionId(0), 0x1000);
+        ordinary.push_op(
+            0x1000,
+            OpKind::Sub {
+                dst: rsp,
+                src1: rsp,
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        ordinary.push_op(
+            0x1000,
+            OpKind::Store {
+                src: x86(X86Reg::Rax),
+                addr: Address::Direct(rsp),
+                width: MemWidth::B8,
+            },
+        );
+        ordinary.set_terminator(Terminator::Return { values: vec![] });
+        let ordinary = ordinary.finish();
+        assert!(!is_native_clobber_safe_excluding(
+            &ordinary,
+            &std::collections::HashMap::new(),
+            false
+        ));
+        assert!(is_native_clobber_safe_excluding(
+            &ordinary,
+            &std::collections::HashMap::new(),
+            true
+        ));
+
+        let temporary = VReg::Virtual(VirtualId(7));
+        let mut push_rsp = FunctionBuilder::new(FunctionId(0), 0x2000);
+        push_rsp.push_op(
+            0x2000,
+            OpKind::Mov {
+                dst: temporary,
+                src: SrcOperand::Reg(rsp),
+                width: OpWidth::W64,
+            },
+        );
+        push_rsp.push_op(
+            0x2000,
+            OpKind::Sub {
+                dst: rsp,
+                src1: rsp,
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        push_rsp.push_op(
+            0x2000,
+            OpKind::Store {
+                src: temporary,
+                addr: Address::Direct(rsp),
+                width: MemWidth::B8,
+            },
+        );
+        push_rsp.set_terminator(Terminator::Return { values: vec![] });
+        assert!(is_native_clobber_safe_excluding(
+            &push_rsp.finish(),
+            &std::collections::HashMap::new(),
+            true
+        ));
+
+        let mut malformed = FunctionBuilder::new(FunctionId(0), 0x3000);
+        malformed.push_op(
+            0x3000,
+            OpKind::Sub {
+                dst: rsp,
+                src1: rsp,
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        malformed.push_op(
+            0x3000,
+            OpKind::Store {
+                src: rsp,
+                addr: Address::Direct(rsp),
+                width: MemWidth::B8,
+            },
+        );
+        malformed.set_terminator(Terminator::Return { values: vec![] });
+        assert!(!is_native_clobber_safe_excluding(
+            &malformed.finish(),
+            &std::collections::HashMap::new(),
+            true
+        ));
     }
 
     #[test]

@@ -290,6 +290,8 @@ pub enum X86OpHint {
     MovImmModRm,
     /// Push with 8-bit immediate
     PushImm8,
+    /// Push with 16-bit immediate
+    PushImm16,
     /// Push with 32-bit immediate
     PushImm32,
     /// IMUL with 8-bit immediate

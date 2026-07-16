@@ -3119,9 +3119,25 @@ impl<'a> X86Emitter<'a> {
         self.code.emit_u8(0x50 + src.low3());
     }
 
+    pub fn emit_push16(&mut self, src: PhysReg) {
+        self.code.emit_u8(0x66);
+        self.emit_push(src);
+    }
+
     pub fn emit_push_imm8(&mut self, imm: i8) {
         self.code.emit_u8(0x6A);
         self.code.emit_i8(imm);
+    }
+
+    pub fn emit_push_imm8_16(&mut self, imm: i8) {
+        self.code.emit_u8(0x66);
+        self.emit_push_imm8(imm);
+    }
+
+    pub fn emit_push_imm16(&mut self, imm: i16) {
+        self.code.emit_u8(0x66);
+        self.code.emit_u8(0x68);
+        self.code.emit_u16(imm as u16);
     }
 
     pub fn emit_push_imm32(&mut self, imm: i32) {
@@ -3135,6 +3151,11 @@ impl<'a> X86Emitter<'a> {
             self.code.emit_u8(0x41); // REX.B
         }
         self.code.emit_u8(0x58 + dst.low3());
+    }
+
+    pub fn emit_pop16(&mut self, dst: PhysReg) {
+        self.code.emit_u8(0x66);
+        self.emit_pop(dst);
     }
 
     // ========================================================================
@@ -3639,9 +3660,6 @@ pub struct X86_64Lowerer {
     /// Guest PC for blocks
     block_guest_pcs: HashMap<BlockId, GuestAddr>,
 
-    /// Pending return immediate for current block
-    pending_ret_imm: Option<u16>,
-
     /// Native-exit blocks (JIT general-exit ABI): block-id ⇒ resume guest PC.
     /// A block in this map is lowered as an EXIT STUB that records `exit_pc`
     /// (via the state pointer saved in the block frame) and returns to the trampoline, instead
@@ -3721,7 +3739,6 @@ impl X86_64Lowerer {
             pcrel_adjust: true,
             guest_pcrel_lea_immediates: false,
             block_guest_pcs: HashMap::new(),
-            pending_ret_imm: None,
             pending_cond: None,
             native_exits: std::collections::HashMap::new(),
             native_exit_edges: std::collections::HashMap::new(),
@@ -3837,11 +3854,29 @@ impl X86_64Lowerer {
     }
 
     fn ensure_native_stack_dests_safe(op: &SmirOp) -> Result<(), LowerError> {
-        if Self::mov_touches_state_backed_gpr(&op.kind) {
+        if Self::mov_touches_state_backed_gpr(&op.kind)
+            || Self::alu_touches_state_backed_stack_gpr(&op.kind)
+        {
             return Ok(());
         }
         for dst in op.kind.dests() {
             Self::ensure_native_stack_dst_safe(dst)?;
+        }
+        Ok(())
+    }
+
+    fn ensure_native_stack_memory_safe(op: &SmirOp, mem_helpers: bool) -> Result<(), LowerError> {
+        if mem_helpers {
+            return Ok(());
+        }
+        let address = match &op.kind {
+            OpKind::Load { addr, .. } | OpKind::Store { addr, .. } => addr,
+            _ => return Ok(()),
+        };
+        if let Some(reg) = address.regs().into_iter().find_map(Self::native_stack_dst) {
+            return Err(LowerError::InvalidRegister(format!(
+                "guest {reg:?} cannot address native memory without MMU helpers"
+            )));
         }
         Ok(())
     }
@@ -5071,6 +5106,11 @@ impl X86_64Lowerer {
                 width,
                 flags,
             } => {
+                if Self::alu_touches_state_backed_stack_gpr(&op.kind) {
+                    return self.lower_state_backed_stack_gpr_alu(
+                        false, *dst, *src1, src2, *width, *flags,
+                    );
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
                 let preserve_flags = !flags.updates_any();
@@ -5141,6 +5181,10 @@ impl X86_64Lowerer {
                 width,
                 flags,
             } => {
+                if Self::alu_touches_state_backed_stack_gpr(&op.kind) {
+                    return self
+                        .lower_state_backed_stack_gpr_alu(true, *dst, *src1, src2, *width, *flags);
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
                 let preserve_flags = !flags.updates_any();
@@ -10757,8 +10801,7 @@ impl X86_64Lowerer {
             }
 
             Terminator::Return { .. } => {
-                let ret_imm = self.pending_ret_imm.take();
-                self.emit_epilogue_with_ret(ret_imm);
+                self.emit_epilogue();
             }
 
             Terminator::Call {
@@ -13598,6 +13641,51 @@ impl X86_64Lowerer {
         )
     }
 
+    fn alu_touches_state_backed_stack_gpr(kind: &OpKind) -> bool {
+        let valid = |dst: VReg, src1: VReg, src2: &SrcOperand, width: OpWidth| {
+            matches!(
+                width,
+                OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+            ) && Self::x86_gpr_index(dst).is_some()
+                && Self::x86_gpr_index(src1).is_some()
+                && match src2 {
+                    SrcOperand::Reg(src2) => Self::x86_gpr_index(*src2).is_some(),
+                    SrcOperand::Imm(value) => {
+                        width != OpWidth::W64 || i32::try_from(*value).is_ok()
+                    }
+                    _ => false,
+                }
+                && [dst, src1]
+                    .into_iter()
+                    .chain(match src2 {
+                        SrcOperand::Reg(src2) => Some(*src2),
+                        _ => None,
+                    })
+                    .any(|reg| Self::x86_gpr_index(reg).is_some_and(|index| matches!(index, 4 | 5)))
+        };
+
+        match kind {
+            OpKind::Add {
+                dst,
+                src1,
+                src2,
+                width,
+                flags,
+            }
+            | OpKind::Sub {
+                dst,
+                src1,
+                src2,
+                width,
+                flags,
+            } => {
+                valid(*dst, *src1, src2, *width)
+                    && matches!(flags, FlagUpdate::None | FlagUpdate::All)
+            }
+            _ => false,
+        }
+    }
+
     /// `mov [base+off], r<reg_enc>` (store) or `mov r<reg_enc>, [base+off]` (load),
     /// REX.W, mod=10 disp32. `base` is always RAX or RCX here (rm 0/1, no SIB).
     fn emit_struct_mov(&mut self, base: PhysReg, reg_enc: u8, off: i32, store: bool) {
@@ -13753,6 +13841,107 @@ impl X86_64Lowerer {
             emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
         }
         self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_stack_gpr_alu(
+        &mut self,
+        subtract: bool,
+        dst: VReg,
+        src1: VReg,
+        src2: &SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        if !matches!(
+            width,
+            OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+        ) {
+            return Err(LowerError::UnsupportedOp {
+                op: "state-backed stack ADD/SUB with non-scalar width".to_string(),
+            });
+        }
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::UnsupportedOp {
+            op: "state-backed stack ADD/SUB destination is not an x86 GPR".to_string(),
+        })?;
+        let src1_idx = Self::x86_gpr_index(src1).ok_or_else(|| LowerError::UnsupportedOp {
+            op: "state-backed stack ADD/SUB source is not an x86 GPR".to_string(),
+        })?;
+        let src2_idx = match src2 {
+            SrcOperand::Reg(src) => {
+                Some(
+                    Self::x86_gpr_index(*src).ok_or_else(|| LowerError::UnsupportedOp {
+                        op: "state-backed stack ADD/SUB source is not an x86 GPR".to_string(),
+                    })?,
+                )
+            }
+            SrcOperand::Imm(_) => None,
+            _ => {
+                return Err(LowerError::UnsupportedOp {
+                    op: "state-backed stack ADD/SUB with non-scalar source".to_string(),
+                });
+            }
+        };
+        if let SrcOperand::Imm(value) = src2 {
+            if width == OpWidth::W64 && i32::try_from(*value).is_err() {
+                return Err(LowerError::InvalidOperand {
+                    op: "state-backed stack ADD/SUB".to_string(),
+                    operand: format!("64-bit immediate {value} is not sign-extended imm32"),
+                });
+            }
+        }
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        let preserve_flags = !flags.updates_any();
+        if preserve_flags {
+            self.code.emit_u8(0x9C); // pushfq; guest RAX is now at [rsp+8]
+        }
+        self.emit_spill_legacy_gprs_to_state_from_rax(if preserve_flags { 8 } else { 0 });
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rax, i32::from(src1_idx) * 8, width);
+            match (src2, src2_idx) {
+                (SrcOperand::Reg(_), Some(index)) => {
+                    emitter.emit_mov_rm(PhysReg::Rdi, PhysReg::Rax, i32::from(index) * 8, width);
+                    if subtract {
+                        emitter.emit_sub_rr(PhysReg::Rdx, PhysReg::Rdi, width);
+                    } else {
+                        emitter.emit_add_rr(PhysReg::Rdx, PhysReg::Rdi, width);
+                    }
+                }
+                (SrcOperand::Imm(value), None) => {
+                    if subtract {
+                        emitter.emit_sub_ri(PhysReg::Rdx, *value, width);
+                    } else {
+                        emitter.emit_add_ri(PhysReg::Rdx, *value, width);
+                    }
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
+        if dst_idx == 5 {
+            let commit_width = if matches!(width, OpWidth::W8 | OpWidth::W16) {
+                width
+            } else {
+                OpWidth::W64
+            };
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        if preserve_flags {
+            self.code.emit_u8(0x9D); // popfq
+        }
         self.emit_flag_preserving_stack_pop8();
         Ok(())
     }
@@ -14269,6 +14458,113 @@ impl X86_64Lowerer {
             emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
         }
         Ok(Some(2))
+    }
+
+    /// Fuse a lifted PUSH into one fault-precise helper store followed by the
+    /// state-backed RSP commit. The helper observes the old state snapshot and
+    /// stores at `old_rsp - width`; only its success path performs the SUB.
+    fn try_lower_jit_push(
+        &mut self,
+        ops: &[crate::smir::ir::ops::SmirOp],
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let (sub_index, store_index, snapshot) = match ops.get(idx).map(|op| &op.kind) {
+            Some(OpKind::Mov {
+                dst: temporary @ VReg::Virtual(_),
+                src: SrcOperand::Reg(source),
+                width: OpWidth::W16 | OpWidth::W64,
+            }) if *source == rsp => (idx + 1, idx + 2, Some(*temporary)),
+            _ => (idx, idx + 1, None),
+        };
+        let sub = match ops.get(sub_index) {
+            Some(op) => op,
+            None => return Ok(None),
+        };
+        let delta = match sub.kind {
+            OpKind::Sub {
+                dst,
+                src1,
+                src2: SrcOperand::Imm(delta @ (2 | 8)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            } if dst == rsp && src1 == rsp => delta,
+            _ => return Ok(None),
+        };
+        let store = match ops.get(store_index) {
+            Some(op) if op.guest_pc == sub.guest_pc => op,
+            _ => return Ok(None),
+        };
+        if snapshot.is_some_and(|_| ops[idx].guest_pc != sub.guest_pc) {
+            return Ok(None);
+        }
+        let expected_width = if delta == 2 {
+            MemWidth::B2
+        } else {
+            MemWidth::B8
+        };
+        let store_source = match &store.kind {
+            OpKind::Store {
+                src,
+                addr: Address::Direct(base),
+                width,
+            } if *base == rsp && *width == expected_width => *src,
+            _ => return Ok(None),
+        };
+        let (source, consumed) = if let Some(temporary) = snapshot {
+            let expected_snapshot_width = if delta == 2 {
+                OpWidth::W16
+            } else {
+                OpWidth::W64
+            };
+            if store_source != temporary
+                || !matches!(ops[idx].kind, OpKind::Mov { width, .. } if width == expected_snapshot_width)
+                || virtual_definitions.get(&temporary) != Some(&1)
+                || virtual_uses.get(&temporary) != Some(&1)
+            {
+                return Ok(None);
+            }
+            (rsp, 3)
+        } else {
+            let source_valid = matches!(store_source, VReg::Imm(_))
+                || matches!(store_source, VReg::Arch(ArchReg::X86(reg)) if reg.gpr_index().is_some());
+            if store_source == rsp || !source_valid {
+                return Ok(None);
+            }
+            (store_source, 2)
+        };
+
+        let address = Address::BaseOffset {
+            base: rsp,
+            offset: -delta,
+            disp_size: DispSize::Auto,
+        };
+        let (source_reg, source_imm) = match source {
+            VReg::Imm(value) => (None, Some(value)),
+            register => (Some(register), None),
+        };
+        self.emit_jit_mem_op(
+            store.guest_pc,
+            false,
+            None,
+            source_reg,
+            source_imm,
+            &address,
+            expected_width,
+            SignExtend::Zero,
+            0,
+        )?;
+        self.lower_state_backed_stack_gpr_alu(
+            true,
+            rsp,
+            rsp,
+            &SrcOperand::Imm(delta),
+            OpWidth::W64,
+            FlagUpdate::None,
+        )?;
+        Ok(Some(consumed))
     }
 
     /// Lower a guest `Load`/`Store` as a call into the MMU via the helper
@@ -14927,45 +15223,14 @@ impl X86_64Lowerer {
         // Initialize register allocator for this block
         self.regalloc.begin_block(block);
 
-        // Validate before peepholes adjust `end_idx`; the return-shape fold can
-        // otherwise hide a guest RSP write before the normal per-op guard sees it.
+        // Validate before peepholes consume operations so no direct-memory fold
+        // can hide a guest RSP/RBP destination or address from the safety guard.
         for op in &block.ops {
             Self::ensure_native_stack_dests_safe(op)?;
+            Self::ensure_native_stack_memory_safe(op, self.mem_helpers)?;
         }
 
         let mut end_idx = block.ops.len();
-        if matches!(block.terminator, Terminator::Return { .. }) && block.ops.len() >= 2 {
-            if let (
-                OpKind::Load {
-                    dst: load_dst,
-                    addr: Address::Direct(addr_base),
-                    width: MemWidth::B8,
-                    sign: SignExtend::Zero,
-                },
-                OpKind::Add {
-                    dst,
-                    src1,
-                    src2: SrcOperand::Imm(imm),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ) = (
-                &block.ops[block.ops.len() - 2].kind,
-                &block.ops[block.ops.len() - 1].kind,
-            ) {
-                if self.is_rsp(*dst)
-                    && self.is_rsp(*src1)
-                    && self.is_rsp(*addr_base)
-                    && matches!(load_dst, VReg::Virtual(_))
-                {
-                    let imm_total = *imm;
-                    if imm_total >= 8 && imm_total <= (8 + u16::MAX as i64) {
-                        self.pending_ret_imm = Some((imm_total - 8) as u16);
-                        end_idx -= 2;
-                    }
-                }
-            }
-        }
 
         // Fold a trailing `TestCondition` that exists only to feed this block's
         // `CondBranch` into a direct `Jcc<cond>` off live flags. The x86 lifter
@@ -15030,6 +15295,12 @@ impl X86_64Lowerer {
             // (see `emit_jit_mem_op`). The CRC32 fusion below is explicitly
             // helper-backed and therefore runs only in that mode.
             if self.mem_helpers {
+                if let Some(consumed) =
+                    self.try_lower_jit_push(&block.ops, idx, &virtual_definitions, &virtual_uses)?
+                {
+                    idx += consumed;
+                    continue;
+                }
                 if let Some(consumed) = self.try_lower_jit_mem_crc32c(
                     &block.ops,
                     idx,
@@ -15141,7 +15412,6 @@ impl SmirLowerer for X86_64Lowerer {
         self.relocations.clear();
         self.pending_jumps.clear();
         self.guest_base = func.guest_range.0;
-        self.pending_ret_imm = None;
         self.pending_cond = None;
         self.epilogue_stack_patches.clear();
         self.block_guest_pcs = func
@@ -19098,38 +19368,18 @@ mod tests {
     }
 
     #[test]
-    fn rejects_non_state_backed_guest_stack_frame_register_destinations() {
+    fn rejects_non_state_backed_guest_stack_frame_address_destinations() {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
-        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
         let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
 
-        for (name, expected, kind) in [
-            (
-                "add rsp, rax",
-                "Rsp",
-                OpKind::Add {
-                    dst: rsp,
-                    src1: rax,
-                    src2: SrcOperand::Imm(8),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ),
-            (
-                "lea rbp, [rax]",
-                "Rbp",
-                OpKind::Lea {
-                    dst: rbp,
-                    addr: Address::Direct(rax),
-                },
-            ),
-        ] {
-            let err = lower_single_op_err(kind);
-            assert!(
-                matches!(err, LowerError::InvalidRegister(ref reg) if reg.contains(expected)),
-                "{name} should reject {expected}, got {err:?}"
-            );
-        }
+        let err = lower_single_op_err(OpKind::Lea {
+            dst: rbp,
+            addr: Address::Direct(rax),
+        });
+        assert!(
+            matches!(err, LowerError::InvalidRegister(ref reg) if reg.contains("Rbp")),
+            "LEA RBP,[RAX] must remain outside the state-backed path, got {err:?}"
+        );
     }
 
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -19232,21 +19482,92 @@ mod tests {
         );
     }
 
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
     #[test]
-    fn rejects_guest_rsp_write_hidden_by_return_shape_fold() {
-        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
-        let tmp = VReg::virt(0);
+    fn native_state_backed_stack_add_sub_preserve_host_stack_widths_and_flags() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
 
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
+        let r16 = VReg::Arch(ArchReg::X86(X86Reg::R16));
         let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
         builder.push_op(
             0x1000,
-            OpKind::Load {
-                dst: tmp,
-                addr: Address::Direct(rsp),
-                width: MemWidth::B8,
-                sign: SignExtend::Zero,
+            OpKind::Add {
+                dst: rsp,
+                src1: rsp,
+                src2: SrcOperand::Reg(rax),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None,
             },
         );
+        builder.push_op(
+            0x1001,
+            OpKind::Sub {
+                dst: rbp,
+                src1: rbp,
+                src2: SrcOperand::Reg(rdx),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0x1002,
+            OpKind::Add {
+                dst: r16,
+                src1: rsp,
+                src2: SrcOperand::Reg(rbp),
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0x1003,
+            OpKind::Sub {
+                dst: rbp,
+                src1: rsp,
+                src2: SrcOperand::Imm(0x10),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&builder.finish())
+            .expect("lower state-backed stack arithmetic");
+        let exec = ExecMem::new(&lowerer.finalize().expect("finalize")).expect("exec memory");
+
+        let mut regs = GuestRegs::default();
+        regs.gpr[0] = 0x20;
+        regs.gpr[2] = 0x20;
+        regs.gpr[4] = 0x1111_2222_3333_44F0;
+        regs.gpr[5] = 0xAAAA_BBBB_CCCC_DD10;
+        regs.rflags = 0x8D5;
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.gpr[4], 0x1111_2222_3333_4410, "ADD SPL,AL");
+        assert_eq!(regs.gpr[16], 0x2100, "ADD R16D,ESP/EBP snapshot");
+        assert_eq!(regs.gpr[5], 0x1111_2222_3333_4400, "SUB RBP,RSP,16");
+        const STATUS: u64 = 0x8D5;
+        assert_eq!(
+            regs.rflags & STATUS,
+            STATUS,
+            "FlagUpdate::None arithmetic must preserve status flags"
+        );
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn return_shape_does_not_elide_state_backed_guest_rsp_updates() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
         builder.push_op(
             0x1004,
             OpKind::Add {
@@ -19261,12 +19582,16 @@ mod tests {
         let func = builder.finish();
 
         let mut lowerer = X86_64Lowerer::new();
-        let err = lowerer
+        let lowered = lowerer
             .lower_function(&func)
-            .expect_err("return-shape fold must not hide guest RSP writes");
-        assert!(
-            matches!(err, LowerError::InvalidRegister(ref reg) if reg.contains("Rsp")),
-            "return-shape fold must reject guest RSP writes, got {err:?}"
+            .expect("state-backed return-shape RSP update");
+        let exec = ExecMem::new(&lowerer.finalize().expect("finalize")).expect("exec memory");
+        let mut regs = GuestRegs::default();
+        regs.gpr[4] = 0x1234_5678_9ABC_DEF0;
+        exec.run(lowered.entry_offset, &mut regs);
+        assert_eq!(
+            regs.gpr[4], 0x1234_5678_9ABC_DEF8,
+            "guest RSP update must execute rather than becoming a host RET immediate"
         );
     }
 
@@ -19784,18 +20109,19 @@ mod tests {
     }
 
     #[test]
-    fn lower_apx_push2_pop2_legacy_pair_rejects_guest_rsp_write() {
+    fn lower_apx_push2_pop2_requires_helper_backed_stack_memory() {
         // LLVM 20:
         //   push2 %rax, %rbx => 62 f4 64 18 ff f0
         //   pop2  %rax, %rbx => 62 f4 64 18 8f c0
-        // PUSH2/POP2 write architectural RSP; a lowered block runs on the host
-        // stack, so this must be rejected rather than emit a pivotable frame.
+        // State-backed arithmetic makes the RSP deltas safe, but PUSH2/POP2's
+        // virtual two-slot memory sequence is not helper-fused yet. Direct
+        // lowering must reject it rather than address the live host stack.
         let err = lower_rex2_block_err(&[
             0x62, 0xF4, 0x64, 0x18, 0xFF, 0xF0, 0x62, 0xF4, 0x64, 0x18, 0x8F, 0xC0, 0xF4,
         ]);
         assert!(
             matches!(err, LowerError::InvalidRegister(ref reg) if reg.contains("Rsp")),
-            "push2/pop2 must reject guest RSP writes, got {err:?}"
+            "push2/pop2 must reject non-helper guest stack memory, got {err:?}"
         );
     }
 

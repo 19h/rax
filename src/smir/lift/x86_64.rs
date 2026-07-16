@@ -33372,19 +33372,43 @@ impl X86_64Lifter {
         opcode: u8,
         prefix: &X86Prefix,
         pc: u64,
-        _ctx: &mut LiftContext,
+        ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
         let reg = (opcode & 0x07) | prefix.rex_b();
+        let (width, mem_width, stack_bytes) = if prefix.operand_size_override {
+            (OpWidth::W16, MemWidth::B2, 2)
+        } else {
+            (OpWidth::W64, MemWidth::B8, 8)
+        };
         let mut ops = Vec::new();
 
-        // RSP -= 8
+        // Intel defines PUSH RSP/PUSH SP to store the source value as it
+        // existed before the stack-pointer decrement. Preserve that ordering
+        // explicitly for the interpreter and for helper-backed JIT fusion.
+        let source = if self.gpr(reg) == self.rsp() {
+            let old_sp = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: old_sp,
+                    src: SrcOperand::Reg(self.rsp()),
+                    width,
+                },
+            ));
+            old_sp
+        } else {
+            self.gpr(reg)
+        };
+
+        // RSP -= operand width
         ops.push(SmirOp::new(
-            OpId(0),
+            OpId(ops.len() as u16),
             pc,
             OpKind::Sub {
                 dst: self.rsp(),
                 src1: self.rsp(),
-                src2: SrcOperand::Imm(8),
+                src2: SrcOperand::Imm(stack_bytes),
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
@@ -33392,12 +33416,12 @@ impl X86_64Lifter {
 
         // [RSP] = reg
         ops.push(SmirOp::new(
-            OpId(1),
+            OpId(ops.len() as u16),
             pc,
             OpKind::Store {
-                src: self.gpr(reg),
+                src: source,
                 addr: Address::Direct(self.rsp()),
-                width: MemWidth::B8,
+                width: mem_width,
             },
         ));
 
@@ -33410,10 +33434,62 @@ impl X86_64Lifter {
         opcode: u8,
         prefix: &X86Prefix,
         pc: u64,
-        _ctx: &mut LiftContext,
+        ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
         let reg = (opcode & 0x07) | prefix.rex_b();
+        let (width, mem_width, stack_bytes) = if prefix.operand_size_override {
+            (OpWidth::W16, MemWidth::B2, 2)
+        } else {
+            (OpWidth::W64, MemWidth::B8, 8)
+        };
         let mut ops = Vec::new();
+
+        if self.gpr(reg) == self.rsp() {
+            let popped = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::Load {
+                    dst: popped,
+                    addr: Address::Direct(self.rsp()),
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            if width == OpWidth::W16 {
+                let incremented = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(1),
+                    pc,
+                    OpKind::Add {
+                        dst: incremented,
+                        src1: self.rsp(),
+                        src2: SrcOperand::Imm(stack_bytes),
+                        width: OpWidth::W64,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(2),
+                    pc,
+                    OpKind::Mov {
+                        dst: self.rsp(),
+                        src: SrcOperand::Reg(incremented),
+                        width: OpWidth::W64,
+                    },
+                ));
+            }
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: self.rsp(),
+                    src: SrcOperand::Reg(popped),
+                    width,
+                },
+            ));
+            return Ok(LiftResult::fallthrough(ops, prefix.cursor));
+        }
 
         // reg = [RSP]
         ops.push(SmirOp::new(
@@ -33422,19 +33498,19 @@ impl X86_64Lifter {
             OpKind::Load {
                 dst: self.gpr(reg),
                 addr: Address::Direct(self.rsp()),
-                width: MemWidth::B8,
+                width: mem_width,
                 sign: SignExtend::Zero,
             },
         ));
 
-        // RSP += 8
+        // RSP += operand width
         ops.push(SmirOp::new(
             OpId(1),
             pc,
             OpKind::Add {
                 dst: self.rsp(),
                 src1: self.rsp(),
-                src2: SrcOperand::Imm(8),
+                src2: SrcOperand::Imm(stack_bytes),
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
@@ -33861,7 +33937,13 @@ impl X86_64Lifter {
         prefix: &X86Prefix,
         pc: u64,
     ) -> Result<LiftResult, LiftError> {
-        let imm_size = if opcode == 0x6A { 1 } else { 4 };
+        let imm_size = if opcode == 0x6A {
+            1
+        } else if prefix.operand_size_override {
+            2
+        } else {
+            4
+        };
         if bytes.len() < imm_size {
             return Err(LiftError::Incomplete {
                 addr: pc,
@@ -33870,16 +33952,23 @@ impl X86_64Lifter {
             });
         }
 
-        let imm = if imm_size == 1 {
-            bytes[0] as i8 as i64
-        } else {
-            i32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]) as i64
+        let imm = match imm_size {
+            1 => bytes[0] as i8 as i64,
+            2 => i16::from_le_bytes([bytes[0], bytes[1]]) as i64,
+            4 => i32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]) as i64,
+            _ => unreachable!(),
         };
 
-        let hint = if imm_size == 1 {
-            X86OpHint::PushImm8
+        let hint = match imm_size {
+            1 => X86OpHint::PushImm8,
+            2 => X86OpHint::PushImm16,
+            4 => X86OpHint::PushImm32,
+            _ => unreachable!(),
+        };
+        let (stack_bytes, mem_width) = if prefix.operand_size_override {
+            (2, MemWidth::B2)
         } else {
-            X86OpHint::PushImm32
+            (8, MemWidth::B8)
         };
 
         let mut ops = Vec::new();
@@ -33889,7 +33978,7 @@ impl X86_64Lifter {
             OpKind::Sub {
                 dst: self.rsp(),
                 src1: self.rsp(),
-                src2: SrcOperand::Imm(8),
+                src2: SrcOperand::Imm(stack_bytes),
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,
             },
@@ -33901,7 +33990,7 @@ impl X86_64Lifter {
             OpKind::Store {
                 src: VReg::Imm(imm),
                 addr: Address::Direct(self.rsp()),
-                width: MemWidth::B8,
+                width: mem_width,
             },
             hint,
         ));
@@ -46391,6 +46480,115 @@ mod tests {
                 width: OpWidth::W16,
                 ..
             }
+        ));
+    }
+
+    #[test]
+    fn lift_short_push_pop_preserves_stack_width_and_rsp_alias_ordering() {
+        let push_rsp = lift_single(&[0x54]).unwrap();
+        let old_rsp = match push_rsp.ops[0].kind {
+            OpKind::Mov {
+                dst: temporary @ VReg::Virtual(_),
+                src: SrcOperand::Reg(VReg::Arch(ArchReg::X86(X86Reg::Rsp))),
+                width: OpWidth::W64,
+            } => temporary,
+            ref other => panic!("expected pre-decrement RSP snapshot, got {other:?}"),
+        };
+        assert!(matches!(
+            push_rsp.ops[1].kind,
+            OpKind::Sub {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+                src2: SrcOperand::Imm(8),
+                ..
+            }
+        ));
+        assert!(matches!(
+            push_rsp.ops[2].kind,
+            OpKind::Store {
+                src,
+                addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rsp))),
+                width: MemWidth::B8,
+            } if src == old_rsp
+        ));
+
+        let push_ax = lift_single(&[0x66, 0x50]).unwrap();
+        assert!(matches!(
+            push_ax.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::Sub {
+                        src2: SrcOperand::Imm(2),
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::Store {
+                        src: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                        width: MemWidth::B2,
+                        ..
+                    },
+                    ..
+                }
+            ]
+        ));
+
+        let push_imm16 = lift_single(&[0x66, 0x68, 0x34, 0xF2]).unwrap();
+        assert_eq!(push_imm16.bytes_consumed, 4);
+        assert!(matches!(
+            push_imm16.ops[0].kind,
+            OpKind::Sub {
+                src2: SrcOperand::Imm(2),
+                ..
+            }
+        ));
+        assert!(matches!(
+            push_imm16.ops[1],
+            SmirOp {
+                kind: OpKind::Store {
+                    src: VReg::Imm(-3532),
+                    width: MemWidth::B2,
+                    ..
+                },
+                x86_hint: Some(X86OpHint::PushImm16),
+                ..
+            }
+        ));
+
+        let pop_ax = lift_single(&[0x66, 0x58]).unwrap();
+        assert!(matches!(
+            pop_ax.ops[0].kind,
+            OpKind::Load {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                width: MemWidth::B2,
+                ..
+            }
+        ));
+        assert!(matches!(
+            pop_ax.ops[1].kind,
+            OpKind::Add {
+                src2: SrcOperand::Imm(2),
+                ..
+            }
+        ));
+
+        let pop_rsp = lift_single(&[0x5C]).unwrap();
+        let popped = match pop_rsp.ops[0].kind {
+            OpKind::Load {
+                dst: temporary @ VReg::Virtual(_),
+                addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rsp))),
+                width: MemWidth::B8,
+                ..
+            } => temporary,
+            ref other => panic!("expected POP RSP temporary load, got {other:?}"),
+        };
+        assert!(matches!(
+            pop_rsp.ops[1].kind,
+            OpKind::Mov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
+                src: SrcOperand::Reg(source),
+                width: OpWidth::W64,
+            } if source == popped
         ));
     }
 
