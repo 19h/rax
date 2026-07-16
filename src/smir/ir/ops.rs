@@ -46,7 +46,7 @@ impl SmirOp {
     /// Fail-safe native-JIT eligibility for an operation, including encoding
     /// hints that affect lowering semantics.
     pub fn is_jit_safe(&self) -> bool {
-        self.kind.is_jit_safe()
+        !matches!(self.x86_hint, Some(X86OpHint::ShiftGroup6)) && self.kind.is_jit_safe()
     }
 }
 
@@ -300,6 +300,10 @@ pub enum X86OpHint {
     ImulImm32,
     /// BMI2 MULX, which has non-destructive RAX/RDX semantics.
     Mulx,
+    /// Legacy Group-2 `/6` SAL alias. The architectural result matches SHL,
+    /// but the interpreter's deterministic undefined-AF policy differs from
+    /// `/4`; native tiers must fail closed unless they model that distinction.
+    ShiftGroup6,
     /// Byte-register source was encoded with a REX/REX2 prefix, so ModR/M
     /// codes 4..7 name SPL/BPL/SIL/DIL (or extended low-byte regs), not
     /// legacy AH/CH/DH/BH.

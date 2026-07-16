@@ -8103,6 +8103,204 @@ fn jit_scalar_memory_destination_unary_matches_interpreter_widths_flags_and_faul
     );
 }
 
+#[test]
+fn jit_scalar_memory_destination_shifts_match_interpreter_counts_flags_and_faults() {
+    const DATA: u64 = 0x20_0000;
+
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        initial: u64,
+        rcx: u64,
+        rflags: u64,
+    }
+
+    let cases = [
+        Case {
+            name: "ROL r/m8,1",
+            instruction: &[0xD0, 0x03],
+            initial: 0x1122_3344_5566_7781,
+            rcx: 0,
+            rflags: 0x8D7,
+        },
+        Case {
+            name: "ROR r/m16,7",
+            instruction: &[0x66, 0xC1, 0x0B, 0x07],
+            initial: 0x1122_3344_5566_8001,
+            rcx: 0,
+            rflags: 0x8D7,
+        },
+        Case {
+            name: "RCL r/m32,1",
+            instruction: &[0xD1, 0x13],
+            initial: 0x1122_3344_8000_0000,
+            rcx: 0,
+            rflags: 0x8D7,
+        },
+        Case {
+            name: "RCR r/m64,1",
+            instruction: &[0x48, 0xD1, 0x1B],
+            initial: 0x0000_0000_0000_0001,
+            rcx: 0,
+            rflags: 0x8D7,
+        },
+        Case {
+            name: "SHL r/m8,32 (masked zero)",
+            instruction: &[0xC0, 0x23, 0x20],
+            initial: 0x1122_3344_5566_7781,
+            rcx: 0,
+            rflags: 0x8D7,
+        },
+        Case {
+            name: "SHL r/m16,4",
+            instruction: &[0x66, 0xC1, 0x23, 0x04],
+            initial: 0x1122_3344_5566_F123,
+            rcx: 0,
+            rflags: 0x8D7,
+        },
+        Case {
+            name: "SHR r/m32,1",
+            instruction: &[0xD1, 0x2B],
+            initial: 0x1122_3344_F123_4567,
+            rcx: 0,
+            rflags: 0x8D7,
+        },
+        Case {
+            name: "SAR r/m64,7",
+            instruction: &[0x48, 0xC1, 0x3B, 0x07],
+            initial: 0xF123_4567_89AB_CDEF,
+            rcx: 0,
+            rflags: 0x8D7,
+        },
+        Case {
+            name: "ROL r/m64,9",
+            instruction: &[0x48, 0xC1, 0x03, 0x09],
+            initial: 0x8123_4567_89AB_CDEF,
+            rcx: 0,
+            rflags: 0x8D7,
+        },
+    ];
+
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+        let setup = |vcpu: &mut X86_64Vcpu, memory: &Arc<GuestMemoryMmap>| {
+            memory.write_obj(case.initial, GuestAddress(DATA)).unwrap();
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = 0xA5A5_5A5A_A5A5_5A5A;
+            regs.rbx = DATA;
+            regs.rcx = case.rcx;
+            regs.rsp = 0x11_0000;
+            regs.rbp = 0x2233_4455_6677_8899;
+            regs.rflags = case.rflags;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let (mut interp, interp_mem) = make_vcpu_mem(&code);
+        setup(&mut interp, &interp_mem);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+        let expected_memory = interp_mem.read_obj::<u64>(GuestAddress(DATA)).unwrap();
+
+        let (mut jit, jit_mem) = make_vcpu_mem(&code);
+        setup(&mut jit, &jit_mem);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the helper-backed native tier",
+            case.name
+        );
+        let actual = jit.get_regs().unwrap();
+        let actual_gprs = [
+            actual.rax, actual.rcx, actual.rdx, actual.rbx, actual.rsp, actual.rbp, actual.rsi,
+            actual.rdi, actual.r8, actual.r9, actual.r10, actual.r11, actual.r12, actual.r13,
+            actual.r14, actual.r15, actual.r16, actual.r17, actual.r18, actual.r19, actual.r20,
+            actual.r21, actual.r22, actual.r23, actual.r24, actual.r25, actual.r26, actual.r27,
+            actual.r28, actual.r29, actual.r30, actual.r31,
+        ];
+        let expected_gprs = [
+            expected.rax,
+            expected.rcx,
+            expected.rdx,
+            expected.rbx,
+            expected.rsp,
+            expected.rbp,
+            expected.rsi,
+            expected.rdi,
+            expected.r8,
+            expected.r9,
+            expected.r10,
+            expected.r11,
+            expected.r12,
+            expected.r13,
+            expected.r14,
+            expected.r15,
+            expected.r16,
+            expected.r17,
+            expected.r18,
+            expected.r19,
+            expected.r20,
+            expected.r21,
+            expected.r22,
+            expected.r23,
+            expected.r24,
+            expected.r25,
+            expected.r26,
+            expected.r27,
+            expected.r28,
+            expected.r29,
+            expected.r30,
+            expected.r31,
+        ];
+        for (index, (actual, expected)) in actual_gprs.into_iter().zip(expected_gprs).enumerate() {
+            assert_eq!(actual, expected, "{} GPR index {index}", case.name);
+        }
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+        assert_eq!(
+            actual.rflags, expected.rflags,
+            "{} architectural flags",
+            case.name
+        );
+        assert_eq!(
+            jit_mem.read_obj::<u64>(GuestAddress(DATA)).unwrap(),
+            expected_memory,
+            "{} memory result",
+            case.name
+        );
+    }
+
+    let code = [0x48, 0xC1, 0x23, 0x03, 0xF4]; // shl qword ptr [rbx],3; hlt
+    let (mut fault, _) = make_vcpu_mem(&code);
+    let mut before = fault.get_regs().unwrap();
+    before.rax = 0xA5A5_5A5A_A5A5_5A5A;
+    before.rbx = MEM_SIZE + 0x1000;
+    before.rcx = 0x0123_4567_89AB_CDEF;
+    before.rflags = 0x8D7;
+    fault.set_regs(&before).unwrap();
+    assert!(
+        fault
+            .jit_try_block()
+            .expect("faulting scalar memory-destination shift JIT"),
+        "a shift RMW helper access must compile before precise deoptimization"
+    );
+    let after = fault.get_regs().unwrap();
+    assert_eq!(after.rax, before.rax, "load fault must preserve scratch");
+    assert_eq!(after.rbx, before.rbx, "load fault must preserve base");
+    assert_eq!(after.rcx, before.rcx, "load fault must preserve RCX");
+    assert_eq!(
+        after.rflags, before.rflags,
+        "load fault must preserve flags"
+    );
+    assert_eq!(
+        after.rip, LOAD_ADDR,
+        "load fault must restart at current PC"
+    );
+}
+
 /// Memory-operand JIT (RAX_JIT_MEM path): a loop that LOADS from a scratch array
 /// and STORES each element into a second array runs natively via the MMU helper
 /// calls and reproduces the interpreter's GPRs AND memory bit-exact.

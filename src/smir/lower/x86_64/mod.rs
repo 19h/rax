@@ -14672,6 +14672,179 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
+    /// Fuse an exact fault-precise memory-destination shift/rotate sequence.
+    /// The speculative scratch-RAX operation is wrapped by PUSHFQ/POPFQ, so
+    /// store faults retain every incoming flag; only a successful store reaches
+    /// the native replay. A masked RFLAGS merge then implements the interpreter's
+    /// deterministic policy for architecturally undefined AF/OF outputs.
+    #[cfg(feature = "smir-jit")]
+    fn try_lower_jit_mem_shift_rmw(
+        &mut self,
+        block: &SmirBlock,
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(consumed) = super::runtime::x86_jit_mem_shift_rmw_sequence_len(
+            block,
+            idx,
+            true,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
+            return Ok(None);
+        };
+
+        let load = &block.ops[idx];
+        let (addr, mem_width) = match &load.kind {
+            OpKind::Load {
+                addr,
+                width,
+                sign: SignExtend::Zero,
+                ..
+            } => (addr, *width),
+            _ => unreachable!("validated scalar shift RMW starts with Load"),
+        };
+        let width = mem_width
+            .to_op_width()
+            .expect("validated scalar shift RMW width has an integer width");
+        let (kind, amount) = match &block.ops[idx + 1].kind {
+            OpKind::Rol { amount, .. } => (ShiftRegOp::Rol, amount),
+            OpKind::Ror { amount, .. } => (ShiftRegOp::Ror, amount),
+            OpKind::Rcl { amount, .. } => (ShiftRegOp::Rcl, amount),
+            OpKind::Rcr { amount, .. } => (ShiftRegOp::Rcr, amount),
+            OpKind::Shl { amount, .. } => (ShiftRegOp::Shl, amount),
+            OpKind::Shr { amount, .. } => (ShiftRegOp::Shr, amount),
+            OpKind::Sar { amount, .. } => (ShiftRegOp::Sar, amount),
+            _ => unreachable!("validated scalar shift RMW consumer"),
+        };
+        let raw_count = match amount {
+            SrcOperand::Imm(value) => *value as u8,
+            _ => unreachable!("validated scalar shift RMW has an immediate count"),
+        };
+        let count_mask = if width == OpWidth::W64 { 0x3f } else { 0x1f };
+        let count = raw_count & count_mask;
+        const X86_STATUS_RFLAGS: i64 = 0x08D5;
+        const ROTATE_UNCHANGED_RFLAGS: i64 = 0x00D4;
+        let (preserve_rflags, clear_rflags) = if count == 0 {
+            (X86_STATUS_RFLAGS, 0i64)
+        } else {
+            match kind {
+                ShiftRegOp::Rol | ShiftRegOp::Ror => (
+                    ROTATE_UNCHANGED_RFLAGS | if count == 1 { 0 } else { 1 << 11 },
+                    0,
+                ),
+                ShiftRegOp::Rcl | ShiftRegOp::Rcr => (ROTATE_UNCHANGED_RFLAGS, 0),
+                ShiftRegOp::Shl | ShiftRegOp::Shr | ShiftRegOp::Sar => {
+                    (1 << 4, if count == 1 { 0 } else { 1 << 11 })
+                }
+            }
+        };
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -32);
+            emitter.emit_mov_mr(PhysReg::Rsp, 24, PhysReg::Rax, OpWidth::W64);
+            // Capture the incoming status image before either helper. RAX is
+            // restored before its coherent GuestRegs snapshot is published.
+            emitter.code.emit_u8(0x9C); // pushfq
+            emitter.emit_pop(PhysReg::Rax);
+            emitter.emit_mov_mr(PhysReg::Rsp, 16, PhysReg::Rax, OpWidth::W64);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+        }
+        self.emit_jit_mem_op(
+            load.guest_pc,
+            true,
+            None,
+            Some(16),
+            None,
+            None,
+            None,
+            addr,
+            mem_width,
+            SignExtend::Zero,
+            32,
+        )?;
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 0, width);
+        }
+        self.code.emit_u8(0x9C); // pushfq
+        self.emit_shift_reg_imm(kind, PhysReg::Rax, raw_count, width);
+        self.code.emit_u8(0x9D); // popfq
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rsp, 8, PhysReg::Rax, OpWidth::W64);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+        }
+
+        self.emit_jit_mem_op(
+            load.guest_pc,
+            false,
+            None,
+            None,
+            None,
+            None,
+            Some(24),
+            addr,
+            mem_width,
+            SignExtend::Zero,
+            32,
+        )?;
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 0, width);
+        }
+        self.emit_shift_reg_imm(kind, PhysReg::Rax, raw_count, width);
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            if preserve_rflags != 0 || clear_rflags != 0 {
+                // Keep the native replay image on the stack and use scratch
+                // RAX for the saved incoming bits. This leaves one canonical
+                // merged image for POPFQ and avoids relying on host flags set
+                // by the merge instructions themselves.
+                emitter.code.emit_u8(0x9C); // pushfq: native replay flags
+                if preserve_rflags != 0 {
+                    emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+                    emitter.emit_and_ri(PhysReg::Rax, preserve_rflags, OpWidth::W64);
+                    emitter.emit_alu_mi_disp(
+                        4,
+                        PhysReg::Rsp,
+                        0,
+                        DispSize::Auto,
+                        !preserve_rflags,
+                        OpWidth::W64,
+                    );
+                    emitter.emit_alu_mem_disp(
+                        0x08,
+                        PhysReg::Rax,
+                        PhysReg::Rsp,
+                        0,
+                        DispSize::Auto,
+                        OpWidth::W64,
+                        X86AluEncoding::RmReg,
+                    );
+                }
+                if clear_rflags != 0 {
+                    emitter.emit_alu_mi_disp(
+                        4,
+                        PhysReg::Rsp,
+                        0,
+                        DispSize::Auto,
+                        !clear_rflags,
+                        OpWidth::W64,
+                    );
+                }
+                emitter.code.emit_u8(0x9D); // popfq: merged guest flags
+            }
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 24, OpWidth::W64);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 32);
+        }
+        Ok(Some(consumed))
+    }
+
     /// Fuse one exact scalar `Load virtual; ALU/CMP/TEST ... virtual` pair into
     /// a fault-precise MMU helper load followed by a native operation using a
     /// caller-owned stack slot. The carrier register is saved twice: one word
@@ -16314,6 +16487,16 @@ impl X86_64Lowerer {
             #[cfg(feature = "smir-jit")]
             {
                 if self.mem_helpers {
+                    if let Some(consumed) = super::runtime::x86_jit_mem_shift_rmw_sequence_len(
+                        block,
+                        validate_idx,
+                        true,
+                        &virtual_definitions,
+                        &virtual_uses,
+                    ) {
+                        validate_idx += consumed;
+                        continue;
+                    }
                     if let Some(consumed) = super::runtime::x86_jit_mem_unary_rmw_sequence_len(
                         block,
                         validate_idx,
@@ -16430,6 +16613,16 @@ impl X86_64Lowerer {
             // (see `emit_jit_mem_op`). The helper-backed scalar/CRC fusions
             // below are explicitly restricted to that mode.
             if self.mem_helpers {
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_mem_shift_rmw(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_mem_unary_rmw(
                     block,
@@ -24813,6 +25006,177 @@ mod tests {
             "fault must preserve every arithmetic status flag"
         );
         assert_eq!(fault.exit_pc, 0x2000, "fault must restart current PC");
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_helper_backed_memory_destination_shift_commits_flags_only_after_store() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        #[repr(C)]
+        struct LoadResult {
+            value: u64,
+            ok: u64,
+        }
+
+        #[derive(Default)]
+        struct MemoryContext {
+            load_value: u64,
+            store_value: u64,
+            committed_value: u64,
+            loads: u64,
+            stores: u64,
+            store_ok: u64,
+        }
+
+        extern "C" fn load(
+            context: *mut MemoryContext,
+            _addr: u64,
+            _size: u64,
+            _signed: u64,
+        ) -> LoadResult {
+            let context = unsafe { &mut *context };
+            context.loads += 1;
+            LoadResult {
+                value: context.load_value,
+                ok: 1,
+            }
+        }
+
+        extern "C" fn store(
+            context: *mut MemoryContext,
+            _addr: u64,
+            value: u64,
+            _size: u64,
+        ) -> u64 {
+            let context = unsafe { &mut *context };
+            context.stores += 1;
+            context.store_value = value;
+            if context.store_ok != 0 {
+                context.committed_value = value;
+            }
+            context.store_ok
+        }
+
+        let old = VReg::Virtual(crate::smir::ir::types::VirtualId(60));
+        let result = VReg::Virtual(crate::smir::ir::types::VirtualId(61));
+        let flags_result = VReg::Virtual(crate::smir::ir::types::VirtualId(62));
+        let address = Address::Absolute(0x6000);
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x3000);
+        builder.push_op(
+            0x3000,
+            OpKind::Load {
+                dst: old,
+                addr: address.clone(),
+                width: MemWidth::B2,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.push_op(
+            0x3000,
+            OpKind::Shl {
+                dst: result,
+                src: old,
+                amount: SrcOperand::Imm(4),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.push_op(
+            0x3000,
+            OpKind::Store {
+                src: result,
+                addr: address,
+                width: MemWidth::B2,
+            },
+        );
+        builder.push_op(
+            0x3000,
+            OpKind::Shl {
+                dst: flags_result,
+                src: old,
+                amount: SrcOperand::Imm(4),
+                width: OpWidth::W16,
+                flags: FlagUpdate::All,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_mem_helpers(true);
+        let lowered = lowerer
+            .lower_function(&builder.finish())
+            .expect("lower helper-backed scalar shift RMW");
+        let exec = ExecMem::new(
+            &lowerer
+                .finalize()
+                .expect("finalize helper-backed scalar shift RMW"),
+        )
+        .expect("map helper-backed scalar shift RMW");
+
+        const INCOMING_FLAGS: u64 = 0x2 | 0x8D5;
+        const INITIAL_VALUE: u64 = 0xF123;
+        const RESULT_VALUE: u64 = 0x1230;
+        const RESULT_STATUS: u64 = 0x15; // CF | PF | preserved AF
+        let initial_gprs = {
+            let mut gprs = [0u64; 32];
+            for (index, value) in gprs.iter_mut().enumerate() {
+                *value = 0xC700_0000_0000_0000 | index as u64;
+            }
+            gprs
+        };
+
+        let mut success_context = MemoryContext {
+            load_value: INITIAL_VALUE,
+            committed_value: 0xDEAD_BEEF_DEAD_BEEF,
+            store_ok: 1,
+            ..MemoryContext::default()
+        };
+        let mut success = GuestRegs::default();
+        success.gpr = initial_gprs;
+        success.rflags = INCOMING_FLAGS;
+        success.exit_pc = 0xAAAA_BBBB_CCCC_DDDD;
+        success.ctx = (&mut success_context as *mut MemoryContext) as u64;
+        success.load_fn = load as usize as u64;
+        success.store_fn = store as usize as u64;
+        exec.run(lowered.entry_offset, &mut success);
+
+        assert_eq!(success_context.loads, 1);
+        assert_eq!(success_context.stores, 1);
+        assert_eq!(success_context.store_value, RESULT_VALUE);
+        assert_eq!(success_context.committed_value, RESULT_VALUE);
+        assert_eq!(success.gpr, initial_gprs, "success must preserve every GPR");
+        assert_eq!(success.rflags & 0x8D5, RESULT_STATUS, "SHL result flags");
+        assert_eq!(success.exit_pc, 0xAAAA_BBBB_CCCC_DDDD);
+
+        let mut fault_context = MemoryContext {
+            load_value: INITIAL_VALUE,
+            committed_value: 0xDEAD_BEEF_DEAD_BEEF,
+            store_ok: 0,
+            ..MemoryContext::default()
+        };
+        let mut fault = GuestRegs::default();
+        fault.gpr = initial_gprs;
+        fault.rflags = INCOMING_FLAGS;
+        fault.ctx = (&mut fault_context as *mut MemoryContext) as u64;
+        fault.load_fn = load as usize as u64;
+        fault.store_fn = store as usize as u64;
+        exec.run(lowered.entry_offset, &mut fault);
+
+        assert_eq!(fault_context.loads, 1);
+        assert_eq!(fault_context.stores, 1);
+        assert_eq!(fault_context.store_value, RESULT_VALUE);
+        assert_eq!(
+            fault_context.committed_value, 0xDEAD_BEEF_DEAD_BEEF,
+            "failed store must not commit memory"
+        );
+        assert_eq!(fault.gpr, initial_gprs, "fault must preserve every GPR");
+        assert_eq!(
+            fault.rflags & 0x8D5,
+            INCOMING_FLAGS & 0x8D5,
+            "fault must preserve every arithmetic status flag"
+        );
+        assert_eq!(fault.exit_pc, 0x3000, "fault must restart current PC");
     }
 
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]

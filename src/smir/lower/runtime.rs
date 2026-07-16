@@ -6328,6 +6328,182 @@ pub(crate) fn x86_jit_mem_unary_rmw_sequence_len(
     Some(3)
 }
 
+fn x86_shift_rmw_shape(
+    kind: &crate::smir::ir::ops::OpKind,
+) -> Option<(
+    u8,
+    crate::smir::ir::types::VReg,
+    crate::smir::ir::types::VReg,
+    crate::smir::ir::types::SrcOperand,
+    crate::smir::ir::types::OpWidth,
+    crate::smir::ir::flags::FlagUpdate,
+)> {
+    use crate::smir::ir::ops::OpKind;
+
+    match kind {
+        OpKind::Rol {
+            dst,
+            src,
+            amount,
+            width,
+            flags,
+        } => Some((0, *dst, *src, amount.clone(), *width, *flags)),
+        OpKind::Ror {
+            dst,
+            src,
+            amount,
+            width,
+            flags,
+        } => Some((1, *dst, *src, amount.clone(), *width, *flags)),
+        OpKind::Rcl {
+            dst,
+            src,
+            amount,
+            width,
+            flags,
+        } => Some((2, *dst, *src, amount.clone(), *width, *flags)),
+        OpKind::Rcr {
+            dst,
+            src,
+            amount,
+            width,
+            flags,
+        } => Some((3, *dst, *src, amount.clone(), *width, *flags)),
+        OpKind::Shl {
+            dst,
+            src,
+            amount,
+            width,
+            flags,
+        } => Some((4, *dst, *src, amount.clone(), *width, *flags)),
+        OpKind::Shr {
+            dst,
+            src,
+            amount,
+            width,
+            flags,
+        } => Some((5, *dst, *src, amount.clone(), *width, *flags)),
+        OpKind::Sar {
+            dst,
+            src,
+            amount,
+            width,
+            flags,
+        } => Some((7, *dst, *src, amount.clone(), *width, *flags)),
+        _ => None,
+    }
+}
+
+/// Validate the exact four-op fault-precise memory-destination shift/rotate
+/// sequence emitted by the x86 lifter. Immediate counts are normalized exactly
+/// as x86 does. Counts at or above a sub-dword operand width and variable CL
+/// counts remain fail-closed until their undefined-flag policy can be selected
+/// without speculative guest-visible state.
+pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::flags::{FlagSet, FlagUpdate};
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{OpWidth, SignExtend, SrcOperand, VReg};
+
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (old, addr, mem_width) = match &load.kind {
+        OpKind::Load {
+            dst: old @ VReg::Virtual(_),
+            addr,
+            width,
+            sign: SignExtend::Zero,
+        } => (*old, addr, *width),
+        _ => return None,
+    };
+    let width = mem_width.to_op_width()?;
+    if !matches!(
+        width,
+        OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+    ) || !x86_jit_mem_address_shape_valid(addr)
+    {
+        return None;
+    }
+
+    let compute = block.ops.get(index + 1)?;
+    let store = block.ops.get(index + 2)?;
+    let replay = block.ops.get(index + 3)?;
+    if [compute, store, replay]
+        .into_iter()
+        .any(|op| op.guest_pc != load.guest_pc)
+    {
+        return None;
+    }
+    if matches!(
+        compute.x86_hint,
+        Some(crate::smir::ir::ops::X86OpHint::ShiftGroup6)
+    ) || matches!(
+        replay.x86_hint,
+        Some(crate::smir::ir::ops::X86OpHint::ShiftGroup6)
+    ) {
+        return None;
+    }
+    let (compute_tag, result, compute_old, amount, compute_width, compute_flags) =
+        x86_shift_rmw_shape(&compute.kind)?;
+    let (replay_tag, flags_result, replay_old, replay_amount, replay_width, replay_flags) =
+        x86_shift_rmw_shape(&replay.kind)?;
+    let count_valid = match amount {
+        SrcOperand::Imm(value) if (0..=i64::from(u8::MAX)).contains(&value) => {
+            let mask = if width == OpWidth::W64 { 0x3f } else { 0x1f };
+            let masked = (value as u8) & mask;
+            match compute_tag {
+                2 | 3 => masked == 1,
+                0 | 1 | 4 | 5 | 7 => masked == 0 || u32::from(masked) < width.bits(),
+                _ => false,
+            }
+        }
+        _ => false,
+    };
+    let rotate_flags = FlagSet::CF.union(FlagSet::OF);
+    let replay_flags_valid = if compute_tag <= 3 {
+        matches!(replay_flags, FlagUpdate::Specific(set) if set == rotate_flags)
+    } else {
+        replay_flags == FlagUpdate::All
+    };
+    if !matches!(result, VReg::Virtual(_))
+        || !matches!(flags_result, VReg::Virtual(_))
+        || compute_tag != replay_tag
+        || compute_old != old
+        || replay_old != old
+        || amount != replay_amount
+        || compute_width != width
+        || replay_width != width
+        || compute_flags != FlagUpdate::None
+        || !replay_flags_valid
+        || !count_valid
+        || !matches!(
+            &store.kind,
+            OpKind::Store {
+                src,
+                addr: store_addr,
+                width: store_width,
+            } if *src == result && *store_addr == *addr && *store_width == mem_width
+        )
+        || virtual_definitions.get(&old) != Some(&1)
+        || virtual_uses.get(&old) != Some(&2)
+        || virtual_definitions.get(&result) != Some(&1)
+        || virtual_uses.get(&result) != Some(&1)
+        || virtual_definitions.get(&flags_result) != Some(&1)
+        || virtual_uses.contains_key(&flags_result)
+    {
+        return None;
+    }
+
+    Some(4)
+}
+
 /// Validate an exact scalar memory-source pair emitted by the x86 lifter:
 /// `Load virtual; ALU/CMP/TEST ... virtual`. The load result must be an SSA
 /// single-definition/single-use value, and every architectural operand must be
@@ -7102,6 +7278,16 @@ fn block_is_clobber_safe(
 
     let mut i = 0;
     while i < n {
+        if let Some(consumed) = x86_jit_mem_shift_rmw_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
         if let Some(consumed) = x86_jit_mem_unary_rmw_sequence_len(
             block,
             i,
@@ -19265,6 +19451,367 @@ mod jit_gate_tests {
             &std::collections::HashMap::new(),
             true,
         ));
+    }
+
+    #[test]
+    fn x86_scalar_memory_destination_shift_gate_accepts_exact_replay_and_fails_closed() {
+        let old = VReg::Virtual(VirtualId(50));
+        let result = VReg::Virtual(VirtualId(51));
+        let flags_result = VReg::Virtual(VirtualId(52));
+        let address = || Address::BaseIndexScale {
+            base: Some(x86(X86Reg::Rbx)),
+            index: x86(X86Reg::R18),
+            scale: 8,
+            disp: -32,
+            disp_size: DispSize::Disp8,
+        };
+        let shift = |tag: u8,
+                     dst: VReg,
+                     src: VReg,
+                     amount: SrcOperand,
+                     width: OpWidth,
+                     flags: FlagUpdate| match tag {
+            0 => OpKind::Rol {
+                dst,
+                src,
+                amount,
+                width,
+                flags,
+            },
+            1 => OpKind::Ror {
+                dst,
+                src,
+                amount,
+                width,
+                flags,
+            },
+            2 => OpKind::Rcl {
+                dst,
+                src,
+                amount,
+                width,
+                flags,
+            },
+            3 => OpKind::Rcr {
+                dst,
+                src,
+                amount,
+                width,
+                flags,
+            },
+            4 => OpKind::Shl {
+                dst,
+                src,
+                amount,
+                width,
+                flags,
+            },
+            5 => OpKind::Shr {
+                dst,
+                src,
+                amount,
+                width,
+                flags,
+            },
+            7 => OpKind::Sar {
+                dst,
+                src,
+                amount,
+                width,
+                flags,
+            },
+            _ => unreachable!(),
+        };
+        let rotate_flags = FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF));
+        let build = |tag: u8,
+                     replay_tag: u8,
+                     amount: SrcOperand,
+                     replay_amount: SrcOperand,
+                     mem_width: MemWidth,
+                     compute_flags: FlagUpdate,
+                     replay_flags: FlagUpdate,
+                     store_addr: Address,
+                     replay_pc: u64,
+                     extra_old_use: bool| {
+            let width = mem_width.to_op_width().unwrap();
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::Load {
+                    dst: old,
+                    addr: address(),
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
+            );
+            builder.push_op(
+                0x1000,
+                shift(tag, result, old, amount, width, compute_flags),
+            );
+            builder.push_op(
+                0x1000,
+                OpKind::Store {
+                    src: result,
+                    addr: store_addr,
+                    width: mem_width,
+                },
+            );
+            builder.push_op(
+                replay_pc,
+                shift(
+                    replay_tag,
+                    flags_result,
+                    old,
+                    replay_amount,
+                    width,
+                    replay_flags,
+                ),
+            );
+            if extra_old_use {
+                builder.push_op(
+                    0x1001,
+                    OpKind::Mov {
+                        dst: x86(X86Reg::R11),
+                        src: SrcOperand::Reg(old),
+                        width,
+                    },
+                );
+            }
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            builder.finish()
+        };
+
+        for (tag, amount, mem_width) in [
+            (0, SrcOperand::Imm(7), MemWidth::B1),
+            (1, SrcOperand::Imm(7), MemWidth::B2),
+            (2, SrcOperand::Imm(1), MemWidth::B4),
+            (3, SrcOperand::Imm(1), MemWidth::B8),
+            (4, SrcOperand::Imm(0), MemWidth::B1),
+            (5, SrcOperand::Imm(1), MemWidth::B4),
+            (7, SrcOperand::Imm(255), MemWidth::B8),
+        ] {
+            let replay_flags = if tag <= 3 {
+                rotate_flags
+            } else {
+                FlagUpdate::All
+            };
+            let function = build(
+                tag,
+                tag,
+                amount.clone(),
+                amount,
+                mem_width,
+                FlagUpdate::None,
+                replay_flags,
+                address(),
+                0x1000,
+                false,
+            );
+            assert!(is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                true,
+            ));
+            assert!(!is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                false,
+            ));
+        }
+
+        for function in [
+            {
+                let mut function = build(
+                    4,
+                    4,
+                    SrcOperand::Imm(1),
+                    SrcOperand::Imm(1),
+                    MemWidth::B8,
+                    FlagUpdate::None,
+                    FlagUpdate::All,
+                    address(),
+                    0x1000,
+                    false,
+                );
+                function.blocks[0].ops[1].x86_hint = Some(X86OpHint::ShiftGroup6);
+                function.blocks[0].ops[3].x86_hint = Some(X86OpHint::ShiftGroup6);
+                function
+            },
+            build(
+                0,
+                0,
+                SrcOperand::Reg(x86(X86Reg::Rcx)),
+                SrcOperand::Reg(x86(X86Reg::Rcx)),
+                MemWidth::B8,
+                FlagUpdate::None,
+                rotate_flags,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                5,
+                5,
+                SrcOperand::Reg(x86(X86Reg::Rcx)),
+                SrcOperand::Reg(x86(X86Reg::Rcx)),
+                MemWidth::B4,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                2,
+                2,
+                SrcOperand::Reg(x86(X86Reg::Rcx)),
+                SrcOperand::Reg(x86(X86Reg::Rcx)),
+                MemWidth::B8,
+                FlagUpdate::None,
+                rotate_flags,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                3,
+                3,
+                SrcOperand::Imm(2),
+                SrcOperand::Imm(2),
+                MemWidth::B8,
+                FlagUpdate::None,
+                rotate_flags,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                0,
+                0,
+                SrcOperand::Imm(1),
+                SrcOperand::Imm(1),
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                4,
+                4,
+                SrcOperand::Imm(1),
+                SrcOperand::Imm(1),
+                MemWidth::B8,
+                FlagUpdate::All,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                5,
+                7,
+                SrcOperand::Imm(1),
+                SrcOperand::Imm(1),
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                7,
+                7,
+                SrcOperand::Reg(x86(X86Reg::Rdx)),
+                SrcOperand::Reg(x86(X86Reg::Rdx)),
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                4,
+                4,
+                SrcOperand::Imm(8),
+                SrcOperand::Imm(8),
+                MemWidth::B1,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                4,
+                4,
+                SrcOperand::Imm(256),
+                SrcOperand::Imm(256),
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                4,
+                4,
+                SrcOperand::Imm(1),
+                SrcOperand::Imm(2),
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                4,
+                4,
+                SrcOperand::Imm(1),
+                SrcOperand::Imm(1),
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                Address::Absolute(0x2000),
+                0x1000,
+                false,
+            ),
+            build(
+                4,
+                4,
+                SrcOperand::Imm(1),
+                SrcOperand::Imm(1),
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1001,
+                false,
+            ),
+            build(
+                4,
+                4,
+                SrcOperand::Imm(1),
+                SrcOperand::Imm(1),
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                true,
+            ),
+        ] {
+            assert!(!is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                true,
+            ));
+        }
     }
 
     #[test]

@@ -5113,6 +5113,14 @@ impl X86_64Lifter {
         }
     }
 
+    fn x86_shift_smir_op(id: OpId, pc: u64, group: u8, kind: OpKind) -> SmirOp {
+        if group == 6 {
+            SmirOp::with_hint(id, pc, kind, X86OpHint::ShiftGroup6)
+        } else {
+            SmirOp::new(id, pc, kind)
+        }
+    }
+
     /// Lift shift instructions with immediate (C0/C1)
     fn lift_shift_imm(
         &self,
@@ -5182,9 +5190,10 @@ impl X86_64Lifter {
         } else {
             src
         };
-        ops.push(SmirOp::new(
+        ops.push(Self::x86_shift_smir_op(
             OpId(ops.len() as u16),
             pc,
+            group,
             Self::x86_shift_op(
                 group,
                 result,
@@ -5210,9 +5219,10 @@ impl X86_64Lifter {
                 },
             ));
             let flag_result = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
+            ops.push(Self::x86_shift_smir_op(
                 OpId(ops.len() as u16),
                 pc,
+                group,
                 Self::x86_shift_op(group, flag_result, src, SrcOperand::Imm(imm), width, true),
             ));
         }
@@ -5283,9 +5293,10 @@ impl X86_64Lifter {
         } else {
             src
         };
-        ops.push(SmirOp::new(
+        ops.push(Self::x86_shift_smir_op(
             OpId(ops.len() as u16),
             pc,
+            group,
             Self::x86_shift_op(
                 group,
                 result,
@@ -5311,9 +5322,10 @@ impl X86_64Lifter {
                 },
             ));
             let flag_result = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
+            ops.push(Self::x86_shift_smir_op(
                 OpId(ops.len() as u16),
                 pc,
+                group,
                 Self::x86_shift_op(group, flag_result, src, SrcOperand::Imm(1), width, true),
             ));
         }
@@ -5385,9 +5397,10 @@ impl X86_64Lifter {
             src
         };
         let amount = SrcOperand::Reg(self.gpr(1));
-        ops.push(SmirOp::new(
+        ops.push(Self::x86_shift_smir_op(
             OpId(ops.len() as u16),
             pc,
+            group,
             Self::x86_shift_op(group, result, src, amount.clone(), width, addr.is_none()),
         ));
 
@@ -5406,9 +5419,10 @@ impl X86_64Lifter {
                 },
             ));
             let flag_result = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
+            ops.push(Self::x86_shift_smir_op(
                 OpId(ops.len() as u16),
                 pc,
+                group,
                 Self::x86_shift_op(group, flag_result, src, amount, width, true),
             ));
         }
@@ -41226,6 +41240,34 @@ mod tests {
                     assert_eq!(*flags, x86_rotate_flags(), "{name}");
                 }
                 other => panic!("expected APX NDD {name}, got {other:?}"),
+            }
+        }
+    }
+
+    #[test]
+    fn lift_legacy_group2_sal_alias_marks_memory_sequence_jit_unsafe() {
+        let mut lifter = X86_64Lifter::strict();
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+
+        for (name, bytes) in [
+            ("imm8", &[0xC0, 0x33, 0x04][..]),
+            ("one", &[0xD0, 0x33][..]),
+            ("cl", &[0xD2, 0x33][..]),
+        ] {
+            let result = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap();
+            assert_eq!(result.ops.len(), 4, "{name}");
+            for index in [1, 3] {
+                assert!(
+                    matches!(result.ops[index].kind, OpKind::Shl { .. }),
+                    "{name} op {index}: {:?}",
+                    result.ops[index].kind
+                );
+                assert_eq!(
+                    result.ops[index].x86_hint,
+                    Some(X86OpHint::ShiftGroup6),
+                    "{name} op {index}"
+                );
+                assert!(!result.ops[index].is_jit_safe(), "{name} op {index}");
             }
         }
     }
