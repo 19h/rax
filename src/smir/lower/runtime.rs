@@ -6396,12 +6396,11 @@ fn x86_shift_rmw_shape(
 
 /// Validate the exact four-op fault-precise memory-destination shift/rotate
 /// sequence emitted by the x86 lifter. Immediate counts are normalized exactly
-/// as x86 does. Byte ROL/ROR accepts every immediate/CL count because value
-/// rotation wraps modulo eight while CF/OF classification still uses the raw
-/// masked count. Multi-bit/zero RCL/RCR and every other variable CL operation are
-/// restricted to dword/qword widths, where the masked count cannot reach a
-/// second through-carry period. Remaining subword shapes stay fail-closed unless
-/// covered by an exact count whose deterministic flag policy is representable.
+/// as x86 does. ROL/ROR/RCL/RCR accept every immediate/CL count because native
+/// value/CF behavior follows the operand or through-carry period while the saved
+/// RFLAGS merge classifies zero/one/multi using the raw masked count. Subword
+/// SHL/SHR/SAR shapes stay fail-closed unless their exact count has representable
+/// deterministic flag behavior.
 pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -6462,18 +6461,14 @@ pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
             let mask = if width == OpWidth::W64 { 0x3f } else { 0x1f };
             let masked = (*value as u8) & mask;
             match compute_tag {
-                0 | 1 if width == OpWidth::W8 => true,
-                2 | 3 => masked == 1 || matches!(width, OpWidth::W32 | OpWidth::W64),
-                0 | 1 | 4 | 5 | 7 => masked == 0 || u32::from(masked) < width.bits(),
+                0..=3 => true,
+                4 | 5 | 7 => masked == 0 || u32::from(masked) < width.bits(),
                 _ => false,
             }
         }
         SrcOperand::Reg(VReg::Arch(crate::smir::ir::types::ArchReg::X86(
             crate::smir::ir::types::X86Reg::Rcx,
-        ))) => {
-            matches!(width, OpWidth::W32 | OpWidth::W64)
-                || (compute_tag <= 1 && width == OpWidth::W8)
-        }
+        ))) => matches!(width, OpWidth::W32 | OpWidth::W64) || compute_tag <= 3,
         _ => false,
     };
     let rotate_flags = FlagSet::CF.union(FlagSet::OF);
@@ -19644,6 +19639,40 @@ mod jit_gate_tests {
             ));
         }
 
+        for tag in 0..=3 {
+            for mem_width in [MemWidth::B1, MemWidth::B2] {
+                for amount in [
+                    SrcOperand::Imm(0),
+                    SrcOperand::Imm(1),
+                    SrcOperand::Imm(9),
+                    SrcOperand::Imm(17),
+                    SrcOperand::Imm(31),
+                    SrcOperand::Reg(x86(X86Reg::Rcx)),
+                ] {
+                    let function = build(
+                        tag,
+                        tag,
+                        amount.clone(),
+                        amount,
+                        mem_width,
+                        FlagUpdate::None,
+                        rotate_flags,
+                        address(),
+                        0x1000,
+                        false,
+                    );
+                    assert!(
+                        is_native_clobber_safe_excluding(
+                            &function,
+                            &std::collections::HashMap::new(),
+                            true,
+                        ),
+                        "subword rotate tag {tag} with {mem_width:?} must JIT"
+                    );
+                }
+            }
+        }
+
         for function in [
             {
                 let mut function = build(
@@ -19663,30 +19692,6 @@ mod jit_gate_tests {
                 function
             },
             build(
-                0,
-                0,
-                SrcOperand::Reg(x86(X86Reg::Rcx)),
-                SrcOperand::Reg(x86(X86Reg::Rcx)),
-                MemWidth::B2,
-                FlagUpdate::None,
-                rotate_flags,
-                address(),
-                0x1000,
-                false,
-            ),
-            build(
-                1,
-                1,
-                SrcOperand::Reg(x86(X86Reg::Rcx)),
-                SrcOperand::Reg(x86(X86Reg::Rcx)),
-                MemWidth::B2,
-                FlagUpdate::None,
-                rotate_flags,
-                address(),
-                0x1000,
-                false,
-            ),
-            build(
                 4,
                 4,
                 SrcOperand::Reg(x86(X86Reg::Rcx)),
@@ -19706,54 +19711,6 @@ mod jit_gate_tests {
                 MemWidth::B2,
                 FlagUpdate::None,
                 FlagUpdate::All,
-                address(),
-                0x1000,
-                false,
-            ),
-            build(
-                0,
-                0,
-                SrcOperand::Imm(17),
-                SrcOperand::Imm(17),
-                MemWidth::B2,
-                FlagUpdate::None,
-                rotate_flags,
-                address(),
-                0x1000,
-                false,
-            ),
-            build(
-                1,
-                1,
-                SrcOperand::Imm(17),
-                SrcOperand::Imm(17),
-                MemWidth::B2,
-                FlagUpdate::None,
-                rotate_flags,
-                address(),
-                0x1000,
-                false,
-            ),
-            build(
-                2,
-                2,
-                SrcOperand::Imm(2),
-                SrcOperand::Imm(2),
-                MemWidth::B1,
-                FlagUpdate::None,
-                rotate_flags,
-                address(),
-                0x1000,
-                false,
-            ),
-            build(
-                3,
-                3,
-                SrcOperand::Imm(2),
-                SrcOperand::Imm(2),
-                MemWidth::B2,
-                FlagUpdate::None,
-                rotate_flags,
                 address(),
                 0x1000,
                 false,
