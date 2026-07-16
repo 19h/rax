@@ -8405,6 +8405,7 @@ fn block_is_clobber_safe(
         let state_not_ok = super::x86_64::x86_state_backed_gpr_not_valid(op);
         let state_neg_ok = super::x86_64::x86_state_backed_gpr_neg_valid(op);
         let state_inc_dec_ok = super::x86_64::x86_state_backed_gpr_inc_dec_valid(op);
+        let state_count_ok = super::x86_64::x86_state_backed_gpr_count_valid(op);
         let state_bswap_ok = super::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = super::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let stack_state_ok = stack_mov_ok
@@ -8415,6 +8416,7 @@ fn block_is_clobber_safe(
             || state_not_ok
             || state_neg_ok
             || state_inc_dec_ok
+            || state_count_ok
             || state_bswap_ok
             || state_xchg_ok;
         if (super::x86_64::x86_state_backed_gpr_extend_candidate(op) && !state_extend_ok)
@@ -8423,6 +8425,7 @@ fn block_is_clobber_safe(
             || (super::x86_64::x86_state_backed_gpr_not_candidate(op) && !state_not_ok)
             || (super::x86_64::x86_state_backed_gpr_neg_candidate(op) && !state_neg_ok)
             || (super::x86_64::x86_state_backed_gpr_inc_dec_candidate(op) && !state_inc_dec_ok)
+            || (super::x86_64::x86_state_backed_gpr_count_candidate(op) && !state_count_ok)
             || (super::x86_64::x86_state_backed_gpr_bswap_candidate(op) && !state_bswap_ok)
             || (super::x86_64::x86_state_backed_gpr_xchg_candidate(op) && !state_xchg_ok)
         {
@@ -8553,6 +8556,7 @@ fn block_is_clobber_safe(
                 | OpKind::Popcnt { .. }
                 | OpKind::X86Count { .. }
         ) && !x86_count_shape_valid(&op.kind)
+            && !state_count_ok
         {
             return false;
         }
@@ -8582,7 +8586,7 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
+        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/count/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the current guest
@@ -19094,6 +19098,110 @@ mod jit_gate_tests {
         ] {
             assert!(!x86_gate(op), "malformed {name} count must deopt");
         }
+    }
+
+    #[test]
+    fn x86_count_gate_accepts_state_backed_gprs_and_rejects_unsafe_ir() {
+        for op in [
+            OpKind::X86Count {
+                dst: x86(X86Reg::Rbp),
+                src: x86(X86Reg::Rsp),
+                width: OpWidth::W16,
+                kind: X86CountKind::Popcnt,
+                flags: FlagUpdate::All,
+            },
+            OpKind::X86Count {
+                dst: x86(X86Reg::Rsp),
+                src: x86(X86Reg::Rbp),
+                width: OpWidth::W64,
+                kind: X86CountKind::Tzcnt,
+                flags: FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF)),
+            },
+            OpKind::X86Count {
+                dst: x86(X86Reg::R31),
+                src: x86(X86Reg::R16),
+                width: OpWidth::W32,
+                kind: X86CountKind::Lzcnt,
+                flags: FlagUpdate::None,
+            },
+            OpKind::X86Count {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W64,
+                kind: X86CountKind::Popcnt,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
+            },
+        ] {
+            assert!(op.is_jit_safe());
+            assert!(x86_gate(op));
+        }
+
+        for (name, op) in [
+            (
+                "byte width",
+                OpKind::X86Count {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W8,
+                    kind: X86CountKind::Popcnt,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "undefined flag request",
+                OpKind::X86Count {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W64,
+                    kind: X86CountKind::Tzcnt,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "virtual source",
+                OpKind::X86Count {
+                    dst: x86(X86Reg::R16),
+                    src: VReg::Virtual(VirtualId(0)),
+                    width: OpWidth::W64,
+                    kind: X86CountKind::Lzcnt,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "foreign architecture source",
+                OpKind::X86Count {
+                    dst: x86(X86Reg::R16),
+                    src: arm_x(0),
+                    width: OpWidth::W64,
+                    kind: X86CountKind::Popcnt,
+                    flags: FlagUpdate::All,
+                },
+            ),
+        ] {
+            assert!(
+                !x86_gate(op),
+                "malformed {name} state-backed count must deopt"
+            );
+        }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::X86Count {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W64,
+                kind: X86CountKind::Popcnt,
+                flags: FlagUpdate::All,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut hinted = builder.finish();
+        hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+        assert!(
+            !is_native_clobber_safe(&hinted),
+            "hinted state-backed count must fail closed"
+        );
     }
 
     #[test]

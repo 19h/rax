@@ -223,6 +223,37 @@ pub(crate) fn x86_state_backed_gpr_inc_dec_valid(op: &SmirOp) -> bool {
     )
 }
 
+pub(crate) fn x86_state_backed_gpr_count_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::X86Count { dst, src, .. }
+            if x86_state_backed_arch_gpr(dst) || x86_state_backed_arch_gpr(src)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_count_valid(op: &SmirOp) -> bool {
+    let OpKind::X86Count {
+        dst: VReg::Arch(ArchReg::X86(dst)),
+        src: VReg::Arch(ArchReg::X86(src)),
+        width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+        kind,
+        flags,
+    } = &op.kind
+    else {
+        return false;
+    };
+    let defined = match kind {
+        X86CountKind::Popcnt => FlagSet::ALL_X86,
+        X86CountKind::Tzcnt | X86CountKind::Lzcnt => FlagSet::CF.union(FlagSet::ZF),
+    };
+
+    x86_state_backed_gpr_count_candidate(op)
+        && op.x86_hint.is_none()
+        && dst.gpr_index().is_some()
+        && src.gpr_index().is_some()
+        && flags.as_set().difference(defined).is_empty()
+}
+
 pub(crate) fn x86_state_backed_gpr_bswap_candidate(op: &SmirOp) -> bool {
     matches!(
         &op.kind,
@@ -4171,6 +4202,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_not_valid(op)
             || x86_state_backed_gpr_neg_valid(op)
             || x86_state_backed_gpr_inc_dec_valid(op)
+            || x86_state_backed_gpr_count_valid(op)
             || x86_state_backed_gpr_bswap_valid(op)
             || x86_state_backed_gpr_xchg_valid(op)
         {
@@ -6830,7 +6862,18 @@ impl X86_64Lowerer {
                 width,
                 kind,
                 flags,
-            } => self.lower_x86_count(*dst, *src, *width, *kind, *flags)?,
+            } => {
+                if x86_state_backed_gpr_count_candidate(op) {
+                    if !x86_state_backed_gpr_count_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed X86Count".to_string(),
+                            operand: format!("invalid x86 GPR count {kind:?} {width:?} {flags:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_count(*dst, *src, *width, *kind, *flags);
+                }
+                self.lower_x86_count(*dst, *src, *width, *kind, *flags)?;
+            }
 
             // ================================================================
             // Shifts
@@ -14629,6 +14672,108 @@ impl X86_64Lowerer {
         if dst_idx == 5 {
             let commit_width = if matches!(width, OpWidth::W8 | OpWidth::W16) {
                 width
+            } else {
+                OpWidth::W64
+            };
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_count(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+        kind: X86CountKind,
+        flags: FlagUpdate,
+    ) -> Result<(), LowerError> {
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: "state-backed X86Count".to_string(),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let src_idx = Self::x86_gpr_index(src).ok_or_else(|| LowerError::InvalidOperand {
+            op: "state-backed X86Count".to_string(),
+            operand: "source is not an architectural x86 GPR".to_string(),
+        })?;
+        let requested = flags.as_set();
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rax, i32::from(src_idx) * 8, width);
+        }
+        let emit_count = |emitter: &mut X86Emitter<'_>| match kind {
+            X86CountKind::Popcnt => emitter.emit_popcnt(PhysReg::Rdx, PhysReg::Rdx, width),
+            X86CountKind::Tzcnt => emitter.emit_tzcnt(PhysReg::Rdx, PhysReg::Rdx, width),
+            X86CountKind::Lzcnt => emitter.emit_lzcnt(PhysReg::Rdx, PhysReg::Rdx, width),
+        };
+
+        if requested.is_empty() {
+            self.code.emit_u8(0x9C); // pushfq: APX NF preserves every status flag
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emit_count(&mut emitter);
+            self.code.emit_u8(0x9D); // popfq
+        } else if kind == X86CountKind::Popcnt && requested == FlagSet::ALL_X86 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emit_count(&mut emitter);
+        } else {
+            let rflags_mask = Self::x86_status_rflags_mask(requested);
+            self.code.emit_u8(0x9C); // pushfq (old)
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emit_count(&mut emitter);
+                emitter.emit_push(PhysReg::Rdx);
+            }
+            self.code.emit_u8(0x9C); // pushfq (new)
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_alu_mi_disp(
+                    4,
+                    PhysReg::Rsp,
+                    0,
+                    DispSize::Auto,
+                    rflags_mask,
+                    OpWidth::W64,
+                );
+                emitter.emit_pop(PhysReg::Rdx); // requested new status bits
+                emitter.emit_alu_mi_disp(
+                    4,
+                    PhysReg::Rsp,
+                    8,
+                    DispSize::Auto,
+                    !rflags_mask,
+                    OpWidth::W64,
+                );
+                emitter.emit_alu_mem_disp(
+                    0x08,
+                    PhysReg::Rdx,
+                    PhysReg::Rsp,
+                    8,
+                    DispSize::Auto,
+                    OpWidth::W64,
+                    X86AluEncoding::RmReg,
+                );
+                emitter.emit_pop(PhysReg::Rdx); // restore count result
+            }
+            self.code.emit_u8(0x9D); // popfq (merged)
+        }
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
+        if dst_idx == 5 {
+            let commit_width = if width == OpWidth::W16 {
+                OpWidth::W16
             } else {
                 OpWidth::W64
             };
@@ -27209,6 +27354,270 @@ mod tests {
                 lower_single_op_err(malformed),
                 LowerError::InvalidOperand { .. }
             ));
+        }
+    }
+
+    #[test]
+    fn lower_state_backed_gpr_count_emits_flag_contracts_and_rejects_malformed_shapes() {
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let flagless = lower_single_op(OpKind::X86Count {
+            dst: x86(X86Reg::R31),
+            src: x86(X86Reg::Rbp),
+            width: OpWidth::W32,
+            kind: X86CountKind::Lzcnt,
+            flags: FlagUpdate::None,
+        });
+        assert!(
+            flagless.contains(&0x9C) && flagless.contains(&0x9D),
+            "APX NF LZCNT must preserve RFLAGS: {flagless:02X?}"
+        );
+        assert!(
+            flagless
+                .windows(4)
+                .any(|bytes| bytes == [0xF3, 0x0F, 0xBD, 0xD2]),
+            "dword LZCNT must count EDX into EDX: {flagless:02X?}"
+        );
+        assert!(
+            flagless
+                .windows(7)
+                .any(|bytes| bytes == [0x48, 0x89, 0x90, 0xF8, 0x00, 0x00, 0x00]),
+            "dword LZCNT must fully commit GuestRegs.gpr[31]: {flagless:02X?}"
+        );
+
+        let popcnt_all = lower_single_op(OpKind::X86Count {
+            dst: x86(X86Reg::Rbp),
+            src: x86(X86Reg::Rsp),
+            width: OpWidth::W16,
+            kind: X86CountKind::Popcnt,
+            flags: FlagUpdate::All,
+        });
+        assert!(
+            !popcnt_all.contains(&0x9C) && !popcnt_all.contains(&0x9D),
+            "flag-setting POPCNT must leave native flags live: {popcnt_all:02X?}"
+        );
+        assert!(
+            popcnt_all
+                .windows(5)
+                .any(|bytes| bytes == [0xF3, 0x66, 0x0F, 0xB8, 0xD2]),
+            "word POPCNT must count DX into DX: {popcnt_all:02X?}"
+        );
+        assert!(
+            popcnt_all
+                .windows(4)
+                .any(|bytes| bytes == [0x66, 0x89, 0x55, 0x00]),
+            "word POPCNT must partially synchronize guest RBP: {popcnt_all:02X?}"
+        );
+
+        let tzcnt_flags = lower_single_op(OpKind::X86Count {
+            dst: x86(X86Reg::R16),
+            src: x86(X86Reg::Rbp),
+            width: OpWidth::W64,
+            kind: X86CountKind::Tzcnt,
+            flags: FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF)),
+        });
+        assert_eq!(
+            tzcnt_flags.iter().filter(|byte| **byte == 0x9C).count(),
+            2,
+            "state-backed TZCNT must save old and new RFLAGS: {tzcnt_flags:02X?}"
+        );
+        assert_eq!(tzcnt_flags.iter().filter(|byte| **byte == 0x9D).count(), 1);
+        assert!(tzcnt_flags.contains(&0x41), "TZCNT must merge CF and ZF");
+
+        for malformed in [
+            OpKind::X86Count {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W8,
+                kind: X86CountKind::Popcnt,
+                flags: FlagUpdate::All,
+            },
+            OpKind::X86Count {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W64,
+                kind: X86CountKind::Lzcnt,
+                flags: FlagUpdate::All,
+            },
+            OpKind::X86Count {
+                dst: x86(X86Reg::R16),
+                src: VReg::Virtual(crate::smir::ir::types::VirtualId(0)),
+                width: OpWidth::W64,
+                kind: X86CountKind::Tzcnt,
+                flags: FlagUpdate::None,
+            },
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(malformed),
+                    LowerError::InvalidOperand { .. }
+                ),
+                "malformed state-backed count must fail lowering"
+            );
+        }
+
+        let hinted = OpKind::X86Count {
+            dst: x86(X86Reg::R16),
+            src: x86(X86Reg::Rax),
+            width: OpWidth::W64,
+            kind: X86CountKind::Popcnt,
+            flags: FlagUpdate::All,
+        };
+        assert!(matches!(
+            lower_single_hinted_op_err(hinted, X86OpHint::Mulx),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_gpr_count_preserves_width_and_flag_contracts() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        const STATUS_MASK: u64 = 0x8D5;
+
+        struct Case {
+            name: &'static str,
+            dst: X86Reg,
+            src: X86Reg,
+            source: u64,
+            width: OpWidth,
+            kind: X86CountKind,
+            flags: FlagUpdate,
+        }
+
+        let cases = [
+            Case {
+                name: "POPCNT BP,SP partial flag-setting destination",
+                dst: X86Reg::Rbp,
+                src: X86Reg::Rsp,
+                source: 0x2233_4455_6677_5678,
+                width: OpWidth::W16,
+                kind: X86CountKind::Popcnt,
+                flags: FlagUpdate::All,
+            },
+            Case {
+                name: "TZCNT RSP,RBP full flag-merge destination",
+                dst: X86Reg::Rsp,
+                src: X86Reg::Rbp,
+                source: 0,
+                width: OpWidth::W64,
+                kind: X86CountKind::Tzcnt,
+                flags: FlagUpdate::Specific(FlagSet::CF.union(FlagSet::ZF)),
+            },
+            Case {
+                name: "NF LZCNT R31D,R16D zero-extending destination",
+                dst: X86Reg::R31,
+                src: X86Reg::R16,
+                source: 0xAABB_CCDD_8000_0000,
+                width: OpWidth::W32,
+                kind: X86CountKind::Lzcnt,
+                flags: FlagUpdate::None,
+            },
+            Case {
+                name: "POPCNT R16D in-place selective ZF destination",
+                dst: X86Reg::R16,
+                src: X86Reg::R16,
+                source: 0,
+                width: OpWidth::W32,
+                kind: X86CountKind::Popcnt,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
+            },
+            Case {
+                name: "NF TZCNT R16W,SP partial destination",
+                dst: X86Reg::R16,
+                src: X86Reg::Rsp,
+                source: 0x2233_4455_6677_0080,
+                width: OpWidth::W16,
+                kind: X86CountKind::Tzcnt,
+                flags: FlagUpdate::None,
+            },
+        ];
+
+        let count_result = |source: u64, width: OpWidth, kind: X86CountKind| {
+            let value = source & width.mask();
+            match kind {
+                X86CountKind::Popcnt => u64::from(value.count_ones()),
+                X86CountKind::Tzcnt => u64::from(if value == 0 {
+                    width.bits()
+                } else {
+                    value.trailing_zeros()
+                }),
+                X86CountKind::Lzcnt => u64::from(if value == 0 {
+                    width.bits()
+                } else {
+                    value.leading_zeros() - (64 - width.bits())
+                }),
+            }
+        };
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        for case in cases {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::X86Count {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    width: case.width,
+                    kind: case.kind,
+                    flags: case.flags,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            for (index, value) in regs.gpr.iter_mut().enumerate() {
+                *value = 0xA1A2_0000_0000_8000u64
+                    .wrapping_add((index as u64).wrapping_mul(0x0101_1111_2222_0101));
+            }
+            regs.gpr[4] = 0x2233_4455_6677_5678;
+            regs.gpr[5] = 0x3344_5566_8765_9ABC;
+            regs.gpr[16] = 0xAABB_CCDD_EEFF_7788;
+            regs.gpr[31] = 0xFFEE_DDCC_BBAA_1357;
+            let src_idx = case.src.gpr_index().unwrap() as usize;
+            regs.gpr[src_idx] = case.source;
+            regs.rflags = STATUS_MASK;
+
+            let mut expected = regs;
+            let dst_idx = case.dst.gpr_index().unwrap() as usize;
+            let source = regs.gpr[src_idx];
+            let result = count_result(source, case.width, case.kind);
+            expected.gpr[dst_idx] = match case.width {
+                OpWidth::W16 => (regs.gpr[dst_idx] & !case.width.mask()) | result,
+                OpWidth::W32 | OpWidth::W64 => result,
+                OpWidth::W8 | OpWidth::W128 => unreachable!(),
+            };
+            let requested = case.flags.as_set();
+            if !requested.is_empty() {
+                let new_status = match case.kind {
+                    X86CountKind::Popcnt => u64::from(source & case.width.mask() == 0) << 6,
+                    X86CountKind::Tzcnt | X86CountKind::Lzcnt => {
+                        u64::from(source & case.width.mask() == 0) | (u64::from(result == 0) << 6)
+                    }
+                };
+                let requested_mask = X86_64Lowerer::x86_status_rflags_mask(requested) as u64;
+                expected.rflags =
+                    (expected.rflags & !requested_mask) | (new_status & requested_mask);
+            }
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            assert_eq!(
+                regs.rflags & STATUS_MASK,
+                expected.rflags & STATUS_MASK,
+                "{} status flags",
+                case.name
+            );
         }
     }
 

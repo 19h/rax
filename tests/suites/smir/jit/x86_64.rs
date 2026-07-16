@@ -4738,6 +4738,151 @@ fn jit_state_backed_gpr_inc_dec_execute_without_memory_helpers() {
     }
 }
 
+/// State-backed scalar counts retain exact legacy POPCNT/LZCNT/TZCNT flags and
+/// preserve every incoming flag for APX NF forms.
+#[test]
+fn jit_state_backed_gpr_count_executes_without_memory_helpers() {
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        apx: bool,
+        destination_index: usize,
+        source_index: usize,
+        source: u64,
+        expected_destination: u64,
+    }
+
+    let cases = [
+        Case {
+            name: "POPCNT BP,SP partial flag-setting destination",
+            instruction: &[0x66, 0xF3, 0x0F, 0xB8, 0xEC],
+            apx: false,
+            destination_index: 5,
+            source_index: 4,
+            source: 0x2233_4455_6677_5678,
+            expected_destination: 0x3344_5566_8765_0008,
+        },
+        Case {
+            name: "TZCNT RSP,RBP full flag-merge destination",
+            instruction: &[0xF3, 0x48, 0x0F, 0xBC, 0xE5],
+            apx: false,
+            destination_index: 4,
+            source_index: 5,
+            source: 0,
+            expected_destination: 64,
+        },
+        Case {
+            name: "LZCNT R8D,EBP state-backed source",
+            instruction: &[0xF3, 0x44, 0x0F, 0xBD, 0xC5],
+            apx: false,
+            destination_index: 8,
+            source_index: 5,
+            source: 0x3344_5566_8000_0000,
+            expected_destination: 0,
+        },
+        Case {
+            name: "APX NF POPCNT R16W,SP partial destination",
+            instruction: &[0x62, 0xE4, 0x7D, 0x0C, 0x88, 0xC4],
+            apx: true,
+            destination_index: 16,
+            source_index: 4,
+            source: 0x2233_4455_6677_5678,
+            expected_destination: 0xAABB_CCDD_EEFF_0008,
+        },
+        Case {
+            name: "APX NF LZCNT R31D,EBP zero-extending destination",
+            instruction: &[0x62, 0x64, 0x7C, 0x0C, 0xF5, 0xFD],
+            apx: true,
+            destination_index: 31,
+            source_index: 5,
+            source: 1,
+            expected_destination: 31,
+        },
+        Case {
+            name: "APX NF TZCNT R31,RSP full destination",
+            instruction: &[0x62, 0x64, 0xFC, 0x0C, 0xF4, 0xFC],
+            apx: true,
+            destination_index: 31,
+            source_index: 4,
+            source: 0x80,
+            expected_destination: 7,
+        },
+    ];
+
+    let gprs = |regs: &Registers| {
+        [
+            regs.rax, regs.rcx, regs.rdx, regs.rbx, regs.rsp, regs.rbp, regs.rsi, regs.rdi,
+            regs.r8, regs.r9, regs.r10, regs.r11, regs.r12, regs.r13, regs.r14, regs.r15, regs.r16,
+            regs.r17, regs.r18, regs.r19, regs.r20, regs.r21, regs.r22, regs.r23, regs.r24,
+            regs.r25, regs.r26, regs.r27, regs.r28, regs.r29, regs.r30, regs.r31,
+        ]
+    };
+    let setup = |vcpu: &mut X86_64Vcpu, case: &Case| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x0102_0304_0506_0708;
+        regs.rcx = 0x1122_3344_5566_1234;
+        regs.rdx = 0x99AA_BBCC_DDEE_FF00;
+        regs.rbx = 0x0F1E_2D3C_4B5A_6978;
+        regs.rsp = 0x2233_4455_6677_5678;
+        regs.rbp = 0x3344_5566_8765_9ABC;
+        regs.r8 = 0x8899_AABB_CCDD_EEFF;
+        regs.r16 = 0xAABB_CCDD_EEFF_7788;
+        regs.r17 = 0xBBCC_DDEE_5566_7788;
+        regs.r31 = 0xFFEE_DDCC_BBAA_1357;
+        let source = match case.source_index {
+            4 => &mut regs.rsp,
+            5 => &mut regs.rbp,
+            _ => unreachable!(),
+        };
+        *source = case.source;
+        regs.rflags = 0x2 | 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+        vcpu.set_apx_enabled(case.apx);
+    };
+
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp, &case);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+        assert_eq!(
+            gprs(&expected)[case.destination_index],
+            case.expected_destination,
+            "{} reference destination",
+            case.name
+        );
+        assert_eq!(
+            gprs(&expected)[case.source_index],
+            case.source,
+            "{} reference source",
+            case.name
+        );
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit, &case);
+        jit.set_jit_call(false);
+        jit.set_jit_mem(false);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the register-only native tier:\n{}",
+            case.name,
+            jit.jit_dump_region(LOAD_ADDR)
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(gprs(&actual), gprs(&expected), "{} GPR file", case.name);
+        assert_eq!(actual.rflags, expected.rflags, "{} RFLAGS", case.name);
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+    }
+}
+
 /// State-backed register NOT uses the GuestRegs snapshot for guest RSP/RBP and
 /// APX EGPRs while retaining byte/word partial writes and dword zero extension.
 #[test]
