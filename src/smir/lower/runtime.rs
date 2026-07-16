@@ -5802,7 +5802,9 @@ fn x86_block_preserves_live_flags(
                 X86AdxKind::Adcx => FlagSet::CF,
                 X86AdxKind::Adox => FlagSet::OF,
             };
-            if !live.intersection(native_output).is_empty() {
+            if !super::x86_64::x86_state_backed_gpr_adx_valid(op)
+                && !live.intersection(native_output).is_empty()
+            {
                 return false;
             }
         }
@@ -8412,6 +8414,7 @@ fn block_is_clobber_safe(
         let state_and_not_ok = super::x86_64::x86_state_backed_gpr_and_not_valid(op);
         let state_bextr_bzhi_ok = super::x86_64::x86_state_backed_gpr_bextr_bzhi_valid(op);
         let state_bls_ok = super::x86_64::x86_state_backed_gpr_bls_valid(op);
+        let state_adx_ok = super::x86_64::x86_state_backed_gpr_adx_valid(op);
         let state_pdep_pext_ok = super::x86_64::x86_state_backed_gpr_pdep_pext_valid(op);
         let state_bswap_ok = super::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = super::x86_64::x86_state_backed_gpr_xchg_valid(op);
@@ -8430,6 +8433,7 @@ fn block_is_clobber_safe(
             || state_and_not_ok
             || state_bextr_bzhi_ok
             || state_bls_ok
+            || state_adx_ok
             || state_pdep_pext_ok
             || state_bswap_ok
             || state_xchg_ok;
@@ -8447,6 +8451,7 @@ fn block_is_clobber_safe(
             || (super::x86_64::x86_state_backed_gpr_bextr_bzhi_candidate(op)
                 && !state_bextr_bzhi_ok)
             || (super::x86_64::x86_state_backed_gpr_bls_candidate(op) && !state_bls_ok)
+            || (super::x86_64::x86_state_backed_gpr_adx_candidate(op) && !state_adx_ok)
             || (super::x86_64::x86_state_backed_gpr_pdep_pext_candidate(op) && !state_pdep_pext_ok)
             || (super::x86_64::x86_state_backed_gpr_bswap_candidate(op) && !state_bswap_ok)
             || (super::x86_64::x86_state_backed_gpr_xchg_candidate(op) && !state_xchg_ok)
@@ -8577,7 +8582,10 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        if matches!(op.kind, OpKind::X86Adx { .. }) && !x86_adx_shape_valid(&op.kind) {
+        if matches!(op.kind, OpKind::X86Adx { .. })
+            && !x86_adx_shape_valid(&op.kind)
+            && !state_adx_ok
+        {
             return false;
         }
         if matches!(
@@ -8617,7 +8625,7 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/count/bit-scan/bit-test/CRC32/PDEP/PEXT/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
+        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/count/bit-scan/bit-test/CRC32/BMI/ADX/PDEP/PEXT/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the current guest
@@ -19575,6 +19583,23 @@ mod jit_gate_tests {
                 ),
                 std::is_x86_feature_detected!("adx")
             );
+
+            let state_op = OpKind::X86Adx {
+                dst: x86(X86Reg::R16),
+                src1: x86(X86Reg::Rsp),
+                src2: x86(X86Reg::Rbp),
+                width: OpWidth::W64,
+                kind,
+                flags: FlagUpdate::Specific(output),
+            };
+            assert!(
+                x86_gate(state_op.clone()),
+                "valid state-backed ADX shape must JIT"
+            );
+            assert!(
+                !aarch64_gate(vec![state_op], false),
+                "state-backed x86 ADX must not enter the AArch64 native gate"
+            );
         }
 
         let suppressed = OpKind::X86Adx {
@@ -19607,6 +19632,19 @@ mod jit_gate_tests {
             "suppressed native CF output is safe when overwritten before observation"
         );
 
+        let state_suppressed = OpKind::X86Adx {
+            dst: x86(X86Reg::R31),
+            src1: x86(X86Reg::Rsp),
+            src2: x86(X86Reg::Rbp),
+            width: OpWidth::W32,
+            kind: X86AdxKind::Adcx,
+            flags: FlagUpdate::None,
+        };
+        assert!(
+            x86_gate(state_suppressed),
+            "validated state-backed suppressed ADX preserves its native output flag exactly"
+        );
+
         for malformed in [
             OpKind::X86Adx {
                 dst: x86(X86Reg::Rax),
@@ -19617,17 +19655,17 @@ mod jit_gate_tests {
                 flags: FlagUpdate::Specific(FlagSet::CF),
             },
             OpKind::X86Adx {
-                dst: x86(X86Reg::Rsp),
-                src1: x86(X86Reg::Rcx),
-                src2: x86(X86Reg::Rdx),
-                width: OpWidth::W64,
-                kind: X86AdxKind::Adox,
-                flags: FlagUpdate::Specific(FlagSet::OF),
+                dst: x86(X86Reg::R16),
+                src1: x86(X86Reg::Rsp),
+                src2: x86(X86Reg::Rbp),
+                width: OpWidth::W16,
+                kind: X86AdxKind::Adcx,
+                flags: FlagUpdate::Specific(FlagSet::CF),
             },
             OpKind::X86Adx {
-                dst: x86(X86Reg::Rax),
+                dst: x86(X86Reg::R31),
                 src1: VReg::Virtual(VirtualId(0)),
-                src2: x86(X86Reg::Rdx),
+                src2: x86(X86Reg::Rbp),
                 width: OpWidth::W64,
                 kind: X86AdxKind::Adcx,
                 flags: FlagUpdate::Specific(FlagSet::CF),
@@ -19643,6 +19681,26 @@ mod jit_gate_tests {
         ] {
             assert!(!x86_gate(malformed), "malformed ADX shape must deopt");
         }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::X86Adx {
+                dst: x86(X86Reg::R16),
+                src1: x86(X86Reg::Rsp),
+                src2: x86(X86Reg::Rbp),
+                width: OpWidth::W64,
+                kind: X86AdxKind::Adox,
+                flags: FlagUpdate::Specific(FlagSet::OF),
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut hinted = builder.finish();
+        hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+        assert!(
+            !is_native_clobber_safe(&hinted),
+            "hinted state-backed ADX must fail closed"
+        );
     }
 
     #[test]

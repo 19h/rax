@@ -496,6 +496,45 @@ pub(crate) fn x86_state_backed_gpr_bls_valid(op: &SmirOp) -> bool {
         )
 }
 
+pub(crate) fn x86_state_backed_gpr_adx_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::X86Adx {
+            dst, src1, src2, ..
+        } if x86_state_backed_arch_gpr(dst)
+            || x86_state_backed_arch_gpr(src1)
+            || x86_state_backed_arch_gpr(src2)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_adx_valid(op: &SmirOp) -> bool {
+    let arch_gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
+
+    let OpKind::X86Adx {
+        dst,
+        src1,
+        src2,
+        width: OpWidth::W32 | OpWidth::W64,
+        kind,
+        flags,
+    } = &op.kind
+    else {
+        return false;
+    };
+    let output = match kind {
+        X86AdxKind::Adcx => FlagSet::CF,
+        X86AdxKind::Adox => FlagSet::OF,
+    };
+
+    x86_state_backed_gpr_adx_candidate(op)
+        && op.x86_hint.is_none()
+        && arch_gpr(dst)
+        && arch_gpr(src1)
+        && arch_gpr(src2)
+        && (*flags == FlagUpdate::None || *flags == FlagUpdate::Specific(output))
+}
+
 pub(crate) fn x86_state_backed_gpr_pdep_pext_candidate(op: &SmirOp) -> bool {
     matches!(
         &op.kind,
@@ -4488,6 +4527,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_and_not_valid(op)
             || x86_state_backed_gpr_bextr_bzhi_valid(op)
             || x86_state_backed_gpr_bls_valid(op)
+            || x86_state_backed_gpr_adx_valid(op)
             || x86_state_backed_gpr_pdep_pext_valid(op)
             || x86_state_backed_gpr_bswap_valid(op)
             || x86_state_backed_gpr_xchg_valid(op)
@@ -7240,7 +7280,33 @@ impl X86_64Lowerer {
                 width,
                 kind,
                 flags,
-            } => self.lower_x86_adx(*dst, *src1, *src2, *width, *kind, *flags)?,
+            } => {
+                if x86_state_backed_gpr_adx_candidate(op) {
+                    if !x86_state_backed_gpr_adx_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed X86Adx".to_string(),
+                            operand: format!("invalid x86 GPR ADX {kind:?} {width:?} {flags:?}"),
+                        });
+                    }
+                    let output_rflags_mask = match flags {
+                        FlagUpdate::None => None,
+                        FlagUpdate::Specific(_) => Some(match kind {
+                            X86AdxKind::Adcx => 1,
+                            X86AdxKind::Adox => 1 << 11,
+                        }),
+                        _ => unreachable!(),
+                    };
+                    return self.lower_state_backed_gpr_adx(
+                        *dst,
+                        *src1,
+                        *src2,
+                        *width,
+                        *kind,
+                        output_rflags_mask,
+                    );
+                }
+                self.lower_x86_adx(*dst, *src1, *src2, *width, *kind, *flags)?;
+            }
 
             OpKind::Pdep {
                 dst,
@@ -15713,6 +15779,71 @@ impl X86_64Lowerer {
             emitter.emit_vex_bls_rr(kind, PhysReg::Rdx, PhysReg::Rdi, width);
         }
         self.finish_bmi_flags(PhysReg::Rdx, defined_rflags_mask);
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
+        if dst_idx == 5 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, OpWidth::W64);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_adx(
+        &mut self,
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        width: OpWidth,
+        kind: X86AdxKind,
+        output_rflags_mask: Option<i64>,
+    ) -> Result<(), LowerError> {
+        let name = match kind {
+            X86AdxKind::Adcx => "Adcx",
+            X86AdxKind::Adox => "Adox",
+        };
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let src1_idx = Self::x86_gpr_index(src1).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "first source is not an architectural x86 GPR".to_string(),
+        })?;
+        let src2_idx = Self::x86_gpr_index(src2).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "second source is not an architectural x86 GPR".to_string(),
+        })?;
+        if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: format!("state-backed {name}"),
+                operand: format!("unsupported width {width:?}"),
+            });
+        }
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        // All staging instructions preserve RFLAGS, so the scratch ADX consumes
+        // the guest's incoming CF/OF after both sources have been snapshotted.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rax, i32::from(src1_idx) * 8, width);
+            emitter.emit_mov_rm(PhysReg::Rdi, PhysReg::Rax, i32::from(src2_idx) * 8, width);
+        }
+        self.code.emit_u8(0x9C); // pushfq: preserve non-output or every flag when suppressed
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_adx_rr(kind, PhysReg::Rdx, PhysReg::Rdi, width);
+        }
+        self.finish_bmi_flags(PhysReg::Rdx, output_rflags_mask);
 
         self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
         if dst_idx == 5 {
@@ -30498,6 +30629,10 @@ mod tests {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
         let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
+        let r16 = VReg::Arch(ArchReg::X86(X86Reg::R16));
+        let r31 = VReg::Arch(ArchReg::X86(X86Reg::R31));
 
         let distinct = lower_single_op(OpKind::X86Adx {
             dst: r8,
@@ -30549,6 +30684,55 @@ mod tests {
             "self-aliased ADCX lowering: {self_alias:02X?}"
         );
 
+        for (name, op, expected) in [
+            (
+                "state-backed ADCX qword",
+                OpKind::X86Adx {
+                    dst: rsp,
+                    src1: rsp,
+                    src2: rbp,
+                    width: OpWidth::W64,
+                    kind: X86AdxKind::Adcx,
+                    flags: FlagUpdate::Specific(FlagSet::CF),
+                },
+                &[0x66, 0x48, 0x0F, 0x38, 0xF6, 0xD7][..],
+            ),
+            (
+                "state-backed ADOX dword",
+                OpKind::X86Adx {
+                    dst: rbp,
+                    src1: rsp,
+                    src2: rbp,
+                    width: OpWidth::W32,
+                    kind: X86AdxKind::Adox,
+                    flags: FlagUpdate::Specific(FlagSet::OF),
+                },
+                &[0xF3, 0x0F, 0x38, 0xF6, 0xD7][..],
+            ),
+            (
+                "state-backed suppressed ADCX all operands alias",
+                OpKind::X86Adx {
+                    dst: r31,
+                    src1: r31,
+                    src2: r31,
+                    width: OpWidth::W64,
+                    kind: X86AdxKind::Adcx,
+                    flags: FlagUpdate::None,
+                },
+                &[0x66, 0x48, 0x0F, 0x38, 0xF6, 0xD7][..],
+            ),
+        ] {
+            let code = lower_single_op(op);
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "{name}: missing scratch ADX {expected:02X?} in {code:02X?}"
+            );
+            assert!(
+                code.contains(&0x9C) && code.contains(&0x9D),
+                "{name}: incoming and preserved flags must be saved and restored or merged"
+            );
+        }
+
         for malformed in [
             OpKind::X86Adx {
                 dst: rax,
@@ -30567,18 +30751,197 @@ mod tests {
                 flags: FlagUpdate::Specific(FlagSet::CF),
             },
             OpKind::X86Adx {
-                dst: VReg::Arch(ArchReg::X86(X86Reg::Rsp)),
-                src1: rax,
-                src2: rbx,
-                width: OpWidth::W64,
+                dst: r16,
+                src1: rsp,
+                src2: rbp,
+                width: OpWidth::W16,
                 kind: X86AdxKind::Adcx,
                 flags: FlagUpdate::Specific(FlagSet::CF),
+            },
+            OpKind::X86Adx {
+                dst: r31,
+                src1: VReg::Virtual(crate::smir::ir::types::VirtualId(7)),
+                src2: rbp,
+                width: OpWidth::W64,
+                kind: X86AdxKind::Adox,
+                flags: FlagUpdate::Specific(FlagSet::OF),
+            },
+            OpKind::X86Adx {
+                dst: rsp,
+                src1: rbp,
+                src2: r16,
+                width: OpWidth::W64,
+                kind: X86AdxKind::Adcx,
+                flags: FlagUpdate::Specific(FlagSet::OF),
             },
         ] {
             assert!(matches!(
                 lower_single_op_err(malformed),
                 LowerError::InvalidOperand { .. } | LowerError::InvalidRegister(_)
             ));
+        }
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                OpKind::X86Adx {
+                    dst: r16,
+                    src1: rsp,
+                    src2: rbp,
+                    width: OpWidth::W64,
+                    kind: X86AdxKind::Adcx,
+                    flags: FlagUpdate::None,
+                },
+                X86OpHint::Mulx,
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_adx_consumes_input_and_preserves_non_output_flags() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        if !std::is_x86_feature_detected!("adx") {
+            return;
+        }
+        struct Case {
+            name: &'static str,
+            kind: X86AdxKind,
+            flagful: bool,
+            dst: X86Reg,
+            src1: X86Reg,
+            src2: X86Reg,
+            width: OpWidth,
+            src1_value: u64,
+            src2_value: u64,
+            status: u64,
+        }
+        let cases = [
+            Case {
+                name: "ADCX RSP,RSP,RBP consumes set CF and carries",
+                kind: X86AdxKind::Adcx,
+                flagful: true,
+                dst: X86Reg::Rsp,
+                src1: X86Reg::Rsp,
+                src2: X86Reg::Rbp,
+                width: OpWidth::W64,
+                src1_value: u64::MAX,
+                src2_value: 0,
+                status: 0x8D5,
+            },
+            Case {
+                name: "ADOX RBP,RSP,RBP destination-second-source alias",
+                kind: X86AdxKind::Adox,
+                flagful: true,
+                dst: X86Reg::Rbp,
+                src1: X86Reg::Rsp,
+                src2: X86Reg::Rbp,
+                width: OpWidth::W64,
+                src1_value: u64::MAX,
+                src2_value: 0,
+                status: 0x8D5,
+            },
+            Case {
+                name: "ADCX R16D,R31D,R31D source alias zero-extends",
+                kind: X86AdxKind::Adcx,
+                flagful: true,
+                dst: X86Reg::R16,
+                src1: X86Reg::R31,
+                src2: X86Reg::R31,
+                width: OpWidth::W32,
+                src1_value: 0xAABB_CCDD_FFFF_FFFF,
+                src2_value: 0xAABB_CCDD_FFFF_FFFF,
+                status: 0x8D4,
+            },
+            Case {
+                name: "suppressed ADOX R31,R31,R31 preserves every status flag",
+                kind: X86AdxKind::Adox,
+                flagful: false,
+                dst: X86Reg::R31,
+                src1: X86Reg::R31,
+                src2: X86Reg::R31,
+                width: OpWidth::W64,
+                src1_value: 0x0123_4567_89AB_CDEF,
+                src2_value: 0x0123_4567_89AB_CDEF,
+                status: 0x8D5,
+            },
+        ];
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        const STATUS: u64 = 0x8D5;
+
+        for case in cases {
+            let output = match case.kind {
+                X86AdxKind::Adcx => FlagSet::CF,
+                X86AdxKind::Adox => FlagSet::OF,
+            };
+            let flags = if case.flagful {
+                FlagUpdate::Specific(output)
+            } else {
+                FlagUpdate::None
+            };
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::X86Adx {
+                    dst: x86(case.dst),
+                    src1: x86(case.src1),
+                    src2: x86(case.src2),
+                    width: case.width,
+                    kind: case.kind,
+                    flags,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            for (index, value) in regs.gpr.iter_mut().enumerate() {
+                *value = 0x2468_0000_1357_0000u64
+                    .wrapping_add((index as u64).wrapping_mul(0x0101_1111_2222_0101));
+            }
+            let dst_idx = case.dst.gpr_index().unwrap() as usize;
+            let src1_idx = case.src1.gpr_index().unwrap() as usize;
+            let src2_idx = case.src2.gpr_index().unwrap() as usize;
+            regs.gpr[src1_idx] = case.src1_value;
+            regs.gpr[src2_idx] = case.src2_value;
+            regs.rflags = 0x2 | case.status;
+
+            let mut expected = regs;
+            let src1 = regs.gpr[src1_idx] & case.width.mask();
+            let src2 = regs.gpr[src2_idx] & case.width.mask();
+            let input_mask = match case.kind {
+                X86AdxKind::Adcx => 1,
+                X86AdxKind::Adox => 1 << 11,
+            };
+            let carry_in = u128::from((regs.rflags & input_mask) != 0);
+            let sum = u128::from(src1) + u128::from(src2) + carry_in;
+            let result = (sum as u64) & case.width.mask();
+            expected.gpr[dst_idx] = result;
+            if case.flagful {
+                expected.rflags &= !input_mask;
+                expected.rflags |= u64::from(sum > u128::from(case.width.mask())) * input_mask;
+            }
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            if case.width == OpWidth::W32 {
+                assert_eq!(regs.gpr[dst_idx] >> 32, 0, "{} zero extension", case.name);
+            }
+            assert_eq!(
+                regs.rflags & STATUS,
+                expected.rflags & STATUS,
+                "{} status flags",
+                case.name
+            );
         }
     }
 
