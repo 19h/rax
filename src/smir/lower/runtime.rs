@@ -8403,6 +8403,7 @@ fn block_is_clobber_safe(
         let state_cmove_ok = super::x86_64::x86_state_backed_gpr_cmove_valid(op);
         let state_setcc_ok = super::x86_64::x86_state_backed_gpr_setcc_valid(op);
         let state_not_ok = super::x86_64::x86_state_backed_gpr_not_valid(op);
+        let state_neg_ok = super::x86_64::x86_state_backed_gpr_neg_valid(op);
         let state_bswap_ok = super::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = super::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let stack_state_ok = stack_mov_ok
@@ -8411,12 +8412,14 @@ fn block_is_clobber_safe(
             || state_cmove_ok
             || state_setcc_ok
             || state_not_ok
+            || state_neg_ok
             || state_bswap_ok
             || state_xchg_ok;
         if (super::x86_64::x86_state_backed_gpr_extend_candidate(op) && !state_extend_ok)
             || (super::x86_64::x86_state_backed_gpr_cmove_candidate(op) && !state_cmove_ok)
             || (super::x86_64::x86_state_backed_gpr_setcc_candidate(op) && !state_setcc_ok)
             || (super::x86_64::x86_state_backed_gpr_not_candidate(op) && !state_not_ok)
+            || (super::x86_64::x86_state_backed_gpr_neg_candidate(op) && !state_neg_ok)
             || (super::x86_64::x86_state_backed_gpr_bswap_candidate(op) && !state_bswap_ok)
             || (super::x86_64::x86_state_backed_gpr_xchg_candidate(op) && !state_xchg_ok)
         {
@@ -8576,7 +8579,7 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
+        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the current guest
@@ -19786,6 +19789,98 @@ mod jit_gate_tests {
             assert!(op.is_jit_safe(), "{name} remains class-whitelisted");
             assert!(!x86_gate(op), "malformed {name} must deopt");
         }
+    }
+
+    #[test]
+    fn neg_gate_accepts_state_backed_gpr_flag_contracts_and_rejects_unsafe_ir() {
+        for op in [
+            OpKind::Neg {
+                dst: x86(X86Reg::Rsp),
+                src: x86(X86Reg::Rsp),
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Neg {
+                dst: x86(X86Reg::Rbp),
+                src: x86(X86Reg::R16),
+                width: OpWidth::W16,
+                flags: FlagUpdate::None,
+            },
+            OpKind::Neg {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Neg {
+                dst: x86(X86Reg::R31),
+                src: x86(X86Reg::Rbp),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ] {
+            assert!(op.is_jit_safe());
+            assert!(x86_gate(op));
+        }
+
+        for (name, op) in [
+            (
+                "wide operand",
+                OpKind::Neg {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W128,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "partial flag update",
+                OpKind::Neg {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rax),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(FlagSet::CF),
+                },
+            ),
+            (
+                "virtual source",
+                OpKind::Neg {
+                    dst: x86(X86Reg::R16),
+                    src: VReg::Virtual(VirtualId(0)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "foreign architecture source",
+                OpKind::Neg {
+                    dst: x86(X86Reg::R16),
+                    src: arm_x(0),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                },
+            ),
+        ] {
+            assert!(!x86_gate(op), "malformed {name} Neg must deopt");
+        }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Neg {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rax),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut hinted = builder.finish();
+        hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+        assert!(
+            !is_native_clobber_safe(&hinted),
+            "hinted state-backed Neg must fail closed"
+        );
     }
 
     #[test]
