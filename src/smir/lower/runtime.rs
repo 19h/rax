@@ -6192,6 +6192,142 @@ pub(crate) fn x86_jit_mem_alu_rmw_sequence_len(
     Some(4)
 }
 
+fn x86_flagged_unary_shape(
+    kind: &crate::smir::ir::ops::OpKind,
+) -> Option<(
+    u8,
+    crate::smir::ir::types::VReg,
+    crate::smir::ir::types::VReg,
+    crate::smir::ir::types::OpWidth,
+    crate::smir::ir::flags::FlagUpdate,
+)> {
+    use crate::smir::ir::ops::OpKind;
+
+    match kind {
+        OpKind::Neg {
+            dst,
+            src,
+            width,
+            flags,
+        } => Some((0, *dst, *src, *width, *flags)),
+        OpKind::Inc {
+            dst,
+            src,
+            width,
+            flags,
+        } => Some((1, *dst, *src, *width, *flags)),
+        OpKind::Dec {
+            dst,
+            src,
+            width,
+            flags,
+        } => Some((2, *dst, *src, *width, *flags)),
+        _ => None,
+    }
+}
+
+/// Validate the exact fault-precise scalar memory-destination unary sequence
+/// emitted by the x86 lifter. `NEG`/`INC`/`DEC` use `Load old; unary result`
+/// without flags; `Store result`; then a full-flag replay into a dead virtual.
+/// Flag-neutral `NOT` reuses the load virtual in place and needs no replay.
+pub(crate) fn x86_jit_mem_unary_rmw_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{OpWidth, SignExtend, VReg};
+
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (old, addr, mem_width) = match &load.kind {
+        OpKind::Load {
+            dst: old @ VReg::Virtual(_),
+            addr,
+            width,
+            sign: SignExtend::Zero,
+        } => (*old, addr, *width),
+        _ => return None,
+    };
+    let width = mem_width.to_op_width()?;
+    if !matches!(
+        width,
+        OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
+    ) || !x86_jit_mem_address_shape_valid(addr)
+    {
+        return None;
+    }
+
+    let compute = block.ops.get(index + 1)?;
+    let store = block.ops.get(index + 2)?;
+    if compute.guest_pc != load.guest_pc || store.guest_pc != load.guest_pc {
+        return None;
+    }
+
+    if let Some((compute_tag, result, compute_old, compute_width, compute_flags)) =
+        x86_flagged_unary_shape(&compute.kind)
+    {
+        let replay = block.ops.get(index + 3)?;
+        let (replay_tag, flags_result, replay_old, replay_width, replay_flags) =
+            x86_flagged_unary_shape(&replay.kind)?;
+        if replay.guest_pc != load.guest_pc
+            || !matches!(result, VReg::Virtual(_))
+            || !matches!(flags_result, VReg::Virtual(_))
+            || compute_tag != replay_tag
+            || compute_old != old
+            || replay_old != old
+            || compute_width != width
+            || replay_width != width
+            || compute_flags != FlagUpdate::None
+            || replay_flags != FlagUpdate::All
+            || !matches!(
+                &store.kind,
+                OpKind::Store {
+                    src,
+                    addr: store_addr,
+                    width: store_width,
+                } if *src == result && *store_addr == *addr && *store_width == mem_width
+            )
+            || virtual_definitions.get(&old) != Some(&1)
+            || virtual_uses.get(&old) != Some(&2)
+            || virtual_definitions.get(&result) != Some(&1)
+            || virtual_uses.get(&result) != Some(&1)
+            || virtual_definitions.get(&flags_result) != Some(&1)
+            || virtual_uses.contains_key(&flags_result)
+        {
+            return None;
+        }
+        return Some(4);
+    }
+
+    if !matches!(
+        &compute.kind,
+        OpKind::Not {
+            dst,
+            src,
+            width: not_width,
+        } if *dst == old && *src == old && *not_width == width
+    ) || !matches!(
+        &store.kind,
+        OpKind::Store {
+            src,
+            addr: store_addr,
+            width: store_width,
+        } if *src == old && *store_addr == *addr && *store_width == mem_width
+    ) || virtual_definitions.get(&old) != Some(&2)
+        || virtual_uses.get(&old) != Some(&2)
+    {
+        return None;
+    }
+
+    Some(3)
+}
+
 /// Validate an exact scalar memory-source pair emitted by the x86 lifter:
 /// `Load virtual; ALU/CMP/TEST ... virtual`. The load result must be an SSA
 /// single-definition/single-use value, and every architectural operand must be
@@ -6896,10 +7032,10 @@ pub(crate) fn x86_jit_push_candidate(block: &crate::smir::ir::SmirBlock, index: 
 ///       — so it touches no memory and is validated bit-exact vs KVM; and
 ///   (2) it writes only architectural registers (no virtual temp, which would
 ///       alias a guest GPR under the identity register map).
-/// A trailing `TestCondition` feeding the block's `CondBranch`, the single-use
-/// virtual load in an adjacent helper-backed memory CRC32 pair, and exact POP /
-/// PUSH stack temporaries are exempt because the lowerer never materializes
-/// their destinations.
+/// A trailing `TestCondition` feeding the block's `CondBranch`, exact
+/// helper-backed scalar/CRC memory sequences, and exact POP/PUSH stack
+/// temporaries are exempt because the lowerer never materializes their virtual
+/// destinations.
 fn block_is_clobber_safe(
     block: &crate::smir::ir::SmirBlock,
     allow_mem: bool,
@@ -6922,8 +7058,8 @@ fn block_is_clobber_safe(
     };
 
     let n = block.ops.len();
-    // Count virtual definitions and uses once. Exact CRC pair validation then
-    // remains O(1) per candidate and the complete gate remains O(N).
+    // Count virtual definitions and uses once. Exact helper-sequence validation
+    // then remains O(1) per candidate and the complete gate remains O(N).
     let mut virtual_definitions = std::collections::HashMap::new();
     let mut virtual_uses = std::collections::HashMap::new();
     for op in &block.ops {
@@ -6966,6 +7102,16 @@ fn block_is_clobber_safe(
 
     let mut i = 0;
     while i < n {
+        if let Some(consumed) = x86_jit_mem_unary_rmw_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
         if let Some(consumed) = x86_jit_mem_alu_rmw_sequence_len(
             block,
             i,
@@ -18869,6 +19015,243 @@ mod jit_gate_tests {
             FlagUpdate::None,
             FlagUpdate::All,
             0,
+            address(),
+            0x1000,
+            false,
+        );
+        let OpKind::Load { sign, .. } = &mut signed.blocks[0].ops[0].kind else {
+            unreachable!()
+        };
+        *sign = SignExtend::Sign;
+        assert!(!is_native_clobber_safe_excluding(
+            &signed,
+            &std::collections::HashMap::new(),
+            true,
+        ));
+    }
+
+    #[test]
+    fn x86_scalar_memory_destination_unary_gate_accepts_exact_replay_and_fails_closed() {
+        let old = VReg::Virtual(VirtualId(40));
+        let result = VReg::Virtual(VirtualId(41));
+        let flags_result = VReg::Virtual(VirtualId(42));
+        let address = || Address::BaseIndexScale {
+            base: Some(x86(X86Reg::Rbp)),
+            index: x86(X86Reg::R17),
+            scale: 4,
+            disp: 16,
+            disp_size: DispSize::Disp8,
+        };
+        let unary = |tag: u8, dst: VReg, src: VReg, width: OpWidth, flags: FlagUpdate| match tag {
+            0 => OpKind::Neg {
+                dst,
+                src,
+                width,
+                flags,
+            },
+            1 => OpKind::Inc {
+                dst,
+                src,
+                width,
+                flags,
+            },
+            2 => OpKind::Dec {
+                dst,
+                src,
+                width,
+                flags,
+            },
+            _ => unreachable!(),
+        };
+        let build_flagged = |tag: u8,
+                             replay_tag: u8,
+                             mem_width: MemWidth,
+                             compute_flags: FlagUpdate,
+                             replay_flags: FlagUpdate,
+                             store_addr: Address,
+                             replay_pc: u64,
+                             extra_old_use: bool| {
+            let width = mem_width.to_op_width().unwrap();
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::Load {
+                    dst: old,
+                    addr: address(),
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
+            );
+            builder.push_op(0x1000, unary(tag, result, old, width, compute_flags));
+            builder.push_op(
+                0x1000,
+                OpKind::Store {
+                    src: result,
+                    addr: store_addr,
+                    width: mem_width,
+                },
+            );
+            builder.push_op(
+                replay_pc,
+                unary(replay_tag, flags_result, old, width, replay_flags),
+            );
+            if extra_old_use {
+                builder.push_op(
+                    0x1001,
+                    OpKind::Mov {
+                        dst: x86(X86Reg::R11),
+                        src: SrcOperand::Reg(old),
+                        width,
+                    },
+                );
+            }
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            builder.finish()
+        };
+
+        for (tag, mem_width) in [(0, MemWidth::B1), (1, MemWidth::B4), (2, MemWidth::B8)] {
+            let function = build_flagged(
+                tag,
+                tag,
+                mem_width,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            );
+            assert!(is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                true,
+            ));
+            assert!(!is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                false,
+            ));
+        }
+
+        let mut not_builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        not_builder.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: old,
+                addr: address(),
+                width: MemWidth::B2,
+                sign: SignExtend::Zero,
+            },
+        );
+        not_builder.push_op(
+            0x1000,
+            OpKind::Not {
+                dst: old,
+                src: old,
+                width: OpWidth::W16,
+            },
+        );
+        not_builder.push_op(
+            0x1000,
+            OpKind::Store {
+                src: old,
+                addr: address(),
+                width: MemWidth::B2,
+            },
+        );
+        not_builder.set_terminator(Terminator::Return { values: vec![] });
+        let not_function = not_builder.finish();
+        assert!(is_native_clobber_safe_excluding(
+            &not_function,
+            &std::collections::HashMap::new(),
+            true,
+        ));
+
+        for function in [
+            build_flagged(
+                0,
+                0,
+                MemWidth::B8,
+                FlagUpdate::All,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            ),
+            build_flagged(
+                1,
+                1,
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::None,
+                address(),
+                0x1000,
+                false,
+            ),
+            build_flagged(
+                2,
+                0,
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            ),
+            build_flagged(
+                0,
+                0,
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                Address::Absolute(0x2000),
+                0x1000,
+                false,
+            ),
+            build_flagged(
+                0,
+                0,
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1001,
+                false,
+            ),
+            build_flagged(
+                0,
+                0,
+                MemWidth::B8,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                true,
+            ),
+        ] {
+            assert!(!is_native_clobber_safe_excluding(
+                &function,
+                &std::collections::HashMap::new(),
+                true,
+            ));
+        }
+
+        let mut malformed_not = not_function;
+        let OpKind::Store { addr, .. } = &mut malformed_not.blocks[0].ops[2].kind else {
+            unreachable!()
+        };
+        *addr = Address::Absolute(0x2000);
+        assert!(!is_native_clobber_safe_excluding(
+            &malformed_not,
+            &std::collections::HashMap::new(),
+            true,
+        ));
+
+        let mut signed = build_flagged(
+            0,
+            0,
+            MemWidth::B8,
+            FlagUpdate::None,
+            FlagUpdate::All,
             address(),
             0x1000,
             false,
