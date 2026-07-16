@@ -553,6 +553,15 @@ impl SmirInterpreter {
         (result & width.mask(), carry, effective)
     }
 
+    #[inline]
+    fn scalar_shift_count_mask(source_arch: SourceArch, width: OpWidth) -> u64 {
+        if source_arch == SourceArch::X86_64 && width != OpWidth::W64 {
+            0x1F
+        } else {
+            0x3F
+        }
+    }
+
     /// Execute a single operation
     fn execute_op(
         &self,
@@ -1060,7 +1069,8 @@ impl SmirInterpreter {
                 flags,
             } => {
                 let val = ctx.read_vreg(*src) & width.mask();
-                let amt = self.read_src_operand(ctx, amount) & 0x3F;
+                let count_mask = Self::scalar_shift_count_mask(ctx.source_arch, *width);
+                let amt = self.read_src_operand(ctx, amount) & count_mask;
                 let result = if amt >= width.bits() as u64 {
                     0
                 } else {
@@ -1092,7 +1102,8 @@ impl SmirInterpreter {
                 flags,
             } => {
                 let val = ctx.read_vreg(*src) & width.mask();
-                let amt = self.read_src_operand(ctx, amount) & 0x3F;
+                let count_mask = Self::scalar_shift_count_mask(ctx.source_arch, *width);
+                let amt = self.read_src_operand(ctx, amount) & count_mask;
                 let result = if amt >= width.bits() as u64 {
                     0
                 } else {
@@ -1126,7 +1137,8 @@ impl SmirInterpreter {
                 // Mask to the operand width BEFORE sign-extending, or stale upper
                 // register bits leak into both the shifted-out bits and the sign.
                 let val = self.sign_extend(ctx.read_vreg(*src) & width.mask(), *width);
-                let amt = self.read_src_operand(ctx, amount) & 0x3F;
+                let count_mask = Self::scalar_shift_count_mask(ctx.source_arch, *width);
+                let amt = self.read_src_operand(ctx, amount) & count_mask;
                 let result = if amt >= width.bits() as u64 {
                     if (val as i64) < 0 { width.mask() } else { 0 }
                 } else {
@@ -32047,6 +32059,56 @@ mod tests {
         );
         assert_eq!(value & 0xFFFF, 0x8000);
         assert_eq!(flags & 0x8D5, (preserved | 0x1) & 0x8D5);
+    }
+
+    #[test]
+    fn smir_x86_scalar_shifts_apply_the_operand_count_mask() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let initial_flags = 0x2 | 0x8D5;
+
+        for (op, initial) in [
+            (
+                OpKind::Shl {
+                    dst: rax,
+                    src: rax,
+                    amount: SrcOperand::Imm(32),
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::All,
+                },
+                0xA5A5_A5A5_A5A5_A581,
+            ),
+            (
+                OpKind::Shr {
+                    dst: rax,
+                    src: rax,
+                    amount: SrcOperand::Reg(VReg::Arch(ArchReg::X86(X86Reg::Rcx))),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::All,
+                },
+                0xA5A5_A5A5_A5A5_8001,
+            ),
+            (
+                OpKind::Sar {
+                    dst: rax,
+                    src: rax,
+                    amount: SrcOperand::Imm(32),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::All,
+                },
+                0x8000_0000,
+            ),
+        ] {
+            let (value, flags) = exec_x86_rax_op(op, initial, 32, initial_flags);
+            assert_eq!(
+                value, initial,
+                "masked count zero must preserve the operand"
+            );
+            assert_eq!(
+                flags & 0x8D5,
+                initial_flags & 0x8D5,
+                "masked count zero must preserve every status flag"
+            );
+        }
     }
 
     #[test]
