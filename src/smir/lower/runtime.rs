@@ -6398,9 +6398,10 @@ fn x86_shift_rmw_shape(
 /// sequence emitted by the x86 lifter. Immediate counts are normalized exactly
 /// as x86 does. ROL/ROR/RCL/RCR accept every immediate/CL count because native
 /// value/CF behavior follows the operand or through-carry period while the saved
-/// RFLAGS merge classifies zero/one/multi using the raw masked count. Subword
-/// SHL/SHR/SAR shapes stay fail-closed unless their exact count has representable
-/// deterministic flag behavior.
+/// RFLAGS merge classifies zero/one/multi using the raw masked count. SAR also
+/// accepts every count because repeated sign fill keeps its result and CF
+/// representable. Subword SHL/SHR stay fail-closed once their masked count
+/// reaches the operand width, where architectural CF is undefined.
 pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -6461,14 +6462,14 @@ pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
             let mask = if width == OpWidth::W64 { 0x3f } else { 0x1f };
             let masked = (*value as u8) & mask;
             match compute_tag {
-                0..=3 => true,
-                4 | 5 | 7 => masked == 0 || u32::from(masked) < width.bits(),
+                0..=3 | 7 => true,
+                4 | 5 => masked == 0 || u32::from(masked) < width.bits(),
                 _ => false,
             }
         }
         SrcOperand::Reg(VReg::Arch(crate::smir::ir::types::ArchReg::X86(
             crate::smir::ir::types::X86Reg::Rcx,
-        ))) => matches!(width, OpWidth::W32 | OpWidth::W64) || compute_tag <= 3,
+        ))) => matches!(width, OpWidth::W32 | OpWidth::W64) || compute_tag <= 3 || compute_tag == 7,
         _ => false,
     };
     let rotate_flags = FlagSet::CF.union(FlagSet::OF);
@@ -19670,6 +19671,38 @@ mod jit_gate_tests {
                         "subword rotate tag {tag} with {mem_width:?} must JIT"
                     );
                 }
+            }
+        }
+
+        for mem_width in [MemWidth::B1, MemWidth::B2] {
+            for amount in [
+                SrcOperand::Imm(0),
+                SrcOperand::Imm(1),
+                SrcOperand::Imm(8),
+                SrcOperand::Imm(16),
+                SrcOperand::Imm(31),
+                SrcOperand::Reg(x86(X86Reg::Rcx)),
+            ] {
+                let function = build(
+                    7,
+                    7,
+                    amount.clone(),
+                    amount,
+                    mem_width,
+                    FlagUpdate::None,
+                    FlagUpdate::All,
+                    address(),
+                    0x1000,
+                    false,
+                );
+                assert!(
+                    is_native_clobber_safe_excluding(
+                        &function,
+                        &std::collections::HashMap::new(),
+                        true,
+                    ),
+                    "subword SAR with {mem_width:?} must JIT"
+                );
             }
         }
 
