@@ -6077,6 +6077,160 @@ fn x86_mem_crc32_pair_valid(
     virtual_definitions.get(&temporary) == Some(&1) && virtual_uses.get(&temporary) == Some(&1)
 }
 
+/// Validate the exact POP shapes emitted by the x86 lifter. Ordinary POP uses
+/// a helper load followed by a state-backed RSP increment. POP RSP commits the
+/// loaded value without exposing the increment, while POP SP first computes
+/// the full-width increment and then replaces only its low 16 bits.
+pub(crate) fn x86_jit_pop_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{
+        Address, ArchReg, MemWidth, OpWidth, SignExtend, SrcOperand, VReg, X86Reg,
+    };
+
+    if !allow_mem {
+        return None;
+    }
+    let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+    let load = block.ops.get(index)?;
+    let (popped, mem_width, delta) = match load.kind {
+        OpKind::Load {
+            dst,
+            addr: Address::Direct(base),
+            width: mem_width @ (MemWidth::B2 | MemWidth::B8),
+            sign: SignExtend::Zero,
+        } if base == rsp => (
+            dst,
+            mem_width,
+            if mem_width == MemWidth::B2 { 2 } else { 8 },
+        ),
+        _ => return None,
+    };
+    let same_pc = |offset: usize| {
+        block
+            .ops
+            .get(index + offset)
+            .is_some_and(|op| op.guest_pc == load.guest_pc)
+    };
+
+    if matches!(popped, VReg::Arch(ArchReg::X86(reg)) if reg.gpr_index().is_some()) && popped != rsp
+    {
+        let increment = block.ops.get(index + 1)?;
+        if increment.guest_pc == load.guest_pc
+            && matches!(
+                increment.kind,
+                OpKind::Add {
+                    dst,
+                    src1,
+                    src2: SrcOperand::Imm(amount),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                } if dst == rsp && src1 == rsp && amount == delta
+            )
+        {
+            return Some(2);
+        }
+        return None;
+    }
+
+    let VReg::Virtual(_) = popped else {
+        return None;
+    };
+    if virtual_definitions.get(&popped) != Some(&1) || virtual_uses.get(&popped) != Some(&1) {
+        return None;
+    }
+
+    if mem_width == MemWidth::B8 {
+        let commit = block.ops.get(index + 1)?;
+        return (same_pc(1)
+            && matches!(
+                commit.kind,
+                OpKind::Mov {
+                    dst,
+                    src: SrcOperand::Reg(src),
+                    width: OpWidth::W64,
+                } if dst == rsp && src == popped
+            ))
+        .then_some(2);
+    }
+
+    let increment = block.ops.get(index + 1)?;
+    let incremented = match increment.kind {
+        OpKind::Add {
+            dst: temporary @ VReg::Virtual(_),
+            src1,
+            src2: SrcOperand::Imm(2),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if src1 == rsp && increment.guest_pc == load.guest_pc => temporary,
+        _ => return None,
+    };
+    if virtual_definitions.get(&incremented) != Some(&1)
+        || virtual_uses.get(&incremented) != Some(&1)
+        || !same_pc(2)
+        || !same_pc(3)
+    {
+        return None;
+    }
+    let increment_commit = &block.ops[index + 2];
+    let low_commit = &block.ops[index + 3];
+    (matches!(
+        increment_commit.kind,
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Reg(src),
+            width: OpWidth::W64,
+        } if dst == rsp && src == incremented
+    ) && matches!(
+        low_commit.kind,
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Reg(src),
+            width: OpWidth::W16,
+        } if dst == rsp && src == popped
+    ))
+    .then_some(4)
+}
+
+/// Identify a POP-like same-instruction sequence that failed exact validation.
+/// Without this fail-closed check, its individual helper load and stack-state
+/// operations could be admitted independently with different alias ordering.
+pub(crate) fn x86_jit_pop_candidate(block: &crate::smir::ir::SmirBlock, index: usize) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{Address, ArchReg, MemWidth, SignExtend, VReg, X86Reg};
+
+    let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+    let Some(load) = block.ops.get(index) else {
+        return false;
+    };
+    if !matches!(
+        load.kind,
+        OpKind::Load {
+            addr: Address::Direct(base),
+            width: MemWidth::B2 | MemWidth::B8,
+            sign: SignExtend::Zero,
+            ..
+        } if base == rsp
+    ) {
+        return false;
+    }
+    matches!(
+        block.ops.get(index + 1),
+        Some(next) if next.guest_pc == load.guest_pc
+            && match &next.kind {
+                OpKind::Add { src1, .. } => *src1 == rsp,
+                OpKind::Mov { dst, .. } => *dst == rsp,
+                _ => false,
+            }
+    )
+}
+
 /// Validate the exact PUSH shapes emitted by the x86 lifter. Lowering performs
 /// the helper-backed store against `old_rsp - width` before committing RSP, so
 /// a fault restarts with the architectural stack pointer unchanged. PUSH RSP
@@ -6205,9 +6359,9 @@ pub(crate) fn x86_jit_push_candidate(block: &crate::smir::ir::SmirBlock, index: 
 ///   (2) it writes only architectural registers (no virtual temp, which would
 ///       alias a guest GPR under the identity register map).
 /// A trailing `TestCondition` feeding the block's `CondBranch`, the single-use
-/// virtual load in an adjacent helper-backed memory CRC32 pair, and the exact
-/// pre-decrement RSP snapshot in PUSH RSP are exempt because the lowerer never
-/// materializes their destinations.
+/// virtual load in an adjacent helper-backed memory CRC32 pair, and exact POP /
+/// PUSH stack temporaries are exempt because the lowerer never materializes
+/// their destinations.
 fn block_is_clobber_safe(
     block: &crate::smir::ir::SmirBlock,
     allow_mem: bool,
@@ -6253,6 +6407,15 @@ fn block_is_clobber_safe(
 
     let mut i = 0;
     while i < n {
+        if let Some(consumed) =
+            x86_jit_pop_sequence_len(block, i, allow_mem, &virtual_definitions, &virtual_uses)
+        {
+            i += consumed;
+            continue;
+        }
+        if x86_jit_pop_candidate(block, i) {
+            return false;
+        }
         if let Some(consumed) =
             x86_jit_push_sequence_len(block, i, allow_mem, &virtual_definitions, &virtual_uses)
         {
@@ -18496,6 +18659,172 @@ mod jit_gate_tests {
         malformed.set_terminator(Terminator::Return { values: vec![] });
         assert!(!is_native_clobber_safe_excluding(
             &malformed.finish(),
+            &std::collections::HashMap::new(),
+            true
+        ));
+    }
+
+    #[test]
+    fn x86_pop_gate_requires_exact_fault_precise_alias_shapes() {
+        let rsp = x86(X86Reg::Rsp);
+        let mut ordinary = FunctionBuilder::new(FunctionId(0), 0x1000);
+        ordinary.push_op(
+            0x1000,
+            OpKind::Load {
+                dst: x86(X86Reg::Rbp),
+                addr: Address::Direct(rsp),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        );
+        ordinary.push_op(
+            0x1000,
+            OpKind::Add {
+                dst: rsp,
+                src1: rsp,
+                src2: SrcOperand::Imm(8),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        ordinary.set_terminator(Terminator::Return { values: vec![] });
+        let ordinary = ordinary.finish();
+        assert!(!is_native_clobber_safe_excluding(
+            &ordinary,
+            &std::collections::HashMap::new(),
+            false
+        ));
+        assert!(is_native_clobber_safe_excluding(
+            &ordinary,
+            &std::collections::HashMap::new(),
+            true
+        ));
+
+        let popped = VReg::Virtual(VirtualId(7));
+        let mut pop_rsp = FunctionBuilder::new(FunctionId(1), 0x2000);
+        pop_rsp.push_op(
+            0x2000,
+            OpKind::Load {
+                dst: popped,
+                addr: Address::Direct(rsp),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        );
+        pop_rsp.push_op(
+            0x2000,
+            OpKind::Mov {
+                dst: rsp,
+                src: SrcOperand::Reg(popped),
+                width: OpWidth::W64,
+            },
+        );
+        pop_rsp.set_terminator(Terminator::Return { values: vec![] });
+        assert!(is_native_clobber_safe_excluding(
+            &pop_rsp.finish(),
+            &std::collections::HashMap::new(),
+            true
+        ));
+
+        let popped = VReg::Virtual(VirtualId(8));
+        let incremented = VReg::Virtual(VirtualId(9));
+        let mut pop_sp = FunctionBuilder::new(FunctionId(2), 0x3000);
+        pop_sp.push_op(
+            0x3000,
+            OpKind::Load {
+                dst: popped,
+                addr: Address::Direct(rsp),
+                width: MemWidth::B2,
+                sign: SignExtend::Zero,
+            },
+        );
+        pop_sp.push_op(
+            0x3000,
+            OpKind::Add {
+                dst: incremented,
+                src1: rsp,
+                src2: SrcOperand::Imm(2),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        pop_sp.push_op(
+            0x3000,
+            OpKind::Mov {
+                dst: rsp,
+                src: SrcOperand::Reg(incremented),
+                width: OpWidth::W64,
+            },
+        );
+        pop_sp.push_op(
+            0x3000,
+            OpKind::Mov {
+                dst: rsp,
+                src: SrcOperand::Reg(popped),
+                width: OpWidth::W16,
+            },
+        );
+        pop_sp.set_terminator(Terminator::Return { values: vec![] });
+        assert!(is_native_clobber_safe_excluding(
+            &pop_sp.finish(),
+            &std::collections::HashMap::new(),
+            true
+        ));
+
+        // A same-instruction POP-like pair with the wrong delta must fail
+        // closed instead of being admitted as an independent Load and ADD.
+        let mut malformed = FunctionBuilder::new(FunctionId(3), 0x4000);
+        malformed.push_op(
+            0x4000,
+            OpKind::Load {
+                dst: x86(X86Reg::Rax),
+                addr: Address::Direct(rsp),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        );
+        malformed.push_op(
+            0x4000,
+            OpKind::Add {
+                dst: rsp,
+                src1: rsp,
+                src2: SrcOperand::Imm(2),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        malformed.set_terminator(Terminator::Return { values: vec![] });
+        assert!(!is_native_clobber_safe_excluding(
+            &malformed.finish(),
+            &std::collections::HashMap::new(),
+            true
+        ));
+
+        // The same two SMIR operations at distinct guest PCs are independent
+        // instructions, not a malformed fused POP, and remain individually safe.
+        let mut independent = FunctionBuilder::new(FunctionId(4), 0x5000);
+        independent.push_op(
+            0x5000,
+            OpKind::Load {
+                dst: x86(X86Reg::Rax),
+                addr: Address::Direct(rsp),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            },
+        );
+        independent.push_op(
+            0x5001,
+            OpKind::Add {
+                dst: rsp,
+                src1: rsp,
+                src2: SrcOperand::Imm(2),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        independent.set_terminator(Terminator::Return { values: vec![] });
+        assert!(is_native_clobber_safe_excluding(
+            &independent.finish(),
             &std::collections::HashMap::new(),
             true
         ));

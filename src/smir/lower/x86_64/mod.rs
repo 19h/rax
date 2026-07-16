@@ -9681,6 +9681,7 @@ impl X86_64Lowerer {
                         Some(*dst),
                         None,
                         None,
+                        None,
                         addr,
                         *width,
                         *sign,
@@ -9885,6 +9886,7 @@ impl X86_64Lowerer {
                     return self.emit_jit_mem_op(
                         op.guest_pc,
                         false,
+                        None,
                         None,
                         src_reg,
                         src_imm,
@@ -14445,6 +14447,7 @@ impl X86_64Lowerer {
             Some(dst),
             None,
             None,
+            None,
             addr,
             mem_width,
             SignExtend::Zero,
@@ -14458,6 +14461,222 @@ impl X86_64Lowerer {
             emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
         }
         Ok(Some(2))
+    }
+
+    /// Fuse the exact POP shapes emitted by the x86 lifter. The memory helper
+    /// runs against the pre-increment RSP snapshot and exits before any state
+    /// commit on fault. Ordinary destinations then increment RSP; POP RSP uses
+    /// the loaded value directly; POP SP stages the value on the host stack so
+    /// full-width increment carries are retained before the low-16-bit merge.
+    fn try_lower_jit_pop(
+        &mut self,
+        ops: &[crate::smir::ir::ops::SmirOp],
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let load = match ops.get(idx) {
+            Some(op) => op,
+            None => return Ok(None),
+        };
+        let (popped, mem_width, delta) = match load.kind {
+            OpKind::Load {
+                dst,
+                addr: Address::Direct(base),
+                width: mem_width @ (MemWidth::B2 | MemWidth::B8),
+                sign: SignExtend::Zero,
+            } if base == rsp => (
+                dst,
+                mem_width,
+                if mem_width == MemWidth::B2 { 2 } else { 8 },
+            ),
+            _ => return Ok(None),
+        };
+
+        if let VReg::Arch(ArchReg::X86(reg)) = popped {
+            if reg.gpr_index().is_none() || popped == rsp {
+                return Ok(None);
+            }
+            let increment = match ops.get(idx + 1) {
+                Some(op) if op.guest_pc == load.guest_pc => op,
+                _ => return Ok(None),
+            };
+            if !matches!(
+                increment.kind,
+                OpKind::Add {
+                    dst,
+                    src1,
+                    src2: SrcOperand::Imm(amount),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                } if dst == rsp && src1 == rsp && amount == delta
+            ) {
+                return Ok(None);
+            }
+
+            self.emit_jit_mem_op(
+                load.guest_pc,
+                true,
+                Some(popped),
+                None,
+                None,
+                None,
+                &Address::Direct(rsp),
+                mem_width,
+                SignExtend::Zero,
+                0,
+            )?;
+            if reg.gpr_index() == Some(5) {
+                // The helper committed GuestRegs.gpr[RBP], but hardware RBP is
+                // the native frame pointer. Synchronize the prologue-saved
+                // guest word, then restore any scratch-clobbered live GPRs.
+                self.code.emit_u8(0x48);
+                self.code.emit_u8(0x8B);
+                self.code.emit_u8(0x4D);
+                self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8);
+                self.emit_sync_saved_rbp_from_state(PhysReg::Rcx);
+                self.emit_reload_all(PhysReg::Rcx);
+            }
+            self.lower_state_backed_stack_gpr_alu(
+                false,
+                rsp,
+                rsp,
+                &SrcOperand::Imm(delta),
+                OpWidth::W64,
+                FlagUpdate::None,
+            )?;
+            return Ok(Some(2));
+        }
+
+        let VReg::Virtual(_) = popped else {
+            return Ok(None);
+        };
+        if virtual_definitions.get(&popped) != Some(&1) || virtual_uses.get(&popped) != Some(&1) {
+            return Ok(None);
+        }
+
+        if mem_width == MemWidth::B8 {
+            let commit = match ops.get(idx + 1) {
+                Some(op) if op.guest_pc == load.guest_pc => op,
+                _ => return Ok(None),
+            };
+            if !matches!(
+                commit.kind,
+                OpKind::Mov {
+                    dst,
+                    src: SrcOperand::Reg(src),
+                    width: OpWidth::W64,
+                } if dst == rsp && src == popped
+            ) {
+                return Ok(None);
+            }
+            self.emit_jit_mem_op(
+                load.guest_pc,
+                true,
+                Some(rsp),
+                None,
+                None,
+                None,
+                &Address::Direct(rsp),
+                MemWidth::B8,
+                SignExtend::Zero,
+                0,
+            )?;
+            return Ok(Some(2));
+        }
+
+        let increment = match ops.get(idx + 1) {
+            Some(op) if op.guest_pc == load.guest_pc => op,
+            _ => return Ok(None),
+        };
+        let incremented = match increment.kind {
+            OpKind::Add {
+                dst: temporary @ VReg::Virtual(_),
+                src1,
+                src2: SrcOperand::Imm(2),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            } if src1 == rsp => temporary,
+            _ => return Ok(None),
+        };
+        if virtual_definitions.get(&incremented) != Some(&1)
+            || virtual_uses.get(&incremented) != Some(&1)
+        {
+            return Ok(None);
+        }
+        let increment_commit = match ops.get(idx + 2) {
+            Some(op) if op.guest_pc == load.guest_pc => op,
+            _ => return Ok(None),
+        };
+        let low_commit = match ops.get(idx + 3) {
+            Some(op) if op.guest_pc == load.guest_pc => op,
+            _ => return Ok(None),
+        };
+        if !matches!(
+            increment_commit.kind,
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Reg(src),
+                width: OpWidth::W64,
+            } if dst == rsp && src == incremented
+        ) || !matches!(
+            low_commit.kind,
+            OpKind::Mov {
+                dst,
+                src: SrcOperand::Reg(src),
+                width: OpWidth::W16,
+            } if dst == rsp && src == popped
+        ) {
+            return Ok(None);
+        }
+
+        // Reserve 16 bytes without changing flags. The helper stores its
+        // zero-extended return value at the caller-owned top slot. Its fault
+        // path removes this reservation before returning to the trampoline.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
+        }
+        self.emit_jit_mem_op(
+            load.guest_pc,
+            true,
+            None,
+            Some(16),
+            None,
+            None,
+            &Address::Direct(rsp),
+            MemWidth::B2,
+            SignExtend::Zero,
+            16,
+        )?;
+        self.lower_state_backed_stack_gpr_alu(
+            false,
+            rsp,
+            rsp,
+            &SrcOperand::Imm(2),
+            OpWidth::W64,
+            FlagUpdate::None,
+        )?;
+
+        // At this point GuestRegs.gpr[RSP] contains old_rsp + 2. Merge the
+        // staged POP value into only its low 16 bits, preserving the carry into
+        // bit 16 and every live guest register and flag.
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_push(PhysReg::Rax);
+            emitter.emit_push(PhysReg::Rcx);
+        }
+        self.emit_load_state_ptr_rax();
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rcx, PhysReg::Rsp, 16, OpWidth::W16);
+            emitter.emit_mov_mr(PhysReg::Rax, 4 * 8, PhysReg::Rcx, OpWidth::W16);
+            emitter.emit_pop(PhysReg::Rcx);
+            emitter.emit_pop(PhysReg::Rax);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+        Ok(Some(4))
     }
 
     /// Fuse a lifted PUSH into one fault-precise helper store followed by the
@@ -14549,6 +14768,7 @@ impl X86_64Lowerer {
             store.guest_pc,
             false,
             None,
+            None,
             source_reg,
             source_imm,
             &address,
@@ -14580,6 +14800,7 @@ impl X86_64Lowerer {
         guest_pc: u64,
         is_load: bool,
         load_dst: Option<VReg>,
+        load_stack_dst: Option<i32>,
         store_src_reg: Option<VReg>,
         store_src_imm: Option<i64>,
         addr: &Address,
@@ -14599,6 +14820,18 @@ impl X86_64Lowerer {
             }
         };
         let signed: i32 = matches!(sign, SignExtend::Sign) as i32;
+        if is_load && (load_dst.is_some() == load_stack_dst.is_some()) {
+            return Err(LowerError::InvalidOperand {
+                op: "jit-mem load".to_string(),
+                operand: "exactly one register or host-stack destination is required".to_string(),
+            });
+        }
+        if !is_load && load_stack_dst.is_some() {
+            return Err(LowerError::InvalidOperand {
+                op: "jit-mem store".to_string(),
+                operand: "host-stack load destination supplied for store".to_string(),
+            });
+        }
         let load_dst_enc = match load_dst {
             Some(d) => Some(self.jit_arch_enc(d)?),
             None => None,
@@ -14792,33 +15025,41 @@ impl X86_64Lowerer {
 
         // --- OK path ---
         if is_load {
-            let denc = load_dst_enc.unwrap() as i32;
-            let off = (denc * 8) as u32;
-            // Deliver the loaded value (in RAX) into the destination's GuestRegs
-            // slot, RESPECTING x86 partial-register write semantics — `mov
-            // al/ax,[mem]` (B1/B2) writes only the low 1/2 bytes and PRESERVES
-            // the upper register bits, whereas `mov eax,[mem]` (B4) zero-extends
-            // to 64 (the helper already returned a zero-extended value, so a full
-            // 8-byte store is correct) and B8 is a full store. Writing the full
-            // RAX for B1/B2 would wrongly clobber the upper bits — exactly the
-            // divergence a `mov al, gs:[...]` per-CPU read exposes.
-            match mem_width {
-                MemWidth::B1 => {
-                    // mov byte [rcx + off], al  (88 81 <disp32>)
-                    self.code.emit_u8(0x88);
-                    self.code.emit_u8(0x81);
-                    self.code.emit_u32(off);
-                }
-                MemWidth::B2 => {
-                    // mov word [rcx + off], ax  (66 89 81 <disp32>)
-                    self.code.emit_u8(0x66);
-                    self.code.emit_u8(0x89);
-                    self.code.emit_u8(0x81);
-                    self.code.emit_u32(off);
-                }
-                _ => {
-                    // B4 (zero-extended by the helper) / B8: full 8-byte store.
-                    self.emit_struct_mov(PhysReg::Rcx, 0, denc * 8, true);
+            if let Some(stack_off) = load_stack_dst {
+                // The load helper returns a zero-extended scalar in RAX. Stage
+                // a complete 64-bit value in caller-owned host stack space;
+                // no architectural GuestRegs slot is modified.
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_mr(PhysReg::Rsp, stack_off, PhysReg::Rax, OpWidth::W64);
+            } else {
+                let denc = load_dst_enc.unwrap() as i32;
+                let off = (denc * 8) as u32;
+                // Deliver the loaded value (in RAX) into the destination's GuestRegs
+                // slot, RESPECTING x86 partial-register write semantics — `mov
+                // al/ax,[mem]` (B1/B2) writes only the low 1/2 bytes and PRESERVES
+                // the upper register bits, whereas `mov eax,[mem]` (B4) zero-extends
+                // to 64 (the helper already returned a zero-extended value, so a full
+                // 8-byte store is correct) and B8 is a full store. Writing the full
+                // RAX for B1/B2 would wrongly clobber the upper bits — exactly the
+                // divergence a `mov al, gs:[...]` per-CPU read exposes.
+                match mem_width {
+                    MemWidth::B1 => {
+                        // mov byte [rcx + off], al  (88 81 <disp32>)
+                        self.code.emit_u8(0x88);
+                        self.code.emit_u8(0x81);
+                        self.code.emit_u32(off);
+                    }
+                    MemWidth::B2 => {
+                        // mov word [rcx + off], ax  (66 89 81 <disp32>)
+                        self.code.emit_u8(0x66);
+                        self.code.emit_u8(0x89);
+                        self.code.emit_u8(0x81);
+                        self.code.emit_u32(off);
+                    }
+                    _ => {
+                        // B4 (zero-extended by the helper) / B8: full 8-byte store.
+                        self.emit_struct_mov(PhysReg::Rcx, 0, denc * 8, true);
+                    }
                 }
             }
         }
@@ -15223,11 +15464,49 @@ impl X86_64Lowerer {
         // Initialize register allocator for this block
         self.regalloc.begin_block(block);
 
+        // Count virtual definitions and uses once. Exact helper-backed fusion
+        // validation and lowering are then O(1) per candidate; the complete
+        // block pass remains O(N).
+        let mut virtual_definitions = HashMap::new();
+        let mut virtual_uses = HashMap::new();
+        for op in &block.ops {
+            for reg in op.kind.dests() {
+                if matches!(reg, VReg::Virtual(_)) {
+                    *virtual_definitions.entry(reg).or_insert(0usize) += 1;
+                }
+            }
+            for reg in op.kind.source_vregs() {
+                if matches!(reg, VReg::Virtual(_)) {
+                    *virtual_uses.entry(reg).or_insert(0usize) += 1;
+                }
+            }
+        }
+
         // Validate before peepholes consume operations so no direct-memory fold
         // can hide a guest RSP/RBP destination or address from the safety guard.
-        for op in &block.ops {
+        // Exact helper-backed POP sequences are validated as a unit because
+        // their virtual/state-backed destinations are intentionally elided.
+        let mut validate_idx = 0;
+        while validate_idx < block.ops.len() {
+            #[cfg(feature = "smir-jit")]
+            {
+                if self.mem_helpers {
+                    if let Some(consumed) = super::runtime::x86_jit_pop_sequence_len(
+                        block,
+                        validate_idx,
+                        true,
+                        &virtual_definitions,
+                        &virtual_uses,
+                    ) {
+                        validate_idx += consumed;
+                        continue;
+                    }
+                }
+            }
+            let op = &block.ops[validate_idx];
             Self::ensure_native_stack_dests_safe(op)?;
             Self::ensure_native_stack_memory_safe(op, self.mem_helpers)?;
+            validate_idx += 1;
         }
 
         let mut end_idx = block.ops.len();
@@ -15255,23 +15534,6 @@ impl X86_64Lowerer {
             }
         }
 
-        // Count virtual definitions and uses once. Helper-backed fusion shape
-        // checks are then O(1) each and block lowering remains O(N).
-        let mut virtual_definitions = HashMap::new();
-        let mut virtual_uses = HashMap::new();
-        for op in &block.ops {
-            for reg in op.kind.dests() {
-                if matches!(reg, VReg::Virtual(_)) {
-                    *virtual_definitions.entry(reg).or_insert(0usize) += 1;
-                }
-            }
-            for reg in op.kind.source_vregs() {
-                if matches!(reg, VReg::Virtual(_)) {
-                    *virtual_uses.entry(reg).or_insert(0usize) += 1;
-                }
-            }
-        }
-
         // Lower each operation
         let mut idx = 0;
         while idx < end_idx {
@@ -15295,6 +15557,12 @@ impl X86_64Lowerer {
             // (see `emit_jit_mem_op`). The CRC32 fusion below is explicitly
             // helper-backed and therefore runs only in that mode.
             if self.mem_helpers {
+                if let Some(consumed) =
+                    self.try_lower_jit_pop(&block.ops, idx, &virtual_definitions, &virtual_uses)?
+                {
+                    idx += consumed;
+                    continue;
+                }
                 if let Some(consumed) =
                     self.try_lower_jit_push(&block.ops, idx, &virtual_definitions, &virtual_uses)?
                 {

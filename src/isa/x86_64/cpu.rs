@@ -4209,9 +4209,9 @@ fn jit_classify_bail(
 ) -> String {
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
     use crate::smir::lower::runtime::{
-        is_x86_native_vector_op, x86_jit_push_candidate, x86_jit_push_sequence_len,
-        x86_jit_vector_mem_shape_valid, x86_state_backed_stack_alu_valid,
-        x86_state_backed_stack_mov_valid,
+        is_x86_native_vector_op, x86_jit_pop_candidate, x86_jit_pop_sequence_len,
+        x86_jit_push_candidate, x86_jit_push_sequence_len, x86_jit_vector_mem_shape_valid,
+        x86_state_backed_stack_alu_valid, x86_state_backed_stack_mov_valid,
     };
     let is_sp_bp = |v: &VReg| {
         matches!(
@@ -4246,6 +4246,15 @@ fn jit_classify_bail(
         }
         let mut i = 0;
         while i < n {
+            if let Some(consumed) =
+                x86_jit_pop_sequence_len(b, i, allow_mem, &virtual_definitions, &virtual_uses)
+            {
+                i += consumed;
+                continue;
+            }
+            if x86_jit_pop_candidate(b, i) {
+                return "pop-shape".to_string();
+            }
             if let Some(consumed) =
                 x86_jit_push_sequence_len(b, i, allow_mem, &virtual_definitions, &virtual_uses)
             {

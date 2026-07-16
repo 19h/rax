@@ -536,6 +536,85 @@ fn jit_helper_backed_push_pop_is_precise_and_uses_predecrement_rsp() {
     assert_eq!(after.rflags, before.rflags, "fault path flags");
 }
 
+#[test]
+fn jit_helper_backed_pop_aliases_match_interpreter_and_fault_precisely() {
+    let run_case = |name: &str, code: &[u8], setup: fn(&mut Registers)| {
+        let mut interp = make_vcpu_code(code);
+        let mut initial = interp.get_regs().unwrap();
+        setup(&mut initial);
+        interp.set_regs(&initial).unwrap();
+        run_interp(&mut interp);
+        let expected = interp.get_regs().unwrap();
+
+        let mut jit = make_vcpu_code(code);
+        jit.set_regs(&initial).unwrap();
+        jit.set_jit_mem(true);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{name}: POP JIT: {error}")),
+            "{name}: exact POP sequence must enter the native tier"
+        );
+        run_interp(&mut jit);
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(actual.rsp, expected.rsp, "{name}: RSP");
+        assert_eq!(actual.rbp, expected.rbp, "{name}: RBP");
+        assert_eq!(actual.rax, expected.rax, "{name}: RAX");
+        assert_eq!(actual.rcx, expected.rcx, "{name}: RCX");
+        assert_eq!(actual.rflags, expected.rflags, "{name}: RFLAGS");
+    };
+
+    // The helper commits RBP through GuestRegs, while the lowerer must also
+    // synchronize the guest-RBP word saved under the trusted native frame.
+    run_case("POP RBP", &[0x50, 0x5D, 0xF4], |regs| {
+        regs.rax = 0x8877_6655_4433_2211;
+        regs.rbp = 0x0123_4567_89AB_CDEF;
+        regs.rsp = 0x11_0000;
+        regs.rflags = 0x2 | 0x8D5;
+    });
+
+    // Intel specifies that POP RSP writes the loaded value after the otherwise
+    // implicit increment, so the loaded value wins completely.
+    run_case("POP RSP", &[0x50, 0x5C, 0xF4], |regs| {
+        regs.rax = 0x12_3450;
+        regs.rsp = 0x11_0000;
+        regs.rflags = 0x2 | 0x8D5;
+    });
+
+    // Starting at 0x10_FFFE forces the 2-byte increment to carry into bit 16.
+    // POP SP must retain that carry and replace only the final low 16 bits.
+    run_case("POP SP carry", &[0x66, 0x50, 0x66, 0x5C, 0xF4], |regs| {
+        regs.rax = 0x0123_4567_89AB_CDEF;
+        regs.rsp = 0x11_0000;
+        regs.rflags = 0x2 | 0x8D5;
+    });
+
+    for (name, code) in [
+        ("faulting POP RSP", &[0x5C, 0xB9, 1, 0, 0, 0, 0xF4][..]),
+        ("faulting POP SP", &[0x66, 0x5C, 0xB9, 1, 0, 0, 0, 0xF4][..]),
+    ] {
+        let mut fault = make_vcpu_code(code);
+        let mut before = fault.get_regs().unwrap();
+        before.rax = 0xA5A5_5A5A_1234_5678;
+        before.rcx = 0xDEAD_BEEF;
+        before.rsp = MEM_SIZE + 4;
+        before.rflags = 0x2 | 0x8D5;
+        fault.set_regs(&before).unwrap();
+        fault.set_jit_mem(true);
+        assert!(
+            fault
+                .jit_try_block()
+                .unwrap_or_else(|error| panic!("{name}: {error}")),
+            "{name}: alias sequence must compile before the helper fault"
+        );
+        let after = fault.get_regs().unwrap();
+        assert_eq!(after.rip, LOAD_ADDR, "{name}: restart PC");
+        assert_eq!(after.rsp, before.rsp, "{name}: RSP must not commit");
+        assert_eq!(after.rax, before.rax, "{name}: RAX");
+        assert_eq!(after.rcx, before.rcx, "{name}: following MOV must not run");
+        assert_eq!(after.rflags, before.rflags, "{name}: RFLAGS");
+    }
+}
+
 /// A lift-through-call interpreter helper can semantically change guest RBP.
 /// The native frame must retain hardware RBP as its trusted base while keeping
 /// the prologue's saved guest value coherent for the final trampoline write-back.
