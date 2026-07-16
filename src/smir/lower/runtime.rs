@@ -6396,10 +6396,11 @@ fn x86_shift_rmw_shape(
 
 /// Validate the exact four-op fault-precise memory-destination shift/rotate
 /// sequence emitted by the x86 lifter. Immediate counts are normalized exactly
-/// as x86 does. Variable CL operations are restricted to dword/qword widths,
-/// where the masked count cannot exceed the operand width or reach a second
-/// through-carry period. Subword counts remain fail-closed because their
-/// effective-count reduction changes deterministic undefined-OF classification.
+/// as x86 does; multi-bit/zero RCL/RCR and variable CL operations are restricted
+/// to dword/qword widths, where the masked count cannot exceed the operand width
+/// or reach a second through-carry period. Subword counts remain fail-closed
+/// unless already covered by an exact one-bit case because their effective-count
+/// reduction changes deterministic undefined-OF classification.
 pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -6460,7 +6461,7 @@ pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
             let mask = if width == OpWidth::W64 { 0x3f } else { 0x1f };
             let masked = (*value as u8) & mask;
             match compute_tag {
-                2 | 3 => masked == 1,
+                2 | 3 => masked == 1 || matches!(width, OpWidth::W32 | OpWidth::W64),
                 0 | 1 | 4 | 5 | 7 => masked == 0 || u32::from(masked) < width.bits(),
                 _ => false,
             }
@@ -19590,6 +19591,10 @@ mod jit_gate_tests {
             (1, SrcOperand::Imm(7), MemWidth::B2),
             (2, SrcOperand::Imm(1), MemWidth::B4),
             (3, SrcOperand::Imm(1), MemWidth::B8),
+            (2, SrcOperand::Imm(32), MemWidth::B4),
+            (3, SrcOperand::Imm(64), MemWidth::B8),
+            (2, SrcOperand::Imm(7), MemWidth::B4),
+            (3, SrcOperand::Imm(7), MemWidth::B8),
             (4, SrcOperand::Imm(0), MemWidth::B1),
             (5, SrcOperand::Imm(1), MemWidth::B4),
             (7, SrcOperand::Imm(255), MemWidth::B8),
@@ -19697,11 +19702,23 @@ mod jit_gate_tests {
                 false,
             ),
             build(
+                2,
+                2,
+                SrcOperand::Imm(2),
+                SrcOperand::Imm(2),
+                MemWidth::B1,
+                FlagUpdate::None,
+                rotate_flags,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
                 3,
                 3,
                 SrcOperand::Imm(2),
                 SrcOperand::Imm(2),
-                MemWidth::B8,
+                MemWidth::B2,
                 FlagUpdate::None,
                 rotate_flags,
                 address(),

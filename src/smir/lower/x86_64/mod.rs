@@ -14772,11 +14772,10 @@ impl X86_64Lowerer {
                 (X86_STATUS_RFLAGS, 0i64)
             } else {
                 match kind {
-                    ShiftRegOp::Rol | ShiftRegOp::Ror => (
+                    ShiftRegOp::Rol | ShiftRegOp::Ror | ShiftRegOp::Rcl | ShiftRegOp::Rcr => (
                         ROTATE_UNCHANGED_RFLAGS | if count == 1 { 0 } else { 1 << 11 },
                         0,
                     ),
-                    ShiftRegOp::Rcl | ShiftRegOp::Rcr => (ROTATE_UNCHANGED_RFLAGS, 0),
                     ShiftRegOp::Shl | ShiftRegOp::Shr | ShiftRegOp::Sar => {
                         (1 << 4, if count == 1 { 0 } else { 1 << 11 })
                     }
