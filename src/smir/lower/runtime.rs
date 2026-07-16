@@ -6400,10 +6400,9 @@ fn x86_shift_rmw_shape(
 /// value/CF behavior follows the operand or through-carry period while the saved
 /// RFLAGS merge classifies zero/one/multi using the raw masked count. SAR also
 /// accepts every count because repeated sign fill keeps its result and CF
-/// representable. Oversized immediate subword SHL/SHR counts are representable
-/// by clearing Rax's deterministic CF/OF outputs after replay. Counts exactly
-/// equal to the width and subword CL forms stay fail-closed because equality
-/// requires deriving CF from the original operand at runtime.
+/// representable. Subword SHL/SHR counts are also representable: equality
+/// derives CF from the staged original operand, while oversized counts clear
+/// Rax's deterministic CF/OF outputs after replay.
 pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -6460,18 +6459,10 @@ pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
     let (replay_tag, flags_result, replay_old, replay_amount, replay_width, replay_flags) =
         x86_shift_rmw_shape(&replay.kind)?;
     let count_valid = match &amount {
-        SrcOperand::Imm(value) if (0..=i64::from(u8::MAX)).contains(value) => {
-            let mask = if width == OpWidth::W64 { 0x3f } else { 0x1f };
-            let masked = (*value as u8) & mask;
-            match compute_tag {
-                0..=3 | 7 => true,
-                4 | 5 => masked == 0 || u32::from(masked) != width.bits(),
-                _ => false,
-            }
-        }
+        SrcOperand::Imm(value) if (0..=i64::from(u8::MAX)).contains(value) => true,
         SrcOperand::Reg(VReg::Arch(crate::smir::ir::types::ArchReg::X86(
             crate::smir::ir::types::X86Reg::Rcx,
-        ))) => matches!(width, OpWidth::W32 | OpWidth::W64) || compute_tag <= 3 || compute_tag == 7,
+        ))) => true,
         _ => false,
     };
     let rotate_flags = FlagSet::CF.union(FlagSet::OF);
@@ -19708,32 +19699,39 @@ mod jit_gate_tests {
             }
         }
 
-        for (tag, amount, mem_width) in [
-            (4, SrcOperand::Imm(9), MemWidth::B1),
-            (5, SrcOperand::Imm(31), MemWidth::B1),
-            (4, SrcOperand::Imm(17), MemWidth::B2),
-            (5, SrcOperand::Imm(31), MemWidth::B2),
-        ] {
-            let function = build(
-                tag,
-                tag,
-                amount.clone(),
-                amount,
-                mem_width,
-                FlagUpdate::None,
-                FlagUpdate::All,
-                address(),
-                0x1000,
-                false,
-            );
-            assert!(
-                is_native_clobber_safe_excluding(
-                    &function,
-                    &std::collections::HashMap::new(),
-                    true,
-                ),
-                "oversized subword shift tag {tag} with {mem_width:?} must JIT"
-            );
+        for tag in [4, 5] {
+            for (mem_width, boundary) in [(MemWidth::B1, 8), (MemWidth::B2, 16)] {
+                for amount in [
+                    SrcOperand::Imm(0),
+                    SrcOperand::Imm(1),
+                    SrcOperand::Imm(boundary - 1),
+                    SrcOperand::Imm(boundary),
+                    SrcOperand::Imm(boundary + 1),
+                    SrcOperand::Imm(31),
+                    SrcOperand::Reg(x86(X86Reg::Rcx)),
+                ] {
+                    let function = build(
+                        tag,
+                        tag,
+                        amount.clone(),
+                        amount,
+                        mem_width,
+                        FlagUpdate::None,
+                        FlagUpdate::All,
+                        address(),
+                        0x1000,
+                        false,
+                    );
+                    assert!(
+                        is_native_clobber_safe_excluding(
+                            &function,
+                            &std::collections::HashMap::new(),
+                            true,
+                        ),
+                        "subword shift tag {tag} with {mem_width:?} must JIT"
+                    );
+                }
+            }
         }
 
         for function in [
@@ -19755,30 +19753,6 @@ mod jit_gate_tests {
                 function
             },
             build(
-                4,
-                4,
-                SrcOperand::Reg(x86(X86Reg::Rcx)),
-                SrcOperand::Reg(x86(X86Reg::Rcx)),
-                MemWidth::B1,
-                FlagUpdate::None,
-                FlagUpdate::All,
-                address(),
-                0x1000,
-                false,
-            ),
-            build(
-                5,
-                5,
-                SrcOperand::Reg(x86(X86Reg::Rcx)),
-                SrcOperand::Reg(x86(X86Reg::Rcx)),
-                MemWidth::B2,
-                FlagUpdate::None,
-                FlagUpdate::All,
-                address(),
-                0x1000,
-                false,
-            ),
-            build(
                 0,
                 0,
                 SrcOperand::Imm(1),
@@ -19820,30 +19794,6 @@ mod jit_gate_tests {
                 SrcOperand::Reg(x86(X86Reg::Rdx)),
                 SrcOperand::Reg(x86(X86Reg::Rdx)),
                 MemWidth::B8,
-                FlagUpdate::None,
-                FlagUpdate::All,
-                address(),
-                0x1000,
-                false,
-            ),
-            build(
-                4,
-                4,
-                SrcOperand::Imm(8),
-                SrcOperand::Imm(8),
-                MemWidth::B1,
-                FlagUpdate::None,
-                FlagUpdate::All,
-                address(),
-                0x1000,
-                false,
-            ),
-            build(
-                5,
-                5,
-                SrcOperand::Imm(16),
-                SrcOperand::Imm(16),
-                MemWidth::B2,
                 FlagUpdate::None,
                 FlagUpdate::All,
                 address(),

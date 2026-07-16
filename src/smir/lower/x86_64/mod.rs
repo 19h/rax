@@ -14712,6 +14712,39 @@ impl X86_64Lowerer {
         }
     }
 
+    /// Merge the deterministic count-equals-width SHL/SHR status image. The
+    /// final PUSHFQ places native replay flags at [RSP], the original
+    /// zero-extended memory operand at [RSP+8], and incoming flags at [RSP+24].
+    /// AF is preserved, OF is cleared, and CF is reconstructed from the last
+    /// original bit shifted out instead of relying on an architecturally
+    /// undefined native CF result.
+    #[cfg(feature = "smir-jit")]
+    fn emit_merge_jit_shift_boundary_cf(&mut self, kind: ShiftRegOp, width: OpWidth) {
+        self.emit_merge_jit_shift_status(1 << 4, 1 << 11);
+
+        let boundary_bit = match kind {
+            ShiftRegOp::Shl => 0,
+            ShiftRegOp::Shr => width.bits() - 1,
+            _ => unreachable!("boundary CF reconstruction is only valid for SHL/SHR"),
+        };
+        let mut emitter = X86Emitter::new(&mut self.code);
+        emitter.emit_alu_mi_disp(4, PhysReg::Rsp, 0, DispSize::Auto, !1, OpWidth::W64);
+        emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rsp, 8, OpWidth::W64);
+        if boundary_bit != 0 {
+            emitter.emit_shr_ri(PhysReg::Rax, boundary_bit as u8, OpWidth::W64);
+        }
+        emitter.emit_and_ri(PhysReg::Rax, 1, OpWidth::W64);
+        emitter.emit_alu_mem_disp(
+            0x08,
+            PhysReg::Rax,
+            PhysReg::Rsp,
+            0,
+            DispSize::Auto,
+            OpWidth::W64,
+            X86AluEncoding::RmReg,
+        );
+    }
+
     /// Fuse an exact fault-precise memory-destination shift/rotate sequence.
     /// The speculative scratch-RAX operation is wrapped by PUSHFQ/POPFQ, so
     /// store faults retain every incoming flag; only a successful store reaches
@@ -14766,25 +14799,51 @@ impl X86_64Lowerer {
         let count_mask = if width == OpWidth::W64 { 0x3f } else { 0x1f };
         const X86_STATUS_RFLAGS: i64 = 0x08D5;
         const ROTATE_UNCHANGED_RFLAGS: i64 = 0x00D4;
-        let static_status_merge = raw_count.map(|raw_count| {
-            let count = raw_count & count_mask;
-            if count == 0 {
-                (X86_STATUS_RFLAGS, 0i64)
-            } else {
-                match kind {
-                    ShiftRegOp::Rol | ShiftRegOp::Ror | ShiftRegOp::Rcl | ShiftRegOp::Rcr => (
-                        ROTATE_UNCHANGED_RFLAGS | if count == 1 { 0 } else { 1 << 11 },
-                        0,
-                    ),
-                    ShiftRegOp::Shl | ShiftRegOp::Shr if u32::from(count) > width.bits() => {
-                        (1 << 4, 1 | (1 << 11))
+        enum StatusMerge {
+            Static {
+                preserve_rflags: i64,
+                clear_rflags: i64,
+            },
+            BoundaryCf,
+            Dynamic,
+        }
+        let status_merge = match raw_count {
+            None => StatusMerge::Dynamic,
+            Some(raw_count) => {
+                let count = raw_count & count_mask;
+                if count == 0 {
+                    StatusMerge::Static {
+                        preserve_rflags: X86_STATUS_RFLAGS,
+                        clear_rflags: 0,
                     }
-                    ShiftRegOp::Shl | ShiftRegOp::Shr | ShiftRegOp::Sar => {
-                        (1 << 4, if count == 1 { 0 } else { 1 << 11 })
+                } else {
+                    match kind {
+                        ShiftRegOp::Rol | ShiftRegOp::Ror | ShiftRegOp::Rcl | ShiftRegOp::Rcr => {
+                            StatusMerge::Static {
+                                preserve_rflags: ROTATE_UNCHANGED_RFLAGS
+                                    | if count == 1 { 0 } else { 1 << 11 },
+                                clear_rflags: 0,
+                            }
+                        }
+                        ShiftRegOp::Shl | ShiftRegOp::Shr if u32::from(count) == width.bits() => {
+                            StatusMerge::BoundaryCf
+                        }
+                        ShiftRegOp::Shl | ShiftRegOp::Shr if u32::from(count) > width.bits() => {
+                            StatusMerge::Static {
+                                preserve_rflags: 1 << 4,
+                                clear_rflags: 1 | (1 << 11),
+                            }
+                        }
+                        ShiftRegOp::Shl | ShiftRegOp::Shr | ShiftRegOp::Sar => {
+                            StatusMerge::Static {
+                                preserve_rflags: 1 << 4,
+                                clear_rflags: if count == 1 { 0 } else { 1 << 11 },
+                            }
+                        }
                     }
                 }
             }
-        });
+        };
 
         {
             let mut emitter = X86Emitter::new(&mut self.code);
@@ -14856,45 +14915,84 @@ impl X86_64Lowerer {
         // the exact incoming-bit policy. The branch tests may change live host
         // flags, but every path edits the saved image and converges at POPFQ.
         self.code.emit_u8(0x9C); // pushfq: native replay flags
-        if let Some((preserve_rflags, clear_rflags)) = static_status_merge {
-            self.emit_merge_jit_shift_status(preserve_rflags, clear_rflags);
-        } else {
-            {
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_mov_rr(PhysReg::Rax, PhysReg::Rcx, OpWidth::W64);
-                emitter.emit_and_ri(PhysReg::Rax, i64::from(count_mask), OpWidth::W64);
-                emitter.emit_test_rr(PhysReg::Rax, PhysReg::Rax, OpWidth::W64);
+        match status_merge {
+            StatusMerge::Static {
+                preserve_rflags,
+                clear_rflags,
+            } => self.emit_merge_jit_shift_status(preserve_rflags, clear_rflags),
+            StatusMerge::BoundaryCf => self.emit_merge_jit_shift_boundary_cf(kind, width),
+            StatusMerge::Dynamic => {
+                {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_mov_rr(PhysReg::Rax, PhysReg::Rcx, OpWidth::W64);
+                    emitter.emit_and_ri(PhysReg::Rax, i64::from(count_mask), OpWidth::W64);
+                    emitter.emit_test_rr(PhysReg::Rax, PhysReg::Rax, OpWidth::W64);
+                }
+                let count_zero = self.emit_jcc_placeholder(X86Cond::E);
+                {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_cmp_ri(PhysReg::Rax, 1, OpWidth::W64);
+                }
+                let count_one = self.emit_jcc_placeholder(X86Cond::E);
+                let subword_logical_shift = matches!(kind, ShiftRegOp::Shl | ShiftRegOp::Shr)
+                    && matches!(width, OpWidth::W8 | OpWidth::W16);
+                let (count_boundary, count_oversized) = if subword_logical_shift {
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_cmp_ri(PhysReg::Rax, i64::from(width.bits()), OpWidth::W64);
+                    }
+                    (
+                        Some(self.emit_jcc_placeholder(X86Cond::E)),
+                        Some(self.emit_jcc_placeholder(X86Cond::A)),
+                    )
+                } else {
+                    (None, None)
+                };
+
+                let (one_preserve, multi_preserve, multi_clear) = match kind {
+                    ShiftRegOp::Rol | ShiftRegOp::Ror | ShiftRegOp::Rcl | ShiftRegOp::Rcr => (
+                        ROTATE_UNCHANGED_RFLAGS,
+                        ROTATE_UNCHANGED_RFLAGS | (1 << 11),
+                        0,
+                    ),
+                    ShiftRegOp::Shl | ShiftRegOp::Shr | ShiftRegOp::Sar => {
+                        (1 << 4, 1 << 4, 1 << 11)
+                    }
+                };
+                self.emit_merge_jit_shift_status(multi_preserve, multi_clear);
+                self.code.emit_u8(0xE9);
+                let multi_done = self.code.position();
+                self.code.emit_u32(0);
+
+                self.patch_rel32_to_current(count_one)?;
+                self.emit_merge_jit_shift_status(one_preserve, 0);
+                self.code.emit_u8(0xE9);
+                let one_done = self.code.position();
+                self.code.emit_u32(0);
+
+                self.patch_rel32_to_current(count_zero)?;
+                self.emit_merge_jit_shift_status(X86_STATUS_RFLAGS, 0);
+                if let (Some(count_boundary), Some(count_oversized)) =
+                    (count_boundary, count_oversized)
+                {
+                    self.code.emit_u8(0xE9);
+                    let zero_done = self.code.position();
+                    self.code.emit_u32(0);
+
+                    self.patch_rel32_to_current(count_boundary)?;
+                    self.emit_merge_jit_shift_boundary_cf(kind, width);
+                    self.code.emit_u8(0xE9);
+                    let boundary_done = self.code.position();
+                    self.code.emit_u32(0);
+
+                    self.patch_rel32_to_current(count_oversized)?;
+                    self.emit_merge_jit_shift_status(1 << 4, 1 | (1 << 11));
+                    self.patch_rel32_to_current(zero_done)?;
+                    self.patch_rel32_to_current(boundary_done)?;
+                }
+                self.patch_rel32_to_current(multi_done)?;
+                self.patch_rel32_to_current(one_done)?;
             }
-            let count_zero = self.emit_jcc_placeholder(X86Cond::E);
-            {
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_cmp_ri(PhysReg::Rax, 1, OpWidth::W64);
-            }
-            let count_one = self.emit_jcc_placeholder(X86Cond::E);
-
-            let (one_preserve, multi_preserve, multi_clear) = match kind {
-                ShiftRegOp::Rol | ShiftRegOp::Ror | ShiftRegOp::Rcl | ShiftRegOp::Rcr => (
-                    ROTATE_UNCHANGED_RFLAGS,
-                    ROTATE_UNCHANGED_RFLAGS | (1 << 11),
-                    0,
-                ),
-                ShiftRegOp::Shl | ShiftRegOp::Shr | ShiftRegOp::Sar => (1 << 4, 1 << 4, 1 << 11),
-            };
-            self.emit_merge_jit_shift_status(multi_preserve, multi_clear);
-            self.code.emit_u8(0xE9);
-            let multi_done = self.code.position();
-            self.code.emit_u32(0);
-
-            self.patch_rel32_to_current(count_one)?;
-            self.emit_merge_jit_shift_status(one_preserve, 0);
-            self.code.emit_u8(0xE9);
-            let one_done = self.code.position();
-            self.code.emit_u32(0);
-
-            self.patch_rel32_to_current(count_zero)?;
-            self.emit_merge_jit_shift_status(X86_STATUS_RFLAGS, 0);
-            self.patch_rel32_to_current(multi_done)?;
-            self.patch_rel32_to_current(one_done)?;
         }
         self.code.emit_u8(0x9D); // popfq: merged guest flags
         {
@@ -25131,6 +25229,103 @@ mod tests {
             2,
             "SHL EAX,CL must execute once speculatively and once after store"
         );
+    }
+
+    #[cfg(feature = "smir-jit")]
+    #[test]
+    fn helper_backed_subword_cl_shifts_emit_original_operand_boundary_cf_merge() {
+        let lower = |tag: u8, mem_width: MemWidth| {
+            let old = VReg::Virtual(crate::smir::ir::types::VirtualId(66));
+            let result = VReg::Virtual(crate::smir::ir::types::VirtualId(67));
+            let flags_result = VReg::Virtual(crate::smir::ir::types::VirtualId(68));
+            let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+            let address = Address::Absolute(0x7100);
+            let width = mem_width.to_op_width().unwrap();
+            let shift = |dst, src, flags| match tag {
+                4 => OpKind::Shl {
+                    dst,
+                    src,
+                    amount: SrcOperand::Reg(rcx),
+                    width,
+                    flags,
+                },
+                5 => OpKind::Shr {
+                    dst,
+                    src,
+                    amount: SrcOperand::Reg(rcx),
+                    width,
+                    flags,
+                },
+                _ => unreachable!(),
+            };
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x4100);
+            builder.push_op(
+                0x4100,
+                OpKind::Load {
+                    dst: old,
+                    addr: address.clone(),
+                    width: mem_width,
+                    sign: SignExtend::Zero,
+                },
+            );
+            builder.push_op(0x4100, shift(result, old, FlagUpdate::None));
+            builder.push_op(
+                0x4100,
+                OpKind::Store {
+                    src: result,
+                    addr: address,
+                    width: mem_width,
+                },
+            );
+            builder.push_op(0x4100, shift(flags_result, old, FlagUpdate::All));
+            builder.set_terminator(Terminator::Return { values: vec![] });
+
+            let mut lowerer = X86_64Lowerer::new();
+            lowerer.set_mem_helpers(true);
+            lowerer
+                .lower_function(&builder.finish())
+                .expect("lower helper-backed subword CL shift RMW");
+            lowerer
+                .finalize()
+                .expect("finalize helper-backed subword CL shift RMW")
+        };
+
+        for (name, code, replay, boundary_merge) in [
+            (
+                "SHL r/m8,CL",
+                lower(4, MemWidth::B1),
+                &[0xD2, 0xE0][..],
+                &[
+                    0x48, 0x8B, 0x44, 0x24, 0x08, // mov rax,[rsp+8]
+                    0x48, 0x83, 0xE0, 0x01, // and rax,1
+                    0x48, 0x09, 0x04, 0x24, // or [rsp],rax
+                ][..],
+            ),
+            (
+                "SHR r/m16,CL",
+                lower(5, MemWidth::B2),
+                &[0x66, 0xD3, 0xE8][..],
+                &[
+                    0x48, 0x8B, 0x44, 0x24, 0x08, // mov rax,[rsp+8]
+                    0x48, 0xC1, 0xE8, 0x0F, // shr rax,15
+                    0x48, 0x83, 0xE0, 0x01, // and rax,1
+                    0x48, 0x09, 0x04, 0x24, // or [rsp],rax
+                ][..],
+            ),
+        ] {
+            assert_eq!(
+                code.windows(replay.len())
+                    .filter(|bytes| *bytes == replay)
+                    .count(),
+                2,
+                "{name} must execute once speculatively and once after store"
+            );
+            assert!(
+                code.windows(boundary_merge.len())
+                    .any(|bytes| bytes == boundary_merge),
+                "{name} must reconstruct boundary CF from the original operand: {code:02X?}"
+            );
+        }
     }
 
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
