@@ -424,6 +424,157 @@ fn jit_state_backed_rsp_rbp_moves_match_interpreter_without_memory_helpers() {
     assert_eq!(actual.rflags, expected.rflags, "MOV flags");
 }
 
+/// Register-source MOVZX/MOVSX/MOVSXD forms use the canonical GuestRegs file
+/// whenever either operand is guest RSP/RBP or an APX EGPR. This preserves the
+/// host stack/frame pointers, partial destination writes, aliases, and flags.
+#[test]
+fn jit_state_backed_gpr_extensions_match_interpreter_without_memory_helpers() {
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        apx: bool,
+        destination_index: usize,
+        expected_destination: u64,
+    }
+
+    let cases = [
+        Case {
+            name: "MOVZX SP,BL partial destination",
+            instruction: &[0x66, 0x0F, 0xB6, 0xE3],
+            apx: false,
+            destination_index: 4,
+            expected_destination: 0x1234_5678_9ABC_00A7,
+        },
+        Case {
+            name: "MOVSX EBP,BX zeroes upper dword",
+            instruction: &[0x0F, 0xBF, 0xEB],
+            apx: false,
+            destination_index: 5,
+            expected_destination: 0x0000_0000_FFFF_80A7,
+        },
+        Case {
+            name: "MOVZX RAX,SPL REX byte source",
+            instruction: &[0x48, 0x0F, 0xB6, 0xC4],
+            apx: false,
+            destination_index: 0,
+            expected_destination: 0xF2,
+        },
+        Case {
+            name: "MOVSX RCX,BP state-backed source",
+            instruction: &[0x48, 0x0F, 0xBF, 0xCD],
+            apx: false,
+            destination_index: 1,
+            expected_destination: 0xFFFF_FFFF_FFFF_8001,
+        },
+        Case {
+            name: "MOVZX SP,AH legacy high byte",
+            instruction: &[0x66, 0x0F, 0xB6, 0xE4],
+            apx: false,
+            destination_index: 4,
+            expected_destination: 0x1234_5678_9ABC_00CD,
+        },
+        Case {
+            name: "MOVSX EBP,BH legacy high byte",
+            instruction: &[0x0F, 0xBE, 0xEF],
+            apx: false,
+            destination_index: 5,
+            expected_destination: 0x0000_0000_FFFF_FF80,
+        },
+        Case {
+            name: "MOVSXD RBP,ESP state-backed source and destination",
+            instruction: &[0x48, 0x63, 0xEC],
+            apx: false,
+            destination_index: 5,
+            expected_destination: 0xFFFF_FFFF_9ABC_80F2,
+        },
+        Case {
+            name: "MOVZX SP,SPL state-backed alias",
+            instruction: &[0x66, 0x40, 0x0F, 0xB6, 0xE4],
+            apx: false,
+            destination_index: 4,
+            expected_destination: 0x1234_5678_9ABC_00F2,
+        },
+        Case {
+            name: "REX2 MOVZX R16,BL state-backed EGPR destination",
+            instruction: &[0xD5, 0xC8, 0xB6, 0xC3],
+            apx: true,
+            destination_index: 16,
+            expected_destination: 0xA7,
+        },
+        Case {
+            name: "REX2 MOVSX RAX,R16B state-backed EGPR source",
+            instruction: &[0xD5, 0x98, 0xBE, 0xC0],
+            apx: true,
+            destination_index: 0,
+            expected_destination: 0xFFFF_FFFF_FFFF_FFF1,
+        },
+    ];
+
+    let gprs = |regs: &Registers| {
+        [
+            regs.rax, regs.rcx, regs.rdx, regs.rbx, regs.rsp, regs.rbp, regs.rsi, regs.rdi,
+            regs.r8, regs.r9, regs.r10, regs.r11, regs.r12, regs.r13, regs.r14, regs.r15, regs.r16,
+            regs.r17, regs.r18, regs.r19, regs.r20, regs.r21, regs.r22, regs.r23, regs.r24,
+            regs.r25, regs.r26, regs.r27, regs.r28, regs.r29, regs.r30, regs.r31,
+        ]
+    };
+    let setup = |vcpu: &mut X86_64Vcpu, apx: bool| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x0123_4567_89AB_CDEF;
+        regs.rcx = 0x1111_2222_3333_4444;
+        regs.rdx = 0xA5A5_5A5A_1357_2468;
+        regs.rbx = 0xFEDC_BA98_7654_80A7;
+        regs.rsp = 0x1234_5678_9ABC_80F2;
+        regs.rbp = 0x0FED_CBA9_8765_8001;
+        regs.rsi = 0x99AA_BBCC_DDEE_FF00;
+        regs.rdi = 0x0F1E_2D3C_4B5A_6978;
+        regs.r8 = 0x0102_0304_0506_0708;
+        regs.r9 = 0x1112_1314_1516_1718;
+        regs.r16 = 0xA1A2_A3A4_A5A6_80F1;
+        regs.r17 = 0xB1B2_B3B4_B5B6_B7B8;
+        regs.r31 = 0xF1F2_F3F4_F5F6_F7F8;
+        regs.rflags = 0x2 | 0x8D5;
+        vcpu.set_regs(&regs).unwrap();
+        vcpu.set_apx_enabled(apx);
+    };
+
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp, case.apx);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+        assert_eq!(
+            gprs(&expected)[case.destination_index],
+            case.expected_destination,
+            "{} reference destination",
+            case.name
+        );
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit, case.apx);
+        jit.set_jit_call(false);
+        jit.set_jit_mem(false);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the register-only native tier:\n{}",
+            case.name,
+            jit.jit_dump_region(LOAD_ADDR)
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(gprs(&actual), gprs(&expected), "{} GPR file", case.name);
+        assert_eq!(actual.rflags, expected.rflags, "{} RFLAGS", case.name);
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+    }
+}
+
 #[test]
 fn jit_state_backed_rsp_rbp_add_sub_match_interpreter_without_memory_helpers() {
     // Exercise 8/16/32/64-bit arithmetic with stack registers in destination

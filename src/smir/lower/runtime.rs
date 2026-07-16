@@ -5852,6 +5852,55 @@ pub(crate) fn x86_state_backed_stack_mov_valid(op: &crate::smir::ir::ops::OpKind
     )
 }
 
+pub(crate) fn x86_state_backed_gpr_extend_valid(op: &crate::smir::ir::ops::SmirOp) -> bool {
+    use crate::smir::ir::ops::{OpKind, X86OpHint};
+    use crate::smir::ir::types::{ArchReg, OpWidth, VReg};
+
+    let gpr_index = |reg: &VReg| match reg {
+        VReg::Arch(ArchReg::X86(x86)) => x86.gpr_index(),
+        _ => None,
+    };
+    let state_backed = |index: u8| index >= 16 || matches!(index, 4 | 5);
+    let widths_valid = |from: OpWidth, to: OpWidth| {
+        matches!(
+            (from, to),
+            (OpWidth::W8, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+                | (OpWidth::W16, OpWidth::W32 | OpWidth::W64)
+                | (OpWidth::W32, OpWidth::W64)
+        )
+    };
+
+    let (dst, src, from_width, to_width) = match &op.kind {
+        OpKind::ZeroExtend {
+            dst,
+            src,
+            from_width,
+            to_width,
+        }
+        | OpKind::SignExtend {
+            dst,
+            src,
+            from_width,
+            to_width,
+        } => (dst, src, *from_width, *to_width),
+        _ => return false,
+    };
+    let (Some(dst_index), Some(src_index)) = (gpr_index(dst), gpr_index(src)) else {
+        return false;
+    };
+    if !widths_valid(from_width, to_width) || !(state_backed(dst_index) || state_backed(src_index))
+    {
+        return false;
+    }
+
+    match op.x86_hint {
+        None => !(from_width == OpWidth::W8 && matches!(src_index, 4..=7)),
+        Some(X86OpHint::RexByteReg) => from_width == OpWidth::W8,
+        Some(X86OpHint::LegacyHighByteReg) => x86_legacy_high_byte_movx_shape_valid(op),
+        Some(_) => false,
+    }
+}
+
 pub(crate) fn x86_state_backed_stack_alu_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg};
@@ -8399,7 +8448,8 @@ fn block_is_clobber_safe(
         let vector_mem_ok = allow_mem && x86_jit_vector_mem_shape_valid(&op.kind);
         let stack_mov_ok = x86_state_backed_stack_mov_valid(&op.kind);
         let stack_alu_ok = x86_state_backed_stack_alu_valid(&op.kind);
-        let stack_state_ok = stack_mov_ok || stack_alu_ok;
+        let state_extend_ok = x86_state_backed_gpr_extend_valid(op);
+        let stack_state_ok = stack_mov_ok || stack_alu_ok || state_extend_ok;
         let unsigned_div_ok = x86_jit_unsigned_div_register_shape_valid(op);
         let signed_div_ok = x86_jit_signed_div_register_shape_valid(op);
         let guarded_div_ok = unsigned_div_ok || signed_div_ok;
@@ -8548,7 +8598,7 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. Validated MOV/ADD/SUB reads/writes are state-backed.
+        // (3) guest RSP/RBP. Validated MOV/MOVX/ADD/SUB reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the current guest
@@ -9568,11 +9618,15 @@ fn x86_movx_uses_ambiguous_high_byte_source(op: &crate::smir::ir::ops::SmirOp) -
     matches!(
         &op.kind,
         OpKind::ZeroExtend {
-            src: VReg::Arch(ArchReg::X86(X86Reg::Rsi | X86Reg::Rdi)),
+            src: VReg::Arch(ArchReg::X86(
+                X86Reg::Rsp | X86Reg::Rbp | X86Reg::Rsi | X86Reg::Rdi
+            )),
             from_width: OpWidth::W8,
             ..
         } | OpKind::SignExtend {
-            src: VReg::Arch(ArchReg::X86(X86Reg::Rsi | X86Reg::Rdi)),
+            src: VReg::Arch(ArchReg::X86(
+                X86Reg::Rsp | X86Reg::Rbp | X86Reg::Rsi | X86Reg::Rdi
+            )),
             from_width: OpWidth::W8,
             ..
         }
@@ -9595,7 +9649,14 @@ fn x86_legacy_high_byte_movx_shape_valid(op: &crate::smir::ir::ops::SmirOp) -> b
         matches!(
             reg,
             VReg::Arch(ArchReg::X86(
-                X86Reg::Rax | X86Reg::Rcx | X86Reg::Rdx | X86Reg::Rbx | X86Reg::Rsi | X86Reg::Rdi
+                X86Reg::Rax
+                    | X86Reg::Rcx
+                    | X86Reg::Rdx
+                    | X86Reg::Rbx
+                    | X86Reg::Rsp
+                    | X86Reg::Rbp
+                    | X86Reg::Rsi
+                    | X86Reg::Rdi
             ))
         )
     };
@@ -24637,6 +24698,148 @@ mod jit_gate_tests {
                 !is_native_clobber_safe(&func),
                 "malformed legacy high-byte hint must deopt"
             );
+        }
+    }
+
+    #[test]
+    fn clobber_gate_admits_state_backed_gpr_extensions_and_fails_closed() {
+        let gate = |op: OpKind, hint: Option<X86OpHint>| {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, op);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = hint;
+            is_native_clobber_safe(&function)
+        };
+
+        for (name, op, hint) in [
+            (
+                "MOVZX SP,BL",
+                OpKind::ZeroExtend {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rbx),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W16,
+                },
+                None,
+            ),
+            (
+                "MOVSX EBP,SP",
+                OpKind::SignExtend {
+                    dst: x86(X86Reg::Rbp),
+                    src: x86(X86Reg::Rsp),
+                    from_width: OpWidth::W16,
+                    to_width: OpWidth::W32,
+                },
+                None,
+            ),
+            (
+                "MOVZX R16,EBP",
+                OpKind::ZeroExtend {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rbp),
+                    from_width: OpWidth::W32,
+                    to_width: OpWidth::W64,
+                },
+                None,
+            ),
+            (
+                "MOVSX RAX,R16B",
+                OpKind::SignExtend {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::R16),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W64,
+                },
+                Some(X86OpHint::RexByteReg),
+            ),
+            (
+                "MOVZX SP,AH",
+                OpKind::ZeroExtend {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rax),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W16,
+                },
+                Some(X86OpHint::LegacyHighByteReg),
+            ),
+            (
+                "MOVZX RAX,SPL",
+                OpKind::ZeroExtend {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rsp),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W64,
+                },
+                Some(X86OpHint::RexByteReg),
+            ),
+        ] {
+            assert!(gate(op, hint), "{name} must enter the native tier");
+        }
+
+        for (name, op, hint) in [
+            (
+                "unhinted ambiguous SPL/AH source",
+                OpKind::ZeroExtend {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rsp),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W64,
+                },
+                None,
+            ),
+            (
+                "non-extending width pair",
+                OpKind::SignExtend {
+                    dst: x86(X86Reg::Rbp),
+                    src: x86(X86Reg::Rbx),
+                    from_width: OpWidth::W16,
+                    to_width: OpWidth::W16,
+                },
+                None,
+            ),
+            (
+                "virtual source",
+                OpKind::ZeroExtend {
+                    dst: x86(X86Reg::Rsp),
+                    src: VReg::Virtual(VirtualId(7)),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W16,
+                },
+                None,
+            ),
+            (
+                "irrelevant encoding hint",
+                OpKind::ZeroExtend {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rbx),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W64,
+                },
+                Some(X86OpHint::Mulx),
+            ),
+            (
+                "legacy high byte with EGPR destination",
+                OpKind::SignExtend {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rbx),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W32,
+                },
+                Some(X86OpHint::LegacyHighByteReg),
+            ),
+            (
+                "legacy high byte with REX.W destination",
+                OpKind::ZeroExtend {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rax),
+                    from_width: OpWidth::W8,
+                    to_width: OpWidth::W64,
+                },
+                Some(X86OpHint::LegacyHighByteReg),
+            ),
+        ] {
+            assert!(!gate(op, hint), "{name} must fail closed");
         }
     }
 

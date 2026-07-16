@@ -3929,6 +3929,7 @@ impl X86_64Lowerer {
     fn ensure_native_stack_dests_safe(op: &SmirOp) -> Result<(), LowerError> {
         if Self::mov_touches_state_backed_gpr(&op.kind)
             || Self::alu_touches_state_backed_stack_gpr(&op.kind)
+            || super::runtime::x86_state_backed_gpr_extend_valid(op)
         {
             return Ok(());
         }
@@ -10658,6 +10659,24 @@ impl X86_64Lowerer {
                 from_width,
                 to_width,
             } => {
+                if Self::gpr_extend_touches_state_backed_gpr(&op.kind) {
+                    if !super::runtime::x86_state_backed_gpr_extend_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed MOVZX".to_string(),
+                            operand: format!(
+                                "invalid x86 GPR extension {from_width:?}->{to_width:?}"
+                            ),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_extend(
+                        *dst,
+                        *src,
+                        *from_width,
+                        *to_width,
+                        false,
+                        matches!(op.x86_hint, Some(X86OpHint::LegacyHighByteReg)),
+                    );
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
 
@@ -10696,6 +10715,24 @@ impl X86_64Lowerer {
                 from_width,
                 to_width,
             } => {
+                if Self::gpr_extend_touches_state_backed_gpr(&op.kind) {
+                    if !super::runtime::x86_state_backed_gpr_extend_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed MOVSX".to_string(),
+                            operand: format!(
+                                "invalid x86 GPR extension {from_width:?}->{to_width:?}"
+                            ),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_extend(
+                        *dst,
+                        *src,
+                        *from_width,
+                        *to_width,
+                        true,
+                        matches!(op.x86_hint, Some(X86OpHint::LegacyHighByteReg)),
+                    );
+                }
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
 
@@ -13752,6 +13789,14 @@ impl X86_64Lowerer {
         )
     }
 
+    fn gpr_extend_touches_state_backed_gpr(kind: &OpKind) -> bool {
+        matches!(
+            kind,
+            OpKind::ZeroExtend { dst, src, .. } | OpKind::SignExtend { dst, src, .. }
+                if Self::x86_state_backed_gpr(*dst) || Self::x86_state_backed_gpr(*src)
+        )
+    }
+
     fn alu_touches_state_backed_stack_gpr(kind: &OpKind) -> bool {
         let valid = |dst: VReg, src1: VReg, src2: &SrcOperand, width: OpWidth| {
             matches!(
@@ -13945,6 +13990,82 @@ impl X86_64Lowerer {
                 let mut emitter = X86Emitter::new(&mut self.code);
                 emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, OpWidth::W64);
             }
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_extend(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        from_width: OpWidth,
+        to_width: OpWidth,
+        signed: bool,
+        legacy_high_byte: bool,
+    ) -> Result<(), LowerError> {
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: "state-backed MOVX".to_string(),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let src_idx = Self::x86_gpr_index(src).ok_or_else(|| LowerError::InvalidOperand {
+            op: "state-backed MOVX".to_string(),
+            operand: "source is not an architectural x86 GPR".to_string(),
+        })?;
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        if to_width == OpWidth::W16 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(
+                PhysReg::Rdx,
+                PhysReg::Rax,
+                i32::from(dst_idx) * 8,
+                OpWidth::W64,
+            );
+        }
+
+        let source_offset = i32::from(src_idx) * 8 + i32::from(legacy_high_byte);
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            if signed {
+                emitter.emit_movsx_rm_disp(
+                    PhysReg::Rdx,
+                    PhysReg::Rax,
+                    source_offset,
+                    DispSize::Auto,
+                    from_width,
+                    to_width,
+                );
+            } else {
+                emitter.emit_movzx_rm_disp(
+                    PhysReg::Rdx,
+                    PhysReg::Rax,
+                    source_offset,
+                    DispSize::Auto,
+                    from_width,
+                    to_width,
+                );
+            }
+        }
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, to_width)?;
+        if dst_idx == 5 {
+            let commit_width = if to_width == OpWidth::W16 {
+                OpWidth::W16
+            } else {
+                OpWidth::W64
+            };
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
         }
 
         {
@@ -22732,6 +22853,62 @@ mod tests {
         );
     }
 
+    #[test]
+    fn lower_state_backed_gpr_extensions_emit_state_commits_and_reject_malformed_shapes() {
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let rsp = lower_single_op(OpKind::ZeroExtend {
+            dst: x86(X86Reg::Rsp),
+            src: x86(X86Reg::Rbx),
+            from_width: OpWidth::W8,
+            to_width: OpWidth::W16,
+        });
+        assert!(
+            rsp.windows(5)
+                .any(|bytes| bytes == [0x66, 0x0F, 0xB6, 0x50, 0x18]),
+            "MOVZX SP,BL must read the RBX snapshot: {rsp:02X?}"
+        );
+        assert!(
+            rsp.windows(4)
+                .any(|bytes| bytes == [0x66, 0x89, 0x50, 0x20]),
+            "MOVZX SP,BL must partially commit GuestRegs.gpr[4]: {rsp:02X?}"
+        );
+
+        let r16 = lower_single_op(OpKind::SignExtend {
+            dst: x86(X86Reg::R16),
+            src: x86(X86Reg::Rbp),
+            from_width: OpWidth::W16,
+            to_width: OpWidth::W64,
+        });
+        assert!(
+            r16.windows(7)
+                .any(|bytes| bytes == [0x48, 0x89, 0x90, 0x80, 0x00, 0x00, 0x00]),
+            "MOVSX R16,BP must commit GuestRegs.gpr[16]: {r16:02X?}"
+        );
+
+        for malformed in [
+            OpKind::ZeroExtend {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::Rsp),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W64,
+            },
+            OpKind::SignExtend {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rbx),
+                from_width: OpWidth::W16,
+                to_width: OpWidth::W16,
+            },
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(malformed),
+                    LowerError::InvalidOperand { .. }
+                ),
+                "malformed state-backed extension must fail lowering"
+            );
+        }
+    }
+
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
     #[test]
     fn native_state_backed_rsp_rbp_moves_preserve_host_stack_and_guest_widths() {
@@ -22829,6 +23006,100 @@ mod tests {
             regs.rflags & STATUS,
             STATUS,
             "MOV sequence must preserve status flags"
+        );
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_gpr_extensions_preserve_widths_flags_and_aliases() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        for kind in [
+            OpKind::ZeroExtend {
+                dst: x86(X86Reg::Rsp),
+                src: x86(X86Reg::Rbx),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W16,
+            },
+            OpKind::SignExtend {
+                dst: x86(X86Reg::Rbp),
+                src: x86(X86Reg::Rbx),
+                from_width: OpWidth::W16,
+                to_width: OpWidth::W32,
+            },
+            OpKind::ZeroExtend {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rcx),
+                from_width: OpWidth::W32,
+                to_width: OpWidth::W64,
+            },
+            OpKind::SignExtend {
+                dst: x86(X86Reg::Rax),
+                src: x86(X86Reg::R17),
+                from_width: OpWidth::W32,
+                to_width: OpWidth::W64,
+            },
+            OpKind::ZeroExtend {
+                dst: x86(X86Reg::R18),
+                src: x86(X86Reg::R18),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W16,
+            },
+            OpKind::ZeroExtend {
+                dst: x86(X86Reg::Rsp),
+                src: x86(X86Reg::Rdx),
+                from_width: OpWidth::W8,
+                to_width: OpWidth::W16,
+            },
+        ] {
+            builder.push_op(0x1000, kind);
+        }
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[5].x86_hint = Some(X86OpHint::LegacyHighByteReg);
+
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&function)
+            .expect("lower state-backed register extensions");
+        let code = lowerer.finalize().expect("finalize register extensions");
+        assert!(
+            code.windows(4)
+                .any(|bytes| bytes == [0x66, 0x0F, 0xB6, 0x50]),
+            "W16 MOVZX must extend through the state snapshot: {code:02X?}"
+        );
+        assert!(
+            code.windows(7)
+                .any(|bytes| bytes == [0x48, 0x89, 0x90, 0x80, 0x00, 0x00, 0x00]),
+            "R16 destination must commit GuestRegs.gpr[16]: {code:02X?}"
+        );
+
+        let exec = ExecMem::new(&code).expect("map register extensions");
+        let mut regs = GuestRegs::default();
+        regs.gpr[1] = 0x0123_4567_89AB_CDEF;
+        regs.gpr[2] = 0xA5A5_5A5A_1357_CD00;
+        regs.gpr[3] = 0xFEDC_BA98_7654_80A7;
+        regs.gpr[4] = 0x1234_5678_9ABC_80F2;
+        regs.gpr[5] = 0x0FED_CBA9_8765_8001;
+        regs.gpr[17] = 0xB1B2_B3B4_8000_0001;
+        regs.gpr[18] = 0xC1C2_C3C4_C5C6_80F1;
+        regs.rflags = 0x2 | 0x8D5;
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.gpr[0], 0xFFFF_FFFF_8000_0001, "MOVSXD RAX,R17D");
+        assert_eq!(regs.gpr[1], 0x0123_4567_89AB_CDEF, "RCX source");
+        assert_eq!(regs.gpr[2], 0xA5A5_5A5A_1357_CD00, "RDX source");
+        assert_eq!(regs.gpr[3], 0xFEDC_BA98_7654_80A7, "RBX source");
+        assert_eq!(regs.gpr[4], 0x1234_5678_9ABC_00CD, "MOVZX SP,DH");
+        assert_eq!(regs.gpr[5], 0x0000_0000_FFFF_80A7, "MOVSX EBP,BX");
+        assert_eq!(regs.gpr[16], 0x89AB_CDEF, "MOVZX R16,ECX");
+        assert_eq!(regs.gpr[18], 0xC1C2_C3C4_C5C6_00F1, "MOVZX R18W,R18B alias");
+        assert_eq!(
+            regs.rflags & 0x8D5,
+            0x8D5,
+            "MOVZX/MOVSX/MOVSXD preserve status flags"
         );
     }
 
