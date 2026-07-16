@@ -8409,6 +8409,7 @@ fn block_is_clobber_safe(
         let state_bit_scan_ok = super::x86_64::x86_state_backed_gpr_bit_scan_valid(op);
         let state_bit_test_ok = super::x86_64::x86_state_backed_gpr_bit_test_valid(op);
         let state_crc32_ok = super::x86_64::x86_state_backed_gpr_crc32_valid(op);
+        let state_pdep_pext_ok = super::x86_64::x86_state_backed_gpr_pdep_pext_valid(op);
         let state_bswap_ok = super::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = super::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let stack_state_ok = stack_mov_ok
@@ -8423,6 +8424,7 @@ fn block_is_clobber_safe(
             || state_bit_scan_ok
             || state_bit_test_ok
             || state_crc32_ok
+            || state_pdep_pext_ok
             || state_bswap_ok
             || state_xchg_ok;
         if (super::x86_64::x86_state_backed_gpr_extend_candidate(op) && !state_extend_ok)
@@ -8435,6 +8437,7 @@ fn block_is_clobber_safe(
             || (super::x86_64::x86_state_backed_gpr_bit_scan_candidate(op) && !state_bit_scan_ok)
             || (super::x86_64::x86_state_backed_gpr_bit_test_candidate(op) && !state_bit_test_ok)
             || (super::x86_64::x86_state_backed_gpr_crc32_candidate(op) && !state_crc32_ok)
+            || (super::x86_64::x86_state_backed_gpr_pdep_pext_candidate(op) && !state_pdep_pext_ok)
             || (super::x86_64::x86_state_backed_gpr_bswap_candidate(op) && !state_bswap_ok)
             || (super::x86_64::x86_state_backed_gpr_xchg_candidate(op) && !state_xchg_ok)
         {
@@ -8557,6 +8560,7 @@ fn block_is_clobber_safe(
                 | OpKind::Pdep { .. }
                 | OpKind::Pext { .. }
         ) && !x86_bmi_shape_valid(&op.kind)
+            && !state_pdep_pext_ok
         {
             return false;
         }
@@ -8600,7 +8604,7 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/count/bit-scan/bit-test/CRC32/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
+        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/count/bit-scan/bit-test/CRC32/PDEP/PEXT/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the current guest
@@ -19575,6 +19579,42 @@ mod jit_gate_tests {
                 },
                 (true, false, false, false, false),
             ),
+            (
+                OpKind::Pdep {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rdx),
+                    mask: x86(X86Reg::Rsp),
+                    width: OpWidth::W64,
+                },
+                (true, false, false, false, false),
+            ),
+            (
+                OpKind::Pext {
+                    dst: x86(X86Reg::Rbp),
+                    src: x86(X86Reg::Rdx),
+                    mask: x86(X86Reg::Rcx),
+                    width: OpWidth::W64,
+                },
+                (true, false, false, false, false),
+            ),
+            (
+                OpKind::Pdep {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rdx),
+                    mask: x86(X86Reg::Rcx),
+                    width: OpWidth::W32,
+                },
+                (true, false, false, false, false),
+            ),
+            (
+                OpKind::Pext {
+                    dst: x86(X86Reg::R31),
+                    src: x86(X86Reg::Rsp),
+                    mask: x86(X86Reg::Rbp),
+                    width: OpWidth::W64,
+                },
+                (true, false, false, false, false),
+            ),
         ];
 
         for (op, expected_features) in &valid {
@@ -19656,30 +19696,21 @@ mod jit_gate_tests {
                 },
             ),
             (
-                "PDEP guest stack mask",
-                OpKind::Pdep {
-                    dst: x86(X86Reg::Rax),
-                    src: x86(X86Reg::Rdx),
-                    mask: x86(X86Reg::Rsp),
-                    width: OpWidth::W64,
-                },
-            ),
-            (
-                "PEXT guest frame destination",
-                OpKind::Pext {
-                    dst: x86(X86Reg::Rbp),
-                    src: x86(X86Reg::Rdx),
-                    mask: x86(X86Reg::Rcx),
-                    width: OpWidth::W64,
-                },
-            ),
-            (
-                "PDEP extended guest register",
+                "state-backed PDEP word width",
                 OpKind::Pdep {
                     dst: x86(X86Reg::R16),
-                    src: x86(X86Reg::Rdx),
-                    mask: x86(X86Reg::Rcx),
-                    width: OpWidth::W32,
+                    src: x86(X86Reg::Rsp),
+                    mask: x86(X86Reg::Rbp),
+                    width: OpWidth::W16,
+                },
+            ),
+            (
+                "state-backed PEXT virtual source",
+                OpKind::Pext {
+                    dst: x86(X86Reg::R31),
+                    src: VReg::Virtual(VirtualId(0)),
+                    mask: x86(X86Reg::Rbp),
+                    width: OpWidth::W64,
                 },
             ),
             (
@@ -19708,6 +19739,24 @@ mod jit_gate_tests {
             );
             assert!(!x86_gate(op), "malformed {name} must deopt");
         }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Pdep {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rsp),
+                mask: x86(X86Reg::Rbp),
+                width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut hinted = builder.finish();
+        hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+        assert!(
+            !is_native_clobber_safe(&hinted),
+            "hinted state-backed PDEP must fail closed"
+        );
     }
 
     #[test]

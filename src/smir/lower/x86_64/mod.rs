@@ -365,6 +365,43 @@ pub(crate) fn x86_state_backed_gpr_crc32_valid(op: &SmirOp) -> bool {
         )
 }
 
+pub(crate) fn x86_state_backed_gpr_pdep_pext_candidate(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::Pdep {
+            dst, src, mask, ..
+        }
+        | OpKind::Pext {
+            dst, src, mask, ..
+        } if x86_state_backed_arch_gpr(dst)
+            || x86_state_backed_arch_gpr(src)
+            || x86_state_backed_arch_gpr(mask)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_pdep_pext_valid(op: &SmirOp) -> bool {
+    let arch_gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
+
+    x86_state_backed_gpr_pdep_pext_candidate(op)
+        && op.x86_hint.is_none()
+        && matches!(
+            &op.kind,
+            OpKind::Pdep {
+                dst,
+                src,
+                mask,
+                width: OpWidth::W32 | OpWidth::W64,
+            }
+            | OpKind::Pext {
+                dst,
+                src,
+                mask,
+                width: OpWidth::W32 | OpWidth::W64,
+            } if arch_gpr(dst) && arch_gpr(src) && arch_gpr(mask)
+        )
+}
+
 pub(crate) fn x86_state_backed_gpr_bswap_candidate(op: &SmirOp) -> bool {
     matches!(
         &op.kind,
@@ -4317,6 +4354,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_bit_scan_valid(op)
             || x86_state_backed_gpr_bit_test_valid(op)
             || x86_state_backed_gpr_crc32_valid(op)
+            || x86_state_backed_gpr_pdep_pext_valid(op)
             || x86_state_backed_gpr_bswap_valid(op)
             || x86_state_backed_gpr_xchg_valid(op)
         {
@@ -6987,6 +7025,15 @@ impl X86_64Lowerer {
                 mask,
                 width,
             } => {
+                if x86_state_backed_gpr_pdep_pext_candidate(op) {
+                    if !x86_state_backed_gpr_pdep_pext_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Pdep".to_string(),
+                            operand: format!("invalid x86 GPR PDEP {width:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_pdep_pext(*dst, *src, *mask, *width, false);
+                }
                 if !matches!(width, OpWidth::W32 | OpWidth::W64) {
                     return Err(LowerError::UnsupportedOp {
                         op: format!("Pdep width {width:?}"),
@@ -7016,6 +7063,15 @@ impl X86_64Lowerer {
                 mask,
                 width,
             } => {
+                if x86_state_backed_gpr_pdep_pext_candidate(op) {
+                    if !x86_state_backed_gpr_pdep_pext_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Pext".to_string(),
+                            operand: format!("invalid x86 GPR PEXT {width:?}"),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_pdep_pext(*dst, *src, *mask, *width, true);
+                }
                 if !matches!(width, OpWidth::W32 | OpWidth::W64) {
                     return Err(LowerError::UnsupportedOp {
                         op: format!("Pext width {width:?}"),
@@ -15251,6 +15307,71 @@ impl X86_64Lowerer {
         // Every CRC32 encoding produces a 32-bit Castagnoli remainder and
         // zero-extends it to the full architectural destination.
         self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, OpWidth::W32)?;
+        if dst_idx == 5 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, OpWidth::W64);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_pdep_pext(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        mask: VReg,
+        width: OpWidth,
+        extract: bool,
+    ) -> Result<(), LowerError> {
+        let name = if extract { "Pext" } else { "Pdep" };
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let src_idx = Self::x86_gpr_index(src).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "source is not an architectural x86 GPR".to_string(),
+        })?;
+        let mask_idx = Self::x86_gpr_index(mask).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "mask is not an architectural x86 GPR".to_string(),
+        })?;
+        if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: format!("state-backed {name}"),
+                operand: format!("unsupported width {width:?}"),
+            });
+        }
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdi, PhysReg::Rax, i32::from(src_idx) * 8, width);
+            emitter.emit_mov_rm(PhysReg::R8, PhysReg::Rax, i32::from(mask_idx) * 8, width);
+            emitter.emit_vex_bmi_rr_pp(
+                0xF5,
+                if extract {
+                    X86SsePrefix::Rep
+                } else {
+                    X86SsePrefix::Repne
+                },
+                PhysReg::Rdx,
+                PhysReg::R8,
+                PhysReg::Rdi,
+                width,
+            );
+        }
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
         if dst_idx == 5 {
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, OpWidth::W64);
@@ -29835,6 +29956,233 @@ mod tests {
             assert!(
                 code.contains(&0x9C) && code.contains(&0x9D),
                 "{name} must preserve all incoming flags"
+            );
+        }
+
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
+        let r16 = VReg::Arch(ArchReg::X86(X86Reg::R16));
+        let r31 = VReg::Arch(ArchReg::X86(X86Reg::R31));
+        for (name, op, expected) in [
+            (
+                "state-backed PDEP qword",
+                OpKind::Pdep {
+                    dst: rsp,
+                    src: rbp,
+                    mask: r16,
+                    width: OpWidth::W64,
+                },
+                &[0xC4, 0xC2, 0xC3, 0xF5, 0xD0][..],
+            ),
+            (
+                "state-backed PEXT dword",
+                OpKind::Pext {
+                    dst: r31,
+                    src: rsp,
+                    mask: rbp,
+                    width: OpWidth::W32,
+                },
+                &[0xC4, 0xC2, 0x42, 0xF5, 0xD0][..],
+            ),
+            (
+                "state-backed PEXT all operands alias",
+                OpKind::Pext {
+                    dst: rbp,
+                    src: rbp,
+                    mask: rbp,
+                    width: OpWidth::W64,
+                },
+                &[0xC4, 0xC2, 0xC2, 0xF5, 0xD0][..],
+            ),
+        ] {
+            let code = lower_single_op(op);
+            assert!(
+                code.windows(expected.len()).any(|bytes| bytes == expected),
+                "{name}: missing scratch BMI2 {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        for malformed in [
+            OpKind::Pdep {
+                dst: r16,
+                src: rsp,
+                mask: rbp,
+                width: OpWidth::W16,
+            },
+            OpKind::Pext {
+                dst: r31,
+                src: VReg::Virtual(crate::smir::ir::types::VirtualId(7)),
+                mask: rbp,
+                width: OpWidth::W64,
+            },
+        ] {
+            assert!(matches!(
+                lower_single_op_err(malformed),
+                LowerError::InvalidOperand { .. }
+            ));
+        }
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                OpKind::Pdep {
+                    dst: r16,
+                    src: rsp,
+                    mask: rbp,
+                    width: OpWidth::W64,
+                },
+                X86OpHint::Mulx,
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_pdep_pext_preserve_gprs_flags_and_aliases() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        if !std::is_x86_feature_detected!("bmi2") {
+            return;
+        }
+        fn pdep(mut src: u64, mut mask: u64) -> u64 {
+            let mut result = 0u64;
+            while mask != 0 {
+                let bit = mask & mask.wrapping_neg();
+                if src & 1 != 0 {
+                    result |= bit;
+                }
+                src >>= 1;
+                mask &= mask - 1;
+            }
+            result
+        }
+        fn pext(src: u64, mut mask: u64) -> u64 {
+            let mut result = 0u64;
+            let mut output_bit = 1u64;
+            while mask != 0 {
+                let bit = mask & mask.wrapping_neg();
+                if src & bit != 0 {
+                    result |= output_bit;
+                }
+                output_bit <<= 1;
+                mask &= mask - 1;
+            }
+            result
+        }
+
+        struct Case {
+            name: &'static str,
+            extract: bool,
+            dst: X86Reg,
+            src: X86Reg,
+            mask: X86Reg,
+            width: OpWidth,
+            source: u64,
+            mask_value: u64,
+        }
+        let cases = [
+            Case {
+                name: "PDEP RSP,RBP,R16",
+                extract: false,
+                dst: X86Reg::Rsp,
+                src: X86Reg::Rbp,
+                mask: X86Reg::R16,
+                width: OpWidth::W64,
+                source: 0x0123_4567_89AB_CDEF,
+                mask_value: 0xF0F0_00FF_AA55_5A5A,
+            },
+            Case {
+                name: "PEXT EBP,ESP,ECX",
+                extract: true,
+                dst: X86Reg::Rbp,
+                src: X86Reg::Rsp,
+                mask: X86Reg::Rcx,
+                width: OpWidth::W32,
+                source: 0xAABB_CCDD_DEAD_BEEF,
+                mask_value: 0xFFFF_0000_F0F0_55AA,
+            },
+            Case {
+                name: "PDEP R31D,R16D,R31D destination-mask alias",
+                extract: false,
+                dst: X86Reg::R31,
+                src: X86Reg::R16,
+                mask: X86Reg::R31,
+                width: OpWidth::W32,
+                source: 0xFEDC_BA98_7654_3210,
+                mask_value: 0xAAAA_5555,
+            },
+            Case {
+                name: "PEXT R16,R16,R16 all operands alias",
+                extract: true,
+                dst: X86Reg::R16,
+                src: X86Reg::R16,
+                mask: X86Reg::R16,
+                width: OpWidth::W64,
+                source: 0xDEAD_BEEF_1357_2468,
+                mask_value: 0xA5A5_5A5A_C3C3_3C3C,
+            },
+        ];
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        const FLAGS: u64 = 0x8D5;
+
+        for case in cases {
+            let kind = if case.extract {
+                OpKind::Pext {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    mask: x86(case.mask),
+                    width: case.width,
+                }
+            } else {
+                OpKind::Pdep {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    mask: x86(case.mask),
+                    width: case.width,
+                }
+            };
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            for (index, value) in regs.gpr.iter_mut().enumerate() {
+                *value = 0x2468_0000_1357_0000u64
+                    .wrapping_add((index as u64).wrapping_mul(0x0101_1111_2222_0101));
+            }
+            let dst_idx = case.dst.gpr_index().unwrap() as usize;
+            let src_idx = case.src.gpr_index().unwrap() as usize;
+            let mask_idx = case.mask.gpr_index().unwrap() as usize;
+            regs.gpr[src_idx] = case.source;
+            regs.gpr[mask_idx] = case.mask_value;
+            regs.rflags = 0x2 | FLAGS;
+
+            let mut expected = regs;
+            let operand_mask = case.width.mask();
+            let source = regs.gpr[src_idx] & operand_mask;
+            let mask = regs.gpr[mask_idx] & operand_mask;
+            expected.gpr[dst_idx] = if case.extract {
+                pext(source, mask)
+            } else {
+                pdep(source, mask)
+            };
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            assert_eq!(
+                regs.rflags & FLAGS,
+                expected.rflags & FLAGS,
+                "{} flags",
+                case.name
             );
         }
     }
