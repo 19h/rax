@@ -30906,7 +30906,7 @@ impl X86_64Lifter {
                 pc,
                 OpKind::MulU {
                     dst_lo: self.gpr(0),
-                    dst_hi: Some(self.gpr(2)),
+                    dst_hi: (width != OpWidth::W8).then_some(self.gpr(2)),
                     src1: self.gpr(0),
                     src2: SrcOperand::Reg(src),
                     width,
@@ -30918,7 +30918,7 @@ impl X86_64Lifter {
                 pc,
                 OpKind::MulS {
                     dst_lo: self.gpr(0),
-                    dst_hi: Some(self.gpr(2)),
+                    dst_hi: (width != OpWidth::W8).then_some(self.gpr(2)),
                     src1: self.gpr(0),
                     src2: SrcOperand::Reg(src),
                     width,
@@ -30930,7 +30930,7 @@ impl X86_64Lifter {
                 pc,
                 OpKind::DivU {
                     quot: self.gpr(0),
-                    rem: Some(self.gpr(2)),
+                    rem: (width != OpWidth::W8).then_some(self.gpr(2)),
                     src1: self.gpr(0),
                     src2: SrcOperand::Reg(src),
                     width,
@@ -30942,7 +30942,7 @@ impl X86_64Lifter {
                 pc,
                 OpKind::DivS {
                     quot: self.gpr(0),
-                    rem: Some(self.gpr(2)),
+                    rem: (width != OpWidth::W8).then_some(self.gpr(2)),
                     src1: self.gpr(0),
                     src2: SrcOperand::Reg(src),
                     width,
@@ -33011,7 +33011,7 @@ impl X86_64Lifter {
                     pc,
                     OpKind::MulU {
                         dst_lo: self.gpr(0),
-                        dst_hi: Some(self.gpr(2)),
+                        dst_hi: (width != OpWidth::W8).then_some(self.gpr(2)),
                         src1: self.gpr(0),
                         src2: SrcOperand::Reg(operand),
                         width,
@@ -33025,7 +33025,7 @@ impl X86_64Lifter {
                     pc,
                     OpKind::MulS {
                         dst_lo: self.gpr(0),
-                        dst_hi: Some(self.gpr(2)),
+                        dst_hi: (width != OpWidth::W8).then_some(self.gpr(2)),
                         src1: self.gpr(0),
                         src2: SrcOperand::Reg(operand),
                         width,
@@ -33039,7 +33039,7 @@ impl X86_64Lifter {
                     pc,
                     OpKind::DivU {
                         quot: self.gpr(0),
-                        rem: Some(self.gpr(2)),
+                        rem: (width != OpWidth::W8).then_some(self.gpr(2)),
                         src1: self.gpr(0),
                         src2: SrcOperand::Reg(operand),
                         width,
@@ -33053,7 +33053,7 @@ impl X86_64Lifter {
                     pc,
                     OpKind::DivS {
                         quot: self.gpr(0),
-                        rem: Some(self.gpr(2)),
+                        rem: (width != OpWidth::W8).then_some(self.gpr(2)),
                         src1: self.gpr(0),
                         src2: SrcOperand::Reg(operand),
                         width,
@@ -43457,6 +43457,78 @@ mod tests {
                 }
                 (other, _) => panic!("expected APX NF implicit {name}, got {other:?}"),
             }
+        }
+    }
+
+    #[test]
+    fn lift_byte_group3_models_ax_as_the_only_implicit_destination() {
+        let mut lifter = X86_64Lifter::strict();
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+
+        for (bytes, name, group) in [
+            (&[0xF6, 0xE3][..], "mul bl", 4),
+            (&[0xF6, 0xEB][..], "imul bl", 5),
+            (&[0xF6, 0xF3][..], "div bl", 6),
+            (&[0xF6, 0xFB][..], "idiv bl", 7),
+            (
+                &[0x62, 0xF4, 0xFC, 0x0C, 0xF6, 0xE3][..],
+                "APX NF mul bl",
+                4,
+            ),
+            (
+                &[0x62, 0xF4, 0xFC, 0x0C, 0xF6, 0xF3][..],
+                "APX NF div bl",
+                6,
+            ),
+        ] {
+            let lifted = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap();
+            assert_eq!(lifted.ops.len(), 1, "{name}");
+            match (&lifted.ops[0].kind, group) {
+                (
+                    OpKind::MulU {
+                        dst_lo,
+                        dst_hi: None,
+                        src1,
+                        width: OpWidth::W8,
+                        ..
+                    }
+                    | OpKind::MulS {
+                        dst_lo,
+                        dst_hi: None,
+                        src1,
+                        width: OpWidth::W8,
+                        ..
+                    },
+                    4 | 5,
+                ) => {
+                    assert_eq!(*dst_lo, x86_gpr(0), "{name}: AX destination");
+                    assert_eq!(*src1, x86_gpr(0), "{name}: AL multiplicand");
+                }
+                (
+                    OpKind::DivU {
+                        quot,
+                        rem: None,
+                        src1,
+                        width: OpWidth::W8,
+                        ..
+                    }
+                    | OpKind::DivS {
+                        quot,
+                        rem: None,
+                        src1,
+                        width: OpWidth::W8,
+                        ..
+                    },
+                    6 | 7,
+                ) => {
+                    assert_eq!(*quot, x86_gpr(0), "{name}: AL:AH destination");
+                    assert_eq!(*src1, x86_gpr(0), "{name}: AX dividend");
+                }
+                (other, _) => {
+                    panic!("expected byte implicit group-3 shape for {name}, got {other:?}")
+                }
+            }
+            assert_eq!(lifted.ops[0].kind.dests(), vec![x86_gpr(0)], "{name}");
         }
     }
 

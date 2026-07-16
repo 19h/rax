@@ -6725,7 +6725,7 @@ pub(crate) fn x86_jit_mem_widening_mul_source_sequence_len(
     let valid = match &consumer.kind {
         OpKind::MulU {
             dst_lo,
-            dst_hi: Some(dst_hi),
+            dst_hi,
             src1,
             src2: SrcOperand::Reg(source),
             width: op_width,
@@ -6733,14 +6733,19 @@ pub(crate) fn x86_jit_mem_widening_mul_source_sequence_len(
         }
         | OpKind::MulS {
             dst_lo,
-            dst_hi: Some(dst_hi),
+            dst_hi,
             src1,
             src2: SrcOperand::Reg(source),
             width: op_width,
             flags,
         } => {
             *dst_lo == rax
-                && *dst_hi == rdx
+                && *dst_hi
+                    == if width == OpWidth::W8 {
+                        None
+                    } else {
+                        Some(rdx)
+                    }
                 && *src1 == rax
                 && *source == temporary
                 && *op_width == width
@@ -21550,7 +21555,7 @@ mod jit_gate_tests {
             multiply(
                 signed,
                 rax,
-                Some(rdx),
+                (width != OpWidth::W8).then_some(rdx),
                 rax,
                 SrcOperand::Reg(temporary),
                 width,

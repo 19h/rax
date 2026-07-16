@@ -3864,8 +3864,9 @@ impl OpKind {
     /// (including KVM-backed suites where available) and that touch NO memory
     /// (their operands are `VReg`/`SrcOperand`, never an `Address`).
     /// Everything else — memory/stack ops (Load/Store/Push/Pop/string/atomic),
-    /// DivU/DivS (the shared single-width div IR mismodels x86's RDX:RAX
-    /// dividend → wrong results), FP/SIMD, flags-register plumbing, syscalls,
+    /// DivU/DivS (native x86 division can raise a host #DE until an exact
+    /// guarded lowering rules out zero divisors and quotient overflow),
+    /// FP/SIMD, flags-register plumbing, syscalls,
     /// and any unvalidated op — returns false so the JIT BAILS to the
     /// interpreter rather than risk incorrect native execution. This is the
     /// correctness gate that makes the JIT safe to auto-trigger on real code

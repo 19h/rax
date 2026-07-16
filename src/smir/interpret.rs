@@ -18411,6 +18411,20 @@ mod tests {
         ctx.write_vreg(rax, 0x1122_3344_5566_0304);
         execute_lifted_x86(&[0xF6, 0xE4], &mut ctx, &mut memory); // MUL AH
         assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_000C);
+
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        ctx.write_vreg(rax, 0x1122_3344_5566_0120);
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_0010);
+        ctx.write_vreg(rdx, 0x8877_6655_4433_2211);
+        execute_lifted_x86(&[0xF6, 0xF3], &mut ctx, &mut memory); // DIV BL
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_0012);
+        assert_eq!(ctx.read_vreg(rdx), 0x8877_6655_4433_2211);
+
+        ctx.write_vreg(rax, 0x1122_3344_5566_FFEB);
+        ctx.write_vreg(rbx, 0xAABB_CCDD_EEFF_00FD);
+        execute_lifted_x86(&[0xF6, 0xFB], &mut ctx, &mut memory); // IDIV BL
+        assert_eq!(ctx.read_vreg(rax), 0x1122_3344_5566_0007);
+        assert_eq!(ctx.read_vreg(rdx), 0x8877_6655_4433_2211);
     }
 
     #[test]

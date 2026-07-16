@@ -2310,11 +2310,46 @@ impl OpKind {
                 }
             }
 
-            OpKind::MulU { src1, src2, .. }
-            | OpKind::MulS { src1, src2, .. }
-            | OpKind::DivU { src1, src2, .. }
-            | OpKind::DivS { src1, src2, .. } => {
+            OpKind::MulU { src1, src2, .. } | OpKind::MulS { src1, src2, .. } => {
                 result.push(*src1);
+                if let SrcOperand::Reg(r) = src2 {
+                    result.push(*r);
+                }
+            }
+
+            OpKind::DivU {
+                quot,
+                rem,
+                src1,
+                src2,
+                width,
+                ..
+            }
+            | OpKind::DivS {
+                quot,
+                rem,
+                src1,
+                src2,
+                width,
+                ..
+            } => {
+                result.push(*src1);
+
+                // The x86 one-operand W16/W32/W64 forms consume the implicit
+                // high dividend half in RDX. Model that use explicitly so
+                // liveness/DCE cannot erase a preceding CWD/CDQ/CQO or other
+                // RDX definition. Byte forms consume AX, which is already
+                // represented by the RAX source.
+                let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+                let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+                if *quot == rax
+                    && *rem == Some(rdx)
+                    && *src1 == rax
+                    && matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+                {
+                    result.push(rdx);
+                }
+
                 if let SrcOperand::Reg(r) = src2 {
                     result.push(*r);
                 }
@@ -3984,6 +4019,64 @@ mod tests {
         assert_eq!(lzcnt.flags_written(), defined);
         assert_eq!(lzcnt.flags_must_write(), defined);
         assert!(!op_fully_defines(&lzcnt));
+    }
+
+    #[test]
+    fn x86_implicit_division_metadata_tracks_the_complete_dividend() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+
+        for signed in [false, true] {
+            let divide = if signed {
+                OpKind::DivS {
+                    quot: rax,
+                    rem: Some(rdx),
+                    src1: rax,
+                    src2: SrcOperand::Reg(rcx),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                }
+            } else {
+                OpKind::DivU {
+                    quot: rax,
+                    rem: Some(rdx),
+                    src1: rax,
+                    src2: SrcOperand::Reg(rcx),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::All,
+                }
+            };
+            assert_eq!(divide.source_vregs(), vec![rax, rdx, rcx]);
+
+            let mut block = SmirBlock::new(BlockId(0), 0x1000);
+            block.push_op(make_op(
+                0,
+                OpKind::Mov {
+                    dst: rdx,
+                    src: SrcOperand::Imm(0),
+                    width: OpWidth::W64,
+                },
+            ));
+            block.push_op(make_op(1, divide));
+            block.set_terminator(Terminator::Return { values: vec![rax] });
+            assert_eq!(
+                dead_code_elimination(&mut block),
+                0,
+                "implicit RDX definition must remain live before {signed:?} division"
+            );
+        }
+
+        let byte_divide = OpKind::DivU {
+            quot: rax,
+            rem: None,
+            src1: rax,
+            src2: SrcOperand::Reg(rcx),
+            width: OpWidth::W8,
+            flags: FlagUpdate::All,
+        };
+        assert_eq!(byte_divide.dests(), vec![rax]);
+        assert_eq!(byte_divide.source_vregs(), vec![rax, rcx]);
     }
 
     #[test]

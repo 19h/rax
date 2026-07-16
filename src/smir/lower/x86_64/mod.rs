@@ -5788,7 +5788,14 @@ impl X86_64Lowerer {
                 let preserve_flags = !flags.updates_any();
                 let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
                 let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
-                let x86_implicit = *src1 == rax && *quot == rax && *rem == Some(rdx);
+                let x86_implicit = *src1 == rax
+                    && *quot == rax
+                    && *rem
+                        == if *width == OpWidth::W8 {
+                            None
+                        } else {
+                            Some(rdx)
+                        };
 
                 // Unsigned divide: RDX:RAX / src2 -> RAX (quot), RDX (rem)
                 // Generic non-x86 lowering uses a zero high half. Lifted x86
@@ -5884,7 +5891,14 @@ impl X86_64Lowerer {
                 let preserve_flags = !flags.updates_any();
                 let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
                 let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
-                let x86_implicit = *src1 == rax && *quot == rax && *rem == Some(rdx);
+                let x86_implicit = *src1 == rax
+                    && *quot == rax
+                    && *rem
+                        == if *width == OpWidth::W8 {
+                            None
+                        } else {
+                            Some(rdx)
+                        };
 
                 // Signed divide: RDX:RAX / src2 -> RAX (quot), RDX (rem)
                 // Generic non-x86 lowering sign-extends into RDX. Lifted x86
@@ -13499,7 +13513,12 @@ impl X86_64Lowerer {
                 flags,
             } if *width == op_width
                 && *dst_lo == rax
-                && *dst_hi == Some(rdx)
+                && *dst_hi
+                    == if op_width == OpWidth::W8 {
+                        None
+                    } else {
+                        Some(rdx)
+                    }
                 && *src1 == rax
                 && flags.updates_any()
                 && matches!(src2, SrcOperand::Reg(r) if *r == tmp) =>
@@ -13516,7 +13535,12 @@ impl X86_64Lowerer {
                 flags,
             } if *width == op_width
                 && *dst_lo == rax
-                && *dst_hi == Some(rdx)
+                && *dst_hi
+                    == if op_width == OpWidth::W8 {
+                        None
+                    } else {
+                        Some(rdx)
+                    }
                 && *src1 == rax
                 && flags.updates_any()
                 && matches!(src2, SrcOperand::Reg(r) if *r == tmp) =>
@@ -13533,7 +13557,12 @@ impl X86_64Lowerer {
                 flags,
             } if *width == op_width
                 && *quot == rax
-                && *rem == Some(rdx)
+                && *rem
+                    == if op_width == OpWidth::W8 {
+                        None
+                    } else {
+                        Some(rdx)
+                    }
                 && *src1 == rax
                 && flags.updates_any()
                 && matches!(src2, SrcOperand::Reg(r) if *r == tmp) =>
@@ -13550,7 +13579,12 @@ impl X86_64Lowerer {
                 flags,
             } if *width == op_width
                 && *quot == rax
-                && *rem == Some(rdx)
+                && *rem
+                    == if op_width == OpWidth::W8 {
+                        None
+                    } else {
+                        Some(rdx)
+                    }
                 && *src1 == rax
                 && flags.updates_any()
                 && matches!(src2, SrcOperand::Reg(r) if *r == tmp) =>
@@ -27493,6 +27527,61 @@ mod tests {
             zero_rdx < pop,
             "popfq must restore flags after divide setup"
         );
+    }
+
+    #[test]
+    fn lower_x86_byte_division_uses_ax_without_touching_rdx() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+
+        for signed in [false, true] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                if signed {
+                    OpKind::DivS {
+                        quot: rax,
+                        rem: None,
+                        src1: rax,
+                        src2: SrcOperand::Reg(rcx),
+                        width: OpWidth::W8,
+                        flags: FlagUpdate::All,
+                    }
+                } else {
+                    OpKind::DivU {
+                        quot: rax,
+                        rem: None,
+                        src1: rax,
+                        src2: SrcOperand::Reg(rcx),
+                        width: OpWidth::W8,
+                        flags: FlagUpdate::All,
+                    }
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+
+            let mut lowerer = X86_64Lowerer::new();
+            lowerer.lower_function(&builder.finish()).unwrap();
+            let code = lowerer.finalize().unwrap();
+            let expected = if signed {
+                [0xF6, 0xF9] // idiv cl
+            } else {
+                [0xF6, 0xF1] // div cl
+            };
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "missing byte division for signed={signed}: {code:02X?}"
+            );
+            assert!(
+                !code.windows(3).any(|window| window == [0x48, 0x31, 0xD2]),
+                "byte division must not zero RDX: {code:02X?}"
+            );
+            assert!(
+                !code.windows(3).any(|window| window == [0x99, 0xF6, 0xF9]),
+                "byte division must not sign-extend through RDX: {code:02X?}"
+            );
+        }
     }
 
     #[test]
