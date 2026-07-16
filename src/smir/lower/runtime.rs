@@ -24,10 +24,11 @@ use super::{
     X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CPL_OFFSET,
     X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
     X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
-    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_RFLAGS_OFFSET,
-    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET,
-    X86_GUEST_VEC_STORE_FN_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_XCR0_OFFSET,
-    X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET,
+    X86_GUEST_PAIR_STORE_FN_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
+    X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET, X86_GUEST_VEC_STORE_FN_OFFSET,
+    X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET,
+    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 /// Apple I-cache invalidation (libSystem). Required after writing a `MAP_JIT`
@@ -149,6 +150,14 @@ pub struct GuestRegs {
     /// Address of `extern "C" fn(state, addr, src_idx, size) -> ok`.
     /// The helper reads the source bytes from `state.zmm[src_idx]`.
     pub vec_store_fn: u64,
+    /// Address of `extern "C" fn(state, dst_low, dst_high) -> ok`.
+    /// The helper performs one complete APX POP2 stack transfer and commits the
+    /// two destinations plus RSP only after the complete 16-byte read succeeds.
+    pub pair_load_fn: u64,
+    /// Address of `extern "C" fn(state, src_low, src_high) -> ok`.
+    /// The helper performs one complete APX PUSH2 stack transfer and commits
+    /// RSP only after the complete 16-byte write succeeds.
+    pub pair_store_fn: u64,
 }
 
 impl Default for GuestRegs {
@@ -177,6 +186,8 @@ impl Default for GuestRegs {
             apx_enabled: 0,
             vec_load_fn: 0,
             vec_store_fn: 0,
+            pair_load_fn: 0,
+            pair_store_fn: 0,
         }
     }
 }
@@ -6077,6 +6088,240 @@ fn x86_mem_crc32_pair_valid(
     virtual_definitions.get(&temporary) == Some(&1) && virtual_uses.get(&temporary) == Some(&1)
 }
 
+/// Validate the exact five-op APX PUSH2 shape emitted by the x86 lifter. Both
+/// source snapshots are single-definition/single-use virtuals; native lowering
+/// replaces the complete sequence with one paired helper call.
+pub(crate) fn x86_jit_push2_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{Address, ArchReg, MemWidth, OpWidth, SrcOperand, VReg, X86Reg};
+
+    if !allow_mem {
+        return None;
+    }
+    let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+    let first = block.ops.get(index)?;
+    let (tmp_low, src_low) = match first.kind {
+        OpKind::Mov {
+            dst: temporary @ VReg::Virtual(_),
+            src: SrcOperand::Reg(source @ VReg::Arch(ArchReg::X86(reg))),
+            width: OpWidth::W64,
+        } if reg.gpr_index().is_some() && source != rsp => (temporary, source),
+        _ => return None,
+    };
+    let second = block.ops.get(index + 1)?;
+    let (tmp_high, src_high) = match second.kind {
+        OpKind::Mov {
+            dst: temporary @ VReg::Virtual(_),
+            src: SrcOperand::Reg(source @ VReg::Arch(ArchReg::X86(reg))),
+            width: OpWidth::W64,
+        } if reg.gpr_index().is_some() && source != rsp => (temporary, source),
+        _ => return None,
+    };
+    let sub = block.ops.get(index + 2)?;
+    let store_low = block.ops.get(index + 3)?;
+    let store_high = block.ops.get(index + 4)?;
+    if [second, sub, store_low, store_high]
+        .iter()
+        .any(|op| op.guest_pc != first.guest_pc)
+        || !matches!(
+            sub.kind,
+            OpKind::Sub {
+                dst,
+                src1,
+                src2: SrcOperand::Imm(16),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            } if dst == rsp && src1 == rsp
+        )
+        || !matches!(
+            store_low.kind,
+            OpKind::Store {
+                src,
+                addr: Address::Direct(base),
+                width: MemWidth::B8,
+            } if src == tmp_low && base == rsp
+        )
+        || !matches!(
+            &store_high.kind,
+            OpKind::Store {
+                src,
+                addr,
+                width: MemWidth::B8,
+            } if *src == tmp_high && *addr == Address::base_off(rsp, 8)
+        )
+        || virtual_definitions.get(&tmp_low) != Some(&1)
+        || virtual_uses.get(&tmp_low) != Some(&1)
+        || virtual_definitions.get(&tmp_high) != Some(&1)
+        || virtual_uses.get(&tmp_high) != Some(&1)
+    {
+        return None;
+    }
+
+    let _ = (src_low, src_high);
+    Some(5)
+}
+
+/// Identify a PUSH2-like same-instruction sequence that failed exact
+/// validation. This prevents its virtual snapshots and two stores from being
+/// admitted independently.
+pub(crate) fn x86_jit_push2_candidate(block: &crate::smir::ir::SmirBlock, index: usize) -> bool {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
+
+    let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+    let Some(first) = block.ops.get(index) else {
+        return false;
+    };
+    matches!(
+        first.kind,
+        OpKind::Mov {
+            dst: VReg::Virtual(_),
+            width: OpWidth::W64,
+            ..
+        }
+    ) && matches!(
+        block.ops.get(index + 1),
+        Some(second) if second.guest_pc == first.guest_pc
+            && matches!(second.kind, OpKind::Mov { dst: VReg::Virtual(_), width: OpWidth::W64, .. })
+    ) && matches!(
+        block.ops.get(index + 2),
+        Some(sub) if sub.guest_pc == first.guest_pc
+            && matches!(
+                sub.kind,
+                OpKind::Sub {
+                    dst,
+                    src1,
+                    src2: SrcOperand::Imm(16),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                } if dst == rsp && src1 == rsp
+            )
+    )
+}
+
+/// Validate the exact five-op APX POP2 shape emitted by the x86 lifter. The
+/// V-register destination consumes `[RSP]`; the distinct ModRM B-register
+/// destination consumes `[RSP+8]`.
+pub(crate) fn x86_jit_pop2_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{
+        Address, ArchReg, MemWidth, OpWidth, SignExtend, SrcOperand, VReg, X86Reg,
+    };
+
+    if !allow_mem {
+        return None;
+    }
+    let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+    let first = block.ops.get(index)?;
+    let tmp_low = match first.kind {
+        OpKind::Load {
+            dst: temporary @ VReg::Virtual(_),
+            addr: Address::Direct(base),
+            width: MemWidth::B8,
+            sign: SignExtend::Zero,
+        } if base == rsp => temporary,
+        _ => return None,
+    };
+    let second = block.ops.get(index + 1)?;
+    let tmp_high = match &second.kind {
+        OpKind::Load {
+            dst: temporary @ VReg::Virtual(_),
+            addr,
+            width: MemWidth::B8,
+            sign: SignExtend::Zero,
+        } if *addr == Address::base_off(rsp, 8) => *temporary,
+        _ => return None,
+    };
+    let add = block.ops.get(index + 2)?;
+    let low_commit = block.ops.get(index + 3)?;
+    let high_commit = block.ops.get(index + 4)?;
+    let dst_low = match low_commit.kind {
+        OpKind::Mov {
+            dst: destination @ VReg::Arch(ArchReg::X86(reg)),
+            src: SrcOperand::Reg(source),
+            width: OpWidth::W64,
+        } if reg.gpr_index().is_some() && destination != rsp && source == tmp_low => destination,
+        _ => return None,
+    };
+    let dst_high = match high_commit.kind {
+        OpKind::Mov {
+            dst: destination @ VReg::Arch(ArchReg::X86(reg)),
+            src: SrcOperand::Reg(source),
+            width: OpWidth::W64,
+        } if reg.gpr_index().is_some() && destination != rsp && source == tmp_high => destination,
+        _ => return None,
+    };
+    if dst_low == dst_high
+        || [second, add, low_commit, high_commit]
+            .iter()
+            .any(|op| op.guest_pc != first.guest_pc)
+        || !matches!(
+            add.kind,
+            OpKind::Add {
+                dst,
+                src1,
+                src2: SrcOperand::Imm(16),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            } if dst == rsp && src1 == rsp
+        )
+        || virtual_definitions.get(&tmp_low) != Some(&1)
+        || virtual_uses.get(&tmp_low) != Some(&1)
+        || virtual_definitions.get(&tmp_high) != Some(&1)
+        || virtual_uses.get(&tmp_high) != Some(&1)
+    {
+        return None;
+    }
+    Some(5)
+}
+
+/// Identify a POP2-like paired-load prefix that failed exact validation.
+pub(crate) fn x86_jit_pop2_candidate(block: &crate::smir::ir::SmirBlock, index: usize) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{Address, ArchReg, MemWidth, SignExtend, VReg, X86Reg};
+
+    let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+    let Some(first) = block.ops.get(index) else {
+        return false;
+    };
+    matches!(
+        first.kind,
+        OpKind::Load {
+            dst: VReg::Virtual(_),
+            addr: Address::Direct(base),
+            width: MemWidth::B8,
+            sign: SignExtend::Zero,
+        } if base == rsp
+    ) && matches!(
+        block.ops.get(index + 1),
+        Some(second) if second.guest_pc == first.guest_pc
+            && matches!(
+                &second.kind,
+                OpKind::Load {
+                    dst: VReg::Virtual(_),
+                    addr,
+                    width: MemWidth::B8,
+                    sign: SignExtend::Zero,
+                } if *addr == Address::base_off(rsp, 8)
+            )
+    )
+}
+
 /// Validate the exact POP shapes emitted by the x86 lifter. Ordinary POP uses
 /// a helper load followed by a state-backed RSP increment. POP RSP commits the
 /// loaded value without exposing the increment, while POP SP first computes
@@ -6407,6 +6652,24 @@ fn block_is_clobber_safe(
 
     let mut i = 0;
     while i < n {
+        if let Some(consumed) =
+            x86_jit_pop2_sequence_len(block, i, allow_mem, &virtual_definitions, &virtual_uses)
+        {
+            i += consumed;
+            continue;
+        }
+        if x86_jit_pop2_candidate(block, i) {
+            return false;
+        }
+        if let Some(consumed) =
+            x86_jit_push2_sequence_len(block, i, allow_mem, &virtual_definitions, &virtual_uses)
+        {
+            i += consumed;
+            continue;
+        }
+        if x86_jit_push2_candidate(block, i) {
+            return false;
+        }
         if let Some(consumed) =
             x86_jit_pop_sequence_len(block, i, allow_mem, &virtual_definitions, &virtual_uses)
         {
@@ -10666,6 +10929,14 @@ mod jit_gate_tests {
         assert_eq!(
             std::mem::offset_of!(GuestRegs, vec_store_fn),
             X86_GUEST_VEC_STORE_FN_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, pair_load_fn),
+            X86_GUEST_PAIR_LOAD_FN_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, pair_store_fn),
+            X86_GUEST_PAIR_STORE_FN_OFFSET as usize
         );
         assert_eq!(std::mem::align_of::<GuestRegs>(), 64);
 

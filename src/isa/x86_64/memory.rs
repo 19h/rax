@@ -1491,6 +1491,45 @@ impl Mmu {
         }
     }
 
+    /// Read two adjacent qwords through one aligned 16-byte MMU transaction.
+    ///
+    /// APX POP2 requires a single both-or-neither fault boundary, while the
+    /// embedder-facing memory recorder represents values as `u64`. Record the
+    /// successful transfer as two logical qword reads so neither value is lost.
+    #[inline]
+    pub fn read_aligned_u64_pair(
+        &mut self,
+        vaddr: u64,
+        sregs: &SystemRegisters,
+    ) -> Result<(u64, u64)> {
+        debug_assert_eq!(vaddr & 0xF, 0);
+        let mut bytes = [0u8; 16];
+        let paddr = self.translate(vaddr, AccessType::Read, sregs)?;
+        let paddr_high = paddr.wrapping_add(8);
+        if Self::is_lapic_addr(paddr)
+            || Self::is_lapic_addr(paddr_high)
+            || self.in_pci_aperture(paddr)
+            || self.in_pci_aperture(paddr_high)
+        {
+            // MMIO models expose qword semantics; permission checking has
+            // already succeeded for the containing aligned virtual page.
+            self.read_phys(paddr, &mut bytes[..8])?;
+            self.read_phys(paddr_high, &mut bytes[8..])?;
+        } else {
+            self.read_phys(paddr, &mut bytes)?;
+        }
+        let low = u64::from_le_bytes(bytes[..8].try_into().expect("low paired qword"));
+        let high = u64::from_le_bytes(bytes[8..].try_into().expect("high paired qword"));
+        self.record(crate::vm::vcpu::MemAccess::Read, vaddr, 8, low);
+        self.record(
+            crate::vm::vcpu::MemAccess::Read,
+            vaddr.wrapping_add(8),
+            8,
+            high,
+        );
+        Ok((low, high))
+    }
+
     /// Write a u8 to virtual address.
     #[inline(always)]
     pub fn write_u8(&mut self, vaddr: u64, value: u8, sregs: &SystemRegisters) -> Result<()> {
@@ -1573,5 +1612,48 @@ impl Mmu {
         } else {
             self.write(vaddr, &value.to_le_bytes(), sregs)
         }
+    }
+
+    /// Write two adjacent qwords through one aligned 16-byte MMU transaction.
+    ///
+    /// The translation and complete physical write precede both logical memory
+    /// records. Consequently a fault records and commits neither qword, while a
+    /// successful APX PUSH2 remains observable as its two architectural stores.
+    #[inline]
+    pub fn write_aligned_u64_pair(
+        &mut self,
+        vaddr: u64,
+        low: u64,
+        high: u64,
+        sregs: &SystemRegisters,
+    ) -> Result<()> {
+        debug_assert_eq!(vaddr & 0xF, 0);
+        self.note_smc(vaddr);
+        self.note_smc(vaddr.wrapping_add(15));
+        let mut bytes = [0u8; 16];
+        bytes[..8].copy_from_slice(&low.to_le_bytes());
+        bytes[8..].copy_from_slice(&high.to_le_bytes());
+        let paddr = self.translate(vaddr, AccessType::Write, sregs)?;
+        let paddr_high = paddr.wrapping_add(8);
+        if Self::is_lapic_addr(paddr)
+            || Self::is_lapic_addr(paddr_high)
+            || self.in_pci_aperture(paddr)
+            || self.in_pci_aperture(paddr_high)
+        {
+            // Preserve the two architectural qword MMIO operations. These
+            // device dispatch paths are non-faulting after translation.
+            self.write_phys(paddr, &bytes[..8])?;
+            self.write_phys(paddr_high, &bytes[8..])?;
+        } else {
+            self.write_phys(paddr, &bytes)?;
+        }
+        self.record(crate::vm::vcpu::MemAccess::Write, vaddr, 8, low);
+        self.record(
+            crate::vm::vcpu::MemAccess::Write,
+            vaddr.wrapping_add(8),
+            8,
+            high,
+        );
+        Ok(())
     }
 }

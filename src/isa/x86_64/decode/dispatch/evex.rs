@@ -18,11 +18,6 @@ use crate::vm::vcpu::VcpuExit;
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::{execute, flags};
 
-#[inline]
-fn apx_pair_second_stack_slot_addr(first_slot: u64) -> u64 {
-    first_slot.wrapping_add(8)
-}
-
 impl X86_64Vcpu {
     /// Execute EVEX-encoded instruction.
     /// mm: opcode map (1=0F, 2=0F38, 3=0F3A)
@@ -5354,44 +5349,81 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-    /// APX POP2 - Pop two registers atomically
+    /// APX POP2 - pop two registers with one aligned 16-byte stack transfer.
     fn execute_apx_pop2(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let modrm = ctx.consume_u8()?;
-        if (modrm >> 6) != 3 {
+        let evex = ctx
+            .evex
+            .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
+        if (modrm >> 6) != 3
+            || !evex.nd
+            || evex.nf
+            || evex.z
+            || evex.ll != 0
+            || evex.aaa != 0
+            || evex.pp != 0
+            || !evex.x4
+        {
             return self.inject_invalid_opcode();
         }
 
-        // Extract register operands
-        let reg1 = (modrm & 0x07) | ctx.evex_rm_reg();
-        let reg2 = ctx.evex_vvvv();
+        // Intel names the ModRM operand B and the VVVVV operand V. POP2 loads V
+        // from [RSP] and B from [RSP+8]. RSP is forbidden and the destinations
+        // must be distinct.
+        let b_reg = (modrm & 0x07) | ctx.evex_rm_reg();
+        let v_reg = ctx.evex_vvvv();
+        if b_reg == 4 || v_reg == 4 || b_reg == v_reg {
+            return self.inject_invalid_opcode();
+        }
+        if self.regs.rsp & 0xF != 0 {
+            self.inject_exception(13, Some(0))?;
+            return Ok(None);
+        }
 
-        // Pop reg1 first (from RSP), then reg2 (from RSP+8)
-        let val1 = self.read_mem(self.regs.rsp, 8)?;
-        let val2 = self.read_mem(apx_pair_second_stack_slot_addr(self.regs.rsp), 8)?;
+        let (low, high) = self.read_mem_pair(self.regs.rsp)?;
         self.regs.rsp = self.regs.rsp.wrapping_add(16);
-
-        self.set_reg(reg1, val1, 8);
-        self.set_reg(reg2, val2, 8);
+        self.set_reg(v_reg, low, 8);
+        self.set_reg(b_reg, high, 8);
 
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
 
-    /// APX PUSH2 - Push two registers atomically.
+    /// APX PUSH2 - push two registers with both-or-neither fault visibility.
     fn execute_apx_push2(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let modrm = ctx.consume_u8()?;
-        if (modrm >> 6) != 3 {
+        let evex = ctx
+            .evex
+            .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
+        if (modrm >> 6) != 3
+            || !evex.nd
+            || evex.nf
+            || evex.z
+            || evex.ll != 0
+            || evex.aaa != 0
+            || evex.pp != 0
+            || !evex.x4
+        {
             return self.inject_invalid_opcode();
         }
 
-        let reg1 = (modrm & 0x07) | ctx.evex_rm_reg();
-        let reg2 = ctx.evex_vvvv();
-        let val1 = self.get_reg(reg1, 8);
-        let val2 = self.get_reg(reg2, 8);
+        let b_reg = (modrm & 0x07) | ctx.evex_rm_reg();
+        let v_reg = ctx.evex_vvvv();
+        if b_reg == 4 || v_reg == 4 {
+            return self.inject_invalid_opcode();
+        }
+        if self.regs.rsp & 0xF != 0 {
+            self.inject_exception(13, Some(0))?;
+            return Ok(None);
+        }
+
+        // PUSH2 is equivalent to PUSH V followed by PUSH B, hence B occupies
+        // the lower-address qword in the final 16-byte stack image.
+        let low = self.get_reg(b_reg, 8);
+        let high = self.get_reg(v_reg, 8);
         let new_rsp = self.regs.rsp.wrapping_sub(16);
 
-        self.write_mem(new_rsp, val1, 8)?;
-        self.write_mem(apx_pair_second_stack_slot_addr(new_rsp), val2, 8)?;
+        self.write_mem_pair(new_rsp, low, high)?;
         self.regs.rsp = new_rsp;
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
@@ -6551,25 +6583,22 @@ mod tests {
     }
 
     #[test]
-    fn apx_pair_second_stack_slot_address_wraps() {
-        assert_eq!(apx_pair_second_stack_slot_addr(u64::MAX - 7), 0);
-        assert_eq!(apx_pair_second_stack_slot_addr(0x1000), 0x1008);
-    }
-
-    #[test]
-    fn apx_push2_wraps_second_store_address() {
+    fn apx_push2_wraps_aligned_rsp_without_wrapping_the_transfer() {
         // LLVM 23: `push2 %rax, %rbx` => 62 f4 64 18 ff f0.
         let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0x64, 0x18, 0xFF, 0xF0]);
         enable_paging_for_wrapped_stack_test(&mut vcpu);
-        vcpu.regs.rsp = 8;
+        // Zero is 16-byte aligned. The architectural RSP decrement wraps to
+        // 0xffff_ffff_ffff_fff0, but the aligned 16-byte transfer remains
+        // wholly inside the final canonical page and does not wrap to address 0.
+        vcpu.regs.rsp = 0;
         vcpu.regs.rax = 0x1111_2222_3333_4444;
         vcpu.regs.rbx = 0xAAAA_BBBB_CCCC_DDDD;
 
         step_ok(&mut vcpu);
 
-        assert_eq!(vcpu.regs.rsp, u64::MAX - 7);
-        assert_eq!(read_u64(&mut vcpu, u64::MAX - 7), 0x1111_2222_3333_4444);
-        assert_eq!(read_u64(&mut vcpu, 0), 0xAAAA_BBBB_CCCC_DDDD);
+        assert_eq!(vcpu.regs.rsp, u64::MAX - 15);
+        assert_eq!(read_u64(&mut vcpu, u64::MAX - 15), 0x1111_2222_3333_4444);
+        assert_eq!(read_u64(&mut vcpu, u64::MAX - 7), 0xAAAA_BBBB_CCCC_DDDD);
     }
 
     #[test]

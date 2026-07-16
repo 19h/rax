@@ -244,6 +244,8 @@ struct ApxEvexPrefix {
     operand_size_override: bool,
     nd: bool,
     nf: bool,
+    z: bool,
+    ll: u8,
     aaa: u8,
     b: bool,
     b4: bool,
@@ -940,6 +942,8 @@ fn decode_apx_evex_prefix_for_map(
         operand_size_override: (p1 & 0x03) == 0x01,
         nd: (p2 & 0x10) != 0,
         nf: (p2 & 0x04) != 0,
+        z: (p2 & 0x80) != 0,
+        ll: (p2 >> 5) & 0x03,
         aaa: p2 & 0x07,
         b: (p0 & 0x20) != 0,
         b4: (p0 & 0x08) != 0,
@@ -29724,6 +29728,19 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
+        if !prefix.nd
+            || prefix.nf
+            || prefix.z
+            || prefix.ll != 0
+            || prefix.aaa != 0
+            || prefix.pp != 0
+            || !prefix.x4
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: Vec::new(),
+            });
+        }
         if (modrm >> 6) != 3 {
             return Err(LiftError::Unsupported {
                 addr: pc,
@@ -29740,6 +29757,12 @@ impl X86_64Lifter {
 
         let reg1 = (modrm & 0x07) | prefix.rm_ext();
         let reg2 = prefix.vvvv_reg();
+        if reg1 == 4 || reg2 == 4 {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: Vec::new(),
+            });
+        }
         let tmp1 = ctx.alloc_vreg();
         let tmp2 = ctx.alloc_vreg();
         let rsp = self.rsp();
@@ -29803,6 +29826,19 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
+        if !prefix.nd
+            || prefix.nf
+            || prefix.z
+            || prefix.ll != 0
+            || prefix.aaa != 0
+            || prefix.pp != 0
+            || !prefix.x4
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: Vec::new(),
+            });
+        }
         if (modrm >> 6) != 3 {
             return Err(LiftError::Unsupported {
                 addr: pc,
@@ -29819,6 +29855,12 @@ impl X86_64Lifter {
 
         let reg1 = (modrm & 0x07) | prefix.rm_ext();
         let reg2 = prefix.vvvv_reg();
+        if reg1 == 4 || reg2 == 4 || reg1 == reg2 {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: Vec::new(),
+            });
+        }
         let tmp1 = ctx.alloc_vreg();
         let tmp2 = ctx.alloc_vreg();
         let rsp = self.rsp();
@@ -29858,7 +29900,7 @@ impl X86_64Lifter {
                 OpId(3),
                 pc,
                 OpKind::Mov {
-                    dst: self.gpr(reg1),
+                    dst: self.gpr(reg2),
                     src: SrcOperand::Reg(tmp1),
                     width: OpWidth::W64,
                 },
@@ -29867,7 +29909,7 @@ impl X86_64Lifter {
                 OpId(4),
                 pc,
                 OpKind::Mov {
-                    dst: self.gpr(reg2),
+                    dst: self.gpr(reg1),
                     src: SrcOperand::Reg(tmp2),
                     width: OpWidth::W64,
                 },
@@ -43798,9 +43840,10 @@ mod tests {
         let mut lifter = X86_64Lifter::strict();
         let mut ctx = LiftContext::new(SourceArch::X86_64);
 
-        // LLVM 20: `push2 %rax, %rsp` as EVEX MAP4 FF /6.
+        // LLVM 23: `push2 %rax, %rbx` as EVEX MAP4 FF /6. The ModRM B
+        // operand (RAX) occupies the lower final stack slot.
         let result = lifter
-            .lift_insn(0x1000, &[0x62, 0xF4, 0x5C, 0x18, 0xFF, 0xF0], &mut ctx)
+            .lift_insn(0x1000, &[0x62, 0xF4, 0x64, 0x18, 0xFF, 0xF0], &mut ctx)
             .unwrap();
         assert_eq!(result.bytes_consumed, 6);
         assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
@@ -43825,7 +43868,7 @@ mod tests {
                 width: OpWidth::W64,
             } => {
                 assert!(dst.is_virtual());
-                assert_eq!(src, x86_gpr(4));
+                assert_eq!(src, x86_gpr(3));
                 dst
             }
             ref other => panic!("expected source capture for PUSH2 operand 2, got {other:?}"),
@@ -43872,9 +43915,11 @@ mod tests {
         let mut lifter = X86_64Lifter::strict();
         let mut ctx = LiftContext::new(SourceArch::X86_64);
 
-        // LLVM 20: `pop2 %rsp, %rax` as EVEX MAP4 8F.
+        // LLVM 23: `pop2 %rax, %rbx` as EVEX MAP4 8F. Intel's V operand
+        // (RBX) receives [RSP], while the ModRM B operand (RAX) receives
+        // [RSP+8].
         let result = lifter
-            .lift_insn(0x1000, &[0x62, 0xF4, 0x7C, 0x18, 0x8F, 0xC4], &mut ctx)
+            .lift_insn(0x1000, &[0x62, 0xF4, 0x64, 0x18, 0x8F, 0xC0], &mut ctx)
             .unwrap();
         assert_eq!(result.bytes_consumed, 6);
         assert_eq!(result.ops.len(), 5);
@@ -43922,7 +43967,7 @@ mod tests {
                 src: SrcOperand::Reg(src),
                 width: OpWidth::W64,
             } => {
-                assert_eq!(dst, x86_gpr(4));
+                assert_eq!(dst, x86_gpr(3));
                 assert_eq!(src, tmp1);
             }
             ref other => panic!("expected POP2 first destination write, got {other:?}"),
@@ -43945,9 +43990,9 @@ mod tests {
         let mut lifter = X86_64Lifter::strict();
         let mut ctx = LiftContext::new(SourceArch::X86_64);
 
-        // LLVM 20: `push2 %r16, %rcx`.
+        // LLVM 23: `push2 %r16, %rcx`.
         let push = lifter
-            .lift_insn(0x1000, &[0x62, 0xEC, 0x74, 0x18, 0xFF, 0xF0], &mut ctx)
+            .lift_insn(0x1000, &[0x62, 0xFC, 0x74, 0x18, 0xFF, 0xF0], &mut ctx)
             .unwrap();
         match push.ops[0].kind {
             OpKind::Mov {
@@ -43964,17 +44009,18 @@ mod tests {
             ref other => panic!("expected PUSH2 second operand, got {other:?}"),
         }
 
-        // LLVM 20: `pop2 %r20, %rbp`.
+        // LLVM 23: `pop2 %r20, %rbp`. V (RBP) receives the low qword and B
+        // (R20) receives the high qword.
         let pop = lifter
-            .lift_insn(0x2000, &[0x62, 0xEC, 0x54, 0x18, 0x8F, 0xC4], &mut ctx)
+            .lift_insn(0x2000, &[0x62, 0xFC, 0x54, 0x18, 0x8F, 0xC4], &mut ctx)
             .unwrap();
         match pop.ops[3].kind {
-            OpKind::Mov { dst, .. } => assert_eq!(dst, x86_gpr(20)),
-            ref other => panic!("expected POP2 first EGPR destination, got {other:?}"),
+            OpKind::Mov { dst, .. } => assert_eq!(dst, x86_gpr(5)),
+            ref other => panic!("expected POP2 low-slot destination, got {other:?}"),
         }
         match pop.ops[4].kind {
-            OpKind::Mov { dst, .. } => assert_eq!(dst, x86_gpr(5)),
-            ref other => panic!("expected POP2 second destination, got {other:?}"),
+            OpKind::Mov { dst, .. } => assert_eq!(dst, x86_gpr(20)),
+            ref other => panic!("expected POP2 high-slot destination, got {other:?}"),
         }
     }
 
@@ -43997,6 +44043,26 @@ mod tests {
             .lift_insn(0x1000, &[0x62, 0xF4, 0x7C, 0x18, 0x8F, 0xC8], &mut ctx)
             .unwrap_err();
         assert!(matches!(pop_group_err, LiftError::Unsupported { .. }));
+
+        // Intel APX revision 8.0: either RSP operand and duplicate POP2
+        // destinations are #UD encodings.
+        for bytes in [
+            &[0x62, 0xF4, 0x5C, 0x18, 0xFF, 0xF0][..],
+            &[0x62, 0xF4, 0x7C, 0x18, 0x8F, 0xC4][..],
+            &[0x62, 0xF4, 0x7C, 0x18, 0x8F, 0xC0][..],
+            &[0x62, 0xF4, 0x64, 0x08, 0xFF, 0xF0][..],
+            &[0x62, 0xF4, 0x64, 0x1C, 0xFF, 0xF0][..],
+            &[0x62, 0xF4, 0x64, 0x98, 0xFF, 0xF0][..],
+            &[0x62, 0xF4, 0x64, 0x38, 0xFF, 0xF0][..],
+            &[0x62, 0xF4, 0x64, 0x19, 0xFF, 0xF0][..],
+            &[0x62, 0xF4, 0x65, 0x18, 0xFF, 0xF0][..],
+            &[0x62, 0xF4, 0x60, 0x18, 0xFF, 0xF0][..],
+        ] {
+            assert!(matches!(
+                lifter.lift_insn(0x1000, bytes, &mut ctx),
+                Err(LiftError::InvalidEncoding { .. })
+            ));
+        }
     }
 
     #[test]

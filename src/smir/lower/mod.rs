@@ -94,6 +94,10 @@ pub const X86_GUEST_APX_ENABLED_OFFSET: i32 = X86_GUEST_CPL_OFFSET + 8;
 pub const X86_GUEST_VEC_LOAD_FN_OFFSET: i32 = X86_GUEST_APX_ENABLED_OFFSET + 8;
 /// Byte offset of the helper-backed vector-store function pointer.
 pub const X86_GUEST_VEC_STORE_FN_OFFSET: i32 = X86_GUEST_VEC_LOAD_FN_OFFSET + 8;
+/// Byte offset of the helper-backed APX POP2 function pointer.
+pub const X86_GUEST_PAIR_LOAD_FN_OFFSET: i32 = X86_GUEST_VEC_STORE_FN_OFFSET + 8;
+/// Byte offset of the helper-backed APX PUSH2 function pointer.
+pub const X86_GUEST_PAIR_STORE_FN_OFFSET: i32 = X86_GUEST_PAIR_LOAD_FN_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

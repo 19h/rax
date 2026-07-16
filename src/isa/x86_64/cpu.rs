@@ -2145,6 +2145,20 @@ impl X86_64Vcpu {
         Ok(val)
     }
 
+    /// Read the two adjacent qwords of an aligned APX POP2 as one MMU
+    /// transaction. The caller performs the architectural register/RSP commit
+    /// only after this returns successfully.
+    #[inline]
+    pub(super) fn read_mem_pair(&mut self, addr: u64) -> Result<(u64, u64)> {
+        let (low, high) = self.mmu.read_aligned_u64_pair(addr, &self.sregs)?;
+        #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+        {
+            self.push_jit_mem_trace((0, addr, 8, low));
+            self.push_jit_mem_trace((0, addr.wrapping_add(8), 8, high));
+        }
+        Ok((low, high))
+    }
+
     /// Drain the MMU's self-modifying-code journal (code pages written by ANY
     /// store, including the ~39 handlers that call `mmu.write_u*` directly) and
     /// invalidate the decode + JIT caches for each. Called at every instruction
@@ -2230,6 +2244,23 @@ impl X86_64Vcpu {
             self.push_jit_mem_trace((1, addr, size, value & mask));
         }
         r
+    }
+
+    /// Write the two adjacent qwords of an aligned APX PUSH2 as one MMU
+    /// transaction. At the architectural 16-byte alignment required by APX,
+    /// the transfer cannot cross a 4 KiB page, so translation and permission
+    /// checking precede the complete physical write.
+    #[inline]
+    pub(super) fn write_mem_pair(&mut self, addr: u64, low: u64, high: u64) -> Result<()> {
+        let result = self
+            .mmu
+            .write_aligned_u64_pair(addr, low, high, &self.sregs);
+        #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+        if result.is_ok() {
+            self.push_jit_mem_trace((1, addr, 8, low));
+            self.push_jit_mem_trace((1, addr.wrapping_add(8), 8, high));
+        }
+        result
     }
 
     // FPU memory access helpers
@@ -4003,6 +4034,95 @@ unsafe extern "C" fn rax_jit_vec_store(
     u64::from(vcpu.write_bytes(addr, &bytes[..size as usize]).is_ok())
 }
 
+/// JIT APX POP2 helper. A complete aligned 16-byte read is staged before any
+/// architectural state changes. `dst_low` is the EVEX V register and receives
+/// `[RSP]`; `dst_high` is the ModRM B register and receives `[RSP+8]`.
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+unsafe extern "C" fn rax_jit_pair_load(
+    state: *mut crate::smir::lower::runtime::GuestRegs,
+    dst_low: u32,
+    dst_high: u32,
+) -> u64 {
+    let Some(state) = (unsafe { state.as_mut() }) else {
+        return 0;
+    };
+    if state.apx_enabled == 0
+        || dst_low >= 32
+        || dst_high >= 32
+        || dst_low == 4
+        || dst_high == 4
+        || dst_low == dst_high
+    {
+        return 0;
+    }
+    let rsp = state.gpr[4];
+    if rsp & 0xF != 0 {
+        return 0;
+    }
+    let Some(vcpu) = (unsafe { (state.ctx as *mut X86_64Vcpu).as_mut() }) else {
+        return 0;
+    };
+    let Ok((low, high)) = vcpu.read_mem_pair(rsp) else {
+        return 0;
+    };
+
+    state.gpr[4] = rsp.wrapping_add(16);
+    state.gpr[dst_low as usize] = low;
+    state.gpr[dst_high as usize] = high;
+    1
+}
+
+/// JIT APX PUSH2 helper. The two values are submitted to the MMU as one
+/// aligned 16-byte transfer, providing the architectural both-or-neither fault
+/// behavior without promising a single atomic 16-byte physical store.
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+unsafe extern "C" fn rax_jit_pair_store(
+    state: *mut crate::smir::lower::runtime::GuestRegs,
+    src_low: u32,
+    src_high: u32,
+) -> u64 {
+    let Some(state) = (unsafe { state.as_mut() }) else {
+        return 0;
+    };
+    if state.apx_enabled == 0 || src_low >= 32 || src_high >= 32 || src_low == 4 || src_high == 4 {
+        return 0;
+    }
+    let old_rsp = state.gpr[4];
+    if old_rsp & 0xF != 0 {
+        return 0;
+    }
+    let Some(vcpu) = (unsafe { (state.ctx as *mut X86_64Vcpu).as_mut() }) else {
+        return 0;
+    };
+    let new_rsp = old_rsp.wrapping_sub(16);
+    if vcpu.mmu.is_code_page(new_rsp) || vcpu.mmu.is_code_page(new_rsp.wrapping_add(15)) {
+        return 0;
+    }
+
+    if vcpu.jit_mem_log.is_some() {
+        let saved_trace = vcpu.jit_mem_trace.take();
+        let old = vcpu.read_mem_pair(new_rsp);
+        vcpu.jit_mem_trace = saved_trace;
+        match old {
+            Ok((low, high)) => {
+                vcpu.push_jit_mem_log((new_rsp, 8, low));
+                if vcpu.jit_mem_log.is_some() {
+                    vcpu.push_jit_mem_log((new_rsp.wrapping_add(8), 8, high));
+                }
+            }
+            Err(_) => vcpu.jit_mem_log = None,
+        }
+    }
+
+    let low = state.gpr[src_low as usize];
+    let high = state.gpr[src_high as usize];
+    if vcpu.write_mem_pair(new_rsp, low, high).is_err() {
+        return 0;
+    }
+    state.gpr[4] = new_rsp;
+    1
+}
+
 /// Lift-through-calls helper: run the interpreter for a guest CALL's callee.
 ///
 /// Called from a lowered JIT region at a guest `CALL` site (the `RAX_JIT_CALL`
@@ -4210,8 +4330,10 @@ fn jit_classify_bail(
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
     use crate::smir::lower::runtime::{
         is_x86_native_vector_op, x86_jit_pop_candidate, x86_jit_pop_sequence_len,
-        x86_jit_push_candidate, x86_jit_push_sequence_len, x86_jit_vector_mem_shape_valid,
-        x86_state_backed_stack_alu_valid, x86_state_backed_stack_mov_valid,
+        x86_jit_pop2_candidate, x86_jit_pop2_sequence_len, x86_jit_push_candidate,
+        x86_jit_push_sequence_len, x86_jit_push2_candidate, x86_jit_push2_sequence_len,
+        x86_jit_vector_mem_shape_valid, x86_state_backed_stack_alu_valid,
+        x86_state_backed_stack_mov_valid,
     };
     let is_sp_bp = |v: &VReg| {
         matches!(
@@ -4246,6 +4368,24 @@ fn jit_classify_bail(
         }
         let mut i = 0;
         while i < n {
+            if let Some(consumed) =
+                x86_jit_pop2_sequence_len(b, i, allow_mem, &virtual_definitions, &virtual_uses)
+            {
+                i += consumed;
+                continue;
+            }
+            if x86_jit_pop2_candidate(b, i) {
+                return "pop2-shape".to_string();
+            }
+            if let Some(consumed) =
+                x86_jit_push2_sequence_len(b, i, allow_mem, &virtual_definitions, &virtual_uses)
+            {
+                i += consumed;
+                continue;
+            }
+            if x86_jit_push2_candidate(b, i) {
+                return "push2-shape".to_string();
+            }
             if let Some(consumed) =
                 x86_jit_pop_sequence_len(b, i, allow_mem, &virtual_definitions, &virtual_uses)
             {
@@ -4828,6 +4968,8 @@ impl X86_64Vcpu {
         gr.store_fn = rax_jit_mem_store as usize as u64;
         gr.vec_load_fn = rax_jit_vec_load as usize as u64;
         gr.vec_store_fn = rax_jit_vec_store as usize as u64;
+        gr.pair_load_fn = rax_jit_pair_load as usize as u64;
+        gr.pair_store_fn = rax_jit_pair_store as usize as u64;
         // Lift-through-calls channel (RAX_JIT_CALL): a guest CALL in the region
         // calls out here to run its callee in the interpreter, then resumes.
         gr.call_fn = rax_jit_call as usize as u64;

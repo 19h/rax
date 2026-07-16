@@ -24,10 +24,11 @@ use super::{
     X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CPL_OFFSET,
     X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
     X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
-    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_RFLAGS_OFFSET,
-    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET,
-    X86_GUEST_VEC_STORE_FN_OFFSET, X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET,
-    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET,
+    X86_GUEST_PAIR_STORE_FN_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
+    X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET, X86_GUEST_VEC_STORE_FN_OFFSET,
+    X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET,
+    X86_STATE_PTR_AT_RBP,
 };
 
 // ============================================================================
@@ -14463,6 +14464,246 @@ impl X86_64Lowerer {
         Ok(Some(2))
     }
 
+    /// Emit one fault-precise APX paired-stack helper call. The helper consumes
+    /// the coherent GuestRegs snapshot and performs the complete architectural
+    /// POP2/PUSH2 commit; native code only restores the snapshot or exits to the
+    /// interpreter at the original instruction PC.
+    fn emit_jit_pair_op(
+        &mut self,
+        guest_pc: u64,
+        is_load: bool,
+        low: VReg,
+        high: VReg,
+    ) -> Result<(), LowerError> {
+        let low_enc = self.jit_arch_enc(low)?;
+        let high_enc = self.jit_arch_enc(high)?;
+        if low_enc == 4 || high_enc == 4 || (is_load && low_enc == high_enc) {
+            return Err(LowerError::InvalidOperand {
+                op: if is_load { "APX POP2" } else { "APX PUSH2" }.to_string(),
+                operand: "RSP operands and duplicate POP2 destinations are invalid".to_string(),
+            });
+        }
+
+        self.code.emit_u8(0x50); // push guest RAX
+        self.emit_load_state_ptr_rax();
+        self.code.emit_u8(0x9C); // pushfq; keep the helper call 16-byte aligned
+        self.emit_spill_legacy_gprs_to_state_from_rax(8);
+        if self.preserve_vector_mem_helpers {
+            self.emit_helper_vector_state(PhysReg::Rax, true);
+        }
+
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0x89);
+        self.code.emit_u8(0xC7); // mov rdi,rax (GuestRegs state)
+        self.code.emit_u8(0xBE); // mov esi, low register encoding
+        self.code.emit_u32(u32::from(low_enc));
+        self.code.emit_u8(0xBA); // mov edx, high register encoding
+        self.code.emit_u32(u32::from(high_enc));
+        self.code.emit_u8(0xFF);
+        self.code.emit_u8(0x90); // call qword [rax+paired helper]
+        self.code.emit_u32(if is_load {
+            X86_GUEST_PAIR_LOAD_FN_OFFSET as u32
+        } else {
+            X86_GUEST_PAIR_STORE_FN_OFFSET as u32
+        });
+
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0x8B);
+        self.code.emit_u8(0x4D);
+        self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8); // mov rcx,[rbp+state_ptr]
+        self.code.emit_u8(0x48);
+        self.code.emit_u8(0x85);
+        self.code.emit_u8(0xC0); // test rax,rax
+        let fault = self.emit_jcc_placeholder(X86Cond::E);
+
+        if self.preserve_vector_mem_helpers {
+            self.emit_helper_vector_state(PhysReg::Rcx, false);
+        }
+        if is_load && (low_enc == 5 || high_enc == 5) {
+            self.emit_sync_saved_rbp_from_state(PhysReg::Rcx);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.code.emit_u8(0x9D); // popfq
+        self.emit_flag_preserving_stack_pop8();
+        self.code.emit_u8(0xE9);
+        let done = self.code.position();
+        self.code.emit_u32(0);
+
+        self.patch_rel32_to_current(fault)?;
+        if self.preserve_vector_mem_helpers {
+            self.emit_helper_vector_state(PhysReg::Rcx, false);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.code.emit_u8(0x9D);
+        self.emit_flag_preserving_stack_pop8();
+        self.emit_native_exit(guest_pc);
+
+        self.patch_rel32_to_current(done)?;
+        Ok(())
+    }
+
+    /// Fuse the exact five-op APX PUSH2 shape emitted by the x86 lifter.
+    fn try_lower_jit_push2(
+        &mut self,
+        ops: &[crate::smir::ir::ops::SmirOp],
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let Some(first) = ops.get(idx) else {
+            return Ok(None);
+        };
+        let (tmp_low, src_low) = match first.kind {
+            OpKind::Mov {
+                dst: temporary @ VReg::Virtual(_),
+                src: SrcOperand::Reg(source @ VReg::Arch(ArchReg::X86(reg))),
+                width: OpWidth::W64,
+            } if reg.gpr_index().is_some() && source != rsp => (temporary, source),
+            _ => return Ok(None),
+        };
+        let second = match ops.get(idx + 1) {
+            Some(op) if op.guest_pc == first.guest_pc => op,
+            _ => return Ok(None),
+        };
+        let (tmp_high, src_high) = match second.kind {
+            OpKind::Mov {
+                dst: temporary @ VReg::Virtual(_),
+                src: SrcOperand::Reg(source @ VReg::Arch(ArchReg::X86(reg))),
+                width: OpWidth::W64,
+            } if reg.gpr_index().is_some() && source != rsp => (temporary, source),
+            _ => return Ok(None),
+        };
+        let Some(sub) = ops.get(idx + 2).filter(|op| op.guest_pc == first.guest_pc) else {
+            return Ok(None);
+        };
+        let Some(store_low) = ops.get(idx + 3).filter(|op| op.guest_pc == first.guest_pc) else {
+            return Ok(None);
+        };
+        let Some(store_high) = ops.get(idx + 4).filter(|op| op.guest_pc == first.guest_pc) else {
+            return Ok(None);
+        };
+        if !matches!(
+            sub.kind,
+            OpKind::Sub {
+                dst,
+                src1,
+                src2: SrcOperand::Imm(16),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            } if dst == rsp && src1 == rsp
+        ) || !matches!(
+            store_low.kind,
+            OpKind::Store {
+                src,
+                addr: Address::Direct(base),
+                width: MemWidth::B8,
+            } if src == tmp_low && base == rsp
+        ) || !matches!(
+            &store_high.kind,
+            OpKind::Store {
+                src,
+                addr,
+                width: MemWidth::B8,
+            } if *src == tmp_high && *addr == Address::base_off(rsp, 8)
+        ) || virtual_definitions.get(&tmp_low) != Some(&1)
+            || virtual_uses.get(&tmp_low) != Some(&1)
+            || virtual_definitions.get(&tmp_high) != Some(&1)
+            || virtual_uses.get(&tmp_high) != Some(&1)
+        {
+            return Ok(None);
+        }
+
+        self.emit_jit_pair_op(first.guest_pc, false, src_low, src_high)?;
+        Ok(Some(5))
+    }
+
+    /// Fuse the exact five-op APX POP2 shape emitted by the x86 lifter.
+    fn try_lower_jit_pop2(
+        &mut self,
+        ops: &[crate::smir::ir::ops::SmirOp],
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let Some(first) = ops.get(idx) else {
+            return Ok(None);
+        };
+        let tmp_low = match first.kind {
+            OpKind::Load {
+                dst: temporary @ VReg::Virtual(_),
+                addr: Address::Direct(base),
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            } if base == rsp => temporary,
+            _ => return Ok(None),
+        };
+        let second = match ops.get(idx + 1) {
+            Some(op) if op.guest_pc == first.guest_pc => op,
+            _ => return Ok(None),
+        };
+        let tmp_high = match &second.kind {
+            OpKind::Load {
+                dst: temporary @ VReg::Virtual(_),
+                addr,
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+            } if *addr == Address::base_off(rsp, 8) => *temporary,
+            _ => return Ok(None),
+        };
+        let Some(add) = ops.get(idx + 2).filter(|op| op.guest_pc == first.guest_pc) else {
+            return Ok(None);
+        };
+        let Some(low_commit) = ops.get(idx + 3).filter(|op| op.guest_pc == first.guest_pc) else {
+            return Ok(None);
+        };
+        let Some(high_commit) = ops.get(idx + 4).filter(|op| op.guest_pc == first.guest_pc) else {
+            return Ok(None);
+        };
+        let dst_low = match low_commit.kind {
+            OpKind::Mov {
+                dst: destination @ VReg::Arch(ArchReg::X86(reg)),
+                src: SrcOperand::Reg(source),
+                width: OpWidth::W64,
+            } if reg.gpr_index().is_some() && destination != rsp && source == tmp_low => {
+                destination
+            }
+            _ => return Ok(None),
+        };
+        let dst_high = match high_commit.kind {
+            OpKind::Mov {
+                dst: destination @ VReg::Arch(ArchReg::X86(reg)),
+                src: SrcOperand::Reg(source),
+                width: OpWidth::W64,
+            } if reg.gpr_index().is_some() && destination != rsp && source == tmp_high => {
+                destination
+            }
+            _ => return Ok(None),
+        };
+        if dst_low == dst_high
+            || !matches!(
+                add.kind,
+                OpKind::Add {
+                    dst,
+                    src1,
+                    src2: SrcOperand::Imm(16),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                } if dst == rsp && src1 == rsp
+            )
+            || virtual_definitions.get(&tmp_low) != Some(&1)
+            || virtual_uses.get(&tmp_low) != Some(&1)
+            || virtual_definitions.get(&tmp_high) != Some(&1)
+            || virtual_uses.get(&tmp_high) != Some(&1)
+        {
+            return Ok(None);
+        }
+
+        self.emit_jit_pair_op(first.guest_pc, true, dst_low, dst_high)?;
+        Ok(Some(5))
+    }
+
     /// Fuse the exact POP shapes emitted by the x86 lifter. The memory helper
     /// runs against the pre-increment RSP snapshot and exits before any state
     /// commit on fault. Ordinary destinations then increment RSP; POP RSP uses
@@ -15491,6 +15732,26 @@ impl X86_64Lowerer {
             #[cfg(feature = "smir-jit")]
             {
                 if self.mem_helpers {
+                    if let Some(consumed) = super::runtime::x86_jit_pop2_sequence_len(
+                        block,
+                        validate_idx,
+                        true,
+                        &virtual_definitions,
+                        &virtual_uses,
+                    ) {
+                        validate_idx += consumed;
+                        continue;
+                    }
+                    if let Some(consumed) = super::runtime::x86_jit_push2_sequence_len(
+                        block,
+                        validate_idx,
+                        true,
+                        &virtual_definitions,
+                        &virtual_uses,
+                    ) {
+                        validate_idx += consumed;
+                        continue;
+                    }
                     if let Some(consumed) = super::runtime::x86_jit_pop_sequence_len(
                         block,
                         validate_idx,
@@ -15557,6 +15818,18 @@ impl X86_64Lowerer {
             // (see `emit_jit_mem_op`). The CRC32 fusion below is explicitly
             // helper-backed and therefore runs only in that mode.
             if self.mem_helpers {
+                if let Some(consumed) =
+                    self.try_lower_jit_pop2(&block.ops, idx, &virtual_definitions, &virtual_uses)?
+                {
+                    idx += consumed;
+                    continue;
+                }
+                if let Some(consumed) =
+                    self.try_lower_jit_push2(&block.ops, idx, &virtual_definitions, &virtual_uses)?
+                {
+                    idx += consumed;
+                    continue;
+                }
                 if let Some(consumed) =
                     self.try_lower_jit_pop(&block.ops, idx, &virtual_definitions, &virtual_uses)?
                 {
@@ -15820,7 +16093,7 @@ mod tests {
         }
     }
 
-    fn lower_rex2_block(bytes: &[u8]) -> (Vec<u8>, usize) {
+    fn lower_rex2_block_with_mem_helpers(bytes: &[u8], mem_helpers: bool) -> (Vec<u8>, usize) {
         let reader = TestReader {
             base: 0x1000,
             bytes: bytes.to_vec(),
@@ -15837,11 +16110,16 @@ mod tests {
         func.add_block(block);
 
         let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_mem_helpers(mem_helpers);
         let res = lowerer.lower_function(&func).unwrap_or_else(|error| {
             panic!("lower REX2 block {bytes:02X?}: {error:?}; ops={ops_debug}")
         });
         assert!(res.relocations.is_empty(), "REX2 block should not relocate");
         (lowerer.finalize().expect("finalize"), res.entry_offset)
+    }
+
+    fn lower_rex2_block(bytes: &[u8]) -> (Vec<u8>, usize) {
+        lower_rex2_block_with_mem_helpers(bytes, false)
     }
 
     fn lower_rex2_block_err(bytes: &[u8]) -> LowerError {
@@ -20378,19 +20656,39 @@ mod tests {
 
     #[test]
     fn lower_apx_push2_pop2_requires_helper_backed_stack_memory() {
-        // LLVM 20:
+        // LLVM 23:
         //   push2 %rax, %rbx => 62 f4 64 18 ff f0
-        //   pop2  %rax, %rbx => 62 f4 64 18 8f c0
-        // State-backed arithmetic makes the RSP deltas safe, but PUSH2/POP2's
-        // virtual two-slot memory sequence is not helper-fused yet. Direct
-        // lowering must reject it rather than address the live host stack.
-        let err = lower_rex2_block_err(&[
-            0x62, 0xF4, 0x64, 0x18, 0xFF, 0xF0, 0x62, 0xF4, 0x64, 0x18, 0x8F, 0xC0, 0xF4,
-        ]);
+        //   pop2  %rbx, %rax => 62 f4 7c 18 8f c3
+        let code = [
+            0x62, 0xF4, 0x64, 0x18, 0xFF, 0xF0, 0x62, 0xF4, 0x7C, 0x18, 0x8F, 0xC3, 0xF4,
+        ];
+
+        // Direct lowering must reject the virtual guest-RSP memory rather than
+        // addressing the live host stack.
+        let err = lower_rex2_block_err(&code);
         assert!(
             matches!(err, LowerError::InvalidRegister(ref reg) if reg.contains("Rsp")),
             "push2/pop2 must reject non-helper guest stack memory, got {err:?}"
         );
+
+        // Helper mode fuses each complete five-op instruction into exactly one
+        // paired runtime call, preserving the all-or-neither commit boundary.
+        let (lowered, _) = lower_rex2_block_with_mem_helpers(&code, true);
+        for offset in [
+            X86_GUEST_PAIR_STORE_FN_OFFSET,
+            X86_GUEST_PAIR_LOAD_FN_OFFSET,
+        ] {
+            let mut call = vec![0xFF, 0x90];
+            call.extend_from_slice(&(offset as u32).to_le_bytes());
+            assert_eq!(
+                lowered
+                    .windows(call.len())
+                    .filter(|bytes| *bytes == call)
+                    .count(),
+                1,
+                "paired helper call at GuestRegs offset {offset:#x}: {lowered:02X?}"
+            );
+        }
     }
 
     #[test]
