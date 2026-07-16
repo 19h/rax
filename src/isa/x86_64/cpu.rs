@@ -4647,6 +4647,8 @@ impl X86_64Vcpu {
             let mut lowerer = Aarch64Lowerer::new();
             #[cfg(target_arch = "x86_64")]
             let mut lowerer = X86_64Lowerer::new();
+            #[cfg(target_arch = "x86_64")]
+            lowerer.set_guest_pcrel_lea_immediates(true);
             lowerer.set_native_exits(exits);
             lowerer.set_native_exit_edges(edge_exits);
             #[cfg(target_arch = "x86_64")]

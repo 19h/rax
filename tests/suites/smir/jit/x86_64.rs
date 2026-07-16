@@ -329,6 +329,32 @@ fn jit_lea_sib_matches_interpreter() {
     assert_eq!(jr.rdx & 0xffff_ffff, 902, "lea result of last iteration");
 }
 
+/// RIP-relative LEA computes a numeric guest virtual address; it neither reads
+/// memory nor depends on where the native code buffer was allocated.
+#[test]
+fn jit_rip_relative_lea_materializes_guest_address_without_memory_helpers() {
+    // lea rax,[rip+0x1234]; hlt
+    let code = [0x48, 0x8D, 0x05, 0x34, 0x12, 0x00, 0x00, 0xF4];
+    let expected = (LOAD_ADDR + 7).wrapping_add_signed(0x1234);
+
+    let mut interp = make_vcpu_code(&code);
+    run_interp(&mut interp);
+    assert_eq!(interp.get_regs().unwrap().rax, expected);
+
+    let mut jit = make_vcpu_code(&code);
+    jit.set_jit_call(false);
+    jit.set_jit_mem(false);
+    assert!(
+        jit.jit_try_block().expect("RIP-relative LEA JIT"),
+        "register-only RIP-relative LEA must not be rejected as a relocation"
+    );
+    let handoff = jit.get_regs().unwrap();
+    assert_eq!(handoff.rax, expected);
+    assert_eq!(handoff.rip, LOAD_ADDR + 7, "HLT must remain a frontier");
+    run_interp(&mut jit);
+    assert_eq!(jit.get_regs().unwrap().rax, interp.get_regs().unwrap().rax);
+}
+
 /// BSF/BSR define only ZF. The native tier must retain CF across each scan,
 /// handle both zero and nonzero sources, preserve source/destination aliasing,
 /// and produce the same defined results as the interpreter in a hot region.

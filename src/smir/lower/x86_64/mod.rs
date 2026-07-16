@@ -3669,6 +3669,12 @@ pub struct X86_64Lowerer {
     /// Whether to adjust PC-relative displacements for code layout
     pcrel_adjust: bool,
 
+    /// Materialize `LEA` with an explicit guest PC base as its absolute guest
+    /// address instead of a native RIP-relative relocation. Native JIT code is
+    /// allocated independently of guest virtual addresses, while x86 `LEA`
+    /// observes only the numeric effective address and performs no memory access.
+    guest_pcrel_lea_immediates: bool,
+
     /// When set, `Load`/`Store` ops are lowered as calls back into the guest
     /// MMU (via the function pointers in `GuestRegs.load_fn`/`store_fn`) with a
     /// full guest-register spill/reload and a per-op fault-bail stub, instead of
@@ -3713,6 +3719,7 @@ impl X86_64Lowerer {
             pending_jumps: Vec::new(),
             guest_base: 0,
             pcrel_adjust: true,
+            guest_pcrel_lea_immediates: false,
             block_guest_pcs: HashMap::new(),
             pending_ret_imm: None,
             pending_cond: None,
@@ -3763,6 +3770,12 @@ impl X86_64Lowerer {
 
     pub fn set_pcrel_adjust(&mut self, adjust: bool) {
         self.pcrel_adjust = adjust;
+    }
+
+    /// Materialize guest-anchored PC-relative `LEA` results as immediates. This
+    /// is the relocation-free form required by independently allocated JIT code.
+    pub fn set_guest_pcrel_lea_immediates(&mut self, on: bool) {
+        self.guest_pcrel_lea_immediates = on;
     }
 
     /// Get a physical register for a VReg, loading from stack if needed
@@ -4925,6 +4938,15 @@ impl X86_64Lowerer {
                         );
                     }
                     Address::PcRel { offset, base, .. } => {
+                        if self.guest_pcrel_lea_immediates {
+                            if let Some(base_pc) = base {
+                                let target = base_pc.wrapping_add_signed(*offset);
+                                let mut emitter = X86Emitter::new(&mut self.code);
+                                emitter.emit_mov_ri(dst_reg, target as i64, OpWidth::W64);
+                                return Ok(());
+                            }
+                        }
+
                         let disp_offset = {
                             let mut emitter = X86Emitter::new(&mut self.code);
                             emitter.emit_lea_pcrel(dst_reg, 0)
@@ -4932,7 +4954,7 @@ impl X86_64Lowerer {
                         let insn_end = self.code.position();
 
                         let disp = if let Some(base_pc) = base {
-                            let target = (*base_pc as i64 + *offset) as u64;
+                            let target = base_pc.wrapping_add_signed(*offset);
                             let disp = if self.pcrel_adjust {
                                 let next_rip = self.guest_base as i64 + insn_end as i64;
                                 target as i64 - next_rip
@@ -15201,7 +15223,7 @@ mod tests {
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
     use crate::smir::ir::memory::MemoryError;
     use crate::smir::ir::types::{
-        Address, ArchReg, FunctionId, OpWidth, SourceArch, SrcOperand, VReg, X86Reg,
+        Address, ArchReg, DispSize, FunctionId, OpWidth, SourceArch, SrcOperand, VReg, X86Reg,
     };
     use crate::smir::ir::{FunctionBuilder, SmirFunction, Terminator};
     use crate::smir::lift::x86_64::X86_64Lifter;
@@ -15346,6 +15368,47 @@ mod tests {
                 .windows(4)
                 .any(|window| window == [0xF3, 0x0F, 0x28, 0xC8]),
             "explicit no-prefix MOVAPS was corrupted into a reserved F3 form: {bytes:02X?}"
+        );
+    }
+
+    #[test]
+    fn jit_pcrel_lea_materializes_exact_guest_address_without_relocation() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Lea {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                addr: Address::PcRel {
+                    offset: -0x27,
+                    disp_size: DispSize::Disp32,
+                    base: Some(0x1234_5007),
+                },
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let func = builder.finish();
+
+        // The general lowerer retains relocation metadata for consumers that
+        // place code relative to the guest image.
+        let mut relocated = X86_64Lowerer::new();
+        let relocated_result = relocated.lower_function(&func).unwrap();
+        assert_eq!(relocated_result.relocations.len(), 1);
+        assert_eq!(
+            relocated_result.relocations[0].target,
+            RelocTarget::GuestAddr(0x1234_4FE0)
+        );
+
+        // Independently allocated JIT code must instead carry the numeric guest
+        // effective address directly and expose no unresolved relocation.
+        let mut jit = X86_64Lowerer::new();
+        jit.set_guest_pcrel_lea_immediates(true);
+        let jit_result = jit.lower_function(&func).unwrap();
+        assert!(jit_result.relocations.is_empty());
+        let code = jit.finalize().unwrap();
+        assert!(
+            code.windows(7)
+                .any(|window| window == [0x48, 0xC7, 0xC0, 0xE0, 0x4F, 0x34, 0x12]),
+            "guest-address immediate missing from {code:02X?}"
         );
     }
 
