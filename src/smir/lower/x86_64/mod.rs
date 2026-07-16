@@ -3236,6 +3236,22 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(dst, src);
     }
 
+    /// CMOVcc r, [base+disp]
+    pub fn emit_cmovcc_rm_disp(
+        &mut self,
+        cond: X86Cond,
+        dst: PhysReg,
+        base: PhysReg,
+        disp: i32,
+        disp_size: DispSize,
+        width: OpWidth,
+    ) {
+        self.emit_rex_for_width_mem_reg(width, dst, base, None);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0x40 + cond as u8);
+        self.emit_modrm_mem_disp(dst, base, disp, disp_size);
+    }
+
     // ========================================================================
     // Miscellaneous
     // ========================================================================
@@ -15425,6 +15441,118 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
+    /// Fuse `Load virtual; CMove architectural_dst,virtual` into an
+    /// unconditional fault-precise helper load followed by a native conditional
+    /// move from caller-owned stack storage. The helper must run even when the
+    /// condition is false. State-backed destinations seed a scratch with their
+    /// complete old value before native CMOV applies its destination width.
+    #[cfg(feature = "smir-jit")]
+    fn try_lower_jit_mem_cmove(
+        &mut self,
+        block: &SmirBlock,
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(consumed) = super::runtime::x86_jit_mem_cmove_source_sequence_len(
+            block,
+            idx,
+            true,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
+            return Ok(None);
+        };
+
+        let load = &block.ops[idx];
+        let (addr, mem_width) = match &load.kind {
+            OpKind::Load {
+                addr,
+                width,
+                sign: SignExtend::Zero,
+                ..
+            } => (addr, *width),
+            _ => unreachable!("validated memory CMOV starts with Load"),
+        };
+        let (dst, cond, width) = match &block.ops[idx + 1].kind {
+            OpKind::CMove {
+                dst, cond, width, ..
+            } => (*dst, *cond, *width),
+            _ => unreachable!("validated memory CMOV consumer"),
+        };
+        let dst_index = self.jit_arch_enc(dst)?;
+        let x86_cond = X86Cond::from_condition(cond);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
+        }
+        self.emit_jit_mem_op(
+            load.guest_pc,
+            true,
+            None,
+            Some(16),
+            None,
+            None,
+            None,
+            addr,
+            mem_width,
+            SignExtend::Zero,
+            16,
+        )?;
+
+        if dst_index <= 15 && !matches!(dst_index, 4 | 5) {
+            let dst_reg = self.get_dst_reg(dst)?;
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_cmovcc_rm_disp(x86_cond, dst_reg, PhysReg::Rsp, 0, DispSize::Auto, width);
+        } else {
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_push(PhysReg::Rax);
+                emitter.emit_push(PhysReg::Rdx);
+            }
+            self.emit_load_state_ptr_rax();
+            self.emit_struct_mov(
+                PhysReg::Rax,
+                PhysReg::Rdx.encoding(),
+                i32::from(dst_index) * 8,
+                false,
+            );
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_cmovcc_rm_disp(
+                    x86_cond,
+                    PhysReg::Rdx,
+                    PhysReg::Rsp,
+                    16,
+                    DispSize::Auto,
+                    width,
+                );
+            }
+            self.emit_store_gpr_slot_from_reg(dst_index, PhysReg::Rdx, width)?;
+            if dst_index == 5 {
+                let commit_width = if width == OpWidth::W16 {
+                    OpWidth::W16
+                } else {
+                    OpWidth::W64
+                };
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
+            }
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_pop(PhysReg::Rdx);
+                emitter.emit_pop(PhysReg::Rax);
+            }
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+        Ok(Some(consumed))
+    }
+
     /// Fuse `Load virtual; ZeroExtend/SignExtend architectural_dst,virtual`
     /// into a fault-precise MMU helper load followed by a native extension from
     /// caller-owned stack storage. Identity-mapped destinations use their host
@@ -18156,6 +18284,16 @@ impl X86_64Lowerer {
                         validate_idx += consumed;
                         continue;
                     }
+                    if let Some(consumed) = super::runtime::x86_jit_mem_cmove_source_sequence_len(
+                        block,
+                        validate_idx,
+                        true,
+                        &virtual_definitions,
+                        &virtual_uses,
+                    ) {
+                        validate_idx += consumed;
+                        continue;
+                    }
                     if let Some(consumed) = super::runtime::x86_jit_mem_extend_source_sequence_len(
                         block,
                         validate_idx,
@@ -18400,6 +18538,13 @@ impl X86_64Lowerer {
                     &virtual_definitions,
                     &virtual_uses,
                 )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) =
+                    self.try_lower_jit_mem_cmove(block, idx, &virtual_definitions, &virtual_uses)?
+                {
                     idx += consumed;
                     continue;
                 }
@@ -23686,6 +23831,74 @@ mod tests {
                 bytes == [0x9C, 0x66, 0x44, 0x69, 0x44, 0x24, 0x08, 0x34, 0x12, 0x9D]
             }),
             "NF immediate IMUL must preserve flags around the shifted staged source: {lowered:02X?}"
+        );
+    }
+
+    #[cfg(feature = "smir-jit")]
+    #[test]
+    fn lower_helper_backed_memory_cmov_uses_staged_and_state_destinations() {
+        for (name, instruction, expected) in [
+            (
+                "CMOVNE AX,word [RBX]",
+                &[0x66, 0x0F, 0x45, 0x03, 0xF4][..],
+                &[0x66, 0x0F, 0x45, 0x04, 0x24][..],
+            ),
+            (
+                "CMOVE ECX,dword [RBX]",
+                &[0x0F, 0x44, 0x0B, 0xF4][..],
+                &[0x0F, 0x44, 0x0C, 0x24][..],
+            ),
+            (
+                "CMOVNE R9,qword [RBX]",
+                &[0x4C, 0x0F, 0x45, 0x0B, 0xF4][..],
+                &[0x4C, 0x0F, 0x45, 0x0C, 0x24][..],
+            ),
+        ] {
+            let (lowered, entry) = lower_rex2_block_with_mem_helpers(instruction, true);
+            assert!(entry < lowered.len(), "{name}");
+            assert!(
+                lowered
+                    .windows(expected.len())
+                    .any(|bytes| bytes == expected),
+                "{name} must conditionally read the helper-staged source: {lowered:02X?}"
+            );
+            assert!(
+                lowered
+                    .windows(5)
+                    .any(|bytes| bytes == [0x48, 0x89, 0x44, 0x24, 0x10]),
+                "{name} helper must stage above saved flags and RAX: {lowered:02X?}"
+            );
+        }
+
+        let (rsp, _) = lower_rex2_block_with_mem_helpers(&[0x66, 0x0F, 0x45, 0x23, 0xF4], true);
+        assert!(
+            rsp.windows(6)
+                .any(|bytes| bytes == [0x66, 0x0F, 0x45, 0x54, 0x24, 0x10]),
+            "CMOVNE SP must conditionally update a state-commit scratch: {rsp:02X?}"
+        );
+        assert!(
+            rsp.windows(4)
+                .any(|bytes| bytes == [0x66, 0x89, 0x50, 0x20]),
+            "CMOVNE SP must partially commit GuestRegs.gpr[4]: {rsp:02X?}"
+        );
+
+        let (rbp, _) = lower_rex2_block_with_mem_helpers(&[0x0F, 0x44, 0x2B, 0xF4], true);
+        assert!(
+            rbp.windows(4)
+                .any(|bytes| bytes == [0x48, 0x89, 0x50, 0x28]),
+            "CMOVE EBP must commit the complete conditional result: {rbp:02X?}"
+        );
+        assert!(
+            rbp.windows(4)
+                .any(|bytes| bytes == [0x48, 0x89, 0x55, 0x00]),
+            "CMOVE EBP must synchronize the prologue's saved guest RBP: {rbp:02X?}"
+        );
+
+        let (r16, _) = lower_rex2_block_with_mem_helpers(&[0xD5, 0xC8, 0x45, 0x03, 0xF4], true);
+        assert!(
+            r16.windows(7)
+                .any(|bytes| bytes == [0x48, 0x89, 0x90, 0x80, 0x00, 0x00, 0x00]),
+            "CMOVNE R16 must commit canonical GuestRegs.gpr[16]: {r16:02X?}"
         );
     }
 

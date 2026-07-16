@@ -6676,6 +6676,60 @@ pub(crate) fn x86_jit_mem_alu_source_sequence_len(
     valid.then_some(2)
 }
 
+/// Validate the exact memory-source conditional-move pair emitted by the x86
+/// lifter: `Load virtual; CMove architectural_dst,virtual`. The architectural
+/// memory read is unconditional even when the condition is false, so native
+/// lowering always calls the MMU helper before a flag-neutral CMOV from staged
+/// caller storage. RSP/RBP and APX EGPR destinations commit through GuestRegs.
+pub(crate) fn x86_jit_mem_cmove_source_sequence_len(
+    block: &crate::smir::ir::SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+    virtual_uses: &std::collections::HashMap<crate::smir::ir::types::VReg, usize>,
+) -> Option<usize> {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, SignExtend, VReg};
+
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (temporary, addr, mem_width) = match &load.kind {
+        OpKind::Load {
+            dst: temporary @ VReg::Virtual(_),
+            addr,
+            width,
+            sign: SignExtend::Zero,
+        } => (*temporary, addr, *width),
+        _ => return None,
+    };
+    let width = mem_width.to_op_width()?;
+    if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+        || !x86_jit_mem_address_shape_valid(addr)
+        || load.x86_hint.is_some()
+        || virtual_definitions.get(&temporary) != Some(&1)
+        || virtual_uses.get(&temporary) != Some(&1)
+    {
+        return None;
+    }
+
+    let consumer = block.ops.get(index + 1)?;
+    if consumer.guest_pc != load.guest_pc || consumer.x86_hint.is_some() {
+        return None;
+    }
+    matches!(
+        &consumer.kind,
+        OpKind::CMove {
+            dst: VReg::Arch(ArchReg::X86(dst)),
+            src,
+            width: consumer_width,
+            ..
+        } if dst.gpr_index().is_some() && *src == temporary && *consumer_width == width
+    )
+    .then_some(2)
+}
+
 /// Validate an exact scalar memory-extension pair emitted by the x86 lifter:
 /// `Load virtual; ZeroExtend/SignExtend architectural_dst,virtual`. The MMU
 /// helper stages the scalar in caller-owned stack space, and the lowerer then
@@ -8164,6 +8218,16 @@ fn block_is_clobber_safe(
             continue;
         }
         if let Some(consumed) = x86_jit_mem_alu_source_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
+        if let Some(consumed) = x86_jit_mem_cmove_source_sequence_len(
             block,
             i,
             allow_mem,
@@ -21858,6 +21922,213 @@ mod jit_gate_tests {
                 "{name}: {function:?}"
             );
         }
+    }
+
+    #[test]
+    fn x86_memory_cmove_gate_requires_exact_ssa_pair() {
+        let temporary = VReg::Virtual(VirtualId(19));
+        let build = |dst: VReg,
+                     mem_width: MemWidth,
+                     consumer_width: OpWidth,
+                     sign: SignExtend,
+                     consumer_pc: u64,
+                     extra_use: bool| {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::Load {
+                    dst: temporary,
+                    addr: Address::BaseIndexScale {
+                        base: Some(x86(X86Reg::Rbx)),
+                        index: x86(X86Reg::R16),
+                        scale: 4,
+                        disp: -9,
+                        disp_size: DispSize::Disp8,
+                    },
+                    width: mem_width,
+                    sign,
+                },
+            );
+            builder.push_op(
+                consumer_pc,
+                OpKind::CMove {
+                    dst,
+                    src: temporary,
+                    cond: Condition::Ne,
+                    width: consumer_width,
+                },
+            );
+            if extra_use {
+                builder.push_op(
+                    0x1000,
+                    OpKind::Mov {
+                        dst: x86(X86Reg::R8),
+                        src: SrcOperand::Reg(temporary),
+                        width: OpWidth::W64,
+                    },
+                );
+            }
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            builder.finish()
+        };
+
+        for (name, dst, mem_width, width) in [
+            (
+                "CMOVNE AX,m16",
+                x86(X86Reg::Rax),
+                MemWidth::B2,
+                OpWidth::W16,
+            ),
+            (
+                "CMOVNE ESP,m32",
+                x86(X86Reg::Rsp),
+                MemWidth::B4,
+                OpWidth::W32,
+            ),
+            (
+                "CMOVNE RBP,m64",
+                x86(X86Reg::Rbp),
+                MemWidth::B8,
+                OpWidth::W64,
+            ),
+            (
+                "CMOVNE R16,m64",
+                x86(X86Reg::R16),
+                MemWidth::B8,
+                OpWidth::W64,
+            ),
+        ] {
+            let function = build(dst, mem_width, width, SignExtend::Zero, 0x1000, false);
+            assert!(
+                is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    true,
+                ),
+                "{name}"
+            );
+            assert!(
+                !is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    false,
+                ),
+                "{name} must require memory helpers"
+            );
+        }
+
+        for (name, dst, mem_width, width, sign, pc, extra_use) in [
+            (
+                "byte CMOV",
+                x86(X86Reg::Rax),
+                MemWidth::B1,
+                OpWidth::W8,
+                SignExtend::Zero,
+                0x1000,
+                false,
+            ),
+            (
+                "signed load",
+                x86(X86Reg::Rax),
+                MemWidth::B8,
+                OpWidth::W64,
+                SignExtend::Sign,
+                0x1000,
+                false,
+            ),
+            (
+                "width mismatch",
+                x86(X86Reg::Rax),
+                MemWidth::B4,
+                OpWidth::W64,
+                SignExtend::Zero,
+                0x1000,
+                false,
+            ),
+            (
+                "non-GPR destination",
+                x86(X86Reg::Xmm(0)),
+                MemWidth::B8,
+                OpWidth::W64,
+                SignExtend::Zero,
+                0x1000,
+                false,
+            ),
+            (
+                "different guest PC",
+                x86(X86Reg::Rax),
+                MemWidth::B8,
+                OpWidth::W64,
+                SignExtend::Zero,
+                0x1001,
+                false,
+            ),
+            (
+                "extra temporary use",
+                x86(X86Reg::Rax),
+                MemWidth::B8,
+                OpWidth::W64,
+                SignExtend::Zero,
+                0x1000,
+                true,
+            ),
+        ] {
+            let function = build(dst, mem_width, width, sign, pc, extra_use);
+            assert!(
+                !is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    true,
+                ),
+                "{name}: {function:?}"
+            );
+        }
+
+        let mut hinted = build(
+            x86(X86Reg::Rax),
+            MemWidth::B8,
+            OpWidth::W64,
+            SignExtend::Zero,
+            0x1000,
+            false,
+        );
+        hinted.blocks[0].ops[1].x86_hint = Some(X86OpHint::RexByteReg);
+        assert!(!is_native_clobber_safe_excluding(
+            &hinted,
+            &std::collections::HashMap::new(),
+            true,
+        ));
+
+        let mut hinted_load = build(
+            x86(X86Reg::Rax),
+            MemWidth::B8,
+            OpWidth::W64,
+            SignExtend::Zero,
+            0x1000,
+            false,
+        );
+        hinted_load.blocks[0].ops[0].x86_hint = Some(X86OpHint::RexByteReg);
+        assert!(!is_native_clobber_safe_excluding(
+            &hinted_load,
+            &std::collections::HashMap::new(),
+            true,
+        ));
+
+        let mut duplicate_definition = build(
+            x86(X86Reg::Rax),
+            MemWidth::B8,
+            OpWidth::W64,
+            SignExtend::Zero,
+            0x1000,
+            false,
+        );
+        let duplicate_load = duplicate_definition.blocks[0].ops[0].clone();
+        duplicate_definition.blocks[0].ops.insert(0, duplicate_load);
+        assert!(!is_native_clobber_safe_excluding(
+            &duplicate_definition,
+            &std::collections::HashMap::new(),
+            true,
+        ));
     }
 
     #[test]
