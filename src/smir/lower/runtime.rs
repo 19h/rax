@@ -8407,6 +8407,7 @@ fn block_is_clobber_safe(
         let state_not_ok = super::x86_64::x86_state_backed_gpr_not_valid(op);
         let state_neg_ok = super::x86_64::x86_state_backed_gpr_neg_valid(op);
         let state_inc_dec_ok = super::x86_64::x86_state_backed_gpr_inc_dec_valid(op);
+        let state_rotate_ok = super::x86_64::x86_state_backed_gpr_rotate_valid(op);
         let state_count_ok = super::x86_64::x86_state_backed_gpr_count_valid(op);
         let state_bit_scan_ok = super::x86_64::x86_state_backed_gpr_bit_scan_valid(op);
         let state_bit_test_ok = super::x86_64::x86_state_backed_gpr_bit_test_valid(op);
@@ -8426,6 +8427,7 @@ fn block_is_clobber_safe(
             || state_not_ok
             || state_neg_ok
             || state_inc_dec_ok
+            || state_rotate_ok
             || state_count_ok
             || state_bit_scan_ok
             || state_bit_test_ok
@@ -8443,6 +8445,7 @@ fn block_is_clobber_safe(
             || (super::x86_64::x86_state_backed_gpr_not_candidate(op) && !state_not_ok)
             || (super::x86_64::x86_state_backed_gpr_neg_candidate(op) && !state_neg_ok)
             || (super::x86_64::x86_state_backed_gpr_inc_dec_candidate(op) && !state_inc_dec_ok)
+            || (super::x86_64::x86_state_backed_gpr_rotate_candidate(op) && !state_rotate_ok)
             || (super::x86_64::x86_state_backed_gpr_count_candidate(op) && !state_count_ok)
             || (super::x86_64::x86_state_backed_gpr_bit_scan_candidate(op) && !state_bit_scan_ok)
             || (super::x86_64::x86_state_backed_gpr_bit_test_candidate(op) && !state_bit_test_ok)
@@ -8625,7 +8628,7 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/count/bit-scan/bit-test/CRC32/BMI/ADX/PDEP/PEXT/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
+        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/ROL/ROR/count/bit-scan/bit-test/CRC32/BMI/ADX/PDEP/PEXT/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the current guest
@@ -24993,6 +24996,119 @@ mod jit_gate_tests {
         ] {
             assert!(x86_gate(op), "{name} must remain native-eligible");
         }
+    }
+
+    #[test]
+    fn x86_state_backed_rotate_gate_accepts_exact_shapes_and_fails_closed() {
+        let rotate_flags = FlagSet::CF.union(FlagSet::OF);
+        for (name, op) in [
+            (
+                "ROL RSP,RBP,1",
+                OpKind::Rol {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rbp),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(rotate_flags),
+                },
+            ),
+            (
+                "ROR R31B,R16B,SP",
+                OpKind::Ror {
+                    dst: x86(X86Reg::R31),
+                    src: x86(X86Reg::R16),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rsp)),
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "NF ROL BP,R31W,9",
+                OpKind::Rol {
+                    dst: x86(X86Reg::Rbp),
+                    src: x86(X86Reg::R31),
+                    amount: SrcOperand::Imm(9),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "ROR R16D,R16D,R16 all alias",
+                OpKind::Ror {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::R16),
+                    amount: SrcOperand::Reg(x86(X86Reg::R16)),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::Specific(rotate_flags),
+                },
+            ),
+        ] {
+            assert!(x86_gate(op), "valid state-backed {name} must JIT");
+        }
+
+        for (name, op) in [
+            (
+                "128-bit width",
+                OpKind::Rol {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rsp),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W128,
+                    flags: FlagUpdate::Specific(rotate_flags),
+                },
+            ),
+            (
+                "virtual source",
+                OpKind::Ror {
+                    dst: x86(X86Reg::R31),
+                    src: VReg::Virtual(VirtualId(0)),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(rotate_flags),
+                },
+            ),
+            (
+                "Imm64 count",
+                OpKind::Rol {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rbp),
+                    amount: SrcOperand::Imm64(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(rotate_flags),
+                },
+            ),
+            (
+                "incomplete flag set",
+                OpKind::Ror {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rbp),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(FlagSet::CF),
+                },
+            ),
+        ] {
+            assert!(!x86_gate(op), "malformed state-backed {name} must deopt");
+        }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Rol {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rsp),
+                amount: SrcOperand::Reg(x86(X86Reg::Rbp)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut hinted = builder.finish();
+        hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+        assert!(
+            !is_native_clobber_safe(&hinted),
+            "hinted state-backed rotate must fail closed"
+        );
     }
 
     #[test]
