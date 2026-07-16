@@ -14716,7 +14716,7 @@ impl X86_64Lowerer {
     /// The speculative scratch-RAX operation is wrapped by PUSHFQ/POPFQ, so
     /// store faults retain every incoming flag; only a successful store reaches
     /// the native replay. A masked RFLAGS merge then implements the interpreter's
-    /// deterministic policy for architecturally undefined AF/OF outputs.
+    /// deterministic policy for architecturally undefined status outputs.
     #[cfg(feature = "smir-jit")]
     fn try_lower_jit_mem_shift_rmw(
         &mut self,
@@ -14776,6 +14776,9 @@ impl X86_64Lowerer {
                         ROTATE_UNCHANGED_RFLAGS | if count == 1 { 0 } else { 1 << 11 },
                         0,
                     ),
+                    ShiftRegOp::Shl | ShiftRegOp::Shr if u32::from(count) > width.bits() => {
+                        (1 << 4, 1 | (1 << 11))
+                    }
                     ShiftRegOp::Shl | ShiftRegOp::Shr | ShiftRegOp::Sar => {
                         (1 << 4, if count == 1 { 0 } else { 1 << 11 })
                     }

@@ -6400,8 +6400,10 @@ fn x86_shift_rmw_shape(
 /// value/CF behavior follows the operand or through-carry period while the saved
 /// RFLAGS merge classifies zero/one/multi using the raw masked count. SAR also
 /// accepts every count because repeated sign fill keeps its result and CF
-/// representable. Subword SHL/SHR stay fail-closed once their masked count
-/// reaches the operand width, where architectural CF is undefined.
+/// representable. Oversized immediate subword SHL/SHR counts are representable
+/// by clearing Rax's deterministic CF/OF outputs after replay. Counts exactly
+/// equal to the width and subword CL forms stay fail-closed because equality
+/// requires deriving CF from the original operand at runtime.
 pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
     block: &crate::smir::ir::SmirBlock,
     index: usize,
@@ -6463,7 +6465,7 @@ pub(crate) fn x86_jit_mem_shift_rmw_sequence_len(
             let masked = (*value as u8) & mask;
             match compute_tag {
                 0..=3 | 7 => true,
-                4 | 5 => masked == 0 || u32::from(masked) < width.bits(),
+                4 | 5 => masked == 0 || u32::from(masked) != width.bits(),
                 _ => false,
             }
         }
@@ -19706,6 +19708,34 @@ mod jit_gate_tests {
             }
         }
 
+        for (tag, amount, mem_width) in [
+            (4, SrcOperand::Imm(9), MemWidth::B1),
+            (5, SrcOperand::Imm(31), MemWidth::B1),
+            (4, SrcOperand::Imm(17), MemWidth::B2),
+            (5, SrcOperand::Imm(31), MemWidth::B2),
+        ] {
+            let function = build(
+                tag,
+                tag,
+                amount.clone(),
+                amount,
+                mem_width,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            );
+            assert!(
+                is_native_clobber_safe_excluding(
+                    &function,
+                    &std::collections::HashMap::new(),
+                    true,
+                ),
+                "oversized subword shift tag {tag} with {mem_width:?} must JIT"
+            );
+        }
+
         for function in [
             {
                 let mut function = build(
@@ -19802,6 +19832,18 @@ mod jit_gate_tests {
                 SrcOperand::Imm(8),
                 SrcOperand::Imm(8),
                 MemWidth::B1,
+                FlagUpdate::None,
+                FlagUpdate::All,
+                address(),
+                0x1000,
+                false,
+            ),
+            build(
+                5,
+                5,
+                SrcOperand::Imm(16),
+                SrcOperand::Imm(16),
+                MemWidth::B2,
                 FlagUpdate::None,
                 FlagUpdate::All,
                 address(),
