@@ -3347,6 +3347,36 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
         X86Reg,
     };
 
+    if let OpKind::X86MovdQ {
+        dst,
+        src,
+        width,
+        zero_upper,
+    } = &op.kind
+    {
+        let safe_gpr = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 15 && !matches!(index, 4 | 5)));
+        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        let (expected_opcode, exact_registers) = if mm(dst) {
+            (0x6E, safe_gpr(src))
+        } else if mm(src) {
+            (0x7E, safe_gpr(dst))
+        } else {
+            (0, false)
+        };
+        if mm(dst) || mm(src) {
+            return exact_registers
+                && matches!(width, OpWidth::W32 | OpWidth::W64)
+                && !*zero_upper
+                && matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode,
+                    }) if opcode == expected_opcode
+                );
+        }
+    }
+
     if let OpKind::X86MovMask {
         dst,
         src,
@@ -14446,6 +14476,104 @@ mod jit_gate_tests {
                     opcode: 0xD7,
                 },
             );
+            assert!(!is_x86_native_mmx_op(&malformed), "{malformed:?}");
+        }
+    }
+
+    #[test]
+    fn x86_mmx_movd_q_gate_accepts_exact_bidirectional_register_transfers() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let gpr = |reg| VReg::Arch(ArchReg::X86(reg));
+        for (kind, opcode) in [
+            (
+                OpKind::X86MovdQ {
+                    dst: mm(1),
+                    src: gpr(X86Reg::R10),
+                    width: OpWidth::W64,
+                    zero_upper: false,
+                },
+                0x6E,
+            ),
+            (
+                OpKind::X86MovdQ {
+                    dst: gpr(X86Reg::R8),
+                    src: mm(2),
+                    width: OpWidth::W32,
+                    zero_upper: false,
+                },
+                0x7E,
+            ),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0xA500);
+            builder.push_op(
+                0xA500,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.push_op(0xA500, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[1]));
+            assert!(!x86_native_mmx_op_requires_ssse3(
+                &function.blocks[0].ops[1]
+            ));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+
+        for malformed in [
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0xA500,
+                OpKind::X86MovdQ {
+                    dst: mm(1),
+                    src: gpr(X86Reg::Rsp),
+                    width: OpWidth::W64,
+                    zero_upper: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x6E,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(1),
+                0xA500,
+                OpKind::X86MovdQ {
+                    dst: mm(1),
+                    src: gpr(X86Reg::R10),
+                    width: OpWidth::W64,
+                    zero_upper: true,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x6E,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(2),
+                0xA500,
+                OpKind::X86MovdQ {
+                    dst: gpr(X86Reg::R8),
+                    src: mm(2),
+                    width: OpWidth::W32,
+                    zero_upper: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x7E,
+                },
+            ),
+        ] {
             assert!(!is_x86_native_mmx_op(&malformed), "{malformed:?}");
         }
     }

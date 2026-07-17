@@ -2323,6 +2323,19 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(xmm, gpr);
     }
 
+    /// Emit a prefix-free legacy MMX MOVD/MOVQ register transfer. ModR/M.reg
+    /// names the three-bit MM register and ModR/M.rm names the GPR; REX.R is
+    /// therefore never used, while REX.B and REX.W select the GPR and width.
+    fn emit_mmx_movd_q_rr(&mut self, opcode: u8, mm: PhysReg, gpr: PhysReg, width: OpWidth) {
+        let w = width == OpWidth::W64;
+        if w || gpr.is_extended() {
+            self.emit_rex(w, mm, None, gpr);
+        }
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(mm, gpr);
+    }
+
     pub fn emit_sse_op3a_rr_imm(
         &mut self,
         prefix: Option<u8>,
@@ -5816,6 +5829,51 @@ impl X86_64Lowerer {
     /// the normal scalar/vector matcher; any mixed or malformed MMX shape is an
     /// error rather than a widening opportunity.
     fn lower_mmx_rr(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<bool, LowerError> {
+        if let OpKind::X86MovdQ {
+            dst,
+            src,
+            width,
+            zero_upper,
+        } = &op.kind
+        {
+            let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+            if is_mm(dst) || is_mm(src) {
+                let safe_gpr = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 15 && !matches!(index, 4 | 5)));
+                let (mm_vreg, gpr_vreg, expected_opcode) = if is_mm(dst) && safe_gpr(src) {
+                    (*dst, *src, 0x6E)
+                } else if is_mm(src) && safe_gpr(dst) {
+                    (*src, *dst, 0x7E)
+                } else {
+                    return Err(LowerError::InvalidOperand {
+                        op: "MMX MOVD/MOVQ".to_string(),
+                        operand: "requires exactly one MM register and one safe legacy GPR"
+                            .to_string(),
+                    });
+                };
+                let encoding_valid = matches!(width, OpWidth::W32 | OpWidth::W64)
+                    && !*zero_upper
+                    && matches!(
+                        op.x86_hint,
+                        Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode,
+                        }) if opcode == expected_opcode
+                    );
+                if !encoding_valid {
+                    return Err(LowerError::InvalidOperand {
+                        op: "MMX MOVD/MOVQ".to_string(),
+                        operand: "requires exact direction, width, and prefix-free opcode"
+                            .to_string(),
+                    });
+                }
+                let mm_reg = self.get_reg(mm_vreg)?;
+                let gpr_reg = self.get_reg(gpr_vreg)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mmx_movd_q_rr(expected_opcode, mm_reg, gpr_reg, *width);
+                return Ok(true);
+            }
+        }
+
         if let OpKind::X86MovMask {
             dst,
             src,
@@ -27680,6 +27738,87 @@ mod tests {
             ),
             "{error:?}"
         );
+    }
+
+    #[test]
+    fn lower_mmx_movd_q_emits_bidirectional_width_exact_register_encodings() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let gpr = |reg| VReg::Arch(ArchReg::X86(reg));
+        for (name, kind, opcode, expected) in [
+            (
+                "MOVD mm1,eax",
+                OpKind::X86MovdQ {
+                    dst: mm(1),
+                    src: gpr(X86Reg::Rax),
+                    width: OpWidth::W32,
+                    zero_upper: false,
+                },
+                0x6E,
+                &[0x0F, 0x6E, 0xC8][..],
+            ),
+            (
+                "MOVQ mm1,r10",
+                OpKind::X86MovdQ {
+                    dst: mm(1),
+                    src: gpr(X86Reg::R10),
+                    width: OpWidth::W64,
+                    zero_upper: false,
+                },
+                0x6E,
+                &[0x49, 0x0F, 0x6E, 0xCA][..],
+            ),
+            (
+                "MOVD eax,mm1",
+                OpKind::X86MovdQ {
+                    dst: gpr(X86Reg::Rax),
+                    src: mm(1),
+                    width: OpWidth::W32,
+                    zero_upper: false,
+                },
+                0x7E,
+                &[0x0F, 0x7E, 0xC8][..],
+            ),
+            (
+                "MOVQ r10,mm1",
+                OpKind::X86MovdQ {
+                    dst: gpr(X86Reg::R10),
+                    src: mm(1),
+                    width: OpWidth::W64,
+                    zero_upper: false,
+                },
+                0x7E,
+                &[0x49, 0x0F, 0x7E, 0xCA][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(
+                kind,
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                OpKind::X86MovdQ {
+                    dst: mm(1),
+                    src: gpr(X86Reg::Rax),
+                    width: OpWidth::W64,
+                    zero_upper: true,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x6E,
+                },
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
     }
 
     #[test]
