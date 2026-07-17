@@ -37514,9 +37514,11 @@ impl X86_64Lifter {
             // emulator profile.
             0x08 | 0x09 => Ok(LiftResult::fallthrough(vec![], prefix2.cursor)),
 
-            // EMMS marks every x87/MMX register empty without modifying the
-            // aliased 64-bit payloads or any other x87 state.
-            0x77 => {
+            // EMMS marks every x87/MMX register empty while preserving the
+            // aliased payloads. FEMMS performs the same defined tag transition
+            // but leaves those payloads architecturally undefined; retaining
+            // them is one permitted deterministic outcome.
+            0x0E | 0x77 => {
                 if prefix2.lock || prefix2.rex2.is_some() {
                     return Err(LiftError::InvalidEncoding {
                         addr: pc,
@@ -45913,7 +45915,7 @@ mod tests {
     }
 
     #[test]
-    fn lift_emms_exact_state_transition_prefixes_and_legality() {
+    fn lift_emms_and_femms_exact_state_transition_prefixes_and_legality() {
         for bytes in [
             &[0x0F, 0x77][..],
             &[0x66, 0x0F, 0x77][..],
@@ -45922,6 +45924,13 @@ mod tests {
             &[0xF3, 0x0F, 0x77][..],
             &[0x48, 0x0F, 0x77][..],
             &[0x64, 0x0F, 0x77][..],
+            &[0x0F, 0x0E][..],
+            &[0x66, 0x0F, 0x0E][..],
+            &[0x67, 0x0F, 0x0E][..],
+            &[0xF2, 0x0F, 0x0E][..],
+            &[0xF3, 0x0F, 0x0E][..],
+            &[0x48, 0x0F, 0x0E][..],
+            &[0x64, 0x0F, 0x0E][..],
         ] {
             let result = lift_single(bytes).unwrap();
             assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
@@ -45941,10 +45950,13 @@ mod tests {
             &[0xF0, 0x0F, 0x77][..],
             &[0xD5, 0x00, 0x0F, 0x77][..],
             &[0xD5, 0x80, 0x77][..],
+            &[0xF0, 0x0F, 0x0E][..],
+            &[0xD5, 0x00, 0x0F, 0x0E][..],
+            &[0xD5, 0x80, 0x0E][..],
         ] {
             assert!(
                 matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
-                "accepted invalid EMMS encoding {bytes:02X?}"
+                "accepted invalid EMMS/FEMMS encoding {bytes:02X?}"
             );
         }
     }
