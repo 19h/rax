@@ -40901,6 +40901,22 @@ mod tests {
 
         for opcode in [0xDA, 0xDE, 0xEA, 0xEE] {
             if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[0] = u64::from_le_bytes(lhs[..8].try_into().unwrap());
+                x86.mm[1] = u64::from_le_bytes(rhs[..8].try_into().unwrap());
+                x86.x87.tag_word = 0xFFFF;
+                x86.x87.status_word = 3 << 11;
+            }
+            execute_lifted_x86(&[0x0F, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    x86.mm[0],
+                    u64::from_le_bytes(reference(opcode, &lhs[..8], &rhs[..8]).try_into().unwrap())
+                );
+                assert_eq!(x86.x87.tag_word, 0);
+                assert_eq!(x86.x87.status_word & 0x3800, 3 << 11);
+            }
+
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
                 x86.xmm[0] = seeded(&lhs[..16], upper);
                 x86.xmm[1] = seeded(&rhs[..16], 0);
             }
@@ -40954,6 +40970,17 @@ mod tests {
             }
         }
 
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::from_le_bytes(lhs[..8].try_into().unwrap());
+        }
+        execute_lifted_x86(&[0x0F, 0xDA, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.mm[0],
+                u64::from_le_bytes(reference(0xDA, &lhs[..8], &lhs[..8]).try_into().unwrap())
+            );
+        }
+
         memory.write(0x3FF, &rhs[..1]).unwrap();
         ctx.write_vreg(rax, 0x3FF);
         if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
@@ -40990,6 +41017,36 @@ mod tests {
             suppressed,
             BlockResult::Exit(ExitReason::MemoryFault { .. })
         ));
+
+        memory.write(0x181, &rhs[..8]).unwrap();
+        ctx.write_vreg(rax, 0x181);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::from_le_bytes(lhs[..8].try_into().unwrap());
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0xEE, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.mm[0],
+                u64::from_le_bytes(reference(0xEE, &lhs[..8], &rhs[..8]).try_into().unwrap())
+            );
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        ctx.write_vreg(rax, 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0xDA, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xDEAD_BEEF_CAFE_BABE);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
 
         memory.write(0x100, &rhs[..16]).unwrap();
         ctx.write_vreg(rax, 0x101);
