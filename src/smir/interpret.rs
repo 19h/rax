@@ -44292,6 +44292,92 @@ mod tests {
         ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
         ctx.flags.lazy = None;
 
+        // The prefix-free forms shift a 64-bit MMX destination by the complete
+        // low 64-bit count from mm/m64, then enter MMX state without changing
+        // x87 TOP or integer flags.
+        for (opcode, bits, shift) in [
+            (0xD1, 16, ShiftOp::Lsr),
+            (0xD2, 32, ShiftOp::Lsr),
+            (0xD3, 64, ShiftOp::Lsr),
+            (0xE1, 16, ShiftOp::Asr),
+            (0xE2, 32, ShiftOp::Asr),
+            (0xF1, 16, ShiftOp::Lsl),
+            (0xF2, 32, ShiftOp::Lsl),
+            (0xF3, 64, ShiftOp::Lsl),
+        ] {
+            let input = source(bits, 64 / bits as usize);
+            let packed_input = packed(&input, bits, 0)[0];
+            for amount in [
+                0,
+                u64::from(bits - 1),
+                u64::from(bits),
+                u64::from(bits + 1),
+                1 << 40,
+            ] {
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.mm[0] = packed_input;
+                    x86.mm[1] = amount;
+                    x86.x87.tag_word = 0xFFFF;
+                    x86.x87.status_word = 5 << 11;
+                }
+                execute_lifted_x86(&[0x0F, opcode, 0xC1], &mut ctx, &mut memory);
+                if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                    let actual = packed(&[x86.mm[0]], 64, 0);
+                    assert_eq!(
+                        lanes(&actual, bits, input.len()),
+                        input
+                            .iter()
+                            .map(|value| shifted(*value, bits, amount, shift))
+                            .collect::<Vec<_>>(),
+                        "MMX opcode {opcode:02X}, count {amount}",
+                    );
+                    assert_eq!(x86.x87.tag_word, 0);
+                    assert_eq!(x86.x87.status_word & 0x3800, 5 << 11);
+                }
+            }
+        }
+
+        // Destructive aliases must read the complete original destination as
+        // the count before committing the result.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 4;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0xF1, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 64);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        // An unaligned m64 count is legal and is fully read before either the
+        // destination or x87 tags are changed.
+        memory.write(0x81, &3u64.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x81);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0x8001_7FFF_F00F_00F0;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0xD1, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0x1000_0FFF_1E01_001E);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        ctx.write_vreg(rax, 0xFC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xA55A_C33C_F00F_8111;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0xD1, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xA55A_C33C_F00F_8111);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+
         for (opcode, bits, shift) in [
             (0xD1, 16, ShiftOp::Lsr),
             (0xD2, 32, ShiftOp::Lsr),
