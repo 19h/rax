@@ -17026,6 +17026,52 @@ mod tests {
         assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
     }
 
+    #[test]
+    fn lifted_3dnow_pavgusb_and_pswapd_execute_and_order_memory_faults() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        let flags_before = 0x8D7;
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::from_le_bytes([0, 1, 2, 3, 254, 255, 100, 101]);
+            x86.mm[1] = u64::from_le_bytes([1, 2, 3, 4, 255, 0, 101, 104]);
+            x86.mm[2] = 0;
+            x86.x87.tag_word = 0xFFFF;
+            x86.x87.status_word = 6 << 11 | 0x45;
+        }
+        execute_lifted_x86(&[0x0F, 0x0F, 0xC1, 0xBF], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0].to_le_bytes(), [1, 2, 3, 4, 255, 128, 101, 103]);
+            assert_eq!(x86.x87.tag_word, 0);
+            assert_eq!(x86.x87.status_word, 6 << 11 | 0x45);
+        }
+
+        execute_lifted_x86(&[0x0F, 0x0F, 0xD0, 0xBB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[2], 0x0403_0201_6765_80FF);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let fault = execute_lifted_x86(&[0x0F, 0x0F, 0x00, 0xBF], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xDEAD_BEEF_CAFE_BABE);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
     fn execute_lifted_thumb(bytes: &[u8], ctx: &mut SmirContext) -> BlockResult {
         use crate::smir::ir::types::SourceArch;
         use crate::smir::lift::thumb::ThumbLifter;

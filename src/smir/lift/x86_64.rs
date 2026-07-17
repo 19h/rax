@@ -37483,6 +37483,88 @@ impl X86_64Lifter {
         }
     }
 
+    /// Lift the 3DNow! suffix-selected `0F 0F /r imm8` forms that map exactly
+    /// onto existing packed-integer SMIR operations.
+    fn lift_3dnow_existing_integer(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock || prefix.rex2.is_some() {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let suffix_offset = modrm.bytes_consumed;
+        let Some(&suffix) = bytes.get(suffix_offset) else {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: prefix.cursor + suffix_offset,
+                need: prefix.cursor + suffix_offset + 1,
+            });
+        };
+        if !matches!(suffix, 0xBB | 0xBF) {
+            return Err(LiftError::Unsupported {
+                addr: pc,
+                mnemonic: format!("3DNow! suffix 0x{suffix:02X}"),
+            });
+        }
+
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64 + 1;
+        let mut ops = Vec::new();
+        let src = if modrm.is_memory {
+            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.extend(pre_ops);
+            let loaded = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLoad {
+                    dst: loaded,
+                    addr,
+                    width: VecWidth::V64,
+                },
+            ));
+            loaded
+        } else {
+            // 3DNow! has only the eight legacy MM registers. REX.R/REX.B do
+            // not extend either register field.
+            self.mm(modrm.rm & 7)
+        };
+        let dst = self.mm(modrm.reg & 7);
+        let kind = match suffix {
+            0xBB => OpKind::X86PackedShuffleImm {
+                dst,
+                src,
+                width: VecWidth::V64,
+                elem: VecElementType::I32,
+                imm: 0x01,
+                high_words: None,
+            },
+            0xBF => {
+                Self::packed_unsigned_average_kind(dst, dst, src, VecWidth::V64, VecElementType::I8)
+            }
+            _ => unreachable!(),
+        };
+        ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: None,
+            },
+        ));
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed + 1,
+        ))
+    }
+
     /// Lift 0F-prefixed (two-byte) opcodes
     fn lift_0f_opcode(
         &self,
@@ -37513,6 +37595,10 @@ impl X86_64Lifter {
             // Cache-maintenance instructions modeled as no-ops by the base
             // emulator profile.
             0x08 | 0x09 => Ok(LiftResult::fallthrough(vec![], prefix2.cursor)),
+
+            // 3DNow! uses the final imm8 after ModR/M and any displacement as
+            // an opcode suffix.
+            0x0F => self.lift_3dnow_existing_integer(after_opcode, &prefix2, pc, ctx),
 
             // EMMS marks every x87/MMX register empty while preserving the
             // aliased payloads. FEMMS performs the same defined tag transition
@@ -45958,6 +46044,136 @@ mod tests {
                 matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
                 "accepted invalid EMMS/FEMMS encoding {bytes:02X?}"
             );
+        }
+    }
+
+    #[test]
+    fn lift_3dnow_integer_suffix_forms_lengths_registers_and_fault_order() {
+        let avg = lift_single(&[0x0F, 0x0F, 0xC1, 0xBF]).unwrap();
+        assert_eq!(avg.bytes_consumed, 4);
+        assert!(matches!(
+            avg.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::VLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        elem: VecElementType::I8,
+                        lanes: 8,
+                        op: VLaneOp::AvgRnd,
+                        signed: false,
+                        set_ovf: false,
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    },
+                    ..
+                }
+            ]
+        ));
+
+        let swap = lift_single(&[0x0F, 0x0F, 0xD1, 0xBB]).unwrap();
+        assert_eq!(swap.bytes_consumed, 4);
+        assert!(matches!(
+            swap.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::X86PackedShuffleImm {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(2))),
+                        src: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        width: VecWidth::V64,
+                        elem: VecElementType::I32,
+                        imm: 1,
+                        high_words: None,
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    },
+                    ..
+                }
+            ]
+        ));
+
+        let rex_ignored = lift_single(&[0x4F, 0x0F, 0x0F, 0xFF, 0xBF]).unwrap();
+        assert_eq!(rex_ignored.bytes_consumed, 5);
+        assert!(matches!(
+            rex_ignored.ops.first().map(|op| &op.kind),
+            Some(OpKind::VLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(7))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(7))),
+                ..
+            })
+        ));
+
+        let memory = lift_single(&[0x67, 0xF3, 0x0F, 0x0F, 0x54, 0x4B, 0x20, 0xBF]).unwrap();
+        assert_eq!(memory.bytes_consumed, 8);
+        let load = memory
+            .ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V64,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let average = memory
+            .ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLane {
+                        op: VLaneOp::AvgRnd,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let enter = memory
+            .ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        assert!(load < average && average < enter);
+
+        assert!(matches!(
+            lift_single(&[0x0F, 0x0F, 0xC1]),
+            Err(LiftError::Incomplete { .. })
+        ));
+        assert!(matches!(
+            lift_single(&[0x0F, 0x0F, 0xC1, 0x00]),
+            Err(LiftError::Unsupported { .. })
+        ));
+        for bytes in [
+            &[0xF0, 0x0F, 0x0F, 0xC1, 0xBF][..],
+            &[0xD5, 0x00, 0x0F, 0x0F, 0xC1, 0xBF][..],
+            &[0xD5, 0x80, 0x0F, 0xC1, 0xBF][..],
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. })
+            ));
         }
     }
 
