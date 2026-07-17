@@ -36937,6 +36937,34 @@ mod tests {
     }
 
     #[test]
+    fn lifted_mmx_pmovmskb_extracts_byte_signs_and_enters_mmx_state() {
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let flags_before = 0xCD7;
+        let mut memory = FlatMemory::new(0x100);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.write_vreg(r8, u64::MAX);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            // Little-endian byte sign bits are 10101010b from byte 7 to 0.
+            x86.mm[1] = 0x80_7F_FF_00_81_01_FE_7E;
+            x86.x87.tag_word = 0xFFFF;
+            x86.x87.status_word = 3 << 11;
+        }
+
+        let exit = execute_lifted_x86(&[0x4C, 0x0F, 0xD7, 0xC1], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        assert_eq!(ctx.read_vreg(r8), 0xAA);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[1], 0x80_7F_FF_00_81_01_FE_7E);
+            assert_eq!(x86.x87.tag_word, 0);
+            assert_eq!(x86.x87.status_word & 0x3800, 3 << 11);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
     fn lifted_scalar_vector_movq_executes_aliasing_upper_state_memory_and_faults_exactly() {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let flags_before = 0xCD7;

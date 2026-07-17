@@ -8386,17 +8386,7 @@ impl X86_64Lifter {
         pc: u64,
         _ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if !prefix.operand_size_override && prefix.rep_prefix.is_none() && !prefix.lock {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: "MMX PMOVMSKB".to_string(),
-            });
-        }
-        if prefix.lock
-            || !prefix.operand_size_override
-            || prefix.rep_prefix.is_some()
-            || prefix.rex2.is_some()
-        {
+        if prefix.lock || prefix.rep_prefix.is_some() || prefix.rex2.is_some() {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
@@ -8409,21 +8399,45 @@ impl X86_64Lifter {
                 bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
             });
         }
-        let ops = vec![SmirOp::with_hint(
-            OpId(0),
+        let mmx = !prefix.operand_size_override;
+        let mut ops = Vec::with_capacity(if mmx { 2 } else { 1 });
+        if mmx {
+            ops.push(SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            ));
+        }
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
             pc,
             OpKind::X86MovMask {
                 dst: self.gpr(modrm.reg),
-                src: self.xmm(modrm.rm),
+                src: if mmx {
+                    self.mm(modrm.rm)
+                } else {
+                    self.xmm(modrm.rm)
+                },
                 elem: VecElementType::I8,
-                lanes: 16,
-                dst_width: OpWidth::W32,
+                lanes: if mmx { 8 } else { 16 },
+                dst_width: if mmx && prefix.rex_w() {
+                    OpWidth::W64
+                } else {
+                    OpWidth::W32
+                },
             },
             X86OpHint::SseOp {
-                prefix: X86SsePrefix::OpSize,
+                prefix: if mmx {
+                    X86SsePrefix::None
+                } else {
+                    X86SsePrefix::OpSize
+                },
                 opcode: 0xD7,
             },
-        )];
+        ));
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -47860,6 +47874,46 @@ mod tests {
 
     #[test]
     fn lift_legacy_and_vex_pmovmskb_extracts_all_bytes_and_rejects_reserved_forms() {
+        for (bytes, dst, width) in [
+            (&[0x0F, 0xD7, 0xC1][..], X86Reg::Rax, OpWidth::W32),
+            (&[0x4C, 0x0F, 0xD7, 0xC1][..], X86Reg::R8, OpWidth::W64),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+            assert!(matches!(
+                result.ops.as_slice(),
+                [
+                    SmirOp {
+                        kind: OpKind::X86X87Control {
+                            kind: X86X87ControlKind::EnterMmx,
+                            addr: None,
+                        },
+                        ..
+                    },
+                    SmirOp {
+                        kind: OpKind::X86MovMask {
+                            dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                            src: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                            elem: VecElementType::I8,
+                            lanes: 8,
+                            dst_width: actual_width,
+                        },
+                        x86_hint: Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: 0xD7,
+                        }),
+                        ..
+                    }
+                ] if *actual_dst == dst && *actual_width == width
+            ));
+            assert!(
+                result
+                    .ops
+                    .iter()
+                    .all(|op| op.kind.flags_written().is_empty())
+            );
+        }
+
         for (bytes, dst, src, lanes) in [
             (
                 &[0x66, 0x0F, 0xD7, 0xC1][..],
@@ -47917,6 +47971,8 @@ mod tests {
         }
 
         for bytes in [
+            &[0x0F, 0xD7, 0x01][..],
+            &[0xF3, 0x0F, 0xD7, 0xC1][..],
             &[0x66, 0x0F, 0xD7, 0x01][..],
             &[0xF3, 0x66, 0x0F, 0xD7, 0xC1][..],
             &[0xC5, 0xED, 0xD7, 0xC1][..],
@@ -47932,10 +47988,6 @@ mod tests {
                 "invalid PMOVMSKB accepted: {bytes:02X?}",
             );
         }
-        assert!(matches!(
-            lift_single(&[0x0F, 0xD7, 0xC1]),
-            Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "MMX PMOVMSKB"
-        ));
     }
 
     #[test]
