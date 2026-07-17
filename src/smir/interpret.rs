@@ -38095,6 +38095,55 @@ mod tests {
         ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
         ctx.flags.lazy = None;
 
+        let mmx_source = u64::from_le_bytes([0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17]);
+        let mmx_control = u64::from_le_bytes([0x00, 0x07, 0x08, 0x87, 0x02, 0x06, 0x80, 0x03]);
+        let mmx_expected = [0x10, 0x17, 0x10, 0x00, 0x12, 0x16, 0x00, 0x13];
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = mmx_source;
+            x86.mm[1] = mmx_control;
+            x86.x87.tag_word = 0xFFFF;
+            x86.x87.status_word = 6 << 11;
+        }
+        execute_lifted_x86(&[0x0F, 0x38, 0x00, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0].to_le_bytes(), mmx_expected);
+            assert_eq!(x86.mm[1], mmx_control);
+            assert_eq!(x86.x87.tag_word, 0);
+            assert_eq!(x86.x87.status_word & 0x3800, 6 << 11);
+        }
+
+        // The MMX control source is m64 and has no mandatory #GP alignment.
+        // A faulting complete load leaves the destructive destination and the
+        // x87/MMX state unchanged.
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        memory.write(0x81, &mmx_control.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x80);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = mmx_source;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0x38, 0x00, 0x40, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0].to_le_bytes(), mmx_expected);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        ctx.write_vreg(rax, 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0x38, 0x00, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xDEAD_BEEF_CAFE_BABE);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+
         if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
             x86.xmm[0] = seeded(&source[..16], upper);
             x86.xmm[1] = seeded(&control[..16], 0);
@@ -38110,7 +38159,6 @@ mod tests {
 
         // The legacy memory form checks its mandatory 16-byte alignment before
         // reading controls or modifying the destructive destination.
-        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
         memory.write(0x101, &control[..16]).unwrap();
         ctx.write_vreg(rax, 0x101);
