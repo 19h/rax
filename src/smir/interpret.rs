@@ -38958,6 +38958,220 @@ mod tests {
     }
 
     #[test]
+    fn lifted_evex_immediate_integer_compares_execute_predicates_masks_and_fault_suppression() {
+        fn packed(values: &[u64], elem_bytes: usize) -> VecValue {
+            let mut bytes = Vec::with_capacity(values.len() * elem_bytes);
+            for value in values {
+                bytes.extend_from_slice(&value.to_le_bytes()[..elem_bytes]);
+            }
+            vec_from_bytes(&bytes)
+        }
+
+        fn signed_value(value: u64, bits: u32) -> i64 {
+            let shift = 64 - bits;
+            ((value << shift) as i64) >> shift
+        }
+
+        fn predicate(predicate: u8, lhs: u64, rhs: u64, bits: u32, signed: bool) -> bool {
+            let relation = if signed {
+                signed_value(lhs, bits).cmp(&signed_value(rhs, bits))
+            } else {
+                lhs.cmp(&rhs)
+            };
+            match predicate & 7 {
+                0 => relation.is_eq(),
+                1 => relation.is_lt(),
+                2 => !relation.is_gt(),
+                3 => false,
+                4 => !relation.is_eq(),
+                5 => !relation.is_lt(),
+                6 => relation.is_gt(),
+                7 => true,
+                _ => unreachable!(),
+            }
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k3 = VReg::Arch(ArchReg::X86(X86Reg::K(3)));
+        let k4 = VReg::Arch(ArchReg::X86(X86Reg::K(4)));
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Signed and unsigned dword forms execute all predicates. High imm8
+        // bits are ignored, so the second pass also probes imm8[7:3].
+        let lhs = (0..16)
+            .map(|lane| [0, 0x8000_0000, 7, 5][lane % 4])
+            .collect::<Vec<_>>();
+        let rhs = (0..16)
+            .map(|lane| [0, 1, 3, 5][lane % 4])
+            .collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed(&lhs, 4);
+            x86.xmm[2] = packed(&rhs, 4);
+        }
+        for (opcode, signed) in [(0x1F, true), (0x1E, false)] {
+            for low_predicate in 0u8..8 {
+                for immediate in [low_predicate, low_predicate | 0xF8] {
+                    ctx.write_vreg(k3, u64::MAX);
+                    execute_lifted_x86(
+                        &[0x62, 0xF3, 0x75, 0x48, opcode, 0xDA, immediate],
+                        &mut ctx,
+                        &mut memory,
+                    );
+                    let expected =
+                        lhs.iter()
+                            .zip(&rhs)
+                            .enumerate()
+                            .fold(0u64, |mask, (lane, (&a, &b))| {
+                                mask | (u64::from(predicate(immediate, a, b, 32, signed)) << lane)
+                            });
+                    assert_eq!(
+                        ctx.read_vreg(k3),
+                        expected,
+                        "opcode {opcode:02X}, predicate {immediate:02X}",
+                    );
+                }
+            }
+        }
+
+        // Every B/W/D/Q signed form orders the element sign bit below zero;
+        // every unsigned counterpart orders the identical bits above zero.
+        for (opcode, w, elem_bytes, signed) in [
+            (0x3F, false, 1usize, true),
+            (0x3E, false, 1, false),
+            (0x3F, true, 2, true),
+            (0x3E, true, 2, false),
+            (0x1F, false, 4, true),
+            (0x1E, false, 4, false),
+            (0x1F, true, 8, true),
+            (0x1E, true, 8, false),
+        ] {
+            let lanes = 16 / elem_bytes;
+            let sign_bit = 1u64 << (elem_bytes * 8 - 1);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[1] = packed(&vec![sign_bit; lanes], elem_bytes);
+                x86.xmm[2] = packed(&vec![0; lanes], elem_bytes);
+            }
+            let p1 = if w { 0xF5 } else { 0x75 };
+            execute_lifted_x86(
+                &[0x62, 0xF3, p1, 0x08, opcode, 0xDA, 0x01],
+                &mut ctx,
+                &mut memory,
+            );
+            let lane_mask = (1u64 << lanes) - 1;
+            assert_eq!(
+                ctx.read_vreg(k3),
+                if signed { lane_mask } else { 0 },
+                "opcode {opcode:02X}, W={w}",
+            );
+        }
+
+        // High ZMM sources and an input writemask produce a zeroing-only K3
+        // result. The destination is committed only after both sources exist.
+        let high_lhs = (0..16)
+            .map(|lane| if lane % 3 == 0 { 20 } else { lane as u64 })
+            .collect::<Vec<_>>();
+        let high_rhs = vec![10; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = packed(&high_lhs, 4);
+            x86.xmm[18] = packed(&high_rhs, 4);
+        }
+        ctx.write_vreg(k4, 0xA55A);
+        execute_lifted_x86(
+            &[0x62, 0xB3, 0x75, 0x44, 0x1E, 0xDA, 0x06],
+            &mut ctx,
+            &mut memory,
+        );
+        let raw = high_lhs
+            .iter()
+            .zip(&high_rhs)
+            .enumerate()
+            .fold(0u64, |mask, (lane, (&a, &b))| {
+                mask | (u64::from(a > b) << lane)
+            });
+        assert_eq!(ctx.read_vreg(k3), raw & 0xA55A);
+
+        // Broadcast disp8*N uses N=4. Only active lanes access the scalar and
+        // inactive destination bits are zero, including bits above KL.
+        memory.write(0x104, &0u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        let broadcast_lhs = (0..16)
+            .map(|lane| if lane % 2 == 0 { u32::MAX as u64 } else { 1 })
+            .collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed(&broadcast_lhs, 4);
+        }
+        ctx.write_vreg(k4, 0x5555);
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0x75, 0x5C, 0x1F, 0x58, 0x01, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        assert_eq!(ctx.read_vreg(k3), 0x5555);
+
+        // Full-vector disp8*N uses N=64. TRUE still performs each active load
+        // and writes exactly the input writemask.
+        memory.write(0x140, &[0xA5; 64]).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k4, 0x8421);
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0x75, 0x4C, 0x1F, 0x58, 0x01, 0x07],
+            &mut ctx,
+            &mut memory,
+        );
+        assert_eq!(ctx.read_vreg(k3), 0x8421);
+
+        // An all-zero writemask suppresses every E4 memory access, including
+        // a TRUE predicate. Activating one lane exposes the fault and leaves
+        // the complete destination unchanged.
+        ctx.write_vreg(rax, 0x1000);
+        ctx.write_vreg(k4, 0);
+        ctx.write_vreg(k3, u64::MAX);
+        let suppressed = execute_lifted_x86(
+            &[0x62, 0xF3, 0x75, 0x4C, 0x1F, 0x18, 0x07],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(!matches!(
+            suppressed,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+        assert_eq!(ctx.read_vreg(k3), 0);
+
+        ctx.write_vreg(k4, 1);
+        ctx.write_vreg(k3, 0xDEAD_BEEF);
+        let exposed = execute_lifted_x86(
+            &[0x62, 0xF3, 0x75, 0x4C, 0x1F, 0x18, 0x07],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            exposed,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        assert_eq!(ctx.read_vreg(k3), 0xDEAD_BEEF);
+
+        // FALSE is not permission to elide an unmasked memory operand.
+        ctx.write_vreg(k3, 0xC0DE_CAFE);
+        let false_fault = execute_lifted_x86(
+            &[0x62, 0xF3, 0x75, 0x48, 0x1F, 0x18, 0x03],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            false_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        assert_eq!(ctx.read_vreg(k3), 0xC0DE_CAFE);
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
     fn lifted_legacy_and_vex_packed_unpacks_interleave_per_128_bit_lane() {
         fn seeded(bytes: &[u8], fill: u64) -> VecValue {
             let mut value = [fill; 16];

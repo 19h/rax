@@ -653,7 +653,10 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
     let is_packed_int_compare = ((b1 & 0x07) == 1
         && (b2 & 0x03) == 1
         && matches!(bytes.get(4), Some(0x64..=0x66 | 0x74..=0x76)))
-        || ((b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x29 | 0x37)));
+        || ((b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x29 | 0x37)))
+        || ((b1 & 0x07) == 3
+            && (b2 & 0x03) == 1
+            && matches!(bytes.get(4), Some(0x1E | 0x1F | 0x3E | 0x3F)));
     let is_packed_unpack = (b1 & 0x07) == 1
         && (b2 & 0x03) == 1
         && matches!(bytes.get(4), Some(0x60..=0x62 | 0x68..=0x6A | 0x6C | 0x6D));
@@ -26448,18 +26451,54 @@ impl X86_64Lifter {
                 bytes: bytes.to_vec(),
             });
         }
-        let (elem, cond) = match opcode {
-            0x64 => (VecElementType::I8, VecCmpCond::Gt),
-            0x65 => (VecElementType::I16, VecCmpCond::Gt),
-            0x66 => (VecElementType::I32, VecCmpCond::Gt),
-            0x74 => (VecElementType::I8, VecCmpCond::Eq),
-            0x75 => (VecElementType::I16, VecCmpCond::Eq),
-            0x76 => (VecElementType::I32, VecCmpCond::Eq),
-            0x29 => (VecElementType::I64, VecCmpCond::Eq),
-            0x37 => (VecElementType::I64, VecCmpCond::Gt),
+        let (elem, fixed_cond, signed) = match (prefix.map, opcode) {
+            (X86VecMap::Map0F, 0x64) => (VecElementType::I8, Some(VecCmpCond::Gt), true),
+            (X86VecMap::Map0F, 0x65) => (VecElementType::I16, Some(VecCmpCond::Gt), true),
+            (X86VecMap::Map0F, 0x66) => (VecElementType::I32, Some(VecCmpCond::Gt), true),
+            (X86VecMap::Map0F, 0x74) => (VecElementType::I8, Some(VecCmpCond::Eq), true),
+            (X86VecMap::Map0F, 0x75) => (VecElementType::I16, Some(VecCmpCond::Eq), true),
+            (X86VecMap::Map0F, 0x76) => (VecElementType::I32, Some(VecCmpCond::Eq), true),
+            (X86VecMap::Map0F38, 0x29) => (VecElementType::I64, Some(VecCmpCond::Eq), true),
+            (X86VecMap::Map0F38, 0x37) => (VecElementType::I64, Some(VecCmpCond::Gt), true),
+            (X86VecMap::Map0F3A, 0x1E) => (
+                if prefix.w {
+                    VecElementType::I64
+                } else {
+                    VecElementType::I32
+                },
+                None,
+                false,
+            ),
+            (X86VecMap::Map0F3A, 0x1F) => (
+                if prefix.w {
+                    VecElementType::I64
+                } else {
+                    VecElementType::I32
+                },
+                None,
+                true,
+            ),
+            (X86VecMap::Map0F3A, 0x3E) => (
+                if prefix.w {
+                    VecElementType::I16
+                } else {
+                    VecElementType::I8
+                },
+                None,
+                false,
+            ),
+            (X86VecMap::Map0F3A, 0x3F) => (
+                if prefix.w {
+                    VecElementType::I16
+                } else {
+                    VecElementType::I8
+                },
+                None,
+                true,
+            ),
             _ => unreachable!(),
         };
-        if matches!(opcode, 0x29 | 0x37) && !prefix.w {
+        if prefix.map == X86VecMap::Map0F38 && !prefix.w {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
@@ -26470,6 +26509,8 @@ impl X86_64Lifter {
         let modrm_prefix = X86Prefix {
             rex: prefix.rex,
             operand_size_override: true,
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
             cursor,
             ..X86Prefix::default()
         };
@@ -26490,7 +26531,66 @@ impl X86_64Lifter {
             });
         }
 
-        let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+        let imm_offset = cursor + modrm.bytes_consumed;
+        let immediate = fixed_cond.is_none();
+        let imm = if immediate {
+            if bytes.len() <= imm_offset {
+                return Err(LiftError::Incomplete {
+                    addr: pc,
+                    have: bytes.len(),
+                    need: imm_offset + 1,
+                });
+            }
+            Some(bytes[imm_offset] & 0x07)
+        } else {
+            None
+        };
+        let (cond, constant) = if let Some(cond) = fixed_cond {
+            (Some(cond), None)
+        } else {
+            match imm.unwrap() {
+                0 => (Some(VecCmpCond::Eq), None),
+                1 => (
+                    Some(if signed {
+                        VecCmpCond::Lt
+                    } else {
+                        VecCmpCond::Ltu
+                    }),
+                    None,
+                ),
+                2 => (
+                    Some(if signed {
+                        VecCmpCond::Le
+                    } else {
+                        VecCmpCond::Leu
+                    }),
+                    None,
+                ),
+                3 => (None, Some(false)),
+                4 => (Some(VecCmpCond::Ne), None),
+                5 => (
+                    Some(if signed {
+                        VecCmpCond::Ge
+                    } else {
+                        VecCmpCond::Geu
+                    }),
+                    None,
+                ),
+                6 => (
+                    Some(if signed {
+                        VecCmpCond::Gt
+                    } else {
+                        VecCmpCond::Gtu
+                    }),
+                    None,
+                ),
+                7 => (None, Some(true)),
+                _ => unreachable!(),
+            }
+        };
+
+        let bytes_consumed = imm_offset + usize::from(immediate);
+        let next_pc = pc + bytes_consumed as u64;
         let lanes = prefix.width.lanes(elem) as u8;
         let mask = (prefix.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
         let mut ops = Vec::new();
@@ -26650,33 +26750,54 @@ impl X86_64Lifter {
         } else {
             self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width)
         };
-        let compared = ctx.alloc_vreg();
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::VCmp {
-                dst: compared,
-                src1: self.vec_reg(
-                    prefix.vvvv + if prefix.v_high { 16 } else { 0 },
-                    prefix.width,
-                ),
-                src2,
-                cond,
+        let raw_mask = ctx.alloc_vreg();
+        if let Some(cond) = cond {
+            let compared = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VCmp {
+                    dst: compared,
+                    src1: self.vec_reg(
+                        prefix.vvvv + if prefix.v_high { 16 } else { 0 },
+                        prefix.width,
+                    ),
+                    src2,
+                    cond,
+                    elem,
+                    lanes,
+                },
+            ));
+            self.append_sse_movmask(
+                raw_mask,
+                compared,
                 elem,
                 lanes,
-            },
-        ));
-        let raw_mask = ctx.alloc_vreg();
-        self.append_sse_movmask(
-            raw_mask,
-            compared,
-            elem,
-            lanes,
-            OpWidth::W64,
-            pc,
-            ctx,
-            &mut ops,
-        );
+                OpWidth::W64,
+                pc,
+                ctx,
+                &mut ops,
+            );
+        } else {
+            let all_lanes = if constant.unwrap() {
+                if lanes == 64 {
+                    -1
+                } else {
+                    ((1u64 << lanes) - 1) as i64
+                }
+            } else {
+                0
+            };
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: raw_mask,
+                    src: SrcOperand::Imm(all_lanes),
+                    width: OpWidth::W64,
+                },
+            ));
+        }
         let dst = VReg::Arch(ArchReg::X86(X86Reg::K(modrm.reg)));
         if let Some(mask_reg) = mask {
             ops.push(SmirOp::new(
@@ -26701,7 +26822,7 @@ impl X86_64Lifter {
                 },
             ));
         }
-        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+        Ok(LiftResult::fallthrough(ops, bytes_consumed))
     }
 
     fn lift_vec_palignr(
@@ -30834,6 +30955,9 @@ impl X86_64Lifter {
                 }),
             },
             X86VecMap::Map0F3A => match opcode {
+                0x1E | 0x1F | 0x3E | 0x3F if prefix.encoding == VecEncodingKind::Evex => {
+                    self.lift_evex_integer_compare(prefix, opcode, bytes, pc, ctx)
+                }
                 0x03 => self.lift_evex_vector_align(prefix, bytes, pc, ctx),
                 0x70..=0x73 => self.lift_evex_packed_funnel_shift(prefix, opcode, bytes, pc, ctx),
                 0x25 => self.lift_evex_ternary_logic(prefix, bytes, pc, ctx),
@@ -53910,6 +54034,212 @@ mod tests {
                         | LiftError::Incomplete { .. })
                 ),
                 "invalid packed compare accepted: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn lift_evex_immediate_integer_compares_cover_predicates_elements_masks_and_faults() {
+        let families = [
+            (0x3F, false, VecElementType::I8, true),
+            (0x3E, false, VecElementType::I8, false),
+            (0x3F, true, VecElementType::I16, true),
+            (0x3E, true, VecElementType::I16, false),
+            (0x1F, false, VecElementType::I32, true),
+            (0x1E, false, VecElementType::I32, false),
+            (0x1F, true, VecElementType::I64, true),
+            (0x1E, true, VecElementType::I64, false),
+        ];
+        for (opcode, w, elem, signed) in families {
+            for predicate in 0u8..8 {
+                let p1 = if w { 0xF5 } else { 0x75 };
+                let bytes = [0x62, 0xF3, p1, 0x08, opcode, 0xDA, predicate];
+                let result = lift_single(&bytes).unwrap();
+                assert_eq!(result.bytes_consumed, bytes.len());
+                let expected = match predicate {
+                    0 => Some(VecCmpCond::Eq),
+                    1 => Some(if signed {
+                        VecCmpCond::Lt
+                    } else {
+                        VecCmpCond::Ltu
+                    }),
+                    2 => Some(if signed {
+                        VecCmpCond::Le
+                    } else {
+                        VecCmpCond::Leu
+                    }),
+                    3 => None,
+                    4 => Some(VecCmpCond::Ne),
+                    5 => Some(if signed {
+                        VecCmpCond::Ge
+                    } else {
+                        VecCmpCond::Geu
+                    }),
+                    6 => Some(if signed {
+                        VecCmpCond::Gt
+                    } else {
+                        VecCmpCond::Gtu
+                    }),
+                    7 => None,
+                    _ => unreachable!(),
+                };
+                if let Some(expected) = expected {
+                    assert!(result.ops.iter().any(|op| matches!(
+                        op.kind,
+                        OpKind::VCmp {
+                            src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                            src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                            cond,
+                            elem: actual_elem,
+                            lanes,
+                            ..
+                        } if cond == expected
+                            && actual_elem == elem
+                            && u32::from(lanes) == VecWidth::V128.lanes(elem)
+                    )));
+                } else {
+                    let lanes = VecWidth::V128.lanes(elem);
+                    let expected = if predicate == 3 {
+                        0
+                    } else {
+                        ((1u64 << lanes) - 1) as i64
+                    };
+                    assert!(
+                        !result
+                            .ops
+                            .iter()
+                            .any(|op| matches!(op.kind, OpKind::VCmp { .. }))
+                    );
+                    assert!(result.ops.iter().any(|op| matches!(
+                        op.kind,
+                        OpKind::Mov {
+                            src: SrcOperand::Imm(actual),
+                            width: OpWidth::W64,
+                            ..
+                        } if actual == expected
+                    )));
+                }
+            }
+        }
+
+        // Reserved immediate high bits do not select the predicate; Intel's
+        // operation consumes imm8[2:0]. 0xFE therefore remains unsigned GT.
+        let high_imm = lift_single(&[0x62, 0xF3, 0x75, 0x08, 0x1E, 0xDA, 0xFE]).unwrap();
+        assert!(high_imm.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VCmp {
+                cond: VecCmpCond::Gtu,
+                elem: VecElementType::I32,
+                ..
+            }
+        )));
+
+        // EVEX extension bits expose ZMM17/ZMM18, while aaa is a source
+        // writemask and the low ModR/M.reg bits select destination K3.
+        let high = lift_single(&[0x62, 0xB3, 0x75, 0x44, 0x1E, 0xDA, 0x06]).unwrap();
+        assert!(high.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VCmp {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                cond: VecCmpCond::Gtu,
+                ..
+            }
+        )));
+        assert!(matches!(
+            high.ops.last().map(|op| &op.kind),
+            Some(OpKind::And {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::K(3))),
+                src2: SrcOperand::Reg(VReg::Arch(ArchReg::X86(X86Reg::K(4)))),
+                flags: FlagUpdate::None,
+                ..
+            })
+        ));
+
+        // Full-vector and broadcast disp8 tuples use N=64 and N=4,
+        // respectively. Constant predicates retain every active predicated
+        // memory access so TRUE/FALSE cannot suppress architectural faults.
+        for (bytes, offset, predicate) in [
+            (&[0x62, 0xF3, 0x75, 0x4C, 0x1F, 0x58, 0x01, 0x07][..], 64, 7),
+            (&[0x62, 0xF3, 0x75, 0x5C, 0x1F, 0x58, 0x01, 0x03][..], 4, 3),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(result.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Lea {
+                    addr: Address::BaseOffset {
+                        offset: actual,
+                        disp_size: DispSize::Disp8,
+                        ..
+                    },
+                    ..
+                } if actual == offset
+            )));
+            assert_eq!(
+                result
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::PredLoad {
+                            width: MemWidth::B4,
+                            ..
+                        }
+                    ))
+                    .count(),
+                16,
+                "predicate {predicate} must retain active memory accesses",
+            );
+        }
+
+        // RIP-relative addressing uses the PC after the immediate byte.
+        let rip = lift_single(&[0x62, 0xF3, 0x75, 0x08, 0x1F, 0x1D, 0, 0, 0, 0, 0x01]).unwrap();
+        assert_eq!(rip.bytes_consumed, 11);
+        assert!(rip.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLoad {
+                addr: Address::PcRel {
+                    offset: 0,
+                    base: Some(0x100B),
+                    ..
+                },
+                width: VecWidth::V128,
+                ..
+            }
+        )));
+
+        // A 512-bit byte TRUE comparison produces all 64 architectural mask
+        // bits, without a shift-by-64 overflow in the lifter.
+        let all_bytes = lift_single(&[0x62, 0xF3, 0x75, 0x48, 0x3F, 0xDA, 0x07]).unwrap();
+        assert!(all_bytes.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Mov {
+                src: SrcOperand::Imm(-1),
+                width: OpWidth::W64,
+                ..
+            }
+        )));
+
+        for bytes in [
+            &[0x62, 0xF3, 0x75, 0x88, 0x1F, 0xDA, 0][..], // EVEX.z reserved
+            &[0x62, 0xF3, 0x75, 0x68, 0x1F, 0xDA, 0][..], // EVEX.L'L=3
+            &[0x62, 0xF3, 0x74, 0x08, 0x1F, 0xDA, 0][..], // pp != 66
+            &[0x62, 0xF3, 0x75, 0x18, 0x1F, 0xDA, 0][..], // broadcast register
+            &[0x62, 0xF3, 0x75, 0x18, 0x3F, 0x00, 0][..], // byte broadcast
+            &[0x62, 0x73, 0x75, 0x08, 0x1F, 0xDA, 0][..], // extended k destination
+            &[0x62, 0xE3, 0x75, 0x08, 0x1F, 0xDA, 0][..], // EVEX.R' on k destination
+            &[0x62, 0xF3, 0x75, 0x08, 0x1F][..],          // missing ModR/M
+            &[0x62, 0xF3, 0x75, 0x08, 0x1F, 0xDA][..],    // missing imm8
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. }
+                        | LiftError::Unsupported { .. }
+                        | LiftError::Incomplete { .. })
+                ),
+                "invalid immediate packed compare accepted: {bytes:02X?}",
             );
         }
     }

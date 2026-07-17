@@ -5024,6 +5024,79 @@ mod tests {
             "EVEX.128 VPCMPEQD requires one fault-suppressible load per lane"
         );
 
+        // Immediate TRUE/FALSE predicates still carry Type E4 memory effects.
+        // Their source vectors do not feed the constant result, so these cases
+        // explicitly pin the optimizer's fault and commit boundaries.
+        let masked_true = optimized(&[0x62, 0xF3, 0x75, 0x0C, 0x1F, 0x18, 0x07]);
+        let ops = &masked_true.blocks[0].ops;
+        let first_pred_load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VPCMPD TRUE predicated loads must survive optimization");
+        let k_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::And {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::K(3))),
+                        src2: SrcOperand::Reg(VReg::Arch(ArchReg::X86(X86Reg::K(4)))),
+                        flags: FlagUpdate::None,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VPCMPD TRUE k-destination write must survive optimization");
+        assert!(first_pred_load < k_write);
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            4,
+        );
+
+        let unmasked_false = optimized(&[0x62, 0xF3, 0x75, 0x08, 0x1F, 0x18, 0x03]);
+        let ops = &unmasked_false.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("unmasked VPCMPD FALSE load must survive optimization");
+        let k_write = ops
+            .iter()
+            .rposition(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Mov {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::K(3))),
+                        ..
+                    }
+                )
+            })
+            .expect("unmasked VPCMPD FALSE destination write must survive optimization");
+        assert!(load < k_write);
+
         let vex_unpack = optimized(&[0xC5, 0xF5, 0x60, 0x00]);
         let ops = &vex_unpack.blocks[0].ops;
         let load = ops
