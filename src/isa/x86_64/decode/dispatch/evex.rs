@@ -5570,7 +5570,8 @@ impl X86_64Vcpu {
             (self.regs.rcx as u8) & count_mask
         };
 
-        let result = if count == 0 {
+        let defined = count != 0 && u32::from(count) <= width;
+        let result = if !defined {
             src1
         } else {
             let count = count as u32;
@@ -5589,7 +5590,7 @@ impl X86_64Vcpu {
             self.set_reg(src1_reg, result, op_size);
         }
 
-        if !nf && count != 0 {
+        if !nf && defined {
             self.update_apx_double_shift_flags(result, src1, count, op_size, is_shrd);
         }
 

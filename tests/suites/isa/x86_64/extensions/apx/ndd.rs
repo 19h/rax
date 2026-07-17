@@ -425,6 +425,42 @@ fn test_ndd_shrd_reg_reg_cl_match_llvm() {
 }
 
 #[test]
+fn test_apx_double_shift_w16_undefined_counts_follow_noop_policy() {
+    // LLVM 23: shldw $17, %r31w, %bp, %r16w. The 5-bit masked count exceeds
+    // the 16-bit operand width, so Rax copies the base into the NDD destination
+    // and preserves every incoming status flag.
+    let ndd = [0x62, 0x64, 0x7D, 0x10, 0x24, 0xFD, 0x11, 0xF4];
+    let mut regs = Registers {
+        rbp: 0x3344_5566_8765_1357,
+        r16: 0xAABB_CCDD_EEFF_2468,
+        r31: 0xFFEE_DDCC_BBAA_8001,
+        rflags: 0x8D7,
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_apx_vm(&ndd, Some(regs));
+    regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.r16, 0xAABB_CCDD_EEFF_1357);
+    assert_eq!(regs.rbp, 0x3344_5566_8765_1357);
+    assert_eq!(regs.r31, 0xFFEE_DDCC_BBAA_8001);
+    assert_eq!(regs.rflags & 0x8D5, 0x8D5);
+
+    // LLVM 23: {nf} shldw $17, %r31w, %bp. The destructive destination and
+    // flags are both unchanged under the same policy.
+    let nf = [0x62, 0x64, 0x7D, 0x0C, 0x24, 0xFD, 0x11, 0xF4];
+    let initial = Registers {
+        rbp: 0x3344_5566_8765_1357,
+        r31: 0xFFEE_DDCC_BBAA_8001,
+        rflags: 0x0D7,
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_apx_vm(&nf, Some(initial.clone()));
+    regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rbp, initial.rbp);
+    assert_eq!(regs.r31, initial.r31);
+    assert_eq!(regs.rflags & 0x8D5, initial.rflags & 0x8D5);
+}
+
+#[test]
 fn test_nf_ndd_shld_reg_reg_imm_match_llvm() {
     // LLVM 23 assembles "{nf} shld r8, rax, rbx, 4" as 62 f4 bc 1c 24 d8 04.
     let code = [0x62, 0xF4, 0xBC, 0x1C, 0x24, 0xD8, 0x04, 0xF4];

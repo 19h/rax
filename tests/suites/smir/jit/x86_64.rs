@@ -7187,6 +7187,129 @@ fn jit_state_backed_gpr_carry_rotate_execute_without_memory_helpers() {
     }
 }
 
+/// Destructive SHLD/SHRD stages guest RSP/RBP/APX EGPR operands and CL through
+/// GuestRegs. The matrix covers zero, one, multi-bit, W16 boundary/undefined
+/// counts, REX2, and APX NF without MMU or semantic call helpers.
+#[test]
+fn jit_state_backed_gpr_double_shift_execute_without_memory_helpers() {
+    struct Case {
+        name: &'static str,
+        instruction: &'static [u8],
+        apx: bool,
+        rcx: u64,
+    }
+    let cases = [
+        Case {
+            name: "SHLD RSP,RBP,1",
+            instruction: &[0x48, 0x0F, 0xA4, 0xEC, 0x01],
+            apx: false,
+            rcx: 0,
+        },
+        Case {
+            name: "SHRD RBP,RSP,CL masked zero",
+            instruction: &[0x48, 0x0F, 0xAD, 0xE5],
+            apx: false,
+            rcx: 64,
+        },
+        Case {
+            name: "SHRD RBP,RSP,CL count one",
+            instruction: &[0x48, 0x0F, 0xAD, 0xE5],
+            apx: false,
+            rcx: 1,
+        },
+        Case {
+            name: "SHRD RBP,RSP,CL multi-bit",
+            instruction: &[0x48, 0x0F, 0xAD, 0xE5],
+            apx: false,
+            rcx: 9,
+        },
+        Case {
+            name: "SHLD BP,SP,17 undefined no-op",
+            instruction: &[0x66, 0x0F, 0xA4, 0xE5, 0x11],
+            apx: false,
+            rcx: 0,
+        },
+        Case {
+            name: "SHRD BP,SP,16 width boundary",
+            instruction: &[0x66, 0x0F, 0xAC, 0xE5, 0x10],
+            apx: false,
+            rcx: 0,
+        },
+        Case {
+            name: "REX2 SHLD RSP,R16,1",
+            instruction: &[0xD5, 0xC8, 0xA4, 0xC4, 0x01],
+            apx: true,
+            rcx: 0,
+        },
+        Case {
+            name: "REX2 SHRD R16,R31,CL",
+            instruction: &[0xD5, 0xDC, 0xAD, 0xF8],
+            apx: true,
+            rcx: 9,
+        },
+        Case {
+            name: "APX NF SHRD RSP,R31,4",
+            instruction: &[0x62, 0x64, 0xFC, 0x0C, 0x2C, 0xFC, 0x04],
+            apx: true,
+            rcx: 0,
+        },
+    ];
+
+    let gprs = |regs: &Registers| {
+        [
+            regs.rax, regs.rcx, regs.rdx, regs.rbx, regs.rsp, regs.rbp, regs.rsi, regs.rdi,
+            regs.r8, regs.r9, regs.r10, regs.r11, regs.r12, regs.r13, regs.r14, regs.r15, regs.r16,
+            regs.r17, regs.r18, regs.r19, regs.r20, regs.r21, regs.r22, regs.r23, regs.r24,
+            regs.r25, regs.r26, regs.r27, regs.r28, regs.r29, regs.r30, regs.r31,
+        ]
+    };
+    let setup = |vcpu: &mut X86_64Vcpu, case: &Case| {
+        vcpu.set_apx_enabled(case.apx);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x0102_0304_0506_0708;
+        regs.rcx = case.rcx;
+        regs.rdx = 0x99AA_BBCC_DDEE_FF00;
+        regs.rbx = 0x0F1E_2D3C_4B5A_6978;
+        regs.rsp = 0x2233_4455_6677_5681;
+        regs.rbp = 0x3344_5566_8765_8001;
+        regs.r8 = 0x8899_AABB_CCDD_EEFF;
+        regs.r16 = 0xAABB_CCDD_8000_0011;
+        regs.r31 = 0xFFEE_DDCC_BBAA_1357;
+        regs.rflags = 0x8D7;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    for case in cases {
+        let mut code = case.instruction.to_vec();
+        code.push(0xF4);
+
+        let mut interp = make_vcpu_code(&code);
+        setup(&mut interp, &case);
+        assert!(
+            interp.step().unwrap().is_none(),
+            "{} interpreter",
+            case.name
+        );
+        let expected = interp.get_regs().unwrap();
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit, &case);
+        jit.set_jit_call(false);
+        jit.set_jit_mem(false);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{}: {error:?}", case.name)),
+            "{} must enter the register-only native tier:\n{}",
+            case.name,
+            jit.jit_dump_region(LOAD_ADDR)
+        );
+        let actual = jit.get_regs().unwrap();
+        assert_eq!(gprs(&actual), gprs(&expected), "{} GPR file", case.name);
+        assert_eq!(actual.rflags, expected.rflags, "{} RFLAGS", case.name);
+        assert_eq!(actual.rip, expected.rip, "{} RIP", case.name);
+    }
+}
+
 /// Register ADCX/ADOX stages guest RSP/RBP operands through GuestRegs while
 /// consuming the incoming CF/OF, updating only the selected output bit, and
 /// retaining destructive aliases and dword zero-extension.

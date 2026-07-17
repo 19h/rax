@@ -1175,7 +1175,8 @@ impl SmirInterpreter {
                 let bits = width.bits() as u64;
                 let mask = if bits == 64 { 0x3F } else { 0x1F };
                 let amt = self.read_src_operand(ctx, amount) & mask;
-                let result = if amt == 0 {
+                let defined = amt != 0 && amt <= bits;
+                let result = if !defined {
                     left
                 } else {
                     ((left << amt) | (right >> (bits - amt))) & width.mask()
@@ -1183,8 +1184,10 @@ impl SmirInterpreter {
 
                 Self::write_gpr(ctx, *dst, result, *width);
 
-                // count==0 leaves flags unchanged; else CF = last bit out of dst's top.
-                if amt != 0 && flags.updates_any() {
+                // The deterministic no-op cases (zero or a masked subword count above
+                // the operand width) preserve flags; otherwise CF is the last bit out
+                // of the destination's top.
+                if defined && flags.updates_any() {
                     ctx.flags.lazy = Some(LazyFlags {
                         op: LazyFlagOp::Shld,
                         result,
@@ -1208,7 +1211,8 @@ impl SmirInterpreter {
                 let bits = width.bits() as u64;
                 let mask = if bits == 64 { 0x3F } else { 0x1F };
                 let amt = self.read_src_operand(ctx, amount) & mask;
-                let result = if amt == 0 {
+                let defined = amt != 0 && amt <= bits;
+                let result = if !defined {
                     left
                 } else {
                     ((left >> amt) | (right << (bits - amt))) & width.mask()
@@ -1216,8 +1220,10 @@ impl SmirInterpreter {
 
                 Self::write_gpr(ctx, *dst, result, *width);
 
-                // count==0 leaves flags unchanged; else CF = last bit out of dst's bottom.
-                if amt != 0 && flags.updates_any() {
+                // The deterministic no-op cases (zero or a masked subword count above
+                // the operand width) preserve flags; otherwise CF is the last bit out
+                // of the destination's bottom.
+                if defined && flags.updates_any() {
                     ctx.flags.lazy = Some(LazyFlags {
                         op: LazyFlagOp::Shrd,
                         result,
@@ -1243,7 +1249,8 @@ impl SmirInterpreter {
                 let bits = width.bits() as u64;
                 let count_mask = if bits == 64 { 0x3F } else { 0x1F };
                 let amt = self.read_src_operand(ctx, amount) & count_mask;
-                let result = if amt == 0 {
+                let defined = amt != 0 && amt <= bits;
+                let result = if !defined {
                     base
                 } else if *left {
                     ((base << amt) | (fill >> (bits - amt))) & width.mask()
@@ -1252,7 +1259,7 @@ impl SmirInterpreter {
                 };
 
                 Self::write_gpr(ctx, *dst, result, *width);
-                if amt != 0 && flags.updates_any() {
+                if defined && flags.updates_any() {
                     ctx.flags.lazy = Some(LazyFlags {
                         op: if *left {
                             LazyFlagOp::Shld
@@ -17470,6 +17477,47 @@ mod tests {
             ctx.read_vreg(rbx),
             (old_rbx & !0xFFFF) | expected_low,
             "W16 NDD writes must preserve the old destination's upper bits"
+        );
+
+        let rbp = VReg::Arch(ArchReg::X86(X86Reg::Rbp));
+        let rsp = VReg::Arch(ArchReg::X86(X86Reg::Rsp));
+        let r16 = VReg::Arch(ArchReg::X86(X86Reg::R16));
+        let r31 = VReg::Arch(ArchReg::X86(X86Reg::R31));
+        let undefined_seed = 0x08D7;
+        for bytes in [
+            &[0x66, 0x0F, 0xA4, 0xE5, 0x11][..],
+            &[0x66, 0x0F, 0xAC, 0xE5, 0x11][..],
+        ] {
+            ctx.write_vreg(rbp, 0x3344_5566_8765_1357);
+            ctx.write_vreg(rsp, 0x2233_4455_6677_8001);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(undefined_seed);
+            ctx.flags.lazy = None;
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.read_vreg(rbp), 0x3344_5566_8765_1357);
+            assert_eq!(
+                ctx.flags.materialized.to_rflags() & 0x08D5,
+                undefined_seed & 0x08D5,
+                "W16 destructive double shift above the width must preserve flags"
+            );
+        }
+
+        ctx.write_vreg(rbp, 0x3344_5566_8765_1357);
+        ctx.write_vreg(r16, 0xAABB_CCDD_EEFF_2468);
+        ctx.write_vreg(r31, 0xFFEE_DDCC_BBAA_8001);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(undefined_seed);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(
+            &[0x62, 0x64, 0x7D, 0x10, 0x24, 0xFD, 0x11],
+            &mut ctx,
+            &mut memory,
+        );
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.read_vreg(r16), 0xAABB_CCDD_EEFF_1357);
+        assert_eq!(
+            ctx.flags.materialized.to_rflags() & 0x08D5,
+            undefined_seed & 0x08D5,
+            "W16 NDD double shift above the width must preserve flags"
         );
 
         const STATUS_MASK: u64 = 0x08D5;

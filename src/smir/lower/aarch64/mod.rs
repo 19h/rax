@@ -14843,16 +14843,16 @@ impl Aarch64Lowerer {
 
         let zero_count = self.code.position();
         self.emit(0xb400_0000 | u32::from(count));
-        let source_count_bits: &[u32] = match width {
+        let width_or_larger_bits: &[u32] = match width {
             OpWidth::W8 => &[3, 4],
             OpWidth::W16 => &[4],
             _ => unreachable!("subword double shift width already checked"),
         };
-        let mut source_count = Vec::with_capacity(source_count_bits.len());
-        for &bit in source_count_bits {
+        let mut width_or_larger = Vec::with_capacity(width_or_larger_bits.len());
+        for &bit in width_or_larger_bits {
             let offset = self.code.position();
             self.emit_test_branch(count, bit, true, 0)?;
-            source_count.push((offset, bit));
+            width_or_larger.push((offset, bit));
         }
 
         if left {
@@ -14871,9 +14871,17 @@ impl Aarch64Lowerer {
         let done_main = self.code.position();
         self.emit(0x1400_0000);
 
-        for (offset, bit) in source_count {
+        for (offset, bit) in width_or_larger {
             self.patch_test_branch_to_current(offset, count, bit, true)?;
         }
+        self.emit_addsub_imm(temp, count, i64::from(bits), true, false, OpWidth::W64)?;
+        let exact_width = self.code.position();
+        self.emit(0xb400_0000 | u32::from(temp));
+        self.emit_mov_reg(dst, original, OpWidth::W32)?;
+        let done_undefined = self.code.position();
+        self.emit(0x1400_0000);
+
+        self.patch_compare_branch_to_current(exact_width, temp, false)?;
         self.emit_mov_reg(dst, source, OpWidth::W32)?;
         let done_source = self.code.position();
         self.emit(0x1400_0000);
@@ -14882,6 +14890,7 @@ impl Aarch64Lowerer {
         self.emit_mov_reg(dst, original, OpWidth::W32)?;
 
         self.patch_branch_to_current(done_main)?;
+        self.patch_branch_to_current(done_undefined)?;
         self.patch_branch_to_current(done_source)?;
         self.emit_scratch_restore(&scratches);
         Ok(())
@@ -14962,7 +14971,10 @@ impl Aarch64Lowerer {
             }
             if let VReg::Imm(value) = src {
                 let value = (value as u64) & width.mask();
-                if amount >= bits {
+                if amount > bits {
+                    return self.emit_bitfield(dst_reg, rn, 0b10, 0, top_bit, OpWidth::W32);
+                }
+                if amount == bits {
                     return self.emit_mov_imm(dst_reg, value as i64, OpWidth::W32);
                 }
                 let injected = if left {
@@ -15008,7 +15020,10 @@ impl Aarch64Lowerer {
                 }
             }
             let src = Self::gpr_arm_or_x86(src)?;
-            if amount >= bits {
+            if amount > bits {
+                return self.emit_bitfield(dst_reg, rn, 0b10, 0, top_bit, OpWidth::W32);
+            }
+            if amount == bits {
                 return self.emit_bitfield(dst_reg, src, 0b10, 0, top_bit, OpWidth::W32);
             }
             let scratches = if dst_reg == src {
@@ -19743,7 +19758,9 @@ mod tests {
         let count = (amount as u64 & 0x1f) as u32;
         if count == 0 {
             dst
-        } else if count >= bits {
+        } else if count > bits {
+            dst
+        } else if count == bits {
             src
         } else if left {
             ((dst << count) | (src >> (bits - count))) & mask
@@ -22246,7 +22263,9 @@ mod tests {
         let count = (amount & count_mask) as u32;
         if count == 0 {
             dst
-        } else if count >= bits {
+        } else if count > bits {
+            dst
+        } else if count == bits {
             src
         } else if left {
             ((dst << count) | (src >> (bits - count))) & mask
@@ -57391,7 +57410,7 @@ mod tests {
     }
 
     #[test]
-    fn lowers_subword_double_shift_count_greater_than_width_as_source() {
+    fn lowers_subword_double_shift_count_greater_than_width_as_base() {
         assert_double_shift_imm_lowering(
             "shld_w16_count_greater_than_width",
             true,
