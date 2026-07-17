@@ -19618,6 +19618,9 @@ mod tests {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let mut memory = FlatMemory::new(0x100);
         let mut ctx = SmirContext::new_x86_64();
+        let flags_before = 0xCD7;
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
         let lhs = [
             0x00FF_00FF_AAAA_5555,
             0xF0F0_0F0F_1234_5678,
@@ -19662,6 +19665,19 @@ mod tests {
             (0xEF, (|a: u64, b: u64| a ^ b) as fn(u64, u64) -> u64),
         ] {
             if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[0] = lhs[0];
+                x86.mm[1] = rhs[0];
+                x86.x87.tag_word = 0xFFFF;
+                x86.x87.status_word = 4 << 11;
+            }
+            execute_lifted_x86(&[0x0F, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.mm[0], apply(lhs[0], rhs[0]), "MMX {opcode:02X}");
+                assert_eq!(x86.x87.tag_word, 0);
+                assert_eq!(x86.x87.status_word & 0x3800, 4 << 11);
+            }
+
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
                 x86.xmm[0] = lhs;
                 x86.xmm[1] = rhs;
             }
@@ -19690,6 +19706,37 @@ mod tests {
             }
         }
 
+        // A successful MMX memory source reads exactly 8 bytes before entering
+        // MMX state and computing the non-commutative PANDN result.
+        memory.write(0xF8, &rhs[0].to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0xF8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = lhs[0];
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0xDF, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], !lhs[0] & rhs[0]);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        // A faulting MMX memory read precedes both the destination write and
+        // the x87 tag transition.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = lhs[0];
+            x86.x87.tag_word = 0xFFFF;
+        }
+        ctx.write_vreg(rax, 0x1000);
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0xDF, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], lhs[0]);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+
         // A memory fault occurs before the architectural destination write.
         if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
             x86.xmm[0] = lhs;
@@ -19703,6 +19750,8 @@ mod tests {
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(x86.xmm[0], lhs);
         }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
     }
 
     #[test]

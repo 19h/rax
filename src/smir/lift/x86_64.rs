@@ -8537,7 +8537,7 @@ impl X86_64Lifter {
         ))
     }
 
-    /// Lift XMM PAND/PANDN/POR/PXOR (66 0F DB/DF/EB/EF).
+    /// Lift MMX/XMM PAND/PANDN/POR/PXOR (0F DB/DF/EB/EF).
     fn lift_sse_integer_logic(
         &self,
         opcode: u8,
@@ -8546,18 +8546,14 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if prefix.lock || prefix.rep_prefix.is_some() {
+        if prefix.lock || prefix.rep_prefix.is_some() || prefix.rex2.is_some() {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
             });
         }
-        if !prefix.operand_size_override {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("MMX opcode 0F {opcode:02X}"),
-            });
-        }
+        let mmx = !prefix.operand_size_override;
+        let width = if mmx { VecWidth::V64 } else { VecWidth::V128 };
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
@@ -8571,38 +8567,55 @@ impl X86_64Lifter {
                 OpKind::VLoad {
                     dst: value,
                     addr,
-                    width: VecWidth::V128,
+                    width,
                 },
             ));
             value
+        } else if mmx {
+            self.mm(modrm.rm)
         } else {
             self.xmm(modrm.rm)
         };
-        let dst = self.xmm(modrm.reg);
+        if mmx {
+            // A faulting memory source must not enter MMX state.
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            ));
+        }
+        let dst = if mmx {
+            self.mm(modrm.reg)
+        } else {
+            self.xmm(modrm.reg)
+        };
         let kind = match opcode {
             0xDB => OpKind::VAnd {
                 dst,
                 src1: dst,
                 src2,
-                width: VecWidth::V128,
+                width,
             },
             0xDF => OpKind::VAndNot {
                 dst,
                 src1: dst,
                 src2,
-                width: VecWidth::V128,
+                width,
             },
             0xEB => OpKind::VOr {
                 dst,
                 src1: dst,
                 src2,
-                width: VecWidth::V128,
+                width,
             },
             0xEF => OpKind::VXor {
                 dst,
                 src1: dst,
                 src2,
-                width: VecWidth::V128,
+                width,
             },
             _ => unreachable!(),
         };
@@ -8611,7 +8624,11 @@ impl X86_64Lifter {
             pc,
             kind,
             X86OpHint::SseOp {
-                prefix: X86SsePrefix::OpSize,
+                prefix: if mmx {
+                    X86SsePrefix::None
+                } else {
+                    X86SsePrefix::OpSize
+                },
                 opcode,
             },
         ));
@@ -49074,6 +49091,62 @@ mod tests {
     #[test]
     fn lift_legacy_and_vex_packed_integer_logic_covers_all_operations_and_forms() {
         for (opcode, expected) in [(0xDB, "and"), (0xDF, "andn"), (0xEB, "or"), (0xEF, "xor")] {
+            let mmx = lift_single(&[0x0F, opcode, 0xC1]).unwrap();
+            assert_eq!(mmx.bytes_consumed, 3);
+            assert!(matches!(
+                mmx.ops.first().unwrap().kind,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                }
+            ));
+            assert!(mmx.ops.iter().any(|op| match (&op.kind, expected) {
+                (
+                    OpKind::VAnd {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        width: VecWidth::V64,
+                    },
+                    "and",
+                )
+                | (
+                    OpKind::VAndNot {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        width: VecWidth::V64,
+                    },
+                    "andn",
+                )
+                | (
+                    OpKind::VOr {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        width: VecWidth::V64,
+                    },
+                    "or",
+                )
+                | (
+                    OpKind::VXor {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        width: VecWidth::V64,
+                    },
+                    "xor",
+                ) => true,
+                _ => false,
+            }));
+            assert!(matches!(
+                mmx.ops.last().unwrap().x86_hint,
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: actual,
+                }) if actual == opcode
+            ));
+
             let legacy = lift_single(&[0x66, 0x0F, opcode, 0xC1]).unwrap();
             assert_eq!(legacy.bytes_consumed, 4);
             assert!(
@@ -49170,6 +49243,48 @@ mod tests {
             }
         ));
 
+        let mmx_memory = lift_single(&[0x0F, 0xDF, 0x40, 0x10]).unwrap();
+        assert!(matches!(
+            mmx_memory.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::VLoad {
+                        width: VecWidth::V64,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::VAndNot {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        width: VecWidth::V64,
+                        ..
+                    },
+                    ..
+                }
+            ]
+        ));
+
+        // REX.R/REX.B do not extend the three-bit MMX register namespace.
+        let mmx_rex = lift_single(&[0x45, 0x0F, 0xEB, 0xC1]).unwrap();
+        assert!(matches!(
+            mmx_rex.ops.last().unwrap().kind,
+            OpKind::VOr {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                width: VecWidth::V64,
+            }
+        ));
+
         let high = lift_single(&[0xC4, 0x41, 0x35, 0xDB, 0xC1]).unwrap();
         assert!(matches!(
             high.ops.as_slice(),
@@ -49185,7 +49300,6 @@ mod tests {
         ));
 
         for bytes in [
-            &[0x0F, 0xDB, 0xC1][..],             // MMX form unsupported
             &[0xF2, 0x0F, 0xDB, 0xC1][..],       // invalid mandatory prefix
             &[0xF0, 0x66, 0x0F, 0xDB, 0xC1][..], // LOCK is undefined
             &[0xC5, 0xF4, 0xDB, 0xC2][..],       // VEX form requires 66
@@ -49195,7 +49309,7 @@ mod tests {
                     lift_single(bytes),
                     Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
                 ),
-                "invalid/unsupported integer logic accepted: {bytes:02X?}",
+                "invalid integer logic accepted: {bytes:02X?}",
             );
         }
     }
