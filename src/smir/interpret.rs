@@ -39599,6 +39599,60 @@ mod tests {
         ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
         ctx.flags.lazy = None;
 
+        // Prefix-free SSSE3 PABS operates on an MMX destination and an mm/m64
+        // source.  Exercise every element width, the wrapping minimum value,
+        // the x87/MMX state transition, and a destructive register alias.
+        for &(opcode, elem_bytes, input) in &cases {
+            if opcode == 0x1F {
+                continue;
+            }
+            let input = &input[..8];
+            let source = u64::from_le_bytes(input.try_into().unwrap());
+            let expected = u64::from_le_bytes(reference(input, elem_bytes).try_into().unwrap());
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[0] = source;
+                x86.x87.tag_word = 0xFFFF;
+                x86.x87.status_word = 5 << 11;
+            }
+            execute_lifted_x86(&[0x0F, 0x38, opcode, 0xC0], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.mm[0], expected, "MMX opcode={opcode:02X}");
+                assert_eq!(x86.x87.tag_word, 0);
+                assert_eq!(x86.x87.status_word & 0x3800, 5 << 11);
+            }
+        }
+
+        // The m64 form has no mandatory 16-byte #GP alignment.  Its complete
+        // source load faults before either the destination or MMX state changes.
+        let mmx_word_expected =
+            u64::from_le_bytes(reference(&word_input[..8], 2).try_into().unwrap());
+        memory.write(0x81, &word_input[..8]).unwrap();
+        ctx.write_vreg(rax, 0x80);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0x38, 0x1D, 0x40, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], mmx_word_expected);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        ctx.write_vreg(rax, 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0x38, 0x1D, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xDEAD_BEEF_CAFE_BABE);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+
         for (opcode, elem_bytes, input) in cases {
             let expected = reference(input, elem_bytes);
             assert_eq!(&expected[..elem_bytes], &input[..elem_bytes]);
