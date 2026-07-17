@@ -1543,15 +1543,22 @@ pub enum OpKind {
         suppress_exceptions: bool,
     },
 
-    /// x86 CVTSI2SS/CVTSI2SD scalar signed-integer conversion. `merge` supplies
-    /// destination bits 32/64..127. VEX/EVEX forms set `zero_upper` to clear
-    /// shared vector state above bit 127; legacy forms preserve it.
+    /// x86 CVTSI2SS/CVTSI2SD and EVEX VCVT(U)SI2SS/SD/SH scalar integer
+    /// conversion. `merge` supplies destination bits above the converted
+    /// scalar through bit 127. `signed` selects signed or unsigned integer
+    /// interpretation. `round` records MXCSR-dynamic or EVEX embedded
+    /// rounding, and `suppress_exceptions` records EVEX ER/SAE. VEX/EVEX
+    /// forms set `zero_upper` to clear shared vector state above bit 127;
+    /// legacy forms preserve it.
     X86IntToFp {
         dst: VReg,
         merge: VReg,
         src: VReg,
         elem: VecElementType,
         int_width: OpWidth,
+        signed: bool,
+        round: FpRoundMode,
+        suppress_exceptions: bool,
         zero_upper: bool,
     },
 

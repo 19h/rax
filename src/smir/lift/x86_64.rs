@@ -756,6 +756,10 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
         || ((b1 & 0x07) == 5
             && (b2 & 0x03) == 2
             && matches!(bytes.get(4), Some(0x2C | 0x2D | 0x78 | 0x79)));
+    let is_scalar_int_to_fp = ((b1 & 0x07) == 1
+        && matches!(b2 & 0x03, 2 | 3)
+        && matches!(bytes.get(4), Some(0x2A | 0x7B)))
+        || ((b1 & 0x07) == 5 && (b2 & 0x03) == 2 && matches!(bytes.get(4), Some(0x2A | 0x7B)));
     let is_fp16_scalar_move =
         (b1 & 0x07) == 5 && (b2 & 0x03) == 2 && matches!(bytes.get(4), Some(0x10 | 0x11));
     let is_fp16_sqrt =
@@ -892,6 +896,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
                 || is_fp16_arithmetic
                 || is_fp16_flag_compare
                 || is_scalar_fp_to_int
+                || is_scalar_int_to_fp
                 || is_fp16_sqrt
                 || is_permute
                 || is_ternary_logic
@@ -8435,6 +8440,9 @@ impl X86_64Lifter {
                 src,
                 elem,
                 int_width,
+                signed: true,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
                 zero_upper: false,
             },
             X86OpHint::SseOp {
@@ -29533,6 +29541,104 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
+    fn lift_evex_int_to_fp16(
+        &self,
+        prefix: VecPrefix,
+        opcode: u8,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.encoding != VecEncodingKind::Evex
+            || prefix.map != X86VecMap::Map5
+            || prefix.pp != X86SsePrefix::Rep
+            || prefix.aaa != 0
+            || prefix.zeroing
+            || !matches!(opcode, 0x2A | 0x7B)
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let cursor = prefix.bytes + 1;
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
+            cursor,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        if (prefix.b && modrm.is_memory) || (!modrm.is_memory && prefix.rm_high) {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let signed = opcode == 0x2A;
+        let int_width = if prefix.w { OpWidth::W64 } else { OpWidth::W32 };
+        let mem_width = if prefix.w { MemWidth::B8 } else { MemWidth::B4 };
+        let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let src = if modrm.is_memory {
+            let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                prefix,
+                modrm.addr.as_ref().unwrap(),
+                next_pc,
+                mem_width.bytes(),
+                ctx,
+            );
+            ops.extend(pre_ops);
+            let value = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Load {
+                    dst: value,
+                    addr,
+                    width: mem_width,
+                    sign: if signed {
+                        SignExtend::Sign
+                    } else {
+                        SignExtend::Zero
+                    },
+                },
+            ));
+            value
+        } else {
+            self.gpr(modrm.rm)
+        };
+        let round = if prefix.b {
+            match prefix.l_bits {
+                0 => FpRoundMode::RoundNearest,
+                1 => FpRoundMode::RoundDown,
+                2 => FpRoundMode::RoundUp,
+                _ => FpRoundMode::RoundTowardZero,
+            }
+        } else {
+            FpRoundMode::Dynamic
+        };
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86IntToFp {
+                dst: self.xmm(modrm.reg + if prefix.reg_high { 16 } else { 0 }),
+                merge: self.xmm(prefix.vvvv + if prefix.v_high { 16 } else { 0 }),
+                src,
+                elem: VecElementType::F16,
+                int_width,
+                signed,
+                round,
+                suppress_exceptions: prefix.b,
+                zero_upper: true,
+            },
+        ));
+        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+    }
+
     fn lift_evex_word_move(
         &self,
         prefix: VecPrefix,
@@ -30959,9 +31065,13 @@ impl X86_64Lifter {
                     Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
                 }
 
-                // VCVTSI2SS/VCVTSI2SD.
-                0x2A => {
-                    if !matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) {
+                // Scalar GPR/memory-to-FP32/FP64 conversions. Opcode 2A is
+                // signed; opcode 7B is the EVEX-only unsigned family.
+                0x2A | 0x7B => {
+                    let signed = opcode == 0x2A;
+                    if !matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne)
+                        || (!signed && prefix.encoding != VecEncodingKind::Evex)
+                    {
                         return Err(LiftError::InvalidEncoding {
                             addr: pc,
                             bytes: bytes.to_vec(),
@@ -30980,8 +31090,7 @@ impl X86_64Lifter {
                     };
                     let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
                     if prefix.encoding == VecEncodingKind::Evex
-                        && !modrm.is_memory
-                        && prefix.rm_high
+                        && ((prefix.b && modrm.is_memory) || (!modrm.is_memory && prefix.rm_high))
                     {
                         return Err(LiftError::InvalidEncoding {
                             addr: pc,
@@ -31006,7 +31115,11 @@ impl X86_64Lifter {
                                 dst: value,
                                 addr,
                                 width: mem_width,
-                                sign: SignExtend::Sign,
+                                sign: if signed {
+                                    SignExtend::Sign
+                                } else {
+                                    SignExtend::Zero
+                                },
                             },
                         ));
                         value
@@ -31029,6 +31142,22 @@ impl X86_64Lifter {
                                 0
                             },
                     );
+                    // CVT(U)SI2SD with W=0 is exact for every 32-bit source;
+                    // Intel specifies that attempted EVEX embedded rounding is
+                    // ignored for this encoding.
+                    let embedded_rounding = prefix.encoding == VecEncodingKind::Evex
+                        && prefix.b
+                        && !(elem == VecElementType::F64 && !prefix.w);
+                    let round = if embedded_rounding {
+                        match prefix.l_bits {
+                            0 => FpRoundMode::RoundNearest,
+                            1 => FpRoundMode::RoundDown,
+                            2 => FpRoundMode::RoundUp,
+                            _ => FpRoundMode::RoundTowardZero,
+                        }
+                    } else {
+                        FpRoundMode::Dynamic
+                    };
                     ops.push(SmirOp::with_hint(
                         OpId(ops.len() as u16),
                         pc,
@@ -31038,6 +31167,9 @@ impl X86_64Lifter {
                             src,
                             elem,
                             int_width,
+                            signed,
+                            round,
+                            suppress_exceptions: embedded_rounding,
                             zero_upper: true,
                         },
                         hint,
@@ -33580,6 +33712,7 @@ impl X86_64Lifter {
             },
             X86VecMap::Map5 => match opcode {
                 0x10 | 0x11 => self.lift_evex_fp16_scalar_move(prefix, opcode, bytes, pc, ctx),
+                0x2A | 0x7B => self.lift_evex_int_to_fp16(prefix, opcode, bytes, pc, ctx),
                 0x2C | 0x2D | 0x78 | 0x79 => {
                     self.lift_evex_fp16_to_int(prefix, opcode, bytes, pc, ctx)
                 }
@@ -55129,6 +55262,60 @@ mod tests {
             }
         ));
 
+        for (bytes, elem, width, round, sae) in [
+            (
+                &[0x62, 0xF1, 0xEE, 0x78, 0x7B, 0xC8][..],
+                VecElementType::F32,
+                OpWidth::W64,
+                FpRoundMode::RoundTowardZero,
+                true,
+            ),
+            (
+                &[0x62, 0xF1, 0xEF, 0x38, 0x7B, 0xC8][..],
+                VecElementType::F64,
+                OpWidth::W64,
+                FpRoundMode::RoundDown,
+                true,
+            ),
+            (
+                &[0x62, 0xF1, 0x6F, 0x58, 0x7B, 0xC8][..],
+                VecElementType::F64,
+                OpWidth::W32,
+                FpRoundMode::Dynamic,
+                false,
+            ),
+        ] {
+            let unsigned = lift_single(bytes).unwrap();
+            assert!(matches!(
+                unsigned.ops.last().unwrap().kind,
+                OpKind::X86IntToFp {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    merge: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                    elem: actual_elem,
+                    int_width,
+                    signed: false,
+                    round: actual_round,
+                    suppress_exceptions,
+                    zero_upper: true,
+                } if actual_elem == elem
+                    && int_width == width
+                    && actual_round == round
+                    && suppress_exceptions == sae
+            ));
+        }
+
+        let unsigned_memory = lift_single(&[0x62, 0xF1, 0x6E, 0x08, 0x7B, 0x48, 0x7F]).unwrap();
+        assert!(unsigned_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load {
+                addr: Address::BaseOffset { offset: 508, .. },
+                width: MemWidth::B4,
+                sign: SignExtend::Zero,
+                ..
+            }
+        )));
+
         let evex_er = lift_single(&[0x62, 0xF1, 0x7E, 0x38, 0x2D, 0xC3]).unwrap();
         assert!(matches!(
             evex_er.ops.last().unwrap().kind,
@@ -55253,6 +55440,9 @@ mod tests {
                     src: VReg::Arch(ArchReg::X86(actual_src)),
                     elem: actual_elem,
                     int_width: actual_width,
+                    signed: true,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
                     zero_upper: actual_zero,
                 } if actual_dst == dst && actual_merge == merge && actual_src == src
                     && actual_elem == elem && actual_width == width && actual_zero == zero_upper
@@ -55268,6 +55458,9 @@ mod tests {
                 src: VReg::Arch(ArchReg::X86(X86Reg::R10)),
                 elem: VecElementType::F32,
                 int_width: OpWidth::W64,
+                signed: true,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
                 zero_upper: true,
             }
         ));
@@ -55301,8 +55494,10 @@ mod tests {
         }
 
         for bytes in [
-            &[0x0F, 0x2A, 0xC8][..],             // missing F2/F3
-            &[0xF0, 0xF3, 0x0F, 0x2A, 0xC8][..], // LOCK
+            &[0x0F, 0x2A, 0xC8][..],                   // missing F2/F3
+            &[0xF0, 0xF3, 0x0F, 0x2A, 0xC8][..],       // LOCK
+            &[0xC5, 0xEA, 0x7B, 0xC8][..],             // unsigned is EVEX-only
+            &[0x62, 0xF1, 0x6E, 0x18, 0x7B, 0x00][..], // EVEX.b memory
         ] {
             assert!(matches!(
                 lift_single(bytes),
@@ -62670,6 +62865,94 @@ mod tests {
             &[0x62, 0xF5, 0x7E, 0x88, 0x2D, 0xC3][..], // reserved zeroing
             &[0x62, 0xE5, 0x7E, 0x08, 0x2D, 0xC3][..], // no GPR bit 4
             &[0x62, 0xF5, 0x7E, 0x18, 0x2D, 0x00][..], // EVEX.b memory
+        ] {
+            assert!(lift_single(invalid).is_err(), "accepted {invalid:02X?}");
+        }
+    }
+
+    #[test]
+    fn lift_evex_int_to_fp16_covers_signedness_rounding_merge_memory_and_invalids() {
+        for (bytes, signed, width) in [
+            (
+                &[0x62, 0xF5, 0x6E, 0x08, 0x2A, 0xC8][..],
+                true,
+                OpWidth::W32,
+            ),
+            (
+                &[0x62, 0xF5, 0xEE, 0x08, 0x7B, 0xC8][..],
+                false,
+                OpWidth::W64,
+            ),
+        ] {
+            let lifted = lift_single(bytes).unwrap();
+            assert_eq!(lifted.bytes_consumed, bytes.len());
+            assert!(matches!(
+                lifted.ops.last().unwrap().kind,
+                OpKind::X86IntToFp {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    merge: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                    elem: VecElementType::F16,
+                    int_width,
+                    signed: actual_signed,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                    zero_upper: true,
+                } if actual_signed == signed && int_width == width
+            ));
+        }
+
+        let high = lift_single(&[0x62, 0xC5, 0xE6, 0x00, 0x7B, 0xC8]).unwrap();
+        assert!(matches!(
+            high.ops.last().unwrap().kind,
+            OpKind::X86IntToFp {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                merge: VReg::Arch(ArchReg::X86(X86Reg::Xmm(19))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::R8)),
+                elem: VecElementType::F16,
+                int_width: OpWidth::W64,
+                signed: false,
+                ..
+            }
+        ));
+
+        let memory = lift_single(&[0x62, 0xF5, 0xEE, 0x08, 0x7B, 0x48, 0x7F]).unwrap();
+        assert!(memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load {
+                addr: Address::BaseOffset { offset: 1016, .. },
+                width: MemWidth::B8,
+                sign: SignExtend::Zero,
+                ..
+            }
+        )));
+
+        for (l_bits, expected) in [
+            (0u8, FpRoundMode::RoundNearest),
+            (1, FpRoundMode::RoundDown),
+            (2, FpRoundMode::RoundUp),
+            (3, FpRoundMode::RoundTowardZero),
+        ] {
+            let b3 = 0x18 | (l_bits << 5);
+            let rounded = lift_single(&[0x62, 0xF5, 0xEE, b3, 0x7B, 0xC8]).unwrap();
+            assert!(matches!(
+                rounded.ops.last().unwrap().kind,
+                OpKind::X86IntToFp {
+                    signed: false,
+                    round,
+                    suppress_exceptions: true,
+                    ..
+                } if round == expected
+            ));
+        }
+
+        assert!(lift_single(&[0x62, 0xF5, 0x6E, 0x68, 0x2A, 0xC8]).is_ok()); // LLIG
+        for invalid in [
+            &[0x62, 0xF5, 0x6C, 0x08, 0x2A, 0xC8][..], // pp != F3
+            &[0x62, 0xF5, 0x6E, 0x09, 0x2A, 0xC8][..], // reserved opmask
+            &[0x62, 0xF5, 0x6E, 0x88, 0x2A, 0xC8][..], // reserved zeroing
+            &[0x62, 0xB5, 0x6E, 0x08, 0x7B, 0xC8][..], // no GPR bit 4
+            &[0x62, 0xF5, 0x6E, 0x18, 0x7B, 0x00][..], // EVEX.b memory
         ] {
             assert!(lift_single(invalid).is_err(), "accepted {invalid:02X?}");
         }

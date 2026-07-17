@@ -9200,6 +9200,9 @@ impl X86_64Lowerer {
                 src,
                 elem,
                 int_width,
+                signed,
+                round,
+                suppress_exceptions,
                 zero_upper,
             } => {
                 let dst_reg = self.get_dst_reg(*dst)?;
@@ -9219,6 +9222,13 @@ impl X86_64Lowerer {
                 if !matches!(int_width, OpWidth::W32 | OpWidth::W64) {
                     return Err(LowerError::UnsupportedOp {
                         op: format!("X86IntToFp width {int_width:?}"),
+                    });
+                }
+                if !*signed || *round != FpRoundMode::Dynamic || *suppress_exceptions {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!(
+                            "X86IntToFp signed={signed}, rounding {round:?}, sae={suppress_exceptions}"
+                        ),
                     });
                 }
                 let prefix = match elem {
@@ -29513,6 +29523,9 @@ mod tests {
                     src: rax,
                     elem: VecElementType::F32,
                     int_width: OpWidth::W32,
+                    signed: true,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
                     zero_upper: false,
                 },
                 &[0xF3, 0x0F, 0x2A, 0xC8][..],
@@ -29525,6 +29538,9 @@ mod tests {
                     src: rax,
                     elem: VecElementType::F64,
                     int_width: OpWidth::W64,
+                    signed: true,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
                     zero_upper: false,
                 },
                 &[0xF2, 0x48, 0x0F, 0x2A, 0xC8][..],
@@ -29536,6 +29552,36 @@ mod tests {
                     .any(|window| window == expected),
                 "{name}: missing native opcode in {code:02X?}"
             );
+        }
+
+        for kind in [
+            OpKind::X86IntToFp {
+                dst: xmm1,
+                merge: xmm1,
+                src: rax,
+                elem: VecElementType::F32,
+                int_width: OpWidth::W64,
+                signed: false,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
+                zero_upper: false,
+            },
+            OpKind::X86IntToFp {
+                dst: xmm1,
+                merge: xmm1,
+                src: rax,
+                elem: VecElementType::F16,
+                int_width: OpWidth::W64,
+                signed: true,
+                round: FpRoundMode::RoundDown,
+                suppress_exceptions: true,
+                zero_upper: false,
+            },
+        ] {
+            assert!(matches!(
+                lower_single_op_err(kind),
+                LowerError::UnsupportedOp { .. }
+            ));
         }
     }
 

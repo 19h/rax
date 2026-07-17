@@ -1937,6 +1937,9 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src,
             elem,
             int_width,
+            signed,
+            round,
+            suppress_exceptions,
             zero_upper,
         } => op_json!(
             "x86_int_to_fp",
@@ -1945,6 +1948,9 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src,
             elem,
             int_width,
+            signed,
+            round,
+            suppress_exceptions,
             zero_upper
         ),
         OpKind::X86FpConvert {

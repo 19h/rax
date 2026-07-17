@@ -3470,11 +3470,18 @@ impl SmirInterpreter {
                 src,
                 elem,
                 int_width,
+                signed,
+                round,
                 zero_upper,
+                ..
             } => {
                 let raw = ctx.read_vreg(*src) & int_width.mask();
-                let value = self.sign_extend(raw, *int_width) as i64 as i128;
-                let scalar_bits = self.x86_int_to_fp_bits(ctx, value, *elem);
+                let value = if *signed {
+                    self.sign_extend(raw, *int_width) as i64 as i128
+                } else {
+                    raw as i128
+                };
+                let scalar_bits = self.x86_int_to_fp_bits(ctx, value, *elem, *round);
                 let mut result = Self::read_vec(ctx, *merge);
                 Self::set_lane(&mut result, 0, elem.bytes() * 8, scalar_bits);
                 if *zero_upper {
@@ -15303,61 +15310,99 @@ impl SmirInterpreter {
         }
     }
 
-    fn x86_int_to_fp_bits(&self, ctx: &SmirContext, value: i128, elem: VecElementType) -> u64 {
-        let mode = self.dynamic_fp_round_mode(ctx);
-        match elem {
-            VecElementType::F32 => {
-                let nearest = value as f32;
-                let nearest_int = nearest as i128;
-                if nearest_int == value {
-                    return nearest.to_bits() as u64;
-                }
-                let (lo, hi) = if nearest_int < value {
-                    (nearest, Self::next_up_f32(nearest))
-                } else {
-                    (Self::next_down_f32(nearest), nearest)
-                };
-                let rounded = match mode {
-                    FpRoundMode::RoundDown => lo,
-                    FpRoundMode::RoundUp => hi,
-                    FpRoundMode::RoundTowardZero => {
-                        if value < 0 {
-                            hi
-                        } else {
-                            lo
-                        }
-                    }
-                    _ => nearest,
-                };
-                rounded.to_bits() as u64
-            }
-            VecElementType::F64 => {
-                let nearest = value as f64;
-                let nearest_int = nearest as i128;
-                if nearest_int == value {
-                    return nearest.to_bits();
-                }
-                let (lo, hi) = if nearest_int < value {
-                    (nearest, Self::next_up_f64(nearest))
-                } else {
-                    (Self::next_down_f64(nearest), nearest)
-                };
-                let rounded = match mode {
-                    FpRoundMode::RoundDown => lo,
-                    FpRoundMode::RoundUp => hi,
-                    FpRoundMode::RoundTowardZero => {
-                        if value < 0 {
-                            hi
-                        } else {
-                            lo
-                        }
-                    }
-                    _ => nearest,
-                };
-                rounded.to_bits()
-            }
-            _ => 0,
+    fn x86_int_to_fp_bits(
+        &self,
+        ctx: &SmirContext,
+        value: i128,
+        elem: VecElementType,
+        mode: FpRoundMode,
+    ) -> u64 {
+        let mode = if mode == FpRoundMode::Dynamic {
+            self.dynamic_fp_round_mode(ctx)
+        } else {
+            mode
+        };
+        let negative = value < 0;
+        let magnitude = if negative {
+            (-value) as u128
+        } else {
+            value as u128
+        };
+        let (frac_bits, exp_bits, bias) = match elem {
+            VecElementType::F16 => (10, 5, 15),
+            VecElementType::F32 => (23, 8, 127),
+            VecElementType::F64 => (52, 11, 1023),
+            _ => return 0,
+        };
+        Self::x86_int_magnitude_to_fp_bits(negative, magnitude, frac_bits, exp_bits, bias, mode)
+    }
+
+    fn x86_int_magnitude_to_fp_bits(
+        negative: bool,
+        magnitude: u128,
+        frac_bits: u32,
+        exp_bits: u32,
+        bias: i32,
+        mode: FpRoundMode,
+    ) -> u64 {
+        let sign_shift = exp_bits + frac_bits;
+        let sign = if negative { 1u64 << sign_shift } else { 0 };
+        if magnitude == 0 {
+            return sign;
         }
+
+        let precision = frac_bits + 1;
+        let mut exponent = (u128::BITS - 1 - magnitude.leading_zeros()) as i32;
+        let mut significand = if exponent as u32 <= frac_bits {
+            magnitude << (frac_bits - exponent as u32)
+        } else {
+            let shift = exponent as u32 - frac_bits;
+            let mut significand = magnitude >> shift;
+            let remainder = magnitude & ((1u128 << shift) - 1);
+            let increment = if remainder == 0 {
+                false
+            } else {
+                match mode {
+                    FpRoundMode::RoundNearest => {
+                        let half = 1u128 << (shift - 1);
+                        remainder > half || (remainder == half && significand & 1 != 0)
+                    }
+                    FpRoundMode::RoundNearestTiesAway => remainder >= 1u128 << (shift - 1),
+                    FpRoundMode::RoundDown => negative,
+                    FpRoundMode::RoundUp => !negative,
+                    FpRoundMode::RoundTowardZero => false,
+                    FpRoundMode::Dynamic => unreachable!(),
+                }
+            };
+            if increment {
+                significand += 1;
+            }
+            significand
+        };
+
+        if significand == 1u128 << precision {
+            significand >>= 1;
+            exponent += 1;
+        }
+
+        let max_exp = (1u64 << exp_bits) - 1;
+        let biased = exponent + bias;
+        if biased >= max_exp as i32 {
+            let round_to_infinity = match mode {
+                FpRoundMode::RoundNearest | FpRoundMode::RoundNearestTiesAway => true,
+                FpRoundMode::RoundDown => negative,
+                FpRoundMode::RoundUp => !negative,
+                FpRoundMode::RoundTowardZero => false,
+                FpRoundMode::Dynamic => unreachable!(),
+            };
+            if round_to_infinity {
+                return sign | (max_exp << frac_bits);
+            }
+            return sign | ((max_exp - 1) << frac_bits) | ((1u64 << frac_bits) - 1);
+        }
+
+        let fraction = (significand & ((1u128 << frac_bits) - 1)) as u64;
+        sign | ((biased as u64) << frac_bits) | fraction
     }
 
     fn x86_f64_to_f32_bits(&self, ctx: &SmirContext, value: f64) -> u32 {
@@ -22563,6 +22608,52 @@ mod tests {
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(x86.xmm[17][0] as u32, (-7.0f32).to_bits());
         }
+
+        // Signed FP16 embedded round-down avoids positive overflow to infinity.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = merge;
+            x86.mxcsr = (0x1F80 & !(3 << 13)) | (2 << 13); // toward +infinity
+        }
+        ctx.write_vreg(rax, 65_520);
+        execute_lifted_x86(
+            &[0x62, 0xF5, 0xEE, 0x38, 0x2A, 0xC8], // {rd-sae}
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0] as u16, 0x7BFF);
+            assert_eq!(x86.xmm[1][0] & !0xFFFF, merge[0] & !0xFFFF);
+            assert_eq!(x86.xmm[1][1], merge[1]);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+        }
+
+        // Unsigned W=1 conversion preserves the full u64 source domain and
+        // honors embedded directed rounding for FP16/FP32/FP64 destinations.
+        ctx.write_vreg(rax, u64::MAX);
+        execute_lifted_x86(
+            &[0x62, 0xF5, 0xEE, 0x78, 0x7B, 0xC8], // FP16 {rz-sae}
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0] as u16, 0x7BFF);
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF1, 0xEE, 0x78, 0x7B, 0xC8], // FP32 {rz-sae}
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0] as u32, 0x5F7F_FFFF);
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF1, 0xEF, 0x38, 0x7B, 0xC8], // FP64 {rd-sae}
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x43EF_FFFF_FFFF_FFFF);
+        }
         ctx.flags.materialize_all();
         assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
     }
@@ -22580,6 +22671,11 @@ mod tests {
             (
                 "EVEX VCVTSI2SS",
                 &[0x62, 0xE1, 0xFE, 0x00, 0x2A, 0x08][..],
+                17usize,
+            ),
+            (
+                "EVEX VCVTUSI2SH",
+                &[0x62, 0xE5, 0xFE, 0x00, 0x7B, 0x08][..],
                 17usize,
             ),
         ] {

@@ -9039,6 +9039,9 @@ mod tests {
                         merge: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
                         elem: VecElementType::F64,
                         int_width: OpWidth::W64,
+                        signed: true,
+                        round: FpRoundMode::Dynamic,
+                        suppress_exceptions: false,
                         zero_upper: false,
                         ..
                     }
@@ -9047,6 +9050,55 @@ mod tests {
             .expect("CVTSI2SD conversion must survive optimization");
         assert!(load < conversion);
         assert!(ops[conversion].kind.flags_written().is_empty());
+
+        let unsigned_int_to_fp = optimized(&[0x62, 0xF1, 0x6E, 0x08, 0x7B, 0x48, 0x7F]);
+        let ops = &unsigned_int_to_fp.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        addr: Address::BaseOffset { offset: 508, .. },
+                        width: MemWidth::B4,
+                        sign: SignExtend::Zero,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting VCVTUSI2SS compressed-displacement load must survive optimization");
+        let conversion = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86IntToFp {
+                        elem: VecElementType::F32,
+                        int_width: OpWidth::W32,
+                        signed: false,
+                        round: FpRoundMode::Dynamic,
+                        suppress_exceptions: false,
+                        zero_upper: true,
+                        ..
+                    }
+                )
+            })
+            .expect("VCVTUSI2SS conversion must survive optimization");
+        assert!(load < conversion);
+
+        let fp16_er = optimized(&[0x62, 0xF5, 0xEE, 0x38, 0x7B, 0xC8]);
+        assert!(fp16_er.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::X86IntToFp {
+                elem: VecElementType::F16,
+                int_width: OpWidth::W64,
+                signed: false,
+                round: FpRoundMode::RoundDown,
+                suppress_exceptions: true,
+                zero_upper: true,
+                ..
+            }
+        )));
 
         let fp_convert = optimized(&[0xF2, 0x0F, 0x5A, 0x00]);
         let ops = &fp_convert.blocks[0].ops;
