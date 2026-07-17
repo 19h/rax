@@ -31125,6 +31125,149 @@ mod tests {
     }
 
     #[test]
+    fn lifted_evex_fp16_scalar_arithmetic_executes_ops_masks_aliases_and_faults() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        let sentinel = [0xA55A_A55A_A55A_A55A; 16];
+        let flags_before = 0xCD7;
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for (opcode, first, second, expected) in [
+            (0x58, 0x3C00u16, 0x4000u16, 0x4200u16), // 1 + 2 = 3
+            (0x59, 0x4200, 0x4000, 0x4600),          // 3 * 2 = 6
+            (0x5C, 0x4500, 0x4000, 0x4200),          // 5 - 2 = 3
+            (0x5E, 0x4600, 0x4000, 0x4200),          // 6 / 2 = 3
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[1] = sentinel;
+                x86.xmm[2] = [0; 16];
+                x86.xmm[3] = [0; 16];
+                for lane in 0..8u8 {
+                    SmirInterpreter::set_lane(
+                        &mut x86.xmm[2],
+                        lane,
+                        16,
+                        if lane == 0 {
+                            u64::from(first)
+                        } else {
+                            0x1100 + u64::from(lane)
+                        },
+                    );
+                }
+                SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, u64::from(second));
+            }
+            execute_lifted_x86(
+                &[0x62, 0xF5, 0x6E, 0x08, opcode, 0xCB],
+                &mut ctx,
+                &mut memory,
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], 0, 16),
+                    u64::from(expected),
+                    "scalar FP16 opcode {opcode:#04x}",
+                );
+                for lane in 1..8u8 {
+                    assert_eq!(
+                        SmirInterpreter::get_lane(&x86.xmm[1], lane, 16),
+                        0x1100 + u64::from(lane),
+                    );
+                }
+                assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+            }
+        }
+
+        // The low destination lane observes merge/zero masking independently
+        // of the seven upper lanes, which always come from SRC1.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[2] = [0; 16];
+            x86.xmm[3] = [0; 16];
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 16, 0x3C00);
+            SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, 0x4000);
+            for lane in 1..8u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[2], lane, 16, 0x3300 + u64::from(lane));
+            }
+            x86.k[2] = 0;
+        }
+        execute_lifted_x86(&[0x62, 0xF5, 0x6E, 0x0A, 0x58, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 16), 0xA55A);
+            for lane in 1..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 16),
+                    0x3300 + u64::from(lane),
+                );
+            }
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[2] = 0;
+        }
+        execute_lifted_x86(&[0x62, 0xF5, 0x6E, 0x8A, 0x59, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 16), 0);
+            for lane in 1..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 16),
+                    0x3300 + u64::from(lane),
+                );
+            }
+        }
+
+        // All operands may alias without consuming reconstructed destination
+        // lanes as inputs to the scalar operation.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = [0; 16];
+            SmirInterpreter::set_lane(&mut x86.xmm[8], 0, 16, 0x4000);
+            for lane in 1..8u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[8], lane, 16, 0x4400 + u64::from(lane));
+            }
+        }
+        execute_lifted_x86(&[0x62, 0x55, 0x3E, 0x08, 0x58, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[8], 0, 16), 0x4400);
+            for lane in 1..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[8], lane, 16),
+                    0x4400 + u64::from(lane),
+                );
+            }
+            assert_eq!(&x86.xmm[8][2..], &[0; 14]);
+        }
+
+        // Type E3 all-zero masking suppresses the scalar source read; an
+        // active mask faults before any destination lane is committed.
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x200);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[2] = 0;
+        }
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF5, 0x6E, 0x0A, 0x5E, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[2] = 1;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF5, 0x6E, 0x0A, 0x5E, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
     fn executes_vpshufbitqmb_lane_domains_opmask_zeroing_memory_and_faults() {
         let mut ctx = SmirContext::new_x86_64();
         let mut memory = FlatMemory::new(0x400);

@@ -8092,6 +8092,66 @@ mod tests {
         );
         assert!(load < sqrt && sqrt < destination_write);
 
+        let scalar_fp16_div = optimized(&[0x62, 0xF5, 0x6E, 0x0A, 0x5E, 0x48, 0x7F]);
+        let ops = &scalar_fp16_div.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        addr: Address::BaseOffset { offset: 254, .. },
+                        width: MemWidth::B2,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VDIVSH scalar source load must survive optimization");
+        let divide = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VFP16Arith {
+                        dst: VReg::Virtual(_),
+                        op: Avx10FP16Op::Div,
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("VDIVSH scalar division must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        lane: 7,
+                        elem: VecElementType::F16,
+                        ..
+                    }
+                )
+            })
+            .expect("VDIVSH scalar merge destination must survive optimization");
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                        lane: 1..=7,
+                        elem: VecElementType::F16,
+                        ..
+                    }
+                ))
+                .count(),
+            7,
+            "VDIVSH must preserve all seven upper FP16 lanes from SRC1",
+        );
+        assert!(load < divide && divide < destination_write);
+
         let psadbw = optimized(&[0x66, 0x44, 0x0F, 0xF6, 0x08]);
         let ops = &psadbw.blocks[0].ops;
         let alignment = ops
