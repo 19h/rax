@@ -5121,6 +5121,31 @@ pub fn uses_x86_native_vectors_excluding(
         .any(|op| x86_native_vector_smir_op(op) || x86_jit_vector_mem_shape_valid(&op.kind))
 }
 
+/// Whether an executable (non-exit) block enters architectural MMX state.
+///
+/// Every lifted MMX instruction ends with `EnterMmx` after its fault-capable
+/// work and destination commit. Using that explicit state transition as the
+/// region discriminator keeps MM0-MM7 marshalling independent of the AVX-512
+/// vector trampoline and excludes ordinary x87 control operations.
+pub fn uses_x86_native_mmx_excluding(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> bool {
+    func.blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .flat_map(|block| &block.ops)
+        .any(|op| {
+            matches!(
+                op.kind,
+                crate::smir::ir::ops::OpKind::X86X87Control {
+                    kind: crate::smir::ir::ops::X86X87ControlKind::EnterMmx,
+                    ..
+                }
+            )
+        })
+}
+
 /// Return `(AES-NI, VAES, AVX-512VL)` requirements contributed by an admitted
 /// `X86Aes` operation. Low-register 128/256-bit rounds are re-encoded with VEX;
 /// high registers require EVEX.VL, while 512-bit rounds use EVEX without VL.
@@ -10632,7 +10657,7 @@ mod jit_gate_tests {
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
     use crate::smir::ir::ops::{
         ArmDpRegShiftKind, OpKind, X86AdxKind, X86BlsKind, X86CacheControlKind, X86CountKind,
-        X86OpHint, X86SsePrefix, X86VecMap,
+        X86OpHint, X86SsePrefix, X86VecMap, X86X87ControlKind,
     };
     use crate::smir::ir::types::{
         Address, ArchReg, ArmReg, BlockId, Condition, DispSize, FenceKind, FpPrecision, FunctionId,
@@ -12793,6 +12818,46 @@ mod jit_gate_tests {
         assert_eq!(regs.get_zmm(31), high);
         assert_eq!(regs.mxcsr, 0x1F80);
         assert_eq!(regs.x87_tag_word, 0xFFFF);
+    }
+
+    #[test]
+    fn x86_mmx_region_discriminator_tracks_precise_enter_state_and_exits() {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let function = builder.finish();
+
+        assert!(uses_x86_native_mmx_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+        assert!(!uses_x86_native_vectors_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+
+        let excluded = std::collections::HashMap::from([(function.entry, 0x1001)]);
+        assert!(!uses_x86_native_mmx_excluding(&function, &excluded));
+
+        let mut x87 = FunctionBuilder::new(FunctionId(1), 0x2000);
+        x87.push_op(
+            0x2000,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::ClearExceptions,
+                addr: None,
+            },
+        );
+        x87.set_terminator(Terminator::Return { values: vec![] });
+        assert!(!uses_x86_native_mmx_excluding(
+            &x87.finish(),
+            &std::collections::HashMap::new()
+        ));
     }
 
     #[cfg(target_arch = "x86_64")]

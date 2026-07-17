@@ -3722,6 +3722,9 @@ pub(super) struct JitRegion {
     /// Whether the entry trampoline must marshal ZMM0-ZMM31 and K0-K7.
     #[cfg(target_arch = "x86_64")]
     uses_vector: bool,
+    /// Whether the native entry bridge must marshal MM0-MM7 and guest x87 tags.
+    #[cfg(target_arch = "x86_64")]
+    uses_mmx: bool,
 }
 
 /// RAX_JIT_BAIL=1 logs why each hot region is rejected by the JIT (diagnostic
@@ -4198,6 +4201,10 @@ unsafe extern "C" fn rax_jit_call(
         vcpu.regs.k = gr.k;
         vcpu.mxcsr = gr.mxcsr;
     }
+    if gr.mmx_active != 0 {
+        vcpu.regs.mm = gr.mm;
+        vcpu.fpu.tag_word = gr.x87_tag_word as u16;
+    }
     // Simulate the CALL's stack effect (the block's own ops already ran
     // natively; only the call's push+transfer remain), then enter the callee.
     let _ = vcpu.push64(return_pc);
@@ -4262,6 +4269,10 @@ unsafe extern "C" fn rax_jit_call(
         }
         gr.k = vcpu.regs.k;
         gr.mxcsr = vcpu.mxcsr;
+    }
+    if gr.mmx_active != 0 {
+        gr.mm = vcpu.regs.mm;
+        gr.x87_tag_word = u64::from(vcpu.fpu.tag_word);
     }
     gr.gpr[0] = vcpu.regs.rax;
     gr.gpr[1] = vcpu.regs.rcx;
@@ -4607,8 +4618,8 @@ impl X86_64Vcpu {
         use crate::smir::lower::runtime::is_x86_aarch64_native_clobber_safe_excluding;
         #[cfg(target_arch = "x86_64")]
         use crate::smir::lower::runtime::{
-            is_native_clobber_safe_excluding, uses_x86_native_vectors_excluding,
-            x86_native_scalar_features_supported_excluding,
+            is_native_clobber_safe_excluding, uses_x86_native_mmx_excluding,
+            uses_x86_native_vectors_excluding, x86_native_scalar_features_supported_excluding,
             x86_native_vector_features_supported_excluding,
         };
         #[cfg(target_arch = "x86_64")]
@@ -4793,6 +4804,8 @@ impl X86_64Vcpu {
                 uses_vector
             };
             #[cfg(target_arch = "x86_64")]
+            let uses_mmx = uses_x86_native_mmx_excluding(&func, &exits);
+            #[cfg(target_arch = "x86_64")]
             let uses_mem_helpers = allow_mem
                 && func
                     .blocks
@@ -4882,6 +4895,8 @@ impl X86_64Vcpu {
                 entry_offset: res.entry_offset,
                 #[cfg(target_arch = "x86_64")]
                 uses_vector,
+                #[cfg(target_arch = "x86_64")]
+                uses_mmx,
             }));
         }
         Ok(None)
@@ -5040,6 +5055,11 @@ impl X86_64Vcpu {
             gr.mxcsr = self.mxcsr;
             gr.vector_active = 1;
         }
+        if region.uses_mmx {
+            gr.mm = self.regs.mm;
+            gr.mmx_active = 1;
+            gr.x87_tag_word = u64::from(self.fpu.tag_word);
+        }
 
         region.exec.run(region.entry_offset, &mut gr);
 
@@ -5104,6 +5124,10 @@ impl X86_64Vcpu {
             }
             self.regs.k = gr.k;
             self.mxcsr = gr.mxcsr;
+        }
+        if region.uses_mmx {
+            self.regs.mm = gr.mm;
+            self.fpu.tag_word = gr.x87_tag_word as u16;
         }
         // Merge: status flags from the native result, all other bits (IF, DF,
         // IOPL, NT, reserved, …) preserved from the guest's pre-region value.
@@ -5170,6 +5194,7 @@ impl X86_64Vcpu {
     fn jit_run_region_verified(&mut self, region: &JitRegion) {
         let entry_pc = self.regs.rip;
         let snap = self.regs.clone();
+        let snap_fpu = self.fpu.clone();
         let snap_lf = self.lazy_flags;
 
         // 1) Run natively with store-logging (to UNDO writes) and an access
@@ -5178,6 +5203,7 @@ impl X86_64Vcpu {
         self.jit_mem_trace = Some(Vec::new());
         self.jit_run_region_native(region);
         let jit = self.regs.clone();
+        let jit_fpu = self.fpu.clone();
         let jit_rflags = self.regs.rflags; // already materialized by the native bridge
         let exit_pc = self.regs.rip;
         // Take the native trace NOW, before the undo/re-read loops add to it.
@@ -5188,6 +5214,7 @@ impl X86_64Vcpu {
             // the native result unverified.
             None => {
                 self.regs = jit;
+                self.fpu = jit_fpu;
                 return;
             }
         };
@@ -5207,6 +5234,7 @@ impl X86_64Vcpu {
         // 2) Re-run the interpreter from the same entry up to the exit PC,
         //    restoring the LAZY flag state (the interpreter's source of truth).
         self.regs = snap.clone();
+        self.fpu = snap_fpu;
         self.lazy_flags = snap_lf;
         self.jit_mem_trace = Some(Vec::new());
         let cap = 50_000_000u64;
@@ -5349,6 +5377,18 @@ impl X86_64Vcpu {
                         self.regs.k[i], jit.k[i]
                     ));
                 }
+                if self.regs.mm[i] != jit.mm[i] {
+                    diffs.push(format!(
+                        "mm{i}: interp={:#x} jit={:#x}",
+                        self.regs.mm[i], jit.mm[i]
+                    ));
+                }
+            }
+            if self.fpu.tag_word != jit_fpu.tag_word {
+                diffs.push(format!(
+                    "x87_tag_word: interp={:#x} jit={:#x}",
+                    self.fpu.tag_word, jit_fpu.tag_word
+                ));
             }
             // A flags-ONLY divergence (registers + memory all match) is a benign
             // dead-flag artifact: the optimizer drops a flag update it proved
@@ -5437,6 +5477,7 @@ impl X86_64Vcpu {
 
         // Matched (or unverifiable within the cap): adopt the native result.
         self.regs = jit;
+        self.fpu = jit_fpu;
     }
 
     /// Re-lift + optimize the region at `entry` and pretty-print its blocks/ops
@@ -5845,6 +5886,7 @@ mod decode_cache_invalidation_tests {
             exec: crate::smir::lower::runtime::ExecMem::new(&[0xC3]).unwrap(),
             entry_offset: 0,
             uses_vector: false,
+            uses_mmx: false,
         };
         vcpu.jit_cache
             .insert((head, register_only), Some(Arc::new(cached)));
@@ -5869,6 +5911,53 @@ mod decode_cache_invalidation_tests {
         assert_eq!(vcpu.jit_mode_tag(), memory);
         vcpu.set_jit_mem(false);
         assert_eq!(vcpu.jit_mode_tag(), register_only);
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn jit_native_region_synchronizes_mmx_values_and_precise_guest_tags() {
+        // push rbp; mov rbp,rsp; push rax; mov rax,[rbp+24];
+        // mov qword ptr [rax+x87_tag],0; pop rax; paddb mm0,mm1; leave; ret.
+        // The explicit state-slot store models the lowerer's precise EnterMmx
+        // commit independently of the trampoline's host-only EMMS cleanup.
+        let mut code = vec![
+            0x55, 0x48, 0x89, 0xE5, 0x50, 0x48, 0x8B, 0x45, 0x18, 0x48, 0xC7, 0x80,
+        ];
+        code.extend_from_slice(
+            &(crate::smir::lower::X86_GUEST_X87_TAG_WORD_OFFSET as u32).to_le_bytes(),
+        );
+        code.extend_from_slice(&0u32.to_le_bytes());
+        code.extend_from_slice(&[0x58, 0x0F, 0xFC, 0xC1, 0xC9, 0xC3]);
+        let region = JitRegion {
+            exec: crate::smir::lower::runtime::ExecMem::new(&code).expect("map MMX region"),
+            entry_offset: 0,
+            uses_vector: false,
+            uses_mmx: true,
+        };
+        let mut vcpu = test_vcpu();
+        vcpu.regs.rip = 0x1000;
+        vcpu.regs.rflags = 0x2;
+        vcpu.regs.mm = [
+            0x00ff_7f80_0102_0304,
+            0x0102_0304_0506_0708,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+        ];
+        vcpu.fpu.tag_word = 0xFFFF;
+
+        vcpu.jit_run_region_native(&region);
+
+        assert_eq!(vcpu.regs.mm[0], 0x0101_8284_0608_0A0C);
+        assert_eq!(
+            &vcpu.regs.mm[1..],
+            &[0x0102_0304_0506_0708, 2, 3, 4, 5, 6, 7]
+        );
+        assert_eq!(vcpu.fpu.tag_word, 0);
+        assert_eq!(vcpu.regs.rip, 0x1000);
     }
 
     #[cfg(all(
@@ -6321,15 +6410,16 @@ mod tests {
     }
 
     #[test]
-    fn jit_callout_synchronizes_callee_vector_and_opmask_state() {
+    fn jit_callout_synchronizes_callee_vector_opmask_and_mmx_state() {
         use crate::smir::lower::runtime::GuestRegs;
 
         let mem =
             Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
-        // vprold $7,%zmm2,%zmm1{%k4}{z}; ldmxcsr 1(%rip); ret; .long 0x5f80
+        // vprold $7,%zmm2,%zmm1{%k4}{z}; ldmxcsr 4(%rip);
+        // paddb %mm1,%mm0; ret; .long 0x5f80
         let mut returning_callee = vec![
-            0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07, 0x0f, 0xae, 0x15, 0x01, 0x00, 0x00, 0x00,
-            0xc3,
+            0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07, 0x0f, 0xae, 0x15, 0x04, 0x00, 0x00, 0x00,
+            0x0f, 0xfc, 0xc1, 0xc3,
         ];
         returning_callee.extend_from_slice(&0x5f80u32.to_le_bytes());
         mem.write_slice(&returning_callee, GuestAddress(0x100))
@@ -6376,6 +6466,9 @@ mod tests {
         gr.k[4] = mask;
         gr.k[7] = 0x7777_7777_7777_7777;
         gr.mxcsr = 0x3f80;
+        gr.mm[0] = 0x00ff_7f80_0102_0304;
+        gr.mm[1] = 0x0102_0304_0506_0708;
+        gr.mmx_active = 1;
 
         let ok = unsafe { rax_jit_call(&mut gr, 0x100, 0x200) };
         assert_eq!(ok, 1);
@@ -6393,6 +6486,8 @@ mod tests {
         assert_eq!(gr.k[4], mask);
         assert_eq!(gr.k[7], 0x7777_7777_7777_7777);
         assert_eq!(gr.mxcsr, 0x5f80, "callee MXCSR was not returned");
+        assert_eq!(gr.mm[0], 0x0101_8284_0608_0A0C);
+        assert_eq!(gr.mm[1], 0x0102_0304_0506_0708);
 
         // A successful callout can change XCR0 before native execution resumes.
         // Publish that control state into GuestRegs so a later lowered XGETBV
