@@ -3342,7 +3342,9 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
 /// sources require helper-boundary MMX preservation that is not enabled yet.
 pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
     use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix};
-    use crate::smir::ir::types::{ArchReg, VReg, VecCmpCond, VecElementType, VecWidth, X86Reg};
+    use crate::smir::ir::types::{
+        ArchReg, VLaneOp, VReg, VecCmpCond, VecElementType, VecWidth, X86Reg,
+    };
 
     let (dst, src1, src2, expected_opcode) = match &op.kind {
         OpKind::VAnd {
@@ -3488,6 +3490,27 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 (VecElementType::I16, 4, 4, false) => Some(0x63),
                 (VecElementType::I16, 4, 4, true) => Some(0x67),
                 (VecElementType::I32, 2, 2, false) => Some(0x6B),
+                _ => None,
+            },
+        ),
+        OpKind::VLane {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            op: lane_op,
+            signed,
+            set_ovf,
+        } => (
+            dst,
+            src1,
+            src2,
+            match (*elem, *lanes, *lane_op, *signed, *set_ovf) {
+                (VecElementType::I8, 8, VLaneOp::Min, false, false) => Some(0xDA),
+                (VecElementType::I8, 8, VLaneOp::Max, false, false) => Some(0xDE),
+                (VecElementType::I16, 4, VLaneOp::Min, true, false) => Some(0xEA),
+                (VecElementType::I16, 4, VLaneOp::Max, true, false) => Some(0xEE),
                 _ => None,
             },
         ),
@@ -5331,34 +5354,34 @@ pub fn x86_native_mmx_pairs_valid_excluding(
         .iter()
         .filter(|block| !excluded.contains_key(&block.id))
         .all(|block| {
-            block.ops.iter().enumerate().all(|(index, op)| {
-                let enter_mmx = matches!(
+            let is_enter = |op: &crate::smir::ir::ops::SmirOp| {
+                matches!(
                     op.kind,
                     OpKind::X86X87Control {
                         kind: X86X87ControlKind::EnterMmx,
                         addr: None,
                     }
-                );
-                if enter_mmx {
-                    return block.ops.get(index + 1).is_some_and(|next| {
-                        next.guest_pc == op.guest_pc && is_x86_native_mmx_op(next)
-                    });
+                )
+            };
+            let mut index = 0;
+            while index < block.ops.len() {
+                let first = &block.ops[index];
+                if is_enter(first) || is_x86_native_mmx_op(first) {
+                    let Some(second) = block.ops.get(index + 1) else {
+                        return false;
+                    };
+                    let paired = first.guest_pc == second.guest_pc
+                        && ((is_enter(first) && is_x86_native_mmx_op(second))
+                            || (is_x86_native_mmx_op(first) && is_enter(second)));
+                    if !paired {
+                        return false;
+                    }
+                    index += 2;
+                } else {
+                    index += 1;
                 }
-                if is_x86_native_mmx_op(op) {
-                    return index > 0
-                        && block.ops.get(index - 1).is_some_and(|previous| {
-                            previous.guest_pc == op.guest_pc
-                                && matches!(
-                                    previous.kind,
-                                    OpKind::X86X87Control {
-                                        kind: X86X87ControlKind::EnterMmx,
-                                        addr: None,
-                                    }
-                                )
-                        });
-                }
-                true
-            })
+            }
+            true
         })
 }
 
@@ -13373,6 +13396,58 @@ mod jit_gate_tests {
             assert!(is_x86_native_mmx_op(&function.blocks[0].ops[1]));
             assert!(is_native_clobber_safe(&function));
             assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+    }
+
+    #[test]
+    fn x86_mmx_minmax_gate_accepts_post_op_state_pairs_only_once() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, lanes, lane_op, signed, opcode) in [
+            (VecElementType::I8, 8, VLaneOp::Min, false, 0xDA),
+            (VecElementType::I8, 8, VLaneOp::Max, false, 0xDE),
+            (VecElementType::I16, 4, VLaneOp::Min, true, 0xEA),
+            (VecElementType::I16, 4, VLaneOp::Max, true, 0xEE),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x9000);
+            builder.push_op(
+                0x9000,
+                OpKind::VLane {
+                    dst: mm(7),
+                    src1: mm(7),
+                    src2: mm(0),
+                    elem,
+                    lanes,
+                    op: lane_op,
+                    signed,
+                    set_ovf: false,
+                },
+            );
+            builder.push_op(
+                0x9000,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+
+            let duplicate = function.blocks[0].ops[0].clone();
+            function.blocks[0].ops.push(duplicate);
+            assert!(!x86_native_mmx_pairs_valid_excluding(
                 &function,
                 &std::collections::HashMap::new()
             ));

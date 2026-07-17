@@ -5947,6 +5947,27 @@ impl X86_64Lowerer {
                     _ => None,
                 },
             ),
+            OpKind::VLane {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                op: lane_op,
+                signed,
+                set_ovf,
+            } => (
+                dst,
+                src1,
+                src2,
+                match (*elem, *lanes, *lane_op, *signed, *set_ovf) {
+                    (VecElementType::I8, 8, VLaneOp::Min, false, false) => Some(0xDA),
+                    (VecElementType::I8, 8, VLaneOp::Max, false, false) => Some(0xDE),
+                    (VecElementType::I16, 4, VLaneOp::Min, true, false) => Some(0xEA),
+                    (VecElementType::I16, 4, VLaneOp::Max, true, false) => Some(0xEE),
+                    _ => None,
+                },
+            ),
             _ => return Ok(false),
         };
         let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
@@ -26716,6 +26737,38 @@ mod tests {
             assert!(
                 code.windows(3).any(|window| window == [0x0F, opcode, 0xF3]),
                 "missing MMX pack 0F {opcode:02X} /r: {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_mmx_minmax_emits_all_classic_register_opcodes() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, lanes, lane_op, signed, opcode) in [
+            (VecElementType::I8, 8, VLaneOp::Min, false, 0xDA),
+            (VecElementType::I8, 8, VLaneOp::Max, false, 0xDE),
+            (VecElementType::I16, 4, VLaneOp::Min, true, 0xEA),
+            (VecElementType::I16, 4, VLaneOp::Max, true, 0xEE),
+        ] {
+            let code = lower_single_hinted_op(
+                OpKind::VLane {
+                    dst: mm(7),
+                    src1: mm(7),
+                    src2: mm(0),
+                    elem,
+                    lanes,
+                    op: lane_op,
+                    signed,
+                    set_ovf: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(3).any(|window| window == [0x0F, opcode, 0xF8]),
+                "missing MMX min/max 0F {opcode:02X} /r: {code:02X?}"
             );
         }
     }

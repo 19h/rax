@@ -14382,7 +14382,7 @@ impl X86_64Lifter {
             self.xmm(modrm.reg)
         };
         if mmx {
-            ops.push(SmirOp::new(
+            ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
                 OpKind::VLane {
@@ -14394,6 +14394,10 @@ impl X86_64Lifter {
                     op: if min { VLaneOp::Min } else { VLaneOp::Max },
                     signed,
                     set_ovf: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
                 },
             ));
             ops.push(SmirOp::new(
@@ -55702,7 +55706,10 @@ mod tests {
                             signed: actual_signed,
                             set_ovf: false,
                         },
-                        x86_hint: None,
+                        x86_hint: Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: actual_opcode,
+                        }),
                         ..
                     },
                     SmirOp {
@@ -55716,6 +55723,7 @@ mod tests {
                     && *lanes == VecWidth::V64.lanes(elem) as u8
                     && *actual_op == lane_op
                     && *actual_signed == signed
+                    && *actual_opcode == opcode
             ));
         }
 
