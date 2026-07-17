@@ -2180,6 +2180,14 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(reg, rm);
     }
 
+    pub fn emit_mmx_0f38_rr(&mut self, opcode: u8, reg: PhysReg, rm: PhysReg) {
+        debug_assert!(reg.is_mmx() && rm.is_mmx());
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0x38);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(reg, rm);
+    }
+
     pub fn emit_mmx_shift_imm(&mut self, opcode: u8, digit: u8, rm: PhysReg, imm: u8) {
         debug_assert!(rm.is_mmx() && digit < 8);
         self.code.emit_u8(0x0F);
@@ -5808,6 +5816,47 @@ impl X86_64Lowerer {
     /// the normal scalar/vector matcher; any mixed or malformed MMX shape is an
     /// error rather than a widening opportunity.
     fn lower_mmx_rr(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<bool, LowerError> {
+        if let OpKind::VUnary {
+            dst,
+            src,
+            elem,
+            lanes,
+            op: VecUnaryOp::Abs,
+        } = &op.kind
+        {
+            let expected = match (*elem, *lanes) {
+                (VecElementType::I8, 8) => Some(0x1C),
+                (VecElementType::I16, 4) => Some(0x1D),
+                (VecElementType::I32, 2) => Some(0x1E),
+                _ => None,
+            };
+            let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+            if !is_mm(dst) && !is_mm(src) {
+                return Ok(false);
+            }
+            let encoding_valid = expected.is_some()
+                && is_mm(dst)
+                && is_mm(src)
+                && matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode,
+                    }) if Some(opcode) == expected
+                );
+            if !encoding_valid {
+                return Err(LowerError::InvalidOperand {
+                    op: "MMX packed absolute value".to_string(),
+                    operand: "requires exact V64 MM registers and 0F38 opcode".to_string(),
+                });
+            }
+            let dst_reg = self.get_dst_reg(*dst)?;
+            let src_reg = self.get_reg(*src)?;
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mmx_0f38_rr(expected.unwrap(), dst_reg, src_reg);
+            return Ok(true);
+        }
+
         if let OpKind::X86PackedShiftImm {
             dst,
             src,
@@ -27076,6 +27125,35 @@ mod tests {
                 code.windows(4)
                     .any(|window| window == [0x0F, opcode, modrm, 17]),
                 "missing MMX immediate shift 0F {opcode:02X} /{digit}: {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_mmx_absolute_value_emits_ssse3_byte_word_and_dword_opcodes() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, lanes, opcode) in [
+            (VecElementType::I8, 8, 0x1C),
+            (VecElementType::I16, 4, 0x1D),
+            (VecElementType::I32, 2, 0x1E),
+        ] {
+            let code = lower_single_hinted_op(
+                OpKind::VUnary {
+                    dst: mm(0),
+                    src: mm(1),
+                    elem,
+                    lanes,
+                    op: VecUnaryOp::Abs,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(4)
+                    .any(|window| window == [0x0F, 0x38, opcode, 0xC1]),
+                "missing MMX PABS 0F 38 {opcode:02X} /r: {code:02X?}"
             );
         }
     }

@@ -3343,8 +3343,35 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
 pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
     use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix};
     use crate::smir::ir::types::{
-        ArchReg, ShiftOp, VLaneOp, VReg, VecCmpCond, VecElementType, VecWidth, X86Reg,
+        ArchReg, ShiftOp, VLaneOp, VReg, VecCmpCond, VecElementType, VecUnaryOp, VecWidth, X86Reg,
     };
+
+    if let OpKind::VUnary {
+        dst,
+        src,
+        elem,
+        lanes,
+        op: VecUnaryOp::Abs,
+    } = &op.kind
+    {
+        let expected = match (*elem, *lanes) {
+            (VecElementType::I8, 8) => Some(0x1C),
+            (VecElementType::I16, 4) => Some(0x1D),
+            (VecElementType::I32, 2) => Some(0x1E),
+            _ => None,
+        };
+        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        return expected.is_some()
+            && mm(dst)
+            && mm(src)
+            && matches!(
+                op.x86_hint,
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                }) if Some(opcode) == expected
+            );
+    }
 
     if let OpKind::X86PackedShiftImm {
         dst,
@@ -5472,6 +5499,39 @@ pub fn uses_x86_native_mmx_excluding(
                 }
             )
         })
+}
+
+fn x86_native_mmx_op_requires_ssse3(op: &crate::smir::ir::ops::SmirOp) -> bool {
+    matches!(
+        op.kind,
+        crate::smir::ir::ops::OpKind::VUnary {
+            op: crate::smir::ir::types::VecUnaryOp::Abs,
+            ..
+        }
+    ) && is_x86_native_mmx_op(op)
+}
+
+/// Verify host extensions required by admitted native MMX opcodes without
+/// coupling MMX-only regions to the AVX-512 vector-state trampoline gate.
+pub fn x86_native_mmx_features_supported_excluding(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> bool {
+    let needs_ssse3 = func
+        .blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .flat_map(|block| &block.ops)
+        .any(x86_native_mmx_op_requires_ssse3);
+
+    #[cfg(target_arch = "x86_64")]
+    {
+        !needs_ssse3 || std::is_x86_feature_detected!("ssse3")
+    }
+    #[cfg(not(target_arch = "x86_64"))]
+    {
+        !needs_ssse3
+    }
 }
 
 /// Verify the exact architectural-state marker paired with every admitted MMX
@@ -13799,6 +13859,48 @@ mod jit_gate_tests {
                 opcode,
             });
             assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+    }
+
+    #[test]
+    fn x86_mmx_absolute_value_gate_covers_ssse3_byte_word_and_dword_forms() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, lanes, opcode) in [
+            (VecElementType::I8, 8, 0x1C),
+            (VecElementType::I16, 4, 0x1D),
+            (VecElementType::I32, 2, 0x1E),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x9D00);
+            builder.push_op(
+                0x9D00,
+                OpKind::VUnary {
+                    dst: mm(0),
+                    src: mm(1),
+                    elem,
+                    lanes,
+                    op: VecUnaryOp::Abs,
+                },
+            );
+            builder.push_op(
+                0x9D00,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+            assert!(x86_native_mmx_op_requires_ssse3(&function.blocks[0].ops[0]));
             assert!(is_native_clobber_safe(&function));
             assert!(x86_native_mmx_pairs_valid_excluding(
                 &function,

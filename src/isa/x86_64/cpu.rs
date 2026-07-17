@@ -4619,8 +4619,8 @@ impl X86_64Vcpu {
         #[cfg(target_arch = "x86_64")]
         use crate::smir::lower::runtime::{
             is_native_clobber_safe_excluding, uses_x86_native_mmx_excluding,
-            uses_x86_native_vectors_excluding, x86_native_mmx_pairs_valid_excluding,
-            x86_native_scalar_features_supported_excluding,
+            uses_x86_native_vectors_excluding, x86_native_mmx_features_supported_excluding,
+            x86_native_mmx_pairs_valid_excluding, x86_native_scalar_features_supported_excluding,
             x86_native_vector_features_supported_excluding,
         };
         #[cfg(target_arch = "x86_64")]
@@ -4806,6 +4806,13 @@ impl X86_64Vcpu {
             };
             #[cfg(target_arch = "x86_64")]
             let uses_mmx = uses_x86_native_mmx_excluding(&func, &exits);
+            #[cfg(target_arch = "x86_64")]
+            if uses_mmx && !x86_native_mmx_features_supported_excluding(&func, &exits) {
+                if jit_bail_log() {
+                    eprintln!("[JIT-BAIL] host-mmx-features @ {entry:#x} (call={cm})");
+                }
+                continue 'modes;
+            }
             #[cfg(target_arch = "x86_64")]
             if !x86_native_mmx_pairs_valid_excluding(&func, &exits) {
                 if jit_bail_log() {

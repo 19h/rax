@@ -14247,7 +14247,15 @@ impl X86_64Lifter {
             op: VecUnaryOp::Abs,
         };
         if mmx {
-            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, abs));
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                abs,
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            ));
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
@@ -54860,7 +54868,10 @@ mod tests {
                             lanes,
                             op: VecUnaryOp::Abs,
                         },
-                        x86_hint: None,
+                        x86_hint: Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: actual_opcode,
+                        }),
                         ..
                     },
                     SmirOp {
@@ -54870,7 +54881,9 @@ mod tests {
                         },
                         ..
                     }
-                ] if *actual == elem && u32::from(*lanes) == VecWidth::V64.lanes(elem)
+                ] if *actual == elem
+                    && u32::from(*lanes) == VecWidth::V64.lanes(elem)
+                    && *actual_opcode == opcode
             ));
 
             let legacy = lift_single(&[0x66, 0x0F, 0x38, opcode, 0xC1]).unwrap();
