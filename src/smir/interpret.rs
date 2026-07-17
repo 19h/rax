@@ -40949,6 +40949,144 @@ mod tests {
     }
 
     #[test]
+    fn lifted_mmx_average_and_pmaddwd_execute_rounding_wrap_aliases_and_faults() {
+        fn pavg(opcode: u8, lhs: u64, rhs: u64) -> u64 {
+            if opcode == 0xE0 {
+                let lhs = lhs.to_le_bytes();
+                let rhs = rhs.to_le_bytes();
+                return u64::from_le_bytes(std::array::from_fn(|lane| {
+                    ((u16::from(lhs[lane]) + u16::from(rhs[lane]) + 1) >> 1) as u8
+                }));
+            }
+            let lhs = lhs.to_le_bytes();
+            let rhs = rhs.to_le_bytes();
+            u64::from_le_bytes(
+                (0..4)
+                    .flat_map(|lane| {
+                        let at = lane * 2;
+                        let a = u16::from_le_bytes(lhs[at..at + 2].try_into().unwrap());
+                        let b = u16::from_le_bytes(rhs[at..at + 2].try_into().unwrap());
+                        ((u32::from(a) + u32::from(b) + 1) >> 1)
+                            .to_le_bytes()
+                            .into_iter()
+                            .take(2)
+                    })
+                    .collect::<Vec<_>>()
+                    .try_into()
+                    .unwrap(),
+            )
+        }
+
+        fn pmaddwd(lhs: u64, rhs: u64) -> u64 {
+            let lhs = lhs.to_le_bytes();
+            let rhs = rhs.to_le_bytes();
+            u64::from_le_bytes(
+                (0..2)
+                    .flat_map(|lane| {
+                        let at = lane * 4;
+                        let word = |bytes: &[u8], offset: usize| {
+                            i32::from(i16::from_le_bytes(
+                                bytes[offset..offset + 2].try_into().unwrap(),
+                            ))
+                        };
+                        let sum = word(&lhs, at)
+                            .wrapping_mul(word(&rhs, at))
+                            .wrapping_add(word(&lhs, at + 2).wrapping_mul(word(&rhs, at + 2)));
+                        sum.to_le_bytes()
+                    })
+                    .collect::<Vec<_>>()
+                    .try_into()
+                    .unwrap(),
+            )
+        }
+
+        let lhs = 0xFFFF_8000_0100_00FFu64;
+        let rhs = 0x8000_FFFF_00FF_0002u64;
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for opcode in [0xE0, 0xE3] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[0] = lhs;
+                x86.mm[1] = rhs;
+                x86.x87.tag_word = 0xFFFF;
+                x86.x87.status_word = 5 << 11;
+            }
+            execute_lifted_x86(&[0x0F, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.mm[0], pavg(opcode, lhs, rhs), "opcode={opcode:02X}");
+                assert_eq!(x86.x87.tag_word, 0);
+                assert_eq!(x86.x87.status_word & 0x3800, 5 << 11);
+            }
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = lhs;
+            x86.mm[1] = rhs;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0xF5, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], pmaddwd(lhs, rhs));
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        // The only overflowing PMADDWD input wraps each pairwise sum to
+        // 0x8000_0000 rather than saturating.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0x8000_8000_8000_8000;
+            x86.mm[1] = 0x8000_8000_8000_8000;
+        }
+        execute_lifted_x86(&[0x0F, 0xF5, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0x8000_0000_8000_0000);
+        }
+
+        // A destructive self-alias remains unchanged under rounded averaging.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = lhs;
+        }
+        execute_lifted_x86(&[0x0F, 0xE0, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], lhs);
+        }
+
+        memory.write(0x181, &rhs.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x180);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = lhs;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0xE3, 0x40, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], pavg(0xE3, lhs, rhs));
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        ctx.write_vreg(rax, 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let fault = execute_lifted_x86(&[0x0F, 0xF5, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xDEAD_BEEF_CAFE_BABE);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
     fn lifted_original_packed_minmax_executes_values_masks_e4_and_faults() {
         fn seeded(input: &[u8], fill: u64) -> VecValue {
             let mut value = [fill; 16];
