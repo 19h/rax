@@ -2197,6 +2197,14 @@ impl<'a> X86Emitter<'a> {
         self.code.emit_u8(imm);
     }
 
+    pub fn emit_mmx_rr_imm(&mut self, opcode: u8, reg: PhysReg, rm: PhysReg, imm: u8) {
+        debug_assert!(reg.is_mmx() && rm.is_mmx());
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(reg, rm);
+        self.code.emit_u8(imm);
+    }
+
     pub fn emit_mmx_shift_imm(&mut self, opcode: u8, digit: u8, rm: PhysReg, imm: u8) {
         debug_assert!(rm.is_mmx() && digit < 8);
         self.code.emit_u8(0x0F);
@@ -5838,6 +5846,44 @@ impl X86_64Lowerer {
     /// the normal scalar/vector matcher; any mixed or malformed MMX shape is an
     /// error rather than a widening opportunity.
     fn lower_mmx_rr(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<bool, LowerError> {
+        if let OpKind::X86PackedShuffleImm {
+            dst,
+            src,
+            width,
+            elem,
+            imm,
+            high_words,
+        } = &op.kind
+        {
+            let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+            if is_mm(dst) || is_mm(src) {
+                let encoding_valid = *width == VecWidth::V64
+                    && *elem == VecElementType::I16
+                    && high_words.is_none()
+                    && is_mm(dst)
+                    && is_mm(src)
+                    && matches!(
+                        op.x86_hint,
+                        Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: 0x70,
+                        })
+                    );
+                if !encoding_valid {
+                    return Err(LowerError::InvalidOperand {
+                        op: "MMX PSHUFW".to_string(),
+                        operand: "requires exact I16x4 MM registers and prefix-free opcode"
+                            .to_string(),
+                    });
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mmx_rr_imm(0x70, dst_reg, src_reg, *imm);
+                return Ok(true);
+            }
+        }
+
         if let OpKind::X86PackedAlignRight {
             dst,
             high,
@@ -27894,6 +27940,46 @@ mod tests {
                 X86OpHint::SseOp {
                     prefix: X86SsePrefix::OpSize,
                     opcode: 0x0F,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, malformed_hint),
+                LowerError::InvalidOperand { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn lower_mmx_word_shuffle_emits_immediate_opcode_and_rejects_malformed() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let shuffle = |dst, src, width, high_words| OpKind::X86PackedShuffleImm {
+            dst,
+            src,
+            width,
+            elem: VecElementType::I16,
+            imm: 0x1B,
+            high_words,
+        };
+        let hint = X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0x70,
+        };
+        let code = lower_single_hinted_op(shuffle(mm(0), mm(1), VecWidth::V64, None), hint);
+        assert!(
+            code.windows(4)
+                .any(|window| window == [0x0F, 0x70, 0xC1, 0x1B]),
+            "missing MMX PSHUFW 0F 70 /r ib: {code:02X?}"
+        );
+
+        for (kind, malformed_hint) in [
+            (shuffle(mm(0), mm(1), VecWidth::V128, None), hint),
+            (shuffle(mm(0), mm(1), VecWidth::V64, Some(true)), hint),
+            (
+                shuffle(mm(0), mm(1), VecWidth::V64, None),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x70,
                 },
             ),
         ] {

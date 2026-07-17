@@ -3768,6 +3768,10 @@ impl OpKind {
                 result.push(*low);
             }
 
+            OpKind::X86PackedShuffleImm { src, .. } => {
+                result.push(*src);
+            }
+
             OpKind::X86PackedShift { src, count, .. } => {
                 result.push(*src);
                 result.push(*count);

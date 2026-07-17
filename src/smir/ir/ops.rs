@@ -3303,6 +3303,18 @@ pub enum OpKind {
         amount: u8,
     },
 
+    /// PSHUFW/PSHUFD/PSHUFHW/PSHUFLW immediate-controlled lane shuffle.
+    /// `high_words` is `None` for all-lane shuffles, `Some(true)` for the high
+    /// four words, and `Some(false)` for the low four words.
+    X86PackedShuffleImm {
+        dst: VReg,
+        src: VReg,
+        width: VecWidth,
+        elem: VecElementType,
+        imm: u8,
+        high_words: Option<bool>,
+    },
+
     /// Packed element shift by the unsigned count in `count`. Architectural
     /// x86 forms consume the complete low 64 bits and apply the same count to
     /// every element; out-of-range counts zero logical results or sign-fill
@@ -4111,6 +4123,7 @@ impl OpKind {
             | OpKind::X86Convert16ToFp32 { dst, .. }
             | OpKind::X86PackedShiftImm { dst, .. }
             | OpKind::X86PackedAlignRight { dst, .. }
+            | OpKind::X86PackedShuffleImm { dst, .. }
             | OpKind::X86PackedShift { dst, .. }
             | OpKind::X86PackedShiftVariable { dst, .. }
             | OpKind::X86PackedRotate { dst, .. }

@@ -13543,19 +13543,23 @@ impl X86_64Lifter {
         } else {
             self.xmm(modrm.reg)
         };
-        let raw = if mmx { dst } else { ctx.alloc_vreg() };
-        self.append_packed_shuffle_imm(
-            raw,
-            src,
-            if mmx { VecWidth::V64 } else { VecWidth::V128 },
-            elem,
-            bytes[imm_offset],
-            high_words,
-            pc,
-            ctx,
-            &mut ops,
-        );
         if mmx {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86PackedShuffleImm {
+                    dst,
+                    src,
+                    width: VecWidth::V64,
+                    elem,
+                    imm: bytes[imm_offset],
+                    high_words,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x70,
+                },
+            ));
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
@@ -13565,6 +13569,18 @@ impl X86_64Lifter {
                 },
             ));
         } else {
+            let raw = ctx.alloc_vreg();
+            self.append_packed_shuffle_imm(
+                raw,
+                src,
+                VecWidth::V128,
+                elem,
+                bytes[imm_offset],
+                high_words,
+                pc,
+                ctx,
+                &mut ops,
+            );
             self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
         }
         Ok(LiftResult::fallthrough(
@@ -62721,14 +62737,21 @@ mod tests {
     fn lift_packed_immediate_shuffle_covers_legacy_vex_memory_and_invalids() {
         let mmx_register = lift_single(&[0x0F, 0x70, 0xC1, 0x1B]).unwrap();
         assert!(mmx_register.ops.iter().any(|op| matches!(
-            op.kind,
-            OpKind::VShuffle {
-                dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
-                src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
-                elem: VecElementType::I16,
-                lanes: 4,
-                ..
-            }
+            (&op.kind, op.x86_hint),
+            (
+                OpKind::X86PackedShuffleImm {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                    width: VecWidth::V64,
+                    elem: VecElementType::I16,
+                    imm: 0x1B,
+                    high_words: None,
+                },
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x70,
+                })
+            )
         )));
         assert!(mmx_register.ops.iter().any(|op| matches!(
             op.kind,

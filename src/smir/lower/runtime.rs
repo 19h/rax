@@ -3347,6 +3347,32 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
         X86Reg,
     };
 
+    if let OpKind::X86PackedShuffleImm {
+        dst,
+        src,
+        width,
+        elem,
+        high_words,
+        ..
+    } = &op.kind
+    {
+        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        if mm(dst) || mm(src) {
+            return *width == VecWidth::V64
+                && *elem == VecElementType::I16
+                && high_words.is_none()
+                && mm(dst)
+                && mm(src)
+                && matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0x70,
+                    })
+                );
+        }
+    }
+
     if let OpKind::X86PackedAlignRight {
         dst,
         high,
@@ -14688,6 +14714,82 @@ mod jit_gate_tests {
         ] {
             assert!(!is_x86_native_mmx_op(&malformed), "{malformed:?}");
             assert!(!x86_native_mmx_op_requires_ssse3(&malformed));
+        }
+    }
+
+    #[test]
+    fn x86_mmx_word_shuffle_gate_accepts_only_exact_immediate_form() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let exact = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(0),
+            0xA700,
+            OpKind::X86PackedShuffleImm {
+                dst: mm(0),
+                src: mm(1),
+                width: VecWidth::V64,
+                elem: VecElementType::I16,
+                imm: 0x1B,
+                high_words: None,
+            },
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode: 0x70,
+            },
+        );
+        assert!(is_x86_native_mmx_op(&exact));
+        assert!(!x86_native_mmx_op_requires_ssse3(&exact));
+
+        for malformed in [
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(1),
+                0xA700,
+                OpKind::X86PackedShuffleImm {
+                    dst: mm(0),
+                    src: mm(1),
+                    width: VecWidth::V128,
+                    elem: VecElementType::I16,
+                    imm: 0x1B,
+                    high_words: None,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x70,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(2),
+                0xA700,
+                OpKind::X86PackedShuffleImm {
+                    dst: mm(0),
+                    src: mm(1),
+                    width: VecWidth::V64,
+                    elem: VecElementType::I16,
+                    imm: 0x1B,
+                    high_words: Some(true),
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x70,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(3),
+                0xA700,
+                OpKind::X86PackedShuffleImm {
+                    dst: mm(0),
+                    src: mm(1),
+                    width: VecWidth::V64,
+                    elem: VecElementType::I16,
+                    imm: 0x1B,
+                    high_words: None,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x70,
+                },
+            ),
+        ] {
+            assert!(!is_x86_native_mmx_op(&malformed), "{malformed:?}");
         }
     }
 

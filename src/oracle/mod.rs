@@ -3236,6 +3236,22 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             width,
             amount,
         } => op_json!("x86_packed_align_right", dst, high, low, width, amount),
+        OpKind::X86PackedShuffleImm {
+            dst,
+            src,
+            width,
+            elem,
+            imm,
+            high_words,
+        } => op_json!(
+            "x86_packed_shuffle_imm",
+            dst,
+            src,
+            width,
+            elem,
+            imm,
+            high_words
+        ),
         OpKind::X86PackedShift {
             dst,
             src,

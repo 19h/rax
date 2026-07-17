@@ -8724,6 +8724,41 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::X86PackedShuffleImm {
+                dst,
+                src,
+                width,
+                elem,
+                imm,
+                high_words,
+            } => {
+                let input = Self::read_vec(ctx, *src);
+                let mut result = [0u64; 16];
+                let lanes = width.lanes(*elem) as u8;
+                let block_lanes = if *elem == VecElementType::I32 { 4 } else { 8 };
+                let bits = elem.bytes() * 8;
+                for lane in 0..lanes {
+                    let within = lane % block_lanes;
+                    let block = lane - within;
+                    let shuffled = match high_words {
+                        None => true,
+                        Some(true) => within >= 4,
+                        Some(false) => within < 4,
+                    };
+                    let selector = if shuffled {
+                        let output = within % 4;
+                        block
+                            + if *high_words == Some(true) { 4 } else { 0 }
+                            + ((*imm >> (output * 2)) & 3)
+                    } else {
+                        lane
+                    };
+                    let value = Self::get_lane(&input, selector, bits);
+                    Self::set_lane(&mut result, lane, bits, value);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::X86PackedShift {
                 dst,
                 src,
