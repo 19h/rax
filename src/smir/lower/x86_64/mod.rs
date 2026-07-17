@@ -2180,6 +2180,14 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(reg, rm);
     }
 
+    pub fn emit_mmx_shift_imm(&mut self, opcode: u8, digit: u8, rm: PhysReg, imm: u8) {
+        debug_assert!(rm.is_mmx() && digit < 8);
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_digit(0b11, digit, rm);
+        self.code.emit_u8(imm);
+    }
+
     pub fn emit_sse_fp_to_int_rr(
         &mut self,
         prefix: u8,
@@ -5800,6 +5808,55 @@ impl X86_64Lowerer {
     /// the normal scalar/vector matcher; any mixed or malformed MMX shape is an
     /// error rather than a widening opportunity.
     fn lower_mmx_rr(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<bool, LowerError> {
+        if let OpKind::X86PackedShiftImm {
+            dst,
+            src,
+            width,
+            elem,
+            shift,
+            amount,
+            byte_lane,
+        } = &op.kind
+        {
+            let encoding = match (*width, *elem, *shift, *byte_lane) {
+                (VecWidth::V64, VecElementType::I16, ShiftOp::Lsr, false) => Some((0x71, 2)),
+                (VecWidth::V64, VecElementType::I16, ShiftOp::Asr, false) => Some((0x71, 4)),
+                (VecWidth::V64, VecElementType::I16, ShiftOp::Lsl, false) => Some((0x71, 6)),
+                (VecWidth::V64, VecElementType::I32, ShiftOp::Lsr, false) => Some((0x72, 2)),
+                (VecWidth::V64, VecElementType::I32, ShiftOp::Asr, false) => Some((0x72, 4)),
+                (VecWidth::V64, VecElementType::I32, ShiftOp::Lsl, false) => Some((0x72, 6)),
+                (VecWidth::V64, VecElementType::I64, ShiftOp::Lsr, false) => Some((0x73, 2)),
+                (VecWidth::V64, VecElementType::I64, ShiftOp::Lsl, false) => Some((0x73, 6)),
+                _ => None,
+            };
+            let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+            if !is_mm(dst) && !is_mm(src) {
+                return Ok(false);
+            }
+            let encoding_valid = encoding.is_some()
+                && dst == src
+                && is_mm(dst)
+                && is_mm(src)
+                && matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode,
+                    }) if Some(opcode) == encoding.map(|(opcode, _)| opcode)
+                );
+            if !encoding_valid {
+                return Err(LowerError::InvalidOperand {
+                    op: "MMX immediate shift".to_string(),
+                    operand: "requires exact destructive V64 register and group opcode".to_string(),
+                });
+            }
+            let (opcode, digit) = encoding.unwrap();
+            let dst_reg = self.get_dst_reg(*dst)?;
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mmx_shift_imm(opcode, digit, dst_reg, *amount);
+            return Ok(true);
+        }
+
         let (dst, src1, src2, expected_opcode) = match &op.kind {
             OpKind::VAnd {
                 dst,
@@ -26982,6 +27039,43 @@ mod tests {
             assert!(
                 code.windows(3).any(|window| window == [0x0F, opcode, 0xD5]),
                 "missing MMX packed shift 0F {opcode:02X} /r: {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_mmx_immediate_shifts_emit_all_classic_group_forms() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, shift, opcode, digit) in [
+            (VecElementType::I16, ShiftOp::Lsr, 0x71, 2),
+            (VecElementType::I16, ShiftOp::Asr, 0x71, 4),
+            (VecElementType::I16, ShiftOp::Lsl, 0x71, 6),
+            (VecElementType::I32, ShiftOp::Lsr, 0x72, 2),
+            (VecElementType::I32, ShiftOp::Asr, 0x72, 4),
+            (VecElementType::I32, ShiftOp::Lsl, 0x72, 6),
+            (VecElementType::I64, ShiftOp::Lsr, 0x73, 2),
+            (VecElementType::I64, ShiftOp::Lsl, 0x73, 6),
+        ] {
+            let code = lower_single_hinted_op(
+                OpKind::X86PackedShiftImm {
+                    dst: mm(1),
+                    src: mm(1),
+                    width: VecWidth::V64,
+                    elem,
+                    shift,
+                    amount: 17,
+                    byte_lane: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            let modrm = 0xC1 | (digit << 3);
+            assert!(
+                code.windows(4)
+                    .any(|window| window == [0x0F, opcode, modrm, 17]),
+                "missing MMX immediate shift 0F {opcode:02X} /{digit}: {code:02X?}"
             );
         }
     }

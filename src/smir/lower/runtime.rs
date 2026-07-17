@@ -3346,6 +3346,40 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
         ArchReg, ShiftOp, VLaneOp, VReg, VecCmpCond, VecElementType, VecWidth, X86Reg,
     };
 
+    if let OpKind::X86PackedShiftImm {
+        dst,
+        src,
+        width,
+        elem,
+        shift,
+        byte_lane,
+        ..
+    } = &op.kind
+    {
+        let expected = match (*width, *elem, *shift, *byte_lane) {
+            (VecWidth::V64, VecElementType::I16, ShiftOp::Lsr, false) => Some(0x71),
+            (VecWidth::V64, VecElementType::I16, ShiftOp::Asr, false) => Some(0x71),
+            (VecWidth::V64, VecElementType::I16, ShiftOp::Lsl, false) => Some(0x71),
+            (VecWidth::V64, VecElementType::I32, ShiftOp::Lsr, false) => Some(0x72),
+            (VecWidth::V64, VecElementType::I32, ShiftOp::Asr, false) => Some(0x72),
+            (VecWidth::V64, VecElementType::I32, ShiftOp::Lsl, false) => Some(0x72),
+            (VecWidth::V64, VecElementType::I64, ShiftOp::Lsr, false) => Some(0x73),
+            (VecWidth::V64, VecElementType::I64, ShiftOp::Lsl, false) => Some(0x73),
+            _ => None,
+        };
+        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        return expected.is_some()
+            && dst == src
+            && mm(dst)
+            && matches!(
+                op.x86_hint,
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                }) if Some(opcode) == expected
+            );
+    }
+
     let (dst, src1, src2, expected_opcode) = match &op.kind {
         OpKind::VAnd {
             dst,
@@ -13705,6 +13739,54 @@ mod jit_gate_tests {
             );
             builder.push_op(
                 0x9B00,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+    }
+
+    #[test]
+    fn x86_mmx_immediate_shift_gate_covers_all_classic_group_forms() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, shift, opcode) in [
+            (VecElementType::I16, ShiftOp::Lsr, 0x71),
+            (VecElementType::I16, ShiftOp::Asr, 0x71),
+            (VecElementType::I16, ShiftOp::Lsl, 0x71),
+            (VecElementType::I32, ShiftOp::Lsr, 0x72),
+            (VecElementType::I32, ShiftOp::Asr, 0x72),
+            (VecElementType::I32, ShiftOp::Lsl, 0x72),
+            (VecElementType::I64, ShiftOp::Lsr, 0x73),
+            (VecElementType::I64, ShiftOp::Lsl, 0x73),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x9C00);
+            builder.push_op(
+                0x9C00,
+                OpKind::X86PackedShiftImm {
+                    dst: mm(1),
+                    src: mm(1),
+                    width: VecWidth::V64,
+                    elem,
+                    shift,
+                    amount: 17,
+                    byte_lane: false,
+                },
+            );
+            builder.push_op(
+                0x9C00,
                 OpKind::X86X87Control {
                     kind: X86X87ControlKind::EnterMmx,
                     addr: None,

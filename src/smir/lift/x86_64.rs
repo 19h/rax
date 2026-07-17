@@ -22303,19 +22303,28 @@ impl X86_64Lifter {
             self.xmm(modrm.rm)
         };
         let raw = if mmx { dst } else { ctx.alloc_vreg() };
-        let mut ops = vec![SmirOp::new(
-            OpId(0),
-            pc,
-            OpKind::X86PackedShiftImm {
-                dst: raw,
-                src: dst,
-                width: if mmx { VecWidth::V64 } else { VecWidth::V128 },
-                elem,
-                shift,
-                amount: bytes[imm_offset],
-                byte_lane,
-            },
-        )];
+        let kind = OpKind::X86PackedShiftImm {
+            dst: raw,
+            src: dst,
+            width: if mmx { VecWidth::V64 } else { VecWidth::V128 },
+            elem,
+            shift,
+            amount: bytes[imm_offset],
+            byte_lane,
+        };
+        let mut ops = if mmx {
+            vec![SmirOp::with_hint(
+                OpId(0),
+                pc,
+                kind,
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            )]
+        } else {
+            vec![SmirOp::new(OpId(0), pc, kind)]
+        };
         if mmx {
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
@@ -62458,6 +62467,10 @@ mod tests {
                             amount: 0x11,
                             byte_lane: false,
                         },
+                        x86_hint: Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: actual_opcode,
+                        }),
                         ..
                     },
                     SmirOp {
@@ -62467,7 +62480,7 @@ mod tests {
                         },
                         ..
                     }
-                ] if *actual_elem == elem && *actual_shift == shift
+                ] if *actual_elem == elem && *actual_shift == shift && *actual_opcode == opcode
             ));
         }
 
