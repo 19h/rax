@@ -3343,8 +3343,52 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
 pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
     use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix};
     use crate::smir::ir::types::{
-        ArchReg, ShiftOp, VLaneOp, VReg, VecCmpCond, VecElementType, VecUnaryOp, VecWidth, X86Reg,
+        ArchReg, OpWidth, ShiftOp, VLaneOp, VReg, VecCmpCond, VecElementType, VecUnaryOp, VecWidth,
+        X86Reg,
     };
+
+    if let OpKind::X86MovMask {
+        dst,
+        src,
+        elem,
+        lanes,
+        dst_width,
+    } = &op.kind
+    {
+        let safe_gpr = matches!(
+            dst,
+            VReg::Arch(ArchReg::X86(
+                X86Reg::Rax
+                    | X86Reg::Rcx
+                    | X86Reg::Rdx
+                    | X86Reg::Rbx
+                    | X86Reg::Rsi
+                    | X86Reg::Rdi
+                    | X86Reg::R8
+                    | X86Reg::R9
+                    | X86Reg::R10
+                    | X86Reg::R11
+                    | X86Reg::R12
+                    | X86Reg::R13
+                    | X86Reg::R14
+                    | X86Reg::R15
+            ))
+        );
+        let mm = matches!(src, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        if mm {
+            return safe_gpr
+                && *elem == VecElementType::I8
+                && *lanes == 8
+                && matches!(dst_width, OpWidth::W32 | OpWidth::W64)
+                && matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0xD7,
+                    })
+                );
+        }
+    }
 
     if let OpKind::VByteShuffle {
         dst,
@@ -14338,6 +14382,71 @@ mod jit_gate_tests {
         ] {
             assert!(!is_x86_native_mmx_op(&malformed), "{malformed:?}");
             assert!(!x86_native_mmx_op_requires_ssse3(&malformed));
+        }
+    }
+
+    #[test]
+    fn x86_mmx_movemask_gate_accepts_only_exact_safe_gpr_form() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0xA400);
+        builder.push_op(
+            0xA400,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: None,
+            },
+        );
+        builder.push_op(
+            0xA400,
+            OpKind::X86MovMask {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::R8)),
+                src: mm(1),
+                elem: VecElementType::I8,
+                lanes: 8,
+                dst_width: OpWidth::W64,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0xD7,
+        });
+        assert!(is_x86_native_mmx_op(&function.blocks[0].ops[1]));
+        assert!(!x86_native_mmx_op_requires_ssse3(
+            &function.blocks[0].ops[1]
+        ));
+        assert!(is_native_clobber_safe(&function));
+        assert!(x86_native_mmx_pairs_valid_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+
+        for (dst, lanes, prefix) in [
+            (VReg::Arch(ArchReg::X86(X86Reg::Rbp)), 8, X86SsePrefix::None),
+            (VReg::Arch(ArchReg::X86(X86Reg::R8)), 16, X86SsePrefix::None),
+            (
+                VReg::Arch(ArchReg::X86(X86Reg::R8)),
+                8,
+                X86SsePrefix::OpSize,
+            ),
+        ] {
+            let malformed = crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0xA400,
+                OpKind::X86MovMask {
+                    dst,
+                    src: mm(1),
+                    elem: VecElementType::I8,
+                    lanes,
+                    dst_width: OpWidth::W64,
+                },
+                X86OpHint::SseOp {
+                    prefix,
+                    opcode: 0xD7,
+                },
+            );
+            assert!(!is_x86_native_mmx_op(&malformed), "{malformed:?}");
         }
     }
 

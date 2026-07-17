@@ -5816,6 +5816,91 @@ impl X86_64Lowerer {
     /// the normal scalar/vector matcher; any mixed or malformed MMX shape is an
     /// error rather than a widening opportunity.
     fn lower_mmx_rr(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<bool, LowerError> {
+        if let OpKind::X86MovMask {
+            dst,
+            src,
+            elem,
+            lanes,
+            dst_width,
+        } = &op.kind
+        {
+            let src_is_mm = matches!(src, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+            if src_is_mm {
+                let safe_gpr_vreg = matches!(
+                    dst,
+                    VReg::Arch(ArchReg::X86(
+                        X86Reg::Rax
+                            | X86Reg::Rcx
+                            | X86Reg::Rdx
+                            | X86Reg::Rbx
+                            | X86Reg::Rsi
+                            | X86Reg::Rdi
+                            | X86Reg::R8
+                            | X86Reg::R9
+                            | X86Reg::R10
+                            | X86Reg::R11
+                            | X86Reg::R12
+                            | X86Reg::R13
+                            | X86Reg::R14
+                            | X86Reg::R15
+                    ))
+                );
+                if !safe_gpr_vreg {
+                    return Err(LowerError::InvalidOperand {
+                        op: "MMX PMOVMSKB".to_string(),
+                        operand: "requires a safe legacy GPR destination".to_string(),
+                    });
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let safe_gpr = matches!(
+                    dst_reg,
+                    PhysReg::Rax
+                        | PhysReg::Rcx
+                        | PhysReg::Rdx
+                        | PhysReg::Rbx
+                        | PhysReg::Rsi
+                        | PhysReg::Rdi
+                        | PhysReg::R8
+                        | PhysReg::R9
+                        | PhysReg::R10
+                        | PhysReg::R11
+                        | PhysReg::R12
+                        | PhysReg::R13
+                        | PhysReg::R14
+                        | PhysReg::R15
+                );
+                let encoding_valid = safe_gpr
+                    && matches!(src_reg, PhysReg::Mm(0..=7))
+                    && *elem == VecElementType::I8
+                    && *lanes == 8
+                    && matches!(dst_width, OpWidth::W32 | OpWidth::W64)
+                    && matches!(
+                        op.x86_hint,
+                        Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: 0xD7,
+                        })
+                    );
+                if !encoding_valid {
+                    return Err(LowerError::InvalidOperand {
+                        op: "MMX PMOVMSKB".to_string(),
+                        operand: "requires an exact I8x8 MM source and safe legacy GPR destination"
+                            .to_string(),
+                    });
+                }
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_sse_mov_mask_rr(
+                    None,
+                    0xD7,
+                    dst_reg,
+                    src_reg,
+                    *dst_width == OpWidth::W64,
+                );
+                return Ok(true);
+            }
+        }
+
         if let OpKind::VByteShuffle {
             dst,
             src,
@@ -27546,6 +27631,55 @@ mod tests {
                 LowerError::InvalidOperand { .. }
             ));
         }
+    }
+
+    #[test]
+    fn lower_mmx_movemask_emits_width_exact_gpr_encoding_and_rejects_unsafe_dst() {
+        let mm1 = VReg::Arch(ArchReg::X86(X86Reg::Mm(1)));
+        for (dst_width, expected) in [
+            (OpWidth::W32, &[0x44, 0x0F, 0xD7, 0xC1][..]),
+            (OpWidth::W64, &[0x4C, 0x0F, 0xD7, 0xC1][..]),
+        ] {
+            let code = lower_single_hinted_op(
+                OpKind::X86MovMask {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::R8)),
+                    src: mm1,
+                    elem: VecElementType::I8,
+                    lanes: 8,
+                    dst_width,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0xD7,
+                },
+            );
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "missing MMX PMOVMSKB encoding {expected:02X?}: {code:02X?}"
+            );
+        }
+
+        let error = lower_single_hinted_op_err(
+            OpKind::X86MovMask {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rbp)),
+                src: mm1,
+                elem: VecElementType::I8,
+                lanes: 8,
+                dst_width: OpWidth::W64,
+            },
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode: 0xD7,
+            },
+        );
+        assert!(
+            matches!(
+                error,
+                LowerError::InvalidOperand { .. } | LowerError::InvalidRegister(_)
+            ),
+            "{error:?}"
+        );
     }
 
     #[test]
