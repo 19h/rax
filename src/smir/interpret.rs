@@ -39091,6 +39091,58 @@ mod tests {
         ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
         ctx.flags.lazy = None;
 
+        for &(opcode, elem_bytes, value, control) in &cases {
+            let value = &value[..8];
+            let control = &control[..8];
+            let expected =
+                u64::from_le_bytes(reference(value, control, elem_bytes).try_into().unwrap());
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[0] = u64::from_le_bytes(value.try_into().unwrap());
+                x86.mm[1] = u64::from_le_bytes(control.try_into().unwrap());
+                x86.x87.tag_word = 0xFFFF;
+                x86.x87.status_word = 3 << 11;
+            }
+            execute_lifted_x86(&[0x0F, 0x38, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.mm[0], expected, "MMX opcode={opcode:02X}");
+                assert_eq!(x86.x87.tag_word, 0);
+                assert_eq!(x86.x87.status_word & 0x3800, 3 << 11);
+            }
+        }
+
+        // The m64 control operand is unaligned and must be read completely
+        // before either the destructive destination or x87/MMX state changes.
+        let mmx_value = &byte_values[..8];
+        let mmx_control = &byte_controls[..8];
+        let mmx_expected =
+            u64::from_le_bytes(reference(mmx_value, mmx_control, 1).try_into().unwrap());
+        memory.write(0x81, mmx_control).unwrap();
+        ctx.write_vreg(rax, 0x80);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::from_le_bytes(mmx_value.try_into().unwrap());
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0x38, 0x08, 0x40, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], mmx_expected);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        ctx.write_vreg(rax, 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0x38, 0x08, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xDEAD_BEEF_CAFE_BABE);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+
         for (opcode, elem_bytes, value, control) in cases {
             let expected = reference(value, control, elem_bytes);
             if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {

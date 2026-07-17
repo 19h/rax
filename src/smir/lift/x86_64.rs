@@ -13880,22 +13880,13 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if !prefix.operand_size_override && prefix.rep_prefix.is_none() && !prefix.lock {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("MMX PSIGN opcode {opcode:02X}"),
-            });
-        }
-        if !prefix.operand_size_override
-            || prefix.rep_prefix.is_some()
-            || prefix.lock
-            || prefix.rex2.is_some()
-        {
+        if prefix.rep_prefix.is_some() || prefix.lock || prefix.rex2.is_some() {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
             });
         }
+        let mmx = !prefix.operand_size_override;
         let elem = match opcode {
             0x08 => VecElementType::I8,
             0x09 => VecElementType::I16,
@@ -13908,14 +13899,16 @@ impl X86_64Lifter {
         let control = if modrm.is_memory {
             let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
             ops.extend(pre_ops);
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::X86CheckAlignment {
-                    addr: addr.clone(),
-                    alignment: 16,
-                },
-            ));
+            if !mmx {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86CheckAlignment {
+                        addr: addr.clone(),
+                        alignment: 16,
+                    },
+                ));
+            }
             let loaded = ctx.alloc_vreg();
             ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
@@ -13923,16 +13916,49 @@ impl X86_64Lifter {
                 OpKind::VLoad {
                     dst: loaded,
                     addr,
-                    width: VecWidth::V128,
+                    width: if mmx { VecWidth::V64 } else { VecWidth::V128 },
                 },
-                X86OpHint::VecAlign(X86VecAlign::Aligned),
+                X86OpHint::VecAlign(if mmx {
+                    X86VecAlign::Unaligned
+                } else {
+                    X86VecAlign::Aligned
+                }),
             ));
             loaded
+        } else if mmx {
+            self.mm(modrm.rm)
         } else {
             self.xmm(modrm.rm)
         };
-        let dst = self.xmm(modrm.reg);
-        if modrm.is_memory {
+        let dst = if mmx {
+            self.mm(modrm.reg)
+        } else {
+            self.xmm(modrm.reg)
+        };
+        if mmx {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLane {
+                    dst,
+                    src1: dst,
+                    src2: control,
+                    elem,
+                    lanes: VecWidth::V64.lanes(elem) as u8,
+                    op: VLaneOp::Sign,
+                    signed: true,
+                    set_ovf: false,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            ));
+        } else if modrm.is_memory {
             let raw = ctx.alloc_vreg();
             self.append_packed_sign(raw, dst, control, elem, VecWidth::V128, pc, ctx, &mut ops);
             self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
@@ -53887,6 +53913,34 @@ mod tests {
             (0x09, VecElementType::I16),
             (0x0A, VecElementType::I32),
         ] {
+            let mmx = lift_single(&[0x0F, 0x38, opcode, 0xC1]).unwrap();
+            assert!(matches!(
+                mmx.ops.as_slice(),
+                [
+                    SmirOp {
+                        kind: OpKind::VLane {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                            src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                            src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                            elem: actual_elem,
+                            lanes,
+                            op: VLaneOp::Sign,
+                            signed: true,
+                            set_ovf: false,
+                        },
+                        x86_hint: None,
+                        ..
+                    },
+                    SmirOp {
+                        kind: OpKind::X86X87Control {
+                            kind: X86X87ControlKind::EnterMmx,
+                            ..
+                        },
+                        ..
+                    }
+                ] if *actual_elem == elem && *lanes == VecWidth::V64.lanes(elem) as u8
+            ));
+
             let legacy = lift_single(&[0x66, 0x0F, 0x38, opcode, 0xC1]).unwrap();
             assert_eq!(legacy.ops.len(), 1);
             assert!(matches!(
@@ -53997,6 +54051,34 @@ mod tests {
             .unwrap();
         assert!(alignment < load);
 
+        let mmx_mem = lift_single(&[0x0F, 0x38, 0x09, 0x40, 0x01]).unwrap();
+        assert!(mmx_mem.ops.iter().any(|op| matches!(
+            (&op.kind, op.x86_hint),
+            (
+                OpKind::VLoad {
+                    width: VecWidth::V64,
+                    ..
+                },
+                Some(X86OpHint::VecAlign(X86VecAlign::Unaligned))
+            )
+        )));
+        assert!(mmx_mem.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                elem: VecElementType::I16,
+                lanes: 4,
+                op: VLaneOp::Sign,
+                ..
+            }
+        )));
+        assert!(
+            !mmx_mem
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
+        );
+
         let vex_mem = lift_single(&[0xC4, 0xE2, 0x75, 0x0A, 0x00]).unwrap();
         assert!(vex_mem.ops.iter().any(|op| matches!(
             op.kind,
@@ -54026,7 +54108,7 @@ mod tests {
             })
         ));
         for bytes in [
-            &[0x0F, 0x38, 0x08, 0xC1][..],             // MMX state is not exposed
+            &[0x0F, 0x38, 0x08][..],                   // missing ModR/M
             &[0xF3, 0x66, 0x0F, 0x38, 0x09, 0xC1][..], // conflicting prefix
             &[0xF0, 0x66, 0x0F, 0x38, 0x0A, 0xC1][..], // LOCK
             &[0xC4, 0xE2, 0x70, 0x08, 0xC2][..],       // VEX.pp != 66
