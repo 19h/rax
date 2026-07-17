@@ -39524,6 +39524,146 @@ mod tests {
         ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
         ctx.flags.lazy = None;
 
+        // Legacy SSE is destructive and preserves shared state above XMM,
+        // while VEX.256 is three-operand and clears state above YMM.
+        let legacy_left = (0..16u8)
+            .map(|lane| lane.wrapping_mul(0x57).wrapping_add(0x13))
+            .collect::<Vec<_>>();
+        let legacy_right = (0..16u8)
+            .map(|lane| lane.wrapping_mul(0x83).wrapping_add(0x29))
+            .collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = packed(&legacy_left, 0xA5A5_A5A5_A5A5_A5A5);
+            x86.xmm[9] = packed(&legacy_right, 0);
+        }
+        execute_lifted_x86(&[0x66, 0x45, 0x0F, 0x38, 0xCF, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[8], 16),
+                legacy_left
+                    .iter()
+                    .copied()
+                    .zip(legacy_right.iter().copied())
+                    .map(|(left, right)| gf_mul(left, right))
+                    .collect::<Vec<_>>()
+            );
+            assert!(
+                x86.xmm[8][2..]
+                    .iter()
+                    .all(|word| *word == 0xA5A5_A5A5_A5A5_A5A5)
+            );
+        }
+
+        let vex_left = (0..32u8)
+            .map(|lane| lane.wrapping_mul(0x31).wrapping_add(0xC7))
+            .collect::<Vec<_>>();
+        let vex_right = (0..32u8)
+            .map(|lane| lane.wrapping_mul(0xA7).wrapping_add(0x02))
+            .collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = sentinel;
+            x86.xmm[9] = packed(&vex_left, 0);
+            x86.xmm[10] = packed(&vex_right, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x42, 0x35, 0xCF, 0xC2], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[8], 32),
+                vex_left
+                    .iter()
+                    .copied()
+                    .zip(vex_right.iter().copied())
+                    .map(|(left, right)| gf_mul(left, right))
+                    .collect::<Vec<_>>()
+            );
+            assert!(x86.xmm[8][4..].iter().all(|word| *word == 0));
+        }
+
+        // The immediate affine forms additionally validate VEX source
+        // ordering and legacy destructive inverse composition.
+        let identity_matrix = [0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01];
+        let vex_affine_input = (0..32u8)
+            .map(|lane| lane.wrapping_mul(0x5D).wrapping_add(0x21))
+            .collect::<Vec<_>>();
+        let vex_affine_matrices = identity_matrix.repeat(4);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = sentinel;
+            x86.xmm[9] = packed(&vex_affine_input, 0);
+            x86.xmm[10] = packed(&vex_affine_matrices, 0);
+        }
+        execute_lifted_x86(&[0xC4, 0x43, 0xB5, 0xCE, 0xC2, 0x63], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[8], 32),
+                vex_affine_input
+                    .iter()
+                    .copied()
+                    .map(|value| affine(&identity_matrix, value, 0x63))
+                    .collect::<Vec<_>>()
+            );
+            assert!(x86.xmm[8][4..].iter().all(|word| *word == 0));
+        }
+
+        let legacy_inverse_input = (0..16u8)
+            .map(|lane| lane.wrapping_mul(0x97).wrapping_add(0x53))
+            .collect::<Vec<_>>();
+        let legacy_inverse_matrices = identity_matrix.repeat(2);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = packed(&legacy_inverse_input, 0x5A5A_5A5A_5A5A_5A5A);
+            x86.xmm[9] = packed(&legacy_inverse_matrices, 0);
+        }
+        execute_lifted_x86(
+            &[0x66, 0x45, 0x0F, 0x3A, 0xCF, 0xC1, 0x63],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[8], 16),
+                legacy_inverse_input
+                    .iter()
+                    .copied()
+                    .map(|value| affine(&identity_matrix, gf_inverse(value), 0x63))
+                    .collect::<Vec<_>>()
+            );
+            assert!(
+                x86.xmm[8][2..]
+                    .iter()
+                    .all(|word| *word == 0x5A5A_5A5A_5A5A_5A5A)
+            );
+        }
+
+        // Only the legacy m128 form imposes 16-byte alignment. The same
+        // unaligned address is valid for VEX.128.
+        memory.write(0x101, &legacy_right).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        let legacy_before = packed(&legacy_left, 0xA5A5_A5A5_A5A5_A5A5);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = legacy_before;
+            x86.xmm[1] = packed(&legacy_left, 0);
+        }
+        let misaligned = execute_lifted_x86(&[0x66, 0x0F, 0x38, 0xCF, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            misaligned,
+            BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], legacy_before);
+        }
+        execute_lifted_x86(&[0xC4, 0xE2, 0x71, 0xCF, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                bytes(&x86.xmm[0], 16),
+                legacy_left
+                    .iter()
+                    .copied()
+                    .zip(legacy_right.iter().copied())
+                    .map(|(left, right)| gf_mul(left, right))
+                    .collect::<Vec<_>>()
+            );
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        }
+
         // High ZMM sources and destination exercise every EVEX extension bit;
         // k3 zeroing applies independently to each of the 64 byte products.
         let multiplicands = (0..64u8)

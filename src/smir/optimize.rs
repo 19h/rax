@@ -5336,6 +5336,97 @@ mod tests {
             "E4NF VGF2P8AFFINEQB must not become fault-suppressible"
         );
 
+        let legacy_gfni = optimized(&[0x66, 0x0F, 0x38, 0xCF, 0x00]);
+        let ops = &legacy_gfni.blocks[0].ops;
+        let alignment = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::X86CheckAlignment { alignment: 16, .. }))
+            .expect("legacy GF2P8MULB alignment check removed");
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy GF2P8MULB source load removed");
+        let field_op = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VShift {
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy GF2P8MULB field arithmetic removed");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("legacy GF2P8MULB destination write removed");
+        assert!(alignment < load && load < field_op && field_op < destination_write);
+
+        let vex_gfni = optimized(&[0xC4, 0xE2, 0x71, 0xCF, 0x00]);
+        let ops = &vex_gfni.blocks[0].ops;
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. })),
+            "VEX VGF2P8MULB must accept unaligned memory"
+        );
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VGF2P8MULB source load removed");
+        let field_op = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VShift {
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VGF2P8MULB field arithmetic removed");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VMov {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("VEX VGF2P8MULB destination write removed");
+        assert!(load < field_op && field_op < destination_write);
+
         let vex_unpack = optimized(&[0xC5, 0xF5, 0x60, 0x00]);
         let ops = &vex_unpack.blocks[0].ops;
         let load = ops
