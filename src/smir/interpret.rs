@@ -29411,7 +29411,7 @@ mod tests {
     #[test]
     fn executes_evex_map5_fp16_arithmetic_masks_and_zeroes_upper_state() {
         let mut ctx = SmirContext::new_x86_64();
-        let mut memory = FlatMemory::new(0x100);
+        let mut memory = FlatMemory::new(0x200);
         let mask = 0xa55a_a55au64;
         if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
             x86.xmm[1] = [u64::MAX; 16];
@@ -29446,6 +29446,62 @@ mod tests {
         execute_lifted_x86(&[0x62, 0xF5, 0x6C, 0x48, 0x58, 0xCB], &mut ctx, &mut memory);
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 16), 0x3c01);
+        }
+
+        memory
+            .write(0x80, &[0x00, 0x40].repeat(32))
+            .expect("FP16 full-width source");
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.gpr[0] = 0x80;
+            x86.xmm[2] = [0x3c00_3c00_3c00_3c00; 16];
+        }
+        execute_lifted_x86(&[0x62, 0xF5, 0x6C, 0x48, 0x58, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..32u8 {
+                assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], lane, 16), 0x4200);
+            }
+        }
+
+        memory
+            .write(0xC0, &0x4000u16.to_le_bytes())
+            .expect("FP16 broadcast source");
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.gpr[0] = 0xC0;
+            x86.xmm[2] = [0x3c00_3c00_3c00_3c00; 16];
+        }
+        execute_lifted_x86(&[0x62, 0xF5, 0x6C, 0x58, 0x59, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..32u8 {
+                assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], lane, 16), 0x4000);
+            }
+        }
+
+        let sentinel = [0xA55A_A55A_A55A_A55A; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.gpr[0] = 0x200;
+            x86.xmm[1] = sentinel;
+            x86.k[4] = 0;
+        }
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF5, 0x6C, 0x0C, 0x5C, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[1][..2], &sentinel[..2]);
+            assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[4] = 1;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF5, 0x6C, 0x0C, 0x5E, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel, "fault must not commit destination");
         }
     }
 
