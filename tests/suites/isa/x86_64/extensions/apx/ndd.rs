@@ -350,6 +350,27 @@ fn test_ndd_shl_r16_r17_imm() {
 }
 
 #[test]
+fn test_ndd_shl_preserves_undefined_af_policy() {
+    // LLVM 23: shlq $7, %rsp, %r16. AF is architecturally undefined; Rax's
+    // deterministic shift policy retains the incoming value across all tiers.
+    let code = [0x62, 0xF4, 0xFC, 0x10, 0xC1, 0xE4, 0x07, 0xF4];
+    let source = 0x2233_4455_6677_5681u64;
+    let mut regs = Registers {
+        rsp: source,
+        r16: 0xDEAD_BEEF_DEAD_BEEF,
+        rflags: 0x8D7,
+        ..Registers::default()
+    };
+
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+    regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.r16, source.wrapping_shl(7));
+    assert_eq!(regs.rsp, source, "NDD must preserve the source");
+    assert_eq!(regs.rflags & 0x8D5, 0x11, "CF and incoming AF remain set");
+}
+
+#[test]
 fn test_ndd_shld_reg_reg_imm_match_llvm() {
     // LLVM 23 assembles "shld r8, rax, rbx, 4" as 62 f4 bc 18 24 d8 04.
     let code = [0x62, 0xF4, 0xBC, 0x18, 0x24, 0xD8, 0x04, 0xF4];

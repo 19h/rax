@@ -6396,7 +6396,10 @@ impl X86_64Vcpu {
         };
 
         let mut flags = self.regs.rflags;
-        flags &= !(0x8D5);
+        // AF is architecturally undefined for shifts. Preserve its incoming
+        // value as the deterministic policy shared by the legacy executor,
+        // SMIR interpreter, and native JIT status merge.
+        flags &= !0x8C5;
         if cf {
             flags |= 0x001;
         }
