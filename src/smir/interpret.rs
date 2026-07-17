@@ -39524,6 +39524,22 @@ mod tests {
         ctx.flags.lazy = None;
 
         if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::from_le_bytes(first[..8].try_into().unwrap());
+            x86.mm[1] = u64::from_le_bytes(second[..8].try_into().unwrap());
+            x86.x87.tag_word = 0xFFFF;
+            x86.x87.status_word = 3 << 11;
+        }
+        execute_lifted_x86(&[0x0F, 0x38, 0x0B, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.mm[0],
+                u64::from_le_bytes(expected[..8].try_into().unwrap())
+            );
+            assert_eq!(x86.x87.tag_word, 0);
+            assert_eq!(x86.x87.status_word & 0x3800, 3 << 11);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
             x86.xmm[0] = seeded(&first[..16], upper);
             x86.xmm[1] = seeded(&second[..16], 0);
         }
@@ -39552,6 +39568,17 @@ mod tests {
             assert_eq!(
                 bytes(&x86.xmm[0], 16),
                 reference(&first[..16], &first[..16])
+            );
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::from_le_bytes(first[..8].try_into().unwrap());
+        }
+        execute_lifted_x86(&[0x0F, 0x38, 0x0B, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.mm[0],
+                u64::from_le_bytes(reference(&first[..8], &first[..8]).try_into().unwrap())
             );
         }
 
@@ -39594,6 +39621,35 @@ mod tests {
             assert_eq!(x86.xmm[0], sentinel);
         }
 
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::from_le_bytes(first[..8].try_into().unwrap());
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0x38, 0x0B, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.mm[0],
+                u64::from_le_bytes(expected[..8].try_into().unwrap())
+            );
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        ctx.write_vreg(rax, 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0x38, 0x0B, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xDEAD_BEEF_CAFE_BABE);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+
+        ctx.write_vreg(rax, 0x101);
         if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
             x86.xmm[0] = sentinel;
             x86.xmm[1] = seeded(&first[..32], 0);
