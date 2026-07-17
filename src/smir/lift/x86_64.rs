@@ -9979,19 +9979,10 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if opcode == 0xE7
-            && !prefix.operand_size_override
-            && prefix.rep_prefix.is_none()
-            && !prefix.lock
-        {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: "MMX MOVNTQ".to_string(),
-            });
-        }
+        let mmx = opcode == 0xE7 && !prefix.operand_size_override;
         let valid_prefix = match opcode {
             0x2B => prefix.rep_prefix.is_none(),
-            0xE7 => prefix.operand_size_override && prefix.rep_prefix.is_none(),
+            0xE7 => prefix.rep_prefix.is_none(),
             _ => false,
         };
         if prefix.lock || prefix.rex2.is_some() || !valid_prefix {
@@ -10009,24 +10000,45 @@ impl X86_64Lifter {
         }
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let (addr, mut ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::X86CheckAlignment {
-                addr: addr.clone(),
-                alignment: 16,
-            },
-        ));
+        if !mmx {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86CheckAlignment {
+                    addr: addr.clone(),
+                    alignment: 16,
+                },
+            ));
+        }
         ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
             OpKind::VStore {
-                src: self.xmm(modrm.reg),
+                src: if mmx {
+                    self.mm(modrm.reg)
+                } else {
+                    self.xmm(modrm.reg)
+                },
                 addr,
-                width: VecWidth::V128,
+                width: if mmx { VecWidth::V64 } else { VecWidth::V128 },
             },
-            X86OpHint::VecAlign(X86VecAlign::Aligned),
+            X86OpHint::VecAlign(if mmx {
+                X86VecAlign::Unaligned
+            } else {
+                X86VecAlign::Aligned
+            }),
         ));
+        if mmx {
+            // A faulting store must not enter MMX state.
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            ));
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -62445,6 +62457,34 @@ mod tests {
 
     #[test]
     fn lift_legacy_vex_evex_non_temporal_vector_stores() {
+        let mmx = lift_single(&[0x0F, 0xE7, 0x08]).unwrap();
+        assert!(matches!(
+            mmx.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::VStore {
+                        src: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        width: VecWidth::V64,
+                        ..
+                    },
+                    x86_hint: Some(X86OpHint::VecAlign(X86VecAlign::Unaligned)),
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    },
+                    ..
+                }
+            ]
+        ));
+        assert!(
+            !mmx.ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
+        );
+
         for (bytes, width, alignment) in [
             (&[0x0F, 0x2B, 0x08][..], VecWidth::V128, 16),
             (
@@ -62506,6 +62546,7 @@ mod tests {
         )));
         for bytes in [
             &[0x0F, 0x2B, 0xC1][..],
+            &[0x0F, 0xE7, 0xC1][..],
             &[0x66, 0x0F, 0xE7, 0xC1][..],
             &[0xF3, 0x0F, 0x2B, 0x08][..],
             &[0xC5, 0xEC, 0x2B, 0x08][..],
@@ -62521,10 +62562,6 @@ mod tests {
                 "invalid MOVNT vector store accepted: {bytes:02X?}"
             );
         }
-        assert!(matches!(
-            lift_single(&[0x0F, 0xE7, 0x08]),
-            Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "MMX MOVNTQ"
-        ));
     }
 
     #[test]

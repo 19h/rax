@@ -46841,6 +46841,28 @@ mod tests {
             x86.xmm[19][..evex.len()].copy_from_slice(&evex);
         }
 
+        // MOVNTQ accepts an unaligned m64 destination. Its successful store
+        // enters MMX state while preserving TOP.
+        let mmx_value = 0x0123_4567_89AB_CDEFu64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[1] = mmx_value;
+            x86.x87.tag_word = 0xFFFF;
+            x86.x87.status_word = 5 << 11;
+        }
+        ctx.write_vreg(rax, 0x83);
+        assert!(matches!(
+            execute_lifted_x86(&[0x0F, 0xE7, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        let mut mmx_stored = [0u8; 8];
+        memory.read(0x83, &mut mmx_stored).unwrap();
+        assert_eq!(u64::from_le_bytes(mmx_stored), mmx_value);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[1], mmx_value);
+            assert_eq!(x86.x87.tag_word, 0);
+            assert_eq!(x86.x87.status_word & 0x3800, 5 << 11);
+        }
+
         ctx.write_vreg(rax, 0x100);
         assert!(matches!(
             execute_lifted_x86(&[0x0F, 0x2B, 0x08], &mut ctx, &mut memory),
@@ -46878,6 +46900,27 @@ mod tests {
         ));
         memory.read(0x180, &mut actual[..16]).unwrap();
         assert_eq!(&actual[..16], before_misaligned);
+
+        let mut mmx_fault_memory = StoreFaultMemory {
+            inner: FlatMemory::new(0x100),
+            stores_before_fault: 0,
+        };
+        ctx.write_vreg(rax, 0x40);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[1] = mmx_value;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0xE7, 0x08], &mut ctx, &mut mmx_fault_memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        mmx_fault_memory.inner.read(0x40, &mut mmx_stored).unwrap();
+        assert_eq!(mmx_stored, [0; 8]);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[1], mmx_value);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
 
         let mut fault_memory = StoreFaultMemory {
             inner: FlatMemory::new(0x100),

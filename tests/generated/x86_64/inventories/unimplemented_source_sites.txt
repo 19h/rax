@@ -14,4 +14,4 @@
 # valid-gap-needs-diff Valid instruction-family gap still needing differential work.
 #
 # Keep this sorted by path, then source fragment.
-src/smir/lift/x86_64.rs|71|mixed-dispatch|LiftError::Unsupported
+src/smir/lift/x86_64.rs|70|mixed-dispatch|LiftError::Unsupported
