@@ -761,6 +761,8 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
     let is_packed_fp_arithmetic = (b1 & 0x07) == 1
         && matches!(b2 & 0x03, 0 | 1)
         && matches!(bytes.get(4), Some(0x58 | 0x59 | 0x5C..=0x5F));
+    let is_packed_fp_sqrt =
+        (b1 & 0x07) == 1 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x51));
     let is_mask_blend =
         (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x64..=0x66));
     let is_load_broadcast = (b1 & 0x07) == 2
@@ -815,6 +817,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
         || is_integer_test_mask
         || is_packed_variable_shift
         || is_packed_fp_arithmetic
+        || is_packed_fp_sqrt
         || is_mask_blend
         || is_load_broadcast;
     if !is_apx_gpr_0f38
@@ -29308,7 +29311,11 @@ impl X86_64Lifter {
                         return Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed));
                     }
 
-                    if prefix.vvvv != 0 || prefix.v_high || prefix.aaa != 0 || prefix.zeroing {
+                    if prefix.vvvv != 0
+                        || prefix.v_high
+                        || (prefix.encoding == VecEncodingKind::Evex && prefix.l_bits == 3)
+                        || (prefix.zeroing && prefix.aaa == 0)
+                    {
                         return Err(LiftError::InvalidEncoding {
                             addr: pc,
                             bytes: bytes.to_vec(),
@@ -29337,6 +29344,8 @@ impl X86_64Lifter {
                             },
                         prefix.width,
                     );
+                    let mask = (prefix.encoding == VecEncodingKind::Evex && prefix.aaa != 0)
+                        .then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
                     let src = if modrm.is_memory {
                         let (addr, pre_ops) = self.vec_full_addr_to_smir(
                             prefix,
@@ -29345,19 +29354,32 @@ impl X86_64Lifter {
                             ctx,
                         );
                         ops.extend(pre_ops);
-                        let vector = ctx.alloc_vreg();
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::VLoad {
-                                dst: vector,
+                        if let Some(mask) = mask {
+                            self.append_evex_masked_vector_source(
                                 addr,
-                                width: prefix.width,
-                            },
-                        ));
-                        vector
+                                elem,
+                                prefix.width,
+                                false,
+                                mask,
+                                pc,
+                                ctx,
+                                &mut ops,
+                            )
+                        } else {
+                            let vector = ctx.alloc_vreg();
+                            ops.push(SmirOp::new(
+                                OpId(ops.len() as u16),
+                                pc,
+                                OpKind::VLoad {
+                                    dst: vector,
+                                    addr,
+                                    width: prefix.width,
+                                },
+                            ));
+                            vector
+                        }
                     } else {
-                        self.vec_reg(
+                        let source = self.vec_reg(
                             modrm.rm
                                 + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
                                     16
@@ -29365,13 +29387,41 @@ impl X86_64Lifter {
                                     0
                                 },
                             prefix.width,
-                        )
+                        );
+                        if mask.is_some() {
+                            // Masked-off packed floating-point elements must not
+                            // participate in computation or raise SIMD exceptions.
+                            // Replace them with +0 before the vector square root;
+                            // the architectural merge/zero selection is applied
+                            // independently to the result below.
+                            let sanitized = ctx.alloc_vreg();
+                            self.append_evex_vector_mask_result(
+                                VecPrefix {
+                                    zeroing: true,
+                                    ..prefix
+                                },
+                                sanitized,
+                                source,
+                                elem,
+                                pc,
+                                ctx,
+                                &mut ops,
+                            );
+                            sanitized
+                        } else {
+                            source
+                        }
+                    };
+                    let raw = if mask.is_some() {
+                        ctx.alloc_vreg()
+                    } else {
+                        dst
                     };
                     ops.push(SmirOp::with_hint(
                         OpId(ops.len() as u16),
                         pc,
                         OpKind::VUnary {
-                            dst,
+                            dst: raw,
                             src,
                             elem,
                             lanes: prefix.width.lanes(elem) as u8,
@@ -29379,6 +29429,11 @@ impl X86_64Lifter {
                         },
                         hint,
                     ));
+                    if mask.is_some() {
+                        self.append_evex_vector_mask_result(
+                            prefix, dst, raw, elem, pc, ctx, &mut ops,
+                        );
+                    }
                     Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
                 }
 
@@ -51664,13 +51719,108 @@ mod tests {
                 ..
             }
         )));
+
+        for (bytes, elem, lanes, dst) in [
+            (
+                &[0x62, 0xF1, 0x7C, 0x49, 0x51, 0xE0][..],
+                VecElementType::F32,
+                16,
+                4,
+            ), // VSQRTPS ZMM4{k1},ZMM0
+            (
+                &[0x62, 0xF1, 0xFD, 0xCA, 0x51, 0xF9][..],
+                VecElementType::F64,
+                8,
+                7,
+            ), // VSQRTPD ZMM7{k2}{z},ZMM1
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(result.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VUnary {
+                    dst: VReg::Virtual(_),
+                    src: VReg::Virtual(_),
+                    elem: actual_elem,
+                    lanes: actual_lanes,
+                    op: VecUnaryOp::FSqrt,
+                } if actual_elem == elem && actual_lanes == lanes
+            )));
+            assert_eq!(
+                result
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::VInsertLane {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(actual_dst))),
+                            elem: actual_elem,
+                            ..
+                        } if actual_dst == dst && actual_elem == elem
+                    ))
+                    .count(),
+                usize::from(lanes),
+                "masked packed square root must select every destination lane"
+            );
+        }
+
+        for (bytes, width, lanes) in [
+            (&[0x62, 0xF1, 0x7C, 0x49, 0x51, 0x10][..], MemWidth::B4, 16), // VSQRTPS ZMM2{k1},[RAX]
+            (&[0x62, 0xF1, 0xFD, 0x4A, 0x51, 0x18][..], MemWidth::B8, 8),  // VSQRTPD ZMM3{k2},[RAX]
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(
+                result
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::PredLoad {
+                            width: actual_width,
+                            ..
+                        } if actual_width == width
+                    ))
+                    .count(),
+                lanes,
+                "masked packed square root needs one fault-suppressing load per lane"
+            );
+            assert!(
+                !result
+                    .ops
+                    .iter()
+                    .any(|op| matches!(op.kind, OpKind::VLoad { .. } | OpKind::Load { .. }))
+            );
+        }
+
+        let compressed_masked = lift_single(&[0x62, 0xF1, 0x7C, 0x49, 0x51, 0x50, 0x01]).unwrap();
+        assert!(compressed_masked.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Lea {
+                addr: Address::BaseOffset {
+                    offset: 64,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                ..
+            }
+        )));
         for bytes in [
             &[0x62, 0xF1, 0xFC, 0x48, 0x51, 0xC1][..], // VSQRTPS with W=1
             &[0x62, 0xF1, 0x7D, 0x48, 0x51, 0xC1][..], // VSQRTPD with W=0
+            &[0x62, 0xF1, 0x7C, 0xC8, 0x51, 0xC1][..], // VSQRTPS {z} with k0
+            &[0x62, 0xF1, 0x7C, 0x68, 0x51, 0xC1][..], // VSQRTPS with reserved L'L=3
         ] {
             assert!(matches!(
                 lift_single(bytes),
                 Err(LiftError::InvalidEncoding { .. })
+            ));
+        }
+        for bytes in [
+            &[0x62, 0xF1, 0x7C, 0x58, 0x51, 0x08][..], // VSQRTPS m32bcst
+            &[0x62, 0xF1, 0x7C, 0x18, 0x51, 0xC1][..], // VSQRTPS embedded rounding
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::Unsupported { .. })
             ));
         }
         assert!(matches!(
