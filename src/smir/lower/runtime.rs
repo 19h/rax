@@ -3472,6 +3472,25 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 _ => None,
             },
         ),
+        OpKind::VPackSat {
+            dst,
+            src1,
+            src2,
+            src_elem,
+            to_unsigned,
+            src_lanes,
+            block_lanes,
+        } => (
+            dst,
+            src2,
+            src1,
+            match (*src_elem, *src_lanes, *block_lanes, *to_unsigned) {
+                (VecElementType::I16, 4, 4, false) => Some(0x63),
+                (VecElementType::I16, 4, 4, true) => Some(0x67),
+                (VecElementType::I32, 2, 2, false) => Some(0x6B),
+                _ => None,
+            },
+        ),
         _ => return false,
     };
     let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
@@ -13300,6 +13319,49 @@ mod jit_gate_tests {
                     lanes,
                     block_lanes,
                     high,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[1]));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+    }
+
+    #[test]
+    fn x86_mmx_pack_gate_preserves_reversed_smir_source_order() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (src_elem, src_lanes, to_unsigned, opcode) in [
+            (VecElementType::I16, 4, false, 0x63),
+            (VecElementType::I16, 4, true, 0x67),
+            (VecElementType::I32, 2, false, 0x6B),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x8000);
+            builder.push_op(
+                0x8000,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.push_op(
+                0x8000,
+                OpKind::VPackSat {
+                    dst: mm(6),
+                    src1: mm(3),
+                    src2: mm(6),
+                    src_elem,
+                    to_unsigned,
+                    src_lanes,
+                    block_lanes: src_lanes,
                 },
             );
             builder.set_terminator(Terminator::Return { values: vec![] });

@@ -5928,6 +5928,25 @@ impl X86_64Lowerer {
                     _ => None,
                 },
             ),
+            OpKind::VPackSat {
+                dst,
+                src1,
+                src2,
+                src_elem,
+                to_unsigned,
+                src_lanes,
+                block_lanes,
+            } => (
+                dst,
+                src2,
+                src1,
+                match (*src_elem, *src_lanes, *block_lanes, *to_unsigned) {
+                    (VecElementType::I16, 4, 4, false) => Some(0x63),
+                    (VecElementType::I16, 4, 4, true) => Some(0x67),
+                    (VecElementType::I32, 2, 2, false) => Some(0x6B),
+                    _ => None,
+                },
+            ),
             _ => return Ok(false),
         };
         let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
@@ -26667,6 +26686,36 @@ mod tests {
             assert!(
                 code.windows(3).any(|window| window == [0x0F, opcode, 0xEA]),
                 "missing MMX interleave 0F {opcode:02X} /r: {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_mmx_pack_emits_all_classic_register_opcodes_with_rm_source() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (src_elem, src_lanes, to_unsigned, opcode) in [
+            (VecElementType::I16, 4, false, 0x63),
+            (VecElementType::I16, 4, true, 0x67),
+            (VecElementType::I32, 2, false, 0x6B),
+        ] {
+            let code = lower_single_hinted_op(
+                OpKind::VPackSat {
+                    dst: mm(6),
+                    src1: mm(3),
+                    src2: mm(6),
+                    src_elem,
+                    to_unsigned,
+                    src_lanes,
+                    block_lanes: src_lanes,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(3).any(|window| window == [0x0F, opcode, 0xF3]),
+                "missing MMX pack 0F {opcode:02X} /r: {code:02X?}"
             );
         }
     }
