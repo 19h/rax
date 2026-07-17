@@ -8796,8 +8796,8 @@ impl X86_64Lifter {
         ))
     }
 
-    /// Lift legacy SSE2/SSE4.1 packed integer equality and signed
-    /// greater-than comparisons. Prefix-free encodings address MMX state.
+    /// Lift MMX/SSE2/SSE4.1 packed integer equality and signed greater-than
+    /// comparisons.
     fn lift_sse_integer_compare(
         &self,
         opcode: u8,
@@ -8806,13 +8806,9 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if !prefix.operand_size_override && prefix.rep_prefix.is_none() && !prefix.lock {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("MMX packed compare opcode {opcode:02X}"),
-            });
-        }
-        if !prefix.operand_size_override
+        let mmx_opcode = matches!(opcode, 0x64 | 0x65 | 0x66 | 0x74 | 0x75 | 0x76);
+        let mmx = !prefix.operand_size_override && mmx_opcode;
+        if (!prefix.operand_size_override && !mmx)
             || prefix.rep_prefix.is_some()
             || prefix.lock
             || prefix.rex2.is_some()
@@ -8834,6 +8830,7 @@ impl X86_64Lifter {
             0x37 => (VecElementType::I64, VecCmpCond::Gt),
             _ => unreachable!(),
         };
+        let width = if mmx { VecWidth::V64 } else { VecWidth::V128 };
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
@@ -8847,15 +8844,32 @@ impl X86_64Lifter {
                 OpKind::VLoad {
                     dst: loaded,
                     addr,
-                    width: VecWidth::V128,
+                    width,
                 },
             ));
             loaded
+        } else if mmx {
+            self.mm(modrm.rm)
         } else {
             self.xmm(modrm.rm)
         };
-        let dst = self.xmm(modrm.reg);
-        let result = if modrm.is_memory {
+        if mmx {
+            // A faulting memory source must not enter MMX state.
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            ));
+        }
+        let dst = if mmx {
+            self.mm(modrm.reg)
+        } else {
+            self.xmm(modrm.reg)
+        };
+        let result = if modrm.is_memory && !mmx {
             ctx.alloc_vreg()
         } else {
             dst
@@ -8869,14 +8883,18 @@ impl X86_64Lifter {
                 src2,
                 cond,
                 elem,
-                lanes: VecWidth::V128.lanes(elem) as u8,
+                lanes: width.lanes(elem) as u8,
             },
             X86OpHint::SseOp {
-                prefix: X86SsePrefix::OpSize,
+                prefix: if mmx {
+                    X86SsePrefix::None
+                } else {
+                    X86SsePrefix::OpSize
+                },
                 opcode,
             },
         ));
-        if modrm.is_memory {
+        if modrm.is_memory && !mmx {
             self.append_legacy_packed_result(dst, result, elem, pc, ctx, &mut ops);
         }
 
@@ -37085,8 +37103,7 @@ impl X86_64Lifter {
             // LDDQU unaligned 128-bit integer load.
             0xF0 => self.lift_sse_lddqu(after_opcode, &prefix2, pc, ctx),
 
-            // XMM packed-integer logical operations. Prefix-free forms target
-            // MMX state, which SMIR does not yet expose.
+            // MMX/XMM packed-integer logical operations.
             0xDB | 0xDF | 0xEB | 0xEF => {
                 self.lift_sse_integer_logic(opcode2, after_opcode, &prefix2, pc, ctx)
             }
@@ -52068,6 +52085,37 @@ mod tests {
             (0x75, VecElementType::I16, VecCmpCond::Eq),
             (0x76, VecElementType::I32, VecCmpCond::Eq),
         ] {
+            let mmx = lift_single(&[0x0F, opcode, 0xC1]).unwrap();
+            assert!(matches!(
+                mmx.ops.as_slice(),
+                [
+                    SmirOp {
+                        kind: OpKind::X86X87Control {
+                            kind: X86X87ControlKind::EnterMmx,
+                            ..
+                        },
+                        ..
+                    },
+                    SmirOp {
+                        kind: OpKind::VCmp {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                            src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                            src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                            cond: actual_cond,
+                            elem: actual_elem,
+                            lanes,
+                        },
+                        x86_hint: Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: actual_opcode,
+                        }),
+                        ..
+                    }
+                ] if *actual_cond == cond && *actual_elem == elem
+                    && u32::from(*lanes) == VecWidth::V64.lanes(elem)
+                    && *actual_opcode == opcode
+            ));
+
             let legacy = lift_single(&[0x66, 0x0F, opcode, 0xC1]).unwrap();
             assert!(legacy.ops.iter().any(|op| matches!(
                 op.kind,
@@ -52197,6 +52245,36 @@ mod tests {
                 ..
             }
         )));
+
+        let mmx_memory = lift_single(&[0x0F, 0x74, 0x00]).unwrap();
+        assert!(matches!(
+            mmx_memory.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::VLoad {
+                        width: VecWidth::V64,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::VCmp {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        elem: VecElementType::I8,
+                        lanes: 8,
+                        ..
+                    },
+                    ..
+                }
+            ]
+        ));
         assert!(legacy_memory.ops.iter().any(|op| matches!(
             op.kind,
             OpKind::VInsertLane {
@@ -52298,7 +52376,6 @@ mod tests {
         );
 
         for bytes in [
-            &[0x0F, 0x74, 0xC1][..],                   // MMX state is not exposed
             &[0xF0, 0x66, 0x0F, 0x74, 0xC1][..],       // LOCK
             &[0xF3, 0x66, 0x0F, 0x74, 0xC1][..],       // conflicting prefix
             &[0xC5, 0xF0, 0x74, 0xC1][..],             // VEX.pp != 66

@@ -37202,6 +37202,91 @@ mod tests {
         ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
         ctx.flags.lazy = None;
 
+        let mmx_cases = [
+            (
+                0x64,
+                0x3412_00FF_0505_7F80,
+                0x3512_01FF_0605_807F,
+                0x0000_0000_0000_FF00,
+            ),
+            (
+                0x65,
+                0xFFFE_FFFF_7FFF_8000,
+                0xFFFF_FFFE_8000_7FFF,
+                0x0000_FFFF_FFFF_0000,
+            ),
+            (
+                0x66,
+                0x7FFF_FFFF_8000_0000,
+                0x8000_0000_7FFF_FFFF,
+                0xFFFF_FFFF_0000_0000,
+            ),
+            (
+                0x74,
+                0xAA22_CC44_5566_7788,
+                0xAA00_CCFF_5500_77FF,
+                0xFF00_FF00_FF00_FF00,
+            ),
+            (
+                0x75,
+                0xAAAA_BBBB_CCCC_DDDD,
+                0xAAAA_0000_CCCC_1111,
+                0xFFFF_0000_FFFF_0000,
+            ),
+            (
+                0x76,
+                0xAAAA_BBBB_CCCC_DDDD,
+                0xAAAA_BBBB_1111_2222,
+                0xFFFF_FFFF_0000_0000,
+            ),
+        ];
+        for (opcode, lhs, rhs, expected) in mmx_cases {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[0] = lhs;
+                x86.mm[1] = rhs;
+                x86.x87.tag_word = 0xFFFF;
+                x86.x87.status_word = 2 << 11;
+            }
+            execute_lifted_x86(&[0x0F, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.mm[0], expected, "MMX {opcode:02X}");
+                assert_eq!(x86.x87.tag_word, 0);
+                assert_eq!(x86.x87.status_word & 0x3800, 2 << 11);
+            }
+        }
+
+        // The MMX memory form consumes exactly 8 bytes before entering MMX
+        // state and committing the compare result.
+        memory
+            .write(0x3F8, &0xAA00_CCFF_5500_77FFu64.to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(rax, 0x3F8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xAA22_CC44_5566_7788;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0x74, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xFF00_FF00_FF00_FF00);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        // A faulting source changes neither the destination nor the x87 tags.
+        ctx.write_vreg(rax, 0x1000);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xA5A5_5A5A_C3C3_3C3C;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0x74, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xA5A5_5A5A_C3C3_3C3C);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+
         let signed_cases = [
             (
                 &[0x66, 0x0F, 0x64, 0xC1][..],
