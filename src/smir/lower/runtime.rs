@@ -3373,6 +3373,36 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
             );
     }
 
+    if let OpKind::VLane {
+        dst,
+        src1,
+        src2,
+        elem,
+        lanes,
+        op: VLaneOp::Sign,
+        signed,
+        set_ovf,
+    } = &op.kind
+    {
+        let expected = match (*elem, *lanes, *signed, *set_ovf) {
+            (VecElementType::I8, 8, true, false) => Some(0x08),
+            (VecElementType::I16, 4, true, false) => Some(0x09),
+            (VecElementType::I32, 2, true, false) => Some(0x0A),
+            _ => None,
+        };
+        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        return expected.is_some()
+            && dst == src1
+            && [dst, src1, src2].into_iter().all(mm)
+            && matches!(
+                op.x86_hint,
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                }) if Some(opcode) == expected
+            );
+    }
+
     if let OpKind::X86PackedShiftImm {
         dst,
         src,
@@ -5502,10 +5532,16 @@ pub fn uses_x86_native_mmx_excluding(
 }
 
 fn x86_native_mmx_op_requires_ssse3(op: &crate::smir::ir::ops::SmirOp) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{VLaneOp, VecUnaryOp};
+
     matches!(
         op.kind,
-        crate::smir::ir::ops::OpKind::VUnary {
-            op: crate::smir::ir::types::VecUnaryOp::Abs,
+        OpKind::VUnary {
+            op: VecUnaryOp::Abs,
+            ..
+        } | OpKind::VLane {
+            op: VLaneOp::Sign,
             ..
         }
     ) && is_x86_native_mmx_op(op)
@@ -13888,6 +13924,51 @@ mod jit_gate_tests {
             );
             builder.push_op(
                 0x9D00,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+            assert!(x86_native_mmx_op_requires_ssse3(&function.blocks[0].ops[0]));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+    }
+
+    #[test]
+    fn x86_mmx_sign_gate_covers_ssse3_byte_word_and_dword_forms() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, lanes, opcode) in [
+            (VecElementType::I8, 8, 0x08),
+            (VecElementType::I16, 4, 0x09),
+            (VecElementType::I32, 2, 0x0A),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x9E00);
+            builder.push_op(
+                0x9E00,
+                OpKind::VLane {
+                    dst: mm(0),
+                    src1: mm(0),
+                    src2: mm(1),
+                    elem,
+                    lanes,
+                    op: VLaneOp::Sign,
+                    signed: true,
+                    set_ovf: false,
+                },
+            );
+            builder.push_op(
+                0x9E00,
                 OpKind::X86X87Control {
                     kind: X86X87ControlKind::EnterMmx,
                     addr: None,

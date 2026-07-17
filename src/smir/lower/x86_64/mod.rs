@@ -5857,6 +5857,51 @@ impl X86_64Lowerer {
             return Ok(true);
         }
 
+        if let OpKind::VLane {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            op: VLaneOp::Sign,
+            signed,
+            set_ovf,
+        } = &op.kind
+        {
+            let expected = match (*elem, *lanes, *signed, *set_ovf) {
+                (VecElementType::I8, 8, true, false) => Some(0x08),
+                (VecElementType::I16, 4, true, false) => Some(0x09),
+                (VecElementType::I32, 2, true, false) => Some(0x0A),
+                _ => None,
+            };
+            let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+            if ![dst, src1, src2].into_iter().any(is_mm) {
+                return Ok(false);
+            }
+            let encoding_valid = expected.is_some()
+                && dst == src1
+                && [dst, src1, src2].into_iter().all(is_mm)
+                && matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode,
+                    }) if Some(opcode) == expected
+                );
+            if !encoding_valid {
+                return Err(LowerError::InvalidOperand {
+                    op: "MMX packed sign".to_string(),
+                    operand: "requires exact destructive V64 MM registers and 0F38 opcode"
+                        .to_string(),
+                });
+            }
+            let dst_reg = self.get_dst_reg(*dst)?;
+            let src2_reg = self.get_reg(*src2)?;
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mmx_0f38_rr(expected.unwrap(), dst_reg, src2_reg);
+            return Ok(true);
+        }
+
         if let OpKind::X86PackedShiftImm {
             dst,
             src,
@@ -27154,6 +27199,38 @@ mod tests {
                 code.windows(4)
                     .any(|window| window == [0x0F, 0x38, opcode, 0xC1]),
                 "missing MMX PABS 0F 38 {opcode:02X} /r: {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_mmx_sign_emits_ssse3_byte_word_and_dword_opcodes() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, lanes, opcode) in [
+            (VecElementType::I8, 8, 0x08),
+            (VecElementType::I16, 4, 0x09),
+            (VecElementType::I32, 2, 0x0A),
+        ] {
+            let code = lower_single_hinted_op(
+                OpKind::VLane {
+                    dst: mm(0),
+                    src1: mm(0),
+                    src2: mm(1),
+                    elem,
+                    lanes,
+                    op: VLaneOp::Sign,
+                    signed: true,
+                    set_ovf: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(4)
+                    .any(|window| window == [0x0F, 0x38, opcode, 0xC1]),
+                "missing MMX PSIGN 0F 38 {opcode:02X} /r: {code:02X?}"
             );
         }
     }

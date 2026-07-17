@@ -13987,7 +13987,7 @@ impl X86_64Lifter {
             self.xmm(modrm.reg)
         };
         if mmx {
-            ops.push(SmirOp::new(
+            ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
                 OpKind::VLane {
@@ -13999,6 +13999,10 @@ impl X86_64Lifter {
                     op: VLaneOp::Sign,
                     signed: true,
                     set_ovf: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
                 },
             ));
             ops.push(SmirOp::new(
@@ -54425,7 +54429,10 @@ mod tests {
                             signed: true,
                             set_ovf: false,
                         },
-                        x86_hint: None,
+                        x86_hint: Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: actual_opcode,
+                        }),
                         ..
                     },
                     SmirOp {
@@ -54435,7 +54442,9 @@ mod tests {
                         },
                         ..
                     }
-                ] if *actual_elem == elem && *lanes == VecWidth::V64.lanes(elem) as u8
+                ] if *actual_elem == elem
+                    && *lanes == VecWidth::V64.lanes(elem) as u8
+                    && *actual_opcode == opcode
             ));
 
             let legacy = lift_single(&[0x66, 0x0F, 0x38, opcode, 0xC1]).unwrap();
