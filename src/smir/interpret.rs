@@ -38308,7 +38308,7 @@ mod tests {
         ) -> Vec<u8> {
             let bits = elem_bytes * 8;
             let mask = (1u64 << bits) - 1;
-            let block_lanes = 16 / elem_bytes;
+            let block_lanes = usize::min(16, first.len()) / elem_bytes;
             let lanes = first.len() / elem_bytes;
             let read = |source: &[u8], lane: usize| -> u64 {
                 let at = lane * elem_bytes;
@@ -38482,6 +38482,29 @@ mod tests {
                 true,
             ),
         ] {
+            let mmx_first = u64::from_le_bytes(first[..8].try_into().unwrap());
+            let mmx_second = u64::from_le_bytes(second[..8].try_into().unwrap());
+            let mmx_expected = u64::from_le_bytes(
+                reference(&first[..8], &second[..8], elem_bytes, subtract, saturating)
+                    .try_into()
+                    .unwrap(),
+            );
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[0] = mmx_first;
+                x86.mm[1] = mmx_second;
+                x86.x87.tag_word = 0xFFFF;
+                x86.x87.status_word = 3 << 11;
+            }
+            execute_lifted_x86(&[0x0F, 0x38, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    x86.mm[0], mmx_expected,
+                    "MMX horizontal opcode {opcode:02X}"
+                );
+                assert_eq!(x86.x87.tag_word, 0);
+                assert_eq!(x86.x87.status_word & 0x3800, 3 << 11);
+            }
+
             if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
                 x86.xmm[0] = seeded(&first[..16], upper);
                 x86.xmm[1] = seeded(&second[..16], 0);
@@ -38531,6 +38554,22 @@ mod tests {
             );
         }
 
+        // The destructive MMX alias reads both source operands before the
+        // packed result replaces MM0.
+        let mmx_alias = u64::from_le_bytes(words1_bytes[..8].try_into().unwrap());
+        let mmx_alias_expected = u64::from_le_bytes(
+            reference(&words1_bytes[..8], &words1_bytes[..8], 2, false, false)
+                .try_into()
+                .unwrap(),
+        );
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = mmx_alias;
+        }
+        execute_lifted_x86(&[0x0F, 0x38, 0x01, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], mmx_alias_expected);
+        }
+
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
         memory.write(0x101, &words2_bytes).unwrap();
@@ -38547,8 +38586,45 @@ mod tests {
             assert_eq!(x86.xmm[0], sentinel);
         }
 
+        // The MMX source is an unaligned m64. Its complete load precedes the
+        // destructive destination write and the x87-to-MMX state transition.
+        memory.write(0x181, &words2_bytes[..8]).unwrap();
+        ctx.write_vreg(rax, 0x180);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::from_le_bytes(words1_bytes[..8].try_into().unwrap());
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0x38, 0x07, 0x40, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.mm[0],
+                u64::from_le_bytes(
+                    reference(&words1_bytes[..8], &words2_bytes[..8], 2, true, true)
+                        .try_into()
+                        .unwrap()
+                )
+            );
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        ctx.write_vreg(rax, 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0x38, 0x01, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xDEAD_BEEF_CAFE_BABE);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+
         // Type-4 alignment applies only to legacy SSE; VEX.256 accepts the
         // same unaligned address and consumes the complete 32-byte operand.
+        ctx.write_vreg(rax, 0x101);
         if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
             x86.xmm[0] = sentinel;
             x86.xmm[1] = seeded(&words1_bytes, 0);
