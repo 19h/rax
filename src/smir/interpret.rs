@@ -45798,6 +45798,59 @@ mod tests {
         ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
         ctx.flags.lazy = None;
 
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = vector(&first[..8], 0)[0];
+            x86.mm[1] = vector(&second[..8], 0)[0];
+            x86.x87.tag_word = 0xFFFF;
+            x86.x87.status_word = 6 << 11;
+        }
+        execute_lifted_x86(&[0x0F, 0xF6, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], expected[0]);
+            assert_eq!(x86.x87.tag_word, 0);
+            assert_eq!(x86.x87.status_word & 0x3800, 6 << 11);
+        }
+
+        // The destructive same-register form snapshots both inputs before
+        // writing and therefore produces an exact zero sum.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = vector(&first[..8], 0)[0];
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0xF6, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        // The m64 source is unaligned-capable and completes before MMX state
+        // entry; a crossing fault preserves both destination and x87 tags.
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = vector(&first[..8], 0)[0];
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0xF6, 0x40, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], expected[0]);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        ctx.write_vreg(rax, 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xA55A_C33C_F00F_8111;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0xF6, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xA55A_C33C_F00F_8111);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+
         // Legacy PSADBW intrinsically aliases destination/source1 and preserves
         // the architectural state above bit 127.
         if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {

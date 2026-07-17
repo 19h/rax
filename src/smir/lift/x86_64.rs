@@ -17167,32 +17167,29 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        // The prefix-free 0F F6 form addresses MMX state, which SMIR does not
-        // expose. The XMM form requires the mandatory 66 prefix.
-        if !prefix.operand_size_override
-            || prefix.rep_prefix.is_some()
-            || prefix.lock
-            || prefix.rex2.is_some()
-        {
+        if prefix.rep_prefix.is_some() || prefix.lock || prefix.rex2.is_some() {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
             });
         }
+        let mmx = !prefix.operand_size_override;
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
         let src2 = if modrm.is_memory {
             let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
             ops.extend(pre_ops);
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::X86CheckAlignment {
-                    addr: addr.clone(),
-                    alignment: 16,
-                },
-            ));
+            if !mmx {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86CheckAlignment {
+                        addr: addr.clone(),
+                        alignment: 16,
+                    },
+                ));
+            }
             let loaded = ctx.alloc_vreg();
             ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
@@ -17200,16 +17197,45 @@ impl X86_64Lifter {
                 OpKind::VLoad {
                     dst: loaded,
                     addr,
-                    width: VecWidth::V128,
+                    width: if mmx { VecWidth::V64 } else { VecWidth::V128 },
                 },
-                X86OpHint::VecAlign(X86VecAlign::Aligned),
+                X86OpHint::VecAlign(if mmx {
+                    X86VecAlign::Unaligned
+                } else {
+                    X86VecAlign::Aligned
+                }),
             ));
             loaded
+        } else if mmx {
+            self.mm(modrm.rm)
         } else {
             self.xmm(modrm.rm)
         };
-        let dst = self.xmm(modrm.reg);
-        if modrm.is_memory {
+        let dst = if mmx {
+            self.mm(modrm.reg)
+        } else {
+            self.xmm(modrm.reg)
+        };
+        if mmx {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VSadBytes {
+                    dst,
+                    src1: dst,
+                    src2,
+                    width: VecWidth::V64,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            ));
+        } else if modrm.is_memory {
             // Keep the computation detached from the architectural destination
             // until the aligned source load has completed successfully.
             let raw = ctx.alloc_vreg();
@@ -63130,6 +63156,47 @@ mod tests {
 
     #[test]
     fn lift_psadbw_covers_widths_sources_alignment_tuples_wig_and_invalids() {
+        let mmx = lift_single(&[0x0F, 0xF6, 0xC1]).unwrap();
+        assert!(matches!(
+            mmx.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::VSadBytes {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        width: VecWidth::V64,
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    },
+                    ..
+                }
+            ]
+        ));
+
+        let mmx_mem = lift_single(&[0x0F, 0xF6, 0x40, 0x01]).unwrap();
+        assert!(mmx_mem.ops.iter().any(|op| matches!(
+            (&op.kind, op.x86_hint),
+            (
+                OpKind::VLoad {
+                    width: VecWidth::V64,
+                    ..
+                },
+                Some(X86OpHint::VecAlign(X86VecAlign::Unaligned))
+            )
+        )));
+        assert!(
+            !mmx_mem
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::X86CheckAlignment { .. }))
+        );
+
         for (bytes, width, dst, src1, src2) in [
             (
                 &[0x66, 0x45, 0x0F, 0xF6, 0xCA][..],
@@ -63293,7 +63360,6 @@ mod tests {
         ));
 
         for bytes in [
-            &[0x0F, 0xF6, 0xCA][..],
             &[0xF0, 0x66, 0x0F, 0xF6, 0xCA][..],
             &[0xF3, 0x66, 0x0F, 0xF6, 0xCA][..],
             &[0x66, 0x0F, 0xF6][..],
