@@ -7996,6 +7996,102 @@ mod tests {
             "E4NF VDBPSADBW must not become fault-suppressible"
         );
 
+        let packed_fp16_sqrt = optimized(&[0x62, 0xF5, 0x7C, 0x4A, 0x51, 0x48, 0x01]);
+        let ops = &packed_fp16_sqrt.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B2,
+                        ..
+                    }
+                ))
+                .count(),
+            32,
+            "masked VSQRTPH requires one fault-suppressing load per FP16 lane",
+        );
+        let first_load = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+            .unwrap();
+        let sqrt = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VFP16Arith {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                        op: Avx10FP16Op::Sqrt,
+                        width: VecWidth::V512,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VSQRTPH operation must survive optimization");
+        assert!(first_load < sqrt);
+
+        let scalar_fp16_sqrt = optimized(&[0x62, 0xF5, 0x6E, 0x0A, 0x51, 0x48, 0x7F]);
+        let ops = &scalar_fp16_sqrt.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        addr: Address::BaseOffset { offset: 254, .. },
+                        width: MemWidth::B2,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VSQRTSH scalar source load must survive optimization");
+        let sqrt = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VFP16Arith {
+                        dst: VReg::Virtual(_),
+                        op: Avx10FP16Op::Sqrt,
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("VSQRTSH scalar square root must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        lane: 7,
+                        elem: VecElementType::F16,
+                        ..
+                    }
+                )
+            })
+            .expect("VSQRTSH scalar merge destination must survive optimization");
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                        lane: 1..=7,
+                        elem: VecElementType::F16,
+                        ..
+                    }
+                ))
+                .count(),
+            7,
+            "VSQRTSH must preserve all seven upper FP16 lanes from SRC1",
+        );
+        assert!(load < sqrt && sqrt < destination_write);
+
         let psadbw = optimized(&[0x66, 0x44, 0x0F, 0xF6, 0x08]);
         let ops = &psadbw.blocks[0].ops;
         let alignment = ops
