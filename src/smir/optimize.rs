@@ -5247,6 +5247,95 @@ mod tests {
             "E4 VFPCLASSPD broadcast must retain only fault-suppressing loads"
         );
 
+        let gfni_multiply = optimized(&[0x62, 0xF2, 0x4D, 0x4D, 0xCF, 0x60, 0x01]);
+        let ops = &gfni_multiply.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B1,
+                        ..
+                    }
+                ))
+                .count(),
+            64,
+            "E4 VGF2P8MULB byte PredLoads must survive optimization",
+        );
+        let last_load = ops
+            .iter()
+            .rposition(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+            .unwrap();
+        let first_field_op = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VShift {
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("VGF2P8MULB field arithmetic removed");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(4))),
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VGF2P8MULB destination write removed");
+        assert!(last_load < first_field_op && first_field_op < destination_write);
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::Load { .. } | OpKind::VLoad { .. })),
+            "E4 VGF2P8MULB must retain only fault-suppressing source loads"
+        );
+
+        let gfni_affine = optimized(&[0x62, 0xF3, 0xCD, 0x5D, 0xCE, 0x60, 0x01, 0x63]);
+        let ops = &gfni_affine.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                )
+            })
+            .expect("E4NF VGF2P8AFFINEQB broadcast load removed");
+        let affine = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::VByteShuffle { block_lanes: 8, .. }))
+            .expect("VGF2P8AFFINEQB matrix-row selection removed");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(4))),
+                        elem: VecElementType::I8,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VGF2P8AFFINEQB destination write removed");
+        assert!(load < affine && affine < destination_write);
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. })),
+            "E4NF VGF2P8AFFINEQB must not become fault-suppressible"
+        );
+
         let vex_unpack = optimized(&[0xC5, 0xF5, 0x60, 0x00]);
         let ops = &vex_unpack.blocks[0].ops;
         let load = ops

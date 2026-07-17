@@ -39463,6 +39463,248 @@ mod tests {
     }
 
     #[test]
+    fn lifted_evex_gfni_executes_field_algebra_masks_and_memory_fault_classes() {
+        fn packed(bytes: &[u8], fill: u64) -> VecValue {
+            let mut value = [fill; 16];
+            for (index, chunk) in bytes.chunks_exact(8).enumerate() {
+                value[index] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            value
+        }
+
+        fn bytes(value: &VecValue, len: usize) -> Vec<u8> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(len)
+                .collect()
+        }
+
+        fn gf_mul(mut a: u8, mut b: u8) -> u8 {
+            let mut result = 0;
+            for _ in 0..8 {
+                if b & 1 != 0 {
+                    result ^= a;
+                }
+                let carry = a & 0x80 != 0;
+                a <<= 1;
+                if carry {
+                    a ^= 0x1B;
+                }
+                b >>= 1;
+            }
+            result
+        }
+
+        fn gf_inverse(value: u8) -> u8 {
+            if value == 0 {
+                return 0;
+            }
+            let mut result = 1;
+            for _ in 0..254 {
+                result = gf_mul(result, value);
+            }
+            result
+        }
+
+        fn affine(matrix: &[u8], input: u8, imm: u8) -> u8 {
+            let mut result = 0;
+            for bit in 0..8 {
+                let parity = (matrix[7 - bit] & input).count_ones() as u8 & 1;
+                result |= (parity ^ ((imm >> bit) & 1)) << bit;
+            }
+            result
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let flags_before = 0xCD7;
+        let sentinel = [0xA5A5_A5A5_A5A5_A5A5; 16];
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // High ZMM sources and destination exercise every EVEX extension bit;
+        // k3 zeroing applies independently to each of the 64 byte products.
+        let multiplicands = (0..64u8)
+            .map(|lane| lane.wrapping_mul(0x53).wrapping_add(0xCA))
+            .collect::<Vec<_>>();
+        let multipliers = (0..64u8)
+            .map(|lane| lane.wrapping_mul(0x87).wrapping_add(0x11))
+            .collect::<Vec<_>>();
+        let multiply_mask = 0xA55A_C33C_F00F_8111u64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.xmm[18] = packed(&multiplicands, 0);
+            x86.xmm[19] = packed(&multipliers, 0);
+            x86.k[3] = multiply_mask;
+        }
+        execute_lifted_x86(&[0x62, 0xA2, 0x6D, 0xC3, 0xCF, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let actual = bytes(&x86.xmm[17], 64);
+            for lane in 0..64 {
+                assert_eq!(
+                    actual[lane],
+                    if multiply_mask >> lane & 1 != 0 {
+                        gf_mul(multiplicands[lane], multipliers[lane])
+                    } else {
+                        0
+                    },
+                    "multiply lane {lane}",
+                );
+            }
+        }
+
+        // Two independent 64-bit matrices validate row selection at qword
+        // boundaries. Merge-masked bytes retain the old XMM1 value.
+        let affine_input = (0..16u8)
+            .map(|lane| lane.wrapping_mul(0x31).wrapping_add(7))
+            .collect::<Vec<_>>();
+        let identity = [0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01];
+        let reverse = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80];
+        let matrices = [identity, reverse].concat();
+        let affine_mask = 0xA55Au64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[3] = packed(&affine_input, 0);
+            x86.xmm[4] = packed(&matrices, 0);
+            x86.k[2] = affine_mask;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0xE5, 0x0A, 0xCE, 0xCC, 0x00],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let actual = bytes(&x86.xmm[1], 16);
+            for lane in 0..16 {
+                assert_eq!(
+                    actual[lane],
+                    if affine_mask >> lane & 1 != 0 {
+                        affine(
+                            &matrices[lane / 8 * 8..lane / 8 * 8 + 8],
+                            affine_input[lane],
+                            0,
+                        )
+                    } else {
+                        0xA5
+                    },
+                    "affine lane {lane}",
+                );
+            }
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+        }
+
+        // An identity affine matrix exposes the multiplicative inverse
+        // directly. Four batches cover all 256 possible field elements.
+        let identity_matrices = identity.repeat(8);
+        for batch in 0..4u16 {
+            let inputs = (0..64u16)
+                .map(|lane| (batch * 64 + lane) as u8)
+                .collect::<Vec<_>>();
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[1] = packed(&inputs, 0);
+                x86.xmm[2] = packed(&identity_matrices, 0);
+            }
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0xF5, 0x48, 0xCF, 0xC2, 0x00],
+                &mut ctx,
+                &mut memory,
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    bytes(&x86.xmm[0], 64),
+                    inputs.iter().copied().map(gf_inverse).collect::<Vec<_>>(),
+                    "inverse batch {batch}",
+                );
+            }
+        }
+
+        // The SDM's AES S-box matrix provides a fixed affine-inverse
+        // composition: S(0x53) = 0xED with imm8=0x63.
+        let sbox_matrix = 0xF1E3_C78F_1F3E_7CF8u64.to_le_bytes().repeat(8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = packed(&[0x53; 64], 0);
+            x86.xmm[2] = packed(&sbox_matrix, 0);
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0xF5, 0x48, 0xCF, 0xC2, 0x63],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(bytes(&x86.xmm[0], 64), vec![0xED; 64]);
+        }
+
+        // A valid 64-bit broadcast is applied to every qword. Inactive bytes
+        // merge from ZMM4 after the unconditional Type E4NF memory read.
+        memory.write(0x108, &identity).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        let inverse_mask = 0x0F0F_F0F0_55AA_AA55u64;
+        let inverse_input = (0..64u8)
+            .map(|lane| lane.wrapping_mul(0x29).wrapping_add(3))
+            .collect::<Vec<_>>();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[4] = sentinel;
+            x86.xmm[6] = packed(&inverse_input, 0);
+            x86.k[5] = inverse_mask;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0xCD, 0x5D, 0xCF, 0x60, 0x01, 0x00],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let actual = bytes(&x86.xmm[4], 64);
+            for lane in 0..64 {
+                assert_eq!(
+                    actual[lane],
+                    if inverse_mask >> lane & 1 != 0 {
+                        gf_inverse(inverse_input[lane])
+                    } else {
+                        0xA5
+                    },
+                    "broadcast inverse lane {lane}",
+                );
+            }
+        }
+
+        // MULB is Type E4: an all-zero mask suppresses every invalid byte
+        // access. Affine is Type E4NF: the same mask cannot suppress its m64
+        // broadcast access, and the destination remains unchanged on fault.
+        ctx.write_vreg(rax, 0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[4] = sentinel;
+            x86.k[5] = 0;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x4D, 0x4D, 0xCF, 0x20], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[4][..8], &sentinel[..8]);
+            assert!(x86.xmm[4][8..].iter().all(|word| *word == 0));
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[4] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0xCD, 0x5D, 0xCF, 0x20, 0x63],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[4], sentinel);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
     fn lifted_evex_fp_class_executes_all_classes_daz_masks_and_fault_suppression() {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let flags_before = 0xCD7;

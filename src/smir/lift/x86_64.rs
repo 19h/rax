@@ -668,6 +668,10 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
     let is_fp_class =
         (b1 & 0x07) == 3 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x66 | 0x67));
     let is_packed_fp_class = is_fp_class && matches!(bytes.get(4), Some(0x66));
+    let is_gfni = (b2 & 0x03) == 1
+        && (((b1 & 0x07) == 2 && matches!(bytes.get(4), Some(0xCF)))
+            || ((b1 & 0x07) == 3 && matches!(bytes.get(4), Some(0xCE | 0xCF))));
+    let is_gfni_affine = is_gfni && (b1 & 0x07) == 3;
     let is_packed_unpack = (b1 & 0x07) == 1
         && (b2 & 0x03) == 1
         && matches!(bytes.get(4), Some(0x60..=0x62 | 0x68..=0x6A | 0x6C | 0x6D));
@@ -796,6 +800,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
         || is_chunk_extract_insert
         || is_shuffle_128_chunks
         || is_fp_class
+        || is_gfni
         || is_packed_unpack
         || is_packed_pack
         || is_packed_byte_shuffle
@@ -877,6 +882,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
                 || is_vector_align
                 || is_shuffle_128_chunks
                 || is_packed_fp_class
+                || is_gfni_affine
                 || is_integer_test_mask
                 || is_packed_variable_shift
                 || is_packed_fp_arithmetic
@@ -1535,6 +1541,81 @@ impl X86_64Lifter {
                 src1,
                 src2,
                 width,
+            },
+        ));
+        dst
+    }
+
+    fn append_vector_xor(
+        &self,
+        src1: VReg,
+        src2: VReg,
+        width: VecWidth,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) -> VReg {
+        let dst = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VXor {
+                dst,
+                src1,
+                src2,
+                width,
+            },
+        ));
+        dst
+    }
+
+    fn append_vector_sub(
+        &self,
+        src1: VReg,
+        src2: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) -> VReg {
+        let dst = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VSub {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            },
+        ));
+        dst
+    }
+
+    fn append_vector_shift(
+        &self,
+        src: VReg,
+        amount: u8,
+        shift: ShiftOp,
+        elem: VecElementType,
+        lanes: u8,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) -> VReg {
+        let dst = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VShift {
+                dst,
+                src,
+                amount: SrcOperand::Imm(i64::from(amount)),
+                shift,
+                elem,
+                lanes,
             },
         ));
         dst
@@ -24250,6 +24331,270 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
+    fn append_gf2p8_mul_vector(
+        &self,
+        src1: VReg,
+        src2: VReg,
+        width: VecWidth,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) -> VReg {
+        let elem = VecElementType::I8;
+        let lanes = width.lanes(elem) as u8;
+        let zero = self.append_zero_vector(width, elem, pc, ctx, ops);
+        let one = self.append_vector_splat_imm(1, width, elem, pc, ctx, ops);
+        let reduction_polynomial = self.append_vector_splat_imm(0x1B, width, elem, pc, ctx, ops);
+        let mut result = zero;
+        let mut multiplicand = src1;
+        let mut multiplier = src2;
+
+        // Russian-peasant multiplication in GF(2^8). Each byte lane is
+        // independent and reduction uses x^8 + x^4 + x^3 + x + 1 (0x11B).
+        for _ in 0..8 {
+            let multiplier_lsb = self.append_vector_and(multiplier, one, width, pc, ctx, ops);
+            let multiplier_mask =
+                self.append_vector_sub(zero, multiplier_lsb, elem, lanes, pc, ctx, ops);
+            let contribution =
+                self.append_vector_and(multiplicand, multiplier_mask, width, pc, ctx, ops);
+            result = self.append_vector_xor(result, contribution, width, pc, ctx, ops);
+
+            let carry =
+                self.append_vector_shift(multiplicand, 7, ShiftOp::Lsr, elem, lanes, pc, ctx, ops);
+            let carry_mask = self.append_vector_sub(zero, carry, elem, lanes, pc, ctx, ops);
+            let reduction =
+                self.append_vector_and(carry_mask, reduction_polynomial, width, pc, ctx, ops);
+            let shifted =
+                self.append_vector_shift(multiplicand, 1, ShiftOp::Lsl, elem, lanes, pc, ctx, ops);
+            multiplicand = self.append_vector_xor(shifted, reduction, width, pc, ctx, ops);
+            multiplier =
+                self.append_vector_shift(multiplier, 1, ShiftOp::Lsr, elem, lanes, pc, ctx, ops);
+        }
+        result
+    }
+
+    fn append_gf2p8_inverse_vector(
+        &self,
+        src: VReg,
+        width: VecWidth,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) -> VReg {
+        // In GF(2^8), x^-1 = x^254 for x != 0; the same addition chain maps
+        // zero to zero, matching the architectural inverse table.
+        let mut power = self.append_gf2p8_mul_vector(src, src, width, pc, ctx, ops);
+        let mut result = power;
+        for _ in 0..6 {
+            power = self.append_gf2p8_mul_vector(power, power, width, pc, ctx, ops);
+            result = self.append_gf2p8_mul_vector(result, power, width, pc, ctx, ops);
+        }
+        result
+    }
+
+    fn append_gf2p8_affine_vector(
+        &self,
+        src: VReg,
+        matrix: VReg,
+        width: VecWidth,
+        imm: u8,
+        inverse: bool,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) -> VReg {
+        let elem = VecElementType::I8;
+        let lanes = width.lanes(elem) as u8;
+        let input = if inverse {
+            self.append_gf2p8_inverse_vector(src, width, pc, ctx, ops)
+        } else {
+            src
+        };
+        let zero = self.append_zero_vector(width, elem, pc, ctx, ops);
+        let one = self.append_vector_splat_imm(1, width, elem, pc, ctx, ops);
+        let mut result = zero;
+
+        for output_bit in 0..8u8 {
+            let control =
+                self.append_vector_splat_imm(u64::from(7 - output_bit), width, elem, pc, ctx, ops);
+            let matrix_row = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VByteShuffle {
+                    dst: matrix_row,
+                    src: matrix,
+                    control,
+                    lanes,
+                    block_lanes: 8,
+                },
+            ));
+            let mut parity = self.append_vector_and(matrix_row, input, width, pc, ctx, ops);
+            for shift in [4, 2, 1] {
+                let high = self.append_vector_shift(
+                    parity,
+                    shift,
+                    ShiftOp::Lsr,
+                    elem,
+                    lanes,
+                    pc,
+                    ctx,
+                    ops,
+                );
+                parity = self.append_vector_xor(parity, high, width, pc, ctx, ops);
+            }
+            parity = self.append_vector_and(parity, one, width, pc, ctx, ops);
+            if output_bit != 0 {
+                parity = self.append_vector_shift(
+                    parity,
+                    output_bit,
+                    ShiftOp::Lsl,
+                    elem,
+                    lanes,
+                    pc,
+                    ctx,
+                    ops,
+                );
+            }
+            result = self.append_vector_or(result, parity, width, pc, ctx, ops);
+        }
+
+        let constant = self.append_vector_splat_imm(u64::from(imm), width, elem, pc, ctx, ops);
+        self.append_vector_xor(result, constant, width, pc, ctx, ops)
+    }
+
+    fn lift_evex_gfni(
+        &self,
+        prefix: VecPrefix,
+        opcode: u8,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let multiply = prefix.map == X86VecMap::Map0F38 && opcode == 0xCF;
+        let affine = prefix.map == X86VecMap::Map0F3A && matches!(opcode, 0xCE | 0xCF);
+        if prefix.encoding != VecEncodingKind::Evex
+            || prefix.pp != X86SsePrefix::OpSize
+            || (!multiply && !affine)
+            || prefix.w != affine
+            || prefix.l_bits == 3
+            || (prefix.zeroing && prefix.aaa == 0)
+            || (multiply && prefix.b)
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let cursor = prefix.bytes + 1;
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            operand_size_override: true,
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
+            cursor,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        if prefix.b && !modrm.is_memory {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        let imm_offset = cursor + modrm.bytes_consumed;
+        if affine && bytes.len() <= imm_offset {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: bytes.len(),
+                need: imm_offset + 1,
+            });
+        }
+        let bytes_consumed = imm_offset + usize::from(affine);
+        let next_pc = pc + bytes_consumed as u64;
+        let elem = VecElementType::I8;
+        let mask = (prefix.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
+        let mut ops = Vec::new();
+        let src2 = if modrm.is_memory {
+            let broadcast = affine && prefix.b;
+            let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                prefix,
+                modrm.addr.as_ref().unwrap(),
+                next_pc,
+                if broadcast { 8 } else { prefix.width.bytes() },
+                ctx,
+            );
+            ops.extend(pre_ops);
+            if multiply && mask.is_some() {
+                self.append_evex_masked_vector_source(
+                    addr,
+                    elem,
+                    prefix.width,
+                    false,
+                    mask.unwrap(),
+                    pc,
+                    ctx,
+                    &mut ops,
+                )
+            } else if broadcast {
+                self.append_broadcast_memory_source(
+                    addr,
+                    VecElementType::I64,
+                    prefix.width,
+                    pc,
+                    ctx,
+                    &mut ops,
+                )
+            } else {
+                let loaded = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VLoad {
+                        dst: loaded,
+                        addr,
+                        width: prefix.width,
+                    },
+                ));
+                loaded
+            }
+        } else {
+            self.vec_reg(modrm.rm + if prefix.rm_high { 16 } else { 0 }, prefix.width)
+        };
+        let src1 = self.vec_reg(
+            prefix.vvvv + if prefix.v_high { 16 } else { 0 },
+            prefix.width,
+        );
+        let raw = if multiply {
+            self.append_gf2p8_mul_vector(src1, src2, prefix.width, pc, ctx, &mut ops)
+        } else {
+            self.append_gf2p8_affine_vector(
+                src1,
+                src2,
+                prefix.width,
+                bytes[imm_offset],
+                opcode == 0xCF,
+                pc,
+                ctx,
+                &mut ops,
+            )
+        };
+        self.append_evex_vector_mask_result(
+            prefix,
+            self.vec_reg(
+                modrm.reg + if prefix.reg_high { 16 } else { 0 },
+                prefix.width,
+            ),
+            raw,
+            elem,
+            pc,
+            ctx,
+            &mut ops,
+        );
+        Ok(LiftResult::fallthrough(ops, bytes_consumed))
+    }
+
     fn append_evex_fp_class_vector(
         &self,
         src: VReg,
@@ -31715,6 +32060,9 @@ impl X86_64Lifter {
                 }
                 0xB0 | 0xB1 => self.lift_vex_ne_convert(prefix, opcode, bytes, pc, ctx),
                 0xCB..=0xCD => self.lift_vex_sha512(prefix, opcode, bytes, pc, ctx),
+                0xCF if prefix.encoding == VecEncodingKind::Evex => {
+                    self.lift_evex_gfni(prefix, opcode, bytes, pc, ctx)
+                }
                 0xDA if matches!(prefix.pp, X86SsePrefix::None | X86SsePrefix::OpSize) => {
                     self.lift_vex_sm3_message(prefix, bytes, pc, ctx)
                 }
@@ -31859,6 +32207,9 @@ impl X86_64Lifter {
                 }
                 0x66 | 0x67 if prefix.encoding == VecEncodingKind::Evex => {
                     self.lift_evex_fp_class(prefix, opcode, bytes, pc, ctx)
+                }
+                0xCE | 0xCF if prefix.encoding == VecEncodingKind::Evex => {
+                    self.lift_evex_gfni(prefix, opcode, bytes, pc, ctx)
                 }
                 0x1E | 0x1F | 0x3E | 0x3F if prefix.encoding == VecEncodingKind::Evex => {
                     self.lift_evex_integer_compare(prefix, opcode, bytes, pc, ctx)
@@ -55516,6 +55867,192 @@ mod tests {
                         | LiftError::Incomplete { .. })
                 ),
                 "invalid EVEX 128-bit chunk shuffle accepted: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn lift_evex_gfni_covers_field_ops_masks_memory_classes_and_invalids() {
+        for (p3, width) in [
+            (0x08, VecWidth::V128),
+            (0x28, VecWidth::V256),
+            (0x48, VecWidth::V512),
+        ] {
+            let multiply = lift_single(&[0x62, 0xF2, 0x7D, p3, 0xCF, 0xC8]).unwrap();
+            assert_eq!(multiply.bytes_consumed, 6);
+            assert!(multiply.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VShift {
+                    shift: ShiftOp::Lsl,
+                    elem: VecElementType::I8,
+                    lanes,
+                    ..
+                } if u32::from(lanes) == width.lanes(VecElementType::I8)
+            )));
+
+            for opcode in [0xCE, 0xCF] {
+                let affine = lift_single(&[0x62, 0xF3, 0xFD, p3, opcode, 0xC8, 0x63]).unwrap();
+                assert_eq!(affine.bytes_consumed, 7);
+                assert!(affine.ops.iter().any(|op| matches!(
+                    op.kind,
+                    OpKind::VByteShuffle {
+                        lanes,
+                        block_lanes: 8,
+                        ..
+                    } if u32::from(lanes) == width.lanes(VecElementType::I8)
+                )));
+            }
+        }
+
+        // Every EVEX vector extension bit remains live through the expanded
+        // field arithmetic, and k3 applies byte-granular zeroing to ZMM17.
+        let high_mul = lift_single(&[0x62, 0xA2, 0x6D, 0xC3, 0xCF, 0xCB]).unwrap();
+        assert!(high_mul.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VAnd {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                ..
+            }
+        )));
+        assert!(high_mul.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VAnd {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(19))),
+                ..
+            }
+        )));
+        assert!(high_mul.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                elem: VecElementType::I8,
+                ..
+            }
+        )));
+        assert!(high_mul.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Shr {
+                src: VReg::Arch(ArchReg::X86(X86Reg::K(3))),
+                ..
+            }
+        )));
+
+        let high_affine = lift_single(&[0x62, 0xA3, 0xED, 0xC3, 0xCE, 0xCB, 0x63]).unwrap();
+        assert!(high_affine.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VByteShuffle {
+                src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(19))),
+                block_lanes: 8,
+                ..
+            }
+        )));
+        assert!(high_affine.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VAnd {
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                ..
+            }
+        )));
+
+        // VGF2P8MULB is Type E4: each inactive byte suppresses its own
+        // memory access, and the full-memory disp8 tuple scales by 64 bytes.
+        let multiply_memory = lift_single(&[0x62, 0xF2, 0x4D, 0x4D, 0xCF, 0x60, 0x01]).unwrap();
+        assert!(multiply_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Lea {
+                addr: Address::BaseOffset {
+                    offset: 64,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                ..
+            }
+        )));
+        assert_eq!(
+            multiply_memory
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B1,
+                        ..
+                    }
+                ))
+                .count(),
+            64
+        );
+
+        // Affine forms are Type E4NF: the 64-bit broadcast is loaded
+        // unconditionally even under k5, then replicated across eight qwords.
+        let affine_broadcast =
+            lift_single(&[0x62, 0xF3, 0xCD, 0x5D, 0xCF, 0x60, 0x01, 0x63]).unwrap();
+        assert!(affine_broadcast.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load {
+                addr: Address::BaseOffset {
+                    offset: 8,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                width: MemWidth::B8,
+                ..
+            }
+        )));
+        assert!(affine_broadcast.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VBroadcast {
+                elem: VecElementType::I64,
+                lanes: 8,
+                ..
+            }
+        )));
+        assert!(
+            !affine_broadcast
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+        );
+
+        let affine_full = lift_single(&[0x62, 0xF3, 0xCD, 0x4D, 0xCE, 0x60, 0x01, 0x63]).unwrap();
+        assert!(affine_full.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLoad {
+                addr: Address::BaseOffset {
+                    offset: 64,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                width: VecWidth::V512,
+                ..
+            }
+        )));
+        assert!(
+            !affine_full
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+        );
+
+        for bytes in [
+            &[0x62, 0xF2, 0x7C, 0x08, 0xCF, 0xC8][..], // MULB pp != 66
+            &[0x62, 0xF2, 0xFD, 0x08, 0xCF, 0xC8][..], // MULB W=1
+            &[0x62, 0xF2, 0x7D, 0x18, 0xCF, 0xC8][..], // MULB EVEX.b
+            &[0x62, 0xF2, 0x7D, 0x68, 0xCF, 0xC8][..], // L'L=3
+            &[0x62, 0xF2, 0x7D, 0x88, 0xCF, 0xC8][..], // z without a mask
+            &[0x62, 0xF3, 0x7D, 0x08, 0xCE, 0xC8, 0][..], // affine W=0
+            &[0x62, 0xF3, 0xFD, 0x18, 0xCE, 0xC8, 0][..], // broadcast register
+            &[0x62, 0xF3, 0xFD, 0x08, 0xCE][..],       // missing ModR/M
+            &[0x62, 0xF3, 0xFD, 0x08, 0xCE, 0xC8][..], // missing imm8
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. }
+                        | LiftError::Unsupported { .. }
+                        | LiftError::Incomplete { .. })
+                ),
+                "invalid EVEX GFNI form accepted: {bytes:02X?}",
             );
         }
     }
