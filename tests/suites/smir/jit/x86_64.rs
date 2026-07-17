@@ -7187,9 +7187,10 @@ fn jit_state_backed_gpr_carry_rotate_execute_without_memory_helpers() {
     }
 }
 
-/// Destructive SHLD/SHRD stages guest RSP/RBP/APX EGPR operands and CL through
-/// GuestRegs. The matrix covers zero, one, multi-bit, W16 boundary/undefined
-/// counts, REX2, and APX NF without MMU or semantic call helpers.
+/// Destructive and APX NDD SHLD/SHRD stage guest RSP/RBP/APX EGPR operands and
+/// CL through GuestRegs. The matrix covers zero, one, multi-bit, W16
+/// boundary/undefined counts, independent NDD destinations, REX2, and APX NF
+/// without MMU or semantic call helpers.
 #[test]
 fn jit_state_backed_gpr_double_shift_execute_without_memory_helpers() {
     struct Case {
@@ -7252,6 +7253,42 @@ fn jit_state_backed_gpr_double_shift_execute_without_memory_helpers() {
             instruction: &[0x62, 0x64, 0xFC, 0x0C, 0x2C, 0xFC, 0x04],
             apx: true,
             rcx: 0,
+        },
+        Case {
+            name: "APX NDD SHLD R16,RSP,R31,4",
+            instruction: &[0x62, 0x64, 0xFC, 0x10, 0x24, 0xFC, 0x04],
+            apx: true,
+            rcx: 0,
+        },
+        Case {
+            name: "APX NDD SHRD RSP,RBP,R31,CL",
+            instruction: &[0x62, 0x64, 0xDC, 0x18, 0xAD, 0xFD],
+            apx: true,
+            rcx: 9,
+        },
+        Case {
+            name: "APX NDD SHRD R16W,BP,R31W,CL dynamic deterministic base copy",
+            instruction: &[0x62, 0x64, 0x7D, 0x10, 0xAD, 0xFD],
+            apx: true,
+            rcx: 17,
+        },
+        Case {
+            name: "APX NF NDD SHLD R31,RBP,RSP,4",
+            instruction: &[0x62, 0xF4, 0x84, 0x14, 0x24, 0xE5, 0x04],
+            apx: true,
+            rcx: 0,
+        },
+        Case {
+            name: "APX NDD SHLD DX,AX,BX,17 deterministic base copy",
+            instruction: &[0x62, 0xF4, 0x6D, 0x18, 0x24, 0xD8, 0x11],
+            apx: true,
+            rcx: 0,
+        },
+        Case {
+            name: "APX NDD SHRD DX,AX,BX,CL dynamic deterministic base copy",
+            instruction: &[0x62, 0xF4, 0x6D, 0x18, 0xAD, 0xD8],
+            apx: true,
+            rcx: 17,
         },
     ];
 

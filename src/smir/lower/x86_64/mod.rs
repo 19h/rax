@@ -381,17 +381,37 @@ pub(crate) fn x86_state_backed_gpr_carry_rotate_valid(op: &SmirOp) -> bool {
 pub(crate) fn x86_state_backed_gpr_double_shift_candidate(op: &SmirOp) -> bool {
     let state_amount = |amount: &SrcOperand| matches!(amount, SrcOperand::Reg(reg) if x86_state_backed_arch_gpr(reg));
 
-    matches!(
-        &op.kind,
+    match &op.kind {
         OpKind::Shld {
             dst, src, amount, ..
         }
         | OpKind::Shrd {
             dst, src, amount, ..
-        } if x86_state_backed_arch_gpr(dst)
-            || x86_state_backed_arch_gpr(src)
-            || state_amount(amount)
-    )
+        } => {
+            x86_state_backed_arch_gpr(dst) || x86_state_backed_arch_gpr(src) || state_amount(amount)
+        }
+        OpKind::X86NddDoubleShift {
+            dst,
+            base,
+            fill,
+            amount,
+            width,
+            ..
+        } => {
+            let needs_subword_guard = *width == OpWidth::W16
+                && match amount {
+                    SrcOperand::Imm(value) => (*value as u64 & 0x1f) > 16,
+                    SrcOperand::Reg(_) => true,
+                    _ => false,
+                };
+            x86_state_backed_arch_gpr(dst)
+                || x86_state_backed_arch_gpr(base)
+                || x86_state_backed_arch_gpr(fill)
+                || state_amount(amount)
+                || needs_subword_guard
+        }
+        _ => false,
+    }
 }
 
 pub(crate) fn x86_state_backed_gpr_double_shift_valid(op: &SmirOp) -> bool {
@@ -400,6 +420,13 @@ pub(crate) fn x86_state_backed_gpr_double_shift_valid(op: &SmirOp) -> bool {
     let amount_valid = |amount: &SrcOperand| {
         matches!(amount, SrcOperand::Imm(_))
             || matches!(amount, SrcOperand::Reg(reg) if arch_gpr(reg))
+    };
+    let ndd_amount_valid = |amount: &SrcOperand| {
+        matches!(amount, SrcOperand::Imm(_))
+            || matches!(
+                amount,
+                SrcOperand::Reg(VReg::Arch(ArchReg::X86(X86Reg::Rcx)))
+            )
     };
 
     x86_state_backed_gpr_double_shift_candidate(op)
@@ -419,6 +446,15 @@ pub(crate) fn x86_state_backed_gpr_double_shift_valid(op: &SmirOp) -> bool {
                 width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
                 flags: FlagUpdate::None | FlagUpdate::All,
             } => arch_gpr(dst) && arch_gpr(src) && amount_valid(amount),
+            OpKind::X86NddDoubleShift {
+                dst,
+                base,
+                fill,
+                amount,
+                width: OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+                flags: FlagUpdate::None | FlagUpdate::All,
+                ..
+            } => arch_gpr(dst) && arch_gpr(base) && arch_gpr(fill) && ndd_amount_valid(amount),
             _ => false,
         }
 }
@@ -5525,6 +5561,12 @@ impl X86_64Lowerer {
                 operand: format!("unsupported width {width:?}"),
             });
         }
+        if !matches!(flags, FlagUpdate::None | FlagUpdate::All) {
+            return Err(LowerError::InvalidOperand {
+                op: "X86NddDoubleShift".to_string(),
+                operand: format!("unsupported flag contract {flags:?}"),
+            });
+        }
         let dst_reg = self.get_dst_reg(dst)?;
         let base_reg = self.get_reg(base)?;
         let fill_reg = self.get_reg(fill)?;
@@ -7831,7 +7873,7 @@ impl X86_64Lowerer {
                         });
                     }
                     return self.lower_state_backed_gpr_double_shift(
-                        *dst, *src, amount, *width, *flags, true,
+                        *dst, *dst, *src, amount, *width, *flags, true,
                     );
                 }
                 let dst_reg = self.get_dst_reg(*dst)?;
@@ -7878,7 +7920,7 @@ impl X86_64Lowerer {
                         });
                     }
                     return self.lower_state_backed_gpr_double_shift(
-                        *dst, *src, amount, *width, *flags, false,
+                        *dst, *dst, *src, amount, *width, *flags, false,
                     );
                 }
                 let dst_reg = self.get_dst_reg(*dst)?;
@@ -7917,6 +7959,19 @@ impl X86_64Lowerer {
                 left,
                 flags,
             } => {
+                if x86_state_backed_gpr_double_shift_candidate(op) {
+                    if !x86_state_backed_gpr_double_shift_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed X86NddDoubleShift".to_string(),
+                            operand: format!(
+                                "invalid x86 GPR NDD double shift {dst:?} {base:?} {fill:?} {amount:?} {width:?} {flags:?}"
+                            ),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_double_shift(
+                        *dst, *base, *fill, amount, *width, *flags, *left,
+                    );
+                }
                 self.lower_x86_ndd_double_shift(*dst, *base, *fill, amount, *width, *left, *flags)?
             }
 
@@ -15930,6 +15985,7 @@ impl X86_64Lowerer {
     fn lower_state_backed_gpr_double_shift(
         &mut self,
         dst: VReg,
+        base: VReg,
         src: VReg,
         amount: &SrcOperand,
         width: OpWidth,
@@ -15940,6 +15996,10 @@ impl X86_64Lowerer {
         let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
             op: format!("state-backed {name}"),
             operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let base_idx = Self::x86_gpr_index(base).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "base source is not an architectural x86 GPR".to_string(),
         })?;
         let src_idx = Self::x86_gpr_index(src).ok_or_else(|| LowerError::InvalidOperand {
             op: format!("state-backed {name}"),
@@ -15970,7 +16030,7 @@ impl X86_64Lowerer {
 
         {
             let mut emitter = X86Emitter::new(&mut self.code);
-            emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rax, i32::from(dst_idx) * 8, width);
+            emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rax, i32::from(base_idx) * 8, width);
             emitter.emit_mov_rm(PhysReg::Rsi, PhysReg::Rax, i32::from(src_idx) * 8, width);
             if let Some(index) = count_idx {
                 emitter.emit_mov_rm(
@@ -28822,6 +28882,15 @@ mod tests {
                 left: false,
                 flags: FlagUpdate::All,
             },
+            OpKind::X86NddDoubleShift {
+                dst: rbx,
+                base: rax,
+                fill: r8,
+                amount: SrcOperand::Imm(4),
+                width: OpWidth::W64,
+                left: true,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
+            },
         ] {
             assert!(
                 lower_single_op_err(invalid)
@@ -30762,6 +30831,44 @@ mod tests {
             "word SHLD must partially synchronize guest RBP: {suppressed:02X?}"
         );
 
+        let ndd = lower_single_op(OpKind::X86NddDoubleShift {
+            dst: x86(X86Reg::R16),
+            base: x86(X86Reg::Rsp),
+            fill: x86(X86Reg::R31),
+            amount: SrcOperand::Imm(4),
+            width: OpWidth::W64,
+            left: true,
+            flags: FlagUpdate::All,
+        });
+        assert!(
+            ndd.windows(5)
+                .any(|bytes| bytes == [0x48, 0x0F, 0xA4, 0xF2, 0x04]),
+            "state-backed NDD SHLD must shift staged base RDX with fill RSI: {ndd:02X?}"
+        );
+        assert!(
+            ndd.windows(4)
+                .any(|bytes| bytes == [0x48, 0x8B, 0x50, 0x20]),
+            "state-backed NDD SHLD must load guest RSP as its independent base: {ndd:02X?}"
+        );
+
+        let guarded_ndd = lower_single_op(OpKind::X86NddDoubleShift {
+            dst: x86(X86Reg::Rdx),
+            base: x86(X86Reg::Rax),
+            fill: x86(X86Reg::Rbx),
+            amount: SrcOperand::Imm(17),
+            width: OpWidth::W16,
+            left: true,
+            flags: FlagUpdate::All,
+        });
+        assert!(
+            !guarded_ndd
+                .windows(5)
+                .any(|bytes| bytes == [0x66, 0x0F, 0xA4, 0xF2, 0x11]),
+            "W16 NDD count above the width must not execute the host instruction: {guarded_ndd:02X?}"
+        );
+        assert_eq!(guarded_ndd.iter().filter(|byte| **byte == 0x9C).count(), 1);
+        assert_eq!(guarded_ndd.iter().filter(|byte| **byte == 0x9D).count(), 1);
+
         for malformed in [
             OpKind::Shld {
                 dst: x86(X86Reg::R16),
@@ -30789,6 +30896,24 @@ mod tests {
                 src: x86(X86Reg::Rbp),
                 amount: SrcOperand::Imm(1),
                 width: OpWidth::W64,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
+            },
+            OpKind::X86NddDoubleShift {
+                dst: x86(X86Reg::R16),
+                base: x86(X86Reg::Rsp),
+                fill: x86(X86Reg::R31),
+                amount: SrcOperand::Reg(x86(X86Reg::Rbp)),
+                width: OpWidth::W64,
+                left: true,
+                flags: FlagUpdate::All,
+            },
+            OpKind::X86NddDoubleShift {
+                dst: x86(X86Reg::R16),
+                base: x86(X86Reg::Rsp),
+                fill: x86(X86Reg::R31),
+                amount: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                left: false,
                 flags: FlagUpdate::Specific(FlagSet::ZF),
             },
         ] {

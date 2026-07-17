@@ -8629,6 +8629,7 @@ fn block_is_clobber_safe(
         }
         if matches!(op.kind, OpKind::X86NddDoubleShift { .. })
             && !x86_ndd_double_shift_shape_valid(&op.kind)
+            && !state_double_shift_ok
         {
             return false;
         }
@@ -8641,7 +8642,7 @@ fn block_is_clobber_safe(
         {
             return false;
         }
-        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/ROL/ROR/RCL/RCR/SHL/SHR/SAR/SHLD/SHRD/count/bit-scan/bit-test/CRC32/BMI/ADX/PDEP/PEXT/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
+        // (3) guest RSP/RBP. Validated MOV/MOVX/CMOV/SETcc/NOT/NEG/INC/DEC/ROL/ROR/RCL/RCR/SHL/SHR/SAR/SHLD/SHRD (including APX NDD)/count/bit-scan/bit-test/CRC32/BMI/ADX/PDEP/PEXT/BSWAP/XCHG/ADD/SUB reads/writes are state-backed.
         // Other writes are not modeled and bail. A read is additionally valid
         // as an operand of a mem-JIT Load/Store (an address base/index, or a stored value): the MMU
         // helper reads the value from the GuestRegs struct — the current guest
@@ -9722,6 +9723,7 @@ fn x86_legacy_high_byte_movx_shape_valid(op: &crate::smir::ir::ops::SmirOp) -> b
 }
 
 fn x86_ndd_double_shift_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::flags::FlagUpdate;
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
     let OpKind::X86NddDoubleShift {
@@ -9730,6 +9732,7 @@ fn x86_ndd_double_shift_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         fill,
         amount,
         width,
+        flags,
         ..
     } = op
     else {
@@ -9760,6 +9763,7 @@ fn x86_ndd_double_shift_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         && native_gpr(base)
         && native_gpr(fill)
         && matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+        && matches!(flags, FlagUpdate::None | FlagUpdate::All)
         && matches!(
             amount,
             SrcOperand::Imm(_) | SrcOperand::Reg(VReg::Arch(ArchReg::X86(X86Reg::Rcx)))
@@ -25056,7 +25060,10 @@ mod jit_gate_tests {
                 },
             ),
         ] {
-            assert!(x86_gate(op), "valid state-backed {name} must JIT");
+            assert!(
+                x86_gate(op),
+                "valid state-backed or guarded {name} must JIT"
+            );
         }
 
         for (name, op) in [
@@ -25392,6 +25399,42 @@ mod jit_gate_tests {
                     flags: FlagUpdate::All,
                 },
             ),
+            (
+                "NDD SHLD R16,RSP,R31,4",
+                OpKind::X86NddDoubleShift {
+                    dst: x86(X86Reg::R16),
+                    base: x86(X86Reg::Rsp),
+                    fill: x86(X86Reg::R31),
+                    amount: SrcOperand::Imm(4),
+                    width: OpWidth::W64,
+                    left: true,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "NF NDD SHRD SP,BP,R31,CL",
+                OpKind::X86NddDoubleShift {
+                    dst: x86(X86Reg::Rsp),
+                    base: x86(X86Reg::Rbp),
+                    fill: x86(X86Reg::R31),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W16,
+                    left: false,
+                    flags: FlagUpdate::None,
+                },
+            ),
+            (
+                "direct NDD SHLD DX,AX,BX,17 needs deterministic guard",
+                OpKind::X86NddDoubleShift {
+                    dst: x86(X86Reg::Rdx),
+                    base: x86(X86Reg::Rax),
+                    fill: x86(X86Reg::Rbx),
+                    amount: SrcOperand::Imm(17),
+                    width: OpWidth::W16,
+                    left: true,
+                    flags: FlagUpdate::All,
+                },
+            ),
         ] {
             assert!(x86_gate(op), "valid state-backed {name} must JIT");
         }
@@ -25434,6 +25477,30 @@ mod jit_gate_tests {
                     src: x86(X86Reg::Rbp),
                     amount: SrcOperand::Imm(1),
                     width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(FlagSet::ZF),
+                },
+            ),
+            (
+                "NDD non-CL register count",
+                OpKind::X86NddDoubleShift {
+                    dst: x86(X86Reg::R16),
+                    base: x86(X86Reg::Rsp),
+                    fill: x86(X86Reg::R31),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rbp)),
+                    width: OpWidth::W64,
+                    left: true,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "NDD partial flag set",
+                OpKind::X86NddDoubleShift {
+                    dst: x86(X86Reg::R16),
+                    base: x86(X86Reg::Rsp),
+                    fill: x86(X86Reg::R31),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    left: false,
                     flags: FlagUpdate::Specific(FlagSet::ZF),
                 },
             ),
@@ -25838,6 +25905,15 @@ mod jit_gate_tests {
                 left: false,
                 flags: FlagUpdate::None,
             },
+            OpKind::X86NddDoubleShift {
+                dst: x86(X86Reg::R16),
+                base: rax,
+                fill: rbx,
+                amount: SrcOperand::Imm(4),
+                width: OpWidth::W64,
+                left: true,
+                flags: FlagUpdate::All,
+            },
         ] {
             assert!(x86_gate(op), "valid APX NDD double shift must JIT");
         }
@@ -25871,13 +25947,13 @@ mod jit_gate_tests {
                 flags: FlagUpdate::All,
             },
             OpKind::X86NddDoubleShift {
-                dst: x86(X86Reg::R16),
+                dst: rbx,
                 base: rax,
                 fill: rbx,
                 amount: SrcOperand::Imm(4),
                 width: OpWidth::W64,
                 left: true,
-                flags: FlagUpdate::All,
+                flags: FlagUpdate::Specific(FlagSet::ZF),
             },
         ] {
             assert!(!x86_gate(op), "malformed APX NDD double shift must deopt");
