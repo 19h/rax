@@ -3239,6 +3239,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         src2,
         mask,
         op,
+        round,
         width,
         zeroing,
     } = op
@@ -3267,6 +3268,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
                     | crate::smir::ir::types::Avx10FP16Op::Div
             )
             || *width == crate::smir::ir::types::VecWidth::V64
+            || *round != crate::smir::ir::types::FpRoundMode::Dynamic
             || (*zeroing && mask.is_none())
             || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
         {
@@ -12951,6 +12953,7 @@ mod jit_gate_tests {
                 src2: zmm3,
                 mask: Some(k4),
                 op: crate::smir::ir::types::Avx10FP16Op::Add,
+                round: crate::smir::ir::types::FpRoundMode::Dynamic,
                 width: VecWidth::V512,
                 zeroing: true,
             },
@@ -13011,6 +13014,19 @@ mod jit_gate_tests {
             assert!(is_x86_native_vector_op(native), "{native:?}");
             assert!(x86_gate(native.clone()), "{native:?}");
         }
+
+        let embedded_rounding = OpKind::VFP16Arith {
+            dst: zmm1,
+            src1: zmm2,
+            src2: zmm3,
+            mask: None,
+            op: crate::smir::ir::types::Avx10FP16Op::Add,
+            round: crate::smir::ir::types::FpRoundMode::RoundNearest,
+            width: VecWidth::V512,
+            zeroing: false,
+        };
+        assert!(!is_x86_native_vector_op(&embedded_rounding));
+        assert!(!x86_gate(embedded_rounding));
 
         let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
         builder.push_op(0x1000, native_ops[0].clone());

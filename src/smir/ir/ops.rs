@@ -3107,14 +3107,17 @@ pub enum OpKind {
         width: VecWidth,
     },
 
-    /// FP16 arithmetic operations
-    /// VADDPH, VSUBPH, VMULPH, VDIVPH
+    /// FP16 arithmetic operations: VADDPH, VSUBPH, VMULPH, and VDIVPH.
+    /// `round` is [`FpRoundMode::Dynamic`] for MXCSR-controlled forms. An
+    /// explicit x86 rounding mode represents the 512-bit EVEX `{er}` form;
+    /// embedded rounding also suppresses SIMD floating-point exceptions.
     VFP16Arith {
         dst: VReg,
         src1: VReg,
         src2: VReg,
         mask: Option<VReg>,
         op: Avx10FP16Op,
+        round: FpRoundMode,
         width: VecWidth,
         zeroing: bool,
     },

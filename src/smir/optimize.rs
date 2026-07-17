@@ -3942,8 +3942,8 @@ mod tests {
         X86SsePrefix, X86X87ControlKind, X86X87DataKind,
     };
     use crate::smir::ir::types::{
-        Avx10FP16Op, Condition, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType, X86AesOp,
-        X86NarrowMode,
+        Avx10FP16Op, Condition, FpRoundMode, FunctionId, OpId, VLaneOp, VecCmpCond, VecElementType,
+        X86AesOp, X86NarrowMode,
     };
 
     fn make_op(id: u16, kind: OpKind) -> SmirOp {
@@ -11310,6 +11310,7 @@ mod tests {
                 src2,
                 mask: Some(mask),
                 op: Avx10FP16Op::Add,
+                round: FpRoundMode::Dynamic,
                 width: VecWidth::V128,
                 zeroing: false,
             },

@@ -805,7 +805,22 @@ impl Avx10Lifter {
         let dst_reg = evex.dest_reg(modrm.reg);
         let src1_reg = evex.src1_reg();
         let src2_reg = evex.rm_reg(modrm.rm);
-        let width = evex.vec_width();
+        let embedded_rounding = evex.b_bit && !modrm.is_memory;
+        let width = if embedded_rounding {
+            VecWidth::V512
+        } else {
+            evex.vec_width()
+        };
+        let round = if embedded_rounding {
+            match evex.ll {
+                0 => FpRoundMode::RoundNearest,
+                1 => FpRoundMode::RoundDown,
+                2 => FpRoundMode::RoundUp,
+                _ => FpRoundMode::RoundTowardZero,
+            }
+        } else {
+            FpRoundMode::Dynamic
+        };
 
         let dst = self.zmm(dst_reg);
         let src1 = self.zmm(src1_reg);
@@ -820,6 +835,7 @@ impl Avx10Lifter {
                 src2,
                 mask: (evex.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(evex.aaa)))),
                 op: op_type,
+                round,
                 width,
                 zeroing: evex.z,
             },

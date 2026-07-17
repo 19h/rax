@@ -438,18 +438,27 @@ impl Avx10Lowerer {
                 src2,
                 mask,
                 op,
+                round,
                 width,
                 zeroing,
-            } => Some(self.lower_vfp16_arith(
-                code,
-                dst,
-                src1,
-                src2,
-                mask.as_ref(),
-                *op,
-                *width,
-                *zeroing,
-            )),
+            } => {
+                if *round != FpRoundMode::Dynamic {
+                    Some(Err(LowerError::UnsupportedOperation(
+                        "packed FP16 embedded rounding / SAE is not lowered natively".to_string(),
+                    )))
+                } else {
+                    Some(self.lower_vfp16_arith(
+                        code,
+                        dst,
+                        src1,
+                        src2,
+                        mask.as_ref(),
+                        *op,
+                        *width,
+                        *zeroing,
+                    ))
+                }
+            }
 
             // AVX10.2 saturation conversions
             OpKind::VCvtFpToIntSat {
@@ -2537,6 +2546,7 @@ mod tests {
                 src2: zmm3,
                 mask,
                 op,
+                round: FpRoundMode::Dynamic,
                 width,
                 zeroing,
             };
@@ -3544,6 +3554,7 @@ mod tests {
                     src2: zmm3,
                     mask: Some(k4),
                     op: Avx10FP16Op::Add,
+                    round: FpRoundMode::Dynamic,
                     width: VecWidth::V512,
                     zeroing: true,
                 },
@@ -3556,6 +3567,7 @@ mod tests {
                     src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(18))),
                     mask: Some(k7),
                     op: Avx10FP16Op::Mul,
+                    round: FpRoundMode::Dynamic,
                     width: VecWidth::V256,
                     zeroing: false,
                 },
@@ -3568,6 +3580,7 @@ mod tests {
                     src2: xmm9,
                     mask: Some(k3),
                     op: Avx10FP16Op::Sub,
+                    round: FpRoundMode::Dynamic,
                     width: VecWidth::V128,
                     zeroing: true,
                 },
@@ -3580,6 +3593,7 @@ mod tests {
                     src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(6))),
                     mask: None,
                     op: Avx10FP16Op::Div,
+                    round: FpRoundMode::Dynamic,
                     width: VecWidth::V512,
                     zeroing: false,
                 },

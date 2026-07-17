@@ -6194,8 +6194,8 @@ mod tests {
         use crate::smir::ir::Terminator;
         use crate::smir::ir::ops::OpKind;
         use crate::smir::ir::types::{
-            Address, ArchReg, Avx10FP16Op, FunctionId, MemWidth, SignExtend, VReg, VecElementType,
-            VecWidth, X86Reg,
+            Address, ArchReg, Avx10FP16Op, FpRoundMode, FunctionId, MemWidth, SignExtend, VReg,
+            VecElementType, VecWidth, X86Reg,
         };
 
         let arch = |reg| VReg::Arch(ArchReg::X86(reg));
@@ -6250,6 +6250,7 @@ mod tests {
                 src2: arch(X86Reg::Zmm(7)),
                 mask: None,
                 op: Avx10FP16Op::Add,
+                round: FpRoundMode::Dynamic,
                 width: VecWidth::V512,
                 zeroing: false,
             },

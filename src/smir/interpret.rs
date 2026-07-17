@@ -9417,15 +9417,29 @@ impl SmirInterpreter {
                 src2,
                 mask,
                 op,
+                round,
                 width,
                 zeroing,
             } => {
                 let old = Self::read_vec(ctx, *dst);
                 let first = Self::read_vec(ctx, *src1);
                 let second = Self::read_vec(ctx, *src2);
-                let rounding = match &ctx.arch_regs {
-                    ArchRegState::X86_64(x86) => ((x86.mxcsr >> 13) & 3) as u8,
-                    _ => 0,
+                let rounding = match round {
+                    FpRoundMode::Dynamic => match &ctx.arch_regs {
+                        ArchRegState::X86_64(x86) => ((x86.mxcsr >> 13) & 3) as u8,
+                        _ => 0,
+                    },
+                    FpRoundMode::RoundNearest => 0,
+                    FpRoundMode::RoundDown => 1,
+                    FpRoundMode::RoundUp => 2,
+                    FpRoundMode::RoundTowardZero => 3,
+                    FpRoundMode::RoundNearestTiesAway => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
                 };
                 let mut result = [0u64; 16];
                 for lane in 0..width.lanes(VecElementType::F16) as u8 {
@@ -29502,6 +29516,54 @@ mod tests {
         ));
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(x86.xmm[1], sentinel, "fault must not commit destination");
+        }
+    }
+
+    #[test]
+    fn executes_evex_map5_fp16_embedded_rounding_independent_of_mxcsr() {
+        for (p2, mxcsr_rounding, expected_positive, expected_negative) in [
+            (0x18, 2u32, 0x3c00, 0xbc00), // RN-SAE; MXCSR requests RU.
+            (0x38, 2u32, 0x3c00, 0xbc01), // RD-SAE; MXCSR requests RU.
+            (0x58, 1u32, 0x3c01, 0xbc00), // RU-SAE; MXCSR requests RD.
+            (0x78, 2u32, 0x3c00, 0xbc00), // RZ-SAE; MXCSR requests RU.
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x10);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mxcsr = (x86.mxcsr & !(3 << 13)) | (mxcsr_rounding << 13);
+                for lane in 0..32u8 {
+                    let negative = lane & 1 != 0;
+                    SmirInterpreter::set_lane(
+                        &mut x86.xmm[2],
+                        lane,
+                        16,
+                        if negative { 0xbc00 } else { 0x3c00 },
+                    );
+                    SmirInterpreter::set_lane(
+                        &mut x86.xmm[3],
+                        lane,
+                        16,
+                        if negative { 0x9000 } else { 0x1000 },
+                    );
+                }
+            }
+
+            let result =
+                execute_lifted_x86(&[0x62, 0xF5, 0x6C, p2, 0x58, 0xCB], &mut ctx, &mut memory);
+            assert!(matches!(result, BlockResult::Exit(ExitReason::Halt)));
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                for lane in 0..32u8 {
+                    assert_eq!(
+                        SmirInterpreter::get_lane(&x86.xmm[1], lane, 16),
+                        if lane & 1 != 0 {
+                            expected_negative
+                        } else {
+                            expected_positive
+                        },
+                        "P2={p2:#04x}, lane={lane}"
+                    );
+                }
+            }
         }
     }
 

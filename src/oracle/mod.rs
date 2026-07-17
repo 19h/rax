@@ -3096,9 +3096,20 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src2,
             mask,
             op,
+            round,
             width,
             zeroing,
-        } => op_json!("vfp16_arith", dst, src1, src2, mask, op, width, zeroing),
+        } => op_json!(
+            "vfp16_arith",
+            dst,
+            src1,
+            src2,
+            mask,
+            op,
+            round,
+            width,
+            zeroing
+        ),
         OpKind::VCvtFpToIntSat {
             dst,
             src,

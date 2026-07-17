@@ -17474,10 +17474,15 @@ impl Aarch64Lowerer {
                 src2,
                 mask,
                 op,
+                round,
                 width,
                 zeroing,
             } => {
-                if mask.is_some() || *zeroing {
+                if *round != FpRoundMode::Dynamic {
+                    Err(LowerError::UnsupportedOp {
+                        op: "x86 FP16 embedded rounding / SAE on AArch64".into(),
+                    })
+                } else if mask.is_some() || *zeroing {
                     Err(LowerError::UnsupportedOp {
                         op: "masked x86 VFP16Arith on AArch64".into(),
                     })
@@ -32933,6 +32938,7 @@ mod tests {
                 src2: v(2),
                 mask: None,
                 op: Avx10FP16Op::Add,
+                round: FpRoundMode::Dynamic,
                 width: VecWidth::V128,
                 zeroing: false,
             },
@@ -32942,6 +32948,7 @@ mod tests {
                 src2: v(2),
                 mask: None,
                 op: Avx10FP16Op::Sub,
+                round: FpRoundMode::Dynamic,
                 width: VecWidth::V128,
                 zeroing: false,
             },
@@ -32951,6 +32958,7 @@ mod tests {
                 src2: v(2),
                 mask: None,
                 op: Avx10FP16Op::Mul,
+                round: FpRoundMode::Dynamic,
                 width: VecWidth::V128,
                 zeroing: false,
             },
@@ -32960,6 +32968,7 @@ mod tests {
                 src2: v(2),
                 mask: None,
                 op: Avx10FP16Op::Div,
+                round: FpRoundMode::Dynamic,
                 width: VecWidth::V128,
                 zeroing: false,
             },
@@ -32969,6 +32978,7 @@ mod tests {
                 src2: v(7),
                 mask: None,
                 op: Avx10FP16Op::Add,
+                round: FpRoundMode::Dynamic,
                 width: VecWidth::V64,
                 zeroing: false,
             },
@@ -32978,6 +32988,7 @@ mod tests {
                 src2: v(7),
                 mask: None,
                 op: Avx10FP16Op::Div,
+                round: FpRoundMode::Dynamic,
                 width: VecWidth::V64,
                 zeroing: false,
             },
@@ -35838,6 +35849,7 @@ mod tests {
             src2: v(2),
             mask: None,
             op: Avx10FP16Op::Add,
+            round: FpRoundMode::Dynamic,
             width: VecWidth::V256,
             zeroing: false,
         });
@@ -35848,6 +35860,7 @@ mod tests {
             src2: v(2),
             mask: None,
             op: Avx10FP16Op::Min,
+            round: FpRoundMode::Dynamic,
             width: VecWidth::V128,
             zeroing: false,
         });
@@ -37962,6 +37975,7 @@ mod tests {
                     src2: v(2),
                     mask: None,
                     op: Avx10FP16Op::Add,
+                    round: FpRoundMode::Dynamic,
                     width: VecWidth::V128,
                     zeroing: false,
                 },
