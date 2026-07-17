@@ -8152,6 +8152,95 @@ mod tests {
         );
         assert!(load < divide && divide < destination_write);
 
+        let scalar_fp16_move = optimized(&[0x62, 0xA5, 0x6E, 0x83, 0x10, 0xCB]);
+        let ops = &scalar_fp16_move.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+                        lane: 1..=7,
+                        elem: VecElementType::F16,
+                        ..
+                    }
+                ))
+                .count(),
+            7,
+            "masked VMOVSH must preserve all seven upper FP16 lanes from SRC1",
+        );
+        assert!(ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                lane: 7,
+                elem: VecElementType::F16,
+                ..
+            }
+        )));
+
+        let scalar_fp16_load = optimized(&[0x62, 0xF5, 0x7E, 0x0A, 0x10, 0x48, 0x7F]);
+        let ops = &scalar_fp16_load.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        addr: Address::BaseOffset { offset: 254, .. },
+                        width: MemWidth::B2,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VMOVSH scalar load must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VBroadcast {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        elem: VecElementType::F16,
+                        lanes: 1,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VMOVSH load destination write must survive optimization");
+        assert!(load < destination_write);
+
+        let scalar_fp16_store = optimized(&[0x62, 0xF5, 0x7E, 0x0A, 0x11, 0x50, 0x7F]);
+        let ops = &scalar_fp16_store.blocks[0].ops;
+        let source_read = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                        lane: 0,
+                        elem: VecElementType::F16,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VMOVSH store source read must survive optimization");
+        let store = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredStore {
+                        addr: Address::BaseOffset { offset: 254, .. },
+                        width: MemWidth::B2,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VMOVSH scalar store must survive optimization");
+        assert!(source_read < store);
+
         let psadbw = optimized(&[0x66, 0x44, 0x0F, 0xF6, 0x08]);
         let ops = &psadbw.blocks[0].ops;
         let alignment = ops

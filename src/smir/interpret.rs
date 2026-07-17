@@ -31125,6 +31125,163 @@ mod tests {
     }
 
     #[test]
+    fn lifted_evex_vmovsh_executes_aliases_masks_load_store_and_fault_suppression() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        let sentinel = [0xA55A_A55A_A55A_A55A; 16];
+        let flags_before = 0xCD7;
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[2] = [0; 16];
+            x86.xmm[3] = [0; 16];
+            SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, 0x4567);
+            for lane in 1..8u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[2], lane, 16, 0x1200 + u64::from(lane));
+            }
+        }
+        execute_lifted_x86(&[0x62, 0xF5, 0x6E, 0x08, 0x10, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 16), 0x4567);
+            for lane in 1..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 16),
+                    0x1200 + u64::from(lane),
+                );
+            }
+            assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+        }
+
+        // The opcode 11h register alias accepts complete operand aliasing.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = [0; 16];
+            for lane in 0..8u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[8], lane, 16, 0x2200 + u64::from(lane));
+            }
+        }
+        execute_lifted_x86(&[0x62, 0x55, 0x3E, 0x08, 0x11, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[8], lane, 16),
+                    0x2200 + u64::from(lane),
+                );
+            }
+            assert_eq!(&x86.xmm[8][2..], &[0; 14]);
+        }
+
+        // A masked-off register move merges or zeroes only the low lane;
+        // lanes 1..=7 still come from SRC1.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[2] = 0;
+        }
+        execute_lifted_x86(&[0x62, 0xF5, 0x6E, 0x0A, 0x10, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 16), 0xA55A);
+            for lane in 1..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 16),
+                    0x1200 + u64::from(lane),
+                );
+            }
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+        }
+        execute_lifted_x86(&[0x62, 0xF5, 0x6E, 0x8A, 0x10, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 16), 0);
+            for lane in 1..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 16),
+                    0x1200 + u64::from(lane),
+                );
+            }
+        }
+
+        memory.write(0x100, &0xBEEFu16.to_le_bytes()).unwrap();
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+        }
+        execute_lifted_x86(&[0x62, 0xF5, 0x7E, 0x08, 0x10, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 16), 0xBEEF);
+            assert_eq!(&x86.xmm[1][1..], &[0; 15]);
+        }
+
+        // Type E5 suppresses masked-off memory accesses. A two-operand load
+        // still clears everything above the selected low lane when it retires.
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x200);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[2] = 0;
+        }
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF5, 0x7E, 0x0A, 0x10, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 16), 0xA55A);
+            assert_eq!(&x86.xmm[1][1..], &[0; 15]);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.k[2] = 1;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF5, 0x7E, 0x0A, 0x10, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x100);
+        memory.write(0x100, &[0xAA, 0xBB]).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = [0; 16];
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 16, 0x1234);
+            x86.k[2] = 0;
+        }
+        execute_lifted_x86(&[0x62, 0xF5, 0x7E, 0x0A, 0x11, 0x10], &mut ctx, &mut memory);
+        let mut stored = [0u8; 2];
+        memory.read(0x100, &mut stored).unwrap();
+        assert_eq!(stored, [0xAA, 0xBB]);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[2] = 1;
+        }
+        execute_lifted_x86(&[0x62, 0xF5, 0x7E, 0x0A, 0x11, 0x10], &mut ctx, &mut memory);
+        memory.read(0x100, &mut stored).unwrap();
+        assert_eq!(u16::from_le_bytes(stored), 0x1234);
+
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x200);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[2] = 0;
+        }
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF5, 0x7E, 0x0A, 0x11, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[2] = 1;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF5, 0x7E, 0x0A, 0x11, 0x10], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
     fn lifted_evex_fp16_scalar_arithmetic_executes_ops_masks_aliases_and_faults() {
         let mut ctx = SmirContext::new_x86_64();
         let mut memory = FlatMemory::new(0x200);
