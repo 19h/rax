@@ -19736,6 +19736,174 @@ mod tests {
     }
 
     #[test]
+    fn lifted_evex_unaligned_integer_moves_execute_all_element_masks_and_faults() {
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let sentinel = [0xA5A5_A5A5_A5A5_A5A5; 16];
+        let mut memory = FlatMemory::new(0x500);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        let mask8 = 0xA55A_9669_3CC3_F00Fu64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = sentinel;
+            for lane in 0..64u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[1], lane, 8, 0x40 + u64::from(lane));
+            }
+            x86.k[1] = mask8;
+        }
+        execute_lifted_x86(&[0x62, 0xF1, 0x7F, 0x49, 0x6F, 0xD1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..64u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[2], lane, 8),
+                    if mask8 & (1u64 << lane) != 0 {
+                        0x40 + u64::from(lane)
+                    } else {
+                        0xA5
+                    }
+                );
+            }
+            assert!(x86.xmm[2][8..].iter().all(|word| *word == 0));
+        }
+
+        let mask16 = 0xA55A_9669u64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[4] = sentinel;
+            for lane in 0..32u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[3], lane, 16, 0x1100 + u64::from(lane));
+            }
+            x86.k[2] = mask16;
+        }
+        execute_lifted_x86(&[0x62, 0xF1, 0xFF, 0xCA, 0x6F, 0xE3], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..32u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[4], lane, 16),
+                    if mask16 & (1u64 << lane) != 0 {
+                        0x1100 + u64::from(lane)
+                    } else {
+                        0
+                    }
+                );
+            }
+            assert!(x86.xmm[4][8..].iter().all(|word| *word == 0));
+        }
+
+        let mask32 = 0xA55Au64;
+        let load_values = (0..16u32)
+            .map(|lane| 0xC010_2000u32.wrapping_add(lane * 0x0101_0101))
+            .collect::<Vec<_>>();
+        let load_bytes = load_values
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect::<Vec<_>>();
+        memory.write(0x101, &load_bytes).unwrap();
+        ctx.write_vreg(rax, 0x101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[5] = sentinel;
+            x86.k[3] = mask32;
+        }
+        execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x4B, 0x6F, 0x28], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[5], lane, 32),
+                    if mask32 & (1u64 << lane) != 0 {
+                        u64::from(load_values[usize::from(lane)])
+                    } else {
+                        0xA5A5_A5A5
+                    }
+                );
+            }
+        }
+
+        // Masked loads are element-fault-suppressing and commit the register
+        // only after every active load has succeeded.
+        ctx.write_vreg(rax, 0x500);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[5] = sentinel;
+            x86.k[3] = 0;
+        }
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x4B, 0x6F, 0x28], &mut ctx, &mut memory);
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[5][..8], &sentinel[..8]);
+            assert!(x86.xmm[5][8..].iter().all(|word| *word == 0));
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[5] = sentinel;
+            x86.k[3] = 1;
+        }
+        let load_fault =
+            execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x4B, 0x6F, 0x28], &mut ctx, &mut memory);
+        assert!(matches!(
+            load_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[5], sentinel);
+        }
+
+        let mask64 = 0b1010_0101u64;
+        let store_values = (0..8u64)
+            .map(|lane| 0x5060_7080_90A0_B000u64.wrapping_add(lane * 0x0011_2233_4455_6677))
+            .collect::<Vec<_>>();
+        memory.write(0x201, &[0x5A; 64]).unwrap();
+        ctx.write_vreg(rax, 0x201);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for (lane, value) in store_values.iter().copied().enumerate() {
+                SmirInterpreter::set_lane(&mut x86.xmm[6], lane as u8, 64, value);
+            }
+            x86.k[4] = mask64;
+        }
+        execute_lifted_x86(&[0x62, 0xF1, 0xFE, 0x4C, 0x7F, 0x30], &mut ctx, &mut memory);
+        let mut stored = [0; 64];
+        memory.read(0x201, &mut stored).unwrap();
+        for lane in 0..8 {
+            let actual = &stored[lane * 8..lane * 8 + 8];
+            if mask64 & (1u64 << lane) != 0 {
+                assert_eq!(actual, &store_values[lane].to_le_bytes());
+            } else {
+                assert_eq!(actual, &[0x5A; 8]);
+            }
+        }
+
+        ctx.write_vreg(rax, 0x500);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[4] = 0;
+        }
+        let suppressed_store =
+            execute_lifted_x86(&[0x62, 0xF1, 0xFE, 0x4C, 0x7F, 0x30], &mut ctx, &mut memory);
+        assert!(matches!(
+            suppressed_store,
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+
+        // Active stores commit in lane order. Lane 0 completes at the last
+        // mapped qword; lane 1 then faults at the exact memory boundary.
+        memory.write(0x4F8, &[0x6B; 8]).unwrap();
+        ctx.write_vreg(rax, 0x4F8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[4] = 0b0011;
+        }
+        let store_fault =
+            execute_lifted_x86(&[0x62, 0xF1, 0xFE, 0x4C, 0x7F, 0x30], &mut ctx, &mut memory);
+        assert!(matches!(
+            store_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        let mut partial = [0; 8];
+        memory.read(0x4F8, &mut partial).unwrap();
+        assert_eq!(partial, store_values[0].to_le_bytes());
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
     fn lifted_scalar_sse_moves_and_arithmetic_preserve_or_clear_upper_lanes_exactly() {
         let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
         let mut memory = FlatMemory::new(0x1000);
