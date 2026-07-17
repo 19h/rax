@@ -5097,6 +5097,69 @@ mod tests {
             .expect("unmasked VPCMPD FALSE destination write must survive optimization");
         assert!(load < k_write);
 
+        let insert_memory = optimized(&[0x62, 0xF3, 0xDD, 0x2A, 0x18, 0x18, 0x01]);
+        let ops = &insert_memory.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("E6NF VINSERTF64X2 source load must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
+                        elem: VecElementType::F64,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VINSERTF64X2 destination write must survive optimization");
+        assert!(
+            load < destination_write,
+            "VINSERTF64X2 committed its destination before the E6NF source access"
+        );
+
+        let extract_memory = optimized(&[0x62, 0xF3, 0x7D, 0x2A, 0x39, 0x18, 0x01]);
+        let ops = &extract_memory.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("masked E6NF VEXTRACTI32X4 destination read must survive optimization");
+        let store = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VStore {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                )
+            })
+            .expect("masked E6NF VEXTRACTI32X4 destination write must survive optimization");
+        assert!(
+            load < store,
+            "VEXTRACTI32X4 must retain the E6NF read/merge/write sequence"
+        );
+
         let vex_unpack = optimized(&[0xC5, 0xF5, 0x60, 0x00]);
         let ops = &vex_unpack.blocks[0].ops;
         let load = ops

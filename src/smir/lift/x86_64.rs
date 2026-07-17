@@ -657,6 +657,12 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
         || ((b1 & 0x07) == 3
             && (b2 & 0x03) == 1
             && matches!(bytes.get(4), Some(0x1E | 0x1F | 0x3E | 0x3F)));
+    let is_chunk_extract_insert = (b1 & 0x07) == 3
+        && (b2 & 0x03) == 1
+        && matches!(
+            bytes.get(4),
+            Some(0x18 | 0x19 | 0x1A | 0x1B | 0x38 | 0x39 | 0x3A | 0x3B)
+        );
     let is_packed_unpack = (b1 & 0x07) == 1
         && (b2 & 0x03) == 1
         && matches!(bytes.get(4), Some(0x60..=0x62 | 0x68..=0x6A | 0x6C | 0x6D));
@@ -782,6 +788,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
         || is_packed_fp_convert
         || is_packed_logic
         || is_packed_int_compare
+        || is_chunk_extract_insert
         || is_packed_unpack
         || is_packed_pack
         || is_packed_byte_shuffle
@@ -19462,29 +19469,30 @@ impl X86_64Lifter {
         ctx: &mut LiftContext,
         ops: &mut Vec<SmirOp>,
     ) {
-        self.append_evex_vector_mask_result_lanes(
+        self.append_evex_vector_mask_result_width(
             prefix,
             dst,
             raw,
             elem,
-            prefix.width.lanes(elem) as u8,
+            prefix.width,
             pc,
             ctx,
             ops,
         );
     }
 
-    fn append_evex_vector_mask_result_lanes(
+    fn append_evex_vector_mask_result_width(
         &self,
         prefix: VecPrefix,
         dst: VReg,
         raw: VReg,
         elem: VecElementType,
-        lanes: u8,
+        width: VecWidth,
         pc: u64,
         ctx: &mut LiftContext,
         ops: &mut Vec<SmirOp>,
     ) {
+        let lanes = width.lanes(elem) as u8;
         if prefix.aaa == 0 {
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
@@ -19492,7 +19500,7 @@ impl X86_64Lifter {
                 OpKind::VMov {
                     dst,
                     src: raw,
-                    width: prefix.width,
+                    width,
                 },
             ));
             return;
@@ -19509,7 +19517,7 @@ impl X86_64Lifter {
                 OpKind::VMov {
                     dst: old,
                     src: dst,
-                    width: prefix.width,
+                    width,
                 },
             ));
             Some(old)
@@ -23710,6 +23718,250 @@ impl X86_64Lifter {
             ctx,
             &mut ops,
         );
+        Ok(LiftResult::fallthrough(ops, imm_offset + 1))
+    }
+
+    fn lift_evex_chunk_extract_insert(
+        &self,
+        prefix: VecPrefix,
+        opcode: u8,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let extract = matches!(opcode, 0x19 | 0x1B | 0x39 | 0x3B);
+        let half_chunk = matches!(opcode, 0x1A | 0x1B | 0x3A | 0x3B);
+        if prefix.encoding != VecEncodingKind::Evex
+            || prefix.pp != X86SsePrefix::OpSize
+            || prefix.l_bits == 3
+            || prefix.b
+            || (prefix.zeroing && prefix.aaa == 0)
+            || (half_chunk && prefix.width != VecWidth::V512)
+            || (!half_chunk && !matches!(prefix.width, VecWidth::V256 | VecWidth::V512))
+            || (extract && (prefix.vvvv != 0 || prefix.v_high))
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let elem = match (opcode < 0x30, prefix.w) {
+            (true, false) => VecElementType::F32,
+            (true, true) => VecElementType::F64,
+            (false, false) => VecElementType::I32,
+            (false, true) => VecElementType::I64,
+        };
+        let chunk_width = if half_chunk {
+            VecWidth::V256
+        } else {
+            VecWidth::V128
+        };
+        let cursor = prefix.bytes + 1;
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            operand_size_override: true,
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
+            cursor,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        if extract && modrm.is_memory && prefix.zeroing {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        let imm_offset = cursor + modrm.bytes_consumed;
+        if bytes.len() <= imm_offset {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: bytes.len(),
+                need: imm_offset + 1,
+            });
+        }
+        let next_pc = pc + imm_offset as u64 + 1;
+        let imm = bytes[imm_offset];
+        let chunk_lanes = chunk_width.lanes(elem) as u8;
+        let chunks = (prefix.width.bytes() / chunk_width.bytes()) as u8;
+        let chunk = imm & (chunks - 1);
+        let first_lane = chunk * chunk_lanes;
+        let reg_index = modrm.reg + if prefix.reg_high { 16 } else { 0 };
+        let rm_index = modrm.rm + if prefix.rm_high { 16 } else { 0 };
+        let mut ops = Vec::new();
+
+        if extract {
+            let source = self.vec_reg(reg_index, prefix.width);
+            let raw = self.append_zero_vector(chunk_width, elem, pc, ctx, &mut ops);
+            for lane in 0..chunk_lanes {
+                let scalar = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VExtractLane {
+                        dst: scalar,
+                        vec: source,
+                        lane: first_lane + lane,
+                        elem,
+                        sign: SignExtend::Zero,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VInsertLane {
+                        dst: raw,
+                        vec: raw,
+                        scalar,
+                        lane,
+                        elem,
+                    },
+                ));
+            }
+
+            if modrm.is_memory {
+                let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                    prefix,
+                    modrm.addr.as_ref().unwrap(),
+                    next_pc,
+                    chunk_width.bytes(),
+                    ctx,
+                );
+                ops.extend(pre_ops);
+                if prefix.aaa == 0 {
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VStore {
+                            src: raw,
+                            addr,
+                            width: chunk_width,
+                        },
+                    ));
+                } else {
+                    // Type E6NF does not suppress memory faults. Materialize the
+                    // complete destination, merge active elements, and write the
+                    // complete chunk even when every writemask bit is clear.
+                    let merged = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VLoad {
+                            dst: merged,
+                            addr: addr.clone(),
+                            width: chunk_width,
+                        },
+                    ));
+                    self.append_evex_vector_mask_result_width(
+                        prefix,
+                        merged,
+                        raw,
+                        elem,
+                        chunk_width,
+                        pc,
+                        ctx,
+                        &mut ops,
+                    );
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VStore {
+                            src: merged,
+                            addr,
+                            width: chunk_width,
+                        },
+                    ));
+                }
+            } else {
+                self.append_evex_vector_mask_result_width(
+                    prefix,
+                    self.vec_reg(rm_index, chunk_width),
+                    raw,
+                    elem,
+                    chunk_width,
+                    pc,
+                    ctx,
+                    &mut ops,
+                );
+            }
+        } else {
+            let source2 = if modrm.is_memory {
+                let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                    prefix,
+                    modrm.addr.as_ref().unwrap(),
+                    next_pc,
+                    chunk_width.bytes(),
+                    ctx,
+                );
+                ops.extend(pre_ops);
+                let loaded = ctx.alloc_vreg();
+                // E6NF requires the complete memory source to be accessed even
+                // when the destination writemask contains no active elements.
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VLoad {
+                        dst: loaded,
+                        addr,
+                        width: chunk_width,
+                    },
+                ));
+                loaded
+            } else {
+                self.vec_reg(rm_index, chunk_width)
+            };
+            let source1 = self.vec_reg(
+                prefix.vvvv + if prefix.v_high { 16 } else { 0 },
+                prefix.width,
+            );
+            let raw = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VAnd {
+                    dst: raw,
+                    src1: source1,
+                    src2: source1,
+                    width: prefix.width,
+                },
+            ));
+            for lane in 0..chunk_lanes {
+                let scalar = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VExtractLane {
+                        dst: scalar,
+                        vec: source2,
+                        lane,
+                        elem,
+                        sign: SignExtend::Zero,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VInsertLane {
+                        dst: raw,
+                        vec: raw,
+                        scalar,
+                        lane: first_lane + lane,
+                        elem,
+                    },
+                ));
+            }
+            self.append_evex_vector_mask_result(
+                prefix,
+                self.vec_reg(reg_index, prefix.width),
+                raw,
+                elem,
+                pc,
+                ctx,
+                &mut ops,
+            );
+        }
+
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
@@ -30955,6 +31207,11 @@ impl X86_64Lifter {
                 }),
             },
             X86VecMap::Map0F3A => match opcode {
+                0x18 | 0x19 | 0x1A | 0x1B | 0x38 | 0x39 | 0x3A | 0x3B
+                    if prefix.encoding == VecEncodingKind::Evex =>
+                {
+                    self.lift_evex_chunk_extract_insert(prefix, opcode, bytes, pc, ctx)
+                }
                 0x1E | 0x1F | 0x3E | 0x3F if prefix.encoding == VecEncodingKind::Evex => {
                     self.lift_evex_integer_compare(prefix, opcode, bytes, pc, ctx)
                 }
@@ -54240,6 +54497,235 @@ mod tests {
                         | LiftError::Incomplete { .. })
                 ),
                 "invalid immediate packed compare accepted: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn lift_evex_chunk_extract_insert_covers_families_masks_e6nf_and_invalids() {
+        for opcode in [0x18u8, 0x19, 0x38, 0x39] {
+            for (w, elem) in [
+                (
+                    false,
+                    if opcode < 0x30 {
+                        VecElementType::F32
+                    } else {
+                        VecElementType::I32
+                    },
+                ),
+                (
+                    true,
+                    if opcode < 0x30 {
+                        VecElementType::F64
+                    } else {
+                        VecElementType::I64
+                    },
+                ),
+            ] {
+                for (p2, source_width) in [(0x28, VecWidth::V256), (0x48, VecWidth::V512)] {
+                    let p1 = if w { 0xFD } else { 0x7D };
+                    let bytes = [0x62, 0xF3, p1, p2, opcode, 0xD1, 0xFF];
+                    let result = lift_single(&bytes).unwrap();
+                    assert_eq!(result.bytes_consumed, bytes.len());
+                    let chunk_lanes = VecWidth::V128.lanes(elem) as usize;
+                    assert_eq!(
+                        result
+                            .ops
+                            .iter()
+                            .filter(|op| matches!(
+                                op.kind,
+                                OpKind::VExtractLane { elem: actual, .. } if actual == elem
+                            ))
+                            .count(),
+                        chunk_lanes,
+                        "opcode {opcode:02X}, W={w}, width={source_width:?}",
+                    );
+                    assert!(result.ops.iter().any(|op| matches!(
+                        op.kind,
+                        OpKind::VMov { width, .. }
+                            if width == if opcode & 1 == 0 { source_width } else { VecWidth::V128 }
+                    )));
+                }
+            }
+        }
+
+        for opcode in [0x1Au8, 0x1B, 0x3A, 0x3B] {
+            for (w, elem) in [
+                (
+                    false,
+                    if opcode < 0x30 {
+                        VecElementType::F32
+                    } else {
+                        VecElementType::I32
+                    },
+                ),
+                (
+                    true,
+                    if opcode < 0x30 {
+                        VecElementType::F64
+                    } else {
+                        VecElementType::I64
+                    },
+                ),
+            ] {
+                let p1 = if w { 0xFD } else { 0x7D };
+                let bytes = [0x62, 0xF3, p1, 0x48, opcode, 0xD1, 0xFF];
+                let result = lift_single(&bytes).unwrap();
+                assert_eq!(result.bytes_consumed, bytes.len());
+                assert_eq!(
+                    result
+                        .ops
+                        .iter()
+                        .filter(|op| matches!(
+                            op.kind,
+                            OpKind::VExtractLane { elem: actual, .. } if actual == elem
+                        ))
+                        .count(),
+                    VecWidth::V256.lanes(elem) as usize,
+                    "opcode {opcode:02X}, W={w}",
+                );
+                assert!(result.ops.iter().any(|op| matches!(
+                    op.kind,
+                    OpKind::VMov { width, .. }
+                        if width == if opcode & 1 == 0 { VecWidth::V512 } else { VecWidth::V256 }
+                )));
+            }
+        }
+
+        // High register extension, zeroing masking, and immediate chunk
+        // selection are independent for extract and insert forms.
+        let extract = lift_single(&[0x62, 0xA3, 0x7D, 0xCB, 0x19, 0xD1, 0x03]).unwrap();
+        assert!(extract.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                lane: 12,
+                elem: VecElementType::F32,
+                ..
+            }
+        )));
+        assert!(extract.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                elem: VecElementType::F32,
+                ..
+            }
+        )));
+
+        let insert = lift_single(&[0x62, 0xA3, 0x6D, 0xC3, 0x18, 0xCB, 0x02]).unwrap();
+        assert!(insert.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VAnd {
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                width: VecWidth::V512,
+                ..
+            }
+        )));
+        assert!(insert.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(19))),
+                elem: VecElementType::F32,
+                ..
+            }
+        )));
+        assert!(insert.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                elem: VecElementType::F32,
+                ..
+            }
+        )));
+
+        // E6NF masked extract memory performs an unconditional full tuple
+        // read/merge/write. Insert memory performs an unconditional full tuple
+        // read before masking. Both use Tuple4's 16-byte disp8 scale here.
+        let extract_memory =
+            lift_single(&[0x62, 0xF3, 0x7D, 0x2A, 0x39, 0x58, 0x02, 0x01]).unwrap();
+        assert!(extract_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLoad {
+                addr: Address::BaseOffset {
+                    offset: 32,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                width: VecWidth::V128,
+                ..
+            }
+        )));
+        assert!(extract_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VStore {
+                width: VecWidth::V128,
+                ..
+            }
+        )));
+        assert!(
+            !extract_memory
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::PredStore { .. }))
+        );
+
+        let insert_memory = lift_single(&[0x62, 0xF3, 0xDD, 0x2A, 0x18, 0x58, 0x02, 0x01]).unwrap();
+        assert!(insert_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLoad {
+                addr: Address::BaseOffset {
+                    offset: 32,
+                    disp_size: DispSize::Disp8,
+                    ..
+                },
+                width: VecWidth::V128,
+                ..
+            }
+        )));
+        assert!(
+            !insert_memory
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+        );
+
+        // RIP-relative memory uses the PC after imm8, not after ModR/M.
+        let rip = lift_single(&[0x62, 0xF3, 0x7D, 0x48, 0x18, 0x1D, 0, 0, 0, 0, 0x01]).unwrap();
+        assert_eq!(rip.bytes_consumed, 11);
+        assert!(rip.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLoad {
+                addr: Address::PcRel {
+                    base: Some(0x100B),
+                    ..
+                },
+                width: VecWidth::V128,
+                ..
+            }
+        )));
+
+        for bytes in [
+            &[0x62, 0xF3, 0x7D, 0x08, 0x18, 0xD1, 0][..], // VL=128
+            &[0x62, 0xF3, 0x7D, 0x28, 0x1A, 0xD1, 0][..], // x8 requires VL=512
+            &[0x62, 0xF3, 0x7D, 0x68, 0x18, 0xD1, 0][..], // L'L=3
+            &[0x62, 0xF3, 0x7C, 0x48, 0x18, 0xD1, 0][..], // pp != 66
+            &[0x62, 0xF3, 0x7D, 0x58, 0x18, 0xD1, 0][..], // EVEX.b reserved
+            &[0x62, 0xF3, 0x7D, 0xC8, 0x18, 0xD1, 0][..], // {z} with k0
+            &[0x62, 0xF3, 0x7D, 0xAA, 0x19, 0x10, 0][..], // {z} memory extract
+            &[0x62, 0xF3, 0x75, 0x48, 0x19, 0xD1, 0][..], // extract vvvv reserved
+            &[0x62, 0xF3, 0x7D, 0x41, 0x19, 0xD1, 0][..], // extract V' reserved
+            &[0x62, 0xF3, 0x7D, 0x48, 0x18][..],          // missing ModR/M
+            &[0x62, 0xF3, 0x7D, 0x48, 0x18, 0xD1][..],    // missing imm8
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. }
+                        | LiftError::Unsupported { .. }
+                        | LiftError::Incomplete { .. })
+                ),
+                "invalid EVEX chunk extract/insert accepted: {bytes:02X?}",
             );
         }
     }

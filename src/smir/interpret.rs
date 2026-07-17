@@ -39172,6 +39172,178 @@ mod tests {
     }
 
     #[test]
+    fn lifted_evex_chunk_extract_insert_execute_masks_aliases_tuples_and_e6nf_faults() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // A high-register 128-bit extract selects imm8[1:0], applies zeroing
+        // masking at dword granularity, and clears all backing state above XMM.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[18], lane, 32, 0x1000 + u64::from(lane));
+            }
+            x86.xmm[17] = [u64::MAX; 16];
+            x86.k[3] = 0b1010;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xA3, 0x7D, 0xCB, 0x19, 0xD1, 0x03],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..4u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 32),
+                    if 0b1010 & (1u64 << lane) != 0 {
+                        0x1000 + u64::from(12 + lane)
+                    } else {
+                        0
+                    }
+                );
+            }
+            assert!(x86.xmm[17][2..].iter().all(|word| *word == 0));
+        }
+
+        // Insert captures both high-register inputs before committing an
+        // aliased destination and applies the writemask after chunk assembly.
+        let insert_mask = 0xA55Au64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[18], lane, 32, 0x2000 + u64::from(lane));
+            }
+            for lane in 0..4u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[19], lane, 32, 0x3000 + u64::from(lane));
+            }
+            x86.xmm[17] = [u64::MAX; 16];
+            x86.k[3] = insert_mask;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xA3, 0x6D, 0xC3, 0x18, 0xCB, 0x02],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                let raw = if (8..12).contains(&lane) {
+                    0x3000 + u64::from(lane - 8)
+                } else {
+                    0x2000 + u64::from(lane)
+                };
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 32),
+                    if insert_mask & (1u64 << lane) != 0 {
+                        raw
+                    } else {
+                        0
+                    }
+                );
+            }
+        }
+
+        // Masked extract-to-memory uses Tuple4 scaling (disp8*16), preserves
+        // inactive dwords, and selects the upper half of the YMM source.
+        let old_dwords = [0xAAAA_0000u32, 0xBBBB_0001, 0xCCCC_0002, 0xDDDD_0003];
+        for (lane, value) in old_dwords.into_iter().enumerate() {
+            memory
+                .write(0x120 + lane as u64 * 4, &value.to_le_bytes())
+                .unwrap();
+        }
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k2, 0b0101);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..8u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[3], lane, 32, 0x4000 + u64::from(lane));
+            }
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0x7D, 0x2A, 0x39, 0x58, 0x02, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        let mut extracted = [0u8; 16];
+        memory.read(0x120, &mut extracted).unwrap();
+        for lane in 0..4usize {
+            let actual = u32::from_le_bytes(extracted[lane * 4..lane * 4 + 4].try_into().unwrap());
+            assert_eq!(
+                actual,
+                if 0b0101 & (1 << lane) != 0 {
+                    0x4000 + 4 + lane as u32
+                } else {
+                    old_dwords[lane]
+                }
+            );
+        }
+
+        // Insert-from-memory also scales disp8 by 16 bytes. E6NF performs the
+        // complete read before merging or zeroing any destination element.
+        let inserted_qwords = [0x1111_2222_3333_4444u64, 0x5555_6666_7777_8888];
+        for (lane, value) in inserted_qwords.into_iter().enumerate() {
+            memory
+                .write(0x120 + lane as u64 * 8, &value.to_le_bytes())
+                .unwrap();
+        }
+        ctx.write_vreg(k2, 0b1010);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..4u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[4], lane, 64, 0x5000 + u64::from(lane));
+                SmirInterpreter::set_lane(&mut x86.xmm[3], lane, 64, 0x6000 + u64::from(lane));
+            }
+            x86.xmm[3][4..].fill(u64::MAX);
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0xDD, 0x2A, 0x18, 0x58, 0x02, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[3][0], 0x6000);
+            assert_eq!(x86.xmm[3][1], 0x5001);
+            assert_eq!(x86.xmm[3][2], 0x6002);
+            assert_eq!(x86.xmm[3][3], inserted_qwords[1]);
+            assert!(x86.xmm[3][4..].iter().all(|word| *word == 0));
+        }
+
+        // Unlike E1/E4, an all-zero E6NF writemask does not suppress either
+        // an insert source fault or an extract destination access fault.
+        let sentinel = [0xA5A5_A5A5_A5A5_A5A5; 16];
+        ctx.write_vreg(rax, 0x400);
+        ctx.write_vreg(k2, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[3] = sentinel;
+        }
+        let insert_fault = execute_lifted_x86(
+            &[0x62, 0xF3, 0xDD, 0x2A, 0x18, 0x18, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            insert_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[3], sentinel);
+        }
+
+        let extract_fault = execute_lifted_x86(
+            &[0x62, 0xF3, 0x7D, 0x2A, 0x39, 0x18, 0x01],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            extract_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { .. })
+        ));
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
     fn lifted_legacy_and_vex_packed_unpacks_interleave_per_128_bit_lane() {
         fn seeded(bytes: &[u8], fill: u64) -> VecValue {
             let mut value = [fill; 16];
