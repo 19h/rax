@@ -19875,6 +19875,9 @@ mod tests {
         let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
         let mut memory = FlatMemory::new(0x400);
         let mut ctx = SmirContext::new_x86_64();
+        let flags_before = 0xCD7;
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
 
         for (opcode, one_per_lane) in [
             (0xFC, 0x0101_0101_0101_0101u64),
@@ -19886,6 +19889,19 @@ mod tests {
             lhs[0] = u64::MAX;
             lhs[1] = u64::MAX;
             let rhs = [one_per_lane; 16];
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[0] = u64::MAX;
+                x86.mm[1] = one_per_lane;
+                x86.x87.tag_word = 0xFFFF;
+                x86.x87.status_word = 6 << 11;
+            }
+            execute_lifted_x86(&[0x0F, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.mm[0], 0, "MMX opcode {opcode:02X}");
+                assert_eq!(x86.x87.tag_word, 0);
+                assert_eq!(x86.x87.status_word & 0x3800, 6 << 11);
+            }
+
             if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
                 x86.xmm[0] = lhs;
                 x86.xmm[1] = rhs;
@@ -19908,6 +19924,37 @@ mod tests {
             if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
                 assert!(x86.xmm[0].iter().all(|word| *word == 0), "VEX {opcode:02X}");
             }
+        }
+
+        // The MMX memory form reads exactly 8 bytes before entering MMX state.
+        memory
+            .write(0x3F8, &0x0101_0101_0101_0101u64.to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(rax, 0x3F8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::MAX;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0xFC, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        // A faulting source leaves both the MMX destination and x87 tags intact.
+        ctx.write_vreg(rax, 0x1000);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xA5A5_5A5A_C3C3_3C3C;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0xFC, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xA5A5_5A5A_C3C3_3C3C);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
         }
 
         // Byte masking uses all 64 K bits and preserves or zeroes individual bytes.
@@ -19974,6 +20021,8 @@ mod tests {
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(x86.xmm[2], old);
         }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
     }
 
     #[test]
@@ -19992,6 +20041,17 @@ mod tests {
             lhs[0] = 0;
             lhs[1] = 0;
             let rhs = [one_per_lane; 16];
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[0] = 0;
+                x86.mm[1] = one_per_lane;
+                x86.x87.tag_word = 0xFFFF;
+            }
+            execute_lifted_x86(&[0x0F, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.mm[0], u64::MAX, "MMX {opcode:02X}");
+                assert_eq!(x86.x87.tag_word, 0);
+            }
+
             if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
                 x86.xmm[0] = lhs;
                 x86.xmm[1] = rhs;
@@ -20116,6 +20176,17 @@ mod tests {
             lhs[0] = lhs_word;
             lhs[1] = lhs_word;
             let rhs = [rhs_word; 16];
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[0] = lhs_word;
+                x86.mm[1] = rhs_word;
+                x86.x87.tag_word = 0xFFFF;
+            }
+            execute_lifted_x86(&[0x0F, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.mm[0], expected_word, "MMX {opcode:02X}");
+                assert_eq!(x86.x87.tag_word, 0);
+            }
+
             if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
                 x86.xmm[0] = lhs;
                 x86.xmm[1] = rhs;
