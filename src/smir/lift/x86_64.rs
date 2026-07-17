@@ -15162,10 +15162,14 @@ impl X86_64Lifter {
             self.xmm(modrm.reg)
         };
         if mmx {
-            ops.push(SmirOp::new(
+            ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
                 Self::pmaddwd_kind(dst, dst, src2, VecWidth::V64),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0xF5,
+                },
             ));
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
@@ -60252,7 +60256,10 @@ mod tests {
                         saturate: false,
                         zeroing: false,
                     },
-                    x86_hint: None,
+                    x86_hint: Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0xF5,
+                    }),
                     ..
                 },
                 SmirOp {

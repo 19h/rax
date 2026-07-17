@@ -5970,6 +5970,32 @@ impl X86_64Lowerer {
                     _ => None,
                 },
             ),
+            OpKind::VDotProduct {
+                dst,
+                acc,
+                src1,
+                src2,
+                mask,
+                src_elem,
+                acc_elem,
+                width,
+                src1_unsigned,
+                saturate,
+                zeroing,
+            } => (
+                dst,
+                src1,
+                src2,
+                (*acc == VReg::Imm(0)
+                    && mask.is_none()
+                    && *src_elem == VecElementType::I16
+                    && *acc_elem == VecElementType::I32
+                    && *width == VecWidth::V64
+                    && !*src1_unsigned
+                    && !*saturate
+                    && !*zeroing)
+                    .then_some(0xF5),
+            ),
             OpKind::VMul {
                 dst,
                 src1,
@@ -26846,6 +26872,34 @@ mod tests {
                 "missing MMX average 0F {opcode:02X} /r: {code:02X?}"
             );
         }
+    }
+
+    #[test]
+    fn lower_mmx_maddwd_emits_classic_register_opcode() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let code = lower_single_hinted_op(
+            OpKind::VDotProduct {
+                dst: mm(3),
+                acc: VReg::Imm(0),
+                src1: mm(3),
+                src2: mm(6),
+                mask: None,
+                src_elem: VecElementType::I16,
+                acc_elem: VecElementType::I32,
+                width: VecWidth::V64,
+                src1_unsigned: false,
+                saturate: false,
+                zeroing: false,
+            },
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode: 0xF5,
+            },
+        );
+        assert!(
+            code.windows(3).any(|window| window == [0x0F, 0xF5, 0xDE]),
+            "missing MMX PMADDWD 0F F5 /r: {code:02X?}"
+        );
     }
 
     #[test]

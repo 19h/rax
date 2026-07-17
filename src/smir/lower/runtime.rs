@@ -3516,6 +3516,32 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 _ => None,
             },
         ),
+        OpKind::VDotProduct {
+            dst,
+            acc,
+            src1,
+            src2,
+            mask,
+            src_elem,
+            acc_elem,
+            width,
+            src1_unsigned,
+            saturate,
+            zeroing,
+        } => (
+            dst,
+            src1,
+            src2,
+            (*acc == VReg::Imm(0)
+                && mask.is_none()
+                && *src_elem == VecElementType::I16
+                && *acc_elem == VecElementType::I32
+                && *width == VecWidth::V64
+                && !*src1_unsigned
+                && !*saturate
+                && !*zeroing)
+                .then_some(0xF5),
+        ),
         OpKind::VMul {
             dst,
             src1,
@@ -13540,6 +13566,53 @@ mod jit_gate_tests {
                 &std::collections::HashMap::new()
             ));
         }
+    }
+
+    #[test]
+    fn x86_mmx_maddwd_gate_accepts_only_non_accumulating_word_dot_product() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x9900);
+        builder.push_op(
+            0x9900,
+            OpKind::VDotProduct {
+                dst: mm(3),
+                acc: VReg::Imm(0),
+                src1: mm(3),
+                src2: mm(6),
+                mask: None,
+                src_elem: VecElementType::I16,
+                acc_elem: VecElementType::I32,
+                width: VecWidth::V64,
+                src1_unsigned: false,
+                saturate: false,
+                zeroing: false,
+            },
+        );
+        builder.push_op(
+            0x9900,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0xF5,
+        });
+        assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+        assert!(is_native_clobber_safe(&function));
+        assert!(x86_native_mmx_pairs_valid_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+
+        let OpKind::VDotProduct { acc, .. } = &mut function.blocks[0].ops[0].kind else {
+            unreachable!()
+        };
+        *acc = mm(0);
+        assert!(!is_x86_native_mmx_op(&function.blocks[0].ops[0]));
     }
 
     #[test]
