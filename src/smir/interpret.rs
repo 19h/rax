@@ -48342,6 +48342,163 @@ mod tests {
     }
 
     #[test]
+    fn lifted_vdbpsadbw_executes_dword_shuffle_sad_masks_aliases_and_faults() {
+        fn vector(bytes: &[u8], fill: u64) -> VecValue {
+            let mut out = [fill; 16];
+            for (word, chunk) in bytes.chunks_exact(8).enumerate() {
+                out[word] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            out
+        }
+        fn words(value: &VecValue, count: usize) -> Vec<u16> {
+            value
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .take(count * 2)
+                .collect::<Vec<_>>()
+                .chunks_exact(2)
+                .map(|chunk| u16::from_le_bytes(chunk.try_into().unwrap()))
+                .collect()
+        }
+        fn reference(first: &[u8], second: &[u8], imm: u8) -> Vec<u16> {
+            let mut shuffled = vec![0u8; second.len()];
+            for block in (0..second.len()).step_by(16) {
+                for dword in 0..4usize {
+                    let selector = usize::from((imm >> (2 * dword)) & 3);
+                    shuffled[block + dword * 4..block + dword * 4 + 4]
+                        .copy_from_slice(&second[block + selector * 4..block + selector * 4 + 4]);
+                }
+            }
+
+            let mut result = Vec::with_capacity(first.len() / 2);
+            for block in (0..first.len()).step_by(8) {
+                for (first_offset, shuffled_offset) in [(0, 0), (0, 1), (4, 2), (4, 3)] {
+                    let mut sum = 0u16;
+                    for byte in 0..4usize {
+                        sum += u16::from(
+                            first[block + first_offset + byte]
+                                .abs_diff(shuffled[block + shuffled_offset + byte]),
+                        );
+                    }
+                    result.push(sum);
+                }
+            }
+            result
+        }
+
+        let first = (0..64)
+            .map(|lane| (lane as u8).wrapping_mul(0x5D).wrapping_add(0x21))
+            .collect::<Vec<_>>();
+        let second = (0..64)
+            .map(|lane| (lane as u8).wrapping_mul(0x97).wrapping_add(0x53))
+            .collect::<Vec<_>>();
+        let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Exhaust all four independent two-bit dword selectors in imm8.
+        for imm in 0..=u8::MAX {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[1] = sentinel;
+                x86.xmm[2] = vector(&first[..16], 0);
+                x86.xmm[3] = vector(&second[..16], 0);
+            }
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x6D, 0x08, 0x42, 0xCB, imm],
+                &mut ctx,
+                &mut memory,
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    words(&x86.xmm[1], 8),
+                    reference(&first[..16], &second[..16], imm),
+                    "VDBPSADBW imm8={imm:#04x}",
+                );
+                assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+            }
+        }
+
+        // imm8=E4 selects all four source dwords and a zeroing word mask
+        // applies after all 32 ZMM results are computed from high registers.
+        let mask = 0xA55A_C33Cu64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = sentinel;
+            x86.xmm[18] = vector(&first, 0);
+            x86.xmm[19] = vector(&second, 0);
+            x86.k[3] = mask;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xA3, 0x6D, 0xC3, 0x42, 0xCB, 0xE4],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let actual = words(&x86.xmm[17], 32);
+            let expected = reference(&first, &second, 0xE4);
+            for lane in 0..32 {
+                assert_eq!(
+                    actual[lane],
+                    if mask & (1u64 << lane) != 0 {
+                        expected[lane]
+                    } else {
+                        0
+                    },
+                    "VDBPSADBW lane {lane}",
+                );
+            }
+            assert!(expected.iter().all(|word| *word <= 4 * 255));
+        }
+
+        // A YMM destination may alias the shuffled second source; all input
+        // bytes are consumed before writeback and state above VL is cleared.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[8] = vector(&second[..32], 0xA5A5_A5A5_A5A5_A5A5);
+            x86.xmm[9] = vector(&first[..32], 0);
+        }
+        execute_lifted_x86(
+            &[0x62, 0x53, 0x35, 0x28, 0x42, 0xC0, 0x1B],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                words(&x86.xmm[8], 16),
+                reference(&first[..32], &second[..32], 0x1B)
+            );
+            assert!(x86.xmm[8][4..].iter().all(|word| *word == 0));
+        }
+
+        // E4NF performs the complete FULLMEM read even when every write-mask
+        // bit is clear, and the fault precedes all destination state changes.
+        ctx.write_vreg(rax, 0x3F0);
+        ctx.write_vreg(k2, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[2] = vector(&first, 0);
+        }
+        let fault = execute_lifted_x86(
+            &[0x62, 0xF3, 0x6D, 0x4A, 0x42, 0x08, 0xE4],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
     fn lifted_psadbw_executes_all_widths_aliases_upper_state_and_faults() {
         fn vector(bytes: &[u8], fill: u64) -> VecValue {
             let mut out = [fill; 16];

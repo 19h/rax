@@ -7944,6 +7944,58 @@ mod tests {
             .expect("VEX VMPSADBW destination operation must survive optimization");
         assert!(load < sad);
 
+        let vdbpsadbw = optimized(&[0x62, 0xF3, 0x6D, 0x4A, 0x42, 0x48, 0x01, 0xE4]);
+        let ops = &vdbpsadbw.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        addr: Address::BaseOffset { offset: 64, .. },
+                        width: VecWidth::V512,
+                        ..
+                    }
+                )
+            })
+            .expect("E4NF VDBPSADBW full source load must survive optimization");
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VMpsadbw {
+                        width: VecWidth::V512,
+                        ..
+                    }
+                ))
+                .count(),
+            4,
+            "VDBPSADBW requires all four projected SAD calculations",
+        );
+        let first_sad = ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::VMpsadbw { .. }))
+            .unwrap();
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                        elem: VecElementType::I16,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VDBPSADBW destination write removed");
+        assert!(load < first_sad && first_sad < destination_write);
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. })),
+            "E4NF VDBPSADBW must not become fault-suppressible"
+        );
+
         let psadbw = optimized(&[0x66, 0x44, 0x0F, 0xF6, 0x08]);
         let ops = &psadbw.blocks[0].ops;
         let alignment = ops

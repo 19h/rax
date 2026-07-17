@@ -688,7 +688,8 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
     let is_packed_abs =
         (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x1C..=0x1F));
     let is_palignr = (b1 & 0x07) == 3 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x0F));
-    let is_mpsadbw = (b1 & 0x07) == 3 && (b2 & 0x03) == 2 && matches!(bytes.get(4), Some(0x42));
+    let is_mpsadbw =
+        (b1 & 0x07) == 3 && matches!(b2 & 0x03, 1 | 2) && matches!(bytes.get(4), Some(0x42));
     let is_packed_extend = (b1 & 0x07) == 2
         && (b2 & 0x03) == 1
         && matches!(bytes.get(4), Some(0x20..=0x25 | 0x30..=0x35));
@@ -20946,6 +20947,105 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
+    fn append_vdbpsadbw(
+        &self,
+        src1: VReg,
+        src2: VReg,
+        width: VecWidth,
+        imm: u8,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) -> VReg {
+        // First apply the immediate-controlled dword shuffle to SRC2 within
+        // each independent 128-bit lane.
+        let dwords = width.lanes(VecElementType::I32) as u8;
+        let mut shuffled = self.append_zero_vector(width, VecElementType::I32, pc, ctx, ops);
+        for lane in 0..dwords {
+            let block_base = lane & !3;
+            let selector = (imm >> (2 * (lane & 3))) & 3;
+            let scalar = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VExtractLane {
+                    dst: scalar,
+                    vec: src2,
+                    lane: block_base + selector,
+                    elem: VecElementType::I32,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            let inserted = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VInsertLane {
+                    dst: inserted,
+                    vec: shuffled,
+                    scalar,
+                    lane,
+                    elem: VecElementType::I32,
+                },
+            ));
+            shuffled = inserted;
+        }
+
+        // VDBPSADBW's four result pairs are projections of four ordinary
+        // MPSADBW computations over the shuffled SRC2 and stationary SRC1.
+        // Repeating each imm3 in bits 5:3 applies the same selector to every
+        // 128-bit block at all vector lengths.
+        let mut partials = Vec::with_capacity(4);
+        for selector in [0u8, 1, 6, 7] {
+            let partial = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VMpsadbw {
+                    dst: partial,
+                    src1: shuffled,
+                    src2: src1,
+                    mask: None,
+                    width,
+                    imm: selector | (selector << 3),
+                    zeroing: false,
+                },
+            ));
+            partials.push(partial);
+        }
+
+        let words = width.lanes(VecElementType::I16) as u8;
+        let mut result = self.append_zero_vector(width, VecElementType::I16, pc, ctx, ops);
+        for lane in 0..words {
+            let scalar = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VExtractLane {
+                    dst: scalar,
+                    vec: partials[usize::from((lane & 7) / 2)],
+                    lane,
+                    elem: VecElementType::I16,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            let inserted = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VInsertLane {
+                    dst: inserted,
+                    vec: result,
+                    scalar,
+                    lane,
+                    elem: VecElementType::I16,
+                },
+            ));
+            result = inserted;
+        }
+        result
+    }
+
     fn lift_vec_mpsadbw(
         &self,
         prefix: VecPrefix,
@@ -20956,7 +21056,7 @@ impl X86_64Lifter {
         let vex = prefix.encoding == VecEncodingKind::Vex
             && prefix.pp == X86SsePrefix::OpSize
             && matches!(prefix.width, VecWidth::V128 | VecWidth::V256);
-        let evex = prefix.encoding == VecEncodingKind::Evex
+        let evex_mpsadbw = prefix.encoding == VecEncodingKind::Evex
             && prefix.pp == X86SsePrefix::Rep
             && !prefix.w
             && prefix.l_bits != 3
@@ -20966,12 +21066,23 @@ impl X86_64Lifter {
             )
             && !prefix.b
             && (!prefix.zeroing || prefix.aaa != 0);
-        if !vex && !evex {
+        let vdbpsadbw = prefix.encoding == VecEncodingKind::Evex
+            && prefix.pp == X86SsePrefix::OpSize
+            && !prefix.w
+            && prefix.l_bits != 3
+            && matches!(
+                prefix.width,
+                VecWidth::V128 | VecWidth::V256 | VecWidth::V512
+            )
+            && !prefix.b
+            && (!prefix.zeroing || prefix.aaa != 0);
+        if !vex && !evex_mpsadbw && !vdbpsadbw {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
             });
         }
+        let evex = evex_mpsadbw || vdbpsadbw;
         let cursor = prefix.bytes + 1;
         let modrm_prefix = X86Prefix {
             rex: prefix.rex,
@@ -21025,12 +21136,35 @@ impl X86_64Lifter {
             modrm.reg + if evex && prefix.reg_high { 16 } else { 0 },
             prefix.width,
         );
+        let src1 = self.vec_reg(
+            prefix.vvvv + if evex && prefix.v_high { 16 } else { 0 },
+            prefix.width,
+        );
+        if vdbpsadbw {
+            let raw = self.append_vdbpsadbw(
+                src1,
+                src2,
+                prefix.width,
+                bytes[imm_offset],
+                pc,
+                ctx,
+                &mut ops,
+            );
+            self.append_evex_vector_mask_result(
+                prefix,
+                dst,
+                raw,
+                VecElementType::I16,
+                pc,
+                ctx,
+                &mut ops,
+            );
+            return Ok(LiftResult::fallthrough(ops, imm_offset + 1));
+        }
+
         let kind = OpKind::VMpsadbw {
             dst,
-            src1: self.vec_reg(
-                prefix.vvvv + if evex && prefix.v_high { 16 } else { 0 },
-                prefix.width,
-            ),
+            src1,
             src2,
             mask: (evex && prefix.aaa != 0)
                 .then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa)))),
@@ -65635,9 +65769,11 @@ mod tests {
             &[0xF3, 0x66, 0x0F, 0x3A, 0x42, 0xCA, 0x07][..],
             &[0x66, 0x0F, 0x3A, 0x42, 0xCA][..],
             &[0xC4, 0x43, 0x20, 0x42, 0xCA, 0x07][..],
-            // AVX10.2 requires F3/W0, reserves L'L=3 and EVEX.b, and cannot
-            // request zeroing without a nonzero opmask.
-            &[0x62, 0xF3, 0x65, 0x08, 0x42, 0xCA, 0x07][..],
+            // AVX10.2 VMPSADBW requires F3/W0, while VDBPSADBW requires
+            // 66/W0. Neither form accepts NP/F2, L'L=3, EVEX.b, or zeroing
+            // without a nonzero opmask.
+            &[0x62, 0xF3, 0x64, 0x08, 0x42, 0xCA, 0x07][..],
+            &[0x62, 0xF3, 0x67, 0x08, 0x42, 0xCA, 0x07][..],
             &[0x62, 0xF3, 0xE6, 0x08, 0x42, 0xCA, 0x07][..],
             &[0x62, 0xF3, 0x66, 0x68, 0x42, 0xCA, 0x07][..],
             &[0x62, 0xF3, 0x66, 0x58, 0x42, 0xCA, 0x07][..],
@@ -65651,6 +65787,121 @@ mod tests {
                         | LiftError::Incomplete { .. })
                 ),
                 "invalid MPSADBW encoding accepted: {bytes:02X?}",
+            );
+        }
+    }
+
+    #[test]
+    fn lift_vdbpsadbw_decomposes_shuffle_sad_masks_and_full_tuple_memory() {
+        let high = lift_single(&[0x62, 0xA3, 0x6D, 0xC3, 0x42, 0xCB, 0xE4]).unwrap();
+        assert_eq!(high.bytes_consumed, 7);
+        assert_eq!(
+            high.ops
+                .iter()
+                .filter_map(|op| match op.kind {
+                    OpKind::VMpsadbw {
+                        dst: VReg::Virtual(_),
+                        src1: VReg::Virtual(_),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                        mask: None,
+                        width: VecWidth::V512,
+                        imm,
+                        zeroing: false,
+                    } => Some(imm),
+                    _ => None,
+                })
+                .collect::<Vec<_>>(),
+            vec![0, 9, 54, 63],
+        );
+        assert!(high.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Zmm(19))),
+                lane: 15,
+                elem: VecElementType::I32,
+                ..
+            }
+        )));
+        assert!(high.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                elem: VecElementType::I16,
+                ..
+            }
+        )));
+
+        let ymm = lift_single(&[0x62, 0x53, 0x35, 0x28, 0x42, 0xC2, 0x63]).unwrap();
+        assert_eq!(ymm.bytes_consumed, 7);
+        assert_eq!(
+            ymm.ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::VMpsadbw {
+                        width: VecWidth::V256,
+                        ..
+                    }
+                ))
+                .count(),
+            4,
+        );
+        assert!(matches!(
+            ymm.ops.last().map(|op| &op.kind),
+            Some(OpKind::VMov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(8))),
+                width: VecWidth::V256,
+                ..
+            })
+        ));
+
+        // E4NF uses a complete, non-fault-suppressible source read. FULLMEM
+        // disp8 scales by the selected vector length.
+        let memory = lift_single(&[0x62, 0xF3, 0x6D, 0x4A, 0x42, 0x48, 0x02, 0xA5]).unwrap();
+        let load = memory
+            .ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VLoad {
+                        addr: Address::BaseOffset { offset: 128, .. },
+                        width: VecWidth::V512,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let first_sad = memory
+            .ops
+            .iter()
+            .position(|op| matches!(op.kind, OpKind::VMpsadbw { .. }))
+            .unwrap();
+        assert!(load < first_sad);
+        assert!(
+            !memory
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+        );
+
+        for bytes in [
+            &[0x62, 0xF3, 0xED, 0x48, 0x42, 0xC8, 0][..], // W=1
+            &[0x62, 0xF3, 0x6D, 0x68, 0x42, 0xC8, 0][..], // L'L=3
+            &[0x62, 0xF3, 0x6D, 0x18, 0x42, 0xC8, 0][..], // EVEX.b register
+            &[0x62, 0xF3, 0x6D, 0x58, 0x42, 0x08, 0][..], // EVEX.b memory
+            &[0x62, 0xF3, 0x6D, 0x88, 0x42, 0xC8, 0][..], // zeroing with k0
+            &[0x62, 0xF3, 0x6C, 0x48, 0x42, 0xC8, 0][..], // pp != 66/F3
+            &[0x62, 0xF3, 0x6D, 0x48, 0x42, 0xC8][..],    // missing imm8
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. }
+                        | LiftError::Unsupported { .. }
+                        | LiftError::Incomplete { .. })
+                ),
+                "invalid VDBPSADBW encoding accepted: {bytes:02X?}",
             );
         }
     }
