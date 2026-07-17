@@ -3502,6 +3502,7 @@ fn x86_reg_name(reg: &X86Reg) -> String {
         X86Reg::Rflags => "rflags".to_string(),
         X86Reg::FsBase => "fs_base".to_string(),
         X86Reg::GsBase => "gs_base".to_string(),
+        X86Reg::Mm(n) => format!("mm{n}"),
         X86Reg::Xmm(n) => format!("xmm{n}"),
         X86Reg::Ymm(n) => format!("ymm{n}"),
         X86Reg::Zmm(n) => format!("zmm{n}"),

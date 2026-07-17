@@ -206,6 +206,9 @@ pub enum X86Reg {
     FsBase,
     GsBase,
 
+    // MMX registers (0-7)
+    Mm(u8),
+
     // SIMD registers (0-31)
     Xmm(u8),
     Ymm(u8),

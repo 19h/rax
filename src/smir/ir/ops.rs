@@ -110,6 +110,8 @@ pub enum X86XSaveKind {
 pub enum X86X87ControlKind {
     Init,
     ClearExceptions,
+    /// Enter MMX state by marking all eight aliased x87 data registers valid.
+    EnterMmx,
     StoreStatusAx,
     LoadControlWord,
     StoreControlWord,
@@ -3193,11 +3195,12 @@ pub enum OpKind {
         dst_width: OpWidth,
     },
 
-    /// Scalar integer transfer between a general-purpose register and the low
-    /// doubleword or quadword of an XMM register. A vector destination clears
+    /// Scalar integer transfer between a general-purpose register and an MMX
+    /// register or the low doubleword/quadword of an XMM register. An MMX
+    /// MOVD destination is zero-extended to 64 bits. An XMM destination clears
     /// bits 127:width; `zero_upper` additionally clears the shared backing
     /// state above bit 127 for VEX/EVEX encodings.
-    /// MOVD, MOVQ, VMOVD, VMOVQ register forms (66 0F 6E/7E).
+    /// MOVD, MOVQ, VMOVD, VMOVQ register forms (0F 6E/7E and 66 0F 6E/7E).
     X86MovdQ {
         dst: VReg,
         src: VReg,
@@ -4346,6 +4349,7 @@ impl OpKind {
                 kind:
                     X86X87ControlKind::Init
                     | X86X87ControlKind::ClearExceptions
+                    | X86X87ControlKind::EnterMmx
                     | X86X87ControlKind::LoadControlWord
                     | X86X87ControlKind::StoreControlWord
                     | X86X87ControlKind::StoreStatusWord
@@ -4414,6 +4418,7 @@ impl OpKind {
                         kind:
                             X86X87ControlKind::Init
                             | X86X87ControlKind::ClearExceptions
+                            | X86X87ControlKind::EnterMmx
                             | X86X87ControlKind::StoreControlWord
                             | X86X87ControlKind::StoreStatusWord
                             | X86X87ControlKind::StoreEnvironment(_)
@@ -4640,6 +4645,16 @@ mod tests {
         };
         assert!(init.has_side_effects());
         assert!(init.dests().is_empty());
+
+        let enter_mmx = OpKind::X86X87Control {
+            kind: X86X87ControlKind::EnterMmx,
+            addr: None,
+        };
+        assert!(enter_mmx.has_side_effects());
+        assert!(enter_mmx.dests().is_empty());
+        assert!(!enter_mmx.reads_memory());
+        assert!(!enter_mmx.writes_memory());
+        assert!(!enter_mmx.is_jit_safe());
 
         let status_ax = OpKind::X86X87Control {
             kind: X86X87ControlKind::StoreStatusAx,

@@ -1309,6 +1309,10 @@ impl X86_64Lifter {
         VReg::Arch(ArchReg::X86(X86Reg::Xmm(reg)))
     }
 
+    fn mm(&self, reg: u8) -> VReg {
+        VReg::Arch(ArchReg::X86(X86Reg::Mm(reg & 0x7)))
+    }
+
     fn ymm(&self, reg: u8) -> VReg {
         VReg::Arch(ArchReg::X86(X86Reg::Ymm(reg)))
     }
@@ -7092,8 +7096,8 @@ impl X86_64Lifter {
         ))
     }
 
-    /// Lift legacy MOVD/MOVQ transfers between XMM and GPR/memory operands
-    /// (66 0F 6E/7E). Prefix-free encodings address MMX state instead.
+    /// Lift legacy MOVD/MOVQ transfers between MMX/XMM and GPR/memory operands
+    /// (0F 6E/7E and 66 0F 6E/7E respectively).
     fn lift_sse_movd_q(
         &self,
         opcode: u8,
@@ -7102,12 +7106,6 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if !prefix.operand_size_override && prefix.rep_prefix.is_none() && !prefix.lock {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("MMX opcode 0F {opcode:02X}"),
-            });
-        }
         if prefix.lock || prefix.rep_prefix.is_some() || prefix.rex2.is_some() {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
@@ -7115,6 +7113,7 @@ impl X86_64Lifter {
             });
         }
 
+        let mmx = !prefix.operand_size_override;
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
@@ -7123,15 +7122,49 @@ impl X86_64Lifter {
         } else {
             (VecElementType::I32, OpWidth::W32, MemWidth::B4)
         };
+        let hint = X86OpHint::SseOp {
+            prefix: if mmx {
+                X86SsePrefix::None
+            } else {
+                X86SsePrefix::OpSize
+            },
+            opcode,
+        };
 
         if !modrm.is_memory {
             let (dst, src, zero_upper) = if opcode == 0x6E {
-                (self.xmm(modrm.reg), self.gpr(modrm.rm), false)
+                (
+                    if mmx {
+                        self.mm(modrm.reg)
+                    } else {
+                        self.xmm(modrm.reg)
+                    },
+                    self.gpr(modrm.rm),
+                    false,
+                )
             } else {
-                (self.gpr(modrm.rm), self.xmm(modrm.reg), false)
+                (
+                    self.gpr(modrm.rm),
+                    if mmx {
+                        self.mm(modrm.reg)
+                    } else {
+                        self.xmm(modrm.reg)
+                    },
+                    false,
+                )
             };
+            if mmx {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    },
+                ));
+            }
             ops.push(SmirOp::with_hint(
-                OpId(0),
+                OpId(ops.len() as u16),
                 pc,
                 OpKind::X86MovdQ {
                     dst,
@@ -7139,10 +7172,7 @@ impl X86_64Lifter {
                     width: op_width,
                     zero_upper,
                 },
-                X86OpHint::SseOp {
-                    prefix: X86SsePrefix::OpSize,
-                    opcode,
-                },
+                hint,
             ));
         } else if opcode == 0x6E {
             let scalar = {
@@ -7162,28 +7192,64 @@ impl X86_64Lifter {
                 ));
                 scalar
             };
-            self.append_scalar_zeroed_xmm_result(
-                self.xmm(modrm.reg),
-                scalar,
-                elem,
-                false,
-                pc,
-                ctx,
-                &mut ops,
-            );
+            if mmx {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    },
+                ));
+                ops.push(SmirOp::with_hint(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86MovdQ {
+                        dst: self.mm(modrm.reg),
+                        src: scalar,
+                        width: op_width,
+                        zero_upper: false,
+                    },
+                    hint,
+                ));
+            } else {
+                self.append_scalar_zeroed_xmm_result(
+                    self.xmm(modrm.reg),
+                    scalar,
+                    elem,
+                    false,
+                    pc,
+                    ctx,
+                    &mut ops,
+                );
+            }
         } else {
             let scalar = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VExtractLane {
-                    dst: scalar,
-                    vec: self.xmm(modrm.reg),
-                    lane: 0,
-                    elem,
-                    sign: SignExtend::Zero,
-                },
-            ));
+            if mmx {
+                ops.push(SmirOp::with_hint(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86MovdQ {
+                        dst: scalar,
+                        src: self.mm(modrm.reg),
+                        width: op_width,
+                        zero_upper: false,
+                    },
+                    hint,
+                ));
+            } else {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VExtractLane {
+                        dst: scalar,
+                        vec: self.xmm(modrm.reg),
+                        lane: 0,
+                        elem,
+                        sign: SignExtend::Zero,
+                    },
+                ));
+            }
             let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
             ops.extend(pre_ops);
             ops.push(SmirOp::new(
@@ -7195,6 +7261,16 @@ impl X86_64Lifter {
                     width: mem_width,
                 },
             ));
+            if mmx {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    },
+                ));
+            }
         }
 
         Ok(LiftResult::fallthrough(
@@ -51442,9 +51518,103 @@ mod tests {
                 "reserved MOVD/MOVQ encoding accepted: {bytes:02X?}",
             );
         }
+        let mmx_d = lift_single(&[0x0F, 0x6E, 0xC1]).unwrap();
+        assert_eq!(mmx_d.bytes_consumed, 3);
         assert!(matches!(
-            lift_single(&[0x0F, 0x6E, 0xC1]),
-            Err(LiftError::Unsupported { .. })
+            mmx_d.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86MovdQ {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src: VReg::Arch(ArchReg::X86(X86Reg::Rcx)),
+                        width: OpWidth::W32,
+                        zero_upper: false,
+                    },
+                    x86_hint: Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0x6E,
+                    }),
+                    ..
+                }
+            ]
+        ));
+
+        // REX.W selects the 64-bit transfer; REX.R does not extend the
+        // three-bit MMX register namespace.
+        let mmx_q_reg = lift_single(&[0x4C, 0x0F, 0x6E, 0xCA]).unwrap();
+        assert!(matches!(
+            mmx_q_reg.ops.last().unwrap().kind,
+            OpKind::X86MovdQ {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
+                width: OpWidth::W64,
+                ..
+            }
+        ));
+
+        let mmx_q_load = lift_single(&[0x48, 0x0F, 0x6E, 0x00]).unwrap();
+        assert!(matches!(
+            mmx_q_load.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::Load {
+                        width: MemWidth::B8,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86MovdQ {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        width: OpWidth::W64,
+                        ..
+                    },
+                    ..
+                }
+            ]
+        ));
+
+        let mmx_q_store = lift_single(&[0x48, 0x0F, 0x7E, 0x00]).unwrap();
+        assert!(matches!(
+            mmx_q_store.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::X86MovdQ {
+                        src: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        width: OpWidth::W64,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::Store {
+                        width: MemWidth::B8,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    },
+                    ..
+                }
+            ]
         ));
     }
 

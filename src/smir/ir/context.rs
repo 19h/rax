@@ -360,6 +360,8 @@ pub struct X86RegState {
     pub fs_base: u64,
     /// GS base
     pub gs_base: u64,
+    /// MMX registers MM0-MM7 (64-bit each)
+    pub mm: [u64; 8],
     /// XMM/YMM/ZMM registers (up to 512-bit each)
     pub xmm: [VecValue; 32],
     /// AVX-512 opmask registers K0-K7.
@@ -436,6 +438,7 @@ impl X86RegState {
             X86Reg::Rflags => self.rflags,
             X86Reg::FsBase => self.fs_base,
             X86Reg::GsBase => self.gs_base,
+            X86Reg::Mm(n) => self.mm[n as usize & 0x7],
             X86Reg::Xmm(n) | X86Reg::Ymm(n) | X86Reg::Zmm(n) => self.xmm[n as usize][0],
             X86Reg::K(n) => self.k[n as usize & 0x7],
             _ => 0,
@@ -481,6 +484,7 @@ impl X86RegState {
             X86Reg::Rflags => self.rflags = val,
             X86Reg::FsBase => self.fs_base = val,
             X86Reg::GsBase => self.gs_base = val,
+            X86Reg::Mm(n) => self.mm[n as usize & 0x7] = val,
             X86Reg::Xmm(n) | X86Reg::Ymm(n) | X86Reg::Zmm(n) => self.xmm[n as usize][0] = val,
             X86Reg::K(n) => self.k[n as usize & 0x7] = val,
             _ => {}

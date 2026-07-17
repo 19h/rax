@@ -7529,6 +7529,11 @@ impl SmirInterpreter {
                         x86.x87.clear_exceptions();
                     }
                 }
+                X86X87ControlKind::EnterMmx => {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.x87.tag_word = 0;
+                    }
+                }
                 X86X87ControlKind::StoreStatusAx => {
                     let status = match &ctx.arch_regs {
                         ArchRegState::X86_64(x86) => x86.x87.status_word,
@@ -8308,7 +8313,10 @@ impl SmirInterpreter {
                 width,
                 zero_upper,
             } => {
-                if matches!(dst, VReg::Arch(ArchReg::X86(X86Reg::Xmm(_)))) {
+                if matches!(
+                    dst,
+                    VReg::Arch(ArchReg::X86(X86Reg::Mm(_) | X86Reg::Xmm(_)))
+                ) {
                     let scalar = ctx.read_vreg(*src) & width.mask();
                     let old = Self::read_vec(ctx, *dst);
                     let mut result = if *zero_upper { [0; 16] } else { old };
@@ -9491,6 +9499,14 @@ impl SmirInterpreter {
     fn read_vec(ctx: &SmirContext, reg: VReg) -> VecValue {
         match reg {
             VReg::Virtual(id) => ctx.vregs.get_vec(id),
+            VReg::Arch(ArchReg::X86(X86Reg::Mm(n))) => match &ctx.arch_regs {
+                ArchRegState::X86_64(x86) => {
+                    let mut value = [0; 16];
+                    value[0] = x86.mm[n as usize & 0x7];
+                    value
+                }
+                _ => [0; 16],
+            },
             VReg::Arch(ArchReg::X86(X86Reg::Xmm(n)))
             | VReg::Arch(ArchReg::X86(X86Reg::Ymm(n)))
             | VReg::Arch(ArchReg::X86(X86Reg::Zmm(n))) => match &ctx.arch_regs {
@@ -9548,6 +9564,11 @@ impl SmirInterpreter {
     fn write_vec(ctx: &mut SmirContext, reg: VReg, value: VecValue) {
         match reg {
             VReg::Virtual(id) => ctx.vregs.set_vec(id, value),
+            VReg::Arch(ArchReg::X86(X86Reg::Mm(n))) => {
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.mm[n as usize & 0x7] = value[0];
+                }
+            }
             VReg::Arch(ArchReg::X86(X86Reg::Xmm(n)))
             | VReg::Arch(ArchReg::X86(X86Reg::Ymm(n)))
             | VReg::Arch(ArchReg::X86(X86Reg::Zmm(n))) => {
@@ -36754,6 +36775,68 @@ mod tests {
         let mut ctx = SmirContext::new_x86_64();
         ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
         ctx.flags.lazy = None;
+
+        // Prefix-free MOVD/MOVQ address MMX state. MOVD zero-extends its
+        // 32-bit source, enters MMX state, and preserves x87 TOP.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::MAX;
+            x86.x87.tag_word = 0xFFFF;
+            x86.x87.status_word = 5 << 11;
+        }
+        ctx.write_vreg(rcx, 0x1122_3344_5566_7788);
+        execute_lifted_x86(&[0x0F, 0x6E, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0x0000_0000_5566_7788);
+            assert_eq!(x86.x87.tag_word, 0);
+            assert_eq!(x86.x87.status_word & 0x3800, 5 << 11);
+        }
+
+        // REX.W MOVQ transfers all 64 bits from memory.
+        memory
+            .write(0x40, &0xFEDC_BA98_7654_3210u64.to_le_bytes())
+            .unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        ctx.write_vreg(rax, 0x40);
+        execute_lifted_x86(&[0x48, 0x0F, 0x6E, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xFEDC_BA98_7654_3210);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        // MMX MOVD to a GPR performs the architectural 32-bit zero-extension.
+        ctx.write_vreg(rcx, u64::MAX);
+        execute_lifted_x86(&[0x0F, 0x7E, 0xC1], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rcx), 0x7654_3210);
+
+        // Faulting MMX loads and stores do not enter MMX state or mutate MMX
+        // data, because the explicit state transition follows memory access.
+        let mm_fault_sentinel = 0xA5A5_5A5A_C3C3_3C3C;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = mm_fault_sentinel;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        ctx.write_vreg(rax, 0x1000);
+        let load_exit = execute_lifted_x86(&[0x48, 0x0F, 0x6E, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            load_exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], mm_fault_sentinel);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+        let store_exit = execute_lifted_x86(&[0x48, 0x0F, 0x7E, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            store_exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], mm_fault_sentinel);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
 
         // Legacy MOVD clears bits 127:32 but preserves the shared backing state
         // above bit 127.
