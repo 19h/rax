@@ -273,6 +273,61 @@ pub(crate) fn x86_state_backed_gpr_rotate_valid(op: &SmirOp) -> bool {
         }
 }
 
+pub(crate) fn x86_state_backed_gpr_shift_candidate(op: &SmirOp) -> bool {
+    let state_amount = |amount: &SrcOperand| matches!(amount, SrcOperand::Reg(reg) if x86_state_backed_arch_gpr(reg));
+
+    matches!(
+        &op.kind,
+        OpKind::Shl {
+            dst, src, amount, ..
+        }
+        | OpKind::Shr {
+            dst, src, amount, ..
+        }
+        | OpKind::Sar {
+            dst, src, amount, ..
+        } if x86_state_backed_arch_gpr(dst)
+            || x86_state_backed_arch_gpr(src)
+            || state_amount(amount)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_shift_valid(op: &SmirOp) -> bool {
+    let arch_gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
+    let amount_valid = |amount: &SrcOperand| {
+        matches!(amount, SrcOperand::Imm(_))
+            || matches!(amount, SrcOperand::Reg(reg) if arch_gpr(reg))
+    };
+
+    x86_state_backed_gpr_shift_candidate(op)
+        && op.x86_hint.is_none()
+        && match &op.kind {
+            OpKind::Shl {
+                dst,
+                src,
+                amount,
+                width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+                flags: FlagUpdate::None | FlagUpdate::All,
+            }
+            | OpKind::Shr {
+                dst,
+                src,
+                amount,
+                width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+                flags: FlagUpdate::None | FlagUpdate::All,
+            }
+            | OpKind::Sar {
+                dst,
+                src,
+                amount,
+                width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+                flags: FlagUpdate::None | FlagUpdate::All,
+            } => arch_gpr(dst) && arch_gpr(src) && amount_valid(amount),
+            _ => false,
+        }
+}
+
 pub(crate) fn x86_state_backed_gpr_count_candidate(op: &SmirOp) -> bool {
     matches!(
         &op.kind,
@@ -4571,6 +4626,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_neg_valid(op)
             || x86_state_backed_gpr_inc_dec_valid(op)
             || x86_state_backed_gpr_rotate_valid(op)
+            || x86_state_backed_gpr_shift_valid(op)
             || x86_state_backed_gpr_count_valid(op)
             || x86_state_backed_gpr_bit_scan_valid(op)
             || x86_state_backed_gpr_bit_test_valid(op)
@@ -7493,7 +7549,27 @@ impl X86_64Lowerer {
                 amount,
                 width,
                 flags,
-            } => self.lower_shift_reg_op(ShiftRegOp::Shl, *dst, *src, amount, *width, *flags)?,
+            } => {
+                if x86_state_backed_gpr_shift_candidate(op) {
+                    if !x86_state_backed_gpr_shift_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Shl".to_string(),
+                            operand: format!(
+                                "invalid x86 GPR shift {dst:?} {src:?} {amount:?} {width:?} {flags:?}"
+                            ),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_shift(
+                        *dst,
+                        *src,
+                        amount,
+                        *width,
+                        *flags,
+                        ShiftRegOp::Shl,
+                    );
+                }
+                self.lower_shift_reg_op(ShiftRegOp::Shl, *dst, *src, amount, *width, *flags)?;
+            }
 
             OpKind::Shr {
                 dst,
@@ -7501,7 +7577,27 @@ impl X86_64Lowerer {
                 amount,
                 width,
                 flags,
-            } => self.lower_shift_reg_op(ShiftRegOp::Shr, *dst, *src, amount, *width, *flags)?,
+            } => {
+                if x86_state_backed_gpr_shift_candidate(op) {
+                    if !x86_state_backed_gpr_shift_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Shr".to_string(),
+                            operand: format!(
+                                "invalid x86 GPR shift {dst:?} {src:?} {amount:?} {width:?} {flags:?}"
+                            ),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_shift(
+                        *dst,
+                        *src,
+                        amount,
+                        *width,
+                        *flags,
+                        ShiftRegOp::Shr,
+                    );
+                }
+                self.lower_shift_reg_op(ShiftRegOp::Shr, *dst, *src, amount, *width, *flags)?;
+            }
 
             OpKind::Sar {
                 dst,
@@ -7509,7 +7605,27 @@ impl X86_64Lowerer {
                 amount,
                 width,
                 flags,
-            } => self.lower_shift_reg_op(ShiftRegOp::Sar, *dst, *src, amount, *width, *flags)?,
+            } => {
+                if x86_state_backed_gpr_shift_candidate(op) {
+                    if !x86_state_backed_gpr_shift_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Sar".to_string(),
+                            operand: format!(
+                                "invalid x86 GPR shift {dst:?} {src:?} {amount:?} {width:?} {flags:?}"
+                            ),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_shift(
+                        *dst,
+                        *src,
+                        amount,
+                        *width,
+                        *flags,
+                        ShiftRegOp::Sar,
+                    );
+                }
+                self.lower_shift_reg_op(ShiftRegOp::Sar, *dst, *src, amount, *width, *flags)?;
+            }
 
             OpKind::Rol {
                 dst,
@@ -15474,6 +15590,285 @@ impl X86_64Lowerer {
 
                 self.patch_rel32_to_current(count_zero)?;
                 self.emit_finish_state_backed_gpr_rotate_flags(0);
+                self.patch_rel32_to_current(multi_done)?;
+                self.patch_rel32_to_current(one_done)?;
+            }
+        }
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
+        if dst_idx == 5 {
+            let commit_width = if matches!(width, OpWidth::W8 | OpWidth::W16) {
+                width
+            } else {
+                OpWidth::W64
+            };
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    /// Merge a native SHL/SHR/SAR status image into the incoming image while
+    /// restoring the staged result. The active stack layout is native RFLAGS,
+    /// result, original operand, incoming RFLAGS at offsets 0, 8, 16, and 24.
+    /// `reconstructed_cf_bit` selects a bit from the original operand when the
+    /// interpreter defines CF where the host architecture leaves it undefined.
+    fn emit_finish_state_backed_gpr_shift_flags(
+        &mut self,
+        native_mask: i64,
+        clear_mask: i64,
+        reconstructed_cf_bit: Option<u8>,
+    ) {
+        if native_mask != 0 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdi, PhysReg::Rsp, 0, OpWidth::W64);
+            emitter.emit_and_ri(PhysReg::Rdi, native_mask, OpWidth::W64);
+            emitter.emit_alu_mi_disp(
+                4,
+                PhysReg::Rsp,
+                24,
+                DispSize::Auto,
+                !native_mask,
+                OpWidth::W64,
+            );
+            emitter.emit_alu_mem_disp(
+                0x08,
+                PhysReg::Rdi,
+                PhysReg::Rsp,
+                24,
+                DispSize::Auto,
+                OpWidth::W64,
+                X86AluEncoding::RmReg,
+            );
+        }
+        if clear_mask != 0 {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_alu_mi_disp(
+                4,
+                PhysReg::Rsp,
+                24,
+                DispSize::Auto,
+                !clear_mask,
+                OpWidth::W64,
+            );
+        }
+        if let Some(bit) = reconstructed_cf_bit {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_alu_mi_disp(4, PhysReg::Rsp, 24, DispSize::Auto, !1, OpWidth::W64);
+            emitter.emit_mov_rm(PhysReg::Rdi, PhysReg::Rsp, 16, OpWidth::W64);
+            if bit != 0 {
+                emitter.emit_shr_ri(PhysReg::Rdi, bit, OpWidth::W64);
+            }
+            emitter.emit_and_ri(PhysReg::Rdi, 1, OpWidth::W64);
+            emitter.emit_alu_mem_disp(
+                0x08,
+                PhysReg::Rdi,
+                PhysReg::Rsp,
+                24,
+                DispSize::Auto,
+                OpWidth::W64,
+                X86AluEncoding::RmReg,
+            );
+        }
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 8); // discard native RFLAGS
+            emitter.emit_pop(PhysReg::Rdx); // restore shift result
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 8); // discard original operand
+        }
+        self.code.emit_u8(0x9D); // popfq: incoming or merged status image
+    }
+
+    fn emit_state_backed_gpr_shift_flag_case(
+        &mut self,
+        kind: ShiftRegOp,
+        width: OpWidth,
+        count: u8,
+    ) {
+        const CF: i64 = 1;
+        const RESULT_FLAGS: i64 = (1 << 2) | (1 << 6) | (1 << 7);
+        const OF: i64 = 1 << 11;
+
+        if count == 0 {
+            self.emit_finish_state_backed_gpr_shift_flags(0, 0, None);
+        } else if count == 1 {
+            self.emit_finish_state_backed_gpr_shift_flags(CF | RESULT_FLAGS | OF, 0, None);
+        } else if u32::from(count) < width.bits() {
+            self.emit_finish_state_backed_gpr_shift_flags(CF | RESULT_FLAGS, OF, None);
+        } else {
+            match kind {
+                ShiftRegOp::Shl if u32::from(count) == width.bits() => {
+                    self.emit_finish_state_backed_gpr_shift_flags(RESULT_FLAGS, OF, Some(0));
+                }
+                ShiftRegOp::Shr if u32::from(count) == width.bits() => {
+                    self.emit_finish_state_backed_gpr_shift_flags(
+                        RESULT_FLAGS,
+                        OF,
+                        Some((width.bits() - 1) as u8),
+                    );
+                }
+                ShiftRegOp::Shl | ShiftRegOp::Shr => {
+                    self.emit_finish_state_backed_gpr_shift_flags(RESULT_FLAGS, CF | OF, None);
+                }
+                ShiftRegOp::Sar => {
+                    self.emit_finish_state_backed_gpr_shift_flags(
+                        RESULT_FLAGS,
+                        OF,
+                        Some((width.bits() - 1) as u8),
+                    );
+                }
+                _ => unreachable!("state-backed GPR shift kind was validated"),
+            }
+        }
+    }
+
+    fn lower_state_backed_gpr_shift(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        amount: &SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+        kind: ShiftRegOp,
+    ) -> Result<(), LowerError> {
+        let name = match kind {
+            ShiftRegOp::Shl => "Shl",
+            ShiftRegOp::Shr => "Shr",
+            ShiftRegOp::Sar => "Sar",
+            _ => unreachable!("state-backed GPR shift kind was validated"),
+        };
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let src_idx = Self::x86_gpr_index(src).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "source is not an architectural x86 GPR".to_string(),
+        })?;
+        let (immediate, count_idx) = match amount {
+            SrcOperand::Imm(value) => (Some(*value as u8), None),
+            SrcOperand::Reg(reg) => {
+                let index =
+                    Self::x86_gpr_index(*reg).ok_or_else(|| LowerError::InvalidOperand {
+                        op: format!("state-backed {name}"),
+                        operand: "count is not an architectural x86 GPR".to_string(),
+                    })?;
+                (None, Some(index))
+            }
+            _ => {
+                return Err(LowerError::InvalidOperand {
+                    op: format!("state-backed {name}"),
+                    operand: "count is neither an immediate nor an architectural x86 GPR"
+                        .to_string(),
+                });
+            }
+        };
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rax, i32::from(src_idx) * 8, width);
+            if let Some(index) = count_idx {
+                emitter.emit_mov_rm(
+                    PhysReg::Rcx,
+                    PhysReg::Rax,
+                    i32::from(index) * 8,
+                    OpWidth::W64,
+                );
+            }
+        }
+
+        self.code.emit_u8(0x9C); // pushfq: complete incoming image
+        if flags.updates_any() {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_push(PhysReg::Rdx); // retain the original operand for CF reconstruction
+        }
+        if let Some(value) = immediate {
+            self.emit_shift_reg_imm(kind, PhysReg::Rdx, value, width);
+        } else {
+            self.emit_shift_reg_cl(kind, PhysReg::Rdx, width);
+        }
+
+        if !flags.updates_any() {
+            self.code.emit_u8(0x9D); // popfq: APX NF preserves every flag
+        } else {
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_push(PhysReg::Rdx);
+            }
+            self.code.emit_u8(0x9C); // pushfq: native shift image
+
+            let count_mask = if width == OpWidth::W64 { 0x3f } else { 0x1f };
+            if let Some(value) = immediate {
+                self.emit_state_backed_gpr_shift_flag_case(kind, width, value & count_mask);
+            } else {
+                {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_mov_rr(PhysReg::Rdi, PhysReg::Rcx, OpWidth::W64);
+                    emitter.emit_and_ri(PhysReg::Rdi, i64::from(count_mask), OpWidth::W64);
+                    emitter.emit_test_rr(PhysReg::Rdi, PhysReg::Rdi, OpWidth::W64);
+                }
+                let count_zero = self.emit_jcc_placeholder(X86Cond::E);
+                {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_cmp_ri(PhysReg::Rdi, 1, OpWidth::W64);
+                }
+                let count_one = self.emit_jcc_placeholder(X86Cond::E);
+                let subword = matches!(width, OpWidth::W8 | OpWidth::W16);
+                let (count_boundary, count_oversized) = if subword {
+                    {
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_cmp_ri(PhysReg::Rdi, i64::from(width.bits()), OpWidth::W64);
+                    }
+                    (
+                        Some(self.emit_jcc_placeholder(X86Cond::E)),
+                        Some(self.emit_jcc_placeholder(X86Cond::A)),
+                    )
+                } else {
+                    (None, None)
+                };
+
+                self.emit_state_backed_gpr_shift_flag_case(kind, width, 2);
+                self.code.emit_u8(0xE9);
+                let multi_done = self.code.position();
+                self.code.emit_u32(0);
+
+                self.patch_rel32_to_current(count_one)?;
+                self.emit_state_backed_gpr_shift_flag_case(kind, width, 1);
+                self.code.emit_u8(0xE9);
+                let one_done = self.code.position();
+                self.code.emit_u32(0);
+
+                self.patch_rel32_to_current(count_zero)?;
+                self.emit_state_backed_gpr_shift_flag_case(kind, width, 0);
+                if let (Some(count_boundary), Some(count_oversized)) =
+                    (count_boundary, count_oversized)
+                {
+                    self.code.emit_u8(0xE9);
+                    let zero_done = self.code.position();
+                    self.code.emit_u32(0);
+
+                    self.patch_rel32_to_current(count_boundary)?;
+                    self.emit_state_backed_gpr_shift_flag_case(kind, width, width.bits() as u8);
+                    self.code.emit_u8(0xE9);
+                    let boundary_done = self.code.position();
+                    self.code.emit_u32(0);
+
+                    self.patch_rel32_to_current(count_oversized)?;
+                    self.emit_state_backed_gpr_shift_flag_case(kind, width, width.bits() as u8 + 1);
+                    self.patch_rel32_to_current(zero_done)?;
+                    self.patch_rel32_to_current(boundary_done)?;
+                }
                 self.patch_rel32_to_current(multi_done)?;
                 self.patch_rel32_to_current(one_done)?;
             }
@@ -29067,6 +29462,400 @@ mod tests {
                     };
                     expected.rflags = (expected.rflags & !(1 << 11)) | (of << 11);
                 }
+            }
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            assert_eq!(
+                regs.rflags & STATUS_MASK,
+                expected.rflags & STATUS_MASK,
+                "{} status flags",
+                case.name
+            );
+        }
+    }
+
+    #[test]
+    fn lower_state_backed_gpr_shift_emits_count_flag_contracts_and_rejects_malformed_shapes() {
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+
+        let one = lower_single_op(OpKind::Shl {
+            dst: x86(X86Reg::Rsp),
+            src: x86(X86Reg::Rbp),
+            amount: SrcOperand::Imm(1),
+            width: OpWidth::W64,
+            flags: FlagUpdate::All,
+        });
+        assert!(
+            one.windows(3).any(|bytes| bytes == [0x48, 0xD1, 0xE2]),
+            "state-backed SHL must shift RDX by its immediate: {one:02X?}"
+        );
+        assert_eq!(
+            one.iter().filter(|byte| **byte == 0x9C).count(),
+            2,
+            "flagful SHL must save incoming and native RFLAGS: {one:02X?}"
+        );
+        assert_eq!(one.iter().filter(|byte| **byte == 0x9D).count(), 1);
+        assert!(
+            one.windows(9)
+                .any(|bytes| bytes == [0x48, 0x81, 0x64, 0x24, 0x18, 0x3A, 0xF7, 0xFF, 0xFF]),
+            "count-one SHL must replace CF/PF/ZF/SF/OF while retaining AF: {one:02X?}"
+        );
+
+        let dynamic = lower_single_op(OpKind::Shr {
+            dst: x86(X86Reg::R31),
+            src: x86(X86Reg::R16),
+            amount: SrcOperand::Reg(x86(X86Reg::Rsp)),
+            width: OpWidth::W8,
+            flags: FlagUpdate::All,
+        });
+        assert!(
+            dynamic.windows(2).any(|bytes| bytes == [0xD2, 0xEA]),
+            "state-backed SHR must use staged CL and DL: {dynamic:02X?}"
+        );
+        assert!(
+            dynamic
+                .windows(4)
+                .any(|bytes| bytes == [0x48, 0x83, 0xE7, 0x1F]),
+            "byte SHR must classify the 5-bit masked count: {dynamic:02X?}"
+        );
+        assert!(
+            dynamic
+                .windows(4)
+                .any(|bytes| bytes == [0x48, 0x83, 0xFF, 0x08]),
+            "byte SHR must classify operand-width boundary counts: {dynamic:02X?}"
+        );
+        assert!(
+            dynamic
+                .windows(2)
+                .filter(|bytes| matches!(*bytes, [0x0F, 0x84] | [0x0F, 0x87]))
+                .count()
+                >= 4,
+            "dynamic subword SHR must branch on zero/one/boundary/oversized counts: {dynamic:02X?}"
+        );
+
+        let suppressed = lower_single_op(OpKind::Sar {
+            dst: x86(X86Reg::Rbp),
+            src: x86(X86Reg::R31),
+            amount: SrcOperand::Imm(9),
+            width: OpWidth::W16,
+            flags: FlagUpdate::None,
+        });
+        assert!(
+            suppressed
+                .windows(4)
+                .any(|bytes| bytes == [0x66, 0xC1, 0xFA, 0x09]),
+            "state-backed NF SAR must use staged DX: {suppressed:02X?}"
+        );
+        assert_eq!(suppressed.iter().filter(|byte| **byte == 0x9C).count(), 1);
+        assert_eq!(suppressed.iter().filter(|byte| **byte == 0x9D).count(), 1);
+        assert!(
+            suppressed
+                .windows(4)
+                .any(|bytes| bytes == [0x66, 0x89, 0x55, 0x00]),
+            "word SAR must partially synchronize guest RBP: {suppressed:02X?}"
+        );
+
+        for malformed in [
+            OpKind::Shl {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rsp),
+                amount: SrcOperand::Imm(1),
+                width: OpWidth::W128,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Shr {
+                dst: x86(X86Reg::R31),
+                src: VReg::Virtual(crate::smir::ir::types::VirtualId(0)),
+                amount: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Sar {
+                dst: x86(X86Reg::Rsp),
+                src: x86(X86Reg::Rbp),
+                amount: SrcOperand::Imm64(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+            },
+            OpKind::Shl {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rbp),
+                amount: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::Specific(FlagSet::CF),
+            },
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(malformed),
+                    LowerError::InvalidOperand { .. } | LowerError::InvalidRegister(_)
+                ),
+                "malformed state-backed shift must fail lowering"
+            );
+        }
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                OpKind::Shr {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rsp),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rbp)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                X86OpHint::Mulx,
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_gpr_shift_preserves_width_alias_count_and_flag_contracts() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        const STATUS_MASK: u64 = 0x8D5;
+
+        struct Case {
+            name: &'static str,
+            kind: u8,
+            dst: X86Reg,
+            src: X86Reg,
+            count_reg: Option<X86Reg>,
+            immediate: i64,
+            width: OpWidth,
+            flags: FlagUpdate,
+            source: u64,
+            count: u64,
+            status: u64,
+        }
+
+        let cases = [
+            Case {
+                name: "SHL RSP,RBP,0 preserves every flag",
+                kind: 0,
+                dst: X86Reg::Rsp,
+                src: X86Reg::Rbp,
+                count_reg: None,
+                immediate: 0,
+                width: OpWidth::W64,
+                flags: FlagUpdate::All,
+                source: 0x8123_4567_89AB_CDEF,
+                count: 0,
+                status: 0x8D5,
+            },
+            Case {
+                name: "SHR BPL,SPL,1 partial count-one flags",
+                kind: 1,
+                dst: X86Reg::Rbp,
+                src: X86Reg::Rsp,
+                count_reg: None,
+                immediate: 1,
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+                source: 0x2233_4455_6677_5681,
+                count: 1,
+                status: 0x0D4,
+            },
+            Case {
+                name: "SHL R16B,R31B,8 reconstructs boundary CF",
+                kind: 0,
+                dst: X86Reg::R16,
+                src: X86Reg::R31,
+                count_reg: None,
+                immediate: 8,
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+                source: 0xFFEE_DDCC_BBAA_1381,
+                count: 8,
+                status: 0x8D4,
+            },
+            Case {
+                name: "SHR R31W,R16W,17 clears oversized CF and OF",
+                kind: 1,
+                dst: X86Reg::R31,
+                src: X86Reg::R16,
+                count_reg: None,
+                immediate: 17,
+                width: OpWidth::W16,
+                flags: FlagUpdate::All,
+                source: 0xAABB_CCDD_EEFF_8001,
+                count: 17,
+                status: 0x8D5,
+            },
+            Case {
+                name: "SAR R16B,R31B,9 reconstructs oversized sign CF",
+                kind: 2,
+                dst: X86Reg::R16,
+                src: X86Reg::R31,
+                count_reg: None,
+                immediate: 9,
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+                source: 0xFFEE_DDCC_BBAA_1381,
+                count: 9,
+                status: 0x0D4,
+            },
+            Case {
+                name: "SAR R31W,R16W,SP dynamic boundary",
+                kind: 2,
+                dst: X86Reg::R31,
+                src: X86Reg::R16,
+                count_reg: Some(X86Reg::Rsp),
+                immediate: 0,
+                width: OpWidth::W16,
+                flags: FlagUpdate::All,
+                source: 0xAABB_CCDD_EEFF_8001,
+                count: 16,
+                status: 0x8D4,
+            },
+            Case {
+                name: "SHL R16D,R16D,R16 all aliases",
+                kind: 0,
+                dst: X86Reg::R16,
+                src: X86Reg::R16,
+                count_reg: Some(X86Reg::R16),
+                immediate: 0,
+                width: OpWidth::W32,
+                flags: FlagUpdate::All,
+                source: 0xAABB_CCDD_8000_0001,
+                count: 0x8000_0001,
+                status: 0x0D5,
+            },
+            Case {
+                name: "NF SAR RSP,R31D,BP zero-extends and preserves flags",
+                kind: 2,
+                dst: X86Reg::Rsp,
+                src: X86Reg::R31,
+                count_reg: Some(X86Reg::Rbp),
+                immediate: 0,
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+                source: 0xFFEE_DDCC_8000_0001,
+                count: 1,
+                status: 0x8D5,
+            },
+        ];
+
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        for case in cases {
+            let amount = case
+                .count_reg
+                .map_or(SrcOperand::Imm(case.immediate), |reg| {
+                    SrcOperand::Reg(x86(reg))
+                });
+            let kind = match case.kind {
+                0 => OpKind::Shl {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    amount,
+                    width: case.width,
+                    flags: case.flags,
+                },
+                1 => OpKind::Shr {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    amount,
+                    width: case.width,
+                    flags: case.flags,
+                },
+                2 => OpKind::Sar {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    amount,
+                    width: case.width,
+                    flags: case.flags,
+                },
+                _ => unreachable!(),
+            };
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            for (index, value) in regs.gpr.iter_mut().enumerate() {
+                *value = 0x1357_0000_2468_0000u64
+                    .wrapping_add((index as u64).wrapping_mul(0x0101_1111_2222_0101));
+            }
+            let dst_idx = case.dst.gpr_index().unwrap() as usize;
+            let src_idx = case.src.gpr_index().unwrap() as usize;
+            regs.gpr[src_idx] = case.source;
+            if let Some(count_reg) = case.count_reg {
+                let count_idx = count_reg.gpr_index().unwrap() as usize;
+                if count_idx != src_idx {
+                    regs.gpr[count_idx] = case.count;
+                }
+            }
+            regs.rflags = 0x2 | case.status;
+
+            let mut expected = regs;
+            let bits = u64::from(case.width.bits());
+            let count_mask = if bits == 64 { 0x3f } else { 0x1f };
+            let raw_count = case.count_reg.map_or(case.immediate as u64, |reg| {
+                regs.gpr[reg.gpr_index().unwrap() as usize]
+            });
+            let count = raw_count & count_mask;
+            let source = regs.gpr[src_idx] & case.width.mask();
+            let signed_source = if source & case.width.sign_bit() != 0 {
+                source | !case.width.mask()
+            } else {
+                source
+            };
+            let result = if count >= bits {
+                if case.kind == 2 && (signed_source as i64) < 0 {
+                    case.width.mask()
+                } else {
+                    0
+                }
+            } else {
+                match case.kind {
+                    0 => (source << count) & case.width.mask(),
+                    1 => source >> count,
+                    2 => ((signed_source as i64 >> count) as u64) & case.width.mask(),
+                    _ => unreachable!(),
+                }
+            };
+            expected.gpr[dst_idx] = match case.width {
+                OpWidth::W8 | OpWidth::W16 => (regs.gpr[dst_idx] & !case.width.mask()) | result,
+                OpWidth::W32 | OpWidth::W64 => result,
+                OpWidth::W128 => unreachable!(),
+            };
+            if case.flags.updates_any() && count != 0 {
+                let cf = match case.kind {
+                    0 if count <= bits => (source >> (bits - count)) & 1,
+                    0 => 0,
+                    1 => (source >> (count - 1)) & 1,
+                    2 => (signed_source >> (count - 1)) & 1,
+                    _ => unreachable!(),
+                };
+                expected.rflags = (expected.rflags & !1) | cf;
+                let pf = u64::from((result as u8).count_ones().is_multiple_of(2));
+                expected.rflags = (expected.rflags & !(1 << 2)) | (pf << 2);
+                let zf = u64::from(result == 0);
+                expected.rflags = (expected.rflags & !(1 << 6)) | (zf << 6);
+                let sf = u64::from(result & case.width.sign_bit() != 0);
+                expected.rflags = (expected.rflags & !(1 << 7)) | (sf << 7);
+                let of = if count == 1 {
+                    match case.kind {
+                        0 => u64::from((cf != 0) != (sf != 0)),
+                        1 => u64::from(source & case.width.sign_bit() != 0),
+                        2 => 0,
+                        _ => unreachable!(),
+                    }
+                } else {
+                    0
+                };
+                expected.rflags = (expected.rflags & !(1 << 11)) | (of << 11);
             }
 
             exec.run(lowered.entry_offset, &mut regs);
