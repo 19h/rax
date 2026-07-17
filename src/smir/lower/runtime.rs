@@ -3542,6 +3542,12 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 && !*zeroing)
                 .then_some(0xF5),
         ),
+        OpKind::VSadBytes {
+            dst,
+            src1,
+            src2,
+            width,
+        } => (dst, src1, src2, (*width == VecWidth::V64).then_some(0xF6)),
         OpKind::VMul {
             dst,
             src1,
@@ -13613,6 +13619,40 @@ mod jit_gate_tests {
         };
         *acc = mm(0);
         assert!(!is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+    }
+
+    #[test]
+    fn x86_mmx_sad_bytes_gate_accepts_exact_v64_register_shape() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x9A00);
+        builder.push_op(
+            0x9A00,
+            OpKind::VSadBytes {
+                dst: mm(4),
+                src1: mm(4),
+                src2: mm(1),
+                width: VecWidth::V64,
+            },
+        );
+        builder.push_op(
+            0x9A00,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0xF6,
+        });
+        assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+        assert!(is_native_clobber_safe(&function));
+        assert!(x86_native_mmx_pairs_valid_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
     }
 
     #[test]

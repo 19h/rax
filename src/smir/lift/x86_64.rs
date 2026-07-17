@@ -17241,7 +17241,7 @@ impl X86_64Lifter {
             self.xmm(modrm.reg)
         };
         if mmx {
-            ops.push(SmirOp::new(
+            ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
                 OpKind::VSadBytes {
@@ -17249,6 +17249,10 @@ impl X86_64Lifter {
                     src1: dst,
                     src2,
                     width: VecWidth::V64,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0xF6,
                 },
             ));
             ops.push(SmirOp::new(
@@ -63209,6 +63213,10 @@ mod tests {
                         src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
                         width: VecWidth::V64,
                     },
+                    x86_hint: Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0xF6,
+                    }),
                     ..
                 },
                 SmirOp {

@@ -5996,6 +5996,12 @@ impl X86_64Lowerer {
                     && !*zeroing)
                     .then_some(0xF5),
             ),
+            OpKind::VSadBytes {
+                dst,
+                src1,
+                src2,
+                width,
+            } => (dst, src1, src2, (*width == VecWidth::V64).then_some(0xF6)),
             OpKind::VMul {
                 dst,
                 src1,
@@ -26899,6 +26905,27 @@ mod tests {
         assert!(
             code.windows(3).any(|window| window == [0x0F, 0xF5, 0xDE]),
             "missing MMX PMADDWD 0F F5 /r: {code:02X?}"
+        );
+    }
+
+    #[test]
+    fn lower_mmx_sad_bytes_emits_classic_register_opcode() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let code = lower_single_hinted_op(
+            OpKind::VSadBytes {
+                dst: mm(4),
+                src1: mm(4),
+                src2: mm(1),
+                width: VecWidth::V64,
+            },
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode: 0xF6,
+            },
+        );
+        assert!(
+            code.windows(3).any(|window| window == [0x0F, 0xF6, 0xE1]),
+            "missing MMX PSADBW 0F F6 /r: {code:02X?}"
         );
     }
 
