@@ -8792,6 +8792,37 @@ mod tests {
         assert!(load < compare);
         assert_eq!(ops[compare].kind.flags_written(), FlagSet::ALL_X86);
 
+        let fp16_comi = optimized(&[0x62, 0xF5, 0x7C, 0x08, 0x2F, 0x50, 0x7F]);
+        let ops = &fp16_comi.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        addr: Address::BaseOffset { offset: 254, .. },
+                        width: MemWidth::B2,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting VCOMISH compressed-displacement load must survive optimization");
+        let compare = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86FpCompare {
+                        elem: VecElementType::F16,
+                        signaling: true,
+                        ..
+                    }
+                )
+            })
+            .expect("VCOMISH flag producer must survive optimization");
+        assert!(load < compare);
+        assert_eq!(ops[compare].kind.flags_written(), FlagSet::ALL_X86);
+
         let fp_to_int = optimized(&[0xF2, 0x48, 0x0F, 0x2D, 0x00]);
         let ops = &fp_to_int.blocks[0].ops;
         let load = ops

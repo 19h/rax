@@ -3004,6 +3004,8 @@ impl SmirInterpreter {
                 let a_bits = Self::get_lane(&Self::read_vec(ctx, *src1), 0, elem_bits);
                 let b_bits = Self::get_lane(&Self::read_vec(ctx, *src2), 0, elem_bits);
                 let ordering = match elem {
+                    VecElementType::F16 => Self::x86_fp16_to_f32(a_bits as u16)
+                        .partial_cmp(&Self::x86_fp16_to_f32(b_bits as u16)),
                     VecElementType::F32 => {
                         f32::from_bits(a_bits as u32).partial_cmp(&f32::from_bits(b_bits as u32))
                     }
@@ -22147,6 +22149,48 @@ mod tests {
         );
         ctx.flags.materialize_all();
         assert_eq!(ctx.flags.materialized.to_rflags(), 0x442);
+
+        for (name, opcode, a, b, expected_rflags) in [
+            ("FP16 greater", 0x2E, 0x4000u16, 0x3C00u16, 0x402u64),
+            ("FP16 less", 0x2F, 0x3C00, 0x4000, 0x403),
+            ("FP16 equal", 0x2E, 0xBC00, 0xBC00, 0x442),
+            ("FP16 unordered", 0x2F, 0x7E01, 0x3C00, 0x447),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 16, u64::from(a));
+                SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, u64::from(b));
+            }
+            ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+            ctx.flags.lazy = None;
+            execute_lifted_x86(
+                &[0x62, 0xF5, 0x7C, 0x08, opcode, 0xD3],
+                &mut ctx,
+                &mut memory,
+            );
+            ctx.flags.materialize_all();
+            assert_eq!(
+                ctx.flags.materialized.to_rflags(),
+                expected_rflags,
+                "{name}"
+            );
+        }
+
+        // The scalar tuple compresses disp8 by 2 bytes for an FP16 memory
+        // operand, and a successful load commits the comparison flags.
+        ctx.write_vreg(rax, 0x200);
+        memory.write(0x2FE, &0xBC00u16.to_le_bytes()).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 16, 0xBC00);
+        }
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        execute_lifted_x86(
+            &[0x62, 0xF5, 0x7C, 0x08, 0x2F, 0x50, 0x7F],
+            &mut ctx,
+            &mut memory,
+        );
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0x442);
     }
 
     #[test]
@@ -22156,6 +22200,10 @@ mod tests {
             ("legacy UCOMISS", &[0x0F, 0x2E, 0x00][..]),
             ("VEX COMISD", &[0xC5, 0xF9, 0x2F, 0x00][..]),
             ("EVEX VCOMISD", &[0x62, 0xF1, 0xFD, 0x08, 0x2F, 0x00][..]),
+            (
+                "EVEX VCOMISH",
+                &[0x62, 0xF5, 0x7C, 0x08, 0x2F, 0x40, 0x01][..],
+            ),
         ] {
             let mut ctx = SmirContext::new_x86_64();
             ctx.write_vreg(rax, 0x200);
