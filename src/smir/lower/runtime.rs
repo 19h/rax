@@ -3403,6 +3403,39 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
             );
     }
 
+    if let OpKind::VHorizontalBin {
+        dst,
+        src1,
+        src2,
+        elem,
+        lanes,
+        block_lanes,
+        subtract,
+        saturating,
+    } = &op.kind
+    {
+        let expected = match (*elem, *lanes, *block_lanes, *subtract, *saturating) {
+            (VecElementType::I16, 4, 4, false, false) => Some(0x01),
+            (VecElementType::I32, 2, 2, false, false) => Some(0x02),
+            (VecElementType::I16, 4, 4, false, true) => Some(0x03),
+            (VecElementType::I16, 4, 4, true, false) => Some(0x05),
+            (VecElementType::I32, 2, 2, true, false) => Some(0x06),
+            (VecElementType::I16, 4, 4, true, true) => Some(0x07),
+            _ => None,
+        };
+        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        return expected.is_some()
+            && dst == src1
+            && [dst, src1, src2].into_iter().all(mm)
+            && matches!(
+                op.x86_hint,
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                }) if Some(opcode) == expected
+            );
+    }
+
     if let OpKind::X86PackedShiftImm {
         dst,
         src,
@@ -5543,7 +5576,7 @@ fn x86_native_mmx_op_requires_ssse3(op: &crate::smir::ir::ops::SmirOp) -> bool {
         } | OpKind::VLane {
             op: VLaneOp::Sign,
             ..
-        }
+        } | OpKind::VHorizontalBin { .. }
     ) && is_x86_native_mmx_op(op)
 }
 
@@ -13969,6 +14002,54 @@ mod jit_gate_tests {
             );
             builder.push_op(
                 0x9E00,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+            assert!(x86_native_mmx_op_requires_ssse3(&function.blocks[0].ops[0]));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+    }
+
+    #[test]
+    fn x86_mmx_horizontal_gate_covers_all_ssse3_add_sub_forms() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, lanes, subtract, saturating, opcode) in [
+            (VecElementType::I16, 4, false, false, 0x01),
+            (VecElementType::I32, 2, false, false, 0x02),
+            (VecElementType::I16, 4, false, true, 0x03),
+            (VecElementType::I16, 4, true, false, 0x05),
+            (VecElementType::I32, 2, true, false, 0x06),
+            (VecElementType::I16, 4, true, true, 0x07),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x9F00);
+            builder.push_op(
+                0x9F00,
+                OpKind::VHorizontalBin {
+                    dst: mm(0),
+                    src1: mm(0),
+                    src2: mm(1),
+                    elem,
+                    lanes,
+                    block_lanes: lanes,
+                    subtract,
+                    saturating,
+                },
+            );
+            builder.push_op(
+                0x9F00,
                 OpKind::X86X87Control {
                     kind: X86X87ControlKind::EnterMmx,
                     addr: None,
