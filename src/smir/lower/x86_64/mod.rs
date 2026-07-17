@@ -5950,6 +5950,54 @@ impl X86_64Lowerer {
             return Ok(true);
         }
 
+        if let OpKind::VDotProduct {
+            dst,
+            acc,
+            src1,
+            src2,
+            mask,
+            src_elem,
+            acc_elem,
+            width,
+            src1_unsigned,
+            saturate,
+            zeroing,
+        } = &op.kind
+        {
+            let exact_maddubs = *acc == VReg::Imm(0)
+                && mask.is_none()
+                && *src_elem == VecElementType::I8
+                && *acc_elem == VecElementType::I16
+                && *width == VecWidth::V64
+                && *src1_unsigned
+                && *saturate
+                && !*zeroing;
+            let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+            if exact_maddubs && [dst, src1, src2].into_iter().any(is_mm) {
+                let encoding_valid = dst == src1
+                    && [dst, src1, src2].into_iter().all(is_mm)
+                    && matches!(
+                        op.x86_hint,
+                        Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: 0x04,
+                        })
+                    );
+                if !encoding_valid {
+                    return Err(LowerError::InvalidOperand {
+                        op: "MMX PMADDUBSW".to_string(),
+                        operand: "requires exact destructive V64 MM registers and 0F38 opcode"
+                            .to_string(),
+                    });
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src2_reg = self.get_reg(*src2)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mmx_0f38_rr(0x04, dst_reg, src2_reg);
+                return Ok(true);
+            }
+        }
+
         if let OpKind::X86PackedShiftImm {
             dst,
             src,
@@ -27316,6 +27364,35 @@ mod tests {
                 "missing horizontal MMX opcode 0F 38 {opcode:02X} /r: {code:02X?}"
             );
         }
+    }
+
+    #[test]
+    fn lower_mmx_maddubs_emits_ssse3_saturating_dot_product_opcode() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let code = lower_single_hinted_op(
+            OpKind::VDotProduct {
+                dst: mm(0),
+                acc: VReg::Imm(0),
+                src1: mm(0),
+                src2: mm(1),
+                mask: None,
+                src_elem: VecElementType::I8,
+                acc_elem: VecElementType::I16,
+                width: VecWidth::V64,
+                src1_unsigned: true,
+                saturate: true,
+                zeroing: false,
+            },
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode: 0x04,
+            },
+        );
+        assert!(
+            code.windows(4)
+                .any(|window| window == [0x0F, 0x38, 0x04, 0xC1]),
+            "missing MMX PMADDUBSW 0F 38 04 /r: {code:02X?}"
+        );
     }
 
     #[test]

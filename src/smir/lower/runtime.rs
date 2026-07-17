@@ -3373,6 +3373,42 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
             );
     }
 
+    if let OpKind::VDotProduct {
+        dst,
+        acc,
+        src1,
+        src2,
+        mask,
+        src_elem,
+        acc_elem,
+        width,
+        src1_unsigned,
+        saturate,
+        zeroing,
+    } = &op.kind
+    {
+        let exact_maddubs = *acc == VReg::Imm(0)
+            && mask.is_none()
+            && *src_elem == VecElementType::I8
+            && *acc_elem == VecElementType::I16
+            && *width == VecWidth::V64
+            && *src1_unsigned
+            && *saturate
+            && !*zeroing;
+        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        if exact_maddubs {
+            return dst == src1
+                && [dst, src1, src2].into_iter().all(mm)
+                && matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0x04,
+                    })
+                );
+        }
+    }
+
     if let OpKind::VLane {
         dst,
         src1,
@@ -5566,7 +5602,7 @@ pub fn uses_x86_native_mmx_excluding(
 
 fn x86_native_mmx_op_requires_ssse3(op: &crate::smir::ir::ops::SmirOp) -> bool {
     use crate::smir::ir::ops::OpKind;
-    use crate::smir::ir::types::{VLaneOp, VecUnaryOp};
+    use crate::smir::ir::types::{VLaneOp, VecElementType, VecUnaryOp};
 
     matches!(
         op.kind,
@@ -5577,6 +5613,13 @@ fn x86_native_mmx_op_requires_ssse3(op: &crate::smir::ir::ops::SmirOp) -> bool {
             op: VLaneOp::Sign,
             ..
         } | OpKind::VHorizontalBin { .. }
+            | OpKind::VDotProduct {
+                src_elem: VecElementType::I8,
+                acc_elem: VecElementType::I16,
+                src1_unsigned: true,
+                saturate: true,
+                ..
+            }
     ) && is_x86_native_mmx_op(op)
 }
 
@@ -14069,6 +14112,48 @@ mod jit_gate_tests {
                 &std::collections::HashMap::new()
             ));
         }
+    }
+
+    #[test]
+    fn x86_mmx_maddubs_gate_accepts_exact_ssse3_saturating_dot_product() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0xA100);
+        builder.push_op(
+            0xA100,
+            OpKind::VDotProduct {
+                dst: mm(0),
+                acc: VReg::Imm(0),
+                src1: mm(0),
+                src2: mm(1),
+                mask: None,
+                src_elem: VecElementType::I8,
+                acc_elem: VecElementType::I16,
+                width: VecWidth::V64,
+                src1_unsigned: true,
+                saturate: true,
+                zeroing: false,
+            },
+        );
+        builder.push_op(
+            0xA100,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0x04,
+        });
+        assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+        assert!(x86_native_mmx_op_requires_ssse3(&function.blocks[0].ops[0]));
+        assert!(is_native_clobber_safe(&function));
+        assert!(x86_native_mmx_pairs_valid_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
     }
 
     #[test]
