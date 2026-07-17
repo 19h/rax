@@ -17455,11 +17455,7 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if !prefix.operand_size_override
-            || prefix.rep_prefix.is_some()
-            || prefix.lock
-            || prefix.rex2.is_some()
-        {
+        if prefix.rep_prefix.is_some() || prefix.lock || prefix.rex2.is_some() {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
@@ -17480,9 +17476,86 @@ impl X86_64Lifter {
                 need: prefix.cursor + imm_offset + 1,
             });
         }
-        let lane = bytes[imm_offset] & 0x07;
+        let mmx = !prefix.operand_size_override;
+        let lane = bytes[imm_offset] & if mmx { 0x03 } else { 0x07 };
         let next_pc = pc + prefix.cursor as u64 + imm_offset as u64 + 1;
         let mut ops = Vec::new();
+
+        if mmx {
+            let hint = X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            };
+            if opcode == 0xC5 {
+                // REX.R extends the GPR destination, while REX.B is ignored
+                // for the three-bit MM source register.
+                ops.push(SmirOp::new(
+                    OpId(0),
+                    pc,
+                    OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    },
+                ));
+                ops.push(SmirOp::with_hint(
+                    OpId(1),
+                    pc,
+                    OpKind::VExtractLane {
+                        dst: self.gpr(modrm.reg),
+                        vec: self.mm(modrm.rm & 0x07),
+                        lane,
+                        elem: VecElementType::I16,
+                        sign: SignExtend::Zero,
+                    },
+                    hint,
+                ));
+            } else {
+                let scalar = if modrm.is_memory {
+                    let (addr, pre_ops) =
+                        self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                    ops.extend(pre_ops);
+                    let scalar = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::Load {
+                            dst: scalar,
+                            addr,
+                            width: MemWidth::B2,
+                            sign: SignExtend::Zero,
+                        },
+                    ));
+                    scalar
+                } else {
+                    // REX.B extends the GPR source, while REX.R is ignored
+                    // for the three-bit MM destination register.
+                    self.gpr(modrm.rm)
+                };
+                let dst = self.mm(modrm.reg & 0x07);
+                // A faulting memory source must not enter MMX state.
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    },
+                ));
+                ops.push(SmirOp::with_hint(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VInsertLane {
+                        dst,
+                        vec: dst,
+                        scalar,
+                        lane,
+                        elem: VecElementType::I16,
+                    },
+                    hint,
+                ));
+            }
+            return Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_offset + 1));
+        }
 
         if opcode == 0xC5 {
             let scalar = ctx.alloc_vreg();
@@ -61677,6 +61750,125 @@ mod tests {
     }
 
     #[test]
+    fn lift_mmx_pinsrw_pextrw_masks_lanes_applies_rex_to_gprs_and_preserves_fault_order() {
+        let insert = lift_single(&[0x45, 0x0F, 0xC4, 0xC8, 0xFF]).unwrap();
+        assert_eq!(insert.bytes_consumed, 5);
+        assert!(matches!(
+            insert.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        vec: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        scalar: VReg::Arch(ArchReg::X86(X86Reg::R8)),
+                        lane: 3,
+                        elem: VecElementType::I16,
+                    },
+                    x86_hint: Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0xC4,
+                    }),
+                    ..
+                }
+            ]
+        ));
+
+        let extract = lift_single(&[0x45, 0x0F, 0xC5, 0xC9, 0xFF]).unwrap();
+        assert_eq!(extract.bytes_consumed, 5);
+        assert!(matches!(
+            extract.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::VExtractLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::R9)),
+                        vec: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        lane: 3,
+                        elem: VecElementType::I16,
+                        sign: SignExtend::Zero,
+                    },
+                    x86_hint: Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0xC5,
+                    }),
+                    ..
+                }
+            ]
+        ));
+
+        // The memory load precedes both MMX-state entry and architectural
+        // destination writeback, and REX.R remains ignored for the MM field.
+        let memory = lift_single(&[0x44, 0x0F, 0xC4, 0x08, 0xFE]).unwrap();
+        let load = memory
+            .ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B2,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let enter = memory
+            .ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        let insert = memory
+            .ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        lane: 2,
+                        elem: VecElementType::I16,
+                        ..
+                    }
+                )
+            })
+            .unwrap();
+        assert!(load < enter && enter + 1 == insert);
+
+        for bytes in [
+            &[0x0F, 0xC5, 0x01, 0x00][..],
+            &[0xF0, 0x0F, 0xC4, 0xC0, 0x00][..],
+            &[0xF3, 0x0F, 0xC5, 0xC0, 0x00][..],
+            &[0x0F, 0xC4, 0xC0][..],
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. } | LiftError::Incomplete { .. })
+            ));
+        }
+    }
+
+    #[test]
     fn lift_map0f_pinsrw_pextrw_covers_direction_merges_tuples_high_regs_and_invalids() {
         for bytes in [
             &[0x66, 0x45, 0x0F, 0xC5, 0xC1, 0x0F][..],
@@ -61785,7 +61977,6 @@ mod tests {
         assert!(lift_single(&[0x62, 0x31, 0xFD, 0x08, 0xC5, 0xC1, 0x07]).is_ok());
 
         for bytes in [
-            &[0x0F, 0xC4, 0xC8, 0x07][..],
             &[0xF0, 0x66, 0x0F, 0xC5, 0xC1, 0x07][..],
             &[0xF3, 0x66, 0x0F, 0xC4, 0xC8, 0x07][..],
             &[0x66, 0x0F, 0xC5, 0x01, 0x07][..],

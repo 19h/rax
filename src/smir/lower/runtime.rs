@@ -3343,9 +3343,61 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
 pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
     use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix};
     use crate::smir::ir::types::{
-        ArchReg, OpWidth, ShiftOp, VLaneOp, VReg, VecCmpCond, VecElementType, VecUnaryOp, VecWidth,
-        X86Reg,
+        ArchReg, OpWidth, ShiftOp, SignExtend, VLaneOp, VReg, VecCmpCond, VecElementType,
+        VecUnaryOp, VecWidth, X86Reg,
     };
+
+    if let OpKind::VInsertLane {
+        dst,
+        vec,
+        scalar,
+        lane,
+        elem,
+    } = &op.kind
+    {
+        let safe_gpr = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 15 && !matches!(index, 4 | 5)));
+        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        if mm(dst) || mm(vec) {
+            return dst == vec
+                && mm(dst)
+                && mm(vec)
+                && safe_gpr(scalar)
+                && *lane < 4
+                && *elem == VecElementType::I16
+                && matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0xC4,
+                    })
+                );
+        }
+    }
+
+    if let OpKind::VExtractLane {
+        dst,
+        vec,
+        lane,
+        elem,
+        sign,
+    } = &op.kind
+    {
+        let safe_gpr = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 15 && !matches!(index, 4 | 5)));
+        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        if mm(vec) {
+            return safe_gpr(dst)
+                && *lane < 4
+                && *elem == VecElementType::I16
+                && *sign == SignExtend::Zero
+                && matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0xC5,
+                    })
+                );
+        }
+    }
 
     if let OpKind::X86PackedShuffleImm {
         dst,
@@ -14528,6 +14580,124 @@ mod jit_gate_tests {
                     opcode: 0xD7,
                 },
             );
+            assert!(!is_x86_native_mmx_op(&malformed), "{malformed:?}");
+        }
+    }
+
+    #[test]
+    fn x86_mmx_word_lane_gate_accepts_only_exact_safe_register_forms() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let gpr = |reg| VReg::Arch(ArchReg::X86(reg));
+        for (kind, opcode) in [
+            (
+                OpKind::VInsertLane {
+                    dst: mm(1),
+                    vec: mm(1),
+                    scalar: gpr(X86Reg::R10),
+                    lane: 3,
+                    elem: VecElementType::I16,
+                },
+                0xC4,
+            ),
+            (
+                OpKind::VExtractLane {
+                    dst: gpr(X86Reg::R8),
+                    vec: mm(2),
+                    lane: 3,
+                    elem: VecElementType::I16,
+                    sign: SignExtend::Zero,
+                },
+                0xC5,
+            ),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0xA480);
+            builder.push_op(
+                0xA480,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.push_op(0xA480, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[1]));
+            assert!(!x86_native_mmx_op_requires_ssse3(
+                &function.blocks[0].ops[1]
+            ));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+
+        for malformed in [
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0xA480,
+                OpKind::VInsertLane {
+                    dst: mm(1),
+                    vec: mm(2),
+                    scalar: gpr(X86Reg::R10),
+                    lane: 3,
+                    elem: VecElementType::I16,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0xC4,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(1),
+                0xA480,
+                OpKind::VInsertLane {
+                    dst: mm(1),
+                    vec: mm(1),
+                    scalar: gpr(X86Reg::Rbp),
+                    lane: 3,
+                    elem: VecElementType::I16,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0xC4,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(2),
+                0xA480,
+                OpKind::VExtractLane {
+                    dst: gpr(X86Reg::R8),
+                    vec: mm(2),
+                    lane: 4,
+                    elem: VecElementType::I16,
+                    sign: SignExtend::Zero,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0xC5,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(3),
+                0xA480,
+                OpKind::VExtractLane {
+                    dst: gpr(X86Reg::R8),
+                    vec: mm(2),
+                    lane: 3,
+                    elem: VecElementType::I16,
+                    sign: SignExtend::Sign,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xC5,
+                },
+            ),
+        ] {
             assert!(!is_x86_native_mmx_op(&malformed), "{malformed:?}");
         }
     }

@@ -2205,6 +2205,24 @@ impl<'a> X86Emitter<'a> {
         self.code.emit_u8(imm);
     }
 
+    /// Emit prefix-free MMX PINSRW/PEXTRW register forms. PINSRW encodes the
+    /// MM register in ModR/M.reg and extends the GPR source with REX.B;
+    /// PEXTRW reverses the register classes and extends its GPR destination
+    /// with REX.R. REX never extends the three-bit MM register file.
+    pub fn emit_mmx_word_lane_rr_imm(&mut self, opcode: u8, mm: PhysReg, gpr: PhysReg, imm: u8) {
+        debug_assert!(
+            matches!(opcode, 0xC4 | 0xC5) && mm.is_mmx() && !gpr.is_mmx() && !gpr.is_vec()
+        );
+        let (reg, rm) = if opcode == 0xC4 { (mm, gpr) } else { (gpr, mm) };
+        if gpr.is_extended() {
+            self.emit_rex(false, reg, None, rm);
+        }
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(reg, rm);
+        self.code.emit_u8(imm);
+    }
+
     pub fn emit_mmx_shift_imm(&mut self, opcode: u8, digit: u8, rm: PhysReg, imm: u8) {
         debug_assert!(rm.is_mmx() && digit < 8);
         self.code.emit_u8(0x0F);
@@ -5846,6 +5864,82 @@ impl X86_64Lowerer {
     /// the normal scalar/vector matcher; any mixed or malformed MMX shape is an
     /// error rather than a widening opportunity.
     fn lower_mmx_rr(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<bool, LowerError> {
+        if let OpKind::VInsertLane {
+            dst,
+            vec,
+            scalar,
+            lane,
+            elem,
+        } = &op.kind
+        {
+            let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+            if is_mm(dst) || is_mm(vec) {
+                let safe_gpr = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 15 && !matches!(index, 4 | 5)));
+                let encoding_valid = dst == vec
+                    && is_mm(dst)
+                    && is_mm(vec)
+                    && safe_gpr(scalar)
+                    && *lane < 4
+                    && *elem == VecElementType::I16
+                    && matches!(
+                        op.x86_hint,
+                        Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: 0xC4,
+                        })
+                    );
+                if !encoding_valid {
+                    return Err(LowerError::InvalidOperand {
+                        op: "MMX PINSRW".to_string(),
+                        operand: "requires an exact destructive I16 MM destination and safe legacy GPR source"
+                            .to_string(),
+                    });
+                }
+                let mm_reg = self.get_dst_reg(*dst)?;
+                let gpr_reg = self.get_reg(*scalar)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mmx_word_lane_rr_imm(0xC4, mm_reg, gpr_reg, *lane);
+                return Ok(true);
+            }
+        }
+
+        if let OpKind::VExtractLane {
+            dst,
+            vec,
+            lane,
+            elem,
+            sign,
+        } = &op.kind
+        {
+            let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+            if is_mm(vec) {
+                let safe_gpr = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index <= 15 && !matches!(index, 4 | 5)));
+                let encoding_valid = safe_gpr(dst)
+                    && *lane < 4
+                    && *elem == VecElementType::I16
+                    && *sign == SignExtend::Zero
+                    && matches!(
+                        op.x86_hint,
+                        Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: 0xC5,
+                        })
+                    );
+                if !encoding_valid {
+                    return Err(LowerError::InvalidOperand {
+                        op: "MMX PEXTRW".to_string(),
+                        operand: "requires an exact I16 MM source and safe legacy GPR destination"
+                            .to_string(),
+                    });
+                }
+                let mm_reg = self.get_reg(*vec)?;
+                let gpr_reg = self.get_dst_reg(*dst)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mmx_word_lane_rr_imm(0xC5, mm_reg, gpr_reg, *lane);
+                return Ok(true);
+            }
+        }
+
         if let OpKind::X86PackedShuffleImm {
             dst,
             src,
@@ -27828,6 +27922,189 @@ mod tests {
             ),
             "{error:?}"
         );
+    }
+
+    #[test]
+    fn lower_mmx_word_lane_ops_emit_directional_rex_and_reject_malformed_ir() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let gpr = |reg| VReg::Arch(ArchReg::X86(reg));
+        for (name, kind, opcode, expected) in [
+            (
+                "PINSRW mm1,r10w,3",
+                OpKind::VInsertLane {
+                    dst: mm(1),
+                    vec: mm(1),
+                    scalar: gpr(X86Reg::R10),
+                    lane: 3,
+                    elem: VecElementType::I16,
+                },
+                0xC4,
+                &[0x41, 0x0F, 0xC4, 0xCA, 0x03][..],
+            ),
+            (
+                "PEXTRW r8d,mm2,3",
+                OpKind::VExtractLane {
+                    dst: gpr(X86Reg::R8),
+                    vec: mm(2),
+                    lane: 3,
+                    elem: VecElementType::I16,
+                    sign: SignExtend::Zero,
+                },
+                0xC5,
+                &[0x44, 0x0F, 0xC5, 0xC2, 0x03][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(
+                kind,
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        for (kind, hint) in [
+            (
+                OpKind::VInsertLane {
+                    dst: mm(1),
+                    vec: mm(2),
+                    scalar: gpr(X86Reg::R10),
+                    lane: 3,
+                    elem: VecElementType::I16,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0xC4,
+                },
+            ),
+            (
+                OpKind::VInsertLane {
+                    dst: mm(1),
+                    vec: mm(1),
+                    scalar: gpr(X86Reg::Rbp),
+                    lane: 3,
+                    elem: VecElementType::I16,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0xC4,
+                },
+            ),
+            (
+                OpKind::VExtractLane {
+                    dst: gpr(X86Reg::R8),
+                    vec: mm(2),
+                    lane: 4,
+                    elem: VecElementType::I16,
+                    sign: SignExtend::Zero,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0xC5,
+                },
+            ),
+            (
+                OpKind::VExtractLane {
+                    dst: gpr(X86Reg::R8),
+                    vec: mm(2),
+                    lane: 3,
+                    elem: VecElementType::I16,
+                    sign: SignExtend::Sign,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xC5,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::InvalidOperand { .. } | LowerError::InvalidRegister(_)
+            ));
+        }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_mmx_word_lane_ops_execute_extended_gprs_and_round_trip_state() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        let mm1 = VReg::Arch(ArchReg::X86(X86Reg::Mm(1)));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let r10 = VReg::Arch(ArchReg::X86(X86Reg::R10));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: None,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::VInsertLane {
+                dst: mm1,
+                vec: mm1,
+                scalar: r10,
+                lane: 2,
+                elem: VecElementType::I16,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: None,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::VExtractLane {
+                dst: r8,
+                vec: mm1,
+                lane: 2,
+                elem: VecElementType::I16,
+                sign: SignExtend::Zero,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0xC4,
+        });
+        function.blocks[0].ops[3].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0xC5,
+        });
+
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&function)
+            .expect("lower native MMX word lane operations");
+        let code = lowerer.finalize().expect("finalize MMX word lane code");
+        let exec = ExecMem::new(&code).expect("map MMX word lane code");
+        let mut regs = GuestRegs {
+            mm: [0, 0x4444_3333_2222_1111, 0, 0, 0, 0, 0, 0],
+            mmx_active: 1,
+            x87_tag_word: 0xFFFF,
+            rflags: 0x2 | 0x8D5,
+            ..GuestRegs::default()
+        };
+        regs.gpr[8] = u64::MAX;
+        regs.gpr[10] = 0xDEAD_BEEF_CAFE_A1B2;
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.mm[1], 0x4444_A1B2_2222_1111);
+        assert_eq!(regs.gpr[8], 0xA1B2);
+        assert_eq!(regs.gpr[10], 0xDEAD_BEEF_CAFE_A1B2);
+        assert_eq!(regs.x87_tag_word, 0);
+        assert_eq!(regs.rflags & 0x8D5, 0x8D5);
     }
 
     #[test]

@@ -37149,6 +37149,73 @@ mod tests {
     }
 
     #[test]
+    fn lifted_mmx_pinsrw_pextrw_execute_rex_lanes_state_memory_and_faults() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+        let r9 = VReg::Arch(ArchReg::X86(X86Reg::R9));
+        let flags_before = 0xCD7;
+        let mut memory = FlatMemory::new(0x100);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[1] = 0x4444_3333_2222_1111;
+            x86.x87.tag_word = 0xFFFF;
+            x86.x87.status_word = 6 << 11;
+        }
+        ctx.write_vreg(r8, 0xDEAD_BEEF_CAFE_A1B2);
+
+        // REX.B selects R8 as the scalar source, REX.R is ignored for MM1,
+        // and only imm8[1:0] selects one of four words.
+        execute_lifted_x86(&[0x45, 0x0F, 0xC4, 0xC8, 0xFF], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[1], 0xA1B2_3333_2222_1111);
+            assert_eq!(x86.x87.tag_word, 0);
+            assert_eq!(x86.x87.status_word & 0x3800, 6 << 11);
+        }
+
+        // REX.R selects R9 as the destination, REX.B is ignored for MM1, and
+        // PEXTRW clears every destination bit above the selected word.
+        ctx.write_vreg(r9, u64::MAX);
+        execute_lifted_x86(&[0x45, 0x0F, 0xC5, 0xC9, 0xFE], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(r9), 0x3333);
+
+        // An unaligned m16 source reads exactly two bytes before entering MMX
+        // state or changing its destination.
+        memory.write(0x41, &0x7788u16.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x40);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[1] = 0x4444_3333_2222_1111;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0xC4, 0x48, 0x01, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[1], 0x4444_3333_2222_7788);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[1] = 0xA5A5_5A5A_C3C3_3C3C;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let fault = execute_lifted_x86(&[0x0F, 0xC4, 0x08, 0x03], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[1], 0xA5A5_5A5A_C3C3_3C3C);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+        assert_eq!(ctx.read_vreg(r8), 0xDEAD_BEEF_CAFE_A1B2);
+    }
+
+    #[test]
     fn lifted_scalar_vector_movq_executes_aliasing_upper_state_memory_and_faults_exactly() {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let flags_before = 0xCD7;
