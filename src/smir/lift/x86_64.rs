@@ -21278,18 +21278,27 @@ impl X86_64Lifter {
             self.xmm(modrm.reg)
         };
         let raw = if mmx { dst } else { ctx.alloc_vreg() };
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::X86PackedShift {
-                dst: raw,
-                src: dst,
-                count,
-                width,
-                elem,
-                shift,
-            },
-        ));
+        let kind = OpKind::X86PackedShift {
+            dst: raw,
+            src: dst,
+            count,
+            width,
+            elem,
+            shift,
+        };
+        if mmx && !modrm.is_memory {
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                kind,
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            ));
+        } else {
+            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+        }
         if mmx {
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
@@ -60507,15 +60516,21 @@ mod tests {
         ] {
             let result = lift_single(&[0x0F, opcode, 0xC1]).unwrap();
             assert!(result.ops.iter().any(|op| matches!(
-                op.kind,
-                OpKind::X86PackedShift {
-                    dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
-                    src: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
-                    count: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
-                    width: VecWidth::V64,
-                    elem: actual_elem,
-                    shift: actual_shift,
-                } if actual_elem == elem && actual_shift == shift
+                (&op.kind, op.x86_hint),
+                (
+                    OpKind::X86PackedShift {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        count: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        width: VecWidth::V64,
+                        elem: actual_elem,
+                        shift: actual_shift,
+                    },
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: actual_opcode,
+                    })
+                ) if *actual_elem == elem && *actual_shift == shift && actual_opcode == opcode
             )));
             assert!(matches!(
                 result.ops.last(),

@@ -3343,7 +3343,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
 pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
     use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix};
     use crate::smir::ir::types::{
-        ArchReg, VLaneOp, VReg, VecCmpCond, VecElementType, VecWidth, X86Reg,
+        ArchReg, ShiftOp, VLaneOp, VReg, VecCmpCond, VecElementType, VecWidth, X86Reg,
     };
 
     let (dst, src1, src2, expected_opcode) = match &op.kind {
@@ -3548,6 +3548,29 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
             src2,
             width,
         } => (dst, src1, src2, (*width == VecWidth::V64).then_some(0xF6)),
+        OpKind::X86PackedShift {
+            dst,
+            src,
+            count,
+            width,
+            elem,
+            shift,
+        } => (
+            dst,
+            src,
+            count,
+            match (*width, *elem, *shift) {
+                (VecWidth::V64, VecElementType::I16, ShiftOp::Lsr) => Some(0xD1),
+                (VecWidth::V64, VecElementType::I32, ShiftOp::Lsr) => Some(0xD2),
+                (VecWidth::V64, VecElementType::I64, ShiftOp::Lsr) => Some(0xD3),
+                (VecWidth::V64, VecElementType::I16, ShiftOp::Asr) => Some(0xE1),
+                (VecWidth::V64, VecElementType::I32, ShiftOp::Asr) => Some(0xE2),
+                (VecWidth::V64, VecElementType::I16, ShiftOp::Lsl) => Some(0xF1),
+                (VecWidth::V64, VecElementType::I32, ShiftOp::Lsl) => Some(0xF2),
+                (VecWidth::V64, VecElementType::I64, ShiftOp::Lsl) => Some(0xF3),
+                _ => None,
+            },
+        ),
         OpKind::VMul {
             dst,
             src1,
@@ -13653,6 +13676,53 @@ mod jit_gate_tests {
             &function,
             &std::collections::HashMap::new()
         ));
+    }
+
+    #[test]
+    fn x86_mmx_shared_count_shift_gate_covers_all_classic_opcodes() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, shift, opcode) in [
+            (VecElementType::I16, ShiftOp::Lsr, 0xD1),
+            (VecElementType::I32, ShiftOp::Lsr, 0xD2),
+            (VecElementType::I64, ShiftOp::Lsr, 0xD3),
+            (VecElementType::I16, ShiftOp::Asr, 0xE1),
+            (VecElementType::I32, ShiftOp::Asr, 0xE2),
+            (VecElementType::I16, ShiftOp::Lsl, 0xF1),
+            (VecElementType::I32, ShiftOp::Lsl, 0xF2),
+            (VecElementType::I64, ShiftOp::Lsl, 0xF3),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x9B00);
+            builder.push_op(
+                0x9B00,
+                OpKind::X86PackedShift {
+                    dst: mm(2),
+                    src: mm(2),
+                    count: mm(5),
+                    width: VecWidth::V64,
+                    elem,
+                    shift,
+                },
+            );
+            builder.push_op(
+                0x9B00,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
     }
 
     #[test]

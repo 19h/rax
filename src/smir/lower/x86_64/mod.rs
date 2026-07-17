@@ -6002,6 +6002,29 @@ impl X86_64Lowerer {
                 src2,
                 width,
             } => (dst, src1, src2, (*width == VecWidth::V64).then_some(0xF6)),
+            OpKind::X86PackedShift {
+                dst,
+                src,
+                count,
+                width,
+                elem,
+                shift,
+            } => (
+                dst,
+                src,
+                count,
+                match (*width, *elem, *shift) {
+                    (VecWidth::V64, VecElementType::I16, ShiftOp::Lsr) => Some(0xD1),
+                    (VecWidth::V64, VecElementType::I32, ShiftOp::Lsr) => Some(0xD2),
+                    (VecWidth::V64, VecElementType::I64, ShiftOp::Lsr) => Some(0xD3),
+                    (VecWidth::V64, VecElementType::I16, ShiftOp::Asr) => Some(0xE1),
+                    (VecWidth::V64, VecElementType::I32, ShiftOp::Asr) => Some(0xE2),
+                    (VecWidth::V64, VecElementType::I16, ShiftOp::Lsl) => Some(0xF1),
+                    (VecWidth::V64, VecElementType::I32, ShiftOp::Lsl) => Some(0xF2),
+                    (VecWidth::V64, VecElementType::I64, ShiftOp::Lsl) => Some(0xF3),
+                    _ => None,
+                },
+            ),
             OpKind::VMul {
                 dst,
                 src1,
@@ -26927,6 +26950,40 @@ mod tests {
             code.windows(3).any(|window| window == [0x0F, 0xF6, 0xE1]),
             "missing MMX PSADBW 0F F6 /r: {code:02X?}"
         );
+    }
+
+    #[test]
+    fn lower_mmx_shared_count_shifts_emit_all_classic_opcodes() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, shift, opcode) in [
+            (VecElementType::I16, ShiftOp::Lsr, 0xD1),
+            (VecElementType::I32, ShiftOp::Lsr, 0xD2),
+            (VecElementType::I64, ShiftOp::Lsr, 0xD3),
+            (VecElementType::I16, ShiftOp::Asr, 0xE1),
+            (VecElementType::I32, ShiftOp::Asr, 0xE2),
+            (VecElementType::I16, ShiftOp::Lsl, 0xF1),
+            (VecElementType::I32, ShiftOp::Lsl, 0xF2),
+            (VecElementType::I64, ShiftOp::Lsl, 0xF3),
+        ] {
+            let code = lower_single_hinted_op(
+                OpKind::X86PackedShift {
+                    dst: mm(2),
+                    src: mm(2),
+                    count: mm(5),
+                    width: VecWidth::V64,
+                    elem,
+                    shift,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(3).any(|window| window == [0x0F, opcode, 0xD5]),
+                "missing MMX packed shift 0F {opcode:02X} /r: {code:02X?}"
+            );
+        }
     }
 
     #[test]
