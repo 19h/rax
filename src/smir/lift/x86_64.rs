@@ -12803,8 +12803,7 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-    /// Lift legacy XMM PACKSSWB/PACKUSWB/PACKSSDW/PACKUSDW. Prefix-free
-    /// 0F-map forms address MMX state, which SMIR does not expose.
+    /// Lift legacy MMX/XMM PACKSSWB/PACKUSWB/PACKSSDW/PACKUSDW.
     fn lift_sse_integer_pack(
         &self,
         opcode: u8,
@@ -12813,17 +12812,9 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if opcode != 0x2B
-            && !prefix.operand_size_override
-            && prefix.rep_prefix.is_none()
-            && !prefix.lock
-        {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("MMX pack opcode {opcode:02X}"),
-            });
-        }
-        if !prefix.operand_size_override
+        let mmx_opcode = matches!(opcode, 0x63 | 0x67 | 0x6B);
+        let mmx = !prefix.operand_size_override && mmx_opcode;
+        if (!prefix.operand_size_override && !mmx)
             || prefix.rep_prefix.is_some()
             || prefix.lock
             || prefix.rex2.is_some()
@@ -12843,6 +12834,7 @@ impl X86_64Lifter {
         } else {
             VecElementType::I16
         };
+        let width = if mmx { VecWidth::V64 } else { VecWidth::V128 };
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
@@ -12856,20 +12848,37 @@ impl X86_64Lifter {
                 OpKind::VLoad {
                     dst: loaded,
                     addr,
-                    width: VecWidth::V128,
+                    width,
                 },
             ));
             loaded
+        } else if mmx {
+            self.mm(modrm.rm)
         } else {
             self.xmm(modrm.rm)
         };
-        let dst = self.xmm(modrm.reg);
-        let raw = if modrm.is_memory {
+        if mmx {
+            // A faulting memory source must not enter MMX state.
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            ));
+        }
+        let dst = if mmx {
+            self.mm(modrm.reg)
+        } else {
+            self.xmm(modrm.reg)
+        };
+        let raw = if modrm.is_memory && !mmx {
             ctx.alloc_vreg()
         } else {
             dst
         };
-        let src_lanes = VecWidth::V128.lanes(src_elem) as u8;
+        let src_lanes = width.lanes(src_elem) as u8;
         ops.push(SmirOp::with_hint(
             OpId(ops.len() as u16),
             pc,
@@ -12885,11 +12894,15 @@ impl X86_64Lifter {
                 block_lanes: src_lanes,
             },
             X86OpHint::SseOp {
-                prefix: X86SsePrefix::OpSize,
+                prefix: if mmx {
+                    X86SsePrefix::None
+                } else {
+                    X86SsePrefix::OpSize
+                },
                 opcode,
             },
         ));
-        if modrm.is_memory {
+        if modrm.is_memory && !mmx {
             self.append_legacy_packed_result(dst, raw, dst_elem, pc, ctx, &mut ops);
         }
         Ok(LiftResult::fallthrough(
@@ -52782,6 +52795,79 @@ mod tests {
 
     #[test]
     fn lift_legacy_vex_evex_saturating_packs_cover_widths_masks_tuples_and_invalids() {
+        for (opcode, src_elem, to_unsigned) in [
+            (0x63, VecElementType::I16, false),
+            (0x67, VecElementType::I16, true),
+            (0x6B, VecElementType::I32, false),
+        ] {
+            let lifted = lift_single(&[0x0F, opcode, 0xC1]).unwrap();
+            assert!(matches!(
+                lifted.ops.as_slice(),
+                [
+                    SmirOp {
+                        kind: OpKind::X86X87Control {
+                            kind: X86X87ControlKind::EnterMmx,
+                            ..
+                        },
+                        ..
+                    },
+                    SmirOp {
+                        kind: OpKind::VPackSat {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                            src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                            src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                            src_elem: actual,
+                            to_unsigned: actual_unsigned,
+                            src_lanes,
+                            block_lanes,
+                        },
+                        x86_hint: Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: actual_opcode,
+                        }),
+                        ..
+                    }
+                ] if *actual == src_elem
+                    && *actual_unsigned == to_unsigned
+                    && u32::from(*src_lanes) == VecWidth::V64.lanes(src_elem)
+                    && *src_lanes == *block_lanes
+                    && *actual_opcode == opcode
+            ));
+        }
+
+        let mmx_memory = lift_single(&[0x0F, 0x63, 0x00]).unwrap();
+        assert!(matches!(
+            mmx_memory.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::VLoad {
+                        width: VecWidth::V64,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::VPackSat {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src1: VReg::Virtual(_),
+                        src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        src_elem: VecElementType::I16,
+                        src_lanes: 4,
+                        block_lanes: 4,
+                        ..
+                    },
+                    ..
+                }
+            ]
+        ));
+
         let legacy_cases = [
             (&[0x66, 0x0F, 0x63, 0xC1][..], VecElementType::I16, false),
             (&[0x66, 0x0F, 0x67, 0xC1][..], VecElementType::I16, true),
@@ -53007,7 +53093,6 @@ mod tests {
         // doubleword-to-word forms. Broadcast is memory-only and dword-only.
         assert!(lift_single(&[0x62, 0xF1, 0xF5, 0x08, 0x63, 0xC1]).is_ok());
         for bytes in [
-            &[0x0F, 0x63, 0xC1][..],                   // MMX state is not exposed
             &[0xF3, 0x66, 0x0F, 0x63, 0xC1][..],       // conflicting prefix
             &[0xF0, 0x66, 0x0F, 0x67, 0xC1][..],       // LOCK
             &[0x0F, 0x38, 0x2B, 0xC1][..],             // PACKUSDW requires 66

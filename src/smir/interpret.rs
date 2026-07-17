@@ -37731,10 +37731,11 @@ mod tests {
             first: &[u8],
             second: &[u8],
             src_bytes: usize,
+            block_bytes: usize,
             to_unsigned: bool,
         ) -> Vec<u8> {
             let dst_bytes = src_bytes / 2;
-            let block_lanes = 16 / src_bytes;
+            let block_lanes = block_bytes / src_bytes;
             let source_lanes = first.len() / src_bytes;
             let read_signed = |source: &[u8], lane: usize| -> i64 {
                 let at = lane * src_bytes;
@@ -37812,6 +37813,81 @@ mod tests {
         ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
         ctx.flags.lazy = None;
 
+        for (opcode, first, second, src_bytes, to_unsigned) in [
+            (
+                0x63,
+                words1_bytes.as_slice(),
+                words2_bytes.as_slice(),
+                2,
+                false,
+            ),
+            (
+                0x67,
+                words1_bytes.as_slice(),
+                words2_bytes.as_slice(),
+                2,
+                true,
+            ),
+            (
+                0x6B,
+                dwords1_bytes.as_slice(),
+                dwords2_bytes.as_slice(),
+                4,
+                false,
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[0] = u64::from_le_bytes(first[..8].try_into().unwrap());
+                x86.mm[1] = u64::from_le_bytes(second[..8].try_into().unwrap());
+                x86.x87.tag_word = 0xFFFF;
+                x86.x87.status_word = 6 << 11;
+            }
+            execute_lifted_x86(&[0x0F, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    x86.mm[0].to_le_bytes().as_slice(),
+                    pack_reference(&first[..8], &second[..8], src_bytes, 8, to_unsigned),
+                    "MMX opcode {opcode:02X}",
+                );
+                assert_eq!(x86.x87.tag_word, 0);
+                assert_eq!(x86.x87.status_word & 0x3800, 6 << 11);
+            }
+        }
+
+        // MMX memory packs consume exactly one 8-byte source before entering
+        // MMX state and committing their destructive result.
+        memory.write(0x3F8, &words2_bytes[..8]).unwrap();
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        ctx.write_vreg(rax, 0x3F8);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::from_le_bytes(words1_bytes[..8].try_into().unwrap());
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0x63, 0x00], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.mm[0].to_le_bytes().as_slice(),
+                pack_reference(&words1_bytes[..8], &words2_bytes[..8], 2, 8, false)
+            );
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        // A source fault changes neither MMX data nor the x87 tag word.
+        ctx.write_vreg(rax, 0x1000);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xA5A5_5A5A_C3C3_3C3C;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0x63, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xA5A5_5A5A_C3C3_3C3C);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+
         for (legacy, vex, first, second, src_bytes, to_unsigned) in [
             (
                 &[0x66, 0x0F, 0x63, 0xC1][..],
@@ -37854,7 +37930,7 @@ mod tests {
             if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
                 assert_eq!(
                     bytes(&x86.xmm[0], 16),
-                    pack_reference(&first[..16], &second[..16], src_bytes, to_unsigned),
+                    pack_reference(&first[..16], &second[..16], src_bytes, 16, to_unsigned),
                     "legacy {legacy:02X?}",
                 );
                 assert!(x86.xmm[0][2..].iter().all(|word| *word == upper));
@@ -37869,7 +37945,7 @@ mod tests {
             if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
                 assert_eq!(
                     bytes(&x86.xmm[0], 32),
-                    pack_reference(first, second, src_bytes, to_unsigned),
+                    pack_reference(first, second, src_bytes, 16, to_unsigned),
                     "VEX {vex:02X?}",
                 );
                 assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
@@ -37879,7 +37955,7 @@ mod tests {
         // EVEX masking is applied to the packed word result, after independent
         // 128-bit groups. Merging and zeroing both clear backing state above VL.
         let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
-        let raw = pack_reference(&dwords1_bytes, &dwords2_bytes, 4, true);
+        let raw = pack_reference(&dwords1_bytes, &dwords2_bytes, 4, 16, true);
         let mask = 0xA55Au64;
         for (p2, zeroing) in [(0x29, false), (0xA9, true)] {
             if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
