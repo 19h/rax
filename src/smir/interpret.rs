@@ -40838,6 +40838,117 @@ mod tests {
     }
 
     #[test]
+    fn lifted_mmx_packed_multiply_executes_widths_aliases_state_and_faults() {
+        fn words(value: u64) -> [u16; 4] {
+            let bytes = value.to_le_bytes();
+            std::array::from_fn(|lane| {
+                u16::from_le_bytes(bytes[lane * 2..lane * 2 + 2].try_into().unwrap())
+            })
+        }
+
+        fn pack_words(value: [u16; 4]) -> u64 {
+            u64::from_le_bytes(
+                value
+                    .into_iter()
+                    .flat_map(u16::to_le_bytes)
+                    .collect::<Vec<_>>()
+                    .try_into()
+                    .unwrap(),
+            )
+        }
+
+        fn reference(opcode: u8, lhs: u64, rhs: u64) -> u64 {
+            if opcode == 0xF4 {
+                return u64::from(lhs as u32) * u64::from(rhs as u32);
+            }
+            let lhs = words(lhs);
+            let rhs = words(rhs);
+            pack_words(std::array::from_fn(|lane| match opcode {
+                0xD5 => lhs[lane].wrapping_mul(rhs[lane]),
+                0xE4 => ((u32::from(lhs[lane]) * u32::from(rhs[lane])) >> 16) as u16,
+                0xE5 => {
+                    let product = i32::from(lhs[lane] as i16) * i32::from(rhs[lane] as i16);
+                    (product >> 16) as i16 as u16
+                }
+                _ => unreachable!(),
+            }))
+        }
+
+        let lhs = pack_words([0xFFFF, 0x8000, 0x1234, 0x7FFF]);
+        let rhs = pack_words([0x0002, 0xFFFF, 0xFEDC, 0x8000]);
+        let flags_before = 0xCD7;
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        for opcode in [0xF4, 0xD5, 0xE4, 0xE5] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[0] = lhs;
+                x86.mm[1] = rhs;
+                x86.x87.tag_word = 0xFFFF;
+                x86.x87.status_word = 3 << 11;
+            }
+            execute_lifted_x86(&[0x0F, opcode, 0xC1], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    x86.mm[0],
+                    reference(opcode, lhs, rhs),
+                    "opcode={opcode:02X}"
+                );
+                assert_eq!(x86.x87.tag_word, 0);
+                assert_eq!(x86.x87.status_word & 0x3800, 3 << 11);
+            }
+        }
+
+        // Destructive register aliases snapshot every input lane before the
+        // first architectural write.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = lhs;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0xD5, 0xC0], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], reference(0xD5, lhs, lhs));
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        // PMULUDQ fetches the complete unaligned m64 source even though only
+        // its low doubleword participates in the single qword product.
+        memory.write(0x181, &rhs.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x180);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = lhs;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0xF4, 0x40, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], reference(0xF4, lhs, rhs));
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        // A source fault precedes both the destructive result and EnterMmx.
+        ctx.write_vreg(rax, 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let fault = execute_lifted_x86(&[0x0F, 0xF4, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xDEAD_BEEF_CAFE_BABE);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
     fn lifted_original_packed_minmax_executes_values_masks_e4_and_faults() {
         fn seeded(input: &[u8], fill: u64) -> VecValue {
             let mut value = [fill; 16];
