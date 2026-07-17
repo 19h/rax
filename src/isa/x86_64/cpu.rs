@@ -4619,7 +4619,8 @@ impl X86_64Vcpu {
         #[cfg(target_arch = "x86_64")]
         use crate::smir::lower::runtime::{
             is_native_clobber_safe_excluding, uses_x86_native_mmx_excluding,
-            uses_x86_native_vectors_excluding, x86_native_scalar_features_supported_excluding,
+            uses_x86_native_vectors_excluding, x86_native_mmx_pairs_valid_excluding,
+            x86_native_scalar_features_supported_excluding,
             x86_native_vector_features_supported_excluding,
         };
         #[cfg(target_arch = "x86_64")]
@@ -4806,6 +4807,13 @@ impl X86_64Vcpu {
             #[cfg(target_arch = "x86_64")]
             let uses_mmx = uses_x86_native_mmx_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
+            if !x86_native_mmx_pairs_valid_excluding(&func, &exits) {
+                if jit_bail_log() {
+                    eprintln!("[JIT-BAIL] mmx-state-pair @ {entry:#x} (call={cm})");
+                }
+                continue 'modes;
+            }
+            #[cfg(target_arch = "x86_64")]
             let uses_mem_helpers = allow_mem
                 && func
                     .blocks
@@ -4821,6 +4829,18 @@ impl X86_64Vcpu {
                                 | OpKind::VStore { .. }
                         )
                     });
+            #[cfg(target_arch = "x86_64")]
+            if uses_mmx && (uses_mem_helpers || cm) {
+                // Rust helper calls cannot execute while the host x87/MMX file
+                // contains live guest state. Retry call-mode regions without
+                // call-through, and retain interpreter fallback for MMX memory
+                // forms until each helper boundary spills, executes EMMS, and
+                // restores MM0-MM7.
+                if jit_bail_log() {
+                    eprintln!("[JIT-BAIL] mmx-helper-boundary @ {entry:#x} (call={cm})");
+                }
+                continue 'modes;
+            }
             #[cfg(target_arch = "x86_64")]
             {
                 if !is_native_clobber_safe_excluding(&func, &exits, allow_mem) {
@@ -5958,6 +5978,39 @@ mod decode_cache_invalidation_tests {
         );
         assert_eq!(vcpu.fpu.tag_word, 0);
         assert_eq!(vcpu.regs.rip, 0x1000);
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn jit_compiles_and_executes_lifted_register_mmx_logic() {
+        let (mut vcpu, mem) = test_vcpu_with_mem();
+        // pand mm0,mm1; jmp next; ret. The RET block is an interpreter
+        // frontier, leaving the MMX instruction in the executable native block.
+        mem.write_slice(&[0x0F, 0xDB, 0xC1, 0xEB, 0x00, 0xC3], GuestAddress(0))
+            .unwrap();
+        vcpu.sregs.efer = 1 << 10;
+        vcpu.sregs.cs.l = true;
+        vcpu.regs.rip = 0;
+        vcpu.regs.rflags = 0x2;
+        vcpu.regs.mm[0] = 0xF0F0_0FF0_AA55_1234;
+        vcpu.regs.mm[1] = 0x0FF0_FFFF_0F0F_FFFF;
+        vcpu.fpu.tag_word = 0xFFFF;
+        vcpu.set_jit_mem(false);
+        vcpu.set_jit_call(false);
+
+        let region = vcpu
+            .jit_compile_region()
+            .expect("compile MMX region")
+            .expect("register MMX logic should be JIT eligible");
+        assert!(region.uses_mmx);
+        assert!(!region.uses_vector);
+
+        vcpu.jit_run_region_native(&region);
+
+        assert_eq!(vcpu.regs.mm[0], 0x00F0_0FF0_0A05_1234);
+        assert_eq!(vcpu.regs.mm[1], 0x0FF0_FFFF_0F0F_FFFF);
+        assert_eq!(vcpu.fpu.tag_word, 0);
+        assert_eq!(vcpu.regs.rip, 5);
     }
 
     #[cfg(all(

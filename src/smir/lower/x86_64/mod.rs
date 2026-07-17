@@ -2173,6 +2173,13 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(reg, rm);
     }
 
+    pub fn emit_mmx_rr(&mut self, opcode: u8, reg: PhysReg, rm: PhysReg) {
+        debug_assert!(reg.is_mmx() && rm.is_mmx());
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(reg, rm);
+    }
+
     pub fn emit_sse_fp_to_int_rr(
         &mut self,
         prefix: u8,
@@ -10937,20 +10944,39 @@ impl X86_64Lowerer {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
                 let src2_reg = self.get_reg(*src2)?;
-                if !dst_reg.is_vec() || !src1_reg.is_vec() || !src2_reg.is_vec() {
+                let (default_opcode, default_mmx_opcode) = match &op.kind {
+                    OpKind::VAnd { .. } => (0x54, 0xDB),
+                    OpKind::VAndNot { .. } => (0x55, 0xDF),
+                    OpKind::VOr { .. } => (0x56, 0xEB),
+                    OpKind::VXor { .. } => (0x57, 0xEF),
+                    _ => unreachable!(),
+                };
+                let mmx_regs = dst_reg.is_mmx() && src1_reg.is_mmx() && src2_reg.is_mmx();
+                if mmx_regs {
+                    let encoding_valid = *width == VecWidth::V64
+                        && dst_reg == src1_reg
+                        && matches!(
+                            op.x86_hint,
+                            Some(X86OpHint::SseOp {
+                                prefix: X86SsePrefix::None,
+                                opcode,
+                            }) if opcode == default_mmx_opcode
+                        );
+                    if !encoding_valid {
+                        return Err(LowerError::InvalidOperand {
+                            op: "MMX logic".to_string(),
+                            operand: "requires exact destructive V64 registers and classic opcode"
+                                .to_string(),
+                        });
+                    }
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_mmx_rr(default_mmx_opcode, dst_reg, src2_reg);
+                } else if !dst_reg.is_vec() || !src1_reg.is_vec() || !src2_reg.is_vec() {
                     return Err(LowerError::InvalidOperand {
                         op: "vector logic".to_string(),
                         operand: "requires vector registers".to_string(),
                     });
-                }
-                let default_opcode = match &op.kind {
-                    OpKind::VAnd { .. } => 0x54,
-                    OpKind::VAndNot { .. } => 0x55,
-                    OpKind::VOr { .. } => 0x56,
-                    OpKind::VXor { .. } => 0x57,
-                    _ => unreachable!(),
-                };
-                if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
+                } else if let Some(enc_hint) = self.vec_hint(op.x86_hint) {
                     let enc = self.coerce_vec_encoding(
                         VecEncoding {
                             width: *width,
@@ -26258,6 +26284,82 @@ mod tests {
                 kind: X86X87ControlKind::EnterMmx,
                 addr: Some(Address::Absolute(0x1000)),
             }),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[test]
+    fn lower_mmx_logic_emits_exact_classic_opcodes_and_rejects_malformed_ir() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let logic = |opcode| match opcode {
+            0xDB => OpKind::VAnd {
+                dst: mm(1),
+                src1: mm(1),
+                src2: mm(2),
+                width: VecWidth::V64,
+            },
+            0xDF => OpKind::VAndNot {
+                dst: mm(1),
+                src1: mm(1),
+                src2: mm(2),
+                width: VecWidth::V64,
+            },
+            0xEB => OpKind::VOr {
+                dst: mm(1),
+                src1: mm(1),
+                src2: mm(2),
+                width: VecWidth::V64,
+            },
+            0xEF => OpKind::VXor {
+                dst: mm(1),
+                src1: mm(1),
+                src2: mm(2),
+                width: VecWidth::V64,
+            },
+            _ => unreachable!(),
+        };
+
+        for opcode in [0xDB, 0xDF, 0xEB, 0xEF] {
+            let code = lower_single_hinted_op(
+                logic(opcode),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(3).any(|window| window == [0x0F, opcode, 0xCA]),
+                "missing MMX opcode 0F {opcode:02X} /r: {code:02X?}"
+            );
+        }
+
+        assert!(matches!(
+            lower_single_op_err(logic(0xDB)),
+            LowerError::InvalidOperand { .. }
+        ));
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                logic(0xDB),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0xDB,
+                },
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                OpKind::VAnd {
+                    dst: mm(1),
+                    src1: mm(2),
+                    src2: mm(3),
+                    width: VecWidth::V64,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0xDB,
+                },
+            ),
             LowerError::InvalidOperand { .. }
         ));
     }

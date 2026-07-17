@@ -3336,6 +3336,56 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     })
 }
 
+/// Admit only the destructive register-register forms of the four baseline
+/// MMX logical instructions. The classic encoding metadata is part of the
+/// contract: V64 IR alone is insufficient to distinguish MMX from malformed or
+/// synthetic vector operations, and memory sources require helper-boundary MMX
+/// preservation that is intentionally not enabled yet.
+pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
+    use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix};
+    use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86Reg};
+
+    let (dst, src1, src2, width, expected_opcode) = match &op.kind {
+        OpKind::VAnd {
+            dst,
+            src1,
+            src2,
+            width,
+        } => (dst, src1, src2, width, 0xDB),
+        OpKind::VAndNot {
+            dst,
+            src1,
+            src2,
+            width,
+        } => (dst, src1, src2, width, 0xDF),
+        OpKind::VOr {
+            dst,
+            src1,
+            src2,
+            width,
+        } => (dst, src1, src2, width, 0xEB),
+        OpKind::VXor {
+            dst,
+            src1,
+            src2,
+            width,
+        } => (dst, src1, src2, width, 0xEF),
+        _ => return false,
+    };
+    let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+
+    *width == VecWidth::V64
+        && dst == src1
+        && [dst, src1, src2].into_iter().all(mm)
+        && matches!(
+            op.x86_hint,
+            Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            }) if opcode == expected_opcode
+        )
+}
+
 fn x86_vector_move_encoding_valid(
     prefix: crate::smir::ir::ops::X86SsePrefix,
     opcode: u8,
@@ -5143,6 +5193,51 @@ pub fn uses_x86_native_mmx_excluding(
                     ..
                 }
             )
+        })
+}
+
+/// Verify the exact architectural-state marker paired with every admitted MMX
+/// opcode. This region-level check prevents synthetic or optimizer-corrupted
+/// MMX IR from executing without importing MM0-MM7 or committing the x87 tag
+/// transition, while also rejecting orphan state markers.
+pub fn x86_native_mmx_pairs_valid_excluding(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> bool {
+    use crate::smir::ir::ops::{OpKind, X86X87ControlKind};
+
+    func.blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .all(|block| {
+            block.ops.iter().enumerate().all(|(index, op)| {
+                let enter_mmx = matches!(
+                    op.kind,
+                    OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    }
+                );
+                if enter_mmx {
+                    return block.ops.get(index + 1).is_some_and(|next| {
+                        next.guest_pc == op.guest_pc && is_x86_native_mmx_op(next)
+                    });
+                }
+                if is_x86_native_mmx_op(op) {
+                    return index > 0
+                        && block.ops.get(index - 1).is_some_and(|previous| {
+                            previous.guest_pc == op.guest_pc
+                                && matches!(
+                                    previous.kind,
+                                    OpKind::X86X87Control {
+                                        kind: X86X87ControlKind::EnterMmx,
+                                        addr: None,
+                                    }
+                                )
+                        });
+                }
+                true
+            })
         })
 }
 
@@ -8554,7 +8649,8 @@ fn block_is_clobber_safe(
             OpKind::AndNot { .. } | OpKind::X86Bls { .. } | OpKind::X86Adx { .. }
         ) || guarded_div_ok;
         let vector_ok = x86_native_vector_smir_op(op);
-        if !op.is_jit_safe() && !mem_ok && !scalar_ok && !vector_ok {
+        let mmx_ok = is_x86_native_mmx_op(op);
+        if !op.is_jit_safe() && !mem_ok && !scalar_ok && !vector_ok && !mmx_ok {
             return false;
         }
         if x86_movx_uses_ambiguous_high_byte_source(op) {
@@ -12838,6 +12934,10 @@ mod jit_gate_tests {
             &std::collections::HashMap::new()
         ));
         assert!(is_native_clobber_safe(&function));
+        assert!(!x86_native_mmx_pairs_valid_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
         assert!(!uses_x86_native_vectors_excluding(
             &function,
             &std::collections::HashMap::new()
@@ -12857,6 +12957,66 @@ mod jit_gate_tests {
         x87.set_terminator(Terminator::Return { values: vec![] });
         assert!(!uses_x86_native_mmx_excluding(
             &x87.finish(),
+            &std::collections::HashMap::new()
+        ));
+    }
+
+    #[test]
+    fn x86_mmx_logic_gate_requires_exact_hint_registers_and_state_pair() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let kind = OpKind::VAndNot {
+            dst: mm(2),
+            src1: mm(2),
+            src2: mm(7),
+            width: VecWidth::V64,
+        };
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x3000);
+        builder.push_op(
+            0x3000,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: None,
+            },
+        );
+        builder.push_op(0x3000, kind);
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0xDF,
+        });
+
+        assert!(is_x86_native_mmx_op(&function.blocks[0].ops[1]));
+        assert!(is_native_clobber_safe(&function));
+        assert!(x86_native_mmx_pairs_valid_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+        assert!(!uses_x86_native_vectors_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+
+        function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::OpSize,
+            opcode: 0xDF,
+        });
+        assert!(!is_x86_native_mmx_op(&function.blocks[0].ops[1]));
+        assert!(!is_native_clobber_safe(&function));
+
+        function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0xDB,
+        });
+        assert!(!is_x86_native_mmx_op(&function.blocks[0].ops[1]));
+
+        function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0xDF,
+        });
+        function.blocks[0].ops[1].guest_pc = 0x3001;
+        assert!(!x86_native_mmx_pairs_valid_excluding(
+            &function,
             &std::collections::HashMap::new()
         ));
     }
