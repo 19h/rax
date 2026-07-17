@@ -6209,9 +6209,17 @@ impl X86_64Lifter {
                     });
                 }
                 if group == 6 && prefix.rep_prefix == Some(0xF3) {
-                    return Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: "SENDUIPI".to_string(),
+                    // SENDUIPI requires User Interrupts. The configured x86
+                    // interpreter does not expose UINTR and therefore raises
+                    // #UD for this encoding; preserve that architectural exit
+                    // explicitly instead of treating it as a lifting gap.
+                    return Ok(LiftResult {
+                        ops: vec![],
+                        bytes_consumed: prefix.cursor + modrm.bytes_consumed,
+                        control_flow: ControlFlow::Trap {
+                            kind: TrapKind::InvalidOpcode,
+                        },
+                        branch_targets: vec![],
                     });
                 }
                 let kind = if group == 7 && prefix.rep_prefix == Some(0xF3) {
@@ -47668,9 +47676,14 @@ mod tests {
                 "{bytes:02X?}"
             );
         }
+        let senduipi = lift_single(&[0xF3, 0x0F, 0xC7, 0xF0]).unwrap();
+        assert_eq!(senduipi.bytes_consumed, 4);
+        assert!(senduipi.ops.is_empty());
         assert!(matches!(
-            lift_single(&[0xF3, 0x0F, 0xC7, 0xF0]),
-            Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "SENDUIPI"
+            senduipi.control_flow,
+            ControlFlow::Trap {
+                kind: TrapKind::InvalidOpcode
+            }
         ));
     }
 
@@ -65209,17 +65222,27 @@ mod tests {
     }
 
     #[test]
-    fn interpreter_frontiers_retain_supported_prefix_without_weakening_strict_insn_errors() {
-        // MOV EAX,0x12345678; SENDUIPI. SENDUIPI is valid and interpreted but
-        // intentionally has no SMIR operation yet.
+    fn senduipi_lifts_to_configured_invalid_opcode_and_remains_a_jit_frontier() {
+        // MOV EAX,0x12345678; SENDUIPI. Strict lifting represents the configured
+        // #UD explicitly, while JIT frontier mode preserves the native prefix
+        // and returns to the interpreter at SENDUIPI.
         let bytes = vec![0xB8, 0x78, 0x56, 0x34, 0x12, 0xF3, 0x0F, 0xC7, 0xF0];
         let mem = TestMemory::new(0x1000, bytes);
 
         let mut strict = X86_64Lifter::strict();
         let mut strict_ctx = LiftContext::new(SourceArch::X86_64);
+        let strict_function = strict.lift_function(0x1000, &mem, &mut strict_ctx).unwrap();
+        let strict_entry = strict_function
+            .blocks
+            .iter()
+            .find(|block| block.guest_pc == 0x1000)
+            .unwrap();
+        assert_eq!(strict_entry.ops.len(), 1);
         assert!(matches!(
-            strict.lift_function(0x1000, &mem, &mut strict_ctx),
-            Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "SENDUIPI"
+            strict_entry.terminator,
+            Terminator::Trap {
+                kind: TrapKind::InvalidOpcode
+            }
         ));
 
         let mut partial = X86_64Lifter::strict();
@@ -65261,12 +65284,19 @@ mod tests {
         assert!(frontier.ops.is_empty());
         assert!(matches!(frontier.terminator, Terminator::Return { .. }));
 
-        // Frontier mode is a region-lifting policy. It must not turn exact
-        // single-instruction diagnostics into NOPs or successful lifts.
+        // Exact instruction lifting retains the same explicit trap and full
+        // instruction length outside region-frontier policy.
         let mut insn_ctx = LiftContext::new(SourceArch::X86_64);
+        let insn = partial
+            .lift_insn(0x1005, &[0xF3, 0x0F, 0xC7, 0xF0], &mut insn_ctx)
+            .unwrap();
+        assert_eq!(insn.bytes_consumed, 4);
+        assert!(insn.ops.is_empty());
         assert!(matches!(
-            partial.lift_insn(0x1005, &[0xF3, 0x0F, 0xC7, 0xF0], &mut insn_ctx),
-            Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "SENDUIPI"
+            insn.control_flow,
+            ControlFlow::Trap {
+                kind: TrapKind::InvalidOpcode
+            }
         ));
     }
 

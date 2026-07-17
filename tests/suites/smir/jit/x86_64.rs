@@ -180,9 +180,10 @@ fn jit_bails_on_ineligible() {
 }
 
 #[test]
-fn jit_executes_supported_prefix_before_unsupported_interpreter_frontier() {
-    // MOV EAX,0x12345678; SENDUIPI. The latter remains interpreter-only, but it
-    // must not discard the liftable/native prefix that precedes it.
+fn jit_executes_supported_prefix_before_senduipi_trap_frontier() {
+    // MOV EAX,0x12345678; SENDUIPI. UINTR is unavailable in the configured
+    // interpreter, so SENDUIPI is an explicit #UD trap and remains a precise
+    // interpreter frontier without discarding the liftable/native prefix.
     let code = [0xB8, 0x78, 0x56, 0x34, 0x12, 0xF3, 0x0F, 0xC7, 0xF0];
     let mut vcpu = make_vcpu_code(&code);
     let before_flags = vcpu.get_regs().unwrap().rflags;
@@ -190,8 +191,8 @@ fn jit_executes_supported_prefix_before_unsupported_interpreter_frontier() {
 
     assert!(
         vcpu.jit_try_block()
-            .expect("partial region before unsupported frontier"),
-        "a later unsupported instruction must not reject the supported prefix"
+            .expect("partial region before SENDUIPI trap frontier"),
+        "a later trap must not reject the supported prefix"
     );
 
     let regs = vcpu.get_regs().unwrap();
