@@ -3342,7 +3342,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
 /// sources require helper-boundary MMX preservation that is not enabled yet.
 pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
     use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix};
-    use crate::smir::ir::types::{ArchReg, VReg, VecElementType, VecWidth, X86Reg};
+    use crate::smir::ir::types::{ArchReg, VReg, VecCmpCond, VecElementType, VecWidth, X86Reg};
 
     let (dst, src1, src2, expected_opcode) = match &op.kind {
         OpKind::VAnd {
@@ -3426,6 +3426,27 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 (VecElementType::I16, 4, true, true) => Some(0xE9),
                 (VecElementType::I8, 8, true, false) => Some(0xD8),
                 (VecElementType::I16, 4, true, false) => Some(0xD9),
+                _ => None,
+            },
+        ),
+        OpKind::VCmp {
+            dst,
+            src1,
+            src2,
+            cond,
+            elem,
+            lanes,
+        } => (
+            dst,
+            src1,
+            src2,
+            match (*elem, *lanes, *cond) {
+                (VecElementType::I8, 8, VecCmpCond::Gt) => Some(0x64),
+                (VecElementType::I16, 4, VecCmpCond::Gt) => Some(0x65),
+                (VecElementType::I32, 2, VecCmpCond::Gt) => Some(0x66),
+                (VecElementType::I8, 8, VecCmpCond::Eq) => Some(0x74),
+                (VecElementType::I16, 4, VecCmpCond::Eq) => Some(0x75),
+                (VecElementType::I32, 2, VecCmpCond::Eq) => Some(0x76),
                 _ => None,
             },
         ),
@@ -13181,6 +13202,51 @@ mod jit_gate_tests {
         });
         assert!(!is_x86_native_mmx_op(&function.blocks[0].ops[0]));
         assert!(!is_native_clobber_safe(&function));
+    }
+
+    #[test]
+    fn x86_mmx_packed_compare_gate_covers_exact_classic_shapes() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, lanes, cond, opcode) in [
+            (VecElementType::I8, 8, VecCmpCond::Gt, 0x64),
+            (VecElementType::I16, 4, VecCmpCond::Gt, 0x65),
+            (VecElementType::I32, 2, VecCmpCond::Gt, 0x66),
+            (VecElementType::I8, 8, VecCmpCond::Eq, 0x74),
+            (VecElementType::I16, 4, VecCmpCond::Eq, 0x75),
+            (VecElementType::I32, 2, VecCmpCond::Eq, 0x76),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x6000);
+            builder.push_op(
+                0x6000,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.push_op(
+                0x6000,
+                OpKind::VCmp {
+                    dst: mm(4),
+                    src1: mm(4),
+                    src2: mm(1),
+                    cond,
+                    elem,
+                    lanes,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[1]));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
     }
 
     #[cfg(target_arch = "x86_64")]

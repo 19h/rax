@@ -5885,6 +5885,27 @@ impl X86_64Lowerer {
                     _ => None,
                 },
             ),
+            OpKind::VCmp {
+                dst,
+                src1,
+                src2,
+                cond,
+                elem,
+                lanes,
+            } => (
+                dst,
+                src1,
+                src2,
+                match (*elem, *lanes, *cond) {
+                    (VecElementType::I8, 8, VecCmpCond::Gt) => Some(0x64),
+                    (VecElementType::I16, 4, VecCmpCond::Gt) => Some(0x65),
+                    (VecElementType::I32, 2, VecCmpCond::Gt) => Some(0x66),
+                    (VecElementType::I8, 8, VecCmpCond::Eq) => Some(0x74),
+                    (VecElementType::I16, 4, VecCmpCond::Eq) => Some(0x75),
+                    (VecElementType::I32, 2, VecCmpCond::Eq) => Some(0x76),
+                    _ => None,
+                },
+            ),
             _ => return Ok(false),
         };
         let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
@@ -26561,6 +26582,38 @@ mod tests {
             ),
             LowerError::InvalidOperand { .. }
         ));
+    }
+
+    #[test]
+    fn lower_mmx_packed_compare_emits_all_classic_register_opcodes() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, lanes, cond, opcode) in [
+            (VecElementType::I8, 8, VecCmpCond::Gt, 0x64),
+            (VecElementType::I16, 4, VecCmpCond::Gt, 0x65),
+            (VecElementType::I32, 2, VecCmpCond::Gt, 0x66),
+            (VecElementType::I8, 8, VecCmpCond::Eq, 0x74),
+            (VecElementType::I16, 4, VecCmpCond::Eq, 0x75),
+            (VecElementType::I32, 2, VecCmpCond::Eq, 0x76),
+        ] {
+            let code = lower_single_hinted_op(
+                OpKind::VCmp {
+                    dst: mm(4),
+                    src1: mm(4),
+                    src2: mm(1),
+                    cond,
+                    elem,
+                    lanes,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(3).any(|window| window == [0x0F, opcode, 0xE1]),
+                "missing MMX compare 0F {opcode:02X} /r: {code:02X?}"
+            );
+        }
     }
 
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
