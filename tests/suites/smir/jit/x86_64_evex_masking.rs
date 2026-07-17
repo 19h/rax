@@ -2,14 +2,15 @@
 //!
 //! SMIR preserves the EVEX opmask (`{k}`) and zeroing (`{z}`) directly for
 //! selected native-lowered bit-manipulation operations; other supported vector
-//! families may expand masking into primitive operations. EVEX.b memory
+//! families, including aligned moves, expand masking into primitive operations.
+//! EVEX.b memory
 //! broadcast (`{1toN}`) / register embedded rounding (`{er}`+SAE) remains
 //! outside this JIT path. Two layers keep unsupported forms from becoming
 //! silent miscompilations when a hot loop is promoted to native code:
 //!
 //!   1. The lifter preserves masking for explicitly modeled operations and
-//!      refuses unsupported masked/zeroing/broadcast/rounding forms, so those
-//!      regions bail to the interpreter regardless of the JIT op whitelist.
+//!      refuses unsupported broadcast/rounding forms. Lifted operations that
+//!      are not natively lowerable bail at the JIT safety gate.
 //!   2. (Belt-and-suspenders, exercised by `RAX_JIT_VERIFY`, not here.) The JIT
 //!      verifier now also diffs ZMM/opmask state, so any future vector JIT that
 //!      diverged would be caught rather than silently corrupting vector state.
@@ -152,14 +153,18 @@ fn lifter_accepts_modeled_evex_masking_but_refuses_unsupported_features() {
         lift_one(&[0x62, 0xf1, 0x74, 0x58, 0x58, 0x10]).is_ok(),
         "broadcast vaddps must remain interpreter-liftable"
     );
+    assert!(
+        lift_one(&[0x62, 0xf1, 0x7d, 0x49, 0x6f, 0xd1]).is_ok(),
+        "masked vmovdqa32 must remain interpreter-liftable"
+    );
+    assert!(
+        lift_one(&[0x62, 0xf1, 0x7d, 0xc9, 0x6f, 0xd1]).is_ok(),
+        "zero-masked vmovdqa32 must remain interpreter-liftable"
+    );
 
     // Every form this SMIR vector path cannot represent must be refused so it
     // falls back to the interpreter. (Encodings from llvm-mc.)
     let refused: &[(&str, &[u8])] = &[
-        // vmovdqa32 %zmm1,%zmm2{%k1}      — write-mask (aaa=1)
-        ("vmovdqa32 {k1}", &[0x62, 0xf1, 0x7d, 0x49, 0x6f, 0xd1]),
-        // vmovdqa32 %zmm1,%zmm2{%k1}{z}   — zeroing (z=1, aaa=1)
-        ("vmovdqa32 {k1}{z}", &[0x62, 0xf1, 0x7d, 0xc9, 0x6f, 0xd1]),
         // vaddps {rn-sae},%zmm1,%zmm2,%zmm3 — embedded rounding (b=1, reg;
         // here L'L=00 would even misdecode the width as 128-bit if not bailed)
         ("vaddps {rn-sae}", &[0x62, 0xf1, 0x6c, 0x18, 0x58, 0xd9]),
