@@ -13643,7 +13643,15 @@ impl X86_64Lifter {
             block_lanes: if mmx { 8 } else { 16 },
         };
         if mmx {
-            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, shuffle));
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                shuffle,
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x00,
+                },
+            ));
         } else {
             ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
@@ -53613,7 +53621,10 @@ mod tests {
                         lanes: 8,
                         block_lanes: 8,
                     },
-                    x86_hint: None,
+                    x86_hint: Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0x00,
+                    }),
                     ..
                 },
                 SmirOp {

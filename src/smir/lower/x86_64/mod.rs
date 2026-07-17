@@ -5816,6 +5816,43 @@ impl X86_64Lowerer {
     /// the normal scalar/vector matcher; any mixed or malformed MMX shape is an
     /// error rather than a widening opportunity.
     fn lower_mmx_rr(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<bool, LowerError> {
+        if let OpKind::VByteShuffle {
+            dst,
+            src,
+            control,
+            lanes,
+            block_lanes,
+        } = &op.kind
+        {
+            let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+            if ![dst, src, control].into_iter().any(is_mm) {
+                return Ok(false);
+            }
+            let encoding_valid = *lanes == 8
+                && *block_lanes == 8
+                && dst == src
+                && [dst, src, control].into_iter().all(is_mm)
+                && matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0x00,
+                    })
+                );
+            if !encoding_valid {
+                return Err(LowerError::InvalidOperand {
+                    op: "MMX PSHUFB".to_string(),
+                    operand: "requires exact destructive I8x8 MM registers and 0F38 opcode"
+                        .to_string(),
+                });
+            }
+            let dst_reg = self.get_dst_reg(*dst)?;
+            let control_reg = self.get_reg(*control)?;
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mmx_0f38_rr(0x00, dst_reg, control_reg);
+            return Ok(true);
+        }
+
         if let OpKind::VUnary {
             dst,
             src,
@@ -27470,6 +27507,45 @@ mod tests {
                 .any(|window| window == [0x0F, 0x38, 0x0B, 0xC1]),
             "missing MMX PMULHRSW 0F 38 0B /r: {code:02X?}"
         );
+    }
+
+    #[test]
+    fn lower_mmx_byte_shuffle_emits_ssse3_opcode_and_rejects_malformed_ir() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let shuffle = |dst, src, control, lanes, block_lanes| OpKind::VByteShuffle {
+            dst,
+            src,
+            control,
+            lanes,
+            block_lanes,
+        };
+        let hint = X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0x00,
+        };
+        let code = lower_single_hinted_op(shuffle(mm(0), mm(0), mm(1), 8, 8), hint);
+        assert!(
+            code.windows(4)
+                .any(|window| window == [0x0F, 0x38, 0x00, 0xC1]),
+            "missing MMX PSHUFB 0F 38 00 /r: {code:02X?}"
+        );
+
+        for (kind, malformed_hint) in [
+            (shuffle(mm(0), mm(2), mm(1), 8, 8), hint),
+            (shuffle(mm(0), mm(0), mm(1), 16, 8), hint),
+            (
+                shuffle(mm(0), mm(0), mm(1), 8, 8),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x00,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, malformed_hint),
+                LowerError::InvalidOperand { .. }
+            ));
+        }
     }
 
     #[test]

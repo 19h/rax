@@ -3346,6 +3346,28 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
         ArchReg, ShiftOp, VLaneOp, VReg, VecCmpCond, VecElementType, VecUnaryOp, VecWidth, X86Reg,
     };
 
+    if let OpKind::VByteShuffle {
+        dst,
+        src,
+        control,
+        lanes,
+        block_lanes,
+    } = &op.kind
+    {
+        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        return *lanes == 8
+            && *block_lanes == 8
+            && dst == src
+            && [dst, src, control].into_iter().all(mm)
+            && matches!(
+                op.x86_hint,
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x00,
+                })
+            );
+    }
+
     if let OpKind::VUnary {
         dst,
         src,
@@ -5644,6 +5666,10 @@ fn x86_native_mmx_op_requires_ssse3(op: &crate::smir::ir::ops::SmirOp) -> bool {
         op.kind,
         OpKind::VUnary {
             op: VecUnaryOp::Abs,
+            ..
+        } | OpKind::VByteShuffle {
+            lanes: 8,
+            block_lanes: 8,
             ..
         } | OpKind::VLane {
             op: VLaneOp::Sign,
@@ -14240,6 +14266,79 @@ mod jit_gate_tests {
             &function,
             &std::collections::HashMap::new()
         ));
+    }
+
+    #[test]
+    fn x86_mmx_byte_shuffle_gate_accepts_only_exact_ssse3_destructive_form() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let exact = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(0),
+            0xA300,
+            OpKind::VByteShuffle {
+                dst: mm(0),
+                src: mm(0),
+                control: mm(1),
+                lanes: 8,
+                block_lanes: 8,
+            },
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode: 0x00,
+            },
+        );
+        assert!(is_x86_native_mmx_op(&exact));
+        assert!(x86_native_mmx_op_requires_ssse3(&exact));
+
+        for malformed in [
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(1),
+                0xA300,
+                OpKind::VByteShuffle {
+                    dst: mm(0),
+                    src: mm(2),
+                    control: mm(1),
+                    lanes: 8,
+                    block_lanes: 8,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x00,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(2),
+                0xA300,
+                OpKind::VByteShuffle {
+                    dst: mm(0),
+                    src: mm(0),
+                    control: mm(1),
+                    lanes: 16,
+                    block_lanes: 8,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x00,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(3),
+                0xA300,
+                OpKind::VByteShuffle {
+                    dst: mm(0),
+                    src: mm(0),
+                    control: mm(1),
+                    lanes: 8,
+                    block_lanes: 8,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x00,
+                },
+            ),
+        ] {
+            assert!(!is_x86_native_mmx_op(&malformed), "{malformed:?}");
+            assert!(!x86_native_mmx_op_requires_ssse3(&malformed));
+        }
     }
 
     #[test]
