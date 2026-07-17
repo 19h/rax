@@ -43749,6 +43749,36 @@ mod tests {
             );
         }
 
+        // Prefix-free MASKMOVQ performs the same selection over eight MMX
+        // bytes and commits the x87-to-MMX tag transition after the stores.
+        memory.write(0x80, &[0x66; 8]).unwrap();
+        ctx.write_vreg(rdi, 0x80);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::from_le_bytes(data[..8].try_into().unwrap());
+            x86.mm[1] = u64::from_le_bytes(alternating_mask[..8].try_into().unwrap());
+            x86.x87.tag_word = 0xFFFF;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x0F, 0xF7, 0xC1], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        let mut mmx_stored = [0; 8];
+        memory.read(0x80, &mut mmx_stored).unwrap();
+        for lane in 0..8 {
+            assert_eq!(
+                mmx_stored[lane],
+                if lane % 2 == 0 { data[lane] } else { 0x66 }
+            );
+        }
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], u64::from_le_bytes(data[..8].try_into().unwrap()));
+            assert_eq!(
+                x86.mm[1],
+                u64::from_le_bytes(alternating_mask[..8].try_into().unwrap())
+            );
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
         // Address-size override truncates RDI to EDI before adding the lane.
         memory.write(0x80, &[0x33; 16]).unwrap();
         ctx.write_vreg(rdi, 0xFFFF_FFFF_0000_0080);
@@ -43815,6 +43845,40 @@ mod tests {
             execute_lifted_x86(&[0xC4, 0x41, 0x79, 0xF7, 0xC1], &mut ctx, &mut memory,),
             BlockResult::Exit(ExitReason::Halt)
         ));
+
+        // MASKMOVQ also takes the permitted fully suppressed all-zero-mask
+        // path, but still enters MMX state on successful completion.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[1] = 0;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x0F, 0xF7, 0xC1], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        // Earlier active bytes may be stored before a later active byte
+        // faults. EnterMmx remains after the complete predicated-store series,
+        // so the fault does not commit the x87 tag transition.
+        ctx.write_vreg(rdi, 0x1FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::from_le_bytes(data[..8].try_into().unwrap());
+            x86.mm[1] = 0x0000_0080_0000_0080;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x0F, 0xF7, 0xC1], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::MemoryFault { write: true, .. })
+        ));
+        let mut first = [0];
+        memory.read(0x1FC, &mut first).unwrap();
+        assert_eq!(first[0], data[0]);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
         ctx.flags.materialize_all();
         assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
     }

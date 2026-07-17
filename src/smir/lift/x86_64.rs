@@ -15320,14 +15320,15 @@ impl X86_64Lifter {
         }
     }
 
-    /// Expand MASKMOVDQU/VMASKMOVDQU into sixteen independently predicated
+    /// Expand MASKMOVQ/MASKMOVDQU/VMASKMOVDQU into independently predicated
     /// byte stores. The predicate for byte `n` is bit 7 of mask byte `n`.
     /// A false predicate performs no memory access, matching the instruction's
     /// byte-selective store semantics and its permitted all-zero-mask behavior.
-    fn append_maskmovdqu(
+    fn append_maskmov(
         &self,
         data: VReg,
         mask: VReg,
+        lanes: u8,
         address_size_override: bool,
         segment_override: Option<u8>,
         pc: u64,
@@ -15352,7 +15353,7 @@ impl X86_64Lifter {
             self.gpr(7)
         };
 
-        for lane in 0..16u8 {
+        for lane in 0..lanes {
             let mask_byte = ctx.alloc_vreg();
             let active = ctx.alloc_vreg();
             let data_byte = ctx.alloc_vreg();
@@ -15427,12 +15428,6 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if !prefix.operand_size_override {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: "MMX MASKMOVQ".to_string(),
-            });
-        }
         if prefix.rep_prefix.is_some() || prefix.lock || prefix.rex2.is_some() {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
@@ -15446,16 +15441,40 @@ impl X86_64Lifter {
                 bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
             });
         }
+        let mmx = !prefix.operand_size_override;
         let mut ops = Vec::new();
-        self.append_maskmovdqu(
-            self.xmm(modrm.reg),
-            self.xmm(modrm.rm),
+        self.append_maskmov(
+            if mmx {
+                self.mm(modrm.reg)
+            } else {
+                self.xmm(modrm.reg)
+            },
+            if mmx {
+                self.mm(modrm.rm)
+            } else {
+                self.xmm(modrm.rm)
+            },
+            if mmx { 8 } else { 16 },
             prefix.address_size_override,
             prefix.segment_override,
             pc,
             ctx,
             &mut ops,
         );
+        if mmx {
+            // Place the architectural state transition after every predicated
+            // store: earlier active bytes may be visible when a later byte
+            // faults, while the fault still suppresses the register-state
+            // commit of the instruction as a whole.
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            ));
+        }
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed,
@@ -15494,9 +15513,10 @@ impl X86_64Lifter {
             });
         }
         let mut ops = Vec::new();
-        self.append_maskmovdqu(
+        self.append_maskmov(
             self.xmm(modrm.reg),
             self.xmm(modrm.rm),
+            16,
             prefix.address_size_override,
             prefix.segment_override,
             pc,
@@ -48520,9 +48540,61 @@ mod tests {
                 "invalid MASKMOVDQU accepted: {bytes:02X?}",
             );
         }
+        let mmx = lift_single(&[0x0F, 0xF7, 0xC1]).unwrap();
+        assert_eq!(mmx.bytes_consumed, 3);
+        assert_eq!(
+            mmx.ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredStore {
+                        width: MemWidth::B1,
+                        ..
+                    }
+                ))
+                .count(),
+            8
+        );
+        for lane in 0..8u8 {
+            assert!(mmx.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VExtractLane {
+                    vec: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                    lane: actual,
+                    elem: VecElementType::I8,
+                    ..
+                } if actual == lane
+            )));
+            assert!(mmx.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VExtractLane {
+                    vec: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                    lane: actual,
+                    elem: VecElementType::I8,
+                    ..
+                } if actual == lane
+            )));
+            assert!(mmx.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::PredStore {
+                    addr: Address::BaseOffset {
+                        base: VReg::Arch(ArchReg::X86(X86Reg::Rdi)),
+                        offset,
+                        ..
+                    },
+                    ..
+                } if offset == i64::from(lane)
+            )));
+        }
         assert!(matches!(
-            lift_single(&[0x0F, 0xF7, 0xC1]),
-            Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "MMX MASKMOVQ"
+            mmx.ops.last(),
+            Some(SmirOp {
+                kind: OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    ..
+                },
+                ..
+            })
         ));
     }
 
