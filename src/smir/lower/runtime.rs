@@ -24,10 +24,11 @@ use super::{
     X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CPL_OFFSET,
     X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
     X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
-    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET,
-    X86_GUEST_PAIR_STORE_FN_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
-    X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET, X86_GUEST_VEC_STORE_FN_OFFSET,
-    X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET,
+    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MM_OFFSET, X86_GUEST_MMX_ACTIVE_OFFSET,
+    X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET, X86_GUEST_PAIR_STORE_FN_OFFSET,
+    X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET,
+    X86_GUEST_VEC_LOAD_FN_OFFSET, X86_GUEST_VEC_STORE_FN_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET,
+    X86_GUEST_X87_TAG_WORD_OFFSET, X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET,
     X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
@@ -158,6 +159,16 @@ pub struct GuestRegs {
     /// The helper performs one complete APX PUSH2 stack transfer and commits
     /// RSP only after the complete 16-byte write succeeds.
     pub pair_store_fn: u64,
+    /// Architectural MM0-MM7 values. This native ABI carries the emulator's
+    /// canonical MMX view used by lifted packed-integer operations.
+    pub mm: [u64; 8],
+    /// Non-zero only for a region containing admitted native MMX operations.
+    /// The trampoline uses this to avoid entering MMX state for all other code.
+    pub mmx_active: u64,
+    /// Guest architectural x87 tag word. Native `EnterMmx` commits zero here at
+    /// the exact post-instruction point; trampoline `EMMS` affects only host
+    /// state and must not overwrite this guest value.
+    pub x87_tag_word: u64,
 }
 
 impl Default for GuestRegs {
@@ -188,6 +199,9 @@ impl Default for GuestRegs {
             vec_store_fn: 0,
             pair_load_fn: 0,
             pair_store_fn: 0,
+            mm: [0; 8],
+            mmx_active: 0,
+            x87_tag_word: 0xFFFF,
         }
     }
 }
@@ -608,6 +622,20 @@ macro_rules! x86_enter_native_trampoline {
             "kmovq k7, [rsi+2424]",
             "ldmxcsr [rsi+2440]",
             "2:",
+            // MMX state is independent of the AVX-512 vector path. MOVQ itself
+            // enters host MMX state; the matching exit path always executes
+            // EMMS after exporting MM0-MM7.
+            "cmp qword ptr [rsi+2600], 0",
+            "je 4f",
+            "movq mm0, qword ptr [rsi+2536]",
+            "movq mm1, qword ptr [rsi+2544]",
+            "movq mm2, qword ptr [rsi+2552]",
+            "movq mm3, qword ptr [rsi+2560]",
+            "movq mm4, qword ptr [rsi+2568]",
+            "movq mm5, qword ptr [rsi+2576]",
+            "movq mm6, qword ptr [rsi+2584]",
+            "movq mm7, qword ptr [rsi+2592]",
+            "4:",
             "mov rax, [rsi+256]", // RFLAGS
             "push rax",
             "popfq",
@@ -692,6 +720,20 @@ macro_rules! x86_enter_native_trampoline {
             "kmovq [rax+2424], k7",
             "stmxcsr [rax+2440]",
             "3:",
+            // Export the complete guest MMX file before returning the host x87
+            // unit to the empty-tag state required after MMX use.
+            "cmp qword ptr [rax+2600], 0",
+            "je 4f",
+            "movq qword ptr [rax+2536], mm0",
+            "movq qword ptr [rax+2544], mm1",
+            "movq qword ptr [rax+2552], mm2",
+            "movq qword ptr [rax+2560], mm3",
+            "movq qword ptr [rax+2568], mm4",
+            "movq qword ptr [rax+2576], mm5",
+            "movq qword ptr [rax+2584], mm6",
+            "movq qword ptr [rax+2592], mm7",
+            "emms",
+            "4:",
             "ldmxcsr [rax+2444]",
             // Sanitize the HOST EFLAGS before returning to Rust. The `popfq` above loaded
             // the GUEST RFLAGS into the host, and the region runs with them — but the
@@ -12728,6 +12770,18 @@ mod jit_gate_tests {
             std::mem::offset_of!(GuestRegs, pair_store_fn),
             X86_GUEST_PAIR_STORE_FN_OFFSET as usize
         );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, mm),
+            X86_GUEST_MM_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, mmx_active),
+            X86_GUEST_MMX_ACTIVE_OFFSET as usize
+        );
+        assert_eq!(
+            std::mem::offset_of!(GuestRegs, x87_tag_word),
+            X86_GUEST_X87_TAG_WORD_OFFSET as usize
+        );
         assert_eq!(std::mem::align_of::<GuestRegs>(), 64);
 
         let mut regs = GuestRegs::default();
@@ -12738,6 +12792,58 @@ mod jit_gate_tests {
         assert_eq!(regs.get_zmm(0), low);
         assert_eq!(regs.get_zmm(31), high);
         assert_eq!(regs.mxcsr, 0x1F80);
+        assert_eq!(regs.x87_tag_word, 0xFFFF);
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn x86_mmx_trampoline_round_trips_all_registers_and_cleans_host_state() {
+        // paddb mm0,mm1; movq mm7,mm0; ret. The trampoline must import both
+        // sources, export both destinations and execute EMMS before Rust resumes.
+        let exec =
+            ExecMem::new(&[0x0F, 0xFC, 0xC1, 0x0F, 0x6F, 0xF8, 0xC3]).expect("map raw MMX block");
+        let mut regs = GuestRegs {
+            mm: [
+                0x00ff_7f80_0102_0304,
+                0x0102_0304_0506_0708,
+                0x2222_2222_2222_2222,
+                0x3333_3333_3333_3333,
+                0x4444_4444_4444_4444,
+                0x5555_5555_5555_5555,
+                0x6666_6666_6666_6666,
+                0x7777_7777_7777_7777,
+            ],
+            mmx_active: 1,
+            x87_tag_word: 0xA5A5,
+            ..GuestRegs::default()
+        };
+        let original = regs.mm;
+        let expected = 0x0101_8284_0608_0A0C;
+
+        exec.run(0, &mut regs);
+
+        assert_eq!(regs.mm[0], expected);
+        assert_eq!(regs.mm[7], expected);
+        assert_eq!(&regs.mm[1..7], &original[1..7]);
+        assert_eq!(
+            regs.x87_tag_word, 0xA5A5,
+            "host EMMS must not alter guest tag state"
+        );
+
+        // A scalar x87 operation after ExecMem::run is also an execution-level
+        // probe that the trampoline did not leave the host in MMX tag state.
+        let mut x87_result = std::mem::MaybeUninit::<f64>::uninit();
+        unsafe {
+            core::arch::asm!(
+                "fld1",
+                "fld1",
+                "faddp st(1), st(0)",
+                "fstp qword ptr [{out}]",
+                out = in(reg) x87_result.as_mut_ptr(),
+                options(nostack)
+            );
+            assert_eq!(x87_result.assume_init(), 2.0);
+        }
     }
 
     #[test]

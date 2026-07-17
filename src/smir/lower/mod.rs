@@ -98,6 +98,18 @@ pub const X86_GUEST_VEC_STORE_FN_OFFSET: i32 = X86_GUEST_VEC_LOAD_FN_OFFSET + 8;
 pub const X86_GUEST_PAIR_LOAD_FN_OFFSET: i32 = X86_GUEST_VEC_STORE_FN_OFFSET + 8;
 /// Byte offset of the helper-backed APX PUSH2 function pointer.
 pub const X86_GUEST_PAIR_STORE_FN_OFFSET: i32 = X86_GUEST_PAIR_LOAD_FN_OFFSET + 8;
+/// Byte offset of the eight architectural MMX registers.
+///
+/// This state is appended after the established helper ABI so the hard-coded
+/// GPR/ZMM/K/MXCSR trampoline offsets remain stable.
+pub const X86_GUEST_MM_OFFSET: i32 = X86_GUEST_PAIR_STORE_FN_OFFSET + 8;
+/// Byte offset of the native-MMX marshalling discriminator.
+pub const X86_GUEST_MMX_ACTIVE_OFFSET: i32 = X86_GUEST_MM_OFFSET + 8 * 8;
+/// Byte offset of the guest architectural x87 tag word.
+///
+/// MMX instructions set this to zero at their precise SMIR `EnterMmx` point;
+/// the host `EMMS` executed by the trampoline is host-state cleanup only.
+pub const X86_GUEST_X87_TAG_WORD_OFFSET: i32 = X86_GUEST_MMX_ACTIVE_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 
