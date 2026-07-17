@@ -328,6 +328,56 @@ pub(crate) fn x86_state_backed_gpr_shift_valid(op: &SmirOp) -> bool {
         }
 }
 
+pub(crate) fn x86_state_backed_gpr_carry_rotate_candidate(op: &SmirOp) -> bool {
+    let state_amount = |amount: &SrcOperand| matches!(amount, SrcOperand::Reg(reg) if x86_state_backed_arch_gpr(reg));
+
+    matches!(
+        &op.kind,
+        OpKind::Rcl {
+            dst, src, amount, ..
+        }
+        | OpKind::Rcr {
+            dst, src, amount, ..
+        } if x86_state_backed_arch_gpr(dst)
+            || x86_state_backed_arch_gpr(src)
+            || state_amount(amount)
+    )
+}
+
+pub(crate) fn x86_state_backed_gpr_carry_rotate_valid(op: &SmirOp) -> bool {
+    let arch_gpr =
+        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
+    let amount_valid = |amount: &SrcOperand| {
+        matches!(amount, SrcOperand::Imm(_))
+            || matches!(amount, SrcOperand::Reg(reg) if arch_gpr(reg))
+    };
+    let rotate_flags = FlagSet::CF.union(FlagSet::OF);
+    let flags_valid = |flags: &FlagUpdate| {
+        matches!(flags, FlagUpdate::None | FlagUpdate::All)
+            || matches!(flags, FlagUpdate::Specific(set) if *set == rotate_flags)
+    };
+
+    x86_state_backed_gpr_carry_rotate_candidate(op)
+        && op.x86_hint.is_none()
+        && match &op.kind {
+            OpKind::Rcl {
+                dst,
+                src,
+                amount,
+                width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+                flags,
+            }
+            | OpKind::Rcr {
+                dst,
+                src,
+                amount,
+                width: OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64,
+                flags,
+            } => arch_gpr(dst) && arch_gpr(src) && amount_valid(amount) && flags_valid(flags),
+            _ => false,
+        }
+}
+
 pub(crate) fn x86_state_backed_gpr_count_candidate(op: &SmirOp) -> bool {
     matches!(
         &op.kind,
@@ -4627,6 +4677,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_inc_dec_valid(op)
             || x86_state_backed_gpr_rotate_valid(op)
             || x86_state_backed_gpr_shift_valid(op)
+            || x86_state_backed_gpr_carry_rotate_valid(op)
             || x86_state_backed_gpr_count_valid(op)
             || x86_state_backed_gpr_bit_scan_valid(op)
             || x86_state_backed_gpr_bit_test_valid(op)
@@ -7677,7 +7728,22 @@ impl X86_64Lowerer {
                 amount,
                 width,
                 flags,
-            } => self.lower_shift_reg_op(ShiftRegOp::Rcl, *dst, *src, amount, *width, *flags)?,
+            } => {
+                if x86_state_backed_gpr_carry_rotate_candidate(op) {
+                    if !x86_state_backed_gpr_carry_rotate_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Rcl".to_string(),
+                            operand: format!(
+                                "invalid x86 GPR carry rotate {dst:?} {src:?} {amount:?} {width:?} {flags:?}"
+                            ),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_carry_rotate(
+                        *dst, *src, amount, *width, *flags, false,
+                    );
+                }
+                self.lower_shift_reg_op(ShiftRegOp::Rcl, *dst, *src, amount, *width, *flags)?;
+            }
 
             OpKind::Rcr {
                 dst,
@@ -7685,7 +7751,22 @@ impl X86_64Lowerer {
                 amount,
                 width,
                 flags,
-            } => self.lower_shift_reg_op(ShiftRegOp::Rcr, *dst, *src, amount, *width, *flags)?,
+            } => {
+                if x86_state_backed_gpr_carry_rotate_candidate(op) {
+                    if !x86_state_backed_gpr_carry_rotate_valid(op) {
+                        return Err(LowerError::InvalidOperand {
+                            op: "state-backed Rcr".to_string(),
+                            operand: format!(
+                                "invalid x86 GPR carry rotate {dst:?} {src:?} {amount:?} {width:?} {flags:?}"
+                            ),
+                        });
+                    }
+                    return self.lower_state_backed_gpr_carry_rotate(
+                        *dst, *src, amount, *width, *flags, true,
+                    );
+                }
+                self.lower_shift_reg_op(ShiftRegOp::Rcr, *dst, *src, amount, *width, *flags)?;
+            }
 
             OpKind::Shld {
                 dst,
@@ -15562,6 +15643,151 @@ impl X86_64Lowerer {
                 } else {
                     CF
                 };
+                self.emit_finish_state_backed_gpr_rotate_flags(native_mask);
+            } else {
+                {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_mov_rr(PhysReg::Rdi, PhysReg::Rcx, OpWidth::W64);
+                    emitter.emit_and_ri(PhysReg::Rdi, i64::from(count_mask), OpWidth::W64);
+                    emitter.emit_test_rr(PhysReg::Rdi, PhysReg::Rdi, OpWidth::W64);
+                }
+                let count_zero = self.emit_jcc_placeholder(X86Cond::E);
+                {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_cmp_ri(PhysReg::Rdi, 1, OpWidth::W64);
+                }
+                let count_one = self.emit_jcc_placeholder(X86Cond::E);
+
+                self.emit_finish_state_backed_gpr_rotate_flags(CF);
+                self.code.emit_u8(0xE9);
+                let multi_done = self.code.position();
+                self.code.emit_u32(0);
+
+                self.patch_rel32_to_current(count_one)?;
+                self.emit_finish_state_backed_gpr_rotate_flags(CF_OF);
+                self.code.emit_u8(0xE9);
+                let one_done = self.code.position();
+                self.code.emit_u32(0);
+
+                self.patch_rel32_to_current(count_zero)?;
+                self.emit_finish_state_backed_gpr_rotate_flags(0);
+                self.patch_rel32_to_current(multi_done)?;
+                self.patch_rel32_to_current(one_done)?;
+            }
+        }
+
+        self.emit_store_gpr_slot_from_reg(dst_idx, PhysReg::Rdx, width)?;
+        if dst_idx == 5 {
+            let commit_width = if matches!(width, OpWidth::W8 | OpWidth::W16) {
+                width
+            } else {
+                OpWidth::W64
+            };
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rdx, commit_width);
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rcx, PhysReg::Rax, OpWidth::W64);
+        }
+        self.emit_reload_all(PhysReg::Rcx);
+        self.emit_flag_preserving_stack_pop8();
+        Ok(())
+    }
+
+    fn lower_state_backed_gpr_carry_rotate(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        amount: &SrcOperand,
+        width: OpWidth,
+        flags: FlagUpdate,
+        right: bool,
+    ) -> Result<(), LowerError> {
+        let name = if right { "Rcr" } else { "Rcl" };
+        let kind = if right {
+            ShiftRegOp::Rcr
+        } else {
+            ShiftRegOp::Rcl
+        };
+        let dst_idx = Self::x86_gpr_index(dst).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "destination is not an architectural x86 GPR".to_string(),
+        })?;
+        let src_idx = Self::x86_gpr_index(src).ok_or_else(|| LowerError::InvalidOperand {
+            op: format!("state-backed {name}"),
+            operand: "source is not an architectural x86 GPR".to_string(),
+        })?;
+        let (immediate, count_idx) = match amount {
+            SrcOperand::Imm(value) => (Some(*value as u8), None),
+            SrcOperand::Reg(reg) => {
+                let index =
+                    Self::x86_gpr_index(*reg).ok_or_else(|| LowerError::InvalidOperand {
+                        op: format!("state-backed {name}"),
+                        operand: "count is not an architectural x86 GPR".to_string(),
+                    })?;
+                (None, Some(index))
+            }
+            _ => {
+                return Err(LowerError::InvalidOperand {
+                    op: format!("state-backed {name}"),
+                    operand: "count is neither an immediate nor an architectural x86 GPR"
+                        .to_string(),
+                });
+            }
+        };
+
+        self.code.emit_u8(0x50); // push guest RAX while creating the state snapshot
+        self.emit_load_state_ptr_rax();
+        self.emit_spill_legacy_gprs_to_state_from_rax(0);
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rax, i32::from(src_idx) * 8, width);
+            if let Some(index) = count_idx {
+                emitter.emit_mov_rm(
+                    PhysReg::Rcx,
+                    PhysReg::Rax,
+                    i32::from(index) * 8,
+                    OpWidth::W64,
+                );
+            }
+        }
+
+        // Snapshot creation is flag-neutral, so the native operation consumes
+        // the guest's incoming CF directly. The saved image is also the source
+        // for NF restoration and selective CF/OF merging.
+        self.code.emit_u8(0x9C); // pushfq: complete incoming image
+        if let Some(value) = immediate {
+            self.emit_shift_reg_imm(kind, PhysReg::Rdx, value, width);
+        } else {
+            self.emit_shift_reg_cl(kind, PhysReg::Rdx, width);
+        }
+
+        if !flags.updates_any() {
+            self.code.emit_u8(0x9D); // popfq: suppressed outputs preserve every flag
+        } else {
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_push(PhysReg::Rdx);
+            }
+            self.code.emit_u8(0x9C); // pushfq: native carry-rotate image
+
+            const CF: i64 = 1;
+            const CF_OF: i64 = 1 | (1 << 11);
+            let count_mask = if width == OpWidth::W64 { 0x3f } else { 0x1f };
+            if let Some(value) = immediate {
+                let masked = value & count_mask;
+                let native_mask = if masked == 0 {
+                    0
+                } else if masked == 1 {
+                    CF_OF
+                } else {
+                    CF
+                };
+                // A subword full-period count (9 for W8, 17 for W16) leaves
+                // native CF unchanged, so merging that identical bit is exact.
                 self.emit_finish_state_backed_gpr_rotate_flags(native_mask);
             } else {
                 {
@@ -29856,6 +30082,358 @@ mod tests {
                     0
                 };
                 expected.rflags = (expected.rflags & !(1 << 11)) | (of << 11);
+            }
+
+            exec.run(lowered.entry_offset, &mut regs);
+
+            assert_eq!(regs.gpr, expected.gpr, "{} GPR file", case.name);
+            assert_eq!(
+                regs.rflags & STATUS_MASK,
+                expected.rflags & STATUS_MASK,
+                "{} status flags",
+                case.name
+            );
+        }
+    }
+
+    #[test]
+    fn lower_state_backed_gpr_carry_rotate_emits_count_flag_contracts_and_rejects_malformed_shapes()
+    {
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        let rotate_flags = FlagSet::CF.union(FlagSet::OF);
+
+        let one = lower_single_op(OpKind::Rcl {
+            dst: x86(X86Reg::Rsp),
+            src: x86(X86Reg::Rbp),
+            amount: SrcOperand::Imm(1),
+            width: OpWidth::W64,
+            flags: FlagUpdate::Specific(rotate_flags),
+        });
+        assert!(
+            one.windows(3).any(|bytes| bytes == [0x48, 0xD1, 0xD2]),
+            "state-backed RCL must rotate RDX through incoming CF: {one:02X?}"
+        );
+        assert_eq!(
+            one.iter().filter(|byte| **byte == 0x9C).count(),
+            2,
+            "flagful RCL must save incoming and native RFLAGS: {one:02X?}"
+        );
+        assert_eq!(one.iter().filter(|byte| **byte == 0x9D).count(), 1);
+        assert!(
+            one.windows(9)
+                .any(|bytes| bytes == [0x48, 0x81, 0x64, 0x24, 0x10, 0xFE, 0xF7, 0xFF, 0xFF]),
+            "count-one RCL must replace exactly CF and OF: {one:02X?}"
+        );
+
+        let dynamic = lower_single_op(OpKind::Rcr {
+            dst: x86(X86Reg::R31),
+            src: x86(X86Reg::R16),
+            amount: SrcOperand::Reg(x86(X86Reg::Rsp)),
+            width: OpWidth::W8,
+            flags: FlagUpdate::All,
+        });
+        assert!(
+            dynamic.windows(2).any(|bytes| bytes == [0xD2, 0xDA]),
+            "state-backed RCR must use staged CL and DL: {dynamic:02X?}"
+        );
+        assert!(
+            dynamic
+                .windows(4)
+                .any(|bytes| bytes == [0x48, 0x83, 0xE7, 0x1F]),
+            "byte RCR must classify the 5-bit masked count: {dynamic:02X?}"
+        );
+        assert!(
+            dynamic
+                .windows(2)
+                .filter(|bytes| *bytes == [0x0F, 0x84])
+                .count()
+                >= 2,
+            "dynamic RCR must branch on zero and one masked counts: {dynamic:02X?}"
+        );
+
+        let suppressed = lower_single_op(OpKind::Rcl {
+            dst: x86(X86Reg::Rbp),
+            src: x86(X86Reg::R31),
+            amount: SrcOperand::Imm(9),
+            width: OpWidth::W16,
+            flags: FlagUpdate::None,
+        });
+        assert!(
+            suppressed
+                .windows(4)
+                .any(|bytes| bytes == [0x66, 0xC1, 0xD2, 0x09]),
+            "state-backed suppressed-output RCL must use staged DX: {suppressed:02X?}"
+        );
+        assert_eq!(suppressed.iter().filter(|byte| **byte == 0x9C).count(), 1);
+        assert_eq!(suppressed.iter().filter(|byte| **byte == 0x9D).count(), 1);
+        assert!(
+            suppressed
+                .windows(4)
+                .any(|bytes| bytes == [0x66, 0x89, 0x55, 0x00]),
+            "word RCL must partially synchronize guest RBP: {suppressed:02X?}"
+        );
+
+        for malformed in [
+            OpKind::Rcl {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rsp),
+                amount: SrcOperand::Imm(1),
+                width: OpWidth::W128,
+                flags: FlagUpdate::Specific(rotate_flags),
+            },
+            OpKind::Rcr {
+                dst: x86(X86Reg::R31),
+                src: VReg::Virtual(crate::smir::ir::types::VirtualId(0)),
+                amount: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::Specific(rotate_flags),
+            },
+            OpKind::Rcl {
+                dst: x86(X86Reg::Rsp),
+                src: x86(X86Reg::Rbp),
+                amount: SrcOperand::Imm64(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::Specific(rotate_flags),
+            },
+            OpKind::Rcr {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rbp),
+                amount: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+                flags: FlagUpdate::Specific(FlagSet::CF),
+            },
+        ] {
+            assert!(
+                matches!(
+                    lower_single_op_err(malformed),
+                    LowerError::InvalidOperand { .. } | LowerError::InvalidRegister(_)
+                ),
+                "malformed state-backed carry rotate must fail lowering"
+            );
+        }
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                OpKind::Rcl {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rsp),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rbp)),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::None,
+                },
+                X86OpHint::Mulx,
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_state_backed_gpr_carry_rotate_preserves_alias_count_and_flag_contracts() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        const STATUS_MASK: u64 = 0x8D5;
+        let rotate_flags = FlagSet::CF.union(FlagSet::OF);
+
+        struct Case {
+            name: &'static str,
+            right: bool,
+            dst: X86Reg,
+            src: X86Reg,
+            count_reg: Option<X86Reg>,
+            immediate: i64,
+            width: OpWidth,
+            flags: FlagUpdate,
+            source: u64,
+            count: u64,
+            status: u64,
+        }
+
+        let cases = [
+            Case {
+                name: "RCL RSP,RBP,0 preserves every flag",
+                right: false,
+                dst: X86Reg::Rsp,
+                src: X86Reg::Rbp,
+                count_reg: None,
+                immediate: 0,
+                width: OpWidth::W64,
+                flags: FlagUpdate::Specific(rotate_flags),
+                source: 0x8123_4567_89AB_CDEF,
+                count: 0,
+                status: 0x8D5,
+            },
+            Case {
+                name: "RCL BPL,SPL,1 consumes incoming CF",
+                right: false,
+                dst: X86Reg::Rbp,
+                src: X86Reg::Rsp,
+                count_reg: None,
+                immediate: 1,
+                width: OpWidth::W8,
+                flags: FlagUpdate::Specific(rotate_flags),
+                source: 0x2233_4455_6677_5642,
+                count: 1,
+                status: 0x0D5,
+            },
+            Case {
+                name: "RCR R16B,R31B,10 effective one preserves raw-multi OF",
+                right: true,
+                dst: X86Reg::R16,
+                src: X86Reg::R31,
+                count_reg: None,
+                immediate: 10,
+                width: OpWidth::W8,
+                flags: FlagUpdate::All,
+                source: 0xFFEE_DDCC_BBAA_1301,
+                count: 10,
+                status: 0x8D4,
+            },
+            Case {
+                name: "RCL R31B,R16B,SP full through-carry period",
+                right: false,
+                dst: X86Reg::R31,
+                src: X86Reg::R16,
+                count_reg: Some(X86Reg::Rsp),
+                immediate: 0,
+                width: OpWidth::W8,
+                flags: FlagUpdate::Specific(rotate_flags),
+                source: 0xAABB_CCDD_EEFF_13A5,
+                count: 9,
+                status: 0x8D5,
+            },
+            Case {
+                name: "RCL R31W,R16W,SP effective one raw multi",
+                right: false,
+                dst: X86Reg::R31,
+                src: X86Reg::R16,
+                count_reg: Some(X86Reg::Rsp),
+                immediate: 0,
+                width: OpWidth::W16,
+                flags: FlagUpdate::Specific(rotate_flags),
+                source: 0xAABB_CCDD_EEFF_4000,
+                count: 18,
+                status: 0x8D4,
+            },
+            Case {
+                name: "RCR R16D,R16D,R16 all aliases",
+                right: true,
+                dst: X86Reg::R16,
+                src: X86Reg::R16,
+                count_reg: Some(X86Reg::R16),
+                immediate: 0,
+                width: OpWidth::W32,
+                flags: FlagUpdate::Specific(rotate_flags),
+                source: 0xAABB_CCDD_8000_0001,
+                count: 0x8000_0001,
+                status: 0x0D5,
+            },
+            Case {
+                name: "suppressed RCR RSP,R31D,BP consumes CF and zero-extends",
+                right: true,
+                dst: X86Reg::Rsp,
+                src: X86Reg::R31,
+                count_reg: Some(X86Reg::Rbp),
+                immediate: 0,
+                width: OpWidth::W32,
+                flags: FlagUpdate::None,
+                source: 0xFFEE_DDCC_8000_0001,
+                count: 1,
+                status: 0x8D5,
+            },
+        ];
+
+        let x86 = |reg| VReg::Arch(ArchReg::X86(reg));
+        for case in cases {
+            let amount = case
+                .count_reg
+                .map_or(SrcOperand::Imm(case.immediate), |reg| {
+                    SrcOperand::Reg(x86(reg))
+                });
+            let kind = if case.right {
+                OpKind::Rcr {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    amount,
+                    width: case.width,
+                    flags: case.flags,
+                }
+            } else {
+                OpKind::Rcl {
+                    dst: x86(case.dst),
+                    src: x86(case.src),
+                    amount,
+                    width: case.width,
+                    flags: case.flags,
+                }
+            };
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(0x1000, kind);
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut lowerer = X86_64Lowerer::new();
+            let lowered = lowerer
+                .lower_function(&builder.finish())
+                .unwrap_or_else(|error| panic!("{} lowering: {error:?}", case.name));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("{} finalize: {error:?}", case.name));
+            let exec = ExecMem::new(&code)
+                .unwrap_or_else(|error| panic!("{} executable mapping: {error:?}", case.name));
+
+            let mut regs = GuestRegs::default();
+            for (index, value) in regs.gpr.iter_mut().enumerate() {
+                *value = 0x1357_0000_2468_0000u64
+                    .wrapping_add((index as u64).wrapping_mul(0x0101_1111_2222_0101));
+            }
+            let dst_idx = case.dst.gpr_index().unwrap() as usize;
+            let src_idx = case.src.gpr_index().unwrap() as usize;
+            regs.gpr[src_idx] = case.source;
+            if let Some(count_reg) = case.count_reg {
+                let count_idx = count_reg.gpr_index().unwrap() as usize;
+                if count_idx != src_idx {
+                    regs.gpr[count_idx] = case.count;
+                }
+            }
+            regs.rflags = 0x2 | case.status;
+
+            let mut expected = regs;
+            let bits = u64::from(case.width.bits());
+            let count_mask = if bits == 64 { 0x3f } else { 0x1f };
+            let raw_count = case.count_reg.map_or(case.immediate as u64, |reg| {
+                regs.gpr[reg.gpr_index().unwrap() as usize]
+            });
+            let masked = raw_count & count_mask;
+            let effective = masked % (bits + 1);
+            let source = regs.gpr[src_idx] & case.width.mask();
+            let mut result = source;
+            let mut carry = expected.rflags & 1 != 0;
+            for _ in 0..effective {
+                if case.right {
+                    let next = result & 1 != 0;
+                    result = (result >> 1) | (u64::from(carry) << (bits - 1));
+                    carry = next;
+                } else {
+                    let next = result & case.width.sign_bit() != 0;
+                    result = ((result << 1) | u64::from(carry)) & case.width.mask();
+                    carry = next;
+                }
+            }
+            expected.gpr[dst_idx] = match case.width {
+                OpWidth::W8 | OpWidth::W16 => (regs.gpr[dst_idx] & !case.width.mask()) | result,
+                OpWidth::W32 | OpWidth::W64 => result,
+                OpWidth::W128 => unreachable!(),
+            };
+            if case.flags.updates_any() && effective != 0 {
+                expected.rflags = (expected.rflags & !1) | u64::from(carry);
+                if masked == 1 {
+                    let msb = result & case.width.sign_bit() != 0;
+                    let of = if case.right {
+                        let second = result & (case.width.sign_bit() >> 1) != 0;
+                        msb != second
+                    } else {
+                        msb != carry
+                    };
+                    expected.rflags = (expected.rflags & !(1 << 11)) | (u64::from(of) << 11);
+                }
             }
 
             exec.run(lowered.entry_offset, &mut regs);

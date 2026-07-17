@@ -6337,7 +6337,7 @@ impl X86_64Vcpu {
                 3 => (src >> (rotate_count - 1)) & 1 != 0,    // RCR
                 _ => unreachable!(),
             };
-            let of = if rotate_count == 1 {
+            let of = if count == 1 {
                 match shift_type {
                     0 => ((masked_result >> (bits - 1)) ^ masked_result) & 1 != 0,
                     1 | 3 => {

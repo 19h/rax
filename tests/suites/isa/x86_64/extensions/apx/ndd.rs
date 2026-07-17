@@ -371,6 +371,27 @@ fn test_ndd_shl_preserves_undefined_af_policy() {
 }
 
 #[test]
+fn test_ndd_rcl_raw_multi_effective_one_preserves_of() {
+    // LLVM 23: rclb $10, %spl, %r16b. The 5-bit masked count is 10 while the
+    // effective 9-bit through-carry rotation is one; OF remains undefined and
+    // retains its incoming deterministic value.
+    let code = [0x62, 0xF4, 0x7C, 0x10, 0xC0, 0xD4, 0x0A, 0xF4];
+    let mut regs = Registers {
+        rsp: 0x2233_4455_6677_5681,
+        r16: 0xAABB_CCDD_EEFF_1300,
+        rflags: 0x0D7,
+        ..Registers::default()
+    };
+
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+    regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.r16, 0xAABB_CCDD_EEFF_1303);
+    assert_ne!(regs.rflags & 1, 0, "effective-one RCL produces CF");
+    assert_eq!(regs.rflags & (1 << 11), 0, "raw-multi RCL preserves OF");
+}
+
+#[test]
 fn test_ndd_shld_reg_reg_imm_match_llvm() {
     // LLVM 23 assembles "shld r8, rax, rbx, 4" as 62 f4 bc 18 24 d8 04.
     let code = [0x62, 0xF4, 0xBC, 0x18, 0x24, 0xD8, 0x04, 0xF4];

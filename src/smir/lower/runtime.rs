@@ -8409,6 +8409,7 @@ fn block_is_clobber_safe(
         let state_inc_dec_ok = super::x86_64::x86_state_backed_gpr_inc_dec_valid(op);
         let state_rotate_ok = super::x86_64::x86_state_backed_gpr_rotate_valid(op);
         let state_shift_ok = super::x86_64::x86_state_backed_gpr_shift_valid(op);
+        let state_carry_rotate_ok = super::x86_64::x86_state_backed_gpr_carry_rotate_valid(op);
         let state_count_ok = super::x86_64::x86_state_backed_gpr_count_valid(op);
         let state_bit_scan_ok = super::x86_64::x86_state_backed_gpr_bit_scan_valid(op);
         let state_bit_test_ok = super::x86_64::x86_state_backed_gpr_bit_test_valid(op);
@@ -8430,6 +8431,7 @@ fn block_is_clobber_safe(
             || state_inc_dec_ok
             || state_rotate_ok
             || state_shift_ok
+            || state_carry_rotate_ok
             || state_count_ok
             || state_bit_scan_ok
             || state_bit_test_ok
@@ -8449,6 +8451,8 @@ fn block_is_clobber_safe(
             || (super::x86_64::x86_state_backed_gpr_inc_dec_candidate(op) && !state_inc_dec_ok)
             || (super::x86_64::x86_state_backed_gpr_rotate_candidate(op) && !state_rotate_ok)
             || (super::x86_64::x86_state_backed_gpr_shift_candidate(op) && !state_shift_ok)
+            || (super::x86_64::x86_state_backed_gpr_carry_rotate_candidate(op)
+                && !state_carry_rotate_ok)
             || (super::x86_64::x86_state_backed_gpr_count_candidate(op) && !state_count_ok)
             || (super::x86_64::x86_state_backed_gpr_bit_scan_candidate(op) && !state_bit_scan_ok)
             || (super::x86_64::x86_state_backed_gpr_bit_test_candidate(op) && !state_bit_test_ok)
@@ -8569,6 +8573,7 @@ fn block_is_clobber_safe(
         }
         if matches!(op.kind, OpKind::Rcl { .. } | OpKind::Rcr { .. })
             && !x86_carry_rotate_shape_valid(&op.kind)
+            && !state_carry_rotate_ok
         {
             return false;
         }
@@ -20138,6 +20143,16 @@ mod jit_gate_tests {
                     flags,
                 },
             ),
+            (
+                "RCR qword APX EGPR destination",
+                OpKind::Rcr {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rax),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags,
+                },
+            ),
         ] {
             assert!(op.is_jit_safe(), "{name} must be class-whitelisted");
             assert!(x86_gate(op), "{name} must enter native lowering");
@@ -20191,16 +20206,6 @@ mod jit_gate_tests {
                     src: x86(X86Reg::Rax),
                     amount: SrcOperand::Imm(1),
                     width: OpWidth::W128,
-                    flags,
-                },
-            ),
-            (
-                "extended guest register",
-                OpKind::Rcr {
-                    dst: x86(X86Reg::R16),
-                    src: x86(X86Reg::Rax),
-                    amount: SrcOperand::Imm(1),
-                    width: OpWidth::W64,
                     flags,
                 },
             ),
@@ -25223,6 +25228,119 @@ mod jit_gate_tests {
         assert!(
             !is_native_clobber_safe(&hinted),
             "hinted state-backed shift must fail closed"
+        );
+    }
+
+    #[test]
+    fn x86_state_backed_carry_rotate_gate_accepts_exact_shapes_and_fails_closed() {
+        let rotate_flags = FlagSet::CF.union(FlagSet::OF);
+        for (name, op) in [
+            (
+                "RCL RSP,RBP,1",
+                OpKind::Rcl {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rbp),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(rotate_flags),
+                },
+            ),
+            (
+                "RCR R31B,R16B,SP",
+                OpKind::Rcr {
+                    dst: x86(X86Reg::R31),
+                    src: x86(X86Reg::R16),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rsp)),
+                    width: OpWidth::W8,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "RCL BP,R31W,9",
+                OpKind::Rcl {
+                    dst: x86(X86Reg::Rbp),
+                    src: x86(X86Reg::R31),
+                    amount: SrcOperand::Imm(9),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::Specific(rotate_flags),
+                },
+            ),
+            (
+                "NF RCR R16D,R16D,R16 all alias",
+                OpKind::Rcr {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::R16),
+                    amount: SrcOperand::Reg(x86(X86Reg::R16)),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+            ),
+        ] {
+            assert!(x86_gate(op), "valid state-backed {name} must JIT");
+        }
+
+        for (name, op) in [
+            (
+                "128-bit width",
+                OpKind::Rcl {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rsp),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W128,
+                    flags: FlagUpdate::Specific(rotate_flags),
+                },
+            ),
+            (
+                "virtual source",
+                OpKind::Rcr {
+                    dst: x86(X86Reg::R31),
+                    src: VReg::Virtual(VirtualId(0)),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(rotate_flags),
+                },
+            ),
+            (
+                "Imm64 count",
+                OpKind::Rcl {
+                    dst: x86(X86Reg::Rsp),
+                    src: x86(X86Reg::Rbp),
+                    amount: SrcOperand::Imm64(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(rotate_flags),
+                },
+            ),
+            (
+                "partial flag set",
+                OpKind::Rcr {
+                    dst: x86(X86Reg::R16),
+                    src: x86(X86Reg::Rbp),
+                    amount: SrcOperand::Imm(1),
+                    width: OpWidth::W64,
+                    flags: FlagUpdate::Specific(FlagSet::CF),
+                },
+            ),
+        ] {
+            assert!(!x86_gate(op), "malformed state-backed {name} must deopt");
+        }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::Rcl {
+                dst: x86(X86Reg::R16),
+                src: x86(X86Reg::Rsp),
+                amount: SrcOperand::Reg(x86(X86Reg::Rbp)),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut hinted = builder.finish();
+        hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::Mulx);
+        assert!(
+            !is_native_clobber_safe(&hinted),
+            "hinted state-backed carry rotate must fail closed"
         );
     }
 
