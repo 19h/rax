@@ -3933,6 +3933,10 @@ impl OpKind {
                 | OpKind::X86XGetBv { .. }
                 | OpKind::X86XSetBv { .. }
                 | OpKind::X86Count { .. }
+                | OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                }
                 | OpKind::Bswap { .. }
                 | OpKind::Xchg { .. }
                 // Register-only address arithmetic (no memory dereference).
@@ -4654,7 +4658,7 @@ mod tests {
         assert!(enter_mmx.dests().is_empty());
         assert!(!enter_mmx.reads_memory());
         assert!(!enter_mmx.writes_memory());
-        assert!(!enter_mmx.is_jit_safe());
+        assert!(enter_mmx.is_jit_safe());
 
         let status_ax = OpKind::X86X87Control {
             kind: X86X87ControlKind::StoreStatusAx,

@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap,
+    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap, X86X87ControlKind,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, BlockId, Condition, DispSize, FenceKind, FpRoundMode, GuestAddr, MemWidth,
@@ -27,8 +27,8 @@ use super::{
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET,
     X86_GUEST_PAIR_STORE_FN_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
     X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET, X86_GUEST_VEC_STORE_FN_OFFSET,
-    X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET,
-    X86_STATE_PTR_AT_RBP,
+    X86_GUEST_X87_TAG_WORD_OFFSET, X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET,
+    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 fn x86_state_backed_arch_gpr(reg: &VReg) -> bool {
@@ -12113,6 +12113,33 @@ impl X86_64Lowerer {
                         });
                     }
                 }
+            }
+
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr,
+            } => {
+                if addr.is_some() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86X87Control EnterMmx".to_string(),
+                        operand: "must not have a memory address".to_string(),
+                    });
+                }
+                // Preserve architectural RAX and RFLAGS while committing the
+                // guest tag word at this exact post-instruction point.
+                self.code.emit_u8(0x50); // push rax
+                self.code.emit_bytes(&[
+                    0x48,
+                    0x8B,
+                    0x45,
+                    X86_STATE_PTR_AT_RBP as u8, // mov rax,[rbp+state]
+                    0x48,
+                    0xC7,
+                    0x80, // mov qword ptr [rax+disp32],0
+                ]);
+                self.code.emit_u32(X86_GUEST_X87_TAG_WORD_OFFSET as u32);
+                self.code.emit_u32(0);
+                self.code.emit_u8(0x58); // pop rax
             }
 
             // ================================================================
@@ -26197,6 +26224,40 @@ mod tests {
         };
         assert!(matches!(
             lower_single_hinted_op_err(hinted, X86OpHint::Mulx),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[test]
+    fn lower_enter_mmx_commits_guest_tag_word_without_clobbering_arch_state() {
+        let code = lower_single_op(OpKind::X86X87Control {
+            kind: X86X87ControlKind::EnterMmx,
+            addr: None,
+        });
+        let mut expected = vec![
+            0x50,
+            0x48,
+            0x8B,
+            0x45,
+            X86_STATE_PTR_AT_RBP as u8,
+            0x48,
+            0xC7,
+            0x80,
+        ];
+        expected.extend_from_slice(&(X86_GUEST_X87_TAG_WORD_OFFSET as u32).to_le_bytes());
+        expected.extend_from_slice(&0u32.to_le_bytes());
+        expected.push(0x58);
+        assert!(
+            code.windows(expected.len())
+                .any(|window| window == expected),
+            "missing precise EnterMmx state commit: {code:02X?}"
+        );
+
+        assert!(matches!(
+            lower_single_op_err(OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: Some(Address::Absolute(0x1000)),
+            }),
             LowerError::InvalidOperand { .. }
         ));
     }

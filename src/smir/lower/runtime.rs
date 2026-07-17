@@ -12837,6 +12837,7 @@ mod jit_gate_tests {
             &function,
             &std::collections::HashMap::new()
         ));
+        assert!(is_native_clobber_safe(&function));
         assert!(!uses_x86_native_vectors_excluding(
             &function,
             &std::collections::HashMap::new()

@@ -36,6 +36,7 @@ pub enum PhysReg {
     R14,
     R15,
     // Vector registers
+    Mm(u8),
     Xmm(u8),
     Ymm(u8),
     Zmm(u8),
@@ -61,7 +62,7 @@ impl PhysReg {
             PhysReg::R13 => 13,
             PhysReg::R14 => 14,
             PhysReg::R15 => 15,
-            PhysReg::Xmm(idx) | PhysReg::Ymm(idx) | PhysReg::Zmm(idx) => idx,
+            PhysReg::Mm(idx) | PhysReg::Xmm(idx) | PhysReg::Ymm(idx) | PhysReg::Zmm(idx) => idx,
         }
     }
 
@@ -100,6 +101,10 @@ impl PhysReg {
 
     pub fn is_vec(self) -> bool {
         matches!(self, PhysReg::Xmm(_) | PhysReg::Ymm(_) | PhysReg::Zmm(_))
+    }
+
+    pub fn is_mmx(self) -> bool {
+        matches!(self, PhysReg::Mm(_))
     }
 
     pub fn is_xmm(self) -> bool {
@@ -193,6 +198,7 @@ impl PhysReg {
             X86Reg::R13 => Some(PhysReg::R13),
             X86Reg::R14 => Some(PhysReg::R14),
             X86Reg::R15 => Some(PhysReg::R15),
+            X86Reg::Mm(n) => Some(PhysReg::Mm(n)),
             X86Reg::Xmm(n) => Some(PhysReg::Xmm(n)),
             X86Reg::Ymm(n) => Some(PhysReg::Ymm(n)),
             X86Reg::Zmm(n) => Some(PhysReg::Zmm(n)),
@@ -219,6 +225,7 @@ impl PhysReg {
             PhysReg::R13 => X86Reg::R13,
             PhysReg::R14 => X86Reg::R14,
             PhysReg::R15 => X86Reg::R15,
+            PhysReg::Mm(n) => X86Reg::Mm(n),
             PhysReg::Xmm(n) => X86Reg::Xmm(n),
             PhysReg::Ymm(n) => X86Reg::Ymm(n),
             PhysReg::Zmm(n) => X86Reg::Zmm(n),
@@ -640,9 +647,14 @@ mod tests {
         assert_eq!(PhysReg::Rcx.encoding(), 1);
         assert_eq!(PhysReg::R8.encoding(), 8);
         assert_eq!(PhysReg::R15.encoding(), 15);
+        assert_eq!(PhysReg::Mm(7).encoding(), 7);
 
         assert!(!PhysReg::Rax.is_extended());
         assert!(PhysReg::R8.is_extended());
+        assert!(PhysReg::Mm(0).is_mmx());
+        assert!(!PhysReg::Mm(0).is_vec());
+        assert_eq!(PhysReg::from_x86_reg(X86Reg::Mm(6)), Some(PhysReg::Mm(6)));
+        assert_eq!(PhysReg::Mm(6).to_x86_reg(), X86Reg::Mm(6));
     }
 
     #[test]
