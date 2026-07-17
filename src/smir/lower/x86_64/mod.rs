@@ -2188,6 +2188,15 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(reg, rm);
     }
 
+    pub fn emit_mmx_0f3a_rr_imm(&mut self, opcode: u8, reg: PhysReg, rm: PhysReg, imm: u8) {
+        debug_assert!(reg.is_mmx() && rm.is_mmx());
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(0x3A);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(reg, rm);
+        self.code.emit_u8(imm);
+    }
+
     pub fn emit_mmx_shift_imm(&mut self, opcode: u8, digit: u8, rm: PhysReg, imm: u8) {
         debug_assert!(rm.is_mmx() && digit < 8);
         self.code.emit_u8(0x0F);
@@ -5829,6 +5838,41 @@ impl X86_64Lowerer {
     /// the normal scalar/vector matcher; any mixed or malformed MMX shape is an
     /// error rather than a widening opportunity.
     fn lower_mmx_rr(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<bool, LowerError> {
+        if let OpKind::X86PackedAlignRight {
+            dst,
+            high,
+            low,
+            width,
+            amount,
+        } = &op.kind
+        {
+            let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+            if [dst, high, low].into_iter().any(is_mm) {
+                let encoding_valid = *width == VecWidth::V64
+                    && dst == high
+                    && [dst, high, low].into_iter().all(is_mm)
+                    && matches!(
+                        op.x86_hint,
+                        Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: 0x0F,
+                        })
+                    );
+                if !encoding_valid {
+                    return Err(LowerError::InvalidOperand {
+                        op: "MMX PALIGNR".to_string(),
+                        operand: "requires exact destructive V64 MM registers and 0F3A opcode"
+                            .to_string(),
+                    });
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let low_reg = self.get_reg(*low)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mmx_0f3a_rr_imm(0x0F, dst_reg, low_reg, *amount);
+                return Ok(true);
+            }
+        }
+
         if let OpKind::X86MovdQ {
             dst,
             src,
@@ -27819,6 +27863,45 @@ mod tests {
             ),
             LowerError::InvalidOperand { .. }
         ));
+    }
+
+    #[test]
+    fn lower_mmx_align_right_emits_ssse3_immediate_opcode_and_rejects_malformed() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let align = |dst, high, low, width| OpKind::X86PackedAlignRight {
+            dst,
+            high,
+            low,
+            width,
+            amount: 0x25,
+        };
+        let hint = X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0x0F,
+        };
+        let code = lower_single_hinted_op(align(mm(0), mm(0), mm(1), VecWidth::V64), hint);
+        assert!(
+            code.windows(5)
+                .any(|window| window == [0x0F, 0x3A, 0x0F, 0xC1, 0x25]),
+            "missing MMX PALIGNR 0F 3A 0F /r ib: {code:02X?}"
+        );
+
+        for (kind, malformed_hint) in [
+            (align(mm(0), mm(2), mm(1), VecWidth::V64), hint),
+            (align(mm(0), mm(0), mm(1), VecWidth::V128), hint),
+            (
+                align(mm(0), mm(0), mm(1), VecWidth::V64),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x0F,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, malformed_hint),
+                LowerError::InvalidOperand { .. }
+            ));
+        }
     }
 
     #[test]

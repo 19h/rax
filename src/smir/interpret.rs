@@ -8695,6 +8695,35 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::X86PackedAlignRight {
+                dst,
+                high,
+                low,
+                width,
+                amount,
+            } => {
+                let high = Self::read_vec(ctx, *high);
+                let low = Self::read_vec(ctx, *low);
+                let mut result = [0u64; 16];
+                let width_bytes = width.bytes() as usize;
+                let block_bytes = usize::min(width_bytes, 16);
+                for block in 0..width_bytes / block_bytes {
+                    let base = block * block_bytes;
+                    for lane in 0..block_bytes {
+                        let selected = usize::from(*amount) + lane;
+                        let value = if selected < block_bytes {
+                            Self::get_lane(&low, (base + selected) as u8, 8)
+                        } else if selected < block_bytes * 2 {
+                            Self::get_lane(&high, (base + selected - block_bytes) as u8, 8)
+                        } else {
+                            0
+                        };
+                        Self::set_lane(&mut result, (base + lane) as u8, 8, value);
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::X86PackedShift {
                 dst,
                 src,

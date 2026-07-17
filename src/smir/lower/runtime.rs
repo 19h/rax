@@ -3347,6 +3347,29 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
         X86Reg,
     };
 
+    if let OpKind::X86PackedAlignRight {
+        dst,
+        high,
+        low,
+        width,
+        ..
+    } = &op.kind
+    {
+        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        if [dst, high, low].into_iter().any(mm) {
+            return *width == VecWidth::V64
+                && dst == high
+                && [dst, high, low].into_iter().all(mm)
+                && matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0x0F,
+                    })
+                );
+        }
+    }
+
     if let OpKind::X86MovdQ {
         dst,
         src,
@@ -5740,6 +5763,9 @@ fn x86_native_mmx_op_requires_ssse3(op: &crate::smir::ir::ops::SmirOp) -> bool {
         op.kind,
         OpKind::VUnary {
             op: VecUnaryOp::Abs,
+            ..
+        } | OpKind::X86PackedAlignRight {
+            width: crate::smir::ir::types::VecWidth::V64,
             ..
         } | OpKind::VByteShuffle {
             lanes: 8,
@@ -14575,6 +14601,93 @@ mod jit_gate_tests {
             ),
         ] {
             assert!(!is_x86_native_mmx_op(&malformed), "{malformed:?}");
+        }
+    }
+
+    #[test]
+    fn x86_mmx_align_right_gate_accepts_only_exact_ssse3_destructive_form() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0xA600);
+        builder.push_op(
+            0xA600,
+            OpKind::X86PackedAlignRight {
+                dst: mm(0),
+                high: mm(0),
+                low: mm(1),
+                width: VecWidth::V64,
+                amount: 0x25,
+            },
+        );
+        builder.push_op(
+            0xA600,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0x0F,
+        });
+        assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+        assert!(x86_native_mmx_op_requires_ssse3(&function.blocks[0].ops[0]));
+        assert!(is_native_clobber_safe(&function));
+        assert!(x86_native_mmx_pairs_valid_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+
+        for malformed in [
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0xA600,
+                OpKind::X86PackedAlignRight {
+                    dst: mm(0),
+                    high: mm(2),
+                    low: mm(1),
+                    width: VecWidth::V64,
+                    amount: 5,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x0F,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(1),
+                0xA600,
+                OpKind::X86PackedAlignRight {
+                    dst: mm(0),
+                    high: mm(0),
+                    low: mm(1),
+                    width: VecWidth::V128,
+                    amount: 5,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x0F,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(2),
+                0xA600,
+                OpKind::X86PackedAlignRight {
+                    dst: mm(0),
+                    high: mm(0),
+                    low: mm(1),
+                    width: VecWidth::V64,
+                    amount: 5,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x0F,
+                },
+            ),
+        ] {
+            assert!(!is_x86_native_mmx_op(&malformed), "{malformed:?}");
+            assert!(!x86_native_mmx_op_requires_ssse3(&malformed));
         }
     }
 

@@ -3229,6 +3229,13 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             amount,
             byte_lane
         ),
+        OpKind::X86PackedAlignRight {
+            dst,
+            high,
+            low,
+            width,
+            amount,
+        } => op_json!("x86_packed_align_right", dst, high, low, width, amount),
         OpKind::X86PackedShift {
             dst,
             src,

@@ -3763,6 +3763,11 @@ impl OpKind {
                 result.push(*src);
             }
 
+            OpKind::X86PackedAlignRight { high, low, .. } => {
+                result.push(*high);
+                result.push(*low);
+            }
+
             OpKind::X86PackedShift { src, count, .. } => {
                 result.push(*src);
                 result.push(*count);

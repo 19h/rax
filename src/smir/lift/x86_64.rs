@@ -16770,7 +16770,21 @@ impl X86_64Lifter {
             self.xmm(modrm.reg)
         };
         if mmx {
-            self.append_align_right(dst, dst, low, VecWidth::V64, imm, pc, ctx, &mut ops);
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86PackedAlignRight {
+                    dst,
+                    high: dst,
+                    low,
+                    width: VecWidth::V64,
+                    amount: imm,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x0F,
+                },
+            ));
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
@@ -55127,6 +55141,34 @@ mod tests {
 
     #[test]
     fn lift_palignr_covers_forms_grouping_masks_memory_and_invalids() {
+        let mmx = lift_single(&[0x0F, 0x3A, 0x0F, 0xC1, 0x05]).unwrap();
+        assert!(matches!(
+            mmx.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::X86PackedAlignRight {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        high: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        low: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        width: VecWidth::V64,
+                        amount: 5,
+                    },
+                    x86_hint: Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0x0F,
+                    }),
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    },
+                    ..
+                }
+            ]
+        ));
+
         let legacy = lift_single(&[0x66, 0x0F, 0x3A, 0x0F, 0xC1, 0x05]).unwrap();
         assert!(legacy.ops.iter().any(|op| matches!(
             op.kind,
@@ -55282,13 +55324,12 @@ mod tests {
         let mmx = lift_single(&[0x0F, 0x3A, 0x0F, 0xC1, 0x05]).unwrap();
         assert!(mmx.ops.iter().any(|op| matches!(
             op.kind,
-            OpKind::VShuffle {
+            OpKind::X86PackedAlignRight {
                 dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
-                src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
-                src2: Some(VReg::Arch(ArchReg::X86(X86Reg::Mm(0)))),
-                elem: VecElementType::I8,
-                lanes: 8,
-                ..
+                high: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                low: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                width: VecWidth::V64,
+                amount: 5,
             }
         )));
         assert!(matches!(

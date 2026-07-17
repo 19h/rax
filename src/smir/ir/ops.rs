@@ -3291,6 +3291,18 @@ pub enum OpKind {
         byte_lane: bool,
     },
 
+    /// PALIGNR/VPALIGNR byte extraction from the per-lane concatenation
+    /// `(high || low) >> (amount * 8)`. V64 has one 8-byte lane; wider forms
+    /// operate independently in 16-byte lanes. Bytes beyond the two-source
+    /// concatenation are zero.
+    X86PackedAlignRight {
+        dst: VReg,
+        high: VReg,
+        low: VReg,
+        width: VecWidth,
+        amount: u8,
+    },
+
     /// Packed element shift by the unsigned count in `count`. Architectural
     /// x86 forms consume the complete low 64 bits and apply the same count to
     /// every element; out-of-range counts zero logical results or sign-fill
@@ -4098,6 +4110,7 @@ impl OpKind {
             | OpKind::X86Sm4 { dst, .. }
             | OpKind::X86Convert16ToFp32 { dst, .. }
             | OpKind::X86PackedShiftImm { dst, .. }
+            | OpKind::X86PackedAlignRight { dst, .. }
             | OpKind::X86PackedShift { dst, .. }
             | OpKind::X86PackedShiftVariable { dst, .. }
             | OpKind::X86PackedRotate { dst, .. }
