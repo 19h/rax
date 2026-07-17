@@ -5247,6 +5247,44 @@ mod tests {
             "E4 VFPCLASSPD broadcast must retain only fault-suppressing loads"
         );
 
+        let fp16_compare = optimized(&[0x62, 0xF3, 0x6C, 0x1A, 0xC2, 0x18, 0]);
+        let ops = &fp16_compare.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B2,
+                        ..
+                    }
+                ))
+                .count(),
+            8,
+            "VCMPPH broadcast PredLoads must survive optimization",
+        );
+        let last_load = ops
+            .iter()
+            .rposition(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+            .unwrap();
+        let compare = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86VectorFpCompare {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::K(3))),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                        elem: VecElementType::F16,
+                        width: VecWidth::V128,
+                        lanes: 8,
+                        predicate: 0,
+                        ..
+                    }
+                )
+            })
+            .expect("VCMPPH comparison must survive optimization");
+        assert!(last_load < compare);
+
         let gfni_multiply = optimized(&[0x62, 0xF2, 0x4D, 0x4D, 0xCF, 0x60, 0x01]);
         let ops = &gfni_multiply.blocks[0].ops;
         assert_eq!(

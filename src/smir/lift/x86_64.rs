@@ -724,7 +724,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
     let is_duplicate_move = (b1 & 0x07) == 1
         && (((b2 & 0x03) == 2 && matches!(bytes.get(4), Some(0x12 | 0x16)))
             || ((b2 & 0x03) == 3 && matches!(bytes.get(4), Some(0x12))));
-    let is_fp_compare = (b1 & 0x07) == 1 && matches!(bytes.get(4), Some(0xC2));
+    let is_fp_compare = matches!(b1 & 0x07, 1 | 3) && matches!(bytes.get(4), Some(0xC2));
     let is_fp_unpack =
         (b1 & 0x07) == 1 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x14 | 0x15));
     let is_fma = (b1 & 0x07) == 2
@@ -13652,13 +13652,23 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        let (elem, scalar) = match prefix.pp {
-            X86SsePrefix::None => (VecElementType::F32, false),
-            X86SsePrefix::OpSize => (VecElementType::F64, false),
-            X86SsePrefix::Rep => (VecElementType::F32, true),
-            X86SsePrefix::Repne => (VecElementType::F64, true),
+        let fp16 = prefix.map == X86VecMap::Map0F3A;
+        let (elem, scalar) = match (fp16, prefix.pp) {
+            (true, X86SsePrefix::None) => (VecElementType::F16, false),
+            (true, X86SsePrefix::Rep) => (VecElementType::F16, true),
+            (true, _) => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes.to_vec(),
+                });
+            }
+            (false, X86SsePrefix::None) => (VecElementType::F32, false),
+            (false, X86SsePrefix::OpSize) => (VecElementType::F64, false),
+            (false, X86SsePrefix::Rep) => (VecElementType::F32, true),
+            (false, X86SsePrefix::Repne) => (VecElementType::F64, true),
         };
-        if prefix.l_bits == 3
+        if (fp16 && (prefix.encoding != VecEncodingKind::Evex || prefix.w))
+            || (!scalar && prefix.l_bits == 3)
             || (prefix.encoding == VecEncodingKind::Evex
                 && ((elem == VecElementType::F32 && prefix.w)
                     || (elem == VecElementType::F64 && !prefix.w)))
@@ -13781,10 +13791,10 @@ impl X86_64Lifter {
                             dst: value,
                             cond: active,
                             addr,
-                            width: if elem == VecElementType::F32 {
-                                MemWidth::B4
-                            } else {
-                                MemWidth::B8
+                            width: match elem {
+                                VecElementType::F16 => MemWidth::B2,
+                                VecElementType::F32 => MemWidth::B4,
+                                _ => MemWidth::B8,
                             },
                             signed: SignExtend::Zero,
                         },
@@ -13796,10 +13806,10 @@ impl X86_64Lifter {
                         OpKind::Load {
                             dst: value,
                             addr,
-                            width: if elem == VecElementType::F32 {
-                                MemWidth::B4
-                            } else {
-                                MemWidth::B8
+                            width: match elem {
+                                VecElementType::F16 => MemWidth::B2,
+                                VecElementType::F32 => MemWidth::B4,
+                                _ => MemWidth::B8,
                             },
                             sign: SignExtend::Zero,
                         },
@@ -13830,10 +13840,10 @@ impl X86_64Lifter {
                     OpKind::Load {
                         dst: value,
                         addr,
-                        width: if elem == VecElementType::F32 {
-                            MemWidth::B4
-                        } else {
-                            MemWidth::B8
+                        width: match elem {
+                            VecElementType::F16 => MemWidth::B2,
+                            VecElementType::F32 => MemWidth::B4,
+                            _ => MemWidth::B8,
                         },
                         sign: SignExtend::Zero,
                     },
@@ -33705,6 +33715,7 @@ impl X86_64Lifter {
                 0xF0 if prefix.encoding == VecEncodingKind::Evex => {
                     self.lift_apx_bmi2_rorx(bytes, pc, ctx)
                 }
+                0xC2 => self.lift_vec_fp_compare(prefix, bytes, pc, ctx),
                 _ => Err(LiftError::Unsupported {
                     addr: pc,
                     mnemonic: "VEX 0F3A".to_string(),
@@ -71108,6 +71119,96 @@ mod tests {
             }
         ));
 
+        for (bytes, scalar, width, lanes) in [
+            (
+                &[0x62, 0xF3, 0x7C, 0x09, 0xC2, 0xC8, 0x03][..],
+                false,
+                VecWidth::V128,
+                8,
+            ),
+            (
+                &[0x62, 0xF3, 0x7E, 0x69, 0xC2, 0xC8, 0x03][..],
+                true,
+                VecWidth::V128,
+                1,
+            ),
+        ] {
+            let fp16 = lift_single(bytes).unwrap();
+            assert_eq!(fp16.bytes_consumed, bytes.len());
+            assert!(matches!(
+                fp16.ops.last().unwrap().kind,
+                OpKind::X86VectorFpCompare {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::K(1))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                    mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+                    elem: VecElementType::F16,
+                    width: actual_width,
+                    lanes: actual_lanes,
+                    predicate: 3,
+                    scalar: actual_scalar,
+                    mask_destination: true,
+                    suppress_exceptions: false,
+                    ..
+                } if actual_scalar == scalar && actual_width == width && actual_lanes == lanes
+            ));
+        }
+
+        let fp16_high = lift_single(&[0x62, 0xB3, 0x6C, 0x40, 0xC2, 0xCB, 0x0E]).unwrap();
+        assert!(matches!(
+            fp16_high.ops.last().unwrap().kind,
+            OpKind::X86VectorFpCompare {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::K(1))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(19))),
+                elem: VecElementType::F16,
+                width: VecWidth::V512,
+                lanes: 32,
+                predicate: 14,
+                ..
+            }
+        ));
+
+        let fp16_broadcast = lift_single(&[0x62, 0xF3, 0x7C, 0x19, 0xC2, 0x08, 0x03]).unwrap();
+        assert_eq!(
+            fp16_broadcast
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B2,
+                        ..
+                    }
+                ))
+                .count(),
+            8
+        );
+        assert!(matches!(
+            fp16_broadcast.ops.last().unwrap().kind,
+            OpKind::X86VectorFpCompare {
+                elem: VecElementType::F16,
+                width: VecWidth::V128,
+                lanes: 8,
+                ..
+            }
+        ));
+
+        for bytes in [
+            &[0x62, 0xF3, 0x7C, 0x18, 0xC2, 0xC8, 0x03][..],
+            &[0x62, 0xF3, 0x7E, 0x78, 0xC2, 0xC8, 0x03][..],
+        ] {
+            let fp16_sae = lift_single(bytes).unwrap();
+            assert!(matches!(
+                fp16_sae.ops.last().unwrap().kind,
+                OpKind::X86VectorFpCompare {
+                    elem: VecElementType::F16,
+                    suppress_exceptions: true,
+                    ..
+                }
+            ));
+        }
+
         let masked_broadcast =
             lift_single(&[0x62, 0xF1, 0x6C, 0x52, 0xC2, 0x58, 0x10, 0x03]).unwrap();
         assert_eq!(
@@ -71166,6 +71267,12 @@ mod tests {
             &[0x62, 0xF1, 0x6C, 0x88, 0xC2, 0xC1, 0][..], // EVEX.z
             &[0x62, 0xF1, 0x6C, 0x38, 0xC2, 0xC1, 0][..], // packed SAE with nonzero L'L
             &[0x62, 0xF1, 0x6E, 0x1A, 0xC2, 0x18, 0][..], // scalar memory EVEX.b
+            &[0xC4, 0xE3, 0x78, 0xC2, 0xC1, 0][..],       // FP16 compare is EVEX-only
+            &[0x62, 0xF3, 0x7D, 0x08, 0xC2, 0xC1, 0][..], // FP16 pp=66
+            &[0x62, 0xF3, 0xFC, 0x08, 0xC2, 0xC1, 0][..], // FP16 W=1
+            &[0x62, 0xF3, 0x7C, 0x88, 0xC2, 0xC1, 0][..], // FP16 EVEX.z
+            &[0x62, 0xF3, 0x7C, 0x38, 0xC2, 0xC1, 0][..], // FP16 packed SAE, L'L!=0
+            &[0x62, 0xF3, 0x7E, 0x18, 0xC2, 0x01, 0][..], // FP16 scalar memory EVEX.b
         ] {
             assert!(
                 matches!(

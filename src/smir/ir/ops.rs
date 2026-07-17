@@ -1505,7 +1505,7 @@ pub enum OpKind {
         signaling: bool,
     },
 
-    /// x86 (V)CMP{PS,PD,SS,SD}. Legacy and VEX encodings write an
+    /// x86 (V)CMP{PS,PD,PH,SS,SD,SH}. Legacy and VEX encodings write an
     /// all-zeros/all-ones element vector; EVEX encodings write one result bit
     /// per active element to an opmask register. `mask` is the EVEX write mask,
     /// whose inactive result bits are architecturally zero. `scalar` limits the

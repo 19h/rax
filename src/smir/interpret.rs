@@ -147,6 +147,12 @@ struct X86SimdFpFormat {
     bias: i32,
 }
 
+const X86_SIMD_F16: X86SimdFpFormat = X86SimdFpFormat {
+    total_bits: 16,
+    exponent_bits: 5,
+    fraction_bits: 10,
+    bias: 15,
+};
 const X86_SIMD_F32: X86SimdFpFormat = X86SimdFpFormat {
     total_bits: 32,
     exponent_bits: 8,
@@ -3065,6 +3071,7 @@ impl SmirInterpreter {
                 };
                 let active = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
                 let format = match elem {
+                    VecElementType::F16 => X86_SIMD_F16,
                     VecElementType::F32 => X86_SIMD_F32,
                     VecElementType::F64 => X86_SIMD_F64,
                     _ => {
@@ -3110,6 +3117,8 @@ impl SmirInterpreter {
                         3
                     } else {
                         let ordering = match elem {
+                            VecElementType::F16 => Self::x86_fp16_to_f32(first_value.bits as u16)
+                                .partial_cmp(&Self::x86_fp16_to_f32(second_value.bits as u16)),
                             VecElementType::F32 => f32::from_bits(first_value.bits as u32)
                                 .partial_cmp(&f32::from_bits(second_value.bits as u32)),
                             VecElementType::F64 => f64::from_bits(first_value.bits)
@@ -49513,7 +49522,6 @@ mod tests {
                 .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
                 .collect()
         }
-
         let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
         let upper = 0xA5A5_A5A5_A5A5_A5A5;
         let flags_before = 0xCD7;
@@ -51741,6 +51749,18 @@ mod tests {
                 .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
                 .collect()
         }
+        fn vector_f16(values: &[u16], fill: u64) -> VecValue {
+            let mut bytes = values
+                .iter()
+                .flat_map(|value| value.to_le_bytes())
+                .collect::<Vec<_>>();
+            bytes.resize(bytes.len().next_multiple_of(8), 0);
+            let mut out = [fill; 16];
+            for (word, chunk) in bytes.chunks_exact(8).enumerate() {
+                out[word] = u64::from_le_bytes(chunk.try_into().unwrap());
+            }
+            out
+        }
 
         const TRUTH_TABLES: [u8; 16] = [
             0b0100, 0b0010, 0b0110, 0b1000, 0b1011, 0b1101, 0b1001, 0b0111, 0b1100, 0b1010, 0b1110,
@@ -51798,6 +51818,131 @@ mod tests {
                     "predicate {predicate} QNaN invalid status"
                 );
             }
+        }
+
+        // FP16 comparisons share the complete 32-predicate truth table and
+        // additionally use FP16 DAZ, denormal, NaN, opmask, and destination
+        // width rules. Lanes encode greater, less, equal, unordered,
+        // denormal, signed-zero equality, infinity equality, and SNaN.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = vector_f16(
+                &[
+                    0x4000, 0x3C00, 0x3C00, 0x7E00, 0x0001, 0x8000, 0x7C00, 0x7D00,
+                ],
+                0,
+            );
+            x86.xmm[0] = vector_f16(&[0x3C00, 0x4000, 0x3C00, 0, 0, 0, 0x7C00, 0], 0);
+            x86.k[2] = 0xFF;
+            x86.k[3] = u64::MAX;
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0x6C, 0x0A, 0xC2, 0xD8, 0],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[3], 0x64);
+            assert_eq!(x86.mxcsr & 3, 3);
+        }
+
+        for (daz, expected, denormal_status) in [(false, 0u64, true), (true, 1, false)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[2] = vector_f16(&[1], 0);
+                x86.xmm[0] = vector_f16(&[0], 0);
+                x86.k[2] = 1;
+                x86.k[3] = u64::MAX;
+                x86.mxcsr = 0x1F80 | if daz { 1 << 6 } else { 0 };
+            }
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x6C, 0x0A, 0xC2, 0xD8, 0],
+                &mut ctx,
+                &mut memory,
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.k[3], expected);
+                assert_eq!(x86.mxcsr & (1 << 1) != 0, denormal_status);
+            }
+        }
+
+        // Packed FP16 broadcast compares the same m16 value against every
+        // active source lane and zeros all inactive destination mask bits.
+        memory.write(0x100, &0x3C00u16.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = vector_f16(
+                &[
+                    0x3C00, 0x4000, 0x3C00, 0x4000, 0x3C00, 0x4000, 0x3C00, 0x4000,
+                ],
+                0,
+            );
+            x86.k[2] = 0x55;
+            x86.k[3] = u64::MAX;
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0x6C, 0x1A, 0xC2, 0x18, 0],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[3], 0x55);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+
+        // Scalar FP16 SAE suppresses a signaling-predicate QNaN exception.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[2] = vector_f16(&[0x7E00], 0);
+            x86.xmm[0] = vector_f16(&[0], 0);
+            x86.k[2] = 1;
+            x86.k[3] = u64::MAX;
+            x86.mxcsr = 0x1F80 & !(1 << 7);
+        }
+        let fp16_sae = execute_lifted_x86(
+            &[0x62, 0xF3, 0x6E, 0x1A, 0xC2, 0xD8, 5],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(fp16_sae, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[3], 1);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+
+        // An inactive scalar opmask suppresses the m16 load; an active mask
+        // exposes the fault without committing the destination opmask.
+        ctx.write_vreg(rax, 0x300);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[2] = 0;
+            x86.k[3] = u64::MAX;
+        }
+        let fp16_suppressed_fault = execute_lifted_x86(
+            &[0x62, 0xF3, 0x6E, 0x0A, 0xC2, 0x18, 1],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fp16_suppressed_fault,
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[3], 0);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[2] = 1;
+            x86.k[3] = 0xAA;
+        }
+        let fp16_fault = execute_lifted_x86(
+            &[0x62, 0xF3, 0x6E, 0x0A, 0xC2, 0x18, 1],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fp16_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[3], 0xAA);
         }
 
         // Legacy scalar preserves every bit above its result lane. VEX scalar
