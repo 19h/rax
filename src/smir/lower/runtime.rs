@@ -3336,45 +3336,104 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     })
 }
 
-/// Admit only the destructive register-register forms of the four baseline
-/// MMX logical instructions. The classic encoding metadata is part of the
-/// contract: V64 IR alone is insufficient to distinguish MMX from malformed or
-/// synthetic vector operations, and memory sources require helper-boundary MMX
-/// preservation that is intentionally not enabled yet.
+/// Admit only exact destructive register-register MMX operations. The classic
+/// encoding metadata is part of the contract: V64 IR alone is insufficient to
+/// distinguish MMX from malformed or synthetic vector operations, and memory
+/// sources require helper-boundary MMX preservation that is not enabled yet.
 pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
     use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix};
-    use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86Reg};
+    use crate::smir::ir::types::{ArchReg, VReg, VecElementType, VecWidth, X86Reg};
 
-    let (dst, src1, src2, width, expected_opcode) = match &op.kind {
+    let (dst, src1, src2, expected_opcode) = match &op.kind {
         OpKind::VAnd {
             dst,
             src1,
             src2,
             width,
-        } => (dst, src1, src2, width, 0xDB),
+        } => (dst, src1, src2, (*width == VecWidth::V64).then_some(0xDB)),
         OpKind::VAndNot {
             dst,
             src1,
             src2,
             width,
-        } => (dst, src1, src2, width, 0xDF),
+        } => (dst, src1, src2, (*width == VecWidth::V64).then_some(0xDF)),
         OpKind::VOr {
             dst,
             src1,
             src2,
             width,
-        } => (dst, src1, src2, width, 0xEB),
+        } => (dst, src1, src2, (*width == VecWidth::V64).then_some(0xEB)),
         OpKind::VXor {
             dst,
             src1,
             src2,
             width,
-        } => (dst, src1, src2, width, 0xEF),
+        } => (dst, src1, src2, (*width == VecWidth::V64).then_some(0xEF)),
+        OpKind::VAdd {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+        } => (
+            dst,
+            src1,
+            src2,
+            match (*elem, *lanes) {
+                (VecElementType::I8, 8) => Some(0xFC),
+                (VecElementType::I16, 4) => Some(0xFD),
+                (VecElementType::I32, 2) => Some(0xFE),
+                (VecElementType::I64, 1) => Some(0xD4),
+                _ => None,
+            },
+        ),
+        OpKind::VSub {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+        } => (
+            dst,
+            src1,
+            src2,
+            match (*elem, *lanes) {
+                (VecElementType::I8, 8) => Some(0xF8),
+                (VecElementType::I16, 4) => Some(0xF9),
+                (VecElementType::I32, 2) => Some(0xFA),
+                (VecElementType::I64, 1) => Some(0xFB),
+                _ => None,
+            },
+        ),
+        OpKind::VAddSubSat {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            subtract,
+            signed,
+        } => (
+            dst,
+            src1,
+            src2,
+            match (*elem, *lanes, *subtract, *signed) {
+                (VecElementType::I8, 8, false, true) => Some(0xEC),
+                (VecElementType::I16, 4, false, true) => Some(0xED),
+                (VecElementType::I8, 8, false, false) => Some(0xDC),
+                (VecElementType::I16, 4, false, false) => Some(0xDD),
+                (VecElementType::I8, 8, true, true) => Some(0xE8),
+                (VecElementType::I16, 4, true, true) => Some(0xE9),
+                (VecElementType::I8, 8, true, false) => Some(0xD8),
+                (VecElementType::I16, 4, true, false) => Some(0xD9),
+                _ => None,
+            },
+        ),
         _ => return false,
     };
     let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
 
-    *width == VecWidth::V64
+    expected_opcode.is_some()
         && dst == src1
         && [dst, src1, src2].into_iter().all(mm)
         && matches!(
@@ -3382,7 +3441,7 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
             Some(X86OpHint::SseOp {
                 prefix: X86SsePrefix::None,
                 opcode,
-            }) if opcode == expected_opcode
+            }) if Some(opcode) == expected_opcode
         )
 }
 
@@ -13019,6 +13078,109 @@ mod jit_gate_tests {
             &function,
             &std::collections::HashMap::new()
         ));
+    }
+
+    #[test]
+    fn x86_mmx_packed_add_sub_gate_covers_all_classic_register_opcodes() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let arithmetic = |opcode| match opcode {
+            0xFC | 0xFD | 0xFE | 0xD4 => {
+                let (elem, lanes) = match opcode {
+                    0xFC => (VecElementType::I8, 8),
+                    0xFD => (VecElementType::I16, 4),
+                    0xFE => (VecElementType::I32, 2),
+                    0xD4 => (VecElementType::I64, 1),
+                    _ => unreachable!(),
+                };
+                OpKind::VAdd {
+                    dst: mm(3),
+                    src1: mm(3),
+                    src2: mm(6),
+                    elem,
+                    lanes,
+                }
+            }
+            0xF8 | 0xF9 | 0xFA | 0xFB => {
+                let (elem, lanes) = match opcode {
+                    0xF8 => (VecElementType::I8, 8),
+                    0xF9 => (VecElementType::I16, 4),
+                    0xFA => (VecElementType::I32, 2),
+                    0xFB => (VecElementType::I64, 1),
+                    _ => unreachable!(),
+                };
+                OpKind::VSub {
+                    dst: mm(3),
+                    src1: mm(3),
+                    src2: mm(6),
+                    elem,
+                    lanes,
+                }
+            }
+            _ => {
+                let (elem, lanes, subtract, signed) = match opcode {
+                    0xEC => (VecElementType::I8, 8, false, true),
+                    0xED => (VecElementType::I16, 4, false, true),
+                    0xDC => (VecElementType::I8, 8, false, false),
+                    0xDD => (VecElementType::I16, 4, false, false),
+                    0xE8 => (VecElementType::I8, 8, true, true),
+                    0xE9 => (VecElementType::I16, 4, true, true),
+                    0xD8 => (VecElementType::I8, 8, true, false),
+                    0xD9 => (VecElementType::I16, 4, true, false),
+                    _ => unreachable!(),
+                };
+                OpKind::VAddSubSat {
+                    dst: mm(3),
+                    src1: mm(3),
+                    src2: mm(6),
+                    elem,
+                    lanes,
+                    subtract,
+                    signed,
+                }
+            }
+        };
+
+        for opcode in [
+            0xFC, 0xFD, 0xFE, 0xD4, 0xF8, 0xF9, 0xFA, 0xFB, 0xEC, 0xED, 0xDC, 0xDD, 0xE8, 0xE9,
+            0xD8, 0xD9,
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x4000);
+            builder.push_op(
+                0x4000,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.push_op(0x4000, arithmetic(opcode));
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[1]));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+
+        let mut malformed = arithmetic(0xFC);
+        if let OpKind::VAdd { lanes, .. } = &mut malformed {
+            *lanes = 4;
+        }
+        let mut builder = FunctionBuilder::new(FunctionId(1), 0x5000);
+        builder.push_op(0x5000, malformed);
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0xFC,
+        });
+        assert!(!is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+        assert!(!is_native_clobber_safe(&function));
     }
 
     #[cfg(target_arch = "x86_64")]

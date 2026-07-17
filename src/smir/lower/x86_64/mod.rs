@@ -5794,8 +5794,132 @@ impl X86_64Lowerer {
         }
     }
 
+    /// Lower an exact destructive register-register MMX operation before the
+    /// generic vector paths classify MM registers as a distinct register file.
+    /// Returning `false` means the operation has no MM operand and should use
+    /// the normal scalar/vector matcher; any mixed or malformed MMX shape is an
+    /// error rather than a widening opportunity.
+    fn lower_mmx_rr(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<bool, LowerError> {
+        let (dst, src1, src2, expected_opcode) = match &op.kind {
+            OpKind::VAnd {
+                dst,
+                src1,
+                src2,
+                width,
+            } => (dst, src1, src2, (*width == VecWidth::V64).then_some(0xDB)),
+            OpKind::VAndNot {
+                dst,
+                src1,
+                src2,
+                width,
+            } => (dst, src1, src2, (*width == VecWidth::V64).then_some(0xDF)),
+            OpKind::VOr {
+                dst,
+                src1,
+                src2,
+                width,
+            } => (dst, src1, src2, (*width == VecWidth::V64).then_some(0xEB)),
+            OpKind::VXor {
+                dst,
+                src1,
+                src2,
+                width,
+            } => (dst, src1, src2, (*width == VecWidth::V64).then_some(0xEF)),
+            OpKind::VAdd {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            } => (
+                dst,
+                src1,
+                src2,
+                match (*elem, *lanes) {
+                    (VecElementType::I8, 8) => Some(0xFC),
+                    (VecElementType::I16, 4) => Some(0xFD),
+                    (VecElementType::I32, 2) => Some(0xFE),
+                    (VecElementType::I64, 1) => Some(0xD4),
+                    _ => None,
+                },
+            ),
+            OpKind::VSub {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            } => (
+                dst,
+                src1,
+                src2,
+                match (*elem, *lanes) {
+                    (VecElementType::I8, 8) => Some(0xF8),
+                    (VecElementType::I16, 4) => Some(0xF9),
+                    (VecElementType::I32, 2) => Some(0xFA),
+                    (VecElementType::I64, 1) => Some(0xFB),
+                    _ => None,
+                },
+            ),
+            OpKind::VAddSubSat {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                subtract,
+                signed,
+            } => (
+                dst,
+                src1,
+                src2,
+                match (*elem, *lanes, *subtract, *signed) {
+                    (VecElementType::I8, 8, false, true) => Some(0xEC),
+                    (VecElementType::I16, 4, false, true) => Some(0xED),
+                    (VecElementType::I8, 8, false, false) => Some(0xDC),
+                    (VecElementType::I16, 4, false, false) => Some(0xDD),
+                    (VecElementType::I8, 8, true, true) => Some(0xE8),
+                    (VecElementType::I16, 4, true, true) => Some(0xE9),
+                    (VecElementType::I8, 8, true, false) => Some(0xD8),
+                    (VecElementType::I16, 4, true, false) => Some(0xD9),
+                    _ => None,
+                },
+            ),
+            _ => return Ok(false),
+        };
+        let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        if ![dst, src1, src2].into_iter().any(is_mm) {
+            return Ok(false);
+        }
+        let encoding_valid = expected_opcode.is_some()
+            && dst == src1
+            && [dst, src1, src2].into_iter().all(is_mm)
+            && matches!(
+                op.x86_hint,
+                Some(X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                }) if Some(opcode) == expected_opcode
+            );
+        if !encoding_valid {
+            return Err(LowerError::InvalidOperand {
+                op: "MMX register operation".to_string(),
+                operand: "requires exact destructive V64 registers and classic opcode".to_string(),
+            });
+        }
+
+        let dst_reg = self.get_dst_reg(*dst)?;
+        let src2_reg = self.get_reg(*src2)?;
+        let mut emitter = X86Emitter::new(&mut self.code);
+        emitter.emit_mmx_rr(expected_opcode.unwrap(), dst_reg, src2_reg);
+        Ok(true)
+    }
+
     /// Lower a single operation
     fn lower_op(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<(), LowerError> {
+        if self.lower_mmx_rr(op)? {
+            return Ok(());
+        }
         // AVX10 owns the EVEX-native vector operations that do not have a
         // legacy scalar lowering below. Keep this dispatch in the production
         // path so the dedicated encoder is exercised by normal JIT lowering,
@@ -10944,34 +11068,14 @@ impl X86_64Lowerer {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src1_reg = self.get_reg(*src1)?;
                 let src2_reg = self.get_reg(*src2)?;
-                let (default_opcode, default_mmx_opcode) = match &op.kind {
-                    OpKind::VAnd { .. } => (0x54, 0xDB),
-                    OpKind::VAndNot { .. } => (0x55, 0xDF),
-                    OpKind::VOr { .. } => (0x56, 0xEB),
-                    OpKind::VXor { .. } => (0x57, 0xEF),
+                let default_opcode = match &op.kind {
+                    OpKind::VAnd { .. } => 0x54,
+                    OpKind::VAndNot { .. } => 0x55,
+                    OpKind::VOr { .. } => 0x56,
+                    OpKind::VXor { .. } => 0x57,
                     _ => unreachable!(),
                 };
-                let mmx_regs = dst_reg.is_mmx() && src1_reg.is_mmx() && src2_reg.is_mmx();
-                if mmx_regs {
-                    let encoding_valid = *width == VecWidth::V64
-                        && dst_reg == src1_reg
-                        && matches!(
-                            op.x86_hint,
-                            Some(X86OpHint::SseOp {
-                                prefix: X86SsePrefix::None,
-                                opcode,
-                            }) if opcode == default_mmx_opcode
-                        );
-                    if !encoding_valid {
-                        return Err(LowerError::InvalidOperand {
-                            op: "MMX logic".to_string(),
-                            operand: "requires exact destructive V64 registers and classic opcode"
-                                .to_string(),
-                        });
-                    }
-                    let mut emitter = X86Emitter::new(&mut self.code);
-                    emitter.emit_mmx_rr(default_mmx_opcode, dst_reg, src2_reg);
-                } else if !dst_reg.is_vec() || !src1_reg.is_vec() || !src2_reg.is_vec() {
+                if !dst_reg.is_vec() || !src1_reg.is_vec() || !src2_reg.is_vec() {
                     return Err(LowerError::InvalidOperand {
                         op: "vector logic".to_string(),
                         operand: "requires vector registers".to_string(),
@@ -26358,6 +26462,101 @@ mod tests {
                 X86OpHint::SseOp {
                     prefix: X86SsePrefix::None,
                     opcode: 0xDB,
+                },
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[test]
+    fn lower_mmx_packed_add_sub_emits_all_classic_register_opcodes() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let arithmetic = |opcode| match opcode {
+            0xFC | 0xFD | 0xFE | 0xD4 => {
+                let (elem, lanes) = match opcode {
+                    0xFC => (VecElementType::I8, 8),
+                    0xFD => (VecElementType::I16, 4),
+                    0xFE => (VecElementType::I32, 2),
+                    0xD4 => (VecElementType::I64, 1),
+                    _ => unreachable!(),
+                };
+                OpKind::VAdd {
+                    dst: mm(3),
+                    src1: mm(3),
+                    src2: mm(6),
+                    elem,
+                    lanes,
+                }
+            }
+            0xF8 | 0xF9 | 0xFA | 0xFB => {
+                let (elem, lanes) = match opcode {
+                    0xF8 => (VecElementType::I8, 8),
+                    0xF9 => (VecElementType::I16, 4),
+                    0xFA => (VecElementType::I32, 2),
+                    0xFB => (VecElementType::I64, 1),
+                    _ => unreachable!(),
+                };
+                OpKind::VSub {
+                    dst: mm(3),
+                    src1: mm(3),
+                    src2: mm(6),
+                    elem,
+                    lanes,
+                }
+            }
+            _ => {
+                let (elem, lanes, subtract, signed) = match opcode {
+                    0xEC => (VecElementType::I8, 8, false, true),
+                    0xED => (VecElementType::I16, 4, false, true),
+                    0xDC => (VecElementType::I8, 8, false, false),
+                    0xDD => (VecElementType::I16, 4, false, false),
+                    0xE8 => (VecElementType::I8, 8, true, true),
+                    0xE9 => (VecElementType::I16, 4, true, true),
+                    0xD8 => (VecElementType::I8, 8, true, false),
+                    0xD9 => (VecElementType::I16, 4, true, false),
+                    _ => unreachable!(),
+                };
+                OpKind::VAddSubSat {
+                    dst: mm(3),
+                    src1: mm(3),
+                    src2: mm(6),
+                    elem,
+                    lanes,
+                    subtract,
+                    signed,
+                }
+            }
+        };
+
+        for opcode in [
+            0xFC, 0xFD, 0xFE, 0xD4, 0xF8, 0xF9, 0xFA, 0xFB, 0xEC, 0xED, 0xDC, 0xDD, 0xE8, 0xE9,
+            0xD8, 0xD9,
+        ] {
+            let code = lower_single_hinted_op(
+                arithmetic(opcode),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(3).any(|window| window == [0x0F, opcode, 0xDE]),
+                "missing MMX opcode 0F {opcode:02X} /r: {code:02X?}"
+            );
+        }
+
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                OpKind::VAdd {
+                    dst: mm(3),
+                    src1: mm(3),
+                    src2: mm(6),
+                    elem: VecElementType::I8,
+                    lanes: 4,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0xFC,
                 },
             ),
             LowerError::InvalidOperand { .. }
