@@ -38891,6 +38891,48 @@ mod tests {
             assert!(x86.xmm[0][1..].iter().all(|word| *word == 0));
         }
 
+        // VMOVW reads only the low word of a GPR and clears all remaining
+        // architectural vector state, including state above bit 127.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[17] = [u64::MAX; 16];
+        }
+        ctx.write_vreg(r8, 0xDEAD_BEEF_CAFE_A1B2);
+        execute_lifted_x86(&[0x62, 0xC5, 0x7D, 0x08, 0x6E, 0xC8], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[17][0], 0xA1B2);
+            assert!(x86.xmm[17][1..].iter().all(|word| *word == 0));
+        }
+
+        // The reverse register form writes a zero-extended 32-bit GPR result.
+        ctx.write_vreg(r8, u64::MAX);
+        execute_lifted_x86(&[0x62, 0xC5, 0xFD, 0x08, 0x7E, 0xC8], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(r8), 0xA1B2);
+
+        // Type E9NF scalar memory tuples scale disp8 by 2 and transfer exactly
+        // one word in either direction.
+        memory.write(0x1FE, &0x5AA5u16.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        execute_lifted_x86(
+            &[0x62, 0xF5, 0x7D, 0x08, 0x6E, 0x48, 0x7F],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x5AA5);
+            assert!(x86.xmm[1][1..].iter().all(|word| *word == 0));
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 0x0123_4567_89AB_CDEF;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF5, 0x7D, 0x08, 0x7E, 0x48, 0x7F],
+            &mut ctx,
+            &mut memory,
+        );
+        let mut word = [0u8; 2];
+        memory.read(0x1FE, &mut word).unwrap();
+        assert_eq!(u16::from_le_bytes(word), 0xCDEF);
+
         ctx.flags.materialize_all();
         assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
 
@@ -38907,6 +38949,21 @@ mod tests {
         ));
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(x86.xmm[0], fault_sentinel);
+        }
+
+        // A faulting VMOVW load likewise precedes every architectural vector
+        // write despite the expanded zero-and-insert representation.
+        let word_fault_sentinel = [0x5A5A_A5A5_5A5A_A5A5u64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = word_fault_sentinel;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7D, 0x08, 0x6E, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], word_fault_sentinel);
         }
     }
 

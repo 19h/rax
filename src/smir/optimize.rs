@@ -7354,6 +7354,68 @@ mod tests {
             assert!(ops[0].kind.flags_written().is_empty());
         }
 
+        let vmovw_load = optimized(&[0x62, 0xF5, 0x7D, 0x08, 0x6E, 0x48, 0x7F]);
+        let ops = &vmovw_load.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        addr: Address::BaseOffset { offset: 254, .. },
+                        width: MemWidth::B2,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting VMOVW compressed-displacement load must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        elem: VecElementType::I16,
+                        lane: 0,
+                        ..
+                    }
+                )
+            })
+            .expect("VMOVW vector destination write must survive optimization");
+        assert!(load < destination_write);
+
+        let vmovw_store = optimized(&[0x62, 0xF5, 0x7D, 0x08, 0x7E, 0x48, 0x7F]);
+        let ops = &vmovw_store.blocks[0].ops;
+        let extract = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VExtractLane {
+                        vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                        elem: VecElementType::I16,
+                        lane: 0,
+                        ..
+                    }
+                )
+            })
+            .expect("VMOVW scalar extraction must survive optimization");
+        let store = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Store {
+                        addr: Address::BaseOffset { offset: 254, .. },
+                        width: MemWidth::B2,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting VMOVW compressed-displacement store must survive optimization");
+        assert!(extract < store);
+
         let legacy_phminposuw = optimized(&[0x66, 0x0F, 0x38, 0x41, 0x00]);
         let ops = &legacy_phminposuw.blocks[0].ops;
         let alignment = ops

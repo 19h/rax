@@ -29422,6 +29422,131 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
+    fn lift_evex_word_move(
+        &self,
+        prefix: VecPrefix,
+        opcode: u8,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.encoding != VecEncodingKind::Evex
+            || prefix.map != X86VecMap::Map5
+            || prefix.pp != X86SsePrefix::OpSize
+            || prefix.l_bits != 0
+            || prefix.vvvv != 0
+            || prefix.v_high
+            || prefix.aaa != 0
+            || prefix.zeroing
+            || prefix.b
+            || !matches!(opcode, 0x6E | 0x7E)
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let cursor = prefix.bytes + 1;
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
+            cursor,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        if !modrm.is_memory && prefix.rm_high {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+        let xmm = self.xmm(modrm.reg + if prefix.reg_high { 16 } else { 0 });
+        let mut ops = Vec::new();
+        if opcode == 0x6E {
+            let scalar = if modrm.is_memory {
+                let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                    prefix,
+                    modrm.addr.as_ref().unwrap(),
+                    next_pc,
+                    MemWidth::B2.bytes(),
+                    ctx,
+                );
+                ops.extend(pre_ops);
+                let scalar = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Load {
+                        dst: scalar,
+                        addr,
+                        width: MemWidth::B2,
+                        sign: SignExtend::Zero,
+                    },
+                ));
+                scalar
+            } else {
+                self.gpr(modrm.rm)
+            };
+            self.append_scalar_zeroed_xmm_result(
+                xmm,
+                scalar,
+                VecElementType::I16,
+                true,
+                pc,
+                ctx,
+                &mut ops,
+            );
+        } else {
+            let scalar = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VExtractLane {
+                    dst: scalar,
+                    vec: xmm,
+                    lane: 0,
+                    elem: VecElementType::I16,
+                    sign: SignExtend::Zero,
+                },
+            ));
+            if modrm.is_memory {
+                let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                    prefix,
+                    modrm.addr.as_ref().unwrap(),
+                    next_pc,
+                    MemWidth::B2.bytes(),
+                    ctx,
+                );
+                ops.extend(pre_ops);
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Store {
+                        src: scalar,
+                        addr,
+                        width: MemWidth::B2,
+                    },
+                ));
+            } else {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Mov {
+                        dst: self.gpr(modrm.rm),
+                        src: SrcOperand::Reg(scalar),
+                        width: OpWidth::W32,
+                    },
+                ));
+            }
+        }
+
+        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+    }
+
     fn lift_evex_fp16_scalar_move(
         &self,
         prefix: VecPrefix,
@@ -33324,6 +33449,7 @@ impl X86_64Lifter {
                 0x58 | 0x59 | 0x5C | 0x5E => {
                     self.lift_evex_fp16_arithmetic(prefix, opcode, bytes, pc, ctx)
                 }
+                0x6E | 0x7E => self.lift_evex_word_move(prefix, opcode, bytes, pc, ctx),
                 _ => Err(LiftError::Unsupported {
                     addr: pc,
                     mnemonic: format!("EVEX MAP5 opcode 0x{opcode:02X}"),
@@ -62230,6 +62356,88 @@ mod tests {
             &[0x62, 0xF5, 0x7C, 0x0A, 0x2E, 0xD3][..], // reserved opmask
             &[0x62, 0xF5, 0x7C, 0x88, 0x2E, 0xD3][..], // reserved zeroing
             &[0x62, 0xF5, 0x7C, 0x18, 0x2E, 0x10][..], // EVEX.b memory
+        ] {
+            assert!(lift_single(invalid).is_err(), "accepted {invalid:02X?}");
+        }
+    }
+
+    #[test]
+    fn lift_evex_vmovw_covers_directions_wig_extensions_memory_and_invalids() {
+        for bytes in [
+            &[0x62, 0xC5, 0x7D, 0x08, 0x6E, 0xC8][..],
+            &[0x62, 0xC5, 0xFD, 0x08, 0x6E, 0xC8][..],
+        ] {
+            let load = lift_single(bytes).unwrap();
+            assert_eq!(load.bytes_consumed, bytes.len());
+            assert!(load.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::VInsertLane {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                    scalar: VReg::Arch(ArchReg::X86(X86Reg::R8)),
+                    lane: 0,
+                    elem: VecElementType::I16,
+                    ..
+                }
+            )));
+        }
+
+        let store = lift_single(&[0x62, 0xC5, 0x7D, 0x08, 0x7E, 0xC8]).unwrap();
+        assert!(store.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                lane: 0,
+                elem: VecElementType::I16,
+                sign: SignExtend::Zero,
+                ..
+            }
+        )));
+        assert!(matches!(
+            store.ops.last().unwrap().kind,
+            OpKind::Mov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::R8)),
+                src: SrcOperand::Reg(_),
+                width: OpWidth::W32,
+            }
+        ));
+
+        let load_memory = lift_single(&[0x62, 0xF5, 0x7D, 0x08, 0x6E, 0x48, 0x7F]).unwrap();
+        assert!(load_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load {
+                addr: Address::BaseOffset { offset: 254, .. },
+                width: MemWidth::B2,
+                ..
+            }
+        )));
+        assert!(load_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VInsertLane {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                elem: VecElementType::I16,
+                ..
+            }
+        )));
+
+        let store_memory = lift_single(&[0x62, 0xF5, 0x7D, 0x08, 0x7E, 0x48, 0x7F]).unwrap();
+        assert!(matches!(
+            store_memory.ops.last().unwrap().kind,
+            OpKind::Store {
+                addr: Address::BaseOffset { offset: 254, .. },
+                width: MemWidth::B2,
+                ..
+            }
+        ));
+
+        for invalid in [
+            &[0x62, 0xF5, 0x7C, 0x08, 0x6E, 0xC1][..], // pp != 66
+            &[0x62, 0xF5, 0x7D, 0x28, 0x6E, 0xC1][..], // L'L != 00b
+            &[0x62, 0xF5, 0x75, 0x08, 0x6E, 0xC1][..], // reserved vvvv
+            &[0x62, 0xF5, 0x7D, 0x00, 0x6E, 0xC1][..], // reserved V'
+            &[0x62, 0xF5, 0x7D, 0x09, 0x6E, 0xC1][..], // reserved opmask
+            &[0x62, 0xF5, 0x7D, 0x88, 0x6E, 0xC1][..], // reserved zeroing
+            &[0x62, 0xF5, 0x7D, 0x18, 0x6E, 0xC1][..], // reserved EVEX.b
+            &[0x62, 0xB5, 0x7D, 0x08, 0x6E, 0xC1][..], // no GPR bit 4
         ] {
             assert!(lift_single(invalid).is_err(), "accepted {invalid:02X?}");
         }
