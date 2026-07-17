@@ -5998,6 +5998,54 @@ impl X86_64Lowerer {
             }
         }
 
+        if let OpKind::VMulShiftSat {
+            dst,
+            src1,
+            src2,
+            src_elem,
+            lanes,
+            signed1,
+            signed2,
+            shift_left,
+            round,
+            sat_bits,
+            out_shift,
+        } = &op.kind
+        {
+            let exact_mulhrsw = *src_elem == VecElementType::I16
+                && *lanes == 4
+                && *signed1
+                && *signed2
+                && *shift_left == 0
+                && *round
+                && *sat_bits == 0
+                && *out_shift == 15;
+            let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+            if exact_mulhrsw && [dst, src1, src2].into_iter().any(is_mm) {
+                let encoding_valid = dst == src1
+                    && [dst, src1, src2].into_iter().all(is_mm)
+                    && matches!(
+                        op.x86_hint,
+                        Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: 0x0B,
+                        })
+                    );
+                if !encoding_valid {
+                    return Err(LowerError::InvalidOperand {
+                        op: "MMX PMULHRSW".to_string(),
+                        operand: "requires exact destructive V64 MM registers and 0F38 opcode"
+                            .to_string(),
+                    });
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src2_reg = self.get_reg(*src2)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mmx_0f38_rr(0x0B, dst_reg, src2_reg);
+                return Ok(true);
+            }
+        }
+
         if let OpKind::X86PackedShiftImm {
             dst,
             src,
@@ -27392,6 +27440,35 @@ mod tests {
             code.windows(4)
                 .any(|window| window == [0x0F, 0x38, 0x04, 0xC1]),
             "missing MMX PMADDUBSW 0F 38 04 /r: {code:02X?}"
+        );
+    }
+
+    #[test]
+    fn lower_mmx_mulhrsw_emits_ssse3_rounded_high_multiply_opcode() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let code = lower_single_hinted_op(
+            OpKind::VMulShiftSat {
+                dst: mm(0),
+                src1: mm(0),
+                src2: mm(1),
+                src_elem: VecElementType::I16,
+                lanes: 4,
+                signed1: true,
+                signed2: true,
+                shift_left: 0,
+                round: true,
+                sat_bits: 0,
+                out_shift: 15,
+            },
+            X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode: 0x0B,
+            },
+        );
+        assert!(
+            code.windows(4)
+                .any(|window| window == [0x0F, 0x38, 0x0B, 0xC1]),
+            "missing MMX PMULHRSW 0F 38 0B /r: {code:02X?}"
         );
     }
 

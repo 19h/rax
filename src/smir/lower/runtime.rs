@@ -3409,6 +3409,42 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
         }
     }
 
+    if let OpKind::VMulShiftSat {
+        dst,
+        src1,
+        src2,
+        src_elem,
+        lanes,
+        signed1,
+        signed2,
+        shift_left,
+        round,
+        sat_bits,
+        out_shift,
+    } = &op.kind
+    {
+        let exact_mulhrsw = *src_elem == VecElementType::I16
+            && *lanes == 4
+            && *signed1
+            && *signed2
+            && *shift_left == 0
+            && *round
+            && *sat_bits == 0
+            && *out_shift == 15;
+        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        if exact_mulhrsw {
+            return dst == src1
+                && [dst, src1, src2].into_iter().all(mm)
+                && matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0x0B,
+                    })
+                );
+        }
+    }
+
     if let OpKind::VLane {
         dst,
         src1,
@@ -5618,6 +5654,14 @@ fn x86_native_mmx_op_requires_ssse3(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 acc_elem: VecElementType::I16,
                 src1_unsigned: true,
                 saturate: true,
+                ..
+            }
+            | OpKind::VMulShiftSat {
+                src_elem: VecElementType::I16,
+                signed1: true,
+                signed2: true,
+                round: true,
+                out_shift: 15,
                 ..
             }
     ) && is_x86_native_mmx_op(op)
@@ -14146,6 +14190,48 @@ mod jit_gate_tests {
         function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
             prefix: X86SsePrefix::None,
             opcode: 0x04,
+        });
+        assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+        assert!(x86_native_mmx_op_requires_ssse3(&function.blocks[0].ops[0]));
+        assert!(is_native_clobber_safe(&function));
+        assert!(x86_native_mmx_pairs_valid_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+    }
+
+    #[test]
+    fn x86_mmx_mulhrsw_gate_accepts_exact_ssse3_rounded_high_multiply() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0xA200);
+        builder.push_op(
+            0xA200,
+            OpKind::VMulShiftSat {
+                dst: mm(0),
+                src1: mm(0),
+                src2: mm(1),
+                src_elem: VecElementType::I16,
+                lanes: 4,
+                signed1: true,
+                signed2: true,
+                shift_left: 0,
+                round: true,
+                sat_bits: 0,
+                out_shift: 15,
+            },
+        );
+        builder.push_op(
+            0xA200,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0x0B,
         });
         assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
         assert!(x86_native_mmx_op_requires_ssse3(&function.blocks[0].ops[0]));

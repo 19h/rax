@@ -14112,7 +14112,7 @@ impl X86_64Lifter {
             self.xmm(modrm.reg)
         };
         if mmx {
-            ops.push(SmirOp::new(
+            ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
                 OpKind::VMulShiftSat {
@@ -14127,6 +14127,10 @@ impl X86_64Lifter {
                     round: true,
                     sat_bits: 0,
                     out_shift: 15,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x0B,
                 },
             ));
             ops.push(SmirOp::new(
@@ -54672,7 +54676,10 @@ mod tests {
                         sat_bits: 0,
                         out_shift: 15,
                     },
-                    x86_hint: None,
+                    x86_hint: Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0x0B,
+                    }),
                     ..
                 },
                 SmirOp {
