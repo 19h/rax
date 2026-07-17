@@ -9,7 +9,7 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap,
+    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign, X86VecMap,
     X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
     X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
     X86XSaveKind,
@@ -37483,9 +37483,10 @@ impl X86_64Lifter {
         }
     }
 
-    /// Lift the 3DNow! suffix-selected `0F 0F /r imm8` forms that map exactly
-    /// onto existing packed-integer SMIR operations.
-    fn lift_3dnow_existing_integer(
+    /// Lift every architecturally defined 3DNow! suffix-selected
+    /// `0F 0F /r imm8` form. PAVGUSB and PSWAPD reuse generic packed-integer
+    /// operations; the remaining operations use the atomic 3DNow! IR family.
+    fn lift_3dnow(
         &self,
         bytes: &[u8],
         prefix: &X86Prefix,
@@ -37507,13 +37508,37 @@ impl X86_64Lifter {
                 need: prefix.cursor + suffix_offset + 1,
             });
         };
-        if !matches!(suffix, 0xBB | 0xBF) {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("3DNow! suffix 0x{suffix:02X}"),
-            });
-        }
-
+        let three_d_now_kind = match suffix {
+            0x0C => Some(X86ThreeDNowKind::Pi2Fw),
+            0x0D => Some(X86ThreeDNowKind::Pi2Fd),
+            0x1C => Some(X86ThreeDNowKind::Pf2Iw),
+            0x1D => Some(X86ThreeDNowKind::Pf2Id),
+            0x8A => Some(X86ThreeDNowKind::PfNAcc),
+            0x8E => Some(X86ThreeDNowKind::PfPNAcc),
+            0x90 => Some(X86ThreeDNowKind::PfCmpGe),
+            0x94 => Some(X86ThreeDNowKind::PfMin),
+            0x96 => Some(X86ThreeDNowKind::PfRcp),
+            0x97 => Some(X86ThreeDNowKind::PfRsqrt),
+            0x9A => Some(X86ThreeDNowKind::PfSub),
+            0x9E => Some(X86ThreeDNowKind::PfAdd),
+            0xA0 => Some(X86ThreeDNowKind::PfCmpGt),
+            0xA4 => Some(X86ThreeDNowKind::PfMax),
+            0xA6 => Some(X86ThreeDNowKind::PfRcpIt1),
+            0xA7 => Some(X86ThreeDNowKind::PfRsqIt1),
+            0xAA => Some(X86ThreeDNowKind::PfSubR),
+            0xAE => Some(X86ThreeDNowKind::PfAcc),
+            0xB0 => Some(X86ThreeDNowKind::PfCmpEq),
+            0xB4 => Some(X86ThreeDNowKind::PfMul),
+            0xB6 => Some(X86ThreeDNowKind::PfRcpIt2),
+            0xB7 => Some(X86ThreeDNowKind::PmulHrw),
+            0xBB | 0xBF => None,
+            _ => {
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("3DNow! suffix 0x{suffix:02X}"),
+                });
+            }
+        };
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64 + 1;
         let mut ops = Vec::new();
         let src = if modrm.is_memory {
@@ -37548,7 +37573,12 @@ impl X86_64Lifter {
             0xBF => {
                 Self::packed_unsigned_average_kind(dst, dst, src, VecWidth::V64, VecElementType::I8)
             }
-            _ => unreachable!(),
+            _ => OpKind::X86ThreeDNow {
+                dst,
+                src1: dst,
+                src2: src,
+                kind: three_d_now_kind.expect("defined non-generic 3DNow! suffix"),
+            },
         };
         ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
         ops.push(SmirOp::new(
@@ -37598,7 +37628,7 @@ impl X86_64Lifter {
 
             // 3DNow! uses the final imm8 after ModR/M and any displacement as
             // an opcode suffix.
-            0x0F => self.lift_3dnow_existing_integer(after_opcode, &prefix2, pc, ctx),
+            0x0F => self.lift_3dnow(after_opcode, &prefix2, pc, ctx),
 
             // EMMS marks every x87/MMX register empty while preserving the
             // aliased payloads. FEMMS performs the same defined tag transition
@@ -46048,7 +46078,56 @@ mod tests {
     }
 
     #[test]
-    fn lift_3dnow_integer_suffix_forms_lengths_registers_and_fault_order() {
+    fn lift_3dnow_all_suffix_forms_lengths_registers_and_fault_order() {
+        for (suffix, expected) in [
+            (0x0C, X86ThreeDNowKind::Pi2Fw),
+            (0x0D, X86ThreeDNowKind::Pi2Fd),
+            (0x1C, X86ThreeDNowKind::Pf2Iw),
+            (0x1D, X86ThreeDNowKind::Pf2Id),
+            (0x8A, X86ThreeDNowKind::PfNAcc),
+            (0x8E, X86ThreeDNowKind::PfPNAcc),
+            (0x90, X86ThreeDNowKind::PfCmpGe),
+            (0x94, X86ThreeDNowKind::PfMin),
+            (0x96, X86ThreeDNowKind::PfRcp),
+            (0x97, X86ThreeDNowKind::PfRsqrt),
+            (0x9A, X86ThreeDNowKind::PfSub),
+            (0x9E, X86ThreeDNowKind::PfAdd),
+            (0xA0, X86ThreeDNowKind::PfCmpGt),
+            (0xA4, X86ThreeDNowKind::PfMax),
+            (0xA6, X86ThreeDNowKind::PfRcpIt1),
+            (0xA7, X86ThreeDNowKind::PfRsqIt1),
+            (0xAA, X86ThreeDNowKind::PfSubR),
+            (0xAE, X86ThreeDNowKind::PfAcc),
+            (0xB0, X86ThreeDNowKind::PfCmpEq),
+            (0xB4, X86ThreeDNowKind::PfMul),
+            (0xB6, X86ThreeDNowKind::PfRcpIt2),
+            (0xB7, X86ThreeDNowKind::PmulHrw),
+        ] {
+            let result = lift_single(&[0x0F, 0x0F, 0xC1, suffix]).unwrap();
+            assert_eq!(result.bytes_consumed, 4, "suffix {suffix:02X}");
+            assert!(matches!(
+                result.ops.as_slice(),
+                [
+                    SmirOp {
+                        kind: OpKind::X86ThreeDNow {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                            src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                            src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                            kind,
+                        },
+                        ..
+                    },
+                    SmirOp {
+                        kind: OpKind::X86X87Control {
+                            kind: X86X87ControlKind::EnterMmx,
+                            addr: None,
+                        },
+                        ..
+                    }
+                ] if *kind == expected
+            ));
+        }
+
         let avg = lift_single(&[0x0F, 0x0F, 0xC1, 0xBF]).unwrap();
         assert_eq!(avg.bytes_consumed, 4);
         assert!(matches!(
@@ -46156,6 +46235,25 @@ mod tests {
             })
             .unwrap();
         assert!(load < average && average < enter);
+
+        for bytes in [
+            &[0x66, 0x0F, 0x0F, 0xC1, 0x9E][..],
+            &[0xF2, 0x0F, 0x0F, 0xC1, 0x9E][..],
+            &[0xF3, 0x0F, 0x0F, 0xC1, 0x9E][..],
+            &[0x67, 0x0F, 0x0F, 0xC1, 0x9E][..],
+            &[0x48, 0x0F, 0x0F, 0xC1, 0x9E][..],
+            &[0x64, 0x0F, 0x0F, 0xC1, 0x9E][..],
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+            assert!(matches!(
+                result.ops.first().map(|op| &op.kind),
+                Some(OpKind::X86ThreeDNow {
+                    kind: X86ThreeDNowKind::PfAdd,
+                    ..
+                })
+            ));
+        }
 
         assert!(matches!(
             lift_single(&[0x0F, 0x0F, 0xC1]),

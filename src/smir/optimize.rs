@@ -8,7 +8,8 @@ use std::collections::{HashMap, HashSet};
 
 use crate::smir::ir::flags::{FlagSet, FlagState, FlagUpdate};
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AdxKind, X86OpHint, X86RepMode, X86StringKind, X86VecAlign, X86X87DataKind,
+    OpKind, SmirOp, X86AdxKind, X86OpHint, X86RepMode, X86StringKind, X86ThreeDNowKind,
+    X86VecAlign, X86X87DataKind,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, BlockId, HexagonReg, MemWidth, OpWidth, ShiftOp, SignExtend,
@@ -2755,6 +2756,23 @@ impl OpKind {
             | OpKind::VPermute2 { src1, src2, .. }
             | OpKind::VCmp { src1, src2, .. } => {
                 result.push(*src1);
+                result.push(*src2);
+            }
+
+            OpKind::X86ThreeDNow {
+                src1, src2, kind, ..
+            } => {
+                if !matches!(
+                    kind,
+                    X86ThreeDNowKind::Pf2Iw
+                        | X86ThreeDNowKind::Pi2Fw
+                        | X86ThreeDNowKind::Pf2Id
+                        | X86ThreeDNowKind::PfRcp
+                        | X86ThreeDNowKind::PfRsqrt
+                        | X86ThreeDNowKind::Pi2Fd
+                ) {
+                    result.push(*src1);
+                }
                 result.push(*src2);
             }
 

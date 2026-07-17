@@ -16,6 +16,7 @@ use crate::smir::ir::ops::X86AdxKind;
 use crate::smir::ir::ops::X86BlsKind;
 use crate::smir::ir::ops::X86CacheControlKind;
 use crate::smir::ir::ops::X86CountKind;
+use crate::smir::ir::ops::X86ThreeDNowKind;
 use crate::smir::ir::ops::X86X87CompareSource;
 use crate::smir::ir::ops::X86X87Constant;
 use crate::smir::ir::ops::X86X87ControlKind;
@@ -1133,6 +1134,7 @@ debug_name_json!(
     X86CacheControlKind,
     X86BlsKind,
     X86CountKind,
+    X86ThreeDNowKind,
     X86X87Constant,
     X86X87CompareSource,
     X86X87ControlKind,
@@ -3252,6 +3254,12 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             imm,
             high_words
         ),
+        OpKind::X86ThreeDNow {
+            dst,
+            src1,
+            src2,
+            kind,
+        } => op_json!("x86_three_d_now", dst, src1, src2, kind),
         OpKind::X86PackedShift {
             dst,
             src,

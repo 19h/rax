@@ -10,7 +10,7 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
-    X86CacheControlKind, X86CountKind, X86OpHint, X86X87ArithmeticDestination,
+    X86CacheControlKind, X86CountKind, X86OpHint, X86ThreeDNowKind, X86X87ArithmeticDestination,
     X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
     X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
@@ -8764,6 +8764,19 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::X86ThreeDNow {
+                dst,
+                src1,
+                src2,
+                kind,
+            } => {
+                let first = Self::read_vec(ctx, *src1)[0];
+                let second = Self::read_vec(ctx, *src2)[0];
+                let mut result = [0u64; 16];
+                result[0] = Self::x86_three_d_now_eval(*kind, first, second);
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::X86PackedShift {
                 dst,
                 src,
@@ -9662,6 +9675,283 @@ impl SmirInterpreter {
                 }
             }
             _ => {}
+        }
+    }
+
+    #[inline]
+    fn x86_three_d_now_is_zero(bits: u32) -> bool {
+        bits & 0x7F80_0000 == 0
+    }
+
+    #[inline]
+    fn x86_three_d_now_is_unsupported(bits: u32) -> bool {
+        bits & 0x7F80_0000 == 0x7F80_0000
+    }
+
+    /// 3DNow! treats every exponent-zero input as signed zero, including IEEE
+    /// binary32 subnormals. Exponent-255 encodings are architecturally
+    /// unsupported and are left intact for deterministic undefined handling.
+    #[inline]
+    fn x86_three_d_now_input_bits(bits: u32) -> u32 {
+        if Self::x86_three_d_now_is_zero(bits) {
+            bits & 0x8000_0000
+        } else {
+            bits
+        }
+    }
+
+    /// Map a binary32 result into the 3DNow! numerical domain: subnormal
+    /// results flush to signed zero and overflow saturates to signed maximum
+    /// normal. A canonical quiet NaN is the deterministic result selected for
+    /// architecturally undefined exponent-255 input combinations.
+    #[inline]
+    fn x86_three_d_now_finish(value: f32) -> u32 {
+        let bits = value.to_bits();
+        let sign = bits & 0x8000_0000;
+        let exponent = bits & 0x7F80_0000;
+        let fraction = bits & 0x007F_FFFF;
+        if exponent == 0 {
+            sign
+        } else if exponent == 0x7F80_0000 {
+            if fraction == 0 {
+                sign | 0x7F7F_FFFF
+            } else {
+                0x7FC0_0000
+            }
+        } else {
+            bits
+        }
+    }
+
+    #[inline]
+    fn x86_three_d_now_binary(
+        first: u32,
+        second: u32,
+        operation: impl FnOnce(f32, f32) -> f32,
+    ) -> u32 {
+        let first = Self::x86_three_d_now_input_bits(first);
+        let second = Self::x86_three_d_now_input_bits(second);
+        if Self::x86_three_d_now_is_unsupported(first)
+            || Self::x86_three_d_now_is_unsupported(second)
+        {
+            return 0x7FC0_0000;
+        }
+        Self::x86_three_d_now_finish(operation(f32::from_bits(first), f32::from_bits(second)))
+    }
+
+    #[inline]
+    fn x86_three_d_now_multiply(first: u32, second: u32) -> u32 {
+        let first = Self::x86_three_d_now_input_bits(first);
+        let second = Self::x86_three_d_now_input_bits(second);
+        if Self::x86_three_d_now_is_zero(first) || Self::x86_three_d_now_is_zero(second) {
+            return (first ^ second) & 0x8000_0000;
+        }
+        Self::x86_three_d_now_binary(first, second, |a, b| a * b)
+    }
+
+    #[inline]
+    fn x86_three_d_now_lane(value: u64, lane: u32) -> u32 {
+        (value >> (lane * 32)) as u32
+    }
+
+    #[inline]
+    fn x86_three_d_now_pack(low: u32, high: u32) -> u64 {
+        u64::from(low) | (u64::from(high) << 32)
+    }
+
+    fn x86_three_d_now_float_to_int(bits: u32, minimum: i32, maximum: i32) -> i32 {
+        let bits = Self::x86_three_d_now_input_bits(bits);
+        if Self::x86_three_d_now_is_unsupported(bits) {
+            // AMD defines exponent-255 sources as unsupported. Zero is the
+            // interpreter's deterministic undefined result.
+            return 0;
+        }
+        let value = f32::from_bits(bits);
+        if value >= maximum as f32 + 1.0 {
+            maximum
+        } else if value <= minimum as f32 {
+            minimum
+        } else {
+            value.trunc() as i32
+        }
+    }
+
+    fn x86_three_d_now_min_max(first: u32, second: u32, maximum: bool) -> u32 {
+        let first = Self::x86_three_d_now_input_bits(first);
+        let second = Self::x86_three_d_now_input_bits(second);
+        if Self::x86_three_d_now_is_unsupported(first)
+            || Self::x86_three_d_now_is_unsupported(second)
+        {
+            return 0x7FC0_0000;
+        }
+        let first_value = f32::from_bits(first);
+        let second_value = f32::from_bits(second);
+        if first_value == 0.0 || second_value == 0.0 {
+            let other = if first_value == 0.0 {
+                (second, second_value)
+            } else {
+                (first, first_value)
+            };
+            if (maximum && other.1 > 0.0) || (!maximum && other.1 < 0.0) {
+                other.0
+            } else {
+                0
+            }
+        } else if (maximum && first_value > second_value)
+            || (!maximum && first_value < second_value)
+        {
+            first
+        } else {
+            second
+        }
+    }
+
+    fn x86_three_d_now_reciprocal(bits: u32, square_root: bool) -> u32 {
+        let bits = Self::x86_three_d_now_input_bits(bits);
+        let sign = bits & 0x8000_0000;
+        if Self::x86_three_d_now_is_zero(bits) {
+            return sign | 0x7F7F_FFFF;
+        }
+        if Self::x86_three_d_now_is_unsupported(bits) {
+            return 0x7FC0_0000;
+        }
+        let magnitude = f32::from_bits(bits & 0x7FFF_FFFF);
+        let estimate = if square_root {
+            1.0f32 / magnitude.sqrt()
+        } else {
+            1.0f32 / magnitude
+        };
+        Self::x86_three_d_now_finish(f32::from_bits(estimate.to_bits() | sign))
+    }
+
+    fn x86_three_d_now_iteration(first: u32, second: u32, kind: X86ThreeDNowKind) -> u32 {
+        let first = Self::x86_three_d_now_input_bits(first);
+        let second = Self::x86_three_d_now_input_bits(second);
+        if Self::x86_three_d_now_is_zero(first) || Self::x86_three_d_now_is_zero(second) {
+            return (first ^ second) & 0x8000_0000;
+        }
+        if Self::x86_three_d_now_is_unsupported(first)
+            || Self::x86_three_d_now_is_unsupported(second)
+        {
+            return 0x7FC0_0000;
+        }
+        let first = f32::from_bits(first);
+        let second = f32::from_bits(second);
+        let value = match kind {
+            X86ThreeDNowKind::PfRcpIt1 => 2.0f32 - first * second,
+            X86ThreeDNowKind::PfRcpIt2 => first * second,
+            X86ThreeDNowKind::PfRsqIt1 => (3.0f32 - first * second) * 0.5f32,
+            _ => unreachable!("non-iteration 3DNow! kind"),
+        };
+        Self::x86_three_d_now_finish(value)
+    }
+
+    fn x86_three_d_now_eval(kind: X86ThreeDNowKind, first: u64, second: u64) -> u64 {
+        use X86ThreeDNowKind::*;
+
+        let first_low = Self::x86_three_d_now_lane(first, 0);
+        let first_high = Self::x86_three_d_now_lane(first, 1);
+        let second_low = Self::x86_three_d_now_lane(second, 0);
+        let second_high = Self::x86_three_d_now_lane(second, 1);
+        match kind {
+            Pf2Iw => {
+                let low = Self::x86_three_d_now_float_to_int(
+                    second_low,
+                    i16::MIN.into(),
+                    i16::MAX.into(),
+                );
+                let high = Self::x86_three_d_now_float_to_int(
+                    second_high,
+                    i16::MIN.into(),
+                    i16::MAX.into(),
+                );
+                Self::x86_three_d_now_pack(low as u32, high as u32)
+            }
+            Pf2Id => {
+                let low = Self::x86_three_d_now_float_to_int(second_low, i32::MIN, i32::MAX);
+                let high = Self::x86_three_d_now_float_to_int(second_high, i32::MIN, i32::MAX);
+                Self::x86_three_d_now_pack(low as u32, high as u32)
+            }
+            Pi2Fw => {
+                let low = (second as u16 as i16) as f32;
+                let high = ((second >> 32) as u16 as i16) as f32;
+                Self::x86_three_d_now_pack(low.to_bits(), high.to_bits())
+            }
+            Pi2Fd => Self::x86_three_d_now_pack(
+                (second_low as i32 as f32).to_bits(),
+                (second_high as i32 as f32).to_bits(),
+            ),
+            PfAcc | PfNAcc | PfPNAcc => {
+                let low = Self::x86_three_d_now_binary(first_low, first_high, |a, b| {
+                    if kind == PfAcc { a + b } else { a - b }
+                });
+                let high = Self::x86_three_d_now_binary(second_low, second_high, |a, b| {
+                    if kind == PfNAcc { a - b } else { a + b }
+                });
+                Self::x86_three_d_now_pack(low, high)
+            }
+            PfAdd | PfSub | PfSubR | PfMul => {
+                let evaluate = |a_bits, b_bits| match kind {
+                    PfAdd => Self::x86_three_d_now_binary(a_bits, b_bits, |a, b| a + b),
+                    PfSub => Self::x86_three_d_now_binary(a_bits, b_bits, |a, b| a - b),
+                    PfSubR => Self::x86_three_d_now_binary(a_bits, b_bits, |a, b| b - a),
+                    PfMul => Self::x86_three_d_now_multiply(a_bits, b_bits),
+                    _ => unreachable!(),
+                };
+                let low = evaluate(first_low, second_low);
+                let high = evaluate(first_high, second_high);
+                Self::x86_three_d_now_pack(low, high)
+            }
+            PfCmpEq | PfCmpGe | PfCmpGt => {
+                let compare = |a_bits: u32, b_bits: u32| {
+                    let a_bits = Self::x86_three_d_now_input_bits(a_bits);
+                    let b_bits = Self::x86_three_d_now_input_bits(b_bits);
+                    if Self::x86_three_d_now_is_unsupported(a_bits)
+                        || Self::x86_three_d_now_is_unsupported(b_bits)
+                    {
+                        return 0;
+                    }
+                    let a = f32::from_bits(a_bits);
+                    let b = f32::from_bits(b_bits);
+                    if match kind {
+                        PfCmpEq => a == b,
+                        PfCmpGe => a >= b,
+                        PfCmpGt => a > b,
+                        _ => unreachable!(),
+                    } {
+                        u32::MAX
+                    } else {
+                        0
+                    }
+                };
+                Self::x86_three_d_now_pack(
+                    compare(first_low, second_low),
+                    compare(first_high, second_high),
+                )
+            }
+            PfMax | PfMin => Self::x86_three_d_now_pack(
+                Self::x86_three_d_now_min_max(first_low, second_low, kind == PfMax),
+                Self::x86_three_d_now_min_max(first_high, second_high, kind == PfMax),
+            ),
+            PfRcp | PfRsqrt => {
+                let result = Self::x86_three_d_now_reciprocal(second_low, kind == PfRsqrt);
+                Self::x86_three_d_now_pack(result, result)
+            }
+            PfRcpIt1 | PfRcpIt2 | PfRsqIt1 => Self::x86_three_d_now_pack(
+                Self::x86_three_d_now_iteration(first_low, second_low, kind),
+                Self::x86_three_d_now_iteration(first_high, second_high, kind),
+            ),
+            PmulHrw => {
+                let mut result = 0u64;
+                for lane in 0..4 {
+                    let shift = lane * 16;
+                    let a = ((first >> shift) as u16) as i16 as i32;
+                    let b = ((second >> shift) as u16) as i16 as i32;
+                    let rounded = (a * b + 0x8000) >> 16;
+                    result |= u64::from(rounded as u16) << shift;
+                }
+                result
+            }
         }
     }
 
@@ -17067,6 +17357,273 @@ mod tests {
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(x86.mm[0], 0xDEAD_BEEF_CAFE_BABE);
             assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
+    fn three_d_now_atomic_family_covers_all_defined_suffix_semantics_and_numeric_bounds() {
+        let fp = |low: f32, high: f32| {
+            SmirInterpreter::x86_three_d_now_pack(low.to_bits(), high.to_bits())
+        };
+        let lanes = |value| {
+            (
+                SmirInterpreter::x86_three_d_now_lane(value, 0),
+                SmirInterpreter::x86_three_d_now_lane(value, 1),
+            )
+        };
+        let assert_fp = |kind, first, second, low: f32, high: f32| {
+            assert_eq!(
+                lanes(SmirInterpreter::x86_three_d_now_eval(kind, first, second)),
+                (low.to_bits(), high.to_bits()),
+                "{kind:?}"
+            );
+        };
+
+        assert_eq!(
+            lanes(SmirInterpreter::x86_three_d_now_eval(
+                X86ThreeDNowKind::Pf2Iw,
+                0,
+                fp(40_000.75, -1.75),
+            )),
+            (0x0000_7FFF, 0xFFFF_FFFF)
+        );
+        assert_eq!(
+            lanes(SmirInterpreter::x86_three_d_now_eval(
+                X86ThreeDNowKind::Pf2Id,
+                0,
+                fp(2_147_483_648.0, -2_147_483_648.0),
+            )),
+            (0x7FFF_FFFF, 0x8000_0000)
+        );
+
+        let integer_words = u64::from((-32_768i16) as u16)
+            | (0xA55Au64 << 16)
+            | (u64::from(32_767u16) << 32)
+            | (0x5AA5u64 << 48);
+        assert_fp(
+            X86ThreeDNowKind::Pi2Fw,
+            0,
+            integer_words,
+            -32_768.0,
+            32_767.0,
+        );
+
+        let integer_dwords = u64::from((-16_777_217i32) as u32) | (u64::from(16_777_217u32) << 32);
+        assert_fp(
+            X86ThreeDNowKind::Pi2Fd,
+            0,
+            integer_dwords,
+            -16_777_217i32 as f32,
+            16_777_217u32 as f32,
+        );
+
+        let horizontal_first = fp(1.5, 2.5);
+        let horizontal_second = fp(-3.0, 5.0);
+        assert_fp(
+            X86ThreeDNowKind::PfAcc,
+            horizontal_first,
+            horizontal_second,
+            4.0,
+            2.0,
+        );
+        assert_fp(
+            X86ThreeDNowKind::PfNAcc,
+            horizontal_first,
+            horizontal_second,
+            -1.0,
+            -8.0,
+        );
+        assert_fp(
+            X86ThreeDNowKind::PfPNAcc,
+            horizontal_first,
+            horizontal_second,
+            -1.0,
+            2.0,
+        );
+
+        let first = fp(6.0, -4.0);
+        let second = fp(2.0, 0.5);
+        assert_fp(X86ThreeDNowKind::PfAdd, first, second, 8.0, -3.5);
+        assert_fp(X86ThreeDNowKind::PfSub, first, second, 4.0, -4.5);
+        assert_fp(X86ThreeDNowKind::PfSubR, first, second, -4.0, 4.5);
+        assert_fp(X86ThreeDNowKind::PfMul, first, second, 12.0, -2.0);
+
+        let comparison_first = fp(2.0, -1.0);
+        let comparison_second = fp(2.0, -2.0);
+        assert_eq!(
+            lanes(SmirInterpreter::x86_three_d_now_eval(
+                X86ThreeDNowKind::PfCmpEq,
+                comparison_first,
+                comparison_second,
+            )),
+            (u32::MAX, 0)
+        );
+        assert_eq!(
+            lanes(SmirInterpreter::x86_three_d_now_eval(
+                X86ThreeDNowKind::PfCmpGe,
+                comparison_first,
+                comparison_second,
+            )),
+            (u32::MAX, u32::MAX)
+        );
+        assert_eq!(
+            lanes(SmirInterpreter::x86_three_d_now_eval(
+                X86ThreeDNowKind::PfCmpGt,
+                comparison_first,
+                comparison_second,
+            )),
+            (0, u32::MAX)
+        );
+
+        let signed_zero_mix = fp(-0.0, -2.0);
+        let signed_zero_other = fp(-3.0, 0.0);
+        assert_eq!(
+            lanes(SmirInterpreter::x86_three_d_now_eval(
+                X86ThreeDNowKind::PfMax,
+                signed_zero_mix,
+                signed_zero_other,
+            )),
+            (0, 0)
+        );
+        assert_fp(
+            X86ThreeDNowKind::PfMin,
+            signed_zero_mix,
+            signed_zero_other,
+            -3.0,
+            -2.0,
+        );
+
+        assert_fp(X86ThreeDNowKind::PfRcp, 0, fp(4.0, 123.0), 0.25, 0.25);
+        assert_fp(X86ThreeDNowKind::PfRsqrt, 0, fp(-4.0, 123.0), -0.5, -0.5);
+
+        let iteration_first = fp(4.0, 5.0);
+        let iteration_second = fp(0.2, 0.1);
+        assert_fp(
+            X86ThreeDNowKind::PfRcpIt1,
+            iteration_first,
+            iteration_second,
+            2.0f32 - 4.0f32 * 0.2f32,
+            2.0f32 - 5.0f32 * 0.1f32,
+        );
+        assert_fp(
+            X86ThreeDNowKind::PfRcpIt2,
+            iteration_first,
+            iteration_second,
+            4.0f32 * 0.2f32,
+            5.0f32 * 0.1f32,
+        );
+        assert_fp(
+            X86ThreeDNowKind::PfRsqIt1,
+            iteration_first,
+            iteration_second,
+            (3.0f32 - 4.0f32 * 0.2f32) * 0.5f32,
+            (3.0f32 - 5.0f32 * 0.1f32) * 0.5f32,
+        );
+
+        let words = |values: [i16; 4]| {
+            values
+                .into_iter()
+                .enumerate()
+                .fold(0u64, |packed, (lane, value)| {
+                    packed | (u64::from(value as u16) << (lane * 16))
+                })
+        };
+        assert_eq!(
+            SmirInterpreter::x86_three_d_now_eval(
+                X86ThreeDNowKind::PmulHrw,
+                words([0x4000, -0x4000, 0x7FFF, i16::MIN]),
+                words([0x4000, 0x4000, 0x7FFF, i16::MIN]),
+            ),
+            words([0x1000, -0x1000, 0x3FFF, 0x4000])
+        );
+
+        assert_eq!(
+            lanes(SmirInterpreter::x86_three_d_now_eval(
+                X86ThreeDNowKind::PfMul,
+                fp(f32::MIN_POSITIVE, -f32::MAX),
+                fp(0.5, 2.0),
+            )),
+            (0, 0xFF7F_FFFF),
+            "underflow must flush and overflow must saturate"
+        );
+        assert_eq!(
+            lanes(SmirInterpreter::x86_three_d_now_eval(
+                X86ThreeDNowKind::PfAdd,
+                fp(f32::from_bits(1), f32::from_bits(0x8000_0001)),
+                fp(1.0, -0.0),
+            )),
+            (1.0f32.to_bits(), (-0.0f32).to_bits()),
+            "subnormal inputs must decode as signed zero"
+        );
+        assert_eq!(
+            lanes(SmirInterpreter::x86_three_d_now_eval(
+                X86ThreeDNowKind::PfRcp,
+                0,
+                fp(-0.0, 1.0),
+            )),
+            (0xFF7F_FFFF, 0xFF7F_FFFF)
+        );
+        assert_eq!(
+            lanes(SmirInterpreter::x86_three_d_now_eval(
+                X86ThreeDNowKind::PfRcpIt1,
+                fp(-0.0, 1.0),
+                fp(2.0, -0.0),
+            )),
+            (0x8000_0000, 0x8000_0000)
+        );
+        assert_eq!(
+            lanes(SmirInterpreter::x86_three_d_now_eval(
+                X86ThreeDNowKind::PfAdd,
+                fp(f32::NAN, 1.0),
+                fp(1.0, 2.0),
+            )),
+            (0x7FC0_0000, 3.0f32.to_bits()),
+            "unsupported exponent-255 inputs use the documented deterministic result"
+        );
+    }
+
+    #[test]
+    fn lifted_3dnow_atomic_operation_preserves_flags_top_and_fault_atomicity() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        let flags_before = 0x8D7;
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] =
+                SmirInterpreter::x86_three_d_now_pack(6.0f32.to_bits(), (-4.0f32).to_bits());
+            x86.mm[1] = SmirInterpreter::x86_three_d_now_pack(2.0f32.to_bits(), 0.5f32.to_bits());
+            x86.x87.tag_word = 0xFFFF;
+            x86.x87.status_word = 6 << 11 | 0x45;
+        }
+
+        execute_lifted_x86(&[0x0F, 0x0F, 0xC1, 0x9E], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.mm[0],
+                SmirInterpreter::x86_three_d_now_pack(8.0f32.to_bits(), (-3.5f32).to_bits(),)
+            );
+            assert_eq!(x86.x87.tag_word, 0);
+            assert_eq!(x86.x87.status_word, 6 << 11 | 0x45);
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let fault = execute_lifted_x86(&[0x0F, 0x0F, 0x00, 0x9E], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xDEAD_BEEF_CAFE_BABE);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+            assert_eq!(x86.x87.status_word, 6 << 11 | 0x45);
         }
         ctx.flags.materialize_all();
         assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);

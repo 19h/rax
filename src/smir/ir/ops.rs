@@ -130,6 +130,36 @@ pub enum X86X87ControlKind {
     SaveState(X86X87EnvWidth),
 }
 
+/// 3DNow! operations selected by the trailing `imm8` of `0F 0F /r imm8`
+/// that do not map exactly onto a generic packed-integer SMIR operation.
+/// Operands and results are always one 64-bit MMX register containing either
+/// two packed binary32 values or four packed signed 16-bit integers.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86ThreeDNowKind {
+    Pf2Iw,
+    PfNAcc,
+    PfPNAcc,
+    Pi2Fw,
+    Pf2Id,
+    PfAcc,
+    PfAdd,
+    PfCmpEq,
+    PfCmpGe,
+    PfCmpGt,
+    PfMax,
+    PfMin,
+    PfMul,
+    PfRcp,
+    PfRcpIt1,
+    PfRcpIt2,
+    PfRsqIt1,
+    PfRsqrt,
+    PfSub,
+    PfSubR,
+    Pi2Fd,
+    PmulHrw,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum X86X87EnvWidth {
     W16,
@@ -3317,6 +3347,16 @@ pub enum OpKind {
         high_words: Option<bool>,
     },
 
+    /// Atomic 3DNow! operation. `src1` is the old destructive destination and
+    /// `src2` is the ModR/M source; keeping both explicit makes optimizer
+    /// liveness exact for horizontal and Newton-Raphson forms.
+    X86ThreeDNow {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        kind: X86ThreeDNowKind,
+    },
+
     /// Packed element shift by the unsigned count in `count`. Architectural
     /// x86 forms consume the complete low 64 bits and apply the same count to
     /// every element; out-of-range counts zero logical results or sign-fill
@@ -4126,6 +4166,7 @@ impl OpKind {
             | OpKind::X86PackedShiftImm { dst, .. }
             | OpKind::X86PackedAlignRight { dst, .. }
             | OpKind::X86PackedShuffleImm { dst, .. }
+            | OpKind::X86ThreeDNow { dst, .. }
             | OpKind::X86PackedShift { dst, .. }
             | OpKind::X86PackedShiftVariable { dst, .. }
             | OpKind::X86PackedRotate { dst, .. }
@@ -5048,6 +5089,34 @@ mod tests {
         assert!(xsetbv.has_side_effects());
         assert!(!xsetbv.reads_memory());
         assert!(!xsetbv.writes_memory());
+    }
+
+    #[test]
+    fn x86_three_d_now_metadata_tracks_atomic_destructive_operands() {
+        let dst = VReg::virt(0);
+        let src1 = VReg::virt(1);
+        let src2 = VReg::virt(2);
+        let op = OpKind::X86ThreeDNow {
+            dst,
+            src1,
+            src2,
+            kind: X86ThreeDNowKind::PfAcc,
+        };
+
+        assert_eq!(op.dests(), vec![dst]);
+        assert_eq!(op.source_vregs(), vec![src1, src2]);
+        assert!(!op.reads_memory());
+        assert!(!op.writes_memory());
+        assert!(!op.has_side_effects());
+        assert!(!op.is_jit_safe());
+
+        let unary = OpKind::X86ThreeDNow {
+            dst,
+            src1,
+            src2,
+            kind: X86ThreeDNowKind::PfRcp,
+        };
+        assert_eq!(unary.source_vregs(), vec![src2]);
     }
 
     #[test]

@@ -11467,7 +11467,7 @@ mod jit_gate_tests {
     use crate::smir::ir::flags::{FlagSet, FlagUpdate};
     use crate::smir::ir::ops::{
         ArmDpRegShiftKind, OpKind, X86AdxKind, X86BlsKind, X86CacheControlKind, X86CountKind,
-        X86OpHint, X86SsePrefix, X86VecMap, X86X87ControlKind,
+        X86OpHint, X86SsePrefix, X86ThreeDNowKind, X86VecMap, X86X87ControlKind,
     };
     use crate::smir::ir::types::{
         Address, ArchReg, ArmReg, BlockId, Condition, DispSize, FenceKind, FpPrecision, FunctionId,
@@ -13693,6 +13693,36 @@ mod jit_gate_tests {
             &std::collections::HashMap::new()
         ));
         assert!(is_native_clobber_safe(&emms));
+
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let mut three_d_now = FunctionBuilder::new(FunctionId(3), 0x4000);
+        three_d_now.push_op(
+            0x4000,
+            OpKind::X86ThreeDNow {
+                dst: mm(0),
+                src1: mm(0),
+                src2: mm(1),
+                kind: X86ThreeDNowKind::PfAdd,
+            },
+        );
+        three_d_now.push_op(
+            0x4000,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: None,
+            },
+        );
+        three_d_now.set_terminator(Terminator::Return { values: vec![] });
+        let three_d_now = three_d_now.finish();
+        assert!(uses_x86_native_mmx_excluding(
+            &three_d_now,
+            &std::collections::HashMap::new()
+        ));
+        assert!(!is_native_clobber_safe(&three_d_now));
+        assert!(!x86_native_mmx_pairs_valid_excluding(
+            &three_d_now,
+            &std::collections::HashMap::new()
+        ));
     }
 
     #[test]
