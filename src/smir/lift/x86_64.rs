@@ -767,6 +767,9 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
         (b1 & 0x07) == 1 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x10 | 0x11));
     let is_unaligned_int_move =
         (b1 & 0x07) == 1 && matches!(b2 & 0x03, 2 | 3) && matches!(bytes.get(4), Some(0x6F | 0x7F));
+    let is_aligned_move = (b1 & 0x07) == 1
+        && ((matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x28 | 0x29)))
+            || (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x6F | 0x7F)));
     let is_mask_blend =
         (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x64..=0x66));
     let is_load_broadcast = (b1 & 0x07) == 2
@@ -824,6 +827,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
         || is_packed_fp_sqrt
         || is_unaligned_fp_move
         || is_unaligned_int_move
+        || is_aligned_move
         || is_mask_blend
         || is_load_broadcast;
     if !is_apx_gpr_0f38
@@ -30076,11 +30080,15 @@ impl X86_64Lifter {
                     let evex_unaligned_int = prefix.encoding == VecEncodingKind::Evex
                         && matches!(opcode, 0x6F | 0x7F)
                         && matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne);
+                    let evex_aligned = prefix.encoding == VecEncodingKind::Evex
+                        && (matches!(opcode, 0x28 | 0x29)
+                            || matches!(opcode, 0x6F | 0x7F) && prefix.pp == X86SsePrefix::OpSize);
+                    let evex_maskable = evex_unaligned_int || evex_aligned;
                     if !valid_prefix
                         || prefix.l_bits == 3
                         || prefix.vvvv != 0
                         || prefix.v_high
-                        || (!evex_unaligned_int && prefix.aaa != 0)
+                        || (!evex_maskable && prefix.aaa != 0)
                         || (prefix.zeroing && prefix.aaa == 0)
                         || prefix.b
                         || wrong_evex_w
@@ -30112,14 +30120,18 @@ impl X86_64Lifter {
                     );
                     let aligned =
                         matches!(opcode, 0x28 | 0x29) || prefix.pp == X86SsePrefix::OpSize;
-                    let mask_elem = evex_unaligned_int.then(|| match (prefix.pp, prefix.w) {
-                        (X86SsePrefix::Repne, false) => VecElementType::I8,
-                        (X86SsePrefix::Repne, true) => VecElementType::I16,
-                        (X86SsePrefix::Rep, false) => VecElementType::I32,
-                        (X86SsePrefix::Rep, true) => VecElementType::I64,
+                    let mask_elem = evex_maskable.then(|| match (opcode, prefix.pp, prefix.w) {
+                        (0x28 | 0x29, X86SsePrefix::None, false) => VecElementType::F32,
+                        (0x28 | 0x29, X86SsePrefix::OpSize, true) => VecElementType::F64,
+                        (0x6F | 0x7F, X86SsePrefix::Repne, false) => VecElementType::I8,
+                        (0x6F | 0x7F, X86SsePrefix::Repne, true) => VecElementType::I16,
+                        (0x6F | 0x7F, X86SsePrefix::Rep, false)
+                        | (0x6F | 0x7F, X86SsePrefix::OpSize, false) => VecElementType::I32,
+                        (0x6F | 0x7F, X86SsePrefix::Rep, true)
+                        | (0x6F | 0x7F, X86SsePrefix::OpSize, true) => VecElementType::I64,
                         _ => unreachable!(),
                     });
-                    let mask = (evex_unaligned_int && prefix.aaa != 0)
+                    let mask = (evex_maskable && prefix.aaa != 0)
                         .then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
 
                     match opcode {
@@ -65220,7 +65232,6 @@ mod tests {
         );
 
         for invalid in [
-            &[0x62, 0xE1, 0x7C, 0x49, 0x28, 0x20][..], // writemask ignored
             &[0x62, 0xE1, 0x74, 0x48, 0x28, 0x20][..], // reserved vvvv
             &[0x62, 0xE1, 0x7C, 0x58, 0x28, 0x20][..], // EVEX.b reserved
         ] {
@@ -65663,7 +65674,6 @@ mod tests {
             &[0x62, 0xF1, 0x77, 0x49, 0x6F, 0xC1][..], // reserved vvvv
             &[0x62, 0xF1, 0x7F, 0x41, 0x6F, 0xC1][..], // reserved V'
             &[0x62, 0xF1, 0x7C, 0x49, 0x6F, 0xC1][..], // invalid mandatory prefix
-            &[0x62, 0xF1, 0x7D, 0x49, 0x6F, 0xC1][..], // masked VMOVDQA32 remains separate
         ] {
             assert!(
                 matches!(
@@ -65671,6 +65681,255 @@ mod tests {
                     Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
                 ),
                 "invalid masked VMOVDQU* encoding accepted: {bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lift_evex_aligned_moves_masks_every_element_and_checks_alignment_first() {
+        for (bytes, elem, lanes, dst) in [
+            (
+                &[0x62, 0xF1, 0x7C, 0x49, 0x28, 0xD1][..],
+                VecElementType::F32,
+                16,
+                X86Reg::Zmm(2),
+            ),
+            (
+                &[0x62, 0xF1, 0xFD, 0xCA, 0x28, 0xE3][..],
+                VecElementType::F64,
+                8,
+                X86Reg::Zmm(4),
+            ),
+            (
+                &[0x62, 0xA1, 0x7D, 0x49, 0x6F, 0xC8][..],
+                VecElementType::I32,
+                16,
+                X86Reg::Zmm(17),
+            ),
+            (
+                &[0x62, 0xF1, 0xFD, 0xCA, 0x6F, 0xE3][..],
+                VecElementType::I64,
+                8,
+                X86Reg::Zmm(4),
+            ),
+        ] {
+            let lifted = lift_single(bytes).unwrap();
+            assert_eq!(
+                lifted
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::VInsertLane {
+                            dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                            elem: actual_elem,
+                            ..
+                        } if actual_dst == dst && actual_elem == elem
+                    ))
+                    .count(),
+                lanes,
+                "masked aligned register move: {bytes:02X?}"
+            );
+        }
+
+        for (bytes, elem, mem_width, alignment, lanes) in [
+            (
+                &[0x62, 0xF1, 0x7C, 0x09, 0x28, 0x10][..],
+                VecElementType::F32,
+                MemWidth::B4,
+                16,
+                4,
+            ),
+            (
+                &[0x62, 0xF1, 0xFD, 0x2A, 0x28, 0x10][..],
+                VecElementType::F64,
+                MemWidth::B8,
+                32,
+                4,
+            ),
+            (
+                &[0x62, 0xF1, 0x7D, 0x4B, 0x6F, 0x28][..],
+                VecElementType::I32,
+                MemWidth::B4,
+                64,
+                16,
+            ),
+            (
+                &[0x62, 0xF1, 0xFD, 0x4C, 0x6F, 0x28][..],
+                VecElementType::I64,
+                MemWidth::B8,
+                64,
+                8,
+            ),
+        ] {
+            let lifted = lift_single(bytes).unwrap();
+            let check = lifted
+                .ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::X86CheckAlignment { alignment: actual, .. }
+                            if actual == alignment
+                    )
+                })
+                .unwrap();
+            let first_load = lifted
+                .ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::PredLoad {
+                            width: actual,
+                            ..
+                        } if actual == mem_width
+                    )
+                })
+                .unwrap();
+            assert!(check < first_load, "Type E1 ordering: {bytes:02X?}");
+            assert_eq!(
+                lifted
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::PredLoad {
+                            width: actual,
+                            ..
+                        } if actual == mem_width
+                    ))
+                    .count(),
+                lanes
+            );
+            assert_eq!(
+                lifted
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::VInsertLane {
+                            elem: actual,
+                            ..
+                        } if actual == elem
+                    ))
+                    .count(),
+                lanes * 2
+            );
+        }
+
+        for (bytes, mem_width, alignment, lanes) in [
+            (
+                &[0x62, 0xF1, 0x7C, 0x09, 0x29, 0x08][..],
+                MemWidth::B4,
+                16,
+                4,
+            ),
+            (
+                &[0x62, 0xF1, 0xFD, 0x2A, 0x29, 0x08][..],
+                MemWidth::B8,
+                32,
+                4,
+            ),
+            (
+                &[0x62, 0xF1, 0x7D, 0x4B, 0x7F, 0x08][..],
+                MemWidth::B4,
+                64,
+                16,
+            ),
+            (
+                &[0x62, 0xF1, 0xFD, 0x4C, 0x7F, 0x08][..],
+                MemWidth::B8,
+                64,
+                8,
+            ),
+        ] {
+            let lifted = lift_single(bytes).unwrap();
+            let check = lifted
+                .ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::X86CheckAlignment { alignment: actual, .. }
+                            if actual == alignment
+                    )
+                })
+                .unwrap();
+            let first_store = lifted
+                .ops
+                .iter()
+                .position(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::PredStore {
+                            width: actual,
+                            ..
+                        } if actual == mem_width
+                    )
+                })
+                .unwrap();
+            assert!(check < first_store, "Type E1 ordering: {bytes:02X?}");
+            assert_eq!(
+                lifted
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(
+                        op.kind,
+                        OpKind::PredStore {
+                            width: actual,
+                            ..
+                        } if actual == mem_width
+                    ))
+                    .count(),
+                lanes
+            );
+        }
+
+        for bytes in [
+            &[0x62, 0xF1, 0x7C, 0x49, 0x28, 0x50, 0x01][..],
+            &[0x62, 0xF1, 0xFD, 0x4B, 0x7F, 0x58, 0x01][..],
+        ] {
+            let lifted = lift_single(bytes).unwrap();
+            assert!(lifted.ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::Lea {
+                    addr: Address::BaseOffset {
+                        offset: 64,
+                        disp_size: DispSize::Disp8,
+                        ..
+                    },
+                    ..
+                }
+            )));
+        }
+
+        let high_store = lift_single(&[0x62, 0xC1, 0xFD, 0x4C, 0x29, 0x29]).unwrap();
+        assert!(high_store.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(X86Reg::Zmm(21))),
+                elem: VecElementType::F64,
+                ..
+            }
+        )));
+
+        for bytes in [
+            &[0x62, 0xF1, 0x7C, 0xC8, 0x28, 0xC1][..], // {z} with k0
+            &[0x62, 0xF1, 0x7C, 0xC9, 0x29, 0x08][..], // {z} memory store
+            &[0x62, 0xF1, 0xFC, 0x49, 0x28, 0xC1][..], // VMOVAPS with W=1
+            &[0x62, 0xF1, 0x7D, 0x49, 0x28, 0xC1][..], // VMOVAPD with W=0
+            &[0x62, 0xF1, 0x7C, 0x69, 0x28, 0xC1][..], // reserved L'L=3
+            &[0x62, 0xF1, 0x7C, 0x59, 0x28, 0xC1][..], // reserved EVEX.b
+            &[0x62, 0xF1, 0x74, 0x49, 0x28, 0xC1][..], // reserved vvvv
+            &[0x62, 0xF1, 0x7C, 0x41, 0x28, 0xC1][..], // reserved V'
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+                ),
+                "invalid masked aligned move accepted: {bytes:02X?}"
             );
         }
     }
