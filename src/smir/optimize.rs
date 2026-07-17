@@ -5160,6 +5160,43 @@ mod tests {
             "VEXTRACTI32X4 must retain the E6NF read/merge/write sequence"
         );
 
+        let chunk_shuffle = optimized(&[0x62, 0xF3, 0x6D, 0x5A, 0x23, 0x08, 0x1B]);
+        let ops = &chunk_shuffle.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                )
+            })
+            .expect("E4NF VSHUFF32X4 broadcast load must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VInsertLane {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                        elem: VecElementType::F32,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VSHUFF32X4 destination write must survive optimization");
+        assert!(
+            load < destination_write,
+            "VSHUFF32X4 committed its destination before the E4NF broadcast access"
+        );
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::PredLoad { .. })),
+            "E4NF VSHUFF32X4 must not turn its source into fault-suppressible loads"
+        );
+
         let vex_unpack = optimized(&[0xC5, 0xF5, 0x60, 0x00]);
         let ops = &vex_unpack.blocks[0].ops;
         let load = ops

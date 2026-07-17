@@ -39344,6 +39344,125 @@ mod tests {
     }
 
     #[test]
+    fn lifted_evex_shuffle_128_chunks_executes_selectors_masks_broadcasts_and_e4nf_faults() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // imm8=0x4e selects SRC1 chunks 2,3 and SRC2 chunks 0,1. Masking is
+        // applied afterward at dword granularity to high ZMM registers.
+        let mask = 0xA55Au64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[18], lane, 32, 0x1000 + u64::from(lane));
+                SmirInterpreter::set_lane(&mut x86.xmm[19], lane, 32, 0x2000 + u64::from(lane));
+            }
+            x86.xmm[17] = [u64::MAX; 16];
+            x86.k[3] = mask;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xA3, 0x6D, 0xC3, 0x23, 0xCB, 0x4E],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                let raw = match lane / 4 {
+                    0 | 1 => 0x1000 + u64::from(lane + 8),
+                    2 | 3 => 0x2000 + u64::from(lane - 8),
+                    _ => unreachable!(),
+                };
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[17], lane, 32),
+                    if mask & (1u64 << lane) != 0 { raw } else { 0 }
+                );
+            }
+        }
+
+        // The 256-bit qword form uses imm8 bits 0 and 1 only: SRC1 chunk 1
+        // supplies the low half and SRC2 chunk 0 supplies the high half.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..4u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[21], lane, 64, 0x3000 + u64::from(lane));
+                SmirInterpreter::set_lane(&mut x86.xmm[22], lane, 64, 0x4000 + u64::from(lane));
+                SmirInterpreter::set_lane(&mut x86.xmm[20], lane, 64, 0x5000 + u64::from(lane));
+            }
+            x86.xmm[20][4..].fill(u64::MAX);
+            x86.k[4] = 0b1010;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xA3, 0xD5, 0x24, 0x43, 0xE6, 0xB1],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[20][0], 0x5000);
+            assert_eq!(x86.xmm[20][1], 0x3003);
+            assert_eq!(x86.xmm[20][2], 0x5002);
+            assert_eq!(x86.xmm[20][3], 0x4001);
+            assert!(x86.xmm[20][4..].iter().all(|word| *word == 0));
+        }
+
+        // A dword broadcast uses disp8*4. It fills both SRC2-selected chunks,
+        // while the low chunks retain their independent SRC1 selectors.
+        memory.write(0x104, &0xDEAD_BEEFu32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k2, u64::MAX);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[2], lane, 32, 0x6000 + u64::from(lane));
+            }
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0x6D, 0x5A, 0x23, 0x48, 0x01, 0x1B],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 32),
+                    if lane < 4 {
+                        0x6000 + u64::from(lane + 12)
+                    } else if lane < 8 {
+                        0x6000 + u64::from(lane + 4)
+                    } else {
+                        0xDEAD_BEEF
+                    }
+                );
+            }
+        }
+
+        // E4NF does not suppress the scalar broadcast read when every
+        // destination mask bit is clear; a fault precedes all destination state.
+        ctx.write_vreg(rax, 0x400);
+        ctx.write_vreg(k2, 0);
+        let sentinel = [0xA5A5_A5A5_A5A5_A5A5; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+        }
+        let fault = execute_lifted_x86(
+            &[0x62, 0xF3, 0x6D, 0x5A, 0x23, 0x08, 0x1B],
+            &mut ctx,
+            &mut memory,
+        );
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
     fn lifted_legacy_and_vex_packed_unpacks_interleave_per_128_bit_lane() {
         fn seeded(bytes: &[u8], fill: u64) -> VecValue {
             let mut value = [fill; 16];
