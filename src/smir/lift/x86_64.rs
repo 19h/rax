@@ -22186,22 +22186,13 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if !prefix.operand_size_override && prefix.rep_prefix.is_none() && !prefix.lock {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("MMX packed immediate shift opcode {opcode:02X}"),
-            });
-        }
-        if !prefix.operand_size_override
-            || prefix.rep_prefix.is_some()
-            || prefix.lock
-            || prefix.rex2.is_some()
-        {
+        if prefix.rep_prefix.is_some() || prefix.lock || prefix.rex2.is_some() {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
             });
         }
+        let mmx = !prefix.operand_size_override;
         let modrm = decode_modrm(bytes, prefix, pc)?;
         if modrm.is_memory {
             return Err(LiftError::InvalidEncoding {
@@ -22236,22 +22227,44 @@ impl X86_64Lifter {
                 });
             }
         };
-        let dst = self.xmm(modrm.rm);
-        let raw = ctx.alloc_vreg();
+        // PSRLDQ/PSLLDQ (/3 and /7) have no prefix-free MMX encoding.
+        if mmx && byte_lane {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        let dst = if mmx {
+            self.mm(modrm.rm)
+        } else {
+            self.xmm(modrm.rm)
+        };
+        let raw = if mmx { dst } else { ctx.alloc_vreg() };
         let mut ops = vec![SmirOp::new(
             OpId(0),
             pc,
             OpKind::X86PackedShiftImm {
                 dst: raw,
                 src: dst,
-                width: VecWidth::V128,
+                width: if mmx { VecWidth::V64 } else { VecWidth::V128 },
                 elem,
                 shift,
                 amount: bytes[imm_offset],
                 byte_lane,
             },
         )];
-        self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
+        if mmx {
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            ));
+        } else {
+            self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
+        }
         Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_offset + 1))
     }
 
@@ -62333,6 +62346,44 @@ mod tests {
             }
         )));
 
+        for (opcode, group, elem, shift) in [
+            (0x71, 2, VecElementType::I16, ShiftOp::Lsr),
+            (0x71, 4, VecElementType::I16, ShiftOp::Asr),
+            (0x71, 6, VecElementType::I16, ShiftOp::Lsl),
+            (0x72, 2, VecElementType::I32, ShiftOp::Lsr),
+            (0x72, 4, VecElementType::I32, ShiftOp::Asr),
+            (0x72, 6, VecElementType::I32, ShiftOp::Lsl),
+            (0x73, 2, VecElementType::I64, ShiftOp::Lsr),
+            (0x73, 6, VecElementType::I64, ShiftOp::Lsl),
+        ] {
+            let modrm = 0xC1 | (group << 3);
+            let result = lift_single(&[0x0F, opcode, modrm, 0x11]).unwrap();
+            assert!(matches!(
+                result.ops.as_slice(),
+                [
+                    SmirOp {
+                        kind: OpKind::X86PackedShiftImm {
+                            dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                            src: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                            width: VecWidth::V64,
+                            elem: actual_elem,
+                            shift: actual_shift,
+                            amount: 0x11,
+                            byte_lane: false,
+                        },
+                        ..
+                    },
+                    SmirOp {
+                        kind: OpKind::X86X87Control {
+                            kind: X86X87ControlKind::EnterMmx,
+                            ..
+                        },
+                        ..
+                    }
+                ] if *actual_elem == elem && *actual_shift == shift
+            ));
+        }
+
         for (bytes, elem) in [
             (
                 &[0x62, 0xB1, 0x7D, 0xC1, 0x72, 0xE2, 0x03][..],
@@ -62446,6 +62497,8 @@ mod tests {
             &[0xC4, 0xC1, 0x31, 0x71, 0x12, 0x01][..],
             &[0xC4, 0xC1, 0x31, 0x71, 0xD2][..],
             &[0x66, 0x0F, 0x71, 0x10, 0x01][..],
+            &[0x0F, 0x73, 0xD8, 0x01][..],
+            &[0x0F, 0x73, 0xF8, 0x01][..],
             &[0x62, 0xF1, 0x7D, 0xC0, 0x73, 0xD8, 0x01][..],
             &[0x62, 0xF1, 0x7D, 0x49, 0x73, 0xD8, 0x01][..],
             &[0x62, 0xF1, 0x7D, 0x58, 0x71, 0x10, 0x01][..],

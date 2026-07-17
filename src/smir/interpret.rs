@@ -47025,6 +47025,42 @@ mod tests {
                 .collect()
         }
 
+        fn shifted_mmx(value: u64, bits: u32, amount: u8, shift: ShiftOp) -> u64 {
+            let lane_mask = if bits == 64 {
+                u64::MAX
+            } else {
+                (1u64 << bits) - 1
+            };
+            let mut result = 0;
+            for lane in 0..64 / bits {
+                let lane_shift = lane * bits;
+                let input = value >> lane_shift & lane_mask;
+                let output = if u32::from(amount) >= bits {
+                    if shift == ShiftOp::Asr && input & (1u64 << (bits - 1)) != 0 {
+                        lane_mask
+                    } else {
+                        0
+                    }
+                } else {
+                    match shift {
+                        ShiftOp::Lsl => input << amount & lane_mask,
+                        ShiftOp::Lsr => input >> amount,
+                        ShiftOp::Asr => {
+                            let signed = if bits == 64 {
+                                input as i64
+                            } else {
+                                ((input << (64 - bits)) as i64) >> (64 - bits)
+                            };
+                            (signed >> amount) as u64 & lane_mask
+                        }
+                        _ => unreachable!(),
+                    }
+                };
+                result |= output << lane_shift;
+            }
+            result
+        }
+
         let sentinel = [0x6B6B_6B6B_6B6B_6B6Bu64; 16];
         let upper = 0xA5A5_A5A5_A5A5_A5A5;
         let flags_before = 0xCD7;
@@ -47034,6 +47070,40 @@ mod tests {
         let mut memory = FlatMemory::new(0x100);
         ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
         ctx.flags.lazy = None;
+
+        let mmx_source = 0x8001_7FFF_F00F_00F0;
+        for (opcode, group, bits, shift) in [
+            (0x71, 2, 16, ShiftOp::Lsr),
+            (0x71, 4, 16, ShiftOp::Asr),
+            (0x71, 6, 16, ShiftOp::Lsl),
+            (0x72, 2, 32, ShiftOp::Lsr),
+            (0x72, 4, 32, ShiftOp::Asr),
+            (0x72, 6, 32, ShiftOp::Lsl),
+            (0x73, 2, 64, ShiftOp::Lsr),
+            (0x73, 6, 64, ShiftOp::Lsl),
+        ] {
+            for amount in [0, bits as u8 - 1, bits as u8, bits as u8 + 1, u8::MAX] {
+                if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                    x86.mm[0] = mmx_source;
+                    x86.x87.tag_word = 0xFFFF;
+                    x86.x87.status_word = 3 << 11;
+                }
+                execute_lifted_x86(
+                    &[0x0F, opcode, 0xC0 | (group << 3), amount],
+                    &mut ctx,
+                    &mut memory,
+                );
+                if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                    assert_eq!(
+                        x86.mm[0],
+                        shifted_mmx(mmx_source, bits, amount, shift),
+                        "MMX opcode {opcode:02X}, count {amount}",
+                    );
+                    assert_eq!(x86.x87.tag_word, 0);
+                    assert_eq!(x86.x87.status_word & 0x3800, 3 << 11);
+                }
+            }
+        }
 
         let words = (0..8)
             .flat_map(|lane| if lane % 2 == 0 { 0x8001u16 } else { 0x7FFF }.to_le_bytes())
