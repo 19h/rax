@@ -5965,6 +5965,8 @@ impl X86_64Lowerer {
                     (VecElementType::I8, 8, VLaneOp::Max, false, false) => Some(0xDE),
                     (VecElementType::I16, 4, VLaneOp::Min, true, false) => Some(0xEA),
                     (VecElementType::I16, 4, VLaneOp::Max, true, false) => Some(0xEE),
+                    (VecElementType::I8, 8, VLaneOp::AvgRnd, false, false) => Some(0xE0),
+                    (VecElementType::I16, 4, VLaneOp::AvgRnd, false, false) => Some(0xE3),
                     _ => None,
                 },
             ),
@@ -26812,6 +26814,36 @@ mod tests {
             assert!(
                 code.windows(3).any(|window| window == [0x0F, opcode, 0xF8]),
                 "missing MMX min/max 0F {opcode:02X} /r: {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_mmx_average_emits_byte_and_word_classic_opcodes() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, lanes, opcode) in [
+            (VecElementType::I8, 8, 0xE0),
+            (VecElementType::I16, 4, 0xE3),
+        ] {
+            let code = lower_single_hinted_op(
+                OpKind::VLane {
+                    dst: mm(2),
+                    src1: mm(2),
+                    src2: mm(5),
+                    elem,
+                    lanes,
+                    op: VLaneOp::AvgRnd,
+                    signed: false,
+                    set_ovf: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(3).any(|window| window == [0x0F, opcode, 0xD5]),
+                "missing MMX average 0F {opcode:02X} /r: {code:02X?}"
             );
         }
     }

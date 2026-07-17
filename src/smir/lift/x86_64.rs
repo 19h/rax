@@ -15061,10 +15061,14 @@ impl X86_64Lifter {
             self.xmm(modrm.reg)
         };
         if mmx {
-            ops.push(SmirOp::new(
+            ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
                 Self::packed_unsigned_average_kind(dst, dst, src2, VecWidth::V64, elem),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
             ));
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
@@ -60077,7 +60081,10 @@ mod tests {
                             signed: false,
                             set_ovf: false,
                         },
-                        x86_hint: None,
+                        x86_hint: Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: actual_opcode,
+                        }),
                         ..
                     },
                     SmirOp {
@@ -60087,7 +60094,9 @@ mod tests {
                         },
                         ..
                     }
-                ] if *actual_elem == elem && *actual_lanes == lanes
+                ] if *actual_elem == elem
+                    && *actual_lanes == lanes
+                    && *actual_opcode == opcode
             ));
             let memory = lift_single(&[0x0F, opcode, 0x40, 0x01]).unwrap();
             assert!(memory.ops.iter().any(|op| matches!(

@@ -3511,6 +3511,8 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 (VecElementType::I8, 8, VLaneOp::Max, false, false) => Some(0xDE),
                 (VecElementType::I16, 4, VLaneOp::Min, true, false) => Some(0xEA),
                 (VecElementType::I16, 4, VLaneOp::Max, true, false) => Some(0xEE),
+                (VecElementType::I8, 8, VLaneOp::AvgRnd, false, false) => Some(0xE0),
+                (VecElementType::I16, 4, VLaneOp::AvgRnd, false, false) => Some(0xE3),
                 _ => None,
             },
         ),
@@ -13491,6 +13493,49 @@ mod jit_gate_tests {
             let duplicate = function.blocks[0].ops[0].clone();
             function.blocks[0].ops.push(duplicate);
             assert!(!x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+    }
+
+    #[test]
+    fn x86_mmx_average_gate_covers_byte_and_word_register_forms() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, lanes, opcode) in [
+            (VecElementType::I8, 8, 0xE0),
+            (VecElementType::I16, 4, 0xE3),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x9800);
+            builder.push_op(
+                0x9800,
+                OpKind::VLane {
+                    dst: mm(2),
+                    src1: mm(2),
+                    src2: mm(5),
+                    elem,
+                    lanes,
+                    op: VLaneOp::AvgRnd,
+                    signed: false,
+                    set_ovf: false,
+                },
+            );
+            builder.push_op(
+                0x9800,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
                 &function,
                 &std::collections::HashMap::new()
             ));
