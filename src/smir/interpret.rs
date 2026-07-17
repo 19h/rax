@@ -39463,6 +39463,198 @@ mod tests {
     }
 
     #[test]
+    fn lifted_evex_fp_class_executes_all_classes_daz_masks_and_fault_suppression() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let flags_before = 0xCD7;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x400);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        // Each lane is one of the eight SDM classes. imm8=0xff accepts every
+        // class, leaving the input writemask as the exact destination value.
+        let classes = [
+            0x7FC0_0001u64, // qNaN
+            0x0000_0000,    // +0
+            0x8000_0000,    // -0
+            0x7F80_0000,    // +infinity
+            0xFF80_0000,    // -infinity
+            0x0000_0001,    // denormal
+            0xBF80_0000,    // negative finite
+            0x7F80_0001,    // sNaN
+        ];
+        let mask = 0xA55Au64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[17],
+                    lane,
+                    32,
+                    classes[usize::from(lane % 8)],
+                );
+            }
+            x86.k[2] = u64::MAX;
+            x86.k[3] = mask;
+            x86.mxcsr = 0x1F80;
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xB3, 0x7D, 0x4B, 0x66, 0xD1, 0xFF],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[2], mask);
+            assert_eq!(x86.mxcsr, 0x1F80);
+        }
+
+        // FP16 uses the same eight classes but does not apply MXCSR.DAZ. A
+        // denormal lane therefore remains classified as denormal with DAZ set.
+        let fp16_classes = [
+            0x7E01u64, // qNaN
+            0x0000,    // +0
+            0x8000,    // -0
+            0x7C00,    // +infinity
+            0xFC00,    // -infinity
+            0x0001,    // denormal
+            0xBC00,    // negative finite
+            0x7C01,    // sNaN
+        ];
+        let fp16_mask = 0xA55A_5AA5u64;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..32u8 {
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[17],
+                    lane,
+                    16,
+                    fp16_classes[usize::from(lane % 8)],
+                );
+            }
+            x86.k[2] = u64::MAX;
+            x86.k[3] = fp16_mask;
+            x86.mxcsr = 0x1F80 | (1 << 6);
+        }
+        execute_lifted_x86(
+            &[0x62, 0xB3, 0x7C, 0x4B, 0x66, 0xD1, 0xFF],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[2], fp16_mask);
+            assert_eq!(x86.mxcsr, 0x1F80 | (1 << 6));
+        }
+
+        // Scalar classification accepts high XMM sources and distinguishes an
+        // sNaN from a qNaN using the raw quiet bit.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[18], 0, 64, 0x7FF0_0000_0000_0001);
+            x86.k[1] = u64::MAX;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xB3, 0xFD, 0x08, 0x67, 0xCA, 0x80],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[1], 1);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[18], 0, 16, 0x7C01);
+            x86.k[1] = u64::MAX;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xB3, 0x7C, 0x08, 0x67, 0xCA, 0x80],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[1], 1);
+        }
+
+        // A broadcasted binary64 subnormal is classified as denormal with DAZ
+        // clear and as zero with DAZ set. FPCLASS never changes MXCSR status.
+        memory.write(0x108, &1u64.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[5] = 0xAD;
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0xFD, 0x5D, 0x66, 0x60, 0x01, 0x20],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[4], 0xAD);
+            assert_eq!(x86.mxcsr, 0x1F80);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[5] = 0xAD;
+            x86.mxcsr = 0x1F80 | (1 << 6);
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0xFD, 0x5D, 0x66, 0x60, 0x01, 0x20],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[4], 0);
+            assert_eq!(x86.mxcsr, 0x1F80 | (1 << 6));
+        }
+
+        // E4/E6 fault suppression skips an invalid packed broadcast or scalar
+        // memory source when every relevant input-mask bit is clear.
+        ctx.write_vreg(rax, 0x400);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[5] = 0;
+            x86.k[7] = 0;
+            x86.k[4] = u64::MAX;
+            x86.k[6] = u64::MAX;
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0xFD, 0x5D, 0x66, 0x60, 0x01, 0x20],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x7D, 0x0F, 0x67, 0x70, 0x01, 0x7F],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[4], 0);
+            assert_eq!(x86.k[6], 0);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[7] = 1;
+            x86.k[6] = 0x55;
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x7D, 0x0F, 0x67, 0x70, 0x01, 0x7F],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.k[6], 0x55);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
     fn lifted_legacy_and_vex_packed_unpacks_interleave_per_128_bit_lane() {
         fn seeded(bytes: &[u8], fill: u64) -> VecValue {
             let mut value = [fill; 16];

@@ -5197,6 +5197,56 @@ mod tests {
             "E4NF VSHUFF32X4 must not turn its source into fault-suppressible loads"
         );
 
+        let fp_class = optimized(&[0x62, 0xF3, 0xFD, 0x5D, 0x66, 0x60, 0x01, 0x20]);
+        let ops = &fp_class.blocks[0].ops;
+        let last_load = ops
+            .iter()
+            .rposition(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                )
+            })
+            .expect("E4 VFPCLASSPD broadcast PredLoads must survive optimization");
+        let daz_classification = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86VectorFpCompare {
+                        elem: VecElementType::F64,
+                        width: VecWidth::V512,
+                        lanes: 8,
+                        suppress_exceptions: true,
+                        ..
+                    }
+                )
+            })
+            .expect("VFPCLASSPD DAZ-aware zero classification must survive optimization");
+        let destination_write = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::And {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::K(4))),
+                        src2: SrcOperand::Reg(VReg::Arch(ArchReg::X86(X86Reg::K(5)))),
+                        flags: FlagUpdate::None,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VFPCLASSPD destination write must survive optimization");
+        assert!(last_load < daz_classification && daz_classification < destination_write);
+        assert!(
+            !ops.iter()
+                .any(|op| matches!(op.kind, OpKind::Load { .. } | OpKind::VLoad { .. })),
+            "E4 VFPCLASSPD broadcast must retain only fault-suppressing loads"
+        );
+
         let vex_unpack = optimized(&[0xC5, 0xF5, 0x60, 0x00]);
         let ops = &vex_unpack.blocks[0].ops;
         let load = ops
