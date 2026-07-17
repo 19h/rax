@@ -14864,7 +14864,15 @@ impl X86_64Lifter {
             lanes: if mmx { 4 } else { 8 },
         };
         if mmx {
-            ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                kind,
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0xD5,
+                },
+            ));
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
@@ -14948,10 +14956,14 @@ impl X86_64Lifter {
             self.xmm(modrm.reg)
         };
         if mmx {
-            ops.push(SmirOp::new(
+            ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,
                 Self::pmul_high_word_kind(dst, dst, src2, VecWidth::V64, opcode == 0xE5),
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
             ));
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
@@ -59675,7 +59687,10 @@ mod tests {
                         elem: VecElementType::I16,
                         lanes: 4,
                     },
-                    x86_hint: None,
+                    x86_hint: Some(X86OpHint::SseOp {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0xD5,
+                    }),
                     ..
                 },
                 SmirOp {
@@ -59878,7 +59893,10 @@ mod tests {
                             sat_bits: 0,
                             out_shift: 16,
                         },
-                        x86_hint: None,
+                        x86_hint: Some(X86OpHint::SseOp {
+                            prefix: X86SsePrefix::None,
+                            opcode: actual_opcode,
+                        }),
                         ..
                     },
                     SmirOp {
@@ -59888,7 +59906,7 @@ mod tests {
                         },
                         ..
                     }
-                ] if *signed1 == signed && *signed2 == signed
+                ] if *signed1 == signed && *signed2 == signed && *actual_opcode == opcode
             ));
             let memory = lift_single(&[0x0F, opcode, 0x40, 0x01]).unwrap();
             assert!(memory.ops.iter().any(|op| matches!(

@@ -5968,6 +5968,49 @@ impl X86_64Lowerer {
                     _ => None,
                 },
             ),
+            OpKind::VMul {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+            } => (
+                dst,
+                src1,
+                src2,
+                (*elem == VecElementType::I16 && *lanes == 4).then_some(0xD5),
+            ),
+            OpKind::VMulShiftSat {
+                dst,
+                src1,
+                src2,
+                src_elem,
+                lanes,
+                signed1,
+                signed2,
+                shift_left,
+                round,
+                sat_bits,
+                out_shift,
+            } => (
+                dst,
+                src1,
+                src2,
+                match (
+                    *src_elem,
+                    *lanes,
+                    *signed1,
+                    *signed2,
+                    *shift_left,
+                    *round,
+                    *sat_bits,
+                    *out_shift,
+                ) {
+                    (VecElementType::I16, 4, false, false, 0, false, 0, 16) => Some(0xE4),
+                    (VecElementType::I16, 4, true, true, 0, false, 0, 16) => Some(0xE5),
+                    _ => None,
+                },
+            ),
             _ => return Ok(false),
         };
         let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
@@ -26769,6 +26812,59 @@ mod tests {
             assert!(
                 code.windows(3).any(|window| window == [0x0F, opcode, 0xF8]),
                 "missing MMX min/max 0F {opcode:02X} /r: {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_mmx_word_multiply_emits_low_and_high_classic_opcodes() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let kinds = [
+            OpKind::VMul {
+                dst: mm(1),
+                src1: mm(1),
+                src2: mm(4),
+                elem: VecElementType::I16,
+                lanes: 4,
+            },
+            OpKind::VMulShiftSat {
+                dst: mm(1),
+                src1: mm(1),
+                src2: mm(4),
+                src_elem: VecElementType::I16,
+                lanes: 4,
+                signed1: false,
+                signed2: false,
+                shift_left: 0,
+                round: false,
+                sat_bits: 0,
+                out_shift: 16,
+            },
+            OpKind::VMulShiftSat {
+                dst: mm(1),
+                src1: mm(1),
+                src2: mm(4),
+                src_elem: VecElementType::I16,
+                lanes: 4,
+                signed1: true,
+                signed2: true,
+                shift_left: 0,
+                round: false,
+                sat_bits: 0,
+                out_shift: 16,
+            },
+        ];
+        for (kind, opcode) in kinds.into_iter().zip([0xD5, 0xE4, 0xE5]) {
+            let code = lower_single_hinted_op(
+                kind,
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(3).any(|window| window == [0x0F, opcode, 0xCC]),
+                "missing MMX multiply 0F {opcode:02X} /r: {code:02X?}"
             );
         }
     }

@@ -3514,6 +3514,49 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 _ => None,
             },
         ),
+        OpKind::VMul {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+        } => (
+            dst,
+            src1,
+            src2,
+            (*elem == VecElementType::I16 && *lanes == 4).then_some(0xD5),
+        ),
+        OpKind::VMulShiftSat {
+            dst,
+            src1,
+            src2,
+            src_elem,
+            lanes,
+            signed1,
+            signed2,
+            shift_left,
+            round,
+            sat_bits,
+            out_shift,
+        } => (
+            dst,
+            src1,
+            src2,
+            match (
+                *src_elem,
+                *lanes,
+                *signed1,
+                *signed2,
+                *shift_left,
+                *round,
+                *sat_bits,
+                *out_shift,
+            ) {
+                (VecElementType::I16, 4, false, false, 0, false, 0, 16) => Some(0xE4),
+                (VecElementType::I16, 4, true, true, 0, false, 0, 16) => Some(0xE5),
+                _ => None,
+            },
+        ),
         _ => return false,
     };
     let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
@@ -13448,6 +13491,69 @@ mod jit_gate_tests {
             let duplicate = function.blocks[0].ops[0].clone();
             function.blocks[0].ops.push(duplicate);
             assert!(!x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+    }
+
+    #[test]
+    fn x86_mmx_word_multiply_gate_covers_low_signed_high_and_unsigned_high() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let kinds = [
+            OpKind::VMul {
+                dst: mm(1),
+                src1: mm(1),
+                src2: mm(4),
+                elem: VecElementType::I16,
+                lanes: 4,
+            },
+            OpKind::VMulShiftSat {
+                dst: mm(1),
+                src1: mm(1),
+                src2: mm(4),
+                src_elem: VecElementType::I16,
+                lanes: 4,
+                signed1: false,
+                signed2: false,
+                shift_left: 0,
+                round: false,
+                sat_bits: 0,
+                out_shift: 16,
+            },
+            OpKind::VMulShiftSat {
+                dst: mm(1),
+                src1: mm(1),
+                src2: mm(4),
+                src_elem: VecElementType::I16,
+                lanes: 4,
+                signed1: true,
+                signed2: true,
+                shift_left: 0,
+                round: false,
+                sat_bits: 0,
+                out_shift: 16,
+            },
+        ];
+        for (kind, opcode) in kinds.into_iter().zip([0xD5, 0xE4, 0xE5]) {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0xA000);
+            builder.push_op(0xA000, kind);
+            builder.push_op(
+                0xA000,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[0].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[0]));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
                 &function,
                 &std::collections::HashMap::new()
             ));
