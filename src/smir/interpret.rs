@@ -7534,6 +7534,11 @@ impl SmirInterpreter {
                         x86.x87.tag_word = 0;
                     }
                 }
+                X86X87ControlKind::EmptyMmx => {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.x87.tag_word = 0xFFFF;
+                    }
+                }
                 X86X87ControlKind::StoreStatusAx => {
                     let status = match &ctx.arch_regs {
                         ArchRegState::X86_64(x86) => x86.x87.status_word,
@@ -16930,6 +16935,52 @@ mod tests {
         let mut func = builder.finish();
         func.blocks[0].ops = result.ops;
         SmirInterpreter::new().execute_block(ctx, memory, &func.blocks[0])
+    }
+
+    #[test]
+    fn lifted_emms_empties_tags_and_preserves_aliased_payloads_and_x87_state() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x1000);
+        let flags_before = 0xCD7;
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+
+        let mm_before = [
+            0x0123_4567_89AB_CDEF,
+            0x1111_2222_3333_4444,
+            0x5555_6666_7777_8888,
+            0x9999_AAAA_BBBB_CCCC,
+            0xDEAD_BEEF_CAFE_BABE,
+            0x0F0E_0D0C_0B0A_0908,
+            0x8877_6655_4433_2211,
+            u64::MAX,
+        ];
+        let x87_before = if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm = mm_before;
+            x86.x87.control_word = 0x027F;
+            x86.x87.status_word = 5 << 11 | 0x45;
+            x86.x87.tag_word = 0;
+            x86.x87.data_ptr = 0x1122_3344_5566_7788;
+            x86.x87.instr_ptr = 0x8877_6655_4433_2211;
+            x86.x87.last_opcode = 0x345;
+            x86.x87.regs[3] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+            x86.x87.clone()
+        } else {
+            unreachable!()
+        };
+
+        assert!(matches!(
+            execute_lifted_x86(&[0x0F, 0x77], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm, mm_before);
+            let mut expected = x87_before;
+            expected.tag_word = 0xFFFF;
+            assert_eq!(x86.x87, expected);
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
     }
 
     fn execute_lifted_thumb(bytes: &[u8], ctx: &mut SmirContext) -> BlockResult {

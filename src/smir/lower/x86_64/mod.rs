@@ -13120,13 +13120,20 @@ impl X86_64Lowerer {
                 }
             }
 
-            OpKind::X86X87Control {
-                kind: X86X87ControlKind::EnterMmx,
-                addr,
-            } => {
+            OpKind::X86X87Control { kind, addr }
+                if matches!(
+                    kind,
+                    X86X87ControlKind::EnterMmx | X86X87ControlKind::EmptyMmx
+                ) =>
+            {
+                let (name, tag_word) = match kind {
+                    X86X87ControlKind::EnterMmx => ("EnterMmx", 0),
+                    X86X87ControlKind::EmptyMmx => ("EmptyMmx", 0xFFFF),
+                    _ => unreachable!(),
+                };
                 if addr.is_some() {
                     return Err(LowerError::InvalidOperand {
-                        op: "X86X87Control EnterMmx".to_string(),
+                        op: format!("X86X87Control {name}"),
                         operand: "must not have a memory address".to_string(),
                     });
                 }
@@ -13140,10 +13147,10 @@ impl X86_64Lowerer {
                     X86_STATE_PTR_AT_RBP as u8, // mov rax,[rbp+state]
                     0x48,
                     0xC7,
-                    0x80, // mov qword ptr [rax+disp32],0
+                    0x80, // mov qword ptr [rax+disp32],imm32
                 ]);
                 self.code.emit_u32(X86_GUEST_X87_TAG_WORD_OFFSET as u32);
-                self.code.emit_u32(0);
+                self.code.emit_u32(tag_word);
                 self.code.emit_u8(0x58); // pop rax
             }
 
@@ -27265,6 +27272,112 @@ mod tests {
             }),
             LowerError::InvalidOperand { .. }
         ));
+    }
+
+    #[test]
+    fn lower_empty_mmx_commits_empty_tag_word_without_clobbering_arch_state() {
+        let code = lower_single_op(OpKind::X86X87Control {
+            kind: X86X87ControlKind::EmptyMmx,
+            addr: None,
+        });
+        let mut expected = vec![
+            0x50,
+            0x48,
+            0x8B,
+            0x45,
+            X86_STATE_PTR_AT_RBP as u8,
+            0x48,
+            0xC7,
+            0x80,
+        ];
+        expected.extend_from_slice(&(X86_GUEST_X87_TAG_WORD_OFFSET as u32).to_le_bytes());
+        expected.extend_from_slice(&0xFFFFu32.to_le_bytes());
+        expected.push(0x58);
+        assert!(
+            code.windows(expected.len())
+                .any(|window| window == expected),
+            "missing precise EmptyMmx state commit: {code:02X?}"
+        );
+
+        assert!(matches!(
+            lower_single_op_err(OpKind::X86X87Control {
+                kind: X86X87ControlKind::EmptyMmx,
+                addr: Some(Address::Absolute(0x1000)),
+            }),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_empty_mmx_follows_mmx_work_and_preserves_payloads_flags_and_gprs() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        let mm0 = VReg::Arch(ArchReg::X86(X86Reg::Mm(0)));
+        let mm1 = VReg::Arch(ArchReg::X86(X86Reg::Mm(1)));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(
+            0x1000,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EnterMmx,
+                addr: None,
+            },
+        );
+        builder.push_op(
+            0x1000,
+            OpKind::VAnd {
+                dst: mm0,
+                src1: mm0,
+                src2: mm1,
+                width: VecWidth::V64,
+            },
+        );
+        builder.push_op(
+            0x1002,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EmptyMmx,
+                addr: None,
+            },
+        );
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseOp {
+            prefix: X86SsePrefix::None,
+            opcode: 0xDB,
+        });
+
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&function)
+            .expect("lower native MMX work followed by EmptyMmx");
+        let code = lowerer.finalize().expect("finalize MMX/EmptyMmx code");
+        let exec = ExecMem::new(&code).expect("map MMX/EmptyMmx code");
+        let mut regs = GuestRegs {
+            mm: [
+                0xFF00_FF00_AAAA_AAAA,
+                0x0FF0_00FF_5555_FFFF,
+                0x0123_4567_89AB_CDEF,
+                0x1111_2222_3333_4444,
+                0x5555_6666_7777_8888,
+                0x9999_AAAA_BBBB_CCCC,
+                0xDEAD_BEEF_CAFE_BABE,
+                u64::MAX,
+            ],
+            mmx_active: 1,
+            x87_tag_word: 0,
+            rflags: 0x2 | 0x8D5,
+            ..GuestRegs::default()
+        };
+        let untouched = regs.mm[2..].to_vec();
+        regs.gpr[0] = 0x8877_6655_4433_2211;
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.mm[0], 0x0F00_0000_0000_AAAA);
+        assert_eq!(regs.mm[1], 0x0FF0_00FF_5555_FFFF);
+        assert_eq!(regs.mm[2..], untouched);
+        assert_eq!(regs.x87_tag_word, 0xFFFF);
+        assert_eq!(regs.gpr[0], 0x8877_6655_4433_2211);
+        assert_eq!(regs.rflags & 0x8D5, 0x8D5);
     }
 
     #[test]

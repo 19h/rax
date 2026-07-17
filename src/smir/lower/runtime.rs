@@ -165,9 +165,9 @@ pub struct GuestRegs {
     /// Non-zero only for a region containing admitted native MMX operations.
     /// The trampoline uses this to avoid entering MMX state for all other code.
     pub mmx_active: u64,
-    /// Guest architectural x87 tag word. Native `EnterMmx` commits zero here at
-    /// the exact post-instruction point; trampoline `EMMS` affects only host
-    /// state and must not overwrite this guest value.
+    /// Guest architectural x87 tag word. Native `EnterMmx` commits zero and
+    /// native `EmptyMmx` commits `0xFFFF` at their exact instruction points;
+    /// trampoline `EMMS` affects only host state and must not overwrite it.
     pub x87_tag_word: u64,
 }
 
@@ -13673,6 +13673,26 @@ mod jit_gate_tests {
             &x87.finish(),
             &std::collections::HashMap::new()
         ));
+
+        let mut emms = FunctionBuilder::new(FunctionId(2), 0x3000);
+        emms.push_op(
+            0x3000,
+            OpKind::X86X87Control {
+                kind: X86X87ControlKind::EmptyMmx,
+                addr: None,
+            },
+        );
+        emms.set_terminator(Terminator::Return { values: vec![] });
+        let emms = emms.finish();
+        assert!(!uses_x86_native_mmx_excluding(
+            &emms,
+            &std::collections::HashMap::new()
+        ));
+        assert!(x86_native_mmx_pairs_valid_excluding(
+            &emms,
+            &std::collections::HashMap::new()
+        ));
+        assert!(is_native_clobber_safe(&emms));
     }
 
     #[test]

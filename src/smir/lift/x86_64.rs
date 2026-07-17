@@ -37514,6 +37514,28 @@ impl X86_64Lifter {
             // emulator profile.
             0x08 | 0x09 => Ok(LiftResult::fallthrough(vec![], prefix2.cursor)),
 
+            // EMMS marks every x87/MMX register empty without modifying the
+            // aliased 64-bit payloads or any other x87 state.
+            0x77 => {
+                if prefix2.lock || prefix2.rex2.is_some() {
+                    return Err(LiftError::InvalidEncoding {
+                        addr: pc,
+                        bytes: vec![opcode2],
+                    });
+                }
+                Ok(LiftResult::fallthrough(
+                    vec![SmirOp::new(
+                        OpId(0),
+                        pc,
+                        OpKind::X86X87Control {
+                            kind: X86X87ControlKind::EmptyMmx,
+                            addr: None,
+                        },
+                    )],
+                    prefix2.cursor,
+                ))
+            }
+
             // NOP/cache/prefetch hint encodings still consume a complete
             // ModR/M addressing form even though they have no state effect.
             0x0D | 0x18 | 0x1A | 0x1B | 0x1E | 0x1F => {
@@ -45887,6 +45909,43 @@ mod tests {
                 lift_single(bytes),
                 Err(LiftError::Unsupported { .. })
             ));
+        }
+    }
+
+    #[test]
+    fn lift_emms_exact_state_transition_prefixes_and_legality() {
+        for bytes in [
+            &[0x0F, 0x77][..],
+            &[0x66, 0x0F, 0x77][..],
+            &[0x67, 0x0F, 0x77][..],
+            &[0xF2, 0x0F, 0x77][..],
+            &[0xF3, 0x0F, 0x77][..],
+            &[0x48, 0x0F, 0x77][..],
+            &[0x64, 0x0F, 0x77][..],
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EmptyMmx,
+                        addr: None,
+                    },
+                    ..
+                }]
+            ));
+        }
+
+        for bytes in [
+            &[0xF0, 0x0F, 0x77][..],
+            &[0xD5, 0x00, 0x0F, 0x77][..],
+            &[0xD5, 0x80, 0x77][..],
+        ] {
+            assert!(
+                matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
+                "accepted invalid EMMS encoding {bytes:02X?}"
+            );
         }
     }
 

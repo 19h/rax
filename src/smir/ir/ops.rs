@@ -112,6 +112,8 @@ pub enum X86X87ControlKind {
     ClearExceptions,
     /// Enter MMX state by marking all eight aliased x87 data registers valid.
     EnterMmx,
+    /// Leave MMX state by marking all eight aliased x87 data registers empty.
+    EmptyMmx,
     StoreStatusAx,
     LoadControlWord,
     StoreControlWord,
@@ -3457,7 +3459,7 @@ pub enum OpKind {
     },
 
     /// x87 environment/control operation. Memory forms carry `Some(addr)`;
-    /// register-only FNINIT/FNCLEX/FNSTSW AX forms carry `None`.
+    /// register-only FNINIT/FNCLEX/FNSTSW AX/EMMS forms carry `None`.
     X86X87Control {
         kind: X86X87ControlKind,
         addr: Option<Address>,
@@ -3958,7 +3960,7 @@ impl OpKind {
                 | OpKind::X86XSetBv { .. }
                 | OpKind::X86Count { .. }
                 | OpKind::X86X87Control {
-                    kind: X86X87ControlKind::EnterMmx,
+                    kind: X86X87ControlKind::EnterMmx | X86X87ControlKind::EmptyMmx,
                     addr: None,
                 }
                 | OpKind::Bswap { .. }
@@ -4380,6 +4382,7 @@ impl OpKind {
                     X86X87ControlKind::Init
                     | X86X87ControlKind::ClearExceptions
                     | X86X87ControlKind::EnterMmx
+                    | X86X87ControlKind::EmptyMmx
                     | X86X87ControlKind::LoadControlWord
                     | X86X87ControlKind::StoreControlWord
                     | X86X87ControlKind::StoreStatusWord
@@ -4449,6 +4452,7 @@ impl OpKind {
                             X86X87ControlKind::Init
                             | X86X87ControlKind::ClearExceptions
                             | X86X87ControlKind::EnterMmx
+                            | X86X87ControlKind::EmptyMmx
                             | X86X87ControlKind::StoreControlWord
                             | X86X87ControlKind::StoreStatusWord
                             | X86X87ControlKind::StoreEnvironment(_)
@@ -4685,6 +4689,16 @@ mod tests {
         assert!(!enter_mmx.reads_memory());
         assert!(!enter_mmx.writes_memory());
         assert!(enter_mmx.is_jit_safe());
+
+        let empty_mmx = OpKind::X86X87Control {
+            kind: X86X87ControlKind::EmptyMmx,
+            addr: None,
+        };
+        assert!(empty_mmx.has_side_effects());
+        assert!(empty_mmx.dests().is_empty());
+        assert!(!empty_mmx.reads_memory());
+        assert!(!empty_mmx.writes_memory());
+        assert!(empty_mmx.is_jit_safe());
 
         let status_ax = OpKind::X86X87Control {
             kind: X86X87ControlKind::StoreStatusAx,
