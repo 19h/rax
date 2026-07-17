@@ -8908,6 +8908,7 @@ mod tests {
                         dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
                         elem: VecElementType::F64,
                         int_width: OpWidth::W64,
+                        signed: true,
                         truncate: false,
                         ..
                     }
@@ -8941,6 +8942,7 @@ mod tests {
                         dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
                         elem: VecElementType::F16,
                         int_width: OpWidth::W32,
+                        signed: true,
                         truncate: false,
                         round: FpRoundMode::Dynamic,
                         suppress_exceptions: false,
@@ -8957,6 +8959,54 @@ mod tests {
             OpKind::X86FpToInt {
                 elem: VecElementType::F16,
                 int_width: OpWidth::W32,
+                signed: true,
+                truncate: false,
+                round: FpRoundMode::RoundDown,
+                suppress_exceptions: true,
+                ..
+            }
+        )));
+
+        let unsigned_fp_to_int = optimized(&[0x62, 0xF1, 0x7E, 0x08, 0x79, 0x40, 0x7F]);
+        let ops = &unsigned_fp_to_int.blocks[0].ops;
+        let load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::Load {
+                        addr: Address::BaseOffset { offset: 508, .. },
+                        width: MemWidth::B4,
+                        ..
+                    }
+                )
+            })
+            .expect("faulting VCVTSS2USI compressed-displacement load must survive optimization");
+        let conversion = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86FpToInt {
+                        elem: VecElementType::F32,
+                        int_width: OpWidth::W32,
+                        signed: false,
+                        truncate: false,
+                        round: FpRoundMode::Dynamic,
+                        suppress_exceptions: false,
+                        ..
+                    }
+                )
+            })
+            .expect("VCVTSS2USI conversion must survive optimization");
+        assert!(load < conversion);
+
+        let unsigned_er = optimized(&[0x62, 0xF1, 0x7E, 0x38, 0x79, 0xC3]);
+        assert!(unsigned_er.blocks[0].ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::X86FpToInt {
+                elem: VecElementType::F32,
+                signed: false,
                 truncate: false,
                 round: FpRoundMode::RoundDown,
                 suppress_exceptions: true,

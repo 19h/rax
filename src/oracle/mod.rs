@@ -1916,6 +1916,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src,
             elem,
             int_width,
+            signed,
             truncate,
             round,
             suppress_exceptions,
@@ -1925,6 +1926,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src,
             elem,
             int_width,
+            signed,
             truncate,
             round,
             suppress_exceptions

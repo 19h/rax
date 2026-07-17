@@ -3394,6 +3394,7 @@ impl SmirInterpreter {
                 src,
                 elem,
                 int_width,
+                signed,
                 truncate,
                 round,
                 ..
@@ -3414,26 +3415,49 @@ impl SmirInterpreter {
                 } else {
                     self.round_fp_value(ctx, value, *round)
                 };
-                let indefinite = match int_width {
-                    OpWidth::W32 => 0x8000_0000,
-                    OpWidth::W64 => 0x8000_0000_0000_0000,
-                    _ => 0,
+                let indefinite = if *signed {
+                    match int_width {
+                        OpWidth::W32 => 0x8000_0000,
+                        OpWidth::W64 => 0x8000_0000_0000_0000,
+                        _ => 0,
+                    }
+                } else {
+                    int_width.mask()
                 };
-                let valid = match int_width {
-                    OpWidth::W32 => {
-                        rounded.is_finite()
-                            && rounded >= i32::MIN as f64
-                            && rounded <= i32::MAX as f64
+                let valid = if *signed {
+                    match int_width {
+                        OpWidth::W32 => {
+                            rounded.is_finite()
+                                && rounded >= i32::MIN as f64
+                                && rounded <= i32::MAX as f64
+                        }
+                        OpWidth::W64 => {
+                            rounded.is_finite()
+                                && rounded >= -9_223_372_036_854_775_808.0
+                                && rounded < 9_223_372_036_854_775_808.0
+                        }
+                        _ => false,
                     }
-                    OpWidth::W64 => {
-                        rounded.is_finite()
-                            && rounded >= -9_223_372_036_854_775_808.0
-                            && rounded < 9_223_372_036_854_775_808.0
+                } else {
+                    match int_width {
+                        OpWidth::W32 => {
+                            rounded.is_finite() && rounded >= 0.0 && rounded <= 4_294_967_295.0
+                        }
+                        OpWidth::W64 => {
+                            rounded.is_finite()
+                                && rounded >= 0.0
+                                && rounded < 18_446_744_073_709_551_616.0
+                        }
+                        _ => false,
                     }
-                    _ => false,
                 };
                 let result = if valid {
-                    (rounded as i64 as u64) & int_width.mask()
+                    let converted = if *signed {
+                        rounded as i64 as u64
+                    } else {
+                        rounded as u64
+                    };
+                    converted & int_width.mask()
                 } else {
                     indefinite
                 };
@@ -22349,6 +22373,51 @@ mod tests {
         );
         assert_eq!(ctx.read_vreg(rax), 3);
 
+        // Unsigned FP16 embedded rounding uses EVEX.RC and writes a 32-bit
+        // zero-extended result.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, 0x4300); // +3.5
+            x86.mxcsr = (0x1F80 & !(3 << 13)) | (1 << 13); // toward -infinity
+        }
+        ctx.write_vreg(rax, u64::MAX);
+        execute_lifted_x86(
+            &[0x62, 0xF5, 0x7E, 0x58, 0x79, 0xC3], // {ru-sae}
+            &mut ctx,
+            &mut memory,
+        );
+        assert_eq!(ctx.read_vreg(rax), 4);
+
+        // Negative and NaN inputs return the all-ones unsigned integer
+        // indefinite value for the selected destination width.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, 0xBC00); // -1
+        }
+        execute_lifted_x86(&[0x62, 0xF5, 0x7E, 0x08, 0x78, 0xC3], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), u32::MAX as u64);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, 0x7E01);
+        }
+        execute_lifted_x86(&[0x62, 0xF5, 0xFE, 0x08, 0x79, 0xC3], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), u64::MAX);
+
+        // FP32 W=0 covers the highest representable value below 2^32; FP64
+        // W=1 accepts values above i64::MAX and rejects 2^64.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[3][0] = 4_294_967_040.0f32.to_bits() as u64;
+        }
+        execute_lifted_x86(&[0x62, 0xF1, 0x7E, 0x08, 0x78, 0xC3], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 4_294_967_040);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[3][0] = 9_223_372_036_854_775_808.0f64.to_bits();
+        }
+        execute_lifted_x86(&[0x62, 0xF1, 0xFF, 0x08, 0x78, 0xC3], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x8000_0000_0000_0000);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[3][0] = 18_446_744_073_709_551_616.0f64.to_bits();
+        }
+        execute_lifted_x86(&[0x62, 0xF1, 0xFF, 0x08, 0x78, 0xC3], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), u64::MAX);
+
         // Successful memory conversion reads the scalar Load result from the
         // virtual scalar register file.
         ctx.write_vreg(rbx, 0x200);
@@ -22368,6 +22437,10 @@ mod tests {
             (
                 "EVEX VCVTSH2SI",
                 &[0x62, 0xF5, 0x7E, 0x08, 0x2D, 0x40, 0x01][..],
+            ),
+            (
+                "EVEX VCVTSH2USI",
+                &[0x62, 0xF5, 0x7E, 0x08, 0x79, 0x40, 0x01][..],
             ),
         ] {
             let mut ctx = SmirContext::new_x86_64();

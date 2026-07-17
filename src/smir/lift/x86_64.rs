@@ -750,8 +750,12 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
         && matches!(bytes.get(4), Some(0x58 | 0x59 | 0x5C | 0x5E));
     let is_fp16_flag_compare =
         (b1 & 0x07) == 5 && (b2 & 0x03) == 0 && matches!(bytes.get(4), Some(0x2E | 0x2F));
-    let is_fp16_to_int =
-        (b1 & 0x07) == 5 && (b2 & 0x03) == 2 && matches!(bytes.get(4), Some(0x2C | 0x2D));
+    let is_scalar_fp_to_int = ((b1 & 0x07) == 1
+        && matches!(b2 & 0x03, 2 | 3)
+        && matches!(bytes.get(4), Some(0x2C | 0x2D | 0x78 | 0x79)))
+        || ((b1 & 0x07) == 5
+            && (b2 & 0x03) == 2
+            && matches!(bytes.get(4), Some(0x2C | 0x2D | 0x78 | 0x79)));
     let is_fp16_scalar_move =
         (b1 & 0x07) == 5 && (b2 & 0x03) == 2 && matches!(bytes.get(4), Some(0x10 | 0x11));
     let is_fp16_sqrt =
@@ -887,7 +891,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
                 || is_bf16
                 || is_fp16_arithmetic
                 || is_fp16_flag_compare
-                || is_fp16_to_int
+                || is_scalar_fp_to_int
                 || is_fp16_sqrt
                 || is_permute
                 || is_ternary_logic
@@ -8343,6 +8347,7 @@ impl X86_64Lifter {
                 src,
                 elem,
                 int_width,
+                signed: true,
                 truncate: opcode == 0x2C,
                 round: if opcode == 0x2C {
                     FpRoundMode::RoundTowardZero
@@ -29447,7 +29452,7 @@ impl X86_64Lifter {
             || prefix.reg_high
             || prefix.aaa != 0
             || prefix.zeroing
-            || !matches!(opcode, 0x2C | 0x2D)
+            || !matches!(opcode, 0x2C | 0x2D | 0x78 | 0x79)
         {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
@@ -29497,7 +29502,8 @@ impl X86_64Lifter {
         } else {
             self.xmm(modrm.rm + if prefix.rm_high { 16 } else { 0 })
         };
-        let truncate = opcode == 0x2C;
+        let signed = matches!(opcode, 0x2C | 0x2D);
+        let truncate = matches!(opcode, 0x2C | 0x78);
         let round = if truncate {
             FpRoundMode::RoundTowardZero
         } else if prefix.b {
@@ -29518,6 +29524,7 @@ impl X86_64Lifter {
                 src,
                 elem: VecElementType::F16,
                 int_width: if prefix.w { OpWidth::W64 } else { OpWidth::W32 },
+                signed,
                 truncate,
                 round,
                 suppress_exceptions: prefix.b,
@@ -31038,12 +31045,16 @@ impl X86_64Lifter {
                     Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
                 }
 
-                // VCVTTSS2SI/VCVTTSD2SI and VCVTSS2SI/VCVTSD2SI.
-                0x2C | 0x2D => {
+                // Scalar FP32/FP64-to-GPR conversions. Opcodes 2C/2D are the
+                // signed VEX/EVEX forms; 78/79 are EVEX-only unsigned forms.
+                0x2C | 0x2D | 0x78 | 0x79 => {
+                    let signed = matches!(opcode, 0x2C | 0x2D);
+                    let truncate = matches!(opcode, 0x2C | 0x78);
                     if prefix.vvvv != 0
                         || prefix.v_high
                         || prefix.reg_high
                         || !matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne)
+                        || (!signed && prefix.encoding != VecEncodingKind::Evex)
                     {
                         return Err(LiftError::InvalidEncoding {
                             addr: pc,
@@ -31056,6 +31067,12 @@ impl X86_64Lifter {
                         VecElementType::F64
                     };
                     let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
+                    if prefix.encoding == VecEncodingKind::Evex && prefix.b && modrm.is_memory {
+                        return Err(LiftError::InvalidEncoding {
+                            addr: pc,
+                            bytes: bytes.to_vec(),
+                        });
+                    }
                     let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
                     let src = if modrm.is_memory {
                         let (addr, pre_ops) = self.vec_scalar_addr_to_smir(
@@ -31100,13 +31117,22 @@ impl X86_64Lifter {
                             src,
                             elem,
                             int_width: if prefix.w { OpWidth::W64 } else { OpWidth::W32 },
-                            truncate: opcode == 0x2C,
-                            round: if opcode == 0x2C {
+                            signed,
+                            truncate,
+                            round: if truncate {
                                 FpRoundMode::RoundTowardZero
+                            } else if prefix.encoding == VecEncodingKind::Evex && prefix.b {
+                                match prefix.l_bits {
+                                    0 => FpRoundMode::RoundNearest,
+                                    1 => FpRoundMode::RoundDown,
+                                    2 => FpRoundMode::RoundUp,
+                                    _ => FpRoundMode::RoundTowardZero,
+                                }
                             } else {
                                 FpRoundMode::Dynamic
                             },
-                            suppress_exceptions: false,
+                            suppress_exceptions: prefix.encoding == VecEncodingKind::Evex
+                                && prefix.b,
                         },
                         hint,
                     ));
@@ -33554,7 +33580,9 @@ impl X86_64Lifter {
             },
             X86VecMap::Map5 => match opcode {
                 0x10 | 0x11 => self.lift_evex_fp16_scalar_move(prefix, opcode, bytes, pc, ctx),
-                0x2C | 0x2D => self.lift_evex_fp16_to_int(prefix, opcode, bytes, pc, ctx),
+                0x2C | 0x2D | 0x78 | 0x79 => {
+                    self.lift_evex_fp16_to_int(prefix, opcode, bytes, pc, ctx)
+                }
                 0x2E | 0x2F => self.lift_evex_fp16_flag_compare(prefix, opcode, bytes, pc, ctx),
                 0x51 => self.lift_evex_fp16_sqrt(prefix, bytes, pc, ctx),
                 0x58 | 0x59 | 0x5C | 0x5E => {
@@ -55094,17 +55122,80 @@ mod tests {
                 src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
                 elem: VecElementType::F32,
                 int_width: OpWidth::W64,
+                signed: true,
                 truncate: false,
                 round: FpRoundMode::Dynamic,
                 suppress_exceptions: false,
             }
         ));
 
+        let evex_er = lift_single(&[0x62, 0xF1, 0x7E, 0x38, 0x2D, 0xC3]).unwrap();
+        assert!(matches!(
+            evex_er.ops.last().unwrap().kind,
+            OpKind::X86FpToInt {
+                elem: VecElementType::F32,
+                signed: true,
+                truncate: false,
+                round: FpRoundMode::RoundDown,
+                suppress_exceptions: true,
+                ..
+            }
+        ));
+
+        for (bytes, elem, width, truncate, round, sae) in [
+            (
+                &[0x62, 0xF1, 0x7E, 0x08, 0x79, 0xC3][..],
+                VecElementType::F32,
+                OpWidth::W32,
+                false,
+                FpRoundMode::Dynamic,
+                false,
+            ),
+            (
+                &[0x62, 0xF1, 0xFF, 0x18, 0x78, 0xC3][..],
+                VecElementType::F64,
+                OpWidth::W64,
+                true,
+                FpRoundMode::RoundTowardZero,
+                true,
+            ),
+        ] {
+            let unsigned = lift_single(bytes).unwrap();
+            assert!(matches!(
+                unsigned.ops.last().unwrap().kind,
+                OpKind::X86FpToInt {
+                    elem: actual_elem,
+                    int_width,
+                    signed: false,
+                    truncate: actual_truncate,
+                    round: actual_round,
+                    suppress_exceptions,
+                    ..
+                } if actual_elem == elem
+                    && int_width == width
+                    && actual_truncate == truncate
+                    && actual_round == round
+                    && suppress_exceptions == sae
+            ));
+        }
+
+        let unsigned_memory = lift_single(&[0x62, 0xF1, 0x7E, 0x08, 0x79, 0x40, 0x7F]).unwrap();
+        assert!(unsigned_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load {
+                addr: Address::BaseOffset { offset: 508, .. },
+                width: MemWidth::B4,
+                ..
+            }
+        )));
+
         for bytes in [
             &[0x0F, 0x2D, 0xC1][..],                   // missing F2/F3
             &[0xF0, 0xF3, 0x0F, 0x2D, 0xC1][..],       // LOCK
             &[0xC5, 0xF2, 0x2D, 0xC1][..],             // reserved VEX.vvvv
+            &[0xC5, 0xFA, 0x79, 0xC1][..],             // unsigned is EVEX-only
             &[0x62, 0xE1, 0x7E, 0x08, 0x2D, 0xC1][..], // EVEX GPR R'
+            &[0x62, 0xF1, 0x7E, 0x18, 0x79, 0x00][..], // EVEX.b memory
         ] {
             assert!(matches!(
                 lift_single(bytes),
@@ -62475,10 +62566,12 @@ mod tests {
     }
 
     #[test]
-    fn lift_evex_fp16_to_int_covers_rounding_widths_extensions_memory_and_invalids() {
-        for (bytes, truncate) in [
-            (&[0x62, 0xF5, 0x7E, 0x08, 0x2D, 0xC3][..], false),
-            (&[0x62, 0xF5, 0x7E, 0x08, 0x2C, 0xC3][..], true),
+    fn lift_evex_fp16_to_int_covers_signedness_rounding_widths_and_invalids() {
+        for (bytes, signed, truncate) in [
+            (&[0x62, 0xF5, 0x7E, 0x08, 0x2D, 0xC3][..], true, false),
+            (&[0x62, 0xF5, 0x7E, 0x08, 0x2C, 0xC3][..], true, true),
+            (&[0x62, 0xF5, 0x7E, 0x08, 0x79, 0xC3][..], false, false),
+            (&[0x62, 0xF5, 0x7E, 0x08, 0x78, 0xC3][..], false, true),
         ] {
             let lifted = lift_single(bytes).unwrap();
             assert_eq!(lifted.bytes_consumed, bytes.len());
@@ -62489,10 +62582,12 @@ mod tests {
                     src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
                     elem: VecElementType::F16,
                     int_width: OpWidth::W32,
+                    signed: actual_signed,
                     truncate: actual,
                     round,
                     suppress_exceptions: false,
-                } if actual == truncate
+                } if actual_signed == signed
+                    && actual == truncate
                     && round == if truncate {
                         FpRoundMode::RoundTowardZero
                     } else {
@@ -62509,13 +62604,14 @@ mod tests {
                 src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(19))),
                 elem: VecElementType::F16,
                 int_width: OpWidth::W64,
+                signed: true,
                 truncate: false,
                 round: FpRoundMode::Dynamic,
                 suppress_exceptions: false,
             }
         ));
 
-        let memory = lift_single(&[0x62, 0xF5, 0x7E, 0x08, 0x2D, 0x40, 0x7F]).unwrap();
+        let memory = lift_single(&[0x62, 0xF5, 0x7E, 0x08, 0x79, 0x40, 0x7F]).unwrap();
         assert!(memory.ops.iter().any(|op| matches!(
             op.kind,
             OpKind::Load {
@@ -62529,6 +62625,7 @@ mod tests {
             OpKind::X86FpToInt {
                 src: VReg::Virtual(_),
                 elem: VecElementType::F16,
+                signed: false,
                 ..
             }
         ));
@@ -62540,10 +62637,11 @@ mod tests {
             (3, FpRoundMode::RoundTowardZero),
         ] {
             let b3 = 0x18 | (l_bits << 5);
-            let rounded = lift_single(&[0x62, 0xF5, 0x7E, b3, 0x2D, 0xC3]).unwrap();
+            let rounded = lift_single(&[0x62, 0xF5, 0x7E, b3, 0x79, 0xC3]).unwrap();
             assert!(matches!(
                 rounded.ops.last().unwrap().kind,
                 OpKind::X86FpToInt {
+                    signed: false,
                     round,
                     suppress_exceptions: true,
                     ..
@@ -62551,10 +62649,11 @@ mod tests {
             ));
         }
 
-        let trunc_sae = lift_single(&[0x62, 0xF5, 0x7E, 0x78, 0x2C, 0xC3]).unwrap();
+        let trunc_sae = lift_single(&[0x62, 0xF5, 0x7E, 0x78, 0x78, 0xC3]).unwrap();
         assert!(matches!(
             trunc_sae.ops.last().unwrap().kind,
             OpKind::X86FpToInt {
+                signed: false,
                 truncate: true,
                 round: FpRoundMode::RoundTowardZero,
                 suppress_exceptions: true,

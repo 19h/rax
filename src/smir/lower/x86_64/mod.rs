@@ -9151,6 +9151,7 @@ impl X86_64Lowerer {
                 src,
                 elem,
                 int_width,
+                signed,
                 truncate,
                 round,
                 suppress_exceptions,
@@ -9168,13 +9169,14 @@ impl X86_64Lowerer {
                         op: format!("X86FpToInt width {int_width:?}"),
                     });
                 }
-                if *suppress_exceptions
+                if !*signed
+                    || *suppress_exceptions
                     || (*truncate && *round != FpRoundMode::RoundTowardZero)
                     || (!*truncate && *round != FpRoundMode::Dynamic)
                 {
                     return Err(LowerError::UnsupportedOp {
                         op: format!(
-                            "X86FpToInt rounding {round:?}, truncate={truncate}, sae={suppress_exceptions}"
+                            "X86FpToInt signed={signed}, rounding {round:?}, truncate={truncate}, sae={suppress_exceptions}"
                         ),
                     });
                 }
@@ -29443,6 +29445,7 @@ mod tests {
                     src: xmm1,
                     elem: VecElementType::F32,
                     int_width: OpWidth::W32,
+                    signed: true,
                     truncate: false,
                     round: FpRoundMode::Dynamic,
                     suppress_exceptions: false,
@@ -29456,6 +29459,7 @@ mod tests {
                     src: xmm1,
                     elem: VecElementType::F64,
                     int_width: OpWidth::W64,
+                    signed: true,
                     truncate: true,
                     round: FpRoundMode::RoundTowardZero,
                     suppress_exceptions: false,
@@ -29476,11 +29480,24 @@ mod tests {
             src: xmm1,
             elem: VecElementType::F16,
             int_width: OpWidth::W32,
+            signed: true,
             truncate: false,
             round: FpRoundMode::RoundDown,
             suppress_exceptions: true,
         });
         assert!(matches!(fp16_er, LowerError::UnsupportedOp { .. }));
+
+        let unsigned = lower_single_op_err(OpKind::X86FpToInt {
+            dst: rax,
+            src: xmm1,
+            elem: VecElementType::F32,
+            int_width: OpWidth::W32,
+            signed: false,
+            truncate: false,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions: false,
+        });
+        assert!(matches!(unsigned, LowerError::UnsupportedOp { .. }));
     }
 
     #[test]
