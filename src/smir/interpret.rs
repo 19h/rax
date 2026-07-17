@@ -43308,7 +43308,6 @@ mod tests {
                 .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
                 .collect()
         }
-
         fn reference(a: &[u16], b: &[u16]) -> Vec<u32> {
             a.chunks_exact(2)
                 .zip(b.chunks_exact(2))
@@ -46354,6 +46353,9 @@ mod tests {
                 .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
                 .collect()
         }
+        fn mmx_words(value: u64) -> [u16; 4] {
+            std::array::from_fn(|lane| ((value >> (lane * 16)) & 0xFFFF) as u16)
+        }
 
         let sentinel = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
         let flags_before = 0xCD7;
@@ -46362,6 +46364,53 @@ mod tests {
         let mut memory = FlatMemory::new(0x200);
         ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
         ctx.flags.lazy = None;
+
+        // Prefix-free PSHUFW uses four 16-bit lanes, snapshots an aliased
+        // register source, and enters MMX state without changing TOP.
+        let mmx_source = vector_u16(&[0, 1, 2, 3], 0)[0];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[1] = mmx_source;
+            x86.x87.tag_word = 0xFFFF;
+            x86.x87.status_word = 5 << 11;
+        }
+        execute_lifted_x86(&[0x0F, 0x70, 0xC9, 0x1B], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(mmx_words(x86.mm[1]), [3, 2, 1, 0]);
+            assert_eq!(x86.x87.tag_word, 0);
+            assert_eq!(x86.x87.status_word & 0x3800, 5 << 11);
+        }
+
+        // The m64 source may be unaligned. A fault leaves both the destination
+        // and MMX/x87 state untouched because the load precedes writeback.
+        let mmx_memory_source = vector_u16(&[10, 11, 12, 13], 0)[0];
+        memory
+            .write(0x81, &mmx_memory_source.to_le_bytes())
+            .unwrap();
+        ctx.write_vreg(rax, 0x80);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::MAX;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0x70, 0x40, 0x01, 0x1B], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(mmx_words(x86.mm[0]), [13, 12, 11, 10]);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        ctx.write_vreg(rax, 0x1FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0x70, 0x00, 0x1B], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xDEAD_BEEF_CAFE_BABE);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
 
         for (insn, expected) in [
             (
