@@ -7231,6 +7231,18 @@ fn jit_state_backed_gpr_double_shift_execute_without_memory_helpers() {
             rcx: 0,
         },
         Case {
+            name: "SHLD AX,BX,17 low-register deterministic no-op",
+            instruction: &[0x66, 0x0F, 0xA4, 0xD8, 0x11],
+            apx: false,
+            rcx: 0,
+        },
+        Case {
+            name: "SHRD AX,BX,CL low-register dynamic deterministic no-op",
+            instruction: &[0x66, 0x0F, 0xAD, 0xD8],
+            apx: false,
+            rcx: 17,
+        },
+        Case {
             name: "SHRD BP,SP,16 width boundary",
             instruction: &[0x66, 0x0F, 0xAC, 0xE5, 0x10],
             apx: false,

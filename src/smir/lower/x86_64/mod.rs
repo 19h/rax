@@ -380,15 +380,34 @@ pub(crate) fn x86_state_backed_gpr_carry_rotate_valid(op: &SmirOp) -> bool {
 
 pub(crate) fn x86_state_backed_gpr_double_shift_candidate(op: &SmirOp) -> bool {
     let state_amount = |amount: &SrcOperand| matches!(amount, SrcOperand::Reg(reg) if x86_state_backed_arch_gpr(reg));
+    let needs_subword_guard = |width: OpWidth, amount: &SrcOperand| {
+        width == OpWidth::W16
+            && match amount {
+                SrcOperand::Imm(value) => (*value as u64 & 0x1f) > 16,
+                SrcOperand::Reg(_) => true,
+                _ => false,
+            }
+    };
 
     match &op.kind {
         OpKind::Shld {
-            dst, src, amount, ..
+            dst,
+            src,
+            amount,
+            width,
+            ..
         }
         | OpKind::Shrd {
-            dst, src, amount, ..
+            dst,
+            src,
+            amount,
+            width,
+            ..
         } => {
-            x86_state_backed_arch_gpr(dst) || x86_state_backed_arch_gpr(src) || state_amount(amount)
+            x86_state_backed_arch_gpr(dst)
+                || x86_state_backed_arch_gpr(src)
+                || state_amount(amount)
+                || needs_subword_guard(*width, amount)
         }
         OpKind::X86NddDoubleShift {
             dst,
@@ -398,17 +417,11 @@ pub(crate) fn x86_state_backed_gpr_double_shift_candidate(op: &SmirOp) -> bool {
             width,
             ..
         } => {
-            let needs_subword_guard = *width == OpWidth::W16
-                && match amount {
-                    SrcOperand::Imm(value) => (*value as u64 & 0x1f) > 16,
-                    SrcOperand::Reg(_) => true,
-                    _ => false,
-                };
             x86_state_backed_arch_gpr(dst)
                 || x86_state_backed_arch_gpr(base)
                 || x86_state_backed_arch_gpr(fill)
                 || state_amount(amount)
-                || needs_subword_guard
+                || needs_subword_guard(*width, amount)
         }
         _ => false,
     }
@@ -30868,6 +30881,40 @@ mod tests {
         );
         assert_eq!(guarded_ndd.iter().filter(|byte| **byte == 0x9C).count(), 1);
         assert_eq!(guarded_ndd.iter().filter(|byte| **byte == 0x9D).count(), 1);
+
+        let guarded_legacy = lower_single_op(OpKind::Shld {
+            dst: x86(X86Reg::Rax),
+            src: x86(X86Reg::Rbx),
+            amount: SrcOperand::Imm(17),
+            width: OpWidth::W16,
+            flags: FlagUpdate::All,
+        });
+        assert!(
+            !guarded_legacy
+                .windows(5)
+                .any(|bytes| bytes == [0x66, 0x0F, 0xA4, 0xF2, 0x11]),
+            "W16 legacy count above the width must not execute the host instruction: {guarded_legacy:02X?}"
+        );
+
+        let dynamic_legacy = lower_single_op(OpKind::Shrd {
+            dst: x86(X86Reg::Rax),
+            src: x86(X86Reg::Rbx),
+            amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+            width: OpWidth::W16,
+            flags: FlagUpdate::None,
+        });
+        assert!(
+            dynamic_legacy
+                .windows(4)
+                .any(|bytes| bytes == [0x66, 0x0F, 0xAD, 0xF2]),
+            "dynamic W16 legacy SHRD must use the staged register form: {dynamic_legacy:02X?}"
+        );
+        assert!(
+            dynamic_legacy
+                .windows(4)
+                .any(|bytes| bytes == [0x48, 0x83, 0xFF, 0x10]),
+            "dynamic W16 legacy SHRD must guard counts above the width: {dynamic_legacy:02X?}"
+        );
 
         for malformed in [
             OpKind::Shld {

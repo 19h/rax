@@ -25175,7 +25175,10 @@ mod jit_gate_tests {
                 },
             ),
         ] {
-            assert!(x86_gate(op), "valid state-backed {name} must JIT");
+            assert!(
+                x86_gate(op),
+                "valid state-backed or guarded {name} must JIT"
+            );
         }
 
         for (name, op) in [
@@ -25433,6 +25436,26 @@ mod jit_gate_tests {
                     width: OpWidth::W16,
                     left: true,
                     flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "direct legacy SHLD AX,BX,17 needs deterministic guard",
+                OpKind::Shld {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rbx),
+                    amount: SrcOperand::Imm(17),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::All,
+                },
+            ),
+            (
+                "direct legacy SHRD AX,BX,CL needs runtime guard",
+                OpKind::Shrd {
+                    dst: x86(X86Reg::Rax),
+                    src: x86(X86Reg::Rbx),
+                    amount: SrcOperand::Reg(x86(X86Reg::Rcx)),
+                    width: OpWidth::W16,
+                    flags: FlagUpdate::None,
                 },
             ),
         ] {
