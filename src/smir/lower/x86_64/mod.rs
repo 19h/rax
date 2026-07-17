@@ -5864,6 +5864,39 @@ impl X86_64Lowerer {
     /// the normal scalar/vector matcher; any mixed or malformed MMX shape is an
     /// error rather than a widening opportunity.
     fn lower_mmx_rr(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<bool, LowerError> {
+        if let OpKind::VMov { dst, src, width } = &op.kind {
+            let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+            if is_mm(dst) || is_mm(src) {
+                let opcode = match op.x86_hint {
+                    Some(X86OpHint::SseMov {
+                        prefix: X86SsePrefix::None,
+                        opcode: opcode @ (0x6F | 0x7F),
+                    }) => Some(opcode),
+                    _ => None,
+                };
+                let encoding_valid =
+                    *width == VecWidth::V64 && is_mm(dst) && is_mm(src) && opcode.is_some();
+                if !encoding_valid {
+                    return Err(LowerError::InvalidOperand {
+                        op: "MMX MOVQ".to_string(),
+                        operand: "requires exact V64 MM registers and prefix-free MOVQ opcode"
+                            .to_string(),
+                    });
+                }
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let opcode = opcode.unwrap();
+                let (reg, rm) = if opcode == 0x6F {
+                    (dst_reg, src_reg)
+                } else {
+                    (src_reg, dst_reg)
+                };
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mmx_rr(opcode, reg, rm);
+                return Ok(true);
+            }
+        }
+
         if let OpKind::VInsertLane {
             dst,
             vec,
@@ -27922,6 +27955,139 @@ mod tests {
             ),
             "{error:?}"
         );
+    }
+
+    #[test]
+    fn lower_mmx_movq_emits_directional_opcodes_and_rejects_malformed_ir() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (opcode, expected) in [
+            (0x6F, &[0x0F, 0x6F, 0xCA][..]),
+            (0x7F, &[0x0F, 0x7F, 0xD1][..]),
+        ] {
+            let code = lower_single_hinted_op(
+                OpKind::VMov {
+                    dst: mm(1),
+                    src: mm(2),
+                    width: VecWidth::V64,
+                },
+                X86OpHint::SseMov {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "missing MMX MOVQ encoding {expected:02X?}: {code:02X?}"
+            );
+        }
+
+        for (kind, hint) in [
+            (
+                OpKind::VMov {
+                    dst: mm(1),
+                    src: mm(2),
+                    width: VecWidth::V128,
+                },
+                X86OpHint::SseMov {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x6F,
+                },
+            ),
+            (
+                OpKind::VMov {
+                    dst: mm(1),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                    width: VecWidth::V64,
+                },
+                X86OpHint::SseMov {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x6F,
+                },
+            ),
+            (
+                OpKind::VMov {
+                    dst: mm(1),
+                    src: mm(2),
+                    width: VecWidth::V64,
+                },
+                X86OpHint::SseMov {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x6F,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::InvalidOperand { .. } | LowerError::InvalidRegister(_)
+            ));
+        }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[test]
+    fn native_mmx_movq_executes_both_register_directions_and_round_trips_state() {
+        use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        for (dst, src) in [(mm(0), mm(1)), (mm(2), mm(0))] {
+            builder.push_op(
+                0x1000,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.push_op(
+                0x1000,
+                OpKind::VMov {
+                    dst,
+                    src,
+                    width: VecWidth::V64,
+                },
+            );
+        }
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseMov {
+            prefix: X86SsePrefix::None,
+            opcode: 0x6F,
+        });
+        function.blocks[0].ops[3].x86_hint = Some(X86OpHint::SseMov {
+            prefix: X86SsePrefix::None,
+            opcode: 0x7F,
+        });
+
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&function)
+            .expect("lower native MMX MOVQ operations");
+        let code = lowerer.finalize().expect("finalize MMX MOVQ code");
+        let exec = ExecMem::new(&code).expect("map MMX MOVQ code");
+        let mut regs = GuestRegs {
+            mm: [
+                0xAAAA_AAAA_AAAA_AAAA,
+                0x0123_4567_89AB_CDEF,
+                0xBBBB_BBBB_BBBB_BBBB,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ],
+            mmx_active: 1,
+            x87_tag_word: 0xFFFF,
+            rflags: 0x2 | 0x8D5,
+            ..GuestRegs::default()
+        };
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.mm[0], 0x0123_4567_89AB_CDEF);
+        assert_eq!(regs.mm[1], 0x0123_4567_89AB_CDEF);
+        assert_eq!(regs.mm[2], 0x0123_4567_89AB_CDEF);
+        assert_eq!(regs.x87_tag_word, 0);
+        assert_eq!(regs.rflags & 0x8D5, 0x8D5);
     }
 
     #[test]

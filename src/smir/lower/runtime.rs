@@ -3347,6 +3347,22 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
         VecUnaryOp, VecWidth, X86Reg,
     };
 
+    if let OpKind::VMov { dst, src, width } = &op.kind {
+        let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
+        if mm(dst) || mm(src) {
+            return *width == VecWidth::V64
+                && mm(dst)
+                && mm(src)
+                && matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::SseMov {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0x6F | 0x7F,
+                    })
+                );
+        }
+    }
+
     if let OpKind::VInsertLane {
         dst,
         vec,
@@ -14580,6 +14596,88 @@ mod jit_gate_tests {
                     opcode: 0xD7,
                 },
             );
+            assert!(!is_x86_native_mmx_op(&malformed), "{malformed:?}");
+        }
+    }
+
+    #[test]
+    fn x86_mmx_movq_gate_accepts_only_exact_v64_register_forms() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for opcode in [0x6F, 0x7F] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0xA470);
+            builder.push_op(
+                0xA470,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.push_op(
+                0xA470,
+                OpKind::VMov {
+                    dst: mm(1),
+                    src: mm(2),
+                    width: VecWidth::V64,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseMov {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[1]));
+            assert!(!x86_native_mmx_op_requires_ssse3(
+                &function.blocks[0].ops[1]
+            ));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+
+        for malformed in [
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(0),
+                0xA470,
+                OpKind::VMov {
+                    dst: mm(1),
+                    src: mm(2),
+                    width: VecWidth::V128,
+                },
+                X86OpHint::SseMov {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x6F,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(1),
+                0xA470,
+                OpKind::VMov {
+                    dst: mm(1),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                    width: VecWidth::V64,
+                },
+                X86OpHint::SseMov {
+                    prefix: X86SsePrefix::None,
+                    opcode: 0x6F,
+                },
+            ),
+            crate::smir::ir::ops::SmirOp::with_hint(
+                crate::smir::ir::types::OpId(2),
+                0xA470,
+                OpKind::VMov {
+                    dst: mm(1),
+                    src: mm(2),
+                    width: VecWidth::V64,
+                },
+                X86OpHint::SseMov {
+                    prefix: X86SsePrefix::OpSize,
+                    opcode: 0x6F,
+                },
+            ),
+        ] {
             assert!(!is_x86_native_mmx_op(&malformed), "{malformed:?}");
         }
     }

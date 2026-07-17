@@ -6813,7 +6813,7 @@ impl X86_64Lifter {
         }
     }
 
-    /// Lift SSE MOVDQA/MOVDQU (0F 6F/7F with prefixes)
+    /// Lift MMX MOVQ and legacy SSE packed moves (0F 6F/7F and related forms).
     fn lift_sse_mov(
         &self,
         opcode: u8,
@@ -6846,6 +6846,107 @@ impl X86_64Lifter {
             prefix: prefix_kind,
             opcode,
         };
+
+        if prefix_kind == X86SsePrefix::None && matches!(opcode, 0x6F | 0x7F) {
+            if prefix.rex2.is_some() {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes.to_vec(),
+                });
+            }
+            let reg = self.mm(modrm.reg & 0x07);
+            if opcode == 0x6F {
+                if modrm.is_memory {
+                    let (addr, pre_ops) =
+                        self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                    ops.extend(pre_ops);
+                    ops.push(SmirOp::with_hint(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VLoad {
+                            dst: reg,
+                            addr,
+                            width: VecWidth::V64,
+                        },
+                        hint,
+                    ));
+                    // A faulting load must not enter MMX state.
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::X86X87Control {
+                            kind: X86X87ControlKind::EnterMmx,
+                            addr: None,
+                        },
+                    ));
+                } else {
+                    ops.push(SmirOp::new(
+                        OpId(0),
+                        pc,
+                        OpKind::X86X87Control {
+                            kind: X86X87ControlKind::EnterMmx,
+                            addr: None,
+                        },
+                    ));
+                    ops.push(SmirOp::with_hint(
+                        OpId(1),
+                        pc,
+                        OpKind::VMov {
+                            dst: reg,
+                            src: self.mm(modrm.rm & 0x07),
+                            width: VecWidth::V64,
+                        },
+                        hint,
+                    ));
+                }
+            } else if modrm.is_memory {
+                let (addr, pre_ops) =
+                    self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                ops.extend(pre_ops);
+                ops.push(SmirOp::with_hint(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VStore {
+                        src: reg,
+                        addr,
+                        width: VecWidth::V64,
+                    },
+                    hint,
+                ));
+                // A faulting store must not enter MMX state.
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    },
+                ));
+            } else {
+                ops.push(SmirOp::new(
+                    OpId(0),
+                    pc,
+                    OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    },
+                ));
+                ops.push(SmirOp::with_hint(
+                    OpId(1),
+                    pc,
+                    OpKind::VMov {
+                        dst: self.mm(modrm.rm & 0x07),
+                        src: reg,
+                        width: VecWidth::V64,
+                    },
+                    hint,
+                ));
+            }
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
 
         if matches!(prefix_kind, X86SsePrefix::Rep | X86SsePrefix::Repne)
             && matches!(opcode, 0x10 | 0x11)
@@ -37631,7 +37732,7 @@ impl X86_64Lifter {
                 self.lift_sse_duplicate_move(opcode2, after_opcode, &prefix2, pc, ctx)
             }
 
-            // Packed legacy SSE/SSE2 moves.
+            // Prefix-free MMX MOVQ and packed legacy SSE/SSE2 moves.
             0x10 | 0x11 | 0x28 | 0x29 | 0x6F | 0x7F => {
                 self.lift_sse_mov(opcode2, after_opcode, &prefix2, pc, ctx)
             }
@@ -37644,8 +37745,7 @@ impl X86_64Lifter {
                 self.lift_sse_movq_vec(opcode2, after_opcode, &prefix2, pc, ctx)
             }
 
-            // MOVD/MOVQ between XMM and GPR/memory operands. Prefix-free
-            // encodings address MMX state, which SMIR does not expose.
+            // MOVD/MOVQ between XMM or MMX and GPR/memory operands.
             0x6E | 0x7E => self.lift_sse_movd_q(opcode2, after_opcode, &prefix2, pc, ctx),
 
             // MOVMSKPS/MOVMSKPD sign-bit extraction.
@@ -37721,7 +37821,7 @@ impl X86_64Lifter {
             }
 
             // Packed sums of absolute byte differences. Prefix-free forms
-            // target MMX state, which SMIR does not expose.
+            // target MMX state.
             0xF6 => self.lift_sse_psadbw(after_opcode, &prefix2, pc, ctx),
 
             // Scalar ordered/unordered FP compare setting integer flags.
@@ -64149,6 +64249,112 @@ mod tests {
                 ),
                 "invalid MOVNT vector store accepted: {bytes:02X?}"
             );
+        }
+    }
+
+    #[test]
+    fn lift_mmx_movq_uses_v64_registers_ignores_rex_extensions_and_orders_faults() {
+        for (bytes, dst, src, opcode) in [
+            (
+                &[0x45, 0x0F, 0x6F, 0xC1][..],
+                X86Reg::Mm(0),
+                X86Reg::Mm(1),
+                0x6F,
+            ),
+            (
+                &[0x45, 0x0F, 0x7F, 0xC1][..],
+                X86Reg::Mm(1),
+                X86Reg::Mm(0),
+                0x7F,
+            ),
+        ] {
+            let lifted = lift_single(bytes).unwrap();
+            assert_eq!(lifted.bytes_consumed, bytes.len());
+            assert!(matches!(
+                lifted.ops.as_slice(),
+                [
+                    SmirOp {
+                        kind: OpKind::X86X87Control {
+                            kind: X86X87ControlKind::EnterMmx,
+                            addr: None,
+                        },
+                        ..
+                    },
+                    SmirOp {
+                        kind: OpKind::VMov {
+                            dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                            src: VReg::Arch(ArchReg::X86(actual_src)),
+                            width: VecWidth::V64,
+                        },
+                        x86_hint: Some(X86OpHint::SseMov {
+                            prefix: X86SsePrefix::None,
+                            opcode: actual_opcode,
+                        }),
+                        ..
+                    }
+                ] if *actual_dst == dst && *actual_src == src && *actual_opcode == opcode
+            ));
+        }
+
+        let load = lift_single(&[0x44, 0x0F, 0x6F, 0x08]).unwrap();
+        assert!(matches!(
+            load.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::VLoad {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        width: VecWidth::V64,
+                        ..
+                    },
+                    x86_hint: Some(X86OpHint::SseMov {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0x6F,
+                    }),
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    },
+                    ..
+                }
+            ]
+        ));
+        let store = lift_single(&[0x44, 0x0F, 0x7F, 0x08]).unwrap();
+        assert!(matches!(
+            store.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::VStore {
+                        src: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                        width: VecWidth::V64,
+                        ..
+                    },
+                    x86_hint: Some(X86OpHint::SseMov {
+                        prefix: X86SsePrefix::None,
+                        opcode: 0x7F,
+                    }),
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    },
+                    ..
+                }
+            ]
+        ));
+        for bytes in [
+            &[0xF0, 0x0F, 0x6F, 0xC1][..],
+            &[0xF2, 0x0F, 0x6F, 0xC1][..],
+            &[0xF0, 0x0F, 0x7F, 0x08][..],
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. })
+            ));
         }
     }
 

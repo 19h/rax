@@ -37216,6 +37216,81 @@ mod tests {
     }
 
     #[test]
+    fn lifted_mmx_movq_executes_directions_rex_memory_state_and_faults() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let flags_before = 0xCD7;
+        let mut memory = FlatMemory::new(0x100);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
+        ctx.flags.lazy = None;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xAAAA_AAAA_AAAA_AAAA;
+            x86.mm[1] = 0x0123_4567_89AB_CDEF;
+            x86.x87.tag_word = 0xFFFF;
+            x86.x87.status_word = 4 << 11;
+        }
+
+        // REX.R/REX.B do not extend either three-bit MM field.
+        execute_lifted_x86(&[0x45, 0x0F, 0x6F, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0x0123_4567_89AB_CDEF);
+            assert_eq!(x86.mm[1], 0x0123_4567_89AB_CDEF);
+            assert_eq!(x86.x87.tag_word, 0);
+            assert_eq!(x86.x87.status_word & 0x3800, 4 << 11);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xFEDC_BA98_7654_3210;
+        }
+        execute_lifted_x86(&[0x45, 0x0F, 0x7F, 0xC1], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[1], 0xFEDC_BA98_7654_3210);
+        }
+
+        let memory_value = 0x8877_6655_4433_2211u64;
+        memory.write(0x41, &memory_value.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x40);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0x6F, 0x48, 0x01], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[1], memory_value);
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+        ctx.write_vreg(rax, 0x50);
+        execute_lifted_x86(&[0x0F, 0x7F, 0x48, 0x01], &mut ctx, &mut memory);
+        let mut stored = [0u8; 8];
+        memory.read(0x51, &mut stored).unwrap();
+        assert_eq!(u64::from_le_bytes(stored), memory_value);
+
+        for (bytes, write) in [
+            (&[0x0F, 0x6F, 0x08][..], false),
+            (&[0x0F, 0x7F, 0x08][..], true),
+        ] {
+            ctx.write_vreg(rax, 0x100);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[1] = 0xA5A5_5A5A_C3C3_3C3C;
+                x86.x87.tag_word = 0xFFFF;
+            }
+            let fault = execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            assert!(matches!(
+                fault,
+                BlockResult::Exit(ExitReason::MemoryFault {
+                    write: actual,
+                    ..
+                }) if actual == write
+            ));
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.mm[1], 0xA5A5_5A5A_C3C3_3C3C);
+                assert_eq!(x86.x87.tag_word, 0xFFFF);
+            }
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), flags_before);
+    }
+
+    #[test]
     fn lifted_scalar_vector_movq_executes_aliasing_upper_state_memory_and_faults_exactly() {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let flags_before = 0xCD7;
