@@ -5906,6 +5906,28 @@ impl X86_64Lowerer {
                     _ => None,
                 },
             ),
+            OpKind::VInterleave {
+                dst,
+                src1,
+                src2,
+                elem,
+                lanes,
+                block_lanes,
+                high,
+            } => (
+                dst,
+                src1,
+                src2,
+                match (*elem, *lanes, *block_lanes, *high) {
+                    (VecElementType::I8, 8, 8, false) => Some(0x60),
+                    (VecElementType::I16, 4, 4, false) => Some(0x61),
+                    (VecElementType::I32, 2, 2, false) => Some(0x62),
+                    (VecElementType::I8, 8, 8, true) => Some(0x68),
+                    (VecElementType::I16, 4, 4, true) => Some(0x69),
+                    (VecElementType::I32, 2, 2, true) => Some(0x6A),
+                    _ => None,
+                },
+            ),
             _ => return Ok(false),
         };
         let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
@@ -26612,6 +26634,39 @@ mod tests {
             assert!(
                 code.windows(3).any(|window| window == [0x0F, opcode, 0xE1]),
                 "missing MMX compare 0F {opcode:02X} /r: {code:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lower_mmx_interleave_emits_all_classic_register_opcodes() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, lanes, block_lanes, high, opcode) in [
+            (VecElementType::I8, 8, 8, false, 0x60),
+            (VecElementType::I16, 4, 4, false, 0x61),
+            (VecElementType::I32, 2, 2, false, 0x62),
+            (VecElementType::I8, 8, 8, true, 0x68),
+            (VecElementType::I16, 4, 4, true, 0x69),
+            (VecElementType::I32, 2, 2, true, 0x6A),
+        ] {
+            let code = lower_single_hinted_op(
+                OpKind::VInterleave {
+                    dst: mm(5),
+                    src1: mm(5),
+                    src2: mm(2),
+                    elem,
+                    lanes,
+                    block_lanes,
+                    high,
+                },
+                X86OpHint::SseOp {
+                    prefix: X86SsePrefix::None,
+                    opcode,
+                },
+            );
+            assert!(
+                code.windows(3).any(|window| window == [0x0F, opcode, 0xEA]),
+                "missing MMX interleave 0F {opcode:02X} /r: {code:02X?}"
             );
         }
     }

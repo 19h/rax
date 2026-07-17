@@ -3450,6 +3450,28 @@ pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 _ => None,
             },
         ),
+        OpKind::VInterleave {
+            dst,
+            src1,
+            src2,
+            elem,
+            lanes,
+            block_lanes,
+            high,
+        } => (
+            dst,
+            src1,
+            src2,
+            match (*elem, *lanes, *block_lanes, *high) {
+                (VecElementType::I8, 8, 8, false) => Some(0x60),
+                (VecElementType::I16, 4, 4, false) => Some(0x61),
+                (VecElementType::I32, 2, 2, false) => Some(0x62),
+                (VecElementType::I8, 8, 8, true) => Some(0x68),
+                (VecElementType::I16, 4, 4, true) => Some(0x69),
+                (VecElementType::I32, 2, 2, true) => Some(0x6A),
+                _ => None,
+            },
+        ),
         _ => return false,
     };
     let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
@@ -13232,6 +13254,52 @@ mod jit_gate_tests {
                     cond,
                     elem,
                     lanes,
+                },
+            );
+            builder.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = builder.finish();
+            function.blocks[0].ops[1].x86_hint = Some(X86OpHint::SseOp {
+                prefix: X86SsePrefix::None,
+                opcode,
+            });
+            assert!(is_x86_native_mmx_op(&function.blocks[0].ops[1]));
+            assert!(is_native_clobber_safe(&function));
+            assert!(x86_native_mmx_pairs_valid_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ));
+        }
+    }
+
+    #[test]
+    fn x86_mmx_interleave_gate_covers_exact_classic_shapes() {
+        let mm = |index| VReg::Arch(ArchReg::X86(X86Reg::Mm(index)));
+        for (elem, lanes, block_lanes, high, opcode) in [
+            (VecElementType::I8, 8, 8, false, 0x60),
+            (VecElementType::I16, 4, 4, false, 0x61),
+            (VecElementType::I32, 2, 2, false, 0x62),
+            (VecElementType::I8, 8, 8, true, 0x68),
+            (VecElementType::I16, 4, 4, true, 0x69),
+            (VecElementType::I32, 2, 2, true, 0x6A),
+        ] {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x7000);
+            builder.push_op(
+                0x7000,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            );
+            builder.push_op(
+                0x7000,
+                OpKind::VInterleave {
+                    dst: mm(5),
+                    src1: mm(5),
+                    src2: mm(2),
+                    elem,
+                    lanes,
+                    block_lanes,
+                    high,
                 },
             );
             builder.set_terminator(Terminator::Return { values: vec![] });
