@@ -40069,14 +40069,15 @@ mod tests {
 
         fn reference(high: &[u8], low: &[u8], imm: u8) -> Vec<u8> {
             let mut result = vec![0; high.len()];
-            for block in 0..high.len() / 16 {
-                let base = block * 16;
-                for lane in 0..16 {
+            let block_bytes = usize::min(16, high.len());
+            for block in 0..high.len() / block_bytes {
+                let base = block * block_bytes;
+                for lane in 0..block_bytes {
                     let index = usize::from(imm) + lane;
-                    result[base + lane] = if index < 16 {
+                    result[base + lane] = if index < block_bytes {
                         low[base + index]
-                    } else if index < 32 {
-                        high[base + index - 16]
+                    } else if index < block_bytes * 2 {
+                        high[base + index - block_bytes]
                     } else {
                         0
                     };
@@ -40096,6 +40097,65 @@ mod tests {
         let mut memory = FlatMemory::new(0x400);
         ctx.flags.materialized = MaterializedFlags::from_rflags(flags_before);
         ctx.flags.lazy = None;
+
+        for imm in [0u8, 1, 7, 8, 9, 15, 16, 255] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mm[0] = u64::from_le_bytes(high[..8].try_into().unwrap());
+                x86.mm[1] = u64::from_le_bytes(low[..8].try_into().unwrap());
+                x86.x87.tag_word = 0xFFFF;
+            }
+            execute_lifted_x86(&[0x0F, 0x3A, 0x0F, 0xC1, imm], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    x86.mm[0],
+                    u64::from_le_bytes(reference(&high[..8], &low[..8], imm).try_into().unwrap()),
+                    "MMX imm={imm}"
+                );
+                assert_eq!(x86.x87.tag_word, 0);
+            }
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::from_le_bytes(high[..8].try_into().unwrap());
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0x3A, 0x0F, 0xC0, 5], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.mm[0],
+                u64::from_le_bytes(reference(&high[..8], &high[..8], 5).try_into().unwrap())
+            );
+        }
+
+        memory.write(0x181, &low[..8]).unwrap();
+        ctx.write_vreg(rax, 0x180);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = u64::from_le_bytes(high[..8].try_into().unwrap());
+            x86.x87.tag_word = 0xFFFF;
+        }
+        execute_lifted_x86(&[0x0F, 0x3A, 0x0F, 0x40, 0x01, 5], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.mm[0],
+                u64::from_le_bytes(reference(&high[..8], &low[..8], 5).try_into().unwrap())
+            );
+            assert_eq!(x86.x87.tag_word, 0);
+        }
+
+        ctx.write_vreg(rax, 0x3FC);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mm[0] = 0xDEAD_BEEF_CAFE_BABE;
+            x86.x87.tag_word = 0xFFFF;
+        }
+        let mmx_fault = execute_lifted_x86(&[0x0F, 0x3A, 0x0F, 0x00, 5], &mut ctx, &mut memory);
+        assert!(matches!(
+            mmx_fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mm[0], 0xDEAD_BEEF_CAFE_BABE);
+            assert_eq!(x86.x87.tag_word, 0xFFFF);
+        }
 
         for imm in [0u8, 1, 15, 16, 17, 31, 32, 255] {
             if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
