@@ -9006,15 +9006,14 @@ impl X86_64Lifter {
                 src2,
                 elem,
                 lanes: width.lanes(elem) as u8,
-                block_lanes: (16 / elem.bytes()) as u8,
+                block_lanes: (if width == VecWidth::V64 { 8 } else { 16 } / elem.bytes()) as u8,
                 high,
             },
             hint,
         ));
     }
 
-    /// Lift SSE2 PUNPCKL*/PUNPCKH* XMM interleaves. Prefix-free forms target
-    /// MMX state and are intentionally reported separately.
+    /// Lift MMX/SSE2 PUNPCKL*/PUNPCKH* packed-integer interleaves.
     fn lift_sse_integer_unpack(
         &self,
         opcode: u8,
@@ -9023,13 +9022,9 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if !prefix.operand_size_override && prefix.rep_prefix.is_none() && !prefix.lock {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("MMX unpack opcode {opcode:02X}"),
-            });
-        }
-        if !prefix.operand_size_override
+        let mmx_opcode = matches!(opcode, 0x60 | 0x61 | 0x62 | 0x68 | 0x69 | 0x6A);
+        let mmx = !prefix.operand_size_override && mmx_opcode;
+        if (!prefix.operand_size_override && !mmx)
             || prefix.rep_prefix.is_some()
             || prefix.lock
             || prefix.rex2.is_some()
@@ -9047,6 +9042,7 @@ impl X86_64Lifter {
             _ => unreachable!(),
         };
         let high = matches!(opcode, 0x68 | 0x69 | 0x6A | 0x6D);
+        let width = if mmx { VecWidth::V64 } else { VecWidth::V128 };
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();
@@ -9054,21 +9050,64 @@ impl X86_64Lifter {
             let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
             ops.extend(pre_ops);
             let loaded = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VLoad {
-                    dst: loaded,
-                    addr,
-                    width: VecWidth::V128,
-                },
-            ));
+            if mmx && !high {
+                // MMX PUNPCKL* memory sources are m32 even though register
+                // sources address a complete 64-bit MM register.
+                let scalar = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Load {
+                        dst: scalar,
+                        addr,
+                        width: MemWidth::B4,
+                        sign: SignExtend::Zero,
+                    },
+                ));
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VBroadcast {
+                        dst: loaded,
+                        scalar,
+                        elem: VecElementType::I64,
+                        lanes: 1,
+                    },
+                ));
+            } else {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VLoad {
+                        dst: loaded,
+                        addr,
+                        width,
+                    },
+                ));
+            }
             loaded
+        } else if mmx {
+            self.mm(modrm.rm)
         } else {
             self.xmm(modrm.rm)
         };
-        let dst = self.xmm(modrm.reg);
-        let result = if modrm.is_memory {
+        if mmx {
+            // A faulting memory source must not enter MMX state.
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            ));
+        }
+        let dst = if mmx {
+            self.mm(modrm.reg)
+        } else {
+            self.xmm(modrm.reg)
+        };
+        let result = if modrm.is_memory && !mmx {
             ctx.alloc_vreg()
         } else {
             dst
@@ -9078,16 +9117,20 @@ impl X86_64Lifter {
             dst,
             src2,
             elem,
-            VecWidth::V128,
+            width,
             high,
             X86OpHint::SseOp {
-                prefix: X86SsePrefix::OpSize,
+                prefix: if mmx {
+                    X86SsePrefix::None
+                } else {
+                    X86SsePrefix::OpSize
+                },
                 opcode,
             },
             pc,
             &mut ops,
         );
-        if modrm.is_memory {
+        if modrm.is_memory && !mmx {
             self.append_legacy_packed_result(dst, result, elem, pc, ctx, &mut ops);
         }
         Ok(LiftResult::fallthrough(
@@ -52412,6 +52455,42 @@ mod tests {
             (0x6A, VecElementType::I32, true),
             (0x6D, VecElementType::I64, true),
         ] {
+            if elem != VecElementType::I64 {
+                let mmx = lift_single(&[0x0F, opcode, 0xC1]).unwrap();
+                assert!(matches!(
+                    mmx.ops.as_slice(),
+                    [
+                        SmirOp {
+                            kind: OpKind::X86X87Control {
+                                kind: X86X87ControlKind::EnterMmx,
+                                ..
+                            },
+                            ..
+                        },
+                        SmirOp {
+                            kind: OpKind::VInterleave {
+                                dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                                src1: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                                src2: VReg::Arch(ArchReg::X86(X86Reg::Mm(1))),
+                                elem: actual,
+                                lanes,
+                                block_lanes,
+                                high: actual_high,
+                            },
+                            x86_hint: Some(X86OpHint::SseOp {
+                                prefix: X86SsePrefix::None,
+                                opcode: actual_opcode,
+                            }),
+                            ..
+                        }
+                    ] if *actual == elem
+                        && u32::from(*lanes) == VecWidth::V64.lanes(elem)
+                        && u32::from(*block_lanes) == 8 / elem.bytes()
+                        && *actual_high == high
+                        && *actual_opcode == opcode
+                ));
+            }
+
             let legacy = lift_single(&[0x66, 0x0F, opcode, 0xC1]).unwrap();
             assert!(legacy.ops.iter().any(|op| matches!(
                 (op.kind.clone(), op.x86_hint),
@@ -52509,8 +52588,81 @@ mod tests {
             }
         )));
 
+        let mmx_low_memory = lift_single(&[0x0F, 0x60, 0x00]).unwrap();
+        assert!(matches!(
+            mmx_low_memory.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::Load {
+                        width: MemWidth::B4,
+                        sign: SignExtend::Zero,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::VBroadcast {
+                        elem: VecElementType::I64,
+                        lanes: 1,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::VInterleave {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        elem: VecElementType::I8,
+                        lanes: 8,
+                        block_lanes: 8,
+                        high: false,
+                        ..
+                    },
+                    ..
+                }
+            ]
+        ));
+        let mmx_high_memory = lift_single(&[0x0F, 0x68, 0x00]).unwrap();
+        assert!(matches!(
+            mmx_high_memory.ops.as_slice(),
+            [
+                SmirOp {
+                    kind: OpKind::VLoad {
+                        width: VecWidth::V64,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        ..
+                    },
+                    ..
+                },
+                SmirOp {
+                    kind: OpKind::VInterleave {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Mm(0))),
+                        elem: VecElementType::I8,
+                        lanes: 8,
+                        block_lanes: 8,
+                        high: true,
+                        ..
+                    },
+                    ..
+                }
+            ]
+        ));
+
         for bytes in [
-            &[0x0F, 0x60, 0xC1][..],             // MMX form
+            &[0x0F, 0x6C, 0xC1][..],             // no MMX qword form
+            &[0x0F, 0x6D, 0xC1][..],             // no MMX qword form
             &[0xF0, 0x66, 0x0F, 0x60, 0xC1][..], // LOCK
             &[0xF3, 0x66, 0x0F, 0x60, 0xC1][..], // conflicting mandatory prefix
             &[0xC5, 0xF0, 0x60, 0xC1][..],       // VEX.pp != 66
