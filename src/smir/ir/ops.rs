@@ -1526,15 +1526,19 @@ pub enum OpKind {
         suppress_exceptions: bool,
     },
 
-    /// x86 CVT(T)SS2SI/CVT(T)SD2SI scalar conversion. Invalid or out-of-range
-    /// inputs produce the signed integer-indefinite value for `int_width` when
-    /// the SIMD invalid exception is masked. Non-truncating forms use MXCSR.RC.
+    /// x86 CVT(T)SS2SI/CVT(T)SD2SI/VCVT(T)SH2SI scalar conversion. Invalid or
+    /// out-of-range inputs produce the signed integer-indefinite value for
+    /// `int_width` when the SIMD invalid exception is masked. `round` records
+    /// MXCSR-dynamic or EVEX embedded rounding; truncating forms require
+    /// round-toward-zero. `suppress_exceptions` records EVEX ER/SAE.
     X86FpToInt {
         dst: VReg,
         src: VReg,
         elem: VecElementType,
         int_width: OpWidth,
         truncate: bool,
+        round: FpRoundMode,
+        suppress_exceptions: bool,
     },
 
     /// x86 CVTSI2SS/CVTSI2SD scalar signed-integer conversion. `merge` supplies

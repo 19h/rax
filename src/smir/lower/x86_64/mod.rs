@@ -9152,6 +9152,8 @@ impl X86_64Lowerer {
                 elem,
                 int_width,
                 truncate,
+                round,
+                suppress_exceptions,
             } => {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
@@ -9164,6 +9166,16 @@ impl X86_64Lowerer {
                 if !matches!(int_width, OpWidth::W32 | OpWidth::W64) {
                     return Err(LowerError::UnsupportedOp {
                         op: format!("X86FpToInt width {int_width:?}"),
+                    });
+                }
+                if *suppress_exceptions
+                    || (*truncate && *round != FpRoundMode::RoundTowardZero)
+                    || (!*truncate && *round != FpRoundMode::Dynamic)
+                {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!(
+                            "X86FpToInt rounding {round:?}, truncate={truncate}, sae={suppress_exceptions}"
+                        ),
                     });
                 }
                 let prefix = match elem {
@@ -29432,6 +29444,8 @@ mod tests {
                     elem: VecElementType::F32,
                     int_width: OpWidth::W32,
                     truncate: false,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
                 },
                 &[0xF3, 0x0F, 0x2D, 0xC1][..],
             ),
@@ -29443,6 +29457,8 @@ mod tests {
                     elem: VecElementType::F64,
                     int_width: OpWidth::W64,
                     truncate: true,
+                    round: FpRoundMode::RoundTowardZero,
+                    suppress_exceptions: false,
                 },
                 &[0xF2, 0x48, 0x0F, 0x2C, 0xC1][..],
             ),
@@ -29454,6 +29470,17 @@ mod tests {
                 "{name}: missing native opcode in {code:02X?}"
             );
         }
+
+        let fp16_er = lower_single_op_err(OpKind::X86FpToInt {
+            dst: rax,
+            src: xmm1,
+            elem: VecElementType::F16,
+            int_width: OpWidth::W32,
+            truncate: false,
+            round: FpRoundMode::RoundDown,
+            suppress_exceptions: true,
+        });
+        assert!(matches!(fp16_er, LowerError::UnsupportedOp { .. }));
     }
 
     #[test]

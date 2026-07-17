@@ -3395,6 +3395,8 @@ impl SmirInterpreter {
                 elem,
                 int_width,
                 truncate,
+                round,
+                ..
             } => {
                 let bits = if matches!(src, VReg::Virtual(_)) {
                     ctx.read_vreg(*src)
@@ -3402,6 +3404,7 @@ impl SmirInterpreter {
                     Self::get_lane(&Self::read_vec(ctx, *src), 0, elem.bytes() * 8)
                 };
                 let value = match elem {
+                    VecElementType::F16 => Self::x86_fp16_to_f32(bits as u16) as f64,
                     VecElementType::F32 => f32::from_bits(bits as u32) as f64,
                     VecElementType::F64 => f64::from_bits(bits),
                     _ => f64::NAN,
@@ -3409,7 +3412,7 @@ impl SmirInterpreter {
                 let rounded = if *truncate {
                     value.trunc()
                 } else {
-                    self.round_fp_value(ctx, value, FpRoundMode::Dynamic)
+                    self.round_fp_value(ctx, value, *round)
                 };
                 let indefinite = match int_width {
                     OpWidth::W32 => 0x8000_0000,
@@ -22227,6 +22230,7 @@ mod tests {
     fn lifted_x86_fp_to_int_honors_mxcsr_width_truncation_and_indefinite() {
         let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+        let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
         let r10 = VReg::Arch(ArchReg::X86(X86Reg::R10));
         let mut memory = FlatMemory::new(0x1000);
         let mut ctx = SmirContext::new_x86_64();
@@ -22289,6 +22293,62 @@ mod tests {
         execute_lifted_x86(&[0x62, 0x31, 0xFE, 0x08, 0x2D, 0xD1], &mut ctx, &mut memory);
         assert_eq!(ctx.read_vreg(r10), 42);
 
+        // FP16 non-truncating conversion uses MXCSR.RC when EVEX.b is clear.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, 0x4100); // +2.5
+            x86.mxcsr = (0x1F80 & !(3 << 13)) | (2 << 13); // toward +infinity
+        }
+        ctx.write_vreg(rax, u64::MAX);
+        execute_lifted_x86(&[0x62, 0xF5, 0x7E, 0x08, 0x2D, 0xC3], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 3);
+
+        // EVEX embedded rounding overrides MXCSR for register sources.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, 0xC100); // -2.5
+            x86.mxcsr = (0x1F80 & !(3 << 13)) | (2 << 13); // toward +infinity
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF5, 0x7E, 0x38, 0x2D, 0xC3], // {rd-sae}
+            &mut ctx,
+            &mut memory,
+        );
+        assert_eq!(ctx.read_vreg(rax), (-3i32) as u32 as u64);
+
+        // Truncating conversion is round-toward-zero regardless of MXCSR.RC.
+        execute_lifted_x86(
+            &[0x62, 0xF5, 0x7E, 0x18, 0x2C, 0xC3], // {sae}
+            &mut ctx,
+            &mut memory,
+        );
+        assert_eq!(ctx.read_vreg(rax), (-2i32) as u32 as u64);
+
+        // W=1 selects a 64-bit destination and EVEX.X' selects XMM19.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[19], 0, 16, 0x5140); // +42
+        }
+        ctx.write_vreg(r8, 0);
+        execute_lifted_x86(&[0x62, 0x35, 0xFE, 0x08, 0x2D, 0xC3], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(r8), 42);
+
+        // Masked-invalid FP16 NaN conversion returns signed integer indefinite
+        // and the 32-bit destination write clears the upper GPR half.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, 0x7E01);
+        }
+        ctx.write_vreg(rax, u64::MAX);
+        execute_lifted_x86(&[0x62, 0xF5, 0x7E, 0x08, 0x2D, 0xC3], &mut ctx, &mut memory);
+        assert_eq!(ctx.read_vreg(rax), 0x8000_0000);
+
+        // The scalar memory tuple compresses disp8 by 2 bytes.
+        ctx.write_vreg(rbx, 0x200);
+        memory.write(0x2FE, &0x4300u16.to_le_bytes()).unwrap(); // +3.5
+        execute_lifted_x86(
+            &[0x62, 0xF5, 0x7E, 0x08, 0x2C, 0x43, 0x7F],
+            &mut ctx,
+            &mut memory,
+        );
+        assert_eq!(ctx.read_vreg(rax), 3);
+
         // Successful memory conversion reads the scalar Load result from the
         // virtual scalar register file.
         ctx.write_vreg(rbx, 0x200);
@@ -22305,6 +22365,10 @@ mod tests {
         for (name, bytes) in [
             ("legacy CVTSD2SI", &[0xF2, 0x48, 0x0F, 0x2D, 0x00][..]),
             ("VEX VCVTTSS2SI", &[0xC5, 0xFA, 0x2C, 0x00][..]),
+            (
+                "EVEX VCVTSH2SI",
+                &[0x62, 0xF5, 0x7E, 0x08, 0x2D, 0x40, 0x01][..],
+            ),
         ] {
             let mut ctx = SmirContext::new_x86_64();
             ctx.write_vreg(rax, 0x200);
