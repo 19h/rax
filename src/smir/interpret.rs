@@ -1356,6 +1356,27 @@ impl SmirInterpreter {
         }
     }
 
+    fn x86_fp16_approx(bits: u16, rsqrt: bool) -> u16 {
+        let magnitude = bits & 0x7FFF;
+        let fraction = bits & 0x03FF;
+        if magnitude & 0x7C00 == 0x7C00 && fraction != 0 {
+            // Both instructions quiet NaNs without changing the binary16
+            // sign or payload. No SIMD floating-point exception is raised.
+            return bits | 0x0200;
+        }
+        if rsqrt && bits & 0x8000 != 0 && magnitude != 0 {
+            // This includes every negative finite nonzero value and -INF.
+            return 0xFE00;
+        }
+        let input = Self::x86_fp16_to_f32(bits);
+        let result = if rsqrt {
+            1.0f32 / input.sqrt()
+        } else {
+            1.0f32 / input
+        };
+        Self::x86_f32_to_fp16(result, 0)
+    }
+
     fn x86_fp16_round_increment(
         negative: bool,
         base: u32,
@@ -4861,6 +4882,75 @@ impl SmirInterpreter {
                         Self::x86_simd_recip14(bits, format, mxcsr)
                     };
                     Self::set_lane(&mut result, lane, elem_bits, converted.bits);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86RecipFp16 {
+                dst,
+                merge,
+                src,
+                mask,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+            }
+            | OpKind::X86RsqrtFp16 {
+                dst,
+                merge,
+                src,
+                mask,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+            } => {
+                let rsqrt = matches!(op.kind, OpKind::X86RsqrtFp16 { .. });
+                if *scalar != merge.is_some()
+                    || (*scalar && (*width != VecWidth::V128 || *lanes != 1))
+                    || (!*scalar
+                        && (!matches!(width, VecWidth::V128 | VecWidth::V256 | VecWidth::V512)
+                            || *lanes != width.lanes(VecElementType::F16) as u8))
+                    || (*mask_zeroing && mask.is_none())
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: ctx.pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let source = Self::read_vec(ctx, *src);
+                let old = Self::read_vec(ctx, *dst);
+                let mut result = if let Some(merge) = merge {
+                    Self::read_vec(ctx, *merge)
+                } else {
+                    old
+                };
+                if *scalar {
+                    result[2..].fill(0);
+                } else {
+                    result[(width.bytes() / 8) as usize..].fill(0);
+                }
+                let active = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
+                for lane in 0..*lanes {
+                    if active & (1u64 << lane) == 0 {
+                        let inactive = if *mask_zeroing {
+                            0
+                        } else {
+                            Self::get_lane(&old, lane, 16)
+                        };
+                        Self::set_lane(&mut result, lane, 16, inactive);
+                        continue;
+                    }
+                    let bits = Self::get_lane(&source, lane, 16) as u16;
+                    Self::set_lane(
+                        &mut result,
+                        lane,
+                        16,
+                        u64::from(Self::x86_fp16_approx(bits, rsqrt)),
+                    );
                 }
                 Self::write_vec(ctx, *dst, result);
             }
@@ -60887,6 +60977,80 @@ mod tests {
     }
 
     #[test]
+    fn x86_fp16_approx_exhaustively_satisfies_special_cases_and_error_bound() {
+        let limit = 2.0f64.powi(-11) + 2.0f64.powi(-14);
+        for bits in 0u16..=u16::MAX {
+            let magnitude = bits & 0x7FFF;
+            let fraction = bits & 0x03FF;
+            let input = f64::from(SmirInterpreter::x86_fp16_to_f32(bits));
+
+            let reciprocal = SmirInterpreter::x86_fp16_approx(bits, false);
+            if magnitude & 0x7C00 == 0x7C00 && fraction != 0 {
+                assert_eq!(reciprocal, bits | 0x0200, "VRCP NaN {bits:04X}");
+            } else if magnitude == 0 {
+                assert_eq!(reciprocal, (bits & 0x8000) | 0x7C00);
+            } else if magnitude == 0x7C00 {
+                assert_eq!(reciprocal, bits & 0x8000);
+            } else {
+                let actual = f64::from(SmirInterpreter::x86_fp16_to_f32(reciprocal));
+                let reference = input.recip();
+                if actual.is_infinite() {
+                    assert!(input.abs() <= 2.0f64.powi(-16));
+                } else if reciprocal & 0x7C00 == 0 {
+                    // The stated relative bound is unrepresentable for some
+                    // binary16 subnormal reciprocals. Round-to-nearest instead
+                    // supplies the tight binary16 absolute-error bound.
+                    assert!(
+                        (actual - reference).abs() <= 2.0f64.powi(-25),
+                        "VRCPH {bits:04X}: subnormal absolute error {:e}",
+                        (actual - reference).abs()
+                    );
+                } else {
+                    let relative_error = ((actual - reference) / reference).abs();
+                    assert!(
+                        relative_error < limit,
+                        "VRCPH {bits:04X}: relative error {relative_error:e}"
+                    );
+                }
+            }
+
+            let rsqrt = SmirInterpreter::x86_fp16_approx(bits, true);
+            if magnitude & 0x7C00 == 0x7C00 && fraction != 0 {
+                assert_eq!(rsqrt, bits | 0x0200, "VRSQRT NaN {bits:04X}");
+            } else if bits & 0x8000 != 0 && magnitude != 0 {
+                assert_eq!(rsqrt, 0xFE00, "VRSQRT negative {bits:04X}");
+            } else if magnitude == 0 {
+                assert_eq!(rsqrt, (bits & 0x8000) | 0x7C00);
+            } else if magnitude == 0x7C00 {
+                assert_eq!(rsqrt, 0);
+            } else {
+                let actual = f64::from(SmirInterpreter::x86_fp16_to_f32(rsqrt));
+                let reference = input.sqrt().recip();
+                let relative_error = ((actual - reference) / reference).abs();
+                assert!(
+                    relative_error < limit,
+                    "VRSQRTH {bits:04X}: relative error {relative_error:e}"
+                );
+                if magnitude < 0x0400 {
+                    assert_ne!(rsqrt & 0x7C00, 0, "denormal input returned denormal");
+                }
+            }
+        }
+
+        for exponent in -14..=15 {
+            let input = 2.0f32.powi(exponent);
+            let bits = SmirInterpreter::x86_f32_to_fp16(input, 0);
+            let expected = SmirInterpreter::x86_f32_to_fp16(input.recip(), 0);
+            assert_eq!(SmirInterpreter::x86_fp16_approx(bits, false), expected);
+            if exponent % 2 == 0 {
+                let expected_rsqrt =
+                    SmirInterpreter::x86_f32_to_fp16(2.0f32.powi(-exponent / 2), 0);
+                assert_eq!(SmirInterpreter::x86_fp16_approx(bits, true), expected_rsqrt);
+            }
+        }
+    }
+
+    #[test]
     fn lifted_x86_recip14_preserves_widths_scalar_merge_masks_mxcsr_and_fault_suppression() {
         let mut ctx = SmirContext::new_x86_64();
         let mut memory = FlatMemory::new(0x100);
@@ -61102,6 +61266,89 @@ mod tests {
         ctx.write_vreg(k1, 1);
         assert!(matches!(
             execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0x4F, 0x08], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+    }
+
+    #[test]
+    fn lifted_x86_fp16_approx_preserves_masks_scalar_merge_mxcsr_and_fault_suppression() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0xAAAA_AAAA_DEAD_BEEF; 16];
+            x86.xmm[2] = [
+                0x0123_4567_89AB_CDEF,
+                0x0FED_CBA9_8765_4321,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ];
+            x86.xmm[3][0] = 0x4400;
+            x86.mxcsr = 0xA5A5;
+        }
+        execute_lifted_x86(&[0x62, 0xF6, 0x6D, 0x08, 0x4F, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x0123_4567_89AB_3800);
+            assert_eq!(x86.xmm[1][1], 0x0FED_CBA9_8765_4321);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+            assert_eq!(x86.mxcsr, 0xA5A5);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0xDEAD_BEEF_CAFE_BABE; 16];
+            for lane in 0..8 {
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[3],
+                    lane,
+                    16,
+                    u64::from(0x3C00u16 + u16::from(lane)),
+                );
+            }
+            x86.k[2] = 0x55;
+            x86.mxcsr = 0x5A5A;
+        }
+        execute_lifted_x86(&[0x62, 0xF6, 0x7D, 0x0A, 0x4C, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8 {
+                let actual = SmirInterpreter::get_lane(&x86.xmm[1], lane, 16) as u16;
+                if lane % 2 == 0 {
+                    assert_eq!(
+                        actual,
+                        SmirInterpreter::x86_fp16_approx(0x3C00 + u16::from(lane), false)
+                    );
+                } else {
+                    assert_eq!(
+                        actual,
+                        SmirInterpreter::get_lane(&[0xDEAD_BEEF_CAFE_BABE; 16], lane, 16) as u16
+                    );
+                }
+            }
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+            assert_eq!(x86.mxcsr, 0x5A5A);
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k1, 0);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF6, 0x6D, 0x09, 0x4D, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        ctx.write_vreg(k1, 1);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF6, 0x6D, 0x09, 0x4D, 0x08], &mut ctx, &mut memory),
             BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
         ));
     }

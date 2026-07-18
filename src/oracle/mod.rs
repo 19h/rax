@@ -2131,6 +2131,46 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             scalar,
             mask_zeroing
         ),
+        OpKind::X86RecipFp16 {
+            dst,
+            merge,
+            src,
+            mask,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+        } => op_json!(
+            "x86_recip_fp16",
+            dst,
+            merge,
+            src,
+            mask,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing
+        ),
+        OpKind::X86RsqrtFp16 {
+            dst,
+            merge,
+            src,
+            mask,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+        } => op_json!(
+            "x86_rsqrt_fp16",
+            dst,
+            merge,
+            src,
+            mask,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing
+        ),
         OpKind::X86Recip28 {
             dst,
             merge,

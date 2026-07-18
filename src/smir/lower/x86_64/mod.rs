@@ -10051,6 +10051,108 @@ impl X86_64Lowerer {
                 );
             }
 
+            OpKind::X86RecipFp16 {
+                dst,
+                merge,
+                src,
+                mask,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+            }
+            | OpKind::X86RsqrtFp16 {
+                dst,
+                merge,
+                src,
+                mask,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+            } => {
+                let rsqrt = matches!(op.kind, OpKind::X86RsqrtFp16 { .. });
+                let op_name = if rsqrt {
+                    "X86RsqrtFp16"
+                } else {
+                    "X86RecipFp16"
+                };
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let merge_reg = merge.map(|reg| self.get_reg(reg)).transpose()?;
+                let aaa = match mask {
+                    None => 0,
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::K(n @ 1..=7)))) => *n,
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: op_name.to_string(),
+                            operand: "mask must be architectural k1-k7".to_string(),
+                        });
+                    }
+                };
+                let opcode = match (rsqrt, *scalar) {
+                    (false, false) => 0x4C,
+                    (false, true) => 0x4D,
+                    (true, false) => 0x4E,
+                    (true, true) => 0x4F,
+                };
+                let register_matches_width = |reg: PhysReg, expected: VecWidth| {
+                    matches!(
+                        (reg, expected),
+                        (PhysReg::Xmm(_), VecWidth::V128)
+                            | (PhysReg::Ymm(_), VecWidth::V256)
+                            | (PhysReg::Zmm(_), VecWidth::V512)
+                    )
+                };
+                let valid_shape = (!*mask_zeroing || aaa != 0)
+                    && if *scalar {
+                        dst_reg.is_xmm()
+                            && src_reg.is_xmm()
+                            && merge_reg.is_some_and(|reg| reg.is_xmm())
+                            && *width == VecWidth::V128
+                            && *lanes == 1
+                    } else {
+                        register_matches_width(dst_reg, *width)
+                            && register_matches_width(src_reg, *width)
+                            && merge_reg.is_none()
+                            && *lanes == width.lanes(VecElementType::F16) as u8
+                    };
+                let valid_hint = matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::EvexOp {
+                        map: X86VecMap::Map6,
+                        pp: X86SsePrefix::OpSize,
+                        opcode: hint_opcode,
+                        width: hint_width,
+                        w: false,
+                    }) if hint_opcode == opcode && hint_width == *width
+                );
+                if !valid_shape || !valid_hint {
+                    return Err(LowerError::InvalidOperand {
+                        op: op_name.to_string(),
+                        operand: format!(
+                            "non-canonical {} shape or encoding metadata",
+                            if rsqrt { "VRSQRTFP16" } else { "VRCPFP16" }
+                        ),
+                    });
+                }
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_evex_unary_fp_rr(
+                    X86VecMap::Map6,
+                    X86SsePrefix::OpSize,
+                    *width,
+                    false,
+                    opcode,
+                    dst_reg,
+                    merge_reg,
+                    src_reg,
+                    aaa,
+                    *mask_zeroing,
+                    false,
+                    None,
+                );
+            }
+
             OpKind::X86Recip28 {
                 dst,
                 merge,
@@ -33607,6 +33709,189 @@ mod tests {
         );
         assert!(matches!(
             lower_single_hinted_op_err(wrong_hint, hint(0x4F, VecWidth::V512, false)),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[test]
+    fn lower_x86_fp16_approx_emits_all_widths_and_rejects_synthetic_shapes() {
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        let make = |rsqrt, dst, merge, src, mask, width, lanes, scalar, mask_zeroing| {
+            if rsqrt {
+                OpKind::X86RsqrtFp16 {
+                    dst,
+                    merge,
+                    src,
+                    mask,
+                    width,
+                    lanes,
+                    scalar,
+                    mask_zeroing,
+                }
+            } else {
+                OpKind::X86RecipFp16 {
+                    dst,
+                    merge,
+                    src,
+                    mask,
+                    width,
+                    lanes,
+                    scalar,
+                    mask_zeroing,
+                }
+            }
+        };
+        let hint = |opcode, width| X86OpHint::EvexOp {
+            map: X86VecMap::Map6,
+            pp: X86SsePrefix::OpSize,
+            opcode,
+            width,
+            w: false,
+        };
+        for (name, kind, encoding, expected) in [
+            (
+                "VRCPPH xmm1,xmm3",
+                make(
+                    false,
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    None,
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    None,
+                    VecWidth::V128,
+                    8,
+                    false,
+                    false,
+                ),
+                hint(0x4C, VecWidth::V128),
+                &[0x62, 0xF6, 0x7D, 0x08, 0x4C, 0xCB][..],
+            ),
+            (
+                "VRCPPH ymm1,ymm3",
+                make(
+                    false,
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                    None,
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
+                    None,
+                    VecWidth::V256,
+                    16,
+                    false,
+                    false,
+                ),
+                hint(0x4C, VecWidth::V256),
+                &[0x62, 0xF6, 0x7D, 0x28, 0x4C, 0xCB][..],
+            ),
+            (
+                "VRSQRTPH zmm17{k2}{z},zmm19",
+                make(
+                    true,
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    None,
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(19))),
+                    Some(k2),
+                    VecWidth::V512,
+                    32,
+                    false,
+                    true,
+                ),
+                hint(0x4E, VecWidth::V512),
+                &[0x62, 0xA6, 0x7D, 0xCA, 0x4E, 0xCB][..],
+            ),
+            (
+                "VRCPSH xmm1,xmm2,xmm3",
+                make(
+                    false,
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    None,
+                    VecWidth::V128,
+                    1,
+                    true,
+                    false,
+                ),
+                hint(0x4D, VecWidth::V128),
+                &[0x62, 0xF6, 0x6D, 0x08, 0x4D, 0xCB][..],
+            ),
+            (
+                "VRSQRTSH xmm17{k2}{z},xmm18,xmm19",
+                make(
+                    true,
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(18)))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(19))),
+                    Some(k2),
+                    VecWidth::V128,
+                    1,
+                    true,
+                    true,
+                ),
+                hint(0x4F, VecWidth::V128),
+                &[0x62, 0xA6, 0x6D, 0x82, 0x4F, 0xCB][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, encoding);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        let missing_merge = make(
+            false,
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            None,
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+            None,
+            VecWidth::V128,
+            1,
+            true,
+            false,
+        );
+        assert!(matches!(
+            lower_single_hinted_op_err(missing_merge, hint(0x4D, VecWidth::V128)),
+            LowerError::InvalidOperand { .. }
+        ));
+
+        let mismatched_width = make(
+            true,
+            VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+            None,
+            VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
+            None,
+            VecWidth::V512,
+            32,
+            false,
+            false,
+        );
+        assert!(matches!(
+            lower_single_hinted_op_err(mismatched_width, hint(0x4E, VecWidth::V512)),
+            LowerError::InvalidOperand { .. }
+        ));
+
+        let wrong_hint = make(
+            false,
+            VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+            None,
+            VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+            None,
+            VecWidth::V512,
+            32,
+            false,
+            false,
+        );
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                wrong_hint,
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x4C,
+                    width: VecWidth::V512,
+                    w: false,
+                }
+            ),
             LowerError::InvalidOperand { .. }
         ));
     }

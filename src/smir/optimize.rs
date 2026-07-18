@@ -2892,6 +2892,22 @@ impl OpKind {
                 mask_zeroing,
                 ..
             }
+            | OpKind::X86RecipFp16 {
+                dst,
+                merge,
+                src,
+                mask,
+                mask_zeroing,
+                ..
+            }
+            | OpKind::X86RsqrtFp16 {
+                dst,
+                merge,
+                src,
+                mask,
+                mask_zeroing,
+                ..
+            }
             | OpKind::X86Recip28 {
                 dst,
                 merge,
