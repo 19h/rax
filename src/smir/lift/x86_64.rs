@@ -607,378 +607,9 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
     let b2 = bytes[2];
     let b3 = bytes[3];
 
-    // Scalar EVEX moves and arithmetic below model one-bit write masks with
-    // Select plus PredLoad/PredStore, including {z} and memory-fault suppression.
-    // Packed precision converts and packed logical operations model per-element
-    // masks; their memory forms use PredLoad so masked-off elements do not fault.
-    // EVEX.b remains rejected except where the relevant family implements memory
-    // broadcast or embedded rounding/SAE:
-    //   - aaa (b3 bits[2:0]) != 0  -> allowed only for modeled maskable forms
-    //   - z   (b3 bit[7])          -> allowed only with a nonzero mask on those forms
-    //   - b   (b3 bit[4])          -> broadcast / embedded rounding
-    //
-    // EXCEPTION: APX GPR instructions on map 0F38 (opcodes F2/F3/F5/F6/F7) are
-    // also 0x62/EVEX-encoded and share this decoder, but repurpose byte3's aaa/b
-    // bits as the APX NF/ND fields. They re-decode with APX semantics in
-    // lift_apx_{nf_,}bmi2_0f38, so the vector mask guard must not trip on them.
-    let is_apx_gpr_0f38 =
-        (b1 & 0x07) == 0x02 && matches!(bytes.get(4), Some(0xF2 | 0xF3 | 0xF5 | 0xF6 | 0xF7));
-    let is_scalar_maskable = (b1 & 0x07) == 1
-        && matches!(b2 & 0x03, 2 | 3)
-        && matches!(
-            bytes.get(4),
-            Some(0x10 | 0x11 | 0x51 | 0x58 | 0x59 | 0x5C | 0x5D | 0x5E | 0x5F)
-        );
-    let is_packed_fp_convert =
-        ((b1 & 0x07) == 1 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x5A)))
-            || ((b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x13)))
-            || ((b1 & 0x07) == 3 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x1D)))
-            || ((b1 & 0x07) == 5
-                && ((matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x5A)))
-                    || ((b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x1D)))))
-            || ((b1 & 0x07) == 6 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x13)));
-    let is_packed_int_to_fp = (b1 & 0x07) == 1
-        && (((b2 & 0x03) == 0 && matches!(bytes.get(4), Some(0x5B)))
-            || ((b2 & 0x03) == 2 && matches!(bytes.get(4), Some(0xE6 | 0x7A)))
-            || ((b2 & 0x03) == 3 && matches!(bytes.get(4), Some(0x7A))));
-    let is_packed_fp_to_int = (b1 & 0x07) == 1
-        && ((matches!(b2 & 0x03, 1 | 2) && matches!(bytes.get(4), Some(0x5B)))
-            || (matches!(b2 & 0x03, 1 | 3) && matches!(bytes.get(4), Some(0xE6)))
-            || (matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x78 | 0x79)))
-            || ((b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x7A | 0x7B))));
-    let is_scalar_fp_convert =
-        (((b1 & 0x07) == 1 && matches!(b2 & 0x03, 2 | 3) && matches!(bytes.get(4), Some(0x5A)))
-            || ((b1 & 0x07) == 5
-                && ((matches!(b2 & 0x03, 2 | 3) && matches!(bytes.get(4), Some(0x5A)))
-                    || ((b2 & 0x03) == 0 && matches!(bytes.get(4), Some(0x1D)))))
-            || ((b1 & 0x07) == 6 && (b2 & 0x03) == 0 && matches!(bytes.get(4), Some(0x13))));
-    let is_packed_logic = (b1 & 0x07) == 1
-        && ((matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x54..=0x57)))
-            || ((b2 & 0x03) == 1
-                && matches!(
-                    bytes.get(4),
-                    Some(
-                        0xD4 | 0xD8
-                            | 0xD9
-                            | 0xDB
-                            | 0xDC
-                            | 0xDD
-                            | 0xDF
-                            | 0xE8
-                            | 0xE9
-                            | 0xEB
-                            | 0xEC
-                            | 0xED
-                            | 0xEF
-                            | 0xF8
-                            | 0xF9
-                            | 0xFA
-                            | 0xFB
-                            | 0xFC
-                            | 0xFD
-                            | 0xFE
-                    )
-                )));
-    let is_packed_int_compare = ((b1 & 0x07) == 1
-        && (b2 & 0x03) == 1
-        && matches!(bytes.get(4), Some(0x64..=0x66 | 0x74..=0x76)))
-        || ((b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x29 | 0x37)))
-        || ((b1 & 0x07) == 3
-            && (b2 & 0x03) == 1
-            && matches!(bytes.get(4), Some(0x1E | 0x1F | 0x3E | 0x3F)));
-    let is_chunk_extract_insert = (b1 & 0x07) == 3
-        && (b2 & 0x03) == 1
-        && matches!(
-            bytes.get(4),
-            Some(0x18 | 0x19 | 0x1A | 0x1B | 0x38 | 0x39 | 0x3A | 0x3B)
-        );
-    let is_shuffle_128_chunks =
-        (b1 & 0x07) == 3 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x23 | 0x43));
-    let is_fp_class =
-        (b1 & 0x07) == 3 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x66 | 0x67));
-    let is_packed_fp_class = is_fp_class && matches!(bytes.get(4), Some(0x66));
-    let is_gfni = (b2 & 0x03) == 1
-        && (((b1 & 0x07) == 2 && matches!(bytes.get(4), Some(0xCF)))
-            || ((b1 & 0x07) == 3 && matches!(bytes.get(4), Some(0xCE | 0xCF))));
-    let is_gfni_affine = is_gfni && (b1 & 0x07) == 3;
-    let is_packed_unpack = (b1 & 0x07) == 1
-        && (b2 & 0x03) == 1
-        && matches!(bytes.get(4), Some(0x60..=0x62 | 0x68..=0x6A | 0x6C | 0x6D));
-    let is_packed_pack = (((b1 & 0x07) == 1)
-        && (b2 & 0x03) == 1
-        && matches!(bytes.get(4), Some(0x63 | 0x67 | 0x6B)))
-        || (((b1 & 0x07) == 2) && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x2B)));
-    let is_packed_byte_shuffle =
-        (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x00));
-    let is_packed_maddubs =
-        (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x04));
-    let is_packed_mulhrsw =
-        (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x0B));
-    let is_packed_abs =
-        (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x1C..=0x1F));
-    let is_palignr = (b1 & 0x07) == 3 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x0F));
-    let is_mpsadbw =
-        (b1 & 0x07) == 3 && matches!(b2 & 0x03, 1 | 2) && matches!(bytes.get(4), Some(0x42));
-    let is_packed_extend = (b1 & 0x07) == 2
-        && (b2 & 0x03) == 1
-        && matches!(bytes.get(4), Some(0x20..=0x25 | 0x30..=0x35));
-    let is_packed_minmax = (b2 & 0x03) == 1
-        && (((b1 & 0x07) == 2 && matches!(bytes.get(4), Some(0x38..=0x3F)))
-            || ((b1 & 0x07) == 1 && matches!(bytes.get(4), Some(0xDA | 0xDE | 0xEA | 0xEE))));
-    let is_packed_muldq = (b2 & 0x03) == 1
-        && (((b1 & 0x07) == 2 && matches!(bytes.get(4), Some(0x28)))
-            || ((b1 & 0x07) == 1 && matches!(bytes.get(4), Some(0xF4))));
-    let is_packed_mul_low =
-        (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x40));
-    let is_packed_mul_word =
-        (b1 & 0x07) == 1 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0xD5));
-    let is_packed_mul_high =
-        (b1 & 0x07) == 1 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0xE4 | 0xE5));
-    let is_packed_average =
-        (b1 & 0x07) == 1 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0xE0 | 0xE3));
-    let is_packed_madd_word =
-        (b1 & 0x07) == 1 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0xF5));
-    let is_packed_shift_count = (b1 & 0x07) == 1
-        && (b2 & 0x03) == 1
-        && matches!(bytes.get(4), Some(0xD1..=0xD3 | 0xE1 | 0xE2 | 0xF1..=0xF3));
-    let is_packed_shift_imm =
-        (b1 & 0x07) == 1 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x71..=0x73));
-    let is_packed_rotate = (b2 & 0x03) == 1
-        && (((b1 & 0x07) == 1 && matches!(bytes.get(4), Some(0x72)))
-            || ((b1 & 0x07) == 2 && matches!(bytes.get(4), Some(0x14 | 0x15))));
-    let is_packed_shuffle =
-        (b1 & 0x07) == 1 && matches!(b2 & 0x03, 1..=3) && matches!(bytes.get(4), Some(0x70));
-    let is_two_source_shuffle =
-        (b1 & 0x07) == 1 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0xC6));
-    let is_duplicate_move = (b1 & 0x07) == 1
-        && (((b2 & 0x03) == 2 && matches!(bytes.get(4), Some(0x12 | 0x16)))
-            || ((b2 & 0x03) == 3 && matches!(bytes.get(4), Some(0x12))));
-    let is_fp_compare = matches!(b1 & 0x07, 1 | 3) && matches!(bytes.get(4), Some(0xC2));
-    let is_fp_unpack =
-        (b1 & 0x07) == 1 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x14 | 0x15));
-    let is_fma = (b1 & 0x07) == 2
-        && (b2 & 0x03) == 1
-        && matches!(bytes.get(4), Some(0x96..=0x9F | 0xA6..=0xAF | 0xB6..=0xBF));
-    let is_gather =
-        (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x90..=0x93));
-    let is_scatter =
-        (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0xA0..=0xA3));
-    let is_vpopcnt =
-        (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x54 | 0x55));
-    let is_vplzcnt = (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x44));
-    let is_vpconflict = (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0xC4));
-    let is_vpmadd52 =
-        (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0xB4 | 0xB5));
-    let is_vnni_dot =
-        (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x50..=0x53));
-    let is_bf16 = (b1 & 0x07) == 2
-        && (((b2 & 0x03) == 2 && matches!(bytes.get(4), Some(0x52)))
-            || (matches!(b2 & 0x03, 2 | 3) && matches!(bytes.get(4), Some(0x72))));
-    let is_fp16_arithmetic = (b1 & 0x07) == 5
-        && matches!(b2 & 0x03, 0 | 2)
-        && matches!(bytes.get(4), Some(0x58 | 0x59 | 0x5C..=0x5F));
-    let is_packed_int_to_fp16 = (b1 & 0x07) == 5
-        && (((b2 & 0x03) == 0 && matches!(bytes.get(4), Some(0x5B)))
-            || ((b2 & 0x03) == 3 && matches!(bytes.get(4), Some(0x7A)))
-            || (matches!(b2 & 0x03, 2 | 3) && matches!(bytes.get(4), Some(0x7D))));
-    let is_packed_fp16_to_int = (b1 & 0x07) == 5
-        && ((matches!(b2 & 0x03, 1 | 2) && matches!(bytes.get(4), Some(0x5B)))
-            || ((b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x7A | 0x7B)))
-            || (matches!(b2 & 0x03, 0 | 1)
-                && matches!(bytes.get(4), Some(0x78 | 0x79 | 0x7C | 0x7D))));
-    let is_fp16_flag_compare =
-        (b1 & 0x07) == 5 && (b2 & 0x03) == 0 && matches!(bytes.get(4), Some(0x2E | 0x2F));
-    let is_scalar_fp_to_int = ((b1 & 0x07) == 1
-        && matches!(b2 & 0x03, 2 | 3)
-        && matches!(bytes.get(4), Some(0x2C | 0x2D | 0x78 | 0x79)))
-        || ((b1 & 0x07) == 5
-            && (b2 & 0x03) == 2
-            && matches!(bytes.get(4), Some(0x2C | 0x2D | 0x78 | 0x79)));
-    let is_scalar_int_to_fp = ((b1 & 0x07) == 1
-        && matches!(b2 & 0x03, 2 | 3)
-        && matches!(bytes.get(4), Some(0x2A | 0x7B)))
-        || ((b1 & 0x07) == 5 && (b2 & 0x03) == 2 && matches!(bytes.get(4), Some(0x2A | 0x7B)));
-    let is_fp16_scalar_move =
-        (b1 & 0x07) == 5 && (b2 & 0x03) == 2 && matches!(bytes.get(4), Some(0x10 | 0x11));
-    let is_fp16_sqrt =
-        (b1 & 0x07) == 5 && matches!(b2 & 0x03, 0 | 2) && matches!(bytes.get(4), Some(0x51));
-    let is_get_exponent =
-        matches!(b1 & 0x07, 2 | 6) && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x42 | 0x43));
-    let is_get_mantissa =
-        (b1 & 0x07) == 3 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x26 | 0x27));
-    let is_round_scale =
-        (b1 & 0x07) == 3 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x08..=0x0B));
-    let is_bitshuffle = (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x8F));
-    let is_compress_expand = (b1 & 0x07) == 2
-        && (b2 & 0x03) == 1
-        && matches!(bytes.get(4), Some(0x62 | 0x63 | 0x88..=0x8B));
-    let is_packed_narrow = (b1 & 0x07) == 2
-        && (b2 & 0x03) == 2
-        && matches!(bytes.get(4), Some(0x10..=0x15 | 0x20..=0x25 | 0x30..=0x35));
-    let is_permute = (b2 & 0x03) == 1
-        && (((b1 & 0x07) == 2
-            && matches!(
-                bytes.get(4),
-                Some(0x0C | 0x0D | 0x16 | 0x36 | 0x75..=0x77 | 0x7D..=0x7F | 0x8D)
-            ))
-            || ((b1 & 0x07) == 3 && matches!(bytes.get(4), Some(0x00 | 0x01 | 0x04 | 0x05))));
-    let is_ternary_logic =
-        (b1 & 0x07) == 3 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x25));
-    let is_packed_funnel_shift =
-        matches!(b1 & 0x07, 2 | 3) && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x70..=0x73));
-    let is_multishift_qb =
-        (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x83));
-    let is_vector_align =
-        (b1 & 0x07) == 3 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x03));
-    let is_integer_test_mask =
-        (b1 & 0x07) == 2 && matches!(b2 & 0x03, 1 | 2) && matches!(bytes.get(4), Some(0x26 | 0x27));
-    let is_pair_intersect =
-        (b1 & 0x07) == 2 && (b2 & 0x03) == 3 && matches!(bytes.get(4), Some(0x68));
-    let is_packed_variable_shift = (b1 & 0x07) == 2
-        && (b2 & 0x03) == 1
-        && matches!(bytes.get(4), Some(0x10..=0x12 | 0x45..=0x47));
-    let is_packed_fp_arithmetic = (b1 & 0x07) == 1
-        && matches!(b2 & 0x03, 0 | 1)
-        && matches!(bytes.get(4), Some(0x58 | 0x59 | 0x5C..=0x5F));
-    let is_packed_fp_sqrt =
-        (b1 & 0x07) == 1 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x51));
-    let is_unaligned_fp_move =
-        (b1 & 0x07) == 1 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x10 | 0x11));
-    let is_unaligned_int_move =
-        (b1 & 0x07) == 1 && matches!(b2 & 0x03, 2 | 3) && matches!(bytes.get(4), Some(0x6F | 0x7F));
-    let is_aligned_move = (b1 & 0x07) == 1
-        && ((matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x28 | 0x29)))
-            || (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x6F | 0x7F)));
-    let is_mask_blend =
-        (b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x64..=0x66));
-    let is_load_broadcast = (b1 & 0x07) == 2
-        && (b2 & 0x03) == 1
-        && matches!(bytes.get(4), Some(0x18..=0x1B | 0x58..=0x5B | 0x78..=0x7C));
-    let is_maskable = is_scalar_maskable
-        || is_packed_fp_convert
-        || is_packed_int_to_fp
-        || is_packed_fp_to_int
-        || is_scalar_fp_convert
-        || is_packed_logic
-        || is_packed_int_compare
-        || is_chunk_extract_insert
-        || is_shuffle_128_chunks
-        || is_fp_class
-        || is_gfni
-        || is_packed_unpack
-        || is_packed_pack
-        || is_packed_byte_shuffle
-        || is_packed_maddubs
-        || is_packed_mulhrsw
-        || is_packed_abs
-        || is_palignr
-        || is_mpsadbw
-        || is_packed_extend
-        || is_packed_minmax
-        || is_packed_muldq
-        || is_packed_mul_low
-        || is_packed_mul_word
-        || is_packed_mul_high
-        || is_packed_average
-        || is_packed_madd_word
-        || is_packed_shift_count
-        || is_packed_shift_imm
-        || is_packed_rotate
-        || is_packed_shuffle
-        || is_two_source_shuffle
-        || is_duplicate_move
-        || is_fp_compare
-        || is_fp_unpack
-        || is_fma
-        || is_gather
-        || is_scatter
-        || is_vpopcnt
-        || is_vplzcnt
-        || is_vpconflict
-        || is_vpmadd52
-        || is_vnni_dot
-        || is_bf16
-        || is_fp16_arithmetic
-        || is_packed_int_to_fp16
-        || is_packed_fp16_to_int
-        || is_fp16_scalar_move
-        || is_fp16_sqrt
-        || is_get_exponent
-        || is_get_mantissa
-        || is_round_scale
-        || is_bitshuffle
-        || is_compress_expand
-        || is_packed_narrow
-        || is_permute
-        || is_ternary_logic
-        || is_packed_funnel_shift
-        || is_multishift_qb
-        || is_vector_align
-        || is_integer_test_mask
-        || is_packed_variable_shift
-        || is_packed_fp_arithmetic
-        || is_packed_fp_sqrt
-        || is_unaligned_fp_move
-        || is_unaligned_int_move
-        || is_aligned_move
-        || is_mask_blend
-        || is_load_broadcast;
-    if !is_apx_gpr_0f38
-        && ((!is_maskable && ((b3 & 0x07) != 0 || (b3 & 0x80) != 0))
-            || (!(is_packed_fp_convert
-                || is_packed_int_to_fp
-                || is_packed_fp_to_int
-                || is_scalar_fp_convert
-                || is_packed_logic
-                || is_packed_int_compare
-                || is_packed_pack
-                || is_packed_minmax
-                || is_packed_muldq
-                || is_packed_mul_low
-                || is_packed_shift_imm
-                || is_packed_rotate
-                || (is_packed_shuffle && (b2 & 0x03) == 1)
-                || is_two_source_shuffle
-                || is_fp_compare
-                || is_fp_unpack
-                || is_fma
-                || is_vpopcnt
-                || is_vplzcnt
-                || is_vpconflict
-                || is_vpmadd52
-                || is_vnni_dot
-                || is_bf16
-                || is_fp16_arithmetic
-                || is_packed_int_to_fp16
-                || is_packed_fp16_to_int
-                || is_fp16_flag_compare
-                || is_scalar_fp_to_int
-                || is_scalar_int_to_fp
-                || is_fp16_sqrt
-                || is_get_exponent
-                || is_get_mantissa
-                || is_round_scale
-                || is_permute
-                || is_ternary_logic
-                || is_packed_funnel_shift
-                || is_multishift_qb
-                || is_vector_align
-                || is_shuffle_128_chunks
-                || is_packed_fp_class
-                || is_gfni_affine
-                || is_integer_test_mask
-                || is_packed_variable_shift
-                || is_packed_fp_arithmetic
-                || is_mask_blend
-                || is_pair_intersect
-                || (is_packed_abs && matches!(bytes.get(4), Some(0x1E | 0x1F))))
-                && (b3 & 0x10) != 0))
-    {
-        return Err(LiftError::Unsupported {
-            addr,
-            mnemonic: "EVEX write-mask / zeroing / broadcast / embedded-rounding".to_string(),
-        });
-    }
+    // EVEX prefix decoding is structural. Opcode-family lifters consume or
+    // reject write masks, zeroing, broadcast, SAE, and embedded rounding so
+    // adding a family does not require a second semantic opcode allowlist.
 
     let r = ((b1 >> 7) & 1) ^ 1;
     let r_prime = ((b1 >> 4) & 1) ^ 1;
@@ -33379,6 +33010,7 @@ impl X86_64Lifter {
                     if let Some(elem) = scalar_elem {
                         if prefix.encoding == VecEncodingKind::Evex
                             && ((prefix.zeroing && prefix.aaa == 0)
+                                || prefix.b
                                 || (elem == VecElementType::F32 && prefix.w)
                                 || (elem == VecElementType::F64 && !prefix.w))
                         {
@@ -33578,6 +33210,7 @@ impl X86_64Lifter {
                         || (prefix.encoding == VecEncodingKind::Evex
                             && (prefix.v_high
                                 || prefix.l_bits == 3
+                                || prefix.b
                                 || (prefix.zeroing && prefix.aaa == 0)
                                 || prefix.w != (elem == VecElementType::F64)))
                     {
@@ -34055,6 +33688,12 @@ impl X86_64Lifter {
                 0x51 => {
                     let modrm = decode_modrm(after_opcode, &prefix_modrm, pc)?;
                     let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+                    if prefix.encoding == VecEncodingKind::Evex && prefix.b {
+                        return Err(LiftError::Unsupported {
+                            addr: pc,
+                            mnemonic: "EVEX square-root broadcast / embedded-rounding".to_string(),
+                        });
+                    }
                     if matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) {
                         let elem = if prefix.pp == X86SsePrefix::Rep {
                             VecElementType::F32
@@ -35027,6 +34666,7 @@ impl X86_64Lifter {
                     if matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) {
                         if prefix.encoding == VecEncodingKind::Evex
                             && ((prefix.zeroing && prefix.aaa == 0)
+                                || prefix.b
                                 || (prefix.pp == X86SsePrefix::Rep && prefix.w)
                                 || (prefix.pp == X86SsePrefix::Repne && !prefix.w))
                         {
@@ -44189,6 +43829,28 @@ mod tests {
         let mut lifter = X86_64Lifter::strict();
         let mut ctx = LiftContext::new(SourceArch::X86_64);
         lifter.lift_insn(0x1000, bytes, &mut ctx)
+    }
+
+    #[test]
+    fn evex_decorations_are_validated_by_opcode_lifters() {
+        // A valid decorated VEXP2PS form reaches the opcode dispatcher instead
+        // of a decoder-global decoration gate, preserving the precise gap.
+        assert!(matches!(
+            lift_single(&[0x62, 0xF2, 0x7D, 0x49, 0xC8, 0xC8]),
+            Err(LiftError::Unsupported { mnemonic, .. })
+                if mnemonic == "VEX 0F38 opcode 0xC8"
+        ));
+
+        // Shared VEX/EVEX dispatch must remain fail-closed when the EVEX form
+        // reserves masking, and a VEX-only family must reject EVEX outright.
+        assert!(matches!(
+            lift_single(&[0x62, 0xF3, 0x7D, 0x09, 0x44, 0xC0, 0x00]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
+        assert!(matches!(
+            lift_single(&[0x62, 0xF2, 0x7F, 0x29, 0xCB, 0xC0]),
+            Err(LiftError::InvalidEncoding { .. })
+        ));
     }
 
     fn assert_adx_sequence(
