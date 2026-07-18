@@ -625,6 +625,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
     let is_packed_fp_convert =
         ((b1 & 0x07) == 1 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x5A)))
             || ((b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x13)))
+            || ((b1 & 0x07) == 3 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x1D)))
             || ((b1 & 0x07) == 5
                 && ((matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x5A)))
                     || ((b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x1D)))))
@@ -31172,6 +31173,154 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
+    fn lift_vec_packed_f32_to_f16_store(
+        &self,
+        prefix: VecPrefix,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.map != X86VecMap::Map0F3A
+            || prefix.pp != X86SsePrefix::OpSize
+            || prefix.w
+            || prefix.vvvv != 0
+            || (prefix.encoding == VecEncodingKind::Evex
+                && (prefix.v_high || (prefix.zeroing && prefix.aaa == 0)))
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let opcode = bytes[prefix.bytes];
+        let cursor = prefix.bytes + 1;
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            operand_size_override: true,
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
+            cursor,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        let register_sae = prefix.encoding == VecEncodingKind::Evex && prefix.b && !modrm.is_memory;
+        if (prefix.encoding == VecEncodingKind::Evex
+            && ((prefix.b && modrm.is_memory) || (prefix.zeroing && modrm.is_memory)))
+            || (!register_sae && prefix.l_bits == 3)
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let imm_offset = cursor + modrm.bytes_consumed;
+        let imm = *bytes.get(imm_offset).ok_or(LiftError::Incomplete {
+            addr: pc,
+            have: bytes.len(),
+            need: imm_offset + 1,
+        })?;
+        let instruction_width = if register_sae {
+            VecWidth::V512
+        } else {
+            prefix.width
+        };
+        let lanes = instruction_width.lanes(VecElementType::F32) as u8;
+        let dst_width = match lanes {
+            4 => VecWidth::V64,
+            8 => VecWidth::V128,
+            16 => VecWidth::V256,
+            _ => unreachable!(),
+        };
+        let round = if imm & 4 != 0 {
+            FpRoundMode::Dynamic
+        } else {
+            match imm & 3 {
+                0 => FpRoundMode::RoundNearest,
+                1 => FpRoundMode::RoundDown,
+                2 => FpRoundMode::RoundUp,
+                _ => FpRoundMode::RoundTowardZero,
+            }
+        };
+        let mask = (prefix.encoding == VecEncodingKind::Evex && prefix.aaa != 0)
+            .then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
+        let src = self.vec_reg(
+            modrm.reg
+                + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
+                    16
+                } else {
+                    0
+                },
+            instruction_width,
+        );
+        let next_pc = pc + imm_offset as u64 + 1;
+        let hint = if register_sae {
+            X86OpHint::EvexOp {
+                map: prefix.map,
+                pp: prefix.pp,
+                opcode,
+                width: instruction_width,
+                w: false,
+            }
+        } else {
+            self.vec_hint(prefix, opcode)
+        };
+        let mut ops = Vec::new();
+        if modrm.is_memory {
+            let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                prefix,
+                modrm.addr.as_ref().unwrap(),
+                next_pc,
+                u32::from(lanes) * 2,
+                ctx,
+            );
+            ops.extend(pre_ops);
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86PackedFpConvertStore {
+                    addr,
+                    src,
+                    mask,
+                    lanes,
+                    round,
+                },
+                hint,
+            ));
+        } else {
+            let dst = self.vec_reg(
+                modrm.rm
+                    + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
+                        16
+                    } else {
+                        0
+                    },
+                dst_width,
+            );
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86PackedFpConvert {
+                    dst,
+                    src,
+                    mask,
+                    from: VecElementType::F32,
+                    to: VecElementType::F16,
+                    lanes,
+                    dst_width,
+                    mask_zeroing: prefix.zeroing,
+                    zero_upper: true,
+                    round,
+                    suppress_exceptions: register_sae,
+                    report_fp16_denormal: false,
+                },
+                hint,
+            ));
+        }
+        Ok(LiftResult::fallthrough(ops, imm_offset + 1))
+    }
+
     fn unsupported_evex_map_opcode(
         &self,
         map: X86VecMap,
@@ -34145,6 +34294,9 @@ impl X86_64Lifter {
                 }),
             },
             X86VecMap::Map0F3A => match opcode {
+                0x1D if prefix.pp == X86SsePrefix::OpSize => {
+                    self.lift_vec_packed_f32_to_f16_store(prefix, bytes, pc, ctx)
+                }
                 0x18 | 0x19 | 0x1A | 0x1B | 0x38 | 0x39 | 0x3A | 0x3B
                     if prefix.encoding == VecEncodingKind::Evex =>
                 {
@@ -34294,15 +34446,15 @@ impl X86_64Lifter {
         self.lift_vec_opcode(prefix, bytes, pc, ctx)
     }
 
-    fn lift_prefixed_vex(
+    fn lift_prefixed_vec(
         &self,
         pc: u64,
         bytes: &[u8],
         legacy: &X86Prefix,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        // VEX must follow any address-size/segment prefix and must not be
-        // preceded by REX, LOCK, or a separately encoded SIMD prefix.
+        // VEX/EVEX may follow address-size or segment prefixes, but must not
+        // be preceded by REX, LOCK, or a separately encoded SIMD prefix.
         if legacy.rex.is_some()
             || legacy.rex2.is_some()
             || legacy.lock
@@ -34314,7 +34466,10 @@ impl X86_64Lifter {
                 bytes: bytes.to_vec(),
             });
         }
-        let mut prefix = decode_vex_prefix(&bytes[legacy.cursor..], pc)?;
+        let mut prefix = match bytes.get(legacy.cursor) {
+            Some(0x62) => decode_evex_prefix(&bytes[legacy.cursor..], pc)?,
+            _ => decode_vex_prefix(&bytes[legacy.cursor..], pc)?,
+        };
         prefix.bytes += legacy.cursor;
         prefix.address_size_override = legacy.address_size_override;
         prefix.segment_override = legacy.segment_override;
@@ -40553,8 +40708,16 @@ impl X86_64Lifter {
             });
         }
 
-        if matches!(opcode_bytes[0], 0xC4 | 0xC5) {
-            let vec_prefix = decode_vex_prefix(opcode_bytes, pc)?;
+        let prefixed_vec = matches!(opcode_bytes[0], 0xC4 | 0xC5)
+            || (opcode_bytes[0] == 0x62
+                && opcode_bytes.get(1).is_some_and(|byte| byte & 7 == 3)
+                && opcode_bytes.get(4) == Some(&0x1D));
+        if prefixed_vec {
+            let vec_prefix = if opcode_bytes[0] == 0x62 {
+                decode_evex_prefix(opcode_bytes, pc)?
+            } else {
+                decode_vex_prefix(opcode_bytes, pc)?
+            };
             let vec_opcode = opcode_bytes.get(vec_prefix.bytes).copied();
             let supported_prefixed = (vec_prefix.map == X86VecMap::Map0F
                 && matches!(vec_opcode, Some(0x52 | 0x53 | 0x7C | 0x7D | 0xD0 | 0xF7)))
@@ -40574,9 +40737,9 @@ impl X86_64Lifter {
                         )
                     ))
                 || (vec_prefix.map == X86VecMap::Map0F3A
-                    && matches!(vec_opcode, Some(0xCE | 0xCF | 0xDF)));
+                    && matches!(vec_opcode, Some(0x1D | 0xCE | 0xCF | 0xDF)));
             if supported_prefixed {
-                return self.lift_prefixed_vex(pc, bytes, &prefix, ctx);
+                return self.lift_prefixed_vec(pc, bytes, &prefix, ctx);
             }
         }
 
@@ -57235,6 +57398,153 @@ mod tests {
                 Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
             ));
         }
+    }
+
+    #[test]
+    fn lift_vcvtps2ph_reversed_operands_destinations_rounding_and_reserved_fields() {
+        for (bytes, dst, src, lanes, dst_width, mask, zeroing, round, suppress) in [
+            (
+                &[0xC4, 0xE3, 0x79, 0x1D, 0xD1, 0x00][..],
+                X86Reg::Xmm(1),
+                X86Reg::Xmm(2),
+                4,
+                VecWidth::V64,
+                None,
+                false,
+                FpRoundMode::RoundNearest,
+                false,
+            ),
+            (
+                &[0xC4, 0xE3, 0x7D, 0x1D, 0xD1, 0x05][..],
+                X86Reg::Xmm(1),
+                X86Reg::Ymm(2),
+                8,
+                VecWidth::V128,
+                None,
+                false,
+                FpRoundMode::Dynamic,
+                false,
+            ),
+            (
+                &[0x62, 0xA3, 0x7D, 0xCB, 0x1D, 0xD1, 0x02][..],
+                X86Reg::Ymm(17),
+                X86Reg::Zmm(18),
+                16,
+                VecWidth::V256,
+                Some(X86Reg::K(3)),
+                true,
+                FpRoundMode::RoundUp,
+                false,
+            ),
+            (
+                &[0x62, 0xF3, 0x7D, 0x99, 0x1D, 0xD1, 0x03][..],
+                X86Reg::Ymm(1),
+                X86Reg::Zmm(2),
+                16,
+                VecWidth::V256,
+                Some(X86Reg::K(1)),
+                true,
+                FpRoundMode::RoundTowardZero,
+                true,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86PackedFpConvert {
+                    dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                    src: VReg::Arch(ArchReg::X86(actual_src)),
+                    mask: actual_mask,
+                    from: VecElementType::F32,
+                    to: VecElementType::F16,
+                    lanes: actual_lanes,
+                    dst_width: actual_width,
+                    mask_zeroing: actual_zeroing,
+                    zero_upper: true,
+                    round: actual_round,
+                    suppress_exceptions: actual_suppress,
+                    report_fp16_denormal: false,
+                } if actual_dst == dst && actual_src == src
+                    && actual_mask == mask.map(|reg| VReg::Arch(ArchReg::X86(reg)))
+                    && actual_lanes == lanes && actual_width == dst_width
+                    && actual_zeroing == zeroing && actual_round == round
+                    && actual_suppress == suppress
+            ));
+        }
+
+        for (bytes, lanes, expected_offset, round) in [
+            (
+                &[0x62, 0xF3, 0x7D, 0x09, 0x1D, 0x50, 0x02, 0x00][..],
+                4,
+                16,
+                FpRoundMode::RoundNearest,
+            ),
+            (
+                &[0x62, 0xF3, 0x7D, 0x29, 0x1D, 0x50, 0x02, 0x01][..],
+                8,
+                32,
+                FpRoundMode::RoundDown,
+            ),
+            (
+                &[0x62, 0xF3, 0x7D, 0x49, 0x1D, 0x50, 0x02, 0x06][..],
+                16,
+                64,
+                FpRoundMode::Dynamic,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86PackedFpConvertStore {
+                    addr: Address::BaseOffset {
+                        base: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                        offset,
+                        disp_size: DispSize::Disp8,
+                    },
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)
+                        | X86Reg::Ymm(2)
+                        | X86Reg::Zmm(2))),
+                    mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+                    lanes: actual_lanes,
+                    round: actual_round,
+                } if offset == expected_offset && actual_lanes == lanes && actual_round == round
+            ));
+        }
+
+        for bytes in [
+            &[0x67, 0xC4, 0xE3, 0x79, 0x1D, 0x10, 0x00][..],
+            &[0x64, 0xC4, 0xE3, 0x79, 0x1D, 0x10, 0x00][..],
+            &[0x67, 0x62, 0xF3, 0x7D, 0x09, 0x1D, 0x10, 0x00][..],
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86PackedFpConvertStore { .. }
+            ));
+        }
+
+        for bytes in [
+            &[0x62, 0xF3, 0x7D, 0x88, 0x1D, 0xD1, 0x00][..], // {z} with k0
+            &[0x62, 0xF3, 0x7D, 0x89, 0x1D, 0x10, 0x00][..], // zeroing store
+            &[0x62, 0xF3, 0x7D, 0x19, 0x1D, 0x10, 0x00][..], // EVEX.b memory
+            &[0x62, 0xF3, 0x7D, 0x69, 0x1D, 0xD1, 0x00][..], // reserved L'L=3
+            &[0x62, 0xF3, 0x75, 0x09, 0x1D, 0xD1, 0x00][..], // reserved vvvv
+            &[0xC4, 0xE3, 0xF9, 0x1D, 0xD1, 0x00][..],       // VEX.W=1
+            &[0xC4, 0xE3, 0x71, 0x1D, 0xD1, 0x00][..],       // reserved VEX.vvvv
+            &[0x66, 0xC4, 0xE3, 0x79, 0x1D, 0x10, 0x00][..], // separate SIMD prefix
+            &[0xF0, 0xC4, 0xE3, 0x79, 0x1D, 0x10, 0x00][..], // LOCK
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+            ));
+        }
+        assert!(matches!(
+            lift_single(&[0xC4, 0xE3, 0x79, 0x1D, 0xD1]),
+            Err(LiftError::Incomplete { .. })
+        ));
     }
 
     #[test]

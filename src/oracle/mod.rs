@@ -2005,6 +2005,13 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             suppress_exceptions,
             report_fp16_denormal
         ),
+        OpKind::X86PackedFpConvertStore {
+            addr,
+            src,
+            mask,
+            lanes,
+            round,
+        } => op_json!("x86_packed_fp_convert_store", addr, src, mask, lanes, round),
         OpKind::X86LoadMxcsr { addr } => op_json!("x86_load_mxcsr", addr),
         OpKind::X86StoreMxcsr { addr } => op_json!("x86_store_mxcsr", addr),
         OpKind::X86CacheControl { addr, kind } => op_json!("x86_cache_control", addr, kind),

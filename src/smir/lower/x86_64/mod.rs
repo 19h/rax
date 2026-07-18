@@ -9432,6 +9432,12 @@ impl X86_64Lowerer {
                 }
             }
 
+            OpKind::X86PackedFpConvertStore { .. } => {
+                return Err(LowerError::UnsupportedOp {
+                    op: "X86PackedFpConvertStore".to_string(),
+                });
+            }
+
             OpKind::MaterializeFlags => {}
 
             OpKind::SetCF { value } => {
@@ -29931,6 +29937,7 @@ mod tests {
 
     #[test]
     fn lower_x86_packed_fp16_precision_converts_remain_explicitly_interpreter_only() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
         let xmm0 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
         let xmm1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
         let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
@@ -29978,6 +29985,22 @@ mod tests {
                     pp: X86SsePrefix::OpSize,
                     opcode: 0x1D,
                     width: VecWidth::V512,
+                    w: false,
+                },
+            ),
+            (
+                OpKind::X86PackedFpConvertStore {
+                    addr: Address::Direct(rax),
+                    src: xmm1,
+                    mask: Some(k1),
+                    lanes: 4,
+                    round: FpRoundMode::Dynamic,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F3A,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x1D,
+                    width: VecWidth::V128,
                     w: false,
                 },
             ),

@@ -2760,6 +2760,14 @@ impl OpKind {
                 }
             }
 
+            OpKind::X86PackedFpConvertStore {
+                addr, src, mask, ..
+            } => {
+                result.push(*src);
+                result.extend(mask.iter().copied());
+                result.extend(addr.regs());
+            }
+
             // Vector operations
             OpKind::VAdd { src1, src2, .. }
             | OpKind::VSub { src1, src2, .. }
@@ -9349,6 +9357,30 @@ mod tests {
         );
         let sources = ops[conversion].kind.source_vregs();
         assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::K(1)))));
+
+        let vcvtps2ph_store = optimized(&[0x62, 0xF3, 0x7D, 0x09, 0x1D, 0x10, 0x04]);
+        let store = vcvtps2ph_store.blocks[0]
+            .ops
+            .iter()
+            .find(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86PackedFpConvertStore {
+                        addr: Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rax))),
+                        src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+                        lanes: 4,
+                        round: FpRoundMode::Dynamic,
+                    }
+                )
+            })
+            .expect("masked VCVTPS2PH memory conversion removed");
+        assert!(store.kind.has_side_effects());
+        assert!(store.kind.writes_memory());
+        let sources = store.kind.source_vregs();
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Rax))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)))));
         assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::K(1)))));
 
         let legacy_packed_convert = optimized(&[0x0F, 0x5A, 0xC1]);

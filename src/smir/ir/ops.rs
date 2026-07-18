@@ -1606,6 +1606,20 @@ pub enum OpKind {
         report_fp16_denormal: bool,
     },
 
+    /// x86 VCVTPS2PH packed FP32-to-FP16 conversion with a memory
+    /// destination. `mask` selects the 2-byte destination lanes that are
+    /// written; inactive lanes perform no memory access and cannot fault.
+    /// The interpreter preflights every active lane before conversion and
+    /// commits no stores when an unmasked SIMD floating-point exception is
+    /// raised. FP16 output denormals are retained regardless of MXCSR.FTZ.
+    X86PackedFpConvertStore {
+        addr: Address,
+        src: VReg,
+        mask: Option<VReg>,
+        lanes: u8,
+        round: FpRoundMode,
+    },
+
     /// FP convert precision
     FConvert {
         dst: VReg,
@@ -4430,6 +4444,7 @@ impl OpKind {
             | OpKind::Bt { .. }
             | OpKind::Store { .. }
             | OpKind::PredStore { .. }
+            | OpKind::X86PackedFpConvertStore { .. }
             | OpKind::StorePair { .. }
             | OpKind::AtomicStore { .. }
             | OpKind::ClearExclusive
@@ -4488,6 +4503,7 @@ impl OpKind {
                 self,
                 OpKind::Store { .. }
                     | OpKind::PredStore { .. }
+                    | OpKind::X86PackedFpConvertStore { .. }
                     | OpKind::RepStos { .. }
                     | OpKind::RepMovs { .. }
                     | OpKind::X86String { .. }
@@ -4656,6 +4672,7 @@ impl OpKind {
             self,
             OpKind::Store { .. }
                 | OpKind::PredStore { .. }
+                | OpKind::X86PackedFpConvertStore { .. }
                 | OpKind::RepStos { .. }
                 | OpKind::RepMovs { .. }
                 | OpKind::X86String {
