@@ -166,7 +166,9 @@ const X86_SIMD_F64: X86SimdFpFormat = X86SimdFpFormat {
     bias: 1023,
 };
 
-// VEXP2 polynomial coefficients derived from Intel's reference implementation:
+// Approximation polynomial coefficients derived from Intel's reference
+// implementations:
+// https://www.intel.com/content/dam/develop/external/us/en/documents/recip14.c
 // https://www.intel.com/content/dam/develop/external/us/en/documents/RECIP28EXP2.c
 //
 // Copyright (c) 2015, Intel Corporation
@@ -258,6 +260,76 @@ const X86_EXP2_23_COEFFICIENTS: [(u64, u64, u64); 64] = [
     (0x3DF4_37EA, 0x1578B, 0x077A),
     (0x3EA0_ECC3, 0x15B48, 0x0792),
     (0x3F4F_830F, 0x15F11, 0x07A3),
+];
+
+// VRCP14 slope and free-term pairs from Intel's RECIP14.c. The license notice
+// above applies. Integer evaluation reproduces the source's exact intermediate
+// arithmetic and truncation without host floating-point operations.
+const X86_RCP14_COEFFICIENTS: [(u64, u64); 64] = [
+    (1009, 260119),
+    (977, 256148),
+    (949, 252296),
+    (921, 248558),
+    (893, 244929),
+    (869, 241405),
+    (843, 237981),
+    (821, 234652),
+    (797, 231416),
+    (777, 228266),
+    (755, 225202),
+    (735, 222220),
+    (717, 219314),
+    (699, 216485),
+    (681, 213727),
+    (663, 211038),
+    (647, 208417),
+    (631, 205859),
+    (617, 203364),
+    (601, 200929),
+    (587, 198551),
+    (573, 196229),
+    (561, 193960),
+    (547, 191743),
+    (535, 189576),
+    (523, 187458),
+    (513, 185387),
+    (501, 183360),
+    (491, 181377),
+    (479, 179439),
+    (469, 177540),
+    (459, 175681),
+    (451, 173860),
+    (441, 172077),
+    (433, 170330),
+    (423, 168618),
+    (415, 166940),
+    (407, 165295),
+    (399, 163682),
+    (391, 162101),
+    (385, 160550),
+    (377, 159027),
+    (369, 157535),
+    (363, 156069),
+    (357, 154631),
+    (349, 153219),
+    (343, 151832),
+    (337, 150470),
+    (331, 149133),
+    (325, 147819),
+    (319, 146528),
+    (315, 145260),
+    (309, 144012),
+    (303, 142787),
+    (299, 141582),
+    (293, 140397),
+    (289, 139232),
+    (285, 138085),
+    (279, 136959),
+    (275, 135853),
+    (271, 134763),
+    (267, 133689),
+    (263, 132631),
+    (259, 131589),
 ];
 
 // VRCP28 raw polynomial coefficients from the same Intel reference source.
@@ -4628,6 +4700,82 @@ impl SmirInterpreter {
                         ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
                         return Ok(());
                     }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Recip14 {
+                dst,
+                merge,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+            } => {
+                let format = match elem {
+                    VecElementType::F32 => X86_SIMD_F32,
+                    VecElementType::F64 => X86_SIMD_F64,
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                if *scalar != merge.is_some()
+                    || (*scalar && (*width != VecWidth::V128 || *lanes != 1))
+                    || (!*scalar && *lanes != width.lanes(*elem) as u8)
+                    || (*mask_zeroing && mask.is_none())
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: ctx.pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let source = Self::read_vec(ctx, *src);
+                let old = Self::read_vec(ctx, *dst);
+                let mut result = if let Some(merge) = merge {
+                    Self::read_vec(ctx, *merge)
+                } else {
+                    old
+                };
+                if *scalar {
+                    result[2..].fill(0);
+                } else {
+                    result[(width.bytes() / 8) as usize..].fill(0);
+                }
+                let active = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let elem_bits = elem.bytes() * 8;
+                for lane in 0..*lanes {
+                    if active & (1u64 << lane) == 0 {
+                        if *mask_zeroing {
+                            Self::set_lane(&mut result, lane, elem_bits, 0);
+                        } else {
+                            Self::set_lane(
+                                &mut result,
+                                lane,
+                                elem_bits,
+                                Self::get_lane(&old, lane, elem_bits),
+                            );
+                        }
+                        continue;
+                    }
+                    let converted = Self::x86_simd_recip14(
+                        Self::get_lane(&source, lane, elem_bits),
+                        format,
+                        mxcsr,
+                    );
+                    Self::set_lane(&mut result, lane, elem_bits, converted.bits);
                 }
                 Self::write_vec(ctx, *dst, result);
             }
@@ -18114,6 +18262,111 @@ impl SmirInterpreter {
             _ => unreachable!(),
         };
         X86SimdFpResult { bits, status: 0 }
+    }
+
+    fn x86_simd_recip14(bits: u64, format: X86SimdFpFormat, mxcsr: u32) -> X86SimdFpResult {
+        let (sign_mask, exponent_mask, fraction_mask, quiet_mask) = Self::x86_simd_fp_masks(format);
+        if Self::x86_simd_fp_is_nan(bits, format) {
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_quiet_nan(bits, format),
+                status: 0,
+            };
+        }
+        if Self::x86_simd_fp_is_infinite(bits, format) {
+            return X86SimdFpResult {
+                bits: bits & sign_mask,
+                status: 0,
+            };
+        }
+        if Self::x86_simd_fp_is_zero(bits, format) {
+            return X86SimdFpResult {
+                bits: (bits & sign_mask) | exponent_mask,
+                status: 0,
+            };
+        }
+
+        let sign = bits & sign_mask;
+        let magnitude = bits & !sign_mask;
+        let ftz = mxcsr & (1 << 15) != 0;
+        let daz = mxcsr & (1 << 6) != 0;
+        let max_biased_exponent = (1u64 << format.exponent_bits) - 1;
+        let hidden = 1u64 << format.fraction_bits;
+
+        let mut result = if Self::x86_simd_fp_is_denormal(bits, format) {
+            let small_denormal_threshold = 1u64 << (format.fraction_bits - 2);
+            if daz || magnitude <= small_denormal_threshold {
+                sign | exponent_mask
+            } else {
+                // Intel's reference normalizes large denormals recursively and
+                // starts the reciprocal exponent one below the largest normal.
+                let mut normalized = magnitude;
+                let mut output_exponent = max_biased_exponent - 3;
+                while normalized & hidden == 0 {
+                    normalized <<= 1;
+                    output_exponent += 1;
+                }
+                let normalized_fraction = normalized & fraction_mask;
+                let base = if normalized_fraction == 0 {
+                    (format.bias as u64) << format.fraction_bits
+                } else {
+                    Self::x86_recip14_normalized_base(normalized_fraction, format)
+                };
+                if base == (format.bias as u64) << format.fraction_bits {
+                    output_exponent += 1;
+                }
+                sign | (output_exponent << format.fraction_bits) | (base & fraction_mask)
+            }
+        } else {
+            let input_exponent = (magnitude & exponent_mask) >> format.fraction_bits;
+            let fraction = magnitude & fraction_mask;
+            if fraction == 0 {
+                if input_exponent == max_biased_exponent - 1 {
+                    // The exact reciprocal of the largest power of two is a
+                    // denormal whose sole set bit equals the NaN quiet bit.
+                    sign | quiet_mask
+                } else {
+                    let output_exponent = 2 * format.bias as u64 - input_exponent;
+                    sign | (output_exponent << format.fraction_bits)
+                }
+            } else {
+                let base = Self::x86_recip14_normalized_base(fraction, format);
+                let significand = hidden | (base & fraction_mask);
+                if input_exponent == max_biased_exponent - 1 {
+                    sign | (significand >> 2)
+                } else if input_exponent == max_biased_exponent - 2 {
+                    sign | (significand >> 1)
+                } else {
+                    let output_exponent = 2 * format.bias as u64 - 1 - input_exponent;
+                    sign | (output_exponent << format.fraction_bits) | (base & fraction_mask)
+                }
+            }
+        };
+
+        if ftz && result & exponent_mask == 0 && result & fraction_mask != 0 {
+            result = sign;
+        }
+        X86SimdFpResult {
+            bits: result,
+            status: 0,
+        }
+    }
+
+    fn x86_recip14_normalized_base(fraction: u64, format: X86SimdFpFormat) -> u64 {
+        let segment = (fraction >> (format.fraction_bits - 6)) as usize;
+        let retained_fraction = fraction & !((1u64 << (format.fraction_bits - 16)) - 1);
+        let center = ((2 * segment + 1) as u64) << (format.fraction_bits - 7);
+        let delta = retained_fraction as i128 - center as i128;
+        let denominator = 1i128 << (format.fraction_bits - 8);
+        let (slope, free_term) = X86_RCP14_COEFFICIENTS[segment];
+        let numerator = free_term as i128 * denominator - slope as i128 * delta;
+        let significand = numerator >> (format.fraction_bits - 7);
+        debug_assert!((1 << 16..=1 << 17).contains(&significand));
+        if significand == 1 << 17 {
+            (format.bias as u64) << format.fraction_bits
+        } else {
+            ((format.bias as u64 - 1) << format.fraction_bits)
+                | ((significand as u64 - (1 << 16)) << (format.fraction_bits - 16))
+        }
     }
 
     fn x86_simd_recip28(bits: u64, format: X86SimdFpFormat) -> X86SimdFpResult {
@@ -60019,6 +60272,145 @@ mod tests {
     }
 
     #[test]
+    fn x86_recip14_matches_intel_reference_all_segments_mxcsr_and_special_values() {
+        // FNV-1a accumulation over outputs generated by Intel's RECIP14.c
+        // RCP14S/RCP14D implementation. The corpus covers every polynomial
+        // segment, both signs, four exponent scales, and four segment offsets.
+        const FNV_OFFSET: u64 = 0xCBF2_9CE4_8422_2325;
+        const FNV_PRIME: u64 = 0x0000_0100_0000_01B3;
+        let mut hash32 = FNV_OFFSET;
+        let mut count32 = 0usize;
+        for sign in [0u32, 1] {
+            for exponent in [1u32, 127, 253, 254] {
+                for segment in 0u32..64 {
+                    for tail in [0u32, 1, 0xFFFF, 0x1_FFFF] {
+                        let bits = (sign << 31) | (exponent << 23) | (segment << 17) | tail;
+                        let result =
+                            SmirInterpreter::x86_simd_recip14(u64::from(bits), X86_SIMD_F32, 0);
+                        hash32 = (hash32 ^ result.bits).wrapping_mul(FNV_PRIME);
+                        assert_eq!(result.status, 0);
+                        count32 += 1;
+                    }
+                }
+            }
+        }
+        assert_eq!(count32, 2_048);
+        assert_eq!(hash32, 0x3458_3FF8_E41E_DD25);
+
+        let mut hash64 = FNV_OFFSET;
+        let mut count64 = 0usize;
+        for sign in [0u64, 1] {
+            for exponent in [1u64, 1023, 2045, 2046] {
+                for segment in 0u64..64 {
+                    for tail in [0u64, 1, (1 << 45) - 1, (1 << 46) - 1] {
+                        let bits = (sign << 63) | (exponent << 52) | (segment << 46) | tail;
+                        let result = SmirInterpreter::x86_simd_recip14(bits, X86_SIMD_F64, 0);
+                        hash64 = (hash64 ^ result.bits).wrapping_mul(FNV_PRIME);
+                        assert_eq!(result.status, 0);
+                        count64 += 1;
+                    }
+                }
+            }
+        }
+        assert_eq!(count64, 2_048);
+        assert_eq!(hash64, 0xD3E9_7608_DF2E_C325);
+
+        for (bits, format, mxcsr, expected) in [
+            (0, X86_SIMD_F32, 0, 0x7F80_0000),
+            (0x8000_0000, X86_SIMD_F32, 0, 0xFF80_0000),
+            (0x7F80_0000, X86_SIMD_F32, 0, 0),
+            (0xFF80_0000, X86_SIMD_F32, 0, 0x8000_0000),
+            (0x7FC1_2345, X86_SIMD_F32, 0, 0x7FC1_2345),
+            (0x7F81_2345, X86_SIMD_F32, 0, 0x7FC1_2345),
+            (0x0020_0000, X86_SIMD_F32, 0, 0x7F80_0000),
+            (0x0020_0001, X86_SIMD_F32, 0, 0x7F7F_FE00),
+            (0x0020_0001, X86_SIMD_F32, 1 << 6, 0x7F80_0000),
+            (0x0040_0000, X86_SIMD_F32, 0, 0x7F00_0000),
+            (0x7E80_0001, X86_SIMD_F32, 0, 0x007F_FF00),
+            (0x7E80_0001, X86_SIMD_F32, 1 << 15, 0),
+            (0x7F00_0001, X86_SIMD_F32, 0, 0x003F_FF80),
+            (0, X86_SIMD_F64, 0, 0x7FF0_0000_0000_0000),
+            (
+                0x8000_0000_0000_0000,
+                X86_SIMD_F64,
+                0,
+                0xFFF0_0000_0000_0000,
+            ),
+            (0x7FF0_0000_0000_0000, X86_SIMD_F64, 0, 0),
+            (
+                0xFFF0_0000_0000_0000,
+                X86_SIMD_F64,
+                0,
+                0x8000_0000_0000_0000,
+            ),
+            (
+                0x7FF8_1234_5678_9ABC,
+                X86_SIMD_F64,
+                0,
+                0x7FF8_1234_5678_9ABC,
+            ),
+            (
+                0x7FF0_1234_5678_9ABC,
+                X86_SIMD_F64,
+                0,
+                0x7FF8_1234_5678_9ABC,
+            ),
+            (
+                0x0004_0000_0000_0000,
+                X86_SIMD_F64,
+                0,
+                0x7FF0_0000_0000_0000,
+            ),
+            (
+                0x0004_0000_0000_0001,
+                X86_SIMD_F64,
+                0,
+                0x7FEF_FFC0_0000_0000,
+            ),
+            (
+                0x0004_0000_0000_0001,
+                X86_SIMD_F64,
+                1 << 6,
+                0x7FF0_0000_0000_0000,
+            ),
+            (
+                0x7FD0_0000_0000_0001,
+                X86_SIMD_F64,
+                0,
+                0x000F_FFE0_0000_0000,
+            ),
+            (0x7FD0_0000_0000_0001, X86_SIMD_F64, 1 << 15, 0),
+        ] {
+            assert_eq!(
+                SmirInterpreter::x86_simd_recip14(bits, format, mxcsr),
+                X86SimdFpResult {
+                    bits: expected,
+                    status: 0,
+                }
+            );
+        }
+
+        let limit = 2.0f64.powi(-14);
+        for exponent in [1u64, 256, 1023, 1792, 2046] {
+            for segment in 0u64..64 {
+                for tail in [1u64, (1 << 45) - 1, (1 << 46) - 1] {
+                    let bits = (exponent << 52) | (segment << 46) | tail;
+                    let input = f64::from_bits(bits);
+                    let actual = f64::from_bits(
+                        SmirInterpreter::x86_simd_recip14(bits, X86_SIMD_F64, 0).bits,
+                    );
+                    let reference = input.recip();
+                    let relative_error = ((actual - reference) / reference).abs();
+                    assert!(
+                        relative_error < limit,
+                        "VRCP14D {input:e}: relative error {relative_error:e}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn x86_recip28_matches_intel_reference_all_segments_and_special_values() {
         // FNV-1a-style accumulation over outputs and status flags generated by
         // Intel's RECIP28EXP2.c RCP28S/RCP28D implementation. The corpus
@@ -60156,6 +60548,119 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn lifted_x86_recip14_preserves_widths_scalar_merge_masks_mxcsr_and_fault_suppression() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0xAAAA_AAAA_DEAD_BEEF; 16];
+            x86.xmm[2] = [
+                0x0123_4567_89AB_CDEF,
+                0x0FED_CBA9_8765_4321,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ];
+            x86.xmm[3][0] = u64::from(3.0f32.to_bits());
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x08, 0x4D, 0xCB], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x0123_4567_3EAA_AA80);
+            assert_eq!(x86.xmm[1][1], 0x0FED_CBA9_8765_4321);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 0xAAAA_AAAA_DEAD_BEEF;
+            x86.k[1] = 0;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0x4D, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x0123_4567_DEAD_BEEF);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 0xAAAA_AAAA_DEAD_BEEF;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x89, 0x4D, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x0123_4567_0000_0000);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[3][0] = 0x0020_0001;
+            x86.mxcsr = 0;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x08, 0x4D, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0] as u32, 0x7F7F_FE00);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mxcsr = 1 << 6;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x08, 0x4D, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0] as u32, 0x7F80_0000);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[3][0] = 0x7E80_0001;
+            x86.mxcsr = 0;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x08, 0x4D, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0] as u32, 0x007F_FF00);
+        }
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mxcsr = 1 << 15;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x08, 0x4D, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0] as u32, 0);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0xDEAD_BEEF_CAFE_BABE; 16];
+            x86.xmm[3][0] = (u64::from(4.0f32.to_bits()) << 32) | u64::from(2.0f32.to_bits());
+            x86.xmm[3][1] = (u64::from(16.0f32.to_bits()) << 32) | u64::from(8.0f32.to_bits());
+            x86.mxcsr = 0;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x08, 0x4C, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x3E80_0000_3F00_0000);
+            assert_eq!(x86.xmm[1][1], 0x3D80_0000_3E00_0000);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k1, 0);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0x4D, 0x08], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        ctx.write_vreg(k1, 1);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0x4D, 0x08], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
     }
 
     #[test]

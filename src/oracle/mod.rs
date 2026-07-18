@@ -2087,6 +2087,28 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             mask_zeroing,
             suppress_exceptions
         ),
+        OpKind::X86Recip14 {
+            dst,
+            merge,
+            src,
+            mask,
+            elem,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+        } => op_json!(
+            "x86_recip14",
+            dst,
+            merge,
+            src,
+            mask,
+            elem,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing
+        ),
         OpKind::X86Recip28 {
             dst,
             merge,

@@ -2876,7 +2876,15 @@ impl OpKind {
                 }
             }
 
-            OpKind::X86Recip28 {
+            OpKind::X86Recip14 {
+                dst,
+                merge,
+                src,
+                mask,
+                mask_zeroing,
+                ..
+            }
+            | OpKind::X86Recip28 {
                 dst,
                 merge,
                 src,
@@ -10058,6 +10066,68 @@ mod tests {
             }
             .has_side_effects()
         );
+
+        let recip14 = optimized(&[0x62, 0xF2, 0x7D, 0x5A, 0x4C, 0x00]);
+        let ops = &recip14.blocks[0].ops;
+        let recip14 = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86Recip14 {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        merge: None,
+                        src: VReg::Virtual(_),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                        elem: VecElementType::F32,
+                        width: VecWidth::V512,
+                        lanes: 16,
+                        scalar: false,
+                        mask_zeroing: false,
+                    }
+                )
+            })
+            .expect("masked broadcast VRCP14PS removed");
+        assert!(!ops[recip14].kind.has_side_effects());
+        assert_eq!(
+            ops[..recip14]
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            1,
+        );
+        let sources = ops[recip14].kind.source_vregs();
+        assert!(sources.iter().any(|reg| matches!(reg, VReg::Virtual(_))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Zmm(0)))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::K(2)))));
+
+        let scalar_recip14 = OpKind::X86Recip14 {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            merge: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)))),
+            src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+            mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+            elem: VecElementType::F64,
+            width: VecWidth::V128,
+            lanes: 1,
+            scalar: true,
+            mask_zeroing: false,
+        };
+        assert!(!scalar_recip14.has_side_effects());
+        let sources = scalar_recip14.source_vregs();
+        for source in [
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+            VReg::Arch(ArchReg::X86(X86Reg::K(1))),
+        ] {
+            assert!(sources.contains(&source));
+        }
 
         let recip28 = optimized(&[0x62, 0xF2, 0x7D, 0x5A, 0xCA, 0x00]);
         let ops = &recip28.blocks[0].ops;
