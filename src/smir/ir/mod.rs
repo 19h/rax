@@ -418,6 +418,56 @@ impl X86InstructionBytes {
             _ => None,
         }
     }
+
+    /// Validate register-only EVEX packed binary32/binary64 fused
+    /// multiply-add/subtract operations and return whether the vector length
+    /// requires AVX-512VL. Memory and EVEX.b embedded-rounding forms are
+    /// intentionally excluded so replay remains register-only and uses the
+    /// guest MXCSR rounding mode.
+    pub fn evex_register_packed_fma_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+        if p0 & 0x0f != 2 || p1 & 0x04 == 0 || modrm >> 6 != 3 || p1 & 0x03 != 1 {
+            return None;
+        }
+        if !matches!(
+            opcode,
+            0x96..=0x98
+                | 0x9A
+                | 0x9C
+                | 0x9E
+                | 0xA6..=0xA8
+                | 0xAA
+                | 0xAC
+                | 0xAE
+                | 0xB6..=0xB8
+                | 0xBA
+                | 0xBC
+                | 0xBE
+        ) {
+            return None;
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || (zeroing && mask == 0) {
+            return None;
+        }
+        match ll {
+            0 | 1 => Some(true),
+            2 => Some(false),
+            _ => None,
+        }
+    }
 }
 
 /// A contiguous semantic-op group that may be replaced by one exact native x86
@@ -543,6 +593,19 @@ pub fn x86_evex_immediate_count_shift_replay_spans(
     })
 }
 
+/// Identify valid register-only EVEX packed FMA replay groups in `block` in
+/// O(N) time and O(P) space for N operations and P unique guest PCs.
+pub fn x86_evex_packed_fma_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_packed_fma_needs_vl()
+            .map(|needs_vl| (needs_vl, false))
+    })
+}
+
 /// Identify every validated native EVEX replay group in one O(N)-time,
 /// O(P)-space block pass. Classifiers are intentionally disjoint and ordered
 /// explicitly so adding a replay family does not add another scan of the SMIR
@@ -569,6 +632,11 @@ pub fn x86_evex_native_replay_spans(
             .or_else(|| {
                 instruction
                     .evex_register_immediate_count_shift_needs_vl()
+                    .map(|needs_vl| (needs_vl, false))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_packed_fma_needs_vl()
                     .map(|needs_vl| (needs_vl, false))
             })
     })
@@ -1242,6 +1310,46 @@ mod tests {
                 X86InstructionBytes::new(bytes)
                     .unwrap()
                     .evex_register_immediate_count_shift_needs_vl(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn x86_evex_packed_fma_replay_classifier_is_exact_and_fail_closed() {
+        let valid = [
+            (&[0x62, 0xA2, 0xED, 0xC1, 0x98, 0xCB][..], Some(false)),
+            (&[0x62, 0xF2, 0x6D, 0x29, 0xA6, 0xC8][..], Some(true)),
+            (&[0x62, 0xF2, 0xED, 0x09, 0xBE, 0xC8][..], Some(true)),
+        ];
+        for (bytes, expected) in valid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_packed_fma_needs_vl(),
+                expected,
+                "{bytes:02X?}"
+            );
+        }
+
+        let invalid: &[&[u8]] = &[
+            &[0x62, 0xA1, 0xED, 0xC1, 0x98, 0xCB], // wrong map
+            &[0x62, 0xA2, 0xE9, 0xC1, 0x98, 0xCB], // missing EVEX fixed-one bit
+            &[0x62, 0xA2, 0xEC, 0xC1, 0x98, 0xCB], // missing 66 prefix
+            &[0x62, 0xA2, 0xED, 0xC1, 0x98, 0x0B], // memory source
+            &[0x62, 0xA2, 0xED, 0xD1, 0x98, 0xCB], // EVEX.b
+            &[0x62, 0xA2, 0xED, 0xC8, 0x98, 0xCB], // {z} with k0
+            &[0x62, 0xA2, 0xED, 0xE1, 0x98, 0xCB], // L'L=3
+            &[0x62, 0xA2, 0xED, 0xC1, 0x99, 0xCB], // scalar FMA opcode
+            &[0x62, 0xA2, 0xED, 0xC1, 0x9B, 0xCB], // unrelated opcode
+            &[0x62, 0xA2, 0xED, 0xC1, 0x98],       // missing ModR/M
+        ];
+        for bytes in invalid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_packed_fma_needs_vl(),
                 None,
                 "{bytes:02X?}"
             );
