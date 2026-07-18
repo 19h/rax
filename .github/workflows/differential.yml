@@ -151,6 +151,7 @@ jobs:
           cargo test "${features[@]}" "${matrix_tests[@]}" "${apx_tests[@]}" -- \
             --include-ignored \
             --skip report_evex_spec_forms_rejected_by_smir_lifter \
+            --skip report_evex_spec_forms_accepted_by_lifter_but_rejected_by_lowerer \
             --skip qemu_evex_unimplemented_avx512_corpus_matches_rax_when_enabled \
             "${evex_skips[@]}" \
             --nocapture

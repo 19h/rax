@@ -3,7 +3,7 @@
 //! This module lifts x86_64 machine code to SMIR. Unlike AArch64 which has a clean
 //! decoder, x86 decoding is interleaved with lifting due to variable-length encoding.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
@@ -17,6 +17,7 @@ use crate::smir::ir::ops::{
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
     CallTarget, CallingConv, FunctionAttrs, SmirBlock, SmirFunction, Terminator, TrapKind,
+    X86InstructionBytes,
 };
 use crate::smir::lift::{
     ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
@@ -74,6 +75,10 @@ pub struct X86_64Lifter {
     lift_through_calls: bool,
     /// Cap on lifted blocks (only enforced under `lift_through_calls`).
     max_blocks: usize,
+    /// Exact instruction provenance accumulated by `lift_block` for transfer to
+    /// the next `lift_function` result. The block ID participates in the key so
+    /// synthetic ops carrying another block's guest PC cannot claim its bytes.
+    lifted_instruction_bytes: HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
 }
 
 impl Default for X86_64Lifter {
@@ -90,6 +95,7 @@ impl X86_64Lifter {
             interpreter_frontiers: false,
             lift_through_calls: false,
             max_blocks: 0,
+            lifted_instruction_bytes: HashMap::new(),
         }
     }
 
@@ -100,6 +106,7 @@ impl X86_64Lifter {
             interpreter_frontiers: false,
             lift_through_calls: false,
             max_blocks: 0,
+            lifted_instruction_bytes: HashMap::new(),
         }
     }
 
@@ -43768,6 +43775,11 @@ impl SmirLifter for X86_64Lifter {
                 break;
             }
 
+            if let Some(instruction) = X86InstructionBytes::new(&buf[..result.bytes_consumed]) {
+                self.lifted_instruction_bytes
+                    .insert((block_id, pc), instruction);
+            }
+
             // Add ops to block
             block.ops.extend(result.ops);
             pc += result.bytes_consumed as u64;
@@ -43866,6 +43878,7 @@ impl SmirLifter for X86_64Lifter {
         mem: &dyn MemoryReader,
         ctx: &mut LiftContext,
     ) -> Result<SmirFunction, LiftError> {
+        self.lifted_instruction_bytes.clear();
         let entry_block = ctx.get_or_create_block(entry);
         let mut func = SmirFunction::new(FunctionId(entry as u32), entry_block, entry);
         func.attrs.preserve_interpreter_frontiers =
@@ -43941,6 +43954,7 @@ impl SmirLifter for X86_64Lifter {
             func.add_block(block);
         }
 
+        func.x86_instruction_bytes = std::mem::take(&mut self.lifted_instruction_bytes);
         Ok(func)
     }
 }
@@ -75155,6 +75169,48 @@ mod tests {
             );
             assert!(matches!(frontier.terminator, Terminator::Return { .. }));
         }
+    }
+
+    #[test]
+    fn lift_function_retains_exact_evex_replay_provenance_through_optimization() {
+        const VADDPS: [u8; 6] = [0x62, 0xF1, 0x6C, 0xC9, 0x58, 0xCB];
+        let mut bytes = VADDPS.to_vec(); // vaddps zmm1{k1}{z}, zmm2, zmm3
+        bytes.push(0xC3); // interpreter frontier
+        let mem = TestMemory::new(0x1800, bytes);
+        let mut lifter = X86_64Lifter::strict();
+        lifter.set_interpreter_frontiers(true);
+        let mut ctx = LiftContext::new(SourceArch::X86_64);
+        let mut function = lifter.lift_function(0x1800, &mem, &mut ctx).unwrap();
+
+        let entry_id = function
+            .blocks
+            .iter()
+            .find(|block| block.guest_pc == 0x1800)
+            .unwrap()
+            .id;
+        assert_eq!(
+            function
+                .x86_instruction_bytes
+                .get(&(entry_id, 0x1800))
+                .map(X86InstructionBytes::as_slice),
+            Some(VADDPS.as_slice())
+        );
+        assert!(
+            !function
+                .x86_instruction_bytes
+                .contains_key(&(entry_id, 0x1806)),
+            "frontier instruction must not be attached to the executable block"
+        );
+
+        crate::smir::optimize::optimize_function(
+            &mut function,
+            crate::smir::optimize::OptLevel::O2,
+        );
+        let entry = function.get_block(entry_id).unwrap();
+        let spans =
+            crate::smir::ir::x86_evex_fp_replay_spans(entry, &function.x86_instruction_bytes);
+        assert_eq!(spans.len(), 1);
+        assert_eq!(spans.get(&0).unwrap().instruction.as_slice(), VADDPS);
     }
 
     #[test]

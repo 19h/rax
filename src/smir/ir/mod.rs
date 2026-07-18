@@ -110,6 +110,13 @@ pub struct SmirFunction {
     pub calling_convention: CallingConv,
     /// Function attributes
     pub attrs: FunctionAttrs,
+    /// Exact source bytes for x86 instructions retained in this function,
+    /// keyed by `(block, guest PC)`. These bytes are provenance metadata: the
+    /// interpreter and architecture-independent optimizers use the semantic
+    /// SMIR operations, while the same-architecture x86 lowerer may replay a
+    /// narrowly validated register-only instruction to avoid materializing
+    /// otherwise unrepresentable vector temporaries.
+    pub x86_instruction_bytes: HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
 }
 
 impl SmirFunction {
@@ -123,6 +130,7 @@ impl SmirFunction {
             guest_range: (guest_start, guest_start),
             calling_convention: CallingConv::GuestPreserveAll,
             attrs: FunctionAttrs::default(),
+            x86_instruction_bytes: HashMap::new(),
         }
     }
 
@@ -157,6 +165,141 @@ impl SmirFunction {
     pub fn op_count(&self) -> usize {
         self.blocks.iter().map(|b| b.ops.len()).sum()
     }
+}
+
+/// Exact bytes of one x86 instruction. Architectural x86 instructions are at
+/// most 15 bytes; keeping a fixed-size value makes function provenance cheap to
+/// clone and prevents metadata from carrying an unbounded byte sequence into a
+/// native lowerer.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct X86InstructionBytes {
+    bytes: [u8; 15],
+    len: u8,
+}
+
+impl X86InstructionBytes {
+    /// Capture one complete x86 instruction.
+    pub fn new(bytes: &[u8]) -> Option<Self> {
+        if bytes.is_empty() || bytes.len() > 15 {
+            return None;
+        }
+        let mut captured = [0u8; 15];
+        captured[..bytes.len()].copy_from_slice(bytes);
+        Some(Self {
+            bytes: captured,
+            len: bytes.len() as u8,
+        })
+    }
+
+    /// Return the complete instruction byte sequence.
+    pub fn as_slice(&self) -> &[u8] {
+        &self.bytes[..self.len as usize]
+    }
+
+    /// Validate the initial native-replay family and return whether its vector
+    /// length requires AVX-512VL in addition to AVX-512F. The admitted set is
+    /// exactly register-source EVEX VADD*/VMUL*/VSUB*/VMIN*/VDIV*/VMAX* over
+    /// binary32/binary64 packed or scalar elements, without EVEX.b embedded
+    /// rounding/SAE. Every structural and reserved field relevant to this set
+    /// is checked so fabricated metadata fails closed.
+    pub fn evex_register_fp_arithmetic_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+
+        // Map 1 (0F), EVEX.P1's fixed-one bit, and a register ModR/M source.
+        if p0 & 0x0f != 1 || p1 & 0x04 == 0 || modrm >> 6 != 3 {
+            return None;
+        }
+        if !matches!(opcode, 0x58 | 0x59 | 0x5c | 0x5d | 0x5e | 0x5f) {
+            return None;
+        }
+
+        let pp = p1 & 0x03;
+        let w = p1 & 0x80 != 0;
+        // PS/SS use W0; PD/SD use W1.
+        if w != matches!(pp, 1 | 3) {
+            return None;
+        }
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || (zeroing && mask == 0) {
+            return None;
+        }
+
+        let scalar = matches!(pp, 2 | 3);
+        if scalar {
+            (ll == 0).then_some(false)
+        } else {
+            match ll {
+                0 | 1 => Some(true),
+                2 => Some(false),
+                _ => None,
+            }
+        }
+    }
+}
+
+/// A contiguous semantic-op group that may be replaced by one exact native x86
+/// instruction after byte-level validation.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct X86EvexFpReplaySpan {
+    /// Exclusive semantic-op end index.
+    pub end: usize,
+    /// Exact source instruction to emit.
+    pub instruction: X86InstructionBytes,
+    /// Whether native execution requires AVX-512VL.
+    pub needs_avx512vl: bool,
+}
+
+/// Identify valid register-only EVEX floating-point replay groups in `block`.
+/// Construction is O(N) time and O(P) space for N SMIR operations and P unique
+/// guest PCs. A guest PC occurring in multiple non-contiguous groups is
+/// rejected, preventing one source instruction from replacing reordered or
+/// fabricated semantic fragments.
+pub fn x86_evex_fp_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86EvexFpReplaySpan> {
+    let mut groups = HashMap::<GuestAddr, (usize, usize, bool)>::new();
+    for (index, op) in block.ops.iter().enumerate() {
+        groups
+            .entry(op.guest_pc)
+            .and_modify(|(_, end, contiguous)| {
+                if *end != index {
+                    *contiguous = false;
+                }
+                *end = index + 1;
+            })
+            .or_insert((index, index + 1, true));
+    }
+
+    groups
+        .into_iter()
+        .filter_map(|(guest_pc, (start, end, contiguous))| {
+            if !contiguous {
+                return None;
+            }
+            let instruction = *instruction_bytes.get(&(block.id, guest_pc))?;
+            let needs_avx512vl = instruction.evex_register_fp_arithmetic_needs_vl()?;
+            Some((
+                start,
+                X86EvexFpReplaySpan {
+                    end,
+                    instruction,
+                    needs_avx512vl,
+                },
+            ))
+        })
+        .collect()
 }
 
 /// Calling convention
@@ -587,5 +730,71 @@ mod tests {
         let term = Terminator::Return { values: vec![] };
         assert!(term.successors().is_empty());
         assert!(term.is_terminal());
+    }
+
+    #[test]
+    fn x86_evex_fp_replay_classifier_is_exact_and_fail_closed() {
+        let valid = [
+            (&[0x62, 0xF1, 0x6C, 0x48, 0x58, 0xCB][..], Some(false)),
+            (&[0x62, 0xA1, 0x6C, 0xA1, 0x58, 0xCB][..], Some(true)),
+            (&[0x62, 0xF1, 0x6E, 0x89, 0x58, 0xCB][..], Some(false)),
+            (&[0x62, 0xF1, 0xEF, 0x09, 0x5F, 0xCB][..], Some(false)),
+        ];
+        for (bytes, expected) in valid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_fp_arithmetic_needs_vl(),
+                expected,
+                "{bytes:02X?}"
+            );
+        }
+
+        let invalid: &[&[u8]] = &[
+            &[0x62, 0xF1, 0x6C, 0x48, 0x58],       // incomplete
+            &[0x62, 0xF5, 0x6C, 0x48, 0x58, 0xCB], // MAP5 / FP16
+            &[0x62, 0xF1, 0x6C, 0x48, 0x58, 0x08], // memory source
+            &[0x62, 0xF1, 0x6C, 0x58, 0x58, 0xCB], // EVEX.b
+            &[0x62, 0xF1, 0x6C, 0x88, 0x58, 0xCB], // {z} with k0
+            &[0x62, 0xF1, 0x68, 0x48, 0x58, 0xCB], // fixed-one bit clear
+            &[0x62, 0xF1, 0xEC, 0x48, 0x58, 0xCB], // PS with W1
+            &[0x62, 0xF1, 0x6D, 0x48, 0x58, 0xCB], // PD with W0
+            &[0x62, 0xF1, 0x6C, 0x68, 0x58, 0xCB], // packed L'L=3
+            &[0x62, 0xF1, 0x6E, 0x28, 0x58, 0xCB], // scalar L'L=1
+            &[0x62, 0xF1, 0x6C, 0x48, 0x51, 0xCB], // different opcode
+        ];
+        for bytes in invalid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_fp_arithmetic_needs_vl(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
+        assert!(X86InstructionBytes::new(&[]).is_none());
+        assert!(X86InstructionBytes::new(&[0x90; 16]).is_none());
+    }
+
+    #[test]
+    fn x86_evex_fp_replay_spans_require_block_provenance_and_contiguity() {
+        let mut block = SmirBlock::new(BlockId(7), 0x1000);
+        block.push_op(SmirOp::new(OpId(0), 0x1000, OpKind::Nop));
+        block.push_op(SmirOp::new(OpId(1), 0x1000, OpKind::Nop));
+        block.push_op(SmirOp::new(OpId(2), 0x1006, OpKind::Nop));
+        let instruction = X86InstructionBytes::new(&[0x62, 0xF1, 0x6C, 0x48, 0x58, 0xCB]).unwrap();
+        let mut provenance = HashMap::from([((BlockId(7), 0x1000), instruction)]);
+
+        let spans = x86_evex_fp_replay_spans(&block, &provenance);
+        assert_eq!(spans.get(&0).map(|span| span.end), Some(2));
+
+        provenance.clear();
+        provenance.insert((BlockId(8), 0x1000), instruction);
+        assert!(x86_evex_fp_replay_spans(&block, &provenance).is_empty());
+
+        provenance.clear();
+        provenance.insert((BlockId(7), 0x1000), instruction);
+        block.push_op(SmirOp::new(OpId(3), 0x1000, OpKind::Nop));
+        assert!(x86_evex_fp_replay_spans(&block, &provenance).is_empty());
     }
 }

@@ -1445,7 +1445,7 @@ pub fn is_native_clobber_safe_excluding(
         .filter(|b| !excluded.contains_key(&b.id))
         .all(|b| {
             let flags_live_out = x86_block_flag_live_out(b, excluded, &flag_live_in);
-            block_is_clobber_safe(b, allow_mem, flags_live_out)
+            block_is_clobber_safe(b, &func.x86_instruction_bytes, allow_mem, flags_live_out)
         })
 }
 
@@ -6758,8 +6758,13 @@ pub fn uses_x86_native_vectors_excluding(
     func.blocks
         .iter()
         .filter(|block| !excluded.contains_key(&block.id))
-        .flat_map(|block| &block.ops)
-        .any(|op| x86_native_vector_smir_op(op) || x86_jit_vector_mem_shape_valid(&op.kind))
+        .any(|block| {
+            !crate::smir::ir::x86_evex_fp_replay_spans(block, &func.x86_instruction_bytes)
+                .is_empty()
+                || block.ops.iter().any(|op| {
+                    x86_native_vector_smir_op(op) || x86_jit_vector_mem_shape_valid(&op.kind)
+                })
+        })
 }
 
 /// Whether an executable (non-exit) block enters architectural MMX state.
@@ -7035,6 +7040,19 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_maddubs_avx2 = false;
     let mut needs_maddwd_avx = false;
     let mut needs_maddwd_avx2 = false;
+
+    for block in func
+        .blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+    {
+        for span in crate::smir::ir::x86_evex_fp_replay_spans(block, &func.x86_instruction_bytes)
+            .into_values()
+        {
+            any = true;
+            needs_vl |= span.needs_avx512vl;
+        }
+    }
 
     for op in func
         .blocks
@@ -9984,6 +10002,13 @@ pub(crate) fn x86_jit_push_candidate(block: &crate::smir::ir::SmirBlock, index: 
 /// destinations.
 fn block_is_clobber_safe(
     block: &crate::smir::ir::SmirBlock,
+    x86_instruction_bytes: &std::collections::HashMap<
+        (
+            crate::smir::ir::types::BlockId,
+            crate::smir::ir::types::GuestAddr,
+        ),
+        crate::smir::ir::X86InstructionBytes,
+    >,
     allow_mem: bool,
     flags_live_out: crate::smir::ir::flags::FlagSet,
 ) -> bool {
@@ -10004,6 +10029,8 @@ fn block_is_clobber_safe(
     };
 
     let n = block.ops.len();
+    let native_replay_spans =
+        crate::smir::ir::x86_evex_fp_replay_spans(block, x86_instruction_bytes);
     // Count virtual definitions and uses once. Exact helper-sequence validation
     // then remains O(1) per candidate and the complete gate remains O(N).
     let mut virtual_definitions = std::collections::HashMap::new();
@@ -10048,6 +10075,10 @@ fn block_is_clobber_safe(
 
     let mut i = 0;
     while i < n {
+        if let Some(span) = native_replay_spans.get(&i) {
+            i = span.end;
+            continue;
+        }
         if let Some(consumed) = x86_jit_mem_shift_rmw_sequence_len(
             block,
             i,
@@ -22893,6 +22924,69 @@ mod jit_gate_tests {
         }
     }
 
+    #[test]
+    fn x86_evex_fp_replay_is_admitted_only_with_exact_provenance() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        const PC: u64 = 0x1000;
+        const VADDPS: [u8; 6] = [0x62, 0xF1, 0x6C, 0xC9, 0x58, 0xCB];
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+        let result = lifter.lift_insn(PC, &VADDPS, &mut context).unwrap();
+        let mut block = SmirBlock::new(BlockId(0), PC);
+        block.ops = result.ops;
+        block.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+        function.add_block(block);
+
+        assert!(!is_native_clobber_safe(&function));
+        function
+            .x86_instruction_bytes
+            .insert((BlockId(0), PC), X86InstructionBytes::new(&VADDPS).unwrap());
+        crate::smir::optimize::optimize_function(
+            &mut function,
+            crate::smir::optimize::OptLevel::O2,
+        );
+        assert!(is_native_clobber_safe(&function));
+        assert!(uses_x86_native_vectors_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+
+        let mut wrong_block = function.clone();
+        let instruction = wrong_block
+            .x86_instruction_bytes
+            .remove(&(BlockId(0), PC))
+            .unwrap();
+        wrong_block
+            .x86_instruction_bytes
+            .insert((BlockId(1), PC), instruction);
+        assert!(!is_native_clobber_safe(&wrong_block));
+
+        let mut excluded = std::collections::HashMap::new();
+        excluded.insert(function.entry, PC);
+        assert!(!uses_x86_native_vectors_excluding(&function, &excluded));
+        assert!(x86_native_vector_features_supported_excluding(
+            &function, &excluded
+        ));
+
+        #[cfg(target_arch = "x86_64")]
+        assert_eq!(
+            x86_native_vector_features_supported_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ),
+            std::is_x86_feature_detected!("avx512f") && std::is_x86_feature_detected!("avx512bw")
+        );
+        #[cfg(not(target_arch = "x86_64"))]
+        assert!(!x86_native_vector_features_supported_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+    }
+
     #[cfg(target_arch = "x86_64")]
     #[test]
     fn x86_vector_trampoline_round_trips_all_zmm_and_opmask_registers() {
@@ -22986,6 +23080,101 @@ mod jit_gate_tests {
             host_before,
             "guest MXCSR leaked into host Rust"
         );
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn x86_evex_fp_replay_crosses_virtual_temp_barrier_and_executes_exactly() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+        use crate::smir::lower::SmirLowerer;
+        use crate::smir::lower::x86_64::X86_64Lowerer;
+
+        const PC: u64 = 0x1000;
+        const VADDPS: [u8; 6] = [0x62, 0xF1, 0x6C, 0xC9, 0x58, 0xCB];
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+        let result = lifter.lift_insn(PC, &VADDPS, &mut context).unwrap();
+        assert!(
+            result.ops.iter().any(|op| op
+                .kind
+                .dests()
+                .iter()
+                .any(|dst| matches!(dst, VReg::Virtual(_)))),
+            "test instruction must exercise the virtual-vector-temp barrier"
+        );
+
+        let mut block = SmirBlock::new(BlockId(0), PC);
+        block.ops = result.ops;
+        block.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+        function.add_block(block);
+        let semantic_only = function.clone();
+        function
+            .x86_instruction_bytes
+            .insert((BlockId(0), PC), X86InstructionBytes::new(&VADDPS).unwrap());
+        crate::smir::optimize::optimize_function(
+            &mut function,
+            crate::smir::optimize::OptLevel::O2,
+        );
+
+        assert!(!is_native_clobber_safe(&semantic_only));
+        assert!(is_native_clobber_safe(&function));
+        assert!(uses_x86_native_vectors_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+        let host_supports_replay =
+            std::is_x86_feature_detected!("avx512f") && std::is_x86_feature_detected!("avx512bw");
+        assert_eq!(
+            x86_native_vector_features_supported_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ),
+            host_supports_replay
+        );
+
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&function)
+            .expect("lower replay region");
+        let code = lowerer.finalize().expect("finalize replay region");
+        assert!(code.windows(VADDPS.len()).any(|window| window == VADDPS));
+        if !host_supports_replay {
+            return;
+        }
+
+        let exec = ExecMem::new(&code).expect("map replay region");
+        let mut source1 = [0u64; 8];
+        let mut source2 = [0u64; 8];
+        let mut expected = [0u64; 8];
+        let mask = 0xA55Au64;
+        for lane in 0..16 {
+            let lhs = lane as f32 + 0.25;
+            let rhs = (32 - lane) as f32 + 0.5;
+            let shift = (lane % 2) * 32;
+            source1[lane / 2] |= (lhs.to_bits() as u64) << shift;
+            source2[lane / 2] |= (rhs.to_bits() as u64) << shift;
+            if mask >> lane & 1 != 0 {
+                expected[lane / 2] |= ((lhs + rhs).to_bits() as u64) << shift;
+            }
+        }
+
+        let mut regs = GuestRegs {
+            vector_active: 1,
+            ..GuestRegs::default()
+        };
+        regs.set_zmm(1, [u64::MAX; 8]);
+        regs.set_zmm(2, source1);
+        regs.set_zmm(3, source2);
+        regs.k[1] = mask;
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.get_zmm(1), expected);
+        assert_eq!(regs.get_zmm(2), source1);
+        assert_eq!(regs.get_zmm(3), source2);
+        assert_eq!(regs.k[1], mask);
     }
 
     #[cfg(target_arch = "x86_64")]

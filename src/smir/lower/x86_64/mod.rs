@@ -16,7 +16,9 @@ use crate::smir::ir::types::{
     OpWidth, ShiftOp, SignExtend, SrcOperand, VLaneOp, VReg, VecCmpCond, VecElementType,
     VecUnaryOp, VecWidth, X86Reg,
 };
-use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator};
+use crate::smir::ir::{
+    CallTarget, SmirBlock, SmirFunction, Terminator, X86InstructionBytes, x86_evex_fp_replay_spans,
+};
 
 use super::regalloc::{PhysReg, RegAlloc, RegLocation};
 use super::{
@@ -4683,6 +4685,10 @@ pub struct X86_64Lowerer {
     /// Guest PC for blocks
     block_guest_pcs: HashMap<BlockId, GuestAddr>,
 
+    /// Exact x86 source-instruction provenance copied from the function being
+    /// lowered. Only byte-level validated replay families may consume it.
+    x86_instruction_bytes: HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+
     /// Native-exit blocks (JIT general-exit ABI): block-id ⇒ resume guest PC.
     /// A block in this map is lowered as an EXIT STUB that records `exit_pc`
     /// (via the state pointer saved in the block frame) and returns to the trampoline, instead
@@ -4768,6 +4774,7 @@ impl X86_64Lowerer {
             jit_fault_deopt_guards: false,
             guest_pcrel_lea_immediates: false,
             block_guest_pcs: HashMap::new(),
+            x86_instruction_bytes: HashMap::new(),
             pending_cond: None,
             native_exits: std::collections::HashMap::new(),
             native_exit_edges: std::collections::HashMap::new(),
@@ -23630,6 +23637,7 @@ impl X86_64Lowerer {
 
         // Initialize register allocator for this block
         self.regalloc.begin_block(block);
+        let native_replay_spans = x86_evex_fp_replay_spans(block, &self.x86_instruction_bytes);
 
         // Count virtual definitions and uses once. Exact helper-backed fusion
         // validation and lowering are then O(1) per candidate; the complete
@@ -23656,6 +23664,10 @@ impl X86_64Lowerer {
         // elided.
         let mut validate_idx = 0;
         while validate_idx < block.ops.len() {
+            if let Some(span) = native_replay_spans.get(&validate_idx) {
+                validate_idx = span.end;
+                continue;
+            }
             #[cfg(feature = "smir-jit")]
             {
                 if self.mem_helpers {
@@ -23900,6 +23912,11 @@ impl X86_64Lowerer {
         let mut idx = 0;
         while idx < end_idx {
             self.regalloc.set_current_idx(idx);
+            if let Some(span) = native_replay_spans.get(&idx) {
+                self.code.emit_bytes(span.instruction.as_slice());
+                idx = span.end;
+                continue;
+            }
             if matches!(block.ops[idx].kind, OpKind::X86XSetBv { .. }) {
                 let resume_pc = block.ops[idx + 1..]
                     .iter()
@@ -24176,6 +24193,7 @@ impl SmirLowerer for X86_64Lowerer {
             .iter()
             .map(|block| (block.id, block.guest_pc))
             .collect();
+        self.x86_instruction_bytes = func.x86_instruction_bytes.clone();
 
         let entry_offset = self.code.position();
 

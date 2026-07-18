@@ -20854,6 +20854,7 @@ impl SmirLifter for HexagonLifter {
             guest_range: (min_addr, max_addr),
             calling_convention: CallingConv::HexagonStd,
             attrs: FunctionAttrs::default(),
+            x86_instruction_bytes: std::collections::HashMap::new(),
         })
     }
 }

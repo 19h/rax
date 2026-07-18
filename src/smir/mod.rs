@@ -91,7 +91,8 @@ pub use ir::types::{
 };
 pub use ir::{
     CallTarget, CallingConv, FunctionBuilder, PhiNode, RuntimeFunc, SmirBlock, SmirFunction,
-    SmirModule, Terminator, TrapKind,
+    SmirModule, Terminator, TrapKind, X86EvexFpReplaySpan, X86InstructionBytes,
+    x86_evex_fp_replay_spans,
 };
 pub use lift::aarch64::Aarch64Lifter;
 pub use lift::avx10::{Avx10Lifter, EvexPrefix};

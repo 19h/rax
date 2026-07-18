@@ -12,7 +12,10 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use rax::smir::{LiftContext, SmirLifter, SourceArch, X86_64Lifter};
+use rax::smir::{
+    BlockId, FunctionId, LiftContext, SmirBlock, SmirFunction, SmirLifter, SmirLowerer, SourceArch,
+    Terminator, X86_64Lifter, X86_64Lowerer, X86InstructionBytes,
+};
 
 #[path = "../../../generated/x86_64/inventories/avx512.rs"]
 mod avx512_inventory_data;
@@ -752,6 +755,127 @@ fn report_evex_spec_forms_rejected_by_smir_lifter() {
             .collect::<Vec<_>>()
             .join("\n")
     );
+}
+
+/// Diagnostic for the second half of the native-admission boundary. Every
+/// generated EVEX form accepted by the production lifter is presented to the
+/// production x86-64 lowerer as a one-instruction function. This distinguishes
+/// absent instruction families from latent lift/lower coverage gaps.
+#[test]
+#[ignore = "diagnostic: reports EVEX forms accepted by the lifter but rejected by the lowerer"]
+fn report_evex_spec_forms_accepted_by_lifter_but_rejected_by_lowerer() {
+    let mut failures = BTreeMap::<String, (usize, String)>::new();
+    let mut lifted = 0usize;
+    let mut lowered = 0usize;
+
+    for row in avx512_spec_evex_rows() {
+        for variant in evex_case_variants_for_row(&row) {
+            let bytes = raw_evex_spec_bytes_for_variant(&row, variant);
+            let mut lifter = X86_64Lifter::new();
+            let mut ctx = LiftContext::new(SourceArch::X86_64);
+            let result = match lifter.lift_insn(0x1000, &bytes, &mut ctx) {
+                Ok(result) if result.bytes_consumed == bytes.len() => result,
+                _ => continue,
+            };
+            lifted += 1;
+
+            let mut block = SmirBlock::new(BlockId(0), 0x1000);
+            for op in result.ops {
+                block.push_op(op);
+            }
+            block.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = SmirFunction::new(FunctionId(0), BlockId(0), 0x1000);
+            function.add_block(block);
+            function.x86_instruction_bytes.insert(
+                (BlockId(0), 0x1000),
+                X86InstructionBytes::new(&bytes).expect("generated x86 instruction length"),
+            );
+
+            let mut lowerer = X86_64Lowerer::new();
+            match lowerer.lower_function(&function) {
+                Ok(_) => lowered += 1,
+                Err(error) => {
+                    let detail = format!(
+                        "{}: {error:?} ({bytes:02X?})",
+                        spec_case_variant_id(&row, variant)
+                    );
+                    let entry = failures
+                        .entry(row.key.mnemonic.clone())
+                        .or_insert((0, detail));
+                    entry.0 += 1;
+                }
+            }
+        }
+    }
+
+    assert!(
+        failures.is_empty(),
+        "lifted {lifted} EVEX forms; lowered {lowered}; lift/lower gaps in {} mnemonics / {} forms:\n{}",
+        failures.len(),
+        failures.values().map(|entry| entry.0).sum::<usize>(),
+        failures
+            .iter()
+            .map(|(mnemonic, (count, detail))| format!("{mnemonic}: {count} ({detail})"))
+            .collect::<Vec<_>>()
+            .join("\n")
+    );
+}
+
+#[test]
+fn register_evex_fp_arithmetic_replay_closes_generated_lift_lower_gap() {
+    let expected_mnemonics = set_from_slice(&[
+        "vaddpd", "vaddps", "vaddsd", "vaddss", "vdivpd", "vdivps", "vdivsd", "vdivss", "vmaxpd",
+        "vmaxps", "vmaxsd", "vmaxss", "vminpd", "vminps", "vminsd", "vminss", "vmulpd", "vmulps",
+        "vmulsd", "vmulss", "vsubpd", "vsubps", "vsubsd", "vsubss",
+    ]);
+    let mut covered_mnemonics = BTreeSet::new();
+    let mut covered_forms = 0usize;
+
+    for row in avx512_spec_evex_rows() {
+        for variant in evex_case_variants_for_row(&row) {
+            let bytes = raw_evex_spec_bytes_for_variant(&row, variant);
+            let instruction = X86InstructionBytes::new(&bytes).unwrap();
+            if instruction.evex_register_fp_arithmetic_needs_vl().is_none() {
+                continue;
+            }
+            assert_eq!(variant.mode, EvexAsmMode::Register);
+
+            let mut lifter = X86_64Lifter::new();
+            let mut ctx = LiftContext::new(SourceArch::X86_64);
+            let result = lifter
+                .lift_insn(0x1000, &bytes, &mut ctx)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "{}: replay-eligible form failed to lift: {error:?}",
+                        spec_case_variant_id(&row, variant)
+                    )
+                });
+            assert_eq!(result.bytes_consumed, bytes.len());
+
+            let mut block = SmirBlock::new(BlockId(0), 0x1000);
+            block.ops = result.ops;
+            block.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = SmirFunction::new(FunctionId(0), BlockId(0), 0x1000);
+            function.add_block(block);
+            function
+                .x86_instruction_bytes
+                .insert((BlockId(0), 0x1000), instruction);
+            let mut lowerer = X86_64Lowerer::new();
+            lowerer.lower_function(&function).unwrap_or_else(|error| {
+                panic!(
+                    "{}: replay-eligible form failed to lower: {error:?}",
+                    spec_case_variant_id(&row, variant)
+                )
+            });
+            let code = lowerer.finalize().expect("finalize replay-eligible form");
+            assert!(code.windows(bytes.len()).any(|window| window == bytes));
+            covered_mnemonics.insert(row.key.mnemonic.clone());
+            covered_forms += 1;
+        }
+    }
+
+    assert_eq!(covered_mnemonics, expected_mnemonics);
+    assert_eq!(covered_forms, 192);
 }
 
 #[test]

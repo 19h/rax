@@ -1580,6 +1580,7 @@ impl SmirLifter for ThumbLifter {
             guest_range: (min, max),
             calling_convention: CallingConv::GuestPreserveAll,
             attrs: FunctionAttrs::default(),
+            x86_instruction_bytes: std::collections::HashMap::new(),
         })
     }
 }

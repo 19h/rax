@@ -5315,6 +5315,7 @@ impl crate::smir::lift::SmirLifter for Aarch64Lifter {
             guest_range: (min_addr, max_addr),
             calling_convention: CallingConv::Aarch64Aapcs,
             attrs: FunctionAttrs::default(),
+            x86_instruction_bytes: std::collections::HashMap::new(),
         })
     }
 }

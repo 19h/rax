@@ -6400,6 +6400,7 @@ impl SmirLifter for RiscVLifter {
             guest_range: (min_addr, max_addr),
             calling_convention,
             attrs: FunctionAttrs::default(),
+            x86_instruction_bytes: std::collections::HashMap::new(),
         })
     }
 }

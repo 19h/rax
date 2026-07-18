@@ -1654,6 +1654,28 @@ pub fn block_merging(func: &mut SmirFunction) -> usize {
             let to_ops = func.blocks[to_idx].ops.clone();
             let to_term = func.blocks[to_idx].terminator.clone();
 
+            // Instruction provenance follows operations across a merge. A
+            // duplicate `(destination block, guest PC)` is ambiguous and is
+            // removed fail-closed instead of allowing either instruction to
+            // claim the combined semantic group.
+            let moved_provenance = func
+                .x86_instruction_bytes
+                .iter()
+                .filter_map(|(&(block, guest_pc), &instruction)| {
+                    (block == to).then_some((guest_pc, instruction))
+                })
+                .collect::<Vec<_>>();
+            for (guest_pc, instruction) in moved_provenance {
+                func.x86_instruction_bytes.remove(&(to, guest_pc));
+                if func
+                    .x86_instruction_bytes
+                    .insert((from, guest_pc), instruction)
+                    .is_some()
+                {
+                    func.x86_instruction_bytes.remove(&(from, guest_pc));
+                }
+            }
+
             // Append to source block
             func.blocks[from_idx].ops.extend(to_ops);
             func.blocks[from_idx].terminator = to_term;
@@ -12230,6 +12252,41 @@ mod tests {
                 .iter()
                 .any(|op| matches!(op.kind, OpKind::MulS { .. }))
         );
+    }
+
+    #[test]
+    fn block_merging_migrates_x86_instruction_provenance() {
+        use crate::smir::ir::{X86InstructionBytes, x86_evex_fp_replay_spans};
+
+        let entry = BlockId(0);
+        let successor = BlockId(1);
+        let mut first = SmirBlock::new(entry, 0x1000);
+        first.push_op(SmirOp::new(OpId(0), 0x1000, OpKind::Nop));
+        first.set_terminator(Terminator::Branch { target: successor });
+        let mut second = SmirBlock::new(successor, 0x1001);
+        second.push_op(SmirOp::new(OpId(0), 0x1001, OpKind::Nop));
+        second.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), entry, 0x1000);
+        function.add_block(first);
+        function.add_block(second);
+        let instruction = X86InstructionBytes::new(&[0x62, 0xF1, 0x6C, 0x48, 0x58, 0xCB]).unwrap();
+        function
+            .x86_instruction_bytes
+            .insert((successor, 0x1001), instruction);
+
+        assert_eq!(block_merging(&mut function), 1);
+        assert_eq!(function.blocks.len(), 1);
+        assert_eq!(
+            function.x86_instruction_bytes.get(&(entry, 0x1001)),
+            Some(&instruction)
+        );
+        assert!(
+            !function
+                .x86_instruction_bytes
+                .contains_key(&(successor, 0x1001))
+        );
+        let spans = x86_evex_fp_replay_spans(&function.blocks[0], &function.x86_instruction_bytes);
+        assert_eq!(spans.get(&1).map(|span| span.end), Some(2));
     }
 
     #[test]
