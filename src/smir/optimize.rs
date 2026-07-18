@@ -2760,6 +2760,29 @@ impl OpKind {
                 }
             }
 
+            OpKind::X86PackedIntToFp {
+                dst,
+                src,
+                mask,
+                mask_zeroing,
+                zero_upper,
+                ..
+            }
+            | OpKind::X86PackedFpToInt {
+                dst,
+                src,
+                mask,
+                mask_zeroing,
+                zero_upper,
+                ..
+            } => {
+                result.push(*src);
+                result.extend(mask.iter().copied());
+                if !zero_upper || (mask.is_some() && !mask_zeroing) {
+                    result.push(*dst);
+                }
+            }
+
             OpKind::X86PackedIntToFp16 {
                 dst,
                 src,
@@ -9421,6 +9444,146 @@ mod tests {
         let sources = ops[conversion].kind.source_vregs();
         assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)))));
         assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::K(1)))));
+
+        let packed_int_to_fp = optimized(&[0x62, 0xF1, 0x7F, 0x5A, 0x7A, 0x00]);
+        let ops = &packed_int_to_fp.blocks[0].ops;
+        let conversion = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86PackedIntToFp {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                        int_elem: VecElementType::I32,
+                        fp_elem: VecElementType::F32,
+                        signed: false,
+                        lanes: 16,
+                        src_width: VecWidth::V512,
+                        dst_width: VecWidth::V512,
+                        mask_zeroing: false,
+                        round: FpRoundMode::Dynamic,
+                        suppress_exceptions: false,
+                        ..
+                    }
+                )
+            })
+            .expect("masked broadcast VCVTUDQ2PS removed");
+        assert!(ops[conversion].kind.has_side_effects());
+        assert_eq!(
+            ops[..conversion]
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            16,
+        );
+        let sources = ops[conversion].kind.source_vregs();
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Zmm(0)))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::K(2)))));
+        assert!(
+            !OpKind::X86PackedIntToFp {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                mask: None,
+                int_elem: VecElementType::I64,
+                fp_elem: VecElementType::F32,
+                signed: true,
+                lanes: 8,
+                src_width: VecWidth::V512,
+                dst_width: VecWidth::V256,
+                mask_zeroing: false,
+                zero_upper: true,
+                round: FpRoundMode::RoundNearest,
+                suppress_exceptions: true,
+            }
+            .has_side_effects()
+        );
+        assert!(
+            OpKind::X86PackedIntToFp {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                mask: None,
+                int_elem: VecElementType::I64,
+                fp_elem: VecElementType::F32,
+                signed: true,
+                lanes: 8,
+                src_width: VecWidth::V512,
+                dst_width: VecWidth::V256,
+                mask_zeroing: false,
+                zero_upper: true,
+                round: FpRoundMode::RoundNearestTiesAway,
+                suppress_exceptions: true,
+            }
+            .has_side_effects()
+        );
+
+        let packed_fp_to_int = optimized(&[0x62, 0xF1, 0xFD, 0x5A, 0x79, 0x00]);
+        let ops = &packed_fp_to_int.blocks[0].ops;
+        let conversion = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86PackedFpToInt {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                        fp_elem: VecElementType::F64,
+                        int_elem: VecElementType::I64,
+                        signed: false,
+                        truncate: false,
+                        lanes: 8,
+                        src_width: VecWidth::V512,
+                        dst_width: VecWidth::V512,
+                        mask_zeroing: false,
+                        round: FpRoundMode::Dynamic,
+                        suppress_exceptions: false,
+                        ..
+                    }
+                )
+            })
+            .expect("masked broadcast VCVTPD2UQQ removed");
+        assert!(ops[conversion].kind.has_side_effects());
+        assert_eq!(
+            ops[..conversion]
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                ))
+                .count(),
+            8,
+        );
+        let sources = ops[conversion].kind.source_vregs();
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Zmm(0)))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::K(2)))));
+        assert!(
+            !OpKind::X86PackedFpToInt {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                mask: None,
+                fp_elem: VecElementType::F64,
+                int_elem: VecElementType::I64,
+                signed: false,
+                truncate: true,
+                lanes: 8,
+                src_width: VecWidth::V512,
+                dst_width: VecWidth::V512,
+                mask_zeroing: false,
+                zero_upper: true,
+                round: FpRoundMode::RoundTowardZero,
+                suppress_exceptions: true,
+            }
+            .has_side_effects()
+        );
 
         let packed_int_to_fp16 = optimized(&[0x62, 0xF5, 0x7C, 0x0A, 0x5B, 0x00]);
         let ops = &packed_int_to_fp16.blocks[0].ops;

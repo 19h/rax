@@ -1606,6 +1606,51 @@ pub enum OpKind {
         report_fp16_denormal: bool,
     },
 
+    /// x86 packed signed/unsigned integer-to-floating-point conversion for
+    /// I32/I64 and F32/F64 elements. `lanes` is the number of converted
+    /// source elements; `src_width` and `dst_width` identify the exact low
+    /// architectural regions read and written by full- and half-width tuple
+    /// forms. Inactive EVEX lanes merge or zero before VEX/EVEX upper-state
+    /// clearing. Dynamic rounding observes MXCSR.RC, while an explicit mode
+    /// represents EVEX embedded rounding with SAE.
+    X86PackedIntToFp {
+        dst: VReg,
+        src: VReg,
+        mask: Option<VReg>,
+        int_elem: VecElementType,
+        fp_elem: VecElementType,
+        signed: bool,
+        lanes: u8,
+        src_width: VecWidth,
+        dst_width: VecWidth,
+        mask_zeroing: bool,
+        zero_upper: bool,
+        round: FpRoundMode,
+        suppress_exceptions: bool,
+    },
+
+    /// x86 packed F32/F64-to-signed/unsigned-I32/I64 conversion. `lanes` is
+    /// the number of converted source elements and the source/destination
+    /// widths preserve the full- versus half-width tuple relationship.
+    /// Rounded forms use MXCSR.RC or EVEX embedded rounding; truncating forms
+    /// always use round-toward-zero and may independently request EVEX SAE.
+    X86PackedFpToInt {
+        dst: VReg,
+        src: VReg,
+        mask: Option<VReg>,
+        fp_elem: VecElementType,
+        int_elem: VecElementType,
+        signed: bool,
+        truncate: bool,
+        lanes: u8,
+        src_width: VecWidth,
+        dst_width: VecWidth,
+        mask_zeroing: bool,
+        zero_upper: bool,
+        round: FpRoundMode,
+        suppress_exceptions: bool,
+    },
+
     /// x86 EVEX packed signed/unsigned integer-to-FP16 conversion. `src_width`
     /// is the encoded source vector length, while `dst_width` is the low
     /// destination region containing `lanes` FP16 results. Inactive masked
@@ -4184,6 +4229,8 @@ impl OpKind {
             | OpKind::X86IntToFp { dst, .. }
             | OpKind::X86FpConvert { dst, .. }
             | OpKind::X86PackedFpConvert { dst, .. }
+            | OpKind::X86PackedIntToFp { dst, .. }
+            | OpKind::X86PackedFpToInt { dst, .. }
             | OpKind::X86PackedIntToFp16 { dst, .. }
             | OpKind::X86PackedFp16ToInt { dst, .. }
             | OpKind::FRound { dst, .. }
@@ -4584,6 +4631,22 @@ impl OpKind {
                     }
                     | OpKind::X86PackedFpConvert {
                         suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86PackedIntToFp {
+                        suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86PackedFpToInt {
+                        suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86PackedIntToFp {
+                        round: FpRoundMode::RoundNearestTiesAway,
+                        ..
+                    }
+                    | OpKind::X86PackedFpToInt {
+                        round: FpRoundMode::RoundNearestTiesAway,
                         ..
                     }
                     | OpKind::X86PackedIntToFp16 {
