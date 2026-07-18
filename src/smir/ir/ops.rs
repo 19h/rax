@@ -1681,6 +1681,24 @@ pub enum OpKind {
         mask_zeroing: bool,
     },
 
+    /// x86 AVX-512F VRSQRT14{PS,PD,SS,SD}. Each active positive element
+    /// receives Intel's reciprocal-square-root approximation with less than
+    /// `2^-14` relative error before final rounding. MXCSR.DAZ treats
+    /// denormal inputs as signed zero; positive finite inputs always produce
+    /// normal results, so MXCSR.FTZ is inapplicable. Scalar forms copy bits
+    /// above the low element through bit 127 from `merge`.
+    X86Rsqrt14 {
+        dst: VReg,
+        merge: Option<VReg>,
+        src: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        lanes: u8,
+        scalar: bool,
+        mask_zeroing: bool,
+    },
+
     /// x86 AVX512ER VRCP28{PS,PD,SS,SD}. Each active element receives Intel's
     /// reciprocal approximation with less than `2^-28` relative error before
     /// final rounding. Denormal inputs are treated as signed zero and denormal
@@ -4481,6 +4499,7 @@ impl OpKind {
             | OpKind::X86FixupImm { dst, .. }
             | OpKind::X86Exp2 { dst, .. }
             | OpKind::X86Recip14 { dst, .. }
+            | OpKind::X86Rsqrt14 { dst, .. }
             | OpKind::X86Recip28 { dst, .. }
             | OpKind::X86Rsqrt28 { dst, .. }
             | OpKind::X86ScaleF { dst, .. }

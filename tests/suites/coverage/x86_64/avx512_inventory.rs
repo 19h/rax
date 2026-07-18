@@ -1304,6 +1304,73 @@ fn evex_recip14_closes_generated_lift_and_register_lower_gap() {
 }
 
 #[test]
+fn evex_rsqrt14_closes_generated_lift_and_register_lower_gap() {
+    let expected_mnemonics =
+        set_from_slice(&["vrsqrt14pd", "vrsqrt14ps", "vrsqrt14sd", "vrsqrt14ss"]);
+    let mut covered_mnemonics = BTreeSet::new();
+    let mut lowered_mnemonics = BTreeSet::new();
+    let mut covered_forms = 0usize;
+    let mut lowered_forms = 0usize;
+
+    for row in avx512_spec_evex_rows() {
+        if !expected_mnemonics.contains(&row.key.mnemonic) {
+            continue;
+        }
+        for variant in evex_case_variants_for_row(&row) {
+            let bytes = raw_evex_spec_bytes_for_variant(&row, variant);
+            let instruction = X86InstructionBytes::new(&bytes).unwrap();
+            let mut lifter = X86_64Lifter::new();
+            let mut ctx = LiftContext::new(SourceArch::X86_64);
+            let result = lifter
+                .lift_insn(0x1000, &bytes, &mut ctx)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "{}: VRSQRT14 form failed to lift: {error:?}",
+                        spec_case_variant_id(&row, variant)
+                    )
+                });
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(
+                result
+                    .ops
+                    .iter()
+                    .any(|op| matches!(op.kind, OpKind::X86Rsqrt14 { .. }))
+            );
+
+            if variant.mode == EvexAsmMode::Register {
+                let mut block = SmirBlock::new(BlockId(0), 0x1000);
+                block.ops = result.ops;
+                block.set_terminator(Terminator::Return { values: vec![] });
+                let mut function = SmirFunction::new(FunctionId(0), BlockId(0), 0x1000);
+                function.add_block(block);
+                function
+                    .x86_instruction_bytes
+                    .insert((BlockId(0), 0x1000), instruction);
+                let mut lowerer = X86_64Lowerer::new();
+                lowerer.lower_function(&function).unwrap_or_else(|error| {
+                    panic!(
+                        "{}: register VRSQRT14 form failed to lower: {error:?}",
+                        spec_case_variant_id(&row, variant)
+                    )
+                });
+                let code = lowerer.finalize().expect("finalize register VRSQRT14 form");
+                assert!(code.windows(bytes.len()).any(|window| window == bytes));
+                lowered_mnemonics.insert(row.key.mnemonic.clone());
+                lowered_forms += 1;
+            }
+
+            covered_mnemonics.insert(row.key.mnemonic.clone());
+            covered_forms += 1;
+        }
+    }
+
+    assert_eq!(covered_mnemonics, expected_mnemonics);
+    assert_eq!(lowered_mnemonics, expected_mnemonics);
+    assert_eq!(covered_forms, 40);
+    assert_eq!(lowered_forms, 32);
+}
+
+#[test]
 fn evex_recip28_closes_generated_lift_and_register_lower_gap() {
     let expected_mnemonics = set_from_slice(&["vrcp28pd", "vrcp28ps", "vrcp28sd", "vrcp28ss"]);
     let mut covered_mnemonics = BTreeSet::new();
