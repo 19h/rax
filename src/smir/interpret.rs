@@ -3606,6 +3606,92 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::X86FixupImm {
+                dst,
+                src1,
+                src2,
+                mask,
+                elem,
+                width,
+                lanes,
+                imm,
+                scalar,
+                mask_zeroing,
+                suppress_exceptions,
+            } => {
+                let format = match elem {
+                    VecElementType::F32 => X86_SIMD_F32,
+                    VecElementType::F64 => X86_SIMD_F64,
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                if (*scalar && (*width != VecWidth::V128 || *lanes != 1))
+                    || (!*scalar && *lanes != width.lanes(*elem) as u8)
+                    || (*mask_zeroing && mask.is_none())
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: ctx.pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let first = Self::read_vec(ctx, *src1);
+                let table = Self::read_vec(ctx, *src2);
+                let old = Self::read_vec(ctx, *dst);
+                let mut result = if *scalar { first } else { old };
+                if *scalar {
+                    result[2..].fill(0);
+                } else {
+                    result[(width.bytes() / 8) as usize..].fill(0);
+                }
+                let active = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let elem_bits = elem.bytes() * 8;
+                let mut status = 0;
+                for lane in 0..*lanes {
+                    if active & (1u64 << lane) == 0 {
+                        if *mask_zeroing {
+                            Self::set_lane(&mut result, lane, elem_bits, 0);
+                        } else {
+                            Self::set_lane(
+                                &mut result,
+                                lane,
+                                elem_bits,
+                                Self::get_lane(&old, lane, elem_bits),
+                            );
+                        }
+                        continue;
+                    }
+                    let converted = Self::x86_simd_fixup_imm(
+                        Self::get_lane(&old, lane, elem_bits),
+                        Self::get_lane(&first, lane, elem_bits),
+                        Self::get_lane(&table, lane, elem_bits),
+                        format,
+                        mxcsr,
+                        *imm,
+                    );
+                    status |= converted.status;
+                    Self::set_lane(&mut result, lane, elem_bits, converted.bits);
+                }
+                // VFIXUPIMM treats MXCSR exception masks as set: reporting can
+                // update the IE/ZE sticky flags but never raises #XM.
+                if !*suppress_exceptions {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= status;
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::X86ScaleF {
                 dst,
                 src1,
@@ -16664,6 +16750,117 @@ impl SmirInterpreter {
             bits: result_sign | selected_magnitude,
             status,
         }
+    }
+
+    fn x86_simd_fixup_imm(
+        dest_bits: u64,
+        src_bits: u64,
+        table_bits: u64,
+        format: X86SimdFpFormat,
+        mxcsr: u32,
+        imm: u8,
+    ) -> X86SimdFpResult {
+        let (sign_mask, exponent_mask, fraction_mask, quiet_mask) = Self::x86_simd_fp_masks(format);
+        // The SDM operation applies DAZ to every exponent-zero encoding and
+        // explicitly substitutes +0.0, including for -0 and negative
+        // subnormal inputs. VFIXUPIMM never reports the denormal exception.
+        let src = if mxcsr & (1 << 6) != 0 && src_bits & exponent_mask == 0 {
+            0
+        } else {
+            src_bits
+        };
+        let exponent = src & exponent_mask;
+        let fraction = src & fraction_mask;
+        let is_nan = exponent == exponent_mask && fraction != 0;
+        let token = if is_nan {
+            if fraction & quiet_mask != 0 { 0 } else { 1 }
+        } else if exponent == 0 && fraction == 0 {
+            2
+        } else {
+            let positive_one = match format.total_bits {
+                32 => 0x3F80_0000,
+                64 => 0x3FF0_0000_0000_0000,
+                _ => unreachable!("VFIXUPIMM supports FP32 and FP64"),
+            };
+            if src == positive_one {
+                3
+            } else if exponent == exponent_mask && src & sign_mask != 0 {
+                4
+            } else if exponent == exponent_mask {
+                5
+            } else if src & sign_mask != 0 {
+                6
+            } else {
+                7
+            }
+        };
+        let response = ((table_bits >> (token * 4)) & 0x0F) as u8;
+        let (
+            positive_infinity,
+            indefinite_nan,
+            positive_half,
+            positive_ninety,
+            positive_pi_2,
+            max_finite,
+        ) = match format.total_bits {
+            32 => (
+                0x7F80_0000,
+                0xFFC0_0000,
+                0x3F00_0000,
+                0x42B4_0000,
+                0x3FC9_0FDB,
+                0x7F7F_FFFF,
+            ),
+            64 => (
+                0x7FF0_0000_0000_0000,
+                0xFFF8_0000_0000_0000,
+                0x3FE0_0000_0000_0000,
+                0x4056_8000_0000_0000,
+                0x3FF9_21FB_5444_2D18,
+                0x7FEF_FFFF_FFFF_FFFF,
+            ),
+            _ => unreachable!("VFIXUPIMM supports FP32 and FP64"),
+        };
+        let positive_one = match format.total_bits {
+            32 => 0x3F80_0000,
+            64 => 0x3FF0_0000_0000_0000,
+            _ => unreachable!(),
+        };
+        let bits = match response {
+            0x0 => dest_bits,
+            0x1 => src,
+            0x2 => {
+                if is_nan {
+                    src | quiet_mask
+                } else {
+                    positive_infinity | quiet_mask
+                }
+            }
+            0x3 => indefinite_nan,
+            0x4 => sign_mask | positive_infinity,
+            0x5 => positive_infinity,
+            0x6 => (src & sign_mask) | positive_infinity,
+            0x7 => sign_mask,
+            0x8 => 0,
+            0x9 => sign_mask | positive_one,
+            0xA => positive_one,
+            0xB => positive_half,
+            0xC => positive_ninety,
+            0xD => positive_pi_2,
+            0xE => max_finite,
+            0xF => sign_mask | max_finite,
+            _ => unreachable!(),
+        };
+        let status = match token {
+            1 if imm & (1 << 4) != 0 => 1 << 0,
+            2 => u32::from(imm & (1 << 1) != 0) << 0 | u32::from(imm & (1 << 0) != 0) << 2,
+            3 => u32::from(imm & (1 << 3) != 0) << 0 | u32::from(imm & (1 << 2) != 0) << 2,
+            4 if imm & (1 << 5) != 0 => 1 << 0,
+            5 if imm & (1 << 7) != 0 => 1 << 0,
+            6 if imm & (1 << 6) != 0 => 1 << 0,
+            _ => 0,
+        };
+        X86SimdFpResult { bits, status }
     }
 
     fn x86_simd_fp_convert_precision(
@@ -57949,6 +58146,266 @@ mod tests {
             let result = SmirInterpreter::x86_simd_range(a, b, X86_SIMD_F32, 0x1F80, 4);
             assert_eq!(result.bits, denormal);
             assert_eq!(result.status, 0, "qNaN counterpart suppresses DE");
+        }
+    }
+
+    #[test]
+    fn x86_fixup_imm_exact_semantics_cover_tokens_responses_daz_and_reports() {
+        let dest32 = 0xDEAD_BEEFu64;
+        let positive_two32 = u64::from(2.0f32.to_bits());
+        let expected32 = [
+            dest32,
+            positive_two32,
+            0x7FC0_0000,
+            0xFFC0_0000,
+            0xFF80_0000,
+            0x7F80_0000,
+            0x7F80_0000,
+            0x8000_0000,
+            0x0000_0000,
+            0xBF80_0000,
+            0x3F80_0000,
+            0x3F00_0000,
+            0x42B4_0000,
+            0x3FC9_0FDB,
+            0x7F7F_FFFF,
+            0xFF7F_FFFF,
+        ];
+        for response in 0..16u8 {
+            let result = SmirInterpreter::x86_simd_fixup_imm(
+                dest32,
+                positive_two32,
+                u64::from(response) << 28,
+                X86_SIMD_F32,
+                0x1F80,
+                0,
+            );
+            assert_eq!(
+                result.bits, expected32[response as usize],
+                "FP32 response {response:#x}"
+            );
+            assert_eq!(result.status, 0);
+        }
+
+        let dest64 = 0xDEAD_BEEF_CAFE_BABEu64;
+        let positive_two64 = 2.0f64.to_bits();
+        let expected64 = [
+            dest64,
+            positive_two64,
+            0x7FF8_0000_0000_0000,
+            0xFFF8_0000_0000_0000,
+            0xFFF0_0000_0000_0000,
+            0x7FF0_0000_0000_0000,
+            0x7FF0_0000_0000_0000,
+            0x8000_0000_0000_0000,
+            0x0000_0000_0000_0000,
+            0xBFF0_0000_0000_0000,
+            0x3FF0_0000_0000_0000,
+            0x3FE0_0000_0000_0000,
+            0x4056_8000_0000_0000,
+            0x3FF9_21FB_5444_2D18,
+            0x7FEF_FFFF_FFFF_FFFF,
+            0xFFEF_FFFF_FFFF_FFFF,
+        ];
+        for response in 0..16u8 {
+            let result = SmirInterpreter::x86_simd_fixup_imm(
+                dest64,
+                positive_two64,
+                u64::from(response) << 28,
+                X86_SIMD_F64,
+                0x1F80,
+                0,
+            );
+            assert_eq!(
+                result.bits, expected64[response as usize],
+                "FP64 response {response:#x}"
+            );
+            assert_eq!(result.status, 0);
+        }
+
+        let tokens = [
+            (0x7FC1_2345u64, 0),
+            (0x7F81_2345, 1),
+            (0x8000_0000, 2),
+            (0x3F80_0000, 3),
+            (0xFF80_0000, 4),
+            (0x7F80_0000, 5),
+            (0xC000_0000, 6),
+            (0x4000_0000, 7),
+        ];
+        for (src, token) in tokens {
+            let result = SmirInterpreter::x86_simd_fixup_imm(
+                dest32,
+                src,
+                0xAu64 << (token * 4),
+                X86_SIMD_F32,
+                0x1F80,
+                0xFF,
+            );
+            assert_eq!(result.bits, 0x3F80_0000, "token {token}");
+            assert_eq!(
+                result.status,
+                match token {
+                    1 | 4 | 5 | 6 => 1 << 0,
+                    2 | 3 => (1 << 0) | (1 << 2),
+                    _ => 0,
+                },
+                "token {token} report"
+            );
+        }
+
+        let qnan =
+            SmirInterpreter::x86_simd_fixup_imm(dest32, 0xFFC1_2345, 2, X86_SIMD_F32, 0x1F80, 0);
+        assert_eq!(qnan.bits, 0xFFC1_2345);
+        let snan = SmirInterpreter::x86_simd_fixup_imm(
+            dest32,
+            0xFF81_2345,
+            2u64 << 4,
+            X86_SIMD_F32,
+            0x1F80,
+            0,
+        );
+        assert_eq!(snan.bits, 0xFFC1_2345);
+        assert_eq!(snan.status, 0, "sNaN reporting depends only on imm[4]");
+
+        let negative_subnormal = 0x8000_0001u64;
+        let table = (0xAu64 << 8) | (0x9u64 << 24);
+        assert_eq!(
+            SmirInterpreter::x86_simd_fixup_imm(
+                dest32,
+                negative_subnormal,
+                table,
+                X86_SIMD_F32,
+                0x1F80,
+                0,
+            )
+            .bits,
+            0xBF80_0000,
+        );
+        assert_eq!(
+            SmirInterpreter::x86_simd_fixup_imm(
+                dest32,
+                negative_subnormal,
+                table,
+                X86_SIMD_F32,
+                0x1FC0,
+                0,
+            )
+            .bits,
+            0x3F80_0000,
+            "DAZ maps a negative subnormal to the +zero token",
+        );
+        assert_eq!(
+            SmirInterpreter::x86_simd_fixup_imm(
+                dest32,
+                0x8000_0000,
+                0x6u64 << 8,
+                X86_SIMD_F32,
+                0x1FC0,
+                0,
+            )
+            .bits,
+            0x7F80_0000,
+            "DAZ replacement +0 also controls response-six sign",
+        );
+    }
+
+    #[test]
+    fn lifted_x86_fixup_imm_preserves_old_dst_masks_upper_lanes_and_masked_reporting() {
+        let run = |encoding: &[u8], mask: u64, initial_mxcsr: u32| {
+            let mut ctx = SmirContext::new_x86_64();
+            let mut memory = FlatMemory::new(0x100);
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[1][0] = 0xAAAA_AAAA_DEAD_BEEF;
+                x86.xmm[1][1] = 0xBBBB_BBBB_CCCC_CCCC;
+                x86.xmm[2][0] = 0x1111_1111_0000_0000;
+                x86.xmm[2][1] = 0x2222_2222_3333_3333;
+                x86.xmm[3][0] = 0x0000_0000_0000_0A00;
+                x86.k[1] = mask;
+                x86.mxcsr = initial_mxcsr;
+            }
+            let exit = execute_lifted_x86(encoding, &mut ctx, &mut memory);
+            assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+            ctx
+        };
+
+        // Active +zero chooses table response +1 and imm[1:0] reports IE+ZE.
+        // Even with MXCSR exception masks cleared, VFIXUPIMM never raises #XM.
+        let active = run(&[0x62, 0xF3, 0x6D, 0x09, 0x55, 0xCB, 0x03], 1, 0);
+        if let ArchRegState::X86_64(x86) = &active.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x1111_1111_3F80_0000);
+            assert_eq!(x86.xmm[1][1], 0x2222_2222_3333_3333);
+            assert_eq!(x86.mxcsr & 0x3F, (1 << 0) | (1 << 2));
+        }
+
+        let sae = run(&[0x62, 0xF3, 0x6D, 0x19, 0x55, 0xCB, 0x03], 1, 0);
+        if let ArchRegState::X86_64(x86) = &sae.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x1111_1111_3F80_0000);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+
+        let merge = run(&[0x62, 0xF3, 0x6D, 0x09, 0x55, 0xCB, 0x03], 0, 0);
+        if let ArchRegState::X86_64(x86) = &merge.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x1111_1111_DEAD_BEEF);
+            assert_eq!(x86.mxcsr & 0x3F, 0, "inactive lane does not report");
+        }
+
+        let zero = run(&[0x62, 0xF3, 0x6D, 0x89, 0x55, 0xCB, 0x03], 0, 0);
+        if let ArchRegState::X86_64(x86) = &zero.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x1111_1111_0000_0000);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+
+        // An active response-zero lane consumes and preserves the old low dst.
+        let response_zero = run(&[0x62, 0xF3, 0x6D, 0x09, 0x55, 0xCA, 0x00], 1, 0);
+        if let ArchRegState::X86_64(x86) = &response_zero.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x1111_1111_DEAD_BEEF);
+        }
+
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k1, 0);
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x6D, 0x09, 0x55, 0x08, 0xFF],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        ctx.write_vreg(k1, 1);
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x6D, 0x09, 0x55, 0x08, 0xFF],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+
+        // Scalar memory EVEX.b is SAE. A valid active load still occurs, but
+        // its enabled zero reports do not update MXCSR.
+        memory.write(0x80, &0xA00u32.to_le_bytes()).unwrap();
+        ctx.write_vreg(rax, 0x80);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 0xAAAA_AAAA_DEAD_BEEF;
+            x86.xmm[2][0] = 0x1111_1111_0000_0000;
+            x86.mxcsr = 0;
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x6D, 0x19, 0x55, 0x08, 0x03],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x1111_1111_3F80_0000);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
         }
     }
 

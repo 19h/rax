@@ -1627,6 +1627,26 @@ pub enum OpKind {
         suppress_exceptions: bool,
     },
 
+    /// x86 EVEX VFIXUPIMM{PS,PD,SS,SD}. Each active `src1` element is
+    /// classified into one of eight architectural tokens; the corresponding
+    /// nibble in the low 32 bits of `src2` selects one of sixteen result
+    /// actions. The old destination is always an input because response zero
+    /// preserves it. `imm` independently enables the zero and invalid sticky
+    /// exception reports, while `suppress_exceptions` records EVEX SAE.
+    X86FixupImm {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        lanes: u8,
+        imm: u8,
+        scalar: bool,
+        mask_zeroing: bool,
+        suppress_exceptions: bool,
+    },
+
     /// x86 EVEX VSCALEF{PH,PS,PD,SH,SS,SD}. Each active element computes
     /// `src1 * 2^floor(src2)` using the selected MXCSR or embedded rounding
     /// mode. Scalar forms copy bits 127:element-width from `src1`; packed and
@@ -4385,6 +4405,7 @@ impl OpKind {
             | OpKind::X86RoundScale { dst, .. }
             | OpKind::X86Reduce { dst, .. }
             | OpKind::X86Range { dst, .. }
+            | OpKind::X86FixupImm { dst, .. }
             | OpKind::X86ScaleF { dst, .. }
             | OpKind::X86IntToFp { dst, .. }
             | OpKind::X86FpConvert { dst, .. }
@@ -4893,6 +4914,14 @@ impl OpKind {
                     | OpKind::WriteSysReg { .. }
                     | OpKind::X86ReadTsc { .. }
                     | OpKind::Breakpoint
+            )
+            || matches!(
+                self,
+                OpKind::X86FixupImm {
+                    imm,
+                    suppress_exceptions: false,
+                    ..
+                } if *imm != 0
             )
     }
 
