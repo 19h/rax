@@ -1587,6 +1587,27 @@ pub enum OpKind {
         suppress_exceptions: bool,
     },
 
+    /// x86 EVEX VREDUCE{PH,PS,PD,SH,SS,SD}. The operation subtracts the
+    /// integer multiple of `2^-imm[7:4]` selected by the active rounding mode
+    /// from each source element. `imm[2]` selects MXCSR or immediate rounding
+    /// control and `imm[3]` suppresses only the precision exception. Packed
+    /// and scalar masking/merge behavior matches [`Self::X86RoundScale`];
+    /// `suppress_exceptions` records EVEX SAE and suppresses every SIMD
+    /// floating-point exception independently of SPE.
+    X86Reduce {
+        dst: VReg,
+        merge: Option<VReg>,
+        src: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        lanes: u8,
+        imm: u8,
+        scalar: bool,
+        mask_zeroing: bool,
+        suppress_exceptions: bool,
+    },
+
     /// x86 CVT(T)SS2SI/CVT(T)SD2SI and EVEX VCVT(T)SS/SD/SH2SI/USI scalar
     /// conversion. Invalid or out-of-range inputs produce the signed
     /// integer-indefinite value, or `2^int_width - 1` when `signed` is false,
@@ -4305,6 +4326,7 @@ impl OpKind {
             | OpKind::X86GetExponent { dst, .. }
             | OpKind::X86GetMantissa { dst, .. }
             | OpKind::X86RoundScale { dst, .. }
+            | OpKind::X86Reduce { dst, .. }
             | OpKind::X86IntToFp { dst, .. }
             | OpKind::X86FpConvert { dst, .. }
             | OpKind::X86PackedFpConvert { dst, .. }
@@ -4714,6 +4736,10 @@ impl OpKind {
                         ..
                     }
                     | OpKind::X86RoundScale {
+                        suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86Reduce {
                         suppress_exceptions: false,
                         ..
                     }

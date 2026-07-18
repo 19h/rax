@@ -13,8 +13,8 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 use rax::smir::{
-    BlockId, FunctionId, LiftContext, SmirBlock, SmirFunction, SmirLifter, SmirLowerer, SourceArch,
-    Terminator, X86_64Lifter, X86_64Lowerer, X86InstructionBytes,
+    BlockId, FunctionId, LiftContext, OpKind, SmirBlock, SmirFunction, SmirLifter, SmirLowerer,
+    SourceArch, Terminator, X86_64Lifter, X86_64Lowerer, X86InstructionBytes,
 };
 
 #[path = "../../../generated/x86_64/inventories/avx512.rs"]
@@ -888,6 +888,79 @@ fn evex_sparse_prefetch_hints_close_generated_lift_lower_gap() {
 
     assert_eq!(covered_mnemonics, expected_mnemonics);
     assert_eq!(covered_forms, 32);
+}
+
+#[test]
+fn evex_reduce_closes_generated_lift_and_register_lower_gap() {
+    let expected_mnemonics = set_from_slice(&[
+        "vreducepd",
+        "vreduceph",
+        "vreduceps",
+        "vreducesd",
+        "vreducesh",
+        "vreducess",
+    ]);
+    let mut covered_mnemonics = BTreeSet::new();
+    let mut lowered_mnemonics = BTreeSet::new();
+    let mut covered_forms = 0usize;
+    let mut lowered_forms = 0usize;
+
+    for row in avx512_spec_evex_rows() {
+        if !expected_mnemonics.contains(&row.key.mnemonic) {
+            continue;
+        }
+        for variant in evex_case_variants_for_row(&row) {
+            let bytes = raw_evex_spec_bytes_for_variant(&row, variant);
+            let instruction = X86InstructionBytes::new(&bytes).unwrap();
+            let mut lifter = X86_64Lifter::new();
+            let mut ctx = LiftContext::new(SourceArch::X86_64);
+            let result = lifter
+                .lift_insn(0x1000, &bytes, &mut ctx)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "{}: VREDUCE form failed to lift: {error:?}",
+                        spec_case_variant_id(&row, variant)
+                    )
+                });
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(
+                result
+                    .ops
+                    .iter()
+                    .any(|op| matches!(op.kind, OpKind::X86Reduce { .. }))
+            );
+
+            if variant.mode == EvexAsmMode::Register {
+                let mut block = SmirBlock::new(BlockId(0), 0x1000);
+                block.ops = result.ops;
+                block.set_terminator(Terminator::Return { values: vec![] });
+                let mut function = SmirFunction::new(FunctionId(0), BlockId(0), 0x1000);
+                function.add_block(block);
+                function
+                    .x86_instruction_bytes
+                    .insert((BlockId(0), 0x1000), instruction);
+                let mut lowerer = X86_64Lowerer::new();
+                lowerer.lower_function(&function).unwrap_or_else(|error| {
+                    panic!(
+                        "{}: register VREDUCE form failed to lower: {error:?}",
+                        spec_case_variant_id(&row, variant)
+                    )
+                });
+                let code = lowerer.finalize().expect("finalize register VREDUCE form");
+                assert!(code.windows(bytes.len()).any(|window| window == bytes));
+                lowered_mnemonics.insert(row.key.mnemonic.clone());
+                lowered_forms += 1;
+            }
+
+            covered_mnemonics.insert(row.key.mnemonic.clone());
+            covered_forms += 1;
+        }
+    }
+
+    assert_eq!(covered_mnemonics, expected_mnemonics);
+    assert_eq!(lowered_mnemonics, expected_mnemonics);
+    assert_eq!(covered_forms, 60);
+    assert_eq!(lowered_forms, 48);
 }
 
 #[test]
