@@ -508,6 +508,48 @@ impl X86InstructionBytes {
             _ => None,
         }
     }
+
+    /// Validate register-only EVEX packed integer multiply operations and
+    /// return `(needs AVX-512VL, needs AVX-512DQ)`. `VPMULLQ` requires
+    /// AVX-512DQ; the remaining admitted word/doubleword/quadword products use
+    /// AVX-512F or AVX-512BW, both required by the vector-state trampoline.
+    pub fn evex_register_integer_multiply_requirements(&self) -> Option<(bool, bool)> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+        if p1 & 0x04 == 0 || modrm >> 6 != 3 || p1 & 0x03 != 1 {
+            return None;
+        }
+
+        let map = p0 & 0x0f;
+        let w = p1 & 0x80 != 0;
+        let needs_avx512dq = match (map, opcode) {
+            (1, 0xD5 | 0xE4 | 0xE5) | (2, 0x0B) => false,
+            (1, 0xF4) | (2, 0x28) if w => false,
+            (2, 0x40) => w,
+            _ => return None,
+        };
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || (zeroing && mask == 0) {
+            return None;
+        }
+        let needs_avx512vl = match ll {
+            0 | 1 => true,
+            2 => false,
+            _ => return None,
+        };
+        Some((needs_avx512vl, needs_avx512dq))
+    }
 }
 
 /// A contiguous semantic-op group that may be replaced by one exact native x86
@@ -659,6 +701,17 @@ pub fn x86_evex_integer_minmax_replay_spans(
     })
 }
 
+/// Identify valid register-only EVEX packed integer multiply replay groups in
+/// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
+pub fn x86_evex_integer_multiply_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction.evex_register_integer_multiply_requirements()
+    })
+}
+
 /// Identify every validated native EVEX replay group in one O(N)-time,
 /// O(P)-space block pass. Classifiers are intentionally disjoint and ordered
 /// explicitly so adding a replay family does not add another scan of the SMIR
@@ -697,6 +750,7 @@ pub fn x86_evex_native_replay_spans(
                     .evex_register_integer_minmax_needs_vl()
                     .map(|needs_vl| (needs_vl, false))
             })
+            .or_else(|| instruction.evex_register_integer_multiply_requirements())
     })
 }
 
@@ -1449,6 +1503,58 @@ mod tests {
                 X86InstructionBytes::new(bytes)
                     .unwrap()
                     .evex_register_integer_minmax_needs_vl(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn x86_evex_integer_multiply_replay_classifier_is_exact_and_fail_closed() {
+        let valid = [
+            (
+                &[0x62, 0xA2, 0xED, 0xC1, 0x40, 0xCB][..],
+                Some((false, true)),
+            ),
+            (
+                &[0x62, 0xF2, 0x6D, 0x29, 0x40, 0xC8][..],
+                Some((true, false)),
+            ),
+            // Word operations are WIG.
+            (
+                &[0x62, 0xF1, 0xFD, 0x09, 0xD5, 0xC8][..],
+                Some((true, false)),
+            ),
+        ];
+        for (bytes, expected) in valid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_integer_multiply_requirements(),
+                expected,
+                "{bytes:02X?}"
+            );
+        }
+
+        let invalid: &[&[u8]] = &[
+            &[0x62, 0xF2, 0x7D, 0x09, 0xD5, 0xC8], // map-1 opcode in map 2
+            &[0x62, 0xF1, 0x7D, 0x09, 0x40, 0xC8], // map-2 opcode in map 1
+            &[0x62, 0xF2, 0x79, 0x09, 0x40, 0xC8], // missing EVEX fixed-one bit
+            &[0x62, 0xF2, 0x7C, 0x09, 0x40, 0xC8], // missing 66 prefix
+            &[0x62, 0xF2, 0x7D, 0x09, 0x40, 0x08], // memory source
+            &[0x62, 0xF2, 0x7D, 0x19, 0x40, 0xC8], // EVEX.b
+            &[0x62, 0xF2, 0x7D, 0x88, 0x40, 0xC8], // {z} with k0
+            &[0x62, 0xF2, 0x7D, 0x69, 0x40, 0xC8], // L'L=3
+            &[0x62, 0xF1, 0x7D, 0x09, 0xF4, 0xC8], // VPMULUDQ with W0
+            &[0x62, 0xF2, 0x7D, 0x09, 0x28, 0xC8], // VPMULDQ with W0
+            &[0x62, 0xF2, 0x7D, 0x09, 0x41, 0xC8], // unrelated opcode
+            &[0x62, 0xF2, 0x7D, 0x09, 0x40],       // missing ModR/M
+        ];
+        for bytes in invalid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_integer_multiply_requirements(),
                 None,
                 "{bytes:02X?}"
             );

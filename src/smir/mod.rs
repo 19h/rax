@@ -94,7 +94,8 @@ pub use ir::{
     SmirModule, Terminator, TrapKind, X86EvexFpReplaySpan, X86InstructionBytes,
     X86NativeReplaySpan, x86_evex_fp_replay_spans, x86_evex_immediate_count_shift_replay_spans,
     x86_evex_integer_arithmetic_replay_spans, x86_evex_integer_minmax_replay_spans,
-    x86_evex_logic_replay_spans, x86_evex_native_replay_spans, x86_evex_packed_fma_replay_spans,
+    x86_evex_integer_multiply_replay_spans, x86_evex_logic_replay_spans,
+    x86_evex_native_replay_spans, x86_evex_packed_fma_replay_spans,
     x86_evex_shared_count_shift_replay_spans,
 };
 pub use lift::aarch64::Aarch64Lifter;

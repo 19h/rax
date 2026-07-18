@@ -23282,6 +23282,57 @@ mod jit_gate_tests {
         assert!(!is_native_clobber_safe(&memory_metadata));
     }
 
+    #[test]
+    fn x86_evex_integer_multiply_replay_requires_dq_and_rejects_memory_metadata() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        const PC: u64 = 0x1000;
+        const VPMULLQ: [u8; 6] = [0x62, 0xA2, 0xED, 0xC1, 0x40, 0xCB];
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+        let result = lifter.lift_insn(PC, &VPMULLQ, &mut context).unwrap();
+        let mut block = SmirBlock::new(BlockId(0), PC);
+        block.ops = result.ops;
+        block.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+        function.add_block(block);
+        function.x86_instruction_bytes.insert(
+            (BlockId(0), PC),
+            X86InstructionBytes::new(&VPMULLQ).unwrap(),
+        );
+
+        assert!(is_native_clobber_safe(&function));
+        assert!(uses_x86_native_vectors_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+        #[cfg(target_arch = "x86_64")]
+        assert_eq!(
+            x86_native_vector_features_supported_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ),
+            std::is_x86_feature_detected!("avx512f")
+                && std::is_x86_feature_detected!("avx512bw")
+                && std::is_x86_feature_detected!("avx512dq")
+        );
+        #[cfg(not(target_arch = "x86_64"))]
+        assert!(!x86_native_vector_features_supported_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+
+        let mut memory_metadata = function;
+        let mut bytes = VPMULLQ;
+        bytes[5] &= 0x3f;
+        memory_metadata
+            .x86_instruction_bytes
+            .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+        assert!(!is_native_clobber_safe(&memory_metadata));
+    }
+
     #[cfg(target_arch = "x86_64")]
     #[test]
     fn x86_vector_trampoline_round_trips_all_zmm_and_opmask_registers() {
@@ -23898,6 +23949,81 @@ mod jit_gate_tests {
         for lane in 0..8 {
             if mask >> lane & 1 != 0 {
                 expected[lane] = std::cmp::max(lhs[lane] as i64, rhs[lane] as i64) as u64;
+            }
+        }
+
+        let mut regs = GuestRegs {
+            vector_active: 1,
+            ..GuestRegs::default()
+        };
+        regs.set_zmm(17, [u64::MAX; 8]);
+        regs.set_zmm(18, lhs);
+        regs.set_zmm(19, rhs);
+        regs.k[1] = mask;
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.get_zmm(17), expected);
+        assert_eq!(regs.get_zmm(18), lhs);
+        assert_eq!(regs.get_zmm(19), rhs);
+        assert_eq!(regs.k[1], mask);
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn x86_evex_integer_multiply_replay_executes_dq_high_register_form_exactly() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+        use crate::smir::lower::SmirLowerer;
+        use crate::smir::lower::x86_64::X86_64Lowerer;
+
+        if !std::is_x86_feature_detected!("avx512f")
+            || !std::is_x86_feature_detected!("avx512bw")
+            || !std::is_x86_feature_detected!("avx512dq")
+        {
+            return;
+        }
+
+        const PC: u64 = 0x1000;
+        // vpmullq zmm17{k1}{z}, zmm18, zmm19
+        const VPMULLQ: [u8; 6] = [0x62, 0xA2, 0xED, 0xC1, 0x40, 0xCB];
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+        let result = lifter.lift_insn(PC, &VPMULLQ, &mut context).unwrap();
+        let mut block = SmirBlock::new(BlockId(0), PC);
+        block.ops = result.ops;
+        block.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+        function.add_block(block);
+        function.x86_instruction_bytes.insert(
+            (BlockId(0), PC),
+            X86InstructionBytes::new(&VPMULLQ).unwrap(),
+        );
+
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&function)
+            .expect("lower VPMULLQ replay");
+        let code = lowerer.finalize().expect("finalize VPMULLQ replay");
+        assert!(code.windows(VPMULLQ.len()).any(|window| window == VPMULLQ));
+        let exec = ExecMem::new(&code).expect("map VPMULLQ replay");
+
+        let lhs = [
+            u64::MAX,
+            0x8000_0000_0000_0000,
+            0x0123_4567_89AB_CDEF,
+            0xFEDC_BA98_7654_3210,
+            0,
+            1,
+            0xFFFF_0000_FFFF_0000,
+            0x0000_FFFF_0000_FFFF,
+        ];
+        let rhs = [3, 2, 7, 11, u64::MAX, u64::MAX, 0x10001, 0x1_0000_0001];
+        let mask = 0xA5u64;
+        let mut expected = [0u64; 8];
+        for lane in 0..8 {
+            if mask >> lane & 1 != 0 {
+                expected[lane] = lhs[lane].wrapping_mul(rhs[lane]);
             }
         }
 
