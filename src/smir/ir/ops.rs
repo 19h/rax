@@ -78,6 +78,7 @@ pub enum X86VecMap {
     Map0F38,
     Map0F3A,
     Map5,
+    Map6,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1562,14 +1563,23 @@ pub enum OpKind {
         zero_upper: bool,
     },
 
-    /// x86 CVTSS2SD/CVTSD2SS scalar precision conversion. `merge` supplies
-    /// the non-low scalar lanes; VEX/EVEX forms clear state above bit 127.
+    /// x86 scalar floating-point precision conversion. `merge` supplies the
+    /// destination bits above the converted scalar through bit 127. `mask`
+    /// selects the low scalar element for EVEX forms; an inactive merging mask
+    /// preserves the old destination low element while an inactive zeroing
+    /// mask clears it. `round` records MXCSR-dynamic or EVEX embedded rounding,
+    /// and `suppress_exceptions` records EVEX ER/SAE. VEX/EVEX forms clear
+    /// shared vector state above bit 127.
     X86FpConvert {
         dst: VReg,
         merge: VReg,
         src: VReg,
+        mask: Option<VReg>,
         from: VecElementType,
         to: VecElementType,
+        mask_zeroing: bool,
+        round: FpRoundMode,
+        suppress_exceptions: bool,
         zero_upper: bool,
     },
 

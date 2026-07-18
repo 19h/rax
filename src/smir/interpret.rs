@@ -3503,33 +3503,76 @@ impl SmirInterpreter {
                 dst,
                 merge,
                 src,
+                mask,
                 from,
                 to,
+                mask_zeroing,
+                round,
+                suppress_exceptions,
                 zero_upper,
             } => {
-                let source = if matches!(src, VReg::Virtual(_)) {
-                    let mut value = [0; 16];
-                    value[0] = ctx.read_vreg(*src);
-                    value
-                } else {
-                    Self::read_vec(ctx, *src)
-                };
-                let scalar_bits = match (*from, *to) {
-                    (VecElementType::F32, VecElementType::F64) => {
-                        let bits = Self::get_lane(&source, 0, 32) as u32;
-                        (f32::from_bits(bits) as f64).to_bits()
-                    }
-                    (VecElementType::F64, VecElementType::F32) => {
-                        let bits = Self::get_lane(&source, 0, 64);
-                        self.x86_f64_to_f32_bits(ctx, f64::from_bits(bits)) as u64
-                    }
-                    _ => 0,
-                };
                 let mut result = Self::read_vec(ctx, *merge);
-                Self::set_lane(&mut result, 0, to.bytes() * 8, scalar_bits);
                 if *zero_upper {
                     result[2..].fill(0);
                 }
+                let active = mask.map_or(true, |reg| ctx.read_vreg(reg) & 1 != 0);
+                if !active {
+                    let scalar_bits = if *mask_zeroing {
+                        0
+                    } else {
+                        Self::get_lane(&Self::read_vec(ctx, *dst), 0, to.bytes() * 8)
+                    };
+                    Self::set_lane(&mut result, 0, to.bytes() * 8, scalar_bits);
+                    Self::write_vec(ctx, *dst, result);
+                    return Ok(());
+                }
+
+                let source = if matches!(src, VReg::Virtual(_)) {
+                    ctx.read_vreg(*src)
+                } else {
+                    Self::get_lane(&Self::read_vec(ctx, *src), 0, from.bytes() * 8)
+                };
+                let (from_format, to_format) = match (*from, *to) {
+                    (VecElementType::F16, VecElementType::F32) => (X86_SIMD_F16, X86_SIMD_F32),
+                    (VecElementType::F16, VecElementType::F64) => (X86_SIMD_F16, X86_SIMD_F64),
+                    (VecElementType::F32, VecElementType::F16) => (X86_SIMD_F32, X86_SIMD_F16),
+                    (VecElementType::F32, VecElementType::F64) => (X86_SIMD_F32, X86_SIMD_F64),
+                    (VecElementType::F64, VecElementType::F16) => (X86_SIMD_F64, X86_SIMD_F16),
+                    (VecElementType::F64, VecElementType::F32) => (X86_SIMD_F64, X86_SIMD_F32),
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let mode = if *round == FpRoundMode::Dynamic {
+                    self.dynamic_fp_round_mode(ctx)
+                } else {
+                    *round
+                };
+                let converted = Self::x86_simd_fp_convert_precision(
+                    source,
+                    from_format,
+                    to_format,
+                    mode,
+                    mxcsr,
+                );
+                if !*suppress_exceptions {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= converted.status;
+                    }
+                    if Self::x86_simd_fp_unmasked(converted.status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
+                    }
+                }
+                Self::set_lane(&mut result, 0, to.bytes() * 8, converted.bits);
                 Self::write_vec(ctx, *dst, result);
             }
 
@@ -14931,6 +14974,64 @@ impl SmirInterpreter {
         }
     }
 
+    fn x86_simd_fp_convert_precision(
+        bits: u64,
+        from: X86SimdFpFormat,
+        to: X86SimdFpFormat,
+        mode: FpRoundMode,
+        mxcsr: u32,
+    ) -> X86SimdFpResult {
+        let source = Self::x86_simd_fp_apply_daz(bits, from, mxcsr);
+        let mut status = source.status;
+        let (from_sign, _, from_fraction, _) = Self::x86_simd_fp_masks(from);
+        let (to_sign, to_exponent, to_fraction, to_quiet) = Self::x86_simd_fp_masks(to);
+        let sign = if source.bits & from_sign != 0 {
+            to_sign
+        } else {
+            0
+        };
+
+        if Self::x86_simd_fp_is_nan(source.bits, from) {
+            if Self::x86_simd_fp_is_snan(source.bits, from) {
+                status |= 1;
+            }
+            let payload = source.bits & from_fraction;
+            let payload = if to.fraction_bits >= from.fraction_bits {
+                payload << (to.fraction_bits - from.fraction_bits)
+            } else {
+                payload >> (from.fraction_bits - to.fraction_bits)
+            };
+            return X86SimdFpResult {
+                bits: sign | to_exponent | (payload & to_fraction) | to_quiet,
+                status,
+            };
+        }
+        if Self::x86_simd_fp_is_infinite(source.bits, from) {
+            return X86SimdFpResult {
+                bits: sign | to_exponent,
+                status,
+            };
+        }
+        if Self::x86_simd_fp_is_zero(source.bits, from) {
+            return X86SimdFpResult { bits: sign, status };
+        }
+
+        let finite = Self::x86_simd_fp_decode(source.bits, from);
+        let rounded = Self::x86_simd_fp_round_exact(
+            finite.negative,
+            finite.significand,
+            finite.exponent,
+            false,
+            to,
+            mode,
+            mxcsr,
+        );
+        X86SimdFpResult {
+            bits: rounded.bits,
+            status: status | rounded.status,
+        }
+    }
+
     fn x86_simd_fp_decode(bits: u64, format: X86SimdFpFormat) -> X86SimdFinite {
         let (sign, _, fraction_mask, _) = Self::x86_simd_fp_masks(format);
         let exponent_field =
@@ -22793,6 +22894,396 @@ mod tests {
             assert_eq!(x86.xmm[18][0] >> 32, merge[0] >> 32);
             assert_eq!(x86.xmm[18][1], merge[1]);
             assert!(x86.xmm[18][2..].iter().all(|word| *word == 0));
+        }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn x86_scalar_precision_softfloat_core_is_exact_across_f16_f32_f64() {
+        for raw in 0u16..=u16::MAX {
+            if raw & 0x7C00 == 0x7C00 && raw & 0x03FF != 0 {
+                continue;
+            }
+            let converted = SmirInterpreter::x86_simd_fp_convert_precision(
+                u64::from(raw),
+                X86_SIMD_F16,
+                X86_SIMD_F32,
+                FpRoundMode::RoundNearest,
+                0x1F80,
+            );
+            assert_eq!(
+                converted.bits as u32,
+                SmirInterpreter::x86_fp16_to_f32(raw).to_bits(),
+                "f16 0x{raw:04X}"
+            );
+        }
+
+        let mut state = 0xD1B5_4A32_D192_ED03u64;
+        for _ in 0..20_000 {
+            state = state
+                .wrapping_mul(0x9E37_79B9_7F4A_7C15)
+                .wrapping_add(0xBF58_476D_1CE4_E5B9);
+            let f32_bits = state as u32;
+            if f32_bits & 0x7F80_0000 != 0x7F80_0000 {
+                let widened = SmirInterpreter::x86_simd_fp_convert_precision(
+                    u64::from(f32_bits),
+                    X86_SIMD_F32,
+                    X86_SIMD_F64,
+                    FpRoundMode::RoundNearest,
+                    0x1F80,
+                );
+                assert_eq!(widened.bits, (f32::from_bits(f32_bits) as f64).to_bits());
+                let narrowed = SmirInterpreter::x86_simd_fp_convert_precision(
+                    u64::from(f32_bits),
+                    X86_SIMD_F32,
+                    X86_SIMD_F16,
+                    FpRoundMode::RoundNearest,
+                    0x1F80,
+                );
+                assert_eq!(
+                    narrowed.bits as u16,
+                    SmirInterpreter::x86_f32_to_fp16(f32::from_bits(f32_bits), 0)
+                );
+            }
+
+            let f64_bits = state.rotate_left(29);
+            if f64_bits & 0x7FF0_0000_0000_0000 != 0x7FF0_0000_0000_0000 {
+                let narrowed = SmirInterpreter::x86_simd_fp_convert_precision(
+                    f64_bits,
+                    X86_SIMD_F64,
+                    X86_SIMD_F32,
+                    FpRoundMode::RoundNearest,
+                    0x1F80,
+                );
+                assert_eq!(
+                    narrowed.bits as u32,
+                    (f64::from_bits(f64_bits) as f32).to_bits()
+                );
+            }
+        }
+
+        // This value is just above an FP16 midpoint but rounds to the midpoint
+        // in FP32. Direct FP64->FP16 must round upward, avoiding double rounding.
+        let double_rounding_probe = 1.0f64 + 2.0f64.powi(-11) + 2.0f64.powi(-30);
+        let direct = SmirInterpreter::x86_simd_fp_convert_precision(
+            double_rounding_probe.to_bits(),
+            X86_SIMD_F64,
+            X86_SIMD_F16,
+            FpRoundMode::RoundNearest,
+            0x1F80,
+        );
+        assert_eq!(direct.bits, 0x3C01);
+        assert_eq!(
+            SmirInterpreter::x86_f32_to_fp16(double_rounding_probe as f32, 0),
+            0x3C00,
+            "probe must distinguish direct conversion from an FP32 intermediate"
+        );
+
+        for (source, mode, expected) in [
+            (1.0f64 + 2.0f64.powi(-11), FpRoundMode::RoundNearest, 0x3C00),
+            (1.0f64 + 2.0f64.powi(-11), FpRoundMode::RoundDown, 0x3C00),
+            (1.0f64 + 2.0f64.powi(-11), FpRoundMode::RoundUp, 0x3C01),
+            (
+                1.0f64 + 2.0f64.powi(-11),
+                FpRoundMode::RoundTowardZero,
+                0x3C00,
+            ),
+            (
+                -1.0f64 - 2.0f64.powi(-11),
+                FpRoundMode::RoundNearest,
+                0xBC00,
+            ),
+            (-1.0f64 - 2.0f64.powi(-11), FpRoundMode::RoundDown, 0xBC01),
+            (-1.0f64 - 2.0f64.powi(-11), FpRoundMode::RoundUp, 0xBC00),
+            (
+                -1.0f64 - 2.0f64.powi(-11),
+                FpRoundMode::RoundTowardZero,
+                0xBC00,
+            ),
+        ] {
+            let converted = SmirInterpreter::x86_simd_fp_convert_precision(
+                source.to_bits(),
+                X86_SIMD_F64,
+                X86_SIMD_F16,
+                mode,
+                0x1F80,
+            );
+            assert_eq!(converted.bits as u16, expected, "{source} {mode:?}");
+        }
+
+        for (bits, from, to, expected) in [
+            (0x8000_0000_0000_0000, X86_SIMD_F64, X86_SIMD_F16, 0x8000),
+            (0xFFF0_0000_0000_0000, X86_SIMD_F64, X86_SIMD_F16, 0xFC00),
+            (0x8000, X86_SIMD_F16, X86_SIMD_F64, 0x8000_0000_0000_0000),
+            (0xFC00, X86_SIMD_F16, X86_SIMD_F64, 0xFFF0_0000_0000_0000),
+        ] {
+            let converted = SmirInterpreter::x86_simd_fp_convert_precision(
+                bits,
+                from,
+                to,
+                FpRoundMode::RoundNearest,
+                0x1F80,
+            );
+            assert_eq!(converted.bits, expected);
+            assert_eq!(converted.status, 0);
+        }
+
+        let snan = SmirInterpreter::x86_simd_fp_convert_precision(
+            0x7FF0_0123_4567_89AB,
+            X86_SIMD_F64,
+            X86_SIMD_F16,
+            FpRoundMode::RoundNearest,
+            0x1F80,
+        );
+        let expected_payload = ((0x0000_0123_4567_89ABu64 >> 42) as u16) & 0x03FF;
+        assert_eq!(snan.bits as u16, 0x7C00 | expected_payload | 0x0200);
+        assert_eq!(snan.status & 1, 1);
+        let qnan = SmirInterpreter::x86_simd_fp_convert_precision(
+            0xFFF8_0123_4567_89AB,
+            X86_SIMD_F64,
+            X86_SIMD_F32,
+            FpRoundMode::RoundNearest,
+            0x1F80,
+        );
+        assert_eq!(qnan.bits, 0xFFC0_091A);
+        assert_eq!(qnan.status & 1, 0);
+
+        let denormal = SmirInterpreter::x86_simd_fp_convert_precision(
+            1,
+            X86_SIMD_F16,
+            X86_SIMD_F32,
+            FpRoundMode::RoundNearest,
+            0x1F80,
+        );
+        assert_eq!(denormal.bits, 0x3380_0000);
+        assert_eq!(denormal.status & (1 << 1), 1 << 1);
+        let daz = SmirInterpreter::x86_simd_fp_convert_precision(
+            1,
+            X86_SIMD_F16,
+            X86_SIMD_F32,
+            FpRoundMode::RoundNearest,
+            0x1F80 | (1 << 6),
+        );
+        assert_eq!(daz.bits, 0);
+        assert_eq!(daz.status, 0);
+
+        let overflow = SmirInterpreter::x86_simd_fp_convert_precision(
+            u64::from(f32::MAX.to_bits()),
+            X86_SIMD_F32,
+            X86_SIMD_F16,
+            FpRoundMode::RoundNearest,
+            0x1F80,
+        );
+        assert_eq!(overflow.bits, 0x7C00);
+        assert_eq!(overflow.status & ((1 << 3) | (1 << 5)), (1 << 3) | (1 << 5));
+        let underflow = SmirInterpreter::x86_simd_fp_convert_precision(
+            u64::from(f32::MIN_POSITIVE.to_bits()),
+            X86_SIMD_F32,
+            X86_SIMD_F16,
+            FpRoundMode::RoundNearest,
+            0x1F80,
+        );
+        assert_eq!(underflow.bits, 0);
+        assert_eq!(
+            underflow.status & ((1 << 4) | (1 << 5)),
+            (1 << 4) | (1 << 5)
+        );
+    }
+
+    #[test]
+    fn lifted_evex_scalar_precision_family_executes_masks_er_sae_faults_and_exceptions() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let mut memory = FlatMemory::new(0x400);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        let merge = [0x0123_4567_89AB_CDEFu64; 16];
+
+        for (name, bytes, source, to_bits, expected) in [
+            (
+                "VCVTSD2SS",
+                &[0x62, 0xF1, 0xFF, 0x09, 0x5A, 0xCA][..],
+                1.5f64.to_bits(),
+                32u32,
+                u64::from(1.5f32.to_bits()),
+            ),
+            (
+                "VCVTSS2SD",
+                &[0x62, 0xF1, 0x7E, 0x09, 0x5A, 0xCA][..],
+                u64::from(1.5f32.to_bits()),
+                64,
+                1.5f64.to_bits(),
+            ),
+            (
+                "VCVTSD2SH",
+                &[0x62, 0xF5, 0xFF, 0x09, 0x5A, 0xCA][..],
+                1.5f64.to_bits(),
+                16,
+                0x3E00,
+            ),
+            (
+                "VCVTSH2SD",
+                &[0x62, 0xF5, 0x7E, 0x09, 0x5A, 0xCA][..],
+                0x3E00,
+                64,
+                1.5f64.to_bits(),
+            ),
+            (
+                "VCVTSS2SH",
+                &[0x62, 0xF5, 0x7C, 0x09, 0x1D, 0xCA][..],
+                u64::from(1.5f32.to_bits()),
+                16,
+                0x3E00,
+            ),
+            (
+                "VCVTSH2SS",
+                &[0x62, 0xF6, 0x7C, 0x09, 0x13, 0xCA][..],
+                0x3E00,
+                32,
+                u64::from(1.5f32.to_bits()),
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = merge;
+                x86.xmm[1] = [u64::MAX; 16];
+                x86.xmm[2] = [0; 16];
+                x86.xmm[2][0] = source;
+                x86.k[1] = 1;
+                x86.mxcsr = 0x1F80;
+            }
+            assert!(matches!(
+                execute_lifted_x86(bytes, &mut ctx, &mut memory),
+                BlockResult::Exit(ExitReason::Halt)
+            ));
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                let low_mask = if to_bits == 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << to_bits) - 1
+                };
+                assert_eq!(x86.xmm[1][0] & low_mask, expected, "{name}: result");
+                assert_eq!(
+                    x86.xmm[1][0] & !low_mask,
+                    merge[0] & !low_mask,
+                    "{name}: merge"
+                );
+                assert_eq!(x86.xmm[1][1], merge[1], "{name}: merge");
+                assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+            }
+        }
+
+        let midpoint = 1.0f64 + 2.0f64.powi(-11);
+        for (name, bytes, source, mxcsr, expected, expected_status) in [
+            (
+                "embedded nearest direct",
+                &[0x62, 0xF5, 0xFF, 0x19, 0x5A, 0xCA][..],
+                midpoint + 2.0f64.powi(-30),
+                (0x1F80 & !(3 << 13)) | (1 << 13),
+                0x3C01u16,
+                0u32,
+            ),
+            (
+                "embedded round up",
+                &[0x62, 0xF5, 0xFF, 0x59, 0x5A, 0xCA][..],
+                midpoint,
+                (0x1F80 & !(3 << 13)) | (1 << 13),
+                0x3C01,
+                0,
+            ),
+            (
+                "MXCSR round down",
+                &[0x62, 0xF5, 0xFF, 0x09, 0x5A, 0xCA][..],
+                midpoint,
+                (0x1F80 & !(3 << 13)) | (1 << 13),
+                0x3C00,
+                1 << 5,
+            ),
+        ] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = merge;
+                x86.xmm[1] = [u64::MAX; 16];
+                x86.xmm[2][0] = source.to_bits();
+                x86.k[1] = 1;
+                x86.mxcsr = mxcsr;
+            }
+            execute_lifted_x86(bytes, &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[1][0] as u16, expected, "{name}");
+                assert_eq!(x86.mxcsr & 0x3F, expected_status, "{name}: MXCSR");
+            }
+        }
+
+        // SAE quiets an SNaN result without updating MXCSR.INVALID.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = merge;
+            x86.xmm[1] = [u64::MAX; 16];
+            x86.xmm[2][0] = 0x7C01;
+            x86.k[1] = 1;
+            x86.mxcsr = 0x1F80;
+        }
+        execute_lifted_x86(&[0x62, 0xF6, 0x7C, 0x19, 0x13, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0] as u32, 0x7FC0_2000);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+
+        // Inactive memory masks suppress the load and all FP exceptions.
+        ctx.write_vreg(rax, 0x400);
+        for (zeroing, p2, expected_low) in [(false, 0x09u8, 0xBEEF), (true, 0x89, 0)] {
+            let old = [0xCAFE_BABE_DEAD_BEEFu64; 16];
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.xmm[0] = merge;
+                x86.xmm[1] = old;
+                x86.k[1] = 0;
+                x86.mxcsr = 0x1F80 & !(1 << 7);
+            }
+            let exit =
+                execute_lifted_x86(&[0x62, 0xF5, 0x7C, p2, 0x1D, 0x08], &mut ctx, &mut memory);
+            assert!(
+                matches!(exit, BlockResult::Exit(ExitReason::Halt)),
+                "{zeroing}"
+            );
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(x86.xmm[1][0] as u16, expected_low);
+                assert_eq!(x86.xmm[1][0] & !0xFFFF, merge[0] & !0xFFFF);
+                assert_eq!(x86.mxcsr & 0x3F, 0);
+            }
+        }
+
+        let original = [0xA5A5_5A5A_0123_4567u64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = original;
+            x86.k[1] = 1;
+            x86.mxcsr = 0x1F80;
+        }
+        let fault =
+            execute_lifted_x86(&[0x62, 0xF5, 0x7C, 0x09, 0x1D, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(
+            fault,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], original);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+
+        // An unmasked overflow records MXCSR status and traps atomically.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = original;
+            x86.xmm[2][0] = u64::from(f32::MAX.to_bits());
+            x86.k[1] = 1;
+            x86.mxcsr = 0x1F80 & !(1 << 10);
+        }
+        let overflow =
+            execute_lifted_x86(&[0x62, 0xF5, 0x7C, 0x09, 0x1D, 0xCA], &mut ctx, &mut memory);
+        assert!(matches!(
+            overflow,
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], original);
+            assert_ne!(x86.mxcsr & (1 << 3), 0);
         }
         ctx.flags.materialize_all();
         assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);

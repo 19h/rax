@@ -2480,6 +2480,7 @@ impl<'a> X86Emitter<'a> {
             X86VecMap::Map0F38 => 0x02,
             X86VecMap::Map0F3A => 0x03,
             X86VecMap::Map5 => 0x05,
+            X86VecMap::Map6 => 0x06,
         }
     }
 
@@ -9248,8 +9249,12 @@ impl X86_64Lowerer {
                 dst,
                 merge,
                 src,
+                mask,
                 from,
                 to,
+                mask_zeroing,
+                round,
+                suppress_exceptions,
                 zero_upper,
             } => {
                 let dst_reg = self.get_dst_reg(*dst)?;
@@ -9260,6 +9265,10 @@ impl X86_64Lowerer {
                     || merge_reg != dst_reg
                     || dst_reg.vec_ext2() != 0
                     || src_reg.vec_ext2() != 0
+                    || mask.is_some()
+                    || *mask_zeroing
+                    || *round != FpRoundMode::Dynamic
+                    || *suppress_exceptions
                     || *zero_upper
                 {
                     return Err(LowerError::InvalidOperand {
@@ -29596,8 +29605,12 @@ mod tests {
                     dst: xmm0,
                     merge: xmm0,
                     src: xmm1,
+                    mask: None,
                     from: VecElementType::F32,
                     to: VecElementType::F64,
+                    mask_zeroing: false,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
                     zero_upper: false,
                 },
                 &[0xF3, 0x0F, 0x5A, 0xC1][..],
@@ -29608,8 +29621,12 @@ mod tests {
                     dst: xmm0,
                     merge: xmm0,
                     src: xmm1,
+                    mask: None,
                     from: VecElementType::F64,
                     to: VecElementType::F32,
+                    mask_zeroing: false,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
                     zero_upper: false,
                 },
                 &[0xF2, 0x0F, 0x5A, 0xC1][..],
@@ -29621,6 +29638,56 @@ mod tests {
                     .any(|window| window == expected),
                 "{name}: missing native opcode in {code:02X?}"
             );
+        }
+    }
+
+    #[test]
+    fn lower_x86_scalar_fp_convert_rejects_interpreter_only_evex_metadata() {
+        let xmm0 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let xmm1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        for kind in [
+            OpKind::X86FpConvert {
+                dst: xmm0,
+                merge: xmm1,
+                src: xmm1,
+                mask: Some(k1),
+                from: VecElementType::F64,
+                to: VecElementType::F32,
+                mask_zeroing: true,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
+                zero_upper: true,
+            },
+            OpKind::X86FpConvert {
+                dst: xmm0,
+                merge: xmm0,
+                src: xmm1,
+                mask: None,
+                from: VecElementType::F16,
+                to: VecElementType::F32,
+                mask_zeroing: false,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
+                zero_upper: false,
+            },
+            OpKind::X86FpConvert {
+                dst: xmm0,
+                merge: xmm0,
+                src: xmm1,
+                mask: None,
+                from: VecElementType::F64,
+                to: VecElementType::F32,
+                mask_zeroing: false,
+                round: FpRoundMode::RoundUp,
+                suppress_exceptions: true,
+                zero_upper: false,
+            },
+        ] {
+            assert!(matches!(
+                lower_single_op_err(kind),
+                LowerError::InvalidOperand { .. } | LowerError::UnsupportedOp { .. }
+            ));
         }
     }
 

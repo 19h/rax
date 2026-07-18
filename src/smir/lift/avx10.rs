@@ -171,6 +171,7 @@ impl EvexPrefix {
             2 => Some(X86VecMap::Map0F38),
             3 => Some(X86VecMap::Map0F3A),
             5 => Some(X86VecMap::Map5),
+            6 => Some(X86VecMap::Map6),
             _ => None,
         }
     }

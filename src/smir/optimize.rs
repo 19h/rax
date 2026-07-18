@@ -2716,9 +2716,20 @@ impl OpKind {
                 result.push(*src);
             }
 
-            OpKind::X86FpConvert { merge, src, .. } => {
+            OpKind::X86FpConvert {
+                dst,
+                merge,
+                src,
+                mask,
+                mask_zeroing,
+                ..
+            } => {
                 result.push(*merge);
                 result.push(*src);
+                result.extend(mask.iter().copied());
+                if mask.is_some() && !mask_zeroing {
+                    result.push(*dst);
+                }
             }
 
             OpKind::X86Round { merge, src, .. } => {
@@ -9170,6 +9181,67 @@ mod tests {
             .expect("CVTSD2SS conversion must survive optimization");
         assert!(load < conversion);
         assert!(ops[conversion].kind.flags_written().is_empty());
+
+        let masked_scalar_fp_convert = optimized(&[0x62, 0xF5, 0x7C, 0x09, 0x1D, 0x08]);
+        let ops = &masked_scalar_fp_convert.blocks[0].ops;
+        let mask_condition = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::And {
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::K(1))),
+                        flags: FlagUpdate::None,
+                        ..
+                    }
+                )
+            })
+            .expect("VCVTSS2SH mask condition must survive optimization");
+        let predicated_load = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        signed: SignExtend::Zero,
+                        ..
+                    }
+                )
+            })
+            .expect("VCVTSS2SH fault-suppressing load must survive optimization");
+        let conversion = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86FpConvert {
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+                        from: VecElementType::F32,
+                        to: VecElementType::F16,
+                        mask_zeroing: false,
+                        round: FpRoundMode::Dynamic,
+                        suppress_exceptions: false,
+                        zero_upper: true,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VCVTSS2SH conversion must survive optimization");
+        assert!(mask_condition < predicated_load && predicated_load < conversion);
+        assert!(
+            ops[conversion]
+                .kind
+                .source_vregs()
+                .contains(&VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))))
+        );
+        assert!(ops[..predicated_load].iter().any(|op| matches!(
+            op.kind,
+            OpKind::Mov {
+                src: SrcOperand::Imm(0),
+                ..
+            }
+        )));
 
         let packed_fp_convert = optimized(&[0x66, 0x0F, 0x5A, 0x00]);
         let ops = &packed_fp_convert.blocks[0].ops;
