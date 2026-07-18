@@ -96,7 +96,7 @@ pub use ir::{
     x86_evex_immediate_count_shift_replay_spans, x86_evex_integer_arithmetic_replay_spans,
     x86_evex_integer_interleave_replay_spans, x86_evex_integer_minmax_replay_spans,
     x86_evex_integer_multiply_replay_spans, x86_evex_integer_pack_replay_spans,
-    x86_evex_logic_replay_spans, x86_evex_native_replay_spans,
+    x86_evex_logic_replay_spans, x86_evex_native_replay_spans, x86_evex_packed_abs_replay_spans,
     x86_evex_packed_compare_replay_spans, x86_evex_packed_fma_replay_spans,
     x86_evex_packed_test_replay_spans, x86_evex_scalar_fma_replay_spans,
     x86_evex_shared_count_shift_replay_spans,
