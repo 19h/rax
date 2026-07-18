@@ -1608,6 +1608,25 @@ pub enum OpKind {
         suppress_exceptions: bool,
     },
 
+    /// x86 EVEX VSCALEF{PH,PS,PD,SH,SS,SD}. Each active element computes
+    /// `src1 * 2^floor(src2)` using the selected MXCSR or embedded rounding
+    /// mode. Scalar forms copy bits 127:element-width from `src1`; packed and
+    /// scalar writemasking merge from the old destination when zeroing is
+    /// disabled. `suppress_exceptions` records EVEX embedded rounding/SAE.
+    X86ScaleF {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        lanes: u8,
+        scalar: bool,
+        mask_zeroing: bool,
+        round: FpRoundMode,
+        suppress_exceptions: bool,
+    },
+
     /// x86 CVT(T)SS2SI/CVT(T)SD2SI and EVEX VCVT(T)SS/SD/SH2SI/USI scalar
     /// conversion. Invalid or out-of-range inputs produce the signed
     /// integer-indefinite value, or `2^int_width - 1` when `signed` is false,
@@ -4327,6 +4346,7 @@ impl OpKind {
             | OpKind::X86GetMantissa { dst, .. }
             | OpKind::X86RoundScale { dst, .. }
             | OpKind::X86Reduce { dst, .. }
+            | OpKind::X86ScaleF { dst, .. }
             | OpKind::X86IntToFp { dst, .. }
             | OpKind::X86FpConvert { dst, .. }
             | OpKind::X86PackedFpConvert { dst, .. }
@@ -4740,6 +4760,10 @@ impl OpKind {
                         ..
                     }
                     | OpKind::X86Reduce {
+                        suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86ScaleF {
                         suppress_exceptions: false,
                         ..
                     }

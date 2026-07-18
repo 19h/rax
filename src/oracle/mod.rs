@@ -2015,6 +2015,32 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             mask_zeroing,
             suppress_exceptions
         ),
+        OpKind::X86ScaleF {
+            dst,
+            src1,
+            src2,
+            mask,
+            elem,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+            round,
+            suppress_exceptions,
+        } => op_json!(
+            "x86_scale_f",
+            dst,
+            src1,
+            src2,
+            mask,
+            elem,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+            round,
+            suppress_exceptions
+        ),
         OpKind::X86FpToInt {
             dst,
             src,

@@ -2678,6 +2678,63 @@ impl<'a> X86Emitter<'a> {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn emit_evex_fp_rrr(
+        &mut self,
+        map: X86VecMap,
+        pp: X86SsePrefix,
+        width: VecWidth,
+        w: bool,
+        opcode: u8,
+        dst: PhysReg,
+        src1: PhysReg,
+        src2: PhysReg,
+        aaa: u8,
+        zeroing: bool,
+        round: FpRoundMode,
+        suppress_exceptions: bool,
+    ) {
+        let r_inv = u8::from(dst.vec_ext() == 0);
+        let r2_inv = u8::from(dst.vec_ext2() == 0);
+        let b_inv = u8::from(src2.vec_ext() == 0);
+        let b2_inv = u8::from(src2.vec_ext2() == 0);
+        let vvvv = src1.encoding() & 0x1F;
+        let vvvv_inv = (!vvvv) & 0x0F;
+        let vprime_inv = u8::from(vvvv & 0x10 == 0);
+        let byte2 = (r_inv << 7)
+            | (b2_inv << 6)
+            | (b_inv << 5)
+            | (r2_inv << 4)
+            | (Self::vex_map_bits(map) & 0x0F);
+        let byte3 = ((w as u8) << 7) | (vvvv_inv << 3) | 0x04 | Self::vex_pp_bits(pp);
+        let ll_or_rc = if suppress_exceptions {
+            match round {
+                FpRoundMode::RoundNearest => 0,
+                FpRoundMode::RoundDown => 1,
+                FpRoundMode::RoundUp => 2,
+                FpRoundMode::RoundTowardZero => 3,
+                _ => unreachable!("validated VSCALEF embedded rounding mode"),
+            }
+        } else {
+            match width {
+                VecWidth::V128 | VecWidth::V64 => 0,
+                VecWidth::V256 => 1,
+                VecWidth::V512 => 2,
+            }
+        };
+        let byte4 = ((zeroing as u8) << 7)
+            | (ll_or_rc << 5)
+            | ((suppress_exceptions as u8) << 4)
+            | (vprime_inv << 3)
+            | (aaa & 7);
+        self.code.emit_u8(0x62);
+        self.code.emit_u8(byte2);
+        self.code.emit_u8(byte3);
+        self.code.emit_u8(byte4);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(dst, src2);
+    }
+
     pub fn emit_vex_rrr(
         &mut self,
         map: X86VecMap,
@@ -9587,6 +9644,108 @@ impl X86_64Lowerer {
                     *mask_zeroing,
                     *suppress_exceptions,
                     Some(*imm),
+                );
+            }
+
+            OpKind::X86ScaleF {
+                dst,
+                src1,
+                src2,
+                mask,
+                elem,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+                round,
+                suppress_exceptions,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src1_reg = self.get_reg(*src1)?;
+                let src2_reg = self.get_reg(*src2)?;
+                let aaa = match mask {
+                    None => 0,
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::K(n @ 1..=7)))) => *n,
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86ScaleF".to_string(),
+                            operand: "mask must be architectural k1-k7".to_string(),
+                        });
+                    }
+                };
+                let (map, w) = match elem {
+                    VecElementType::F16 => (X86VecMap::Map6, false),
+                    VecElementType::F32 => (X86VecMap::Map0F38, false),
+                    VecElementType::F64 => (X86VecMap::Map0F38, true),
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86ScaleF".to_string(),
+                            operand: format!("unsupported element {elem:?}"),
+                        });
+                    }
+                };
+                let register_matches_width = |reg: PhysReg, expected: VecWidth| {
+                    matches!(
+                        (reg, expected),
+                        (PhysReg::Xmm(_), VecWidth::V128)
+                            | (PhysReg::Ymm(_), VecWidth::V256)
+                            | (PhysReg::Zmm(_), VecWidth::V512)
+                    )
+                };
+                let register_width = if *scalar { VecWidth::V128 } else { *width };
+                let valid_round = matches!(
+                    round,
+                    FpRoundMode::Dynamic
+                        | FpRoundMode::RoundNearest
+                        | FpRoundMode::RoundDown
+                        | FpRoundMode::RoundUp
+                        | FpRoundMode::RoundTowardZero
+                ) && (*suppress_exceptions == (*round != FpRoundMode::Dynamic));
+                let valid_shape = register_matches_width(dst_reg, register_width)
+                    && register_matches_width(src1_reg, register_width)
+                    && register_matches_width(src2_reg, register_width)
+                    && (!*mask_zeroing || aaa != 0)
+                    && valid_round
+                    && if *scalar {
+                        *width == VecWidth::V128 && *lanes == 1
+                    } else {
+                        *lanes == width.lanes(*elem) as u8
+                            && (!*suppress_exceptions || *width == VecWidth::V512)
+                    };
+                let opcode = if *scalar { 0x2D } else { 0x2C };
+                let valid_hint = matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::EvexOp {
+                        map: hint_map,
+                        pp: X86SsePrefix::OpSize,
+                        opcode: hint_opcode,
+                        width: hint_width,
+                        w: hint_w,
+                    }) if hint_map == map
+                        && hint_opcode == opcode
+                        && hint_width == *width
+                        && hint_w == w
+                );
+                if !valid_shape || !valid_hint {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86ScaleF".to_string(),
+                        operand: "non-canonical VSCALEF shape or encoding metadata".to_string(),
+                    });
+                }
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_evex_fp_rrr(
+                    map,
+                    X86SsePrefix::OpSize,
+                    *width,
+                    w,
+                    opcode,
+                    dst_reg,
+                    src1_reg,
+                    src2_reg,
+                    aaa,
+                    *mask_zeroing,
+                    *round,
+                    *suppress_exceptions,
                 );
             }
 
@@ -31991,6 +32150,164 @@ mod tests {
             lower_single_hinted_op_err(
                 fp16_wrong_hint,
                 hint(X86SsePrefix::OpSize, 0x56, VecWidth::V128, false),
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[test]
+    fn lower_x86_scale_f_emits_canonical_evex_and_rejects_synthetic_shapes() {
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        let make = |dst,
+                    src1,
+                    src2,
+                    mask,
+                    elem,
+                    width,
+                    lanes,
+                    scalar,
+                    mask_zeroing,
+                    round,
+                    suppress_exceptions| OpKind::X86ScaleF {
+            dst,
+            src1,
+            src2,
+            mask,
+            elem,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+            round,
+            suppress_exceptions,
+        };
+        let hint = |map, opcode, width, w| X86OpHint::EvexOp {
+            map,
+            pp: X86SsePrefix::OpSize,
+            opcode,
+            width,
+            w,
+        };
+        for (name, kind, encoding, expected) in [
+            (
+                "VSCALEFPS xmm1,xmm2,xmm3",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    None,
+                    VecElementType::F32,
+                    VecWidth::V128,
+                    4,
+                    false,
+                    false,
+                    FpRoundMode::Dynamic,
+                    false,
+                ),
+                hint(X86VecMap::Map0F38, 0x2C, VecWidth::V128, false),
+                &[0x62, 0xF2, 0x6D, 0x08, 0x2C, 0xCB][..],
+            ),
+            (
+                "VSCALEFPD ymm1{k2}{z},ymm2,ymm3",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
+                    Some(k2),
+                    VecElementType::F64,
+                    VecWidth::V256,
+                    4,
+                    false,
+                    true,
+                    FpRoundMode::Dynamic,
+                    false,
+                ),
+                hint(X86VecMap::Map0F38, 0x2C, VecWidth::V256, true),
+                &[0x62, 0xF2, 0xED, 0xAA, 0x2C, 0xCB][..],
+            ),
+            (
+                "VSCALEFPH zmm17{k2}{z},zmm18,zmm19,{rn-sae}",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(18))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(19))),
+                    Some(k2),
+                    VecElementType::F16,
+                    VecWidth::V512,
+                    32,
+                    false,
+                    true,
+                    FpRoundMode::RoundNearest,
+                    true,
+                ),
+                hint(X86VecMap::Map6, 0x2C, VecWidth::V512, false),
+                &[0x62, 0xA6, 0x6D, 0x92, 0x2C, 0xCB][..],
+            ),
+            (
+                "VSCALEFSD xmm1,xmm2,xmm3,{rz-sae}",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    None,
+                    VecElementType::F64,
+                    VecWidth::V128,
+                    1,
+                    true,
+                    false,
+                    FpRoundMode::RoundTowardZero,
+                    true,
+                ),
+                hint(X86VecMap::Map0F38, 0x2D, VecWidth::V128, true),
+                &[0x62, 0xF2, 0xED, 0x78, 0x2D, 0xCB][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, encoding);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        let invalid_short_er = make(
+            VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+            VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+            VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
+            None,
+            VecElementType::F32,
+            VecWidth::V256,
+            8,
+            false,
+            false,
+            FpRoundMode::RoundNearest,
+            true,
+        );
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                invalid_short_er,
+                hint(X86VecMap::Map0F38, 0x2C, VecWidth::V256, false),
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+
+        let invalid_dynamic_sae = make(
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+            None,
+            VecElementType::F32,
+            VecWidth::V128,
+            1,
+            true,
+            false,
+            FpRoundMode::Dynamic,
+            true,
+        );
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                invalid_dynamic_sae,
+                hint(X86VecMap::Map0F38, 0x2D, VecWidth::V128, false),
             ),
             LowerError::InvalidOperand { .. }
         ));

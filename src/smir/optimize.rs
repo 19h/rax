@@ -2831,6 +2831,22 @@ impl OpKind {
                 }
             }
 
+            OpKind::X86ScaleF {
+                dst,
+                src1,
+                src2,
+                mask,
+                mask_zeroing,
+                ..
+            } => {
+                result.push(*src1);
+                result.push(*src2);
+                result.extend(mask.iter().copied());
+                if mask.is_some() && !mask_zeroing {
+                    result.push(*dst);
+                }
+            }
+
             OpKind::X86PackedFpConvert {
                 dst,
                 src,
@@ -9761,6 +9777,71 @@ mod tests {
                 imm: 0x53,
                 scalar: false,
                 mask_zeroing: false,
+                suppress_exceptions: true,
+            }
+            .has_side_effects()
+        );
+
+        let scale_f = optimized(&[0x62, 0xF2, 0x7D, 0x5A, 0x2C, 0x00]);
+        let ops = &scale_f.blocks[0].ops;
+        let scale = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86ScaleF {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        src2: VReg::Virtual(_),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                        elem: VecElementType::F32,
+                        width: VecWidth::V512,
+                        lanes: 16,
+                        scalar: false,
+                        mask_zeroing: false,
+                        round: FpRoundMode::Dynamic,
+                        suppress_exceptions: false,
+                    }
+                )
+            })
+            .expect("masked broadcast VSCALEFPS removed");
+        assert!(ops[scale].kind.has_side_effects());
+        assert_eq!(
+            ops[..scale]
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            1,
+        );
+        let sources = ops[scale].kind.source_vregs();
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Zmm(0)))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::K(2)))));
+        assert_eq!(
+            sources
+                .iter()
+                .filter(|source| **source == VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))))
+                .count(),
+            2,
+            "src1 and masked-merge destination are both data dependencies"
+        );
+        assert!(
+            !OpKind::X86ScaleF {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                mask: None,
+                elem: VecElementType::F32,
+                width: VecWidth::V512,
+                lanes: 16,
+                scalar: false,
+                mask_zeroing: false,
+                round: FpRoundMode::RoundNearest,
                 suppress_exceptions: true,
             }
             .has_side_effects()

@@ -3518,6 +3518,104 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::X86ScaleF {
+                dst,
+                src1,
+                src2,
+                mask,
+                elem,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+                round,
+                suppress_exceptions,
+            } => {
+                let format = match elem {
+                    VecElementType::F16 => X86_SIMD_F16,
+                    VecElementType::F32 => X86_SIMD_F32,
+                    VecElementType::F64 => X86_SIMD_F64,
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                if (*scalar && (*width != VecWidth::V128 || *lanes != 1))
+                    || (!*scalar && *lanes != width.lanes(*elem) as u8)
+                    || (*mask_zeroing && mask.is_none())
+                    || (*suppress_exceptions != (*round != FpRoundMode::Dynamic))
+                    || matches!(round, FpRoundMode::RoundNearestTiesAway)
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: ctx.pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let old = Self::read_vec(ctx, *dst);
+                let mut result = if *scalar { first } else { old };
+                if *scalar {
+                    result[2..].fill(0);
+                } else {
+                    result[(width.bytes() / 8) as usize..].fill(0);
+                }
+                let active = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let mode = if *round == FpRoundMode::Dynamic {
+                    self.dynamic_fp_round_mode(ctx)
+                } else {
+                    *round
+                };
+                let elem_bits = elem.bytes() * 8;
+                let mut status = 0;
+                for lane in 0..*lanes {
+                    if active & (1u64 << lane) == 0 {
+                        if *mask_zeroing {
+                            Self::set_lane(&mut result, lane, elem_bits, 0);
+                        } else {
+                            Self::set_lane(
+                                &mut result,
+                                lane,
+                                elem_bits,
+                                Self::get_lane(&old, lane, elem_bits),
+                            );
+                        }
+                        continue;
+                    }
+                    let first_bits = Self::get_lane(&first, lane, elem_bits);
+                    let second_bits = Self::get_lane(&second, lane, elem_bits);
+                    let converted = Self::x86_simd_scale_f(
+                        first_bits,
+                        second_bits,
+                        format,
+                        mode,
+                        mxcsr,
+                        *scalar,
+                    );
+                    status |= converted.status;
+                    Self::set_lane(&mut result, lane, elem_bits, converted.bits);
+                }
+                if !*suppress_exceptions {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= status;
+                    }
+                    if Self::x86_simd_fp_unmasked(status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::X86CheckAlignment { addr, alignment } => {
                 debug_assert!(alignment.is_power_of_two());
                 let effective_addr = self.compute_address(ctx, addr);
@@ -16337,6 +16435,134 @@ impl SmirInterpreter {
                 significand: fraction | (1u128 << format.fraction_bits),
                 exponent: exponent_field - format.bias - format.fraction_bits as i32,
             }
+        }
+    }
+
+    fn x86_simd_fp_floor_bounded(bits: u64, format: X86SimdFpFormat) -> i32 {
+        const LIMIT: u128 = 4096;
+        let finite = Self::x86_simd_fp_decode(bits, format);
+        let (integer, fractional) = if finite.exponent >= 0 {
+            let shift = finite.exponent as u32;
+            let integer = if shift >= u128::BITS || finite.significand > (LIMIT >> shift.min(12)) {
+                LIMIT
+            } else {
+                (finite.significand << shift).min(LIMIT)
+            };
+            (integer, false)
+        } else {
+            let drop = (-finite.exponent) as u32;
+            if drop >= u128::BITS {
+                (0, finite.significand != 0)
+            } else {
+                let integer = finite.significand >> drop;
+                let fractional = finite.significand & ((1u128 << drop) - 1) != 0;
+                (integer.min(LIMIT), fractional)
+            }
+        };
+        if finite.negative {
+            -(integer as i32) - i32::from(fractional && integer < LIMIT)
+        } else {
+            integer as i32
+        }
+    }
+
+    fn x86_simd_scale_f(
+        first_bits: u64,
+        second_bits: u64,
+        format: X86SimdFpFormat,
+        mode: FpRoundMode,
+        mxcsr: u32,
+        scalar: bool,
+    ) -> X86SimdFpResult {
+        let (sign, exponent, _, _) = Self::x86_simd_fp_masks(format);
+        let first_nan = Self::x86_simd_fp_is_nan(first_bits, format);
+        let second_nan = Self::x86_simd_fp_is_nan(second_bits, format);
+        if first_nan || second_nan {
+            let bits = if first_nan {
+                Self::x86_simd_fp_quiet_nan(first_bits, format)
+            } else {
+                Self::x86_simd_fp_quiet_nan(second_bits, format)
+            };
+            return X86SimdFpResult {
+                bits,
+                status: u32::from(
+                    Self::x86_simd_fp_is_snan(first_bits, format)
+                        || Self::x86_simd_fp_is_snan(second_bits, format),
+                ),
+            };
+        }
+
+        // AVX512-FP16 ignores DAZ. All formats report denormal input only for
+        // src1; src2 still participates in scaling but never raises DE.
+        let (first, second, status) = if format.total_bits == 16 {
+            (
+                first_bits,
+                second_bits,
+                u32::from(Self::x86_simd_fp_is_denormal(first_bits, format)) << 1,
+            )
+        } else {
+            let first = Self::x86_simd_fp_apply_daz(first_bits, format, mxcsr);
+            let second = Self::x86_simd_fp_apply_daz(second_bits, format, mxcsr);
+            (first.bits, second.bits, first.status)
+        };
+        let first_sign = first & sign;
+        let second_negative = second & sign != 0;
+        if Self::x86_simd_fp_is_infinite(first, format) {
+            if Self::x86_simd_fp_is_infinite(second, format) && second_negative {
+                return X86SimdFpResult {
+                    bits: Self::x86_simd_fp_indefinite(format),
+                    status: status | 1,
+                };
+            }
+            return X86SimdFpResult {
+                bits: first,
+                status,
+            };
+        }
+        if Self::x86_simd_fp_is_zero(first, format) {
+            if Self::x86_simd_fp_is_infinite(second, format) && !second_negative {
+                return X86SimdFpResult {
+                    bits: Self::x86_simd_fp_indefinite(format),
+                    status: status | 1,
+                };
+            }
+            return X86SimdFpResult {
+                bits: first,
+                status,
+            };
+        }
+        if Self::x86_simd_fp_is_infinite(second, format) {
+            return X86SimdFpResult {
+                bits: if second_negative {
+                    first_sign
+                } else {
+                    first_sign | exponent
+                },
+                status,
+            };
+        }
+
+        let finite = Self::x86_simd_fp_decode(first, format);
+        let scale = Self::x86_simd_fp_floor_bounded(second, format);
+        // Intel specifies gradual underflow for packed VSCALEFPH, while the
+        // scalar VSCALEFSH form explicitly honors MXCSR.FTZ.
+        let round_mxcsr = if format.total_bits == 16 && !scalar {
+            mxcsr & !(1 << 15)
+        } else {
+            mxcsr
+        };
+        let rounded = Self::x86_simd_fp_round_exact(
+            finite.negative,
+            finite.significand,
+            finite.exponent.saturating_add(scale),
+            false,
+            format,
+            mode,
+            round_mxcsr,
+        );
+        X86SimdFpResult {
+            bits: rounded.bits,
+            status: status | rounded.status,
         }
     }
 
@@ -56975,6 +57201,256 @@ mod tests {
         assert_ne!(rflags & (1 << 0), 0, "CF must be set (carry out)");
         assert_eq!(rflags & (1 << 7), 0, "SF must be clear");
         assert_eq!(rflags & (1 << 11), 0, "OF must be clear");
+    }
+
+    #[test]
+    fn x86_scale_f_exact_semantics_cover_floor_specials_daz_ftz_and_rounding() {
+        let run32 = |first: f32, second: f32, mxcsr: u32| {
+            SmirInterpreter::x86_simd_scale_f(
+                u64::from(first.to_bits()),
+                u64::from(second.to_bits()),
+                X86_SIMD_F32,
+                FpRoundMode::RoundNearest,
+                mxcsr,
+                false,
+            )
+        };
+        assert_eq!(run32(1.5, 2.75, 0x1F80).bits, u64::from(6.0f32.to_bits()));
+        assert_eq!(
+            run32(1.5, -1.25, 0x1F80).bits,
+            u64::from(0.375f32.to_bits())
+        );
+
+        let first_qnan = 0x7FC1_2345u64;
+        let second_snan = 0x7F81_5678u64;
+        let nan = SmirInterpreter::x86_simd_scale_f(
+            first_qnan,
+            second_snan,
+            X86_SIMD_F32,
+            FpRoundMode::RoundNearest,
+            0x1F80,
+            false,
+        );
+        assert_eq!(nan.bits, first_qnan);
+        assert_eq!(nan.status, 1);
+
+        let denormal_then_nan = SmirInterpreter::x86_simd_scale_f(
+            1,
+            second_snan,
+            X86_SIMD_F32,
+            FpRoundMode::RoundNearest,
+            0x1F80,
+            false,
+        );
+        assert_eq!(denormal_then_nan.status, 1, "src2 NaN suppresses src1 DE");
+
+        for (first, second, expected, status) in [
+            (f32::INFINITY, f32::NEG_INFINITY, 0xFFC0_0000u64, 1u32),
+            (0.0, f32::INFINITY, 0xFFC0_0000, 1),
+            (
+                -1.0,
+                f32::INFINITY,
+                u64::from(f32::NEG_INFINITY.to_bits()),
+                0,
+            ),
+            (-1.0, f32::NEG_INFINITY, u64::from((-0.0f32).to_bits()), 0),
+        ] {
+            let result = run32(first, second, 0x1F80);
+            assert_eq!(result.bits, expected);
+            assert_eq!(result.status, status);
+        }
+
+        let denormal = SmirInterpreter::x86_simd_scale_f(
+            1,
+            u64::from(0.0f32.to_bits()),
+            X86_SIMD_F32,
+            FpRoundMode::RoundNearest,
+            0x1F80,
+            false,
+        );
+        assert_eq!(denormal.bits, 1);
+        assert_eq!(denormal.status, 1 << 1);
+        let daz = SmirInterpreter::x86_simd_scale_f(
+            1,
+            u64::from(0.0f32.to_bits()),
+            X86_SIMD_F32,
+            FpRoundMode::RoundNearest,
+            0x1FC0,
+            false,
+        );
+        assert_eq!(daz.bits, 0);
+        assert_eq!(daz.status, 0);
+
+        let negative_denormal_scale = 0x8000_0001u64;
+        let no_daz = SmirInterpreter::x86_simd_scale_f(
+            u64::from(1.0f32.to_bits()),
+            negative_denormal_scale,
+            X86_SIMD_F32,
+            FpRoundMode::RoundNearest,
+            0x1F80,
+            false,
+        );
+        assert_eq!(no_daz.bits, u64::from(0.5f32.to_bits()));
+        assert_eq!(no_daz.status, 0, "src2 denormal never raises DE");
+        let with_daz = SmirInterpreter::x86_simd_scale_f(
+            u64::from(1.0f32.to_bits()),
+            negative_denormal_scale,
+            X86_SIMD_F32,
+            FpRoundMode::RoundNearest,
+            0x1FC0,
+            false,
+        );
+        assert_eq!(with_daz.bits, u64::from(1.0f32.to_bits()));
+
+        let fp16_gradual = SmirInterpreter::x86_simd_scale_f(
+            1,
+            0,
+            X86_SIMD_F16,
+            FpRoundMode::RoundNearest,
+            0x9FC0,
+            false,
+        );
+        assert_eq!(fp16_gradual.bits, 1, "packed FP16 ignores DAZ and FTZ");
+        assert_eq!(fp16_gradual.status, 1 << 1);
+        let fp16_scalar_ftz = SmirInterpreter::x86_simd_scale_f(
+            1,
+            0,
+            X86_SIMD_F16,
+            FpRoundMode::RoundNearest,
+            0x9FC0,
+            true,
+        );
+        assert_eq!(fp16_scalar_ftz.bits, 0, "scalar FP16 honors FTZ");
+        assert_eq!(fp16_scalar_ftz.status, (1 << 1) | (1 << 4) | (1 << 5));
+
+        let max_f32 = 0x7F7F_FFFFu64;
+        let overflow_nearest = SmirInterpreter::x86_simd_scale_f(
+            max_f32,
+            u64::from(1.0f32.to_bits()),
+            X86_SIMD_F32,
+            FpRoundMode::RoundNearest,
+            0x1F80,
+            false,
+        );
+        assert_eq!(overflow_nearest.bits, u64::from(f32::INFINITY.to_bits()));
+        assert_eq!(overflow_nearest.status, (1 << 3) | (1 << 5));
+        let overflow_zero = SmirInterpreter::x86_simd_scale_f(
+            max_f32,
+            u64::from(1.0f32.to_bits()),
+            X86_SIMD_F32,
+            FpRoundMode::RoundTowardZero,
+            0x1F80,
+            false,
+        );
+        assert_eq!(overflow_zero.bits, max_f32);
+        assert_eq!(overflow_zero.status, (1 << 3) | (1 << 5));
+    }
+
+    #[test]
+    fn lifted_x86_scale_f_preserves_scalar_merge_and_exception_atomicity() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0xCCCC_CCCC_4120_0000; 16];
+            x86.xmm[2] = [
+                0xA5A5_A5A5_3FC0_0000,
+                0x0123_4567_89AB_CDEF,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ];
+            x86.xmm[3][0] = u64::from(2.75f32.to_bits());
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x08, 0x2D, 0xCB], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0xA5A5_A5A5_40C0_0000);
+            assert_eq!(x86.xmm[1][1], 0x0123_4567_89AB_CDEF);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[1] = 0;
+            x86.xmm[1][0] = 0xCCCC_CCCC_4120_0000;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0x2D, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0xA5A5_A5A5_4120_0000);
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x89, 0x2D, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0xA5A5_A5A5_0000_0000);
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k1, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0x2D, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        let masked_memory_result = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.xmm[1],
+            _ => unreachable!(),
+        };
+        ctx.write_vreg(k1, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0xCCCC_CCCC_CCCC_CCCCu64; 16];
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0x2D, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], [0xCCCC_CCCC_CCCC_CCCCu64; 16]);
+            assert_ne!(masked_memory_result, x86.xmm[1]);
+        }
+
+        let sentinel = [0xDEAD_BEEF_CAFE_BABEu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mxcsr = 0x1F00;
+            x86.xmm[1] = sentinel;
+            x86.xmm[2][0] = u64::from(f32::INFINITY.to_bits());
+            x86.xmm[3][0] = u64::from(f32::NEG_INFINITY.to_bits());
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x08, 0x2D, 0xCB], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+            assert_ne!(x86.mxcsr & 1, 0);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mxcsr = 0x1F00;
+            x86.xmm[1] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x18, 0x2D, 0xCB], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0] & 0xFFFF_FFFF, 0xFFC0_0000);
+            assert_eq!(x86.mxcsr, 0x1F00);
+        }
     }
 }
 
