@@ -760,7 +760,7 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
             || (matches!(b2 & 0x03, 2 | 3) && matches!(bytes.get(4), Some(0x72))));
     let is_fp16_arithmetic = (b1 & 0x07) == 5
         && matches!(b2 & 0x03, 0 | 2)
-        && matches!(bytes.get(4), Some(0x58 | 0x59 | 0x5C | 0x5E));
+        && matches!(bytes.get(4), Some(0x58 | 0x59 | 0x5C..=0x5F));
     let is_fp16_flag_compare =
         (b1 & 0x07) == 5 && (b2 & 0x03) == 0 && matches!(bytes.get(4), Some(0x2E | 0x2F));
     let is_scalar_fp_to_int = ((b1 & 0x07) == 1
@@ -30087,7 +30087,9 @@ impl X86_64Lifter {
             0x58 => Avx10FP16Op::Add,
             0x59 => Avx10FP16Op::Mul,
             0x5C => Avx10FP16Op::Sub,
+            0x5D => Avx10FP16Op::Min,
             0x5E => Avx10FP16Op::Div,
+            0x5F => Avx10FP16Op::Max,
             _ => unreachable!("MAP5 FP16 dispatch filtered opcode"),
         };
         ops.push(SmirOp::new(
@@ -30130,7 +30132,9 @@ impl X86_64Lifter {
             0x58 => Avx10FP16Op::Add,
             0x59 => Avx10FP16Op::Mul,
             0x5C => Avx10FP16Op::Sub,
+            0x5D => Avx10FP16Op::Min,
             0x5E => Avx10FP16Op::Div,
+            0x5F => Avx10FP16Op::Max,
             _ => unreachable!("MAP5 scalar FP16 arithmetic dispatch filtered opcode"),
         };
         let cursor = prefix.bytes + 1;
@@ -34404,7 +34408,7 @@ impl X86_64Lifter {
                 }
                 0x2E | 0x2F => self.lift_evex_fp16_flag_compare(prefix, opcode, bytes, pc, ctx),
                 0x51 => self.lift_evex_fp16_sqrt(prefix, bytes, pc, ctx),
-                0x58 | 0x59 | 0x5C | 0x5E => {
+                0x58 | 0x59 | 0x5C | 0x5D | 0x5E | 0x5F => {
                     self.lift_evex_fp16_arithmetic(prefix, opcode, bytes, pc, ctx)
                 }
                 0x6E | 0x7E => self.lift_evex_word_move(prefix, opcode, bytes, pc, ctx),
@@ -63787,16 +63791,21 @@ mod tests {
 
     #[test]
     fn lift_evex_map5_fp16_arithmetic_covers_register_memory_and_broadcast_forms() {
-        for bytes in [
-            &[0x62, 0xF5, 0x6C, 0xCC, 0x58, 0xCB][..],
-            &[0x62, 0xA5, 0x74, 0x27, 0x59, 0xC2][..],
-            &[0x62, 0xD5, 0x3C, 0x8B, 0x5C, 0xF9][..],
-            &[0x62, 0xF5, 0x54, 0x48, 0x5E, 0xE6][..],
+        for (bytes, expected_op) in [
+            (&[0x62, 0xF5, 0x6C, 0xCC, 0x58, 0xCB][..], Avx10FP16Op::Add),
+            (&[0x62, 0xA5, 0x74, 0x27, 0x59, 0xC2][..], Avx10FP16Op::Mul),
+            (&[0x62, 0xD5, 0x3C, 0x8B, 0x5C, 0xF9][..], Avx10FP16Op::Sub),
+            (&[0x62, 0xF5, 0x6C, 0x08, 0x5D, 0xCB][..], Avx10FP16Op::Min),
+            (&[0x62, 0xF5, 0x54, 0x48, 0x5E, 0xE6][..], Avx10FP16Op::Div),
+            (&[0x62, 0xF5, 0x6C, 0x29, 0x5F, 0xCB][..], Avx10FP16Op::Max),
         ] {
             let lifted = lift_single(bytes).unwrap();
             assert_eq!(lifted.bytes_consumed, bytes.len());
             assert_eq!(lifted.ops.len(), 1);
-            assert!(matches!(lifted.ops[0].kind, OpKind::VFP16Arith { .. }));
+            assert!(matches!(
+                lifted.ops[0].kind,
+                OpKind::VFP16Arith { op, .. } if op == expected_op
+            ));
         }
         let add = lift_single(&[0x62, 0xF5, 0x6C, 0xCC, 0x58, 0xCB]).unwrap();
         assert!(matches!(
@@ -63940,6 +63949,49 @@ mod tests {
             32
         );
 
+        let min_broadcast = lift_single(&[0x62, 0xF5, 0x6C, 0x5A, 0x5D, 0x48, 0x01]).unwrap();
+        assert_eq!(
+            min_broadcast
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B2,
+                        ..
+                    }
+                ))
+                .count(),
+            32
+        );
+        assert!(matches!(
+            min_broadcast.ops.last().map(|op| &op.kind),
+            Some(OpKind::VFP16Arith {
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                op: Avx10FP16Op::Min,
+                width: VecWidth::V512,
+                ..
+            })
+        ));
+
+        let scalar_max = lift_single(&[0x62, 0xF5, 0x6E, 0x09, 0x5F, 0x48, 0x7F]).unwrap();
+        assert!(scalar_max.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::PredLoad {
+                addr: Address::BaseOffset { offset: 254, .. },
+                width: MemWidth::B2,
+                ..
+            }
+        )));
+        assert!(scalar_max.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VFP16Arith {
+                op: Avx10FP16Op::Max,
+                width: VecWidth::V128,
+                ..
+            }
+        )));
+
         for (p2, round) in [
             (0x18, FpRoundMode::RoundNearest),
             (0x38, FpRoundMode::RoundDown),
@@ -63977,6 +64029,28 @@ mod tests {
                 ..
             }]
         ));
+        let min_sae = lift_single(&[0x62, 0xF5, 0x6C, 0x18, 0x5D, 0xCB]).unwrap();
+        assert!(matches!(
+            min_sae.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::VFP16Arith {
+                    op: Avx10FP16Op::Min,
+                    round: FpRoundMode::RoundNearest,
+                    width: VecWidth::V512,
+                    ..
+                },
+                ..
+            }]
+        ));
+        let scalar_max_sae = lift_single(&[0x62, 0xF5, 0x6E, 0x78, 0x5F, 0xCB]).unwrap();
+        assert!(scalar_max_sae.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VFP16Arith {
+                op: Avx10FP16Op::Max,
+                round: FpRoundMode::RoundTowardZero,
+                ..
+            }
+        )));
 
         for invalid in [
             &[0x62, 0xF5, 0xEC, 0x4C, 0x58, 0xCB][..], // W=1

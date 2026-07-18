@@ -9705,11 +9705,12 @@ impl SmirInterpreter {
                 let old = Self::read_vec(ctx, *dst);
                 let first = Self::read_vec(ctx, *src1);
                 let second = Self::read_vec(ctx, *src2);
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
                 let rounding = match round {
-                    FpRoundMode::Dynamic => match &ctx.arch_regs {
-                        ArchRegState::X86_64(x86) => ((x86.mxcsr >> 13) & 3) as u8,
-                        _ => 0,
-                    },
+                    FpRoundMode::Dynamic => ((mxcsr >> 13) & 3) as u8,
                     FpRoundMode::RoundNearest => 0,
                     FpRoundMode::RoundDown => 1,
                     FpRoundMode::RoundUp => 2,
@@ -9722,34 +9723,65 @@ impl SmirInterpreter {
                         return Ok(());
                     }
                 };
+                let mask_bits = mask.map(|mask| ctx.read_vreg(mask));
                 let mut result = [0u64; 16];
+                let mut status = 0u32;
                 for lane in 0..width.lanes(VecElementType::F16) as u8 {
-                    let a = Self::x86_fp16_to_f32(Self::get_lane(&first, lane, 16) as u16);
-                    let b = Self::x86_fp16_to_f32(Self::get_lane(&second, lane, 16) as u16);
+                    if mask_bits.is_some_and(|bits| bits & (1u64 << lane) == 0) {
+                        if !*zeroing {
+                            Self::set_lane(&mut result, lane, 16, Self::get_lane(&old, lane, 16));
+                        }
+                        continue;
+                    }
+                    let a_bits = Self::get_lane(&first, lane, 16) as u16;
+                    let b_bits = Self::get_lane(&second, lane, 16) as u16;
+                    let a = Self::x86_fp16_to_f32(a_bits);
+                    let b = Self::x86_fp16_to_f32(b_bits);
                     let value = match op {
-                        Avx10FP16Op::Add => a + b,
-                        Avx10FP16Op::Sub => a - b,
-                        Avx10FP16Op::Mul => a * b,
-                        Avx10FP16Op::Div => a / b,
-                        Avx10FP16Op::Sqrt => a.sqrt(),
-                        Avx10FP16Op::Min => a.min(b),
-                        Avx10FP16Op::Max => a.max(b),
+                        Avx10FP16Op::Min | Avx10FP16Op::Max => {
+                            // AVX512-FP16 always handles denormal FP16 inputs;
+                            // MXCSR.DAZ is ignored, but the denormal-operand
+                            // exception remains architecturally observable.
+                            if Self::x86_simd_fp_is_denormal(u64::from(a_bits), X86_SIMD_F16)
+                                || Self::x86_simd_fp_is_denormal(u64::from(b_bits), X86_SIMD_F16)
+                            {
+                                status |= 1 << 1;
+                            }
+                            if Self::x86_simd_fp_is_snan(u64::from(a_bits), X86_SIMD_F16)
+                                || Self::x86_simd_fp_is_snan(u64::from(b_bits), X86_SIMD_F16)
+                            {
+                                status |= 1;
+                            }
+                            // Intel MIN/MAX selects source 2 for unordered or
+                            // equal operands. Preserve the selected FP16 bits
+                            // exactly, including an SNaN in source 2.
+                            if (*op == Avx10FP16Op::Min && a < b)
+                                || (*op == Avx10FP16Op::Max && a > b)
+                            {
+                                a_bits
+                            } else {
+                                b_bits
+                            }
+                        }
+                        Avx10FP16Op::Add => Self::x86_f32_to_fp16(a + b, rounding),
+                        Avx10FP16Op::Sub => Self::x86_f32_to_fp16(a - b, rounding),
+                        Avx10FP16Op::Mul => Self::x86_f32_to_fp16(a * b, rounding),
+                        Avx10FP16Op::Div => Self::x86_f32_to_fp16(a / b, rounding),
+                        Avx10FP16Op::Sqrt => Self::x86_f32_to_fp16(a.sqrt(), rounding),
                     };
-                    Self::set_lane(
-                        &mut result,
-                        lane,
-                        16,
-                        u64::from(Self::x86_f32_to_fp16(value, rounding)),
-                    );
+                    Self::set_lane(&mut result, lane, 16, u64::from(value));
                 }
-                Self::apply_vector_mask(
-                    &mut result,
-                    &old,
-                    mask.map(|mask| ctx.read_vreg(mask)),
-                    *zeroing,
-                    *width,
-                    VecElementType::F16,
-                );
+                if matches!(op, Avx10FP16Op::Min | Avx10FP16Op::Max)
+                    && *round == FpRoundMode::Dynamic
+                {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= status;
+                    }
+                    if Self::x86_simd_fp_unmasked(status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
+                    }
+                }
                 Self::write_vec(ctx, *dst, result);
             }
 
@@ -32269,6 +32301,124 @@ mod tests {
         ));
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(x86.xmm[1], sentinel, "fault must not commit destination");
+        }
+    }
+
+    #[test]
+    fn executes_evex_fp16_minmax_selection_exceptions_masks_and_scalar_merge() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        let sentinel = [0xA55A_A55A_A55A_A55A; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[2] = [0; 16];
+            x86.xmm[3] = [0; 16];
+            for (lane, a, b) in [
+                (0, 0x3C00, 0x4000), // 1 < 2: select source 1.
+                (1, 0x0000, 0x8000), // Equal zero: preserve source-2 sign.
+                (2, 0x7E11, 0x3C00), // Source-1 QNaN: select source 2.
+                (3, 0x3C00, 0xFE22), // Source-2 QNaN: preserve its payload.
+                (4, 0x3C00, 0x7C01), // Source-2 SNaN remains signaling.
+                (5, 0x0001, 0x3C00), // FP16 denormal remains nonzero with DAZ.
+            ] {
+                SmirInterpreter::set_lane(&mut x86.xmm[2], lane, 16, a);
+                SmirInterpreter::set_lane(&mut x86.xmm[3], lane, 16, b);
+            }
+            x86.mxcsr |= 1 << 6; // DAZ does not zero AVX512-FP16 inputs.
+        }
+
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0x6C, 0x08, 0x5D, 0xCB], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for (lane, expected) in [
+                (0, 0x3C00),
+                (1, 0x8000),
+                (2, 0x3C00),
+                (3, 0xFE22),
+                (4, 0x7C01),
+                (5, 0x0001),
+            ] {
+                assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], lane, 16), expected);
+            }
+            assert_eq!(x86.mxcsr & 0x3, 0x3, "invalid and denormal status");
+            assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+        }
+
+        // Inactive lanes neither inspect exceptional inputs nor access memory.
+        ctx.write_vreg(VReg::Arch(ArchReg::X86(X86Reg::Rax)), 0x200);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[2] = [0x3C00_3C00_3C00_3C00; 16];
+            x86.k[2] = 0;
+            x86.mxcsr = 0x1F80;
+        }
+        let suppressed =
+            execute_lifted_x86(&[0x62, 0xF5, 0x6C, 0x0A, 0x5F, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(suppressed, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mxcsr, 0x1F80);
+            assert_eq!(&x86.xmm[1][..2], &sentinel[..2]);
+            assert_eq!(&x86.xmm[1][2..], &[0; 14]);
+        }
+
+        // An unmasked invalid exception records MXCSR.IE and traps before the
+        // architectural destination is committed.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[2] = [0x3C00_3C00_3C00_3C00; 16];
+            x86.xmm[3] = [0x7C01_7C01_7C01_7C01; 16];
+            x86.mxcsr = 0x1F80 & !(1 << 7);
+        }
+        let trap = execute_lifted_x86(&[0x62, 0xF5, 0x6C, 0x08, 0x5F, 0xCB], &mut ctx, &mut memory);
+        assert!(matches!(
+            trap,
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mxcsr & 1, 1);
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+
+        // Packed SAE suppresses status and traps while preserving source-2
+        // SNaN bits in every selected lane.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.mxcsr = 0x1F80 & !(1 << 7);
+        }
+        let sae = execute_lifted_x86(&[0x62, 0xF5, 0x6C, 0x18, 0x5F, 0xCB], &mut ctx, &mut memory);
+        assert!(matches!(sae, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mxcsr & 1, 0);
+            for lane in 0..32u8 {
+                assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], lane, 16), 0x7C01);
+            }
+        }
+
+        // Scalar VMINSH updates only lane 0, merges lanes 1..7 from source 1,
+        // and clears all architectural state above bit 127.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[2] = [0; 16];
+            x86.xmm[3] = [0; 16];
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 16, 0x4000);
+            SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, 0x3C00);
+            for lane in 1..8u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[2], lane, 16, 0x4400 + u64::from(lane));
+            }
+            x86.mxcsr = 0x1F80;
+        }
+        let scalar =
+            execute_lifted_x86(&[0x62, 0xF5, 0x6E, 0x08, 0x5D, 0xCB], &mut ctx, &mut memory);
+        assert!(matches!(scalar, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 16), 0x3C00);
+            for lane in 1..8u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 16),
+                    0x4400 + u64::from(lane)
+                );
+            }
+            assert_eq!(&x86.xmm[1][2..], &[0; 14]);
         }
     }
 

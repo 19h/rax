@@ -1712,7 +1712,9 @@ impl Avx10Lowerer {
             Avx10FP16Op::Add => 0x58,
             Avx10FP16Op::Mul => 0x59,
             Avx10FP16Op::Sub => 0x5C,
+            Avx10FP16Op::Min => 0x5D,
             Avx10FP16Op::Div => 0x5E,
+            Avx10FP16Op::Max => 0x5F,
             _ => {
                 return Err(LowerError::UnsupportedOperation(
                     "FP16: unsupported op".to_string(),
@@ -3598,6 +3600,32 @@ mod tests {
                     zeroing: false,
                 },
                 &[0x62, 0xF5, 0x54, 0x48, 0x5E, 0xE6][..],
+            ),
+            (
+                OpKind::VFP16Arith {
+                    dst: xmm7,
+                    src1: xmm8,
+                    src2: xmm9,
+                    mask: Some(k3),
+                    op: Avx10FP16Op::Min,
+                    round: FpRoundMode::Dynamic,
+                    width: VecWidth::V128,
+                    zeroing: true,
+                },
+                &[0x62, 0xD5, 0x3C, 0x8B, 0x5D, 0xF9][..],
+            ),
+            (
+                OpKind::VFP16Arith {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(16))),
+                    src1: VReg::Arch(ArchReg::X86(X86Reg::Ymm(17))),
+                    src2: VReg::Arch(ArchReg::X86(X86Reg::Ymm(18))),
+                    mask: Some(k7),
+                    op: Avx10FP16Op::Max,
+                    round: FpRoundMode::Dynamic,
+                    width: VecWidth::V256,
+                    zeroing: false,
+                },
+                &[0x62, 0xA5, 0x74, 0x27, 0x5F, 0xC2][..],
             ),
             (
                 OpKind::VCvtFP32ToBF16 {

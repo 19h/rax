@@ -3184,7 +3184,8 @@ pub enum OpKind {
     },
 
     /// FP16 arithmetic operations: VADDPH, VSUBPH, VMULPH, VDIVPH, VSQRTPH,
-    /// and the scalar-compute component of VSQRTSH.
+    /// VMINPH, VMAXPH, and the scalar-compute component of the corresponding
+    /// scalar instructions.
     /// `round` is [`FpRoundMode::Dynamic`] for MXCSR-controlled forms. An
     /// explicit x86 rounding mode represents the 512-bit EVEX `{er}` form;
     /// embedded rounding also suppresses SIMD floating-point exceptions.
@@ -4539,6 +4540,10 @@ impl OpKind {
                     }
                     | OpKind::X86PackedFpConvert {
                         suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::VFP16Arith {
+                        round: FpRoundMode::Dynamic,
                         ..
                     }
                     | OpKind::X86X87Control {

@@ -3308,6 +3308,8 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
                     | crate::smir::ir::types::Avx10FP16Op::Sub
                     | crate::smir::ir::types::Avx10FP16Op::Mul
                     | crate::smir::ir::types::Avx10FP16Op::Div
+                    | crate::smir::ir::types::Avx10FP16Op::Min
+                    | crate::smir::ir::types::Avx10FP16Op::Max
             )
             || *width == crate::smir::ir::types::VecWidth::V64
             || *round != crate::smir::ir::types::FpRoundMode::Dynamic
@@ -15441,6 +15443,26 @@ mod jit_gate_tests {
                 round: crate::smir::ir::types::FpRoundMode::Dynamic,
                 width: VecWidth::V512,
                 zeroing: true,
+            },
+            OpKind::VFP16Arith {
+                dst: zmm1,
+                src1: zmm2,
+                src2: zmm3,
+                mask: Some(k4),
+                op: crate::smir::ir::types::Avx10FP16Op::Min,
+                round: crate::smir::ir::types::FpRoundMode::Dynamic,
+                width: VecWidth::V512,
+                zeroing: true,
+            },
+            OpKind::VFP16Arith {
+                dst: zmm1,
+                src1: zmm2,
+                src2: zmm3,
+                mask: Some(k4),
+                op: crate::smir::ir::types::Avx10FP16Op::Max,
+                round: crate::smir::ir::types::FpRoundMode::Dynamic,
+                width: VecWidth::V512,
+                zeroing: false,
             },
             OpKind::X86PackedShiftVariable {
                 dst: zmm1,

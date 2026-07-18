@@ -8161,6 +8161,39 @@ mod tests {
             .expect("masked VSQRTPH operation must survive optimization");
         assert!(first_load < sqrt);
 
+        let packed_fp16_min = optimized(&[0x62, 0xF5, 0x6C, 0x4A, 0x5D, 0x48, 0x01]);
+        let ops = &packed_fp16_min.blocks[0].ops;
+        assert_eq!(
+            ops.iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B2,
+                        ..
+                    }
+                ))
+                .count(),
+            32,
+            "masked VMINPH requires one fault-suppressing load per FP16 lane",
+        );
+        let min = ops
+            .iter()
+            .find(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::VFP16Arith {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                        op: Avx10FP16Op::Min,
+                        round: FpRoundMode::Dynamic,
+                        width: VecWidth::V512,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VMINPH operation must survive optimization");
+        assert!(min.kind.has_side_effects());
+
         let scalar_fp16_sqrt = optimized(&[0x62, 0xF5, 0x6E, 0x0A, 0x51, 0x48, 0x7F]);
         let ops = &scalar_fp16_sqrt.blocks[0].ops;
         let load = ops
