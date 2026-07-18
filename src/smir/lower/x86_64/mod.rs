@@ -43,6 +43,7 @@ mod control;
 pub use control::*;
 mod dispatch;
 pub use dispatch::*;
+mod ops;
 mod emitter;
 pub use emitter::*;
 mod jit;

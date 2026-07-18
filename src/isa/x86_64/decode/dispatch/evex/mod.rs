@@ -1,0 +1,597 @@
+//! EVEX-encoded (AVX-512) instruction dispatch.
+//!
+//! EVEX prefix format (after 0x62):
+//! - P0: R X B R' 0 m m m
+//! - P1: W v v v v 1 p p
+//! - P2: z L' L b V' a a a
+//!
+//! mm field (opcode map):
+//! - 1: 0F (two-byte opcode)
+//! - 2: 0F 38 (three-byte opcode)
+//! - 3: 0F 3A (three-byte opcode with immediate)
+//! - 5: MAP5 (AVX-512 FP16)
+//! - 6: MAP6 (AVX-512 FP16)
+
+use crate::error::{Error, Result};
+use crate::vm::vcpu::VcpuExit;
+
+use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
+use crate::isa::x86_64::{execute, flags};
+
+// ---- module tree (auto-split) ----
+mod apx;
+pub(crate) use apx::*;
+mod fp;
+pub(crate) use fp::*;
+mod map0f;
+pub(crate) use map0f::*;
+mod map0f38;
+pub(crate) use map0f38::*;
+mod map0f3a;
+pub(crate) use map0f3a::*;
+mod map5;
+pub(crate) use map5::*;
+mod misc;
+pub(crate) use misc::*;
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::sync::Arc;
+
+    use vm_memory::{GuestAddress, GuestMemoryMmap};
+
+    use crate::isa::x86_64::flags;
+
+    const CODE: u64 = 0x1000;
+    const DATA: u64 = 0x2000;
+    const INVALID: u64 = 0x2_0000;
+
+    fn long_mode_vcpu(code: &[u8]) -> X86_64Vcpu {
+        let mem =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+        let mut vcpu = X86_64Vcpu::new(0, mem);
+        vcpu.regs.rip = CODE;
+        vcpu.regs.rflags = 0x2;
+        vcpu.sregs.efer = 0x400;
+        vcpu.sregs.cs.l = true;
+        vcpu.sregs.cs.db = false;
+        vcpu.set_apx_enabled(true);
+
+        let sregs = vcpu.sregs.clone();
+        vcpu.mmu.write(CODE, code, &sregs).unwrap();
+        vcpu
+    }
+
+    fn step_ok(vcpu: &mut X86_64Vcpu) {
+        assert!(vcpu.step().unwrap().is_none());
+    }
+
+    fn write_u64(vcpu: &mut X86_64Vcpu, addr: u64, value: u64) {
+        let sregs = vcpu.sregs.clone();
+        vcpu.mmu.write_u64(addr, value, &sregs).unwrap();
+    }
+
+    fn write_u32(vcpu: &mut X86_64Vcpu, addr: u64, value: u32) {
+        let sregs = vcpu.sregs.clone();
+        vcpu.mmu.write_u32(addr, value, &sregs).unwrap();
+    }
+
+    fn read_u64(vcpu: &mut X86_64Vcpu, addr: u64) -> u64 {
+        let sregs = vcpu.sregs.clone();
+        vcpu.mmu.read_u64(addr, &sregs).unwrap()
+    }
+
+    fn read_u32(vcpu: &mut X86_64Vcpu, addr: u64) -> u32 {
+        let sregs = vcpu.sregs.clone();
+        vcpu.mmu.read_u32(addr, &sregs).unwrap()
+    }
+
+    fn read_u8(vcpu: &mut X86_64Vcpu, addr: u64) -> u8 {
+        let sregs = vcpu.sregs.clone();
+        vcpu.mmu.read_u8(addr, &sregs).unwrap()
+    }
+
+    #[test]
+    fn evex_vpmulhrsw_wig_executes_w0_and_w1_identically() {
+        // vpmulhrsw %xmm11, %xmm10, %xmm9. Only EVEX.W differs.
+        let execute = |w: bool| {
+            let mut code = [0x62, 0x52, 0x2D, 0x08, 0x0B, 0xCB];
+            if w {
+                code[2] |= 0x80;
+            }
+            let mut vcpu = long_mode_vcpu(&code);
+            vcpu.regs.xmm[9] = [u64::MAX; 2];
+            vcpu.regs.ymm_high[9] = [u64::MAX; 2];
+            vcpu.regs.zmm_high[9] = [u64::MAX; 4];
+            vcpu.regs.xmm[10] = [0x4000_C000_7FFF_8000, 0x0001_FFFF_1234_EDCB];
+            vcpu.regs.xmm[11] = [0x4000_4000_7FFF_8000, 0x7FFF_8000_CDEF_3210];
+
+            step_ok(&mut vcpu);
+            (
+                vcpu.regs.xmm[9],
+                vcpu.regs.ymm_high[9],
+                vcpu.regs.zmm_high[9],
+                vcpu.regs.rip,
+            )
+        };
+
+        let w0 = execute(false);
+        let w1 = execute(true);
+        assert_eq!(w1, w0, "EVEX.W must not affect VPMULHRSW semantics");
+        assert_eq!(w0.1, [0; 2], "128-bit EVEX form clears YMM upper state");
+        assert_eq!(w0.2, [0; 4], "128-bit EVEX form clears ZMM upper state");
+    }
+
+    fn enable_paging_for_wrapped_stack_test(vcpu: &mut X86_64Vcpu) {
+        const PRESENT_WRITABLE: u64 = 0x3;
+        const HUGE_PAGE: u64 = 0x80;
+        const PML4: u64 = 0x3000;
+        const LOW_PDPT: u64 = 0x4000;
+        const LOW_PD: u64 = 0x5000;
+        const HIGH_PDPT: u64 = 0x6000;
+        const HIGH_PD: u64 = 0x7000;
+        const HIGH_PT: u64 = 0x8000;
+        const HIGH_STACK_PHYS: u64 = 0x9000;
+
+        let sregs = vcpu.sregs.clone();
+        vcpu.mmu
+            .write_u64(PML4, LOW_PDPT | PRESENT_WRITABLE, &sregs)
+            .unwrap();
+        vcpu.mmu
+            .write_u64(LOW_PDPT, LOW_PD | PRESENT_WRITABLE, &sregs)
+            .unwrap();
+        vcpu.mmu
+            .write_u64(LOW_PD, PRESENT_WRITABLE | HUGE_PAGE, &sregs)
+            .unwrap();
+
+        vcpu.mmu
+            .write_u64(PML4 + 511 * 8, HIGH_PDPT | PRESENT_WRITABLE, &sregs)
+            .unwrap();
+        vcpu.mmu
+            .write_u64(HIGH_PDPT + 511 * 8, HIGH_PD | PRESENT_WRITABLE, &sregs)
+            .unwrap();
+        vcpu.mmu
+            .write_u64(HIGH_PD + 511 * 8, HIGH_PT | PRESENT_WRITABLE, &sregs)
+            .unwrap();
+        vcpu.mmu
+            .write_u64(
+                HIGH_PT + 511 * 8,
+                HIGH_STACK_PHYS | PRESENT_WRITABLE,
+                &sregs,
+            )
+            .unwrap();
+
+        vcpu.sregs.cr3 = PML4;
+        vcpu.sregs.cr0 = 0x8000_0001;
+        vcpu.sregs.efer = 0x500;
+    }
+
+    #[test]
+    fn apx_push2_wraps_aligned_rsp_without_wrapping_the_transfer() {
+        // LLVM 23: `push2 %rax, %rbx` => 62 f4 64 18 ff f0.
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0x64, 0x18, 0xFF, 0xF0]);
+        enable_paging_for_wrapped_stack_test(&mut vcpu);
+        // Zero is 16-byte aligned. The architectural RSP decrement wraps to
+        // 0xffff_ffff_ffff_fff0, but the aligned 16-byte transfer remains
+        // wholly inside the final canonical page and does not wrap to address 0.
+        vcpu.regs.rsp = 0;
+        vcpu.regs.rax = 0x1111_2222_3333_4444;
+        vcpu.regs.rbx = 0xAAAA_BBBB_CCCC_DDDD;
+
+        step_ok(&mut vcpu);
+
+        assert_eq!(vcpu.regs.rsp, u64::MAX - 15);
+        assert_eq!(read_u64(&mut vcpu, u64::MAX - 15), 0x1111_2222_3333_4444);
+        assert_eq!(read_u64(&mut vcpu, u64::MAX - 7), 0xAAAA_BBBB_CCCC_DDDD);
+    }
+
+    #[test]
+    fn apx_ctest_default_flags_clear_stale_lazy_flags() {
+        let code = [
+            0x83, 0xC1, 0x01, // addl $1, %ecx
+            0x62, 0xF4, 0xE4, 0x00, 0x85, 0xC3, // ctesto {dfv=of,sf} %rax, %rbx
+            0x0F, 0x94, 0xC2, // setz %dl
+        ];
+        let mut vcpu = long_mode_vcpu(&code);
+        vcpu.regs.rcx = u32::MAX as u64;
+        vcpu.regs.rax = 1;
+        vcpu.regs.rbx = 1;
+
+        step_ok(&mut vcpu);
+        step_ok(&mut vcpu);
+        step_ok(&mut vcpu);
+
+        assert_eq!(vcpu.regs.rdx & 0xFF, 0);
+    }
+
+    #[test]
+    fn apx_imul_clears_stale_lazy_flags_for_following_condition() {
+        let code = [
+            0x83, 0xC1, 0x01, // addl $1, %ecx
+            0x62, 0xF4, 0xFC, 0x08, 0xAF, 0xC3, // {evex} imulq %rbx, %rax
+            0x0F, 0x94, 0xC2, // setz %dl
+        ];
+        let mut vcpu = long_mode_vcpu(&code);
+        vcpu.regs.rcx = u32::MAX as u64;
+        vcpu.regs.rax = 2;
+        vcpu.regs.rbx = 3;
+
+        step_ok(&mut vcpu);
+        step_ok(&mut vcpu);
+        assert_eq!(vcpu.regs.rax, 6);
+        step_ok(&mut vcpu);
+
+        assert_eq!(vcpu.regs.rdx & 0xFF, 0);
+    }
+
+    #[test]
+    fn apx_adc_reg_materializes_lazy_cf() {
+        let code = [
+            0x83, 0xC1, 0x01, // addl $1, %ecx
+            0x62, 0xF4, 0x7C, 0x08, 0x11, 0xD8, // {evex} adcl %ebx, %eax
+        ];
+        let mut vcpu = long_mode_vcpu(&code);
+        vcpu.regs.rcx = u32::MAX as u64;
+        vcpu.regs.rax = 1;
+        vcpu.regs.rbx = 0;
+
+        step_ok(&mut vcpu);
+        step_ok(&mut vcpu);
+
+        assert_eq!(vcpu.regs.rax, 2);
+    }
+
+    #[test]
+    fn apx_sbb_imm_materializes_lazy_cf() {
+        let code = [
+            0x83, 0xC1, 0x01, // addl $1, %ecx
+            0x62, 0xF4, 0x7C, 0x08, 0x83, 0xD8, 0x00, // {evex} sbbl $0, %eax
+        ];
+        let mut vcpu = long_mode_vcpu(&code);
+        vcpu.regs.rcx = u32::MAX as u64;
+        vcpu.regs.rax = 1;
+
+        step_ok(&mut vcpu);
+        step_ok(&mut vcpu);
+
+        assert_eq!(vcpu.regs.rax, 0);
+    }
+
+    #[test]
+    fn apx_map4_setzu_and_evex_setcc_split_by_nd_like_llvm() {
+        // LLVM 20: `setzub %al` => 62 f4 7f 18 42 c0.
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0x7F, 0x18, 0x42, 0xC0]);
+        vcpu.regs.rax = 0xAAAA_BBBB_CCCC_DDDD;
+        vcpu.regs.rflags = 0x2 | flags::bits::CF;
+        step_ok(&mut vcpu);
+        assert_eq!(vcpu.regs.rax, 1);
+        assert_eq!(vcpu.regs.rip, CODE + 6);
+
+        // LLVM 20: `{evex} setb %al` => 62 f4 7f 08 42 c0.
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0x7F, 0x08, 0x42, 0xC0]);
+        vcpu.regs.rax = 0x1122_3344_5566_77FF;
+        vcpu.regs.rflags = 0x2;
+        step_ok(&mut vcpu);
+        assert_eq!(vcpu.regs.rax, 0x1122_3344_5566_7700);
+        assert_eq!(vcpu.regs.rip, CODE + 6);
+    }
+
+    #[test]
+    fn apx_cmov_nd_uses_vvvv_destination_like_llvm() {
+        // LLVM 20: `cmovbq %rbx, %rax, %r8` => 62 f4 bc 18 42 c3.
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0xBC, 0x18, 0x42, 0xC3]);
+        vcpu.regs.rax = 0x1111;
+        vcpu.regs.rbx = 0x2222;
+        vcpu.regs.r8 = 0x3333;
+        vcpu.regs.rflags = 0x2 | flags::bits::CF;
+        step_ok(&mut vcpu);
+        assert_eq!(vcpu.regs.r8, 0x2222);
+
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0xBC, 0x18, 0x42, 0xC3]);
+        vcpu.regs.rax = 0x1111;
+        vcpu.regs.rbx = 0x2222;
+        vcpu.regs.r8 = 0x3333;
+        vcpu.regs.rflags = 0x2;
+        step_ok(&mut vcpu);
+        assert_eq!(vcpu.regs.r8, 0x1111);
+    }
+
+    #[test]
+    fn apx_cfcmov_two_operand_directions_and_false_zero_like_llvm() {
+        // LLVM 20: clear NF decodes as `cfcmovbq %rax, %rbx`
+        // from 62 f4 fc 08 42 d8: dst=ModRM.reg, src=r/m.
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0xFC, 0x08, 0x42, 0xD8]);
+        vcpu.regs.rax = 0xAAAA;
+        vcpu.regs.rbx = 0xBBBB;
+        vcpu.regs.rflags = 0x2 | flags::bits::CF;
+        step_ok(&mut vcpu);
+        assert_eq!(vcpu.regs.rbx, 0xAAAA);
+
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0xFC, 0x08, 0x42, 0xD8]);
+        vcpu.regs.rax = 0xAAAA;
+        vcpu.regs.rbx = 0xBBBB;
+        vcpu.regs.rflags = 0x2;
+        step_ok(&mut vcpu);
+        assert_eq!(vcpu.regs.rbx, 0);
+
+        // LLVM 20: `cfcmovbq %rbx, %rax` => 62 f4 fc 0c 42 d8.
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0xFC, 0x0C, 0x42, 0xD8]);
+        vcpu.regs.rax = 0xAAAA;
+        vcpu.regs.rbx = 0xBBBB;
+        vcpu.regs.rflags = 0x2 | flags::bits::CF;
+        step_ok(&mut vcpu);
+        assert_eq!(vcpu.regs.rax, 0xBBBB);
+
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0xFC, 0x0C, 0x42, 0xD8]);
+        vcpu.regs.rax = 0xAAAA;
+        vcpu.regs.rbx = 0xBBBB;
+        vcpu.regs.rflags = 0x2;
+        step_ok(&mut vcpu);
+        assert_eq!(vcpu.regs.rax, 0);
+    }
+
+    #[test]
+    fn apx_cfcmov_memory_source_suppresses_false_fault_like_llvm() {
+        // LLVM 20: `cfcmovbq (%rbx), %rax` => 62 f4 fc 08 42 03.
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0xFC, 0x08, 0x42, 0x03]);
+        vcpu.regs.rax = 0xAAAA;
+        vcpu.regs.rbx = INVALID;
+        vcpu.regs.rflags = 0x2;
+        step_ok(&mut vcpu);
+        assert_eq!(vcpu.regs.rax, 0);
+
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0xFC, 0x08, 0x42, 0x03]);
+        write_u64(&mut vcpu, DATA, 0xDEAD_BEEF_CAFE_BABE);
+        vcpu.regs.rbx = DATA;
+        vcpu.regs.rflags = 0x2 | flags::bits::CF;
+        step_ok(&mut vcpu);
+        assert_eq!(vcpu.regs.rax, 0xDEAD_BEEF_CAFE_BABE);
+
+        // LLVM 20: `cfcmovbq (%rbx), %rax, %r8` => 62 f4 bc 1c 42 03.
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0xBC, 0x1C, 0x42, 0x03]);
+        vcpu.regs.rax = 0x1234_5678;
+        vcpu.regs.rbx = INVALID;
+        vcpu.regs.r8 = 0xFFFF;
+        vcpu.regs.rflags = 0x2;
+        step_ok(&mut vcpu);
+        assert_eq!(vcpu.regs.r8, 0x1234_5678);
+    }
+
+    #[test]
+    fn apx_cfcmov_memory_destination_suppresses_false_fault_like_llvm() {
+        // LLVM 20: `cfcmovbq %rbx, (%rax)` => 62 f4 fc 0c 42 18.
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0xFC, 0x0C, 0x42, 0x18]);
+        vcpu.regs.rax = INVALID;
+        vcpu.regs.rbx = 0xDEAD_BEEF_CAFE_BABE;
+        vcpu.regs.rflags = 0x2;
+        step_ok(&mut vcpu);
+
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0xFC, 0x0C, 0x42, 0x18]);
+        vcpu.regs.rax = DATA;
+        vcpu.regs.rbx = 0xDEAD_BEEF_CAFE_BABE;
+        vcpu.regs.rflags = 0x2 | flags::bits::CF;
+        step_ok(&mut vcpu);
+        assert_eq!(read_u64(&mut vcpu, DATA), 0xDEAD_BEEF_CAFE_BABE);
+    }
+
+    #[test]
+    fn apx_shld_imm_rip_relative_includes_imm8_in_target() {
+        // LLVM 23: `{evex} shldl $1, %eax, 0x20(%rip)`
+        let code = [
+            0x62, 0xF4, 0x7C, 0x08, 0x24, 0x05, 0x20, 0x00, 0x00, 0x00, 0x01,
+        ];
+        let target = CODE + code.len() as u64 + 0x20;
+        let mut vcpu = long_mode_vcpu(&code);
+        vcpu.regs.rax = 0x8000_0000;
+        write_u32(&mut vcpu, target, 0x4000_0000);
+
+        step_ok(&mut vcpu);
+
+        assert_eq!(read_u32(&mut vcpu, target), 0x8000_0001);
+        assert_eq!(read_u8(&mut vcpu, target - 1), 0);
+    }
+
+    #[test]
+    fn apx_shrd_imm_rip_relative_includes_imm8_in_target() {
+        // LLVM 23: `{evex} shrdl $1, %eax, 0x20(%rip)`
+        let code = [
+            0x62, 0xF4, 0x7C, 0x08, 0x2C, 0x05, 0x20, 0x00, 0x00, 0x00, 0x01,
+        ];
+        let target = CODE + code.len() as u64 + 0x20;
+        let mut vcpu = long_mode_vcpu(&code);
+        vcpu.regs.rax = 1;
+        write_u32(&mut vcpu, target, 2);
+
+        step_ok(&mut vcpu);
+
+        assert_eq!(read_u32(&mut vcpu, target), 0x8000_0001);
+        assert_eq!(read_u8(&mut vcpu, target - 1), 0);
+    }
+
+    #[test]
+    fn apx_cmov_nd_memory_source_still_faults_when_false() {
+        // LLVM 20: `cmovbq (%rbx), %rax, %r8` => 62 f4 bc 18 42 03.
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0xBC, 0x18, 0x42, 0x03]);
+        vcpu.regs.rax = 0x1234;
+        vcpu.regs.rbx = INVALID;
+        vcpu.regs.r8 = 0xFFFF;
+        vcpu.regs.rflags = 0x2;
+
+        assert!(vcpu.step().is_err());
+        assert_eq!(vcpu.regs.r8, 0xFFFF);
+    }
+
+    #[test]
+    fn apx_conditional_map4_rejects_invalid_pp2_like_llvm() {
+        // LLVM rejects PP=2 for the MAP4 conditional range.
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF4, 0x7E, 0x18, 0x42, 0xC0]);
+        let err = vcpu.step().unwrap_err();
+        assert!(
+            format!("{err:?}").contains("IDT entry 6 not present"),
+            "{err:?}"
+        );
+    }
+
+    #[test]
+    fn f32_to_bf16_matches_vcvtne_rounding_edges() {
+        let cases = [
+            (0x3f80_7fff, 0x3f80),
+            (0x3f80_8000, 0x3f80),
+            (0x3f80_8001, 0x3f81),
+            (0x3f81_8000, 0x3f82),
+            (0xbf80_7fff, 0xbf80),
+            (0xbf80_8000, 0xbf80),
+            (0xbf80_8001, 0xbf81),
+            (0xbf81_8000, 0xbf82),
+            (0x007f_7fff, 0x0000),
+            (0x807f_7fff, 0x8000),
+            (0x0080_0000, 0x0080),
+            (0x8080_0000, 0x8080),
+            (0x7f7f_8000, 0x7f80),
+            (0xff7f_8000, 0xff80),
+            (0x7f80_0001, 0x7fc0),
+        ];
+
+        for (input, expected) in cases {
+            assert_eq!(
+                f32_to_bf16(f32::from_bits(input)),
+                expected,
+                "{input:#010x}"
+            );
+        }
+    }
+}
+
+/// APX ALU operation types
+#[derive(Clone, Copy)]
+enum ApxAluOp {
+    Add,
+    Adc,
+    Or,
+    And,
+    Sub,
+    Sbb,
+    Xor,
+}
+
+/// Convert IEEE 754 half-precision (FP16) to single-precision (f32)
+fn fp16_to_f32(h: u16) -> f32 {
+    let sign = ((h >> 15) & 1) as u32;
+    let exp = ((h >> 10) & 0x1F) as u32;
+    let mant = (h & 0x3FF) as u32;
+
+    let f32_bits = if exp == 0 {
+        if mant == 0 {
+            // Zero (preserve sign)
+            sign << 31
+        } else {
+            // Denormalized number - normalize it
+            let mut m = mant;
+            let mut e = 0i32;
+            while (m & 0x400) == 0 {
+                m <<= 1;
+                e += 1;
+            }
+            m &= 0x3FF; // Remove implicit bit
+            let new_exp = (127 - 14 - e) as u32;
+            (sign << 31) | (new_exp << 23) | (m << 13)
+        }
+    } else if exp == 0x1F {
+        // Infinity or NaN
+        (sign << 31) | (0xFF << 23) | (mant << 13)
+    } else {
+        // Normalized number
+        // FP16 exponent bias is 15, f32 is 127
+        let new_exp = exp + 127 - 15;
+        (sign << 31) | (new_exp << 23) | (mant << 13)
+    };
+
+    f32::from_bits(f32_bits)
+}
+
+/// Convert single-precision (f32) to IEEE 754 half-precision (FP16)
+fn f32_to_fp16(f: f32) -> u16 {
+    let bits = f.to_bits();
+    let sign = (bits >> 16) & 0x8000;
+    let abs = bits & 0x7fff_ffff;
+    let exp = (abs >> 23) as i32;
+    let mant = abs & 0x007f_ffff;
+
+    if exp == 0xff {
+        if mant == 0 {
+            return (sign | 0x7c00) as u16;
+        }
+        let payload = (mant >> 13).max(1);
+        return (sign | 0x7c00 | payload) as u16;
+    }
+
+    // Too small to round to the smallest half subnormal.
+    if abs < 0x3300_0000 {
+        return sign as u16;
+    }
+
+    // Half subnormal: round the f32 significand to a 10-bit denormal.
+    if abs < 0x3880_0000 {
+        let mant24 = mant | 0x0080_0000;
+        let shift = (126 - exp) as u32;
+        let round = 1u32 << (shift - 1);
+        let half_mant = (mant24 + round - 1 + ((mant24 >> shift) & 1)) >> shift;
+        return (sign | half_mant) as u16;
+    }
+
+    // Half normal: rebias exponent and round mantissa to nearest-even.
+    let mut half = (abs - 0x3800_0000) >> 13;
+    let remainder = abs & 0x1fff;
+    if remainder > 0x1000 || (remainder == 0x1000 && (half & 1) != 0) {
+        half += 1;
+    }
+
+    if half >= 0x7c00 {
+        (sign | 0x7c00) as u16
+    } else {
+        (sign | half) as u16
+    }
+}
+
+fn ftz_f32_bits(bits: u32) -> u32 {
+    let exp = (bits >> 23) & 0xff;
+    let mant = bits & 0x007f_ffff;
+    if exp == 0 && mant != 0 {
+        bits & 0x8000_0000
+    } else {
+        bits
+    }
+}
+
+/// Convert BFloat16 (BF16) to single-precision (f32)
+fn bf16_to_f32(bf: u16) -> f32 {
+    // BF16 is simply the upper 16 bits of f32.
+    f32::from_bits((bf as u32) << 16)
+}
+
+/// Convert single-precision (f32) to BFloat16 (BF16)
+fn f32_to_bf16(f: f32) -> u16 {
+    // BF16 is the upper 16 bits of f32 with round-to-nearest-even.
+    let bits = f.to_bits();
+
+    // Check for NaN and preserve signaling NaN.
+    if (bits & 0x7FFFFFFF) > 0x7F800000 {
+        // NaN - ensure we keep a non-zero mantissa
+        return ((bits >> 16) as u16) | 0x0040;
+    }
+
+    let rounding_bias = 0x7FFF + ((bits >> 16) & 1);
+    let rounded = ((bits.wrapping_add(rounding_bias)) >> 16) as u16;
+
+    // x86 VCVTNE*PS2BF16 does not produce BF16 subnormals. Finite results
+    // that underflow the BF16 normal range become signed zero.
+    if (rounded & 0x7f80) == 0 {
+        rounded & 0x8000
+    } else {
+        rounded
+    }
+}

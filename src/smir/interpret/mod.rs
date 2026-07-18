@@ -20,6 +20,7 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 // ---- module tree (auto-split) ----
 mod execution;
 pub use execution::*;
+mod ops;
 mod hex_float;
 pub use hex_float::*;
 mod simd;

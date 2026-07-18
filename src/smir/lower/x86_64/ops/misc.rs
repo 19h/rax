@@ -1,0 +1,121 @@
+//! Miscellaneous lowering
+
+use crate::smir::lower::x86_64::*;
+use std::collections::HashMap;
+
+use crate::smir::ir::flags::{FlagSet, FlagUpdate};
+use crate::smir::ir::ops::{
+    OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
+    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86VecAlign, X86VecMap, X86X87ControlKind,
+};
+use crate::smir::ir::types::{
+    Address, ArchReg, BlockId, Condition, DispSize, FenceKind, FpRoundMode, GuestAddr, MemWidth,
+    OpWidth, ShiftOp, SignExtend, SrcOperand, VLaneOp, VReg, VecCmpCond, VecElementType,
+    VecUnaryOp, VecWidth, X86Reg,
+};
+use crate::smir::ir::{
+    CallTarget, SmirBlock, SmirFunction, Terminator, X86InstructionBytes,
+    x86_evex_native_replay_spans,
+};
+
+use crate::smir::lower::regalloc::{PhysReg, RegAlloc, RegLocation};
+use crate::smir::lower::{
+    CodeBuffer, LowerError, LowerResult, RelocKind, RelocTarget, Relocation, SmirLowerer,
+    X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CPL_OFFSET,
+    X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
+    X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
+    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET,
+    X86_GUEST_PAIR_STORE_FN_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
+    X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET, X86_GUEST_VEC_STORE_FN_OFFSET,
+    X86_GUEST_X87_TAG_WORD_OFFSET, X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET,
+    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
+};
+
+impl X86_64Lowerer {
+    pub(crate) fn lower_op_misc(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<(), LowerError> {
+        let is_non_accumulating_madd = matches!(
+            &op.kind,
+            OpKind::VDotProduct {
+                acc: VReg::Imm(0),
+                mask: None,
+                src_elem: VecElementType::I8,
+                acc_elem: VecElementType::I16,
+                src1_unsigned: true,
+                saturate: true,
+                zeroing: false,
+                ..
+            } | OpKind::VDotProduct {
+                acc: VReg::Imm(0),
+                mask: None,
+                src_elem: VecElementType::I16,
+                acc_elem: VecElementType::I32,
+                src1_unsigned: false,
+                saturate: false,
+                zeroing: false,
+                ..
+            }
+        );
+        let is_classic_mpsadbw = matches!(
+            (&op.kind, op.x86_hint),
+            (
+                OpKind::VMpsadbw { .. },
+                Some(X86OpHint::SseOp { .. } | X86OpHint::VexOp { .. })
+            )
+        );
+        if !is_non_accumulating_madd && !is_classic_mpsadbw {
+            if let Some(result) = avx10::Avx10Lowerer::new().try_lower(&op.kind, &mut self.code) {
+                return result;
+            }
+        }
+
+        let alu_hint = match op.x86_hint {
+            Some(X86OpHint::AluEncoding(enc)) => Some(enc),
+            _ => None,
+        };
+
+        match &op.kind {
+            // ================================================================
+            // Misc
+            // ================================================================
+            OpKind::Fence { kind } => match kind {
+                FenceKind::LoadLoad => self.code.emit_bytes(&[0x0F, 0xAE, 0xE8]),
+                FenceKind::Full => self.code.emit_bytes(&[0x0F, 0xAE, 0xF0]),
+                FenceKind::StoreStore => self.code.emit_bytes(&[0x0F, 0xAE, 0xF8]),
+                other => {
+                    return Err(LowerError::UnsupportedOp {
+                        op: format!("x86 native fence {other:?}"),
+                    });
+                }
+            },
+
+            OpKind::Nop => {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_nop();
+            }
+
+            OpKind::Breakpoint => {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_int3();
+            }
+
+            OpKind::Leave => {
+                self.code.emit_u8(0xC9);
+            }
+
+            OpKind::Undefined { .. } => {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_ud2();
+            }
+
+            // Unimplemented ops
+            _ => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("{:?}", op.kind),
+                });
+            }
+            _ => unreachable!("lower_op: unhandled OpKind"),
+        }
+
+        Ok(())
+    }
+}
