@@ -17,8 +17,8 @@ use crate::smir::ir::types::{
     VecUnaryOp, VecWidth, X86Reg,
 };
 use crate::smir::ir::{
-    CallTarget, SmirBlock, SmirFunction, Terminator, X86InstructionBytes, x86_evex_fp_replay_spans,
-    x86_evex_logic_replay_spans,
+    CallTarget, SmirBlock, SmirFunction, Terminator, X86InstructionBytes,
+    x86_evex_native_replay_spans,
 };
 
 use super::regalloc::{PhysReg, RegAlloc, RegLocation};
@@ -23638,11 +23638,7 @@ impl X86_64Lowerer {
 
         // Initialize register allocator for this block
         self.regalloc.begin_block(block);
-        let mut native_replay_spans = x86_evex_fp_replay_spans(block, &self.x86_instruction_bytes);
-        native_replay_spans.extend(x86_evex_logic_replay_spans(
-            block,
-            &self.x86_instruction_bytes,
-        ));
+        let native_replay_spans = x86_evex_native_replay_spans(block, &self.x86_instruction_bytes);
 
         // Count virtual definitions and uses once. Exact helper-backed fusion
         // validation and lowering are then O(1) per candidate; the complete

@@ -287,6 +287,50 @@ impl X86InstructionBytes {
         };
         Some((needs_avx512vl, needs_avx512dq))
     }
+
+    /// Validate register-only EVEX packed integer additions/subtractions and
+    /// return whether the vector length requires AVX-512VL. Byte/word and all
+    /// saturating forms use AVX-512BW; doubleword/quadword wrapping forms use
+    /// AVX-512F. The native vector-state trampoline already requires both
+    /// feature sets, so only the additional VL requirement is returned here.
+    /// Memory, EVEX.b, reserved vector lengths, and malformed masks fail closed.
+    pub fn evex_register_integer_arithmetic_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+        if p0 & 0x0f != 1 || p1 & 0x04 == 0 || modrm >> 6 != 3 || p1 & 0x03 != 1 {
+            return None;
+        }
+
+        let w = p1 & 0x80 != 0;
+        match opcode {
+            // VPADDQ and VPSUBQ are W1; VPADDD and VPSUBD are W0.
+            0xD4 | 0xFB if w => {}
+            0xFA | 0xFE if !w => {}
+            // Byte/word operations specify WIG.
+            0xD8 | 0xD9 | 0xDC | 0xDD | 0xE8 | 0xE9 | 0xEC | 0xED | 0xF8 | 0xF9 | 0xFC | 0xFD => {}
+            _ => return None,
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || (zeroing && mask == 0) {
+            return None;
+        }
+        match ll {
+            0 | 1 => Some(true),
+            2 => Some(false),
+            _ => None,
+        }
+    }
 }
 
 /// A contiguous semantic-op group that may be replaced by one exact native x86
@@ -369,6 +413,41 @@ pub fn x86_evex_logic_replay_spans(
 ) -> HashMap<usize, X86NativeReplaySpan> {
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction.evex_register_logic_requirements()
+    })
+}
+
+/// Identify valid register-only EVEX packed integer arithmetic replay groups
+/// in `block` in O(N) time and O(P) space for N operations and P unique guest
+/// PCs.
+pub fn x86_evex_integer_arithmetic_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_integer_arithmetic_needs_vl()
+            .map(|needs_vl| (needs_vl, false))
+    })
+}
+
+/// Identify every validated native EVEX replay group in one O(N)-time,
+/// O(P)-space block pass. Classifiers are intentionally disjoint and ordered
+/// explicitly so adding a replay family does not add another scan of the SMIR
+/// operation stream.
+pub fn x86_evex_native_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        if let Some(needs_vl) = instruction.evex_register_fp_arithmetic_needs_vl() {
+            return Some((needs_vl, false));
+        }
+        if let Some(requirements) = instruction.evex_register_logic_requirements() {
+            return Some(requirements);
+        }
+        instruction
+            .evex_register_integer_arithmetic_needs_vl()
+            .map(|needs_vl| (needs_vl, false))
     })
 }
 
@@ -914,6 +993,47 @@ mod tests {
                 X86InstructionBytes::new(bytes)
                     .unwrap()
                     .evex_register_logic_requirements(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn x86_evex_integer_arithmetic_replay_classifier_is_exact_and_fail_closed() {
+        let valid = [
+            (&[0x62, 0xF1, 0x75, 0x09, 0xFC, 0xC8][..], Some(true)),
+            // WIG byte/word operations also admit W1.
+            (&[0x62, 0xF1, 0xF5, 0x29, 0xE9, 0xC8][..], Some(true)),
+            (&[0x62, 0xF1, 0x7D, 0x49, 0xFA, 0xC8][..], Some(false)),
+            (&[0x62, 0xF1, 0xFD, 0xC9, 0xD4, 0xC8][..], Some(false)),
+        ];
+        for (bytes, expected) in valid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_integer_arithmetic_needs_vl(),
+                expected,
+                "{bytes:02X?}"
+            );
+        }
+
+        let invalid: &[&[u8]] = &[
+            &[0x62, 0xF2, 0x75, 0x09, 0xFC, 0xC8], // wrong map
+            &[0x62, 0xF1, 0x75, 0x09, 0xFC, 0x08], // memory source
+            &[0x62, 0xF1, 0x75, 0x19, 0xFC, 0xC8], // EVEX.b
+            &[0x62, 0xF1, 0x75, 0x88, 0xFC, 0xC8], // {z} with k0
+            &[0x62, 0xF1, 0x74, 0x09, 0xFC, 0xC8], // missing 66 prefix
+            &[0x62, 0xF1, 0xFD, 0x09, 0xFA, 0xC8], // VPSUBD with W1
+            &[0x62, 0xF1, 0x7D, 0x09, 0xD4, 0xC8], // VPADDQ with W0
+            &[0x62, 0xF1, 0x75, 0x69, 0xFC, 0xC8], // L'L=3
+            &[0x62, 0xF1, 0x75, 0x09, 0xDB, 0xC8], // logical opcode
+        ];
+        for bytes in invalid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_integer_arithmetic_needs_vl(),
                 None,
                 "{bytes:02X?}"
             );

@@ -6759,10 +6759,8 @@ pub fn uses_x86_native_vectors_excluding(
         .iter()
         .filter(|block| !excluded.contains_key(&block.id))
         .any(|block| {
-            !crate::smir::ir::x86_evex_fp_replay_spans(block, &func.x86_instruction_bytes)
+            !crate::smir::ir::x86_evex_native_replay_spans(block, &func.x86_instruction_bytes)
                 .is_empty()
-                || !crate::smir::ir::x86_evex_logic_replay_spans(block, &func.x86_instruction_bytes)
-                    .is_empty()
                 || block.ops.iter().any(|op| {
                     x86_native_vector_smir_op(op) || x86_jit_vector_mem_shape_valid(&op.kind)
                 })
@@ -7048,13 +7046,10 @@ pub fn x86_native_vector_features_supported_excluding(
         .iter()
         .filter(|block| !excluded.contains_key(&block.id))
     {
-        let mut replay_spans =
-            crate::smir::ir::x86_evex_fp_replay_spans(block, &func.x86_instruction_bytes);
-        replay_spans.extend(crate::smir::ir::x86_evex_logic_replay_spans(
-            block,
-            &func.x86_instruction_bytes,
-        ));
-        for span in replay_spans.into_values() {
+        for span in
+            crate::smir::ir::x86_evex_native_replay_spans(block, &func.x86_instruction_bytes)
+                .into_values()
+        {
             any = true;
             needs_vl |= span.needs_avx512vl;
             needs_dq |= span.needs_avx512dq;
@@ -10036,12 +10031,8 @@ fn block_is_clobber_safe(
     };
 
     let n = block.ops.len();
-    let mut native_replay_spans =
-        crate::smir::ir::x86_evex_fp_replay_spans(block, x86_instruction_bytes);
-    native_replay_spans.extend(crate::smir::ir::x86_evex_logic_replay_spans(
-        block,
-        x86_instruction_bytes,
-    ));
+    let native_replay_spans =
+        crate::smir::ir::x86_evex_native_replay_spans(block, x86_instruction_bytes);
     // Count virtual definitions and uses once. Exact helper-sequence validation
     // then remains O(1) per candidate and the complete gate remains O(N).
     let mut virtual_definitions = std::collections::HashMap::new();
@@ -23048,6 +23039,55 @@ mod jit_gate_tests {
         assert!(!is_native_clobber_safe(&memory_metadata));
     }
 
+    #[test]
+    fn x86_evex_integer_arithmetic_replay_uses_base_vector_gate_and_rejects_memory_metadata() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        const PC: u64 = 0x1000;
+        const VPADDSB: [u8; 6] = [0x62, 0xA1, 0x6D, 0xC1, 0xEC, 0xCB];
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+        let result = lifter.lift_insn(PC, &VPADDSB, &mut context).unwrap();
+        let mut block = SmirBlock::new(BlockId(0), PC);
+        block.ops = result.ops;
+        block.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+        function.add_block(block);
+        function.x86_instruction_bytes.insert(
+            (BlockId(0), PC),
+            X86InstructionBytes::new(&VPADDSB).unwrap(),
+        );
+
+        assert!(is_native_clobber_safe(&function));
+        assert!(uses_x86_native_vectors_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+        #[cfg(target_arch = "x86_64")]
+        assert_eq!(
+            x86_native_vector_features_supported_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ),
+            std::is_x86_feature_detected!("avx512f") && std::is_x86_feature_detected!("avx512bw")
+        );
+        #[cfg(not(target_arch = "x86_64"))]
+        assert!(!x86_native_vector_features_supported_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+
+        let mut memory_metadata = function;
+        let mut bytes = VPADDSB;
+        bytes[5] = 0x08;
+        memory_metadata
+            .x86_instruction_bytes
+            .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+        assert!(!is_native_clobber_safe(&memory_metadata));
+    }
+
     #[cfg(target_arch = "x86_64")]
     #[test]
     fn x86_vector_trampoline_round_trips_all_zmm_and_opmask_registers() {
@@ -23305,6 +23345,74 @@ mod jit_gate_tests {
                 let lhs = (source1[lane / 2] >> shift) as u32;
                 let rhs = (source2[lane / 2] >> shift) as u32;
                 expected[lane / 2] |= ((lhs & rhs) as u64) << shift;
+            }
+        }
+
+        let mut regs = GuestRegs {
+            vector_active: 1,
+            ..GuestRegs::default()
+        };
+        regs.set_zmm(17, [u64::MAX; 8]);
+        regs.set_zmm(18, source1);
+        regs.set_zmm(19, source2);
+        regs.k[1] = mask;
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.get_zmm(17), expected);
+        assert_eq!(regs.get_zmm(18), source1);
+        assert_eq!(regs.get_zmm(19), source2);
+        assert_eq!(regs.k[1], mask);
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn x86_evex_integer_arithmetic_replay_executes_saturating_high_register_form_exactly() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+        use crate::smir::lower::SmirLowerer;
+        use crate::smir::lower::x86_64::X86_64Lowerer;
+
+        if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+            return;
+        }
+
+        const PC: u64 = 0x1000;
+        // vpaddsb zmm17{k1}{z}, zmm18, zmm19
+        const VPADDSB: [u8; 6] = [0x62, 0xA1, 0x6D, 0xC1, 0xEC, 0xCB];
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+        let result = lifter.lift_insn(PC, &VPADDSB, &mut context).unwrap();
+        let mut block = SmirBlock::new(BlockId(0), PC);
+        block.ops = result.ops;
+        block.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+        function.add_block(block);
+        function.x86_instruction_bytes.insert(
+            (BlockId(0), PC),
+            X86InstructionBytes::new(&VPADDSB).unwrap(),
+        );
+
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&function)
+            .expect("lower VPADDSB replay");
+        let code = lowerer.finalize().expect("finalize VPADDSB replay");
+        assert!(code.windows(VPADDSB.len()).any(|window| window == VPADDSB));
+        let exec = ExecMem::new(&code).expect("map VPADDSB replay");
+
+        let mask = 0xA55A_F00F_9696_6996u64;
+        let mut source1 = [0u64; 8];
+        let mut source2 = [0u64; 8];
+        let mut expected = [0u64; 8];
+        for lane in 0..64 {
+            let lhs = (lane as i16 * 17 - 200) as i8;
+            let rhs = (300 - lane as i16 * 13) as i8;
+            let shift = (lane % 8) * 8;
+            source1[lane / 8] |= (lhs as u8 as u64) << shift;
+            source2[lane / 8] |= (rhs as u8 as u64) << shift;
+            if mask >> lane & 1 != 0 {
+                expected[lane / 8] |= (lhs.saturating_add(rhs) as u8 as u64) << shift;
             }
         }
 
