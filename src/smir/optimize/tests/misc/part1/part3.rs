@@ -1,93 +1,9 @@
-//! misc part 1 tests
+//! part1 part 3 tests
 
 use super::*;
 use crate::smir::optimize::*;
 use crate::smir::optimize::tests::*;
 
-    #[test]
-    fn bit_test_and_carry_control_metadata_tracks_cf_exactly() {
-        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
-        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
-        let forms = [
-            OpKind::Bt {
-                src: rax,
-                index: SrcOperand::Reg(rcx),
-                width: OpWidth::W64,
-            },
-            OpKind::Bts {
-                dst: rax,
-                src: rax,
-                index: SrcOperand::Imm(3),
-                width: OpWidth::W64,
-            },
-            OpKind::Btr {
-                dst: rax,
-                src: rax,
-                index: SrcOperand::Imm(4),
-                width: OpWidth::W64,
-            },
-            OpKind::Btc {
-                dst: rax,
-                src: rax,
-                index: SrcOperand::Imm(5),
-                width: OpWidth::W64,
-            },
-        ];
-        for form in forms {
-            assert_eq!(form.flags_written(), FlagSet::CF, "{form:?}");
-            assert_eq!(form.flags_must_write(), FlagSet::CF, "{form:?}");
-            assert_eq!(form.flags_read(), FlagSet::EMPTY, "{form:?}");
-        }
-
-        let set = OpKind::SetCF { value: true };
-        assert_eq!(set.flags_written(), FlagSet::CF);
-        assert_eq!(set.flags_must_write(), FlagSet::CF);
-        assert_eq!(set.flags_read(), FlagSet::EMPTY);
-
-        let complement = OpKind::CmcCF;
-        assert_eq!(complement.flags_written(), FlagSet::CF);
-        assert_eq!(complement.flags_must_write(), FlagSet::CF);
-        assert_eq!(complement.flags_read(), FlagSet::CF);
-    }
-    #[test]
-    fn o2_removes_internal_bit_test_overwritten_before_frontier() {
-        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
-        let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
-        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
-        builder.push_op(
-            0x1000,
-            OpKind::Bt {
-                src: rax,
-                index: SrcOperand::Imm(7),
-                width: OpWidth::W64,
-            },
-        );
-        builder.push_op(
-            0x1001,
-            OpKind::Cmp {
-                src1: rax,
-                src2: SrcOperand::Reg(rcx),
-                width: OpWidth::W64,
-            },
-        );
-        builder.set_terminator(Terminator::Return { values: vec![] });
-        let mut function = builder.finish();
-
-        let stats = optimize_function_with_stats(&mut function, OptLevel::O2);
-        assert_eq!(stats.dead_flags_eliminated, 1);
-        assert!(
-            !function.blocks[0]
-                .ops
-                .iter()
-                .any(|op| matches!(op.kind, OpKind::Bt { .. } | OpKind::Nop))
-        );
-        assert!(
-            function.blocks[0]
-                .ops
-                .iter()
-                .any(|op| matches!(op.kind, OpKind::Cmp { .. }))
-        );
-    }
     #[test]
     fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
         use crate::smir::ir::types::{
@@ -7126,3 +7042,4 @@ use crate::smir::optimize::tests::*;
             }
         )));
     }
+
