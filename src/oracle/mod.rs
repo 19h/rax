@@ -1911,6 +1911,30 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             zero_upper,
             suppress_exceptions
         ),
+        OpKind::X86GetExponent {
+            dst,
+            merge,
+            src,
+            mask,
+            elem,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+            suppress_exceptions,
+        } => op_json!(
+            "x86_get_exponent",
+            dst,
+            merge,
+            src,
+            mask,
+            elem,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+            suppress_exceptions
+        ),
         OpKind::X86FpToInt {
             dst,
             src,

@@ -1527,6 +1527,26 @@ pub enum OpKind {
         suppress_exceptions: bool,
     },
 
+    /// x86 EVEX VGETEXP{PH,PS,PD,SH,SS,SD}. Active lanes return the
+    /// same-format floating-point representation of `floor(log2(abs(src)))`.
+    /// Packed merging masks preserve the old destination. Scalar forms copy
+    /// bits above the low element through bit 127 from `merge`, while an
+    /// inactive merging mask preserves only the old destination low element.
+    /// All forms clear shared vector state above their encoded vector length;
+    /// `suppress_exceptions` records EVEX SAE.
+    X86GetExponent {
+        dst: VReg,
+        merge: Option<VReg>,
+        src: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        lanes: u8,
+        scalar: bool,
+        mask_zeroing: bool,
+        suppress_exceptions: bool,
+    },
+
     /// x86 CVT(T)SS2SI/CVT(T)SD2SI and EVEX VCVT(T)SS/SD/SH2SI/USI scalar
     /// conversion. Invalid or out-of-range inputs produce the signed
     /// integer-indefinite value, or `2^int_width - 1` when `signed` is false,
@@ -4226,6 +4246,7 @@ impl OpKind {
             | OpKind::FpToInt { dst, .. }
             | OpKind::X86FpToInt { dst, .. }
             | OpKind::X86VectorFpCompare { dst, .. }
+            | OpKind::X86GetExponent { dst, .. }
             | OpKind::X86IntToFp { dst, .. }
             | OpKind::X86FpConvert { dst, .. }
             | OpKind::X86PackedFpConvert { dst, .. }
@@ -4625,6 +4646,10 @@ impl OpKind {
                     | OpKind::X86Round { .. }
                     | OpKind::X86DotProduct { .. }
                     | OpKind::X86VectorFpCompare { .. }
+                    | OpKind::X86GetExponent {
+                        suppress_exceptions: false,
+                        ..
+                    }
                     | OpKind::X86FpConvert {
                         suppress_exceptions: false,
                         ..

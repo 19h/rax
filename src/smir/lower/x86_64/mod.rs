@@ -2619,6 +2619,58 @@ impl<'a> X86Emitter<'a> {
         self.emit_modrm_rr(reg, rm);
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn emit_evex_get_exponent_rr(
+        &mut self,
+        map: X86VecMap,
+        width: VecWidth,
+        w: bool,
+        opcode: u8,
+        dst: PhysReg,
+        merge: Option<PhysReg>,
+        src: PhysReg,
+        aaa: u8,
+        zeroing: bool,
+        suppress_exceptions: bool,
+    ) {
+        let r_inv = u8::from(dst.vec_ext() == 0);
+        let r2_inv = u8::from(dst.vec_ext2() == 0);
+        let b_inv = u8::from(src.vec_ext() == 0);
+        let b2_inv = u8::from(src.vec_ext2() == 0);
+        let vvvv = merge.map_or(0, |reg| reg.encoding() & 0x1F);
+        let vvvv_inv = (!vvvv) & 0x0F;
+        let vprime_inv = u8::from(vvvv & 0x10 == 0);
+        let byte2 = (r_inv << 7)
+            | (b2_inv << 6)
+            | (b_inv << 5)
+            | (r2_inv << 4)
+            | (Self::vex_map_bits(map) & 0x0F);
+        let byte3 =
+            ((w as u8) << 7) | (vvvv_inv << 3) | 0x04 | Self::vex_pp_bits(X86SsePrefix::OpSize);
+        // VGETEXP uses SAE without embedded rounding. With EVEX.b set,
+        // EVEX.L'L is ignored and the canonical encoding is 00b.
+        let ll = if suppress_exceptions {
+            0
+        } else {
+            match width {
+                VecWidth::V128 | VecWidth::V64 => 0,
+                VecWidth::V256 => 1,
+                VecWidth::V512 => 2,
+            }
+        };
+        let byte4 = ((zeroing as u8) << 7)
+            | (ll << 5)
+            | ((suppress_exceptions as u8) << 4)
+            | (vprime_inv << 3)
+            | (aaa & 7);
+        self.code.emit_u8(0x62);
+        self.code.emit_u8(byte2);
+        self.code.emit_u8(byte3);
+        self.code.emit_u8(byte4);
+        self.code.emit_u8(opcode);
+        self.emit_modrm_rr(dst, src);
+    }
+
     pub fn emit_vex_rrr(
         &mut self,
         map: X86VecMap,
@@ -9145,6 +9197,97 @@ impl X86_64Lowerer {
                     let mut emitter = X86Emitter::new(&mut self.code);
                     emitter.emit_sse_mov_rr(prefix, opcode, src1_reg, src2_reg);
                 }
+            }
+
+            OpKind::X86GetExponent {
+                dst,
+                merge,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+                suppress_exceptions,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let merge_reg = merge.map(|reg| self.get_reg(reg)).transpose()?;
+                let aaa = match mask {
+                    None => 0,
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::K(n @ 1..=7)))) => *n,
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86GetExponent".to_string(),
+                            operand: "mask must be architectural k1-k7".to_string(),
+                        });
+                    }
+                };
+                let (map, w) = match elem {
+                    VecElementType::F16 => (X86VecMap::Map6, false),
+                    VecElementType::F32 => (X86VecMap::Map0F38, false),
+                    VecElementType::F64 => (X86VecMap::Map0F38, true),
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86GetExponent".to_string(),
+                            operand: format!("unsupported element {elem:?}"),
+                        });
+                    }
+                };
+                let opcode = if *scalar { 0x43 } else { 0x42 };
+                let register_matches_width = |reg: PhysReg, expected: VecWidth| {
+                    matches!(
+                        (reg, expected),
+                        (PhysReg::Xmm(_), VecWidth::V128)
+                            | (PhysReg::Ymm(_), VecWidth::V256)
+                            | (PhysReg::Zmm(_), VecWidth::V512)
+                    )
+                };
+                let valid_shape = register_matches_width(dst_reg, *width)
+                    && register_matches_width(src_reg, *width)
+                    && (!*mask_zeroing || aaa != 0)
+                    && if *scalar {
+                        *width == VecWidth::V128
+                            && *lanes == 1
+                            && merge_reg.is_some_and(|reg| reg.is_xmm())
+                    } else {
+                        *lanes == width.lanes(*elem) as u8
+                            && merge_reg.is_none()
+                            && (!*suppress_exceptions || *width == VecWidth::V512)
+                    };
+                let valid_hint = matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::EvexOp {
+                        map: hint_map,
+                        pp: X86SsePrefix::OpSize,
+                        opcode: hint_opcode,
+                        width: hint_width,
+                        w: hint_w,
+                    }) if hint_map == map
+                        && hint_opcode == opcode
+                        && hint_width == *width
+                        && hint_w == w
+                );
+                if !valid_shape || !valid_hint {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86GetExponent".to_string(),
+                        operand: "non-canonical VGETEXP shape or encoding metadata".to_string(),
+                    });
+                }
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_evex_get_exponent_rr(
+                    map,
+                    *width,
+                    w,
+                    opcode,
+                    dst_reg,
+                    merge_reg,
+                    src_reg,
+                    aaa,
+                    *mask_zeroing,
+                    *suppress_exceptions,
+                );
             }
 
             OpKind::X86FpToInt {
@@ -30654,6 +30797,228 @@ mod tests {
                 "{name}: missing EVEX opcode in {code:02X?}"
             );
         }
+    }
+
+    #[test]
+    fn lower_x86_get_exponent_emits_canonical_evex_and_rejects_synthetic_shapes() {
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        for (name, kind, hint, expected) in [
+            (
+                "VGETEXPPS xmm1,xmm3",
+                OpKind::X86GetExponent {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    merge: None,
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    mask: None,
+                    elem: VecElementType::F32,
+                    width: VecWidth::V128,
+                    lanes: 4,
+                    scalar: false,
+                    mask_zeroing: false,
+                    suppress_exceptions: false,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+                &[0x62, 0xF2, 0x7D, 0x08, 0x42, 0xCB][..],
+            ),
+            (
+                "VGETEXPPD ymm1{k2}{z},ymm3",
+                OpKind::X86GetExponent {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                    merge: None,
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
+                    mask: Some(k2),
+                    elem: VecElementType::F64,
+                    width: VecWidth::V256,
+                    lanes: 4,
+                    scalar: false,
+                    mask_zeroing: true,
+                    suppress_exceptions: false,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                    width: VecWidth::V256,
+                    w: true,
+                },
+                &[0x62, 0xF2, 0xFD, 0xAA, 0x42, 0xCB][..],
+            ),
+            (
+                "VGETEXPPH zmm17{k2},zmm19,{sae}",
+                OpKind::X86GetExponent {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    merge: None,
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(19))),
+                    mask: Some(k2),
+                    elem: VecElementType::F16,
+                    width: VecWidth::V512,
+                    lanes: 32,
+                    scalar: false,
+                    mask_zeroing: false,
+                    suppress_exceptions: true,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map6,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+                &[0x62, 0xA6, 0x7D, 0x1A, 0x42, 0xCB][..],
+            ),
+            (
+                "VGETEXPSS xmm17{k2}{z},xmm18,xmm19,{sae}",
+                OpKind::X86GetExponent {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                    merge: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(18)))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(19))),
+                    mask: Some(k2),
+                    elem: VecElementType::F32,
+                    width: VecWidth::V128,
+                    lanes: 1,
+                    scalar: true,
+                    mask_zeroing: true,
+                    suppress_exceptions: true,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x43,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+                &[0x62, 0xA2, 0x6D, 0x92, 0x43, 0xCB][..],
+            ),
+            (
+                "VGETEXPSD xmm1,xmm2,xmm3",
+                OpKind::X86GetExponent {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    merge: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    mask: None,
+                    elem: VecElementType::F64,
+                    width: VecWidth::V128,
+                    lanes: 1,
+                    scalar: true,
+                    mask_zeroing: false,
+                    suppress_exceptions: false,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x43,
+                    width: VecWidth::V128,
+                    w: true,
+                },
+                &[0x62, 0xF2, 0xED, 0x08, 0x43, 0xCB][..],
+            ),
+            (
+                "VGETEXPSH xmm1,xmm2,xmm3",
+                OpKind::X86GetExponent {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    merge: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    mask: None,
+                    elem: VecElementType::F16,
+                    width: VecWidth::V128,
+                    lanes: 1,
+                    scalar: true,
+                    mask_zeroing: false,
+                    suppress_exceptions: false,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map6,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x43,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+                &[0x62, 0xF6, 0x6D, 0x08, 0x43, 0xCB][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, hint);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        for instruction in [
+            &[0x62, 0xF2, 0x7D, 0x08, 0x42, 0xCB][..],
+            &[0x62, 0xF2, 0xFD, 0xAA, 0x42, 0xCB][..],
+            &[0x62, 0xA6, 0x7D, 0x1A, 0x42, 0xCB][..],
+            &[0x62, 0xA2, 0x6D, 0x92, 0x43, 0xCB][..],
+            &[0x62, 0xF2, 0xED, 0x08, 0x43, 0xCB][..],
+            &[0x62, 0xF6, 0x6D, 0x08, 0x43, 0xCB][..],
+        ] {
+            let mut block = instruction.to_vec();
+            block.push(0xF4);
+            let (code, _) = lower_rex2_block(&block);
+            assert!(
+                code.windows(instruction.len())
+                    .any(|window| window == instruction),
+                "production lift/lower omitted {instruction:02X?} from {code:02X?}"
+            );
+        }
+
+        let packed_sae_v256 = OpKind::X86GetExponent {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+            merge: None,
+            src: VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
+            mask: Some(k2),
+            elem: VecElementType::F32,
+            width: VecWidth::V256,
+            lanes: 8,
+            scalar: false,
+            mask_zeroing: false,
+            suppress_exceptions: true,
+        };
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                packed_sae_v256,
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x42,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+
+        let scalar_without_merge = OpKind::X86GetExponent {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            merge: None,
+            src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+            mask: None,
+            elem: VecElementType::F32,
+            width: VecWidth::V128,
+            lanes: 1,
+            scalar: true,
+            mask_zeroing: false,
+            suppress_exceptions: false,
+        };
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                scalar_without_merge,
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F38,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x43,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
     }
 
     #[test]
