@@ -2847,6 +2847,23 @@ impl OpKind {
                 }
             }
 
+            OpKind::X86FP16Complex {
+                dst,
+                src1,
+                src2,
+                mask,
+                mask_zeroing,
+                accumulate,
+                ..
+            } => {
+                result.push(*src1);
+                result.push(*src2);
+                result.extend(mask.iter().copied());
+                if *accumulate || (mask.is_some() && !mask_zeroing) {
+                    result.push(*dst);
+                }
+            }
+
             OpKind::X86PackedFpConvert {
                 dst,
                 src,

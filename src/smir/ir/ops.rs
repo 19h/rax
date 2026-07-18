@@ -3198,6 +3198,25 @@ pub enum OpKind {
         lanes: u8,
     },
 
+    /// x86 AVX512-FP16 complex multiply and multiply-add. Each mask bit
+    /// controls one adjacent real/imaginary FP16 pair. Dynamic rounding uses
+    /// MXCSR and records sticky status while the instruction-specific rule
+    /// masks every SIMD floating-point exception; explicit rounding denotes
+    /// EVEX embedded rounding with status suppression.
+    X86FP16Complex {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        mask: Option<VReg>,
+        width: VecWidth,
+        pairs: u8,
+        scalar: bool,
+        mask_zeroing: bool,
+        accumulate: bool,
+        conjugate: bool,
+        round: FpRoundMode,
+    },
+
     // ========================================================================
     // AVX10.1 OPERATIONS
     // ========================================================================
@@ -4389,6 +4408,7 @@ impl OpKind {
             | OpKind::VMin { dst, .. }
             | OpKind::VFma { dst, .. }
             | OpKind::X86FP16Fma { dst, .. }
+            | OpKind::X86FP16Complex { dst, .. }
             | OpKind::VDotProduct { dst, .. }
             | OpKind::VMultiplyAdd52 { dst, .. }
             | OpKind::VPopcnt { dst, .. }
@@ -4815,6 +4835,10 @@ impl OpKind {
                         round: FpRoundMode::Dynamic,
                         ..
                     }
+                    | OpKind::X86FP16Complex {
+                        round: FpRoundMode::Dynamic,
+                        ..
+                    }
                     | OpKind::X86X87Control {
                         kind:
                             X86X87ControlKind::Init
@@ -5039,6 +5063,62 @@ mod tests {
             lanes: 8,
         };
         assert!(!embedded.has_side_effects());
+    }
+
+    #[test]
+    fn x86_fp16_complex_metadata_tracks_accumulator_merge_mask_and_mxcsr_status() {
+        let dst = VReg::virt(0);
+        let src1 = VReg::virt(1);
+        let src2 = VReg::virt(2);
+        let mask = VReg::virt(3);
+        let accumulate = OpKind::X86FP16Complex {
+            dst,
+            src1,
+            src2,
+            mask: Some(mask),
+            width: VecWidth::V512,
+            pairs: 16,
+            scalar: false,
+            mask_zeroing: true,
+            accumulate: true,
+            conjugate: false,
+            round: FpRoundMode::Dynamic,
+        };
+        assert_eq!(accumulate.dests(), vec![dst]);
+        assert_eq!(accumulate.source_vregs(), vec![src1, src2, mask, dst]);
+        assert!(accumulate.has_side_effects());
+
+        let merge = OpKind::X86FP16Complex {
+            dst,
+            src1,
+            src2,
+            mask: Some(mask),
+            width: VecWidth::V128,
+            pairs: 1,
+            scalar: true,
+            mask_zeroing: false,
+            accumulate: false,
+            conjugate: true,
+            round: FpRoundMode::RoundNearest,
+        };
+        assert_eq!(merge.source_vregs(), vec![src1, src2, mask, dst]);
+        assert!(!merge.has_side_effects());
+
+        let overwrite = OpKind::X86FP16Complex {
+            dst,
+            src1,
+            src2,
+            mask: None,
+            width: VecWidth::V128,
+            pairs: 4,
+            scalar: false,
+            mask_zeroing: false,
+            accumulate: false,
+            conjugate: false,
+            round: FpRoundMode::RoundNearest,
+        };
+        assert_eq!(overwrite.source_vregs(), vec![src1, src2]);
+        assert!(!overwrite.has_side_effects());
     }
 
     #[test]

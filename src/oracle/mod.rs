@@ -3228,6 +3228,32 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             round,
             lanes
         ),
+        OpKind::X86FP16Complex {
+            dst,
+            src1,
+            src2,
+            mask,
+            width,
+            pairs,
+            scalar,
+            mask_zeroing,
+            accumulate,
+            conjugate,
+            round,
+        } => op_json!(
+            "x86_fp16_complex",
+            dst,
+            src1,
+            src2,
+            mask,
+            width,
+            pairs,
+            scalar,
+            mask_zeroing,
+            accumulate,
+            conjugate,
+            round
+        ),
         OpKind::VDotProduct {
             dst,
             acc,
