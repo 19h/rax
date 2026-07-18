@@ -205,7 +205,7 @@ typedef struct rax_exit {
     int32_t  reason;    /* RAX_STOP_* */
     int32_t  status;    /* rax_status if reason == RAX_STOP_ERROR */
     uint64_t address;   /* PC at stop, or fault/MMIO address */
-    uint64_t value;     /* I/O / MMIO value, or auxiliary datum */
+    uint64_t value;     /* I/O/MMIO value; attempted steps for control stops */
     uint32_t size;      /* access size in bytes (I/O / MMIO) */
     uint32_t port;      /* I/O port (IO_IN / IO_OUT) */
     uint32_t intno;     /* interrupt/exception vector */

@@ -403,6 +403,7 @@ impl AArch64Cpu {
     /// counters + code-page set). Whole-cache eviction is coarse but correct and
     /// SMC is rare; heads re-promote from the modified bytes. Called at the top
     /// of `step_system`, never mid-region.
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_drain_smc(&mut self) {
         if self.jit.smc_dirty {
             self.jit.cache.clear();

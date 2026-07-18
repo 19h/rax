@@ -32,6 +32,10 @@ const RCX: i32 = 0x0101;
 const EAX: i32 = 0x0200;
 const AH: i32 = 0x0500;
 const XMM0: i32 = 0x0B00;
+const ARM64_X0: i32 = 0x0100;
+const ARM64_V0: i32 = 0x0200;
+const ARM64_FPCR: i32 = 0x0020;
+const ARM64_FPSR: i32 = 0x0021;
 const RISCV_PC: i32 = 0x0011;
 const RISCV_X0: i32 = 0x0100;
 
@@ -309,6 +313,7 @@ fn count_and_until_stops() {
         let mut ex = ExitInfo::none();
         rax_emu_last_exit(e, &mut ex);
         assert_eq!(ex.reason, RAX_STOP_COUNT);
+        assert_eq!(ex.value, 2, "COUNT exit must expose attempted steps");
         assert_eq!(rd_u64(e, RIP), 0x1002);
 
         // until = 0x1003
@@ -448,6 +453,123 @@ fn arm64_step_advances_pc() {
         assert_eq!(executed, 1);
         assert_eq!(rd_u64(e, 0x0011), 0x1004);
         assert!(rax_emu_icount(e) >= 1);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn arm64_mem_hook_observes_load_store_fetch() {
+    use crate::hook::{
+        RAX_HOOK_MEM_FETCH, RAX_HOOK_MEM_READ, RAX_HOOK_MEM_WRITE, rax_hook_add_mem,
+    };
+    unsafe {
+        let mut e: *mut Engine = ptr::null_mut();
+        assert_eq!(
+            rax_engine_open(RaxArch::Arm64 as i32, 0, &mut e),
+            RaxStatus::Ok
+        );
+        // mov x0,#0x1122 ; str x0,[sp] ; ldr x1,[sp] ; ret
+        write(
+            e,
+            0x1000,
+            &[
+                0x40, 0x24, 0x82, 0xD2, 0xE0, 0x03, 0x00, 0xF9, 0xE1, 0x03, 0x40, 0xF9, 0xC0, 0x03,
+                0x5F, 0xD6,
+            ],
+        );
+        assert_eq!(rax_reg_write_u64(e, 0x0010, 0x3000), RaxStatus::Ok); // SP
+
+        let mut obs = MemObs::default();
+        let mut id = 0u32;
+        assert_eq!(
+            rax_hook_add_mem(
+                e,
+                RAX_HOOK_MEM_READ | RAX_HOOK_MEM_WRITE | RAX_HOOK_MEM_FETCH,
+                1,
+                0,
+                Some(mem_cb),
+                &mut obs as *mut _ as *mut c_void,
+                &mut id,
+            ),
+            RaxStatus::Ok
+        );
+        assert_eq!(rax_emu_start(e, 0x1000, 0x100C, 0, 10), RaxStatus::Ok);
+        assert_eq!(obs.writes, 1);
+        assert_eq!(obs.last_write_addr, 0x3000);
+        assert_eq!(obs.last_write_val, 0x1122);
+        assert_eq!(obs.reads, 1);
+        assert_eq!(obs.last_read_addr, 0x3000);
+        assert_eq!(obs.last_read_val, 0x1122);
+        assert_eq!(obs.fetches, 3);
+        assert_eq!(rd_u64(e, 0x0101), 0x1122); // X1
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn arm64_emu_start_begin_preserves_monotonic_instruction_count() {
+    unsafe {
+        let mut e: *mut Engine = ptr::null_mut();
+        assert_eq!(
+            rax_engine_open(RaxArch::Arm64 as i32, 0, &mut e),
+            RaxStatus::Ok
+        );
+        let code = [
+            0x1F, 0x20, 0x03, 0xD5, // nop
+            0x1F, 0x20, 0x03, 0xD5, // nop
+        ];
+        write(e, 0x1000, &code);
+        assert_eq!(rax_emu_start(e, 0x1000, RAX_NO_ADDR, 0, 1), RaxStatus::Ok);
+        assert_eq!(rax_emu_icount(e), 1);
+        assert_eq!(rax_emu_start(e, 0x1004, RAX_NO_ADDR, 0, 1), RaxStatus::Ok);
+        assert_eq!(rax_emu_icount(e), 2);
+        rax_engine_close(e);
+    }
+}
+
+#[test]
+fn arm64_register_updates_preserve_runtime_and_simd_fp_state() {
+    unsafe {
+        let mut e: *mut Engine = ptr::null_mut();
+        assert_eq!(
+            rax_engine_open(RaxArch::Arm64 as i32, 0, &mut e),
+            RaxStatus::Ok
+        );
+        let code = [
+            0x1F, 0x20, 0x03, 0xD5, // nop
+            0x1F, 0x20, 0x03, 0xD5, // nop
+        ];
+        write(e, 0x1000, &code);
+
+        let vector = [
+            0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01, 0x10, 0x32, 0x54, 0x76, 0x98, 0xba,
+            0xdc, 0xfe,
+        ];
+        assert_eq!(rax_reg_write(e, ARM64_V0, vector.as_ptr()), RaxStatus::Ok);
+        assert_eq!(rax_reg_write_u64(e, ARM64_FPCR, 1 << 24), RaxStatus::Ok);
+        assert_eq!(rax_reg_write_u64(e, ARM64_FPSR, 1 << 27), RaxStatus::Ok);
+
+        assert_eq!(rax_emu_start(e, 0x1000, RAX_NO_ADDR, 0, 1), RaxStatus::Ok);
+        assert_eq!(rax_emu_icount(e), 1);
+
+        // A scalar summary-style write must not reset execution counters or
+        // discard unrelated SIMD/FP architectural state.
+        assert_eq!(
+            rax_reg_write_u64(e, ARM64_X0, 0xfeed_face_cafe_beef),
+            RaxStatus::Ok
+        );
+        assert_eq!(rax_emu_icount(e), 1);
+        let mut observed = [0u8; 16];
+        assert_eq!(
+            rax_reg_read(e, ARM64_V0, observed.as_mut_ptr(), ptr::null_mut()),
+            RaxStatus::Ok
+        );
+        assert_eq!(observed, vector);
+        assert_eq!(rd_u64(e, ARM64_FPCR), 1 << 24);
+        assert_eq!(rd_u64(e, ARM64_FPSR), 1 << 27);
+
+        assert_eq!(rax_emu_start(e, 0x1004, RAX_NO_ADDR, 0, 1), RaxStatus::Ok);
+        assert_eq!(rax_emu_icount(e), 2);
         rax_engine_close(e);
     }
 }

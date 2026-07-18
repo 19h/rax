@@ -48,6 +48,26 @@ impl AArch64Cpu {
         self.v[(n & 31) as usize] = value;
     }
 
+    /// Floating-point control register, masked to architecturally modeled bits.
+    pub fn fpcr_value(&self) -> u32 {
+        mask_fpcr(self.fpcr)
+    }
+
+    /// Replace the floating-point control register.
+    pub fn set_fpcr_value(&mut self, value: u32) {
+        self.fpcr = mask_fpcr(value);
+    }
+
+    /// Floating-point status register, masked to architecturally modeled bits.
+    pub fn fpsr_value(&self) -> u32 {
+        mask_fpsr(self.fpsr)
+    }
+
+    /// Replace the floating-point status register.
+    pub fn set_fpsr_value(&mut self, value: u32) {
+        self.fpsr = mask_fpsr(value);
+    }
+
 
     /// Set X register (X0-X30, write to XZR is ignored).
     pub fn set_x(&mut self, reg: u8, value: u64) {
@@ -788,6 +808,7 @@ impl AArch64Cpu {
 
     /// Enable/disable JIT of memory-touching regions (Load/Store via helpers).
     /// Off by default (register-only regions); memory ops otherwise bail.
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub fn set_jit_mem(&mut self, on: bool) {
         self.jit.mem = on;
     }
@@ -796,6 +817,7 @@ impl AArch64Cpu {
     /// Enable/disable the JIT tier for this CPU instance (default enabled).
     /// Disabling forces pure interpretation — used to obtain a differential
     /// oracle without touching the process-global `RAX_NO_JIT`.
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub fn set_jit_enabled(&mut self, on: bool) {
         self.jit.disabled = !on;
     }
@@ -803,6 +825,7 @@ impl AArch64Cpu {
 
     /// Run a compiled region over the current state. FP/SIMD regions take the
     /// V-register-marshaling trampoline; integer-only regions the cheaper one.
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_run_region(&mut self, region: &JitRegion) {
         let mut gr = self.jit_marshal_to();
         gr.ctx = self as *mut AArch64Cpu as u64; // mutable ctx for the store helper
@@ -822,6 +845,7 @@ impl AArch64Cpu {
     /// Lift+optimize+lower the region at the current PC. `None` if ineligible
     /// (lift/lower failure, no frontier, entry-is-frontier, clobber-unsafe, or
     /// a relocation slipped through).
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_compile_region(&mut self) -> Option<JitRegion> {
         use crate::smir::ir::Terminator;
         use crate::smir::ir::memory::MemoryError;

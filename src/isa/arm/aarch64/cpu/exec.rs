@@ -195,7 +195,7 @@ impl AArch64Cpu {
     /// Fetch instruction at PC.
     pub(crate) fn fetch_instruction(&self) -> Result<u32, ArmError> {
         let pa = self.translate_address(self.pc, false, true)?;
-        self.memory.read_u32(pa).map_err(|e| e.into())
+        self.memory.fetch_u32(pa).map_err(|e| e.into())
     }
 
 
@@ -2101,6 +2101,7 @@ impl AArch64Cpu {
     /// lands in a page covered by a cached region, flag the cache stale so the
     /// next `step_system` drains it (self-modifying-code correctness). The
     /// fast `is_empty()` guard keeps the common no-JIT-code-pages case cheap.
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_note_write(&mut self, va: u64) {
         if !self.jit.code_pages.is_empty() && self.jit.code_pages.contains(&(va & !0xFFF)) {
             self.jit.smc_dirty = true;
@@ -2111,6 +2112,7 @@ impl AArch64Cpu {
     /// Cache-key discriminator: the active translation regime (TTBR0 frame + EL
     /// + MMU-enable). A region is only reused while these are unchanged, so a
     /// context switch can never run a stale region.
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_mode_tag(&self) -> u64 {
         (self.sysregs.el1.ttbr0 & !0xFFF)
             | (self.current_el as u64)
@@ -2120,6 +2122,7 @@ impl AArch64Cpu {
 
     /// Read up to `max` bytes of guest instruction stream from `entry`, stopping
     /// at the first unmapped word (fault-free; tolerates a short mapped tail).
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_read_window(&self, entry: u64, max: usize) -> Vec<u8> {
         let mut bytes = Vec::with_capacity(max);
         let mut a = entry;
@@ -2137,6 +2140,7 @@ impl AArch64Cpu {
 
 
     /// Marshal live architectural state into the native register file.
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_marshal_to(&self) -> crate::smir::lower::runtime::Aarch64GuestRegs {
         let mut gr = crate::smir::lower::runtime::Aarch64GuestRegs::default();
         gr.load_fn = rax_a64_mem_load as usize as u64;
@@ -2160,6 +2164,7 @@ impl AArch64Cpu {
 
 
     /// Marshal the native register file back, resuming at the recorded PC.
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_marshal_from(&mut self, gr: &crate::smir::lower::runtime::Aarch64GuestRegs) {
         for i in 0..NUM_GPRS {
             self.x[i] = gr.x[i];
@@ -2176,6 +2181,7 @@ impl AArch64Cpu {
 
 
     /// Fast-path lookup: a runnable compiled region at `pc` in the current mode.
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_lookup(&self, pc: u64) -> Option<std::sync::Arc<JitRegion>> {
         if self.jit.disabled {
             return None;
@@ -2191,6 +2197,7 @@ impl AArch64Cpu {
     /// After an interpreted instruction: if it was a backward branch (PC
     /// decreased — a loop back-edge), bump the head's hotness and, once hot,
     /// compile + run the region. RAX_NO_JIT disables promotion.
+    #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_sample_backedge(&mut self, pc_before: u64) {
         {
             use std::sync::OnceLock;

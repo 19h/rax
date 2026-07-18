@@ -569,8 +569,6 @@ unsafe extern "C" fn rax_a64_vec_store(
     1
 }
 
-#[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
-
 impl ArmCpu for AArch64Cpu {
     fn step(&mut self) -> Result<CpuExit, ArmError> {
         if self.halted {
@@ -845,4 +843,3 @@ impl ArmCpu for AArch64Cpu {
         Ok(())
     }
 }
-

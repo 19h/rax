@@ -365,7 +365,7 @@ pub extern "C" fn rax_hook_add_invalid(
 /// Adds a per-access memory hook for accesses in `[begin, end]` (`begin > end`
 /// ⇒ all addresses), filtered to the access kinds in `types` (any combination
 /// of `RAX_HOOK_MEM_READ`/`WRITE`/`FETCH`). Requires a backend that reports
-/// `rax_engine_supports_*` memory hooks (x86-64 today). The callback fires once
+/// `rax_engine_supports_*` memory hooks (x86-64 and AArch64 today). The callback fires once
 /// per matching access, after the instruction that made it retires.
 #[unsafe(no_mangle)]
 pub extern "C" fn rax_hook_add_mem(

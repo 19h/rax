@@ -193,7 +193,8 @@ memory tracing. All callbacks receive the engine handle and may freely re‑ente
 the API, including `rax_emu_stop`: memory accesses are recorded during execution
 and dispatched at instruction boundaries, so no callback ever runs while the
 engine is internally borrowed. Memory hooks require a recording‑capable backend
-(x86‑64 today; query via the `RAX_ERR_UNSUPPORTED` result of `rax_hook_add_mem`).
+(x86‑64 and AArch64 today; query via the `RAX_ERR_UNSUPPORTED` result of
+`rax_hook_add_mem`).
 
 ## Architecture capability matrix
 

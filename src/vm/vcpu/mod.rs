@@ -103,6 +103,23 @@ pub trait VCpu: Send {
         self.get_state().map(|s| s.pc()).unwrap_or(0)
     }
 
+    /// Set only the program counter, preserving all other architectural and
+    /// backend execution state. Backends should override this when loading a
+    /// full [`CpuState`] has reset semantics or omits implementation-private
+    /// state such as vector registers or monotonic counters.
+    fn set_current_pc(&mut self, pc: u64) -> Result<()> {
+        let mut state = self.get_state()?;
+        match &mut state {
+            CpuState::X86_64(s) => s.regs.rip = pc,
+            CpuState::Aarch64(s) => s.regs.pc = pc,
+            CpuState::Aarch32(s) => s.regs.pc = pc as u32,
+            CpuState::CortexM(s) => s.regs.pc = pc as u32,
+            CpuState::RiscV(s) => s.regs.pc = pc,
+            CpuState::Hexagon(s) => s.regs.set_pc(pc as u32),
+        }
+        self.set_state(&state)
+    }
+
     /// Whether this backend records per-access memory events (load/store/fetch)
     /// for memory hooks.
     fn supports_mem_hooks(&self) -> bool {
@@ -167,6 +184,16 @@ pub trait VCpu: Send {
 
     /// Set complete CPU state.
     fn set_state(&mut self, state: &CpuState) -> Result<()>;
+
+    /// Update the exported architectural register state without resetting
+    /// implementation-private runtime state (for example monotonic execution
+    /// counters, pending device state, or debugger configuration).  Register
+    /// APIs use this path after modifying a snapshot returned by
+    /// [`VCpu::get_state`].  Backends whose `set_state` operation is already a
+    /// non-destructive overlay may use the default implementation.
+    fn update_state(&mut self, state: &CpuState) -> Result<()> {
+        self.set_state(state)
+    }
 
     /// Complete an I/O in operation by providing the data read from the device.
     fn complete_io_in(&mut self, data: &[u8]);

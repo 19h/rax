@@ -17,7 +17,6 @@ use crate::hook::{
     MemHook, RAX_HOOK_MEM_FETCH, RAX_HOOK_MEM_READ, RAX_HOOK_MEM_WRITE, RAX_MEM_FETCH,
     RAX_MEM_READ, RAX_MEM_WRITE, SimpleHook,
 };
-use crate::reg;
 use crate::status::RaxStatus;
 
 /// Dispatches buffered memory-access records to matching memory hooks. Called
@@ -266,15 +265,7 @@ fn run_emulation(
         e.stop_flag.set(false);
         e.running = true;
         if let Some(b) = set_begin {
-            let mut st = match e.vcpu.get_state() {
-                Ok(s) => s,
-                Err(err) => {
-                    e.running = false;
-                    return e.fail_engine(&err);
-                }
-            };
-            reg::set_state_pc(&mut st, b);
-            if let Err(err) = e.vcpu.set_state(&st) {
+            if let Err(err) = e.vcpu.set_current_pc(b) {
                 e.running = false;
                 return e.fail_engine(&err);
             }
@@ -331,11 +322,13 @@ fn run_emulation(
             if count != 0 && executed >= count {
                 exit_info = ExitInfo::stop(RAX_STOP_COUNT);
                 exit_info.address = pc;
+                exit_info.value = executed;
                 break;
             }
             if timed_out(&start) {
                 exit_info = ExitInfo::stop(RAX_STOP_TIMEOUT);
                 exit_info.address = pc;
+                exit_info.value = executed;
                 break;
             }
 
@@ -486,6 +479,22 @@ fn run_emulation(
     }
 
     // ---- teardown (single transient borrow) ----
+    // For non-I/O control stops, `value` is an unambiguous attempted-step
+    // count. I/O/MMIO exits retain their protocol-specific value.
+    if matches!(
+        exit_info.reason,
+        RAX_STOP_COUNT
+            | RAX_STOP_UNTIL
+            | RAX_STOP_TIMEOUT
+            | RAX_STOP_STOPPED
+            | RAX_STOP_HLT
+            | RAX_STOP_EXCEPTION
+            | RAX_STOP_SHUTDOWN
+            | RAX_STOP_DEBUG
+            | RAX_STOP_ERROR
+    ) {
+        exit_info.value = executed;
+    }
     {
         let e = unsafe { &mut *eptr };
         e.running = false;

@@ -14,7 +14,7 @@
 //! PSCI calls (the device tree advertises `method = "hvc"`) surface as
 //! [`CpuExit::Hvc`]/[`CpuExit::Smc`] and are implemented here.
 
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 
 use tracing::{debug, info};
@@ -26,7 +26,7 @@ use crate::isa::arm::aarch64::{AArch64Config, AArch64Cpu, Gic};
 use crate::isa::arm::cpu_trait::{ArmCpu, CpuExit, ProcessorState};
 use crate::isa::arm::memory::{ArmMemory, MemResult, MemoryError, MmioHandler};
 use crate::machine::arm_virt::{AARCH64_GICD_BASE, AARCH64_GICR_BASE, AARCH64_UART_IRQ};
-use crate::vm::vcpu::{CpuState, VCpu, VcpuExit};
+use crate::vm::vcpu::{CpuState, MemAccess, MemRecord, VCpu, VcpuExit};
 
 /// GICv3 distributor frame size.
 const GICD_SIZE: u64 = 0x1_0000;
@@ -75,11 +75,59 @@ struct LateBound {
     uart: OnceLock<Arc<Mutex<Pl011>>>,
 }
 
+/// Instruction-scoped memory observation shared by the vCPU and its memory
+/// bridge. The C API enables it only while memory hooks are active and drains
+/// it after every step, so the enabled buffer is bounded by one instruction.
+#[derive(Default)]
+struct MemRecorder {
+    enabled: AtomicBool,
+    records: Mutex<Vec<MemRecord>>,
+}
+
+impl MemRecorder {
+    fn record(&self, access: MemAccess, addr: u64, bytes: &[u8]) {
+        if !self.enabled.load(Ordering::Relaxed) {
+            return;
+        }
+        let mut low = [0u8; 8];
+        let copied = bytes.len().min(low.len());
+        low[..copied].copy_from_slice(&bytes[..copied]);
+        if let Ok(mut records) = self.records.lock() {
+            records.push(MemRecord {
+                access,
+                addr,
+                size: bytes.len().min(u8::MAX as usize) as u8,
+                value: if access == MemAccess::Exec {
+                    0
+                } else {
+                    u64::from_le_bytes(low)
+                },
+            });
+        }
+    }
+
+    fn set_enabled(&self, enabled: bool) {
+        self.enabled.store(enabled, Ordering::Relaxed);
+        if !enabled {
+            if let Ok(mut records) = self.records.lock() {
+                records.clear();
+            }
+        }
+    }
+
+    fn drain(&self, out: &mut Vec<MemRecord>) {
+        if let Ok(mut records) = self.records.lock() {
+            out.append(&mut records);
+        }
+    }
+}
+
 /// Guest memory bridge: RAM via [`GuestMemoryMmap`], GIC and UART windows
 /// intercepted.
 struct GuestBridge {
     mem: Arc<GuestMemoryMmap>,
     late: Arc<LateBound>,
+    recorder: Arc<MemRecorder>,
     /// Local exclusive monitor: (address, size) of the open reservation.
     exclusive: Mutex<Option<(u64, u8)>>,
 }
@@ -168,10 +216,8 @@ impl GuestBridge {
             offset += take;
         }
     }
-}
 
-impl ArmMemory for GuestBridge {
-    fn read(&self, addr: u64, buf: &mut [u8]) -> MemResult<()> {
+    fn read_unrecorded(&self, addr: u64, buf: &mut [u8]) -> MemResult<()> {
         if in_window(addr, UART_BASE, UART_SIZE) {
             if let Some(uart) = self.late.uart.get() {
                 let mut dev = Pl011MmioDevice::new(UART_BASE, uart.clone());
@@ -195,6 +241,14 @@ impl ArmMemory for GuestBridge {
                 size: buf.len(),
             })
     }
+}
+
+impl ArmMemory for GuestBridge {
+    fn read(&self, addr: u64, buf: &mut [u8]) -> MemResult<()> {
+        self.read_unrecorded(addr, buf)?;
+        self.recorder.record(MemAccess::Read, addr, buf);
+        Ok(())
+    }
 
     fn write(&mut self, addr: u64, data: &[u8]) -> MemResult<()> {
         // Boot-debug physical watchpoint (set RAX_WATCH=hexaddr).
@@ -210,12 +264,14 @@ impl ArmMemory for GuestBridge {
                 crate::devices::bus::MmioDevice::write(&mut dev, addr, data);
             }
             self.sync_uart_irq();
+            self.recorder.record(MemAccess::Write, addr, data);
             return Ok(());
         }
         if in_window(addr, AARCH64_GICD_BASE, GICD_SIZE)
             || in_window(addr, AARCH64_GICR_BASE, GICR_SIZE)
         {
             self.gic_write(addr, data);
+            self.recorder.record(MemAccess::Write, addr, data);
             return Ok(());
         }
         self.mem
@@ -223,7 +279,15 @@ impl ArmMemory for GuestBridge {
             .map_err(|_| MemoryError::OutOfBounds {
                 addr,
                 size: data.len(),
-            })
+            })?;
+        self.recorder.record(MemAccess::Write, addr, data);
+        Ok(())
+    }
+
+    fn fetch(&self, addr: u64, buf: &mut [u8]) -> MemResult<()> {
+        self.read_unrecorded(addr, buf)?;
+        self.recorder.record(MemAccess::Exec, addr, buf);
+        Ok(())
     }
 
     fn mark_exclusive(&mut self, addr: u64, size: u8) {
@@ -262,6 +326,7 @@ pub struct Aarch64Vcpu {
     id: u32,
     cpu: AArch64Cpu,
     late: Arc<LateBound>,
+    recorder: Arc<MemRecorder>,
     /// Total instructions executed (also read for snapshot bookkeeping).
     insn_count: Arc<AtomicU64>,
     /// Last heartbeat log (wall clock).
@@ -274,9 +339,11 @@ pub struct Aarch64Vcpu {
 impl Aarch64Vcpu {
     pub fn new(id: u32, mem: Arc<GuestMemoryMmap>) -> Self {
         let late = Arc::new(LateBound::default());
+        let recorder = Arc::new(MemRecorder::default());
         let bridge = GuestBridge {
             mem,
             late: late.clone(),
+            recorder: recorder.clone(),
             exclusive: Mutex::new(None),
         };
         let cpu = AArch64Cpu::new(AArch64Config::default(), Box::new(bridge));
@@ -289,6 +356,7 @@ impl Aarch64Vcpu {
             id,
             cpu,
             late,
+            recorder,
             insn_count: Arc::new(AtomicU64::new(0)),
             last_heartbeat: std::time::Instant::now(),
             trace_reg_last: 0,
@@ -469,9 +537,15 @@ impl VCpu for Aarch64Vcpu {
         for i in 0..31 {
             regs.x[i] = self.cpu.get_gpr(i as u8);
         }
+        for i in 0..32 {
+            let value = self.cpu.get_simd(i as u8);
+            regs.v[i] = [value as u64, (value >> 64) as u64];
+        }
         regs.pc = self.cpu.get_pc();
         regs.sp = self.cpu.get_sp();
         regs.pstate = self.cpu.get_pstate().to_pstate();
+        regs.fpcr = self.cpu.fpcr_value();
+        regs.fpsr = self.cpu.fpsr_value();
         Ok(CpuState::aarch64(regs, self.cpu.export_sregs()))
     }
 
@@ -491,10 +565,51 @@ impl VCpu for Aarch64Vcpu {
         for i in 0..31 {
             self.cpu.set_gpr(i as u8, state.regs.x[i]);
         }
+        for i in 0..32 {
+            let [low, high] = state.regs.v[i];
+            self.cpu
+                .set_simd(i as u8, (low as u128) | ((high as u128) << 64));
+        }
+        self.cpu.set_fpcr_value(state.regs.fpcr);
+        self.cpu.set_fpsr_value(state.regs.fpsr);
         self.cpu.set_pc(state.regs.pc);
         // `regs.sp` is the canonical current SP. The banked SPs in `sregs`
         // are restored first so non-current SPs survive, then current SP is
         // overlaid for compatibility with existing initial-state callers.
+        self.cpu.set_sp(state.regs.sp);
+        self.shutdown = false;
+        Ok(())
+    }
+
+    fn update_state(&mut self, state: &CpuState) -> Result<()> {
+        let state = match state {
+            CpuState::Aarch64(s) => s,
+            _ => {
+                return Err(Error::Emulator(
+                    "expected aarch64 state for aarch64 vCPU".to_string(),
+                ));
+            }
+        };
+
+        // This is deliberately an overlay, not `set_state`: C API register
+        // writes must preserve instruction/cycle counters, device state,
+        // pending exceptions, break/watchpoints, and implementation-private
+        // execution state.  `state` originated from get_state(), so overlaying
+        // every exported field also preserves unrelated architectural values.
+        self.cpu
+            .set_pstate(ProcessorState::from_pstate(state.regs.pstate));
+        self.cpu.import_sregs(&state.sregs);
+        for i in 0..31 {
+            self.cpu.set_gpr(i as u8, state.regs.x[i]);
+        }
+        for i in 0..32 {
+            let [low, high] = state.regs.v[i];
+            self.cpu
+                .set_simd(i as u8, (low as u128) | ((high as u128) << 64));
+        }
+        self.cpu.set_fpcr_value(state.regs.fpcr);
+        self.cpu.set_fpsr_value(state.regs.fpsr);
+        self.cpu.set_pc(state.regs.pc);
         self.cpu.set_sp(state.regs.sp);
         self.shutdown = false;
         Ok(())
@@ -520,8 +635,25 @@ impl VCpu for Aarch64Vcpu {
         true
     }
 
+    fn supports_mem_hooks(&self) -> bool {
+        true
+    }
+
+    fn set_mem_recording(&mut self, on: bool) {
+        self.recorder.set_enabled(on);
+    }
+
+    fn drain_mem_records(&mut self, out: &mut Vec<MemRecord>) {
+        self.recorder.drain(out);
+    }
+
     fn current_pc(&self) -> u64 {
         self.cpu.get_pc()
+    }
+
+    fn set_current_pc(&mut self, pc: u64) -> Result<()> {
+        self.cpu.set_pc(pc);
+        Ok(())
     }
 
     fn step_insn(&mut self) -> Result<Option<VcpuExit>> {
@@ -629,6 +761,10 @@ mod tests {
         regs.pc = 0x1000;
         regs.sp = 0x8000;
         regs.x[0] = 0x1234;
+        regs.v[0] = [0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210];
+        regs.v[31] = [0xa5a5_a5a5_a5a5_a5a5, 0x5a5a_5a5a_5a5a_5a5a];
+        regs.fpcr = 1 << 24;
+        regs.fpsr = 1 << 27;
 
         let mut sregs = Aarch64SystemRegisters::default();
         sregs.sctlr_el1 = 0x2;
@@ -661,6 +797,16 @@ mod tests {
         assert_eq!(state.regs.x[0], 0x1234);
         assert_eq!(state.regs.pc, 0x1000);
         assert_eq!(state.regs.sp, 0x8000);
+        assert_eq!(
+            state.regs.v[0],
+            [0x0123_4567_89ab_cdef, 0xfedc_ba98_7654_3210]
+        );
+        assert_eq!(
+            state.regs.v[31],
+            [0xa5a5_a5a5_a5a5_a5a5, 0x5a5a_5a5a_5a5a_5a5a]
+        );
+        assert_eq!(state.regs.fpcr, 1 << 24);
+        assert_eq!(state.regs.fpsr, 1 << 27);
         assert_eq!(state.sregs.sctlr_el1, sregs.sctlr_el1);
         assert_eq!(state.sregs.tcr_el1, sregs.tcr_el1);
         assert_eq!(state.sregs.ttbr0_el1, sregs.ttbr0_el1);

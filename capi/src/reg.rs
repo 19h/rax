@@ -912,7 +912,7 @@ pub extern "C" fn rax_reg_write(engine: *mut Engine, regid: c_int, value: *const
         if res.is_none() {
             return e.fail(RaxStatus::Reg, "invalid register id for architecture");
         }
-        match e.vcpu.set_state(&st) {
+        match e.vcpu.update_state(&st) {
             Ok(()) => RaxStatus::Ok,
             Err(err) => e.fail_engine(&err),
         }
