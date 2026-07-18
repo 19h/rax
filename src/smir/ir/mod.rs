@@ -708,6 +708,49 @@ impl X86InstructionBytes {
             _ => None,
         }
     }
+
+    /// Validate register-only EVEX binary32/binary64 shuffle and unpack
+    /// operations and return whether the vector length requires AVX-512VL.
+    /// VSHUF* carries an imm8 while VUNPCKL*/VUNPCKH* does not. Memory,
+    /// broadcast, EVEX.b, reserved vector lengths, and malformed masks fail
+    /// closed.
+    pub fn evex_register_fp_shuffle_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if !matches!(bytes.len(), 6 | 7) || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+        if p0 & 0x0f != 1 || p1 & 0x04 == 0 || modrm >> 6 != 3 {
+            return None;
+        }
+        match opcode {
+            0x14 | 0x15 if bytes.len() == 6 => {}
+            0xC6 if bytes.len() == 7 => {}
+            _ => return None,
+        }
+
+        let pp = p1 & 0x03;
+        let w = p1 & 0x80 != 0;
+        if !matches!(pp, 0 | 1) || w != (pp == 1) {
+            return None;
+        }
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || (zeroing && mask == 0) {
+            return None;
+        }
+        match ll {
+            0 | 1 => Some(true),
+            2 => Some(false),
+            _ => None,
+        }
+    }
 }
 
 /// A contiguous semantic-op group that may be replaced by one exact native x86
@@ -923,6 +966,20 @@ pub fn x86_evex_packed_compare_replay_spans(
     })
 }
 
+/// Identify valid register-only EVEX floating shuffle/interleave replay groups
+/// in `block` in O(N) time and O(P) space for N operations and P unique guest
+/// PCs.
+pub fn x86_evex_fp_shuffle_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_fp_shuffle_needs_vl()
+            .map(|needs_vl| (needs_vl, false))
+    })
+}
+
 /// Identify every validated native EVEX replay group in one O(N)-time,
 /// O(P)-space block pass. Classifiers are intentionally disjoint and ordered
 /// explicitly so adding a replay family does not add another scan of the SMIR
@@ -980,6 +1037,11 @@ pub fn x86_evex_native_replay_spans(
             .or_else(|| {
                 instruction
                     .evex_register_packed_compare_needs_vl()
+                    .map(|needs_vl| (needs_vl, false))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_fp_shuffle_needs_vl()
                     .map(|needs_vl| (needs_vl, false))
             })
     })
@@ -1953,6 +2015,49 @@ mod tests {
                 X86InstructionBytes::new(bytes)
                     .unwrap()
                     .evex_register_packed_compare_needs_vl(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn x86_evex_fp_shuffle_replay_classifier_is_exact_and_fail_closed() {
+        let valid = [
+            // vunpcklpd zmm17{k1}{z}, zmm18, zmm19
+            (&[0x62, 0xA1, 0xED, 0xC1, 0x14, 0xCB][..], Some(false)),
+            (&[0x62, 0xF1, 0x6C, 0x29, 0x15, 0xC8][..], Some(true)),
+            (&[0x62, 0xF1, 0xED, 0x09, 0xC6, 0xC8, 0xE4][..], Some(true)),
+        ];
+        for (bytes, expected) in valid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_fp_shuffle_needs_vl(),
+                expected,
+                "{bytes:02X?}"
+            );
+        }
+
+        let invalid: &[&[u8]] = &[
+            &[0x62, 0xF2, 0x7C, 0x09, 0x14, 0xC8],       // wrong map
+            &[0x62, 0xF1, 0x78, 0x09, 0x14, 0xC8],       // missing fixed-one bit
+            &[0x62, 0xF1, 0x7E, 0x09, 0x14, 0xC8],       // invalid mandatory prefix
+            &[0x62, 0xF1, 0xFC, 0x09, 0x14, 0xC8],       // VUNPCKLPS with W1
+            &[0x62, 0xF1, 0x7D, 0x09, 0x14, 0xC8],       // VUNPCKLPD with W0
+            &[0x62, 0xF1, 0x7C, 0x09, 0x14, 0x08],       // memory source
+            &[0x62, 0xF1, 0x7C, 0x19, 0x14, 0xC8],       // EVEX.b
+            &[0x62, 0xF1, 0x7C, 0x88, 0x14, 0xC8],       // {z} with k0
+            &[0x62, 0xF1, 0x7C, 0x69, 0x14, 0xC8],       // L'L=3
+            &[0x62, 0xF1, 0x7C, 0x09, 0xC6, 0xC8],       // missing shuffle imm8
+            &[0x62, 0xF1, 0x7C, 0x09, 0x14, 0xC8, 0x00], // spurious unpack imm8
+            &[0x62, 0xF1, 0x7C, 0x09, 0x16, 0xC8],       // unrelated opcode
+        ];
+        for bytes in invalid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_fp_shuffle_needs_vl(),
                 None,
                 "{bytes:02X?}"
             );
