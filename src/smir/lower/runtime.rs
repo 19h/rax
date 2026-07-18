@@ -7053,6 +7053,7 @@ pub fn x86_native_vector_features_supported_excluding(
             any = true;
             needs_vl |= span.needs_avx512vl;
             needs_dq |= span.needs_avx512dq;
+            needs_fp16 |= span.needs_avx512fp16;
         }
     }
 
@@ -23281,6 +23282,68 @@ mod jit_gate_tests {
             .x86_instruction_bytes
             .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
         assert!(!is_native_clobber_safe(&memory_metadata));
+    }
+
+    #[test]
+    fn x86_evex_fp16_fma_replay_requires_fp16_and_rejects_memory_metadata() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        const PC: u64 = 0x1000;
+        for (bytes, needs_vl) in [
+            (&[0x62, 0xF6, 0x6D, 0x08, 0x98, 0xCB][..], true),
+            (&[0x62, 0xA6, 0x6D, 0xC1, 0xB8, 0xCB][..], false),
+            (&[0x62, 0xA6, 0x6D, 0x81, 0xBF, 0xCB][..], false),
+        ] {
+            let mut lifter = X86_64Lifter::strict();
+            let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+            let result = lifter.lift_insn(PC, bytes, &mut context).unwrap();
+            let mut block = SmirBlock::new(BlockId(0), PC);
+            block.ops = result.ops;
+            block.set_terminator(Terminator::Return { values: Vec::new() });
+            let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+            function.add_block(block);
+            function
+                .x86_instruction_bytes
+                .insert((BlockId(0), PC), X86InstructionBytes::new(bytes).unwrap());
+
+            assert!(is_native_clobber_safe(&function), "{bytes:02X?}");
+            assert!(
+                uses_x86_native_vectors_excluding(&function, &std::collections::HashMap::new()),
+                "{bytes:02X?}"
+            );
+            #[cfg(target_arch = "x86_64")]
+            assert_eq!(
+                x86_native_vector_features_supported_excluding(
+                    &function,
+                    &std::collections::HashMap::new()
+                ),
+                std::is_x86_feature_detected!("avx512f")
+                    && std::is_x86_feature_detected!("avx512bw")
+                    && std::is_x86_feature_detected!("avx512fp16")
+                    && (!needs_vl || std::is_x86_feature_detected!("avx512vl")),
+                "{bytes:02X?}"
+            );
+            #[cfg(not(target_arch = "x86_64"))]
+            assert!(
+                !x86_native_vector_features_supported_excluding(
+                    &function,
+                    &std::collections::HashMap::new()
+                ),
+                "{bytes:02X?}"
+            );
+
+            let mut memory_metadata = function;
+            let mut memory_bytes = [0u8; 6];
+            memory_bytes.copy_from_slice(bytes);
+            memory_bytes[5] &= 0x3f;
+            memory_metadata.x86_instruction_bytes.insert(
+                (BlockId(0), PC),
+                X86InstructionBytes::new(&memory_bytes).unwrap(),
+            );
+            assert!(!is_native_clobber_safe(&memory_metadata), "{bytes:02X?}");
+        }
     }
 
     #[test]

@@ -504,6 +504,92 @@ impl X86InstructionBytes {
         Some(false)
     }
 
+    /// Validate register-only EVEX packed binary16 fused
+    /// multiply-add/subtract operations and return whether the vector length
+    /// requires AVX-512VL. Every admitted instruction additionally requires
+    /// AVX-512-FP16. Memory and EVEX.b embedded-rounding forms are
+    /// intentionally excluded so replay remains register-only and uses the
+    /// guest MXCSR rounding mode.
+    pub fn evex_register_packed_fp16_fma_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+        if p0 & 0x0f != 6 || p1 & 0x04 == 0 || p1 & 0x80 != 0 || p1 & 0x03 != 1 || modrm >> 6 != 3 {
+            return None;
+        }
+        if !matches!(
+            opcode,
+            0x96..=0x98
+                | 0x9A
+                | 0x9C
+                | 0x9E
+                | 0xA6..=0xA8
+                | 0xAA
+                | 0xAC
+                | 0xAE
+                | 0xB6..=0xB8
+                | 0xBA
+                | 0xBC
+                | 0xBE
+        ) {
+            return None;
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || (zeroing && mask == 0) {
+            return None;
+        }
+        match ll {
+            0 | 1 => Some(true),
+            2 => Some(false),
+            _ => None,
+        }
+    }
+
+    /// Validate register-only EVEX scalar binary16 fused
+    /// multiply-add/subtract operations. Scalar AVX-512-FP16 forms do not
+    /// require AVX-512VL. Memory and EVEX.b embedded-rounding forms are
+    /// intentionally excluded so replay uses the guest MXCSR rounding mode,
+    /// and LLIG is admitted only in its canonical L'L=0 encoding.
+    pub fn evex_register_scalar_fp16_fma_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+        if p0 & 0x0f != 6 || p1 & 0x04 == 0 || p1 & 0x80 != 0 || p1 & 0x03 != 1 || modrm >> 6 != 3 {
+            return None;
+        }
+        if !matches!(
+            opcode,
+            0x99 | 0x9B | 0x9D | 0x9F | 0xA9 | 0xAB | 0xAD | 0xAF | 0xB9 | 0xBB | 0xBD | 0xBF
+        ) {
+            return None;
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || ll != 0 || (zeroing && mask == 0) {
+            return None;
+        }
+        Some(false)
+    }
+
     /// Validate register-only EVEX packed signed/unsigned integer minimum and
     /// maximum operations and return whether the vector length requires
     /// AVX-512VL. Byte/word forms use AVX-512BW and doubleword/quadword forms
@@ -887,6 +973,8 @@ pub struct X86NativeReplaySpan {
     pub needs_avx512vl: bool,
     /// Whether native execution requires AVX-512DQ.
     pub needs_avx512dq: bool,
+    /// Whether native execution requires AVX-512-FP16.
+    pub needs_avx512fp16: bool,
 }
 
 /// Compatibility name for the first replay family.
@@ -895,7 +983,7 @@ pub type X86EvexFpReplaySpan = X86NativeReplaySpan;
 fn x86_evex_replay_spans_where(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
-    classify: impl Fn(&X86InstructionBytes) -> Option<(bool, bool)>,
+    classify: impl Fn(&X86InstructionBytes) -> Option<(bool, bool, bool)>,
 ) -> HashMap<usize, X86NativeReplaySpan> {
     let mut groups = HashMap::<GuestAddr, (usize, usize, bool)>::new();
     for (index, op) in block.ops.iter().enumerate() {
@@ -917,7 +1005,7 @@ fn x86_evex_replay_spans_where(
                 return None;
             }
             let instruction = *instruction_bytes.get(&(block.id, guest_pc))?;
-            let (needs_avx512vl, needs_avx512dq) = classify(&instruction)?;
+            let (needs_avx512vl, needs_avx512dq, needs_avx512fp16) = classify(&instruction)?;
             Some((
                 start,
                 X86NativeReplaySpan {
@@ -925,6 +1013,7 @@ fn x86_evex_replay_spans_where(
                     instruction,
                     needs_avx512vl,
                     needs_avx512dq,
+                    needs_avx512fp16,
                 },
             ))
         })
@@ -943,7 +1032,7 @@ pub fn x86_evex_fp_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_fp_arithmetic_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
     })
 }
 
@@ -954,7 +1043,9 @@ pub fn x86_evex_logic_replay_spans(
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
 ) -> HashMap<usize, X86NativeReplaySpan> {
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
-        instruction.evex_register_logic_requirements()
+        instruction
+            .evex_register_logic_requirements()
+            .map(|(needs_vl, needs_dq)| (needs_vl, needs_dq, false))
     })
 }
 
@@ -968,7 +1059,7 @@ pub fn x86_evex_integer_arithmetic_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_integer_arithmetic_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
     })
 }
 
@@ -981,7 +1072,7 @@ pub fn x86_evex_shared_count_shift_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_shared_count_shift_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
     })
 }
 
@@ -994,7 +1085,7 @@ pub fn x86_evex_immediate_count_shift_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_immediate_count_shift_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
     })
 }
 
@@ -1007,7 +1098,7 @@ pub fn x86_evex_packed_fma_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_packed_fma_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
     })
 }
 
@@ -1020,7 +1111,33 @@ pub fn x86_evex_scalar_fma_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_scalar_fma_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
+    })
+}
+
+/// Identify valid register-only EVEX packed binary16 FMA replay groups in
+/// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
+pub fn x86_evex_packed_fp16_fma_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_packed_fp16_fma_needs_vl()
+            .map(|needs_vl| (needs_vl, false, true))
+    })
+}
+
+/// Identify valid register-only EVEX scalar binary16 FMA replay groups in
+/// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
+pub fn x86_evex_scalar_fp16_fma_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_scalar_fp16_fma_needs_vl()
+            .map(|needs_vl| (needs_vl, false, true))
     })
 }
 
@@ -1033,7 +1150,7 @@ pub fn x86_evex_integer_minmax_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_integer_minmax_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
     })
 }
 
@@ -1044,7 +1161,9 @@ pub fn x86_evex_integer_multiply_replay_spans(
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
 ) -> HashMap<usize, X86NativeReplaySpan> {
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
-        instruction.evex_register_integer_multiply_requirements()
+        instruction
+            .evex_register_integer_multiply_requirements()
+            .map(|(needs_vl, needs_dq)| (needs_vl, needs_dq, false))
     })
 }
 
@@ -1058,7 +1177,7 @@ pub fn x86_evex_integer_interleave_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_integer_interleave_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
     })
 }
 
@@ -1072,7 +1191,7 @@ pub fn x86_evex_integer_pack_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_integer_pack_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
     })
 }
 
@@ -1086,7 +1205,7 @@ pub fn x86_evex_packed_abs_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_packed_abs_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
     })
 }
 
@@ -1100,7 +1219,7 @@ pub fn x86_evex_packed_average_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_packed_average_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
     })
 }
 
@@ -1113,7 +1232,7 @@ pub fn x86_evex_packed_test_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_packed_test_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
     })
 }
 
@@ -1126,7 +1245,7 @@ pub fn x86_evex_packed_compare_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_packed_compare_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
     })
 }
 
@@ -1140,7 +1259,7 @@ pub fn x86_evex_fp_shuffle_replay_spans(
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         instruction
             .evex_register_fp_shuffle_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
     })
 }
 
@@ -1154,74 +1273,88 @@ pub fn x86_evex_native_replay_spans(
 ) -> HashMap<usize, X86NativeReplaySpan> {
     x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
         if let Some(needs_vl) = instruction.evex_register_fp_arithmetic_needs_vl() {
-            return Some((needs_vl, false));
+            return Some((needs_vl, false, false));
         }
         if let Some(requirements) = instruction.evex_register_logic_requirements() {
-            return Some(requirements);
+            return Some((requirements.0, requirements.1, false));
         }
         instruction
             .evex_register_integer_arithmetic_needs_vl()
-            .map(|needs_vl| (needs_vl, false))
+            .map(|needs_vl| (needs_vl, false, false))
             .or_else(|| {
                 instruction
                     .evex_register_shared_count_shift_needs_vl()
-                    .map(|needs_vl| (needs_vl, false))
+                    .map(|needs_vl| (needs_vl, false, false))
             })
             .or_else(|| {
                 instruction
                     .evex_register_immediate_count_shift_needs_vl()
-                    .map(|needs_vl| (needs_vl, false))
+                    .map(|needs_vl| (needs_vl, false, false))
             })
             .or_else(|| {
                 instruction
                     .evex_register_packed_fma_needs_vl()
-                    .map(|needs_vl| (needs_vl, false))
+                    .map(|needs_vl| (needs_vl, false, false))
             })
             .or_else(|| {
                 instruction
                     .evex_register_scalar_fma_needs_vl()
-                    .map(|needs_vl| (needs_vl, false))
+                    .map(|needs_vl| (needs_vl, false, false))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_packed_fp16_fma_needs_vl()
+                    .map(|needs_vl| (needs_vl, false, true))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_scalar_fp16_fma_needs_vl()
+                    .map(|needs_vl| (needs_vl, false, true))
             })
             .or_else(|| {
                 instruction
                     .evex_register_integer_minmax_needs_vl()
-                    .map(|needs_vl| (needs_vl, false))
+                    .map(|needs_vl| (needs_vl, false, false))
             })
-            .or_else(|| instruction.evex_register_integer_multiply_requirements())
+            .or_else(|| {
+                instruction
+                    .evex_register_integer_multiply_requirements()
+                    .map(|(needs_vl, needs_dq)| (needs_vl, needs_dq, false))
+            })
             .or_else(|| {
                 instruction
                     .evex_register_integer_interleave_needs_vl()
-                    .map(|needs_vl| (needs_vl, false))
+                    .map(|needs_vl| (needs_vl, false, false))
             })
             .or_else(|| {
                 instruction
                     .evex_register_integer_pack_needs_vl()
-                    .map(|needs_vl| (needs_vl, false))
+                    .map(|needs_vl| (needs_vl, false, false))
             })
             .or_else(|| {
                 instruction
                     .evex_register_packed_abs_needs_vl()
-                    .map(|needs_vl| (needs_vl, false))
+                    .map(|needs_vl| (needs_vl, false, false))
             })
             .or_else(|| {
                 instruction
                     .evex_register_packed_average_needs_vl()
-                    .map(|needs_vl| (needs_vl, false))
+                    .map(|needs_vl| (needs_vl, false, false))
             })
             .or_else(|| {
                 instruction
                     .evex_register_packed_test_needs_vl()
-                    .map(|needs_vl| (needs_vl, false))
+                    .map(|needs_vl| (needs_vl, false, false))
             })
             .or_else(|| {
                 instruction
                     .evex_register_packed_compare_needs_vl()
-                    .map(|needs_vl| (needs_vl, false))
+                    .map(|needs_vl| (needs_vl, false, false))
             })
             .or_else(|| {
                 instruction
                     .evex_register_fp_shuffle_needs_vl()
-                    .map(|needs_vl| (needs_vl, false))
+                    .map(|needs_vl| (needs_vl, false, false))
             })
     })
 }
@@ -1979,6 +2112,108 @@ mod tests {
                 None,
                 "{bytes:02X?}"
             );
+        }
+    }
+
+    #[test]
+    fn x86_evex_packed_fp16_fma_replay_classifier_is_exact_and_fail_closed() {
+        let valid = [
+            (&[0x62, 0xF6, 0x6D, 0x08, 0x98, 0xCB][..], Some(true)),
+            (&[0x62, 0xA6, 0x6D, 0xA1, 0xA8, 0xCB][..], Some(true)),
+            (&[0x62, 0xA6, 0x6D, 0xC1, 0xB7, 0xCB][..], Some(false)),
+        ];
+        for (bytes, expected) in valid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_packed_fp16_fma_needs_vl(),
+                expected,
+                "{bytes:02X?}"
+            );
+        }
+
+        let invalid: &[&[u8]] = &[
+            &[0x62, 0xF2, 0x6D, 0x08, 0x98, 0xCB], // wrong map
+            &[0x62, 0xF6, 0x69, 0x08, 0x98, 0xCB], // missing EVEX fixed-one bit
+            &[0x62, 0xF6, 0x6C, 0x08, 0x98, 0xCB], // missing 66 prefix
+            &[0x62, 0xF6, 0xED, 0x08, 0x98, 0xCB], // W1
+            &[0x62, 0xF6, 0x6D, 0x08, 0x98, 0x0B], // memory source
+            &[0x62, 0xF6, 0x6D, 0x18, 0x98, 0xCB], // EVEX.b
+            &[0x62, 0xF6, 0x6D, 0x88, 0x98, 0xCB], // {z} with k0
+            &[0x62, 0xF6, 0x6D, 0x68, 0x98, 0xCB], // L'L=3
+            &[0x62, 0xF6, 0x6D, 0x08, 0x99, 0xCB], // scalar FMA opcode
+            &[0x62, 0xF6, 0x6D, 0x08, 0x95, 0xCB], // unrelated opcode
+            &[0x62, 0xF6, 0x6D, 0x08, 0x98],       // missing ModR/M
+        ];
+        for bytes in invalid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_packed_fp16_fma_needs_vl(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn x86_evex_scalar_fp16_fma_replay_classifier_is_exact_and_fail_closed() {
+        let valid: &[&[u8]] = &[
+            &[0x62, 0xF6, 0x6D, 0x08, 0x99, 0xCB],
+            &[0x62, 0xA6, 0x6D, 0x81, 0xBF, 0xCB],
+        ];
+        for bytes in valid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_scalar_fp16_fma_needs_vl(),
+                Some(false),
+                "{bytes:02X?}"
+            );
+        }
+
+        let invalid: &[&[u8]] = &[
+            &[0x62, 0xF2, 0x6D, 0x08, 0x99, 0xCB], // wrong map
+            &[0x62, 0xF6, 0x69, 0x08, 0x99, 0xCB], // missing EVEX fixed-one bit
+            &[0x62, 0xF6, 0x6C, 0x08, 0x99, 0xCB], // missing 66 prefix
+            &[0x62, 0xF6, 0xED, 0x08, 0x99, 0xCB], // W1
+            &[0x62, 0xF6, 0x6D, 0x08, 0x99, 0x0B], // memory source
+            &[0x62, 0xF6, 0x6D, 0x18, 0x99, 0xCB], // EVEX.b
+            &[0x62, 0xF6, 0x6D, 0x80, 0x99, 0xCB], // {z} with k0
+            &[0x62, 0xF6, 0x6D, 0x28, 0x99, 0xCB], // noncanonical LLIG
+            &[0x62, 0xF6, 0x6D, 0x08, 0x98, 0xCB], // packed FMA opcode
+            &[0x62, 0xF6, 0x6D, 0x08, 0x95, 0xCB], // unrelated opcode
+            &[0x62, 0xF6, 0x6D, 0x08, 0x99],       // missing ModR/M
+        ];
+        for bytes in invalid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_scalar_fp16_fma_needs_vl(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn x86_evex_fp16_fma_replay_spans_carry_exact_host_requirements() {
+        for (bytes, needs_vl) in [
+            (&[0x62, 0xF6, 0x6D, 0x08, 0x98, 0xCB][..], true),
+            (&[0x62, 0xA6, 0x6D, 0xC1, 0xB8, 0xCB][..], false),
+            (&[0x62, 0xA6, 0x6D, 0x81, 0xBF, 0xCB][..], false),
+        ] {
+            let mut block = SmirBlock::new(BlockId(7), 0x1000);
+            block.push_op(SmirOp::new(OpId(0), 0x1000, OpKind::Nop));
+            let instruction = X86InstructionBytes::new(bytes).unwrap();
+            let provenance = HashMap::from([((BlockId(7), 0x1000), instruction)]);
+            let spans = x86_evex_native_replay_spans(&block, &provenance);
+            let span = spans.get(&0).unwrap_or_else(|| panic!("{bytes:02X?}"));
+            assert_eq!(span.end, 1, "{bytes:02X?}");
+            assert_eq!(span.instruction, instruction, "{bytes:02X?}");
+            assert_eq!(span.needs_avx512vl, needs_vl, "{bytes:02X?}");
+            assert!(!span.needs_avx512dq, "{bytes:02X?}");
+            assert!(span.needs_avx512fp16, "{bytes:02X?}");
         }
     }
 
