@@ -2067,6 +2067,26 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             mask_zeroing,
             suppress_exceptions
         ),
+        OpKind::X86Exp2 {
+            dst,
+            src,
+            mask,
+            elem,
+            width,
+            lanes,
+            mask_zeroing,
+            suppress_exceptions,
+        } => op_json!(
+            "x86_exp2",
+            dst,
+            src,
+            mask,
+            elem,
+            width,
+            lanes,
+            mask_zeroing,
+            suppress_exceptions
+        ),
         OpKind::X86ScaleF {
             dst,
             src1,

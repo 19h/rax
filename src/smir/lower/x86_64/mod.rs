@@ -9861,6 +9861,76 @@ impl X86_64Lowerer {
                 );
             }
 
+            OpKind::X86Exp2 {
+                dst,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                mask_zeroing,
+                suppress_exceptions,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let aaa = match mask {
+                    None => 0,
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::K(n @ 1..=7)))) => *n,
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86Exp2".to_string(),
+                            operand: "mask must be architectural k1-k7".to_string(),
+                        });
+                    }
+                };
+                let w = match elem {
+                    VecElementType::F32 => false,
+                    VecElementType::F64 => true,
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86Exp2".to_string(),
+                            operand: format!("unsupported element {elem:?}"),
+                        });
+                    }
+                };
+                let valid_shape = dst_reg.is_zmm()
+                    && src_reg.is_zmm()
+                    && *width == VecWidth::V512
+                    && *lanes == width.lanes(*elem) as u8
+                    && (!*mask_zeroing || aaa != 0);
+                let valid_hint = matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::EvexOp {
+                        map: X86VecMap::Map0F38,
+                        pp: X86SsePrefix::OpSize,
+                        opcode: 0xC8,
+                        width: VecWidth::V512,
+                        w: hint_w,
+                    }) if hint_w == w
+                );
+                if !valid_shape || !valid_hint {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86Exp2".to_string(),
+                        operand: "non-canonical VEXP2 shape or encoding metadata".to_string(),
+                    });
+                }
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_evex_unary_fp_rr(
+                    X86VecMap::Map0F38,
+                    X86SsePrefix::OpSize,
+                    *width,
+                    w,
+                    0xC8,
+                    dst_reg,
+                    None,
+                    src_reg,
+                    aaa,
+                    *mask_zeroing,
+                    *suppress_exceptions,
+                    None,
+                );
+            }
+
             OpKind::X86ScaleF {
                 dst,
                 src1,
@@ -32805,6 +32875,118 @@ mod tests {
         );
         assert!(matches!(
             lower_single_hinted_op_err(wrong_hint, hint(0x54, VecWidth::V128, false)),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[test]
+    fn lower_x86_exp2_emits_canonical_evex_and_rejects_synthetic_shapes() {
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        let make = |dst, src, mask, elem, width, lanes, mask_zeroing, suppress_exceptions| {
+            OpKind::X86Exp2 {
+                dst,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                mask_zeroing,
+                suppress_exceptions,
+            }
+        };
+        let hint = |w| X86OpHint::EvexOp {
+            map: X86VecMap::Map0F38,
+            pp: X86SsePrefix::OpSize,
+            opcode: 0xC8,
+            width: VecWidth::V512,
+            w,
+        };
+        for (name, kind, encoding, expected) in [
+            (
+                "VEXP2PS zmm1,zmm3",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                    None,
+                    VecElementType::F32,
+                    VecWidth::V512,
+                    16,
+                    false,
+                    false,
+                ),
+                hint(false),
+                &[0x62, 0xF2, 0x7D, 0x48, 0xC8, 0xCB][..],
+            ),
+            (
+                "VEXP2PD zmm17{k2}{z},zmm19,{sae}",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(19))),
+                    Some(k2),
+                    VecElementType::F64,
+                    VecWidth::V512,
+                    8,
+                    true,
+                    true,
+                ),
+                hint(true),
+                &[0x62, 0xA2, 0xFD, 0x9A, 0xC8, 0xCB][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, encoding);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+
+            let mut block = expected.to_vec();
+            block.push(0xF4);
+            let (production, _) = lower_rex2_block(&block);
+            assert!(
+                production
+                    .windows(expected.len())
+                    .any(|window| window == expected),
+                "production lift/lower omitted {expected:02X?} from {production:02X?}"
+            );
+        }
+
+        let short = make(
+            VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+            VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
+            None,
+            VecElementType::F32,
+            VecWidth::V256,
+            8,
+            false,
+            false,
+        );
+        assert!(matches!(
+            lower_single_hinted_op_err(short, hint(false)),
+            LowerError::InvalidOperand { .. }
+        ));
+
+        let wrong_hint = make(
+            VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+            VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+            None,
+            VecElementType::F32,
+            VecWidth::V512,
+            16,
+            false,
+            false,
+        );
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                wrong_hint,
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map0F3A,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0xC8,
+                    width: VecWidth::V512,
+                    w: false,
+                }
+            ),
             LowerError::InvalidOperand { .. }
         ));
     }

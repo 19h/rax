@@ -2339,6 +2339,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::X86Reduce { .. }
             | OpKind::X86Range { .. }
             | OpKind::X86FixupImm { .. }
+            | OpKind::X86Exp2 { .. }
             | OpKind::X86ScaleF { .. }
             | OpKind::X86FP16Complex { .. }
             | OpKind::X86PackedIntToFp { .. }
@@ -3732,6 +3733,34 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
                 *lanes != width.lanes(*elem) as u8
                     || (*suppress_exceptions && *width != VecWidth::V512)
             }
+        {
+            return false;
+        }
+    }
+
+    if let OpKind::X86Exp2 {
+        dst,
+        src,
+        mask,
+        elem,
+        width,
+        lanes,
+        mask_zeroing,
+        ..
+    } = op
+    {
+        let vector_matches_width =
+            |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))));
+        if !matches!(
+            elem,
+            crate::smir::ir::types::VecElementType::F32
+                | crate::smir::ir::types::VecElementType::F64
+        ) || *width != VecWidth::V512
+            || *lanes != width.lanes(*elem) as u8
+            || !vector_matches_width(dst)
+            || !vector_matches_width(src)
+            || (*mask_zeroing && mask.is_none())
+            || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
         {
             return false;
         }
@@ -5219,6 +5248,26 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 width: encoded_width,
                 w,
             }) if opcode == expected_opcode && encoded_width == *width && w == expected_w
+        ) {
+            return false;
+        }
+    }
+
+    if let OpKind::X86Exp2 { elem, width, .. } = &op.kind {
+        let expected_w = match elem {
+            crate::smir::ir::types::VecElementType::F32 => false,
+            crate::smir::ir::types::VecElementType::F64 => true,
+            _ => return false,
+        };
+        if !matches!(
+            op.x86_hint,
+            Some(X86OpHint::EvexOp {
+                map: X86VecMap::Map0F38,
+                pp: crate::smir::ir::ops::X86SsePrefix::OpSize,
+                opcode: 0xC8,
+                width: encoded_width,
+                w,
+            }) if encoded_width == *width && w == expected_w
         ) {
             return false;
         }
@@ -7359,6 +7408,16 @@ fn x86_sm4_feature_required(op: &crate::smir::ir::ops::OpKind) -> bool {
     matches!(op, crate::smir::ir::ops::OpKind::X86Sm4 { .. })
 }
 
+#[cfg(target_arch = "x86_64")]
+fn x86_host_has_avx512er() -> bool {
+    // CPUID.(EAX=07H,ECX=0):EBX[27] enumerates AVX512ER. AVX-512 OS-state
+    // enablement is checked independently through the AVX512F runtime probe.
+    unsafe {
+        let max_leaf = std::arch::x86_64::__cpuid(0).eax;
+        max_leaf >= 7 && std::arch::x86_64::__cpuid_count(7, 0).ebx & (1 << 27) != 0
+    }
+}
+
 /// Verify that this host can execute every admitted vector opcode in `func`.
 /// The trampoline itself uses 512-bit VMOVDQU64 and 64-bit KMOVQ, so AVX-512F
 /// and AVX-512BW are unconditional requirements for every vector region.
@@ -7380,6 +7439,7 @@ pub fn x86_native_vector_features_supported_excluding(
     let mut needs_bf16 = false;
     let mut needs_cd = false;
     let mut needs_fp16 = false;
+    let mut needs_er = false;
     let mut needs_aes = false;
     let mut needs_vaes = false;
     let mut needs_sha512 = false;
@@ -7494,6 +7554,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86Reduce { width, .. }
             | OpKind::X86Range { width, .. }
             | OpKind::X86FixupImm { width, .. }
+            | OpKind::X86Exp2 { width, .. }
             | OpKind::X86ScaleF { width, .. }
             | OpKind::X86FP16Complex { width, .. }
             | OpKind::X86PackedIntToFp {
@@ -7642,6 +7703,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86FixupImm { scalar, .. }
             | OpKind::X86ScaleF { scalar, .. }
             | OpKind::X86FP16Complex { scalar, .. } => !*scalar && width != VecWidth::V512,
+            OpKind::X86Exp2 { .. } => false,
             OpKind::X86Aes { .. } => aes_vl,
             OpKind::X86PackedShiftImm { .. } => shift_vl,
             OpKind::X86PackedShift { .. } => count_vl,
@@ -7725,6 +7787,7 @@ pub fn x86_native_vector_features_supported_excluding(
                 | OpKind::X86PackedIntToFp16 { .. }
                 | OpKind::X86PackedFp16ToInt { .. }
         );
+        needs_er |= matches!(kind, OpKind::X86Exp2 { .. });
         needs_aes |= aes;
         needs_vaes |= vaes;
         needs_sha512 |= x86_sha512_feature_required(kind);
@@ -7818,6 +7881,7 @@ pub fn x86_native_vector_features_supported_excluding(
             && (!needs_bf16 || std::is_x86_feature_detected!("avx512bf16"))
             && (!needs_cd || std::is_x86_feature_detected!("avx512cd"))
             && (!needs_fp16 || std::is_x86_feature_detected!("avx512fp16"))
+            && (!needs_er || x86_host_has_avx512er())
             && (!(needs_dq || needs_mul_dq) || std::is_x86_feature_detected!("avx512dq"))
             && (!needs_aes || std::is_x86_feature_detected!("aes"))
             && (!needs_vaes || std::is_x86_feature_detected!("vaes"))
@@ -7895,6 +7959,7 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_bf16,
             needs_cd,
             needs_fp16,
+            needs_er,
             needs_aes,
             needs_vaes,
             needs_sha512,
@@ -17240,6 +17305,104 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn exp2_native_gate_validates_zmm_shapes_masks_and_encodings() {
+        let packed = OpKind::X86Exp2 {
+            dst: x86(X86Reg::Zmm(17)),
+            src: x86(X86Reg::Zmm(19)),
+            mask: Some(x86(X86Reg::K(2))),
+            elem: VecElementType::F32,
+            width: VecWidth::V512,
+            lanes: 16,
+            mask_zeroing: true,
+            suppress_exceptions: true,
+        };
+        let packed_op = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(0),
+            0xA000,
+            packed.clone(),
+            X86OpHint::EvexOp {
+                map: X86VecMap::Map0F38,
+                pp: X86SsePrefix::OpSize,
+                opcode: 0xC8,
+                width: VecWidth::V512,
+                w: false,
+            },
+        );
+        assert!(is_x86_native_vector_op(&packed));
+        assert!(x86_native_vector_smir_op(&packed_op));
+
+        let double = OpKind::X86Exp2 {
+            dst: x86(X86Reg::Zmm(1)),
+            src: x86(X86Reg::Zmm(3)),
+            mask: None,
+            elem: VecElementType::F64,
+            width: VecWidth::V512,
+            lanes: 8,
+            mask_zeroing: false,
+            suppress_exceptions: false,
+        };
+        let double_op = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(1),
+            0xA006,
+            double.clone(),
+            X86OpHint::EvexOp {
+                map: X86VecMap::Map0F38,
+                pp: X86SsePrefix::OpSize,
+                opcode: 0xC8,
+                width: VecWidth::V512,
+                w: true,
+            },
+        );
+        assert!(is_x86_native_vector_op(&double));
+        assert!(x86_native_vector_smir_op(&double_op));
+
+        let mut wrong_hint = double_op;
+        wrong_hint.x86_hint = Some(X86OpHint::EvexOp {
+            map: X86VecMap::Map0F3A,
+            pp: X86SsePrefix::OpSize,
+            opcode: 0xC8,
+            width: VecWidth::V512,
+            w: true,
+        });
+        assert!(!x86_native_vector_smir_op(&wrong_hint));
+
+        let mut virtual_source = double.clone();
+        let OpKind::X86Exp2 { src, .. } = &mut virtual_source else {
+            unreachable!()
+        };
+        *src = VReg::virt(7);
+        assert!(!is_x86_native_vector_op(&virtual_source));
+
+        let mut bad_mask = double.clone();
+        let OpKind::X86Exp2 {
+            mask, mask_zeroing, ..
+        } = &mut bad_mask
+        else {
+            unreachable!()
+        };
+        *mask = Some(x86(X86Reg::K(0)));
+        *mask_zeroing = true;
+        assert!(!is_x86_native_vector_op(&bad_mask));
+
+        let mut short = packed;
+        let OpKind::X86Exp2 {
+            dst,
+            src,
+            width,
+            lanes,
+            ..
+        } = &mut short
+        else {
+            unreachable!()
+        };
+        *dst = x86(X86Reg::Ymm(17));
+        *src = x86(X86Reg::Ymm(19));
+        *width = VecWidth::V256;
+        *lanes = 8;
+        assert!(!is_x86_native_vector_op(&short));
+    }
+
+    #[test]
     fn scale_f_native_gate_validates_shapes_rounding_and_encodings() {
         let packed = OpKind::X86ScaleF {
             dst: x86(X86Reg::Zmm(17)),
@@ -24395,6 +24558,57 @@ mod jit_gate_tests {
                     && std::is_x86_feature_detected!("avx512bw")
                     && std::is_x86_feature_detected!("avx512dq")
                     && (!needs_vl || std::is_x86_feature_detected!("avx512vl")),
+                "{bytes:02X?}"
+            );
+            #[cfg(not(target_arch = "x86_64"))]
+            assert!(
+                !x86_native_vector_features_supported_excluding(
+                    &function,
+                    &std::collections::HashMap::new()
+                ),
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn x86_evex_exp2_replay_requires_exact_er_feature() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        const PC: u64 = 0x1000;
+        for bytes in [
+            &[0x62, 0xF2, 0x7D, 0x48, 0xC8, 0xCB][..],
+            &[0x62, 0xF2, 0xFD, 0x48, 0xC8, 0xCB][..],
+            &[0x62, 0xA2, 0x7D, 0x99, 0xC8, 0xCB][..],
+        ] {
+            let mut lifter = X86_64Lifter::strict();
+            let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+            let result = lifter.lift_insn(PC, bytes, &mut context).unwrap();
+            let mut block = SmirBlock::new(BlockId(0), PC);
+            block.ops = result.ops;
+            block.set_terminator(Terminator::Return { values: Vec::new() });
+            let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+            function.add_block(block);
+            function
+                .x86_instruction_bytes
+                .insert((BlockId(0), PC), X86InstructionBytes::new(bytes).unwrap());
+
+            assert!(is_native_clobber_safe(&function), "{bytes:02X?}");
+            assert!(
+                uses_x86_native_vectors_excluding(&function, &std::collections::HashMap::new()),
+                "{bytes:02X?}"
+            );
+            #[cfg(target_arch = "x86_64")]
+            assert_eq!(
+                x86_native_vector_features_supported_excluding(
+                    &function,
+                    &std::collections::HashMap::new()
+                ),
+                std::is_x86_feature_detected!("avx512f")
+                    && std::is_x86_feature_detected!("avx512bw")
+                    && x86_host_has_avx512er(),
                 "{bytes:02X?}"
             );
             #[cfg(not(target_arch = "x86_64"))]

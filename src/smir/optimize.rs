@@ -2862,6 +2862,20 @@ impl OpKind {
                 result.extend(mask.iter().copied());
             }
 
+            OpKind::X86Exp2 {
+                dst,
+                src,
+                mask,
+                mask_zeroing,
+                ..
+            } => {
+                result.push(*src);
+                result.extend(mask.iter().copied());
+                if mask.is_some() && !mask_zeroing {
+                    result.push(*dst);
+                }
+            }
+
             OpKind::X86ScaleF {
                 dst,
                 src1,
@@ -9958,6 +9972,57 @@ mod tests {
                 scalar: false,
                 mask_zeroing: false,
                 suppress_exceptions: false,
+            }
+            .has_side_effects()
+        );
+
+        let exp2 = optimized(&[0x62, 0xF2, 0x7D, 0x5A, 0xC8, 0x00]);
+        let ops = &exp2.blocks[0].ops;
+        let exp2 = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86Exp2 {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        src: VReg::Virtual(_),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                        elem: VecElementType::F32,
+                        width: VecWidth::V512,
+                        lanes: 16,
+                        mask_zeroing: false,
+                        suppress_exceptions: false,
+                    }
+                )
+            })
+            .expect("masked broadcast VEXP2PS removed");
+        assert!(ops[exp2].kind.has_side_effects());
+        assert_eq!(
+            ops[..exp2]
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            1,
+        );
+        let sources = ops[exp2].kind.source_vregs();
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Zmm(0)))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::K(2)))));
+        assert!(
+            !OpKind::X86Exp2 {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                mask: None,
+                elem: VecElementType::F32,
+                width: VecWidth::V512,
+                lanes: 16,
+                mask_zeroing: false,
+                suppress_exceptions: true,
             }
             .has_side_effects()
         );

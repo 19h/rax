@@ -166,6 +166,100 @@ const X86_SIMD_F64: X86SimdFpFormat = X86SimdFpFormat {
     bias: 1023,
 };
 
+// VEXP2 polynomial coefficients derived from Intel's reference implementation:
+// https://www.intel.com/content/dam/develop/external/us/en/documents/RECIP28EXP2.c
+//
+// Copyright (c) 2015, Intel Corporation
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+// * Redistributions of source code must retain the above copyright notice,
+//   this list of conditions and the following disclaimer.
+// * Redistributions in binary form must reproduce the above copyright notice,
+//   this list of conditions and the following disclaimer in the documentation
+//   and/or other materials provided with the distribution.
+// * Neither the name of Intel Corporation nor the names of its contributors may
+//   be used to endorse or promote products derived from this software without
+//   specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+const X86_EXP2_23_COEFFICIENTS: [(u64, u64, u64); 64] = [
+    (0x1FFF_FFF8, 0x0B172, 0x03DC),
+    (0x2059_3484, 0x0B360, 0x03E9),
+    (0x20B3_61AE, 0x0B554, 0x03F4),
+    (0x210E_8A33, 0x0B74E, 0x03FD),
+    (0x216A_B0DE, 0x0B94D, 0x0408),
+    (0x21C7_D86A, 0x0BB51, 0x0416),
+    (0x2226_03A9, 0x0BD5B, 0x0422),
+    (0x2285_3563, 0x0BF6B, 0x042D),
+    (0x22E5_7079, 0x0C181, 0x0437),
+    (0x2346_B7E0, 0x0C39C, 0x0444),
+    (0x23A9_0E67, 0x0C5BE, 0x044D),
+    (0x240C_7717, 0x0C7E5, 0x045A),
+    (0x2470_F4E4, 0x0CA12, 0x0467),
+    (0x24D6_8AD5, 0x0CC45, 0x0475),
+    (0x253D_3BEA, 0x0CE7F, 0x047F),
+    (0x25A5_0B4A, 0x0D0BF, 0x048A),
+    (0x260D_FC1F, 0x0D304, 0x049A),
+    (0x2678_1166, 0x0D551, 0x04A4),
+    (0x26E3_4E74, 0x0D7A3, 0x04B4),
+    (0x274F_B675, 0x0D9FC, 0x04C1),
+    (0x27BD_4C9E, 0x0DC5C, 0x04CD),
+    (0x282C_144C, 0x0DEC2, 0x04DC),
+    (0x289C_10CB, 0x0E12F, 0x04E9),
+    (0x290D_456F, 0x0E3A3, 0x04F6),
+    (0x297F_B5A6, 0x0E61E, 0x0502),
+    (0x29F3_64F3, 0x0E89F, 0x0512),
+    (0x2A68_56A8, 0x0EB28, 0x051E),
+    (0x2ADE_8E75, 0x0EDB7, 0x052E),
+    (0x2B56_0FC3, 0x0F04E, 0x053B),
+    (0x2BCE_DE35, 0x0F2EC, 0x0549),
+    (0x2C48_FD62, 0x0F591, 0x0559),
+    (0x2CC4_7110, 0x0F83D, 0x056A),
+    (0x2D41_3CD9, 0x0FAF1, 0x0579),
+    (0x2DBF_6485, 0x0FDAD, 0x0586),
+    (0x2E3E_EBD5, 0x10070, 0x0597),
+    (0x2EBF_D6AE, 0x1033B, 0x05A6),
+    (0x2F42_28E6, 0x1060E, 0x05B4),
+    (0x2FC5_E675, 0x108E8, 0x05C6),
+    (0x304B_132F, 0x10BCB, 0x05D4),
+    (0x30D1_B33F, 0x10EB5, 0x05E6),
+    (0x3159_CA8A, 0x111A8, 0x05F5),
+    (0x31E3_5D37, 0x114A3, 0x0605),
+    (0x326E_6F60, 0x117A6, 0x0617),
+    (0x32FB_054B, 0x11AB1, 0x062A),
+    (0x3389_2312, 0x11DC5, 0x063B),
+    (0x3418_CCFE, 0x120E2, 0x064B),
+    (0x34AA_0770, 0x12407, 0x065E),
+    (0x353C_D6B7, 0x12735, 0x0670),
+    (0x35D1_3F3C, 0x12A6C, 0x0682),
+    (0x3667_457C, 0x12DAC, 0x0693),
+    (0x36FE_EDF3, 0x130F5, 0x06A5),
+    (0x3798_3D2E, 0x13447, 0x06B8),
+    (0x3833_37B9, 0x137A3, 0x06C9),
+    (0x38CF_E254, 0x13B08, 0x06DB),
+    (0x396E_41C6, 0x13E76, 0x06EE),
+    (0x3A0E_5AA1, 0x141ED, 0x0705),
+    (0x3AB0_31C0, 0x1456F, 0x0716),
+    (0x3B53_CC0C, 0x148FA, 0x072B),
+    (0x3BF9_2E70, 0x14C8F, 0x073F),
+    (0x3CA0_5DDA, 0x1502E, 0x0753),
+    (0x3D49_5F52, 0x153D7, 0x0768),
+    (0x3DF4_37EA, 0x1578B, 0x077A),
+    (0x3EA0_ECC3, 0x15B48, 0x0792),
+    (0x3F4F_830F, 0x15F11, 0x07A3),
+];
+
 const X86_SM4_SBOX: [u8; 256] = [
     0xD6, 0x90, 0xE9, 0xFE, 0xCC, 0xE1, 0x3D, 0xB7, 0x16, 0xB6, 0x14, 0xC2, 0x28, 0xFB, 0x2C, 0x05,
     0x2B, 0x67, 0x9A, 0x76, 0x2A, 0xBE, 0x04, 0xC3, 0xAA, 0x44, 0x13, 0x26, 0x49, 0x86, 0x06, 0x99,
@@ -185,7 +279,7 @@ const X86_SM4_SBOX: [u8; 256] = [
     0x18, 0xF0, 0x7D, 0xEC, 0x3A, 0xDC, 0x4D, 0x20, 0x79, 0xEE, 0x5F, 0x3E, 0xD7, 0xCB, 0x39, 0x48,
 ];
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct X86SimdFpResult {
     bits: u64,
     status: u32,
@@ -3687,6 +3781,72 @@ impl SmirInterpreter {
                 if !*suppress_exceptions {
                     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
                         x86.mxcsr |= status;
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Exp2 {
+                dst,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                mask_zeroing,
+                suppress_exceptions,
+            } => {
+                let format = match elem {
+                    VecElementType::F32 => X86_SIMD_F32,
+                    VecElementType::F64 => X86_SIMD_F64,
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                if *width != VecWidth::V512
+                    || *lanes != width.lanes(*elem) as u8
+                    || (*mask_zeroing && mask.is_none())
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: ctx.pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let source = Self::read_vec(ctx, *src);
+                let old = Self::read_vec(ctx, *dst);
+                let mut result = old;
+                let active = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let elem_bits = elem.bytes() * 8;
+                let mut status = 0;
+                for lane in 0..*lanes {
+                    if active & (1u64 << lane) == 0 {
+                        if *mask_zeroing {
+                            Self::set_lane(&mut result, lane, elem_bits, 0);
+                        }
+                        continue;
+                    }
+                    let converted =
+                        Self::x86_simd_exp2(Self::get_lane(&source, lane, elem_bits), format);
+                    status |= converted.status;
+                    Self::set_lane(&mut result, lane, elem_bits, converted.bits);
+                }
+                if !*suppress_exceptions {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= status;
+                    }
+                    if Self::x86_simd_fp_unmasked(status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
                     }
                 }
                 Self::write_vec(ctx, *dst, result);
@@ -16861,6 +17021,162 @@ impl SmirInterpreter {
             _ => 0,
         };
         X86SimdFpResult { bits, status }
+    }
+
+    fn x86_simd_exp2(bits: u64, format: X86SimdFpFormat) -> X86SimdFpResult {
+        let (sign, exponent, _, _) = Self::x86_simd_fp_masks(format);
+        let one = (format.bias as u64) << format.fraction_bits;
+        if Self::x86_simd_fp_is_nan(bits, format) {
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_quiet_nan(bits, format),
+                status: u32::from(Self::x86_simd_fp_is_snan(bits, format)),
+            };
+        }
+        if Self::x86_simd_fp_is_denormal(bits, format) || Self::x86_simd_fp_is_zero(bits, format) {
+            // VEXP2 consumes every denormal encoding as +0 independently of
+            // DAZ. Both signs of zero and every denormal therefore produce +1.
+            return X86SimdFpResult {
+                bits: one,
+                status: 0,
+            };
+        }
+        if Self::x86_simd_fp_is_infinite(bits, format) {
+            return X86SimdFpResult {
+                bits: if bits & sign != 0 { 0 } else { exponent },
+                status: 0,
+            };
+        }
+
+        // Apply Intel's finite-domain cutoffs before fixed-point conversion.
+        // VEXP2 never emits a denormal result: values below the minimum normal
+        // output are flushed to +0 independently of MXCSR.FTZ.
+        match format.total_bits {
+            32 if bits & sign == 0 && bits > 0x42FF_FFFF => {
+                return X86SimdFpResult {
+                    bits: exponent,
+                    status: 1 << 3,
+                };
+            }
+            32 if bits & sign != 0 && bits > 0xC2FC_0000 => {
+                return X86SimdFpResult { bits: 0, status: 0 };
+            }
+            64 => {
+                let biased_exponent = (bits & exponent) >> format.fraction_bits;
+                if biased_exponent >= (format.bias + 10) as u64 {
+                    return X86SimdFpResult {
+                        bits: if bits & sign == 0 { exponent } else { 0 },
+                        status: u32::from(bits & sign == 0) << 3,
+                    };
+                }
+            }
+            _ => {}
+        }
+
+        let input = match format.total_bits {
+            32 => f64::from(f32::from_bits(bits as u32)),
+            64 => f64::from_bits(bits),
+            _ => unreachable!("VEXP2 supports FP32 and FP64"),
+        };
+
+        // Intel's reference algorithm decomposes x into a signed scale and a
+        // 24-bit fixed-point fraction. Multiplication by 2^24 is exact for the
+        // finite domain above; the conversion is explicitly round-to-nearest,
+        // ties-to-even and is therefore independent of MXCSR.RC.
+        let scaled = input * 16_777_216.0;
+        let rounded = scaled.round_ties_even();
+        let fixed = rounded as i64;
+        let scale = (fixed >> 24) as i32;
+        let exact_integer = rounded == scaled && fixed & 0xFF_FFFF == 0;
+        let (mut significand, fraction_exponent) = if exact_integer {
+            (1u64 << 63, 1023)
+        } else {
+            Self::x86_exp2_emulate_fraction(((fixed as u64) << 4) & 0x0FFF_FFFF)
+        };
+
+        let bits = match format.total_bits {
+            32 => {
+                let mut final_scale = scale + fraction_exponent + 127 - 1023;
+                final_scale = final_scale.max(-25);
+                while final_scale <= 0 {
+                    final_scale += 1;
+                    significand = (significand >> 1) | (significand & 1);
+                }
+
+                // Round the normalized fixed-point significand to binary32,
+                // preserving a sticky bit while handling a carry-out.
+                let increment = 1u64 << 39;
+                let mut round_state = (significand >> 39) & 3;
+                if significand & (increment - 1) != 0 {
+                    round_state |= 2;
+                }
+                if round_state == 3 {
+                    significand = significand.wrapping_add(increment);
+                }
+                if significand < increment {
+                    final_scale += 1;
+                    significand = (significand >> 1) | (1u64 << 63);
+                }
+
+                let result = significand >> 40;
+                if result < (1 << 23) {
+                    0
+                } else if final_scale > 254 {
+                    return X86SimdFpResult {
+                        bits: exponent,
+                        status: 1 << 3,
+                    };
+                } else {
+                    ((final_scale as u64) << 23) | (result & 0x7F_FFFF)
+                }
+            }
+            64 => {
+                // VEXP2PD deliberately returns about 23 significant bits even
+                // though the destination is binary64.
+                let half_ulp = 1u64 << 39;
+                let increment = if significand & (half_ulp - 1) != 0 || (significand >> 39) & 3 == 3
+                {
+                    half_ulp
+                } else {
+                    0
+                };
+                significand = significand.wrapping_add(increment) & !0xFF_FFFF_FFFF;
+                let mut final_scale = scale + fraction_exponent;
+                if significand == 0 {
+                    significand = 1u64 << 63;
+                    final_scale += 1;
+                }
+                final_scale = final_scale.max(-54);
+                while final_scale <= 0 {
+                    final_scale += 1;
+                    significand = (significand >> 1) | (significand & 1);
+                }
+
+                let result = significand >> 11;
+                if result < (1u64 << 52) {
+                    0
+                } else if final_scale > 2046 {
+                    return X86SimdFpResult {
+                        bits: exponent,
+                        status: 1 << 3,
+                    };
+                } else {
+                    ((final_scale as u64) << 52) | (result & 0xF_FFFF_FFFF_FFFF)
+                }
+            }
+            _ => unreachable!(),
+        };
+        X86SimdFpResult { bits, status: 0 }
+    }
+
+    fn x86_exp2_emulate_fraction(argument: u64) -> (u64, i32) {
+        let index = (argument >> 22) as usize;
+        let fraction = argument & 0x3F_FFFF;
+        let square = fraction * fraction >> 24;
+        let (a, b, c) = X86_EXP2_23_COEFFICIENTS[index];
+        let polynomial = (a << 24) + (b << 9) * fraction + (c << 9) * square;
+        let shift = polynomial.leading_zeros();
+        debug_assert!(shift <= 11);
+        (polynomial << shift, 1033 - shift as i32)
     }
 
     fn x86_simd_fp_convert_precision(
@@ -58407,6 +58723,250 @@ mod tests {
             assert_eq!(x86.xmm[1][0], 0x1111_1111_3F80_0000);
             assert_eq!(x86.mxcsr & 0x3F, 0);
         }
+    }
+
+    #[test]
+    fn x86_exp2_semantics_cover_error_bound_exact_specials_denormals_and_overflow() {
+        let one32 = u64::from(1.0f32.to_bits());
+        let one64 = 1.0f64.to_bits();
+        for (bits, format, expected) in [
+            (0u64, X86_SIMD_F32, one32),
+            (0x8000_0000, X86_SIMD_F32, one32),
+            (1, X86_SIMD_F32, one32),
+            (0x8000_0001, X86_SIMD_F32, one32),
+            (0, X86_SIMD_F64, one64),
+            (0x8000_0000_0000_0000, X86_SIMD_F64, one64),
+            (1, X86_SIMD_F64, one64),
+            (0x8000_0000_0000_0001, X86_SIMD_F64, one64),
+        ] {
+            assert_eq!(
+                SmirInterpreter::x86_simd_exp2(bits, format),
+                X86SimdFpResult {
+                    bits: expected,
+                    status: 0
+                }
+            );
+        }
+
+        for (input, expected) in [
+            (-126.0f32, 0x0080_0000u64),
+            (-1.0, u64::from(0.5f32.to_bits())),
+            (0.0, one32),
+            (1.0, u64::from(2.0f32.to_bits())),
+            (127.0, 0x7F00_0000),
+        ] {
+            let result = SmirInterpreter::x86_simd_exp2(u64::from(input.to_bits()), X86_SIMD_F32);
+            assert_eq!(result.bits, expected, "FP32 integral {input}");
+            assert_eq!(result.status, 0);
+        }
+        assert_eq!(
+            SmirInterpreter::x86_simd_exp2(u64::from((-127.0f32).to_bits()), X86_SIMD_F32,),
+            X86SimdFpResult { bits: 0, status: 0 },
+            "exact subnormal result is architecturally flushed",
+        );
+        assert_eq!(
+            SmirInterpreter::x86_simd_exp2(u64::from(128.0f32.to_bits()), X86_SIMD_F32,),
+            X86SimdFpResult {
+                bits: 0x7F80_0000,
+                status: 1 << 3,
+            }
+        );
+
+        for input in [-100.25f32, -1.5, -0.125, 0.1, 17.75, 127.25] {
+            let result = SmirInterpreter::x86_simd_exp2(u64::from(input.to_bits()), X86_SIMD_F32);
+            if result.status == 0 && result.bits != 0 {
+                let actual = f64::from(f32::from_bits(result.bits as u32));
+                let reference = f64::from(input).exp2();
+                let relative_error = ((actual - reference) / reference).abs();
+                assert!(
+                    relative_error < 2.0f64.powi(-23),
+                    "FP32 {input}: relative error {relative_error:e}"
+                );
+            }
+        }
+        for input in [-1000.25f64, -1.5, -0.125, 0.1, 17.75, 1000.25] {
+            let result = SmirInterpreter::x86_simd_exp2(input.to_bits(), X86_SIMD_F64);
+            if result.status == 0 && result.bits != 0 {
+                let actual = f64::from_bits(result.bits);
+                let reference = input.exp2();
+                let relative_error = ((actual - reference) / reference).abs();
+                assert!(
+                    relative_error < 2.0f64.powi(-23),
+                    "FP64 {input}: relative error {relative_error:e}"
+                );
+            }
+        }
+
+        for (input, expected) in [
+            (f32::INFINITY.to_bits(), 0x7F80_0000u64),
+            (f32::NEG_INFINITY.to_bits(), 0),
+        ] {
+            assert_eq!(
+                SmirInterpreter::x86_simd_exp2(u64::from(input), X86_SIMD_F32),
+                X86SimdFpResult {
+                    bits: expected,
+                    status: 0,
+                }
+            );
+        }
+        let qnan = SmirInterpreter::x86_simd_exp2(0xFFC1_2345, X86_SIMD_F32);
+        assert_eq!(qnan.bits, 0xFFC1_2345);
+        assert_eq!(qnan.status, 0);
+        let snan = SmirInterpreter::x86_simd_exp2(0xFF81_2345, X86_SIMD_F32);
+        assert_eq!(snan.bits, 0xFFC1_2345);
+        assert_eq!(snan.status, 1);
+    }
+
+    #[test]
+    fn x86_exp2_matches_intel_reference_polynomial_and_segment_error_bound() {
+        for (input, expected) in [
+            (-100.25f32, 0x0D57_44FDu64),
+            (-1.5, 0x3EB5_04F3),
+            (-0.125, 0x3F6A_C0C7),
+            (0.1, 0x3F89_2FDF),
+            (17.75, 0x4857_44FD),
+            (127.25, 0x7F18_37F0),
+        ] {
+            assert_eq!(
+                SmirInterpreter::x86_simd_exp2(u64::from(input.to_bits()), X86_SIMD_F32),
+                X86SimdFpResult {
+                    bits: expected,
+                    status: 0,
+                },
+                "Intel EXP2S reference vector {input}",
+            );
+        }
+        for (input, expected) in [
+            (-1000.25f64, 0x016A_E89F_A000_0000u64),
+            (-1.5, 0x3FD6_A09E_6000_0000),
+            (-0.125, 0x3FED_5818_E000_0000),
+            (0.1, 0x3FF1_25FB_E000_0000),
+            (17.75, 0x410A_E89F_A000_0000),
+            (1000.25, 0x7E73_06FE_0000_0000),
+        ] {
+            assert_eq!(
+                SmirInterpreter::x86_simd_exp2(input.to_bits(), X86_SIMD_F64),
+                X86SimdFpResult {
+                    bits: expected,
+                    status: 0,
+                },
+                "Intel EXP2D reference vector {input}",
+            );
+        }
+
+        // Exercise both sides and the interior of every one of the 64 table
+        // segments at representative output scales, including the finite
+        // boundaries. The exact ISA requirement is relative error < 2^-23.
+        let limit = 2.0f64.powi(-23);
+        for scale in [-126, -100, -1, 0, 17, 126] {
+            for segment in 0..64 {
+                for offset in [1, 0x1F_FFFF, 0x20_0000, 0x3F_FFFF] {
+                    let fraction = ((segment << 22) + offset) as f64 / 268_435_456.0;
+                    let input = scale as f64 + fraction;
+                    let input32 = input as f32;
+                    let result =
+                        SmirInterpreter::x86_simd_exp2(u64::from(input32.to_bits()), X86_SIMD_F32);
+                    let actual = f64::from(f32::from_bits(result.bits as u32));
+                    let reference = f64::from(input32).exp2();
+                    let relative_error = ((actual - reference) / reference).abs();
+                    assert!(
+                        relative_error < limit,
+                        "EXP2S {input32}: relative error {relative_error:e}",
+                    );
+                }
+            }
+        }
+        for scale in [-1022, -1000, -1, 0, 17, 1000, 1022] {
+            for segment in 0..64 {
+                for offset in [1, 0x1F_FFFF, 0x20_0000, 0x3F_FFFF] {
+                    let fraction = ((segment << 22) + offset) as f64 / 268_435_456.0;
+                    let input = scale as f64 + fraction;
+                    let result = SmirInterpreter::x86_simd_exp2(input.to_bits(), X86_SIMD_F64);
+                    let actual = f64::from_bits(result.bits);
+                    let reference = input.exp2();
+                    let relative_error = ((actual - reference) / reference).abs();
+                    assert!(
+                        relative_error < limit,
+                        "EXP2D {input}: relative error {relative_error:e}",
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn lifted_x86_exp2_preserves_masks_fault_suppression_sae_and_exception_atomicity() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0xAAAA_AAAA_DEAD_BEEF; 16];
+            x86.xmm[3][0] = (u64::from(2.0f32.to_bits()) << 32) | u64::from(1.0f32.to_bits());
+            x86.k[1] = 1;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x49, 0xC8, 0xCB], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0xAAAA_AAAA_4000_0000);
+            assert!(
+                x86.xmm[1][1..8]
+                    .iter()
+                    .all(|word| *word == 0xAAAA_AAAA_DEAD_BEEF)
+            );
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [u64::MAX; 16];
+            x86.k[1] = 0;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0xC9, 0xC8, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert!(x86.xmm[1][..8].iter().all(|word| *word == 0));
+        }
+
+        let sentinel = [0xDEAD_BEEF_CAFE_BABEu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[3][0] = 0x7F80_1234;
+            x86.k[1] = 1;
+            x86.mxcsr = 0;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x49, 0xC8, 0xCB], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+            assert_ne!(x86.mxcsr & 1, 0);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.mxcsr = 0;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x19, 0xC8, 0xCB], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0] & 0xFFFF_FFFF, 0x7FC0_1234);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k1, 0);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x49, 0xC8, 0x08], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        ctx.write_vreg(k1, 1);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x7D, 0x49, 0xC8, 0x08], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
     }
 
     #[test]

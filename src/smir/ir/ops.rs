@@ -1647,6 +1647,23 @@ pub enum OpKind {
         suppress_exceptions: bool,
     },
 
+    /// x86 AVX512ER VEXP2{PS,PD}. Each active ZMM element receives an
+    /// approximation to `2^src` with architectural relative error below
+    /// `2^-23`. Denormal inputs are consumed as positive zero and denormal
+    /// results are flushed to positive zero independently of MXCSR.DAZ/FTZ.
+    /// `suppress_exceptions` records EVEX SAE; otherwise SNaN invalid and
+    /// finite-result overflow can update MXCSR or raise #XM.
+    X86Exp2 {
+        dst: VReg,
+        src: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        lanes: u8,
+        mask_zeroing: bool,
+        suppress_exceptions: bool,
+    },
+
     /// x86 EVEX VSCALEF{PH,PS,PD,SH,SS,SD}. Each active element computes
     /// `src1 * 2^floor(src2)` using the selected MXCSR or embedded rounding
     /// mode. Scalar forms copy bits 127:element-width from `src1`; packed and
@@ -4406,6 +4423,7 @@ impl OpKind {
             | OpKind::X86Reduce { dst, .. }
             | OpKind::X86Range { dst, .. }
             | OpKind::X86FixupImm { dst, .. }
+            | OpKind::X86Exp2 { dst, .. }
             | OpKind::X86ScaleF { dst, .. }
             | OpKind::X86IntToFp { dst, .. }
             | OpKind::X86FpConvert { dst, .. }
@@ -4825,6 +4843,10 @@ impl OpKind {
                         ..
                     }
                     | OpKind::X86Range {
+                        suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86Exp2 {
                         suppress_exceptions: false,
                         ..
                     }
