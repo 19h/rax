@@ -1608,6 +1608,25 @@ pub enum OpKind {
         suppress_exceptions: bool,
     },
 
+    /// x86 EVEX VRANGE{PS,PD,SS,SD}. `imm[1:0]` selects minimum, maximum,
+    /// minimum magnitude, or maximum magnitude; `imm[3:2]` selects the result
+    /// sign source. Scalar forms copy bits 127:element-width from `src1`;
+    /// packed and scalar writemasking merge from the old destination when
+    /// zeroing is disabled. `suppress_exceptions` records EVEX SAE.
+    X86Range {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        lanes: u8,
+        imm: u8,
+        scalar: bool,
+        mask_zeroing: bool,
+        suppress_exceptions: bool,
+    },
+
     /// x86 EVEX VSCALEF{PH,PS,PD,SH,SS,SD}. Each active element computes
     /// `src1 * 2^floor(src2)` using the selected MXCSR or embedded rounding
     /// mode. Scalar forms copy bits 127:element-width from `src1`; packed and
@@ -4365,6 +4384,7 @@ impl OpKind {
             | OpKind::X86GetMantissa { dst, .. }
             | OpKind::X86RoundScale { dst, .. }
             | OpKind::X86Reduce { dst, .. }
+            | OpKind::X86Range { dst, .. }
             | OpKind::X86ScaleF { dst, .. }
             | OpKind::X86IntToFp { dst, .. }
             | OpKind::X86FpConvert { dst, .. }
@@ -4780,6 +4800,10 @@ impl OpKind {
                         ..
                     }
                     | OpKind::X86Reduce {
+                        suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86Range {
                         suppress_exceptions: false,
                         ..
                     }

@@ -3518,6 +3518,94 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::X86Range {
+                dst,
+                src1,
+                src2,
+                mask,
+                elem,
+                width,
+                lanes,
+                imm,
+                scalar,
+                mask_zeroing,
+                suppress_exceptions,
+            } => {
+                let format = match elem {
+                    VecElementType::F32 => X86_SIMD_F32,
+                    VecElementType::F64 => X86_SIMD_F64,
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                if *imm > 0x0F
+                    || (*scalar && (*width != VecWidth::V128 || *lanes != 1))
+                    || (!*scalar && *lanes != width.lanes(*elem) as u8)
+                    || (*mask_zeroing && mask.is_none())
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: ctx.pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let old = Self::read_vec(ctx, *dst);
+                let mut result = if *scalar { first } else { old };
+                if *scalar {
+                    result[2..].fill(0);
+                } else {
+                    result[(width.bytes() / 8) as usize..].fill(0);
+                }
+                let active = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let elem_bits = elem.bytes() * 8;
+                let mut status = 0;
+                for lane in 0..*lanes {
+                    if active & (1u64 << lane) == 0 {
+                        if *mask_zeroing {
+                            Self::set_lane(&mut result, lane, elem_bits, 0);
+                        } else {
+                            Self::set_lane(
+                                &mut result,
+                                lane,
+                                elem_bits,
+                                Self::get_lane(&old, lane, elem_bits),
+                            );
+                        }
+                        continue;
+                    }
+                    let converted = Self::x86_simd_range(
+                        Self::get_lane(&first, lane, elem_bits),
+                        Self::get_lane(&second, lane, elem_bits),
+                        format,
+                        mxcsr,
+                        *imm,
+                    );
+                    status |= converted.status;
+                    Self::set_lane(&mut result, lane, elem_bits, converted.bits);
+                }
+                if !*suppress_exceptions {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= status;
+                    }
+                    if Self::x86_simd_fp_unmasked(status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::X86ScaleF {
                 dst,
                 src1,
@@ -16467,6 +16555,115 @@ impl SmirInterpreter {
         }
         remainder.status = status;
         remainder
+    }
+
+    fn x86_simd_range(
+        first_bits: u64,
+        second_bits: u64,
+        format: X86SimdFpFormat,
+        mxcsr: u32,
+        imm: u8,
+    ) -> X86SimdFpResult {
+        let (sign, _, _, _) = Self::x86_simd_fp_masks(format);
+        if Self::x86_simd_fp_is_snan(first_bits, format) {
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_quiet_nan(first_bits, format),
+                status: 1,
+            };
+        }
+        if Self::x86_simd_fp_is_snan(second_bits, format) {
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_quiet_nan(second_bits, format),
+                status: 1,
+            };
+        }
+
+        let first_qnan = Self::x86_simd_fp_is_nan(first_bits, format);
+        let second_qnan = Self::x86_simd_fp_is_nan(second_bits, format);
+        let first_daz = Self::x86_simd_fp_apply_daz(first_bits, format, mxcsr);
+        let second_daz = Self::x86_simd_fp_apply_daz(second_bits, format, mxcsr);
+        let first = first_daz.bits;
+        let second = second_daz.bits;
+        let mut status = 0;
+        if !second_qnan {
+            status |= first_daz.status;
+        }
+        if !first_qnan {
+            status |= second_daz.status;
+        }
+
+        let first_magnitude = first & !sign;
+        let second_magnitude = second & !sign;
+        let first_negative = first & sign != 0;
+        let second_negative = second & sign != 0;
+        let compare = imm & 3;
+        let selected = if second_qnan {
+            first
+        } else if first_qnan {
+            second
+        } else if first_magnitude == 0 && second_magnitude == 0 && first_negative != second_negative
+        {
+            if compare & 1 == 0 { sign } else { 0 }
+        } else if first_magnitude == second_magnitude
+            && first_magnitude != 0
+            && first_negative != second_negative
+            && compare >= 2
+        {
+            if compare == 2 {
+                sign | first_magnitude
+            } else {
+                first_magnitude
+            }
+        } else {
+            let first_le_second = if first_negative != second_negative {
+                first_negative
+            } else if first_negative {
+                first_magnitude >= second_magnitude
+            } else {
+                first_magnitude <= second_magnitude
+            };
+            match compare {
+                0 => {
+                    if first_le_second {
+                        first
+                    } else {
+                        second
+                    }
+                }
+                1 => {
+                    if first_le_second {
+                        second
+                    } else {
+                        first
+                    }
+                }
+                2 => {
+                    if first_magnitude <= second_magnitude {
+                        first
+                    } else {
+                        second
+                    }
+                }
+                _ => {
+                    if first_magnitude <= second_magnitude {
+                        second
+                    } else {
+                        first
+                    }
+                }
+            }
+        };
+        let selected_magnitude = selected & !sign;
+        let result_sign = match (imm >> 2) & 3 {
+            0 => first & sign,
+            1 => selected & sign,
+            2 => 0,
+            _ => sign,
+        };
+        X86SimdFpResult {
+            bits: result_sign | selected_magnitude,
+            status,
+        }
     }
 
     fn x86_simd_fp_convert_precision(
@@ -57646,6 +57843,234 @@ mod tests {
         assert_ne!(rflags & (1 << 0), 0, "CF must be set (carry out)");
         assert_eq!(rflags & (1 << 7), 0, "SF must be clear");
         assert_eq!(rflags & (1 << 11), 0, "OF must be clear");
+    }
+
+    #[test]
+    fn x86_range_exact_semantics_cover_controls_nans_daz_and_ties() {
+        let first = u64::from((-2.0f32).to_bits());
+        let second = u64::from(3.0f32.to_bits());
+        for sign_control in 0..4u8 {
+            for compare in 0..4u8 {
+                let imm = compare | (sign_control << 2);
+                let selected = match compare {
+                    0 | 2 => first,
+                    _ => second,
+                };
+                let expected_sign = match sign_control {
+                    0 => first & 0x8000_0000,
+                    1 => selected & 0x8000_0000,
+                    2 => 0,
+                    _ => 0x8000_0000,
+                };
+                let result =
+                    SmirInterpreter::x86_simd_range(first, second, X86_SIMD_F32, 0x1F80, imm);
+                assert_eq!(
+                    result.bits,
+                    expected_sign | (selected & 0x7FFF_FFFF),
+                    "imm={imm:#04x}"
+                );
+                assert_eq!(result.status, 0);
+            }
+        }
+
+        let positive_zero = u64::from(0.0f32.to_bits());
+        let negative_zero = u64::from((-0.0f32).to_bits());
+        for (a, b) in [
+            (positive_zero, negative_zero),
+            (negative_zero, positive_zero),
+        ] {
+            for compare in 0..4u8 {
+                let result =
+                    SmirInterpreter::x86_simd_range(a, b, X86_SIMD_F32, 0x1F80, compare | 4);
+                assert_eq!(
+                    result.bits,
+                    if compare & 1 == 0 {
+                        negative_zero
+                    } else {
+                        positive_zero
+                    },
+                    "opposite-zero compare={compare}, a={a:#x}, b={b:#x}"
+                );
+            }
+        }
+
+        let positive_two = u64::from(2.0f32.to_bits());
+        let negative_two = u64::from((-2.0f32).to_bits());
+        for (a, b) in [(positive_two, negative_two), (negative_two, positive_two)] {
+            assert_eq!(
+                SmirInterpreter::x86_simd_range(a, b, X86_SIMD_F32, 0x1F80, 6).bits,
+                negative_two
+            );
+            assert_eq!(
+                SmirInterpreter::x86_simd_range(a, b, X86_SIMD_F32, 0x1F80, 7).bits,
+                positive_two
+            );
+        }
+
+        let first_snan = 0x7F80_1234u64;
+        let second_snan = 0xFF80_5678u64;
+        let first_qnan = 0xFFC1_2345u64;
+        let second_qnan = 0x7FC5_6789u64;
+        let both_snan =
+            SmirInterpreter::x86_simd_range(first_snan, second_snan, X86_SIMD_F32, 0x1F80, 0x0C);
+        assert_eq!(both_snan.bits, first_snan | 0x0040_0000);
+        assert_eq!(both_snan.status, 1);
+        let second_snan_result =
+            SmirInterpreter::x86_simd_range(first_qnan, second_snan, X86_SIMD_F32, 0x1F80, 0);
+        assert_eq!(second_snan_result.bits, second_snan | 0x0040_0000);
+        assert_eq!(second_snan_result.status, 1);
+        assert_eq!(
+            SmirInterpreter::x86_simd_range(first_qnan, second_qnan, X86_SIMD_F32, 0x1F80, 8,).bits,
+            first_qnan & 0x7FFF_FFFF
+        );
+        let negative_three = u64::from((-3.0f32).to_bits());
+        assert_eq!(
+            SmirInterpreter::x86_simd_range(first_qnan, negative_three, X86_SIMD_F32, 0x1F80, 4,)
+                .bits,
+            negative_three
+        );
+        assert_eq!(
+            SmirInterpreter::x86_simd_range(negative_three, second_qnan, X86_SIMD_F32, 0x1F80, 8,)
+                .bits,
+            negative_three & 0x7FFF_FFFF
+        );
+
+        let denormal = 1u64;
+        let one = u64::from(1.0f32.to_bits());
+        for (a, b) in [(denormal, one), (one, denormal)] {
+            let result = SmirInterpreter::x86_simd_range(a, b, X86_SIMD_F32, 0x1F80, 4);
+            assert_eq!(result.bits, denormal);
+            assert_eq!(result.status, 1 << 1);
+        }
+        let daz = SmirInterpreter::x86_simd_range(denormal, one, X86_SIMD_F32, 0x1FC0, 4);
+        assert_eq!(daz.bits, positive_zero);
+        assert_eq!(daz.status, 0);
+        for (a, b) in [(denormal, second_qnan), (first_qnan, denormal)] {
+            let result = SmirInterpreter::x86_simd_range(a, b, X86_SIMD_F32, 0x1F80, 4);
+            assert_eq!(result.bits, denormal);
+            assert_eq!(result.status, 0, "qNaN counterpart suppresses DE");
+        }
+    }
+
+    #[test]
+    fn lifted_x86_range_preserves_scalar_merge_fault_suppression_and_exception_atomicity() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0xCCCC_CCCC_4120_0000; 16];
+            x86.xmm[2] = [
+                0xA5A5_A5A5_C000_0000,
+                0x0123_4567_89AB_CDEF,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ];
+            x86.xmm[3][0] = u64::from(3.0f32.to_bits());
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x6D, 0x08, 0x51, 0xCB, 0x05],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0xA5A5_A5A5_4040_0000);
+            assert_eq!(x86.xmm[1][1], 0x0123_4567_89AB_CDEF);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[1] = 0;
+            x86.xmm[1][0] = 0xCCCC_CCCC_4120_0000;
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0x6D, 0x09, 0x51, 0xCB, 0x05],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0xA5A5_A5A5_4120_0000);
+        }
+        execute_lifted_x86(
+            &[0x62, 0xF3, 0x6D, 0x89, 0x51, 0xCB, 0x05],
+            &mut ctx,
+            &mut memory,
+        );
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0xA5A5_A5A5_0000_0000);
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k1, 0);
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x6D, 0x09, 0x51, 0x08, 0x05],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        ctx.write_vreg(k1, 1);
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x6D, 0x09, 0x51, 0x08, 0x05],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+
+        let sentinel = [0xDEAD_BEEF_CAFE_BABEu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mxcsr = 0x1F00;
+            x86.xmm[1] = sentinel;
+            x86.xmm[2][0] = 0x7F80_1234;
+            x86.xmm[3][0] = u64::from(1.0f32.to_bits());
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x6D, 0x08, 0x51, 0xCB, 0x0C],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+            assert_ne!(x86.mxcsr & 1, 0);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mxcsr = 0x1F00;
+            x86.xmm[1] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(
+                &[0x62, 0xF3, 0x6D, 0x18, 0x51, 0xCB, 0x0C],
+                &mut ctx,
+                &mut memory,
+            ),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0] & 0xFFFF_FFFF, 0x7FC0_1234);
+            assert_eq!(x86.mxcsr, 0x1F00);
+        }
     }
 
     #[test]

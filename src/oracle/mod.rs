@@ -2015,6 +2015,32 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             mask_zeroing,
             suppress_exceptions
         ),
+        OpKind::X86Range {
+            dst,
+            src1,
+            src2,
+            mask,
+            elem,
+            width,
+            lanes,
+            imm,
+            scalar,
+            mask_zeroing,
+            suppress_exceptions,
+        } => op_json!(
+            "x86_range",
+            dst,
+            src1,
+            src2,
+            mask,
+            elem,
+            width,
+            lanes,
+            imm,
+            scalar,
+            mask_zeroing,
+            suppress_exceptions
+        ),
         OpKind::X86ScaleF {
             dst,
             src1,

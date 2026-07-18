@@ -2831,6 +2831,22 @@ impl OpKind {
                 }
             }
 
+            OpKind::X86Range {
+                dst,
+                src1,
+                src2,
+                mask,
+                mask_zeroing,
+                ..
+            } => {
+                result.push(*src1);
+                result.push(*src2);
+                result.extend(mask.iter().copied());
+                if mask.is_some() && !mask_zeroing {
+                    result.push(*dst);
+                }
+            }
+
             OpKind::X86ScaleF {
                 dst,
                 src1,
@@ -9792,6 +9808,64 @@ mod tests {
                 width: VecWidth::V512,
                 lanes: 16,
                 imm: 0x53,
+                scalar: false,
+                mask_zeroing: false,
+                suppress_exceptions: true,
+            }
+            .has_side_effects()
+        );
+
+        let range = optimized(&[0x62, 0xF3, 0x6D, 0x5A, 0x50, 0x00, 0x05]);
+        let ops = &range.blocks[0].ops;
+        let range = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86Range {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                        src2: VReg::Virtual(_),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                        elem: VecElementType::F32,
+                        width: VecWidth::V512,
+                        lanes: 16,
+                        imm: 0x05,
+                        scalar: false,
+                        mask_zeroing: false,
+                        suppress_exceptions: false,
+                    }
+                )
+            })
+            .expect("masked broadcast VRANGEPS removed");
+        assert!(ops[range].kind.has_side_effects());
+        assert_eq!(
+            ops[..range]
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            1,
+        );
+        let sources = ops[range].kind.source_vregs();
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Zmm(0)))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::K(2)))));
+        assert!(
+            !OpKind::X86Range {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                mask: None,
+                elem: VecElementType::F32,
+                width: VecWidth::V512,
+                lanes: 16,
+                imm: 0x05,
                 scalar: false,
                 mask_zeroing: false,
                 suppress_exceptions: true,
