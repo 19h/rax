@@ -222,15 +222,19 @@ ELF, drives a 16550 UART over MMIO, and halts on `ecall`. Coverage is the entire
 RV64I/M/A/F/D, **Zfh** half-precision, C (compressed), Zicsr/Zifencei, Zba/Zbb/Zbc/Zbs, Zicond, Zfa,
 Zbkb/Zbkx/Zcb, the scalar crypto suite (Zknh SHA-256/512, Zksh SM3, Zksed SM4, Zkne/Zknd AES), and the
 full **RVV 1.0** vector extension — arithmetic, fixed-point, FP, reductions, permutes, conversions, and
-every load/store mode, at VLEN=128. The floating-point core computes the
+every load/store mode, at VLEN=128.
+
+The floating-point core computes the
 round-to-nearest result, recovers the exact residual (2Sum / FMA / Newton), and uses it to deliver
 correctly-rounded answers in all five rounding modes with all five IEEE flags. It is checked against
 qemu-riscv64 by fuzzers that exercise the whole non-control-flow opcode space, and by a dedicated RVV
-harness that diffs the full vector register file and `vl`/`vtype` case by case. Its opt-in SMIR
-execution tier lowers `step_jit` as one instruction and `run_jit` as cache-keyed straight-line regions
+harness that diffs the full vector register file and `vl`/`vtype` case by case.
+
+Its opt-in SMIR execution tier lowers `step_jit` as one instruction and `run_jit` as cache-keyed straight-line regions
 of up to 16 instructions to state-backed native blocks on both x86-64 and AArch64 hosts. Regions stop
 at memory, control-flow, fence, and replay-sensitive boundaries; cache identity covers every 16- or
 32-bit encoding in the region, and a faulting final memory operation retires only its completed prefix.
+
 Scalar integer, memory (including RV32 Zilsd/Zclsd register-pair transfers), control flow, A/Zacas
 atomics (including AMOCAS.Q), integer crypto, scalar floating point, and memory-free RVV OP-V
 arithmetic/configuration, Zcmp stack/double-move macros, and Zcmt table jumps execute natively. RVV
