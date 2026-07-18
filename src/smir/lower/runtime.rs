@@ -2373,6 +2373,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::X86FixupImm { .. }
             | OpKind::X86Exp2 { .. }
             | OpKind::X86Recip28 { .. }
+            | OpKind::X86Rsqrt28 { .. }
             | OpKind::X86ScaleF { .. }
             | OpKind::X86FP16Complex { .. }
             | OpKind::X86PackedIntToFp { .. }
@@ -3800,6 +3801,54 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     }
 
     if let OpKind::X86Recip28 {
+        dst,
+        merge,
+        src,
+        mask,
+        elem,
+        width,
+        lanes,
+        scalar,
+        mask_zeroing,
+        ..
+    } = op
+    {
+        let vector_matches_width = |reg: &VReg, expected: VecWidth| {
+            matches!(
+                (reg, expected),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    VecWidth::V256
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                    VecWidth::V512
+                )
+            )
+        };
+        if !matches!(
+            elem,
+            crate::smir::ir::types::VecElementType::F32
+                | crate::smir::ir::types::VecElementType::F64
+        ) || !vector_matches_width(dst, *width)
+            || !vector_matches_width(src, *width)
+            || (*mask_zeroing && mask.is_none())
+            || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
+            || if *scalar {
+                *width != VecWidth::V128
+                    || *lanes != 1
+                    || !matches!(merge, Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31)))))
+            } else {
+                *width != VecWidth::V512 || *lanes != width.lanes(*elem) as u8 || merge.is_some()
+            }
+        {
+            return false;
+        }
+    }
+
+    if let OpKind::X86Rsqrt28 {
         dst,
         merge,
         src,
@@ -5367,6 +5416,33 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
             _ => return false,
         };
         let expected_opcode = if *scalar { 0xCB } else { 0xCA };
+        if !matches!(
+            op.x86_hint,
+            Some(X86OpHint::EvexOp {
+                map: X86VecMap::Map0F38,
+                pp: crate::smir::ir::ops::X86SsePrefix::OpSize,
+                opcode,
+                width: encoded_width,
+                w,
+            }) if opcode == expected_opcode && encoded_width == *width && w == expected_w
+        ) {
+            return false;
+        }
+    }
+
+    if let OpKind::X86Rsqrt28 {
+        elem,
+        width,
+        scalar,
+        ..
+    } = &op.kind
+    {
+        let expected_w = match elem {
+            crate::smir::ir::types::VecElementType::F32 => false,
+            crate::smir::ir::types::VecElementType::F64 => true,
+            _ => return false,
+        };
+        let expected_opcode = if *scalar { 0xCD } else { 0xCC };
         if !matches!(
             op.x86_hint,
             Some(X86OpHint::EvexOp {
@@ -7324,7 +7400,8 @@ pub fn uses_x86_native_vectors_excluding(
 }
 
 /// Whether every admitted native vector operation in executable blocks is an
-/// AVX512ER VEXP2/VRCP28 operation whose opmask width is at most 16 bits. Such
+/// AVX512ER VEXP2/VRCP28/VRSQRT28 operation whose opmask width is at most 16
+/// bits. Such
 /// a region can marshal K0-K7 with AVX512F KMOVW: each instruction observes
 /// only the low 8/16 bits, and the trampoline leaves every upper architectural
 /// bit intact in `GuestRegs`. Any additional vector operation fails closed to
@@ -7345,6 +7422,7 @@ pub fn x86_native_vector_uses_k16_opmasks_excluding(
             op.kind,
             crate::smir::ir::ops::OpKind::X86Exp2 { .. }
                 | crate::smir::ir::ops::OpKind::X86Recip28 { .. }
+                | crate::smir::ir::ops::OpKind::X86Rsqrt28 { .. }
         ) {
             saw_er_approximation = true;
         } else {
@@ -7666,7 +7744,10 @@ pub fn x86_native_vector_features_supported_excluding(
     {
         any = true;
         let kind = &op.kind;
-        needs_bw |= !matches!(kind, OpKind::X86Exp2 { .. } | OpKind::X86Recip28 { .. });
+        needs_bw |= !matches!(
+            kind,
+            OpKind::X86Exp2 { .. } | OpKind::X86Recip28 { .. } | OpKind::X86Rsqrt28 { .. }
+        );
         let width = match kind {
             OpKind::VMov { width, .. }
             | OpKind::VAnd { width, .. }
@@ -7698,6 +7779,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86FixupImm { width, .. }
             | OpKind::X86Exp2 { width, .. }
             | OpKind::X86Recip28 { width, .. }
+            | OpKind::X86Rsqrt28 { width, .. }
             | OpKind::X86ScaleF { width, .. }
             | OpKind::X86FP16Complex { width, .. }
             | OpKind::X86PackedIntToFp {
@@ -7846,7 +7928,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86FixupImm { scalar, .. }
             | OpKind::X86ScaleF { scalar, .. }
             | OpKind::X86FP16Complex { scalar, .. } => !*scalar && width != VecWidth::V512,
-            OpKind::X86Exp2 { .. } | OpKind::X86Recip28 { .. } => false,
+            OpKind::X86Exp2 { .. } | OpKind::X86Recip28 { .. } | OpKind::X86Rsqrt28 { .. } => false,
             OpKind::X86Aes { .. } => aes_vl,
             OpKind::X86PackedShiftImm { .. } => shift_vl,
             OpKind::X86PackedShift { .. } => count_vl,
@@ -7930,7 +8012,10 @@ pub fn x86_native_vector_features_supported_excluding(
                 | OpKind::X86PackedIntToFp16 { .. }
                 | OpKind::X86PackedFp16ToInt { .. }
         );
-        needs_er |= matches!(kind, OpKind::X86Exp2 { .. } | OpKind::X86Recip28 { .. });
+        needs_er |= matches!(
+            kind,
+            OpKind::X86Exp2 { .. } | OpKind::X86Recip28 { .. } | OpKind::X86Rsqrt28 { .. }
+        );
         needs_aes |= aes;
         needs_vaes |= vaes;
         needs_sha512 |= x86_sha512_feature_required(kind);
@@ -17645,6 +17730,104 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn rsqrt28_native_gate_validates_packed_scalar_masks_and_encodings() {
+        let packed = OpKind::X86Rsqrt28 {
+            dst: x86(X86Reg::Zmm(17)),
+            merge: None,
+            src: x86(X86Reg::Zmm(19)),
+            mask: Some(x86(X86Reg::K(2))),
+            elem: VecElementType::F32,
+            width: VecWidth::V512,
+            lanes: 16,
+            scalar: false,
+            mask_zeroing: true,
+            suppress_exceptions: true,
+        };
+        let packed_op = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(0),
+            0xA000,
+            packed.clone(),
+            X86OpHint::EvexOp {
+                map: X86VecMap::Map0F38,
+                pp: X86SsePrefix::OpSize,
+                opcode: 0xCC,
+                width: VecWidth::V512,
+                w: false,
+            },
+        );
+        assert!(is_x86_native_vector_op(&packed));
+        assert!(x86_native_vector_smir_op(&packed_op));
+
+        let scalar = OpKind::X86Rsqrt28 {
+            dst: x86(X86Reg::Xmm(17)),
+            merge: Some(x86(X86Reg::Xmm(18))),
+            src: x86(X86Reg::Xmm(19)),
+            mask: Some(x86(X86Reg::K(2))),
+            elem: VecElementType::F64,
+            width: VecWidth::V128,
+            lanes: 1,
+            scalar: true,
+            mask_zeroing: true,
+            suppress_exceptions: true,
+        };
+        let scalar_op = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(1),
+            0xA006,
+            scalar.clone(),
+            X86OpHint::EvexOp {
+                map: X86VecMap::Map0F38,
+                pp: X86SsePrefix::OpSize,
+                opcode: 0xCD,
+                width: VecWidth::V128,
+                w: true,
+            },
+        );
+        assert!(is_x86_native_vector_op(&scalar));
+        assert!(x86_native_vector_smir_op(&scalar_op));
+
+        let mut wrong_hint = scalar_op;
+        wrong_hint.x86_hint = Some(X86OpHint::EvexOp {
+            map: X86VecMap::Map0F38,
+            pp: X86SsePrefix::OpSize,
+            opcode: 0xCC,
+            width: VecWidth::V128,
+            w: true,
+        });
+        assert!(!x86_native_vector_smir_op(&wrong_hint));
+
+        let mut virtual_merge = scalar.clone();
+        let OpKind::X86Rsqrt28 { merge, .. } = &mut virtual_merge else {
+            unreachable!()
+        };
+        *merge = Some(VReg::virt(7));
+        assert!(!is_x86_native_vector_op(&virtual_merge));
+
+        let mut missing_merge = scalar;
+        let OpKind::X86Rsqrt28 { merge, .. } = &mut missing_merge else {
+            unreachable!()
+        };
+        *merge = None;
+        assert!(!is_x86_native_vector_op(&missing_merge));
+
+        let mut short = packed;
+        let OpKind::X86Rsqrt28 {
+            dst,
+            src,
+            width,
+            lanes,
+            ..
+        } = &mut short
+        else {
+            unreachable!()
+        };
+        *dst = x86(X86Reg::Ymm(17));
+        *src = x86(X86Reg::Ymm(19));
+        *width = VecWidth::V256;
+        *lanes = 8;
+        assert!(!is_x86_native_vector_op(&short));
+    }
+
+    #[test]
     fn scale_f_native_gate_validates_shapes_rounding_and_encodings() {
         let packed = OpKind::X86ScaleF {
             dst: x86(X86Reg::Zmm(17)),
@@ -24814,7 +24997,7 @@ mod jit_gate_tests {
     }
 
     #[test]
-    fn x86_evex_exp2_and_recip28_replay_require_exact_er_feature_without_bw_or_vl() {
+    fn x86_evex_exp2_recip28_and_rsqrt28_require_exact_er_without_bw_or_vl() {
         use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
         use crate::smir::lift::x86_64::X86_64Lifter;
         use crate::smir::lift::{LiftContext, SmirLifter};
@@ -24829,6 +25012,11 @@ mod jit_gate_tests {
             &[0x62, 0xA2, 0x7D, 0x99, 0xCA, 0xCB][..],
             &[0x62, 0xF2, 0x6D, 0x08, 0xCB, 0xCB][..],
             &[0x62, 0xA2, 0xED, 0x92, 0xCB, 0xCB][..],
+            &[0x62, 0xF2, 0x7D, 0x48, 0xCC, 0xCB][..],
+            &[0x62, 0xF2, 0xFD, 0x48, 0xCC, 0xCB][..],
+            &[0x62, 0xA2, 0x7D, 0x99, 0xCC, 0xCB][..],
+            &[0x62, 0xF2, 0x6D, 0x08, 0xCD, 0xCB][..],
+            &[0x62, 0xA2, 0xED, 0x92, 0xCD, 0xCB][..],
         ] {
             let mut lifter = X86_64Lifter::strict();
             let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
@@ -24864,12 +25052,20 @@ mod jit_gate_tests {
                 .unwrap();
             let mut mixed_er_function = function.clone();
             mixed_er_function.blocks[0].ops.extend(recip28.ops);
+            let rsqrt28 = lifter
+                .lift_insn(
+                    PC + bytes.len() as u64,
+                    &[0x62, 0xF2, 0x7D, 0x48, 0xCC, 0xCB],
+                    &mut context,
+                )
+                .unwrap();
+            mixed_er_function.blocks[0].ops.extend(rsqrt28.ops);
             assert!(
                 x86_native_vector_uses_k16_opmasks_excluding(
                     &mixed_er_function,
                     &std::collections::HashMap::new()
                 ),
-                "mixed VEXP2/VRCP28 region must retain low-16-bit opmask marshalling"
+                "mixed VEXP2/VRCP28/VRSQRT28 region must retain low-16-bit opmask marshalling"
             );
 
             let scale_f = lifter

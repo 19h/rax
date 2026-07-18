@@ -522,6 +522,524 @@ const X86_RCP28_COEFFICIENTS: [(u64, u64, u64); 256] = [
     (0x10080401e, 0x3bfbfe, 0x0805),
 ];
 
+// VRSQRT28 raw polynomial coefficients from the same Intel reference source.
+// The license notice above applies. Runtime scaling reproduces SINIT with
+// N=50, Na=33, Nb=Nc=50, and S=3 without relying on host floating point.
+const X86_RSQRT28_COEFFICIENTS: [(u64, u64, u64); 512] = [
+    (0x16a09e665, 0x3a57da, 0x10e5),
+    (0x1695568c3, 0x3a604c, 0x10ba),
+    (0x168a1f809, 0x3a68a9, 0x108f),
+    (0x167ef919c, 0x3a70f1, 0x1067),
+    (0x1673e32eb, 0x3a7925, 0x103d),
+    (0x1668dd972, 0x3a8144, 0x1018),
+    (0x165de82ad, 0x3a8950, 0x0ff0),
+    (0x165302c27, 0x3a9148, 0x0fcb),
+    (0x16482d379, 0x3a992d, 0x0fa4),
+    (0x163d67634, 0x3aa0ff, 0x0f7e),
+    (0x1632b1200, 0x3aa8be, 0x0f59),
+    (0x16280a483, 0x3ab06b, 0x0f33),
+    (0x161d72b76, 0x3ab805, 0x0f10),
+    (0x1612ea48e, 0x3abf8d, 0x0eed),
+    (0x160870d8f, 0x3ac703, 0x0ecb),
+    (0x15fe0643f, 0x3ace68, 0x0ea7),
+    (0x15f3aa672, 0x3ad5bb, 0x0e86),
+    (0x15e95d1fa, 0x3adcfe, 0x0e61),
+    (0x15df1e4bb, 0x3ae42f, 0x0e40),
+    (0x15d4edc9b, 0x3aeb4f, 0x0e21),
+    (0x15cacb77d, 0x3af25f, 0x0e01),
+    (0x15c0b735f, 0x3af95f, 0x0ddf),
+    (0x15b6b0e32, 0x3b004f, 0x0dbe),
+    (0x15acb8601, 0x3b072e, 0x0da1),
+    (0x15a2cd8c7, 0x3b0dfe, 0x0d82),
+    (0x1598f0492, 0x3b14bf, 0x0d62),
+    (0x158f2077e, 0x3b1b70, 0x0d44),
+    (0x15855df9a, 0x3b2212, 0x0d27),
+    (0x157ba8b0d, 0x3b28a5, 0x0d0a),
+    (0x1572007f6, 0x3b2f2a, 0x0cea),
+    (0x156865485, 0x3b359f, 0x0cd1),
+    (0x155ed6ee7, 0x3b3c07, 0x0cb2),
+    (0x155555552, 0x3b4260, 0x0c97),
+    (0x154be0605, 0x3b48ab, 0x0c7c),
+    (0x154277f3e, 0x3b4ee9, 0x0c5d),
+    (0x15391bf44, 0x3b5518, 0x0c45),
+    (0x152fcc467, 0x3b5b3a, 0x0c2a),
+    (0x152688cf2, 0x3b614f, 0x0c0e),
+    (0x151d5173e, 0x3b6756, 0x0bf6),
+    (0x1514261a7, 0x3b6d51, 0x0bd9),
+    (0x150b06a8f, 0x3b733e, 0x0bc1),
+    (0x1501f3054, 0x3b791f, 0x0ba7),
+    (0x14f8eb168, 0x3b7ef3, 0x0b8e),
+    (0x14efeec37, 0x3b84ba, 0x0b78),
+    (0x14e6fdf30, 0x3b8a76, 0x0b5d),
+    (0x14de188d3, 0x3b9025, 0x0b45),
+    (0x14d53e796, 0x3b95c8, 0x0b2e),
+    (0x14cc6f9ff, 0x3b9b5f, 0x0b17),
+    (0x14c3abe93, 0x3ba0ea, 0x0b01),
+    (0x14baf33d8, 0x3ba66a, 0x0ae9),
+    (0x14b24585c, 0x3babde, 0x0ad4),
+    (0x14a9a2ab6, 0x3bb147, 0x0abd),
+    (0x14a10a97b, 0x3bb6a5, 0x0aa5),
+    (0x14987d340, 0x3bbbf8, 0x0a8e),
+    (0x148ffa6ac, 0x3bc13f, 0x0a7b),
+    (0x14878225f, 0x3bc67c, 0x0a64),
+    (0x147f144fd, 0x3bcbae, 0x0a4f),
+    (0x1476b0d31, 0x3bd0d5, 0x0a3c),
+    (0x146e579aa, 0x3bd5f2, 0x0a27),
+    (0x14660891c, 0x3bdb05, 0x0a10),
+    (0x145dc3a3b, 0x3be00d, 0x09fd),
+    (0x145588bc1, 0x3be50b, 0x09e9),
+    (0x144d57c66, 0x3be9ff, 0x09d6),
+    (0x144530aef, 0x3beeea, 0x09bf),
+    (0x143d13621, 0x3bf3ca, 0x09ad),
+    (0x1434ffcc4, 0x3bf8a0, 0x099c),
+    (0x142cf5d9f, 0x3bfd6d, 0x0989),
+    (0x1424f5782, 0x3c0231, 0x0974),
+    (0x141cfe93d, 0x3c06eb, 0x0962),
+    (0x1415111a9, 0x3c0b9c, 0x094e),
+    (0x140d2cf99, 0x3c1043, 0x093f),
+    (0x1405521ea, 0x3c14e2, 0x092b),
+    (0x13fd8077c, 0x3c1977, 0x091b),
+    (0x13f5b7f30, 0x3c1e04, 0x0907),
+    (0x13edf87e6, 0x3c2288, 0x08f5),
+    (0x13e64208a, 0x3c2703, 0x08e4),
+    (0x13de94808, 0x3c2b75, 0x08d4),
+    (0x13d6efd45, 0x3c2fdf, 0x08c3),
+    (0x13cf53f39, 0x3c3440, 0x08b4),
+    (0x13c7c0cd8, 0x3c3899, 0x08a3),
+    (0x13c03650e, 0x3c3cea, 0x0892),
+    (0x13b8b46da, 0x3c4133, 0x0880),
+    (0x13b13b13b, 0x3c4573, 0x0872),
+    (0x13a9ca327, 0x3c49ac, 0x0860),
+    (0x13a261ba8, 0x3c4ddc, 0x0852),
+    (0x139b019b7, 0x3c5205, 0x0841),
+    (0x1393a9c5e, 0x3c5626, 0x0832),
+    (0x138c5a2ab, 0x3c5a3f, 0x0823),
+    (0x138512ba0, 0x3c5e51, 0x0812),
+    (0x137dd364f, 0x3c625b, 0x0804),
+    (0x13769c1cb, 0x3c665d, 0x07f7),
+    (0x136f6cd21, 0x3c6a58, 0x07e9),
+    (0x136845766, 0x3c6e4c, 0x07da),
+    (0x136125fb2, 0x3c7239, 0x07ca),
+    (0x135a0e51f, 0x3c761e, 0x07be),
+    (0x1352fe6ca, 0x3c79fd, 0x07ad),
+    (0x134bf63d0, 0x3c7dd4, 0x07a0),
+    (0x1344f5b50, 0x3c81a4, 0x0794),
+    (0x133dfcc6b, 0x3c856e, 0x0784),
+    (0x13370b64c, 0x3c8930, 0x0779),
+    (0x133021813, 0x3c8cec, 0x076b),
+    (0x13293f0ea, 0x3c90a1, 0x075f),
+    (0x132263ffe, 0x3c9450, 0x0750),
+    (0x131b9047c, 0x3c97f8, 0x0743),
+    (0x1314c3d90, 0x3c9b9a, 0x0734),
+    (0x130dfea70, 0x3c9f35, 0x0728),
+    (0x130740a50, 0x3ca2c9, 0x071e),
+    (0x130089c5c, 0x3ca658, 0x070f),
+    (0x12f9d9fd5, 0x3ca9e0, 0x0703),
+    (0x12f3313ed, 0x3cad62, 0x06f7),
+    (0x12ec8f7e3, 0x3cb0de, 0x06eb),
+    (0x12e5f4af7, 0x3cb453, 0x06e1),
+    (0x12df60c5f, 0x3cb7c3, 0x06d4),
+    (0x12d8d3b5e, 0x3cbb2d, 0x06c8),
+    (0x12d24d73a, 0x3cbe91, 0x06bc),
+    (0x12cbcdf37, 0x3cc1ef, 0x06b0),
+    (0x12c555298, 0x3cc547, 0x06a6),
+    (0x12bee30a4, 0x3cc89a, 0x0699),
+    (0x12b8778a7, 0x3ccbe7, 0x068d),
+    (0x12b2129ec, 0x3ccf2e, 0x0683),
+    (0x12abb43c2, 0x3cd26f, 0x067a),
+    (0x12a55c56d, 0x3cd5ac, 0x066c),
+    (0x129f0ae4c, 0x3cd8e2, 0x0664),
+    (0x1298bfda6, 0x3cdc13, 0x0659),
+    (0x12927b2ce, 0x3cdf3f, 0x064e),
+    (0x128c3cd1b, 0x3ce266, 0x0642),
+    (0x128604bea, 0x3ce587, 0x0638),
+    (0x127fd2e8a, 0x3ce8a3, 0x062e),
+    (0x1279a7458, 0x3cebba, 0x0623),
+    (0x127381caf, 0x3ceecc, 0x0618),
+    (0x126d626ef, 0x3cf1d8, 0x0610),
+    (0x12674926c, 0x3cf4e0, 0x0605),
+    (0x126135e93, 0x3cf7e2, 0x05fd),
+    (0x125b28ab8, 0x3cfae0, 0x05f2),
+    (0x125521645, 0x3cfdd9, 0x05e7),
+    (0x124f2009c, 0x3d00cd, 0x05dd),
+    (0x124924923, 0x3d03bc, 0x05d4),
+    (0x12432ef41, 0x3d06a6, 0x05cb),
+    (0x123d3f258, 0x3d098c, 0x05c1),
+    (0x1237551dd, 0x3d0c6c, 0x05ba),
+    (0x123170d2a, 0x3d0f49, 0x05af),
+    (0x122b923bc, 0x3d1220, 0x05a8),
+    (0x1225b94f6, 0x3d14f3, 0x059e),
+    (0x121fe6046, 0x3d17c2, 0x0593),
+    (0x121a1851e, 0x3d1a8c, 0x058b),
+    (0x1214502f6, 0x3d1d51, 0x0584),
+    (0x120e8d932, 0x3d2013, 0x0578),
+    (0x1208d0752, 0x3d22cf, 0x0573),
+    (0x120318cc5, 0x3d2588, 0x0568),
+    (0x11fd66903, 0x3d283c, 0x0560),
+    (0x11f7b9b82, 0x3d2aec, 0x0557),
+    (0x11f2123b8, 0x3d2d98, 0x054e),
+    (0x11ec70125, 0x3d303f, 0x0548),
+    (0x11e6d333f, 0x3d32e2, 0x0540),
+    (0x11e13b97c, 0x3d3582, 0x0535),
+    (0x11dba9363, 0x3d381d, 0x052e),
+    (0x11d61c070, 0x3d3ab4, 0x0526),
+    (0x11d094020, 0x3d3d47, 0x051e),
+    (0x11cb111f0, 0x3d3fd6, 0x0517),
+    (0x11c593566, 0x3d4261, 0x0510),
+    (0x11c01aa02, 0x3d44e9, 0x0505),
+    (0x11baa6f4a, 0x3d476c, 0x04ff),
+    (0x11b5384c3, 0x3d49eb, 0x04f9),
+    (0x11afce9e9, 0x3d4c67, 0x04f1),
+    (0x11aa69e4f, 0x3d4edf, 0x04e9),
+    (0x11a50a177, 0x3d5153, 0x04e2),
+    (0x119faf2e5, 0x3d53c4, 0x04d9),
+    (0x119a59229, 0x3d5631, 0x04d1),
+    (0x119507ece, 0x3d589a, 0x04ca),
+    (0x118fbb85b, 0x3d5aff, 0x04c5),
+    (0x118a73e61, 0x3d5d61, 0x04bd),
+    (0x11853106a, 0x3d5fbf, 0x04b7),
+    (0x117ff2e02, 0x3d621a, 0x04af),
+    (0x117ab96ba, 0x3d6471, 0x04aa),
+    (0x117584a26, 0x3d66c5, 0x04a2),
+    (0x1170547d3, 0x3d6916, 0x0498),
+    (0x116b28f54, 0x3d6b63, 0x0491),
+    (0x11660203c, 0x3d6dac, 0x048d),
+    (0x1160dfa23, 0x3d6ff2, 0x0486),
+    (0x115bc1c94, 0x3d7235, 0x0480),
+    (0x1156a872e, 0x3d7474, 0x047a),
+    (0x11519397b, 0x3d76b1, 0x0471),
+    (0x114c83320, 0x3d78ea, 0x046a),
+    (0x1147773b1, 0x3d7b1f, 0x0466),
+    (0x11426fabf, 0x3d7d52, 0x045e),
+    (0x113d6c7ec, 0x3d7f81, 0x0459),
+    (0x11386dad2, 0x3d81ad, 0x0453),
+    (0x113373306, 0x3d83d6, 0x044d),
+    (0x112e7d02c, 0x3d85fc, 0x0446),
+    (0x11298b1db, 0x3d881f, 0x043f),
+    (0x11249d7b1, 0x3d8a3f, 0x0438),
+    (0x111fb4151, 0x3d8c5b, 0x0435),
+    (0x111acee57, 0x3d8e75, 0x042d),
+    (0x1115ede5f, 0x3d908c, 0x0427),
+    (0x111111113, 0x3d929f, 0x0423),
+    (0x110c3860b, 0x3d94b0, 0x041c),
+    (0x110763cec, 0x3d96be, 0x0416),
+    (0x11029355b, 0x3d98c9, 0x0410),
+    (0x10fdc6ef9, 0x3d9ad1, 0x040b),
+    (0x10f8fe96f, 0x3d9cd6, 0x0406),
+    (0x10f43a45b, 0x3d9ed9, 0x03fe),
+    (0x10ef79f6b, 0x3da0d8, 0x03fa),
+    (0x10eabda3c, 0x3da2d5, 0x03f4),
+    (0x10e605479, 0x3da4cf, 0x03ef),
+    (0x10e150dcf, 0x3da6c6, 0x03ea),
+    (0x10dca05dd, 0x3da8bb, 0x03e3),
+    (0x10d7f3c51, 0x3daaad, 0x03dd),
+    (0x10d34b0d7, 0x3dac9c, 0x03d8),
+    (0x10cea6315, 0x3dae88, 0x03d5),
+    (0x10ca052b8, 0x3db072, 0x03cf),
+    (0x10c567f6f, 0x3db259, 0x03ca),
+    (0x10c0ce8df, 0x3db43e, 0x03c3),
+    (0x10bc38eb8, 0x3db620, 0x03bf),
+    (0x10b7a70aa, 0x3db7ff, 0x03bb),
+    (0x10b318e61, 0x3db9dc, 0x03b5),
+    (0x10ae8e788, 0x3dbbb7, 0x03ae),
+    (0x10aa07bd9, 0x3dbd8e, 0x03ac),
+    (0x10a584af7, 0x3dbf64, 0x03a5),
+    (0x10a10549c, 0x3dc137, 0x03a0),
+    (0x109c89876, 0x3dc307, 0x039c),
+    (0x109811636, 0x3dc4d5, 0x0397),
+    (0x10939cd8d, 0x3dc6a1, 0x0391),
+    (0x108f2be31, 0x3dc86a, 0x038d),
+    (0x108abe7d5, 0x3dca31, 0x0387),
+    (0x108654a2c, 0x3dcbf5, 0x0384),
+    (0x1081ee4ed, 0x3dcdb7, 0x037f),
+    (0x107d8b7c5, 0x3dcf77, 0x037a),
+    (0x10792c272, 0x3dd134, 0x0377),
+    (0x1074d04a7, 0x3dd2ef, 0x0373),
+    (0x107077e1f, 0x3dd4a8, 0x036d),
+    (0x106c22e87, 0x3dd65f, 0x0367),
+    (0x1067d15a0, 0x3dd813, 0x0364),
+    (0x10638331f, 0x3dd9c5, 0x0360),
+    (0x105f386bd, 0x3ddb75, 0x035b),
+    (0x105af1033, 0x3ddd23, 0x0355),
+    (0x1056acf3c, 0x3ddece, 0x0353),
+    (0x10526c391, 0x3de077, 0x0350),
+    (0x104e2ecef, 0x3de21e, 0x034c),
+    (0x1049f4b0c, 0x3de3c3, 0x0348),
+    (0x1045bddaa, 0x3de566, 0x0343),
+    (0x10418a480, 0x3de707, 0x033e),
+    (0x103d59f4f, 0x3de8a6, 0x0338),
+    (0x10392cdd0, 0x3dea42, 0x0337),
+    (0x103502fc4, 0x3debdd, 0x0331),
+    (0x1030dc4ec, 0x3ded75, 0x032e),
+    (0x102cb8cfd, 0x3def0c, 0x0328),
+    (0x1028987be, 0x3df0a0, 0x0326),
+    (0x10247b4ec, 0x3df233, 0x0320),
+    (0x102061447, 0x3df3c3, 0x031d),
+    (0x101c4a58d, 0x3df552, 0x0317),
+    (0x101836886, 0x3df6de, 0x0315),
+    (0x101425cee, 0x3df868, 0x0313),
+    (0x101018286, 0x3df9f1, 0x030d),
+    (0x100c0d90e, 0x3dfb78, 0x0309),
+    (0x100806052, 0x3dfcfc, 0x0307),
+    (0x10040180a, 0x3dfe7f, 0x0303),
+    (0x1fffffffb, 0x380003, 0x17e1),
+    (0x1ff00bf5b, 0x380bf4, 0x17a6),
+    (0x1fe02fb02, 0x3817c7, 0x176e),
+    (0x1fd06af46, 0x38237e, 0x1731),
+    (0x1fc0bd885, 0x382f17, 0x16fa),
+    (0x1fb12732b, 0x383a94, 0x16c2),
+    (0x1fa1a7bb0, 0x3845f5, 0x168b),
+    (0x1f923ee9f, 0x38513a, 0x1655),
+    (0x1f82ec87c, 0x385c64, 0x1620),
+    (0x1f73b05f1, 0x386773, 0x15eb),
+    (0x1f648a39f, 0x387268, 0x15b4),
+    (0x1f5579e37, 0x387d42, 0x1582),
+    (0x1f467f27c, 0x388803, 0x154c),
+    (0x1f3799d36, 0x3892a9, 0x151d),
+    (0x1f28c9b32, 0x389d37, 0x14ea),
+    (0x1f1a0e957, 0x38a7ac, 0x14b7),
+    (0x1f0b68489, 0x38b208, 0x1487),
+    (0x1efcd69b9, 0x38bc4c, 0x1457),
+    (0x1eee595e7, 0x38c678, 0x1427),
+    (0x1edff0618, 0x38d08c, 0x13f9),
+    (0x1ed19b75a, 0x38da89, 0x13cb),
+    (0x1ec35a6c8, 0x38e46f, 0x139d),
+    (0x1eb52d187, 0x38ee3e, 0x1370),
+    (0x1ea7134c2, 0x38f7f6, 0x1346),
+    (0x1e990cda9, 0x390199, 0x1318),
+    (0x1e8b19983, 0x390b25, 0x12ee),
+    (0x1e7d3958e, 0x39149c, 0x12c3),
+    (0x1e6f6bf1d, 0x391dfd, 0x129b),
+    (0x1e61b138b, 0x39274a, 0x126e),
+    (0x1e5409035, 0x393081, 0x1247),
+    (0x1e4673286, 0x3939a4, 0x121d),
+    (0x1e38ef7e8, 0x3942b3, 0x11f3),
+    (0x1e2b7dddd, 0x394bad, 0x11cd),
+    (0x1e1e1e1dd, 0x395494, 0x11a4),
+    (0x1e10d0177, 0x395d66, 0x1181),
+    (0x1e0393a38, 0x396626, 0x1158),
+    (0x1df6689b6, 0x396ed2, 0x1134),
+    (0x1de94ed8e, 0x39776c, 0x110c),
+    (0x1ddc4636f, 0x397ff2, 0x10ea),
+    (0x1dcf4e8f6, 0x398867, 0x10c3),
+    (0x1dc267be5, 0x3990c9, 0x109f),
+    (0x1db5919f4, 0x399919, 0x107b),
+    (0x1da8cc0e3, 0x39a157, 0x1058),
+    (0x1d9c16e7b, 0x39a983, 0x1037),
+    (0x1d8f7208e, 0x39b19e, 0x1014),
+    (0x1d82dd4e8, 0x39b9a8, 0x0ff2),
+    (0x1d7658970, 0x39c1a1, 0x0fcf),
+    (0x1d69e3c04, 0x39c989, 0x0fae),
+    (0x1d5d7ea90, 0x39d160, 0x0f8e),
+    (0x1d51292fe, 0x39d927, 0x0f6d),
+    (0x1d44e3342, 0x39e0de, 0x0f4c),
+    (0x1d38ac95b, 0x39e884, 0x0f2f),
+    (0x1d2c8534c, 0x39f01b, 0x0f0e),
+    (0x1d206cf16, 0x39f7a2, 0x0eef),
+    (0x1d1463aca, 0x39ff19, 0x0ed2),
+    (0x1d0869473, 0x3a0682, 0x0eb0),
+    (0x1cfc7da2f, 0x3a0ddb, 0x0e92),
+    (0x1cf0a0a1b, 0x3a1524, 0x0e78),
+    (0x1ce4d2253, 0x3a1c60, 0x0e57),
+    (0x1cd912107, 0x3a238c, 0x0e3b),
+    (0x1ccd6045c, 0x3a2aaa, 0x0e1e),
+    (0x1cc1bca8b, 0x3a31b9, 0x0e04),
+    (0x1cb6271c4, 0x3a38bb, 0x0de5),
+    (0x1caa9f848, 0x3a3fae, 0x0dcb),
+    (0x1c9f25c59, 0x3a4693, 0x0db1),
+    (0x1c93b9c3b, 0x3a4d6b, 0x0d94),
+    (0x1c885b638, 0x3a5435, 0x0d79),
+    (0x1c7d0a89d, 0x3a5af2, 0x0d5d),
+    (0x1c71c71c6, 0x3a61a1, 0x0d44),
+    (0x1c6691005, 0x3a6843, 0x0d2b),
+    (0x1c5b681b9, 0x3a6ed8, 0x0d12),
+    (0x1c504c542, 0x3a7561, 0x0cf6),
+    (0x1c453d90c, 0x3a7bdc, 0x0cdf),
+    (0x1c3a3bb7c, 0x3a824b, 0x0cc6),
+    (0x1c2f46b05, 0x3a88ae, 0x0cab),
+    (0x1c245e618, 0x3a8f04, 0x0c93),
+    (0x1c1982b2b, 0x3a954e, 0x0c7b),
+    (0x1c0eb38bc, 0x3a9b8c, 0x0c62),
+    (0x1c03f0d4e, 0x3aa1bd, 0x0c4e),
+    (0x1bf93a757, 0x3aa7e4, 0x0c33),
+    (0x1bee9056c, 0x3aadfe, 0x0c1e),
+    (0x1be3f2615, 0x3ab40d, 0x0c06),
+    (0x1bd9607e2, 0x3aba10, 0x0bf0),
+    (0x1bceda961, 0x3ac008, 0x0bda),
+    (0x1bc46092c, 0x3ac5f5, 0x0bc3),
+    (0x1bb9f25de, 0x3acbd7, 0x0bac),
+    (0x1baf8fe1b, 0x3ad1ad, 0x0b98),
+    (0x1ba539078, 0x3ad779, 0x0b82),
+    (0x1b9aedba2, 0x3add3a, 0x0b6d),
+    (0x1b90ade45, 0x3ae2f0, 0x0b59),
+    (0x1b8679708, 0x3ae89c, 0x0b43),
+    (0x1b7c5049c, 0x3aee3d, 0x0b30),
+    (0x1b72325b7, 0x3af3d4, 0x0b1b),
+    (0x1b681f909, 0x3af961, 0x0b06),
+    (0x1b5e17d54, 0x3afee4, 0x0af0),
+    (0x1b541b153, 0x3b045c, 0x0ade),
+    (0x1b4a293c0, 0x3b09cb, 0x0ac9),
+    (0x1b4042364, 0x3b0f30, 0x0ab5),
+    (0x1b3665f07, 0x3b148b, 0x0aa1),
+    (0x1b2c94570, 0x3b19dc, 0x0a90),
+    (0x1b22cd56c, 0x3b1f24, 0x0a7c),
+    (0x1b1910dcc, 0x3b2462, 0x0a6b),
+    (0x1b0f5ed62, 0x3b2997, 0x0a58),
+    (0x1b05b7300, 0x3b2ec3, 0x0a45),
+    (0x1afc19d86, 0x3b33e5, 0x0a35),
+    (0x1af286bc7, 0x3b38ff, 0x0a21),
+    (0x1ae8fdcae, 0x3b3e0f, 0x0a10),
+    (0x1adf7ef0b, 0x3b4317, 0x09fd),
+    (0x1ad60a1ce, 0x3b4816, 0x09ea),
+    (0x1acc9f3e0, 0x3b4d0b, 0x09dc),
+    (0x1ac33e41c, 0x3b51f9, 0x09c8),
+    (0x1ab9e717c, 0x3b56dd, 0x09ba),
+    (0x1ab099ae6, 0x3b5bba, 0x09a6),
+    (0x1aa755f52, 0x3b608d, 0x0998),
+    (0x1a9e1bdad, 0x3b6559, 0x0985),
+    (0x1a94eb4f2, 0x3b6a1c, 0x0975),
+    (0x1a8bc4417, 0x3b6ed7, 0x0965),
+    (0x1a82a6a1a, 0x3b738a, 0x0954),
+    (0x1a79925f9, 0x3b7834, 0x0947),
+    (0x1a70876ac, 0x3b7cd7, 0x0937),
+    (0x1a6785b40, 0x3b8172, 0x0927),
+    (0x1a5e8d2b5, 0x3b8605, 0x0918),
+    (0x1a559dc10, 0x3b8a91, 0x0906),
+    (0x1a4cb7661, 0x3b8f14, 0x08fa),
+    (0x1a43da0ab, 0x3b9391, 0x08e7),
+    (0x1a3b05a04, 0x3b9805, 0x08db),
+    (0x1a323a177, 0x3b9c72, 0x08cd),
+    (0x1a297761a, 0x3ba0d8, 0x08bd),
+    (0x1a20bd702, 0x3ba536, 0x08b0),
+    (0x1a180c33d, 0x3ba98e, 0x089e),
+    (0x1a0f639ed, 0x3badde, 0x0890),
+    (0x1a06c3a2f, 0x3bb226, 0x0885),
+    (0x19fe2c316, 0x3bb668, 0x0876),
+    (0x19f59d3c4, 0x3bbaa3, 0x0868),
+    (0x19ed16b61, 0x3bbed7, 0x0859),
+    (0x19e498907, 0x3bc304, 0x084c),
+    (0x19dc22be2, 0x3bc72a, 0x083f),
+    (0x19d3b5318, 0x3bcb49, 0x0833),
+    (0x19cb4fdcb, 0x3bcf62, 0x0825),
+    (0x19c2f2b2f, 0x3bd374, 0x0818),
+    (0x19ba9da6a, 0x3bd780, 0x0809),
+    (0x19b250aae, 0x3bdb85, 0x07fc),
+    (0x19aa0bb2d, 0x3bdf83, 0x07f1),
+    (0x19a1ceb14, 0x3be37b, 0x07e5),
+    (0x199999997, 0x3be76d, 0x07d8),
+    (0x19916c5f1, 0x3beb59, 0x07c9),
+    (0x198946f57, 0x3bef3e, 0x07be),
+    (0x198129503, 0x3bf31d, 0x07b2),
+    (0x197913630, 0x3bf6f6, 0x07a5),
+    (0x197105217, 0x3bfac9, 0x0799),
+    (0x1968fe7fa, 0x3bfe96, 0x078d),
+    (0x1960ff71c, 0x3c025c, 0x0784),
+    (0x195907eb8, 0x3c061d, 0x0778),
+    (0x195117e12, 0x3c09d9, 0x0769),
+    (0x19492f476, 0x3c0d8e, 0x075e),
+    (0x19414e124, 0x3c113d, 0x0755),
+    (0x193974369, 0x3c14e7, 0x0748),
+    (0x1931a1a8a, 0x3c188b, 0x073d),
+    (0x1929d65d0, 0x3c1c2a, 0x0730),
+    (0x192212491, 0x3c1fc2, 0x0729),
+    (0x191a55614, 0x3c2356, 0x071b),
+    (0x19129f9aa, 0x3c26e4, 0x0710),
+    (0x190af0ea6, 0x3c2a6c, 0x0707),
+    (0x19034945d, 0x3c2def, 0x06fc),
+    (0x18fba8a1c, 0x3c316d, 0x06f1),
+    (0x18f40ef3f, 0x3c34e5, 0x06e7),
+    (0x18ec7c315, 0x3c3858, 0x06de),
+    (0x18e4f0501, 0x3c3bc6, 0x06d3),
+    (0x18dd6b454, 0x3c3f2f, 0x06c8),
+    (0x18d5ed06f, 0x3c4293, 0x06bc),
+    (0x18ce758ad, 0x3c45f1, 0x06b4),
+    (0x18c704c69, 0x3c494b, 0x06a8),
+    (0x18bf9ab05, 0x3c4c9f, 0x06a0),
+    (0x18b8373e1, 0x3c4fef, 0x0694),
+    (0x18b0da661, 0x3c5339, 0x068c),
+    (0x18a9841df, 0x3c567f, 0x0682),
+    (0x18a2345cb, 0x3c59c0, 0x0677),
+    (0x189aeb184, 0x3c5cfc, 0x066e),
+    (0x1893a8471, 0x3c6033, 0x0666),
+    (0x188c6bdfe, 0x3c6366, 0x065a),
+    (0x188535d8e, 0x3c6694, 0x0651),
+    (0x187e06292, 0x3c69bd, 0x0649),
+    (0x1876dcc75, 0x3c6ce1, 0x0642),
+    (0x186fb9a9f, 0x3c7001, 0x0638),
+    (0x18689cc7d, 0x3c731d, 0x062d),
+    (0x186186185, 0x3c7634, 0x0625),
+    (0x185a75927, 0x3c7946, 0x061d),
+    (0x18536b2cc, 0x3c7c54, 0x0615),
+    (0x184c66df1, 0x3c7f5e, 0x060b),
+    (0x184568a03, 0x3c8263, 0x0603),
+    (0x183e7067a, 0x3c8564, 0x05fa),
+    (0x18377e2c9, 0x3c8861, 0x05f1),
+    (0x183091e6c, 0x3c8b59, 0x05e9),
+    (0x1829ab8d3, 0x3c8e4d, 0x05e2),
+    (0x1822cb181, 0x3c913d, 0x05d9),
+    (0x181bf07e8, 0x3c9429, 0x05d0),
+    (0x18151bb84, 0x3c9711, 0x05c7),
+    (0x180e4cbd8, 0x3c99f4, 0x05c1),
+    (0x18078385b, 0x3c9cd4, 0x05b7),
+    (0x1800c0092, 0x3c9faf, 0x05b0),
+    (0x17fa023f0, 0x3ca287, 0x05a6),
+    (0x17f34a201, 0x3ca55a, 0x05a0),
+    (0x17ec97a3f, 0x3ca82a, 0x0597),
+    (0x17e5eac32, 0x3caaf5, 0x0591),
+    (0x17df43758, 0x3cadbd, 0x0588),
+    (0x17d8a1b36, 0x3cb081, 0x0580),
+    (0x17d205755, 0x3cb341, 0x0578),
+    (0x17cb6eb36, 0x3cb5fd, 0x0572),
+    (0x17c4dd662, 0x3cb8b6, 0x0568),
+    (0x17be51862, 0x3cbb6a, 0x0564),
+    (0x17b7cb0c1, 0x3cbe1b, 0x055c),
+    (0x17b149efe, 0x3cc0c9, 0x0552),
+    (0x17aace2ae, 0x3cc372, 0x054e),
+    (0x17a457b5d, 0x3cc618, 0x0546),
+    (0x179de688c, 0x3cc8bb, 0x053d),
+    (0x17977a9d2, 0x3ccb5a, 0x0536),
+    (0x179113ebc, 0x3ccdf5, 0x052f),
+    (0x178ab26d5, 0x3cd08d, 0x0527),
+    (0x1784561ad, 0x3cd321, 0x0522),
+    (0x177dfeed9, 0x3cd5b2, 0x051a),
+    (0x1777acde9, 0x3cd83f, 0x0514),
+    (0x17715fe6a, 0x3cdac9, 0x050d),
+    (0x176b17ff0, 0x3cdd50, 0x0505),
+    (0x1764d5214, 0x3cdfd3, 0x04ff),
+    (0x175e97468, 0x3ce253, 0x04f8),
+    (0x17585e683, 0x3ce4cf, 0x04f2),
+    (0x17522a7f3, 0x3ce748, 0x04ed),
+    (0x174bfb857, 0x3ce9be, 0x04e6),
+    (0x1745d1744, 0x3cec31, 0x04de),
+    (0x173fac455, 0x3ceea0, 0x04d9),
+    (0x17398bf1d, 0x3cf10c, 0x04d4),
+    (0x173370739, 0x3cf375, 0x04ce),
+    (0x172d59c46, 0x3cf5db, 0x04c7),
+    (0x172747dda, 0x3cf83e, 0x04c0),
+    (0x17213ab96, 0x3cfa9e, 0x04b8),
+    (0x171b32516, 0x3cfcfa, 0x04b4),
+    (0x17152e9f3, 0x3cff54, 0x04ac),
+    (0x170f2f9d2, 0x3d01aa, 0x04a7),
+    (0x170935448, 0x3d03fe, 0x049f),
+    (0x17033f901, 0x3d064e, 0x049b),
+    (0x16fd4e794, 0x3d089b, 0x0496),
+    (0x16f761fa2, 0x3d0ae6, 0x048e),
+    (0x16f17a0d3, 0x3d0d2d, 0x048a),
+    (0x16eb96ac0, 0x3d0f72, 0x0483),
+    (0x16e5b7d15, 0x3d11b3, 0x0480),
+    (0x16dfdd772, 0x3d13f2, 0x0479),
+    (0x16da07979, 0x3d162e, 0x0473),
+    (0x16d4362d0, 0x3d1867, 0x046e),
+    (0x16ce6931c, 0x3d1a9e, 0x0465),
+    (0x16c8a0a04, 0x3d1cd1, 0x0462),
+    (0x16c2dc730, 0x3d1f02, 0x045b),
+    (0x16bd1ca44, 0x3d2130, 0x0455),
+    (0x16b7612ec, 0x3d235b, 0x0450),
+    (0x16b1aa0cb, 0x3d2583, 0x044d),
+    (0x16abf7390, 0x3d27a9, 0x0446),
+    (0x16a648ae1, 0x3d29cc, 0x0441),
+];
+
 const X86_SM4_SBOX: [u8; 256] = [
     0xD6, 0x90, 0xE9, 0xFE, 0xCC, 0xE1, 0x3D, 0xB7, 0x16, 0xB6, 0x14, 0xC2, 0x28, 0xFB, 0x2C, 0x05,
     0x2B, 0x67, 0x9A, 0x76, 0x2A, 0xBE, 0x04, 0xC3, 0xAA, 0x44, 0x13, 0x26, 0x49, 0x86, 0x06, 0x99,
@@ -4183,6 +4701,90 @@ impl SmirInterpreter {
                     }
                     let converted =
                         Self::x86_simd_recip28(Self::get_lane(&source, lane, elem_bits), format);
+                    status |= converted.status;
+                    Self::set_lane(&mut result, lane, elem_bits, converted.bits);
+                }
+                if !*suppress_exceptions {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= status;
+                    }
+                    if Self::x86_simd_fp_unmasked(status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Rsqrt28 {
+                dst,
+                merge,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+                suppress_exceptions,
+            } => {
+                let format = match elem {
+                    VecElementType::F32 => X86_SIMD_F32,
+                    VecElementType::F64 => X86_SIMD_F64,
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                if *scalar != merge.is_some()
+                    || (*scalar && (*width != VecWidth::V128 || *lanes != 1))
+                    || (!*scalar
+                        && (*width != VecWidth::V512 || *lanes != width.lanes(*elem) as u8))
+                    || (*mask_zeroing && mask.is_none())
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: ctx.pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let source = Self::read_vec(ctx, *src);
+                let old = Self::read_vec(ctx, *dst);
+                let mut result = if let Some(merge) = merge {
+                    Self::read_vec(ctx, *merge)
+                } else {
+                    old
+                };
+                if *scalar {
+                    result[2..].fill(0);
+                }
+                let active = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let elem_bits = elem.bytes() * 8;
+                let mut status = 0;
+                for lane in 0..*lanes {
+                    if active & (1u64 << lane) == 0 {
+                        if *mask_zeroing {
+                            Self::set_lane(&mut result, lane, elem_bits, 0);
+                        } else {
+                            Self::set_lane(
+                                &mut result,
+                                lane,
+                                elem_bits,
+                                Self::get_lane(&old, lane, elem_bits),
+                            );
+                        }
+                        continue;
+                    }
+                    let converted =
+                        Self::x86_simd_rsqrt28(Self::get_lane(&source, lane, elem_bits), format);
                     status |= converted.status;
                     Self::set_lane(&mut result, lane, elem_bits, converted.bits);
                 }
@@ -17547,10 +18149,10 @@ impl SmirInterpreter {
                 64 => (bits >> 22) & 0x3FFF_FFFF,
                 _ => unreachable!("VRCP28 supports FP32 and FP64"),
             };
-            Self::x86_recip28_emulate(argument)
+            Self::x86_approx28_emulate(argument, &X86_RCP28_COEFFICIENTS)
         };
         X86SimdFpResult {
-            bits: Self::x86_recip28_finish(
+            bits: Self::x86_approx28_finish(
                 bits & sign,
                 significand,
                 polynomial_exponent,
@@ -17561,11 +18163,66 @@ impl SmirInterpreter {
         }
     }
 
-    fn x86_recip28_emulate(argument: u64) -> (u64, i32) {
+    fn x86_simd_rsqrt28(bits: u64, format: X86SimdFpFormat) -> X86SimdFpResult {
+        let (sign, exponent, _, _) = Self::x86_simd_fp_masks(format);
+        if Self::x86_simd_fp_is_nan(bits, format) {
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_quiet_nan(bits, format),
+                status: u32::from(Self::x86_simd_fp_is_snan(bits, format)),
+            };
+        }
+        if Self::x86_simd_fp_is_denormal(bits, format) || Self::x86_simd_fp_is_zero(bits, format) {
+            return X86SimdFpResult {
+                bits: (bits & sign) | exponent,
+                status: 1 << 2,
+            };
+        }
+        if bits & sign != 0 {
+            return X86SimdFpResult {
+                bits: match format.total_bits {
+                    32 => 0xFFC0_0000,
+                    64 => 0xFFF8_0000_0000_0000,
+                    _ => unreachable!("VRSQRT28 supports FP32 and FP64"),
+                },
+                status: 1,
+            };
+        }
+        if Self::x86_simd_fp_is_infinite(bits, format) {
+            return X86SimdFpResult { bits: 0, status: 0 };
+        }
+
+        let (_, _, fraction_mask, _) = Self::x86_simd_fp_masks(format);
+        let biased_exponent = ((bits & exponent) >> format.fraction_bits) as i32;
+        let input_scale = biased_exponent - format.bias;
+        let fraction = bits & fraction_mask;
+        let exact_even_power = fraction == 0 && biased_exponent & 1 != 0;
+        let (significand, polynomial_exponent) = if exact_even_power {
+            (1u64 << 63, 1023)
+        } else {
+            let argument = match format.total_bits {
+                32 => ((bits as u32).wrapping_shl(7) & 0x7FFF_FFFF) as u64,
+                64 => (bits >> 22) & 0x7FFF_FFFF,
+                _ => unreachable!("VRSQRT28 supports FP32 and FP64"),
+            };
+            Self::x86_approx28_emulate(argument, &X86_RSQRT28_COEFFICIENTS)
+        };
+        X86SimdFpResult {
+            bits: Self::x86_approx28_finish(
+                0,
+                significand,
+                polynomial_exponent,
+                -(input_scale >> 1),
+                format,
+            ),
+            status: 0,
+        }
+    }
+
+    fn x86_approx28_emulate(argument: u64, coefficients: &[(u64, u64, u64)]) -> (u64, i32) {
         let index = (argument >> 22) as usize;
         let fraction = argument & 0x3F_FFFF;
         let square = fraction * fraction >> 24;
-        let (a_raw, b_raw, c_raw) = X86_RCP28_COEFFICIENTS[index];
+        let (a_raw, b_raw, c_raw) = coefficients[index];
         let a = (a_raw << 20) as i64;
         let b = ((b_raw as i64) - 0x40_0000) << 3;
         let c = (c_raw << 3) as i64;
@@ -17577,7 +18234,7 @@ impl SmirInterpreter {
         (polynomial << shift, 1033 - shift as i32)
     }
 
-    fn x86_recip28_finish(
+    fn x86_approx28_finish(
         sign: u64,
         mut significand: u64,
         polynomial_exponent: i32,
@@ -59594,6 +60251,249 @@ mod tests {
         ctx.write_vreg(k1, 1);
         assert!(matches!(
             execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0xCB, 0x08], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+    }
+
+    #[test]
+    fn x86_rsqrt28_matches_intel_reference_all_segments_and_special_values() {
+        // FNV-1a-style accumulation over outputs and status flags generated by
+        // Intel's RECIP28EXP2.c RSQRT28S/RSQRT28D implementation. The corpus
+        // exercises all 512 polynomial segments, three exponent scales of the
+        // parity selecting each table half, and three in-segment positions.
+        const FNV_OFFSET: u64 = 0xCBF2_9CE4_8422_2325;
+        const FNV_PRIME: u64 = 0x0000_0100_0000_01B3;
+        let mut hash32 = FNV_OFFSET;
+        let mut count32 = 0usize;
+        for segment in 0u32..512 {
+            let exponents = if segment >> 8 == 0 {
+                [2u32, 128, 254]
+            } else {
+                [1u32, 127, 253]
+            };
+            for exponent in exponents {
+                for tail in [1u32, 0x3FFF, 0x7FFF] {
+                    let fraction = ((segment & 0xFF) << 15) | tail;
+                    let bits = (exponent << 23) | fraction;
+                    let result = SmirInterpreter::x86_simd_rsqrt28(u64::from(bits), X86_SIMD_F32);
+                    hash32 = (hash32 ^ result.bits).wrapping_mul(FNV_PRIME);
+                    hash32 = (hash32 ^ u64::from(result.status)).wrapping_mul(FNV_PRIME);
+                    count32 += 1;
+                }
+            }
+        }
+        assert_eq!(count32, 4_608);
+        assert_eq!(hash32, 0x4FDD_6AA5_109F_3F46);
+
+        let mut hash64 = FNV_OFFSET;
+        let mut count64 = 0usize;
+        for segment in 0u64..512 {
+            let exponents = if segment >> 8 == 0 {
+                [2u64, 1024, 2046]
+            } else {
+                [1u64, 1023, 2045]
+            };
+            for exponent in exponents {
+                for tail in [1u64, 0x1F_FFFF, 0x3F_FFFF] {
+                    let fraction = ((segment & 0xFF) << 44) | (tail << 22) | (tail & 0x3F_FFFF);
+                    let bits = (exponent << 52) | fraction;
+                    let result = SmirInterpreter::x86_simd_rsqrt28(bits, X86_SIMD_F64);
+                    hash64 = (hash64 ^ result.bits).wrapping_mul(FNV_PRIME);
+                    hash64 = (hash64 ^ u64::from(result.status)).wrapping_mul(FNV_PRIME);
+                    count64 += 1;
+                }
+            }
+        }
+        assert_eq!(count64, 4_608);
+        assert_eq!(hash64, 0xDE3A_1C91_6E9A_4AD5);
+
+        for (bits, format, expected, status) in [
+            (0, X86_SIMD_F32, 0x7F80_0000, 1 << 2),
+            (0x8000_0000, X86_SIMD_F32, 0xFF80_0000, 1 << 2),
+            (1, X86_SIMD_F32, 0x7F80_0000, 1 << 2),
+            (0x8000_0001, X86_SIMD_F32, 0xFF80_0000, 1 << 2),
+            (0x7F80_0000, X86_SIMD_F32, 0, 0),
+            (0xFF80_0000, X86_SIMD_F32, 0xFFC0_0000, 1),
+            (0xBF80_0000, X86_SIMD_F32, 0xFFC0_0000, 1),
+            (0, X86_SIMD_F64, 0x7FF0_0000_0000_0000, 1 << 2),
+            (
+                0x8000_0000_0000_0000,
+                X86_SIMD_F64,
+                0xFFF0_0000_0000_0000,
+                1 << 2,
+            ),
+            (1, X86_SIMD_F64, 0x7FF0_0000_0000_0000, 1 << 2),
+            (
+                0x8000_0000_0000_0001,
+                X86_SIMD_F64,
+                0xFFF0_0000_0000_0000,
+                1 << 2,
+            ),
+            (0x7FF0_0000_0000_0000, X86_SIMD_F64, 0, 0),
+            (
+                0xFFF0_0000_0000_0000,
+                X86_SIMD_F64,
+                0xFFF8_0000_0000_0000,
+                1,
+            ),
+            (
+                0xBFF0_0000_0000_0000,
+                X86_SIMD_F64,
+                0xFFF8_0000_0000_0000,
+                1,
+            ),
+        ] {
+            assert_eq!(
+                SmirInterpreter::x86_simd_rsqrt28(bits, format),
+                X86SimdFpResult {
+                    bits: expected,
+                    status,
+                }
+            );
+        }
+
+        for (input, expected) in [(0.25f64, 2.0f64), (1.0, 1.0), (4.0, 0.5), (16.0, 0.25)] {
+            assert_eq!(
+                SmirInterpreter::x86_simd_rsqrt28(input.to_bits(), X86_SIMD_F64),
+                X86SimdFpResult {
+                    bits: expected.to_bits(),
+                    status: 0,
+                }
+            );
+        }
+
+        let qnan = SmirInterpreter::x86_simd_rsqrt28(0xFFC1_2345, X86_SIMD_F32);
+        assert_eq!(
+            qnan,
+            X86SimdFpResult {
+                bits: 0xFFC1_2345,
+                status: 0
+            }
+        );
+        let snan = SmirInterpreter::x86_simd_rsqrt28(0xFF81_2345, X86_SIMD_F32);
+        assert_eq!(
+            snan,
+            X86SimdFpResult {
+                bits: 0xFFC1_2345,
+                status: 1
+            }
+        );
+
+        let limit = 2.0f64.powi(-28);
+        for exponent in [1u64, 256, 1023, 1792, 2046] {
+            for segment in 0u64..256 {
+                for tail in [1u64, 0x1F_FFFF, 0x3F_FFFF] {
+                    let bits = (exponent << 52) | (segment << 44) | (tail << 22);
+                    let input = f64::from_bits(bits);
+                    let result = SmirInterpreter::x86_simd_rsqrt28(bits, X86_SIMD_F64);
+                    if result.bits == 0 {
+                        continue;
+                    }
+                    let actual = f64::from_bits(result.bits);
+                    let reference = 1.0 / input.sqrt();
+                    let relative_error = ((actual - reference) / reference).abs();
+                    assert!(
+                        relative_error < limit,
+                        "VRSQRT28D {input:e}: relative error {relative_error:e}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn lifted_x86_rsqrt28_preserves_scalar_merge_masks_sae_and_fault_atomicity() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0xAAAA_AAAA_DEAD_BEEF; 16];
+            x86.xmm[2] = [
+                0x0123_4567_89AB_CDEF,
+                0x0FED_CBA9_8765_4321,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ];
+            x86.xmm[3][0] = u64::from(4.0f32.to_bits());
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x08, 0xCD, 0xCB], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x0123_4567_3F00_0000);
+            assert_eq!(x86.xmm[1][1], 0x0FED_CBA9_8765_4321);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 0xAAAA_AAAA_DEAD_BEEF;
+            x86.k[1] = 0;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0xCD, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x0123_4567_DEAD_BEEF);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 0xAAAA_AAAA_DEAD_BEEF;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x89, 0xCD, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x0123_4567_0000_0000);
+        }
+
+        let sentinel = [0xDEAD_BEEF_CAFE_BABEu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[3][0] = u64::from((-4.0f32).to_bits());
+            x86.k[1] = 1;
+            x86.mxcsr = 0;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0xCD, 0xCB], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+            assert_ne!(x86.mxcsr & 1, 0);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.mxcsr = 0;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x19, 0xCD, 0xCB], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x0123_4567_FFC0_0000);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k1, 0);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0xCD, 0x08], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        ctx.write_vreg(k1, 1);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0xCD, 0x08], &mut ctx, &mut memory,),
             BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
         ));
     }
