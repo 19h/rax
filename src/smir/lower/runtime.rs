@@ -2333,6 +2333,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::VDotProductBF16 { .. }
             | OpKind::VCvtFP32ToBF16 { .. }
             | OpKind::VFP16Arith { .. }
+            | OpKind::X86PackedIntToFp16 { .. }
             | OpKind::VMultiplyAdd52 { .. }
             | OpKind::X86PackedShiftVariable { .. }
             | OpKind::X86PackedRotate { .. }
@@ -3315,6 +3316,67 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             || *round != crate::smir::ir::types::FpRoundMode::Dynamic
             || (*zeroing && mask.is_none())
             || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
+        {
+            return false;
+        }
+    }
+
+    if let OpKind::X86PackedIntToFp16 {
+        dst,
+        src,
+        mask,
+        int_elem,
+        signed: _,
+        lanes,
+        src_width,
+        dst_width,
+        mask_zeroing,
+        zero_upper,
+        round,
+        suppress_exceptions,
+    } = op
+    {
+        if !matches!(
+            int_elem,
+            crate::smir::ir::types::VecElementType::I16
+                | crate::smir::ir::types::VecElementType::I32
+                | crate::smir::ir::types::VecElementType::I64
+        ) {
+            return false;
+        }
+        let expected_lanes = src_width.lanes(*int_elem) as u8;
+        let dst_bytes = u32::from(expected_lanes) * 2;
+        let expected_dst_width = match dst_bytes {
+            0..=8 => VecWidth::V64,
+            9..=16 => VecWidth::V128,
+            17..=32 => VecWidth::V256,
+            _ => VecWidth::V512,
+        };
+        let vector_matches_width = |reg: &VReg, width: VecWidth| {
+            matches!(
+                (reg, width),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    VecWidth::V64 | VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    VecWidth::V256
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                    VecWidth::V512
+                )
+            )
+        };
+        if !vector_matches_width(src, *src_width)
+            || !vector_matches_width(dst, expected_dst_width)
+            || *lanes != expected_lanes
+            || *dst_width != expected_dst_width
+            || !*zero_upper
+            || (*mask_zeroing && mask.is_none())
+            || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
+            || *round == crate::smir::ir::types::FpRoundMode::RoundNearestTiesAway
+            || *suppress_exceptions != (*round != crate::smir::ir::types::FpRoundMode::Dynamic)
+            || (*suppress_exceptions && *src_width != VecWidth::V512)
         {
             return false;
         }
@@ -4319,6 +4381,48 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
             ))
         )
     };
+
+    if let OpKind::X86PackedIntToFp16 {
+        int_elem,
+        signed,
+        src_width,
+        ..
+    } = &op.kind
+    {
+        let expected = match (int_elem, signed) {
+            (crate::smir::ir::types::VecElementType::I16, true) => {
+                (crate::smir::ir::ops::X86SsePrefix::Rep, 0x7D, false)
+            }
+            (crate::smir::ir::types::VecElementType::I16, false) => {
+                (crate::smir::ir::ops::X86SsePrefix::Repne, 0x7D, false)
+            }
+            (crate::smir::ir::types::VecElementType::I32, true) => {
+                (crate::smir::ir::ops::X86SsePrefix::None, 0x5B, false)
+            }
+            (crate::smir::ir::types::VecElementType::I32, false) => {
+                (crate::smir::ir::ops::X86SsePrefix::Repne, 0x7A, false)
+            }
+            (crate::smir::ir::types::VecElementType::I64, true) => {
+                (crate::smir::ir::ops::X86SsePrefix::None, 0x5B, true)
+            }
+            (crate::smir::ir::types::VecElementType::I64, false) => {
+                (crate::smir::ir::ops::X86SsePrefix::Repne, 0x7A, true)
+            }
+            _ => return false,
+        };
+        if !matches!(
+            op.x86_hint,
+            Some(X86OpHint::EvexOp {
+                map: X86VecMap::Map5,
+                pp,
+                opcode,
+                width,
+                w,
+            }) if (pp, opcode, w) == expected && width == *src_width
+        ) {
+            return false;
+        }
+    }
 
     if let OpKind::VMov { dst, src, width } = &op.kind {
         return match op.x86_hint {
@@ -6132,6 +6236,9 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::VDotProductBF16 { width, .. }
             | OpKind::VCvtFP32ToBF16 { width, .. }
             | OpKind::VFP16Arith { width, .. }
+            | OpKind::X86PackedIntToFp16 {
+                src_width: width, ..
+            }
             | OpKind::VMultiplyAdd52 { width, .. }
             | OpKind::X86PackedShiftVariable { width, .. }
             | OpKind::X86PackedRotate { width, .. }
@@ -6307,7 +6414,10 @@ pub fn x86_native_vector_features_supported_excluding(
             kind,
             OpKind::VConflict { .. } | OpKind::VLeadingZeros { .. }
         );
-        needs_fp16 |= matches!(kind, OpKind::VFP16Arith { .. });
+        needs_fp16 |= matches!(
+            kind,
+            OpKind::VFP16Arith { .. } | OpKind::X86PackedIntToFp16 { .. }
+        );
         needs_aes |= aes;
         needs_vaes |= vaes;
         needs_sha512 |= x86_sha512_feature_required(kind);
@@ -15224,6 +15334,127 @@ mod jit_gate_tests {
                 options(nostack)
             );
             assert_eq!(x87_result.assume_init(), 2.0);
+        }
+    }
+
+    #[test]
+    fn packed_int_to_fp16_native_gate_requires_canonical_architectural_evex_shape() {
+        let kind = OpKind::X86PackedIntToFp16 {
+            dst: x86(X86Reg::Xmm(17)),
+            src: x86(X86Reg::Zmm(18)),
+            mask: Some(x86(X86Reg::K(3))),
+            int_elem: VecElementType::I64,
+            signed: true,
+            lanes: 8,
+            src_width: VecWidth::V512,
+            dst_width: VecWidth::V128,
+            mask_zeroing: true,
+            zero_upper: true,
+            round: crate::smir::ir::types::FpRoundMode::RoundDown,
+            suppress_exceptions: true,
+        };
+        let hint = X86OpHint::EvexOp {
+            map: X86VecMap::Map5,
+            pp: X86SsePrefix::None,
+            opcode: 0x5B,
+            width: VecWidth::V512,
+            w: true,
+        };
+        let canonical = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            kind.clone(),
+            hint,
+        );
+        assert!(is_x86_native_vector_op(&kind));
+        assert!(x86_native_vector_smir_op(&canonical));
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(0x1000, kind.clone());
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[0].x86_hint = Some(hint);
+        assert!(is_native_clobber_safe(&function));
+
+        let unhinted = crate::smir::ir::ops::SmirOp::new(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            kind.clone(),
+        );
+        assert!(!x86_native_vector_smir_op(&unhinted));
+        let wrong_hint = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            kind,
+            X86OpHint::EvexOp {
+                map: X86VecMap::Map5,
+                pp: X86SsePrefix::Repne,
+                opcode: 0x7A,
+                width: VecWidth::V512,
+                w: true,
+            },
+        );
+        assert!(!x86_native_vector_smir_op(&wrong_hint));
+
+        for malformed in [
+            OpKind::X86PackedIntToFp16 {
+                dst: x86(X86Reg::Ymm(17)),
+                src: x86(X86Reg::Zmm(18)),
+                mask: Some(x86(X86Reg::K(3))),
+                int_elem: VecElementType::I64,
+                signed: true,
+                lanes: 8,
+                src_width: VecWidth::V512,
+                dst_width: VecWidth::V128,
+                mask_zeroing: true,
+                zero_upper: true,
+                round: crate::smir::ir::types::FpRoundMode::RoundDown,
+                suppress_exceptions: true,
+            },
+            OpKind::X86PackedIntToFp16 {
+                dst: x86(X86Reg::Xmm(1)),
+                src: VReg::Virtual(VirtualId(0)),
+                mask: None,
+                int_elem: VecElementType::I32,
+                signed: false,
+                lanes: 4,
+                src_width: VecWidth::V128,
+                dst_width: VecWidth::V64,
+                mask_zeroing: false,
+                zero_upper: true,
+                round: crate::smir::ir::types::FpRoundMode::Dynamic,
+                suppress_exceptions: false,
+            },
+            OpKind::X86PackedIntToFp16 {
+                dst: x86(X86Reg::Xmm(1)),
+                src: x86(X86Reg::Ymm(2)),
+                mask: None,
+                int_elem: VecElementType::I32,
+                signed: true,
+                lanes: 8,
+                src_width: VecWidth::V256,
+                dst_width: VecWidth::V128,
+                mask_zeroing: false,
+                zero_upper: true,
+                round: crate::smir::ir::types::FpRoundMode::RoundUp,
+                suppress_exceptions: true,
+            },
+            OpKind::X86PackedIntToFp16 {
+                dst: x86(X86Reg::Ymm(1)),
+                src: x86(X86Reg::Zmm(2)),
+                mask: None,
+                int_elem: VecElementType::I32,
+                signed: true,
+                lanes: 16,
+                src_width: VecWidth::V512,
+                dst_width: VecWidth::V256,
+                mask_zeroing: false,
+                zero_upper: true,
+                round: crate::smir::ir::types::FpRoundMode::RoundNearestTiesAway,
+                suppress_exceptions: true,
+            },
+        ] {
+            assert!(!is_x86_native_vector_op(&malformed), "{malformed:?}");
         }
     }
 

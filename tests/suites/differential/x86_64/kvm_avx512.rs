@@ -5605,6 +5605,36 @@ fn irregular_cases() -> Vec<Case> {
 
     for &(label, asm, profile) in &[
         (
+            "vcvtdq2ph_fp16_edge_int_convert_reg",
+            "vcvtdq2ph %zmm3, %ymm1",
+            IntConvertEdge,
+        ),
+        (
+            "vcvtqq2ph_fp16_edge_int_convert_broadcast",
+            "vcvtqq2ph 64(%rax){1to8}, %xmm1",
+            IntConvertEdge,
+        ),
+        (
+            "vcvtudq2ph_fp16_edge_int_convert_rd_sae",
+            "vcvtudq2ph {rd-sae}, %zmm3, %ymm1",
+            IntConvertEdge,
+        ),
+        (
+            "vcvtuqq2ph_fp16_edge_int_convert_ru_sae",
+            "vcvtuqq2ph {ru-sae}, %zmm3, %xmm1",
+            IntConvertEdge,
+        ),
+        (
+            "vcvtw2ph_fp16_edge_int_convert_merge",
+            "vcvtw2ph %zmm3, %zmm1 {%k1}",
+            IntConvertEdge,
+        ),
+        (
+            "vcvtuw2ph_fp16_edge_int_convert_zero_mem",
+            "vcvtuw2ph 64(%rax), %zmm1 {%k1}{z}",
+            IntConvertEdge,
+        ),
+        (
             "vminph_fp16_edge_minmax_reg",
             "vminph %zmm2, %zmm3, %zmm1",
             F16Edge,
@@ -45647,7 +45677,7 @@ fn avx512_kvm_fp16_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_fp16_edge_"))
         .collect();
-    assert_eq!(cases.len(), 36, "unexpected AVX-512-FP16 edge corpus size");
+    assert_eq!(cases.len(), 42, "unexpected AVX-512-FP16 edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -45670,11 +45700,11 @@ fn avx512_kvm_fp16_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Fp16),
-        36,
+        42,
         "all AVX-512-FP16 edge cases should run"
     );
     assert_eq!(
-        tally.compared, 34,
+        tally.compared, 40,
         "all exact AVX-512-FP16 edge cases should compare"
     );
     assert_eq!(

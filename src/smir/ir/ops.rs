@@ -1606,6 +1606,27 @@ pub enum OpKind {
         report_fp16_denormal: bool,
     },
 
+    /// x86 EVEX packed signed/unsigned integer-to-FP16 conversion. `src_width`
+    /// is the encoded source vector length, while `dst_width` is the low
+    /// destination region containing `lanes` FP16 results. Inactive masked
+    /// lanes merge or zero before all bits above `dst_width` are cleared.
+    /// Dynamic rounding observes MXCSR.RC and can update or trap on MXCSR.OE/PE;
+    /// an explicit rounding mode represents EVEX embedded rounding with SAE.
+    X86PackedIntToFp16 {
+        dst: VReg,
+        src: VReg,
+        mask: Option<VReg>,
+        int_elem: VecElementType,
+        signed: bool,
+        lanes: u8,
+        src_width: VecWidth,
+        dst_width: VecWidth,
+        mask_zeroing: bool,
+        zero_upper: bool,
+        round: FpRoundMode,
+        suppress_exceptions: bool,
+    },
+
     /// x86 VCVTPS2PH packed FP32-to-FP16 conversion with a memory
     /// destination. `mask` selects the 2-byte destination lanes that are
     /// written; inactive lanes perform no memory access and cannot fault.
@@ -4142,6 +4163,7 @@ impl OpKind {
             | OpKind::X86IntToFp { dst, .. }
             | OpKind::X86FpConvert { dst, .. }
             | OpKind::X86PackedFpConvert { dst, .. }
+            | OpKind::X86PackedIntToFp16 { dst, .. }
             | OpKind::FRound { dst, .. }
             | OpKind::X86Round { dst, .. }
             | OpKind::X86DotProduct { dst, .. }
@@ -4540,6 +4562,14 @@ impl OpKind {
                     }
                     | OpKind::X86PackedFpConvert {
                         suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86PackedIntToFp16 {
+                        suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86PackedIntToFp16 {
+                        round: FpRoundMode::RoundNearestTiesAway,
                         ..
                     }
                     | OpKind::VFP16Arith {

@@ -3662,6 +3662,95 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::X86PackedIntToFp16 {
+                dst,
+                src,
+                mask,
+                int_elem,
+                signed,
+                lanes,
+                dst_width,
+                mask_zeroing,
+                zero_upper,
+                round,
+                suppress_exceptions,
+                ..
+            } => {
+                let source = Self::read_vec(ctx, *src);
+                let old = Self::read_vec(ctx, *dst);
+                let mut result = old;
+                if *zero_upper {
+                    result[(dst_width.bytes() / 8) as usize..].fill(0);
+                }
+                result[..(dst_width.bytes() / 8) as usize].fill(0);
+                let mask_bits = mask.map(|reg| ctx.read_vreg(reg));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let mode = if *round == FpRoundMode::Dynamic {
+                    self.dynamic_fp_round_mode(ctx)
+                } else {
+                    *round
+                };
+                if mode == FpRoundMode::RoundNearestTiesAway {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: ctx.pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+                let elem_bits = int_elem.bytes() * 8;
+                let elem_mask = if elem_bits == 64 {
+                    u64::MAX
+                } else {
+                    (1u64 << elem_bits) - 1
+                };
+                let mut status = 0;
+                for lane in 0..*lanes {
+                    if mask_bits.is_some_and(|bits| bits & (1u64 << lane) == 0) {
+                        if !*mask_zeroing {
+                            Self::set_lane(&mut result, lane, 16, Self::get_lane(&old, lane, 16));
+                        }
+                        continue;
+                    }
+                    let raw = Self::get_lane(&source, lane, elem_bits) & elem_mask;
+                    let value = if *signed {
+                        let shift = 128 - elem_bits;
+                        (i128::from(raw) << shift) >> shift
+                    } else {
+                        i128::from(raw)
+                    };
+                    let negative = value < 0;
+                    let magnitude = if negative {
+                        (-value) as u128
+                    } else {
+                        value as u128
+                    };
+                    let converted = Self::x86_simd_fp_round_exact(
+                        negative,
+                        magnitude,
+                        0,
+                        false,
+                        X86_SIMD_F16,
+                        mode,
+                        mxcsr,
+                    );
+                    status |= converted.status;
+                    Self::set_lane(&mut result, lane, 16, converted.bits);
+                }
+                if !*suppress_exceptions {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= status;
+                    }
+                    if Self::x86_simd_fp_unmasked(status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::X86PackedFpConvertStore {
                 addr,
                 src,
@@ -22911,6 +23000,116 @@ mod tests {
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(x86.xmm[1][0], 0x43EF_FFFF_FFFF_FFFF);
         }
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_x86_packed_int_to_fp16_is_exact_masked_atomic_and_sae_aware() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        let k5 = VReg::Arch(ArchReg::X86(X86Reg::K(5)));
+        let k6 = VReg::Arch(ArchReg::X86(X86Reg::K(6)));
+        let sentinel = 0xCAFE_BABE_DEAD_BEEFu64;
+        let mut memory = FlatMemory::new(0x400);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        // Nearest-even integer conversion is performed directly at binary16
+        // precision. A zero-masked lane contributes no precision status, and
+        // narrowing clears every architectural bit above the FP16 results.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [sentinel; 16];
+            for (lane, value) in [2049i32, -2049, 65_520, 3].into_iter().enumerate() {
+                SmirInterpreter::set_lane(&mut x86.xmm[3], lane as u8, 32, u64::from(value as u32));
+            }
+            x86.mxcsr = 0x1F80;
+        }
+        ctx.write_vreg(k2, 0b1101);
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7C, 0x8A, 0x5B, 0xCB], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 16), 0x6800);
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 1, 16), 0);
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 2, 16), 0x7C00);
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 3, 16), 0x4200);
+            assert!(x86.xmm[1][1..].iter().all(|word| *word == 0));
+            assert_eq!(x86.mxcsr & ((1 << 3) | (1 << 5)), (1 << 3) | (1 << 5));
+        }
+
+        // A 512-bit unsigned-quadword form with RZ-SAE retains merging lanes,
+        // rounds the full u64 domain to max-finite FP16, and leaves MXCSR exact.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[4] = [sentinel; 16];
+            x86.xmm[6] = [u64::MAX; 16];
+            x86.mxcsr = (0x1F80 & !(3 << 13)) | (2 << 13);
+        }
+        ctx.write_vreg(k5, 1);
+        let mxcsr_before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.mxcsr,
+            _ => unreachable!(),
+        };
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0xFF, 0x7D, 0x7A, 0xE6], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[4], 0, 16), 0x7BFF);
+            for lane in 1..8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[4], lane, 16),
+                    SmirInterpreter::get_lane(&[sentinel; 16], lane, 16),
+                );
+            }
+            assert!(x86.xmm[4][2..].iter().all(|word| *word == 0));
+            assert_eq!(x86.mxcsr, mxcsr_before);
+        }
+
+        // Unmasked overflow sets OE+PE and traps before the destination commits.
+        let original = [0x0123_4567_89AB_CDEFu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[7] = original;
+            x86.xmm[8] = [0; 16];
+            SmirInterpreter::set_lane(&mut x86.xmm[8], 0, 16, 65_535);
+            x86.mxcsr = 0x1F80 & !(1 << 10);
+        }
+        ctx.write_vreg(k6, 1);
+        let exit = execute_lifted_x86(&[0x62, 0xD5, 0x7F, 0x2E, 0x7D, 0xF8], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[7], original);
+            assert_eq!(x86.mxcsr & ((1 << 3) | (1 << 5)), (1 << 3) | (1 << 5));
+        }
+
+        // An all-zero mask suppresses an out-of-range broadcast access. Making
+        // one lane active exposes the fault and preserves the old destination.
+        ctx.write_vreg(rax, 0x1000);
+        ctx.write_vreg(k2, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [sentinel; 16];
+            x86.mxcsr = 0x1F80;
+        }
+        let bytes = [0x62, 0xF5, 0x7C, 0x9A, 0x5B, 0x48, 0x7F];
+        let exit = execute_lifted_x86(&bytes, &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert!(x86.xmm[1].iter().all(|word| *word == 0));
+        }
+        ctx.write_vreg(k2, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = original;
+        }
+        let exit = execute_lifted_x86(&bytes, &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], original);
+        }
+
         ctx.flags.materialize_all();
         assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
     }
