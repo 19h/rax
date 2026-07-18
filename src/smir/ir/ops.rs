@@ -3408,6 +3408,23 @@ pub enum OpKind {
         mask_zeroing: bool,
     },
 
+    /// Intel AVX512_4VNNIW four-iteration signed-word dot product. Explicit
+    /// source registers retain the aligned source-block snapshot when `dst`
+    /// aliases one of them. Each active I32 lane accumulates two signed I16
+    /// products per iteration; the saturating form clamps after every
+    /// iteration rather than only after the final sum.
+    X86FourDotProduct {
+        dst: VReg,
+        src0: VReg,
+        src1: VReg,
+        src2: VReg,
+        src3: VReg,
+        mem: VReg,
+        mask: Option<VReg>,
+        saturating: bool,
+        mask_zeroing: bool,
+    },
+
     // ========================================================================
     // AVX10.1 OPERATIONS
     // ========================================================================
@@ -4611,6 +4628,7 @@ impl OpKind {
             | OpKind::X86FP16Fma { dst, .. }
             | OpKind::X86FP16Complex { dst, .. }
             | OpKind::X86FourFma { dst, .. }
+            | OpKind::X86FourDotProduct { dst, .. }
             | OpKind::VDotProduct { dst, .. }
             | OpKind::VMultiplyAdd52 { dst, .. }
             | OpKind::VPopcnt { dst, .. }
@@ -5350,7 +5368,7 @@ mod tests {
     }
 
     #[test]
-    fn x86_four_fma_metadata_tracks_source_block_accumulator_mask_and_mxcsr() {
+    fn x86_four_iteration_metadata_tracks_sources_accumulators_masks_and_side_effects() {
         let dst = VReg::virt(0);
         let src0 = VReg::virt(1);
         let src1 = VReg::virt(2);
@@ -5388,6 +5406,25 @@ mod tests {
         assert_eq!(predicated_tuple.source_vregs(), vec![mem, mask, base]);
         assert!(predicated_tuple.reads_memory());
         assert!(predicated_tuple.has_side_effects());
+
+        let dot = OpKind::X86FourDotProduct {
+            dst,
+            src0,
+            src1,
+            src2,
+            src3,
+            mem,
+            mask: Some(mask),
+            saturating: true,
+            mask_zeroing: false,
+        };
+        assert_eq!(dot.dests(), vec![dst]);
+        assert_eq!(
+            dot.source_vregs(),
+            vec![dst, src0, src1, src2, src3, mem, mask]
+        );
+        assert!(!dot.reads_memory());
+        assert!(!dot.has_side_effects());
     }
 
     #[test]

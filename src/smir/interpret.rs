@@ -11910,6 +11910,70 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::X86FourDotProduct {
+                dst,
+                src0,
+                src1,
+                src2,
+                src3,
+                mem,
+                mask,
+                saturating,
+                mask_zeroing,
+            } => {
+                // Snapshot the destination and aligned source block before any
+                // result is produced because the destination may alias a
+                // source register used by a later iteration.
+                let old_dst = Self::read_vec(ctx, *dst);
+                let sources = [
+                    Self::read_vec(ctx, *src0),
+                    Self::read_vec(ctx, *src1),
+                    Self::read_vec(ctx, *src2),
+                    Self::read_vec(ctx, *src3),
+                ];
+                let memory = Self::read_vec(ctx, *mem);
+                let active = mask.map_or(u64::MAX, |mask| ctx.read_vreg(mask));
+                let mut result = [0u64; 16];
+
+                for lane in 0..16u8 {
+                    if active & (1u64 << lane) == 0 {
+                        if !mask_zeroing {
+                            Self::set_lane(
+                                &mut result,
+                                lane,
+                                32,
+                                Self::get_lane(&old_dst, lane, 32),
+                            );
+                        }
+                        continue;
+                    }
+
+                    let mut accumulator =
+                        i64::from(Self::get_lane(&old_dst, lane, 32) as u32 as i32);
+                    for stage in 0..4u8 {
+                        let memory_word = Self::get_lane(&memory, stage, 32) as u32;
+                        let memory_low = i64::from(memory_word as u16 as i16);
+                        let memory_high = i64::from((memory_word >> 16) as u16 as i16);
+                        let source_low = i64::from(Self::get_lane(
+                            &sources[stage as usize],
+                            lane * 2,
+                            16,
+                        ) as u16 as i16);
+                        let source_high =
+                            i64::from(Self::get_lane(&sources[stage as usize], lane * 2 + 1, 16)
+                                as u16 as i16);
+                        let sum = accumulator + source_low * memory_low + source_high * memory_high;
+                        accumulator = if *saturating {
+                            sum.clamp(i64::from(i32::MIN), i64::from(i32::MAX))
+                        } else {
+                            i64::from(sum as i32)
+                        };
+                    }
+                    Self::set_lane(&mut result, lane, 32, accumulator as u32 as u64);
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::X86FP16Complex {
                 dst,
                 src1,
@@ -62560,6 +62624,151 @@ mod tests {
             assert_ne!(x86.mxcsr & 1, 0, "stage 1 invalid status");
             assert_ne!(x86.mxcsr & (1 << 5), 0, "stage 0 precision status");
             assert_eq!(x86.mxcsr & (1 << 1), 0, "stage 2 must not execute");
+        }
+    }
+
+    #[test]
+    fn lifted_avx512_four_dot_product_wraps_saturates_masks_aliases_and_suppresses_faults() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let write_tuple = |memory: &mut FlatMemory, pairs: [(i16, i16); 4]| {
+            let bytes = pairs
+                .into_iter()
+                .flat_map(|(low, high)| low.to_le_bytes().into_iter().chain(high.to_le_bytes()))
+                .collect::<Vec<_>>();
+            memory.write(0x80, &bytes).unwrap();
+        };
+        let seed_sources = |ctx: &mut SmirContext, pairs: [(i16, i16); 4]| {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                for (stage, (low, high)) in pairs.into_iter().enumerate() {
+                    x86.xmm[4 + stage] = [0; 16];
+                    for lane in 0..16u8 {
+                        SmirInterpreter::set_lane(
+                            &mut x86.xmm[4 + stage],
+                            lane * 2,
+                            16,
+                            u64::from(low as u16),
+                        );
+                        SmirInterpreter::set_lane(
+                            &mut x86.xmm[4 + stage],
+                            lane * 2 + 1,
+                            16,
+                            u64::from(high as u16),
+                        );
+                    }
+                }
+            }
+        };
+
+        ctx.write_vreg(rax, 0x80);
+        write_tuple(&mut memory, [(3, 4), (7, 8), (10, 11), (4, 5)]);
+        seed_sources(&mut ctx, [(1, 2), (5, 6), (1, -1), (2, 3)]);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[1], lane, 32, 10);
+            }
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x48, 0x52, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], lane, 32), 126);
+            }
+            assert!(x86.xmm[1][8..].iter().all(|word| *word == 0));
+        }
+
+        write_tuple(&mut memory, [(1, 0); 4]);
+        seed_sources(&mut ctx, [(1, 0), (0, 0), (0, 0), (0, 0)]);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[1], 0, 32, i32::MAX as u64);
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x48, 0x52, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[1], 0, 32),
+                i32::MIN as u32 as u64
+            );
+        }
+
+        // Signed saturation occurs after every iteration. Stage 0 clamps
+        // MAX-5 + 10 to MAX before stage 1 subtracts 20.
+        write_tuple(&mut memory, [(1, 0); 4]);
+        seed_sources(&mut ctx, [(10, 0), (-20, 0), (0, 0), (0, 0)]);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[1], lane, 32, (i32::MAX - 5) as u32 as u64);
+            }
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x48, 0x53, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[1], 0, 32),
+                (i32::MAX - 20) as u32 as u64
+            );
+        }
+
+        // Packed zero masking applies to inactive dword lanes.
+        seed_sources(&mut ctx, [(1, 0); 4]);
+        ctx.write_vreg(k1, 1 << 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[1], lane, 32, 100 + u64::from(lane));
+            }
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0xC9, 0x52, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 32),
+                    if lane == 1 { 105 } else { 0 }
+                );
+            }
+        }
+
+        // ZMM5 aliases the second register of source block ZMM4..ZMM7. Its
+        // contribution must use the pre-instruction value 10.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[5] = [0; 16];
+            SmirInterpreter::set_lane(&mut x86.xmm[5], 0, 32, 10);
+            for reg in [4, 6, 7] {
+                x86.xmm[reg] = [0; 16];
+                SmirInterpreter::set_lane(&mut x86.xmm[reg], 0, 16, 1);
+            }
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x48, 0x52, 0x28], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[5], 0, 32), 23);
+        }
+
+        // Mask bits above KL=16 cannot trigger the Tuple1_4X read; bit 15 can.
+        let sentinel = [0xDEAD_BEEF_CAFE_BABEu64; 16];
+        ctx.write_vreg(rax, 0x200);
+        ctx.write_vreg(k1, 1 << 16);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x49, 0x52, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[1][..8], &sentinel[..8]);
+            assert!(x86.xmm[1][8..].iter().all(|word| *word == 0));
+        }
+        ctx.write_vreg(k1, 1 << 15);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x49, 0x52, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
         }
     }
 }

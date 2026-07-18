@@ -3488,6 +3488,28 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             negate_product,
             mask_zeroing
         ),
+        OpKind::X86FourDotProduct {
+            dst,
+            src0,
+            src1,
+            src2,
+            src3,
+            mem,
+            mask,
+            saturating,
+            mask_zeroing,
+        } => op_json!(
+            "x86_four_dot_product",
+            dst,
+            src0,
+            src1,
+            src2,
+            src3,
+            mem,
+            mask,
+            saturating,
+            mask_zeroing
+        ),
         OpKind::VDotProduct {
             dst,
             acc,

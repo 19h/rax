@@ -24787,6 +24787,94 @@ impl X86_64Lifter {
         result
     }
 
+    fn append_evex_whole_tuple_128(
+        &self,
+        addr: Address,
+        mask: Option<VReg>,
+        applicable_mask: i64,
+        pc: u64,
+        ctx: &mut LiftContext,
+        ops: &mut Vec<SmirOp>,
+    ) -> VReg {
+        let Some(mask_reg) = mask else {
+            let loaded = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLoad {
+                    dst: loaded,
+                    addr,
+                    width: VecWidth::V128,
+                },
+            ));
+            return loaded;
+        };
+
+        // Tuple1_4X is an all-or-none 16-byte access. PredVLoad consumes
+        // condition bit zero, so map any applicable writemask bit to one
+        // canonical Boolean without changing architectural flags.
+        let applicable = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::And {
+                dst: applicable,
+                src1: mask_reg,
+                src2: SrcOperand::Imm(applicable_mask),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        let negated = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Neg {
+                dst: negated,
+                src: applicable,
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        let sign = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Or {
+                dst: sign,
+                src1: applicable,
+                src2: SrcOperand::Reg(negated),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+        let active = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Shr {
+                dst: active,
+                src: sign,
+                amount: SrcOperand::Imm(63),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        ));
+
+        let loaded = self.append_zero_vector(VecWidth::V128, VecElementType::I32, pc, ctx, ops);
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::PredVLoad {
+                dst: loaded,
+                cond: active,
+                addr,
+                width: VecWidth::V128,
+            },
+        ));
+        loaded
+    }
+
     fn lift_evex_four_fma(
         &self,
         prefix: VecPrefix,
@@ -24833,84 +24921,14 @@ impl X86_64Lifter {
         let (addr, mut ops) =
             self.vec_disp8_addr_to_smir(prefix, modrm.addr.as_ref().unwrap(), next_pc, 16, ctx);
         let mask = (prefix.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
-        let memory = if let Some(mask_reg) = mask {
-            // Tuple1_4X is an all-or-none 16-byte access. PredVLoad consumes
-            // condition bit zero, so fold every applicable mask bit into that
-            // bit before issuing the single vector-width memory transaction.
-            let applicable = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::And {
-                    dst: applicable,
-                    src1: mask_reg,
-                    src2: SrcOperand::Imm(if scalar { 1 } else { 0xFFFF }),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            let negated = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Neg {
-                    dst: negated,
-                    src: applicable,
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            let sign = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Or {
-                    dst: sign,
-                    src1: applicable,
-                    src2: SrcOperand::Reg(negated),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-            let active = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Shr {
-                    dst: active,
-                    src: sign,
-                    amount: SrcOperand::Imm(63),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ));
-
-            let loaded =
-                self.append_zero_vector(VecWidth::V128, VecElementType::I32, pc, ctx, &mut ops);
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::PredVLoad {
-                    dst: loaded,
-                    cond: active,
-                    addr,
-                    width: VecWidth::V128,
-                },
-            ));
-            loaded
-        } else {
-            let loaded = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::VLoad {
-                    dst: loaded,
-                    addr,
-                    width: VecWidth::V128,
-                },
-            ));
-            loaded
-        };
+        let memory = self.append_evex_whole_tuple_128(
+            addr,
+            mask,
+            if scalar { 1 } else { 0xFFFF },
+            pc,
+            ctx,
+            &mut ops,
+        );
 
         let register_width = if scalar {
             VecWidth::V128
@@ -24937,6 +24955,78 @@ impl X86_64Lifter {
                 mask,
                 scalar,
                 negate_product: matches!(opcode, 0xAA | 0xAB),
+                mask_zeroing: prefix.zeroing,
+            },
+            self.vec_hint(prefix, opcode),
+        ));
+        Ok(LiftResult::fallthrough(ops, bytes_consumed))
+    }
+
+    fn lift_evex_four_dot_product(
+        &self,
+        prefix: VecPrefix,
+        opcode: u8,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.encoding != VecEncodingKind::Evex
+            || prefix.map != X86VecMap::Map0F38
+            || prefix.pp != X86SsePrefix::Repne
+            || prefix.w
+            || prefix.b
+            || prefix.l_bits == 3
+            || prefix.width != VecWidth::V512
+            || (prefix.zeroing && prefix.aaa == 0)
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let cursor = prefix.bytes + 1;
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            operand_size_override: true,
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
+            cursor,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        if !modrm.is_memory {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let bytes_consumed = cursor + modrm.bytes_consumed;
+        let next_pc = pc + bytes_consumed as u64;
+        let (addr, mut ops) =
+            self.vec_disp8_addr_to_smir(prefix, modrm.addr.as_ref().unwrap(), next_pc, 16, ctx);
+        let mask = (prefix.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
+        let memory = self.append_evex_whole_tuple_128(addr, mask, 0xFFFF, pc, ctx, &mut ops);
+        let source_index = prefix.vvvv + if prefix.v_high { 16 } else { 0 };
+        let source_base = source_index & !3;
+        let source = |offset| self.vec_reg(source_base + offset, VecWidth::V512);
+        let dst = self.vec_reg(
+            modrm.reg + if prefix.reg_high { 16 } else { 0 },
+            VecWidth::V512,
+        );
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86FourDotProduct {
+                dst,
+                src0: source(0),
+                src1: source(1),
+                src2: source(2),
+                src3: source(3),
+                mem: memory,
+                mask,
+                saturating: opcode == 0x53,
                 mask_zeroing: prefix.zeroing,
             },
             self.vec_hint(prefix, opcode),
@@ -36346,6 +36436,12 @@ impl X86_64Lifter {
                 }
                 0x4C..=0x4F if prefix.encoding == VecEncodingKind::Evex => {
                     self.lift_evex_approx14(prefix, opcode, bytes, pc, ctx)
+                }
+                0x52 | 0x53
+                    if prefix.encoding == VecEncodingKind::Evex
+                        && prefix.pp == X86SsePrefix::Repne =>
+                {
+                    self.lift_evex_four_dot_product(prefix, opcode, bytes, pc, ctx)
                 }
                 0xCA..=0xCD if prefix.encoding == VecEncodingKind::Evex => {
                     self.lift_evex_approx28(prefix, opcode, bytes, pc, ctx)
@@ -78952,6 +79048,87 @@ mod tests {
         );
         assert!(matches!(
             lift_single(&[0x62, 0xF2, 0x5F, 0x48, 0x9A]),
+            Err(LiftError::Incomplete { .. })
+        ));
+    }
+
+    #[test]
+    fn lift_avx512_four_dot_product_covers_groups_masks_tuple_and_invalids() {
+        let saturating = lift_single(&[0x62, 0xC2, 0x5F, 0xC2, 0x53, 0x48, 0x02]).unwrap();
+        assert_eq!(saturating.bytes_consumed, 7);
+        assert_eq!(
+            saturating
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredVLoad {
+                        width: VecWidth::V128,
+                        ..
+                    }
+                ))
+                .count(),
+            1,
+            "masked Tuple1_4X must perform one all-or-none 16-byte read"
+        );
+        assert!(saturating.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::PredVLoad {
+                addr: Address::BaseOffset { offset: 32, .. },
+                ..
+            }
+        )));
+        assert!(matches!(
+            saturating.ops.last().map(|op| &op.kind),
+            Some(OpKind::X86FourDotProduct {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                src0: VReg::Arch(ArchReg::X86(X86Reg::Zmm(20))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Zmm(21))),
+                src2: VReg::Arch(ArchReg::X86(X86Reg::Zmm(22))),
+                src3: VReg::Arch(ArchReg::X86(X86Reg::Zmm(23))),
+                mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                saturating: true,
+                mask_zeroing: true,
+                ..
+            })
+        ));
+
+        let wrapping = lift_single(&[0x62, 0xF2, 0x7F, 0x48, 0x52, 0x08]).unwrap();
+        assert!(wrapping.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::VLoad {
+                width: VecWidth::V128,
+                ..
+            }
+        )));
+        assert!(matches!(
+            wrapping.ops.last().map(|op| &op.kind),
+            Some(OpKind::X86FourDotProduct {
+                saturating: false,
+                mask: None,
+                ..
+            })
+        ));
+
+        for invalid in [
+            &[0x62, 0xF2, 0x7F, 0x48, 0x52, 0xC8][..], // ModRM.mod=11b
+            &[0x62, 0xF2, 0x7F, 0x58, 0x52, 0x08][..], // EVEX.b
+            &[0x62, 0xF2, 0xFF, 0x48, 0x52, 0x08][..], // EVEX.W=1
+            &[0x62, 0xF2, 0x7F, 0x28, 0x52, 0x08][..], // VL=256
+            &[0x62, 0xF2, 0x7F, 0x68, 0x52, 0x08][..], // EVEX.L'L=3
+            &[0x62, 0xF2, 0x7F, 0xC8, 0x52, 0x08][..], // {z} with k0
+        ] {
+            assert!(lift_single(invalid).is_err(), "accepted {invalid:02X?}");
+        }
+        let different_pp = lift_single(&[0x62, 0xF2, 0x7D, 0x48, 0x52, 0x08]).unwrap();
+        assert!(
+            !different_pp
+                .ops
+                .iter()
+                .any(|op| matches!(op.kind, OpKind::X86FourDotProduct { .. }))
+        );
+        assert!(matches!(
+            lift_single(&[0x62, 0xF2, 0x7F, 0x48, 0x52]),
             Err(LiftError::Incomplete { .. })
         ));
     }

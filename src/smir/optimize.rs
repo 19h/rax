@@ -3000,6 +3000,25 @@ impl OpKind {
                 result.extend(mask.iter().copied());
             }
 
+            OpKind::X86FourDotProduct {
+                dst,
+                src0,
+                src1,
+                src2,
+                src3,
+                mem,
+                mask,
+                ..
+            } => {
+                result.push(*dst);
+                result.push(*src0);
+                result.push(*src1);
+                result.push(*src2);
+                result.push(*src3);
+                result.push(*mem);
+                result.extend(mask.iter().copied());
+            }
+
             OpKind::X86PackedFpConvert {
                 dst,
                 src,
