@@ -25979,6 +25979,93 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
+    fn lift_evex_recip28(
+        &self,
+        prefix: VecPrefix,
+        opcode: u8,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let scalar = opcode == 0xCB;
+        if prefix.encoding != VecEncodingKind::Evex
+            || prefix.map != X86VecMap::Map0F38
+            || prefix.pp != X86SsePrefix::OpSize
+            || !matches!(opcode, 0xCA | 0xCB)
+            || (prefix.zeroing && prefix.aaa == 0)
+            || (!scalar && (prefix.vvvv != 0 || prefix.v_high))
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let elem = if prefix.w {
+            VecElementType::F64
+        } else {
+            VecElementType::F32
+        };
+        let cursor = prefix.bytes + 1;
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            operand_size_override: true,
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
+            cursor,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        // Packed register EVEX.b is SAE and makes L'L ignored; packed memory
+        // EVEX.b is broadcast and remains strictly 512-bit. Scalar EVEX.b is
+        // SAE for either register or memory sources and L'L is ignored.
+        let embedded_sae = prefix.b && (scalar || !modrm.is_memory);
+        if !scalar && !embedded_sae && prefix.l_bits != 2 {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let width = if scalar {
+            VecWidth::V128
+        } else {
+            VecWidth::V512
+        };
+        let lanes = if scalar { 1 } else { width.lanes(elem) as u8 };
+        let mask = (prefix.aaa != 0).then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
+        let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+        let (src, mut ops) = self.materialize_evex_unary_fp_source(
+            prefix, &modrm, next_pc, elem, width, scalar, mask, pc, ctx,
+        );
+        let dst = self.vec_reg(modrm.reg + if prefix.reg_high { 16 } else { 0 }, width);
+        let merge = scalar.then(|| self.xmm(prefix.vvvv + if prefix.v_high { 16 } else { 0 }));
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86Recip28 {
+                dst,
+                merge,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing: prefix.zeroing,
+                suppress_exceptions: embedded_sae,
+            },
+            X86OpHint::EvexOp {
+                map: prefix.map,
+                pp: prefix.pp,
+                opcode,
+                width,
+                w: prefix.w,
+            },
+        ));
+        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+    }
+
     fn lift_evex_fp16_complex(
         &self,
         prefix: VecPrefix,
@@ -35883,6 +35970,9 @@ impl X86_64Lifter {
                 0xC8 if prefix.encoding == VecEncodingKind::Evex => {
                     self.lift_evex_exp2(prefix, opcode, bytes, pc, ctx)
                 }
+                0xCA | 0xCB if prefix.encoding == VecEncodingKind::Evex => {
+                    self.lift_evex_recip28(prefix, opcode, bytes, pc, ctx)
+                }
                 0x2C | 0x2D if prefix.encoding == VecEncodingKind::Evex => {
                     self.lift_evex_scale_f(prefix, opcode, bytes, pc, ctx)
                 }
@@ -44668,13 +44758,17 @@ mod tests {
 
     #[test]
     fn evex_decorations_are_validated_by_opcode_lifters() {
-        // A valid decorated, still-unimplemented AVX512ER form reaches the
-        // opcode dispatcher instead of a decoder-global decoration gate,
-        // preserving the precise gap.
+        // A valid decorated AVX512ER form reaches the opcode-specific lifter
+        // instead of a decoder-global decoration gate.
         assert!(matches!(
             lift_single(&[0x62, 0xF2, 0x7D, 0x49, 0xCA, 0xC8]),
-            Err(LiftError::Unsupported { mnemonic, .. })
-                if mnemonic == "VEX 0F38 opcode 0xCA"
+            Ok(LiftResult { ops, .. }) if ops.iter().any(|op| matches!(
+                op.kind,
+                OpKind::X86Recip28 {
+                    mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+                    ..
+                }
+            ))
         ));
 
         // Shared VEX/EVEX dispatch must remain fail-closed when the EVEX form
@@ -77371,6 +77465,180 @@ mod tests {
             &[0x62, 0xF2, 0x7D, 0x68, 0xC8, 0xCB][..], // non-SAE L'L=3
             &[0x62, 0xF2, 0x7D, 0x19, 0xC8, 0x08][..], // broadcast requires VL512
             &[0x62, 0xF2, 0x7D, 0xC8, 0xC8, 0xCB][..], // {z} with k0
+        ] {
+            assert!(lift_single(invalid).is_err(), "accepted {invalid:02X?}");
+        }
+    }
+
+    #[test]
+    fn lift_evex_recip28_covers_packed_scalar_masks_sae_broadcast_and_reserved_fields() {
+        for (bytes, elem, lanes, scalar) in [
+            (
+                &[0x62, 0xF2, 0x7D, 0x48, 0xCA, 0xCB][..],
+                VecElementType::F32,
+                16,
+                false,
+            ),
+            (
+                &[0x62, 0xF2, 0xFD, 0x48, 0xCA, 0xCB][..],
+                VecElementType::F64,
+                8,
+                false,
+            ),
+            (
+                &[0x62, 0xF2, 0x6D, 0x08, 0xCB, 0xCB][..],
+                VecElementType::F32,
+                1,
+                true,
+            ),
+            (
+                &[0x62, 0xF2, 0xED, 0x68, 0xCB, 0xCB][..],
+                VecElementType::F64,
+                1,
+                true,
+            ),
+        ] {
+            let lifted = lift_single(bytes).unwrap();
+            assert_eq!(lifted.bytes_consumed, bytes.len());
+            assert!(matches!(
+                lifted.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86Recip28 {
+                        dst: VReg::Arch(ArchReg::X86(
+                            X86Reg::Xmm(1) | X86Reg::Zmm(1)
+                        )),
+                        merge,
+                        src: VReg::Arch(ArchReg::X86(
+                            X86Reg::Xmm(3) | X86Reg::Zmm(3)
+                        )),
+                        mask: None,
+                        elem: actual_elem,
+                        width: actual_width,
+                        lanes: actual_lanes,
+                        scalar: actual_scalar,
+                        mask_zeroing: false,
+                        suppress_exceptions: false,
+                    },
+                    x86_hint: Some(X86OpHint::EvexOp {
+                        map: X86VecMap::Map0F38,
+                        pp: X86SsePrefix::OpSize,
+                        opcode: actual_opcode,
+                        ..
+                    }),
+                    ..
+                }] if *actual_elem == elem
+                    && *actual_width == if scalar { VecWidth::V128 } else { VecWidth::V512 }
+                    && *actual_lanes == lanes
+                    && *actual_scalar == scalar
+                    && *actual_opcode == if scalar { 0xCB } else { 0xCA }
+                    && merge.is_some() == scalar
+            ));
+        }
+
+        let packed_sae = lift_single(&[0x62, 0xA2, 0x7D, 0x99, 0xCA, 0xCB]).unwrap();
+        assert!(matches!(
+            packed_sae.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::X86Recip28 {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    merge: None,
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(19))),
+                    mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+                    mask_zeroing: true,
+                    suppress_exceptions: true,
+                    ..
+                },
+                ..
+            }]
+        ));
+
+        let scalar_sae = lift_single(&[0x62, 0xA2, 0xED, 0x92, 0xCB, 0xCB]).unwrap();
+        assert!(matches!(
+            scalar_sae.ops.as_slice(),
+            [SmirOp {
+                kind: OpKind::X86Recip28 {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                    merge: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(18)))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(19))),
+                    mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                    scalar: true,
+                    mask_zeroing: true,
+                    suppress_exceptions: true,
+                    ..
+                },
+                ..
+            }]
+        ));
+
+        let full_memory = lift_single(&[0x62, 0xF2, 0x7D, 0x49, 0xCA, 0x48, 0x01]).unwrap();
+        assert_eq!(
+            full_memory
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            16
+        );
+        assert!(full_memory.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Lea {
+                addr: Address::BaseOffset { offset: 64, .. },
+                ..
+            }
+        )));
+
+        let broadcast = lift_single(&[0x62, 0xF2, 0xFD, 0x59, 0xCA, 0x48, 0x01]).unwrap();
+        assert_eq!(
+            broadcast
+                .ops
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B8,
+                        ..
+                    }
+                ))
+                .count(),
+            1
+        );
+
+        // For scalar VRCP28, EVEX.b is SAE for a memory source rather than
+        // broadcast. EVEX.L'L is ignored and the load remains one element.
+        let scalar_memory_sae = lift_single(&[0x62, 0xF2, 0x6D, 0x78, 0xCB, 0x48, 0x01]).unwrap();
+        assert!(scalar_memory_sae.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::Load {
+                addr: Address::BaseOffset { offset: 4, .. },
+                width: MemWidth::B4,
+                ..
+            }
+        )));
+        assert!(matches!(
+            scalar_memory_sae.ops.last().map(|op| &op.kind),
+            Some(OpKind::X86Recip28 {
+                src: VReg::Virtual(_),
+                scalar: true,
+                suppress_exceptions: true,
+                ..
+            })
+        ));
+
+        for invalid in [
+            &[0x62, 0xF2, 0x7C, 0x48, 0xCA, 0xCB][..], // pp != 66
+            &[0x62, 0xF2, 0x75, 0x48, 0xCA, 0xCB][..], // packed reserved vvvv
+            &[0x62, 0xF2, 0x7D, 0x40, 0xCA, 0xCB][..], // packed reserved V'
+            &[0x62, 0xF2, 0x7D, 0x08, 0xCA, 0xCB][..], // packed non-SAE VL128
+            &[0x62, 0xF2, 0x7D, 0x28, 0xCA, 0xCB][..], // packed non-SAE VL256
+            &[0x62, 0xF2, 0x7D, 0x68, 0xCA, 0xCB][..], // packed non-SAE L'L=3
+            &[0x62, 0xF2, 0x7D, 0x19, 0xCA, 0x08][..], // packed broadcast VL128
+            &[0x62, 0xF2, 0x7D, 0xC8, 0xCA, 0xCB][..], // {z} with k0
         ] {
             assert!(lift_single(invalid).is_err(), "accepted {invalid:02X?}");
         }

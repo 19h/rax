@@ -2876,6 +2876,22 @@ impl OpKind {
                 }
             }
 
+            OpKind::X86Recip28 {
+                dst,
+                merge,
+                src,
+                mask,
+                mask_zeroing,
+                ..
+            } => {
+                result.extend(merge.iter().copied());
+                result.push(*src);
+                result.extend(mask.iter().copied());
+                if mask.is_some() && !mask_zeroing {
+                    result.push(*dst);
+                }
+            }
+
             OpKind::X86ScaleF {
                 dst,
                 src1,
@@ -10026,6 +10042,84 @@ mod tests {
             }
             .has_side_effects()
         );
+
+        let recip28 = optimized(&[0x62, 0xF2, 0x7D, 0x5A, 0xCA, 0x00]);
+        let ops = &recip28.blocks[0].ops;
+        let recip28 = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86Recip28 {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        merge: None,
+                        src: VReg::Virtual(_),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                        elem: VecElementType::F32,
+                        width: VecWidth::V512,
+                        lanes: 16,
+                        scalar: false,
+                        mask_zeroing: false,
+                        suppress_exceptions: false,
+                    }
+                )
+            })
+            .expect("masked broadcast VRCP28PS removed");
+        assert!(ops[recip28].kind.has_side_effects());
+        assert_eq!(
+            ops[..recip28]
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            1,
+        );
+        let sources = ops[recip28].kind.source_vregs();
+        assert!(sources.iter().any(|reg| matches!(reg, VReg::Virtual(_))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Zmm(0)))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::K(2)))));
+
+        let scalar_recip28 = OpKind::X86Recip28 {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            merge: Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)))),
+            src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+            mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+            elem: VecElementType::F64,
+            width: VecWidth::V128,
+            lanes: 1,
+            scalar: true,
+            mask_zeroing: false,
+            suppress_exceptions: false,
+        };
+        assert!(scalar_recip28.has_side_effects());
+        let sources = scalar_recip28.source_vregs();
+        for source in [
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(2))),
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+            VReg::Arch(ArchReg::X86(X86Reg::K(1))),
+        ] {
+            assert!(sources.contains(&source));
+        }
+        let mut scalar_sae = scalar_recip28;
+        let OpKind::X86Recip28 {
+            mask,
+            mask_zeroing,
+            suppress_exceptions,
+            ..
+        } = &mut scalar_sae
+        else {
+            unreachable!()
+        };
+        *mask = None;
+        *mask_zeroing = false;
+        *suppress_exceptions = true;
+        assert!(!scalar_sae.has_side_effects());
 
         let scale_f = optimized(&[0x62, 0xF2, 0x7D, 0x5A, 0x2C, 0x00]);
         let ops = &scale_f.blocks[0].ops;

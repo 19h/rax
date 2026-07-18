@@ -1664,6 +1664,25 @@ pub enum OpKind {
         suppress_exceptions: bool,
     },
 
+    /// x86 AVX512ER VRCP28{PS,PD,SS,SD}. Each active element receives Intel's
+    /// reciprocal approximation with less than `2^-28` relative error before
+    /// final rounding. Denormal inputs are treated as signed zero and denormal
+    /// results are flushed to signed zero independently of MXCSR.DAZ/FTZ.
+    /// Scalar forms copy bits above the low element through bit 127 from
+    /// `merge`; `suppress_exceptions` records EVEX SAE.
+    X86Recip28 {
+        dst: VReg,
+        merge: Option<VReg>,
+        src: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        lanes: u8,
+        scalar: bool,
+        mask_zeroing: bool,
+        suppress_exceptions: bool,
+    },
+
     /// x86 EVEX VSCALEF{PH,PS,PD,SH,SS,SD}. Each active element computes
     /// `src1 * 2^floor(src2)` using the selected MXCSR or embedded rounding
     /// mode. Scalar forms copy bits 127:element-width from `src1`; packed and
@@ -4424,6 +4443,7 @@ impl OpKind {
             | OpKind::X86Range { dst, .. }
             | OpKind::X86FixupImm { dst, .. }
             | OpKind::X86Exp2 { dst, .. }
+            | OpKind::X86Recip28 { dst, .. }
             | OpKind::X86ScaleF { dst, .. }
             | OpKind::X86IntToFp { dst, .. }
             | OpKind::X86FpConvert { dst, .. }
@@ -4847,6 +4867,10 @@ impl OpKind {
                         ..
                     }
                     | OpKind::X86Exp2 {
+                        suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86Recip28 {
                         suppress_exceptions: false,
                         ..
                     }

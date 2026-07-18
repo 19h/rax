@@ -4840,8 +4840,8 @@ pub struct X86_64Lowerer {
     preserve_vector_call_helpers: bool,
 
     /// Use KMOVW instead of KMOVQ at vector helper boundaries. This is enabled
-    /// only for VEXP2-only regions, whose masks contain at most 16 observable
-    /// bits; partial stores preserve the upper architectural K bits in memory.
+    /// only for admitted AVX512ER regions whose masks contain at most 16
+    /// observable bits; partial stores preserve upper architectural K bits.
     narrow_vector_opmask_helpers: bool,
 
     /// When set, a `Terminator::Call` lowers to a runtime call-out (the
@@ -9933,6 +9933,89 @@ impl X86_64Lowerer {
                     0xC8,
                     dst_reg,
                     None,
+                    src_reg,
+                    aaa,
+                    *mask_zeroing,
+                    *suppress_exceptions,
+                    None,
+                );
+            }
+
+            OpKind::X86Recip28 {
+                dst,
+                merge,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+                suppress_exceptions,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let merge_reg = merge.map(|reg| self.get_reg(reg)).transpose()?;
+                let aaa = match mask {
+                    None => 0,
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::K(n @ 1..=7)))) => *n,
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86Recip28".to_string(),
+                            operand: "mask must be architectural k1-k7".to_string(),
+                        });
+                    }
+                };
+                let w = match elem {
+                    VecElementType::F32 => false,
+                    VecElementType::F64 => true,
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86Recip28".to_string(),
+                            operand: format!("unsupported element {elem:?}"),
+                        });
+                    }
+                };
+                let opcode = if *scalar { 0xCB } else { 0xCA };
+                let valid_shape = (!*mask_zeroing || aaa != 0)
+                    && if *scalar {
+                        dst_reg.is_xmm()
+                            && src_reg.is_xmm()
+                            && merge_reg.is_some_and(|reg| reg.is_xmm())
+                            && *width == VecWidth::V128
+                            && *lanes == 1
+                    } else {
+                        dst_reg.is_zmm()
+                            && src_reg.is_zmm()
+                            && merge_reg.is_none()
+                            && *width == VecWidth::V512
+                            && *lanes == width.lanes(*elem) as u8
+                    };
+                let valid_hint = matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::EvexOp {
+                        map: X86VecMap::Map0F38,
+                        pp: X86SsePrefix::OpSize,
+                        opcode: hint_opcode,
+                        width: hint_width,
+                        w: hint_w,
+                    }) if hint_opcode == opcode && hint_width == *width && hint_w == w
+                );
+                if !valid_shape || !valid_hint {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86Recip28".to_string(),
+                        operand: "non-canonical VRCP28 shape or encoding metadata".to_string(),
+                    });
+                }
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_evex_unary_fp_rr(
+                    X86VecMap::Map0F38,
+                    X86SsePrefix::OpSize,
+                    *width,
+                    w,
+                    opcode,
+                    dst_reg,
+                    merge_reg,
                     src_reg,
                     aaa,
                     *mask_zeroing,
@@ -33050,6 +33133,177 @@ mod tests {
                     w: false,
                 }
             ),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[test]
+    fn lower_x86_recip28_emits_canonical_evex_and_rejects_synthetic_shapes() {
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        let make = |dst,
+                    merge,
+                    src,
+                    mask,
+                    elem,
+                    width,
+                    lanes,
+                    scalar,
+                    mask_zeroing,
+                    suppress_exceptions| OpKind::X86Recip28 {
+            dst,
+            merge,
+            src,
+            mask,
+            elem,
+            width,
+            lanes,
+            scalar,
+            mask_zeroing,
+            suppress_exceptions,
+        };
+        let hint = |opcode, width, w| X86OpHint::EvexOp {
+            map: X86VecMap::Map0F38,
+            pp: X86SsePrefix::OpSize,
+            opcode,
+            width,
+            w,
+        };
+        for (name, kind, encoding, expected) in [
+            (
+                "VRCP28PS zmm1,zmm3",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                    None,
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+                    None,
+                    VecElementType::F32,
+                    VecWidth::V512,
+                    16,
+                    false,
+                    false,
+                    false,
+                ),
+                hint(0xCA, VecWidth::V512, false),
+                &[0x62, 0xF2, 0x7D, 0x48, 0xCA, 0xCB][..],
+            ),
+            (
+                "VRCP28PD zmm17{k2}{z},zmm19,{sae}",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    None,
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(19))),
+                    Some(k2),
+                    VecElementType::F64,
+                    VecWidth::V512,
+                    8,
+                    false,
+                    true,
+                    true,
+                ),
+                hint(0xCA, VecWidth::V512, true),
+                &[0x62, 0xA2, 0xFD, 0x9A, 0xCA, 0xCB][..],
+            ),
+            (
+                "VRCP28SS xmm1,xmm2,xmm3",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    None,
+                    VecElementType::F32,
+                    VecWidth::V128,
+                    1,
+                    true,
+                    false,
+                    false,
+                ),
+                hint(0xCB, VecWidth::V128, false),
+                &[0x62, 0xF2, 0x6D, 0x08, 0xCB, 0xCB][..],
+            ),
+            (
+                "VRCP28SD xmm17{k2}{z},xmm18,xmm19,{sae}",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(18)))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(19))),
+                    Some(k2),
+                    VecElementType::F64,
+                    VecWidth::V128,
+                    1,
+                    true,
+                    true,
+                    true,
+                ),
+                hint(0xCB, VecWidth::V128, true),
+                &[0x62, 0xA2, 0xED, 0x92, 0xCB, 0xCB][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, encoding);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+
+            let mut block = expected.to_vec();
+            block.push(0xF4);
+            let (production, _) = lower_rex2_block(&block);
+            assert!(
+                production
+                    .windows(expected.len())
+                    .any(|window| window == expected),
+                "production lift/lower omitted {expected:02X?} from {production:02X?}"
+            );
+        }
+
+        let short = make(
+            VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+            None,
+            VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
+            None,
+            VecElementType::F32,
+            VecWidth::V256,
+            8,
+            false,
+            false,
+            false,
+        );
+        assert!(matches!(
+            lower_single_hinted_op_err(short, hint(0xCA, VecWidth::V256, false)),
+            LowerError::InvalidOperand { .. }
+        ));
+
+        let missing_merge = make(
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            None,
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+            None,
+            VecElementType::F32,
+            VecWidth::V128,
+            1,
+            true,
+            false,
+            false,
+        );
+        assert!(matches!(
+            lower_single_hinted_op_err(missing_merge, hint(0xCB, VecWidth::V128, false)),
+            LowerError::InvalidOperand { .. }
+        ));
+
+        let wrong_hint = make(
+            VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+            None,
+            VReg::Arch(ArchReg::X86(X86Reg::Zmm(3))),
+            None,
+            VecElementType::F32,
+            VecWidth::V512,
+            16,
+            false,
+            false,
+            false,
+        );
+        assert!(matches!(
+            lower_single_hinted_op_err(wrong_hint, hint(0xCB, VecWidth::V512, false)),
             LowerError::InvalidOperand { .. }
         ));
     }

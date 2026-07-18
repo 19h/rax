@@ -260,6 +260,268 @@ const X86_EXP2_23_COEFFICIENTS: [(u64, u64, u64); 64] = [
     (0x3F4F_830F, 0x15F11, 0x07A3),
 ];
 
+// VRCP28 raw polynomial coefficients from the same Intel reference source.
+// The license notice above applies. Runtime scaling reproduces SINIT with
+// N=50, Na=33, Nb=Nc=50, and S=3 without relying on host floating point.
+const X86_RCP28_COEFFICIENTS: [(u64, u64, u64); 256] = [
+    (0x1fffffff0, 0x300009, 0x3fa0),
+    (0x1fe01fdf1, 0x301fd9, 0x3ee4),
+    (0x1fc07f00f, 0x303f4b, 0x3e28),
+    (0x1fa11ca90, 0x305e5f, 0x3d73),
+    (0x1f81f81e9, 0x307d18, 0x3cbe),
+    (0x1f6310abb, 0x309b77, 0x3c0b),
+    (0x1f44659d5, 0x30b97d, 0x3b5b),
+    (0x1f25f6434, 0x30d72b, 0x3ab0),
+    (0x1f07c1efa, 0x30f483, 0x3a07),
+    (0x1ee9c7f77, 0x311186, 0x3961),
+    (0x1ecc07b22, 0x312e36, 0x38bb),
+    (0x1eae8079e, 0x314a93, 0x381a),
+    (0x1e9131ab1, 0x31669f, 0x377b),
+    (0x1e741aa4c, 0x31825c, 0x36da),
+    (0x1e573ac83, 0x319dc9, 0x3641),
+    (0x1e3a91790, 0x31b8e9, 0x35a8),
+    (0x1e1e1e1d4, 0x31d3bd, 0x350f),
+    (0x1e01e01d3, 0x31ee45, 0x347b),
+    (0x1de5d6e32, 0x320883, 0x33e8),
+    (0x1dca01dc0, 0x322277, 0x335b),
+    (0x1dae6075f, 0x323c24, 0x32cc),
+    (0x1d92f2225, 0x32558a, 0x323e),
+    (0x1d77b6543, 0x326ea9, 0x31b6),
+    (0x1d5cac7fc, 0x328784, 0x312c),
+    (0x1d41d41cb, 0x32a01a, 0x30a8),
+    (0x1d272ca33, 0x32b86e, 0x3022),
+    (0x1d0cb58ed, 0x32d07f, 0x2fa0),
+    (0x1cf26e5bb, 0x32e84f, 0x2f20),
+    (0x1cd856884, 0x32ffdf, 0x2ea1),
+    (0x1cbe6d959, 0x33172f, 0x2e25),
+    (0x1ca4b304b, 0x332e41, 0x2daa),
+    (0x1c8b265a4, 0x334516, 0x2d2d),
+    (0x1c71c71bc, 0x335bad, 0x2cb8),
+    (0x1c5894d06, 0x337209, 0x2c40),
+    (0x1c3f8f014, 0x338829, 0x2bcd),
+    (0x1c26b538b, 0x339e0f, 0x2b5b),
+    (0x1c0e07030, 0x33b3bc, 0x2ae8),
+    (0x1bf583ee1, 0x33c930, 0x2a78),
+    (0x1bdd2b891, 0x33de6c, 0x2a0a),
+    (0x1bc4fd64e, 0x33f371, 0x299d),
+    (0x1bacf9144, 0x34083f, 0x2933),
+    (0x1b951e2a8, 0x341cd8, 0x28c8),
+    (0x1b7d6c3d4, 0x34313c, 0x285e),
+    (0x1b65e2e36, 0x34456b, 0x27f8),
+    (0x1b4e81b46, 0x345967, 0x2792),
+    (0x1b37484a5, 0x346d30, 0x272d),
+    (0x1b20363fd, 0x3480c7, 0x26c9),
+    (0x1b094b314, 0x34942c, 0x2668),
+    (0x1af286bc2, 0x34a760, 0x2608),
+    (0x1adbe87f2, 0x34ba64, 0x25a8),
+    (0x1ac5701a7, 0x34cd38, 0x254b),
+    (0x1aaf1d2f0, 0x34dfdd, 0x24f0),
+    (0x1a98ef602, 0x34f254, 0x2493),
+    (0x1a82e650d, 0x35049d, 0x2439),
+    (0x1a6d01a66, 0x3516b9, 0x23df),
+    (0x1a574106d, 0x3528a8, 0x2388),
+    (0x1a41a419d, 0x353a6b, 0x2331),
+    (0x1a2c2a876, 0x354c03, 0x22d9),
+    (0x1a16d3f8f, 0x355d70, 0x2283),
+    (0x1a01a0198, 0x356eb2, 0x2230),
+    (0x19ec8e94c, 0x357fca, 0x21de),
+    (0x19d79f16f, 0x3590b9, 0x218d),
+    (0x19c2d14e6, 0x35a17f, 0x213d),
+    (0x19ae24e9f, 0x35b21d, 0x20ec),
+    (0x199999991, 0x35c293, 0x209e),
+    (0x19852f0d1, 0x35d2e2, 0x204f),
+    (0x1970e4f79, 0x35e30a, 0x2001),
+    (0x195cbb0b9, 0x35f30b, 0x1fb7),
+    (0x1948b0fc6, 0x3602e7, 0x1f6b),
+    (0x1934c67f3, 0x36129d, 0x1f22),
+    (0x1920fb497, 0x36222e, 0x1eda),
+    (0x190d4f119, 0x36319b, 0x1e91),
+    (0x18f9c18f6, 0x3640e3, 0x1e4c),
+    (0x18e6527a8, 0x365009, 0x1e02),
+    (0x18d3018cd, 0x365f0a, 0x1dc0),
+    (0x18bfce805, 0x366de9, 0x1d7b),
+    (0x18acb90ef, 0x367ca6, 0x1d37),
+    (0x1899c0f59, 0x368b41, 0x1cf3),
+    (0x1886e5f03, 0x3699ba, 0x1cb2),
+    (0x187427bc6, 0x36a812, 0x1c71),
+    (0x18618617f, 0x36b64a, 0x1c2e),
+    (0x184f00c21, 0x36c461, 0x1bee),
+    (0x183c977a6, 0x36d258, 0x1baf),
+    (0x182a4a017, 0x36e02f, 0x1b72),
+    (0x18181817c, 0x36ede8, 0x1b32),
+    (0x1806017ff, 0x36fb81, 0x1af7),
+    (0x17f405fcb, 0x3708fc, 0x1aba),
+    (0x17e22550f, 0x371659, 0x1a7e),
+    (0x17d05f411, 0x372398, 0x1a43),
+    (0x17beb391d, 0x3730b9, 0x1a0b),
+    (0x17ad22089, 0x373dbe, 0x19cf),
+    (0x179baa6b5, 0x374aa6, 0x1995),
+    (0x178a4c813, 0x375771, 0x195d),
+    (0x177908115, 0x376420, 0x1926),
+    (0x1767dce3e, 0x3770b3, 0x18f1),
+    (0x1756cac1b, 0x377d2b, 0x18ba),
+    (0x1745d1741, 0x378988, 0x1883),
+    (0x1734f0c4f, 0x3795ca, 0x184d),
+    (0x1724287ef, 0x37a1f1, 0x181a),
+    (0x1713786d5, 0x37adfe, 0x17e6),
+    (0x1702e05bc, 0x37b9f1, 0x17b3),
+    (0x16f26016a, 0x37c5ca, 0x1782),
+    (0x16e1f76af, 0x37d18a, 0x1750),
+    (0x16d1a6262, 0x37dd31, 0x171e),
+    (0x16c16c168, 0x37e8bf, 0x16ed),
+    (0x16b1490a7, 0x37f435, 0x16ba),
+    (0x16a13cd14, 0x37ff92, 0x168b),
+    (0x1691473a6, 0x380ad7, 0x165d),
+    (0x168168164, 0x381605, 0x162c),
+    (0x16719f35b, 0x38211b, 0x15fe),
+    (0x1661ec6a0, 0x382c1a, 0x15cf),
+    (0x16524f84e, 0x383702, 0x15a1),
+    (0x1642c858c, 0x3841d3, 0x1574),
+    (0x163356b85, 0x384c8d, 0x154a),
+    (0x1623fa76b, 0x385732, 0x151b),
+    (0x1614b3680, 0x3861c0, 0x14f1),
+    (0x160581600, 0x386c39, 0x14c5),
+    (0x15f66433e, 0x38769c, 0x149a),
+    (0x15e75bb8b, 0x3880e9, 0x1473),
+    (0x15d867c3c, 0x388b22, 0x1448),
+    (0x15c9882b6, 0x389546, 0x141e),
+    (0x15babcc63, 0x389f55, 0x13f6),
+    (0x15ac056ad, 0x38a950, 0x13cd),
+    (0x159d61f0d, 0x38b337, 0x13a4),
+    (0x158ed2307, 0x38bd09, 0x137e),
+    (0x158056011, 0x38c6c8, 0x1357),
+    (0x1571ed3c4, 0x38d073, 0x1331),
+    (0x156397ba7, 0x38da0b, 0x130a),
+    (0x155555551, 0x38e390, 0x12e4),
+    (0x154725e68, 0x38ed02, 0x12bd),
+    (0x15390948c, 0x38f661, 0x1298),
+    (0x152aff56a, 0x38ffad, 0x1275),
+    (0x151d07ead, 0x3908e7, 0x1251),
+    (0x150f22e0d, 0x39120f, 0x122d),
+    (0x15015014f, 0x391b25, 0x1208),
+    (0x14f38f62d, 0x392429, 0x11e5),
+    (0x14e5e0a6f, 0x392d1c, 0x11c0),
+    (0x14d843bee, 0x3935fc, 0x11a1),
+    (0x14cab886e, 0x393ecc, 0x117e),
+    (0x14bd3edd7, 0x39478b, 0x115a),
+    (0x14afd6a03, 0x395038, 0x113b),
+    (0x14a27fad6, 0x3958d5, 0x1119),
+    (0x149539e3c, 0x396161, 0x10f9),
+    (0x14880521e, 0x3969dd, 0x10d8),
+    (0x147ae1478, 0x397249, 0x10b6),
+    (0x146dce343, 0x397aa4, 0x1098),
+    (0x1460cbc7c, 0x3982f0, 0x1076),
+    (0x1453d9e2a, 0x398b2b, 0x105a),
+    (0x1446f8656, 0x399357, 0x103b),
+    (0x143a27308, 0x399b74, 0x101b),
+    (0x142d6625a, 0x39a381, 0x0ffe),
+    (0x1420b5265, 0x39ab7f, 0x0fe0),
+    (0x14141413d, 0x39b36f, 0x0fbf),
+    (0x140782d0e, 0x39bb4f, 0x0fa2),
+    (0x13fb013f7, 0x39c320, 0x0f87),
+    (0x13ee8f429, 0x39cae3, 0x0f69),
+    (0x13e22cbce, 0x39d297, 0x0f4e),
+    (0x13d5d9917, 0x39da3e, 0x0f2e),
+    (0x13c995a44, 0x39e1d6, 0x0f12),
+    (0x13bd60d8f, 0x39e95f, 0x0efa),
+    (0x13b13b13b, 0x39f0db, 0x0ede),
+    (0x13a524384, 0x39f84a, 0x0ec0),
+    (0x13991c2c1, 0x39ffaa, 0x0ea7),
+    (0x138d22d34, 0x3a06fd, 0x0e8d),
+    (0x138138136, 0x3a0e43, 0x0e71),
+    (0x13755bd19, 0x3a157c, 0x0e55),
+    (0x13698df3b, 0x3a1ca7, 0x0e3c),
+    (0x135dce5f6, 0x3a23c5, 0x0e24),
+    (0x13521cfaf, 0x3a2ad7, 0x0e08),
+    (0x134679acf, 0x3a31db, 0x0df1),
+    (0x133ae45b3, 0x3a38d3, 0x0dd9),
+    (0x132f5ced4, 0x3a3fbf, 0x0dbe),
+    (0x1323e34a1, 0x3a469e, 0x0da6),
+    (0x13187758c, 0x3a4d71, 0x0d8d),
+    (0x130d19010, 0x3a5438, 0x0d74),
+    (0x1301c82ac, 0x3a5af2, 0x0d5e),
+    (0x12f684bd8, 0x3a61a1, 0x0d45),
+    (0x12eb4ea1d, 0x3a6844, 0x0d2d),
+    (0x12e025c02, 0x3a6edb, 0x0d16),
+    (0x12d50a013, 0x3a7566, 0x0d01),
+    (0x12c9fb4d8, 0x3a7be6, 0x0cea),
+    (0x12bef98e3, 0x3a825b, 0x0cd2),
+    (0x12b404ad0, 0x3a88c4, 0x0cbc),
+    (0x12a91c92f, 0x3a8f22, 0x0ca6),
+    (0x129e4129d, 0x3a9575, 0x0c90),
+    (0x1293725ba, 0x3a9bbd, 0x0c7a),
+    (0x1288b0125, 0x3aa1fa, 0x0c65),
+    (0x127dfa38a, 0x3aa82c, 0x0c50),
+    (0x127350b86, 0x3aae54, 0x0c39),
+    (0x1268b37cb, 0x3ab471, 0x0c24),
+    (0x125e22705, 0x3aba83, 0x0c11),
+    (0x12539d7e7, 0x3ac08b, 0x0bfc),
+    (0x124924922, 0x3ac689, 0x0be6),
+    (0x123eb7972, 0x3acc7c, 0x0bd3),
+    (0x12345678c, 0x3ad265, 0x0bc0),
+    (0x122a01228, 0x3ad845, 0x0ba9),
+    (0x121fb780f, 0x3ade1a, 0x0b97),
+    (0x121579802, 0x3ae3e5, 0x0b85),
+    (0x120b470c3, 0x3ae9a7, 0x0b70),
+    (0x12012011e, 0x3aef5f, 0x0b5c),
+    (0x11f7047da, 0x3af50d, 0x0b4a),
+    (0x11ecf43c6, 0x3afab2, 0x0b36),
+    (0x11e2ef3b4, 0x3b004d, 0x0b24),
+    (0x11d8f5672, 0x3b05df, 0x0b11),
+    (0x11cf06ad8, 0x3b0b68, 0x0afd),
+    (0x11c522fbf, 0x3b10e7, 0x0aed),
+    (0x11bb4a402, 0x3b165d, 0x0adc),
+    (0x11b17c67c, 0x3b1bcb, 0x0ac7),
+    (0x11a7b9610, 0x3b212f, 0x0ab6),
+    (0x119e0119b, 0x3b268a, 0x0aa6),
+    (0x119453807, 0x3b2bdd, 0x0a93),
+    (0x118ab083b, 0x3b3126, 0x0a84),
+    (0x118118115, 0x3b3668, 0x0a70),
+    (0x11778a18f, 0x3b3ba0, 0x0a61),
+    (0x116e06892, 0x3b40d0, 0x0a50),
+    (0x11648d50e, 0x3b45f8, 0x0a3d),
+    (0x115b1e5f7, 0x3b4b17, 0x0a2d),
+    (0x1151b9a3f, 0x3b502e, 0x0a1c),
+    (0x11485f0df, 0x3b553c, 0x0a0f),
+    (0x113f0e8d2, 0x3b5a43, 0x09fc),
+    (0x1135c8112, 0x3b5f41, 0x09ee),
+    (0x112c8b89c, 0x3b6438, 0x09db),
+    (0x112358e74, 0x3b6926, 0x09cd),
+    (0x111a3019c, 0x3b6e0c, 0x09bf),
+    (0x111111111, 0x3b72eb, 0x09ae),
+    (0x1107fbbe0, 0x3b77c2, 0x099e),
+    (0x10fef010e, 0x3b7c91, 0x0990),
+    (0x10f5edfa9, 0x3b8159, 0x097f),
+    (0x10ecf56bb, 0x3b8619, 0x0970),
+    (0x10e406559, 0x3b8ad1, 0x0962),
+    (0x10db20a86, 0x3b8f82, 0x0954),
+    (0x10d244562, 0x3b942c, 0x0943),
+    (0x10c9714fa, 0x3b98ce, 0x0936),
+    (0x10c0a7866, 0x3b9d69, 0x0928),
+    (0x10b7e6ec1, 0x3ba1fd, 0x0918),
+    (0x10af2f722, 0x3ba689, 0x090d),
+    (0x10a6810a5, 0x3bab0f, 0x08fd),
+    (0x109ddba6b, 0x3baf8d, 0x08f1),
+    (0x10953f38f, 0x3bb405, 0x08e1),
+    (0x108cabb35, 0x3bb876, 0x08d2),
+    (0x108421085, 0x3bbcdf, 0x08c7),
+    (0x107b9f29d, 0x3bc142, 0x08b9),
+    (0x1073260a3, 0x3bc59e, 0x08ad),
+    (0x106ab59c6, 0x3bc9f4, 0x089d),
+    (0x10624dd2d, 0x3bce43, 0x088f),
+    (0x1059eea06, 0x3bd28b, 0x0883),
+    (0x105197f7b, 0x3bd6cd, 0x0875),
+    (0x104949cbf, 0x3bdb08, 0x0869),
+    (0x104104101, 0x3bdf3d, 0x085b),
+    (0x1038c6b78, 0x3be36b, 0x084f),
+    (0x103091b51, 0x3be793, 0x0843),
+    (0x102864fc6, 0x3bebb5, 0x0835),
+    (0x10204080f, 0x3befd0, 0x082b),
+    (0x101824364, 0x3bf3e5, 0x0820),
+    (0x1010100fe, 0x3bf7f5, 0x0810),
+    (0x10080401e, 0x3bfbfe, 0x0805),
+];
+
 const X86_SM4_SBOX: [u8; 256] = [
     0xD6, 0x90, 0xE9, 0xFE, 0xCC, 0xE1, 0x3D, 0xB7, 0x16, 0xB6, 0x14, 0xC2, 0x28, 0xFB, 0x2C, 0x05,
     0x2B, 0x67, 0x9A, 0x76, 0x2A, 0xBE, 0x04, 0xC3, 0xAA, 0x44, 0x13, 0x26, 0x49, 0x86, 0x06, 0x99,
@@ -3837,6 +4099,90 @@ impl SmirInterpreter {
                     }
                     let converted =
                         Self::x86_simd_exp2(Self::get_lane(&source, lane, elem_bits), format);
+                    status |= converted.status;
+                    Self::set_lane(&mut result, lane, elem_bits, converted.bits);
+                }
+                if !*suppress_exceptions {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= status;
+                    }
+                    if Self::x86_simd_fp_unmasked(status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Recip28 {
+                dst,
+                merge,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                scalar,
+                mask_zeroing,
+                suppress_exceptions,
+            } => {
+                let format = match elem {
+                    VecElementType::F32 => X86_SIMD_F32,
+                    VecElementType::F64 => X86_SIMD_F64,
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                if *scalar != merge.is_some()
+                    || (*scalar && (*width != VecWidth::V128 || *lanes != 1))
+                    || (!*scalar
+                        && (*width != VecWidth::V512 || *lanes != width.lanes(*elem) as u8))
+                    || (*mask_zeroing && mask.is_none())
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: ctx.pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let source = Self::read_vec(ctx, *src);
+                let old = Self::read_vec(ctx, *dst);
+                let mut result = if let Some(merge) = merge {
+                    Self::read_vec(ctx, *merge)
+                } else {
+                    old
+                };
+                if *scalar {
+                    result[2..].fill(0);
+                }
+                let active = mask.map_or(u64::MAX, |reg| ctx.read_vreg(reg));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let elem_bits = elem.bytes() * 8;
+                let mut status = 0;
+                for lane in 0..*lanes {
+                    if active & (1u64 << lane) == 0 {
+                        if *mask_zeroing {
+                            Self::set_lane(&mut result, lane, elem_bits, 0);
+                        } else {
+                            Self::set_lane(
+                                &mut result,
+                                lane,
+                                elem_bits,
+                                Self::get_lane(&old, lane, elem_bits),
+                            );
+                        }
+                        continue;
+                    }
+                    let converted =
+                        Self::x86_simd_recip28(Self::get_lane(&source, lane, elem_bits), format);
                     status |= converted.status;
                     Self::set_lane(&mut result, lane, elem_bits, converted.bits);
                 }
@@ -17166,6 +17512,127 @@ impl SmirInterpreter {
             _ => unreachable!(),
         };
         X86SimdFpResult { bits, status: 0 }
+    }
+
+    fn x86_simd_recip28(bits: u64, format: X86SimdFpFormat) -> X86SimdFpResult {
+        let (sign, exponent, _, _) = Self::x86_simd_fp_masks(format);
+        if Self::x86_simd_fp_is_nan(bits, format) {
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_quiet_nan(bits, format),
+                status: u32::from(Self::x86_simd_fp_is_snan(bits, format)),
+            };
+        }
+        if Self::x86_simd_fp_is_denormal(bits, format) || Self::x86_simd_fp_is_zero(bits, format) {
+            return X86SimdFpResult {
+                bits: (bits & sign) | exponent,
+                status: 1 << 2,
+            };
+        }
+        if Self::x86_simd_fp_is_infinite(bits, format) {
+            return X86SimdFpResult {
+                bits: bits & sign,
+                status: 0,
+            };
+        }
+
+        let (_, _, fraction_mask, _) = Self::x86_simd_fp_masks(format);
+        let biased_exponent = ((bits & exponent) >> format.fraction_bits) as i32;
+        let input_scale = biased_exponent - format.bias;
+        let fraction = bits & fraction_mask;
+        let (significand, polynomial_exponent) = if fraction == 0 {
+            (1u64 << 63, 1023)
+        } else {
+            let argument = match format.total_bits {
+                32 => ((bits as u32).wrapping_shl(7) & 0x3FFF_FFFF) as u64,
+                64 => (bits >> 22) & 0x3FFF_FFFF,
+                _ => unreachable!("VRCP28 supports FP32 and FP64"),
+            };
+            Self::x86_recip28_emulate(argument)
+        };
+        X86SimdFpResult {
+            bits: Self::x86_recip28_finish(
+                bits & sign,
+                significand,
+                polynomial_exponent,
+                -input_scale,
+                format,
+            ),
+            status: 0,
+        }
+    }
+
+    fn x86_recip28_emulate(argument: u64) -> (u64, i32) {
+        let index = (argument >> 22) as usize;
+        let fraction = argument & 0x3F_FFFF;
+        let square = fraction * fraction >> 24;
+        let (a_raw, b_raw, c_raw) = X86_RCP28_COEFFICIENTS[index];
+        let a = (a_raw << 20) as i64;
+        let b = ((b_raw as i64) - 0x40_0000) << 3;
+        let c = (c_raw << 3) as i64;
+        let polynomial = a + b * fraction as i64 + c * square as i64;
+        debug_assert!(polynomial > 0);
+        let polynomial = polynomial as u64;
+        let shift = polynomial.leading_zeros();
+        debug_assert!(shift <= 11);
+        (polynomial << shift, 1033 - shift as i32)
+    }
+
+    fn x86_recip28_finish(
+        sign: u64,
+        mut significand: u64,
+        polynomial_exponent: i32,
+        scale: i32,
+        format: X86SimdFpFormat,
+    ) -> u64 {
+        match format.total_bits {
+            32 => {
+                let mut final_scale = scale + polynomial_exponent + 127 - 1023;
+                final_scale = final_scale.max(-25);
+                while final_scale <= 0 {
+                    final_scale += 1;
+                    significand = (significand >> 1) | (significand & 1);
+                }
+
+                let increment = 1u64 << 39;
+                let mut round_state = (significand >> 39) & 3;
+                if significand & (increment - 1) != 0 {
+                    round_state |= 2;
+                }
+                if round_state == 3 {
+                    significand = significand.wrapping_add(increment);
+                }
+                if significand < increment {
+                    final_scale += 1;
+                    significand = (significand >> 1) | (1u64 << 63);
+                }
+
+                let result = significand >> 40;
+                if result < (1 << 23) {
+                    sign
+                } else if final_scale > 254 {
+                    sign | 0x7F80_0000
+                } else {
+                    sign | ((final_scale as u64) << 23) | (result & 0x7F_FFFF)
+                }
+            }
+            64 => {
+                let mut final_scale = scale + polynomial_exponent;
+                final_scale = final_scale.max(-54);
+                while final_scale <= 0 {
+                    final_scale += 1;
+                    significand = (significand >> 1) | (significand & 1);
+                }
+                let result = significand >> 11;
+                if result < (1u64 << 52) {
+                    sign
+                } else if final_scale > 2046 {
+                    sign | 0x7FF0_0000_0000_0000
+                } else {
+                    sign | ((final_scale as u64) << 52) | (result & 0xF_FFFF_FFFF_FFFF)
+                }
+            }
+            _ => unreachable!("VRCP28 supports FP32 and FP64"),
+        }
     }
 
     fn x86_exp2_emulate_fraction(argument: u64) -> (u64, i32) {
@@ -58892,6 +59359,243 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn x86_recip28_matches_intel_reference_all_segments_and_special_values() {
+        // FNV-1a-style accumulation over outputs and status flags generated by
+        // Intel's RECIP28EXP2.c RCP28S/RCP28D implementation. The corpus
+        // exercises all 256 polynomial segments, both signs, four in-segment
+        // positions, and minimum/central/maximum normal exponent fields.
+        const FNV_OFFSET: u64 = 0xCBF2_9CE4_8422_2325;
+        const FNV_PRIME: u64 = 0x0000_0100_0000_01B3;
+        let mut hash32 = FNV_OFFSET;
+        let mut count32 = 0usize;
+        for sign in [0u32, 1] {
+            for exponent in [1u32, 127, 254] {
+                for segment in 0u32..256 {
+                    for tail in [0u32, 1, 0x3FFF, 0x7FFF] {
+                        let fraction = (segment << 15) | tail;
+                        if fraction == 0 {
+                            continue;
+                        }
+                        let bits = (sign << 31) | (exponent << 23) | fraction;
+                        let result =
+                            SmirInterpreter::x86_simd_recip28(u64::from(bits), X86_SIMD_F32);
+                        hash32 = (hash32 ^ result.bits).wrapping_mul(FNV_PRIME);
+                        hash32 = (hash32 ^ u64::from(result.status)).wrapping_mul(FNV_PRIME);
+                        count32 += 1;
+                    }
+                }
+            }
+        }
+        assert_eq!(count32, 6_138);
+        assert_eq!(hash32, 0x033E_3A71_C458_F825);
+
+        let mut hash64 = FNV_OFFSET;
+        let mut count64 = 0usize;
+        for sign in [0u64, 1] {
+            for exponent in [1u64, 1023, 2046] {
+                for segment in 0u64..256 {
+                    for tail in [0u64, 1, 0x1F_FFFF, 0x3F_FFFF] {
+                        let fraction = (segment << 44) | (tail << 22) | (tail & 0x3F_FFFF);
+                        if fraction == 0 {
+                            continue;
+                        }
+                        let bits = (sign << 63) | (exponent << 52) | fraction;
+                        let result = SmirInterpreter::x86_simd_recip28(bits, X86_SIMD_F64);
+                        hash64 = (hash64 ^ result.bits).wrapping_mul(FNV_PRIME);
+                        hash64 = (hash64 ^ u64::from(result.status)).wrapping_mul(FNV_PRIME);
+                        count64 += 1;
+                    }
+                }
+            }
+        }
+        assert_eq!(count64, 6_138);
+        assert_eq!(hash64, 0xC358_27E9_E21A_2AD5);
+
+        for (bits, format, expected, status) in [
+            (0, X86_SIMD_F32, 0x7F80_0000, 1 << 2),
+            (0x8000_0000, X86_SIMD_F32, 0xFF80_0000, 1 << 2),
+            (1, X86_SIMD_F32, 0x7F80_0000, 1 << 2),
+            (0x8000_0001, X86_SIMD_F32, 0xFF80_0000, 1 << 2),
+            (0x7F80_0000, X86_SIMD_F32, 0, 0),
+            (0xFF80_0000, X86_SIMD_F32, 0x8000_0000, 0),
+            (0, X86_SIMD_F64, 0x7FF0_0000_0000_0000, 1 << 2),
+            (
+                0x8000_0000_0000_0000,
+                X86_SIMD_F64,
+                0xFFF0_0000_0000_0000,
+                1 << 2,
+            ),
+            (1, X86_SIMD_F64, 0x7FF0_0000_0000_0000, 1 << 2),
+            (
+                0x8000_0000_0000_0001,
+                X86_SIMD_F64,
+                0xFFF0_0000_0000_0000,
+                1 << 2,
+            ),
+            (0x7FF0_0000_0000_0000, X86_SIMD_F64, 0, 0),
+            (
+                0xFFF0_0000_0000_0000,
+                X86_SIMD_F64,
+                0x8000_0000_0000_0000,
+                0,
+            ),
+        ] {
+            assert_eq!(
+                SmirInterpreter::x86_simd_recip28(bits, format),
+                X86SimdFpResult {
+                    bits: expected,
+                    status,
+                }
+            );
+        }
+
+        for (input, expected) in [(0.5f64, 2.0f64), (1.0, 1.0), (2.0, 0.5), (-4.0, -0.25)] {
+            assert_eq!(
+                SmirInterpreter::x86_simd_recip28(input.to_bits(), X86_SIMD_F64),
+                X86SimdFpResult {
+                    bits: expected.to_bits(),
+                    status: 0,
+                }
+            );
+        }
+
+        let qnan = SmirInterpreter::x86_simd_recip28(0xFFC1_2345, X86_SIMD_F32);
+        assert_eq!(
+            qnan,
+            X86SimdFpResult {
+                bits: 0xFFC1_2345,
+                status: 0
+            }
+        );
+        let snan = SmirInterpreter::x86_simd_recip28(0xFF81_2345, X86_SIMD_F32);
+        assert_eq!(
+            snan,
+            X86SimdFpResult {
+                bits: 0xFFC1_2345,
+                status: 1
+            }
+        );
+
+        let limit = 2.0f64.powi(-28);
+        for exponent in [1u64, 256, 1023, 1792, 2046] {
+            for segment in 0u64..256 {
+                for tail in [1u64, 0x1F_FFFF, 0x3F_FFFF] {
+                    let bits = (exponent << 52) | (segment << 44) | (tail << 22);
+                    let input = f64::from_bits(bits);
+                    let result = SmirInterpreter::x86_simd_recip28(bits, X86_SIMD_F64);
+                    if result.bits == 0 || result.bits == 0x7FF0_0000_0000_0000 {
+                        continue;
+                    }
+                    let actual = f64::from_bits(result.bits);
+                    let reference = input.recip();
+                    let relative_error = ((actual - reference) / reference).abs();
+                    assert!(
+                        relative_error < limit,
+                        "VRCP28D {input:e}: relative error {relative_error:e}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn lifted_x86_recip28_preserves_scalar_merge_masks_sae_and_fault_atomicity() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = [0xAAAA_AAAA_DEAD_BEEF; 16];
+            x86.xmm[2] = [
+                0x0123_4567_89AB_CDEF,
+                0x0FED_CBA9_8765_4321,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ];
+            x86.xmm[3][0] = u64::from(2.0f32.to_bits());
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x08, 0xCB, 0xCB], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x0123_4567_3F00_0000);
+            assert_eq!(x86.xmm[1][1], 0x0FED_CBA9_8765_4321);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 0xAAAA_AAAA_DEAD_BEEF;
+            x86.k[1] = 0;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0xCB, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x0123_4567_DEAD_BEEF);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1][0] = 0xAAAA_AAAA_DEAD_BEEF;
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x89, 0xCB, 0xCB], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x0123_4567_0000_0000);
+        }
+
+        let sentinel = [0xDEAD_BEEF_CAFE_BABEu64; 16];
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.xmm[3][0] = 0x7F80_1234;
+            x86.k[1] = 1;
+            x86.mxcsr = 0;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0xCB, 0xCB], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+            assert_ne!(x86.mxcsr & 1, 0);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+            x86.mxcsr = 0;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x19, 0xCB, 0xCB], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], 0x0123_4567_7FC0_1234);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k1, 0);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0xCB, 0x08], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        ctx.write_vreg(k1, 1);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x6D, 0x09, 0xCB, 0x08], &mut ctx, &mut memory,),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
     }
 
     #[test]
