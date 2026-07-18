@@ -246,29 +246,71 @@ impl X86InstructionBytes {
             }
         }
     }
+
+    /// Validate register-only EVEX packed logical operations and return
+    /// `(needs AVX-512VL, needs AVX-512DQ)`. Floating logical VAND*/VANDN*/
+    /// VOR*/VXOR* forms use AVX-512DQ; integer VPANDD/Q, VPANDND/Q, VPORD/Q,
+    /// and VPXORD/Q forms use AVX-512F. Memory, EVEX.b, reserved vector lengths,
+    /// and malformed masking encodings are rejected.
+    pub fn evex_register_logic_requirements(&self) -> Option<(bool, bool)> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+        if p0 & 0x0f != 1 || p1 & 0x04 == 0 || modrm >> 6 != 3 {
+            return None;
+        }
+
+        let pp = p1 & 0x03;
+        let w = p1 & 0x80 != 0;
+        let needs_avx512dq = match opcode {
+            0x54..=0x57 if matches!(pp, 0 | 1) && w == (pp == 1) => true,
+            0xDB | 0xDF | 0xEB | 0xEF if pp == 1 => false,
+            _ => return None,
+        };
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || (zeroing && mask == 0) {
+            return None;
+        }
+        let needs_avx512vl = match ll {
+            0 | 1 => true,
+            2 => false,
+            _ => return None,
+        };
+        Some((needs_avx512vl, needs_avx512dq))
+    }
 }
 
 /// A contiguous semantic-op group that may be replaced by one exact native x86
 /// instruction after byte-level validation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct X86EvexFpReplaySpan {
+pub struct X86NativeReplaySpan {
     /// Exclusive semantic-op end index.
     pub end: usize,
     /// Exact source instruction to emit.
     pub instruction: X86InstructionBytes,
     /// Whether native execution requires AVX-512VL.
     pub needs_avx512vl: bool,
+    /// Whether native execution requires AVX-512DQ.
+    pub needs_avx512dq: bool,
 }
 
-/// Identify valid register-only EVEX floating-point replay groups in `block`.
-/// Construction is O(N) time and O(P) space for N SMIR operations and P unique
-/// guest PCs. A guest PC occurring in multiple non-contiguous groups is
-/// rejected, preventing one source instruction from replacing reordered or
-/// fabricated semantic fragments.
-pub fn x86_evex_fp_replay_spans(
+/// Compatibility name for the first replay family.
+pub type X86EvexFpReplaySpan = X86NativeReplaySpan;
+
+fn x86_evex_replay_spans_where(
     block: &SmirBlock,
     instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
-) -> HashMap<usize, X86EvexFpReplaySpan> {
+    classify: impl Fn(&X86InstructionBytes) -> Option<(bool, bool)>,
+) -> HashMap<usize, X86NativeReplaySpan> {
     let mut groups = HashMap::<GuestAddr, (usize, usize, bool)>::new();
     for (index, op) in block.ops.iter().enumerate() {
         groups
@@ -289,17 +331,45 @@ pub fn x86_evex_fp_replay_spans(
                 return None;
             }
             let instruction = *instruction_bytes.get(&(block.id, guest_pc))?;
-            let needs_avx512vl = instruction.evex_register_fp_arithmetic_needs_vl()?;
+            let (needs_avx512vl, needs_avx512dq) = classify(&instruction)?;
             Some((
                 start,
-                X86EvexFpReplaySpan {
+                X86NativeReplaySpan {
                     end,
                     instruction,
                     needs_avx512vl,
+                    needs_avx512dq,
                 },
             ))
         })
         .collect()
+}
+
+/// Identify valid register-only EVEX floating-point replay groups in `block`.
+/// Construction is O(N) time and O(P) space for N SMIR operations and P unique
+/// guest PCs. A guest PC occurring in multiple non-contiguous groups is
+/// rejected, preventing one source instruction from replacing reordered or
+/// fabricated semantic fragments.
+pub fn x86_evex_fp_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86EvexFpReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_fp_arithmetic_needs_vl()
+            .map(|needs_vl| (needs_vl, false))
+    })
+}
+
+/// Identify valid register-only EVEX logical replay groups in `block` in O(N)
+/// time and O(P) space for N operations and P unique guest PCs.
+pub fn x86_evex_logic_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction.evex_register_logic_requirements()
+    })
 }
 
 /// Calling convention
@@ -796,5 +866,57 @@ mod tests {
         provenance.insert((BlockId(7), 0x1000), instruction);
         block.push_op(SmirOp::new(OpId(3), 0x1000, OpKind::Nop));
         assert!(x86_evex_fp_replay_spans(&block, &provenance).is_empty());
+    }
+
+    #[test]
+    fn x86_evex_logic_replay_classifier_tracks_vl_and_dq_exactly() {
+        let valid = [
+            (
+                &[0x62, 0xF1, 0x7C, 0x09, 0x54, 0xC8][..],
+                Some((true, true)),
+            ),
+            (
+                &[0x62, 0xF1, 0xFD, 0x49, 0x57, 0xC8][..],
+                Some((false, true)),
+            ),
+            (
+                &[0x62, 0xA1, 0x7D, 0xA1, 0xEF, 0xCB][..],
+                Some((true, false)),
+            ),
+            (
+                &[0x62, 0xF1, 0xFD, 0x49, 0xDB, 0xCB][..],
+                Some((false, false)),
+            ),
+        ];
+        for (bytes, expected) in valid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_logic_requirements(),
+                expected,
+                "{bytes:02X?}"
+            );
+        }
+
+        let invalid: &[&[u8]] = &[
+            &[0x62, 0xF2, 0x7C, 0x09, 0x54, 0xC8], // wrong map
+            &[0x62, 0xF1, 0x7C, 0x09, 0x54, 0x08], // memory source
+            &[0x62, 0xF1, 0x7C, 0x19, 0x54, 0xC8], // EVEX.b
+            &[0x62, 0xF1, 0x7C, 0x88, 0x54, 0xC8], // {z} with k0
+            &[0x62, 0xF1, 0x7E, 0x09, 0x54, 0xC8], // floating F3 prefix
+            &[0x62, 0xF1, 0xFC, 0x09, 0x54, 0xC8], // PS with W1
+            &[0x62, 0xF1, 0x7C, 0x09, 0xDB, 0xC8], // integer without 66
+            &[0x62, 0xF1, 0x7D, 0x69, 0xDB, 0xC8], // L'L=3
+            &[0x62, 0xF1, 0x7D, 0x09, 0x58, 0xC8], // arithmetic opcode
+        ];
+        for bytes in invalid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_logic_requirements(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
     }
 }
