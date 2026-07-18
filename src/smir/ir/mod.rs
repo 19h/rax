@@ -373,6 +373,51 @@ impl X86InstructionBytes {
             _ => None,
         }
     }
+
+    /// Validate register-only EVEX packed shifts with an immediate count and
+    /// return whether the destination vector length requires AVX-512VL.
+    /// Word forms use AVX-512BW and doubleword/quadword forms use AVX-512F;
+    /// both are already required by the native vector-state trampoline.
+    pub fn evex_register_immediate_count_shift_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if bytes.len() != 7 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+        if p0 & 0x0f != 1 || p1 & 0x04 == 0 || modrm >> 6 != 3 || p1 & 0x03 != 1 {
+            return None;
+        }
+
+        let w = p1 & 0x80 != 0;
+        let extension = (modrm >> 3) & 0x07;
+        match (opcode, extension) {
+            // Word shifts are WIG.
+            (0x71, 2 | 4 | 6) => {}
+            // Doubleword shifts are W0; VPSRAQ is the W1 /4 form.
+            (0x72, 2 | 4 | 6) if !w => {}
+            (0x72, 4) if w => {}
+            // Quadword logical shifts are W1.
+            (0x73, 2 | 6) if w => {}
+            _ => return None,
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || (zeroing && mask == 0) {
+            return None;
+        }
+        match ll {
+            0 | 1 => Some(true),
+            2 => Some(false),
+            _ => None,
+        }
+    }
 }
 
 /// A contiguous semantic-op group that may be replaced by one exact native x86
@@ -485,6 +530,19 @@ pub fn x86_evex_shared_count_shift_replay_spans(
     })
 }
 
+/// Identify valid register-only EVEX immediate-count shift replay groups in
+/// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
+pub fn x86_evex_immediate_count_shift_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_immediate_count_shift_needs_vl()
+            .map(|needs_vl| (needs_vl, false))
+    })
+}
+
 /// Identify every validated native EVEX replay group in one O(N)-time,
 /// O(P)-space block pass. Classifiers are intentionally disjoint and ordered
 /// explicitly so adding a replay family does not add another scan of the SMIR
@@ -506,6 +564,11 @@ pub fn x86_evex_native_replay_spans(
             .or_else(|| {
                 instruction
                     .evex_register_shared_count_shift_needs_vl()
+                    .map(|needs_vl| (needs_vl, false))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_immediate_count_shift_needs_vl()
                     .map(|needs_vl| (needs_vl, false))
             })
     })
@@ -1135,6 +1198,50 @@ mod tests {
                 X86InstructionBytes::new(bytes)
                     .unwrap()
                     .evex_register_shared_count_shift_needs_vl(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn x86_evex_immediate_count_shift_replay_classifier_is_exact_and_fail_closed() {
+        let valid = [
+            (&[0x62, 0xB1, 0x75, 0xC1, 0x71, 0xF2, 0x05][..], Some(false)),
+            // WIG word shifts also admit W1.
+            (&[0x62, 0xF1, 0xFD, 0x29, 0x71, 0xD0, 0x03][..], Some(true)),
+            (&[0x62, 0xF1, 0x75, 0x09, 0x72, 0xD0, 0x03][..], Some(true)),
+            (&[0x62, 0xF1, 0xF5, 0x49, 0x72, 0xE0, 0x03][..], Some(false)),
+        ];
+        for (bytes, expected) in valid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_immediate_count_shift_needs_vl(),
+                expected,
+                "{bytes:02X?}"
+            );
+        }
+
+        let invalid: &[&[u8]] = &[
+            &[0x62, 0xF2, 0x75, 0x09, 0x72, 0xD0, 0x03], // wrong map
+            &[0x62, 0xF1, 0x75, 0x09, 0x72, 0x10, 0x03], // memory source
+            &[0x62, 0xF1, 0x75, 0x19, 0x72, 0xD0, 0x03], // EVEX.b
+            &[0x62, 0xF1, 0x75, 0x88, 0x72, 0xD0, 0x03], // {z} with k0
+            &[0x62, 0xF1, 0x74, 0x09, 0x72, 0xD0, 0x03], // missing 66 prefix
+            &[0x62, 0xF1, 0xF5, 0x09, 0x72, 0xD0, 0x03], // VPSRLD with W1
+            &[0x62, 0xF1, 0x75, 0x09, 0x73, 0xD0, 0x03], // VPSRLQ with W0
+            &[0x62, 0xF1, 0xF5, 0x09, 0x73, 0xE0, 0x03], // invalid /4 group
+            &[0x62, 0xF1, 0x75, 0x09, 0x72, 0xC0, 0x03], // invalid /0 group
+            &[0x62, 0xF1, 0x75, 0x69, 0x72, 0xD0, 0x03], // L'L=3
+            &[0x62, 0xF1, 0x75, 0x09, 0x70, 0xD0, 0x03], // unrelated opcode
+            &[0x62, 0xF1, 0x75, 0x09, 0x72, 0xD0],       // missing imm8
+        ];
+        for bytes in invalid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_immediate_count_shift_needs_vl(),
                 None,
                 "{bytes:02X?}"
             );
