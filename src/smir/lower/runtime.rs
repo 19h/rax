@@ -25014,6 +25014,56 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn x86_evex_narrow_broadcast_replay_uses_bw_gate_and_rejects_memory_metadata() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        const PC: u64 = 0x1000;
+        const VPBROADCASTB: [u8; 6] = [0x62, 0xA2, 0x7D, 0xC9, 0x78, 0xCA];
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+        let result = lifter.lift_insn(PC, &VPBROADCASTB, &mut context).unwrap();
+        let mut block = SmirBlock::new(BlockId(0), PC);
+        block.ops = result.ops;
+        block.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+        function.add_block(block);
+
+        assert!(!is_native_clobber_safe(&function));
+        function.x86_instruction_bytes.insert(
+            (BlockId(0), PC),
+            X86InstructionBytes::new(&VPBROADCASTB).unwrap(),
+        );
+        assert!(is_native_clobber_safe(&function));
+        assert!(uses_x86_native_vectors_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+        #[cfg(target_arch = "x86_64")]
+        assert_eq!(
+            x86_native_vector_features_supported_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ),
+            std::is_x86_feature_detected!("avx512f") && std::is_x86_feature_detected!("avx512bw")
+        );
+        #[cfg(not(target_arch = "x86_64"))]
+        assert!(!x86_native_vector_features_supported_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+
+        let mut memory_metadata = function;
+        let mut bytes = VPBROADCASTB;
+        bytes[5] = 0x08;
+        memory_metadata
+            .x86_instruction_bytes
+            .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+        assert!(!is_native_clobber_safe(&memory_metadata));
+    }
+
+    #[test]
     fn x86_evex_logic_replay_requires_dq_and_rejects_memory_metadata() {
         use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
         use crate::smir::lift::x86_64::X86_64Lifter;
