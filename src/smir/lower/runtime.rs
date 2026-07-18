@@ -23234,6 +23234,56 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn x86_evex_scalar_fma_replay_uses_base_vector_gate_and_rejects_memory_metadata() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        const PC: u64 = 0x1000;
+        // vfmadd231sd xmm17{k1}{z}, xmm18, xmm19
+        const VFMADD231SD: [u8; 6] = [0x62, 0xA2, 0xED, 0x81, 0xB9, 0xCB];
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+        let result = lifter.lift_insn(PC, &VFMADD231SD, &mut context).unwrap();
+        let mut block = SmirBlock::new(BlockId(0), PC);
+        block.ops = result.ops;
+        block.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+        function.add_block(block);
+        function.x86_instruction_bytes.insert(
+            (BlockId(0), PC),
+            X86InstructionBytes::new(&VFMADD231SD).unwrap(),
+        );
+
+        assert!(is_native_clobber_safe(&function));
+        assert!(uses_x86_native_vectors_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+        #[cfg(target_arch = "x86_64")]
+        assert_eq!(
+            x86_native_vector_features_supported_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ),
+            std::is_x86_feature_detected!("avx512f") && std::is_x86_feature_detected!("avx512bw")
+        );
+        #[cfg(not(target_arch = "x86_64"))]
+        assert!(!x86_native_vector_features_supported_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+
+        let mut memory_metadata = function;
+        let mut bytes = VFMADD231SD;
+        bytes[5] &= 0x3f;
+        memory_metadata
+            .x86_instruction_bytes
+            .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+        assert!(!is_native_clobber_safe(&memory_metadata));
+    }
+
+    #[test]
     fn x86_evex_integer_minmax_replay_uses_base_vector_gate_and_rejects_memory_metadata() {
         use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
         use crate::smir::lift::x86_64::X86_64Lifter;
@@ -23885,6 +23935,87 @@ mod jit_gate_tests {
         assert_eq!(regs.get_zmm(18), lhs.map(f64::to_bits));
         assert_eq!(regs.get_zmm(19), rhs.map(f64::to_bits));
         assert_eq!(regs.k[1], mask);
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn x86_evex_scalar_fma_replay_executes_masked_high_register_form_exactly() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+        use crate::smir::lower::SmirLowerer;
+        use crate::smir::lower::x86_64::X86_64Lowerer;
+
+        if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+            return;
+        }
+
+        const PC: u64 = 0x1000;
+        // vfmadd231sd xmm17{k1}{z}, xmm18, xmm19
+        const VFMADD231SD: [u8; 6] = [0x62, 0xA2, 0xED, 0x81, 0xB9, 0xCB];
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+        let result = lifter.lift_insn(PC, &VFMADD231SD, &mut context).unwrap();
+        let mut block = SmirBlock::new(BlockId(0), PC);
+        block.ops = result.ops;
+        block.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+        function.add_block(block);
+        function.x86_instruction_bytes.insert(
+            (BlockId(0), PC),
+            X86InstructionBytes::new(&VFMADD231SD).unwrap(),
+        );
+
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&function)
+            .expect("lower scalar VFMADD231SD replay");
+        let code = lowerer
+            .finalize()
+            .expect("finalize scalar VFMADD231SD replay");
+        assert!(
+            code.windows(VFMADD231SD.len())
+                .any(|window| window == VFMADD231SD)
+        );
+        let exec = ExecMem::new(&code).expect("map scalar VFMADD231SD replay");
+
+        let destination = [1.0f64.to_bits(), 0x1122_3344_5566_7788, 3, 4, 5, 6, 7, 8];
+        let lhs = [
+            2.0f64.to_bits(),
+            0x8877_6655_4433_2211,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+        ];
+        let rhs = [
+            3.0f64.to_bits(),
+            0x0123_4567_89AB_CDEF,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+        ];
+        let expected = [7.0f64.to_bits(), destination[1], 0, 0, 0, 0, 0, 0];
+
+        let mut regs = GuestRegs {
+            vector_active: 1,
+            ..GuestRegs::default()
+        };
+        regs.set_zmm(17, destination);
+        regs.set_zmm(18, lhs);
+        regs.set_zmm(19, rhs);
+        regs.k[1] = 1;
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.get_zmm(17), expected);
+        assert_eq!(regs.get_zmm(18), lhs);
+        assert_eq!(regs.get_zmm(19), rhs);
+        assert_eq!(regs.k[1], 1);
     }
 
     #[cfg(target_arch = "x86_64")]

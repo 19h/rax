@@ -469,6 +469,41 @@ impl X86InstructionBytes {
         }
     }
 
+    /// Validate register-only EVEX scalar binary32/binary64 fused
+    /// multiply-add/subtract operations. Scalar AVX-512 FMA forms use
+    /// AVX-512F without AVX-512VL. Memory and EVEX.b embedded-rounding forms
+    /// are intentionally excluded so replay uses the guest MXCSR rounding
+    /// mode, and LLIG is admitted only in its canonical L'L=0 encoding.
+    pub fn evex_register_scalar_fma_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+        if p0 & 0x0f != 2 || p1 & 0x04 == 0 || p1 & 0x03 != 1 || modrm >> 6 != 3 {
+            return None;
+        }
+        if !matches!(
+            opcode,
+            0x99 | 0x9B | 0x9D | 0x9F | 0xA9 | 0xAB | 0xAD | 0xAF | 0xB9 | 0xBB | 0xBD | 0xBF
+        ) {
+            return None;
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || ll != 0 || (zeroing && mask == 0) {
+            return None;
+        }
+        Some(false)
+    }
+
     /// Validate register-only EVEX packed signed/unsigned integer minimum and
     /// maximum operations and return whether the vector length requires
     /// AVX-512VL. Byte/word forms use AVX-512BW and doubleword/quadword forms
@@ -688,6 +723,19 @@ pub fn x86_evex_packed_fma_replay_spans(
     })
 }
 
+/// Identify valid register-only EVEX scalar FMA replay groups in `block` in
+/// O(N) time and O(P) space for N operations and P unique guest PCs.
+pub fn x86_evex_scalar_fma_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_scalar_fma_needs_vl()
+            .map(|needs_vl| (needs_vl, false))
+    })
+}
+
 /// Identify valid register-only EVEX packed integer min/max replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_evex_integer_minmax_replay_spans(
@@ -743,6 +791,11 @@ pub fn x86_evex_native_replay_spans(
             .or_else(|| {
                 instruction
                     .evex_register_packed_fma_needs_vl()
+                    .map(|needs_vl| (needs_vl, false))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_scalar_fma_needs_vl()
                     .map(|needs_vl| (needs_vl, false))
             })
             .or_else(|| {
@@ -1462,6 +1515,48 @@ mod tests {
                 X86InstructionBytes::new(bytes)
                     .unwrap()
                     .evex_register_packed_fma_needs_vl(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn x86_evex_scalar_fma_replay_classifier_is_exact_and_fail_closed() {
+        let valid: &[&[u8]] = &[
+            // vfmadd231sd xmm17{k1}{z}, xmm18, xmm19
+            &[0x62, 0xA2, 0xED, 0x81, 0xB9, 0xCB],
+            // W0 selects scalar binary32.
+            &[0x62, 0xF2, 0x6D, 0x09, 0x99, 0xC8],
+            &[0x62, 0xF2, 0xED, 0x09, 0xAF, 0xC8],
+        ];
+        for bytes in valid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_scalar_fma_needs_vl(),
+                Some(false),
+                "{bytes:02X?}"
+            );
+        }
+
+        let invalid: &[&[u8]] = &[
+            &[0x62, 0xA1, 0xED, 0x81, 0xB9, 0xCB], // wrong map
+            &[0x62, 0xA2, 0xE9, 0x81, 0xB9, 0xCB], // missing EVEX fixed-one bit
+            &[0x62, 0xA2, 0xEC, 0x81, 0xB9, 0xCB], // missing 66 prefix
+            &[0x62, 0xA2, 0xED, 0x81, 0xB9, 0x0B], // memory source
+            &[0x62, 0xA2, 0xED, 0x91, 0xB9, 0xCB], // EVEX.b
+            &[0x62, 0xA2, 0xED, 0x80, 0xB9, 0xCB], // {z} with k0
+            &[0x62, 0xA2, 0xED, 0xA1, 0xB9, 0xCB], // noncanonical LLIG
+            &[0x62, 0xA2, 0xED, 0x81, 0xB8, 0xCB], // packed FMA opcode
+            &[0x62, 0xA2, 0xED, 0x81, 0xA7, 0xCB], // unrelated opcode
+            &[0x62, 0xA2, 0xED, 0x81, 0xB9],       // missing ModR/M
+        ];
+        for bytes in invalid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_scalar_fma_needs_vl(),
                 None,
                 "{bytes:02X?}"
             );
