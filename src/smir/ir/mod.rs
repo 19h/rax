@@ -959,6 +959,56 @@ impl X86InstructionBytes {
             _ => None,
         }
     }
+
+    /// Validate register-source EVEX broadcasts whose repeated element or
+    /// tuple has 32-bit or 64-bit granularity. The admitted encodings are
+    /// VBROADCASTSS, VBROADCASTSD, VBROADCASTF32X2, VPBROADCASTD,
+    /// VPBROADCASTQ, and VBROADCASTI32X2. Memory sources are excluded because
+    /// native replay must not bypass guest-memory translation or writemask
+    /// fault suppression. Returns `(needs AVX-512VL, needs AVX-512DQ)`.
+    pub fn evex_register_broadcast_requirements(&self) -> Option<(bool, bool)> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+
+        // Every admitted form uses map 0F38, prefix 66, reserved EVEX.vvvv=1111
+        // and EVEX.V'=1, and a register ModR/M source.
+        if p0 & 0x0f != 2
+            || p1 & 0x04 == 0
+            || p1 & 0x03 != 1
+            || p1 & 0x78 != 0x78
+            || p2 & 0x08 == 0
+            || modrm >> 6 != 3
+        {
+            return None;
+        }
+
+        let w = p1 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let needs_avx512dq = match (opcode, w, ll) {
+            // VBROADCASTSS and VPBROADCASTD.
+            (0x18 | 0x58, false, 0..=2) => false,
+            // VBROADCASTSD and VPBROADCASTQ. VBROADCASTSD excludes VL=128.
+            (0x19, true, 1 | 2) | (0x59, true, 0..=2) => false,
+            // VBROADCASTF32X2 excludes VL=128; VBROADCASTI32X2 permits it.
+            (0x19, false, 1 | 2) | (0x59, false, 0..=2) => true,
+            _ => return None,
+        };
+        let zeroing = p2 & 0x80 != 0;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || (zeroing && mask == 0) {
+            return None;
+        }
+
+        Some((ll != 2, needs_avx512dq))
+    }
 }
 
 /// A contiguous semantic-op group that may be replaced by one exact native x86
@@ -1263,6 +1313,19 @@ pub fn x86_evex_fp_shuffle_replay_spans(
     })
 }
 
+/// Identify valid register-source EVEX 32/64-bit broadcast replay groups in
+/// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
+pub fn x86_evex_broadcast_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_broadcast_requirements()
+            .map(|(needs_vl, needs_dq)| (needs_vl, needs_dq, false))
+    })
+}
+
 /// Identify every validated native EVEX replay group in one O(N)-time,
 /// O(P)-space block pass. Classifiers are intentionally disjoint and ordered
 /// explicitly so adding a replay family does not add another scan of the SMIR
@@ -1355,6 +1418,11 @@ pub fn x86_evex_native_replay_spans(
                 instruction
                     .evex_register_fp_shuffle_needs_vl()
                     .map(|needs_vl| (needs_vl, false, false))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_broadcast_requirements()
+                    .map(|(needs_vl, needs_dq)| (needs_vl, needs_dq, false))
             })
     })
 }
@@ -2601,6 +2669,80 @@ mod tests {
                 X86InstructionBytes::new(bytes)
                     .unwrap()
                     .evex_register_fp_shuffle_needs_vl(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn x86_evex_broadcast_replay_classifier_tracks_vl_and_dq_exactly() {
+        let valid = [
+            // vbroadcastss xmm17{k1}{z},xmm18
+            (
+                &[0x62, 0xA2, 0x7D, 0x89, 0x18, 0xCA][..],
+                Some((true, false)),
+            ),
+            (
+                &[0x62, 0xA2, 0x7D, 0xC9, 0x18, 0xCA][..],
+                Some((false, false)),
+            ),
+            // vbroadcastsd ymm17{k1}{z},xmm18
+            (
+                &[0x62, 0xA2, 0xFD, 0xA9, 0x19, 0xCA][..],
+                Some((true, false)),
+            ),
+            // vbroadcastf32x2 zmm17{k1}{z},xmm18
+            (
+                &[0x62, 0xA2, 0x7D, 0xC9, 0x19, 0xCA][..],
+                Some((false, true)),
+            ),
+            // vpbroadcastd xmm17{k1}{z},xmm18
+            (
+                &[0x62, 0xA2, 0x7D, 0x89, 0x58, 0xCA][..],
+                Some((true, false)),
+            ),
+            // vpbroadcastq zmm17{k1}{z},xmm18
+            (
+                &[0x62, 0xA2, 0xFD, 0xC9, 0x59, 0xCA][..],
+                Some((false, false)),
+            ),
+            // vbroadcasti32x2 xmm17{k1}{z},xmm18
+            (
+                &[0x62, 0xA2, 0x7D, 0x89, 0x59, 0xCA][..],
+                Some((true, true)),
+            ),
+        ];
+        for (bytes, expected) in valid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_broadcast_requirements(),
+                expected,
+                "{bytes:02X?}"
+            );
+        }
+
+        let invalid: &[&[u8]] = &[
+            &[0x62, 0xA2, 0x7D, 0x89, 0x18],       // incomplete
+            &[0x62, 0xA1, 0x7D, 0x89, 0x18, 0xCA], // wrong map
+            &[0x62, 0xA2, 0x79, 0x89, 0x18, 0xCA], // fixed-one bit clear
+            &[0x62, 0xA2, 0x7C, 0x89, 0x18, 0xCA], // missing 66 prefix
+            &[0x62, 0xA2, 0x75, 0x89, 0x18, 0xCA], // reserved EVEX.vvvv
+            &[0x62, 0xA2, 0x7D, 0x81, 0x18, 0xCA], // reserved EVEX.V'
+            &[0x62, 0xA2, 0x7D, 0x89, 0x18, 0x08], // memory source
+            &[0x62, 0xA2, 0x7D, 0x99, 0x18, 0xCA], // EVEX.b
+            &[0x62, 0xA2, 0x7D, 0x88, 0x18, 0xCA], // {z} with k0
+            &[0x62, 0xA2, 0x7D, 0xE9, 0x18, 0xCA], // L'L=3
+            &[0x62, 0xA2, 0xFD, 0x89, 0x19, 0xCA], // VBROADCASTSD VL=128
+            &[0x62, 0xA2, 0x7D, 0x89, 0x19, 0xCA], // VBROADCASTF32X2 VL=128
+            &[0x62, 0xA2, 0x7D, 0x89, 0x5A, 0xCA], // unrelated opcode
+        ];
+        for bytes in invalid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_broadcast_requirements(),
                 None,
                 "{bytes:02X?}"
             );

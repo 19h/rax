@@ -7908,6 +7908,10 @@ pub fn x86_native_vector_features_supported_excluding(
                 .into_values()
         {
             any = true;
+            // Replay spans use the full-width K0-K7 helper boundary. KMOVQ is
+            // an AVX-512BW instruction, independently of the replayed opcode's
+            // own CPUID feature set.
+            needs_bw = true;
             needs_vl |= span.needs_avx512vl;
             needs_dq |= span.needs_avx512dq;
             needs_fp16 |= span.needs_avx512fp16;
@@ -24953,6 +24957,60 @@ mod jit_gate_tests {
             &function,
             &std::collections::HashMap::new()
         ));
+    }
+
+    #[test]
+    fn x86_evex_broadcast_replay_requires_dq_and_rejects_memory_metadata() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        const PC: u64 = 0x1000;
+        const VBROADCASTF32X2: [u8; 6] = [0x62, 0xA2, 0x7D, 0xC9, 0x19, 0xCA];
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+        let result = lifter
+            .lift_insn(PC, &VBROADCASTF32X2, &mut context)
+            .unwrap();
+        let mut block = SmirBlock::new(BlockId(0), PC);
+        block.ops = result.ops;
+        block.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+        function.add_block(block);
+
+        assert!(!is_native_clobber_safe(&function));
+        function.x86_instruction_bytes.insert(
+            (BlockId(0), PC),
+            X86InstructionBytes::new(&VBROADCASTF32X2).unwrap(),
+        );
+        assert!(is_native_clobber_safe(&function));
+        assert!(uses_x86_native_vectors_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+        #[cfg(target_arch = "x86_64")]
+        assert_eq!(
+            x86_native_vector_features_supported_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ),
+            std::is_x86_feature_detected!("avx512f")
+                && std::is_x86_feature_detected!("avx512bw")
+                && std::is_x86_feature_detected!("avx512dq")
+        );
+        #[cfg(not(target_arch = "x86_64"))]
+        assert!(!x86_native_vector_features_supported_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+
+        let mut memory_metadata = function;
+        let mut bytes = VBROADCASTF32X2;
+        bytes[5] = 0x08;
+        memory_metadata
+            .x86_instruction_bytes
+            .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+        assert!(!is_native_clobber_safe(&memory_metadata));
     }
 
     #[test]
