@@ -2334,6 +2334,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::VCvtFP32ToBF16 { .. }
             | OpKind::VFP16Arith { .. }
             | OpKind::X86PackedIntToFp16 { .. }
+            | OpKind::X86PackedFp16ToInt { .. }
             | OpKind::VMultiplyAdd52 { .. }
             | OpKind::X86PackedShiftVariable { .. }
             | OpKind::X86PackedRotate { .. }
@@ -3382,6 +3383,73 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         }
     }
 
+    if let OpKind::X86PackedFp16ToInt {
+        dst,
+        src,
+        mask,
+        int_elem,
+        signed: _,
+        truncate,
+        lanes,
+        src_width,
+        dst_width,
+        mask_zeroing,
+        zero_upper,
+        round,
+        suppress_exceptions,
+    } = op
+    {
+        if !matches!(
+            int_elem,
+            crate::smir::ir::types::VecElementType::I16
+                | crate::smir::ir::types::VecElementType::I32
+                | crate::smir::ir::types::VecElementType::I64
+        ) {
+            return false;
+        }
+        let expected_lanes = dst_width.lanes(*int_elem) as u8;
+        let src_bytes = u32::from(expected_lanes) * 2;
+        let expected_src_width = match src_bytes {
+            0..=8 => VecWidth::V64,
+            9..=16 => VecWidth::V128,
+            17..=32 => VecWidth::V256,
+            _ => VecWidth::V512,
+        };
+        let vector_matches_width = |reg: &VReg, width: VecWidth| {
+            matches!(
+                (reg, width),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    VecWidth::V64 | VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    VecWidth::V256
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                    VecWidth::V512
+                )
+            )
+        };
+        let rounding_valid = if *truncate {
+            *round == crate::smir::ir::types::FpRoundMode::RoundTowardZero
+        } else {
+            *suppress_exceptions == (*round != crate::smir::ir::types::FpRoundMode::Dynamic)
+                && *round != crate::smir::ir::types::FpRoundMode::RoundNearestTiesAway
+        };
+        if !vector_matches_width(src, expected_src_width)
+            || !vector_matches_width(dst, *dst_width)
+            || *lanes != expected_lanes
+            || *src_width != expected_src_width
+            || !*zero_upper
+            || (*mask_zeroing && mask.is_none())
+            || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
+            || !rounding_valid
+            || (*suppress_exceptions && *dst_width != VecWidth::V512)
+        {
+            return false;
+        }
+    }
+
     let non_accumulating_madd =
         x86_vector_integer_maddubs_shape_valid(op) || x86_vector_integer_maddwd_shape_valid(op);
     if matches!(op, OpKind::X86MovMask { .. } | OpKind::X86MovdQ { .. }) {
@@ -4419,6 +4487,67 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 width,
                 w,
             }) if (pp, opcode, w) == expected && width == *src_width
+        ) {
+            return false;
+        }
+    }
+
+    if let OpKind::X86PackedFp16ToInt {
+        int_elem,
+        signed,
+        truncate,
+        dst_width,
+        ..
+    } = &op.kind
+    {
+        let expected = match (int_elem, signed, truncate) {
+            (crate::smir::ir::types::VecElementType::I16, true, false) => {
+                (crate::smir::ir::ops::X86SsePrefix::OpSize, 0x7D)
+            }
+            (crate::smir::ir::types::VecElementType::I16, true, true) => {
+                (crate::smir::ir::ops::X86SsePrefix::OpSize, 0x7C)
+            }
+            (crate::smir::ir::types::VecElementType::I16, false, false) => {
+                (crate::smir::ir::ops::X86SsePrefix::None, 0x7D)
+            }
+            (crate::smir::ir::types::VecElementType::I16, false, true) => {
+                (crate::smir::ir::ops::X86SsePrefix::None, 0x7C)
+            }
+            (crate::smir::ir::types::VecElementType::I32, true, false) => {
+                (crate::smir::ir::ops::X86SsePrefix::OpSize, 0x5B)
+            }
+            (crate::smir::ir::types::VecElementType::I32, true, true) => {
+                (crate::smir::ir::ops::X86SsePrefix::Rep, 0x5B)
+            }
+            (crate::smir::ir::types::VecElementType::I32, false, false) => {
+                (crate::smir::ir::ops::X86SsePrefix::None, 0x79)
+            }
+            (crate::smir::ir::types::VecElementType::I32, false, true) => {
+                (crate::smir::ir::ops::X86SsePrefix::None, 0x78)
+            }
+            (crate::smir::ir::types::VecElementType::I64, true, false) => {
+                (crate::smir::ir::ops::X86SsePrefix::OpSize, 0x7B)
+            }
+            (crate::smir::ir::types::VecElementType::I64, true, true) => {
+                (crate::smir::ir::ops::X86SsePrefix::OpSize, 0x7A)
+            }
+            (crate::smir::ir::types::VecElementType::I64, false, false) => {
+                (crate::smir::ir::ops::X86SsePrefix::OpSize, 0x79)
+            }
+            (crate::smir::ir::types::VecElementType::I64, false, true) => {
+                (crate::smir::ir::ops::X86SsePrefix::OpSize, 0x78)
+            }
+            _ => return false,
+        };
+        if !matches!(
+            op.x86_hint,
+            Some(X86OpHint::EvexOp {
+                map: X86VecMap::Map5,
+                pp,
+                opcode,
+                width,
+                w: false,
+            }) if (pp, opcode) == expected && width == *dst_width
         ) {
             return false;
         }
@@ -6239,6 +6368,9 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::X86PackedIntToFp16 {
                 src_width: width, ..
             }
+            | OpKind::X86PackedFp16ToInt {
+                dst_width: width, ..
+            }
             | OpKind::VMultiplyAdd52 { width, .. }
             | OpKind::X86PackedShiftVariable { width, .. }
             | OpKind::X86PackedRotate { width, .. }
@@ -6416,7 +6548,9 @@ pub fn x86_native_vector_features_supported_excluding(
         );
         needs_fp16 |= matches!(
             kind,
-            OpKind::VFP16Arith { .. } | OpKind::X86PackedIntToFp16 { .. }
+            OpKind::VFP16Arith { .. }
+                | OpKind::X86PackedIntToFp16 { .. }
+                | OpKind::X86PackedFp16ToInt { .. }
         );
         needs_aes |= aes;
         needs_vaes |= vaes;
@@ -15451,6 +15585,117 @@ mod jit_gate_tests {
                 mask_zeroing: false,
                 zero_upper: true,
                 round: crate::smir::ir::types::FpRoundMode::RoundNearestTiesAway,
+                suppress_exceptions: true,
+            },
+        ] {
+            assert!(!is_x86_native_vector_op(&malformed), "{malformed:?}");
+        }
+    }
+
+    #[test]
+    fn packed_fp16_to_int_native_gate_requires_canonical_architectural_evex_shape() {
+        let kind = OpKind::X86PackedFp16ToInt {
+            dst: x86(X86Reg::Zmm(17)),
+            src: x86(X86Reg::Xmm(18)),
+            mask: Some(x86(X86Reg::K(3))),
+            int_elem: VecElementType::I64,
+            signed: true,
+            truncate: false,
+            lanes: 8,
+            src_width: VecWidth::V128,
+            dst_width: VecWidth::V512,
+            mask_zeroing: true,
+            zero_upper: true,
+            round: crate::smir::ir::types::FpRoundMode::RoundDown,
+            suppress_exceptions: true,
+        };
+        let hint = X86OpHint::EvexOp {
+            map: X86VecMap::Map5,
+            pp: X86SsePrefix::OpSize,
+            opcode: 0x7B,
+            width: VecWidth::V512,
+            w: false,
+        };
+        let canonical = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            kind.clone(),
+            hint,
+        );
+        assert!(is_x86_native_vector_op(&kind));
+        assert!(x86_native_vector_smir_op(&canonical));
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(0x1000, kind.clone());
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut function = builder.finish();
+        function.blocks[0].ops[0].x86_hint = Some(hint);
+        assert!(is_native_clobber_safe(&function));
+
+        let unhinted = crate::smir::ir::ops::SmirOp::new(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            kind.clone(),
+        );
+        assert!(!x86_native_vector_smir_op(&unhinted));
+        let wrong_hint = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(0),
+            0x1000,
+            kind,
+            X86OpHint::EvexOp {
+                map: X86VecMap::Map5,
+                pp: X86SsePrefix::OpSize,
+                opcode: 0x79,
+                width: VecWidth::V512,
+                w: false,
+            },
+        );
+        assert!(!x86_native_vector_smir_op(&wrong_hint));
+
+        for malformed in [
+            OpKind::X86PackedFp16ToInt {
+                dst: x86(X86Reg::Ymm(17)),
+                src: x86(X86Reg::Xmm(18)),
+                mask: Some(x86(X86Reg::K(3))),
+                int_elem: VecElementType::I64,
+                signed: true,
+                truncate: false,
+                lanes: 8,
+                src_width: VecWidth::V128,
+                dst_width: VecWidth::V512,
+                mask_zeroing: true,
+                zero_upper: true,
+                round: crate::smir::ir::types::FpRoundMode::RoundDown,
+                suppress_exceptions: true,
+            },
+            OpKind::X86PackedFp16ToInt {
+                dst: x86(X86Reg::Xmm(1)),
+                src: x86(X86Reg::Xmm(2)),
+                mask: None,
+                int_elem: VecElementType::I64,
+                signed: true,
+                truncate: false,
+                lanes: 2,
+                src_width: VecWidth::V128,
+                dst_width: VecWidth::V128,
+                mask_zeroing: false,
+                zero_upper: true,
+                round: crate::smir::ir::types::FpRoundMode::Dynamic,
+                suppress_exceptions: false,
+            },
+            OpKind::X86PackedFp16ToInt {
+                dst: x86(X86Reg::Zmm(1)),
+                src: x86(X86Reg::Ymm(2)),
+                mask: None,
+                int_elem: VecElementType::I32,
+                signed: false,
+                truncate: true,
+                lanes: 16,
+                src_width: VecWidth::V256,
+                dst_width: VecWidth::V512,
+                mask_zeroing: false,
+                zero_upper: true,
+                round: crate::smir::ir::types::FpRoundMode::RoundUp,
                 suppress_exceptions: true,
             },
         ] {

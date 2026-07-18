@@ -1627,6 +1627,27 @@ pub enum OpKind {
         suppress_exceptions: bool,
     },
 
+    /// x86 EVEX packed FP16-to-signed/unsigned-integer conversion. `dst_width`
+    /// is the encoded integer destination vector length and `src_width` is the
+    /// architectural register region containing `lanes` FP16 inputs. Rounded
+    /// forms use MXCSR.RC or EVEX embedded rounding; truncating forms always
+    /// use round-toward-zero and may independently request EVEX SAE.
+    X86PackedFp16ToInt {
+        dst: VReg,
+        src: VReg,
+        mask: Option<VReg>,
+        int_elem: VecElementType,
+        signed: bool,
+        truncate: bool,
+        lanes: u8,
+        src_width: VecWidth,
+        dst_width: VecWidth,
+        mask_zeroing: bool,
+        zero_upper: bool,
+        round: FpRoundMode,
+        suppress_exceptions: bool,
+    },
+
     /// x86 VCVTPS2PH packed FP32-to-FP16 conversion with a memory
     /// destination. `mask` selects the 2-byte destination lanes that are
     /// written; inactive lanes perform no memory access and cannot fault.
@@ -4164,6 +4185,7 @@ impl OpKind {
             | OpKind::X86FpConvert { dst, .. }
             | OpKind::X86PackedFpConvert { dst, .. }
             | OpKind::X86PackedIntToFp16 { dst, .. }
+            | OpKind::X86PackedFp16ToInt { dst, .. }
             | OpKind::FRound { dst, .. }
             | OpKind::X86Round { dst, .. }
             | OpKind::X86DotProduct { dst, .. }
@@ -4568,7 +4590,15 @@ impl OpKind {
                         suppress_exceptions: false,
                         ..
                     }
+                    | OpKind::X86PackedFp16ToInt {
+                        suppress_exceptions: false,
+                        ..
+                    }
                     | OpKind::X86PackedIntToFp16 {
+                        round: FpRoundMode::RoundNearestTiesAway,
+                        ..
+                    }
+                    | OpKind::X86PackedFp16ToInt {
                         round: FpRoundMode::RoundNearestTiesAway,
                         ..
                     }

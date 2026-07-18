@@ -3751,6 +3751,80 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::X86PackedFp16ToInt {
+                dst,
+                src,
+                mask,
+                int_elem,
+                signed,
+                truncate,
+                lanes,
+                dst_width,
+                mask_zeroing,
+                zero_upper,
+                round,
+                suppress_exceptions,
+                ..
+            } => {
+                let source = Self::read_vec(ctx, *src);
+                let old = Self::read_vec(ctx, *dst);
+                let mut result = old;
+                if *zero_upper {
+                    result[(dst_width.bytes() / 8) as usize..].fill(0);
+                }
+                result[..(dst_width.bytes() / 8) as usize].fill(0);
+                let mask_bits = mask.map(|reg| ctx.read_vreg(reg));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let mode = if *round == FpRoundMode::Dynamic {
+                    self.dynamic_fp_round_mode(ctx)
+                } else {
+                    *round
+                };
+                if mode == FpRoundMode::RoundNearestTiesAway
+                    || (*truncate && mode != FpRoundMode::RoundTowardZero)
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: ctx.pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+                let elem_bits = int_elem.bytes() * 8;
+                let mut status = 0;
+                for lane in 0..*lanes {
+                    if mask_bits.is_some_and(|bits| bits & (1u64 << lane) == 0) {
+                        if !*mask_zeroing {
+                            let preserved = Self::get_lane(&old, lane, elem_bits);
+                            Self::set_lane(&mut result, lane, elem_bits, preserved);
+                        }
+                        continue;
+                    }
+                    let source_bits = Self::get_lane(&source, lane, 16);
+                    let converted = Self::x86_simd_fp_to_int(
+                        source_bits,
+                        X86_SIMD_F16,
+                        elem_bits,
+                        *signed,
+                        mode,
+                    );
+                    status |= converted.status;
+                    Self::set_lane(&mut result, lane, elem_bits, converted.bits);
+                }
+                if !*suppress_exceptions {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= status;
+                    }
+                    if Self::x86_simd_fp_unmasked(status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::X86PackedFpConvertStore {
                 addr,
                 src,
@@ -15288,6 +15362,73 @@ impl SmirInterpreter {
         }
     }
 
+    fn x86_simd_fp_to_int(
+        bits: u64,
+        format: X86SimdFpFormat,
+        int_bits: u32,
+        signed: bool,
+        mode: FpRoundMode,
+    ) -> X86SimdFpResult {
+        let mask = if int_bits == 64 {
+            u64::MAX
+        } else {
+            (1u64 << int_bits) - 1
+        };
+        let indefinite = if signed { 1u64 << (int_bits - 1) } else { mask };
+        if Self::x86_simd_fp_is_nan(bits, format) || Self::x86_simd_fp_is_infinite(bits, format) {
+            return X86SimdFpResult {
+                bits: indefinite,
+                status: 1,
+            };
+        }
+        if Self::x86_simd_fp_is_zero(bits, format) {
+            return X86SimdFpResult { bits: 0, status: 0 };
+        }
+
+        let finite = Self::x86_simd_fp_decode(bits, format);
+        let (magnitude, inexact) = if finite.exponent >= 0 {
+            (finite.significand << finite.exponent as u32, false)
+        } else {
+            let (rounded, rounded_exponent, inexact) = Self::x86_simd_fp_round_shift(
+                finite.significand,
+                finite.exponent,
+                false,
+                -finite.exponent,
+                mode,
+                finite.negative,
+            );
+            debug_assert_eq!(rounded_exponent, 0);
+            (rounded, inexact)
+        };
+
+        let valid = if signed {
+            let negative_limit = 1u128 << (int_bits - 1);
+            if finite.negative {
+                magnitude <= negative_limit
+            } else {
+                magnitude < negative_limit
+            }
+        } else {
+            (!finite.negative || magnitude == 0) && magnitude <= u128::from(mask)
+        };
+        if !valid {
+            return X86SimdFpResult {
+                bits: indefinite,
+                status: 1,
+            };
+        }
+
+        let value = if finite.negative {
+            0u128.wrapping_sub(magnitude) as u64 & mask
+        } else {
+            magnitude as u64 & mask
+        };
+        X86SimdFpResult {
+            bits: value,
+            status: if inexact { 1 << 5 } else { 0 },
+        }
+    }
+
     fn x86_simd_fp_round_up(mode: FpRoundMode, negative: bool, inexact: bool) -> bool {
         inexact
             && matches!(
@@ -23112,6 +23253,173 @@ mod tests {
 
         ctx.flags.materialize_all();
         assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_x86_packed_fp16_to_int_is_exact_masked_atomic_and_sae_aware() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        let original = [0xCAFE_BABE_DEAD_BEEFu64; 16];
+        let mut memory = FlatMemory::new(0x400);
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        // Nearest-even conversion is exact at the binary16 source precision;
+        // masked-invalid and inexact lanes accumulate IE and PE atomically.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = original;
+            for (lane, bits) in [0x4100u16, 0xC100, 0x3A00, 0x7E01].into_iter().enumerate() {
+                SmirInterpreter::set_lane(&mut x86.xmm[3], lane as u8, 16, u64::from(bits));
+            }
+            x86.mxcsr = 0x1F80;
+        }
+        ctx.write_vreg(k2, 0b1111);
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7D, 0x8A, 0x5B, 0xCB], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 32), 2);
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[1], 1, 32),
+                (-2i32) as u32 as u64
+            );
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 2, 32), 1);
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 3, 32), 0x8000_0000);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+            assert_eq!(x86.mxcsr & ((1 << 0) | (1 << 5)), (1 << 0) | (1 << 5));
+        }
+
+        // An unmasked precision exception updates MXCSR but commits no vector
+        // destination state.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = original;
+            x86.xmm[3] = [0; 16];
+            SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, 0x4100);
+            x86.mxcsr = 0x1F80 & !(1 << 12);
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7D, 0x08, 0x5B, 0xCB], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], original);
+            assert_ne!(x86.mxcsr & (1 << 5), 0);
+        }
+
+        // Embedded rounding with SAE is fixed to the 512-bit form and leaves
+        // MXCSR unchanged while applying directed rounding per active lane.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = original;
+            x86.xmm[3] = [0; 16];
+            SmirInterpreter::set_lane(&mut x86.xmm[3], 0, 16, 0x4100);
+            SmirInterpreter::set_lane(&mut x86.xmm[3], 1, 16, 0xC100);
+            x86.mxcsr = 0x1F80 | 0x21;
+        }
+        let mxcsr_before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.mxcsr,
+            _ => unreachable!(),
+        };
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7D, 0x38, 0x7D, 0xCB], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 16), 2);
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[1], 1, 16),
+                (-3i16) as u16 as u64
+            );
+            assert_eq!(x86.mxcsr, mxcsr_before);
+        }
+
+        // The 128-bit quadword destination consumes exactly two FP16 lanes
+        // (four bytes), not the eight-byte minimum architectural XMM region.
+        ctx.write_vreg(rax, 0x3FC);
+        memory.write(0x3FC, &[0x00, 0x3C, 0x00, 0x40]).unwrap(); // +1, +2
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7D, 0x08, 0x7B, 0x08], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 64), 1);
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 1, 64), 2);
+        }
+
+        // A zero opmask suppresses every broadcast access. Activating one lane
+        // exposes the fault before the old destination can be modified.
+        ctx.write_vreg(rax, 0x1000);
+        ctx.write_vreg(k2, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = original;
+            x86.mxcsr = 0x1F80;
+        }
+        let bytes = [0x62, 0xF5, 0x7D, 0x1A, 0x7B, 0x48, 0x7F];
+        let exit = execute_lifted_x86(&bytes, &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0], original[0]);
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+        }
+        ctx.write_vreg(k2, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = original;
+        }
+        let exit = execute_lifted_x86(&bytes, &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], original);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn x86_fp16_to_integer_exact_boundaries_cover_rounding_signedness_and_status() {
+        let cvt = |bits, width, signed, round| {
+            SmirInterpreter::x86_simd_fp_to_int(bits, X86_SIMD_F16, width, signed, round)
+        };
+        for (round, positive, negative) in [
+            (FpRoundMode::RoundNearest, 0, 0),
+            (FpRoundMode::RoundDown, 0, u32::MAX as u64),
+            (FpRoundMode::RoundUp, 1, 0),
+            (FpRoundMode::RoundTowardZero, 0, 0),
+        ] {
+            let plus_half = cvt(0x3800, 32, true, round);
+            let minus_half = cvt(0xB800, 32, true, round);
+            assert_eq!(plus_half.bits, positive);
+            assert_eq!(minus_half.bits, negative);
+            assert_eq!(plus_half.status, 1 << 5);
+            assert_eq!(minus_half.status, 1 << 5);
+        }
+
+        for (bits, signed, expected, status) in [
+            (0x77FF, true, 32_752, 0),
+            (0x7800, true, 0x8000, 1),
+            (0xF800, true, 0x8000, 0),
+            (0x7BFF, false, 65_504, 0),
+            (0xBC00, false, 0xFFFF, 1),
+            (0x7C00, false, 0xFFFF, 1),
+            (0x7E01, false, 0xFFFF, 1),
+            (0x0001, false, 0, 1 << 5),
+        ] {
+            let actual = cvt(bits, 16, signed, FpRoundMode::RoundNearest);
+            assert_eq!(actual.bits, expected, "bits={bits:04X}");
+            assert_eq!(actual.status, status, "bits={bits:04X}");
+        }
+
+        let unsigned_negative_half_nearest = cvt(0xB800, 16, false, FpRoundMode::RoundNearest);
+        assert_eq!(unsigned_negative_half_nearest.bits, 0);
+        assert_eq!(unsigned_negative_half_nearest.status, 1 << 5);
+        let unsigned_negative_half_down = cvt(0xB800, 16, false, FpRoundMode::RoundDown);
+        assert_eq!(unsigned_negative_half_down.bits, 0xFFFF);
+        assert_eq!(unsigned_negative_half_down.status, 1);
+
+        for width in [32, 64] {
+            let max_finite = cvt(0x7BFF, width, true, FpRoundMode::RoundNearest);
+            assert_eq!(max_finite.bits, 65_504);
+            assert_eq!(max_finite.status, 0);
+        }
     }
 
     #[test]

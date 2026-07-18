@@ -9532,6 +9532,137 @@ impl X86_64Lowerer {
                 );
             }
 
+            OpKind::X86PackedFp16ToInt {
+                dst,
+                src,
+                mask,
+                int_elem,
+                signed,
+                truncate,
+                lanes,
+                src_width,
+                dst_width,
+                mask_zeroing,
+                zero_upper,
+                round,
+                suppress_exceptions,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                if !dst_reg.is_vec() || !src_reg.is_vec() {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86PackedFp16ToInt".to_string(),
+                        operand: "requires vector registers".to_string(),
+                    });
+                }
+                let (pp, opcode) = match (*int_elem, *signed, *truncate) {
+                    (VecElementType::I16, true, false) => (X86SsePrefix::OpSize, 0x7D),
+                    (VecElementType::I16, true, true) => (X86SsePrefix::OpSize, 0x7C),
+                    (VecElementType::I16, false, false) => (X86SsePrefix::None, 0x7D),
+                    (VecElementType::I16, false, true) => (X86SsePrefix::None, 0x7C),
+                    (VecElementType::I32, true, false) => (X86SsePrefix::OpSize, 0x5B),
+                    (VecElementType::I32, true, true) => (X86SsePrefix::Rep, 0x5B),
+                    (VecElementType::I32, false, false) => (X86SsePrefix::None, 0x79),
+                    (VecElementType::I32, false, true) => (X86SsePrefix::None, 0x78),
+                    (VecElementType::I64, true, false) => (X86SsePrefix::OpSize, 0x7B),
+                    (VecElementType::I64, true, true) => (X86SsePrefix::OpSize, 0x7A),
+                    (VecElementType::I64, false, false) => (X86SsePrefix::OpSize, 0x79),
+                    (VecElementType::I64, false, true) => (X86SsePrefix::OpSize, 0x78),
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86PackedFp16ToInt".to_string(),
+                            operand: "integer element must be I16, I32, or I64".to_string(),
+                        });
+                    }
+                };
+                let expected_lanes = dst_width.lanes(*int_elem) as u8;
+                let src_bytes = u32::from(expected_lanes) * 2;
+                let expected_src_width = match src_bytes {
+                    0..=8 => VecWidth::V64,
+                    9..=16 => VecWidth::V128,
+                    17..=32 => VecWidth::V256,
+                    _ => VecWidth::V512,
+                };
+                let aaa = match mask {
+                    None => 0,
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::K(n @ 1..=7)))) => *n,
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86PackedFp16ToInt".to_string(),
+                            operand: "mask must be architectural k1-k7".to_string(),
+                        });
+                    }
+                };
+                let Some(X86OpHint::EvexOp {
+                    map,
+                    pp: hinted_pp,
+                    opcode: hinted_opcode,
+                    width: hinted_width,
+                    w: hinted_w,
+                }) = op.x86_hint
+                else {
+                    return Err(LowerError::UnsupportedOp {
+                        op: "X86PackedFp16ToInt without canonical EVEX metadata".to_string(),
+                    });
+                };
+                let rounding_valid = if *truncate {
+                    *round == FpRoundMode::RoundTowardZero
+                } else {
+                    *suppress_exceptions == (*round != FpRoundMode::Dynamic)
+                        && *round != FpRoundMode::RoundNearestTiesAway
+                };
+                if map != X86VecMap::Map5
+                    || hinted_pp != pp
+                    || hinted_opcode != opcode
+                    || hinted_width != *dst_width
+                    || hinted_w
+                    || *lanes != expected_lanes
+                    || *src_width != expected_src_width
+                    || !*zero_upper
+                    || (*mask_zeroing && aaa == 0)
+                    || !rounding_valid
+                    || (*suppress_exceptions && *dst_width != VecWidth::V512)
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86PackedFp16ToInt".to_string(),
+                        operand: "invalid packed FP16-to-integer EVEX shape".to_string(),
+                    });
+                }
+                let mut emitter = X86Emitter::new(&mut self.code);
+                if *truncate && *suppress_exceptions {
+                    // SAE-only forms use EVEX.b=1 with L'L ignored. Emit the
+                    // canonical LLVM encoding (L'L=00b), while ZMM operands
+                    // still select the architecturally fixed 512-bit form.
+                    emitter.emit_evex_masked_rr(
+                        X86VecMap::Map5,
+                        pp,
+                        VecWidth::V128,
+                        false,
+                        opcode,
+                        dst_reg,
+                        src_reg,
+                        aaa,
+                        *mask_zeroing,
+                        true,
+                        FpRoundMode::Dynamic,
+                    );
+                } else {
+                    emitter.emit_evex_masked_rr(
+                        X86VecMap::Map5,
+                        pp,
+                        *dst_width,
+                        false,
+                        opcode,
+                        dst_reg,
+                        src_reg,
+                        aaa,
+                        *mask_zeroing,
+                        *suppress_exceptions,
+                        *round,
+                    );
+                }
+            }
+
             OpKind::X86PackedFpConvertStore { .. } => {
                 return Err(LowerError::UnsupportedOp {
                     op: "X86PackedFpConvertStore".to_string(),
@@ -30234,6 +30365,174 @@ mod tests {
             ),
             LowerError::InvalidOperand { .. }
         ));
+    }
+
+    #[test]
+    fn lower_x86_packed_fp16_to_int_emits_canonical_evex_and_rejects_synthetic_shapes() {
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        let k3 = VReg::Arch(ArchReg::X86(X86Reg::K(3)));
+        let k5 = VReg::Arch(ArchReg::X86(X86Reg::K(5)));
+        let k6 = VReg::Arch(ArchReg::X86(X86Reg::K(6)));
+        for (name, kind, hint, expected) in [
+            (
+                "VCVTPH2DQ xmm1{k2}{z},xmm3",
+                OpKind::X86PackedFp16ToInt {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    mask: Some(k2),
+                    int_elem: VecElementType::I32,
+                    signed: true,
+                    truncate: false,
+                    lanes: 4,
+                    src_width: VecWidth::V64,
+                    dst_width: VecWidth::V128,
+                    mask_zeroing: true,
+                    zero_upper: true,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map5,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x5B,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+                &[0x62, 0xF5, 0x7D, 0x8A, 0x5B, 0xCB][..],
+            ),
+            (
+                "VCVTPH2QQ zmm17{k3}{z},xmm18,{rd-sae}",
+                OpKind::X86PackedFp16ToInt {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(18))),
+                    mask: Some(k3),
+                    int_elem: VecElementType::I64,
+                    signed: true,
+                    truncate: false,
+                    lanes: 8,
+                    src_width: VecWidth::V128,
+                    dst_width: VecWidth::V512,
+                    mask_zeroing: true,
+                    zero_upper: true,
+                    round: FpRoundMode::RoundDown,
+                    suppress_exceptions: true,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map5,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x7B,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+                &[0x62, 0xA5, 0x7D, 0xBB, 0x7B, 0xCA][..],
+            ),
+            (
+                "VCVTTPH2UDQ zmm4{k5}{z},ymm6,{sae}",
+                OpKind::X86PackedFp16ToInt {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(4))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Ymm(6))),
+                    mask: Some(k5),
+                    int_elem: VecElementType::I32,
+                    signed: false,
+                    truncate: true,
+                    lanes: 16,
+                    src_width: VecWidth::V256,
+                    dst_width: VecWidth::V512,
+                    mask_zeroing: true,
+                    zero_upper: true,
+                    round: FpRoundMode::RoundTowardZero,
+                    suppress_exceptions: true,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map5,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x78,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+                &[0x62, 0xF5, 0x7C, 0x9D, 0x78, 0xE6][..],
+            ),
+            (
+                "VCVTPH2UW ymm7{k6}{z},ymm8",
+                OpKind::X86PackedFp16ToInt {
+                    dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(7))),
+                    src: VReg::Arch(ArchReg::X86(X86Reg::Ymm(8))),
+                    mask: Some(k6),
+                    int_elem: VecElementType::I16,
+                    signed: false,
+                    truncate: false,
+                    lanes: 16,
+                    src_width: VecWidth::V256,
+                    dst_width: VecWidth::V256,
+                    mask_zeroing: true,
+                    zero_upper: true,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map5,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x7D,
+                    width: VecWidth::V256,
+                    w: false,
+                },
+                &[0x62, 0xD5, 0x7C, 0xAE, 0x7D, 0xF8][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, hint);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing canonical EVEX bytes in {code:02X?}"
+            );
+        }
+
+        let make = |round, suppress_exceptions| OpKind::X86PackedFp16ToInt {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+            mask: Some(k2),
+            int_elem: VecElementType::I32,
+            signed: true,
+            truncate: false,
+            lanes: 4,
+            src_width: VecWidth::V64,
+            dst_width: VecWidth::V128,
+            mask_zeroing: true,
+            zero_upper: true,
+            round,
+            suppress_exceptions,
+        };
+        assert!(matches!(
+            lower_single_op_err(make(FpRoundMode::Dynamic, false)),
+            LowerError::UnsupportedOp { .. }
+        ));
+        for (kind, hint) in [
+            (
+                make(FpRoundMode::RoundUp, true),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map5,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x5B,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                make(FpRoundMode::Dynamic, false),
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map5,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x79,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::InvalidOperand { .. }
+            ));
+        }
     }
 
     #[test]

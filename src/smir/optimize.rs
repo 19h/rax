@@ -2775,6 +2775,21 @@ impl OpKind {
                 }
             }
 
+            OpKind::X86PackedFp16ToInt {
+                dst,
+                src,
+                mask,
+                mask_zeroing,
+                zero_upper,
+                ..
+            } => {
+                result.push(*src);
+                result.extend(mask.iter().copied());
+                if !zero_upper || (mask.is_some() && !mask_zeroing) {
+                    result.push(*dst);
+                }
+            }
+
             OpKind::X86PackedFpConvertStore {
                 addr, src, mask, ..
             } => {
@@ -9477,6 +9492,66 @@ mod tests {
                 mask_zeroing: false,
                 zero_upper: true,
                 round: FpRoundMode::RoundNearestTiesAway,
+                suppress_exceptions: true,
+            }
+            .has_side_effects()
+        );
+
+        let packed_fp16_to_int = optimized(&[0x62, 0xF5, 0x7D, 0x0A, 0x7B, 0x00]);
+        let ops = &packed_fp16_to_int.blocks[0].ops;
+        let conversion = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86PackedFp16ToInt {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                        int_elem: VecElementType::I64,
+                        signed: true,
+                        truncate: false,
+                        lanes: 2,
+                        src_width: VecWidth::V64,
+                        dst_width: VecWidth::V128,
+                        mask_zeroing: false,
+                        round: FpRoundMode::Dynamic,
+                        suppress_exceptions: false,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VCVTPH2QQ conversion removed");
+        assert!(ops[conversion].kind.has_side_effects());
+        assert_eq!(
+            ops[..conversion]
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B2,
+                        ..
+                    }
+                ))
+                .count(),
+            2,
+        );
+        let sources = ops[conversion].kind.source_vregs();
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::K(2)))));
+        assert!(
+            !OpKind::X86PackedFp16ToInt {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Ymm(2))),
+                mask: None,
+                int_elem: VecElementType::I32,
+                signed: false,
+                truncate: true,
+                lanes: 16,
+                src_width: VecWidth::V256,
+                dst_width: VecWidth::V512,
+                mask_zeroing: false,
+                zero_upper: true,
+                round: FpRoundMode::RoundTowardZero,
                 suppress_exceptions: true,
             }
             .has_side_effects()

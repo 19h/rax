@@ -23625,6 +23625,78 @@ fn profile_matrix_cases() -> Vec<Case> {
             F16Edge,
         ),
         (
+            "vcvtph2dq_fp16_edge_convert",
+            "vcvtph2dq %ymm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcvttph2dq_fp16_edge_convert",
+            "vcvttph2dq %ymm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcvtph2udq_fp16_edge_convert",
+            "vcvtph2udq %ymm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcvttph2udq_fp16_edge_convert",
+            "vcvttph2udq %ymm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcvtph2qq_fp16_edge_convert",
+            "vcvtph2qq %xmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcvttph2qq_fp16_edge_convert",
+            "vcvttph2qq %xmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcvtph2uqq_fp16_edge_convert",
+            "vcvtph2uqq %xmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcvttph2uqq_fp16_edge_convert",
+            "vcvttph2uqq %xmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcvtph2w_fp16_edge_convert",
+            "vcvtph2w %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcvttph2w_fp16_edge_convert",
+            "vcvttph2w %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcvtph2uw_fp16_edge_convert",
+            "vcvtph2uw %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
+            "vcvttph2uw_fp16_edge_convert",
+            "vcvttph2uw %zmm3, %zmm1",
+            Fp16,
+            F16Edge,
+        ),
+        (
             "vcvtss2sh_fp16_round",
             "vcvtss2sh %xmm2, %xmm3, %xmm1",
             Fp16,
@@ -45677,7 +45749,7 @@ fn avx512_kvm_fp16_edge_corpus() {
         .into_iter()
         .filter(|case| case.label.contains("_fp16_edge_"))
         .collect();
-    assert_eq!(cases.len(), 42, "unexpected AVX-512-FP16 edge corpus size");
+    assert_eq!(cases.len(), 54, "unexpected AVX-512-FP16 edge corpus size");
 
     let Some(tally) = run_corpus(&cases) else {
         return;
@@ -45700,11 +45772,11 @@ fn avx512_kvm_fp16_edge_corpus() {
     );
     assert_eq!(
         tally.ran_for(Feat::Fp16),
-        42,
+        54,
         "all AVX-512-FP16 edge cases should run"
     );
     assert_eq!(
-        tally.compared, 40,
+        tally.compared, 52,
         "all exact AVX-512-FP16 edge cases should compare"
     );
     assert_eq!(
