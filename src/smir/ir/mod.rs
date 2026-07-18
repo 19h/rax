@@ -715,6 +715,43 @@ impl X86InstructionBytes {
         }
     }
 
+    /// Validate register-only EVEX rounded unsigned packed byte/word average
+    /// operations and return whether the vector length requires AVX-512VL.
+    /// Both forms specify WIG and require AVX-512BW. Memory, EVEX.b, reserved
+    /// vector lengths, and malformed masks fail closed.
+    pub fn evex_register_packed_average_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+        if p0 & 0x0f != 1
+            || p1 & 0x04 == 0
+            || p1 & 0x03 != 1
+            || !matches!(opcode, 0xE0 | 0xE3)
+            || modrm >> 6 != 3
+        {
+            return None;
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_control = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_control || (zeroing && mask == 0) {
+            return None;
+        }
+        match ll {
+            0 | 1 => Some(true),
+            2 => Some(false),
+            _ => None,
+        }
+    }
+
     /// Validate register-only EVEX packed integer bit tests that write an
     /// opmask destination and return whether the vector length requires
     /// AVX-512VL. Byte/word forms use AVX-512BW and doubleword/quadword forms
@@ -1053,6 +1090,20 @@ pub fn x86_evex_packed_abs_replay_spans(
     })
 }
 
+/// Identify valid register-only EVEX rounded unsigned packed average replay
+/// groups in `block` in O(N) time and O(P) space for N operations and P unique
+/// guest PCs.
+pub fn x86_evex_packed_average_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_packed_average_needs_vl()
+            .map(|needs_vl| (needs_vl, false))
+    })
+}
+
 /// Identify valid register-only EVEX packed integer test replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_evex_packed_test_replay_spans(
@@ -1150,6 +1201,11 @@ pub fn x86_evex_native_replay_spans(
             .or_else(|| {
                 instruction
                     .evex_register_packed_abs_needs_vl()
+                    .map(|needs_vl| (needs_vl, false))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_packed_average_needs_vl()
                     .map(|needs_vl| (needs_vl, false))
             })
             .or_else(|| {
@@ -2144,6 +2200,47 @@ mod tests {
                 X86InstructionBytes::new(bytes)
                     .unwrap()
                     .evex_register_packed_abs_needs_vl(),
+                None,
+                "{bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn x86_evex_packed_average_replay_classifier_is_exact_and_fail_closed() {
+        let valid = [
+            // vpavgw zmm17{k1}{z}, zmm18, zmm19
+            (&[0x62, 0xA1, 0x6D, 0xC1, 0xE3, 0xCB][..], Some(false)),
+            // Both byte and word forms specify WIG.
+            (&[0x62, 0xF1, 0xED, 0x29, 0xE0, 0xC8][..], Some(true)),
+            (&[0x62, 0xF1, 0x6D, 0x09, 0xE3, 0xC8][..], Some(true)),
+        ];
+        for (bytes, expected) in valid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_packed_average_needs_vl(),
+                expected,
+                "{bytes:02X?}"
+            );
+        }
+
+        let invalid: &[&[u8]] = &[
+            &[0x62, 0xF2, 0x7D, 0x09, 0xE0, 0xC8], // wrong map
+            &[0x62, 0xF1, 0x79, 0x09, 0xE0, 0xC8], // missing fixed-one bit
+            &[0x62, 0xF1, 0x7C, 0x09, 0xE0, 0xC8], // missing 66 prefix
+            &[0x62, 0xF1, 0x7D, 0x09, 0xE0, 0x08], // memory source
+            &[0x62, 0xF1, 0x7D, 0x19, 0xE0, 0xC8], // EVEX.b
+            &[0x62, 0xF1, 0x7D, 0x88, 0xE0, 0xC8], // {z} with k0
+            &[0x62, 0xF1, 0x7D, 0x69, 0xE0, 0xC8], // L'L=3
+            &[0x62, 0xF1, 0x7D, 0x09, 0xE1, 0xC8], // unrelated opcode
+            &[0x62, 0xF1, 0x7D, 0x09, 0xE0],       // missing ModR/M
+        ];
+        for bytes in invalid {
+            assert_eq!(
+                X86InstructionBytes::new(bytes)
+                    .unwrap()
+                    .evex_register_packed_average_needs_vl(),
                 None,
                 "{bytes:02X?}"
             );
