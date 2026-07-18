@@ -2777,6 +2777,22 @@ impl OpKind {
                 }
             }
 
+            OpKind::X86RoundScale {
+                dst,
+                merge,
+                src,
+                mask,
+                mask_zeroing,
+                ..
+            } => {
+                result.extend(merge.iter().copied());
+                result.push(*src);
+                result.extend(mask.iter().copied());
+                if mask.is_some() && !mask_zeroing {
+                    result.push(*dst);
+                }
+            }
+
             OpKind::X86PackedFpConvert {
                 dst,
                 src,
@@ -9580,6 +9596,62 @@ mod tests {
                 width: VecWidth::V512,
                 lanes: 16,
                 imm: 3,
+                scalar: false,
+                mask_zeroing: false,
+                suppress_exceptions: true,
+            }
+            .has_side_effects()
+        );
+
+        let round_scale = optimized(&[0x62, 0xF3, 0x7D, 0x5A, 0x08, 0x00, 0x53]);
+        let ops = &round_scale.blocks[0].ops;
+        let rndscale = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86RoundScale {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(0))),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(2)))),
+                        elem: VecElementType::F32,
+                        width: VecWidth::V512,
+                        lanes: 16,
+                        imm: 0x53,
+                        scalar: false,
+                        mask_zeroing: false,
+                        suppress_exceptions: false,
+                        ..
+                    }
+                )
+            })
+            .expect("masked broadcast VRNDSCALEPS removed");
+        assert!(ops[rndscale].kind.has_side_effects());
+        assert_eq!(
+            ops[..rndscale]
+                .iter()
+                .filter(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        width: MemWidth::B4,
+                        ..
+                    }
+                ))
+                .count(),
+            1,
+        );
+        let sources = ops[rndscale].kind.source_vregs();
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Zmm(0)))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::K(2)))));
+        assert!(
+            !OpKind::X86RoundScale {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Zmm(1))),
+                merge: None,
+                src: VReg::Arch(ArchReg::X86(X86Reg::Zmm(2))),
+                mask: None,
+                elem: VecElementType::F32,
+                width: VecWidth::V512,
+                lanes: 16,
+                imm: 0x53,
                 scalar: false,
                 mask_zeroing: false,
                 suppress_exceptions: true,
