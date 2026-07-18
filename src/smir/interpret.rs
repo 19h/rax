@@ -9905,6 +9905,121 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, out);
             }
 
+            OpKind::X86FP16Fma {
+                dst,
+                src1,
+                src2,
+                src3,
+                mask,
+                kind,
+                order,
+                round,
+                lanes,
+            } => {
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let third = Self::read_vec(ctx, *src3);
+                let active = mask.map_or(u64::MAX, |mask| ctx.read_vreg(mask));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let mode = match round {
+                    FpRoundMode::Dynamic => match (mxcsr >> 13) & 3 {
+                        0 => FpRoundMode::RoundNearest,
+                        1 => FpRoundMode::RoundDown,
+                        2 => FpRoundMode::RoundUp,
+                        _ => FpRoundMode::RoundTowardZero,
+                    },
+                    FpRoundMode::RoundNearest
+                    | FpRoundMode::RoundDown
+                    | FpRoundMode::RoundUp
+                    | FpRoundMode::RoundTowardZero => *round,
+                    FpRoundMode::RoundNearestTiesAway => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                let sign = 0x8000u64;
+                let mut result = [0u64; 16];
+                let mut status = 0u32;
+                for lane in 0..*lanes {
+                    if active & (1u64 << lane) == 0 {
+                        continue;
+                    }
+                    let sources = [
+                        Self::get_lane(&first, lane, 16),
+                        Self::get_lane(&second, lane, 16),
+                        Self::get_lane(&third, lane, 16),
+                    ];
+                    if sources
+                        .iter()
+                        .any(|bits| Self::x86_simd_fp_is_denormal(*bits, X86_SIMD_F16))
+                    {
+                        status |= 1 << 1;
+                    }
+
+                    let (mut a, b, mut c) = match order {
+                        X86FmaOrder::Order132 => (sources[0], sources[2], sources[1]),
+                        X86FmaOrder::Order213 => (sources[1], sources[0], sources[2]),
+                        X86FmaOrder::Order231 => (sources[1], sources[2], sources[0]),
+                    };
+                    let invalid_product = (Self::x86_simd_fp_is_zero(a, X86_SIMD_F16)
+                        && Self::x86_simd_fp_is_infinite(b, X86_SIMD_F16))
+                        || (Self::x86_simd_fp_is_infinite(a, X86_SIMD_F16)
+                            && Self::x86_simd_fp_is_zero(b, X86_SIMD_F16));
+                    let any_snan = sources
+                        .iter()
+                        .any(|bits| Self::x86_simd_fp_is_snan(*bits, X86_SIMD_F16));
+                    if invalid_product || any_snan {
+                        status |= 1;
+                    }
+
+                    let bits = if let Some(nan) = sources
+                        .iter()
+                        .copied()
+                        .find(|bits| Self::x86_simd_fp_is_nan(*bits, X86_SIMD_F16))
+                    {
+                        Self::x86_simd_fp_quiet_nan(nan, X86_SIMD_F16)
+                    } else {
+                        let negate_product = matches!(
+                            kind,
+                            X86FmaKind::NegativeMultiplyAdd | X86FmaKind::NegativeMultiplySub
+                        );
+                        let negate_acc = match kind {
+                            X86FmaKind::Sub | X86FmaKind::NegativeMultiplySub => true,
+                            X86FmaKind::AddSub => lane & 1 == 0,
+                            X86FmaKind::SubAdd => lane & 1 != 0,
+                            X86FmaKind::Add | X86FmaKind::NegativeMultiplyAdd => false,
+                        };
+                        if negate_product {
+                            a ^= sign;
+                        }
+                        if negate_acc {
+                            c ^= sign;
+                        }
+                        let computed =
+                            Self::x86_simd_fp_fma_non_nan(a, b, c, X86_SIMD_F16, mode, mxcsr);
+                        status |= computed.status;
+                        computed.bits
+                    };
+                    Self::set_lane(&mut result, lane, 16, bits);
+                }
+                if *round == FpRoundMode::Dynamic {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= status;
+                    }
+                    if Self::x86_simd_fp_unmasked(status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
             OpKind::VPermute {
                 dst,
                 src1,
@@ -16466,6 +16581,114 @@ impl SmirInterpreter {
             bits: rounded.bits,
             status: status | rounded.status,
         }
+    }
+
+    /// Exact non-NaN fused multiply-add. The caller owns x86 FMA NaN
+    /// source priority and denormal-operand status; this core handles invalid
+    /// zero/infinity combinations and performs one final format rounding.
+    fn x86_simd_fp_fma_non_nan(
+        first: u64,
+        second: u64,
+        accumulator: u64,
+        format: X86SimdFpFormat,
+        mode: FpRoundMode,
+        mxcsr: u32,
+    ) -> X86SimdFpResult {
+        debug_assert!(!Self::x86_simd_fp_is_nan(first, format));
+        debug_assert!(!Self::x86_simd_fp_is_nan(second, format));
+        debug_assert!(!Self::x86_simd_fp_is_nan(accumulator, format));
+        let first_inf = Self::x86_simd_fp_is_infinite(first, format);
+        let second_inf = Self::x86_simd_fp_is_infinite(second, format);
+        let accumulator_inf = Self::x86_simd_fp_is_infinite(accumulator, format);
+        let first_zero = Self::x86_simd_fp_is_zero(first, format);
+        let second_zero = Self::x86_simd_fp_is_zero(second, format);
+        let accumulator_zero = Self::x86_simd_fp_is_zero(accumulator, format);
+        let (sign_mask, exponent_mask, _, _) = Self::x86_simd_fp_masks(format);
+        let product_negative = (first ^ second) & sign_mask != 0;
+        let accumulator_negative = accumulator & sign_mask != 0;
+
+        if (first_inf && second_zero) || (second_inf && first_zero) {
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_indefinite(format),
+                status: 1,
+            };
+        }
+        if first_inf || second_inf {
+            if accumulator_inf && product_negative != accumulator_negative {
+                return X86SimdFpResult {
+                    bits: Self::x86_simd_fp_indefinite(format),
+                    status: 1,
+                };
+            }
+            return X86SimdFpResult {
+                bits: (if product_negative { sign_mask } else { 0 }) | exponent_mask,
+                status: 0,
+            };
+        }
+        if accumulator_inf {
+            return X86SimdFpResult {
+                bits: accumulator & (sign_mask | exponent_mask),
+                status: 0,
+            };
+        }
+        if first_zero || second_zero {
+            if accumulator_zero {
+                let negative = if product_negative == accumulator_negative {
+                    product_negative
+                } else {
+                    mode == FpRoundMode::RoundDown
+                };
+                return X86SimdFpResult {
+                    bits: if negative { sign_mask } else { 0 },
+                    status: 0,
+                };
+            }
+            return X86SimdFpResult {
+                bits: accumulator,
+                status: 0,
+            };
+        }
+
+        let a = Self::x86_simd_fp_decode(first, format);
+        let b = Self::x86_simd_fp_decode(second, format);
+        let product_magnitude = a.significand * b.significand;
+        let product_exponent = a.exponent + b.exponent;
+        let (negative, magnitude, exponent, sticky) = if accumulator_zero {
+            (product_negative, product_magnitude, product_exponent, false)
+        } else {
+            let c = Self::x86_simd_fp_decode(accumulator, format);
+            // Binary16's complete product/accumulator exponent range is below
+            // 64 bits; this guard therefore retains every cancellation bit.
+            hr_add_scaled(
+                product_negative,
+                product_magnitude,
+                product_exponent,
+                accumulator_negative,
+                c.significand,
+                c.exponent,
+                64,
+            )
+        };
+        if magnitude == 0 && !sticky {
+            return X86SimdFpResult {
+                bits: if mode == FpRoundMode::RoundDown {
+                    sign_mask
+                } else {
+                    0
+                },
+                status: 0,
+            };
+        }
+        // AVX512-FP16 processes gradual underflow regardless of MXCSR.FTZ.
+        Self::x86_simd_fp_round_exact(
+            negative,
+            magnitude,
+            exponent,
+            sticky,
+            format,
+            mode,
+            mxcsr & !(1 << 15),
+        )
     }
 
     fn x86_simd_fp_unmasked(status: u32, mxcsr: u32) -> bool {
@@ -48780,6 +49003,194 @@ mod tests {
                 assert_eq!(x86.xmm[3][0], expected);
                 assert!(x86.xmm[3][1..].iter().all(|word| *word == 0));
             }
+        }
+    }
+
+    #[test]
+    fn x86_fp16_fma_is_single_round_mask_aware_and_exception_precise() {
+        for (mode, expected) in [
+            (FpRoundMode::RoundNearest, 0x3C00),
+            (FpRoundMode::RoundDown, 0x3C00),
+            (FpRoundMode::RoundUp, 0x3C01),
+            (FpRoundMode::RoundTowardZero, 0x3C00),
+        ] {
+            // 1 * 1 + 2^-11 is exactly halfway between 1 and the next FP16
+            // value. The result must be rounded once in the selected mode.
+            let result = SmirInterpreter::x86_simd_fp_fma_non_nan(
+                0x3C00,
+                0x3C00,
+                0x1000,
+                X86_SIMD_F16,
+                mode,
+                0x1F80,
+            );
+            assert_eq!(result.bits, expected, "{mode:?}");
+            assert_eq!(result.status, 1 << 5, "{mode:?}");
+        }
+        let gradual = SmirInterpreter::x86_simd_fp_fma_non_nan(
+            0x0001,
+            0x3C00,
+            0,
+            X86_SIMD_F16,
+            FpRoundMode::RoundNearest,
+            0x1F80 | (1 << 15),
+        );
+        assert_eq!(gradual.bits, 0x0001, "AVX512-FP16 ignores MXCSR.FTZ");
+
+        let regs = [
+            X86Reg::Xmm(0),
+            X86Reg::Xmm(1),
+            X86Reg::Xmm(2),
+            X86Reg::Xmm(3),
+        ]
+        .map(|reg| VReg::Arch(ArchReg::X86(reg)));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let make_function = |round| {
+            let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+            builder.push_op(
+                0x1000,
+                OpKind::X86FP16Fma {
+                    dst: regs[3],
+                    src1: regs[0],
+                    src2: regs[1],
+                    src3: regs[2],
+                    mask: Some(k1),
+                    kind: X86FmaKind::Add,
+                    order: X86FmaOrder::Order132,
+                    round,
+                    lanes: 2,
+                },
+            );
+            builder.set_terminator(Terminator::Trap {
+                kind: TrapKind::Halt,
+            });
+            builder.finish()
+        };
+        let initialize = |ctx: &mut SmirContext| {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                // Lane zero would raise invalid and denormal-operand, but K1
+                // suppresses it. Lane one is the exact halfway case above.
+                SmirInterpreter::set_lane(&mut x86.xmm[0], 0, 16, 0x7D01);
+                SmirInterpreter::set_lane(&mut x86.xmm[1], 0, 16, 0x0001);
+                SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 16, 0x7E55);
+                SmirInterpreter::set_lane(&mut x86.xmm[0], 1, 16, 0x3C00);
+                SmirInterpreter::set_lane(&mut x86.xmm[1], 1, 16, 0x1000);
+                SmirInterpreter::set_lane(&mut x86.xmm[2], 1, 16, 0x3C00);
+            }
+            ctx.write_vreg(k1, 1 << 1);
+        };
+
+        let mut memory = FlatMemory::new(0x100);
+        let mut dynamic = SmirContext::new_x86_64();
+        initialize(&mut dynamic);
+        let function = make_function(FpRoundMode::Dynamic);
+        assert!(matches!(
+            SmirInterpreter::new().execute_block(&mut dynamic, &mut memory, &function.blocks[0]),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &dynamic.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[3], 0, 16), 0);
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[3], 1, 16), 0x3C00);
+            assert_eq!(x86.mxcsr & 0x3F, 1 << 5);
+        }
+
+        let mut embedded = SmirContext::new_x86_64();
+        initialize(&mut embedded);
+        let function = make_function(FpRoundMode::RoundUp);
+        assert!(matches!(
+            SmirInterpreter::new().execute_block(&mut embedded, &mut memory, &function.blocks[0]),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &embedded.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[3], 1, 16), 0x3C01);
+            assert_eq!(x86.mxcsr & 0x3F, 0, "embedded rounding implies SAE");
+        }
+
+        let mut nan = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut nan.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[0], 0, 16, 0x7E11);
+            SmirInterpreter::set_lane(&mut x86.xmm[1], 0, 16, 0x7E22);
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 16, 0x7E33);
+        }
+        nan.write_vreg(k1, 1);
+        let function = make_function(FpRoundMode::Dynamic);
+        assert!(matches!(
+            SmirInterpreter::new().execute_block(&mut nan, &mut memory, &function.blocks[0]),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &nan.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[3], 0, 16), 0x7E11);
+            assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+
+        let mut invalid = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut invalid.arch_regs {
+            SmirInterpreter::set_lane(&mut x86.xmm[0], 0, 16, 0);
+            SmirInterpreter::set_lane(&mut x86.xmm[1], 0, 16, 0x3C00);
+            SmirInterpreter::set_lane(&mut x86.xmm[2], 0, 16, 0x7C00);
+        }
+        invalid.write_vreg(k1, 1);
+        assert!(matches!(
+            SmirInterpreter::new().execute_block(&mut invalid, &mut memory, &function.blocks[0]),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &invalid.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[3], 0, 16), 0xFE00);
+            assert_eq!(x86.mxcsr & 0x3F, 1);
+        }
+
+        let mut fault = SmirContext::new_x86_64();
+        initialize(&mut fault);
+        fault.write_vreg(k1, 1);
+        let sentinel = [0xA5A5_A5A5_A5A5_A5A5; 16];
+        if let ArchRegState::X86_64(x86) = &mut fault.arch_regs {
+            x86.mxcsr &= !(1 << 7);
+            x86.xmm[3] = sentinel;
+        }
+        let function = make_function(FpRoundMode::Dynamic);
+        assert!(matches!(
+            SmirInterpreter::new().execute_block(&mut fault, &mut memory, &function.blocks[0]),
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &fault.arch_regs {
+            assert_eq!(
+                x86.xmm[3], sentinel,
+                "unmasked exception committed a result"
+            );
+            assert_ne!(x86.mxcsr & 1, 0);
+        }
+    }
+
+    #[test]
+    fn lifted_evex_fp16_fma_executes_and_zero_mask_suppresses_memory_faults() {
+        let mut ctx = SmirContext::new_x86_64();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[0], lane, 16, 0x3C00);
+                SmirInterpreter::set_lane(&mut x86.xmm[1], lane, 16, 0x3C00);
+            }
+        }
+        let mut memory = FlatMemory::new(0x100);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF6, 0x7D, 0x08, 0x98, 0xC8], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..8 {
+                assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], lane, 16), 0x4000);
+            }
+        }
+
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        ctx.write_vreg(rax, 0x1_0000);
+        ctx.write_vreg(k1, 0);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF6, 0x7D, 0x99, 0x98, 0x10], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert!(x86.xmm[2].iter().all(|word| *word == 0));
         }
     }
 

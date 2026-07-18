@@ -3142,6 +3142,22 @@ pub enum OpKind {
         negate_acc: bool,
     },
 
+    /// x86 AVX512-FP16 fused multiply-add. Source numbering is architectural
+    /// (before the 132/213/231 permutation) so NaN selection retains Intel's
+    /// source-priority rule. Explicit rounding denotes EVEX embedded rounding
+    /// and therefore also suppresses SIMD floating-point exceptions.
+    X86FP16Fma {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        src3: VReg,
+        mask: Option<VReg>,
+        kind: X86FmaKind,
+        order: X86FmaOrder,
+        round: FpRoundMode,
+        lanes: u8,
+    },
+
     // ========================================================================
     // AVX10.1 OPERATIONS
     // ========================================================================
@@ -4330,6 +4346,7 @@ impl OpKind {
             | OpKind::VBroadcast { dst, .. }
             | OpKind::VMin { dst, .. }
             | OpKind::VFma { dst, .. }
+            | OpKind::X86FP16Fma { dst, .. }
             | OpKind::VDotProduct { dst, .. }
             | OpKind::VMultiplyAdd52 { dst, .. }
             | OpKind::VPopcnt { dst, .. }
@@ -4744,6 +4761,10 @@ impl OpKind {
                         round: FpRoundMode::Dynamic,
                         ..
                     }
+                    | OpKind::X86FP16Fma {
+                        round: FpRoundMode::Dynamic,
+                        ..
+                    }
                     | OpKind::X86X87Control {
                         kind:
                             X86X87ControlKind::Init
@@ -4933,6 +4954,42 @@ impl OpKind {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn x86_fp16_fma_metadata_tracks_sources_mask_destination_and_mxcsr_effects() {
+        let dst = VReg::virt(0);
+        let src1 = VReg::virt(1);
+        let src2 = VReg::virt(2);
+        let src3 = VReg::virt(3);
+        let mask = VReg::virt(4);
+        let dynamic = OpKind::X86FP16Fma {
+            dst,
+            src1,
+            src2,
+            src3,
+            mask: Some(mask),
+            kind: X86FmaKind::Add,
+            order: X86FmaOrder::Order132,
+            round: FpRoundMode::Dynamic,
+            lanes: 8,
+        };
+        assert_eq!(dynamic.dests(), vec![dst]);
+        assert_eq!(dynamic.source_vregs(), vec![src1, src2, src3, mask]);
+        assert!(dynamic.has_side_effects());
+
+        let embedded = OpKind::X86FP16Fma {
+            dst,
+            src1,
+            src2,
+            src3,
+            mask: Some(mask),
+            kind: X86FmaKind::Add,
+            order: X86FmaOrder::Order132,
+            round: FpRoundMode::RoundNearest,
+            lanes: 8,
+        };
+        assert!(!embedded.has_side_effects());
+    }
 
     #[test]
     fn cas_pair_metadata_tracks_all_results_and_memory_effects() {

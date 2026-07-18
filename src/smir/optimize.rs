@@ -3694,6 +3694,19 @@ impl OpKind {
                 result.push(*acc);
             }
 
+            OpKind::X86FP16Fma {
+                src1,
+                src2,
+                src3,
+                mask,
+                ..
+            } => {
+                result.push(*src1);
+                result.push(*src2);
+                result.push(*src3);
+                result.extend(mask.iter().copied());
+            }
+
             OpKind::VDotProductBF16 {
                 acc,
                 src1,

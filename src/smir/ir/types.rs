@@ -1125,6 +1125,28 @@ pub enum Avx10FP16Op {
     Max,
 }
 
+/// Operand permutation selected by the x86 FMA3 opcode high nibble.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum X86FmaOrder {
+    /// `(src1 * src3) + src2`.
+    Order132,
+    /// `(src2 * src1) + src3`.
+    Order213,
+    /// `(src2 * src3) + src1`.
+    Order231,
+}
+
+/// Arithmetic/sign variant selected by the x86 FMA3 opcode low nibble.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum X86FmaKind {
+    Add,
+    Sub,
+    NegativeMultiplyAdd,
+    NegativeMultiplySub,
+    AddSub,
+    SubAdd,
+}
+
 /// Integer narrowing behavior used by EVEX VPMOV* down-conversions.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum X86NarrowMode {
