@@ -2543,6 +2543,14 @@ impl OpKind {
                 result.extend(addr.regs());
             }
 
+            OpKind::PredVLoad {
+                dst, cond, addr, ..
+            } => {
+                result.push(*dst);
+                result.push(*cond);
+                result.extend(addr.regs());
+            }
+
             // Predicated store: reads the predicate `cond`, the source operand
             // (when a register), and the address base register(s).
             OpKind::PredStore {
@@ -2971,6 +2979,25 @@ impl OpKind {
                 if *accumulate || (mask.is_some() && !mask_zeroing) {
                     result.push(*dst);
                 }
+            }
+
+            OpKind::X86FourFma {
+                dst,
+                src0,
+                src1,
+                src2,
+                src3,
+                mem,
+                mask,
+                ..
+            } => {
+                result.push(*dst);
+                result.push(*src0);
+                result.push(*src1);
+                result.push(*src2);
+                result.push(*src3);
+                result.push(*mem);
+                result.extend(mask.iter().copied());
             }
 
             OpKind::X86PackedFpConvert {

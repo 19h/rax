@@ -10048,6 +10048,26 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, vec);
             }
 
+            OpKind::PredVLoad {
+                dst,
+                cond,
+                addr,
+                width,
+            } => {
+                if ctx.read_vreg(*cond) & 1 != 0 {
+                    let effective_addr = self.compute_address(ctx, addr);
+                    let mut buf = [0u8; 64];
+                    let size = width.bytes() as usize;
+                    memory.read(effective_addr, &mut buf[..size])?;
+
+                    let mut vec = [0u64; 16];
+                    for (word, chunk) in buf[..size].chunks_exact(8).enumerate() {
+                        vec[word] = u64::from_le_bytes(chunk.try_into().unwrap());
+                    }
+                    Self::write_vec(ctx, *dst, vec);
+                }
+            }
+
             OpKind::VStore { src, addr, width } => {
                 let effective_addr = self.compute_address(ctx, addr);
                 let val = Self::read_vec(ctx, *src);
@@ -11802,6 +11822,87 @@ impl SmirInterpreter {
                         x86.mxcsr |= status;
                     }
                     if Self::x86_simd_fp_unmasked(status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
+                    }
+                }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86FourFma {
+                dst,
+                src0,
+                src1,
+                src2,
+                src3,
+                mem,
+                mask,
+                scalar,
+                negate_product,
+                mask_zeroing,
+            } => {
+                // Snapshot every architectural input before computing: the
+                // destination may be one of the four aligned source-block
+                // registers.
+                let old_dst = Self::read_vec(ctx, *dst);
+                let sources = [
+                    Self::read_vec(ctx, *src0),
+                    Self::read_vec(ctx, *src1),
+                    Self::read_vec(ctx, *src2),
+                    Self::read_vec(ctx, *src3),
+                ];
+                let memory = Self::read_vec(ctx, *mem);
+                let active = mask.map_or(u64::MAX, |mask| ctx.read_vreg(mask));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let mode = match (mxcsr >> 13) & 3 {
+                    0 => FpRoundMode::RoundNearest,
+                    1 => FpRoundMode::RoundDown,
+                    2 => FpRoundMode::RoundUp,
+                    _ => FpRoundMode::RoundTowardZero,
+                };
+                let lanes = if *scalar { 1 } else { 16 };
+                let mut result = [0u64; 16];
+                for lane in 0..lanes {
+                    if active & (1u64 << lane) != 0 || !mask_zeroing {
+                        Self::set_lane(&mut result, lane, 32, Self::get_lane(&old_dst, lane, 32));
+                    }
+                }
+                if *scalar {
+                    for lane in 1..4u8 {
+                        Self::set_lane(&mut result, lane, 32, Self::get_lane(&old_dst, lane, 32));
+                    }
+                }
+
+                // Intel specifies exception priority by FMA boundary. Compute
+                // all lanes in one boundary, commit its sticky status, and
+                // stop before the next boundary when any exception is
+                // unmasked. The architectural destination is written only
+                // after all four boundaries complete.
+                for stage in 0..4u8 {
+                    let multiplier = Self::get_lane(&memory, stage, 32);
+                    let mut stage_status = 0u32;
+                    for lane in 0..lanes {
+                        if active & (1u64 << lane) == 0 {
+                            continue;
+                        }
+                        let computed = Self::x86_f32_fma_boundary(
+                            Self::get_lane(&sources[stage as usize], lane, 32),
+                            multiplier,
+                            Self::get_lane(&result, lane, 32),
+                            *negate_product,
+                            mode,
+                            mxcsr,
+                        );
+                        stage_status |= computed.status;
+                        Self::set_lane(&mut result, lane, 32, computed.bits);
+                    }
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= stage_status;
+                    }
+                    if Self::x86_simd_fp_unmasked(stage_status, mxcsr) {
                         ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
                         return Ok(());
                     }
@@ -19527,7 +19628,11 @@ impl SmirInterpreter {
                 accumulator_negative,
                 c.significand,
                 c.exponent,
-                64,
+                if format.total_bits == 32 {
+                    HR_SF_GUARD
+                } else {
+                    64
+                },
             )
         };
         if magnitude == 0 && !sticky {
@@ -19540,7 +19645,13 @@ impl SmirInterpreter {
                 status: 0,
             };
         }
-        // AVX512-FP16 processes gradual underflow regardless of MXCSR.FTZ.
+        // AVX512-FP16 processes gradual underflow regardless of MXCSR.FTZ;
+        // binary32 users of this exact core retain the architectural FTZ bit.
+        let round_mxcsr = if format.total_bits == 16 {
+            mxcsr & !(1 << 15)
+        } else {
+            mxcsr
+        };
         Self::x86_simd_fp_round_exact(
             negative,
             magnitude,
@@ -19548,8 +19659,64 @@ impl SmirInterpreter {
             sticky,
             format,
             mode,
-            mxcsr & !(1 << 15),
+            round_mxcsr,
         )
+    }
+
+    /// One binary32 FMA boundary for AVX512_4FMAPS. DAZ is applied before the
+    /// arithmetic classification, FTZ is applied by the final rounding core,
+    /// and arithmetic negation does not alter a propagated NaN payload.
+    fn x86_f32_fma_boundary(
+        first: u64,
+        second: u64,
+        accumulator: u64,
+        negate_product: bool,
+        mode: FpRoundMode,
+        mxcsr: u32,
+    ) -> X86SimdFpResult {
+        let first = Self::x86_simd_fp_apply_daz(first, X86_SIMD_F32, mxcsr);
+        let second = Self::x86_simd_fp_apply_daz(second, X86_SIMD_F32, mxcsr);
+        let accumulator = Self::x86_simd_fp_apply_daz(accumulator, X86_SIMD_F32, mxcsr);
+        let sources = [first.bits, second.bits, accumulator.bits];
+        let mut status = first.status | second.status | accumulator.status;
+        let invalid_product = (Self::x86_simd_fp_is_zero(first.bits, X86_SIMD_F32)
+            && Self::x86_simd_fp_is_infinite(second.bits, X86_SIMD_F32))
+            || (Self::x86_simd_fp_is_infinite(first.bits, X86_SIMD_F32)
+                && Self::x86_simd_fp_is_zero(second.bits, X86_SIMD_F32));
+        if invalid_product
+            || sources
+                .iter()
+                .any(|bits| Self::x86_simd_fp_is_snan(*bits, X86_SIMD_F32))
+        {
+            status |= 1;
+        }
+        if let Some(nan) = sources
+            .iter()
+            .copied()
+            .find(|bits| Self::x86_simd_fp_is_nan(*bits, X86_SIMD_F32))
+        {
+            return X86SimdFpResult {
+                bits: Self::x86_simd_fp_quiet_nan(nan, X86_SIMD_F32),
+                status,
+            };
+        }
+        let first = if negate_product {
+            first.bits ^ 0x8000_0000
+        } else {
+            first.bits
+        };
+        let computed = Self::x86_simd_fp_fma_non_nan(
+            first,
+            second.bits,
+            accumulator.bits,
+            X86_SIMD_F32,
+            mode,
+            mxcsr,
+        );
+        X86SimdFpResult {
+            bits: computed.bits,
+            status: status | computed.status,
+        }
     }
 
     /// One architectural FP16 FMA boundary for the complex arithmetic
@@ -62136,6 +62303,263 @@ mod tests {
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(x86.xmm[1][0] & 0xFFFF_FFFF, 0xFFC0_0000);
             assert_eq!(x86.mxcsr, 0x1F00);
+        }
+    }
+
+    #[test]
+    fn lifted_avx512_four_fma_executes_sequential_rounding_masks_scalar_and_aliases() {
+        let gradual = SmirInterpreter::x86_f32_fma_boundary(
+            0x0080_0000,
+            0x3F00_0000,
+            0,
+            false,
+            FpRoundMode::RoundNearest,
+            0x1F80,
+        );
+        assert_eq!(gradual.bits, 0x0040_0000);
+        assert_eq!(gradual.status, 0);
+        let flushed = SmirInterpreter::x86_f32_fma_boundary(
+            0x0080_0000,
+            0x3F00_0000,
+            0,
+            false,
+            FpRoundMode::RoundNearest,
+            0x9F80,
+        );
+        assert_eq!(flushed.bits, 0);
+        assert_eq!(flushed.status, (1 << 4) | (1 << 5));
+
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x200);
+        let write_tuple = |memory: &mut FlatMemory, values: [f32; 4]| {
+            let bytes = values
+                .into_iter()
+                .flat_map(|value| value.to_bits().to_le_bytes())
+                .collect::<Vec<_>>();
+            memory.write(0x80, &bytes).unwrap();
+        };
+        write_tuple(&mut memory, [10.0, 20.0, 30.0, 40.0]);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.gpr[0] = 0x80;
+            x86.mxcsr = 0x1F80;
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[1], lane, 32, u64::from(1.0f32.to_bits()));
+                for (reg, value) in [(4, 2.0f32), (5, 3.0), (6, 4.0), (7, 5.0)] {
+                    SmirInterpreter::set_lane(
+                        &mut x86.xmm[reg],
+                        lane,
+                        32,
+                        u64::from(value.to_bits()),
+                    );
+                }
+            }
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x48, 0x9A, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 32),
+                    u64::from(401.0f32.to_bits())
+                );
+            }
+            assert!(x86.xmm[1][8..].iter().all(|word| *word == 0));
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[1], lane, 32, u64::from(1.0f32.to_bits()));
+            }
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x48, 0xAA, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[1], 0, 32),
+                u64::from((-399.0f32).to_bits())
+            );
+        }
+
+        // Four half-ULP additions round independently. RN-even retains 1.0 at
+        // every boundary; RU advances by one ULP at each boundary.
+        write_tuple(&mut memory, [1.0; 4]);
+        for (mxcsr, expected) in [(0x1F80, 0x3F80_0000u32), (0x5F80, 0x3F80_0004)] {
+            if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                x86.mxcsr = mxcsr;
+                for lane in 0..16u8 {
+                    SmirInterpreter::set_lane(&mut x86.xmm[1], lane, 32, 0x3F80_0000);
+                    for reg in 4..=7 {
+                        SmirInterpreter::set_lane(&mut x86.xmm[reg], lane, 32, 0x3380_0000);
+                    }
+                }
+            }
+            execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x48, 0x9A, 0x08], &mut ctx, &mut memory);
+            if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], 0, 32),
+                    u64::from(expected)
+                );
+                assert_ne!(x86.mxcsr & (1 << 5), 0, "each half-ULP FMA is inexact");
+            }
+        }
+
+        // Packed zeroing applies only to inactive destination lanes and scalar
+        // operation preserves bits 127:32 while clearing bits above 127.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[1] = 1 << 1;
+            x86.mxcsr = 0x1F80;
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[1],
+                    lane,
+                    32,
+                    u64::from((100.0f32 + f32::from(lane)).to_bits()),
+                );
+                for reg in 4..=7 {
+                    SmirInterpreter::set_lane(
+                        &mut x86.xmm[reg],
+                        lane,
+                        32,
+                        u64::from(1.0f32.to_bits()),
+                    );
+                }
+            }
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0xC9, 0x9A, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            for lane in 0..16u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 32),
+                    if lane == 1 {
+                        u64::from(105.0f32.to_bits())
+                    } else {
+                        0
+                    }
+                );
+            }
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.k[1] = 1;
+            x86.xmm[1] = [0xA5A5_A5A5_A5A5_A5A5; 16];
+            SmirInterpreter::set_lane(&mut x86.xmm[1], 0, 32, 0x3F80_0000);
+            for reg in 4..=7 {
+                SmirInterpreter::set_lane(&mut x86.xmm[reg], 0, 32, 0x3F80_0000);
+            }
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x09, 0x9B, 0x08], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[1], 0, 32), 0x40A0_0000);
+            for lane in 1..4u8 {
+                assert_eq!(
+                    SmirInterpreter::get_lane(&x86.xmm[1], lane, 32),
+                    0xA5A5_A5A5
+                );
+            }
+            assert!(x86.xmm[1][2..].iter().all(|word| *word == 0));
+        }
+
+        // Destination ZMM5 overlaps source block ZMM4..ZMM7. Stage one must
+        // observe the pre-instruction ZMM5 snapshot, not a partial result.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[5] = [0; 16];
+            SmirInterpreter::set_lane(&mut x86.xmm[5], 0, 32, 10.0f32.to_bits().into());
+            for (reg, value) in [(4, 1.0f32), (6, 1.0), (7, 1.0)] {
+                SmirInterpreter::set_lane(&mut x86.xmm[reg], 0, 32, u64::from(value.to_bits()));
+            }
+        }
+        execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x48, 0x9A, 0x28], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                SmirInterpreter::get_lane(&x86.xmm[5], 0, 32),
+                u64::from(23.0f32.to_bits())
+            );
+        }
+    }
+
+    #[test]
+    fn lifted_avx512_four_fma_orders_exceptions_and_suppresses_whole_tuple_faults() {
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x100);
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let sentinel = [0xDEAD_BEEF_CAFE_BABEu64; 16];
+        ctx.write_vreg(rax, 0x100);
+        ctx.write_vreg(k1, 1 << 16);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x49, 0x9A, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(&x86.xmm[1][..8], &sentinel[..8]);
+            assert!(x86.xmm[1][8..].iter().all(|word| *word == 0));
+        }
+
+        ctx.write_vreg(k1, 1 << 15);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[1] = sentinel;
+        }
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x49, 0x9A, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1], sentinel);
+        }
+
+        ctx.write_vreg(k1, 2);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x09, 0x9B, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::Halt)
+        ));
+        ctx.write_vreg(k1, 1);
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x09, 0x9B, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+
+        let tuple = [
+            1.0f32.to_bits(),
+            f32::INFINITY.to_bits(),
+            1.0f32.to_bits(),
+            1.0f32.to_bits(),
+        ]
+        .into_iter()
+        .flat_map(u32::to_le_bytes)
+        .collect::<Vec<_>>();
+        memory.write(0x80, &tuple).unwrap();
+        ctx.write_vreg(rax, 0x80);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.mxcsr = 0x1F80 & !(1 << 7); // Unmask invalid only.
+            x86.xmm[1] = sentinel;
+            for lane in 0..16u8 {
+                SmirInterpreter::set_lane(&mut x86.xmm[1], lane, 32, 0x3F80_0000);
+                SmirInterpreter::set_lane(&mut x86.xmm[4], lane, 32, 0x3380_0000);
+                SmirInterpreter::set_lane(&mut x86.xmm[5], lane, 32, 0);
+                SmirInterpreter::set_lane(&mut x86.xmm[6], lane, 32, 1);
+                SmirInterpreter::set_lane(&mut x86.xmm[7], lane, 32, 0x3F80_0000);
+            }
+        }
+        let before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.xmm[1],
+            _ => unreachable!(),
+        };
+        assert!(matches!(
+            execute_lifted_x86(&[0x62, 0xF2, 0x5F, 0x48, 0x9A, 0x08], &mut ctx, &mut memory),
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                x86.xmm[1], before,
+                "faulting FMA must not commit destination"
+            );
+            assert_ne!(x86.mxcsr & 1, 0, "stage 1 invalid status");
+            assert_ne!(x86.mxcsr & (1 << 5), 0, "stage 0 precision status");
+            assert_eq!(x86.mxcsr & (1 << 1), 0, "stage 2 must not execute");
         }
     }
 }

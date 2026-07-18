@@ -3372,6 +3372,12 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             saturating
         ),
         OpKind::VLoad { dst, addr, width } => op_json!("vload", dst, addr, width),
+        OpKind::PredVLoad {
+            dst,
+            cond,
+            addr,
+            width,
+        } => op_json!("pred_vload", dst, cond, addr, width),
         OpKind::VStore { src, addr, width } => op_json!("vstore", src, addr, width),
         OpKind::Leave => op_json!("leave"),
         OpKind::IoIn { dst, port, width } => op_json!("io_in", dst, port, width),
@@ -3457,6 +3463,30 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             accumulate,
             conjugate,
             round
+        ),
+        OpKind::X86FourFma {
+            dst,
+            src0,
+            src1,
+            src2,
+            src3,
+            mem,
+            mask,
+            scalar,
+            negate_product,
+            mask_zeroing,
+        } => op_json!(
+            "x86_four_fma",
+            dst,
+            src0,
+            src1,
+            src2,
+            src3,
+            mem,
+            mask,
+            scalar,
+            negate_product,
+            mask_zeroing
         ),
         OpKind::VDotProduct {
             dst,

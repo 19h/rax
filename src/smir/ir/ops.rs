@@ -3290,6 +3290,16 @@ pub enum OpKind {
         width: VecWidth,
     },
 
+    /// Conditional vector load. When `cond` bit zero is set, reads the entire
+    /// vector-width memory operand as one SMIR memory transaction and replaces
+    /// `dst`. Otherwise preserves `dst` and performs no memory access.
+    PredVLoad {
+        dst: VReg,
+        cond: VReg,
+        addr: Address,
+        width: VecWidth,
+    },
+
     /// Vector store
     VStore {
         src: VReg,
@@ -3377,6 +3387,25 @@ pub enum OpKind {
         accumulate: bool,
         conjugate: bool,
         round: FpRoundMode,
+    },
+
+    /// Intel AVX512_4FMAPS four-iteration fused multiply-add. The four
+    /// architectural source registers are explicit so dependency analysis and
+    /// destination/source aliasing retain the source-block snapshot. `mem`
+    /// contains the fault-suppressed 16-byte Tuple1_4X memory operand. Each
+    /// active F32 lane rounds and raises MXCSR exceptions at every sequential
+    /// FMA boundary.
+    X86FourFma {
+        dst: VReg,
+        src0: VReg,
+        src1: VReg,
+        src2: VReg,
+        src3: VReg,
+        mem: VReg,
+        mask: Option<VReg>,
+        scalar: bool,
+        negate_product: bool,
+        mask_zeroing: bool,
     },
 
     // ========================================================================
@@ -4575,11 +4604,13 @@ impl OpKind {
             | OpKind::VByteShuffle { dst, .. }
             | OpKind::VHorizontalBin { dst, .. }
             | OpKind::VLoad { dst, .. }
+            | OpKind::PredVLoad { dst, .. }
             | OpKind::VBroadcast { dst, .. }
             | OpKind::VMin { dst, .. }
             | OpKind::VFma { dst, .. }
             | OpKind::X86FP16Fma { dst, .. }
             | OpKind::X86FP16Complex { dst, .. }
+            | OpKind::X86FourFma { dst, .. }
             | OpKind::VDotProduct { dst, .. }
             | OpKind::VMultiplyAdd52 { dst, .. }
             | OpKind::VPopcnt { dst, .. }
@@ -5026,6 +5057,7 @@ impl OpKind {
                         round: FpRoundMode::Dynamic,
                         ..
                     }
+                    | OpKind::X86FourFma { .. }
                     | OpKind::X86X87Control {
                         kind:
                             X86X87ControlKind::Init
@@ -5083,6 +5115,7 @@ impl OpKind {
                 | OpKind::RepMovs { .. }
                 | OpKind::X86String { .. }
                 | OpKind::VLoad { .. }
+                | OpKind::PredVLoad { .. }
                 | OpKind::VHist { .. }
                 | OpKind::X86LoadMxcsr { .. }
                 | OpKind::X86X87Control {
@@ -5314,6 +5347,47 @@ mod tests {
         };
         assert_eq!(overwrite.source_vregs(), vec![src1, src2]);
         assert!(!overwrite.has_side_effects());
+    }
+
+    #[test]
+    fn x86_four_fma_metadata_tracks_source_block_accumulator_mask_and_mxcsr() {
+        let dst = VReg::virt(0);
+        let src0 = VReg::virt(1);
+        let src1 = VReg::virt(2);
+        let src2 = VReg::virt(3);
+        let src3 = VReg::virt(4);
+        let mem = VReg::virt(5);
+        let mask = VReg::virt(6);
+        let op = OpKind::X86FourFma {
+            dst,
+            src0,
+            src1,
+            src2,
+            src3,
+            mem,
+            mask: Some(mask),
+            scalar: false,
+            negate_product: false,
+            mask_zeroing: true,
+        };
+        assert_eq!(op.dests(), vec![dst]);
+        assert_eq!(
+            op.source_vregs(),
+            vec![dst, src0, src1, src2, src3, mem, mask]
+        );
+        assert!(op.has_side_effects());
+
+        let base = VReg::virt(7);
+        let predicated_tuple = OpKind::PredVLoad {
+            dst: mem,
+            cond: mask,
+            addr: Address::reg(base),
+            width: VecWidth::V128,
+        };
+        assert_eq!(predicated_tuple.dests(), vec![mem]);
+        assert_eq!(predicated_tuple.source_vregs(), vec![mem, mask, base]);
+        assert!(predicated_tuple.reads_memory());
+        assert!(predicated_tuple.has_side_effects());
     }
 
     #[test]

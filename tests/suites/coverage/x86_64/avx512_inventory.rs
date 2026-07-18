@@ -1645,6 +1645,50 @@ fn evex_fp16_complex_closes_generated_lift_and_register_lower_gap() {
 }
 
 #[test]
+fn evex_four_fma_closes_generated_lift_gap() {
+    let expected_mnemonics =
+        set_from_slice(&["v4fmaddps", "v4fmaddss", "v4fnmaddps", "v4fnmaddss"]);
+    let mut covered_mnemonics = BTreeSet::new();
+    let mut covered_forms = 0usize;
+
+    for row in avx512_spec_evex_rows() {
+        if !expected_mnemonics.contains(&row.key.mnemonic) {
+            continue;
+        }
+        for variant in evex_case_variants_for_row(&row) {
+            assert_eq!(
+                variant.mode,
+                EvexAsmMode::Memory,
+                "AVX512_4FMAPS has no register r/m form"
+            );
+            let bytes = raw_evex_spec_bytes_for_variant(&row, variant);
+            let mut lifter = X86_64Lifter::new();
+            let mut ctx = LiftContext::new(SourceArch::X86_64);
+            let result = lifter
+                .lift_insn(0x1000, &bytes, &mut ctx)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "{}: AVX512_4FMAPS form failed to lift: {error:?}",
+                        spec_case_variant_id(&row, variant)
+                    )
+                });
+            assert_eq!(result.bytes_consumed, bytes.len());
+            assert!(
+                result
+                    .ops
+                    .iter()
+                    .any(|op| matches!(op.kind, OpKind::X86FourFma { .. }))
+            );
+            covered_mnemonics.insert(row.key.mnemonic.clone());
+            covered_forms += 1;
+        }
+    }
+
+    assert_eq!(covered_mnemonics, expected_mnemonics);
+    assert_eq!(covered_forms, 8);
+}
+
+#[test]
 fn register_evex_fp_arithmetic_replay_closes_generated_lift_lower_gap() {
     let expected_mnemonics = set_from_slice(&[
         "vaddpd", "vaddps", "vaddsd", "vaddss", "vdivpd", "vdivps", "vdivsd", "vdivss", "vmaxpd",
