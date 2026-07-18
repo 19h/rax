@@ -23434,6 +23434,56 @@ mod jit_gate_tests {
     }
 
     #[test]
+    fn x86_evex_integer_pack_replay_uses_base_vector_gate_and_rejects_memory_metadata() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+
+        const PC: u64 = 0x1000;
+        // vpackusdw zmm17{k1}{z}, zmm18, zmm19
+        const VPACKUSDW: [u8; 6] = [0x62, 0xA2, 0x6D, 0xC1, 0x2B, 0xCB];
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+        let result = lifter.lift_insn(PC, &VPACKUSDW, &mut context).unwrap();
+        let mut block = SmirBlock::new(BlockId(0), PC);
+        block.ops = result.ops;
+        block.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+        function.add_block(block);
+        function.x86_instruction_bytes.insert(
+            (BlockId(0), PC),
+            X86InstructionBytes::new(&VPACKUSDW).unwrap(),
+        );
+
+        assert!(is_native_clobber_safe(&function));
+        assert!(uses_x86_native_vectors_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+        #[cfg(target_arch = "x86_64")]
+        assert_eq!(
+            x86_native_vector_features_supported_excluding(
+                &function,
+                &std::collections::HashMap::new()
+            ),
+            std::is_x86_feature_detected!("avx512f") && std::is_x86_feature_detected!("avx512bw")
+        );
+        #[cfg(not(target_arch = "x86_64"))]
+        assert!(!x86_native_vector_features_supported_excluding(
+            &function,
+            &std::collections::HashMap::new()
+        ));
+
+        let mut memory_metadata = function;
+        let mut bytes = VPACKUSDW;
+        bytes[5] &= 0x3f;
+        memory_metadata
+            .x86_instruction_bytes
+            .insert((BlockId(0), PC), X86InstructionBytes::new(&bytes).unwrap());
+        assert!(!is_native_clobber_safe(&memory_metadata));
+    }
+
+    #[test]
     fn x86_evex_packed_test_replay_uses_base_vector_gate_and_rejects_memory_metadata() {
         use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
         use crate::smir::lift::x86_64::X86_64Lifter;
@@ -24423,6 +24473,126 @@ mod jit_gate_tests {
                 expected[lane] = interleaved[lane];
             }
         }
+
+        let mut regs = GuestRegs {
+            vector_active: 1,
+            ..GuestRegs::default()
+        };
+        regs.set_zmm(17, [u64::MAX; 8]);
+        regs.set_zmm(18, lhs);
+        regs.set_zmm(19, rhs);
+        regs.k[1] = mask;
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.get_zmm(17), expected);
+        assert_eq!(regs.get_zmm(18), lhs);
+        assert_eq!(regs.get_zmm(19), rhs);
+        assert_eq!(regs.k[1], mask);
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn x86_evex_integer_pack_replay_executes_high_register_form_exactly() {
+        use crate::smir::ir::{SmirBlock, SmirFunction, X86InstructionBytes};
+        use crate::smir::lift::x86_64::X86_64Lifter;
+        use crate::smir::lift::{LiftContext, SmirLifter};
+        use crate::smir::lower::SmirLowerer;
+        use crate::smir::lower::x86_64::X86_64Lowerer;
+
+        if !std::is_x86_feature_detected!("avx512f") || !std::is_x86_feature_detected!("avx512bw") {
+            return;
+        }
+
+        const PC: u64 = 0x1000;
+        // vpackusdw zmm17{k1}{z}, zmm18, zmm19
+        const VPACKUSDW: [u8; 6] = [0x62, 0xA2, 0x6D, 0xC1, 0x2B, 0xCB];
+        let mut lifter = X86_64Lifter::strict();
+        let mut context = LiftContext::new(crate::smir::ir::types::SourceArch::X86_64);
+        let result = lifter.lift_insn(PC, &VPACKUSDW, &mut context).unwrap();
+        let mut block = SmirBlock::new(BlockId(0), PC);
+        block.ops = result.ops;
+        block.set_terminator(Terminator::Return { values: Vec::new() });
+        let mut function = SmirFunction::new(FunctionId(0), block.id, PC);
+        function.add_block(block);
+        function.x86_instruction_bytes.insert(
+            (BlockId(0), PC),
+            X86InstructionBytes::new(&VPACKUSDW).unwrap(),
+        );
+
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&function)
+            .expect("lower VPACKUSDW replay");
+        let code = lowerer.finalize().expect("finalize VPACKUSDW replay");
+        assert!(
+            code.windows(VPACKUSDW.len())
+                .any(|window| window == VPACKUSDW)
+        );
+        let exec = ExecMem::new(&code).expect("map VPACKUSDW replay");
+
+        let lhs_elements = [
+            -1,
+            0,
+            1,
+            65_535,
+            65_536,
+            i32::MAX,
+            i32::MIN,
+            42,
+            32_767,
+            32_768,
+            65_534,
+            65_535,
+            -32_768,
+            -2,
+            70_000,
+            12_345,
+        ];
+        let rhs_elements = [
+            65_535,
+            65_536,
+            -1,
+            2,
+            100_000,
+            -100_000,
+            255,
+            256,
+            i32::MAX,
+            0,
+            -214,
+            4_096,
+            7,
+            65_534,
+            65_537,
+            i32::MIN,
+        ];
+        let pack_i32 = |elements: &[i32; 16]| {
+            std::array::from_fn(|word| {
+                elements[word * 2] as u32 as u64 | ((elements[word * 2 + 1] as u32 as u64) << 32)
+            })
+        };
+        let lhs = pack_i32(&lhs_elements);
+        let rhs = pack_i32(&rhs_elements);
+
+        let mut packed = [0u16; 32];
+        for lane in 0..4 {
+            for element in 0..4 {
+                let saturate = |value: i32| value.clamp(0, u16::MAX as i32) as u16;
+                packed[lane * 8 + element] = saturate(lhs_elements[lane * 4 + element]);
+                packed[lane * 8 + 4 + element] = saturate(rhs_elements[lane * 4 + element]);
+            }
+        }
+        let mask = 0xF0F0_0F0F_A55A_C33Cu64;
+        for (lane, value) in packed.iter_mut().enumerate() {
+            if mask >> lane & 1 == 0 {
+                *value = 0;
+            }
+        }
+        let expected: [u64; 8] = std::array::from_fn(|word| {
+            (0..4).fold(0u64, |bits, element| {
+                bits | ((packed[word * 4 + element] as u64) << (element * 16))
+            })
+        });
 
         let mut regs = GuestRegs {
             vector_active: 1,

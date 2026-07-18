@@ -1485,6 +1485,61 @@ fn register_evex_integer_interleave_replay_closes_generated_lift_lower_gap() {
 }
 
 #[test]
+fn register_evex_integer_pack_replay_closes_generated_lift_lower_gap() {
+    let expected_mnemonics = set_from_slice(&["vpackssdw", "vpacksswb", "vpackusdw", "vpackuswb"]);
+    let mut covered_mnemonics = BTreeSet::new();
+    let mut covered_forms = 0usize;
+
+    for row in avx512_spec_evex_rows() {
+        for variant in evex_case_variants_for_row(&row) {
+            let bytes = raw_evex_spec_bytes_for_variant(&row, variant);
+            let instruction = X86InstructionBytes::new(&bytes).unwrap();
+            if instruction.evex_register_integer_pack_needs_vl().is_none() {
+                continue;
+            }
+            assert_eq!(variant.mode, EvexAsmMode::Register);
+
+            let mut lifter = X86_64Lifter::new();
+            let mut ctx = LiftContext::new(SourceArch::X86_64);
+            let result = lifter
+                .lift_insn(0x1000, &bytes, &mut ctx)
+                .unwrap_or_else(|error| {
+                    panic!(
+                        "{}: replay-eligible integer pack failed to lift: {error:?}",
+                        spec_case_variant_id(&row, variant)
+                    )
+                });
+            assert_eq!(result.bytes_consumed, bytes.len());
+
+            let mut block = SmirBlock::new(BlockId(0), 0x1000);
+            block.ops = result.ops;
+            block.set_terminator(Terminator::Return { values: vec![] });
+            let mut function = SmirFunction::new(FunctionId(0), BlockId(0), 0x1000);
+            function.add_block(block);
+            function
+                .x86_instruction_bytes
+                .insert((BlockId(0), 0x1000), instruction);
+            let mut lowerer = X86_64Lowerer::new();
+            lowerer.lower_function(&function).unwrap_or_else(|error| {
+                panic!(
+                    "{}: replay-eligible integer pack failed to lower: {error:?}",
+                    spec_case_variant_id(&row, variant)
+                )
+            });
+            let code = lowerer
+                .finalize()
+                .expect("finalize replay-eligible integer pack");
+            assert!(code.windows(bytes.len()).any(|window| window == bytes));
+            covered_mnemonics.insert(row.key.mnemonic.clone());
+            covered_forms += 1;
+        }
+    }
+
+    assert_eq!(covered_mnemonics, expected_mnemonics);
+    assert_eq!(covered_forms, 48);
+}
+
+#[test]
 fn register_evex_packed_test_replay_closes_generated_lift_lower_gap() {
     let expected_mnemonics = set_from_slice(&[
         "vptestmb",
