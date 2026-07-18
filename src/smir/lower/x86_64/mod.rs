@@ -4839,6 +4839,11 @@ pub struct X86_64Lowerer {
     /// helper-updated state rather than merely restoring the pre-call snapshot.
     preserve_vector_call_helpers: bool,
 
+    /// Use KMOVW instead of KMOVQ at vector helper boundaries. This is enabled
+    /// only for VEXP2-only regions, whose masks contain at most 16 observable
+    /// bits; partial stores preserve the upper architectural K bits in memory.
+    narrow_vector_opmask_helpers: bool,
+
     /// When set, a `Terminator::Call` lowers to a runtime call-out (the
     /// `GuestRegs.call_fn` helper) that runs the callee in the interpreter and
     /// resumes native execution at the call's continuation block, instead of
@@ -4874,6 +4879,7 @@ impl X86_64Lowerer {
             mem_helpers: false,
             preserve_vector_mem_helpers: false,
             preserve_vector_call_helpers: false,
+            narrow_vector_opmask_helpers: false,
             call_helpers: false,
             epilogue_stack_patches: Vec::new(),
         }
@@ -4890,6 +4896,10 @@ impl X86_64Lowerer {
 
     pub fn set_preserve_vector_call_helpers(&mut self, on: bool) {
         self.preserve_vector_call_helpers = on;
+    }
+
+    pub fn set_narrow_vector_opmask_helpers(&mut self, on: bool) {
+        self.narrow_vector_opmask_helpers = on;
     }
 
     /// Enable lowering `Terminator::Call` as a runtime call-out (see `call_helpers`).
@@ -20405,10 +20415,17 @@ impl X86_64Lowerer {
         }
 
         for index in 0..8u8 {
-            // KMOVQ m64,k / k,m64: VEX.W1.0F 90/91 with a disp32 operand.
-            self.code.emit_u8(0xC4);
-            self.code.emit_u8(0xE1);
-            self.code.emit_u8(0xF8);
+            if self.narrow_vector_opmask_helpers {
+                // KMOVW m16,k / k,m16: VEX.L0.66.0F.W0 90/91. A 16-bit
+                // memory store intentionally leaves K[63:16] untouched.
+                self.code.emit_u8(0xC5);
+                self.code.emit_u8(0xF8);
+            } else {
+                // KMOVQ m64,k / k,m64: VEX.W1.0F 90/91.
+                self.code.emit_u8(0xC4);
+                self.code.emit_u8(0xE1);
+                self.code.emit_u8(0xF8);
+            }
             self.code.emit_u8(if store { 0x91 } else { 0x90 });
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_modrm_mem_disp(
@@ -25192,6 +25209,52 @@ mod tests {
                 "missing {expected:02X?} in {loads:02X?}"
             );
         }
+    }
+
+    #[test]
+    fn vector_helper_narrow_opmask_mode_uses_avx512f_kmovw_only() {
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_narrow_vector_opmask_helpers(true);
+        lowerer.emit_helper_vector_state(PhysReg::Rax, true);
+        let stores = lowerer.code.data().to_vec();
+        for expected in [
+            &[0xC5, 0xF8, 0x91, 0x80, 0x40, 0x09, 0x00, 0x00][..],
+            &[0xC5, 0xF8, 0x91, 0xB8, 0x78, 0x09, 0x00, 0x00][..],
+        ] {
+            assert!(
+                stores
+                    .windows(expected.len())
+                    .any(|window| window == expected),
+                "missing narrow opmask store {expected:02X?} in {stores:02X?}"
+            );
+        }
+        assert!(
+            !stores
+                .windows(4)
+                .any(|window| window == [0xC4, 0xE1, 0xF8, 0x91]),
+            "narrow helper emitted AVX512BW KMOVQ: {stores:02X?}"
+        );
+
+        lowerer.code.clear();
+        lowerer.emit_helper_vector_state(PhysReg::Rcx, false);
+        let loads = lowerer.code.data();
+        for expected in [
+            &[0xC5, 0xF8, 0x90, 0x81, 0x40, 0x09, 0x00, 0x00][..],
+            &[0xC5, 0xF8, 0x90, 0xB9, 0x78, 0x09, 0x00, 0x00][..],
+        ] {
+            assert!(
+                loads
+                    .windows(expected.len())
+                    .any(|window| window == expected),
+                "missing narrow opmask load {expected:02X?} in {loads:02X?}"
+            );
+        }
+        assert!(
+            !loads
+                .windows(4)
+                .any(|window| window == [0xC4, 0xE1, 0xF8, 0x90]),
+            "narrow helper emitted AVX512BW KMOVQ: {loads:02X?}"
+        );
     }
 
     #[test]

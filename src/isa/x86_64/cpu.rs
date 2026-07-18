@@ -3722,6 +3722,10 @@ pub(super) struct JitRegion {
     /// Whether the entry trampoline must marshal ZMM0-ZMM31 and K0-K7.
     #[cfg(target_arch = "x86_64")]
     uses_vector: bool,
+    /// Whether vector state can use AVX512F KMOVW while retaining K[63:16] in
+    /// memory. False selects the general AVX512BW KMOVQ path.
+    #[cfg(target_arch = "x86_64")]
+    narrow_vector_opmasks: bool,
     /// Whether the native entry bridge must marshal MM0-MM7 and guest x87 tags.
     #[cfg(target_arch = "x86_64")]
     uses_mmx: bool,
@@ -4622,6 +4626,7 @@ impl X86_64Vcpu {
             uses_x86_native_vectors_excluding, x86_native_mmx_features_supported_excluding,
             x86_native_mmx_pairs_valid_excluding, x86_native_scalar_features_supported_excluding,
             x86_native_vector_features_supported_excluding,
+            x86_native_vector_uses_k16_opmasks_excluding,
         };
         #[cfg(target_arch = "x86_64")]
         use crate::smir::lower::x86_64::X86_64Lowerer;
@@ -4805,6 +4810,9 @@ impl X86_64Vcpu {
                 uses_vector
             };
             #[cfg(target_arch = "x86_64")]
+            let narrow_vector_opmasks =
+                uses_vector && x86_native_vector_uses_k16_opmasks_excluding(&func, &exits);
+            #[cfg(target_arch = "x86_64")]
             let uses_mmx = uses_x86_native_mmx_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
             if uses_mmx && !x86_native_mmx_features_supported_excluding(&func, &exits) {
@@ -4874,6 +4882,8 @@ impl X86_64Vcpu {
             #[cfg(target_arch = "x86_64")]
             let mut lowerer = X86_64Lowerer::new();
             #[cfg(target_arch = "x86_64")]
+            lowerer.set_narrow_vector_opmask_helpers(narrow_vector_opmasks);
+            #[cfg(target_arch = "x86_64")]
             lowerer.set_guest_pcrel_lea_immediates(true);
             #[cfg(target_arch = "x86_64")]
             lowerer.set_jit_fault_deopt_guards(true);
@@ -4922,6 +4932,8 @@ impl X86_64Vcpu {
                 entry_offset: res.entry_offset,
                 #[cfg(target_arch = "x86_64")]
                 uses_vector,
+                #[cfg(target_arch = "x86_64")]
+                narrow_vector_opmasks,
                 #[cfg(target_arch = "x86_64")]
                 uses_mmx,
             }));
@@ -5080,7 +5092,11 @@ impl X86_64Vcpu {
             }
             gr.k = self.regs.k;
             gr.mxcsr = self.mxcsr;
-            gr.vector_active = 1;
+            gr.vector_active = if region.narrow_vector_opmasks {
+                crate::smir::lower::runtime::X86_VECTOR_STATE_K16
+            } else {
+                crate::smir::lower::runtime::X86_VECTOR_STATE_K64
+            };
         }
         if region.uses_mmx {
             gr.mm = self.regs.mm;
@@ -5913,6 +5929,7 @@ mod decode_cache_invalidation_tests {
             exec: crate::smir::lower::runtime::ExecMem::new(&[0xC3]).unwrap(),
             entry_offset: 0,
             uses_vector: false,
+            narrow_vector_opmasks: false,
             uses_mmx: false,
         };
         vcpu.jit_cache
@@ -5959,6 +5976,7 @@ mod decode_cache_invalidation_tests {
             exec: crate::smir::lower::runtime::ExecMem::new(&code).expect("map MMX region"),
             entry_offset: 0,
             uses_vector: false,
+            narrow_vector_opmasks: false,
             uses_mmx: true,
         };
         let mut vcpu = test_vcpu();

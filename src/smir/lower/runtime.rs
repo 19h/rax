@@ -118,9 +118,11 @@ pub struct GuestRegs {
     pub zmm: [[u64; 8]; 32],
     /// AVX-512 architectural opmask registers K0-K7.
     pub k: [u64; 8],
-    /// Non-zero only for a region containing an admitted native vector op. The
-    /// trampoline branches around every AVX-512 instruction when this is zero,
-    /// preserving GPR-only JIT execution on hosts without AVX-512 support.
+    /// Native vector-state mode. Zero disables every AVX-512 trampoline
+    /// instruction, one imports/exports all 64 opmask bits with KMOVQ, and two
+    /// imports/exports only the low 16 bits with AVX512F KMOVW while preserving
+    /// the upper 48 bits in memory. The narrow mode is valid only for a region
+    /// whose admitted operations cannot read or modify upper opmask bits.
     pub vector_active: u64,
     /// Guest architectural MXCSR control/status. Loaded before native vector
     /// execution and captured afterward.
@@ -171,6 +173,10 @@ pub struct GuestRegs {
     pub x87_tag_word: u64,
 }
 
+pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
+pub const X86_VECTOR_STATE_K64: u64 = 1;
+pub const X86_VECTOR_STATE_K16: u64 = 2;
+
 impl Default for GuestRegs {
     fn default() -> Self {
         Self {
@@ -185,7 +191,7 @@ impl Default for GuestRegs {
             call_fn: 0,
             zmm: [[0; 8]; 32],
             k: [0; 8],
-            vector_active: 0,
+            vector_active: X86_VECTOR_STATE_INACTIVE,
             mxcsr: 0x1F80,
             host_mxcsr: 0,
             tsc_aux: 0,
@@ -612,6 +618,8 @@ macro_rules! x86_enter_native_trampoline {
             "vmovdqu64 zmm29, [rsi+2176]",
             "vmovdqu64 zmm30, [rsi+2240]",
             "vmovdqu64 zmm31, [rsi+2304]",
+            "cmp qword ptr [rsi+2432], 2",
+            "je 5f",
             "kmovq k0, [rsi+2368]",
             "kmovq k1, [rsi+2376]",
             "kmovq k2, [rsi+2384]",
@@ -620,6 +628,17 @@ macro_rules! x86_enter_native_trampoline {
             "kmovq k5, [rsi+2408]",
             "kmovq k6, [rsi+2416]",
             "kmovq k7, [rsi+2424]",
+            "jmp 6f",
+            "5:",
+            "kmovw k0, word ptr [rsi+2368]",
+            "kmovw k1, word ptr [rsi+2376]",
+            "kmovw k2, word ptr [rsi+2384]",
+            "kmovw k3, word ptr [rsi+2392]",
+            "kmovw k4, word ptr [rsi+2400]",
+            "kmovw k5, word ptr [rsi+2408]",
+            "kmovw k6, word ptr [rsi+2416]",
+            "kmovw k7, word ptr [rsi+2424]",
+            "6:",
             "ldmxcsr [rsi+2440]",
             "2:",
             // MMX state is independent of the AVX-512 vector path. MOVQ itself
@@ -710,6 +729,8 @@ macro_rules! x86_enter_native_trampoline {
             "vmovdqu64 [rax+2176], zmm29",
             "vmovdqu64 [rax+2240], zmm30",
             "vmovdqu64 [rax+2304], zmm31",
+            "cmp qword ptr [rax+2432], 2",
+            "je 7f",
             "kmovq [rax+2368], k0",
             "kmovq [rax+2376], k1",
             "kmovq [rax+2384], k2",
@@ -718,6 +739,17 @@ macro_rules! x86_enter_native_trampoline {
             "kmovq [rax+2408], k5",
             "kmovq [rax+2416], k6",
             "kmovq [rax+2424], k7",
+            "jmp 8f",
+            "7:",
+            "kmovw word ptr [rax+2368], k0",
+            "kmovw word ptr [rax+2376], k1",
+            "kmovw word ptr [rax+2384], k2",
+            "kmovw word ptr [rax+2392], k3",
+            "kmovw word ptr [rax+2400], k4",
+            "kmovw word ptr [rax+2408], k5",
+            "kmovw word ptr [rax+2416], k6",
+            "kmovw word ptr [rax+2424], k7",
+            "8:",
             "stmxcsr [rax+2440]",
             "3:",
             // Export the complete guest MMX file before returning the host x87
@@ -7215,6 +7247,32 @@ pub fn uses_x86_native_vectors_excluding(
         })
 }
 
+/// Whether every admitted native vector operation in executable blocks is a
+/// VEXP2 operation whose opmask width is at most 16 bits. Such a region can
+/// marshal K0-K7 with AVX512F KMOVW: each instruction observes only the low
+/// 8/16 bits, and the trampoline leaves every upper architectural bit intact in
+/// `GuestRegs`. Any additional vector operation fails closed to full KMOVQ.
+pub fn x86_native_vector_uses_k16_opmasks_excluding(
+    func: &crate::smir::ir::SmirFunction,
+    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
+) -> bool {
+    let mut saw_exp2 = false;
+    for op in func
+        .blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .flat_map(|block| &block.ops)
+        .filter(|op| x86_native_vector_smir_op(op) || x86_jit_vector_mem_shape_valid(&op.kind))
+    {
+        if matches!(op.kind, crate::smir::ir::ops::OpKind::X86Exp2 { .. }) {
+            saw_exp2 = true;
+        } else {
+            return false;
+        }
+    }
+    saw_exp2
+}
+
 /// Whether an executable (non-exit) block enters architectural MMX state.
 ///
 /// Every lifted MMX instruction ends with `EnterMmx` after its fault-capable
@@ -7419,8 +7477,9 @@ fn x86_host_has_avx512er() -> bool {
 }
 
 /// Verify that this host can execute every admitted vector opcode in `func`.
-/// The trampoline itself uses 512-bit VMOVDQU64 and 64-bit KMOVQ, so AVX-512F
-/// and AVX-512BW are unconditional requirements for every vector region.
+/// The trampoline always requires AVX512F for 512-bit VMOVDQU64 and KMOVW.
+/// General vector regions additionally require AVX512BW for full-width KMOVQ;
+/// VEXP2-only regions use the fail-closed low-16 opmask state mode instead.
 pub fn x86_native_vector_features_supported_excluding(
     func: &crate::smir::ir::SmirFunction,
     excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
@@ -7429,6 +7488,7 @@ pub fn x86_native_vector_features_supported_excluding(
     use crate::smir::ir::types::VecWidth;
 
     let mut any = false;
+    let mut needs_bw = false;
     let mut needs_vl = false;
     let mut needs_vbmi = false;
     let mut needs_vbmi2 = false;
@@ -7525,6 +7585,7 @@ pub fn x86_native_vector_features_supported_excluding(
     {
         any = true;
         let kind = &op.kind;
+        needs_bw |= !matches!(kind, OpKind::X86Exp2 { .. });
         let width = match kind {
             OpKind::VMov { width, .. }
             | OpKind::VAnd { width, .. }
@@ -7870,7 +7931,7 @@ pub fn x86_native_vector_features_supported_excluding(
     #[cfg(target_arch = "x86_64")]
     {
         std::is_x86_feature_detected!("avx512f")
-            && std::is_x86_feature_detected!("avx512bw")
+            && (!needs_bw || std::is_x86_feature_detected!("avx512bw"))
             && (!needs_vl || std::is_x86_feature_detected!("avx512vl"))
             && (!needs_vbmi || std::is_x86_feature_detected!("avx512vbmi"))
             && (!needs_vbmi2 || std::is_x86_feature_detected!("avx512vbmi2"))
@@ -7949,6 +8010,7 @@ pub fn x86_native_vector_features_supported_excluding(
     #[cfg(not(target_arch = "x86_64"))]
     {
         let _ = (
+            needs_bw,
             needs_vl,
             needs_vbmi,
             needs_vbmi2,
@@ -24600,15 +24662,38 @@ mod jit_gate_tests {
                 uses_x86_native_vectors_excluding(&function, &std::collections::HashMap::new()),
                 "{bytes:02X?}"
             );
+            assert!(
+                x86_native_vector_uses_k16_opmasks_excluding(
+                    &function,
+                    &std::collections::HashMap::new()
+                ),
+                "{bytes:02X?}"
+            );
+
+            let scale_f = lifter
+                .lift_insn(
+                    PC + bytes.len() as u64,
+                    &[0x62, 0xF2, 0x6D, 0x48, 0x2C, 0xCB],
+                    &mut context,
+                )
+                .unwrap();
+            let mut mixed_function = function.clone();
+            mixed_function.blocks[0].ops.extend(scale_f.ops);
+            assert!(
+                !x86_native_vector_uses_k16_opmasks_excluding(
+                    &mixed_function,
+                    &std::collections::HashMap::new()
+                ),
+                "mixed VEXP2/VSCALEF region must retain full-width opmask marshalling"
+            );
+
             #[cfg(target_arch = "x86_64")]
             assert_eq!(
                 x86_native_vector_features_supported_excluding(
                     &function,
                     &std::collections::HashMap::new()
                 ),
-                std::is_x86_feature_detected!("avx512f")
-                    && std::is_x86_feature_detected!("avx512bw")
-                    && x86_host_has_avx512er(),
+                std::is_x86_feature_detected!("avx512f") && x86_host_has_avx512er(),
                 "{bytes:02X?}"
             );
             #[cfg(not(target_arch = "x86_64"))]
@@ -24652,6 +24737,13 @@ mod jit_gate_tests {
             assert!(is_native_clobber_safe(&function), "{bytes:02X?}");
             assert!(
                 uses_x86_native_vectors_excluding(&function, &std::collections::HashMap::new()),
+                "{bytes:02X?}"
+            );
+            assert!(
+                !x86_native_vector_uses_k16_opmasks_excluding(
+                    &function,
+                    &std::collections::HashMap::new()
+                ),
                 "{bytes:02X?}"
             );
             #[cfg(target_arch = "x86_64")]
@@ -25218,6 +25310,50 @@ mod jit_gate_tests {
 
         assert_eq!(regs.zmm, expected_zmm);
         assert_eq!(regs.k, expected_k);
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn x86_vector_trampoline_k16_mode_preserves_upper_opmask_state_without_bw() {
+        use crate::smir::lower::SmirLowerer;
+        use crate::smir::lower::x86_64::X86_64Lowerer;
+
+        if !std::is_x86_feature_detected!("avx512f") {
+            return;
+        }
+
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(0x1000, OpKind::Nop);
+        builder.set_terminator(Terminator::Return { values: vec![] });
+        let mut lowerer = X86_64Lowerer::new();
+        let lowered = lowerer
+            .lower_function(&builder.finish())
+            .expect("lower narrow vector-state no-op region");
+        let code = lowerer
+            .finalize()
+            .expect("finalize narrow vector-state no-op region");
+        let exec = ExecMem::new(&code).expect("map narrow vector-state no-op region");
+
+        let mut regs = GuestRegs {
+            vector_active: X86_VECTOR_STATE_K16,
+            ..GuestRegs::default()
+        };
+        for register in 0..32 {
+            regs.zmm[register] = [0x5A00_0000_0000_0000 | register as u64; 8];
+        }
+        for register in 0..8 {
+            regs.k[register] = 0xA5A5_5A5A_C3C3_0000 | (0x1001 * register as u64 + 0x55AA);
+        }
+        let expected_zmm = regs.zmm;
+        let expected_k = regs.k;
+
+        exec.run(lowered.entry_offset, &mut regs);
+
+        assert_eq!(regs.zmm, expected_zmm);
+        assert_eq!(
+            regs.k, expected_k,
+            "KMOVW stores must not overwrite architectural K[63:16]"
+        );
     }
 
     #[cfg(target_arch = "x86_64")]
