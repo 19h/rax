@@ -9300,6 +9300,8 @@ impl X86_64Lowerer {
                 mask_zeroing,
                 zero_upper,
                 round,
+                suppress_exceptions,
+                report_fp16_denormal,
             } => {
                 let dst_reg = self.get_dst_reg(*dst)?;
                 let src_reg = self.get_reg(*src)?;
@@ -9307,6 +9309,11 @@ impl X86_64Lowerer {
                     return Err(LowerError::InvalidOperand {
                         op: "X86PackedFpConvert".to_string(),
                         operand: "requires vector registers".to_string(),
+                    });
+                }
+                if *report_fp16_denormal {
+                    return Err(LowerError::UnsupportedOp {
+                        op: "X86PackedFpConvert FP16 denormal reporting".to_string(),
                     });
                 }
                 let pp = match (*from, *to) {
@@ -9349,6 +9356,7 @@ impl X86_64Lowerer {
                 if let Some(X86OpHint::EvexOp { map, .. }) = op.x86_hint {
                     if !*zero_upper
                         || !matches!(*lanes, 2 | 4 | 8)
+                        || *suppress_exceptions != (*round != FpRoundMode::Dynamic)
                         || (*round != FpRoundMode::Dynamic
                             && !(*from == VecElementType::F64
                                 && *lanes == 8
@@ -9378,6 +9386,7 @@ impl X86_64Lowerer {
                         || mask.is_some()
                         || *mask_zeroing
                         || *round != FpRoundMode::Dynamic
+                        || *suppress_exceptions
                         || !matches!(*lanes, 2 | 4)
                         || !matches!(instruction_width, VecWidth::V128 | VecWidth::V256)
                     {
@@ -9402,6 +9411,7 @@ impl X86_64Lowerer {
                         || mask.is_some()
                         || *mask_zeroing
                         || *round != FpRoundMode::Dynamic
+                        || *suppress_exceptions
                         || *lanes != 2
                         || *dst_width != VecWidth::V128
                         || dst_reg.vec_ext2() != 0
@@ -29724,6 +29734,8 @@ mod tests {
                     mask_zeroing: false,
                     zero_upper: false,
                     round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                    report_fp16_denormal: false,
                 },
                 &[0x0F, 0x5A, 0xC1][..],
             ),
@@ -29740,6 +29752,8 @@ mod tests {
                     mask_zeroing: false,
                     zero_upper: false,
                     round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                    report_fp16_denormal: false,
                 },
                 &[0x66, 0x0F, 0x5A, 0xC1][..],
             ),
@@ -29766,6 +29780,8 @@ mod tests {
                     mask_zeroing: false,
                     zero_upper: true,
                     round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                    report_fp16_denormal: false,
                 },
                 X86OpHint::VexOp {
                     map: X86VecMap::Map0F,
@@ -29789,6 +29805,8 @@ mod tests {
                     mask_zeroing: false,
                     zero_upper: true,
                     round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                    report_fp16_denormal: false,
                 },
                 X86OpHint::VexOp {
                     map: X86VecMap::Map0F,
@@ -29829,6 +29847,8 @@ mod tests {
                     mask_zeroing: true,
                     zero_upper: true,
                     round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                    report_fp16_denormal: false,
                 },
                 &[0x62, 0xF1, 0x7C, 0xC9, 0x5A, 0xC1][..],
             ),
@@ -29845,6 +29865,8 @@ mod tests {
                     mask_zeroing: true,
                     zero_upper: true,
                     round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                    report_fp16_denormal: false,
                 },
                 &[0x62, 0xF1, 0xFD, 0xCC, 0x5A, 0xEE][..],
             ),
@@ -29861,6 +29883,8 @@ mod tests {
                     mask_zeroing: false,
                     zero_upper: true,
                     round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                    report_fp16_denormal: false,
                 },
                 &[0x62, 0xA1, 0x7C, 0x4B, 0x5A, 0xD1][..],
             ),
@@ -29877,6 +29901,8 @@ mod tests {
                     mask_zeroing: false,
                     zero_upper: true,
                     round: FpRoundMode::RoundDown,
+                    suppress_exceptions: true,
+                    report_fp16_denormal: false,
                 },
                 &[0x62, 0xF1, 0xFD, 0x39, 0x5A, 0xC1][..],
             ),
@@ -29900,6 +29926,66 @@ mod tests {
                     .any(|window| window == expected),
                 "{name}: missing EVEX opcode in {code:02X?}"
             );
+        }
+    }
+
+    #[test]
+    fn lower_x86_packed_fp16_precision_converts_remain_explicitly_interpreter_only() {
+        let xmm0 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)));
+        let xmm1 = VReg::Arch(ArchReg::X86(X86Reg::Xmm(1)));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        for (kind, hint) in [
+            (
+                OpKind::X86PackedFpConvert {
+                    dst: xmm0,
+                    src: xmm1,
+                    mask: Some(k1),
+                    from: VecElementType::F16,
+                    to: VecElementType::F64,
+                    lanes: 2,
+                    dst_width: VecWidth::V128,
+                    mask_zeroing: false,
+                    zero_upper: true,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                    report_fp16_denormal: true,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map5,
+                    pp: X86SsePrefix::None,
+                    opcode: 0x5A,
+                    width: VecWidth::V128,
+                    w: false,
+                },
+            ),
+            (
+                OpKind::X86PackedFpConvert {
+                    dst: xmm0,
+                    src: xmm1,
+                    mask: Some(k1),
+                    from: VecElementType::F32,
+                    to: VecElementType::F16,
+                    lanes: 16,
+                    dst_width: VecWidth::V256,
+                    mask_zeroing: true,
+                    zero_upper: true,
+                    round: FpRoundMode::RoundUp,
+                    suppress_exceptions: true,
+                    report_fp16_denormal: false,
+                },
+                X86OpHint::EvexOp {
+                    map: X86VecMap::Map5,
+                    pp: X86SsePrefix::OpSize,
+                    opcode: 0x1D,
+                    width: VecWidth::V512,
+                    w: false,
+                },
+            ),
+        ] {
+            assert!(matches!(
+                lower_single_hinted_op_err(kind, hint),
+                LowerError::UnsupportedOp { .. } | LowerError::InvalidOperand { .. }
+            ));
         }
     }
 

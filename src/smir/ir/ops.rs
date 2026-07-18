@@ -1583,11 +1583,14 @@ pub enum OpKind {
         zero_upper: bool,
     },
 
-    /// x86 packed CVTPS2PD/CVTPD2PS precision conversion. `lanes` is the
-    /// number of converted source elements. `dst_width` identifies the
+    /// x86 packed floating-point precision conversion. `lanes` is the number
+    /// of converted source elements. `dst_width` identifies the
     /// architecturally written low region; narrowing conversions clear any
-    /// unused bits in that region. VEX forms set `zero_upper` to clear all
-    /// shared vector state above `dst_width`, while legacy forms preserve it.
+    /// unused bits in that region. `suppress_exceptions` records EVEX SAE/ER;
+    /// `report_fp16_denormal` distinguishes FP16 conversions that preserve a
+    /// denormal input and set MXCSR.DE from those that preserve it silently.
+    /// VEX/EVEX forms set `zero_upper` to clear all shared vector state above
+    /// `dst_width`, while legacy forms preserve it.
     X86PackedFpConvert {
         dst: VReg,
         src: VReg,
@@ -1599,6 +1602,8 @@ pub enum OpKind {
         mask_zeroing: bool,
         zero_upper: bool,
         round: FpRoundMode,
+        suppress_exceptions: bool,
+        report_fp16_denormal: bool,
     },
 
     /// FP convert precision
@@ -4512,6 +4517,14 @@ impl OpKind {
                     | OpKind::X86Round { .. }
                     | OpKind::X86DotProduct { .. }
                     | OpKind::X86VectorFpCompare { .. }
+                    | OpKind::X86FpConvert {
+                        suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86PackedFpConvert {
+                        suppress_exceptions: false,
+                        ..
+                    }
                     | OpKind::X86X87Control {
                         kind:
                             X86X87ControlKind::Init

@@ -606,8 +606,8 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
     // masks; their memory forms use PredLoad so masked-off elements do not fault.
     // EVEX.b remains rejected except where the relevant family implements memory
     // broadcast or embedded rounding/SAE:
-    //   - aaa (b3 bits[2:0]) != 0  -> allowed only for scalar maskable forms
-    //   - z   (b3 bit[7])          -> allowed only with those scalar masks
+    //   - aaa (b3 bits[2:0]) != 0  -> allowed only for modeled maskable forms
+    //   - z   (b3 bit[7])          -> allowed only with a nonzero mask on those forms
     //   - b   (b3 bit[4])          -> broadcast / embedded rounding
     //
     // EXCEPTION: APX GPR instructions on map 0F38 (opcodes F2/F3/F5/F6/F7) are
@@ -623,7 +623,12 @@ fn decode_evex_prefix(bytes: &[u8], addr: u64) -> Result<VecPrefix, LiftError> {
             Some(0x10 | 0x11 | 0x51 | 0x58 | 0x59 | 0x5C | 0x5D | 0x5E | 0x5F)
         );
     let is_packed_fp_convert =
-        (b1 & 0x07) == 1 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x5A));
+        ((b1 & 0x07) == 1 && matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x5A)))
+            || ((b1 & 0x07) == 2 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x13)))
+            || ((b1 & 0x07) == 5
+                && ((matches!(b2 & 0x03, 0 | 1) && matches!(bytes.get(4), Some(0x5A)))
+                    || ((b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x1D)))))
+            || ((b1 & 0x07) == 6 && (b2 & 0x03) == 1 && matches!(bytes.get(4), Some(0x13)));
     let is_scalar_fp_convert =
         (((b1 & 0x07) == 1 && matches!(b2 & 0x03, 2 | 3) && matches!(bytes.get(4), Some(0x5A)))
             || ((b1 & 0x07) == 5
@@ -8534,6 +8539,8 @@ impl X86_64Lifter {
                     mask_zeroing: false,
                     zero_upper: false,
                     round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                    report_fp16_denormal: false,
                 },
                 X86OpHint::SseOp {
                     prefix: prefix_kind,
@@ -30821,6 +30828,350 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
+    fn lift_vec_packed_fp16_convert(
+        &self,
+        prefix: VecPrefix,
+        bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+        from: VecElementType,
+        to: VecElementType,
+    ) -> Result<LiftResult, LiftError> {
+        let expected_w = from == VecElementType::F64;
+        if !matches!(
+            from,
+            VecElementType::F16 | VecElementType::F32 | VecElementType::F64
+        ) || !matches!(
+            to,
+            VecElementType::F16 | VecElementType::F32 | VecElementType::F64
+        ) || from == to
+            || (prefix.encoding == VecEncodingKind::Vex
+                && (from != VecElementType::F16 || to != VecElementType::F32 || prefix.w))
+            || prefix.vvvv != 0
+            || (prefix.encoding == VecEncodingKind::Evex
+                && (prefix.v_high || prefix.w != expected_w || (prefix.zeroing && prefix.aaa == 0)))
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let opcode = bytes[prefix.bytes];
+        let cursor = prefix.bytes + 1;
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            operand_size_override: matches!(prefix.pp, X86SsePrefix::OpSize),
+            rep_prefix: match prefix.pp {
+                X86SsePrefix::Rep => Some(0xF3),
+                X86SsePrefix::Repne => Some(0xF2),
+                _ => None,
+            },
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
+            cursor,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        let register_sae_or_er =
+            prefix.encoding == VecEncodingKind::Evex && prefix.b && !modrm.is_memory;
+        if prefix.encoding == VecEncodingKind::Evex
+            && prefix.b
+            && modrm.is_memory
+            && prefix.map == X86VecMap::Map0F38
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        if prefix.encoding == VecEncodingKind::Evex && !register_sae_or_er && prefix.l_bits == 3 {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+        if register_sae_or_er && from.bytes() < to.bytes() && prefix.l_bits != 2 {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let instruction_width = if register_sae_or_er {
+            VecWidth::V512
+        } else {
+            prefix.width
+        };
+        let lanes = (instruction_width.bytes() / from.bytes().max(to.bytes())) as u8;
+        let src_bytes = u32::from(lanes) * from.bytes();
+        let dst_bytes = u32::from(lanes) * to.bytes();
+        let container_width = |bytes: u32| match bytes {
+            0..=8 => VecWidth::V64,
+            9..=16 => VecWidth::V128,
+            17..=32 => VecWidth::V256,
+            _ => VecWidth::V512,
+        };
+        let src_width = container_width(src_bytes);
+        let dst_width = container_width(dst_bytes);
+        let mask = (prefix.encoding == VecEncodingKind::Evex && prefix.aaa != 0)
+            .then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
+        let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let broadcast = prefix.encoding == VecEncodingKind::Evex && prefix.b && modrm.is_memory;
+        let src = if modrm.is_memory {
+            let (addr, pre_ops) = self.vec_disp8_addr_to_smir(
+                prefix,
+                modrm.addr.as_ref().unwrap(),
+                next_pc,
+                if broadcast { from.bytes() } else { src_bytes },
+                ctx,
+            );
+            ops.extend(pre_ops);
+            let value = ctx.alloc_vreg();
+            let zero = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::Mov {
+                    dst: zero,
+                    src: SrcOperand::Imm(0),
+                    width: OpWidth::W64,
+                },
+            ));
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VBroadcast {
+                    dst: value,
+                    scalar: zero,
+                    elem: from,
+                    lanes,
+                },
+            ));
+            let mem_width = match from {
+                VecElementType::F16 => MemWidth::B2,
+                VecElementType::F32 => MemWidth::B4,
+                VecElementType::F64 => MemWidth::B8,
+                _ => unreachable!(),
+            };
+            if broadcast {
+                let scalar = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Mov {
+                        dst: scalar,
+                        src: SrcOperand::Imm(0),
+                        width: OpWidth::W64,
+                    },
+                ));
+                if let Some(mask_reg) = mask {
+                    let cond = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::And {
+                            dst: cond,
+                            src1: mask_reg,
+                            src2: SrcOperand::Imm(((1u64 << lanes) - 1) as i64),
+                            width: OpWidth::W64,
+                            flags: FlagUpdate::None,
+                        },
+                    ));
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::PredLoad {
+                            dst: scalar,
+                            cond,
+                            addr,
+                            width: mem_width,
+                            signed: SignExtend::Zero,
+                        },
+                    ));
+                } else {
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::Load {
+                            dst: scalar,
+                            addr,
+                            width: mem_width,
+                            sign: SignExtend::Zero,
+                        },
+                    ));
+                }
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VBroadcast {
+                        dst: value,
+                        scalar,
+                        elem: from,
+                        lanes,
+                    },
+                ));
+            } else if mask.is_some() || src_bytes < 8 {
+                let base = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Lea { dst: base, addr },
+                ));
+                for lane in 0..lanes {
+                    let scalar = ctx.alloc_vreg();
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::Mov {
+                            dst: scalar,
+                            src: SrcOperand::Imm(0),
+                            width: OpWidth::W64,
+                        },
+                    ));
+                    if let Some(mask_reg) = mask {
+                        let shifted = ctx.alloc_vreg();
+                        let cond = ctx.alloc_vreg();
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::Shr {
+                                dst: shifted,
+                                src: mask_reg,
+                                amount: SrcOperand::Imm(i64::from(lane)),
+                                width: OpWidth::W64,
+                                flags: FlagUpdate::None,
+                            },
+                        ));
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::And {
+                                dst: cond,
+                                src1: shifted,
+                                src2: SrcOperand::Imm(1),
+                                width: OpWidth::W64,
+                                flags: FlagUpdate::None,
+                            },
+                        ));
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::PredLoad {
+                                dst: scalar,
+                                cond,
+                                addr: Address::base_off(
+                                    base,
+                                    i64::from(lane) * i64::from(from.bytes()),
+                                ),
+                                width: mem_width,
+                                signed: SignExtend::Zero,
+                            },
+                        ));
+                    } else {
+                        ops.push(SmirOp::new(
+                            OpId(ops.len() as u16),
+                            pc,
+                            OpKind::Load {
+                                dst: scalar,
+                                addr: Address::base_off(
+                                    base,
+                                    i64::from(lane) * i64::from(from.bytes()),
+                                ),
+                                width: mem_width,
+                                sign: SignExtend::Zero,
+                            },
+                        ));
+                    }
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::VInsertLane {
+                            dst: value,
+                            vec: value,
+                            scalar,
+                            lane,
+                            elem: from,
+                        },
+                    ));
+                }
+            } else {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VLoad {
+                        dst: value,
+                        addr,
+                        width: src_width,
+                    },
+                ));
+            }
+            value
+        } else {
+            self.vec_reg(
+                modrm.rm
+                    + if prefix.encoding == VecEncodingKind::Evex && prefix.rm_high {
+                        16
+                    } else {
+                        0
+                    },
+                src_width,
+            )
+        };
+        let dst = self.vec_reg(
+            modrm.reg
+                + if prefix.encoding == VecEncodingKind::Evex && prefix.reg_high {
+                    16
+                } else {
+                    0
+                },
+            dst_width,
+        );
+        let round = if register_sae_or_er && from.bytes() > to.bytes() {
+            match prefix.l_bits {
+                0 => FpRoundMode::RoundNearest,
+                1 => FpRoundMode::RoundDown,
+                2 => FpRoundMode::RoundUp,
+                _ => FpRoundMode::RoundTowardZero,
+            }
+        } else {
+            FpRoundMode::Dynamic
+        };
+        let hint = if register_sae_or_er {
+            X86OpHint::EvexOp {
+                map: prefix.map,
+                pp: prefix.pp,
+                opcode,
+                width: instruction_width,
+                w: prefix.w,
+            }
+        } else {
+            self.vec_hint(prefix, opcode)
+        };
+        ops.push(SmirOp::with_hint(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86PackedFpConvert {
+                dst,
+                src,
+                mask,
+                from,
+                to,
+                lanes,
+                dst_width,
+                mask_zeroing: prefix.zeroing,
+                zero_upper: true,
+                round,
+                suppress_exceptions: register_sae_or_er,
+                report_fp16_denormal: from == VecElementType::F16
+                    && (to == VecElementType::F64 || broadcast),
+            },
+            hint,
+        ));
+        Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
+    }
+
     fn unsupported_evex_map_opcode(
         &self,
         map: X86VecMap,
@@ -32234,6 +32585,8 @@ impl X86_64Lifter {
                             mask_zeroing: prefix.zeroing,
                             zero_upper: true,
                             round,
+                            suppress_exceptions: embedded_rounding,
+                            report_fp16_denormal: false,
                         },
                         conversion_hint,
                     ));
@@ -33601,6 +33954,14 @@ impl X86_64Lifter {
                 }),
             },
             X86VecMap::Map0F38 => match opcode {
+                0x13 if prefix.pp == X86SsePrefix::OpSize => self.lift_vec_packed_fp16_convert(
+                    prefix,
+                    bytes,
+                    pc,
+                    ctx,
+                    VecElementType::F16,
+                    VecElementType::F32,
+                ),
                 0x64..=0x66 if prefix.pp == X86SsePrefix::OpSize => {
                     self.lift_evex_mask_blend(prefix, opcode, bytes, pc, ctx)
                 }
@@ -33836,6 +34197,22 @@ impl X86_64Lifter {
                 }),
             },
             X86VecMap::Map5 => match opcode {
+                0x5A if prefix.pp == X86SsePrefix::None => self.lift_vec_packed_fp16_convert(
+                    prefix,
+                    bytes,
+                    pc,
+                    ctx,
+                    VecElementType::F16,
+                    VecElementType::F64,
+                ),
+                0x5A if prefix.pp == X86SsePrefix::OpSize => self.lift_vec_packed_fp16_convert(
+                    prefix,
+                    bytes,
+                    pc,
+                    ctx,
+                    VecElementType::F64,
+                    VecElementType::F16,
+                ),
                 0x5A if prefix.pp == X86SsePrefix::Repne => self.lift_vec_scalar_fp_convert(
                     prefix,
                     bytes,
@@ -33860,6 +34237,14 @@ impl X86_64Lifter {
                     VecElementType::F32,
                     VecElementType::F16,
                 ),
+                0x1D if prefix.pp == X86SsePrefix::OpSize => self.lift_vec_packed_fp16_convert(
+                    prefix,
+                    bytes,
+                    pc,
+                    ctx,
+                    VecElementType::F32,
+                    VecElementType::F16,
+                ),
                 0x10 | 0x11 => self.lift_evex_fp16_scalar_move(prefix, opcode, bytes, pc, ctx),
                 0x2A | 0x7B => self.lift_evex_int_to_fp16(prefix, opcode, bytes, pc, ctx),
                 0x2C | 0x2D | 0x78 | 0x79 => {
@@ -33874,6 +34259,14 @@ impl X86_64Lifter {
                 _ => self.unsupported_evex_map_opcode(prefix.map, opcode, pc),
             },
             X86VecMap::Map6 => match opcode {
+                0x13 if prefix.pp == X86SsePrefix::OpSize => self.lift_vec_packed_fp16_convert(
+                    prefix,
+                    bytes,
+                    pc,
+                    ctx,
+                    VecElementType::F16,
+                    VecElementType::F32,
+                ),
                 0x13 if prefix.pp == X86SsePrefix::None => self.lift_vec_scalar_fp_convert(
                     prefix,
                     bytes,
@@ -56297,10 +56690,13 @@ mod tests {
                     mask_zeroing: actual_zeroing,
                     zero_upper: true,
                     round: actual_round,
+                    suppress_exceptions: actual_suppress,
+                    report_fp16_denormal: false,
                 } if actual_dst == dst && actual_src == src && actual_mask == mask
                     && actual_from == from && actual_to == to && actual_lanes == lanes
                     && actual_width == dst_width && actual_zeroing == zeroing
                     && actual_round == round
+                    && actual_suppress == (round != FpRoundMode::Dynamic)
             ));
         }
 
@@ -56371,6 +56767,468 @@ mod tests {
             &[0x62, 0xF1, 0x7D, 0x48, 0x5A, 0xC1][..], // VCVTPD2PS W=0
             &[0x62, 0xF1, 0x7C, 0x58, 0x5A, 0xC1][..], // widening EVEX.b reg
             &[0x62, 0xF1, 0x7C, 0x68, 0x5A, 0xC1][..], // reserved EVEX.L'L=3
+        ] {
+            assert!(matches!(
+                lift_single(bytes),
+                Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
+            ));
+        }
+    }
+
+    #[test]
+    fn lift_packed_fp16_precision_family_widths_masks_memory_er_sae_and_maps() {
+        let vex = lift_single(&[0xC4, 0xE2, 0x79, 0x13, 0xC1]).unwrap();
+        assert!(matches!(
+            vex.ops.last().unwrap().kind,
+            OpKind::X86PackedFpConvert {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                mask: None,
+                from: VecElementType::F16,
+                to: VecElementType::F32,
+                lanes: 4,
+                dst_width: VecWidth::V128,
+                mask_zeroing: false,
+                zero_upper: true,
+                round: FpRoundMode::Dynamic,
+                suppress_exceptions: false,
+                report_fp16_denormal: false,
+            }
+        ));
+        let vex256 = lift_single(&[0xC4, 0xE2, 0x7D, 0x13, 0xC1]).unwrap();
+        assert!(matches!(
+            vex256.ops.last().unwrap().kind,
+            OpKind::X86PackedFpConvert {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Ymm(0))),
+                src: VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                from: VecElementType::F16,
+                to: VecElementType::F32,
+                lanes: 8,
+                dst_width: VecWidth::V256,
+                ..
+            }
+        ));
+
+        for (bytes, from, to, dst, src, lanes, dst_width) in [
+            (
+                &[0x62, 0xF5, 0x7C, 0x09, 0x5A, 0xC8][..],
+                VecElementType::F16,
+                VecElementType::F64,
+                X86Reg::Xmm(1),
+                X86Reg::Xmm(0),
+                2,
+                VecWidth::V128,
+            ),
+            (
+                &[0x62, 0xF5, 0xFD, 0x09, 0x5A, 0xC8][..],
+                VecElementType::F64,
+                VecElementType::F16,
+                X86Reg::Xmm(1),
+                X86Reg::Xmm(0),
+                2,
+                VecWidth::V64,
+            ),
+            (
+                &[0x62, 0xF2, 0x7D, 0x09, 0x13, 0xC8][..],
+                VecElementType::F16,
+                VecElementType::F32,
+                X86Reg::Xmm(1),
+                X86Reg::Xmm(0),
+                4,
+                VecWidth::V128,
+            ),
+            (
+                &[0x62, 0xF6, 0x7D, 0x09, 0x13, 0xC8][..],
+                VecElementType::F16,
+                VecElementType::F32,
+                X86Reg::Xmm(1),
+                X86Reg::Xmm(0),
+                4,
+                VecWidth::V128,
+            ),
+            (
+                &[0x62, 0xF5, 0x7D, 0x09, 0x1D, 0xC8][..],
+                VecElementType::F32,
+                VecElementType::F16,
+                X86Reg::Xmm(1),
+                X86Reg::Xmm(0),
+                4,
+                VecWidth::V64,
+            ),
+            (
+                &[0x62, 0xF5, 0x7C, 0x29, 0x5A, 0xC8][..],
+                VecElementType::F16,
+                VecElementType::F64,
+                X86Reg::Ymm(1),
+                X86Reg::Xmm(0),
+                4,
+                VecWidth::V256,
+            ),
+            (
+                &[0x62, 0xF5, 0xFD, 0x29, 0x5A, 0xC8][..],
+                VecElementType::F64,
+                VecElementType::F16,
+                X86Reg::Xmm(1),
+                X86Reg::Ymm(0),
+                4,
+                VecWidth::V64,
+            ),
+            (
+                &[0x62, 0xF2, 0x7D, 0x29, 0x13, 0xC8][..],
+                VecElementType::F16,
+                VecElementType::F32,
+                X86Reg::Ymm(1),
+                X86Reg::Xmm(0),
+                8,
+                VecWidth::V256,
+            ),
+            (
+                &[0x62, 0xF6, 0x7D, 0x29, 0x13, 0xC8][..],
+                VecElementType::F16,
+                VecElementType::F32,
+                X86Reg::Ymm(1),
+                X86Reg::Xmm(0),
+                8,
+                VecWidth::V256,
+            ),
+            (
+                &[0x62, 0xF5, 0x7D, 0x29, 0x1D, 0xC8][..],
+                VecElementType::F32,
+                VecElementType::F16,
+                X86Reg::Xmm(1),
+                X86Reg::Ymm(0),
+                8,
+                VecWidth::V128,
+            ),
+            (
+                &[0x62, 0xF5, 0x7C, 0x49, 0x5A, 0xC8][..],
+                VecElementType::F16,
+                VecElementType::F64,
+                X86Reg::Zmm(1),
+                X86Reg::Xmm(0),
+                8,
+                VecWidth::V512,
+            ),
+            (
+                &[0x62, 0xF5, 0xFD, 0x49, 0x5A, 0xC8][..],
+                VecElementType::F64,
+                VecElementType::F16,
+                X86Reg::Xmm(1),
+                X86Reg::Zmm(0),
+                8,
+                VecWidth::V128,
+            ),
+            (
+                &[0x62, 0xF2, 0x7D, 0x49, 0x13, 0xC8][..],
+                VecElementType::F16,
+                VecElementType::F32,
+                X86Reg::Zmm(1),
+                X86Reg::Ymm(0),
+                16,
+                VecWidth::V512,
+            ),
+            (
+                &[0x62, 0xF6, 0x7D, 0x49, 0x13, 0xC8][..],
+                VecElementType::F16,
+                VecElementType::F32,
+                X86Reg::Zmm(1),
+                X86Reg::Ymm(0),
+                16,
+                VecWidth::V512,
+            ),
+            (
+                &[0x62, 0xF5, 0x7D, 0x49, 0x1D, 0xC8][..],
+                VecElementType::F32,
+                VecElementType::F16,
+                X86Reg::Ymm(1),
+                X86Reg::Zmm(0),
+                16,
+                VecWidth::V256,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86PackedFpConvert {
+                    dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                    src: VReg::Arch(ArchReg::X86(actual_src)),
+                    mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+                    from: actual_from,
+                    to: actual_to,
+                    lanes: actual_lanes,
+                    dst_width: actual_width,
+                    mask_zeroing: false,
+                    zero_upper: true,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                    report_fp16_denormal: actual_report,
+                } if actual_dst == dst && actual_src == src && actual_from == from
+                    && actual_to == to && actual_lanes == lanes && actual_width == dst_width
+                    && actual_report == (from == VecElementType::F16
+                        && to == VecElementType::F64)
+            ));
+        }
+
+        for (bytes, from, to, dst, src, lanes, dst_width, report_fp16_denormal) in [
+            (
+                &[0x62, 0xA5, 0x7C, 0x4B, 0x5A, 0xD1][..],
+                VecElementType::F16,
+                VecElementType::F64,
+                X86Reg::Zmm(18),
+                X86Reg::Xmm(17),
+                8,
+                VecWidth::V512,
+                true,
+            ),
+            (
+                &[0x62, 0xA5, 0xFD, 0x4B, 0x5A, 0xD1][..],
+                VecElementType::F64,
+                VecElementType::F16,
+                X86Reg::Xmm(18),
+                X86Reg::Zmm(17),
+                8,
+                VecWidth::V128,
+                false,
+            ),
+            (
+                &[0x62, 0xA2, 0x7D, 0x4B, 0x13, 0xD1][..],
+                VecElementType::F16,
+                VecElementType::F32,
+                X86Reg::Zmm(18),
+                X86Reg::Ymm(17),
+                16,
+                VecWidth::V512,
+                false,
+            ),
+            (
+                &[0x62, 0xA6, 0x7D, 0x4B, 0x13, 0xD1][..],
+                VecElementType::F16,
+                VecElementType::F32,
+                X86Reg::Zmm(18),
+                X86Reg::Ymm(17),
+                16,
+                VecWidth::V512,
+                false,
+            ),
+            (
+                &[0x62, 0xA5, 0x7D, 0x4B, 0x1D, 0xD1][..],
+                VecElementType::F32,
+                VecElementType::F16,
+                X86Reg::Ymm(18),
+                X86Reg::Zmm(17),
+                16,
+                VecWidth::V256,
+                false,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86PackedFpConvert {
+                    dst: VReg::Arch(ArchReg::X86(actual_dst)),
+                    src: VReg::Arch(ArchReg::X86(actual_src)),
+                    mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(3)))),
+                    from: actual_from,
+                    to: actual_to,
+                    lanes: actual_lanes,
+                    dst_width: actual_width,
+                    report_fp16_denormal: actual_report,
+                    ..
+                } if actual_dst == dst && actual_src == src && actual_from == from
+                    && actual_to == to && actual_lanes == lanes && actual_width == dst_width
+                    && actual_report == report_fp16_denormal
+            ));
+        }
+
+        for (bytes, expected_offset, pred_loads, report_fp16_denormal) in [
+            // VCVTPH2PD full-memory tuple scales and broadcast tuple.
+            (
+                &[0x62, 0xF5, 0x7C, 0x09, 0x5A, 0x48, 0x08][..],
+                32i64,
+                2usize,
+                true,
+            ),
+            (&[0x62, 0xF5, 0x7C, 0x29, 0x5A, 0x48, 0x08][..], 64, 4, true),
+            (
+                &[0x62, 0xF5, 0x7C, 0x49, 0x5A, 0x48, 0x08][..],
+                128,
+                8,
+                true,
+            ),
+            (&[0x62, 0xF5, 0x7C, 0x19, 0x5A, 0x48, 0x08][..], 16, 1, true),
+            // VCVTPD2PH full-memory tuple scales and broadcast tuple.
+            (
+                &[0x62, 0xF5, 0xFD, 0x09, 0x5A, 0x48, 0x08][..],
+                128,
+                2,
+                false,
+            ),
+            (
+                &[0x62, 0xF5, 0xFD, 0x29, 0x5A, 0x48, 0x08][..],
+                256,
+                4,
+                false,
+            ),
+            (
+                &[0x62, 0xF5, 0xFD, 0x49, 0x5A, 0x48, 0x08][..],
+                512,
+                8,
+                false,
+            ),
+            (
+                &[0x62, 0xF5, 0xFD, 0x19, 0x5A, 0x48, 0x08][..],
+                64,
+                1,
+                false,
+            ),
+            // VCVTPH2PS full-memory tuple scales; EVEX.b is reserved.
+            (
+                &[0x62, 0xF2, 0x7D, 0x09, 0x13, 0x48, 0x08][..],
+                64,
+                4,
+                false,
+            ),
+            (
+                &[0x62, 0xF2, 0x7D, 0x29, 0x13, 0x48, 0x08][..],
+                128,
+                8,
+                false,
+            ),
+            (
+                &[0x62, 0xF2, 0x7D, 0x49, 0x13, 0x48, 0x08][..],
+                256,
+                16,
+                false,
+            ),
+            // VCVTPH2PSX full-memory tuple scales and broadcast tuple.
+            (
+                &[0x62, 0xF6, 0x7D, 0x09, 0x13, 0x48, 0x08][..],
+                64,
+                4,
+                false,
+            ),
+            (
+                &[0x62, 0xF6, 0x7D, 0x29, 0x13, 0x48, 0x08][..],
+                128,
+                8,
+                false,
+            ),
+            (
+                &[0x62, 0xF6, 0x7D, 0x49, 0x13, 0x48, 0x08][..],
+                256,
+                16,
+                false,
+            ),
+            (&[0x62, 0xF6, 0x7D, 0x19, 0x13, 0x48, 0x08][..], 16, 1, true),
+            // VCVTPS2PHX full-memory tuple scales and broadcast tuple.
+            (
+                &[0x62, 0xF5, 0x7D, 0x09, 0x1D, 0x48, 0x08][..],
+                128,
+                4,
+                false,
+            ),
+            (
+                &[0x62, 0xF5, 0x7D, 0x29, 0x1D, 0x48, 0x08][..],
+                256,
+                8,
+                false,
+            ),
+            (
+                &[0x62, 0xF5, 0x7D, 0x49, 0x1D, 0x48, 0x08][..],
+                512,
+                16,
+                false,
+            ),
+            (
+                &[0x62, 0xF5, 0x7D, 0x19, 0x1D, 0x48, 0x08][..],
+                32,
+                1,
+                false,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86PackedFpConvert {
+                    report_fp16_denormal: actual,
+                    ..
+                } if actual == report_fp16_denormal
+            ));
+            assert!(
+                result.ops.iter().any(|op| matches!(
+                    op.kind,
+                    OpKind::Lea {
+                        addr: Address::BaseOffset {
+                            offset,
+                            disp_size: DispSize::Disp8,
+                            ..
+                        },
+                        ..
+                    } if offset == expected_offset
+                )) || result.ops.iter().any(|op| matches!(
+                    op.kind,
+                    OpKind::PredLoad {
+                        addr: Address::BaseOffset {
+                            offset,
+                            disp_size: DispSize::Disp8,
+                            ..
+                        },
+                        ..
+                    } if offset == expected_offset
+                ))
+            );
+            assert_eq!(
+                result
+                    .ops
+                    .iter()
+                    .filter(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+                    .count(),
+                pred_loads
+            );
+        }
+
+        for (bytes, from, to, round) in [
+            (
+                &[0x62, 0xF5, 0x7C, 0x59, 0x5A, 0xC0][..],
+                VecElementType::F16,
+                VecElementType::F64,
+                FpRoundMode::Dynamic,
+            ),
+            (
+                &[0x62, 0xF5, 0xFD, 0x59, 0x5A, 0xC0][..],
+                VecElementType::F64,
+                VecElementType::F16,
+                FpRoundMode::RoundUp,
+            ),
+            (
+                &[0x62, 0xF5, 0x7D, 0x59, 0x1D, 0xC0][..],
+                VecElementType::F32,
+                VecElementType::F16,
+                FpRoundMode::RoundUp,
+            ),
+        ] {
+            let result = lift_single(bytes).unwrap();
+            assert!(matches!(
+                result.ops.last().unwrap().kind,
+                OpKind::X86PackedFpConvert {
+                    from: actual_from,
+                    to: actual_to,
+                    round: actual_round,
+                    suppress_exceptions: true,
+                    ..
+                } if actual_from == from && actual_to == to && actual_round == round
+            ));
+        }
+
+        for bytes in [
+            &[0x62, 0xF5, 0xFD, 0x88, 0x5A, 0xC0][..], // {z} without a mask
+            &[0x62, 0xF5, 0x7D, 0x09, 0x5A, 0xC0][..], // VCVTPD2PH W=0
+            &[0x62, 0xF2, 0x7D, 0x19, 0x13, 0x00][..], // VCVTPH2PS has no broadcast
+            &[0x62, 0xF5, 0x7C, 0x19, 0x5A, 0xC0][..], // packed SAE requires VL=512
+            &[0x62, 0xF5, 0x75, 0x09, 0x1D, 0xC0][..], // reserved EVEX.vvvv
+            &[0x62, 0xF6, 0x7D, 0x69, 0x13, 0xC0][..], // reserved EVEX.L'L=3
+            &[0xC4, 0xE2, 0x71, 0x13, 0xC1][..],       // reserved VEX.vvvv
+            &[0xC4, 0xE2, 0xF9, 0x13, 0xC1][..],       // VCVTPH2PS requires VEX.W=0
         ] {
             assert!(matches!(
                 lift_single(bytes),

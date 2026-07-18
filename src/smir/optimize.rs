@@ -2745,9 +2745,19 @@ impl OpKind {
                 result.extend(mask.iter().copied());
             }
 
-            OpKind::X86PackedFpConvert { src, mask, .. } => {
+            OpKind::X86PackedFpConvert {
+                dst,
+                src,
+                mask,
+                mask_zeroing,
+                zero_upper,
+                ..
+            } => {
                 result.push(*src);
                 result.extend(mask.iter().copied());
+                if !zero_upper || (mask.is_some() && !mask_zeroing) {
+                    result.push(*dst);
+                }
             }
 
             // Vector operations
@@ -9308,6 +9318,51 @@ mod tests {
                 .count(),
             8,
             "per-lane fault-suppressing loads must precede conversion"
+        );
+
+        let fp16_packed_convert = optimized(&[0x62, 0xF5, 0x7C, 0x09, 0x5A, 0x00]);
+        let ops = &fp16_packed_convert.blocks[0].ops;
+        let conversion = ops
+            .iter()
+            .position(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::X86PackedFpConvert {
+                        dst: VReg::Arch(ArchReg::X86(X86Reg::Xmm(0))),
+                        mask: Some(VReg::Arch(ArchReg::X86(X86Reg::K(1)))),
+                        from: VecElementType::F16,
+                        to: VecElementType::F64,
+                        lanes: 2,
+                        mask_zeroing: false,
+                        ..
+                    }
+                )
+            })
+            .expect("masked VCVTPH2PD conversion removed");
+        assert!(ops[conversion].kind.has_side_effects());
+        assert_eq!(
+            ops[..conversion]
+                .iter()
+                .filter(|op| matches!(op.kind, OpKind::PredLoad { .. }))
+                .count(),
+            2
+        );
+        let sources = ops[conversion].kind.source_vregs();
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)))));
+        assert!(sources.contains(&VReg::Arch(ArchReg::X86(X86Reg::K(1)))));
+
+        let legacy_packed_convert = optimized(&[0x0F, 0x5A, 0xC1]);
+        let conversion = legacy_packed_convert.blocks[0]
+            .ops
+            .iter()
+            .find(|op| matches!(op.kind, OpKind::X86PackedFpConvert { .. }))
+            .expect("legacy CVTPS2PD conversion removed");
+        assert!(
+            conversion
+                .kind
+                .source_vregs()
+                .contains(&VReg::Arch(ArchReg::X86(X86Reg::Xmm(0)))),
+            "legacy packed conversion must preserve vector state above XMM"
         );
 
         for (name, bytes, load) in [

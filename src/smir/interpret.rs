@@ -3562,6 +3562,7 @@ impl SmirInterpreter {
                     to_format,
                     mode,
                     mxcsr,
+                    true,
                 );
                 if !*suppress_exceptions {
                     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
@@ -3587,6 +3588,8 @@ impl SmirInterpreter {
                 mask_zeroing,
                 zero_upper,
                 round,
+                suppress_exceptions,
+                report_fp16_denormal,
             } => {
                 let source = Self::read_vec(ctx, *src);
                 let old = Self::read_vec(ctx, *dst);
@@ -3596,6 +3599,31 @@ impl SmirInterpreter {
                 }
                 result[..(dst_width.bytes() / 8) as usize].fill(0);
                 let mask_bits = mask.map(|reg| ctx.read_vreg(reg));
+                let mxcsr = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.mxcsr,
+                    _ => 0x1F80,
+                };
+                let mode = if *round == FpRoundMode::Dynamic {
+                    self.dynamic_fp_round_mode(ctx)
+                } else {
+                    *round
+                };
+                let (from_format, to_format) = match (*from, *to) {
+                    (VecElementType::F16, VecElementType::F32) => (X86_SIMD_F16, X86_SIMD_F32),
+                    (VecElementType::F16, VecElementType::F64) => (X86_SIMD_F16, X86_SIMD_F64),
+                    (VecElementType::F32, VecElementType::F16) => (X86_SIMD_F32, X86_SIMD_F16),
+                    (VecElementType::F32, VecElementType::F64) => (X86_SIMD_F32, X86_SIMD_F64),
+                    (VecElementType::F64, VecElementType::F16) => (X86_SIMD_F64, X86_SIMD_F16),
+                    (VecElementType::F64, VecElementType::F32) => (X86_SIMD_F64, X86_SIMD_F32),
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: ctx.pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                let mut status = 0;
                 for lane in 0..*lanes {
                     if mask_bits.is_some_and(|bits| bits & (1u64 << lane) == 0) {
                         if !*mask_zeroing {
@@ -3604,28 +3632,32 @@ impl SmirInterpreter {
                         }
                         continue;
                     }
-                    let converted = match (*from, *to) {
-                        (VecElementType::F32, VecElementType::F64) => {
-                            let bits = Self::get_lane(&source, lane, 32) as u32;
-                            (f32::from_bits(bits) as f64).to_bits()
-                        }
-                        (VecElementType::F64, VecElementType::F32) => {
-                            let bits = Self::get_lane(&source, lane, 64);
-                            u64::from(self.x86_f64_to_f32_bits_mode(
-                                ctx,
-                                f64::from_bits(bits),
-                                *round,
-                            ))
-                        }
-                        _ => {
-                            ctx.request_exit(ExitReason::Undefined {
-                                addr: ctx.pc,
-                                opcode: 0,
-                            });
-                            0
-                        }
-                    };
-                    Self::set_lane(&mut result, lane, to.bytes() * 8, converted);
+                    let source_bits = Self::get_lane(&source, lane, from.bytes() * 8);
+                    let converted = Self::x86_simd_fp_convert_precision(
+                        source_bits,
+                        from_format,
+                        to_format,
+                        mode,
+                        if *to == VecElementType::F16 {
+                            // VCVTPD2PH/VCVTPS2PHX produce FP16 denormals
+                            // regardless of MXCSR.FTZ.
+                            mxcsr & !(1 << 15)
+                        } else {
+                            mxcsr
+                        },
+                        *report_fp16_denormal,
+                    );
+                    status |= converted.status;
+                    Self::set_lane(&mut result, lane, to.bytes() * 8, converted.bits);
+                }
+                if !*suppress_exceptions {
+                    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+                        x86.mxcsr |= status;
+                    }
+                    if Self::x86_simd_fp_unmasked(status, mxcsr) {
+                        ctx.request_exit(ExitReason::SimdFloatingPoint { addr: ctx.pc });
+                        return Ok(());
+                    }
                 }
                 Self::write_vec(ctx, *dst, result);
             }
@@ -14980,8 +15012,20 @@ impl SmirInterpreter {
         to: X86SimdFpFormat,
         mode: FpRoundMode,
         mxcsr: u32,
+        report_fp16_denormal: bool,
     ) -> X86SimdFpResult {
-        let source = Self::x86_simd_fp_apply_daz(bits, from, mxcsr);
+        let source = if from.total_bits == 16 {
+            X86SimdFpResult {
+                bits,
+                status: if report_fp16_denormal && Self::x86_simd_fp_is_denormal(bits, from) {
+                    1 << 1
+                } else {
+                    0
+                },
+            }
+        } else {
+            Self::x86_simd_fp_apply_daz(bits, from, mxcsr)
+        };
         let mut status = source.status;
         let (from_sign, _, from_fraction, _) = Self::x86_simd_fp_masks(from);
         let (to_sign, to_exponent, to_fraction, to_quiet) = Self::x86_simd_fp_masks(to);
@@ -22911,6 +22955,7 @@ mod tests {
                 X86_SIMD_F32,
                 FpRoundMode::RoundNearest,
                 0x1F80,
+                true,
             );
             assert_eq!(
                 converted.bits as u32,
@@ -22932,6 +22977,7 @@ mod tests {
                     X86_SIMD_F64,
                     FpRoundMode::RoundNearest,
                     0x1F80,
+                    true,
                 );
                 assert_eq!(widened.bits, (f32::from_bits(f32_bits) as f64).to_bits());
                 let narrowed = SmirInterpreter::x86_simd_fp_convert_precision(
@@ -22940,6 +22986,7 @@ mod tests {
                     X86_SIMD_F16,
                     FpRoundMode::RoundNearest,
                     0x1F80,
+                    true,
                 );
                 assert_eq!(
                     narrowed.bits as u16,
@@ -22955,6 +23002,7 @@ mod tests {
                     X86_SIMD_F32,
                     FpRoundMode::RoundNearest,
                     0x1F80,
+                    true,
                 );
                 assert_eq!(
                     narrowed.bits as u32,
@@ -22972,6 +23020,7 @@ mod tests {
             X86_SIMD_F16,
             FpRoundMode::RoundNearest,
             0x1F80,
+            true,
         );
         assert_eq!(direct.bits, 0x3C01);
         assert_eq!(
@@ -23008,6 +23057,7 @@ mod tests {
                 X86_SIMD_F16,
                 mode,
                 0x1F80,
+                true,
             );
             assert_eq!(converted.bits as u16, expected, "{source} {mode:?}");
         }
@@ -23024,6 +23074,7 @@ mod tests {
                 to,
                 FpRoundMode::RoundNearest,
                 0x1F80,
+                true,
             );
             assert_eq!(converted.bits, expected);
             assert_eq!(converted.status, 0);
@@ -23035,6 +23086,7 @@ mod tests {
             X86_SIMD_F16,
             FpRoundMode::RoundNearest,
             0x1F80,
+            true,
         );
         let expected_payload = ((0x0000_0123_4567_89ABu64 >> 42) as u16) & 0x03FF;
         assert_eq!(snan.bits as u16, 0x7C00 | expected_payload | 0x0200);
@@ -23045,6 +23097,7 @@ mod tests {
             X86_SIMD_F32,
             FpRoundMode::RoundNearest,
             0x1F80,
+            true,
         );
         assert_eq!(qnan.bits, 0xFFC0_091A);
         assert_eq!(qnan.status & 1, 0);
@@ -23055,6 +23108,7 @@ mod tests {
             X86_SIMD_F32,
             FpRoundMode::RoundNearest,
             0x1F80,
+            true,
         );
         assert_eq!(denormal.bits, 0x3380_0000);
         assert_eq!(denormal.status & (1 << 1), 1 << 1);
@@ -23064,9 +23118,20 @@ mod tests {
             X86_SIMD_F32,
             FpRoundMode::RoundNearest,
             0x1F80 | (1 << 6),
+            true,
         );
-        assert_eq!(daz.bits, 0);
-        assert_eq!(daz.status, 0);
+        assert_eq!(daz.bits, 0x3380_0000);
+        assert_eq!(daz.status & (1 << 1), 1 << 1);
+        let fp16_no_denormal_status = SmirInterpreter::x86_simd_fp_convert_precision(
+            1,
+            X86_SIMD_F16,
+            X86_SIMD_F32,
+            FpRoundMode::RoundNearest,
+            0x1F80 | (1 << 6),
+            false,
+        );
+        assert_eq!(fp16_no_denormal_status.bits, 0x3380_0000);
+        assert_eq!(fp16_no_denormal_status.status, 0);
 
         let overflow = SmirInterpreter::x86_simd_fp_convert_precision(
             u64::from(f32::MAX.to_bits()),
@@ -23074,6 +23139,7 @@ mod tests {
             X86_SIMD_F16,
             FpRoundMode::RoundNearest,
             0x1F80,
+            true,
         );
         assert_eq!(overflow.bits, 0x7C00);
         assert_eq!(overflow.status & ((1 << 3) | (1 << 5)), (1 << 3) | (1 << 5));
@@ -23083,6 +23149,7 @@ mod tests {
             X86_SIMD_F16,
             FpRoundMode::RoundNearest,
             0x1F80,
+            true,
         );
         assert_eq!(underflow.bits, 0);
         assert_eq!(
@@ -23226,6 +23293,21 @@ mod tests {
         if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
             assert_eq!(x86.xmm[1][0] as u32, 0x7FC0_2000);
             assert_eq!(x86.mxcsr & 0x3F, 0);
+        }
+
+        // FP16 denormals are never treated as zero, even when DAZ is set;
+        // scalar SH conversions still report the denormal status.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = merge;
+            x86.xmm[1] = [u64::MAX; 16];
+            x86.xmm[2][0] = 1;
+            x86.k[1] = 1;
+            x86.mxcsr = 0x1F80 | (1 << 6);
+        }
+        execute_lifted_x86(&[0x62, 0xF6, 0x7C, 0x09, 0x13, 0xCA], &mut ctx, &mut memory);
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[1][0] as u32, 0x3380_0000);
+            assert_eq!(x86.mxcsr & (1 << 1), 1 << 1);
         }
 
         // Inactive memory masks suppress the load and all FP exceptions.
@@ -23501,6 +23583,217 @@ mod tests {
                     "embedded round-down lane {lane}"
                 );
             }
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_packed_fp16_precision_conversions_are_exact_and_honor_daz_ftz_er_sae() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let sentinel = 0xCAFE_BABE_DEAD_BEEFu64;
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x1000);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+
+        // VCVTPH2PS explicitly ignores DAZ and reports no denormal status.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            x86.xmm[1][0] = 0x7C00_0001_C000_3C00;
+            x86.mxcsr = 0x1F80 | (1 << 6);
+        }
+        let exit = execute_lifted_x86(&[0xC4, 0xE2, 0x79, 0x13, 0xC1], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(
+                [
+                    SmirInterpreter::get_lane(&x86.xmm[0], 0, 32) as u32,
+                    SmirInterpreter::get_lane(&x86.xmm[0], 1, 32) as u32,
+                    SmirInterpreter::get_lane(&x86.xmm[0], 2, 32) as u32,
+                    SmirInterpreter::get_lane(&x86.xmm[0], 3, 32) as u32,
+                ],
+                [
+                    1.0f32.to_bits(),
+                    (-2.0f32).to_bits(),
+                    0x3380_0000,
+                    f32::INFINITY.to_bits(),
+                ]
+            );
+            assert_eq!(x86.mxcsr & (1 << 1), 0);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        }
+
+        // VCVTPH2PD preserves FP16 denormals despite DAZ, reports DE, and
+        // observes merging-mask semantics.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            x86.xmm[1][0] = 1;
+            x86.mxcsr = 0x1F80 | (1 << 6);
+        }
+        ctx.write_vreg(k1, 1);
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7C, 0x09, 0x5A, 0xC1], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 2.0f64.powi(-24).to_bits());
+            assert_eq!(x86.xmm[0][1], sentinel);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+            assert_eq!(x86.mxcsr & (1 << 1), 1 << 1);
+        }
+
+        // VCVTPH2PSX broadcast preserves an FP16 denormal despite DAZ and,
+        // unlike its non-broadcast form, reports the denormal exception.
+        ctx.write_vreg(rax, 0x200);
+        memory.write(0x200, &1u16.to_le_bytes()).unwrap();
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            x86.mxcsr = 0x1F80 | (1 << 6);
+        }
+        ctx.write_vreg(k1, 1);
+        let exit = execute_lifted_x86(&[0x62, 0xF6, 0x7D, 0x19, 0x13, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[0], 0, 32), 0x3380_0000);
+            assert_eq!(x86.mxcsr & (1 << 1), 1 << 1);
+            assert!(x86.xmm[0][2..].iter().all(|word| *word == 0));
+        }
+
+        // VCVTPS2PHX uses embedded round-up and never flushes FP16 outputs.
+        let midpoint = 1.0f32 + 2.0f32.powi(-11);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            for lane in 0..16 {
+                SmirInterpreter::set_lane(
+                    &mut x86.xmm[1],
+                    lane,
+                    32,
+                    u64::from(if lane == 0 {
+                        midpoint.to_bits()
+                    } else if lane == 1 {
+                        2.0f32.powi(-24).to_bits()
+                    } else {
+                        1.0f32.to_bits()
+                    }),
+                );
+            }
+            x86.mxcsr = ((0x1F80 & !(3 << 13)) | (1 << 13)) | (1 << 15);
+        }
+        ctx.write_vreg(k1, 0xFFFF);
+        let mxcsr_before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.mxcsr,
+            _ => unreachable!(),
+        };
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7D, 0x59, 0x1D, 0xC1], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[0], 0, 16), 0x3C01);
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[0], 1, 16), 0x0001);
+            assert!(x86.xmm[0][4..].iter().all(|word| *word == 0));
+            assert_eq!(x86.mxcsr, mxcsr_before, "ER must suppress status updates");
+        }
+
+        // Direct FP64->FP16 conversion must avoid an FP32 double-rounding step.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [0; 16];
+            x86.xmm[1][0] = (1.0f64 + 2.0f64.powi(-11) + 2.0f64.powi(-30)).to_bits();
+            x86.mxcsr = 0x1F80;
+        }
+        ctx.write_vreg(k1, 1);
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0xFD, 0x19, 0x5A, 0xC1], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(SmirInterpreter::get_lane(&x86.xmm[0], 0, 16), 0x3C01);
+        }
+
+        // SAE suppresses an FP16 signaling-NaN invalid exception and status.
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = [sentinel; 16];
+            x86.xmm[1][0] = 0x7D00;
+            x86.mxcsr = 0x1F80 & !(1 << 7);
+        }
+        ctx.write_vreg(k1, 1);
+        let mxcsr_before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.mxcsr,
+            _ => unreachable!(),
+        };
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7C, 0x59, 0x5A, 0xC1], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            let result = x86.xmm[0][0];
+            assert_eq!(result & 0x7FF0_0000_0000_0000, 0x7FF0_0000_0000_0000);
+            assert_ne!(result & 0x0008_0000_0000_0000, 0);
+            assert_eq!(x86.mxcsr, mxcsr_before);
+        }
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+
+    #[test]
+    fn lifted_packed_fp16_precision_masks_suppress_faults_and_traps_atomically() {
+        let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+        let k1 = VReg::Arch(ArchReg::X86(X86Reg::K(1)));
+        let original = [0x0123_4567_89AB_CDEFu64; 16];
+        let mut ctx = SmirContext::new_x86_64();
+        let mut memory = FlatMemory::new(0x202);
+        ctx.write_vreg(rax, 0x200);
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        memory.write(0x200, &0x3C00u16.to_le_bytes()).unwrap();
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = original;
+        }
+        ctx.write_vreg(k1, 1);
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7C, 0x09, 0x5A, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0][0], 1.0f64.to_bits());
+            assert_eq!(x86.xmm[0][1], original[1]);
+        }
+
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = original;
+        }
+        ctx.write_vreg(k1, 0b11);
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7C, 0x09, 0x5A, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.xmm[0], original);
+        }
+
+        // A zero mask suppresses an out-of-range broadcast load.
+        ctx.write_vreg(rax, 0x2000);
+        ctx.write_vreg(k1, 0);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = original;
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF6, 0x7D, 0x99, 0x13, 0x00], &mut ctx, &mut memory);
+        assert!(matches!(exit, BlockResult::Exit(ExitReason::Halt)));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert!(x86.xmm[0].iter().all(|word| *word == 0));
+        }
+
+        // Unmasked overflow records sticky status, traps, and preserves DEST.
+        ctx.write_vreg(k1, 1);
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.xmm[0] = original;
+            x86.xmm[1][0] = u64::from(f32::MAX.to_bits());
+            x86.mxcsr = 0x1F80 & !(1 << 10);
+        }
+        let exit = execute_lifted_x86(&[0x62, 0xF5, 0x7D, 0x09, 0x1D, 0xC1], &mut ctx, &mut memory);
+        assert!(matches!(
+            exit,
+            BlockResult::Exit(ExitReason::SimdFloatingPoint { .. })
+        ));
+        if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+            assert_eq!(x86.mxcsr & (1 << 3), 1 << 3);
+            assert_eq!(x86.xmm[0], original);
         }
 
         ctx.flags.materialize_all();
