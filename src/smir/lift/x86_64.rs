@@ -16405,6 +16405,70 @@ impl X86_64Lifter {
         }
     }
 
+    /// Lift the AVX-512PF sparse gather/scatter prefetch families. Intel
+    /// defines each requested prefetch as an optional hint, leaves the opmask
+    /// unchanged, and permits neither FP nor memory faults. Consequently an
+    /// empty fallthrough is one architecturally valid implementation after
+    /// the complete E12NP encoding boundary has been validated.
+    fn lift_evex_sparse_prefetch(
+        &self,
+        prefix: VecPrefix,
+        opcode: u8,
+        bytes: &[u8],
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        let fixed_zero = prefix
+            .bytes
+            .checked_sub(3)
+            .and_then(|index| bytes.get(index))
+            .is_some_and(|p0| p0 & 0x08 == 0);
+        let fixed_one = prefix
+            .bytes
+            .checked_sub(2)
+            .and_then(|index| bytes.get(index))
+            .is_some_and(|p1| p1 & 0x04 != 0);
+        if prefix.encoding != VecEncodingKind::Evex
+            || prefix.map != X86VecMap::Map0F38
+            || prefix.pp != X86SsePrefix::OpSize
+            || !matches!(opcode, 0xC6 | 0xC7)
+            || prefix.l_bits != 2
+            || prefix.vvvv != 0
+            || prefix.v_high
+            || prefix.aaa == 0
+            || prefix.zeroing
+            || prefix.b
+            || !fixed_zero
+            || !fixed_one
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let cursor = prefix.bytes + 1;
+        let modrm_prefix = X86Prefix {
+            rex: prefix.rex,
+            address_size_override: prefix.address_size_override,
+            segment_override: prefix.segment_override,
+            cursor,
+            ..X86Prefix::default()
+        };
+        let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
+        let group = (modrm.byte >> 3) & 7;
+        if !modrm.is_memory || modrm.byte & 7 != 4 || !matches!(group, 1 | 2 | 5 | 6) {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        Ok(LiftResult::fallthrough(
+            Vec::new(),
+            cursor + modrm.bytes_consumed,
+        ))
+    }
+
     fn lift_vec_gather(
         &self,
         prefix: VecPrefix,
@@ -35158,6 +35222,7 @@ impl X86_64Lifter {
                 0x8F => self.lift_evex_vpshufbitqmb(prefix, bytes, pc, ctx),
                 0xD2 | 0xD3 => self.lift_vex_vnni_dot_ext(prefix, opcode, bytes, pc, ctx),
                 0x54 | 0x55 => self.lift_evex_vpopcnt(prefix, opcode, bytes, pc, ctx),
+                0xC6 | 0xC7 => self.lift_evex_sparse_prefetch(prefix, opcode, bytes, pc),
                 0xC4 => self.lift_evex_vpconflict(prefix, bytes, pc, ctx),
                 0x0C | 0x0D | 0x16 | 0x36 | 0x8D => {
                     self.lift_vec_permute_variable(prefix, opcode, bytes, pc, ctx)
@@ -41745,41 +41810,9 @@ impl X86_64Lifter {
             });
         }
 
-        let prefixed_vec = matches!(opcode_bytes[0], 0xC4 | 0xC5)
-            || (opcode_bytes[0] == 0x62
-                && opcode_bytes.get(1).is_some_and(|byte| byte & 7 == 3)
-                && opcode_bytes.get(4) == Some(&0x1D));
+        let prefixed_vec = matches!(opcode_bytes[0], 0x62 | 0xC4 | 0xC5);
         if prefixed_vec {
-            let vec_prefix = if opcode_bytes[0] == 0x62 {
-                decode_evex_prefix(opcode_bytes, pc)?
-            } else {
-                decode_vex_prefix(opcode_bytes, pc)?
-            };
-            let vec_opcode = opcode_bytes.get(vec_prefix.bytes).copied();
-            let supported_prefixed = (vec_prefix.map == X86VecMap::Map0F
-                && matches!(vec_opcode, Some(0x52 | 0x53 | 0x7C | 0x7D | 0xD0 | 0xF7)))
-                || (vec_prefix.map == X86VecMap::Map0F38
-                    && matches!(
-                        vec_opcode,
-                        Some(
-                            0x2C..=0x2F
-                            | 0x8C
-                            | 0x8E
-                            | 0xCF
-                            | 0x90..=0x93
-                            | 0x96..=0x9F
-                            | 0xA6..=0xAF
-                            | 0xB6..=0xBF
-                            | 0xDB..=0xDF,
-                        )
-                    ))
-                || (vec_prefix.map == X86VecMap::Map0F3A
-                    && matches!(vec_opcode, Some(0x1D | 0xCE | 0xCF | 0xDF)))
-                || (vec_prefix.map == X86VecMap::Map6
-                    && matches!(vec_opcode, Some(0x96..=0x9F | 0xA6..=0xAF | 0xB6..=0xBF)));
-            if supported_prefixed {
-                return self.lift_prefixed_vec(pc, bytes, &prefix, ctx);
-            }
+            return self.lift_prefixed_vec(pc, bytes, &prefix, ctx);
         }
 
         if prefix.rex2_m() {
@@ -67696,6 +67729,68 @@ mod tests {
                     Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
                 ),
                 "accepted reserved scatter encoding {bytes:02X?}"
+            );
+        }
+    }
+
+    #[test]
+    fn lift_evex_sparse_prefetch_covers_all_groups_types_and_reserved_encodings() {
+        for opcode in [0xC6u8, 0xC7] {
+            for group in [1u8, 2, 5, 6] {
+                for w in [false, true] {
+                    let bytes = [
+                        0x62,
+                        0xF2,
+                        if w { 0xFD } else { 0x7D },
+                        0x49,
+                        opcode,
+                        group << 3 | 4,
+                        0x80,
+                    ];
+                    let lifted = lift_single(&bytes).unwrap_or_else(|error| {
+                        panic!("rejected sparse-prefetch encoding {bytes:02X?}: {error:?}")
+                    });
+                    assert_eq!(lifted.bytes_consumed, bytes.len(), "{bytes:02X?}");
+                    assert!(lifted.ops.is_empty(), "{bytes:02X?}");
+                    assert!(matches!(lifted.control_flow, ControlFlow::Fallthrough));
+                }
+            }
+        }
+
+        let address32 =
+            lift_single(&[0x67, 0x62, 0xF2, 0x7D, 0x49, 0xC6, 0x4C, 0x80, 0x7F]).unwrap();
+        assert_eq!(address32.bytes_consumed, 9);
+        assert!(address32.ops.is_empty());
+
+        for bytes in [
+            &[0xC4, 0xE2, 0x7D, 0xC6, 0x0C, 0x80][..], // EVEX-only
+            &[0x62, 0xFA, 0x7D, 0x49, 0xC6, 0x0C, 0x80][..], // EVEX fixed-zero absent
+            &[0x62, 0xF2, 0x7C, 0x49, 0xC6, 0x0C, 0x80][..], // mandatory 66 absent
+            &[0x62, 0xF2, 0x79, 0x49, 0xC6, 0x0C, 0x80][..], // EVEX fixed-one absent
+            &[0x62, 0xF2, 0x7D, 0x09, 0xC6, 0x0C, 0x80][..], // L'L != 512
+            &[0x62, 0xF2, 0x7D, 0x69, 0xC6, 0x0C, 0x80][..], // L'L=3
+            &[0x62, 0xF2, 0x75, 0x49, 0xC6, 0x0C, 0x80][..], // EVEX.vvvv reserved
+            &[0x62, 0xF2, 0x7D, 0x41, 0xC6, 0x0C, 0x80][..], // EVEX.V' reserved
+            &[0x62, 0xF2, 0x7D, 0x48, 0xC6, 0x0C, 0x80][..], // k0 reserved
+            &[0x62, 0xF2, 0x7D, 0xC9, 0xC6, 0x0C, 0x80][..], // EVEX.z reserved
+            &[0x62, 0xF2, 0x7D, 0x59, 0xC6, 0x0C, 0x80][..], // EVEX.b reserved
+            &[0x62, 0xF2, 0x7D, 0x49, 0xC6, 0xCC][..], // register operand
+            &[0x62, 0xF2, 0x7D, 0x49, 0xC6, 0x08][..], // memory without SIB
+            &[0x62, 0xF2, 0x7D, 0x49, 0xC6, 0x04, 0x80][..], // invalid /0 group
+            &[0x62, 0xF2, 0x7D, 0x49, 0xC6, 0x1C, 0x80][..], // invalid /3 group
+            &[0x62, 0xF2, 0x7D, 0x49, 0xC6, 0x24, 0x80][..], // invalid /4 group
+            &[0x62, 0xF2, 0x7D, 0x49, 0xC6, 0x3C, 0x80][..], // invalid /7 group
+            &[0x62, 0xF2, 0x7D, 0x49, 0xC6, 0x0C][..], // missing SIB
+            &[0x62, 0xF2, 0x7D, 0x49, 0xC6, 0x4C, 0x80][..], // missing disp8
+        ] {
+            assert!(
+                matches!(
+                    lift_single(bytes),
+                    Err(LiftError::InvalidEncoding { .. }
+                        | LiftError::Unsupported { .. }
+                        | LiftError::Incomplete { .. })
+                ),
+                "accepted reserved sparse-prefetch encoding {bytes:02X?}"
             );
         }
     }
