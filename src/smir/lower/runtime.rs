@@ -2334,6 +2334,7 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
             | OpKind::VCvtFP32ToBF16 { .. }
             | OpKind::VFP16Arith { .. }
             | OpKind::X86GetExponent { .. }
+            | OpKind::X86GetMantissa { .. }
             | OpKind::X86PackedIntToFp { .. }
             | OpKind::X86PackedFpToInt { .. }
             | OpKind::X86PackedIntToFp16 { .. }
@@ -3336,6 +3337,63 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
         scalar,
         mask_zeroing,
         suppress_exceptions,
+    } = op
+    {
+        if !matches!(
+            elem,
+            crate::smir::ir::types::VecElementType::F16
+                | crate::smir::ir::types::VecElementType::F32
+                | crate::smir::ir::types::VecElementType::F64
+        ) || (*mask_zeroing && mask.is_none())
+            || mask.is_some_and(|mask| !matches!(mask, VReg::Arch(ArchReg::X86(X86Reg::K(1..=7)))))
+        {
+            return false;
+        }
+        let vector_matches_width = |reg: &VReg, expected: VecWidth| {
+            matches!(
+                (reg, expected),
+                (
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(0..=31))),
+                    VecWidth::V128
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(0..=31))),
+                    VecWidth::V256
+                ) | (
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(0..=31))),
+                    VecWidth::V512
+                )
+            )
+        };
+        let valid_shape = if *scalar {
+            *width == VecWidth::V128
+                && *lanes == 1
+                && vector_matches_width(dst, VecWidth::V128)
+                && vector_matches_width(src, VecWidth::V128)
+                && merge.is_some_and(|reg| vector_matches_width(&reg, VecWidth::V128))
+        } else {
+            *lanes == width.lanes(*elem) as u8
+                && vector_matches_width(dst, *width)
+                && vector_matches_width(src, *width)
+                && merge.is_none()
+                && (!*suppress_exceptions || *width == VecWidth::V512)
+        };
+        if !valid_shape {
+            return false;
+        }
+    }
+
+    if let OpKind::X86GetMantissa {
+        dst,
+        merge,
+        src,
+        mask,
+        elem,
+        width,
+        lanes,
+        scalar,
+        mask_zeroing,
+        suppress_exceptions,
+        ..
     } = op
     {
         if !matches!(
@@ -4727,6 +4785,43 @@ fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
                 width: encoded_width,
                 w,
             }) if map == expected_map
+                && opcode == expected_opcode
+                && encoded_width == *width
+                && w == expected_w
+        ) {
+            return false;
+        }
+    }
+
+    if let OpKind::X86GetMantissa {
+        elem,
+        width,
+        scalar,
+        ..
+    } = &op.kind
+    {
+        let (expected_pp, expected_w) = match elem {
+            crate::smir::ir::types::VecElementType::F16 => {
+                (crate::smir::ir::ops::X86SsePrefix::None, false)
+            }
+            crate::smir::ir::types::VecElementType::F32 => {
+                (crate::smir::ir::ops::X86SsePrefix::OpSize, false)
+            }
+            crate::smir::ir::types::VecElementType::F64 => {
+                (crate::smir::ir::ops::X86SsePrefix::OpSize, true)
+            }
+            _ => return false,
+        };
+        let expected_opcode = if *scalar { 0x27 } else { 0x26 };
+        if !matches!(
+            op.x86_hint,
+            Some(X86OpHint::EvexOp {
+                map: X86VecMap::Map0F3A,
+                pp,
+                opcode,
+                width: encoded_width,
+                w,
+            }) if pp == expected_pp
                 && opcode == expected_opcode
                 && encoded_width == *width
                 && w == expected_w
@@ -6915,6 +7010,7 @@ pub fn x86_native_vector_features_supported_excluding(
             | OpKind::VCvtFP32ToBF16 { width, .. }
             | OpKind::VFP16Arith { width, .. }
             | OpKind::X86GetExponent { width, .. }
+            | OpKind::X86GetMantissa { width, .. }
             | OpKind::X86PackedIntToFp {
                 src_width: width, ..
             }
@@ -7053,7 +7149,9 @@ pub fn x86_native_vector_features_supported_excluding(
                         if width != VecWidth::V512
                 )
             }
-            OpKind::X86GetExponent { scalar, .. } => !*scalar && width != VecWidth::V512,
+            OpKind::X86GetExponent { scalar, .. } | OpKind::X86GetMantissa { scalar, .. } => {
+                !*scalar && width != VecWidth::V512
+            }
             OpKind::X86Aes { .. } => aes_vl,
             OpKind::X86PackedShiftImm { .. } => shift_vl,
             OpKind::X86PackedShift { .. } => count_vl,
@@ -7114,6 +7212,10 @@ pub fn x86_native_vector_features_supported_excluding(
             kind,
             OpKind::VFP16Arith { .. }
                 | OpKind::X86GetExponent {
+                    elem: crate::smir::ir::types::VecElementType::F16,
+                    ..
+                }
+                | OpKind::X86GetMantissa {
                     elem: crate::smir::ir::types::VecElementType::F16,
                     ..
                 }
@@ -16124,6 +16226,99 @@ mod jit_gate_tests {
 
         let mut short_sae = packed;
         let OpKind::X86GetExponent {
+            dst,
+            src,
+            width,
+            lanes,
+            ..
+        } = &mut short_sae
+        else {
+            unreachable!()
+        };
+        *dst = x86(X86Reg::Ymm(17));
+        *src = x86(X86Reg::Ymm(19));
+        *width = VecWidth::V256;
+        *lanes = 16;
+        assert!(!is_x86_native_vector_op(&short_sae));
+    }
+
+    #[test]
+    fn get_mantissa_native_gate_validates_shapes_and_encodings() {
+        let packed = OpKind::X86GetMantissa {
+            dst: x86(X86Reg::Zmm(17)),
+            merge: None,
+            src: x86(X86Reg::Zmm(19)),
+            mask: Some(x86(X86Reg::K(2))),
+            elem: VecElementType::F16,
+            width: VecWidth::V512,
+            lanes: 32,
+            imm: 0xFB,
+            scalar: false,
+            mask_zeroing: false,
+            suppress_exceptions: true,
+        };
+        let packed_op = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(0),
+            0xA000,
+            packed.clone(),
+            X86OpHint::EvexOp {
+                map: crate::smir::ir::ops::X86VecMap::Map0F3A,
+                pp: X86SsePrefix::None,
+                opcode: 0x26,
+                width: VecWidth::V512,
+                w: false,
+            },
+        );
+        assert!(is_x86_native_vector_op(&packed));
+        assert!(x86_native_vector_smir_op(&packed_op));
+
+        let scalar = OpKind::X86GetMantissa {
+            dst: x86(X86Reg::Xmm(17)),
+            merge: Some(x86(X86Reg::Xmm(18))),
+            src: x86(X86Reg::Xmm(19)),
+            mask: Some(x86(X86Reg::K(2))),
+            elem: VecElementType::F32,
+            width: VecWidth::V128,
+            lanes: 1,
+            imm: 3,
+            scalar: true,
+            mask_zeroing: true,
+            suppress_exceptions: true,
+        };
+        let scalar_op = crate::smir::ir::ops::SmirOp::with_hint(
+            crate::smir::ir::types::OpId(1),
+            0xA007,
+            scalar.clone(),
+            X86OpHint::EvexOp {
+                map: crate::smir::ir::ops::X86VecMap::Map0F3A,
+                pp: X86SsePrefix::OpSize,
+                opcode: 0x27,
+                width: VecWidth::V128,
+                w: false,
+            },
+        );
+        assert!(is_x86_native_vector_op(&scalar));
+        assert!(x86_native_vector_smir_op(&scalar_op));
+
+        let mut wrong_hint = scalar_op.clone();
+        wrong_hint.x86_hint = Some(X86OpHint::EvexOp {
+            map: crate::smir::ir::ops::X86VecMap::Map0F3A,
+            pp: X86SsePrefix::None,
+            opcode: 0x27,
+            width: VecWidth::V128,
+            w: false,
+        });
+        assert!(!x86_native_vector_smir_op(&wrong_hint));
+
+        let mut virtual_source = scalar.clone();
+        let OpKind::X86GetMantissa { src, .. } = &mut virtual_source else {
+            unreachable!()
+        };
+        *src = VReg::virt(7);
+        assert!(!is_x86_native_vector_op(&virtual_source));
+
+        let mut short_sae = packed;
+        let OpKind::X86GetMantissa {
             dst,
             src,
             width,

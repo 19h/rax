@@ -1547,6 +1547,26 @@ pub enum OpKind {
         suppress_exceptions: bool,
     },
 
+    /// x86 EVEX VGETMANT{PH,PS,PD,SH,SS,SD}. `imm[1:0]` selects the
+    /// normalized mantissa interval and `imm[3:2]` selects sign preservation,
+    /// positive forcing, or rejection of negative nonzero inputs. Packed and
+    /// scalar masking/merge behavior matches [`Self::X86GetExponent`]. The
+    /// full immediate is retained so native lowering preserves reserved high
+    /// bits even though only its low nibble affects current semantics.
+    X86GetMantissa {
+        dst: VReg,
+        merge: Option<VReg>,
+        src: VReg,
+        mask: Option<VReg>,
+        elem: VecElementType,
+        width: VecWidth,
+        lanes: u8,
+        imm: u8,
+        scalar: bool,
+        mask_zeroing: bool,
+        suppress_exceptions: bool,
+    },
+
     /// x86 CVT(T)SS2SI/CVT(T)SD2SI and EVEX VCVT(T)SS/SD/SH2SI/USI scalar
     /// conversion. Invalid or out-of-range inputs produce the signed
     /// integer-indefinite value, or `2^int_width - 1` when `signed` is false,
@@ -4247,6 +4267,7 @@ impl OpKind {
             | OpKind::X86FpToInt { dst, .. }
             | OpKind::X86VectorFpCompare { dst, .. }
             | OpKind::X86GetExponent { dst, .. }
+            | OpKind::X86GetMantissa { dst, .. }
             | OpKind::X86IntToFp { dst, .. }
             | OpKind::X86FpConvert { dst, .. }
             | OpKind::X86PackedFpConvert { dst, .. }
@@ -4647,6 +4668,10 @@ impl OpKind {
                     | OpKind::X86DotProduct { .. }
                     | OpKind::X86VectorFpCompare { .. }
                     | OpKind::X86GetExponent {
+                        suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86GetMantissa {
                         suppress_exceptions: false,
                         ..
                     }

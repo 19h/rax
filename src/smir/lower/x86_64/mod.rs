@@ -2620,9 +2620,10 @@ impl<'a> X86Emitter<'a> {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn emit_evex_get_exponent_rr(
+    fn emit_evex_unary_fp_extract_rr(
         &mut self,
         map: X86VecMap,
+        pp: X86SsePrefix,
         width: VecWidth,
         w: bool,
         opcode: u8,
@@ -2632,6 +2633,7 @@ impl<'a> X86Emitter<'a> {
         aaa: u8,
         zeroing: bool,
         suppress_exceptions: bool,
+        imm: Option<u8>,
     ) {
         let r_inv = u8::from(dst.vec_ext() == 0);
         let r2_inv = u8::from(dst.vec_ext2() == 0);
@@ -2645,10 +2647,9 @@ impl<'a> X86Emitter<'a> {
             | (b_inv << 5)
             | (r2_inv << 4)
             | (Self::vex_map_bits(map) & 0x0F);
-        let byte3 =
-            ((w as u8) << 7) | (vvvv_inv << 3) | 0x04 | Self::vex_pp_bits(X86SsePrefix::OpSize);
-        // VGETEXP uses SAE without embedded rounding. With EVEX.b set,
-        // EVEX.L'L is ignored and the canonical encoding is 00b.
+        let byte3 = ((w as u8) << 7) | (vvvv_inv << 3) | 0x04 | Self::vex_pp_bits(pp);
+        // VGETEXP/VGETMANT use SAE without embedded rounding. With EVEX.b
+        // set, EVEX.L'L is ignored and the canonical encoding is 00b.
         let ll = if suppress_exceptions {
             0
         } else {
@@ -2669,6 +2670,9 @@ impl<'a> X86Emitter<'a> {
         self.code.emit_u8(byte4);
         self.code.emit_u8(opcode);
         self.emit_modrm_rr(dst, src);
+        if let Some(imm) = imm {
+            self.code.emit_u8(imm);
+        }
     }
 
     pub fn emit_vex_rrr(
@@ -9276,8 +9280,9 @@ impl X86_64Lowerer {
                     });
                 }
                 let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_evex_get_exponent_rr(
+                emitter.emit_evex_unary_fp_extract_rr(
                     map,
+                    X86SsePrefix::OpSize,
                     *width,
                     w,
                     opcode,
@@ -9287,6 +9292,101 @@ impl X86_64Lowerer {
                     aaa,
                     *mask_zeroing,
                     *suppress_exceptions,
+                    None,
+                );
+            }
+
+            OpKind::X86GetMantissa {
+                dst,
+                merge,
+                src,
+                mask,
+                elem,
+                width,
+                lanes,
+                imm,
+                scalar,
+                mask_zeroing,
+                suppress_exceptions,
+            } => {
+                let dst_reg = self.get_dst_reg(*dst)?;
+                let src_reg = self.get_reg(*src)?;
+                let merge_reg = merge.map(|reg| self.get_reg(reg)).transpose()?;
+                let aaa = match mask {
+                    None => 0,
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::K(n @ 1..=7)))) => *n,
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86GetMantissa".to_string(),
+                            operand: "mask must be architectural k1-k7".to_string(),
+                        });
+                    }
+                };
+                let (pp, w) = match elem {
+                    VecElementType::F16 => (X86SsePrefix::None, false),
+                    VecElementType::F32 => (X86SsePrefix::OpSize, false),
+                    VecElementType::F64 => (X86SsePrefix::OpSize, true),
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "X86GetMantissa".to_string(),
+                            operand: format!("unsupported element {elem:?}"),
+                        });
+                    }
+                };
+                let opcode = if *scalar { 0x27 } else { 0x26 };
+                let register_matches_width = |reg: PhysReg, expected: VecWidth| {
+                    matches!(
+                        (reg, expected),
+                        (PhysReg::Xmm(_), VecWidth::V128)
+                            | (PhysReg::Ymm(_), VecWidth::V256)
+                            | (PhysReg::Zmm(_), VecWidth::V512)
+                    )
+                };
+                let valid_shape = register_matches_width(dst_reg, *width)
+                    && register_matches_width(src_reg, *width)
+                    && (!*mask_zeroing || aaa != 0)
+                    && if *scalar {
+                        *width == VecWidth::V128
+                            && *lanes == 1
+                            && merge_reg.is_some_and(|reg| reg.is_xmm())
+                    } else {
+                        *lanes == width.lanes(*elem) as u8
+                            && merge_reg.is_none()
+                            && (!*suppress_exceptions || *width == VecWidth::V512)
+                    };
+                let valid_hint = matches!(
+                    op.x86_hint,
+                    Some(X86OpHint::EvexOp {
+                        map: X86VecMap::Map0F3A,
+                        pp: hint_pp,
+                        opcode: hint_opcode,
+                        width: hint_width,
+                        w: hint_w,
+                    }) if hint_pp == pp
+                        && hint_opcode == opcode
+                        && hint_width == *width
+                        && hint_w == w
+                );
+                if !valid_shape || !valid_hint {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86GetMantissa".to_string(),
+                        operand: "non-canonical VGETMANT shape or encoding metadata".to_string(),
+                    });
+                }
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_evex_unary_fp_extract_rr(
+                    X86VecMap::Map0F3A,
+                    pp,
+                    *width,
+                    w,
+                    opcode,
+                    dst_reg,
+                    merge_reg,
+                    src_reg,
+                    aaa,
+                    *mask_zeroing,
+                    *suppress_exceptions,
+                    Some(*imm),
                 );
             }
 
@@ -31016,6 +31116,258 @@ mod tests {
                     width: VecWidth::V128,
                     w: false,
                 },
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+    }
+
+    #[test]
+    fn lower_x86_get_mantissa_emits_canonical_evex_and_rejects_synthetic_shapes() {
+        let k2 = VReg::Arch(ArchReg::X86(X86Reg::K(2)));
+        let make = |dst,
+                    merge,
+                    src,
+                    mask,
+                    elem,
+                    width,
+                    lanes,
+                    imm,
+                    scalar,
+                    mask_zeroing,
+                    suppress_exceptions| OpKind::X86GetMantissa {
+            dst,
+            merge,
+            src,
+            mask,
+            elem,
+            width,
+            lanes,
+            imm,
+            scalar,
+            mask_zeroing,
+            suppress_exceptions,
+        };
+        let hint = |pp, opcode, width, w| X86OpHint::EvexOp {
+            map: X86VecMap::Map0F3A,
+            pp,
+            opcode,
+            width,
+            w,
+        };
+        for (name, kind, encoding, expected) in [
+            (
+                "VGETMANTPS xmm1,xmm3,3",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    None,
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    None,
+                    VecElementType::F32,
+                    VecWidth::V128,
+                    4,
+                    3,
+                    false,
+                    false,
+                    false,
+                ),
+                hint(X86SsePrefix::OpSize, 0x26, VecWidth::V128, false),
+                &[0x62, 0xF3, 0x7D, 0x08, 0x26, 0xCB, 0x03][..],
+            ),
+            (
+                "VGETMANTPD ymm1{k2}{z},ymm3,7",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+                    None,
+                    VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
+                    Some(k2),
+                    VecElementType::F64,
+                    VecWidth::V256,
+                    4,
+                    7,
+                    false,
+                    true,
+                    false,
+                ),
+                hint(X86SsePrefix::OpSize, 0x26, VecWidth::V256, true),
+                &[0x62, 0xF3, 0xFD, 0xAA, 0x26, 0xCB, 0x07][..],
+            ),
+            (
+                "VGETMANTPH zmm17{k2},zmm19,{sae},11",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(17))),
+                    None,
+                    VReg::Arch(ArchReg::X86(X86Reg::Zmm(19))),
+                    Some(k2),
+                    VecElementType::F16,
+                    VecWidth::V512,
+                    32,
+                    11,
+                    false,
+                    false,
+                    true,
+                ),
+                hint(X86SsePrefix::None, 0x26, VecWidth::V512, false),
+                &[0x62, 0xA3, 0x7C, 0x1A, 0x26, 0xCB, 0x0B][..],
+            ),
+            (
+                "VGETMANTSS xmm17{k2}{z},xmm18,xmm19,{sae},3",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(17))),
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(18)))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(19))),
+                    Some(k2),
+                    VecElementType::F32,
+                    VecWidth::V128,
+                    1,
+                    3,
+                    true,
+                    true,
+                    true,
+                ),
+                hint(X86SsePrefix::OpSize, 0x27, VecWidth::V128, false),
+                &[0x62, 0xA3, 0x6D, 0x92, 0x27, 0xCB, 0x03][..],
+            ),
+            (
+                "VGETMANTSD xmm1,xmm2,xmm3,2",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    None,
+                    VecElementType::F64,
+                    VecWidth::V128,
+                    1,
+                    2,
+                    true,
+                    false,
+                    false,
+                ),
+                hint(X86SsePrefix::OpSize, 0x27, VecWidth::V128, true),
+                &[0x62, 0xF3, 0xED, 0x08, 0x27, 0xCB, 0x02][..],
+            ),
+            (
+                "VGETMANTSH xmm1,xmm2,xmm3,1",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    Some(VReg::Arch(ArchReg::X86(X86Reg::Xmm(2)))),
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    None,
+                    VecElementType::F16,
+                    VecWidth::V128,
+                    1,
+                    1,
+                    true,
+                    false,
+                    false,
+                ),
+                hint(X86SsePrefix::None, 0x27, VecWidth::V128, false),
+                &[0x62, 0xF3, 0x6C, 0x08, 0x27, 0xCB, 0x01][..],
+            ),
+            (
+                "VGETMANTPS xmm1,xmm3,0xf3",
+                make(
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+                    None,
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+                    None,
+                    VecElementType::F32,
+                    VecWidth::V128,
+                    4,
+                    0xF3,
+                    false,
+                    false,
+                    false,
+                ),
+                hint(X86SsePrefix::OpSize, 0x26, VecWidth::V128, false),
+                &[0x62, 0xF3, 0x7D, 0x08, 0x26, 0xCB, 0xF3][..],
+            ),
+        ] {
+            let code = lower_single_hinted_op(kind, encoding);
+            assert!(
+                code.windows(expected.len())
+                    .any(|window| window == expected),
+                "{name}: missing {expected:02X?} in {code:02X?}"
+            );
+        }
+
+        for instruction in [
+            &[0x62, 0xF3, 0x7D, 0x08, 0x26, 0xCB, 0x03][..],
+            &[0x62, 0xF3, 0xFD, 0xAA, 0x26, 0xCB, 0x07][..],
+            &[0x62, 0xA3, 0x7C, 0x1A, 0x26, 0xCB, 0x0B][..],
+            &[0x62, 0xA3, 0x6D, 0x92, 0x27, 0xCB, 0x03][..],
+            &[0x62, 0xF3, 0xED, 0x08, 0x27, 0xCB, 0x02][..],
+            &[0x62, 0xF3, 0x6C, 0x08, 0x27, 0xCB, 0x01][..],
+            &[0x62, 0xF3, 0x7D, 0x08, 0x26, 0xCB, 0xF3][..],
+        ] {
+            let mut block = instruction.to_vec();
+            block.push(0xF4);
+            let (code, _) = lower_rex2_block(&block);
+            assert!(
+                code.windows(instruction.len())
+                    .any(|window| window == instruction),
+                "production lift/lower omitted {instruction:02X?} from {code:02X?}"
+            );
+        }
+
+        let packed_sae_v256 = make(
+            VReg::Arch(ArchReg::X86(X86Reg::Ymm(1))),
+            None,
+            VReg::Arch(ArchReg::X86(X86Reg::Ymm(3))),
+            Some(k2),
+            VecElementType::F32,
+            VecWidth::V256,
+            8,
+            3,
+            false,
+            false,
+            true,
+        );
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                packed_sae_v256,
+                hint(X86SsePrefix::OpSize, 0x26, VecWidth::V256, false),
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+
+        let scalar_without_merge = make(
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            None,
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+            None,
+            VecElementType::F32,
+            VecWidth::V128,
+            1,
+            3,
+            true,
+            false,
+            false,
+        );
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                scalar_without_merge,
+                hint(X86SsePrefix::OpSize, 0x27, VecWidth::V128, false),
+            ),
+            LowerError::InvalidOperand { .. }
+        ));
+
+        let fp16_wrong_hint = make(
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(1))),
+            None,
+            VReg::Arch(ArchReg::X86(X86Reg::Xmm(3))),
+            None,
+            VecElementType::F16,
+            VecWidth::V128,
+            8,
+            3,
+            false,
+            false,
+            false,
+        );
+        assert!(matches!(
+            lower_single_hinted_op_err(
+                fp16_wrong_hint,
+                hint(X86SsePrefix::OpSize, 0x26, VecWidth::V128, false),
             ),
             LowerError::InvalidOperand { .. }
         ));
