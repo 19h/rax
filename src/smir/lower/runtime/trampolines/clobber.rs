@@ -640,6 +640,7 @@ pub(crate) fn block_is_clobber_safe(
                 crate::smir::ir::types::FenceKind::LoadLoad
                     | crate::smir::ir::types::FenceKind::Full
                     | crate::smir::ir::types::FenceKind::StoreStore
+                    | crate::smir::ir::types::FenceKind::InstructionSerialize
             ) {
                 return false;
             }

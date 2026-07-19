@@ -30,6 +30,8 @@ mod pkru;
 #[cfg(test)]
 mod scalar;
 #[cfg(test)]
+mod serialize;
+#[cfg(test)]
 mod sha_ni;
 #[cfg(test)]
 mod sse;

@@ -309,7 +309,7 @@ pub(crate) fn x86_aarch64_legacy_gpr(vreg: &crate::smir::ir::types::VReg) -> boo
 /// fail closed until their AArch64-host shape is reviewed.
 pub(crate) fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
-    use crate::smir::ir::types::{OpWidth, SrcOperand};
+    use crate::smir::ir::types::{FenceKind, OpWidth, SrcOperand};
 
     let full_gpr_write = |width: &OpWidth| matches!(width, OpWidth::W32 | OpWidth::W64);
     let scalar_read_width = |width: &OpWidth| {
@@ -495,6 +495,9 @@ pub(crate) fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) 
         | OpKind::SetCF { .. }
         | OpKind::CmcCF
         | OpKind::Nop => true,
+        OpKind::Fence {
+            kind: FenceKind::InstructionSerialize,
+        } => true,
         _ => false,
     }
 }

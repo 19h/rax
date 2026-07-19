@@ -880,6 +880,9 @@ pub enum FenceKind {
     ISync,
     /// Data synchronization
     DSync,
+    /// Complete instruction serialization: prior architectural state and
+    /// stores are globally visible before subsequent instruction fetch begins.
+    InstructionSerialize,
 }
 
 /// Atomic operation type

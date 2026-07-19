@@ -30,6 +30,8 @@ mod mmx_memory_source;
 #[cfg(test)]
 mod pkru;
 #[cfg(test)]
+mod serialize;
+#[cfg(test)]
 mod sqrt;
 #[cfg(test)]
 mod trap;

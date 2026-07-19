@@ -12,6 +12,8 @@ mod atomic;
 #[cfg(test)]
 mod bit;
 #[cfg(test)]
+mod fence;
+#[cfg(test)]
 mod flags;
 #[cfg(test)]
 mod fp;

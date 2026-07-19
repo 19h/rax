@@ -29,6 +29,8 @@ mod bit;
 pub use bit::*;
 mod branch;
 pub use branch::*;
+mod fence;
+pub use fence::*;
 mod flags;
 pub use flags::*;
 mod fp;

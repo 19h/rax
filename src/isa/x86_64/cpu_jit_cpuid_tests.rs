@@ -123,3 +123,63 @@ fn jit_cpuid_matches_direct_profile_for_static_dynamic_and_extended_leaves() {
         assert_direct_native_cpuid_match(leaf, subleaf);
     }
 }
+
+#[test]
+fn jit_serialize_matches_direct_and_preserves_state_at_handoff() {
+    let memory =
+        Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+    // SERIALIZE; JMP HLT; HLT. The explicit branch gives the native region a
+    // deterministic handoff frontier after the serializing instruction.
+    memory
+        .write_slice(&[0x0F, 0x01, 0xE8, 0xEB, 0x00, 0xF4], GuestAddress(0))
+        .unwrap();
+
+    let mut direct = test_vcpu(memory.clone());
+    let mut native = test_vcpu(memory);
+    for vcpu in [&mut direct, &mut native] {
+        vcpu.regs.rax = 0x0123_4567_89AB_CDEF;
+        vcpu.regs.rbx = 0x1122_3344_5566_7788;
+        vcpu.regs.rcx = 0x8877_6655_4433_2211;
+        vcpu.regs.rdx = 0xFEDC_BA98_7654_3210;
+    }
+
+    assert!(direct.step().expect("direct SERIALIZE").is_none());
+    assert!(direct.step().expect("direct handoff branch").is_none());
+    assert_eq!(direct.regs.rip, 5);
+
+    let region = native
+        .jit_compile_region()
+        .expect("compile SERIALIZE region")
+        .expect("SERIALIZE must be native eligible");
+    native.jit_run_region_native(&region);
+
+    assert_eq!(outputs(&native), outputs(&direct));
+    assert_eq!(native.regs.r8, direct.regs.r8);
+    assert_eq!(native.regs.r15, direct.regs.r15);
+    assert_eq!(native.regs.r16, direct.regs.r16);
+    assert_eq!(native.regs.r31, direct.regs.r31);
+    assert_eq!(native.regs.rsp, direct.regs.rsp);
+    assert_eq!(native.regs.rbp, direct.regs.rbp);
+    assert_eq!(native.regs.rflags, direct.regs.rflags);
+    assert_eq!(native.regs.rip, direct.regs.rip);
+}
+
+#[test]
+fn jit_verify_accepts_deterministic_serialize_regions() {
+    let memory =
+        Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
+    memory
+        .write_slice(&[0x0F, 0x01, 0xE8, 0xEB, 0x00, 0xF4], GuestAddress(0))
+        .unwrap();
+    let mut vcpu = test_vcpu(memory);
+    vcpu.regs.rax = 0xA5A5_5A5A_F0F0_0F0F;
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile verified SERIALIZE region")
+        .expect("verified SERIALIZE region must be native eligible");
+
+    vcpu.jit_run_region_verified(&region);
+
+    assert_eq!(vcpu.regs.rax, 0xA5A5_5A5A_F0F0_0F0F);
+    assert_eq!(vcpu.regs.rip, 5);
+}

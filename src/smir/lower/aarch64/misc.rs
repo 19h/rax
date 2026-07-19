@@ -8,9 +8,9 @@ use crate::smir::ir::ops::{
     ArmDpRegShiftKind, OpKind, SmirOp, X86AdxKind, X86BlsKind, X86CountKind,
 };
 use crate::smir::ir::types::{
-    Address, ArchReg, ArmReg, AtomicOp, Avx10FP16Op, BlockId, Condition, ExtendOp, FenceKind,
-    FpPrecision, FpRoundMode, MemWidth, MemoryOrder, OpWidth, ShiftOp, SignExtend, SrcOperand,
-    VLaneOp, VReg, VecElementType, VecPermuteKind, VecReduceOp, VecUnaryOp, VecWidth,
+    Address, ArchReg, ArmReg, AtomicOp, Avx10FP16Op, BlockId, Condition, ExtendOp, FpPrecision,
+    FpRoundMode, MemWidth, MemoryOrder, OpWidth, ShiftOp, SignExtend, SrcOperand, VLaneOp, VReg,
+    VecElementType, VecPermuteKind, VecReduceOp, VecUnaryOp, VecWidth,
 };
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 
@@ -3686,18 +3686,7 @@ impl Aarch64Lowerer {
                 Ok(())
             }
             OpKind::Prefetch { addr, write } => self.lower_prefetch(addr, *write, op.guest_pc),
-            OpKind::Fence { kind } => {
-                let insn = match kind {
-                    FenceKind::ISync => 0xd503_3fdf,
-                    FenceKind::DSync | FenceKind::Full => 0xd503_3f9f,
-                    FenceKind::LoadLoad
-                    | FenceKind::LoadStore
-                    | FenceKind::StoreLoad
-                    | FenceKind::StoreStore => 0xd503_3fbf,
-                };
-                self.emit(insn);
-                Ok(())
-            }
+            OpKind::Fence { kind } => self.lower_fence(*kind),
             OpKind::Mov { dst, src, width } => self.lower_mov(*dst, src, *width),
             OpKind::ReadSysReg { dst, reg } => self.lower_raw_sysreg_read(*dst, *reg),
             OpKind::WriteSysReg { reg, src } => self.lower_raw_sysreg_write(*reg, *src),

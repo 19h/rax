@@ -50,6 +50,8 @@ mod fsgsbase;
 pub use fsgsbase::*;
 mod pkru;
 pub use pkru::*;
+mod serialize;
+pub use serialize::*;
 mod ops;
 pub use emitter::*;
 mod jit;

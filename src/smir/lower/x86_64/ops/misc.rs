@@ -84,6 +84,7 @@ impl X86_64Lowerer {
                 FenceKind::LoadLoad => self.code.emit_bytes(&[0x0F, 0xAE, 0xE8]),
                 FenceKind::Full => self.code.emit_bytes(&[0x0F, 0xAE, 0xF0]),
                 FenceKind::StoreStore => self.code.emit_bytes(&[0x0F, 0xAE, 0xF8]),
+                FenceKind::InstructionSerialize => self.emit_x86_serialize(),
                 other => {
                     return Err(LowerError::UnsupportedOp {
                         op: format!("x86 native fence {other:?}"),

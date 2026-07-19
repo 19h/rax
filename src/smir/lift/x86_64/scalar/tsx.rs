@@ -3,8 +3,8 @@
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
-    /// Lift XGETBV/XSETBV, RDPKRU/WRPKRU, and the RTM fixed ModR/M encodings
-    /// in 0F 01.
+    /// Lift XGETBV/XSETBV, RDPKRU/WRPKRU, SERIALIZE, and the RTM fixed ModR/M
+    /// encodings in 0F 01.
     pub(crate) fn lift_xcr_0f01(
         &self,
         bytes: &[u8],
@@ -75,6 +75,33 @@ impl X86_64Lifter {
                     branch_targets: Vec::new(),
                 });
             }
+            0xE8 if prefix.rep_prefix == Some(0xF2) => {
+                // F2 0F 01 E8 selects XSUSLDTRK. The guest profile does not
+                // expose TSX load-address tracking, so the alias is #UD.
+                return Ok(LiftResult {
+                    ops: Vec::new(),
+                    bytes_consumed: prefix.cursor + 1,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::InvalidOpcode,
+                    },
+                    branch_targets: Vec::new(),
+                });
+            }
+            0xE8 if prefix.rep_prefix == Some(0xF3) => {
+                // F3 0F 01 E8 selects CET SETSSBSY. CET shadow stacks are not
+                // exposed by this guest profile, so the alias is #UD.
+                return Ok(LiftResult {
+                    ops: Vec::new(),
+                    bytes_consumed: prefix.cursor + 1,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::InvalidOpcode,
+                    },
+                    branch_targets: Vec::new(),
+                });
+            }
+            0xE8 => OpKind::Fence {
+                kind: FenceKind::InstructionSerialize,
+            },
             0xEE | 0xEF => OpKind::X86Pkru {
                 eax: self.gpr(0),
                 ecx: self.gpr(1),
