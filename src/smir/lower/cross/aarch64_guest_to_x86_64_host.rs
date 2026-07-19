@@ -19,6 +19,8 @@ use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::x86_64::{X86Cond, X86Emitter};
 use crate::smir::lower::{CodeBuffer, LowerError, LowerResult, RelocKind, Relocation, SmirLowerer};
 
+mod memory_address;
+
 const STATE: PhysReg = PhysReg::Rdi;
 const ACC: PhysReg = PhysReg::Rax;
 const HI: PhysReg = PhysReg::Rdx;
@@ -415,62 +417,6 @@ impl Aarch64X86_64Lowerer {
             let mut e = X86Emitter::new(&mut self.code);
             e.emit_add_rr(reg, B2, OpWidth::W64);
         }
-    }
-
-    fn load_addr_to(&mut self, addr: &Address, dst: PhysReg) -> Result<(), LowerError> {
-        match addr {
-            Address::Direct(base) => self.load_vreg_to(*base, dst, OpWidth::W64)?,
-            Address::BaseOffset { base, offset, .. } => {
-                self.load_vreg_to(*base, dst, OpWidth::W64)?;
-                self.emit_add_i64_to_reg(dst, *offset);
-            }
-            Address::BaseIndexScale {
-                base,
-                index,
-                scale,
-                disp,
-                ..
-            } => {
-                {
-                    let mut e = X86Emitter::new(&mut self.code);
-                    if let Some(base) = base {
-                        drop(e);
-                        self.load_vreg_to(*base, dst, OpWidth::W64)?;
-                    } else {
-                        e.emit_xor_rr(dst, dst, OpWidth::W64);
-                    }
-                }
-                self.load_vreg_to(*index, B2, OpWidth::W64)?;
-                match scale {
-                    1 => {}
-                    2 | 4 | 8 => {
-                        let mut e = X86Emitter::new(&mut self.code);
-                        e.emit_shl_ri(B2, scale.trailing_zeros() as u8, OpWidth::W64);
-                    }
-                    _ => {
-                        return Err(LowerError::UnsupportedOp {
-                            op: format!("AArch64 memory scale {scale}"),
-                        });
-                    }
-                }
-                {
-                    let mut e = X86Emitter::new(&mut self.code);
-                    e.emit_add_rr(dst, B2, OpWidth::W64);
-                }
-                self.emit_add_i64_to_reg(dst, i64::from(*disp));
-            }
-            Address::Absolute(addr) => self.emit_mov_imm(dst, *addr as i64, OpWidth::W64),
-            Address::PcRel { offset, base, .. } => {
-                let addr = base.unwrap_or(0).wrapping_add(*offset as u64);
-                self.emit_mov_imm(dst, addr as i64, OpWidth::W64);
-            }
-            Address::GpRel { .. } | Address::SegmentRel { .. } => {
-                return Err(LowerError::UnsupportedOp {
-                    op: format!("AArch64 memory address {addr:?}"),
-                });
-            }
-        }
-        Ok(())
     }
 
     fn emit_mem_helper_call(&mut self, target: PhysReg) {

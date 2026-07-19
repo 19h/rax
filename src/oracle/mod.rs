@@ -1,5 +1,6 @@
 //! JSON oracle harness for ISA-specific decoders and SMIR lifters.
 
+mod address;
 mod call_target;
 
 use call_target::call_target_json;
@@ -1232,73 +1233,6 @@ impl OracleJson for SrcOperand {
                 "reg": reg.oracle_json(),
                 "extend": extend.oracle_json(),
                 "shift": shift,
-            }),
-        }
-    }
-}
-
-impl OracleJson for Address {
-    fn oracle_json(&self) -> Value {
-        match self {
-            Address::Direct(reg) => json!({
-                "kind": "direct",
-                "reg": reg.oracle_json(),
-            }),
-            Address::BaseOffset {
-                base,
-                offset,
-                disp_size,
-            } => json!({
-                "kind": "base_offset",
-                "base": base.oracle_json(),
-                "offset": offset,
-                "disp_size": disp_size.oracle_json(),
-            }),
-            Address::BaseIndexScale {
-                base,
-                index,
-                scale,
-                disp,
-                disp_size,
-            } => json!({
-                "kind": "base_index_scale",
-                "base": base.oracle_json(),
-                "index": index.oracle_json(),
-                "scale": scale,
-                "disp": disp,
-                "disp_size": disp_size.oracle_json(),
-            }),
-            Address::PcRel {
-                offset,
-                disp_size,
-                base,
-            } => json!({
-                "kind": "pc_relative",
-                "offset": offset,
-                "disp_size": disp_size.oracle_json(),
-                "base": base.map(hex_u64),
-            }),
-            Address::GpRel { offset } => json!({
-                "kind": "gp_relative",
-                "offset": offset,
-            }),
-            Address::Absolute(addr) => json!({
-                "kind": "absolute",
-                "addr": hex_u64(*addr),
-            }),
-            Address::SegmentRel {
-                segment,
-                base,
-                index,
-                scale,
-                disp,
-            } => json!({
-                "kind": "segment_rel",
-                "segment": segment.oracle_json(),
-                "base": base.map(|b| b.oracle_json()),
-                "index": index.map(|i| i.oracle_json()),
-                "scale": scale,
-                "disp": disp,
             }),
         }
     }

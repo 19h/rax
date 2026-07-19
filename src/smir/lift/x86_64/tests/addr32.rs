@@ -3,90 +3,66 @@
 use super::*;
 use crate::smir::lift::x86_64::*;
 
-/// A 67h ModR/M address is calculated at W32 and zero-extended. FS/GS is
-/// added only after the 32-bit offset calculation.
+/// A 67h ModR/M address retains its architectural components under one
+/// explicit addr32 contract. FS/GS is added only after the W32 offset wraps
+/// and is zero-extended.
 #[test]
-fn memory_materializes_zero_extended_offset() {
+fn memory_preserves_state_backed_zero_extended_offset() {
     let ops = lift_one(&[0x67, 0x48, 0x8b, 0x03]).expect("mov rax,[ebx]");
-    let offset = match &ops[0].kind {
-        OpKind::Mov {
-            dst,
-            src: SrcOperand::Reg(src),
-            width: OpWidth::W32,
-        } => {
-            assert_eq!(*src, x86_gpr(3));
-            *dst
-        }
-        other => panic!("expected W32 address truncation, got {other:?}"),
-    };
     assert!(matches!(
-        &ops[1].kind,
+        ops.as_slice(),
+        [SmirOp {
+            kind:
         OpKind::Load {
-            addr: Address::Direct(reg),
+                    addr: Address::X86Addr32(inner),
             width: MemWidth::B8,
             ..
-        } if *reg == offset
+                },
+            ..
+        }] if matches!(inner.as_ref(), Address::Direct(reg) if *reg == x86_gpr(3))
     ));
 
     let fs = lift_one(&[0x67, 0x64, 0x48, 0x8b, 0x44, 0x0b, 0x08]).expect("mov rax,fs:[ebx+ecx+8]");
     assert!(matches!(
-        &fs[0].kind,
-        OpKind::Add {
-            src1,
-            src2: SrcOperand::Reg(src2),
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
-            ..
-        } if *src1 == x86_gpr(3) && *src2 == x86_gpr(1)
-    ));
-    let final_offset = match &fs[1].kind {
-        OpKind::Add {
-            dst,
-            src2: SrcOperand::Imm(8),
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
-            ..
-        } => *dst,
-        other => panic!("expected W32 displacement add, got {other:?}"),
-    };
-    assert!(matches!(
-        &fs[2].kind,
-        OpKind::Load {
-            addr: Address::SegmentRel {
-                segment: VReg::Arch(ArchReg::X86(X86Reg::FsBase)),
-                base: Some(base),
-                index: None,
-                scale: 1,
-                disp: 0,
+        fs.as_slice(),
+        [SmirOp {
+            kind: OpKind::Load {
+                addr: Address::X86Addr32(inner),
+                ..
             },
             ..
-        } if *base == final_offset
+        }] if matches!(
+            inner.as_ref(),
+            Address::SegmentRel {
+                segment: VReg::Arch(ArchReg::X86(X86Reg::FsBase)),
+                base: Some(base),
+                index: Some(index),
+                scale: 1,
+                disp: 8,
+            } if *base == x86_gpr(3) && *index == x86_gpr(1)
+        )
     ));
 
     // REX.X/B remain effective in addr32 mode: [r8d+r12d*4+8].
     let high = lift_one(&[0x67, 0x4b, 0x8b, 0x44, 0xa0, 0x08]).expect("mov rax,[r8d+r12d*4+8]");
-    let scaled = match &high[0].kind {
-        OpKind::Shl {
-            dst,
-            src,
-            amount: SrcOperand::Imm(2),
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
-        } => {
-            assert_eq!(*src, x86_gpr(12));
-            *dst
-        }
-        other => panic!("expected W32 scaled r12d, got {other:?}"),
-    };
     assert!(matches!(
-        &high[1].kind,
-        OpKind::Add {
-            src1,
-            src2: SrcOperand::Reg(index),
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
+        high.as_slice(),
+        [SmirOp {
+            kind: OpKind::Load {
+                addr: Address::X86Addr32(inner),
+                ..
+            },
             ..
-        } if *src1 == x86_gpr(8) && *index == scaled
+        }] if matches!(
+            inner.as_ref(),
+            Address::BaseIndexScale {
+                base: Some(base),
+                index,
+                scale: 4,
+                disp: 8,
+                ..
+            } if *base == x86_gpr(8) && *index == x86_gpr(12)
+        )
     ));
 }
 
@@ -107,11 +83,11 @@ fn modrm_rm5_remains_eip_relative_and_wraps_at_32_bits() {
         high.ops.as_slice(),
         [SmirOp {
             kind: OpKind::Load {
-                addr: Address::Absolute(0x1008),
+                addr: Address::X86Addr32(inner),
                 ..
             },
             ..
-        }]
+        }] if matches!(inner.as_ref(), Address::Absolute(0x1008))
     ));
 
     let low = lifter
@@ -125,11 +101,11 @@ fn modrm_rm5_remains_eip_relative_and_wraps_at_32_bits() {
         low.ops.as_slice(),
         [SmirOp {
             kind: OpKind::Load {
-                addr: Address::Absolute(0xffff_ffff),
+                addr: Address::X86Addr32(inner),
                 ..
             },
             ..
-        }]
+        }] if matches!(inner.as_ref(), Address::Absolute(0xffff_ffff))
     ));
 }
 
@@ -138,11 +114,14 @@ fn sib_no_base_remains_absolute_and_fs_follows_eip_truncation() {
     let absolute = lift_one(&[0x67, 0x48, 0x8b, 0x04, 0x25, 0xfc, 0xff, 0xff, 0xff])
         .expect("addr32 SIB absolute disp32");
     assert!(matches!(
-        &absolute[0].kind,
-        OpKind::Load {
-            addr: Address::Absolute(0xffff_fffc),
+        absolute.as_slice(),
+        [SmirOp {
+            kind: OpKind::Load {
+                addr: Address::X86Addr32(inner),
+                ..
+            },
             ..
-        }
+        }] if matches!(inner.as_ref(), Address::Absolute(0xffff_fffc))
     ));
 
     let mut lifter = X86_64Lifter::strict();
@@ -158,17 +137,20 @@ fn sib_no_base_remains_absolute_and_fs_follows_eip_truncation() {
         fs.ops.as_slice(),
         [SmirOp {
             kind: OpKind::Load {
-                addr: Address::SegmentRel {
+                addr: Address::X86Addr32(inner),
+                ..
+            },
+            ..
+        }] if matches!(
+            inner.as_ref(),
+            Address::SegmentRel {
                     segment: VReg::Arch(ArchReg::X86(X86Reg::FsBase)),
                     base: None,
                     index: None,
                     scale: 1,
                     disp: 0x2005,
-                },
-                ..
-            },
-            ..
-        }]
+            }
+        )
     ));
 }
 

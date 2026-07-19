@@ -93,6 +93,7 @@ impl SmirInterpreter {
     /// Compute effective address
     pub(crate) fn compute_address(&self, ctx: &SmirContext, addr: &Address) -> GuestAddr {
         match addr {
+            Address::X86Addr32(inner) => self.compute_x86_addr32(ctx, inner),
             Address::Direct(r) => ctx.read_vreg(*r),
             Address::BaseOffset { base, offset, .. } => {
                 ctx.read_vreg(*base).wrapping_add(*offset as u64)
@@ -146,6 +147,7 @@ impl SmirInterpreter {
     /// FS/GS is then added as a full 64-bit segment base.
     pub(crate) fn compute_x86_addr32(&self, ctx: &SmirContext, addr: &Address) -> GuestAddr {
         match addr {
+            Address::X86Addr32(inner) => self.compute_x86_addr32(ctx, inner),
             Address::SegmentRel {
                 segment,
                 base,

@@ -358,8 +358,8 @@ impl X86_64Lifter {
     }
 
     /// Preserve a decoded addr32 expression entirely in architectural address
-    /// components. The enclosing x86 call-target variant supplies the W32
-    /// arithmetic contract, so no virtual materialization operations are
+    /// components. An enclosing address or call-target variant supplies the
+    /// W32 arithmetic contract, so no virtual materialization operations are
     /// required. RIP-relative input is folded to its exact low-32-bit offset.
     pub(crate) fn x86_addr32_state_address(&self, x86_addr: &X86Address, next_rip: u64) -> Address {
         debug_assert_eq!(x86_addr.address_width, OpWidth::W32);
@@ -415,7 +415,10 @@ impl X86_64Lifter {
         ctx: &mut LiftContext,
     ) -> (Address, Vec<SmirOp>) {
         if x86_addr.address_width == OpWidth::W32 {
-            return self.x86_addr32_to_smir(x86_addr, next_rip, ctx, None);
+            return (
+                Address::X86Addr32(Box::new(self.x86_addr32_state_address(x86_addr, next_rip))),
+                Vec::new(),
+            );
         }
 
         let mut pre_ops = Vec::new();

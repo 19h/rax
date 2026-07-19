@@ -255,8 +255,8 @@ impl HexagonLifter {
                 disp_size: *disp_size,
                 base: *base,
             },
-            // Hexagon never produces x86 segment-relative addresses.
-            Address::SegmentRel { .. } => addr.clone(),
+            // Hexagon never produces x86-specific address forms.
+            Address::X86Addr32(_) | Address::SegmentRel { .. } => addr.clone(),
         }
     }
 

@@ -11,6 +11,16 @@ impl X86_64Lowerer {
         addr: &Address,
         address_size_32: bool,
     ) -> Result<(), LowerError> {
+        if let Address::X86Addr32(inner) = addr {
+            if address_size_32 {
+                return Err(LowerError::InvalidOperand {
+                    op: "jit-mem addr32".to_string(),
+                    operand: "nested explicit addr32 address".to_string(),
+                });
+            }
+            return self.emit_jit_mem_effective_address(inner, true);
+        }
+
         // --- effective guest address into RSI (enc 6), reading base/index from
         //     the struct (state ptr in RAX) ---
         if address_size_32 {
@@ -181,6 +191,12 @@ impl X86_64Lowerer {
         addr: &Address,
     ) -> Result<(), LowerError> {
         match addr {
+            Address::X86Addr32(_) => {
+                return Err(LowerError::InvalidOperand {
+                    op: "jit-mem addr32".to_string(),
+                    operand: "nested explicit addr32 address".to_string(),
+                });
+            }
             Address::Direct(base) => {
                 self.emit_jit_addr32_offset(Some(*base), None, 1, 0)?;
             }

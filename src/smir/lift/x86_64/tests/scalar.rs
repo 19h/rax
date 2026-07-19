@@ -907,23 +907,20 @@ fn lift_x87_environment_control_encodings_and_legality() {
 
     let addr32 = lift_single(&[0x67, 0xD9, 0x6B, 0x20]).unwrap();
     assert_eq!(addr32.bytes_consumed, 4);
-    assert!(matches!(
-        addr32.ops.first().map(|op| &op.kind),
-        Some(OpKind::Add {
-            src1: VReg::Arch(ArchReg::X86(X86Reg::Rbx)),
-            src2: SrcOperand::Imm(0x20),
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
+    let [
+        SmirOp {
+            kind:
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::LoadControlWord,
+                    addr: Some(addr),
+                },
             ..
-        })
-    ));
-    assert!(matches!(
-        addr32.ops.last().map(|op| &op.kind),
-        Some(OpKind::X86X87Control {
-            kind: X86X87ControlKind::LoadControlWord,
-            addr: Some(Address::Direct(_)),
-        })
-    ));
+        },
+    ] = addr32.ops.as_slice()
+    else {
+        panic!("expected one addr32 FLDCW operation")
+    };
+    super::addr32_assertions::base_offset(addr, X86Reg::Rbx, 0x20);
 
     for bytes in [
         &[0xF0, 0xDB, 0xE3][..],
@@ -2154,30 +2151,25 @@ fn lift_x87_exact_data_transfer_encodings_addressing_and_legality() {
         ));
     }
 
-    // addr32 arithmetic wraps in 32 bits and is materialized before the
-    // exact ten-byte load operation.
+    // The exact ten-byte load retains architectural addr32 components without
+    // allocator-owned W32 materialization temporaries.
     let addr32 = lift_single(&[0x67, 0xDB, 0x6C, 0x8B, 0x20]).unwrap();
     assert_eq!(addr32.bytes_consumed, 5);
-    assert!(addr32.ops[..addr32.ops.len() - 1].iter().all(|op| matches!(
-        op.kind,
-        OpKind::Shl {
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
+    let [
+        SmirOp {
+            kind:
+                OpKind::X86X87Data {
+                    kind: X86X87DataKind::LoadExtended,
+                    addr: Some(addr),
+                    ..
+                },
             ..
-        } | OpKind::Add {
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
-            ..
-        }
-    )));
-    assert!(matches!(
-        addr32.ops.last().map(|op| &op.kind),
-        Some(OpKind::X86X87Data {
-            kind: X86X87DataKind::LoadExtended,
-            addr: Some(Address::Direct(_)),
-            ..
-        })
-    ));
+        },
+    ] = addr32.ops.as_slice()
+    else {
+        panic!("expected one addr32 FLD m80 operation")
+    };
+    super::addr32_assertions::sib(addr, Some(X86Reg::Rbx), X86Reg::Rcx, 4, 0x20);
 
     for bytes in [
         &[0xF0, 0xD9, 0xC0][..],
@@ -2220,25 +2212,16 @@ fn lift_fxsave_fxrstor_width_addressing_and_legality() {
 
     let addr32 = lift_single(&[0x67, 0x0F, 0xAE, 0x44, 0x4B, 0x20]).unwrap();
     assert_eq!(addr32.bytes_consumed, 6);
-    assert!(addr32.ops[..addr32.ops.len() - 1].iter().all(|op| matches!(
-        op.kind,
-        OpKind::Shl {
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
+    let [
+        SmirOp {
+            kind: OpKind::X86FxSave { addr, rex_w: false },
             ..
-        } | OpKind::Add {
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
-            ..
-        }
-    )));
-    assert!(matches!(
-        addr32.ops.last().map(|op| &op.kind),
-        Some(OpKind::X86FxSave {
-            addr: Address::Direct(_),
-            rex_w: false,
-        })
-    ));
+        },
+    ] = addr32.ops.as_slice()
+    else {
+        panic!("expected one addr32 FXSAVE operation")
+    };
+    super::addr32_assertions::sib(addr, Some(X86Reg::Rbx), X86Reg::Rcx, 2, 0x20);
 
     // Legacy optional prefixes are tolerated; LOCK and register operands
     // are architecturally invalid.
@@ -2311,14 +2294,21 @@ fn lift_xsave_xsaveopt_xrstor_width_addressing_and_legality() {
 
     let addr32 = lift_single(&[0x67, 0x0F, 0xAE, 0x64, 0x4B, 0x20]).unwrap();
     assert_eq!(addr32.bytes_consumed, 6);
-    assert!(matches!(
-        addr32.ops.last().map(|op| &op.kind),
-        Some(OpKind::X86XSave {
-            addr: Address::Direct(_),
-            kind: X86XSaveKind::XSave,
+    let [
+        SmirOp {
+            kind:
+                OpKind::X86XSave {
+                    addr,
+                    kind: X86XSaveKind::XSave,
+                    ..
+                },
             ..
-        })
-    ));
+        },
+    ] = addr32.ops.as_slice()
+    else {
+        panic!("expected one addr32 XSAVE operation")
+    };
+    super::addr32_assertions::sib(addr, Some(X86Reg::Rbx), X86Reg::Rcx, 2, 0x20);
 
     for bytes in [
         &[0x66, 0x0F, 0xAE, 0x23][..],
@@ -2406,14 +2396,21 @@ fn lift_compacted_xsave_family_group9_encodings_and_legality() {
 
     let addr32 = lift_single(&[0x67, 0x0F, 0xC7, 0x64, 0x4B, 0x20]).unwrap();
     assert_eq!(addr32.bytes_consumed, 6);
-    assert!(matches!(
-        addr32.ops.last().map(|op| &op.kind),
-        Some(OpKind::X86XSave {
-            addr: Address::Direct(_),
-            kind: X86XSaveKind::XSaveC,
+    let [
+        SmirOp {
+            kind:
+                OpKind::X86XSave {
+                    addr,
+                    kind: X86XSaveKind::XSaveC,
+                    ..
+                },
             ..
-        })
-    ));
+        },
+    ] = addr32.ops.as_slice()
+    else {
+        panic!("expected one addr32 XSAVEC operation")
+    };
+    super::addr32_assertions::sib(addr, Some(X86Reg::Rbx), X86Reg::Rcx, 2, 0x20);
 
     for bytes in [
         &[0xF0, 0x0F, 0xC7, 0x23][..],

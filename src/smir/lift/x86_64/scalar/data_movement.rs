@@ -1124,7 +1124,15 @@ impl X86_64Lifter {
         // SegmentRel that wrongly adds the FS/GS base.
         let mut lea_addr = modrm.addr.as_ref().unwrap().clone();
         lea_addr.segment = None;
-        let (addr, mut ops) = self.x86_addr_to_smir(&lea_addr, next_pc, ctx);
+        // LEA's addr32 result is an integer destination rather than a memory
+        // address. Keep its explicit W32 computation in ordinary SMIR ops;
+        // `Address::X86Addr32` is reserved for memory consumers whose helper
+        // lowering reconstructs the address directly from architectural state.
+        let (addr, mut ops) = if lea_addr.address_width == OpWidth::W32 {
+            self.x86_addr32_to_smir(&lea_addr, next_pc, ctx, None)
+        } else {
+            self.x86_addr_to_smir(&lea_addr, next_pc, ctx)
+        };
 
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),

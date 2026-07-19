@@ -1071,14 +1071,15 @@ fn lift_vex_masked_memory_covers_float_integer_load_store_and_fault_lanes() {
 
     let addr32 = lift_single(&[0x67, 0xC4, 0xE2, 0x71, 0x2C, 0x14, 0x77]).unwrap();
     assert_eq!(addr32.bytes_consumed, 7);
-    assert!(addr32.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::Add {
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
-            ..
-        }
-    )));
+    let addr = addr32
+        .ops
+        .iter()
+        .find_map(|op| match &op.kind {
+            OpKind::Lea { addr, .. } => Some(addr),
+            _ => None,
+        })
+        .expect("masked addr32 memory base");
+    super::addr32_assertions::sib(addr, Some(X86Reg::Rdi), X86Reg::Rsi, 2, 0);
 
     for bytes in [
         &[0xC4, 0xE2, 0x71, 0x2C, 0xD2][..], // memory operand required
@@ -1183,21 +1184,19 @@ fn lift_vex_fma3_covers_orders_signs_scalars_alternation_and_addresses() {
 
     let addr32 = lift_single(&[0x67, 0xC4, 0xE2, 0x75, 0x98, 0x54, 0x77, 0x20]).unwrap();
     assert_eq!(addr32.bytes_consumed, 8);
-    assert!(addr32.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::VLoad {
-            width: VecWidth::V256,
-            ..
-        }
-    )));
-    assert!(addr32.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::Add {
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
-            ..
-        }
-    )));
+    let addr = addr32
+        .ops
+        .iter()
+        .find_map(|op| match &op.kind {
+            OpKind::VLoad {
+                addr,
+                width: VecWidth::V256,
+                ..
+            } => Some(addr),
+            _ => None,
+        })
+        .expect("FMA addr32 memory source");
+    super::addr32_assertions::sib(addr, Some(X86Reg::Rdi), X86Reg::Rsi, 2, 0x20);
 
     assert!(matches!(
         lift_single(&[0xC4, 0xE2, 0x74, 0x98, 0xD3]),
@@ -1346,14 +1345,15 @@ fn lift_sse3_addsub_horizontal_covers_legacy_vex_widths_addresses_and_invalids()
     );
     let addr32 = lift_single(&[0x67, 0xC5, 0xFF, 0x7C, 0x54, 0x77, 0x20]).unwrap();
     assert_eq!(addr32.bytes_consumed, 7);
-    assert!(addr32.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::Add {
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
-            ..
-        }
-    )));
+    let addr = addr32
+        .ops
+        .iter()
+        .find_map(|op| match &op.kind {
+            OpKind::VLoad { addr, .. } => Some(addr),
+            _ => None,
+        })
+        .expect("horizontal-add addr32 memory source");
+    super::addr32_assertions::sib(addr, Some(X86Reg::Rdi), X86Reg::Rsi, 2, 0x20);
     assert!(
         !addr32
             .ops
@@ -1435,14 +1435,15 @@ fn lift_reciprocal_estimates_covers_legacy_vex_scalar_packed_and_special_encodin
     );
     let addr32 = lift_single(&[0x67, 0xC5, 0xF8, 0x52, 0x54, 0x77, 0x10]).unwrap();
     assert_eq!(addr32.bytes_consumed, 7);
-    assert!(addr32.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::Add {
-            width: OpWidth::W32,
-            flags: FlagUpdate::None,
-            ..
-        }
-    )));
+    let addr = addr32
+        .ops
+        .iter()
+        .find_map(|op| match &op.kind {
+            OpKind::VLoad { addr, .. } => Some(addr),
+            _ => None,
+        })
+        .expect("reciprocal addr32 memory source");
+    super::addr32_assertions::sib(addr, Some(X86Reg::Rdi), X86Reg::Rsi, 2, 0x10);
     assert!(lift_single(&[0xC5, 0xFE, 0x53, 0xD1]).is_ok()); // scalar VEX.LIG
 
     for bytes in [
@@ -2404,26 +2405,19 @@ fn lift_legacy_and_vex_gfni_cover_widths_aliases_prefixes_and_alignment() {
     // Address-size and segment prefixes before VEX remain legal and are
     // carried into the memory source rather than rejected as SIMD prefixes.
     let addr32 = lift_single(&[0x67, 0xC4, 0xE2, 0x71, 0xCF, 0x00]).unwrap();
-    let truncated = addr32
+    let addr = addr32
         .ops
         .iter()
-        .find_map(|op| match op.kind {
-            OpKind::Mov {
-                dst,
-                src: SrcOperand::Reg(VReg::Arch(ArchReg::X86(X86Reg::Rax))),
-                width: OpWidth::W32,
-            } => Some(dst),
+        .find_map(|op| match &op.kind {
+            OpKind::VLoad {
+                addr,
+                width: VecWidth::V128,
+                ..
+            } => Some(addr),
             _ => None,
         })
-        .expect("67h must materialize the zero-extended EAX address");
-    assert!(addr32.ops.iter().any(|op| matches!(
-        op.kind,
-        OpKind::VLoad {
-            addr: Address::Direct(base),
-            width: VecWidth::V128,
-            ..
-        } if base == truncated
-    )));
+        .expect("GFNI addr32 memory source");
+    super::addr32_assertions::direct(addr, X86Reg::Rax);
     let fs = lift_single(&[0x64, 0xC4, 0xE3, 0xF1, 0xCE, 0x00, 0x63]).unwrap();
     assert!(fs.ops.iter().any(|op| matches!(
         op.kind,

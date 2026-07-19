@@ -1103,9 +1103,11 @@ impl Aarch64Lowerer {
                 let addr = base.unwrap_or(guest_pc).wrapping_add(*offset as u64);
                 self.emit_mov_imm_best(dst, addr as i64, OpWidth::W64)
             }
-            Address::GpRel { .. } | Address::SegmentRel { .. } => Err(LowerError::UnsupportedOp {
-                op: format!("AArch64 native LEA address {addr:?}"),
-            }),
+            Address::X86Addr32(_) | Address::GpRel { .. } | Address::SegmentRel { .. } => {
+                Err(LowerError::UnsupportedOp {
+                    op: format!("AArch64 native LEA address {addr:?}"),
+                })
+            }
         }
     }
 }

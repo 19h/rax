@@ -522,6 +522,16 @@ pub enum DispSize {
 /// Memory address operand
 #[derive(Clone, Debug, PartialEq)]
 pub enum Address {
+    /// x86-64 memory address evaluated with a 32-bit effective-address size.
+    ///
+    /// The wrapped address contains the architectural base/index/scale/
+    /// displacement expression. Its non-segment components are evaluated
+    /// modulo 2^32 and zero-extended to 64 bits; for `SegmentRel`, the full
+    /// 64-bit FS/GS base is added only after that zero-extension. A lifter must
+    /// fold EIP-relative input to an `Absolute` low-32-bit offset before
+    /// constructing this variant.
+    X86Addr32(Box<Address>),
+
     /// Simple register indirect: [reg]
     Direct(VReg),
 
@@ -601,6 +611,7 @@ impl Address {
     /// Get all registers used in this address
     pub fn regs(&self) -> Vec<VReg> {
         match self {
+            Address::X86Addr32(inner) => inner.regs(),
             Address::Direct(r) => vec![*r],
             Address::BaseOffset { base, .. } => vec![*base],
             Address::BaseIndexScale { base, index, .. } => {
@@ -634,11 +645,19 @@ impl Address {
     /// predicate before accepting an address: virtual operands would otherwise
     /// require an allocator-owned temporary that can alias live guest state.
     pub(crate) fn is_x86_state_backed_shape(&self) -> bool {
+        if let Address::X86Addr32(inner) = self {
+            return !matches!(
+                inner.as_ref(),
+                Address::X86Addr32(_) | Address::PcRel { .. }
+            ) && inner.is_x86_state_backed_shape();
+        }
+
         let state_gpr =
             |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
         let valid_scale = |scale: &u8| matches!(scale, 1 | 2 | 4 | 8);
 
         match self {
+            Address::X86Addr32(_) => false,
             Address::Direct(base) | Address::BaseOffset { base, .. } => state_gpr(base),
             Address::BaseIndexScale {
                 base, index, scale, ..
@@ -668,7 +687,15 @@ impl Address {
     /// been folded to an `Absolute` low-32-bit offset by the lifter so the
     /// address-size rule remains explicit in the enclosing call target.
     pub(crate) fn is_x86_addr32_state_backed_shape(&self) -> bool {
-        self.is_x86_state_backed_shape() && !matches!(self, Address::PcRel { .. })
+        match self {
+            Address::X86Addr32(inner) => {
+                !matches!(
+                    inner.as_ref(),
+                    Address::X86Addr32(_) | Address::PcRel { .. }
+                ) && inner.is_x86_state_backed_shape()
+            }
+            _ => self.is_x86_state_backed_shape() && !matches!(self, Address::PcRel { .. }),
+        }
     }
 }
 

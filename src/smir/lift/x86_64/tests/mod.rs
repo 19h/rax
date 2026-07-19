@@ -6,6 +6,8 @@ use super::*;
 #[cfg(test)]
 mod addr32;
 #[cfg(test)]
+mod addr32_assertions;
+#[cfg(test)]
 mod apx;
 #[cfg(test)]
 mod callout;
