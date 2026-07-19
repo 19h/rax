@@ -103,6 +103,18 @@ pub(crate) fn block_is_clobber_safe(
     use crate::smir::ir::ops::{OpKind, X86OpHint};
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
 
+    // A native host trap cannot stand in for a guest architectural exception:
+    // it would signal the emulator process rather than producing an exact
+    // guest exit. Frontier blocks explicitly listed in `excluded` never reach
+    // this function, so rejecting terminal traps here does not constrain the
+    // existing native-exit mechanism.
+    if matches!(
+        block.terminator,
+        Terminator::Trap { .. } | Terminator::Unreachable
+    ) {
+        return false;
+    }
+
     // The native trampoline runs the region on the HOST stack: guest RSP is
     // never loaded into the host RSP, and the lowerer's prologue repurposes RBP
     // as the frame pointer. Validated MOV forms use GuestRegs slots and keep the

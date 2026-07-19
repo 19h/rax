@@ -29,6 +29,18 @@ fn assert_forced_abort(result: &LiftResult, expected_len: usize, expected_target
     ));
 }
 
+fn assert_gp0_trap(result: &LiftResult, expected_len: usize) {
+    assert_eq!(result.bytes_consumed, expected_len);
+    assert!(result.ops.is_empty());
+    assert!(result.branch_targets.is_empty());
+    assert!(matches!(
+        result.control_flow,
+        ControlFlow::Trap {
+            kind: TrapKind::GeneralProtection,
+        }
+    ));
+}
+
 #[test]
 fn xabort_consumes_immediate_and_accepts_ignored_non_lock_prefixes() {
     for bytes in [
@@ -78,21 +90,14 @@ fn xbegin_rel16_rel32_and_prefix_order_compute_exact_fallbacks() {
 }
 
 #[test]
-fn xbegin_noncanonical_fallback_remains_an_interpreter_frontier() {
+fn xbegin_noncanonical_fallback_lifts_to_precise_gp0_trap() {
     let pc = 0x0000_7FFF_FFFF_FFFAu64;
-    let error = lift_at(pc, &[0xC7, 0xF8, 0, 0, 0, 0]).unwrap_err();
-    assert!(
-        matches!(
-            error,
-            LiftError::Unsupported { addr, ref mnemonic }
-                if addr == pc && mnemonic == "xbegin non-canonical fallback"
-        ),
-        "{error:?}"
-    );
+    let result = lift_at(pc, &[0xC7, 0xF8, 0, 0, 0, 0]).unwrap();
+    assert_gp0_trap(&result, 6);
 }
 
 #[test]
-fn xtest_lifts_exact_flag_operation_and_xend_stays_fail_closed() {
+fn xtest_lifts_exact_flag_operation_and_xend_lifts_to_gp0() {
     for bytes in [
         &[0x0F, 0x01, 0xD6][..],
         &[0x66, 0xF2, 0x67, 0x64, 0x48, 0x0F, 0x01, 0xD6],
@@ -111,10 +116,15 @@ fn xtest_lifts_exact_flag_operation_and_xend_stays_fail_closed() {
         ));
     }
 
-    assert!(matches!(
-        lift_at(0x1000, &[0x0F, 0x01, 0xD5]),
-        Err(LiftError::Unsupported { ref mnemonic, .. }) if mnemonic == "xend"
-    ));
+    for bytes in [
+        &[0x0F, 0x01, 0xD5][..],
+        &[0x66, 0xF2, 0x67, 0x64, 0x48, 0x0F, 0x01, 0xD5],
+        &[0xD5, 0x00, 0x0F, 0x01, 0xD5],
+    ] {
+        let result = lift_at(0x1000, bytes)
+            .unwrap_or_else(|error| panic!("XEND {bytes:02X?} must lift to #GP(0): {error:?}"));
+        assert_gp0_trap(&result, bytes.len());
+    }
 }
 
 #[test]

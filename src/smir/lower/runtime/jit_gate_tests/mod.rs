@@ -24,6 +24,8 @@ mod mmx_memory_source;
 #[cfg(test)]
 mod sqrt;
 #[cfg(test)]
+mod trap;
+#[cfg(test)]
 mod vector;
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};

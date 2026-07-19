@@ -12,6 +12,8 @@ pub mod context;
 pub mod flags;
 pub mod memory;
 pub mod ops;
+mod trap;
+pub use trap::TrapKind;
 pub mod types;
 
 use std::collections::HashMap;
@@ -1710,27 +1712,6 @@ impl Terminator {
                 | Terminator::Unreachable
         )
     }
-}
-
-/// Trap kinds
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum TrapKind {
-    /// Debug breakpoint
-    Breakpoint,
-    /// Undefined instruction
-    Undefined,
-    /// Division by zero
-    DivideByZero,
-    /// Integer overflow
-    Overflow,
-    /// Bounds check failure
-    Bounds,
-    /// Invalid opcode
-    InvalidOpcode,
-    /// System call
-    SystemCall,
-    /// Halt and wait for interrupt
-    Halt,
 }
 
 // ============================================================================

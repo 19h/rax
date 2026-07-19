@@ -20,8 +20,8 @@ src/smir/lift/x86_64/dispatch/legacy.rs|1|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/dispatch/opcode_maps.rs|4|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/dispatch/vector.rs|5|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/mod.rs|1|mixed-dispatch|LiftError::Unsupported
-src/smir/lift/x86_64/scalar/group11.rs|2|mixed-dispatch|LiftError::Unsupported
+src/smir/lift/x86_64/scalar/group11.rs|1|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/scalar/group5.rs|1|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/scalar/system.rs|4|mixed-dispatch|LiftError::Unsupported
-src/smir/lift/x86_64/scalar/tsx.rs|2|mixed-dispatch|LiftError::Unsupported
+src/smir/lift/x86_64/scalar/tsx.rs|1|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/simd/evex/misc.rs|1|mixed-dispatch|LiftError::Unsupported

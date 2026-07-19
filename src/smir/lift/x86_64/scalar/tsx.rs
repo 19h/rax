@@ -48,12 +48,17 @@ impl X86_64Lifter {
             }
             0xD6 => OpKind::X86XTest,
             0xD5 => {
-                // XEND outside transactional execution raises #GP(0). SMIR
-                // currently has no general-protection trap kind, so retain an
-                // explicit interpreter frontier instead of approximating it.
-                return Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: "xend".to_string(),
+                // The SMIR RTM profile deterministically forces XBEGIN down
+                // its abort path and therefore never enters transactional
+                // execution. XEND is consequently always outside an RTM
+                // region and raises #GP(0).
+                return Ok(LiftResult {
+                    ops: Vec::new(),
+                    bytes_consumed: prefix.cursor + 1,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::GeneralProtection,
+                    },
+                    branch_targets: Vec::new(),
                 });
             }
             _ => {

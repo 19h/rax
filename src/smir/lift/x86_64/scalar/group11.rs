@@ -79,12 +79,13 @@ impl X86_64Lifter {
             let next_pc = pc.wrapping_add(insn_len as u64);
             let fallback = next_pc.wrapping_add_signed(offset);
             if !is_canonical_48(fallback) {
-                // XBEGIN specifies #GP(0) for a non-canonical fallback. SMIR
-                // has no general-protection TrapKind, so reject before native
-                // admission and preserve the exact guest frontier.
-                return Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: "xbegin non-canonical fallback".to_string(),
+                return Ok(LiftResult {
+                    ops: Vec::new(),
+                    bytes_consumed: insn_len,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::GeneralProtection,
+                    },
+                    branch_targets: Vec::new(),
                 });
             }
 

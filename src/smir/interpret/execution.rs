@@ -323,6 +323,12 @@ impl SmirInterpreter {
                             opcode: 0,
                         })
                     }
+                    TrapKind::GeneralProtection => {
+                        BlockResult::Exit(ExitReason::GeneralProtection {
+                            addr: ctx.pc,
+                            error_code: 0,
+                        })
+                    }
                     TrapKind::DivideByZero | TrapKind::Overflow | TrapKind::Bounds => {
                         BlockResult::Exit(ExitReason::Undefined {
                             addr: ctx.pc,

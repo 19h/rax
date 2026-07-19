@@ -1228,6 +1228,16 @@ pub(crate) fn aarch64_block_is_clobber_safe(
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, ArmReg, VReg};
 
+    // Host BRK/UDF would signal the emulator rather than deliver the guest
+    // exception. Excluded frontier blocks are filtered by the caller, so every
+    // trap that reaches this predicate must remain interpreter-only.
+    if matches!(
+        block.terminator,
+        Terminator::Trap { .. } | Terminator::Unreachable
+    ) {
+        return false;
+    }
+
     // Reserved host registers under the identity-map trampoline. A guest write to
     // any of these clobbers host platform/state/link/stack; a guest read returns
     // the host (not guest) value. X28 holds the live state pointer; X18 is the

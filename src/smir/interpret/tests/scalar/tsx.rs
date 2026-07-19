@@ -3,6 +3,40 @@
 use super::*;
 use crate::smir::interpret::tests::*;
 use crate::smir::interpret::*;
+use crate::smir::lift::ControlFlow;
+
+fn execute_lifted_rtm_trap_at(
+    pc: u64,
+    bytes: &[u8],
+    level: crate::smir::optimize::OptLevel,
+    ctx: &mut SmirContext,
+    memory: &mut dyn SmirMemory,
+) -> BlockResult {
+    use crate::smir::lift::x86_64::X86_64Lifter;
+    use crate::smir::lift::{LiftContext, SmirLifter};
+
+    let mut lifter = X86_64Lifter::strict();
+    let mut lift_ctx = LiftContext::new(SourceArch::X86_64);
+    let result = lifter.lift_insn(pc, bytes, &mut lift_ctx).unwrap();
+    assert_eq!(result.bytes_consumed, bytes.len());
+    let ControlFlow::Trap { kind } = result.control_flow else {
+        panic!("RTM instruction did not lift to a trap");
+    };
+
+    let mut builder = FunctionBuilder::new(FunctionId(0), pc);
+    builder.set_terminator(Terminator::Trap { kind });
+    let mut function = builder.finish();
+    function.blocks[0].ops = result.ops;
+    crate::smir::optimize::optimize_function(&mut function, level);
+    assert!(matches!(
+        function.blocks[0].terminator,
+        Terminator::Trap {
+            kind: TrapKind::GeneralProtection,
+        }
+    ));
+    ctx.pc = pc;
+    SmirInterpreter::new().execute_block(ctx, memory, &function.blocks[0])
+}
 
 #[test]
 fn lifted_xtest_overwrites_all_status_flags_and_preserves_other_state() {
@@ -45,6 +79,53 @@ fn xtest_ir_metadata_is_exact_and_not_cross_host_whitelisted() {
         !kind.is_jit_safe(),
         "XTEST admission must remain x86-host-specific"
     );
+}
+
+#[test]
+fn lifted_rtm_gp0_paths_fault_atomically_at_the_instruction_pc() {
+    const RFLAGS: u64 = 0xCD7;
+    const RAX: u64 = 0x0123_4567_89AB_CDEF;
+    const R15: u64 = 0xFEDC_BA98_7654_3210;
+
+    for level in [
+        crate::smir::optimize::OptLevel::O0,
+        crate::smir::optimize::OptLevel::O1,
+        crate::smir::optimize::OptLevel::O2,
+    ] {
+        for (pc, bytes) in [
+            (0x1000, &[0x0F, 0x01, 0xD5][..]),
+            (
+                0x0000_7FFF_FFFF_FFFA,
+                &[0xC7, 0xF8, 0x00, 0x00, 0x00, 0x00][..],
+            ),
+        ] {
+            let mut ctx = SmirContext::new_x86_64();
+            let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+            let r15 = VReg::Arch(ArchReg::X86(X86Reg::R15));
+            ctx.write_vreg(rax, RAX);
+            ctx.write_vreg(r15, R15);
+            ctx.flags.materialized = MaterializedFlags::from_rflags(RFLAGS);
+            ctx.flags.lazy = None;
+            let mut memory = FlatMemory::new(0x100);
+            memory.write(0x20, &[0xA5; 16]).unwrap();
+
+            let exit = execute_lifted_rtm_trap_at(pc, bytes, level, &mut ctx, &mut memory);
+            assert!(matches!(
+                exit,
+                BlockResult::Exit(ExitReason::GeneralProtection {
+                    addr,
+                    error_code: 0,
+                }) if addr == pc
+            ));
+            assert_eq!(ctx.read_vreg(rax), RAX);
+            assert_eq!(ctx.read_vreg(r15), R15);
+            ctx.flags.materialize_all();
+            assert_eq!(ctx.flags.materialized.to_rflags(), RFLAGS);
+            let mut observed = [0u8; 16];
+            memory.read(0x20, &mut observed).unwrap();
+            assert_eq!(observed, [0xA5; 16]);
+        }
+    }
 }
 
 #[test]

@@ -225,6 +225,21 @@ fn emits_complete_non_transactional_rtm_semantics() {
     assert_eq!(xtest["smir"]["bytes_consumed"], 3);
     assert_eq!(xtest["smir"]["ops"][0]["kind"]["opcode"], "x86_xtest");
     assert_eq!(xtest["smir"]["ops"][0]["side_effects"], true);
+
+    let xend = decode_to_json(&[0x0f, 0x01, 0xd5], &opts).unwrap();
+    assert_eq!(xend["smir"]["bytes_consumed"], 3);
+    assert_eq!(xend["smir"]["control_flow"]["kind"], "trap");
+    assert_eq!(xend["smir"]["control_flow"]["trap"], "GeneralProtection");
+    assert_eq!(xend["smir"]["ops"], serde_json::json!([]));
+
+    opts.pc = 0x0000_7fff_ffff_fffa;
+    let noncanonical_xbegin = decode_to_json(&[0xc7, 0xf8, 0x00, 0x00, 0x00, 0x00], &opts).unwrap();
+    assert_eq!(noncanonical_xbegin["smir"]["bytes_consumed"], 6);
+    assert_eq!(
+        noncanonical_xbegin["smir"]["control_flow"]["trap"],
+        "GeneralProtection"
+    );
+    assert_eq!(noncanonical_xbegin["smir"]["ops"], serde_json::json!([]));
 }
 
 #[test]
