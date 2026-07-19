@@ -2618,6 +2618,22 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             lanes,
             op,
         } => op_json!("vunary", dst, src, elem, lanes, op),
+        OpKind::X86Sqrt {
+            dst,
+            src,
+            elem,
+            lanes,
+            round,
+            suppress_exceptions,
+        } => op_json!(
+            "x86_sqrt",
+            dst,
+            src,
+            elem,
+            lanes,
+            round,
+            suppress_exceptions
+        ),
         OpKind::VReduce {
             dst,
             src,

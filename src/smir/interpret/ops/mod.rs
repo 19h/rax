@@ -12,3 +12,4 @@ mod meta;
 mod shift;
 mod simd;
 mod system;
+mod unary;

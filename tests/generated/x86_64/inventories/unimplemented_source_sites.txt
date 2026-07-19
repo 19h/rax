@@ -25,4 +25,3 @@ src/smir/lift/x86_64/scalar/group5.rs|1|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/scalar/system.rs|4|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/scalar/tsx.rs|2|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/simd/evex/misc.rs|1|mixed-dispatch|LiftError::Unsupported
-src/smir/lift/x86_64/simd/vector/sqrt.rs|2|valid-gap-needs-diff|LiftError::Unsupported

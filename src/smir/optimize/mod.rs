@@ -3187,6 +3187,7 @@ impl OpKind {
             }
 
             OpKind::VUnary { src, .. }
+            | OpKind::X86Sqrt { src, .. }
             | OpKind::VReduce { src, .. }
             | OpKind::X86Phminposuw { src, .. }
             | OpKind::X86MovMask { src, .. }

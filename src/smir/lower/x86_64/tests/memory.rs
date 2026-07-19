@@ -147,6 +147,16 @@ fn lower_x86_fp_to_int_emits_width_and_rounding_native_opcodes() {
         suppress_exceptions: false,
     });
     assert!(matches!(unsigned, LowerError::UnsupportedOp { .. }));
+
+    let sqrt_er = lower_single_op_err(OpKind::X86Sqrt {
+        dst: xmm1,
+        src: xmm1,
+        elem: VecElementType::F64,
+        lanes: 1,
+        round: FpRoundMode::RoundDown,
+        suppress_exceptions: true,
+    });
+    assert!(matches!(sqrt_er, LowerError::UnsupportedOp { .. }));
 }
 #[test]
 fn lower_x86_int_to_fp_emits_source_width_native_opcodes() {

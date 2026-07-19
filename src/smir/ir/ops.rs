@@ -2117,6 +2117,21 @@ pub enum OpKind {
         op: VecUnaryOp,
     },
 
+    /// x86 SQRTPS/SQRTPD/SQRTSS/SQRTSD square root with architectural
+    /// MXCSR input processing and IEEE-754 rounding. `round` is either
+    /// MXCSR-dynamic or an EVEX embedded rounding mode. For the latter,
+    /// `suppress_exceptions` records the implied SAE behavior. This is a
+    /// per-lane compute primitive; x86 masking, scalar merging, and upper-lane
+    /// clearing are composed explicitly by the lifter.
+    X86Sqrt {
+        dst: VReg,
+        src: VReg,
+        elem: VecElementType,
+        lanes: u8,
+        round: FpRoundMode,
+        suppress_exceptions: bool,
+    },
+
     /// Vector across-lanes reduction: combine all `lanes` elements of `src`
     /// into a single scalar written to lane 0 of `dst` (other lanes zeroed).
     VReduce {
@@ -4606,6 +4621,7 @@ impl OpKind {
             | OpKind::VMul { dst, .. }
             | OpKind::VDiv { dst, .. }
             | OpKind::VUnary { dst, .. }
+            | OpKind::X86Sqrt { dst, .. }
             | OpKind::VReduce { dst, .. }
             | OpKind::VFMinMaxNm { dst, .. }
             | OpKind::VPermute2 { dst, .. }
@@ -5027,6 +5043,10 @@ impl OpKind {
                         ..
                     }
                     | OpKind::X86ScaleF {
+                        suppress_exceptions: false,
+                        ..
+                    }
+                    | OpKind::X86Sqrt {
                         suppress_exceptions: false,
                         ..
                     }

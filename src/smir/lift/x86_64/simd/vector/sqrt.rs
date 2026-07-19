@@ -5,6 +5,15 @@ use crate::smir::ir::types::*;
 use crate::smir::lift::x86_64::*;
 use crate::smir::lift::{LiftContext, LiftError, LiftResult};
 
+fn evex_sqrt_round_mode(l_bits: u8) -> FpRoundMode {
+    match l_bits {
+        0 => FpRoundMode::RoundNearest,
+        1 => FpRoundMode::RoundDown,
+        2 => FpRoundMode::RoundUp,
+        _ => FpRoundMode::RoundTowardZero,
+    }
+}
+
 impl X86_64Lifter {
     pub(crate) fn lift_vec_sqrt(
         &self,
@@ -44,7 +53,6 @@ impl X86_64Lifter {
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
         let next_pc = pc + cursor as u64 + modrm.bytes_consumed as u64;
-        let hint = self.vec_hint(prefix, opcode);
         let mut ops = Vec::new();
 
         if matches!(prefix.pp, X86SsePrefix::Rep | X86SsePrefix::Repne) {
@@ -64,12 +72,12 @@ impl X86_64Lifter {
                     bytes: bytes.to_vec(),
                 });
             }
-            if prefix.encoding == VecEncodingKind::Evex && prefix.b {
-                return Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: "EVEX square-root embedded rounding / SAE".to_string(),
-                });
-            }
+            let embedded_rounding = prefix.encoding == VecEncodingKind::Evex && prefix.b;
+            let operation_prefix = VecPrefix {
+                width: VecWidth::V128,
+                ..prefix
+            };
+            let hint = self.vec_hint(operation_prefix, opcode);
 
             let dst = self.xmm(
                 modrm.reg
@@ -167,18 +175,25 @@ impl X86_64Lifter {
             };
             let vector_result = ctx.alloc_vreg();
             let scalar_result = ctx.alloc_vreg();
-            ops.push(SmirOp::with_hint(
-                OpId(ops.len() as u16),
-                pc,
+            let sqrt = if embedded_rounding {
+                OpKind::X86Sqrt {
+                    dst: vector_result,
+                    src,
+                    elem,
+                    lanes: 1,
+                    round: evex_sqrt_round_mode(prefix.l_bits),
+                    suppress_exceptions: true,
+                }
+            } else {
                 OpKind::VUnary {
                     dst: vector_result,
                     src,
                     elem,
                     lanes: 1,
                     op: VecUnaryOp::FSqrt,
-                },
-                hint,
-            ));
+                }
+            };
+            ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, sqrt, hint));
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),
                 pc,
@@ -221,18 +236,23 @@ impl X86_64Lifter {
                 bytes: bytes.to_vec(),
             });
         }
-        if prefix.encoding == VecEncodingKind::Evex && prefix.b && !modrm.is_memory {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: "EVEX square-root embedded rounding / SAE".to_string(),
-            });
-        }
-        if prefix.encoding == VecEncodingKind::Evex && prefix.l_bits == 3 {
+        let embedded_rounding =
+            prefix.encoding == VecEncodingKind::Evex && prefix.b && !modrm.is_memory;
+        if prefix.encoding == VecEncodingKind::Evex && prefix.l_bits == 3 && !embedded_rounding {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
             });
         }
+        let operation_prefix = if embedded_rounding {
+            VecPrefix {
+                width: VecWidth::V512,
+                ..prefix
+            }
+        } else {
+            prefix
+        };
+        let hint = self.vec_hint(operation_prefix, opcode);
 
         let dst = self.vec_reg(
             modrm.reg
@@ -241,7 +261,7 @@ impl X86_64Lifter {
                 } else {
                     0
                 },
-            prefix.width,
+            operation_prefix.width,
         );
         let mask = (prefix.encoding == VecEncodingKind::Evex && prefix.aaa != 0)
             .then_some(VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa))));
@@ -304,7 +324,7 @@ impl X86_64Lifter {
                     } else {
                         0
                     },
-                prefix.width,
+                operation_prefix.width,
             );
             if mask.is_some() {
                 // Masked-off packed floating-point elements must not
@@ -313,7 +333,7 @@ impl X86_64Lifter {
                 self.append_evex_vector_mask_result(
                     VecPrefix {
                         zeroing: true,
-                        ..prefix
+                        ..operation_prefix
                     },
                     sanitized,
                     source,
@@ -332,20 +352,35 @@ impl X86_64Lifter {
         } else {
             dst
         };
-        ops.push(SmirOp::with_hint(
-            OpId(ops.len() as u16),
-            pc,
+        let sqrt = if embedded_rounding {
+            OpKind::X86Sqrt {
+                dst: raw,
+                src,
+                elem,
+                lanes: operation_prefix.width.lanes(elem) as u8,
+                round: evex_sqrt_round_mode(prefix.l_bits),
+                suppress_exceptions: true,
+            }
+        } else {
             OpKind::VUnary {
                 dst: raw,
                 src,
                 elem,
-                lanes: prefix.width.lanes(elem) as u8,
+                lanes: operation_prefix.width.lanes(elem) as u8,
                 op: VecUnaryOp::FSqrt,
-            },
-            hint,
-        ));
+            }
+        };
+        ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, sqrt, hint));
         if mask.is_some() {
-            self.append_evex_vector_mask_result(prefix, dst, raw, elem, pc, ctx, &mut ops);
+            self.append_evex_vector_mask_result(
+                operation_prefix,
+                dst,
+                raw,
+                elem,
+                pc,
+                ctx,
+                &mut ops,
+            );
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
