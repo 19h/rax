@@ -112,18 +112,9 @@ impl Aarch64X86_64Lowerer {
                     }
                 }
                 Terminator::Call { target, .. } | Terminator::TailCall { target, .. } => {
-                    if let CallTarget::Indirect(reg) | CallTarget::IndirectInterworking(reg) =
-                        target
-                    {
-                        if let VReg::Virtual(id) = *reg {
+                    for reg in target.regs() {
+                        if let VReg::Virtual(id) = reg {
                             ids.insert(id);
-                        }
-                    }
-                    if let CallTarget::IndirectMem(addr) = target {
-                        for reg in addr.regs() {
-                            if let VReg::Virtual(id) = reg {
-                                ids.insert(id);
-                            }
                         }
                     }
                 }

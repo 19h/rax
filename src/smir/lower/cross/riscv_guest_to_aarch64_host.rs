@@ -460,10 +460,8 @@ impl RiscVAarch64Lowerer {
                     }
                 }
                 Terminator::Call { target, .. } | Terminator::TailCall { target, .. } => {
-                    if let CallTarget::Indirect(reg) | CallTarget::IndirectInterworking(reg) =
-                        target
-                    {
-                        if let VReg::Virtual(id) = *reg {
+                    for reg in target.regs() {
+                        if let VReg::Virtual(id) = reg {
                             ids.insert(id);
                         }
                     }

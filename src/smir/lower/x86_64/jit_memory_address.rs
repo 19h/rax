@@ -61,11 +61,7 @@ impl X86_64Lowerer {
                     self.code.emit_u8(0x01);
                     self.code.emit_u8(0xFE); // add rsi,rdi
                 }
-                _ => {
-                    return Err(LowerError::UnsupportedOp {
-                        op: "jit-mem addr32: unsupported address form".to_string(),
-                    });
-                }
+                _ => self.emit_jit_mem_effective_address_addr32_general(addr)?,
             }
         } else {
             match addr {
@@ -172,6 +168,112 @@ impl X86_64Lowerer {
                     });
                 }
             }
+        }
+        Ok(())
+    }
+
+    /// General state-backed x86 addr32 builder. The special RDI-only cases in
+    /// `emit_jit_mem_effective_address` retain their established byte sequences;
+    /// this path covers every other architectural GPR, SIB shape, absolute
+    /// offset, and FS/GS-relative form.
+    fn emit_jit_mem_effective_address_addr32_general(
+        &mut self,
+        addr: &Address,
+    ) -> Result<(), LowerError> {
+        match addr {
+            Address::Direct(base) => {
+                self.emit_jit_addr32_offset(Some(*base), None, 1, 0)?;
+            }
+            Address::BaseOffset { base, offset, .. } => {
+                self.emit_jit_addr32_offset(Some(*base), None, 1, *offset)?;
+            }
+            Address::BaseIndexScale {
+                base,
+                index,
+                scale,
+                disp,
+                ..
+            } => {
+                self.emit_jit_addr32_offset(*base, Some(*index), *scale, i64::from(*disp))?;
+            }
+            Address::Absolute(offset) => {
+                self.code.emit_u8(0xBE); // mov esi, imm32
+                self.code.emit_u32(*offset as u32);
+            }
+            Address::SegmentRel {
+                segment,
+                base,
+                index,
+                scale,
+                disp,
+            } => {
+                let segment_offset = match segment {
+                    VReg::Arch(ArchReg::X86(X86Reg::FsBase)) => X86_GUEST_FS_BASE_OFFSET,
+                    VReg::Arch(ArchReg::X86(X86Reg::GsBase)) => X86_GUEST_GS_BASE_OFFSET,
+                    _ => {
+                        return Err(LowerError::UnsupportedOp {
+                            op: "jit-mem addr32: non-FS/GS segment".to_string(),
+                        });
+                    }
+                };
+                self.emit_jit_addr32_offset(*base, *index, *scale, *disp)?;
+                self.emit_struct_mov(PhysReg::Rax, 7, segment_offset, false);
+                self.code.emit_u8(0x48);
+                self.code.emit_u8(0x01);
+                self.code.emit_u8(0xFE); // add rsi,rdi after offset zero-extension
+            }
+            Address::PcRel { .. } | Address::GpRel { .. } => {
+                return Err(LowerError::UnsupportedOp {
+                    op: "jit-mem addr32: unsupported address form".to_string(),
+                });
+            }
+        }
+        Ok(())
+    }
+
+    /// Evaluate `base + index*scale + displacement` modulo 2^32 into RSI.
+    fn emit_jit_addr32_offset(
+        &mut self,
+        base: Option<VReg>,
+        index: Option<VReg>,
+        scale: u8,
+        disp: i64,
+    ) -> Result<(), LowerError> {
+        if !matches!(scale, 1 | 2 | 4 | 8) {
+            return Err(LowerError::UnsupportedOp {
+                op: format!("jit-mem addr32: invalid scale {scale}"),
+            });
+        }
+
+        if let Some(base) = base {
+            let guest_index = self.jit_arch_enc(base)?;
+            self.emit_struct_mov(PhysReg::Rax, 6, i32::from(guest_index) * 8, false);
+            self.code.emit_u8(0x89);
+            self.code.emit_u8(0xF6); // mov esi,esi
+        } else {
+            self.code.emit_u8(0x31);
+            self.code.emit_u8(0xF6); // xor esi,esi
+        }
+
+        if let Some(index) = index {
+            let guest_index = self.jit_arch_enc(index)?;
+            self.emit_struct_mov(PhysReg::Rax, 7, i32::from(guest_index) * 8, false);
+            self.code.emit_u8(0x89);
+            self.code.emit_u8(0xFF); // mov edi,edi
+            let shift = scale.trailing_zeros() as u8;
+            if shift != 0 {
+                self.code.emit_u8(0xC1);
+                self.code.emit_u8(0xE7);
+                self.code.emit_u8(shift); // shl edi, shift
+            }
+            self.code.emit_u8(0x01);
+            self.code.emit_u8(0xFE); // add esi,edi
+        }
+
+        if disp != 0 {
+            self.code.emit_u8(0x81);
+            self.code.emit_u8(0xC6);
+            self.code.emit_u32(disp as u32); // add esi, imm32
         }
         Ok(())
     }

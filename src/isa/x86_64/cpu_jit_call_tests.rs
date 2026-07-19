@@ -214,6 +214,120 @@ fn jit_compiles_and_executes_rip_relative_memory_indirect_call() {
 }
 
 #[test]
+fn jit_compiles_and_executes_eip_relative_addr32_memory_call() {
+    let (mut vcpu, memory) = test_vcpu_with_mem();
+    // 67 call qword ptr [eip+0xff9]; mov rbx,rdx; jmp next; hlt.
+    // The seven-byte CALL ends at 7, so the pointer is read at 1000h.
+    memory
+        .write_slice(
+            &[
+                0x67, 0xFF, 0x15, 0xF9, 0x0F, 0x00, 0x00, 0x48, 0x89, 0xD3, 0xEB, 0x00, 0xF4,
+            ],
+            GuestAddress(0),
+        )
+        .unwrap();
+    memory
+        .write_slice(&0x2000u64.to_le_bytes(), GuestAddress(0x1000))
+        .unwrap();
+    memory
+        .write_slice(&[0x48, 0xFF, 0xC2, 0xC3], GuestAddress(0x2000))
+        .unwrap();
+    configure_long_mode_jit(&mut vcpu);
+    vcpu.regs.rdx = 41;
+    vcpu.regs.rbx = 0xDEAD_BEEF;
+    vcpu.regs.rsp = 0x8000;
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile EIP-relative addr32 CALL region")
+        .expect("EIP-relative addr32 CALL should remain native");
+    vcpu.jit_run_region_native(&region);
+
+    assert_eq!(vcpu.regs.rdx, 42);
+    assert_eq!(vcpu.regs.rbx, 42, "native continuation did not resume");
+    assert_eq!(vcpu.regs.rsp, 0x8000);
+    assert_eq!(vcpu.regs.rip, 12);
+}
+
+#[test]
+fn jit_addr32_memory_call_wraps_base_index_and_discards_high_halves() {
+    let (mut vcpu, memory) = test_vcpu_with_mem();
+    // 67 call qword ptr [eax+ecx*4+20h].
+    memory
+        .write_slice(
+            &[
+                0x67, 0xFF, 0x54, 0x88, 0x20, 0x48, 0x89, 0xD3, 0xEB, 0x00, 0xF4,
+            ],
+            GuestAddress(0),
+        )
+        .unwrap();
+    memory
+        .write_slice(&0x2000u64.to_le_bytes(), GuestAddress(0x20))
+        .unwrap();
+    memory
+        .write_slice(&[0x48, 0xFF, 0xC2, 0xC3], GuestAddress(0x2000))
+        .unwrap();
+    configure_long_mode_jit(&mut vcpu);
+    vcpu.regs.rax = 0xABCD_EF01_FFFF_FF00;
+    vcpu.regs.rcx = 0x1234_5678_0000_0040;
+    vcpu.regs.rdx = 41;
+    vcpu.regs.rbx = 0xDEAD_BEEF;
+    vcpu.regs.rsp = 0x8000;
+
+    // FFFFFF00h + 40h*4 + 20h = 20h modulo 2^32.
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile wrapped addr32 SIB CALL region")
+        .expect("state-backed addr32 SIB CALL should remain native");
+    vcpu.jit_run_region_native(&region);
+
+    assert_eq!(vcpu.regs.rax, 0xABCD_EF01_FFFF_FF00);
+    assert_eq!(vcpu.regs.rcx, 0x1234_5678_0000_0040);
+    assert_eq!(vcpu.regs.rdx, 42);
+    assert_eq!(vcpu.regs.rbx, 42);
+    assert_eq!(vcpu.regs.rsp, 0x8000);
+    assert_eq!(vcpu.regs.rip, 10);
+}
+
+#[test]
+fn jit_addr32_memory_call_adds_fs_after_wrapped_offset() {
+    let (mut vcpu, memory) = test_vcpu_with_mem();
+    // FS:67 call qword ptr [eax+20h].
+    memory
+        .write_slice(
+            &[
+                0x64, 0x67, 0xFF, 0x50, 0x20, 0x48, 0x89, 0xD3, 0xEB, 0x00, 0xF4,
+            ],
+            GuestAddress(0),
+        )
+        .unwrap();
+    memory
+        .write_slice(&0x2000u64.to_le_bytes(), GuestAddress(0x110))
+        .unwrap();
+    memory
+        .write_slice(&[0x48, 0xFF, 0xC2, 0xC3], GuestAddress(0x2000))
+        .unwrap();
+    configure_long_mode_jit(&mut vcpu);
+    vcpu.sregs.fs.base = 0x100;
+    vcpu.regs.rax = 0xABCD_EF01_FFFF_FFF0;
+    vcpu.regs.rdx = 41;
+    vcpu.regs.rbx = 0xDEAD_BEEF;
+    vcpu.regs.rsp = 0x8000;
+
+    // (FFFFFFF0h + 20h) mod 2^32 = 10h, then FS.base yields 110h.
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile FS addr32 CALL region")
+        .expect("FS addr32 CALL should remain native");
+    vcpu.jit_run_region_native(&region);
+
+    assert_eq!(vcpu.regs.rdx, 42);
+    assert_eq!(vcpu.regs.rbx, 42);
+    assert_eq!(vcpu.regs.rsp, 0x8000);
+    assert_eq!(vcpu.regs.rip, 10);
+}
+
+#[test]
 fn jit_memory_indirect_call_uses_pre_push_rsp_for_target_operand() {
     let (mut vcpu, memory) = test_vcpu_with_mem();
     // call qword ptr [rsp]; mov rbx,rax; jmp next; hlt
@@ -283,6 +397,36 @@ fn jit_memory_indirect_call_target_fault_restarts_at_call_without_stack_effect()
 }
 
 #[test]
+fn jit_addr32_memory_call_target_fault_restarts_without_stack_effect() {
+    let (mut vcpu, memory) = test_vcpu_with_mem();
+    // The addr32 EIP-relative pointer begins at FFFFh and crosses the mapped
+    // memory end. The continuation would increment RDX if the fault leaked.
+    memory
+        .write_slice(
+            &[
+                0x67, 0xFF, 0x15, 0xF8, 0xFF, 0x00, 0x00, 0x48, 0xFF, 0xC2, 0xEB, 0x00, 0xF4,
+            ],
+            GuestAddress(0),
+        )
+        .unwrap();
+    configure_long_mode_jit(&mut vcpu);
+    vcpu.regs.rdx = 41;
+    vcpu.regs.rsp = 0x8000;
+    let original_flags = vcpu.regs.rflags;
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile faulting addr32 target-load region")
+        .expect("addr32 memory-indirect CALL should be JIT eligible");
+    vcpu.jit_run_region_native(&region);
+
+    assert_eq!(vcpu.regs.rip, 0, "target fault must restart the CALL");
+    assert_eq!(vcpu.regs.rsp, 0x8000, "target fault must precede the push");
+    assert_eq!(vcpu.regs.rdx, 41, "continuation must not execute");
+    assert_eq!(vcpu.regs.rflags, original_flags);
+}
+
+#[test]
 fn jit_memory_indirect_call_stack_fault_restarts_at_call_without_target_execution() {
     let (mut vcpu, memory) = test_vcpu_with_mem();
     memory
@@ -343,12 +487,12 @@ fn jit_callouts_remain_disabled_outside_64_bit_code_segments() {
 #[test]
 fn jit_callout_rejects_legacy_operand_size_override_until_widths_are_unified() {
     let (mut vcpu, memory) = test_vcpu_with_mem();
-    // 66 call qword ptr [rip+0xff9]; ret. The direct interpreter currently
-    // assigns a 16-bit near-CALL stack width to this encoding, whereas the
-    // callout ABI is intentionally 64-bit only.
+    // 66 67 call qword ptr [eip+0xff8]; ret. The direct interpreter currently
+    // assigns a 16-bit near-CALL stack width to the 66h encoding, whereas the
+    // callout ABI is intentionally 64-bit only. 67h must not bypass that gate.
     memory
         .write_slice(
-            &[0x66, 0xFF, 0x15, 0xF9, 0x0F, 0x00, 0x00, 0xC3],
+            &[0x66, 0x67, 0xFF, 0x15, 0xF8, 0x0F, 0x00, 0x00, 0xC3],
             GuestAddress(0),
         )
         .unwrap();

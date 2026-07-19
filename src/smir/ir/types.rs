@@ -662,6 +662,14 @@ impl Address {
             Address::GpRel { .. } => false,
         }
     }
+
+    /// Whether this address is a valid state-backed x86 32-bit effective
+    /// address. Unlike the ordinary helper shape, PC-relative input must have
+    /// been folded to an `Absolute` low-32-bit offset by the lifter so the
+    /// address-size rule remains explicit in the enclosing call target.
+    pub(crate) fn is_x86_addr32_state_backed_shape(&self) -> bool {
+        self.is_x86_state_backed_shape() && !matches!(self, Address::PcRel { .. })
+    }
 }
 
 // ============================================================================

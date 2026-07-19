@@ -5,6 +5,51 @@ use crate::smir::interpret::tests::*;
 use crate::smir::interpret::*;
 
 #[test]
+fn addr32_memory_call_targets_wrap_before_segment_addition() {
+    let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
+    let r12 = VReg::Arch(ArchReg::X86(X86Reg::R12));
+    let fs = VReg::Arch(ArchReg::X86(X86Reg::FsBase));
+    let mut ctx = SmirContext::new_x86_64();
+    let mut memory = FlatMemory::new(0x400);
+    ctx.write_vreg(r8, 0xDEAD_BEEF_FFFF_FFF0);
+    ctx.write_vreg(r12, 0xCAFE_BABE_0000_0008);
+    ctx.write_vreg(fs, 0x100);
+
+    // (FFFF_FFF0h + 8*4 + 10h) mod 2^32 = 20h; FS is then added,
+    // selecting the 8-byte target at linear address 120h.
+    memory.write(0x120, &0x2345u64.to_le_bytes()).unwrap();
+    let mut call = SmirBlock::new(BlockId(0), 0x1000);
+    call.set_terminator(Terminator::Call {
+        target: CallTarget::X86IndirectMemAddr32(Address::SegmentRel {
+            segment: fs,
+            base: Some(r8),
+            index: Some(r12),
+            scale: 4,
+            disp: 0x10,
+        }),
+        args: Vec::new(),
+        continuation: BlockId(1),
+    });
+    assert!(matches!(
+        SmirInterpreter::new().execute_block(&mut ctx, &mut memory, &call),
+        BlockResult::Continue(0x2345)
+    ));
+
+    // Synthetic IR with high absolute bits still follows the variant's modulo
+    // contract. TailCall shares the same canonical target-resolution path.
+    memory.write(0x180, &0x3456u64.to_le_bytes()).unwrap();
+    let mut tail = SmirBlock::new(BlockId(0), 0x1000);
+    tail.set_terminator(Terminator::TailCall {
+        target: CallTarget::X86IndirectMemAddr32(Address::Absolute(0x1_0000_0180)),
+        args: Vec::new(),
+    });
+    assert!(matches!(
+        SmirInterpreter::new().execute_block(&mut ctx, &mut memory, &tail),
+        BlockResult::Continue(0x3456)
+    ));
+}
+
+#[test]
 fn lifted_modrm_addr32_zero_extends_wraps_and_adds_segment_after_offset() {
     let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
     let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));

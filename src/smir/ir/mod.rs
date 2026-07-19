@@ -6,6 +6,8 @@
 //! - Block: a basic block
 //! - Terminator: block terminators (branches, returns, etc.)
 
+mod call;
+pub use call::{CallTarget, RuntimeFunc};
 pub mod context;
 pub mod flags;
 pub mod memory;
@@ -1708,49 +1710,6 @@ impl Terminator {
                 | Terminator::Unreachable
         )
     }
-}
-
-/// Call target
-#[derive(Clone, Debug)]
-pub enum CallTarget {
-    /// Direct call to known function
-    Direct(FunctionId),
-    /// Direct call to guest address
-    GuestAddr(GuestAddr),
-    /// Direct AArch32 interworking call. `addr` is the architectural target PC
-    /// (with no state tag in bit 0), while `thumb` is the execution state the
-    /// dispatcher must install before resuming the guest.
-    GuestAddrInterworking { addr: GuestAddr, thumb: bool },
-    /// Indirect call through register
-    Indirect(VReg),
-    /// AArch32 register interworking call. Bit 0 of the W32 target selects the
-    /// execution state and is cleared from the architectural target PC.
-    IndirectInterworking(VReg),
-    /// Indirect call through memory
-    IndirectMem(Address),
-    /// External runtime function
-    Runtime(RuntimeFunc),
-}
-
-/// Runtime helper functions
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RuntimeFunc {
-    /// System call handler
-    Syscall,
-    /// Page fault handler
-    PageFault,
-    /// FP exception handler
-    FpException,
-    /// Undefined instruction handler
-    Undefined,
-    /// Debug breakpoint
-    Breakpoint,
-    /// Memory barrier (fence)
-    MemoryBarrier,
-    /// CPUID (x86)
-    Cpuid,
-    /// Read timestamp counter
-    Rdtsc,
 }
 
 /// Trap kinds

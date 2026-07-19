@@ -209,3 +209,32 @@ pub(super) fn jit_call_enabled() -> bool {
     static ON: OnceLock<bool> = OnceLock::new();
     *ON.get_or_init(|| jit_default_enabled(std::env::var_os("RAX_JIT_NO_CALL").is_some()))
 }
+
+/// Whether the x86-64 callout lowerer can resolve this target without an
+/// allocator-owned virtual address component.
+pub(super) fn jit_call_target_supported(
+    target: &crate::smir::ir::CallTarget,
+    mem_helpers: bool,
+) -> bool {
+    use crate::smir::ir::CallTarget;
+
+    match target {
+        CallTarget::GuestAddr(_) | CallTarget::Indirect(_) => true,
+        CallTarget::IndirectMem(addr) => mem_helpers && addr.is_x86_state_backed_shape(),
+        CallTarget::X86IndirectMemAddr32(addr) => {
+            mem_helpers && addr.is_x86_addr32_state_backed_shape()
+        }
+        _ => false,
+    }
+}
+
+/// Whether this call target invokes the guest-MMU helper before its callout.
+pub(super) fn jit_call_target_uses_mem_helper(target: &crate::smir::ir::CallTarget) -> bool {
+    use crate::smir::ir::CallTarget;
+
+    match target {
+        CallTarget::IndirectMem(addr) => addr.is_x86_state_backed_shape(),
+        CallTarget::X86IndirectMemAddr32(addr) => addr.is_x86_addr32_state_backed_shape(),
+        _ => false,
+    }
+}

@@ -151,6 +151,31 @@ impl X86_64Lowerer {
                 )?;
                 (TargetSource::Stack, 16)
             }
+            CallTarget::X86IndirectMemAddr32(addr)
+                if self.mem_helpers && addr.is_x86_addr32_state_backed_shape() =>
+            {
+                // The target load has the same fault/stack contract as the
+                // ordinary memory form, but its effective offset is evaluated
+                // modulo 2^32 before an optional FS/GS base is added.
+                {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
+                }
+                self.emit_jit_mem_op_addr32(
+                    call_pc,
+                    true,
+                    None,
+                    Some(16),
+                    None,
+                    None,
+                    None,
+                    addr,
+                    MemWidth::B8,
+                    SignExtend::Zero,
+                    16,
+                )?;
+                (TargetSource::Stack, 16)
+            }
             _ => {
                 return Err(LowerError::UnsupportedOp {
                     op: format!("jit-call target {target:?}"),

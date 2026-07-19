@@ -1,5 +1,9 @@
 //! JSON oracle harness for ISA-specific decoders and SMIR lifters.
 
+mod call_target;
+
+use call_target::call_target_json;
+
 use serde_json::{Map, Value, json};
 
 use crate::config::{Endianness, HexagonIsa};
@@ -4494,36 +4498,6 @@ fn control_flow_json(cf: &ControlFlow) -> Value {
         ControlFlow::Return => json!({"kind": "return"}),
         ControlFlow::Trap { kind } => json!({"kind": "trap", "trap": format!("{kind:?}")}),
         ControlFlow::Syscall => json!({"kind": "syscall"}),
-    }
-}
-
-fn call_target_json(target: &CallTarget) -> Value {
-    match target {
-        CallTarget::Direct(id) => json!({"kind": "direct_function", "id": id.0}),
-        CallTarget::GuestAddr(addr) => json!({"kind": "direct", "addr": hex_u64(*addr)}),
-        CallTarget::GuestAddrInterworking { addr, thumb } => json!({
-            "kind": "direct_interworking",
-            "addr": hex_u64(*addr),
-            "thumb": thumb,
-        }),
-        CallTarget::Indirect(reg) => json!({
-            "kind": "indirect",
-            "reg": format!("{reg:?}"),
-            "reg_value": reg.oracle_json(),
-        }),
-        CallTarget::IndirectInterworking(reg) => json!({
-            "kind": "indirect_interworking",
-            "reg": format!("{reg:?}"),
-            "reg_value": reg.oracle_json(),
-        }),
-        CallTarget::IndirectMem(addr) => {
-            json!({
-                "kind": "indirect_mem",
-                "addr": format!("{addr:?}"),
-                "address": addr.oracle_json(),
-            })
-        }
-        CallTarget::Runtime(func) => json!({"kind": "runtime", "func": format!("{func:?}")}),
     }
 }
 

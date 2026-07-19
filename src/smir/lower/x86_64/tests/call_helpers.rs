@@ -3,7 +3,8 @@
 use super::*;
 use crate::smir::ir::X86InstructionBytes;
 use crate::smir::lower::{
-    X86_GUEST_CALL_FN_OFFSET, X86_GUEST_EXIT_PC_OFFSET, X86_GUEST_LOAD_FN_OFFSET,
+    X86_GUEST_CALL_FN_OFFSET, X86_GUEST_EXIT_PC_OFFSET, X86_GUEST_FS_BASE_OFFSET,
+    X86_GUEST_LOAD_FN_OFFSET,
 };
 
 fn indirect_helper_call(offset: i32) -> Vec<u8> {
@@ -130,6 +131,82 @@ fn memory_indirect_call_loads_target_before_callout_with_precise_fault_pc() {
 }
 
 #[test]
+fn addr32_memory_indirect_call_builds_wrapped_sib_and_segment_addresses() {
+    let continuation = BlockId(7);
+    let target = CallTarget::X86IndirectMemAddr32(Address::BaseIndexScale {
+        base: Some(VReg::Arch(ArchReg::X86(X86Reg::R31))),
+        index: VReg::Arch(ArchReg::X86(X86Reg::R16)),
+        scale: 8,
+        disp: -1,
+        disp_size: DispSize::Disp8,
+    });
+    let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_mem_helpers(true);
+    lowerer.block_guest_pcs.insert(continuation, 0x2000);
+    lowerer
+        .emit_jit_call_op(&target, continuation, 0x1ff9)
+        .expect("lower addr32 SIB memory CALL");
+
+    let bytes = lowerer.code.data();
+    let wrapped_sib = [
+        0x48, 0x8B, 0xB0, 0xF8, 0x00, 0x00, 0x00, // rsi = guest R31
+        0x89, 0xF6, // mov esi,esi
+        0x48, 0x8B, 0xB8, 0x80, 0x00, 0x00, 0x00, // rdi = guest R16
+        0x89, 0xFF, // mov edi,edi
+        0xC1, 0xE7, 0x03, // shl edi,3
+        0x01, 0xFE, // add esi,edi
+        0x81, 0xC6, 0xFF, 0xFF, 0xFF, 0xFF, // add esi,-1 modulo 2^32
+    ];
+    assert!(
+        bytes
+            .windows(wrapped_sib.len())
+            .any(|window| window == wrapped_sib),
+        "missing W32 R31/R16 SIB construction"
+    );
+    let load_call = indirect_helper_call(X86_GUEST_LOAD_FN_OFFSET);
+    let callout = indirect_helper_call(X86_GUEST_CALL_FN_OFFSET);
+    let load_pos = bytes
+        .windows(load_call.len())
+        .position(|window| window == load_call)
+        .expect("addr32 target-load helper call");
+    let callout_pos = bytes
+        .windows(callout.len())
+        .position(|window| window == callout)
+        .expect("addr32 interpreter callout helper call");
+    assert!(
+        load_pos < callout_pos,
+        "addr32 target load must precede the interpreter callout"
+    );
+
+    let mut segmented = X86_64Lowerer::new();
+    segmented.set_mem_helpers(true);
+    segmented.block_guest_pcs.insert(continuation, 0x2000);
+    segmented
+        .emit_jit_call_op(
+            &CallTarget::X86IndirectMemAddr32(Address::SegmentRel {
+                segment: VReg::Arch(ArchReg::X86(X86Reg::FsBase)),
+                base: Some(VReg::Arch(ArchReg::X86(X86Reg::R31))),
+                index: Some(VReg::Arch(ArchReg::X86(X86Reg::R16))),
+                scale: 8,
+                disp: -1,
+            }),
+            continuation,
+            0x1ff8,
+        )
+        .expect("lower FS addr32 SIB memory CALL");
+    let bytes = segmented.code.data();
+    let mut fs_after_offset = vec![0x48, 0x8B, 0xB8];
+    fs_after_offset.extend_from_slice(&(X86_GUEST_FS_BASE_OFFSET as u32).to_le_bytes());
+    fs_after_offset.extend_from_slice(&[0x48, 0x01, 0xFE]);
+    assert!(
+        bytes
+            .windows(fs_after_offset.len())
+            .any(|window| window == fs_after_offset),
+        "FS base must be added in W64 only after the W32 offset"
+    );
+}
+
+#[test]
 fn memory_indirect_call_lowering_rejects_disabled_helpers_and_virtual_addresses() {
     let continuation = BlockId(7);
     let architectural = Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rax)));
@@ -154,6 +231,69 @@ fn memory_indirect_call_lowering_rejects_disabled_helpers_and_virtual_addresses(
             continuation,
             0x1ffe,
         ),
+        Err(LowerError::UnsupportedOp { .. })
+    ));
+
+    let addr32_architectural =
+        CallTarget::X86IndirectMemAddr32(Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rax))));
+    let mut addr32_disabled = X86_64Lowerer::new();
+    addr32_disabled.block_guest_pcs.insert(continuation, 0x2000);
+    assert!(matches!(
+        addr32_disabled.emit_jit_call_op(&addr32_architectural, continuation, 0x1ffd),
+        Err(LowerError::UnsupportedOp { .. })
+    ));
+
+    for malformed in [
+        Address::Direct(VReg::virt(0)),
+        Address::BaseIndexScale {
+            base: Some(VReg::Arch(ArchReg::X86(X86Reg::Rax))),
+            index: VReg::Arch(ArchReg::X86(X86Reg::Rcx)),
+            scale: 3,
+            disp: 0,
+            disp_size: DispSize::Auto,
+        },
+        Address::PcRel {
+            offset: 0,
+            disp_size: DispSize::Disp32,
+            base: Some(0x2000),
+        },
+    ] {
+        let mut lowerer = X86_64Lowerer::new();
+        lowerer.set_mem_helpers(true);
+        lowerer.block_guest_pcs.insert(continuation, 0x2000);
+        assert!(matches!(
+            lowerer.emit_jit_call_op(
+                &CallTarget::X86IndirectMemAddr32(malformed),
+                continuation,
+                0x1ffd,
+            ),
+            Err(LowerError::UnsupportedOp { .. })
+        ));
+    }
+}
+
+#[test]
+fn addr32_call_site_pc_accepts_67h_but_rejects_66h_width_override() {
+    let source = BlockId(3);
+    let continuation = BlockId(7);
+    let mut lowerer = X86_64Lowerer::new();
+    lowerer.block_guest_pcs.insert(continuation, 0x1007);
+    lowerer.x86_instruction_bytes.insert(
+        (source, 0x1000),
+        X86InstructionBytes::new(&[0x67, 0xFF, 0x15, 0, 0, 0, 0]).unwrap(),
+    );
+    assert_eq!(
+        lowerer.jit_call_site_pc(source, continuation).unwrap(),
+        0x1000
+    );
+
+    lowerer.block_guest_pcs.insert(continuation, 0x1008);
+    lowerer.x86_instruction_bytes.insert(
+        (source, 0x1000),
+        X86InstructionBytes::new(&[0x66, 0x67, 0xFF, 0x15, 0, 0, 0, 0]).unwrap(),
+    );
+    assert!(matches!(
+        lowerer.jit_call_site_pc(source, continuation),
         Err(LowerError::UnsupportedOp { .. })
     ));
 }

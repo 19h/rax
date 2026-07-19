@@ -357,6 +357,56 @@ impl X86_64Lifter {
         (addr, pre_ops)
     }
 
+    /// Preserve a decoded addr32 expression entirely in architectural address
+    /// components. The enclosing x86 call-target variant supplies the W32
+    /// arithmetic contract, so no virtual materialization operations are
+    /// required. RIP-relative input is folded to its exact low-32-bit offset.
+    pub(crate) fn x86_addr32_state_address(&self, x86_addr: &X86Address, next_rip: u64) -> Address {
+        debug_assert_eq!(x86_addr.address_width, OpWidth::W32);
+        debug_assert!(matches!(x86_addr.scale, 1 | 2 | 4 | 8));
+        debug_assert!(
+            !x86_addr.rip_relative || (x86_addr.base.is_none() && x86_addr.index.is_none())
+        );
+
+        let base = x86_addr.base.map(|index| self.gpr(index));
+        let index = x86_addr.index.map(|index| self.gpr(index));
+        let disp = if x86_addr.rip_relative {
+            i64::from(next_rip.wrapping_add_signed(x86_addr.disp) as u32)
+        } else {
+            x86_addr.disp
+        };
+        let segment = x86_addr
+            .segment
+            .map(|segment| VReg::Arch(ArchReg::X86(segment)));
+
+        if let Some(segment) = segment {
+            return Address::SegmentRel {
+                segment,
+                base,
+                index,
+                scale: x86_addr.scale,
+                disp,
+            };
+        }
+
+        match (base, index) {
+            (None, None) => Address::Absolute(disp as u32 as u64),
+            (Some(base), None) if disp == 0 => Address::Direct(base),
+            (Some(base), None) => Address::BaseOffset {
+                base,
+                offset: disp,
+                disp_size: x86_addr.disp_size,
+            },
+            (base, Some(index)) => Address::BaseIndexScale {
+                base,
+                index,
+                scale: x86_addr.scale,
+                disp: disp as i32,
+                disp_size: x86_addr.disp_size,
+            },
+        }
+    }
+
     /// Convert x86 address to SMIR Address, optionally generating pre-ops
     pub(crate) fn x86_addr_to_smir(
         &self,

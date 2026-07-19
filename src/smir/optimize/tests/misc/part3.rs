@@ -1,6 +1,7 @@
 //! misc part 3 tests
 
 use super::*;
+use crate::smir::ir::types::DispSize;
 use crate::smir::optimize::tests::*;
 use crate::smir::optimize::*;
 
@@ -139,4 +140,64 @@ fn o2_preserves_aarch32_blx_lr_snapshot_and_link_write() {
             width: OpWidth::W32,
         } if dst == lr
     ));
+}
+
+#[test]
+fn o2_preserves_every_addr32_memory_call_target_definition() {
+    let base_snapshot = VReg::virt(0);
+    let index_snapshot = VReg::virt(1);
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+    let entry = BlockId(0);
+    let continuation = BlockId(1);
+    let mut block = SmirBlock::new(entry, 0x1000);
+    block.push_op(make_op(
+        0,
+        OpKind::Mov {
+            dst: base_snapshot,
+            src: SrcOperand::Reg(rax),
+            width: OpWidth::W32,
+        },
+    ));
+    block.push_op(make_op(
+        1,
+        OpKind::Mov {
+            dst: index_snapshot,
+            src: SrcOperand::Reg(rcx),
+            width: OpWidth::W32,
+        },
+    ));
+    block.set_terminator(Terminator::Call {
+        target: CallTarget::X86IndirectMemAddr32(Address::BaseIndexScale {
+            base: Some(base_snapshot),
+            index: index_snapshot,
+            scale: 8,
+            disp: -1,
+            disp_size: DispSize::Disp8,
+        }),
+        args: Vec::new(),
+        continuation,
+    });
+    let mut continuation_block = SmirBlock::new(continuation, 0x1004);
+    continuation_block.set_terminator(Terminator::Return { values: Vec::new() });
+    let mut function = SmirFunction::new(FunctionId(0), entry, 0x1000);
+    function.add_block(block);
+    function.add_block(continuation_block);
+
+    optimize_function(&mut function, OptLevel::O2);
+
+    let block = function.get_block(entry).unwrap();
+    assert_eq!(block.ops.len(), 2);
+    assert!(
+        block
+            .ops
+            .iter()
+            .any(|op| op.kind.dests() == vec![base_snapshot])
+    );
+    assert!(
+        block
+            .ops
+            .iter()
+            .any(|op| op.kind.dests() == vec![index_snapshot])
+    );
 }

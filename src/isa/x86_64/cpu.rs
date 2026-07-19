@@ -3724,7 +3724,9 @@ use jit_state::JitRegion;
 #[path = "cpu_jit_call.rs"]
 mod jit_call;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-use jit_call::{jit_call_enabled, rax_jit_call};
+use jit_call::{
+    jit_call_enabled, jit_call_target_supported, jit_call_target_uses_mem_helper, rax_jit_call,
+};
 
 /// RAX_JIT_BAIL=1 logs why each hot region is rejected by the JIT (diagnostic
 /// for expanding the whitelist toward the highest-frequency bail reasons).
@@ -4504,23 +4506,15 @@ impl X86_64Vcpu {
                     | Terminator::Switch { .. } => true,
                     // Lift-through-calls: a CALL is NOT a frontier when call-mode
                     // is on, the continuation was lifted, and the target form is
-                    // supported (direct or register-indirect) — it lowers to a
-                    // runtime call-out and continues natively at `continuation`.
+                    // supported — it lowers to a runtime call-out and continues
+                    // natively at `continuation`.
                     Terminator::Call {
                         target,
                         continuation,
                         ..
                     } => {
                         #[cfg(target_arch = "x86_64")]
-                        let target_ok = matches!(
-                            target,
-                            crate::smir::ir::CallTarget::GuestAddr(_)
-                                | crate::smir::ir::CallTarget::Indirect(_)
-                        ) || matches!(
-                            target,
-                            crate::smir::ir::CallTarget::IndirectMem(addr)
-                                if self.jit_mem && addr.is_x86_state_backed_shape()
-                        );
+                        let target_ok = jit_call_target_supported(target, self.jit_mem);
                         #[cfg(target_arch = "aarch64")]
                         let target_ok = false;
                         !(cm && target_ok && lifted.contains(continuation))
@@ -4570,19 +4564,7 @@ impl X86_64Vcpu {
                                 continuation,
                                 ..
                             } => {
-                                let tk = match target {
-                                    crate::smir::ir::CallTarget::Direct(_) => "DirectFn",
-                                    crate::smir::ir::CallTarget::GuestAddr(_) => "GuestAddr",
-                                    crate::smir::ir::CallTarget::GuestAddrInterworking {
-                                        ..
-                                    } => "GuestAddrInterworking",
-                                    crate::smir::ir::CallTarget::Indirect(_) => "IndirectReg",
-                                    crate::smir::ir::CallTarget::IndirectInterworking(_) => {
-                                        "IndirectInterworking"
-                                    }
-                                    crate::smir::ir::CallTarget::IndirectMem(_) => "IndirectMem",
-                                    crate::smir::ir::CallTarget::Runtime(_) => "Runtime",
-                                };
+                                let tk = target.kind_name();
                                 format!("Call/{tk}(lifted-cont={})", lifted.contains(continuation))
                             }
                             _ => "other".to_string(),
@@ -4646,10 +4628,8 @@ impl X86_64Vcpu {
                             .any(|op| x86_jit_op_uses_mem_helper(&op.kind))
                             || matches!(
                                 &block.terminator,
-                                Terminator::Call {
-                                    target: crate::smir::ir::CallTarget::IndirectMem(addr),
-                                    ..
-                                } if addr.is_x86_state_backed_shape()
+                                Terminator::Call { target, .. }
+                                    if jit_call_target_uses_mem_helper(target)
                             )
                     });
             #[cfg(target_arch = "x86_64")]

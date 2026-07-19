@@ -141,6 +141,29 @@ impl SmirInterpreter {
         }
     }
 
+    /// Compute an x86-64 effective address under a 32-bit address-size
+    /// override. Offset components wrap modulo 2^32 and are zero-extended;
+    /// FS/GS is then added as a full 64-bit segment base.
+    pub(crate) fn compute_x86_addr32(&self, ctx: &SmirContext, addr: &Address) -> GuestAddr {
+        match addr {
+            Address::SegmentRel {
+                segment,
+                base,
+                index,
+                scale,
+                disp,
+            } => {
+                let base = base.map(|reg| ctx.read_vreg(reg) as u32).unwrap_or(0);
+                let index = index.map(|reg| ctx.read_vreg(reg) as u32).unwrap_or(0);
+                let offset = base
+                    .wrapping_add(index.wrapping_mul(u32::from(*scale)))
+                    .wrapping_add(*disp as u32);
+                ctx.read_vreg(*segment).wrapping_add(u64::from(offset))
+            }
+            _ => u64::from(self.compute_address(ctx, addr) as u32),
+        }
+    }
+
     /// Load from memory
     pub(crate) fn load_memory(
         &self,

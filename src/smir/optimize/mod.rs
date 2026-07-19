@@ -228,12 +228,7 @@ fn terminator_reg_uses(term: &Terminator) -> Vec<VReg> {
         Terminator::IndirectBranchMem { addr, .. } => v.extend(addr.regs()),
         Terminator::Return { values } => v.extend(values.iter().copied()),
         Terminator::Call { target, args, .. } | Terminator::TailCall { target, args } => {
-            if let CallTarget::Indirect(reg) | CallTarget::IndirectInterworking(reg) = target {
-                v.push(*reg);
-            }
-            if let CallTarget::IndirectMem(addr) = target {
-                v.extend(addr.regs());
-            }
+            v.extend(target.regs());
             v.extend(args.iter().copied());
         }
         _ => {}

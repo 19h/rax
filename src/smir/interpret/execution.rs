@@ -261,6 +261,11 @@ impl SmirInterpreter {
                         self.load_memory(memory, target_addr, MemWidth::B8, SignExtend::Zero)
                             .unwrap_or(0)
                     }
+                    CallTarget::X86IndirectMemAddr32(addr) => {
+                        let target_addr = self.compute_x86_addr32(ctx, addr);
+                        self.load_memory(memory, target_addr, MemWidth::B8, SignExtend::Zero)
+                            .unwrap_or(0)
+                    }
                     CallTarget::Runtime(_) => {
                         // Return to continuation for runtime calls
                         let addr = self
@@ -289,6 +294,11 @@ impl SmirInterpreter {
                     }
                     CallTarget::IndirectMem(addr) => {
                         let target_addr = self.compute_address(ctx, addr);
+                        self.load_memory(memory, target_addr, MemWidth::B8, SignExtend::Zero)
+                            .unwrap_or(0)
+                    }
+                    CallTarget::X86IndirectMemAddr32(addr) => {
+                        let target_addr = self.compute_x86_addr32(ctx, addr);
                         self.load_memory(memory, target_addr, MemWidth::B8, SignExtend::Zero)
                             .unwrap_or(0)
                     }
