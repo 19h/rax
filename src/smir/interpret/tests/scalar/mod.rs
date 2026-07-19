@@ -13,6 +13,8 @@ mod hex;
 mod memory;
 #[cfg(test)]
 mod misc;
+#[cfg(test)]
+mod tsx;
 use crate::smir::interpret::*;
 use crate::smir::ir::FunctionBuilder;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate, MaterializedFlags};

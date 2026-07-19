@@ -151,11 +151,18 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 0xD6 => {
-                    // XTEST sets ZF=1 when not in transactional execution. The
-                    // emulator has no transactional state, so it is never in one.
+                    // Outside transactional execution XTEST sets ZF and clears
+                    // CF/PF/AF/SF/OF. The emulator has no transactional state,
+                    // so every XTEST follows this path.
                     ctx.consume_u8()?; // consume modrm
                     self.clear_lazy_flags();
-                    self.regs.rflags |= flags::bits::ZF;
+                    const STATUS_MASK: u64 = flags::bits::CF
+                        | flags::bits::PF
+                        | flags::bits::AF
+                        | flags::bits::ZF
+                        | flags::bits::SF
+                        | flags::bits::OF;
+                    self.regs.rflags = (self.regs.rflags & !STATUS_MASK) | flags::bits::ZF;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }

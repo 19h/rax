@@ -1,0 +1,72 @@
+//! Transactional Synchronization Extensions fixed-encoding lifting.
+
+use crate::smir::lift::x86_64::*;
+
+impl X86_64Lifter {
+    /// Lift XGETBV/XSETBV and the RTM fixed ModR/M encodings in 0F 01.
+    pub(crate) fn lift_xcr_0f01(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        let Some(&modrm) = bytes.first() else {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: prefix.cursor,
+                need: prefix.cursor + 1,
+            });
+        };
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..1].to_vec(),
+            });
+        }
+
+        let kind = match modrm {
+            0xD0 | 0xD1 if prefix.rep_prefix.is_none() && !prefix.operand_size_override => {
+                if modrm == 0xD0 {
+                    OpKind::X86XGetBv {
+                        dst_low: self.gpr(0),
+                        dst_high: self.gpr(2),
+                        selector: self.gpr(1),
+                    }
+                } else {
+                    OpKind::X86XSetBv {
+                        selector: self.gpr(1),
+                        src_low: self.gpr(0),
+                        src_high: self.gpr(2),
+                    }
+                }
+            }
+            0xD0 | 0xD1 => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes[..1].to_vec(),
+                });
+            }
+            0xD6 => OpKind::X86XTest,
+            0xD5 => {
+                // XEND outside transactional execution raises #GP(0). SMIR
+                // currently has no general-protection trap kind, so retain an
+                // explicit interpreter frontier instead of approximating it.
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: "xend".to_string(),
+                });
+            }
+            _ => {
+                return Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("0F 01 {modrm:02X}"),
+                });
+            }
+        };
+
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(OpId(0), pc, kind)],
+            prefix.cursor + 1,
+        ))
+    }
+}

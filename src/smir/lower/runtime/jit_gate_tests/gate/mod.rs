@@ -13,4 +13,6 @@ mod native;
 mod scalar;
 #[cfg(test)]
 mod state;
+#[cfg(test)]
+mod tsx;
 use crate::smir::lower::runtime::*;

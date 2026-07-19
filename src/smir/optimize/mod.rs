@@ -2160,6 +2160,8 @@ impl OpKind {
 
             OpKind::X86Random { .. } => FlagSet::ALL_X86,
 
+            OpKind::X86XTest => FlagSet::ALL_X86,
+
             OpKind::X86X87Data {
                 kind: X86X87DataKind::Compare { eflags: true, .. },
                 ..
@@ -3870,6 +3872,7 @@ impl OpKind {
             | OpKind::X86X87Data { addr: None, .. }
             | OpKind::CmcCF
             | OpKind::MaterializeFlags
+            | OpKind::X86XTest
             | OpKind::TestCondition { .. }
             | OpKind::SetCC { .. }
             | OpKind::ClearExclusive

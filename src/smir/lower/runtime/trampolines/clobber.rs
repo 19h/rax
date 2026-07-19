@@ -528,7 +528,10 @@ pub(crate) fn block_is_clobber_safe(
             || mmx_mem_ok;
         let scalar_ok = matches!(
             op.kind,
-            OpKind::AndNot { .. } | OpKind::X86Bls { .. } | OpKind::X86Adx { .. }
+            OpKind::AndNot { .. }
+                | OpKind::X86Bls { .. }
+                | OpKind::X86Adx { .. }
+                | OpKind::X86XTest
         ) || guarded_div_ok;
         let vector_ok = x86_native_vector_smir_op(op);
         let mmx_ok = is_x86_native_mmx_op(op) || mmx_mem_ok;

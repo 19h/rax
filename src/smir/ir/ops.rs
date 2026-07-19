@@ -3962,6 +3962,11 @@ pub enum OpKind {
     /// Force flag materialization
     MaterializeFlags,
 
+    /// XTEST under the x86 execution profile with no active transaction.
+    /// Sets ZF and clears CF, PF, AF, SF, and OF while preserving every other
+    /// modeled RFLAGS field.
+    X86XTest,
+
     /// x86 LDMXCSR/VLDMXCSR: load the 32-bit SIMD control/status register.
     X86LoadMxcsr {
         addr: Address,
@@ -4914,6 +4919,7 @@ impl OpKind {
             | OpKind::SetDF { .. }
             | OpKind::CmcCF
             | OpKind::MaterializeFlags
+            | OpKind::X86XTest
             | OpKind::X86LoadMxcsr { .. }
             | OpKind::X86StoreMxcsr { .. }
             | OpKind::X86X87Control {
@@ -4980,6 +4986,7 @@ impl OpKind {
                     | OpKind::SetDF { .. }
                     | OpKind::CmcCF
                     | OpKind::MaterializeFlags
+                    | OpKind::X86XTest
                     | OpKind::X86LoadMxcsr { .. }
                     | OpKind::X86StoreMxcsr { .. }
                     | OpKind::X86CacheControl { .. }

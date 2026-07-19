@@ -311,56 +311,6 @@ impl X86_64Lifter {
         }
     }
 
-    /// Lift XGETBV/XSETBV fixed ModRM encodings (0F 01 D0/D1).
-    pub(crate) fn lift_xcr_0f01(
-        &self,
-        bytes: &[u8],
-        prefix: &X86Prefix,
-        pc: u64,
-    ) -> Result<LiftResult, LiftError> {
-        let Some(&modrm) = bytes.first() else {
-            return Err(LiftError::Incomplete {
-                addr: pc,
-                have: prefix.cursor,
-                need: prefix.cursor + 1,
-            });
-        };
-        if prefix.lock
-            || prefix.rep_prefix.is_some()
-            || prefix.operand_size_override
-            || !matches!(modrm, 0xD0 | 0xD1)
-        {
-            return Err(if prefix.lock || matches!(modrm, 0xD0 | 0xD1) {
-                LiftError::InvalidEncoding {
-                    addr: pc,
-                    bytes: bytes[..1].to_vec(),
-                }
-            } else {
-                LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: format!("0F 01 {modrm:02X}"),
-                }
-            });
-        }
-        let kind = if modrm == 0xD0 {
-            OpKind::X86XGetBv {
-                dst_low: self.gpr(0),
-                dst_high: self.gpr(2),
-                selector: self.gpr(1),
-            }
-        } else {
-            OpKind::X86XSetBv {
-                selector: self.gpr(1),
-                src_low: self.gpr(0),
-                src_high: self.gpr(2),
-            }
-        };
-        Ok(LiftResult::fallthrough(
-            vec![SmirOp::new(OpId(0), pc, kind)],
-            prefix.cursor + 1,
-        ))
-    }
-
     pub(crate) fn lift_bf16_convert(
         &self,
         prefix: VecPrefix,

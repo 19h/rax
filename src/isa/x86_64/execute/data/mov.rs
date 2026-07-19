@@ -5,6 +5,11 @@ use crate::vm::vcpu::VcpuExit;
 
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 
+#[inline(always)]
+fn is_canonical_48(addr: u64) -> bool {
+    ((addr as i64) << 16 >> 16) as u64 == addr
+}
+
 /// MOV r8, imm8 (0xB0-0xB7)
 pub fn mov_r8_imm8(
     vcpu: &mut X86_64Vcpu,
@@ -286,7 +291,7 @@ pub fn mov_rm8_imm8(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opti
     Ok(None)
 }
 
-/// MOV r/m, imm (0xC7 /0) or XBEGIN (0xC7 F8 rel32)
+/// MOV r/m, imm (0xC7 /0) or XBEGIN (0xC7 F8 rel16/rel32)
 pub fn mov_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm = ctx.peek_u8()?;
     let reg = (modrm >> 3) & 0x07;
@@ -295,11 +300,21 @@ pub fn mov_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
         // XBEGIN starts a transaction. The emulator has no transactional state,
         // so model the guest-visible forced-abort path and jump to fallback.
         ctx.consume_u8()?; // consume ModRM
-        let rel32 = ctx.consume_u32()? as i32;
+        let offset = if ctx.op_size == 2 {
+            ctx.consume_u16()? as i16 as i64
+        } else {
+            // REX.W does not widen XBEGIN's displacement beyond rel32.
+            ctx.consume_u32()? as i32 as i64
+        };
+        let next_rip = vcpu.regs.rip.wrapping_add(ctx.cursor as u64);
+        // The rel16 form sign-extends into RIP; it does not truncate the
+        // resulting target to 16 bits.
+        let fallback = next_rip.wrapping_add_signed(offset);
+        if !is_canonical_48(fallback) {
+            vcpu.inject_exception(13, Some(0))?;
+            return Ok(None);
+        }
         vcpu.regs.rax = 0;
-        let fallback = (vcpu.regs.rip as i64)
-            .wrapping_add(ctx.cursor as i64)
-            .wrapping_add(rel32 as i64) as u64;
         vcpu.regs.rip = fallback;
         return Ok(None);
     }
@@ -337,4 +352,19 @@ pub fn mov_rm_imm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_canonical_48;
+
+    #[test]
+    fn canonical_48_boundaries_cover_both_sign_extensions() {
+        for addr in [0, 0x0000_7FFF_FFFF_FFFF, 0xFFFF_8000_0000_0000, u64::MAX] {
+            assert!(is_canonical_48(addr), "{addr:016X}");
+        }
+        for addr in [0x0000_8000_0000_0000, 0xFFFF_7FFF_FFFF_FFFF] {
+            assert!(!is_canonical_48(addr), "{addr:016X}");
+        }
+    }
 }

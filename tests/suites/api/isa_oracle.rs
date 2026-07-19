@@ -199,6 +199,35 @@ fn emits_structured_smir_ops() {
 }
 
 #[test]
+fn emits_complete_non_transactional_rtm_semantics() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let xabort = decode_to_json(&[0xc6, 0xf8, 0x42], &opts).unwrap();
+    assert_eq!(xabort["smir"]["bytes_consumed"], 3);
+    assert_eq!(xabort["smir"]["control_flow"]["kind"], "fallthrough");
+    assert_eq!(xabort["smir"]["ops"], serde_json::json!([]));
+
+    let xbegin_rel32 = decode_to_json(&[0xc7, 0xf8, 0x05, 0x00, 0x00, 0x00], &opts).unwrap();
+    assert_eq!(xbegin_rel32["smir"]["bytes_consumed"], 6);
+    assert_eq!(xbegin_rel32["smir"]["control_flow"]["kind"], "branch");
+    assert_eq!(xbegin_rel32["smir"]["control_flow"]["target"], "0x100b");
+    assert_eq!(xbegin_rel32["smir"]["ops"][0]["kind"]["opcode"], "mov");
+    assert_eq!(xbegin_rel32["smir"]["ops"][0]["kind"]["dst"]["name"], "rax");
+    assert_eq!(xbegin_rel32["smir"]["ops"][0]["kind"]["src"]["value"], 0);
+    assert_eq!(xbegin_rel32["smir"]["ops"][0]["kind"]["width"], "W32");
+
+    let xbegin_rel16 = decode_to_json(&[0x66, 0xc7, 0xf8, 0xfb, 0xff], &opts).unwrap();
+    assert_eq!(xbegin_rel16["smir"]["bytes_consumed"], 5);
+    assert_eq!(xbegin_rel16["smir"]["control_flow"]["target"], "0x1000");
+
+    let xtest = decode_to_json(&[0x0f, 0x01, 0xd6], &opts).unwrap();
+    assert_eq!(xtest["smir"]["bytes_consumed"], 3);
+    assert_eq!(xtest["smir"]["ops"][0]["kind"]["opcode"], "x86_xtest");
+    assert_eq!(xtest["smir"]["ops"][0]["side_effects"], true);
+}
+
+#[test]
 fn emits_atomic_register_movd_q_and_keeps_memory_effects_explicit() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

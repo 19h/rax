@@ -3940,6 +3940,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::SetDF { value } => op_json!("set_df", value),
         OpKind::CmcCF => op_json!("cmc_cf"),
         OpKind::MaterializeFlags => op_json!("materialize_flags"),
+        OpKind::X86XTest => op_json!("x86_xtest"),
         OpKind::TestCondition { dst, cond } => op_json!("test_condition", dst, cond),
         OpKind::SetCC { dst, cond, width } => op_json!("set_cc", dst, cond, width),
         OpKind::Syscall { num, args } => op_json!("syscall", num, args),

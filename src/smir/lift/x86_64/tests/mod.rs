@@ -20,6 +20,8 @@ mod scalar;
 #[cfg(test)]
 mod sse;
 #[cfg(test)]
+mod tsx;
+#[cfg(test)]
 mod vex;
 
 /// Test memory reader for unit tests

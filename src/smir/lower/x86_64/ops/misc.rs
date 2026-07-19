@@ -105,6 +105,16 @@ impl X86_64Lowerer {
                 self.code.emit_u8(0xC9);
             }
 
+            OpKind::X86XTest => {
+                // Preserve all non-status RFLAGS without consuming a GPR:
+                // pushfq; and qword [rsp], !0x08D5; or qword [rsp], 0x40;
+                // popfq.
+                self.code.emit_bytes(&[
+                    0x9C, 0x48, 0x81, 0x24, 0x24, 0x2A, 0xF7, 0xFF, 0xFF, 0x48, 0x83, 0x0C, 0x24,
+                    0x40, 0x9D,
+                ]);
+            }
+
             OpKind::Undefined { .. } => {
                 let mut emitter = X86Emitter::new(&mut self.code);
                 emitter.emit_ud2();

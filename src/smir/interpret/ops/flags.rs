@@ -60,6 +60,17 @@ impl SmirInterpreter {
                 ctx.flags.materialize_all();
             }
 
+            OpKind::X86XTest => {
+                ctx.flags.materialize_all();
+                ctx.flags.materialized.cf = false;
+                ctx.flags.materialized.pf = false;
+                ctx.flags.materialized.af = false;
+                ctx.flags.materialized.zf = true;
+                ctx.flags.materialized.sf = false;
+                ctx.flags.materialized.of = false;
+                ctx.flags.lazy = None;
+            }
+
             OpKind::X86LoadMxcsr { addr } => {
                 let effective_addr = self.compute_address(ctx, addr);
                 let mut bytes = [0u8; 4];
