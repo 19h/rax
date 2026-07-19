@@ -1310,6 +1310,8 @@ mod x86_64_simd_sse_pcmpgtq;
 mod x86_64_simd_sse_pcmpistri;
 #[path = "simd/sse/pcmpistrm.rs"]
 mod x86_64_simd_sse_pcmpistrm;
+#[path = "simd/sse/pcmpxstrx_arch.rs"]
+mod x86_64_simd_sse_pcmpxstrx_arch;
 #[path = "simd/sse/pextrb_pextrd_pextrq.rs"]
 mod x86_64_simd_sse_pextrb_pextrd_pextrq;
 #[path = "simd/sse/pextrw.rs"]

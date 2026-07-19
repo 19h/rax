@@ -18,6 +18,7 @@ mod convert;
 mod gfni;
 mod minmax;
 mod mov;
+pub(crate) mod pcmpxstrx;
 mod shuffle;
 mod sse;
 mod sse4;

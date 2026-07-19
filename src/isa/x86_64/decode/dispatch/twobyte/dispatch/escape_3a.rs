@@ -8,6 +8,7 @@ use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::execute;
 use crate::isa::x86_64::execute::crypto::aes;
 use crate::isa::x86_64::execute::crypto::sha;
+use crate::isa::x86_64::execute::simd::pcmpxstrx;
 
 impl X86_64Vcpu {
     #[inline(always)]
@@ -812,7 +813,7 @@ impl X86_64Vcpu {
 
             // PCMPESTRM - Packed Compare Explicit Length Strings, Return Mask (0x60)
             0x60 => {
-                if !ctx.operand_size_override {
+                if !ctx.operand_size_override || ctx.rep_prefix.is_some() {
                     return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -826,13 +827,20 @@ impl X86_64Vcpu {
                 let dst_lo = self.regs.xmm[xmm1][0];
                 let dst_hi = self.regs.xmm[xmm1][1];
 
-                // Explicit length from EAX (dst) and EDX (src)
-                let len1 = (self.regs.rax & 0xFFFF_FFFF) as i32;
-                let len2 = (self.regs.rdx & 0xFFFF_FFFF) as i32;
+                // Without REX.W, explicit lengths are signed EAX/EDX values.
+                // REX.W selects signed RAX/RDX values before absolute-value
+                // saturation to the byte/word element count.
+                let (len1, len2) = if ctx.rex_w() {
+                    (self.regs.rax as i64, self.regs.rdx as i64)
+                } else {
+                    (
+                        self.regs.rax as u32 as i32 as i64,
+                        self.regs.rdx as u32 as i32 as i64,
+                    )
+                };
 
                 // Perform string comparison and return mask in XMM0
-                let result =
-                    self.pcmpxstrx(dst_lo, dst_hi, src_lo, src_hi, len1, len2, imm8, true)?;
+                let result = self.pcmpxstrx(dst_lo, dst_hi, src_lo, src_hi, len1, len2, imm8, true);
                 self.regs.xmm[0][0] = result as u64;
                 self.regs.xmm[0][1] = (result >> 64) as u64;
                 self.regs.rip += ctx.cursor as u64;
@@ -841,7 +849,7 @@ impl X86_64Vcpu {
 
             // PCMPESTRI - Packed Compare Explicit Length Strings, Return Index (0x61)
             0x61 => {
-                if !ctx.operand_size_override {
+                if !ctx.operand_size_override || ctx.rep_prefix.is_some() {
                     return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -855,11 +863,17 @@ impl X86_64Vcpu {
                 let dst_lo = self.regs.xmm[xmm1][0];
                 let dst_hi = self.regs.xmm[xmm1][1];
 
-                let len1 = (self.regs.rax & 0xFFFF_FFFF) as i32;
-                let len2 = (self.regs.rdx & 0xFFFF_FFFF) as i32;
+                let (len1, len2) = if ctx.rex_w() {
+                    (self.regs.rax as i64, self.regs.rdx as i64)
+                } else {
+                    (
+                        self.regs.rax as u32 as i32 as i64,
+                        self.regs.rdx as u32 as i32 as i64,
+                    )
+                };
 
                 let result =
-                    self.pcmpxstrx(dst_lo, dst_hi, src_lo, src_hi, len1, len2, imm8, false)?;
+                    self.pcmpxstrx(dst_lo, dst_hi, src_lo, src_hi, len1, len2, imm8, false);
                 self.regs.rcx = result as u64;
                 self.regs.rip += ctx.cursor as u64;
                 Ok(None)
@@ -867,7 +881,7 @@ impl X86_64Vcpu {
 
             // PCMPISTRM - Packed Compare Implicit Length Strings, Return Mask (0x62)
             0x62 => {
-                if !ctx.operand_size_override {
+                if !ctx.operand_size_override || ctx.rep_prefix.is_some() {
                     return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -885,8 +899,7 @@ impl X86_64Vcpu {
                 let len1 = self.find_null_terminator(dst_lo, dst_hi, imm8);
                 let len2 = self.find_null_terminator(src_lo, src_hi, imm8);
 
-                let result =
-                    self.pcmpxstrx(dst_lo, dst_hi, src_lo, src_hi, len1, len2, imm8, true)?;
+                let result = self.pcmpxstrx(dst_lo, dst_hi, src_lo, src_hi, len1, len2, imm8, true);
                 self.regs.xmm[0][0] = result as u64;
                 self.regs.xmm[0][1] = (result >> 64) as u64;
                 self.regs.rip += ctx.cursor as u64;
@@ -895,7 +908,7 @@ impl X86_64Vcpu {
 
             // PCMPISTRI - Packed Compare Implicit Length Strings, Return Index (0x63)
             0x63 => {
-                if !ctx.operand_size_override {
+                if !ctx.operand_size_override || ctx.rep_prefix.is_some() {
                     return self.inject_undefined_instruction();
                 }
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -913,7 +926,7 @@ impl X86_64Vcpu {
                 let len2 = self.find_null_terminator(src_lo, src_hi, imm8);
 
                 let result =
-                    self.pcmpxstrx(dst_lo, dst_hi, src_lo, src_hi, len1, len2, imm8, false)?;
+                    self.pcmpxstrx(dst_lo, dst_hi, src_lo, src_hi, len1, len2, imm8, false);
 
                 self.regs.rcx = result as u64;
                 self.regs.rip += ctx.cursor as u64;
@@ -972,295 +985,52 @@ impl X86_64Vcpu {
         }
     }
 
-    /// Helper for PCMPxSTRx instructions - find null terminator position
-    fn find_null_terminator(&self, lo: u64, hi: u64, imm8: u8) -> i32 {
-        let is_word = (imm8 & 0x01) != 0;
-        if is_word {
-            // Word elements (8 elements)
-            for i in 0..4 {
-                if ((lo >> (i * 16)) & 0xFFFF) == 0 {
-                    return i as i32;
-                }
-            }
-            for i in 0..4 {
-                if ((hi >> (i * 16)) & 0xFFFF) == 0 {
-                    return (i + 4) as i32;
-                }
-            }
-            8
-        } else {
-            // Byte elements (16 elements)
-            for i in 0..8 {
-                if ((lo >> (i * 8)) & 0xFF) == 0 {
-                    return i as i32;
-                }
-            }
-            for i in 0..8 {
-                if ((hi >> (i * 8)) & 0xFF) == 0 {
-                    return (i + 8) as i32;
-                }
-            }
-            16
-        }
+    /// Return the implicit packed-string length selected by the immediate.
+    fn find_null_terminator(&self, lo: u64, hi: u64, imm8: u8) -> i64 {
+        pcmpxstrx::find_null_terminator(lo, hi, imm8)
     }
 
-    /// Helper for PCMPxSTRx instructions - perform comparison
+    /// Evaluate a packed-string comparison and commit its six defined status
+    /// flags. DF and every non-status RFLAGS bit are preserved.
+    #[allow(clippy::too_many_arguments)]
     fn pcmpxstrx(
         &mut self,
-        dst_lo: u64,
-        dst_hi: u64,
-        src_lo: u64,
-        src_hi: u64,
-        len1: i32,
-        len2: i32,
+        first_lo: u64,
+        first_hi: u64,
+        second_lo: u64,
+        second_hi: u64,
+        len1: i64,
+        len2: i64,
         imm8: u8,
         return_mask: bool,
-    ) -> Result<u128> {
-        let is_word = (imm8 & 0x01) != 0;
-        let is_signed = (imm8 & 0x02) != 0;
-        let agg_op = (imm8 >> 2) & 0x03;
-        let polarity = (imm8 >> 4) & 0x03;
-        let output_sel = (imm8 >> 6) & 0x01;
+    ) -> u128 {
+        let result = pcmpxstrx::evaluate(
+            first_lo,
+            first_hi,
+            second_lo,
+            second_hi,
+            len1,
+            len2,
+            imm8,
+            return_mask,
+        );
 
-        let num_elements = if is_word { 8 } else { 16 };
-        // PCMPESTRx takes the operand lengths from EAX/EDX as a SIGNED value
-        // whose ABSOLUTE value is the length, saturated to the element count
-        // (Intel SDM): e.g. EAX = -3 means length 3, not 0. PCMPISTRx passes a
-        // find_null_terminator() result already in [0, num_elements], for which
-        // unsigned_abs() is a no-op. The previous `.clamp(0, num_elements)`
-        // wrongly mapped a negative explicit length to 0.
-        let valid1 = len1.unsigned_abs().min(num_elements as u32) as i32;
-        let valid2 = len2.unsigned_abs().min(num_elements as u32) as i32;
-
-        // Get elements from operands
-        let get_elem = |lo: u64, hi: u64, idx: usize| -> i32 {
-            if is_word {
-                let val = if idx < 4 {
-                    ((lo >> (idx * 16)) & 0xFFFF) as u16
-                } else {
-                    ((hi >> ((idx - 4) * 16)) & 0xFFFF) as u16
-                };
-                if is_signed {
-                    val as i16 as i32
-                } else {
-                    val as i32
-                }
-            } else {
-                let val = if idx < 8 {
-                    ((lo >> (idx * 8)) & 0xFF) as u8
-                } else {
-                    ((hi >> ((idx - 8) * 8)) & 0xFF) as u8
-                };
-                if is_signed {
-                    val as i8 as i32
-                } else {
-                    val as i32
-                }
-            }
-        };
-
-        // Build intermediate result based on aggregation operation
-        let mut int_res1 = 0u16;
-
-        match agg_op {
-            0 => {
-                // Equal any - check if each char in src2 is in src1
-                for j in 0..num_elements as usize {
-                    if j >= valid2 as usize {
-                        break;
-                    }
-                    let s2 = get_elem(src_lo, src_hi, j);
-                    for i in 0..valid1 as usize {
-                        let s1 = get_elem(dst_lo, dst_hi, i);
-                        if s1 == s2 {
-                            int_res1 |= 1 << j;
-                            break;
-                        }
-                    }
-                }
-            }
-            1 => {
-                // Ranges - check if each char in src2 is in range pairs from src1
-                for j in 0..num_elements as usize {
-                    if j >= valid2 as usize {
-                        break;
-                    }
-                    let s2 = get_elem(src_lo, src_hi, j);
-                    let mut i = 0;
-                    while i + 1 < valid1 as usize {
-                        let lo_range = get_elem(dst_lo, dst_hi, i);
-                        let hi_range = get_elem(dst_lo, dst_hi, i + 1);
-                        if s2 >= lo_range && s2 <= hi_range {
-                            int_res1 |= 1 << j;
-                            break;
-                        }
-                        i += 2;
-                    }
-                }
-            }
-            2 => {
-                // Equal each - compare corresponding elements, applying the
-                // Intel SDM "valid/invalid override" (Vol. 2B, PCMPxSTRx):
-                //   both elements valid    -> a[i] == b[i]
-                //   exactly one invalid    -> 0 (force false)
-                //   both invalid           -> 1 (force true)
-                // The both-invalid -> 1 rule is essential: it is exactly what
-                // makes the strlen/terminator idiom `pcmpistri $0x3a,xmm,xmm`
-                // (self-compare, EQUAL_EACH + masked-negative polarity) report
-                // the NUL position as the result index. The previous code broke
-                // out of the loop at min(valid1,valid2) and left the post-NUL
-                // bits 0, so that idiom returned `num_elements` (no terminator)
-                // and callers like glibc __strcspn_sse42 walked off the string.
-                for i in 0..num_elements as usize {
-                    let v1 = i < valid1 as usize;
-                    let v2 = i < valid2 as usize;
-                    let bit = if v1 && v2 {
-                        let s1 = get_elem(dst_lo, dst_hi, i);
-                        let s2 = get_elem(src_lo, src_hi, i);
-                        (s1 == s2) as u16
-                    } else if !v1 && !v2 {
-                        1
-                    } else {
-                        0
-                    };
-                    int_res1 |= bit << i;
-                }
-            }
-            3 => {
-                // Equal ordered - substring search: is operand1 (the needle)
-                // found in operand2 (the haystack) starting at position j? Per
-                // the Intel SDM, IntRes1[j] is computed for ALL j in 0..n (so an
-                // empty needle matches at every position) as the AND over needle
-                // indices i of an overridden per-element boolean:
-                //   i+j beyond the vector (>= n)   -> 1 (no constraint: a partial
-                //                                    match running off the end of
-                //                                    the window still counts — the
-                //                                    caller, e.g. strstr, rechecks)
-                //   needle exhausted (i >= valid1) -> 1
-                //   haystack past its NUL          -> 0  (i+j >= valid2, in-vector)
-                //   both valid                     -> needle[i] == haystack[i+j]
-                // The previous code broke at j>=valid2 (dropping the empty-needle
-                // case and the high bits that matter once polarity negates them)
-                // and conflated "beyond the vector" with "past the NUL", so it
-                // returned no-match where hardware reports a tail-partial match.
-                let nn = num_elements as usize;
-                let v1 = valid1 as usize;
-                let v2 = valid2 as usize;
-                for j in 0..nn {
-                    let mut matched = true;
-                    for i in 0..nn {
-                        if i + j >= nn || i >= v1 {
-                            break; // remaining terms are forced to 1 (match)
-                        }
-                        if i + j >= v2
-                            || get_elem(dst_lo, dst_hi, i) != get_elem(src_lo, src_hi, i + j)
-                        {
-                            matched = false;
-                            break;
-                        }
-                    }
-                    if matched {
-                        int_res1 |= 1 << j;
-                    }
-                }
-            }
-            _ => {}
-        }
-
-        // Apply polarity
-        // Use u32 for the mask to avoid overflow when num_elements = 16
-        let mask = if num_elements == 16 {
-            0xFFFFu16
-        } else {
-            ((1u16 << num_elements) - 1)
-        };
-        let int_res2 = match polarity {
-            0 => int_res1,         // Positive
-            1 => !int_res1 & mask, // Negative
-            2 => int_res1,         // Masked positive
-            3 => {
-                // Masked negative: XOR with valid mask
-                let valid_mask = if valid2 == 16 {
-                    0xFFFFu16
-                } else if valid2 == 0 {
-                    0
-                } else {
-                    (1u16 << valid2) - 1
-                };
-                (int_res1 ^ valid_mask) & mask
-            }
-            _ => int_res1,
-        };
-
-        // Set flags
-        // CF = int_res2 != 0
-        // ZF = any byte/word of src2 is null (len2 < num_elements)
-        // SF = any byte/word of src1 is null (len1 < num_elements)
-        // OF = int_res2[0]
-        // AF = 0, PF = 0
-        // CRITICAL: Clear lazy flags before setting flags directly to prevent
-        // materialize_flags() from overwriting our flag settings
         self.clear_lazy_flags();
         use crate::isa::x86_64::flags::bits;
         self.regs.rflags &= !(bits::CF | bits::ZF | bits::SF | bits::OF | bits::AF | bits::PF);
-        if int_res2 != 0 {
+        if result.cf {
             self.regs.rflags |= bits::CF;
         }
-        if valid2 < num_elements {
+        if result.zf {
             self.regs.rflags |= bits::ZF;
         }
-        if valid1 < num_elements {
+        if result.sf {
             self.regs.rflags |= bits::SF;
         }
-        if int_res2 & 1 != 0 {
+        if result.of {
             self.regs.rflags |= bits::OF;
         }
 
-        if return_mask {
-            // Return mask (for PCMPESTRM/PCMPISTRM)
-            if output_sel != 0 {
-                // Expanded byte/word mask: each matching element becomes all-ones
-                // across the full 128-bit destination.
-                if is_word {
-                    let mut result = 0u128;
-                    for i in 0..8 {
-                        if int_res2 & (1 << i) != 0 {
-                            result |= 0xFFFFu128 << (i * 16);
-                        }
-                    }
-                    Ok(result)
-                } else {
-                    let mut result = 0u128;
-                    for i in 0..16 {
-                        if int_res2 & (1 << i) != 0 {
-                            result |= 0xFFu128 << (i * 8);
-                        }
-                    }
-                    Ok(result)
-                }
-            } else {
-                // Bit mask: result is in the low bits, high bits zero.
-                Ok(int_res2 as u128)
-            }
-        } else {
-            // Return index (for PCMPESTRI/PCMPISTRI)
-            if output_sel != 0 {
-                // MSB - find most significant set bit
-                for i in (0..num_elements as usize).rev() {
-                    if int_res2 & (1 << i) != 0 {
-                        return Ok(i as u128);
-                    }
-                }
-                Ok(num_elements as u128)
-            } else {
-                // LSB - find least significant set bit
-                for i in 0..num_elements as usize {
-                    if int_res2 & (1 << i) != 0 {
-                        return Ok(i as u128);
-                    }
-                }
-                Ok(num_elements as u128)
-            }
-        }
+        result.value
     }
 }

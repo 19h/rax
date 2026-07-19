@@ -124,6 +124,7 @@ impl X86_64Lifter {
             0x40 | 0x41 => self.lift_sse_dot_product(opcode, after_opcode, &prefix3, pc, ctx),
             0x42 => self.lift_sse_mpsadbw(after_opcode, &prefix3, pc, ctx),
             0x44 => self.lift_sse_pclmulqdq(after_opcode, &prefix3, pc, ctx),
+            0x60..=0x63 => self.lift_sse_pcmpxstrx(opcode, after_opcode, &prefix3, pc, ctx),
             0xCC => self.lift_sse_sha32(opcode, after_opcode, &prefix3, true, pc, ctx),
             0xCE | 0xCF => self.lift_sse_gfni(opcode, after_opcode, &prefix3, true, pc, ctx),
             0xDF => self.lift_sse_aes_keygen(after_opcode, &prefix3, pc, ctx),

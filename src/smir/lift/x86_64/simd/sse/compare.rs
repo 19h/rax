@@ -7,10 +7,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign, X86VecMap,
-    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
-    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
-    X86XSaveKind,
+    X86OpHint, X86PackedStringKind, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind,
+    X86VecAlign, X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource,
+    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
+    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -19,6 +19,98 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
+    /// Lift the four exact legacy SSE4.2 packed-string comparison forms.
+    pub(crate) fn lift_sse_pcmpxstrx(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let kind = match opcode {
+            0x60 => X86PackedStringKind::ExplicitMask,
+            0x61 => X86PackedStringKind::ExplicitIndex,
+            0x62 => X86PackedStringKind::ImplicitMask,
+            0x63 => X86PackedStringKind::ImplicitIndex,
+            _ => unreachable!(),
+        };
+        if !prefix.operand_size_override
+            || prefix.rep_prefix.is_some()
+            || prefix.lock
+            || prefix.rex2.is_some()
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let imm_offset = modrm.bytes_consumed;
+        if bytes.len() <= imm_offset {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: prefix.cursor + bytes.len(),
+                need: prefix.cursor + imm_offset + 1,
+            });
+        }
+        let imm = bytes[imm_offset];
+        let bytes_consumed = prefix.cursor + imm_offset + 1;
+        let next_pc = pc + bytes_consumed as u64;
+        let mut ops = Vec::new();
+        let src2 = if modrm.is_memory {
+            let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+            ops.extend(pre_ops);
+            let loaded = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VLoad {
+                    dst: loaded,
+                    addr,
+                    width: VecWidth::V128,
+                },
+            ));
+            loaded
+        } else {
+            self.xmm(modrm.rm)
+        };
+        let (len1, len2, length_width) = if kind.is_explicit() {
+            (
+                Some(self.gpr(0)),
+                Some(self.gpr(2)),
+                if prefix.rex_w() {
+                    OpWidth::W64
+                } else {
+                    OpWidth::W32
+                },
+            )
+        } else {
+            (None, None, OpWidth::W32)
+        };
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86PackedStringCompare {
+                dst: if kind.returns_mask() {
+                    self.xmm(0)
+                } else {
+                    self.gpr(1)
+                },
+                src1: self.xmm(modrm.reg),
+                src2,
+                len1,
+                len2,
+                length_width,
+                kind,
+                imm,
+            },
+        ));
+
+        Ok(LiftResult::fallthrough(ops, bytes_consumed))
+    }
+
     /// Lift MMX/SSE2/SSE4.1 packed integer equality and signed greater-than
     /// comparisons.
     pub(crate) fn lift_sse_integer_compare(

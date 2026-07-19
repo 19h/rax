@@ -9,6 +9,8 @@ mod x86_fp_types;
 pub use x86_fp_types::*;
 mod x86_crypto_types;
 pub use x86_crypto_types::*;
+mod x86_packed_string_types;
+pub use x86_packed_string_types::*;
 
 // ============================================================================
 // Operation Structure
@@ -3596,6 +3598,23 @@ pub enum OpKind {
         imm: u8,
     },
 
+    /// Exact legacy SSE4.2 packed-string comparison (`PCMPxSTRx`). `src1`
+    /// names the ModR/M.reg XMM operand and `src2` the snapshotted register or
+    /// memory operand. Explicit forms carry signed EAX/EDX or RAX/RDX sources;
+    /// implicit forms carry neither length. Mask forms write XMM0 bits 127:0
+    /// while preserving shared vector state above bit 127; index forms write
+    /// ECX, which zero-extends RCX. All six x86 status flags are defined.
+    X86PackedStringCompare {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        len1: Option<VReg>,
+        len2: Option<VReg>,
+        length_width: OpWidth,
+        kind: X86PackedStringKind,
+        imm: u8,
+    },
+
     /// SHA-512 message schedule, first stage.
     X86Sha512Msg1 {
         dst: VReg,
@@ -4530,6 +4549,7 @@ impl OpKind {
             | OpKind::X86MovdQ { dst, .. }
             | OpKind::X86Aes { dst, .. }
             | OpKind::X86Sha32 { dst, .. }
+            | OpKind::X86PackedStringCompare { dst, .. }
             | OpKind::X86Sha512Msg1 { dst, .. }
             | OpKind::X86Sha512Msg2 { dst, .. }
             | OpKind::X86Sha512Rounds2 { dst, .. }

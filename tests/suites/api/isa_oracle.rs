@@ -199,6 +199,44 @@ fn emits_structured_smir_ops() {
 }
 
 #[test]
+fn emits_exact_legacy_pcmpxstrx_semantics() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let explicit = decode_to_json(&[0x66, 0x4D, 0x0F, 0x3A, 0x61, 0xD1, 0xFD], &opts).unwrap();
+    assert_eq!(explicit["smir"]["available"], true);
+    assert_eq!(explicit["smir"]["bytes_consumed"], 7);
+    let op = explicit["smir"]["ops"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|op| op["kind"]["opcode"] == "x86_packed_string_compare")
+        .unwrap();
+    assert_eq!(op["kind"]["dst"]["name"], "rcx");
+    assert_eq!(op["kind"]["src1"]["name"], "xmm10");
+    assert_eq!(op["kind"]["src2"]["name"], "xmm9");
+    assert_eq!(op["kind"]["len1"]["name"], "rax");
+    assert_eq!(op["kind"]["len2"]["name"], "rdx");
+    assert_eq!(op["kind"]["length_width"], "W64");
+    assert_eq!(op["kind"]["kind"], "ExplicitIndex");
+    assert_eq!(op["kind"]["imm"], 0xFD);
+    assert_eq!(op["writes"][0]["name"], "rcx");
+
+    let implicit = decode_to_json(&[0x66, 0x0F, 0x3A, 0x62, 0xD1, 0x40], &opts).unwrap();
+    assert_eq!(implicit["smir"]["bytes_consumed"], 6);
+    let op = implicit["smir"]["ops"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|op| op["kind"]["opcode"] == "x86_packed_string_compare")
+        .unwrap();
+    assert_eq!(op["kind"]["dst"]["name"], "xmm0");
+    assert_eq!(op["kind"]["len1"], serde_json::Value::Null);
+    assert_eq!(op["kind"]["len2"], serde_json::Value::Null);
+    assert_eq!(op["kind"]["kind"], "ImplicitMask");
+}
+
+#[test]
 fn emits_complete_non_transactional_rtm_semantics() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

@@ -1467,6 +1467,22 @@ fn rewrite_pure_src_vregs(kind: &mut OpKind, f: &dyn Fn(VReg) -> VReg) -> usize 
                 do_v(wk, &mut n);
             }
         }
+        OpKind::X86PackedStringCompare {
+            src1,
+            src2,
+            len1,
+            len2,
+            ..
+        } => {
+            do_v(src1, &mut n);
+            do_v(src2, &mut n);
+            if let Some(len1) = len1 {
+                do_v(len1, &mut n);
+            }
+            if let Some(len2) = len2 {
+                do_v(len2, &mut n);
+            }
+        }
         _ => {}
     }
     n
@@ -2162,6 +2178,8 @@ impl OpKind {
             }
 
             OpKind::X86FpCompare { .. } => FlagSet::ALL_X86,
+
+            OpKind::X86PackedStringCompare { .. } => FlagSet::ALL_X86,
 
             OpKind::X86Cmpxchg8b16b { .. } => FlagSet::ZF,
 
@@ -4129,6 +4147,27 @@ impl OpKind {
                 result.push(*src1);
                 result.push(*src2);
                 result.extend(wk.iter().copied());
+            }
+
+            OpKind::X86PackedStringCompare {
+                dst,
+                src1,
+                src2,
+                len1,
+                len2,
+                kind,
+                ..
+            } => {
+                result.push(*src1);
+                result.push(*src2);
+                result.extend(len1.iter().copied());
+                result.extend(len2.iter().copied());
+                // Legacy mask forms overwrite only XMM0 bits 127:0. The
+                // shared architectural vector value above bit 127 is merged
+                // from the old destination, so this is a true RMW use.
+                if kind.returns_mask() {
+                    result.push(*dst);
+                }
             }
 
             OpKind::X86Sha512Msg1 { dst, src } | OpKind::X86Sha512Msg2 { dst, src } => {

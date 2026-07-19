@@ -21,6 +21,7 @@ use crate::smir::ir::ops::X86AdxKind;
 use crate::smir::ir::ops::X86BlsKind;
 use crate::smir::ir::ops::X86CacheControlKind;
 use crate::smir::ir::ops::X86CountKind;
+use crate::smir::ir::ops::X86PackedStringKind;
 use crate::smir::ir::ops::X86Sha32Op;
 use crate::smir::ir::ops::X86ThreeDNowKind;
 use crate::smir::ir::ops::X86X87CompareSource;
@@ -1131,6 +1132,7 @@ debug_name_json!(
     VecReduceOp,
     VecPermuteKind,
     X86AesOp,
+    X86PackedStringKind,
     X86Sha32Op,
     Avx10FP16Op,
     X86FpBinaryOp,
@@ -3760,6 +3762,26 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             op,
             imm,
         } => op_json!("x86_sha32", dst, src1, src2, wk, op, imm),
+        OpKind::X86PackedStringCompare {
+            dst,
+            src1,
+            src2,
+            len1,
+            len2,
+            length_width,
+            kind,
+            imm,
+        } => op_json!(
+            "x86_packed_string_compare",
+            dst,
+            src1,
+            src2,
+            len1,
+            len2,
+            length_width,
+            kind,
+            imm
+        ),
         OpKind::X86Sha512Msg1 { dst, src } => op_json!("x86_sha512_msg1", dst, src),
         OpKind::X86Sha512Msg2 { dst, src } => op_json!("x86_sha512_msg2", dst, src),
         OpKind::X86Sha512Rounds2 { dst, state, wk } => {

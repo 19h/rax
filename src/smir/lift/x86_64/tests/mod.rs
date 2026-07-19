@@ -20,6 +20,8 @@ mod movdir64b;
 #[cfg(test)]
 mod movdiri;
 #[cfg(test)]
+mod packed_string;
+#[cfg(test)]
 mod scalar;
 #[cfg(test)]
 mod sha_ni;

@@ -493,6 +493,84 @@ impl SmirInterpreter {
                 Self::write_vec(ctx, *dst, result);
             }
 
+            OpKind::X86PackedStringCompare {
+                dst,
+                src1,
+                src2,
+                len1,
+                len2,
+                length_width,
+                kind,
+                imm,
+            } => {
+                use crate::isa::x86_64::execute::simd::pcmpxstrx;
+
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                macro_rules! invalid {
+                    () => {{
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }};
+                }
+                let (first_length, second_length) = if kind.is_explicit() {
+                    let (Some(first_length), Some(second_length)) = (len1, len2) else {
+                        invalid!();
+                    };
+                    match length_width {
+                        OpWidth::W32 => (
+                            ctx.read_vreg(*first_length) as u32 as i32 as i64,
+                            ctx.read_vreg(*second_length) as u32 as i32 as i64,
+                        ),
+                        OpWidth::W64 => (
+                            ctx.read_vreg(*first_length) as i64,
+                            ctx.read_vreg(*second_length) as i64,
+                        ),
+                        _ => {
+                            invalid!();
+                        }
+                    }
+                } else {
+                    if len1.is_some() || len2.is_some() || *length_width != OpWidth::W32 {
+                        invalid!();
+                    }
+                    (
+                        pcmpxstrx::find_null_terminator(first[0], first[1], *imm),
+                        pcmpxstrx::find_null_terminator(second[0], second[1], *imm),
+                    )
+                };
+                let result = pcmpxstrx::evaluate(
+                    first[0],
+                    first[1],
+                    second[0],
+                    second[1],
+                    first_length,
+                    second_length,
+                    *imm,
+                    kind.returns_mask(),
+                );
+
+                if kind.returns_mask() {
+                    let mut destination = Self::read_vec(ctx, *dst);
+                    destination[0] = result.value as u64;
+                    destination[1] = (result.value >> 64) as u64;
+                    Self::write_vec(ctx, *dst, destination);
+                } else {
+                    ctx.write_vreg(*dst, result.value as u64);
+                }
+
+                ctx.flags.materialize_all();
+                ctx.flags.materialized.cf = result.cf;
+                ctx.flags.materialized.zf = result.zf;
+                ctx.flags.materialized.sf = result.sf;
+                ctx.flags.materialized.of = result.of;
+                ctx.flags.materialized.af = false;
+                ctx.flags.materialized.pf = false;
+            }
+
             OpKind::X86Sha512Msg1 { dst, src } => {
                 let old = Self::read_vec(ctx, *dst);
                 let source = Self::read_vec(ctx, *src);
