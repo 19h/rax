@@ -501,37 +501,7 @@ pub(crate) fn x86_crc32_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
     )
 }
 pub(crate) fn x86_jit_mem_address_shape_valid(addr: &crate::smir::ir::types::Address) -> bool {
-    use crate::smir::ir::types::{Address, ArchReg, VReg, X86Reg};
-
-    let state_gpr =
-        |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
-    let scale = |value: &u8| matches!(value, 1 | 2 | 4 | 8);
-    match addr {
-        Address::Direct(base) | Address::BaseOffset { base, .. } => state_gpr(base),
-        Address::BaseIndexScale {
-            base,
-            index,
-            scale: amount,
-            ..
-        } => base.as_ref().is_none_or(state_gpr) && state_gpr(index) && scale(amount),
-        Address::PcRel { base, .. } => base.is_some(),
-        Address::Absolute(_) => true,
-        Address::SegmentRel {
-            segment,
-            base,
-            index,
-            scale: amount,
-            ..
-        } => {
-            matches!(
-                segment,
-                VReg::Arch(ArchReg::X86(X86Reg::FsBase | X86Reg::GsBase))
-            ) && base.as_ref().is_none_or(state_gpr)
-                && index.as_ref().is_none_or(state_gpr)
-                && scale(amount)
-        }
-        Address::GpRel { .. } => false,
-    }
+    addr.is_x86_state_backed_shape()
 }
 pub(crate) fn x86_binary_alu_shape(
     kind: &crate::smir::ir::ops::OpKind,

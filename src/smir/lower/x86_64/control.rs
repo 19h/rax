@@ -189,7 +189,8 @@ impl X86_64Lowerer {
             } if self.call_helpers => {
                 // Lift-through-calls: run the callee in the interpreter, resume
                 // native at `continuation`.
-                self.emit_jit_call_op(target, *continuation)?;
+                let call_pc = self.jit_call_site_pc(source, *continuation)?;
+                self.emit_jit_call_op(target, *continuation, call_pc)?;
             }
 
             Terminator::Call {

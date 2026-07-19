@@ -141,7 +141,7 @@ fn mmx_state_wraps_every_rust_helper_boundary_on_both_return_paths() {
     call.set_preserve_mmx_helpers(true);
     let continuation = BlockId(7);
     call.block_guest_pcs.insert(continuation, 0x2000);
-    call.emit_jit_call_op(&CallTarget::GuestAddr(0x1800), continuation)
+    call.emit_jit_call_op(&CallTarget::GuestAddr(0x1800), continuation, 0x17fb)
         .unwrap();
     assert_mmx_helper_boundary(call.code.data(), "interpreter call helper");
 }

@@ -48,6 +48,8 @@ mod ops;
 pub use emitter::*;
 mod jit;
 pub use jit::*;
+mod jit_call;
+pub use jit_call::*;
 mod jit_memory_address;
 pub use jit_memory_address::*;
 mod memory;
@@ -1185,7 +1187,9 @@ pub struct X86_64Lowerer {
     /// When set, a `Terminator::Call` lowers to a runtime call-out (the
     /// `GuestRegs.call_fn` helper) that runs the callee in the interpreter and
     /// resumes native execution at the call's continuation block, instead of
-    /// being treated as a region-ending native exit. The lift-through-calls path.
+    /// being treated as a region-ending native exit. State-backed memory target
+    /// forms first read the 8-byte target through the MMU helper. The
+    /// lift-through-calls path.
     call_helpers: bool,
 
     /// Code offsets of the disp32 field in each epilogue's `lea rsp, [rsp+frame]`

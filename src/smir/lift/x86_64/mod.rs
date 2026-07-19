@@ -166,7 +166,11 @@ fn x86_interpreter_frontier_control_flow(
         | ControlFlow::Syscall => true,
         ControlFlow::Call { target } => {
             !lift_through_calls
-                || !matches!(target, CallTarget::GuestAddr(_) | CallTarget::Indirect(_))
+                || !match target {
+                    CallTarget::GuestAddr(_) | CallTarget::Indirect(_) => true,
+                    CallTarget::IndirectMem(addr) => addr.is_x86_state_backed_shape(),
+                    _ => false,
+                }
         }
         _ => false,
     }

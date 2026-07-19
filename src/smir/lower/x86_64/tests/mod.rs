@@ -8,6 +8,8 @@ mod alu;
 #[cfg(test)]
 mod apx;
 #[cfg(test)]
+mod call_helpers;
+#[cfg(test)]
 mod jit;
 #[cfg(test)]
 mod memory;

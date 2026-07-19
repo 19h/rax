@@ -3720,6 +3720,12 @@ mod jit_state;
 ))]
 use jit_state::JitRegion;
 
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_call.rs"]
+mod jit_call;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_call::{jit_call_enabled, rax_jit_call};
+
 /// RAX_JIT_BAIL=1 logs why each hot region is rejected by the JIT (diagnostic
 /// for expanding the whitelist toward the highest-frequency bail reasons).
 #[cfg(all(
@@ -4119,210 +4125,6 @@ unsafe extern "C" fn rax_jit_pair_store(
     1
 }
 
-/// Lift-through-calls helper: run the interpreter for a guest CALL's callee.
-///
-/// Called from a lowered JIT region at a guest `CALL` site (the `RAX_JIT_CALL`
-/// path). The native region holds the live guest state in `gr` (the marshalled
-/// GuestRegs); this helper syncs it into the vcpu, simulates the CALL (push the
-/// return address, jump to `target_pc`), then steps the INTERPRETER until the
-/// callee returns to `return_pc` — i.e. runs the entire called subtree (incl.
-/// nested calls, which the interpreter handles) — then syncs the post-call state
-/// back into `gr` so native execution resumes at the continuation.
-///
-/// Returns `1` on a clean return to `return_pc`. Returns `0` (and sets
-/// `gr.exit_pc`) when the callee yields an exit that must reach the VMM (I/O,
-/// HLT, …) or errors: the stashed exit is recovered by `jit_run_region_native`
-/// and propagated, and the region returns to the interpreter at `exit_pc`.
-///
-/// Safety: `gr` is the region's marshalled state; `gr.ctx` is the owning vcpu.
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-unsafe extern "C" fn rax_jit_call(
-    gr: *mut crate::smir::lower::runtime::GuestRegs,
-    target_pc: u64,
-    return_pc: u64,
-) -> u64 {
-    let gr = unsafe { &mut *gr };
-    let vcpu = unsafe { &mut *(gr.ctx as *mut X86_64Vcpu) };
-
-    // Sync marshalled native state -> vcpu interpreter state. The JIT works with
-    // materialized flags, so clear any pending lazy op.
-    vcpu.regs.rax = gr.gpr[0];
-    vcpu.regs.rcx = gr.gpr[1];
-    vcpu.regs.rdx = gr.gpr[2];
-    vcpu.regs.rbx = gr.gpr[3];
-    vcpu.regs.rsp = gr.gpr[4];
-    vcpu.regs.rbp = gr.gpr[5];
-    vcpu.regs.rsi = gr.gpr[6];
-    vcpu.regs.rdi = gr.gpr[7];
-    vcpu.regs.r8 = gr.gpr[8];
-    vcpu.regs.r9 = gr.gpr[9];
-    vcpu.regs.r10 = gr.gpr[10];
-    vcpu.regs.r11 = gr.gpr[11];
-    vcpu.regs.r12 = gr.gpr[12];
-    vcpu.regs.r13 = gr.gpr[13];
-    vcpu.regs.r14 = gr.gpr[14];
-    vcpu.regs.r15 = gr.gpr[15];
-    vcpu.regs.r16 = gr.gpr[16];
-    vcpu.regs.r17 = gr.gpr[17];
-    vcpu.regs.r18 = gr.gpr[18];
-    vcpu.regs.r19 = gr.gpr[19];
-    vcpu.regs.r20 = gr.gpr[20];
-    vcpu.regs.r21 = gr.gpr[21];
-    vcpu.regs.r22 = gr.gpr[22];
-    vcpu.regs.r23 = gr.gpr[23];
-    vcpu.regs.r24 = gr.gpr[24];
-    vcpu.regs.r25 = gr.gpr[25];
-    vcpu.regs.r26 = gr.gpr[26];
-    vcpu.regs.r27 = gr.gpr[27];
-    vcpu.regs.r28 = gr.gpr[28];
-    vcpu.regs.r29 = gr.gpr[29];
-    vcpu.regs.r30 = gr.gpr[30];
-    vcpu.regs.r31 = gr.gpr[31];
-    vcpu.regs.rflags = gr.rflags;
-    vcpu.lazy_flags = LazyFlags {
-        op: LazyFlagOp::None,
-        ..Default::default()
-    };
-    if gr.vector_active != 0 {
-        for index in 0..16 {
-            let low = gr.get_zmm(index);
-            vcpu.regs.xmm[index] = [low[0], low[1]];
-            vcpu.regs.ymm_high[index] = [low[2], low[3]];
-            vcpu.regs.zmm_high[index] = [low[4], low[5], low[6], low[7]];
-            vcpu.regs.zmm_ext[index] = gr.get_zmm(index + 16);
-        }
-        vcpu.regs.k = gr.k;
-        vcpu.mxcsr = gr.mxcsr;
-    }
-    if gr.mmx_active != 0 {
-        vcpu.regs.mm = gr.mm;
-        vcpu.fpu.tag_word = gr.x87_tag_word as u16;
-    }
-    // Simulate the CALL's stack effect (the block's own ops already ran
-    // natively; only the call's push+transfer remain), then enter the callee.
-    let _ = vcpu.push64(return_pc);
-    vcpu.regs.rip = target_pc;
-
-    // Run the callee to completion. The callee is bounded (a normal function);
-    // the step cap is a runaway backstop only.
-    let start_time = std::time::Instant::now();
-    let mut ok: u64 = 1;
-    let mut steps: u64 = 0;
-    loop {
-        if vcpu.regs.rip == return_pc {
-            break;
-        }
-        steps += 1;
-        if steps > 500_000_000 {
-            ok = 0;
-            break;
-        }
-        if vcpu.jit_callout_should_yield(&start_time, steps) {
-            vcpu.jit_callout_exit = Some(VcpuExit::Hlt);
-            ok = 0;
-            break;
-        }
-        // SMC: invalidate any code page the callee wrote before its next fetch
-        // (this direct-step loop bypasses the run-loop drain). Guarded → cheap.
-        vcpu.drain_smc();
-        match vcpu.step() {
-            Ok(None) => {}
-            Ok(Some(exit)) => {
-                // An exit that needs the VMM (I/O, HLT, …): stash it and bail.
-                vcpu.jit_callout_exit = Some(exit);
-                ok = 0;
-                break;
-            }
-            Err(_) => {
-                ok = 0;
-                break;
-            }
-        }
-    }
-
-    // Sync vcpu state back into the marshalled file. Materialize flags first so
-    // gr.rflags is current (the native reload / trampoline reads it).
-    vcpu.materialize_flags();
-    if gr.vector_active != 0 {
-        for index in 0..16 {
-            gr.set_zmm(
-                index,
-                [
-                    vcpu.regs.xmm[index][0],
-                    vcpu.regs.xmm[index][1],
-                    vcpu.regs.ymm_high[index][0],
-                    vcpu.regs.ymm_high[index][1],
-                    vcpu.regs.zmm_high[index][0],
-                    vcpu.regs.zmm_high[index][1],
-                    vcpu.regs.zmm_high[index][2],
-                    vcpu.regs.zmm_high[index][3],
-                ],
-            );
-            gr.set_zmm(index + 16, vcpu.regs.zmm_ext[index]);
-        }
-        gr.k = vcpu.regs.k;
-        gr.mxcsr = vcpu.mxcsr;
-    }
-    if gr.mmx_active != 0 {
-        gr.mm = vcpu.regs.mm;
-        gr.x87_tag_word = u64::from(vcpu.fpu.tag_word);
-    }
-    gr.gpr[0] = vcpu.regs.rax;
-    gr.gpr[1] = vcpu.regs.rcx;
-    gr.gpr[2] = vcpu.regs.rdx;
-    gr.gpr[3] = vcpu.regs.rbx;
-    gr.gpr[4] = vcpu.regs.rsp;
-    gr.gpr[5] = vcpu.regs.rbp;
-    gr.gpr[6] = vcpu.regs.rsi;
-    gr.gpr[7] = vcpu.regs.rdi;
-    gr.gpr[8] = vcpu.regs.r8;
-    gr.gpr[9] = vcpu.regs.r9;
-    gr.gpr[10] = vcpu.regs.r10;
-    gr.gpr[11] = vcpu.regs.r11;
-    gr.gpr[12] = vcpu.regs.r12;
-    gr.gpr[13] = vcpu.regs.r13;
-    gr.gpr[14] = vcpu.regs.r14;
-    gr.gpr[15] = vcpu.regs.r15;
-    gr.gpr[16] = vcpu.regs.r16;
-    gr.gpr[17] = vcpu.regs.r17;
-    gr.gpr[18] = vcpu.regs.r18;
-    gr.gpr[19] = vcpu.regs.r19;
-    gr.gpr[20] = vcpu.regs.r20;
-    gr.gpr[21] = vcpu.regs.r21;
-    gr.gpr[22] = vcpu.regs.r22;
-    gr.gpr[23] = vcpu.regs.r23;
-    gr.gpr[24] = vcpu.regs.r24;
-    gr.gpr[25] = vcpu.regs.r25;
-    gr.gpr[26] = vcpu.regs.r26;
-    gr.gpr[27] = vcpu.regs.r27;
-    gr.gpr[28] = vcpu.regs.r28;
-    gr.gpr[29] = vcpu.regs.r29;
-    gr.gpr[30] = vcpu.regs.r30;
-    gr.gpr[31] = vcpu.regs.r31;
-    gr.rflags = vcpu.regs.rflags;
-    gr.xcr0 = vcpu.xcr0;
-    gr.xgetbv1 = vcpu.xgetbv1_value;
-    gr.cr4 = vcpu.sregs.cr4;
-    gr.cr0 = vcpu.sregs.cr0;
-    gr.cpl = u64::from(vcpu.sregs.cs.selector & 3);
-    gr.apx_enabled = u64::from(vcpu.apx_enabled());
-    if ok == 0 {
-        gr.exit_pc = vcpu.regs.rip;
-    }
-    ok
-}
-
-/// Lift-through-calls is enabled by default: a guest CALL inside a hot region
-/// lowers to a call-out into [`rax_jit_call`] instead of ending the region, so
-/// call-heavy loops remain native between callees. `RAX_JIT_NO_CALL=1` restores
-/// call-as-frontier behavior. Call mode requires and implies the MMU helper path.
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-fn jit_call_enabled() -> bool {
-    use std::sync::OnceLock;
-    static ON: OnceLock<bool> = OnceLock::new();
-    *ON.get_or_init(|| jit_default_enabled(std::env::var_os("RAX_JIT_NO_CALL").is_some()))
-}
-
 /// Classify the first reason an executed block of `func` fails the clobber gate:
 /// the offending op's variant name, or `rsp/rbp` / `virtual-dst`.
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4657,7 +4459,10 @@ impl X86_64Vcpu {
         // region). This makes lift-through-calls STRICTLY ADDITIVE — never worse
         // than the baseline mem/register JIT coverage.
         #[cfg(target_arch = "x86_64")]
-        let want_call = self.jit_call;
+        // The callout helper implements the 64-bit near-CALL contract: an
+        // 8-byte return-address push and a 64-bit target. Compatibility-mode
+        // CALL widths remain exact interpreter frontiers.
+        let want_call = self.jit_call && self.sregs.cs.l;
         #[cfg(target_arch = "aarch64")]
         let want_call = false;
         let modes: &[bool] = if want_call { &[true, false] } else { &[false] };
@@ -4706,11 +4511,18 @@ impl X86_64Vcpu {
                         continuation,
                         ..
                     } => {
+                        #[cfg(target_arch = "x86_64")]
                         let target_ok = matches!(
                             target,
                             crate::smir::ir::CallTarget::GuestAddr(_)
                                 | crate::smir::ir::CallTarget::Indirect(_)
+                        ) || matches!(
+                            target,
+                            crate::smir::ir::CallTarget::IndirectMem(addr)
+                                if self.jit_mem && addr.is_x86_state_backed_shape()
                         );
+                        #[cfg(target_arch = "aarch64")]
+                        let target_ok = false;
                         !(cm && target_ok && lifted.contains(continuation))
                     }
                     _ => false,
@@ -4827,8 +4639,19 @@ impl X86_64Vcpu {
                     .blocks
                     .iter()
                     .filter(|block| !exits.contains_key(&block.id))
-                    .flat_map(|block| &block.ops)
-                    .any(|op| x86_jit_op_uses_mem_helper(&op.kind));
+                    .any(|block| {
+                        block
+                            .ops
+                            .iter()
+                            .any(|op| x86_jit_op_uses_mem_helper(&op.kind))
+                            || matches!(
+                                &block.terminator,
+                                Terminator::Call {
+                                    target: crate::smir::ir::CallTarget::IndirectMem(addr),
+                                    ..
+                                } if addr.is_x86_state_backed_shape()
+                            )
+                    });
             #[cfg(target_arch = "x86_64")]
             {
                 if !is_native_clobber_safe_excluding(&func, &exits, allow_mem) {
@@ -6032,6 +5855,10 @@ mod jit_mmx_tests;
 #[path = "cpu_jit_mmx_memory_source_tests.rs"]
 mod jit_mmx_memory_source_tests;
 
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_call_tests.rs"]
+mod jit_call_tests;
+
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {
     use super::*;
@@ -6121,7 +5948,6 @@ mod debugger_breakpoint_tests {
 mod tests {
     use super::*;
     use std::sync::Arc;
-    use std::time::{Duration, Instant};
     use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
     fn test_vcpu() -> X86_64Vcpu {
@@ -6155,17 +5981,6 @@ mod tests {
         );
         vcpu.push_jit_mem_log((0xbeef, 1, 0));
         assert!(vcpu.jit_mem_log.is_none());
-    }
-
-    #[test]
-    fn jit_callout_housekeeping_yields_on_run_loop_slice() {
-        let mut vcpu = test_vcpu();
-        let expired = Instant::now()
-            .checked_sub(Duration::from_millis(2))
-            .unwrap_or_else(Instant::now);
-
-        assert!(!vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE - 1));
-        assert!(vcpu.jit_callout_should_yield(&expired, LAPIC_POLL_STRIDE));
     }
 
     #[test]
@@ -6392,123 +6207,6 @@ mod tests {
 
         assert_eq!(jit_classify_bail(&func, &exits, false), "Load");
         assert_eq!(jit_classify_bail(&func, &exits, true), "VCvtBF16ToFP32");
-    }
-
-    #[test]
-    fn jit_callout_synchronizes_callee_vector_opmask_and_mmx_state() {
-        use crate::smir::lower::runtime::GuestRegs;
-
-        let mem =
-            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
-        // vprold $7,%zmm2,%zmm1{%k4}{z}; ldmxcsr 4(%rip);
-        // paddb %mm1,%mm0; ret; .long 0x5f80
-        let mut returning_callee = vec![
-            0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07, 0x0f, 0xae, 0x15, 0x04, 0x00, 0x00, 0x00,
-            0x0f, 0xfc, 0xc1, 0xc3,
-        ];
-        returning_callee.extend_from_slice(&0x5f80u32.to_le_bytes());
-        mem.write_slice(&returning_callee, GuestAddress(0x100))
-            .unwrap();
-        let mut vcpu = X86_64Vcpu::new(0, mem.clone());
-        vcpu.sregs.cr0 = 0x21;
-        vcpu.sregs.cr4 = 0x20 | (1 << 9) | (1 << 18);
-        vcpu.sregs.efer = 0x500;
-        vcpu.sregs.cs.limit = u32::MAX;
-        vcpu.sregs.cs.present = true;
-        vcpu.sregs.cs.s = true;
-        vcpu.sregs.cs.l = true;
-
-        let source = [
-            0x0123_4567_89ab_cdef,
-            0x1111_2222_3333_4444,
-            0x8000_0001_7fff_ffff,
-            0xdead_beef_cafe_babe,
-            0x0102_0304_0506_0708,
-            0xf0e0_d0c0_b0a0_9080,
-            0x1357_9bdf_2468_ace0,
-            0xffff_ffff_0000_0001,
-        ];
-        let mask = 0x9669u64;
-        let mut expected = [0u64; 8];
-        for lane in 0..16 {
-            let input = (source[lane / 2] >> ((lane % 2) * 32)) as u32;
-            let output = if ((mask >> lane) & 1) != 0 {
-                input.rotate_left(7)
-            } else {
-                0
-            };
-            expected[lane / 2] |= u64::from(output) << ((lane % 2) * 32);
-        }
-
-        let mut gr = GuestRegs::default();
-        gr.ctx = (&mut vcpu as *mut X86_64Vcpu) as u64;
-        gr.gpr[4] = 0x8000;
-        gr.rflags = 0x2;
-        gr.vector_active = 1;
-        gr.set_zmm(1, [u64::MAX; 8]);
-        gr.set_zmm(2, source);
-        gr.set_zmm(31, [0x3131_3131_3131_3131; 8]);
-        gr.k[4] = mask;
-        gr.k[7] = 0x7777_7777_7777_7777;
-        gr.mxcsr = 0x3f80;
-        gr.mm[0] = 0x00ff_7f80_0102_0304;
-        gr.mm[1] = 0x0102_0304_0506_0708;
-        gr.mmx_active = 1;
-
-        let ok = unsafe { rax_jit_call(&mut gr, 0x100, 0x200) };
-        assert_eq!(ok, 1);
-        assert_eq!(
-            gr.get_zmm(1),
-            expected,
-            "callee destination was not returned"
-        );
-        assert_eq!(gr.get_zmm(2), source, "caller source was not preserved");
-        assert_eq!(
-            gr.get_zmm(31),
-            [0x3131_3131_3131_3131; 8],
-            "high ZMM state was not preserved"
-        );
-        assert_eq!(gr.k[4], mask);
-        assert_eq!(gr.k[7], 0x7777_7777_7777_7777);
-        assert_eq!(gr.mxcsr, 0x5f80, "callee MXCSR was not returned");
-        assert_eq!(gr.mm[0], 0x0101_8284_0608_0A0C);
-        assert_eq!(gr.mm[1], 0x0102_0304_0506_0708);
-
-        // A successful callout can change XCR0 before native execution resumes.
-        // Publish that control state into GuestRegs so a later lowered XGETBV
-        // in the same region observes the callee's value rather than the entry
-        // snapshot.
-        let xsetbv_callee = [
-            0xB9, 0, 0, 0, 0, // mov ecx,0
-            0xB8, 0xE7, 0, 0, 0, // mov eax,0xE7 (x87|SSE|AVX|AVX-512)
-            0x31, 0xD2, // xor edx,edx
-            0x0F, 0x01, 0xD1, // xsetbv
-            0xC3, // ret
-        ];
-        mem.write_slice(&xsetbv_callee, GuestAddress(0x500))
-            .unwrap();
-        let ok = unsafe { rax_jit_call(&mut gr, 0x500, 0x600) };
-        assert_eq!(ok, 1);
-        assert_eq!(gr.xcr0, 0xE7, "callee XCR0 was not returned");
-        assert_eq!(gr.cr4, vcpu.sregs.cr4, "callee CR4 was not returned");
-
-        // A callee that mutates vector state and then yields HLT must publish
-        // that state before returning `ok=0`; the run loop consumes the stashed
-        // exit while leaving the interpreter state exactly at the yield.
-        let mut yielding_callee = vec![
-            0x62, 0xf1, 0x75, 0xcc, 0x72, 0xca, 0x07, 0x0f, 0xae, 0x15, 0x01, 0x00, 0x00, 0x00,
-            0xf4,
-        ];
-        yielding_callee.extend_from_slice(&0x7f80u32.to_le_bytes());
-        mem.write_slice(&yielding_callee, GuestAddress(0x300))
-            .unwrap();
-        gr.set_zmm(1, [u64::MAX; 8]);
-        gr.gpr[4] = 0x8000;
-        let ok = unsafe { rax_jit_call(&mut gr, 0x300, 0x400) };
-        assert_eq!(ok, 0);
-        assert_eq!(gr.get_zmm(1), expected, "bailing callee lost vector state");
-        assert_eq!(gr.mxcsr, 0x7f80, "bailing callee lost MXCSR state");
-        assert!(matches!(vcpu.jit_callout_exit, Some(VcpuExit::Hlt)));
     }
 
     #[cfg(feature = "debug")]

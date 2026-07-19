@@ -113,37 +113,6 @@ fn vector_helper_narrow_opmask_mode_uses_avx512f_kmovw_only() {
     );
 }
 #[test]
-fn vector_call_helper_emits_save_and_both_resume_reloads() {
-    let mut lowerer = X86_64Lowerer::new();
-    lowerer.set_call_helpers(true);
-    lowerer.set_preserve_vector_call_helpers(true);
-    let continuation = BlockId(7);
-    lowerer.block_guest_pcs.insert(continuation, 0x2000);
-    lowerer
-        .emit_jit_call_op(&CallTarget::GuestAddr(0x1800), continuation)
-        .expect("lower vector-preserving call helper");
-
-    let bytes = lowerer.code.data();
-    let store_zmm0 = &[0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x40, 0x05];
-    let load_zmm0 = &[0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x41, 0x05];
-    assert_eq!(
-        bytes
-            .windows(store_zmm0.len())
-            .filter(|window| *window == store_zmm0)
-            .count(),
-        1,
-        "call helper must save vector state once"
-    );
-    assert_eq!(
-        bytes
-            .windows(load_zmm0.len())
-            .filter(|window| *window == load_zmm0)
-            .count(),
-        2,
-        "call helper must reload vector state on success and bailout"
-    );
-}
-#[test]
 fn lifted_native_vector_instructions_reach_native_jit_lowering() {
     for (instruction, expected) in [
         (&[0x0F, 0x28, 0xC1][..], &[0x0F, 0x28, 0xC1][..]),

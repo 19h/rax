@@ -628,6 +628,40 @@ impl Address {
             }
         }
     }
+
+    /// Whether this x86 address can be reconstructed exclusively from the
+    /// state-backed architectural register file. Native helper paths use this
+    /// predicate before accepting an address: virtual operands would otherwise
+    /// require an allocator-owned temporary that can alias live guest state.
+    pub(crate) fn is_x86_state_backed_shape(&self) -> bool {
+        let state_gpr =
+            |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some());
+        let valid_scale = |scale: &u8| matches!(scale, 1 | 2 | 4 | 8);
+
+        match self {
+            Address::Direct(base) | Address::BaseOffset { base, .. } => state_gpr(base),
+            Address::BaseIndexScale {
+                base, index, scale, ..
+            } => base.as_ref().is_none_or(state_gpr) && state_gpr(index) && valid_scale(scale),
+            Address::PcRel { base, .. } => base.is_some(),
+            Address::Absolute(_) => true,
+            Address::SegmentRel {
+                segment,
+                base,
+                index,
+                scale,
+                ..
+            } => {
+                matches!(
+                    segment,
+                    VReg::Arch(ArchReg::X86(X86Reg::FsBase | X86Reg::GsBase))
+                ) && base.as_ref().is_none_or(state_gpr)
+                    && index.as_ref().is_none_or(state_gpr)
+                    && valid_scale(scale)
+            }
+            Address::GpRel { .. } => false,
+        }
+    }
 }
 
 // ============================================================================

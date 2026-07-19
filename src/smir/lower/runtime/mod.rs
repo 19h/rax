@@ -108,14 +108,17 @@ pub struct GuestRegs {
     /// IA32_GS_BASE. As `fs_base` but for
     /// `gs:`-overridden operands (per-CPU data in the Linux kernel).
     pub gs_base: u64,
-    /// Address of the call helper `fn(gr, target_pc, return_pc) -> ok`. Used by
-    /// the lift-through-calls path (RAX_JIT_CALL): a guest CALL in a JIT region
+    /// Address of the call helper
+    /// `fn(gr, target_pc, return_pc, call_pc) -> ok`. Used by the
+    /// lift-through-calls path (RAX_JIT_CALL): a guest CALL in a JIT region
     /// lowers to a call-out into this helper, which runs the interpreter for the
     /// callee until it returns to `return_pc`, then resumes native execution.
     /// `ok == 0` means the callee bailed to the interpreter (an exit/exception)
     /// and the region must return; the helper has set `exit_pc`. NOTE: arg0 is
     /// the `*mut GuestRegs` itself (not `ctx`), because the helper needs the
     /// full marshalled guest state, and `gr.ctx` carries the vcpu pointer.
+    /// `call_pc` is the precise deoptimization PC if the architectural
+    /// return-address push faults.
     pub call_fn: u64,
     /// Complete architectural ZMM0-ZMM31 state. XMM and YMM values occupy the
     /// corresponding low 128/256 bits. Kept in one canonical representation so

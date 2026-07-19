@@ -6,6 +6,8 @@ use super::*;
 #[cfg(test)]
 mod apx;
 #[cfg(test)]
+mod callout;
+#[cfg(test)]
 mod decode;
 #[cfg(test)]
 mod evex;
