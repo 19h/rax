@@ -76,6 +76,7 @@ impl X86_64Lifter {
                 self.lift_crc32_0f38(opcode3, after_opcode, &prefix3, pc, ctx)
             }
             0xF0 | 0xF1 => self.lift_movbe_0f38(opcode3, after_opcode, &prefix3, pc, ctx),
+            0xF9 => self.lift_movdiri_0f38(after_opcode, &prefix3, pc, ctx),
             0xFC => self.lift_rao_int_0f38(after_opcode, &prefix3, pc, ctx),
             _ => {
                 if self.strict {
