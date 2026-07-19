@@ -22,7 +22,6 @@ use crate::smir::lift::{
 };
 
 impl X86_64Lifter {
-
     /// Lift XCHG r/m, r (86/87).
     pub(crate) fn lift_xchg_rm_r(
         &self,
@@ -125,7 +124,6 @@ impl X86_64Lifter {
         }
     }
 
-
     pub(crate) fn lift_movnti(
         &self,
         bytes: &[u8],
@@ -170,7 +168,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
 
     pub(crate) fn lift_movbe_0f38(
         &self,
@@ -259,7 +256,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_movrs_0f38(
         &self,
         opcode: u8,
@@ -299,7 +295,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
 
     /// Lift POP r/m16 or r/m64 (8F /0) in 64-bit mode.
     pub(crate) fn lift_pop_rm(
@@ -445,7 +440,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift MOV accumulator to/from a moffs absolute offset (A0-A3).
     pub(crate) fn lift_mov_moffs(
         &self,
@@ -522,7 +516,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift MOV r, imm (B8-BF)
     pub(crate) fn lift_mov_r_imm(
         &self,
@@ -598,7 +591,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_size))
     }
 
-
     /// Lift MOV r8, imm8 (B0-B7)
     pub(crate) fn lift_mov_r8_imm8(
         &self,
@@ -647,7 +639,6 @@ impl X86_64Lifter {
 
         Ok(LiftResult::fallthrough(ops, prefix.cursor + 1))
     }
-
 
     /// Lift PUSH r64 (50-57)
     pub(crate) fn lift_push_r64(
@@ -710,7 +701,6 @@ impl X86_64Lifter {
 
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
-
 
     /// Lift POP r64 (58-5F)
     pub(crate) fn lift_pop_r64(
@@ -803,7 +793,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
 
-
     /// Lift XCHG rax, r64 (90-97)
     pub(crate) fn lift_xchg_rax(
         &self,
@@ -825,7 +814,6 @@ impl X86_64Lifter {
 
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
-
 
     /// Lift BSWAP r32/r64 (0F C8+rd)
     pub(crate) fn lift_bswap_opcode(
@@ -866,7 +854,6 @@ impl X86_64Lifter {
 
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
-
 
     /// Lift PUSH imm8/imm32 (6A/68)
     pub(crate) fn lift_push_imm(
@@ -937,13 +924,11 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_size))
     }
 
-
     /// Lift LEAVE (C9)
     pub(crate) fn lift_leave(&self, prefix: &X86Prefix, pc: u64) -> Result<LiftResult, LiftError> {
         let ops = vec![SmirOp::new(OpId(0), pc, OpKind::Leave)];
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
-
 
     /// Lift ENTER imm16, imm8 (C8), including all 32 architectural nesting
     /// levels. Stack stores are emitted in retirement order.
@@ -1113,7 +1098,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, prefix.cursor + 3))
     }
 
-
     /// Lift LEA (8D)
     pub(crate) fn lift_lea(
         &self,
@@ -1156,7 +1140,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
 
     /// Lift XLAT/XLATB (D7): AL := byte ptr [segment:(E)BX + AL].
     pub(crate) fn lift_xlat(
@@ -1242,7 +1225,6 @@ impl X86_64Lifter {
 
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
-
 
     /// Lift MOV r/m, r and MOV r, r/m (88-8B)
     pub(crate) fn lift_mov_rm_r(
@@ -1350,7 +1332,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift MOVSXD r64, r/m32 (63)
     pub(crate) fn lift_movsxd(
         &self,
@@ -1407,7 +1388,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
 
     /// Lift MOV r/m, imm (C6/C7)
     pub(crate) fn lift_mov_rm_imm(

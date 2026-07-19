@@ -19,7 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
     /// Materialize the register or memory source used by masked EVEX unary
     /// floating-point operations. Memory forms preserve EVEX
     /// fault suppression at element granularity; scalar broadcasts aggregate
@@ -138,8 +137,6 @@ impl X86_64Lifter {
         };
         (source, ops)
     }
-
-
 
     /// Materialize the exact FP16 tuple used by packed FP16-to-integer
     /// conversions. Quarter tuples can be only four bytes wide, so the lane
@@ -282,8 +279,6 @@ impl X86_64Lifter {
         }
         loaded
     }
-
-
 
     pub(crate) fn lift_evex_compress_expand(
         &self,
@@ -567,8 +562,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_mask_vector_convert(
         &self,
         prefix: VecPrefix,
@@ -759,8 +752,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_four_fma(
         &self,
         prefix: VecPrefix,
@@ -847,8 +838,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, bytes_consumed))
     }
-
-
 
     pub(crate) fn append_evex_fp_class_vector(
         &self,
@@ -1009,8 +998,6 @@ impl X86_64Lifter {
         result
     }
 
-
-
     pub(crate) fn lift_evex_get_exponent(
         &self,
         prefix: VecPrefix,
@@ -1102,8 +1089,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_round_scale(
         &self,
@@ -1215,8 +1200,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
-
-
     pub(crate) fn lift_evex_reduce(
         &self,
         prefix: VecPrefix,
@@ -1320,8 +1303,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_evex_scale_f(
         &self,
@@ -1427,8 +1408,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_range(
         &self,
         prefix: VecPrefix,
@@ -1531,8 +1510,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_evex_fixup_imm(
         &self,
@@ -1638,8 +1615,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
-
-
     pub(crate) fn lift_evex_exp2(
         &self,
         prefix: VecPrefix,
@@ -1719,8 +1694,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_approx14(
         &self,
@@ -1818,8 +1791,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_fp16_approx(
         &self,
@@ -1924,8 +1895,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_approx28(
         &self,
         prefix: VecPrefix,
@@ -2029,8 +1998,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_fp16_complex(
         &self,
@@ -2245,8 +2212,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_fp_class(
         &self,
         prefix: VecPrefix,
@@ -2445,8 +2410,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
-
-
     pub(crate) fn lift_evex_packed_fp_arithmetic(
         &self,
         prefix: VecPrefix,
@@ -2598,8 +2561,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_fp16_flag_compare(
         &self,
         prefix: VecPrefix,
@@ -2689,8 +2650,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_fp16_to_int(
         &self,
@@ -2789,8 +2748,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_int_to_fp16(
         &self,
         prefix: VecPrefix,
@@ -2888,8 +2845,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_fp16_scalar_move(
         &self,
@@ -3078,8 +3033,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_fp16_arithmetic(
         &self,
         prefix: VecPrefix,
@@ -3206,8 +3159,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_fp16_scalar_arithmetic(
         &self,
@@ -3451,8 +3402,6 @@ impl X86_64Lifter {
         self.append_vex_scalar_result(dst, merge, low, VecElementType::F16, pc, ctx, &mut ops);
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_fp16_sqrt(
         &self,
@@ -3771,8 +3720,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_packed_int_to_fp16(
         &self,
         prefix: VecPrefix,
@@ -3914,8 +3861,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_packed_fp16_to_int(
         &self,

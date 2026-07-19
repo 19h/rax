@@ -1,11 +1,11 @@
 //! Instruction/condition predicate helpers
 
-use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::aarch32::cpu::{
     ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr, add_with_carry, compute_n_flag,
     compute_z_flag, condition_passed, expand_imm_c, shift_c, sign_extend,
 };
+use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::aarch32::vfp::{
     Fpscr, NeonSize, RoundingMode, vabs_f16_bits, vabs_f32, vabs_f64, vadd_f16_bits, vadd_f32,
     vadd_f64, vadd_i, vand, vbic, vcls_i, vclz_i, vcmp_f16_bits_with_exception,
@@ -27,8 +27,7 @@ use crate::isa::arm::aarch32::vfp::{
 };
 use crate::isa::arm::decoder::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 
-impl <'a, M: ArmMemory> Executor<'a, M> {
-
+impl<'a, M: ArmMemory> Executor<'a, M> {
     pub(crate) fn is_a32_state(state: ExecutionState) -> bool {
         matches!(state, ExecutionState::Arm | ExecutionState::Aarch32)
     }

@@ -7,128 +7,128 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate, MaterializedFlags};
 use crate::smir::ir::memory::{FlatMemory, SmirMemory};
 use crate::smir::ir::types::ShiftOp;
 
-    #[test]
-    fn rvfp_invalid_rounding_mode_traps_without_writes() {
-        let dst = VReg::Virtual(VirtualId(1));
-        let fcsr_dst = VReg::Virtual(VirtualId(2));
-        let src1 = VReg::Virtual(VirtualId(3));
-        let src2 = VReg::Virtual(VirtualId(4));
-        let src3 = VReg::Virtual(VirtualId(5));
-        let fcsr_src = VReg::Virtual(VirtualId(6));
-        let mut ctx = SmirContext::new_riscv();
-        ctx.pc = 0x2000;
-        ctx.write_vreg(dst, 0x1111);
-        ctx.write_vreg(fcsr_dst, 0x2222);
-        ctx.write_vreg(src1, 0xffff_ffff_3f80_0000); // boxed 1.0f
-        ctx.write_vreg(src2, 0xffff_ffff_4000_0000); // boxed 2.0f
-        ctx.write_vreg(src3, 0);
-        ctx.write_vreg(fcsr_src, 0);
+#[test]
+fn rvfp_invalid_rounding_mode_traps_without_writes() {
+    let dst = VReg::Virtual(VirtualId(1));
+    let fcsr_dst = VReg::Virtual(VirtualId(2));
+    let src1 = VReg::Virtual(VirtualId(3));
+    let src2 = VReg::Virtual(VirtualId(4));
+    let src3 = VReg::Virtual(VirtualId(5));
+    let fcsr_src = VReg::Virtual(VirtualId(6));
+    let mut ctx = SmirContext::new_riscv();
+    ctx.pc = 0x2000;
+    ctx.write_vreg(dst, 0x1111);
+    ctx.write_vreg(fcsr_dst, 0x2222);
+    ctx.write_vreg(src1, 0xffff_ffff_3f80_0000); // boxed 1.0f
+    ctx.write_vreg(src2, 0xffff_ffff_4000_0000); // boxed 2.0f
+    ctx.write_vreg(src3, 0);
+    ctx.write_vreg(fcsr_src, 0);
 
-        let block = SmirBlock {
-            id: BlockId(0),
-            guest_pc: 0x2000,
-            phis: vec![],
-            ops: vec![SmirOp::new(
+    let block = SmirBlock {
+        id: BlockId(0),
+        guest_pc: 0x2000,
+        phis: vec![],
+        ops: vec![SmirOp::new(
+            OpId(0),
+            0x2004,
+            OpKind::RvFp {
+                dst,
+                fcsr_dst,
+                src1,
+                src2,
+                src3,
+                fcsr_src,
+                op: crate::isa::riscv::Op::FaddS,
+                rm_field: 0b101,
+                xlen: 64,
+            },
+        )],
+        terminator: Terminator::Trap {
+            kind: TrapKind::Halt,
+        },
+        exec_count: 0,
+    };
+    let interp = SmirInterpreter::new();
+    let mut memory = FlatMemory::new(0x1000);
+
+    let exit = interp.execute_block(&mut ctx, &mut memory, &block);
+
+    assert!(matches!(
+        exit,
+        BlockResult::Exit(ExitReason::Undefined {
+            addr: 0x2004,
+            opcode: 0
+        })
+    ));
+    assert_eq!(ctx.read_vreg(dst), 0x1111);
+    assert_eq!(ctx.read_vreg(fcsr_dst), 0x2222);
+    assert!(ctx.exit_reason.is_none());
+}
+#[test]
+fn rvfp_rv32_integer_destination_is_zero_extended_to_xlen() {
+    let dst = VReg::Virtual(VirtualId(1));
+    let src1 = VReg::Virtual(VirtualId(2));
+    let src2 = VReg::Virtual(VirtualId(3));
+    let src3 = VReg::Virtual(VirtualId(4));
+    let fcsr = VReg::Virtual(VirtualId(5));
+    let mut ctx = SmirContext::new_riscv();
+    ctx.write_vreg(src1, 0xffff_ffff_bfc0_0000); // boxed -1.5f
+    ctx.write_vreg(src2, 0);
+    ctx.write_vreg(src3, 0);
+    ctx.write_vreg(fcsr, 0);
+
+    let interp = SmirInterpreter::new();
+    let mut memory = FlatMemory::new(0x1000);
+    interp
+        .execute_op(
+            &mut ctx,
+            &mut memory,
+            &SmirOp::new(
                 OpId(0),
-                0x2004,
+                0x1000,
                 OpKind::RvFp {
                     dst,
-                    fcsr_dst,
+                    fcsr_dst: fcsr,
                     src1,
                     src2,
                     src3,
-                    fcsr_src,
-                    op: crate::isa::riscv::Op::FaddS,
-                    rm_field: 0b101,
-                    xlen: 64,
+                    fcsr_src: fcsr,
+                    op: crate::isa::riscv::Op::FcvtWS,
+                    rm_field: 1,
+                    xlen: 32,
                 },
-            )],
-            terminator: Terminator::Trap {
-                kind: TrapKind::Halt,
-            },
-            exec_count: 0,
-        };
-        let interp = SmirInterpreter::new();
-        let mut memory = FlatMemory::new(0x1000);
+            ),
+        )
+        .unwrap();
 
-        let exit = interp.execute_block(&mut ctx, &mut memory, &block);
+    assert_eq!(ctx.read_vreg(dst), 0xffff_ffff);
+    assert_eq!(ctx.read_vreg(fcsr) & 1, 1);
+}
+#[test]
+fn rv_vector_load_uses_current_scalar_vreg_address() {
+    let current_x10 = VReg::Virtual(VirtualId(7));
+    let mut ctx = SmirContext::new_riscv();
+    let mut memory = FlatMemory::new(0x1000);
+    let stale_addr = 0x100;
+    let current_addr = 0x200;
+    let stale_lane = 0x1111_2222u32.to_le_bytes();
+    let current_lane = 0xAABB_CCDDu32.to_le_bytes();
 
-        assert!(matches!(
-            exit,
-            BlockResult::Exit(ExitReason::Undefined {
-                addr: 0x2004,
-                opcode: 0
-            })
-        ));
-        assert_eq!(ctx.read_vreg(dst), 0x1111);
-        assert_eq!(ctx.read_vreg(fcsr_dst), 0x2222);
-        assert!(ctx.exit_reason.is_none());
-    }
-    #[test]
-    fn rvfp_rv32_integer_destination_is_zero_extended_to_xlen() {
-        let dst = VReg::Virtual(VirtualId(1));
-        let src1 = VReg::Virtual(VirtualId(2));
-        let src2 = VReg::Virtual(VirtualId(3));
-        let src3 = VReg::Virtual(VirtualId(4));
-        let fcsr = VReg::Virtual(VirtualId(5));
-        let mut ctx = SmirContext::new_riscv();
-        ctx.write_vreg(src1, 0xffff_ffff_bfc0_0000); // boxed -1.5f
-        ctx.write_vreg(src2, 0);
-        ctx.write_vreg(src3, 0);
-        ctx.write_vreg(fcsr, 0);
+    ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::X(10)), stale_addr);
+    ctx.write_vreg(current_x10, current_addr);
+    ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc20)), 1); // vl
+    ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc21)), 0x10); // e32,m1
+    memory.write(stale_addr, &stale_lane).unwrap();
+    memory.write(current_addr, &current_lane).unwrap();
 
-        let interp = SmirInterpreter::new();
-        let mut memory = FlatMemory::new(0x1000);
-        interp
-            .execute_op(
-                &mut ctx,
-                &mut memory,
-                &SmirOp::new(
-                    OpId(0),
-                    0x1000,
-                    OpKind::RvFp {
-                        dst,
-                        fcsr_dst: fcsr,
-                        src1,
-                        src2,
-                        src3,
-                        fcsr_src: fcsr,
-                        op: crate::isa::riscv::Op::FcvtWS,
-                        rm_field: 1,
-                        xlen: 32,
-                    },
-                ),
-            )
-            .unwrap();
+    // vle32.v v1,(a0)
+    let insn = (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07;
+    let state = rv_vector_test_state(current_x10);
+    exec_rv_vector(&mut ctx, &mut memory, insn, 64, 0, &state);
 
-        assert_eq!(ctx.read_vreg(dst), 0xffff_ffff);
-        assert_eq!(ctx.read_vreg(fcsr) & 1, 1);
-    }
-    #[test]
-    fn rv_vector_load_uses_current_scalar_vreg_address() {
-        let current_x10 = VReg::Virtual(VirtualId(7));
-        let mut ctx = SmirContext::new_riscv();
-        let mut memory = FlatMemory::new(0x1000);
-        let stale_addr = 0x100;
-        let current_addr = 0x200;
-        let stale_lane = 0x1111_2222u32.to_le_bytes();
-        let current_lane = 0xAABB_CCDDu32.to_le_bytes();
-
-        ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::X(10)), stale_addr);
-        ctx.write_vreg(current_x10, current_addr);
-        ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc20)), 1); // vl
-        ctx.write_arch_reg(ArchReg::RiscV(RiscVReg::Csr(0xc21)), 0x10); // e32,m1
-        memory.write(stale_addr, &stale_lane).unwrap();
-        memory.write(current_addr, &current_lane).unwrap();
-
-        // vle32.v v1,(a0)
-        let insn = (1 << 25) | (10 << 15) | (6 << 12) | (1 << 7) | 0x07;
-        let state = rv_vector_test_state(current_x10);
-        exec_rv_vector(&mut ctx, &mut memory, insn, 64, 0, &state);
-
-        let ArchRegState::RiscV(rv) = &ctx.arch_regs else {
-            panic!("expected RISC-V context");
-        };
-        assert_eq!(&rv.v[1][0..4], &current_lane);
-        assert_ne!(&rv.v[1][0..4], &stale_lane);
-    }
+    let ArchRegState::RiscV(rv) = &ctx.arch_regs else {
+        panic!("expected RISC-V context");
+    };
+    assert_eq!(&rv.v[1][0..4], &current_lane);
+    assert_ne!(&rv.v[1][0..4], &stale_lane);
+}

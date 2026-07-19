@@ -1,9 +1,8 @@
 //! scalar::fp tests
 
 use super::*;
-use crate::smir::interpret::*;
 use crate::smir::interpret::tests::*;
-
+use crate::smir::interpret::*;
 
 // ---- even-chunked tests ----
 #[cfg(test)]

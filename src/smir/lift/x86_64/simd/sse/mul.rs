@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn lift_sse_pmaddubsw(
         &self,
         bytes: &[u8],
@@ -163,8 +161,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_pmulhrsw(
         &self,
         bytes: &[u8],
@@ -300,8 +296,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_pmuldq(
         &self,
         bytes: &[u8],
@@ -384,8 +378,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     /// Lift SSE4.1 PMULLD (66 0F 38 40)
     pub(crate) fn lift_sse_pmulld(
         &self,
@@ -461,8 +453,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_pmullw(
         &self,
@@ -561,8 +551,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_pmul_high_word(
         &self,
@@ -663,8 +651,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_pmaddwd(
         &self,
@@ -767,8 +753,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_pclmulqdq(
         &self,
         bytes: &[u8],
@@ -830,8 +814,6 @@ impl X86_64Lifter {
         self.append_legacy_packed_result(dst, raw, VecElementType::I64, pc, ctx, &mut ops);
         Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_sse_dot_product(
         &self,

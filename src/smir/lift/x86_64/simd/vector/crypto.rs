@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn lift_vec_aes_round(
         &self,
         prefix: VecPrefix,
@@ -128,8 +126,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_vec_aes_keygen(
         &self,
         prefix: VecPrefix,
@@ -196,8 +192,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_vec_gfni(
         &self,

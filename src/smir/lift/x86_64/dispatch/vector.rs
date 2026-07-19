@@ -22,8 +22,6 @@ use crate::smir::lift::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn lift_vec_opcode(
         &self,
         prefix: VecPrefix,

@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     /// Materialize an EVEX full-width memory source with one fault-suppressing
     /// load per destination element. For broadcasts, every active lane reads
     /// the same scalar address; otherwise lane `n` reads element `n`.
@@ -118,8 +116,6 @@ impl X86_64Lifter {
         loaded
     }
 
-
-
     pub(crate) fn append_evex_mask_condition(
         &self,
         prefix: VecPrefix,
@@ -144,8 +140,6 @@ impl X86_64Lifter {
         ));
         Some(cond)
     }
-
-
 
     pub(crate) fn append_mask_bit_condition(
         &self,
@@ -196,8 +190,6 @@ impl X86_64Lifter {
         }
     }
 
-
-
     pub(crate) fn append_evex_vector_mask_result(
         &self,
         prefix: VecPrefix,
@@ -219,8 +211,6 @@ impl X86_64Lifter {
             ops,
         );
     }
-
-
 
     pub(crate) fn append_evex_vector_mask_result_width(
         &self,
@@ -358,8 +348,6 @@ impl X86_64Lifter {
             ));
         }
     }
-
-
 
     pub(crate) fn lift_evex_integer_test_mask(
         &self,
@@ -525,8 +513,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_integer_compare(
         &self,

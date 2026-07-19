@@ -25,7 +25,6 @@ use crate::isa::hexagon::decode::{
 use crate::isa::hexagon::opcode::{DecodedOp, Opcode, decode_word};
 
 impl HexagonLifter {
-
     /// Lift a single Hexagon instruction to SMIR operations
     pub(crate) fn lift_insn_inner(
         &mut self,
@@ -2825,7 +2824,6 @@ impl HexagonLifter {
 
         Ok((ops, control_flow))
     }
-
 
     /// Lift a regular scalar register opcode that the `DecodedInsn` path leaves
     /// as `Unknown` (the ~900 ops handled only by the sem layer). Emits SMIR ops

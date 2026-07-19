@@ -16,7 +16,6 @@ use crate::smir::ir::ops::{
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 
-
 // ============================================================================
 // Hexagon scalar floating-point evaluation (OpKind::HexFp)
 // ============================================================================
@@ -377,7 +376,13 @@ pub(crate) fn hr_decode(b: u32) -> HrSf {
 /// exact half AWAY from zero on a tiny/subnormal result instead — this is the
 /// behaviour that native `f32::mul_add` (always ties-to-even) cannot reproduce.
 /// Port of `round_exact_to_f32` (result bits only).
-pub(crate) fn hr_round_exact_to_f32(neg: bool, mut m: u128, mut e: i32, sticky: bool, ties_away: bool) -> u32 {
+pub(crate) fn hr_round_exact_to_f32(
+    neg: bool,
+    mut m: u128,
+    mut e: i32,
+    sticky: bool,
+    ties_away: bool,
+) -> u32 {
     let sign = if neg { 0x8000_0000u32 } else { 0 };
     if m == 0 {
         return sign;
@@ -528,7 +533,13 @@ pub(crate) fn hr_add_scaled(
 /// Exact fused multiply-add `a*b + c` with a single rounding (flag-free port of
 /// the sem's `sf_fma`). `ties_away` selects the `:lib` ties-away rounding of a
 /// subnormal result; the recip path never uses it.
-pub(crate) fn hr_sf_fma(araw: u32, braw: u32, craw: u32, negate_prod: bool, ties_away: bool) -> u32 {
+pub(crate) fn hr_sf_fma(
+    araw: u32,
+    braw: u32,
+    craw: u32,
+    negate_prod: bool,
+    ties_away: bool,
+) -> u32 {
     let a = if negate_prod {
         araw ^ 0x8000_0000
     } else {
@@ -1257,4 +1268,3 @@ pub(crate) fn hex_fp_eval(op: HexFpOp, a: u64, b: u64) -> u64 {
 // ============================================================================
 // Tests
 // ============================================================================
-

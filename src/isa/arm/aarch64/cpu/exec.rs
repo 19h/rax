@@ -87,7 +87,6 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Get current stack pointer.
     pub fn current_sp(&self) -> u64 {
         if self.sp_sel || self.current_el == 0 {
@@ -101,7 +100,6 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Read a register encoded in the "Xn|SP" slot: index 31 selects the
     /// current stack pointer rather than XZR.
     pub(crate) fn gpr_or_sp(&self, reg: u8) -> u64 {
@@ -111,7 +109,6 @@ impl AArch64Cpu {
             self.get_x(reg)
         }
     }
-
 
     // =========================================================================
     // Condition Evaluation
@@ -138,9 +135,12 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Convert translation fault to ArmError.
-    pub(crate) fn translation_fault_to_error(&self, fault: TranslationFault, is_write: bool) -> ArmError {
+    pub(crate) fn translation_fault_to_error(
+        &self,
+        fault: TranslationFault,
+        is_write: bool,
+    ) -> ArmError {
         use crate::isa::arm::aarch64::mmu::TranslationFaultType;
 
         let fault_type = match fault.fault_type {
@@ -167,13 +167,11 @@ impl AArch64Cpu {
         })
     }
 
-
     /// Shared handle to the GIC (for the platform memory bridge to service
     /// distributor/redistributor MMIO).
     pub fn gic_handle(&self) -> Option<std::sync::Arc<std::sync::Mutex<Gic>>> {
         self.gic.clone()
     }
-
 
     /// Recently executed PCs, oldest first (boot debugging).
     pub fn recent_pcs(&self) -> Vec<u64> {
@@ -187,7 +185,6 @@ impl AArch64Cpu {
         out
     }
 
-
     // =========================================================================
     // Instruction Fetch and Execution
     // =========================================================================
@@ -197,7 +194,6 @@ impl AArch64Cpu {
         let pa = self.translate_address(self.pc, false, true)?;
         self.memory.fetch_u32(pa).map_err(|e| e.into())
     }
-
 
     /// Execute one instruction.
     pub(crate) fn execute_instruction(&mut self) -> Result<CpuExit, ArmError> {
@@ -235,7 +231,6 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Decode and execute an instruction.
     pub(crate) fn decode_and_execute(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         // Top-level decode by bits [28:25]
@@ -269,7 +264,6 @@ impl AArch64Cpu {
             _ => Err(ArmError::UndefinedInstruction(insn)),
         }
     }
-
 
     /// Check for pending interrupts.
     pub(crate) fn check_pending_interrupts(&mut self) -> Result<Option<CpuExit>, ArmError> {
@@ -310,7 +304,6 @@ impl AArch64Cpu {
         Ok(None)
     }
 
-
     /// Export the backend-agnostic subset of modeled AArch64 system state.
     pub fn export_sregs(&self) -> Aarch64SystemRegisters {
         Aarch64SystemRegisters {
@@ -336,7 +329,6 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Import the backend-agnostic subset of modeled AArch64 system state.
     pub fn import_sregs(&mut self, sregs: &Aarch64SystemRegisters) {
         self.sysregs.el1.sctlr = sregs.sctlr_el1;
@@ -361,7 +353,6 @@ impl AArch64Cpu {
         self.update_mmu_config();
     }
 
-
     // =========================================================================
     // Instruction Execution Stubs
     // =========================================================================
@@ -381,7 +372,6 @@ impl AArch64Cpu {
             _ => Err(ArmError::UndefinedInstruction(insn)),
         }
     }
-
 
     pub(crate) fn exec_ordered_unscaled(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let size = (insn >> 30) & 0x3;
@@ -437,7 +427,6 @@ impl AArch64Cpu {
         }
         Ok(CpuExit::Continue)
     }
-
 
     /// FMLAL/FMLSL/FMLAL2/FMLSL2 (FEAT_FHM): widening FP16 fused multiply-add.
     /// Each FP32 result lane accumulates the exact product of two FP16 source
@@ -524,7 +513,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     pub(crate) fn fp16_to_f32(h: u16) -> f32 {
         let sign = ((h >> 15) & 1) as u32;
         let exp = ((h >> 10) & 0x1F) as u32;
@@ -557,7 +545,6 @@ impl AArch64Cpu {
         f32::from_bits(f32_bits)
     }
 
-
     pub(crate) fn f32_to_fp16(f: f32) -> u16 {
         let bits = f.to_bits();
         let sign = ((bits >> 31) & 1) as u16;
@@ -579,7 +566,6 @@ impl AArch64Cpu {
         }
     }
 
-
     // =========================================================================
     // SVE (Scalable Vector Extension) Execution
     // =========================================================================
@@ -591,12 +577,10 @@ impl AArch64Cpu {
         self.sve_p[i]
     }
 
-
     /// Read the SVE first-fault register. Exposed for the differential harness.
     pub fn sve_ffr(&self) -> u32 {
         self.sve_ffr
     }
-
 
     // =========================================================================
     // Instruction Implementations (stubs - to be filled in)
@@ -625,7 +609,6 @@ impl AArch64Cpu {
         self.set_x(rd, result);
         Ok(CpuExit::Continue)
     }
-
 
     pub(crate) fn exec_add_sub_imm(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
@@ -706,7 +689,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     /// Execute Add/Sub Immediate with Tags (ADDG/SUBG - MTE instructions).
     ///
     /// Encoding:
@@ -781,7 +763,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     pub(crate) fn exec_logical_imm(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
         let opc = (insn >> 29) & 0x3;
@@ -850,7 +831,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     pub(crate) fn exec_move_wide(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
         let opc = (insn >> 29) & 0x3;
@@ -895,7 +875,6 @@ impl AArch64Cpu {
 
         Ok(CpuExit::Continue)
     }
-
 
     /// Decode addressing mode for load/store. `scale` is the log2 of the access
     /// size in bytes (used to scale the unsigned/register offsets).
@@ -973,7 +952,6 @@ impl AArch64Cpu {
             _ => unreachable!(),
         }
     }
-
 
     // Data processing (register) implementations
     pub(crate) fn exec_logical_shifted(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
@@ -1061,7 +1039,6 @@ impl AArch64Cpu {
 
         Ok(CpuExit::Continue)
     }
-
 
     pub(crate) fn exec_add_sub_shifted_ext(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
@@ -1240,7 +1217,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     pub(crate) fn exec_adc_sbc(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
         let op = (insn >> 30) & 1;
@@ -1359,7 +1335,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     pub(crate) fn exec_ccmp_ccmn(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
         let op = (insn >> 30) & 1; // 0=CCMN, 1=CCMP
@@ -1423,7 +1398,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     pub(crate) fn exec_csel(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
         let op = (insn >> 30) & 1;
@@ -1477,7 +1451,6 @@ impl AArch64Cpu {
 
         Ok(CpuExit::Continue)
     }
-
 
     pub(crate) fn exec_dp_1src(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
@@ -1573,7 +1546,6 @@ impl AArch64Cpu {
 
         Ok(CpuExit::Continue)
     }
-
 
     pub(crate) fn exec_dp_2src(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
@@ -1778,7 +1750,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     pub(crate) fn exec_dp_3src(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
         let op54 = (insn >> 29) & 0x3;
@@ -1955,7 +1926,6 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Advance the generic timer and mirror its output lines into GIC PPIs
     /// (27 = virtual timer, 30 = non-secure physical timer).
     pub(crate) fn tick_system(&mut self, cycles: u64) {
@@ -1975,7 +1945,6 @@ impl AArch64Cpu {
             self.timer_levels = levels;
         }
     }
-
 
     /// During WFI, jump the counter to the nearest armed timer deadline (or
     /// nudge it forward when no timer is armed).
@@ -2004,7 +1973,6 @@ impl AArch64Cpu {
         self.tick_system(jump);
     }
 
-
     /// Take an IRQ exception now.
     pub(crate) fn take_irq(&mut self) -> Result<(), ArmError> {
         let target = exception_target_el(
@@ -2016,7 +1984,6 @@ impl AArch64Cpu {
         self.take_exception(target, ExceptionType::Irq, SyndromeRegister::new())
     }
 
-
     /// FP/SIMD access trap (CPACR.FPEN): vector to the EL1 handler with
     /// EC=0x07 so the kernel can do its lazy FP context switch. Called from
     /// inside instruction execution, where PC has already been advanced.
@@ -2025,7 +1992,6 @@ impl AArch64Cpu {
         self.enter_sync_exception(SyndromeRegister::simd_fp_trap(), None)?;
         Ok(CpuExit::Continue)
     }
-
 
     /// Convert an execution error into the corresponding guest exception.
     /// PC has been restored to the faulting instruction by
@@ -2096,7 +2062,6 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Note a guest write at `va` (called from the memory-store path). If it
     /// lands in a page covered by a cached region, flag the cache stale so the
     /// next `step_system` drains it (self-modifying-code correctness). The
@@ -2108,7 +2073,6 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Cache-key discriminator: the active translation regime (TTBR0 frame + EL
     /// + MMU-enable). A region is only reused while these are unchanged, so a
     /// context switch can never run a stale region.
@@ -2118,7 +2082,6 @@ impl AArch64Cpu {
             | (self.current_el as u64)
             | (((self.sysregs.el1.sctlr & 1) as u64) << 2)
     }
-
 
     /// Read up to `max` bytes of guest instruction stream from `entry`, stopping
     /// at the first unmapped word (fault-free; tolerates a short mapped tail).
@@ -2137,7 +2100,6 @@ impl AArch64Cpu {
         }
         bytes
     }
-
 
     /// Marshal live architectural state into the native register file.
     #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
@@ -2162,7 +2124,6 @@ impl AArch64Cpu {
         gr
     }
 
-
     /// Marshal the native register file back, resuming at the recorded PC.
     #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_marshal_from(&mut self, gr: &crate::smir::lower::runtime::Aarch64GuestRegs) {
@@ -2179,7 +2140,6 @@ impl AArch64Cpu {
         self.pc = gr.pc;
     }
 
-
     /// Fast-path lookup: a runnable compiled region at `pc` in the current mode.
     #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_lookup(&self, pc: u64) -> Option<std::sync::Arc<JitRegion>> {
@@ -2192,7 +2152,6 @@ impl AArch64Cpu {
             _ => None,
         }
     }
-
 
     /// After an interpreted instruction: if it was a backward branch (PC
     /// decreased — a loop back-edge), bump the head's hotness and, once hot,

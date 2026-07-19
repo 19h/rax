@@ -17,7 +17,6 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 impl Aarch64Lowerer {
-
     pub(crate) fn emit_logic_reg_n(
         &mut self,
         dst: u8,
@@ -29,7 +28,6 @@ impl Aarch64Lowerer {
     ) -> Result<(), LowerError> {
         self.emit_logic_shifted(dst, rn, rm, opc, n, 0, 0, width)
     }
-
 
     pub(crate) fn emit_logic_shifted(
         &mut self,
@@ -57,7 +55,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_logic_imm(
         &mut self,
         dst: u8,
@@ -82,12 +79,15 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
-    pub(crate) fn emit_orr_imm_one(&mut self, dst: u8, rn: u8, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn emit_orr_imm_one(
+        &mut self,
+        dst: u8,
+        rn: u8,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         let n = Self::sf(width)?;
         self.emit_logic_imm(dst, rn, 0b01, n, 0, 0, width)
     }
-
 
     pub(crate) fn lower_logic(
         &mut self,
@@ -382,7 +382,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_materialized_logic_imm(
         &mut self,
         dst: VReg,
@@ -447,7 +446,6 @@ impl Aarch64Lowerer {
         self.emit_logic_reg_n(dst, rn, dst, opc, false, width)
     }
 
-
     pub(crate) fn lower_logic_with_synth_flags(
         &mut self,
         dst: VReg,
@@ -502,7 +500,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_logic_special_imm(
         &mut self,
         dst: VReg,
@@ -540,7 +537,6 @@ impl Aarch64Lowerer {
         Ok(true)
     }
 
-
     pub(crate) fn emit_logic_imm_scratch(
         &mut self,
         dst: u8,
@@ -558,7 +554,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn inverted_logical_imm(imm: i64, width: OpWidth) -> Result<i64, LowerError> {
         match width {
             OpWidth::W32 => Ok((!(imm as u32)) as i64),
@@ -569,8 +564,10 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn logical_bitmask_imm(imm: i64, width: OpWidth) -> Result<(u32, u32, u32), LowerError> {
+    pub(crate) fn logical_bitmask_imm(
+        imm: i64,
+        width: OpWidth,
+    ) -> Result<(u32, u32, u32), LowerError> {
         let (bits, value, all_ones) = Self::logical_imm_value(imm, width)?;
         if value != 0 && value != all_ones {
             for element_bits in [2_u32, 4, 8, 16, 32, 64] {
@@ -612,8 +609,10 @@ impl Aarch64Lowerer {
         })
     }
 
-
-    pub(crate) fn logical_imm_value(imm: i64, width: OpWidth) -> Result<(u32, u64, u64), LowerError> {
+    pub(crate) fn logical_imm_value(
+        imm: i64,
+        width: OpWidth,
+    ) -> Result<(u32, u64, u64), LowerError> {
         let bits = match width {
             OpWidth::W32 => 32,
             OpWidth::W64 => 64,
@@ -636,7 +635,6 @@ impl Aarch64Lowerer {
         Ok((bits, value, all_ones))
     }
 
-
     pub(crate) fn emit_logic_imm_mask(
         &mut self,
         dst: u8,
@@ -649,8 +647,10 @@ impl Aarch64Lowerer {
         self.emit_logic_imm(dst, rn, opc, imm_n, immr, imms, width)
     }
 
-
-    pub(crate) fn logical_src2(src2: &SrcOperand, width: OpWidth) -> Result<(u8, u32, u32), LowerError> {
+    pub(crate) fn logical_src2(
+        src2: &SrcOperand,
+        width: OpWidth,
+    ) -> Result<(u8, u32, u32), LowerError> {
         let bits = width.bits();
         match src2 {
             SrcOperand::Reg(reg) => Ok((Self::gpr_arm_or_x86(*reg)?, 0, 0)),
@@ -682,8 +682,11 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn emit_logic_flags_from_source(&mut self, src: u8, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn emit_logic_flags_from_source(
+        &mut self,
+        src: u8,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         match width {
             OpWidth::W32 | OpWidth::W64 => self.emit_logic_reg_n(31, src, src, 0b11, false, width),
             OpWidth::W8 | OpWidth::W16 => {
@@ -719,7 +722,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn vector_inverted_logic_sources(
         dst: VReg,
         src1: VReg,
@@ -736,7 +738,6 @@ impl Aarch64Lowerer {
             None
         }
     }
-
 
     pub(crate) fn lower_logic_flag_contract(
         &mut self,

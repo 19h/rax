@@ -23,8 +23,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
-
     /// Execute SIMD three-different (disparate) instructions.
     /// These are widening/narrowing operations like multiply-accumulate long.
     pub(crate) fn exec_simd_three_different(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
@@ -202,12 +200,14 @@ impl AArch64Cpu {
         }
     }
 
-
-
     /// Execute FCADD / FCMLA: floating-point complex add / fused multiply-add
     /// over interleaved (real, imaginary) element pairs (FEAT_FCMA). `is_fcmla`
     /// selects FCMLA (2-bit rotation) vs FCADD (1-bit rotation).
-    pub(crate) fn exec_simd_complex(&mut self, insn: u32, is_fcmla: bool) -> Result<CpuExit, ArmError> {
+    pub(crate) fn exec_simd_complex(
+        &mut self,
+        insn: u32,
+        is_fcmla: bool,
+    ) -> Result<CpuExit, ArmError> {
         if (insn >> 31) & 1 != 0 {
             return Err(ArmError::UndefinedInstruction(insn));
         }
@@ -327,8 +327,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute FCMLA by element: like vector FCMLA, but the Vm complex pair is
     /// selected once by the H:L (f16) / H (f32) index and reused for every lane.
     pub(crate) fn exec_simd_complex_indexed(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
@@ -440,8 +438,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SDOT/UDOT/USDOT: the 8-bit -> 32-bit four-way dot product. Each
     /// 32-bit lane accumulates four byte-wise products of the corresponding
     /// Vn/Vm bytes. `op1_signed`/`op2_signed` give the byte signedness:
@@ -483,8 +479,6 @@ impl AArch64Cpu {
         self.v[rd] = result;
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute USDOT/SUDOT by element (FEAT_I8MM). The index (H:L) selects a
     /// 4-byte group of Vm reused for every lane. `op1_signed`/`op2_signed` give
@@ -532,12 +526,14 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute BFMLALB/BFMLALT (FEAT_BF16): widening bf16 -> f32 fused
     /// multiply-accumulate. Q (bit30) selects the Bottom (0) or Top (1) bf16 of
     /// each f32 pair. The result is always a full 128-bit, 4-lane f32 vector.
-    pub(crate) fn exec_simd_bfmlal(&mut self, insn: u32, is_indexed: bool) -> Result<CpuExit, ArmError> {
+    pub(crate) fn exec_simd_bfmlal(
+        &mut self,
+        insn: u32,
+        is_indexed: bool,
+    ) -> Result<CpuExit, ArmError> {
         if (insn >> 31) & 1 != 0 {
             return Err(ArmError::UndefinedInstruction(insn));
         }
@@ -599,13 +595,15 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute BFDOT (FEAT_BF16): 2-way bf16 dot product accumulated into f32
     /// lanes. The two bf16 products and the f32 accumulator are summed in
     /// unrounded precision and rounded once to f32 with round-to-odd (the
     /// standard FPCR.EBF==0 path).
-    pub(crate) fn exec_simd_bfdot(&mut self, insn: u32, is_indexed: bool) -> Result<CpuExit, ArmError> {
+    pub(crate) fn exec_simd_bfdot(
+        &mut self,
+        insn: u32,
+        is_indexed: bool,
+    ) -> Result<CpuExit, ArmError> {
         if (insn >> 31) & 1 != 0 {
             return Err(ArmError::UndefinedInstruction(insn));
         }
@@ -645,8 +643,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute BFCVTN/BFCVTN2 (FEAT_BF16): narrow 4 f32 lanes to 4 bf16 lanes
     /// (round-to-nearest-even). BFCVTN (Q=0) writes the low 64 bits and zeroes
     /// the high half; BFCVTN2 (Q=1) writes the high 64 bits, preserving the low.
@@ -672,8 +668,6 @@ impl AArch64Cpu {
         }
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute BFMMLA (FEAT_BF16): 2x4-by-4x2 bf16 matrix multiply accumulating
     /// into a 2x2 f32 matrix, with the same round-to-odd accumulation as BFDOT.
@@ -706,8 +700,6 @@ impl AArch64Cpu {
         self.v[rd] = result;
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute the SIMD modified-immediate group: MOVI, MVNI, ORR (imm),
     /// BIC (imm) and FMOV (vector immediate).
@@ -778,8 +770,6 @@ impl AArch64Cpu {
         self.v[rd] = result;
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute Advanced SIMD "vector x indexed element" instructions: the second
     /// multiplicand is a single broadcast lane of Vm. Covers integer MUL/MLA/MLS,
@@ -1145,8 +1135,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SIMD table lookup (TBL, TBX).
     pub(crate) fn exec_simd_table(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let q = (insn >> 30) & 1;
@@ -1193,8 +1181,6 @@ impl AArch64Cpu {
         self.v[rd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute SIMD three-same register instructions.
     pub(crate) fn exec_simd_three_same(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
@@ -1357,8 +1343,6 @@ impl AArch64Cpu {
         self.v[rd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute SIMD two-register miscellaneous instructions.
     pub(crate) fn exec_simd_two_reg(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
@@ -1575,8 +1559,6 @@ impl AArch64Cpu {
         Err(ArmError::UndefinedInstruction(insn))
     }
 
-
-
     // FP helper functions
     pub(crate) fn fp_maxnm_f32(&self, a: f32, b: f32) -> f32 {
         if a.is_nan() {
@@ -1588,8 +1570,6 @@ impl AArch64Cpu {
         }
     }
 
-
-
     pub(crate) fn fp_minnm_f32(&self, a: f32, b: f32) -> f32 {
         if a.is_nan() {
             b
@@ -1600,13 +1580,9 @@ impl AArch64Cpu {
         }
     }
 
-
-
     pub(crate) fn fp_nmul_f32(&self, a: f32, b: f32) -> f32 {
         -(a * b)
     }
-
-
 
     pub(crate) fn fp_maxnm_f64(&self, a: f64, b: f64) -> f64 {
         if a.is_nan() {
@@ -1618,8 +1594,6 @@ impl AArch64Cpu {
         }
     }
 
-
-
     pub(crate) fn fp_minnm_f64(&self, a: f64, b: f64) -> f64 {
         if a.is_nan() {
             b
@@ -1629,8 +1603,6 @@ impl AArch64Cpu {
             a.min(b)
         }
     }
-
-
 
     pub(crate) fn fp_nmul_f64(&self, a: f64, b: f64) -> f64 {
         -(a * b)

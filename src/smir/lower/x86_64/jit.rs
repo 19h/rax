@@ -32,7 +32,6 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
-
     /// Mark blocks as JIT native-exit stubs (block-id ⇒ resume guest PC). Call
     /// after `new()` and before `lower_function`. Each marked block lowers to an
     /// exit stub that records `exit_pc` and returns; its ops/terminator are not
@@ -40,7 +39,6 @@ impl X86_64Lowerer {
     pub fn set_native_exits(&mut self, exits: std::collections::HashMap<BlockId, u64>) {
         self.native_exits = exits;
     }
-
 
     /// Mark individual branch edges as JIT native-exit stubs. Call after `new()`
     /// and before `lower_function`.
@@ -51,13 +49,11 @@ impl X86_64Lowerer {
         self.native_exit_edges = exits;
     }
 
-
     /// Enable precise JIT-only guarded exits for native instructions whose
     /// host fault conditions must be handled by the guest interpreter.
     pub fn set_jit_fault_deopt_guards(&mut self, on: bool) {
         self.jit_fault_deopt_guards = on;
     }
-
 
     pub(crate) fn emit_jcc_placeholder(&mut self, cond: X86Cond) -> usize {
         let off = self.code.position();
@@ -65,7 +61,6 @@ impl X86_64Lowerer {
         emitter.emit_jcc_rel32(cond, 0);
         off + 2
     }
-
 
     pub(crate) fn patch_rel32_to_current(&mut self, offset: usize) -> Result<(), LowerError> {
         let target = self.code.position();
@@ -76,7 +71,6 @@ impl X86_64Lowerer {
         self.code.patch_i32(offset, rel as i32);
         Ok(())
     }
-
 
     pub(crate) fn emit_native_exit(&mut self, resume_pc: u64) {
         // JIT native-exit stub: record the resume guest PC into `exit_pc` and
@@ -103,7 +97,6 @@ impl X86_64Lowerer {
         self.emit_epilogue_with_ret(None);
     }
 
-
     /// x86 encoding (0..31) of an architectural GPR VReg, or Err for a
     /// non-arch / non-GPR operand (so the region bails to the interpreter).
     pub(crate) fn jit_arch_enc(&self, v: VReg) -> Result<u8, LowerError> {
@@ -117,7 +110,6 @@ impl X86_64Lowerer {
             }),
         }
     }
-
 
     /// Lower one architectural XMM/YMM/ZMM memory transfer through the vCPU
     /// MMU. The complete vector file is published before the helper call because
@@ -211,7 +203,6 @@ impl X86_64Lowerer {
         self.patch_rel32_to_current(done)?;
         Ok(())
     }
-
 
     /// Fuse the exact fault-precise memory-destination ALU sequence emitted by
     /// the x86 lifter. A 32-byte caller frame retains the original memory
@@ -381,7 +372,6 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
-
     /// Fuse the exact fault-precise memory-destination unary sequence emitted
     /// by the x86 lifter. The helper-backed load and store surround a native
     /// scratch-RAX computation. Flag-writing operations preserve the incoming
@@ -508,7 +498,6 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
-
     /// Merge selected incoming status bits into a native replay image at
     /// `[rsp]`, optionally clearing deterministic undefined outputs. The caller
     /// has already pushed the native RFLAGS image, so its saved incoming image
@@ -549,7 +538,6 @@ impl X86_64Lowerer {
         }
     }
 
-
     /// Merge the deterministic count-equals-width SHL/SHR status image. The
     /// final PUSHFQ places native replay flags at [RSP], the original
     /// zero-extended memory operand at [RSP+8], and incoming flags at [RSP+24].
@@ -582,7 +570,6 @@ impl X86_64Lowerer {
             X86AluEncoding::RmReg,
         );
     }
-
 
     /// Fuse an exact fault-precise memory-destination shift/rotate sequence.
     /// The speculative scratch-RAX operation is wrapped by PUSHFQ/POPFQ, so
@@ -841,7 +828,6 @@ impl X86_64Lowerer {
         }
         Ok(Some(consumed))
     }
-
 
     /// Fuse one exact scalar `Load virtual; ALU/CMP/TEST/IMUL ... virtual` pair into
     /// a fault-precise MMU helper load followed by a native operation using a
@@ -1175,7 +1161,6 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
-
     /// Fuse `Load virtual; CMove architectural_dst,virtual` into an
     /// unconditional fault-precise helper load followed by a native conditional
     /// move from caller-owned stack storage. The helper must run even when the
@@ -1287,7 +1272,6 @@ impl X86_64Lowerer {
         }
         Ok(Some(consumed))
     }
-
 
     /// Fuse `Load virtual; ZeroExtend/SignExtend architectural_dst,virtual`
     /// into a fault-precise MMU helper load followed by a native extension from
@@ -1435,7 +1419,6 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
-
     /// Fuse the x86 lifter's exact implicit widening `MUL/IMUL r/m` pair. The
     /// helper stages the source in a 16-byte aligned caller frame and restores
     /// the original architectural `RAX:RDX` before the native group-3
@@ -1448,13 +1431,15 @@ impl X86_64Lowerer {
         virtual_definitions: &HashMap<VReg, usize>,
         virtual_uses: &HashMap<VReg, usize>,
     ) -> Result<Option<usize>, LowerError> {
-        let Some(consumed) = crate::smir::lower::runtime::x86_jit_mem_widening_mul_source_sequence_len(
-            block,
-            idx,
-            true,
-            virtual_definitions,
-            virtual_uses,
-        ) else {
+        let Some(consumed) =
+            crate::smir::lower::runtime::x86_jit_mem_widening_mul_source_sequence_len(
+                block,
+                idx,
+                true,
+                virtual_definitions,
+                virtual_uses,
+            )
+        else {
             return Ok(None);
         };
 
@@ -1519,7 +1504,6 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
-
     /// Stage any architectural x86 GPR in caller-owned host-stack space. The
     /// identity-mapped legacy registers are read directly; guest RSP/RBP and
     /// APX EGPRs are read from their canonical GuestRegs slots because they do
@@ -1568,7 +1552,6 @@ impl X86_64Lowerer {
         }
         Ok(())
     }
-
 
     /// Lower exact x86 `DIV r/m` through pre-fault guards. The divisor is
     /// staged in a 16-byte caller frame, while the original RFLAGS/RAX/RDX are
@@ -1642,7 +1625,9 @@ impl X86_64Lowerer {
                 unreachable!("validated high-byte unsigned DIV starts with Shr")
             };
             (DivisorSource::LegacyHighByte(*parent), idx + 1, 2)
-        } else if crate::smir::lower::runtime::x86_jit_unsigned_div_register_shape_valid(&block.ops[idx]) {
+        } else if crate::smir::lower::runtime::x86_jit_unsigned_div_register_shape_valid(
+            &block.ops[idx],
+        ) {
             let OpKind::DivU {
                 src2: SrcOperand::Reg(source),
                 ..
@@ -1765,7 +1750,6 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
-
     /// Lower exact x86 `IDIV r/m` through zero-divisor and signed quotient-
     /// range guards. The guard compares the unsigned magnitude of the signed
     /// 2N-bit dividend against `|divisor| * 2^(N-1)` for a nonnegative
@@ -1839,7 +1823,9 @@ impl X86_64Lowerer {
                 unreachable!("validated high-byte signed IDIV starts with Shr")
             };
             (DivisorSource::LegacyHighByte(*parent), idx + 1, 2)
-        } else if crate::smir::lower::runtime::x86_jit_signed_div_register_shape_valid(&block.ops[idx]) {
+        } else if crate::smir::lower::runtime::x86_jit_signed_div_register_shape_valid(
+            &block.ops[idx],
+        ) {
             let OpKind::DivS {
                 src2: SrcOperand::Reg(source),
                 ..
@@ -2148,7 +2134,6 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
-
     /// Fuse the x86 lifter's exact non-locked immediate memory BTS/BTR/BTC
     /// sequence. The original and updated operands remain in caller-owned
     /// stack words across the MMU helpers. Speculative native modification is
@@ -2271,7 +2256,6 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
-
     /// Fuse the x86 lifter's exact non-modifying immediate memory bit test:
     /// `Load virtual; Bt virtual,imm`. The helper stages the operand in a
     /// caller-owned word; native BT then supplies CF, which is the only status
@@ -2347,7 +2331,6 @@ impl X86_64Lowerer {
         }
         Ok(Some(consumed))
     }
-
 
     /// Fuse the x86 lifter's exact `Load virtual; Bsf/Bsr dst,virtual` pair.
     /// The helper stages the load in caller-owned stack storage, leaving the
@@ -2465,7 +2448,6 @@ impl X86_64Lowerer {
         }
         Ok(Some(consumed))
     }
-
 
     /// Fuse the x86 lifter's exact `Load virtual; X86Count dst,virtual` pair.
     /// The MMU helper writes the zero-extended load into caller-owned stack
@@ -2606,7 +2588,6 @@ impl X86_64Lowerer {
         Ok(Some(consumed))
     }
 
-
     /// Fuse the x86 lifter's `Load virtual; Crc32C dst,dst,virtual` memory
     /// source into one MMU helper call followed by native CRC32. The identity
     /// bridge has no free guest GPR for the virtual load result, so the helper
@@ -2696,7 +2677,6 @@ impl X86_64Lowerer {
         Ok(Some(2))
     }
 
-
     /// Emit one fault-precise APX paired-stack helper call. The helper consumes
     /// the coherent GuestRegs snapshot and performs the complete architectural
     /// POP2/PUSH2 commit; native code only restores the snapshot or exits to the
@@ -2775,7 +2755,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     /// Fuse the exact five-op APX PUSH2 shape emitted by the x86 lifter.
     pub(crate) fn try_lower_jit_push2(
         &mut self,
@@ -2851,7 +2830,6 @@ impl X86_64Lowerer {
         self.emit_jit_pair_op(first.guest_pc, false, src_low, src_high)?;
         Ok(Some(5))
     }
-
 
     /// Fuse the exact five-op APX POP2 shape emitted by the x86 lifter.
     pub(crate) fn try_lower_jit_pop2(
@@ -2938,7 +2916,6 @@ impl X86_64Lowerer {
         self.emit_jit_pair_op(first.guest_pc, true, dst_low, dst_high)?;
         Ok(Some(5))
     }
-
 
     /// Fuse the exact POP shapes emitted by the x86 lifter. The memory helper
     /// runs against the pre-increment RSP snapshot and exits before any state
@@ -3159,7 +3136,6 @@ impl X86_64Lowerer {
         Ok(Some(4))
     }
 
-
     /// Fuse a lifted PUSH into one fault-precise helper store followed by the
     /// state-backed RSP commit. The helper observes the old state snapshot and
     /// stores at `old_rsp - width`; only its success path performs the SUB.
@@ -3268,7 +3244,6 @@ impl X86_64Lowerer {
         )?;
         Ok(Some(consumed))
     }
-
 
     /// Lower a guest `Load`/`Store` as a call into the MMU via the helper
     /// function pointers in `GuestRegs`. Spills all guest GPRs to the struct,
@@ -3618,7 +3593,6 @@ impl X86_64Lowerer {
             .patch_i32(jmp_pos, (done as i64 - (jmp_pos as i64 + 4)) as i32);
         Ok(())
     }
-
 
     /// Lower a guest `CALL` as a runtime call-out (lift-through-calls). Spills all
     /// guest registers + RFLAGS to the GuestRegs struct, then calls the helper at

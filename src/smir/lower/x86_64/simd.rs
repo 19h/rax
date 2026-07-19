@@ -32,23 +32,23 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
-
     pub fn set_preserve_vector_call_helpers(&mut self, on: bool) {
         self.preserve_vector_call_helpers = on;
     }
 
-
     pub fn set_narrow_vector_opmask_helpers(&mut self, on: bool) {
         self.narrow_vector_opmask_helpers = on;
     }
-
 
     /// Lower an exact destructive register-register MMX operation before the
     /// generic vector paths classify MM registers as a distinct register file.
     /// Returning `false` means the operation has no MM operand and should use
     /// the normal scalar/vector matcher; any mixed or malformed MMX shape is an
     /// error rather than a widening opportunity.
-    pub(crate) fn lower_mmx_rr(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<bool, LowerError> {
+    pub(crate) fn lower_mmx_rr(
+        &mut self,
+        op: &crate::smir::ir::ops::SmirOp,
+    ) -> Result<bool, LowerError> {
         if let OpKind::VMov { dst, src, width } = &op.kind {
             let is_mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
             if is_mm(dst) || is_mm(src) {
@@ -975,14 +975,16 @@ impl X86_64Lowerer {
         Ok(true)
     }
 
-
-    pub(crate) fn coerce_vec_encoding(&self, mut encoding: VecEncoding, regs: &[PhysReg]) -> VecEncoding {
+    pub(crate) fn coerce_vec_encoding(
+        &self,
+        mut encoding: VecEncoding,
+        regs: &[PhysReg],
+    ) -> VecEncoding {
         if self.vec_requires_evex(encoding.width, regs) {
             encoding.kind = VecEncodingKind::Evex;
         }
         encoding
     }
-
 
     /// Select the mandatory prefix for a legacy vector move without conflating
     /// an explicit `SseMov { prefix: None }` with the absence of an encoding
@@ -994,7 +996,6 @@ impl X86_64Lowerer {
             _ => self.vec_move_prefix(hint),
         }
     }
-
 
     pub(crate) fn default_vec_mov_encoding(
         &self,
@@ -1012,8 +1013,13 @@ impl X86_64Lowerer {
         }
     }
 
-
-    pub(crate) fn emit_vec_rrr(&mut self, encoding: VecEncoding, dst: PhysReg, src1: PhysReg, src2: PhysReg) {
+    pub(crate) fn emit_vec_rrr(
+        &mut self,
+        encoding: VecEncoding,
+        dst: PhysReg,
+        src1: PhysReg,
+        src2: PhysReg,
+    ) {
         let encoding = self.coerce_vec_encoding(encoding, &[dst, src1, src2]);
         let mut emitter = X86Emitter::new(&mut self.code);
         match encoding.kind {
@@ -1043,7 +1049,6 @@ impl X86_64Lowerer {
             }
         }
     }
-
 
     pub(crate) fn emit_vec_rrr_imm(
         &mut self,
@@ -1080,8 +1085,13 @@ impl X86_64Lowerer {
         emitter.code.emit_u8(imm);
     }
 
-
-    pub(crate) fn emit_vec_rr(&mut self, encoding: VecEncoding, reg: PhysReg, rm: PhysReg, vvvv: u8) {
+    pub(crate) fn emit_vec_rr(
+        &mut self,
+        encoding: VecEncoding,
+        reg: PhysReg,
+        rm: PhysReg,
+        vvvv: u8,
+    ) {
         let encoding = self.coerce_vec_encoding(encoding, &[reg, rm]);
         let r = reg.vec_ext();
         let r2 = reg.vec_ext2();
@@ -1122,8 +1132,13 @@ impl X86_64Lowerer {
         emitter.emit_modrm_rr(reg, rm);
     }
 
-
-    pub(crate) fn emit_vec_shift_imm(&mut self, encoding: VecEncoding, dst: PhysReg, src: PhysReg, imm: u8) {
+    pub(crate) fn emit_vec_shift_imm(
+        &mut self,
+        encoding: VecEncoding,
+        dst: PhysReg,
+        src: PhysReg,
+        imm: u8,
+    ) {
         let encoding = self.coerce_vec_encoding(encoding, &[dst, src]);
         let b = src.vec_ext();
         let b2 = src.vec_ext2();

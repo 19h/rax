@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn lift_sse_duplicate_move(
         &self,
         opcode: u8,
@@ -103,8 +101,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_two_source_shuffle_imm(
         &self,
         bytes: &[u8],
@@ -176,8 +172,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed + 1,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_packed_shuffle_imm(
         &self,
@@ -293,8 +287,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     /// Lift legacy SSSE3 PSHUFB with MMX or XMM operands.
     pub(crate) fn lift_sse_pshufb(
         &self,
@@ -403,8 +395,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_variable_blend(
         &self,
         opcode: u8,
@@ -477,8 +467,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_palignr(
         &self,
@@ -579,8 +567,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_immediate_blend(
         &self,
         opcode: u8,
@@ -660,8 +646,6 @@ impl X86_64Lifter {
         self.append_legacy_packed_result(dst, raw, elem, pc, ctx, &mut ops);
         Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_sse_extract_0f3a(
         &self,
@@ -743,8 +727,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_sse_insert_0f3a(
         &self,

@@ -19,7 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
     /// Lift MMX MOVQ and legacy SSE packed moves (0F 6F/7F and related forms).
     pub(crate) fn lift_sse_mov(
         &self,
@@ -406,8 +405,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     /// Lift legacy MOVD/MOVQ transfers between MMX/XMM and GPR/memory operands
     /// (0F 6E/7E and 66 0F 6E/7E respectively).
     pub(crate) fn lift_sse_movd_q(
@@ -591,8 +588,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     /// Lift the scalar vector MOVQ forms: F3 0F 7E loads an XMM register from
     /// an XMM/m64 operand, while 66 0F D6 stores an XMM register to XMM/m64.
     /// Register destinations have bits 127:64 cleared; legacy encodings retain
@@ -707,8 +702,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_comi(
         &self,
         opcode: u8,
@@ -787,8 +780,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     /// Lift packed legacy SSE/SSE2 bitwise AND/AND-NOT/OR/XOR.
     pub(crate) fn lift_sse_logic(
@@ -872,8 +863,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     /// Lift legacy MOVMSKPS/MOVMSKPD (0F 50 /r).
     pub(crate) fn lift_sse_movmask(
         &self,
@@ -929,8 +918,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_pmovmskb(
         &self,
@@ -996,8 +983,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     /// Lift MMX/XMM PAND/PANDN/POR/PXOR (0F DB/DF/EB/EF).
     pub(crate) fn lift_sse_integer_logic(
@@ -1099,8 +1084,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_half_move(
         &self,
@@ -1208,8 +1191,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_horizontal_integer(
         &self,
@@ -1330,8 +1311,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_pinsrw_pextrw(
         &self,

@@ -16,4 +16,3 @@ mod ops;
 #[cfg(test)]
 mod permute;
 use crate::smir::lift::x86_64::*;
-

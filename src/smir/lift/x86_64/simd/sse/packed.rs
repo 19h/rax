@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     /// Lift packed and scalar legacy SSE/SSE2 floating-point arithmetic.
     pub(crate) fn lift_sse_packed_arith(
         &self,
@@ -255,8 +253,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     /// Lift MMX/XMM wrapping and saturating packed integer add/subtract.
     pub(crate) fn lift_sse_packed_add_sub(
         &self,
@@ -415,8 +411,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     /// Lift MMX/SSE2 PUNPCKL*/PUNPCKH* packed-integer interleaves.
     pub(crate) fn lift_sse_integer_unpack(
         &self,
@@ -543,8 +537,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_addsub_horizontal(
         &self,
         opcode: u8,
@@ -616,8 +608,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     /// Lift legacy MMX/XMM PACKSSWB/PACKUSWB/PACKSSDW/PACKUSDW.
     pub(crate) fn lift_sse_integer_pack(
@@ -726,8 +716,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_psign(
         &self,
@@ -849,8 +837,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_pabs(
         &self,
         opcode: u8,
@@ -965,8 +951,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_packed_extend(
         &self,
         opcode: u8,
@@ -1008,8 +992,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_packed_minmax(
         &self,
@@ -1142,8 +1124,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_packed_average(
         &self,
         opcode: u8,
@@ -1251,8 +1231,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_phminposuw(
         &self,
         bytes: &[u8],
@@ -1322,8 +1300,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_mpsadbw(
         &self,
@@ -1419,8 +1395,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_sse_psadbw(
         &self,
@@ -1538,8 +1512,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_packed_shift_count(
         &self,
         opcode: u8,
@@ -1655,8 +1627,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_packed_shift_imm(
         &self,

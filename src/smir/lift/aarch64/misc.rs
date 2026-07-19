@@ -22,12 +22,10 @@ impl Aarch64Lifter {
         Aarch64Lifter { strict: false }
     }
 
-
     /// Create a lifter in strict mode
     pub fn strict() -> Self {
         Aarch64Lifter { strict: true }
     }
-
 
     // ========================================================================
     // Register Conversion
@@ -45,7 +43,6 @@ impl Aarch64Lifter {
         }
     }
 
-
     /// Get the width for an ARM register operand
     pub(crate) fn reg_width(&self, reg: &Register) -> OpWidth {
         if reg.is_64bit {
@@ -54,7 +51,6 @@ impl Aarch64Lifter {
             OpWidth::W32
         }
     }
-
 
     /// Handle pre/post-index writeback for memory operand
     pub(crate) fn handle_writeback(
@@ -94,7 +90,6 @@ impl Aarch64Lifter {
         }
     }
 
-
     pub(crate) fn materialize_src_operand(
         &self,
         src: SrcOperand,
@@ -122,7 +117,6 @@ impl Aarch64Lifter {
         }
     }
 
-
     /// Get destination VReg from operand, handling XZR/WZR writes
     pub(crate) fn dst_reg(&self, reg: &Register, ctx: &mut LiftContext) -> VReg {
         if reg.num == 31 && !reg.is_sp {
@@ -134,11 +128,9 @@ impl Aarch64Lifter {
         }
     }
 
-
     pub(crate) fn push_lifted_op(ops: &mut Vec<SmirOp>, pc: u64, kind: OpKind) {
         ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
     }
-
 
     pub(crate) fn widen_w_to_x(
         &self,
@@ -168,7 +160,6 @@ impl Aarch64Lifter {
         dst
     }
 
-
     // ========================================================================
     // FP Helpers
     // ========================================================================
@@ -176,7 +167,6 @@ impl Aarch64Lifter {
     pub(crate) fn fp_vreg(reg: &FpRegister) -> VReg {
         VReg::Arch(ArchReg::Arm(ArmReg::V(reg.num)))
     }
-
 
     pub(crate) fn fp_precision(size: &FpRegSize) -> FpPrecision {
         match size {
@@ -186,7 +176,6 @@ impl Aarch64Lifter {
             _ => FpPrecision::F32,
         }
     }
-
 
     // ========================================================================
     // Helper Methods
@@ -217,7 +206,6 @@ impl Aarch64Lifter {
         ))
     }
 
-
     pub(crate) fn parse_operand2(
         &self,
         insn: &DecodedInsn,
@@ -246,7 +234,6 @@ impl Aarch64Lifter {
         }
     }
 
-
     pub(crate) fn operand_to_src(
         &self,
         op: &Operand,
@@ -273,7 +260,6 @@ impl Aarch64Lifter {
             _ => Err(LiftError::Internal("invalid operand".to_string())),
         }
     }
-
 
     pub(crate) fn lift_axflag(&self, pc: u64, ops: &mut Vec<SmirOp>, ctx: &mut LiftContext) {
         let nzcv = VReg::Arch(ArchReg::Arm(ArmReg::Nzcv));
@@ -380,7 +366,6 @@ impl Aarch64Lifter {
         );
     }
 
-
     pub(crate) fn lift_atomic_rmw(
         &self,
         insn: &DecodedInsn,
@@ -466,7 +451,6 @@ impl Aarch64Lifter {
 
         Ok(())
     }
-
 
     pub(crate) fn lift_cas(
         &self,

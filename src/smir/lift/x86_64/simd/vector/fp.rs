@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn append_fp_estimate_result(
         &self,
         dst: VReg,
@@ -96,8 +94,6 @@ impl X86_64Lifter {
             ));
         }
     }
-
-
 
     pub(crate) fn lift_vec_fp_estimate(
         &self,
@@ -187,8 +183,6 @@ impl X86_64Lifter {
         );
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn append_fp_addsub_horizontal(
         &self,
@@ -294,8 +288,6 @@ impl X86_64Lifter {
             },
         ));
     }
-
-
 
     pub(crate) fn lift_vec_fp_unpack(
         &self,
@@ -459,8 +451,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_fp_compare(
         &self,
@@ -738,8 +728,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_vec_fma3(
         &self,
@@ -1134,8 +1122,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_vec_scalar_fp_convert(
         &self,
         prefix: VecPrefix,
@@ -1299,8 +1285,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_packed_fp16_convert(
         &self,
@@ -1645,8 +1629,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_packed_int_fp_convert(
         &self,

@@ -22,7 +22,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
     // =========================================================================
     // Register Access
     // =========================================================================
@@ -36,12 +35,10 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Get the full 128 bits of a V (SIMD/FP) register V0-V31.
     pub fn get_simd(&self, n: u8) -> u128 {
         self.v[(n & 31) as usize]
     }
-
 
     /// Set the full 128 bits of a V (SIMD/FP) register V0-V31.
     pub fn set_simd(&mut self, n: u8, value: u128) {
@@ -68,7 +65,6 @@ impl AArch64Cpu {
         self.fpsr = mask_fpsr(value);
     }
 
-
     /// Set X register (X0-X30, write to XZR is ignored).
     pub fn set_x(&mut self, reg: u8, value: u64) {
         if reg < 31 {
@@ -76,18 +72,15 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Get W register (lower 32 bits of X).
     pub fn get_w(&self, reg: u8) -> u32 {
         self.get_x(reg) as u32
     }
 
-
     /// Set W register (zero-extends to X).
     pub fn set_w(&mut self, reg: u8, value: u32) {
         self.set_x(reg, value as u64);
     }
-
 
     /// Write a register encoded in the "Xn|SP" slot.
     pub(crate) fn set_gpr_or_sp(&mut self, reg: u8, value: u64) {
@@ -97,7 +90,6 @@ impl AArch64Cpu {
             self.set_x(reg, value);
         }
     }
-
 
     /// Set current stack pointer.
     pub fn set_current_sp(&mut self, value: u64) {
@@ -112,7 +104,6 @@ impl AArch64Cpu {
         }
     }
 
-
     // =========================================================================
     // Flag Access
     // =========================================================================
@@ -122,24 +113,20 @@ impl AArch64Cpu {
         (self.nzcv >> 3) & 1 != 0
     }
 
-
     /// Get Z flag.
     pub fn get_z(&self) -> bool {
         (self.nzcv >> 2) & 1 != 0
     }
-
 
     /// Get C flag.
     pub fn get_c(&self) -> bool {
         (self.nzcv >> 1) & 1 != 0
     }
 
-
     /// Get V flag.
     pub fn get_v(&self) -> bool {
         self.nzcv & 1 != 0
     }
-
 
     /// Set N flag.
     pub fn set_n(&mut self, v: bool) {
@@ -150,7 +137,6 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Set Z flag.
     pub fn set_z(&mut self, v: bool) {
         if v {
@@ -159,7 +145,6 @@ impl AArch64Cpu {
             self.nzcv &= !0x4;
         }
     }
-
 
     /// Set C flag.
     pub fn set_c(&mut self, v: bool) {
@@ -170,7 +155,6 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Set V flag.
     pub fn set_v(&mut self, v: bool) {
         if v {
@@ -180,12 +164,10 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Set all NZCV flags.
     pub fn set_nzcv(&mut self, n: bool, z: bool, c: bool, v: bool) {
         self.nzcv = ((n as u8) << 3) | ((z as u8) << 2) | ((c as u8) << 1) | (v as u8);
     }
-
 
     /// Update N and Z flags based on result.
     pub fn update_nz_64(&mut self, result: u64) {
@@ -193,23 +175,19 @@ impl AArch64Cpu {
         self.set_z(result == 0);
     }
 
-
     /// Update N and Z flags based on 32-bit result.
     pub fn update_nz_32(&mut self, result: u32) {
         self.set_n((result as i32) < 0);
         self.set_z(result == 0);
     }
 
-
     pub(crate) fn has_uao_ext(&self) -> bool {
         ((self.sysregs.id_aa64mmfr2_el1 >> 4) & 0xF) != 0
     }
 
-
     pub(crate) fn has_pan_ext(&self) -> bool {
         ((self.sysregs.id_aa64mmfr1_el1 >> 20) & 0xF) != 0
     }
-
 
     // =========================================================================
     // System Register Access
@@ -299,7 +277,6 @@ impl AArch64Cpu {
             .ok_or_else(|| ArmError::Unimplemented(format!("System register {}", encoding)))
     }
 
-
     /// Read a GICv3 CPU interface (ICC_*) register. Returns None when the
     /// encoding is not an implemented ICC register.
     pub(crate) fn read_icc(&self, encoding: Aarch64SysRegEncoding) -> Option<u64> {
@@ -342,7 +319,6 @@ impl AArch64Cpu {
         };
         Some(value)
     }
-
 
     /// Write a GICv3 CPU interface (ICC_*) register. Returns true when the
     /// encoding was handled.
@@ -400,7 +376,6 @@ impl AArch64Cpu {
         }
         true
     }
-
 
     /// Write system register.
     pub(crate) fn write_sysreg(
@@ -532,7 +507,6 @@ impl AArch64Cpu {
         }
     }
 
-
     pub(crate) fn sysreg_read_allowed_at_el0(encoding: Aarch64SysRegEncoding) -> bool {
         matches!(
             (
@@ -572,7 +546,6 @@ impl AArch64Cpu {
         )
     }
 
-
     pub(crate) fn sysreg_write_allowed_at_el0(encoding: Aarch64SysRegEncoding) -> bool {
         matches!(
             (
@@ -592,7 +565,6 @@ impl AArch64Cpu {
                 | (3, 3, 13, 0, 2) // TPIDR_EL0
         )
     }
-
 
     /// Update MMU configuration from system registers.
     pub(crate) fn update_mmu_config(&mut self) {
@@ -630,7 +602,6 @@ impl AArch64Cpu {
             wxn,
         });
     }
-
 
     /// Execute data processing (register) instruction.
     pub(crate) fn exec_dp_reg(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
@@ -681,7 +652,6 @@ impl AArch64Cpu {
 
         Err(ArmError::UndefinedInstruction(insn))
     }
-
 
     pub(crate) fn exec_msr_mrs(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let l = (insn >> 21) & 1; // 0 = MSR, 1 = MRS
@@ -734,7 +704,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     pub(crate) fn exec_br_reg(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let opc = (insn >> 21) & 0xF;
         let op2 = (insn >> 16) & 0x1F;
@@ -786,7 +755,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     /// Extend register with optional shift.
     pub(crate) fn extend_reg(&self, rm: u8, option: u8, shift: u32) -> Result<u64, ArmError> {
         let val = self.get_x(rm);
@@ -813,7 +781,6 @@ impl AArch64Cpu {
         self.jit.mem = on;
     }
 
-
     /// Enable/disable the JIT tier for this CPU instance (default enabled).
     /// Disabling forces pure interpretation — used to obtain a differential
     /// oracle without touching the process-global `RAX_NO_JIT`.
@@ -821,7 +788,6 @@ impl AArch64Cpu {
     pub fn set_jit_enabled(&mut self, on: bool) {
         self.jit.disabled = !on;
     }
-
 
     /// Run a compiled region over the current state. FP/SIMD regions take the
     /// V-register-marshaling trampoline; integer-only regions the cheaper one.
@@ -840,7 +806,6 @@ impl AArch64Cpu {
         }
         self.jit_marshal_from(&gr);
     }
-
 
     /// Lift+optimize+lower the region at the current PC. `None` if ineligible
     /// (lift/lower failure, no frontier, entry-is-frontier, clobber-unsafe, or

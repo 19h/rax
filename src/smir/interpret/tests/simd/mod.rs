@@ -16,4 +16,3 @@ use crate::smir::ir::FunctionBuilder;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate, MaterializedFlags};
 use crate::smir::ir::memory::{FlatMemory, SmirMemory};
 use crate::smir::ir::types::ShiftOp;
-

@@ -1,16 +1,19 @@
 //! map5.rs
 
-use crate::isa::x86_64::decode::dispatch::evex::*;
 use crate::error::{Error, Result};
+use crate::isa::x86_64::decode::dispatch::evex::*;
 use crate::vm::vcpu::VcpuExit;
 
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::{execute, flags};
 
 impl X86_64Vcpu {
-
     /// EVEX MAP5 opcode map (mm=5) - AVX-512 FP16 instructions
-    pub(crate) fn execute_evex_map5(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_evex_map5(
+        &mut self,
+        ctx: &mut InsnContext,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx
             .evex
             .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
@@ -173,9 +176,12 @@ impl X86_64Vcpu {
         }
     }
 
-
     /// EVEX MAP6 opcode map - AVX-512 FP16 FMA instructions.
-    pub(crate) fn execute_evex_map6(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_evex_map6(
+        &mut self,
+        ctx: &mut InsnContext,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx
             .evex
             .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;

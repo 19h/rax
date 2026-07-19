@@ -32,7 +32,6 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
-
     /// Lower a single operation
     pub(crate) fn lower_op(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<(), LowerError> {
         if self.lower_mmx_rr(op)? {

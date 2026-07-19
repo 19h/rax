@@ -1,11 +1,11 @@
 //! Data-processing (ALU, multiply, bitfield, saturate) execution
 
-use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::aarch32::cpu::{
     ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr, add_with_carry, compute_n_flag,
     compute_z_flag, condition_passed, expand_imm_c, shift_c, sign_extend,
 };
+use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::aarch32::vfp::{
     Fpscr, NeonSize, RoundingMode, vabs_f16_bits, vabs_f32, vabs_f64, vadd_f16_bits, vadd_f32,
     vadd_f64, vadd_i, vand, vbic, vcls_i, vclz_i, vcmp_f16_bits_with_exception,
@@ -27,8 +27,7 @@ use crate::isa::arm::aarch32::vfp::{
 };
 use crate::isa::arm::decoder::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 
-impl <'a, M: ArmMemory> Executor<'a, M> {
-
+impl<'a, M: ArmMemory> Executor<'a, M> {
     // =========================================================================
     // Data Processing - Arithmetic
     // =========================================================================
@@ -43,7 +42,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg_with_s(d, result, insn.sets_flags)
     }
 
-
     pub(crate) fn exec_adc(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, operand2) = self.decode_dp_operands(insn);
         let result = self
@@ -56,7 +54,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg_with_s(d, result, insn.sets_flags)
     }
 
-
     pub(crate) fn exec_sub(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, operand2) = self.decode_dp_operands(insn);
         let result = self.cpu.add_with_carry(self.reg(n), !operand2, true);
@@ -66,7 +63,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         self.set_reg_with_s(d, result, insn.sets_flags)
     }
-
 
     pub(crate) fn exec_sbc(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, operand2) = self.decode_dp_operands(insn);
@@ -80,7 +76,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg_with_s(d, result, insn.sets_flags)
     }
 
-
     pub(crate) fn exec_rsb(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, operand2) = self.decode_dp_operands(insn);
         let result = self.cpu.add_with_carry(!self.reg(n), operand2, true);
@@ -90,7 +85,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         self.set_reg_with_s(d, result, insn.sets_flags)
     }
-
 
     // =========================================================================
     // Data Processing - Logical
@@ -106,7 +100,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_orr(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, operand2) = self.decode_dp_operands(insn);
         let result = self.reg(n) | operand2;
@@ -116,7 +109,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         self.set_reg(d, result)
     }
-
 
     pub(crate) fn exec_eor(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, operand2) = self.decode_dp_operands(insn);
@@ -128,7 +120,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_bic(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, operand2) = self.decode_dp_operands(insn);
         let result = self.reg(n) & !operand2;
@@ -138,7 +129,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         self.set_reg(d, result)
     }
-
 
     // =========================================================================
     // Data Processing - Move
@@ -154,7 +144,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg_with_s(d, result, insn.sets_flags)
     }
 
-
     pub(crate) fn exec_mvn(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, _, operand2) = self.decode_dp_operands(insn);
         let result = !operand2;
@@ -165,7 +154,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_movw(&mut self, insn: &DecodedInsn) -> ExecResult {
         let d = ((insn.raw >> 12) & 0xF) as usize;
         let imm4 = (insn.raw >> 16) & 0xF;
@@ -174,7 +162,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.cpu.regs[d] = imm16;
         ExecResult::Continue
     }
-
 
     pub(crate) fn exec_movt(&mut self, insn: &DecodedInsn) -> ExecResult {
         use crate::isa::arm::decoder::Operand;
@@ -194,7 +181,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
     // =========================================================================
     // Data Processing - Compare
     // =========================================================================
@@ -207,7 +193,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
     pub(crate) fn exec_tst(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (_, n, operand2) = self.decode_dp_operands(insn);
         let result = self.reg(n) & operand2;
@@ -215,14 +200,12 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
     pub(crate) fn exec_teq(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (_, n, operand2) = self.decode_dp_operands(insn);
         let result = self.reg(n) ^ operand2;
         self.set_flags_logical(result);
         ExecResult::Continue
     }
-
 
     // =========================================================================
     // Data Processing - Shift
@@ -238,7 +221,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_lsr(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, m, shift_amount) = self.decode_shift_operands(insn);
         let result = self.cpu.shift_c(self.reg(m), ShiftType::LSR, shift_amount);
@@ -248,7 +230,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         self.set_reg(d, result)
     }
-
 
     pub(crate) fn exec_asr(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, m, shift_amount) = self.decode_shift_operands(insn);
@@ -260,7 +241,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_ror(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, m, shift_amount) = self.decode_shift_operands(insn);
         let result = self.cpu.shift_c(self.reg(m), ShiftType::ROR, shift_amount);
@@ -271,7 +251,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_rrx(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, m, _) = self.decode_shift_operands(insn);
         let result = self.cpu.shift_c(self.reg(m), ShiftType::RRX, 1);
@@ -281,7 +260,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         self.set_reg(d, result)
     }
-
 
     // =========================================================================
     // Multiply Operations
@@ -298,7 +276,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_mla(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, m, a) = self.decode_mla_operands(insn);
         let result = self
@@ -312,7 +289,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_mls(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, m, a) = self.decode_mla_operands(insn);
         let result = self
@@ -320,7 +296,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             .wrapping_sub(self.reg(n).wrapping_mul(self.reg(m)));
         self.set_reg(d, result)
     }
-
 
     pub(crate) fn exec_umull(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (dlo, dhi, n, m) = self.decode_mull_operands(insn);
@@ -336,7 +311,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
     pub(crate) fn exec_smull(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (dlo, dhi, n, m) = self.decode_mull_operands(insn);
         let result = (self.reg(n) as i32 as i64).wrapping_mul(self.reg(m) as i32 as i64) as u64;
@@ -350,7 +324,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         ExecResult::Continue
     }
-
 
     pub(crate) fn exec_umlal(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (dlo, dhi, n, m) = self.decode_mull_operands(insn);
@@ -368,7 +341,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
     pub(crate) fn exec_smlal(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (dlo, dhi, n, m) = self.decode_mull_operands(insn);
         let addend = ((self.cpu.regs[dhi] as u64) << 32) | (self.cpu.regs[dlo] as u64);
@@ -384,7 +356,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
     /// UMAAL: RdHi:RdLo = Rn*Rm + RdHi + RdLo (all unsigned). No flags.
     pub(crate) fn exec_umaal(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (dlo, dhi, n, m) = self.decode_mull_operands(insn);
@@ -396,7 +367,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.cpu.regs[dhi] = (result >> 32) as u32;
         ExecResult::Continue
     }
-
 
     pub(crate) fn exec_sdiv(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, m) = self.decode_mul_operands(insn);
@@ -415,7 +385,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_udiv(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, m) = self.decode_mul_operands(insn);
 
@@ -427,7 +396,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     // =========================================================================
     // Bit Manipulation
     // =========================================================================
@@ -438,13 +406,11 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_rev(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, m) = self.dm_ops(insn);
         let result = self.reg(m).swap_bytes();
         self.set_reg(d, result)
     }
-
 
     pub(crate) fn exec_rev16(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, m) = self.dm_ops(insn);
@@ -452,7 +418,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         let result = ((val >> 8) & 0x00FF00FF) | ((val << 8) & 0xFF00FF00);
         self.set_reg(d, result)
     }
-
 
     pub(crate) fn exec_revsh(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, m) = self.dm_ops(insn);
@@ -463,13 +428,11 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_rbit(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, m) = self.dm_ops(insn);
         let result = self.reg(m).reverse_bits();
         self.set_reg(d, result)
     }
-
 
     pub(crate) fn exec_bfc(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, _, lsb, msb) = self.bitfield_fields(insn);
@@ -486,7 +449,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.cpu.regs[d] &= !mask;
         ExecResult::Continue
     }
-
 
     pub(crate) fn exec_bfi(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, lsb, msb) = self.bitfield_fields(insn);
@@ -505,7 +467,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
     pub(crate) fn exec_ubfx(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, lsb, w) = self.bitfield_fields(insn);
         let width = w + 1;
@@ -518,7 +479,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         let result = (self.reg(n) >> lsb) & mask;
         self.set_reg(d, result)
     }
-
 
     pub(crate) fn exec_sbfx(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, lsb, w) = self.bitfield_fields(insn);
@@ -533,7 +493,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         let result = sign_extend(extracted, width);
         self.set_reg(d, result)
     }
-
 
     // =========================================================================
     // Extension Operations
@@ -551,7 +510,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_sxth(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, m) = self.dm_ops(insn);
         let rotation = if insn.state.is_thumb() {
@@ -563,7 +521,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         let result = sign_extend(rotated & 0xFFFF, 16);
         self.set_reg(d, result)
     }
-
 
     pub(crate) fn exec_uxtb(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, m) = self.dm_ops(insn);
@@ -577,7 +534,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_uxth(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, m) = self.dm_ops(insn);
         let rotation = if insn.state.is_thumb() {
@@ -589,7 +545,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         let result = rotated & 0xFFFF;
         self.set_reg(d, result)
     }
-
 
     pub(crate) fn exec_usat(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, sat_imm, sh, imm5) = self.sat_fields(insn);
@@ -614,7 +569,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_ssat(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, sat_imm0, sh, imm5) = self.sat_fields(insn);
         let sat_imm = sat_imm0 + 1;
@@ -638,7 +592,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         self.set_reg(d, result)
     }
-
 
     /// QADD / QSUB / QDADD / QDSUB.
     pub(crate) fn exec_a32_sat_addsub(&mut self, insn: &DecodedInsn) -> ExecResult {
@@ -671,7 +624,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         };
         self.set_reg(rd, result)
     }
-
 
     /// SMLALD / SMLSLD.
     pub(crate) fn exec_a32_smlald(&mut self, insn: &DecodedInsn) -> ExecResult {
@@ -709,7 +661,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.cpu.regs[dhi] = (result >> 32) as u32;
         ExecResult::Continue
     }
-
 
     /// SEL (select bytes by GE flags).
     pub(crate) fn exec_a32_sel(&mut self, insn: &DecodedInsn) -> ExecResult {

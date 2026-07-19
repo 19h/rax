@@ -84,7 +84,13 @@ pub(crate) fn sve_ld1_dtype(dtype: u32) -> (usize, usize, bool) {
 pub(crate) fn sve_fp_combine(kind: FpKind, esize: usize, x: u64, y: u64) -> u64 {
     sve_fp_combine_with_fpcr(kind, esize, x, y, 0)
 }
-pub(crate) fn sve_fp_combine_with_fpcr(kind: FpKind, esize: usize, x: u64, y: u64, fpcr: u32) -> u64 {
+pub(crate) fn sve_fp_combine_with_fpcr(
+    kind: FpKind,
+    esize: usize,
+    x: u64,
+    y: u64,
+    fpcr: u32,
+) -> u64 {
     match esize {
         2 => sve_fp16_binop_with_fpcr(kind, x as u16, y as u16, fpcr) as u64,
         4 => fp_three_same_f32_with_fpcr(kind, x as u32, y as u32, 0, fpcr) as u64,
@@ -141,7 +147,12 @@ pub(crate) fn sve_fp_tree_reduce(buf: &[u64], kind: FpKind, esize: usize) -> u64
     let hi = sve_fp_tree_reduce(&buf[h..], kind, esize);
     sve_fp_combine(kind, esize, lo, hi)
 }
-pub(crate) fn sve_fp_tree_reduce_status(buf: &[u64], kind: FpKind, esize: usize, fpcr: u32) -> (u64, u32) {
+pub(crate) fn sve_fp_tree_reduce_status(
+    buf: &[u64],
+    kind: FpKind,
+    esize: usize,
+    fpcr: u32,
+) -> (u64, u32) {
     if buf.len() == 1 {
         return (buf[0], 0);
     }

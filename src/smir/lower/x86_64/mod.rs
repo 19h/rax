@@ -43,8 +43,8 @@ mod control;
 pub use control::*;
 mod dispatch;
 pub use dispatch::*;
-mod ops;
 mod emitter;
+mod ops;
 pub use emitter::*;
 mod jit;
 pub use jit::*;
@@ -58,7 +58,6 @@ mod state;
 pub use state::*;
 #[cfg(test)]
 mod tests;
-
 
 fn x86_state_backed_arch_gpr(reg: &VReg) -> bool {
     matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.gpr_index().is_some_and(|index| index >= 16 || matches!(index, 4 | 5)))
@@ -1073,7 +1072,6 @@ pub struct X86Emitter<'a> {
     code: &'a mut CodeBuffer,
 }
 
-
 // ============================================================================
 // x86_64 Lowerer
 // ============================================================================
@@ -1180,7 +1178,6 @@ pub struct X86_64Lowerer {
     /// guest-clobberable RBP) keeps the host return path off guest control.
     epilogue_stack_patches: Vec<usize>,
 }
-
 
 impl Default for X86_64Lowerer {
     fn default() -> Self {
@@ -1313,4 +1310,3 @@ impl SmirLowerer for X86_64Lowerer {
 // ============================================================================
 // Tests
 // ============================================================================
-

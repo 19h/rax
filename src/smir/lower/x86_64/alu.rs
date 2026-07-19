@@ -32,8 +32,13 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
-
-    pub(crate) fn emit_shift_reg_imm(&mut self, kind: ShiftRegOp, dst_reg: PhysReg, imm: u8, width: OpWidth) {
+    pub(crate) fn emit_shift_reg_imm(
+        &mut self,
+        kind: ShiftRegOp,
+        dst_reg: PhysReg,
+        imm: u8,
+        width: OpWidth,
+    ) {
         let mut emitter = X86Emitter::new(&mut self.code);
         match kind {
             ShiftRegOp::Rol => emitter.emit_rol_ri(dst_reg, imm, width),
@@ -45,7 +50,6 @@ impl X86_64Lowerer {
             ShiftRegOp::Sar => emitter.emit_sar_ri(dst_reg, imm, width),
         }
     }
-
 
     pub(crate) fn emit_shift_reg_cl(&mut self, kind: ShiftRegOp, dst_reg: PhysReg, width: OpWidth) {
         let mut emitter = X86Emitter::new(&mut self.code);
@@ -59,7 +63,6 @@ impl X86_64Lowerer {
             ShiftRegOp::Sar => emitter.emit_sar_cl(dst_reg, width),
         }
     }
-
 
     pub(crate) fn lower_shift_reg_op(
         &mut self,
@@ -178,7 +181,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_and_not(
         &mut self,
         dst: VReg,
@@ -250,7 +252,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_x86_bls(
         &mut self,
         dst: VReg,
@@ -296,7 +297,6 @@ impl X86_64Lowerer {
         self.finish_bmi_flags(dst_reg, defined_rflags_mask);
         Ok(())
     }
-
 
     pub(crate) fn lower_x86_adx(
         &mut self,
@@ -345,7 +345,6 @@ impl X86_64Lowerer {
         }
         Ok(())
     }
-
 
     pub(crate) fn lower_x86_count(
         &mut self,
@@ -448,7 +447,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_bit_scan(
         &mut self,
         dst: VReg,
@@ -541,7 +539,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     /// Lower register-only BT/BTS/BTR/BTC while retaining the emulator's
     /// deterministic policy for architecturally undefined status flags. Native
     /// x86 supplies CF directly; [`Self::finish_bmi_flags`] merges only that bit
@@ -607,7 +604,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     /// Lower the register-source SSE4.2 CRC32 family. The architectural
     /// instruction is destructive (`dst == crc`) and does not modify RFLAGS.
     /// W8/W16/W32 sources write a 32-bit destination; W64 selects the r64
@@ -649,7 +645,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     /// Complete a BMI operation after its pre-instruction PUSHFQ. `None`
     /// restores every incoming flag (APX NF). A mask merges the native defined
     /// flags into the saved value while retaining the interpreter's explicit
@@ -683,7 +678,6 @@ impl X86_64Lowerer {
         emitter.code.emit_u8(0x9D); // popfq
     }
 
-
     pub(crate) fn emit_noncommutative_alu_alias(
         &mut self,
         op: &'static str,
@@ -710,7 +704,6 @@ impl X86_64Lowerer {
         emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 8);
         Ok(())
     }
-
 
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn lower_x86_ndd_double_shift(
@@ -823,7 +816,6 @@ impl X86_64Lowerer {
         }
         Ok(())
     }
-
 
     /// `movabs <reg64 enc>, imm64`.
     pub(crate) fn emit_movabs(&mut self, reg_enc: u8, imm: u64) {

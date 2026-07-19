@@ -17,7 +17,6 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 impl Aarch64Lowerer {
-
     /// Lower direct, argument-free guest calls as native frontier exits.
     ///
     /// The call block's ordinary operations execute first (including guest
@@ -29,7 +28,6 @@ impl Aarch64Lowerer {
         self.guest_call_exits = enable;
     }
 
-
     /// Lower structurally validated AArch32 direct/register BLX calls as
     /// interworking dispatcher exits. This mode must be paired with the
     /// AArch32 native clobber gate.
@@ -37,12 +35,10 @@ impl Aarch64Lowerer {
         self.guest_interworking_call_exits = enable;
     }
 
-
     /// `blr Xn` — call through a register, setting the link register (x30).
     pub(crate) fn emit_blr_reg(&mut self, rn: u8) {
         self.emit(0xd63f_0000 | ((rn as u32) << 5));
     }
-
 
     pub(crate) fn emit_branch_placeholder(&mut self, target: BlockId) {
         let offset = self.code.position();
@@ -54,7 +50,6 @@ impl Aarch64Lowerer {
         });
     }
 
-
     pub(crate) fn emit_cond_branch_placeholder(&mut self, cond: u32, target: BlockId) {
         let offset = self.code.position();
         self.emit(0x5400_0000 | (cond & 0xf));
@@ -65,8 +60,12 @@ impl Aarch64Lowerer {
         });
     }
 
-
-    pub(crate) fn emit_compare_branch_placeholder(&mut self, rt: u8, nonzero: bool, target: BlockId) {
+    pub(crate) fn emit_compare_branch_placeholder(
+        &mut self,
+        rt: u8,
+        nonzero: bool,
+        target: BlockId,
+    ) {
         let offset = self.code.position();
         self.emit(if nonzero { 0xb500_0000 } else { 0xb400_0000 } | (rt as u32));
         self.branch_fixups.push(BranchFixup {
@@ -75,7 +74,6 @@ impl Aarch64Lowerer {
             kind: BranchFixupKind::CompareAndBranch { rt, nonzero },
         });
     }
-
 
     pub(crate) fn branch_scaled_imm(
         offset: usize,
@@ -102,7 +100,6 @@ impl Aarch64Lowerer {
 
         Ok((scaled as u32) & ((1_u32 << bits) - 1))
     }
-
 
     pub(crate) fn fixup_branches(&mut self) -> Result<(), LowerError> {
         for fixup in self.branch_fixups.drain(..).collect::<Vec<_>>() {
@@ -132,7 +129,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn patch_branch_to_current(&mut self, insn_offset: usize) -> Result<(), LowerError> {
         let target = self.code.position();
         let imm26 = Self::branch_scaled_imm(insn_offset, target, 26)?;
@@ -140,7 +136,6 @@ impl Aarch64Lowerer {
             .patch_i32(insn_offset, (0x1400_0000 | imm26) as i32);
         Ok(())
     }
-
 
     pub(crate) fn patch_compare_branch_to_current(
         &mut self,
@@ -156,7 +151,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn patch_cond_branch_to_current(
         &mut self,
         insn_offset: usize,
@@ -171,14 +165,12 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_branch_to_offset(&mut self, target_offset: usize) -> Result<(), LowerError> {
         let offset = self.code.position();
         let imm26 = Self::branch_scaled_imm(offset, target_offset, 26)?;
         self.emit(0x1400_0000 | imm26);
         Ok(())
     }
-
 
     pub(crate) fn emit_compare_branch_to_offset(
         &mut self,
@@ -193,7 +185,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_test_branch(
         &mut self,
         rt: u8,
@@ -205,8 +196,12 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
-    pub(crate) fn test_branch_word(rt: u8, bit: u32, nonzero: bool, offset: i32) -> Result<u32, LowerError> {
+    pub(crate) fn test_branch_word(
+        rt: u8,
+        bit: u32,
+        nonzero: bool,
+        offset: i32,
+    ) -> Result<u32, LowerError> {
         if bit >= 64 {
             return Err(LowerError::InvalidOperand {
                 op: "AArch64 test branch".into(),
@@ -237,7 +232,6 @@ impl Aarch64Lowerer {
             | (rt as u32))
     }
 
-
     pub(crate) fn patch_test_branch_to_current(
         &mut self,
         insn_offset: usize,
@@ -257,7 +251,6 @@ impl Aarch64Lowerer {
         self.code.patch_i32(insn_offset, word as i32);
         Ok(())
     }
-
 
     pub(crate) fn lower_cond_branch(
         &mut self,
@@ -314,8 +307,11 @@ impl Aarch64Lowerer {
         self.lower_branch_edge(source, false_target)
     }
 
-
-    pub(crate) fn lower_branch_edge(&mut self, source: BlockId, target: BlockId) -> Result<(), LowerError> {
+    pub(crate) fn lower_branch_edge(
+        &mut self,
+        source: BlockId,
+        target: BlockId,
+    ) -> Result<(), LowerError> {
         if let Some(resume_pc) = self.native_exit_edges.get(&(source, target)).copied() {
             self.emit_native_exit(resume_pc)
         } else {
@@ -323,7 +319,6 @@ impl Aarch64Lowerer {
             Ok(())
         }
     }
-
 
     pub(crate) fn folded_branch_condition(block: &SmirBlock) -> (usize, Option<Condition>) {
         let op_end = block.ops.len();

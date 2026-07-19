@@ -17,7 +17,6 @@ use crate::smir::ir::{
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader};
 
 impl Aarch64Lifter {
-
     /// Convert ARM condition to SMIR condition
     pub(crate) fn arm_cond(&self, cond: ArmCondition) -> Condition {
         match cond {
@@ -38,7 +37,6 @@ impl Aarch64Lifter {
             ArmCondition::AL | ArmCondition::NV => Condition::Always,
         }
     }
-
 
     pub(crate) fn lift_cond_compare(
         &self,
@@ -130,7 +128,6 @@ impl Aarch64Lifter {
 
         Ok(())
     }
-
 
     pub(crate) fn lift_cond_select(
         &self,

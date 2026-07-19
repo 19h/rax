@@ -1,11 +1,11 @@
 //! Load/store, load/store-multiple execution
 
-use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::aarch32::cpu::{
     ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr, add_with_carry, compute_n_flag,
     compute_z_flag, condition_passed, expand_imm_c, shift_c, sign_extend,
 };
+use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::aarch32::vfp::{
     Fpscr, NeonSize, RoundingMode, vabs_f16_bits, vabs_f32, vabs_f64, vadd_f16_bits, vadd_f32,
     vadd_f64, vadd_i, vand, vbic, vcls_i, vclz_i, vcmp_f16_bits_with_exception,
@@ -27,8 +27,7 @@ use crate::isa::arm::aarch32::vfp::{
 };
 use crate::isa::arm::decoder::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 
-impl <'a, M: ArmMemory> Executor<'a, M> {
-
+impl<'a, M: ArmMemory> Executor<'a, M> {
     /// Table Branch Byte (TBB) - Thumb-2.
     ///
     /// TBB [Rn, Rm]
@@ -54,7 +53,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     /// Table Branch Halfword (TBH) - Thumb-2.
     ///
     /// TBH [Rn, Rm, LSL #1]
@@ -79,7 +77,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             Err(e) => ExecResult::MemoryFault(e),
         }
     }
-
 
     // =========================================================================
     // Load/Store Operations
@@ -109,7 +106,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn exec_ldrb(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (t, address, writeback) = match self.decode_ldst_operands(insn) {
             Some(v) => v,
@@ -127,7 +123,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             Err(e) => ExecResult::MemoryFault(e),
         }
     }
-
 
     pub(crate) fn exec_ldrh(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (t, address, writeback) = match self.decode_ldst_halfword_operands(insn) {
@@ -147,7 +142,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn exec_ldrsb(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (t, address, writeback) = match self.decode_ldst_halfword_operands(insn) {
             Some(v) => v,
@@ -165,7 +159,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             Err(e) => ExecResult::MemoryFault(e),
         }
     }
-
 
     pub(crate) fn exec_ldrsh(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (t, address, writeback) = match self.decode_ldst_halfword_operands(insn) {
@@ -185,7 +178,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn exec_str(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (t, address, writeback) = match self.decode_ldst_operands(insn) {
             Some(v) => v,
@@ -202,7 +194,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             Err(e) => ExecResult::MemoryFault(e),
         }
     }
-
 
     pub(crate) fn exec_strb(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (t, address, writeback) = match self.decode_ldst_operands(insn) {
@@ -221,7 +212,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn exec_strh(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (t, address, writeback) = match self.decode_ldst_halfword_operands(insn) {
             Some(v) => v,
@@ -238,7 +228,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             Err(e) => ExecResult::MemoryFault(e),
         }
     }
-
 
     // =========================================================================
     // Load/Store Double
@@ -267,7 +256,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn exec_strd(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (t, address, writeback) = match self.decode_ldst_halfword_operands(insn) {
             Some(v) => v,
@@ -289,7 +277,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     // =========================================================================
     // Load/Store Exclusive
     // =========================================================================
@@ -310,7 +297,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn exec_strex(&mut self, insn: &DecodedInsn) -> ExecResult {
         let d = ((insn.raw >> 12) & 0xF) as usize;
         let t = (insn.raw & 0xF) as usize;
@@ -330,7 +316,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             ExecResult::Continue
         }
     }
-
 
     /// LDREXD: doubleword exclusive load into an even/odd register pair.
     pub(crate) fn exec_ldrexd(&mut self, insn: &DecodedInsn) -> ExecResult {
@@ -355,7 +340,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.cpu.regs[t + 1] = hi;
         ExecResult::Continue
     }
-
 
     /// STREXD: doubleword exclusive store from an even/odd register pair.
     pub(crate) fn exec_strexd(&mut self, insn: &DecodedInsn) -> ExecResult {
@@ -384,7 +368,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
     pub(crate) fn exec_ldrexb(&mut self, insn: &DecodedInsn) -> ExecResult {
         let t = ((insn.raw >> 12) & 0xF) as usize;
         let n = ((insn.raw >> 16) & 0xF) as usize;
@@ -400,7 +383,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             Err(e) => ExecResult::MemoryFault(e),
         }
     }
-
 
     pub(crate) fn exec_strexb(&mut self, insn: &DecodedInsn) -> ExecResult {
         let d = ((insn.raw >> 12) & 0xF) as usize;
@@ -422,7 +404,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn exec_ldrexh(&mut self, insn: &DecodedInsn) -> ExecResult {
         let t = ((insn.raw >> 12) & 0xF) as usize;
         let n = ((insn.raw >> 16) & 0xF) as usize;
@@ -438,7 +419,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             Err(e) => ExecResult::MemoryFault(e),
         }
     }
-
 
     pub(crate) fn exec_strexh(&mut self, insn: &DecodedInsn) -> ExecResult {
         let d = ((insn.raw >> 12) & 0xF) as usize;
@@ -460,14 +440,19 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     // =========================================================================
     // Load/Store Multiple
     // =========================================================================
 
     /// Unified LDM/STM for all four addressing modes (IA/IB/DA/DB), A32 and T32.
     /// The lowest-numbered register always maps to the lowest address.
-    pub(crate) fn exec_ldm_stm(&mut self, insn: &DecodedInsn, is_load: bool, p: bool, u: bool) -> ExecResult {
+    pub(crate) fn exec_ldm_stm(
+        &mut self,
+        insn: &DecodedInsn,
+        is_load: bool,
+        p: bool,
+        u: bool,
+    ) -> ExecResult {
         let (n, reglist, wback) = match self.decode_ldstm_operands(insn) {
             Some(v) => v,
             None => return ExecResult::Undefined,
@@ -553,7 +538,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     #[allow(dead_code)]
     pub(crate) fn exec_ldm(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (n, reglist, wback) = match self.decode_ldstm_operands(insn) {
@@ -590,7 +574,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             ExecResult::Continue
         }
     }
-
 
     pub(crate) fn exec_ldmdb(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (n, reglist, wback) = match self.decode_ldstm_operands(insn) {
@@ -630,7 +613,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn exec_stm(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (n, reglist, wback) = match self.decode_ldstm_operands(insn) {
             Some(v) => v,
@@ -656,7 +638,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
 
     pub(crate) fn exec_stmdb(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (n, reglist, wback) = match self.decode_ldstm_operands(insn) {
@@ -685,7 +666,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
 
     pub(crate) fn exec_push(&mut self, insn: &DecodedInsn) -> ExecResult {
         let reglist = match self.decode_reglist(insn) {
@@ -717,7 +697,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.cpu.regs[13] = start_address;
         ExecResult::Continue
     }
-
 
     pub(crate) fn exec_pop(&mut self, insn: &DecodedInsn) -> ExecResult {
         let reglist = match self.decode_reglist(insn) {
@@ -774,7 +753,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             ExecResult::Continue
         }
     }
-
 
     /// SWP/SWPB: atomic swap (ARMv6-deprecated but still used).
     pub(crate) fn exec_swp(&mut self, insn: &DecodedInsn) -> ExecResult {

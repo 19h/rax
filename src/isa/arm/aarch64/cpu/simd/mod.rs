@@ -32,5 +32,3 @@ mod permute;
 pub(crate) use permute::*;
 mod shift;
 pub(crate) use shift::*;
-
-

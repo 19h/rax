@@ -22,7 +22,6 @@ use crate::smir::lift::{
 };
 
 impl X86_64Lifter {
-
     /// Lift 0F 38-prefixed (three-byte) opcodes
     pub(crate) fn lift_0f38_opcode(
         &self,
@@ -94,8 +93,6 @@ impl X86_64Lifter {
         }
     }
 
-
-
     pub(crate) fn lift_0f3a_opcode(
         &self,
         bytes: &[u8],
@@ -138,8 +135,6 @@ impl X86_64Lifter {
         }
     }
 
-
-
     pub(crate) fn lift_prefixed_vec(
         &self,
         pc: u64,
@@ -169,8 +164,6 @@ impl X86_64Lifter {
         prefix.segment_override = legacy.segment_override;
         self.lift_vec_opcode(prefix, bytes, pc, ctx)
     }
-
-
 
     /// Lift every architecturally defined 3DNow! suffix-selected
     /// `0F 0F /r imm8` form. PAVGUSB and PSWAPD reuse generic packed-integer
@@ -283,8 +276,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed + 1,
         ))
     }
-
-
 
     /// Lift 0F-prefixed (two-byte) opcodes
     pub(crate) fn lift_0f_opcode(

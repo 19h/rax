@@ -1,10 +1,10 @@
 //! lower_op dispatch groups
 
-mod data_movement;
-mod integer_arithmetic;
 mod bitwise;
-mod shifts;
 mod comparisons;
-mod memory;
+mod data_movement;
 mod extensions;
+mod integer_arithmetic;
+mod memory;
 mod misc;
+mod shifts;

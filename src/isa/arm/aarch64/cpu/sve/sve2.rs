@@ -23,8 +23,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
-
     /// Execute SVE integer dot product (SDOT/UDOT/USDOT/SUDOT), vector and
     /// indexed. Each destination element (S from 8-bit sources, D from 16-bit)
     /// accumulates a 4-element dot product; the indexed form broadcasts the
@@ -89,8 +87,6 @@ impl AArch64Cpu {
         self.v[zd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute the SVE2 predicated integer ALU group at 0x44 bits[15:14]==10:
     /// saturating/rounding shifts by vector (SRSHL/URSHL/SQSHL/UQSHL/SQRSHL/
@@ -227,8 +223,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SVE2 widening multiply-add long by an indexed element. The
     /// narrow source elements (half the destination width) are sign- or
     /// zero-extended; `Zm[index]` is the shared broadcast factor and bit10 (T)
@@ -294,8 +288,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute the SVE2 crypto group (AES round/mix, SM4, SHA3 RAX1). At
     /// VL=128 every operation works on the single 128-bit segment, so it reuses
     /// the NEON primitives directly. AES family: bits[15:11]==11100, sub-decoded
@@ -340,8 +332,6 @@ impl AArch64Cpu {
             _ => Ok(CpuExit::Undefined(insn)),
         }
     }
-
-
 
     /// Execute SVE2 integer multiply / multiply-add by an indexed element.
     /// `Zm[index]` (selected within the single 128-bit segment for VL=128) is

@@ -17,7 +17,6 @@ use crate::smir::ir::{
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader};
 
 impl Aarch64Lifter {
-
     pub(crate) fn lift_load(
         &self,
         insn: &DecodedInsn,
@@ -117,7 +116,6 @@ impl Aarch64Lifter {
         Ok(())
     }
 
-
     pub(crate) fn lift_store(
         &self,
         insn: &DecodedInsn,
@@ -162,7 +160,6 @@ impl Aarch64Lifter {
         Ok(())
     }
 
-
     pub(crate) fn lift_load_exclusive(
         &self,
         insn: &DecodedInsn,
@@ -202,7 +199,6 @@ impl Aarch64Lifter {
 
         Ok(())
     }
-
 
     pub(crate) fn lift_store_exclusive(
         &self,
@@ -248,7 +244,6 @@ impl Aarch64Lifter {
 
         Ok(())
     }
-
 
     pub(crate) fn lift_load_pair(
         &self,
@@ -348,7 +343,6 @@ impl Aarch64Lifter {
 
         Ok(())
     }
-
 
     pub(crate) fn lift_store_pair(
         &self,

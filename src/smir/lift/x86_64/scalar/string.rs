@@ -22,7 +22,6 @@ use crate::smir::lift::{
 };
 
 impl X86_64Lifter {
-
     /// Lift MOVS/STOS/LODS/SCAS/CMPS, with or without REP prefixes.
     pub(crate) fn lift_string(
         &self,

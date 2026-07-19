@@ -17,18 +17,15 @@ use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 
 impl SmirInterpreter {
-
     #[inline]
     pub(crate) fn x86_three_d_now_is_zero(bits: u32) -> bool {
         bits & 0x7F80_0000 == 0
     }
 
-
     #[inline]
     pub(crate) fn x86_three_d_now_is_unsupported(bits: u32) -> bool {
         bits & 0x7F80_0000 == 0x7F80_0000
     }
-
 
     /// 3DNow! treats every exponent-zero input as signed zero, including IEEE
     /// binary32 subnormals. Exponent-255 encodings are architecturally
@@ -41,7 +38,6 @@ impl SmirInterpreter {
             bits
         }
     }
-
 
     /// Map a binary32 result into the 3DNow! numerical domain: subnormal
     /// results flush to signed zero and overflow saturates to signed maximum
@@ -66,7 +62,6 @@ impl SmirInterpreter {
         }
     }
 
-
     #[inline]
     pub(crate) fn x86_three_d_now_binary(
         first: u32,
@@ -83,7 +78,6 @@ impl SmirInterpreter {
         Self::x86_three_d_now_finish(operation(f32::from_bits(first), f32::from_bits(second)))
     }
 
-
     #[inline]
     pub(crate) fn x86_three_d_now_multiply(first: u32, second: u32) -> u32 {
         let first = Self::x86_three_d_now_input_bits(first);
@@ -94,18 +88,15 @@ impl SmirInterpreter {
         Self::x86_three_d_now_binary(first, second, |a, b| a * b)
     }
 
-
     #[inline]
     pub(crate) fn x86_three_d_now_lane(value: u64, lane: u32) -> u32 {
         (value >> (lane * 32)) as u32
     }
 
-
     #[inline]
     pub(crate) fn x86_three_d_now_pack(low: u32, high: u32) -> u64 {
         u64::from(low) | (u64::from(high) << 32)
     }
-
 
     pub(crate) fn x86_three_d_now_float_to_int(bits: u32, minimum: i32, maximum: i32) -> i32 {
         let bits = Self::x86_three_d_now_input_bits(bits);
@@ -123,7 +114,6 @@ impl SmirInterpreter {
             value.trunc() as i32
         }
     }
-
 
     pub(crate) fn x86_three_d_now_min_max(first: u32, second: u32, maximum: bool) -> u32 {
         let first = Self::x86_three_d_now_input_bits(first);
@@ -155,7 +145,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_three_d_now_reciprocal(bits: u32, square_root: bool) -> u32 {
         let bits = Self::x86_three_d_now_input_bits(bits);
         let sign = bits & 0x8000_0000;
@@ -174,8 +163,11 @@ impl SmirInterpreter {
         Self::x86_three_d_now_finish(f32::from_bits(estimate.to_bits() | sign))
     }
 
-
-    pub(crate) fn x86_three_d_now_iteration(first: u32, second: u32, kind: X86ThreeDNowKind) -> u32 {
+    pub(crate) fn x86_three_d_now_iteration(
+        first: u32,
+        second: u32,
+        kind: X86ThreeDNowKind,
+    ) -> u32 {
         let first = Self::x86_three_d_now_input_bits(first);
         let second = Self::x86_three_d_now_input_bits(second);
         if Self::x86_three_d_now_is_zero(first) || Self::x86_three_d_now_is_zero(second) {
@@ -196,7 +188,6 @@ impl SmirInterpreter {
         };
         Self::x86_three_d_now_finish(value)
     }
-
 
     pub(crate) fn x86_three_d_now_eval(kind: X86ThreeDNowKind, first: u64, second: u64) -> u64 {
         use X86ThreeDNowKind::*;

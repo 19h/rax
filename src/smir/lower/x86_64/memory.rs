@@ -32,17 +32,14 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
-
     /// Enable lowering `Load`/`Store` as MMU helper calls (see `mem_helpers`).
     pub fn set_mem_helpers(&mut self, on: bool) {
         self.mem_helpers = on;
     }
 
-
     pub fn set_preserve_vector_mem_helpers(&mut self, on: bool) {
         self.preserve_vector_mem_helpers = on;
     }
-
 
     pub(crate) fn native_stack_dst(vreg: VReg) -> Option<X86Reg> {
         match vreg {
@@ -50,7 +47,6 @@ impl X86_64Lowerer {
             _ => None,
         }
     }
-
 
     pub(crate) fn ensure_native_stack_dst_safe(vreg: VReg) -> Result<(), LowerError> {
         if let Some(reg) = Self::native_stack_dst(vreg) {
@@ -60,7 +56,6 @@ impl X86_64Lowerer {
         }
         Ok(())
     }
-
 
     pub(crate) fn ensure_native_stack_dests_safe(op: &SmirOp) -> Result<(), LowerError> {
         if Self::mov_touches_state_backed_gpr(&op.kind)
@@ -95,8 +90,10 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
-    pub(crate) fn ensure_native_stack_memory_safe(op: &SmirOp, mem_helpers: bool) -> Result<(), LowerError> {
+    pub(crate) fn ensure_native_stack_memory_safe(
+        op: &SmirOp,
+        mem_helpers: bool,
+    ) -> Result<(), LowerError> {
         if mem_helpers {
             return Ok(());
         }
@@ -111,7 +108,6 @@ impl X86_64Lowerer {
         }
         Ok(())
     }
-
 
     pub(crate) fn ensure_count_native_stack_safe(
         op: &'static str,
@@ -130,7 +126,6 @@ impl X86_64Lowerer {
 
         Ok(())
     }
-
 
     pub(crate) fn emit_predicated_memory_guard(
         &mut self,
@@ -156,7 +151,6 @@ impl X86_64Lowerer {
         }
         Ok(self.emit_jcc_placeholder(X86Cond::E))
     }
-
 
     pub(crate) fn emit_sse_mov_mem(
         &mut self,
@@ -255,7 +249,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_sse_op38_mem(
         &mut self,
         prefix: Option<u8>,
@@ -352,7 +345,6 @@ impl X86_64Lowerer {
 
         Ok(())
     }
-
 
     pub(crate) fn emit_vec_mem(
         &mut self,
@@ -613,7 +605,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_movzx_mem(
         &mut self,
         dst: PhysReg,
@@ -711,7 +702,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_movsx_mem(
         &mut self,
         dst: PhysReg,
@@ -808,7 +798,6 @@ impl X86_64Lowerer {
 
         Ok(())
     }
-
 
     pub(crate) fn emit_alu_mem_reg(
         &mut self,
@@ -917,7 +906,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_alu_mem_imm(
         &mut self,
         digit: u8,
@@ -1008,7 +996,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_test_mem_reg(
         &mut self,
         addr: &Address,
@@ -1097,7 +1084,6 @@ impl X86_64Lowerer {
 
         Ok(())
     }
-
 
     pub(crate) fn emit_test_mem_imm(
         &mut self,
@@ -1188,7 +1174,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_group3_mem(
         &mut self,
         digit: u8,
@@ -1277,7 +1262,6 @@ impl X86_64Lowerer {
 
         Ok(())
     }
-
 
     pub(crate) fn emit_shift_mem(
         &mut self,
@@ -1376,7 +1360,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_group5_mem(&mut self, digit: u8, addr: &Address) -> Result<(), LowerError> {
         match addr {
             Address::Direct(base) => {
@@ -1459,7 +1442,6 @@ impl X86_64Lowerer {
 
         Ok(())
     }
-
 
     pub(crate) fn emit_shld_mem(
         &mut self,
@@ -1551,7 +1533,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_shrd_mem(
         &mut self,
         addr: &Address,
@@ -1641,7 +1622,6 @@ impl X86_64Lowerer {
 
         Ok(())
     }
-
 
     pub(crate) fn emit_imul_mem_imm(
         &mut self,
@@ -1742,7 +1722,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn try_lower_mem_extend(
         &mut self,
         ops: &[crate::smir::ir::ops::SmirOp],
@@ -1794,7 +1773,6 @@ impl X86_64Lowerer {
 
         Ok(None)
     }
-
 
     pub(crate) fn try_lower_mem_shift(
         &mut self,
@@ -1915,7 +1893,6 @@ impl X86_64Lowerer {
         self.emit_shift_mem(digit, addr, op_width, count)?;
         Ok(Some(3))
     }
-
 
     pub(crate) fn try_lower_mem_alu(
         &mut self,
@@ -2178,7 +2155,6 @@ impl X86_64Lowerer {
         Ok(None)
     }
 
-
     pub(crate) fn try_lower_mem_imul(
         &mut self,
         ops: &[crate::smir::ir::ops::SmirOp],
@@ -2239,7 +2215,6 @@ impl X86_64Lowerer {
         self.emit_imul_mem_imm(dst_reg, addr, imm, op_width, use_imm8)?;
         Ok(Some(2))
     }
-
 
     pub(crate) fn try_lower_mem_group3(
         &mut self,
@@ -2368,7 +2343,6 @@ impl X86_64Lowerer {
         Ok(None)
     }
 
-
     pub(crate) fn try_lower_mem_shld(
         &mut self,
         ops: &[crate::smir::ir::ops::SmirOp],
@@ -2450,7 +2424,6 @@ impl X86_64Lowerer {
         Ok(Some(3))
     }
 
-
     /// `mov [base+off], r<reg_enc>` (store) or `mov r<reg_enc>, [base+off]` (load),
     /// REX.W, mod=10 disp32. `base` is always RAX or RCX here (rm 0/1, no SIB).
     pub(crate) fn emit_struct_mov(&mut self, base: PhysReg, reg_enc: u8, off: i32, store: bool) {
@@ -2468,7 +2441,6 @@ impl X86_64Lowerer {
         self.code.emit_u32(off as u32);
     }
 
-
     /// `add rsi, imm` (REX.W 81 /0 id) when `v` fits i32; else bail.
     pub(crate) fn emit_add_rsi_imm(&mut self, v: i64) -> Result<(), LowerError> {
         if v == 0 {
@@ -2485,7 +2457,6 @@ impl X86_64Lowerer {
         self.code.emit_u32(v as u32);
         Ok(())
     }
-
 
     /// Add a wrapping signed 64-bit displacement to RSI. The generic memory
     /// helper path accepts only architectural x86 disp32 values, but a lifted
@@ -2508,7 +2479,6 @@ impl X86_64Lowerer {
             self.code.emit_u8(0xFE); // add rsi, rdi
         }
     }
-
 
     /// Evaluate the explicit alignment precondition emitted for aligned x86
     /// SIMD memory operands. No guest address is dereferenced here. A mismatch

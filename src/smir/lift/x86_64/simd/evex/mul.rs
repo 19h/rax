@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn lift_evex_bf16_dot(
         &self,
         prefix: VecPrefix,
@@ -125,8 +123,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_four_dot_product(
         &self,
         prefix: VecPrefix,
@@ -198,8 +194,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_pmaddubsw(
         &self,
@@ -305,8 +299,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_pmulhrsw(
         &self,

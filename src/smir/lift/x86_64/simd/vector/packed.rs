@@ -19,7 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
     /// Merge a computed legacy packed-XMM result into the architectural
     /// destination without changing the shared YMM/ZMM state above bit 127.
     pub(crate) fn append_legacy_packed_result(
@@ -63,8 +62,6 @@ impl X86_64Lifter {
         }
     }
 
-
-
     pub(crate) fn append_zero_vector(
         &self,
         width: VecWidth,
@@ -96,8 +93,6 @@ impl X86_64Lifter {
         ));
         vector
     }
-
-
 
     pub(crate) fn append_vector_splat_imm(
         &self,
@@ -132,8 +127,6 @@ impl X86_64Lifter {
         vector
     }
 
-
-
     pub(crate) fn append_vector_and(
         &self,
         src1: VReg,
@@ -156,8 +149,6 @@ impl X86_64Lifter {
         ));
         dst
     }
-
-
 
     /// Append the vector operation `!src1 & src2`.
     pub(crate) fn append_vector_and_not(
@@ -183,8 +174,6 @@ impl X86_64Lifter {
         dst
     }
 
-
-
     pub(crate) fn append_vector_or(
         &self,
         src1: VReg,
@@ -208,8 +197,6 @@ impl X86_64Lifter {
         dst
     }
 
-
-
     pub(crate) fn append_vector_xor(
         &self,
         src1: VReg,
@@ -232,8 +219,6 @@ impl X86_64Lifter {
         ));
         dst
     }
-
-
 
     pub(crate) fn append_vector_sub(
         &self,
@@ -259,8 +244,6 @@ impl X86_64Lifter {
         ));
         dst
     }
-
-
 
     pub(crate) fn append_vector_shift(
         &self,
@@ -288,8 +271,6 @@ impl X86_64Lifter {
         ));
         dst
     }
-
-
 
     /// Append the exact per-lane semantics of PSIGNB/W/D using generic SMIR:
     /// negative control -> wrapping negation, zero control -> zero, positive
@@ -369,8 +350,6 @@ impl X86_64Lifter {
         ));
     }
 
-
-
     pub(crate) fn packed_minmax_shape(opcode: u8, qword: bool) -> (VecElementType, bool, bool) {
         let elem = match opcode {
             0xDA | 0xDE => VecElementType::I8,
@@ -385,8 +364,6 @@ impl X86_64Lifter {
         let signed = matches!(opcode, 0x38 | 0x39 | 0x3C | 0x3D | 0xEA | 0xEE);
         (elem, min, signed)
     }
-
-
 
     /// Select the elementwise signed/unsigned packed integer minimum or maximum.
     /// `VCmp` produces an all-ones lane mask, which makes the subsequent
@@ -435,8 +412,6 @@ impl X86_64Lifter {
             },
         ));
     }
-
-
 
     /// Find the unsigned minimum of eight packed words and return the minimum
     /// in bits 15:0 and its first (lowest) lane index in bits 18:16.  Scalar
@@ -594,8 +569,6 @@ impl X86_64Lifter {
         ));
     }
 
-
-
     pub(crate) fn pmul_high_word_kind(
         dst: VReg,
         src1: VReg,
@@ -618,8 +591,6 @@ impl X86_64Lifter {
         }
     }
 
-
-
     pub(crate) fn packed_extend_shape(opcode: u8) -> (VecElementType, VecElementType, bool) {
         let signed = opcode < 0x30;
         let (src, dst) = match opcode & 0x0F {
@@ -634,8 +605,6 @@ impl X86_64Lifter {
         (src, dst, signed)
     }
 
-
-
     pub(crate) fn packed_extend_source_width(source_bytes: u32) -> VecWidth {
         match source_bytes {
             0..=8 => VecWidth::V64,
@@ -644,8 +613,6 @@ impl X86_64Lifter {
             _ => unreachable!(),
         }
     }
-
-
 
     pub(crate) fn append_packed_extend(
         &self,
@@ -715,8 +682,6 @@ impl X86_64Lifter {
             ));
         }
     }
-
-
 
     pub(crate) fn append_packed_extend_memory_source(
         &self,
@@ -818,8 +783,6 @@ impl X86_64Lifter {
         source
     }
 
-
-
     /// Construct an XMM result whose low 32- or 64-bit lane is `scalar` and
     /// whose remaining bits through bit 127 are zero. Legacy encodings retain
     /// the shared architectural backing state above bit 127; VEX/EVEX
@@ -873,8 +836,6 @@ impl X86_64Lifter {
         }
     }
 
-
-
     pub(crate) fn append_integer_interleave(
         &self,
         dst: VReg,
@@ -902,8 +863,6 @@ impl X86_64Lifter {
             hint,
         ));
     }
-
-
 
     pub(crate) fn lift_vec_addsub_horizontal(
         &self,
@@ -968,8 +927,6 @@ impl X86_64Lifter {
         );
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_packed_extend(
         &self,
@@ -1060,8 +1017,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_packed_minmax(
         &self,
@@ -1253,8 +1208,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_vec_mpsadbw(
         &self,
         prefix: VecPrefix,
@@ -1408,8 +1361,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
-
-
     pub(crate) fn lift_vec_psadbw(
         &self,
         prefix: VecPrefix,
@@ -1507,8 +1458,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn packed_shift_count_spec(
         opcode: u8,
         evex: bool,
@@ -1527,8 +1476,6 @@ impl X86_64Lifter {
             _ => None,
         }
     }
-
-
 
     pub(crate) fn lift_vec_packed_shift_count(
         &self,
@@ -1634,8 +1581,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_packed_shift_variable(
         &self,
@@ -1764,8 +1709,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_packed_shift_imm(
         &self,
@@ -2111,8 +2054,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_vec_packed_average(
         &self,

@@ -23,13 +23,15 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
-
     /// Execute SVE integer reduction (predicated) to a scalar in Vd. opc6 =
     /// bits[21:16]: SADDV(000000)/UADDV(000001) give a 64-bit sum; SMAXV/UMAXV/
     /// SMINV/UMINV (0010xx) and ANDV/ORV/EORV (0110xx) give an esize result.
     /// Inactive elements use the operation identity. Pg is byte-granular.
-    pub(crate) fn exec_sve_int_reduce(&mut self, insn: u32, esize: usize) -> Result<CpuExit, ArmError> {
+    pub(crate) fn exec_sve_int_reduce(
+        &mut self,
+        insn: u32,
+        esize: usize,
+    ) -> Result<CpuExit, ArmError> {
         let opc6 = (insn >> 16) & 0x3F;
         // SADDV has no 64-bit form (use UADDV.D for that).
         if opc6 == 0b000000 && esize == 8 {
@@ -85,15 +87,17 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute an SVE2.1 integer quadword reduction (ADDQV/SMAXQV/UMAXQV/SMINQV/
     /// UMINQV/ANDQV/ORQV/EORQV) to Vd. opc6=bits[21:16]. Each element position is
     /// reduced across the 128-bit segments of Zn (seeded with the op identity);
     /// at VL=128 (one segment) an active lane keeps Zn's value while an inactive
     /// lane takes the identity. Pg is byte-granular. Mirrors qemu DO_VPQ /
     /// DO_LOGIC_QV (the identity is the reduction of the empty active set).
-    pub(crate) fn exec_sve_qv_reduce_int(&mut self, insn: u32, esize: usize) -> Result<CpuExit, ArmError> {
+    pub(crate) fn exec_sve_qv_reduce_int(
+        &mut self,
+        insn: u32,
+        esize: usize,
+    ) -> Result<CpuExit, ArmError> {
         let opc6 = (insn >> 16) & 0x3F;
         let pg = ((insn >> 10) & 0x7) as usize;
         let zn = ((insn >> 5) & 0x1F) as usize;

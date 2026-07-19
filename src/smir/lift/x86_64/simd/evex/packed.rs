@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn lift_evex_vpopcnt(
         &self,
         prefix: VecPrefix,
@@ -129,8 +127,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_vplzcnt(
         &self,
         prefix: VecPrefix,
@@ -233,8 +229,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_integer_narrow(
         &self,
@@ -430,8 +424,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn append_vsib_lane_address(
         &self,
         x86_addr: &X86Address,
@@ -511,8 +503,6 @@ impl X86_64Lifter {
             None => Address::Direct(offset),
         }
     }
-
-
 
     pub(crate) fn append_vdbpsadbw(
         &self,
@@ -612,8 +602,6 @@ impl X86_64Lifter {
         }
         result
     }
-
-
 
     pub(crate) fn lift_evex_packed_rotate_variable(
         &self,
@@ -752,8 +740,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_packed_funnel_shift(
         &self,
@@ -910,8 +896,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, bytes_consumed))
     }
 
-
-
     pub(crate) fn append_evex_whole_tuple_128(
         &self,
         addr: Address,
@@ -999,8 +983,6 @@ impl X86_64Lifter {
         ));
         loaded
     }
-
-
 
     pub(crate) fn lift_evex_pabs(
         &self,
@@ -1278,8 +1260,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_integer_pack(
         &self,
@@ -1594,8 +1574,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_integer_unpack(
         &self,
         prefix: VecPrefix,
@@ -1681,8 +1659,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_word_move(
         &self,

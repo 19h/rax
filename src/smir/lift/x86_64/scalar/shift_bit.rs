@@ -22,7 +22,6 @@ use crate::smir::lift::{
 };
 
 impl X86_64Lifter {
-
     pub(crate) fn x86_shift_op(
         group: u8,
         dst: VReg,
@@ -95,7 +94,6 @@ impl X86_64Lifter {
         }
     }
 
-
     pub(crate) fn x86_shift_smir_op(id: OpId, pc: u64, group: u8, kind: OpKind) -> SmirOp {
         if group == 6 {
             SmirOp::with_hint(id, pc, kind, X86OpHint::ShiftGroup6)
@@ -103,7 +101,6 @@ impl X86_64Lifter {
             SmirOp::new(id, pc, kind)
         }
     }
-
 
     /// Lift shift instructions with immediate (C0/C1)
     pub(crate) fn lift_shift_imm(
@@ -217,7 +214,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift shift instructions with implicit count = 1 (D0/D1)
     pub(crate) fn lift_shift_one(
         &self,
@@ -321,7 +317,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift shift instructions with count in CL (D2/D3)
     pub(crate) fn lift_shift_cl(
         &self,
@@ -419,7 +414,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift BSF/BSR (0F BC/0F BD)
     pub(crate) fn lift_bsf_bsr(
         &self,
@@ -480,7 +474,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
 
     pub(crate) fn emit_bit_test_ops(
         &self,
@@ -784,7 +777,6 @@ impl X86_64Lifter {
         Ok(ops)
     }
 
-
     /// Lift BT/BTS/BTR/BTC r/m,reg (0F A3/AB/B3/BB).
     pub(crate) fn lift_bit_test_reg(
         &self,
@@ -825,7 +817,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift Group-8 BT/BTS/BTR/BTC r/m,imm8 (0F BA /4-/7).
     pub(crate) fn lift_bit_test_imm(
         &self,
@@ -865,7 +856,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed + 1,
         ))
     }
-
 
     /// Lift POPCNT/TZCNT/LZCNT (F3 0F B8/BC/BD), including their exact
     /// modeled RFLAGS effects. POPCNT clears the arithmetic status flags other
@@ -945,7 +935,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
 
     /// Lift SHLD/SHRD (0F A4/A5/AC/AD)
     pub(crate) fn lift_shld_shrd(

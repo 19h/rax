@@ -1220,7 +1220,10 @@ pub(crate) fn aarch64_op_needs_fp_trampoline(op: &crate::smir::ir::ops::OpKind) 
         || op.dests().iter().any(aarch64_fp_trampoline_vreg)
         || op.source_vregs().iter().any(aarch64_fp_trampoline_vreg)
 }
-pub(crate) fn aarch64_block_is_clobber_safe(block: &crate::smir::ir::SmirBlock, allow_mem: bool) -> bool {
+pub(crate) fn aarch64_block_is_clobber_safe(
+    block: &crate::smir::ir::SmirBlock,
+    allow_mem: bool,
+) -> bool {
     use crate::smir::ir::Terminator;
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, ArmReg, VReg};

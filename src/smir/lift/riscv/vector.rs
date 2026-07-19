@@ -1,6 +1,5 @@
 //! vector.rs
 
-use crate::smir::lift::riscv::*;
 use crate::isa::riscv::{
     Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode, rvc::decode_rvc as rv_decode_rvc,
 };
@@ -8,11 +7,13 @@ use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, RvVectorState, SmirOp};
 use crate::smir::ir::types::*;
 use crate::smir::ir::{SmirBlock, SmirFunction};
+use crate::smir::lift::riscv::*;
 
-use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter};
+use crate::smir::lift::{
+    ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
+};
 
 impl RiscVLifter {
-
     /// OP-V (0x57): RVV arithmetic and `vset{i}vl{i}` configuration. RVV element
     /// width and length are runtime `vtype`/`vl` state unknown at lift time, so
     /// the whole vector ISA is lifted to the opaque [`OpKind::RvVector`] engine.
@@ -36,7 +37,6 @@ impl RiscVLifter {
         }
         self.emit_rv_vector(insn, &d, addr, ctx)
     }
-
 
     /// Emit an opaque [`OpKind::RvVector`] for one RVV instruction. The vector
     /// engine is opaque to SMIR, so scalar x/f/CSR state is explicitly listed

@@ -23,8 +23,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
-
     pub(crate) fn exec_sve_fp_pred(
         &mut self,
         insn: u32,
@@ -1307,12 +1305,14 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SVE FP reduction to a scalar in Vd: the "fast" tree reductions
     /// FADDV/FMAXNMV/FMINNMV/FMAXV/FMINV (opc=bits[18:16]) and the strictly
     /// ordered FADDA (bits[20:16]==11000). Pg is byte-granular.
-    pub(crate) fn exec_sve_fp_reduce(&mut self, insn: u32, esize: usize) -> Result<CpuExit, ArmError> {
+    pub(crate) fn exec_sve_fp_reduce(
+        &mut self,
+        insn: u32,
+        esize: usize,
+    ) -> Result<CpuExit, ArmError> {
         if esize < 2 {
             return Ok(CpuExit::Undefined(insn));
         }
@@ -1363,8 +1363,6 @@ impl AArch64Cpu {
         self.v[vd] = (r as u128) & mask;
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute SVE predicated FP unary (merging): FSQRT, FRECPX and FRINT*
     /// (bits[20:16] selects the op). Inactive lanes keep their prior Zd value.
@@ -1564,8 +1562,6 @@ impl AArch64Cpu {
         self.v[zd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute SVE FCVTZS/FCVTZU (FP -> integer, round toward zero, saturating)
     /// and SCVTF/UCVTF (integer -> FP, round to nearest even). The per-element

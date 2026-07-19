@@ -1,12 +1,12 @@
 //! helpers.rs
 
-use crate::isa::arm::aarch32::instructions::neon::*;
-use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::aarch32::cpu::{
     ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr, add_with_carry, compute_n_flag,
     compute_z_flag, condition_passed, expand_imm_c, shift_c, sign_extend,
 };
+use crate::isa::arm::aarch32::instructions::neon::*;
+use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::aarch32::vfp::{
     Fpscr, NeonSize, RoundingMode, vabs_f16_bits, vabs_f32, vabs_f64, vadd_f16_bits, vadd_f32,
     vadd_f64, vadd_i, vand, vbic, vcls_i, vclz_i, vcmp_f16_bits_with_exception,
@@ -28,9 +28,7 @@ use crate::isa::arm::aarch32::vfp::{
 };
 use crate::isa::arm::decoder::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 
-impl <'a, M: ArmMemory> Executor<'a, M> {
-
-
+impl<'a, M: ArmMemory> Executor<'a, M> {
     pub(crate) fn is_neon_abs_neg(raw: u32) -> bool {
         if (raw >> 23) != 0b111100111
             || ((raw >> 20) & 0x3) != 0b11
@@ -49,16 +47,12 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
-
     pub(crate) fn is_neon_integer_multiply_shape(raw: u32) -> bool {
         (raw >> 25) == 0b1111001
             && ((raw >> 23) & 1) == 0
             && ((raw >> 8) & 0xF) == 0b1001
             && (((raw >> 4) & 1) == 0 || ((raw >> 24) & 1) == 0)
     }
-
-
 
     pub(crate) fn is_neon_polynomial_multiply_shape(raw: u32) -> bool {
         (raw >> 25) == 0b1111001
@@ -68,8 +62,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             && ((raw >> 8) & 0xF) == 0b1001
             && ((raw >> 4) & 1) == 1
     }
-
-
 
     pub(crate) fn is_neon_integer_multiply_scalar_shape(raw: u32) -> bool {
         if (raw >> 25) != 0b1111001
@@ -83,8 +75,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         matches!((raw >> 8) & 0xF, 0b0000 | 0b0100 | 0b1000)
     }
 
-
-
     pub(crate) fn is_neon_long_multiply_shape(raw: u32) -> bool {
         (raw >> 25) == 0b1111001
             && ((raw >> 23) & 1) == 1
@@ -95,8 +85,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
                 0b1000 | 0b1001 | 0b1010 | 0b1011 | 0b1100 | 0b1101
             )
     }
-
-
 
     pub(crate) fn is_neon_long_multiply_scalar_shape(raw: u32) -> bool {
         if (raw >> 25) != 0b1111001
@@ -113,8 +101,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         )
     }
 
-
-
     pub(crate) fn is_neon_polynomial_multiply_long_shape(raw: u32) -> bool {
         (raw >> 25) == 0b1111001
             && ((raw >> 23) & 1) == 1
@@ -124,8 +110,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             && ((raw >> 4) & 1) == 0
     }
 
-
-
     pub(crate) fn is_neon_modified_immediate_shape(raw: u32) -> bool {
         (raw >> 25) == 0b1111001
             && ((raw >> 23) & 1) == 1
@@ -133,8 +117,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             && ((raw >> 4) & 1) == 1
             && (((raw >> 8) & 0xF) != 0b1111 || ((raw >> 5) & 1) == 0)
     }
-
-
 
     pub(crate) fn is_neon_directed_convert_shape(raw: u32) -> bool {
         (raw >> 24) == 0xF3
@@ -145,8 +127,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             && ((raw >> 10) & 0x3) == 0
             && ((raw >> 4) & 1) == 0
     }
-
-
 
     pub(crate) fn decode_vfp_mem(&mut self, insn: &DecodedInsn) -> Option<(u32, u32, u8)> {
         let u = (insn.raw >> 23) & 1;
@@ -174,8 +154,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             _ => None,
         }
     }
-
-
 
     pub(crate) fn decode_vfp_block_mem(
         &mut self,
@@ -222,9 +200,10 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         Some((start, final_addr, elem_size, first, count, w, rn))
     }
 
-
-
-    pub(crate) fn decode_vfp_cond_select_regs(&self, insn: &DecodedInsn) -> Option<(u8, u8, u8, u32)> {
+    pub(crate) fn decode_vfp_cond_select_regs(
+        &self,
+        insn: &DecodedInsn,
+    ) -> Option<(u8, u8, u8, u32)> {
         let d_bit = ((insn.raw >> 22) & 1) as u8;
         let vd = ((insn.raw >> 12) & 0xF) as u8;
         let n_bit = ((insn.raw >> 7) & 1) as u8;
@@ -238,8 +217,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             _ => None,
         }
     }
-
-
 
     pub(crate) fn decode_vfp_ternary_regs(&self, insn: &DecodedInsn) -> Option<(u8, u8, u8, u32)> {
         let d_bit = ((insn.raw >> 22) & 1) as u8;
@@ -255,8 +232,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             _ => None,
         }
     }
-
-
 
     pub(crate) fn decode_vfp_unary_regs(&self, insn: &DecodedInsn) -> Option<(u8, u8, u32)> {
         let d_bit = ((insn.raw >> 22) & 1) as u8;

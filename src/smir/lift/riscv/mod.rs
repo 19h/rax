@@ -29,7 +29,6 @@ pub(crate) use system::*;
 mod vector;
 pub(crate) use vector::*;
 
-
 /// A term in a SHA/SM3 xor-fold: a rotate / shift / identity of the source.
 #[derive(Clone, Copy)]
 enum CryptoTerm {
@@ -213,7 +212,6 @@ pub struct RiscVLifter {
     /// Enabled extensions
     extensions: RiscVExtensions,
 }
-
 
 // ============================================================================
 // SmirLifter Implementation

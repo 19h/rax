@@ -17,7 +17,6 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 impl Aarch64Lowerer {
-
     pub(crate) fn emit_addsub_shifted(
         &mut self,
         dst: u8,
@@ -44,7 +43,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_addsub_reg(
         &mut self,
         dst: u8,
@@ -56,7 +54,6 @@ impl Aarch64Lowerer {
     ) -> Result<(), LowerError> {
         self.emit_addsub_shifted(dst, rn, rm, subtract, set_flags, 0, 0, width)
     }
-
 
     pub(crate) fn emit_addsub_extended(
         &mut self,
@@ -85,7 +82,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_addsub_carry(
         &mut self,
         dst: u8,
@@ -107,7 +103,6 @@ impl Aarch64Lowerer {
         );
         Ok(())
     }
-
 
     pub(crate) fn emit_addsub_imm(
         &mut self,
@@ -149,13 +144,15 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn addsub_imm_fits(imm: u64) -> bool {
         imm <= 0xfff || (imm & 0xfff == 0 && (imm >> 12) <= 0xfff)
     }
 
-
-    pub(crate) fn canonical_addsub_imm(imm: i64, subtract: bool, width: OpWidth) -> Option<(bool, i64)> {
+    pub(crate) fn canonical_addsub_imm(
+        imm: i64,
+        subtract: bool,
+        width: OpWidth,
+    ) -> Option<(bool, i64)> {
         let value = match width {
             OpWidth::W32 => u64::from(imm as u32),
             OpWidth::W64 => imm as u64,
@@ -172,7 +169,6 @@ impl Aarch64Lowerer {
 
         None
     }
-
 
     pub(crate) fn canonical_subword_addsub_imm(
         imm: i64,
@@ -196,14 +192,12 @@ impl Aarch64Lowerer {
         None
     }
 
-
     pub(crate) fn direct_addr_reg(addr: &Address) -> Option<VReg> {
         match addr {
             Address::Direct(reg) => Some(*reg),
             _ => None,
         }
     }
-
 
     pub(crate) fn writeback_add_parts(kind: &OpKind) -> Option<(VReg, i64)> {
         match kind {
@@ -218,7 +212,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn signed_addsub_imm_fits(offset: i64) -> bool {
         let imm = if offset < 0 {
             match offset.checked_neg() {
@@ -231,7 +224,6 @@ impl Aarch64Lowerer {
 
         imm <= 0xfff || (imm & 0xfff == 0 && (imm >> 12) <= 0xfff)
     }
-
 
     pub(crate) fn emit_add_signed_imm(
         &mut self,
@@ -255,7 +247,6 @@ impl Aarch64Lowerer {
         };
         self.emit_addsub_imm(dst, rn, imm, subtract, false, width)
     }
-
 
     pub(crate) fn lower_addsub(
         &mut self,
@@ -469,7 +460,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_addsub_materialized_ror_src2(
         &mut self,
         dst: u8,
@@ -497,7 +487,6 @@ impl Aarch64Lowerer {
         self.lower_shift_imm(dst, rm, i64::from(amount), ShiftOp::Ror, width)?;
         self.emit_addsub_reg(dst, rn, dst, subtract, set_flags, width)
     }
-
 
     pub(crate) fn lower_subword_addsub(
         &mut self,
@@ -698,7 +687,6 @@ impl Aarch64Lowerer {
         self.emit_bitfield(dst, dst, 0b10, 0, top_bit, OpWidth::W32)
     }
 
-
     pub(crate) fn emit_shifted_subword_addsub_operand(
         &mut self,
         dst: u8,
@@ -710,7 +698,6 @@ impl Aarch64Lowerer {
         self.emit_bitfield(dst, src, 0b10, 0, top_bit, OpWidth::W32)?;
         self.emit_logic_shifted(dst, 31, dst, 0b01, false, 0, shift, OpWidth::W32)
     }
-
 
     pub(crate) fn lower_subword_addsub_with_flags(
         &mut self,
@@ -761,7 +748,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_addsub_carry(
         &mut self,
@@ -842,7 +828,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_subword_addsub_carry(
         &mut self,
         dst: VReg,
@@ -889,7 +874,6 @@ impl Aarch64Lowerer {
 
         self.emit_bitfield(dst, dst, 0b10, 0, top_bit, OpWidth::W32)
     }
-
 
     pub(crate) fn emit_finalize_subword_addsub_carry_flags(
         &mut self,
@@ -941,7 +925,6 @@ impl Aarch64Lowerer {
 
         self.emit_sysreg(flags, ArmReg::Nzcv, false)
     }
-
 
     pub(crate) fn lower_subword_addsub_carry_with_flags(
         &mut self,
@@ -1009,7 +992,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_subword_logic(
         &mut self,
@@ -1127,7 +1109,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_materialized_subword_logic_imm(
         &mut self,
         dst: u8,
@@ -1173,7 +1154,6 @@ impl Aarch64Lowerer {
         self.emit_mov_imm_best(dst, imm as i64, OpWidth::W32)?;
         self.emit_logic_reg_n(dst, rn, dst, opc, false, OpWidth::W32)
     }
-
 
     pub(crate) fn lower_subword_logic_with_flags(
         &mut self,
@@ -1232,7 +1212,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_neg(
         &mut self,
@@ -1298,7 +1277,6 @@ impl Aarch64Lowerer {
         )
     }
 
-
     pub(crate) fn lower_subword_neg_with_flags(
         &mut self,
         dst: VReg,
@@ -1320,7 +1298,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_subword_inc_dec_with_flags(
         &mut self,
@@ -1351,8 +1328,10 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
-    pub(crate) fn addsub_src2(src2: &SrcOperand, width: OpWidth) -> Result<(u8, u32, u32), LowerError> {
+    pub(crate) fn addsub_src2(
+        src2: &SrcOperand,
+        width: OpWidth,
+    ) -> Result<(u8, u32, u32), LowerError> {
         let bits = width.bits();
         match src2 {
             SrcOperand::Reg(reg) => Ok((Self::gpr_arm_or_x86(*reg)?, 0, 0)),
@@ -1381,7 +1360,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn addsub_ext_src2(src2: &SrcOperand) -> Result<(u8, u32, u32), LowerError> {
         match src2 {
             SrcOperand::Extended { reg, extend, shift } => {
@@ -1408,7 +1386,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_mul(
         &mut self,
@@ -1686,7 +1663,6 @@ impl Aarch64Lowerer {
         )
     }
 
-
     pub(crate) fn lower_mul_full_sub64(
         &mut self,
         dst_lo: VReg,
@@ -1776,7 +1752,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_mul_imm(
         &mut self,
         dst_lo: VReg,
@@ -1807,7 +1782,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_mul_full_imm(
         &mut self,
@@ -1861,7 +1835,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_subword_mul_with_flags(
         &mut self,
@@ -1951,7 +1924,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_mul_acc(
         &mut self,
@@ -2062,7 +2034,6 @@ impl Aarch64Lowerer {
         self.emit_dp3(dst, rn, rm, ra, 0b000, subtract as u32, width)
     }
 
-
     pub(crate) fn lower_subword_div(
         &mut self,
         quot: VReg,
@@ -2132,7 +2103,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_subword_shift_imm(
         &mut self,
         dst: u8,
@@ -2199,7 +2169,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn emit_subword_shift_oob_guards(
         &mut self,
         amount: u8,
@@ -2224,7 +2193,6 @@ impl Aarch64Lowerer {
         Ok(guards)
     }
 
-
     pub(crate) fn patch_subword_shift_oob_guards(
         &mut self,
         amount: u8,
@@ -2235,7 +2203,6 @@ impl Aarch64Lowerer {
         }
         Ok(())
     }
-
 
     pub(crate) fn lower_subword_shift_reg(
         &mut self,
@@ -2387,7 +2354,6 @@ impl Aarch64Lowerer {
             ShiftOp::Rrx => unreachable!(),
         }
     }
-
 
     pub(crate) fn lower_mul_flag_contract(
         &mut self,

@@ -20,8 +20,8 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 // ---- module tree (auto-split) ----
 mod execution;
 pub use execution::*;
-mod ops;
 mod hex_float;
+mod ops;
 pub use hex_float::*;
 mod simd;
 pub use simd::*;
@@ -37,7 +37,6 @@ mod x87;
 pub use x87::*;
 mod xsave;
 pub use xsave::*;
-
 
 // ============================================================================
 // Block Result
@@ -1251,7 +1250,6 @@ pub struct SmirInterpreter {
     /// Block address mapping (BlockId -> guest address)
     block_addrs: HashMap<BlockId, GuestAddr>,
 }
-
 
 impl Default for SmirInterpreter {
     fn default() -> Self {

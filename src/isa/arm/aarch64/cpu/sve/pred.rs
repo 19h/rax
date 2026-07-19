@@ -23,13 +23,10 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
     /// Write SVE predicate register `i`. Exposed for the differential harness.
     pub fn set_sve_pred(&mut self, i: usize, v: u32) {
         self.sve_p[i] = v;
     }
-
-
 
     /// Execute SVE integer predicated operations.
     pub(crate) fn exec_sve_int_pred(
@@ -144,8 +141,6 @@ impl AArch64Cpu {
         self.v[zd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute SVE predicate-generating operations (PTRUE/PTRUES, PFALSE, the
     /// WHILE family). Predicates are stored BYTE-granular: element `e` (size

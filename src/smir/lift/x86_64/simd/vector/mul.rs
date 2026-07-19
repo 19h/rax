@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     /// Multiply the even dword lanes into full qword products.
     /// Every input is extracted before the output vector is initialized, which
     /// makes all architectural source/destination alias combinations safe.
@@ -122,8 +120,6 @@ impl X86_64Lifter {
         ));
     }
 
-
-
     pub(crate) fn pmaddwd_kind(dst: VReg, src1: VReg, src2: VReg, width: VecWidth) -> OpKind {
         // The zero accumulator selects the non-accumulating PMADDWD semantic
         // subset of VDotProduct. Narrowing to I32 performs the instruction's
@@ -142,8 +138,6 @@ impl X86_64Lifter {
             zeroing: false,
         }
     }
-
-
 
     /// Carry-less multiply one selected qword pair in every independent
     /// 128-bit block. imm8[0] selects src1's qword and imm8[4] selects src2's;
@@ -232,8 +226,6 @@ impl X86_64Lifter {
             },
         ));
     }
-
-
 
     pub(crate) fn lift_vec_vpmadd52(
         &self,
@@ -363,8 +355,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_vnni_dot(
         &self,
@@ -497,8 +487,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_vec_pclmulqdq(
         &self,
         prefix: VecPrefix,
@@ -587,8 +575,6 @@ impl X86_64Lifter {
         self.append_pclmulqdq(dst, src1, src2, prefix.width, imm, pc, ctx, &mut ops);
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_vec_pmuldq(
         &self,
@@ -734,8 +720,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_pmul_low(
         &self,
@@ -901,8 +885,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_vec_pmul_high_word(
         &self,
         prefix: VecPrefix,
@@ -1026,8 +1008,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_pmaddwd(
         &self,

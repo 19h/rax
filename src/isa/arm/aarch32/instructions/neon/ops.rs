@@ -1,12 +1,12 @@
 //! ops.rs
 
-use crate::isa::arm::aarch32::instructions::neon::*;
-use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::aarch32::cpu::{
     ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr, add_with_carry, compute_n_flag,
     compute_z_flag, condition_passed, expand_imm_c, shift_c, sign_extend,
 };
+use crate::isa::arm::aarch32::instructions::neon::*;
+use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::aarch32::vfp::{
     Fpscr, NeonSize, RoundingMode, vabs_f16_bits, vabs_f32, vabs_f64, vadd_f16_bits, vadd_f32,
     vadd_f64, vadd_i, vand, vbic, vcls_i, vclz_i, vcmp_f16_bits_with_exception,
@@ -28,9 +28,7 @@ use crate::isa::arm::aarch32::vfp::{
 };
 use crate::isa::arm::decoder::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 
-impl <'a, M: ArmMemory> Executor<'a, M> {
-
-
+impl<'a, M: ArmMemory> Executor<'a, M> {
     pub(crate) fn exec_vadd_vsub(&mut self, insn: &DecodedInsn) -> ExecResult {
         if Self::is_neon_fp_add_sub_shape(insn.raw) {
             self.exec_neon_fp_add_sub(insn)
@@ -40,8 +38,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             self.exec_vfp_binop(insn)
         }
     }
-
-
 
     pub(crate) fn neon_integer_add_sub_size(insn: &DecodedInsn) -> Option<NeonSize> {
         if !matches!(insn.mnemonic, Mnemonic::VADD | Mnemonic::VSUB)
@@ -62,8 +58,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             _ => None,
         }
     }
-
-
 
     pub(crate) fn exec_neon_integer_add_sub(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -105,8 +99,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_logical_register(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -156,8 +148,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_vmvn_register(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -189,8 +179,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_vrev_register(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -240,8 +228,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_vswp(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -279,8 +265,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_vdup(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -340,8 +324,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_pairwise_permute(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -434,8 +416,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_pairwise_integer(&mut self, insn: &DecodedInsn) -> ExecResult {
         if Self::is_neon_fp_pairwise_shape(insn.raw) {
             return self.exec_neon_fp_pairwise(insn);
@@ -518,8 +498,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_pairwise_add_long(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -587,8 +565,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_shift_immediate(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -713,8 +689,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_vshl(&mut self, insn: &DecodedInsn) -> ExecResult {
         if (insn.raw >> 25) == 0b1111001
             && ((insn.raw >> 23) & 1) == 0
@@ -726,8 +700,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         self.exec_neon_shift_immediate(insn)
     }
-
-
 
     pub(crate) fn exec_vqshl(&mut self, insn: &DecodedInsn) -> ExecResult {
         if (insn.raw >> 25) == 0b1111001
@@ -741,9 +713,10 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.exec_neon_saturating_shift_left_immediate(insn)
     }
 
-
-
-    pub(crate) fn exec_neon_saturating_shift_left_immediate(&mut self, insn: &DecodedInsn) -> ExecResult {
+    pub(crate) fn exec_neon_saturating_shift_left_immediate(
+        &mut self,
+        insn: &DecodedInsn,
+    ) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
         }
@@ -818,8 +791,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_shift_register(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -963,8 +934,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_shift_narrow_immediate(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -1059,8 +1028,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_widen_move(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -1110,8 +1077,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.neon_write_vector_elements_u64(d, 2, wide_ebytes, &out);
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_narrow_move(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -1188,8 +1153,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_saturating_abs_neg(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -1239,8 +1202,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_abs_neg(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -1311,8 +1272,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_halving_add_sub(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -1393,8 +1352,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_saturating_add_sub(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -1467,8 +1424,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_long_wide_add_sub(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -1550,8 +1505,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_narrow_add_sub(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -1632,8 +1585,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_vmul(&mut self, insn: &DecodedInsn) -> ExecResult {
         if Self::is_neon_fp_multiply_shape(insn.raw)
             || Self::is_neon_fp_multiply_scalar_shape(insn.raw)
@@ -1651,8 +1602,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         self.exec_vfp_binop(insn)
     }
-
-
 
     pub(crate) fn exec_vmla_vmls(&mut self, insn: &DecodedInsn) -> ExecResult {
         if Self::is_neon_fp_multiply_shape(insn.raw)
@@ -1675,8 +1624,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         self.exec_vfp_accop(insn)
     }
-
-
 
     pub(crate) fn exec_neon_polynomial_multiply(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -1719,8 +1666,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_integer_multiply(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -1839,8 +1784,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_long_multiply(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -1978,8 +1921,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_polynomial_multiply_long(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !Self::is_neon_polynomial_multiply_long_shape(insn.raw) {
             return ExecResult::Undefined;
@@ -2012,8 +1953,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn neon_polynomial_mul_u8(lhs: u8, rhs: u8) -> u16 {
         let mut product = 0u16;
         for bit in 0..8 {
@@ -2023,8 +1962,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         product
     }
-
-
 
     pub(crate) fn exec_neon_saturating_doubling_mulh(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -2102,8 +2039,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_count_register(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -2148,8 +2083,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_recip_estimate(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -2232,15 +2165,11 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn neon_recip_estimate(a: u32) -> u32 {
         let a = a * 2 + 1;
         let b = (1u32 << 19) / a;
         (b + 1) >> 1
     }
-
-
 
     pub(crate) fn neon_recip_sqrt_estimate(mut a: u32) -> u32 {
         if a < 256 {
@@ -2257,8 +2186,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ((b + 1) >> 1) as u32
     }
 
-
-
     pub(crate) fn neon_unsigned_recip_estimate(op: u32) -> u32 {
         if op & 0x8000_0000 == 0 {
             return u32::MAX;
@@ -2267,8 +2194,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         (estimate & 0x1FF) << 23
     }
 
-
-
     pub(crate) fn neon_unsigned_rsqrt_estimate(op: u32) -> u32 {
         if op & 0xC000_0000 == 0 {
             return u32::MAX;
@@ -2276,8 +2201,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         let estimate = Self::neon_recip_sqrt_estimate((op >> 23) & 0x1FF);
         (estimate & 0x1FF) << 23
     }
-
-
 
     pub(crate) fn exec_neon_vext(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -2326,8 +2249,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_table_lookup(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -2371,8 +2292,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_minmax(&mut self, insn: &DecodedInsn) -> ExecResult {
         if (insn.raw >> 25) == 0b1111001
             && ((insn.raw >> 23) & 1) == 0
@@ -2383,8 +2302,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         self.exec_neon_fp_minmax(insn)
     }
-
-
 
     pub(crate) fn exec_neon_integer_minmax(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -2453,8 +2370,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_integer_compare(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -2538,8 +2453,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_compare(&mut self, insn: &DecodedInsn) -> ExecResult {
         if (insn.raw >> 23) == 0b111100111
             && ((insn.raw >> 20) & 0x3) == 0b11
@@ -2559,8 +2472,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         self.exec_neon_integer_compare(insn)
     }
-
-
 
     pub(crate) fn exec_neon_compare_zero(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -2654,8 +2565,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_recip_step(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -2741,8 +2650,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_absdiff(&mut self, insn: &DecodedInsn) -> ExecResult {
         if (insn.raw >> 25) == 0b1111001
             && ((insn.raw >> 23) & 1) == 0
@@ -2753,8 +2660,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         self.exec_neon_fp_absdiff(insn)
     }
-
-
 
     pub(crate) fn exec_neon_integer_absdiff_accum(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -2840,8 +2745,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_integer_absdiff_long(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -2924,8 +2827,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_vmov(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -3086,8 +2987,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn neon_expand_modified_immediate(raw: u32) -> Option<u64> {
         let cmode = (raw >> 8) & 0xF;
         let imm8 = ((((raw >> 24) & 1) << 7) | (((raw >> 16) & 0x7) << 4) | (raw & 0xF)) as u64;
@@ -3127,8 +3026,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         Some(u64::from(imm32) | (u64::from(imm32) << 32))
     }
 
-
-
     pub(crate) fn exec_neon_modified_immediate(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -3161,8 +3058,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_vfp_binop(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -3225,8 +3120,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_vsel(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -3273,8 +3166,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_vfp_accop(&mut self, insn: &DecodedInsn) -> ExecResult {
         if Self::is_neon_fp_fma_shape(insn.raw) {
@@ -3347,8 +3238,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_vfp_unop(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -3391,8 +3280,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_vcmp(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -3447,8 +3334,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_directed_convert(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -3529,8 +3414,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn neon_struct_writeback(&self, base: u32, regs: u8, streams: u8, rm: usize) -> u32 {
         if rm == 13 {
             base.wrapping_add((regs as u32) * (streams as u32) * 8)
@@ -3539,8 +3422,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
-
     pub(crate) fn neon_lane_writeback(&self, base: u32, streams: u8, ebytes: u8, rm: usize) -> u32 {
         if rm == 13 {
             base.wrapping_add((streams as u32) * (ebytes as u32))
@@ -3548,8 +3429,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             base.wrapping_add(self.reg(rm))
         }
     }
-
-
 
     pub(crate) fn neon_replicate_elem(value: u32, ebytes: u8) -> u64 {
         let bits = (ebytes * 8) as u32;
@@ -3567,8 +3446,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         out
     }
 
-
-
     pub(crate) fn neon_read_d_elem(&self, dreg: u8, element: u8, ebytes: u8) -> u32 {
         let shift = (element * ebytes * 8) as u32;
         let mask = if ebytes == 4 {
@@ -3578,8 +3455,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         };
         ((self.cpu.vfp.read_d_bits(dreg) >> shift) & mask) as u32
     }
-
-
 
     pub(crate) fn neon_read_d_elem_u64(&self, dreg: u8, element: u8, ebytes: u8) -> u64 {
         let shift = (element * ebytes * 8) as u32;
@@ -3591,21 +3466,15 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         (self.cpu.vfp.read_d_bits(dreg) >> shift) & mask
     }
 
-
-
     pub(crate) fn neon_sign_extend_elem(value: u32, bits: u32) -> i64 {
         let shift = 64 - bits;
         (((value as u64) << shift) as i64) >> shift
     }
 
-
-
     pub(crate) fn neon_sign_extend_elem_u64(value: u64, bits: u32) -> i128 {
         let shift = 128 - bits;
         ((value as i128) << shift) >> shift
     }
-
-
 
     pub(crate) fn neon_signed_saturate(value: i64, bits: u32) -> (i64, bool) {
         let min = -(1i64 << (bits - 1));
@@ -3619,8 +3488,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
-
     pub(crate) fn neon_signed_saturate_i128(value: i128, bits: u32) -> (i128, bool) {
         let min = -(1i128 << (bits - 1));
         let max = (1i128 << (bits - 1)) - 1;
@@ -3632,8 +3499,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             (value, false)
         }
     }
-
-
 
     pub(crate) fn neon_unsigned_saturate(value: i128, bits: u32) -> (u64, bool) {
         let max = if bits == 64 {
@@ -3650,8 +3515,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
-
     pub(crate) fn neon_pack_signed_elem(value: i64, bits: u32) -> u32 {
         let mask = if bits == 32 {
             u32::MAX as u64
@@ -3660,8 +3523,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         };
         (value as u64 & mask) as u32
     }
-
-
 
     pub(crate) fn neon_pack_signed_elem_i128(value: i128, bits: u32) -> u64 {
         let mask = if bits == 64 {
@@ -3672,9 +3533,12 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         (value as u128 & mask) as u64
     }
 
-
-
-    pub(crate) fn neon_doubling_mulh_elem(lhs: u64, rhs: u64, bits: u32, rounding: bool) -> (u64, bool) {
+    pub(crate) fn neon_doubling_mulh_elem(
+        lhs: u64,
+        rhs: u64,
+        bits: u32,
+        rounding: bool,
+    ) -> (u64, bool) {
         let lhs = Self::neon_sign_extend_elem_u64(lhs, bits);
         let rhs = Self::neon_sign_extend_elem_u64(rhs, bits);
         let round_const = if rounding { 1i128 << (bits - 1) } else { 0 };
@@ -3683,8 +3547,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         let (result, saturated) = Self::neon_signed_saturate_i128(shifted, bits);
         (Self::neon_pack_signed_elem_i128(result, bits), saturated)
     }
-
-
 
     pub(crate) fn neon_write_d_elem(&mut self, dreg: u8, element: u8, ebytes: u8, value: u32) {
         let shift = (element * ebytes * 8) as u32;
@@ -3698,8 +3560,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.cpu.vfp.write_d_bits(dreg, bits);
     }
 
-
-
     pub(crate) fn neon_write_d_elem_u64(&mut self, dreg: u8, element: u8, ebytes: u8, value: u64) {
         let shift = (element * ebytes * 8) as u32;
         let mask = if ebytes == 8 {
@@ -3712,8 +3572,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.cpu.vfp.write_d_bits(dreg, bits);
     }
 
-
-
     pub(crate) fn neon_read_mem_elem(&self, addr: u32, ebytes: u8) -> Result<u32, MemoryError> {
         match ebytes {
             1 => self.mem.read_byte(addr).map(|v| v as u32),
@@ -3722,8 +3580,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             _ => Err(MemoryError::OutOfBounds(addr)),
         }
     }
-
-
 
     pub(crate) fn neon_write_mem_elem(
         &mut self,

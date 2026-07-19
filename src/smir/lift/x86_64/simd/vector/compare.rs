@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn append_vector_compare(
         &self,
         src1: VReg,
@@ -47,8 +45,6 @@ impl X86_64Lifter {
         ));
         dst
     }
-
-
 
     /// Compute PTEST/VPTEST's two whole-vector reductions and commit exactly
     /// CF/ZF while clearing OF/SF/AF/PF. Memory operands are materialized by the

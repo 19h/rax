@@ -17,7 +17,6 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 impl Aarch64Lowerer {
-
     pub(crate) fn gpr_arm_or_x86(vreg: VReg) -> Result<u8, LowerError> {
         match vreg {
             VReg::Arch(ArchReg::Arm(ArmReg::X(n))) if n < 30 => Ok(n),
@@ -39,7 +38,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn dst_gpr_arm_or_x86(vreg: VReg) -> Result<u8, LowerError> {
         match vreg {
             VReg::Arch(ArchReg::Arm(ArmReg::X(n))) if n < 30 => Ok(n),
@@ -57,16 +55,22 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn dst_or_zero_for_flags_arm_or_x86(vreg: VReg, set_flags: bool) -> Result<u8, LowerError> {
+    pub(crate) fn dst_or_zero_for_flags_arm_or_x86(
+        vreg: VReg,
+        set_flags: bool,
+    ) -> Result<u8, LowerError> {
         match vreg {
             VReg::Virtual(_) if set_flags => Ok(31),
             other => Self::dst_gpr_arm_or_x86(other),
         }
     }
 
-
-    pub(crate) fn emit_sysreg(&mut self, rt: u8, reg: ArmReg, read: bool) -> Result<(), LowerError> {
+    pub(crate) fn emit_sysreg(
+        &mut self,
+        rt: u8,
+        reg: ArmReg,
+        read: bool,
+    ) -> Result<(), LowerError> {
         let Some(info) = Self::sysreg_info(reg) else {
             return Err(LowerError::UnsupportedOp {
                 op: format!("AArch64 native system register {reg:?}"),
@@ -85,7 +89,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_sysreg_read(
         &mut self,
         dst: VReg,
@@ -95,7 +98,6 @@ impl Aarch64Lowerer {
         Self::validate_sysreg_width("MRS", width)?;
         self.emit_sysreg(Self::dst_gpr(dst)?, reg, true)
     }
-
 
     pub(crate) fn lower_sysreg_write(
         &mut self,
@@ -119,7 +121,6 @@ impl Aarch64Lowerer {
         self.emit_sysreg(rt, reg, false)
     }
 
-
     pub(crate) fn lower_sysreg_write_imm(
         &mut self,
         reg: ArmReg,
@@ -139,7 +140,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_raw_sysreg_read(&mut self, dst: VReg, reg: u32) -> Result<(), LowerError> {
         let Some(reg) = Self::raw_sysreg(reg) else {
             return Err(LowerError::UnsupportedOp {
@@ -148,7 +148,6 @@ impl Aarch64Lowerer {
         };
         self.emit_sysreg(Self::dst_gpr(dst)?, reg, true)
     }
-
 
     pub(crate) fn lower_raw_sysreg_write(&mut self, reg: u32, src: VReg) -> Result<(), LowerError> {
         let Some(reg) = Self::raw_sysreg(reg) else {
@@ -167,7 +166,6 @@ impl Aarch64Lowerer {
 
         self.emit_sysreg(Self::gpr(src)?, reg, false)
     }
-
 
     pub(crate) fn lower_x86_count(
         &mut self,
@@ -302,7 +300,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_x86_bls(
         &mut self,
         dst: VReg,
@@ -380,7 +377,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_x86_adx(
         &mut self,
@@ -484,7 +480,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn sysreg_vreg(vreg: VReg) -> Option<ArmReg> {
         match vreg {
             VReg::Arch(ArchReg::Arm(reg @ (ArmReg::Nzcv | ArmReg::Fpcr | ArmReg::Fpsr))) => {
@@ -494,7 +489,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn raw_sysreg(reg: u32) -> Option<ArmReg> {
         match reg {
             SYSREG_NZCV => Some(ArmReg::Nzcv),
@@ -503,7 +497,6 @@ impl Aarch64Lowerer {
             _ => None,
         }
     }
-
 
     pub(crate) fn sysreg_info(reg: ArmReg) -> Option<SysRegInfo> {
         match reg {
@@ -537,7 +530,6 @@ impl Aarch64Lowerer {
             _ => None,
         }
     }
-
 
     pub(crate) fn validate_sysreg_width(op: &str, width: OpWidth) -> Result<(), LowerError> {
         match width {

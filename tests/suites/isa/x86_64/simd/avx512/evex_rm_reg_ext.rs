@@ -64,9 +64,23 @@ fn run_one(op: &[u8], regs: Registers) -> Registers {
     run_until_hlt(&mut vcpu).unwrap()
 }
 
+/// Concatenated source of the EVEX decode dispatch. This was a single
+/// `decode/dispatch/evex.rs`; it was split into a `decode/dispatch/evex/`
+/// module, so the source-text anti-regression checks below scan every child.
+const EVEX_DISPATCH_SRC: &str = concat!(
+    include_str!("../../../../../../src/isa/x86_64/decode/dispatch/evex/mod.rs"),
+    include_str!("../../../../../../src/isa/x86_64/decode/dispatch/evex/apx.rs"),
+    include_str!("../../../../../../src/isa/x86_64/decode/dispatch/evex/fp.rs"),
+    include_str!("../../../../../../src/isa/x86_64/decode/dispatch/evex/map0f.rs"),
+    include_str!("../../../../../../src/isa/x86_64/decode/dispatch/evex/map0f38.rs"),
+    include_str!("../../../../../../src/isa/x86_64/decode/dispatch/evex/map0f3a.rs"),
+    include_str!("../../../../../../src/isa/x86_64/decode/dispatch/evex/map5.rs"),
+    include_str!("../../../../../../src/isa/x86_64/decode/dispatch/evex/misc.rs"),
+);
+
 #[test]
 fn test_evex_rm_register_decode_stays_centralized() {
-    let dispatch = include_str!("../../../../../../src/isa/x86_64/decode/dispatch/evex.rs");
+    let dispatch = EVEX_DISPATCH_SRC;
     let raw_b_only_decode = "if !evex.b { rm + 8 } else { rm }";
 
     assert_eq!(
@@ -78,7 +92,7 @@ fn test_evex_rm_register_decode_stays_centralized() {
 
 #[test]
 fn test_evex_vector_vvvv_decode_stays_centralized() {
-    let dispatch = include_str!("../../../../../../src/isa/x86_64/decode/dispatch/evex.rs");
+    let dispatch = EVEX_DISPATCH_SRC;
 
     assert!(
         !dispatch.contains("(evex.vvvv ^ 0xF) as usize"),

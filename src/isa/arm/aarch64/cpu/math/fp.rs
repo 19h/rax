@@ -120,7 +120,12 @@ pub(crate) fn fp_scaled_int_exact(
     let exponent = trailing as i32 - fbits as i32;
     128 - normalized.leading_zeros() <= precision_bits && exponent >= min_subnormal_exp
 }
-pub(crate) fn fp_status_scaled_int_to_fp(abs_int: u128, fbits: u32, dst_prec: usize, result: u64) -> u32 {
+pub(crate) fn fp_status_scaled_int_to_fp(
+    abs_int: u128,
+    fbits: u32,
+    dst_prec: usize,
+    result: u64,
+) -> u32 {
     let overflow = match dst_prec {
         2 => fp16_is_inf(result as u16),
         4 => fp32_is_inf(result as u32),
@@ -262,13 +267,28 @@ pub(crate) fn int_to_fp32_bits_with_fpcr(abs_int: u128, negative: bool, fpcr: u3
 pub(crate) fn int_to_fp64_bits_with_fpcr(abs_int: u128, negative: bool, fpcr: u32) -> u64 {
     round_int_to_fp_bits(abs_int, negative, 53, 11, 52, 1023, fpcr)
 }
-pub(crate) fn scaled_int_to_fp16_bits_with_fpcr(abs_int: u128, negative: bool, fbits: u32, fpcr: u32) -> u16 {
+pub(crate) fn scaled_int_to_fp16_bits_with_fpcr(
+    abs_int: u128,
+    negative: bool,
+    fbits: u32,
+    fpcr: u32,
+) -> u16 {
     round_scaled_int_to_fp_bits(abs_int, negative, fbits, 11, 5, 10, 15, fpcr) as u16
 }
-pub(crate) fn scaled_int_to_fp32_bits_with_fpcr(abs_int: u128, negative: bool, fbits: u32, fpcr: u32) -> u32 {
+pub(crate) fn scaled_int_to_fp32_bits_with_fpcr(
+    abs_int: u128,
+    negative: bool,
+    fbits: u32,
+    fpcr: u32,
+) -> u32 {
     round_scaled_int_to_fp_bits(abs_int, negative, fbits, 24, 8, 23, 127, fpcr) as u32
 }
-pub(crate) fn scaled_int_to_fp64_bits_with_fpcr(abs_int: u128, negative: bool, fbits: u32, fpcr: u32) -> u64 {
+pub(crate) fn scaled_int_to_fp64_bits_with_fpcr(
+    abs_int: u128,
+    negative: bool,
+    fbits: u32,
+    fpcr: u32,
+) -> u64 {
     round_scaled_int_to_fp_bits(abs_int, negative, fbits, 53, 11, 52, 1023, fpcr)
 }
 /// One element of a NEON fixed-point <-> floating-point conversion (`bits` is
@@ -400,7 +420,13 @@ pub(crate) fn fp_three_same_decode(u: u32, a: u32, opcode: u32) -> Option<FpKind
 /// `src_prec`/`dst_prec` are byte widths (2=f16, 4=f32, 8=f64). NaN goes through
 /// FPConvertNaN; `round_odd` selects FCVTX (f64->f32 round-to-odd, which carries
 /// its own NaN handling). Other narrowing conversions use FPCR rounding.
-pub(crate) fn fp_cvt_elem_raw(bits: u64, src_prec: usize, dst_prec: usize, round_odd: bool, fpcr: u32) -> u64 {
+pub(crate) fn fp_cvt_elem_raw(
+    bits: u64,
+    src_prec: usize,
+    dst_prec: usize,
+    round_odd: bool,
+    fpcr: u32,
+) -> u64 {
     let bits = fp_cvt_input_bits_with_fpcr(bits, src_prec, dst_prec, fpcr);
     if round_odd {
         return round_odd_f64_to_f32(f64::from_bits(bits)) as u64;
@@ -426,7 +452,12 @@ pub(crate) fn fp_cvt_elem_raw(bits: u64, src_prec: usize, dst_prec: usize, round
     }
 }
 #[inline]
-pub(crate) fn fp_cvt_input_bits_with_fpcr(bits: u64, src_prec: usize, dst_prec: usize, fpcr: u32) -> u64 {
+pub(crate) fn fp_cvt_input_bits_with_fpcr(
+    bits: u64,
+    src_prec: usize,
+    dst_prec: usize,
+    fpcr: u32,
+) -> u64 {
     if src_prec == 2 && dst_prec > src_prec {
         bits
     } else {
@@ -434,7 +465,13 @@ pub(crate) fn fp_cvt_input_bits_with_fpcr(bits: u64, src_prec: usize, dst_prec: 
     }
 }
 /// One element of an FP precision conversion (FCVTL/FCVTN and the scalar FCVT).
-pub(crate) fn fp_cvt_elem(bits: u64, src_prec: usize, dst_prec: usize, round_odd: bool, fpcr: u32) -> u64 {
+pub(crate) fn fp_cvt_elem(
+    bits: u64,
+    src_prec: usize,
+    dst_prec: usize,
+    round_odd: bool,
+    fpcr: u32,
+) -> u64 {
     let result = fp_cvt_elem_raw(bits, src_prec, dst_prec, round_odd, fpcr);
     fp_flush_output_bits_with_fpcr(result, (dst_prec * 8) as u32, fpcr)
 }
@@ -1506,7 +1543,13 @@ pub(crate) fn fp_status_mulx(esize: usize, a: u64, b: u64, result: u64) -> u32 {
         fp_status_from_exact_f64(esize, exact, result)
     }
 }
-pub(crate) fn fp_status_mulx_with_fpcr(esize: usize, a: u64, b: u64, result: u64, fpcr: u32) -> u32 {
+pub(crate) fn fp_status_mulx_with_fpcr(
+    esize: usize,
+    a: u64,
+    b: u64,
+    result: u64,
+    fpcr: u32,
+) -> u32 {
     let input_status = fp_fz_input_status(esize, a, fpcr) | fp_fz_input_status(esize, b, fpcr);
     if fp_input_flush_enabled(esize, fpcr) {
         match esize {
@@ -1539,7 +1582,13 @@ pub(crate) fn fp_status_mulx_with_fpcr(esize: usize, a: u64, b: u64, result: u64
     }
     fp_status_mulx(esize, a, b, result) | input_status
 }
-pub(crate) fn fp_status_recps_rsqrts(esize: usize, rsqrt: bool, a: u64, b: u64, result: u64) -> u32 {
+pub(crate) fn fp_status_recps_rsqrts(
+    esize: usize,
+    rsqrt: bool,
+    a: u64,
+    b: u64,
+    result: u64,
+) -> u32 {
     if fp_is_snan_bits(esize, a) || fp_is_snan_bits(esize, b) {
         return FPSR_IOC;
     }
@@ -1674,7 +1723,14 @@ pub(crate) fn fp_status_sve_underflow(esize: usize, result: u64, status: u32) ->
     };
     status | if underflow { FPSR_UFC } else { 0 }
 }
-pub(crate) fn fp_three_same_status(esize: usize, kind: FpKind, a: u64, b: u64, d: u64, result: u64) -> u32 {
+pub(crate) fn fp_three_same_status(
+    esize: usize,
+    kind: FpKind,
+    a: u64,
+    b: u64,
+    d: u64,
+    result: u64,
+) -> u32 {
     use FpKind::*;
     match kind {
         Mla => fp_status_fma(esize, d, a, b, result),
@@ -1751,7 +1807,14 @@ pub(crate) fn fp_three_same_status_with_fpcr(
         _ => fp_status_binop_with_fpcr(esize, kind, a, b, result, fpcr),
     }
 }
-pub(crate) fn fp16_three_same_status(u: u32, a_bit: u32, opcode: u32, n: u16, m: u16, r: u16) -> u32 {
+pub(crate) fn fp16_three_same_status(
+    u: u32,
+    a_bit: u32,
+    opcode: u32,
+    n: u16,
+    m: u16,
+    r: u16,
+) -> u32 {
     use FpKind::*;
     let kind = match (u, a_bit, opcode) {
         (0, 0, 0b000) => Some(MaxNm),
@@ -1846,7 +1909,13 @@ pub(crate) fn fp_status_estimate(esize: usize, rsqrt: bool, a: u64, result: u64)
     }
     0
 }
-pub(crate) fn fp_status_estimate_with_fpcr(esize: usize, rsqrt: bool, a: u64, result: u64, fpcr: u32) -> u32 {
+pub(crate) fn fp_status_estimate_with_fpcr(
+    esize: usize,
+    rsqrt: bool,
+    a: u64,
+    result: u64,
+    fpcr: u32,
+) -> u32 {
     if fpcr & FPCR_AH != 0 {
         return 0;
     }
@@ -1962,7 +2031,12 @@ pub(crate) fn fp16_two_reg_status_with_fpcr(
         _ => fp16_two_reg_status(u, a_bit, opcode, sf, r),
     }
 }
-pub(crate) fn fp_status_cvt_precision(src: u64, src_prec: usize, dst_prec: usize, result: u64) -> u32 {
+pub(crate) fn fp_status_cvt_precision(
+    src: u64,
+    src_prec: usize,
+    dst_prec: usize,
+    result: u64,
+) -> u32 {
     let snan = match src_prec {
         2 => fp16_is_snan(src as u16),
         4 => is_snan32(src as u32),
@@ -2736,7 +2810,12 @@ pub(crate) fn fp_status_fp_to_int_unop(esize: usize, kind: TwoRegFp, a: u64) -> 
     };
     fp_to_int_rounded_status(input, rounded, signed, (esize * 8) as u32)
 }
-pub(crate) fn fp_status_fp_to_int_unop_with_fpcr(esize: usize, kind: TwoRegFp, a: u64, fpcr: u32) -> u32 {
+pub(crate) fn fp_status_fp_to_int_unop_with_fpcr(
+    esize: usize,
+    kind: TwoRegFp,
+    a: u64,
+    fpcr: u32,
+) -> u32 {
     use TwoRegFp::*;
     if fp_input_flush_enabled(esize, fpcr)
         && matches!(
@@ -3679,7 +3758,13 @@ pub(crate) fn fp_muladd_bits(acc: u64, x: u64, y: u64, esize: u32) -> u64 {
         _ => fp_three_same_f64(FpKind::Mla, x, y, acc),
     }
 }
-pub(crate) fn fp_fma_cancelled_zero_rounds_negative(acc: u64, x: u64, y: u64, esize: u32, fpcr: u32) -> bool {
+pub(crate) fn fp_fma_cancelled_zero_rounds_negative(
+    acc: u64,
+    x: u64,
+    y: u64,
+    esize: u32,
+    fpcr: u32,
+) -> bool {
     if (fpcr >> 22) & 0x3 != 2 {
         return false;
     }
@@ -3808,7 +3893,13 @@ pub(crate) fn fp_muladd_bits_with_fpcr(acc: u64, x: u64, y: u64, esize: u32, fpc
         _ => fp_muladd_f64_with_fpcr(acc, x, y, fpcr),
     }
 }
-pub(crate) fn fp_fcmla_muladd_bits_with_fpcr(acc: u64, x: u64, y: u64, esize: u32, fpcr: u32) -> u64 {
+pub(crate) fn fp_fcmla_muladd_bits_with_fpcr(
+    acc: u64,
+    x: u64,
+    y: u64,
+    esize: u32,
+    fpcr: u32,
+) -> u64 {
     if fpcr & FPCR_AH != 0 {
         let nan = match esize {
             16 => fp16_ah_nan3(x as u16, y as u16, acc as u16).map(|n| n as u64),

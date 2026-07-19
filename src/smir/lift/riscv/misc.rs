@@ -1,6 +1,5 @@
 //! misc.rs
 
-use crate::smir::lift::riscv::*;
 use crate::isa::riscv::{
     Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode, rvc::decode_rvc as rv_decode_rvc,
 };
@@ -8,8 +7,11 @@ use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, RvVectorState, SmirOp};
 use crate::smir::ir::types::*;
 use crate::smir::ir::{SmirBlock, SmirFunction};
+use crate::smir::lift::riscv::*;
 
-use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter};
+use crate::smir::lift::{
+    ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
+};
 
 impl RiscVLifter {
     /// Create a new RV64 lifter with specified extensions
@@ -20,7 +22,6 @@ impl RiscVLifter {
         }
     }
 
-
     /// Create a new RV32 lifter with specified extensions
     pub fn new_rv32(extensions: RiscVExtensions) -> Self {
         Self {
@@ -29,12 +30,10 @@ impl RiscVLifter {
         }
     }
 
-
     /// Create a standard RV64GC lifter
     pub fn rv64gc() -> Self {
         Self::new_rv64(RiscVExtensions::rv64gc())
     }
-
 
     /// Get the operation width for this XLEN
     pub(crate) fn op_width(&self) -> OpWidth {
@@ -45,7 +44,6 @@ impl RiscVLifter {
         }
     }
 
-
     pub(crate) fn rv_xlen(&self) -> RvXlen {
         if self.xlen == 64 {
             RvXlen::Rv64
@@ -53,7 +51,6 @@ impl RiscVLifter {
             RvXlen::Rv32
         }
     }
-
 
     pub(crate) fn decoder_isa(&self) -> RvIsa {
         RvIsa {
@@ -104,7 +101,6 @@ impl RiscVLifter {
         }
     }
 
-
     /// Get a VReg for an integer register (x0 returns Imm(0))
     pub(crate) fn get_x_reg(&self, reg: u8, _ctx: &mut LiftContext) -> VReg {
         if reg == 0 {
@@ -113,7 +109,6 @@ impl RiscVLifter {
             VReg::Arch(ArchReg::RiscV(RiscVReg::X(reg)))
         }
     }
-
 
     /// Define a new value for an integer register (x0 writes are ignored)
     pub(crate) fn def_x_reg(&self, reg: u8, _ctx: &mut LiftContext) -> Option<VReg> {
@@ -124,18 +119,15 @@ impl RiscVLifter {
         }
     }
 
-
     /// Get the PC register
     pub(crate) fn get_pc(&self, _ctx: &mut LiftContext) -> VReg {
         VReg::Arch(ArchReg::RiscV(RiscVReg::Pc))
     }
 
-
     /// Define a new PC value
     pub(crate) fn def_pc(&self, _ctx: &mut LiftContext) -> VReg {
         VReg::Arch(ArchReg::RiscV(RiscVReg::Pc))
     }
-
 
     // ========================================================================
     // Instruction Format Extraction
@@ -146,36 +138,30 @@ impl RiscVLifter {
         ((insn >> 7) & 0x1F) as u8
     }
 
-
     /// Extract rs1 field (bits 19:15)
     pub(crate) fn rs1(insn: u32) -> u8 {
         ((insn >> 15) & 0x1F) as u8
     }
-
 
     /// Extract rs2 field (bits 24:20)
     pub(crate) fn rs2(insn: u32) -> u8 {
         ((insn >> 20) & 0x1F) as u8
     }
 
-
     /// Extract funct3 field (bits 14:12)
     pub(crate) fn funct3(insn: u32) -> u8 {
         ((insn >> 12) & 0x7) as u8
     }
-
 
     /// Extract funct7 field (bits 31:25)
     pub(crate) fn funct7(insn: u32) -> u8 {
         ((insn >> 25) & 0x7F) as u8
     }
 
-
     /// Extract I-type immediate (bits 31:20, sign-extended)
     pub(crate) fn imm_i(insn: u32) -> i64 {
         ((insn as i32) >> 20) as i64
     }
-
 
     /// Extract S-type immediate (bits 31:25 | 11:7, sign-extended)
     pub(crate) fn imm_s(insn: u32) -> i64 {
@@ -185,7 +171,6 @@ impl RiscVLifter {
         // Sign-extend from bit 11
         ((imm << 20) >> 20) as i64
     }
-
 
     /// Extract B-type immediate (bits 31|7|30:25|11:8, sign-extended, shifted left by 1)
     pub(crate) fn imm_b(insn: u32) -> i64 {
@@ -198,12 +183,10 @@ impl RiscVLifter {
         ((imm << 19) >> 19) as i64
     }
 
-
     /// Extract U-type immediate (bits 31:12, shifted left by 12)
     pub(crate) fn imm_u(insn: u32) -> i64 {
         ((insn & 0xFFFF_F000) as i32) as i64
     }
-
 
     /// Extract J-type immediate (bits 31|19:12|20|30:21, sign-extended, shifted left by 1)
     pub(crate) fn imm_j(insn: u32) -> i64 {
@@ -215,7 +198,6 @@ impl RiscVLifter {
         // Sign-extend from bit 20
         ((imm << 11) >> 11) as i64
     }
-
 
     // ========================================================================
     // Instruction Lifting
@@ -263,7 +245,6 @@ impl RiscVLifter {
         }
     }
 
-
     /// LUI: Load Upper Immediate
     pub(crate) fn lift_lui(
         &mut self,
@@ -290,7 +271,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     /// AUIPC: Add Upper Immediate to PC
     pub(crate) fn lift_auipc(
@@ -319,7 +299,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     /// JAL: Jump and Link
     pub(crate) fn lift_jal(
@@ -350,7 +329,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::DirectBranch(target)))
     }
-
 
     /// JALR: Jump and Link Register
     pub(crate) fn lift_jalr(
@@ -429,7 +407,6 @@ impl RiscVLifter {
         ))
     }
 
-
     /// Branch instructions (BEQ, BNE, BLT, BGE, BLTU, BGEU)
     pub(crate) fn lift_branch(
         &mut self,
@@ -497,7 +474,6 @@ impl RiscVLifter {
             },
         ))
     }
-
 
     /// Hypervisor memory instructions (HLV*/HSV*) are modeled like direct
     /// loads/stores in the local RISC-V interpreter.
@@ -580,7 +556,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     /// Integer register-immediate operations
     pub(crate) fn lift_op_imm(
@@ -726,7 +701,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     /// Emit `dst = term0 ^ term1 ^ term2` where each term is a rotate / shift /
     /// identity of `src`, optionally sign-extending a 32-bit result to 64 bits.
     pub(crate) fn crypto_xor3(
@@ -829,7 +803,6 @@ impl RiscVLifter {
             ));
         }
     }
-
 
     /// 32-bit integer register-immediate operations (RV64 only)
     pub(crate) fn lift_op_imm32(
@@ -943,7 +916,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     /// Integer register-register operations
     pub(crate) fn lift_op(
@@ -1089,7 +1061,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     /// 32-bit register-register operations (RV64 only)
     pub(crate) fn lift_op32(
         &mut self,
@@ -1225,7 +1196,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     /// Emit a bit-exact [`OpKind::RvFp`] for a scalar OP-FP / FMA instruction
     /// whose result depends on `fflags` / NaN-canonicalisation / dynamic
     /// rounding. Routes the source/destination register *files* per
@@ -1275,7 +1245,6 @@ impl RiscVLifter {
             },
         ));
     }
-
 
     /// Emit the RISC-V FCLASS 10-bit classification of FP value `f` (the value
     /// must already be unboxed for .S/.H) into integer register `dst`.
@@ -1465,7 +1434,6 @@ impl RiscVLifter {
         );
     }
 
-
     /// M extension multiply/divide operations
     pub(crate) fn lift_op_m(
         &mut self,
@@ -1609,7 +1577,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     /// Lift DIV/DIVU/REM/REMU via a non-trapping sequence implementing RISC-V's
     /// divide-by-zero and signed MIN/-1 overflow results (SMIR's DivS/DivU trap
@@ -1776,7 +1743,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     /// M extension 32-bit multiply/divide operations
     pub(crate) fn lift_op32_m(
         &mut self,
@@ -1879,7 +1845,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     // ========================================================================
     // Compressed Instructions (C extension)
     // ========================================================================
@@ -1955,12 +1920,10 @@ impl RiscVLifter {
         }
     }
 
-
     /// Get compressed register (rd', rs1', rs2' - maps 0-7 to x8-x15)
     pub(crate) fn creg(r: u8) -> u8 {
         8 + (r & 0x7)
     }
-
 
     // Extract C.J / C.JAL offset
     pub(crate) fn c_j_offset(&self, insn: u16) -> i64 {
@@ -1983,7 +1946,6 @@ impl RiscVLifter {
             | (bit3_1 << 1);
         ((raw << 4) >> 4) as i64 // Sign-extend from 12 bits
     }
-
 
     pub(crate) fn c_branch_offset(&self, insn: u16) -> i64 {
         let bit8 = ((insn >> 12) & 1) as i16;

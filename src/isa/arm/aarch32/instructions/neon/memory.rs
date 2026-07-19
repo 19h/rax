@@ -1,12 +1,12 @@
 //! memory.rs
 
-use crate::isa::arm::aarch32::instructions::neon::*;
-use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::aarch32::cpu::{
     ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr, add_with_carry, compute_n_flag,
     compute_z_flag, condition_passed, expand_imm_c, shift_c, sign_extend,
 };
+use crate::isa::arm::aarch32::instructions::neon::*;
+use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::aarch32::vfp::{
     Fpscr, NeonSize, RoundingMode, vabs_f16_bits, vabs_f32, vabs_f64, vadd_f16_bits, vadd_f32,
     vadd_f64, vadd_i, vand, vbic, vcls_i, vclz_i, vcmp_f16_bits_with_exception,
@@ -28,8 +28,7 @@ use crate::isa::arm::aarch32::vfp::{
 };
 use crate::isa::arm::decoder::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 
-impl <'a, M: ArmMemory> Executor<'a, M> {
-
+impl<'a, M: ArmMemory> Executor<'a, M> {
     pub(crate) fn exec_vldr(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -70,8 +69,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
-
     pub(crate) fn exec_vstr(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -107,8 +104,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             _ => ExecResult::Undefined,
         }
     }
-
-
 
     pub(crate) fn exec_vldm(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -156,8 +151,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_vstm(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -200,8 +193,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_vld1_multiple(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -246,8 +237,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_vst1_multiple(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -284,8 +273,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_vld2_multiple(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -328,8 +315,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_vst2_multiple(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -367,8 +352,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_vld3_multiple(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -417,8 +400,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_vst3_multiple(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -463,8 +444,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_vld4_multiple(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -521,8 +500,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_vld_single_lane(&mut self, info: NeonSingleLaneMem) -> ExecResult {
         let mut current = info.addr;
         for stream in 0..info.streams {
@@ -545,8 +522,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_vld_all_lanes(&mut self, info: NeonAllLanesMem) -> ExecResult {
         let mut current = info.addr;
@@ -573,8 +548,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_vst4_multiple(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -630,8 +603,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_vst_single_lane(&mut self, info: NeonSingleLaneMem) -> ExecResult {
         let mut current = info.addr;
         for stream in 0..info.streams {
@@ -649,8 +620,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn decode_neon_vld_vst_multiple(&self, insn: &DecodedInsn) -> Option<NeonStructMem> {
         let ty = (insn.raw >> 8) & 0xF;
@@ -738,8 +707,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         })
     }
 
-
-
     pub(crate) fn decode_neon_vld_all_lanes(&self, insn: &DecodedInsn) -> Option<NeonAllLanesMem> {
         if ((insn.raw >> 23) & 1) != 1 || ((insn.raw >> 21) & 1) != 1 {
             return None;
@@ -810,9 +777,10 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         })
     }
 
-
-
-    pub(crate) fn decode_neon_vld_vst_single_lane(&self, insn: &DecodedInsn) -> Option<NeonSingleLaneMem> {
+    pub(crate) fn decode_neon_vld_vst_single_lane(
+        &self,
+        insn: &DecodedInsn,
+    ) -> Option<NeonSingleLaneMem> {
         if ((insn.raw >> 23) & 1) != 1 {
             return None;
         }
@@ -868,8 +836,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         })
     }
 
-
-
     pub(crate) fn decode_neon_single_lane_shape(
         streams: u8,
         size: u8,
@@ -920,8 +886,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
-
     pub(crate) fn neon_read_vector_elements(&self, first: u8, regs: u8, ebytes: u8) -> Vec<u32> {
         let elements_per_d = 8 / ebytes;
         let mut elements = Vec::with_capacity(regs as usize * elements_per_d as usize);
@@ -933,9 +897,12 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         elements
     }
 
-
-
-    pub(crate) fn neon_read_vector_elements_u64(&self, first: u8, regs: u8, ebytes: u8) -> Vec<u64> {
+    pub(crate) fn neon_read_vector_elements_u64(
+        &self,
+        first: u8,
+        regs: u8,
+        ebytes: u8,
+    ) -> Vec<u64> {
         let elements_per_d = 8 / ebytes;
         let mut elements = Vec::with_capacity(regs as usize * elements_per_d as usize);
         for reg in 0..regs {
@@ -946,9 +913,13 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         elements
     }
 
-
-
-    pub(crate) fn neon_write_vector_elements(&mut self, first: u8, regs: u8, ebytes: u8, elements: &[u32]) {
+    pub(crate) fn neon_write_vector_elements(
+        &mut self,
+        first: u8,
+        regs: u8,
+        ebytes: u8,
+        elements: &[u32],
+    ) {
         let elements_per_d = 8 / ebytes;
         debug_assert_eq!(elements.len(), regs as usize * elements_per_d as usize);
         let mut next = 0;
@@ -959,8 +930,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             }
         }
     }
-
-
 
     pub(crate) fn neon_write_vector_elements_u64(
         &mut self,

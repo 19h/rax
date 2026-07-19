@@ -1,12 +1,12 @@
 //! fp.rs
 
-use crate::isa::arm::aarch32::instructions::neon::*;
-use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::aarch32::cpu::{
     ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr, add_with_carry, compute_n_flag,
     compute_z_flag, condition_passed, expand_imm_c, shift_c, sign_extend,
 };
+use crate::isa::arm::aarch32::instructions::neon::*;
+use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::aarch32::vfp::{
     Fpscr, NeonSize, RoundingMode, vabs_f16_bits, vabs_f32, vabs_f64, vadd_f16_bits, vadd_f32,
     vadd_f64, vadd_i, vand, vbic, vcls_i, vclz_i, vcmp_f16_bits_with_exception,
@@ -28,9 +28,7 @@ use crate::isa::arm::aarch32::vfp::{
 };
 use crate::isa::arm::decoder::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 
-impl <'a, M: ArmMemory> Executor<'a, M> {
-
-
+impl<'a, M: ArmMemory> Executor<'a, M> {
     pub(crate) fn is_neon_fp_add_sub_shape(raw: u32) -> bool {
         (raw >> 25) == 0b1111001
             && ((raw >> 24) & 1) == 0
@@ -38,8 +36,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             && ((raw >> 8) & 0xF) == 0b1101
             && ((raw >> 4) & 1) == 0
     }
-
-
 
     pub(crate) fn exec_neon_fp_add_sub(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -113,8 +109,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn is_neon_fp_pairwise_shape(raw: u32) -> bool {
         (raw >> 25) == 0b1111001
             && ((raw >> 24) & 1) == 1
@@ -125,8 +119,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             )
             && ((raw >> 4) & 1) == 0
     }
-
-
 
     pub(crate) fn exec_neon_fp_pairwise(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -213,8 +205,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn is_neon_vrint_shape(raw: u32) -> bool {
         (raw >> 24) == 0xF3
             && ((raw >> 23) & 1) == 1
@@ -228,8 +218,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             )
             && ((raw >> 4) & 1) == 0
     }
-
-
 
     pub(crate) fn exec_neon_vrint(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -294,8 +282,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn is_neon_fp_multiply_shape(raw: u32) -> bool {
         if (raw >> 25) != 0b1111001
             || ((raw >> 23) & 1) != 0
@@ -311,8 +297,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         )
     }
 
-
-
     pub(crate) fn is_neon_fp_multiply_scalar_shape(raw: u32) -> bool {
         (raw >> 25) == 0b1111001
             && ((raw >> 23) & 1) == 1
@@ -322,8 +306,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             && matches!((raw >> 8) & 0xF, 0b0001 | 0b0101 | 0b1001)
     }
 
-
-
     pub(crate) fn is_neon_fp_fma_shape(raw: u32) -> bool {
         (raw >> 25) == 0b1111001
             && ((raw >> 24) & 1) == 0
@@ -332,8 +314,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             && ((raw >> 8) & 0xF) == 0b1100
             && ((raw >> 4) & 1) == 1
     }
-
-
 
     pub(crate) fn is_neon_fp16_fused_multiply_long_shape(raw: u32) -> bool {
         ((raw >> 24) == 0xFC
@@ -347,8 +327,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
                 && ((raw >> 8) & 0xF) == 0b1000
                 && ((raw >> 4) & 1) == 1)
     }
-
-
 
     pub(crate) fn exec_neon_fp_multiply(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -493,8 +471,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_fp16_fused_multiply_long(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -597,8 +573,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn neon_fp_recip_estimate_f32(bits: u32) -> u32 {
         let sign = bits >> 31;
         let exp = (bits >> 23) & 0xFF;
@@ -640,8 +614,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         (sign << 31) | (((result_exp as u32) & 0xFF) << 23) | ((out_frac >> 29) as u32 & 0x7F_FFFF)
     }
 
-
-
     pub(crate) fn neon_fp_rsqrt_estimate_f32(bits: u32) -> u32 {
         let sign = bits >> 31;
         let exp = (bits >> 23) & 0xFF;
@@ -677,8 +649,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         let estimate = Self::neon_recip_sqrt_estimate(scaled);
         (sign << 31) | (result_exp << 23) | ((estimate & 0xFF) << 15)
     }
-
-
 
     pub(crate) fn exec_neon_fp_minmax(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -758,8 +728,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_fp_compare(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -849,8 +817,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn neon_fpmax_f32_bits(a: f32, b: f32) -> u32 {
         if a.is_nan() || b.is_nan() {
             return f32::NAN.to_bits();
@@ -866,8 +832,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
-
     pub(crate) fn neon_fpmin_f32_bits(a: f32, b: f32) -> u32 {
         if a.is_nan() || b.is_nan() {
             return f32::NAN.to_bits();
@@ -882,8 +846,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             a.min(b).to_bits()
         }
     }
-
-
 
     pub(crate) fn exec_neon_fp_absdiff(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -951,8 +913,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_vrint(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -985,8 +945,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_vcvt(&mut self, insn: &DecodedInsn) -> ExecResult {
         if Self::is_neon_fp16_convert_shape(insn.raw) {
@@ -1266,8 +1224,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn is_neon_fp_convert_shape(raw: u32) -> bool {
         (raw >> 25) == 0b1111001
             && ((raw >> 24) & 1) == 1
@@ -1279,8 +1235,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             && ((raw >> 5) & 1) == 0
             && ((raw >> 4) & 1) == 0
     }
-
-
 
     pub(crate) fn is_neon_fp16_convert_shape(raw: u32) -> bool {
         (raw >> 25) == 0b1111001
@@ -1295,8 +1249,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             && ((raw >> 4) & 1) == 0
     }
 
-
-
     pub(crate) fn is_neon_fp_fixed_convert_shape(raw: u32) -> bool {
         (raw >> 25) == 0b1111001
             && ((raw >> 23) & 1) == 1
@@ -1305,8 +1257,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             && ((raw >> 4) & 1) == 1
             && ((raw >> 16) & 0x3F) >= 32
     }
-
-
 
     pub(crate) fn exec_neon_fp_convert(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -1358,8 +1308,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn exec_neon_fp16_convert(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -1400,8 +1348,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
-
 
     pub(crate) fn exec_neon_fp_fixed_convert(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
@@ -1464,8 +1410,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
-
     pub(crate) fn neon_float_to_int_lane(
         value: f32,
         bits: u32,
@@ -1510,8 +1454,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
-
     pub(crate) fn directed_vcvt_rounding(mnemonic: Mnemonic) -> Option<RoundingMode> {
         match mnemonic {
             Mnemonic::VCVTA_S32_F32
@@ -1541,8 +1483,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             _ => None,
         }
     }
-
-
 
     pub(crate) fn decode_vcvt_regs(&self, insn: &DecodedInsn) -> Option<(u8, u8)> {
         let d_bit = ((insn.raw >> 22) & 1) as u8;
@@ -1614,8 +1554,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             _ => None,
         }
     }
-
-
 
     pub(crate) fn decode_vcvt_fixed_fbits(insn: &DecodedInsn) -> Option<u32> {
         if ((insn.raw >> 7) & 1) == 0 {

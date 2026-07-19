@@ -32,7 +32,10 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
-    pub(crate) fn lower_op_comparisons(&mut self, op: &crate::smir::ir::ops::SmirOp) -> Result<(), LowerError> {
+    pub(crate) fn lower_op_comparisons(
+        &mut self,
+        op: &crate::smir::ir::ops::SmirOp,
+    ) -> Result<(), LowerError> {
         let is_non_accumulating_madd = matches!(
             &op.kind,
             OpKind::VDotProduct {

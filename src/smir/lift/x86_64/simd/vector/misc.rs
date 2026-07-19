@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn packed_unsigned_average_kind(
         dst: VReg,
         src1: VReg,
@@ -39,8 +37,6 @@ impl X86_64Lifter {
             set_ovf: false,
         }
     }
-
-
 
     /// Construct a VEX scalar XMM result: lane 0 comes from `low_scalar`, the
     /// remaining 128-bit lanes come from `upper_src`, and all state above bit
@@ -119,8 +115,6 @@ impl X86_64Lifter {
             ));
         }
     }
-
-
 
     /// Emit the exact integer sign-bit mask used by the (V)MOVMSK families.
     pub(crate) fn append_sse_movmask(
@@ -209,8 +203,6 @@ impl X86_64Lifter {
         ));
     }
 
-
-
     pub(crate) fn lift_vec_pmovmskb(
         &self,
         prefix: VecPrefix,
@@ -261,8 +253,6 @@ impl X86_64Lifter {
         )];
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_half_move(
         &self,
@@ -420,8 +410,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_pinsrw_pextrw(
         &self,

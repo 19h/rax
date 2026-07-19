@@ -17,7 +17,6 @@ use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 
 impl SmirInterpreter {
-
     /// Write a width-tagged operation result to a destination, applying x86
     /// sub-register write semantics for architectural GPRs: an 8-bit or 16-bit
     /// write MERGES into the existing register (the upper bits are preserved),
@@ -40,7 +39,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn write_x86_partial(ctx: &mut SmirContext, dst: VReg, value: u64, width: OpWidth) {
         if let VReg::Arch(ArchReg::X86(_)) = dst {
             if matches!(width, OpWidth::W8 | OpWidth::W16) {
@@ -52,7 +50,6 @@ impl SmirInterpreter {
         }
         ctx.write_vreg(dst, value & width.mask());
     }
-
 
     // ========================================================================
     // Helper Methods
@@ -92,7 +89,6 @@ impl SmirInterpreter {
             }
         }
     }
-
 
     /// Compute effective address
     pub(crate) fn compute_address(&self, ctx: &SmirContext, addr: &Address) -> GuestAddr {
@@ -145,7 +141,6 @@ impl SmirInterpreter {
         }
     }
 
-
     /// Load from memory
     pub(crate) fn load_memory(
         &self,
@@ -178,7 +173,6 @@ impl SmirInterpreter {
             }
         })
     }
-
 
     /// Store to memory
     pub(crate) fn store_memory(

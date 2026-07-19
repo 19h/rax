@@ -1,11 +1,11 @@
 //! Branch, exception, and system instruction execution
 
-use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::aarch32::cpu::{
     ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr, add_with_carry, compute_n_flag,
     compute_z_flag, condition_passed, expand_imm_c, shift_c, sign_extend,
 };
+use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::aarch32::vfp::{
     Fpscr, NeonSize, RoundingMode, vabs_f16_bits, vabs_f32, vabs_f64, vadd_f16_bits, vadd_f32,
     vadd_f64, vadd_i, vand, vbic, vcls_i, vclz_i, vcmp_f16_bits_with_exception,
@@ -27,8 +27,7 @@ use crate::isa::arm::aarch32::vfp::{
 };
 use crate::isa::arm::decoder::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 
-impl <'a, M: ArmMemory> Executor<'a, M> {
-
+impl<'a, M: ArmMemory> Executor<'a, M> {
     pub(crate) fn exec_bl(&mut self, insn: &DecodedInsn) -> ExecResult {
         // The return address is the instruction after this BL. In Thumb state
         // LR must carry bit0 = 1 so the eventual `BX LR` resumes in Thumb.
@@ -45,7 +44,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn exec_bx(&mut self, insn: &DecodedInsn) -> ExecResult {
         if let Some(m) = self.decode_reg_operand(insn, 0) {
             let target = self.reg(m);
@@ -55,7 +53,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             ExecResult::Undefined
         }
     }
-
 
     pub(crate) fn exec_blx(&mut self, insn: &DecodedInsn) -> ExecResult {
         let thumb = insn.state.is_thumb();
@@ -89,7 +86,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn exec_cbz(&mut self, insn: &DecodedInsn) -> ExecResult {
         // Thumb-2 only
         let n = (insn.raw & 0x7) as usize;
@@ -100,7 +96,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         ExecResult::Continue
     }
-
 
     pub(crate) fn exec_cbnz(&mut self, insn: &DecodedInsn) -> ExecResult {
         // Thumb-2 only
@@ -113,12 +108,10 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
     pub(crate) fn exec_clrex(&mut self, _insn: &DecodedInsn) -> ExecResult {
         self.exclusive_monitor.clear();
         ExecResult::Continue
     }
-
 
     // =========================================================================
     // System Operations
@@ -129,12 +122,10 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Exception(ExceptionType::SupervisorCall(imm))
     }
 
-
     pub(crate) fn exec_bkpt(&mut self, insn: &DecodedInsn) -> ExecResult {
         let imm = ((insn.raw >> 8) & 0xFFF0) | (insn.raw & 0xF);
         ExecResult::Exception(ExceptionType::Breakpoint(imm as u16))
     }
-
 
     pub(crate) fn exec_mrs(&mut self, insn: &DecodedInsn) -> ExecResult {
         let d = ((insn.raw >> 12) & 0xF) as usize;
@@ -153,7 +144,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.cpu.regs[d] = value;
         ExecResult::Continue
     }
-
 
     pub(crate) fn exec_msr(&mut self, insn: &DecodedInsn) -> ExecResult {
         let r = (insn.raw >> 22) & 1;
@@ -175,7 +165,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
 
     /// Execute IT (If-Then) instruction (Thumb-2).
     ///
@@ -200,7 +189,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
 
     // =========================================================================
     // Coprocessor Operations

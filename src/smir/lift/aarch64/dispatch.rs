@@ -17,7 +17,6 @@ use crate::smir::ir::{
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader};
 
 impl Aarch64Lifter {
-
     // ========================================================================
     // Instruction Lifting
     // ========================================================================

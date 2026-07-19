@@ -68,7 +68,6 @@ pub use registers::*;
 #[cfg(test)]
 mod tests;
 
-
 /// Result of instruction execution.
 #[derive(Clone, Debug)]
 pub enum ExecResult {
@@ -243,8 +242,6 @@ pub struct Executor<'a, M: ArmMemory> {
     pub vbar: u32,
 }
 
-
 // =============================================================================
 // Tests
 // =============================================================================
-

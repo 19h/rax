@@ -22,7 +22,6 @@ use crate::smir::lift::{
 };
 
 impl X86_64Lifter {
-
     pub(crate) fn lift_apx_nf_bmi_0f38(
         &self,
         opcode: u8,
@@ -146,7 +145,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn validate_apx_bmi_payload(
         &self,
         prefix: ApxEvexPrefix,
@@ -163,7 +161,6 @@ impl X86_64Lifter {
         }
         Ok(())
     }
-
 
     pub(crate) fn lift_apx_bmi2_0f38(
         &self,
@@ -303,7 +300,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_apx_bmi2_rorx(
         &self,
         bytes: &[u8],
@@ -372,7 +368,6 @@ impl X86_64Lifter {
             prefix.bytes + 1 + modrm.bytes_consumed + 1,
         ))
     }
-
 
     pub(crate) fn lift_cmpccxadd(
         &self,
@@ -453,7 +448,6 @@ impl X86_64Lifter {
             prefix_bytes + 1 + modrm.bytes_consumed,
         ))
     }
-
 
     pub(crate) fn lift_apx_push2(
         &self,
@@ -552,7 +546,6 @@ impl X86_64Lifter {
 
         Ok(LiftResult::fallthrough(ops, prefix.bytes + 2))
     }
-
 
     pub(crate) fn lift_apx_pop2(
         &self,
@@ -654,7 +647,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, prefix.bytes + 2))
     }
 
-
     pub(crate) fn apx_alu_op(
         &self,
         group: u8,
@@ -737,7 +729,6 @@ impl X86_64Lifter {
             }),
         }
     }
-
 
     pub(crate) fn lift_apx_alu(
         &self,
@@ -837,7 +828,6 @@ impl X86_64Lifter {
             prefix.bytes + 1 + modrm.bytes_consumed,
         ))
     }
-
 
     pub(crate) fn lift_apx_group1_imm(
         &self,
@@ -1018,7 +1008,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_apx_movbe(
         &self,
         prefix: ApxEvexPrefix,
@@ -1119,7 +1108,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_apx_movrs(
         &self,
         prefix: ApxEvexPrefix,
@@ -1173,7 +1161,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn apx_ccmp_default_rflags(dfv: u8) -> i64 {
         let mut flags = 0x02;
         if dfv & 0x1 != 0 {
@@ -1190,7 +1177,6 @@ impl X86_64Lifter {
         }
         flags
     }
-
 
     pub(crate) fn push_apx_conditional_flags_with(
         &self,
@@ -1272,7 +1258,6 @@ impl X86_64Lifter {
             },
         ));
     }
-
 
     pub(crate) fn lift_apx_ccmp(
         &self,
@@ -1358,7 +1343,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_apx_ctest_reg(
         &self,
         prefix: ApxEvexPrefix,
@@ -1435,7 +1419,6 @@ impl X86_64Lifter {
             prefix.bytes + 1 + modrm.bytes_consumed,
         ))
     }
-
 
     pub(crate) fn lift_apx_ctest_imm(
         &self,
@@ -1552,7 +1535,6 @@ impl X86_64Lifter {
             prefix.bytes + 1 + modrm.bytes_consumed + imm_size,
         ))
     }
-
 
     pub(crate) fn lift_apx_group3(
         &self,
@@ -1704,7 +1686,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_apx_inc_dec(
         &self,
         prefix: ApxEvexPrefix,
@@ -1800,7 +1781,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_apx_count(
         &self,
         prefix: ApxEvexPrefix,
@@ -1869,7 +1849,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_apx_rao_int(
         &self,
         prefix: ApxEvexPrefix,
@@ -1903,7 +1882,6 @@ impl X86_64Lifter {
         self.lift_rao_int_modrm(bytes, &modrm_prefix, pc, ctx, op, width)
     }
 
-
     pub(crate) fn lift_apx_adx(
         &self,
         prefix: ApxEvexPrefix,
@@ -1934,7 +1912,6 @@ impl X86_64Lifter {
         let dst = self.gpr(prefix.vvvv_reg());
         self.lift_adx_modrm(bytes, &modrm_prefix, pc, ctx, kind, width, Some(dst))
     }
-
 
     pub(crate) fn lift_apx_setzucc(
         &self,
@@ -1992,7 +1969,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn push_apx_condition(
         &self,
         ops: &mut Vec<SmirOp>,
@@ -2012,7 +1988,6 @@ impl X86_64Lifter {
         ));
         cond_reg
     }
-
 
     pub(crate) fn lift_apx_evex_setcc(
         &self,
@@ -2069,7 +2044,6 @@ impl X86_64Lifter {
             prefix.bytes + 1 + modrm.bytes_consumed,
         ))
     }
-
 
     pub(crate) fn lift_apx_cmovcc(
         &self,
@@ -2269,7 +2243,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_apx_conditional_map4(
         &self,
         prefix: ApxEvexPrefix,
@@ -2295,7 +2268,6 @@ impl X86_64Lifter {
             self.lift_apx_cmovcc(prefix, opcode, bytes, pc, ctx)
         }
     }
-
 
     pub(crate) fn lift_apx_imul_reg(
         &self,
@@ -2359,7 +2331,6 @@ impl X86_64Lifter {
             prefix.bytes + 1 + modrm.bytes_consumed,
         ))
     }
-
 
     pub(crate) fn lift_apx_imul_imm(
         &self,
@@ -2455,7 +2426,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn apx_shift_op(
         &self,
         group: u8,
@@ -2533,7 +2503,6 @@ impl X86_64Lifter {
             }),
         }
     }
-
 
     pub(crate) fn lift_apx_shift(
         &self,
@@ -2618,7 +2587,6 @@ impl X86_64Lifter {
             prefix.bytes + 1 + modrm.bytes_consumed + imm_size,
         ))
     }
-
 
     pub(crate) fn lift_apx_double_shift(
         &self,
@@ -2785,7 +2753,6 @@ impl X86_64Lifter {
             prefix.bytes + 1 + modrm.bytes_consumed + imm_size,
         ))
     }
-
 
     pub(crate) fn lift_apx_evex_map4(
         &self,

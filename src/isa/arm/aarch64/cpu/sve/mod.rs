@@ -40,5 +40,3 @@ mod shift;
 pub(crate) use shift::*;
 mod sve2;
 pub(crate) use sve2::*;
-
-

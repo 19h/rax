@@ -23,8 +23,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
-
     /// Execute the AdvSIMD "three-same-extra" (bit21==0) ops: SQRDMLAH/SQRDMLSH
     /// (FEAT_RDM; vector + scalar) and SMMLA/UMMLA/USMMLA (FEAT_I8MM int8 2x2
     /// matrix multiply-accumulate; .4s,.16b,.16b, Q==1 only).
@@ -115,8 +113,6 @@ impl AArch64Cpu {
         self.v[rd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute SIMD across lanes (reduction operations).
     pub(crate) fn exec_simd_across_lanes(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
@@ -250,8 +246,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// AdvSIMD scalar pairwise: reduce the two elements of a vector to a scalar.
     /// ADDP (int, D only); FADDP/FMAXP/FMINP/FMAXNMP/FMINNMP for f16 (U=0),
     /// f32 (U=1, bit22=0) or f64 (U=1, bit22=1). bit23 selects min for the
@@ -311,8 +305,6 @@ impl AArch64Cpu {
         self.v[rd] = (r & mask) as u128;
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute the Advanced SIMD "copy" group: DUP (element/general), INS
     /// (element/general), SMOV, UMOV. Element size and lane index come from the
@@ -449,8 +441,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SIMD permute operations (ZIP, UZP, TRN).
     pub(crate) fn exec_simd_permute(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         if (insn >> 31) != 0 {
@@ -565,8 +555,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SIMD extract (EXT).
     pub(crate) fn exec_simd_extract(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         if (insn >> 31) != 0 {
@@ -601,8 +589,6 @@ impl AArch64Cpu {
         self.v[rd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     pub(crate) fn exec_extract(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;

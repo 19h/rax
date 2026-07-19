@@ -17,7 +17,6 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 impl Aarch64Lowerer {
-
     pub(crate) fn emit_bitfield(
         &mut self,
         dst: u8,
@@ -41,7 +40,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn bitfield_args(
         op: &str,
         lsb: u8,
@@ -63,7 +61,6 @@ impl Aarch64Lowerer {
         Ok(op_bits)
     }
 
-
     pub(crate) fn mem_index_scale_bit(scale: u8, size: u32) -> Result<u32, LowerError> {
         if scale == 1 {
             return Ok(0);
@@ -77,7 +74,6 @@ impl Aarch64Lowerer {
         })
     }
 
-
     pub(crate) fn bit_test_single_bit_imm(bit: u32, width: OpWidth) -> i64 {
         if width == OpWidth::W64 {
             (1_u64 << bit) as i64
@@ -86,8 +82,11 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn finish_bit_test_result_width(&mut self, dst: u8, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn finish_bit_test_result_width(
+        &mut self,
+        dst: u8,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         match width {
             OpWidth::W8 | OpWidth::W16 => {
                 self.emit_bitfield(dst, dst, 0b10, 0, width.bits() - 1, OpWidth::W32)
@@ -99,15 +98,17 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn emit_write_c_from_low_bit(&mut self, flags: u8, bit: u8) -> Result<(), LowerError> {
+    pub(crate) fn emit_write_c_from_low_bit(
+        &mut self,
+        flags: u8,
+        bit: u8,
+    ) -> Result<(), LowerError> {
         let (imm_n, immr, imms) = Self::logical_bitmask_imm(!(NZCV_C as u32) as i64, OpWidth::W32)?;
         self.emit_sysreg(flags, ArmReg::Nzcv, true)?;
         self.emit_logic_imm(flags, flags, 0b00, imm_n, immr, imms, OpWidth::W32)?;
         self.emit_logic_shifted(flags, flags, bit, 0b01, false, 0, 29, OpWidth::W32)?;
         self.emit_sysreg(flags, ArmReg::Nzcv, false)
     }
-
 
     pub(crate) fn apply_bit_test_imm_action(
         &mut self,
@@ -136,7 +137,6 @@ impl Aarch64Lowerer {
         }
         Ok(())
     }
-
 
     pub(crate) fn apply_bit_test_reg_action(
         &mut self,
@@ -168,7 +168,6 @@ impl Aarch64Lowerer {
         }
         Ok(())
     }
-
 
     pub(crate) fn lower_bit_test(
         &mut self,
@@ -204,7 +203,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_bit_test_imm(
         &mut self,
@@ -251,7 +249,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_bit_test_reg(
         &mut self,
@@ -318,8 +315,12 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
-    pub(crate) fn lower_clz(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_clz(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         if width == OpWidth::W16 {
             if let Some((dst, result)) = Self::x86_partial_write_scratch(dst, width, &[src], &[])? {
                 let scratches = [result];
@@ -363,7 +364,6 @@ impl Aarch64Lowerer {
         }
         self.emit_dp1(dst, src, 0b000100, width)
     }
-
 
     pub(crate) fn lower_bit_scan_flags(
         &mut self,
@@ -411,7 +411,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_bit_scan_zero_flags(
         &mut self,
         dst: u8,
@@ -441,7 +440,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_pdep_pext(
         &mut self,
@@ -531,7 +529,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn emit_pdep_pext_operand(
         &mut self,
         dst: u8,
@@ -558,7 +555,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn emit_finish_pdep_pext_value(
         &mut self,
         dst: u8,
@@ -576,7 +572,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_pdep_runtime_mask(
         &mut self,
@@ -632,7 +627,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_pext_runtime_mask(
         &mut self,
         dst: VReg,
@@ -678,7 +672,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn eval_pdep(src: u64, mask: u64, bits: u32) -> u64 {
         let mut result = 0;
         let mut src_bit = 0;
@@ -692,7 +685,6 @@ impl Aarch64Lowerer {
         }
         result
     }
-
 
     pub(crate) fn eval_pext(src: u64, mask: u64, bits: u32) -> u64 {
         let mut result = 0;
@@ -708,7 +700,6 @@ impl Aarch64Lowerer {
         result
     }
 
-
     pub(crate) fn contiguous_bitfield(mask: u64) -> Option<(u8, u8)> {
         if mask == 0 {
             return None;
@@ -721,7 +712,6 @@ impl Aarch64Lowerer {
         Some((lsb as u8, shifted.count_ones() as u8))
     }
 
-
     pub(crate) fn single_bit_operand(bit: u32, width: OpWidth) -> SrcOperand {
         let value = 1_u64 << bit;
         if width == OpWidth::W64 {
@@ -730,7 +720,6 @@ impl Aarch64Lowerer {
             SrcOperand::Imm(value as i64)
         }
     }
-
 
     pub(crate) fn emit_ubfx_bit_to_low(
         &mut self,
@@ -741,7 +730,6 @@ impl Aarch64Lowerer {
     ) -> Result<(), LowerError> {
         self.emit_bitfield(dst, src, 0b10, bit, bit, width)
     }
-
 
     pub(crate) fn emit_bfxil_bit_to_low(
         &mut self,
@@ -755,13 +743,15 @@ impl Aarch64Lowerer {
         self.emit_bitfield(dst, src, 0b01, bit, bit, width)
     }
 
-
-    pub(crate) fn emit_restore_c_from_low_bit(&mut self, flags_base: u8, carry: u8) -> Result<(), LowerError> {
+    pub(crate) fn emit_restore_c_from_low_bit(
+        &mut self,
+        flags_base: u8,
+        carry: u8,
+    ) -> Result<(), LowerError> {
         self.emit_logic_shifted(carry, flags_base, carry, 0b01, false, 0, 29, OpWidth::W32)?;
         self.emit_sysreg(carry, ArmReg::Nzcv, false)?;
         self.emit_ubfx_bit_to_low(carry, carry, 29, OpWidth::W32)
     }
-
 
     pub(crate) fn lower_pdep_const_mask(
         &mut self,
@@ -795,7 +785,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_pext_const_mask(
         &mut self,
         dst: u8,
@@ -823,8 +812,12 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
-    pub(crate) fn lower_cls(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_cls(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         if let VReg::Imm(value) = src {
             let result = Self::cls_imm(value as u64, width)?;
             return self.emit_mov_imm(Self::dst_gpr_arm_or_x86(dst)?, result as i64, width);
@@ -838,8 +831,12 @@ impl Aarch64Lowerer {
         )
     }
 
-
-    pub(crate) fn lower_rbit(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_rbit(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         if let VReg::Imm(value) = src {
             let (result, emit_width) = match width {
                 OpWidth::W8 | OpWidth::W16 => (value as u64, OpWidth::W64),
@@ -873,8 +870,12 @@ impl Aarch64Lowerer {
         )
     }
 
-
-    pub(crate) fn lower_rev16(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_rev16(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         if let VReg::Imm(value) = src {
             let result = Self::rev16_imm(value as u64, width)?;
             let dst = Self::dst_gpr(dst)?;
@@ -897,8 +898,12 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn lower_rev32(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_rev32(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         if let VReg::Imm(value) = src {
             let result = Self::rev32_imm(value as u64, width)?;
             let dst = Self::dst_gpr(dst)?;
@@ -920,7 +925,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn emit_bitfield_merge_from_work(
         &mut self,
@@ -967,7 +971,6 @@ impl Aarch64Lowerer {
         )
     }
 
-
     pub(crate) fn lower_bitfield_insert_zero(
         &mut self,
         dst: VReg,
@@ -990,7 +993,6 @@ impl Aarch64Lowerer {
             op_width,
         )
     }
-
 
     pub(crate) fn lower_bitfield_insert_low(
         &mut self,
@@ -1094,12 +1096,10 @@ impl Aarch64Lowerer {
         )
     }
 
-
     pub(crate) fn bidir_count_imm(imm: i64) -> i64 {
         let low7 = imm & 0x7f;
         (low7 << 57) >> 57
     }
-
 
     pub(crate) fn lower_bidir_full_count(
         &mut self,
@@ -1118,7 +1118,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn deposit_imm_bits(value: u64, mut mask: u64) -> u64 {
         let mut result = 0;
         let mut bit = 0;
@@ -1133,7 +1132,6 @@ impl Aarch64Lowerer {
         result
     }
 
-
     pub(crate) fn extract_imm_bits(value: u64, mut mask: u64) -> u64 {
         let mut result = 0;
         let mut bit = 0;
@@ -1147,7 +1145,6 @@ impl Aarch64Lowerer {
         }
         result
     }
-
 
     pub(crate) fn lower_bit_permute_imm_mask(
         &mut self,

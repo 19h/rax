@@ -27,12 +27,10 @@ impl X86_64Lifter {
         VReg::Arch(ArchReg::X86(X86Reg::gpr(reg)))
     }
 
-
     /// Get x86 register by number
     pub(crate) fn gpr(&self, reg: u8) -> VReg {
         self.x86_gpr(reg & 0x1F)
     }
-
 
     /// Decode an 8-bit register source, extracting AH/CH/DH/BH when no REX
     /// prefix is present. With REX, codes 4..7 remain SPL/BPL/SIL/DIL.
@@ -63,12 +61,10 @@ impl X86_64Lifter {
         }
     }
 
-
     /// Return the aliased full GPR for an AH/CH/DH/BH destination.
     pub(crate) fn high_byte_base(&self, reg: u8, prefix: &X86Prefix) -> Option<VReg> {
         (!prefix.has_rex() && (4..=7).contains(&(reg & 7))).then(|| self.gpr((reg & 7) - 4))
     }
-
 
     /// Merge the low byte of `value` into bits 15:8 of `base`, preserving all
     /// other bits. All helper arithmetic is explicitly flag-free.
@@ -129,7 +125,6 @@ impl X86_64Lifter {
         ));
     }
 
-
     /// Write an 8-bit register destination from `value`, including the legacy
     /// high-byte aliases when no REX prefix is present.
     pub(crate) fn write_byte_reg(
@@ -156,26 +151,21 @@ impl X86_64Lifter {
         }
     }
 
-
     pub(crate) fn xmm(&self, reg: u8) -> VReg {
         VReg::Arch(ArchReg::X86(X86Reg::Xmm(reg)))
     }
-
 
     pub(crate) fn mm(&self, reg: u8) -> VReg {
         VReg::Arch(ArchReg::X86(X86Reg::Mm(reg & 0x7)))
     }
 
-
     pub(crate) fn ymm(&self, reg: u8) -> VReg {
         VReg::Arch(ArchReg::X86(X86Reg::Ymm(reg)))
     }
 
-
     pub(crate) fn zmm(&self, reg: u8) -> VReg {
         VReg::Arch(ArchReg::X86(X86Reg::Zmm(reg)))
     }
-
 
     pub(crate) fn vec_reg(&self, reg: u8, width: VecWidth) -> VReg {
         match width {
@@ -186,12 +176,10 @@ impl X86_64Lifter {
         }
     }
 
-
     /// Get RSP register
     pub(crate) fn rsp(&self) -> VReg {
         VReg::Arch(ArchReg::X86(X86Reg::Rsp))
     }
-
 
     /// Convert op_size to OpWidth
     pub(crate) fn size_to_width(&self, size: u8) -> OpWidth {
@@ -204,7 +192,6 @@ impl X86_64Lifter {
         }
     }
 
-
     /// Convert op_size to MemWidth
     pub(crate) fn size_to_memwidth(&self, size: u8) -> MemWidth {
         match size {
@@ -215,7 +202,6 @@ impl X86_64Lifter {
             _ => MemWidth::B4,
         }
     }
-
 
     /// Materialize a 32-bit effective address selected by a `67h` override in
     /// 64-bit mode. Base, index, scaling, and displacement are evaluated
@@ -365,7 +351,6 @@ impl X86_64Lifter {
         };
         (addr, pre_ops)
     }
-
 
     /// Convert x86 address to SMIR Address, optionally generating pre-ops
     pub(crate) fn x86_addr_to_smir(
@@ -577,7 +562,6 @@ impl X86_64Lifter {
         }
     }
 
-
     pub(crate) fn vec_scalar_addr_to_smir(
         &self,
         prefix: VecPrefix,
@@ -593,7 +577,6 @@ impl X86_64Lifter {
         scaled.disp = scaled.disp.wrapping_mul(i64::from(elem.bytes()));
         self.x86_addr_to_smir(&scaled, next_rip, ctx)
     }
-
 
     /// Decode an EVEX full-vector memory tuple. A disp8 is compressed by the
     /// complete vector width (16, 32, or 64 bytes).
@@ -612,7 +595,6 @@ impl X86_64Lifter {
         self.x86_addr_to_smir(&scaled, next_rip, ctx)
     }
 
-
     pub(crate) fn vec_disp8_addr_to_smir(
         &self,
         prefix: VecPrefix,
@@ -628,7 +610,6 @@ impl X86_64Lifter {
         scaled.disp = scaled.disp.wrapping_mul(i64::from(scale));
         self.x86_addr_to_smir(&scaled, next_rip, ctx)
     }
-
 
     /// Replace one register in an already-decoded address expression. Used by
     /// POP r/m memory forms, whose effective address observes the incremented
@@ -677,7 +658,6 @@ impl X86_64Lifter {
         }
     }
 
-
     /// Map x86 condition code (0-15) to SMIR Condition
     pub(crate) fn x86_cond(&self, cc: u8) -> Condition {
         match cc & 0x0F {
@@ -700,7 +680,6 @@ impl X86_64Lifter {
             _ => Condition::Always,
         }
     }
-
 
     pub(crate) fn vec_hint(&self, prefix: VecPrefix, opcode: u8) -> X86OpHint {
         match prefix.encoding {

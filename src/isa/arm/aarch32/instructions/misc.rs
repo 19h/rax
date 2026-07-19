@@ -1,11 +1,11 @@
 //! Uncategorized instruction execution
 
-use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::aarch32::cpu::{
     ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr, add_with_carry, compute_n_flag,
     compute_z_flag, condition_passed, expand_imm_c, shift_c, sign_extend,
 };
+use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::aarch32::vfp::{
     Fpscr, NeonSize, RoundingMode, vabs_f16_bits, vabs_f32, vabs_f64, vadd_f16_bits, vadd_f32,
     vadd_f64, vadd_i, vand, vbic, vcls_i, vclz_i, vcmp_f16_bits_with_exception,
@@ -27,7 +27,7 @@ use crate::isa::arm::aarch32::vfp::{
 };
 use crate::isa::arm::decoder::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 
-impl <'a, M: ArmMemory> Executor<'a, M> {
+impl<'a, M: ArmMemory> Executor<'a, M> {
     /// Create a new executor.
     pub fn new(cpu: &'a mut Armv7Cpu, mem: &'a mut M) -> Self {
         Executor {
@@ -38,7 +38,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     /// Create a new executor with custom VBAR.
     pub fn with_vbar(cpu: &'a mut Armv7Cpu, mem: &'a mut M, vbar: u32) -> Self {
         Executor {
@@ -48,7 +47,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             vbar,
         }
     }
-
 
     /// Execute a single decoded instruction.
     pub fn execute(&mut self, insn: &DecodedInsn) -> ExecResult {
@@ -469,7 +467,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     // =========================================================================
     // Exception Handling
     // =========================================================================
@@ -524,7 +521,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.cpu.regs[15] = self.vbar.wrapping_add(vector_offset);
     }
 
-
     /// Return from exception (MOVS PC, LR or SUBS PC, LR, #imm with S bit).
     pub fn exception_return(&mut self) {
         if let Some(spsr) = self.cpu.get_current_spsr() {
@@ -540,7 +536,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     /// Check if condition is passed.
     pub(crate) fn condition_passed(&self, cond: Condition) -> bool {
         condition_passed(
@@ -552,18 +547,15 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         )
     }
 
-
     /// Get register value with PC+8 handling.
     #[inline]
     pub(crate) fn reg(&self, r: usize) -> u32 {
         self.cpu.reg(r)
     }
 
-
     pub(crate) fn a32_s_bit(insn: &DecodedInsn) -> bool {
         Self::is_a32_state(insn.state) && (insn.raw >> 22) & 1 == 1
     }
-
 
     pub(crate) fn exec_rsc(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, operand2) = self.decode_dp_operands(insn);
@@ -576,7 +568,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         self.set_reg_with_s(d, result, insn.sets_flags)
     }
-
 
     pub(crate) fn exec_neg(&mut self, insn: &DecodedInsn) -> ExecResult {
         // NEG Rd, Rm is RSB Rd, Rm, #0
@@ -594,7 +585,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_orn(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (d, n, operand2) = self.decode_dp_operands(insn);
         let result = self.reg(n) | !operand2;
@@ -605,14 +595,12 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(d, result)
     }
 
-
     pub(crate) fn exec_cmn(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (_, n, operand2) = self.decode_dp_operands(insn);
         let result = self.cpu.add_with_carry(self.reg(n), operand2, false);
         self.set_flags_arithmetic(result);
         ExecResult::Continue
     }
-
 
     // =========================================================================
     // Branch Operations
@@ -625,7 +613,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             ExecResult::Undefined
         }
     }
-
 
     /// SRS: store return state (LR and SPSR of the current mode) to the
     /// stack of the mode given in the instruction.
@@ -666,7 +653,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
     /// RFE: return from exception — load PC and CPSR from [Rn].
     pub(crate) fn exec_rfe(&mut self, insn: &DecodedInsn) -> ExecResult {
         if self.cpu.is_user_or_system() {
@@ -704,7 +690,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Branch(new_pc)
     }
 
-
     /// SP of an arbitrary mode (live register if it is the current mode).
     pub(crate) fn banked_sp(&self, mode_bits: u8) -> u32 {
         if mode_bits == self.cpu.cpsr.mode {
@@ -721,7 +706,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             _ => self.cpu.regs[13],
         }
     }
-
 
     pub(crate) fn exec_mcr(&mut self, insn: &DecodedInsn) -> ExecResult {
         let t = ((insn.raw >> 12) & 0xF) as usize;
@@ -776,7 +760,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         ExecResult::Continue
     }
-
 
     pub(crate) fn exec_mrc(&mut self, insn: &DecodedInsn) -> ExecResult {
         let t = ((insn.raw >> 12) & 0xF) as usize;
@@ -841,7 +824,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-
     pub(crate) fn vrint_rounding(&self, mnemonic: Mnemonic) -> Option<(RoundingMode, bool)> {
         match mnemonic {
             Mnemonic::VRINTA_F16 | Mnemonic::VRINTA_F32 | Mnemonic::VRINTA_F64 => {
@@ -869,7 +851,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     // =========================================================================
     // Bit Field Operations
     // =========================================================================
@@ -883,11 +864,9 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn bitfield_range_valid(lsb: u32, width: u32) -> bool {
         lsb < 32 && width != 0 && lsb.checked_add(width).is_some_and(|end| end <= 32)
     }
-
 
     /// Bitfield instruction fields (Rd, Rn, lsb, five) where `five` is the
     /// width-minus-1 (SBFX/UBFX) or msb (BFI/BFC) field. Handles A32 and T32.
@@ -904,7 +883,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             (d, n, (raw >> 7) & 0x1F, (raw >> 16) & 0x1F)
         }
     }
-
 
     // =========================================================================
     // Saturating Arithmetic
@@ -931,7 +909,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     /// Signed-saturate a value to 32 bits, setting the Q flag on saturation.
     pub(crate) fn ssat32(&mut self, x: i64) -> u32 {
         if x > i32::MAX as i64 {
@@ -944,7 +921,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             x as u32
         }
     }
-
 
     /// SMUL/SMLA/SMULW/SMLAW/SMLAL <x><y> (halfword and word multiplies).
     pub(crate) fn exec_a32_hmul(&mut self, insn: &DecodedInsn) -> ExecResult {
@@ -1019,7 +995,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     /// SMUAD / SMUSD / SMLAD / SMLSD.
     pub(crate) fn exec_a32_dual(&mut self, insn: &DecodedInsn) -> ExecResult {
         let raw = insn.raw;
@@ -1048,7 +1023,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(rd, r32 as u32)
     }
 
-
     /// SMMUL / SMMLA / SMMLS (signed most-significant-word multiply).
     pub(crate) fn exec_a32_smmul(&mut self, insn: &DecodedInsn) -> ExecResult {
         let raw = insn.raw;
@@ -1071,7 +1045,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(rd, (result >> 32) as u32)
     }
 
-
     /// USAD8 / USADA8 (sum of absolute differences).
     pub(crate) fn exec_a32_usad(&mut self, insn: &DecodedInsn) -> ExecResult {
         let (rd, ra, rm, rn) = self.dsp4_regs(insn);
@@ -1088,7 +1061,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         self.set_reg(rd, sum)
     }
-
 
     /// PKHBT / PKHTB (pack halfword).
     pub(crate) fn exec_a32_pkh(&mut self, insn: &DecodedInsn) -> ExecResult {
@@ -1119,7 +1091,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         };
         self.set_reg(rd, result)
     }
-
 
     /// (U|S)XT(A)(B|H|B16) sign/zero extend, with optional add and rotate.
     pub(crate) fn exec_a32_extend(&mut self, insn: &DecodedInsn) -> ExecResult {
@@ -1180,7 +1151,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(rd, result)
     }
 
-
     /// SSAT16 / USAT16 (parallel halfword saturate).
     pub(crate) fn exec_a32_sat16(&mut self, insn: &DecodedInsn) -> ExecResult {
         let raw = insn.raw;
@@ -1232,7 +1202,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         self.set_reg(rd, out)
     }
-
 
     /// Signed/unsigned parallel add/sub (SADD8/QADD16/UHASX/...). Sets GE for
     /// the plain signed (S) and unsigned (U) prefixes.
@@ -1384,7 +1353,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.set_reg(rd, result)
     }
 
-
     // =========================================================================
     // Operand Decoding Helpers
     // =========================================================================
@@ -1405,7 +1373,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         (regs, cnt)
     }
 
-
     /// (Rd, Rm) for two-register ops: from operands in Thumb, from raw in A32.
     pub(crate) fn dm_ops(&self, insn: &DecodedInsn) -> (usize, usize) {
         if insn.state.is_thumb() {
@@ -1415,7 +1382,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             (((insn.raw >> 12) & 0xF) as usize, (insn.raw & 0xF) as usize)
         }
     }
-
 
     /// Carry-out of a Thumb data-processing immediate (ThumbExpandImm_C). The
     /// rotated forms produce carry = result[31]; plain forms leave C unchanged.

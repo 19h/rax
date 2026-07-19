@@ -119,7 +119,9 @@ pub(crate) fn x86_packed_shift_shape_valid(op: &crate::smir::ir::ops::OpKind) ->
         )
         && matches!(shift, ShiftOp::Lsl | ShiftOp::Lsr | ShiftOp::Asr)
 }
-pub(crate) fn x86_packed_shift_feature_requirements(op: &crate::smir::ir::ops::OpKind) -> (bool, bool, bool) {
+pub(crate) fn x86_packed_shift_feature_requirements(
+    op: &crate::smir::ir::ops::OpKind,
+) -> (bool, bool, bool) {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, ShiftOp, VReg, VecElementType, VecWidth, X86Reg};
     let OpKind::X86PackedShift {
@@ -5689,7 +5691,9 @@ pub(crate) fn x86_vector_sad_bytes_feature_requirements(
 }
 /// Return `(SSE4.1, AVX)` requirements for an admitted register-only
 /// PHMINPOSUW/VPHMINPOSUW operation.
-pub(crate) fn x86_phminposuw_feature_requirements(op: &crate::smir::ir::ops::SmirOp) -> (bool, bool) {
+pub(crate) fn x86_phminposuw_feature_requirements(
+    op: &crate::smir::ir::ops::SmirOp,
+) -> (bool, bool) {
     use crate::smir::ir::ops::X86OpHint;
 
     if !x86_phminposuw_shape_valid(&op.kind) {
@@ -5939,7 +5943,9 @@ pub fn x86_native_mmx_pairs_valid_excluding(
 /// Return `(AES-NI, VAES, AVX-512VL)` requirements contributed by an admitted
 /// `X86Aes` operation. Low-register 128/256-bit rounds are re-encoded with VEX;
 /// high registers require EVEX.VL, while 512-bit rounds use EVEX without VL.
-pub(crate) fn x86_aes_feature_requirements(op: &crate::smir::ir::ops::OpKind) -> (bool, bool, bool) {
+pub(crate) fn x86_aes_feature_requirements(
+    op: &crate::smir::ir::ops::OpKind,
+) -> (bool, bool, bool) {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86AesOp, X86Reg};
 

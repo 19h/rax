@@ -17,7 +17,6 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 impl Aarch64Lowerer {
-
     /// Spill all 32 host V registers into the state struct's V slots. A C
     /// vector-helper `blr` may clobber any caller-saved V register (V0-V7,
     /// V16-V31) — including the live operands of surrounding vector ops — so the
@@ -32,7 +31,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     /// Reload all 32 host V registers from the state struct's V slots.
     pub(crate) fn emit_simd_reload_all(&mut self) {
         for n in 0..32u32 {
@@ -42,8 +40,14 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn emit_simd_ldst_unsigned(&mut self, rt: u8, rn: u8, size: u32, opc: u32, imm12: u32) {
+    pub(crate) fn emit_simd_ldst_unsigned(
+        &mut self,
+        rt: u8,
+        rn: u8,
+        size: u32,
+        opc: u32,
+        imm12: u32,
+    ) {
         self.emit(
             (size << 30)
                 | (0b111 << 27)
@@ -56,8 +60,15 @@ impl Aarch64Lowerer {
         );
     }
 
-
-    pub(crate) fn emit_simd_ldst_simm(&mut self, rt: u8, rn: u8, size: u32, opc: u32, imm9: i64, mode: u32) {
+    pub(crate) fn emit_simd_ldst_simm(
+        &mut self,
+        rt: u8,
+        rn: u8,
+        size: u32,
+        opc: u32,
+        imm9: i64,
+        mode: u32,
+    ) {
         self.emit(
             (size << 30)
                 | (0b111 << 27)
@@ -70,21 +81,24 @@ impl Aarch64Lowerer {
         );
     }
 
-
-    pub(crate) fn emit_simd_ldst_unscaled(&mut self, rt: u8, rn: u8, size: u32, opc: u32, imm9: i64) {
+    pub(crate) fn emit_simd_ldst_unscaled(
+        &mut self,
+        rt: u8,
+        rn: u8,
+        size: u32,
+        opc: u32,
+        imm9: i64,
+    ) {
         self.emit_simd_ldst_simm(rt, rn, size, opc, imm9, 0b00);
     }
-
 
     pub(crate) fn emit_simd_push_scratch(&mut self, rt: u8) {
         self.emit_simd_ldst_simm(rt, 31, 0b00, 0b10, -16, 0b11);
     }
 
-
     pub(crate) fn emit_simd_pop_scratch(&mut self, rt: u8) {
         self.emit_simd_ldst_simm(rt, 31, 0b00, 0b11, 16, 0b01);
     }
-
 
     pub(crate) fn emit_simd_three_same(
         &mut self,
@@ -107,7 +121,6 @@ impl Aarch64Lowerer {
                 | (rd as u32),
         );
     }
-
 
     pub(crate) fn emit_simd_fp16_three_same(
         &mut self,
@@ -133,11 +146,9 @@ impl Aarch64Lowerer {
         );
     }
 
-
     pub(crate) fn emit_simd_bfcvtn(&mut self, rd: u8, rn: u8, q: u32) {
         self.emit(0x0ea1_6800 | (q << 30) | ((rn as u32) << 5) | (rd as u32));
     }
-
 
     pub(crate) fn emit_simd_bfdot(&mut self, rd: u8, rn: u8, rm: u8, q: u32) {
         self.emit(
@@ -151,7 +162,6 @@ impl Aarch64Lowerer {
                 | (rd as u32),
         );
     }
-
 
     pub(crate) fn emit_simd_i8_dot_kind(
         &mut self,
@@ -185,14 +195,20 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_simd_i8_dot(&mut self, rd: u8, rn: u8, rm: u8, q: u32, src1_unsigned: bool) {
         self.emit_simd_i8_dot_kind(rd, rn, rm, q, !src1_unsigned, true)
             .expect("legacy vector dot supports SDOT/USDOT");
     }
 
-
-    pub(crate) fn emit_simd_two_reg_misc(&mut self, rd: u8, rn: u8, q: u32, u: u32, size: u32, opcode: u32) {
+    pub(crate) fn emit_simd_two_reg_misc(
+        &mut self,
+        rd: u8,
+        rn: u8,
+        q: u32,
+        u: u32,
+        size: u32,
+        opcode: u32,
+    ) {
         self.emit(
             0x0e20_0800
                 | (q << 30)
@@ -203,7 +219,6 @@ impl Aarch64Lowerer {
                 | (rd as u32),
         );
     }
-
 
     pub(crate) fn emit_simd_dup_general(&mut self, rd: u8, rn: u8, q: u32, size: u32) {
         let imm5 = 1_u32 << size;
@@ -218,22 +233,18 @@ impl Aarch64Lowerer {
         );
     }
 
-
     pub(crate) fn emit_simd_ins_general(&mut self, rd: u8, rn: u8, imm5: u32) {
         self.emit(0x4e00_1c00 | (imm5 << 16) | ((rn as u32) << 5) | (rd as u32));
     }
-
 
     pub(crate) fn emit_simd_umov(&mut self, rd: u8, rn: u8, imm5: u32, to_x: bool) {
         let base = if to_x { 0x4e00_3c00 } else { 0x0e00_3c00 };
         self.emit(base | (imm5 << 16) | ((rn as u32) << 5) | (rd as u32));
     }
 
-
     pub(crate) fn emit_simd_smov(&mut self, rd: u8, rn: u8, imm5: u32) {
         self.emit(0x4e00_2c00 | (imm5 << 16) | ((rn as u32) << 5) | (rd as u32));
     }
-
 
     pub(crate) fn emit_simd_shift_imm(
         &mut self,
@@ -257,7 +268,6 @@ impl Aarch64Lowerer {
         );
     }
 
-
     pub(crate) fn emit_simd_logical(
         &mut self,
         rd: u8,
@@ -278,7 +288,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_simd_tbl(&mut self, rd: u8, rn: u8, rm: u8, q: u32, len: u32, op: u32) {
         self.emit(
             (q << 30)
@@ -291,7 +300,6 @@ impl Aarch64Lowerer {
         );
     }
 
-
     pub(crate) fn simd_vec_q(width: VecWidth) -> Result<u32, LowerError> {
         match width {
             VecWidth::V64 => Ok(0),
@@ -301,7 +309,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn simd_lane_width(elem: VecElementType, lanes: u8) -> Result<VecWidth, LowerError> {
         match elem.bytes() * u32::from(lanes) {
@@ -313,8 +320,10 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn simd_mem_fields(width: VecWidth, load: bool) -> Result<(u32, u32, u32), LowerError> {
+    pub(crate) fn simd_mem_fields(
+        width: VecWidth,
+        load: bool,
+    ) -> Result<(u32, u32, u32), LowerError> {
         match width {
             VecWidth::V64 => Ok((0b11, load as u32, 3)),
             VecWidth::V128 => Ok((0b00, 0b10 | load as u32, 4)),
@@ -324,8 +333,10 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn simd_integer_shape(elem: VecElementType, lanes: u8) -> Result<(u32, u32), LowerError> {
+    pub(crate) fn simd_integer_shape(
+        elem: VecElementType,
+        lanes: u8,
+    ) -> Result<(u32, u32), LowerError> {
         let size = match elem {
             VecElementType::I8 => 0,
             VecElementType::I16 => 1,
@@ -356,8 +367,10 @@ impl Aarch64Lowerer {
         Ok((q, size))
     }
 
-
-    pub(crate) fn simd_float_shape(elem: VecElementType, lanes: u8) -> Result<(u32, u32), LowerError> {
+    pub(crate) fn simd_float_shape(
+        elem: VecElementType,
+        lanes: u8,
+    ) -> Result<(u32, u32), LowerError> {
         let size = match elem {
             VecElementType::F32 => 0,
             VecElementType::F64 => 1,
@@ -386,7 +399,6 @@ impl Aarch64Lowerer {
         Ok((q, size))
     }
 
-
     pub(crate) fn simd_fp16_shape(width: VecWidth) -> Result<u32, LowerError> {
         match width {
             VecWidth::V64 => Ok(0),
@@ -397,8 +409,10 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn simd_broadcast_shape(elem: VecElementType, lanes: u8) -> Result<(u32, u32), LowerError> {
+    pub(crate) fn simd_broadcast_shape(
+        elem: VecElementType,
+        lanes: u8,
+    ) -> Result<(u32, u32), LowerError> {
         let size = match elem {
             VecElementType::I8 => 0,
             VecElementType::I16 => 1,
@@ -429,7 +443,6 @@ impl Aarch64Lowerer {
         Ok((q, size))
     }
 
-
     pub(crate) fn simd_lane_imm5(elem: VecElementType, lane: u8) -> Result<(u32, u32), LowerError> {
         let size = match elem {
             VecElementType::I8 => 0,
@@ -451,7 +464,6 @@ impl Aarch64Lowerer {
         }
         Ok((size, (u32::from(lane) << (size + 1)) | (1 << size)))
     }
-
 
     pub(crate) fn lower_simd_mem_access(
         &mut self,
@@ -506,7 +518,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_vlogic(
         &mut self,
         dst: VReg,
@@ -520,7 +531,6 @@ impl Aarch64Lowerer {
         let rm = Self::fp_reg(src2)?;
         self.emit_simd_logical(rd, rn, rm, width, op)
     }
-
 
     pub(crate) fn lower_vshift(
         &mut self,
@@ -566,7 +576,6 @@ impl Aarch64Lowerer {
         self.emit_simd_shift_imm(rd, rn, q, u, immhimmb >> 3, immhimmb & 0x7, opcode);
         Ok(())
     }
-
 
     pub(crate) fn lower_vshift_acc(
         &mut self,
@@ -614,10 +623,17 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     /// Emit an "advanced SIMD across lanes" instruction:
     /// `0 Q U 01110 size 11000 opcode 10 Rn Rd`.
-    pub(crate) fn emit_simd_across_lanes(&mut self, rd: u8, rn: u8, q: u32, u: u32, size: u32, opcode: u32) {
+    pub(crate) fn emit_simd_across_lanes(
+        &mut self,
+        rd: u8,
+        rn: u8,
+        q: u32,
+        u: u32,
+        size: u32,
+        opcode: u32,
+    ) {
         self.emit(
             0x0e30_0800
                 | (q << 30)
@@ -629,10 +645,17 @@ impl Aarch64Lowerer {
         );
     }
 
-
     /// Emit an "advanced SIMD permute" instruction:
     /// `0 Q 0 01110 size 0 Rm 0 opcode 10 Rn Rd` (opcode = bits[14:12]).
-    pub(crate) fn emit_simd_permute(&mut self, rd: u8, rn: u8, rm: u8, q: u32, size: u32, opcode: u32) {
+    pub(crate) fn emit_simd_permute(
+        &mut self,
+        rd: u8,
+        rn: u8,
+        rm: u8,
+        q: u32,
+        size: u32,
+        opcode: u32,
+    ) {
         self.emit(
             0x0e00_0800
                 | (q << 30)
@@ -643,7 +666,6 @@ impl Aarch64Lowerer {
                 | (rd as u32),
         );
     }
-
 
     pub(crate) fn lower_vdotproduct(
         &mut self,
@@ -683,7 +705,6 @@ impl Aarch64Lowerer {
         self.emit_simd_i8_dot(rd, rn, rm, q, src1_unsigned);
         Ok(())
     }
-
 
     pub(crate) fn lower_vdotproduct_ext(
         &mut self,
@@ -729,7 +750,6 @@ impl Aarch64Lowerer {
         self.emit_simd_i8_dot_kind(rd, dot_rn, dot_rm, q, dot_rn_signed, dot_rm_signed)
     }
 
-
     pub(crate) fn lower_vdotproduct_bf16(
         &mut self,
         dst: VReg,
@@ -754,7 +774,6 @@ impl Aarch64Lowerer {
         self.emit_simd_bfdot(rd, rn, rm, q);
         Ok(())
     }
-
 
     pub(crate) fn lower_vcvt_fp32_to_bf16(
         &mut self,
@@ -787,7 +806,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_vcvt_bf16_to_fp32(
         &mut self,
         dst: VReg,
@@ -806,7 +824,6 @@ impl Aarch64Lowerer {
         self.emit_simd_shift_imm(rd, rd, 1, 0, 0b0110, 0, 0b01010);
         Ok(())
     }
-
 
     pub(crate) fn lower_vcvt_fp_to_int_sat(
         &mut self,
@@ -846,7 +863,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_vlane_three_same(
         &mut self,
         dst: VReg,
@@ -871,7 +887,6 @@ impl Aarch64Lowerer {
         self.emit_simd_three_same(rd, rn, rm, q, u, size, opcode);
         Ok(())
     }
-
 
     pub(crate) fn lower_vlane(
         &mut self,
@@ -948,7 +963,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_vlane_unary_two_reg(
         &mut self,
         dst: VReg,
@@ -970,7 +984,6 @@ impl Aarch64Lowerer {
         self.emit_simd_two_reg_misc(rd, rn, q, u, size, opcode);
         Ok(())
     }
-
 
     pub(crate) fn lower_vlane_unary_clb(
         &mut self,
@@ -1008,7 +1021,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_vlane_unary(
         &mut self,
         dst: VReg,
@@ -1045,7 +1057,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_vmultiply_add52(
         &mut self,
@@ -1099,7 +1110,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn clmul_source_gpr(src: &SrcOperand) -> Result<Option<u8>, LowerError> {
         match src {
             SrcOperand::Reg(reg) => Ok(Some(Self::gpr_arm_or_x86(*reg)?)),
@@ -1110,8 +1120,11 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn emit_clmul_operand(&mut self, dst: u8, src: &SrcOperand) -> Result<(), LowerError> {
+    pub(crate) fn emit_clmul_operand(
+        &mut self,
+        dst: u8,
+        src: &SrcOperand,
+    ) -> Result<(), LowerError> {
         match src {
             SrcOperand::Reg(reg) => {
                 self.emit_mov_reg(dst, Self::gpr_arm_or_x86(*reg)?, OpWidth::W32)
@@ -1124,7 +1137,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_clmul_product(
         &mut self,
@@ -1144,15 +1156,18 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
-    pub(crate) fn emit_finish_clmul_word(&mut self, dst: u8, value: u8, acc: bool) -> Result<(), LowerError> {
+    pub(crate) fn emit_finish_clmul_word(
+        &mut self,
+        dst: u8,
+        value: u8,
+        acc: bool,
+    ) -> Result<(), LowerError> {
         if acc {
             self.emit_logic_shifted(dst, dst, value, 0b10, false, 0, 0, OpWidth::W32)
         } else {
             self.emit_mov_reg(dst, value, OpWidth::W32)
         }
     }
-
 
     pub(crate) fn lower_clmul(
         &mut self,
@@ -1245,20 +1260,17 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_simd_scratch_save(&mut self, regs: &[u8]) {
         for &reg in regs {
             self.emit_simd_push_scratch(reg);
         }
     }
 
-
     pub(crate) fn emit_simd_scratch_restore(&mut self, regs: &[u8]) {
         for &reg in regs.iter().rev() {
             self.emit_simd_pop_scratch(reg);
         }
     }
-
 
     pub(crate) fn try_lower_fused_vector_inverted_logic(
         &mut self,

@@ -32,7 +32,6 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
-
     /// Emit function prologue
     pub(crate) fn emit_prologue(&mut self) {
         let mut emitter = X86Emitter::new(&mut self.code);
@@ -55,12 +54,10 @@ impl X86_64Lowerer {
         }
     }
 
-
     /// Emit function epilogue
     pub(crate) fn emit_epilogue(&mut self) {
         self.emit_epilogue_with_ret(None);
     }
-
 
     pub(crate) fn emit_epilogue_with_ret(&mut self, ret_imm: Option<u16>) {
         // Deallocate the frame with `lea rsp, [rsp + frame]` rather than
@@ -101,9 +98,12 @@ impl X86_64Lowerer {
         }
     }
 
-
     /// Lower a block terminator
-    pub(crate) fn lower_terminator(&mut self, source: BlockId, term: &Terminator) -> Result<(), LowerError> {
+    pub(crate) fn lower_terminator(
+        &mut self,
+        source: BlockId,
+        term: &Terminator,
+    ) -> Result<(), LowerError> {
         match term {
             Terminator::Branch { target } => {
                 if let Some(&resume_pc) = self.native_exit_edges.get(&(source, *target)) {
@@ -281,7 +281,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_block(&mut self, block: &SmirBlock) -> Result<(), LowerError> {
         // Record block offset
         self.block_offsets.insert(block.id, self.code.position());
@@ -330,73 +329,87 @@ impl X86_64Lowerer {
             #[cfg(feature = "smir-jit")]
             {
                 if self.mem_helpers {
-                    if let Some(consumed) = crate::smir::lower::runtime::x86_jit_mem_shift_rmw_sequence_len(
-                        block,
-                        validate_idx,
-                        true,
-                        &virtual_definitions,
-                        &virtual_uses,
-                    ) {
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_mem_shift_rmw_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
                         validate_idx += consumed;
                         continue;
                     }
-                    if let Some(consumed) = crate::smir::lower::runtime::x86_jit_mem_unary_rmw_sequence_len(
-                        block,
-                        validate_idx,
-                        true,
-                        &virtual_definitions,
-                        &virtual_uses,
-                    ) {
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_mem_unary_rmw_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
                         validate_idx += consumed;
                         continue;
                     }
-                    if let Some(consumed) = crate::smir::lower::runtime::x86_jit_mem_alu_rmw_sequence_len(
-                        block,
-                        validate_idx,
-                        true,
-                        &virtual_definitions,
-                        &virtual_uses,
-                    ) {
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_mem_alu_rmw_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
                         validate_idx += consumed;
                         continue;
                     }
-                    if let Some(consumed) = crate::smir::lower::runtime::x86_jit_mem_bit_update_rmw_sequence_len(
-                        block,
-                        validate_idx,
-                        true,
-                        &virtual_definitions,
-                        &virtual_uses,
-                    ) {
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_mem_bit_update_rmw_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
                         validate_idx += consumed;
                         continue;
                     }
-                    if let Some(consumed) = crate::smir::lower::runtime::x86_jit_mem_alu_source_sequence_len(
-                        block,
-                        validate_idx,
-                        true,
-                        &virtual_definitions,
-                        &virtual_uses,
-                    ) {
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_mem_alu_source_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
                         validate_idx += consumed;
                         continue;
                     }
-                    if let Some(consumed) = crate::smir::lower::runtime::x86_jit_mem_cmove_source_sequence_len(
-                        block,
-                        validate_idx,
-                        true,
-                        &virtual_definitions,
-                        &virtual_uses,
-                    ) {
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_mem_cmove_source_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
                         validate_idx += consumed;
                         continue;
                     }
-                    if let Some(consumed) = crate::smir::lower::runtime::x86_jit_mem_extend_source_sequence_len(
-                        block,
-                        validate_idx,
-                        true,
-                        &virtual_definitions,
-                        &virtual_uses,
-                    ) {
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_mem_extend_source_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
                         validate_idx += consumed;
                         continue;
                     }
@@ -438,33 +451,39 @@ impl X86_64Lowerer {
                             continue;
                         }
                     }
-                    if let Some(consumed) = crate::smir::lower::runtime::x86_jit_mem_bit_test_source_sequence_len(
-                        block,
-                        validate_idx,
-                        true,
-                        &virtual_definitions,
-                        &virtual_uses,
-                    ) {
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_mem_bit_test_source_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
                         validate_idx += consumed;
                         continue;
                     }
-                    if let Some(consumed) = crate::smir::lower::runtime::x86_jit_mem_bit_scan_source_sequence_len(
-                        block,
-                        validate_idx,
-                        true,
-                        &virtual_definitions,
-                        &virtual_uses,
-                    ) {
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_mem_bit_scan_source_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
                         validate_idx += consumed;
                         continue;
                     }
-                    if let Some(consumed) = crate::smir::lower::runtime::x86_jit_mem_count_source_sequence_len(
-                        block,
-                        validate_idx,
-                        true,
-                        &virtual_definitions,
-                        &virtual_uses,
-                    ) {
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_mem_count_source_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
                         validate_idx += consumed;
                         continue;
                     }

@@ -241,7 +241,12 @@ pub(crate) fn fmlal_ah_result(addend: u32, op1: u32, op2: u32, fpcr: u32) -> Opt
     None
 }
 #[inline]
-pub(crate) fn fmlal_default_invalid_result(addend: u32, op1: u32, op2: u32, fpcr: u32) -> Option<u32> {
+pub(crate) fn fmlal_default_invalid_result(
+    addend: u32,
+    op1: u32,
+    op2: u32,
+    fpcr: u32,
+) -> Option<u32> {
     if fpcr & FPCR_AH != 0 || !is_nan32(addend) || is_snan32(addend) {
         return None;
     }

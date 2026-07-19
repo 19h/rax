@@ -22,8 +22,6 @@ use crate::smir::lift::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn lift_vex_evex(
         &self,
         pc: u64,

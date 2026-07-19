@@ -1,11 +1,11 @@
 //! Instruction sub-decoding helpers
 
-use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::aarch32::cpu::{
     ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr, add_with_carry, compute_n_flag,
     compute_z_flag, condition_passed, expand_imm_c, shift_c, sign_extend,
 };
+use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::aarch32::vfp::{
     Fpscr, NeonSize, RoundingMode, vabs_f16_bits, vabs_f32, vabs_f64, vadd_f16_bits, vadd_f32,
     vadd_f64, vadd_i, vand, vbic, vcls_i, vclz_i, vcmp_f16_bits_with_exception,
@@ -27,8 +27,7 @@ use crate::isa::arm::aarch32::vfp::{
 };
 use crate::isa::arm::decoder::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 
-impl <'a, M: ArmMemory> Executor<'a, M> {
-
+impl<'a, M: ArmMemory> Executor<'a, M> {
     /// Thumb (T16/T32) data-processing operand decode using the decoded operands.
     pub(crate) fn decode_dp_operands_thumb(&mut self, insn: &DecodedInsn) -> (usize, usize, u32) {
         use crate::isa::arm::decoder::Operand;
@@ -86,7 +85,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         (d, n, operand2)
     }
 
-
     /// Decode data processing operands: (Rd, Rn, operand2)
     pub(crate) fn decode_dp_operands(&mut self, insn: &DecodedInsn) -> (usize, usize, u32) {
         if insn.state.is_thumb() {
@@ -131,7 +129,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         (d, n, operand2)
     }
 
-
     /// Decode shift instruction operands: (Rd, Rm, shift_amount)
     pub(crate) fn decode_shift_operands(&self, insn: &DecodedInsn) -> (usize, usize, u32) {
         if insn.state.is_thumb() {
@@ -161,7 +158,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         (d, m, shift_amount)
     }
 
-
     /// Decode multiply operands: (Rd, Rn, Rm)
     pub(crate) fn decode_mul_operands(&self, insn: &DecodedInsn) -> (usize, usize, usize) {
         if insn.state.is_thumb() {
@@ -173,7 +169,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         let m = ((insn.raw >> 8) & 0xF) as usize;
         (d, n, m)
     }
-
 
     /// Decode MLA operands: (Rd, Rn, Rm, Ra)
     pub(crate) fn decode_mla_operands(&self, insn: &DecodedInsn) -> (usize, usize, usize, usize) {
@@ -188,7 +183,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         (d, n, m, a)
     }
 
-
     /// Decode long multiply operands: (RdLo, RdHi, Rn, Rm)
     pub(crate) fn decode_mull_operands(&self, insn: &DecodedInsn) -> (usize, usize, usize, usize) {
         if insn.state.is_thumb() {
@@ -201,7 +195,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         let n = (insn.raw & 0xF) as usize;
         (dlo, dhi, n, m)
     }
-
 
     /// Decode branch target from instruction.
     pub(crate) fn decode_branch_target(&self, insn: &DecodedInsn) -> Option<u32> {
@@ -235,7 +228,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         Some(self.cpu.get_pc().wrapping_add(imm32))
     }
 
-
     /// Decode register operand at given position.
     pub(crate) fn decode_reg_operand(&self, insn: &DecodedInsn, pos: usize) -> Option<usize> {
         if pos < insn.operands.len() {
@@ -248,11 +240,13 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     /// Decode load/store operands for word/byte: (Rt, address, writeback)
     /// Compute (Rt, address, writeback) from the decoded operands (Thumb path):
     /// the first Reg operand is Rt and the Mem operand gives base/offset/mode.
-    pub(crate) fn decode_mem_thumb(&self, insn: &DecodedInsn) -> Option<(usize, u32, Option<(usize, u32)>)> {
+    pub(crate) fn decode_mem_thumb(
+        &self,
+        insn: &DecodedInsn,
+    ) -> Option<(usize, u32, Option<(usize, u32)>)> {
         use crate::isa::arm::decoder::{AddressingMode, MemOffset, Operand};
         let t = insn.operands.iter().find_map(|o| match o {
             Operand::Reg(r) => Some(crate::isa::arm::aarch32::cpu::aarch32_reg_index(
@@ -322,7 +316,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         Some((t, address, wb_addr.filter(|_| n != 15).map(|a| (n, a))))
     }
 
-
     pub(crate) fn decode_ldst_operands(
         &self,
         insn: &DecodedInsn,
@@ -370,7 +363,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
 
         Some((t, address, writeback))
     }
-
 
     /// Decode load/store operands for halfword/signed: (Rt, address, writeback)
     /// Uses different encoding: bits[11:8] and bits[3:0] for immediate
@@ -421,7 +413,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         Some((t, address, writeback))
     }
 
-
     /// Decode load/store multiple operands: (Rn, reglist, wback)
     pub(crate) fn decode_ldstm_operands(&self, insn: &DecodedInsn) -> Option<(usize, u16, bool)> {
         if insn.state.is_thumb() {
@@ -447,7 +438,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         let reglist = (insn.raw & 0xFFFF) as u16;
         Some((n, reglist, w != 0))
     }
-
 
     /// Decode register list for PUSH/POP.
     pub(crate) fn decode_reglist(&self, insn: &DecodedInsn) -> Option<u16> {

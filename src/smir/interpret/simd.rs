@@ -17,7 +17,6 @@ use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 
 impl SmirInterpreter {
-
     pub(crate) fn x86_fp16_to_fp32_bits(bits: u16) -> u32 {
         let sign = u32::from(bits & 0x8000) << 16;
         let exponent = (bits >> 10) & 0x1F;
@@ -35,7 +34,6 @@ impl SmirInterpreter {
             _ => sign | ((((i32::from(exponent)) - 15 + 127) as u32) << 23) | (fraction << 13),
         }
     }
-
 
     pub(crate) fn x86_fp32_to_bf16_bits(bits: u32) -> u16 {
         let sign = (bits >> 16) as u16 & 0x8000;
@@ -56,7 +54,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_fp16_to_f32(bits: u16) -> f32 {
         let sign = (u32::from(bits & 0x8000)) << 16;
         let exp = (bits >> 10) & 0x1f;
@@ -76,7 +73,6 @@ impl SmirInterpreter {
         };
         f32::from_bits(value)
     }
-
 
     pub(crate) fn x86_f32_to_fp16(value: f32, rounding: u8) -> u16 {
         let bits = value.to_bits();
@@ -131,7 +127,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_fp16_approx(bits: u16, rsqrt: bool) -> u16 {
         let magnitude = bits & 0x7FFF;
         let fraction = bits & 0x03FF;
@@ -152,7 +147,6 @@ impl SmirInterpreter {
         };
         Self::x86_f32_to_fp16(result, 0)
     }
-
 
     pub(crate) fn x86_fp16_round_increment(
         negative: bool,
@@ -175,7 +169,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_bf16_to_fp32_daz(bits: u16) -> u32 {
         if bits & 0x7F80 == 0 {
             u32::from(bits & 0x8000) << 16
@@ -183,7 +176,6 @@ impl SmirInterpreter {
             u32::from(bits) << 16
         }
     }
-
 
     pub(crate) fn x86_fp32_ftz(bits: u32) -> u32 {
         if bits & 0x7F80_0000 == 0 {
@@ -193,16 +185,13 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_bf16_is_nan(bits: u16) -> bool {
         bits & 0x7F80 == 0x7F80 && bits & 0x007F != 0
     }
 
-
     pub(crate) fn x86_bf16_quiet_nan(bits: u16) -> u32 {
         u32::from(bits | (1 << 6)) << 16
     }
-
 
     /// Sign-extend the low `bits` of `v` to a full i128.
     #[inline]
@@ -215,7 +204,6 @@ impl SmirInterpreter {
         }
     }
 
-
     #[inline]
     pub(crate) fn scalar_shift_count_mask(source_arch: SourceArch, width: OpWidth) -> u64 {
         if source_arch == SourceArch::X86_64 && width != OpWidth::W64 {
@@ -224,7 +212,6 @@ impl SmirInterpreter {
             0x3F
         }
     }
-
 
     pub(crate) fn read_vec(ctx: &SmirContext, reg: VReg) -> VecValue {
         match reg {
@@ -264,7 +251,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn write_vec(ctx: &mut SmirContext, reg: VReg, value: VecValue) {
         match reg {
             VReg::Virtual(id) => ctx.vregs.set_vec(id, value),
@@ -300,7 +286,6 @@ impl SmirInterpreter {
         }
     }
 
-
     /// Sign extend a value
     pub(crate) fn sign_extend(&self, val: u64, width: OpWidth) -> u64 {
         let sign_bit = width.sign_bit();
@@ -310,7 +295,6 @@ impl SmirInterpreter {
             val
         }
     }
-
 
     /// Read FP register as f64
     pub(crate) fn read_fp(&self, ctx: &SmirContext, vreg: VReg, precision: FpPrecision) -> f64 {
@@ -326,16 +310,20 @@ impl SmirInterpreter {
         }
     }
 
-
     /// Write FP register from f64
-    pub(crate) fn write_fp(&self, ctx: &mut SmirContext, vreg: VReg, value: f64, precision: FpPrecision) {
+    pub(crate) fn write_fp(
+        &self,
+        ctx: &mut SmirContext,
+        vreg: VReg,
+        value: f64,
+        precision: FpPrecision,
+    ) {
         let bits = match precision {
             FpPrecision::F16 | FpPrecision::F32 => (value as f32).to_bits() as u64,
             FpPrecision::F64 | FpPrecision::F80 => value.to_bits(),
         };
         ctx.write_vreg(vreg, bits);
     }
-
 
     pub(crate) fn x86_simd_fp_masks(format: X86SimdFpFormat) -> (u64, u64, u64, u64) {
         let sign = 1u64 << (format.total_bits - 1);
@@ -346,50 +334,46 @@ impl SmirInterpreter {
         (sign, exponent, fraction, quiet)
     }
 
-
     pub(crate) fn x86_simd_fp_is_nan(bits: u64, format: X86SimdFpFormat) -> bool {
         let (_, exponent, fraction, _) = Self::x86_simd_fp_masks(format);
         bits & exponent == exponent && bits & fraction != 0
     }
-
 
     pub(crate) fn x86_simd_fp_is_snan(bits: u64, format: X86SimdFpFormat) -> bool {
         let (_, _, _, quiet) = Self::x86_simd_fp_masks(format);
         Self::x86_simd_fp_is_nan(bits, format) && bits & quiet == 0
     }
 
-
     pub(crate) fn x86_simd_fp_is_infinite(bits: u64, format: X86SimdFpFormat) -> bool {
         let (_, exponent, fraction, _) = Self::x86_simd_fp_masks(format);
         bits & exponent == exponent && bits & fraction == 0
     }
-
 
     pub(crate) fn x86_simd_fp_is_denormal(bits: u64, format: X86SimdFpFormat) -> bool {
         let (_, exponent, fraction, _) = Self::x86_simd_fp_masks(format);
         bits & exponent == 0 && bits & fraction != 0
     }
 
-
     pub(crate) fn x86_simd_fp_is_zero(bits: u64, format: X86SimdFpFormat) -> bool {
         let (sign, _, _, _) = Self::x86_simd_fp_masks(format);
         bits & !sign == 0
     }
-
 
     pub(crate) fn x86_simd_fp_quiet_nan(bits: u64, format: X86SimdFpFormat) -> u64 {
         let (_, _, _, quiet) = Self::x86_simd_fp_masks(format);
         bits | quiet
     }
 
-
     pub(crate) fn x86_simd_fp_indefinite(format: X86SimdFpFormat) -> u64 {
         let (sign, exponent, _, quiet) = Self::x86_simd_fp_masks(format);
         sign | exponent | quiet
     }
 
-
-    pub(crate) fn x86_simd_fp_propagate_nan(first: u64, second: u64, format: X86SimdFpFormat) -> u64 {
+    pub(crate) fn x86_simd_fp_propagate_nan(
+        first: u64,
+        second: u64,
+        format: X86SimdFpFormat,
+    ) -> u64 {
         // Intel SDM Table 4-8: SSE/AVX forwards the first source when both
         // sources are NaNs; a sole NaN source is forwarded. SNaNs are quieted.
         if Self::x86_simd_fp_is_nan(first, format) {
@@ -399,8 +383,11 @@ impl SmirInterpreter {
         }
     }
 
-
-    pub(crate) fn x86_simd_fp_apply_daz(bits: u64, format: X86SimdFpFormat, mxcsr: u32) -> X86SimdFpResult {
+    pub(crate) fn x86_simd_fp_apply_daz(
+        bits: u64,
+        format: X86SimdFpFormat,
+        mxcsr: u32,
+    ) -> X86SimdFpResult {
         if !Self::x86_simd_fp_is_denormal(bits, format) {
             return X86SimdFpResult { bits, status: 0 };
         }
@@ -418,8 +405,11 @@ impl SmirInterpreter {
         }
     }
 
-
-    pub(crate) fn x86_simd_get_exponent(bits: u64, format: X86SimdFpFormat, mxcsr: u32) -> X86SimdFpResult {
+    pub(crate) fn x86_simd_get_exponent(
+        bits: u64,
+        format: X86SimdFpFormat,
+        mxcsr: u32,
+    ) -> X86SimdFpResult {
         let (sign, exponent, _, _) = Self::x86_simd_fp_masks(format);
         if Self::x86_simd_fp_is_nan(bits, format) {
             return X86SimdFpResult {
@@ -473,7 +463,6 @@ impl SmirInterpreter {
         }
         result
     }
-
 
     pub(crate) fn x86_simd_get_mantissa(
         bits: u64,
@@ -575,7 +564,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_simd_round_scale(
         bits: u64,
         format: X86SimdFpFormat,
@@ -672,8 +660,12 @@ impl SmirInterpreter {
         }
     }
 
-
-    pub(crate) fn x86_simd_reduce(bits: u64, format: X86SimdFpFormat, mxcsr: u32, imm: u8) -> X86SimdFpResult {
+    pub(crate) fn x86_simd_reduce(
+        bits: u64,
+        format: X86SimdFpFormat,
+        mxcsr: u32,
+        imm: u8,
+    ) -> X86SimdFpResult {
         if Self::x86_simd_fp_is_nan(bits, format) {
             return X86SimdFpResult {
                 bits: Self::x86_simd_fp_quiet_nan(bits, format),
@@ -741,7 +733,6 @@ impl SmirInterpreter {
         remainder.status = status;
         remainder
     }
-
 
     pub(crate) fn x86_simd_range(
         first_bits: u64,
@@ -851,7 +842,6 @@ impl SmirInterpreter {
             status,
         }
     }
-
 
     pub(crate) fn x86_simd_fixup_imm(
         dest_bits: u64,
@@ -963,7 +953,6 @@ impl SmirInterpreter {
         };
         X86SimdFpResult { bits, status }
     }
-
 
     pub(crate) fn x86_simd_exp2(bits: u64, format: X86SimdFpFormat) -> X86SimdFpResult {
         let (sign, exponent, _, _) = Self::x86_simd_fp_masks(format);
@@ -1110,8 +1099,11 @@ impl SmirInterpreter {
         X86SimdFpResult { bits, status: 0 }
     }
 
-
-    pub(crate) fn x86_simd_recip14(bits: u64, format: X86SimdFpFormat, mxcsr: u32) -> X86SimdFpResult {
+    pub(crate) fn x86_simd_recip14(
+        bits: u64,
+        format: X86SimdFpFormat,
+        mxcsr: u32,
+    ) -> X86SimdFpResult {
         let (sign_mask, exponent_mask, fraction_mask, quiet_mask) = Self::x86_simd_fp_masks(format);
         if Self::x86_simd_fp_is_nan(bits, format) {
             return X86SimdFpResult {
@@ -1198,7 +1190,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_recip14_normalized_base(fraction: u64, format: X86SimdFpFormat) -> u64 {
         let segment = (fraction >> (format.fraction_bits - 6)) as usize;
         let retained_fraction = fraction & !((1u64 << (format.fraction_bits - 16)) - 1);
@@ -1217,8 +1208,11 @@ impl SmirInterpreter {
         }
     }
 
-
-    pub(crate) fn x86_simd_rsqrt14(bits: u64, format: X86SimdFpFormat, mxcsr: u32) -> X86SimdFpResult {
+    pub(crate) fn x86_simd_rsqrt14(
+        bits: u64,
+        format: X86SimdFpFormat,
+        mxcsr: u32,
+    ) -> X86SimdFpResult {
         let (sign_mask, exponent_mask, fraction_mask, quiet_mask) = Self::x86_simd_fp_masks(format);
         if Self::x86_simd_fp_is_nan(bits, format) {
             return X86SimdFpResult {
@@ -1288,7 +1282,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_rsqrt14_normalized_base(
         fraction: u64,
         odd_exponent: bool,
@@ -1315,7 +1308,6 @@ impl SmirInterpreter {
                 | ((significand as u64 - (1 << 16)) << (format.fraction_bits - 16))
         }
     }
-
 
     pub(crate) fn x86_simd_recip28(bits: u64, format: X86SimdFpFormat) -> X86SimdFpResult {
         let (sign, exponent, _, _) = Self::x86_simd_fp_masks(format);
@@ -1363,7 +1355,6 @@ impl SmirInterpreter {
             status: 0,
         }
     }
-
 
     pub(crate) fn x86_simd_rsqrt28(bits: u64, format: X86SimdFpFormat) -> X86SimdFpResult {
         let (sign, exponent, _, _) = Self::x86_simd_fp_masks(format);
@@ -1419,7 +1410,6 @@ impl SmirInterpreter {
             status: 0,
         }
     }
-
 
     pub(crate) fn x86_simd_fp_convert_precision(
         bits: u64,
@@ -1491,7 +1481,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_simd_fp_decode(bits: u64, format: X86SimdFpFormat) -> X86SimdFinite {
         let (sign, _, fraction_mask, _) = Self::x86_simd_fp_masks(format);
         let exponent_field =
@@ -1511,7 +1500,6 @@ impl SmirInterpreter {
             }
         }
     }
-
 
     pub(crate) fn x86_simd_fp_floor_bounded(bits: u64, format: X86SimdFpFormat) -> i32 {
         const LIMIT: u128 = 4096;
@@ -1540,7 +1528,6 @@ impl SmirInterpreter {
             integer as i32
         }
     }
-
 
     pub(crate) fn x86_simd_scale_f(
         first_bits: u64,
@@ -1642,7 +1629,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_simd_fp_to_int(
         bits: u64,
         format: X86SimdFpFormat,
@@ -1717,7 +1703,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_simd_fp_round_up(mode: FpRoundMode, negative: bool, inexact: bool) -> bool {
         inexact
             && matches!(
@@ -1725,7 +1710,6 @@ impl SmirInterpreter {
                 (FpRoundMode::RoundUp, false) | (FpRoundMode::RoundDown, true)
             )
     }
-
 
     pub(crate) fn x86_simd_fp_round_shift(
         mut magnitude: u128,
@@ -1774,7 +1758,6 @@ impl SmirInterpreter {
         (magnitude, exponent, inexact)
     }
 
-
     pub(crate) fn x86_simd_fp_unbounded_tiny(
         magnitude: u128,
         exponent: i32,
@@ -1790,7 +1773,6 @@ impl SmirInterpreter {
         let rounded_msb = 127 - rounded.leading_zeros() as i32;
         rounded_msb + rounded_exponent < 1 - format.bias
     }
-
 
     pub(crate) fn x86_simd_fp_round_exact(
         negative: bool,
@@ -1892,7 +1874,6 @@ impl SmirInterpreter {
         X86SimdFpResult { bits, status }
     }
 
-
     pub(crate) fn x86_simd_fp_mul(
         first: u64,
         second: u64,
@@ -1956,7 +1937,6 @@ impl SmirInterpreter {
             status: status | rounded.status,
         }
     }
-
 
     pub(crate) fn x86_simd_fp_add(
         first: u64,
@@ -2046,7 +2026,6 @@ impl SmirInterpreter {
             status: status | rounded.status,
         }
     }
-
 
     /// Exact non-NaN fused multiply-add. The caller owns x86 FMA NaN
     /// source priority and denormal-operand status; this core handles invalid
@@ -2166,7 +2145,6 @@ impl SmirInterpreter {
         )
     }
 
-
     /// One binary32 FMA boundary for AVX512_4FMAPS. DAZ is applied before the
     /// arithmetic classification, FTZ is applied by the final rounding core,
     /// and arithmetic negation does not alter a propagated NaN payload.
@@ -2223,7 +2201,6 @@ impl SmirInterpreter {
         }
     }
 
-
     /// One architectural FP16 FMA boundary for the complex arithmetic
     /// instructions. NaN priority follows the written operand order, the
     /// optional arithmetic negation does not alter a propagated NaN payload,
@@ -2275,11 +2252,9 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_simd_fp_unmasked(status: u32, mxcsr: u32) -> bool {
         status & 0x3F & !((mxcsr >> 7) & 0x3F) != 0
     }
-
 
     pub(crate) fn dynamic_fp_round_mode(&self, ctx: &SmirContext) -> FpRoundMode {
         match &ctx.arch_regs {
@@ -2307,7 +2282,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn round_fp_value(&self, ctx: &SmirContext, value: f64, mode: FpRoundMode) -> f64 {
         match match mode {
             FpRoundMode::Dynamic => self.dynamic_fp_round_mode(ctx),
@@ -2322,13 +2296,16 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_f64_to_f32_bits(&self, ctx: &SmirContext, value: f64) -> u32 {
         self.x86_f64_to_f32_bits_mode(ctx, value, FpRoundMode::Dynamic)
     }
 
-
-    pub(crate) fn x86_f64_to_f32_bits_mode(&self, ctx: &SmirContext, value: f64, mode: FpRoundMode) -> u32 {
+    pub(crate) fn x86_f64_to_f32_bits_mode(
+        &self,
+        ctx: &SmirContext,
+        value: f64,
+        mode: FpRoundMode,
+    ) -> u32 {
         let nearest = value as f32;
         if value.is_nan() || value.is_infinite() || (nearest as f64) == value {
             return nearest.to_bits();
@@ -2364,7 +2341,6 @@ impl SmirInterpreter {
         rounded.to_bits()
     }
 
-
     pub(crate) fn next_up_f32(value: f32) -> f32 {
         if value == 0.0 {
             return f32::from_bits(1);
@@ -2376,7 +2352,6 @@ impl SmirInterpreter {
             bits + 1
         })
     }
-
 
     pub(crate) fn next_down_f32(value: f32) -> f32 {
         if value == 0.0 {
@@ -2390,7 +2365,6 @@ impl SmirInterpreter {
         })
     }
 
-
     pub(crate) fn next_up_f64(value: f64) -> f64 {
         if value == 0.0 {
             return f64::from_bits(1);
@@ -2403,7 +2377,6 @@ impl SmirInterpreter {
         })
     }
 
-
     pub(crate) fn next_down_f64(value: f64) -> f64 {
         if value == 0.0 {
             return f64::from_bits(0x8000_0000_0000_0001);
@@ -2415,7 +2388,6 @@ impl SmirInterpreter {
             bits - 1
         })
     }
-
 
     /// v6mpy product-term table: `(vsel, byte, ci, osel)` — which Vuu vector
     /// (0=lo,1=hi), which byte (0..3) of the word lane, which of the six
@@ -2518,7 +2490,6 @@ impl SmirInterpreter {
         if horizontal { H_TERMS[p] } else { V_TERMS[p] }
     }
 
-
     pub(crate) fn get_lane(value: &VecValue, lane: u8, elem_bits: u32) -> u64 {
         let bit_index = lane as u32 * elem_bits;
         let word_index = (bit_index / 64) as usize;
@@ -2547,7 +2518,6 @@ impl SmirInterpreter {
             (low | high) & mask
         }
     }
-
 
     pub(crate) fn set_lane(value: &mut VecValue, lane: u8, elem_bits: u32, bits: u64) {
         let bit_index = lane as u32 * elem_bits;
@@ -2582,7 +2552,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn apply_vector_mask(
         result: &mut VecValue,
         old: &VecValue,
@@ -2607,7 +2576,6 @@ impl SmirInterpreter {
         }
     }
 
-
     /// Vector binary operation helper (integer)
     /// Apply a `VLaneOp` to two zero-extended `elem_bits`-wide lane values,
     /// returning the result masked to `elem_bits`. Signed ops sign-extend the
@@ -2617,7 +2585,13 @@ impl SmirInterpreter {
     /// overflow condition. Only `AddSat`/`SubSat` saturate; all other ops never
     /// clamp (return false). Mirrors `apply_lane_op`'s i128 arithmetic exactly so
     /// the clamp detection matches the value path bit-for-bit.
-    pub(crate) fn lane_sat_clamped(op: VLaneOp, a: u64, b: u64, elem_bits: u32, signed: bool) -> bool {
+    pub(crate) fn lane_sat_clamped(
+        op: VLaneOp,
+        a: u64,
+        b: u64,
+        elem_bits: u32,
+        signed: bool,
+    ) -> bool {
         let mask: u64 = if elem_bits >= 64 {
             u64::MAX
         } else {
@@ -2664,7 +2638,6 @@ impl SmirInterpreter {
             _ => false,
         }
     }
-
 
     pub(crate) fn apply_lane_op(op: VLaneOp, a: u64, b: u64, elem_bits: u32, signed: bool) -> u64 {
         let mask: u64 = if elem_bits >= 64 {
@@ -2765,7 +2738,6 @@ impl SmirInterpreter {
         res & mask
     }
 
-
     pub(crate) fn vec_binary_op<F>(
         &self,
         ctx: &mut SmirContext,
@@ -2794,7 +2766,6 @@ impl SmirInterpreter {
         Self::write_vec(ctx, dst, result);
     }
 
-
     pub(crate) fn vec_unary_op<F>(
         &self,
         ctx: &mut SmirContext,
@@ -2816,9 +2787,14 @@ impl SmirInterpreter {
         Self::write_vec(ctx, dst, result);
     }
 
-
-    pub(crate) fn vec_unary_op_f32<F>(&self, ctx: &mut SmirContext, dst: VReg, src: VReg, lanes: u8, op: F)
-    where
+    pub(crate) fn vec_unary_op_f32<F>(
+        &self,
+        ctx: &mut SmirContext,
+        dst: VReg,
+        src: VReg,
+        lanes: u8,
+        op: F,
+    ) where
         F: Fn(f32) -> f32,
     {
         let a = Self::read_vec(ctx, src);
@@ -2831,9 +2807,14 @@ impl SmirInterpreter {
         Self::write_vec(ctx, dst, result);
     }
 
-
-    pub(crate) fn vec_unary_op_f64<F>(&self, ctx: &mut SmirContext, dst: VReg, src: VReg, lanes: u8, op: F)
-    where
+    pub(crate) fn vec_unary_op_f64<F>(
+        &self,
+        ctx: &mut SmirContext,
+        dst: VReg,
+        src: VReg,
+        lanes: u8,
+        op: F,
+    ) where
         F: Fn(f64) -> f64,
     {
         let a = Self::read_vec(ctx, src);
@@ -2845,7 +2826,6 @@ impl SmirInterpreter {
         }
         Self::write_vec(ctx, dst, result);
     }
-
 
     pub(crate) fn vec_binary_op_f32<F>(
         &self,
@@ -2871,7 +2851,6 @@ impl SmirInterpreter {
 
         Self::write_vec(ctx, dst, result);
     }
-
 
     pub(crate) fn vec_binary_op_f64<F>(
         &self,

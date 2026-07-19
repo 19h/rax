@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn append_evex_scalar_select(
         &self,
         prefix: VecPrefix,
@@ -79,8 +77,6 @@ impl X86_64Lifter {
         ));
         selected
     }
-
-
 
     /// Lift the AVX-512PF sparse gather/scatter prefetch families. Intel
     /// defines each requested prefetch as an optional hint, leaves the opmask
@@ -145,8 +141,6 @@ impl X86_64Lifter {
             cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_evex_get_mantissa(
         &self,
@@ -248,8 +242,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_evex_pair_intersect(
         &self,
@@ -449,8 +441,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn unsupported_evex_map_opcode(
         &self,

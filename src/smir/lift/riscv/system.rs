@@ -1,6 +1,5 @@
 //! system.rs
 
-use crate::smir::lift::riscv::*;
 use crate::isa::riscv::{
     Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode, rvc::decode_rvc as rv_decode_rvc,
 };
@@ -8,11 +7,13 @@ use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, RvVectorState, SmirOp};
 use crate::smir::ir::types::*;
 use crate::smir::ir::{SmirBlock, SmirFunction};
+use crate::smir::lift::riscv::*;
 
-use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter};
+use crate::smir::lift::{
+    ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
+};
 
 impl RiscVLifter {
-
     /// Fence instructions
     pub(crate) fn lift_fence(
         &mut self,
@@ -90,7 +91,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     /// System instructions (ECALL, EBREAK, CSR ops)
     pub(crate) fn lift_system(

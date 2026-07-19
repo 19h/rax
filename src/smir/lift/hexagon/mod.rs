@@ -36,7 +36,6 @@ pub use lift::*;
 #[cfg(test)]
 mod tests;
 
-
 // ============================================================================
 // Hexagon Lifter
 // ============================================================================
@@ -82,7 +81,6 @@ pub struct HexagonLifter {
     /// this. Updated at every packet boundary alongside `packet_producers`.
     packet_start_pc: GuestAddr,
 }
-
 
 impl SmirLifter for HexagonLifter {
     fn source_arch(&self) -> SourceArch {
@@ -337,4 +335,3 @@ impl SmirLifter for HexagonLifter {
 // ============================================================================
 // Tests
 // ============================================================================
-

@@ -365,17 +365,21 @@ pub(crate) fn block_is_clobber_safe(
         let state_inc_dec_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_inc_dec_valid(op);
         let state_rotate_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_rotate_valid(op);
         let state_shift_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_shift_valid(op);
-        let state_carry_rotate_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_carry_rotate_valid(op);
-        let state_double_shift_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_double_shift_valid(op);
+        let state_carry_rotate_ok =
+            crate::smir::lower::x86_64::x86_state_backed_gpr_carry_rotate_valid(op);
+        let state_double_shift_ok =
+            crate::smir::lower::x86_64::x86_state_backed_gpr_double_shift_valid(op);
         let state_count_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_count_valid(op);
         let state_bit_scan_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_bit_scan_valid(op);
         let state_bit_test_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_bit_test_valid(op);
         let state_crc32_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_crc32_valid(op);
         let state_and_not_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_and_not_valid(op);
-        let state_bextr_bzhi_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_bextr_bzhi_valid(op);
+        let state_bextr_bzhi_ok =
+            crate::smir::lower::x86_64::x86_state_backed_gpr_bextr_bzhi_valid(op);
         let state_bls_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_bls_valid(op);
         let state_adx_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_adx_valid(op);
-        let state_pdep_pext_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_pdep_pext_valid(op);
+        let state_pdep_pext_ok =
+            crate::smir::lower::x86_64::x86_state_backed_gpr_pdep_pext_valid(op);
         let state_bswap_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let stack_state_ok = stack_mov_ok
@@ -401,30 +405,44 @@ pub(crate) fn block_is_clobber_safe(
             || state_pdep_pext_ok
             || state_bswap_ok
             || state_xchg_ok;
-        if (crate::smir::lower::x86_64::x86_state_backed_gpr_extend_candidate(op) && !state_extend_ok)
-            || (crate::smir::lower::x86_64::x86_state_backed_gpr_cmove_candidate(op) && !state_cmove_ok)
-            || (crate::smir::lower::x86_64::x86_state_backed_gpr_setcc_candidate(op) && !state_setcc_ok)
+        if (crate::smir::lower::x86_64::x86_state_backed_gpr_extend_candidate(op)
+            && !state_extend_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_cmove_candidate(op)
+                && !state_cmove_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_setcc_candidate(op)
+                && !state_setcc_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_not_candidate(op) && !state_not_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_neg_candidate(op) && !state_neg_ok)
-            || (crate::smir::lower::x86_64::x86_state_backed_gpr_inc_dec_candidate(op) && !state_inc_dec_ok)
-            || (crate::smir::lower::x86_64::x86_state_backed_gpr_rotate_candidate(op) && !state_rotate_ok)
-            || (crate::smir::lower::x86_64::x86_state_backed_gpr_shift_candidate(op) && !state_shift_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_inc_dec_candidate(op)
+                && !state_inc_dec_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_rotate_candidate(op)
+                && !state_rotate_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_shift_candidate(op)
+                && !state_shift_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_carry_rotate_candidate(op)
                 && !state_carry_rotate_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_double_shift_candidate(op)
                 && !state_double_shift_ok)
-            || (crate::smir::lower::x86_64::x86_state_backed_gpr_count_candidate(op) && !state_count_ok)
-            || (crate::smir::lower::x86_64::x86_state_backed_gpr_bit_scan_candidate(op) && !state_bit_scan_ok)
-            || (crate::smir::lower::x86_64::x86_state_backed_gpr_bit_test_candidate(op) && !state_bit_test_ok)
-            || (crate::smir::lower::x86_64::x86_state_backed_gpr_crc32_candidate(op) && !state_crc32_ok)
-            || (crate::smir::lower::x86_64::x86_state_backed_gpr_and_not_candidate(op) && !state_and_not_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_count_candidate(op)
+                && !state_count_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_bit_scan_candidate(op)
+                && !state_bit_scan_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_bit_test_candidate(op)
+                && !state_bit_test_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_crc32_candidate(op)
+                && !state_crc32_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_and_not_candidate(op)
+                && !state_and_not_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_bextr_bzhi_candidate(op)
                 && !state_bextr_bzhi_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_bls_candidate(op) && !state_bls_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_adx_candidate(op) && !state_adx_ok)
-            || (crate::smir::lower::x86_64::x86_state_backed_gpr_pdep_pext_candidate(op) && !state_pdep_pext_ok)
-            || (crate::smir::lower::x86_64::x86_state_backed_gpr_bswap_candidate(op) && !state_bswap_ok)
-            || (crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_candidate(op) && !state_xchg_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_pdep_pext_candidate(op)
+                && !state_pdep_pext_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_bswap_candidate(op)
+                && !state_bswap_ok)
+            || (crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_candidate(op)
+                && !state_xchg_ok)
         {
             return false;
         }
@@ -621,7 +639,9 @@ pub(crate) fn block_is_clobber_safe(
     }
     true
 }
-pub(crate) fn x86_native_op_would_clobber_preserved_flags(op: &crate::smir::ir::ops::OpKind) -> bool {
+pub(crate) fn x86_native_op_would_clobber_preserved_flags(
+    op: &crate::smir::ir::ops::OpKind,
+) -> bool {
     use crate::smir::ir::flags::FlagUpdate;
     use crate::smir::ir::ops::OpKind;
 

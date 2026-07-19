@@ -17,7 +17,6 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 impl Aarch64Lowerer {
-
     pub(crate) fn fp_reg(vreg: VReg) -> Result<u8, LowerError> {
         match vreg {
             VReg::Arch(ArchReg::Arm(ArmReg::V(n))) if n < 32 => Ok(n),
@@ -27,8 +26,12 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn emit_mov_reg(&mut self, dst: u8, src: u8, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn emit_mov_reg(
+        &mut self,
+        dst: u8,
+        src: u8,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         let sf = Self::sf(width)?;
         self.emit(
             (sf << 31)
@@ -41,8 +44,12 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
-    pub(crate) fn emit_mov_imm(&mut self, dst: u8, imm: i64, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn emit_mov_imm(
+        &mut self,
+        dst: u8,
+        imm: i64,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         let sf = Self::sf(width)?;
         let bits = match width {
             OpWidth::W32 => imm as u32 as u64,
@@ -69,8 +76,12 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
-    pub(crate) fn emit_mov_imm_best(&mut self, dst: u8, imm: i64, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn emit_mov_imm_best(
+        &mut self,
+        dst: u8,
+        imm: i64,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         let bits = match width {
             OpWidth::W32 => imm as u32 as u64,
             OpWidth::W64 => imm as u64,
@@ -82,18 +93,20 @@ impl Aarch64Lowerer {
         self.emit_mov_imm(dst, imm, width)
     }
 
-
-    pub(crate) fn emit_movn_imm16(&mut self, dst: u8, imm16: u32, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn emit_movn_imm16(
+        &mut self,
+        dst: u8,
+        imm16: u32,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         let sf = Self::sf(width)?;
         self.emit((sf << 31) | (0b100101 << 23) | ((imm16 & 0xffff) << 5) | (dst as u32));
         Ok(())
     }
 
-
     pub(crate) fn emit_movn_zero(&mut self, dst: u8, width: OpWidth) -> Result<(), LowerError> {
         self.emit_movn_imm16(dst, 0, width)
     }
-
 
     pub(crate) fn try_emit_movn_single(
         &mut self,
@@ -109,14 +122,12 @@ impl Aarch64Lowerer {
         Ok(false)
     }
 
-
     pub(crate) fn src_imm(src: &SrcOperand) -> Option<i64> {
         match src {
             SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) => Some(*imm),
             _ => None,
         }
     }
-
 
     pub(crate) fn transfer_reg_aliases_base(rt: u8, base: VReg) -> bool {
         match Self::base_gpr(base) {
@@ -125,8 +136,10 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn pair_scaled_imm(width: MemWidth, offset: i64) -> Result<Option<(u32, i64)>, LowerError> {
+    pub(crate) fn pair_scaled_imm(
+        width: MemWidth,
+        offset: i64,
+    ) -> Result<Option<(u32, i64)>, LowerError> {
         let (opc, scale) = Self::pair_width(width)?;
         if offset % scale != 0 {
             return Ok(None);
@@ -140,7 +153,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn ldpsw_scaled_imm(offset: i64) -> Option<i64> {
         if offset % 4 != 0 {
             return None;
@@ -149,8 +161,11 @@ impl Aarch64Lowerer {
         (-64..=63).contains(&imm7).then_some(imm7)
     }
 
-
-    pub(crate) fn literal_scaled_imm19(op: &str, target: i64, insn_pc: i64) -> Result<i32, LowerError> {
+    pub(crate) fn literal_scaled_imm19(
+        op: &str,
+        target: i64,
+        insn_pc: i64,
+    ) -> Result<i32, LowerError> {
         let delta = target.wrapping_sub(insn_pc);
         if delta % 4 != 0 {
             return Err(LowerError::InvalidOperand {
@@ -170,8 +185,12 @@ impl Aarch64Lowerer {
         Ok(imm19 as i32)
     }
 
-
-    pub(crate) fn lower_mov(&mut self, dst: VReg, src: &SrcOperand, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_mov(
+        &mut self,
+        dst: VReg,
+        src: &SrcOperand,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         if let Some(reg) = Self::sysreg_vreg(dst) {
             return self.lower_sysreg_write(reg, src, width);
         }
@@ -215,7 +234,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_bextr_register_control(
         &mut self,
@@ -289,11 +307,9 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn arm_x_reg(reg: u8) -> VReg {
         VReg::Arch(ArchReg::Arm(ArmReg::X(reg)))
     }
-
 
     pub(crate) fn cls_imm(value: u64, width: OpWidth) -> Result<u64, LowerError> {
         match width {
@@ -320,7 +336,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn rev16_imm(value: u64, width: OpWidth) -> Result<u64, LowerError> {
         match width {
             OpWidth::W32 | OpWidth::W64 => {
@@ -335,7 +350,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn rev32_imm(value: u64, width: OpWidth) -> Result<u64, LowerError> {
         match width {
             OpWidth::W32 => Ok(u64::from((value as u32).swap_bytes())),
@@ -349,7 +363,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_div_regs(
         &mut self,
@@ -388,11 +401,9 @@ impl Aarch64Lowerer {
         self.emit_dp2(quot, rn, rm, opcode2, width)
     }
 
-
     pub(crate) fn src_imm_eq(src: &SrcOperand, value: i64) -> bool {
         matches!(src, SrcOperand::Imm(imm) | SrcOperand::Imm64(imm) if *imm == value)
     }
-
 
     pub(crate) fn src_masked_imm_eq(src: &SrcOperand, value: i64, width: OpWidth) -> bool {
         let Some(imm) = Self::src_imm(src) else {
@@ -401,14 +412,12 @@ impl Aarch64Lowerer {
         (imm as u64 & width.mask()) == (value as u64 & width.mask())
     }
 
-
     pub(crate) fn vreg_src(reg: VReg) -> SrcOperand {
         match reg {
             VReg::Imm(value) => SrcOperand::Imm(value),
             other => SrcOperand::Reg(other),
         }
     }
-
 
     pub(crate) fn op_dst(op: &OpKind) -> Option<VReg> {
         match op {
@@ -423,11 +432,9 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn src_reg_eq(src: &SrcOperand, reg: VReg) -> bool {
         matches!(src, SrcOperand::Reg(src) if *src == reg)
     }
-
 
     pub(crate) fn lower_cmove_imm(
         &mut self,
@@ -493,7 +500,6 @@ impl Aarch64Lowerer {
         self.patch_cond_branch_to_current(skip_mov, inverted)?;
         self.finish_cmove_width(dst, width)
     }
-
 
     pub(crate) fn lower_select_mov(
         &mut self,

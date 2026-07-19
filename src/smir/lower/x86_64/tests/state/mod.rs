@@ -3,7 +3,6 @@
 use super::*;
 use crate::smir::lower::x86_64::*;
 
-
 // ---- even-chunked tests ----
 #[cfg(test)]
 mod part1;

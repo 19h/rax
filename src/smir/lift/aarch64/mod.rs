@@ -33,7 +33,6 @@ pub(crate) use simd::*;
 mod system;
 pub(crate) use system::*;
 
-
 const NZCV_N: i64 = 1_i64 << 31;
 const NZCV_Z: i64 = 1_i64 << 30;
 const NZCV_C: i64 = 1_i64 << 29;
@@ -86,7 +85,6 @@ pub struct Aarch64Lifter {
     /// Whether to use strict mode (fail on unsupported instructions)
     strict: bool,
 }
-
 
 impl Default for Aarch64Lifter {
     fn default() -> Self {

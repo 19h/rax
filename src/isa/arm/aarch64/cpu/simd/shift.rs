@@ -23,8 +23,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
-
     /// Execute SIMD shift by immediate.
     pub(crate) fn exec_simd_shift_imm(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         if (insn >> 31) & 1 != 0 {

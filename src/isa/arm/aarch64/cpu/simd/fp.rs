@@ -23,7 +23,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
     /// Execute SIMD/FP instruction.
     pub(crate) fn exec_simd_fp(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         // Check if FP/SIMD is enabled
@@ -1347,8 +1346,6 @@ impl AArch64Cpu {
         )))
     }
 
-
-
     /// Execute SIMD FP add (binary uniform add).
     pub(crate) fn exec_simd_fp_add_uniform(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let q = (insn >> 30) & 1;
@@ -1480,8 +1477,6 @@ impl AArch64Cpu {
         self.v[rd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute SIMD FP16 three-same register instructions.
     pub(crate) fn exec_simd_fp16_three_same(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
@@ -1717,8 +1712,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SIMD FP16 two-reg misc instructions.
     pub(crate) fn exec_simd_fp16_two_reg(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         if (insn >> 31) != 0 {
@@ -1843,10 +1836,12 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute an Advanced SIMD three-same floating-point instruction.
-    pub(crate) fn exec_simd_three_same_fp(&mut self, insn: u32, scalar: bool) -> Result<CpuExit, ArmError> {
+    pub(crate) fn exec_simd_three_same_fp(
+        &mut self,
+        insn: u32,
+        scalar: bool,
+    ) -> Result<CpuExit, ArmError> {
         let q = (insn >> 30) & 1;
         let u = (insn >> 29) & 1;
         let size = (insn >> 22) & 0x3;
@@ -1954,8 +1949,6 @@ impl AArch64Cpu {
         self.v[rd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Deterministic FP two-register-misc ops (FABS/FNEG/FSQRT, FRINT*, FCVT* to
     /// integer, SCVTF/UCVTF, FCMxx #0). Returns `None` for the estimate ops and

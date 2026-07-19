@@ -17,7 +17,6 @@ use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 
 impl SmirInterpreter {
-
     pub(crate) fn execute_x86_x87_data(
         &self,
         ctx: &mut SmirContext,
@@ -1553,7 +1552,6 @@ impl SmirInterpreter {
         Ok(())
     }
 
-
     pub(crate) fn x86_x87_raw_info(raw: &[u8; 10]) -> X87RawInfo {
         let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
         let exponent_sign = u16::from_le_bytes(raw[8..].try_into().unwrap());
@@ -1572,7 +1570,6 @@ impl SmirInterpreter {
             zero: exponent == 0 && significand == 0,
         }
     }
-
 
     /// Exact total ordering for supported, non-NaN binary80 operands. Signed
     /// zeros compare equal. Pseudo-denormals use an effective biased exponent
@@ -1607,11 +1604,9 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_x87_from_i64(value: i64) -> [u8; 10] {
         Self::x86_x87_from_signed_magnitude(value.unsigned_abs(), value < 0)
     }
-
 
     /// Convert an exactly representable signed magnitude into binary80. The
     /// explicit sign preserves the packed-BCD distinction between +0 and -0.
@@ -1630,8 +1625,11 @@ impl SmirInterpreter {
         raw
     }
 
-
-    pub(crate) fn x86_x87_to_integer(raw: &[u8; 10], width_bits: u32, rounding: u16) -> X87IntegerConversion {
+    pub(crate) fn x86_x87_to_integer(
+        raw: &[u8; 10],
+        width_bits: u32,
+        rounding: u16,
+    ) -> X87IntegerConversion {
         let info = Self::x86_x87_raw_info(raw);
         let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
         let mut exponent = u16::from_le_bytes(raw[8..].try_into().unwrap()) & 0x7FFF;
@@ -1739,11 +1737,13 @@ impl SmirInterpreter {
         }
     }
 
-
     /// Round a binary80 value to an integral binary80 value without narrowing
     /// through a host integer type. Values with unbiased exponent >= 63 are
     /// already integral because binary80 has a 64-bit significand.
-    pub(crate) fn x86_x87_round_to_integral(raw: &[u8; 10], rounding: u16) -> X87IntegralConversion {
+    pub(crate) fn x86_x87_round_to_integral(
+        raw: &[u8; 10],
+        rounding: u16,
+    ) -> X87IntegralConversion {
         let info = Self::x86_x87_raw_info(raw);
         let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
         let exponent_sign = u16::from_le_bytes(raw[8..].try_into().unwrap());
@@ -1806,7 +1806,6 @@ impl SmirInterpreter {
             rounded_up,
         }
     }
-
 
     pub(crate) fn x86_x87_extract(raw: &[u8; 10]) -> X87ExtractResult {
         let info = Self::x86_x87_raw_info(raw);
@@ -1874,14 +1873,12 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_x87_from_raw_parts(significand: u64, exponent_sign: u16) -> [u8; 10] {
         let mut raw = [0u8; 10];
         raw[..8].copy_from_slice(&significand.to_le_bytes());
         raw[8..].copy_from_slice(&exponent_sign.to_le_bytes());
         raw
     }
-
 
     /// Truncate a supported finite binary80 value toward zero, saturating at a
     /// bound larger than every exponent displacement relevant to FSCALE.
@@ -1909,7 +1906,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_x87_quiet_nan(raw: &[u8; 10]) -> [u8; 10] {
         let mut result = *raw;
         let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
@@ -1917,10 +1913,13 @@ impl SmirInterpreter {
         result
     }
 
-
     /// Exact FSCALE response. The operation is independent of FCW.PC; only
     /// denormalization at the binary80 exponent floor can discard bits.
-    pub(crate) fn x86_x87_scale(st0: &[u8; 10], st1: &[u8; 10], control_word: u16) -> X87ScaleResult {
+    pub(crate) fn x86_x87_scale(
+        st0: &[u8; 10],
+        st1: &[u8; 10],
+        control_word: u16,
+    ) -> X87ScaleResult {
         let lhs = Self::x86_x87_raw_info(st0);
         let rhs = Self::x86_x87_raw_info(st1);
         let lhs_sig = u64::from_le_bytes(st0[..8].try_into().unwrap());
@@ -2116,7 +2115,6 @@ impl SmirInterpreter {
         )
     }
 
-
     /// Floor(sqrt(value)) for the full u128 domain. The restoring algorithm
     /// consumes one base-4 digit per iteration: O(64) time and O(1) space.
     pub(crate) fn x86_x87_integer_sqrt(mut value: u128) -> u128 {
@@ -2136,7 +2134,6 @@ impl SmirInterpreter {
         }
         result
     }
-
 
     /// Exact binary80 square root. The radicand is promoted to a u128 fixed-
     /// point integer, so both the root and its residual are available for an
@@ -2259,7 +2256,6 @@ impl SmirInterpreter {
             increment,
         )
     }
-
 
     /// Exact binary80 multiplication. A 64x64-bit significand product fits in
     /// u128, permitting one rounding step from the exact product at FCW.PC or
@@ -2516,7 +2512,6 @@ impl SmirInterpreter {
             normal_rounded_up,
         )
     }
-
 
     /// Exact binary80 addition and subtraction. Finite magnitudes are held as
     /// unsigned integers in units of the minimum binary80 subnormal
@@ -2805,7 +2800,6 @@ impl SmirInterpreter {
             normal_rounded_up,
         )
     }
-
 
     /// Exact binary80 division. The normalized 64-bit significands are scaled
     /// into a u128 numerator, and the quotient remainder supplies the exact
@@ -3129,7 +3123,6 @@ impl SmirInterpreter {
         )
     }
 
-
     /// Round `numerator * 2^shift / denominator` without losing the exact
     /// remainder relation. Callers constrain positive shifts to at most 64.
     pub(crate) fn x86_x87_round_ratio_shift(
@@ -3186,7 +3179,6 @@ impl SmirInterpreter {
             };
         (truncated + u128::from(increment), inexact, increment)
     }
-
 
     /// Exact FPREM/FPREM1 with a deterministic architecturally permitted
     /// partial-reduction width N=63. All finite operands are integer multiples
@@ -3325,7 +3317,6 @@ impl SmirInterpreter {
         )
     }
 
-
     pub(crate) fn x86_x87_big_from_raw(raw: &[u8; 10]) -> Vec<u64> {
         let significand = u64::from_le_bytes(raw[..8].try_into().unwrap());
         if significand == 0 {
@@ -3348,7 +3339,6 @@ impl SmirInterpreter {
         result
     }
 
-
     pub(crate) fn x86_x87_big_shl(value: &[u64], shift: usize) -> Vec<u64> {
         if value.is_empty() {
             return Vec::new();
@@ -3365,7 +3355,6 @@ impl SmirInterpreter {
         Self::x86_x87_big_trim(&mut result);
         result
     }
-
 
     pub(crate) fn x86_x87_big_mul_u128(value: &[u64], multiplier: u128) -> Vec<u64> {
         if value.is_empty() || multiplier == 0 {
@@ -3401,7 +3390,6 @@ impl SmirInterpreter {
         result
     }
 
-
     pub(crate) fn x86_x87_big_to_raw(value: &[u64], sign: bool) -> [u8; 10] {
         let bit_length = Self::x86_x87_big_bit_len(value);
         if bit_length == 0 {
@@ -3425,13 +3413,11 @@ impl SmirInterpreter {
         )
     }
 
-
     pub(crate) fn x86_x87_big_trim(value: &mut Vec<u64>) {
         while value.last() == Some(&0) {
             value.pop();
         }
     }
-
 
     pub(crate) fn x86_x87_big_cmp(lhs: &[u64], rhs: &[u64]) -> Ordering {
         lhs.len().cmp(&rhs.len()).then_with(|| {
@@ -3442,7 +3428,6 @@ impl SmirInterpreter {
                 .unwrap_or(Ordering::Equal)
         })
     }
-
 
     pub(crate) fn x86_x87_big_add(lhs: &[u64], rhs: &[u64]) -> Vec<u64> {
         let length = lhs.len().max(rhs.len());
@@ -3461,7 +3446,6 @@ impl SmirInterpreter {
         result
     }
 
-
     pub(crate) fn x86_x87_big_sub(lhs: &[u64], rhs: &[u64]) -> Vec<u64> {
         debug_assert!(Self::x86_x87_big_cmp(lhs, rhs) != Ordering::Less);
         let mut result = Vec::with_capacity(lhs.len());
@@ -3478,14 +3462,12 @@ impl SmirInterpreter {
         result
     }
 
-
     pub(crate) fn x86_x87_big_bit_len(value: &[u64]) -> usize {
         value
             .last()
             .map(|word| (value.len() - 1) * 64 + (64 - word.leading_zeros() as usize))
             .unwrap_or(0)
     }
-
 
     pub(crate) fn x86_x87_big_any_below(value: &[u64], bit_count: usize) -> bool {
         if bit_count == 0 {
@@ -3502,13 +3484,11 @@ impl SmirInterpreter {
                 .is_some_and(|word| word & ((1u64 << remaining) - 1) != 0)
     }
 
-
     pub(crate) fn x86_x87_big_bit(value: &[u64], bit: usize) -> bool {
         value
             .get(bit / 64)
             .is_some_and(|word| word & (1u64 << (bit % 64)) != 0)
     }
-
 
     pub(crate) fn x86_x87_big_shr_u64(value: &[u64], shift: usize) -> u64 {
         let word = shift / 64;
@@ -3520,7 +3500,6 @@ impl SmirInterpreter {
             low | (value.get(word + 1).copied().unwrap_or(0) << (64 - bit))
         }
     }
-
 
     pub(crate) fn x86_x87_big_round_shift(
         value: &[u64],
@@ -3556,7 +3535,6 @@ impl SmirInterpreter {
             };
         (truncated + u128::from(increment), inexact, increment)
     }
-
 
     /// Round an unsigned integer divided by `2^shift` according to an x87 RC
     /// field. The final boolean reports an increment of the truncated
@@ -3617,7 +3595,6 @@ impl SmirInterpreter {
             increment,
         )
     }
-
 
     /// Narrow a supported x87 binary80 value to an IEEE interchange payload.
     /// This uses integer arithmetic exclusively, including gradual underflow,
@@ -3791,7 +3768,6 @@ impl SmirInterpreter {
         }
     }
 
-
     /// Widen an IEEE binary32/binary64 payload into x87 double-extended
     /// precision without host floating-point conversion. Returns the raw
     /// binary80 value plus source SNaN and denormal classifications. SNaNs are
@@ -3842,7 +3818,6 @@ impl SmirInterpreter {
         raw[8..].copy_from_slice(&exponent_sign.to_le_bytes());
         (raw, signaling_nan, denormal)
     }
-
 
     /// Return the architecturally rounded 80-bit encoding of an x87 load
     /// constant. Values were cross-checked byte-for-byte for all FCW.RC modes
@@ -3902,14 +3877,12 @@ impl SmirInterpreter {
         raw
     }
 
-
     pub(crate) fn x86_x87_environment_len(width: X86X87EnvWidth) -> usize {
         match width {
             X86X87EnvWidth::W16 => 14,
             X86X87EnvWidth::W32 => 28,
         }
     }
-
 
     /// Construct the protected-mode legacy x87 environment image used in
     /// 64-bit mode. Legacy formats save only 16 or 32 pointer-offset bits and
@@ -3946,7 +3919,6 @@ impl SmirInterpreter {
         (image, Self::x86_x87_environment_len(width))
     }
 
-
     pub(crate) fn restore_x86_x87_environment(
         state: &mut crate::smir::X86X87State,
         image: &[u8],
@@ -3973,7 +3945,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_x87_state_image(
         state: &crate::smir::X86X87State,
         width: X86X87EnvWidth,
@@ -3990,7 +3961,6 @@ impl SmirInterpreter {
         }
         (image, environment_len + 80)
     }
-
 
     pub(crate) fn restore_x86_x87_state(
         state: &mut crate::smir::X86X87State,

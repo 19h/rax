@@ -69,7 +69,11 @@ pub struct X86Address {
 }
 
 /// Decode ModR/M byte and any following SIB/displacement
-pub(crate) fn decode_modrm(bytes: &[u8], prefix: &X86Prefix, addr: u64) -> Result<ModRm, LiftError> {
+pub(crate) fn decode_modrm(
+    bytes: &[u8],
+    prefix: &X86Prefix,
+    addr: u64,
+) -> Result<ModRm, LiftError> {
     if bytes.is_empty() {
         return Err(LiftError::Incomplete {
             addr,
@@ -239,4 +243,3 @@ pub(crate) fn decode_modrm(bytes: &[u8], prefix: &X86Prefix, addr: u64) -> Resul
         bytes_consumed: consumed,
     })
 }
-

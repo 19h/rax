@@ -8,7 +8,12 @@ use crate::isa::arm::aarch64::cpu::*;
 // =============================================================================
 
 /// Decode bitmask immediate for logical instructions.
-pub(crate) fn decode_bitmask(n: bool, imms: u32, immr: u32, is_64bit: bool) -> Result<u64, ArmError> {
+pub(crate) fn decode_bitmask(
+    n: bool,
+    imms: u32,
+    immr: u32,
+    is_64bit: bool,
+) -> Result<u64, ArmError> {
     // For 64-bit (sf=1): N must be 1
     // For 32-bit (sf=0): N must be 0, and highest set bit in ~imms[5:0] determines element size
     let len = if n {
@@ -597,7 +602,14 @@ pub(crate) fn sat_signed_wide(v: i128, bits: u32) -> u128 {
 /// destination element (used by accumulating ops MLA/MLS/SABA/UABA). `u` is the
 /// U bit and `opcode` the 5-bit opcode. For pairwise opcodes (SMAXP/SMINP/ADDP)
 /// the caller supplies the adjacent pair as `(a, b)`.
-pub(crate) fn adv_simd_three_same_int(u: u32, opcode: u32, bits: u32, a: u64, b: u64, d: u64) -> (u64, bool) {
+pub(crate) fn adv_simd_three_same_int(
+    u: u32,
+    opcode: u32,
+    bits: u32,
+    a: u64,
+    b: u64,
+    d: u64,
+) -> (u64, bool) {
     let m = elem_mask(bits);
     let sa = sext_elem(a, bits);
     let sb = sext_elem(b, bits);
@@ -826,7 +838,13 @@ pub(crate) fn elem_mask_u128(bits: u32) -> u128 {
 }
 /// Like `simd_rshift` but returns the full (untruncated, signed) shifted value
 /// so a narrowing op can saturate it to a smaller destination element.
-pub(crate) fn simd_rshift_full(a: u64, shift: u32, bits: u32, signed: bool, rounding: bool) -> i128 {
+pub(crate) fn simd_rshift_full(
+    a: u64,
+    shift: u32,
+    bits: u32,
+    signed: bool,
+    rounding: bool,
+) -> i128 {
     let round: i128 = if rounding { 1i128 << (shift - 1) } else { 0 };
     if signed {
         (sext_elem(a, bits) + round) >> shift
@@ -965,7 +983,13 @@ pub(crate) fn count_leading_zeros_elem(a: u64, bits: u32) -> u64 {
 /// preserves element size (not REV / widening / narrowing / FP). `a` is the
 /// source element and `d` the current destination (for SUQADD/USQADD). Returns
 /// `Some(result)` or `None` if the opcode is handled elsewhere.
-pub(crate) fn adv_simd_two_reg_int(u: u32, opcode: u32, bits: u32, a: u64, d: u64) -> Option<(u64, bool)> {
+pub(crate) fn adv_simd_two_reg_int(
+    u: u32,
+    opcode: u32,
+    bits: u32,
+    a: u64,
+    d: u64,
+) -> Option<(u64, bool)> {
     let m = elem_mask(bits);
     let sa = sext_elem(a, bits);
     Some(match (u, opcode) {
@@ -1159,7 +1183,11 @@ pub(crate) fn pacga_stub(x: u64, y: u64) -> u64 {
     h ^= h >> 29;
     h & 0xFFFF_FFFF_0000_0000
 }
-pub(crate) fn pred_test_flags(pred: u32, elements: usize, esize: usize) -> (bool, bool, bool, bool) {
+pub(crate) fn pred_test_flags(
+    pred: u32,
+    elements: usize,
+    esize: usize,
+) -> (bool, bool, bool, bool) {
     let first = pred & 1 != 0;
     let none = pred == 0;
     let last = (pred >> ((elements - 1) * esize)) & 1 != 0;
@@ -1168,7 +1196,12 @@ pub(crate) fn pred_test_flags(pred: u32, elements: usize, esize: usize) -> (bool
 /// General SVE PredTest(mask, result): N=is the first mask-active element set in
 /// result, Z=no mask-active element is set, C=!is the last mask-active element
 /// set, V=0. Both predicates are byte-granular.
-pub(crate) fn pred_test(mask: u32, result: u32, elements: usize, esize: usize) -> (bool, bool, bool, bool) {
+pub(crate) fn pred_test(
+    mask: u32,
+    result: u32,
+    elements: usize,
+    esize: usize,
+) -> (bool, bool, bool, bool) {
     let mut n = false;
     let mut first = true;
     let mut z = true;

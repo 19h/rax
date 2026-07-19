@@ -23,8 +23,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
-
     /// Execute SVE LASTA/LASTB/CLASTA/CLASTB to a GPR. `B` (bit16) takes the
     /// last active element; `A` takes the element after it (wrapping). The
     /// conditional (C) forms keep Rdn when no element is active.
@@ -60,11 +58,13 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SVE LASTA/LASTB to a SIMD&FP scalar. `B` (bit16) takes the last
     /// active element; `A` takes the element after it, wrapping.
-    pub(crate) fn exec_sve_last_scalar(&mut self, insn: u32, esize: usize) -> Result<CpuExit, ArmError> {
+    pub(crate) fn exec_sve_last_scalar(
+        &mut self,
+        insn: u32,
+        esize: usize,
+    ) -> Result<CpuExit, ArmError> {
         let before = (insn >> 16) & 1 == 1;
         let pg = ((insn >> 10) & 0x7) as usize;
         let zn = ((insn >> 5) & 0x1F) as usize;
@@ -91,12 +91,15 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SVE CPY/MOV (predicated copy). `mode`: 0=immediate (Pg=4-bit,
     /// merging or zeroing), 1=scalar GPR (Rn, SP if 31, merging), 2=SIMD scalar
     /// Vn (merging). Pg is byte-granular.
-    pub(crate) fn exec_sve_cpy(&mut self, insn: u32, esize: usize, mode: u32) -> Result<CpuExit, ArmError> {
+    pub(crate) fn exec_sve_cpy(
+        &mut self,
+        insn: u32,
+        esize: usize,
+        mode: u32,
+    ) -> Result<CpuExit, ArmError> {
         let zd = (insn & 0x1F) as usize;
         let bits = (esize * 8) as u32;
         let mask = elem_mask(bits);
@@ -148,13 +151,16 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SVE INDEX: Zd[e] = base + e*step, with base/step from either a
     /// signed 5-bit immediate or an X register. bits[11:10]: bit10 picks the
     /// base source (0=imm5 at [9:5], 1=Xn), bit11 the step source (0=imm5 at
     /// [20:16], 1=Xm).
-    pub(crate) fn exec_sve_index(&mut self, insn: u32, zd: usize, esize: usize) -> Result<CpuExit, ArmError> {
+    pub(crate) fn exec_sve_index(
+        &mut self,
+        insn: u32,
+        zd: usize,
+        esize: usize,
+    ) -> Result<CpuExit, ArmError> {
         let sext5 = |v: u32| -> i64 { (((v & 0x1F) as i32) << 27 >> 27) as i64 };
         let base: i64 = if (insn >> 10) & 1 == 1 {
             self.get_x(((insn >> 5) & 0x1F) as u8) as i64
@@ -177,8 +183,6 @@ impl AArch64Cpu {
         self.v[zd] = dst;
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute the SVE element-count / inc-dec-by-element-count / stack-
     /// allocation family (all 0x04): ADDVL/ADDPL/RDVL, CNTB/H/W/D, INCB/DECB...
@@ -286,8 +290,6 @@ impl AArch64Cpu {
         }
     }
 
-
-
     /// Execute SVE ZIP1/ZIP2/UZP1/UZP2/TRN1/TRN2 (unpredicated vector permute).
     /// At VL=128 these match the corresponding NEON permutes over the register.
     pub(crate) fn exec_sve_zip_uzp_trn(
@@ -344,8 +346,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SVE TBL (table lookup, single source table). For each element e,
     /// `Zd[e] = Zn[Zm[e]]` if the index `Zm[e]` is within range, else 0. The
     /// table Zn is indexed by the unsigned element value of Zm.
@@ -372,8 +372,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SVE TBX (table lookup with destination preservation). Like TBL,
     /// but an out-of-range index keeps the prior value of the destination
     /// element rather than zeroing it (so Zd is both source and destination).
@@ -398,8 +396,6 @@ impl AArch64Cpu {
         self.v[zd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute SVE DUP (indexed): broadcast element `index` of Zn to every lane
     /// of Zd. The esize and index are encoded in tsz:imm2 — the lowest set bit
@@ -441,8 +437,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SVE COMPACT: pack the active (per Pg) elements of Zn contiguously
     /// into the low elements of Zd, zeroing the remaining high elements. Only
     /// 32-bit (S) and 64-bit (D) element sizes are defined (esize = 32 << sz).
@@ -470,8 +464,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SVE SPLICE (destructive): copy the elements of Zdn spanning from
     /// the first to the last active element (inclusive, regardless of the
     /// predicate value of elements in between) into the low part of the result,
@@ -487,8 +479,6 @@ impl AArch64Cpu {
         self.exec_sve_splice_sources(insn, zd, zd, zn, pg)
     }
 
-
-
     /// Execute SVE2 SPLICE (constructive): source 1 is Zn and source 2 is the
     /// next architectural vector register modulo 32.
     pub(crate) fn exec_sve_splice_pair(
@@ -500,8 +490,6 @@ impl AArch64Cpu {
     ) -> Result<CpuExit, ArmError> {
         self.exec_sve_splice_sources(insn, zd, zn, (zn + 1) & 31, pg)
     }
-
-
 
     pub(crate) fn exec_sve_splice_sources(
         &mut self,
@@ -546,8 +534,6 @@ impl AArch64Cpu {
         self.v[zd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute SVE permute operations (DUP, INDEX, REV, etc.).
     pub(crate) fn exec_sve_permute(

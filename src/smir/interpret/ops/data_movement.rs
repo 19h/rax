@@ -1,17 +1,27 @@
 //! Data-movement op execution
 
 use crate::smir::interpret::*;
-use std::cmp::Ordering;
-use std::collections::HashMap;
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext, VecValue};
 use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
-use crate::smir::ir::ops::{HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind, X86CacheControlKind, X86CountKind, X86OpHint, X86ThreeDNowKind, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind};
+use crate::smir::ir::ops::{
+    HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
+    X86CacheControlKind, X86CountKind, X86OpHint, X86ThreeDNowKind, X86X87ArithmeticDestination,
+    X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
+    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+};
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
+use std::cmp::Ordering;
+use std::collections::HashMap;
 
 impl SmirInterpreter {
-    pub(crate) fn execute_op_data_movement(&self, ctx: &mut SmirContext, memory: &mut dyn SmirMemory, op: &SmirOp) -> Result<(), MemoryError> {
+    pub(crate) fn execute_op_data_movement(
+        &self,
+        ctx: &mut SmirContext,
+        memory: &mut dyn SmirMemory,
+        op: &SmirOp,
+    ) -> Result<(), MemoryError> {
         let x86_hint = op.x86_hint;
         match &op.kind {
             // ==================================================================

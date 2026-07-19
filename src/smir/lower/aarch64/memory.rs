@@ -17,13 +17,11 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 impl Aarch64Lowerer {
-
     /// Route memory ops through MMU-translated runtime helpers rather than
     /// inline native loads/stores. Call before `lower_function`.
     pub fn set_mem_helpers(&mut self, enable: bool) {
         self.mem_helpers = enable;
     }
-
 
     /// Select the arithmetic width used to form MMU-helper addresses.
     ///
@@ -34,7 +32,6 @@ impl Aarch64Lowerer {
     pub fn set_mem_helper_addr_width(&mut self, width: OpWidth) {
         self.mem_helper_addr_width = width;
     }
-
 
     /// Byte offset of a guest base/index register within `Aarch64GuestRegs`
     /// (X(n) → n*8, SP → 248). The helper reads the *frozen* guest value from
@@ -49,7 +46,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     /// Spill the live guest GPRs a C helper may clobber (x0–x17 caller-saved,
     /// x29) plus NZCV into the state struct, so they survive a `blr`. x18/x28/
@@ -66,7 +62,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     /// Reverse of [`Self::emit_mem_helper_spill`]: restore NZCV (via x9, before
     /// x9 itself is reloaded) then x0–x17,x29 from the struct.
     pub(crate) fn emit_mem_helper_reload(&mut self) -> Result<(), LowerError> {
@@ -78,7 +73,6 @@ impl Aarch64Lowerer {
         self.emit_ldst_unsigned(29, A64_STATE_REG, 3, 0b01, 29);
         Ok(())
     }
-
 
     /// Compute a guest effective address into x1 (helper arg1) from either a
     /// bounded absolute literal or the spilled state-struct slots — never the
@@ -164,7 +158,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     /// Lower a `Load` as an MMU-translated runtime helper call-out:
     /// spill-all → save LR → compute addr → `load_fn(ctx, addr, size, signed)
     /// -> (value in x0, ok in x1)` → restore LR → fault-bail on `!ok` →
@@ -217,7 +210,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     /// Lower a `Store` as an MMU-translated runtime helper call-out:
     /// `store_fn(ctx, addr, value, size) -> ok in x0`, with the same spill / LR
     /// / fault-bail discipline as [`Self::emit_jit_mem_load_op`].
@@ -265,7 +257,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn mem_pair_second_addr(addr: &Address, stride: u32) -> Result<Address, LowerError> {
         match addr {
             Address::Direct(base) => Ok(Address::BaseOffset {
@@ -310,7 +301,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     /// Route a `LoadPair` through two scalar helpers while retaining the pair's
     /// all-or-nothing destination contract. The first value is held on the host
@@ -386,7 +376,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_jit_mem_store_pair_op(
         &mut self,
         guest_pc: u64,
@@ -400,7 +389,6 @@ impl Aarch64Lowerer {
         self.emit_jit_mem_store_op(guest_pc, src2, &second_addr, width)
     }
 
-
     pub(crate) fn emit_ldst_unsigned(&mut self, rt: u8, rn: u8, size: u32, opc: u32, imm12: u32) {
         self.emit(
             (size << 30)
@@ -413,8 +401,15 @@ impl Aarch64Lowerer {
         );
     }
 
-
-    pub(crate) fn emit_ldst_simm(&mut self, rt: u8, rn: u8, size: u32, opc: u32, imm9: i64, mode: u32) {
+    pub(crate) fn emit_ldst_simm(
+        &mut self,
+        rt: u8,
+        rn: u8,
+        size: u32,
+        opc: u32,
+        imm9: i64,
+        mode: u32,
+    ) {
         self.emit(
             (size << 30)
                 | (0b111 << 27)
@@ -426,11 +421,9 @@ impl Aarch64Lowerer {
         );
     }
 
-
     pub(crate) fn emit_ldst_unscaled(&mut self, rt: u8, rn: u8, size: u32, opc: u32, imm9: i64) {
         self.emit_ldst_simm(rt, rn, size, opc, imm9, 0b00);
     }
-
 
     pub(crate) fn emit_ldst_reg_offset(
         &mut self,
@@ -456,7 +449,6 @@ impl Aarch64Lowerer {
         );
     }
 
-
     pub(crate) fn emit_ldst_pair(
         &mut self,
         rt: u8,
@@ -479,11 +471,9 @@ impl Aarch64Lowerer {
         );
     }
 
-
     pub(crate) fn emit_load_exclusive(&mut self, rt: u8, rn: u8, size: u32) {
         self.emit_load_exclusive_ordered(rt, rn, size, 0);
     }
-
 
     pub(crate) fn emit_load_exclusive_ordered(&mut self, rt: u8, rn: u8, size: u32, acquire: u32) {
         self.emit(
@@ -498,13 +488,18 @@ impl Aarch64Lowerer {
         );
     }
 
-
     pub(crate) fn emit_store_exclusive(&mut self, rs: u8, rt: u8, rn: u8, size: u32) {
         self.emit_store_exclusive_ordered(rs, rt, rn, size, 0);
     }
 
-
-    pub(crate) fn emit_store_exclusive_ordered(&mut self, rs: u8, rt: u8, rn: u8, size: u32, release: u32) {
+    pub(crate) fn emit_store_exclusive_ordered(
+        &mut self,
+        rs: u8,
+        rt: u8,
+        rn: u8,
+        size: u32,
+        release: u32,
+    ) {
         self.emit(
             (size << 30)
                 | (0b001000 << 24)
@@ -515,7 +510,6 @@ impl Aarch64Lowerer {
                 | (rt as u32),
         );
     }
-
 
     pub(crate) fn signed_load_w_parts<'a>(
         load: &'a OpKind,
@@ -545,7 +539,6 @@ impl Aarch64Lowerer {
             _ => Ok(None),
         }
     }
-
 
     pub(crate) fn lifted_ldpsw_pair_parts<'a>(
         first: &'a SmirOp,
@@ -585,7 +578,6 @@ impl Aarch64Lowerer {
             _ => Ok(None),
         }
     }
-
 
     pub(crate) fn lower_mem_access(
         &mut self,
@@ -636,7 +628,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_mem_indexed_access(
         &mut self,
         rt: u8,
@@ -658,7 +649,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_load(
         &mut self,
         dst: VReg,
@@ -671,7 +661,6 @@ impl Aarch64Lowerer {
         let opc = Self::load_opc(width, sign)?;
         self.lower_mem_access(rt, addr, size, opc)
     }
-
 
     pub(crate) fn lower_store_imm_addr_to_base(
         &mut self,
@@ -694,7 +683,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_store_imm(
         &mut self,
@@ -728,7 +716,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_store(
         &mut self,
         src: VReg,
@@ -744,7 +731,6 @@ impl Aarch64Lowerer {
         self.lower_mem_access(rt, addr, size, 0b00)
     }
 
-
     pub(crate) fn lower_leave(&mut self) -> Result<(), LowerError> {
         const X86_RSP_INDEX: u8 = 4;
         const X86_RBP_INDEX: u8 = 5;
@@ -756,7 +742,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn pred_store_src_to_vreg(src: &SrcOperand) -> Result<VReg, LowerError> {
         match src {
             SrcOperand::Reg(reg) => Ok(*reg),
@@ -766,7 +751,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_pred_load(
         &mut self,
@@ -783,7 +767,6 @@ impl Aarch64Lowerer {
         self.patch_test_branch_to_current(branch, cond, 0, false)
     }
 
-
     pub(crate) fn lower_pred_store(
         &mut self,
         src: &SrcOperand,
@@ -798,7 +781,6 @@ impl Aarch64Lowerer {
         self.patch_test_branch_to_current(branch, cond, 0, false)
     }
 
-
     pub(crate) fn lower_load_exclusive(
         &mut self,
         dst: VReg,
@@ -811,7 +793,6 @@ impl Aarch64Lowerer {
         self.emit_load_exclusive(rt, rn, size);
         Ok(())
     }
-
 
     pub(crate) fn lower_store_exclusive(
         &mut self,
@@ -837,7 +818,6 @@ impl Aarch64Lowerer {
         self.emit_store_exclusive(rs, rt, rn, size);
         Ok(())
     }
-
 
     pub(crate) fn lower_pair_mem_access(
         &mut self,
@@ -884,7 +864,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_pair_indexed_access(
         &mut self,
         rt: u8,
@@ -907,7 +886,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_ldpsw_pair_access(
         &mut self,
         rt: u8,
@@ -927,7 +905,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_load_pair(
         &mut self,
         dst1: VReg,
@@ -944,7 +921,6 @@ impl Aarch64Lowerer {
         )
     }
 
-
     pub(crate) fn lower_store_pair(
         &mut self,
         src1: VReg,
@@ -960,7 +936,6 @@ impl Aarch64Lowerer {
             false,
         )
     }
-
 
     pub(crate) fn lower_mem_base_index_scale_access(
         &mut self,
@@ -982,7 +957,6 @@ impl Aarch64Lowerer {
 
         self.lower_mem_base_index_scale_scratch_access(rt, base, index, scale, disp, size, opc)
     }
-
 
     pub(crate) fn lower_mem_base_index_scale_scratch_access(
         &mut self,
@@ -1006,7 +980,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_mem_reg_offset_access(
         &mut self,
         rt: u8,
@@ -1028,7 +1001,6 @@ impl Aarch64Lowerer {
         );
         Ok(())
     }
-
 
     pub(crate) fn lower_lea_add_disp(&mut self, dst: u8, disp: i64) -> Result<(), LowerError> {
         if disp == 0 {
@@ -1052,8 +1024,12 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
-    pub(crate) fn lower_lea(&mut self, dst: VReg, addr: &Address, guest_pc: u64) -> Result<(), LowerError> {
+    pub(crate) fn lower_lea(
+        &mut self,
+        dst: VReg,
+        addr: &Address,
+        guest_pc: u64,
+    ) -> Result<(), LowerError> {
         let dst = Self::dst_gpr_arm_or_x86(dst)?;
         match addr {
             Address::Direct(base) => {

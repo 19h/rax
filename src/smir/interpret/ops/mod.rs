@@ -1,14 +1,14 @@
 //! execute_op dispatch groups
 
 mod arithmetic;
-mod logic;
-mod shift;
+mod avx10;
 mod bit;
 mod data_movement;
-mod memory;
-mod fp;
-mod simd;
 mod flags;
-mod system;
+mod fp;
+mod logic;
+mod memory;
 mod meta;
-mod avx10;
+mod shift;
+mod simd;
+mod system;

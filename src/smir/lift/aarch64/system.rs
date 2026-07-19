@@ -17,7 +17,6 @@ use crate::smir::ir::{
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader};
 
 impl Aarch64Lifter {
-
     pub(crate) fn supported_sysreg(sysreg: u16) -> Option<SysRegAccess> {
         match sysreg {
             SYSREG_NZCV => Some(SysRegAccess {
@@ -41,7 +40,6 @@ impl Aarch64Lifter {
             _ => None,
         }
     }
-
 
     pub(crate) fn lift_mrs(
         &self,
@@ -84,7 +82,6 @@ impl Aarch64Lifter {
         );
         Ok(())
     }
-
 
     pub(crate) fn lift_msr(
         &self,

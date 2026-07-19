@@ -600,4 +600,3 @@ pub(crate) fn decode_apx_evex_prefix_for_map(
         x4: (p1 & 0x04) != 0,
     })
 }
-

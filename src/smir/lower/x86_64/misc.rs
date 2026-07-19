@@ -58,7 +58,6 @@ impl X86_64Lowerer {
         }
     }
 
-
     pub(crate) fn try_lower_push_pop(
         &mut self,
         ops: &[crate::smir::ir::ops::SmirOp],
@@ -135,7 +134,6 @@ impl X86_64Lowerer {
 
         Ok(None)
     }
-
 
     pub(crate) fn try_lower_vmem_binop(
         &mut self,
@@ -221,7 +219,6 @@ impl X86_64Lowerer {
         Ok(None)
     }
 
-
     pub(crate) fn emit_flag_preserving_stack_pop8(&mut self) {
         // lea rsp,[rsp+8]  (48 8D 64 24 08)
         self.code.emit_u8(0x48);
@@ -230,7 +227,6 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x24);
         self.code.emit_u8(0x08);
     }
-
 
     /// Lower XSETBV as a state-backed control update followed by an immediate
     /// native-region handoff. Returning at `resume_pc` is required: changing
@@ -404,7 +400,6 @@ impl X86_64Lowerer {
         self.emit_native_exit(op.guest_pc);
         Ok(())
     }
-
 
     /// Fix up all pending jumps
     pub(crate) fn fixup_jumps(&mut self) -> Result<(), LowerError> {

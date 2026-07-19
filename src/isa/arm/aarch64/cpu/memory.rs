@@ -22,7 +22,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
     // =========================================================================
     // Memory Access
     // =========================================================================
@@ -33,13 +32,11 @@ impl AArch64Cpu {
         self.memory.read_u8(pa).map_err(|e| e.into())
     }
 
-
     /// Read halfword from memory.
     pub fn mem_read_u16(&self, va: u64) -> Result<u16, ArmError> {
         let pa = self.translate_address(va, false, false)?;
         self.memory.read_u16(pa).map_err(|e| e.into())
     }
-
 
     /// Read word from memory.
     pub fn mem_read_u32(&self, va: u64) -> Result<u32, ArmError> {
@@ -47,13 +44,11 @@ impl AArch64Cpu {
         self.memory.read_u32(pa).map_err(|e| e.into())
     }
 
-
     /// Read doubleword from memory.
     pub fn mem_read_u64(&self, va: u64) -> Result<u64, ArmError> {
         let pa = self.translate_address(va, false, false)?;
         self.memory.read_u64(pa).map_err(|e| e.into())
     }
-
 
     /// Write byte to memory.
     pub fn mem_write_u8(&mut self, va: u64, value: u8) -> Result<(), ArmError> {
@@ -66,7 +61,6 @@ impl AArch64Cpu {
         Ok(())
     }
 
-
     /// Write halfword to memory.
     pub fn mem_write_u16(&mut self, va: u64, value: u16) -> Result<(), ArmError> {
         let pa = self.translate_address(va, true, false)?;
@@ -77,7 +71,6 @@ impl AArch64Cpu {
         self.jit_note_write(va);
         Ok(())
     }
-
 
     /// Write word to memory.
     pub fn mem_write_u32(&mut self, va: u64, value: u32) -> Result<(), ArmError> {
@@ -90,7 +83,6 @@ impl AArch64Cpu {
         Ok(())
     }
 
-
     /// Write doubleword to memory.
     pub fn mem_write_u64(&mut self, va: u64, value: u64) -> Result<(), ArmError> {
         let pa = self.translate_address(va, true, false)?;
@@ -102,7 +94,6 @@ impl AArch64Cpu {
         Ok(())
     }
 
-
     /// Translate virtual address to physical address, using the privilege level
     /// implied by the current EL (EL0 ⇒ unprivileged, EL1+ ⇒ privileged).
     pub(crate) fn translate_address(
@@ -113,7 +104,6 @@ impl AArch64Cpu {
     ) -> Result<u64, ArmError> {
         self.translate_address_at(va, is_write, is_execute, self.current_el > 0)
     }
-
 
     /// Translate as an unprivileged access. PSTATE.UAO lets EL1+ unprivileged
     /// load/store instructions use privileged permissions instead.
@@ -132,7 +122,6 @@ impl AArch64Cpu {
             self.current_el > 0 && self.uao && self.has_uao_ext(),
         )
     }
-
 
     pub(crate) fn translate_address_at(
         &self,
@@ -171,7 +160,6 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Read a doubleword through unprivileged access translation. See
     /// [`Self::translate_address_unprivileged`]. (#39)
     pub(crate) fn mem_read_u64_unprivileged(&self, va: u64) -> Result<u64, ArmError> {
@@ -179,28 +167,28 @@ impl AArch64Cpu {
         self.memory.read_u64(pa).map_err(|e| e.into())
     }
 
-
     pub(crate) fn mem_read_u8_unprivileged(&self, va: u64) -> Result<u8, ArmError> {
         let pa = self.translate_address_unprivileged(va, false, false)?;
         self.memory.read_u8(pa).map_err(|e| e.into())
     }
-
 
     pub(crate) fn mem_read_u16_unprivileged(&self, va: u64) -> Result<u16, ArmError> {
         let pa = self.translate_address_unprivileged(va, false, false)?;
         self.memory.read_u16(pa).map_err(|e| e.into())
     }
 
-
     pub(crate) fn mem_read_u32_unprivileged(&self, va: u64) -> Result<u32, ArmError> {
         let pa = self.translate_address_unprivileged(va, false, false)?;
         self.memory.read_u32(pa).map_err(|e| e.into())
     }
 
-
     /// Write a doubleword through unprivileged access translation. See
     /// [`Self::translate_address_unprivileged`]. (#39)
-    pub(crate) fn mem_write_u64_unprivileged(&mut self, va: u64, value: u64) -> Result<(), ArmError> {
+    pub(crate) fn mem_write_u64_unprivileged(
+        &mut self,
+        va: u64,
+        value: u64,
+    ) -> Result<(), ArmError> {
         let pa = self.translate_address_unprivileged(va, true, false)?;
         self.memory
             .write_u64(pa, value)
@@ -209,7 +197,6 @@ impl AArch64Cpu {
         self.jit_note_write(va);
         Ok(())
     }
-
 
     pub(crate) fn mem_write_u8_unprivileged(&mut self, va: u64, value: u8) -> Result<(), ArmError> {
         let pa = self.translate_address_unprivileged(va, true, false)?;
@@ -221,8 +208,11 @@ impl AArch64Cpu {
         Ok(())
     }
 
-
-    pub(crate) fn mem_write_u16_unprivileged(&mut self, va: u64, value: u16) -> Result<(), ArmError> {
+    pub(crate) fn mem_write_u16_unprivileged(
+        &mut self,
+        va: u64,
+        value: u16,
+    ) -> Result<(), ArmError> {
         let pa = self.translate_address_unprivileged(va, true, false)?;
         self.memory
             .write_u16(pa, value)
@@ -232,8 +222,11 @@ impl AArch64Cpu {
         Ok(())
     }
 
-
-    pub(crate) fn mem_write_u32_unprivileged(&mut self, va: u64, value: u32) -> Result<(), ArmError> {
+    pub(crate) fn mem_write_u32_unprivileged(
+        &mut self,
+        va: u64,
+        value: u32,
+    ) -> Result<(), ArmError> {
         let pa = self.translate_address_unprivileged(va, true, false)?;
         self.memory
             .write_u32(pa, value)
@@ -242,7 +235,6 @@ impl AArch64Cpu {
         self.jit_note_write(va);
         Ok(())
     }
-
 
     /// Execute load/store instruction.
     pub(crate) fn exec_load_store(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
@@ -398,7 +390,6 @@ impl AArch64Cpu {
         // Fallback to single register for any remaining cases
         self.exec_ldst_reg(insn)
     }
-
 
     // Load/Store implementations
     /// Execute Load/Store Exclusive instructions (LDXR, STXR, LDAXR, STLXR, etc.)
@@ -755,7 +746,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     pub(crate) fn exec_ldr_literal(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let opc = (insn >> 30) & 0x3;
         let v = (insn >> 26) & 1;
@@ -806,7 +796,6 @@ impl AArch64Cpu {
 
         Ok(CpuExit::Continue)
     }
-
 
     pub(crate) fn exec_ldst_pair(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let opc = (insn >> 30) & 0x3;
@@ -989,7 +978,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     /// Advanced SIMD load/store single structure: one element to/from a lane of
     /// `selem` consecutive registers (LD1-LD4 by element), and the replicating
     /// loads LD1R-LD4R (broadcast one element across all lanes).
@@ -1117,7 +1105,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     /// Advanced SIMD load/store multiple structures: LD1/ST1 (1-4 registers),
     /// LD2/ST2, LD3/ST3, LD4/ST4 (de-interleaving). Contiguous, optional
     /// post-index writeback.
@@ -1225,7 +1212,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     /// Atomic memory operations (FEAT_LSE): LDADD/LDCLR/LDEOR/LDSET/LDSMAX/
     /// LDSMIN/LDUMAX/LDUMIN and SWP. Single-core, so the load-op-store is just
     /// sequential. Rt receives the pre-operation value (discarded if Rt==31).
@@ -1305,7 +1291,6 @@ impl AArch64Cpu {
         }
         Ok(CpuExit::Continue)
     }
-
 
     pub(crate) fn exec_ldst_reg(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let size = (insn >> 30) & 0x3;

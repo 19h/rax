@@ -14,4 +14,3 @@ mod scalar;
 #[cfg(test)]
 mod state;
 use crate::smir::lower::runtime::*;
-

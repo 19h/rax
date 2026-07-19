@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     /// Lift MMX/SSE2/SSE4.1 packed integer equality and signed greater-than
     /// comparisons.
     pub(crate) fn lift_sse_integer_compare(
@@ -128,8 +126,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_ptest(
         &self,

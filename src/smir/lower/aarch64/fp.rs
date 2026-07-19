@@ -17,24 +17,20 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 impl Aarch64Lowerer {
-
     #[cfg(target_arch = "aarch64")]
     pub(crate) fn detect_fp16_available() -> bool {
         std::arch::is_aarch64_feature_detected!("fp16")
     }
-
 
     #[cfg(not(target_arch = "aarch64"))]
     pub(crate) fn detect_fp16_available() -> bool {
         true
     }
 
-
     #[cfg(test)]
     pub(crate) fn set_fp16_available_for_test(&mut self, available: bool) {
         self.fp16_available = available;
     }
-
 
     pub(crate) fn emit_fp_two_source(
         &mut self,
@@ -58,7 +54,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_fp_one_source(
         &mut self,
         rd: u8,
@@ -79,7 +74,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_fp_compare(
         &mut self,
         rn: u8,
@@ -97,7 +91,6 @@ impl Aarch64Lowerer {
         );
         Ok(())
     }
-
 
     pub(crate) fn emit_fp_three_source(
         &mut self,
@@ -123,7 +116,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_int_to_fp(
         &mut self,
         rd: u8,
@@ -146,7 +138,6 @@ impl Aarch64Lowerer {
         );
         Ok(())
     }
-
 
     pub(crate) fn emit_fp_to_int(
         &mut self,
@@ -180,7 +171,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     /// Lower a vector FP numeric min/max (FMAXNM/FMINNM): three-same FP, U=0,
     /// opcode 11000, with a = size<1> selecting max (0) vs min (1) and sz the
     /// single/double element width.
@@ -202,7 +192,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_fp_binary(
         &mut self,
         dst: VReg,
@@ -217,7 +206,6 @@ impl Aarch64Lowerer {
         self.emit_fp_two_source(rd, rn, rm, opcode, precision)
     }
 
-
     pub(crate) fn lower_fp_unary(
         &mut self,
         dst: VReg,
@@ -229,7 +217,6 @@ impl Aarch64Lowerer {
         let rn = Self::fp_reg(src)?;
         self.emit_fp_one_source(rd, rn, opcode, precision)
     }
-
 
     pub(crate) fn lower_fp_round(
         &mut self,
@@ -249,7 +236,6 @@ impl Aarch64Lowerer {
         self.lower_fp_unary(dst, src, precision, opcode)
     }
 
-
     pub(crate) fn lower_fp_compare(
         &mut self,
         src1: VReg,
@@ -260,7 +246,6 @@ impl Aarch64Lowerer {
         let rm = Self::fp_reg(src2)?;
         self.emit_fp_compare(rn, rm, precision)
     }
-
 
     pub(crate) fn lower_fp_convert(
         &mut self,
@@ -278,7 +263,6 @@ impl Aarch64Lowerer {
             self.emit_fp_one_source(rd, rn, opcode, from)
         }
     }
-
 
     pub(crate) fn lower_int_to_fp(
         &mut self,
@@ -316,7 +300,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_fp_to_int(
         &mut self,
         dst: VReg,
@@ -352,7 +335,6 @@ impl Aarch64Lowerer {
             _ => unreachable!(),
         }
     }
-
 
     pub(crate) fn lower_fp_to_int_dynamic(
         &mut self,
@@ -435,7 +417,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_fp_fma(
         &mut self,
         dst: VReg,
@@ -451,7 +432,6 @@ impl Aarch64Lowerer {
         self.emit_fp_three_source(rd, rn, rm, ra, 0, 0, precision)
     }
 
-
     pub(crate) fn scratch_fp_reg(avoid: &[u8]) -> Result<u8, LowerError> {
         for reg in (0_u8..=31).rev() {
             if !avoid.contains(&reg) {
@@ -463,7 +443,6 @@ impl Aarch64Lowerer {
             op: "AArch64 native lowering needs a SIMD scratch register".to_string(),
         })
     }
-
 
     pub(crate) fn scratch_fp_reg_pair(avoid: &[u8]) -> Result<(u8, u8), LowerError> {
         for first in (0_u8..31).rev() {
@@ -478,7 +457,6 @@ impl Aarch64Lowerer {
         })
     }
 
-
     pub(crate) fn double_shift_count_mask(width: OpWidth) -> Result<u64, LowerError> {
         match width {
             OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => Ok(0x1f),
@@ -488,7 +466,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn emit_double_shift_carry_imm(
         &mut self,
@@ -510,7 +487,6 @@ impl Aarch64Lowerer {
         self.patch_test_branch_to_current(no_carry, original, bit, false)
     }
 
-
     pub(crate) fn emit_double_shift_carry_reg(
         &mut self,
         flags: u8,
@@ -531,7 +507,6 @@ impl Aarch64Lowerer {
         self.emit_logic_shifted(flags, flags, temp, 0b01, false, 0, 29, OpWidth::W32)
     }
 
-
     pub(crate) fn emit_double_shift_overflow_from_result(
         &mut self,
         flags: u8,
@@ -548,7 +523,6 @@ impl Aarch64Lowerer {
         self.emit_or_nzcv_const(flags, temp, NZCV_V)?;
         self.patch_test_branch_to_current(no_overflow, temp, top_bit, false)
     }
-
 
     pub(crate) fn emit_finalize_double_shift_flags(
         &mut self,
@@ -579,7 +553,6 @@ impl Aarch64Lowerer {
         }
         self.emit_sysreg(flags, ArmReg::Nzcv, false)
     }
-
 
     pub(crate) fn lower_double_shift_imm_with_flags(
         &mut self,
@@ -658,7 +631,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_double_shift_reg_with_flags(
         &mut self,
         dst: u8,
@@ -723,7 +695,6 @@ impl Aarch64Lowerer {
         self.patch_branch_to_current(done)
     }
 
-
     pub(crate) fn lower_double_shift_reg(
         &mut self,
         dst: VReg,
@@ -781,7 +752,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_subword_double_shift_reg(
         &mut self,
@@ -859,7 +829,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_double_shift(
         &mut self,
@@ -1084,7 +1053,6 @@ impl Aarch64Lowerer {
         self.emit_extract(dst_reg, rn, rm, lsb, width)
     }
 
-
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn lower_x86_ndd_double_shift(
         &mut self,
@@ -1158,7 +1126,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_fused_select(
         &mut self,
         dst: VReg,
@@ -1171,7 +1138,6 @@ impl Aarch64Lowerer {
         let cond = Self::arm_cond_code(cond)?;
         self.lower_fused_select_cond(dst, cond, src_true, src_false_base, false_op, width)
     }
-
 
     pub(crate) fn lower_fused_select_cond(
         &mut self,
@@ -1199,8 +1165,10 @@ impl Aarch64Lowerer {
         )
     }
 
-
-    pub(crate) fn try_lower_fused_flagm(&mut self, ops: &[SmirOp]) -> Result<Option<usize>, LowerError> {
+    pub(crate) fn try_lower_fused_flagm(
+        &mut self,
+        ops: &[SmirOp],
+    ) -> Result<Option<usize>, LowerError> {
         if let Some(SmirOp {
             kind:
                 OpKind::Xor {
@@ -1236,8 +1204,10 @@ impl Aarch64Lowerer {
         Ok(None)
     }
 
-
-    pub(crate) fn try_lower_fused_cls(&mut self, ops: &[SmirOp]) -> Result<Option<usize>, LowerError> {
+    pub(crate) fn try_lower_fused_cls(
+        &mut self,
+        ops: &[SmirOp],
+    ) -> Result<Option<usize>, LowerError> {
         let [
             SmirOp {
                 kind:
@@ -1315,7 +1285,6 @@ impl Aarch64Lowerer {
         Ok(Some(4))
     }
 
-
     pub(crate) fn try_lower_fused_signed_load_w(
         &mut self,
         ops: &[SmirOp],
@@ -1364,8 +1333,10 @@ impl Aarch64Lowerer {
         Ok(None)
     }
 
-
-    pub(crate) fn try_lower_fused_mem_indexed(&mut self, ops: &[SmirOp]) -> Result<Option<usize>, LowerError> {
+    pub(crate) fn try_lower_fused_mem_indexed(
+        &mut self,
+        ops: &[SmirOp],
+    ) -> Result<Option<usize>, LowerError> {
         if let [writeback, access, ..] = ops {
             if let Some((base, offset)) = Self::writeback_add_parts(&writeback.kind) {
                 if let Some((rt, addr, size, opc)) = Self::mem_access_parts(&access.kind)? {
@@ -1396,7 +1367,6 @@ impl Aarch64Lowerer {
 
         Ok(None)
     }
-
 
     pub(crate) fn try_lower_fused_pair_indexed(
         &mut self,
@@ -1435,8 +1405,10 @@ impl Aarch64Lowerer {
         Ok(None)
     }
 
-
-    pub(crate) fn try_lower_fused_ldpsw_pair(&mut self, ops: &[SmirOp]) -> Result<Option<usize>, LowerError> {
+    pub(crate) fn try_lower_fused_ldpsw_pair(
+        &mut self,
+        ops: &[SmirOp],
+    ) -> Result<Option<usize>, LowerError> {
         if let [writeback, first, second, ..] = ops {
             if writeback.guest_pc == first.guest_pc {
                 if let Some((base, offset)) = Self::writeback_add_parts(&writeback.kind) {
@@ -1483,8 +1455,10 @@ impl Aarch64Lowerer {
         Ok(None)
     }
 
-
-    pub(crate) fn try_lower_fused_extract(&mut self, ops: &[SmirOp]) -> Result<Option<usize>, LowerError> {
+    pub(crate) fn try_lower_fused_extract(
+        &mut self,
+        ops: &[SmirOp],
+    ) -> Result<Option<usize>, LowerError> {
         let [lo_op, hi_op, or_op, ..] = ops else {
             return Ok(None);
         };
@@ -1552,8 +1526,10 @@ impl Aarch64Lowerer {
         Ok(Some(3))
     }
 
-
-    pub(crate) fn try_lower_fused_rev16(&mut self, ops: &[SmirOp]) -> Result<Option<usize>, LowerError> {
+    pub(crate) fn try_lower_fused_rev16(
+        &mut self,
+        ops: &[SmirOp],
+    ) -> Result<Option<usize>, LowerError> {
         let [lo_op, hi_op, lo_shift_op, hi_shift_op, or_op, ..] = ops else {
             return Ok(None);
         };
@@ -1641,8 +1617,10 @@ impl Aarch64Lowerer {
         Ok(Some(5))
     }
 
-
-    pub(crate) fn try_lower_fused_rev32(&mut self, ops: &[SmirOp]) -> Result<Option<usize>, LowerError> {
+    pub(crate) fn try_lower_fused_rev32(
+        &mut self,
+        ops: &[SmirOp],
+    ) -> Result<Option<usize>, LowerError> {
         let [lo_rev_op, hi_op, hi_rev_op, hi_shift_op, or_op, ..] = ops else {
             return Ok(None);
         };
@@ -1715,7 +1693,6 @@ impl Aarch64Lowerer {
         Ok(Some(5))
     }
 
-
     pub(crate) fn try_lower_fused_bitfield_insert_zero(
         &mut self,
         ops: &[SmirOp],
@@ -1778,7 +1755,6 @@ impl Aarch64Lowerer {
         Ok(Some(2))
     }
 
-
     pub(crate) fn try_lower_fused_bitfield_insert_low(
         &mut self,
         ops: &[SmirOp],
@@ -1826,7 +1802,6 @@ impl Aarch64Lowerer {
         self.lower_bitfield_insert_low(*dst, *dst_in, *src, *lsb, *width_bits, *op_width)?;
         Ok(Some(2))
     }
-
 
     pub(crate) fn try_lower_fused_mem_reg_offset(
         &mut self,
@@ -2015,8 +1990,10 @@ impl Aarch64Lowerer {
         Ok(None)
     }
 
-
-    pub(crate) fn try_lower_fused_ldclr(&mut self, ops: &[SmirOp]) -> Result<Option<usize>, LowerError> {
+    pub(crate) fn try_lower_fused_ldclr(
+        &mut self,
+        ops: &[SmirOp],
+    ) -> Result<Option<usize>, LowerError> {
         let [
             SmirOp {
                 guest_pc,
@@ -2058,7 +2035,6 @@ impl Aarch64Lowerer {
         self.lower_ldclr(*dst, addr, *src, *width, *order)?;
         Ok(Some(2))
     }
-
 
     pub(crate) fn try_lower_fused_inverted_shifted_logic(
         &mut self,
@@ -2138,7 +2114,6 @@ impl Aarch64Lowerer {
         Ok(Some(2))
     }
 
-
     pub(crate) fn try_lower_fused_inverted_reg_logic(
         &mut self,
         ops: &[SmirOp],
@@ -2199,7 +2174,6 @@ impl Aarch64Lowerer {
         self.emit_logic_shifted(dst, rn, rm, opc, true, 0, 0, *not_width)?;
         Ok(Some(2))
     }
-
 
     pub(crate) fn try_lower_fused_sysreg_access(
         &mut self,
@@ -2266,8 +2240,10 @@ impl Aarch64Lowerer {
         Ok(Some(2))
     }
 
-
-    pub(crate) fn try_lower_fused_select(&mut self, ops: &[SmirOp]) -> Result<Option<usize>, LowerError> {
+    pub(crate) fn try_lower_fused_select(
+        &mut self,
+        ops: &[SmirOp],
+    ) -> Result<Option<usize>, LowerError> {
         let Some(SmirOp {
             kind:
                 OpKind::TestCondition {
@@ -2345,7 +2321,6 @@ impl Aarch64Lowerer {
 
         Ok(None)
     }
-
 
     pub(crate) fn try_lower_fused_cond_compare(
         &mut self,

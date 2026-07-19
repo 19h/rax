@@ -23,8 +23,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
-
     /// Execute cryptographic operations (AES, SHA, SM3, SM4).
     /// For now, this is a stub that allows the instruction to execute.
     pub(crate) fn exec_crypto(&mut self, insn: u32) -> Result<CpuExit, ArmError> {

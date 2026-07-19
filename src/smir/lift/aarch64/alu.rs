@@ -17,7 +17,6 @@ use crate::smir::ir::{
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader};
 
 impl Aarch64Lifter {
-
     pub(crate) fn lift_add_sub_tags(
         &self,
         insn: &DecodedInsn,
@@ -79,7 +78,6 @@ impl Aarch64Lifter {
         Ok(())
     }
 
-
     /// Convert shift type
     pub(crate) fn arm_shift(&self, shift: ShiftType) -> ShiftOp {
         match shift {
@@ -89,7 +87,6 @@ impl Aarch64Lifter {
             ShiftType::ROR | ShiftType::RRX => ShiftOp::Ror,
         }
     }
-
 
     pub(crate) fn arm_extend(&self, extend: ExtendType) -> ExtendOp {
         match extend {
@@ -104,13 +101,16 @@ impl Aarch64Lifter {
         }
     }
 
-
     // ========================================================================
     // Operand Helpers
     // ========================================================================
 
     /// Convert memory operand to SMIR address
-    pub(crate) fn mem_to_addr(&self, mem: &MemOperand, ctx: &mut LiftContext) -> (Address, Vec<SmirOp>) {
+    pub(crate) fn mem_to_addr(
+        &self,
+        mem: &MemOperand,
+        ctx: &mut LiftContext,
+    ) -> (Address, Vec<SmirOp>) {
         let mut pre_ops = Vec::new();
         let pc = ctx.guest_pc;
 
@@ -256,7 +256,6 @@ impl Aarch64Lifter {
         (addr, pre_ops)
     }
 
-
     pub(crate) fn indexed_access_addr(&self, mem: &MemOperand, addr: Address) -> Address {
         if matches!(
             mem.mode,
@@ -267,7 +266,6 @@ impl Aarch64Lifter {
             addr
         }
     }
-
 
     pub(crate) fn push_mul_op(
         ops: &mut Vec<SmirOp>,
@@ -309,7 +307,6 @@ impl Aarch64Lifter {
             );
         }
     }
-
 
     pub(crate) fn lift_crc32(
         &self,
@@ -480,7 +477,6 @@ impl Aarch64Lifter {
         }
     }
 
-
     pub(crate) fn lift_rev(
         &self,
         insn: &DecodedInsn,
@@ -636,7 +632,6 @@ impl Aarch64Lifter {
         Ok(())
     }
 
-
     pub(crate) fn lift_shift(
         &self,
         insn: &DecodedInsn,
@@ -709,7 +704,6 @@ impl Aarch64Lifter {
 
         Ok(())
     }
-
 
     pub(crate) fn lift_extract(
         &self,
@@ -785,7 +779,6 @@ impl Aarch64Lifter {
 
         Ok(())
     }
-
 
     pub(crate) fn lift_bitfield(
         &self,
@@ -938,7 +931,6 @@ impl Aarch64Lifter {
 
         Ok(())
     }
-
 
     pub(crate) fn lift_xaflag(&self, pc: u64, ops: &mut Vec<SmirOp>, ctx: &mut LiftContext) {
         let nzcv = VReg::Arch(ArchReg::Arm(ArmReg::Nzcv));
@@ -1148,7 +1140,6 @@ impl Aarch64Lifter {
             },
         );
     }
-
 
     pub(crate) fn lift_extend(
         &self,

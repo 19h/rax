@@ -23,8 +23,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
-
     /// Execute SVE predicated shift by immediate (destructive, merging). The
     /// element size AND shift amount are jointly encoded in tsz:imm: esize is
     /// the lowest set bit of tsize=tszh:tszl; for ASR/LSR amount = 2*esize -
@@ -139,8 +137,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SVE unpredicated shift by immediate. The element size and shift
     /// amount are encoded in tszh:tszl:imm3.
     pub(crate) fn exec_sve_shift_imm_unpred(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
@@ -193,8 +189,6 @@ impl AArch64Cpu {
         self.v[zd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute SVE predicated shift by vector (destructive): Zdn = shift(Zdn,
     /// Zm) per active element. opc=bits[18:16]: 000=ASR, 001=LSR, 011=LSL. The
@@ -258,8 +252,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SVE predicated shift by wide elements. Element sizes B/H/S use
     /// the 64-bit Zm lane that covers the destination element as the shift
     /// amount; D elements are unallocated.
@@ -316,8 +308,6 @@ impl AArch64Cpu {
         self.v[zd] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute SVE unpredicated shift by wide elements. Element sizes B/H/S use
     /// the 64-bit Zm lane that covers the source element as the shift amount; D

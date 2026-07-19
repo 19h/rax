@@ -23,8 +23,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
-
     /// Execute SVE integer unpredicated operations.
     pub(crate) fn exec_sve_int_unpred(
         &mut self,
@@ -62,8 +60,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
-
     /// Execute SVE unpredicated bitwise logical (AND/ORR/EOR/BIC), selected by
     /// bits[23:22], over the whole vector (element size is irrelevant).
     pub(crate) fn exec_sve_logical_unpred(
@@ -83,8 +79,6 @@ impl AArch64Cpu {
         };
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Execute SVE FP predicated operations.
     /// FEAT_SVE_B16B16 bf16 data-processing. Returns `Some(result)` if `insn` is
@@ -245,8 +239,6 @@ impl AArch64Cpu {
         }
         None
     }
-
-
 
     /// Execute SVE FCVT (predicated FP precision conversion between fp16/fp32/
     /// fp64). The per-element container size is the larger of the source and

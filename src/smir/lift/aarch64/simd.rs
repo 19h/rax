@@ -17,7 +17,6 @@ use crate::smir::ir::{
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader};
 
 impl Aarch64Lifter {
-
     /// Emit a vector per-lane unary op (advanced SIMD two-register misc) as an
     /// `OpKind::VUnary`. When `byte_wise` the element is forced to I8 (CNT/NOT/
     /// RBIT operate per byte); otherwise the element width comes from
@@ -86,7 +85,6 @@ impl Aarch64Lifter {
         Ok(())
     }
 
-
     /// Emit a vector across-lanes reduction (advanced SIMD across lanes) as an
     /// `OpKind::VReduce`. Operand 0 is the scalar destination, operand 1 the
     /// vector source; the source element width comes from size = bits[23:22]
@@ -141,7 +139,6 @@ impl Aarch64Lifter {
         Ok(())
     }
 
-
     /// Emit a vector two-source permute (ZIP/UZP/TRN) as an `OpKind::VPermute2`.
     /// Three vector operands; element width from size = bits[23:22], lane count
     /// from Q.
@@ -189,7 +186,6 @@ impl Aarch64Lifter {
         ));
         Ok(())
     }
-
 
     /// Lift a SIMD/FP register load/store (LDR/STR whose Rt the decoder resolved
     /// to an FP register) into a VLoad/VStore. Only Q (128-bit) and D (64-bit)

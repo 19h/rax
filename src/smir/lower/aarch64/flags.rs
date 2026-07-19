@@ -17,37 +17,31 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 impl Aarch64Lowerer {
-
     #[cfg(target_arch = "aarch64")]
     pub(crate) fn detect_flagm_available() -> bool {
         std::arch::is_aarch64_feature_detected!("flagm")
     }
 
-
     #[cfg(not(target_arch = "aarch64"))]
     pub(crate) fn detect_flagm_available() -> bool {
         true
     }
-
 
     #[cfg(target_arch = "aarch64")]
     pub(crate) fn detect_flagm2_available() -> bool {
         cfg!(target_feature = "flagm2")
     }
 
-
     #[cfg(not(target_arch = "aarch64"))]
     pub(crate) fn detect_flagm2_available() -> bool {
         true
     }
-
 
     #[cfg(test)]
     pub(crate) fn set_flagm_features_for_test(&mut self, flagm: bool, flagm2: bool) {
         self.flagm_available = flagm;
         self.flagm2_available = flagm2;
     }
-
 
     pub(crate) fn emit_cond_select(
         &mut self,
@@ -73,7 +67,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_cond_compare(
         &mut self,
         rn: u8,
@@ -98,13 +91,15 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_flagm(&mut self, op2: u32) {
         self.emit(0xd500_401f | (op2 << 5));
     }
 
-
-    pub(crate) fn constant_sub_nzcv(left: i64, right: i64, width: OpWidth) -> Result<u32, LowerError> {
+    pub(crate) fn constant_sub_nzcv(
+        left: i64,
+        right: i64,
+        width: OpWidth,
+    ) -> Result<u32, LowerError> {
         if !matches!(
             width,
             OpWidth::W8 | OpWidth::W16 | OpWidth::W32 | OpWidth::W64
@@ -126,8 +121,11 @@ impl Aarch64Lowerer {
         Ok((n << 3) | (z << 2) | (c << 1) | v)
     }
 
-
-    pub(crate) fn lower_constant_cmp_nzcv(&mut self, nzcv: u32, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_constant_cmp_nzcv(
+        &mut self,
+        nzcv: u32,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         let emit_width = if width == OpWidth::W64 {
             OpWidth::W64
         } else {
@@ -145,7 +143,6 @@ impl Aarch64Lowerer {
             }
         }
     }
-
 
     pub(crate) fn arm_cond_code(cond: Condition) -> Result<u32, LowerError> {
         match cond {
@@ -170,7 +167,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn inverted_arm_cond_code(cond: Condition) -> Result<u32, LowerError> {
         let code = Self::arm_cond_code(cond)?;
         if code < 14 {
@@ -182,11 +178,9 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn is_nzcv(vreg: VReg) -> bool {
         matches!(vreg, VReg::Arch(ArchReg::Arm(ArmReg::Nzcv)))
     }
-
 
     pub(crate) fn flagm_shl(op: &OpKind, dst: VReg, src: VReg, amount: u32) -> bool {
         matches!(
@@ -204,7 +198,6 @@ impl Aarch64Lowerer {
         )
     }
 
-
     pub(crate) fn flagm_shr(op: &OpKind, dst: VReg, src: VReg, amount: u32) -> bool {
         matches!(
             op,
@@ -220,7 +213,6 @@ impl Aarch64Lowerer {
                 && !flags.updates_any()
         )
     }
-
 
     pub(crate) fn flagm_or_reg(op: &OpKind, dst: VReg, src1: VReg, src2: VReg) -> bool {
         matches!(
@@ -238,7 +230,6 @@ impl Aarch64Lowerer {
         )
     }
 
-
     pub(crate) fn flagm_and_imm(op: &OpKind, dst: VReg, src1: VReg, imm: i64) -> bool {
         matches!(
             op,
@@ -254,7 +245,6 @@ impl Aarch64Lowerer {
                 && !flags.updates_any()
         )
     }
-
 
     pub(crate) fn flagm_and_reg(op: &OpKind, dst: VReg, src1: VReg, src2: VReg) -> bool {
         matches!(
@@ -272,7 +262,6 @@ impl Aarch64Lowerer {
         )
     }
 
-
     pub(crate) fn flagm_andnot_reg(op: &OpKind, dst: VReg, src1: VReg, src2: VReg) -> bool {
         matches!(
             op,
@@ -289,7 +278,6 @@ impl Aarch64Lowerer {
         )
     }
 
-
     pub(crate) fn flagm_mov_to_nzcv(op: &OpKind, src: VReg) -> bool {
         matches!(
             op,
@@ -301,12 +289,15 @@ impl Aarch64Lowerer {
         )
     }
 
-
-    pub(crate) fn emit_or_nzcv_const(&mut self, flags: u8, temp: u8, value: i64) -> Result<(), LowerError> {
+    pub(crate) fn emit_or_nzcv_const(
+        &mut self,
+        flags: u8,
+        temp: u8,
+        value: i64,
+    ) -> Result<(), LowerError> {
         self.emit_mov_imm(temp, value, OpWidth::W32)?;
         self.emit_logic_shifted(flags, flags, temp, 0b01, false, 0, 0, OpWidth::W32)
     }
-
 
     /// Merge exactly the requested architectural NZCV outputs while retaining
     /// every other incoming flag bit verbatim.
@@ -348,8 +339,11 @@ impl Aarch64Lowerer {
         self.emit_sysreg(saved, ArmReg::Nzcv, false)
     }
 
-
-    pub(crate) fn lower_test_condition(&mut self, dst: VReg, cond: Condition) -> Result<(), LowerError> {
+    pub(crate) fn lower_test_condition(
+        &mut self,
+        dst: VReg,
+        cond: Condition,
+    ) -> Result<(), LowerError> {
         if cond == Condition::Always {
             return self.emit_mov_imm(Self::dst_gpr_arm_or_x86(dst)?, 1, OpWidth::W64);
         }
@@ -363,7 +357,6 @@ impl Aarch64Lowerer {
             OpWidth::W64,
         )
     }
-
 
     pub(crate) fn lower_setcc(
         &mut self,
@@ -396,7 +389,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn cond_select_false_transform(
         op: &OpKind,
     ) -> Option<(VReg, VReg, CondSelectFalseOp, OpWidth)> {
@@ -426,8 +418,9 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn cond_compare_op_args(op: &OpKind) -> Option<(VReg, VReg, &SrcOperand, bool, OpWidth)> {
+    pub(crate) fn cond_compare_op_args(
+        op: &OpKind,
+    ) -> Option<(VReg, VReg, &SrcOperand, bool, OpWidth)> {
         match op {
             OpKind::Add {
                 dst,
@@ -446,7 +439,6 @@ impl Aarch64Lowerer {
             _ => None,
         }
     }
-
 
     pub(crate) fn cond_compare_src2(src2: &SrcOperand) -> Result<CondCompareSource, LowerError> {
         match src2 {
@@ -467,7 +459,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn cond_compare_nzcv(nzcv: i64) -> Result<u32, LowerError> {
         if nzcv >= 0 && (nzcv & !0xf000_0000) == 0 {
             Ok(((nzcv as u32) >> 28) & 0xf)
@@ -478,7 +469,6 @@ impl Aarch64Lowerer {
             })
         }
     }
-
 
     pub(crate) fn native_nzcv_mask(set: FlagSet) -> Result<i64, LowerError> {
         if !set.difference(FlagSet::NZCV).is_empty() {
@@ -503,8 +493,11 @@ impl Aarch64Lowerer {
         Ok(mask)
     }
 
-
-    pub(crate) fn lower_with_selected_nzcv<F>(&mut self, set: FlagSet, produce: F) -> Result<(), LowerError>
+    pub(crate) fn lower_with_selected_nzcv<F>(
+        &mut self,
+        set: FlagSet,
+        produce: F,
+    ) -> Result<(), LowerError>
     where
         F: FnOnce(&mut Self) -> Result<(), LowerError>,
     {

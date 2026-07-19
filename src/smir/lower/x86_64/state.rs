@@ -32,7 +32,6 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
-
     pub(crate) fn x86_status_rflags_mask(flags: FlagSet) -> i64 {
         let mut mask = 0i64;
         if flags.contains(FlagSet::CF) {
@@ -56,11 +55,9 @@ impl X86_64Lowerer {
         mask
     }
 
-
     pub(crate) fn x86_state_backed_gpr(v: VReg) -> bool {
         Self::x86_gpr_index(v).is_some_and(|index| index >= 16 || matches!(index, 4 | 5))
     }
-
 
     pub(crate) fn mov_touches_state_backed_gpr(kind: &OpKind) -> bool {
         matches!(
@@ -81,7 +78,6 @@ impl X86_64Lowerer {
             } if Self::x86_state_backed_gpr(*dst)
         )
     }
-
 
     pub(crate) fn alu_touches_state_backed_stack_gpr(kind: &OpKind) -> bool {
         let valid = |dst: VReg, src1: VReg, src2: &SrcOperand, width: OpWidth| {
@@ -128,7 +124,6 @@ impl X86_64Lowerer {
         }
     }
 
-
     pub(crate) fn emit_load_state_ptr_rax(&mut self) {
         // mov rax, [rbp+state_ptr]
         self.code.emit_u8(0x48);
@@ -136,7 +131,6 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x45);
         self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8);
     }
-
 
     pub(crate) fn emit_spill_legacy_gprs_to_state_from_rax(&mut self, saved_rax_stack_off: u8) {
         for enc in [1u8, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] {
@@ -150,7 +144,6 @@ impl X86_64Lowerer {
         self.code.emit_u8(saved_rax_stack_off);
         self.emit_struct_mov(PhysReg::Rax, 1, 0, true);
     }
-
 
     pub(crate) fn emit_store_gpr_slot_from_reg(
         &mut self,
@@ -176,7 +169,6 @@ impl X86_64Lowerer {
         }
         Ok(())
     }
-
 
     pub(crate) fn lower_state_backed_gpr_mov(
         &mut self,
@@ -265,7 +257,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_state_backed_gpr_extend(
         &mut self,
         dst: VReg,
@@ -342,7 +333,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_state_backed_gpr_cmove(
         &mut self,
         dst: VReg,
@@ -405,7 +395,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_state_backed_gpr_setcc(
         &mut self,
         dst: VReg,
@@ -443,7 +432,6 @@ impl X86_64Lowerer {
         self.emit_flag_preserving_stack_pop8();
         Ok(())
     }
-
 
     pub(crate) fn lower_state_backed_gpr_not(
         &mut self,
@@ -489,7 +477,6 @@ impl X86_64Lowerer {
         self.emit_flag_preserving_stack_pop8();
         Ok(())
     }
-
 
     pub(crate) fn lower_state_backed_gpr_neg(
         &mut self,
@@ -545,7 +532,6 @@ impl X86_64Lowerer {
         self.emit_flag_preserving_stack_pop8();
         Ok(())
     }
-
 
     pub(crate) fn lower_state_backed_gpr_inc_dec(
         &mut self,
@@ -608,7 +594,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     /// Merge a native ROL/ROR status image into the incoming image while
     /// restoring the staged result. The active stack layout is native RFLAGS,
     /// result, incoming RFLAGS at offsets 0, 8, and 16 respectively.
@@ -642,7 +627,6 @@ impl X86_64Lowerer {
         }
         self.code.emit_u8(0x9D); // popfq: incoming or merged status image
     }
-
 
     pub(crate) fn lower_state_backed_gpr_rotate(
         &mut self,
@@ -783,7 +767,6 @@ impl X86_64Lowerer {
         self.emit_flag_preserving_stack_pop8();
         Ok(())
     }
-
 
     pub(crate) fn lower_state_backed_gpr_carry_rotate(
         &mut self,
@@ -930,7 +913,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_state_backed_gpr_double_shift_flag_case(&mut self, count: u8) {
         const CF_RESULT: i64 = 1 | (1 << 2) | (1 << 6) | (1 << 7);
         const OF: i64 = 1 << 11;
@@ -944,7 +926,6 @@ impl X86_64Lowerer {
             self.emit_finish_state_backed_gpr_shift_flags(CF_RESULT, OF, None);
         }
     }
-
 
     pub(crate) fn lower_state_backed_gpr_double_shift(
         &mut self,
@@ -1113,7 +1094,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     /// Merge a native SHL/SHR/SAR status image into the incoming image while
     /// restoring the staged result. The active stack layout is native RFLAGS,
     /// result, original operand, incoming RFLAGS at offsets 0, 8, 16, and 24.
@@ -1185,7 +1165,6 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x9D); // popfq: incoming or merged status image
     }
 
-
     pub(crate) fn emit_state_backed_gpr_shift_flag_case(
         &mut self,
         kind: ShiftRegOp,
@@ -1228,7 +1207,6 @@ impl X86_64Lowerer {
             }
         }
     }
-
 
     pub(crate) fn lower_state_backed_gpr_shift(
         &mut self,
@@ -1395,7 +1373,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_state_backed_gpr_count(
         &mut self,
         dst: VReg,
@@ -1497,7 +1474,6 @@ impl X86_64Lowerer {
         self.emit_flag_preserving_stack_pop8();
         Ok(())
     }
-
 
     pub(crate) fn lower_state_backed_gpr_bit_scan(
         &mut self,
@@ -1602,7 +1578,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_state_backed_gpr_bit_test(
         &mut self,
         kind: BitTestRegOp,
@@ -1693,7 +1668,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_state_backed_gpr_crc32c(
         &mut self,
         dst: VReg,
@@ -1763,7 +1737,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_state_backed_gpr_and_not(
         &mut self,
         dst: VReg,
@@ -1823,7 +1796,6 @@ impl X86_64Lowerer {
         self.emit_flag_preserving_stack_pop8();
         Ok(())
     }
-
 
     pub(crate) fn lower_state_backed_gpr_bextr_bzhi(
         &mut self,
@@ -1892,7 +1864,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_state_backed_gpr_bls(
         &mut self,
         dst: VReg,
@@ -1950,7 +1921,6 @@ impl X86_64Lowerer {
         self.emit_flag_preserving_stack_pop8();
         Ok(())
     }
-
 
     pub(crate) fn lower_state_backed_gpr_adx(
         &mut self,
@@ -2017,7 +1987,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_state_backed_gpr_pdep_pext(
         &mut self,
         dst: VReg,
@@ -2083,7 +2052,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_state_backed_gpr_bswap(
         &mut self,
         dst: VReg,
@@ -2146,7 +2114,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_state_backed_gpr_xchg(
         &mut self,
         reg1: VReg,
@@ -2197,7 +2164,6 @@ impl X86_64Lowerer {
         self.emit_flag_preserving_stack_pop8();
         Ok(())
     }
-
 
     pub(crate) fn lower_state_backed_stack_gpr_alu(
         &mut self,
@@ -2300,7 +2266,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     /// Reload all 14 allocatable guest GPRs from the GuestRegs struct via `base`
     /// (RCX, the state pointer); RSP/RBP are not JIT-managed. RCX is reloaded
     /// LAST since it doubles as the base.
@@ -2311,7 +2276,6 @@ impl X86_64Lowerer {
         self.emit_struct_mov(base, 1, 8, false); // RCX last
     }
 
-
     /// Synchronize the guest-RBP word saved by the native prologue from the
     /// state file. This is required after a semantic interpreter callout: the
     /// callee may modify RBP, while hardware RBP must remain the trusted native
@@ -2321,7 +2285,6 @@ impl X86_64Lowerer {
         emitter.emit_mov_rm(PhysReg::Rax, base, 5 * 8, OpWidth::W64);
         emitter.emit_mov_mr(PhysReg::Rbp, 0, PhysReg::Rax, OpWidth::W64);
     }
-
 
     /// Materialize one validated x86 guest effective address into RSI from the
     /// coherent GuestRegs snapshot at RAX. RDI is scratch. Arithmetic is
@@ -2435,7 +2398,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     /// Spill or reload every architectural vector/opmask register through the
     /// vector fields in `GuestRegs`. `base` is the live state pointer (RAX before
     /// a helper call, RCX after it). Full-file preservation is intentional: an
@@ -2523,7 +2485,6 @@ impl X86_64Lowerer {
             );
         }
     }
-
 
     pub(crate) fn x86_vector_state_index(reg: VReg, width: VecWidth) -> Option<u8> {
         match (reg, width) {

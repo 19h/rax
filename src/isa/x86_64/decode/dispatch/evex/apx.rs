@@ -1,14 +1,13 @@
 //! apx.rs
 
-use crate::isa::x86_64::decode::dispatch::evex::*;
 use crate::error::{Error, Result};
+use crate::isa::x86_64::decode::dispatch::evex::*;
 use crate::vm::vcpu::VcpuExit;
 
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::{execute, flags};
 
 impl X86_64Vcpu {
-
     // ============================================================================
     // APX EVEX-MAP4 Instruction Implementations (GPR Instructions)
     // ============================================================================
@@ -108,7 +107,6 @@ impl X86_64Vcpu {
             ))),
         }
     }
-
 
     /// Generic APX ALU operation with NDD and NF support
     pub(crate) fn execute_apx_alu(
@@ -226,7 +224,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     pub(crate) fn apx_ccmp_condition_and_default_flags(ctx: &InsnContext) -> Result<(u8, u8)> {
         let evex = ctx
             .evex
@@ -235,7 +232,6 @@ impl X86_64Vcpu {
         let dfv = evex.vvvv;
         Ok((cc, dfv))
     }
-
 
     pub(crate) fn apply_apx_ccmp_default_flags(&mut self, dfv: u8) {
         let mut flags = self.regs.rflags & !0x8D5; // CF, PF, AF, ZF, SF, OF
@@ -255,9 +251,12 @@ impl X86_64Vcpu {
         self.clear_lazy_flags();
     }
 
-
     /// APX CCMP operation.
-    pub(crate) fn execute_apx_ccmp(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_apx_ccmp(
+        &mut self,
+        ctx: &mut InsnContext,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
         let is_byte = (opcode & 0x01) == 0;
         let op_size = if is_byte {
             1
@@ -304,9 +303,12 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// APX CTEST operation.
-    pub(crate) fn execute_apx_ctest(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_apx_ctest(
+        &mut self,
+        ctx: &mut InsnContext,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
         let is_byte = opcode == 0x84;
         let op_size = if is_byte {
             1
@@ -341,9 +343,12 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// APX SETZUcc operation.
-    pub(crate) fn execute_apx_setzucc(&mut self, ctx: &mut InsnContext, cc: u8) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_apx_setzucc(
+        &mut self,
+        ctx: &mut InsnContext,
+        cc: u8,
+    ) -> Result<Option<VcpuExit>> {
         let (_, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let value = if self.check_condition(cc) { 1 } else { 0 };
 
@@ -357,7 +362,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     pub(crate) fn execute_apx_evex_setcc(
         &mut self,
@@ -377,7 +381,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     pub(crate) fn execute_apx_conditional_map4(
         &mut self,
@@ -402,7 +405,6 @@ impl X86_64Vcpu {
             self.execute_apx_cmovcc(ctx, cc, evex.nd, evex.nf)
         }
     }
-
 
     pub(crate) fn execute_apx_cmovcc(
         &mut self,
@@ -474,9 +476,12 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// APX MOV operation
-    pub(crate) fn execute_apx_mov(&mut self, ctx: &mut InsnContext, opcode: u8) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_apx_mov(
+        &mut self,
+        ctx: &mut InsnContext,
+        opcode: u8,
+    ) -> Result<Option<VcpuExit>> {
         let is_byte = (opcode & 0x01) == 0;
         let op_size = if is_byte {
             1
@@ -515,7 +520,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     pub(crate) fn apx_scalar_op_size(ctx: &InsnContext) -> u8 {
         if ctx.evex_w() {
             8
@@ -525,7 +529,6 @@ impl X86_64Vcpu {
             4
         }
     }
-
 
     /// APX MOVBE reg, reg.
     pub(crate) fn execute_apx_movbe(
@@ -558,7 +561,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// APX NF POPCNT/LZCNT/TZCNT.
     pub(crate) fn execute_apx_count(
@@ -617,7 +619,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// APX LEA operation
     pub(crate) fn execute_apx_lea(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let op_size = Self::apx_scalar_op_size(ctx);
@@ -637,7 +638,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// APX POP2 - pop two registers with one aligned 16-byte stack transfer.
     pub(crate) fn execute_apx_pop2(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
@@ -679,7 +679,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// APX PUSH2 - push two registers with both-or-neither fault visibility.
     pub(crate) fn execute_apx_push2(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let modrm = ctx.consume_u8()?;
@@ -719,7 +718,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// APX IMUL with immediate
     pub(crate) fn execute_apx_imul_imm(
@@ -775,7 +773,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// APX IMUL with register/memory source.
     pub(crate) fn execute_apx_imul(
         &mut self,
@@ -826,7 +823,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// APX SHLD/SHRD double shifts.
     pub(crate) fn execute_apx_double_shift(
@@ -891,7 +887,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// APX group 1 immediate ALU operations.
     pub(crate) fn execute_apx_group1_imm(
@@ -972,7 +967,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// APX shift with immediate
     pub(crate) fn execute_apx_shift_imm(
         &mut self,
@@ -1023,7 +1017,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// APX shift by CL
     pub(crate) fn execute_apx_shift_cl(
@@ -1079,7 +1072,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// APX group 3 NOT/NEG.
     pub(crate) fn execute_apx_group3(
@@ -1149,8 +1141,12 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
-    pub(crate) fn execute_apx_group3_implicit(&mut self, op_type: u8, src: u64, op_size: u8) -> Result<bool> {
+    pub(crate) fn execute_apx_group3_implicit(
+        &mut self,
+        op_type: u8,
+        src: u64,
+        op_size: u8,
+    ) -> Result<bool> {
         match (op_type, op_size) {
             (4, 1) => {
                 let result = (self.regs.rax as u8 as u16) * (src as u8 as u16);
@@ -1355,7 +1351,6 @@ impl X86_64Vcpu {
         Ok(true)
     }
 
-
     /// APX INC/DEC
     pub(crate) fn execute_apx_group_ff(
         &mut self,
@@ -1377,7 +1372,6 @@ impl X86_64Vcpu {
         }
         self.execute_apx_inc_dec(ctx, opcode, ndd, nf)
     }
-
 
     pub(crate) fn execute_apx_inc_dec(
         &mut self,
@@ -1438,7 +1432,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     pub(crate) fn update_apx_double_shift_flags(
         &mut self,

@@ -17,7 +17,6 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 impl Aarch64Lowerer {
-
     pub(crate) fn emit_atomic_load(&mut self, rt: u8, rn: u8, size: u32) {
         self.emit(
             (size << 30)
@@ -32,7 +31,6 @@ impl Aarch64Lowerer {
         );
     }
 
-
     pub(crate) fn emit_atomic_store(&mut self, rt: u8, rn: u8, size: u32) {
         self.emit(
             (size << 30)
@@ -45,7 +43,6 @@ impl Aarch64Lowerer {
                 | (rt as u32),
         );
     }
-
 
     pub(crate) fn emit_atomic_rmw(
         &mut self,
@@ -72,8 +69,15 @@ impl Aarch64Lowerer {
         );
     }
 
-
-    pub(crate) fn emit_cas(&mut self, rs: u8, rt: u8, rn: u8, size: u32, acquire: u32, release: u32) {
+    pub(crate) fn emit_cas(
+        &mut self,
+        rs: u8,
+        rt: u8,
+        rn: u8,
+        size: u32,
+        acquire: u32,
+        release: u32,
+    ) {
         self.emit(
             (size << 30)
                 | (0b001000 << 24)
@@ -87,7 +91,6 @@ impl Aarch64Lowerer {
                 | (rt as u32),
         );
     }
-
 
     pub(crate) fn lower_atomic_addr_to_base(
         &mut self,
@@ -127,7 +130,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn atomic_order_bits(order: MemoryOrder) -> (u32, u32) {
         match order {
             MemoryOrder::Relaxed => (0, 0),
@@ -136,7 +138,6 @@ impl Aarch64Lowerer {
             MemoryOrder::AcqRel | MemoryOrder::SeqCst => (1, 1),
         }
     }
-
 
     pub(crate) fn lower_atomic_load(
         &mut self,
@@ -161,7 +162,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_atomic_store(
         &mut self,
         src: VReg,
@@ -185,8 +185,10 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn atomic_rmw_op_encoding(op: AtomicOp, src: VReg) -> Result<(u32, u32), LowerError> {
+    pub(crate) fn atomic_rmw_op_encoding(
+        op: AtomicOp,
+        src: VReg,
+    ) -> Result<(u32, u32), LowerError> {
         match op {
             AtomicOp::Add => Ok((0, 0b000)),
             AtomicOp::Xor => Ok((0, 0b010)),
@@ -207,7 +209,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn atomic_rmw_source_gpr(op: AtomicOp, src: VReg) -> Result<u8, LowerError> {
         if op == AtomicOp::And && src == VReg::Imm(-1) {
             return Ok(31);
@@ -216,14 +217,12 @@ impl Aarch64Lowerer {
         Self::gpr_arm_or_x86(src)
     }
 
-
     pub(crate) fn atomic_rmw_source_avoid(src: VReg) -> Result<Option<u8>, LowerError> {
         match src {
             VReg::Imm(_) => Ok(None),
             other => Ok(Some(Self::gpr_arm_or_x86(other)?)),
         }
     }
-
 
     pub(crate) fn lower_atomic_rmw(
         &mut self,
@@ -277,7 +276,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&addr_scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_atomic_rmw_exclusive_loop(
         &mut self,
@@ -379,7 +377,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn atomic_cmpxadd_flags_width(width: MemWidth) -> Result<OpWidth, LowerError> {
         match width {
             MemWidth::B1 => Ok(OpWidth::W8),
@@ -392,8 +389,11 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn emit_mask_cas_compare_value(&mut self, reg: u8, width: MemWidth) -> Result<(), LowerError> {
+    pub(crate) fn emit_mask_cas_compare_value(
+        &mut self,
+        reg: u8,
+        width: MemWidth,
+    ) -> Result<(), LowerError> {
         match width {
             MemWidth::B1 => self.emit_bitfield(reg, reg, 0b10, 0, 7, OpWidth::W32),
             MemWidth::B2 => self.emit_bitfield(reg, reg, 0b10, 0, 15, OpWidth::W32),
@@ -403,7 +403,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_cas(
         &mut self,
@@ -524,7 +523,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&addr_scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_atomic_cmpxadd(
         &mut self,

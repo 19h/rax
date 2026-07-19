@@ -32,24 +32,20 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
-
     /// Enable lowering `Terminator::Call` as a runtime call-out (see `call_helpers`).
     pub fn set_call_helpers(&mut self, on: bool) {
         self.call_helpers = on;
     }
 
-
     pub fn set_pcrel_adjust(&mut self, adjust: bool) {
         self.pcrel_adjust = adjust;
     }
-
 
     /// Materialize guest-anchored PC-relative `LEA` results as immediates. This
     /// is the relocation-free form required by independently allocated JIT code.
     pub fn set_guest_pcrel_lea_immediates(&mut self, on: bool) {
         self.guest_pcrel_lea_immediates = on;
     }
-
 
     /// Get a physical register for a VReg, loading from stack if needed
     pub(crate) fn get_reg(&mut self, vreg: VReg) -> Result<PhysReg, LowerError> {
@@ -76,7 +72,6 @@ impl X86_64Lowerer {
         }
     }
 
-
     /// Get the destination register for a VReg
     pub(crate) fn get_dst_reg(&mut self, vreg: VReg) -> Result<PhysReg, LowerError> {
         // Reject non-state-backed guest writes to architectural RSP/RBP: a
@@ -93,7 +88,6 @@ impl X86_64Lowerer {
             }
         }
     }
-
 
     pub(crate) fn ensure_legacy_high_byte_movx_shape(
         op: &'static str,
@@ -118,7 +112,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn ensure_flag_stack_operands_safe(
         op: &'static str,
         regs: &[PhysReg],
@@ -136,7 +129,6 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn pred_store_src_to_vreg(src: &SrcOperand) -> Result<VReg, LowerError> {
         match src {
             SrcOperand::Reg(reg) => Ok(*reg),
@@ -147,11 +139,9 @@ impl X86_64Lowerer {
         }
     }
 
-
     pub(crate) fn is_rsp(&self, vreg: VReg) -> bool {
         matches!(vreg, VReg::Arch(ArchReg::X86(X86Reg::Rsp)))
     }
-
 
     pub(crate) fn sse_prefix(&self, hint: Option<X86OpHint>) -> Option<u8> {
         match hint {
@@ -167,7 +157,6 @@ impl X86_64Lowerer {
         }
     }
 
-
     pub(crate) fn sse_opcode(&self, hint: Option<X86OpHint>, default: u8) -> u8 {
         match hint {
             Some(X86OpHint::SseMov { opcode, .. }) | Some(X86OpHint::SseOp { opcode, .. }) => {
@@ -176,7 +165,6 @@ impl X86_64Lowerer {
             _ => default,
         }
     }
-
 
     pub(crate) fn vec_hint(&self, hint: Option<X86OpHint>) -> Option<VecEncoding> {
         match hint {
@@ -212,17 +200,14 @@ impl X86_64Lowerer {
         }
     }
 
-
     pub(crate) fn vec_requires_vex(&self, regs: &[PhysReg]) -> bool {
         regs.iter()
             .any(|reg| reg.is_ymm() || reg.is_zmm() || reg.vec_ext2() != 0)
     }
 
-
     pub(crate) fn vec_requires_evex(&self, width: VecWidth, regs: &[PhysReg]) -> bool {
         width == VecWidth::V512 || regs.iter().any(|reg| reg.is_zmm() || reg.vec_ext2() != 0)
     }
-
 
     pub(crate) fn vec_move_pp(&self, hint: Option<X86OpHint>) -> X86SsePrefix {
         match hint {
@@ -232,7 +217,6 @@ impl X86_64Lowerer {
         }
     }
 
-
     pub(crate) fn vec_move_prefix(&self, hint: Option<X86OpHint>) -> Option<u8> {
         match self.vec_move_pp(hint) {
             X86SsePrefix::OpSize => Some(0x66),
@@ -241,7 +225,6 @@ impl X86_64Lowerer {
             X86SsePrefix::None => None,
         }
     }
-
 
     pub(crate) fn vec_width_from_lanes(&self, elem: VecElementType, lanes: u8) -> Option<VecWidth> {
         if lanes == VecWidth::V128.lanes(elem) as u8 {
@@ -254,7 +237,6 @@ impl X86_64Lowerer {
             None
         }
     }
-
 
     pub(crate) fn x86_gpr_index(v: VReg) -> Option<u8> {
         match v {

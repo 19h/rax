@@ -22,7 +22,6 @@ use crate::smir::lift::{
 };
 
 impl X86_64Lifter {
-
     /// Lift CALL rel32 (E8)
     pub(crate) fn lift_call_rel32(
         &self,
@@ -53,7 +52,6 @@ impl X86_64Lifter {
             branch_targets: vec![target],
         })
     }
-
 
     /// Lift RET (C3)
     pub(crate) fn lift_ret(
@@ -92,7 +90,6 @@ impl X86_64Lifter {
 
         Ok(LiftResult::ret(ops, prefix.cursor))
     }
-
 
     /// Lift RET imm16 (C2)
     pub(crate) fn lift_ret_imm16(
@@ -140,7 +137,6 @@ impl X86_64Lifter {
         Ok(LiftResult::ret(ops, prefix.cursor + 2))
     }
 
-
     /// Lift JMP rel8 (EB)
     pub(crate) fn lift_jmp_rel8(
         &self,
@@ -163,7 +159,6 @@ impl X86_64Lifter {
 
         Ok(LiftResult::branch(vec![], insn_len, target))
     }
-
 
     /// Lift JMP rel32 (E9)
     pub(crate) fn lift_jmp_rel32(
@@ -188,7 +183,6 @@ impl X86_64Lifter {
         Ok(LiftResult::branch(vec![], insn_len, target))
     }
 
-
     /// Lift APX JMPABS imm64 (REX2 + A1).
     pub(crate) fn lift_jmp_abs(
         &self,
@@ -209,7 +203,6 @@ impl X86_64Lifter {
         ]);
         Ok(LiftResult::branch(vec![], prefix.cursor + 8, target))
     }
-
 
     /// Lift Jcc rel8 (70-7F)
     pub(crate) fn lift_jcc_rel8(
@@ -243,7 +236,6 @@ impl X86_64Lifter {
             next_pc,
         ))
     }
-
 
     /// Lift LOOPNZ/LOOPZ/LOOP/JRCXZ (E0-E3) in 64-bit mode. Counter width
     /// follows address size (RCX normally, ECX under 67h); internal comparisons

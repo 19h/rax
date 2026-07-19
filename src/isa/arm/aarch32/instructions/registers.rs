@@ -1,11 +1,11 @@
 //! Register file and banked-register access
 
-use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::aarch32::cpu::{
     ArmMemory, Armv7Cpu, MemoryError, ProcessorMode, Psr, add_with_carry, compute_n_flag,
     compute_z_flag, condition_passed, expand_imm_c, shift_c, sign_extend,
 };
+use crate::isa::arm::aarch32::instructions::*;
 use crate::isa::arm::aarch32::vfp::{
     Fpscr, NeonSize, RoundingMode, vabs_f16_bits, vabs_f32, vabs_f64, vadd_f16_bits, vadd_f32,
     vadd_f64, vadd_i, vand, vbic, vcls_i, vclz_i, vcmp_f16_bits_with_exception,
@@ -27,8 +27,7 @@ use crate::isa::arm::aarch32::vfp::{
 };
 use crate::isa::arm::decoder::{Condition, DecodeError, DecodedInsn, Mnemonic, ShiftType};
 
-impl <'a, M: ArmMemory> Executor<'a, M> {
-
+impl<'a, M: ArmMemory> Executor<'a, M> {
     /// Set register value, handling PC writes as branches.
     #[inline]
     pub(crate) fn set_reg(&mut self, r: usize, value: u32) -> ExecResult {
@@ -39,7 +38,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             ExecResult::Continue
         }
     }
-
 
     /// Set register value, with S bit handling for PC (exception return).
     pub(crate) fn set_reg_with_s(&mut self, r: usize, value: u32, s_bit: bool) -> ExecResult {
@@ -56,7 +54,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn read_user_bank_reg(&self, r: usize) -> u32 {
         match r {
             8..=12 if ProcessorMode::from_bits(self.cpu.cpsr.mode) == Some(ProcessorMode::Fiq) => {
@@ -69,7 +66,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn write_user_bank_reg(&mut self, r: usize, value: u32) {
         match r {
             8..=12 if ProcessorMode::from_bits(self.cpu.cpsr.mode) == Some(ProcessorMode::Fiq) => {
@@ -81,14 +77,12 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     /// Update APSR flags for logical operations (N, Z, C from shifter).
     pub(crate) fn set_flags_logical(&mut self, result: u32) {
         self.cpu.cpsr.n = compute_n_flag(result);
         self.cpu.cpsr.z = compute_z_flag(result);
         self.cpu.cpsr.c = self.cpu.carry_out;
     }
-
 
     /// Update APSR flags for arithmetic operations (N, Z, C, V).
     pub(crate) fn set_flags_arithmetic(&mut self, result: u32) {
@@ -97,7 +91,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         self.cpu.cpsr.c = self.cpu.carry_out;
         self.cpu.cpsr.v = self.cpu.overflow;
     }
-
 
     pub(crate) fn write_current_spsr_by_mask(&mut self, value: u32, mask: u32) {
         if let Some(spsr) = self.cpu.get_current_spsr_mut() {
@@ -120,7 +113,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             }
         }
     }
-
 
     pub(crate) fn write_cpsr_by_mask(&mut self, value: u32, mask: u32) {
         if (mask & 8) != 0 {
@@ -149,7 +141,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     pub(crate) fn set_banked_sp(&mut self, mode_bits: u8, value: u32) {
         if mode_bits == self.cpu.cpsr.mode {
             self.cpu.regs[13] = value;
@@ -169,7 +160,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     /// Raw bits of the current mode's SPSR (CPSR if none).
     pub(crate) fn current_spsr_bits(&self) -> u32 {
         match ProcessorMode::from_bits(self.cpu.cpsr.mode) {
@@ -183,7 +173,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
     }
 
-
     /// Write CPSR including the mode field (exception-return semantics).
     pub(crate) fn write_cpsr_all(&mut self, value: u32) {
         let new_mode = (value & 0x1F) as u8;
@@ -192,7 +181,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
         }
         self.cpu.cpsr = Psr::from_u32(value);
     }
-
 
     // =========================================================================
     // AArch32 media / DSP (A32 encodings; operation derived from the raw word)
@@ -215,7 +203,6 @@ impl <'a, M: ArmMemory> Executor<'a, M> {
             )
         }
     }
-
 
     /// (Rd, Ra, Rm, Rn) for 4-register DSP multiplies (A32 / T32 layouts).
     pub(crate) fn dsp4_regs(&self, insn: &DecodedInsn) -> (usize, usize, usize, usize) {

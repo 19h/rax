@@ -17,25 +17,21 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 impl Aarch64Lowerer {
-
     #[cfg(target_arch = "aarch64")]
     pub(crate) fn detect_crc_available() -> bool {
         std::arch::is_aarch64_feature_detected!("crc")
     }
-
 
     #[cfg(not(target_arch = "aarch64"))]
     pub(crate) fn detect_crc_available() -> bool {
         true
     }
 
-
     /// Lower a validated AArch32 register-indirect branch as an interworking
     /// dispatcher exit, never as a native branch to the guest-controlled value.
     pub fn set_guest_indirect_exits(&mut self, enable: bool) {
         self.guest_indirect_exits = enable;
     }
-
 
     /// Emit a direct AArch32 BLX dispatcher exit with an explicit destination
     /// execution state. The SMIR target is an architectural PC, not a tagged
@@ -73,7 +69,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     /// Emit an AArch32 BX-style interworking exit. The target is consumed as a
     /// W register, so both PC and state selection follow 32-bit AArch32
     /// semantics even when the host X register has non-zero upper bits.
@@ -88,7 +83,6 @@ impl Aarch64Lowerer {
         };
         self.emit_guest_indirect_exit_reg(target, false)
     }
-
 
     /// Physical-register form used by the BLX-LR snapshot path. When
     /// `restore_target` is set, the caller has already saved `target` on the
@@ -125,7 +119,6 @@ impl Aarch64Lowerer {
         self.emit(0xd65f_03c0); // ret to the identity trampoline
         Ok(())
     }
-
 
     /// Lower a `VLoad` (SIMD/vector load) as a runtime helper call-out. The
     /// helper reads `size` bytes from guest memory and writes them (zero-padded
@@ -168,7 +161,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     /// Lower a `VStore` (SIMD/vector store) as a runtime helper call-out: publish
     /// the source V register into its state-struct slot (`str q`), then call the
     /// helper to store `size` bytes to guest memory.
@@ -207,16 +199,13 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_push_scratch(&mut self, rt: u8) {
         self.emit_ldst_simm(rt, 31, 3, 0b00, -16, 0b11);
     }
 
-
     pub(crate) fn emit_pop_scratch(&mut self, rt: u8) {
         self.emit_ldst_simm(rt, 31, 3, 0b01, 16, 0b01);
     }
-
 
     pub(crate) fn lower_base_offset_to_scratch(
         &mut self,
@@ -242,7 +231,6 @@ impl Aarch64Lowerer {
         self.lower_lea_add_disp(addr, offset)?;
         Ok((scratches, addr))
     }
-
 
     pub(crate) fn lower_base_index_scale_to_scratch(
         &mut self,
@@ -326,7 +314,6 @@ impl Aarch64Lowerer {
         Ok((scratches, addr))
     }
 
-
     pub(crate) fn x86_partial_write_scratch(
         dst: VReg,
         width: OpWidth,
@@ -361,7 +348,6 @@ impl Aarch64Lowerer {
         Ok(Some((dst, Self::scratch_regs(&avoid, 1)?[0])))
     }
 
-
     pub(crate) fn scratch_regs(avoid: &[u8], count: usize) -> Result<Vec<u8>, LowerError> {
         const CANDIDATES: [u8; 31] = [
             16, 17, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 18, 19, 20, 21, 22, 23,
@@ -384,20 +370,17 @@ impl Aarch64Lowerer {
         })
     }
 
-
     pub(crate) fn emit_scratch_save(&mut self, regs: &[u8]) {
         for &reg in regs {
             self.emit_push_scratch(reg);
         }
     }
 
-
     pub(crate) fn emit_scratch_restore(&mut self, regs: &[u8]) {
         for &reg in regs.iter().rev() {
             self.emit_pop_scratch(reg);
         }
     }
-
 
     pub(crate) fn finish_cmove_width(&mut self, dst: u8, width: OpWidth) -> Result<(), LowerError> {
         match width {
@@ -413,8 +396,11 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn finish_select_width(&mut self, dst: VReg, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn finish_select_width(
+        &mut self,
+        dst: VReg,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         match width {
             OpWidth::W8 | OpWidth::W16 => {
                 let imms = if width == OpWidth::W8 { 7 } else { 15 };
@@ -428,12 +414,14 @@ impl Aarch64Lowerer {
         }
     }
 
-
     /// Lower the one BLX shape that cannot be expressed as an ordinary
     /// architectural-register terminator use: `BLX LR` snapshots old LR into
     /// a virtual W32 value before writing the return address. The snapshot is
     /// assigned a spilled host scratch register for the duration of the exit.
-    pub(crate) fn try_lower_guest_blx_lr_exit(&mut self, block: &SmirBlock) -> Result<bool, LowerError> {
+    pub(crate) fn try_lower_guest_blx_lr_exit(
+        &mut self,
+        block: &SmirBlock,
+    ) -> Result<bool, LowerError> {
         let Terminator::Call {
             target: CallTarget::IndirectInterworking(VReg::Virtual(snapshot)),
             args,

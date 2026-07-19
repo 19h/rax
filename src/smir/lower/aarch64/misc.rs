@@ -37,12 +37,10 @@ impl Aarch64Lowerer {
         }
     }
 
-
     #[cfg(test)]
     pub(crate) fn set_crc_available_for_test(&mut self, available: bool) {
         self.crc_available = available;
     }
-
 
     /// Mark frontier blocks as native-exit stubs (block id → resume guest PC).
     /// Call before `lower_function`. See [`Aarch64Lowerer::native_exits`].
@@ -50,18 +48,15 @@ impl Aarch64Lowerer {
         self.native_exits = exits;
     }
 
-
     /// Mark frontier-crossing control-flow edges as native-exit stubs
     /// (`(source, target)` → resume guest PC). Call before `lower_function`.
     pub fn set_native_exit_edges(&mut self, exits: HashMap<(BlockId, BlockId), u64>) {
         self.native_exit_edges = exits;
     }
 
-
     pub(crate) fn emit(&mut self, word: u32) {
         self.code.emit_u32(word);
     }
-
 
     /// Emit a native-exit stub: record `resume_pc` into the guest state struct's
     /// PC field (via the state pointer in `A64_STATE_REG` = x28) and `ret` to
@@ -87,7 +82,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     /// Bytes accessed for a scalar memory width (the helper ABI `size` arg).
     pub(crate) fn mem_width_bytes(width: MemWidth) -> Result<u32, LowerError> {
         match width {
@@ -101,7 +95,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     /// Vector access size in bytes for the helper ABI.
     pub(crate) fn vec_width_bytes(width: VecWidth) -> Result<u32, LowerError> {
         match width {
@@ -113,7 +106,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn sf(width: OpWidth) -> Result<u32, LowerError> {
         match width {
             OpWidth::W32 => Ok(0),
@@ -123,7 +115,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn gpr(vreg: VReg) -> Result<u8, LowerError> {
         match vreg {
@@ -135,7 +126,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn dst_gpr(vreg: VReg) -> Result<u8, LowerError> {
         match vreg {
             VReg::Arch(ArchReg::Arm(ArmReg::X(n))) if n < 31 => Ok(n),
@@ -144,7 +134,6 @@ impl Aarch64Lowerer {
             ))),
         }
     }
-
 
     pub(crate) fn fp_type(precision: FpPrecision) -> Result<u32, LowerError> {
         match precision {
@@ -155,7 +144,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn base_gpr(vreg: VReg) -> Result<u8, LowerError> {
         match vreg {
@@ -172,14 +160,12 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lea_base_gpr(vreg: VReg) -> Result<u8, LowerError> {
         match vreg {
             VReg::Arch(ArchReg::Arm(ArmReg::Sp)) => Ok(31),
             other => Self::gpr_arm_or_x86(other),
         }
     }
-
 
     pub(crate) fn dst_or_zero_for_flags(vreg: VReg, set_flags: bool) -> Result<u8, LowerError> {
         match vreg {
@@ -191,7 +177,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn fp_convert_opcode(to: FpPrecision) -> Result<u32, LowerError> {
         match to {
             FpPrecision::F32 => Ok(0b00100),
@@ -201,7 +186,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn fp_to_int_rmode(round: FpRoundMode) -> Result<u32, LowerError> {
         match round {
@@ -217,7 +201,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     /// Emit `dst = extend(src) << amount` for an add/sub *extended-register*
     /// zero base. In the extended-register and immediate add/sub encodings
@@ -270,7 +253,6 @@ impl Aarch64Lowerer {
         )
     }
 
-
     pub(crate) fn emit_zero_base_extended_flags(
         &mut self,
         src: u8,
@@ -291,7 +273,6 @@ impl Aarch64Lowerer {
         result
     }
 
-
     pub(crate) fn emit_dp2(
         &mut self,
         dst: u8,
@@ -311,7 +292,6 @@ impl Aarch64Lowerer {
         );
         Ok(())
     }
-
 
     pub(crate) fn emit_dp3(
         &mut self,
@@ -337,15 +317,19 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
-    pub(crate) fn emit_dp1(&mut self, dst: u8, rn: u8, opcode: u32, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn emit_dp1(
+        &mut self,
+        dst: u8,
+        rn: u8,
+        opcode: u32,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         let sf = Self::sf(width)?;
         self.emit(
             (sf << 31) | (0b1011010110 << 21) | (opcode << 10) | ((rn as u32) << 5) | (dst as u32),
         );
         Ok(())
     }
-
 
     pub(crate) fn emit_prfm_literal(&mut self, prfop: u8, imm19: i32) {
         self.emit(
@@ -355,7 +339,6 @@ impl Aarch64Lowerer {
                 | u32::from(prfop & 0x1f),
         );
     }
-
 
     pub(crate) fn mem_size(width: MemWidth) -> Result<u32, LowerError> {
         match width {
@@ -369,7 +352,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn pair_width(width: MemWidth) -> Result<(u32, i64), LowerError> {
         match width {
             MemWidth::B4 => Ok((0b00, 4)),
@@ -379,7 +361,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn load_opc(width: MemWidth, sign: SignExtend) -> Result<u32, LowerError> {
         match (sign, width) {
@@ -391,8 +372,9 @@ impl Aarch64Lowerer {
         }
     }
 
-
-    pub(crate) fn mem_access_parts(kind: &OpKind) -> Result<Option<(u8, &Address, u32, u32)>, LowerError> {
+    pub(crate) fn mem_access_parts(
+        kind: &OpKind,
+    ) -> Result<Option<(u8, &Address, u32, u32)>, LowerError> {
         match kind {
             OpKind::Load {
                 dst,
@@ -418,7 +400,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn mem_access_sequence_parts(
         ops: &[SmirOp],
     ) -> Result<Option<(u8, &Address, u32, u32, usize)>, LowerError> {
@@ -438,7 +419,6 @@ impl Aarch64Lowerer {
 
         Ok(None)
     }
-
 
     pub(crate) fn pair_access_parts(
         kind: &OpKind,
@@ -472,7 +452,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn addr_base_offset(addr: &Address) -> Option<(VReg, i64)> {
         match addr {
             Address::Direct(base) => Some((*base, 0)),
@@ -480,7 +459,6 @@ impl Aarch64Lowerer {
             _ => None,
         }
     }
-
 
     pub(crate) fn addr_plus_eq(base_addr: &Address, plus_addr: &Address, delta: i64) -> bool {
         match (
@@ -493,7 +471,6 @@ impl Aarch64Lowerer {
             _ => false,
         }
     }
-
 
     pub(crate) fn src_operand_is_zero(src: &SrcOperand) -> bool {
         match src {
@@ -510,7 +487,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn mem_extend_option(from_width: OpWidth, signed: bool) -> Option<u32> {
         match (from_width, signed) {
             (OpWidth::W32, false) => Some(0b010),
@@ -520,7 +496,6 @@ impl Aarch64Lowerer {
             _ => None,
         }
     }
-
 
     pub(crate) fn mem_extend_parts(kind: &OpKind) -> Option<(VReg, VReg, u32)> {
         match kind {
@@ -540,7 +515,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_vload(
         &mut self,
         dst: VReg,
@@ -550,7 +524,6 @@ impl Aarch64Lowerer {
         let rt = Self::fp_reg(dst)?;
         self.lower_simd_mem_access(rt, addr, width, true)
     }
-
 
     pub(crate) fn lower_vstore(
         &mut self,
@@ -562,13 +535,16 @@ impl Aarch64Lowerer {
         self.lower_simd_mem_access(rt, addr, width, false)
     }
 
-
-    pub(crate) fn lower_vmov(&mut self, dst: VReg, src: VReg, width: VecWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_vmov(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: VecWidth,
+    ) -> Result<(), LowerError> {
         let rd = Self::fp_reg(dst)?;
         let rn = Self::fp_reg(src)?;
         self.emit_simd_logical(rd, rn, rn, width, SimdLogicOp::Or)
     }
-
 
     pub(crate) fn lower_vbit_select(
         &mut self,
@@ -609,7 +585,6 @@ impl Aarch64Lowerer {
         })
     }
 
-
     pub(crate) fn lower_vbroadcast(
         &mut self,
         dst: VReg,
@@ -623,7 +598,6 @@ impl Aarch64Lowerer {
         self.emit_simd_dup_general(rd, rn, q, size);
         Ok(())
     }
-
 
     pub(crate) fn lower_vinsert_lane(
         &mut self,
@@ -643,7 +617,6 @@ impl Aarch64Lowerer {
         self.emit_simd_ins_general(rd, rm, imm5);
         Ok(())
     }
-
 
     pub(crate) fn lower_vextract_lane(
         &mut self,
@@ -669,7 +642,6 @@ impl Aarch64Lowerer {
         }
         Ok(())
     }
-
 
     pub(crate) fn lower_varith(
         &mut self,
@@ -728,7 +700,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_vfloat_arith(
         &mut self,
         dst: VReg,
@@ -760,7 +731,6 @@ impl Aarch64Lowerer {
         self.emit_simd_three_same(rd, rn, rm, q, u, size, opcode);
         Ok(())
     }
-
 
     /// Lower a per-lane vector unary op (FP FABS/FNEG/FSQRT or integer NEG/ABS)
     /// to the native AArch64 "advanced SIMD two-register miscellaneous" form.
@@ -849,7 +819,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     /// Lower a vector across-lanes integer reduction (ADDV/SMAXV/UMAXV/SMINV/
     /// UMINV) to the native AArch64 "advanced SIMD across lanes" form. The
     /// result is a scalar in lane 0 of the destination.
@@ -903,7 +872,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     /// Lower a vector two-source permute (ZIP/UZP/TRN) to the native AArch64
     /// "advanced SIMD permute" form.
     pub(crate) fn lower_vpermute2(
@@ -930,7 +898,6 @@ impl Aarch64Lowerer {
         self.emit_simd_permute(rd, rn, rm, q, size, opcode);
         Ok(())
     }
-
 
     /// Lower a vector table lookup (TBL/TBX) to the native AArch64 "advanced
     /// SIMD table lookup" form: `0 Q 0 01110 00 0 Rm 0 len op 00 Rn Rd`, where
@@ -968,7 +935,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_vfp16_arith(
         &mut self,
         dst: VReg,
@@ -1004,7 +970,6 @@ impl Aarch64Lowerer {
         self.emit_simd_fp16_three_same(rd, rn, rm, q, u, a, opcode);
         Ok(())
     }
-
 
     pub(crate) fn lower_vfma(
         &mut self,
@@ -1051,7 +1016,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_vnavg(
         &mut self,
         dst: VReg,
@@ -1063,7 +1027,6 @@ impl Aarch64Lowerer {
     ) -> Result<(), LowerError> {
         self.lower_vlane_three_same(dst, src1, src2, elem, lanes, signed, 0b00100, false)
     }
-
 
     pub(crate) fn lower_vpopcnt(
         &mut self,
@@ -1079,7 +1042,6 @@ impl Aarch64Lowerer {
         }
         self.lower_vlane_unary_two_reg(dst, src, elem, width.lanes(elem) as u8, 0, 0b00101, false)
     }
-
 
     pub(crate) fn lower_vmpsadbw(
         &mut self,
@@ -1147,7 +1109,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_vminmax(
         &mut self,
         dst: VReg,
@@ -1172,8 +1133,12 @@ impl Aarch64Lowerer {
         self.lower_vfloat_arith(dst, src1, src2, elem, lanes, op)
     }
 
-
-    pub(crate) fn lower_vpermute_mask_indices(&mut self, rd: u8, rm: u8, mask: i64) -> Result<(), LowerError> {
+    pub(crate) fn lower_vpermute_mask_indices(
+        &mut self,
+        rd: u8,
+        rm: u8,
+        mask: i64,
+    ) -> Result<(), LowerError> {
         let (imm_n, immr, imms) = Self::logical_bitmask_imm(mask, OpWidth::W32)?;
         let mut lane_imm5 = Vec::with_capacity(16);
         for lane in 0..16 {
@@ -1192,7 +1157,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_vpermute(
         &mut self,
@@ -1242,7 +1206,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_rep_stos(
         &mut self,
         dst: VReg,
@@ -1278,7 +1241,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn io_width(width: MemWidth) -> Result<(), LowerError> {
         match width {
             MemWidth::B1 | MemWidth::B2 | MemWidth::B4 => Ok(()),
@@ -1288,18 +1250,15 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_io_in(&mut self, dst: VReg, width: MemWidth) -> Result<(), LowerError> {
         Self::io_width(width)?;
         let dst = Self::dst_gpr_arm_or_x86(dst)?;
         self.emit_mov_imm(dst, 0, OpWidth::W64)
     }
 
-
     pub(crate) fn lower_io_out(&mut self, width: MemWidth) -> Result<(), LowerError> {
         Self::io_width(width)
     }
-
 
     pub(crate) fn lower_prefetch(
         &mut self,
@@ -1320,7 +1279,6 @@ impl Aarch64Lowerer {
         self.lower_mem_access(prfop, addr, 3, 0b10)
     }
 
-
     pub(crate) fn exclusive_base_gpr(addr: &Address) -> Result<u8, LowerError> {
         match addr {
             Address::Direct(base) => Self::base_gpr(*base),
@@ -1334,7 +1292,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_ldclr(
         &mut self,
@@ -1354,7 +1311,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn cas_compare_width(width: MemWidth) -> Result<OpWidth, LowerError> {
         match width {
             MemWidth::B1 | MemWidth::B2 | MemWidth::B4 => Ok(OpWidth::W32),
@@ -1364,7 +1320,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     /// Lower SBB while reconciling the source architecture's carry convention.
     ///
@@ -1392,8 +1347,11 @@ impl Aarch64Lowerer {
         self.lower_cfinv()
     }
 
-
-    pub(crate) fn emit_preserve_saved_c_flag(&mut self, saved_flags: u8, flags: u8) -> Result<(), LowerError> {
+    pub(crate) fn emit_preserve_saved_c_flag(
+        &mut self,
+        saved_flags: u8,
+        flags: u8,
+    ) -> Result<(), LowerError> {
         let (imm_n, immr, imms) = Self::logical_bitmask_imm(!(NZCV_C as u32) as i64, OpWidth::W32)?;
         self.emit_sysreg(flags, ArmReg::Nzcv, true)?;
         self.emit_logic_imm(flags, flags, 0b00, imm_n, immr, imms, OpWidth::W32)?;
@@ -1411,7 +1369,6 @@ impl Aarch64Lowerer {
         self.emit_logic_shifted(flags, flags, saved_flags, 0b01, false, 0, 0, OpWidth::W32)?;
         self.emit_sysreg(flags, ArmReg::Nzcv, false)
     }
-
 
     pub(crate) fn lower_set_cf(&mut self, value: bool) -> Result<(), LowerError> {
         let scratches = Self::scratch_regs(&[], 1)?;
@@ -1432,7 +1389,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_cmc_cf(&mut self) -> Result<(), LowerError> {
         let scratches = Self::scratch_regs(&[], 1)?;
         let flags = scratches[0];
@@ -1445,7 +1401,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_cfinv(&mut self) -> Result<(), LowerError> {
         if self.flagm_available {
             self.emit_flagm(0b000);
@@ -1454,7 +1409,6 @@ impl Aarch64Lowerer {
             self.lower_cmc_cf()
         }
     }
-
 
     pub(crate) fn lower_axflag_fallback(&mut self) -> Result<(), LowerError> {
         let scratches = Self::scratch_regs(&[], 3)?;
@@ -1478,7 +1432,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_axflag(&mut self) -> Result<(), LowerError> {
         if self.flagm2_available {
             self.emit_flagm(0b010);
@@ -1487,7 +1440,6 @@ impl Aarch64Lowerer {
             self.lower_axflag_fallback()
         }
     }
-
 
     pub(crate) fn lower_xaflag_fallback(&mut self) -> Result<(), LowerError> {
         let scratches = Self::scratch_regs(&[], 4)?;
@@ -1525,7 +1477,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_xaflag(&mut self) -> Result<(), LowerError> {
         if self.flagm2_available {
             self.emit_flagm(0b001);
@@ -1534,7 +1485,6 @@ impl Aarch64Lowerer {
             self.lower_xaflag_fallback()
         }
     }
-
 
     pub(crate) fn bit_test_emit_width(width: OpWidth) -> Result<OpWidth, LowerError> {
         match width {
@@ -1545,7 +1495,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_inc_dec(
         &mut self,
@@ -1624,8 +1573,12 @@ impl Aarch64Lowerer {
         self.lower_addsub(dst, src, &SrcOperand::Imm(1), decrement, false, width)
     }
 
-
-    pub(crate) fn lower_cwd(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_cwd(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         if let VReg::Imm(value) = src {
             let emit_width = match width {
                 OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => OpWidth::W32,
@@ -1683,8 +1636,12 @@ impl Aarch64Lowerer {
         )
     }
 
-
-    pub(crate) fn lower_xchg(&mut self, reg1: VReg, reg2: VReg, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_xchg(
+        &mut self,
+        reg1: VReg,
+        reg2: VReg,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         let x86_partial = matches!(reg1, VReg::Arch(ArchReg::X86(_)))
             && matches!(reg2, VReg::Arch(ArchReg::X86(_)))
             && matches!(width, OpWidth::W8 | OpWidth::W16);
@@ -1727,8 +1684,12 @@ impl Aarch64Lowerer {
         self.emit_logic_reg_n(reg1, reg1, reg2, 0b10, false, width)
     }
 
-
-    pub(crate) fn lower_not(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_not(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         if matches!(dst, VReg::Arch(ArchReg::X86(_))) && matches!(width, OpWidth::W8 | OpWidth::W16)
         {
             let dst_reg = Self::dst_gpr_arm_or_x86(dst)?;
@@ -1786,7 +1747,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_cmp(
         &mut self,
@@ -1876,7 +1836,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_test(
         &mut self,
@@ -1986,7 +1945,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_constant_test_result(
         &mut self,
         result: u64,
@@ -2009,8 +1967,12 @@ impl Aarch64Lowerer {
         self.emit_sysreg(31, ArmReg::Nzcv, false)
     }
 
-
-    pub(crate) fn lower_ctz(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_ctz(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         if width == OpWidth::W16 {
             if let Some((dst, result)) = Self::x86_partial_write_scratch(dst, width, &[src], &[])? {
                 let scratches = [result];
@@ -2063,8 +2025,12 @@ impl Aarch64Lowerer {
         self.emit_dp1(dst, dst, 0b000100, width)
     }
 
-
-    pub(crate) fn lower_popcnt(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_popcnt(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         if width == OpWidth::W16 {
             if let Some((dst, result)) = Self::x86_partial_write_scratch(dst, width, &[src], &[])? {
                 let scratches = [result];
@@ -2137,7 +2103,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_crc32c(
         &mut self,
         dst: VReg,
@@ -2174,7 +2139,6 @@ impl Aarch64Lowerer {
         self.emit(base | (u32::from(rm) << 16) | (u32::from(rn) << 5) | u32::from(rd));
         Ok(())
     }
-
 
     pub(crate) fn lower_bsf(
         &mut self,
@@ -2254,7 +2218,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&saved_src);
         Ok(())
     }
-
 
     pub(crate) fn lower_bsr(
         &mut self,
@@ -2356,7 +2319,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_bmi_result_flags(
         &mut self,
         dst: u8,
@@ -2393,7 +2355,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_bzhi_result_flags(
         &mut self,
         dst: u8,
@@ -2428,7 +2389,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_bzhi(
         &mut self,
@@ -2581,7 +2541,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_bextr(
         &mut self,
         dst: VReg,
@@ -2666,12 +2625,10 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_keep_nz_flags(&mut self, dst: u8, src: u8) -> Result<(), LowerError> {
         let (imm_n, immr, imms) = Self::logical_bitmask_imm(NZCV_N | NZCV_Z, OpWidth::W32)?;
         self.emit_logic_imm(dst, src, 0b00, imm_n, immr, imms, OpWidth::W32)
     }
-
 
     pub(crate) fn emit_normalize_rcl_rcr_count(
         &mut self,
@@ -2704,8 +2661,12 @@ impl Aarch64Lowerer {
         self.patch_cond_branch_to_current(done, Self::arm_cond_code(Condition::Ult)?)
     }
 
-
-    pub(crate) fn lower_bswap(&mut self, dst: VReg, src: VReg, width: OpWidth) -> Result<(), LowerError> {
+    pub(crate) fn lower_bswap(
+        &mut self,
+        dst: VReg,
+        src: VReg,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
         if let VReg::Imm(value) = src {
             let (result, emit_width) = match width {
                 OpWidth::W8 => (value as u64, OpWidth::W64),
@@ -2753,7 +2714,6 @@ impl Aarch64Lowerer {
             width,
         )
     }
-
 
     pub(crate) fn lower_bfx(
         &mut self,
@@ -2809,7 +2769,6 @@ impl Aarch64Lowerer {
             op_width,
         )
     }
-
 
     pub(crate) fn lower_bfi(
         &mut self,
@@ -2904,7 +2863,6 @@ impl Aarch64Lowerer {
         };
         self.emit_bitfield(dst, src, 0b01, immr, u32::from(width_bits - 1), op_width)
     }
-
 
     pub(crate) fn lower_extend(
         &mut self,
@@ -3002,7 +2960,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_truncate(
         &mut self,
         dst: VReg,
@@ -3049,7 +3006,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn lower_div(
         &mut self,
@@ -3343,7 +3299,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn rev16_masks(width: OpWidth) -> Option<(i64, i64)> {
         match width {
             OpWidth::W32 => Some((0x00ff_00ff, 0xff00_ff00)),
@@ -3354,7 +3309,6 @@ impl Aarch64Lowerer {
             _ => None,
         }
     }
-
 
     pub(crate) fn matches_axflag_ops(ops: &[SmirOp]) -> bool {
         if ops.len() < 8 {
@@ -3392,7 +3346,6 @@ impl Aarch64Lowerer {
             && Self::flagm_or_reg(&ops[6].kind, result, z_bit, c_bit)
             && Self::flagm_mov_to_nzcv(&ops[7].kind, result)
     }
-
 
     pub(crate) fn matches_xaflag_ops(ops: &[SmirOp]) -> bool {
         if ops.len() < 16 {
@@ -3462,7 +3415,6 @@ impl Aarch64Lowerer {
             && Self::flagm_or_reg(&ops[14].kind, result, nz, cv)
             && Self::flagm_mov_to_nzcv(&ops[15].kind, result)
     }
-
 
     pub(crate) fn lower_rol(
         &mut self,
@@ -3581,11 +3533,9 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn is_low_contiguous_mask(mask: u64, width: OpWidth) -> bool {
         mask != 0 && mask != width.mask() && (mask & (mask + 1)) == 0
     }
-
 
     pub(crate) fn contiguous_mask_field(mask: u64) -> Option<(u8, u8)> {
         let lsb = mask.trailing_zeros();
@@ -3596,7 +3546,6 @@ impl Aarch64Lowerer {
             None
         }
     }
-
 
     pub(crate) fn lower_cmove(
         &mut self,
@@ -3658,7 +3607,6 @@ impl Aarch64Lowerer {
         self.emit_cond_select(dst, src, dst, Self::arm_cond_code(cond)?, 0, 0, width)
     }
 
-
     pub(crate) fn lower_select(
         &mut self,
         dst: VReg,
@@ -3711,7 +3659,6 @@ impl Aarch64Lowerer {
             }
         }
     }
-
 
     pub(crate) fn lower_op(&mut self, op: &SmirOp) -> Result<(), LowerError> {
         match &op.kind {
@@ -4765,7 +4712,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_switch(
         &mut self,
         index: VReg,
@@ -4811,7 +4757,6 @@ impl Aarch64Lowerer {
         self.emit_branch_placeholder(default);
         Ok(())
     }
-
 
     pub(crate) fn lower_terminator(
         &mut self,
@@ -4908,7 +4853,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_ops(&mut self, block_ops: &[SmirOp]) -> Result<(), LowerError> {
         let op_end = block_ops.len();
         let mut idx = 0;
@@ -5001,7 +4945,6 @@ impl Aarch64Lowerer {
         }
         Ok(())
     }
-
 
     pub(crate) fn lower_block(&mut self, block: &SmirBlock) -> Result<(), LowerError> {
         self.block_offsets.insert(block.id, self.code.position());

@@ -1,6 +1,5 @@
 //! bitmanip.rs
 
-use crate::smir::lift::riscv::*;
 use crate::isa::riscv::{
     Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode, rvc::decode_rvc as rv_decode_rvc,
 };
@@ -8,11 +7,13 @@ use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, RvVectorState, SmirOp};
 use crate::smir::ir::types::*;
 use crate::smir::ir::{SmirBlock, SmirFunction};
+use crate::smir::lift::riscv::*;
 
-use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter};
+use crate::smir::lift::{
+    ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
+};
 
 impl RiscVLifter {
-
     /// Decode-driven lowering of OP-IMM bit-manipulation (Zbb/Zbs immediates
     /// and the unary count/extend/reverse ops). `Orc.b`/`Brev8` (no direct SMIR
     /// op) and crypto remain gaps.
@@ -299,7 +300,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     /// Decode-driven lowering of OP-space bit-manipulation / conditional ops
     /// (Zba/Zbb/Zbs/Zicond). Uses the verified RISC-V decoder for the precise
@@ -936,7 +936,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     /// Decode-driven lowering of OP-IMM-32 bit-manipulation (slli.uw, roriw,
     /// clzw/cpopw/ctzw).

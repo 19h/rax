@@ -141,7 +141,13 @@ impl<'a> X86Emitter<'a> {
     /// still requires a REX prefix to be PRESENT — otherwise ModRM rm 4-7 selects
     /// the legacy high bytes AH/CH/DH/BH. `emit_rex_for_width` keys that rule on
     /// the single operand width, so it misses it here (it sees the wider dst).
-    pub(crate) fn emit_rex_ext(&mut self, dst_width: OpWidth, src_width: OpWidth, dst: PhysReg, src: PhysReg) {
+    pub(crate) fn emit_rex_ext(
+        &mut self,
+        dst_width: OpWidth,
+        src_width: OpWidth,
+        dst: PhysReg,
+        src: PhysReg,
+    ) {
         if matches!(dst_width, OpWidth::W16) {
             self.code.emit_u8(0x66);
         }
@@ -156,7 +162,12 @@ impl<'a> X86Emitter<'a> {
         }
     }
 
-    pub(crate) fn emit_rex_for_width_mem(&mut self, width: OpWidth, base: PhysReg, index: Option<PhysReg>) {
+    pub(crate) fn emit_rex_for_width_mem(
+        &mut self,
+        width: OpWidth,
+        base: PhysReg,
+        index: Option<PhysReg>,
+    ) {
         let needs_rex = base.is_extended() || index.map_or(false, |reg| reg.is_extended());
         match width {
             OpWidth::W64 => self.emit_rex(true, PhysReg::Rax, index, base),
@@ -232,7 +243,12 @@ impl<'a> X86Emitter<'a> {
         }
     }
 
-    pub(crate) fn emit_rex_for_xmm_mem(&mut self, reg: PhysReg, base: PhysReg, index: Option<PhysReg>) {
+    pub(crate) fn emit_rex_for_xmm_mem(
+        &mut self,
+        reg: PhysReg,
+        base: PhysReg,
+        index: Option<PhysReg>,
+    ) {
         let needs_rex =
             reg.is_extended() || base.is_extended() || index.map_or(false, |r| r.is_extended());
         if needs_rex {
@@ -1334,7 +1350,13 @@ impl<'a> X86Emitter<'a> {
     /// Emit a legacy MOVD/MOVQ register transfer. ModR/M.reg always names the
     /// XMM operand and ModR/M.rm always names the GPR operand, independently
     /// of the transfer direction selected by opcode 6E or 7E.
-    pub(crate) fn emit_sse_movd_q_rr(&mut self, opcode: u8, xmm: PhysReg, gpr: PhysReg, width: OpWidth) {
+    pub(crate) fn emit_sse_movd_q_rr(
+        &mut self,
+        opcode: u8,
+        xmm: PhysReg,
+        gpr: PhysReg,
+        width: OpWidth,
+    ) {
         self.code.emit_u8(0x66);
         let w = width == OpWidth::W64;
         if w || xmm.is_extended() || gpr.is_extended() {
@@ -1348,7 +1370,13 @@ impl<'a> X86Emitter<'a> {
     /// Emit a prefix-free legacy MMX MOVD/MOVQ register transfer. ModR/M.reg
     /// names the three-bit MM register and ModR/M.rm names the GPR; REX.R is
     /// therefore never used, while REX.B and REX.W select the GPR and width.
-    pub(crate) fn emit_mmx_movd_q_rr(&mut self, opcode: u8, mm: PhysReg, gpr: PhysReg, width: OpWidth) {
+    pub(crate) fn emit_mmx_movd_q_rr(
+        &mut self,
+        opcode: u8,
+        mm: PhysReg,
+        gpr: PhysReg,
+        width: OpWidth,
+    ) {
         let w = width == OpWidth::W64;
         if w || gpr.is_extended() {
             self.emit_rex(w, mm, None, gpr);
@@ -2038,7 +2066,13 @@ impl<'a> X86Emitter<'a> {
         }
     }
 
-    pub(crate) fn emit_alu_mi_pcrel(&mut self, digit: u8, disp: i32, imm: i64, width: OpWidth) -> usize {
+    pub(crate) fn emit_alu_mi_pcrel(
+        &mut self,
+        digit: u8,
+        disp: i32,
+        imm: i64,
+        width: OpWidth,
+    ) -> usize {
         self.emit_rex_for_width_mem(width, PhysReg::Rbp, None);
         let reg = Self::digit_reg(digit);
         let use_imm8 = width != OpWidth::W8 && imm >= -128 && imm <= 127;
@@ -3554,7 +3588,13 @@ impl<'a> X86Emitter<'a> {
     }
 
     /// CRC32 r32/r64, [base + disp] (SSE4.2).
-    pub(crate) fn emit_crc32_rm(&mut self, dst: PhysReg, base: PhysReg, disp: i32, data_width: OpWidth) {
+    pub(crate) fn emit_crc32_rm(
+        &mut self,
+        dst: PhysReg,
+        base: PhysReg,
+        disp: i32,
+        data_width: OpWidth,
+    ) {
         self.code.emit_u8(0xF2);
         self.emit_rex_for_width_mem_reg(data_width, dst, base, None);
         self.code.emit_u8(0x0F);

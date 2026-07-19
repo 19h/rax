@@ -22,7 +22,6 @@ use crate::smir::lift::{
 };
 
 impl X86_64Lifter {
-
     pub(crate) fn lift_vex_permute2x128(
         &self,
         prefix: VecPrefix,
@@ -128,7 +127,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
-
     pub(crate) fn lift_vex_vnni_dot_ext(
         &self,
         prefix: VecPrefix,
@@ -215,7 +213,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
     pub(crate) fn lift_vex_maskmovdqu(
         &self,
         prefix: VecPrefix,
@@ -260,7 +257,6 @@ impl X86_64Lifter {
         );
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
 
     pub(crate) fn lift_vex_masked_memory(
         &self,
@@ -427,7 +423,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
     pub(crate) fn lift_vex_andn_0f38(
         &self,
         prefix: VecPrefix,
@@ -498,7 +493,6 @@ impl X86_64Lifter {
             prefix.bytes + 1 + modrm.bytes_consumed,
         ))
     }
-
 
     pub(crate) fn lift_vex_bls_0f38(
         &self,
@@ -576,7 +570,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_vex_bzhi_bextr_0f38(
         &self,
         prefix: VecPrefix,
@@ -652,7 +645,6 @@ impl X86_64Lifter {
             prefix.bytes + 1 + modrm.bytes_consumed,
         ))
     }
-
 
     pub(crate) fn lift_vex_pdep_pext_0f38(
         &self,
@@ -732,7 +724,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_vex_mulx_0f38(
         &self,
         prefix: VecPrefix,
@@ -801,7 +792,6 @@ impl X86_64Lifter {
             prefix.bytes + 1 + modrm.bytes_consumed,
         ))
     }
-
 
     pub(crate) fn lift_vex_bmi2_shift_0f38(
         &self,
@@ -908,7 +898,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_vex_bmi2_rorx_0f3a(
         &self,
         prefix: VecPrefix,
@@ -986,7 +975,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_vex_integer_compare(
         &self,
         prefix: VecPrefix,
@@ -1059,7 +1047,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
     pub(crate) fn lift_vex_integer_unpack(
         &self,
         prefix: VecPrefix,
@@ -1125,7 +1112,6 @@ impl X86_64Lifter {
         );
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
 
     pub(crate) fn lift_vex_integer_pack(
         &self,
@@ -1194,7 +1180,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
     pub(crate) fn lift_vex_pshufb(
         &self,
         prefix: VecPrefix,
@@ -1252,7 +1237,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
 
     pub(crate) fn lift_vex_horizontal_integer(
         &self,
@@ -1322,7 +1306,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
     pub(crate) fn lift_vex_pmaddubsw(
         &self,
         prefix: VecPrefix,
@@ -1391,7 +1374,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
 
     pub(crate) fn lift_vex_psign(
         &self,
@@ -1467,7 +1449,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
     pub(crate) fn lift_vex_pmulhrsw(
         &self,
         prefix: VecPrefix,
@@ -1537,7 +1518,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
     pub(crate) fn lift_vex_pabs(
         &self,
         prefix: VecPrefix,
@@ -1604,7 +1584,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
     pub(crate) fn lift_vex_ptest(
         &self,
         prefix: VecPrefix,
@@ -1661,7 +1640,6 @@ impl X86_64Lifter {
         );
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
 
     pub(crate) fn lift_vex_testp(
         &self,
@@ -1725,7 +1703,6 @@ impl X86_64Lifter {
         );
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
 
     pub(crate) fn lift_vex_phminposuw(
         &self,
@@ -1796,7 +1773,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
     pub(crate) fn lift_vex_sha512(
         &self,
         prefix: VecPrefix,
@@ -1853,7 +1829,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_vex_sm3_message(
         &self,
         prefix: VecPrefix,
@@ -1908,7 +1883,6 @@ impl X86_64Lifter {
         ops.push(SmirOp::new(OpId(ops.len() as u16), pc, kind));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
 
     pub(crate) fn lift_vex_sm3_rounds2(
         &self,
@@ -1975,7 +1949,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
-
     pub(crate) fn lift_vex_sm4(
         &self,
         prefix: VecPrefix,
@@ -2033,7 +2006,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
 
     pub(crate) fn lift_vex_ne_convert(
         &self,
@@ -2126,7 +2098,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
     pub(crate) fn lift_vex_dot_product(
         &self,
         prefix: VecPrefix,
@@ -2201,7 +2172,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
-
 
     pub(crate) fn lift_vex_round(
         &self,
@@ -2314,7 +2284,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
-
     pub(crate) fn lift_vex_immediate_blend(
         &self,
         prefix: VecPrefix,
@@ -2389,7 +2358,6 @@ impl X86_64Lifter {
         );
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
-
 
     pub(crate) fn lift_vex_variable_blend(
         &self,

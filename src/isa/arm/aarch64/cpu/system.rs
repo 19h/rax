@@ -22,7 +22,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
     // =========================================================================
     // Exception Handling
     // =========================================================================
@@ -91,7 +90,6 @@ impl AArch64Cpu {
         Ok(())
     }
 
-
     pub(crate) fn exec_exception_system(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         // Check bits [31:24] to distinguish exception generation from system instructions
         let bits_31_24 = (insn >> 24) & 0xFF;
@@ -151,7 +149,6 @@ impl AArch64Cpu {
 
         Err(ArmError::UndefinedInstruction(insn))
     }
-
 
     /// Execute SYS/SYSL (op0=01): DC/IC/TLBI/AT space. Maintenance operations
     /// are mostly no-ops for this memory model, but VA-based operations still
@@ -233,7 +230,6 @@ impl AArch64Cpu {
         // and translations are walked on every access.
         Ok(CpuExit::Continue)
     }
-
 
     pub(crate) fn exec_system(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let crn = ((insn >> 12) & 0xF) as u8;
@@ -378,7 +374,6 @@ impl AArch64Cpu {
         }
     }
 
-
     /// Take a synchronous exception with the given syndrome (and FAR, for
     /// aborts).
     pub(crate) fn enter_sync_exception(
@@ -397,7 +392,6 @@ impl AArch64Cpu {
         }
         self.take_exception(target, ExceptionType::Synchronous, syndrome)
     }
-
 
     /// Drain a pending SMC invalidation: evict every cached region (and hot
     /// counters + code-page set). Whole-cache eviction is coarse but correct and

@@ -1,14 +1,13 @@
 //! fp.rs
 
-use crate::isa::x86_64::decode::dispatch::evex::*;
 use crate::error::{Error, Result};
+use crate::isa::x86_64::decode::dispatch::evex::*;
 use crate::vm::vcpu::VcpuExit;
 
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::{execute, flags};
 
 impl X86_64Vcpu {
-
     /// EVEX single-precision FP arithmetic (VADDPS, VMULPS, VSUBPS, VDIVPS)
     pub(crate) fn execute_evex_fp_arith_ps<F>(
         &mut self,
@@ -115,7 +114,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// EVEX double-precision FP arithmetic (VADDPD, VMULPD, VSUBPD, VDIVPD)
     pub(crate) fn execute_evex_fp_arith_pd<F>(
@@ -232,7 +230,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// EVEX packed single-precision unary FP operation (VSQRTPS).
     pub(crate) fn execute_evex_fp_unary_ps<F>(
         &mut self,
@@ -298,7 +295,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// EVEX packed double-precision unary FP operation (VSQRTPD).
     pub(crate) fn execute_evex_fp_unary_pd<F>(
@@ -366,7 +362,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// EVEX scalar single-precision FP arithmetic (VADDSS, VMULSS, VSUBSS, VDIVSS).
     pub(crate) fn execute_evex_fp_scalar_arith_f32<F>(
         &mut self,
@@ -425,7 +420,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// EVEX scalar double-precision FP arithmetic (VADDSD, VMULSD, VSUBSD, VDIVSD).
     pub(crate) fn execute_evex_fp_scalar_arith_f64<F>(
@@ -493,7 +487,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// EVEX FP bitwise logical operation (VAND*/VANDN*/VOR*/VXOR*).
     pub(crate) fn execute_evex_fp_bitwise<F>(
@@ -575,7 +568,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// EVEX FP16 (half-precision) packed arithmetic/min/max.
     pub(crate) fn execute_evex_fp16_arith<F>(
         &mut self,
@@ -655,7 +647,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// EVEX FP16 packed unary operation (VSQRTPH).
     pub(crate) fn execute_evex_fp16_unary<F>(
         &mut self,
@@ -725,7 +716,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// EVEX FP16 scalar arithmetic/min/max/sqrt.
     pub(crate) fn execute_evex_fp16_scalar_arith<F>(

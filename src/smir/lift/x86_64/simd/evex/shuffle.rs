@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn append_conflict_masked_memory_source(
         &self,
         addr: Address,
@@ -158,8 +156,6 @@ impl X86_64Lifter {
         loaded
     }
 
-
-
     pub(crate) fn lift_evex_permute_two_table(
         &self,
         prefix: VecPrefix,
@@ -290,8 +286,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_vpconflict(
         &self,
         prefix: VecPrefix,
@@ -396,8 +390,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_evex_vpshufbitqmb(
         &self,
         prefix: VecPrefix,
@@ -488,8 +480,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_ternary_logic(
         &self,
@@ -634,8 +624,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_evex_vector_align(
         &self,
@@ -783,8 +771,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
-
-
     pub(crate) fn lift_evex_multishift_qb(
         &self,
         prefix: VecPrefix,
@@ -892,8 +878,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_chunk_extract_insert(
         &self,
@@ -1139,8 +1123,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
-
-
     pub(crate) fn lift_evex_shuffle_128_chunks(
         &self,
         prefix: VecPrefix,
@@ -1286,8 +1268,6 @@ impl X86_64Lifter {
         );
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_evex_pshufb(
         &self,
@@ -1461,8 +1441,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_mask_blend(
         &self,

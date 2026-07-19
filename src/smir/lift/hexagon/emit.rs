@@ -25,7 +25,6 @@ use crate::isa::hexagon::decode::{
 use crate::isa::hexagon::opcode::{DecodedOp, Opcode, decode_word};
 
 impl HexagonLifter {
-
     pub(crate) fn emit_creg_value_write(
         &self,
         ops: &mut Vec<SmirOp>,
@@ -65,7 +64,6 @@ impl HexagonLifter {
         ));
         *op_id += 1;
     }
-
 
     /// Emit `out = brev(src)` (`fbrev`/`fEA_BREVR`): reverse the LOW 16 bits of
     /// `src`, keeping the upper 16 bits intact. Matches `hex_brev` in cpu.rs.
@@ -126,7 +124,6 @@ impl HexagonLifter {
         out
     }
 
-
     /// Combine a Hexagon register PAIR (`R{even}:R{even+1}`) into a fresh 64-bit
     /// VReg: `result = R(even) | (R(even+1) << 32)`. Hexagon GPRs are 32-bit, so
     /// the low half is zero-extended into the W64 value. Returns the temp VReg.
@@ -160,7 +157,6 @@ impl HexagonLifter {
         });
         out
     }
-
 
     /// Emit the `spNloop0` loop-config side effects (after SA0/LC0 are written):
     ///   P3 = 0                              (`new_p[3] = Some(0)` in cpu.rs)
@@ -205,7 +201,6 @@ impl HexagonLifter {
             flags: FlagUpdate::None,
         });
     }
-
 
     /// Emit the circular-buffer post-increment `base = fcirc_add(base, incr, M,
     /// CS)`, writing the result back into the GPR `base` (a `HexagonReg::R`
@@ -467,7 +462,6 @@ impl HexagonLifter {
         });
     }
 
-
     /// Emit `out = read_ireg(M[modsel]) << access_shift` (the `_pcr` increment).
     /// `read_ireg` (`fREAD_IREG`) packs an 11-bit signed value:
     ///   packed = ((M & 0xf0000000) >> 21) | ((M >> 17) & 0x7f)
@@ -566,7 +560,6 @@ impl HexagonLifter {
         out
     }
 
-
     /// Materialize the old effective address for a post-increment load into a
     /// temporary so later staged writeback cannot change the memory address.
     pub(crate) fn emit_postinc_load_ea(
@@ -602,7 +595,6 @@ impl HexagonLifter {
         *op_id += 1;
         Some(Address::Direct(ea))
     }
-
 
     pub(crate) fn emit_postinc_update_value(
         &self,
@@ -694,7 +686,6 @@ impl HexagonLifter {
         }
     }
 
-
     pub(crate) fn emit_commit_postinc_update(
         &self,
         ops: &mut Vec<SmirOp>,
@@ -715,7 +706,6 @@ impl HexagonLifter {
             *op_id += 1;
         }
     }
-
 
     /// Emit the base-register UPDATE for a modifier / circular / bit-reverse
     /// post-increment load or store. `base` is the GPR index; `am` is the
@@ -774,7 +764,6 @@ impl HexagonLifter {
         }
     }
 
-
     /// Emit a fresh vreg holding the BRANCH TRUTH for a predicate condition: the
     /// low bit of `P{pred}` (when `sense`) or its logical inverse (when not).
     /// Used by the conditional branch/jumpr/call lifts so the
@@ -822,7 +811,6 @@ impl HexagonLifter {
         cond_vreg
     }
 
-
     /// Expand a 0/1 truth vreg to a FULL predicate byte (`f8BITSOF`: 0x00/0xff)
     /// and write it into predicate register `P{pred}`. This matches the Hexagon
     /// scalar-compare predicate byte (all 8 bits set on true). `Neg` turns 0/1
@@ -861,7 +849,6 @@ impl HexagonLifter {
         ));
         *op_id += 1;
     }
-
 
     /// Emit a PREDICATE-GATED post-increment-immediate base update: the base
     /// register `base` advances by `inc` ONLY when `cond` (a 0/1 truth vreg)
@@ -902,7 +889,6 @@ impl HexagonLifter {
             width: OpWidth::W32,
         });
     }
-
 
     /// Emit a fresh vreg holding `src & !0x3` (the hardware target alignment of
     /// indirect branches/calls).

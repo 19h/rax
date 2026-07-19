@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn append_gf2p8_mul_vector(
         &self,
         src1: VReg,
@@ -63,8 +61,6 @@ impl X86_64Lifter {
         result
     }
 
-
-
     pub(crate) fn append_gf2p8_inverse_vector(
         &self,
         src: VReg,
@@ -83,8 +79,6 @@ impl X86_64Lifter {
         }
         result
     }
-
-
 
     pub(crate) fn append_gf2p8_affine_vector(
         &self,

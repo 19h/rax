@@ -39,7 +39,6 @@ pub use simd::*;
 #[cfg(test)]
 mod tests;
 
-
 fn x86_rotate_flags() -> FlagUpdate {
     FlagUpdate::Specific(FlagSet::CF.union(FlagSet::OF))
 }
@@ -140,7 +139,6 @@ impl X86_64Lifter {
         self.max_blocks = max_blocks;
     }
 }
-
 
 // ============================================================================
 // SmirLifter Implementation
@@ -448,4 +446,3 @@ impl SmirLifter for X86_64Lifter {
         Ok(func)
     }
 }
-

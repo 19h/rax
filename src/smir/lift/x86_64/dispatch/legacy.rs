@@ -22,8 +22,6 @@ use crate::smir::lift::{
 };
 
 impl X86_64Lifter {
-
-
     /// Lift the main instruction
     pub(crate) fn lift_insn_inner(
         &self,

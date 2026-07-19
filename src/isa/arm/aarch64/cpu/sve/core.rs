@@ -23,8 +23,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
-
     pub(crate) fn exec_sve(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         // Check if SVE is enabled (CPACR_EL1.ZEN)
         let cpacr = self.sysregs.el1.cpacr;

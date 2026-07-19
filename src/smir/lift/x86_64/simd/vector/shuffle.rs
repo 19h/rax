@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn append_permute_immediate_indices(
         &self,
         width: VecWidth,
@@ -64,8 +62,6 @@ impl X86_64Lifter {
         }
         indices
     }
-
-
 
     pub(crate) fn append_permil_variable_indices(
         &self,
@@ -155,8 +151,6 @@ impl X86_64Lifter {
         }
         indices
     }
-
-
 
     pub(crate) fn append_masked_permute_memory_result(
         &self,
@@ -279,8 +273,6 @@ impl X86_64Lifter {
         }
         result
     }
-
-
 
     pub(crate) fn append_two_table_permute_memory_result(
         &self,
@@ -497,8 +489,6 @@ impl X86_64Lifter {
         result
     }
 
-
-
     pub(crate) fn append_packed_shuffle_imm(
         &self,
         dst: VReg,
@@ -564,8 +554,6 @@ impl X86_64Lifter {
         ));
     }
 
-
-
     pub(crate) fn append_two_source_shuffle_imm(
         &self,
         dst: VReg,
@@ -626,8 +614,6 @@ impl X86_64Lifter {
         ));
     }
 
-
-
     pub(crate) fn append_duplicate_shuffle(
         &self,
         dst: VReg,
@@ -679,8 +665,6 @@ impl X86_64Lifter {
         ));
     }
 
-
-
     /// Blend raw element bits according to the sign bit of each mask element.
     /// Floating-point blend forms deliberately use I32/I64 comparisons so NaN
     /// payloads and non-canonical bit patterns are copied without FP semantics.
@@ -722,8 +706,6 @@ impl X86_64Lifter {
             },
         ));
     }
-
-
 
     /// Blend raw integer lane bits under an immediate mask. Floating-point
     /// forms deliberately use I32/I64 lanes so NaN payloads are copied without
@@ -786,8 +768,6 @@ impl X86_64Lifter {
         ));
     }
 
-
-
     pub(crate) fn append_insert_scalar_lane(
         &self,
         dst: VReg,
@@ -844,8 +824,6 @@ impl X86_64Lifter {
             },
         ));
     }
-
-
 
     pub(crate) fn append_insertps(
         &self,
@@ -915,8 +893,6 @@ impl X86_64Lifter {
         ));
     }
 
-
-
     /// Build PALIGNR's `(high || low)` concatenations and extract one result
     /// from each architectural block (8 bytes for MMX, 16 bytes otherwise).
     pub(crate) fn append_align_right(
@@ -980,8 +956,6 @@ impl X86_64Lifter {
             },
         ));
     }
-
-
 
     pub(crate) fn append_unpack_shuffle(
         &self,
@@ -1063,8 +1037,6 @@ impl X86_64Lifter {
             },
         ));
     }
-
-
 
     pub(crate) fn lift_vec_vzero(
         &self,
@@ -1158,8 +1130,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, prefix.bytes + 1))
     }
-
-
 
     pub(crate) fn lift_vec_permute_variable(
         &self,
@@ -1407,8 +1377,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_vec_permute_immediate(
         &self,
         prefix: VecPrefix,
@@ -1590,8 +1558,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
-
-
     pub(crate) fn lift_vec_packed_shuffle_imm(
         &self,
         prefix: VecPrefix,
@@ -1745,8 +1711,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
-
-
     pub(crate) fn lift_vec_duplicate_move(
         &self,
         prefix: VecPrefix,
@@ -1878,8 +1842,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_two_source_shuffle_imm(
         &self,
@@ -2045,8 +2007,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
 
-
-
     pub(crate) fn lift_vec_extract_0f3a(
         &self,
         prefix: VecPrefix,
@@ -2155,8 +2115,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_vec_insert_0f3a(
         &self,
@@ -2323,8 +2281,6 @@ impl X86_64Lifter {
 
         Ok(LiftResult::fallthrough(ops, imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_vec_palignr(
         &self,

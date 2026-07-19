@@ -17,7 +17,6 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 use super::{CodeBuffer, LowerError, LowerResult, Relocation, SmirLowerer};
 
 impl Aarch64Lowerer {
-
     pub(crate) fn emit_extract(
         &mut self,
         dst: u8,
@@ -39,7 +38,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn mem_shift_bit(amount: &SrcOperand, size: u32) -> Option<u32> {
         if Self::src_imm_eq(amount, 0) {
             Some(0)
@@ -49,7 +47,6 @@ impl Aarch64Lowerer {
             None
         }
     }
-
 
     pub(crate) fn lea_scale_shift(scale: u8) -> Result<u32, LowerError> {
         match scale {
@@ -62,7 +59,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn emit_prepare_rotate_carry_value(
         &mut self,
@@ -90,7 +86,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn emit_finish_rotate_carry_value(
         &mut self,
         dst: u8,
@@ -106,7 +101,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn emit_rotate_carry_step(
         &mut self,
@@ -131,7 +125,6 @@ impl Aarch64Lowerer {
             self.emit_ubfx_bit_to_low(carry, flags_base, 0, OpWidth::W32)
         }
     }
-
 
     pub(crate) fn emit_finalize_rotate_carry_flags(
         &mut self,
@@ -177,7 +170,6 @@ impl Aarch64Lowerer {
 
         self.emit_sysreg(flags_base, ArmReg::Nzcv, false)
     }
-
 
     pub(crate) fn lower_rotate_carry(
         &mut self,
@@ -316,7 +308,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn lower_shift_imm(
         &mut self,
         dst: u8,
@@ -374,7 +365,6 @@ impl Aarch64Lowerer {
             }
         }
     }
-
 
     pub(crate) fn lower_shift_reg(
         &mut self,
@@ -450,14 +440,12 @@ impl Aarch64Lowerer {
         self.emit_dp2(dst, src, amount, opcode2, width)
     }
 
-
     pub(crate) fn src_shift_count_eq(src: &SrcOperand, value: u32) -> bool {
         let Some(imm) = Self::src_imm(src) else {
             return false;
         };
         (imm as u64 & 0x3f) == u64::from(value & 0x3f)
     }
-
 
     pub(crate) fn shift_emit_width(width: OpWidth) -> Result<OpWidth, LowerError> {
         match width {
@@ -468,7 +456,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn emit_prepare_shift_flag_source(
         &mut self,
@@ -486,7 +473,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn emit_init_shift_nz_flags(
         &mut self,
@@ -517,7 +503,6 @@ impl Aarch64Lowerer {
         self.patch_compare_branch_to_current(nonzero, zero_reg, true)
     }
 
-
     pub(crate) fn emit_shift_carry_imm(
         &mut self,
         flags: u8,
@@ -543,7 +528,6 @@ impl Aarch64Lowerer {
         self.emit_or_nzcv_const(flags, temp, NZCV_C)?;
         self.patch_test_branch_to_current(no_carry, original, carry_bit, false)
     }
-
 
     pub(crate) fn emit_shift_carry_reg(
         &mut self,
@@ -584,7 +568,6 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
     pub(crate) fn emit_shift_overflow_imm(
         &mut self,
         flags: u8,
@@ -618,7 +601,6 @@ impl Aarch64Lowerer {
             ShiftOp::Ror | ShiftOp::Rrx => unreachable!(),
         }
     }
-
 
     pub(crate) fn emit_shift_overflow_reg(
         &mut self,
@@ -659,7 +641,6 @@ impl Aarch64Lowerer {
         self.patch_cond_branch_to_current(not_one, Self::arm_cond_code(Condition::Ne)?)
     }
 
-
     pub(crate) fn emit_finalize_shift_flags(
         &mut self,
         result: u8,
@@ -683,7 +664,6 @@ impl Aarch64Lowerer {
         self.emit_sysreg(flags, ArmReg::Nzcv, false)
     }
 
-
     pub(crate) fn rotate_count_mask(width: OpWidth) -> Result<u64, LowerError> {
         match width {
             OpWidth::W8 | OpWidth::W16 | OpWidth::W32 => Ok(0x1f),
@@ -693,7 +673,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     pub(crate) fn emit_rotate_overflow_from_result(
         &mut self,
@@ -719,7 +698,6 @@ impl Aarch64Lowerer {
             self.patch_test_branch_to_current(no_overflow, temp, 0, false)
         }
     }
-
 
     pub(crate) fn emit_finalize_rotate_flags(
         &mut self,
@@ -756,7 +734,6 @@ impl Aarch64Lowerer {
 
         self.emit_sysreg(flags, ArmReg::Nzcv, false)
     }
-
 
     pub(crate) fn lower_rotate_with_flags(
         &mut self,
@@ -854,7 +831,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_shift_with_flags(
         &mut self,
         dst: u8,
@@ -941,7 +917,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     /// Emit the exact AArch32 W32 register-controlled shift result. The caller
     /// has already truncated `count` to the architectural low eight bits.
     pub(crate) fn emit_arm_w32_reg_shift_result(
@@ -988,7 +963,6 @@ impl Aarch64Lowerer {
             }),
         }
     }
-
 
     /// Add the AArch32 register-shifter carry output to an already initialized
     /// NZCV word. Count zero passes through the incoming architectural carry.
@@ -1054,7 +1028,6 @@ impl Aarch64Lowerer {
         self.patch_branch_to_current(carry_done)
     }
 
-
     pub(crate) fn emit_arm_dp_reg_shift_result(
         &mut self,
         kind: ArmDpRegShiftKind,
@@ -1088,7 +1061,6 @@ impl Aarch64Lowerer {
             Kind::Mvn => self.emit_logic_shifted(dst, 31, shifted, 0b01, true, 0, 0, OpWidth::W32),
         }
     }
-
 
     /// Lower AArch32's register-controlled W32 shift contract. Unlike generic
     /// SMIR shifts, the count is `amount[7:0]`; N/Z are always produced, C is
@@ -1179,7 +1151,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     /// Lower the complete A32 data-processing register-shifted-register
     /// opcode space as one alias-safe compound operation.
@@ -1277,7 +1248,6 @@ impl Aarch64Lowerer {
         self.emit_scratch_restore(&scratches);
         Ok(())
     }
-
 
     pub(crate) fn lower_shift(
         &mut self,
@@ -1480,7 +1450,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn bidir_shift_op(kind: u8, negative_count: bool) -> ShiftOp {
         match kind {
             0 => {
@@ -1514,7 +1483,6 @@ impl Aarch64Lowerer {
         }
     }
 
-
     pub(crate) fn lower_bidir_shift_imm(
         &mut self,
         dst: u8,
@@ -1532,7 +1500,6 @@ impl Aarch64Lowerer {
         self.lower_shift_imm(dst, src, magnitude, shift, width)
     }
 
-
     pub(crate) fn lower_bidir_shift_reg_path(
         &mut self,
         dst: u8,
@@ -1545,7 +1512,6 @@ impl Aarch64Lowerer {
         let shift = Self::bidir_shift_op(kind, negative_count);
         self.lower_shift_reg(dst, src, count, shift, width)
     }
-
 
     pub(crate) fn lower_bidir_shift(
         &mut self,
@@ -1640,8 +1606,10 @@ impl Aarch64Lowerer {
         Ok(())
     }
 
-
-    pub(crate) fn carry_rotate_effective_count(amount: i64, width: OpWidth) -> Result<u32, LowerError> {
+    pub(crate) fn carry_rotate_effective_count(
+        amount: i64,
+        width: OpWidth,
+    ) -> Result<u32, LowerError> {
         let bits = width.bits();
         if !matches!(
             width,
@@ -1654,7 +1622,6 @@ impl Aarch64Lowerer {
         let mask = if bits == 64 { 0x3f } else { 0x1f };
         Ok(((amount as u64 & mask) % (u64::from(bits) + 1)) as u32)
     }
-
 
     pub(crate) fn lower_carry_rotate(
         &mut self,
@@ -1697,7 +1664,6 @@ impl Aarch64Lowerer {
         let src = Self::gpr(src)?;
         self.lower_shift_imm(dst, src, 0, ShiftOp::Lsl, width)
     }
-
 
     pub(crate) fn lower_shift_flag_contract(
         &mut self,

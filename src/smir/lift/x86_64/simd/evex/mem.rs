@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     /// Store active EVEX destination elements in architectural lane order.
     /// Inactive lanes perform no memory access; a fault after earlier active
     /// lanes have committed preserves those earlier stores.
@@ -74,8 +72,6 @@ impl X86_64Lifter {
             ));
         }
     }
-
-
 
     /// Expand MASKMOVQ/MASKMOVDQU/VMASKMOVDQU into independently predicated
     /// byte stores. The predicate for byte `n` is bit 7 of mask byte `n`.
@@ -177,8 +173,6 @@ impl X86_64Lifter {
             ));
         }
     }
-
-
 
     pub(crate) fn lift_evex_scatter(
         &self,
@@ -352,8 +346,6 @@ impl X86_64Lifter {
         }
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_evex_mask_broadcast(
         &self,

@@ -1,9 +1,8 @@
 //! misc part 1 tests
 
 use super::*;
-use crate::smir::optimize::*;
 use crate::smir::optimize::tests::*;
-
+use crate::smir::optimize::*;
 
 // ---- even-chunked tests ----
 #[cfg(test)]

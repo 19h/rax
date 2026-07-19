@@ -52,7 +52,6 @@ pub use sysreg::*;
 #[cfg(test)]
 mod tests;
 
-
 const NZCV_N: i64 = 1_i64 << 31;
 const NZCV_Z: i64 = 1_i64 << 30;
 const NZCV_C: i64 = 1_i64 << 29;
@@ -161,7 +160,6 @@ enum BitTestAction {
     Reset,
     Toggle,
 }
-
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum CondSelectFalseOp {
@@ -281,4 +279,3 @@ impl SmirLowerer for Aarch64Lowerer {
         Ok(self.code.as_slice().to_vec())
     }
 }
-

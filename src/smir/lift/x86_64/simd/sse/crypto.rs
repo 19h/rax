@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn lift_sse_gfni(
         &self,
         opcode: u8,
@@ -98,8 +96,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_sse_aes_round(
         &self,
         opcode: u8,
@@ -174,8 +170,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_aes_keygen(
         &self,

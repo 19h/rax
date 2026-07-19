@@ -17,7 +17,6 @@ use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 
 impl SmirInterpreter {
-
     /// Snapshot a legacy packed-SSE architectural destination before an
     /// operation whose generic vector implementation clears inactive words.
     pub(crate) fn legacy_xmm_snapshot(
@@ -34,18 +33,20 @@ impl SmirInterpreter {
         }
     }
 
-
     /// Legacy 128-bit SSE operations preserve the shared YMM/ZMM backing
     /// state above bit 127. Restore those words after the low XMM result has
     /// been computed by a width-bounded generic vector operation.
-    pub(crate) fn restore_legacy_xmm_upper(ctx: &mut SmirContext, dst: VReg, old: Option<VecValue>) {
+    pub(crate) fn restore_legacy_xmm_upper(
+        ctx: &mut SmirContext,
+        dst: VReg,
+        old: Option<VecValue>,
+    ) {
         if let Some(old) = old {
             let mut result = Self::read_vec(ctx, dst);
             result[2..].copy_from_slice(&old[2..]);
             Self::write_vec(ctx, dst, result);
         }
     }
-
 
     pub(crate) fn x86_fxsave_image(ctx: &SmirContext, rex_w: bool) -> [u8; 464] {
         let mut image = [0u8; 464];
@@ -81,7 +82,6 @@ impl SmirInterpreter {
         image
     }
 
-
     pub(crate) fn restore_x86_fxsave_image(ctx: &mut SmirContext, image: &[u8; 512], rex_w: bool) {
         let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
             return;
@@ -114,7 +114,6 @@ impl SmirInterpreter {
     }
 
     const X86_XSAVE_SUPPORTED: u64 = 0x7 | (1 << 5) | (1 << 6) | (1 << 7) | (1 << 19);
-
 
     pub(crate) fn x86_xstate_in_use(x86: &crate::smir::X86RegState) -> u64 {
         let mut result = 0;
@@ -159,7 +158,6 @@ impl SmirInterpreter {
         }
         result
     }
-
 
     pub(crate) fn save_x86_xsave_standard(
         ctx: &SmirContext,
@@ -239,7 +237,6 @@ impl SmirInterpreter {
         Ok(())
     }
 
-
     pub(crate) fn x86_xsave_component_size(component: u8) -> u64 {
         match component {
             2 => 256,
@@ -250,7 +247,6 @@ impl SmirInterpreter {
             _ => unreachable!("unsupported XSAVE component {component}"),
         }
     }
-
 
     pub(crate) fn write_x86_xsave_extended_component(
         memory: &mut dyn SmirMemory,
@@ -299,7 +295,6 @@ impl SmirInterpreter {
         );
         memory.write(addr, &image)
     }
-
 
     pub(crate) fn save_x86_xsave_compacted(
         ctx: &SmirContext,
@@ -352,7 +347,6 @@ impl SmirInterpreter {
         memory.write(addr + 520, &((1u64 << 63) | rfbm).to_le_bytes())?;
         Ok(())
     }
-
 
     pub(crate) fn restore_x86_xsave(
         ctx: &mut SmirContext,
@@ -529,7 +523,6 @@ impl SmirInterpreter {
         Ok(true)
     }
 
-
     pub(crate) fn restore_x86_xsave_extended_component(
         memory: &mut dyn SmirMemory,
         addr: u64,
@@ -563,7 +556,6 @@ impl SmirInterpreter {
             _ => unreachable!("unsupported XSAVE component {component}"),
         }
     }
-
 
     pub(crate) fn restore_x86_xsave_lanes(
         memory: &mut dyn SmirMemory,

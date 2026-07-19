@@ -1,6 +1,5 @@
 //! memory.rs
 
-use crate::smir::lift::riscv::*;
 use crate::isa::riscv::{
     Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode, rvc::decode_rvc as rv_decode_rvc,
 };
@@ -8,11 +7,13 @@ use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, RvVectorState, SmirOp};
 use crate::smir::ir::types::*;
 use crate::smir::ir::{SmirBlock, SmirFunction};
+use crate::smir::lift::riscv::*;
 
-use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter};
+use crate::smir::lift::{
+    ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
+};
 
 impl RiscVLifter {
-
     /// Load instructions (LB, LH, LW, LD, LBU, LHU, LWU)
     pub(crate) fn lift_load(
         &mut self,
@@ -76,7 +77,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     /// Store instructions (SB, SH, SW, SD)
     pub(crate) fn lift_store(
         &mut self,
@@ -134,7 +134,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     /// RV32 Zilsd/Zclsd `ld`: one 64-bit memory access followed by an exact
     /// low/high split into the aligned destination pair. `rd=x0` discards the
@@ -210,7 +209,6 @@ impl RiscVLifter {
         }
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     /// RV32 Zilsd/Zclsd `sd`: concatenate the aligned source pair and perform
     /// one 64-bit memory access. `rs2=x0` stores 64 zero bits without reading
@@ -295,7 +293,6 @@ impl RiscVLifter {
         ));
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     /// Atomic instructions (A extension)
     pub(crate) fn lift_atomic(

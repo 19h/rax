@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     /// Lift legacy LDDQU xmm, m128 (F2 0F F0 /r).
     pub(crate) fn lift_sse_lddqu(
         &self,
@@ -62,8 +60,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_movnt(
         &self,
@@ -139,8 +135,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_movntdqa(
         &self,
         bytes: &[u8],
@@ -199,8 +193,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_maskmovdqu(
         &self,

@@ -3,7 +3,6 @@
 use super::*;
 use crate::smir::optimize::*;
 
-
 // ---- even-chunked tests ----
 #[cfg(test)]
 mod part1;

@@ -27,19 +27,16 @@ impl SmirInterpreter {
         }
     }
 
-
     /// Set the maximum instructions per run
     pub fn set_max_insns(&mut self, max: u64) {
         self.max_insns_per_run = max;
     }
-
 
     /// Add a block to the cache
     pub fn add_block(&mut self, addr: GuestAddr, block: SmirBlock) {
         self.block_addrs.insert(block.id, addr);
         self.block_cache.insert(addr, block);
     }
-
 
     /// Add a function to the cache
     pub fn add_function(&mut self, func: SmirFunction) {
@@ -49,7 +46,6 @@ impl SmirInterpreter {
         }
         self.func_cache.insert(addr, func);
     }
-
 
     /// Run until exit condition
     pub fn run(&mut self, ctx: &mut SmirContext, memory: &mut dyn SmirMemory) -> ExitReason {
@@ -96,7 +92,6 @@ impl SmirInterpreter {
         }
     }
 
-
     /// Execute a single block
     pub fn execute_block(
         &self,
@@ -136,7 +131,6 @@ impl SmirInterpreter {
         self.execute_terminator(ctx, memory, &block.terminator)
     }
 
-
     /// OR the Hexagon USR sticky overflow/saturation bit (USR:0) into the
     /// context's USR register, preserving all other bits. Used by saturating
     /// ops whose `fSATN`/`fSATUN` semantics set `fSET_OVF` when a clamp
@@ -147,7 +141,6 @@ impl SmirInterpreter {
         ctx.write_arch_reg(ArchReg::Hexagon(HexagonReg::Usr), usr | 1);
     }
 
-
     /// Execute a single operation
     pub(crate) fn execute_op(
         &self,
@@ -157,7 +150,6 @@ impl SmirInterpreter {
     ) -> Result<(), MemoryError> {
         self.execute_op_arithmetic(ctx, memory, op)
     }
-
 
     /// Execute block terminator
     pub(crate) fn execute_terminator(

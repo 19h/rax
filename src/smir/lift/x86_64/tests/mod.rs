@@ -1,6 +1,6 @@
 //! tests.rs
 
-    use super::*;
+use super::*;
 
 // ---- split test submodules ----
 #[cfg(test)]
@@ -16,1013 +16,689 @@ mod sse;
 #[cfg(test)]
 mod vex;
 
-    /// Test memory reader for unit tests
-    struct TestMemory {
-        data: Vec<u8>,
-        base: u64,
-    }
+/// Test memory reader for unit tests
+struct TestMemory {
+    data: Vec<u8>,
+    base: u64,
+}
 
-    impl TestMemory {
-        fn new(base: u64, data: Vec<u8>) -> Self {
-            TestMemory { data, base }
+impl TestMemory {
+    fn new(base: u64, data: Vec<u8>) -> Self {
+        TestMemory { data, base }
+    }
+}
+
+impl MemoryReader for TestMemory {
+    fn read(&self, addr: u64, size: usize) -> Result<Vec<u8>, MemoryError> {
+        if addr < self.base {
+            return Err(MemoryError::OutOfBounds { addr });
         }
-    }
-
-    impl MemoryReader for TestMemory {
-        fn read(&self, addr: u64, size: usize) -> Result<Vec<u8>, MemoryError> {
-            if addr < self.base {
-                return Err(MemoryError::OutOfBounds { addr });
-            }
-            let offset = (addr - self.base) as usize;
-            if offset >= self.data.len() {
-                return Err(MemoryError::OutOfBounds { addr });
-            }
-            // Return as many bytes as possible up to size
-            let available = (self.data.len() - offset).min(size);
-            Ok(self.data[offset..offset + available].to_vec())
+        let offset = (addr - self.base) as usize;
+        if offset >= self.data.len() {
+            return Err(MemoryError::OutOfBounds { addr });
         }
+        // Return as many bytes as possible up to size
+        let available = (self.data.len() - offset).min(size);
+        Ok(self.data[offset..offset + available].to_vec())
     }
+}
 
+/// Lift one instruction (a trailing HLT terminates the block) and return its ops.
+fn lift_one(code: &[u8]) -> Result<Vec<SmirOp>, LiftError> {
+    use crate::smir::lift::SmirLifter;
+    let mut bytes = code.to_vec();
+    bytes.push(0xF4); // hlt → block terminator
+    let mem = TestMemory::new(0x1000, bytes);
+    let mut lifter = X86_64Lifter::strict();
+    let mut lctx = LiftContext::new(SourceArch::X86_64);
+    lifter.lift_block(0x1000, &mem, &mut lctx).map(|b| b.ops)
+}
 
-    /// Lift one instruction (a trailing HLT terminates the block) and return its ops.
-    fn lift_one(code: &[u8]) -> Result<Vec<SmirOp>, LiftError> {
-        use crate::smir::lift::SmirLifter;
-        let mut bytes = code.to_vec();
-        bytes.push(0xF4); // hlt → block terminator
-        let mem = TestMemory::new(0x1000, bytes);
-        let mut lifter = X86_64Lifter::strict();
-        let mut lctx = LiftContext::new(SourceArch::X86_64);
-        lifter.lift_block(0x1000, &mem, &mut lctx).map(|b| b.ops)
-    }
+fn x86_gpr(idx: u8) -> VReg {
+    VReg::Arch(ArchReg::X86(X86Reg::gpr(idx)))
+}
 
+fn lift_single(bytes: &[u8]) -> Result<LiftResult, LiftError> {
+    let mut lifter = X86_64Lifter::strict();
+    let mut ctx = LiftContext::new(SourceArch::X86_64);
+    lifter.lift_insn(0x1000, bytes, &mut ctx)
+}
 
-
-
-    fn x86_gpr(idx: u8) -> VReg {
-        VReg::Arch(ArchReg::X86(X86Reg::gpr(idx)))
-    }
-
-    fn lift_single(bytes: &[u8]) -> Result<LiftResult, LiftError> {
-        let mut lifter = X86_64Lifter::strict();
-        let mut ctx = LiftContext::new(SourceArch::X86_64);
-        lifter.lift_insn(0x1000, bytes, &mut ctx)
-    }
-
-
-    fn assert_adx_sequence(
-        result: &LiftResult,
-        start: usize,
-        kind: X86AdxKind,
-        dst: VReg,
-        src1: VReg,
-        src2: VReg,
-        width: OpWidth,
-    ) {
-        let ops = &result.ops[start..];
-        assert_eq!(ops.len(), 1);
-        match &ops[0].kind {
-            OpKind::X86Adx {
-                dst: got_dst,
-                src1: got_src1,
-                src2: got_src2,
-                width: got_width,
-                kind: got_kind,
-                flags,
-            } => {
-                assert_eq!(*got_dst, dst);
-                assert_eq!(*got_src1, src1);
-                assert_eq!(*got_src2, src2);
-                assert_eq!(*got_width, width);
-                assert_eq!(*got_kind, kind);
-                let expected_flag = match kind {
-                    X86AdxKind::Adcx => FlagSet::CF,
-                    X86AdxKind::Adox => FlagSet::OF,
-                };
-                assert_eq!(*flags, FlagUpdate::Specific(expected_flag));
-            }
-            other => panic!("expected one exact X86Adx op, got {other:?}"),
+fn assert_adx_sequence(
+    result: &LiftResult,
+    start: usize,
+    kind: X86AdxKind,
+    dst: VReg,
+    src1: VReg,
+    src2: VReg,
+    width: OpWidth,
+) {
+    let ops = &result.ops[start..];
+    assert_eq!(ops.len(), 1);
+    match &ops[0].kind {
+        OpKind::X86Adx {
+            dst: got_dst,
+            src1: got_src1,
+            src2: got_src2,
+            width: got_width,
+            kind: got_kind,
+            flags,
+        } => {
+            assert_eq!(*got_dst, dst);
+            assert_eq!(*got_src1, src1);
+            assert_eq!(*got_src2, src2);
+            assert_eq!(*got_width, width);
+            assert_eq!(*got_kind, kind);
+            let expected_flag = match kind {
+                X86AdxKind::Adcx => FlagSet::CF,
+                X86AdxKind::Adox => FlagSet::OF,
+            };
+            assert_eq!(*flags, FlagUpdate::Specific(expected_flag));
         }
+        other => panic!("expected one exact X86Adx op, got {other:?}"),
     }
+}
 
-
-
-
-    fn assert_vex_andn_op(
-        ops: &[SmirOp],
-        index: usize,
-        dst: VReg,
-        src: VReg,
-        inverted: VReg,
-        width: OpWidth,
-    ) {
-        match &ops[index].kind {
-            OpKind::AndNot {
-                dst: got_dst,
-                src1,
-                src2: SrcOperand::Reg(got_inverted),
-                width: got_width,
-                flags: FlagUpdate::Specific(flags),
-            } => {
-                assert_eq!(*got_dst, dst);
-                assert_eq!(*src1, src);
-                assert_eq!(*got_inverted, inverted);
-                assert_eq!(*got_width, width);
-                assert_eq!(
-                    *flags,
-                    FlagSet::CF
-                        .union(FlagSet::ZF)
-                        .union(FlagSet::SF)
-                        .union(FlagSet::OF)
-                );
-            }
-            other => panic!("expected VEX ANDN, got {other:?}"),
+fn assert_vex_andn_op(
+    ops: &[SmirOp],
+    index: usize,
+    dst: VReg,
+    src: VReg,
+    inverted: VReg,
+    width: OpWidth,
+) {
+    match &ops[index].kind {
+        OpKind::AndNot {
+            dst: got_dst,
+            src1,
+            src2: SrcOperand::Reg(got_inverted),
+            width: got_width,
+            flags: FlagUpdate::Specific(flags),
+        } => {
+            assert_eq!(*got_dst, dst);
+            assert_eq!(*src1, src);
+            assert_eq!(*got_inverted, inverted);
+            assert_eq!(*got_width, width);
+            assert_eq!(
+                *flags,
+                FlagSet::CF
+                    .union(FlagSet::ZF)
+                    .union(FlagSet::SF)
+                    .union(FlagSet::OF)
+            );
         }
+        other => panic!("expected VEX ANDN, got {other:?}"),
     }
+}
 
+fn assert_vex_bls_op(
+    ops: &[SmirOp],
+    index: usize,
+    dst: VReg,
+    src: VReg,
+    width: OpWidth,
+    kind: X86BlsKind,
+    flags: FlagUpdate,
+) {
+    match &ops[index].kind {
+        OpKind::X86Bls {
+            dst: got_dst,
+            src: got_src,
+            width: got_width,
+            kind: got_kind,
+            flags: got_flags,
+        } => {
+            assert_eq!(*got_dst, dst);
+            assert_eq!(*got_src, src);
+            assert_eq!(*got_width, width);
+            assert_eq!(*got_kind, kind);
+            assert_eq!(*got_flags, flags);
+        }
+        other => panic!("expected VEX BLS op, got {other:?}"),
+    }
+}
 
-
-
-
-    fn assert_vex_bls_op(
-        ops: &[SmirOp],
-        index: usize,
-        dst: VReg,
-        src: VReg,
-        width: OpWidth,
-        kind: X86BlsKind,
-        flags: FlagUpdate,
-    ) {
-        match &ops[index].kind {
-            OpKind::X86Bls {
+fn assert_vex_bzhi_bextr_op(
+    ops: &[SmirOp],
+    index: usize,
+    name: &str,
+    dst: VReg,
+    src: VReg,
+    control: VReg,
+    width: OpWidth,
+) {
+    match (&ops[index].kind, name) {
+        (
+            OpKind::Bzhi {
                 dst: got_dst,
                 src: got_src,
+                index: got_control,
                 width: got_width,
-                kind: got_kind,
                 flags: got_flags,
-            } => {
-                assert_eq!(*got_dst, dst);
-                assert_eq!(*got_src, src);
-                assert_eq!(*got_width, width);
-                assert_eq!(*got_kind, kind);
-                assert_eq!(*got_flags, flags);
-            }
-            other => panic!("expected VEX BLS op, got {other:?}"),
-        }
-    }
-
-
-
-    fn assert_vex_bzhi_bextr_op(
-        ops: &[SmirOp],
-        index: usize,
-        name: &str,
-        dst: VReg,
-        src: VReg,
-        control: VReg,
-        width: OpWidth,
-    ) {
-        match (&ops[index].kind, name) {
-            (
-                OpKind::Bzhi {
-                    dst: got_dst,
-                    src: got_src,
-                    index: got_control,
-                    width: got_width,
-                    flags: got_flags,
-                },
-                "bzhi",
-            )
-            | (
-                OpKind::Bextr {
-                    dst: got_dst,
-                    src: got_src,
-                    control: got_control,
-                    width: got_width,
-                    flags: got_flags,
-                },
-                "bextr",
-            ) => {
-                let expected_flags = match name {
-                    "bzhi" => FlagSet::CF
-                        .union(FlagSet::ZF)
-                        .union(FlagSet::SF)
-                        .union(FlagSet::OF),
-                    "bextr" => FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF),
-                    _ => unreachable!(),
-                };
-                assert_eq!(*got_dst, dst, "{name}");
-                assert_eq!(*got_src, src, "{name}");
-                assert_eq!(*got_control, control, "{name}");
-                assert_eq!(*got_width, width, "{name}");
-                assert_eq!(got_flags.as_set(), expected_flags, "{name}");
-            }
-            (other, _) => panic!("expected VEX {name}, got {other:?}"),
-        }
-    }
-
-
-
-
-    fn assert_vex_pdep_pext_op(
-        ops: &[SmirOp],
-        index: usize,
-        name: &str,
-        dst: VReg,
-        src: VReg,
-        mask: VReg,
-        width: OpWidth,
-    ) {
-        match (&ops[index].kind, name) {
-            (
-                OpKind::Pdep {
-                    dst: got_dst,
-                    src: got_src,
-                    mask: got_mask,
-                    width: got_width,
-                },
-                "pdep",
-            )
-            | (
-                OpKind::Pext {
-                    dst: got_dst,
-                    src: got_src,
-                    mask: got_mask,
-                    width: got_width,
-                },
-                "pext",
-            ) => {
-                assert_eq!(*got_dst, dst, "{name}");
-                assert_eq!(*got_src, src, "{name}");
-                assert_eq!(*got_mask, mask, "{name}");
-                assert_eq!(*got_width, width, "{name}");
-            }
-            (other, _) => panic!("expected VEX {name}, got {other:?}"),
-        }
-    }
-
-
-
-
-    fn assert_vex_mulx_op(
-        ops: &[SmirOp],
-        index: usize,
-        dst_hi: VReg,
-        dst_lo: VReg,
-        src2: VReg,
-        width: OpWidth,
-    ) {
-        assert_eq!(ops[index].x86_hint, Some(X86OpHint::Mulx));
-        match &ops[index].kind {
-            OpKind::MulU {
-                dst_lo: got_dst_lo,
-                dst_hi: Some(got_dst_hi),
-                src1,
-                src2: SrcOperand::Reg(got_src2),
-                width: got_width,
-                flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*got_dst_hi, dst_hi);
-                assert_eq!(*got_dst_lo, dst_lo);
-                assert_eq!(*src1, x86_gpr(2));
-                assert_eq!(*got_src2, src2);
-                assert_eq!(*got_width, width);
-            }
-            other => panic!("expected VEX MULX, got {other:?}"),
-        }
-    }
-
-
-
-
-
-
-    fn assert_vex_bmi2_shift(
-        bytes: &[u8],
-        expected_op: &str,
-        dst: VReg,
-        src: VReg,
-        count: VReg,
-        width: OpWidth,
-    ) {
-        let result = lift_single(bytes).unwrap();
-        assert_eq!(result.bytes_consumed, bytes.len(), "{expected_op}");
-        assert_eq!(result.ops.len(), 2, "{expected_op}");
-        assert_vex_bmi2_shift_ops(&result.ops, 0, expected_op, dst, src, count, width);
-    }
-
-    fn assert_vex_bmi2_shift_ops(
-        ops: &[SmirOp],
-        start: usize,
-        expected_op: &str,
-        dst: VReg,
-        src: VReg,
-        count: VReg,
-        width: OpWidth,
-    ) {
-        let masked_count = match &ops[start].kind {
-            OpKind::And {
-                dst,
-                src1,
-                src2: SrcOperand::Imm(mask),
-                width: got_width,
-                flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*src1, count, "{expected_op}");
-                assert_eq!(*mask, (width.bits() - 1) as i64, "{expected_op}");
-                assert_eq!(*got_width, width, "{expected_op}");
-                *dst
-            }
-            other => panic!("expected VEX BMI2 {expected_op} count mask, got {other:?}"),
-        };
-        match (&ops[start + 1].kind, expected_op) {
-            (
-                OpKind::Sar {
-                    dst: got_dst,
-                    src: got_src,
-                    amount: SrcOperand::Reg(amount),
-                    width: got_width,
-                    flags: FlagUpdate::None,
-                },
-                "sarx",
-            )
-            | (
-                OpKind::Shr {
-                    dst: got_dst,
-                    src: got_src,
-                    amount: SrcOperand::Reg(amount),
-                    width: got_width,
-                    flags: FlagUpdate::None,
-                },
-                "shrx",
-            )
-            | (
-                OpKind::Shl {
-                    dst: got_dst,
-                    src: got_src,
-                    amount: SrcOperand::Reg(amount),
-                    width: got_width,
-                    flags: FlagUpdate::None,
-                },
-                "shlx",
-            ) => {
-                assert_eq!(*got_dst, dst, "{expected_op}");
-                assert_eq!(*got_src, src, "{expected_op}");
-                assert_eq!(*amount, masked_count, "{expected_op}");
-                assert_eq!(*got_width, width, "{expected_op}");
-            }
-            (other, _) => panic!("expected VEX BMI2 {expected_op}, got {other:?}"),
-        }
-    }
-
-
-
-
-    fn assert_vex_rorx_op(
-        ops: &[SmirOp],
-        index: usize,
-        dst: VReg,
-        src: VReg,
-        amount: i64,
-        width: OpWidth,
-    ) {
-        match &ops[index].kind {
-            OpKind::Ror {
+            },
+            "bzhi",
+        )
+        | (
+            OpKind::Bextr {
                 dst: got_dst,
                 src: got_src,
-                amount: SrcOperand::Imm(got_amount),
+                control: got_control,
                 width: got_width,
-                flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*got_dst, dst);
-                assert_eq!(*got_src, src);
-                assert_eq!(*got_amount, amount);
-                assert_eq!(*got_width, width);
-            }
-            other => panic!("expected VEX RORX, got {other:?}"),
+                flags: got_flags,
+            },
+            "bextr",
+        ) => {
+            let expected_flags = match name {
+                "bzhi" => FlagSet::CF
+                    .union(FlagSet::ZF)
+                    .union(FlagSet::SF)
+                    .union(FlagSet::OF),
+                "bextr" => FlagSet::CF.union(FlagSet::ZF).union(FlagSet::OF),
+                _ => unreachable!(),
+            };
+            assert_eq!(*got_dst, dst, "{name}");
+            assert_eq!(*got_src, src, "{name}");
+            assert_eq!(*got_control, control, "{name}");
+            assert_eq!(*got_width, width, "{name}");
+            assert_eq!(got_flags.as_set(), expected_flags, "{name}");
         }
+        (other, _) => panic!("expected VEX {name}, got {other:?}"),
     }
+}
 
-
-
-
-    fn assert_apx_bmi2_shift(
-        bytes: &[u8],
-        expected_op: &str,
-        dst: VReg,
-        src: VReg,
-        count: VReg,
-        width: OpWidth,
-    ) {
-        let result = lift_single(bytes).unwrap();
-        assert_eq!(result.bytes_consumed, bytes.len(), "{expected_op}");
-        assert_eq!(result.ops.len(), 2, "{expected_op}");
-        assert_apx_bmi2_shift_ops(&result.ops, 0, expected_op, dst, src, count, width);
+fn assert_vex_pdep_pext_op(
+    ops: &[SmirOp],
+    index: usize,
+    name: &str,
+    dst: VReg,
+    src: VReg,
+    mask: VReg,
+    width: OpWidth,
+) {
+    match (&ops[index].kind, name) {
+        (
+            OpKind::Pdep {
+                dst: got_dst,
+                src: got_src,
+                mask: got_mask,
+                width: got_width,
+            },
+            "pdep",
+        )
+        | (
+            OpKind::Pext {
+                dst: got_dst,
+                src: got_src,
+                mask: got_mask,
+                width: got_width,
+            },
+            "pext",
+        ) => {
+            assert_eq!(*got_dst, dst, "{name}");
+            assert_eq!(*got_src, src, "{name}");
+            assert_eq!(*got_mask, mask, "{name}");
+            assert_eq!(*got_width, width, "{name}");
+        }
+        (other, _) => panic!("expected VEX {name}, got {other:?}"),
     }
+}
 
-    fn assert_apx_bmi2_shift_ops(
-        ops: &[SmirOp],
-        start: usize,
-        expected_op: &str,
-        dst: VReg,
-        src: VReg,
-        count: VReg,
-        width: OpWidth,
-    ) {
-        let masked_count = match &ops[start].kind {
-            OpKind::And {
-                dst,
-                src1,
-                src2: SrcOperand::Imm(mask),
+fn assert_vex_mulx_op(
+    ops: &[SmirOp],
+    index: usize,
+    dst_hi: VReg,
+    dst_lo: VReg,
+    src2: VReg,
+    width: OpWidth,
+) {
+    assert_eq!(ops[index].x86_hint, Some(X86OpHint::Mulx));
+    match &ops[index].kind {
+        OpKind::MulU {
+            dst_lo: got_dst_lo,
+            dst_hi: Some(got_dst_hi),
+            src1,
+            src2: SrcOperand::Reg(got_src2),
+            width: got_width,
+            flags: FlagUpdate::None,
+        } => {
+            assert_eq!(*got_dst_hi, dst_hi);
+            assert_eq!(*got_dst_lo, dst_lo);
+            assert_eq!(*src1, x86_gpr(2));
+            assert_eq!(*got_src2, src2);
+            assert_eq!(*got_width, width);
+        }
+        other => panic!("expected VEX MULX, got {other:?}"),
+    }
+}
+
+fn assert_vex_bmi2_shift(
+    bytes: &[u8],
+    expected_op: &str,
+    dst: VReg,
+    src: VReg,
+    count: VReg,
+    width: OpWidth,
+) {
+    let result = lift_single(bytes).unwrap();
+    assert_eq!(result.bytes_consumed, bytes.len(), "{expected_op}");
+    assert_eq!(result.ops.len(), 2, "{expected_op}");
+    assert_vex_bmi2_shift_ops(&result.ops, 0, expected_op, dst, src, count, width);
+}
+
+fn assert_vex_bmi2_shift_ops(
+    ops: &[SmirOp],
+    start: usize,
+    expected_op: &str,
+    dst: VReg,
+    src: VReg,
+    count: VReg,
+    width: OpWidth,
+) {
+    let masked_count = match &ops[start].kind {
+        OpKind::And {
+            dst,
+            src1,
+            src2: SrcOperand::Imm(mask),
+            width: got_width,
+            flags: FlagUpdate::None,
+        } => {
+            assert_eq!(*src1, count, "{expected_op}");
+            assert_eq!(*mask, (width.bits() - 1) as i64, "{expected_op}");
+            assert_eq!(*got_width, width, "{expected_op}");
+            *dst
+        }
+        other => panic!("expected VEX BMI2 {expected_op} count mask, got {other:?}"),
+    };
+    match (&ops[start + 1].kind, expected_op) {
+        (
+            OpKind::Sar {
+                dst: got_dst,
+                src: got_src,
+                amount: SrcOperand::Reg(amount),
                 width: got_width,
                 flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*src1, count, "{expected_op}");
-                assert_eq!(*mask, (width.bits() - 1) as i64, "{expected_op}");
-                assert_eq!(*got_width, width, "{expected_op}");
-                *dst
-            }
-            other => panic!("expected APX BMI2 {expected_op} count mask, got {other:?}"),
-        };
-        match (&ops[start + 1].kind, expected_op) {
-            (
-                OpKind::Sar {
-                    dst: got_dst,
-                    src: got_src,
-                    amount: SrcOperand::Reg(amount),
-                    width: got_width,
-                    flags: FlagUpdate::None,
+            },
+            "sarx",
+        )
+        | (
+            OpKind::Shr {
+                dst: got_dst,
+                src: got_src,
+                amount: SrcOperand::Reg(amount),
+                width: got_width,
+                flags: FlagUpdate::None,
+            },
+            "shrx",
+        )
+        | (
+            OpKind::Shl {
+                dst: got_dst,
+                src: got_src,
+                amount: SrcOperand::Reg(amount),
+                width: got_width,
+                flags: FlagUpdate::None,
+            },
+            "shlx",
+        ) => {
+            assert_eq!(*got_dst, dst, "{expected_op}");
+            assert_eq!(*got_src, src, "{expected_op}");
+            assert_eq!(*amount, masked_count, "{expected_op}");
+            assert_eq!(*got_width, width, "{expected_op}");
+        }
+        (other, _) => panic!("expected VEX BMI2 {expected_op}, got {other:?}"),
+    }
+}
+
+fn assert_vex_rorx_op(
+    ops: &[SmirOp],
+    index: usize,
+    dst: VReg,
+    src: VReg,
+    amount: i64,
+    width: OpWidth,
+) {
+    match &ops[index].kind {
+        OpKind::Ror {
+            dst: got_dst,
+            src: got_src,
+            amount: SrcOperand::Imm(got_amount),
+            width: got_width,
+            flags: FlagUpdate::None,
+        } => {
+            assert_eq!(*got_dst, dst);
+            assert_eq!(*got_src, src);
+            assert_eq!(*got_amount, amount);
+            assert_eq!(*got_width, width);
+        }
+        other => panic!("expected VEX RORX, got {other:?}"),
+    }
+}
+
+fn assert_apx_bmi2_shift(
+    bytes: &[u8],
+    expected_op: &str,
+    dst: VReg,
+    src: VReg,
+    count: VReg,
+    width: OpWidth,
+) {
+    let result = lift_single(bytes).unwrap();
+    assert_eq!(result.bytes_consumed, bytes.len(), "{expected_op}");
+    assert_eq!(result.ops.len(), 2, "{expected_op}");
+    assert_apx_bmi2_shift_ops(&result.ops, 0, expected_op, dst, src, count, width);
+}
+
+fn assert_apx_bmi2_shift_ops(
+    ops: &[SmirOp],
+    start: usize,
+    expected_op: &str,
+    dst: VReg,
+    src: VReg,
+    count: VReg,
+    width: OpWidth,
+) {
+    let masked_count = match &ops[start].kind {
+        OpKind::And {
+            dst,
+            src1,
+            src2: SrcOperand::Imm(mask),
+            width: got_width,
+            flags: FlagUpdate::None,
+        } => {
+            assert_eq!(*src1, count, "{expected_op}");
+            assert_eq!(*mask, (width.bits() - 1) as i64, "{expected_op}");
+            assert_eq!(*got_width, width, "{expected_op}");
+            *dst
+        }
+        other => panic!("expected APX BMI2 {expected_op} count mask, got {other:?}"),
+    };
+    match (&ops[start + 1].kind, expected_op) {
+        (
+            OpKind::Sar {
+                dst: got_dst,
+                src: got_src,
+                amount: SrcOperand::Reg(amount),
+                width: got_width,
+                flags: FlagUpdate::None,
+            },
+            "sarx",
+        )
+        | (
+            OpKind::Shr {
+                dst: got_dst,
+                src: got_src,
+                amount: SrcOperand::Reg(amount),
+                width: got_width,
+                flags: FlagUpdate::None,
+            },
+            "shrx",
+        )
+        | (
+            OpKind::Shl {
+                dst: got_dst,
+                src: got_src,
+                amount: SrcOperand::Reg(amount),
+                width: got_width,
+                flags: FlagUpdate::None,
+            },
+            "shlx",
+        ) => {
+            assert_eq!(*got_dst, dst, "{expected_op}");
+            assert_eq!(*got_src, src, "{expected_op}");
+            assert_eq!(*amount, masked_count, "{expected_op}");
+            assert_eq!(*got_width, width, "{expected_op}");
+        }
+        (other, _) => panic!("expected APX BMI2 {expected_op}, got {other:?}"),
+    }
+}
+
+fn assert_apx_bmi2_memory_load(op: &SmirOp, expected: &str) -> VReg {
+    match &op.kind {
+        OpKind::Load {
+            dst,
+            addr:
+                Address::BaseIndexScale {
+                    base: Some(base),
+                    index,
+                    scale: 4,
+                    disp: 0x20,
+                    ..
                 },
-                "sarx",
-            )
-            | (
-                OpKind::Shr {
-                    dst: got_dst,
-                    src: got_src,
-                    amount: SrcOperand::Reg(amount),
-                    width: got_width,
-                    flags: FlagUpdate::None,
-                },
-                "shrx",
-            )
-            | (
-                OpKind::Shl {
-                    dst: got_dst,
-                    src: got_src,
-                    amount: SrcOperand::Reg(amount),
-                    width: got_width,
-                    flags: FlagUpdate::None,
-                },
-                "shlx",
-            ) => {
-                assert_eq!(*got_dst, dst, "{expected_op}");
-                assert_eq!(*got_src, src, "{expected_op}");
-                assert_eq!(*amount, masked_count, "{expected_op}");
-                assert_eq!(*got_width, width, "{expected_op}");
-            }
-            (other, _) => panic!("expected APX BMI2 {expected_op}, got {other:?}"),
+            width: MemWidth::B8,
+            sign: SignExtend::Zero,
+        } => {
+            assert_eq!(*base, x86_gpr(17), "{expected}");
+            assert_eq!(*index, x86_gpr(18), "{expected}");
+            *dst
         }
+        other => panic!("expected APX BMI2 {expected} memory load, got {other:?}"),
     }
+}
 
-    fn assert_apx_bmi2_memory_load(op: &SmirOp, expected: &str) -> VReg {
-        match &op.kind {
-            OpKind::Load {
-                dst,
-                addr:
-                    Address::BaseIndexScale {
-                        base: Some(base),
-                        index,
-                        scale: 4,
-                        disp: 0x20,
-                        ..
-                    },
-                width: MemWidth::B8,
-                sign: SignExtend::Zero,
-            } => {
-                assert_eq!(*base, x86_gpr(17), "{expected}");
-                assert_eq!(*index, x86_gpr(18), "{expected}");
-                *dst
-            }
-            other => panic!("expected APX BMI2 {expected} memory load, got {other:?}"),
+fn assert_apx_conditional_flag_shape(result: &LiftResult, cond: Condition, default_rflags: i64) {
+    assert_apx_conditional_flag_shape_with_true_ops(result, cond, default_rflags, 1);
+}
+
+fn assert_apx_conditional_flag_shape_with_true_ops(
+    result: &LiftResult,
+    cond: Condition,
+    default_rflags: i64,
+    true_op_count: usize,
+) -> VReg {
+    let true_flags_idx = 4 + true_op_count;
+    let select_idx = true_flags_idx + 1;
+    let write_flags_idx = select_idx + 1;
+    assert_eq!(result.ops.len(), write_flags_idx + 1);
+
+    let old_flags = match &result.ops[0].kind {
+        OpKind::ReadFlags { dst } => *dst,
+        other => panic!("expected APX conditional old ReadFlags, got {other:?}"),
+    };
+    let cond_reg = match &result.ops[1].kind {
+        OpKind::SetCC {
+            dst,
+            cond: got_cond,
+            width: OpWidth::W64,
+        } => {
+            assert_eq!(*got_cond, cond);
+            *dst
         }
+        other => panic!("expected APX conditional SetCC, got {other:?}"),
+    };
+    let false_flags = match &result.ops[2].kind {
+        OpKind::And {
+            dst,
+            src1,
+            src2: SrcOperand::Imm(mask),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } => {
+            assert_eq!(*src1, old_flags);
+            assert_eq!(*mask, !APX_CCMP_FLAGS_MASK);
+            *dst
+        }
+        other => panic!("expected APX conditional false-flag mask, got {other:?}"),
+    };
+    match &result.ops[3].kind {
+        OpKind::Or {
+            dst,
+            src1,
+            src2: SrcOperand::Imm(flags),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } => {
+            assert_eq!(*dst, false_flags);
+            assert_eq!(*src1, false_flags);
+            assert_eq!(*flags, default_rflags);
+        }
+        other => panic!("expected APX conditional false-flag defaults, got {other:?}"),
     }
-
-
-
-
-
-
-
-
-
-
-
-    fn assert_apx_conditional_flag_shape(
-        result: &LiftResult,
-        cond: Condition,
-        default_rflags: i64,
-    ) {
-        assert_apx_conditional_flag_shape_with_true_ops(result, cond, default_rflags, 1);
+    let true_flags = match &result.ops[true_flags_idx].kind {
+        OpKind::ReadFlags { dst } => *dst,
+        other => panic!("expected APX conditional true ReadFlags, got {other:?}"),
+    };
+    let selected_flags = match &result.ops[select_idx].kind {
+        OpKind::Select {
+            dst,
+            cond,
+            src_true,
+            src_false,
+            width: OpWidth::W64,
+        } => {
+            assert_eq!(*cond, cond_reg);
+            assert_eq!(*src_true, true_flags);
+            assert_eq!(*src_false, false_flags);
+            *dst
+        }
+        other => panic!("expected APX conditional flag Select, got {other:?}"),
+    };
+    match &result.ops[write_flags_idx].kind {
+        OpKind::WriteFlags { src } => assert_eq!(*src, selected_flags),
+        other => panic!("expected APX conditional WriteFlags, got {other:?}"),
     }
+    cond_reg
+}
 
-    fn assert_apx_conditional_flag_shape_with_true_ops(
-        result: &LiftResult,
-        cond: Condition,
-        default_rflags: i64,
-        true_op_count: usize,
-    ) -> VReg {
-        let true_flags_idx = 4 + true_op_count;
-        let select_idx = true_flags_idx + 1;
-        let write_flags_idx = select_idx + 1;
-        assert_eq!(result.ops.len(), write_flags_idx + 1);
-
-        let old_flags = match &result.ops[0].kind {
-            OpKind::ReadFlags { dst } => *dst,
-            other => panic!("expected APX conditional old ReadFlags, got {other:?}"),
-        };
-        let cond_reg = match &result.ops[1].kind {
-            OpKind::SetCC {
-                dst,
-                cond: got_cond,
-                width: OpWidth::W64,
-            } => {
-                assert_eq!(*got_cond, cond);
-                *dst
-            }
-            other => panic!("expected APX conditional SetCC, got {other:?}"),
-        };
-        let false_flags = match &result.ops[2].kind {
-            OpKind::And {
-                dst,
-                src1,
-                src2: SrcOperand::Imm(mask),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*src1, old_flags);
-                assert_eq!(*mask, !APX_CCMP_FLAGS_MASK);
-                *dst
-            }
-            other => panic!("expected APX conditional false-flag mask, got {other:?}"),
-        };
-        match &result.ops[3].kind {
-            OpKind::Or {
-                dst,
-                src1,
-                src2: SrcOperand::Imm(flags),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            } => {
-                assert_eq!(*dst, false_flags);
-                assert_eq!(*src1, false_flags);
-                assert_eq!(*flags, default_rflags);
-            }
-            other => panic!("expected APX conditional false-flag defaults, got {other:?}"),
+fn assert_apx_conditional_predload(
+    result: &LiftResult,
+    cond_reg: VReg,
+    index: usize,
+    width: MemWidth,
+) -> VReg {
+    match &result.ops[index].kind {
+        OpKind::PredLoad {
+            dst,
+            cond,
+            addr: Address::Direct(base),
+            width: got_width,
+            signed: SignExtend::Zero,
+        } => {
+            assert_eq!(*cond, cond_reg);
+            assert_eq!(*base, x86_gpr(3));
+            assert_eq!(*got_width, width);
+            *dst
         }
-        let true_flags = match &result.ops[true_flags_idx].kind {
-            OpKind::ReadFlags { dst } => *dst,
-            other => panic!("expected APX conditional true ReadFlags, got {other:?}"),
-        };
-        let selected_flags = match &result.ops[select_idx].kind {
-            OpKind::Select {
-                dst,
-                cond,
-                src_true,
-                src_false,
-                width: OpWidth::W64,
-            } => {
-                assert_eq!(*cond, cond_reg);
-                assert_eq!(*src_true, true_flags);
-                assert_eq!(*src_false, false_flags);
-                *dst
-            }
-            other => panic!("expected APX conditional flag Select, got {other:?}"),
-        };
-        match &result.ops[write_flags_idx].kind {
-            OpKind::WriteFlags { src } => assert_eq!(*src, selected_flags),
-            other => panic!("expected APX conditional WriteFlags, got {other:?}"),
-        }
-        cond_reg
+        other => panic!("expected APX conditional PredLoad, got {other:?}"),
     }
+}
 
-    fn assert_apx_conditional_predload(
-        result: &LiftResult,
-        cond_reg: VReg,
-        index: usize,
-        width: MemWidth,
-    ) -> VReg {
-        match &result.ops[index].kind {
-            OpKind::PredLoad {
-                dst,
-                cond,
-                addr: Address::Direct(base),
-                width: got_width,
-                signed: SignExtend::Zero,
-            } => {
-                assert_eq!(*cond, cond_reg);
-                assert_eq!(*base, x86_gpr(3));
-                assert_eq!(*got_width, width);
-                *dst
-            }
-            other => panic!("expected APX conditional PredLoad, got {other:?}"),
+fn assert_rex2_xadd_sib_addr(addr: &Address, name: &str) {
+    match addr {
+        Address::BaseIndexScale {
+            base: Some(base),
+            index,
+            scale: 4,
+            disp: 0x20,
+            disp_size: DispSize::Disp8,
+        } => {
+            assert_eq!(*base, x86_gpr(16), "{name}");
+            assert_eq!(*index, x86_gpr(17), "{name}");
         }
+        other => panic!("expected REX2 {name} SIB address, got {other:?}"),
     }
+}
 
-
-
-
-
-
-
-
-
-    fn assert_rex2_xadd_sib_addr(addr: &Address, name: &str) {
-        match addr {
-            Address::BaseIndexScale {
-                base: Some(base),
-                index,
-                scale: 4,
-                disp: 0x20,
-                disp_size: DispSize::Disp8,
-            } => {
-                assert_eq!(*base, x86_gpr(16), "{name}");
-                assert_eq!(*index, x86_gpr(17), "{name}");
-            }
-            other => panic!("expected REX2 {name} SIB address, got {other:?}"),
+fn assert_xadd_register_ops(
+    result: &LiftResult,
+    name: &str,
+    dst_reg: VReg,
+    src_reg: VReg,
+    width: OpWidth,
+) {
+    assert_eq!(result.ops.len(), 5, "{name}");
+    let saved_src = match &result.ops[0].kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Reg(src),
+            width: got_width,
+        } => {
+            assert_eq!(*src, src_reg, "{name}");
+            assert_eq!(*got_width, width, "{name}");
+            *dst
         }
+        other => panic!("expected {name} source snapshot, got {other:?}"),
+    };
+    let old_dst = match &result.ops[1].kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Reg(src),
+            width: got_width,
+        } => {
+            assert_eq!(*src, dst_reg, "{name}");
+            assert_eq!(*got_width, width, "{name}");
+            *dst
+        }
+        other => panic!("expected {name} destination snapshot, got {other:?}"),
+    };
+    let sum = match &result.ops[2].kind {
+        OpKind::Add {
+            dst,
+            src1,
+            src2: SrcOperand::Reg(src2),
+            width: got_width,
+            flags: FlagUpdate::All,
+        } => {
+            assert_eq!(*src1, old_dst, "{name}");
+            assert_eq!(*src2, saved_src, "{name}");
+            assert_eq!(*got_width, width, "{name}");
+            *dst
+        }
+        other => panic!("expected {name} flagged add, got {other:?}"),
+    };
+    match &result.ops[3].kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Reg(src),
+            width: got_width,
+        } => {
+            assert_eq!(*dst, src_reg, "{name}");
+            assert_eq!(*src, old_dst, "{name}");
+            assert_eq!(*got_width, width, "{name}");
+        }
+        other => panic!("expected {name} source writeback, got {other:?}"),
     }
-
-    fn assert_xadd_register_ops(
-        result: &LiftResult,
-        name: &str,
-        dst_reg: VReg,
-        src_reg: VReg,
-        width: OpWidth,
-    ) {
-        assert_eq!(result.ops.len(), 5, "{name}");
-        let saved_src = match &result.ops[0].kind {
-            OpKind::Mov {
-                dst,
-                src: SrcOperand::Reg(src),
-                width: got_width,
-            } => {
-                assert_eq!(*src, src_reg, "{name}");
-                assert_eq!(*got_width, width, "{name}");
-                *dst
-            }
-            other => panic!("expected {name} source snapshot, got {other:?}"),
-        };
-        let old_dst = match &result.ops[1].kind {
-            OpKind::Mov {
-                dst,
-                src: SrcOperand::Reg(src),
-                width: got_width,
-            } => {
-                assert_eq!(*src, dst_reg, "{name}");
-                assert_eq!(*got_width, width, "{name}");
-                *dst
-            }
-            other => panic!("expected {name} destination snapshot, got {other:?}"),
-        };
-        let sum = match &result.ops[2].kind {
-            OpKind::Add {
-                dst,
-                src1,
-                src2: SrcOperand::Reg(src2),
-                width: got_width,
-                flags: FlagUpdate::All,
-            } => {
-                assert_eq!(*src1, old_dst, "{name}");
-                assert_eq!(*src2, saved_src, "{name}");
-                assert_eq!(*got_width, width, "{name}");
-                *dst
-            }
-            other => panic!("expected {name} flagged add, got {other:?}"),
-        };
-        match &result.ops[3].kind {
-            OpKind::Mov {
-                dst,
-                src: SrcOperand::Reg(src),
-                width: got_width,
-            } => {
-                assert_eq!(*dst, src_reg, "{name}");
-                assert_eq!(*src, old_dst, "{name}");
-                assert_eq!(*got_width, width, "{name}");
-            }
-            other => panic!("expected {name} source writeback, got {other:?}"),
+    match &result.ops[4].kind {
+        OpKind::Mov {
+            dst,
+            src: SrcOperand::Reg(src),
+            width: got_width,
+        } => {
+            assert_eq!(*dst, dst_reg, "{name}");
+            assert_eq!(*src, sum, "{name}");
+            assert_eq!(*got_width, width, "{name}");
         }
-        match &result.ops[4].kind {
-            OpKind::Mov {
-                dst,
-                src: SrcOperand::Reg(src),
-                width: got_width,
-            } => {
-                assert_eq!(*dst, dst_reg, "{name}");
-                assert_eq!(*src, sum, "{name}");
-                assert_eq!(*got_width, width, "{name}");
-            }
-            other => panic!("expected {name} destination writeback, got {other:?}"),
-        }
+        other => panic!("expected {name} destination writeback, got {other:?}"),
     }
+}
 
-
-
-
-
-
-    fn assert_bswap_op(result: &LiftResult, name: &str, reg: VReg, width: OpWidth) {
-        assert_eq!(result.ops.len(), 1, "{name}");
-        match &result.ops[0].kind {
-            OpKind::Bswap {
-                dst,
-                src,
-                width: got_width,
-            } => {
-                assert_eq!(*dst, reg, "{name}");
-                assert_eq!(*src, reg, "{name}");
-                assert_eq!(*got_width, width, "{name}");
-            }
-            other => panic!("expected {name} Bswap, got {other:?}"),
+fn assert_bswap_op(result: &LiftResult, name: &str, reg: VReg, width: OpWidth) {
+    assert_eq!(result.ops.len(), 1, "{name}");
+    match &result.ops[0].kind {
+        OpKind::Bswap {
+            dst,
+            src,
+            width: got_width,
+        } => {
+            assert_eq!(*dst, reg, "{name}");
+            assert_eq!(*src, reg, "{name}");
+            assert_eq!(*got_width, width, "{name}");
         }
+        other => panic!("expected {name} Bswap, got {other:?}"),
     }
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    fn assert_0f38_movbe_rex_sib_addr(addr: &Address, name: &str) {
-        match addr {
-            Address::BaseIndexScale {
-                base: Some(base),
-                index,
-                scale: 4,
-                disp: 0x20,
-                disp_size: DispSize::Disp8,
-            } => {
-                assert_eq!(*base, x86_gpr(8), "{name}");
-                assert_eq!(*index, x86_gpr(9), "{name}");
-            }
-            other => panic!("expected {name} REX SIB address, got {other:?}"),
+fn assert_0f38_movbe_rex_sib_addr(addr: &Address, name: &str) {
+    match addr {
+        Address::BaseIndexScale {
+            base: Some(base),
+            index,
+            scale: 4,
+            disp: 0x20,
+            disp_size: DispSize::Disp8,
+        } => {
+            assert_eq!(*base, x86_gpr(8), "{name}");
+            assert_eq!(*index, x86_gpr(9), "{name}");
         }
+        other => panic!("expected {name} REX SIB address, got {other:?}"),
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}

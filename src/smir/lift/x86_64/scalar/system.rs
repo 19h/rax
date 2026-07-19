@@ -22,7 +22,6 @@ use crate::smir::lift::{
 };
 
 impl X86_64Lifter {
-
     /// Lift legacy LDMXCSR/STMXCSR and LFENCE/MFENCE/SFENCE (0F AE).
     pub(crate) fn lift_fence_0f(
         &self,
@@ -179,7 +178,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift Group-9 CMPXCHG8B/16B, compacted XSAVE-family, random-source, and
     /// processor-ID forms (0F C7).
     pub(crate) fn lift_xsave_group9_0fc7(
@@ -313,7 +311,6 @@ impl X86_64Lifter {
         }
     }
 
-
     /// Lift XGETBV/XSETBV fixed ModRM encodings (0F 01 D0/D1).
     pub(crate) fn lift_xcr_0f01(
         &self,
@@ -363,7 +360,6 @@ impl X86_64Lifter {
             prefix.cursor + 1,
         ))
     }
-
 
     pub(crate) fn lift_bf16_convert(
         &self,
@@ -519,7 +515,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
     pub(crate) fn lift_rao_int_0f38(
         &self,
         bytes: &[u8],
@@ -547,7 +542,6 @@ impl X86_64Lifter {
         };
         self.lift_rao_int_modrm(bytes, prefix, pc, ctx, op, width)
     }
-
 
     pub(crate) fn lift_rao_int_modrm(
         &self,
@@ -588,7 +582,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
 
     /// Lift Group 4 INC/DEC r/m8 (FE /0, /1).
     pub(crate) fn lift_group4(
@@ -802,7 +795,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
 
     /// Lift group 5 instructions (FF)
     pub(crate) fn lift_group5(
@@ -1076,7 +1068,6 @@ impl X86_64Lifter {
             }
         }
     }
-
 
     /// Lift group 3 instructions (F6/F7)
     pub(crate) fn lift_group3(
@@ -1366,7 +1357,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift PUSHFQ/PUSHFW (9C) and POPFQ/POPFW (9D) in 64-bit mode.
     pub(crate) fn lift_stack_flags(
         &self,
@@ -1518,7 +1508,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
 
-
     /// Lift SAHF (9E) and LAHF (9F).
     pub(crate) fn lift_ah_flags(
         &self,
@@ -1668,7 +1657,6 @@ impl X86_64Lifter {
 
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
-
 
     /// Lift exact x87 environment/control, stack transfers, conversions, and
     /// the arithmetic families whose FCW-controlled binary80 semantics are
@@ -2195,7 +2183,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift IN imm8 or DX (E4/E5/EC/ED)
     pub(crate) fn lift_in(
         &self,
@@ -2260,7 +2247,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_len))
     }
 
-
     /// Lift OUT imm8 or DX (E6/E7/EE/EF)
     pub(crate) fn lift_out(
         &self,
@@ -2324,7 +2310,6 @@ impl X86_64Lifter {
 
         Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_len))
     }
-
 
     /// Lift NOP (90)
     pub(crate) fn lift_nop(&self, prefix: &X86Prefix, _pc: u64) -> Result<LiftResult, LiftError> {

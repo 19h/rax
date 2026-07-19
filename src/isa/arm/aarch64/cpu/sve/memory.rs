@@ -23,14 +23,10 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
-
     /// Write the SVE first-fault register. Exposed for the differential harness.
     pub fn set_sve_ffr(&mut self, v: u32) {
         self.sve_ffr = v & 0xFFFF;
     }
-
-
 
     /// Execute SVE load/store instructions. Currently models the contiguous
     /// LD1{B,H,W,D}/LD1S{B,H,W} and ST1{B,H,W,D} forms with a scalar base plus a
@@ -1065,8 +1061,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Undefined(insn))
     }
 
-
-
     pub(crate) fn read_sve_mem_element(&self, ea: u64, mbytes: usize) -> Result<u64, ArmError> {
         match self.translate_address(ea, false, false) {
             Ok(pa) => match mbytes {
@@ -1091,15 +1085,11 @@ impl AArch64Cpu {
         }
     }
 
-
-
     pub(crate) fn clear_sve_ffr_from_element(&mut self, e: usize, esize: usize) {
         let bit = e * esize;
         let keep = if bit == 0 { 0 } else { (1u32 << bit) - 1 };
         self.sve_ffr &= keep;
     }
-
-
 
     /// Shared body for the contiguous first-fault (LDFF1) and non-fault (LDNF1)
     /// loads. Loads each active element; on an access that cannot be performed
@@ -1153,8 +1143,6 @@ impl AArch64Cpu {
         self.v[zt] = u128::from_le_bytes(dst);
         Ok(CpuExit::Continue)
     }
-
-
 
     /// Shared gather-load body with first-fault (LDFF1) modelling. `addrs[e]` is
     /// the precomputed effective address for lane `e`. For a plain LD1 gather

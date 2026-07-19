@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn append_broadcast_memory_source(
         &self,
         addr: Address,
@@ -60,8 +58,6 @@ impl X86_64Lifter {
         ));
         vector
     }
-
-
 
     /// Materialize an EVEX scalar broadcast whose memory access is suppressed
     /// when every applicable opmask bit is clear. The architectural memory
@@ -135,8 +131,6 @@ impl X86_64Lifter {
         ));
         vector
     }
-
-
 
     pub(crate) fn lift_vec_movnt(
         &self,
@@ -219,8 +213,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_gather(
         &self,
@@ -594,8 +586,6 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
 
-
-
     pub(crate) fn lift_vec_movntdqa(
         &self,
         prefix: VecPrefix,
@@ -675,8 +665,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     /// Lift VEX/EVEX load-and-broadcast instructions from vector, memory, or
     /// (for EVEX opcodes 7A..7C) GPR sources.  Tuple memory forms use one
@@ -1080,8 +1068,6 @@ impl X86_64Lifter {
 
         Ok(LiftResult::fallthrough(ops, cursor + modrm.bytes_consumed))
     }
-
-
 
     pub(crate) fn lift_vec_packed_f32_to_f16_store(
         &self,

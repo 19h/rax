@@ -19,8 +19,6 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
-
-
     pub(crate) fn lift_sse_sqrt(
         &self,
         bytes: &[u8],
@@ -176,8 +174,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_fp_to_int(
         &self,
         opcode: u8,
@@ -264,8 +260,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_int_to_fp(
         &self,
         bytes: &[u8],
@@ -349,8 +343,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_scalar_fp_convert(
         &self,
@@ -491,8 +483,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_fp_estimate(
         &self,
         opcode: u8,
@@ -587,8 +577,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_fp_unpack(
         &self,
         opcode: u8,
@@ -656,8 +644,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
-
 
     pub(crate) fn lift_sse_fp_compare(
         &self,
@@ -788,8 +774,6 @@ impl X86_64Lifter {
         ))
     }
 
-
-
     pub(crate) fn lift_sse_round(
         &self,
         opcode: u8,
@@ -904,8 +888,6 @@ impl X86_64Lifter {
         ));
         Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_offset + 1))
     }
-
-
 
     pub(crate) fn lift_sse_packed_int_fp_convert(
         &self,

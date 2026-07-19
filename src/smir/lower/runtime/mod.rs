@@ -38,7 +38,6 @@ mod jit_gate_tests;
 mod trampolines;
 pub use trampolines::*;
 
-
 /// Apple I-cache invalidation (libSystem). Required after writing a `MAP_JIT`
 /// region and before executing it: on AArch64 the instruction cache is not
 /// coherent with the data cache, so freshly written code may otherwise execute

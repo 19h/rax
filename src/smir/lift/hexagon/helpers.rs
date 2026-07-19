@@ -36,18 +36,15 @@ impl HexagonLifter {
         }
     }
 
-
     /// Create a lifter with default ISA (V68)
     pub fn default_isa() -> Self {
         Self::new(crate::config::HexagonIsa::V68)
     }
 
-
     /// Convert Hexagon register to VReg
     pub(crate) fn hex_reg(&self, reg: u8) -> VReg {
         VReg::Arch(ArchReg::Hexagon(HexagonReg::R(reg)))
     }
-
 
     /// Resolve a new-value `.new` source: `field >> 1` is the back-distance
     /// (1 = most recently produced) into the current packet's GPR producers.
@@ -68,30 +65,25 @@ impl HexagonLifter {
         }
     }
 
-
     /// Convert Hexagon predicate register to VReg
     pub(crate) fn hex_pred(&self, pred: u8) -> VReg {
         VReg::Arch(ArchReg::Hexagon(HexagonReg::P(pred)))
     }
-
 
     /// Convert an HVX vector register V0..V31 to an SMIR vector VReg.
     pub(crate) fn hex_v(&self, n: u8) -> VReg {
         VReg::Arch(ArchReg::Hexagon(HexagonReg::V(n)))
     }
 
-
     /// Normalize a decoded HVX vector-pair field to its even architectural base.
     pub(crate) fn hex_v_pair_base(n: u8) -> u8 {
         n & !1
     }
 
-
     /// Convert an HVX vector predicate register Q0..Q3 to an SMIR vector VReg.
     pub(crate) fn hex_q(&self, n: u8) -> VReg {
         VReg::Arch(ArchReg::Hexagon(HexagonReg::Q(n)))
     }
-
 
     /// Convert Hexagon memory width to SMIR memory width
     pub(crate) fn hex_mem_width(&self, width: HexMemWidth) -> MemWidth {
@@ -103,7 +95,6 @@ impl HexagonLifter {
         }
     }
 
-
     /// Convert Hexagon sign extension mode
     pub(crate) fn hex_sign(&self, sign: MemSign) -> SignExtend {
         match sign {
@@ -111,7 +102,6 @@ impl HexagonLifter {
             MemSign::Unsigned => SignExtend::Zero,
         }
     }
-
 
     /// Convert Hexagon address mode to SMIR address
     pub(crate) fn hex_addr(&self, addr: &AddrMode, ctx: &mut LiftContext) -> Address {
@@ -159,18 +149,15 @@ impl HexagonLifter {
         }
     }
 
-
     /// Modifier (`M0`/`M1`) register for `modsel` as a VReg.
     pub(crate) fn hex_mod(&self, modsel: u8) -> VReg {
         VReg::Arch(ArchReg::Hexagon(HexagonReg::M(modsel & 1)))
     }
 
-
     /// Circular-start (`CS0`/`CS1`) register for `modsel` as a VReg.
     pub(crate) fn hex_cs(&self, modsel: u8) -> VReg {
         VReg::Arch(ArchReg::Hexagon(HexagonReg::Cs(modsel & 1)))
     }
-
 
     /// Map a Hexagon control-register index to the SMIR `HexagonReg` that models
     /// it AS A PLAIN VALUE REGISTER, for the control-register PAIR transfers
@@ -205,14 +192,12 @@ impl HexagonLifter {
         Some(VReg::Arch(ArchReg::Hexagon(reg)))
     }
 
-
     pub(crate) fn hex_creg_pair_values(&self, idx: u8) -> Option<(VReg, VReg)> {
         if idx & 1 != 0 {
             return None;
         }
         Some((self.hex_creg_value(idx)?, self.hex_creg_value(idx + 1)?))
     }
-
 
     /// Convert Hexagon shift kind to SMIR shift op
     pub(crate) fn hex_shift(&self, kind: ShiftKind) -> ShiftOp {
@@ -222,7 +207,6 @@ impl HexagonLifter {
             ShiftKind::Asr => ShiftOp::Asr,
         }
     }
-
 
     /// Return `addr` shifted by `delta` bytes (for the high half of a `memd`
     /// predicated load/store, EA+4). Only the address modes that the predicated
@@ -276,7 +260,6 @@ impl HexagonLifter {
         }
     }
 
-
     /// Convert Hexagon compare kind to SMIR condition
     pub(crate) fn hex_cmp_to_cond(&self, kind: CmpKind) -> Condition {
         match kind {
@@ -290,11 +273,15 @@ impl HexagonLifter {
         }
     }
 
-
     /// Hexagon PC-relative control-flow offsets are already decoded, including
     /// constant extenders. The extender only changes the architectural base:
     /// extended branches use packet PC, ordinary branches use instruction PC.
-    pub(crate) fn pcrel_target(&self, ctx: &mut LiftContext, addr: GuestAddr, offset: i32) -> GuestAddr {
+    pub(crate) fn pcrel_target(
+        &self,
+        ctx: &mut LiftContext,
+        addr: GuestAddr,
+        offset: i32,
+    ) -> GuestAddr {
         let base = if ctx.take_extended_imm().is_some() {
             self.packet_start_pc
         } else {
@@ -302,7 +289,6 @@ impl HexagonLifter {
         };
         base.wrapping_add(offset as i64 as u64) & !0x3
     }
-
 
     /// TEST/AUDIT probe: re-scan the full Hexagon opcode table and report which
     /// NON-V6 (scalar) opcodes still lift to `Unsupported`. For each opcode the

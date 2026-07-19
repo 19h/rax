@@ -84,7 +84,6 @@ impl X86_64Lifter {
         }
     }
 
-
     /// Append one architecturally atomic x86 memory ALU operation. ADC/SBB
     /// fold the incoming CF into the atomic operand while retaining the
     /// original source for the post-retirement flag calculation.
@@ -168,7 +167,6 @@ impl X86_64Lifter {
             ),
         ));
     }
-
 
     /// Lift arithmetic instruction (ADD, SUB, ADC, SBC, CMP)
     pub(crate) fn lift_arith(
@@ -533,7 +531,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift Group 1 immediate instructions (80/81/83)
     pub(crate) fn lift_group1_imm(
         &self,
@@ -763,7 +760,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift CMPXCHG r/m, r (0F B0/0F B1).
     pub(crate) fn lift_cmpxchg(
         &self,
@@ -975,7 +971,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift XADD r/m, r (0F C0/0F C1).
     pub(crate) fn lift_xadd(
         &self,
@@ -1183,7 +1178,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_crc32_0f38(
         &self,
         opcode: u8,
@@ -1253,7 +1247,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     pub(crate) fn lift_adx_0f38(
         &self,
         bytes: &[u8],
@@ -1285,7 +1278,6 @@ impl X86_64Lifter {
         };
         self.lift_adx_modrm(bytes, prefix, pc, ctx, kind, width, None)
     }
-
 
     pub(crate) fn lift_adx_modrm(
         &self,
@@ -1350,7 +1342,6 @@ impl X86_64Lifter {
             prefix.cursor + modrm.bytes_consumed,
         ))
     }
-
 
     /// Lift IMUL r, r/m, imm (69/6B)
     pub(crate) fn lift_imul_rmi(
@@ -1442,9 +1433,12 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift CWD/CDQ/CQO (99)
-    pub(crate) fn lift_cwd_cdq_cqo(&self, prefix: &X86Prefix, pc: u64) -> Result<LiftResult, LiftError> {
+    pub(crate) fn lift_cwd_cdq_cqo(
+        &self,
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
         let width = self.size_to_width(prefix.op_size());
         let ops = vec![SmirOp::new(
             OpId(0),
@@ -1459,9 +1453,12 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(ops, prefix.cursor))
     }
 
-
     /// Lift CBW/CWDE/CDQE (98).
-    pub(crate) fn lift_cbw_cwde_cdqe(&self, prefix: &X86Prefix, pc: u64) -> Result<LiftResult, LiftError> {
+    pub(crate) fn lift_cbw_cwde_cdqe(
+        &self,
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
         if prefix.lock {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
@@ -1490,7 +1487,6 @@ impl X86_64Lifter {
             prefix.cursor,
         ))
     }
-
 
     /// Lift TEST r/m, r (84/85)
     pub(crate) fn lift_test_rm_r(
@@ -1558,7 +1554,6 @@ impl X86_64Lifter {
         ))
     }
 
-
     /// Lift TEST AL/AX/EAX/RAX, imm (A8/A9)
     pub(crate) fn lift_test_acc_imm(
         &self,
@@ -1604,7 +1599,6 @@ impl X86_64Lifter {
 
         Ok(LiftResult::fallthrough(ops, prefix.cursor + imm_size))
     }
-
 
     /// Lift XOR r/m, r and XOR r, r/m (30-33)
     pub(crate) fn lift_xor_rm_r(

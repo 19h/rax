@@ -17,8 +17,12 @@ use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 
 impl SmirInterpreter {
-
-    pub(crate) fn x86_rcl(val: u64, count: u64, carry_in: bool, width: OpWidth) -> (u64, bool, u64) {
+    pub(crate) fn x86_rcl(
+        val: u64,
+        count: u64,
+        carry_in: bool,
+        width: OpWidth,
+    ) -> (u64, bool, u64) {
         let bits = width.bits() as u64;
         let cmask = if bits == 64 { 0x3F } else { 0x1F };
         let effective = (count & cmask) % (bits + 1);
@@ -34,8 +38,12 @@ impl SmirInterpreter {
         (result, carry, effective)
     }
 
-
-    pub(crate) fn x86_rcr(val: u64, count: u64, carry_in: bool, width: OpWidth) -> (u64, bool, u64) {
+    pub(crate) fn x86_rcr(
+        val: u64,
+        count: u64,
+        carry_in: bool,
+        width: OpWidth,
+    ) -> (u64, bool, u64) {
         let bits = width.bits() as u64;
         let cmask = if bits == 64 { 0x3F } else { 0x1F };
         let effective = (count & cmask) % (bits + 1);
@@ -50,7 +58,6 @@ impl SmirInterpreter {
 
         (result & width.mask(), carry, effective)
     }
-
 
     pub(crate) fn x86_hardware_random(width: OpWidth, _seed: bool) -> (u64, bool) {
         let bytes = (width.bits() / 8) as usize;
@@ -75,8 +82,10 @@ impl SmirInterpreter {
         (0, false)
     }
 
-
-    pub(crate) fn x86_approx28_emulate(argument: u64, coefficients: &[(u64, u64, u64)]) -> (u64, i32) {
+    pub(crate) fn x86_approx28_emulate(
+        argument: u64,
+        coefficients: &[(u64, u64, u64)],
+    ) -> (u64, i32) {
         let index = (argument >> 22) as usize;
         let fraction = argument & 0x3F_FFFF;
         let square = fraction * fraction >> 24;
@@ -91,7 +100,6 @@ impl SmirInterpreter {
         debug_assert!(shift <= 11);
         (polynomial << shift, 1033 - shift as i32)
     }
-
 
     pub(crate) fn x86_approx28_finish(
         sign: u64,
@@ -151,7 +159,6 @@ impl SmirInterpreter {
         }
     }
 
-
     pub(crate) fn x86_exp2_emulate_fraction(argument: u64) -> (u64, i32) {
         let index = (argument >> 22) as usize;
         let fraction = argument & 0x3F_FFFF;
@@ -162,7 +169,6 @@ impl SmirInterpreter {
         debug_assert!(shift <= 11);
         (polynomial << shift, 1033 - shift as i32)
     }
-
 
     pub(crate) fn x86_int_to_fp_bits(
         &self,
@@ -190,7 +196,6 @@ impl SmirInterpreter {
         };
         Self::x86_int_magnitude_to_fp_bits(negative, magnitude, frac_bits, exp_bits, bias, mode)
     }
-
 
     pub(crate) fn x86_int_magnitude_to_fp_bits(
         negative: bool,

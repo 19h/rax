@@ -34,8 +34,6 @@ pub(crate) use map5::*;
 mod misc;
 pub(crate) use misc::*;
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;

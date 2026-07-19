@@ -1,7 +1,7 @@
 //! misc.rs
 
-use crate::isa::x86_64::decode::dispatch::evex::*;
 use crate::error::{Error, Result};
+use crate::isa::x86_64::decode::dispatch::evex::*;
 use crate::vm::vcpu::VcpuExit;
 
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
@@ -35,7 +35,6 @@ impl X86_64Vcpu {
         }
     }
 
-
     /// Resolve the full 0-31 vector register index for an EVEX r/m register operand.
     /// rm (3 bits) extended by EVEX.B (bit 3) and EVEX.X (bit 4, V' for reg-reg).
     #[inline]
@@ -51,11 +50,14 @@ impl X86_64Vcpu {
         base as usize
     }
 
-
     /// Compute the active-element opmask for an EVEX op.
     /// k0 (aaa == 0) means "no masking": all elements active.
     #[inline]
-    pub(crate) fn evex_kmask(evex: &crate::isa::x86_64::cpu::EvexPrefix, k: &[u64], num_elems: usize) -> u64 {
+    pub(crate) fn evex_kmask(
+        evex: &crate::isa::x86_64::cpu::EvexPrefix,
+        k: &[u64],
+        num_elems: usize,
+    ) -> u64 {
         let full = if num_elems >= 64 {
             u64::MAX
         } else {
@@ -68,7 +70,6 @@ impl X86_64Vcpu {
         }
     }
 
-
     pub(crate) fn zero_zmm_upper_from_128(&mut self, zmm: usize) {
         if zmm < 16 {
             self.regs.ymm_high[zmm] = [0; 2];
@@ -77,7 +78,6 @@ impl X86_64Vcpu {
             self.regs.zmm_ext[zmm - 16][2..].fill(0);
         }
     }
-
 
     pub(crate) fn x86_min_f32(a: f32, b: f32) -> f32 {
         if (a == 0.0 && b == 0.0) || a.is_nan() || b.is_nan() {
@@ -89,7 +89,6 @@ impl X86_64Vcpu {
         }
     }
 
-
     pub(crate) fn x86_min_f64(a: f64, b: f64) -> f64 {
         if (a == 0.0 && b == 0.0) || a.is_nan() || b.is_nan() {
             b
@@ -99,7 +98,6 @@ impl X86_64Vcpu {
             b
         }
     }
-
 
     pub(crate) fn x86_max_f32(a: f32, b: f32) -> f32 {
         if (a == 0.0 && b == 0.0) || a.is_nan() || b.is_nan() {
@@ -111,7 +109,6 @@ impl X86_64Vcpu {
         }
     }
 
-
     pub(crate) fn x86_max_f64(a: f64, b: f64) -> f64 {
         if (a == 0.0 && b == 0.0) || a.is_nan() || b.is_nan() {
             b
@@ -121,7 +118,6 @@ impl X86_64Vcpu {
             b
         }
     }
-
 
     // ZMM register helper functions
 
@@ -150,7 +146,6 @@ impl X86_64Vcpu {
         data
     }
 
-
     pub(crate) fn load_zmm_data(&mut self, addr: u64, vl: usize) -> Result<[u8; 64]> {
         let mut data = [0u8; 64];
         for i in 0..(vl / 8) {
@@ -160,7 +155,6 @@ impl X86_64Vcpu {
         }
         Ok(data)
     }
-
 
     pub(crate) fn set_zmm_data(&mut self, zmm: usize, data: &[u8], vl: usize) {
         // Helper to read u64 from data with zero-padding for short slices
@@ -201,7 +195,6 @@ impl X86_64Vcpu {
             }
         }
     }
-
 
     // ============================================================================
     // AVX10.1 VNNI Instruction Implementations
@@ -305,7 +298,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// VPDPWSSD/VPDPWSSDS - Multiply and Add Signed Word Integers
     pub(crate) fn execute_vpdpwssd(
         &mut self,
@@ -400,13 +392,16 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     // ============================================================================
     // AVX10.1 IFMA Instruction Implementations
     // ============================================================================
 
     /// VPMADD52LUQ/VPMADD52HUQ - Packed Multiply of Unsigned 52-bit and Add
-    pub(crate) fn execute_vpmadd52(&mut self, ctx: &mut InsnContext, high: bool) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_vpmadd52(
+        &mut self,
+        ctx: &mut InsnContext,
+        high: bool,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -521,7 +516,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     // ============================================================================
     // AVX10.1 VBMI Instruction Implementations
     // ============================================================================
@@ -584,13 +578,15 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     // ============================================================================
     // AVX10.1 BITALG Instruction Implementations
     // ============================================================================
 
     /// VPSHUFBITQMB - Shuffle Bits from Quadword Elements Using Byte Indexes into Mask
-    pub(crate) fn execute_vpshufbitqmb(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_vpshufbitqmb(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -643,7 +639,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     // ============================================================================
     // AVX10.1 BF16 Instruction Implementations
@@ -733,9 +728,11 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// VCVTNEPS2BF16 - Convert Packed Single-Precision to BF16
-    pub(crate) fn execute_vcvtneps2bf16(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_vcvtneps2bf16(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -803,9 +800,11 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// VCVTNE2PS2BF16 - Convert Two Packed Single-Precision to BF16
-    pub(crate) fn execute_vcvtne2ps2bf16(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_vcvtne2ps2bf16(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let modrm_start = ctx.cursor;
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
@@ -895,7 +894,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     // ============================================================================
     // AVX-512 VDBPSADBW Instruction Implementation
@@ -995,7 +993,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     // ============================================================================
     // AVX10.2 VMINMAX Instruction Implementations
     // ============================================================================
@@ -1056,7 +1053,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// VMINMAXPD - Minimum/Maximum of Packed Double-Precision Floats
     pub(crate) fn execute_vminmax_pd(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
@@ -1131,7 +1127,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// VMINMAXSS - Minimum/Maximum of Scalar Single-Precision Float
     pub(crate) fn execute_vminmax_ss(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
@@ -1179,7 +1174,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// VMINMAXSD - Minimum/Maximum of Scalar Double-Precision Float
     pub(crate) fn execute_vminmax_sd(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
@@ -1235,13 +1229,15 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     // ============================================================================
     // AVX10.2 Saturation Conversion Instruction Implementations
     // ============================================================================
 
     /// VCVTTPS2IBS - Convert with Truncation Packed Single to Signed Byte with Saturation
-    pub(crate) fn execute_vcvttps2ibs(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_vcvttps2ibs(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -1295,9 +1291,11 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// VCVTTPS2IUBS - Convert with Truncation Packed Single to Unsigned Byte with Saturation
-    pub(crate) fn execute_vcvttps2iubs(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_vcvttps2iubs(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -1350,9 +1348,11 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// VCVTTPD2QQS - Convert with Truncation Packed Double to Signed Qword with Saturation
-    pub(crate) fn execute_vcvttpd2qqs(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_vcvttpd2qqs(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -1415,9 +1415,11 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// VCVTTPD2UQQS - Convert with Truncation Packed Double to Unsigned Qword with Saturation
-    pub(crate) fn execute_vcvttpd2uqqs(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    pub(crate) fn execute_vcvttpd2uqqs(
+        &mut self,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
         let evex = ctx.evex.unwrap();
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
@@ -1479,7 +1481,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     // ============================================================================
     // AVX10.2 Media Acceleration Instruction Implementations
@@ -1553,7 +1554,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// VPDPBSUD/VPDPBSUDS - Multiply and Add Signed/Unsigned Byte Integers
     pub(crate) fn execute_vpdpbsud(
         &mut self,
@@ -1622,7 +1622,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// VPDPBUUD/VPDPBUUDS - Multiply and Add Unsigned Byte Integers
     pub(crate) fn execute_vpdpbuud(
         &mut self,
@@ -1690,7 +1689,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// VPDPWSUD/VPDPWSUDS - Multiply and Add Signed/Unsigned Word Integers
     pub(crate) fn execute_vpdpwsud(
@@ -1762,7 +1760,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     /// VPDPWUSD/VPDPWUSDS - Multiply and Add Unsigned/Signed Word Integers
     pub(crate) fn execute_vpdpwusd(
         &mut self,
@@ -1832,7 +1829,6 @@ impl X86_64Vcpu {
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
     }
-
 
     /// VPDPWUUD/VPDPWUUDS - Multiply and Add Unsigned Word Integers
     pub(crate) fn execute_vpdpwuud(
@@ -1904,12 +1900,10 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-
     pub(crate) fn inject_invalid_opcode(&mut self) -> Result<Option<VcpuExit>> {
         self.inject_exception(6, None)?;
         Ok(None)
     }
-
 
     /// Helper: perform shift operation
     pub(crate) fn perform_shift(&self, src: u64, count: u64, shift_type: u8, op_size: u8) -> u64 {
@@ -1995,7 +1989,6 @@ impl X86_64Vcpu {
         }
     }
 
-
     /// Update flags for ALU operations
     pub(crate) fn update_flags_alu(
         &mut self,
@@ -2067,7 +2060,6 @@ impl X86_64Vcpu {
         self.regs.rflags = flags;
         self.clear_lazy_flags();
     }
-
 
     /// Update flags for shift operations
     pub(crate) fn update_flags_shift(

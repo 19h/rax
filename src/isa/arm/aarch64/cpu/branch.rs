@@ -22,7 +22,6 @@ use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
 
 impl AArch64Cpu {
-
     /// Return from exception (ERET).
     pub(crate) fn exception_return(&mut self) -> Result<CpuExit, ArmError> {
         // Get saved state from current EL
@@ -58,7 +57,6 @@ impl AArch64Cpu {
 
         Ok(CpuExit::Continue)
     }
-
 
     /// Execute branch and system instruction.
     pub(crate) fn exec_branch_system(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
@@ -107,7 +105,6 @@ impl AArch64Cpu {
 
         Err(ArmError::UndefinedInstruction(insn))
     }
-
 
     pub(crate) fn exec_bitfield(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
@@ -177,7 +174,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     pub(crate) fn exec_b_cond(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         if (insn >> 4) & 1 != 0 {
             return Err(ArmError::UndefinedInstruction(insn));
@@ -194,7 +190,6 @@ impl AArch64Cpu {
 
         Ok(CpuExit::Continue)
     }
-
 
     pub(crate) fn exec_cbz_cbnz(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let sf = (insn >> 31) & 1;
@@ -218,7 +213,6 @@ impl AArch64Cpu {
         Ok(CpuExit::Continue)
     }
 
-
     pub(crate) fn exec_tbz_tbnz(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let b5 = (insn >> 31) & 1;
         let op = (insn >> 24) & 1; // 0=TBZ, 1=TBNZ
@@ -239,7 +233,6 @@ impl AArch64Cpu {
 
         Ok(CpuExit::Continue)
     }
-
 
     pub(crate) fn exec_b_bl(&mut self, insn: u32) -> Result<CpuExit, ArmError> {
         let op = (insn >> 31) & 1; // 0=B, 1=BL

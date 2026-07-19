@@ -1,6 +1,5 @@
 //! AArch64 SIMD/FP/crypto arithmetic reference routines
 
-
 // ---- split submodules ----
 mod bf16;
 pub use bf16::*;
@@ -11,10 +10,10 @@ pub use fp::*;
 mod misc;
 pub use misc::*;
 mod sve;
-pub use sve::*;
 use crate::isa::arm::aarch64::cpu::*;
 use std::collections::HashSet;
 use std::fmt::Debug;
+pub use sve::*;
 
 use crate::isa::arm::aarch64::exceptions::{
     ExceptionType, SyndromeRegister, build_spsr, exception_target_el, parse_spsr, vector_offset,
@@ -32,69 +31,6 @@ use crate::isa::arm::common::features::ArmFeatures;
 use crate::isa::arm::common::memory::ArmMemory;
 use crate::isa::arm::common::sysreg::Aarch64SysRegEncoding;
 use crate::vm::vcpu::Aarch64SystemRegisters;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /// Advanced SIMD three-same floating-point operation kind.
 #[derive(Clone, Copy, PartialEq)]
@@ -139,24 +75,6 @@ pub(crate) const FPCR_FZ16: u32 = 1 << 19;
 pub(crate) const FPCR_FZ: u32 = 1 << 24;
 pub(crate) const FPCR_ARCH_MASK: u32 = 0x07c8_0007;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /// Deterministic two-register-misc floating-point unary operation kind.
 #[derive(Clone, Copy, PartialEq)]
 pub(crate) enum TwoRegFp {
@@ -186,188 +104,6 @@ pub(crate) enum TwoRegFp {
     CmLe,
     CmLt,
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /// FEXPA coefficient tables (ARM pseudocode): the low bits of Zn index a
 /// significand, the next bits supply the result exponent.
@@ -453,20 +189,6 @@ pub(crate) const FEXPA_D: [u64; 64] = [
     0xFA7C1819E90D8,
 ];
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /// SVE FTMAD coefficient tables (ARM ASL): index = imm + (8 if Zm<0). The
 /// fused multiply-add is Zdn*|Zm| + coeff[index] (FPCR.AH=0 default).
 pub(crate) const FTMAD_COEFF_H: [u16; 16] = [
@@ -509,72 +231,6 @@ pub(crate) const FTMAD_COEFF_D: [u64; 16] = [
     0xbda8_f763_80fb_b401,
 ];
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /// SM4 S-box (GB/T 32907-2016).
 pub(crate) const SM4_SBOX: [u8; 256] = [
     0xd6, 0x90, 0xe9, 0xfe, 0xcc, 0xe1, 0x3d, 0xb7, 0x16, 0xb6, 0x14, 0xc2, 0x28, 0xfb, 0x2c, 0x05,
@@ -594,11 +250,6 @@ pub(crate) const SM4_SBOX: [u8; 256] = [
     0x89, 0x69, 0x97, 0x4a, 0x0c, 0x96, 0x77, 0x7e, 0x65, 0xb9, 0xf1, 0x09, 0xc5, 0x6e, 0xc6, 0x84,
     0x18, 0xf0, 0x7d, 0xec, 0x3a, 0xdc, 0x4d, 0x20, 0x79, 0xee, 0x5f, 0x3e, 0xd7, 0xcb, 0x39, 0x48,
 ];
-
-
-
-
-
 
 /// AES S-box and inverse S-box (FIPS-197).
 pub(crate) const AES_SBOX: [u8; 256] = [
@@ -637,7 +288,3 @@ pub(crate) const AES_INV_SBOX: [u8; 256] = [
     0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61,
     0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d,
 ];
-
-
-
-

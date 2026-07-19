@@ -1,6 +1,5 @@
 //! compressed.rs
 
-use crate::smir::lift::riscv::*;
 use crate::isa::riscv::{
     Isa as RvIsa, Op as RvOp, Xlen as RvXlen, decode as rv_decode, rvc::decode_rvc as rv_decode_rvc,
 };
@@ -8,11 +7,13 @@ use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, RvVectorState, SmirOp};
 use crate::smir::ir::types::*;
 use crate::smir::ir::{SmirBlock, SmirFunction};
+use crate::smir::lift::riscv::*;
 
-use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter};
+use crate::smir::lift::{
+    ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
+};
 
 impl RiscVLifter {
-
     /// Zcmp double moves have two architecturally simultaneous register
     /// assignments. The s-register encoding maps only to x8, x9, and x18-x23,
     /// so neither assignment aliases a0/x10 or a1/x11.
@@ -52,7 +53,6 @@ impl RiscVLifter {
             .collect();
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     /// Expand one Zcmp PUSH/POP macro into its architecturally ordered memory
     /// sequence. Earlier stores or register loads intentionally remain visible
@@ -188,7 +188,6 @@ impl RiscVLifter {
         }
     }
 
-
     /// Zcmt table jumps fetch one XLEN-wide target from instruction memory.
     /// The generic SMIR memory bridge supplies the bytes; the production
     /// dispatcher reclassifies a failed helper read as an instruction-access
@@ -259,7 +258,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::IndirectBranch { target: aligned }))
     }
 
-
     // Compressed FP load/store (c.fld/c.fsd/c.fldsp/c.fsdsp). Doubles need no
     // NaN-boxing; decoded through the rax decoder for the resolved operands.
     pub(crate) fn lift_c_fp_ldst(
@@ -321,7 +319,6 @@ impl RiscVLifter {
         }
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     // Zcb quadrant-0 byte/half loads and stores (c.lbu/lhu/lh/sb/sh). Decoded
     // through the rax decoder for the precise op and resolved rd'/rs1'/rs2'/imm.
@@ -389,7 +386,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     // C.ADDI4SPN: rd' = sp + nzuimm
     pub(crate) fn lift_c_addi4spn(
         &mut self,
@@ -430,7 +426,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     // C.LW: rd' = mem[rs1' + uimm]
     pub(crate) fn lift_c_lw(
         &mut self,
@@ -467,7 +462,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     // C.LD: rd' = mem[rs1' + uimm] (RV64)
     pub(crate) fn lift_c_ld(
         &mut self,
@@ -502,7 +496,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     // C.SW: mem[rs1' + uimm] = rs2'
     pub(crate) fn lift_c_sw(
         &mut self,
@@ -536,7 +529,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     // C.SD: mem[rs1' + uimm] = rs2' (RV64)
     pub(crate) fn lift_c_sd(
         &mut self,
@@ -567,7 +559,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     // C.ADDI / C.NOP
     pub(crate) fn lift_c_addi(
@@ -610,7 +601,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     // C.ADDIW (RV64)
     pub(crate) fn lift_c_addiw(
@@ -657,7 +647,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     // C.JAL (RV32 only)
     pub(crate) fn lift_c_jal(
         &mut self,
@@ -686,7 +675,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::DirectBranch(target)))
     }
-
 
     // C.LI
     pub(crate) fn lift_c_li(
@@ -718,7 +706,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     // C.LUI / C.ADDI16SP
     pub(crate) fn lift_c_lui_addi16sp(
@@ -795,7 +782,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     // C.SRLI, C.SRAI, C.ANDI, C.SUB, C.XOR, C.OR, C.AND, C.SUBW, C.ADDW
     pub(crate) fn lift_c_misc_alu(
@@ -1017,7 +1003,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     // C.J
     pub(crate) fn lift_c_j(
         &mut self,
@@ -1029,7 +1014,6 @@ impl RiscVLifter {
         let target = (addr as i64).wrapping_add(imm) as u64;
         Ok((vec![], ControlFlow::DirectBranch(target)))
     }
-
 
     // C.BEQZ
     pub(crate) fn lift_c_beqz(
@@ -1077,7 +1061,6 @@ impl RiscVLifter {
         ))
     }
 
-
     // C.BNEZ
     pub(crate) fn lift_c_bnez(
         &mut self,
@@ -1124,7 +1107,6 @@ impl RiscVLifter {
         ))
     }
 
-
     // C.SLLI
     pub(crate) fn lift_c_slli(
         &mut self,
@@ -1154,7 +1136,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     // C.LWSP
     pub(crate) fn lift_c_lwsp(
@@ -1198,7 +1179,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     // C.LDSP (RV64)
     pub(crate) fn lift_c_ldsp(
         &mut self,
@@ -1240,7 +1220,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     // C.JR, C.MV, C.JALR, C.ADD
     pub(crate) fn lift_c_jr_mv_add(
@@ -1351,7 +1330,6 @@ impl RiscVLifter {
         Ok((ops, ControlFlow::NextInsn))
     }
 
-
     // C.SWSP
     pub(crate) fn lift_c_swsp(
         &mut self,
@@ -1381,7 +1359,6 @@ impl RiscVLifter {
 
         Ok((ops, ControlFlow::NextInsn))
     }
-
 
     // C.SDSP (RV64)
     pub(crate) fn lift_c_sdsp(
