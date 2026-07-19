@@ -8588,7 +8588,7 @@ fn jit_general_exit_matches_interp_at_handoff() {
     use rax::smir::lift::x86_64::X86_64Lifter;
     use rax::smir::lift::{LiftContext, MemoryReader, SmirLifter};
     use rax::smir::lower::SmirLowerer;
-    use rax::smir::lower::runtime::{ExecMem, GuestRegs, is_native_clobber_safe};
+    use rax::smir::lower::runtime::{ExecMem, GuestRegs, is_native_clobber_safe_excluding};
     use rax::smir::lower::x86_64::X86_64Lowerer;
     use std::collections::HashMap;
 
@@ -8648,7 +8648,7 @@ fn jit_general_exit_matches_interp_at_handoff() {
         }
     }
     assert!(!exits.is_empty(), "expected a frontier exit block");
-    assert!(is_native_clobber_safe(&func), "loop must be clobber-safe");
+    assert!(is_native_clobber_safe_excluding(&func, &exits, false));
 
     let mut lowerer = X86_64Lowerer::new();
     lowerer.set_native_exits(exits);
