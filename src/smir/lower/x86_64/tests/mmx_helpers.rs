@@ -389,3 +389,70 @@ fn mmx_movntq_uses_exact_helper_width_and_fault_safe_stack_staging() {
         assert_mmx_helper_boundary(&code, "MOVNTQ helper");
     }
 }
+
+#[test]
+#[cfg(feature = "smir-jit")]
+fn mmx_maskmovq_emits_ordered_predicated_byte_helpers_and_fault_cleanup() {
+    for level in [
+        crate::smir::optimize::OptLevel::O0,
+        crate::smir::optimize::OptLevel::O1,
+        crate::smir::optimize::OptLevel::O2,
+    ] {
+        let code = lower_lifted_mmx_memory(&[0x0F, 0xF7, 0xC1], level);
+        assert!(
+            code.windows(4)
+                .any(|window| window == [0x0F, 0x7F, 0x04, 0x24]),
+            "MASKMOVQ must stage MM0 data after {level:?}: {code:02X?}"
+        );
+        assert!(
+            code.windows(5)
+                .any(|window| window == [0x0F, 0x7F, 0x4C, 0x24, 0x08]),
+            "MASKMOVQ must stage MM1 mask after {level:?}: {code:02X?}"
+        );
+        for lane in 0..8u8 {
+            let test = [0xF6, 0x44, 0x24, 0x10 + lane, 0x80];
+            assert!(
+                code.windows(test.len()).any(|window| window == test),
+                "MASKMOVQ lane {lane} must test its mask MSB after {level:?}: {code:02X?}"
+            );
+        }
+        assert_eq!(
+            code.windows(5)
+                .filter(|window| *window == [0xB9, 0x01, 0x00, 0x00, 0x00])
+                .count(),
+            8,
+            "MASKMOVQ must emit one exact 1-byte helper per lane after {level:?}"
+        );
+
+        let mm0_store = mm_state_encoding(0, PhysReg::Rax, true);
+        let mm0_load = mm_state_encoding(0, PhysReg::Rcx, false);
+        assert_eq!(
+            code.windows(mm0_store.len())
+                .filter(|window| *window == mm0_store)
+                .count(),
+            8,
+            "each MASKMOVQ lane helper must publish MMX state after {level:?}"
+        );
+        assert_eq!(
+            code.windows(mm0_load.len())
+                .filter(|window| *window == mm0_load)
+                .count(),
+            16,
+            "each MASKMOVQ lane helper must restore MMX on success and fault after {level:?}"
+        );
+        assert_eq!(
+            code.windows(2)
+                .filter(|window| *window == [0x0F, 0x77])
+                .count(),
+            8,
+            "each MASKMOVQ lane helper must execute host-only EMMS after {level:?}"
+        );
+        assert_eq!(
+            code.windows(5)
+                .filter(|window| *window == [0x48, 0x8D, 0x64, 0x24, 0x10])
+                .count(),
+            9,
+            "eight lane-fault paths plus success must release the MASKMOVQ slot after {level:?}"
+        );
+    }
+}

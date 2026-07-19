@@ -2,10 +2,11 @@
 
 use std::collections::HashMap;
 
+use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86VecAlign, X86X87ControlKind};
 use crate::smir::ir::types::{
-    ArchReg, BlockId, MemWidth, SignExtend, VLaneOp, VReg, VecElementType, VecUnaryOp, VecWidth,
-    X86Reg,
+    Address, ArchReg, BlockId, DispSize, MemWidth, OpWidth, SignExtend, SrcOperand, VLaneOp, VReg,
+    VecElementType, VecUnaryOp, VecWidth, X86Reg,
 };
 use crate::smir::ir::{SmirBlock, SmirFunction};
 
@@ -26,6 +27,15 @@ pub(crate) struct X86MmxMemorySourceSequence {
     pub(crate) consumed: usize,
     pub(crate) marker_offset: usize,
     pub(crate) encoding: X86MmxMemorySourceEncoding,
+}
+
+/// Exact lifted `MASKMOVQ mm, mm` sequence consumed by helper-backed lowering.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86MmxMaskmovqSequence {
+    pub(crate) consumed: usize,
+    pub(crate) marker_offset: usize,
+    pub(crate) data_index: u8,
+    pub(crate) mask_index: u8,
 }
 
 fn mm_index(reg: VReg) -> Option<u8> {
@@ -207,6 +217,162 @@ fn is_enter_mmx_marker(op: &SmirOp) -> bool {
             addr: None,
         }
     ) && op.x86_hint.is_none()
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum X86MmxMaskmovqAddressKind {
+    Rdi,
+    FsRdi,
+    GsRdi,
+}
+
+fn x86_mmx_maskmovq_lane_address_kind(
+    addr: &Address,
+    lane: u8,
+) -> Option<X86MmxMaskmovqAddressKind> {
+    match addr {
+        Address::BaseOffset {
+            base: VReg::Arch(ArchReg::X86(X86Reg::Rdi)),
+            offset,
+            disp_size: DispSize::Auto,
+        } if *offset == i64::from(lane) => Some(X86MmxMaskmovqAddressKind::Rdi),
+        Address::SegmentRel {
+            segment: VReg::Arch(ArchReg::X86(segment @ (X86Reg::FsBase | X86Reg::GsBase))),
+            base: Some(VReg::Arch(ArchReg::X86(X86Reg::Rdi))),
+            index: None,
+            scale: 1,
+            disp,
+        } if *disp == i64::from(lane) => Some(match segment {
+            X86Reg::FsBase => X86MmxMaskmovqAddressKind::FsRdi,
+            X86Reg::GsBase => X86MmxMaskmovqAddressKind::GsRdi,
+            _ => return None,
+        }),
+        _ => None,
+    }
+}
+
+/// Validate the exact eight-lane `MASKMOVQ` expansion emitted by the x86-64
+/// lifter. Every temporary is single-definition/single-use, every active lane
+/// performs one ordered byte store, and the architectural MMX-state marker is
+/// last so a later fault preserves the instruction-boundary register state.
+/// Address-size-overridden forms deliberately remain ineligible because their
+/// zero-extended EDI base is a virtual value that the identity JIT cannot
+/// materialize without clobbering guest state.
+pub(crate) fn x86_jit_mmx_maskmovq_sequence(
+    block: &SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86MmxMaskmovqSequence> {
+    if !allow_mem {
+        return None;
+    }
+
+    let guest_pc = block.ops.get(index)?.guest_pc;
+    let mut data_index = None;
+    let mut mask_index = None;
+    let mut address_kind = None;
+    for lane in 0..8u8 {
+        let lane_start = index + usize::from(lane) * 4;
+        let mask_extract = block.ops.get(lane_start)?;
+        let shift = block.ops.get(lane_start + 1)?;
+        let data_extract = block.ops.get(lane_start + 2)?;
+        let store = block.ops.get(lane_start + 3)?;
+        if [mask_extract, shift, data_extract, store]
+            .iter()
+            .any(|op| op.guest_pc != guest_pc || op.x86_hint.is_some())
+        {
+            return None;
+        }
+
+        let (mask_byte, actual_mask_index) = match &mask_extract.kind {
+            OpKind::VExtractLane {
+                dst: temporary @ VReg::Virtual(_),
+                vec,
+                lane: actual_lane,
+                elem: VecElementType::I8,
+                sign: SignExtend::Zero,
+            } if *actual_lane == lane => (*temporary, mm_index(*vec)?),
+            _ => return None,
+        };
+        let active = match &shift.kind {
+            OpKind::Shr {
+                dst: temporary @ VReg::Virtual(_),
+                src,
+                amount: SrcOperand::Imm(7),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            } if *src == mask_byte => *temporary,
+            _ => return None,
+        };
+        let (data_byte, actual_data_index) = match &data_extract.kind {
+            OpKind::VExtractLane {
+                dst: temporary @ VReg::Virtual(_),
+                vec,
+                lane: actual_lane,
+                elem: VecElementType::I8,
+                sign: SignExtend::Zero,
+            } if *actual_lane == lane => (*temporary, mm_index(*vec)?),
+            _ => return None,
+        };
+        let actual_address_kind = match &store.kind {
+            OpKind::PredStore {
+                src: SrcOperand::Reg(src),
+                cond,
+                addr,
+                width: MemWidth::B1,
+            } if *src == data_byte && *cond == active => {
+                x86_mmx_maskmovq_lane_address_kind(addr, lane)?
+            }
+            _ => return None,
+        };
+        if [mask_byte, active, data_byte].iter().any(|temporary| {
+            virtual_definitions.get(temporary) != Some(&1)
+                || virtual_uses.get(temporary) != Some(&1)
+        }) {
+            return None;
+        }
+
+        match mask_index {
+            None => mask_index = Some(actual_mask_index),
+            Some(index) if index == actual_mask_index => {}
+            Some(_) => return None,
+        }
+        match data_index {
+            None => data_index = Some(actual_data_index),
+            Some(index) if index == actual_data_index => {}
+            Some(_) => return None,
+        }
+        match address_kind {
+            None => address_kind = Some(actual_address_kind),
+            Some(kind) if kind == actual_address_kind => {}
+            Some(_) => return None,
+        }
+    }
+
+    let marker_offset = 32;
+    let marker = block.ops.get(index + marker_offset)?;
+    if marker.guest_pc != guest_pc || !is_enter_mmx_marker(marker) {
+        return None;
+    }
+    Some(X86MmxMaskmovqSequence {
+        consumed: marker_offset + 1,
+        marker_offset,
+        data_index: data_index?,
+        mask_index: mask_index?,
+    })
+}
+
+pub(crate) fn x86_jit_mmx_maskmovq_sequence_len(
+    block: &SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<usize> {
+    x86_jit_mmx_maskmovq_sequence(block, index, allow_mem, virtual_definitions, virtual_uses)
+        .map(|sequence| sequence.consumed)
 }
 
 /// Validate one exact `VLoad(V64 virtual)` plus MMX operation and architectural
@@ -534,8 +700,8 @@ pub fn x86_native_mmx_features_supported_excluding(
 }
 
 /// Verify the exact architectural-state marker paired with every admitted MMX
-/// operation, including helper-backed memory-source and scalar-transfer
-/// sequences.
+/// operation, including helper-backed memory-source, scalar-transfer, and
+/// `MASKMOVQ` sequences.
 pub fn x86_native_mmx_pairs_valid_excluding(
     func: &SmirFunction,
     excluded: &HashMap<BlockId, u64>,
@@ -580,6 +746,16 @@ pub fn x86_native_mmx_pairs_valid_excluding(
             }
             let mut index = 0;
             while index < block.ops.len() {
+                if let Some(consumed) = x86_jit_mmx_maskmovq_sequence_len(
+                    block,
+                    index,
+                    true,
+                    &virtual_definitions,
+                    &virtual_uses,
+                ) {
+                    index += consumed;
+                    continue;
+                }
                 if let Some(consumed) = super::x86_jit_mmx_scalar_memory_transfer_sequence_len(
                     block,
                     index,

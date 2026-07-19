@@ -325,6 +325,159 @@ fn jit_faulting_mmx_movntq_preserves_state_and_store_atomicity() {
 }
 
 #[test]
+fn jit_compiles_and_executes_mmx_maskmovq_memory_helper() {
+    let (mut vcpu, mem) = test_vcpu_with_mem();
+    // maskmovq mm0,mm1; jmp next; ret. The implicit destination is DS:RDI.
+    mem.write_slice(&[0x0F, 0xF7, 0xC1, 0xEB, 0x00, 0xC3], GuestAddress(0))
+        .unwrap();
+    let address = 0x2003;
+    let before = [0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7];
+    mem.write_slice(&before, GuestAddress(address)).unwrap();
+    vcpu.sregs.efer = 1 << 10;
+    vcpu.sregs.cs.l = true;
+    vcpu.regs.rip = 0;
+    vcpu.regs.rdi = address;
+    vcpu.regs.rflags = 0x246;
+    vcpu.regs.mm =
+        std::array::from_fn(|index| 0xF0E1_D2C3_B4A5_9687u64.rotate_left(index as u32 * 7));
+    vcpu.regs.mm[0] = u64::from_le_bytes([0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80]);
+    vcpu.regs.mm[1] = u64::from_le_bytes([0x80, 0x00, 0xFF, 0x7F, 0x01, 0x80, 0x00, 0xFF]);
+    let original = vcpu.regs.mm;
+    vcpu.fpu.tag_word = 0xFFFF;
+    vcpu.set_jit_mem(true);
+    vcpu.set_jit_call(false);
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile MMX MASKMOVQ memory region")
+        .expect("exact MMX MASKMOVQ form should be JIT eligible");
+    assert!(region.uses_mmx);
+    assert!(!region.uses_vector);
+
+    vcpu.jit_run_region_native(&region);
+
+    let mut stored = [0u8; 8];
+    mem.read_slice(&mut stored, GuestAddress(address)).unwrap();
+    assert_eq!(stored, [0x10, 0xA1, 0x30, 0xA3, 0xA4, 0x60, 0xA6, 0x80]);
+    assert_eq!(vcpu.regs.mm, original);
+    assert_eq!(vcpu.fpu.tag_word, 0);
+    assert_eq!(vcpu.regs.rflags, 0x246);
+    assert_eq!(vcpu.regs.rdi, address);
+    assert_eq!(vcpu.regs.rip, 5);
+}
+
+#[test]
+fn jit_mmx_maskmovq_all_zero_mask_performs_no_memory_access() {
+    let (mut vcpu, mem) = test_vcpu_with_mem();
+    // maskmovq mm0,mm1; jmp next; ret. RDI is deliberately unmapped.
+    mem.write_slice(&[0x0F, 0xF7, 0xC1, 0xEB, 0x00, 0xC3], GuestAddress(0))
+        .unwrap();
+    vcpu.sregs.efer = 1 << 10;
+    vcpu.sregs.cs.l = true;
+    vcpu.regs.rip = 0;
+    vcpu.regs.rdi = 0x1_0000;
+    vcpu.regs.rflags = 0x8D7;
+    vcpu.regs.mm =
+        std::array::from_fn(|index| 0x0123_4567_89AB_CDEFu64.rotate_left(index as u32 * 7));
+    vcpu.regs.mm[1] = 0;
+    let original = vcpu.regs.mm;
+    vcpu.fpu.tag_word = 0xFFFF;
+    vcpu.set_jit_mem(true);
+    vcpu.set_jit_call(false);
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile all-zero-mask MASKMOVQ")
+        .expect("all-zero-mask MASKMOVQ should be JIT eligible");
+    vcpu.jit_run_region_native(&region);
+
+    assert_eq!(vcpu.regs.mm, original);
+    assert_eq!(vcpu.fpu.tag_word, 0);
+    assert_eq!(vcpu.regs.rflags, 0x8D7);
+    assert_eq!(vcpu.regs.rdi, 0x1_0000);
+    assert_eq!(vcpu.regs.rip, 5);
+}
+
+#[test]
+fn jit_faulting_mmx_maskmovq_preserves_ordered_partial_completion() {
+    let (mut vcpu, mem) = test_vcpu_with_mem();
+    // maskmovq mm0,mm1; jmp next; ret. Lane 0 is mapped and lane 1 faults.
+    mem.write_slice(&[0x0F, 0xF7, 0xC1, 0xEB, 0x00, 0xC3], GuestAddress(0))
+        .unwrap();
+    let address = 0xFFFF;
+    mem.write_slice(&[0xA5], GuestAddress(address)).unwrap();
+    vcpu.sregs.efer = 1 << 10;
+    vcpu.sregs.cs.l = true;
+    vcpu.regs.rip = 0;
+    vcpu.regs.rdi = address;
+    vcpu.regs.rflags = 0x8D7;
+    vcpu.regs.mm =
+        std::array::from_fn(|index| 0xF0E1_D2C3_B4A5_9687u64.rotate_left(index as u32 * 7));
+    vcpu.regs.mm[0] = u64::from_le_bytes([0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88]);
+    vcpu.regs.mm[1] = u64::from_le_bytes([0x80, 0x80, 0, 0, 0, 0, 0, 0]);
+    let original = vcpu.regs.mm;
+    vcpu.fpu.tag_word = 0xFFFF;
+    vcpu.set_jit_mem(true);
+    vcpu.set_jit_call(false);
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile faulting MASKMOVQ")
+        .expect("fault-capable MASKMOVQ should retain native lane exits");
+    vcpu.jit_run_region_native(&region);
+
+    let mut committed = [0u8; 1];
+    mem.read_slice(&mut committed, GuestAddress(address))
+        .unwrap();
+    assert_eq!(committed, [0x11], "lane 0 must commit before lane 1 faults");
+    assert_eq!(vcpu.regs.mm, original);
+    assert_eq!(vcpu.fpu.tag_word, 0xFFFF);
+    assert_eq!(vcpu.regs.rflags, 0x8D7);
+    assert_eq!(vcpu.regs.rdi, address);
+    assert_eq!(vcpu.regs.rip, 0, "fault must restart MASKMOVQ");
+}
+
+#[test]
+fn jit_mmx_maskmovq_honors_fs_segment_base() {
+    let (mut vcpu, mem) = test_vcpu_with_mem();
+    // fs maskmovq mm0,mm1; jmp next; ret.
+    mem.write_slice(&[0x64, 0x0F, 0xF7, 0xC1, 0xEB, 0x00, 0xC3], GuestAddress(0))
+        .unwrap();
+    let address = 0x2003;
+    let before = [0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7];
+    mem.write_slice(&before, GuestAddress(address)).unwrap();
+    vcpu.sregs.efer = 1 << 10;
+    vcpu.sregs.cs.l = true;
+    vcpu.sregs.fs.base = 0x2000;
+    vcpu.regs.rip = 0;
+    vcpu.regs.rdi = 3;
+    vcpu.regs.rflags = 0x246;
+    vcpu.regs.mm =
+        std::array::from_fn(|index| 0x0123_4567_89AB_CDEFu64.rotate_left(index as u32 * 7));
+    vcpu.regs.mm[0] = u64::from_le_bytes([0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80]);
+    vcpu.regs.mm[1] = u64::from_le_bytes([0, 0x80, 0, 0, 0, 0xFF, 0, 0]);
+    let original = vcpu.regs.mm;
+    vcpu.fpu.tag_word = 0xFFFF;
+    vcpu.set_jit_mem(true);
+    vcpu.set_jit_call(false);
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile FS MASKMOVQ")
+        .expect("FS-relative MASKMOVQ should be JIT eligible");
+    vcpu.jit_run_region_native(&region);
+
+    let mut stored = [0u8; 8];
+    mem.read_slice(&mut stored, GuestAddress(address)).unwrap();
+    assert_eq!(stored, [0xA0, 0x20, 0xA2, 0xA3, 0xA4, 0x60, 0xA6, 0xA7]);
+    assert_eq!(vcpu.regs.mm, original);
+    assert_eq!(vcpu.fpu.tag_word, 0);
+    assert_eq!(vcpu.regs.rflags, 0x246);
+    assert_eq!(vcpu.regs.rdi, 3);
+    assert_eq!(vcpu.regs.rip, 6);
+}
+
+#[test]
 fn jit_mmx_scalar_memory_transfers_use_exact_width_at_mapped_boundary() {
     for (instruction, is_load, width, value, name) in [
         (

@@ -12,6 +12,8 @@ mod gate;
 #[cfg(test)]
 mod mmx;
 #[cfg(test)]
+mod mmx_maskmov;
+#[cfg(test)]
 mod mmx_memory;
 #[cfg(test)]
 mod mmx_memory_source;

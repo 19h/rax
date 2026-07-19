@@ -3,7 +3,7 @@
 #[cfg(feature = "smir-jit")]
 use std::collections::HashMap;
 
-use super::{X86_64Lowerer, X86Emitter};
+use super::{X86_64Lowerer, X86Cond, X86Emitter};
 #[cfg(feature = "smir-jit")]
 use crate::smir::ir::SmirBlock;
 use crate::smir::ir::ops::{X86OpHint, X86SsePrefix, X86VecAlign};
@@ -91,11 +91,11 @@ impl X86_64Lowerer {
         (width == VecWidth::V64 && (exact_movq || exact_movntq)).then_some(index)
     }
 
-    fn emit_mmx_stack_move(&mut self, reg: PhysReg, store: bool) {
+    fn emit_mmx_stack_move(&mut self, reg: PhysReg, offset: i32, store: bool) {
         self.code.emit_u8(0x0F);
         self.code.emit_u8(if store { 0x7F } else { 0x6F });
         let mut emitter = X86Emitter::new(&mut self.code);
-        emitter.emit_modrm_mem_disp(reg, PhysReg::Rsp, 0, DispSize::Auto);
+        emitter.emit_modrm_mem_disp(reg, PhysReg::Rsp, offset, DispSize::Auto);
     }
 
     #[cfg(feature = "smir-jit")]
@@ -138,7 +138,7 @@ impl X86_64Lowerer {
             emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
         }
         if !is_load {
-            self.emit_mmx_stack_move(PhysReg::Mm(index), true);
+            self.emit_mmx_stack_move(PhysReg::Mm(index), 0, true);
         }
         self.emit_jit_mem_op(
             guest_pc,
@@ -154,11 +154,99 @@ impl X86_64Lowerer {
             16,
         )?;
         if is_load {
-            self.emit_mmx_stack_move(PhysReg::Mm(index), false);
+            self.emit_mmx_stack_move(PhysReg::Mm(index), 0, false);
         }
         let mut emitter = X86Emitter::new(&mut self.code);
         emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
         Ok(())
+    }
+
+    /// Fuse one exact `MASKMOVQ mm, mm` expansion into eight ordered,
+    /// conditionally executed 1-byte MMU-helper stores. The data and mask MMX
+    /// registers are snapshotted in a 16-byte caller slot. Each mask test saves
+    /// and restores guest flags before either skipping the lane or crossing the
+    /// Rust ABI boundary. A lane fault releases the caller slot and returns at
+    /// the original guest PC; earlier active lanes remain committed and the
+    /// trailing `EnterMmx` marker is not executed.
+    #[cfg(feature = "smir-jit")]
+    pub(crate) fn try_lower_jit_mmx_maskmovq(
+        &mut self,
+        block: &SmirBlock,
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(sequence) = crate::smir::lower::runtime::x86_jit_mmx_maskmovq_sequence(
+            block,
+            idx,
+            true,
+            virtual_definitions,
+            virtual_uses,
+        ) else {
+            return Ok(None);
+        };
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
+        }
+        self.emit_mmx_stack_move(PhysReg::Mm(sequence.data_index), 0, true);
+        self.emit_mmx_stack_move(PhysReg::Mm(sequence.mask_index), 8, true);
+
+        for lane in 0..8u8 {
+            let store = &block.ops[idx + usize::from(lane) * 4 + 3];
+            let addr = match &store.kind {
+                crate::smir::ir::ops::OpKind::PredStore {
+                    addr,
+                    width: MemWidth::B1,
+                    ..
+                } => addr,
+                _ => {
+                    return Err(LowerError::InvalidOperand {
+                        op: "MMX MASKMOVQ".to_string(),
+                        operand: "validated lane must end in its exact byte store".to_string(),
+                    });
+                }
+            };
+
+            self.code.emit_u8(0x9C); // pushfq
+            // test byte ptr [rsp + saved-flags + mask-slot + lane], 0x80
+            self.code.emit_u8(0xF6);
+            self.code.emit_u8(0x44);
+            self.code.emit_u8(0x24);
+            self.code.emit_u8(16 + lane);
+            self.code.emit_u8(0x80);
+            let inactive = self.emit_jcc_placeholder(X86Cond::E);
+            self.code.emit_u8(0x9D); // popfq before a helper call
+
+            self.emit_jit_mem_op(
+                store.guest_pc,
+                false,
+                None,
+                None,
+                None,
+                None,
+                Some(16 + i32::from(lane)),
+                addr,
+                MemWidth::B1,
+                SignExtend::Zero,
+                16,
+            )?;
+            self.code.emit_u8(0xE9);
+            let done = self.code.position();
+            self.code.emit_u32(0);
+
+            self.patch_rel32_to_current(inactive)?;
+            self.code.emit_u8(0x9D); // popfq on the inactive path
+            self.patch_rel32_to_current(done)?;
+        }
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+        self.lower_op(&block.ops[idx + sequence.marker_offset])?;
+        Ok(Some(sequence.consumed))
     }
 
     /// Fuse one exact MMX MOVD/MOVQ scalar-memory transfer. A 16-byte host
