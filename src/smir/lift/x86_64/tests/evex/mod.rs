@@ -15,4 +15,6 @@ mod mask;
 mod ops;
 #[cfg(test)]
 mod permute;
+#[cfg(test)]
+mod sqrt;
 use crate::smir::lift::x86_64::*;

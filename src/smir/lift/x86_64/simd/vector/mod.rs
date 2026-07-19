@@ -16,3 +16,5 @@ mod packed;
 pub use packed::*;
 mod shuffle;
 pub use shuffle::*;
+mod sqrt;
+pub use sqrt::*;
