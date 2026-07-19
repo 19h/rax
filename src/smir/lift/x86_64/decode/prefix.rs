@@ -313,8 +313,14 @@ pub(crate) fn decode_prefixes(bytes: &[u8]) -> Result<X86Prefix, LiftError> {
         }
 
         match b {
-            0x66 => prefix.operand_size_override = true,
-            0x67 => prefix.address_size_override = true,
+            0x66 => {
+                prefix.rex = None;
+                prefix.operand_size_override = true;
+            }
+            0x67 => {
+                prefix.rex = None;
+                prefix.address_size_override = true;
+            }
             0x40..=0x4F => prefix.rex = Some(b),
             0xD5 => {
                 cursor += 1;
@@ -339,9 +345,16 @@ pub(crate) fn decode_prefixes(bytes: &[u8]) -> Result<X86Prefix, LiftError> {
                 cursor += 1;
                 break;
             }
-            0xF0 => prefix.lock = true,
-            0xF2 | 0xF3 => prefix.rep_prefix = Some(b),
+            0xF0 => {
+                prefix.rex = None;
+                prefix.lock = true;
+            }
+            0xF2 | 0xF3 => {
+                prefix.rex = None;
+                prefix.rep_prefix = Some(b);
+            }
             0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 => {
+                prefix.rex = None;
                 prefix.segment_override = Some(b);
             }
             _ => break,

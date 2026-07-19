@@ -37,6 +37,59 @@ fn test_prefix_decode() {
     assert!(prefix.rex_w());
     assert_eq!(prefix.rex_r(), 16);
 }
+
+#[test]
+fn legacy_prefix_after_rex_invalidates_rex_state() {
+    for legacy in [
+        0x66, 0x67, 0xF0, 0xF2, 0xF3, 0x26, 0x2E, 0x36, 0x3E, 0x64, 0x65,
+    ] {
+        let rex_then_legacy = decode_prefixes(&[0x48, legacy, 0x90]).unwrap();
+        assert_eq!(rex_then_legacy.cursor, 2, "legacy prefix {legacy:02X}");
+        assert!(
+            !rex_then_legacy.has_rex(),
+            "legacy prefix {legacy:02X} after REX.W must invalidate REX"
+        );
+
+        let legacy_then_rex = decode_prefixes(&[legacy, 0x48, 0x90]).unwrap();
+        assert_eq!(legacy_then_rex.cursor, 2, "legacy prefix {legacy:02X}");
+        assert!(
+            legacy_then_rex.rex_w(),
+            "REX.W after legacy prefix {legacy:02X} must remain effective"
+        );
+    }
+}
+
+#[test]
+fn legacy_prefix_order_controls_effective_rex_width() {
+    let rex_then_66 = lift_single(&[0x48, 0x66, 0xB8, 0x34, 0x12]).unwrap();
+    assert_eq!(rex_then_66.bytes_consumed, 5);
+    assert!(matches!(
+        rex_then_66.ops.as_slice(),
+        [SmirOp {
+            kind: OpKind::Mov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                src: SrcOperand::Imm(0x1234),
+                width: OpWidth::W16,
+            },
+            ..
+        }]
+    ));
+
+    let prefix_then_rex =
+        lift_single(&[0x66, 0x48, 0xB8, 0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0]).unwrap();
+    assert_eq!(prefix_then_rex.bytes_consumed, 11);
+    assert!(matches!(
+        prefix_then_rex.ops.as_slice(),
+        [SmirOp {
+            kind: OpKind::Mov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                src: SrcOperand::Imm64(0x1234_5678),
+                width: OpWidth::W64,
+            },
+            ..
+        }]
+    ));
+}
 #[test]
 fn lift_0f38_movbe_load_widths_like_llvm() {
     let mut lifter = X86_64Lifter::strict();
