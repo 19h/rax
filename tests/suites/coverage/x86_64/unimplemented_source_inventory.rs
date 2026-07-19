@@ -9,7 +9,9 @@ use std::path::{Path, PathBuf};
 
 const INVENTORY: &str =
     include_str!("../../../generated/x86_64/inventories/unimplemented_source_sites.txt");
-const SOURCE_ROOTS: &[&str] = &["src/isa/x86_64", "src/smir/lift/x86_64.rs"];
+const SMIR_LIFT_ROOT: &str = "src/smir/lift/x86_64";
+const SMIR_LIFT_TEST_ROOT: &str = "src/smir/lift/x86_64/tests/";
+const SOURCE_ROOTS: &[&str] = &["src/isa/x86_64", SMIR_LIFT_ROOT];
 const DIAGNOSTIC_WORDS: &[&str] = &[
     "unimplemented",
     "not implemented",
@@ -116,26 +118,25 @@ fn source_diagnostics() -> Vec<SourceDiagnostic> {
             files.push(source);
         }
     }
+    files.sort();
 
     let mut diagnostics = Vec::new();
     for file in files {
-        let text = fs::read_to_string(&file)
-            .unwrap_or_else(|error| panic!("failed to read {}: {error}", file.display()));
         let relative = file
             .strip_prefix(root)
             .unwrap()
             .to_string_lossy()
             .replace('\\', "/");
-        let mut in_test_module = false;
+        if relative.starts_with(SMIR_LIFT_TEST_ROOT) {
+            continue;
+        }
+
+        let text = fs::read_to_string(&file)
+            .unwrap_or_else(|error| panic!("failed to read {}: {error}", file.display()));
+        let is_smir_lift_source = relative.starts_with(SMIR_LIFT_ROOT);
         for (line_index, line) in text.lines().enumerate() {
-            if relative == "src/smir/lift/x86_64.rs" && line == "#[cfg(test)]" {
-                in_test_module = true;
-            }
-            let smir_fallback = relative == "src/smir/lift/x86_64.rs"
-                && !in_test_module
-                && line.contains("LiftError::Unsupported");
-            let live = if relative == "src/smir/lift/x86_64.rs" {
-                smir_fallback
+            let live = if is_smir_lift_source {
+                line.contains("LiftError::Unsupported")
             } else {
                 line_has_live_diagnostic(line)
             };
