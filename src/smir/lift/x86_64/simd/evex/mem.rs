@@ -107,6 +107,30 @@ impl X86_64Lifter {
         };
 
         for lane in 0..lanes {
+            let (lane_base, disp) = if address_size_override && lane != 0 {
+                let wrapped = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::Add {
+                        dst: wrapped,
+                        src1: base,
+                        src2: SrcOperand::Imm(i64::from(lane)),
+                        width: OpWidth::W32,
+                        flags: FlagUpdate::None,
+                    },
+                ));
+                (wrapped, 0)
+            } else {
+                (
+                    base,
+                    if address_size_override {
+                        0
+                    } else {
+                        i64::from(lane)
+                    },
+                )
+            };
             let mask_byte = ctx.alloc_vreg();
             let active = ctx.alloc_vreg();
             let data_byte = ctx.alloc_vreg();
@@ -143,23 +167,22 @@ impl X86_64Lifter {
                     sign: SignExtend::Zero,
                 },
             ));
-            let disp = i64::from(lane);
             let addr = match segment_override {
                 Some(0x64) => Address::SegmentRel {
                     segment: VReg::Arch(ArchReg::X86(X86Reg::FsBase)),
-                    base: Some(base),
+                    base: Some(lane_base),
                     index: None,
                     scale: 1,
                     disp,
                 },
                 Some(0x65) => Address::SegmentRel {
                     segment: VReg::Arch(ArchReg::X86(X86Reg::GsBase)),
-                    base: Some(base),
+                    base: Some(lane_base),
                     index: None,
                     scale: 1,
                     disp,
                 },
-                _ => Address::base_off(base, disp),
+                _ => Address::base_off(lane_base, disp),
             };
             ops.push(SmirOp::new(
                 OpId(ops.len() as u16),

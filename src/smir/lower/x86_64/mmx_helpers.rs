@@ -194,8 +194,13 @@ impl X86_64Lowerer {
         self.emit_mmx_stack_move(PhysReg::Mm(sequence.mask_index), 8, true);
 
         for lane in 0..8u8 {
-            let store = &block.ops[idx + usize::from(lane) * 4 + 3];
-            let addr = match &store.kind {
+            let store_offset = if sequence.address_size_32 {
+                4 + usize::from(lane) * 5
+            } else {
+                3 + usize::from(lane) * 4
+            };
+            let store = &block.ops[idx + store_offset];
+            let lifted_addr = match &store.kind {
                 crate::smir::ir::ops::OpKind::PredStore {
                     addr,
                     width: MemWidth::B1,
@@ -208,6 +213,36 @@ impl X86_64Lowerer {
                     });
                 }
             };
+            let helper_addr = if sequence.address_size_32 {
+                Some(match lifted_addr {
+                    Address::BaseOffset { disp_size, .. } => Address::BaseOffset {
+                        base: VReg::Arch(ArchReg::X86(X86Reg::Rdi)),
+                        offset: i64::from(lane),
+                        disp_size: *disp_size,
+                    },
+                    Address::SegmentRel {
+                        segment,
+                        index: None,
+                        scale: 1,
+                        ..
+                    } => Address::SegmentRel {
+                        segment: *segment,
+                        base: Some(VReg::Arch(ArchReg::X86(X86Reg::Rdi))),
+                        index: None,
+                        scale: 1,
+                        disp: i64::from(lane),
+                    },
+                    _ => {
+                        return Err(LowerError::InvalidOperand {
+                            op: "MMX MASKMOVQ addr32".to_string(),
+                            operand: "validated lane must use EDI with optional FS/GS".to_string(),
+                        });
+                    }
+                })
+            } else {
+                None
+            };
+            let addr = helper_addr.as_ref().unwrap_or(lifted_addr);
 
             self.code.emit_u8(0x9C); // pushfq
             // test byte ptr [rsp + saved-flags + mask-slot + lane], 0x80
@@ -219,7 +254,13 @@ impl X86_64Lowerer {
             let inactive = self.emit_jcc_placeholder(X86Cond::E);
             self.code.emit_u8(0x9D); // popfq before a helper call
 
-            self.emit_jit_mem_op(
+            let emit = if sequence.address_size_32 {
+                Self::emit_jit_mem_op_addr32
+            } else {
+                Self::emit_jit_mem_op
+            };
+            emit(
+                self,
                 store.guest_pc,
                 false,
                 None,

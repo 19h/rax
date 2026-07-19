@@ -108,12 +108,39 @@ fn lift_maskmovdqu_covers_registers_implicit_addresses_and_reserved_forms() {
         OpKind::PredStore {
             addr: Address::BaseOffset {
                 base,
-                offset: 15,
+                offset: 0,
                 ..
             },
             ..
         } if base == truncated
     )));
+    for lane in 1..16u8 {
+        let wrapped = addr32
+            .ops
+            .iter()
+            .find_map(|op| match op.kind {
+                OpKind::Add {
+                    dst,
+                    src1,
+                    src2: SrcOperand::Imm(offset),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                } if src1 == truncated && offset == i64::from(lane) => Some(dst),
+                _ => None,
+            })
+            .unwrap_or_else(|| panic!("addr32 MASKMOV lane {lane} must wrap EDI addition"));
+        assert!(addr32.ops.iter().any(|op| matches!(
+            op.kind,
+            OpKind::PredStore {
+                addr: Address::BaseOffset {
+                    base,
+                    offset: 0,
+                    ..
+                },
+                ..
+            } if base == wrapped
+        )));
+    }
 
     let fs = lift_single(&[0x64, 0xC5, 0xF9, 0xF7, 0xC1]).unwrap();
     assert!(fs.ops.iter().any(|op| matches!(

@@ -3261,6 +3261,71 @@ impl X86_64Lowerer {
         sign: SignExtend,
         fault_stack_cleanup: i32,
     ) -> Result<(), LowerError> {
+        self.emit_jit_mem_op_inner(
+            guest_pc,
+            is_load,
+            load_dst,
+            load_stack_dst,
+            store_src_reg,
+            store_src_imm,
+            store_stack_src,
+            addr,
+            mem_width,
+            sign,
+            fault_stack_cleanup,
+            false,
+        )
+    }
+
+    /// Exact 32-bit-address variant used by fused long-mode instructions whose
+    /// lifter represents zero-extended EDI as a virtual SSA value. The helper
+    /// computes the offset modulo 2^32 without materializing that virtual into
+    /// an identity-mapped guest GPR.
+    pub(crate) fn emit_jit_mem_op_addr32(
+        &mut self,
+        guest_pc: u64,
+        is_load: bool,
+        load_dst: Option<VReg>,
+        load_stack_dst: Option<i32>,
+        store_src_reg: Option<VReg>,
+        store_src_imm: Option<i64>,
+        store_stack_src: Option<i32>,
+        addr: &Address,
+        mem_width: MemWidth,
+        sign: SignExtend,
+        fault_stack_cleanup: i32,
+    ) -> Result<(), LowerError> {
+        self.emit_jit_mem_op_inner(
+            guest_pc,
+            is_load,
+            load_dst,
+            load_stack_dst,
+            store_src_reg,
+            store_src_imm,
+            store_stack_src,
+            addr,
+            mem_width,
+            sign,
+            fault_stack_cleanup,
+            true,
+        )
+    }
+
+    fn emit_jit_mem_op_inner(
+        &mut self,
+        guest_pc: u64,
+        is_load: bool,
+        load_dst: Option<VReg>,
+        load_stack_dst: Option<i32>,
+        store_src_reg: Option<VReg>,
+        store_src_imm: Option<i64>,
+        store_stack_src: Option<i32>,
+        addr: &Address,
+        mem_width: MemWidth,
+        sign: SignExtend,
+        fault_stack_cleanup: i32,
+        address_size_32: bool,
+    ) -> Result<(), LowerError> {
         let size: i32 = match mem_width {
             MemWidth::B1 => 1,
             MemWidth::B2 => 2,
@@ -3326,112 +3391,7 @@ impl X86_64Lowerer {
 
         self.emit_helper_call_state(PhysReg::Rax, true, self.preserve_vector_mem_helpers);
 
-        // --- effective guest address into RSI (enc 6), reading base/index from
-        //     the struct (state ptr in RAX) ---
-        match addr {
-            Address::Direct(b) => {
-                let b = self.jit_arch_enc(*b)?;
-                self.emit_struct_mov(PhysReg::Rax, 6, (b as i32) * 8, false);
-            }
-            Address::BaseOffset { base, offset, .. } => {
-                let b = self.jit_arch_enc(*base)?;
-                self.emit_struct_mov(PhysReg::Rax, 6, (b as i32) * 8, false);
-                self.emit_add_rsi_imm(*offset)?;
-            }
-            Address::BaseIndexScale {
-                base,
-                index,
-                scale,
-                disp,
-                ..
-            } => {
-                match base {
-                    Some(b) => {
-                        let b = self.jit_arch_enc(*b)?;
-                        self.emit_struct_mov(PhysReg::Rax, 6, (b as i32) * 8, false);
-                    }
-                    None => {
-                        // xor rsi, rsi  (48 31 F6)
-                        self.code.emit_u8(0x48);
-                        self.code.emit_u8(0x31);
-                        self.code.emit_u8(0xF6);
-                    }
-                }
-                let i = self.jit_arch_enc(*index)?;
-                self.emit_struct_mov(PhysReg::Rax, 7, (i as i32) * 8, false); // rdi = index
-                let sh = (*scale as u32).trailing_zeros() as u8; // 1->0,2->1,4->2,8->3
-                if sh > 0 {
-                    // shl rdi, sh  (48 C1 E7 ib)
-                    self.code.emit_u8(0x48);
-                    self.code.emit_u8(0xC1);
-                    self.code.emit_u8(0xE7);
-                    self.code.emit_u8(sh);
-                }
-                // add rsi, rdi  (48 01 FE)
-                self.code.emit_u8(0x48);
-                self.code.emit_u8(0x01);
-                self.code.emit_u8(0xFE);
-                self.emit_add_rsi_imm(*disp as i64)?;
-            }
-            Address::Absolute(a) => self.emit_movabs(6, *a),
-            Address::PcRel { offset, base, .. } => {
-                let b = base.ok_or_else(|| LowerError::UnsupportedOp {
-                    op: "jit-mem: pcrel without base".to_string(),
-                })?;
-                self.emit_movabs(6, b.wrapping_add(*offset as u64));
-            }
-            Address::SegmentRel {
-                segment,
-                base,
-                index,
-                scale,
-                disp,
-            } => {
-                // [segment_base + base + index*scale + disp]. The segment base is
-                // not a GPR, so it is read from a dedicated GuestRegs slot
-                // (fs_base / gs_base) rather than a gpr[] slot.
-                let seg_off: i32 = match segment {
-                    VReg::Arch(ArchReg::X86(X86Reg::FsBase)) => X86_GUEST_FS_BASE_OFFSET,
-                    VReg::Arch(ArchReg::X86(X86Reg::GsBase)) => X86_GUEST_GS_BASE_OFFSET,
-                    _ => {
-                        return Err(LowerError::UnsupportedOp {
-                            op: "jit-mem: SegmentRel with non-FS/GS segment".to_string(),
-                        });
-                    }
-                };
-                self.emit_struct_mov(PhysReg::Rax, 6, seg_off, false); // rsi = seg base
-                if let Some(b) = base {
-                    let b = self.jit_arch_enc(*b)?;
-                    self.emit_struct_mov(PhysReg::Rax, 7, (b as i32) * 8, false); // rdi = base
-                    // add rsi, rdi  (48 01 FE)
-                    self.code.emit_u8(0x48);
-                    self.code.emit_u8(0x01);
-                    self.code.emit_u8(0xFE);
-                }
-                if let Some(idx) = index {
-                    let i = self.jit_arch_enc(*idx)?;
-                    self.emit_struct_mov(PhysReg::Rax, 7, (i as i32) * 8, false); // rdi = index
-                    let sh = (*scale as u32).trailing_zeros() as u8;
-                    if sh > 0 {
-                        // shl rdi, sh  (48 C1 E7 ib)
-                        self.code.emit_u8(0x48);
-                        self.code.emit_u8(0xC1);
-                        self.code.emit_u8(0xE7);
-                        self.code.emit_u8(sh);
-                    }
-                    // add rsi, rdi  (48 01 FE)
-                    self.code.emit_u8(0x48);
-                    self.code.emit_u8(0x01);
-                    self.code.emit_u8(0xFE);
-                }
-                self.emit_add_rsi_imm(*disp)?;
-            }
-            _ => {
-                return Err(LowerError::UnsupportedOp {
-                    op: "jit-mem: unsupported address form".to_string(),
-                });
-            }
-        }
+        self.emit_jit_mem_effective_address(addr, address_size_32)?;
 
         // --- args + call ---
         if is_load {

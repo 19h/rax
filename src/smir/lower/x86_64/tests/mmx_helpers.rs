@@ -456,3 +456,51 @@ fn mmx_maskmovq_emits_ordered_predicated_byte_helpers_and_fault_cleanup() {
         );
     }
 }
+
+#[test]
+#[cfg(feature = "smir-jit")]
+fn mmx_maskmovq_addr32_emits_wrapping_edi_before_optional_segment_base() {
+    for level in [
+        crate::smir::optimize::OptLevel::O0,
+        crate::smir::optimize::OptLevel::O1,
+        crate::smir::optimize::OptLevel::O2,
+    ] {
+        let addr32 = lower_lifted_mmx_memory(&[0x67, 0x0F, 0xF7, 0xC1], level);
+        assert!(
+            addr32
+                .windows(2)
+                .filter(|window| *window == [0x89, 0xF6])
+                .count()
+                >= 8,
+            "each addr32 MASKMOVQ lane must zero-extend EDI in ESI after {level:?}: {addr32:02X?}"
+        );
+        assert!(
+            addr32.windows(3).any(|window| window == [0x83, 0xC6, 0x07]),
+            "addr32 MASKMOVQ lane 7 must add modulo 2^32 after {level:?}: {addr32:02X?}"
+        );
+
+        let fs_addr32 = lower_lifted_mmx_memory(&[0x64, 0x67, 0x0F, 0xF7, 0xC1], level);
+        assert!(
+            fs_addr32
+                .windows(2)
+                .filter(|window| *window == [0x89, 0xFF])
+                .count()
+                >= 8,
+            "each FS addr32 lane must zero-extend EDI after {level:?}: {fs_addr32:02X?}"
+        );
+        assert!(
+            fs_addr32
+                .windows(3)
+                .any(|window| window == [0x83, 0xC7, 0x07]),
+            "FS addr32 lane 7 must wrap EDI before segmentation after {level:?}: {fs_addr32:02X?}"
+        );
+        assert!(
+            fs_addr32
+                .windows(3)
+                .filter(|window| *window == [0x48, 0x01, 0xFE])
+                .count()
+                >= 8,
+            "each FS addr32 lane must add its wrapped offset to FS base after {level:?}: {fs_addr32:02X?}"
+        );
+    }
+}

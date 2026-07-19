@@ -36,6 +36,7 @@ pub(crate) struct X86MmxMaskmovqSequence {
     pub(crate) marker_offset: usize,
     pub(crate) data_index: u8,
     pub(crate) mask_index: u8,
+    pub(crate) address_size_32: bool,
 }
 
 fn mm_index(reg: VReg) -> Option<u8> {
@@ -228,21 +229,24 @@ enum X86MmxMaskmovqAddressKind {
 
 fn x86_mmx_maskmovq_lane_address_kind(
     addr: &Address,
-    lane: u8,
+    expected_base: VReg,
+    expected_disp: i64,
 ) -> Option<X86MmxMaskmovqAddressKind> {
     match addr {
         Address::BaseOffset {
-            base: VReg::Arch(ArchReg::X86(X86Reg::Rdi)),
+            base,
             offset,
             disp_size: DispSize::Auto,
-        } if *offset == i64::from(lane) => Some(X86MmxMaskmovqAddressKind::Rdi),
+        } if *base == expected_base && *offset == expected_disp => {
+            Some(X86MmxMaskmovqAddressKind::Rdi)
+        }
         Address::SegmentRel {
             segment: VReg::Arch(ArchReg::X86(segment @ (X86Reg::FsBase | X86Reg::GsBase))),
-            base: Some(VReg::Arch(ArchReg::X86(X86Reg::Rdi))),
+            base: Some(base),
             index: None,
             scale: 1,
             disp,
-        } if *disp == i64::from(lane) => Some(match segment {
+        } if *base == expected_base && *disp == expected_disp => Some(match segment {
             X86Reg::FsBase => X86MmxMaskmovqAddressKind::FsRdi,
             X86Reg::GsBase => X86MmxMaskmovqAddressKind::GsRdi,
             _ => return None,
@@ -255,9 +259,10 @@ fn x86_mmx_maskmovq_lane_address_kind(
 /// lifter. Every temporary is single-definition/single-use, every active lane
 /// performs one ordered byte store, and the architectural MMX-state marker is
 /// last so a later fault preserves the instruction-boundary register state.
-/// Address-size-overridden forms deliberately remain ineligible because their
-/// zero-extended EDI base is a virtual value that the identity JIT cannot
-/// materialize without clobbering guest state.
+/// An optional leading `And(RDI, 0xFFFF_FFFF)` plus per-lane W32 additions is
+/// consumed as the exact 32-bit address-size form. The lowerer reproduces those
+/// modulo-2^32 addresses in helper scratch state rather than materializing any
+/// virtual destination through the identity register map.
 pub(crate) fn x86_jit_mmx_maskmovq_sequence(
     block: &SmirBlock,
     index: usize,
@@ -269,16 +274,64 @@ pub(crate) fn x86_jit_mmx_maskmovq_sequence(
         return None;
     }
 
-    let guest_pc = block.ops.get(index)?.guest_pc;
+    let first = block.ops.get(index)?;
+    let guest_pc = first.guest_pc;
+    let (lane_ops_offset, address_size_32, address_base) = match &first.kind {
+        OpKind::And {
+            dst: truncated @ VReg::Virtual(_),
+            src1: VReg::Arch(ArchReg::X86(X86Reg::Rdi)),
+            src2: SrcOperand::Imm(0xFFFF_FFFF),
+            width: OpWidth::W64,
+            flags: FlagUpdate::None,
+        } if first.x86_hint.is_none()
+            && virtual_definitions.get(truncated) == Some(&1)
+            && virtual_uses.get(truncated) == Some(&8) =>
+        {
+            (1, true, *truncated)
+        }
+        _ => (0, false, VReg::Arch(ArchReg::X86(X86Reg::Rdi))),
+    };
     let mut data_index = None;
     let mut mask_index = None;
     let mut address_kind = None;
+    let mut cursor = index + lane_ops_offset;
     for lane in 0..8u8 {
-        let lane_start = index + usize::from(lane) * 4;
-        let mask_extract = block.ops.get(lane_start)?;
-        let shift = block.ops.get(lane_start + 1)?;
-        let data_extract = block.ops.get(lane_start + 2)?;
-        let store = block.ops.get(lane_start + 3)?;
+        let (lane_address_base, lane_disp) = if address_size_32 && lane != 0 {
+            let wrap = block.ops.get(cursor)?;
+            let wrapped = match &wrap.kind {
+                OpKind::Add {
+                    dst: temporary @ VReg::Virtual(_),
+                    src1,
+                    src2: SrcOperand::Imm(offset),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                } if *src1 == address_base
+                    && *offset == i64::from(lane)
+                    && wrap.guest_pc == guest_pc
+                    && wrap.x86_hint.is_none() =>
+                {
+                    *temporary
+                }
+                _ => return None,
+            };
+            if virtual_definitions.get(&wrapped) != Some(&1)
+                || virtual_uses.get(&wrapped) != Some(&1)
+            {
+                return None;
+            }
+            cursor += 1;
+            (wrapped, 0)
+        } else {
+            (
+                address_base,
+                if address_size_32 { 0 } else { i64::from(lane) },
+            )
+        };
+
+        let mask_extract = block.ops.get(cursor)?;
+        let shift = block.ops.get(cursor + 1)?;
+        let data_extract = block.ops.get(cursor + 2)?;
+        let store = block.ops.get(cursor + 3)?;
         if [mask_extract, shift, data_extract, store]
             .iter()
             .any(|op| op.guest_pc != guest_pc || op.x86_hint.is_some())
@@ -323,7 +376,7 @@ pub(crate) fn x86_jit_mmx_maskmovq_sequence(
                 addr,
                 width: MemWidth::B1,
             } if *src == data_byte && *cond == active => {
-                x86_mmx_maskmovq_lane_address_kind(addr, lane)?
+                x86_mmx_maskmovq_lane_address_kind(addr, lane_address_base, lane_disp)?
             }
             _ => return None,
         };
@@ -349,9 +402,10 @@ pub(crate) fn x86_jit_mmx_maskmovq_sequence(
             Some(kind) if kind == actual_address_kind => {}
             Some(_) => return None,
         }
+        cursor += 4;
     }
 
-    let marker_offset = 32;
+    let marker_offset = cursor - index;
     let marker = block.ops.get(index + marker_offset)?;
     if marker.guest_pc != guest_pc || !is_enter_mmx_marker(marker) {
         return None;
@@ -361,6 +415,7 @@ pub(crate) fn x86_jit_mmx_maskmovq_sequence(
         marker_offset,
         data_index: data_index?,
         mask_index: mask_index?,
+        address_size_32,
     })
 }
 

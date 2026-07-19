@@ -8,11 +8,47 @@ fn maskmovq_function(
     data_index: u8,
     mask_index: u8,
     segment: Option<X86Reg>,
+    address_size_32: bool,
 ) -> crate::smir::ir::SmirFunction {
     let data = VReg::Arch(ArchReg::X86(X86Reg::Mm(data_index)));
     let mask = VReg::Arch(ArchReg::X86(X86Reg::Mm(mask_index)));
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    let address_base = if address_size_32 {
+        let truncated = VReg::Virtual(VirtualId(99));
+        builder.push_op(
+            0x1000,
+            OpKind::And {
+                dst: truncated,
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Rdi)),
+                src2: SrcOperand::Imm(0xFFFF_FFFF),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            },
+        );
+        truncated
+    } else {
+        VReg::Arch(ArchReg::X86(X86Reg::Rdi))
+    };
     for lane in 0..8u8 {
+        let (lane_address_base, disp) = if address_size_32 && lane != 0 {
+            let wrapped = VReg::Virtual(VirtualId(100 + u32::from(lane)));
+            builder.push_op(
+                0x1000,
+                OpKind::Add {
+                    dst: wrapped,
+                    src1: address_base,
+                    src2: SrcOperand::Imm(i64::from(lane)),
+                    width: OpWidth::W32,
+                    flags: FlagUpdate::None,
+                },
+            );
+            (wrapped, 0)
+        } else {
+            (
+                address_base,
+                if address_size_32 { 0 } else { i64::from(lane) },
+            )
+        };
         let mask_byte = VReg::Virtual(VirtualId(u32::from(lane) * 3));
         let active = VReg::Virtual(VirtualId(u32::from(lane) * 3 + 1));
         let data_byte = VReg::Virtual(VirtualId(u32::from(lane) * 3 + 2));
@@ -49,12 +85,12 @@ fn maskmovq_function(
         let addr = match segment {
             Some(segment) => Address::SegmentRel {
                 segment: VReg::Arch(ArchReg::X86(segment)),
-                base: Some(VReg::Arch(ArchReg::X86(X86Reg::Rdi))),
+                base: Some(lane_address_base),
                 index: None,
                 scale: 1,
-                disp: i64::from(lane),
+                disp,
             },
-            None => Address::base_off(VReg::Arch(ArchReg::X86(X86Reg::Rdi)), i64::from(lane)),
+            None => Address::base_off(lane_address_base, disp),
         };
         builder.push_op(
             0x1000,
@@ -127,12 +163,13 @@ fn x86_mmx_maskmovq_gate_accepts_only_exact_helper_backed_sequence() {
         (7, 0, Some(X86Reg::FsBase)),
         (3, 3, Some(X86Reg::GsBase)),
     ] {
-        let function = maskmovq_function(data_index, mask_index, segment);
+        let function = maskmovq_function(data_index, mask_index, segment, false);
         let exact = sequence(&function, true).expect("exact MASKMOVQ sequence");
         assert_eq!(exact.consumed, 33);
         assert_eq!(exact.marker_offset, 32);
         assert_eq!(exact.data_index, data_index);
         assert_eq!(exact.mask_index, mask_index);
+        assert!(!exact.address_size_32);
         assert!(is_native_clobber_safe_excluding(&function, &excluded, true));
         assert!(!is_native_clobber_safe_excluding(
             &function, &excluded, false
@@ -145,8 +182,91 @@ fn x86_mmx_maskmovq_gate_accepts_only_exact_helper_backed_sequence() {
 }
 
 #[test]
+fn x86_mmx_maskmovq_gate_accepts_exact_address_size_override_sequence() {
+    let excluded = std::collections::HashMap::new();
+    for segment in [None, Some(X86Reg::FsBase), Some(X86Reg::GsBase)] {
+        let function = maskmovq_function(7, 2, segment, true);
+        let exact = sequence(&function, true).expect("exact addr32 MASKMOVQ sequence");
+        assert_eq!(exact.consumed, 41);
+        assert_eq!(exact.marker_offset, 40);
+        assert_eq!(exact.data_index, 7);
+        assert_eq!(exact.mask_index, 2);
+        assert!(exact.address_size_32);
+        assert!(is_native_clobber_safe_excluding(&function, &excluded, true));
+        assert!(!is_native_clobber_safe_excluding(
+            &function, &excluded, false
+        ));
+        assert!(x86_native_mmx_pairs_valid_excluding(&function, &excluded));
+        assert!(uses_x86_native_mmx_excluding(&function, &excluded));
+        assert!(!uses_x86_native_vectors_excluding(&function, &excluded));
+    }
+}
+
+#[test]
+fn x86_mmx_maskmovq_gate_rejects_malformed_address_size_override_state() {
+    let exact = maskmovq_function(7, 2, Some(X86Reg::FsBase), true);
+    let mut malformed = Vec::new();
+
+    let mut wrong_mask = exact.clone();
+    if let OpKind::And { src2, .. } = &mut wrong_mask.blocks[0].ops[0].kind {
+        *src2 = SrcOperand::Imm(0xFFFF_FFFE);
+    }
+    malformed.push(wrong_mask);
+
+    let mut wrong_width = exact.clone();
+    if let OpKind::And { width, .. } = &mut wrong_width.blocks[0].ops[0].kind {
+        *width = OpWidth::W32;
+    }
+    malformed.push(wrong_width);
+
+    let mut flagful = exact.clone();
+    if let OpKind::And { flags, .. } = &mut flagful.blocks[0].ops[0].kind {
+        *flags = FlagUpdate::All;
+    }
+    malformed.push(flagful);
+
+    let mut hinted = exact.clone();
+    hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::VecAlign(X86VecAlign::Unaligned));
+    malformed.push(hinted);
+
+    let mut mixed_base = exact.clone();
+    if let OpKind::PredStore { addr, .. } = &mut mixed_base.blocks[0].ops[4].kind {
+        *addr = Address::SegmentRel {
+            segment: VReg::Arch(ArchReg::X86(X86Reg::FsBase)),
+            base: Some(VReg::Arch(ArchReg::X86(X86Reg::Rdi))),
+            index: None,
+            scale: 1,
+            disp: 0,
+        };
+    }
+    malformed.push(mixed_base);
+
+    let mut reused_truncated = exact.clone();
+    if let OpKind::VExtractLane { vec, .. } = &mut reused_truncated.blocks[0].ops[1].kind {
+        *vec = VReg::Virtual(VirtualId(99));
+    }
+    malformed.push(reused_truncated);
+
+    let mut wrong_lane_wrap = exact.clone();
+    if let OpKind::Add { src2, .. } = &mut wrong_lane_wrap.blocks[0].ops[5].kind {
+        *src2 = SrcOperand::Imm(2);
+    }
+    malformed.push(wrong_lane_wrap);
+
+    let mut wrong_wrap_width = exact.clone();
+    if let OpKind::Add { width, .. } = &mut wrong_wrap_width.blocks[0].ops[5].kind {
+        *width = OpWidth::W64;
+    }
+    malformed.push(wrong_wrap_width);
+
+    for function in malformed {
+        assert_rejected(&function);
+    }
+}
+
+#[test]
 fn x86_mmx_maskmovq_gate_rejects_malformed_lane_state_and_address_shapes() {
-    let exact = maskmovq_function(0, 1, None);
+    let exact = maskmovq_function(0, 1, None, false);
     let mut malformed = Vec::new();
 
     let mut wrong_data_class = exact.clone();

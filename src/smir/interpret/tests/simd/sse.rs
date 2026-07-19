@@ -5,6 +5,32 @@ use crate::smir::interpret::tests::*;
 use crate::smir::interpret::*;
 
 #[test]
+fn lifted_maskmovq_addr32_wraps_each_lane_before_fs_segmentation() {
+    let mut ctx = SmirContext::new_x86_64();
+    let rdi = VReg::Arch(ArchReg::X86(X86Reg::Rdi));
+    ctx.write_vreg(rdi, 0xDEAD_BEEF_FFFF_FFFF);
+    if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+        x86.fs_base = 0x2000;
+        x86.mm[0] = u64::from_le_bytes([0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88]);
+        x86.mm[1] = u64::from_le_bytes([0, 0x80, 0, 0, 0, 0, 0, 0]);
+        x86.x87.tag_word = 0xFFFF;
+    }
+    let mut memory = FlatMemory::new(0x3000);
+    memory.write(0x2000, &[0xA0]).unwrap();
+
+    let result = execute_lifted_x86(&[0x64, 0x67, 0x0F, 0xF7, 0xC1], &mut ctx, &mut memory);
+
+    assert!(matches!(result, BlockResult::Exit(ExitReason::Halt)));
+    let mut stored = [0u8; 1];
+    memory.read(0x2000, &mut stored).unwrap();
+    assert_eq!(stored, [0x22]);
+    assert_eq!(ctx.read_vreg(rdi), 0xDEAD_BEEF_FFFF_FFFF);
+    if let ArchRegState::X86_64(x86) = &ctx.arch_regs {
+        assert_eq!(x86.x87.tag_word, 0);
+    }
+}
+
+#[test]
 fn interprets_vshufflebitqm_writes_k_mask() {
     let src = VReg::Arch(ArchReg::X86(X86Reg::Zmm(2)));
     let indices = VReg::Arch(ArchReg::X86(X86Reg::Zmm(3)));

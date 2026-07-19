@@ -7,12 +7,18 @@ use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::simd_native;
 
 #[inline(always)]
-fn implicit_rdi_addr(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u64 {
-    if ctx.address_size_override && vcpu.sregs.cs.l {
-        vcpu.regs.rdi & 0xFFFF_FFFF
+fn implicit_rdi_addr(vcpu: &X86_64Vcpu, ctx: &InsnContext, lane: u32) -> u64 {
+    let offset = if ctx.address_size_override && vcpu.sregs.cs.l {
+        u64::from((vcpu.regs.rdi as u32).wrapping_add(lane))
     } else {
-        vcpu.regs.rdi
-    }
+        vcpu.regs.rdi.wrapping_add(u64::from(lane))
+    };
+    let segment_base = match ctx.segment_override {
+        Some(0x64) => vcpu.sregs.fs.base,
+        Some(0x65) => vcpu.sregs.gs.base,
+        _ => 0,
+    };
+    segment_base.wrapping_add(offset)
 }
 
 // =============================================================================
@@ -1795,8 +1801,6 @@ pub fn maskmovdqu(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
 
     let xmm_src = reg as usize;
     let xmm_mask = rm as usize;
-    let addr = implicit_rdi_addr(vcpu, ctx);
-
     let src_lo = vcpu.regs.xmm[xmm_src][0];
     let src_hi = vcpu.regs.xmm[xmm_src][1];
     let mask_lo = vcpu.regs.xmm[xmm_mask][0];
@@ -1806,13 +1810,13 @@ pub fn maskmovdqu(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option
     for i in 0..8 {
         if (mask_lo >> (i * 8 + 7)) & 1 != 0 {
             let byte = ((src_lo >> (i * 8)) & 0xFF) as u64;
-            vcpu.write_mem(addr + i as u64, byte, 1)?;
+            vcpu.write_mem(implicit_rdi_addr(vcpu, ctx, i), byte, 1)?;
         }
     }
     for i in 0..8 {
         if (mask_hi >> (i * 8 + 7)) & 1 != 0 {
             let byte = ((src_hi >> (i * 8)) & 0xFF) as u64;
-            vcpu.write_mem(addr + 8 + i as u64, byte, 1)?;
+            vcpu.write_mem(implicit_rdi_addr(vcpu, ctx, 8 + i), byte, 1)?;
         }
     }
 
@@ -1829,18 +1833,17 @@ fn maskmovq(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
 
     let mm_src = (reg & 0x7) as usize;
     let mm_mask = (rm & 0x7) as usize;
-    let addr = implicit_rdi_addr(vcpu, ctx);
-
     let src = vcpu.regs.mm[mm_src];
     let mask = vcpu.regs.mm[mm_mask];
 
     for i in 0..8 {
         if (mask >> (i * 8 + 7)) & 1 != 0 {
             let byte = ((src >> (i * 8)) & 0xFF) as u64;
-            vcpu.write_mem(addr + i as u64, byte, 1)?;
+            vcpu.write_mem(implicit_rdi_addr(vcpu, ctx, i), byte, 1)?;
         }
     }
 
+    vcpu.fpu.tag_word = 0;
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

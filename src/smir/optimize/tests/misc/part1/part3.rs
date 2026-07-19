@@ -6581,14 +6581,13 @@ fn optimizer_preserves_vex_scalar_merge_zeroing_and_load_fault_boundary() {
         .expect("optimizer removed MASKMOVDQU EDI truncation");
     assert!(ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::PredStore {
-            addr: Address::BaseOffset {
-                base,
-                offset: 15,
-                ..
-            },
+        OpKind::Add {
+            src1,
+            src2: SrcOperand::Imm(15),
+            width: OpWidth::W32,
+            flags: FlagUpdate::None,
             ..
-        } if base == truncated
+        } if src1 == truncated
     )));
 
     for (bytes, loads, stores) in [

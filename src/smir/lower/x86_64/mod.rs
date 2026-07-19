@@ -48,6 +48,8 @@ mod ops;
 pub use emitter::*;
 mod jit;
 pub use jit::*;
+mod jit_memory_address;
+pub use jit_memory_address::*;
 mod memory;
 pub use memory::*;
 mod mmx_helpers;
