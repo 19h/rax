@@ -807,3 +807,27 @@ fn test_movdir64b_register_source_raises_ud() {
         _ => {}
     }
 }
+
+// F2/F3 conflict with MOVDIR64B's mandatory 66 refining prefix. A legacy
+// REX2 prefix is likewise not the APX-EVEX MOVDIR64B encoding. All must #UD.
+#[test]
+fn test_movdir64b_rejects_refining_prefix_conflicts_and_legacy_rex2() {
+    for instruction in [
+        &[0xf2, 0x66, 0x0f, 0x38, 0xf8, 0x08][..],
+        &[0xf3, 0x66, 0x0f, 0x38, 0xf8, 0x08][..],
+        &[0x66, 0xd5, 0x00, 0x0f, 0x38, 0xf8, 0x08][..],
+    ] {
+        let mut code = instruction.to_vec();
+        code.push(0xf4);
+        let (mut vcpu, _mem) = setup_vm_no_idt(&code, None);
+        vcpu.set_apx_enabled(true);
+
+        let error = vcpu
+            .run()
+            .expect_err("invalid MOVDIR64B encoding must inject #UD");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "expected #UD delivery failure for {instruction:02x?}, got {error}",
+        );
+    }
+}

@@ -45,10 +45,11 @@ pub fn movdiri(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
 
 /// MOVDIR64B r16/r32/r64, m512 (66 0F 38 F8 /r)
 pub fn movdir64b(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    if !ctx.operand_size_override {
+    if !ctx.operand_size_override || ctx.rep_prefix.is_some() || ctx.rex2.is_some() {
         // MOVDIR64B (66 0F 38 F8) requires the 66 prefix. Without it this is not a
-        // valid MOVDIR64B encoding -> #UD. Inject the fault instead of aborting the
-        // VM; don't advance RIP (exception delivery sets RIP to the handler).
+        // valid MOVDIR64B encoding; F2/F3 refining-prefix conflicts and legacy
+        // REX2 forms are also undefined. Inject #UD instead of aborting the VM;
+        // don't advance RIP (exception delivery sets RIP to the handler).
         vcpu.inject_exception(6, None)?; // #UD = vector 6
         return Ok(None);
     }

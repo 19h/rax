@@ -44,7 +44,6 @@ impl X86_64Lifter {
             cursor: prefix.cursor + 1,
             ..prefix.clone()
         };
-
         match opcode3 {
             0x00 => self.lift_sse_pshufb(after_opcode, &prefix3, pc, ctx),
             0x01..=0x03 | 0x05..=0x07 => {
@@ -76,6 +75,7 @@ impl X86_64Lifter {
                 self.lift_crc32_0f38(opcode3, after_opcode, &prefix3, pc, ctx)
             }
             0xF0 | 0xF1 => self.lift_movbe_0f38(opcode3, after_opcode, &prefix3, pc, ctx),
+            0xF8 => self.lift_movdir64b_0f38(after_opcode, &prefix3, pc, ctx),
             0xF9 => self.lift_movdiri_0f38(after_opcode, &prefix3, pc, ctx),
             0xFC => self.lift_rao_int_0f38(after_opcode, &prefix3, pc, ctx),
             _ => {

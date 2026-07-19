@@ -6,6 +6,8 @@ mod control_flow;
 pub use control_flow::*;
 mod data_movement;
 pub use data_movement::*;
+mod movdir;
+pub use movdir::*;
 mod group11;
 pub use group11::*;
 mod group5;

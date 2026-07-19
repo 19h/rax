@@ -16,6 +16,8 @@ mod decode;
 #[cfg(test)]
 mod evex;
 #[cfg(test)]
+mod movdir64b;
+#[cfg(test)]
 mod movdiri;
 #[cfg(test)]
 mod scalar;

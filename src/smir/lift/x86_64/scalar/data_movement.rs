@@ -169,53 +169,6 @@ impl X86_64Lifter {
         ))
     }
 
-    /// Lift legacy MOVDIRI m32,r32 / m64,r64 (0F 38 F9 /r).
-    pub(crate) fn lift_movdiri_0f38(
-        &self,
-        bytes: &[u8],
-        prefix: &X86Prefix,
-        pc: u64,
-        ctx: &mut LiftContext,
-    ) -> Result<LiftResult, LiftError> {
-        // 66 selects no defined 16-bit form. F2/F3 are ignorable legacy
-        // prefixes, while LOCK and a legacy REX2 form are not valid encodings.
-        if prefix.lock || prefix.operand_size_override || prefix.rex2.is_some() {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: bytes.to_vec(),
-            });
-        }
-
-        let modrm = decode_modrm(bytes, prefix, pc)?;
-        if !modrm.is_memory {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
-            });
-        }
-
-        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
-        let (addr, mut ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Store {
-                src: self.gpr(modrm.reg),
-                addr,
-                width: if prefix.rex_w() {
-                    MemWidth::B8
-                } else {
-                    MemWidth::B4
-                },
-            },
-        ));
-
-        Ok(LiftResult::fallthrough(
-            ops,
-            prefix.cursor + modrm.bytes_consumed,
-        ))
-    }
-
     pub(crate) fn lift_movbe_0f38(
         &self,
         opcode: u8,
