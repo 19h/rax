@@ -180,8 +180,9 @@ pub(crate) fn decode_modrm(
             x86_addr.base = Some(base);
         }
     } else if rm_field == 5 && mod_bits == 0 {
-        // In the default 64-bit address size this is RIP-relative. Under a
-        // 67h override the same encoding is a zero-extended absolute disp32.
+        // In 64-bit mode this encoding is RIP-relative independently of the
+        // address-size prefix. A 67h override truncates the computed
+        // RIP+disp32 offset to 32 bits; it does not select absolute disp32.
         if bytes.len() < 5 {
             return Err(LiftError::Incomplete {
                 addr,
@@ -192,7 +193,7 @@ pub(crate) fn decode_modrm(
         let disp = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]) as i64;
         consumed += 4;
         x86_addr.disp = disp;
-        x86_addr.rip_relative = !prefix.address_size_override;
+        x86_addr.rip_relative = true;
         x86_addr.disp_size = DispSize::Disp32;
     } else {
         // Regular register indirect

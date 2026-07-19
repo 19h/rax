@@ -4,6 +4,8 @@ use super::*;
 
 // ---- split submodules ----
 #[cfg(test)]
+mod addr32;
+#[cfg(test)]
 mod fp;
 #[cfg(test)]
 mod hex;

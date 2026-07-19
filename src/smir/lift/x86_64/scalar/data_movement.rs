@@ -359,7 +359,7 @@ impl X86_64Lifter {
                 // POP evaluates an ESP-based memory destination after the
                 // architectural stack increment. Substitute the incremented
                 // value before materializing the modulo-2^32 address.
-                self.x86_addr32_to_smir(x86_addr, ctx, Some((4, incremented_rsp)))
+                self.x86_addr32_to_smir(x86_addr, next_pc, ctx, Some((4, incremented_rsp)))
             } else {
                 self.x86_addr_to_smir(x86_addr, next_pc, ctx)
             };

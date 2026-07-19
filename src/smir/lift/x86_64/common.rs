@@ -205,29 +205,34 @@ impl X86_64Lifter {
 
     /// Materialize a 32-bit effective address selected by a `67h` override in
     /// 64-bit mode. Base, index, scaling, and displacement are evaluated
-    /// modulo 2^32; the resulting offset is zero-extended to 64 bits before an
-    /// optional FS/GS segment base is added. Flag-neutral integer operations
+    /// modulo 2^32; RIP-relative forms first add the next RIP and displacement
+    /// at that width. The resulting offset is zero-extended to 64 bits before
+    /// an optional FS/GS segment base is added. Flag-neutral integer operations
     /// make this width rule explicit to interpreters and native lowerers.
     pub(crate) fn x86_addr32_to_smir(
         &self,
         x86_addr: &X86Address,
+        next_rip: u64,
         ctx: &mut LiftContext,
         gpr_override: Option<(u8, VReg)>,
     ) -> (Address, Vec<SmirOp>) {
         debug_assert_eq!(x86_addr.address_width, OpWidth::W32);
-        debug_assert!(!x86_addr.rip_relative);
 
         let mut pre_ops = Vec::new();
         let pc = ctx.guest_pc;
-        let displacement = (x86_addr.disp as u64 & u32::MAX as u64) as i64;
+        let displacement = i64::from(if x86_addr.rip_relative {
+            next_rip.wrapping_add_signed(x86_addr.disp) as u32
+        } else {
+            x86_addr.disp as u32
+        });
         let segment = x86_addr.segment.map(|seg| VReg::Arch(ArchReg::X86(seg)));
         let gpr = |index| match gpr_override {
             Some((from, replacement)) if index == from => replacement,
             _ => self.gpr(index),
         };
 
-        // A displacement-only address has no arithmetic operands. Normalize
-        // its signed decoder representation directly to the architectural
+        // A displacement-only address has no dynamic arithmetic operands.
+        // Normalize either disp32 or EIP+disp32 directly to the architectural
         // zero-extended 32-bit offset.
         if x86_addr.base.is_none() && x86_addr.index.is_none() {
             return match segment {
@@ -360,7 +365,7 @@ impl X86_64Lifter {
         ctx: &mut LiftContext,
     ) -> (Address, Vec<SmirOp>) {
         if x86_addr.address_width == OpWidth::W32 {
-            return self.x86_addr32_to_smir(x86_addr, ctx, None);
+            return self.x86_addr32_to_smir(x86_addr, next_rip, ctx, None);
         }
 
         let mut pre_ops = Vec::new();

@@ -4,6 +4,8 @@ use super::*;
 
 // ---- split test submodules ----
 #[cfg(test)]
+mod addr32;
+#[cfg(test)]
 mod apx;
 #[cfg(test)]
 mod callout;
