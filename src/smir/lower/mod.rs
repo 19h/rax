@@ -110,6 +110,14 @@ pub const X86_GUEST_MMX_ACTIVE_OFFSET: i32 = X86_GUEST_MM_OFFSET + 8 * 8;
 /// MMX instructions set this to zero at their precise SMIR `EnterMmx` point;
 /// the host `EMMS` executed by the trampoline is host-state cleanup only.
 pub const X86_GUEST_X87_TAG_WORD_OFFSET: i32 = X86_GUEST_MMX_ACTIVE_OFFSET + 8;
+/// Byte offset of the deterministic guest-CPUID evaluator function pointer.
+pub const X86_GUEST_CPUID_FN_OFFSET: i32 = X86_GUEST_X87_TAG_WORD_OFFSET + 8;
+/// Byte offset of the guest Xeon Phi AVX-512 enumeration policy.
+pub const X86_GUEST_CPUID_XEON_PHI_AVX512_OFFSET: i32 = X86_GUEST_CPUID_FN_OFFSET + 8;
+/// Byte offset of the guest AVX512_VP2INTERSECT enumeration policy.
+pub const X86_GUEST_CPUID_VP2INTERSECT_OFFSET: i32 = X86_GUEST_CPUID_XEON_PHI_AVX512_OFFSET + 8;
+/// Byte offset of the guest SSE4A enumeration policy.
+pub const X86_GUEST_CPUID_SSE4A_OFFSET: i32 = X86_GUEST_CPUID_VP2INTERSECT_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

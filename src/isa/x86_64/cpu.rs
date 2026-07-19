@@ -3728,6 +3728,12 @@ use jit_call::{
     jit_call_enabled, jit_call_target_supported, jit_call_target_uses_mem_helper, rax_jit_call,
 };
 
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_cpuid.rs"]
+mod jit_cpuid;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_cpuid::rax_jit_cpuid;
+
 /// RAX_JIT_BAIL=1 logs why each hot region is rejected by the JIT (diagnostic
 /// for expanding the whitelist toward the highest-frequency bail reasons).
 #[cfg(all(
@@ -4665,6 +4671,8 @@ impl X86_64Vcpu {
             lowerer.set_jit_fault_deopt_guards(true);
             #[cfg(target_arch = "x86_64")]
             lowerer.set_preserve_mmx_helpers(uses_mmx);
+            #[cfg(target_arch = "x86_64")]
+            lowerer.set_preserve_vector_system_helpers(uses_vector);
             lowerer.set_native_exits(exits);
             lowerer.set_native_exit_edges(edge_exits);
             #[cfg(target_arch = "x86_64")]
@@ -4809,6 +4817,9 @@ impl X86_64Vcpu {
         // Lift-through-calls channel (RAX_JIT_CALL): a guest CALL in the region
         // calls out here to run its callee in the interpreter, then resumes.
         gr.call_fn = rax_jit_call as usize as u64;
+        // Deterministic guest CPUID evaluator. The lowered block separately
+        // executes a fixed host CPUID only as a serialization barrier.
+        gr.cpuid_fn = rax_jit_cpuid as usize as u64;
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
@@ -4819,6 +4830,9 @@ impl X86_64Vcpu {
         gr.cr0 = self.sregs.cr0;
         gr.cpl = u64::from(self.sregs.cs.selector & 3);
         gr.apx_enabled = u64::from(self.apx_enabled());
+        gr.cpuid_xeon_phi_avx512 = u64::from(self.xeon_phi_avx512_enabled());
+        gr.cpuid_vp2intersect = u64::from(self.vp2intersect_enabled());
+        gr.cpuid_sse4a = u64::from(self.sse4a_enabled());
         gr.gpr[0] = self.regs.rax;
         gr.gpr[1] = self.regs.rcx;
         gr.gpr[2] = self.regs.rdx;
@@ -5838,6 +5852,10 @@ mod jit_mmx_memory_source_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_call_tests.rs"]
 mod jit_call_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_cpuid_tests.rs"]
+mod jit_cpuid_tests;
 
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {

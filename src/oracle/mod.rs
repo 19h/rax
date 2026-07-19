@@ -2472,6 +2472,22 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src_low,
             src_high,
         } => op_json!("x86_xsetbv", selector, src_low, src_high),
+        OpKind::X86Cpuid {
+            dst_eax,
+            dst_ebx,
+            dst_ecx,
+            dst_edx,
+            leaf,
+            subleaf,
+        } => op_json!(
+            "x86_cpuid",
+            dst_eax,
+            dst_ebx,
+            dst_ecx,
+            dst_edx,
+            leaf,
+            subleaf
+        ),
         OpKind::FConvert { dst, src, from, to } => op_json!("fconvert", dst, src, from, to),
         OpKind::HexFp {
             dst,

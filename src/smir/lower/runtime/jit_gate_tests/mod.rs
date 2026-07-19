@@ -8,6 +8,8 @@ mod aarch64;
 #[cfg(test)]
 mod addr32_memory;
 #[cfg(test)]
+mod cpuid;
+#[cfg(test)]
 mod evex;
 #[cfg(test)]
 mod fp_binary;

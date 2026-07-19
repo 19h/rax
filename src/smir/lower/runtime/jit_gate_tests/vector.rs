@@ -129,6 +129,22 @@ fn x86_vector_guest_state_layout_matches_trampoline_offsets() {
         std::mem::offset_of!(GuestRegs, x87_tag_word),
         X86_GUEST_X87_TAG_WORD_OFFSET as usize
     );
+    assert_eq!(
+        std::mem::offset_of!(GuestRegs, cpuid_fn),
+        X86_GUEST_CPUID_FN_OFFSET as usize
+    );
+    assert_eq!(
+        std::mem::offset_of!(GuestRegs, cpuid_xeon_phi_avx512),
+        X86_GUEST_CPUID_XEON_PHI_AVX512_OFFSET as usize
+    );
+    assert_eq!(
+        std::mem::offset_of!(GuestRegs, cpuid_vp2intersect),
+        X86_GUEST_CPUID_VP2INTERSECT_OFFSET as usize
+    );
+    assert_eq!(
+        std::mem::offset_of!(GuestRegs, cpuid_sse4a),
+        X86_GUEST_CPUID_SSE4A_OFFSET as usize
+    );
     assert_eq!(std::mem::align_of::<GuestRegs>(), 64);
 
     let mut regs = GuestRegs::default();
@@ -140,6 +156,10 @@ fn x86_vector_guest_state_layout_matches_trampoline_offsets() {
     assert_eq!(regs.get_zmm(31), high);
     assert_eq!(regs.mxcsr, 0x1F80);
     assert_eq!(regs.x87_tag_word, 0xFFFF);
+    assert_eq!(regs.cpuid_fn, 0);
+    assert_eq!(regs.cpuid_xeon_phi_avx512, 0);
+    assert_eq!(regs.cpuid_vp2intersect, 0);
+    assert_eq!(regs.cpuid_sse4a, 0);
 }
 #[test]
 fn recip28_native_gate_validates_packed_scalar_masks_and_encodings() {

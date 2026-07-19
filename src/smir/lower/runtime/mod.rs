@@ -22,14 +22,15 @@
 
 use super::{
     X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CPL_OFFSET,
-    X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
-    X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
-    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MM_OFFSET, X86_GUEST_MMX_ACTIVE_OFFSET,
-    X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET, X86_GUEST_PAIR_STORE_FN_OFFSET,
-    X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET,
-    X86_GUEST_VEC_LOAD_FN_OFFSET, X86_GUEST_VEC_STORE_FN_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET,
-    X86_GUEST_X87_TAG_WORD_OFFSET, X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET,
-    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_CPUID_FN_OFFSET, X86_GUEST_CPUID_SSE4A_OFFSET, X86_GUEST_CPUID_VP2INTERSECT_OFFSET,
+    X86_GUEST_CPUID_XEON_PHI_AVX512_OFFSET, X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET,
+    X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET, X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT,
+    X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET, X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MM_OFFSET,
+    X86_GUEST_MMX_ACTIVE_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET,
+    X86_GUEST_PAIR_STORE_FN_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
+    X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET, X86_GUEST_VEC_STORE_FN_OFFSET,
+    X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_X87_TAG_WORD_OFFSET, X86_GUEST_XCR0_OFFSET,
+    X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 // ---- module tree (auto-split) ----
@@ -180,6 +181,16 @@ pub struct GuestRegs {
     /// native `EmptyMmx` commits `0xFFFF` at their exact instruction points;
     /// trampoline `EMMS` affects only host state and must not overwrite it.
     pub x87_tag_word: u64,
+    /// Address of `extern "C" fn(state)` implementing the emulator's
+    /// deterministic guest CPUID profile. The helper reads EAX/ECX and commits
+    /// zero-extended EAX/EBX/ECX/EDX through this structure.
+    pub cpuid_fn: u64,
+    /// Non-zero when CPUID leaf 7 enumerates Xeon Phi AVX-512 extensions.
+    pub cpuid_xeon_phi_avx512: u64,
+    /// Non-zero when CPUID leaf 7 enumerates AVX512_VP2INTERSECT.
+    pub cpuid_vp2intersect: u64,
+    /// Non-zero when CPUID leaf 0x80000001 enumerates SSE4A.
+    pub cpuid_sse4a: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -217,6 +228,10 @@ impl Default for GuestRegs {
             mm: [0; 8],
             mmx_active: 0,
             x87_tag_word: 0xFFFF,
+            cpuid_fn: 0,
+            cpuid_xeon_phi_avx512: 0,
+            cpuid_vp2intersect: 0,
+            cpuid_sse4a: 0,
         }
     }
 }

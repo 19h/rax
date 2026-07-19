@@ -195,6 +195,9 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     gr.cr0 = vcpu.sregs.cr0;
     gr.cpl = u64::from(vcpu.sregs.cs.selector & 3);
     gr.apx_enabled = u64::from(vcpu.apx_enabled());
+    gr.cpuid_xeon_phi_avx512 = u64::from(vcpu.xeon_phi_avx512_enabled());
+    gr.cpuid_vp2intersect = u64::from(vcpu.vp2intersect_enabled());
+    gr.cpuid_sse4a = u64::from(vcpu.sse4a_enabled());
     if ok == 0 {
         gr.exit_pc = vcpu.regs.rip;
     }

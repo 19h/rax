@@ -41,6 +41,8 @@ mod common;
 pub use common::*;
 mod control;
 pub use control::*;
+mod cpuid;
+pub use cpuid::*;
 mod dispatch;
 pub use dispatch::*;
 mod emitter;
@@ -1175,6 +1177,12 @@ pub struct X86_64Lowerer {
     /// semantically modify vector state, so the post-call reload consumes the
     /// helper-updated state rather than merely restoring the pre-call snapshot.
     preserve_vector_call_helpers: bool,
+
+    /// Preserve the complete architectural ZMM/K file around system helpers
+    /// such as the deterministic guest CPUID evaluator. These helpers do not
+    /// modify vector state, but the platform ABI permits them to clobber the
+    /// host registers carrying it.
+    preserve_vector_system_helpers: bool,
 
     /// Spill MM0-MM7 and execute host-only EMMS before every Rust helper call,
     /// then reload the complete MMX file from `GuestRegs` after the call. This

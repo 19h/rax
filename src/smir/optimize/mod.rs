@@ -1483,6 +1483,9 @@ fn rewrite_pure_src_vregs(kind: &mut OpKind, f: &dyn Fn(VReg) -> VReg) -> usize 
                 do_v(len2, &mut n);
             }
         }
+        // XGETBV, XSETBV, and CPUID expose their implicit architectural
+        // operands in `source_vregs()` for liveness, but native helper ABIs
+        // require those operands to remain ECX or EAX/ECX. Do not rewrite them.
         _ => {}
     }
     n
@@ -3857,6 +3860,7 @@ impl OpKind {
                 src_low,
                 src_high,
             } => result.extend([*selector, *src_low, *src_high]),
+            OpKind::X86Cpuid { leaf, subleaf, .. } => result.extend([*leaf, *subleaf]),
 
             OpKind::X86Cmpxchg8b16b {
                 addr,

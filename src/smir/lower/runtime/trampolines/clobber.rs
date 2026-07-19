@@ -611,6 +611,11 @@ pub(crate) fn block_is_clobber_safe(
         if matches!(op.kind, OpKind::X86XGetBv { .. }) && !x86_xgetbv_shape_valid(&op.kind) {
             return false;
         }
+        if matches!(op.kind, OpKind::X86Cpuid { .. })
+            && !crate::smir::lower::x86_64::x86_cpuid_shape_valid(&op.kind)
+        {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86XSetBv { .. }) {
             if !x86_xsetbv_shape_valid(&op.kind)
                 || !block.ops[i + 1..]

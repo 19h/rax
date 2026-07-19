@@ -372,6 +372,17 @@ pub struct X86RegState {
     pub xcr0: u64,
     /// XGETBV(ECX=1) init-optimization state bitmap.
     pub xgetbv1: u64,
+    /// Guest CR4. CPUID leaf 1 reflects OSXSAVE (bit 18), and leaf 7 reflects
+    /// OSPKE (bit 22).
+    pub cr4: u64,
+    /// Opt-in Xeon Phi AVX-512 feature profile used by CPUID leaf 7.
+    pub xeon_phi_avx512: bool,
+    /// Opt-in AVX512_VP2INTERSECT feature profile used by CPUID leaf 7.
+    pub vp2intersect: bool,
+    /// Opt-in AMD SSE4A feature profile used by CPUID leaf 0x80000001.
+    pub sse4a: bool,
+    /// Whether the guest profile exposes Intel APX and its XSAVE component.
+    pub apx_enabled: bool,
     /// IA32_TSC_AUX value returned by RDPID (architecturally 32 bits).
     pub tsc_aux: u32,
     /// x87 architectural environment and exact 80-bit physical registers.

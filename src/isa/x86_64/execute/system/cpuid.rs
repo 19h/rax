@@ -67,12 +67,29 @@ fn compacted_xsave_area_size(xcr0: u64) -> u32 {
     size
 }
 
-/// CPUID (0x0F 0xA2)
-pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let leaf = vcpu.regs.rax as u32;
-    let subleaf = vcpu.regs.rcx as u32;
+/// Mutable guest-profile inputs that affect `CPUID` enumeration.
+///
+/// The leaf/subleaf operands and four output registers remain explicit at the
+/// call site. Keeping the profile in a value type lets the direct interpreter,
+/// SMIR interpreter, and helper-backed JIT execute one shared implementation
+/// without ever exposing the host processor's CPUID leaves.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) struct X86CpuidState {
+    pub cr4: u64,
+    pub xcr0: u64,
+    pub xeon_phi_avx512: bool,
+    pub vp2intersect: bool,
+    pub sse4a: bool,
+    pub apx: bool,
+}
 
-    let (eax, ebx, ecx, edx) = match leaf {
+/// Evaluate the emulator's deterministic CPUID profile.
+pub(crate) fn evaluate_cpuid(
+    leaf: u32,
+    subleaf: u32,
+    state: X86CpuidState,
+) -> (u32, u32, u32, u32) {
+    match leaf {
         0 => {
             // Return max leaf and vendor string "GenuineIntel"
             // x86 vendor string format: EBX + EDX + ECX (not EBX + ECX + EDX!)
@@ -110,7 +127,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             // Note: TSC_DEADLINE (bit 24) NOT advertised - LAPIC only supports oneshot/periodic modes
             // XSAVE (26), OSXSAVE (27, reflects CR4) and AVX (28) ARE advertised:
             // XGETBV/XSETBV/XSAVE/XRSTOR + XCR0 are implemented (see group7.rs, leaf 0xD).
-            let osxsave = ((vcpu.sregs.cr4 >> 18) & 1) as u32; // CR4.OSXSAVE
+            let osxsave = ((state.cr4 >> 18) & 1) as u32; // CR4.OSXSAVE
             let features_ecx: u32 = (1 << 0)   // SSE3
                                   | (1 << 1)   // PCLMULQDQ
                                   | (1 << 3)   // MONITOR/MWAIT
@@ -171,7 +188,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                         | (1u32 << 5) // AVX2
                         | (1u32 << 3) // BMI1
                         | (1u32 << 0); // FSGSBASE
-                if vcpu.xeon_phi_avx512 {
+                if state.xeon_phi_avx512 {
                     ebx |= (1u32 << 26) // AVX512PF
                          | (1u32 << 27); // AVX512ER
                 }
@@ -187,7 +204,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                         | (1u32 << 8) // GFNI (GF2P8MULB / GF2P8AFFINE[INV]QB)
                         | (1u32 << 6) // AVX512VBMI2
                         | (1u32 << 5) // WAITPKG
-                        | (((vcpu.sregs.cr4 >> 22) as u32 & 1) << 4) // OSPKE
+                        | (((state.cr4 >> 22) as u32 & 1) << 4) // OSPKE
                         | (1u32 << 3) // PKU (RDPKRU/WRPKRU implemented)
                         | (1u32 << 2) // UMIP
                         | (1u32 << 1); // AVX512VBMI
@@ -200,18 +217,18 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                             | (1u32 << 14); // SERIALIZE
                 // WBNOINVD is enumerated in CPUID.80000008H:EBX[9],
                 // not here: leaf 7 EDX bit 9 is SRBDS_CTRL.
-                if vcpu.xeon_phi_avx512 {
+                if state.xeon_phi_avx512 {
                     edx |= (1u32 << 2) // AVX512_4VNNIW
                          | (1u32 << 3); // AVX512_4FMAPS
                 }
-                if vcpu.vp2intersect {
+                if state.vp2intersect {
                     edx |= 1u32 << 8; // AVX512_VP2INTERSECT
                 }
                 (1, ebx, ecx, edx)
             } else if subleaf == 1 {
                 let eax = (1u32 << 5) // AVX512_BF16
                         | (1u32 << 4); // AVX_VNNI
-                let edx = if vcpu.apx_enabled() {
+                let edx = if state.apx {
                     1u32 << 21 // APX_F
                 } else {
                     0
@@ -230,7 +247,7 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
             // EAX: Same signature as leaf 1 (extended signature)
             let signature: u32 = 0x000006F1;
             let features_ecx = (1u32 << 5)  // LZCNT/ABM
-                             | ((vcpu.sse4a_enabled() as u32) << 6) // SSE4A
+                             | ((state.sse4a as u32) << 6) // SSE4A
                              | (1u32 << 8)  // PREFETCHW / 3DNow! PREFETCH
                              | (1u32 << 0); // LAHF/SAHF in long mode
             let features_edx = (1u32 << 29)  // LM (Long Mode)
@@ -277,19 +294,19 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                         | XCR0_OPMASK
                         | XCR0_ZMM_HI256
                         | XCR0_HI16_ZMM;
-                    if vcpu.apx_enabled() {
+                    if state.apx {
                         xcr0_valid |= XCR0_APX_F;
                     }
                     (
                         xcr0_valid as u32,
-                        standard_xsave_area_size(vcpu.xcr0),
+                        standard_xsave_area_size(state.xcr0),
                         XSAVE_MAX_SIZE,
                         (xcr0_valid >> 32) as u32,
                     )
                 }
                 // Subleaf 1: XSAVEOPT, XSAVEC/compacted XRSTOR, XGETBV(ECX=1),
                 // and XSAVES/XRSTORS are implemented. IA32_XSS defaults to zero.
-                1 => (0xF, compacted_xsave_area_size(vcpu.xcr0), 0, 0),
+                1 => (0xF, compacted_xsave_area_size(state.xcr0), 0, 0),
                 // Subleaf 2: AVX (YMM_Hi128) component size + offset.
                 2 => (XSAVE_AVX_SIZE, XSAVE_AVX_OFFSET, 0, 0),
                 // Subleaf 5: opmask component.
@@ -299,13 +316,13 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
                 // Subleaf 7: full ZMM16-31.
                 7 => (XSAVE_HI16_ZMM_SIZE, XSAVE_HI16_ZMM_OFFSET, 0, 0),
                 // Subleaf 19: APX_F EGPR component (R16-R31).
-                19 if vcpu.apx_enabled() => (XSAVE_APX_SIZE, XSAVE_APX_OFFSET, 0, 0),
+                19 if state.apx => (XSAVE_APX_SIZE, XSAVE_APX_OFFSET, 0, 0),
                 _ => (0, 0, 0, 0),
             }
         }
         0x29 => {
             // Intel APX leaf. APX_F guarantees subleaf 0 with APX_NCI_NDD_NF.
-            if subleaf == 0 && vcpu.apx_enabled() {
+            if subleaf == 0 && state.apx {
                 (0, 1, 0, 0)
             } else {
                 (0, 0, 0, 0)
@@ -313,7 +330,23 @@ pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
         }
 
         _ => (0, 0, 0, 0),
-    };
+    }
+}
+
+/// CPUID (0x0F 0xA2)
+pub fn cpuid(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let (eax, ebx, ecx, edx) = evaluate_cpuid(
+        vcpu.regs.rax as u32,
+        vcpu.regs.rcx as u32,
+        X86CpuidState {
+            cr4: vcpu.sregs.cr4,
+            xcr0: vcpu.xcr0,
+            xeon_phi_avx512: vcpu.xeon_phi_avx512,
+            vp2intersect: vcpu.vp2intersect,
+            sse4a: vcpu.sse4a_enabled(),
+            apx: vcpu.apx_enabled(),
+        },
+    );
 
     vcpu.regs.rax = eax as u64;
     vcpu.regs.rbx = ebx as u64;

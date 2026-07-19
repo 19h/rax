@@ -58,6 +58,45 @@ impl SmirInterpreter {
                 Self::write_x86_partial(ctx, *dst_hi, tsc >> 32, OpWidth::W32);
             }
 
+            OpKind::X86Cpuid {
+                dst_eax,
+                dst_ebx,
+                dst_ecx,
+                dst_edx,
+                leaf,
+                subleaf,
+            } => {
+                let leaf = ctx.read_vreg(*leaf) as u32;
+                let subleaf = ctx.read_vreg(*subleaf) as u32;
+                let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                };
+                let (eax, ebx, ecx, edx) = crate::isa::x86_64::execute::system::evaluate_cpuid(
+                    leaf,
+                    subleaf,
+                    crate::isa::x86_64::execute::system::X86CpuidState {
+                        cr4: x86.cr4,
+                        xcr0: x86.xcr0,
+                        xeon_phi_avx512: x86.xeon_phi_avx512,
+                        vp2intersect: x86.vp2intersect,
+                        sse4a: x86.sse4a,
+                        apx: x86.apx_enabled,
+                    },
+                );
+                for (dst, value) in [
+                    (*dst_eax, eax),
+                    (*dst_ebx, ebx),
+                    (*dst_ecx, ecx),
+                    (*dst_edx, edx),
+                ] {
+                    Self::write_x86_partial(ctx, dst, u64::from(value), OpWidth::W32);
+                }
+            }
+
             _ => return self.execute_op_meta(ctx, memory, op),
         }
 

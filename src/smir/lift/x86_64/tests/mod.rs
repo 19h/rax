@@ -12,6 +12,8 @@ mod apx;
 #[cfg(test)]
 mod callout;
 #[cfg(test)]
+mod cpuid;
+#[cfg(test)]
 mod decode;
 #[cfg(test)]
 mod evex;

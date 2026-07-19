@@ -4000,6 +4000,20 @@ pub enum OpKind {
         dst_hi: VReg,
     },
 
+    /// x86 CPUID: evaluate the emulator's guest CPU profile using EAX/ECX and
+    /// commit zero-extended EAX, EBX, ECX, and EDX results atomically. The
+    /// profile itself is runtime architectural/configuration state rather than
+    /// an IR constant, so all four destinations and both query inputs remain
+    /// explicit while the interpreter/native helper reads the profile state.
+    X86Cpuid {
+        dst_eax: VReg,
+        dst_ebx: VReg,
+        dst_ecx: VReg,
+        dst_edx: VReg,
+        leaf: VReg,
+        subleaf: VReg,
+    },
+
     // ========================================================================
     // HEXAGON SCALAR FLOATING POINT (F2_*)
     // ========================================================================
@@ -4366,6 +4380,7 @@ impl OpKind {
                 | OpKind::X86ReadPid { .. }
                 | OpKind::X86XGetBv { .. }
                 | OpKind::X86XSetBv { .. }
+                | OpKind::X86Cpuid { .. }
                 | OpKind::X86Count { .. }
                 | OpKind::X86X87Control {
                     kind: X86X87ControlKind::EnterMmx | X86X87ControlKind::EmptyMmx,
@@ -4578,6 +4593,14 @@ impl OpKind {
             OpKind::ArmDpRegShift { dst, .. } => dst.iter().copied().collect(),
 
             OpKind::X86ReadTsc { dst_lo, dst_hi } => vec![*dst_lo, *dst_hi],
+
+            OpKind::X86Cpuid {
+                dst_eax,
+                dst_ebx,
+                dst_ecx,
+                dst_edx,
+                ..
+            } => vec![*dst_eax, *dst_ebx, *dst_ecx, *dst_edx],
 
             OpKind::X86X87Control {
                 kind: X86X87ControlKind::StoreStatusAx,
@@ -5013,6 +5036,7 @@ impl OpKind {
                     | OpKind::Swi { .. }
                     | OpKind::WriteSysReg { .. }
                     | OpKind::X86ReadTsc { .. }
+                    | OpKind::X86Cpuid { .. }
                     | OpKind::Breakpoint
             )
             || matches!(

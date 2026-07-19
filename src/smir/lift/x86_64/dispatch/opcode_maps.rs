@@ -1004,6 +1004,33 @@ impl X86_64Lifter {
                 prefix2.cursor,
             )),
 
+            // CPUID (0F A2): EAX/ECX select the leaf and EAX/EBX/ECX/EDX
+            // receive 32-bit zero-extended results. Intel defines only LOCK as
+            // invalid; other legacy prefixes are ignored.
+            0xA2 => {
+                if prefix2.lock {
+                    return Err(LiftError::InvalidEncoding {
+                        addr: pc,
+                        bytes: vec![opcode2],
+                    });
+                }
+                Ok(LiftResult::fallthrough(
+                    vec![SmirOp::new(
+                        OpId(0),
+                        pc,
+                        OpKind::X86Cpuid {
+                            dst_eax: self.gpr(0),
+                            dst_ebx: self.gpr(3),
+                            dst_ecx: self.gpr(1),
+                            dst_edx: self.gpr(2),
+                            leaf: self.gpr(0),
+                            subleaf: self.gpr(1),
+                        },
+                    )],
+                    prefix2.cursor,
+                ))
+            }
+
             // UD2 (0F 0B): architecturally guaranteed invalid opcode trap.
             0x0B => Ok(LiftResult {
                 ops: vec![],
