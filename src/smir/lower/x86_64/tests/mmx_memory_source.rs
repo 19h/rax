@@ -1,8 +1,8 @@
-//! Helper-backed MMX m64-source lowering tests.
+//! Helper-backed MMX memory-source lowering tests.
 
 use super::*;
 
-fn lift_mmx_m64_function(bytes: &[u8]) -> SmirFunction {
+fn lift_mmx_memory_function(bytes: &[u8]) -> SmirFunction {
     let mut code = bytes.to_vec();
     code.extend_from_slice(&[0xEB, 0x00]); // terminate the block without extra semantic ops
     let reader = TestReader {
@@ -21,8 +21,8 @@ fn lift_mmx_m64_function(bytes: &[u8]) -> SmirFunction {
     function
 }
 
-fn lower_mmx_m64_instruction(bytes: &[u8]) -> (SmirFunction, Vec<u8>) {
-    let function = lift_mmx_m64_function(bytes);
+fn lower_mmx_memory_instruction(bytes: &[u8]) -> (SmirFunction, Vec<u8>) {
+    let function = lift_mmx_memory_function(bytes);
     let excluded = HashMap::new();
     assert!(
         crate::smir::lower::runtime::is_native_clobber_safe_excluding(&function, &excluded, true),
@@ -72,7 +72,7 @@ fn mmx_m64_source_lifters_gate_and_lower_every_native_opcode_family() {
     ];
     for opcode in map_0f {
         let guest = [0x0F, opcode, 0x1B]; // operation mm3, [rbx]
-        let (_, code) = lower_mmx_m64_instruction(&guest);
+        let (_, code) = lower_mmx_memory_instruction(&guest);
         assert_contains(
             &code,
             &[0x0F, opcode, 0x1C, 0x24],
@@ -84,7 +84,7 @@ fn mmx_m64_source_lifters_gate_and_lower_every_native_opcode_family() {
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x1C, 0x1D, 0x1E,
     ] {
         let guest = [0x0F, 0x38, opcode, 0x1B];
-        let (_, code) = lower_mmx_m64_instruction(&guest);
+        let (_, code) = lower_mmx_memory_instruction(&guest);
         assert_contains(
             &code,
             &[0x0F, 0x38, opcode, 0x1C, 0x24],
@@ -92,14 +92,14 @@ fn mmx_m64_source_lifters_gate_and_lower_every_native_opcode_family() {
         );
     }
 
-    let (_, shuffle) = lower_mmx_m64_instruction(&[0x0F, 0x70, 0x1B, 0x1B]);
+    let (_, shuffle) = lower_mmx_memory_instruction(&[0x0F, 0x70, 0x1B, 0x1B]);
     assert_contains(
         &shuffle,
         &[0x0F, 0x70, 0x1C, 0x24, 0x1B],
         "PSHUFW mm3,[rsp],0x1B",
     );
 
-    let (_, align) = lower_mmx_m64_instruction(&[0x0F, 0x3A, 0x0F, 0x1B, 0x03]);
+    let (_, align) = lower_mmx_memory_instruction(&[0x0F, 0x3A, 0x0F, 0x1B, 0x03]);
     assert_contains(
         &align,
         &[0x0F, 0x3A, 0x0F, 0x1C, 0x24, 0x03],
@@ -109,7 +109,7 @@ fn mmx_m64_source_lifters_gate_and_lower_every_native_opcode_family() {
 
 #[test]
 fn mmx_m64_source_uses_fault_safe_scalar_staging_and_precise_tag_commit() {
-    let (_, code) = lower_mmx_m64_instruction(&[0x0F, 0xFC, 0x5B, 0x08]);
+    let (_, code) = lower_mmx_memory_instruction(&[0x0F, 0xFC, 0x5B, 0x08]);
     assert_contains(
         &code,
         &[0x48, 0x89, 0x44, 0x24, 0x10],
@@ -139,4 +139,112 @@ fn mmx_m64_source_uses_fault_safe_scalar_staging_and_precise_tag_commit() {
     tag_commit.extend_from_slice(&0u32.to_le_bytes());
     tag_commit.push(0x58);
     assert_contains(&code, &tag_commit, "precise EnterMmx commit");
+}
+
+#[test]
+fn mmx_m32_unpack_and_m16_pinsrw_lifters_gate_and_emit_exact_widths() {
+    for opcode in [0x60, 0x61, 0x62] {
+        let guest = [0x0F, opcode, 0x1B]; // PUNPCKL* mm3,[rbx]
+        let (_, code) = lower_mmx_memory_instruction(&guest);
+        assert_contains(&code, &[0xBA, 0x04, 0x00, 0x00, 0x00], "m32 helper width");
+        assert_contains(
+            &code,
+            &[0x0F, opcode, 0x1C, 0x24],
+            &format!("0F {opcode:02X} mm3,[rsp]"),
+        );
+    }
+
+    for immediate in [0x00, 0x01, 0x02, 0x03, 0xFE] {
+        let guest = [0x0F, 0xC4, 0x1B, immediate]; // PINSRW mm3,[rbx],imm8
+        let (_, code) = lower_mmx_memory_instruction(&guest);
+        assert_contains(&code, &[0xBA, 0x02, 0x00, 0x00, 0x00], "m16 helper width");
+        assert_contains(
+            &code,
+            &[0x0F, 0xC4, 0x1C, 0x24, immediate & 0x03],
+            "PINSRW mm3,[rsp],imm8 & 3",
+        );
+    }
+}
+
+#[test]
+fn mmx_narrow_sources_preserve_helper_boundary_and_fault_cleanup() {
+    for (guest, host, name) in [
+        (
+            &[0x0F, 0x60, 0x5B, 0x04][..],
+            &[0x0F, 0x60, 0x1C, 0x24][..],
+            "PUNPCKLBW m32",
+        ),
+        (
+            &[0x0F, 0xC4, 0x5B, 0x04, 0x02][..],
+            &[0x0F, 0xC4, 0x1C, 0x24, 0x02][..],
+            "PINSRW m16",
+        ),
+    ] {
+        let (_, code) = lower_mmx_memory_instruction(guest);
+        assert_contains(
+            &code,
+            &[0x48, 0x89, 0x44, 0x24, 0x10],
+            "helper result in outer stack slot",
+        );
+        assert_contains(&code, host, name);
+        assert_eq!(
+            code.windows(5)
+                .filter(|window| *window == [0x48, 0x8D, 0x64, 0x24, 0x10])
+                .count(),
+            2,
+            "{name}: success and fault paths must release the outer stack slot"
+        );
+        super::mmx_helpers::assert_mmx_helper_boundary(&code, name);
+    }
+}
+
+#[test]
+fn mmx_narrow_source_sequences_survive_all_optimizer_levels() {
+    for (guest, host, helper_width) in [
+        (&[0x0F, 0x60, 0x1B][..], &[0x0F, 0x60, 0x1C, 0x24][..], 4u8),
+        (
+            &[0x0F, 0xC4, 0x1B, 0x02][..],
+            &[0x0F, 0xC4, 0x1C, 0x24, 0x02][..],
+            2u8,
+        ),
+    ] {
+        for level in [
+            crate::smir::optimize::OptLevel::O0,
+            crate::smir::optimize::OptLevel::O1,
+            crate::smir::optimize::OptLevel::O2,
+        ] {
+            let mut function = lift_mmx_memory_function(guest);
+            crate::smir::optimize::optimize_function(&mut function, level);
+            let excluded = HashMap::new();
+            assert!(
+                crate::smir::lower::runtime::is_native_clobber_safe_excluding(
+                    &function, &excluded, true
+                ),
+                "gate rejected {guest:02X?} after {level:?}: {:?}",
+                function.blocks[0].ops
+            );
+            assert!(
+                crate::smir::lower::runtime::x86_native_mmx_pairs_valid_excluding(
+                    &function, &excluded
+                ),
+                "MMX pair rejected {guest:02X?} after {level:?}"
+            );
+
+            let mut lowerer = X86_64Lowerer::new();
+            lowerer.set_mem_helpers(true);
+            lowerer.set_preserve_mmx_helpers(true);
+            lowerer
+                .lower_function(&function)
+                .unwrap_or_else(|error| panic!("lower {guest:02X?} after {level:?}: {error:?}"));
+            let code = lowerer
+                .finalize()
+                .unwrap_or_else(|error| panic!("finalize {guest:02X?} after {level:?}: {error:?}"));
+            assert_contains(&code, host, "optimizer-stable MMX memory opcode");
+            assert_contains(
+                &code,
+                &[0xBA, helper_width, 0x00, 0x00, 0x00],
+                "optimizer-stable helper width",
+            );
+        }
+    }
 }

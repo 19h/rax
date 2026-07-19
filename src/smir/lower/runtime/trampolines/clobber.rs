@@ -135,7 +135,7 @@ pub(crate) fn block_is_clobber_safe(
             i = span.end;
             continue;
         }
-        if let Some(consumed) = x86_jit_mmx_m64_source_sequence_len(
+        if let Some(consumed) = x86_jit_mmx_memory_source_sequence_len(
             block,
             i,
             allow_mem,

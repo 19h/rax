@@ -330,7 +330,7 @@ impl X86_64Lowerer {
             {
                 if self.mem_helpers {
                     if let Some(consumed) =
-                        crate::smir::lower::runtime::x86_jit_mmx_m64_source_sequence_len(
+                        crate::smir::lower::runtime::x86_jit_mmx_memory_source_sequence_len(
                             block,
                             validate_idx,
                             true,
@@ -627,7 +627,7 @@ impl X86_64Lowerer {
             // below are explicitly restricted to that mode.
             if self.mem_helpers {
                 #[cfg(feature = "smir-jit")]
-                if let Some(consumed) = self.try_lower_jit_mmx_m64_source(
+                if let Some(consumed) = self.try_lower_jit_mmx_memory_source(
                     block,
                     idx,
                     &virtual_definitions,

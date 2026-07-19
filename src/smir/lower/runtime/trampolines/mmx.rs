@@ -4,26 +4,28 @@ use std::collections::HashMap;
 
 use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86VecAlign, X86X87ControlKind};
 use crate::smir::ir::types::{
-    ArchReg, BlockId, VLaneOp, VReg, VecElementType, VecUnaryOp, VecWidth, X86Reg,
+    ArchReg, BlockId, MemWidth, SignExtend, VLaneOp, VReg, VecElementType, VecUnaryOp, VecWidth,
+    X86Reg,
 };
 use crate::smir::ir::{SmirBlock, SmirFunction};
 
-/// Exact host encoding selected for a helper-backed MMX m64 source.
+/// Exact host encoding selected for a helper-backed MMX memory source.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct X86MmxM64SourceEncoding {
+pub(crate) struct X86MmxMemorySourceEncoding {
     pub(crate) map: crate::smir::ir::ops::X86VecMap,
     pub(crate) opcode: u8,
     pub(crate) dst_index: u8,
     pub(crate) immediate: Option<u8>,
+    pub(crate) mem_width: MemWidth,
     pub(crate) requires_ssse3: bool,
 }
 
 /// Exact contiguous lifted sequence consumed by helper-backed lowering.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct X86MmxM64SourceSequence {
+pub(crate) struct X86MmxMemorySourceSequence {
     pub(crate) consumed: usize,
     pub(crate) marker_offset: usize,
-    pub(crate) encoding: X86MmxM64SourceEncoding,
+    pub(crate) encoding: X86MmxMemorySourceEncoding,
 }
 
 fn mm_index(reg: VReg) -> Option<u8> {
@@ -33,91 +35,136 @@ fn mm_index(reg: VReg) -> Option<u8> {
     }
 }
 
-/// Replace only the architecturally encoded m64 source with the destination MM
-/// register in a clone, then reuse the register-register validator as the
-/// semantic and encoding oracle. The clone is never lowered or executed.
-fn x86_mmx_m64_source_encoding(op: &SmirOp, temporary: VReg) -> Option<X86MmxM64SourceEncoding> {
+/// Replace only the architecturally encoded memory source with an equivalent
+/// register source in a clone, then reuse the register-register validator as
+/// the semantic and encoding oracle. The clone is never lowered or executed.
+fn x86_mmx_memory_source_encoding(
+    op: &SmirOp,
+    temporary: VReg,
+    mem_width: MemWidth,
+) -> Option<X86MmxMemorySourceEncoding> {
     use crate::smir::ir::ops::{X86SsePrefix, X86VecMap};
 
     let mut canonical = op.clone();
-    let destination = match &mut canonical.kind {
-        OpKind::X86PackedShuffleImm { dst, src, .. } if *src == temporary => {
+    let destination = match (&mut canonical.kind, mem_width) {
+        (
+            OpKind::VInsertLane {
+                dst, vec, scalar, ..
+            },
+            MemWidth::B2,
+        ) if *scalar == temporary => {
+            *scalar = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+            if *vec != *dst {
+                return None;
+            }
+            *dst
+        }
+        (
+            OpKind::VInterleave {
+                dst,
+                src1,
+                src2,
+                high: false,
+                ..
+            },
+            MemWidth::B4,
+        ) if *src1 == *dst && *src2 == temporary => {
+            *src2 = *dst;
+            *dst
+        }
+        (OpKind::X86PackedShuffleImm { dst, src, .. }, MemWidth::B8) if *src == temporary => {
             *src = *dst;
             *dst
         }
-        OpKind::X86PackedAlignRight { dst, high, low, .. }
+        (OpKind::X86PackedAlignRight { dst, high, low, .. }, MemWidth::B8)
             if *high == *dst && *low == temporary =>
         {
             *low = *dst;
             *dst
         }
-        OpKind::VByteShuffle {
-            dst, src, control, ..
-        } if *src == *dst && *control == temporary => {
+        (
+            OpKind::VByteShuffle {
+                dst, src, control, ..
+            },
+            MemWidth::B8,
+        ) if *src == *dst && *control == temporary => {
             *control = *dst;
             *dst
         }
-        OpKind::VUnary { dst, src, .. } if *src == temporary => {
+        (OpKind::VUnary { dst, src, .. }, MemWidth::B8) if *src == temporary => {
             *src = *dst;
             *dst
         }
-        OpKind::VAnd {
-            dst, src1, src2, ..
-        }
-        | OpKind::VAndNot {
-            dst, src1, src2, ..
-        }
-        | OpKind::VOr {
-            dst, src1, src2, ..
-        }
-        | OpKind::VXor {
-            dst, src1, src2, ..
-        }
-        | OpKind::VAdd {
-            dst, src1, src2, ..
-        }
-        | OpKind::VSub {
-            dst, src1, src2, ..
-        }
-        | OpKind::VAddSubSat {
-            dst, src1, src2, ..
-        }
-        | OpKind::VCmp {
-            dst, src1, src2, ..
-        }
-        | OpKind::VInterleave {
-            dst, src1, src2, ..
-        }
-        | OpKind::VLane {
-            dst, src1, src2, ..
-        }
-        | OpKind::VDotProduct {
-            dst, src1, src2, ..
-        }
-        | OpKind::VSadBytes {
-            dst, src1, src2, ..
-        }
-        | OpKind::VMul {
-            dst, src1, src2, ..
-        }
-        | OpKind::VMulShiftSat {
-            dst, src1, src2, ..
-        }
-        | OpKind::VHorizontalBin {
-            dst, src1, src2, ..
-        } if *src1 == *dst && *src2 == temporary => {
+        (
+            OpKind::VAnd {
+                dst, src1, src2, ..
+            }
+            | OpKind::VAndNot {
+                dst, src1, src2, ..
+            }
+            | OpKind::VOr {
+                dst, src1, src2, ..
+            }
+            | OpKind::VXor {
+                dst, src1, src2, ..
+            }
+            | OpKind::VAdd {
+                dst, src1, src2, ..
+            }
+            | OpKind::VSub {
+                dst, src1, src2, ..
+            }
+            | OpKind::VAddSubSat {
+                dst, src1, src2, ..
+            }
+            | OpKind::VCmp {
+                dst, src1, src2, ..
+            }
+            | OpKind::VInterleave {
+                dst,
+                src1,
+                src2,
+                high: true,
+                ..
+            }
+            | OpKind::VLane {
+                dst, src1, src2, ..
+            }
+            | OpKind::VDotProduct {
+                dst, src1, src2, ..
+            }
+            | OpKind::VSadBytes {
+                dst, src1, src2, ..
+            }
+            | OpKind::VMul {
+                dst, src1, src2, ..
+            }
+            | OpKind::VMulShiftSat {
+                dst, src1, src2, ..
+            }
+            | OpKind::VHorizontalBin {
+                dst, src1, src2, ..
+            },
+            MemWidth::B8,
+        ) if *src1 == *dst && *src2 == temporary => {
             *src2 = *dst;
             *dst
         }
-        OpKind::VPackSat {
-            dst, src1, src2, ..
-        } if *src2 == *dst && *src1 == temporary => {
+        (
+            OpKind::VPackSat {
+                dst, src1, src2, ..
+            },
+            MemWidth::B8,
+        ) if *src2 == *dst && *src1 == temporary => {
             *src1 = *dst;
             *dst
         }
-        OpKind::X86PackedShift {
-            dst, src, count, ..
-        } if *src == *dst && *count == temporary => {
+        (
+            OpKind::X86PackedShift {
+                dst, src, count, ..
+            },
+            MemWidth::B8,
+        ) if *src == *dst && *count == temporary => {
             *count = *dst;
             *dst
         }
@@ -138,28 +185,40 @@ fn x86_mmx_m64_source_encoding(op: &SmirOp, temporary: VReg) -> Option<X86MmxM64
     let (map, immediate) = match canonical.kind {
         OpKind::X86PackedShuffleImm { imm, .. } => (X86VecMap::Map0F, Some(imm)),
         OpKind::X86PackedAlignRight { amount, .. } => (X86VecMap::Map0F3A, Some(amount)),
+        OpKind::VInsertLane { lane, .. } => (X86VecMap::Map0F, Some(lane)),
         _ if requires_ssse3 => (X86VecMap::Map0F38, None),
         _ => (X86VecMap::Map0F, None),
     };
-    Some(X86MmxM64SourceEncoding {
+    Some(X86MmxMemorySourceEncoding {
         map,
         opcode,
         dst_index,
         immediate,
+        mem_width,
         requires_ssse3,
     })
+}
+
+fn is_enter_mmx_marker(op: &SmirOp) -> bool {
+    matches!(
+        op.kind,
+        OpKind::X86X87Control {
+            kind: X86X87ControlKind::EnterMmx,
+            addr: None,
+        }
+    ) && op.x86_hint.is_none()
 }
 
 /// Validate one exact `VLoad(V64 virtual)` plus MMX operation and architectural
 /// `EnterMmx` marker. Both marker orders emitted by current lifters are legal;
 /// the helper load must remain first so a fault cannot change MMX state.
-pub(crate) fn x86_jit_mmx_m64_source_sequence(
+fn x86_jit_mmx_m64_source_sequence(
     block: &SmirBlock,
     index: usize,
     allow_mem: bool,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
-) -> Option<X86MmxM64SourceSequence> {
+) -> Option<X86MmxMemorySourceSequence> {
     if !allow_mem {
         return None;
     }
@@ -189,19 +248,18 @@ pub(crate) fn x86_jit_mmx_m64_source_sequence(
     if second.guest_pc != load.guest_pc || third.guest_pc != load.guest_pc {
         return None;
     }
-    let is_marker = |op: &SmirOp| {
-        matches!(
-            op.kind,
-            OpKind::X86X87Control {
-                kind: X86X87ControlKind::EnterMmx,
-                addr: None,
-            }
-        ) && op.x86_hint.is_none()
-    };
-    let (consumed, marker_offset, encoding) = if is_marker(second) {
-        (3, 1, x86_mmx_m64_source_encoding(third, temporary)?)
-    } else if is_marker(third) {
-        (3, 2, x86_mmx_m64_source_encoding(second, temporary)?)
+    let (consumed, marker_offset, encoding) = if is_enter_mmx_marker(second) {
+        (
+            3,
+            1,
+            x86_mmx_memory_source_encoding(third, temporary, MemWidth::B8)?,
+        )
+    } else if is_enter_mmx_marker(third) {
+        (
+            3,
+            2,
+            x86_mmx_memory_source_encoding(second, temporary, MemWidth::B8)?,
+        )
     } else {
         use crate::smir::ir::types::{SignExtend, VecElementType};
 
@@ -218,29 +276,142 @@ pub(crate) fn x86_jit_mmx_m64_source_sequence(
         };
         if third.guest_pc != load.guest_pc
             || fourth.guest_pc != load.guest_pc
-            || !is_marker(fourth)
+            || !is_enter_mmx_marker(fourth)
             || virtual_definitions.get(&count) != Some(&1)
             || virtual_uses.get(&count) != Some(&1)
         {
             return None;
         }
-        (4, 3, x86_mmx_m64_source_encoding(third, count)?)
+        (
+            4,
+            3,
+            x86_mmx_memory_source_encoding(third, count, MemWidth::B8)?,
+        )
     };
-    Some(X86MmxM64SourceSequence {
+    Some(X86MmxMemorySourceSequence {
         consumed,
         marker_offset,
         encoding,
     })
 }
 
-pub(crate) fn x86_jit_mmx_m64_source_sequence_len(
+/// Validate the exact scalar-load chains used by MMX m32 PUNPCKL* and m16
+/// PINSRW memory operands. The scalar load must remain first so a fault cannot
+/// change MMX state.
+fn x86_jit_mmx_narrow_source_sequence(
+    block: &SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86MmxMemorySourceSequence> {
+    if !allow_mem {
+        return None;
+    }
+    let load = block.ops.get(index)?;
+    let (temporary, addr, mem_width) = match &load.kind {
+        OpKind::Load {
+            dst: temporary @ VReg::Virtual(_),
+            addr,
+            width: mem_width @ (MemWidth::B2 | MemWidth::B4),
+            sign: SignExtend::Zero,
+        } => (*temporary, addr, *mem_width),
+        _ => return None,
+    };
+    if load.x86_hint.is_some()
+        || !super::x86_jit_mem_address_shape_valid(addr)
+        || virtual_definitions.get(&temporary) != Some(&1)
+        || virtual_uses.get(&temporary) != Some(&1)
+    {
+        return None;
+    }
+
+    match mem_width {
+        MemWidth::B2 => {
+            let second = block.ops.get(index + 1)?;
+            let third = block.ops.get(index + 2)?;
+            if second.guest_pc != load.guest_pc || third.guest_pc != load.guest_pc {
+                return None;
+            }
+            let (marker_offset, operation) = if is_enter_mmx_marker(second) {
+                (1, third)
+            } else if is_enter_mmx_marker(third) {
+                (2, second)
+            } else {
+                return None;
+            };
+            Some(X86MmxMemorySourceSequence {
+                consumed: 3,
+                marker_offset,
+                encoding: x86_mmx_memory_source_encoding(operation, temporary, MemWidth::B2)?,
+            })
+        }
+        MemWidth::B4 => {
+            let broadcast = block.ops.get(index + 1)?;
+            let loaded = match &broadcast.kind {
+                OpKind::VBroadcast {
+                    dst: loaded @ VReg::Virtual(_),
+                    scalar,
+                    elem: VecElementType::I64,
+                    lanes: 1,
+                } if *scalar == temporary && broadcast.x86_hint.is_none() => *loaded,
+                _ => return None,
+            };
+            if broadcast.guest_pc != load.guest_pc
+                || virtual_definitions.get(&loaded) != Some(&1)
+                || virtual_uses.get(&loaded) != Some(&1)
+            {
+                return None;
+            }
+            let third = block.ops.get(index + 2)?;
+            let fourth = block.ops.get(index + 3)?;
+            if third.guest_pc != load.guest_pc || fourth.guest_pc != load.guest_pc {
+                return None;
+            }
+            let (marker_offset, operation) = if is_enter_mmx_marker(third) {
+                (2, fourth)
+            } else if is_enter_mmx_marker(fourth) {
+                (3, third)
+            } else {
+                return None;
+            };
+            Some(X86MmxMemorySourceSequence {
+                consumed: 4,
+                marker_offset,
+                encoding: x86_mmx_memory_source_encoding(operation, loaded, MemWidth::B4)?,
+            })
+        }
+        _ => None,
+    }
+}
+
+pub(crate) fn x86_jit_mmx_memory_source_sequence(
+    block: &SmirBlock,
+    index: usize,
+    allow_mem: bool,
+    virtual_definitions: &HashMap<VReg, usize>,
+    virtual_uses: &HashMap<VReg, usize>,
+) -> Option<X86MmxMemorySourceSequence> {
+    x86_jit_mmx_m64_source_sequence(block, index, allow_mem, virtual_definitions, virtual_uses)
+        .or_else(|| {
+            x86_jit_mmx_narrow_source_sequence(
+                block,
+                index,
+                allow_mem,
+                virtual_definitions,
+                virtual_uses,
+            )
+        })
+}
+
+pub(crate) fn x86_jit_mmx_memory_source_sequence_len(
     block: &SmirBlock,
     index: usize,
     allow_mem: bool,
     virtual_definitions: &HashMap<VReg, usize>,
     virtual_uses: &HashMap<VReg, usize>,
 ) -> Option<usize> {
-    x86_jit_mmx_m64_source_sequence(block, index, allow_mem, virtual_definitions, virtual_uses)
+    x86_jit_mmx_memory_source_sequence(block, index, allow_mem, virtual_definitions, virtual_uses)
         .map(|sequence| sequence.consumed)
 }
 
@@ -331,7 +502,7 @@ pub fn x86_native_mmx_features_supported_excluding(
         }
         let mut index = 0;
         while index < block.ops.len() {
-            if let Some(sequence) = x86_jit_mmx_m64_source_sequence(
+            if let Some(sequence) = x86_jit_mmx_memory_source_sequence(
                 block,
                 index,
                 true,
@@ -363,7 +534,7 @@ pub fn x86_native_mmx_features_supported_excluding(
 }
 
 /// Verify the exact architectural-state marker paired with every admitted MMX
-/// operation, including helper-backed m64 source sequences.
+/// operation, including helper-backed memory-source sequences.
 pub fn x86_native_mmx_pairs_valid_excluding(
     func: &SmirFunction,
     excluded: &HashMap<BlockId, u64>,
@@ -408,7 +579,7 @@ pub fn x86_native_mmx_pairs_valid_excluding(
             }
             let mut index = 0;
             while index < block.ops.len() {
-                if let Some(consumed) = x86_jit_mmx_m64_source_sequence_len(
+                if let Some(consumed) = x86_jit_mmx_memory_source_sequence_len(
                     block,
                     index,
                     true,
