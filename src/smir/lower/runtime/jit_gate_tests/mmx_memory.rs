@@ -44,6 +44,12 @@ fn mmx_movq_memory_function(is_load: bool) -> crate::smir::ir::SmirFunction {
     function
 }
 
+fn mmx_movntq_memory_function() -> crate::smir::ir::SmirFunction {
+    let mut function = mmx_movq_memory_function(false);
+    function.blocks[0].ops[0].x86_hint = Some(X86OpHint::VecAlign(X86VecAlign::Unaligned));
+    function
+}
+
 fn mmx_scalar_memory_function(is_load: bool, width: OpWidth) -> crate::smir::ir::SmirFunction {
     let temporary = VReg::Virtual(VirtualId(7));
     let mm3 = VReg::Arch(ArchReg::X86(X86Reg::Mm(3)));
@@ -231,6 +237,97 @@ fn x86_mmx_movq_memory_gate_rejects_malformed_and_unpaired_shapes() {
     let mut wrong_pc = exact_function;
     wrong_pc.blocks[0].ops[1].guest_pc = 0x1001;
     assert!(!x86_native_mmx_pairs_valid_excluding(&wrong_pc, &excluded));
+
+    for is_load in [true, false] {
+        let mut marker_before_fault = mmx_movq_memory_function(is_load);
+        marker_before_fault.blocks[0].ops.swap(0, 1);
+        assert!(!x86_native_mmx_pairs_valid_excluding(
+            &marker_before_fault,
+            &excluded
+        ));
+    }
+}
+
+#[test]
+fn x86_mmx_movntq_memory_gate_requires_exact_hint_shape_and_fault_order() {
+    let excluded = std::collections::HashMap::new();
+    let exact_function = mmx_movntq_memory_function();
+    let exact = &exact_function.blocks[0].ops[0];
+    assert!(x86_jit_mmx_mem_shape_valid(exact));
+    assert!(is_native_clobber_safe_excluding(
+        &exact_function,
+        &excluded,
+        true
+    ));
+    assert!(!is_native_clobber_safe_excluding(
+        &exact_function,
+        &excluded,
+        false
+    ));
+    assert!(x86_native_mmx_pairs_valid_excluding(
+        &exact_function,
+        &excluded
+    ));
+    assert!(uses_x86_native_mmx_excluding(&exact_function, &excluded));
+    assert!(!uses_x86_native_vectors_excluding(
+        &exact_function,
+        &excluded
+    ));
+
+    let mut malformed = Vec::new();
+    let mut missing_hint = exact.clone();
+    missing_hint.x86_hint = None;
+    malformed.push(missing_hint);
+
+    let mut aligned = exact.clone();
+    aligned.x86_hint = Some(X86OpHint::VecAlign(X86VecAlign::Aligned));
+    malformed.push(aligned);
+
+    let mut synthetic_opcode = exact.clone();
+    synthetic_opcode.x86_hint = Some(X86OpHint::SseMov {
+        prefix: X86SsePrefix::None,
+        opcode: 0xE7,
+    });
+    malformed.push(synthetic_opcode);
+
+    let mut wrong_width = exact.clone();
+    if let OpKind::VStore { width, .. } = &mut wrong_width.kind {
+        *width = VecWidth::V128;
+    }
+    malformed.push(wrong_width);
+
+    let mut wrong_register = exact.clone();
+    if let OpKind::VStore { src, .. } = &mut wrong_register.kind {
+        *src = VReg::Arch(ArchReg::X86(X86Reg::Xmm(7)));
+    }
+    malformed.push(wrong_register);
+
+    let mut unsafe_address = exact.clone();
+    if let OpKind::VStore { addr, .. } = &mut unsafe_address.kind {
+        *addr = Address::Direct(VReg::Virtual(VirtualId(7)));
+    }
+    malformed.push(unsafe_address);
+
+    let mut wrong_direction = exact.clone();
+    if let OpKind::VStore { src, addr, width } = wrong_direction.kind {
+        wrong_direction.kind = OpKind::VLoad {
+            dst: src,
+            addr,
+            width,
+        };
+    }
+    malformed.push(wrong_direction);
+
+    for op in malformed {
+        assert!(!x86_jit_mmx_mem_shape_valid(&op), "{op:?}");
+    }
+
+    let mut marker_before_fault = exact_function;
+    marker_before_fault.blocks[0].ops.swap(0, 1);
+    assert!(!x86_native_mmx_pairs_valid_excluding(
+        &marker_before_fault,
+        &excluded
+    ));
 }
 
 #[test]

@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use crate::smir::ir::SmirBlock;
-use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix};
+use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86SsePrefix, X86VecAlign};
 use crate::smir::ir::types::{ArchReg, MemWidth, OpWidth, SignExtend, VReg, VecWidth, X86Reg};
 
 /// Exact legacy MMX MOVD/MOVQ scalar-memory encoding selected for lowering.
@@ -95,9 +95,9 @@ fn x86_mmx_scalar_memory_transfer_encoding(
     })
 }
 
-/// Admit only the legacy `0F 6F /r` and `0F 7F /r` MMX MOVQ memory forms.
-/// Virtual V64 temporaries remain ineligible because they have no stable state
-/// slot across the Rust MMU helper boundary.
+/// Admit only legacy MMX `MOVQ mm, m64`, `MOVQ m64, mm`, and `MOVNTQ m64, mm`
+/// memory forms. Virtual V64 temporaries remain ineligible because they have no
+/// stable state slot across the Rust MMU helper boundary.
 pub fn x86_jit_mmx_mem_shape_valid(op: &SmirOp) -> bool {
     let mm = |reg: &VReg| matches!(reg, VReg::Arch(ArchReg::X86(X86Reg::Mm(0..=7))));
     match (&op.kind, op.x86_hint) {
@@ -122,6 +122,14 @@ pub fn x86_jit_mmx_mem_shape_valid(op: &SmirOp) -> bool {
                 prefix: X86SsePrefix::None,
                 opcode: 0x7F,
             }),
+        ) => mm(src) && super::x86_jit_mem_address_shape_valid(addr),
+        (
+            OpKind::VStore {
+                src,
+                addr,
+                width: VecWidth::V64,
+            },
+            Some(X86OpHint::VecAlign(X86VecAlign::Unaligned)),
         ) => mm(src) && super::x86_jit_mem_address_shape_valid(addr),
         _ => false,
     }

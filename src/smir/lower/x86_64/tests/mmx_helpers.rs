@@ -239,7 +239,7 @@ fn mmx_movq_memory_uses_scalar_helper_and_fault_safe_stack_staging() {
 }
 
 #[cfg(feature = "smir-jit")]
-fn lower_lifted_mmx_scalar_memory(bytes: &[u8], level: crate::smir::optimize::OptLevel) -> Vec<u8> {
+fn lower_lifted_mmx_memory(bytes: &[u8], level: crate::smir::optimize::OptLevel) -> Vec<u8> {
     let mut code = bytes.to_vec();
     code.extend_from_slice(&[0xEB, 0x00]);
     let reader = TestReader {
@@ -250,7 +250,7 @@ fn lower_lifted_mmx_scalar_memory(bytes: &[u8], level: crate::smir::optimize::Op
     let mut context = LiftContext::new(SourceArch::X86_64);
     let mut block = lifter
         .lift_block(0x1000, &reader, &mut context)
-        .unwrap_or_else(|error| panic!("lift MMX scalar-memory {bytes:02X?}: {error:?}"));
+        .unwrap_or_else(|error| panic!("lift MMX memory form {bytes:02X?}: {error:?}"));
     block.set_terminator(Terminator::Return { values: vec![] });
     let block_id = block.id;
     let mut function = SmirFunction::new(FunctionId(0), block_id, 0x1000);
@@ -317,7 +317,7 @@ fn mmx_scalar_memory_transfers_emit_exact_width_direction_and_fault_boundaries()
             crate::smir::optimize::OptLevel::O1,
             crate::smir::optimize::OptLevel::O2,
         ] {
-            let code = lower_lifted_mmx_scalar_memory(guest, level);
+            let code = lower_lifted_mmx_memory(guest, level);
             assert!(
                 code.windows(host.len()).any(|window| window == host),
                 "missing {name} host replay after {level:?}: {code:02X?}"
@@ -357,5 +357,35 @@ fn mmx_scalar_memory_transfers_emit_exact_width_direction_and_fault_boundaries()
             }
             assert_mmx_helper_boundary(&code, name);
         }
+    }
+}
+
+#[test]
+#[cfg(feature = "smir-jit")]
+fn mmx_movntq_uses_exact_helper_width_and_fault_safe_stack_staging() {
+    for level in [
+        crate::smir::optimize::OptLevel::O0,
+        crate::smir::optimize::OptLevel::O1,
+        crate::smir::optimize::OptLevel::O2,
+    ] {
+        let code = lower_lifted_mmx_memory(&[0x0F, 0xE7, 0x3B], level);
+        assert!(
+            code.windows(4)
+                .any(|window| window == [0x0F, 0x7F, 0x3C, 0x24]),
+            "MOVNTQ must stage MM7 before host EMMS after {level:?}: {code:02X?}"
+        );
+        assert!(
+            code.windows(5)
+                .any(|window| window == [0xB9, 0x08, 0x00, 0x00, 0x00]),
+            "MOVNTQ must request an exact 8-byte store after {level:?}: {code:02X?}"
+        );
+        assert_eq!(
+            code.windows(5)
+                .filter(|window| *window == [0x48, 0x8D, 0x64, 0x24, 0x10])
+                .count(),
+            2,
+            "MOVNTQ success and fault paths must release the stack slot after {level:?}"
+        );
+        assert_mmx_helper_boundary(&code, "MOVNTQ helper");
     }
 }

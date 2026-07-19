@@ -206,6 +206,125 @@ fn jit_compiles_and_executes_mmx_movd_q_scalar_memory_helpers() {
 }
 
 #[test]
+fn jit_compiles_and_executes_mmx_movntq_memory_helper() {
+    let (mut vcpu, mem) = test_vcpu_with_mem();
+    // movntq [rbx],mm3; jmp next; ret. MOVNTQ permits an unaligned m64.
+    mem.write_slice(&[0x0F, 0xE7, 0x1B, 0xEB, 0x00, 0xC3], GuestAddress(0))
+        .unwrap();
+    let address = 0x2003;
+    mem.write_slice(&[0xCC; 8], GuestAddress(address)).unwrap();
+    vcpu.sregs.efer = 1 << 10;
+    vcpu.sregs.cs.l = true;
+    vcpu.regs.rip = 0;
+    vcpu.regs.rbx = address;
+    vcpu.regs.rflags = 0x246;
+    vcpu.regs.mm =
+        std::array::from_fn(|index| 0xF0E1_D2C3_B4A5_9687u64.rotate_left(index as u32 * 7));
+    vcpu.regs.mm[3] = 0x0123_4567_89AB_CDEF;
+    let original = vcpu.regs.mm;
+    vcpu.fpu.tag_word = 0xFFFF;
+    vcpu.set_jit_mem(true);
+    vcpu.set_jit_call(false);
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile MMX MOVNTQ memory region")
+        .expect("exact MMX MOVNTQ memory form should be JIT eligible");
+    assert!(region.uses_mmx);
+    assert!(!region.uses_vector);
+
+    vcpu.jit_run_region_native(&region);
+
+    let mut stored = [0u8; 8];
+    mem.read_slice(&mut stored, GuestAddress(address)).unwrap();
+    assert_eq!(u64::from_le_bytes(stored), 0x0123_4567_89AB_CDEF);
+    assert_eq!(vcpu.regs.mm, original);
+    assert_eq!(vcpu.fpu.tag_word, 0);
+    assert_eq!(vcpu.regs.rflags, 0x246);
+    assert_eq!(vcpu.regs.rbx, address);
+    assert_eq!(vcpu.regs.rip, 5);
+}
+
+#[test]
+fn jit_mmx_movntq_uses_exact_width_at_mapped_boundary() {
+    let (mut vcpu, mem) = test_vcpu_with_mem();
+    // movntq [rbx],mm7; jmp next; ret.
+    mem.write_slice(&[0x0F, 0xE7, 0x3B, 0xEB, 0x00, 0xC3], GuestAddress(0))
+        .unwrap();
+    let address = 0x10000 - 8;
+    mem.write_slice(&[0xCC; 8], GuestAddress(address)).unwrap();
+    vcpu.sregs.efer = 1 << 10;
+    vcpu.sregs.cs.l = true;
+    vcpu.regs.rip = 0;
+    vcpu.regs.rbx = address;
+    vcpu.regs.rflags = 0x246;
+    vcpu.regs.mm = std::array::from_fn(|index| 0x1111_1111_1111_1111u64 * index as u64);
+    vcpu.regs.mm[7] = 0xFEDC_BA98_7654_3210;
+    let original = vcpu.regs.mm;
+    vcpu.fpu.tag_word = 0xFFFF;
+    vcpu.set_jit_mem(true);
+    vcpu.set_jit_call(false);
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile boundary MOVNTQ")
+        .expect("exactly mapped MOVNTQ should be JIT eligible");
+    vcpu.jit_run_region_native(&region);
+
+    let mut stored = [0u8; 8];
+    mem.read_slice(&mut stored, GuestAddress(address)).unwrap();
+    assert_eq!(u64::from_le_bytes(stored), 0xFEDC_BA98_7654_3210);
+    assert_eq!(vcpu.regs.mm, original);
+    assert_eq!(vcpu.fpu.tag_word, 0);
+    assert_eq!(vcpu.regs.rflags, 0x246);
+    assert_eq!(vcpu.regs.rbx, address);
+    assert_eq!(vcpu.regs.rip, 5);
+}
+
+#[test]
+fn jit_faulting_mmx_movntq_preserves_state_and_store_atomicity() {
+    let (mut vcpu, mem) = test_vcpu_with_mem();
+    // movntq [rbx],mm7; jmp next; ret. Only the first 4 bytes are mapped.
+    mem.write_slice(&[0x0F, 0xE7, 0x3B, 0xEB, 0x00, 0xC3], GuestAddress(0))
+        .unwrap();
+    let address = 0x10000 - 4;
+    let before = [0xA5; 4];
+    mem.write_slice(&before, GuestAddress(address)).unwrap();
+    vcpu.sregs.efer = 1 << 10;
+    vcpu.sregs.cs.l = true;
+    vcpu.regs.rip = 0;
+    vcpu.regs.rbx = address;
+    vcpu.regs.rflags = 0x8D7;
+    vcpu.regs.mm =
+        std::array::from_fn(|index| 0x0123_4567_89AB_CDEFu64.rotate_left(index as u32 * 7));
+    let original = vcpu.regs.mm;
+    vcpu.fpu.tag_word = 0xFFFF;
+    vcpu.set_jit_mem(true);
+    vcpu.set_jit_call(false);
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile faulting MOVNTQ")
+        .expect("fault-capable MOVNTQ should retain a native deopt path");
+    vcpu.jit_run_region_native(&region);
+
+    let mut after = [0u8; 4];
+    mem.read_slice(&mut after, GuestAddress(address)).unwrap();
+    assert_eq!(
+        after, before,
+        "MOVNTQ must not partially write before fault"
+    );
+    assert_eq!(vcpu.regs.mm, original);
+    assert_eq!(vcpu.fpu.tag_word, 0xFFFF);
+    assert_eq!(vcpu.regs.rflags, 0x8D7);
+    assert_eq!(vcpu.regs.rbx, address);
+    assert_eq!(
+        vcpu.regs.rip, 0,
+        "MOVNTQ fault must restart the instruction"
+    );
+}
+
+#[test]
 fn jit_mmx_scalar_memory_transfers_use_exact_width_at_mapped_boundary() {
     for (instruction, is_load, width, value, name) in [
         (

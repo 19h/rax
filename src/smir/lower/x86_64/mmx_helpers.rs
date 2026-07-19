@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use super::{X86_64Lowerer, X86Emitter};
 #[cfg(feature = "smir-jit")]
 use crate::smir::ir::SmirBlock;
-use crate::smir::ir::ops::{X86OpHint, X86SsePrefix};
+use crate::smir::ir::ops::{X86OpHint, X86SsePrefix, X86VecAlign};
 use crate::smir::ir::types::{
     Address, ArchReg, DispSize, MemWidth, SignExtend, VReg, VecWidth, X86Reg,
 };
@@ -79,15 +79,16 @@ impl X86_64Lowerer {
             return None;
         };
         let expected_opcode = if is_load { 0x6F } else { 0x7F };
-        (width == VecWidth::V64
-            && matches!(
-                hint,
-                Some(X86OpHint::SseMov {
-                    prefix: X86SsePrefix::None,
-                    opcode,
-                }) if opcode == expected_opcode
-            ))
-        .then_some(index)
+        let exact_movq = matches!(
+            hint,
+            Some(X86OpHint::SseMov {
+                prefix: X86SsePrefix::None,
+                opcode,
+            }) if opcode == expected_opcode
+        );
+        let exact_movntq =
+            !is_load && matches!(hint, Some(X86OpHint::VecAlign(X86VecAlign::Unaligned)));
+        (width == VecWidth::V64 && (exact_movq || exact_movntq)).then_some(index)
     }
 
     fn emit_mmx_stack_move(&mut self, reg: PhysReg, store: bool) {
@@ -129,7 +130,7 @@ impl X86_64Lowerer {
         let index = Self::mmx_memory_index(vector, width, hint, is_load).ok_or_else(|| {
             LowerError::InvalidOperand {
                 op: if is_load { "VLoad" } else { "VStore" }.to_string(),
-                operand: "expected exact legacy MMX MOVQ memory form".to_string(),
+                operand: "expected exact legacy MMX MOVQ or MOVNTQ memory form".to_string(),
             }
         })?;
         {

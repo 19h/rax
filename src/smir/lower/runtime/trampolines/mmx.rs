@@ -601,17 +601,16 @@ pub fn x86_native_mmx_pairs_valid_excluding(
                     continue;
                 }
                 let first = &block.ops[index];
-                let first_is_mmx =
-                    super::is_x86_native_mmx_op(first) || super::x86_jit_mmx_mem_shape_valid(first);
-                if is_enter(first) || first_is_mmx {
+                let first_is_native_mmx = super::is_x86_native_mmx_op(first);
+                let first_is_mmx_memory = super::x86_jit_mmx_mem_shape_valid(first);
+                if is_enter(first) || first_is_native_mmx || first_is_mmx_memory {
                     let Some(second) = block.ops.get(index + 1) else {
                         return false;
                     };
-                    let second_is_mmx = super::is_x86_native_mmx_op(second)
-                        || super::x86_jit_mmx_mem_shape_valid(second);
+                    let second_is_native_mmx = super::is_x86_native_mmx_op(second);
                     let paired = first.guest_pc == second.guest_pc
-                        && ((is_enter(first) && second_is_mmx)
-                            || (first_is_mmx && is_enter(second)));
+                        && ((is_enter(first) && second_is_native_mmx)
+                            || ((first_is_native_mmx || first_is_mmx_memory) && is_enter(second)));
                     if !paired {
                         return false;
                     }
