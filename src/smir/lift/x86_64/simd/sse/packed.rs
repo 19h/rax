@@ -1597,7 +1597,7 @@ impl X86_64Lifter {
             elem,
             shift,
         };
-        if mmx && !modrm.is_memory {
+        if mmx {
             ops.push(SmirOp::with_hint(
                 OpId(ops.len() as u16),
                 pc,

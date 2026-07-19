@@ -14,6 +14,8 @@ mod mmx;
 #[cfg(test)]
 mod mmx_memory;
 #[cfg(test)]
+mod mmx_memory_source;
+#[cfg(test)]
 mod vector;
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};

@@ -9,6 +9,8 @@ mod jit;
 pub use jit::*;
 mod misc;
 pub use misc::*;
+mod mmx;
+pub use mmx::*;
 mod mmx_memory;
 pub use mmx_memory::*;
 mod vector;

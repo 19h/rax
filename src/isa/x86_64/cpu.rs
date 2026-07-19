@@ -6039,6 +6039,10 @@ mod decode_cache_invalidation_tests {
 #[path = "cpu_jit_mmx_tests.rs"]
 mod jit_mmx_tests;
 
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_mmx_memory_source_tests.rs"]
+mod jit_mmx_memory_source_tests;
+
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {
     use super::*;

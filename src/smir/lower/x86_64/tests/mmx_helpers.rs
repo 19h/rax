@@ -10,7 +10,7 @@ fn mm_state_encoding(index: u8, base: PhysReg, store: bool) -> Vec<u8> {
     bytes
 }
 
-fn assert_mmx_helper_boundary(bytes: &[u8], name: &str) {
+pub(super) fn assert_mmx_helper_boundary(bytes: &[u8], name: &str) {
     let store = mm_state_encoding(0, PhysReg::Rax, true);
     let load = mm_state_encoding(0, PhysReg::Rcx, false);
     let store_pos = bytes

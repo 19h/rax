@@ -2564,8 +2564,8 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
 }
 /// Admit only exact destructive register-register MMX operations. The classic
 /// encoding metadata is part of the contract: V64 IR alone is insufficient to
-/// distinguish MMX from malformed or synthetic vector operations, and memory
-/// sources require helper-boundary MMX preservation that is not enabled yet.
+/// distinguish MMX from malformed or synthetic vector operations. Exact m64
+/// source sequences are admitted separately by the helper-backed MMX gate.
 pub fn is_x86_native_mmx_op(op: &crate::smir::ir::ops::SmirOp) -> bool {
     use crate::smir::ir::ops::{OpKind, X86OpHint, X86SsePrefix};
     use crate::smir::ir::types::{
@@ -5812,137 +5812,6 @@ pub fn x86_native_vector_uses_k16_opmasks_excluding(
         }
     }
     saw_narrow_opmask_operation
-}
-/// Whether an executable (non-exit) block enters architectural MMX state.
-///
-/// Every lifted MMX instruction ends with `EnterMmx` after its fault-capable
-/// work and destination commit. Using that explicit state transition as the
-/// region discriminator keeps MM0-MM7 marshalling independent of the AVX-512
-/// vector trampoline and excludes ordinary x87 control operations.
-pub fn uses_x86_native_mmx_excluding(
-    func: &crate::smir::ir::SmirFunction,
-    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
-) -> bool {
-    func.blocks
-        .iter()
-        .filter(|block| !excluded.contains_key(&block.id))
-        .flat_map(|block| &block.ops)
-        .any(|op| {
-            matches!(
-                op.kind,
-                crate::smir::ir::ops::OpKind::X86X87Control {
-                    kind: crate::smir::ir::ops::X86X87ControlKind::EnterMmx,
-                    ..
-                }
-            )
-        })
-}
-pub(crate) fn x86_native_mmx_op_requires_ssse3(op: &crate::smir::ir::ops::SmirOp) -> bool {
-    use crate::smir::ir::ops::OpKind;
-    use crate::smir::ir::types::{VLaneOp, VecElementType, VecUnaryOp};
-
-    matches!(
-        op.kind,
-        OpKind::VUnary {
-            op: VecUnaryOp::Abs,
-            ..
-        } | OpKind::X86PackedAlignRight {
-            width: crate::smir::ir::types::VecWidth::V64,
-            ..
-        } | OpKind::VByteShuffle {
-            lanes: 8,
-            block_lanes: 8,
-            ..
-        } | OpKind::VLane {
-            op: VLaneOp::Sign,
-            ..
-        } | OpKind::VHorizontalBin { .. }
-            | OpKind::VDotProduct {
-                src_elem: VecElementType::I8,
-                acc_elem: VecElementType::I16,
-                src1_unsigned: true,
-                saturate: true,
-                ..
-            }
-            | OpKind::VMulShiftSat {
-                src_elem: VecElementType::I16,
-                signed1: true,
-                signed2: true,
-                round: true,
-                out_shift: 15,
-                ..
-            }
-    ) && is_x86_native_mmx_op(op)
-}
-/// Verify host extensions required by admitted native MMX opcodes without
-/// coupling MMX-only regions to the AVX-512 vector-state trampoline gate.
-pub fn x86_native_mmx_features_supported_excluding(
-    func: &crate::smir::ir::SmirFunction,
-    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
-) -> bool {
-    let needs_ssse3 = func
-        .blocks
-        .iter()
-        .filter(|block| !excluded.contains_key(&block.id))
-        .flat_map(|block| &block.ops)
-        .any(x86_native_mmx_op_requires_ssse3);
-
-    #[cfg(target_arch = "x86_64")]
-    {
-        !needs_ssse3 || std::is_x86_feature_detected!("ssse3")
-    }
-    #[cfg(not(target_arch = "x86_64"))]
-    {
-        !needs_ssse3
-    }
-}
-/// Verify the exact architectural-state marker paired with every admitted MMX
-/// opcode. This region-level check prevents synthetic or optimizer-corrupted
-/// MMX IR from executing without importing MM0-MM7 or committing the x87 tag
-/// transition, while also rejecting orphan state markers.
-pub fn x86_native_mmx_pairs_valid_excluding(
-    func: &crate::smir::ir::SmirFunction,
-    excluded: &std::collections::HashMap<crate::smir::ir::types::BlockId, u64>,
-) -> bool {
-    use crate::smir::ir::ops::{OpKind, X86X87ControlKind};
-
-    func.blocks
-        .iter()
-        .filter(|block| !excluded.contains_key(&block.id))
-        .all(|block| {
-            let is_enter = |op: &crate::smir::ir::ops::SmirOp| {
-                matches!(
-                    op.kind,
-                    OpKind::X86X87Control {
-                        kind: X86X87ControlKind::EnterMmx,
-                        addr: None,
-                    }
-                )
-            };
-            let mut index = 0;
-            while index < block.ops.len() {
-                let first = &block.ops[index];
-                let first_is_mmx =
-                    is_x86_native_mmx_op(first) || x86_jit_mmx_mem_shape_valid(first);
-                if is_enter(first) || first_is_mmx {
-                    let Some(second) = block.ops.get(index + 1) else {
-                        return false;
-                    };
-                    let second_is_mmx =
-                        is_x86_native_mmx_op(second) || x86_jit_mmx_mem_shape_valid(second);
-                    let paired = first.guest_pc == second.guest_pc
-                        && ((is_enter(first) && second_is_mmx)
-                            || (first_is_mmx && is_enter(second)));
-                    if !paired {
-                        return false;
-                    }
-                    index += 2;
-                } else {
-                    index += 1;
-                }
-            }
-            true
-        })
 }
 /// Return `(AES-NI, VAES, AVX-512VL)` requirements contributed by an admitted
 /// `X86Aes` operation. Low-register 128/256-bit rounds are re-encoded with VEX;

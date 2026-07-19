@@ -17,9 +17,9 @@ use crate::smir::lower::runtime::*;
 /// Exemptions are virtual values that the lowerer proves it never
 /// materializes: a trailing `TestCondition` whose `dst` feeds the block's
 /// `CondBranch`, and (when MMU helpers are enabled) single-use load temporaries
-/// in exact x86 memory-source ALU/count/CRC32 pairs or the pre-decrement RSP
-/// snapshot in PUSH RSP. The former folds to a direct `Jcc`; the memory forms
-/// fold to exact helper-backed operations.
+/// in exact x86 memory-source scalar/MMX pairs or the pre-decrement RSP snapshot
+/// in PUSH RSP. The former folds to a direct `Jcc`; the memory forms fold to
+/// exact helper-backed operations.
 ///
 /// Pure architectural-register blocks (counter/pointer loops, ALU chains,
 /// guest-conditional branches) pass — which is the bulk of hot code. Validated
@@ -133,6 +133,16 @@ pub(crate) fn block_is_clobber_safe(
     while i < n {
         if let Some(span) = native_replay_spans.get(&i) {
             i = span.end;
+            continue;
+        }
+        if let Some(consumed) = x86_jit_mmx_m64_source_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
             continue;
         }
         if let Some(consumed) = x86_jit_mem_shift_rmw_sequence_len(

@@ -15,6 +15,8 @@ mod memory;
 mod misc;
 #[cfg(test)]
 mod mmx_helpers;
+#[cfg(all(test, feature = "smir-jit"))]
+mod mmx_memory_source;
 #[cfg(test)]
 mod simd;
 #[cfg(test)]

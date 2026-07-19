@@ -52,6 +52,10 @@ mod memory;
 pub use memory::*;
 mod mmx_helpers;
 pub use mmx_helpers::*;
+#[cfg(feature = "smir-jit")]
+mod mmx_memory_source;
+#[cfg(feature = "smir-jit")]
+pub use mmx_memory_source::*;
 mod misc;
 pub use misc::*;
 mod simd;
