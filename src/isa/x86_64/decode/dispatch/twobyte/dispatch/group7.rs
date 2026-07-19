@@ -250,9 +250,13 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 0xF8 => {
-                    // SWAPGS (0x0F 0x01 0xF8) - privileged: #GP(0) at CPL != 0
+                    // SWAPGS (0x0F 0x01 0xF8): #UD outside 64-bit mode,
+                    // then #GP(0) at CPL != 0, before either base is committed.
                     ctx.consume_u8()?; // consume modrm
-                    if self.sregs.cr0 & 1 != 0 && (self.sregs.cs.selector & 3) != 0 {
+                    if !self.sregs.cs.l {
+                        return self.inject_undefined_instruction();
+                    }
+                    if (self.sregs.cs.selector & 3) != 0 {
                         self.inject_exception(13, Some(0))?;
                         return Ok(None);
                     }

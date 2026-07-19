@@ -4580,11 +4580,11 @@ impl X86_64Vcpu {
                 }
                 continue 'modes;
             }
-            // Standalone x86-64 SMIR models the 64-bit FSGSBASE contract, but
-            // this CPU can also compile compatibility-mode regions. FSGSBASE
-            // is #UD outside CS.L=1, so reject any executed such op before
-            // native admission and let the mode-aware direct decoder deliver
-            // the exception. CS.L is part of the JIT cache mode tag.
+            // Standalone x86-64 SMIR models the 64-bit FSGSBASE/SWAPGS
+            // contracts, but this CPU can also compile compatibility-mode
+            // regions. Both are #UD outside CS.L=1, so reject any executed
+            // such op before native admission and let the mode-aware direct
+            // decoder deliver the exception. CS.L is in the JIT cache tag.
             #[cfg(target_arch = "x86_64")]
             if !self.sregs.cs.l
                 && func
@@ -4592,10 +4592,15 @@ impl X86_64Vcpu {
                     .iter()
                     .filter(|block| !exits.contains_key(&block.id))
                     .flat_map(|block| &block.ops)
-                    .any(|op| matches!(op.kind, OpKind::X86FsGsBase { .. }))
+                    .any(|op| {
+                        matches!(
+                            op.kind,
+                            OpKind::X86FsGsBase { .. } | OpKind::X86SwapGs { .. }
+                        )
+                    })
             {
                 if jit_bail_log() {
-                    eprintln!("[JIT-BAIL] fsgsbase-outside-long-mode @ {entry:#x}");
+                    eprintln!("[JIT-BAIL] long-mode-system-op @ {entry:#x}");
                 }
                 continue 'modes;
             }
@@ -4842,6 +4847,7 @@ impl X86_64Vcpu {
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
+        gr.kernel_gs_base = self.kernel_gs_base;
         gr.tsc_aux = self.tsc_aux;
         gr.pkru = self.pkru;
         gr.xcr0 = self.xcr0;
@@ -4943,6 +4949,7 @@ impl X86_64Vcpu {
         self.pkru = gr.pkru;
         self.sregs.fs.base = gr.fs_base;
         self.sregs.gs.base = gr.gs_base;
+        self.kernel_gs_base = gr.kernel_gs_base;
 
         self.regs.rax = gr.gpr[0];
         self.regs.rcx = gr.gpr[1];
@@ -5060,6 +5067,7 @@ impl X86_64Vcpu {
         let snap_lf = self.lazy_flags;
         let snap_fs_base = self.sregs.fs.base;
         let snap_gs_base = self.sregs.gs.base;
+        let snap_kernel_gs_base = self.kernel_gs_base;
         let snap_pkru = self.pkru;
 
         // 1) Run natively with store-logging (to UNDO writes) and an access
@@ -5071,6 +5079,7 @@ impl X86_64Vcpu {
         let jit_fpu = self.fpu.clone();
         let jit_fs_base = self.sregs.fs.base;
         let jit_gs_base = self.sregs.gs.base;
+        let jit_kernel_gs_base = self.kernel_gs_base;
         let jit_pkru = self.pkru;
         let jit_rflags = self.regs.rflags; // already materialized by the native bridge
         let exit_pc = self.regs.rip;
@@ -5107,6 +5116,7 @@ impl X86_64Vcpu {
         self.lazy_flags = snap_lf;
         self.sregs.fs.base = snap_fs_base;
         self.sregs.gs.base = snap_gs_base;
+        self.kernel_gs_base = snap_kernel_gs_base;
         self.pkru = snap_pkru;
         self.jit_mem_trace = Some(Vec::new());
         let cap = 50_000_000u64;
@@ -5213,6 +5223,7 @@ impl X86_64Vcpu {
             for (name, interp, native) in [
                 ("fs_base", self.sregs.fs.base, jit_fs_base),
                 ("gs_base", self.sregs.gs.base, jit_gs_base),
+                ("kernel_gs_base", self.kernel_gs_base, jit_kernel_gs_base),
                 ("pkru", u64::from(self.pkru), u64::from(jit_pkru)),
             ] {
                 if interp != native {
@@ -5361,6 +5372,7 @@ impl X86_64Vcpu {
         self.fpu = jit_fpu;
         self.sregs.fs.base = jit_fs_base;
         self.sregs.gs.base = jit_gs_base;
+        self.kernel_gs_base = jit_kernel_gs_base;
         self.pkru = jit_pkru;
     }
 
@@ -5909,6 +5921,10 @@ mod jit_fsgsbase_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_pkru_tests.rs"]
 mod jit_pkru_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_swapgs_tests.rs"]
+mod jit_swapgs_tests;
 
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {

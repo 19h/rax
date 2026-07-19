@@ -3866,6 +3866,10 @@ impl OpKind {
                 write,
                 ..
             } => result.push(if *write { *operand } else { *base }),
+            OpKind::X86SwapGs {
+                gs_base,
+                kernel_gs_base,
+            } => result.extend([*gs_base, *kernel_gs_base]),
             OpKind::X86Pkru {
                 eax,
                 ecx,

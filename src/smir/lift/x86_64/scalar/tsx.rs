@@ -3,8 +3,8 @@
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
-    /// Lift XGETBV/XSETBV, RDPKRU/WRPKRU, SERIALIZE, and the RTM fixed ModR/M
-    /// encodings in 0F 01.
+    /// Lift XGETBV/XSETBV, RDPKRU/WRPKRU, SERIALIZE, SWAPGS, and the RTM fixed
+    /// ModR/M encodings in 0F 01.
     pub(crate) fn lift_xcr_0f01(
         &self,
         bytes: &[u8],
@@ -108,6 +108,10 @@ impl X86_64Lifter {
                 edx: self.gpr(2),
                 pkru: VReg::Arch(ArchReg::X86(X86Reg::Pkru)),
                 write: modrm == 0xEF,
+            },
+            0xF8 => OpKind::X86SwapGs {
+                gs_base: VReg::Arch(ArchReg::X86(X86Reg::GsBase)),
+                kernel_gs_base: VReg::Arch(ArchReg::X86(X86Reg::KernelGsBase)),
             },
             _ => {
                 return Err(LiftError::Unsupported {

@@ -360,6 +360,8 @@ pub struct X86RegState {
     pub fs_base: u64,
     /// GS base
     pub gs_base: u64,
+    /// IA32_KERNEL_GS_BASE MSR, exchanged with GS.base by SWAPGS
+    pub kernel_gs_base: u64,
     /// Protection-key rights register (architecturally 32 bits)
     pub pkru: u32,
     /// MMX registers MM0-MM7 (64-bit each)
@@ -377,6 +379,8 @@ pub struct X86RegState {
     /// Guest CR4. CPUID leaf 1 reflects OSXSAVE (bit 18), and leaf 7 reflects
     /// OSPKE (bit 22).
     pub cr4: u64,
+    /// Current privilege level used by privileged system instructions.
+    pub cpl: u8,
     /// Opt-in Xeon Phi AVX-512 feature profile used by CPUID leaf 7.
     pub xeon_phi_avx512: bool,
     /// Opt-in AVX512_VP2INTERSECT feature profile used by CPUID leaf 7.
@@ -451,6 +455,7 @@ impl X86RegState {
             X86Reg::Rflags => self.rflags,
             X86Reg::FsBase => self.fs_base,
             X86Reg::GsBase => self.gs_base,
+            X86Reg::KernelGsBase => self.kernel_gs_base,
             X86Reg::Pkru => u64::from(self.pkru),
             X86Reg::Mm(n) => self.mm[n as usize & 0x7],
             X86Reg::Xmm(n) | X86Reg::Ymm(n) | X86Reg::Zmm(n) => self.xmm[n as usize][0],
@@ -498,6 +503,7 @@ impl X86RegState {
             X86Reg::Rflags => self.rflags = val,
             X86Reg::FsBase => self.fs_base = val,
             X86Reg::GsBase => self.gs_base = val,
+            X86Reg::KernelGsBase => self.kernel_gs_base = val,
             X86Reg::Pkru => self.pkru = val as u32,
             X86Reg::Mm(n) => self.mm[n as usize & 0x7] = val,
             X86Reg::Xmm(n) | X86Reg::Ymm(n) | X86Reg::Zmm(n) => self.xmm[n as usize][0] = val,

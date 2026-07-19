@@ -205,6 +205,8 @@ pub enum X86Reg {
     // Segment bases
     FsBase,
     GsBase,
+    /// IA32_KERNEL_GS_BASE, exchanged with GS.base by SWAPGS.
+    KernelGsBase,
 
     // Protection-key rights register
     Pkru,

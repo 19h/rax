@@ -120,6 +120,8 @@ pub const X86_GUEST_CPUID_XEON_PHI_AVX512_OFFSET: i32 = X86_GUEST_CPUID_FN_OFFSE
 pub const X86_GUEST_CPUID_VP2INTERSECT_OFFSET: i32 = X86_GUEST_CPUID_XEON_PHI_AVX512_OFFSET + 8;
 /// Byte offset of the guest SSE4A enumeration policy.
 pub const X86_GUEST_CPUID_SSE4A_OFFSET: i32 = X86_GUEST_CPUID_VP2INTERSECT_OFFSET + 8;
+/// Byte offset of the guest IA32_KERNEL_GS_BASE value used by SWAPGS.
+pub const X86_GUEST_KERNEL_GS_BASE_OFFSET: i32 = X86_GUEST_CPUID_SSE4A_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

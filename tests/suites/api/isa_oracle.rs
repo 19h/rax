@@ -258,6 +258,44 @@ fn emits_exact_pkru_state_direction_and_implicit_register_metadata() {
 }
 
 #[test]
+fn emits_and_executes_exact_swapgs_state_dataflow() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let decoded = decode_to_json(&[0x0F, 0x01, 0xF8], &opts).unwrap();
+    assert_eq!(decoded["smir"]["available"], true);
+    assert_eq!(decoded["smir"]["bytes_consumed"], 3);
+    let op = &decoded["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_swapgs");
+    assert_eq!(op["kind"]["gs_base"]["name"], "gs_base");
+    assert_eq!(op["kind"]["kernel_gs_base"]["name"], "kernel_gs_base");
+    assert_eq!(op["writes"][0]["name"], "gs_base");
+    assert_eq!(op["writes"][1]["name"], "kernel_gs_base");
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+
+    let seed = OracleSeed {
+        regs: vec![
+            ("gs_base".to_string(), 0x0000_7FFF_1234_5000),
+            ("kernel_gs_base".to_string(), 0xFFFF_8000_ABCD_E000),
+        ],
+        memory: vec![],
+        memory_size: None,
+    };
+    let executed = decode_to_json_with_seed(&[0x0F, 0x01, 0xF8], &opts, Some(&seed)).unwrap();
+    assert_eq!(executed["side_effects"]["available"], true);
+    assert_eq!(
+        executed["side_effects"]["changed_regs"]["gs_base"]["after"],
+        "0xffff8000abcde000"
+    );
+    assert_eq!(
+        executed["side_effects"]["changed_regs"]["kernel_gs_base"]["after"],
+        "0x7fff12345000"
+    );
+}
+
+#[test]
 fn emits_exact_legacy_pcmpxstrx_semantics() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

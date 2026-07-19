@@ -34,6 +34,8 @@ mod serialize;
 #[cfg(test)]
 mod sqrt;
 #[cfg(test)]
+mod swapgs;
+#[cfg(test)]
 mod trap;
 #[cfg(test)]
 mod vector;

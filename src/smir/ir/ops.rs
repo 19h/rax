@@ -3967,6 +3967,14 @@ pub enum OpKind {
         requires_apx: bool,
     },
 
+    /// SWAPGS atomically exchanges GS.base and IA32_KERNEL_GS_BASE after its
+    /// architectural long-mode and CPL checks. Both state operands are
+    /// explicit so liveness, interpretation, and native handoff agree.
+    X86SwapGs {
+        gs_base: VReg,
+        kernel_gs_base: VReg,
+    },
+
     /// RDPKRU/WRPKRU. The implicit GPR and PKRU operands are explicit so
     /// liveness, static analysis, interpretation, and native state handoff all
     /// observe the same architectural data flow. Dynamic CR4.PKE and selector
@@ -4406,6 +4414,7 @@ impl OpKind {
                 | OpKind::X86XGetBv { .. }
                 | OpKind::X86XSetBv { .. }
                 | OpKind::X86FsGsBase { .. }
+                | OpKind::X86SwapGs { .. }
                 | OpKind::X86Pkru { .. }
                 | OpKind::X86Cpuid { .. }
                 | OpKind::X86Count { .. }
@@ -4788,6 +4797,11 @@ impl OpKind {
                 ..
             } => vec![if *write { *base } else { *operand }],
 
+            OpKind::X86SwapGs {
+                gs_base,
+                kernel_gs_base,
+            } => vec![*gs_base, *kernel_gs_base],
+
             OpKind::X86Pkru {
                 eax,
                 edx,
@@ -5073,6 +5087,7 @@ impl OpKind {
                     | OpKind::X86XGetBv { .. }
                     | OpKind::X86XSetBv { .. }
                     | OpKind::X86FsGsBase { .. }
+                    | OpKind::X86SwapGs { .. }
                     | OpKind::X86Pkru { .. }
                     | OpKind::X86Random { .. }
                     // A saturating clamp ORs the Hexagon USR:OVF sticky bit when it

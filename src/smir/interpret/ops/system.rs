@@ -144,6 +144,33 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::X86SwapGs {
+                gs_base,
+                kernel_gs_base,
+            } => {
+                let cpl = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.cpl,
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                if cpl != 0 {
+                    ctx.request_exit(ExitReason::GeneralProtection {
+                        addr: op.guest_pc,
+                        error_code: 0,
+                    });
+                    return Ok(());
+                }
+                let old_gs_base = ctx.read_vreg(*gs_base);
+                let old_kernel_gs_base = ctx.read_vreg(*kernel_gs_base);
+                ctx.write_vreg(*gs_base, old_kernel_gs_base);
+                ctx.write_vreg(*kernel_gs_base, old_gs_base);
+            }
+
             OpKind::X86Pkru {
                 eax,
                 ecx,

@@ -36,6 +36,8 @@ mod simd;
 #[cfg(test)]
 mod state;
 #[cfg(test)]
+mod swapgs;
+#[cfg(test)]
 mod tsx;
 #[cfg(all(test, feature = "smir-jit"))]
 mod vector_maskmov;

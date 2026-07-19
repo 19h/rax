@@ -52,6 +52,8 @@ mod pkru;
 pub use pkru::*;
 mod serialize;
 pub use serialize::*;
+mod swapgs;
+pub use swapgs::*;
 mod ops;
 pub use emitter::*;
 mod jit;
