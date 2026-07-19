@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::devices::pci::PciStub;
 
-use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
+use vm_memory::{Bytes, GuestAddress, GuestMemory, GuestMemoryMmap};
 
 use crate::error::{Error, Result};
 use crate::vm::timing;
@@ -1374,6 +1374,11 @@ impl Mmu {
     /// Slow path for writes that cross page boundaries
     #[cold]
     fn write_crossing(&mut self, vaddr: u64, buf: &[u8], sregs: &SystemRegisters) -> Result<()> {
+        // Fault-class exceptions restore the instruction's pre-execution
+        // machine state. Preflight every translated physical chunk before the
+        // first write so a later page fault or unmapped physical range cannot
+        // expose a partially completed ordinary store.
+        let mut chunks = Vec::new();
         let mut offset = 0;
         let mut remaining = buf.len();
         let mut addr = vaddr;
@@ -1382,12 +1387,24 @@ impl Mmu {
             let paddr = self.translate(addr, AccessType::Write, sregs)?;
             let page_offset = (paddr & 0xFFF) as usize;
             let bytes_in_page = std::cmp::min(remaining, 0x1000 - page_offset);
-
-            self.write_phys(paddr, &buf[offset..offset + bytes_in_page])?;
+            let physical_range_valid = Self::is_lapic_addr(paddr)
+                || self.in_pci_aperture(paddr)
+                || self.in_ram(paddr, bytes_in_page)
+                || self.memory.check_range(GuestAddress(paddr), bytes_in_page);
+            if !physical_range_valid {
+                return Err(Error::Emulator(format!(
+                    "failed to write at {paddr:#x}: physical range is unmapped"
+                )));
+            }
+            chunks.push((paddr, offset, bytes_in_page));
 
             offset += bytes_in_page;
             remaining -= bytes_in_page;
             addr += bytes_in_page as u64;
+        }
+
+        for (paddr, offset, bytes_in_page) in chunks {
+            self.write_phys(paddr, &buf[offset..offset + bytes_in_page])?;
         }
 
         Ok(())

@@ -6,6 +6,8 @@ mod decode;
 pub(crate) mod execute;
 pub mod flags;
 pub(crate) mod memory;
+#[cfg(test)]
+mod memory_tests;
 mod simd_native;
 mod threaded;
 
