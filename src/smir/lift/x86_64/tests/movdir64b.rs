@@ -319,6 +319,7 @@ fn legacy_movdir64b_interpreter_preserves_fault_priority_and_direction() {
     ));
 }
 
+#[cfg(feature = "smir-jit")]
 #[test]
 fn legacy_movdir64b_native_gate_remains_fail_closed_for_the_buffered_temporary() {
     let mut block = block_for(&[0x66, 0x0F, 0x38, 0xF8, 0x08]);

@@ -237,6 +237,7 @@ fn legacy_movdiri_executes_exact_store_through_smir_interpreter() {
     }
 }
 
+#[cfg(feature = "smir-jit")]
 #[test]
 fn legacy_movdiri_is_helper_backed_x86_jit_admissible_and_lowerable() {
     let result = lift_single(&[0x4D, 0x0F, 0x38, 0xF9, 0x48, 0x08]).unwrap();
