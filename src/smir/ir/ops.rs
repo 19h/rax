@@ -7,6 +7,8 @@ use crate::smir::ir::types::*;
 
 mod x86_fp_types;
 pub use x86_fp_types::*;
+mod x86_crypto_types;
+pub use x86_crypto_types::*;
 
 // ============================================================================
 // Operation Structure
@@ -3579,6 +3581,21 @@ pub enum OpKind {
         imm: u8,
     },
 
+    /// Legacy SHA-NI operation over one 128-bit vector of four 32-bit words.
+    /// `src1` snapshots the architectural destination, `src2` is the explicit
+    /// register-or-memory source, and `wk` is present only for SHA256RNDS2's
+    /// implicit XMM0 input. The result is written independently to `dst`; no
+    /// architectural flags are read or written.
+    X86Sha32 {
+        dst: VReg,
+        src1: VReg,
+        src2: VReg,
+        wk: Option<VReg>,
+        op: X86Sha32Op,
+        /// Full encoded immediate; only SHA1RNDS4 consumes bits 1:0.
+        imm: u8,
+    },
+
     /// SHA-512 message schedule, first stage.
     X86Sha512Msg1 {
         dst: VReg,
@@ -4512,6 +4529,7 @@ impl OpKind {
             | OpKind::X86MovMask { dst, .. }
             | OpKind::X86MovdQ { dst, .. }
             | OpKind::X86Aes { dst, .. }
+            | OpKind::X86Sha32 { dst, .. }
             | OpKind::X86Sha512Msg1 { dst, .. }
             | OpKind::X86Sha512Msg2 { dst, .. }
             | OpKind::X86Sha512Rounds2 { dst, .. }

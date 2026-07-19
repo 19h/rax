@@ -22,6 +22,8 @@ mod movdiri;
 #[cfg(test)]
 mod scalar;
 #[cfg(test)]
+mod sha_ni;
+#[cfg(test)]
 mod sse;
 #[cfg(test)]
 mod tsx;

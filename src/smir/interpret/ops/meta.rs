@@ -6,9 +6,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
-    X86CacheControlKind, X86CountKind, X86OpHint, X86ThreeDNowKind, X86X87ArithmeticDestination,
-    X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
-    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+    X86CacheControlKind, X86CountKind, X86OpHint, X86Sha32Op, X86ThreeDNowKind,
+    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
+    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
+    X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -444,6 +445,51 @@ impl SmirInterpreter {
                     result[word] = lo;
                     result[word + 1] = hi;
                 }
+                Self::write_vec(ctx, *dst, result);
+            }
+
+            OpKind::X86Sha32 {
+                dst,
+                src1,
+                src2,
+                wk,
+                op: sha_op,
+                imm,
+            } => {
+                use crate::isa::x86_64::execute::crypto::sha;
+
+                let first = Self::read_vec(ctx, *src1);
+                let second = Self::read_vec(ctx, *src2);
+                let value = match sha_op {
+                    X86Sha32Op::Sha1Nexte => {
+                        sha::sha1nexte(first[0], first[1], second[0], second[1])
+                    }
+                    X86Sha32Op::Sha1Msg1 => sha::sha1msg1(first[0], first[1], second[0], second[1]),
+                    X86Sha32Op::Sha1Msg2 => sha::sha1msg2(first[0], first[1], second[0], second[1]),
+                    X86Sha32Op::Sha1Rounds4 => {
+                        sha::sha1rnds4(first[0], first[1], second[0], second[1], *imm)
+                    }
+                    X86Sha32Op::Sha256Msg1 => {
+                        sha::sha256msg1(first[0], first[1], second[0], second[1])
+                    }
+                    X86Sha32Op::Sha256Msg2 => {
+                        sha::sha256msg2(first[0], first[1], second[0], second[1])
+                    }
+                    X86Sha32Op::Sha256Rounds2 => {
+                        let Some(wk) = wk else {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        };
+                        let work = Self::read_vec(ctx, *wk);
+                        sha::sha256rnds2(first[0], first[1], second[0], second[1], work[0])
+                    }
+                };
+                let mut result = [0u64; 16];
+                result[0] = value.0;
+                result[1] = value.1;
                 Self::write_vec(ctx, *dst, result);
             }
 

@@ -1,6 +1,32 @@
 //! SHA-NI helper functions for x86_64 CPU emulator.
 //! Implements SHA-1 and SHA-256 cryptographic operations.
 
+use crate::error::Result;
+use crate::isa::x86_64::cpu::X86_64Vcpu;
+
+/// Read the register-or-memory second source shared by the legacy SHA-NI
+/// instructions. Type-4 legacy SSE memory operands require 16-byte alignment;
+/// the #GP(0) check must precede either half of the 16-byte read.
+pub(in crate::isa::x86_64) fn read_xmm_m128(
+    vcpu: &mut X86_64Vcpu,
+    rm: u8,
+    is_memory: bool,
+    addr: u64,
+) -> Result<Option<(u64, u64)>> {
+    if is_memory {
+        if addr & 0xF != 0 {
+            vcpu.inject_exception(13, Some(0))?;
+            return Ok(None);
+        }
+        Ok(Some((vcpu.read_mem(addr, 8)?, vcpu.read_mem(addr + 8, 8)?)))
+    } else {
+        Ok(Some((
+            vcpu.regs.xmm[rm as usize][0],
+            vcpu.regs.xmm[rm as usize][1],
+        )))
+    }
+}
+
 // =============================================================================
 // SHA-1 Helper Functions
 // =============================================================================

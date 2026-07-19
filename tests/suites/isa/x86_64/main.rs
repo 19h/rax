@@ -250,6 +250,8 @@ mod x86_64_crypto_sha256msg1;
 mod x86_64_crypto_sha256msg2;
 #[path = "crypto/sha256rnds2.rs"]
 mod x86_64_crypto_sha256rnds2;
+#[path = "crypto/sha_ni_arch.rs"]
+mod x86_64_crypto_sha_ni_arch;
 
 // Data Movement
 #[path = "data/movement/basic_move/mov.rs"]

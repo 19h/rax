@@ -925,10 +925,9 @@ impl X86_64Vcpu {
                 let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                 let imm8 = ctx.consume_u8()?;
                 let xmm_dst = reg as usize;
-                let (src2_lo, src2_hi) = if is_memory {
-                    (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
-                } else {
-                    (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
+                let Some((src2_lo, src2_hi)) = sha::read_xmm_m128(self, rm, is_memory, addr)?
+                else {
+                    return Ok(None);
                 };
                 let src1_lo = self.regs.xmm[xmm_dst][0];
                 let src1_hi = self.regs.xmm[xmm_dst][1];

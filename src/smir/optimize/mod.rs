@@ -1460,6 +1460,13 @@ fn rewrite_pure_src_vregs(kind: &mut OpKind, f: &dyn Fn(VReg) -> VReg) -> usize 
             do_v(src_true, &mut n);
             do_v(src_false, &mut n);
         }
+        OpKind::X86Sha32 { src1, src2, wk, .. } => {
+            do_v(src1, &mut n);
+            do_v(src2, &mut n);
+            if let Some(wk) = wk {
+                do_v(wk, &mut n);
+            }
+        }
         _ => {}
     }
     n
@@ -4116,6 +4123,12 @@ impl OpKind {
                 result.push(*src1);
                 result.push(*src2);
                 result.extend(mask.iter().copied());
+            }
+
+            OpKind::X86Sha32 { src1, src2, wk, .. } => {
+                result.push(*src1);
+                result.push(*src2);
+                result.extend(wk.iter().copied());
             }
 
             OpKind::X86Sha512Msg1 { dst, src } | OpKind::X86Sha512Msg2 { dst, src } => {

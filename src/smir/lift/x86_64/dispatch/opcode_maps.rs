@@ -67,6 +67,7 @@ impl X86_64Lifter {
             0x38..=0x3F => self.lift_sse_packed_minmax(opcode3, after_opcode, &prefix3, pc, ctx),
             0x40 => self.lift_sse_pmulld(after_opcode, &prefix3, pc, ctx),
             0x41 => self.lift_sse_phminposuw(after_opcode, &prefix3, pc, ctx),
+            0xC8..=0xCD => self.lift_sse_sha32(opcode3, after_opcode, &prefix3, false, pc, ctx),
             0xCF => self.lift_sse_gfni(opcode3, after_opcode, &prefix3, false, pc, ctx),
             0xDB..=0xDF => self.lift_sse_aes_round(opcode3, after_opcode, &prefix3, pc, ctx),
             0x8A | 0x8B => self.lift_movrs_0f38(opcode3, after_opcode, &prefix3, pc, ctx),
@@ -123,6 +124,7 @@ impl X86_64Lifter {
             0x40 | 0x41 => self.lift_sse_dot_product(opcode, after_opcode, &prefix3, pc, ctx),
             0x42 => self.lift_sse_mpsadbw(after_opcode, &prefix3, pc, ctx),
             0x44 => self.lift_sse_pclmulqdq(after_opcode, &prefix3, pc, ctx),
+            0xCC => self.lift_sse_sha32(opcode, after_opcode, &prefix3, true, pc, ctx),
             0xCE | 0xCF => self.lift_sse_gfni(opcode, after_opcode, &prefix3, true, pc, ctx),
             0xDF => self.lift_sse_aes_keygen(after_opcode, &prefix3, pc, ctx),
             _ if self.strict => Err(LiftError::Unsupported {
