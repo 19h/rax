@@ -14,6 +14,8 @@ mod memory;
 #[cfg(test)]
 mod misc;
 #[cfg(test)]
+mod mmx_helpers;
+#[cfg(test)]
 mod simd;
 #[cfg(test)]
 mod state;

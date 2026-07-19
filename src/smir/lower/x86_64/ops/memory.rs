@@ -82,7 +82,7 @@ impl X86_64Lowerer {
             // ================================================================
             OpKind::VLoad { dst, addr, width } => {
                 if self.mem_helpers {
-                    return self.emit_jit_vector_mem_op(
+                    return self.emit_jit_vector_or_mmx_mem_op(
                         op.guest_pc,
                         true,
                         *dst,
@@ -123,7 +123,7 @@ impl X86_64Lowerer {
 
             OpKind::VStore { src, addr, width } => {
                 if self.mem_helpers {
-                    return self.emit_jit_vector_mem_op(
+                    return self.emit_jit_vector_or_mmx_mem_op(
                         op.guest_pc,
                         false,
                         *src,

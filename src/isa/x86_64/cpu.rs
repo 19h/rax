@@ -4344,11 +4344,11 @@ fn jit_classify_bail(
 ) -> String {
     use crate::smir::ir::types::{ArchReg, VReg, X86Reg};
     use crate::smir::lower::runtime::{
-        is_x86_native_vector_op, x86_jit_pop_candidate, x86_jit_pop_sequence_len,
-        x86_jit_pop2_candidate, x86_jit_pop2_sequence_len, x86_jit_push_candidate,
-        x86_jit_push_sequence_len, x86_jit_push2_candidate, x86_jit_push2_sequence_len,
-        x86_jit_vector_mem_shape_valid, x86_state_backed_stack_alu_valid,
-        x86_state_backed_stack_mov_valid,
+        is_x86_native_vector_op, x86_jit_mmx_mem_shape_valid, x86_jit_pop_candidate,
+        x86_jit_pop_sequence_len, x86_jit_pop2_candidate, x86_jit_pop2_sequence_len,
+        x86_jit_push_candidate, x86_jit_push_sequence_len, x86_jit_push2_candidate,
+        x86_jit_push2_sequence_len, x86_jit_vector_mem_shape_valid,
+        x86_state_backed_stack_alu_valid, x86_state_backed_stack_mov_valid,
     };
     let is_sp_bp = |v: &VReg| {
         matches!(
@@ -4434,7 +4434,8 @@ fn jit_classify_bail(
             }
             let mem_ok = allow_mem
                 && (matches!(op.kind, OpKind::Load { .. } | OpKind::Store { .. })
-                    || x86_jit_vector_mem_shape_valid(&op.kind));
+                    || x86_jit_vector_mem_shape_valid(&op.kind)
+                    || x86_jit_mmx_mem_shape_valid(op));
             let vector_ok = is_x86_native_vector_op(&op.kind);
             let stack_mov_ok = x86_state_backed_stack_mov_valid(&op.kind);
             let stack_alu_ok = x86_state_backed_stack_alu_valid(&op.kind);
@@ -4845,18 +4846,6 @@ impl X86_64Vcpu {
                         )
                     });
             #[cfg(target_arch = "x86_64")]
-            if uses_mmx && (uses_mem_helpers || cm) {
-                // Rust helper calls cannot execute while the host x87/MMX file
-                // contains live guest state. Retry call-mode regions without
-                // call-through, and retain interpreter fallback for MMX memory
-                // forms until each helper boundary spills, executes EMMS, and
-                // restores MM0-MM7.
-                if jit_bail_log() {
-                    eprintln!("[JIT-BAIL] mmx-helper-boundary @ {entry:#x} (call={cm})");
-                }
-                continue 'modes;
-            }
-            #[cfg(target_arch = "x86_64")]
             {
                 if !is_native_clobber_safe_excluding(&func, &exits, allow_mem) {
                     if jit_bail_log() {
@@ -4887,6 +4876,8 @@ impl X86_64Vcpu {
             lowerer.set_guest_pcrel_lea_immediates(true);
             #[cfg(target_arch = "x86_64")]
             lowerer.set_jit_fault_deopt_guards(true);
+            #[cfg(target_arch = "x86_64")]
+            lowerer.set_preserve_mmx_helpers(uses_mmx);
             lowerer.set_native_exits(exits);
             lowerer.set_native_exit_edges(edge_exits);
             #[cfg(target_arch = "x86_64")]
@@ -5957,87 +5948,6 @@ mod decode_cache_invalidation_tests {
         assert_eq!(vcpu.jit_mode_tag(), register_only);
     }
 
-    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-    #[test]
-    fn jit_native_region_synchronizes_mmx_values_and_precise_guest_tags() {
-        // push rbp; mov rbp,rsp; push rax; mov rax,[rbp+24];
-        // mov qword ptr [rax+x87_tag],0; pop rax; paddb mm0,mm1; leave; ret.
-        // The explicit state-slot store models the lowerer's precise EnterMmx
-        // commit independently of the trampoline's host-only EMMS cleanup.
-        let mut code = vec![
-            0x55, 0x48, 0x89, 0xE5, 0x50, 0x48, 0x8B, 0x45, 0x18, 0x48, 0xC7, 0x80,
-        ];
-        code.extend_from_slice(
-            &(crate::smir::lower::X86_GUEST_X87_TAG_WORD_OFFSET as u32).to_le_bytes(),
-        );
-        code.extend_from_slice(&0u32.to_le_bytes());
-        code.extend_from_slice(&[0x58, 0x0F, 0xFC, 0xC1, 0xC9, 0xC3]);
-        let region = JitRegion {
-            exec: crate::smir::lower::runtime::ExecMem::new(&code).expect("map MMX region"),
-            entry_offset: 0,
-            uses_vector: false,
-            narrow_vector_opmasks: false,
-            uses_mmx: true,
-        };
-        let mut vcpu = test_vcpu();
-        vcpu.regs.rip = 0x1000;
-        vcpu.regs.rflags = 0x2;
-        vcpu.regs.mm = [
-            0x00ff_7f80_0102_0304,
-            0x0102_0304_0506_0708,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-        ];
-        vcpu.fpu.tag_word = 0xFFFF;
-
-        vcpu.jit_run_region_native(&region);
-
-        assert_eq!(vcpu.regs.mm[0], 0x0101_8284_0608_0A0C);
-        assert_eq!(
-            &vcpu.regs.mm[1..],
-            &[0x0102_0304_0506_0708, 2, 3, 4, 5, 6, 7]
-        );
-        assert_eq!(vcpu.fpu.tag_word, 0);
-        assert_eq!(vcpu.regs.rip, 0x1000);
-    }
-
-    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-    #[test]
-    fn jit_compiles_and_executes_lifted_register_mmx_logic() {
-        let (mut vcpu, mem) = test_vcpu_with_mem();
-        // pand mm0,mm1; jmp next; ret. The RET block is an interpreter
-        // frontier, leaving the MMX instruction in the executable native block.
-        mem.write_slice(&[0x0F, 0xDB, 0xC1, 0xEB, 0x00, 0xC3], GuestAddress(0))
-            .unwrap();
-        vcpu.sregs.efer = 1 << 10;
-        vcpu.sregs.cs.l = true;
-        vcpu.regs.rip = 0;
-        vcpu.regs.rflags = 0x2;
-        vcpu.regs.mm[0] = 0xF0F0_0FF0_AA55_1234;
-        vcpu.regs.mm[1] = 0x0FF0_FFFF_0F0F_FFFF;
-        vcpu.fpu.tag_word = 0xFFFF;
-        vcpu.set_jit_mem(false);
-        vcpu.set_jit_call(false);
-
-        let region = vcpu
-            .jit_compile_region()
-            .expect("compile MMX region")
-            .expect("register MMX logic should be JIT eligible");
-        assert!(region.uses_mmx);
-        assert!(!region.uses_vector);
-
-        vcpu.jit_run_region_native(&region);
-
-        assert_eq!(vcpu.regs.mm[0], 0x00F0_0FF0_0A05_1234);
-        assert_eq!(vcpu.regs.mm[1], 0x0FF0_FFFF_0F0F_FFFF);
-        assert_eq!(vcpu.fpu.tag_word, 0);
-        assert_eq!(vcpu.regs.rip, 5);
-    }
-
     #[cfg(all(
         feature = "smir-jit",
         any(target_arch = "x86_64", target_arch = "aarch64")
@@ -6124,6 +6034,10 @@ mod decode_cache_invalidation_tests {
         );
     }
 }
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_mmx_tests.rs"]
+mod jit_mmx_tests;
 
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {

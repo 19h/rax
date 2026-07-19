@@ -153,7 +153,7 @@ impl X86_64Lowerer {
         self.emit_load_state_ptr_rax();
         self.code.emit_u8(0x9C); // pushfq; stack remains 16-byte aligned
         self.emit_spill_legacy_gprs_to_state_from_rax(8);
-        self.emit_helper_vector_state(PhysReg::Rax, true);
+        self.emit_helper_call_state(PhysReg::Rax, true, true);
         self.emit_x86_state_address_rsi(addr)?;
 
         self.code.emit_u8(0x48);
@@ -185,7 +185,7 @@ impl X86_64Lowerer {
         self.code.emit_u8(0xC0); // test rax,rax
         let fault = self.emit_jcc_placeholder(X86Cond::E);
 
-        self.emit_helper_vector_state(PhysReg::Rcx, false);
+        self.emit_helper_call_state(PhysReg::Rcx, false, true);
         self.emit_reload_all(PhysReg::Rcx);
         self.code.emit_u8(0x9D); // popfq
         self.emit_flag_preserving_stack_pop8();
@@ -194,7 +194,7 @@ impl X86_64Lowerer {
         self.code.emit_u32(0);
 
         self.patch_rel32_to_current(fault)?;
-        self.emit_helper_vector_state(PhysReg::Rcx, false);
+        self.emit_helper_call_state(PhysReg::Rcx, false, true);
         self.emit_reload_all(PhysReg::Rcx);
         self.code.emit_u8(0x9D);
         self.emit_flag_preserving_stack_pop8();
@@ -2701,9 +2701,7 @@ impl X86_64Lowerer {
         self.emit_load_state_ptr_rax();
         self.code.emit_u8(0x9C); // pushfq; keep the helper call 16-byte aligned
         self.emit_spill_legacy_gprs_to_state_from_rax(8);
-        if self.preserve_vector_mem_helpers {
-            self.emit_helper_vector_state(PhysReg::Rax, true);
-        }
+        self.emit_helper_call_state(PhysReg::Rax, true, self.preserve_vector_mem_helpers);
 
         self.code.emit_u8(0x48);
         self.code.emit_u8(0x89);
@@ -2729,9 +2727,7 @@ impl X86_64Lowerer {
         self.code.emit_u8(0xC0); // test rax,rax
         let fault = self.emit_jcc_placeholder(X86Cond::E);
 
-        if self.preserve_vector_mem_helpers {
-            self.emit_helper_vector_state(PhysReg::Rcx, false);
-        }
+        self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_mem_helpers);
         if is_load && (low_enc == 5 || high_enc == 5) {
             self.emit_sync_saved_rbp_from_state(PhysReg::Rcx);
         }
@@ -2743,9 +2739,7 @@ impl X86_64Lowerer {
         self.code.emit_u32(0);
 
         self.patch_rel32_to_current(fault)?;
-        if self.preserve_vector_mem_helpers {
-            self.emit_helper_vector_state(PhysReg::Rcx, false);
-        }
+        self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_mem_helpers);
         self.emit_reload_all(PhysReg::Rcx);
         self.code.emit_u8(0x9D);
         self.emit_flag_preserving_stack_pop8();
@@ -3330,9 +3324,7 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x08);
         self.emit_struct_mov(PhysReg::Rax, 1, 0, true);
 
-        if self.preserve_vector_mem_helpers {
-            self.emit_helper_vector_state(PhysReg::Rax, true);
-        }
+        self.emit_helper_call_state(PhysReg::Rax, true, self.preserve_vector_mem_helpers);
 
         // --- effective guest address into RSI (enc 6), reading base/index from
         //     the struct (state ptr in RAX) ---
@@ -3531,9 +3523,7 @@ impl X86_64Lowerer {
                 }
             }
         }
-        if self.preserve_vector_mem_helpers {
-            self.emit_helper_vector_state(PhysReg::Rcx, false);
-        }
+        self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_mem_helpers);
         self.emit_reload_all(PhysReg::Rcx);
         // popfq: restore the guest STATUS flags saved on entry (pops [rsp]).
         self.code.emit_u8(0x9D);
@@ -3554,9 +3544,7 @@ impl X86_64Lowerer {
         let fault = self.code.position();
         self.code
             .patch_i32(jz_pos, (fault as i64 - (jz_pos as i64 + 4)) as i32);
-        if self.preserve_vector_mem_helpers {
-            self.emit_helper_vector_state(PhysReg::Rcx, false);
-        }
+        self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_mem_helpers);
         self.emit_reload_all(PhysReg::Rcx);
         // popfq: restore the guest STATUS flags (pops [rsp]).
         self.code.emit_u8(0x9D);
@@ -3660,9 +3648,7 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x24);
         self.emit_struct_mov(PhysReg::Rax, 1, X86_GUEST_RFLAGS_OFFSET, true);
 
-        if self.preserve_vector_call_helpers {
-            self.emit_helper_vector_state(PhysReg::Rax, true);
-        }
+        self.emit_helper_call_state(PhysReg::Rax, true, self.preserve_vector_call_helpers);
 
         // --- args: rdi = gr (rax), rsi = target_pc, rdx = return_pc ---
         // mov rdi, rax  (48 89 C7)
@@ -3695,9 +3681,7 @@ impl X86_64Lowerer {
         self.code.emit_u32(0);
 
         // --- OK path: restore full post-callee flags, reload GPRs, jmp continuation ---
-        if self.preserve_vector_call_helpers {
-            self.emit_helper_vector_state(PhysReg::Rcx, false);
-        }
+        self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_call_helpers);
         // push qword [rcx+rflags]; popfq  (the helper synced gr.rflags with the
         // post-callee flags). FF /6 [rcx+disp32] = FF B1 <disp32>.
         self.code.emit_u8(0xFF);
@@ -3724,9 +3708,7 @@ impl X86_64Lowerer {
         self.code
             .patch_i32(jz_pos, (bail as i64 - (jz_pos as i64 + 4)) as i32);
         // push qword [rcx+rflags]; popfq
-        if self.preserve_vector_call_helpers {
-            self.emit_helper_vector_state(PhysReg::Rcx, false);
-        }
+        self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_call_helpers);
         self.code.emit_u8(0xFF);
         self.code.emit_u8(0xB1);
         self.code.emit_u32(X86_GUEST_RFLAGS_OFFSET as u32);

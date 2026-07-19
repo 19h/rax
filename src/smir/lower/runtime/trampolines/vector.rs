@@ -5922,13 +5922,17 @@ pub fn x86_native_mmx_pairs_valid_excluding(
             let mut index = 0;
             while index < block.ops.len() {
                 let first = &block.ops[index];
-                if is_enter(first) || is_x86_native_mmx_op(first) {
+                let first_is_mmx =
+                    is_x86_native_mmx_op(first) || x86_jit_mmx_mem_shape_valid(first);
+                if is_enter(first) || first_is_mmx {
                     let Some(second) = block.ops.get(index + 1) else {
                         return false;
                     };
+                    let second_is_mmx =
+                        is_x86_native_mmx_op(second) || x86_jit_mmx_mem_shape_valid(second);
                     let paired = first.guest_pc == second.guest_pc
-                        && ((is_enter(first) && is_x86_native_mmx_op(second))
-                            || (is_x86_native_mmx_op(first) && is_enter(second)));
+                        && ((is_enter(first) && second_is_mmx)
+                            || (first_is_mmx && is_enter(second)));
                     if !paired {
                         return false;
                     }

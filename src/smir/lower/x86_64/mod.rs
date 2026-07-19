@@ -50,6 +50,8 @@ mod jit;
 pub use jit::*;
 mod memory;
 pub use memory::*;
+mod mmx_helpers;
+pub use mmx_helpers::*;
 mod misc;
 pub use misc::*;
 mod simd;
@@ -1159,6 +1161,11 @@ pub struct X86_64Lowerer {
     /// semantically modify vector state, so the post-call reload consumes the
     /// helper-updated state rather than merely restoring the pre-call snapshot.
     preserve_vector_call_helpers: bool,
+
+    /// Spill MM0-MM7 and execute host-only EMMS before every Rust helper call,
+    /// then reload the complete MMX file from `GuestRegs` after the call. This
+    /// is required because MMX aliases the host x87 register/tag file.
+    preserve_mmx_helpers: bool,
 
     /// Use KMOVW instead of KMOVQ at vector helper boundaries. This is enabled
     /// only for admitted AVX512ER regions whose masks contain at most 16

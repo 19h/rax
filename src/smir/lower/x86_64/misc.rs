@@ -52,6 +52,7 @@ impl X86_64Lowerer {
             mem_helpers: false,
             preserve_vector_mem_helpers: false,
             preserve_vector_call_helpers: false,
+            preserve_mmx_helpers: false,
             narrow_vector_opmask_helpers: false,
             call_helpers: false,
             epilogue_stack_patches: Vec::new(),

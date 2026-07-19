@@ -9,6 +9,8 @@ mod jit;
 pub use jit::*;
 mod misc;
 pub use misc::*;
+mod mmx_memory;
+pub use mmx_memory::*;
 mod vector;
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::{
