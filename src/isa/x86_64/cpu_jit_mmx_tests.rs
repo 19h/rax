@@ -140,6 +140,206 @@ fn jit_compiles_and_executes_mmx_movq_memory_helpers() {
 }
 
 #[test]
+fn jit_compiles_and_executes_mmx_movd_q_scalar_memory_helpers() {
+    let (mut vcpu, mem) = test_vcpu_with_mem();
+    // movd mm0,[rbx]; movd [rbx+4],mm0
+    // movq mm1,[rbx+8]; movq [rbx+16],mm1
+    // jmp next; ret.
+    mem.write_slice(
+        &[
+            0x0F, 0x6E, 0x03, 0x0F, 0x7E, 0x43, 0x04, 0x48, 0x0F, 0x6E, 0x4B, 0x08, 0x48, 0x0F,
+            0x7E, 0x4B, 0x10, 0xEB, 0x00, 0xC3,
+        ],
+        GuestAddress(0),
+    )
+    .unwrap();
+    mem.write_slice(&0x89AB_CDEFu32.to_le_bytes(), GuestAddress(0x2000))
+        .unwrap();
+    mem.write_slice(&0xCCCC_CCCCu32.to_le_bytes(), GuestAddress(0x2004))
+        .unwrap();
+    mem.write_slice(
+        &0x0123_4567_89AB_CDEFu64.to_le_bytes(),
+        GuestAddress(0x2008),
+    )
+    .unwrap();
+    mem.write_slice(
+        &0xCCCC_CCCC_CCCC_CCCCu64.to_le_bytes(),
+        GuestAddress(0x2010),
+    )
+    .unwrap();
+    vcpu.sregs.efer = 1 << 10;
+    vcpu.sregs.cs.l = true;
+    vcpu.regs.rip = 0;
+    vcpu.regs.rbx = 0x2000;
+    vcpu.regs.rflags = 0x246;
+    vcpu.regs.mm =
+        std::array::from_fn(|index| 0xF0E1_D2C3_B4A5_9687u64.rotate_left(index as u32 * 7));
+    let original = vcpu.regs.mm;
+    vcpu.fpu.tag_word = 0xFFFF;
+    vcpu.set_jit_mem(true);
+    vcpu.set_jit_call(false);
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile MMX MOVD/MOVQ scalar-memory region")
+        .expect("exact MMX MOVD/MOVQ scalar memory forms should be JIT eligible");
+    assert!(region.uses_mmx);
+    assert!(!region.uses_vector);
+
+    vcpu.jit_run_region_native(&region);
+
+    let mut stored_dword = [0u8; 4];
+    mem.read_slice(&mut stored_dword, GuestAddress(0x2004))
+        .unwrap();
+    let mut stored_qword = [0u8; 8];
+    mem.read_slice(&mut stored_qword, GuestAddress(0x2010))
+        .unwrap();
+    assert_eq!(u32::from_le_bytes(stored_dword), 0x89AB_CDEF);
+    assert_eq!(u64::from_le_bytes(stored_qword), 0x0123_4567_89AB_CDEF);
+    assert_eq!(vcpu.regs.mm[0], 0x0000_0000_89AB_CDEF);
+    assert_eq!(vcpu.regs.mm[1], 0x0123_4567_89AB_CDEF);
+    assert_eq!(&vcpu.regs.mm[2..], &original[2..]);
+    assert_eq!(vcpu.fpu.tag_word, 0);
+    assert_eq!(vcpu.regs.rflags, 0x246);
+    assert_eq!(vcpu.regs.rbx, 0x2000);
+    assert_eq!(vcpu.regs.rip, 19);
+}
+
+#[test]
+fn jit_mmx_scalar_memory_transfers_use_exact_width_at_mapped_boundary() {
+    for (instruction, is_load, width, value, name) in [
+        (
+            &[0x0F, 0x6E, 0x1B][..],
+            true,
+            4usize,
+            0x0000_0000_89AB_CDEFu64,
+            "MOVD mm3,m32",
+        ),
+        (
+            &[0x0F, 0x7E, 0x1B][..],
+            false,
+            4usize,
+            0xFEDC_BA98_7654_3210u64,
+            "MOVD m32,mm3",
+        ),
+        (
+            &[0x48, 0x0F, 0x6E, 0x1B][..],
+            true,
+            8usize,
+            0x0123_4567_89AB_CDEFu64,
+            "MOVQ mm3,m64",
+        ),
+        (
+            &[0x48, 0x0F, 0x7E, 0x1B][..],
+            false,
+            8usize,
+            0xFEDC_BA98_7654_3210u64,
+            "MOVQ m64,mm3",
+        ),
+    ] {
+        let (mut vcpu, mem) = test_vcpu_with_mem();
+        let mut code = instruction.to_vec();
+        code.extend_from_slice(&[0xEB, 0x00, 0xC3]);
+        mem.write_slice(&code, GuestAddress(0)).unwrap();
+        let address = 0x10000 - width as u64;
+        if is_load {
+            mem.write_slice(&value.to_le_bytes()[..width], GuestAddress(address))
+                .unwrap();
+        } else {
+            mem.write_slice(&[0xCC; 8][..width], GuestAddress(address))
+                .unwrap();
+        }
+        vcpu.sregs.efer = 1 << 10;
+        vcpu.sregs.cs.l = true;
+        vcpu.regs.rip = 0;
+        vcpu.regs.rbx = address;
+        vcpu.regs.rflags = 0x246;
+        vcpu.regs.mm =
+            std::array::from_fn(|index| 0xF0E1_D2C3_B4A5_9687u64.rotate_left(index as u32 * 7));
+        if !is_load {
+            vcpu.regs.mm[3] = value;
+        }
+        let original = vcpu.regs.mm;
+        vcpu.fpu.tag_word = 0xFFFF;
+        vcpu.set_jit_mem(true);
+        vcpu.set_jit_call(false);
+
+        let region = vcpu
+            .jit_compile_region()
+            .unwrap_or_else(|error| panic!("compile boundary {name}: {error}"))
+            .unwrap_or_else(|| panic!("exactly mapped {name} should be JIT eligible"));
+        vcpu.jit_run_region_native(&region);
+
+        if is_load {
+            assert_eq!(vcpu.regs.mm[3], value, "{name}");
+            assert_eq!(&vcpu.regs.mm[..3], &original[..3], "{name}");
+            assert_eq!(&vcpu.regs.mm[4..], &original[4..], "{name}");
+        } else {
+            let mut stored = [0u8; 8];
+            mem.read_slice(&mut stored[..width], GuestAddress(address))
+                .unwrap();
+            assert_eq!(&stored[..width], &value.to_le_bytes()[..width], "{name}");
+            assert_eq!(vcpu.regs.mm, original, "{name}");
+        }
+        assert_eq!(vcpu.fpu.tag_word, 0, "{name}");
+        assert_eq!(vcpu.regs.rflags, 0x246, "{name}");
+        assert_eq!(vcpu.regs.rbx, address, "{name}");
+        assert_eq!(vcpu.regs.rip, instruction.len() as u64 + 2, "{name}");
+    }
+}
+
+#[test]
+fn jit_faulting_mmx_scalar_memory_transfers_preserve_state_and_store_atomicity() {
+    for (instruction, width, name) in [
+        (&[0x0F, 0x6E, 0x1B][..], 4usize, "MOVD mm3,m32"),
+        (&[0x0F, 0x7E, 0x1B][..], 4usize, "MOVD m32,mm3"),
+        (&[0x48, 0x0F, 0x6E, 0x1B][..], 8usize, "MOVQ mm3,m64"),
+        (&[0x48, 0x0F, 0x7E, 0x1B][..], 8usize, "MOVQ m64,mm3"),
+    ] {
+        let (mut vcpu, mem) = test_vcpu_with_mem();
+        let mut code = instruction.to_vec();
+        code.extend_from_slice(&[0xEB, 0x00, 0xC3]);
+        mem.write_slice(&code, GuestAddress(0)).unwrap();
+        let mapped = width / 2;
+        let address = 0x10000 - mapped as u64;
+        let before = vec![0xA5; mapped];
+        mem.write_slice(&before, GuestAddress(address)).unwrap();
+        vcpu.sregs.efer = 1 << 10;
+        vcpu.sregs.cs.l = true;
+        vcpu.regs.rip = 0;
+        vcpu.regs.rbx = address;
+        vcpu.regs.rflags = 0x8D7;
+        vcpu.regs.mm =
+            std::array::from_fn(|index| 0x0123_4567_89AB_CDEFu64.rotate_left(index as u32 * 7));
+        let original = vcpu.regs.mm;
+        vcpu.fpu.tag_word = 0xFFFF;
+        vcpu.set_jit_mem(true);
+        vcpu.set_jit_call(false);
+
+        let region = vcpu
+            .jit_compile_region()
+            .unwrap_or_else(|error| panic!("compile faulting {name}: {error}"))
+            .unwrap_or_else(|| panic!("fault-capable {name} should retain a native deopt path"));
+        vcpu.jit_run_region_native(&region);
+
+        let mut after = vec![0u8; mapped];
+        mem.read_slice(&mut after, GuestAddress(address)).unwrap();
+        assert_eq!(
+            after, before,
+            "{name} must not partially write before fault"
+        );
+        assert_eq!(vcpu.regs.mm, original, "{name}");
+        assert_eq!(vcpu.fpu.tag_word, 0xFFFF, "{name}");
+        assert_eq!(vcpu.regs.rflags, 0x8D7, "{name}");
+        assert_eq!(vcpu.regs.rbx, address, "{name}");
+        assert_eq!(
+            vcpu.regs.rip, 0,
+            "{name} fault must restart the instruction"
+        );
+    }
+}
+
+#[test]
 fn jit_scalar_memory_helper_preserves_live_register_mmx_state() {
     let (mut vcpu, mem) = test_vcpu_with_mem();
     // pand mm0,mm1; mov rax,[rbx]; jmp next; ret.

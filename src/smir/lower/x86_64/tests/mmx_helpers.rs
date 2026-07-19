@@ -237,3 +237,125 @@ fn mmx_movq_memory_uses_scalar_helper_and_fault_safe_stack_staging() {
     );
     assert_mmx_helper_boundary(&store, "MMX MOVQ store helper");
 }
+
+#[cfg(feature = "smir-jit")]
+fn lower_lifted_mmx_scalar_memory(bytes: &[u8], level: crate::smir::optimize::OptLevel) -> Vec<u8> {
+    let mut code = bytes.to_vec();
+    code.extend_from_slice(&[0xEB, 0x00]);
+    let reader = TestReader {
+        base: 0x1000,
+        bytes: code,
+    };
+    let mut lifter = X86_64Lifter::strict();
+    let mut context = LiftContext::new(SourceArch::X86_64);
+    let mut block = lifter
+        .lift_block(0x1000, &reader, &mut context)
+        .unwrap_or_else(|error| panic!("lift MMX scalar-memory {bytes:02X?}: {error:?}"));
+    block.set_terminator(Terminator::Return { values: vec![] });
+    let block_id = block.id;
+    let mut function = SmirFunction::new(FunctionId(0), block_id, 0x1000);
+    function.add_block(block);
+    crate::smir::optimize::optimize_function(&mut function, level);
+    let excluded = std::collections::HashMap::new();
+    assert!(
+        crate::smir::lower::runtime::is_native_clobber_safe_excluding(&function, &excluded, true),
+        "helper gate rejected {bytes:02X?} after {level:?}: {:?}",
+        function.blocks[0].ops
+    );
+    assert!(
+        crate::smir::lower::runtime::x86_native_mmx_pairs_valid_excluding(&function, &excluded),
+        "MMX pair gate rejected {bytes:02X?} after {level:?}"
+    );
+
+    let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_mem_helpers(true);
+    lowerer.set_preserve_mmx_helpers(true);
+    let result = lowerer
+        .lower_function(&function)
+        .unwrap_or_else(|error| panic!("lower {bytes:02X?} after {level:?}: {error:?}"));
+    assert!(result.relocations.is_empty());
+    lowerer
+        .finalize()
+        .unwrap_or_else(|error| panic!("finalize {bytes:02X?} after {level:?}: {error:?}"))
+}
+
+#[test]
+#[cfg(feature = "smir-jit")]
+fn mmx_scalar_memory_transfers_emit_exact_width_direction_and_fault_boundaries() {
+    for (guest, host, helper_width, is_load, name) in [
+        (
+            &[0x0F, 0x6E, 0x1B][..],
+            &[0x0F, 0x6E, 0x1C, 0x24][..],
+            4u8,
+            true,
+            "MOVD mm3,m32",
+        ),
+        (
+            &[0x0F, 0x7E, 0x1B][..],
+            &[0x0F, 0x7E, 0x1C, 0x24][..],
+            4u8,
+            false,
+            "MOVD m32,mm3",
+        ),
+        (
+            &[0x48, 0x0F, 0x6E, 0x1B][..],
+            &[0x48, 0x0F, 0x6E, 0x1C, 0x24][..],
+            8u8,
+            true,
+            "MOVQ mm3,m64",
+        ),
+        (
+            &[0x48, 0x0F, 0x7E, 0x1B][..],
+            &[0x48, 0x0F, 0x7E, 0x1C, 0x24][..],
+            8u8,
+            false,
+            "MOVQ m64,mm3",
+        ),
+    ] {
+        for level in [
+            crate::smir::optimize::OptLevel::O0,
+            crate::smir::optimize::OptLevel::O1,
+            crate::smir::optimize::OptLevel::O2,
+        ] {
+            let code = lower_lifted_mmx_scalar_memory(guest, level);
+            assert!(
+                code.windows(host.len()).any(|window| window == host),
+                "missing {name} host replay after {level:?}: {code:02X?}"
+            );
+            assert!(
+                code.windows(5).any(|window| {
+                    window
+                        == [
+                            if is_load { 0xBA } else { 0xB9 },
+                            helper_width,
+                            0x00,
+                            0x00,
+                            0x00,
+                        ]
+                }),
+                "missing {name} helper width after {level:?}: {code:02X?}"
+            );
+            assert_eq!(
+                code.windows(5)
+                    .filter(|window| *window == [0x48, 0x8D, 0x64, 0x24, 0x10])
+                    .count(),
+                2,
+                "{name} after {level:?}: both success and fault paths must release the stack slot"
+            );
+            if is_load {
+                assert!(
+                    code.windows(5)
+                        .any(|window| window == [0x48, 0x89, 0x44, 0x24, 0x10]),
+                    "{name}: helper result must stage in the outer slot"
+                );
+            } else {
+                assert!(
+                    code.windows(5)
+                        .any(|window| window == [0x48, 0x8B, 0x54, 0x24, 0x10]),
+                    "{name}: helper must read the staged outer slot"
+                );
+            }
+            assert_mmx_helper_boundary(&code, name);
+        }
+    }
+}

@@ -534,7 +534,8 @@ pub fn x86_native_mmx_features_supported_excluding(
 }
 
 /// Verify the exact architectural-state marker paired with every admitted MMX
-/// operation, including helper-backed memory-source sequences.
+/// operation, including helper-backed memory-source and scalar-transfer
+/// sequences.
 pub fn x86_native_mmx_pairs_valid_excluding(
     func: &SmirFunction,
     excluded: &HashMap<BlockId, u64>,
@@ -579,6 +580,16 @@ pub fn x86_native_mmx_pairs_valid_excluding(
             }
             let mut index = 0;
             while index < block.ops.len() {
+                if let Some(consumed) = super::x86_jit_mmx_scalar_memory_transfer_sequence_len(
+                    block,
+                    index,
+                    true,
+                    &virtual_definitions,
+                    &virtual_uses,
+                ) {
+                    index += consumed;
+                    continue;
+                }
                 if let Some(consumed) = x86_jit_mmx_memory_source_sequence_len(
                     block,
                     index,

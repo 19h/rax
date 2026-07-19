@@ -330,6 +330,18 @@ impl X86_64Lowerer {
             {
                 if self.mem_helpers {
                     if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_mmx_scalar_memory_transfer_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += consumed;
+                        continue;
+                    }
+                    if let Some(consumed) =
                         crate::smir::lower::runtime::x86_jit_mmx_memory_source_sequence_len(
                             block,
                             validate_idx,
@@ -626,6 +638,16 @@ impl X86_64Lowerer {
             // (see `emit_jit_mem_op`). The helper-backed scalar/CRC fusions
             // below are explicitly restricted to that mode.
             if self.mem_helpers {
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_mmx_scalar_memory_transfer(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
                 #[cfg(feature = "smir-jit")]
                 if let Some(consumed) = self.try_lower_jit_mmx_memory_source(
                     block,

@@ -1,11 +1,18 @@
 //! MMX state preservation and helper-backed memory transfers.
 
+#[cfg(feature = "smir-jit")]
+use std::collections::HashMap;
+
 use super::{X86_64Lowerer, X86Emitter};
+#[cfg(feature = "smir-jit")]
+use crate::smir::ir::SmirBlock;
 use crate::smir::ir::ops::{X86OpHint, X86SsePrefix};
 use crate::smir::ir::types::{
     Address, ArchReg, DispSize, MemWidth, SignExtend, VReg, VecWidth, X86Reg,
 };
 use crate::smir::lower::regalloc::PhysReg;
+#[cfg(feature = "smir-jit")]
+use crate::smir::lower::runtime::X86MmxScalarMemoryTransferEncoding;
 use crate::smir::lower::{LowerError, X86_GUEST_MM_OFFSET};
 
 impl X86_64Lowerer {
@@ -90,6 +97,22 @@ impl X86_64Lowerer {
         emitter.emit_modrm_mem_disp(reg, PhysReg::Rsp, 0, DispSize::Auto);
     }
 
+    #[cfg(feature = "smir-jit")]
+    fn emit_mmx_scalar_stack_transfer(&mut self, encoding: X86MmxScalarMemoryTransferEncoding) {
+        if encoding.rex_w {
+            self.code.emit_u8(0x48);
+        }
+        self.code.emit_u8(0x0F);
+        self.code.emit_u8(encoding.opcode);
+        let mut emitter = X86Emitter::new(&mut self.code);
+        emitter.emit_modrm_mem_disp(
+            PhysReg::Mm(encoding.mm_index),
+            PhysReg::Rsp,
+            0,
+            DispSize::Auto,
+        );
+    }
+
     /// Route exact legacy `MOVQ mm, m64` and `MOVQ m64, mm` forms through the
     /// scalar MMU helper. A 16-byte host-stack slot stages the 64-bit payload;
     /// the inner helper's two pushes make that slot `[rsp+16]`. Fault cleanup
@@ -135,6 +158,84 @@ impl X86_64Lowerer {
         let mut emitter = X86Emitter::new(&mut self.code);
         emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
         Ok(())
+    }
+
+    /// Fuse one exact MMX MOVD/MOVQ scalar-memory transfer. A 16-byte host
+    /// stack slot holds the architectural 4- or 8-byte payload across the MMU
+    /// helper boundary; the MMX-state marker is committed only after success.
+    #[cfg(feature = "smir-jit")]
+    pub(crate) fn try_lower_jit_mmx_scalar_memory_transfer(
+        &mut self,
+        block: &SmirBlock,
+        idx: usize,
+        virtual_definitions: &HashMap<VReg, usize>,
+        virtual_uses: &HashMap<VReg, usize>,
+    ) -> Result<Option<usize>, LowerError> {
+        let Some(sequence) =
+            crate::smir::lower::runtime::x86_jit_mmx_scalar_memory_transfer_sequence(
+                block,
+                idx,
+                true,
+                virtual_definitions,
+                virtual_uses,
+            )
+        else {
+            return Ok(None);
+        };
+        let memory = &block.ops[idx + sequence.memory_offset];
+        let addr = match (&memory.kind, sequence.encoding.is_load) {
+            (
+                crate::smir::ir::ops::OpKind::Load {
+                    addr,
+                    width,
+                    sign: SignExtend::Zero,
+                    ..
+                },
+                true,
+            ) if *width == sequence.encoding.mem_width => addr,
+            (crate::smir::ir::ops::OpKind::Store { addr, width, .. }, false)
+                if *width == sequence.encoding.mem_width =>
+            {
+                addr
+            }
+            _ => {
+                return Err(LowerError::InvalidOperand {
+                    op: "MMX MOVD/MOVQ memory transfer".to_string(),
+                    operand: "validated sequence must contain its exact architectural access"
+                        .to_string(),
+                });
+            }
+        };
+
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
+        }
+        if !sequence.encoding.is_load {
+            self.emit_mmx_scalar_stack_transfer(sequence.encoding);
+        }
+        self.emit_jit_mem_op(
+            memory.guest_pc,
+            sequence.encoding.is_load,
+            None,
+            sequence.encoding.is_load.then_some(16),
+            None,
+            None,
+            (!sequence.encoding.is_load).then_some(16),
+            addr,
+            sequence.encoding.mem_width,
+            SignExtend::Zero,
+            16,
+        )?;
+        if sequence.encoding.is_load {
+            self.emit_mmx_scalar_stack_transfer(sequence.encoding);
+        }
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+        }
+        self.lower_op(&block.ops[idx + sequence.marker_offset])?;
+        Ok(Some(sequence.consumed))
     }
 
     pub(crate) fn emit_jit_vector_or_mmx_mem_op(
