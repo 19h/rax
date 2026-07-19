@@ -3,7 +3,8 @@
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
-    /// Lift XGETBV/XSETBV and the RTM fixed ModR/M encodings in 0F 01.
+    /// Lift XGETBV/XSETBV, RDPKRU/WRPKRU, and the RTM fixed ModR/M encodings
+    /// in 0F 01.
     pub(crate) fn lift_xcr_0f01(
         &self,
         bytes: &[u8],
@@ -61,6 +62,26 @@ impl X86_64Lifter {
                     branch_targets: Vec::new(),
                 });
             }
+            0xEE | 0xEF if prefix.rep_prefix == Some(0xF3) => {
+                // F3 0F 01 EE/EF select CLUI/STUI, not PKRU. The emulator's
+                // profile does not expose User Interrupts, so both aliases
+                // deterministically raise #UD rather than entering fallback.
+                return Ok(LiftResult {
+                    ops: Vec::new(),
+                    bytes_consumed: prefix.cursor + 1,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::InvalidOpcode,
+                    },
+                    branch_targets: Vec::new(),
+                });
+            }
+            0xEE | 0xEF => OpKind::X86Pkru {
+                eax: self.gpr(0),
+                ecx: self.gpr(1),
+                edx: self.gpr(2),
+                pkru: VReg::Arch(ArchReg::X86(X86Reg::Pkru)),
+                write: modrm == 0xEF,
+            },
             _ => {
                 return Err(LiftError::Unsupported {
                     addr: pc,

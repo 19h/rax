@@ -3866,6 +3866,19 @@ impl OpKind {
                 write,
                 ..
             } => result.push(if *write { *operand } else { *base }),
+            OpKind::X86Pkru {
+                eax,
+                ecx,
+                edx,
+                pkru,
+                write,
+            } => {
+                if *write {
+                    result.extend([*eax, *ecx, *edx]);
+                } else {
+                    result.extend([*ecx, *pkru]);
+                }
+            }
             OpKind::X86Cpuid { leaf, subleaf, .. } => result.extend([*leaf, *subleaf]),
 
             OpKind::X86Cmpxchg8b16b {

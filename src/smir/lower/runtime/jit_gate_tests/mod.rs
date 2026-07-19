@@ -28,6 +28,8 @@ mod mmx_memory;
 #[cfg(test)]
 mod mmx_memory_source;
 #[cfg(test)]
+mod pkru;
+#[cfg(test)]
 mod sqrt;
 #[cfg(test)]
 mod trap;

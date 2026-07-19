@@ -78,6 +78,10 @@ fn x86_vector_guest_state_layout_matches_trampoline_offsets() {
         X86_GUEST_TSC_AUX_OFFSET as usize
     );
     assert_eq!(
+        std::mem::offset_of!(GuestRegs, pkru),
+        X86_GUEST_PKRU_OFFSET as usize
+    );
+    assert_eq!(
         std::mem::offset_of!(GuestRegs, xcr0),
         X86_GUEST_XCR0_OFFSET as usize
     );

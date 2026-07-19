@@ -3967,6 +3967,18 @@ pub enum OpKind {
         requires_apx: bool,
     },
 
+    /// RDPKRU/WRPKRU. The implicit GPR and PKRU operands are explicit so
+    /// liveness, static analysis, interpretation, and native state handoff all
+    /// observe the same architectural data flow. Dynamic CR4.PKE and selector
+    /// checks may fault before any destination is committed.
+    X86Pkru {
+        eax: VReg,
+        ecx: VReg,
+        edx: VReg,
+        pkru: VReg,
+        write: bool,
+    },
+
     /// Test condition and store result
     TestCondition {
         dst: VReg,
@@ -4394,6 +4406,7 @@ impl OpKind {
                 | OpKind::X86XGetBv { .. }
                 | OpKind::X86XSetBv { .. }
                 | OpKind::X86FsGsBase { .. }
+                | OpKind::X86Pkru { .. }
                 | OpKind::X86Cpuid { .. }
                 | OpKind::X86Count { .. }
                 | OpKind::X86X87Control {
@@ -4775,6 +4788,20 @@ impl OpKind {
                 ..
             } => vec![if *write { *base } else { *operand }],
 
+            OpKind::X86Pkru {
+                eax,
+                edx,
+                pkru,
+                write,
+                ..
+            } => {
+                if *write {
+                    vec![*pkru]
+                } else {
+                    vec![*eax, *edx]
+                }
+            }
+
             OpKind::X86Cmpxchg8b16b { dst_lo, dst_hi, .. } => vec![*dst_lo, *dst_hi],
 
             OpKind::X86Random { dst, .. } | OpKind::X86ReadPid { dst } => vec![*dst],
@@ -5046,6 +5073,7 @@ impl OpKind {
                     | OpKind::X86XGetBv { .. }
                     | OpKind::X86XSetBv { .. }
                     | OpKind::X86FsGsBase { .. }
+                    | OpKind::X86Pkru { .. }
                     | OpKind::X86Random { .. }
                     // A saturating clamp ORs the Hexagon USR:OVF sticky bit when it
                     // actually clamps and `set_ovf` is set. That update is invisible

@@ -144,6 +144,49 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::X86Pkru {
+                eax,
+                ecx,
+                edx,
+                pkru,
+                write,
+            } => {
+                let cr4 = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.cr4,
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                if cr4 & (1 << 22) == 0 {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let ecx_value = ctx.read_vreg(*ecx) as u32;
+                if ecx_value != 0 || (*write && ctx.read_vreg(*edx) as u32 != 0) {
+                    ctx.request_exit(ExitReason::GeneralProtection {
+                        addr: op.guest_pc,
+                        error_code: 0,
+                    });
+                    return Ok(());
+                }
+
+                if *write {
+                    ctx.write_vreg(*pkru, ctx.read_vreg(*eax) as u32 as u64);
+                } else {
+                    let value = ctx.read_vreg(*pkru) as u32 as u64;
+                    Self::write_x86_partial(ctx, *eax, value, OpWidth::W32);
+                    Self::write_x86_partial(ctx, *edx, 0, OpWidth::W32);
+                }
+            }
+
             _ => return self.execute_op_meta(ctx, memory, op),
         }
 

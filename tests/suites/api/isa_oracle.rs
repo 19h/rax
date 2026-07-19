@@ -230,6 +230,34 @@ fn emits_exact_fsgsbase_state_direction_width_and_apx_metadata() {
 }
 
 #[test]
+fn emits_exact_pkru_state_direction_and_implicit_register_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let read = decode_to_json(&[0x0F, 0x01, 0xEE], &opts).unwrap();
+    assert_eq!(read["smir"]["available"], true);
+    assert_eq!(read["smir"]["bytes_consumed"], 3);
+    let op = &read["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_pkru");
+    assert_eq!(op["kind"]["eax"]["name"], "rax");
+    assert_eq!(op["kind"]["ecx"]["name"], "rcx");
+    assert_eq!(op["kind"]["edx"]["name"], "rdx");
+    assert_eq!(op["kind"]["pkru"]["name"], "pkru");
+    assert_eq!(op["kind"]["write"], false);
+    assert_eq!(op["writes"][0]["name"], "rax");
+    assert_eq!(op["writes"][1]["name"], "rdx");
+    assert_eq!(op["side_effects"], true);
+
+    let write = decode_to_json(&[0x0F, 0x01, 0xEF], &opts).unwrap();
+    let op = &write["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_pkru");
+    assert_eq!(op["kind"]["write"], true);
+    assert_eq!(op["writes"][0]["name"], "pkru");
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], false);
+}
+
+#[test]
 fn emits_exact_legacy_pcmpxstrx_semantics() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

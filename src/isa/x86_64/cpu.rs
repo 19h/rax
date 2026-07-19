@@ -4843,6 +4843,7 @@ impl X86_64Vcpu {
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
         gr.tsc_aux = self.tsc_aux;
+        gr.pkru = self.pkru;
         gr.xcr0 = self.xcr0;
         gr.xgetbv1 = self.xgetbv1_value;
         gr.cr4 = self.sregs.cr4;
@@ -4939,6 +4940,7 @@ impl X86_64Vcpu {
         // Stateful control instructions such as XSETBV commit through the
         // marshalled ABI before returning at a precise next-instruction PC.
         self.xcr0 = gr.xcr0;
+        self.pkru = gr.pkru;
         self.sregs.fs.base = gr.fs_base;
         self.sregs.gs.base = gr.gs_base;
 
@@ -5058,6 +5060,7 @@ impl X86_64Vcpu {
         let snap_lf = self.lazy_flags;
         let snap_fs_base = self.sregs.fs.base;
         let snap_gs_base = self.sregs.gs.base;
+        let snap_pkru = self.pkru;
 
         // 1) Run natively with store-logging (to UNDO writes) and an access
         //    trace (to diff against the interpreter's access sequence).
@@ -5068,6 +5071,7 @@ impl X86_64Vcpu {
         let jit_fpu = self.fpu.clone();
         let jit_fs_base = self.sregs.fs.base;
         let jit_gs_base = self.sregs.gs.base;
+        let jit_pkru = self.pkru;
         let jit_rflags = self.regs.rflags; // already materialized by the native bridge
         let exit_pc = self.regs.rip;
         // Take the native trace NOW, before the undo/re-read loops add to it.
@@ -5079,6 +5083,7 @@ impl X86_64Vcpu {
             None => {
                 self.regs = jit;
                 self.fpu = jit_fpu;
+                self.pkru = jit_pkru;
                 return;
             }
         };
@@ -5102,6 +5107,7 @@ impl X86_64Vcpu {
         self.lazy_flags = snap_lf;
         self.sregs.fs.base = snap_fs_base;
         self.sregs.gs.base = snap_gs_base;
+        self.pkru = snap_pkru;
         self.jit_mem_trace = Some(Vec::new());
         let cap = 50_000_000u64;
         let mut steps = 0u64;
@@ -5207,6 +5213,7 @@ impl X86_64Vcpu {
             for (name, interp, native) in [
                 ("fs_base", self.sregs.fs.base, jit_fs_base),
                 ("gs_base", self.sregs.gs.base, jit_gs_base),
+                ("pkru", u64::from(self.pkru), u64::from(jit_pkru)),
             ] {
                 if interp != native {
                     diffs.push(format!("{name}: interp={interp:#x} jit={native:#x}"));
@@ -5354,6 +5361,7 @@ impl X86_64Vcpu {
         self.fpu = jit_fpu;
         self.sregs.fs.base = jit_fs_base;
         self.sregs.gs.base = jit_gs_base;
+        self.pkru = jit_pkru;
     }
 
     /// Re-lift + optimize the region at `entry` and pretty-print its blocks/ops
@@ -5897,6 +5905,10 @@ mod jit_cpuid_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_fsgsbase_tests.rs"]
 mod jit_fsgsbase_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_pkru_tests.rs"]
+mod jit_pkru_tests;
 
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {

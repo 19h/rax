@@ -28,6 +28,8 @@ mod mmx_helpers;
 #[cfg(all(test, feature = "smir-jit"))]
 mod mmx_memory_source;
 #[cfg(test)]
+mod pkru;
+#[cfg(test)]
 mod simd;
 #[cfg(test)]
 mod state;

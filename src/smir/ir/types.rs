@@ -206,6 +206,9 @@ pub enum X86Reg {
     FsBase,
     GsBase,
 
+    // Protection-key rights register
+    Pkru,
+
     // MMX registers (0-7)
     Mm(u8),
 

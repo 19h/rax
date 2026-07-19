@@ -881,6 +881,7 @@ fn parse_x86_reg(name: &str) -> Option<X86Reg> {
         "rflags" | "eflags" | "flags" => Some(X86Reg::Rflags),
         "fs_base" | "fsbase" => Some(X86Reg::FsBase),
         "gs_base" | "gsbase" => Some(X86Reg::GsBase),
+        "pkru" => Some(X86Reg::Pkru),
         _ => {
             let idx = name.strip_prefix('r')?.parse::<u8>().ok()?;
             (8..=15).contains(&idx).then(|| X86Reg::gpr(idx))
@@ -2479,6 +2480,13 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             width,
             requires_apx,
         } => op_json!("x86_fsgsbase", operand, base, write, width, requires_apx),
+        OpKind::X86Pkru {
+            eax,
+            ecx,
+            edx,
+            pkru,
+            write,
+        } => op_json!("x86_pkru", eax, ecx, edx, pkru, write),
         OpKind::X86Cpuid {
             dst_eax,
             dst_ebx,
@@ -4166,6 +4174,7 @@ fn x86_reg_name(reg: &X86Reg) -> String {
         X86Reg::Rflags => "rflags".to_string(),
         X86Reg::FsBase => "fs_base".to_string(),
         X86Reg::GsBase => "gs_base".to_string(),
+        X86Reg::Pkru => "pkru".to_string(),
         X86Reg::Mm(n) => format!("mm{n}"),
         X86Reg::Xmm(n) => format!("xmm{n}"),
         X86Reg::Ymm(n) => format!("ymm{n}"),

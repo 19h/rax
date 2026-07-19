@@ -26,6 +26,8 @@ mod movdiri;
 #[cfg(test)]
 mod packed_string;
 #[cfg(test)]
+mod pkru;
+#[cfg(test)]
 mod scalar;
 #[cfg(test)]
 mod sha_ni;

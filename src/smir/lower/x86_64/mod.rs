@@ -48,6 +48,8 @@ pub use dispatch::*;
 mod emitter;
 mod fsgsbase;
 pub use fsgsbase::*;
+mod pkru;
+pub use pkru::*;
 mod ops;
 pub use emitter::*;
 mod jit;

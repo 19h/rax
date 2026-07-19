@@ -27,10 +27,11 @@ use super::{
     X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET, X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT,
     X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET, X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MM_OFFSET,
     X86_GUEST_MMX_ACTIVE_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET,
-    X86_GUEST_PAIR_STORE_FN_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
-    X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET, X86_GUEST_VEC_STORE_FN_OFFSET,
-    X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_X87_TAG_WORD_OFFSET, X86_GUEST_XCR0_OFFSET,
-    X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_PAIR_STORE_FN_OFFSET, X86_GUEST_PKRU_OFFSET, X86_GUEST_RFLAGS_OFFSET,
+    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET,
+    X86_GUEST_VEC_STORE_FN_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_X87_TAG_WORD_OFFSET,
+    X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET,
+    X86_STATE_PTR_AT_RBP,
 };
 
 // ---- module tree (auto-split) ----
@@ -143,6 +144,9 @@ pub struct GuestRegs {
     /// Guest IA32_TSC_AUX MSR. RDPID reads this state-backed value rather than
     /// exposing the host thread's processor identifier.
     pub tsc_aux: u32,
+    /// Guest PKRU. RDPKRU/WRPKRU use this state-backed value rather than the
+    /// host thread's protection-key rights register.
+    pub pkru: u32,
     /// Guest XCR0 extended-state enable bitmap.
     pub xcr0: u64,
     /// Guest XGETBV(ECX=1) XINUSE bitmap. The lowered instruction masks it by
@@ -215,6 +219,7 @@ impl Default for GuestRegs {
             mxcsr: 0x1F80,
             host_mxcsr: 0,
             tsc_aux: 0,
+            pkru: 0,
             xcr0: 1,
             xgetbv1: 0,
             cr4: 0,
