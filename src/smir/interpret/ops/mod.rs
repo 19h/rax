@@ -2,6 +2,7 @@
 
 mod arithmetic;
 mod avx10;
+mod binary;
 mod bit;
 mod data_movement;
 mod flags;

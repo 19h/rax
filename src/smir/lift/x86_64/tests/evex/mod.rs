@@ -4,6 +4,8 @@ use super::*;
 
 // ---- split submodules ----
 #[cfg(test)]
+mod arithmetic;
+#[cfg(test)]
 mod fp;
 #[cfg(test)]
 mod integer;

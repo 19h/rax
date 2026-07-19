@@ -11,7 +11,6 @@ fn lift_legacy_vex_evex_scalar_and_packed_x86_minmax() {
         (&[0xF2, 0x0F, 0x5F, 0xC1][..], VecElementType::F64, 1, false),
         (&[0x0F, 0x5D, 0xC1][..], VecElementType::F32, 4, true),
         (&[0x66, 0x0F, 0x5F, 0xC1][..], VecElementType::F64, 2, false),
-        (&[0xC5, 0xF2, 0x5D, 0xC2][..], VecElementType::F32, 1, true),
         (&[0xC5, 0xF5, 0x5F, 0xC2][..], VecElementType::F64, 4, false),
     ] {
         let result = lift_single(bytes).unwrap();
@@ -25,6 +24,19 @@ fn lift_legacy_vex_evex_scalar_and_packed_x86_minmax() {
             } if actual_elem == elem && actual_lanes == lanes && actual_min == min
         )));
     }
+
+    let vex_scalar = lift_single(&[0xC5, 0xF2, 0x5D, 0xC2]).unwrap();
+    assert!(vex_scalar.ops.iter().any(|op| matches!(
+        op.kind,
+        OpKind::X86FpBinary {
+            elem: VecElementType::F32,
+            lanes: 1,
+            op: X86FpBinaryOp::Min,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions: false,
+            ..
+        }
+    )));
 
     let legacy_packed = lift_single(&[0x0F, 0x5D, 0xC1]).unwrap();
     assert!(legacy_packed.ops.iter().any(|op| matches!(
@@ -69,9 +81,11 @@ fn lift_legacy_vex_evex_scalar_and_packed_x86_minmax() {
     )));
     assert!(masked_memory.ops.iter().any(|op| matches!(
         op.kind,
-        OpKind::VX86MinMax {
-            min: true,
+        OpKind::X86FpBinary {
+            op: X86FpBinaryOp::Min,
             lanes: 1,
+            round: FpRoundMode::Dynamic,
+            suppress_exceptions: false,
             ..
         }
     )));

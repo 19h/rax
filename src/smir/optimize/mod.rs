@@ -4110,6 +4110,14 @@ impl OpKind {
                 result.push(*src2);
             }
 
+            OpKind::X86FpBinary {
+                src1, src2, mask, ..
+            } => {
+                result.push(*src1);
+                result.push(*src2);
+                result.extend(mask.iter().copied());
+            }
+
             OpKind::X86Sha512Msg1 { dst, src } | OpKind::X86Sha512Msg2 { dst, src } => {
                 result.push(*dst);
                 result.push(*src);

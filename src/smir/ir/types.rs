@@ -1194,6 +1194,19 @@ pub enum Avx10FP16Op {
     Max,
 }
 
+/// Exact x86 SIMD binary floating-point operation. Unlike the generic vector
+/// arithmetic kinds, these operations consume MXCSR input state and can accrue
+/// SIMD floating-point status or raise #XM.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum X86FpBinaryOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Min,
+    Max,
+}
+
 /// Operand permutation selected by the x86 FMA3 opcode high nibble.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum X86FmaOrder {

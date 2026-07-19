@@ -1,5 +1,7 @@
 //! Shared packed-vector lifting helpers
 
+mod arithmetic;
+pub use arithmetic::*;
 mod compare;
 pub use compare::*;
 mod crypto;

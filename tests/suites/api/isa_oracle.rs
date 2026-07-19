@@ -287,6 +287,49 @@ fn emits_evex_sqrt_embedded_rounding_and_sae_semantics() {
 }
 
 #[test]
+fn emits_evex_scalar_binary_embedded_rounding_and_sae_semantics() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    for (p2, round) in [
+        (0x18, "RoundNearest"),
+        (0x38, "RoundDown"),
+        (0x58, "RoundUp"),
+        (0x78, "RoundTowardZero"),
+    ] {
+        let value = decode_to_json(&[0x62, 0xF1, 0x7E, p2, 0x58, 0xD1], &opts).unwrap();
+        assert_eq!(value["smir"]["available"], true);
+        assert_eq!(value["smir"]["bytes_consumed"], 6);
+        let op = value["smir"]["ops"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|op| op["kind"]["opcode"] == "x86_fp_binary")
+            .unwrap();
+        assert_eq!(op["kind"]["src1"]["name"], "xmm0");
+        assert_eq!(op["kind"]["src2"]["name"], "xmm1");
+        assert_eq!(op["kind"]["elem"], "F32");
+        assert_eq!(op["kind"]["lanes"], 1);
+        assert_eq!(op["kind"]["op"], "Add");
+        assert_eq!(op["kind"]["round"], round);
+        assert_eq!(op["kind"]["suppress_exceptions"], true);
+        assert_eq!(op["side_effects"], false);
+    }
+
+    let sae = decode_to_json(&[0x62, 0xF1, 0xFF, 0x18, 0x5F, 0xD1], &opts).unwrap();
+    let op = sae["smir"]["ops"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|op| op["kind"]["opcode"] == "x86_fp_binary")
+        .unwrap();
+    assert_eq!(op["kind"]["elem"], "F64");
+    assert_eq!(op["kind"]["op"], "Max");
+    assert_eq!(op["kind"]["round"], "Dynamic");
+    assert_eq!(op["kind"]["suppress_exceptions"], true);
+}
+
+#[test]
 fn emits_atomic_register_movd_q_and_keeps_memory_effects_explicit() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

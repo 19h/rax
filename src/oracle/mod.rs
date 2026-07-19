@@ -40,7 +40,7 @@ use crate::smir::{
     RiscVLifter, RiscVReg, ShiftOp, SignExtend, SmirBlock, SmirContext, SmirInterpreter,
     SmirLifter, SmirMemory, SmirOp, SourceArch, SrcOperand, Terminator, TrapKind, VLaneOp, VReg,
     VShiftVKind, VecCmpCond, VecElementType, VecPermuteKind, VecReduceOp, VecUnaryOp, VecWidth,
-    X86_64Lifter, X86FmaKind, X86FmaOrder, X86NarrowMode, X86Reg,
+    X86_64Lifter, X86FmaKind, X86FmaOrder, X86FpBinaryOp, X86NarrowMode, X86Reg,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1131,6 +1131,7 @@ debug_name_json!(
     VecPermuteKind,
     X86AesOp,
     Avx10FP16Op,
+    X86FpBinaryOp,
     X86FmaKind,
     X86FmaOrder,
     X86NarrowMode,
@@ -2631,6 +2632,28 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src,
             elem,
             lanes,
+            round,
+            suppress_exceptions
+        ),
+        OpKind::X86FpBinary {
+            dst,
+            src1,
+            src2,
+            mask,
+            elem,
+            lanes,
+            op,
+            round,
+            suppress_exceptions,
+        } => op_json!(
+            "x86_fp_binary",
+            dst,
+            src1,
+            src2,
+            mask,
+            elem,
+            lanes,
+            op,
             round,
             suppress_exceptions
         ),

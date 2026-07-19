@@ -10,6 +10,8 @@ mod addr32_memory;
 #[cfg(test)]
 mod evex;
 #[cfg(test)]
+mod fp_binary;
+#[cfg(test)]
 mod gate;
 #[cfg(test)]
 mod maskmovdqu;

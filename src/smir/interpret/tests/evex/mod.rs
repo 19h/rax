@@ -9,6 +9,8 @@ use crate::smir::ir::types::ShiftOp;
 
 // ---- even-chunked tests ----
 #[cfg(test)]
+mod binary;
+#[cfg(test)]
 mod part1;
 #[cfg(test)]
 mod part2;

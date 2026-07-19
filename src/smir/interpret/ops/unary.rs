@@ -339,7 +339,7 @@ impl SmirInterpreter {
                 }
             },
 
-            _ => return self.execute_op_flags(ctx, memory, op),
+            _ => return self.execute_op_binary(ctx, memory, op),
         }
 
         Ok(())
