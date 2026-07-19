@@ -441,6 +441,121 @@ fn lifted_x87_exact_register_and_m80_transfers_preserve_payload_tags_and_environ
     ctx.flags.materialize_all();
     assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
 }
+
+#[test]
+fn lifted_legacy_x87_register_forms_match_canonical_state_and_free_pop_exactly() {
+    fn raw(logical: u8) -> [u8; 10] {
+        let significand = 0x8000_0000_0000_0000 | ((u64::from(logical) + 1) << 48);
+        let mut value = [0u8; 10];
+        value[..8].copy_from_slice(&significand.to_le_bytes());
+        value[8..].copy_from_slice(&0x3FFFu16.to_le_bytes());
+        value
+    }
+
+    fn seeded_context(top: u8) -> SmirContext {
+        let mut ctx = SmirContext::new_x86_64();
+        ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
+        ctx.flags.lazy = None;
+        if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
+            x86.x87.control_word = 0x037F;
+            x86.x87.status_word = 0x4745;
+            x86.x87.set_top(top);
+            x86.x87.tag_word = 0xFFFF;
+            x86.x87.data_ptr = 0x1122_3344_5566_7788;
+            for logical in 0u8..8 {
+                x86.x87.set_logical_raw_tagged(logical, raw(logical), 0);
+            }
+        }
+        ctx
+    }
+
+    for (name, canonical, alias, alias_fop) in [
+        (
+            "DD C8-CF FXCH alias",
+            &[0xD9, 0xCB][..],
+            &[0xDD, 0xCB][..],
+            0x05CB,
+        ),
+        (
+            "DC D0-D7 FCOM alias",
+            &[0xD8, 0xD3][..],
+            &[0xDC, 0xD3][..],
+            0x04D3,
+        ),
+        (
+            "DC D8-DF FCOMP alias",
+            &[0xD8, 0xDB][..],
+            &[0xDC, 0xDB][..],
+            0x04DB,
+        ),
+        (
+            "DE D0-D7 FCOMP alias",
+            &[0xD8, 0xDB][..],
+            &[0xDE, 0xD3][..],
+            0x06D3,
+        ),
+        (
+            "DF D0-D7 FSTP alias",
+            &[0xDD, 0xDB][..],
+            &[0xDF, 0xD3][..],
+            0x07D3,
+        ),
+    ] {
+        let mut canonical_ctx = seeded_context(5);
+        let mut alias_ctx = seeded_context(5);
+        let mut canonical_memory = FlatMemory::new(0x100);
+        let mut alias_memory = FlatMemory::new(0x100);
+        execute_lifted_x86(canonical, &mut canonical_ctx, &mut canonical_memory);
+        execute_lifted_x86(alias, &mut alias_ctx, &mut alias_memory);
+
+        let mut canonical_state = match &canonical_ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => unreachable!(),
+        };
+        let alias_state = match &alias_ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => unreachable!(),
+        };
+        assert_eq!(alias_state.last_opcode, alias_fop, "{name}");
+        canonical_state.last_opcode = alias_fop;
+        assert_eq!(alias_state, canonical_state, "{name}");
+
+        canonical_ctx.flags.materialize_all();
+        alias_ctx.flags.materialize_all();
+        assert_eq!(
+            alias_ctx.flags.materialized.to_rflags(),
+            canonical_ctx.flags.materialized.to_rflags(),
+            "{name}"
+        );
+    }
+
+    for (top, st) in [(0, 0), (5, 3), (7, 7)] {
+        let mut ctx = seeded_context(top);
+        let mut memory = FlatMemory::new(0x100);
+        let before = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => unreachable!(),
+        };
+        execute_lifted_x86(&[0xDF, 0xC0 + st], &mut ctx, &mut memory);
+
+        let after = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => x86.x87.clone(),
+            _ => unreachable!(),
+        };
+        let mut expected = before.clone();
+        expected.set_physical_tag(before.physical_index(st), 3);
+        expected.set_physical_tag(before.physical_index(0), 3);
+        expected.status_word &= !0x0200;
+        expected.set_top(top.wrapping_add(1));
+        expected.instr_ptr = 0x1000;
+        expected.last_opcode = 0x07C0 + u16::from(st);
+        assert_eq!(after, expected, "FFREEP ST({st}) with TOP={top}");
+
+        ctx.flags.materialize_all();
+        assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
+    }
+}
+
 #[test]
 fn lifted_x87_exact_sign_and_top_rotation_operations_preserve_raw_state() {
     let mut negative = [0xA5, 0x5A, 1, 2, 3, 4, 5, 0x80, 0x34, 0xC0];

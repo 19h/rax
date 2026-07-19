@@ -24,6 +24,8 @@ mod tsx;
 #[cfg(test)]
 mod vex;
 #[cfg(test)]
+mod x87_aliases;
+#[cfg(test)]
 mod x87_noops;
 
 /// Test memory reader for unit tests

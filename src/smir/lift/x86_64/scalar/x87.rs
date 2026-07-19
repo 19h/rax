@@ -32,6 +32,36 @@ impl X86_64Lifter {
         let group = (modrm.byte >> 3) & 7;
         let st = modrm.byte & 7;
         let fop = (((opcode & 7) as u16) << 8) | modrm.byte as u16;
+
+        // FFREEP has no dedicated IR kind. Its two tag updates and TOP advance
+        // are individually non-faulting; composing them preserves every
+        // defined result. C0-C3 are undefined for FFREEP, so IncrementTop's
+        // deterministic C1=0 is within the architectural result domain.
+        if opcode == 0xDF && !modrm.is_memory && matches!(modrm.byte, 0xC0..=0xC7) {
+            let mut ops = Vec::with_capacity(3);
+            let mut push = |kind, st| {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86X87Data {
+                        kind,
+                        addr: None,
+                        st,
+                        fop,
+                    },
+                ));
+            };
+            push(X86X87DataKind::Free, st);
+            if st != 0 {
+                push(X86X87DataKind::Free, 0);
+            }
+            push(X86X87DataKind::IncrementTop, 0);
+            return Ok(LiftResult::fallthrough(
+                ops,
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+
         let data_kind = match (opcode, modrm.is_memory, group, modrm.byte) {
             (0xD8, true, 0, _) => Some(X86X87DataKind::AddSubtract {
                 source: X86X87ArithmeticSource::Single,
@@ -351,13 +381,17 @@ impl X86_64Lifter {
                 pop: true,
                 reverse: true,
             }),
-            (0xD8, false, _, 0xD0..=0xD7) => Some(X86X87DataKind::Compare {
-                source: X86X87CompareSource::Register,
-                unordered: false,
-                pop: 0,
-                eflags: false,
-            }),
-            (0xD8, false, _, 0xD8..=0xDF) => Some(X86X87DataKind::Compare {
+            (0xD8, false, _, 0xD0..=0xD7) | (0xDC, false, _, 0xD0..=0xD7) => {
+                Some(X86X87DataKind::Compare {
+                    source: X86X87CompareSource::Register,
+                    unordered: false,
+                    pop: 0,
+                    eflags: false,
+                })
+            }
+            (0xD8, false, _, 0xD8..=0xDF)
+            | (0xDC, false, _, 0xD8..=0xDF)
+            | (0xDE, false, _, 0xD0..=0xD7) => Some(X86X87DataKind::Compare {
                 source: X86X87CompareSource::Register,
                 unordered: false,
                 pop: 1,
@@ -420,10 +454,14 @@ impl X86_64Lifter {
             (0xD9, false, _, 0xC0..=0xC7) => Some(X86X87DataKind::LoadRegister),
             (0xDB, true, 5, _) => Some(X86X87DataKind::LoadExtended),
             (0xDD, false, _, 0xD0..=0xD7) => Some(X86X87DataKind::StoreRegister),
-            (0xDD, false, _, 0xD8..=0xDF) => Some(X86X87DataKind::StorePopRegister),
+            (0xDD, false, _, 0xD8..=0xDF) | (0xDF, false, _, 0xD0..=0xD7) => {
+                Some(X86X87DataKind::StorePopRegister)
+            }
             (0xDB, true, 7, _) => Some(X86X87DataKind::StorePopExtended),
             (0xDF, true, 6, _) => Some(X86X87DataKind::StoreBcd),
-            (0xD9, false, _, 0xC8..=0xCF) => Some(X86X87DataKind::Exchange),
+            (0xD9, false, _, 0xC8..=0xCF) | (0xDD, false, _, 0xC8..=0xCF) => {
+                Some(X86X87DataKind::Exchange)
+            }
             (0xDD, false, _, 0xC0..=0xC7) => Some(X86X87DataKind::Free),
             (0xD9, false, _, 0xE0) => Some(X86X87DataKind::ChangeSign),
             (0xD9, false, _, 0xE1) => Some(X86X87DataKind::Absolute),
