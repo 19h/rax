@@ -23,6 +23,8 @@ mod sse;
 mod tsx;
 #[cfg(test)]
 mod vex;
+#[cfg(test)]
+mod x87_noops;
 
 /// Test memory reader for unit tests
 struct TestMemory {

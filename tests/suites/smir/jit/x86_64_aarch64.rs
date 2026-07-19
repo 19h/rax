@@ -1181,3 +1181,43 @@ fn x86_aarch64_run_auto_promotes_and_caches_hot_loop() {
         "run() must auto-compile and cache the eligible AArch64-host region"
     );
 }
+
+#[test]
+fn obsolete_x87_no_operations_remain_inside_an_aarch64_native_region() {
+    // The three x87 no-operations lead the block so an unsupported first
+    // instruction cannot be mistaken for a successfully compiled native
+    // prefix. MOV preserves the seeded ZF, so the syntactic backedge is not
+    // taken and provides a finite JIT region before HLT.
+    let code = [
+        0xDB, 0xE0, // FENI8087_NOP
+        0xDB, 0xE1, // FDISI8087_NOP
+        0xDB, 0xE4, // FSETPM287_NOP
+        0xB8, 0x78, 0x56, 0x34, 0x12, // MOV eax,0x12345678
+        0x75, 0xF3, // JNZ start (not taken because ZF=1)
+        0xF4,
+    ];
+    let setup = |vcpu: &mut X86_64Vcpu| {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = u64::MAX;
+        regs.rflags = 0xCD7;
+        vcpu.set_regs(&regs).unwrap();
+    };
+
+    let mut interpreter = make_vcpu_code(&code);
+    setup(&mut interpreter);
+    run_to_hlt(&mut interpreter);
+    let expected = interpreter.get_regs().unwrap();
+
+    let mut jit = make_vcpu_code(&code);
+    setup(&mut jit);
+    assert!(
+        jit.jit_try_block()
+            .expect("obsolete x87 no-operation JIT attempt"),
+        "the block must enter the AArch64 native tier without an interpreter frontier"
+    );
+    run_to_hlt(&mut jit);
+    let actual = jit.get_regs().unwrap();
+
+    assert_mapped_state_eq(&actual, &expected, "obsolete x87 no-operations");
+    assert_eq!(actual.rax, 0x1234_5678);
+}
