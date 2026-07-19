@@ -3708,28 +3708,17 @@ const JIT_VERIFY_MEM_LOG_LIMIT: usize = 4;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64", test))]
 const JIT_VERIFY_MEM_TRACE_LIMIT: usize = 4;
 
-/// A compiled native hot-block region. The lowered code is register-state
-/// independent (it marshals guest state in/out per run), so one `JitRegion` is
-/// cached by (RIP, mode_tag) and re-run for every later entry to that RIP until
-/// the underlying guest code page is written (SMC invalidation).
 #[cfg(all(
     feature = "smir-jit",
     any(target_arch = "x86_64", target_arch = "aarch64")
 ))]
-pub(super) struct JitRegion {
-    exec: crate::smir::lower::runtime::ExecMem,
-    entry_offset: usize,
-    /// Whether the entry trampoline must marshal ZMM0-ZMM31 and K0-K7.
-    #[cfg(target_arch = "x86_64")]
-    uses_vector: bool,
-    /// Whether vector state can use AVX512F KMOVW while retaining K[63:16] in
-    /// memory. False selects the general AVX512BW KMOVQ path.
-    #[cfg(target_arch = "x86_64")]
-    narrow_vector_opmasks: bool,
-    /// Whether the native entry bridge must marshal MM0-MM7 and guest x87 tags.
-    #[cfg(target_arch = "x86_64")]
-    uses_mmx: bool,
-}
+#[path = "cpu_jit_state.rs"]
+mod jit_state;
+#[cfg(all(
+    feature = "smir-jit",
+    any(target_arch = "x86_64", target_arch = "aarch64")
+))]
+use jit_state::JitRegion;
 
 /// RAX_JIT_BAIL=1 logs why each hot region is rejected by the JIT (diagnostic
 /// for expanding the whitelist toward the highest-frequency bail reasons).
@@ -4623,8 +4612,9 @@ impl X86_64Vcpu {
         use crate::smir::lower::runtime::is_x86_aarch64_native_clobber_safe_excluding;
         #[cfg(target_arch = "x86_64")]
         use crate::smir::lower::runtime::{
-            is_native_clobber_safe_excluding, uses_x86_native_mmx_excluding,
-            uses_x86_native_vectors_excluding, x86_native_mmx_features_supported_excluding,
+            is_native_clobber_safe_excluding, uses_x86_maskmovdqu_state_excluding,
+            uses_x86_native_mmx_excluding, uses_x86_native_vectors_excluding,
+            x86_jit_op_uses_mem_helper, x86_native_mmx_features_supported_excluding,
             x86_native_mmx_pairs_valid_excluding, x86_native_scalar_features_supported_excluding,
             x86_native_vector_features_supported_excluding,
             x86_native_vector_uses_k16_opmasks_excluding,
@@ -4814,6 +4804,8 @@ impl X86_64Vcpu {
             let narrow_vector_opmasks =
                 uses_vector && x86_native_vector_uses_k16_opmasks_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
+            let uses_xmm_state = uses_x86_maskmovdqu_state_excluding(&func, &exits);
+            #[cfg(target_arch = "x86_64")]
             let uses_mmx = uses_x86_native_mmx_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
             if uses_mmx && !x86_native_mmx_features_supported_excluding(&func, &exits) {
@@ -4836,15 +4828,7 @@ impl X86_64Vcpu {
                     .iter()
                     .filter(|block| !exits.contains_key(&block.id))
                     .flat_map(|block| &block.ops)
-                    .any(|op| {
-                        matches!(
-                            op.kind,
-                            OpKind::Load { .. }
-                                | OpKind::Store { .. }
-                                | OpKind::VLoad { .. }
-                                | OpKind::VStore { .. }
-                        )
-                    });
+                    .any(|op| x86_jit_op_uses_mem_helper(&op.kind));
             #[cfg(target_arch = "x86_64")]
             {
                 if !is_native_clobber_safe_excluding(&func, &exits, allow_mem) {
@@ -4923,6 +4907,8 @@ impl X86_64Vcpu {
                 entry_offset: res.entry_offset,
                 #[cfg(target_arch = "x86_64")]
                 uses_vector,
+                #[cfg(target_arch = "x86_64")]
+                uses_xmm_state,
                 #[cfg(target_arch = "x86_64")]
                 narrow_vector_opmasks,
                 #[cfg(target_arch = "x86_64")]
@@ -5064,7 +5050,7 @@ impl X86_64Vcpu {
         gr.gpr[31] = self.regs.r31;
         gr.rflags = self.regs.rflags;
         gr.exit_pc = self.regs.rip; // fallback (an exit stub overwrites this)
-        if region.uses_vector {
+        if region.uses_vector || region.uses_xmm_state {
             for index in 0..16 {
                 gr.set_zmm(
                     index,
@@ -5081,6 +5067,8 @@ impl X86_64Vcpu {
                 );
                 gr.set_zmm(index + 16, self.regs.zmm_ext[index]);
             }
+        }
+        if region.uses_vector {
             gr.k = self.regs.k;
             gr.mxcsr = self.mxcsr;
             gr.vector_active = if region.narrow_vector_opmasks {
@@ -5920,6 +5908,7 @@ mod decode_cache_invalidation_tests {
             exec: crate::smir::lower::runtime::ExecMem::new(&[0xC3]).unwrap(),
             entry_offset: 0,
             uses_vector: false,
+            uses_xmm_state: false,
             narrow_vector_opmasks: false,
             uses_mmx: false,
         };

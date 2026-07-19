@@ -21,6 +21,8 @@ mod mmx_memory_source;
 mod simd;
 #[cfg(test)]
 mod state;
+#[cfg(all(test, feature = "smir-jit"))]
+mod vector_maskmov;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::types::{

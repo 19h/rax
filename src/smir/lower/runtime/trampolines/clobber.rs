@@ -135,6 +135,16 @@ pub(crate) fn block_is_clobber_safe(
             i = span.end;
             continue;
         }
+        if let Some(consumed) = x86_jit_maskmovdqu_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
         if let Some(consumed) = x86_jit_mmx_maskmovq_sequence_len(
             block,
             i,

@@ -64,6 +64,10 @@ mod simd;
 pub use simd::*;
 mod state;
 pub use state::*;
+#[cfg(feature = "smir-jit")]
+mod vector_maskmov;
+#[cfg(feature = "smir-jit")]
+pub use vector_maskmov::*;
 #[cfg(test)]
 mod tests;
 

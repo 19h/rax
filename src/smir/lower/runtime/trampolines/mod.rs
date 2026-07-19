@@ -7,6 +7,8 @@ mod clobber;
 pub use clobber::*;
 mod jit;
 pub use jit::*;
+mod maskmov;
+pub use maskmov::*;
 mod misc;
 pub use misc::*;
 mod mmx;

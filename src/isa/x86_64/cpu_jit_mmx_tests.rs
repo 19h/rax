@@ -31,6 +31,7 @@ fn jit_native_region_synchronizes_mmx_values_and_precise_guest_tags() {
         exec: crate::smir::lower::runtime::ExecMem::new(&code).expect("map MMX region"),
         entry_offset: 0,
         uses_vector: false,
+        uses_xmm_state: false,
         narrow_vector_opmasks: false,
         uses_mmx: true,
     };
@@ -627,6 +628,171 @@ fn jit_faulting_mmx_maskmovq_address_size_preserves_partial_completion() {
     assert_eq!(vcpu.regs.rflags, 0x8D7);
     assert_eq!(vcpu.regs.rdi, 0xDEAD_BEEF_0000_FFFF);
     assert_eq!(vcpu.regs.rip, 0);
+}
+
+#[test]
+fn jit_compiles_and_executes_xmm_maskmovdqu_memory_helper() {
+    let (mut vcpu, mem) = test_vcpu_with_mem();
+    // maskmovdqu xmm0,xmm1; jmp next; ret. The implicit destination is DS:RDI.
+    mem.write_slice(&[0x66, 0x0F, 0xF7, 0xC1, 0xEB, 0x00, 0xC3], GuestAddress(0))
+        .unwrap();
+    let address = 0x3000;
+    let before = [
+        0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE,
+        0xAF,
+    ];
+    mem.write_slice(&before, GuestAddress(address)).unwrap();
+    vcpu.sregs.efer = 1 << 10;
+    vcpu.sregs.cs.l = true;
+    vcpu.regs.rip = 0;
+    vcpu.regs.rdi = address;
+    vcpu.regs.rflags = 0x8D7;
+    vcpu.regs.xmm[0] = [
+        u64::from_le_bytes([0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80]),
+        u64::from_le_bytes([0x90, 0xA0, 0xB0, 0xC0, 0xD0, 0xE0, 0xF0, 0x01]),
+    ];
+    vcpu.regs.xmm[1] = [
+        u64::from_le_bytes([0x80, 0, 0, 0x80, 0, 0, 0x80, 0]),
+        u64::from_le_bytes([0x80, 0, 0, 0, 0, 0x80, 0, 0x80]),
+    ];
+    let original = vcpu.regs.xmm;
+    vcpu.set_jit_mem(true);
+    vcpu.set_jit_call(false);
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile XMM MASKMOVDQU memory region")
+        .expect("exact XMM MASKMOVDQU form should be JIT eligible");
+    assert!(!region.uses_vector);
+    assert!(region.uses_xmm_state);
+    assert!(!region.uses_mmx);
+    vcpu.jit_run_region_native(&region);
+
+    let mut stored = [0u8; 16];
+    mem.read_slice(&mut stored, GuestAddress(address)).unwrap();
+    assert_eq!(
+        stored,
+        [
+            0x10, 0xA1, 0xA2, 0x40, 0xA4, 0xA5, 0x70, 0xA7, 0x90, 0xA9, 0xAA, 0xAB, 0xAC, 0xE0,
+            0xAE, 0x01,
+        ]
+    );
+    assert_eq!(vcpu.regs.xmm, original);
+    assert_eq!(vcpu.regs.rflags, 0x8D7);
+    assert_eq!(vcpu.regs.rdi, address);
+    assert_eq!(vcpu.regs.rip, 6);
+}
+
+#[test]
+fn jit_xmm_maskmovdqu_all_zero_mask_performs_no_memory_access() {
+    let (mut vcpu, mem) = test_vcpu_with_mem();
+    mem.write_slice(&[0x66, 0x0F, 0xF7, 0xC1, 0xEB, 0x00, 0xC3], GuestAddress(0))
+        .unwrap();
+    vcpu.sregs.efer = 1 << 10;
+    vcpu.sregs.cs.l = true;
+    vcpu.regs.rip = 0;
+    vcpu.regs.rdi = 0x1_0000;
+    vcpu.regs.rflags = 0x246;
+    vcpu.regs.xmm = std::array::from_fn(|index| {
+        [
+            0x0123_4567_89AB_CDEFu64.rotate_left(index as u32 * 5),
+            0xFEDC_BA98_7654_3210u64.rotate_right(index as u32 * 7),
+        ]
+    });
+    vcpu.regs.xmm[1] = [0, 0];
+    let original = vcpu.regs.xmm;
+    vcpu.set_jit_mem(true);
+    vcpu.set_jit_call(false);
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile all-zero-mask XMM MASKMOVDQU")
+        .expect("all-zero-mask XMM MASKMOVDQU should be JIT eligible");
+    assert!(region.uses_xmm_state);
+    vcpu.jit_run_region_native(&region);
+
+    assert_eq!(vcpu.regs.xmm, original);
+    assert_eq!(vcpu.regs.rflags, 0x246);
+    assert_eq!(vcpu.regs.rdi, 0x1_0000);
+    assert_eq!(vcpu.regs.rip, 6);
+}
+
+#[test]
+fn jit_faulting_xmm_maskmovdqu_preserves_ordered_partial_completion() {
+    let (mut vcpu, mem) = test_vcpu_with_mem();
+    mem.write_slice(&[0x66, 0x0F, 0xF7, 0xC1, 0xEB, 0x00, 0xC3], GuestAddress(0))
+        .unwrap();
+    let address = 0xFFFF;
+    mem.write_slice(&[0xA5], GuestAddress(address)).unwrap();
+    vcpu.sregs.efer = 1 << 10;
+    vcpu.sregs.cs.l = true;
+    vcpu.regs.rip = 0;
+    vcpu.regs.rdi = address;
+    vcpu.regs.rflags = 0x8D7;
+    vcpu.regs.xmm[0] = [
+        u64::from_le_bytes([0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88]),
+        0x0102_0304_0506_0708,
+    ];
+    vcpu.regs.xmm[1] = [u64::from_le_bytes([0x80, 0x80, 0, 0, 0, 0, 0, 0]), 0];
+    let original = vcpu.regs.xmm;
+    vcpu.set_jit_mem(true);
+    vcpu.set_jit_call(false);
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile faulting XMM MASKMOVDQU")
+        .expect("fault-capable XMM MASKMOVDQU should retain native lane exits");
+    vcpu.jit_run_region_native(&region);
+
+    let mut committed = [0u8; 1];
+    mem.read_slice(&mut committed, GuestAddress(address))
+        .unwrap();
+    assert_eq!(committed, [0x11]);
+    assert_eq!(vcpu.regs.xmm, original);
+    assert_eq!(vcpu.regs.rflags, 0x8D7);
+    assert_eq!(vcpu.regs.rdi, address);
+    assert_eq!(vcpu.regs.rip, 0);
+}
+
+#[test]
+fn jit_xmm_maskmovdqu_addr32_wraps_before_adding_fs_base() {
+    let (mut vcpu, mem) = test_vcpu_with_mem();
+    mem.write_slice(
+        &[0x64, 0x67, 0x66, 0x0F, 0xF7, 0xC1, 0xEB, 0x00, 0xC3],
+        GuestAddress(0),
+    )
+    .unwrap();
+    let address = 0x2000;
+    mem.write_slice(&[0xA0], GuestAddress(address)).unwrap();
+    vcpu.sregs.efer = 1 << 10;
+    vcpu.sregs.cs.l = true;
+    vcpu.sregs.fs.base = address;
+    vcpu.regs.rip = 0;
+    vcpu.regs.rdi = 0xDEAD_BEEF_FFFF_FFFF;
+    vcpu.regs.rflags = 0x8D7;
+    vcpu.regs.xmm[0] = [
+        u64::from_le_bytes([0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88]),
+        0x0102_0304_0506_0708,
+    ];
+    vcpu.regs.xmm[1] = [u64::from_le_bytes([0, 0x80, 0, 0, 0, 0, 0, 0]), 0];
+    let original = vcpu.regs.xmm;
+    vcpu.set_jit_mem(true);
+    vcpu.set_jit_call(false);
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile FS addr32 XMM MASKMOVDQU")
+        .expect("FS addr32 XMM MASKMOVDQU should be JIT eligible");
+    assert!(region.uses_xmm_state);
+    vcpu.jit_run_region_native(&region);
+
+    let mut stored = [0u8; 1];
+    mem.read_slice(&mut stored, GuestAddress(address)).unwrap();
+    assert_eq!(stored, [0x22]);
+    assert_eq!(vcpu.regs.xmm, original);
+    assert_eq!(vcpu.regs.rflags, 0x8D7);
+    assert_eq!(vcpu.regs.rdi, 0xDEAD_BEEF_FFFF_FFFF);
+    assert_eq!(vcpu.regs.rip, 8);
 }
 
 #[test]

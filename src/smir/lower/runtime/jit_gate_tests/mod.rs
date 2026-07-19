@@ -10,6 +10,8 @@ mod evex;
 #[cfg(test)]
 mod gate;
 #[cfg(test)]
+mod maskmovdqu;
+#[cfg(test)]
 mod mmx;
 #[cfg(test)]
 mod mmx_maskmov;
