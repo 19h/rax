@@ -18,6 +18,8 @@ mod decode;
 #[cfg(test)]
 mod evex;
 #[cfg(test)]
+mod fsgsbase;
+#[cfg(test)]
 mod movdir64b;
 #[cfg(test)]
 mod movdiri;

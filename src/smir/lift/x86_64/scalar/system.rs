@@ -36,6 +36,38 @@ impl X86_64Lifter {
         }
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let group = (modrm.byte >> 3) & 7;
+        if !modrm.is_memory && matches!(group, 0..=3) && prefix.rep_prefix == Some(0xF3) {
+            // FSGSBASE has only W32 and W64 forms. A 66h prefix without W=1
+            // requests the nonexistent W16 form and is therefore #UD.
+            if prefix.operand_size_override && !prefix.rex_w() {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+                });
+            }
+            return Ok(LiftResult::fallthrough(
+                vec![SmirOp::new(
+                    OpId(0),
+                    pc,
+                    OpKind::X86FsGsBase {
+                        operand: self.gpr(modrm.rm),
+                        base: VReg::Arch(ArchReg::X86(if matches!(group, 0 | 2) {
+                            X86Reg::FsBase
+                        } else {
+                            X86Reg::GsBase
+                        })),
+                        write: matches!(group, 2 | 3),
+                        width: if prefix.rex_w() {
+                            OpWidth::W64
+                        } else {
+                            OpWidth::W32
+                        },
+                        requires_apx: prefix.rex2.is_some(),
+                    },
+                )],
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
         if modrm.is_memory && matches!(group, 4 | 5 | 6) && !prefix.operand_size_override {
             if prefix.rep_prefix.is_some() {
                 return Err(LiftError::InvalidEncoding {

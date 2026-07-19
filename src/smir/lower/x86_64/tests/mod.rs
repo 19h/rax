@@ -16,6 +16,8 @@ mod cpuid;
 #[cfg(test)]
 mod fp_binary;
 #[cfg(test)]
+mod fsgsbase;
+#[cfg(test)]
 mod jit;
 #[cfg(test)]
 mod memory;

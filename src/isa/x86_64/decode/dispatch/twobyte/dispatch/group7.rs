@@ -287,7 +287,13 @@ impl X86_64Vcpu {
 
         // Memory fences and FSGSBASE (mod=3, specific reg values)
         if modrm >> 6 == 3 {
-            let rm = (modrm & 0x07) | ctx.rex_b(); // Apply REX.B for extended registers
+            let rm = (modrm & 0x07) | ctx.any_rex_b();
+            if matches!(reg_op, 0..=3) && ctx.rep_prefix == Some(0xF3) {
+                // FSGSBASE is defined only in 64-bit mode and has no W16 form.
+                if !self.sregs.cs.l || (ctx.operand_size_override && !ctx.any_rex_w()) {
+                    return self.inject_undefined_instruction();
+                }
+            }
             match reg_op {
                 // WAITPKG register forms using the 0F AE /6 slot.
                 6 if ctx.rep_prefix == Some(0xF3) => {
@@ -314,12 +320,12 @@ impl X86_64Vcpu {
                     if !self.require_cr4_bit_for_ud(CR4_FSGSBASE)? {
                         return Ok(None);
                     }
-                    let value = if ctx.rex_w() {
+                    let value = if ctx.any_rex_w() {
                         self.sregs.fs.base
                     } else {
                         self.sregs.fs.base & 0xFFFF_FFFF
                     };
-                    self.set_reg(rm, value, if ctx.rex_w() { 8 } else { 4 });
+                    self.set_reg(rm, value, if ctx.any_rex_w() { 8 } else { 4 });
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
@@ -328,12 +334,12 @@ impl X86_64Vcpu {
                     if !self.require_cr4_bit_for_ud(CR4_FSGSBASE)? {
                         return Ok(None);
                     }
-                    let value = if ctx.rex_w() {
+                    let value = if ctx.any_rex_w() {
                         self.sregs.gs.base
                     } else {
                         self.sregs.gs.base & 0xFFFF_FFFF
                     };
-                    self.set_reg(rm, value, if ctx.rex_w() { 8 } else { 4 });
+                    self.set_reg(rm, value, if ctx.any_rex_w() { 8 } else { 4 });
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
@@ -342,7 +348,7 @@ impl X86_64Vcpu {
                     if !self.require_cr4_bit_for_ud(CR4_FSGSBASE)? {
                         return Ok(None);
                     }
-                    let value = if ctx.rex_w() {
+                    let value = if ctx.any_rex_w() {
                         self.get_reg(rm, 8)
                     } else {
                         self.get_reg(rm, 4)
@@ -360,7 +366,7 @@ impl X86_64Vcpu {
                     if !self.require_cr4_bit_for_ud(CR4_FSGSBASE)? {
                         return Ok(None);
                     }
-                    let value = if ctx.rex_w() {
+                    let value = if ctx.any_rex_w() {
                         self.get_reg(rm, 8)
                     } else {
                         self.get_reg(rm, 4)

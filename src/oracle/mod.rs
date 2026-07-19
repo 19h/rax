@@ -2472,6 +2472,13 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src_low,
             src_high,
         } => op_json!("x86_xsetbv", selector, src_low, src_high),
+        OpKind::X86FsGsBase {
+            operand,
+            base,
+            write,
+            width,
+            requires_apx,
+        } => op_json!("x86_fsgsbase", operand, base, write, width, requires_apx),
         OpKind::X86Cpuid {
             dst_eax,
             dst_ebx,

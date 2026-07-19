@@ -62,6 +62,8 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     vcpu.regs.r30 = gr.gpr[30];
     vcpu.regs.r31 = gr.gpr[31];
     vcpu.regs.rflags = gr.rflags;
+    vcpu.sregs.fs.base = gr.fs_base;
+    vcpu.sregs.gs.base = gr.gs_base;
     vcpu.lazy_flags = LazyFlags {
         op: LazyFlagOp::None,
         ..Default::default()
@@ -189,6 +191,8 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     gr.gpr[30] = vcpu.regs.r30;
     gr.gpr[31] = vcpu.regs.r31;
     gr.rflags = vcpu.regs.rflags;
+    gr.fs_base = vcpu.sregs.fs.base;
+    gr.gs_base = vcpu.sregs.gs.base;
     gr.xcr0 = vcpu.xcr0;
     gr.xgetbv1 = vcpu.xgetbv1_value;
     gr.cr4 = vcpu.sregs.cr4;

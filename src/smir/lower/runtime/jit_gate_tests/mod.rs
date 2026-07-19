@@ -14,6 +14,8 @@ mod evex;
 #[cfg(test)]
 mod fp_binary;
 #[cfg(test)]
+mod fsgsbase;
+#[cfg(test)]
 mod gate;
 #[cfg(test)]
 mod maskmovdqu;

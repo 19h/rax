@@ -21,7 +21,8 @@
 //!
 //! Note: For 32-bit operations, upper 32 bits are cleared.
 //!
-//! Reference: docs/rdfsbase:rdgsbase.txt, docs/wrfsbase:wrgsbase.txt
+//! Reference: Intel(R) 64 and IA-32 Architectures Software Developer's Manual,
+//! Vol. 2B, RDFSBASE/RDGSBASE and WRFSBASE/WRGSBASE.
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;
@@ -619,4 +620,92 @@ fn test_32bit_write_clears_upper_gs() {
         0,
         "Upper 32 bits should be cleared by 32-bit write"
     );
+}
+
+#[test]
+fn fsgsbase_is_ud_outside_64bit_code_segments() {
+    let code = [0xF3, 0x0F, 0xAE, 0xC0, 0xF4]; // RDFSBASE EAX; HLT
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cr4 |= CR4_FSGSBASE;
+    sregs.cs.l = false;
+    sregs.cs.db = true;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    let err = vcpu
+        .step()
+        .expect_err("FSGSBASE outside CS.L must inject #UD");
+    assert!(
+        err.to_string().contains("IDT entry 6 not present"),
+        "expected #UD delivery failure, got {err}"
+    );
+}
+
+#[test]
+fn fsgsbase_rejects_w16_but_rex_w_overrides_operand_size_prefix() {
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x66, 0xF3, 0x0F, 0xAE, 0xC0], None);
+    enable_cr4_bits(&mut vcpu, CR4_FSGSBASE);
+    let err = vcpu.step().expect_err("66h W16 FSGSBASE must inject #UD");
+    assert!(err.to_string().contains("IDT entry 6 not present"));
+
+    let code = [0x66, 0xF3, 0x48, 0x0F, 0xAE, 0xC0, 0xF4];
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_FSGSBASE);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.fs.base = 0xFFFF_8000_89AB_CDEF;
+    vcpu.set_sregs(&sregs).unwrap();
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xFFFF_8000_89AB_CDEF);
+}
+
+#[test]
+fn rex2_fsgsbase_uses_w_and_full_five_bit_register_index() {
+    // LLVM encodings: WRFSBASE R16 and RDFSBASE R31.
+    let code = [
+        0xF3, 0xD5, 0x98, 0xAE, 0xD0, // WRFSBASE R16
+        0xF3, 0xD5, 0x99, 0xAE, 0xC7, // RDFSBASE R31
+        0xF4,
+    ];
+    let mut initial = Registers::default();
+    initial.r16 = 0xFFFF_8000_7654_3210;
+    let (mut vcpu, _) = setup_apx_vm_no_idt(&code, Some(initial));
+    enable_cr4_bits(&mut vcpu, CR4_FSGSBASE);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.r31, 0xFFFF_8000_7654_3210);
+    assert_eq!(vcpu.get_sregs().unwrap().fs.base, regs.r31);
+
+    let (mut disabled, _) = setup_vm_no_idt(&code, None);
+    enable_cr4_bits(&mut disabled, CR4_FSGSBASE);
+    let err = disabled
+        .step()
+        .expect_err("REX2 FSGSBASE with APX disabled must inject #UD");
+    assert!(err.to_string().contains("IDT entry 6 not present"));
+}
+
+#[test]
+fn wrfsgsbase_noncanonical_w64_faults_without_committing_base() {
+    for (opcode, value) in [
+        (0xD0, 0x0000_8000_0000_0000_u64), // WRFSBASE RAX
+        (0xD8, 0xFFFF_7FFF_FFFF_FFFF_u64), // WRGSBASE RAX
+    ] {
+        let code = [0xF3, 0x48, 0x0F, 0xAE, opcode];
+        let mut initial = Registers::default();
+        initial.rax = value;
+        let (mut vcpu, _) = setup_vm_no_idt(&code, Some(initial));
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cr4 |= CR4_FSGSBASE;
+        sregs.fs.base = 0x1357;
+        sregs.gs.base = 0x2468;
+        vcpu.set_sregs(&sregs).unwrap();
+
+        let err = vcpu
+            .step()
+            .expect_err("non-canonical W64 FSGSBASE write must inject #GP(0)");
+        assert!(
+            err.to_string().contains("IDT entry 13 not present"),
+            "expected #GP delivery failure, got {err}"
+        );
+        let after = vcpu.get_sregs().unwrap();
+        assert_eq!(after.fs.base, 0x1357);
+        assert_eq!(after.gs.base, 0x2468);
+    }
 }

@@ -4580,6 +4580,25 @@ impl X86_64Vcpu {
                 }
                 continue 'modes;
             }
+            // Standalone x86-64 SMIR models the 64-bit FSGSBASE contract, but
+            // this CPU can also compile compatibility-mode regions. FSGSBASE
+            // is #UD outside CS.L=1, so reject any executed such op before
+            // native admission and let the mode-aware direct decoder deliver
+            // the exception. CS.L is part of the JIT cache mode tag.
+            #[cfg(target_arch = "x86_64")]
+            if !self.sregs.cs.l
+                && func
+                    .blocks
+                    .iter()
+                    .filter(|block| !exits.contains_key(&block.id))
+                    .flat_map(|block| &block.ops)
+                    .any(|op| matches!(op.kind, OpKind::X86FsGsBase { .. }))
+            {
+                if jit_bail_log() {
+                    eprintln!("[JIT-BAIL] fsgsbase-outside-long-mode @ {entry:#x}");
+                }
+                continue 'modes;
+            }
             // Fail-safe gate over the EXECUTED (non-exit) blocks.
             #[cfg(target_arch = "x86_64")]
             let allow_mem = self.jit_mem;
@@ -4920,6 +4939,8 @@ impl X86_64Vcpu {
         // Stateful control instructions such as XSETBV commit through the
         // marshalled ABI before returning at a precise next-instruction PC.
         self.xcr0 = gr.xcr0;
+        self.sregs.fs.base = gr.fs_base;
+        self.sregs.gs.base = gr.gs_base;
 
         self.regs.rax = gr.gpr[0];
         self.regs.rcx = gr.gpr[1];
@@ -5035,6 +5056,8 @@ impl X86_64Vcpu {
         let snap = self.regs.clone();
         let snap_fpu = self.fpu.clone();
         let snap_lf = self.lazy_flags;
+        let snap_fs_base = self.sregs.fs.base;
+        let snap_gs_base = self.sregs.gs.base;
 
         // 1) Run natively with store-logging (to UNDO writes) and an access
         //    trace (to diff against the interpreter's access sequence).
@@ -5043,6 +5066,8 @@ impl X86_64Vcpu {
         self.jit_run_region_native(region);
         let jit = self.regs.clone();
         let jit_fpu = self.fpu.clone();
+        let jit_fs_base = self.sregs.fs.base;
+        let jit_gs_base = self.sregs.gs.base;
         let jit_rflags = self.regs.rflags; // already materialized by the native bridge
         let exit_pc = self.regs.rip;
         // Take the native trace NOW, before the undo/re-read loops add to it.
@@ -5075,6 +5100,8 @@ impl X86_64Vcpu {
         self.regs = snap.clone();
         self.fpu = snap_fpu;
         self.lazy_flags = snap_lf;
+        self.sregs.fs.base = snap_fs_base;
+        self.sregs.gs.base = snap_gs_base;
         self.jit_mem_trace = Some(Vec::new());
         let cap = 50_000_000u64;
         let mut steps = 0u64;
@@ -5173,6 +5200,14 @@ impl X86_64Vcpu {
             ];
             let mut diffs: Vec<String> = Vec::new();
             for (name, interp, native) in g {
+                if interp != native {
+                    diffs.push(format!("{name}: interp={interp:#x} jit={native:#x}"));
+                }
+            }
+            for (name, interp, native) in [
+                ("fs_base", self.sregs.fs.base, jit_fs_base),
+                ("gs_base", self.sregs.gs.base, jit_gs_base),
+            ] {
                 if interp != native {
                     diffs.push(format!("{name}: interp={interp:#x} jit={native:#x}"));
                 }
@@ -5317,6 +5352,8 @@ impl X86_64Vcpu {
         // Matched (or unverifiable within the cap): adopt the native result.
         self.regs = jit;
         self.fpu = jit_fpu;
+        self.sregs.fs.base = jit_fs_base;
+        self.sregs.gs.base = jit_gs_base;
     }
 
     /// Re-lift + optimize the region at `entry` and pretty-print its blocks/ops
@@ -5856,6 +5893,10 @@ mod jit_call_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_cpuid_tests.rs"]
 mod jit_cpuid_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_fsgsbase_tests.rs"]
+mod jit_fsgsbase_tests;
 
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {

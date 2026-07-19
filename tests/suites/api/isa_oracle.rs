@@ -199,6 +199,37 @@ fn emits_structured_smir_ops() {
 }
 
 #[test]
+fn emits_exact_fsgsbase_state_direction_width_and_apx_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let read = decode_to_json(&[0xF3, 0xD5, 0x99, 0xAE, 0xCF], &opts).unwrap();
+    assert_eq!(read["smir"]["available"], true);
+    assert_eq!(read["smir"]["bytes_consumed"], 5);
+    let op = &read["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_fsgsbase");
+    assert_eq!(op["kind"]["operand"]["name"], "r31");
+    assert_eq!(op["kind"]["base"]["name"], "gs_base");
+    assert_eq!(op["kind"]["write"], false);
+    assert_eq!(op["kind"]["width"], "W64");
+    assert_eq!(op["kind"]["requires_apx"], true);
+    assert_eq!(op["writes"][0]["name"], "r31");
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+
+    let write = decode_to_json(&[0xF3, 0x0F, 0xAE, 0xD0], &opts).unwrap();
+    let op = &write["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_fsgsbase");
+    assert_eq!(op["kind"]["operand"]["name"], "rax");
+    assert_eq!(op["kind"]["base"]["name"], "fs_base");
+    assert_eq!(op["kind"]["write"], true);
+    assert_eq!(op["kind"]["width"], "W32");
+    assert_eq!(op["kind"]["requires_apx"], false);
+    assert_eq!(op["writes"][0]["name"], "fs_base");
+}
+
+#[test]
 fn emits_exact_legacy_pcmpxstrx_semantics() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

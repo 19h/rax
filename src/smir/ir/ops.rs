@@ -3954,6 +3954,19 @@ pub enum OpKind {
         src_high: VReg,
     },
 
+    /// RDFSBASE/RDGSBASE/WRFSBASE/WRGSBASE. `operand` is the encoded GPR and
+    /// `base` is exactly FS.base or GS.base. A read writes `operand` from
+    /// `base`; a write commits `operand` to `base`. The operation performs its
+    /// architectural CR4.FSGSBASE/APX checks and may therefore fault even when
+    /// its data destination is dead.
+    X86FsGsBase {
+        operand: VReg,
+        base: VReg,
+        write: bool,
+        width: OpWidth,
+        requires_apx: bool,
+    },
+
     /// Test condition and store result
     TestCondition {
         dst: VReg,
@@ -4380,6 +4393,7 @@ impl OpKind {
                 | OpKind::X86ReadPid { .. }
                 | OpKind::X86XGetBv { .. }
                 | OpKind::X86XSetBv { .. }
+                | OpKind::X86FsGsBase { .. }
                 | OpKind::X86Cpuid { .. }
                 | OpKind::X86Count { .. }
                 | OpKind::X86X87Control {
@@ -4754,6 +4768,13 @@ impl OpKind {
                 dst_low, dst_high, ..
             } => vec![*dst_low, *dst_high],
 
+            OpKind::X86FsGsBase {
+                operand,
+                base,
+                write,
+                ..
+            } => vec![if *write { *base } else { *operand }],
+
             OpKind::X86Cmpxchg8b16b { dst_lo, dst_hi, .. } => vec![*dst_lo, *dst_hi],
 
             OpKind::X86Random { dst, .. } | OpKind::X86ReadPid { dst } => vec![*dst],
@@ -5024,6 +5045,7 @@ impl OpKind {
                     | OpKind::X86XSave { .. }
                     | OpKind::X86XGetBv { .. }
                     | OpKind::X86XSetBv { .. }
+                    | OpKind::X86FsGsBase { .. }
                     | OpKind::X86Random { .. }
                     // A saturating clamp ORs the Hexagon USR:OVF sticky bit when it
                     // actually clamps and `set_ovf` is set. That update is invisible

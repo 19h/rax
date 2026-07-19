@@ -3860,6 +3860,12 @@ impl OpKind {
                 src_low,
                 src_high,
             } => result.extend([*selector, *src_low, *src_high]),
+            OpKind::X86FsGsBase {
+                operand,
+                base,
+                write,
+                ..
+            } => result.push(if *write { *operand } else { *base }),
             OpKind::X86Cpuid { leaf, subleaf, .. } => result.extend([*leaf, *subleaf]),
 
             OpKind::X86Cmpxchg8b16b {

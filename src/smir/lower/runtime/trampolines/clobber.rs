@@ -466,6 +466,7 @@ pub(crate) fn block_is_clobber_safe(
             crate::smir::lower::x86_64::x86_state_backed_gpr_pdep_pext_valid(op);
         let state_bswap_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_bswap_valid(op);
         let state_xchg_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_valid(op);
+        let fsgsbase_ok = crate::smir::lower::x86_64::x86_fsgsbase_shape_valid(&op.kind);
         let stack_state_ok = stack_mov_ok
             || stack_alu_ok
             || state_extend_ok
@@ -488,7 +489,8 @@ pub(crate) fn block_is_clobber_safe(
             || state_adx_ok
             || state_pdep_pext_ok
             || state_bswap_ok
-            || state_xchg_ok;
+            || state_xchg_ok
+            || fsgsbase_ok;
         if (crate::smir::lower::x86_64::x86_state_backed_gpr_extend_candidate(op)
             && !state_extend_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_cmove_candidate(op)
@@ -614,6 +616,9 @@ pub(crate) fn block_is_clobber_safe(
         if matches!(op.kind, OpKind::X86Cpuid { .. })
             && !crate::smir::lower::x86_64::x86_cpuid_shape_valid(&op.kind)
         {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86FsGsBase { .. }) && !fsgsbase_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86XSetBv { .. }) {

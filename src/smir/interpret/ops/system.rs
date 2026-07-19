@@ -97,6 +97,53 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::X86FsGsBase {
+                operand,
+                base,
+                write,
+                width,
+                requires_apx,
+            } => {
+                let (cr4, apx_enabled) = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => (x86.cr4, x86.apx_enabled),
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                if cr4 & (1 << 16) == 0 || (*requires_apx && !apx_enabled) {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+                if !matches!(width, OpWidth::W32 | OpWidth::W64) {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+                if *write {
+                    let value = ctx.read_vreg(*operand) & width.mask();
+                    if *width == OpWidth::W64 && (((value as i64) << 16 >> 16) as u64 != value) {
+                        ctx.request_exit(ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        });
+                        return Ok(());
+                    }
+                    ctx.write_vreg(*base, value);
+                } else {
+                    let value = ctx.read_vreg(*base);
+                    Self::write_x86_partial(ctx, *operand, value, *width);
+                }
+            }
+
             _ => return self.execute_op_meta(ctx, memory, op),
         }
 

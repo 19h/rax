@@ -46,6 +46,8 @@ pub use cpuid::*;
 mod dispatch;
 pub use dispatch::*;
 mod emitter;
+mod fsgsbase;
+pub use fsgsbase::*;
 mod ops;
 pub use emitter::*;
 mod jit;
