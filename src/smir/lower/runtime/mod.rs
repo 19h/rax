@@ -261,6 +261,10 @@ pub struct GuestRegs {
     /// fault-precise 10-byte SGDT/SIDT memory transfer. `table` is zero for
     /// GDTR and one for IDTR.
     pub descriptor_store_fn: u64,
+    /// Address of `extern "C" fn(state, addr, table) -> ok`, implementing one
+    /// fault-precise 10-byte LGDT/LIDT memory transfer and committing the
+    /// selected implicit descriptor-table state only after the full read.
+    pub descriptor_load_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -330,6 +334,7 @@ impl Default for GuestRegs {
             sysenter_eip: 0,
             pmc_fn: 0,
             descriptor_store_fn: 0,
+            descriptor_load_fn: 0,
         }
     }
 }

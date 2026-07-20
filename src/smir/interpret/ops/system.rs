@@ -389,6 +389,77 @@ impl SmirInterpreter {
                 memory.write(effective_addr, &payload)?;
             }
 
+            OpKind::X86DescriptorTableLoad(load) => {
+                let instruction_len = load.next_pc.checked_sub(op.guest_pc);
+                let uses_egpr = load
+                    .addr
+                    .regs()
+                    .iter()
+                    .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
+                if !matches!(instruction_len, Some(3..=15))
+                    || op.x86_hint.is_some()
+                    || !load.addr.is_x86_state_backed_shape()
+                    || (uses_egpr && !load.requires_apx)
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => {
+                        // REX2/APX validity is a decode-time fault and therefore
+                        // precedes privilege and memory validation.
+                        if load.requires_apx && !x86.apx_enabled {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        }
+                        if x86.cpl != 0 {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                }
+
+                // Read the complete long-mode pseudo-descriptor before
+                // committing either implicit field. The deterministic guest
+                // profile identifies as GenuineIntel, whose 64-bit-mode LGDT/
+                // LIDT definition retains all 64 source base bits.
+                let effective_addr = self.compute_address(ctx, &load.addr);
+                let mut payload = [0u8; 10];
+                memory.read(effective_addr, &mut payload)?;
+                let limit = u16::from_le_bytes(payload[..2].try_into().unwrap());
+                let base = u64::from_le_bytes(payload[2..].try_into().unwrap());
+                let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                    unreachable!("validated x86 descriptor-table state changed")
+                };
+                match load.table {
+                    X86DescriptorTable::Gdt => {
+                        x86.gdtr_limit = limit;
+                        x86.gdtr_base = base;
+                    }
+                    X86DescriptorTable::Idt => {
+                        x86.idtr_limit = limit;
+                        x86.idtr_base = base;
+                    }
+                }
+            }
+
             OpKind::X86WriteControl {
                 src,
                 control,

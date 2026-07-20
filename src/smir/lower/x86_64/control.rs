@@ -639,6 +639,12 @@ impl X86_64Lowerer {
                 // Control-state changes must not execute a later native op.
                 return Ok(());
             }
+            if matches!(block.ops[idx].kind, OpKind::X86DescriptorTableLoad(..)) {
+                self.emit_x86_descriptor_table_load(&block.ops[idx])?;
+                // Both success and fault paths leave through exact exit stubs.
+                // Descriptor state must be visible before any later guest op.
+                return Ok(());
+            }
             if matches!(&block.ops[idx].kind, OpKind::X86Msr(msr) if msr.write) {
                 self.emit_x86_msr(&block.ops[idx])?;
                 // Successful WRMSR changes architectural admission state and

@@ -228,16 +228,6 @@ fn write_descriptor_table(vcpu: &mut X86_64Vcpu, addr: u64, limit: u16, base: u6
     vcpu.write_descriptor_table_mem(addr, limit, base)
 }
 
-fn read_descriptor_table(vcpu: &mut X86_64Vcpu, addr: u64) -> Result<(u16, u64)> {
-    let limit = vcpu.mmu.read_u16(addr, &vcpu.sregs)?;
-    let base = if vcpu.sregs.cs.l {
-        vcpu.mmu.read_u64(addr + 2, &vcpu.sregs)?
-    } else {
-        u64::from(vcpu.mmu.read_u32(addr + 2, &vcpu.sregs)?)
-    };
-    Ok((limit, base))
-}
-
 /// Inject a #GP(0) (General Protection fault, vector 13, error code 0).
 ///
 /// Exception delivery sets RIP to the fault handler, so callers MUST return
@@ -307,7 +297,7 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
-            let (limit, base) = read_descriptor_table(vcpu, addr)?;
+            let (limit, base) = vcpu.read_descriptor_table_mem(addr, ctx.op_size)?;
             vcpu.sregs.gdt.limit = limit;
             vcpu.sregs.gdt.base = base;
             vcpu.regs.rip += ctx.cursor as u64;
@@ -323,7 +313,7 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
-            let (limit, base) = read_descriptor_table(vcpu, addr)?;
+            let (limit, base) = vcpu.read_descriptor_table_mem(addr, ctx.op_size)?;
             vcpu.sregs.idt.limit = limit;
             vcpu.sregs.idt.base = base;
             vcpu.regs.rip += ctx.cursor as u64;

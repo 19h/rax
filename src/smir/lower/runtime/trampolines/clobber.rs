@@ -500,6 +500,14 @@ pub(crate) fn block_is_clobber_safe(
             }
             _ => false,
         };
+        let descriptor_load_ok = match &op.kind {
+            OpKind::X86DescriptorTableLoad(load)
+                if crate::smir::lower::x86_64::x86_descriptor_table_load_shape_valid(op) =>
+            {
+                allow_mem && x86_jit_mem_address_shape_valid(&load.addr)
+            }
+            _ => false,
+        };
         let read_debug_ok = x86_read_debug_shape_valid(&op.kind);
         let write_control_ok = x86_write_control_shape_valid(op);
         let write_debug_ok = x86_write_debug_shape_valid(&op.kind);
@@ -543,6 +551,7 @@ pub(crate) fn block_is_clobber_safe(
             || smsw_ok
             || lmsw_ok
             || descriptor_store_ok
+            || descriptor_load_ok
             || read_debug_ok
             || write_control_ok
             || write_debug_ok;
@@ -595,7 +604,8 @@ pub(crate) fn block_is_clobber_safe(
             || alignment_ok
             || vector_mem_ok
             || mmx_mem_ok
-            || descriptor_store_ok;
+            || descriptor_store_ok
+            || descriptor_load_ok;
         let scalar_ok = matches!(
             op.kind,
             OpKind::AndNot { .. }
@@ -687,6 +697,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86DescriptorTableStore(..)) && !descriptor_store_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86DescriptorTableLoad(..)) && !descriptor_load_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86ReadDebug { .. }) && !read_debug_ok {

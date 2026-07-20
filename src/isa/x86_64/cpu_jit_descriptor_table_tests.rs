@@ -1,4 +1,4 @@
-//! Direct/native x86-64 JIT differentials for SGDT/SIDT stores and faults.
+//! Direct/native x86-64 JIT differentials for descriptor-table memory operations.
 
 use super::*;
 use std::sync::Arc;
@@ -59,6 +59,13 @@ fn gprs(regs: &Registers) -> [u64; 32] {
         regs.r18, regs.r19, regs.r20, regs.r21, regs.r22, regs.r23, regs.r24, regs.r25, regs.r26,
         regs.r27, regs.r28, regs.r29, regs.r30, regs.r31,
     ]
+}
+
+fn write_pseudo_descriptor(memory: &GuestMemoryMmap, address: u64, limit: u16, base: u64) {
+    let mut payload = [0u8; 10];
+    payload[..2].copy_from_slice(&limit.to_le_bytes());
+    payload[2..].copy_from_slice(&base.to_le_bytes());
+    memory.write_slice(&payload, GuestAddress(address)).unwrap();
 }
 
 #[test]
@@ -278,4 +285,290 @@ fn jit_rejects_descriptor_store_outside_cs_l_and_direct_keeps_six_byte_form() {
     assert_eq!(&observed[..2], &0x1357_u16.to_le_bytes());
     assert_eq!(&observed[2..6], &0x89AB_CDEF_u32.to_le_bytes());
     assert_eq!(&observed[6..], &[0xA5; 2]);
+}
+
+#[test]
+fn jit_lgdt_lidt_memory_forms_match_direct_and_handoff_at_the_exact_next_pc() {
+    for (name, instruction, address, table, limit, base) in [
+        (
+            "LGDT legacy address",
+            &[0x0F, 0x01, 0x53, 0x02][..],
+            0x3002,
+            0_u8,
+            0x1357,
+            0x0001_0000_0000_1234,
+        ),
+        (
+            "LIDT stack/index address",
+            &[0x48, 0x0F, 0x01, 0x5C, 0x4C, 0x04],
+            0x4024,
+            1,
+            0x2468,
+            0xFFFF_8000_7654_3210,
+        ),
+        (
+            "LGDT RIP-relative address",
+            &[0x0F, 0x01, 0x15, 0xF9, 0x5F, 0x00, 0x00],
+            0x6000,
+            0,
+            0x3456,
+            0xFFFF_8000_1234_5678,
+        ),
+        (
+            "LIDT FS-relative address",
+            &[0x64, 0x0F, 0x01, 0x19],
+            0x1010,
+            1,
+            0x4567,
+            0x0000_7FFF_ABCD_EF01,
+        ),
+        (
+            "LGDT address-size override",
+            &[0x67, 0x0F, 0x01, 0x10],
+            0x6000,
+            0,
+            0x5678,
+            0x0000_8000_0000_1234,
+        ),
+        (
+            "LGDT APX EGPR address",
+            &[0xD5, 0xB3, 0x01, 0x14, 0xD1],
+            0x5020,
+            0,
+            0xBEEF,
+            0x0123_4567_89AB_CDEF,
+        ),
+    ] {
+        let mut code = instruction.to_vec();
+        code.extend_from_slice(&[0x48, 0xFF, 0xC7, 0xF4]); // INC RDI; HLT
+        let direct_memory = memory_with_code(&code);
+        let native_memory = memory_with_code(&code);
+        write_pseudo_descriptor(&direct_memory, address, limit, base);
+        write_pseudo_descriptor(&native_memory, address, limit, base);
+        let mut direct = test_vcpu(direct_memory);
+        let mut native = test_vcpu(native_memory);
+        for vcpu in [&mut direct, &mut native] {
+            vcpu.set_apx_enabled(true);
+            vcpu.set_jit_mem(true);
+            vcpu.sregs.fs.base = 0x1000;
+            vcpu.regs.rax = 0x0000_0001_0000_6000;
+            vcpu.regs.rbx = 0x3000;
+            vcpu.regs.rsp = 0x4000;
+            vcpu.regs.rcx = 0x10;
+            vcpu.regs.r25 = 0x5000;
+            vcpu.regs.r26 = 4;
+        }
+        let initial_gdt = (direct.sregs.gdt.limit, direct.sregs.gdt.base);
+        let initial_idt = (direct.sregs.idt.limit, direct.sregs.idt.base);
+
+        assert!(direct.step().expect("direct LGDT/LIDT").is_none(), "{name}");
+        let region = native
+            .jit_compile_region()
+            .expect("compile LGDT/LIDT region")
+            .expect("strict LGDT/LIDT memory form must be native eligible");
+        native.jit_run_region_native(&region);
+
+        assert_eq!(gprs(&native.regs), gprs(&direct.regs), "{name}");
+        assert_eq!(native.regs.rflags, direct.regs.rflags, "{name}");
+        assert_eq!(native.regs.rip, instruction.len() as u64, "{name}");
+        assert_eq!(native.regs.rip, direct.regs.rip, "{name}");
+        if table == 0 {
+            assert_eq!(
+                (native.sregs.gdt.limit, native.sregs.gdt.base),
+                (limit, base)
+            );
+            assert_eq!(
+                (native.sregs.gdt.limit, native.sregs.gdt.base),
+                (direct.sregs.gdt.limit, direct.sregs.gdt.base),
+                "{name}"
+            );
+            assert_eq!((native.sregs.idt.limit, native.sregs.idt.base), initial_idt);
+        } else {
+            assert_eq!(
+                (native.sregs.idt.limit, native.sregs.idt.base),
+                (limit, base)
+            );
+            assert_eq!(
+                (native.sregs.idt.limit, native.sregs.idt.base),
+                (direct.sregs.idt.limit, direct.sregs.idt.base),
+                "{name}"
+            );
+            assert_eq!((native.sregs.gdt.limit, native.sregs.gdt.base), initial_gdt);
+        }
+    }
+}
+
+#[test]
+fn jit_descriptor_load_apx_cpl_and_memory_fault_priority_is_precise_and_noncommitting() {
+    for (name, apx_enabled, cpl, expected_vector) in [
+        ("APX", false, 3_u16, Some(6)),
+        ("CPL", true, 3, Some(13)),
+        ("memory", true, 0, None),
+    ] {
+        let memory = memory_with_code(&[
+            0xD5, 0xB3, 0x01, 0x14, 0xD1, // LGDT [R25+R26*8]
+            0xEB, 0x00, 0xF4,
+        ]);
+        let mut vcpu = test_vcpu(memory);
+        vcpu.set_apx_enabled(apx_enabled);
+        vcpu.set_jit_mem(true);
+        vcpu.sregs.cs.selector = cpl;
+        vcpu.sregs.idt.base = 0;
+        vcpu.sregs.idt.limit = 0;
+        vcpu.regs.r25 = 0x20_000;
+        vcpu.regs.r26 = 0;
+        let before_regs = vcpu.regs.clone();
+        let before_tables = (
+            vcpu.sregs.gdt.limit,
+            vcpu.sregs.gdt.base,
+            vcpu.sregs.idt.limit,
+            vcpu.sregs.idt.base,
+        );
+
+        let region = vcpu
+            .jit_compile_region()
+            .expect("compile dynamically guarded LGDT")
+            .expect("dynamic LGDT faults must not block admission");
+        vcpu.jit_run_region_native(&region);
+        assert_eq!(gprs(&vcpu.regs), gprs(&before_regs), "{name}");
+        assert_eq!(vcpu.regs.rflags, before_regs.rflags, "{name}");
+        assert_eq!(vcpu.regs.rip, 0, "{name}");
+        assert_eq!(
+            (
+                vcpu.sregs.gdt.limit,
+                vcpu.sregs.gdt.base,
+                vcpu.sregs.idt.limit,
+                vcpu.sregs.idt.base,
+            ),
+            before_tables,
+            "{name}"
+        );
+
+        if let Some(vector) = expected_vector {
+            let error = exception_without_idt(&mut vcpu);
+            assert!(
+                error.contains(&format!("IDT entry {vector} not present")),
+                "{name} fault priority changed: {error}"
+            );
+        } else {
+            assert!(
+                vcpu.step().is_err(),
+                "CPL0 APX execution must reach the memory fault"
+            );
+        }
+    }
+}
+
+#[test]
+fn descriptor_load_transaction_and_jit_helper_are_noncommitting_on_cross_region_fault() {
+    use crate::smir::lower::runtime::GuestRegs;
+
+    let memory = Arc::new(
+        GuestMemoryMmap::<()>::from_ranges(&[
+            (GuestAddress(0), 0x1000),
+            (GuestAddress(0x2000), 0x1000),
+        ])
+        .unwrap(),
+    );
+    memory
+        .write_slice(&[0x0F, 0x01, 0x13], GuestAddress(0))
+        .unwrap();
+    memory
+        .write_slice(&[0x57, 0x13, 0x34, 0x12], GuestAddress(0xFFC))
+        .unwrap();
+    let mut vcpu = test_vcpu(memory);
+    vcpu.regs.rbx = 0xFFC;
+    let before = (
+        vcpu.sregs.gdt.limit,
+        vcpu.sregs.gdt.base,
+        vcpu.sregs.idt.limit,
+        vcpu.sregs.idt.base,
+    );
+    assert!(vcpu.step().is_err());
+    assert_eq!(
+        (
+            vcpu.sregs.gdt.limit,
+            vcpu.sregs.gdt.base,
+            vcpu.sregs.idt.limit,
+            vcpu.sregs.idt.base,
+        ),
+        before
+    );
+
+    let mut state = GuestRegs::default();
+    state.ctx = (&mut vcpu as *mut X86_64Vcpu) as u64;
+    assert_eq!(
+        unsafe { rax_jit_descriptor_table_load(&mut state, 0xFFC, 1) },
+        0
+    );
+    assert_eq!(
+        unsafe { rax_jit_descriptor_table_load(&mut state, u64::MAX - 8, 0) },
+        0,
+        "a wrapping 10-byte read must be rejected before memory access"
+    );
+    assert_eq!(
+        unsafe { rax_jit_descriptor_table_load(&mut state, 0, 2) },
+        0,
+        "unknown descriptor-table selectors must be rejected"
+    );
+    assert_eq!(
+        (
+            vcpu.sregs.gdt.limit,
+            vcpu.sregs.gdt.base,
+            vcpu.sregs.idt.limit,
+            vcpu.sregs.idt.base,
+        ),
+        before
+    );
+}
+
+#[test]
+fn jit_verify_descriptor_load_trace_state_restore_and_adoption_match_direct() {
+    let memory = memory_with_code(&[
+        0x0F, 0x01, 0x13, // LGDT [RBX]
+        0xEB, 0x00, // JMP HLT
+        0xF4,
+    ]);
+    write_pseudo_descriptor(&memory, 0x3000, 0xCAFE, 0x0001_0000_0000_1234);
+    let mut vcpu = test_vcpu(memory);
+    vcpu.set_jit_mem(true);
+    vcpu.regs.rbx = 0x3000;
+    let original_idt = (vcpu.sregs.idt.limit, vcpu.sregs.idt.base);
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile verified LGDT region")
+        .expect("verified LGDT region must be native eligible");
+
+    vcpu.jit_run_region_verified(&region);
+
+    assert_eq!(
+        (vcpu.sregs.gdt.limit, vcpu.sregs.gdt.base),
+        (0xCAFE, 0x0001_0000_0000_1234)
+    );
+    assert_eq!((vcpu.sregs.idt.limit, vcpu.sregs.idt.base), original_idt);
+    assert_eq!(vcpu.regs.rip, 3);
+}
+
+#[test]
+fn jit_rejects_descriptor_load_outside_cs_l_and_direct_keeps_six_byte_forms() {
+    for (instruction, expected_base) in [
+        (&[0x0F, 0x01, 0x13][..], 0x89AB_CDEF_u64),
+        (&[0x66, 0x0F, 0x01, 0x13], 0x00AB_CDEF),
+    ] {
+        let memory = memory_with_code(instruction);
+        let mut compatibility = test_vcpu(memory.clone());
+        compatibility.sregs.cs.l = false;
+        compatibility.sregs.cs.db = true;
+        compatibility.regs.rbx = 0x3000;
+        let mut payload = [0xA5; 10];
+        payload[..2].copy_from_slice(&0x1357_u16.to_le_bytes());
+        payload[2..6].copy_from_slice(&0x89AB_CDEF_u32.to_le_bytes());
+        memory.write_slice(&payload, GuestAddress(0x3000)).unwrap();
+
+        assert!(compatibility.jit_compile_region().unwrap().is_none());
+        assert!(compatibility.step().unwrap().is_none());
+        assert_eq!(compatibility.sregs.gdt.limit, 0x1357);
+        assert_eq!(compatibility.sregs.gdt.base, expected_base);
+        assert_eq!(compatibility.regs.rip, instruction.len() as u64);
+    }
 }

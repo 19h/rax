@@ -392,10 +392,10 @@ pub struct X86RegState {
     pub cr4: u64,
     /// Guest CR8 task-priority state.
     pub cr8: u64,
-    /// Global descriptor-table register exposed by SGDT.
+    /// Global descriptor-table register exposed by SGDT and loaded by LGDT.
     pub gdtr_base: u64,
     pub gdtr_limit: u16,
-    /// Interrupt descriptor-table register exposed by SIDT.
+    /// Interrupt descriptor-table register exposed by SIDT and loaded by LIDT.
     pub idtr_base: u64,
     pub idtr_limit: u16,
     /// IA32_EFER, including the software-controlled LME bit and the

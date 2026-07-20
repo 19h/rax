@@ -3998,6 +3998,12 @@ pub enum OpKind {
     /// fault even when the resulting bytes are otherwise unobserved.
     X86DescriptorTableStore(X86DescriptorTableStoreOp),
 
+    /// LGDT/LIDT load the selected implicit descriptor-table register from one
+    /// fault-precise 10-byte long-mode memory transfer. The operation remains
+    /// side-effecting even when the implicit state is not consumed in the same
+    /// block because it can fault and changes subsequent descriptor semantics.
+    X86DescriptorTableLoad(X86DescriptorTableLoadOp),
+
     /// `MOV CR0/CR2/CR3/CR4/CR8, r64`. Dynamic CPL, reserved-bit, PCID, and
     /// IA-32e transition checks are non-committing. `next_pc` is the exact
     /// post-instruction frontier: a successful native write must terminate its
@@ -4497,6 +4503,7 @@ impl OpKind {
                 | OpKind::X86Smsw(..)
                 | OpKind::X86Lmsw(..)
                 | OpKind::X86DescriptorTableStore(..)
+                | OpKind::X86DescriptorTableLoad(..)
                 | OpKind::X86WriteControl { .. }
                 | OpKind::X86ReadDebug { .. }
                 | OpKind::X86WriteDebug { .. }
@@ -5041,6 +5048,7 @@ impl OpKind {
             })
             | OpKind::X86Lmsw(..)
             | OpKind::X86DescriptorTableStore(..)
+            | OpKind::X86DescriptorTableLoad(..)
             | OpKind::X86WriteControl { .. }
             | OpKind::X86WriteDebug { .. }
             | OpKind::X86MonitorMwait(..)
@@ -5216,6 +5224,7 @@ impl OpKind {
                     | OpKind::X86Smsw(..)
                     | OpKind::X86Lmsw(..)
                     | OpKind::X86DescriptorTableStore(..)
+                    | OpKind::X86DescriptorTableLoad(..)
                     | OpKind::X86WriteControl { .. }
                     | OpKind::X86ReadDebug { .. }
                     | OpKind::X86WriteDebug { .. }
@@ -5331,6 +5340,7 @@ impl OpKind {
                 }
                 | OpKind::X86FxRstor { .. }
                 | OpKind::X86XRstor { .. }
+                | OpKind::X86DescriptorTableLoad(..)
                 | OpKind::X86Cmpxchg8b16b { .. }
                 | OpKind::X86XSave {
                     kind: X86XSaveKind::XSave | X86XSaveKind::XSaveOpt,

@@ -3744,7 +3744,7 @@ use jit_control::rax_jit_write_control;
 #[path = "cpu_descriptor_table.rs"]
 mod descriptor_table;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-use descriptor_table::rax_jit_descriptor_table_store;
+use descriptor_table::{rax_jit_descriptor_table_load, rax_jit_descriptor_table_store};
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_msr.rs"]
@@ -4634,6 +4634,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86Smsw(..)
                                 | OpKind::X86Lmsw(..)
                                 | OpKind::X86DescriptorTableStore(..)
+                                | OpKind::X86DescriptorTableLoad(..)
                                 | OpKind::X86WriteControl { .. }
                                 | OpKind::X86ReadDebug { .. }
                                 | OpKind::X86WriteDebug { .. }
@@ -4908,6 +4909,7 @@ impl X86_64Vcpu {
         gr.msr_fn = rax_jit_msr as usize as u64;
         gr.pmc_fn = rax_jit_pmc as usize as u64;
         gr.descriptor_store_fn = rax_jit_descriptor_table_store as usize as u64;
+        gr.descriptor_load_fn = rax_jit_descriptor_table_load as usize as u64;
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
@@ -5212,6 +5214,7 @@ impl X86_64Vcpu {
         let snap_dr3 = self.sregs.dr3;
         let snap_dr6 = self.sregs.dr6;
         let snap_dr7 = self.sregs.dr7;
+        let snap_descriptor_tables = self.descriptor_table_snapshot();
 
         // 1) Run natively with store-logging (to UNDO writes) and an access
         //    trace (to diff against the interpreter's access sequence).
@@ -5245,6 +5248,7 @@ impl X86_64Vcpu {
         let jit_dr3 = self.sregs.dr3;
         let jit_dr6 = self.sregs.dr6;
         let jit_dr7 = self.sregs.dr7;
+        let jit_descriptor_tables = self.descriptor_table_snapshot();
         let jit_rflags = self.regs.rflags; // already materialized by the native bridge
         let exit_pc = self.regs.rip;
         // Take the native trace NOW, before the undo/re-read loops add to it.
@@ -5303,6 +5307,7 @@ impl X86_64Vcpu {
         self.sregs.dr3 = snap_dr3;
         self.sregs.dr6 = snap_dr6;
         self.sregs.dr7 = snap_dr7;
+        snap_descriptor_tables.restore(self);
         // A lift-through-call callee can update translation controls through
         // the direct interpreter. The verification replay must not reuse TLB
         // entries created under the native run's CR0/CR3/CR4 state.
@@ -5440,6 +5445,7 @@ impl X86_64Vcpu {
                     diffs.push(format!("{name}: interp={interp:#x} jit={native:#x}"));
                 }
             }
+            jit_descriptor_tables.append_verify_diffs(self, &mut diffs);
             // Vector (XMM/YMM/ZMM) + opmask (k) state. A masked-EVEX miscompile —
             // or any vector divergence — surfaces here. The interpreter result is
             // in self.regs, the native result in `jit`; the GPR/flags/memory checks
@@ -5605,6 +5611,7 @@ impl X86_64Vcpu {
         self.sregs.dr3 = jit_dr3;
         self.sregs.dr6 = jit_dr6;
         self.sregs.dr7 = jit_dr7;
+        jit_descriptor_tables.restore(self);
         self.mmu.flush_tlb();
     }
 

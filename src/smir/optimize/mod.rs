@@ -3915,6 +3915,7 @@ impl OpKind {
                 ..
             }) => result.extend(addr.regs()),
             OpKind::X86DescriptorTableStore(store) => result.extend(store.addr.regs()),
+            OpKind::X86DescriptorTableLoad(load) => result.extend(load.addr.regs()),
 
             OpKind::X86Cmpxchg8b16b {
                 addr,

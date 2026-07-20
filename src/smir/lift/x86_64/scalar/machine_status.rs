@@ -1,19 +1,20 @@
 //! Legacy machine-status instruction lifting.
 
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86DescriptorTable, X86DescriptorTableStoreOp, X86LmswOp, X86LmswSource,
-    X86SmswOp, X86SmswTarget,
+    OpKind, SmirOp, X86DescriptorTable, X86DescriptorTableLoadOp, X86DescriptorTableStoreOp,
+    X86LmswOp, X86LmswSource, X86SmswOp, X86SmswTarget,
 };
 use crate::smir::ir::types::OpId;
 use crate::smir::lift::x86_64::{X86_64Lifter, X86Prefix, decode_modrm};
 use crate::smir::lift::{LiftContext, LiftError, LiftResult};
 
 impl X86_64Lifter {
-    /// Route Group 7 (`0F 01`) memory-only SGDT/SIDT and all SMSW/LMSW forms
-    /// before the fixed-encoding system dispatcher. The ModR/M.reg opcode
-    /// extension is not extended by REX or REX2; only the r/m register or
-    /// memory address consumes B/X extensions. ModR/M.mod=11b `/0` and `/1`
-    /// encodings belong to the fixed system-instruction space, not SGDT/SIDT.
+    /// Route Group 7 (`0F 01`) memory-only SGDT/SIDT/LGDT/LIDT and all
+    /// SMSW/LMSW forms before the fixed-encoding system dispatcher. The
+    /// ModR/M.reg opcode extension is not extended by REX or REX2; only the
+    /// r/m register or memory address consumes B/X extensions. ModR/M.mod=11b
+    /// `/0` through `/3` encodings belong to the fixed system-instruction
+    /// space, not descriptor-table instructions.
     pub(crate) fn lift_group7_0f01(
         &self,
         bytes: &[u8],
@@ -30,6 +31,20 @@ impl X86_64Lifter {
                 X86DescriptorTable::Gdt,
             ),
             Some((mode, 1)) if mode != 3 => self.lift_descriptor_table_store_0f01(
+                bytes,
+                prefix,
+                pc,
+                ctx,
+                X86DescriptorTable::Idt,
+            ),
+            Some((mode, 2)) if mode != 3 => self.lift_descriptor_table_load_0f01(
+                bytes,
+                prefix,
+                pc,
+                ctx,
+                X86DescriptorTable::Gdt,
+            ),
+            Some((mode, 3)) if mode != 3 => self.lift_descriptor_table_load_0f01(
                 bytes,
                 prefix,
                 pc,
@@ -81,6 +96,52 @@ impl X86_64Lifter {
                     addr,
                     table,
                     requires_apx: prefix.rex2.is_some(),
+                }),
+            )],
+            bytes_consumed,
+        ))
+    }
+
+    /// Lift memory-only LGDT/LIDT (`0F 01 /2` and `/3`) in long mode. The
+    /// operand is always the fixed 10-byte limit:base form; operand-size,
+    /// REX.W, and repeat prefixes are ignored, while address-size and segment
+    /// prefixes remain part of the effective address.
+    fn lift_descriptor_table_load_0f01(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+        table: X86DescriptorTable,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..bytes.len().min(1)].to_vec(),
+            });
+        }
+
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        if modrm.addr.is_none() {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..bytes.len().min(modrm.bytes_consumed)].to_vec(),
+            });
+        }
+        let bytes_consumed = prefix.cursor + modrm.bytes_consumed;
+        let next_pc = pc.wrapping_add(bytes_consumed as u64);
+        let (addr, pre_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+        debug_assert!(pre_ops.is_empty());
+
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::X86DescriptorTableLoad(X86DescriptorTableLoadOp {
+                    addr,
+                    table,
+                    requires_apx: prefix.rex2.is_some(),
+                    next_pc,
                 }),
             )],
             bytes_consumed,

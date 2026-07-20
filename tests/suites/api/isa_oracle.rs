@@ -561,7 +561,7 @@ fn emits_exact_smsw_register_and_memory_metadata() {
 }
 
 #[test]
-fn emits_exact_sgdt_sidt_memory_table_and_apx_metadata() {
+fn emits_exact_descriptor_table_memory_table_handoff_and_apx_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;
 
@@ -590,6 +590,38 @@ fn emits_exact_sgdt_sidt_memory_table_and_apx_metadata() {
     assert_eq!(op["kind"]["addr"]["base"]["name"], "r25");
     assert_eq!(op["kind"]["addr"]["index"]["name"], "r26");
     assert_eq!(op["kind"]["addr"]["scale"], 8);
+
+    let lidt = decode_to_json(&[0x48, 0x0F, 0x01, 0x58, 0x08], &opts).unwrap();
+    assert_eq!(lidt["smir"]["available"], true);
+    assert_eq!(lidt["smir"]["bytes_consumed"], 5);
+    let op = &lidt["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_descriptor_table_load");
+    assert_eq!(op["kind"]["table"], "Idt");
+    assert_eq!(op["kind"]["addr"]["kind"], "base_offset");
+    assert_eq!(op["kind"]["addr"]["base"]["name"], "rax");
+    assert_eq!(op["kind"]["addr"]["offset"], 8);
+    assert_eq!(op["kind"]["requires_apx"], false);
+    assert_eq!(op["kind"]["next_pc"], 0x1005);
+    assert!(op["reads"].is_null());
+    assert_eq!(op["writes"].as_array().unwrap().len(), 0);
+    assert_eq!(op["memory"]["reads"], true);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+
+    let lgdt = decode_to_json(&[0xD5, 0xB3, 0x01, 0x14, 0xD1], &opts).unwrap();
+    assert_eq!(lgdt["smir"]["available"], true);
+    assert_eq!(lgdt["smir"]["bytes_consumed"], 5);
+    let op = &lgdt["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_descriptor_table_load");
+    assert_eq!(op["kind"]["table"], "Gdt");
+    assert_eq!(op["kind"]["requires_apx"], true);
+    assert_eq!(op["kind"]["next_pc"], 0x1005);
+    assert_eq!(op["kind"]["addr"]["base"]["name"], "r25");
+    assert_eq!(op["kind"]["addr"]["index"]["name"], "r26");
+    assert_eq!(op["kind"]["addr"]["scale"], 8);
+    assert_eq!(op["memory"]["reads"], true);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
 }
 
 #[test]

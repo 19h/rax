@@ -100,7 +100,7 @@ pub struct X86LmswOp {
     pub next_pc: u64,
 }
 
-/// Descriptor-table register selected by SGDT/SIDT.
+/// Descriptor-table register selected by SGDT/SIDT/LGDT/LIDT.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum X86DescriptorTable {
     Gdt,
@@ -116,6 +116,19 @@ pub struct X86DescriptorTableStoreOp {
     pub addr: Address,
     pub table: X86DescriptorTable,
     pub requires_apx: bool,
+}
+
+/// LGDT/LIDT load the selected implicit descriptor-table register from one
+/// memory-only operand. `SourceArch::X86_64` fixes the payload at 10 bytes:
+/// the 16-bit limit followed by the complete 64-bit base. A successful native
+/// execution serializes and hands off at `next_pc`; every fault restarts at the
+/// original instruction without committing either field.
+#[derive(Clone, Debug)]
+pub struct X86DescriptorTableLoadOp {
+    pub addr: Address,
+    pub table: X86DescriptorTable,
+    pub requires_apx: bool,
+    pub next_pc: u64,
 }
 
 /// MONITOR/MWAIT under the deterministic guest profile. `Some(addr)` is
