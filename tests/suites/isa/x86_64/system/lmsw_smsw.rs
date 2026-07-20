@@ -510,3 +510,24 @@ fn test_lmsw_idempotent() {
         "MSW should be preserved"
     );
 }
+
+#[test]
+fn test_smsw_rex2_targets_the_full_apx_register_id() {
+    let code = [
+        0x0F, 0x01, 0xE0, // SMSW EAX: independent expected value
+        0xD5, 0x91, 0x01, 0xE7, // REX2.M1.B4.B3 SMSW R31D
+        0xF4,
+    ];
+    let initial = Registers {
+        rdi: 0xD1D1_D1D1_D1D1_D1D1,
+        r31: 0x3131_3131_3131_3131,
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_vm(&code, Some(initial));
+    vcpu.set_apx_enabled(true);
+
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.r31, regs.rax as u32 as u64);
+    assert_eq!(regs.rdi, 0xD1D1_D1D1_D1D1_D1D1);
+}

@@ -334,12 +334,12 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             vcpu.sregs.idt.base = base;
             vcpu.regs.rip += ctx.cursor as u64;
         }
-        // SMSW r/m16 - Store Machine Status Word (lower 16 bits of CR0)
+        // SMSW r16/r32/r64 or m16 - Store Machine Status Word from CR0
         4 => {
             if umip_blocks_user_instruction(vcpu) {
                 return raise_gp0(vcpu);
             }
-            let rm = (modrm & 0x07) | ctx.rex_b();
+            let rm = (modrm & 0x07) | ctx.any_rex_b();
             let is_memory = modrm >> 6 != 3;
             if is_memory {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;

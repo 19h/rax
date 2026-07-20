@@ -3981,6 +3981,12 @@ pub enum OpKind {
         control: X86ControlReg,
     },
 
+    /// SMSW reads implicit CR0 after APX/UMIP validation, then either writes a
+    /// width-specific GPR destination or stores CR0[15:0] as exactly 2 bytes.
+    /// The operation remains side-effecting when its result is dead because it
+    /// can raise #UD/#GP(0), and a memory target can fault or reach MMIO.
+    X86Smsw(X86SmswOp),
+
     /// `MOV CR0/CR2/CR3/CR4/CR8, r64`. Dynamic CPL, reserved-bit, PCID, and
     /// IA-32e transition checks are non-committing. `next_pc` is the exact
     /// post-instruction frontier: a successful native write must terminate its
@@ -4477,6 +4483,7 @@ impl OpKind {
                 | OpKind::X86Clts
                 | OpKind::X86Msr(..)
                 | OpKind::X86ReadControl { .. }
+                | OpKind::X86Smsw(..)
                 | OpKind::X86WriteControl { .. }
                 | OpKind::X86ReadDebug { .. }
                 | OpKind::X86WriteDebug { .. }
@@ -4906,6 +4913,10 @@ impl OpKind {
             OpKind::X86Random { dst, .. }
             | OpKind::X86ReadPid { dst }
             | OpKind::X86ReadControl { dst, .. } => vec![*dst],
+            OpKind::X86Smsw(X86SmswOp {
+                target: X86SmswTarget::Register { dst, .. },
+                ..
+            }) => vec![*dst],
             OpKind::X86ReadDebug { dst, .. } => vec![*dst],
 
             OpKind::CmpyW128Sat { dst, .. } | OpKind::SatOrigShl { dst, .. } => vec![*dst],
@@ -5011,6 +5022,10 @@ impl OpKind {
             | OpKind::X86XRstor { .. }
             | OpKind::X86XSetBv { .. }
             | OpKind::X86Clts
+            | OpKind::X86Smsw(X86SmswOp {
+                target: X86SmswTarget::Memory { .. },
+                ..
+            })
             | OpKind::X86WriteControl { .. }
             | OpKind::X86WriteDebug { .. }
             | OpKind::X86MonitorMwait(..)
@@ -5183,6 +5198,7 @@ impl OpKind {
                     | OpKind::X86Clts
                     | OpKind::X86Msr(..)
                     | OpKind::X86ReadControl { .. }
+                    | OpKind::X86Smsw(..)
                     | OpKind::X86WriteControl { .. }
                     | OpKind::X86ReadDebug { .. }
                     | OpKind::X86WriteDebug { .. }
@@ -5362,6 +5378,10 @@ impl OpKind {
                 | OpKind::X86FxSave { .. }
                 | OpKind::X86XSave { .. }
                 | OpKind::X86Cmpxchg8b16b { .. }
+                | OpKind::X86Smsw(X86SmswOp {
+                    target: X86SmswTarget::Memory { .. },
+                    ..
+                })
                 | OpKind::RvVector { .. }
         )
     }

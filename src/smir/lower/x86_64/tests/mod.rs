@@ -48,6 +48,8 @@ mod serialize;
 #[cfg(test)]
 mod simd;
 #[cfg(test)]
+mod smsw;
+#[cfg(test)]
 mod state;
 #[cfg(test)]
 mod swapgs;

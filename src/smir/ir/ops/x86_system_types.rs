@@ -1,6 +1,6 @@
 //! Structured x86 system-operation payloads.
 
-use crate::smir::ir::types::{Address, VReg};
+use crate::smir::ir::types::{Address, OpWidth, VReg};
 
 /// Architecturally readable x86 control registers accepted by `MOV r64, CRn`
 /// in 64-bit mode. Reserved control-register numbers are represented as an
@@ -62,6 +62,24 @@ pub struct X86MsrOp {
     pub edx: VReg,
     pub write: bool,
     pub next_pc: u64,
+}
+
+/// Architecturally distinct SMSW destinations. Register forms write the
+/// selected 16-, 32-, or 64-bit GPR width; memory forms always store exactly
+/// CR0[15:0] as a 2-byte quantity independently of the encoded operand size.
+#[derive(Clone, Debug)]
+pub enum X86SmswTarget {
+    Register { dst: VReg, width: OpWidth },
+    Memory { addr: Address },
+}
+
+/// SMSW reads implicit CR0 state after dynamic APX and UMIP checks. A REX2
+/// encoding sets `requires_apx` even when it addresses a legacy GPR, because
+/// the prefix itself is unavailable when the guest APX profile is disabled.
+#[derive(Clone, Debug)]
+pub struct X86SmswOp {
+    pub target: X86SmswTarget,
+    pub requires_apx: bool,
 }
 
 /// MONITOR/MWAIT under the deterministic guest profile. `Some(addr)` is

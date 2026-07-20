@@ -531,6 +531,36 @@ fn emits_exact_mov_from_control_register_metadata() {
 }
 
 #[test]
+fn emits_exact_smsw_register_and_memory_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let register = decode_to_json(&[0xD5, 0x91, 0x01, 0xE7], &opts).unwrap();
+    assert_eq!(register["smir"]["available"], true);
+    assert_eq!(register["smir"]["bytes_consumed"], 4);
+    let op = &register["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_smsw");
+    assert_eq!(op["kind"]["target"]["kind"], "register");
+    assert_eq!(op["kind"]["target"]["dst"]["name"], "r31");
+    assert_eq!(op["kind"]["target"]["width"], "W32");
+    assert_eq!(op["kind"]["requires_apx"], true);
+    assert_eq!(op["writes"][0]["name"], "r31");
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+
+    let memory = decode_to_json(&[0x48, 0x0F, 0x01, 0x60, 0x08], &opts).unwrap();
+    assert_eq!(memory["smir"]["available"], true);
+    assert_eq!(memory["smir"]["bytes_consumed"], 5);
+    let op = &memory["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_smsw");
+    assert_eq!(op["kind"]["target"]["kind"], "memory");
+    assert_eq!(op["kind"]["requires_apx"], false);
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], true);
+    assert_eq!(op["side_effects"], true);
+}
+
+#[test]
 fn emits_exact_mov_to_control_register_metadata_and_handoff_frontier() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

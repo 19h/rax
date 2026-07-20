@@ -29,6 +29,8 @@ use crate::smir::ir::ops::X86PackedStringKind;
 use crate::smir::ir::ops::X86ReadPmcOp;
 use crate::smir::ir::ops::X86ReadTscOp;
 use crate::smir::ir::ops::X86Sha32Op;
+use crate::smir::ir::ops::X86SmswOp;
+use crate::smir::ir::ops::X86SmswTarget;
 use crate::smir::ir::ops::X86ThreeDNowKind;
 use crate::smir::ir::ops::X86X87CompareSource;
 use crate::smir::ir::ops::X86X87Constant;
@@ -1103,6 +1105,22 @@ number_json!(u8, u16, u32, u64, usize, i8, i16, i32, i64);
 impl OracleJson for bool {
     fn oracle_json(&self) -> Value {
         json!(*self)
+    }
+}
+
+impl OracleJson for X86SmswTarget {
+    fn oracle_json(&self) -> Value {
+        match self {
+            X86SmswTarget::Register { dst, width } => json!({
+                "kind": "register",
+                "dst": dst.oracle_json(),
+                "width": width.oracle_json(),
+            }),
+            X86SmswTarget::Memory { addr } => json!({
+                "kind": "memory",
+                "addr": addr.oracle_json(),
+            }),
+        }
     }
 }
 
@@ -2493,6 +2511,10 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::X86ReadControl { dst, control } => {
             op_json!("x86_read_control", dst, control)
         }
+        OpKind::X86Smsw(X86SmswOp {
+            target,
+            requires_apx,
+        }) => op_json!("x86_smsw", target, requires_apx),
         OpKind::X86WriteControl {
             src,
             control,

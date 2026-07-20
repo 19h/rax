@@ -83,6 +83,7 @@ impl X86_64Lowerer {
             || x86_state_backed_gpr_xchg_valid(op)
             || x86_fsgsbase_shape_valid(&op.kind)
             || x86_read_control_shape_valid(&op.kind)
+            || x86_smsw_shape_valid(&op.kind)
             || x86_read_debug_shape_valid(&op.kind)
             || x86_write_debug_shape_valid(&op.kind)
         {

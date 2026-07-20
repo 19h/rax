@@ -1,11 +1,11 @@
 //! trampolines::clobber tests
 
 use super::*;
-use crate::smir::ir::ops::X86MonitorMwaitOp;
+use crate::smir::ir::ops::{X86MonitorMwaitOp, X86SmswTarget};
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::x86_64::{
     x86_clts_shape_valid, x86_read_control_shape_valid, x86_read_debug_shape_valid,
-    x86_write_control_shape_valid, x86_write_debug_shape_valid,
+    x86_smsw_shape_valid, x86_write_control_shape_valid, x86_write_debug_shape_valid,
 };
 
 /// Admit only scalar MMU-helper transfers that the x86-64 state-backed
@@ -473,6 +473,15 @@ pub(crate) fn block_is_clobber_safe(
         let state_xchg_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let fsgsbase_ok = crate::smir::lower::x86_64::x86_fsgsbase_shape_valid(&op.kind);
         let read_control_ok = x86_read_control_shape_valid(&op.kind);
+        let smsw_ok = match &op.kind {
+            OpKind::X86Smsw(smsw) if x86_smsw_shape_valid(&op.kind) => match &smsw.target {
+                X86SmswTarget::Register { .. } => true,
+                X86SmswTarget::Memory { addr } => {
+                    allow_mem && x86_jit_mem_address_shape_valid(addr)
+                }
+            },
+            _ => false,
+        };
         let read_debug_ok = x86_read_debug_shape_valid(&op.kind);
         let write_control_ok = x86_write_control_shape_valid(op);
         let write_debug_ok = x86_write_debug_shape_valid(&op.kind);
@@ -513,6 +522,7 @@ pub(crate) fn block_is_clobber_safe(
             || state_xchg_ok
             || fsgsbase_ok
             || read_control_ok
+            || smsw_ok
             || read_debug_ok
             || write_control_ok
             || write_debug_ok;
@@ -647,6 +657,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86ReadControl { .. }) && !read_control_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86Smsw(..)) && !smsw_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86ReadDebug { .. }) && !read_debug_ok {

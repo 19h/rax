@@ -46,6 +46,8 @@ mod read_debug;
 #[cfg(test)]
 mod serialize;
 #[cfg(test)]
+mod smsw;
+#[cfg(test)]
 mod sqrt;
 #[cfg(test)]
 mod swapgs;

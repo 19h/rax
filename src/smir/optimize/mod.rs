@@ -8,8 +8,8 @@ use std::collections::{HashMap, HashSet};
 
 use crate::smir::ir::flags::{FlagSet, FlagState, FlagUpdate};
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AdxKind, X86MonitorMwaitOp, X86OpHint, X86RepMode, X86StringKind,
-    X86ThreeDNowKind, X86VecAlign, X86X87DataKind,
+    OpKind, SmirOp, X86AdxKind, X86MonitorMwaitOp, X86OpHint, X86RepMode, X86SmswOp, X86SmswTarget,
+    X86StringKind, X86ThreeDNowKind, X86VecAlign, X86X87DataKind,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, BlockId, FpRoundMode, HexagonReg, MemWidth, OpWidth, ShiftOp,
@@ -3902,6 +3902,10 @@ impl OpKind {
             OpKind::X86WriteControl { src, .. } | OpKind::X86WriteDebug { src, .. } => {
                 result.push(*src)
             }
+            OpKind::X86Smsw(X86SmswOp {
+                target: X86SmswTarget::Memory { addr },
+                ..
+            }) => result.extend(addr.regs()),
 
             OpKind::X86Cmpxchg8b16b {
                 addr,
@@ -3939,6 +3943,10 @@ impl OpKind {
             | OpKind::SetAC { .. }
             | OpKind::X86Clts
             | OpKind::X86ReadControl { .. }
+            | OpKind::X86Smsw(X86SmswOp {
+                target: X86SmswTarget::Register { .. },
+                ..
+            })
             | OpKind::X86ReadDebug { .. }
             | OpKind::X86ReadTsc(..)
             | OpKind::X86Random { .. }

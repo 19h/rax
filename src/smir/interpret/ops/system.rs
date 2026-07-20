@@ -11,9 +11,9 @@ use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
     X86CacheControlKind, X86ControlReg, X86CountKind, X86DebugReg, X86MonitorMwaitOp, X86OpHint,
-    X86ThreeDNowKind, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
-    X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
-    X86X87IntWidth, X86XSaveKind,
+    X86SmswTarget, X86ThreeDNowKind, X86X87ArithmeticDestination, X86X87ArithmeticSource,
+    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
+    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -196,6 +196,73 @@ impl SmirInterpreter {
                     }
                 };
                 Self::write_x86_partial(ctx, *dst, value, OpWidth::W64);
+            }
+
+            OpKind::X86Smsw(smsw) => {
+                let target_shape = match &smsw.target {
+                    X86SmswTarget::Register { dst, width } => {
+                        matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+                            && matches!(
+                                dst,
+                                VReg::Arch(ArchReg::X86(reg))
+                                    if reg.gpr_index().is_some_and(|index| {
+                                        index < 16 || smsw.requires_apx
+                                    })
+                            )
+                    }
+                    X86SmswTarget::Memory { addr } => {
+                        let uses_egpr = addr.regs().iter().any(
+                            |reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()),
+                        );
+                        addr.is_x86_state_backed_shape() && (!uses_egpr || smsw.requires_apx)
+                    }
+                };
+                if !target_shape {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let cr0 = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => {
+                        if smsw.requires_apx && !x86.apx_enabled {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        }
+                        // Real-address mode has effective CPL 0. In protected
+                        // mode CR4.UMIP blocks SMSW above CPL 0 with #GP(0).
+                        if x86.cr0 & 1 != 0 && x86.cr4 & (1 << 11) != 0 && x86.cpl != 0 {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                        x86.cr0
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+
+                match &smsw.target {
+                    X86SmswTarget::Register { dst, width } => {
+                        Self::write_x86_partial(ctx, *dst, cr0, *width);
+                    }
+                    X86SmswTarget::Memory { addr } => {
+                        let effective_addr = self.compute_address(ctx, addr);
+                        self.store_memory(memory, effective_addr, cr0, MemWidth::B2)?;
+                    }
+                }
             }
 
             OpKind::X86WriteControl {

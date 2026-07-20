@@ -68,6 +68,8 @@ mod write_control;
 pub use write_control::*;
 mod serialize;
 pub use serialize::*;
+mod smsw;
+pub use smsw::*;
 mod swapgs;
 pub use swapgs::*;
 mod timing;

@@ -58,6 +58,8 @@ mod sgx_controls;
 #[cfg(test)]
 mod sha_ni;
 #[cfg(test)]
+mod smsw;
+#[cfg(test)]
 mod sse;
 #[cfg(test)]
 mod svm_controls;
