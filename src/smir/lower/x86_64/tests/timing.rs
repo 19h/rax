@@ -130,16 +130,19 @@ fn lower_timestamp_wraps_helper_with_vector_state_when_requested() {
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-static TSC_HELPER_CALLS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
-
-#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 unsafe extern "C" fn deterministic_test_tsc(state: *mut crate::smir::lower::runtime::GuestRegs) {
-    use std::sync::atomic::Ordering;
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
-    TSC_HELPER_CALLS.fetch_add(1, Ordering::SeqCst);
     let Some(state) = (unsafe { state.as_mut() }) else {
         return;
     };
+    let calls = state.ctx as *const AtomicUsize;
+    let calls = unsafe {
+        calls
+            .as_ref()
+            .expect("timestamp test helper requires a per-execution call counter")
+    };
+    calls.fetch_add(1, Ordering::SeqCst);
     state.gpr[0] = 0x89AB_CDEF;
     state.gpr[2] = 0x0123_4567;
 }
@@ -148,11 +151,13 @@ unsafe extern "C" fn deterministic_test_tsc(state: *mut crate::smir::lower::runt
 fn execute_native(
     aux: bool,
     configure: impl FnOnce(&mut crate::smir::lower::runtime::GuestRegs),
-) -> crate::smir::lower::runtime::GuestRegs {
+) -> (crate::smir::lower::runtime::GuestRegs, usize) {
     use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     let (code, entry) = lower_timestamp(timestamp_kind(aux), true).expect("lower timestamp read");
     let exec = ExecMem::new(&code).expect("map timestamp read");
+    let helper_calls = AtomicUsize::new(0);
     let mut regs = GuestRegs::default();
     for (index, value) in regs.gpr.iter_mut().enumerate() {
         *value = 0xA500_0000_0000_0000 | index as u64;
@@ -165,23 +170,21 @@ fn execute_native(
     regs.tsc_aux = 0xCAFE_BABE;
     regs.tsc_fn = deterministic_test_tsc as usize as u64;
     configure(&mut regs);
+    regs.ctx = (&helper_calls as *const AtomicUsize) as u64;
     exec.run(entry, &mut regs);
-    regs
+    (regs, helper_calls.load(Ordering::SeqCst))
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[test]
 fn native_timestamp_reads_guest_clock_and_aux_and_preserves_nonoutputs() {
-    use std::sync::atomic::Ordering;
-
-    TSC_HELPER_CALLS.store(0, Ordering::SeqCst);
-    let rdtsc = execute_native(false, |_| {});
+    let (rdtsc, rdtsc_helper_calls) = execute_native(false, |_| {});
     assert_eq!(rdtsc.gpr[0], 0x89AB_CDEF);
     assert_eq!(rdtsc.gpr[2], 0x0123_4567);
     assert_eq!(rdtsc.gpr[1], 0xA500_0000_0000_0001);
     assert_eq!(rdtsc.exit_pc, 0xDEAD_BEEF);
 
-    let rdtscp = execute_native(true, |_| {});
+    let (rdtscp, rdtscp_helper_calls) = execute_native(true, |_| {});
     assert_eq!(rdtscp.gpr[0], 0x89AB_CDEF);
     assert_eq!(rdtscp.gpr[2], 0x0123_4567);
     assert_eq!(rdtscp.gpr[1], 0xCAFE_BABE);
@@ -190,17 +193,15 @@ fn native_timestamp_reads_guest_clock_and_aux_and_preserves_nonoutputs() {
         assert_eq!(rdtscp.gpr[index], 0xA500_0000_0000_0000 | index as u64);
     }
     assert_eq!(rdtscp.rflags & (0x08D5 | (1 << 10)), 0x08D5 | (1 << 10));
-    assert_eq!(TSC_HELPER_CALLS.load(Ordering::SeqCst), 2);
+    assert_eq!(rdtsc_helper_calls, 1);
+    assert_eq!(rdtscp_helper_calls, 1);
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[test]
 fn native_timestamp_tsd_guard_is_dynamic_precise_and_noncommitting() {
-    use std::sync::atomic::Ordering;
-
     for aux in [false, true] {
-        TSC_HELPER_CALLS.store(0, Ordering::SeqCst);
-        let regs = execute_native(aux, |regs| {
+        let (regs, helper_calls) = execute_native(aux, |regs| {
             regs.cr0 = 1;
             regs.cr4 = 1 << 2;
             regs.cpl = 3;
@@ -212,18 +213,17 @@ fn native_timestamp_tsd_guard_is_dynamic_precise_and_noncommitting() {
         assert_eq!(regs.gpr[0], 0x1111);
         assert_eq!(regs.gpr[1], 0x2222);
         assert_eq!(regs.gpr[2], 0x3333);
-        assert_eq!(TSC_HELPER_CALLS.load(Ordering::SeqCst), 0);
+        assert_eq!(helper_calls, 0);
     }
 
     for (cr0, cr4, cpl) in [(0, 1 << 2, 3), (1, 0, 3), (1, 1 << 2, 0)] {
-        TSC_HELPER_CALLS.store(0, Ordering::SeqCst);
-        let regs = execute_native(true, |regs| {
+        let (regs, helper_calls) = execute_native(true, |regs| {
             regs.cr0 = cr0;
             regs.cr4 = cr4;
             regs.cpl = cpl;
         });
         assert_eq!(regs.exit_pc, 0xDEAD_BEEF);
         assert_eq!(regs.gpr[1], 0xCAFE_BABE);
-        assert_eq!(TSC_HELPER_CALLS.load(Ordering::SeqCst), 1);
+        assert_eq!(helper_calls, 1);
     }
 }
