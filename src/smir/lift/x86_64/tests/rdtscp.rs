@@ -118,6 +118,7 @@ fn rdtscp_interpreter_reads_cycle_and_guest_aux_with_zero_extending_writes() {
         pf: false,
         af: true,
         df: true,
+        ac: true,
     };
     let (result, context) = execute_timestamp(&[0x0F, 0x01, 0xF9], |context| {
         context.cycle_count = 0x1234_5678_9ABC_DEF0;

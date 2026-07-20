@@ -125,6 +125,9 @@ pub const X86_GUEST_CPUID_SSE4A_OFFSET: i32 = X86_GUEST_CPUID_VP2INTERSECT_OFFSE
 pub const X86_GUEST_KERNEL_GS_BASE_OFFSET: i32 = X86_GUEST_CPUID_SSE4A_OFFSET + 8;
 /// Byte offset of the emulated guest timestamp-counter helper pointer.
 pub const X86_GUEST_TSC_FN_OFFSET: i32 = X86_GUEST_KERNEL_GS_BASE_OFFSET + 8;
+/// Byte offset of the guest RFLAGS.AC shadow. Native execution must keep host
+/// AC clear, so this field is authoritative for the guest bit.
+pub const X86_GUEST_AC_FLAG_OFFSET: i32 = X86_GUEST_TSC_FN_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

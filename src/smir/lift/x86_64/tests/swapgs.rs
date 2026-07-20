@@ -110,6 +110,7 @@ fn swapgs_interpreter_swaps_atomically_is_an_involution_and_preserves_flags() {
         pf: true,
         af: false,
         df: true,
+        ac: true,
     };
     let old_gs = 0x0000_7FFF_1234_5000;
     let old_kernel = 0xFFFF_8000_ABCD_E000;

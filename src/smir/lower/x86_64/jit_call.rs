@@ -244,6 +244,8 @@ impl X86_64Lowerer {
         self.code.emit_u8(0xFF);
         self.code.emit_u8(0xB1);
         self.code.emit_u32(X86_GUEST_RFLAGS_OFFSET as u32);
+        self.code.emit_bytes(&[0x48, 0x81, 0x24, 0x24]);
+        self.code.emit_i32(-0x44101); // keep host TF/NT/AC clear
         self.code.emit_u8(0x9D);
         self.emit_sync_saved_rbp_from_state(PhysReg::Rcx);
         self.emit_reload_all(PhysReg::Rcx);
@@ -265,6 +267,8 @@ impl X86_64Lowerer {
         self.code.emit_u8(0xFF);
         self.code.emit_u8(0xB1);
         self.code.emit_u32(X86_GUEST_RFLAGS_OFFSET as u32);
+        self.code.emit_bytes(&[0x48, 0x81, 0x24, 0x24]);
+        self.code.emit_i32(-0x44101); // keep host TF/NT/AC clear
         self.code.emit_u8(0x9D);
         self.emit_sync_saved_rbp_from_state(PhysReg::Rcx);
         self.emit_reload_all(PhysReg::Rcx);

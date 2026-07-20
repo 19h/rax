@@ -4916,7 +4916,8 @@ impl X86_64Vcpu {
         gr.gpr[29] = self.regs.r29;
         gr.gpr[30] = self.regs.r30;
         gr.gpr[31] = self.regs.r31;
-        gr.rflags = self.regs.rflags;
+        gr.rflags = self.regs.rflags & !flags::bits::AC;
+        gr.ac_flag = u64::from(self.regs.rflags & flags::bits::AC != 0);
         gr.exit_pc = self.regs.rip; // fallback (an exit stub overwrites this)
         if region.uses_vector || region.uses_xmm_state {
             for index in 0..16 {
@@ -5023,15 +5024,18 @@ impl X86_64Vcpu {
             self.regs.mm = gr.mm;
             self.fpu.tag_word = gr.x87_tag_word as u16;
         }
-        // Merge: status flags from the native result, all other bits (IF, DF,
-        // IOPL, NT, reserved, …) preserved from the guest's pre-region value.
+        // Merge status flags from the host result, AC from its dedicated guest
+        // shadow, and preserve every other bit (IF, DF, IOPL, NT, reserved, …)
+        // from the pre-region value. Host AC is deliberately always clear.
         const STATUS: u64 = flags::bits::CF
             | flags::bits::PF
             | flags::bits::AF
             | flags::bits::ZF
             | flags::bits::SF
             | flags::bits::OF;
-        self.regs.rflags = (pre_rflags & !STATUS) | (gr.rflags & STATUS);
+        self.regs.rflags = (pre_rflags & !(STATUS | flags::bits::AC))
+            | (gr.rflags & STATUS)
+            | if gr.ac_flag != 0 { flags::bits::AC } else { 0 };
         self.regs.rip = gr.exit_pc;
         // The native region produced fully-materialized RFLAGS. Mark the lazy
         // state as materialized so the interpreter, on resume, reads
@@ -5968,6 +5972,10 @@ mod jit_monitor_mwait_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_tsc_tests.rs"]
 mod jit_tsc_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_ac_tests.rs"]
+mod jit_ac_tests;
 
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {

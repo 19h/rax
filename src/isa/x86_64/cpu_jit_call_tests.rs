@@ -179,6 +179,29 @@ fn jit_callout_return_push_fault_deopts_at_call_pc_without_executing_target() {
 }
 
 #[test]
+fn jit_callout_resynchronizes_virtual_8086_as_effective_cpl3() {
+    use crate::smir::lower::runtime::GuestRegs;
+
+    let (mut vcpu, _) = test_vcpu_with_mem();
+    vcpu.sregs.cs.selector = 0;
+    vcpu.sregs.ss.base = 0x20000;
+
+    let mut gr = GuestRegs::default();
+    gr.ctx = (&mut vcpu as *mut X86_64Vcpu) as u64;
+    gr.gpr[4] = 0x10008;
+    gr.rflags = 0x2 | flags::bits::VM | flags::bits::AC;
+    gr.ac_flag = 1;
+
+    let ok = unsafe { rax_jit_call(&mut gr, 0x100, 0x200, 0x80) };
+
+    assert_eq!(ok, 0, "unmapped return-address push must deoptimize");
+    assert_ne!(gr.rflags & flags::bits::VM, 0);
+    assert_eq!(gr.rflags & flags::bits::AC, 0, "host image excludes AC");
+    assert_eq!(gr.ac_flag, 1, "guest AC remains in its shadow field");
+    assert_eq!(gr.cpl, 3, "virtual-8086 mode has effective CPL3");
+}
+
+#[test]
 fn jit_compiles_and_executes_rip_relative_memory_indirect_call() {
     let (mut vcpu, memory) = test_vcpu_with_mem();
     // call qword ptr [rip+0x0ffa]; mov rbx,rax; jmp next; hlt

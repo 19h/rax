@@ -153,20 +153,12 @@ impl X86_64Lowerer {
 
             OpKind::ReadFlags { dst } => {
                 let dst_reg = self.get_dst_reg(*dst)?;
-                Self::ensure_flag_stack_operands_safe("ReadFlags", &[dst_reg])?;
-
-                self.code.emit_u8(0x9C); // pushfq
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_pop(dst_reg);
+                self.emit_x86_read_flags_with_ac(dst_reg)?;
             }
 
             OpKind::WriteFlags { src } => {
                 let src_reg = self.get_reg(*src)?;
-                Self::ensure_flag_stack_operands_safe("WriteFlags", &[src_reg])?;
-
-                let mut emitter = X86Emitter::new(&mut self.code);
-                emitter.emit_push(src_reg);
-                self.code.emit_u8(0x9D); // popfq
+                self.emit_x86_write_flags_with_ac(src_reg)?;
             }
 
             OpKind::X86FpCompare {
@@ -2409,6 +2401,8 @@ impl X86_64Lowerer {
                     emitter.emit_cld();
                 }
             }
+
+            OpKind::SetAC { .. } => self.emit_x86_set_ac(op)?,
 
             OpKind::CmcCF => {
                 let mut emitter = X86Emitter::new(&mut self.code);

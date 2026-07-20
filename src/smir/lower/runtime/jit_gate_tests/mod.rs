@@ -6,6 +6,8 @@ use super::*;
 #[cfg(test)]
 mod aarch64;
 #[cfg(test)]
+mod ac;
+#[cfg(test)]
 mod addr32_memory;
 #[cfg(test)]
 mod cpuid;

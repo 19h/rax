@@ -21,18 +21,18 @@
 #![cfg(feature = "smir-jit")]
 
 use super::{
-    X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CALL_FN_OFFSET, X86_GUEST_CPL_OFFSET,
-    X86_GUEST_CPUID_FN_OFFSET, X86_GUEST_CPUID_SSE4A_OFFSET, X86_GUEST_CPUID_VP2INTERSECT_OFFSET,
-    X86_GUEST_CPUID_XEON_PHI_AVX512_OFFSET, X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET,
-    X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET, X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT,
-    X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET, X86_GUEST_KERNEL_GS_BASE_OFFSET,
-    X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MM_OFFSET, X86_GUEST_MMX_ACTIVE_OFFSET,
-    X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET, X86_GUEST_PAIR_STORE_FN_OFFSET,
-    X86_GUEST_PKRU_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
-    X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_TSC_FN_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET,
-    X86_GUEST_VEC_STORE_FN_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_X87_TAG_WORD_OFFSET,
-    X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET,
-    X86_STATE_PTR_AT_RBP,
+    X86_GUEST_AC_FLAG_OFFSET, X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CALL_FN_OFFSET,
+    X86_GUEST_CPL_OFFSET, X86_GUEST_CPUID_FN_OFFSET, X86_GUEST_CPUID_SSE4A_OFFSET,
+    X86_GUEST_CPUID_VP2INTERSECT_OFFSET, X86_GUEST_CPUID_XEON_PHI_AVX512_OFFSET,
+    X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
+    X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
+    X86_GUEST_KERNEL_GS_BASE_OFFSET, X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MM_OFFSET,
+    X86_GUEST_MMX_ACTIVE_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET,
+    X86_GUEST_PAIR_STORE_FN_OFFSET, X86_GUEST_PKRU_OFFSET, X86_GUEST_RFLAGS_OFFSET,
+    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_TSC_FN_OFFSET,
+    X86_GUEST_VEC_LOAD_FN_OFFSET, X86_GUEST_VEC_STORE_FN_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET,
+    X86_GUEST_X87_TAG_WORD_OFFSET, X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET,
+    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 // ---- module tree (auto-split) ----
@@ -80,15 +80,16 @@ unsafe extern "C" {
 ///
 /// `gpr[i]` is indexed by x86 register *encoding*
 /// (0=RAX, 1=RCX, 2=RDX, 3=RBX, 4=RSP, 5=RBP, 6=RSI, 7=RDI, 8..=15=R8..=R15,
-/// 16..=31=R16..=R31). `rflags` holds the materialized flags. `repr(C)` with a
-/// fixed layout — the trampoline reads/writes by byte offset (`gpr[i]` at
-/// `i*8`, `rflags` at [`X86_GUEST_RFLAGS_OFFSET`]).
+/// 16..=31=R16..=R31). `rflags` holds the host-safe materialized flag image;
+/// `ac_flag` separately carries guest RFLAGS.AC because host AC must remain
+/// clear. `repr(C)` has a fixed layout — the trampoline reads/writes by byte
+/// offset (`gpr[i]` at `i*8`, `rflags` at [`X86_GUEST_RFLAGS_OFFSET`]).
 #[repr(C, align(64))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct GuestRegs {
     /// General-purpose registers, indexed by x86 encoding.
     pub gpr: [u64; X86_GUEST_GPR_COUNT],
-    /// Materialized RFLAGS.
+    /// Host-safe materialized RFLAGS image; `ac_flag` carries guest AC.
     pub rflags: u64,
     /// Resume guest PC, written by an exit stub when a block lowered with the
     /// general-exit ABI hands control back to the interpreter. Only meaningful
@@ -204,6 +205,10 @@ pub struct GuestRegs {
     /// timestamp counter. The helper commits zero-extended EAX and EDX slots;
     /// RDTSCP lowering separately commits guest IA32_TSC_AUX to ECX.
     pub tsc_fn: u64,
+    /// Authoritative guest RFLAGS.AC value (zero or one). Host AC is never
+    /// loaded because CPL3 alignment checking would expose guest state to the
+    /// emulator process as #AC/SIGBUS.
+    pub ac_flag: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -248,6 +253,7 @@ impl Default for GuestRegs {
             cpuid_sse4a: 0,
             kernel_gs_base: 0,
             tsc_fn: 0,
+            ac_flag: 0,
         }
     }
 }
@@ -696,6 +702,9 @@ macro_rules! x86_enter_native_trampoline {
             "movq mm7, qword ptr [rsi+2592]",
             "4:",
             "mov rax, [rsi+256]", // RFLAGS
+            // Never import guest TF/NT/AC into host CPL3 execution. DF remains
+            // live because native string lowering implements guest direction.
+            "and rax, -0x44101", // ~0x44100: clear TF(0x100)+NT(0x4000)+AC(0x40000)
             "push rax",
             "popfq",
             "mov rax, [rsi+0]",
@@ -807,14 +816,12 @@ macro_rules! x86_enter_native_trampoline {
             "emms",
             "4:",
             "ldmxcsr [rax+2444]",
-            // Sanitize the HOST EFLAGS before returning to Rust. The `popfq` above loaded
-            // the GUEST RFLAGS into the host, and the region runs with them — but the
-            // sticky control flags then LEAK into the host: AC (alignment check, set by
-            // the kernel's SMAP `stac` for user copies) faults the next unaligned host
-            // access with #AC/SIGBUS; DF (direction) reverses host `rep` string ops
-            // (memcpy/memset) → corruption; TF would single-step → SIGTRAP; NT corrupts
-            // a host `iret`. Clear bits 8(TF)/10(DF)/14(NT)/18(AC); the arithmetic flags
-            // are caller-saved scratch the host re-derives, so they need no restore.
+            // Sanitize HOST EFLAGS before returning to Rust. Entry already masks
+            // TF/NT/AC, while guest DF remains live for native string semantics. Clear
+            // DF and reassert the complete host-safety mask here: DF reverses host `rep`
+            // string operations, AC can raise #AC/SIGBUS on unaligned host accesses, TF
+            // would single-step, and NT is not host-process state. Arithmetic flags are
+            // caller-saved scratch the host re-derives, so they need no restoration.
             "pushfq",
             "and qword ptr [rsp], -0x44501", // ~0x44500: clear TF(0x100)+DF(0x400)+NT(0x4000)+AC(0x40000)
             "popfq",
@@ -1508,6 +1515,54 @@ mod tests {
         regs.rflags = 0x2;
         mem.run(0, &mut regs);
         assert_eq!(regs.gpr[0], 42, "RAX should be RBX+RCX");
+    }
+
+    #[test]
+    fn x86_entry_trampoline_never_imports_guest_tf_nt_or_ac() {
+        // Capture the actual host RFLAGS visible at native-block entry into the
+        // otherwise-unused tsc_fn slot. The block uses the standard lowerer
+        // prologue so [rbp+24] resolves the trampoline's GuestRegs pointer.
+        let mut code = vec![
+            0x55, // push rbp
+            0x48,
+            0x89,
+            0xE5, // mov rbp,rsp
+            0x50, // push rax
+            0x9C, // pushfq
+            0x59, // pop rcx
+            0x48,
+            0x8B,
+            0x45,
+            X86_STATE_PTR_AT_RBP as u8, // mov rax,[rbp+24]
+            0x48,
+            0x89,
+            0x88, // mov [rax+disp32],rcx
+        ];
+        code.extend_from_slice(&(X86_GUEST_TSC_FN_OFFSET as u32).to_le_bytes());
+        code.extend_from_slice(&[
+            0x58, // pop rax
+            0x48, 0x89, 0xEC, // mov rsp,rbp
+            0x5D, // pop rbp
+            0xC3, // ret
+        ]);
+
+        let mem = ExecMem::new(&code).expect("ExecMem map");
+        let mut regs = GuestRegs::default();
+        const TF: u64 = 1 << 8;
+        const DF: u64 = 1 << 10;
+        const NT: u64 = 1 << 14;
+        const AC: u64 = 1 << 18;
+        regs.rflags = 0x2 | TF | DF | NT | AC;
+        regs.ac_flag = 1;
+        mem.run(0, &mut regs);
+
+        assert_eq!(regs.tsc_fn & (TF | NT | AC), 0);
+        assert_ne!(
+            regs.tsc_fn & DF,
+            0,
+            "guest DF remains a native semantic input"
+        );
+        assert_eq!(regs.ac_flag, 1, "guest AC shadow must survive host masking");
     }
 
     // General-exit stub: a block (with the lowerer's `push rbp; mov rbp,rsp`

@@ -331,6 +331,7 @@ pub struct MaterializedFlags {
     pub pf: bool, // Parity (x86)
     pub af: bool, // Auxiliary carry (x86)
     pub df: bool, // Direction (x86)
+    pub ac: bool, // Alignment check / supervisor access override (x86)
 }
 
 impl MaterializedFlags {
@@ -358,6 +359,9 @@ impl MaterializedFlags {
         if self.of {
             val |= 1 << 11;
         }
+        if self.ac {
+            val |= 1 << 18;
+        }
         val
     }
 
@@ -371,6 +375,7 @@ impl MaterializedFlags {
             sf: (rflags & (1 << 7)) != 0,
             df: (rflags & (1 << 10)) != 0,
             of: (rflags & (1 << 11)) != 0,
+            ac: (rflags & (1 << 18)) != 0,
         }
     }
 
@@ -403,6 +408,7 @@ impl MaterializedFlags {
             pf: false,
             af: false,
             df: false,
+            ac: false,
         }
     }
 }
@@ -469,7 +475,8 @@ impl FlagState {
     ///
     /// A selective update must commit any preceding lazy producer before it is
     /// replaced, evaluate the new producer once, and merge only the requested
-    /// status bits. DF is never part of [`FlagSet`] and is therefore preserved.
+    /// status bits. DF and AC are never part of [`FlagSet`] and are therefore
+    /// preserved.
     pub fn set_lazy_with_update(&mut self, lazy: LazyFlags, update: FlagUpdate) {
         match update {
             FlagUpdate::None => {}
@@ -991,6 +998,7 @@ mod tests {
                 pf: old & 0x10 != 0,
                 af: old & 0x20 != 0,
                 df: true,
+                ac: true,
             };
 
             let mut logic = FlagState {
@@ -1006,6 +1014,7 @@ mod tests {
             assert_eq!(logic.materialized.pf, prior.pf, "old={old:#04x}");
             assert_eq!(logic.materialized.af, prior.af, "old={old:#04x}");
             assert!(logic.materialized.df, "old={old:#04x}");
+            assert!(logic.materialized.ac, "old={old:#04x}");
 
             let mut shift = FlagState {
                 lazy: None,
@@ -1130,6 +1139,7 @@ mod tests {
             pf: true,
             af: false,
             df: false,
+            ac: true,
         };
 
         let rflags = flags.to_rflags();
@@ -1140,5 +1150,6 @@ mod tests {
         assert_eq!(flags.sf, restored.sf);
         assert_eq!(flags.of, restored.of);
         assert_eq!(flags.pf, restored.pf);
+        assert_eq!(flags.ac, restored.ac);
     }
 }

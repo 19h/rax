@@ -95,6 +95,7 @@ fn serialize_interpreter_preserves_registers_and_flags() {
         pf: true,
         af: false,
         df: true,
+        ac: true,
     };
     let mut context = SmirContext::new_x86_64();
     context.flags.materialized = flags;

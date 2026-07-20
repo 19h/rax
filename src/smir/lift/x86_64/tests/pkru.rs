@@ -142,6 +142,7 @@ fn rdpkru_interpreter_zero_extends_outputs_ignores_high_ecx_and_preserves_flags(
         pf: true,
         af: true,
         df: true,
+        ac: true,
     };
     let (result, context) = execute_pkru(&[0x0F, 0x01, 0xEE], |context| {
         context.flags.materialized = flags;

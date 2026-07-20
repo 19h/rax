@@ -64,6 +64,7 @@ fn lifted_t16_selective_nzcv_ops_interpret_all_prior_flag_states() {
                 pf: true,
                 af: true,
                 df: true,
+                ac: true,
             };
             ctx.flags.lazy = None;
 
@@ -88,6 +89,7 @@ fn lifted_t16_selective_nzcv_ops_interpret_all_prior_flag_states() {
             assert!(ctx.flags.materialized.pf, "PF is outside T16 NZCV writes");
             assert!(ctx.flags.materialized.af, "AF is outside T16 NZCV writes");
             assert!(ctx.flags.materialized.df, "DF is outside T16 NZCV writes");
+            assert!(ctx.flags.materialized.ac, "AC is outside T16 NZCV writes");
         }
     }
 }
@@ -164,6 +166,7 @@ fn lifted_t16_register_shifts_interpret_low_byte_boundaries_and_aliases() {
                         pf: true,
                         af: true,
                         df: true,
+                        ac: true,
                     };
                     ctx.flags.lazy = None;
 
@@ -179,6 +182,7 @@ fn lifted_t16_register_shifts_interpret_low_byte_boundaries_and_aliases() {
                     assert!(ctx.flags.materialized.pf);
                     assert!(ctx.flags.materialized.af);
                     assert!(ctx.flags.materialized.df);
+                    assert!(ctx.flags.materialized.ac);
                 }
             }
         }
@@ -291,6 +295,7 @@ fn lifted_t32_register_shifts_interpret_independent_aliases_and_flag_modes() {
                             pf: true,
                             af: true,
                             df: true,
+                            ac: true,
                         };
                         ctx.flags.lazy = None;
 
@@ -323,6 +328,7 @@ fn lifted_t32_register_shifts_interpret_independent_aliases_and_flag_modes() {
                         assert!(ctx.flags.materialized.pf);
                         assert!(ctx.flags.materialized.af);
                         assert!(ctx.flags.materialized.df);
+                        assert!(ctx.flags.materialized.ac);
                     }
                 }
             }
@@ -506,6 +512,7 @@ fn lifted_a32_data_processing_register_shifts_cover_all_semantics_and_aliases() 
                                 pf: true,
                                 af: true,
                                 df: true,
+                                ac: true,
                             };
                             ctx.flags.lazy = None;
                             let exit = SmirInterpreter::new().execute_block(
@@ -536,6 +543,7 @@ fn lifted_a32_data_processing_register_shifts_cover_all_semantics_and_aliases() 
                             assert!(ctx.flags.materialized.pf);
                             assert!(ctx.flags.materialized.af);
                             assert!(ctx.flags.materialized.df);
+                            assert!(ctx.flags.materialized.ac);
                         }
                     }
                 }

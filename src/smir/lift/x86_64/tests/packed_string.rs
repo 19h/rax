@@ -314,6 +314,7 @@ fn packed_string_interpreter_matches_hard_coded_byte_mask_index_and_flags() {
             pf: false,
             af: false,
             df: true,
+            ac: false,
         }
         .to_rflags()
     );

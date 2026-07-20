@@ -3847,6 +3847,12 @@ pub enum OpKind {
         value: bool,
     },
 
+    /// Set alignment-check flag (x86 CLAC/STAC). The operation performs its
+    /// mode/privilege validation before changing AC.
+    SetAC {
+        value: bool,
+    },
+
     /// Complement carry flag
     CmcCF,
 
@@ -4419,6 +4425,7 @@ impl OpKind {
                 | OpKind::X86MonitorMwait(..)
                 | OpKind::X86Pkru { .. }
                 | OpKind::X86ReadTsc(..)
+                | OpKind::SetAC { .. }
                 | OpKind::X86Cpuid { .. }
                 | OpKind::X86Count { .. }
                 | OpKind::X86X87Control {
@@ -4902,6 +4909,7 @@ impl OpKind {
             | OpKind::WriteFlags { .. }
             | OpKind::SetCF { .. }
             | OpKind::SetDF { .. }
+            | OpKind::SetAC { .. }
             | OpKind::CmcCF
             | OpKind::MaterializeFlags
             | OpKind::X86XTest
@@ -4970,6 +4978,7 @@ impl OpKind {
                     | OpKind::WriteFlags { .. }
                     | OpKind::SetCF { .. }
                     | OpKind::SetDF { .. }
+                    | OpKind::SetAC { .. }
                     | OpKind::CmcCF
                     | OpKind::MaterializeFlags
                     | OpKind::X86XTest

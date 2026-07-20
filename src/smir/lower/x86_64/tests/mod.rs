@@ -4,6 +4,8 @@ use crate::smir::lower::x86_64::*;
 
 // ---- split test submodules ----
 #[cfg(test)]
+mod ac;
+#[cfg(test)]
 mod addr32_memory;
 #[cfg(test)]
 mod alu;

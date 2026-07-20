@@ -3,8 +3,8 @@
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
-    /// Lift MONITOR/MWAIT, XGETBV/XSETBV, RDPKRU/WRPKRU, SERIALIZE, SWAPGS,
-    /// RDTSCP, and the RTM fixed ModR/M encodings in 0F 01.
+    /// Lift MONITOR/MWAIT, CLAC/STAC, XGETBV/XSETBV, RDPKRU/WRPKRU,
+    /// SERIALIZE, SWAPGS, RDTSCP, and the RTM fixed ModR/M encodings in 0F 01.
     pub(crate) fn lift_xcr_0f01(
         &self,
         bytes: &[u8],
@@ -75,6 +75,9 @@ impl X86_64Lifter {
         }
 
         let kind = match modrm {
+            0xCA | 0xCB => OpKind::SetAC {
+                value: modrm == 0xCB,
+            },
             0xD0 | 0xD1 if prefix.rep_prefix.is_none() && !prefix.operand_size_override => {
                 if modrm == 0xD0 {
                     OpKind::X86XGetBv {

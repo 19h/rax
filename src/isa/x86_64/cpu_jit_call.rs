@@ -61,7 +61,8 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     vcpu.regs.r29 = gr.gpr[29];
     vcpu.regs.r30 = gr.gpr[30];
     vcpu.regs.r31 = gr.gpr[31];
-    vcpu.regs.rflags = gr.rflags;
+    vcpu.regs.rflags =
+        (gr.rflags & !flags::bits::AC) | if gr.ac_flag != 0 { flags::bits::AC } else { 0 };
     vcpu.sregs.fs.base = gr.fs_base;
     vcpu.sregs.gs.base = gr.gs_base;
     vcpu.kernel_gs_base = gr.kernel_gs_base;
@@ -192,7 +193,8 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     gr.gpr[29] = vcpu.regs.r29;
     gr.gpr[30] = vcpu.regs.r30;
     gr.gpr[31] = vcpu.regs.r31;
-    gr.rflags = vcpu.regs.rflags;
+    gr.rflags = vcpu.regs.rflags & !flags::bits::AC;
+    gr.ac_flag = u64::from(vcpu.regs.rflags & flags::bits::AC != 0);
     gr.fs_base = vcpu.sregs.fs.base;
     gr.gs_base = vcpu.sregs.gs.base;
     gr.kernel_gs_base = vcpu.kernel_gs_base;
@@ -201,7 +203,11 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     gr.xgetbv1 = vcpu.xgetbv1_value;
     gr.cr4 = vcpu.sregs.cr4;
     gr.cr0 = vcpu.sregs.cr0;
-    gr.cpl = u64::from(vcpu.sregs.cs.selector & 3);
+    gr.cpl = if vcpu.regs.rflags & flags::bits::VM != 0 {
+        3
+    } else {
+        u64::from(vcpu.sregs.cs.selector & 3)
+    };
     gr.apx_enabled = u64::from(vcpu.apx_enabled());
     gr.cpuid_xeon_phi_avx512 = u64::from(vcpu.xeon_phi_avx512_enabled());
     gr.cpuid_vp2intersect = u64::from(vcpu.vp2intersect_enabled());

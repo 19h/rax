@@ -135,6 +135,7 @@ fn cpuid_interpreter_returns_exact_vendor_and_zero_extends_all_outputs() {
         pf: true,
         af: true,
         df: true,
+        ac: true,
     };
     let (outputs, mut context) = execute_cpuid(0, 0xFFFF_FFFF, |_| {});
     assert_eq!(outputs, [0x29, 0x756E_6547, 0x6C65_746E, 0x4965_6E69]);

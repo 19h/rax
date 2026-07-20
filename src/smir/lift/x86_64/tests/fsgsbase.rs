@@ -232,6 +232,7 @@ fn fsgsbase_interpreter_reads_with_exact_w32_w64_writeback_and_preserves_flags()
         pf: true,
         af: true,
         df: true,
+        ac: true,
     };
     let (result, context) = execute_fsgsbase(&[0xF3, 0x0F, 0xAE, 0xC0], |context| {
         context.flags.materialized = flags;

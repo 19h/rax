@@ -1267,6 +1267,12 @@ pub(crate) fn aarch64_block_is_clobber_safe(
                 }
             }
         }
+        // `SetAC` is x86 architectural state backed by `GuestRegs::ac_flag`.
+        // The AArch64 guest-state ABI has no corresponding field or lowerer,
+        // so the generic JIT-safety classification must not admit it here.
+        if matches!(op.kind, OpKind::SetAC { .. }) {
+            return false;
+        }
         let mem_ok = allow_mem && aarch64_mem_helper_op(&op.kind);
         // AArch64-clean register-only ops that the x86-tuned `is_jit_safe`
         // whitelist omits: UDIV/SDIV never trap on AArch64 (no x86 `#DE`), and

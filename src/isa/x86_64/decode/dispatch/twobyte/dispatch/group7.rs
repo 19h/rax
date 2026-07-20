@@ -26,6 +26,12 @@ impl X86_64Vcpu {
     }
 
     #[inline(always)]
+    fn clac_stac_allowed(&self) -> bool {
+        self.regs.rflags & flags::bits::VM == 0
+            && (self.sregs.cr0 & 1 == 0 || self.sregs.cs.selector & 3 == 0)
+    }
+
+    #[inline(always)]
     fn monitor_mwait_extension(&self) -> u64 {
         if self.sregs.cs.l {
             self.regs.rcx
@@ -238,9 +244,11 @@ impl X86_64Vcpu {
                 0xCA => {
                     // CLAC (0x0F 0x01 0xCA) - Clear AC flag
                     ctx.consume_u8()?; // consume modrm
-                    // Note: AC is not a lazy flag, but clear for consistency
-                    // Materialize (don't discard) pending lazy flags - CLAC must
-                    // only clear AC, leaving ZF/SF/CF/etc. from prior ops intact.
+                    if !self.clac_stac_allowed() {
+                        return self.inject_undefined_instruction();
+                    }
+                    // Materialize (do not discard) pending status flags: CLAC
+                    // changes only AC.
                     self.materialize_flags();
                     self.regs.rflags &= !flags::bits::AC;
                     self.regs.rip += ctx.cursor as u64;
@@ -249,9 +257,11 @@ impl X86_64Vcpu {
                 0xCB => {
                     // STAC (0x0F 0x01 0xCB) - Set AC flag
                     ctx.consume_u8()?; // consume modrm
-                    // Note: AC is not a lazy flag, but clear for consistency
-                    // Materialize (don't discard) pending lazy flags - STAC must
-                    // only set AC, leaving ZF/SF/CF/etc. from prior ops intact.
+                    if !self.clac_stac_allowed() {
+                        return self.inject_undefined_instruction();
+                    }
+                    // Materialize (do not discard) pending status flags: STAC
+                    // changes only AC.
                     self.materialize_flags();
                     self.regs.rflags |= flags::bits::AC;
                     self.regs.rip += ctx.cursor as u64;

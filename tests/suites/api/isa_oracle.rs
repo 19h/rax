@@ -258,6 +258,25 @@ fn emits_exact_pkru_state_direction_and_implicit_register_metadata() {
 }
 
 #[test]
+fn emits_exact_clac_stac_guest_ac_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    for (modrm, value) in [(0xCA, false), (0xCB, true)] {
+        let decoded = decode_to_json(&[0x0F, 0x01, modrm], &opts).unwrap();
+        assert_eq!(decoded["smir"]["available"], true);
+        assert_eq!(decoded["smir"]["bytes_consumed"], 3);
+        let op = &decoded["smir"]["ops"][0];
+        assert_eq!(op["kind"]["opcode"], "set_ac");
+        assert_eq!(op["kind"]["value"], value);
+        assert_eq!(op["writes"].as_array().unwrap().len(), 0);
+        assert_eq!(op["memory"]["reads"], false);
+        assert_eq!(op["memory"]["writes"], false);
+        assert_eq!(op["side_effects"], true);
+    }
+}
+
+#[test]
 fn emits_exact_rdtsc_and_rdtscp_destination_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

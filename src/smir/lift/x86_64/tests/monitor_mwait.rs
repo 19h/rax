@@ -160,6 +160,7 @@ fn monitor_mwait_interpreter_success_preserves_registers_and_flags() {
         pf: false,
         af: true,
         df: true,
+        ac: true,
     };
     let mut context = SmirContext::new_x86_64();
     context.flags.materialized = flags;

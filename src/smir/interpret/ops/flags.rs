@@ -50,6 +50,22 @@ impl SmirInterpreter {
                 ctx.flags.materialized.df = *value;
             }
 
+            OpKind::SetAC { value } => {
+                let allowed = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.cr0 & 1 == 0 || x86.cpl == 0,
+                    _ => false,
+                };
+                if !allowed {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+                ctx.flags.materialize_all();
+                ctx.flags.materialized.ac = *value;
+            }
+
             OpKind::CmcCF => {
                 let cf = ctx.flags.get_cf();
                 ctx.flags.materialize_all();

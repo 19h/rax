@@ -4055,6 +4055,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::WriteFlags { src } => op_json!("write_flags", src),
         OpKind::SetCF { value } => op_json!("set_cf", value),
         OpKind::SetDF { value } => op_json!("set_df", value),
+        OpKind::SetAC { value } => op_json!("set_ac", value),
         OpKind::CmcCF => op_json!("cmc_cf"),
         OpKind::MaterializeFlags => op_json!("materialize_flags"),
         OpKind::X86XTest => op_json!("x86_xtest"),

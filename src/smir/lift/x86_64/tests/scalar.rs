@@ -2583,7 +2583,7 @@ fn lift_pushf_popf_stack_widths_and_flag_masking() {
         assert!(result.ops.iter().any(|op| matches!(
             op.kind,
             OpKind::And {
-                src2: SrcOperand::Imm(0xCD5),
+                src2: SrcOperand::Imm(0x4_0CD5),
                 ..
             }
         )));

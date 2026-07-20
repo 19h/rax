@@ -1134,9 +1134,10 @@ impl X86_64Lifter {
                     },
                 ));
 
-                // SMIR models CF/PF/AF/ZF/SF/DF/OF. Apply POPF's reserved-bit
-                // filtering to that representable subset and force bit 1 set.
-                const SMIR_RFLAGS_MASK: i64 = 0xCD5;
+                // SMIR models CF/PF/AF/ZF/SF/DF/OF/AC. Apply POPF's
+                // reserved/control-bit filtering to that representable subset
+                // and force bit 1 set.
+                const SMIR_RFLAGS_MASK: i64 = 0x4_0CD5;
                 let masked = ctx.alloc_vreg();
                 ops.push(SmirOp::new(
                     OpId(2),
