@@ -281,3 +281,73 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector(
         _ => 0,
     }
 }
+
+/// JIT LLDT helper. Every architectural guard and both the optional operand
+/// read and implicit GDT descriptor read occur before LDTR commit. Failure
+/// returns zero so native code replays the direct instruction at its original
+/// guest PC and delivers the precise architectural fault there.
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
+    state: *mut crate::smir::lower::runtime::GuestRegs,
+    operand: u64,
+    encoding: u32,
+) -> u64 {
+    let Some(state) = (unsafe { state.as_mut() }) else {
+        return 0;
+    };
+    let Some(vcpu) = (unsafe { (state.ctx as *mut X86_64Vcpu).as_mut() }) else {
+        return 0;
+    };
+    if encoding & !0x3 != 0
+        || !vcpu.sregs.cs.l
+        || vcpu.sregs.cr0 & 1 == 0
+        || vcpu.regs.rflags & crate::isa::x86_64::flags::bits::VM != 0
+        || vcpu.sregs.cs.selector & 3 != 0
+        || encoding & 0x2 != 0 && !vcpu.apx_enabled()
+    {
+        return 0;
+    }
+
+    // A semantic descriptor failure deoptimizes and replays LLDT directly.
+    // Restrict speculative reads to ordinary RAM, then roll back the buffered
+    // trace/hook records on failure so replay remains the sole observable
+    // access. MMIO and translation faults deopt before any data read.
+    let saved_trace = vcpu.jit_mem_trace.clone();
+    let mem_record_checkpoint = vcpu.mmu.mem_record_checkpoint();
+    let loaded = (|| {
+        let selector = if encoding & 1 != 0 {
+            if !vcpu.mmu.read_range_is_plain_ram(operand, 2, &vcpu.sregs) {
+                return false;
+            }
+            let Ok(value) = vcpu.read_mem(operand, 2) else {
+                return false;
+            };
+            value as u16
+        } else {
+            operand as u16
+        };
+
+        if selector & 0xFFFC != 0 && selector & 0x4 == 0 {
+            let offset = u64::from(selector >> 3) * 8;
+            if offset + 15 <= u64::from(vcpu.sregs.gdt.limit) {
+                let descriptor_addr = vcpu.sregs.gdt.base.wrapping_add(offset);
+                if !vcpu
+                    .mmu
+                    .read_range_is_plain_ram(descriptor_addr, 16, &vcpu.sregs)
+                {
+                    return false;
+                }
+            }
+        }
+
+        vcpu.load_ldtr_selector(selector).is_ok()
+    })();
+    if loaded {
+        1
+    } else {
+        vcpu.jit_mem_trace = saved_trace;
+        vcpu.mmu
+            .restore_mem_record_checkpoint(mem_record_checkpoint);
+        0
+    }
+}

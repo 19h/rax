@@ -312,6 +312,12 @@ impl X86_64Lifter {
             {
                 self.lift_system_selector_store_0f00(after_opcode, &prefix2, pc, ctx)
             }
+            0x00 if after_opcode
+                .first()
+                .is_some_and(|modrm| ((modrm >> 3) & 7) == 2) =>
+            {
+                self.lift_system_selector_load_0f00(after_opcode, &prefix2, pc, ctx)
+            }
             0x01 => self.lift_group7_0f01(after_opcode, &prefix2, pc, ctx),
 
             // CLTS (0F 06): clear CR0.TS after a dynamic privilege check.

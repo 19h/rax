@@ -1,4 +1,4 @@
-//! Strict lift, metadata, optimizer, and interpreter coverage for SLDT/STR.
+//! Strict lift, metadata, optimizer, and interpreter coverage for SLDT/STR/LLDT.
 
 use super::*;
 use crate::smir::interpret::{BlockResult, SmirInterpreter};
@@ -6,7 +6,10 @@ use crate::smir::ir::FunctionBuilder;
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
 use crate::smir::ir::flags::MaterializedFlags;
 use crate::smir::ir::memory::{FlatMemory, SmirMemory};
-use crate::smir::ir::ops::{X86SystemSelector, X86SystemSelectorStoreOp, X86SystemSelectorTarget};
+use crate::smir::ir::ops::{
+    X86SystemSelector, X86SystemSelectorLoadOp, X86SystemSelectorSource, X86SystemSelectorStoreOp,
+    X86SystemSelectorTarget,
+};
 use crate::smir::optimize::{OptLevel, optimize_function};
 
 fn exact_selector(result: &LiftResult) -> &X86SystemSelectorStoreOp {
@@ -17,8 +20,16 @@ fn exact_selector(result: &LiftResult) -> &X86SystemSelectorStoreOp {
     }
 }
 
+fn exact_selector_load(result: &LiftResult) -> &X86SystemSelectorLoadOp {
+    assert_eq!(result.ops.len(), 1);
+    match &result.ops[0].kind {
+        OpKind::X86SystemSelectorLoad(load) => load,
+        other => panic!("expected one exact X86SystemSelectorLoad op, got {other:?}"),
+    }
+}
+
 fn selector_block(bytes: &[u8]) -> SmirBlock {
-    let lifted = lift_single(bytes).expect("strict SLDT/STR lift");
+    let lifted = lift_single(bytes).expect("strict selector lift");
     let mut block = SmirBlock::new(BlockId(0), 0x1000);
     block.ops = lifted.ops;
     block.set_terminator(Terminator::Trap {
@@ -38,6 +49,48 @@ fn execute_register(
         &mut FlatMemory::new(1),
         &selector_block(bytes),
     );
+    (result, context)
+}
+
+fn ldt_descriptor(
+    base: u64,
+    raw_limit: u32,
+    dpl: u8,
+    present: bool,
+    granularity: bool,
+) -> [u8; 16] {
+    assert!(raw_limit <= 0xF_FFFF);
+    let mut low = u64::from(raw_limit & 0xFFFF)
+        | ((base & 0xFFFF) << 16)
+        | (((base >> 16) & 0xFF) << 32)
+        | (0x2_u64 << 40)
+        | (u64::from(dpl & 3) << 45)
+        | (u64::from(present) << 47)
+        | (u64::from((raw_limit >> 16) & 0xF) << 48)
+        | (((base >> 24) & 0xFF) << 56);
+    if granularity {
+        low |= 1 << 55;
+    }
+    let high = (base >> 32) & 0xFFFF_FFFF;
+    let mut bytes = [0_u8; 16];
+    bytes[..8].copy_from_slice(&low.to_le_bytes());
+    bytes[8..].copy_from_slice(&high.to_le_bytes());
+    bytes
+}
+
+fn execute_lldt(
+    bytes: &[u8],
+    configure: impl FnOnce(&mut SmirContext, &mut FlatMemory),
+) -> (BlockResult, SmirContext) {
+    let mut context = SmirContext::new_x86_64();
+    let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+        unreachable!()
+    };
+    x86.cs_l = true;
+    let mut memory = FlatMemory::with_base(0x2000, 0x100);
+    configure(&mut context, &mut memory);
+    let result =
+        SmirInterpreter::new().execute_block(&mut context, &mut memory, &selector_block(bytes));
     (result, context)
 }
 
@@ -181,12 +234,405 @@ fn selector_stores_honor_prefixes_reject_lock_and_leave_other_group6_unsupported
         lift_single(&[0xF0, 0x0F, 0x00, 0xC0]),
         Err(LiftError::InvalidEncoding { .. })
     ));
-    for modrm in [0xD0, 0xD8, 0xE0, 0xE8] {
+    for modrm in [0xD8, 0xE0, 0xE8] {
         assert!(matches!(
             lift_single(&[0x0F, 0x00, modrm]),
             Err(LiftError::Unsupported { .. })
         ));
     }
+}
+
+#[test]
+fn lldt_strictly_lifts_fixed_width_register_sources_and_apx() {
+    for (bytes, src, requires_apx) in [
+        (&[0x0F, 0x00, 0xD0][..], 0, false),
+        (&[0x66, 0x0F, 0x00, 0xD5], 5, false),
+        (&[0x4D, 0x0F, 0x00, 0xD7], 15, false),
+        (&[0xD5, 0x91, 0x00, 0xD7], 31, true),
+    ] {
+        let result = lift_single(bytes).expect("LLDT register form must strictly lift");
+        assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
+        assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+        assert!(matches!(
+            exact_selector_load(&result),
+            X86SystemSelectorLoadOp {
+                selector: X86SystemSelector::Ldtr,
+                source: X86SystemSelectorSource::Register { src: got_src },
+                requires_apx: got_apx,
+                next_pc,
+            } if *got_src == x86_gpr(src)
+                && *got_apx == requires_apx
+                && *next_pc == 0x1000 + bytes.len() as u64
+        ));
+    }
+}
+
+#[test]
+fn lldt_lifts_fixed_two_byte_memory_addresses_and_apx_components() {
+    let direct = lift_single(&[0x0F, 0x00, 0x10]).unwrap();
+    assert!(matches!(
+        exact_selector_load(&direct),
+        X86SystemSelectorLoadOp {
+            source: X86SystemSelectorSource::Memory {
+                addr: Address::Direct(base),
+            },
+            requires_apx: false,
+            ..
+        } if *base == x86_gpr(0)
+    ));
+
+    let sib = lift_single(&[0x48, 0x0F, 0x00, 0x54, 0x88, 0x7F]).unwrap();
+    assert!(matches!(
+        &exact_selector_load(&sib).source,
+        X86SystemSelectorSource::Memory {
+            addr: Address::BaseIndexScale {
+                base: Some(base),
+                index,
+                scale: 4,
+                disp: 0x7F,
+                disp_size: DispSize::Disp8,
+            }
+        } if *base == x86_gpr(0) && *index == x86_gpr(1)
+    ));
+
+    let addr32 = lift_single(&[0x67, 0x0F, 0x00, 0x94, 0x8D, 0x78, 0x56, 0x34, 0x12]).unwrap();
+    assert!(matches!(
+        &exact_selector_load(&addr32).source,
+        X86SystemSelectorSource::Memory {
+            addr: Address::X86Addr32(inner),
+        } if matches!(
+            inner.as_ref(),
+            Address::BaseIndexScale {
+                base: Some(base),
+                index,
+                scale: 4,
+                disp: 0x1234_5678,
+                disp_size: DispSize::Disp32,
+            } if *base == x86_gpr(5) && *index == x86_gpr(1)
+        )
+    ));
+
+    let apx = lift_single(&[0xD5, 0xB3, 0x00, 0x14, 0xD1]).unwrap();
+    assert!(matches!(
+        exact_selector_load(&apx),
+        X86SystemSelectorLoadOp {
+            source: X86SystemSelectorSource::Memory {
+                addr: Address::BaseIndexScale {
+                    base: Some(base),
+                    index,
+                    scale: 8,
+                    ..
+                },
+            },
+            requires_apx: true,
+            ..
+        } if *base == x86_gpr(25) && *index == x86_gpr(26)
+    ));
+}
+
+#[test]
+fn lldt_ignores_operand_size_prefixes_rejects_lock_and_exposes_effects() {
+    for bytes in [
+        &[0x0F, 0x00, 0xD0][..],
+        &[0x66, 0x0F, 0x00, 0xD0],
+        &[0x48, 0x0F, 0x00, 0xD0],
+        &[0xF2, 0x0F, 0x00, 0xD0],
+        &[0xF3, 0x0F, 0x00, 0xD0],
+    ] {
+        assert!(matches!(
+            exact_selector_load(&lift_single(bytes).unwrap()).source,
+            X86SystemSelectorSource::Register { src } if src == x86_gpr(0)
+        ));
+    }
+    assert!(matches!(
+        lift_single(&[0xF0, 0x0F, 0x00, 0xD0]),
+        Err(LiftError::InvalidEncoding { .. })
+    ));
+
+    let register = &lift_single(&[0x0F, 0x00, 0xD5]).unwrap().ops[0];
+    assert_eq!(register.kind.source_vregs(), vec![x86_gpr(5)]);
+    assert!(register.kind.dests().is_empty());
+    assert!(register.kind.has_side_effects());
+    assert!(register.kind.reads_memory());
+    assert!(!register.kind.writes_memory());
+    assert!(register.is_jit_safe());
+
+    let memory = &lift_single(&[0x0F, 0x00, 0x54, 0x48, 0x08]).unwrap().ops[0];
+    assert_eq!(memory.kind.source_vregs(), vec![x86_gpr(1), x86_gpr(0)]);
+    assert!(memory.kind.dests().is_empty());
+    assert!(memory.kind.has_side_effects());
+    assert!(memory.kind.reads_memory());
+    assert!(!memory.kind.writes_memory());
+    assert!(memory.is_jit_safe());
+}
+
+#[test]
+fn lldt_interpreter_loads_visible_selector_complete_hidden_cache_and_preserves_flags() {
+    let base = 0xFFFF_8000_1234_5000;
+    let raw_limit = 0xA_BCDE;
+    let flags = MaterializedFlags {
+        cf: true,
+        zf: false,
+        sf: true,
+        of: true,
+        pf: false,
+        af: true,
+        df: true,
+        ac: true,
+    };
+    let (result, context) = execute_lldt(&[0x0F, 0x00, 0xD0], |context, memory| {
+        let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+            unreachable!()
+        };
+        x86.cr0 = 1;
+        x86.cpl = 0;
+        x86.gdtr_base = 0x2000;
+        x86.gdtr_limit = 0x1F;
+        context.flags.materialized = flags;
+        context.write_vreg(x86_gpr(0), 0x13);
+        memory.load(0x10, &ldt_descriptor(base, raw_limit, 3, true, true));
+    });
+    assert!(matches!(result, BlockResult::Exit(ExitReason::Halt)));
+    let ArchRegState::X86_64(x86) = &context.arch_regs else {
+        unreachable!()
+    };
+    assert_eq!(x86.ldtr_selector, 0x13);
+    assert_eq!(x86.ldtr_cache.base, base);
+    assert_eq!(x86.ldtr_cache.limit, (raw_limit << 12) | 0xFFF);
+    assert_eq!(x86.ldtr_cache.type_, 0x2);
+    assert!(x86.ldtr_cache.present);
+    assert_eq!(x86.ldtr_cache.dpl, 3);
+    assert!(x86.ldtr_cache.g);
+    assert!(!x86.ldtr_cache.s);
+    assert!(!x86.ldtr_cache.unusable);
+    assert_eq!(context.flags.materialized.to_rflags(), flags.to_rflags());
+}
+
+#[test]
+fn lldt_interpreter_compatibility_mode_reads_only_the_legacy_descriptor() {
+    let (result, context) = execute_lldt(&[0x0F, 0x00, 0xD0], |context, memory| {
+        let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+            unreachable!()
+        };
+        x86.cs_l = false;
+        x86.cr0 = 1;
+        x86.cpl = 0;
+        x86.gdtr_base = 0x2000;
+        x86.gdtr_limit = 0x17;
+        context.write_vreg(x86_gpr(0), 0x10);
+        let descriptor = ldt_descriptor(0xDEAD_BEEF, 0xABCDE, 2, true, true);
+        memory.load(0x10, &descriptor[..8]);
+    });
+    assert!(matches!(result, BlockResult::Exit(ExitReason::Halt)));
+    let ArchRegState::X86_64(x86) = &context.arch_regs else {
+        unreachable!()
+    };
+    assert_eq!(x86.ldtr_selector, 0x10);
+    assert_eq!(x86.ldtr_cache.base, 0xDEAD_BEEF);
+    assert_eq!(x86.ldtr_cache.limit, 0xABCDEFFF);
+    assert_eq!(x86.ldtr_cache.dpl, 2);
+    assert!(!x86.ldtr_cache.unusable);
+}
+
+#[test]
+fn lldt_interpreter_null_selectors_invalidate_without_descriptor_access() {
+    for selector in 0_u64..=3 {
+        let (result, context) = execute_lldt(&[0x0F, 0x00, 0xD0], |context, _| {
+            let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+                unreachable!()
+            };
+            x86.cr0 = 1;
+            x86.cpl = 0;
+            x86.gdtr_base = u64::MAX;
+            x86.gdtr_limit = 0;
+            x86.ldtr_selector = 0x1234;
+            x86.ldtr_cache.base = 0xDEAD_BEEF;
+            context.write_vreg(x86_gpr(0), selector);
+        });
+        assert!(matches!(result, BlockResult::Exit(ExitReason::Halt)));
+        let ArchRegState::X86_64(x86) = &context.arch_regs else {
+            unreachable!()
+        };
+        assert_eq!(u64::from(x86.ldtr_selector), selector);
+        assert!(x86.ldtr_cache.unusable);
+        assert_eq!(x86.ldtr_cache.base, 0);
+        assert!(!x86.ldtr_cache.present);
+    }
+}
+
+#[test]
+fn lldt_interpreter_faults_are_ordered_and_noncommitting() {
+    for (name, selector, limit, descriptor, expected_np) in [
+        (
+            "TI",
+            0x14,
+            0x1F,
+            ldt_descriptor(0, 0, 0, true, false),
+            false,
+        ),
+        (
+            "limit",
+            0x10,
+            0x1E,
+            ldt_descriptor(0, 0, 0, true, false),
+            false,
+        ),
+        (
+            "wrong type",
+            0x10,
+            0x1F,
+            {
+                let mut value = ldt_descriptor(0, 0, 0, true, false);
+                value[5] = (value[5] & 0xF0) | 0x9;
+                value
+            },
+            false,
+        ),
+        (
+            "not present",
+            0x10,
+            0x1F,
+            ldt_descriptor(0, 0, 0, false, false),
+            true,
+        ),
+        (
+            "noncanonical base",
+            0x10,
+            0x1F,
+            ldt_descriptor(0x0000_8000_0000_0000, 0, 0, true, false),
+            false,
+        ),
+        (
+            "reserved high",
+            0x10,
+            0x1F,
+            {
+                let mut value = ldt_descriptor(0, 0, 0, true, false);
+                value[12] = 1;
+                value
+            },
+            false,
+        ),
+    ] {
+        let (result, context) = execute_lldt(&[0x0F, 0x00, 0xD0], |context, memory| {
+            let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+                unreachable!()
+            };
+            x86.cr0 = 1;
+            x86.cpl = 0;
+            x86.gdtr_base = 0x2000;
+            x86.gdtr_limit = limit;
+            x86.ldtr_selector = 0x2468;
+            x86.ldtr_cache.base = 0xDEAD_BEEF;
+            context.write_vreg(x86_gpr(0), selector);
+            memory.load(0x10, &descriptor);
+        });
+        if expected_np {
+            assert!(
+                matches!(
+                    result,
+                    BlockResult::Exit(ExitReason::SegmentNotPresent {
+                        error_code: 0x10,
+                        ..
+                    })
+                ),
+                "{name}: {result:?}"
+            );
+        } else {
+            assert!(
+                matches!(
+                    result,
+                    BlockResult::Exit(ExitReason::GeneralProtection { error_code, .. })
+                        if error_code == (selector & 0xFFFC) as u32
+                ),
+                "{name}: {result:?}"
+            );
+        }
+        let ArchRegState::X86_64(x86) = &context.arch_regs else {
+            unreachable!()
+        };
+        assert_eq!(x86.ldtr_selector, 0x2468, "{name}");
+        assert_eq!(x86.ldtr_cache.base, 0xDEAD_BEEF, "{name}");
+    }
+
+    let mut wrong_type = ldt_descriptor(0, 0, 0, true, false);
+    wrong_type[5] = (wrong_type[5] & 0xF0) | 0x9;
+    let (result, context) = execute_lldt(&[0x0F, 0x00, 0xD0], |context, memory| {
+        let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+            unreachable!()
+        };
+        x86.cr0 = 1;
+        x86.cpl = 0;
+        x86.gdtr_base = 0x20E8;
+        x86.gdtr_limit = 0x1F;
+        x86.ldtr_selector = 0x2468;
+        x86.ldtr_cache.base = 0xDEAD_BEEF;
+        context.write_vreg(x86_gpr(0), 0x10);
+        memory.load(0xF8, &wrong_type[..8]);
+    });
+    assert!(matches!(
+        result,
+        BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+    ));
+    let ArchRegState::X86_64(x86) = &context.arch_regs else {
+        unreachable!()
+    };
+    assert_eq!(x86.ldtr_selector, 0x2468);
+    assert_eq!(x86.ldtr_cache.base, 0xDEAD_BEEF);
+}
+
+#[test]
+fn lldt_interpreter_apx_mode_privilege_then_memory_fault_priority_is_precise() {
+    let bytes = [0xD5, 0x91, 0x00, 0x17]; // LLDT word ptr [R31]
+    for (name, apx, cr0, rflags, cpl, expected_undefined) in [
+        ("APX", false, 0, 1 << 17, 3, true),
+        ("real mode", true, 0, 0, 3, true),
+        ("VM86", true, 1, 1 << 17, 3, true),
+        ("CPL", true, 1, 0, 3, false),
+    ] {
+        let (result, context) = execute_lldt(&bytes, |context, _| {
+            let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+                unreachable!()
+            };
+            x86.apx_enabled = apx;
+            x86.cr0 = cr0;
+            x86.rflags = rflags;
+            x86.cpl = cpl;
+            x86.ldtr_selector = 0x2468;
+            context.write_vreg(x86_gpr(31), 0x3000);
+        });
+        if expected_undefined {
+            assert!(
+                matches!(result, BlockResult::Exit(ExitReason::Undefined { .. })),
+                "{name}: {result:?}"
+            );
+        } else {
+            assert!(
+                matches!(
+                    result,
+                    BlockResult::Exit(ExitReason::GeneralProtection { error_code: 0, .. })
+                ),
+                "{name}: {result:?}"
+            );
+        }
+        let ArchRegState::X86_64(x86) = &context.arch_regs else {
+            unreachable!()
+        };
+        assert_eq!(x86.ldtr_selector, 0x2468, "{name}");
+    }
+
+    let (result, _) = execute_lldt(&[0x0F, 0x00, 0x10], |context, _| {
+        let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+            unreachable!()
+        };
+        x86.cr0 = 1;
+        x86.cpl = 0;
+        context.write_vreg(x86_gpr(0), 0x3000);
+    });
+    assert!(matches!(
+        result,
+        BlockResult::Exit(ExitReason::MemoryFault { write: false, .. })
+    ));
 }
 
 #[test]

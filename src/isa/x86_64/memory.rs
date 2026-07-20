@@ -507,6 +507,21 @@ impl Mmu {
         out.append(&mut self.mem_rec);
     }
 
+    /// Snapshot and restore the buffered embedder-visible access stream around
+    /// a speculative native helper. A failed helper is replayed by the direct
+    /// interpreter, so its discarded RAM probes must not be reported twice.
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[inline]
+    pub(super) fn mem_record_checkpoint(&self) -> usize {
+        self.mem_rec.len()
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[inline]
+    pub(super) fn restore_mem_record_checkpoint(&mut self, checkpoint: usize) {
+        self.mem_rec.truncate(checkpoint);
+    }
+
     /// True while servicing an instruction fetch (sets the suppress window).
     #[inline]
     pub(super) fn set_fetch_active(&mut self, on: bool) {
@@ -835,6 +850,52 @@ impl Mmu {
             }
             Err(e) => Err(e),
         }
+    }
+
+    /// Check that an entire translated read resolves to ordinary RAM without
+    /// performing the data access. Native helpers that may subsequently deopt
+    /// use this fail-closed probe to avoid speculatively touching MMIO and then
+    /// repeating the device read during direct replay.
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    pub(super) fn read_range_is_plain_ram(
+        &mut self,
+        vaddr: u64,
+        len: usize,
+        sregs: &SystemRegisters,
+    ) -> bool {
+        if len == 0 {
+            return true;
+        }
+        if vaddr.checked_add(len as u64 - 1).is_none() {
+            return false;
+        }
+
+        let mut current = vaddr;
+        let mut remaining = len;
+        while remaining != 0 {
+            let page_remaining = (0x1000 - (current & 0xFFF)) as usize;
+            let chunk = remaining.min(page_remaining);
+            let Ok(paddr) = self.translate(current, AccessType::Read, sregs) else {
+                return false;
+            };
+            let Some(physical_end) = paddr.checked_add(chunk as u64) else {
+                return false;
+            };
+            let overlaps_lapic = paddr < LAPIC_BASE + LAPIC_SIZE && physical_end > LAPIC_BASE;
+            let overlaps_pci = paddr < self.pci_ap_hi && physical_end > self.pci_ap_lo;
+            if !self.in_ram(paddr, chunk) || overlaps_lapic || overlaps_pci {
+                return false;
+            }
+
+            remaining -= chunk;
+            if remaining != 0 {
+                let Some(next) = current.checked_add(chunk as u64) else {
+                    return false;
+                };
+                current = next;
+            }
+        }
+        true
     }
 
     /// Fallback translation for direct map addresses outside kernel's page tables.

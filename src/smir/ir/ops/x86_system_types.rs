@@ -108,6 +108,26 @@ pub struct X86SystemSelectorStoreOp {
     pub requires_apx: bool,
 }
 
+/// Architecturally fixed 16-bit source of LLDT/LTR. Operand-size prefixes do
+/// not alter either register reads or memory-transfer width.
+#[derive(Clone, Debug)]
+pub enum X86SystemSelectorSource {
+    Register { src: VReg },
+    Memory { addr: Address },
+}
+
+/// Load one system-segment selector and its hidden descriptor cache. LLDT is
+/// currently emitted with `selector=LDTR`; the shared shape reserves the exact
+/// LTR representation for its distinct busy-bit implementation. Successful
+/// execution serializes and hands off at `next_pc`.
+#[derive(Clone, Debug)]
+pub struct X86SystemSelectorLoadOp {
+    pub selector: X86SystemSelector,
+    pub source: X86SystemSelectorSource,
+    pub requires_apx: bool,
+    pub next_pc: u64,
+}
+
 /// Architecturally distinct LMSW sources. Both forms read exactly 16 bits;
 /// operand-size prefixes never change the source width.
 #[derive(Clone, Debug)]

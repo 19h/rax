@@ -3746,6 +3746,7 @@ mod descriptor_table;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use descriptor_table::{
     rax_jit_descriptor_table_load, rax_jit_descriptor_table_store, rax_jit_system_selector,
+    rax_jit_system_selector_load,
 };
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4638,6 +4639,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86DescriptorTableStore(..)
                                 | OpKind::X86DescriptorTableLoad(..)
                                 | OpKind::X86SystemSelectorStore(..)
+                                | OpKind::X86SystemSelectorLoad(..)
                                 | OpKind::X86WriteControl { .. }
                                 | OpKind::X86ReadDebug { .. }
                                 | OpKind::X86WriteDebug { .. }
@@ -4914,6 +4916,7 @@ impl X86_64Vcpu {
         gr.descriptor_store_fn = rax_jit_descriptor_table_store as usize as u64;
         gr.descriptor_load_fn = rax_jit_descriptor_table_load as usize as u64;
         gr.system_selector_fn = rax_jit_system_selector as usize as u64;
+        gr.system_selector_load_fn = rax_jit_system_selector_load as usize as u64;
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;

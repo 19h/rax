@@ -1,7 +1,8 @@
 use rax::vm::vcpu::Registers;
 
 use crate::common::{
-    DATA_ADDR, VCpu, read_mem_at_u16, run_until_hlt, setup_apx_vm, setup_vm, write_mem_at_u16,
+    Bytes, DATA_ADDR, GDT_BASE, GuestAddress, VCpu, read_mem_at_u16, run_until_hlt, setup_apx_vm,
+    setup_vm, write_mem_at_u16,
 };
 
 // SLDT - Store Local Descriptor Table Register
@@ -494,19 +495,31 @@ fn test_sldt_preserves_registers() {
 #[test]
 fn test_lldt_sldt_roundtrip() {
     let code = [
-        0x66, 0xb8, 0x08, 0x00, // MOV AX, 0x0008
+        0x66, 0xb8, 0x10, 0x00, // MOV AX, 0x0010
         0x0f, 0x00, 0xd0, // LLDT AX
         0x66, 0xbb, 0x00, 0x00, // MOV BX, 0x0000
         0x0f, 0x00, 0xc3, // SLDT BX
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let ldt_descriptor = [
+        0xff, 0xff, // Limit bits 0-15
+        0x00, 0x00, // Base bits 0-15
+        0x00, // Base bits 16-23
+        0x82, // Present system descriptor, type 2 (LDT)
+        0x00, // Byte-granular limit; reserved L/D bits clear
+        0x00, // Base bits 24-31
+        0x00, 0x00, 0x00, 0x00, // Base bits 32-63
+        0x00, 0x00, 0x00, 0x00, // Reserved
+    ];
+    mem.write_slice(&ldt_descriptor, GuestAddress(GDT_BASE + 0x10))
+        .unwrap();
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // BX should contain the LDTR value we loaded (0x0008)
+    // BX should contain the LDTR value we loaded (0x0010).
     assert_eq!(
         regs.rbx & 0xFFFF,
-        0x0008,
+        0x0010,
         "SLDT should return value loaded by LLDT"
     );
 }

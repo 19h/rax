@@ -3992,6 +3992,11 @@ pub enum OpKind {
     /// 16-/32-/64-bit width; memory destinations store exactly 2 bytes.
     X86SystemSelectorStore(X86SystemSelectorStoreOp),
 
+    /// LLDT/LTR read a fixed 16-bit source and load one implicit system-segment
+    /// selector plus its hidden descriptor cache. Successful execution is
+    /// serializing and terminates native execution at `next_pc`.
+    X86SystemSelectorLoad(X86SystemSelectorLoadOp),
+
     /// LMSW reads a fixed-width register or memory source after APX/CPL
     /// validation, updates CR0[3:0] without clearing PE, and is serializing.
     /// Native execution must hand off at `next_pc` after a successful commit.
@@ -4507,6 +4512,7 @@ impl OpKind {
                 | OpKind::X86ReadControl { .. }
                 | OpKind::X86Smsw(..)
                 | OpKind::X86SystemSelectorStore(..)
+                | OpKind::X86SystemSelectorLoad(..)
                 | OpKind::X86Lmsw(..)
                 | OpKind::X86DescriptorTableStore(..)
                 | OpKind::X86DescriptorTableLoad(..)
@@ -5060,6 +5066,7 @@ impl OpKind {
                 target: X86SystemSelectorTarget::Memory { .. },
                 ..
             })
+            | OpKind::X86SystemSelectorLoad(..)
             | OpKind::X86Lmsw(..)
             | OpKind::X86DescriptorTableStore(..)
             | OpKind::X86DescriptorTableLoad(..)
@@ -5237,6 +5244,7 @@ impl OpKind {
                     | OpKind::X86ReadControl { .. }
                     | OpKind::X86Smsw(..)
                     | OpKind::X86SystemSelectorStore(..)
+                    | OpKind::X86SystemSelectorLoad(..)
                     | OpKind::X86Lmsw(..)
                     | OpKind::X86DescriptorTableStore(..)
                     | OpKind::X86DescriptorTableLoad(..)
@@ -5355,6 +5363,7 @@ impl OpKind {
                 }
                 | OpKind::X86FxRstor { .. }
                 | OpKind::X86XRstor { .. }
+                | OpKind::X86SystemSelectorLoad(..)
                 | OpKind::X86DescriptorTableLoad(..)
                 | OpKind::X86Cmpxchg8b16b { .. }
                 | OpKind::X86XSave {

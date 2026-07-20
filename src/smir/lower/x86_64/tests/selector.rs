@@ -1,10 +1,14 @@
-//! Fault-precise helper-backed native lowering for SLDT/STR.
+//! Fault-precise helper-backed native lowering for SLDT/STR and LLDT.
 
 use super::*;
-use crate::smir::ir::ops::{X86SystemSelector, X86SystemSelectorStoreOp, X86SystemSelectorTarget};
+use crate::smir::ir::ops::{
+    X86SystemSelector, X86SystemSelectorLoadOp, X86SystemSelectorSource, X86SystemSelectorStoreOp,
+    X86SystemSelectorTarget,
+};
 use crate::smir::lower::{
     X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CPL_OFFSET, X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET,
     X86_GUEST_RFLAGS_OFFSET, X86_GUEST_SYSTEM_SELECTOR_FN_OFFSET,
+    X86_GUEST_SYSTEM_SELECTOR_LOAD_FN_OFFSET,
 };
 
 fn x86(reg: X86Reg) -> VReg {
@@ -27,6 +31,26 @@ fn memory(selector: X86SystemSelector, addr: Address, requires_apx: bool) -> OpK
         selector,
         target: X86SystemSelectorTarget::Memory { addr },
         requires_apx,
+    })
+}
+
+fn load_register(index: u8, requires_apx: bool, next_pc: u64) -> OpKind {
+    OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+        selector: X86SystemSelector::Ldtr,
+        source: X86SystemSelectorSource::Register {
+            src: x86(X86Reg::gpr(index)),
+        },
+        requires_apx,
+        next_pc,
+    })
+}
+
+fn load_memory(addr: Address, requires_apx: bool, next_pc: u64) -> OpKind {
+    OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+        selector: X86SystemSelector::Ldtr,
+        source: X86SystemSelectorSource::Memory { addr },
+        requires_apx,
+        next_pc,
     })
 }
 
@@ -179,6 +203,180 @@ fn lower_selector_store_rejects_every_non_lifter_shape() {
 }
 
 #[test]
+fn lower_lldt_requires_guards_helpers_serializes_and_never_executes_host_lldt() {
+    let register = load_register(0, false, 0x1003);
+    assert!(matches!(
+        lower(register.clone(), true, false),
+        Err(LowerError::UnsupportedOp { .. })
+    ));
+    assert!(matches!(
+        lower(register.clone(), false, true),
+        Err(LowerError::UnsupportedOp { .. })
+    ));
+    let (register_code, _) = lower(register, true, true).expect("guarded LLDT register lowering");
+    let (apx_code, _) = lower(load_register(31, true, 0x1004), true, true)
+        .expect("guarded APX LLDT register lowering");
+    let (memory_code, _) = lower(
+        load_memory(Address::Direct(x86(X86Reg::Rax)), false, 0x1003),
+        true,
+        true,
+    )
+    .expect("guarded LLDT memory lowering");
+
+    for code in [&register_code, &apx_code, &memory_code] {
+        assert!(
+            code.windows(4).any(|window| {
+                window == (X86_GUEST_SYSTEM_SELECTOR_LOAD_FN_OFFSET as u32).to_le_bytes()
+            }),
+            "missing LLDT helper offset: {code:02X?}"
+        );
+        for offset in [
+            X86_GUEST_CR0_OFFSET,
+            X86_GUEST_RFLAGS_OFFSET,
+            X86_GUEST_CPL_OFFSET,
+        ] {
+            assert!(
+                code.windows(4)
+                    .any(|window| window == (offset as u32).to_le_bytes()),
+                "missing LLDT state offset {offset}: {code:02X?}"
+            );
+        }
+        assert!(
+            code.windows(2).any(|window| window == [0x0F, 0xA2]),
+            "successful LLDT must serialize: {code:02X?}"
+        );
+        assert!(
+            !code
+                .windows(3)
+                .any(|window| window[..2] == [0x0F, 0x00] && ((window[2] >> 3) & 7) == 2),
+            "guest LLDT must not update the host LDTR: {code:02X?}"
+        );
+    }
+    assert!(
+        apx_code
+            .windows(4)
+            .any(|window| window == (X86_GUEST_APX_ENABLED_OFFSET as u32).to_le_bytes())
+    );
+}
+
+#[test]
+fn lower_lldt_rejects_every_non_lifter_shape_and_frontier() {
+    for malformed in [
+        OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+            selector: X86SystemSelector::Tr,
+            source: X86SystemSelectorSource::Register {
+                src: x86(X86Reg::Rax),
+            },
+            requires_apx: false,
+            next_pc: 0x1003,
+        }),
+        OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+            selector: X86SystemSelector::Ldtr,
+            source: X86SystemSelectorSource::Register { src: VReg::virt(0) },
+            requires_apx: false,
+            next_pc: 0x1003,
+        }),
+        load_register(16, false, 0x1004),
+        load_memory(Address::Direct(VReg::virt(1)), false, 0x1003),
+        load_memory(Address::Direct(x86(X86Reg::R31)), false, 0x1004),
+        load_memory(
+            Address::X86Addr32(Box::new(Address::X86Addr32(Box::new(Address::Direct(
+                x86(X86Reg::Rax),
+            ))))),
+            false,
+            0x1004,
+        ),
+        load_memory(
+            Address::BaseIndexScale {
+                base: Some(x86(X86Reg::Rax)),
+                index: x86(X86Reg::Rcx),
+                scale: 3,
+                disp: 0,
+                disp_size: DispSize::Auto,
+            },
+            false,
+            0x1004,
+        ),
+        load_register(0, false, 0x1002),
+        load_register(0, false, 0x1010),
+        load_register(0, false, 0x0FFF),
+    ] {
+        assert!(matches!(
+            lower(malformed, true, true),
+            Err(LowerError::InvalidOperand { .. })
+        ));
+    }
+
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    builder.push_op(0x1000, load_register(0, false, 0x1003));
+    builder.set_terminator(Terminator::Return { values: vec![] });
+    let mut hinted = builder.finish();
+    hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::RexByteReg);
+    let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_mem_helpers(true);
+    lowerer.set_jit_fault_deopt_guards(true);
+    assert!(matches!(
+        lowerer.lower_function(&hinted),
+        Err(LowerError::InvalidOperand { .. })
+    ));
+}
+
+#[test]
+fn lower_lldt_serialization_frontier_ends_the_native_block() {
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    builder.push_op(0x1000, load_register(0, false, 0x1003));
+    builder.push_op(
+        0x1003,
+        OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+            selector: X86SystemSelector::Tr,
+            source: X86SystemSelectorSource::Register {
+                src: x86(X86Reg::Rax),
+            },
+            requires_apx: false,
+            next_pc: 0x1006,
+        }),
+    );
+    builder.set_terminator(Terminator::Return { values: vec![] });
+
+    let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_mem_helpers(true);
+    lowerer.set_jit_fault_deopt_guards(true);
+    lowerer
+        .lower_function(&builder.finish())
+        .expect("LLDT must end lowering before later same-block operations");
+}
+
+#[test]
+fn lower_lldt_wraps_its_implicit_memory_helper_with_vector_state_when_requested() {
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    builder.push_op(0x1000, load_register(0, false, 0x1003));
+    builder.set_terminator(Terminator::Return { values: vec![] });
+    let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_mem_helpers(true);
+    lowerer.set_jit_fault_deopt_guards(true);
+    lowerer.set_preserve_vector_mem_helpers(true);
+    lowerer
+        .lower_function(&builder.finish())
+        .expect("lower vector-preserving LLDT");
+    let code = lowerer.finalize().expect("finalize vector-preserving LLDT");
+
+    let store_zmm0 = [0x62, 0xF1, 0xFE, 0x48, 0x7F, 0x40, 0x05];
+    let load_zmm0 = [0x62, 0xF1, 0xFE, 0x48, 0x6F, 0x41, 0x05];
+    assert_eq!(
+        code.windows(store_zmm0.len())
+            .filter(|window| *window == store_zmm0)
+            .count(),
+        1
+    );
+    assert_eq!(
+        code.windows(load_zmm0.len())
+            .filter(|window| *window == load_zmm0)
+            .count(),
+        2 // distinct success and fault-restoration paths
+    );
+}
+
+#[test]
 fn lower_selector_store_wraps_its_system_helper_with_vector_state_when_requested() {
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
     builder.push_op(
@@ -222,6 +420,10 @@ struct SelectorContext {
     last_value: u64,
     last_size: u64,
     store_ok: u64,
+    load_calls: u64,
+    last_operand: u64,
+    last_encoding: u32,
+    load_ok: u64,
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -248,6 +450,144 @@ extern "C" fn store(context: *mut SelectorContext, addr: u64, value: u64, size: 
     context.last_value = value;
     context.last_size = size;
     context.store_ok
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+unsafe extern "C" fn load_selector(
+    state: *mut crate::smir::lower::runtime::GuestRegs,
+    operand: u64,
+    encoding: u32,
+) -> u64 {
+    let state = unsafe { &mut *state };
+    let context = unsafe { &mut *(state.ctx as *mut SelectorContext) };
+    context.load_calls += 1;
+    context.last_operand = operand;
+    context.last_encoding = encoding;
+    context.load_ok
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+fn execute_load(
+    kind: OpKind,
+    context: &mut SelectorContext,
+    configure: impl FnOnce(&mut crate::smir::lower::runtime::GuestRegs),
+) -> crate::smir::lower::runtime::GuestRegs {
+    use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+    let (code, entry) = lower(kind, true, true).expect("lower guarded LLDT");
+    let exec = ExecMem::new(&code).expect("map guarded LLDT");
+    let mut regs = GuestRegs::default();
+    for (index, value) in regs.gpr.iter_mut().enumerate() {
+        *value = 0xA500_0000_0000_0000 | index as u64;
+    }
+    regs.cr0 = 1;
+    regs.cpl = 0;
+    regs.apx_enabled = 1;
+    regs.rflags = 0x2 | 0x08D5 | (1 << 10);
+    regs.ac_flag = 1;
+    regs.exit_pc = 0xDEAD_BEEF_DEAD_BEEF;
+    regs.ctx = (context as *mut SelectorContext) as u64;
+    regs.system_selector_load_fn = load_selector as usize as u64;
+    configure(&mut regs);
+    exec.run(entry, &mut regs);
+    regs
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_lldt_register_sources_cover_stack_aliases_egprs_flags_and_exact_handoff() {
+    for index in [0_u8, 4, 5, 8, 15, 16, 31] {
+        let requires_apx = index >= 16;
+        let operand = 0xA500_0000_0000_0000 | u64::from(index);
+        let mut context = SelectorContext {
+            load_ok: 1,
+            ..SelectorContext::default()
+        };
+        let regs = execute_load(
+            load_register(index, requires_apx, 0x1004),
+            &mut context,
+            |_| {},
+        );
+
+        assert_eq!(context.load_calls, 1, "source={index}");
+        assert_eq!(context.last_operand, operand, "source={index}");
+        assert_eq!(context.last_encoding, u32::from(requires_apx) << 1);
+        for (other, value) in regs.gpr.iter().enumerate() {
+            assert_eq!(
+                *value,
+                0xA500_0000_0000_0000 | other as u64,
+                "source={index}, GPR={other}"
+            );
+        }
+        assert_eq!(regs.rflags & (0x08D5 | (1 << 10)), 0x08D5 | (1 << 10));
+        assert_eq!(regs.ac_flag, 1);
+        assert_eq!(regs.exit_pc, 0x1004);
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_lldt_memory_address_and_dynamic_failures_are_precise_and_noncommitting() {
+    let address = Address::BaseIndexScale {
+        base: Some(x86(X86Reg::Rsp)),
+        index: x86(X86Reg::R31),
+        scale: 2,
+        disp: -8,
+        disp_size: DispSize::Disp8,
+    };
+    let mut success = SelectorContext {
+        load_ok: 1,
+        ..SelectorContext::default()
+    };
+    let regs = execute_load(
+        load_memory(address.clone(), true, 0x1005),
+        &mut success,
+        |regs| {
+            regs.gpr[4] = 0x2000;
+            regs.gpr[31] = 0x24;
+        },
+    );
+    assert_eq!(success.load_calls, 1);
+    assert_eq!(success.last_operand, 0x2000 + 0x24 * 2 - 8);
+    assert_eq!(success.last_encoding, 0x3);
+    assert_eq!(regs.gpr[4], 0x2000);
+    assert_eq!(regs.gpr[31], 0x24);
+    assert_eq!(regs.exit_pc, 0x1005);
+
+    for (name, apx, cr0, rflags, cpl, helper_ok, expected_calls) in [
+        ("APX", 0, 1, 0, 0, 1, 0),
+        ("real mode", 1, 0, 0, 0, 1, 0),
+        ("VM86", 1, 1, 1 << 17, 0, 1, 0),
+        ("CPL", 1, 1, 0, 3, 1, 0),
+        ("helper", 1, 1, 0, 0, 0, 1),
+    ] {
+        let mut context = SelectorContext {
+            load_ok: helper_ok,
+            ..SelectorContext::default()
+        };
+        let regs = execute_load(
+            load_memory(address.clone(), true, 0x1005),
+            &mut context,
+            |regs| {
+                regs.gpr[4] = 0x2000;
+                regs.gpr[31] = 0x24;
+                regs.apx_enabled = apx;
+                regs.cr0 = cr0;
+                regs.rflags |= rflags;
+                regs.cpl = cpl;
+            },
+        );
+        assert_eq!(context.load_calls, expected_calls, "{name}");
+        assert_eq!(regs.gpr[4], 0x2000, "{name}");
+        assert_eq!(regs.gpr[31], 0x24, "{name}");
+        assert_eq!(
+            regs.rflags & (0x08D5 | (1 << 10)),
+            0x08D5 | (1 << 10),
+            "{name}"
+        );
+        assert_eq!(regs.ac_flag, 1, "{name}");
+        assert_eq!(regs.exit_pc, 0x1000, "{name}");
+    }
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]

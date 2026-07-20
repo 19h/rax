@@ -1,616 +1,543 @@
-use rax::vm::vcpu::Registers;
+//! Architectural LLDT coverage: operand decode, GDT validation, hidden state,
+//! fault priority, and non-commit behavior.
 
-use crate::common::{DATA_ADDR, run_until_hlt, setup_vm, write_mem_at_u16};
+use rax::isa::x86_64::X86_64Vcpu;
+use rax::vm::vcpu::{Registers, Segment, VCpu};
 
-// LLDT - Load Local Descriptor Table Register
-// Opcode: 0F 00 /2
-// Loads the LDTR from a 16-bit segment selector
-// The selector is loaded from a register or memory operand
+use crate::common::{
+    Bytes, CODE_ADDR, DATA_ADDR, GDT_BASE, GuestAddress, GuestMemoryMmap, run_until_hlt,
+    setup_apx_vm, setup_vm, setup_vm_compat, setup_vm_no_idt, write_mem_at_u16,
+};
 
-// LLDT r16 - Load LDTR from AX
+fn set_gpr(regs: &mut Registers, index: u8, value: u64) {
+    match index {
+        0 => regs.rax = value,
+        1 => regs.rcx = value,
+        2 => regs.rdx = value,
+        3 => regs.rbx = value,
+        4 => regs.rsp = value,
+        5 => regs.rbp = value,
+        6 => regs.rsi = value,
+        7 => regs.rdi = value,
+        8 => regs.r8 = value,
+        9 => regs.r9 = value,
+        10 => regs.r10 = value,
+        11 => regs.r11 = value,
+        12 => regs.r12 = value,
+        13 => regs.r13 = value,
+        14 => regs.r14 = value,
+        15 => regs.r15 = value,
+        16 => regs.r16 = value,
+        17 => regs.r17 = value,
+        18 => regs.r18 = value,
+        19 => regs.r19 = value,
+        20 => regs.r20 = value,
+        21 => regs.r21 = value,
+        22 => regs.r22 = value,
+        23 => regs.r23 = value,
+        24 => regs.r24 = value,
+        25 => regs.r25 = value,
+        26 => regs.r26 = value,
+        27 => regs.r27 = value,
+        28 => regs.r28 = value,
+        29 => regs.r29 = value,
+        30 => regs.r30 = value,
+        31 => regs.r31 = value,
+        _ => unreachable!(),
+    }
+}
+
+fn get_gpr(regs: &Registers, index: u8) -> u64 {
+    match index {
+        0 => regs.rax,
+        1 => regs.rcx,
+        2 => regs.rdx,
+        3 => regs.rbx,
+        4 => regs.rsp,
+        5 => regs.rbp,
+        6 => regs.rsi,
+        7 => regs.rdi,
+        8 => regs.r8,
+        9 => regs.r9,
+        10 => regs.r10,
+        11 => regs.r11,
+        12 => regs.r12,
+        13 => regs.r13,
+        14 => regs.r14,
+        15 => regs.r15,
+        16 => regs.r16,
+        17 => regs.r17,
+        18 => regs.r18,
+        19 => regs.r19,
+        20 => regs.r20,
+        21 => regs.r21,
+        22 => regs.r22,
+        23 => regs.r23,
+        24 => regs.r24,
+        25 => regs.r25,
+        26 => regs.r26,
+        27 => regs.r27,
+        28 => regs.r28,
+        29 => regs.r29,
+        30 => regs.r30,
+        31 => regs.r31,
+        _ => unreachable!(),
+    }
+}
+
+fn ldt_descriptor(
+    base: u64,
+    raw_limit: u32,
+    dpl: u8,
+    present: bool,
+    granularity: bool,
+    avl: bool,
+) -> [u8; 16] {
+    assert!(raw_limit <= 0xF_FFFF);
+    let mut low = u64::from(raw_limit & 0xFFFF)
+        | ((base & 0xFFFF) << 16)
+        | (((base >> 16) & 0xFF) << 32)
+        | (0x2_u64 << 40)
+        | (u64::from(dpl & 3) << 45)
+        | (u64::from(present) << 47)
+        | (u64::from((raw_limit >> 16) & 0xF) << 48)
+        | (u64::from(avl) << 52)
+        | (((base >> 24) & 0xFF) << 56);
+    if granularity {
+        low |= 1 << 55;
+    }
+    let high = (base >> 32) & 0xFFFF_FFFF;
+    let mut bytes = [0_u8; 16];
+    bytes[..8].copy_from_slice(&low.to_le_bytes());
+    bytes[8..].copy_from_slice(&high.to_le_bytes());
+    bytes
+}
+
+fn install_descriptor(
+    vcpu: &mut X86_64Vcpu,
+    memory: &GuestMemoryMmap,
+    selector: u16,
+    descriptor: &[u8],
+) {
+    assert_eq!(selector & 0x4, 0);
+    let offset = u64::from(selector >> 3) * 8;
+    memory
+        .write_slice(descriptor, GuestAddress(GDT_BASE + offset))
+        .unwrap();
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.gdt.limit = sregs
+        .gdt
+        .limit
+        .max((offset + descriptor.len() as u64 - 1) as u16);
+    vcpu.set_sregs(&sregs).unwrap();
+}
+
+fn install_valid_descriptor(vcpu: &mut X86_64Vcpu, memory: &GuestMemoryMmap) {
+    install_descriptor(
+        vcpu,
+        memory,
+        0x10,
+        &ldt_descriptor(0x1234_5678, 0x0FFFF, 0, true, false, false),
+    );
+}
+
+fn exception_without_idt(vcpu: &mut X86_64Vcpu) -> String {
+    format!(
+        "{:#}",
+        vcpu.step()
+            .expect_err("exception delivery must fail against the empty test IDT")
+    )
+}
+
+fn segment_fingerprint(segment: &Segment) -> (u64, u32, u16, u8, bool, u8, bool, bool, bool) {
+    (
+        segment.base,
+        segment.limit,
+        segment.selector,
+        segment.type_,
+        segment.present,
+        segment.dpl,
+        segment.g,
+        segment.avl,
+        segment.unusable,
+    )
+}
+
 #[test]
-fn test_lldt_ax() {
-    let code = [
-        0x66, 0xb8, 0x08, 0x00, // MOV AX, 0x0008
-        0x0f, 0x00, 0xd0, // LLDT AX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+fn lldt_register_forms_cover_every_legacy_and_rex_source_and_ignore_operand_size() {
+    for index in 0_u8..16 {
+        for operand_prefix in [None, Some(0x66), Some(0x48)] {
+            let mut code = Vec::new();
+            if let Some(prefix) = operand_prefix {
+                code.push(prefix);
+            }
+            if index >= 8 {
+                code.push(0x41); // REX.B
+            }
+            code.extend_from_slice(&[0x0F, 0x00, 0xD0 | (index & 7), 0xF4]);
+
+            let source = 0xA5A5_5A5A_0000_0010;
+            let mut initial = Registers::default();
+            set_gpr(&mut initial, index, source);
+            let (mut vcpu, memory) = setup_vm(&code, Some(initial));
+            install_valid_descriptor(&mut vcpu, &memory);
+
+            let regs = run_until_hlt(&mut vcpu).unwrap();
+            assert_eq!(
+                get_gpr(&regs, index),
+                source,
+                "index={index}, prefix={operand_prefix:?}"
+            );
+            assert_eq!(vcpu.get_sregs().unwrap().ldt.selector, 0x10);
+        }
+    }
+}
+
+#[test]
+fn lldt_rex2_reads_egpr_and_requires_apx() {
+    let code = [0xD5, 0x91, 0x00, 0xD7, 0xF4]; // LLDT R31W; HLT
+    let mut initial = Registers::default();
+    initial.r31 = 0x3131_3131_0000_0010;
+    let (mut vcpu, memory) = setup_apx_vm(&code, Some(initial.clone()));
+    install_valid_descriptor(&mut vcpu, &memory);
     let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.r31, 0x3131_3131_0000_0010);
+    assert_eq!(vcpu.get_sregs().unwrap().ldt.selector, 0x10);
 
-    assert_eq!(regs.rax & 0xFFFF, 0x0008, "AX should be preserved");
-    assert_eq!(regs.rip, 0x1000 + 8, "RIP should point past HLT");
+    let (mut disabled, _) = setup_vm_no_idt(&code, Some(initial));
+    let error = exception_without_idt(&mut disabled);
+    assert!(error.contains("IDT entry 6 not present"), "{error}");
 }
 
-// LLDT r16 - Load LDTR from BX
 #[test]
-fn test_lldt_bx() {
-    let code = [
-        0x66, 0xbb, 0x10, 0x00, // MOV BX, 0x0010
-        0x0f, 0x00, 0xd3, // LLDT BX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+fn lldt_memory_address_forms_read_exactly_two_source_bytes() {
+    for index in 0_u8..16 {
+        let mut code = Vec::new();
+        if index >= 8 {
+            code.push(0x41); // REX.B
+        }
+        match index & 7 {
+            4 => code.extend_from_slice(&[0x0F, 0x00, 0x14, 0x24]), // [RSP/R12]
+            5 => code.extend_from_slice(&[0x0F, 0x00, 0x55, 0x00]), // [RBP/R13+0]
+            rm => code.extend_from_slice(&[0x0F, 0x00, 0x10 | rm]),
+        }
+        code.push(0xF4);
+
+        let mut initial = Registers::default();
+        set_gpr(&mut initial, index, DATA_ADDR);
+        let (mut vcpu, memory) = setup_vm(&code, Some(initial));
+        install_valid_descriptor(&mut vcpu, &memory);
+        memory
+            .write_slice(&[0x10, 0x00, 0xA5], GuestAddress(DATA_ADDR))
+            .unwrap();
+
+        let regs = run_until_hlt(&mut vcpu).unwrap();
+        assert_eq!(
+            vcpu.get_sregs().unwrap().ldt.selector,
+            0x10,
+            "index={index}"
+        );
+        assert_eq!(get_gpr(&regs, index), DATA_ADDR, "index={index}");
+    }
+
+    for (name, code, configure, source_addr) in [
+        (
+            "absolute SIB",
+            vec![0x0F, 0x00, 0x14, 0x25, 0x00, 0x20, 0x00, 0x00, 0xF4],
+            None,
+            DATA_ADDR,
+        ),
+        (
+            "RAX",
+            vec![0x0F, 0x00, 0x10, 0xF4],
+            Some((0_u8, DATA_ADDR)),
+            DATA_ADDR,
+        ),
+        (
+            "RSP+RCX*2+4",
+            vec![0x0F, 0x00, 0x54, 0x4C, 0x04, 0xF4],
+            Some((4_u8, DATA_ADDR - 0x24)),
+            DATA_ADDR,
+        ),
+        (
+            "RIP relative",
+            vec![0x0F, 0x00, 0x15, 0xF9, 0x0F, 0x00, 0x00, 0xF4],
+            None,
+            DATA_ADDR,
+        ),
+        (
+            "addr32 EIP relative",
+            vec![0x67, 0x0F, 0x00, 0x15, 0xF8, 0x0F, 0x00, 0x00, 0xF4],
+            None,
+            DATA_ADDR,
+        ),
+        (
+            "addr32 absolute",
+            vec![0x67, 0x0F, 0x00, 0x14, 0x25, 0x00, 0x20, 0x00, 0x00, 0xF4],
+            None,
+            DATA_ADDR,
+        ),
+    ] {
+        let mut initial = Registers::default();
+        if let Some((index, value)) = configure {
+            set_gpr(&mut initial, index, value);
+            if name == "RSP+RCX*2+4" {
+                initial.rcx = 0x10;
+            }
+        }
+        let (mut vcpu, memory) = setup_vm(&code, Some(initial));
+        install_valid_descriptor(&mut vcpu, &memory);
+        memory
+            .write_slice(&[0x10, 0x00, 0xA5], GuestAddress(source_addr))
+            .unwrap();
+
+        run_until_hlt(&mut vcpu).unwrap();
+        assert_eq!(vcpu.get_sregs().unwrap().ldt.selector, 0x10, "{name}");
+        let mut source = [0_u8; 3];
+        memory
+            .read_slice(&mut source, GuestAddress(source_addr))
+            .unwrap();
+        assert_eq!(source, [0x10, 0x00, 0xA5], "{name}");
+    }
+}
+
+#[test]
+fn lldt_loads_complete_hidden_descriptor_and_preserves_rflags_and_source() {
+    let code = [0x0F, 0x00, 0xD0, 0xF4]; // LLDT AX; HLT
+    let base = 0xFFFF_8000_1234_5000;
+    let raw_limit = 0xA_BCDE;
+    let mut initial = Registers {
+        rax: 0xA5A5_5A5A_0000_0013,
+        rflags: 0x0CD7,
+        ..Registers::default()
+    };
+    initial.rsp = 0x8000;
+    let (mut vcpu, memory) = setup_vm(&code, Some(initial));
+    install_descriptor(
+        &mut vcpu,
+        &memory,
+        0x13,
+        &ldt_descriptor(base, raw_limit, 3, true, true, true),
+    );
+
+    let before_flags = vcpu.get_regs().unwrap().rflags;
     let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rbx & 0xFFFF, 0x0010);
+    let ldtr = vcpu.get_sregs().unwrap().ldt;
+    assert_eq!(regs.rax, 0xA5A5_5A5A_0000_0013);
+    assert_eq!(regs.rflags, before_flags);
+    assert_eq!(ldtr.selector, 0x13);
+    assert_eq!(ldtr.base, base);
+    assert_eq!(ldtr.limit, (raw_limit << 12) | 0xFFF);
+    assert_eq!(ldtr.type_, 0x2);
+    assert!(ldtr.present);
+    assert_eq!(ldtr.dpl, 3);
+    assert!(ldtr.g);
+    assert!(ldtr.avl);
+    assert!(!ldtr.s);
+    assert!(!ldtr.unusable);
 }
 
-// LLDT r16 - Load LDTR from CX
 #[test]
-fn test_lldt_cx() {
-    let code = [
-        0x66, 0xb9, 0x18, 0x00, // MOV CX, 0x0018
-        0x0f, 0x00, 0xd1, // LLDT CX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
+fn lldt_null_selector_values_invalidate_ldtr_without_gdt_access() {
+    for selector in 0_u64..=3 {
+        let code = [0x0F, 0x00, 0xD0, 0xF4];
+        let initial = Registers {
+            rax: selector,
+            ..Registers::default()
+        };
+        let (mut vcpu, _) = setup_vm(&code, Some(initial));
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.gdt.base = u64::MAX;
+        sregs.gdt.limit = 0;
+        sregs.ldt = Segment {
+            base: 0xDEAD_BEEF,
+            selector: 0x2468,
+            present: true,
+            ..Segment::default()
+        };
+        vcpu.set_sregs(&sregs).unwrap();
 
-    assert_eq!(regs.rcx & 0xFFFF, 0x0018);
+        run_until_hlt(&mut vcpu).unwrap();
+        let ldtr = vcpu.get_sregs().unwrap().ldt;
+        assert_eq!(u64::from(ldtr.selector), selector);
+        assert_eq!(ldtr.base, 0);
+        assert!(!ldtr.present);
+        assert!(ldtr.unusable);
+    }
 }
 
-// LLDT r16 - Load LDTR from DX
 #[test]
-fn test_lldt_dx() {
-    let code = [
-        0x66, 0xba, 0x20, 0x00, // MOV DX, 0x0020
-        0x0f, 0x00, 0xd2, // LLDT DX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
+fn lldt_descriptor_faults_select_exact_vectors_and_do_not_commit() {
+    for (name, selector, limit, descriptor, vector) in [
+        (
+            "TI",
+            0x14,
+            0x1F,
+            ldt_descriptor(0, 0, 0, true, false, false),
+            13,
+        ),
+        (
+            "limit",
+            0x10,
+            0x1E,
+            ldt_descriptor(0, 0, 0, true, false, false),
+            13,
+        ),
+        (
+            "wrong type",
+            0x10,
+            0x1F,
+            {
+                let mut value = ldt_descriptor(0, 0, 0, true, false, false);
+                value[5] = (value[5] & 0xF0) | 0x9;
+                value
+            },
+            13,
+        ),
+        (
+            "not present",
+            0x10,
+            0x1F,
+            ldt_descriptor(0, 0, 0, false, false, false),
+            11,
+        ),
+        (
+            "noncanonical base",
+            0x10,
+            0x1F,
+            ldt_descriptor(0x0000_8000_0000_0000, 0, 0, true, false, false),
+            13,
+        ),
+        (
+            "reserved high",
+            0x10,
+            0x1F,
+            {
+                let mut value = ldt_descriptor(0, 0, 0, true, false, false);
+                value[12] = 1;
+                value
+            },
+            13,
+        ),
+        (
+            "reserved L",
+            0x10,
+            0x1F,
+            {
+                let mut value = ldt_descriptor(0, 0, 0, true, false, false);
+                value[6] |= 0x20;
+                value
+            },
+            13,
+        ),
+    ] {
+        let code = [0x0F, 0x00, 0xD0, 0xF4];
+        let initial = Registers {
+            rax: u64::from(selector),
+            ..Registers::default()
+        };
+        let (mut vcpu, memory) = setup_vm_no_idt(&code, Some(initial));
+        if selector & 0x4 == 0 {
+            install_descriptor(&mut vcpu, &memory, selector, &descriptor);
+        }
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.gdt.limit = limit;
+        sregs.ldt = Segment {
+            base: 0xDEAD_BEEF,
+            limit: 0x1234,
+            selector: 0x2468,
+            type_: 0x2,
+            present: true,
+            unusable: false,
+            ..Segment::default()
+        };
+        let before = segment_fingerprint(&sregs.ldt);
+        vcpu.set_sregs(&sregs).unwrap();
 
-    assert_eq!(regs.rdx & 0xFFFF, 0x0020);
+        let error = exception_without_idt(&mut vcpu);
+        assert!(
+            error.contains(&format!("IDT entry {vector} not present")),
+            "{name}: {error}"
+        );
+        assert_eq!(
+            segment_fingerprint(&vcpu.get_sregs().unwrap().ldt),
+            before,
+            "{name}"
+        );
+        assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
+    }
 }
 
-// LLDT r16 - Load LDTR from SI
 #[test]
-fn test_lldt_si() {
-    let code = [
-        0x66, 0xbe, 0x28, 0x00, // MOV SI, 0x0028
-        0x0f, 0x00, 0xd6, // LLDT SI
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
+fn lldt_mode_privilege_lock_and_operand_fault_priority_is_precise() {
+    for (name, code, configure, vector) in [
+        (
+            "LOCK",
+            vec![0xF0, 0x0F, 0x00, 0xD0],
+            (false, false, false),
+            6,
+        ),
+        ("real mode", vec![0x0F, 0x00, 0x10], (true, false, false), 6),
+        ("VM86", vec![0x0F, 0x00, 0x10], (false, true, false), 6),
+        ("CPL3", vec![0x0F, 0x00, 0x10], (false, false, true), 13),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(&code, None);
+        let (real, vm86, cpl3) = configure;
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x20_00000;
+        if vm86 {
+            regs.rflags |= 1 << 17;
+        }
+        vcpu.set_regs(&regs).unwrap();
+        let mut sregs = vcpu.get_sregs().unwrap();
+        if real {
+            sregs.cr0 &= !1;
+        }
+        if cpl3 {
+            sregs.cs.selector |= 3;
+        }
+        vcpu.set_sregs(&sregs).unwrap();
 
-    assert_eq!(regs.rsi & 0xFFFF, 0x0028);
+        let error = exception_without_idt(&mut vcpu);
+        assert!(
+            error.contains(&format!("IDT entry {vector} not present")),
+            "{name}: {error}"
+        );
+    }
+
+    let code = [0x0F, 0x00, 0x10];
+    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rax = 0x20_00000;
+    vcpu.set_regs(&regs).unwrap();
+    let error = format!("{:#}", vcpu.step().expect_err("unmapped source must fault"));
+    assert!(!error.contains("IDT entry 13 not present"), "{error}");
 }
 
-// LLDT r16 - Load LDTR from DI
 #[test]
-fn test_lldt_di() {
-    let code = [
-        0x66, 0xbf, 0x30, 0x00, // MOV DI, 0x0030
-        0x0f, 0x00, 0xd7, // LLDT DI
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
+fn lldt_compatibility_mode_uses_legacy_eight_byte_descriptor() {
+    let code = [0x0F, 0x00, 0xD0, 0xF4];
+    let initial = Registers {
+        rax: 0x10,
+        ..Registers::default()
+    };
+    let (mut vcpu, memory) = setup_vm_compat(&code, Some(initial));
+    let descriptor = ldt_descriptor(0x1234_5678, 0xF_FFFF, 0, true, true, false);
+    install_descriptor(&mut vcpu, &memory, 0x10, &descriptor[..8]);
 
-    assert_eq!(regs.rdi & 0xFFFF, 0x0030);
+    run_until_hlt(&mut vcpu).unwrap();
+    let ldtr = vcpu.get_sregs().unwrap().ldt;
+    assert_eq!(ldtr.selector, 0x10);
+    assert_eq!(ldtr.base, 0x1234_5678);
+    assert_eq!(ldtr.limit, u32::MAX);
 }
 
-// LLDT r16 - Load LDTR from BP
 #[test]
-fn test_lldt_bp() {
-    let code = [
-        0x66, 0xbd, 0x38, 0x00, // MOV BP, 0x0038
-        0x0f, 0x00, 0xd5, // LLDT BP
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rbp & 0xFFFF, 0x0038);
-}
-
-// LLDT r16 - Load LDTR from SP
-#[test]
-fn test_lldt_sp() {
-    let code = [
-        0x66, 0xbc, 0x40, 0x00, // MOV SP, 0x0040
-        0x0f, 0x00, 0xd4, // LLDT SP
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT r16 - Load LDTR from R8W
-#[test]
-fn test_lldt_r8w() {
-    let code = [
-        0x66, 0x41, 0xb8, 0x48, 0x00, // MOV R8W, 0x0048
-        0x41, 0x0f, 0x00, 0xd0, // LLDT R8W
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT r16 - Load LDTR from R9W
-#[test]
-fn test_lldt_r9w() {
-    let code = [
-        0x66, 0x41, 0xb9, 0x50, 0x00, // MOV R9W, 0x0050
-        0x41, 0x0f, 0x00, 0xd1, // LLDT R9W
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT r16 - Load LDTR from R10W
-#[test]
-fn test_lldt_r10w() {
-    let code = [
-        0x66, 0x41, 0xba, 0x58, 0x00, // MOV R10W, 0x0058
-        0x41, 0x0f, 0x00, 0xd2, // LLDT R10W
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT r16 - Load LDTR from R11W
-#[test]
-fn test_lldt_r11w() {
-    let code = [
-        0x66, 0x41, 0xbb, 0x60, 0x00, // MOV R11W, 0x0060
-        0x41, 0x0f, 0x00, 0xd3, // LLDT R11W
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT r16 - Load LDTR from R12W
-#[test]
-fn test_lldt_r12w() {
-    let code = [
-        0x66, 0x41, 0xbc, 0x68, 0x00, // MOV R12W, 0x0068
-        0x41, 0x0f, 0x00, 0xd4, // LLDT R12W
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT r16 - Load LDTR from R13W
-#[test]
-fn test_lldt_r13w() {
-    let code = [
-        0x66, 0x41, 0xbd, 0x70, 0x00, // MOV R13W, 0x0070
-        0x41, 0x0f, 0x00, 0xd5, // LLDT R13W
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT r16 - Load LDTR from R14W
-#[test]
-fn test_lldt_r14w() {
-    let code = [
-        0x66, 0x41, 0xbe, 0x78, 0x00, // MOV R14W, 0x0078
-        0x41, 0x0f, 0x00, 0xd6, // LLDT R14W
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT r16 - Load LDTR from R15W
-#[test]
-fn test_lldt_r15w() {
-    let code = [
-        0x66, 0x41, 0xbf, 0x80, 0x00, // MOV R15W, 0x0080
-        0x41, 0x0f, 0x00, 0xd7, // LLDT R15W
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT m16 - Load LDTR from memory
-#[test]
-fn test_lldt_memory() {
-    let code = [
-        0x0f, 0x00, 0x14, 0x25, 0x00, 0x20, 0x00, 0x00, // LLDT [0x2000]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0008);
-
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rip, 0x1000 + 9);
-}
-
-// LLDT m16 - Load LDTR from memory via RAX
-#[test]
-fn test_lldt_rax_indirect() {
-    let code = [
-        0x48, 0xb8, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0x2000
-        0x0f, 0x00, 0x10, // LLDT [RAX]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0010);
-
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, DATA_ADDR);
-}
-
-// LLDT m16 - Load LDTR from memory via RBX
-#[test]
-fn test_lldt_rbx_indirect() {
-    let code = [
-        0x48, 0xbb, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RBX, 0x2000
-        0x0f, 0x00, 0x13, // LLDT [RBX]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0018);
-
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rbx, DATA_ADDR);
-}
-
-// LLDT m16 - Load LDTR from memory via RCX
-#[test]
-fn test_lldt_rcx_indirect() {
-    let code = [
-        0x48, 0xb9, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0x2000
-        0x0f, 0x00, 0x11, // LLDT [RCX]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0020);
-
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rcx, DATA_ADDR);
-}
-
-// LLDT m16 - Load LDTR from memory via RDX
-#[test]
-fn test_lldt_rdx_indirect() {
-    let code = [
-        0x48, 0xba, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RDX, 0x2000
-        0x0f, 0x00, 0x12, // LLDT [RDX]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0028);
-
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdx, DATA_ADDR);
-}
-
-// LLDT m16 - Load LDTR from memory via RSI
-#[test]
-fn test_lldt_rsi_indirect() {
-    let code = [
-        0x48, 0xbe, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RSI, 0x2000
-        0x0f, 0x00, 0x16, // LLDT [RSI]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0030);
-
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rsi, DATA_ADDR);
-}
-
-// LLDT m16 - Load LDTR from memory via RDI
-#[test]
-fn test_lldt_rdi_indirect() {
-    let code = [
-        0x48, 0xbf, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RDI, 0x2000
-        0x0f, 0x00, 0x17, // LLDT [RDI]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0038);
-
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rdi, DATA_ADDR);
-}
-
-// LLDT m16 - Load LDTR from memory via R8
-#[test]
-fn test_lldt_r8_indirect() {
-    let code = [
-        0x49, 0xb8, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV R8, 0x2000
-        0x41, 0x0f, 0x00, 0x10, // LLDT [R8]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0040);
-
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT m16 - Load LDTR from memory via R9
-#[test]
-fn test_lldt_r9_indirect() {
-    let code = [
-        0x49, 0xb9, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV R9, 0x2000
-        0x41, 0x0f, 0x00, 0x11, // LLDT [R9]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0048);
-
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT m16 - Load LDTR from memory via R10
-#[test]
-fn test_lldt_r10_indirect() {
-    let code = [
-        0x49, 0xba, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV R10, 0x2000
-        0x41, 0x0f, 0x00, 0x12, // LLDT [R10]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0050);
-
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT m16 - Load LDTR from memory via R11
-#[test]
-fn test_lldt_r11_indirect() {
-    let code = [
-        0x49, 0xbb, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV R11, 0x2000
-        0x41, 0x0f, 0x00, 0x13, // LLDT [R11]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0058);
-
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT with displacement
-#[test]
-fn test_lldt_displacement() {
-    let code = [
-        0x48, 0xb8, 0x00, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0x1F00
-        0x0f, 0x00, 0x90, 0x00, 0x01, 0x00, 0x00, // LLDT [RAX + 0x100]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0060);
-
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x1F00);
-}
-
-// LLDT with negative displacement
-#[test]
-fn test_lldt_negative_displacement() {
-    let code = [
-        0x48, 0xb8, 0x00, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RAX, 0x2100
-        0x0f, 0x00, 0x90, 0x00, 0xFF, 0xFF, 0xFF, // LLDT [RAX - 0x100]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0068);
-
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 0x2100);
-}
-
-// LLDT with zero selector (null selector)
-#[test]
-fn test_lldt_null_selector() {
-    let code = [
-        0x66, 0xb8, 0x00, 0x00, // MOV AX, 0x0000
-        0x0f, 0x00, 0xd0, // LLDT AX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rax & 0xFFFF, 0x0000);
-}
-
-// LLDT preserves other registers
-#[test]
-fn test_lldt_preserves_registers() {
-    let code = [
-        0x48, 0xbb, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
-        0x11, // MOV RBX, 0x1111111111111111
-        0x48, 0xb9, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
-        0x22, // MOV RCX, 0x2222222222222222
-        0x66, 0xb8, 0x08, 0x00, // MOV AX, 0x0008
-        0x0f, 0x00, 0xd0, // LLDT AX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rbx, 0x1111111111111111);
-    assert_eq!(regs.rcx, 0x2222222222222222);
-}
-
-// LLDT multiple times
-#[test]
-fn test_lldt_multiple_times() {
-    let code = [
-        0x66, 0xb8, 0x08, 0x00, // MOV AX, 0x0008
-        0x0f, 0x00, 0xd0, // LLDT AX
-        0x66, 0xb8, 0x10, 0x00, // MOV AX, 0x0010
-        0x0f, 0x00, 0xd0, // LLDT AX
-        0x66, 0xb8, 0x18, 0x00, // MOV AX, 0x0018
-        0x0f, 0x00, 0xd0, // LLDT AX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rax & 0xFFFF, 0x0018);
-}
-
-// LLDT with various selector values
-#[test]
-fn test_lldt_selector_0x0004() {
-    let code = [
-        0x66, 0xb8, 0x04, 0x00, // MOV AX, 0x0004
-        0x0f, 0x00, 0xd0, // LLDT AX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT with selector 0x000C
-#[test]
-fn test_lldt_selector_0x000c() {
-    let code = [
-        0x66, 0xb8, 0x0C, 0x00, // MOV AX, 0x000C
-        0x0f, 0x00, 0xd0, // LLDT AX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT with selector 0x0014
-#[test]
-fn test_lldt_selector_0x0014() {
-    let code = [
-        0x66, 0xb8, 0x14, 0x00, // MOV AX, 0x0014
-        0x0f, 0x00, 0xd0, // LLDT AX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT with selector 0x001C
-#[test]
-fn test_lldt_selector_0x001c() {
-    let code = [
-        0x66, 0xb8, 0x1C, 0x00, // MOV AX, 0x001C
-        0x0f, 0x00, 0xd0, // LLDT AX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT with selector having RPL bits
-#[test]
-fn test_lldt_selector_with_rpl() {
-    let code = [
-        0x66, 0xb8, 0x0B, 0x00, // MOV AX, 0x000B (selector 8 with RPL=3)
-        0x0f, 0x00, 0xd0, // LLDT AX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT with selector having TI bit set
-#[test]
-fn test_lldt_selector_ti_bit() {
-    let code = [
-        0x66, 0xb8, 0x0C, 0x00, // MOV AX, 0x000C (TI bit set)
-        0x0f, 0x00, 0xd0, // LLDT AX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT m16 via RBP with displacement
-#[test]
-fn test_lldt_rbp_displacement() {
-    let code = [
-        0x48, 0xbd, 0x00, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV RBP, 0x1F00
-        0x0f, 0x00, 0x95, 0x00, 0x01, 0x00, 0x00, // LLDT [RBP + 0x100]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0070);
-
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT m16 via R12
-#[test]
-fn test_lldt_r12_indirect() {
-    let code = [
-        0x49, 0xbc, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV R12, 0x2000
-        0x41, 0x0f, 0x00, 0x14, 0x24, // LLDT [R12]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0078);
-
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT m16 via R13 with displacement
-#[test]
-fn test_lldt_r13_displacement() {
-    let code = [
-        0x49, 0xbd, 0x00, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV R13, 0x1F00
-        0x41, 0x0f, 0x00, 0x95, 0x00, 0x01, 0x00, 0x00, // LLDT [R13 + 0x100]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0080);
-
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT m16 via R14
-#[test]
-fn test_lldt_r14_indirect() {
-    let code = [
-        0x49, 0xbe, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV R14, 0x2000
-        0x41, 0x0f, 0x00, 0x16, // LLDT [R14]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0088);
-
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
-}
-
-// LLDT m16 via R15
-#[test]
-fn test_lldt_r15_indirect() {
-    let code = [
-        0x49, 0xbf, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV R15, 0x2000
-        0x41, 0x0f, 0x00, 0x17, // LLDT [R15]
-        0xf4, // HLT
-    ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
-
-    write_mem_at_u16(&mem, DATA_ADDR, 0x0090);
-
-    let _regs = run_until_hlt(&mut vcpu).unwrap();
+fn lldt_memory_source_helper_writes_and_reads_are_independent() {
+    let code = [0x0F, 0x00, 0x14, 0x25, 0x00, 0x20, 0x00, 0x00, 0xF4];
+    let (mut vcpu, memory) = setup_vm(&code, None);
+    install_valid_descriptor(&mut vcpu, &memory);
+    write_mem_at_u16(&memory, DATA_ADDR, 0x10);
+    run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(vcpu.get_sregs().unwrap().ldt.selector, 0x10);
 }

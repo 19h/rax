@@ -29,6 +29,8 @@ pub enum ExitReason {
     Undefined { addr: GuestAddr, opcode: u32 },
     /// x86 general-protection exception with its architectural error code.
     GeneralProtection { addr: GuestAddr, error_code: u32 },
+    /// x86 segment-not-present exception with its selector-derived error code.
+    SegmentNotPresent { addr: GuestAddr, error_code: u32 },
     /// Fault-class x86 debug exception, including DR7.GD general detect.
     Debug { addr: GuestAddr },
     /// x86 stack-segment exception with its architectural error code.
@@ -400,6 +402,9 @@ pub struct X86RegState {
     pub idtr_limit: u16,
     /// Local descriptor-table selector exposed by SLDT.
     pub ldtr_selector: u16,
+    /// Hidden descriptor cache loaded by LLDT. The visible selector remains a
+    /// separate field because SLDT exposes it even when the cache is unusable.
+    pub ldtr_cache: X86SystemSegmentCache,
     /// Task-register selector exposed by STR.
     pub tr_selector: u16,
     /// IA32_EFER, including the software-controlled LME bit and the
@@ -444,6 +449,42 @@ pub struct X86RegState {
     pub sysenter_eip: u64,
     /// x87 architectural environment and exact 80-bit physical registers.
     pub x87: X86X87State,
+}
+
+/// Hidden state cached by an x86 system-segment register. This mirrors the
+/// descriptor fields that affect subsequent selector resolution without
+/// coupling the standalone SMIR context to a concrete vCPU implementation.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct X86SystemSegmentCache {
+    pub base: u64,
+    pub limit: u32,
+    pub type_: u8,
+    pub present: bool,
+    pub dpl: u8,
+    pub db: bool,
+    pub s: bool,
+    pub l: bool,
+    pub g: bool,
+    pub avl: bool,
+    pub unusable: bool,
+}
+
+impl Default for X86SystemSegmentCache {
+    fn default() -> Self {
+        Self {
+            base: 0,
+            limit: 0,
+            type_: 0,
+            present: false,
+            dpl: 0,
+            db: false,
+            s: false,
+            l: false,
+            g: false,
+            avl: false,
+            unusable: true,
+        }
+    }
 }
 
 impl X86RegState {

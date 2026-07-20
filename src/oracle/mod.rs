@@ -37,6 +37,8 @@ use crate::smir::ir::ops::X86Sha32Op;
 use crate::smir::ir::ops::X86SmswOp;
 use crate::smir::ir::ops::X86SmswTarget;
 use crate::smir::ir::ops::X86SystemSelector;
+use crate::smir::ir::ops::X86SystemSelectorLoadOp;
+use crate::smir::ir::ops::X86SystemSelectorSource;
 use crate::smir::ir::ops::X86SystemSelectorStoreOp;
 use crate::smir::ir::ops::X86SystemSelectorTarget;
 use crate::smir::ir::ops::X86ThreeDNowKind;
@@ -1141,6 +1143,23 @@ impl OracleJson for X86SystemSelectorTarget {
                 "width": width.oracle_json(),
             }),
             X86SystemSelectorTarget::Memory { addr } => json!({
+                "kind": "memory",
+                "addr": addr.oracle_json(),
+                "width": "B2",
+            }),
+        }
+    }
+}
+
+impl OracleJson for X86SystemSelectorSource {
+    fn oracle_json(&self) -> serde_json::Value {
+        match self {
+            X86SystemSelectorSource::Register { src } => json!({
+                "kind": "register",
+                "src": src.oracle_json(),
+                "width": "W16",
+            }),
+            X86SystemSelectorSource::Memory { addr } => json!({
                 "kind": "memory",
                 "addr": addr.oracle_json(),
                 "width": "B2",
@@ -2564,6 +2583,18 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             target,
             requires_apx,
         }) => op_json!("x86_system_selector_store", selector, target, requires_apx),
+        OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+            selector,
+            source,
+            requires_apx,
+            next_pc,
+        }) => op_json!(
+            "x86_system_selector_load",
+            selector,
+            source,
+            requires_apx,
+            next_pc
+        ),
         OpKind::X86Lmsw(X86LmswOp {
             source,
             requires_apx,

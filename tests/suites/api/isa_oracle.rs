@@ -599,6 +599,46 @@ fn emits_exact_sldt_str_selector_target_width_and_apx_metadata() {
 }
 
 #[test]
+fn emits_exact_lldt_source_hidden_state_handoff_and_apx_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let register = decode_to_json(&[0xD5, 0x91, 0x00, 0xD7], &opts).unwrap();
+    assert_eq!(register["smir"]["available"], true);
+    assert_eq!(register["smir"]["bytes_consumed"], 4);
+    let op = &register["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_system_selector_load");
+    assert_eq!(op["kind"]["selector"], "Ldtr");
+    assert_eq!(op["kind"]["source"]["kind"], "register");
+    assert_eq!(op["kind"]["source"]["src"]["name"], "r31");
+    assert_eq!(op["kind"]["source"]["width"], "W16");
+    assert_eq!(op["kind"]["requires_apx"], true);
+    assert_eq!(op["kind"]["next_pc"], 0x1004);
+    assert!(op["reads"].is_null());
+    assert_eq!(op["writes"].as_array().unwrap().len(), 0);
+    assert_eq!(op["memory"]["reads"], true);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+
+    let memory = decode_to_json(&[0x48, 0x0F, 0x00, 0x50, 0x08], &opts).unwrap();
+    assert_eq!(memory["smir"]["available"], true);
+    assert_eq!(memory["smir"]["bytes_consumed"], 5);
+    let op = &memory["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_system_selector_load");
+    assert_eq!(op["kind"]["selector"], "Ldtr");
+    assert_eq!(op["kind"]["source"]["kind"], "memory");
+    assert_eq!(op["kind"]["source"]["width"], "B2");
+    assert_eq!(op["kind"]["source"]["addr"]["kind"], "base_offset");
+    assert_eq!(op["kind"]["source"]["addr"]["base"]["name"], "rax");
+    assert_eq!(op["kind"]["source"]["addr"]["offset"], 8);
+    assert_eq!(op["kind"]["requires_apx"], false);
+    assert_eq!(op["kind"]["next_pc"], 0x1005);
+    assert_eq!(op["memory"]["reads"], true);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+}
+
+#[test]
 fn emits_exact_descriptor_table_memory_table_handoff_and_apx_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

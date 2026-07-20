@@ -9,8 +9,9 @@ use std::collections::{HashMap, HashSet};
 use crate::smir::ir::flags::{FlagSet, FlagState, FlagUpdate};
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86LmswOp, X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86RepMode,
-    X86SmswOp, X86SmswTarget, X86StringKind, X86SystemSelectorStoreOp, X86SystemSelectorTarget,
-    X86ThreeDNowKind, X86VecAlign, X86X87DataKind,
+    X86SmswOp, X86SmswTarget, X86StringKind, X86SystemSelectorLoadOp, X86SystemSelectorSource,
+    X86SystemSelectorStoreOp, X86SystemSelectorTarget, X86ThreeDNowKind, X86VecAlign,
+    X86X87DataKind,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, BlockId, FpRoundMode, HexagonReg, MemWidth, OpWidth, ShiftOp,
@@ -3909,6 +3910,14 @@ impl OpKind {
             }) => result.extend(addr.regs()),
             OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
                 target: X86SystemSelectorTarget::Memory { addr },
+                ..
+            }) => result.extend(addr.regs()),
+            OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+                source: X86SystemSelectorSource::Register { src },
+                ..
+            }) => result.push(*src),
+            OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+                source: X86SystemSelectorSource::Memory { addr },
                 ..
             }) => result.extend(addr.regs()),
             OpKind::X86Lmsw(X86LmswOp {

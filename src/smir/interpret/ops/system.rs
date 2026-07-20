@@ -2,19 +2,23 @@
 
 use crate::isa::x86_64::execute::system::{
     X86ControlWriteFault, X86ControlWriteState, X86MsrFault, X86MsrState, X86PmcFault, X86PmcState,
-    read_x86_msr, read_x86_pmc, validate_x86_control_write, validate_x86_msr_write,
+    X86SystemDescriptorFault, decode_x86_ldt_descriptor, read_x86_msr, read_x86_pmc,
+    validate_x86_control_write, validate_x86_msr_write,
 };
 use crate::smir::interpret::*;
-use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext, VecValue};
+use crate::smir::ir::context::{
+    ArchRegState, ExitReason, SmirContext, VecValue, X86SystemSegmentCache,
+};
 use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
     X86CacheControlKind, X86ControlReg, X86CountKind, X86DebugReg, X86DescriptorTable,
     X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86SmswTarget, X86SystemSelector,
-    X86SystemSelectorTarget, X86ThreeDNowKind, X86X87ArithmeticDestination, X86X87ArithmeticSource,
-    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
-    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+    X86SystemSelectorSource, X86SystemSelectorTarget, X86ThreeDNowKind,
+    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
+    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
+    X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -349,6 +353,150 @@ impl SmirInterpreter {
                         )?;
                     }
                 }
+            }
+
+            OpKind::X86SystemSelectorLoad(load) => {
+                let instruction_len = load.next_pc.checked_sub(op.guest_pc);
+                let source_shape = match &load.source {
+                    X86SystemSelectorSource::Register { src } => matches!(
+                        src,
+                        VReg::Arch(ArchReg::X86(reg))
+                            if reg.gpr_index().is_some_and(|index| {
+                                index < 16 || load.requires_apx
+                            })
+                    ),
+                    X86SystemSelectorSource::Memory { addr } => {
+                        let uses_egpr = addr.regs().iter().any(
+                            |reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()),
+                        );
+                        addr.is_x86_state_backed_shape() && (!uses_egpr || load.requires_apx)
+                    }
+                };
+                if !matches!(instruction_len, Some(3..=15))
+                    || op.x86_hint.is_some()
+                    || load.selector != X86SystemSelector::Ldtr
+                    || !source_shape
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let (gdtr_base, gdtr_limit, long_mode) = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => {
+                        if load.requires_apx && !x86.apx_enabled {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        }
+                        if x86.cr0 & 1 == 0 || x86.rflags & crate::isa::x86_64::flags::bits::VM != 0
+                        {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        }
+                        if x86.cpl != 0 {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                        (x86.gdtr_base, x86.gdtr_limit, x86.cs_l)
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+
+                let selector = match &load.source {
+                    X86SystemSelectorSource::Register { src } => ctx.read_vreg(*src) as u16,
+                    X86SystemSelectorSource::Memory { addr } => {
+                        let effective_addr = self.compute_address(ctx, addr);
+                        self.load_memory(memory, effective_addr, MemWidth::B2, SignExtend::Zero)?
+                            as u16
+                    }
+                };
+
+                if selector & 0xFFFC == 0 {
+                    let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                        unreachable!("validated x86 LLDT state changed")
+                    };
+                    x86.ldtr_selector = selector;
+                    x86.ldtr_cache = X86SystemSegmentCache {
+                        unusable: true,
+                        ..X86SystemSegmentCache::default()
+                    };
+                    return Ok(());
+                }
+
+                let error_code = u32::from(selector & 0xFFFC);
+                let offset = u64::from(selector >> 3) * 8;
+                let descriptor_size = if long_mode { 16_u64 } else { 8 };
+                if selector & 0x4 != 0 || offset + descriptor_size - 1 > u64::from(gdtr_limit) {
+                    ctx.request_exit(ExitReason::GeneralProtection {
+                        addr: op.guest_pc,
+                        error_code,
+                    });
+                    return Ok(());
+                }
+
+                let descriptor_addr = gdtr_base.wrapping_add(offset);
+                let mut low_bytes = [0_u8; 8];
+                memory.read(descriptor_addr, &mut low_bytes)?;
+                let low = u64::from_le_bytes(low_bytes);
+                let high = if long_mode {
+                    let mut high_bytes = [0_u8; 8];
+                    memory.read(descriptor_addr.wrapping_add(8), &mut high_bytes)?;
+                    Some(u64::from_le_bytes(high_bytes))
+                } else {
+                    None
+                };
+                let segment = match decode_x86_ldt_descriptor(selector, low, high, long_mode) {
+                    Ok(segment) => segment,
+                    Err(X86SystemDescriptorFault::GeneralProtection { error_code }) => {
+                        ctx.request_exit(ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code,
+                        });
+                        return Ok(());
+                    }
+                    Err(X86SystemDescriptorFault::SegmentNotPresent { error_code }) => {
+                        ctx.request_exit(ExitReason::SegmentNotPresent {
+                            addr: op.guest_pc,
+                            error_code,
+                        });
+                        return Ok(());
+                    }
+                };
+
+                let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                    unreachable!("validated x86 LLDT state changed")
+                };
+                x86.ldtr_selector = segment.selector;
+                x86.ldtr_cache = X86SystemSegmentCache {
+                    base: segment.base,
+                    limit: segment.limit,
+                    type_: segment.type_,
+                    present: segment.present,
+                    dpl: segment.dpl,
+                    db: segment.db,
+                    s: segment.s,
+                    l: segment.l,
+                    g: segment.g,
+                    avl: segment.avl,
+                    unusable: segment.unusable,
+                };
             }
 
             OpKind::X86Lmsw(lmsw) => {

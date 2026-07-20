@@ -1,7 +1,8 @@
-//! Legacy system-segment selector stores.
+//! Legacy system-segment selector stores and loads.
 
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86SystemSelector, X86SystemSelectorStoreOp, X86SystemSelectorTarget,
+    OpKind, SmirOp, X86SystemSelector, X86SystemSelectorLoadOp, X86SystemSelectorSource,
+    X86SystemSelectorStoreOp, X86SystemSelectorTarget,
 };
 use crate::smir::ir::types::OpId;
 use crate::smir::lift::x86_64::{X86_64Lifter, X86Prefix, decode_modrm};
@@ -52,6 +53,53 @@ impl X86_64Lifter {
                     selector,
                     target,
                     requires_apx: prefix.rex2.is_some(),
+                }),
+            )],
+            bytes_consumed,
+        ))
+    }
+
+    /// Lift LLDT (`0F 00 /2`). Both register and memory sources are fixed at
+    /// 16 bits; operand-size prefixes are ignored. APX availability, execution
+    /// mode, privilege, descriptor validation, and serialization remain
+    /// dynamic properties of the emitted operation.
+    pub(crate) fn lift_system_selector_load_0f00(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..bytes.len().min(1)].to_vec(),
+            });
+        }
+
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        debug_assert_eq!((modrm.byte >> 3) & 7, 2);
+        let bytes_consumed = prefix.cursor + modrm.bytes_consumed;
+        let next_pc = pc.wrapping_add(bytes_consumed as u64);
+        let source = if let Some(x86_addr) = modrm.addr.as_ref() {
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            debug_assert!(pre_ops.is_empty());
+            X86SystemSelectorSource::Memory { addr }
+        } else {
+            X86SystemSelectorSource::Register {
+                src: self.gpr(modrm.rm),
+            }
+        };
+
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+                    selector: X86SystemSelector::Ldtr,
+                    source,
+                    requires_apx: prefix.rex2.is_some(),
+                    next_pc,
                 }),
             )],
             bytes_consumed,

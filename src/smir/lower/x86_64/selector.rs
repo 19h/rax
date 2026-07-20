@@ -1,14 +1,15 @@
 //! Fault-precise, helper-backed SLDT/STR lowering.
 
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86SystemSelector, X86SystemSelectorStoreOp, X86SystemSelectorTarget,
+    OpKind, SmirOp, X86SystemSelector, X86SystemSelectorLoadOp, X86SystemSelectorSource,
+    X86SystemSelectorStoreOp, X86SystemSelectorTarget,
 };
 use crate::smir::ir::types::{ArchReg, MemWidth, OpWidth, SignExtend, VReg};
 use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::{
     LowerError, X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CPL_OFFSET, X86_GUEST_CR0_OFFSET,
     X86_GUEST_CR4_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_SYSTEM_SELECTOR_FN_OFFSET,
-    X86_STATE_PTR_AT_RBP,
+    X86_GUEST_SYSTEM_SELECTOR_LOAD_FN_OFFSET, X86_STATE_PTR_AT_RBP,
 };
 
 use super::{X86_64Lowerer, X86Cond, X86Emitter};
@@ -41,6 +42,46 @@ pub(crate) fn x86_system_selector_store_shape_valid(op: &SmirOp) -> bool {
                 && (index < 16 || *requires_apx)
         }
         X86SystemSelectorTarget::Memory { addr } => {
+            let uses_egpr = addr
+                .regs()
+                .iter()
+                .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
+            addr.is_x86_state_backed_shape() && (!uses_egpr || *requires_apx)
+        }
+    }
+}
+
+/// Validate the strict long-mode LLDT form admitted by native lowering. LTR
+/// shares the IR shape but remains fail-closed until its descriptor busy-bit
+/// transaction is implemented.
+pub(crate) fn x86_system_selector_load_shape_valid(op: &SmirOp) -> bool {
+    let OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+        selector,
+        source,
+        requires_apx,
+        next_pc,
+    }) = &op.kind
+    else {
+        return false;
+    };
+    if *selector != X86SystemSelector::Ldtr
+        || op.x86_hint.is_some()
+        || !matches!(next_pc.checked_sub(op.guest_pc), Some(3..=15))
+    {
+        return false;
+    }
+
+    match source {
+        X86SystemSelectorSource::Register { src } => {
+            let Some(index) = (match src {
+                VReg::Arch(ArchReg::X86(reg)) => reg.gpr_index(),
+                _ => None,
+            }) else {
+                return false;
+            };
+            index < 16 || *requires_apx
+        }
+        X86SystemSelectorSource::Memory { addr } => {
             let uses_egpr = addr
                 .regs()
                 .iter()
@@ -236,6 +277,116 @@ impl X86_64Lowerer {
         self.emit_native_exit(op.guest_pc);
 
         self.patch_rel32_to_current(done)?;
+        Ok(())
+    }
+
+    /// Load LDTR through the owning vCPU's MMU and descriptor validator. The
+    /// operation exits natively after a successful serializing commit; every
+    /// dynamic guard, source-memory, or descriptor fault restores the complete
+    /// pre-instruction register/flag image and replays direct at `guest_pc`.
+    pub(crate) fn emit_x86_system_selector_load(&mut self, op: &SmirOp) -> Result<(), LowerError> {
+        if !self.jit_fault_deopt_guards {
+            return Err(LowerError::UnsupportedOp {
+                op: "X86SystemSelectorLoad requires JIT fault-deoptimization guards".to_string(),
+            });
+        }
+        if !self.mem_helpers {
+            return Err(LowerError::UnsupportedOp {
+                op: "X86SystemSelectorLoad requires JIT MMU helpers".to_string(),
+            });
+        }
+        if !x86_system_selector_load_shape_valid(op) {
+            return Err(LowerError::InvalidOperand {
+                op: "X86SystemSelectorLoad".to_string(),
+                operand:
+                    "requires an unhinted LLDT source, APX for every EGPR, and an exact next PC"
+                        .to_string(),
+            });
+        }
+        let OpKind::X86SystemSelectorLoad(load) = &op.kind else {
+            unreachable!("validated X86SystemSelectorLoad shape changed")
+        };
+
+        // Publish every identity-mapped GPR before borrowing ABI registers.
+        // The two pushes preserve guest flags and maintain SysV call alignment.
+        self.code.emit_u8(0x50); // push guest RAX
+        self.emit_load_state_ptr_rax();
+        self.code.emit_u8(0x9C); // pushfq
+        self.emit_spill_legacy_gprs_to_state_from_rax(8);
+
+        let mut guard_faults = Vec::with_capacity(4);
+        if load.requires_apx {
+            self.code.emit_bytes(&[0x83, 0xB8]); // cmp dword [rax+apx],0
+            self.code.emit_u32(X86_GUEST_APX_ENABLED_OFFSET as u32);
+            self.code.emit_u8(0);
+            guard_faults.push(self.emit_jcc_placeholder(X86Cond::E));
+        }
+        self.code.emit_bytes(&[0xF7, 0x80]); // test dword [rax+cr0],PE
+        self.code.emit_u32(X86_GUEST_CR0_OFFSET as u32);
+        self.code.emit_u32(1);
+        guard_faults.push(self.emit_jcc_placeholder(X86Cond::E));
+        self.code.emit_bytes(&[0x48, 0xF7, 0x80]); // test qword [rax+rflags],VM
+        self.code.emit_u32(X86_GUEST_RFLAGS_OFFSET as u32);
+        self.code
+            .emit_u32(crate::isa::x86_64::flags::bits::VM as u32);
+        guard_faults.push(self.emit_jcc_placeholder(X86Cond::Ne));
+        self.code.emit_bytes(&[0x48, 0x83, 0xB8]); // cmp qword [rax+cpl],0
+        self.code.emit_u32(X86_GUEST_CPL_OFFSET as u32);
+        self.code.emit_u8(0);
+        guard_faults.push(self.emit_jcc_placeholder(X86Cond::Ne));
+
+        self.emit_helper_call_state(PhysReg::Rax, true, self.preserve_vector_mem_helpers);
+        let memory_source = matches!(&load.source, X86SystemSelectorSource::Memory { .. });
+        match &load.source {
+            X86SystemSelectorSource::Register { src } => {
+                let VReg::Arch(ArchReg::X86(reg)) = src else {
+                    unreachable!("validated LLDT register source changed")
+                };
+                self.emit_struct_mov(
+                    PhysReg::Rax,
+                    6,
+                    i32::from(reg.gpr_index().unwrap()) * 8,
+                    false,
+                );
+            }
+            X86SystemSelectorSource::Memory { addr } => {
+                self.emit_jit_mem_effective_address(addr, false)?;
+            }
+        }
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rdi, PhysReg::Rax, OpWidth::W64);
+            let encoding = i64::from(memory_source) | (i64::from(load.requires_apx) << 1);
+            emitter.emit_mov_ri(PhysReg::Rdx, encoding, OpWidth::W32);
+        }
+        self.code.emit_u8(0xFC); // cld: platform ABI requires DF=0
+        self.code.emit_u8(0xFF);
+        self.code.emit_u8(0x90); // call qword [rax+system_selector_load_fn]
+        self.code
+            .emit_u32(X86_GUEST_SYSTEM_SELECTOR_LOAD_FN_OFFSET as u32);
+
+        self.code.emit_bytes(&[0x48, 0x8B, 0x4D]);
+        self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8); // mov rcx,[rbp+state_ptr]
+        self.code.emit_bytes(&[0x48, 0x85, 0xC0]); // test rax,rax
+        let helper_fault = self.emit_jcc_placeholder(X86Cond::E);
+
+        self.emit_x86_serialize();
+        self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_mem_helpers);
+        self.emit_reload_all(PhysReg::Rcx);
+        self.code.emit_u8(0x9D); // popfq
+        self.emit_flag_preserving_stack_pop8();
+        self.emit_native_exit(load.next_pc);
+
+        for branch in guard_faults {
+            self.patch_rel32_to_current(branch)?;
+        }
+        self.code.emit_bytes(&[0x48, 0x89, 0xC1]); // mov rcx,rax
+        self.patch_rel32_to_current(helper_fault)?;
+        self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_mem_helpers);
+        self.emit_reload_all(PhysReg::Rcx);
+        self.code.emit_u8(0x9D);
+        self.emit_flag_preserving_stack_pop8();
+        self.emit_native_exit(op.guest_pc);
         Ok(())
     }
 }

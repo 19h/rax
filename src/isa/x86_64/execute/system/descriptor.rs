@@ -1,11 +1,148 @@
 //! Descriptor table instructions: LAR, LSL, Group 6.
 
-use crate::error::Result;
-use crate::vm::vcpu::VcpuExit;
+use crate::error::{Error, Result};
+use crate::vm::vcpu::{Segment, VcpuExit};
 
 use super::control_regs::{current_cpl, is_cpl0, raise_gp0, umip_blocks_user_instruction};
+use super::msr::is_canonical_48;
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::flags;
+
+/// Architectural descriptor-validation faults shared by direct execution and
+/// standalone SMIR interpretation. Selector-derived error codes clear RPL but
+/// retain the selector index and TI bit, as required by x86 exception format.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum X86SystemDescriptorFault {
+    GeneralProtection { error_code: u32 },
+    SegmentNotPresent { error_code: u32 },
+}
+
+/// LLDT failure before any LDTR field commits. Native lowering treats every
+/// variant as a precise deoptimization; direct execution delivers the encoded
+/// architectural exception or propagates the original memory fault.
+#[derive(Debug)]
+pub(in crate::isa::x86_64) enum X86LdtrLoadFault {
+    Architectural(X86SystemDescriptorFault),
+    Memory(Error),
+}
+
+#[inline]
+fn selector_error_code(selector: u16) -> u32 {
+    u32::from(selector & 0xFFFC)
+}
+
+/// Decode and validate one LDT system descriptor after the owning GDT bytes
+/// have been read. In 64-bit mode the descriptor is 16 bytes: the upper base
+/// dword is followed by a reserved dword, and the legacy L/D attribute bits
+/// are reserved for this system-descriptor format.
+pub(crate) fn decode_x86_ldt_descriptor(
+    selector: u16,
+    low: u64,
+    high: Option<u64>,
+    long_mode: bool,
+) -> std::result::Result<Segment, X86SystemDescriptorFault> {
+    let error_code = selector_error_code(selector);
+    let type_ = ((low >> 40) & 0x0F) as u8;
+    let system = (low >> 44) & 1 == 0;
+    if !system || type_ != 0x2 {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    }
+
+    let mut base =
+        ((low >> 16) & 0xFFFF) | (((low >> 32) & 0xFF) << 16) | (((low >> 56) & 0xFF) << 24);
+    if long_mode {
+        let Some(high) = high else {
+            return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+        };
+        // Figure 9-4 of Intel SDM Vol. 3A reserves descriptor bits 127:96 and
+        // lower-descriptor L/D. AMD specifies #GP(selector) for nonzero
+        // extended attributes in 64-bit mode.
+        if high >> 32 != 0 || (low >> 53) & 0x3 != 0 {
+            return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+        }
+        base |= (high & 0xFFFF_FFFF) << 32;
+        if !is_canonical_48(base) {
+            return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+        }
+    }
+
+    if (low >> 47) & 1 == 0 {
+        return Err(X86SystemDescriptorFault::SegmentNotPresent { error_code });
+    }
+
+    let raw_limit = ((low & 0xFFFF) | (((low >> 48) & 0x0F) << 16)) as u32;
+    let g = (low >> 55) & 1 != 0;
+    let limit = if g {
+        (raw_limit << 12) | 0xFFF
+    } else {
+        raw_limit
+    };
+    Ok(Segment {
+        base,
+        limit,
+        selector,
+        type_,
+        present: true,
+        dpl: ((low >> 45) & 0x3) as u8,
+        db: false,
+        s: false,
+        l: false,
+        g,
+        avl: (low >> 52) & 1 != 0,
+        unusable: false,
+    })
+}
+
+impl X86_64Vcpu {
+    /// Validate and load the complete visible/hidden LDTR state. All descriptor
+    /// bytes are read before commit. A null selector loads an unusable LDTR
+    /// without consulting descriptor memory.
+    pub(in crate::isa::x86_64) fn load_ldtr_selector(
+        &mut self,
+        selector: u16,
+    ) -> std::result::Result<(), X86LdtrLoadFault> {
+        if selector & 0xFFFC == 0 {
+            self.sregs.ldt = Segment {
+                selector,
+                unusable: true,
+                ..Segment::default()
+            };
+            return Ok(());
+        }
+
+        let error_code = selector_error_code(selector);
+        if selector & 0x4 != 0 {
+            return Err(X86LdtrLoadFault::Architectural(
+                X86SystemDescriptorFault::GeneralProtection { error_code },
+            ));
+        }
+
+        let offset = u64::from(selector >> 3) * 8;
+        let descriptor_size = if self.sregs.cs.l { 16_u64 } else { 8 };
+        if offset + descriptor_size - 1 > u64::from(self.sregs.gdt.limit) {
+            return Err(X86LdtrLoadFault::Architectural(
+                X86SystemDescriptorFault::GeneralProtection { error_code },
+            ));
+        }
+
+        let address = self.sregs.gdt.base.wrapping_add(offset);
+        let low = self
+            .read_mem(address, 8)
+            .map_err(X86LdtrLoadFault::Memory)?;
+        let high = if self.sregs.cs.l {
+            Some(
+                self.read_mem(address.wrapping_add(8), 8)
+                    .map_err(X86LdtrLoadFault::Memory)?,
+            )
+        } else {
+            None
+        };
+        let segment = decode_x86_ldt_descriptor(selector, low, high, self.sregs.cs.l)
+            .map_err(X86LdtrLoadFault::Architectural)?;
+        self.sregs.ldt = segment;
+        Ok(())
+    }
+}
 
 #[derive(Clone, Copy)]
 struct Descriptor {
@@ -192,13 +329,26 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             let selector = if is_memory {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
-                vcpu.mmu.read_u16(addr, &vcpu.sregs)?
+                vcpu.read_mem(addr, 2)? as u16
             } else {
                 vcpu.get_reg(rm, 2) as u16
             };
-            vcpu.sregs.ldt.selector = selector;
-            // In a real implementation, we'd load the descriptor from the GDT
-            // For emulation purposes, just store the selector
+            match vcpu.load_ldtr_selector(selector) {
+                Ok(()) => {}
+                Err(X86LdtrLoadFault::Architectural(
+                    X86SystemDescriptorFault::GeneralProtection { error_code },
+                )) => {
+                    vcpu.inject_exception(13, Some(u64::from(error_code)))?;
+                    return Ok(None);
+                }
+                Err(X86LdtrLoadFault::Architectural(
+                    X86SystemDescriptorFault::SegmentNotPresent { error_code },
+                )) => {
+                    vcpu.inject_exception(11, Some(u64::from(error_code)))?;
+                    return Ok(None);
+                }
+                Err(X86LdtrLoadFault::Memory(error)) => return Err(error),
+            }
         }
         // LTR - Load Task Register (0x0F 0x00 /3)
         3 => {

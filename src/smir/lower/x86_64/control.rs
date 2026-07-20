@@ -645,6 +645,12 @@ impl X86_64Lowerer {
                 // Descriptor state must be visible before any later guest op.
                 return Ok(());
             }
+            if matches!(block.ops[idx].kind, OpKind::X86SystemSelectorLoad(..)) {
+                self.emit_x86_system_selector_load(&block.ops[idx])?;
+                // LLDT is serializing, and both success and fault paths leave
+                // through exact exit stubs before any later guest operation.
+                return Ok(());
+            }
             if matches!(&block.ops[idx].kind, OpKind::X86Msr(msr) if msr.write) {
                 self.emit_x86_msr(&block.ops[idx])?;
                 // Successful WRMSR changes architectural admission state and

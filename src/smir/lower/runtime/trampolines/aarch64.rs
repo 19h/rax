@@ -1278,6 +1278,7 @@ pub(crate) fn aarch64_block_is_clobber_safe(
                 | OpKind::X86ReadControl { .. }
                 | OpKind::X86Smsw(..)
                 | OpKind::X86SystemSelectorStore(..)
+                | OpKind::X86SystemSelectorLoad(..)
                 | OpKind::X86Lmsw(..)
                 | OpKind::X86DescriptorTableStore(..)
                 | OpKind::X86DescriptorTableLoad(..)
