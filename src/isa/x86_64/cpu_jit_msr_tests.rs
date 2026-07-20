@@ -11,11 +11,31 @@ use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
 const APIC_BASE_PROFILE_VALUE: u64 = (1 << 8) | (1 << 11) | 0xFEE0_0000;
 const RFLAGS_VM: u64 = 1 << 17;
+const PML4: u64 = 0x1000;
+const PDPT: u64 = 0x2000;
+const PD: u64 = 0x3000;
+const PT: u64 = 0x4000;
+const PAGE_FLAGS: u64 = 0x7; // Present | writable | user-accessible.
 
 fn memory_with_code(code: &[u8]) -> Arc<GuestMemoryMmap> {
     let memory =
         Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
     memory.write_slice(code, GuestAddress(0)).unwrap();
+    for (address, entry) in [
+        (PML4, PDPT | PAGE_FLAGS),
+        (PDPT, PD | PAGE_FLAGS),
+        (PD, PT | PAGE_FLAGS),
+    ] {
+        memory
+            .write_slice(&entry.to_le_bytes(), GuestAddress(address))
+            .unwrap();
+    }
+    for page in 0..16_u64 {
+        let entry = page * 0x1000 | PAGE_FLAGS;
+        memory
+            .write_slice(&entry.to_le_bytes(), GuestAddress(PT + page * 8))
+            .unwrap();
+    }
     memory
 }
 
@@ -26,6 +46,8 @@ fn test_vcpu(memory: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
     vcpu.sregs.cs.selector = 0;
     vcpu.sregs.tr.type_ = 9;
     vcpu.sregs.cr0 = 0x8005_0033;
+    vcpu.sregs.cr3 = PML4;
+    vcpu.sregs.cr4 = 1 << 5; // PAE is required by IA-32e paging.
     vcpu.sregs.star = 0x0023_0010_DEAD_BEEF;
     vcpu.sregs.lstar = 0xFFFF_8000_1234_5678;
     vcpu.sregs.cstar = 0xFFFF_8000_ABCD_EF01;
