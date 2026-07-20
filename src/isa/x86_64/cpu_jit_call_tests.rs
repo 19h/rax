@@ -84,6 +84,8 @@ fn jit_callout_synchronizes_callee_vector_opmask_and_mmx_state() {
     gr.ctx = (&mut vcpu as *mut X86_64Vcpu) as u64;
     gr.gpr[4] = 0x8000;
     gr.rflags = 0x2;
+    gr.cr0 = vcpu.sregs.cr0;
+    gr.cr4 = vcpu.sregs.cr4;
     gr.vector_active = 1;
     gr.set_zmm(1, [u64::MAX; 8]);
     gr.set_zmm(2, source);
