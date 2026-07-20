@@ -60,6 +60,8 @@ mod read_control;
 pub use read_control::*;
 mod read_debug;
 pub use read_debug::*;
+mod write_debug;
+pub use write_debug::*;
 mod serialize;
 pub use serialize::*;
 mod swapgs;

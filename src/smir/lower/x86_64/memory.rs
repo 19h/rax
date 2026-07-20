@@ -84,6 +84,7 @@ impl X86_64Lowerer {
             || x86_fsgsbase_shape_valid(&op.kind)
             || x86_read_control_shape_valid(&op.kind)
             || x86_read_debug_shape_valid(&op.kind)
+            || x86_write_debug_shape_valid(&op.kind)
         {
             return Ok(());
         }

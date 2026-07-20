@@ -2487,6 +2487,9 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::X86ReadDebug { dst, debug } => {
             op_json!("x86_read_debug", dst, debug)
         }
+        OpKind::X86WriteDebug { src, debug } => {
+            op_json!("x86_write_debug", src, debug)
+        }
         OpKind::X86FsGsBase {
             operand,
             base,

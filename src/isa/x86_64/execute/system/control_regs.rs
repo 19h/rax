@@ -312,26 +312,52 @@ pub fn mov_r_dr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     Ok(None)
 }
 
-/// MOV DRn, r64 (0x0F 0x23)
+/// MOV DRn, r32/r64 (0x0F 0x23)
 pub fn mov_dr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // Privileged: writing debug registers requires CPL 0.
-    if !is_cpl0(vcpu) {
-        return raise_gp0(vcpu);
-    }
     let modrm = ctx.consume_u8()?;
     let dr = (modrm >> 3) & 0x07;
     let rm = (modrm & 0x07) | ctx.rex_b();
-    let value = vcpu.get_reg(rm, 8);
+
+    // REX.R is an architecturally invalid extension for MOV-DR. APX REX2
+    // defines no replacement form. These decode-time failures precede all
+    // dynamic debug-register checks.
+    if ctx.rex_r() != 0 || ctx.rex2.is_some() {
+        return vcpu.inject_undefined_instruction();
+    }
+
+    // General detect protects every debug-register access and faults before
+    // the MOV commits. DR6.BD is set before delivery; successful handler entry
+    // clears DR7.GD so the handler can inspect the debug registers.
+    if vcpu.sregs.dr7 & DR7_GD != 0 {
+        return raise_debug_register_access(vcpu);
+    }
+
+    // DR4/DR5 are invalid when debug extensions are enabled. Otherwise they
+    // retain the Intel386/Intel486 aliases to DR6/DR7.
+    if matches!(dr, 4 | 5) && vcpu.sregs.cr4 & CR4_DE != 0 {
+        return vcpu.inject_undefined_instruction();
+    }
+
+    // Real-address mode is permitted. Protected, compatibility, and 64-bit
+    // modes require CPL0; virtual-8086 mode has effective CPL3.
+    if !is_cpl0(vcpu) {
+        return raise_gp0(vcpu);
+    }
+
+    // Outside 64-bit mode the source is always r32 and 66H is ignored. In
+    // 64-bit mode, setting any high-half bit while writing effective DR6/DR7
+    // raises #GP(0); DR4/DR5 inherit the rule through their legacy aliases.
+    let value = vcpu.get_reg(rm, if vcpu.sregs.cs.l { 8 } else { 4 });
+    if vcpu.sregs.cs.l && matches!(dr, 4..=7) && value >> 32 != 0 {
+        return raise_gp0(vcpu);
+    }
+
     match dr {
         0 => vcpu.sregs.dr0 = value,
         1 => vcpu.sregs.dr1 = value,
         2 => vcpu.sregs.dr2 = value,
         3 => vcpu.sregs.dr3 = value,
         4 | 5 => {
-            // DR4 and DR5 are reserved; they alias DR6 and DR7 when CR4.DE=0
-            if vcpu.sregs.cr4 & (1 << 3) != 0 {
-                return vcpu.inject_undefined_instruction();
-            }
             if dr == 4 {
                 vcpu.sregs.dr6 = value;
             } else {
@@ -340,7 +366,7 @@ pub fn mov_dr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
         }
         6 => vcpu.sregs.dr6 = value,
         7 => vcpu.sregs.dr7 = value,
-        _ => return vcpu.inject_undefined_instruction(),
+        _ => unreachable!("three-bit debug-register selector changed"),
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)

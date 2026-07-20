@@ -4607,6 +4607,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86MonitorMwait(..)
                                 | OpKind::X86ReadControl { .. }
                                 | OpKind::X86ReadDebug { .. }
+                                | OpKind::X86WriteDebug { .. }
                         )
                     })
             {
@@ -6070,6 +6071,10 @@ mod jit_read_control_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_read_debug_tests.rs"]
 mod jit_read_debug_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_write_debug_tests.rs"]
+mod jit_write_debug_tests;
 
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {

@@ -158,6 +158,70 @@ impl SmirInterpreter {
                 Self::write_x86_partial(ctx, *dst, value, OpWidth::W64);
             }
 
+            OpKind::X86WriteDebug { src, debug } => {
+                const CR4_DE: u64 = 1 << 3;
+                const DR6_BD: u64 = 1 << 13;
+                const DR7_GD: u64 = 1 << 13;
+
+                let value = ctx.read_vreg(*src);
+                match &mut ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => {
+                        // Match direct execution priority. The write is wholly
+                        // non-committing on every fault path.
+                        if x86.dr7 & DR7_GD != 0 {
+                            x86.dr6 |= DR6_BD;
+                            ctx.request_exit(ExitReason::Debug { addr: op.guest_pc });
+                            return Ok(());
+                        }
+                        if matches!(debug, X86DebugReg::Dr4 | X86DebugReg::Dr5)
+                            && x86.cr4 & CR4_DE != 0
+                        {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        }
+                        if x86.cr0 & 1 != 0 && x86.cpl != 0 {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                        if matches!(
+                            debug,
+                            X86DebugReg::Dr4
+                                | X86DebugReg::Dr5
+                                | X86DebugReg::Dr6
+                                | X86DebugReg::Dr7
+                        ) && value >> 32 != 0
+                        {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                        match debug {
+                            X86DebugReg::Dr0 => x86.dr0 = value,
+                            X86DebugReg::Dr1 => x86.dr1 = value,
+                            X86DebugReg::Dr2 => x86.dr2 = value,
+                            X86DebugReg::Dr3 => x86.dr3 = value,
+                            X86DebugReg::Dr4 | X86DebugReg::Dr6 => x86.dr6 = value,
+                            X86DebugReg::Dr5 | X86DebugReg::Dr7 => x86.dr7 = value,
+                        }
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                }
+            }
+
             OpKind::X86ReadTsc(read) => {
                 let (cr0, cr4, cpl, tsc_aux) = match &ctx.arch_regs {
                     ArchRegState::X86_64(x86) => (x86.cr0, x86.cr4, x86.cpl, x86.tsc_aux),

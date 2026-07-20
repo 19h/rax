@@ -51,6 +51,8 @@ mod timing;
 mod trap;
 #[cfg(test)]
 mod vector;
+#[cfg(test)]
+mod write_debug;
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{

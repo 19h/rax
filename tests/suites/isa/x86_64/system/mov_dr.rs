@@ -845,3 +845,222 @@ fn mov_from_dr_outside_64_bit_mode_is_an_ignored_prefix_32_bit_write() {
     assert_eq!(regs.rax, 0x8765_4321);
     assert_eq!(regs.rip, CODE_ADDR + 4);
 }
+
+#[test]
+fn mov_to_dr_writes_exact_state_and_ignores_mod_bits_without_an_address() {
+    for modrm in [0x00, 0x40, 0x80, 0xC0] {
+        let code = [0x0F, 0x23, modrm, 0x25, 0xAA, 0xBB, 0xCC, 0xDD];
+        let (mut vcpu, _) = setup_vm(&code, None);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x0123_4567_89AB_CDEF;
+        regs.rflags = 0x2 | 0x08D5;
+        vcpu.set_regs(&regs).unwrap();
+
+        assert!(vcpu.step().unwrap().is_none(), "ModR/M={modrm:#04x}");
+        let after_regs = vcpu.get_regs().unwrap();
+        assert_eq!(
+            vcpu.get_sregs().unwrap().dr0,
+            regs.rax,
+            "ModR/M={modrm:#04x}"
+        );
+        assert_eq!(
+            after_regs.rip,
+            CODE_ADDR + 3,
+            "ignored mod bits consume no SIB/displacement"
+        );
+        assert_eq!(
+            after_regs.rflags & 0x08D5,
+            regs.rflags & 0x08D5,
+            "deterministic undefined-flag policy"
+        );
+    }
+
+    let (mut vcpu, _) = setup_vm(&[0x49, 0x0F, 0x23, 0xC0, 0xF4], None);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.r8 = 0xFEDC_BA98_7654_3210;
+    vcpu.set_regs(&regs).unwrap();
+    assert!(vcpu.step().unwrap().is_none());
+    assert_eq!(vcpu.get_sregs().unwrap().dr0, regs.r8);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR + 4);
+}
+
+#[test]
+fn mov_to_dr_decode_faults_precede_dynamic_state_without_committing() {
+    for (name, code) in [
+        ("rex-r", &[0x44, 0x0F, 0x23, 0xC0][..]),
+        ("lock", &[0xF0, 0x0F, 0x23, 0xC0]),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(code, None);
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cs.selector = 3;
+        sregs.dr0 = 0x1111;
+        sregs.dr7 = 1 << 13;
+        vcpu.set_sregs(&sregs).unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xA5A5_5A5A_DEAD_BEEF;
+        vcpu.set_regs(&regs).unwrap();
+
+        let error = vcpu.step().expect_err("invalid MOV-to-DR must #UD");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{name}: wrong exception: {error}"
+        );
+        assert_eq!(vcpu.get_sregs().unwrap().dr0, sregs.dr0, "{name}");
+        assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
+        assert_eq!(vcpu.get_sregs().unwrap().dr6 & (1 << 13), 0, "{name}");
+    }
+
+    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x80, 0x23, 0xC0], None);
+    let error = vcpu
+        .step()
+        .expect_err("REX2 MOV-to-DR must remain undefined with APX enabled");
+    assert!(error.to_string().contains("IDT entry 6 not present"));
+}
+
+#[test]
+fn mov_to_dr_de_privilege_and_real_mode_checks_are_precise() {
+    let (mut de, _) = setup_vm_no_idt(&[0x0F, 0x23, 0xE0], None);
+    let mut sregs = de.get_sregs().unwrap();
+    sregs.cr4 |= 1 << 3;
+    sregs.cs.selector = 3;
+    sregs.dr6 = 0x400;
+    de.set_sregs(&sregs).unwrap();
+    let mut regs = de.get_regs().unwrap();
+    regs.rax = 0x1234;
+    de.set_regs(&regs).unwrap();
+    let error = de
+        .step()
+        .expect_err("DR4 with CR4.DE must #UD before the CPL fault");
+    assert!(error.to_string().contains("IDT entry 6 not present"));
+    assert_eq!(de.get_sregs().unwrap().dr6, sregs.dr6);
+
+    for (name, selector, vm) in [
+        ("protected-cpl3", 3, false),
+        ("virtual-8086-cs-rpl0", 0, true),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x23, 0xD0], None);
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cr0 |= 1;
+        sregs.cs.selector = selector;
+        sregs.dr2 = 0x2222;
+        vcpu.set_sregs(&sregs).unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x3333;
+        if vm {
+            regs.rflags |= 1 << 17;
+        }
+        vcpu.set_regs(&regs).unwrap();
+
+        let error = vcpu.step().expect_err("MOV-to-DR privilege must #GP(0)");
+        assert!(
+            error.to_string().contains("IDT entry 13 not present"),
+            "{name}: wrong exception: {error}"
+        );
+        assert_eq!(vcpu.get_sregs().unwrap().dr2, sregs.dr2, "{name}");
+        assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
+    }
+
+    let (mut real_mode, _) = setup_vm_no_idt(&[0x0F, 0x23, 0xD0], None);
+    let mut sregs = real_mode.get_sregs().unwrap();
+    sregs.cr0 &= !1;
+    sregs.cs.selector = 3;
+    real_mode.set_sregs(&sregs).unwrap();
+    let mut regs = real_mode.get_regs().unwrap();
+    regs.rax = 0x4444;
+    real_mode.set_regs(&regs).unwrap();
+    assert!(real_mode.step().unwrap().is_none());
+    assert_eq!(real_mode.get_sregs().unwrap().dr2, 0x4444);
+}
+
+#[test]
+fn mov_to_dr_general_detect_precedes_de_privilege_and_value_checks() {
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x23, 0xE0], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cr4 |= 1 << 3;
+    sregs.cs.selector = 3;
+    sregs.dr6 = 0x400;
+    sregs.dr7 = 1 << 13;
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rax = 0xFFFF_FFFF_0000_0000;
+    vcpu.set_regs(&regs).unwrap();
+
+    let error = vcpu
+        .step()
+        .expect_err("DR7.GD faults prior to executing the MOV");
+    assert!(
+        error.to_string().contains("IDT entry 1 not present"),
+        "wrong exception priority: {error}"
+    );
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR);
+    assert_ne!(vcpu.get_sregs().unwrap().dr6 & (1 << 13), 0);
+}
+
+#[test]
+fn mov_to_dr_general_detect_sets_bd_clears_gd_on_handler_entry_and_does_not_commit() {
+    let (mut vcpu, _) = setup_vm(&[0x0F, 0x23, 0xC0], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.dr0 = 0x0123_4567_89AB_CDEF;
+    sregs.dr6 = 0x400;
+    sregs.dr7 = 1 << 13;
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rax = 0xA5A5_5A5A_DEAD_BEEF;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(vcpu.step().unwrap().is_none());
+    let after_regs = vcpu.get_regs().unwrap();
+    let after_sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(after_regs.rip, INT_HANDLER_ADDR, "fault-class #DB handler");
+    assert_eq!(after_sregs.dr0, sregs.dr0, "debug write is non-committing");
+    assert_ne!(after_sregs.dr6 & (1 << 13), 0, "DR6.BD set before #DB");
+    assert_eq!(after_sregs.dr7 & (1 << 13), 0, "handler entry clears GD");
+}
+
+#[test]
+fn mov_to_dr_rejects_high_halves_for_effective_dr6_dr7_only() {
+    for (modrm, name) in [(0xE0, "DR4"), (0xE8, "DR5"), (0xF0, "DR6"), (0xF8, "DR7")] {
+        let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x23, modrm], None);
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cr4 &= !(1 << 3);
+        sregs.dr6 = 0x400;
+        sregs.dr7 = 0x400;
+        vcpu.set_sregs(&sregs).unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0x0000_0001_0000_0000;
+        vcpu.set_regs(&regs).unwrap();
+
+        let error = vcpu.step().expect_err("high-half write must #GP(0)");
+        assert!(
+            error.to_string().contains("IDT entry 13 not present"),
+            "{name}: wrong exception: {error}"
+        );
+        let after = vcpu.get_sregs().unwrap();
+        assert_eq!(after.dr6, sregs.dr6, "{name}");
+        assert_eq!(after.dr7, sregs.dr7, "{name}");
+    }
+
+    let (mut dr0, _) = setup_vm_no_idt(&[0x0F, 0x23, 0xC0], None);
+    let mut regs = dr0.get_regs().unwrap();
+    regs.rax = 0xFFFF_FFFF_0000_0000;
+    dr0.set_regs(&regs).unwrap();
+    assert!(dr0.step().unwrap().is_none());
+    assert_eq!(dr0.get_sregs().unwrap().dr0, regs.rax);
+}
+
+#[test]
+fn mov_to_dr_outside_64_bit_mode_uses_r32_and_ignores_operand_size() {
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x66, 0x0F, 0x23, 0xF0], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.l = false;
+    sregs.cs.db = true;
+    sregs.dr6 = 0x400;
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rax = 0xFFFF_AAAA_8765_4321;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(vcpu.step().unwrap().is_none());
+    assert_eq!(vcpu.get_sregs().unwrap().dr6, 0x8765_4321);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR + 4);
+}

@@ -341,6 +341,10 @@ impl X86_64Lifter {
             // dynamic in CR4.DE, so retain the raw encoded selector.
             0x21 => self.lift_read_debug_0f21(after_opcode, &prefix2, pc, ctx),
 
+            // MOV DR0-DR7, r64. This shares the ignored ModR/M.mod and dynamic
+            // DR4/DR5 rules, while the SMIR op retains its serializing write.
+            0x23 => self.lift_write_debug_0f23(after_opcode, &prefix2, pc, ctx),
+
             // EMMS marks every x87/MMX register empty while preserving the
             // aliased payloads. FEMMS performs the same defined tag transition
             // but leaves those payloads architecturally undefined; retaining

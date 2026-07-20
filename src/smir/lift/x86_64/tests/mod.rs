@@ -54,6 +54,8 @@ mod tsx;
 #[cfg(test)]
 mod vex;
 #[cfg(test)]
+mod write_debug;
+#[cfg(test)]
 mod x87_aliases;
 #[cfg(test)]
 mod x87_noops;

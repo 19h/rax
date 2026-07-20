@@ -14,9 +14,10 @@ pub enum X86ControlReg {
     Cr8,
 }
 
-/// Encoded debug-register selector accepted by `MOV r64, DRn`. DR4 and DR5
-/// remain explicit because their CR4.DE-dependent invalidity and DR6/DR7 alias
-/// behavior are architectural runtime state, not static decode properties.
+/// Encoded debug-register selector accepted by `MOV r64, DRn` and
+/// `MOV DRn, r64`. DR4 and DR5 remain explicit because their CR4.DE-dependent
+/// invalidity and DR6/DR7 alias behavior are architectural runtime state, not
+/// static decode properties.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum X86DebugReg {
     Dr0,

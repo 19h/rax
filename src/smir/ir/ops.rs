@@ -3986,6 +3986,16 @@ pub enum OpKind {
         debug: X86DebugReg,
     },
 
+    /// `MOV DR0-DR7, r64`. The encoded selector retains dynamic DR4/DR5
+    /// aliasing and CR4.DE invalidity. DR7.GD can fault before the write;
+    /// effective DR6/DR7 reject nonzero source bits 63:32. A successful write
+    /// is serializing. The six undefined status flags are deterministically
+    /// preserved to match the direct implementation.
+    X86WriteDebug {
+        src: VReg,
+        debug: X86DebugReg,
+    },
+
     /// RDFSBASE/RDGSBASE/WRFSBASE/WRGSBASE. `operand` is the encoded GPR and
     /// `base` is exactly FS.base or GS.base. A read writes `operand` from
     /// `base`; a write commits `operand` to `base`. The operation performs its
@@ -4447,6 +4457,7 @@ impl OpKind {
                 | OpKind::X86Clts
                 | OpKind::X86ReadControl { .. }
                 | OpKind::X86ReadDebug { .. }
+                | OpKind::X86WriteDebug { .. }
                 | OpKind::X86FsGsBase { .. }
                 | OpKind::X86SwapGs { .. }
                 | OpKind::X86MonitorMwait(..)
@@ -4967,6 +4978,7 @@ impl OpKind {
             | OpKind::X86XRstor { .. }
             | OpKind::X86XSetBv { .. }
             | OpKind::X86Clts
+            | OpKind::X86WriteDebug { .. }
             | OpKind::X86MonitorMwait(..)
             | OpKind::Syscall { .. }
             | OpKind::IoOut { .. }
@@ -5137,6 +5149,7 @@ impl OpKind {
                     | OpKind::X86Clts
                     | OpKind::X86ReadControl { .. }
                     | OpKind::X86ReadDebug { .. }
+                    | OpKind::X86WriteDebug { .. }
                     | OpKind::X86FsGsBase { .. }
                     | OpKind::X86SwapGs { .. }
                     | OpKind::X86MonitorMwait(..)
