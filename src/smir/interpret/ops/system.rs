@@ -6,10 +6,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
-    X86CacheControlKind, X86CountKind, X86MonitorMwaitOp, X86OpHint, X86ThreeDNowKind,
-    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
-    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
-    X86XSaveKind,
+    X86CacheControlKind, X86ControlReg, X86CountKind, X86MonitorMwaitOp, X86OpHint,
+    X86ThreeDNowKind, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
+    X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
+    X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -71,6 +71,38 @@ impl SmirInterpreter {
                     return Ok(());
                 }
                 x86.cr0 &= !(1 << 3);
+            }
+
+            OpKind::X86ReadControl { dst, control } => {
+                let value = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => {
+                        // Real-address mode permits the read regardless of a
+                        // stale CS.RPL. X86RegState.cpl already maps VM86 to
+                        // effective CPL3.
+                        if x86.cr0 & 1 != 0 && x86.cpl != 0 {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                        match control {
+                            X86ControlReg::Cr0 => x86.cr0,
+                            X86ControlReg::Cr2 => x86.cr2,
+                            X86ControlReg::Cr3 => x86.cr3,
+                            X86ControlReg::Cr4 => x86.cr4,
+                            X86ControlReg::Cr8 => x86.cr8,
+                        }
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                Self::write_x86_partial(ctx, *dst, value, OpWidth::W64);
             }
 
             OpKind::X86ReadTsc(read) => {

@@ -67,10 +67,14 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     vcpu.sregs.gs.base = gr.gs_base;
     vcpu.kernel_gs_base = gr.kernel_gs_base;
     vcpu.pkru = gr.pkru;
-    // CR0 is normally read-only to native regions. CLTS is the narrow state-
-    // backed exception: publish its current value before an interpreter callout
-    // so a callee observes CR0.TS exactly as the native caller left it.
+    // Publish every control register carried by the native ABI so the direct
+    // callee observes prior native state and later native reads observe every
+    // control-register write committed by the callee.
     vcpu.sregs.cr0 = gr.cr0;
+    vcpu.sregs.cr2 = gr.cr2;
+    vcpu.sregs.cr3 = gr.cr3;
+    vcpu.sregs.cr4 = gr.cr4;
+    vcpu.sregs.cr8 = gr.cr8;
     vcpu.lazy_flags = LazyFlags {
         op: LazyFlagOp::None,
         ..Default::default()
@@ -207,6 +211,9 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     gr.xgetbv1 = vcpu.xgetbv1_value;
     gr.cr4 = vcpu.sregs.cr4;
     gr.cr0 = vcpu.sregs.cr0;
+    gr.cr2 = vcpu.sregs.cr2;
+    gr.cr3 = vcpu.sregs.cr3;
+    gr.cr8 = vcpu.sregs.cr8;
     gr.cpl = if vcpu.regs.rflags & flags::bits::VM != 0 {
         3
     } else {

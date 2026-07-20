@@ -24,8 +24,9 @@ use super::{
     X86_GUEST_AC_FLAG_OFFSET, X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CALL_FN_OFFSET,
     X86_GUEST_CPL_OFFSET, X86_GUEST_CPUID_FN_OFFSET, X86_GUEST_CPUID_SSE4A_OFFSET,
     X86_GUEST_CPUID_VP2INTERSECT_OFFSET, X86_GUEST_CPUID_XEON_PHI_AVX512_OFFSET,
-    X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET,
-    X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
+    X86_GUEST_CR0_OFFSET, X86_GUEST_CR2_OFFSET, X86_GUEST_CR3_OFFSET, X86_GUEST_CR4_OFFSET,
+    X86_GUEST_CR8_OFFSET, X86_GUEST_CTX_OFFSET, X86_GUEST_EXIT_PC_OFFSET, X86_GUEST_FS_BASE_OFFSET,
+    X86_GUEST_GPR_COUNT, X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET,
     X86_GUEST_KERNEL_GS_BASE_OFFSET, X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MM_OFFSET,
     X86_GUEST_MMX_ACTIVE_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET,
     X86_GUEST_PAIR_STORE_FN_OFFSET, X86_GUEST_PKRU_OFFSET, X86_GUEST_RFLAGS_OFFSET,
@@ -210,6 +211,13 @@ pub struct GuestRegs {
     /// loaded because CPL3 alignment checking would expose guest state to the
     /// emulator process as #AC/SIGBUS.
     pub ac_flag: u64,
+    /// Guest CR2 page-fault linear-address state. Appended to preserve every
+    /// pre-existing native helper ABI offset.
+    pub cr2: u64,
+    /// Guest CR3 paging-structure root and process-context state.
+    pub cr3: u64,
+    /// Guest CR8 task-priority state.
+    pub cr8: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -255,6 +263,9 @@ impl Default for GuestRegs {
             kernel_gs_base: 0,
             tsc_fn: 0,
             ac_flag: 0,
+            cr2: 0,
+            cr3: 0,
+            cr8: 0,
         }
     }
 }

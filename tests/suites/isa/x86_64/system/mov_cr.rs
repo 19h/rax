@@ -1,10 +1,10 @@
-use crate::common::{run_until_hlt, setup_vm};
-use rax::vm::vcpu::Registers;
-
+use crate::common::{
+    CODE_ADDR, VCpu, run_until_hlt, setup_apx_vm_no_idt, setup_vm, setup_vm_no_idt,
+};
 // MOV CR - Move to/from Control Registers
 // Opcodes:
-// 0F 20 /r - MOV r64, CR0-CR7 (read control register)
-// 0F 22 /r - MOV CR0-CR7, r64 (write control register)
+// 0F 20 /r - MOV r32/r64, CR0/CR2/CR3/CR4 (read control register)
+// 0F 22 /r - MOV CR0/CR2/CR3/CR4, r32/r64 (write control register)
 // REX.R + 0F 20/0 - MOV r64, CR8
 // REX.R + 0F 22/0 - MOV CR8, r64
 //
@@ -717,4 +717,127 @@ fn test_clts_clears_cr0_ts() {
     assert_eq!(regs.rbx & 8, 0, "CLTS cleared CR0.TS");
     // The rest of CR0 (PE etc.) is preserved.
     assert!(regs.rbx & 1 != 0, "PE preserved by CLTS");
+}
+
+#[test]
+fn mov_from_cr_ignores_mod_bits_and_consumes_no_sib_or_displacement() {
+    for modrm in [0x00, 0x40, 0x80, 0xC0] {
+        let code = [
+            0x0F, 0x20, modrm, // MOV RAX,CR0; ModR/M.mod is ignored
+            0xBB, 0x78, 0x56, 0x34, 0x12, // MOV EBX,0x12345678
+            0xF4,
+        ];
+        let (mut vcpu, _) = setup_vm(&code, None);
+        let regs = run_until_hlt(&mut vcpu).unwrap();
+        assert_eq!(regs.rax, 0x0005_0033, "ModR/M={modrm:#04x}");
+        assert_eq!(regs.rbx, 0x1234_5678, "ModR/M={modrm:#04x}");
+    }
+}
+
+#[test]
+fn mov_from_cr_ignores_non_lock_prefixes_and_preserves_deterministic_flags() {
+    for prefix in [
+        0x26, 0x2E, 0x36, 0x3E, 0x64, 0x65, // segment overrides
+        0x66, 0x67, // operand/address size
+        0x40, 0x48, // neutral REX and ignored REX.W
+        0xF2, 0xF3, // repeat prefixes
+    ] {
+        let (mut vcpu, _) = setup_vm(&[prefix, 0x0F, 0x20, 0xC3], None);
+        let before = vcpu.get_regs().unwrap().rflags;
+        assert!(vcpu.step().unwrap().is_none(), "prefix {prefix:#04x}");
+        let regs = vcpu.get_regs().unwrap();
+        assert_eq!(regs.rbx, 0x0005_0033, "prefix {prefix:#04x}");
+        assert_eq!(regs.rflags, before, "prefix {prefix:#04x}");
+        assert_eq!(regs.rip, CODE_ADDR + 4, "prefix {prefix:#04x}");
+    }
+}
+
+#[test]
+fn mov_from_cr_decode_faults_precede_privilege_faults_without_committing() {
+    for (name, code) in [
+        ("reserved-cr1", &[0x0F, 0x20, 0xC8][..]),
+        ("reserved-cr9", &[0x44, 0x0F, 0x20, 0xC8]),
+        ("lock-valid-cr0", &[0xF0, 0x0F, 0x20, 0xC0]),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(code, None);
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cr0 |= 1;
+        sregs.cs.selector = 3;
+        vcpu.set_sregs(&sregs).unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xA5A5_5A5A_DEAD_BEEF;
+        vcpu.set_regs(&regs).unwrap();
+
+        let error = vcpu
+            .step()
+            .expect_err("decode-invalid MOV-from-CR must #UD");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{name}: wrong exception: {error}"
+        );
+        assert_eq!(vcpu.get_regs().unwrap().rax, regs.rax, "{name}");
+        assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
+    }
+
+    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x80, 0x20, 0xC0], None);
+    let error = vcpu
+        .step()
+        .expect_err("REX2 MOV-from-CR must remain undefined with APX enabled");
+    assert!(error.to_string().contains("IDT entry 6 not present"));
+}
+
+#[test]
+fn mov_from_cr_privilege_check_handles_cpl3_vm86_and_real_mode_precisely() {
+    for (name, selector, vm) in [
+        ("protected-cpl3", 3, false),
+        ("virtual-8086-cs-rpl0", 0, true),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x20, 0xD8], None);
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cr0 |= 1;
+        sregs.cr3 = 0x1234_5000;
+        sregs.cs.selector = selector;
+        vcpu.set_sregs(&sregs).unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xA5A5_5A5A_DEAD_BEEF;
+        if vm {
+            regs.rflags |= 1 << 17;
+        }
+        vcpu.set_regs(&regs).unwrap();
+
+        let error = vcpu.step().expect_err("MOV-from-CR privilege must #GP(0)");
+        assert!(
+            error.to_string().contains("IDT entry 13 not present"),
+            "{name}: wrong exception: {error}"
+        );
+        assert_eq!(vcpu.get_regs().unwrap().rax, regs.rax, "{name}");
+        assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
+    }
+
+    let (mut real_mode, _) = setup_vm_no_idt(&[0x0F, 0x20, 0xD8], None);
+    let mut sregs = real_mode.get_sregs().unwrap();
+    sregs.cr0 &= !1;
+    sregs.cr3 = 0x1234_5000;
+    sregs.cs.selector = 3;
+    real_mode.set_sregs(&sregs).unwrap();
+    assert!(real_mode.step().unwrap().is_none());
+    assert_eq!(real_mode.get_regs().unwrap().rax, 0x1234_5000);
+}
+
+#[test]
+fn mov_from_cr_outside_64_bit_mode_is_an_ignored_prefix_32_bit_write() {
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x66, 0x0F, 0x20, 0xD0], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.l = false;
+    sregs.cs.db = true;
+    sregs.cr2 = 0xFFFF_AAAA_8765_4321;
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rax = u64::MAX;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(vcpu.step().unwrap().is_none());
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rax, 0x8765_4321);
+    assert_eq!(regs.rip, CODE_ADDR + 4);
 }

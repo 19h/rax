@@ -120,6 +120,8 @@ impl X86_64Lowerer {
 
             OpKind::X86Clts => self.emit_x86_clts(op)?,
 
+            OpKind::X86ReadControl { .. } => self.emit_x86_read_control(op)?,
+
             OpKind::X86FsGsBase { .. } => self.emit_x86_fsgsbase(op)?,
 
             OpKind::X86SwapGs { .. } => self.emit_x86_swapgs(op)?,

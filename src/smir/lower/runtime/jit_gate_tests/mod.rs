@@ -36,6 +36,8 @@ mod monitor_mwait;
 #[cfg(test)]
 mod pkru;
 #[cfg(test)]
+mod read_control;
+#[cfg(test)]
 mod serialize;
 #[cfg(test)]
 mod sqrt;

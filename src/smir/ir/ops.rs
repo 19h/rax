@@ -3967,6 +3967,15 @@ pub enum OpKind {
     /// no explicit operands but is stateful and potentially faulting.
     X86Clts,
 
+    /// `MOV r64, CR0/CR2/CR3/CR4/CR8`. The selected control register is
+    /// implicit architecture state; `dst` is the encoded 64-bit GPR. The
+    /// operation performs its dynamic real-mode/CPL check and is retained as
+    /// side-effecting because it can fault and CR0/2/3/4 reads are serializing.
+    X86ReadControl {
+        dst: VReg,
+        control: X86ControlReg,
+    },
+
     /// RDFSBASE/RDGSBASE/WRFSBASE/WRGSBASE. `operand` is the encoded GPR and
     /// `base` is exactly FS.base or GS.base. A read writes `operand` from
     /// `base`; a write commits `operand` to `base`. The operation performs its
@@ -4426,6 +4435,7 @@ impl OpKind {
                 | OpKind::X86XGetBv { .. }
                 | OpKind::X86XSetBv { .. }
                 | OpKind::X86Clts
+                | OpKind::X86ReadControl { .. }
                 | OpKind::X86FsGsBase { .. }
                 | OpKind::X86SwapGs { .. }
                 | OpKind::X86MonitorMwait(..)
@@ -4838,7 +4848,9 @@ impl OpKind {
 
             OpKind::X86Cmpxchg8b16b { dst_lo, dst_hi, .. } => vec![*dst_lo, *dst_hi],
 
-            OpKind::X86Random { dst, .. } | OpKind::X86ReadPid { dst } => vec![*dst],
+            OpKind::X86Random { dst, .. }
+            | OpKind::X86ReadPid { dst }
+            | OpKind::X86ReadControl { dst, .. } => vec![*dst],
 
             OpKind::CmpyW128Sat { dst, .. } | OpKind::SatOrigShl { dst, .. } => vec![*dst],
 
@@ -5111,6 +5123,7 @@ impl OpKind {
                     | OpKind::X86XGetBv { .. }
                     | OpKind::X86XSetBv { .. }
                     | OpKind::X86Clts
+                    | OpKind::X86ReadControl { .. }
                     | OpKind::X86FsGsBase { .. }
                     | OpKind::X86SwapGs { .. }
                     | OpKind::X86MonitorMwait(..)

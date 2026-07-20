@@ -4605,6 +4605,7 @@ impl X86_64Vcpu {
                             OpKind::X86FsGsBase { .. }
                                 | OpKind::X86SwapGs { .. }
                                 | OpKind::X86MonitorMwait(..)
+                                | OpKind::X86ReadControl { .. }
                         )
                     })
             {
@@ -4875,6 +4876,9 @@ impl X86_64Vcpu {
         gr.xgetbv1 = self.xgetbv1_value;
         gr.cr4 = self.sregs.cr4;
         gr.cr0 = self.sregs.cr0;
+        gr.cr2 = self.sregs.cr2;
+        gr.cr3 = self.sregs.cr3;
+        gr.cr8 = self.sregs.cr8;
         gr.cpl = if self.regs.rflags & flags::bits::VM != 0 {
             3
         } else {
@@ -4969,11 +4973,15 @@ impl X86_64Vcpu {
             return;
         }
 
-        // Stateful control instructions such as XSETBV and CLTS commit through the
-        // marshalled ABI before returning at a precise next-instruction PC.
+        // Stateful control instructions and interpreter callouts commit through
+        // the marshalled ABI before returning at a precise next-instruction PC.
         self.xcr0 = gr.xcr0;
         self.pkru = gr.pkru;
         self.sregs.cr0 = gr.cr0;
+        self.sregs.cr2 = gr.cr2;
+        self.sregs.cr3 = gr.cr3;
+        self.sregs.cr4 = gr.cr4;
+        self.sregs.cr8 = gr.cr8;
         self.sregs.fs.base = gr.fs_base;
         self.sregs.gs.base = gr.gs_base;
         self.kernel_gs_base = gr.kernel_gs_base;
@@ -5109,6 +5117,10 @@ impl X86_64Vcpu {
         let snap_kernel_gs_base = self.kernel_gs_base;
         let snap_pkru = self.pkru;
         let snap_cr0 = self.sregs.cr0;
+        let snap_cr2 = self.sregs.cr2;
+        let snap_cr3 = self.sregs.cr3;
+        let snap_cr4 = self.sregs.cr4;
+        let snap_cr8 = self.sregs.cr8;
 
         // 1) Run natively with store-logging (to UNDO writes) and an access
         //    trace (to diff against the interpreter's access sequence).
@@ -5122,6 +5134,10 @@ impl X86_64Vcpu {
         let jit_kernel_gs_base = self.kernel_gs_base;
         let jit_pkru = self.pkru;
         let jit_cr0 = self.sregs.cr0;
+        let jit_cr2 = self.sregs.cr2;
+        let jit_cr3 = self.sregs.cr3;
+        let jit_cr4 = self.sregs.cr4;
+        let jit_cr8 = self.sregs.cr8;
         let jit_rflags = self.regs.rflags; // already materialized by the native bridge
         let exit_pc = self.regs.rip;
         // Take the native trace NOW, before the undo/re-read loops add to it.
@@ -5160,6 +5176,14 @@ impl X86_64Vcpu {
         self.kernel_gs_base = snap_kernel_gs_base;
         self.pkru = snap_pkru;
         self.sregs.cr0 = snap_cr0;
+        self.sregs.cr2 = snap_cr2;
+        self.sregs.cr3 = snap_cr3;
+        self.sregs.cr4 = snap_cr4;
+        self.sregs.cr8 = snap_cr8;
+        // A lift-through-call callee can update translation controls through
+        // the direct interpreter. The verification replay must not reuse TLB
+        // entries created under the native run's CR0/CR3/CR4 state.
+        self.mmu.flush_tlb();
         self.jit_mem_trace = Some(Vec::new());
         let cap = 50_000_000u64;
         let mut steps = 0u64;
@@ -5268,6 +5292,10 @@ impl X86_64Vcpu {
                 ("kernel_gs_base", self.kernel_gs_base, jit_kernel_gs_base),
                 ("pkru", u64::from(self.pkru), u64::from(jit_pkru)),
                 ("cr0", self.sregs.cr0, jit_cr0),
+                ("cr2", self.sregs.cr2, jit_cr2),
+                ("cr3", self.sregs.cr3, jit_cr3),
+                ("cr4", self.sregs.cr4, jit_cr4),
+                ("cr8", self.sregs.cr8, jit_cr8),
             ] {
                 if interp != native {
                     diffs.push(format!("{name}: interp={interp:#x} jit={native:#x}"));
@@ -5418,6 +5446,11 @@ impl X86_64Vcpu {
         self.kernel_gs_base = jit_kernel_gs_base;
         self.pkru = jit_pkru;
         self.sregs.cr0 = jit_cr0;
+        self.sregs.cr2 = jit_cr2;
+        self.sregs.cr3 = jit_cr3;
+        self.sregs.cr4 = jit_cr4;
+        self.sregs.cr8 = jit_cr8;
+        self.mmu.flush_tlb();
     }
 
     /// Re-lift + optimize the region at `entry` and pretty-print its blocks/ops
@@ -5986,6 +6019,10 @@ mod jit_ac_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_clts_tests.rs"]
 mod jit_clts_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_read_control_tests.rs"]
+mod jit_read_control_tests;
 
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {

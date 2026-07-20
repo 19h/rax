@@ -4,6 +4,8 @@ mod arithmetic;
 pub use arithmetic::*;
 mod control_flow;
 pub use control_flow::*;
+mod control_regs;
+pub use control_regs::*;
 mod data_movement;
 pub use data_movement::*;
 mod movdir;

@@ -378,12 +378,18 @@ pub struct X86RegState {
     pub xcr0: u64,
     /// XGETBV(ECX=1) init-optimization state bitmap.
     pub xgetbv1: u64,
-    /// Guest CR4. CPUID leaf 1 reflects OSXSAVE (bit 18), and leaf 7 reflects
-    /// OSPKE (bit 22).
-    pub cr4: u64,
     /// Guest CR0. PE (bit 0) participates in timestamp and CLTS privilege
     /// checks; CLTS clears TS (bit 3).
     pub cr0: u64,
+    /// Guest CR2 page-fault linear-address state.
+    pub cr2: u64,
+    /// Guest CR3 paging-structure root and process-context state.
+    pub cr3: u64,
+    /// Guest CR4. CPUID leaf 1 reflects OSXSAVE (bit 18), and leaf 7 reflects
+    /// OSPKE (bit 22).
+    pub cr4: u64,
+    /// Guest CR8 task-priority state.
+    pub cr8: u64,
     /// Effective current privilege level used by privileged system
     /// instructions, including virtual-8086 mode as CPL3.
     pub cpl: u8,

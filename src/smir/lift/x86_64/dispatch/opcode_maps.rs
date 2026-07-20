@@ -332,6 +332,11 @@ impl X86_64Lifter {
             // an opcode suffix.
             0x0F => self.lift_3dnow(after_opcode, &prefix2, pc, ctx),
 
+            // MOV r64, CR0/CR2/CR3/CR4/CR8. ModR/M.mod is architecturally
+            // ignored, so its raw-byte decoder lives outside generic ModR/M
+            // address handling.
+            0x20 => self.lift_read_control_0f20(after_opcode, &prefix2, pc, ctx),
+
             // EMMS marks every x87/MMX register empty while preserving the
             // aliased payloads. FEMMS performs the same defined tag transition
             // but leaves those payloads architecturally undefined; retaining

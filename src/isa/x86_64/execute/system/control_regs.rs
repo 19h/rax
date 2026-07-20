@@ -210,24 +210,36 @@ pub fn clts(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
     Ok(None)
 }
 
-/// MOV r64, CRn (0x0F 0x20)
+/// MOV r32/r64, CRn (0x0F 0x20)
 pub fn mov_r_cr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // Privileged: accessing control registers requires CPL 0.
-    if !is_cpl0(vcpu) {
-        return raise_gp0(vcpu);
+    // REX2/APX does not define an extended MOV-from-control-register form.
+    // Decode-time #UD conditions take precedence over the dynamic CPL check.
+    if ctx.rex2.is_some() {
+        return vcpu.inject_undefined_instruction();
     }
     let modrm = ctx.consume_u8()?;
     let cr = ((modrm >> 3) & 0x07) | ctx.rex_r();
     let rm = (modrm & 0x07) | ctx.rex_b();
+    if !matches!(cr, 0 | 2 | 3 | 4 | 8) || (cr == 8 && !vcpu.sregs.cs.l) {
+        return vcpu.inject_undefined_instruction();
+    }
+    // Real-address mode is permitted. Protected, compatibility, and 64-bit
+    // modes require CPL0; virtual-8086 mode has effective CPL3.
+    if !is_cpl0(vcpu) {
+        return raise_gp0(vcpu);
+    }
     let value = match cr {
         0 => vcpu.sregs.cr0,
         2 => vcpu.sregs.cr2,
         3 => vcpu.sregs.cr3,
         4 => vcpu.sregs.cr4,
         8 => vcpu.sregs.cr8,
-        _ => return vcpu.inject_undefined_instruction(),
+        _ => unreachable!("validated readable control register changed"),
     };
-    vcpu.set_reg(rm, value, 8);
+    // Outside 64-bit mode this instruction always has a 32-bit operand; 66H
+    // is ignored. A 32-bit GPR write zero-extends in the canonical register
+    // state, while 64-bit mode writes the complete r64 destination.
+    vcpu.set_reg(rm, value, if vcpu.sregs.cs.l { 8 } else { 4 });
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

@@ -1267,10 +1267,13 @@ pub(crate) fn aarch64_block_is_clobber_safe(
                 }
             }
         }
-        // These operand-free operations mutate x86 architectural state. The
+        // These operations access x86-specific architectural state. The
         // AArch64 guest-state ABI has no corresponding fields or lowerers, so
         // their generic JIT-safety classification must not admit them here.
-        if matches!(op.kind, OpKind::SetAC { .. } | OpKind::X86Clts) {
+        if matches!(
+            op.kind,
+            OpKind::SetAC { .. } | OpKind::X86Clts | OpKind::X86ReadControl { .. }
+        ) {
             return false;
         }
         let mem_ok = allow_mem && aarch64_mem_helper_op(&op.kind);

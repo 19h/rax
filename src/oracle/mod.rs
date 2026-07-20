@@ -20,6 +20,7 @@ use crate::smir::ir::ops::HexFpRecipKind;
 use crate::smir::ir::ops::X86AdxKind;
 use crate::smir::ir::ops::X86BlsKind;
 use crate::smir::ir::ops::X86CacheControlKind;
+use crate::smir::ir::ops::X86ControlReg;
 use crate::smir::ir::ops::X86CountKind;
 use crate::smir::ir::ops::X86MonitorMwaitOp;
 use crate::smir::ir::ops::X86PackedStringKind;
@@ -1148,6 +1149,7 @@ debug_name_json!(
     HexFpRecipKind,
     X86AdxKind,
     X86CacheControlKind,
+    X86ControlReg,
     X86BlsKind,
     X86CountKind,
     X86ThreeDNowKind,
@@ -2477,6 +2479,9 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src_high,
         } => op_json!("x86_xsetbv", selector, src_low, src_high),
         OpKind::X86Clts => op_json!("x86_clts"),
+        OpKind::X86ReadControl { dst, control } => {
+            op_json!("x86_read_control", dst, control)
+        }
         OpKind::X86FsGsBase {
             operand,
             base,

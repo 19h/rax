@@ -2,6 +2,18 @@
 
 use crate::smir::ir::types::{Address, VReg};
 
+/// Architecturally readable x86 control registers accepted by `MOV r64, CRn`
+/// in 64-bit mode. Reserved control-register numbers are represented as an
+/// explicit invalid-opcode trap by the lifter and never reach this enum.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86ControlReg {
+    Cr0,
+    Cr2,
+    Cr3,
+    Cr4,
+    Cr8,
+}
+
 /// x86 RDTSC/RDTSCP timestamp read. Both forms write EDX:EAX with 32-bit
 /// zero-extending writes. `dst_aux == Some(ECX)` selects RDTSCP: it additionally
 /// reads guest IA32_TSC_AUX and has the architectural prior-load ordering

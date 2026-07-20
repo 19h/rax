@@ -1,0 +1,71 @@
+//! x86 control-register read lifting.
+
+use crate::smir::ir::TrapKind;
+use crate::smir::ir::ops::{OpKind, SmirOp, X86ControlReg};
+use crate::smir::ir::types::OpId;
+use crate::smir::lift::x86_64::{X86_64Lifter, X86Prefix};
+use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult};
+
+impl X86_64Lifter {
+    /// Lift `MOV r64, CR0/CR2/CR3/CR4/CR8` (`0F 20 /r`).
+    ///
+    /// Intel defines the ModR/M.mod field as ignored for this instruction, so
+    /// only the raw ModR/M byte is consumed: apparent memory forms do not carry
+    /// a SIB or displacement. Reserved control-register numbers are guaranteed
+    /// #UDs and therefore become explicit invalid-opcode traps rather than
+    /// unsupported frontiers.
+    pub(crate) fn lift_read_control_0f20(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        _ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if bytes.is_empty() {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: prefix.cursor,
+                need: prefix.cursor + 1,
+            });
+        }
+        if prefix.lock || prefix.rex2.is_some() {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![bytes[0]],
+            });
+        }
+
+        let modrm = bytes[0];
+        let control = match ((modrm >> 3) & 7) | prefix.rex_r() {
+            0 => Some(X86ControlReg::Cr0),
+            2 => Some(X86ControlReg::Cr2),
+            3 => Some(X86ControlReg::Cr3),
+            4 => Some(X86ControlReg::Cr4),
+            8 => Some(X86ControlReg::Cr8),
+            _ => None,
+        };
+        let bytes_consumed = prefix.cursor + 1;
+        let Some(control) = control else {
+            return Ok(LiftResult {
+                ops: vec![],
+                bytes_consumed,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: vec![],
+            });
+        };
+
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::X86ReadControl {
+                    dst: self.gpr((modrm & 7) | prefix.rex_b()),
+                    control,
+                },
+            )],
+            bytes_consumed,
+        ))
+    }
+}

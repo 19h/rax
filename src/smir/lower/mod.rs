@@ -128,6 +128,13 @@ pub const X86_GUEST_TSC_FN_OFFSET: i32 = X86_GUEST_KERNEL_GS_BASE_OFFSET + 8;
 /// Byte offset of the guest RFLAGS.AC shadow. Native execution must keep host
 /// AC clear, so this field is authoritative for the guest bit.
 pub const X86_GUEST_AC_FLAG_OFFSET: i32 = X86_GUEST_TSC_FN_OFFSET + 8;
+/// Byte offset of guest CR2. Newly modeled control-register state is appended
+/// so every established helper/trampoline field retains its existing offset.
+pub const X86_GUEST_CR2_OFFSET: i32 = X86_GUEST_AC_FLAG_OFFSET + 8;
+/// Byte offset of guest CR3.
+pub const X86_GUEST_CR3_OFFSET: i32 = X86_GUEST_CR2_OFFSET + 8;
+/// Byte offset of guest CR8.
+pub const X86_GUEST_CR8_OFFSET: i32 = X86_GUEST_CR3_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

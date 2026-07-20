@@ -157,6 +157,22 @@ fn x86_vector_guest_state_layout_matches_trampoline_offsets() {
         std::mem::offset_of!(GuestRegs, tsc_fn),
         X86_GUEST_TSC_FN_OFFSET as usize
     );
+    assert_eq!(
+        std::mem::offset_of!(GuestRegs, ac_flag),
+        X86_GUEST_AC_FLAG_OFFSET as usize
+    );
+    assert_eq!(
+        std::mem::offset_of!(GuestRegs, cr2),
+        X86_GUEST_CR2_OFFSET as usize
+    );
+    assert_eq!(
+        std::mem::offset_of!(GuestRegs, cr3),
+        X86_GUEST_CR3_OFFSET as usize
+    );
+    assert_eq!(
+        std::mem::offset_of!(GuestRegs, cr8),
+        X86_GUEST_CR8_OFFSET as usize
+    );
     assert_eq!(std::mem::align_of::<GuestRegs>(), 64);
 
     let mut regs = GuestRegs::default();
