@@ -59,10 +59,10 @@ impl X86_64Lifter {
         ))
     }
 
-    /// Lift LLDT (`0F 00 /2`). Both register and memory sources are fixed at
-    /// 16 bits; operand-size prefixes are ignored. APX availability, execution
-    /// mode, privilege, descriptor validation, and serialization remain
-    /// dynamic properties of the emitted operation.
+    /// Lift LLDT/LTR (`0F 00 /2` and `/3`). Both register and memory sources
+    /// are fixed at 16 bits; operand-size prefixes are ignored. APX
+    /// availability, execution mode, privilege, descriptor validation, the
+    /// LTR busy transition, and serialization remain dynamic properties.
     pub(crate) fn lift_system_selector_load_0f00(
         &self,
         bytes: &[u8],
@@ -78,7 +78,11 @@ impl X86_64Lifter {
         }
 
         let modrm = decode_modrm(bytes, prefix, pc)?;
-        debug_assert_eq!((modrm.byte >> 3) & 7, 2);
+        let selector = match (modrm.byte >> 3) & 7 {
+            2 => X86SystemSelector::Ldtr,
+            3 => X86SystemSelector::Tr,
+            _ => unreachable!("0F 00 selector-load dispatcher admitted another group"),
+        };
         let bytes_consumed = prefix.cursor + modrm.bytes_consumed;
         let next_pc = pc.wrapping_add(bytes_consumed as u64);
         let source = if let Some(x86_addr) = modrm.addr.as_ref() {
@@ -96,7 +100,7 @@ impl X86_64Lifter {
                 OpId(0),
                 pc,
                 OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
-                    selector: X86SystemSelector::Ldtr,
+                    selector,
                     source,
                     requires_apx: prefix.rex2.is_some(),
                     next_pc,

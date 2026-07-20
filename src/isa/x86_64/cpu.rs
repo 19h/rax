@@ -2113,7 +2113,7 @@ impl X86_64Vcpu {
 
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
     #[inline(always)]
-    fn push_jit_mem_log(&mut self, access: (u64, u8, u64)) {
+    pub(super) fn push_jit_mem_log(&mut self, access: (u64, u8, u64)) {
         let over_limit = match self.jit_mem_log.as_ref() {
             Some(log) => log.len() >= JIT_VERIFY_MEM_LOG_LIMIT,
             None => false,

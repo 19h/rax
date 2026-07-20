@@ -270,9 +270,9 @@ pub struct GuestRegs {
     /// any prior interpreter callout.
     pub system_selector_fn: u64,
     /// Address of `extern "C" fn(state, operand, encoding) -> ok`. Encoding bit
-    /// zero selects a 16-bit memory source; bit one records a REX2/APX encoding.
-    /// The helper performs complete LLDT validation and commits LDTR only on
-    /// success.
+    /// zero selects a 16-bit memory source, bit one records a REX2/APX encoding,
+    /// and bit two selects LTR instead of LLDT. The helper performs complete
+    /// descriptor validation and commits LDTR/TR only on success.
     pub system_selector_load_fn: u64,
 }
 

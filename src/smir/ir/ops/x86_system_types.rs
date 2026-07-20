@@ -116,10 +116,10 @@ pub enum X86SystemSelectorSource {
     Memory { addr: Address },
 }
 
-/// Load one system-segment selector and its hidden descriptor cache. LLDT is
-/// currently emitted with `selector=LDTR`; the shared shape reserves the exact
-/// LTR representation for its distinct busy-bit implementation. Successful
-/// execution serializes and hands off at `next_pc`.
+/// Load one system-segment selector and its hidden descriptor cache. LTR also
+/// performs the implicit available-to-busy GDT descriptor transition before
+/// task-register commit. Successful execution serializes and hands off at
+/// `next_pc`.
 #[derive(Clone, Debug)]
 pub struct X86SystemSelectorLoadOp {
     pub selector: X86SystemSelector,

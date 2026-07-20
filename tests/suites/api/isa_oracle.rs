@@ -599,7 +599,7 @@ fn emits_exact_sldt_str_selector_target_width_and_apx_metadata() {
 }
 
 #[test]
-fn emits_exact_lldt_source_hidden_state_handoff_and_apx_metadata() {
+fn emits_exact_lldt_ltr_source_hidden_state_handoff_busy_and_apx_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;
 
@@ -635,6 +635,23 @@ fn emits_exact_lldt_source_hidden_state_handoff_and_apx_metadata() {
     assert_eq!(op["kind"]["next_pc"], 0x1005);
     assert_eq!(op["memory"]["reads"], true);
     assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+
+    let ltr = decode_to_json(&[0x48, 0x0F, 0x00, 0x58, 0x08], &opts).unwrap();
+    assert_eq!(ltr["smir"]["available"], true);
+    assert_eq!(ltr["smir"]["bytes_consumed"], 5);
+    let op = &ltr["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_system_selector_load");
+    assert_eq!(op["kind"]["selector"], "Tr");
+    assert_eq!(op["kind"]["source"]["kind"], "memory");
+    assert_eq!(op["kind"]["source"]["width"], "B2");
+    assert_eq!(op["kind"]["source"]["addr"]["kind"], "base_offset");
+    assert_eq!(op["kind"]["source"]["addr"]["base"]["name"], "rax");
+    assert_eq!(op["kind"]["source"]["addr"]["offset"], 8);
+    assert_eq!(op["kind"]["requires_apx"], false);
+    assert_eq!(op["kind"]["next_pc"], 0x1005);
+    assert_eq!(op["memory"]["reads"], true);
+    assert_eq!(op["memory"]["writes"], true);
     assert_eq!(op["side_effects"], true);
 }
 

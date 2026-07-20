@@ -852,15 +852,16 @@ impl Mmu {
         }
     }
 
-    /// Check that an entire translated read resolves to ordinary RAM without
+    /// Check that an entire translated access resolves to ordinary RAM without
     /// performing the data access. Native helpers that may subsequently deopt
     /// use this fail-closed probe to avoid speculatively touching MMIO and then
-    /// repeating the device read during direct replay.
+    /// repeating a device access during direct replay.
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-    pub(super) fn read_range_is_plain_ram(
+    fn range_is_plain_ram(
         &mut self,
         vaddr: u64,
         len: usize,
+        access: AccessType,
         sregs: &SystemRegisters,
     ) -> bool {
         if len == 0 {
@@ -875,7 +876,7 @@ impl Mmu {
         while remaining != 0 {
             let page_remaining = (0x1000 - (current & 0xFFF)) as usize;
             let chunk = remaining.min(page_remaining);
-            let Ok(paddr) = self.translate(current, AccessType::Read, sregs) else {
+            let Ok(paddr) = self.translate(current, access, sregs) else {
                 return false;
             };
             let Some(physical_end) = paddr.checked_add(chunk as u64) else {
@@ -896,6 +897,29 @@ impl Mmu {
             }
         }
         true
+    }
+
+    /// Read-specific wrapper for native speculative-access admission.
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    pub(super) fn read_range_is_plain_ram(
+        &mut self,
+        vaddr: u64,
+        len: usize,
+        sregs: &SystemRegisters,
+    ) -> bool {
+        self.range_is_plain_ram(vaddr, len, AccessType::Read, sregs)
+    }
+
+    /// Write-specific wrapper for native speculative-access admission. This
+    /// checks translation permissions as well as excluding MMIO.
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    pub(super) fn write_range_is_plain_ram(
+        &mut self,
+        vaddr: u64,
+        len: usize,
+        sregs: &SystemRegisters,
+    ) -> bool {
+        self.range_is_plain_ram(vaddr, len, AccessType::Write, sregs)
     }
 
     /// Fallback translation for direct map addresses outside kernel's page tables.

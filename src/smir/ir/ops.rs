@@ -5441,6 +5441,10 @@ impl OpKind {
                     target: X86SystemSelectorTarget::Memory { .. },
                     ..
                 })
+                | OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+                    selector: X86SystemSelector::Tr,
+                    ..
+                })
                 | OpKind::X86DescriptorTableStore(..)
                 | OpKind::RvVector { .. }
         )

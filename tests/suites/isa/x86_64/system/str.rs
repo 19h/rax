@@ -1,7 +1,8 @@
 use rax::vm::vcpu::Registers;
 
 use crate::common::{
-    DATA_ADDR, VCpu, read_mem_at_u16, run_until_hlt, setup_apx_vm, setup_vm, write_mem_at_u16,
+    Bytes, DATA_ADDR, GDT_BASE, GuestAddress, VCpu, read_mem_at_u16, run_until_hlt, setup_apx_vm,
+    setup_vm, write_mem_at_u16,
 };
 
 // STR - Store Task Register
@@ -498,7 +499,16 @@ fn test_ltr_str_roundtrip() {
         0x0f, 0x00, 0xcb, // STR BX
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, memory) = setup_vm(&code, None);
+    let low = 0x67_u64 | (0x9_u64 << 40) | (1_u64 << 47);
+    let mut descriptor = [0_u8; 16];
+    descriptor[..8].copy_from_slice(&low.to_le_bytes());
+    memory
+        .write_slice(&descriptor, GuestAddress(GDT_BASE + 0x28))
+        .unwrap();
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.gdt.limit = 0x37;
+    vcpu.set_sregs(&sregs).unwrap();
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     // BX should contain the TR value we loaded (0x0028)

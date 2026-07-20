@@ -1,4 +1,4 @@
-//! Fault-precise, helper-backed SLDT/STR lowering.
+//! Fault-precise, helper-backed SLDT/STR/LLDT/LTR lowering.
 
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86SystemSelector, X86SystemSelectorLoadOp, X86SystemSelectorSource,
@@ -51,23 +51,18 @@ pub(crate) fn x86_system_selector_store_shape_valid(op: &SmirOp) -> bool {
     }
 }
 
-/// Validate the strict long-mode LLDT form admitted by native lowering. LTR
-/// shares the IR shape but remains fail-closed until its descriptor busy-bit
-/// transaction is implemented.
+/// Validate the strict long-mode LLDT/LTR form admitted by native lowering.
 pub(crate) fn x86_system_selector_load_shape_valid(op: &SmirOp) -> bool {
     let OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
-        selector,
         source,
         requires_apx,
         next_pc,
+        ..
     }) = &op.kind
     else {
         return false;
     };
-    if *selector != X86SystemSelector::Ldtr
-        || op.x86_hint.is_some()
-        || !matches!(next_pc.checked_sub(op.guest_pc), Some(3..=15))
-    {
+    if op.x86_hint.is_some() || !matches!(next_pc.checked_sub(op.guest_pc), Some(3..=15)) {
         return false;
     }
 
@@ -280,10 +275,11 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-    /// Load LDTR through the owning vCPU's MMU and descriptor validator. The
+    /// Load LDTR/TR through the owning vCPU's MMU and descriptor validator. The
     /// operation exits natively after a successful serializing commit; every
-    /// dynamic guard, source-memory, or descriptor fault restores the complete
-    /// pre-instruction register/flag image and replays direct at `guest_pc`.
+    /// dynamic guard, source-memory, descriptor, or LTR busy-store fault
+    /// restores the complete pre-instruction register/flag image and replays
+    /// direct at `guest_pc`.
     pub(crate) fn emit_x86_system_selector_load(&mut self, op: &SmirOp) -> Result<(), LowerError> {
         if !self.jit_fault_deopt_guards {
             return Err(LowerError::UnsupportedOp {
@@ -299,7 +295,7 @@ impl X86_64Lowerer {
             return Err(LowerError::InvalidOperand {
                 op: "X86SystemSelectorLoad".to_string(),
                 operand:
-                    "requires an unhinted LLDT source, APX for every EGPR, and an exact next PC"
+                    "requires an unhinted LLDT/LTR source, APX for every EGPR, and an exact next PC"
                         .to_string(),
             });
         }
@@ -340,7 +336,7 @@ impl X86_64Lowerer {
         match &load.source {
             X86SystemSelectorSource::Register { src } => {
                 let VReg::Arch(ArchReg::X86(reg)) = src else {
-                    unreachable!("validated LLDT register source changed")
+                    unreachable!("validated selector-load register source changed")
                 };
                 self.emit_struct_mov(
                     PhysReg::Rax,
@@ -356,7 +352,12 @@ impl X86_64Lowerer {
         {
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_mov_rr(PhysReg::Rdi, PhysReg::Rax, OpWidth::W64);
-            let encoding = i64::from(memory_source) | (i64::from(load.requires_apx) << 1);
+            let selector = match load.selector {
+                X86SystemSelector::Ldtr => 0,
+                X86SystemSelector::Tr => 1,
+            };
+            let encoding =
+                i64::from(memory_source) | (i64::from(load.requires_apx) << 1) | (selector << 2);
             emitter.emit_mov_ri(PhysReg::Rdx, encoding, OpWidth::W32);
         }
         self.code.emit_u8(0xFC); // cld: platform ABI requires DF=0

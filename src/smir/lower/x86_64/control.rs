@@ -647,8 +647,8 @@ impl X86_64Lowerer {
             }
             if matches!(block.ops[idx].kind, OpKind::X86SystemSelectorLoad(..)) {
                 self.emit_x86_system_selector_load(&block.ops[idx])?;
-                // LLDT is serializing, and both success and fault paths leave
-                // through exact exit stubs before any later guest operation.
+                // LLDT/LTR are serializing, and both success and fault paths
+                // leave through exact exit stubs before any later guest op.
                 return Ok(());
             }
             if matches!(&block.ops[idx].kind, OpKind::X86Msr(msr) if msr.write) {

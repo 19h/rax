@@ -1,4 +1,4 @@
-//! Fail-closed native admission and helper ABI for x86 SLDT/STR/LLDT.
+//! Fail-closed native admission and helper ABI for x86 SLDT/STR/LLDT/LTR.
 
 use super::*;
 use crate::smir::ir::ops::{
@@ -39,9 +39,9 @@ fn load_register(selector: X86SystemSelector, src: VReg, requires_apx: bool) -> 
     })
 }
 
-fn load_memory(addr: Address, requires_apx: bool) -> OpKind {
+fn load_memory(selector: X86SystemSelector, addr: Address, requires_apx: bool) -> OpKind {
     OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
-        selector: X86SystemSelector::Ldtr,
+        selector,
         source: X86SystemSelectorSource::Memory { addr },
         requires_apx,
         next_pc: 0x1003,
@@ -91,12 +91,17 @@ fn selector_helper_offset_is_append_only_and_matches_guest_layout() {
 }
 
 #[test]
-fn x86_lldt_gate_requires_mmu_helpers_for_register_and_memory_sources() {
+fn x86_selector_load_gate_requires_mmu_helpers_for_both_selectors_and_sources() {
     for op in [
         load_register(X86SystemSelector::Ldtr, x86(X86Reg::Rax), false),
-        load_register(X86SystemSelector::Ldtr, x86(X86Reg::R31), true),
-        load_memory(Address::Direct(x86(X86Reg::Rsp)), false),
+        load_register(X86SystemSelector::Tr, x86(X86Reg::R31), true),
         load_memory(
+            X86SystemSelector::Ldtr,
+            Address::Direct(x86(X86Reg::Rsp)),
+            false,
+        ),
+        load_memory(
+            X86SystemSelector::Tr,
             Address::BaseIndexScale {
                 base: Some(x86(X86Reg::R16)),
                 index: x86(X86Reg::R31),
@@ -118,14 +123,17 @@ fn x86_lldt_gate_requires_mmu_helpers_for_register_and_memory_sources() {
 }
 
 #[test]
-fn x86_lldt_gate_rejects_ltr_malformed_sources_hints_and_frontiers() {
+fn x86_selector_load_gate_rejects_malformed_sources_hints_and_frontiers() {
     for malformed in [
-        load_register(X86SystemSelector::Tr, x86(X86Reg::Rax), false),
         load_register(X86SystemSelector::Ldtr, VReg::virt(0), false),
-        load_register(X86SystemSelector::Ldtr, arm_x(0), false),
+        load_register(X86SystemSelector::Tr, arm_x(0), false),
         load_register(X86SystemSelector::Ldtr, x86(X86Reg::R16), false),
-        load_memory(Address::Direct(VReg::virt(0)), false),
-        load_memory(Address::Direct(x86(X86Reg::R31)), false),
+        load_memory(X86SystemSelector::Tr, Address::Direct(VReg::virt(0)), false),
+        load_memory(
+            X86SystemSelector::Ldtr,
+            Address::Direct(x86(X86Reg::R31)),
+            false,
+        ),
         OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
             selector: X86SystemSelector::Ldtr,
             source: X86SystemSelectorSource::Register {
@@ -257,7 +265,8 @@ fn x86_selector_gate_rejects_both_aarch64_host_paths() {
         register(x86(X86Reg::Rax), OpWidth::W32, false),
         memory(Address::Absolute(0x4000), false),
         load_register(X86SystemSelector::Ldtr, x86(X86Reg::Rax), false),
-        load_memory(Address::Absolute(0x4000), false),
+        load_register(X86SystemSelector::Tr, x86(X86Reg::R31), true),
+        load_memory(X86SystemSelector::Tr, Address::Absolute(0x4000), false),
     ] {
         let function = function(op.clone());
         assert!(!is_x86_aarch64_native_clobber_safe_excluding(
@@ -274,7 +283,7 @@ fn x86_selector_survives_o2_and_remains_admitted_with_memory_helpers() {
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
     builder.push_op(
         0x1000,
-        load_register(X86SystemSelector::Ldtr, x86(X86Reg::Rax), false),
+        load_register(X86SystemSelector::Tr, x86(X86Reg::Rax), false),
     );
     builder.push_op(0x1003, register(x86(X86Reg::Rbp), OpWidth::W16, false));
     builder.push_op(0x1006, memory(Address::Direct(x86(X86Reg::Rsp)), false));

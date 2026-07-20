@@ -407,13 +407,17 @@ pub struct X86RegState {
     pub ldtr_cache: X86SystemSegmentCache,
     /// Task-register selector exposed by STR.
     pub tr_selector: u16,
+    /// Hidden descriptor cache loaded by LTR. The cached type is the busy TSS
+    /// type after the descriptor's atomic available-to-busy transition.
+    pub tr_cache: X86SystemSegmentCache,
     /// IA32_EFER, including the software-controlled LME bit and the
     /// processor-maintained LMA bit used by MOV-to-CR0 transitions.
     pub efer: u64,
     /// Current code-segment L bit. The strict x86-64 lifter emits only the
     /// r64 MOV-to-CR form; transition validation still needs the current mode.
     pub cs_l: bool,
-    /// Low four bits of the current task-register descriptor type.
+    /// Low four bits of the current task-register descriptor type. This mirrors
+    /// `tr_cache.type_` for control-register transition validation.
     pub tr_type: u8,
     /// Guest breakpoint linear-address registers.
     pub dr0: u64,

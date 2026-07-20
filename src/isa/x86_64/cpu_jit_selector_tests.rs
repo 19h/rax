@@ -1,4 +1,5 @@
-//! Direct/native x86-64 JIT differentials for SLDT/STR/LLDT state and faults.
+//! Direct/native x86-64 JIT differentials for SLDT/STR/LLDT/LTR state,
+//! descriptor memory, and faults.
 
 use super::*;
 use std::sync::Arc;
@@ -62,6 +63,39 @@ fn install_lldt_descriptor(memory: &GuestMemoryMmap, descriptor: &[u8; 16]) {
     memory
         .write_slice(descriptor, GuestAddress(0x1010))
         .unwrap();
+}
+
+fn tss_descriptor(
+    base: u64,
+    raw_limit: u32,
+    dpl: u8,
+    present: bool,
+    type_: u8,
+    granularity: bool,
+    avl: bool,
+) -> [u8; 16] {
+    assert!(raw_limit <= 0xF_FFFF);
+    let mut low = u64::from(raw_limit & 0xFFFF)
+        | ((base & 0xFFFF) << 16)
+        | (((base >> 16) & 0xFF) << 32)
+        | (u64::from(type_ & 0xF) << 40)
+        | (u64::from(dpl & 3) << 45)
+        | (u64::from(present) << 47)
+        | (u64::from((raw_limit >> 16) & 0xF) << 48)
+        | (u64::from(avl) << 52)
+        | (((base >> 24) & 0xFF) << 56);
+    if granularity {
+        low |= 1 << 55;
+    }
+    let high = (base >> 32) & 0xFFFF_FFFF;
+    let mut bytes = [0_u8; 16];
+    bytes[..8].copy_from_slice(&low.to_le_bytes());
+    bytes[8..].copy_from_slice(&high.to_le_bytes());
+    bytes
+}
+
+fn install_ltr_descriptor(memory: &GuestMemoryMmap, descriptor: &[u8; 16]) {
+    install_lldt_descriptor(memory, descriptor);
 }
 
 fn segment_fingerprint(
@@ -400,6 +434,278 @@ fn lldt_helper_rolls_back_speculative_records_and_never_probes_mmio() {
     crate::vm::vcpu::VCpu::drain_mem_records(&mut vcpu, &mut records);
     assert_eq!(records.len(), 2);
     assert_eq!(vcpu.sregs.ldt.selector, 0x10);
+}
+
+#[test]
+fn ltr_helper_commits_busy_with_exact_traces_and_rolls_back_every_failed_probe() {
+    use crate::smir::lower::runtime::GuestRegs;
+
+    const TRACE_SENTINEL: (u8, u64, u8, u64) = (0, 0xAA, 1, 0x55);
+    const LOG_SENTINEL: (u64, u8, u64) = (0xBB, 1, 0x66);
+    let memory = memory_with_code(&[]);
+    let available = tss_descriptor(0xFFFF_8000_1234_5000, 0xA_BCDE, 3, true, 0x9, true, true);
+    let mut busy = available;
+    busy[5] = (busy[5] & 0xF0) | 0xB;
+    install_ltr_descriptor(&memory, &busy);
+    let mut vcpu = test_vcpu(memory.clone());
+    crate::vm::vcpu::VCpu::set_mem_recording(&mut vcpu, true);
+    vcpu.sregs.tr = crate::vm::vcpu::Segment {
+        base: 0xDEAD_BEEF,
+        selector: 0x2468,
+        type_: 0xB,
+        present: true,
+        ..crate::vm::vcpu::Segment::default()
+    };
+    let before_tr = segment_fingerprint(&vcpu.sregs.tr);
+    let mut state = GuestRegs::default();
+    state.ctx = (&mut vcpu as *mut X86_64Vcpu) as u64;
+
+    for (name, mark_code) in [("busy descriptor", false), ("descriptor code page", true)] {
+        if mark_code {
+            install_ltr_descriptor(&memory, &available);
+            vcpu.mmu.mark_code_page(0x1010);
+        }
+        vcpu.jit_mem_trace = Some(vec![TRACE_SENTINEL]);
+        vcpu.jit_mem_log = Some(vec![LOG_SENTINEL]);
+        assert_eq!(
+            unsafe { rax_jit_system_selector_load(&mut state, 0x10, 0x4) },
+            0,
+            "{name}"
+        );
+        assert_eq!(
+            vcpu.jit_mem_trace.as_deref(),
+            Some(&[TRACE_SENTINEL][..]),
+            "{name}"
+        );
+        assert_eq!(
+            vcpu.jit_mem_log.as_deref(),
+            Some(&[LOG_SENTINEL][..]),
+            "{name}"
+        );
+        let mut records = Vec::new();
+        crate::vm::vcpu::VCpu::drain_mem_records(&mut vcpu, &mut records);
+        assert!(records.is_empty(), "{name}: {records:?}");
+        assert_eq!(segment_fingerprint(&vcpu.sregs.tr), before_tr, "{name}");
+        let mut observed = [0_u8; 16];
+        memory
+            .read_slice(&mut observed, GuestAddress(0x1010))
+            .unwrap();
+        assert_eq!(observed, if mark_code { available } else { busy }, "{name}");
+    }
+
+    vcpu.mmu.clear_code_pages();
+    install_ltr_descriptor(&memory, &available);
+    vcpu.jit_mem_trace = Some(vec![TRACE_SENTINEL]);
+    vcpu.jit_mem_log = Some(vec![LOG_SENTINEL]);
+    assert_eq!(
+        unsafe { rax_jit_system_selector_load(&mut state, 0x10, 0x4) },
+        1
+    );
+    let trace = vcpu.jit_mem_trace.as_ref().unwrap();
+    assert_eq!(trace.len(), 4);
+    assert_eq!(trace[0], TRACE_SENTINEL);
+    assert_eq!((trace[1].0, trace[1].1, trace[1].2), (0, 0x1010, 8));
+    assert_eq!((trace[2].0, trace[2].1, trace[2].2), (0, 0x1018, 8));
+    assert_eq!((trace[3].0, trace[3].1, trace[3].2), (1, 0x1010, 8));
+    let old_low = u64::from_le_bytes(available[..8].try_into().unwrap());
+    assert_eq!(
+        vcpu.jit_mem_log.as_deref(),
+        Some(&[LOG_SENTINEL, (0x1010, 8, old_low)][..])
+    );
+    let mut records = Vec::new();
+    crate::vm::vcpu::VCpu::drain_mem_records(&mut vcpu, &mut records);
+    assert_eq!(records.len(), 3);
+    assert_eq!(vcpu.sregs.tr.selector, 0x10);
+    assert_eq!(vcpu.sregs.tr.base, 0xFFFF_8000_1234_5000);
+    assert_eq!(vcpu.sregs.tr.limit, 0xA_BCDE_FFF);
+    assert_eq!(vcpu.sregs.tr.type_, 0xB);
+    let mut observed = [0_u8; 16];
+    memory
+        .read_slice(&mut observed, GuestAddress(0x1010))
+        .unwrap();
+    assert_eq!(observed[5] & 0x0F, 0xB);
+    assert_eq!(&observed[8..], &available[8..]);
+
+    assert_eq!(
+        unsafe { rax_jit_system_selector_load(&mut state, 0x10, 0x8) },
+        0,
+        "unknown helper encoding bits must remain fail-closed"
+    );
+}
+
+#[test]
+fn ltr_cross_page_read_only_busy_store_deopts_and_never_partially_commits() {
+    use crate::isa::x86_64::execute::system::X86SystemSelectorLoadFault;
+    use crate::smir::lower::runtime::GuestRegs;
+
+    const PML4: u64 = 0x9000;
+    const PDPT: u64 = 0xA000;
+    const PD: u64 = 0xB000;
+    const PT: u64 = 0xC000;
+    const PAGE_FLAGS: u64 = 0x7; // Present | writable | user-accessible.
+    const DESCRIPTOR_ADDR: u64 = 0x1FFC;
+    const TRACE_SENTINEL: (u8, u64, u8, u64) = (0, 0xAA, 1, 0x55);
+    const LOG_SENTINEL: (u64, u8, u64) = (0xBB, 1, 0x66);
+
+    let memory = memory_with_code(&[]);
+    let descriptor = tss_descriptor(0x1234_5000, 0x67, 0, true, 0x9, false, false);
+    memory
+        .write_slice(&descriptor, GuestAddress(DESCRIPTOR_ADDR))
+        .unwrap();
+    for (address, entry) in [
+        (PML4, PDPT | PAGE_FLAGS),
+        (PDPT, PD | PAGE_FLAGS),
+        (PD, PT | PAGE_FLAGS),
+    ] {
+        memory
+            .write_slice(&entry.to_le_bytes(), GuestAddress(address))
+            .unwrap();
+    }
+    for page in 0..16_u64 {
+        let flags = if page == 2 {
+            PAGE_FLAGS & !0x2
+        } else {
+            PAGE_FLAGS
+        };
+        let entry = page * 0x1000 | flags;
+        memory
+            .write_slice(&entry.to_le_bytes(), GuestAddress(PT + page * 8))
+            .unwrap();
+    }
+
+    let mut vcpu = test_vcpu(memory.clone());
+    vcpu.sregs.gdt.base = DESCRIPTOR_ADDR - 0x10;
+    vcpu.sregs.gdt.limit = 0x1F;
+    vcpu.sregs.cr0 |= 1 << 31;
+    vcpu.sregs.cr3 = PML4;
+    vcpu.sregs.cr4 |= 1 << 5;
+    vcpu.sregs.efer |= 1 << 8;
+    vcpu.sregs.tr = crate::vm::vcpu::Segment {
+        base: 0xDEAD_BEEF,
+        selector: 0x2468,
+        type_: 0xB,
+        present: true,
+        ..crate::vm::vcpu::Segment::default()
+    };
+    let before_tr = segment_fingerprint(&vcpu.sregs.tr);
+    vcpu.jit_mem_trace = Some(vec![TRACE_SENTINEL]);
+    vcpu.jit_mem_log = Some(vec![LOG_SENTINEL]);
+    let mut state = GuestRegs::default();
+    state.ctx = (&mut vcpu as *mut X86_64Vcpu) as u64;
+
+    assert_eq!(
+        unsafe { rax_jit_system_selector_load(&mut state, 0x10, 0x4) },
+        0,
+        "native helper must deopt before the cross-page busy write"
+    );
+    assert_eq!(vcpu.jit_mem_trace.as_deref(), Some(&[TRACE_SENTINEL][..]));
+    assert_eq!(vcpu.jit_mem_log.as_deref(), Some(&[LOG_SENTINEL][..]));
+    assert_eq!(segment_fingerprint(&vcpu.sregs.tr), before_tr);
+    let mut observed = [0_u8; 16];
+    memory
+        .read_slice(&mut observed, GuestAddress(DESCRIPTOR_ADDR))
+        .unwrap();
+    assert_eq!(observed, descriptor);
+
+    vcpu.jit_mem_trace = None;
+    vcpu.jit_mem_log = None;
+    assert!(matches!(
+        vcpu.load_tr_selector(0x10),
+        Err(X86SystemSelectorLoadFault::Memory(
+            crate::error::Error::PageFault {
+                vaddr: 0x2000,
+                error_code: 0x3,
+            }
+        ))
+    ));
+    assert_eq!(segment_fingerprint(&vcpu.sregs.tr), before_tr);
+    memory
+        .read_slice(&mut observed, GuestAddress(DESCRIPTOR_ADDR))
+        .unwrap();
+    assert_eq!(observed, descriptor);
+}
+
+#[test]
+fn jit_ltr_register_egpr_and_memory_sources_match_direct_busy_state_at_handoff() {
+    for (name, instruction, source_kind) in [
+        ("RAX", &[0x0F, 0x00, 0xD8][..], 0_u8),
+        ("R31", &[0xD5, 0x91, 0x00, 0xDF], 1),
+        ("R25+R26*8", &[0xD5, 0xB3, 0x00, 0x1C, 0xD1], 2),
+    ] {
+        let mut code = instruction.to_vec();
+        code.extend_from_slice(&[0x48, 0xFF, 0xC3, 0xF4]);
+        let direct_memory = memory_with_code(&code);
+        let native_memory = memory_with_code(&code);
+        let descriptor = tss_descriptor(0xFFFF_8000_1234_5000, 0xA_BCDE, 3, true, 0x9, true, true);
+        for memory in [&direct_memory, &native_memory] {
+            install_ltr_descriptor(memory, &descriptor);
+            if source_kind == 2 {
+                memory
+                    .write_slice(&[0x10, 0x00, 0xA5], GuestAddress(0x3020))
+                    .unwrap();
+            }
+        }
+        let mut direct = test_vcpu(direct_memory.clone());
+        let mut native = test_vcpu(native_memory.clone());
+        for vcpu in [&mut direct, &mut native] {
+            vcpu.set_apx_enabled(source_kind != 0);
+            vcpu.set_jit_mem(true);
+            // Docker Desktop's arm64-hosted amd64 translation drops AF across
+            // the native trampoline. The lowerer-level real-x86 test covers
+            // AF exactly; keep this end-to-end differential portable while
+            // still comparing every initialized architectural flag bit.
+            vcpu.regs.rflags &= !flags::bits::AF;
+            vcpu.regs.rbx = 0xB0B0_B0B0_B0B0_B0B0;
+            match source_kind {
+                0 => vcpu.regs.rax = 0xA5A5_5A5A_0000_0010,
+                1 => vcpu.regs.r31 = 0x3131_3131_0000_0010,
+                2 => {
+                    vcpu.regs.r25 = 0x3000;
+                    vcpu.regs.r26 = 4;
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        assert!(direct.step().expect("direct LTR").is_none(), "{name}");
+        let region = native
+            .jit_compile_region()
+            .expect("compile LTR region")
+            .unwrap_or_else(|| panic!("{name}: strict LTR must be native eligible"));
+        native.jit_run_region_verified(&region);
+
+        assert_eq!(
+            segment_fingerprint(&native.sregs.tr),
+            segment_fingerprint(&direct.sregs.tr),
+            "{name}"
+        );
+        assert_eq!(native.sregs.tr.selector, 0x10, "{name}");
+        assert_eq!(native.sregs.tr.base, 0xFFFF_8000_1234_5000, "{name}");
+        assert_eq!(native.sregs.tr.limit, 0xA_BCDE_FFF, "{name}");
+        assert_eq!(native.sregs.tr.type_, 0xB, "{name}");
+        assert_eq!(gprs(&native.regs), gprs(&direct.regs), "{name}");
+        assert_eq!(native.regs.rflags, direct.regs.rflags, "{name}");
+        assert_eq!(native.regs.rip, instruction.len() as u64, "{name}");
+        assert_eq!(native.regs.rbx, 0xB0B0_B0B0_B0B0_B0B0, "{name}");
+        let mut direct_descriptor = [0_u8; 16];
+        let mut native_descriptor = [0_u8; 16];
+        direct_memory
+            .read_slice(&mut direct_descriptor, GuestAddress(0x1010))
+            .unwrap();
+        native_memory
+            .read_slice(&mut native_descriptor, GuestAddress(0x1010))
+            .unwrap();
+        assert_eq!(native_descriptor, direct_descriptor, "{name}");
+        assert_eq!(native_descriptor[5] & 0x0F, 0xB, "{name}");
+        assert_eq!(&native_descriptor[8..], &descriptor[8..], "{name}");
+        if source_kind == 2 {
+            let mut source = [0_u8; 3];
+            native_memory
+                .read_slice(&mut source, GuestAddress(0x3020))
+                .unwrap();
+            assert_eq!(source, [0x10, 0x00, 0xA5], "{name}");
+        }
+    }
 }
 
 #[test]

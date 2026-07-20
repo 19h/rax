@@ -17,11 +17,12 @@ pub(crate) enum X86SystemDescriptorFault {
     SegmentNotPresent { error_code: u32 },
 }
 
-/// LLDT failure before any LDTR field commits. Native lowering treats every
-/// variant as a precise deoptimization; direct execution delivers the encoded
-/// architectural exception or propagates the original memory fault.
+/// LLDT/LTR failure before any visible or hidden selector state commits.
+/// Native lowering treats every variant as a precise deoptimization; direct
+/// execution delivers the encoded architectural exception or propagates the
+/// original memory fault.
 #[derive(Debug)]
-pub(in crate::isa::x86_64) enum X86LdtrLoadFault {
+pub(in crate::isa::x86_64) enum X86SystemSelectorLoadFault {
     Architectural(X86SystemDescriptorFault),
     Memory(Error),
 }
@@ -93,14 +94,107 @@ pub(crate) fn decode_x86_ldt_descriptor(
     })
 }
 
+/// Fully decoded available TSS descriptor and the low descriptor qword after
+/// its architecturally required available-to-busy transition.
+pub(crate) struct X86TssDescriptor {
+    pub(crate) segment: Segment,
+    pub(crate) busy_low: u64,
+}
+
+/// Decode and validate one TSS descriptor after all architecturally selected
+/// bytes have been read. IA-32e mode admits only the available 32/64-bit TSS
+/// type (9); legacy protected mode additionally admits an available 16-bit TSS
+/// (type 1). A successful decode reports the busy descriptor image that LTR
+/// must commit to the GDT before exposing the new task-register state.
+pub(crate) fn decode_x86_tss_descriptor(
+    selector: u16,
+    low: u64,
+    high: Option<u64>,
+    long_mode: bool,
+    ia32e_active: bool,
+) -> std::result::Result<X86TssDescriptor, X86SystemDescriptorFault> {
+    let error_code = selector_error_code(selector);
+    let type_ = ((low >> 40) & 0x0F) as u8;
+    let system = (low >> 44) & 1 == 0;
+    let available_tss = type_ == 0x9 || !ia32e_active && type_ == 0x1;
+    if !system || !available_tss {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    }
+
+    let mut base =
+        ((low >> 16) & 0xFFFF) | (((low >> 32) & 0xFF) << 16) | (((low >> 56) & 0xFF) << 24);
+    if long_mode {
+        let Some(high) = high else {
+            return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+        };
+        // Intel Figure 9-4 reserves descriptor bits 127:96 and the legacy L/D
+        // attributes. AMD specifies #GP(selector) for nonzero extended
+        // attributes in 64-bit mode.
+        if high >> 32 != 0 || (low >> 53) & 0x3 != 0 {
+            return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+        }
+        base |= (high & 0xFFFF_FFFF) << 32;
+        if !is_canonical_48(base) {
+            return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+        }
+    }
+
+    if (low >> 47) & 1 == 0 {
+        return Err(X86SystemDescriptorFault::SegmentNotPresent { error_code });
+    }
+
+    let raw_limit = ((low & 0xFFFF) | (((low >> 48) & 0x0F) << 16)) as u32;
+    let g = (low >> 55) & 1 != 0;
+    let limit = if g {
+        (raw_limit << 12) | 0xFFF
+    } else {
+        raw_limit
+    };
+    let busy_type = type_ | 0x2;
+    Ok(X86TssDescriptor {
+        segment: Segment {
+            base,
+            limit,
+            selector,
+            type_: busy_type,
+            present: true,
+            dpl: ((low >> 45) & 0x3) as u8,
+            db: false,
+            s: false,
+            l: false,
+            g,
+            avl: (low >> 52) & 1 != 0,
+            unusable: false,
+        },
+        busy_low: low | (1_u64 << 41),
+    })
+}
+
 impl X86_64Vcpu {
+    /// Commit the non-faulting portion of LTR after descriptor validation and
+    /// any native-helper MMIO/permission preflight. The GDT update precedes TR
+    /// exposure and supplies verifier undo data when native differential mode
+    /// is active.
+    pub(in crate::isa::x86_64) fn commit_tr_descriptor(
+        &mut self,
+        address: u64,
+        old_low: u64,
+        descriptor: X86TssDescriptor,
+    ) -> Result<()> {
+        #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+        self.push_jit_mem_log((address, 8, old_low));
+        self.write_mem(address, descriptor.busy_low, 8)?;
+        self.sregs.tr = descriptor.segment;
+        Ok(())
+    }
+
     /// Validate and load the complete visible/hidden LDTR state. All descriptor
     /// bytes are read before commit. A null selector loads an unusable LDTR
     /// without consulting descriptor memory.
     pub(in crate::isa::x86_64) fn load_ldtr_selector(
         &mut self,
         selector: u16,
-    ) -> std::result::Result<(), X86LdtrLoadFault> {
+    ) -> std::result::Result<(), X86SystemSelectorLoadFault> {
         if selector & 0xFFFC == 0 {
             self.sregs.ldt = Segment {
                 selector,
@@ -112,7 +206,7 @@ impl X86_64Vcpu {
 
         let error_code = selector_error_code(selector);
         if selector & 0x4 != 0 {
-            return Err(X86LdtrLoadFault::Architectural(
+            return Err(X86SystemSelectorLoadFault::Architectural(
                 X86SystemDescriptorFault::GeneralProtection { error_code },
             ));
         }
@@ -120,7 +214,7 @@ impl X86_64Vcpu {
         let offset = u64::from(selector >> 3) * 8;
         let descriptor_size = if self.sregs.cs.l { 16_u64 } else { 8 };
         if offset + descriptor_size - 1 > u64::from(self.sregs.gdt.limit) {
-            return Err(X86LdtrLoadFault::Architectural(
+            return Err(X86SystemSelectorLoadFault::Architectural(
                 X86SystemDescriptorFault::GeneralProtection { error_code },
             ));
         }
@@ -128,18 +222,72 @@ impl X86_64Vcpu {
         let address = self.sregs.gdt.base.wrapping_add(offset);
         let low = self
             .read_mem(address, 8)
-            .map_err(X86LdtrLoadFault::Memory)?;
+            .map_err(X86SystemSelectorLoadFault::Memory)?;
         let high = if self.sregs.cs.l {
             Some(
                 self.read_mem(address.wrapping_add(8), 8)
-                    .map_err(X86LdtrLoadFault::Memory)?,
+                    .map_err(X86SystemSelectorLoadFault::Memory)?,
             )
         } else {
             None
         };
         let segment = decode_x86_ldt_descriptor(selector, low, high, self.sregs.cs.l)
-            .map_err(X86LdtrLoadFault::Architectural)?;
+            .map_err(X86SystemSelectorLoadFault::Architectural)?;
         self.sregs.ldt = segment;
+        Ok(())
+    }
+
+    /// Validate an available TSS descriptor, mark it busy in the GDT, then
+    /// load the complete visible/hidden task-register state. Descriptor reads
+    /// and the busy write all precede TR commit, so any fault is noncommitting.
+    pub(in crate::isa::x86_64) fn load_tr_selector(
+        &mut self,
+        selector: u16,
+    ) -> std::result::Result<(), X86SystemSelectorLoadFault> {
+        let error_code = selector_error_code(selector);
+        if selector & 0xFFFC == 0 {
+            return Err(X86SystemSelectorLoadFault::Architectural(
+                X86SystemDescriptorFault::GeneralProtection { error_code: 0 },
+            ));
+        }
+        if selector & 0x4 != 0 {
+            return Err(X86SystemSelectorLoadFault::Architectural(
+                X86SystemDescriptorFault::GeneralProtection { error_code },
+            ));
+        }
+
+        let offset = u64::from(selector >> 3) * 8;
+        let long_mode = self.sregs.cs.l;
+        let descriptor_size = if long_mode { 16_u64 } else { 8 };
+        if offset + descriptor_size - 1 > u64::from(self.sregs.gdt.limit) {
+            return Err(X86SystemSelectorLoadFault::Architectural(
+                X86SystemDescriptorFault::GeneralProtection { error_code },
+            ));
+        }
+
+        let address = self.sregs.gdt.base.wrapping_add(offset);
+        let low = self
+            .read_mem(address, 8)
+            .map_err(X86SystemSelectorLoadFault::Memory)?;
+        let high = if long_mode {
+            Some(
+                self.read_mem(address.wrapping_add(8), 8)
+                    .map_err(X86SystemSelectorLoadFault::Memory)?,
+            )
+        } else {
+            None
+        };
+        let descriptor = decode_x86_tss_descriptor(
+            selector,
+            low,
+            high,
+            long_mode,
+            self.sregs.efer & (1 << 10) != 0,
+        )
+        .map_err(X86SystemSelectorLoadFault::Architectural)?;
+
+        self.commit_tr_descriptor(address, low, descriptor)
+            .map_err(X86SystemSelectorLoadFault::Memory)?;
         Ok(())
     }
 }
@@ -335,19 +483,19 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             };
             match vcpu.load_ldtr_selector(selector) {
                 Ok(()) => {}
-                Err(X86LdtrLoadFault::Architectural(
+                Err(X86SystemSelectorLoadFault::Architectural(
                     X86SystemDescriptorFault::GeneralProtection { error_code },
                 )) => {
                     vcpu.inject_exception(13, Some(u64::from(error_code)))?;
                     return Ok(None);
                 }
-                Err(X86LdtrLoadFault::Architectural(
+                Err(X86SystemSelectorLoadFault::Architectural(
                     X86SystemDescriptorFault::SegmentNotPresent { error_code },
                 )) => {
                     vcpu.inject_exception(11, Some(u64::from(error_code)))?;
                     return Ok(None);
                 }
-                Err(X86LdtrLoadFault::Memory(error)) => return Err(error),
+                Err(X86SystemSelectorLoadFault::Memory(error)) => return Err(error),
             }
         }
         // LTR - Load Task Register (0x0F 0x00 /3)
@@ -359,40 +507,26 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             let selector = if is_memory {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
                 ctx.cursor = modrm_start + 1 + extra;
-                vcpu.mmu.read_u16(addr, &vcpu.sregs)?
+                vcpu.read_mem(addr, 2)? as u16
             } else {
                 vcpu.get_reg(rm, 2) as u16
             };
-            vcpu.sregs.tr.selector = selector;
-
-            // Load the TSS descriptor from the GDT
-            // In 64-bit mode, TSS descriptor is 16 bytes (system segment descriptor)
-            let gdt_base = vcpu.sregs.gdt.base;
-            let index = (selector >> 3) as u64;
-            let desc_addr = gdt_base + index * 8;
-
-            // Read the 16-byte system segment descriptor
-            let mut desc_bytes = [0u8; 16];
-            vcpu.mmu.read(desc_addr, &mut desc_bytes, &vcpu.sregs)?;
-
-            // Parse the descriptor (64-bit TSS descriptor format)
-            // Bytes 0-7: legacy descriptor format
-            // Bytes 8-15: upper 32 bits of base address + reserved
-            let limit_low = u16::from_le_bytes([desc_bytes[0], desc_bytes[1]]) as u32;
-            let base_low = u16::from_le_bytes([desc_bytes[2], desc_bytes[3]]) as u64;
-            let base_mid = desc_bytes[4] as u64;
-            let _type_attr = desc_bytes[5];
-            let limit_high = (desc_bytes[6] & 0x0F) as u32;
-            let base_high_byte = desc_bytes[7] as u64;
-            let base_upper =
-                u32::from_le_bytes([desc_bytes[8], desc_bytes[9], desc_bytes[10], desc_bytes[11]])
-                    as u64;
-
-            let limit = limit_low | (limit_high << 16);
-            let base = base_low | (base_mid << 16) | (base_high_byte << 24) | (base_upper << 32);
-
-            vcpu.sregs.tr.base = base;
-            vcpu.sregs.tr.limit = limit;
+            match vcpu.load_tr_selector(selector) {
+                Ok(()) => {}
+                Err(X86SystemSelectorLoadFault::Architectural(
+                    X86SystemDescriptorFault::GeneralProtection { error_code },
+                )) => {
+                    vcpu.inject_exception(13, Some(u64::from(error_code)))?;
+                    return Ok(None);
+                }
+                Err(X86SystemSelectorLoadFault::Architectural(
+                    X86SystemDescriptorFault::SegmentNotPresent { error_code },
+                )) => {
+                    vcpu.inject_exception(11, Some(u64::from(error_code)))?;
+                    return Ok(None);
+                }
+                Err(X86SystemSelectorLoadFault::Memory(error)) => return Err(error),
+            }
         }
         // VERR - Verify Read (0x0F 0x00 /4)
         4 => {

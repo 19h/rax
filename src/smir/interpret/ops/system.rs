@@ -2,8 +2,8 @@
 
 use crate::isa::x86_64::execute::system::{
     X86ControlWriteFault, X86ControlWriteState, X86MsrFault, X86MsrState, X86PmcFault, X86PmcState,
-    X86SystemDescriptorFault, decode_x86_ldt_descriptor, read_x86_msr, read_x86_pmc,
-    validate_x86_control_write, validate_x86_msr_write,
+    X86SystemDescriptorFault, decode_x86_ldt_descriptor, decode_x86_tss_descriptor, read_x86_msr,
+    read_x86_pmc, validate_x86_control_write, validate_x86_msr_write,
 };
 use crate::smir::interpret::*;
 use crate::smir::ir::context::{
@@ -22,6 +22,22 @@ use crate::smir::ir::ops::{
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
+
+fn x86_system_segment_cache(segment: &crate::vm::vcpu::Segment) -> X86SystemSegmentCache {
+    X86SystemSegmentCache {
+        base: segment.base,
+        limit: segment.limit,
+        type_: segment.type_,
+        present: segment.present,
+        dpl: segment.dpl,
+        db: segment.db,
+        s: segment.s,
+        l: segment.l,
+        g: segment.g,
+        avl: segment.avl,
+        unusable: segment.unusable,
+    }
+}
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
@@ -374,7 +390,6 @@ impl SmirInterpreter {
                 };
                 if !matches!(instruction_len, Some(3..=15))
                     || op.x86_hint.is_some()
-                    || load.selector != X86SystemSelector::Ldtr
                     || !source_shape
                 {
                     ctx.request_exit(ExitReason::Undefined {
@@ -384,7 +399,7 @@ impl SmirInterpreter {
                     return Ok(());
                 }
 
-                let (gdtr_base, gdtr_limit, long_mode) = match &ctx.arch_regs {
+                let (gdtr_base, gdtr_limit, long_mode, ia32e_active) = match &ctx.arch_regs {
                     ArchRegState::X86_64(x86) => {
                         if load.requires_apx && !x86.apx_enabled {
                             ctx.request_exit(ExitReason::Undefined {
@@ -408,7 +423,12 @@ impl SmirInterpreter {
                             });
                             return Ok(());
                         }
-                        (x86.gdtr_base, x86.gdtr_limit, x86.cs_l)
+                        (
+                            x86.gdtr_base,
+                            x86.gdtr_limit,
+                            x86.cs_l,
+                            x86.efer & (1 << 10) != 0,
+                        )
                     }
                     _ => {
                         ctx.request_exit(ExitReason::Undefined {
@@ -429,8 +449,15 @@ impl SmirInterpreter {
                 };
 
                 if selector & 0xFFFC == 0 {
+                    if load.selector == X86SystemSelector::Tr {
+                        ctx.request_exit(ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        });
+                        return Ok(());
+                    }
                     let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
-                        unreachable!("validated x86 LLDT state changed")
+                        unreachable!("validated x86 selector-load state changed")
                     };
                     x86.ldtr_selector = selector;
                     x86.ldtr_cache = X86SystemSegmentCache {
@@ -462,8 +489,18 @@ impl SmirInterpreter {
                 } else {
                     None
                 };
-                let segment = match decode_x86_ldt_descriptor(selector, low, high, long_mode) {
-                    Ok(segment) => segment,
+                let decoded = match load.selector {
+                    X86SystemSelector::Ldtr => {
+                        decode_x86_ldt_descriptor(selector, low, high, long_mode)
+                            .map(|segment| (segment, None))
+                    }
+                    X86SystemSelector::Tr => {
+                        decode_x86_tss_descriptor(selector, low, high, long_mode, ia32e_active)
+                            .map(|descriptor| (descriptor.segment, Some(descriptor.busy_low)))
+                    }
+                };
+                let (segment, busy_low) = match decoded {
+                    Ok(decoded) => decoded,
                     Err(X86SystemDescriptorFault::GeneralProtection { error_code }) => {
                         ctx.request_exit(ExitReason::GeneralProtection {
                             addr: op.guest_pc,
@@ -480,23 +517,28 @@ impl SmirInterpreter {
                     }
                 };
 
+                // LTR marks the available TSS descriptor busy before exposing
+                // either visible or hidden TR state. A store fault therefore
+                // leaves both the descriptor and TR logically uncommitted.
+                if let Some(busy_low) = busy_low {
+                    memory.write(descriptor_addr, &busy_low.to_le_bytes())?;
+                }
+
                 let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
-                    unreachable!("validated x86 LLDT state changed")
+                    unreachable!("validated x86 selector-load state changed")
                 };
-                x86.ldtr_selector = segment.selector;
-                x86.ldtr_cache = X86SystemSegmentCache {
-                    base: segment.base,
-                    limit: segment.limit,
-                    type_: segment.type_,
-                    present: segment.present,
-                    dpl: segment.dpl,
-                    db: segment.db,
-                    s: segment.s,
-                    l: segment.l,
-                    g: segment.g,
-                    avl: segment.avl,
-                    unusable: segment.unusable,
-                };
+                let cache = x86_system_segment_cache(&segment);
+                match load.selector {
+                    X86SystemSelector::Ldtr => {
+                        x86.ldtr_selector = segment.selector;
+                        x86.ldtr_cache = cache;
+                    }
+                    X86SystemSelector::Tr => {
+                        x86.tr_selector = segment.selector;
+                        x86.tr_type = segment.type_;
+                        x86.tr_cache = cache;
+                    }
+                }
             }
 
             OpKind::X86Lmsw(lmsw) => {

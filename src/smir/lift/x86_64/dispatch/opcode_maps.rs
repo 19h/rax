@@ -314,7 +314,7 @@ impl X86_64Lifter {
             }
             0x00 if after_opcode
                 .first()
-                .is_some_and(|modrm| ((modrm >> 3) & 7) == 2) =>
+                .is_some_and(|modrm| matches!((modrm >> 3) & 7, 2 | 3)) =>
             {
                 self.lift_system_selector_load_0f00(after_opcode, &prefix2, pc, ctx)
             }
