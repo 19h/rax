@@ -1,12 +1,14 @@
 //! trampolines::clobber tests
 
 use super::*;
-use crate::smir::ir::ops::{X86LmswSource, X86MonitorMwaitOp, X86SmswTarget};
+use crate::smir::ir::ops::{
+    X86LmswSource, X86MonitorMwaitOp, X86SmswTarget, X86SystemSelectorTarget,
+};
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::x86_64::{
     x86_clts_shape_valid, x86_lmsw_shape_valid, x86_read_control_shape_valid,
-    x86_read_debug_shape_valid, x86_smsw_shape_valid, x86_write_control_shape_valid,
-    x86_write_debug_shape_valid,
+    x86_read_debug_shape_valid, x86_smsw_shape_valid, x86_system_selector_store_shape_valid,
+    x86_write_control_shape_valid, x86_write_debug_shape_valid,
 };
 
 /// Admit only scalar MMU-helper transfers that the x86-64 state-backed
@@ -483,6 +485,17 @@ pub(crate) fn block_is_clobber_safe(
             },
             _ => false,
         };
+        let selector_store_ok = match &op.kind {
+            OpKind::X86SystemSelectorStore(store) if x86_system_selector_store_shape_valid(op) => {
+                match &store.target {
+                    X86SystemSelectorTarget::Register { .. } => true,
+                    X86SystemSelectorTarget::Memory { addr } => {
+                        allow_mem && x86_jit_mem_address_shape_valid(addr)
+                    }
+                }
+            }
+            _ => false,
+        };
         let lmsw_ok = match &op.kind {
             OpKind::X86Lmsw(lmsw) if x86_lmsw_shape_valid(op) => match &lmsw.source {
                 X86LmswSource::Register { .. } => true,
@@ -549,6 +562,7 @@ pub(crate) fn block_is_clobber_safe(
             || fsgsbase_ok
             || read_control_ok
             || smsw_ok
+            || selector_store_ok
             || lmsw_ok
             || descriptor_store_ok
             || descriptor_load_ok
@@ -605,7 +619,13 @@ pub(crate) fn block_is_clobber_safe(
             || vector_mem_ok
             || mmx_mem_ok
             || descriptor_store_ok
-            || descriptor_load_ok;
+            || descriptor_load_ok
+            || matches!(
+                &op.kind,
+                OpKind::X86SystemSelectorStore(store)
+                    if selector_store_ok
+                        && matches!(&store.target, X86SystemSelectorTarget::Memory { .. })
+            );
         let scalar_ok = matches!(
             op.kind,
             OpKind::AndNot { .. }
@@ -691,6 +711,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86Smsw(..)) && !smsw_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86SystemSelectorStore(..)) && !selector_store_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86Lmsw(..)) && !lmsw_ok {

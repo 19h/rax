@@ -1,6 +1,8 @@
 use rax::vm::vcpu::Registers;
 
-use crate::common::{DATA_ADDR, read_mem_at_u16, run_until_hlt, setup_vm, write_mem_at_u16};
+use crate::common::{
+    DATA_ADDR, VCpu, read_mem_at_u16, run_until_hlt, setup_apx_vm, setup_vm, write_mem_at_u16,
+};
 
 // STR - Store Task Register
 // Opcode: 0F 00 /1
@@ -635,4 +637,21 @@ fn test_str_r64_upper_bits_zero() {
         0,
         "Upper 48 bits should be zero"
     );
+}
+
+#[test]
+fn test_str_rex2_egpr_register() {
+    let code = [
+        0xD5, 0x91, 0x00, 0xCF, // STR R31D
+        0xF4,
+    ];
+    let mut initial = Registers::default();
+    initial.r31 = 0x3131_3131_3131_3131;
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(initial));
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.tr.selector = 0xBEEF;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.r31, 0xBEEF, "REX2.B4/B3 must select R31D");
 }

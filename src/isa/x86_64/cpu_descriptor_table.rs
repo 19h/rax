@@ -1,6 +1,7 @@
-//! Shared direct, verifier, and native-helper support for descriptor tables.
+//! Shared direct, verifier, and native-helper support for descriptor registers.
 
 use super::{Result, X86_64Vcpu};
+use crate::vm::vcpu::Segment;
 
 impl X86_64Vcpu {
     /// Read a complete descriptor-table pseudo-descriptor before exposing
@@ -71,25 +72,63 @@ impl X86_64Vcpu {
     }
 }
 
-/// The implicit descriptor-table state that JIT verification must restore
-/// before direct replay and compare before adopting the native result.
-#[derive(Clone, Copy)]
-pub(super) struct DescriptorTableSnapshot {
+/// The implicit descriptor-register state that JIT verification must restore
+/// before direct replay and compare before adopting the native result. LDTR/TR
+/// can change inside interpreter callouts even when the surrounding native
+/// region only reads their selectors through SLDT/STR.
+#[derive(Clone)]
+pub(super) struct DescriptorStateSnapshot {
     gdtr_base: u64,
     gdtr_limit: u16,
     idtr_base: u64,
     idtr_limit: u16,
+    ldtr: Segment,
+    tr: Segment,
 }
 
-impl DescriptorTableSnapshot {
-    pub(super) fn restore(self, vcpu: &mut X86_64Vcpu) {
+type SegmentFingerprint = (
+    u64,
+    u32,
+    u16,
+    u8,
+    bool,
+    u8,
+    bool,
+    bool,
+    bool,
+    bool,
+    bool,
+    bool,
+);
+
+fn segment_fingerprint(segment: &Segment) -> SegmentFingerprint {
+    (
+        segment.base,
+        segment.limit,
+        segment.selector,
+        segment.type_,
+        segment.present,
+        segment.dpl,
+        segment.db,
+        segment.s,
+        segment.l,
+        segment.g,
+        segment.avl,
+        segment.unusable,
+    )
+}
+
+impl DescriptorStateSnapshot {
+    pub(super) fn restore(&self, vcpu: &mut X86_64Vcpu) {
         vcpu.sregs.gdt.base = self.gdtr_base;
         vcpu.sregs.gdt.limit = self.gdtr_limit;
         vcpu.sregs.idt.base = self.idtr_base;
         vcpu.sregs.idt.limit = self.idtr_limit;
+        vcpu.sregs.ldt = self.ldtr.clone();
+        vcpu.sregs.tr = self.tr.clone();
     }
 
-    pub(super) fn append_verify_diffs(self, vcpu: &X86_64Vcpu, diffs: &mut Vec<String>) {
+    pub(super) fn append_verify_diffs(&self, vcpu: &X86_64Vcpu, diffs: &mut Vec<String>) {
         for (name, interp, native) in [
             ("gdtr_base", vcpu.sregs.gdt.base, self.gdtr_base),
             (
@@ -108,16 +147,28 @@ impl DescriptorTableSnapshot {
                 diffs.push(format!("{name}: interp={interp:#x} jit={native:#x}"));
             }
         }
+        for (name, interp, native) in [
+            ("ldtr", &vcpu.sregs.ldt, &self.ldtr),
+            ("tr", &vcpu.sregs.tr, &self.tr),
+        ] {
+            let interp = segment_fingerprint(interp);
+            let native = segment_fingerprint(native);
+            if interp != native {
+                diffs.push(format!("{name}: interp={interp:?} jit={native:?}"));
+            }
+        }
     }
 }
 
 impl X86_64Vcpu {
-    pub(super) fn descriptor_table_snapshot(&self) -> DescriptorTableSnapshot {
-        DescriptorTableSnapshot {
+    pub(super) fn descriptor_state_snapshot(&self) -> DescriptorStateSnapshot {
+        DescriptorStateSnapshot {
             gdtr_base: self.sregs.gdt.base,
             gdtr_limit: self.sregs.gdt.limit,
             idtr_base: self.sregs.idt.base,
             idtr_limit: self.sregs.idt.limit,
+            ldtr: self.sregs.ldt.clone(),
+            tr: self.sregs.tr.clone(),
         }
     }
 }
@@ -208,4 +259,25 @@ pub(super) unsafe extern "C" fn rax_jit_descriptor_table_load(
         _ => unreachable!("descriptor-table selector validated above"),
     }
     1
+}
+
+/// Return the authoritative selector exposed by native SLDT/STR lowering.
+/// Reading through the owning vCPU keeps a native region coherent with a prior
+/// interpreter callout that executed LLDT or LTR.
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+pub(super) unsafe extern "C" fn rax_jit_system_selector(
+    state: *mut crate::smir::lower::runtime::GuestRegs,
+    selector: u32,
+) -> u64 {
+    let Some(state) = (unsafe { state.as_mut() }) else {
+        return 0;
+    };
+    let Some(vcpu) = (unsafe { (state.ctx as *mut X86_64Vcpu).as_ref() }) else {
+        return 0;
+    };
+    match selector {
+        0 => u64::from(vcpu.sregs.ldt.selector),
+        1 => u64::from(vcpu.sregs.tr.selector),
+        _ => 0,
+    }
 }

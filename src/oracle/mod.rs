@@ -36,6 +36,9 @@ use crate::smir::ir::ops::X86ReadTscOp;
 use crate::smir::ir::ops::X86Sha32Op;
 use crate::smir::ir::ops::X86SmswOp;
 use crate::smir::ir::ops::X86SmswTarget;
+use crate::smir::ir::ops::X86SystemSelector;
+use crate::smir::ir::ops::X86SystemSelectorStoreOp;
+use crate::smir::ir::ops::X86SystemSelectorTarget;
 use crate::smir::ir::ops::X86ThreeDNowKind;
 use crate::smir::ir::ops::X86X87CompareSource;
 use crate::smir::ir::ops::X86X87Constant;
@@ -1129,6 +1132,23 @@ impl OracleJson for X86SmswTarget {
     }
 }
 
+impl OracleJson for X86SystemSelectorTarget {
+    fn oracle_json(&self) -> Value {
+        match self {
+            X86SystemSelectorTarget::Register { dst, width } => json!({
+                "kind": "register",
+                "dst": dst.oracle_json(),
+                "width": width.oracle_json(),
+            }),
+            X86SystemSelectorTarget::Memory { addr } => json!({
+                "kind": "memory",
+                "addr": addr.oracle_json(),
+                "width": "B2",
+            }),
+        }
+    }
+}
+
 impl OracleJson for X86LmswSource {
     fn oracle_json(&self) -> Value {
         match self {
@@ -1161,6 +1181,7 @@ macro_rules! debug_name_json {
 debug_name_json!(
     ArmDpRegShiftKind,
     X86DescriptorTable,
+    X86SystemSelector,
     OpWidth,
     MemWidth,
     SignExtend,
@@ -2538,6 +2559,11 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             target,
             requires_apx,
         }) => op_json!("x86_smsw", target, requires_apx),
+        OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
+            selector,
+            target,
+            requires_apx,
+        }) => op_json!("x86_system_selector_store", selector, target, requires_apx),
         OpKind::X86Lmsw(X86LmswOp {
             source,
             requires_apx,

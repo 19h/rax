@@ -3987,6 +3987,11 @@ pub enum OpKind {
     /// can raise #UD/#GP(0), and a memory target can fault or reach MMIO.
     X86Smsw(X86SmswOp),
 
+    /// SLDT/STR expose the implicit LDTR/TR selector after protected-mode,
+    /// APX, and UMIP validation. Register destinations use the encoded
+    /// 16-/32-/64-bit width; memory destinations store exactly 2 bytes.
+    X86SystemSelectorStore(X86SystemSelectorStoreOp),
+
     /// LMSW reads a fixed-width register or memory source after APX/CPL
     /// validation, updates CR0[3:0] without clearing PE, and is serializing.
     /// Native execution must hand off at `next_pc` after a successful commit.
@@ -4501,6 +4506,7 @@ impl OpKind {
                 | OpKind::X86Msr(..)
                 | OpKind::X86ReadControl { .. }
                 | OpKind::X86Smsw(..)
+                | OpKind::X86SystemSelectorStore(..)
                 | OpKind::X86Lmsw(..)
                 | OpKind::X86DescriptorTableStore(..)
                 | OpKind::X86DescriptorTableLoad(..)
@@ -4937,6 +4943,10 @@ impl OpKind {
                 target: X86SmswTarget::Register { dst, .. },
                 ..
             }) => vec![*dst],
+            OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
+                target: X86SystemSelectorTarget::Register { dst, .. },
+                ..
+            }) => vec![*dst],
             OpKind::X86ReadDebug { dst, .. } => vec![*dst],
 
             OpKind::CmpyW128Sat { dst, .. } | OpKind::SatOrigShl { dst, .. } => vec![*dst],
@@ -5044,6 +5054,10 @@ impl OpKind {
             | OpKind::X86Clts
             | OpKind::X86Smsw(X86SmswOp {
                 target: X86SmswTarget::Memory { .. },
+                ..
+            })
+            | OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
+                target: X86SystemSelectorTarget::Memory { .. },
                 ..
             })
             | OpKind::X86Lmsw(..)
@@ -5222,6 +5236,7 @@ impl OpKind {
                     | OpKind::X86Msr(..)
                     | OpKind::X86ReadControl { .. }
                     | OpKind::X86Smsw(..)
+                    | OpKind::X86SystemSelectorStore(..)
                     | OpKind::X86Lmsw(..)
                     | OpKind::X86DescriptorTableStore(..)
                     | OpKind::X86DescriptorTableLoad(..)
@@ -5411,6 +5426,10 @@ impl OpKind {
                 | OpKind::X86Cmpxchg8b16b { .. }
                 | OpKind::X86Smsw(X86SmswOp {
                     target: X86SmswTarget::Memory { .. },
+                    ..
+                })
+                | OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
+                    target: X86SystemSelectorTarget::Memory { .. },
                     ..
                 })
                 | OpKind::X86DescriptorTableStore(..)

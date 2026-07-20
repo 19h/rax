@@ -82,6 +82,47 @@ fn test_umip_preserves_ud_for_invalid_sgdt_sidt_register_forms() {
 }
 
 #[test]
+fn test_group6_real_and_virtual_8086_modes_raise_ud_before_umip_or_memory() {
+    for (name, virtual_8086) in [("real", false), ("virtual-8086", true)] {
+        for (instruction, selector_name) in [
+            (&[0x0F, 0x00, 0x00][..], "SLDT"),
+            (&[0x0F, 0x00, 0x08][..], "STR"),
+            (&[0x0F, 0x00, 0x10][..], "LLDT"),
+            (&[0x0F, 0x00, 0x18][..], "LTR"),
+            (&[0x0F, 0x00, 0x20][..], "VERR"),
+            (&[0x0F, 0x00, 0x28][..], "VERW"),
+        ] {
+            let regs = Registers {
+                rax: 0x0200_0000,
+                rflags: 0x2
+                    | if virtual_8086 {
+                        rax::isa::x86_64::flags::bits::VM
+                    } else {
+                        0
+                    },
+                ..Registers::default()
+            };
+            let (mut vcpu, _) = setup_vm_no_idt(instruction, Some(regs));
+            let mut sregs = vcpu.get_sregs().unwrap();
+            if !virtual_8086 {
+                sregs.cr0 &= !1;
+            }
+            sregs.cr4 |= CR4_UMIP;
+            sregs.cs.selector = 3;
+            sregs.cs.dpl = 3;
+            vcpu.set_sregs(&sregs).unwrap();
+
+            let error = format!("{:?}", vcpu.step().expect_err("Group 6 must raise #UD"));
+            assert!(
+                error.contains("IDT entry 6 not present"),
+                "{selector_name} in {name} mode must raise #UD before UMIP or the unmapped destination: {error}"
+            );
+            assert_eq!(vcpu.get_regs().unwrap().rip, crate::common::CODE_ADDR);
+        }
+    }
+}
+
+#[test]
 fn test_umip_does_not_block_cpl0_store_state_instructions() {
     let mut code = vec![0x48, 0xb8];
     code.extend_from_slice(&DATA_ADDR.to_le_bytes()); // mov rax, DATA_ADDR

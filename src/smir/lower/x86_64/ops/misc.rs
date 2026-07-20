@@ -126,6 +126,8 @@ impl X86_64Lowerer {
 
             OpKind::X86Smsw(..) => self.emit_x86_smsw(op)?,
 
+            OpKind::X86SystemSelectorStore(..) => self.emit_x86_system_selector_store(op)?,
+
             OpKind::X86Lmsw(..) => self.emit_x86_lmsw(op)?,
 
             OpKind::X86DescriptorTableStore(..) => self.emit_x86_descriptor_table_store(op)?,

@@ -561,6 +561,44 @@ fn emits_exact_smsw_register_and_memory_metadata() {
 }
 
 #[test]
+fn emits_exact_sldt_str_selector_target_width_and_apx_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let register = decode_to_json(&[0xD5, 0x91, 0x00, 0xCF], &opts).unwrap();
+    assert_eq!(register["smir"]["available"], true);
+    assert_eq!(register["smir"]["bytes_consumed"], 4);
+    let op = &register["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_system_selector_store");
+    assert_eq!(op["kind"]["selector"], "Tr");
+    assert_eq!(op["kind"]["target"]["kind"], "register");
+    assert_eq!(op["kind"]["target"]["dst"]["name"], "r31");
+    assert_eq!(op["kind"]["target"]["width"], "W32");
+    assert_eq!(op["kind"]["requires_apx"], true);
+    assert_eq!(op["writes"][0]["name"], "r31");
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+
+    let memory = decode_to_json(&[0x48, 0x0F, 0x00, 0x40, 0x08], &opts).unwrap();
+    assert_eq!(memory["smir"]["available"], true);
+    assert_eq!(memory["smir"]["bytes_consumed"], 5);
+    let op = &memory["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_system_selector_store");
+    assert_eq!(op["kind"]["selector"], "Ldtr");
+    assert_eq!(op["kind"]["target"]["kind"], "memory");
+    assert_eq!(op["kind"]["target"]["width"], "B2");
+    assert_eq!(op["kind"]["target"]["addr"]["kind"], "base_offset");
+    assert_eq!(op["kind"]["target"]["addr"]["base"]["name"], "rax");
+    assert_eq!(op["kind"]["target"]["addr"]["offset"], 8);
+    assert_eq!(op["kind"]["requires_apx"], false);
+    assert_eq!(op["writes"].as_array().unwrap().len(), 0);
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], true);
+    assert_eq!(op["side_effects"], true);
+}
+
+#[test]
 fn emits_exact_descriptor_table_memory_table_handoff_and_apx_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

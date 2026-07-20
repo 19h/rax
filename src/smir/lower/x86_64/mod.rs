@@ -70,6 +70,8 @@ mod write_control;
 pub use write_control::*;
 mod serialize;
 pub use serialize::*;
+mod selector;
+pub use selector::*;
 mod smsw;
 pub use smsw::*;
 mod swapgs;

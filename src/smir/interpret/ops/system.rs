@@ -11,10 +11,10 @@ use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
     X86CacheControlKind, X86ControlReg, X86CountKind, X86DebugReg, X86DescriptorTable,
-    X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86SmswTarget, X86ThreeDNowKind,
-    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
-    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
-    X86XSaveKind,
+    X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86SmswTarget, X86SystemSelector,
+    X86SystemSelectorTarget, X86ThreeDNowKind, X86X87ArithmeticDestination, X86X87ArithmeticSource,
+    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
+    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -262,6 +262,91 @@ impl SmirInterpreter {
                     X86SmswTarget::Memory { addr } => {
                         let effective_addr = self.compute_address(ctx, addr);
                         self.store_memory(memory, effective_addr, cr0, MemWidth::B2)?;
+                    }
+                }
+            }
+
+            OpKind::X86SystemSelectorStore(store) => {
+                let target_shape = match &store.target {
+                    X86SystemSelectorTarget::Register { dst, width } => {
+                        matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+                            && matches!(
+                                dst,
+                                VReg::Arch(ArchReg::X86(reg))
+                                    if reg.gpr_index().is_some_and(|index| {
+                                        index < 16 || store.requires_apx
+                                    })
+                            )
+                    }
+                    X86SystemSelectorTarget::Memory { addr } => {
+                        let uses_egpr = addr.regs().iter().any(
+                            |reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()),
+                        );
+                        addr.is_x86_state_backed_shape() && (!uses_egpr || store.requires_apx)
+                    }
+                };
+                if op.x86_hint.is_some() || !target_shape {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let selector = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => {
+                        // REX2 availability is a decode-time fault and precedes
+                        // mode, privilege, and destination validation.
+                        if store.requires_apx && !x86.apx_enabled {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        }
+                        // SLDT/STR are recognized only in protected mode and
+                        // are invalid in virtual-8086 mode.
+                        if x86.cr0 & 1 == 0 || x86.rflags & crate::isa::x86_64::flags::bits::VM != 0
+                        {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        }
+                        if x86.cr4 & (1 << 11) != 0 && x86.cpl != 0 {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                        match store.selector {
+                            X86SystemSelector::Ldtr => x86.ldtr_selector,
+                            X86SystemSelector::Tr => x86.tr_selector,
+                        }
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+
+                match &store.target {
+                    X86SystemSelectorTarget::Register { dst, width } => {
+                        Self::write_x86_partial(ctx, *dst, u64::from(selector), *width);
+                    }
+                    X86SystemSelectorTarget::Memory { addr } => {
+                        let effective_addr = self.compute_address(ctx, addr);
+                        self.store_memory(
+                            memory,
+                            effective_addr,
+                            u64::from(selector),
+                            MemWidth::B2,
+                        )?;
                     }
                 }
             }

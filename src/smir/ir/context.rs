@@ -398,6 +398,10 @@ pub struct X86RegState {
     /// Interrupt descriptor-table register exposed by SIDT and loaded by LIDT.
     pub idtr_base: u64,
     pub idtr_limit: u16,
+    /// Local descriptor-table selector exposed by SLDT.
+    pub ldtr_selector: u16,
+    /// Task-register selector exposed by STR.
+    pub tr_selector: u16,
     /// IA32_EFER, including the software-controlled LME bit and the
     /// processor-maintained LMA bit used by MOV-to-CR0 transitions.
     pub efer: u64,

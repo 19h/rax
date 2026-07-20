@@ -18,6 +18,8 @@ mod group5;
 pub use group5::*;
 mod machine_status;
 pub use machine_status::*;
+mod selector;
+pub use selector::*;
 mod shift_bit;
 pub use shift_bit::*;
 mod string;

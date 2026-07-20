@@ -82,6 +82,32 @@ pub struct X86SmswOp {
     pub requires_apx: bool,
 }
 
+/// Implicit system-segment selector exposed by SLDT or STR.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86SystemSelector {
+    Ldtr,
+    Tr,
+}
+
+/// Architecturally distinct SLDT/STR destinations. Register forms write the
+/// selected 16-, 32-, or 64-bit GPR width; memory forms always store exactly
+/// the 16-bit selector independently of the encoded operand size.
+#[derive(Clone, Debug)]
+pub enum X86SystemSelectorTarget {
+    Register { dst: VReg, width: OpWidth },
+    Memory { addr: Address },
+}
+
+/// SLDT/STR read an implicit descriptor-register selector after protected-mode,
+/// APX, and UMIP validation. A REX2 encoding requires the dynamic APX profile
+/// even when it addresses only legacy GPRs.
+#[derive(Clone, Debug)]
+pub struct X86SystemSelectorStoreOp {
+    pub selector: X86SystemSelector,
+    pub target: X86SystemSelectorTarget,
+    pub requires_apx: bool,
+}
+
 /// Architecturally distinct LMSW sources. Both forms read exactly 16 bits;
 /// operand-size prefixes never change the source width.
 #[derive(Clone, Debug)]

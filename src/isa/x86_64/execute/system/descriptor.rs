@@ -140,10 +140,17 @@ fn set_zf(vcpu: &mut X86_64Vcpu, set: bool) {
 
 /// Group 6 - SLDT, STR, LLDT, LTR, VERR, VERW (0x0F 0x00)
 pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // Every Group-6 instruction is recognized only in protected mode and is
+    // invalid in virtual-8086 mode. Reject before decoding or touching an
+    // operand so #UD has priority over UMIP, privilege, and memory faults.
+    if vcpu.sregs.cr0 & 1 == 0 || vcpu.regs.rflags & flags::bits::VM != 0 {
+        return vcpu.inject_undefined_instruction();
+    }
+
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
     let reg_op = (modrm >> 3) & 0x07;
-    let rm = (modrm & 0x07) | ctx.rex_b();
+    let rm = (modrm & 0x07) | ctx.any_rex_b();
     let is_memory = modrm >> 6 != 3;
 
     match reg_op {

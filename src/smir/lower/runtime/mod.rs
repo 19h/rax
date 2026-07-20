@@ -265,6 +265,10 @@ pub struct GuestRegs {
     /// fault-precise 10-byte LGDT/LIDT memory transfer and committing the
     /// selected implicit descriptor-table state only after the full read.
     pub descriptor_load_fn: u64,
+    /// Address of `extern "C" fn(state, selector) -> value`, returning the
+    /// authoritative LDTR (`selector=0`) or TR (`selector=1`) selector after
+    /// any prior interpreter callout.
+    pub system_selector_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -335,6 +339,7 @@ impl Default for GuestRegs {
             pmc_fn: 0,
             descriptor_store_fn: 0,
             descriptor_load_fn: 0,
+            system_selector_fn: 0,
         }
     }
 }

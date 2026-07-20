@@ -48,6 +48,8 @@ mod read_control;
 #[cfg(test)]
 mod read_debug;
 #[cfg(test)]
+mod selector;
+#[cfg(test)]
 mod serialize;
 #[cfg(test)]
 mod simd;
