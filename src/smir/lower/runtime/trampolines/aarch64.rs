@@ -1275,6 +1275,7 @@ pub(crate) fn aarch64_block_is_clobber_safe(
             OpKind::SetAC { .. }
                 | OpKind::X86Clts
                 | OpKind::X86ReadControl { .. }
+                | OpKind::X86WriteControl { .. }
                 | OpKind::X86ReadDebug { .. }
                 | OpKind::X86WriteDebug { .. }
         ) {

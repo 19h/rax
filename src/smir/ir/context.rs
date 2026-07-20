@@ -392,6 +392,14 @@ pub struct X86RegState {
     pub cr4: u64,
     /// Guest CR8 task-priority state.
     pub cr8: u64,
+    /// IA32_EFER, including the software-controlled LME bit and the
+    /// processor-maintained LMA bit used by MOV-to-CR0 transitions.
+    pub efer: u64,
+    /// Current code-segment L bit. The strict x86-64 lifter emits only the
+    /// r64 MOV-to-CR form; transition validation still needs the current mode.
+    pub cs_l: bool,
+    /// Low four bits of the current task-register descriptor type.
+    pub tr_type: u8,
     /// Guest breakpoint linear-address registers.
     pub dr0: u64,
     pub dr1: u64,

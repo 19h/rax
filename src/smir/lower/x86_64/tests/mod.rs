@@ -54,6 +54,8 @@ mod tsx;
 #[cfg(all(test, feature = "smir-jit"))]
 mod vector_maskmov;
 #[cfg(test)]
+mod write_control;
+#[cfg(test)]
 mod write_debug;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;

@@ -148,6 +148,15 @@ pub const X86_GUEST_DR3_OFFSET: i32 = X86_GUEST_DR2_OFFSET + 8;
 pub const X86_GUEST_DR6_OFFSET: i32 = X86_GUEST_DR3_OFFSET + 8;
 /// Byte offset of guest DR7.
 pub const X86_GUEST_DR7_OFFSET: i32 = X86_GUEST_DR6_OFFSET + 8;
+/// Byte offset of guest IA32_EFER. Appended to preserve every established
+/// native helper and trampoline offset.
+pub const X86_GUEST_EFER_OFFSET: i32 = X86_GUEST_DR7_OFFSET + 8;
+/// Byte offset of the current code-segment L-bit snapshot.
+pub const X86_GUEST_CS_L_OFFSET: i32 = X86_GUEST_EFER_OFFSET + 8;
+/// Byte offset of the current task-register descriptor type.
+pub const X86_GUEST_TR_TYPE_OFFSET: i32 = X86_GUEST_CS_L_OFFSET + 8;
+/// Byte offset of the helper-backed MOV-to-control-register function pointer.
+pub const X86_GUEST_CONTROL_WRITE_FN_OFFSET: i32 = X86_GUEST_TR_TYPE_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

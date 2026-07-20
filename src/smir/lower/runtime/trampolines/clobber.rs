@@ -5,7 +5,7 @@ use crate::smir::ir::ops::X86MonitorMwaitOp;
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::x86_64::{
     x86_clts_shape_valid, x86_read_control_shape_valid, x86_read_debug_shape_valid,
-    x86_write_debug_shape_valid,
+    x86_write_control_shape_valid, x86_write_debug_shape_valid,
 };
 
 /// Admit only scalar MMU-helper transfers that the x86-64 state-backed
@@ -474,6 +474,7 @@ pub(crate) fn block_is_clobber_safe(
         let fsgsbase_ok = crate::smir::lower::x86_64::x86_fsgsbase_shape_valid(&op.kind);
         let read_control_ok = x86_read_control_shape_valid(&op.kind);
         let read_debug_ok = x86_read_debug_shape_valid(&op.kind);
+        let write_control_ok = x86_write_control_shape_valid(op);
         let write_debug_ok = x86_write_debug_shape_valid(&op.kind);
         let swapgs_ok = crate::smir::lower::x86_64::x86_swapgs_shape_valid(&op.kind);
         let monitor_mwait_ok = match &op.kind {
@@ -513,6 +514,7 @@ pub(crate) fn block_is_clobber_safe(
             || fsgsbase_ok
             || read_control_ok
             || read_debug_ok
+            || write_control_ok
             || write_debug_ok;
         if (crate::smir::lower::x86_64::x86_state_backed_gpr_extend_candidate(op)
             && !state_extend_ok)
@@ -643,6 +645,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86ReadDebug { .. }) && !read_debug_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86WriteControl { .. }) && !write_control_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86WriteDebug { .. }) && !write_debug_ok {

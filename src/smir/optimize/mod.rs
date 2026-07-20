@@ -3892,7 +3892,9 @@ impl OpKind {
                 }
             }
             OpKind::X86Cpuid { leaf, subleaf, .. } => result.extend([*leaf, *subleaf]),
-            OpKind::X86WriteDebug { src, .. } => result.push(*src),
+            OpKind::X86WriteControl { src, .. } | OpKind::X86WriteDebug { src, .. } => {
+                result.push(*src)
+            }
 
             OpKind::X86Cmpxchg8b16b {
                 addr,

@@ -63,12 +63,13 @@ fn test_cpuid_function_1_features() {
     assert_eq!(regs.rax as u32, 0x000006F1, "leaf 1 signature");
     assert_eq!(regs.rbx as u32, 0x00000000, "leaf 1 EBX");
 
-    // EDX feature bits: FPU(0) PSE(3) TSC(4) MSR(5) PAE(6) CX8(8) APIC(9)
+    // EDX feature bits: FPU(0) DE(2) PSE(3) TSC(4) MSR(5) PAE(6) CX8(8) APIC(9)
     // SEP(11) PGE(13) CMOV(15) CLFLUSH(19) MMX(23) FXSR(24) SSE(25) SSE2(26).
     let edx = regs.rdx as u32;
-    assert_eq!(edx, 0x0788AB79, "leaf 1 EDX feature bits");
+    assert_eq!(edx, 0x0788AB7D, "leaf 1 EDX feature bits");
     for (bit, name) in [
         (0, "FPU"),
+        (2, "DE"),
         (4, "TSC"),
         (5, "MSR"),
         (8, "CX8"),

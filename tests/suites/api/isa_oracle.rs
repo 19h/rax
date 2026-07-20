@@ -314,6 +314,27 @@ fn emits_exact_mov_from_control_register_metadata() {
 }
 
 #[test]
+fn emits_exact_mov_to_control_register_metadata_and_handoff_frontier() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let decoded = decode_to_json(&[0x49, 0x0F, 0x22, 0xE6], &opts).unwrap();
+    assert_eq!(decoded["smir"]["available"], true);
+    assert_eq!(decoded["smir"]["bytes_consumed"], 4);
+    let op = &decoded["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_write_control");
+    assert_eq!(op["kind"]["control"], "Cr4");
+    assert_eq!(op["kind"]["src"]["arch"], "x86_64");
+    assert_eq!(op["kind"]["src"]["name"], "r14");
+    assert_eq!(op["kind"]["next_pc"], 0x1004);
+    assert!(op["reads"].is_null());
+    assert_eq!(op["writes"].as_array().unwrap().len(), 0);
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+}
+
+#[test]
 fn emits_exact_mov_from_debug_register_metadata_and_instruction_boundary() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

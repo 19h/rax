@@ -337,6 +337,11 @@ impl X86_64Lifter {
             // address handling.
             0x20 => self.lift_read_control_0f20(after_opcode, &prefix2, pc, ctx),
 
+            // MOV CR0/CR2/CR3/CR4/CR8, r64. Successful execution changes
+            // native admission/translation state and therefore carries the
+            // exact next-instruction handoff PC in its SMIR operation.
+            0x22 => self.lift_write_control_0f22(after_opcode, &prefix2, pc, ctx),
+
             // MOV r64, DR0-DR7. ModR/M.mod is ignored and DR4/DR5 validity is
             // dynamic in CR4.DE, so retain the raw encoded selector.
             0x21 => self.lift_read_debug_0f21(after_opcode, &prefix2, pc, ctx),

@@ -3735,6 +3735,12 @@ mod jit_cpuid;
 use jit_cpuid::rax_jit_cpuid;
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_control.rs"]
+mod jit_control;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_control::rax_jit_write_control;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_tsc.rs"]
 mod jit_tsc;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4606,6 +4612,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86SwapGs { .. }
                                 | OpKind::X86MonitorMwait(..)
                                 | OpKind::X86ReadControl { .. }
+                                | OpKind::X86WriteControl { .. }
                                 | OpKind::X86ReadDebug { .. }
                                 | OpKind::X86WriteDebug { .. }
                         )
@@ -4868,6 +4875,9 @@ impl X86_64Vcpu {
         // Guest-clock evaluator used by RDTSC/RDTSCP. Native code must not
         // expose the host TSC or its frequency/offset domain.
         gr.tsc_fn = rax_jit_tsc as usize as u64;
+        // Canonical MOV-to-control-register validator/commit helper. Successful
+        // writes end the region immediately after this call.
+        gr.control_write_fn = rax_jit_write_control as usize as u64;
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
@@ -4887,6 +4897,9 @@ impl X86_64Vcpu {
         gr.dr3 = self.sregs.dr3;
         gr.dr6 = self.sregs.dr6;
         gr.dr7 = self.sregs.dr7;
+        gr.efer = self.sregs.efer;
+        gr.cs_l = u64::from(self.sregs.cs.l);
+        gr.tr_type = u64::from(self.sregs.tr.type_ & 0x0F);
         gr.cpl = if self.regs.rflags & flags::bits::VM != 0 {
             3
         } else {
@@ -4996,6 +5009,7 @@ impl X86_64Vcpu {
         self.sregs.dr3 = gr.dr3;
         self.sregs.dr6 = gr.dr6;
         self.sregs.dr7 = gr.dr7;
+        self.sregs.efer = gr.efer;
         self.sregs.fs.base = gr.fs_base;
         self.sregs.gs.base = gr.gs_base;
         self.kernel_gs_base = gr.kernel_gs_base;
@@ -5135,6 +5149,7 @@ impl X86_64Vcpu {
         let snap_cr3 = self.sregs.cr3;
         let snap_cr4 = self.sregs.cr4;
         let snap_cr8 = self.sregs.cr8;
+        let snap_efer = self.sregs.efer;
         let snap_dr0 = self.sregs.dr0;
         let snap_dr1 = self.sregs.dr1;
         let snap_dr2 = self.sregs.dr2;
@@ -5158,6 +5173,7 @@ impl X86_64Vcpu {
         let jit_cr3 = self.sregs.cr3;
         let jit_cr4 = self.sregs.cr4;
         let jit_cr8 = self.sregs.cr8;
+        let jit_efer = self.sregs.efer;
         let jit_dr0 = self.sregs.dr0;
         let jit_dr1 = self.sregs.dr1;
         let jit_dr2 = self.sregs.dr2;
@@ -5206,6 +5222,7 @@ impl X86_64Vcpu {
         self.sregs.cr3 = snap_cr3;
         self.sregs.cr4 = snap_cr4;
         self.sregs.cr8 = snap_cr8;
+        self.sregs.efer = snap_efer;
         self.sregs.dr0 = snap_dr0;
         self.sregs.dr1 = snap_dr1;
         self.sregs.dr2 = snap_dr2;
@@ -5328,6 +5345,7 @@ impl X86_64Vcpu {
                 ("cr3", self.sregs.cr3, jit_cr3),
                 ("cr4", self.sregs.cr4, jit_cr4),
                 ("cr8", self.sregs.cr8, jit_cr8),
+                ("efer", self.sregs.efer, jit_efer),
                 ("dr0", self.sregs.dr0, jit_dr0),
                 ("dr1", self.sregs.dr1, jit_dr1),
                 ("dr2", self.sregs.dr2, jit_dr2),
@@ -5488,6 +5506,7 @@ impl X86_64Vcpu {
         self.sregs.cr3 = jit_cr3;
         self.sregs.cr4 = jit_cr4;
         self.sregs.cr8 = jit_cr8;
+        self.sregs.efer = jit_efer;
         self.sregs.dr0 = jit_dr0;
         self.sregs.dr1 = jit_dr1;
         self.sregs.dr2 = jit_dr2;
@@ -6075,6 +6094,10 @@ mod jit_read_debug_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_write_debug_tests.rs"]
 mod jit_write_debug_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_write_control_tests.rs"]
+mod jit_write_control_tests;
 
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {

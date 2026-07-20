@@ -2484,6 +2484,11 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::X86ReadControl { dst, control } => {
             op_json!("x86_read_control", dst, control)
         }
+        OpKind::X86WriteControl {
+            src,
+            control,
+            next_pc,
+        } => op_json!("x86_write_control", src, control, next_pc),
         OpKind::X86ReadDebug { dst, debug } => {
             op_json!("x86_read_debug", dst, debug)
         }

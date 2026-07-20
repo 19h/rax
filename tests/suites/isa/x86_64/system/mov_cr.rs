@@ -841,3 +841,254 @@ fn mov_from_cr_outside_64_bit_mode_is_an_ignored_prefix_32_bit_write() {
     assert_eq!(regs.rax, 0x8765_4321);
     assert_eq!(regs.rip, CODE_ADDR + 4);
 }
+
+#[test]
+fn mov_to_cr_decode_faults_precede_privilege_faults_without_committing() {
+    for (name, code) in [
+        ("reserved-cr1", &[0x0F, 0x22, 0xC8][..]),
+        ("reserved-cr9", &[0x44, 0x0F, 0x22, 0xC8]),
+        ("lock-valid-cr0", &[0xF0, 0x0F, 0x22, 0xC0]),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(code, None);
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cr0 |= 1;
+        sregs.cs.selector = 3;
+        let before = sregs.clone();
+        vcpu.set_sregs(&sregs).unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xA5A5_5A5A_DEAD_BEEF;
+        vcpu.set_regs(&regs).unwrap();
+
+        let error = vcpu.step().expect_err("decode-invalid MOV-to-CR must #UD");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{name}: wrong exception: {error}"
+        );
+        let after = vcpu.get_sregs().unwrap();
+        assert_eq!(after.cr0, before.cr0, "{name}");
+        assert_eq!(after.cr2, before.cr2, "{name}");
+        assert_eq!(after.cr3, before.cr3, "{name}");
+        assert_eq!(after.cr4, before.cr4, "{name}");
+        assert_eq!(after.cr8, before.cr8, "{name}");
+        assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
+    }
+
+    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x80, 0x22, 0xC0], None);
+    let before = vcpu.get_sregs().unwrap();
+    let error = vcpu
+        .step()
+        .expect_err("REX2 MOV-to-CR must remain undefined with APX enabled");
+    assert!(error.to_string().contains("IDT entry 6 not present"));
+    assert_eq!(vcpu.get_sregs().unwrap().cr0, before.cr0);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR);
+}
+
+#[test]
+fn mov_to_cr_privilege_and_non_64_bit_source_width_are_precise() {
+    for (name, selector, vm) in [
+        ("protected-cpl3", 3, false),
+        ("virtual-8086-cs-rpl0", 0, true),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x22, 0xD0], None);
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cr0 |= 1;
+        sregs.cr2 = 0x1111_2222_3333_4444;
+        sregs.cs.selector = selector;
+        vcpu.set_sregs(&sregs).unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xA5A5_5A5A_DEAD_BEEF;
+        if vm {
+            regs.rflags |= 1 << 17;
+        }
+        vcpu.set_regs(&regs).unwrap();
+
+        let error = vcpu.step().expect_err("MOV-to-CR privilege must #GP(0)");
+        assert!(
+            error.to_string().contains("IDT entry 13 not present"),
+            "{name}: wrong exception: {error}"
+        );
+        assert_eq!(vcpu.get_sregs().unwrap().cr2, sregs.cr2, "{name}");
+        assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
+    }
+
+    let (mut real_mode, _) = setup_vm_no_idt(&[0x66, 0x0F, 0x22, 0xD0], None);
+    let mut sregs = real_mode.get_sregs().unwrap();
+    sregs.cr0 &= !1;
+    sregs.cs.l = false;
+    sregs.cs.db = true;
+    sregs.cs.selector = 3;
+    real_mode.set_sregs(&sregs).unwrap();
+    let mut regs = real_mode.get_regs().unwrap();
+    regs.rax = 0xFFFF_AAAA_8765_4321;
+    real_mode.set_regs(&regs).unwrap();
+
+    assert!(real_mode.step().unwrap().is_none());
+    assert_eq!(real_mode.get_sregs().unwrap().cr2, 0x8765_4321);
+    assert_eq!(real_mode.get_regs().unwrap().rip, CODE_ADDR + 4);
+}
+
+#[test]
+fn mov_to_cr0_faults_are_non_committing_and_reserved_low_bits_are_ignored() {
+    for (name, value) in [
+        ("pg-without-pe", 1 << 31),
+        ("nw-without-cd", 1 << 29),
+        ("reserved-high", 1 << 32),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x22, 0xC0], None);
+        let before = vcpu.get_sregs().unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = value;
+        let before_flags = regs.rflags;
+        vcpu.set_regs(&regs).unwrap();
+
+        let error = vcpu.step().expect_err("invalid CR0 value must #GP(0)");
+        assert!(
+            error.to_string().contains("IDT entry 13 not present"),
+            "{name}: wrong exception: {error}"
+        );
+        assert_eq!(vcpu.get_sregs().unwrap().cr0, before.cr0, "{name}");
+        assert_eq!(vcpu.get_sregs().unwrap().efer, before.efer, "{name}");
+        assert_eq!(vcpu.get_regs().unwrap().rflags, before_flags, "{name}");
+        assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
+    }
+
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x22, 0xC0], None);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rax = 1 | (1 << 6) | (1 << 15); // PE plus two reserved low fields
+    let before_flags = regs.rflags;
+    vcpu.set_regs(&regs).unwrap();
+    assert!(vcpu.step().unwrap().is_none());
+    assert_eq!(vcpu.get_sregs().unwrap().cr0, 1 | (1 << 4));
+    assert_eq!(vcpu.get_regs().unwrap().rflags, before_flags);
+}
+
+#[test]
+fn mov_to_cr3_validates_physical_width_pcide_and_normalizes_non_pcid_fields() {
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x22, 0xD8], None);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rax = 0x0000_1234_5678_9FFF;
+    vcpu.set_regs(&regs).unwrap();
+    assert!(vcpu.step().unwrap().is_none());
+    assert_eq!(vcpu.get_sregs().unwrap().cr3, 0x0000_1234_5678_9018);
+
+    for (name, value) in [
+        ("no-flush-without-pcide", 1 << 63),
+        ("above-maxphyaddr", 1 << 48),
+    ] {
+        let (mut fault, _) = setup_vm_no_idt(&[0x0F, 0x22, 0xD8], None);
+        let before = fault.get_sregs().unwrap().cr3;
+        let mut regs = fault.get_regs().unwrap();
+        regs.rax = value;
+        fault.set_regs(&regs).unwrap();
+        let error = fault.step().expect_err("invalid CR3 value must #GP(0)");
+        assert!(
+            error.to_string().contains("IDT entry 13 not present"),
+            "{name}: wrong exception: {error}"
+        );
+        assert_eq!(fault.get_sregs().unwrap().cr3, before, "{name}");
+    }
+
+    let (mut pcid, _) = setup_vm_no_idt(&[0x0F, 0x22, 0xD8], None);
+    let mut sregs = pcid.get_sregs().unwrap();
+    sregs.cr4 |= 1 << 17;
+    sregs.efer |= 1 << 10;
+    pcid.set_sregs(&sregs).unwrap();
+    let mut regs = pcid.get_regs().unwrap();
+    regs.rax = (1 << 63) | 0x0000_1234_5678_9ABC;
+    pcid.set_regs(&regs).unwrap();
+    assert!(pcid.step().unwrap().is_none());
+    assert_eq!(pcid.get_sregs().unwrap().cr3, 0x0000_1234_5678_9ABC);
+}
+
+#[test]
+fn mov_to_control_mode_transitions_validate_before_commit() {
+    for (name, cr0, cr3, cr4, efer, cs_l, tr_type, value, modrm) in [
+        (
+            "pcide-with-nonzero-pcid",
+            1,
+            1,
+            1 << 5,
+            1 << 10,
+            true,
+            9,
+            (1 << 5) | (1 << 17),
+            0xE0,
+        ),
+        (
+            "clear-pae-in-ia32e",
+            1,
+            0,
+            1 << 5,
+            1 << 10,
+            true,
+            9,
+            0,
+            0xE0,
+        ),
+        (
+            "activate-ia32e-from-64-bit-cs",
+            1,
+            0,
+            1 << 5,
+            1 << 8,
+            true,
+            9,
+            (1 << 31) | 1,
+            0xC0,
+        ),
+        (
+            "activate-ia32e-with-16-bit-tss",
+            1,
+            0,
+            1 << 5,
+            1 << 8,
+            false,
+            3,
+            (1 << 31) | 1,
+            0xC0,
+        ),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x22, modrm], None);
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cr0 = cr0;
+        sregs.cr3 = cr3;
+        sregs.cr4 = cr4;
+        sregs.efer = efer;
+        sregs.cs.l = cs_l;
+        sregs.tr.type_ = tr_type;
+        let before = sregs.clone();
+        vcpu.set_sregs(&sregs).unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = value;
+        vcpu.set_regs(&regs).unwrap();
+
+        let error = vcpu
+            .step()
+            .expect_err("invalid mode transition must #GP(0)");
+        assert!(
+            error.to_string().contains("IDT entry 13 not present"),
+            "{name}: wrong exception: {error}"
+        );
+        let after = vcpu.get_sregs().unwrap();
+        assert_eq!(after.cr0, before.cr0, "{name}");
+        assert_eq!(after.cr4, before.cr4, "{name}");
+        assert_eq!(after.efer, before.efer, "{name}");
+        assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
+    }
+
+    let (mut enter, _) = setup_vm_no_idt(&[0x0F, 0x22, 0xC0], None);
+    let mut sregs = enter.get_sregs().unwrap();
+    sregs.cr0 = 1;
+    sregs.cr4 = 1 << 5;
+    sregs.efer = 1 << 8;
+    sregs.cs.l = false;
+    sregs.tr.type_ = 9;
+    enter.set_sregs(&sregs).unwrap();
+    let mut regs = enter.get_regs().unwrap();
+    regs.rax = (1 << 31) | 1;
+    enter.set_regs(&regs).unwrap();
+    assert!(enter.step().unwrap().is_none());
+    let entered = enter.get_sregs().unwrap();
+    assert_eq!(entered.cr0, (1 << 31) | (1 << 4) | 1);
+    assert_ne!(entered.efer & (1 << 10), 0);
+}

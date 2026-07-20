@@ -3976,6 +3976,16 @@ pub enum OpKind {
         control: X86ControlReg,
     },
 
+    /// `MOV CR0/CR2/CR3/CR4/CR8, r64`. Dynamic CPL, reserved-bit, PCID, and
+    /// IA-32e transition checks are non-committing. `next_pc` is the exact
+    /// post-instruction frontier: a successful native write must terminate its
+    /// region because paging and instruction-admission state may have changed.
+    X86WriteControl {
+        src: VReg,
+        control: X86ControlReg,
+        next_pc: u64,
+    },
+
     /// `MOV r64, DR0-DR7`. The selector remains encoded so DR4/DR5 can
     /// dynamically alias DR6/DR7 or fault according to CR4.DE. DR7.GD can
     /// raise a fault-class #DB before the destination commits. The six status
@@ -4456,6 +4466,7 @@ impl OpKind {
                 | OpKind::X86XSetBv { .. }
                 | OpKind::X86Clts
                 | OpKind::X86ReadControl { .. }
+                | OpKind::X86WriteControl { .. }
                 | OpKind::X86ReadDebug { .. }
                 | OpKind::X86WriteDebug { .. }
                 | OpKind::X86FsGsBase { .. }
@@ -4978,6 +4989,7 @@ impl OpKind {
             | OpKind::X86XRstor { .. }
             | OpKind::X86XSetBv { .. }
             | OpKind::X86Clts
+            | OpKind::X86WriteControl { .. }
             | OpKind::X86WriteDebug { .. }
             | OpKind::X86MonitorMwait(..)
             | OpKind::Syscall { .. }
@@ -5148,6 +5160,7 @@ impl OpKind {
                     | OpKind::X86XSetBv { .. }
                     | OpKind::X86Clts
                     | OpKind::X86ReadControl { .. }
+                    | OpKind::X86WriteControl { .. }
                     | OpKind::X86ReadDebug { .. }
                     | OpKind::X86WriteDebug { .. }
                     | OpKind::X86FsGsBase { .. }

@@ -105,10 +105,11 @@ pub(crate) fn evaluate_cpuid(
             // EAX: Stepping=1, Model=15, Family=6 => 0x6F1 (typical x86-64)
             let signature: u32 = 0x000006F1;
             // EDX features (required by Linux: 0x0700a169)
-            // bit 0: FPU, bit 3: PSE, bit 4: TSC, bit 5: MSR, bit 6: PAE, bit 8: CX8
+            // bit 0: FPU, bit 2: DE, bit 3: PSE, bit 4: TSC, bit 5: MSR, bit 6: PAE, bit 8: CX8
             // bit 9: APIC, bit 13: PGE, bit 15: CMOV, bit 19: CLFLUSH
             // bit 23: MMX, bit 24: FXSR, bit 25: SSE, bit 26: SSE2
             let features_edx: u32 = (1 << 0)   // FPU
+                                  | (1 << 2)   // DE (CR4.DE and DR4/DR5 behavior)
                                   | (1 << 3)   // PSE
                                   | (1 << 4)   // TSC - Time Stamp Counter
                                   | (1 << 5)   // MSR
@@ -448,5 +449,17 @@ mod tests {
         vcpu.regs.rcx = 0;
         cpuid(&mut vcpu, &mut ctx).unwrap();
         assert_eq!(vcpu.regs.rbx & (1 << 9), 1 << 9);
+    }
+
+    #[test]
+    fn cpuid_advertises_implemented_debug_extensions_control() {
+        let mut vcpu = vcpu();
+        let mut ctx = cpuid_ctx();
+        vcpu.regs.rax = 1;
+        vcpu.regs.rcx = 0;
+
+        cpuid(&mut vcpu, &mut ctx).unwrap();
+
+        assert_eq!(vcpu.regs.rdx & (1 << 2), 1 << 2);
     }
 }

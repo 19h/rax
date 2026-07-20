@@ -1,5 +1,8 @@
 //! System/privileged op execution
 
+use crate::isa::x86_64::execute::system::{
+    X86ControlWriteFault, X86ControlWriteState, validate_x86_control_write,
+};
 use crate::smir::interpret::*;
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext, VecValue};
 use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
@@ -103,6 +106,69 @@ impl SmirInterpreter {
                     }
                 };
                 Self::write_x86_partial(ctx, *dst, value, OpWidth::W64);
+            }
+
+            OpKind::X86WriteControl {
+                src,
+                control,
+                next_pc: _,
+            } => {
+                let value = ctx.read_vreg(*src);
+                let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                };
+
+                // Real-address mode permits the write. Effective CPL already
+                // maps virtual-8086 execution to CPL3. All validation precedes
+                // every architectural state update.
+                if x86.cr0 & 1 != 0 && x86.cpl != 0 {
+                    ctx.request_exit(ExitReason::GeneralProtection {
+                        addr: op.guest_pc,
+                        error_code: 0,
+                    });
+                    return Ok(());
+                }
+                let selector = match control {
+                    X86ControlReg::Cr0 => 0,
+                    X86ControlReg::Cr2 => 2,
+                    X86ControlReg::Cr3 => 3,
+                    X86ControlReg::Cr4 => 4,
+                    X86ControlReg::Cr8 => 8,
+                };
+                let effect = match validate_x86_control_write(
+                    selector,
+                    value,
+                    X86ControlWriteState {
+                        cr0: x86.cr0,
+                        cr3: x86.cr3,
+                        cr4: x86.cr4,
+                        efer: x86.efer,
+                        cs_l: x86.cs_l,
+                        tr_type: x86.tr_type,
+                    },
+                ) {
+                    Ok(effect) => effect,
+                    Err(X86ControlWriteFault::GeneralProtection) => {
+                        ctx.request_exit(ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+
+                match control {
+                    X86ControlReg::Cr0 => x86.cr0 = effect.value,
+                    X86ControlReg::Cr2 => x86.cr2 = effect.value,
+                    X86ControlReg::Cr3 => x86.cr3 = effect.value,
+                    X86ControlReg::Cr4 => x86.cr4 = effect.value,
+                    X86ControlReg::Cr8 => x86.cr8 = effect.value,
+                }
+                x86.efer = effect.efer;
             }
 
             OpKind::X86ReadDebug { dst, debug } => {

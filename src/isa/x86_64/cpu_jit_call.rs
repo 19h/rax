@@ -75,6 +75,7 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     vcpu.sregs.cr3 = gr.cr3;
     vcpu.sregs.cr4 = gr.cr4;
     vcpu.sregs.cr8 = gr.cr8;
+    vcpu.sregs.efer = gr.efer;
     vcpu.sregs.dr0 = gr.dr0;
     vcpu.sregs.dr1 = gr.dr1;
     vcpu.sregs.dr2 = gr.dr2;
@@ -220,6 +221,9 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     gr.cr2 = vcpu.sregs.cr2;
     gr.cr3 = vcpu.sregs.cr3;
     gr.cr8 = vcpu.sregs.cr8;
+    gr.efer = vcpu.sregs.efer;
+    gr.cs_l = u64::from(vcpu.sregs.cs.l);
+    gr.tr_type = u64::from(vcpu.sregs.tr.type_ & 0x0F);
     gr.dr0 = vcpu.sregs.dr0;
     gr.dr1 = vcpu.sregs.dr1;
     gr.dr2 = vcpu.sregs.dr2;

@@ -633,6 +633,12 @@ impl X86_64Lowerer {
                 // No following op or terminator in this block is reachable.
                 return Ok(());
             }
+            if matches!(block.ops[idx].kind, OpKind::X86WriteControl { .. }) {
+                self.emit_x86_write_control(&block.ops[idx])?;
+                // Both success and fault paths return through exact exit stubs.
+                // Control-state changes must not execute a later native op.
+                return Ok(());
+            }
             // The memory-fusion peepholes emit direct host-pointer accesses,
             // which are invalid under the JIT's MMU helper-call mode. In that
             // mode each Load/Store is lowered individually via the helper path
