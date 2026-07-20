@@ -1157,6 +1157,18 @@ impl X86_64Lifter {
                 })
             }
 
+            // UD0 (0F FF /r) always raises #UD. Intel permits processors not
+            // to decode its ModR/M byte; the direct emulator uses that profile,
+            // so consume only the map opcode and perform no operand fetch.
+            0xFF => Ok(LiftResult {
+                ops: vec![],
+                bytes_consumed: prefix2.cursor,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: vec![],
+            }),
+
             // SYSRET (0F 07)
             0x07 => {
                 // Treat as return for lifting purposes

@@ -182,6 +182,22 @@ fn decodes_x86_with_smir_lift() {
 }
 
 #[test]
+fn reports_x86_ud0_as_an_exact_two_byte_invalid_opcode_trap() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let value = decode_to_json(&[0x0F, 0xFF, 0x04, 0x25, 0x78, 0x56, 0x34, 0x12], &opts).unwrap();
+    let smir = &value["smir"];
+    assert_eq!(smir["available"], true);
+    assert_eq!(smir["bytes_consumed"], 2);
+    assert_eq!(smir["ops"].as_array().unwrap().len(), 0);
+    assert_eq!(smir["control_flow"]["kind"], "trap");
+    assert_eq!(smir["control_flow"]["trap"], "InvalidOpcode");
+    assert_eq!(smir["ends_block"], true);
+    assert_eq!(smir["ends_function"], true);
+}
+
+#[test]
 fn emits_structured_smir_ops() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

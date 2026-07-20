@@ -691,6 +691,59 @@ fn lift_ud2_is_an_explicit_invalid_opcode_trap() {
         ));
     }
 }
+
+#[test]
+fn lift_ud0_is_an_explicit_two_byte_trap_without_operand_fetch() {
+    let cases: &[(&[u8], usize)] = &[
+        (&[0x0F, 0xFF], 2),
+        (&[0x0F, 0xFF, 0xC0], 2),
+        (&[0x0F, 0xFF, 0x04, 0x25, 0x78, 0x56, 0x34, 0x12], 2),
+        (&[0x66, 0x0F, 0xFF, 0xC0], 3),
+        (&[0xF0, 0x0F, 0xFF, 0xC0], 3),
+        (&[0x48, 0x0F, 0xFF, 0xC0], 3),
+        // REX2.M selects the 0F map without an encoded 0F byte.
+        (&[0xD5, 0x80, 0xFF, 0xC0], 3),
+        // REX2.M=0 leaves an explicit 0F map byte in the instruction stream.
+        (&[0xD5, 0x00, 0x0F, 0xFF, 0xC0], 4),
+    ];
+
+    for &(bytes, expected_len) in cases {
+        let result = lift_single(bytes).expect("UD0 must strictly lift to an explicit trap");
+        assert_eq!(result.bytes_consumed, expected_len, "{bytes:02X?}");
+        assert!(result.ops.is_empty(), "{bytes:02X?}");
+        assert!(result.branch_targets.is_empty(), "{bytes:02X?}");
+        assert!(matches!(
+            result.control_flow,
+            ControlFlow::Trap {
+                kind: TrapKind::InvalidOpcode
+            }
+        ));
+    }
+
+    // A two-byte buffer is sufficient: this implementation follows the
+    // architecturally permitted UD0 profile that does not decode ModR/M.
+    let mem = TestMemory::new(0x1000, vec![0xB8, 0x78, 0x56, 0x34, 0x12, 0x0F, 0xFF]);
+    let mut lifter = X86_64Lifter::strict();
+    let mut ctx = LiftContext::new(SourceArch::X86_64);
+    let block = lifter.lift_block(0x1000, &mem, &mut ctx).unwrap();
+    assert!(matches!(
+        block.ops.as_slice(),
+        [SmirOp {
+            kind: OpKind::Mov {
+                dst: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                src: SrcOperand::Imm(0x1234_5678),
+                width: OpWidth::W32,
+            },
+            ..
+        }]
+    ));
+    assert!(matches!(
+        block.terminator,
+        Terminator::Trap {
+            kind: TrapKind::InvalidOpcode
+        }
+    ));
+}
 #[test]
 fn lift_enter_decodes_width_nesting_mask_and_invalid_forms() {
     let enter64 = lift_single(&[0xC8, 0x20, 0, 0]).unwrap();
