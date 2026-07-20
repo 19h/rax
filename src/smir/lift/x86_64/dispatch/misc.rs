@@ -33,6 +33,23 @@ impl X86_64Lifter {
             _ => decode_vex_prefix(bytes, pc)?,
         };
 
+        if prefix.map == X86VecMap::Map0F
+            && bytes.get(prefix.bytes) == Some(&0x01)
+            && bytes.get(prefix.bytes + 1) == Some(&0xC5)
+        {
+            // PCONFIG has only the NP legacy encoding. VEX and EVEX forms of
+            // the same opcode/ModR/M sequence are invalid and raise #UD before
+            // any vector or PCONFIG architectural state can be observed.
+            return Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed: prefix.bytes + 2,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
+            });
+        }
+
         self.lift_vec_opcode(prefix, bytes, pc, ctx)
     }
 }

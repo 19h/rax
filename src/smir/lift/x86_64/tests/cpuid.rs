@@ -168,6 +168,17 @@ fn cpuid_interpreter_tracks_every_mutable_guest_profile_input() {
     assert_ne!(leaf7[1] & (1 << 1), 0, "IA32_TSC_ADJUST must be enumerated");
     assert_ne!(leaf7[2] & (1 << 4), 0, "CR4.PKE must drive OSPKE");
     assert_ne!(leaf7[3] & (1 << 8), 0, "VP2INTERSECT gate");
+    assert_eq!(
+        leaf7[3] & (1 << 18),
+        0,
+        "PCONFIG must remain absent until its platform-key semantics exist"
+    );
+
+    let (pconfig, _) = execute_cpuid(0x1B, 0, |_| {});
+    assert_eq!(
+        pconfig, [0; 4],
+        "the disabled profile must expose no PCONFIG target"
+    );
 
     let (sse4a, _) = execute_cpuid(0x8000_0001, 0, |x86| x86.sse4a = true);
     assert_ne!(sse4a[2] & (1 << 6), 0);

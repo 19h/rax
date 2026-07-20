@@ -18,6 +18,14 @@ impl X86_64Vcpu {
             .evex
             .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
 
+        if opcode == 0x01 && ctx.peek_u8()? == 0xC5 {
+            // PCONFIG has no EVEX encoding. Consume the fixed ModR/M byte so
+            // instruction fetch remains precise, then deliver architectural
+            // #UD instead of leaking the generic unimplemented-opcode error.
+            ctx.consume_u8()?;
+            return self.inject_undefined_instruction();
+        }
+
         match opcode {
             // VMOVUPS/VMOVAPS load (0x10/0x28): ps lanes, masked. Aligned for 0x28.
             0x10 | 0x28 if evex.pp == 0 => {

@@ -36,6 +36,8 @@ mod msr;
 #[cfg(test)]
 mod packed_string;
 #[cfg(test)]
+mod pconfig;
+#[cfg(test)]
 mod pkru;
 #[cfg(test)]
 mod rdpmc;

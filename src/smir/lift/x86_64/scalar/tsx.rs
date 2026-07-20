@@ -3,7 +3,7 @@
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
-    /// Lift VMCALL/VMMCALL hints, disabled VMX/SVM/SGX controls,
+    /// Lift VMCALL/VMMCALL hints, disabled VMX/SVM/SGX/PCONFIG controls,
     /// MONITOR/MWAIT, CLAC/STAC, XGETBV/XSETBV, RDPKRU/WRPKRU, SERIALIZE,
     /// SWAPGS, RDTSCP, and the RTM fixed ModR/M encodings in 0F 01.
     pub(crate) fn lift_xcr_0f01(
@@ -48,6 +48,21 @@ impl X86_64Lifter {
             // any leaf-12H SGX capability, so all three roots deterministically
             // raise #UD before VMX, CPL, CR0.TS, leaf, or architectural-state
             // checks.
+            return Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed: prefix.cursor + 1,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
+            });
+        }
+
+        if modrm == 0xC5 {
+            // PCONFIG checks CPUID.07H.0H:EDX.PCONFIG before its leaf,
+            // register, platform-key, memory, and flag semantics. RAX keeps
+            // that bit clear and exposes no leaf-1BH target, so the fixed
+            // encoding deterministically raises #UD without committing state.
             return Ok(LiftResult {
                 ops: Vec::new(),
                 bytes_consumed: prefix.cursor + 1,
