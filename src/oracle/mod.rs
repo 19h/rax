@@ -26,6 +26,7 @@ use crate::smir::ir::ops::X86DebugReg;
 use crate::smir::ir::ops::X86DescriptorTable;
 use crate::smir::ir::ops::X86DescriptorTableLoadOp;
 use crate::smir::ir::ops::X86DescriptorTableStoreOp;
+use crate::smir::ir::ops::X86FarJumpOp;
 use crate::smir::ir::ops::X86LmswOp;
 use crate::smir::ir::ops::X86LmswSource;
 use crate::smir::ir::ops::X86MonitorMwaitOp;
@@ -2593,6 +2594,22 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             selector,
             source,
             requires_apx,
+            next_pc
+        ),
+        OpKind::X86FarJump(X86FarJumpOp {
+            addr,
+            target,
+            offset_width,
+            requires_apx,
+            stack_segment,
+            next_pc,
+        }) => op_json!(
+            "x86_far_jump",
+            addr,
+            target,
+            offset_width,
+            requires_apx,
+            stack_segment,
             next_pc
         ),
         OpKind::X86Lmsw(X86LmswOp {

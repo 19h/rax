@@ -184,6 +184,9 @@ pub const X86_GUEST_SYSTEM_SELECTOR_FN_OFFSET: i32 = X86_GUEST_DESCRIPTOR_LOAD_F
 /// Byte offset of the helper-backed LLDT/LTR selector loader. Appended so all
 /// pre-existing native helper/state fields retain their established ABI.
 pub const X86_GUEST_SYSTEM_SELECTOR_LOAD_FN_OFFSET: i32 = X86_GUEST_SYSTEM_SELECTOR_FN_OFFSET + 8;
+/// Offset of [`runtime::GuestRegs::far_jump_fn`]. Appended to keep all prior
+/// helper ABI offsets stable.
+pub const X86_GUEST_FAR_JUMP_FN_OFFSET: i32 = X86_GUEST_SYSTEM_SELECTOR_LOAD_FN_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

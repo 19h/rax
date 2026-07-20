@@ -7,8 +7,9 @@ use crate::smir::ir::ops::{
 };
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::x86_64::{
-    x86_clts_shape_valid, x86_lmsw_shape_valid, x86_read_control_shape_valid,
-    x86_read_debug_shape_valid, x86_smsw_shape_valid, x86_system_selector_load_shape_valid,
+    x86_clts_shape_valid, x86_far_jump_shape_valid, x86_far_jump_terminal_shape_valid,
+    x86_lmsw_shape_valid, x86_read_control_shape_valid, x86_read_debug_shape_valid,
+    x86_smsw_shape_valid, x86_system_selector_load_shape_valid,
     x86_system_selector_store_shape_valid, x86_write_control_shape_valid,
     x86_write_debug_shape_valid,
 };
@@ -138,6 +139,14 @@ pub(crate) fn block_is_clobber_safe(
     };
 
     let n = block.ops.len();
+    let far_jump_count = block
+        .ops
+        .iter()
+        .filter(|op| matches!(op.kind, OpKind::X86FarJump(..)))
+        .count();
+    if far_jump_count != 0 && (far_jump_count != 1 || !x86_far_jump_terminal_shape_valid(block)) {
+        return false;
+    }
     let native_replay_spans =
         crate::smir::ir::x86_evex_native_replay_spans(block, x86_instruction_bytes);
     // Count virtual definitions and uses once. Exact helper-sequence validation
@@ -535,6 +544,13 @@ pub(crate) fn block_is_clobber_safe(
             }
             _ => false,
         };
+        let far_jump_ok = matches!(
+            &op.kind,
+            OpKind::X86FarJump(jump)
+                if allow_mem
+                    && x86_far_jump_shape_valid(op)
+                    && x86_jit_mem_address_shape_valid(&jump.addr)
+        );
         let read_debug_ok = x86_read_debug_shape_valid(&op.kind);
         let write_control_ok = x86_write_control_shape_valid(op);
         let write_debug_ok = x86_write_debug_shape_valid(&op.kind);
@@ -635,6 +651,7 @@ pub(crate) fn block_is_clobber_safe(
             || mmx_mem_ok
             || descriptor_store_ok
             || descriptor_load_ok
+            || far_jump_ok
             || selector_load_ok
             || matches!(
                 &op.kind,
@@ -742,6 +759,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86DescriptorTableLoad(..)) && !descriptor_load_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86FarJump(..)) && !far_jump_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86ReadDebug { .. }) && !read_debug_ok {

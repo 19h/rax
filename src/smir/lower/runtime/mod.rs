@@ -274,6 +274,12 @@ pub struct GuestRegs {
     /// and bit two selects LTR instead of LLDT. The helper performs complete
     /// descriptor validation and commits LDTR/TR only on success.
     pub system_selector_load_fn: u64,
+    /// Address of `extern "C" fn(state, pointer_address, encoding) -> ok` for
+    /// long-mode `FF /5`. Encoding bits 1:0 select W16/W32/W64 and bit two
+    /// records a REX2/APX encoding; bit three records an SS-based memory
+    /// operand for exact noncanonical-address fault selection. Success commits
+    /// CS and dynamic `exit_pc`.
+    pub far_jump_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -346,6 +352,7 @@ impl Default for GuestRegs {
             descriptor_load_fn: 0,
             system_selector_fn: 0,
             system_selector_load_fn: 0,
+            far_jump_fn: 0,
         }
     }
 }

@@ -268,6 +268,7 @@ pub(crate) fn x86_jit_op_uses_mem_helper(op: &OpKind) -> bool {
             | OpKind::X86DescriptorTableStore(..)
             | OpKind::X86DescriptorTableLoad(..)
             | OpKind::X86SystemSelectorLoad(..)
+            | OpKind::X86FarJump(..)
             | OpKind::X86SystemSelectorStore(crate::smir::ir::ops::X86SystemSelectorStoreOp {
                 target: crate::smir::ir::ops::X86SystemSelectorTarget::Memory { .. },
                 ..

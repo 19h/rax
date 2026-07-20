@@ -3,8 +3,11 @@
 use crate::error::{Error, Result};
 use crate::vm::vcpu::VcpuExit;
 
+use super::X86FarJumpLoadFault;
 use super::call::{near_branch_op_size, validate_far_selector};
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
+use crate::isa::x86_64::execute::system::X86SystemDescriptorFault;
+use crate::smir::ir::types::OpWidth;
 
 /// Group 4: INC/DEC r/m8 (0xFE)
 pub fn group4(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
@@ -181,10 +184,47 @@ fn group5_jmp_far(
         vcpu.inject_exception(6, None)?;
         return Ok(None);
     }
-    let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+    let (addr, extra, stack_segment) =
+        vcpu.decode_modrm_addr_with_stack_segment(ctx, modrm_start)?;
     ctx.cursor = modrm_start + 1 + extra;
 
     let offset_size = ctx.op_size;
+
+    if vcpu.sregs.cs.l && vcpu.sregs.efer & (1 << 10) != 0 {
+        let width = match offset_size {
+            2 => OpWidth::W16,
+            4 => OpWidth::W32,
+            8 => OpWidth::W64,
+            _ => {
+                return Err(Error::Emulator(format!(
+                    "JMP FAR invalid long-mode offset size: {offset_size}"
+                )));
+            }
+        };
+        match vcpu.jump_far_long_mode(addr, width, stack_segment, false) {
+            Ok(()) => return Ok(None),
+            Err(X86FarJumpLoadFault::Architectural(
+                X86SystemDescriptorFault::GeneralProtection { error_code },
+            )) => {
+                vcpu.inject_exception(13, Some(u64::from(error_code)))?;
+                return Ok(None);
+            }
+            Err(X86FarJumpLoadFault::Architectural(
+                X86SystemDescriptorFault::SegmentNotPresent { error_code },
+            )) => {
+                vcpu.inject_exception(11, Some(u64::from(error_code)))?;
+                return Ok(None);
+            }
+            Err(X86FarJumpLoadFault::StackSegment) => {
+                vcpu.inject_exception(12, Some(0))?;
+                return Ok(None);
+            }
+            Err(X86FarJumpLoadFault::Memory(error)) => return Err(error),
+            Err(X86FarJumpLoadFault::NativeDeopt) => {
+                unreachable!("direct long-mode far JMP does not request native preflight")
+            }
+        }
+    }
 
     // Read offset and selector from memory
     let offset = vcpu.read_mem(addr, offset_size)?;

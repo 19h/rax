@@ -2,6 +2,7 @@
 
 mod call;
 mod cmov;
+mod far;
 mod groups;
 mod int;
 mod jump;
@@ -12,6 +13,7 @@ mod xlat;
 // Re-export all instruction functions
 pub use call::*;
 pub use cmov::*;
+pub(crate) use far::*;
 pub use groups::*;
 pub use int::*;
 pub use jump::*;

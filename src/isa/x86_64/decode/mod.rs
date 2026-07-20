@@ -306,7 +306,7 @@ mod tests {
     /// `prefixes` are any legacy prefixes (e.g. 0x67); `modrm` is the ModR/M byte
     /// plus any SIB/displacement bytes. A dummy opcode (0x8B) sits between them, as
     /// in a real instruction, and decode_modrm_addr is invoked at the ModR/M offset.
-    fn ea(vcpu: &X86_64Vcpu, prefixes: &[u8], modrm: &[u8]) -> u64 {
+    fn ea_with_stack_segment(vcpu: &X86_64Vcpu, prefixes: &[u8], modrm: &[u8]) -> (u64, bool) {
         use crate::isa::x86_64::cpu::MAX_INSN_LEN;
         let mut bytes = [0u8; MAX_INSN_LEN];
         let mut len = 0;
@@ -328,8 +328,14 @@ mod tests {
             modrm_offset,
             "prefix scan / offset mismatch"
         );
-        let (addr, _extra) = vcpu.decode_modrm_addr(&ctx, modrm_offset).unwrap();
-        addr
+        let (addr, _extra, stack_segment) = vcpu
+            .decode_modrm_addr_with_stack_segment(&ctx, modrm_offset)
+            .unwrap();
+        (addr, stack_segment)
+    }
+
+    fn ea(vcpu: &X86_64Vcpu, prefixes: &[u8], modrm: &[u8]) -> u64 {
+        ea_with_stack_segment(vcpu, prefixes, modrm).0
     }
 
     fn ea_evex(vcpu: &X86_64Vcpu, evex: EvexPrefix, modrm: &[u8]) -> u64 {
@@ -448,6 +454,48 @@ mod tests {
         //   disp8 = 0x20
         let got = ea(&vcpu, &[], &[0x44, 0xD0, 0x20]);
         assert_eq!(got, 0x1234_5678_9000u64 + 0x10 * 8 + 0x20);
+    }
+
+    #[test]
+    fn rex_b_does_not_extend_the_sib_no_base_encoding() {
+        let mut vcpu = make_vcpu_64();
+        vcpu.regs.r13 = 0x8000;
+
+        // REX.B does not turn mod=00, SIB.base=101 into R13. The encoding
+        // remains disp32-only and therefore retains the DS default segment.
+        let (address, stack_segment) =
+            ea_with_stack_segment(&vcpu, &[0x41], &[0x04, 0x25, 0x34, 0x12, 0x00, 0x00]);
+        assert_eq!(address, 0x1234);
+        assert!(!stack_segment);
+    }
+
+    #[test]
+    fn fpu_rex_b_does_not_extend_the_sib_no_base_encoding() {
+        use crate::isa::x86_64::cpu::MAX_INSN_LEN;
+
+        let mut vcpu = make_vcpu_64();
+        vcpu.regs.r13 = 0x8000;
+        let mut bytes = [0_u8; MAX_INSN_LEN];
+        bytes[..8].copy_from_slice(&[0x41, 0xD9, 0x04, 0x25, 0x34, 0x12, 0x00, 0x00]);
+        let mut ctx = Decoder::decode_prefixes(bytes, 8, false, true).unwrap();
+        assert_eq!(ctx.cursor, 1);
+        ctx.cursor = 3; // FPU dispatch has consumed opcode D9 and ModR/M 04.
+
+        let address = vcpu.decode_fpu_modrm_addr(&mut ctx, 0x04).unwrap();
+        assert_eq!(address, 0x1234);
+        assert_eq!(ctx.cursor, 8);
+    }
+
+    #[test]
+    fn effective_stack_segment_tracks_defaults_and_explicit_overrides() {
+        let mut vcpu = make_vcpu_64();
+        vcpu.regs.rax = 0x1000;
+        vcpu.regs.rbp = 0x2000;
+
+        assert!(ea_with_stack_segment(&vcpu, &[], &[0x45, 0x00]).1);
+        assert!(!ea_with_stack_segment(&vcpu, &[0x3E], &[0x45, 0x00]).1);
+        assert!(ea_with_stack_segment(&vcpu, &[0x36], &[0x00]).1);
+        assert!(!ea_with_stack_segment(&vcpu, &[], &[0x00]).1);
     }
 
     #[test]
@@ -823,8 +871,27 @@ impl X86_64Vcpu {
         ctx: &InsnContext,
         modrm_offset: usize,
     ) -> Result<(u64, usize)> {
-        let (addr, extra, _) = self.decode_modrm_addr_with_segment(ctx, modrm_offset)?;
+        let (addr, extra, _, _) = self.decode_modrm_addr_with_segment(ctx, modrm_offset)?;
         Ok((addr, extra))
+    }
+
+    /// Decode a ModR/M memory address and report whether its effective segment
+    /// is SS. This is needed by instructions whose noncanonical-address fault
+    /// is #SS(0), rather than #GP(0), for an SS-based operand.
+    #[inline]
+    pub(super) fn decode_modrm_addr_with_stack_segment(
+        &self,
+        ctx: &InsnContext,
+        modrm_offset: usize,
+    ) -> Result<(u64, usize, bool)> {
+        let (addr, extra, _, default_ss) =
+            self.decode_modrm_addr_with_segment(ctx, modrm_offset)?;
+        let stack_segment = match ctx.segment_override {
+            Some(0x36) => true,
+            Some(_) => false,
+            None => default_ss,
+        };
+        Ok((addr, extra, stack_segment))
     }
 
     #[inline]
@@ -832,7 +899,7 @@ impl X86_64Vcpu {
         &self,
         ctx: &InsnContext,
         modrm_offset: usize,
-    ) -> Result<(u64, usize, u64)> {
+    ) -> Result<(u64, usize, u64, bool)> {
         let end = ctx.bytes_len.min(ctx.bytes.len());
         let bytes = ctx.bytes.get(modrm_offset..end).unwrap_or(&[]);
         if bytes.is_empty() {
@@ -888,8 +955,9 @@ impl X86_64Vcpu {
         // ds.base/ss.base in, which only the general path does.
         {
             let base = self.get_reg(rm, 8);
+            let default_ss = Self::modrm_base_defaults_to_ss(rm);
             return match mod_bits {
-                0 => Ok((base, 0, 0)),
+                0 => Ok((base, 0, 0, default_ss)),
                 1 => {
                     if bytes.len() < 2 {
                         return Err(ctx.out_of_bytes());
@@ -898,6 +966,7 @@ impl X86_64Vcpu {
                         (base as i64).wrapping_add(bytes[1] as i8 as i64) as u64,
                         1,
                         0,
+                        default_ss,
                     ))
                 }
                 _ => {
@@ -906,7 +975,7 @@ impl X86_64Vcpu {
                         return Err(ctx.out_of_bytes());
                     }
                     let disp = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]) as i64;
-                    Ok(((base as i64).wrapping_add(disp) as u64, 4, 0))
+                    Ok(((base as i64).wrapping_add(disp) as u64, 4, 0, default_ss))
                 }
             };
         }
@@ -916,7 +985,7 @@ impl X86_64Vcpu {
                 self.decode_modrm_addr16(ctx, bytes, mod_bits, rm_field)?;
             let seg_base = self.get_segment_base_with_default(ctx.segment_override, default_ss);
             let final_addr = addr.wrapping_add(seg_base);
-            return Ok((final_addr, extra, seg_base));
+            return Ok((final_addr, extra, seg_base, default_ss));
         }
 
         let addr_size_32 = addr_size == ModrmAddressSize::Addr32;
@@ -947,8 +1016,11 @@ impl X86_64Vcpu {
                 ctx.rex.map_or(0, |r| (r & 0x02) << 2)
             };
             let index = ((sib >> 3) & 0x07) | index_ext;
-            let base_reg = (sib & 0x07) | rm_ext;
-            let has_base = !(base_reg == 5 && mod_bits == 0);
+            let base_field = sib & 0x07;
+            let base_reg = base_field | rm_ext;
+            // The mod=00, SIB.base=101 no-base encoding is independent of
+            // REX.B/REX2.B, just as ModR/M.r/m=101 remains RIP-relative.
+            let has_base = !(base_field == 5 && mod_bits == 0);
 
             // Calculate base
             addr = if !has_base {
@@ -1046,7 +1118,7 @@ impl X86_64Vcpu {
         let seg_base = self.get_segment_base_with_default(ctx.segment_override, default_ss);
         let final_addr = addr.wrapping_add(seg_base);
 
-        Ok((final_addr, extra, seg_base))
+        Ok((final_addr, extra, seg_base, default_ss))
     }
 
     /// Compute the effective address (segment OFFSET) for a ModR/M memory
@@ -1061,7 +1133,7 @@ impl X86_64Vcpu {
         ctx: &InsnContext,
         modrm_offset: usize,
     ) -> Result<(u64, usize)> {
-        let (addr, extra, seg_base) = self.decode_modrm_addr_with_segment(ctx, modrm_offset)?;
+        let (addr, extra, seg_base, _) = self.decode_modrm_addr_with_segment(ctx, modrm_offset)?;
         let offset = addr.wrapping_sub(seg_base);
         Ok((offset, extra))
     }
@@ -1162,8 +1234,9 @@ impl X86_64Vcpu {
                 } else {
                     ctx.rex.map_or(0, |r| (r & 0x02) << 2)
                 };
-            let base_reg = (sib & 0x07) | ctx.any_rex_b();
-            let has_base = !(base_reg == 5 && mod_bits == 0);
+            let base_field = sib & 0x07;
+            let base_reg = base_field | ctx.any_rex_b();
+            let has_base = !(base_field == 5 && mod_bits == 0);
 
             // Calculate base
             addr = if !has_base {

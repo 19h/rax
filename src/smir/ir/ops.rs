@@ -3997,6 +3997,10 @@ pub enum OpKind {
     /// serializing and terminates native execution at `next_pc`.
     X86SystemSelectorLoad(X86SystemSelectorLoadOp),
 
+    /// `FF /5` indirect far JMP. The memory far pointer selects a code segment
+    /// or IA-32e call gate; all descriptor effects precede one CS:RIP commit.
+    X86FarJump(X86FarJumpOp),
+
     /// LMSW reads a fixed-width register or memory source after APX/CPL
     /// validation, updates CR0[3:0] without clearing PE, and is serializing.
     /// Native execution must hand off at `next_pc` after a successful commit.
@@ -4513,6 +4517,7 @@ impl OpKind {
                 | OpKind::X86Smsw(..)
                 | OpKind::X86SystemSelectorStore(..)
                 | OpKind::X86SystemSelectorLoad(..)
+                | OpKind::X86FarJump(..)
                 | OpKind::X86Lmsw(..)
                 | OpKind::X86DescriptorTableStore(..)
                 | OpKind::X86DescriptorTableLoad(..)
@@ -4953,6 +4958,7 @@ impl OpKind {
                 target: X86SystemSelectorTarget::Register { dst, .. },
                 ..
             }) => vec![*dst],
+            OpKind::X86FarJump(jump) => vec![jump.target],
             OpKind::X86ReadDebug { dst, .. } => vec![*dst],
 
             OpKind::CmpyW128Sat { dst, .. } | OpKind::SatOrigShl { dst, .. } => vec![*dst],
@@ -5245,6 +5251,7 @@ impl OpKind {
                     | OpKind::X86Smsw(..)
                     | OpKind::X86SystemSelectorStore(..)
                     | OpKind::X86SystemSelectorLoad(..)
+                    | OpKind::X86FarJump(..)
                     | OpKind::X86Lmsw(..)
                     | OpKind::X86DescriptorTableStore(..)
                     | OpKind::X86DescriptorTableLoad(..)
@@ -5364,6 +5371,7 @@ impl OpKind {
                 | OpKind::X86FxRstor { .. }
                 | OpKind::X86XRstor { .. }
                 | OpKind::X86SystemSelectorLoad(..)
+                | OpKind::X86FarJump(..)
                 | OpKind::X86DescriptorTableLoad(..)
                 | OpKind::X86Cmpxchg8b16b { .. }
                 | OpKind::X86XSave {
@@ -5445,6 +5453,7 @@ impl OpKind {
                     selector: X86SystemSelector::Tr,
                     ..
                 })
+                | OpKind::X86FarJump(..)
                 | OpKind::X86DescriptorTableStore(..)
                 | OpKind::RvVector { .. }
         )

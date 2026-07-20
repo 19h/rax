@@ -3920,6 +3920,7 @@ impl OpKind {
                 source: X86SystemSelectorSource::Memory { addr },
                 ..
             }) => result.extend(addr.regs()),
+            OpKind::X86FarJump(jump) => result.extend(jump.addr.regs()),
             OpKind::X86Lmsw(X86LmswOp {
                 source: X86LmswSource::Register { src },
                 ..

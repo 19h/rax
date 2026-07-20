@@ -400,6 +400,10 @@ pub struct X86RegState {
     /// Interrupt descriptor-table register exposed by SIDT and loaded by LIDT.
     pub idtr_base: u64,
     pub idtr_limit: u16,
+    /// Visible CS selector and hidden descriptor cache. Far control transfers
+    /// update these atomically with RIP after every memory and descriptor check.
+    pub cs_selector: u16,
+    pub cs_cache: X86SystemSegmentCache,
     /// Local descriptor-table selector exposed by SLDT.
     pub ldtr_selector: u16,
     /// Hidden descriptor cache loaded by LLDT. The visible selector remains a

@@ -54,6 +54,8 @@ pub use dispatch::*;
 mod emitter;
 mod fsgsbase;
 pub use fsgsbase::*;
+mod far_jump;
+pub use far_jump::*;
 mod monitor_mwait;
 pub use monitor_mwait::*;
 mod msr;

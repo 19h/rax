@@ -757,21 +757,32 @@ fn test_far_jmp_same_segment_different_offset() {
 // ============================================================================
 
 #[test]
-fn test_far_jmp_does_not_escalate_cpl() {
-    // A far JMP from CPL3 to a ring-0 (RPL 0) selector must NOT lower the CPL.
-    // The emulator derives CPL from CS.selector & 3, so adopting selector 0x08
-    // (RPL 0) while at CPL3 would otherwise make the vCPU CPL0 and let guest user
-    // code bypass privileged-instruction and user/supervisor page checks.
+fn test_far_jmp_to_more_privileged_nonconforming_code_raises_gp_without_commit() {
+    // A far JMP from CPL3 to a DPL0 nonconforming code segment must raise
+    // #GP(selector). It cannot be used for an inter-privilege-level transfer.
     // Uses the memory-indirect form (FF /5): the immediate form (0xEA) is #UD
     // in 64-bit mode.
     let code = [
         0xff, 0x2c, 0x25, 0x00, 0x70, 0x00, 0x00, // JMP FAR [0x7000]
         0xf4,
     ];
-    let (mut vcpu, mem) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm_no_idt(&code, None);
     let far_ptr = [0x00, 0x20, 0x00, 0x00, 0x08, 0x00]; // 0x0008:0x2000
+    let ring0_code_descriptor = [
+        0x00, 0x00, // Limit 15:0
+        0x00, 0x00, // Base 15:0
+        0x00, // Base 23:16
+        0x9a, // P=1, DPL=0, S=1, type=execute/read (accessed=0)
+        0x20, // L=1, D=0
+        0x00, // Base 31:24
+    ];
     mem.write_slice(&far_ptr, vm_memory::GuestAddress(0x7000))
         .unwrap();
+    mem.write_slice(
+        &ring0_code_descriptor,
+        vm_memory::GuestAddress(GDT_BASE + 8),
+    )
+    .unwrap();
     mem.write_slice(&[0xf4], vm_memory::GuestAddress(0x2000))
         .unwrap(); // HLT at the target
 
@@ -780,16 +791,21 @@ fn test_far_jmp_does_not_escalate_cpl() {
     sregs.cs.selector = 0x0b; // GDT index 1 (0x08) with RPL 3
     vcpu.set_sregs(&sregs).unwrap();
 
-    // Execute only the far JMP.
-    vcpu.step().unwrap();
+    let error = vcpu
+        .step()
+        .expect_err("CPL3 far JMP to DPL0 nonconforming code must inject #GP");
+    assert!(
+        error.to_string().contains("IDT entry 13 not present"),
+        "expected #GP delivery failure, got {error}"
+    );
 
     let sregs = vcpu.get_sregs().unwrap();
-    assert_eq!(
-        sregs.cs.selector & 0x3,
-        3,
-        "far JMP from CPL3 must preserve CPL (no escalation to ring 0); CS={:#x}",
-        sregs.cs.selector,
-    );
+    assert_eq!(sregs.cs.selector, 0x0b);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR);
+    let mut descriptor_after = [0_u8; 8];
+    mem.read_slice(&mut descriptor_after, vm_memory::GuestAddress(GDT_BASE + 8))
+        .unwrap();
+    assert_eq!(descriptor_after, ring0_code_descriptor);
 }
 
 #[test]

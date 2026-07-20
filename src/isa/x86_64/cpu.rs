@@ -2097,7 +2097,7 @@ impl X86_64Vcpu {
     // Memory access helpers
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
     #[inline(always)]
-    fn push_jit_mem_trace(&mut self, access: (u8, u64, u8, u64)) {
+    pub(in crate::isa::x86_64) fn push_jit_mem_trace(&mut self, access: (u8, u64, u8, u64)) {
         let over_limit = match self.jit_mem_trace.as_ref() {
             Some(trace) => trace.len() >= JIT_VERIFY_MEM_TRACE_LIMIT,
             None => false,
@@ -2125,6 +2125,12 @@ impl X86_64Vcpu {
         if let Some(log) = self.jit_mem_log.as_mut() {
             log.push(access);
         }
+    }
+
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    #[inline(always)]
+    pub(in crate::isa::x86_64) fn jit_mem_log_active(&self) -> bool {
+        self.jit_mem_log.is_some()
     }
 
     #[inline(always)]
@@ -3750,6 +3756,12 @@ use descriptor_table::{
 };
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_far_jump.rs"]
+mod jit_far_jump;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_far_jump::rax_jit_far_jump;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_msr.rs"]
 mod jit_msr;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4463,7 +4475,7 @@ impl X86_64Vcpu {
             x86_native_vector_uses_k16_opmasks_excluding,
         };
         #[cfg(target_arch = "x86_64")]
-        use crate::smir::lower::x86_64::X86_64Lowerer;
+        use crate::smir::lower::x86_64::{X86_64Lowerer, x86_far_jump_terminal_shape_valid};
         use crate::smir::optimize::{OptLevel, optimize_function};
         use std::collections::HashMap;
 
@@ -4540,9 +4552,18 @@ impl X86_64Vcpu {
                     Terminator::Trap { .. }
                     | Terminator::Return { .. }
                     | Terminator::TailCall { .. }
-                    | Terminator::IndirectBranch { .. }
                     | Terminator::IndirectBranchMem { .. }
                     | Terminator::Switch { .. } => true,
+                    Terminator::IndirectBranch { .. } => {
+                        #[cfg(target_arch = "x86_64")]
+                        {
+                            !x86_far_jump_terminal_shape_valid(b)
+                        }
+                        #[cfg(target_arch = "aarch64")]
+                        {
+                            true
+                        }
+                    }
                     // Lift-through-calls: a CALL is NOT a frontier when call-mode
                     // is on, the continuation was lifted, and the target form is
                     // supported — it lowers to a runtime call-out and continues
@@ -4575,7 +4596,15 @@ impl X86_64Vcpu {
             } else {
                 HashMap::new()
             };
-            if exits.is_empty() && edge_exits.is_empty() {
+            #[cfg(target_arch = "x86_64")]
+            let has_native_terminal = func
+                .blocks
+                .iter()
+                .filter(|block| !exits.contains_key(&block.id))
+                .any(x86_far_jump_terminal_shape_valid);
+            #[cfg(target_arch = "aarch64")]
+            let has_native_terminal = false;
+            if exits.is_empty() && edge_exits.is_empty() && !has_native_terminal {
                 if jit_bail_log() {
                     eprintln!("[JIT-BAIL] no-frontier @ {entry:#x} (call={cm})");
                 }
@@ -4640,6 +4669,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86DescriptorTableLoad(..)
                                 | OpKind::X86SystemSelectorStore(..)
                                 | OpKind::X86SystemSelectorLoad(..)
+                                | OpKind::X86FarJump(..)
                                 | OpKind::X86WriteControl { .. }
                                 | OpKind::X86ReadDebug { .. }
                                 | OpKind::X86WriteDebug { .. }
@@ -4917,6 +4947,7 @@ impl X86_64Vcpu {
         gr.descriptor_load_fn = rax_jit_descriptor_table_load as usize as u64;
         gr.system_selector_fn = rax_jit_system_selector as usize as u64;
         gr.system_selector_load_fn = rax_jit_system_selector_load as usize as u64;
+        gr.far_jump_fn = rax_jit_far_jump as usize as u64;
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
@@ -6220,6 +6251,10 @@ mod jit_descriptor_table_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_selector_tests.rs"]
 mod jit_selector_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_far_jump_tests.rs"]
+mod jit_far_jump_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_read_debug_tests.rs"]

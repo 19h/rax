@@ -1,5 +1,9 @@
 //! System/privileged op execution
 
+use crate::isa::x86_64::execute::control::{
+    X86FarJumpDescriptor, decode_x86_far_jump_call_gate_target, decode_x86_far_jump_descriptor,
+    x86_far_jump_is_ia32e_call_gate,
+};
 use crate::isa::x86_64::execute::system::{
     X86ControlWriteFault, X86ControlWriteState, X86MsrFault, X86MsrState, X86PmcFault, X86PmcState,
     X86SystemDescriptorFault, decode_x86_ldt_descriptor, decode_x86_tss_descriptor, read_x86_msr,
@@ -14,7 +18,7 @@ use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
     X86CacheControlKind, X86ControlReg, X86CountKind, X86DebugReg, X86DescriptorTable,
-    X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86SmswTarget, X86SystemSelector,
+    X86FarJumpOp, X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86SmswTarget, X86SystemSelector,
     X86SystemSelectorSource, X86SystemSelectorTarget, X86ThreeDNowKind,
     X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
     X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
@@ -37,6 +41,72 @@ fn x86_system_segment_cache(segment: &crate::vm::vcpu::Segment) -> X86SystemSegm
         avl: segment.avl,
         unusable: segment.unusable,
     }
+}
+
+fn request_x86_descriptor_fault(
+    ctx: &mut SmirContext,
+    guest_pc: u64,
+    fault: X86SystemDescriptorFault,
+) {
+    match fault {
+        X86SystemDescriptorFault::GeneralProtection { error_code } => {
+            ctx.request_exit(ExitReason::GeneralProtection {
+                addr: guest_pc,
+                error_code,
+            });
+        }
+        X86SystemDescriptorFault::SegmentNotPresent { error_code } => {
+            ctx.request_exit(ExitReason::SegmentNotPresent {
+                addr: guest_pc,
+                error_code,
+            });
+        }
+    }
+}
+
+fn x86_far_jump_descriptor_address(
+    x86: &crate::smir::ir::context::X86RegState,
+    selector: u16,
+    size: u64,
+) -> Result<u64, X86SystemDescriptorFault> {
+    let error_code = u32::from(selector & 0xFFFC);
+    if selector & 0xFFFC == 0 {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code: 0 });
+    }
+    let ti = selector & 4 != 0;
+    if ti && (x86.ldtr_selector & 0xFFFC == 0 || x86.ldtr_cache.unusable) {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    }
+    let (base, limit) = if ti {
+        (x86.ldtr_cache.base, u64::from(x86.ldtr_cache.limit))
+    } else {
+        (x86.gdtr_base, u64::from(x86.gdtr_limit))
+    };
+    let offset = u64::from(selector >> 3) * 8;
+    let Some(last_offset) = offset.checked_add(size - 1) else {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    };
+    if last_offset > limit {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    }
+    let Some(address) = base.checked_add(offset) else {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    };
+    let Some(last) = address.checked_add(size - 1) else {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    };
+    if !crate::isa::x86_64::execute::system::is_canonical_48(address)
+        || !crate::isa::x86_64::execute::system::is_canonical_48(last)
+    {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    }
+    Ok(address)
+}
+
+fn read_smir_u64(memory: &mut dyn SmirMemory, address: u64) -> Result<u64, MemoryError> {
+    let mut bytes = [0_u8; 8];
+    memory.read(address, &mut bytes)?;
+    Ok(u64::from_le_bytes(bytes))
 }
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -539,6 +609,184 @@ impl SmirInterpreter {
                         x86.tr_cache = cache;
                     }
                 }
+            }
+
+            OpKind::X86FarJump(jump) => {
+                let X86FarJumpOp {
+                    addr,
+                    target,
+                    offset_width,
+                    requires_apx,
+                    stack_segment,
+                    next_pc,
+                } = jump;
+                let uses_egpr = addr
+                    .regs()
+                    .iter()
+                    .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
+                let valid_shape = op.x86_hint.is_none()
+                    && matches!(next_pc.checked_sub(op.guest_pc), Some(2..=15))
+                    && matches!(offset_width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+                    && *target == VReg::Arch(ArchReg::X86(X86Reg::Rip))
+                    && addr.is_x86_state_backed_shape()
+                    && (!uses_egpr || *requires_apx);
+                if !valid_shape {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let (cpl, gdtr_base, gdtr_limit, ldtr_selector, ldtr_cache) = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86)
+                        if x86.cr0 & 1 != 0
+                            && x86.rflags & crate::isa::x86_64::flags::bits::VM == 0
+                            && x86.efer & (1 << 10) != 0
+                            && x86.cs_l
+                            && (!*requires_apx || x86.apx_enabled) =>
+                    {
+                        (
+                            x86.cpl,
+                            x86.gdtr_base,
+                            x86.gdtr_limit,
+                            x86.ldtr_selector,
+                            x86.ldtr_cache.clone(),
+                        )
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+
+                let pointer_address = self.compute_address(ctx, addr);
+                let pointer_size = offset_width.bits() as u64 / 8 + 2;
+                let canonical_range =
+                    pointer_address
+                        .checked_add(pointer_size - 1)
+                        .is_some_and(|last| {
+                            crate::isa::x86_64::execute::system::is_canonical_48(pointer_address)
+                                && crate::isa::x86_64::execute::system::is_canonical_48(last)
+                        });
+                if !canonical_range {
+                    ctx.request_exit(if *stack_segment {
+                        ExitReason::StackSegment {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        }
+                    } else {
+                        ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        }
+                    });
+                    return Ok(());
+                }
+
+                let mem_width = offset_width.to_mem_width();
+                let pointer_offset =
+                    self.load_memory(memory, pointer_address, mem_width, SignExtend::Zero)?;
+                let selector = self.load_memory(
+                    memory,
+                    pointer_address.wrapping_add(u64::from(mem_width.bytes())),
+                    MemWidth::B2,
+                    SignExtend::Zero,
+                )? as u16;
+
+                // Reconstruct only the implicit descriptor state needed by the
+                // table locator, keeping mutable memory access independent of
+                // the live architectural-context borrow.
+                let mut descriptor_state = crate::smir::ir::context::X86RegState::new();
+                descriptor_state.gdtr_base = gdtr_base;
+                descriptor_state.gdtr_limit = gdtr_limit;
+                descriptor_state.ldtr_selector = ldtr_selector;
+                descriptor_state.ldtr_cache = ldtr_cache;
+                let descriptor_address =
+                    match x86_far_jump_descriptor_address(&descriptor_state, selector, 8) {
+                        Ok(address) => address,
+                        Err(fault) => {
+                            request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                            return Ok(());
+                        }
+                    };
+                let mut selected_address = descriptor_address;
+                let mut selected_low = read_smir_u64(memory, descriptor_address)?;
+                let selected_high = if x86_far_jump_is_ia32e_call_gate(selected_low, true) {
+                    selected_address =
+                        match x86_far_jump_descriptor_address(&descriptor_state, selector, 16) {
+                            Ok(address) => address,
+                            Err(fault) => {
+                                request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                                return Ok(());
+                            }
+                        };
+                    Some(read_smir_u64(memory, selected_address.wrapping_add(8))?)
+                } else {
+                    None
+                };
+                let descriptor = match decode_x86_far_jump_descriptor(
+                    selector,
+                    selected_low,
+                    selected_high,
+                    pointer_offset,
+                    *offset_width,
+                    cpl,
+                    true,
+                ) {
+                    Ok(descriptor) => descriptor,
+                    Err(fault) => {
+                        request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                        return Ok(());
+                    }
+                };
+                let target_state = match descriptor {
+                    X86FarJumpDescriptor::Code(target) => target,
+                    X86FarJumpDescriptor::CallGate(gate) => {
+                        selected_address = match x86_far_jump_descriptor_address(
+                            &descriptor_state,
+                            gate.selector,
+                            8,
+                        ) {
+                            Ok(address) => address,
+                            Err(fault) => {
+                                request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                                return Ok(());
+                            }
+                        };
+                        selected_low = read_smir_u64(memory, selected_address)?;
+                        match decode_x86_far_jump_call_gate_target(
+                            gate.selector,
+                            selected_low,
+                            gate.offset,
+                            cpl,
+                        ) {
+                            Ok(target) => target,
+                            Err(fault) => {
+                                request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                                return Ok(());
+                            }
+                        }
+                    }
+                };
+
+                // The implicit accessed-bit write is the final faulting action.
+                // Only then does the operation expose the new CS:RIP pair.
+                if selected_low != target_state.accessed_low {
+                    memory.write(selected_address, &target_state.accessed_low.to_le_bytes())?;
+                }
+                let target_offset = target_state.offset;
+                let cache = x86_system_segment_cache(&target_state.segment);
+                let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                    unreachable!("validated x86 far-JMP context changed")
+                };
+                x86.cs_selector = target_state.segment.selector;
+                x86.cs_l = target_state.segment.l;
+                x86.cs_cache = cache;
+                ctx.write_vreg(*target, target_offset);
             }
 
             OpKind::X86Lmsw(lmsw) => {

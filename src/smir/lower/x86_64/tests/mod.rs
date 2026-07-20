@@ -20,6 +20,8 @@ mod cpuid;
 #[cfg(test)]
 mod descriptor_table;
 #[cfg(test)]
+mod far_jump;
+#[cfg(test)]
 mod fp_binary;
 #[cfg(test)]
 mod fsgsbase;

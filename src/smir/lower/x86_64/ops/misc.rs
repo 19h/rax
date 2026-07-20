@@ -130,6 +130,8 @@ impl X86_64Lowerer {
 
             OpKind::X86SystemSelectorLoad(..) => self.emit_x86_system_selector_load(op)?,
 
+            OpKind::X86FarJump(..) => self.emit_x86_far_jump(op)?,
+
             OpKind::X86Lmsw(..) => self.emit_x86_lmsw(op)?,
 
             OpKind::X86DescriptorTableStore(..) => self.emit_x86_descriptor_table_store(op)?,

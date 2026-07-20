@@ -154,11 +154,19 @@ fn x86_interpreter_frontier_error(error: &LiftError) -> bool {
     )
 }
 
-fn x86_interpreter_frontier_control_flow(
-    control_flow: &ControlFlow,
-    lift_through_calls: bool,
-) -> bool {
-    match control_flow {
+fn x86_interpreter_frontier_control_flow(result: &LiftResult, lift_through_calls: bool) -> bool {
+    match &result.control_flow {
+        ControlFlow::IndirectBranch { target }
+            if matches!(
+                result.ops.last(),
+                Some(SmirOp {
+                    kind: OpKind::X86FarJump(jump),
+                    ..
+                }) if jump.target == *target
+            ) =>
+        {
+            false
+        }
         ControlFlow::IndirectBranch { .. }
         | ControlFlow::IndirectBranchMem { .. }
         | ControlFlow::Return
@@ -261,10 +269,7 @@ impl SmirLifter for X86_64Lifter {
             // re-executed by the interpreter. Supported callout forms remain in
             // the native block when lift-through-calls is enabled.
             if self.interpreter_frontiers
-                && x86_interpreter_frontier_control_flow(
-                    &result.control_flow,
-                    self.lift_through_calls,
-                )
+                && x86_interpreter_frontier_control_flow(&result, self.lift_through_calls)
             {
                 terminate_at_interpreter_frontier(&mut block, addr, pc, ctx);
                 break;

@@ -128,6 +128,24 @@ pub struct X86SystemSelectorLoadOp {
     pub next_pc: u64,
 }
 
+/// Indirect far JMP (`FF /5`) through a memory far pointer. The strict x86-64
+/// lifter records the encoded 16-, 32-, or 64-bit offset width and produces the
+/// target in architectural RIP. Descriptor-table reads, optional call-gate
+/// indirection, the implicit code-descriptor accessed-bit write, and CS:RIP
+/// commit are one fault-precise operation.
+#[derive(Clone, Debug)]
+pub struct X86FarJumpOp {
+    pub addr: Address,
+    pub target: VReg,
+    pub offset_width: OpWidth,
+    pub requires_apx: bool,
+    /// Select #SS(0), rather than #GP(0), when the far-pointer linear address
+    /// is noncanonical because the effective address uses SS.
+    pub stack_segment: bool,
+    /// Exact end of the source instruction, retained for native shape checks.
+    pub next_pc: u64,
+}
+
 /// Architecturally distinct LMSW sources. Both forms read exactly 16 bits;
 /// operand-size prefixes never change the source width.
 #[derive(Clone, Debug)]
