@@ -116,6 +116,14 @@ impl X86_64Vcpu {
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
+                0xC6 => {
+                    // NP/F2/F3 forms select WRMSRNS/RDMSRLIST/WRMSRLIST.
+                    // The fixed CPUID profile exposes neither WRMSRNS nor
+                    // MSRLIST, so feature absence raises #UD before mode,
+                    // privilege, register, memory, or MSR state is observed.
+                    ctx.consume_u8()?; // consume modrm
+                    self.inject_undefined_instruction()
+                }
                 0xC8 => {
                     ctx.consume_u8()?; // consume modrm
                     // MONITOR is available in the fixed guest CPUID profile but

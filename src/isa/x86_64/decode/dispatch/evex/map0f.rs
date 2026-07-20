@@ -18,10 +18,11 @@ impl X86_64Vcpu {
             .evex
             .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
 
-        if opcode == 0x01 && ctx.peek_u8()? == 0xC5 {
-            // PCONFIG has no EVEX encoding. Consume the fixed ModR/M byte so
-            // instruction fetch remains precise, then deliver architectural
-            // #UD instead of leaking the generic unimplemented-opcode error.
+        if opcode == 0x01 && matches!(ctx.peek_u8()?, 0xC5 | 0xC6) {
+            // PCONFIG and the WRMSRNS/MSRLIST family have no EVEX encodings.
+            // Consume the fixed ModR/M byte so instruction fetch remains
+            // precise, then deliver architectural #UD instead of leaking the
+            // generic unimplemented-opcode error.
             ctx.consume_u8()?;
             return self.inject_undefined_instruction();
         }

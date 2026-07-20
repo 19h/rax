@@ -337,6 +337,36 @@ fn reports_disabled_pconfig_as_an_exact_invalid_opcode_trap() {
 }
 
 #[test]
+fn reports_disabled_msr_extensions_as_exact_invalid_opcode_traps() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    for bytes in [
+        &[0x0F, 0x01, 0xC6][..],
+        &[0xF2, 0x0F, 0x01, 0xC6],
+        &[0xF3, 0x0F, 0x01, 0xC6],
+        &[0x66, 0x0F, 0x01, 0xC6],
+        &[0xC5, 0xF8, 0x01, 0xC6],
+        &[0xC4, 0xE1, 0x78, 0x01, 0xC6],
+        &[0x62, 0xF1, 0x7C, 0x08, 0x01, 0xC6],
+        &[0xD5, 0x80, 0x01, 0xC6],
+    ] {
+        let value = decode_to_json(bytes, &opts).unwrap();
+        let smir = &value["smir"];
+        assert_eq!(smir["available"], true, "{bytes:02X?}");
+        assert_eq!(smir["bytes_consumed"], bytes.len(), "{bytes:02X?}");
+        assert_eq!(smir["ops"], serde_json::json!([]), "{bytes:02X?}");
+        assert_eq!(smir["control_flow"]["kind"], "trap", "{bytes:02X?}");
+        assert_eq!(
+            smir["control_flow"]["trap"], "InvalidOpcode",
+            "{bytes:02X?}"
+        );
+        assert_eq!(smir["ends_block"], true, "{bytes:02X?}");
+        assert_eq!(smir["ends_function"], true, "{bytes:02X?}");
+    }
+}
+
+#[test]
 fn emits_structured_smir_ops() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

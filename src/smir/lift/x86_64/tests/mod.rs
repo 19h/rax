@@ -34,6 +34,8 @@ mod movdiri;
 #[cfg(test)]
 mod msr;
 #[cfg(test)]
+mod msr_extensions;
+#[cfg(test)]
 mod packed_string;
 #[cfg(test)]
 mod pconfig;

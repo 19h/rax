@@ -1618,6 +1618,8 @@ mod x86_64_system_mmu;
 mod x86_64_system_mov_cr;
 #[path = "system/mov_dr.rs"]
 mod x86_64_system_mov_dr;
+#[path = "system/msr_extensions.rs"]
+mod x86_64_system_msr_extensions;
 #[path = "system/page_fault.rs"]
 mod x86_64_system_page_fault;
 #[path = "system/protection_keys.rs"]

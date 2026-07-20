@@ -1,4 +1,4 @@
-//! Native x86-64 JIT differentials for RDMSR/WRMSR architectural state.
+//! Native x86-64 JIT differentials for MSR state and disabled MSR extensions.
 
 use super::*;
 use crate::isa::x86_64::execute::system::{
@@ -427,4 +427,70 @@ fn jit_verify_snapshots_compares_and_adopts_callout_only_msr_state() {
 
     assert_eq!(vcpu.sregs.star, value);
     assert_eq!(vcpu.regs.rip, 7);
+}
+
+#[test]
+fn jit_disabled_msr_extensions_exit_at_the_exact_faulting_frontier() {
+    for (name, instruction, apx) in [
+        ("WRMSRNS", &[0x0F, 0x01, 0xC6][..], false),
+        ("RDMSRLIST", &[0xF2, 0x0F, 0x01, 0xC6][..], false),
+        ("WRMSRLIST", &[0xF3, 0x0F, 0x01, 0xC6][..], false),
+        ("VEX2", &[0xC5, 0xF8, 0x01, 0xC6][..], false),
+        ("VEX3", &[0xC4, 0xE1, 0x78, 0x01, 0xC6][..], false),
+        ("EVEX", &[0x62, 0xF1, 0x7C, 0x08, 0x01, 0xC6][..], false),
+        ("REX2", &[0xD5, 0x80, 0x01, 0xC6][..], true),
+    ] {
+        let mut code = vec![
+            0xB8, 0x78, 0x56, 0x34, 0x12, // mov eax,12345678h
+            0xEB, 0x02, // jmp disabled MSR extension
+            0x90, 0x90, // unreachable padding
+        ];
+        code.extend_from_slice(instruction);
+        let memory = memory_with_code(&code);
+        let mut direct = test_vcpu(memory.clone());
+        let mut native = test_vcpu(memory);
+        for vcpu in [&mut direct, &mut native] {
+            vcpu.set_apx_enabled(apx);
+            vcpu.regs.rcx = u64::MAX;
+            vcpu.regs.rdx = 0x5555_6666_7777_8888;
+            vcpu.regs.rsi = 0x0000_8000_0000_0001;
+            vcpu.regs.rdi = 0xFFFF_7FFF_FFFF_FFF9;
+            // Apple host translation clears AF while bridging POPFQ. AF is
+            // independently covered by native x86-64 CI; keep this exact
+            // frontier differential portable through the amd64 container.
+            vcpu.regs.rflags &= !(1 << 4);
+        }
+
+        assert!(direct.step().expect("direct MOV").is_none(), "{name}");
+        assert!(direct.step().expect("direct JMP").is_none(), "{name}");
+        assert_eq!(direct.regs.rip, 9, "{name}");
+
+        let region = native
+            .jit_compile_region()
+            .expect("compile region ending at disabled MSR extension")
+            .expect("supported prefix must remain native before the #UD frontier");
+
+        native.jit_run_region_native(&region);
+        assert_eq!(native.regs.rax, 0x1234_5678, "{name}");
+        assert_eq!(native.regs.rip, 9, "{name}");
+        assert_eq!(
+            (msr_state(&native), scalar_state(&native)),
+            (msr_state(&direct), scalar_state(&direct)),
+            "{name}: native/direct state at the exact #UD frontier"
+        );
+
+        let before = (msr_state(&native), scalar_state(&native));
+        let error = native
+            .step()
+            .expect_err("disabled MSR extension frontier must deliver #UD");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{name}: expected #UD delivery failure, got {error}"
+        );
+        assert_eq!(
+            (msr_state(&native), scalar_state(&native)),
+            before,
+            "{name}"
+        );
+    }
 }

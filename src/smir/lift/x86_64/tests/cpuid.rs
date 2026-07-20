@@ -174,6 +174,13 @@ fn cpuid_interpreter_tracks_every_mutable_guest_profile_input() {
         "PCONFIG must remain absent until its platform-key semantics exist"
     );
 
+    let (leaf7_subleaf1, _) = execute_cpuid(7, 1, |_| {});
+    assert_eq!(
+        leaf7_subleaf1[0] & ((1 << 19) | (1 << 27)),
+        0,
+        "WRMSRNS and MSRLIST must remain absent until their MSR semantics exist"
+    );
+
     let (pconfig, _) = execute_cpuid(0x1B, 0, |_| {});
     assert_eq!(
         pconfig, [0; 4],

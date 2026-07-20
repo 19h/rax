@@ -3,9 +3,10 @@
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
-    /// Lift VMCALL/VMMCALL hints, disabled VMX/SVM/SGX/PCONFIG controls,
-    /// MONITOR/MWAIT, CLAC/STAC, XGETBV/XSETBV, RDPKRU/WRPKRU, SERIALIZE,
-    /// SWAPGS, RDTSCP, and the RTM fixed ModR/M encodings in 0F 01.
+    /// Lift VMCALL/VMMCALL hints, disabled VMX/SVM/SGX/PCONFIG and
+    /// WRMSRNS/MSRLIST controls, MONITOR/MWAIT, CLAC/STAC, XGETBV/XSETBV,
+    /// RDPKRU/WRPKRU, SERIALIZE, SWAPGS, RDTSCP, and the RTM fixed ModR/M
+    /// encodings in 0F 01.
     pub(crate) fn lift_xcr_0f01(
         &self,
         bytes: &[u8],
@@ -63,6 +64,22 @@ impl X86_64Lifter {
             // register, platform-key, memory, and flag semantics. RAX keeps
             // that bit clear and exposes no leaf-1BH target, so the fixed
             // encoding deterministically raises #UD without committing state.
+            return Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed: prefix.cursor + 1,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
+            });
+        }
+
+        if modrm == 0xC6 {
+            // NP/F2/F3 0F 01 C6 select WRMSRNS, RDMSRLIST, and
+            // WRMSRLIST, respectively. RAX keeps both
+            // CPUID.07H.01H:EAX.WRMSRNS[19] and EAX.MSRLIST[27] clear, so
+            // every alias deterministically raises #UD before mode, CPL,
+            // MSR, list-memory, partial-completion, or state checks.
             return Ok(LiftResult {
                 ops: Vec::new(),
                 bytes_consumed: prefix.cursor + 1,

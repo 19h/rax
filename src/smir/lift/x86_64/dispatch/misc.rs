@@ -35,11 +35,12 @@ impl X86_64Lifter {
 
         if prefix.map == X86VecMap::Map0F
             && bytes.get(prefix.bytes) == Some(&0x01)
-            && bytes.get(prefix.bytes + 1) == Some(&0xC5)
+            && matches!(bytes.get(prefix.bytes + 1), Some(0xC5 | 0xC6))
         {
-            // PCONFIG has only the NP legacy encoding. VEX and EVEX forms of
-            // the same opcode/ModR/M sequence are invalid and raise #UD before
-            // any vector or PCONFIG architectural state can be observed.
+            // PCONFIG and the WRMSRNS/MSRLIST family have only legacy
+            // encodings. VEX and EVEX forms of the same opcode/ModR/M
+            // sequences are invalid and raise #UD before vector, platform,
+            // MSR, or list-memory state can be observed.
             return Ok(LiftResult {
                 ops: Vec::new(),
                 bytes_consumed: prefix.bytes + 2,
