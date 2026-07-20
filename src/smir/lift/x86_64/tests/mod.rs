@@ -24,6 +24,8 @@ mod evex;
 #[cfg(test)]
 mod fsgsbase;
 #[cfg(test)]
+mod hypercall_hints;
+#[cfg(test)]
 mod monitor_mwait;
 #[cfg(test)]
 mod movdir64b;

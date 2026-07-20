@@ -6143,6 +6143,10 @@ mod jit_cpuid_tests;
 mod jit_fsgsbase_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_hypercall_tests.rs"]
+mod jit_hypercall_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_pkru_tests.rs"]
 mod jit_pkru_tests;
 

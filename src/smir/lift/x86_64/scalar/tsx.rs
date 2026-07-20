@@ -1,10 +1,11 @@
-//! Transactional Synchronization Extensions fixed-encoding lifting.
+//! Fixed-encoding 0F 01 system and transactional instruction lifting.
 
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
-    /// Lift MONITOR/MWAIT, CLAC/STAC, XGETBV/XSETBV, RDPKRU/WRPKRU,
-    /// SERIALIZE, SWAPGS, RDTSCP, and the RTM fixed ModR/M encodings in 0F 01.
+    /// Lift VMCALL/VMMCALL hints, MONITOR/MWAIT, CLAC/STAC, XGETBV/XSETBV,
+    /// RDPKRU/WRPKRU, SERIALIZE, SWAPGS, RDTSCP, and the RTM fixed ModR/M
+    /// encodings in 0F 01.
     pub(crate) fn lift_xcr_0f01(
         &self,
         bytes: &[u8],
@@ -24,6 +25,28 @@ impl X86_64Lifter {
                 addr: pc,
                 bytes: bytes[..1].to_vec(),
             });
+        }
+
+        if modrm == 0xD9 && (prefix.rep_prefix.is_some() || prefix.rex2.is_some()) {
+            // AMD assigns F2/F3 0F 01 D9 to VMGEXIT. The configured guest
+            // profile exposes neither SVM nor SEV-ES, so those aliases are
+            // #UD. REX2 is Intel APX while VMMCALL is AMD-only; consequently
+            // the compressed D9 encoding is undefined on both vendor profiles.
+            return Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed: prefix.cursor + 1,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
+            });
+        }
+
+        if matches!(modrm, 0xC1 | 0xD9) && prefix.rex2.is_none() {
+            // RAX's deterministic non-virtualized profile treats ordinary
+            // VMCALL/VMMCALL as paravirtualized hints: no register, flag,
+            // memory, or control-state effect beyond instruction advance.
+            return Ok(LiftResult::fallthrough(Vec::new(), prefix.cursor + 1));
         }
 
         if matches!(modrm, 0xC8 | 0xC9) {

@@ -218,10 +218,19 @@ impl X86_64Vcpu {
                     self.inject_exception(13, Some(0))?;
                     Ok(None)
                 }
+                0xD9 if ctx.rep_prefix.is_some() || ctx.has_rex2() => {
+                    // AMD assigns F2/F3 0F 01 D9 to VMGEXIT. This emulator
+                    // exposes neither SVM nor SEV-ES, so the aliases are #UD.
+                    // REX2 is Intel APX while VMMCALL is AMD-only; the
+                    // compressed D9 form is therefore undefined as well.
+                    ctx.consume_u8()?; // consume modrm
+                    self.inject_undefined_instruction()
+                }
                 0xD9 => {
                     // VMMCALL (0x0F 0x01 0xD9) - AMD SVM hypercall
                     ctx.consume_u8()?; // consume modrm
-                    // Treat as NOP like VMCALL
+                    // The deterministic non-virtualized profile treats the
+                    // ordinary encoding as a paravirtualized hint, like VMCALL.
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }

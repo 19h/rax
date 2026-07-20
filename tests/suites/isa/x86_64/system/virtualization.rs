@@ -5,6 +5,7 @@
 //!
 //! Instructions covered:
 //! - VMCALL - Call to VM Monitor
+//! - VMMCALL/VMGEXIT - AMD hypercall and SEV-ES exit encodings
 //! - VMCLEAR - Clear Virtual Machine Control Structure
 //! - VMLAUNCH - Launch Virtual Machine
 //! - VMRESUME - Resume Virtual Machine
@@ -505,6 +506,45 @@ fn test_vmresume_after_vmptrld() {
 // VMCALL Tests - Call to VM Monitor
 // ============================================================================
 
+fn hypercall_scalar_state(regs: &Registers) -> [u64; 34] {
+    [
+        regs.rax,
+        regs.rbx,
+        regs.rcx,
+        regs.rdx,
+        regs.rsi,
+        regs.rdi,
+        regs.rsp,
+        regs.rbp,
+        regs.r8,
+        regs.r9,
+        regs.r10,
+        regs.r11,
+        regs.r12,
+        regs.r13,
+        regs.r14,
+        regs.r15,
+        regs.r16,
+        regs.r17,
+        regs.r18,
+        regs.r19,
+        regs.r20,
+        regs.r21,
+        regs.r22,
+        regs.r23,
+        regs.r24,
+        regs.r25,
+        regs.r26,
+        regs.r27,
+        regs.r28,
+        regs.r29,
+        regs.r30,
+        regs.r31,
+        regs.rip,
+        regs.rflags,
+    ]
+}
+
 #[test]
 fn test_vmcall_basic() {
     // VMCALL - Hypercall from guest to host
@@ -515,6 +555,97 @@ fn test_vmcall_basic() {
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
+}
+
+#[test]
+fn test_vmcall_vmmcall_hint_profile_preserves_complete_scalar_state() {
+    let code = [
+        0x0F, 0x01, 0xC1, // VMCALL
+        0x0F, 0x01, 0xD9, // VMMCALL
+    ];
+    let regs = Registers {
+        rax: 0x0101_0101_0101_0101,
+        rbx: 0x0202_0202_0202_0202,
+        rcx: 0x0303_0303_0303_0303,
+        rdx: 0x0404_0404_0404_0404,
+        rsi: 0x0505_0505_0505_0505,
+        rdi: 0x0606_0606_0606_0606,
+        rsp: STACK_ADDR,
+        rbp: 0x0707_0707_0707_0707,
+        r8: 0x0808_0808_0808_0808,
+        r9: 0x0909_0909_0909_0909,
+        r10: 0x1010_1010_1010_1010,
+        r11: 0x1111_1111_1111_1111,
+        r12: 0x1212_1212_1212_1212,
+        r13: 0x1313_1313_1313_1313,
+        r14: 0x1414_1414_1414_1414,
+        r15: 0x1515_1515_1515_1515,
+        r16: 0x1616_1616_1616_1616,
+        r17: 0x1717_1717_1717_1717,
+        r18: 0x1818_1818_1818_1818,
+        r19: 0x1919_1919_1919_1919,
+        r20: 0x2020_2020_2020_2020,
+        r21: 0x2121_2121_2121_2121,
+        r22: 0x2222_2222_2222_2222,
+        r23: 0x2323_2323_2323_2323,
+        r24: 0x2424_2424_2424_2424,
+        r25: 0x2525_2525_2525_2525,
+        r26: 0x2626_2626_2626_2626,
+        r27: 0x2727_2727_2727_2727,
+        r28: 0x2828_2828_2828_2828,
+        r29: 0x2929_2929_2929_2929,
+        r30: 0x3030_3030_3030_3030,
+        r31: 0x3131_3131_3131_3131,
+        rflags: 0x0CD7,
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let mut expected = vcpu.get_regs().unwrap();
+    expected.rip += code.len() as u64;
+
+    assert!(vcpu.step().expect("VMCALL hint").is_none());
+    assert!(vcpu.step().expect("VMMCALL hint").is_none());
+    assert_eq!(
+        hypercall_scalar_state(&vcpu.get_regs().unwrap()),
+        hypercall_scalar_state(&expected)
+    );
+}
+
+#[test]
+fn test_vmgexit_and_rex2_vmmcall_aliases_raise_ud_without_commit() {
+    for (name, bytes, apx) in [
+        ("F2 VMGEXIT", &[0xF2, 0x0F, 0x01, 0xD9][..], false),
+        ("F3 VMGEXIT", &[0xF3, 0x0F, 0x01, 0xD9][..], false),
+        ("REX2 D9", &[0xD5, 0x80, 0x01, 0xD9][..], true),
+    ] {
+        let initial = Registers {
+            rax: 0x0123_4567_89AB_CDEF,
+            rbx: 0xFEDC_BA98_7654_3210,
+            rcx: 0x1111_2222_3333_4444,
+            rdx: 0xAAAA_BBBB_CCCC_DDDD,
+            rsp: STACK_ADDR,
+            rbp: 0x5555_6666_7777_8888,
+            rflags: 0x0CD7,
+            ..Registers::default()
+        };
+        let (mut vcpu, _) = if apx {
+            setup_apx_vm_no_idt(bytes, Some(initial))
+        } else {
+            setup_vm_no_idt(bytes, Some(initial))
+        };
+        let before = hypercall_scalar_state(&vcpu.get_regs().unwrap());
+
+        let error = vcpu.step().expect_err("invalid alias must inject #UD");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{name}: expected #UD delivery failure, got {error}"
+        );
+        assert_eq!(
+            hypercall_scalar_state(&vcpu.get_regs().unwrap()),
+            before,
+            "{name}"
+        );
+    }
 }
 
 #[test]
