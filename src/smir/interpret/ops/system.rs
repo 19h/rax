@@ -1,8 +1,8 @@
 //! System/privileged op execution
 
 use crate::isa::x86_64::execute::system::{
-    X86ControlWriteFault, X86ControlWriteState, X86MsrFault, X86MsrState, read_x86_msr,
-    validate_x86_control_write, validate_x86_msr_write,
+    X86ControlWriteFault, X86ControlWriteState, X86MsrFault, X86MsrState, X86PmcFault, X86PmcState,
+    read_x86_msr, read_x86_pmc, validate_x86_control_write, validate_x86_msr_write,
 };
 use crate::smir::interpret::*;
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext, VecValue};
@@ -402,6 +402,41 @@ impl SmirInterpreter {
                 if let Some(dst_aux) = read.dst_aux {
                     Self::write_x86_partial(ctx, dst_aux, u64::from(tsc_aux), OpWidth::W32);
                 }
+            }
+
+            OpKind::X86ReadPmc(read) => {
+                let selector = ctx.read_vreg(read.selector) as u32;
+                let state = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => X86PmcState {
+                        cr0: x86.cr0,
+                        cr4: x86.cr4,
+                        cpl: x86.cpl,
+                    },
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                let value = match read_x86_pmc(selector, state, ctx.cycle_count) {
+                    Ok(value) => value,
+                    Err(X86PmcFault::GeneralProtection) => {
+                        ctx.request_exit(ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                Self::write_x86_partial(
+                    ctx,
+                    read.dst_lo,
+                    value & u64::from(u32::MAX),
+                    OpWidth::W32,
+                );
+                Self::write_x86_partial(ctx, read.dst_hi, value >> 32, OpWidth::W32);
             }
 
             OpKind::X86Cpuid {

@@ -169,6 +169,9 @@ pub const X86_GUEST_FMASK_OFFSET: i32 = X86_GUEST_CSTAR_OFFSET + 8;
 pub const X86_GUEST_SYSENTER_CS_OFFSET: i32 = X86_GUEST_FMASK_OFFSET + 8;
 pub const X86_GUEST_SYSENTER_ESP_OFFSET: i32 = X86_GUEST_SYSENTER_CS_OFFSET + 8;
 pub const X86_GUEST_SYSENTER_EIP_OFFSET: i32 = X86_GUEST_SYSENTER_ESP_OFFSET + 8;
+/// Byte offset of the helper-backed deterministic RDPMC evaluator. Appended so
+/// every pre-existing native helper/state field retains its established ABI.
+pub const X86_GUEST_PMC_FN_OFFSET: i32 = X86_GUEST_SYSENTER_EIP_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

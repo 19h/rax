@@ -3342,6 +3342,8 @@ impl X86_64Lowerer {
 
             OpKind::X86ReadTsc(..) => self.emit_x86_read_tsc(op)?,
 
+            OpKind::X86ReadPmc(..) => self.emit_x86_read_pmc(op)?,
+
             OpKind::X86Random { dst, width, seed } => {
                 if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {
                     return Err(LowerError::InvalidOperand {

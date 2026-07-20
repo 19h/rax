@@ -668,6 +668,11 @@ pub(crate) fn block_is_clobber_safe(
         {
             return false;
         }
+        if matches!(op.kind, OpKind::X86ReadPmc(..))
+            && !crate::smir::lower::x86_64::x86_read_pmc_shape_valid(op)
+        {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86FsGsBase { .. }) && !fsgsbase_ok {
             return false;
         }

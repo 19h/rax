@@ -440,6 +440,27 @@ fn emits_exact_rdtsc_and_rdtscp_destination_metadata() {
 }
 
 #[test]
+fn emits_exact_rdpmc_selector_and_destination_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let decoded = decode_to_json(&[0x0F, 0x33], &opts).unwrap();
+    assert_eq!(decoded["smir"]["available"], true);
+    assert_eq!(decoded["smir"]["bytes_consumed"], 2);
+    let op = &decoded["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_read_pmc");
+    assert_eq!(op["kind"]["selector"]["name"], "rcx");
+    assert_eq!(op["kind"]["dst_lo"]["name"], "rax");
+    assert_eq!(op["kind"]["dst_hi"]["name"], "rdx");
+    assert!(op["reads"].is_null());
+    assert_eq!(op["writes"][0]["name"], "rax");
+    assert_eq!(op["writes"][1]["name"], "rdx");
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+}
+
+#[test]
 fn emits_and_executes_exact_swapgs_state_dataflow() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

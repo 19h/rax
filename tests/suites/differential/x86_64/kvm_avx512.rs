@@ -17192,12 +17192,12 @@ fn irregular_cases() -> Vec<Case> {
             "movl $2, %ecx\nmovq $0x10, %r8\nsubq $0x21, %r8\nrdpmc\nmovq $0, %rax\nmovq $0, %rdx\nmovq $0, %r8\nmovq $0, %r9",
         ),
         (
-            "rdpmc_rdpmc_edge_fixed0_zero_ext",
-            "movq $-1, %rax\nmovl $0x40000000, %ecx\nmovq $-1, %rdx\nrdpmc\nmovq %rax, %r8\nshrq $32, %r8\nmovq %rdx, %r9\nshrq $32, %r9\norq %r9, %r8\ntestq %r8, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+            "rdpmc_rdpmc_edge_counter0_zero_ext",
+            "movq $-1, %rax\nxorl %ecx, %ecx\nmovq $-1, %rdx\nrdpmc\nmovq %rax, %r8\nshrq $32, %r8\nmovq %rdx, %r9\nshrq $32, %r9\norq %r9, %r8\ntestq %r8, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
         ),
         (
-            "rdpmc_rdpmc_edge_fixed1_preserves_status_flags",
-            "movl $0x40000001, %ecx\nmovq $0x10, %r8\nsubq $0x21, %r8\nrdpmc\nmovq $0, %rax\nmovq $0, %rdx\nmovq $0, %r8\nmovq $0, %r9",
+            "rdpmc_rdpmc_edge_counter1_preserves_status_flags",
+            "movl $1, %ecx\nmovq $0x10, %r8\nsubq $0x21, %r8\nrdpmc\nmovq $0, %rax\nmovq $0, %rdx\nmovq $0, %r8\nmovq $0, %r9",
         ),
         (
             "rdpmc_rdpmc_edge_preserves_non_query_gprs",
@@ -17212,12 +17212,12 @@ fn irregular_cases() -> Vec<Case> {
             "movq $-1, %rax\nmovabsq $0xffffffff00000001, %rcx\nmovq $-1, %rdx\nrdpmc\nmovq %rax, %r8\nshrq $32, %r8\nmovq %rdx, %r9\nshrq $32, %r9\norq %r9, %r8\ntestq %r8, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
         ),
         (
-            "rdpmc_rdpmc_edge_fixed0_high_ecx_ignored",
-            "movq $-1, %rax\nmovabsq $0xffffffff40000000, %rcx\nmovq $-1, %rdx\nrdpmc\nmovq %rax, %r8\nshrq $32, %r8\nmovq %rdx, %r9\nshrq $32, %r9\norq %r9, %r8\ntestq %r8, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
+            "rdpmc_rdpmc_edge_counter2_high_ecx_ignored",
+            "movq $-1, %rax\nmovabsq $0xffffffff00000002, %rcx\nmovq $-1, %rdx\nrdpmc\nmovq %rax, %r8\nshrq $32, %r8\nmovq %rdx, %r9\nshrq $32, %r9\norq %r9, %r8\ntestq %r8, %r8\nsetz %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\nxorq %r9, %r9\ncmpq %rax, %rax",
         ),
         (
-            "rdpmc_rdpmc_edge_fixed0_preserves_rcx",
-            "movl $0x40000000, %ecx\nrdpmc\nmovq %rcx, %r8\ncmpl $0x40000000, %r8d\nsete %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\ncmpq %rax, %rax",
+            "rdpmc_rdpmc_edge_counter2_preserves_rcx",
+            "movl $2, %ecx\nrdpmc\nmovq %rcx, %r8\ncmpl $2, %r8d\nsete %cl\nmovzbl %cl, %ecx\nxorq %rax, %rax\nxorq %rdx, %rdx\nxorq %r8, %r8\ncmpq %rax, %rax",
         ),
     ] {
         out.push(Case {

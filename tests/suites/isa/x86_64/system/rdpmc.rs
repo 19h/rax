@@ -1,576 +1,217 @@
-use crate::common::{run_until_hlt, setup_vm};
+//! Architectural RDPMC coverage for the deterministic legacy-PMU profile.
+
+use crate::common::{
+    CODE_ADDR, VCpu, run_until_hlt, setup_apx_vm_no_idt, setup_vm, setup_vm_no_idt,
+};
 use rax::vm::vcpu::Registers;
 
-// RDPMC - Read Performance-Monitoring Counters
-// Opcode: 0F 33
-// Reads performance monitoring counter specified by ECX into EDX:EAX
-// EDX = high 32 bits, EAX = low 32 bits
-// Does not modify flags
+const CR0_PE: u64 = 1;
+const CR4_PCE: u64 = 1 << 8;
+const RFLAGS_VM: u64 = 1 << 17;
+const STATUS_FLAGS: u64 = 0x08D5;
+const PMC_MASK: u64 = (1_u64 << 40) - 1;
 
-// Basic RDPMC test - reads PMC into EDX:EAX
-#[test]
-fn test_rdpmc_basic() {
-    let code = [
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
+fn set_pmc_controls(
+    vcpu: &mut rax::isa::x86_64::X86_64Vcpu,
+    protected_mode: bool,
+    pce: bool,
+    cpl: u16,
+    virtual_8086: bool,
+) {
+    let mut sregs = vcpu.get_sregs().unwrap();
+    if protected_mode {
+        sregs.cr0 |= CR0_PE;
+    } else {
+        sregs.cr0 &= !CR0_PE;
+    }
+    if pce {
+        sregs.cr4 |= CR4_PCE;
+    } else {
+        sregs.cr4 &= !CR4_PCE;
+    }
+    sregs.cs.selector = (sregs.cs.selector & !3) | cpl;
+    sregs.cs.dpl = cpl as u8;
+    sregs.ss.selector = (sregs.ss.selector & !3) | cpl;
+    sregs.ss.dpl = cpl as u8;
+    vcpu.set_sregs(&sregs).unwrap();
 
-    // PMC should be loaded into EDX:EAX
-    // Upper 32 bits of RAX and RDX should be cleared
-    assert_eq!(regs.rax >> 32, 0, "Upper 32 bits of RAX should be cleared");
-    assert_eq!(regs.rdx >> 32, 0, "Upper 32 bits of RDX should be cleared");
+    let mut regs = vcpu.get_regs().unwrap();
+    if virtual_8086 {
+        regs.rflags |= RFLAGS_VM;
+    } else {
+        regs.rflags &= !RFLAGS_VM;
+    }
+    vcpu.set_regs(&regs).unwrap();
 }
 
-// Test RDPMC with counter 0 (ECX=0)
-#[test]
-fn test_rdpmc_counter_0() {
-    let code = [
-        0x48, 0x31, 0xc9, // XOR RCX, RCX (ECX = 0, select counter 0)
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
+fn assert_gp_noncommitting(
+    selector: u64,
+    configure: impl FnOnce(&mut rax::isa::x86_64::X86_64Vcpu),
+) {
+    let initial = Registers {
+        rax: 0x1111,
+        rcx: selector,
+        rdx: 0x3333,
+        rbx: 0x4444,
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x33], Some(initial));
+    configure(&mut vcpu);
 
-    assert_eq!(regs.rax >> 32, 0, "Upper 32 bits of RAX cleared");
-    assert_eq!(regs.rdx >> 32, 0, "Upper 32 bits of RDX cleared");
+    let err = vcpu
+        .step()
+        .expect_err("invalid or unprivileged RDPMC must inject #GP(0)");
+    assert!(
+        err.to_string().contains("IDT entry 13 not present"),
+        "expected #GP delivery failure, got {err}"
+    );
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rip, CODE_ADDR);
+    assert_eq!(regs.rax, 0x1111);
+    assert_eq!(regs.rcx, selector);
+    assert_eq!(regs.rdx, 0x3333);
+    assert_eq!(regs.rbx, 0x4444);
 }
 
-// Test RDPMC with counter 1 (ECX=1)
 #[test]
-fn test_rdpmc_counter_1() {
-    let code = [
-        0xb9, 0x01, 0x00, 0x00, 0x00, // MOV ECX, 1
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
+fn rdpmc_legacy_selectors_and_fast_mode_have_exact_widths() {
+    for selector in (0_u64..8).chain((0_u64..8).map(|index| index | 0x8000_0000)) {
+        let initial = Registers {
+            rax: u64::MAX,
+            rcx: selector,
+            rdx: u64::MAX,
+            ..Registers::default()
+        };
+        let (mut vcpu, _) = setup_vm(&[0x0F, 0x33, 0xF4], Some(initial));
+        let regs = run_until_hlt(&mut vcpu).unwrap();
+        let value = (regs.rdx << 32) | regs.rax;
 
-    assert_eq!(regs.rax >> 32, 0, "Upper 32 bits of RAX cleared");
-    assert_eq!(regs.rdx >> 32, 0, "Upper 32 bits of RDX cleared");
+        assert_eq!(regs.rax >> 32, 0, "selector={selector:#010x}");
+        assert_eq!(regs.rdx >> 32, 0, "selector={selector:#010x}");
+        assert_eq!(regs.rcx, selector, "RDPMC must preserve RCX");
+        if selector & 0x8000_0000 != 0 {
+            assert_eq!(regs.rdx, 0, "fast read must clear EDX");
+            assert!(value <= u64::from(u32::MAX));
+        } else {
+            assert_eq!(value & !PMC_MASK, 0, "legacy PMC is exactly 40 bits");
+        }
+    }
 }
 
-// Test RDPMC with counter 2 (ECX=2)
 #[test]
-fn test_rdpmc_counter_2() {
-    let code = [
-        0xb9, 0x02, 0x00, 0x00, 0x00, // MOV ECX, 2
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+fn rdpmc_ignores_rcx_high_half_and_preserves_flags_and_nonoutputs() {
+    let initial = Registers {
+        rax: u64::MAX,
+        rcx: 0xFFFF_FFFF_0000_0007,
+        rdx: u64::MAX,
+        rbx: 0x4242_4242_4242_4242,
+        rsi: 0x2A2A_2A2A_2A2A_2A2A,
+        rdi: 0x1919_1919_1919_1919,
+        r8: 0x8888_8888_8888_8888,
+        r15: 0x1515_1515_1515_1515,
+        rflags: 0x2 | STATUS_FLAGS | (1 << 10),
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_vm(&[0x0F, 0x33, 0xF4], Some(initial));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rax >> 32, 0, "Upper 32 bits of RAX cleared");
-    assert_eq!(regs.rdx >> 32, 0, "Upper 32 bits of RDX cleared");
+    assert_eq!(regs.rcx, 0xFFFF_FFFF_0000_0007);
+    assert_eq!(regs.rbx, 0x4242_4242_4242_4242);
+    assert_eq!(regs.rsi, 0x2A2A_2A2A_2A2A_2A2A);
+    assert_eq!(regs.rdi, 0x1919_1919_1919_1919);
+    assert_eq!(regs.r8, 0x8888_8888_8888_8888);
+    assert_eq!(regs.r15, 0x1515_1515_1515_1515);
+    assert_eq!(
+        regs.rflags & (STATUS_FLAGS | (1 << 10)),
+        STATUS_FLAGS | (1 << 10)
+    );
 }
 
-// Test RDPMC with counter 3 (ECX=3)
 #[test]
-fn test_rdpmc_counter_3() {
-    let code = [
-        0xb9, 0x03, 0x00, 0x00, 0x00, // MOV ECX, 3
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rax >> 32, 0, "Upper 32 bits of RAX cleared");
-    assert_eq!(regs.rdx >> 32, 0, "Upper 32 bits of RDX cleared");
+fn rdpmc_invalid_legacy_selectors_raise_gp_without_committing() {
+    for selector in [8, 0x2000_0000, 0x4000_0000, 0x8000_0008, u32::MAX as u64] {
+        assert_gp_noncommitting(selector, |vcpu| {
+            set_pmc_controls(vcpu, true, true, 3, false)
+        });
+    }
 }
 
-// Test RDPMC doesn't modify flags
 #[test]
-fn test_rdpmc_preserves_flags() {
-    let code = [
-        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // MOV RAX, -1
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (sets ZF)
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
+fn rdpmc_privilege_gate_models_cpl_pce_real_mode_and_virtual_8086() {
+    assert_gp_noncommitting(0, |vcpu| set_pmc_controls(vcpu, true, false, 3, false));
+    assert_gp_noncommitting(0, |vcpu| set_pmc_controls(vcpu, true, false, 0, true));
 
-    // ZF should still be set from the ADD
-    assert!(regs.rflags & 0x40 != 0, "ZF should be preserved");
+    for (protected_mode, pce, cpl, virtual_8086) in [
+        (true, false, 0, false),
+        (true, true, 3, false),
+        (true, true, 0, true),
+        (false, false, 3, false),
+    ] {
+        let initial = Registers {
+            rcx: 0,
+            ..Registers::default()
+        };
+        let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x33], Some(initial));
+        set_pmc_controls(&mut vcpu, protected_mode, pce, cpl, virtual_8086);
+        assert!(vcpu.step().expect("permitted RDPMC").is_none());
+        let regs = vcpu.get_regs().unwrap();
+        assert_eq!(regs.rip, CODE_ADDR + 2);
+        assert_eq!(regs.rax >> 32, 0);
+        assert_eq!(regs.rdx >> 32, 0);
+    }
 }
 
-// Test RDPMC preserves other registers
 #[test]
-fn test_rdpmc_preserves_other_registers() {
-    let code = [
-        0x48, 0xc7, 0xc3, 0x42, 0x42, 0x42,
-        0x42, // MOV RBX, 0x42424242 (bit 31 clear, no sign-ext)
-        0x48, 0xc7, 0xc6, 0x2a, 0x2a, 0x2a,
-        0x2a, // MOV RSI, 0x2a2a2a2a (bit 31 clear, no sign-ext)
-        0x48, 0xc7, 0xc7, 0x19, 0x19, 0x19,
-        0x19, // MOV RDI, 0x19191919 (bit 31 clear, no sign-ext)
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // RBX, RSI, RDI should be unchanged (only RCX was used for counter selection)
-    // MOV r64, imm32 sign-extends, so we use values with bit 31 clear
-    assert_eq!(regs.rbx, 0x42424242, "RBX should not be affected");
-    assert_eq!(regs.rsi, 0x2a2a2a2a, "RSI should not be affected");
-    assert_eq!(regs.rdi, 0x19191919, "RDI should not be affected");
+fn rdpmc_ignores_legacy_and_rex_prefixes() {
+    for prefix in [
+        0x26, 0x2E, 0x36, 0x3E, 0x64, 0x65, // segment overrides
+        0x66, 0x67, // operand/address size
+        0x40, 0x48, // ordinary REX and REX.W
+        0xF2, 0xF3, // repeat prefixes
+    ] {
+        let initial = Registers {
+            rcx: 0,
+            ..Registers::default()
+        };
+        let code = [prefix, 0x0F, 0x33];
+        let (mut vcpu, _) = setup_vm_no_idt(&code, Some(initial));
+        assert!(vcpu.step().expect("ignored RDPMC prefix").is_none());
+        assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR + code.len() as u64);
+    }
 }
 
-// Test RDPMC clears upper 32 bits of RAX and RDX
 #[test]
-fn test_rdpmc_clears_upper_bits() {
-    let code = [
-        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // MOV RAX, 0xffffffffffffffff
-        0x48, 0xc7, 0xc2, 0xff, 0xff, 0xff, 0xff, // MOV RDX, 0xffffffffffffffff
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // Upper 32 bits should be cleared
-    assert_eq!(regs.rax >> 32, 0, "Upper 32 bits of RAX should be cleared");
-    assert_eq!(regs.rdx >> 32, 0, "Upper 32 bits of RDX should be cleared");
+fn rdpmc_lock_and_rex2_raise_ud_before_dynamic_checks() {
+    for code in [&[0xF0, 0x0F, 0x33][..], &[0xD5, 0x80, 0x33]] {
+        let initial = Registers {
+            rax: 0x1111,
+            rcx: 8,
+            rdx: 0x3333,
+            ..Registers::default()
+        };
+        let (mut vcpu, _) = setup_apx_vm_no_idt(code, Some(initial));
+        set_pmc_controls(&mut vcpu, true, false, 3, false);
+        let err = vcpu.step().expect_err("LOCK/REX2 RDPMC must inject #UD");
+        assert!(
+            err.to_string().contains("IDT entry 6 not present"),
+            "expected #UD delivery failure, got {err}"
+        );
+        let regs = vcpu.get_regs().unwrap();
+        assert_eq!(regs.rip, CODE_ADDR);
+        assert_eq!(regs.rax, 0x1111);
+        assert_eq!(regs.rcx, 8);
+        assert_eq!(regs.rdx, 0x3333);
+    }
 }
 
-// Test RDPMC with pre-existing values in EAX and EDX
 #[test]
-fn test_rdpmc_overwrites_registers() {
-    let code = [
-        0xb8, 0x11, 0x11, 0x11, 0x11, // MOV EAX, 0x11111111
-        0xba, 0x22, 0x22, 0x22, 0x22, // MOV EDX, 0x22222222
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+fn cpuid_leaf_a_reports_legacy_profile_without_architectural_pmu() {
+    let initial = Registers {
+        rax: 0x0A,
+        rcx: 0,
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_vm(&[0x0F, 0xA2, 0xF4], Some(initial));
     let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // Old values should be completely overwritten
-    // Can't predict exact PMC value, but upper bits should be clear
-    assert_eq!(regs.rax >> 32, 0, "Upper bits of RAX cleared");
-    assert_eq!(regs.rdx >> 32, 0, "Upper bits of RDX cleared");
-}
-
-// Test RDPMC with multiple sequential calls
-#[test]
-fn test_rdpmc_sequential_calls() {
-    let code = [
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC #1
-        0x0f, 0x33, // RDPMC #2
-        0x0f, 0x33, // RDPMC #3
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // Should complete without error
-    let pmc = ((regs.rdx as u64) << 32) | (regs.rax as u64);
-    let _ = pmc;
-}
-
-// Test RDPMC with RCX upper bits set (should be ignored)
-#[test]
-fn test_rdpmc_rcx_upper_bits_ignored() {
-    let code = [
-        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0
-        0x48, 0xb9, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
-        0xff, // MOV RCX, 0xffffffff00000000
-        0x0f, 0x33, // RDPMC (upper 32 bits ignored)
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // Should work like counter 0
-    assert_eq!(regs.rax >> 32, 0, "Upper bits cleared");
-    assert_eq!(regs.rdx >> 32, 0, "Upper bits cleared");
-}
-
-// Test RDPMC with different counter values
-#[test]
-fn test_rdpmc_counter_4() {
-    let code = [
-        0xb9, 0x04, 0x00, 0x00, 0x00, // MOV ECX, 4
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rax >> 32, 0, "Upper 32 bits of RAX cleared");
-    assert_eq!(regs.rdx >> 32, 0, "Upper 32 bits of RDX cleared");
-}
-
-// Test RDPMC with counter 5
-#[test]
-fn test_rdpmc_counter_5() {
-    let code = [
-        0xb9, 0x05, 0x00, 0x00, 0x00, // MOV ECX, 5
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rax >> 32, 0, "Upper 32 bits of RAX cleared");
-    assert_eq!(regs.rdx >> 32, 0, "Upper 32 bits of RDX cleared");
-}
-
-// Test RDPMC with fixed-function counter type (ECX bit 30 set for type 0x40000000)
-#[test]
-fn test_rdpmc_fixed_function_counter() {
-    let code = [
-        0xb9, 0x00, 0x00, 0x00, 0x40, // MOV ECX, 0x40000000 (fixed-function counter 0)
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rax >> 32, 0, "Upper 32 bits of RAX cleared");
-    assert_eq!(regs.rdx >> 32, 0, "Upper 32 bits of RDX cleared");
-}
-
-// Test RDPMC with all flags set
-#[test]
-fn test_rdpmc_with_all_flags_set() {
-    let code = [
-        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0 (doesn't affect flags)
-        0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // MOV RAX, 1
-        0x48, 0x83, 0xe8, 0x02, // SUB RAX, 2 (sets CF, SF)
-        0x0f, 0x33, // RDPMC (should preserve flags)
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // Flags from SUB should be preserved by RDPMC
-    assert!(regs.rflags & 0x01 != 0, "CF should be preserved");
-    assert!(regs.rflags & 0x80 != 0, "SF should be preserved");
-}
-
-// Test RDPMC not serializing
-#[test]
-fn test_rdpmc_not_serializing() {
-    let code = [
-        0x48, 0xc7, 0xc3, 0x01, 0x00, 0x00, 0x00, // MOV RBX, 1
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC (not serializing)
-        0x48, 0x83, 0xc3, 0x01, // ADD RBX, 1
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // ADD should complete
-    assert_eq!(regs.rbx, 2, "ADD should complete normally");
-}
-
-// Test RDPMC with PUSH/POP operations
-#[test]
-fn test_rdpmc_with_push_pop() {
-    let code = [
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0x50, // PUSH RAX
-        0x52, // PUSH RDX
-        0x5a, // POP RDX
-        0x58, // POP RAX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // Values should be restored
-    assert_eq!(regs.rax >> 32, 0, "Upper bits should still be clear");
-    assert_eq!(regs.rdx >> 32, 0, "Upper bits should still be clear");
-}
-
-// Test RDPMC preserves RBX through multiple calls
-#[test]
-fn test_rdpmc_rbx_preservation() {
-    let code = [
-        0x48, 0xc7, 0xc3, 0xef, 0xbe, 0x2d,
-        0x1e, // MOV RBX, 0x1e2dbeef (bit 31 clear, no sign-ext)
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC #1
-        0x0f, 0x33, // RDPMC #2
-        0x0f, 0x33, // RDPMC #3
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rbx, 0x1e2dbeef, "RBX should be preserved");
-}
-
-// Test RDPMC with conditional jumps
-#[test]
-fn test_rdpmc_with_conditional_jump() {
-    let code = [
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0x48, 0x85, 0xc0, // TEST RAX, RAX
-        0x75, 0x02, // JNZ skip
-        0x90, // NOP
-        0x90, // NOP
-        // skip:
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // Should complete successfully
-    let _ = regs;
-}
-
-// Test RDPMC 64-bit reconstruction
-#[test]
-fn test_rdpmc_64bit_reconstruction() {
-    let code = [
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0x48, 0xc1, 0xe2, 0x20, // SHL RDX, 32
-        0x48, 0x09, 0xd0, // OR RAX, RDX
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // RAX should now contain full 64-bit PMC value
-    let pmc = regs.rax;
-    let _ = pmc;
-}
-
-// Test RDPMC with zero flag conditions
-#[test]
-fn test_rdpmc_zero_flag() {
-    let code = [
-        0x48, 0x31, 0xc0, // XOR RAX, RAX (sets ZF)
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // ZF should still be set
-    assert!(regs.rflags & 0x40 != 0, "ZF should be preserved");
-}
-
-// Test RDPMC with carry flag conditions
-#[test]
-fn test_rdpmc_carry_flag() {
-    let code = [
-        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // MOV RAX, 0xffffffffffffffff
-        0x48, 0x83, 0xc0, 0x01, // ADD RAX, 1 (sets CF)
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // Flags should be preserved
-    let _ = regs.rflags;
-}
-
-// Test RDPMC with sign flag conditions
-#[test]
-fn test_rdpmc_sign_flag() {
-    let code = [
-        0x48, 0xc7, 0xc1, 0x00, 0x00, 0x00, 0x00, // MOV RCX, 0 (doesn't affect flags)
-        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // MOV RAX, -1
-        0x48, 0x85, 0xc0, // TEST RAX, RAX (sets SF)
-        0x0f, 0x33, // RDPMC (should preserve flags)
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // SF should still be set (RDPMC preserves flags)
-    assert!(regs.rflags & 0x80 != 0, "SF should be preserved");
-}
-
-// Test RDPMC execution completes quickly
-#[test]
-fn test_rdpmc_execution_speed() {
-    let code = [
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0x0f, 0x33, // RDPMC
-        0x0f, 0x33, // RDPMC
-        0x0f, 0x33, // RDPMC
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // All calls should complete
-    let _ = regs;
-}
-
-// Test RDPMC with counter loop
-#[test]
-fn test_rdpmc_counter_loop() {
-    let code = [
-        0x48, 0x31, 0xc9, // XOR RCX, RCX (counter = 0) - 3 bytes (0x1000)
-        // loop: (0x1003)
-        0x0f, 0x33, // RDPMC - 2 bytes (0x1003)
-        0x48, 0x83, 0xc1, 0x01, // ADD RCX, 1 - 4 bytes (0x1005)
-        0x48, 0x83, 0xf9, 0x04, // CMP RCX, 4 - 4 bytes (0x1009)
-        0x75, 0xf4, // JNZ loop (rel8 = -12, from 0x100F to 0x1003) - 2 bytes (0x100D)
-        0xf4, // HLT - 1 byte (0x100F)
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // Loop should complete with RCX = 4
-    assert_eq!(regs.rcx, 4, "Counter loop should complete");
-}
-
-// Test RDPMC with different ECX values in sequence
-#[test]
-fn test_rdpmc_different_counters_sequence() {
-    let code = [
-        0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
-        0x0f, 0x33, // RDPMC
-        0xb9, 0x01, 0x00, 0x00, 0x00, // MOV ECX, 1
-        0x0f, 0x33, // RDPMC
-        0xb9, 0x02, 0x00, 0x00, 0x00, // MOV ECX, 2
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // Should complete without error
-    assert_eq!(regs.rax >> 32, 0, "Upper bits cleared");
-    assert_eq!(regs.rdx >> 32, 0, "Upper bits cleared");
-}
-
-// Test RDPMC preserves R8-R15
-#[test]
-fn test_rdpmc_preserves_extended_registers() {
-    let code = [
-        0x49, 0xc7, 0xc0, 0x11, 0x11, 0x11, 0x11, // MOV R8, 0x11111111 (bit 31 clear)
-        0x49, 0xc7, 0xc7, 0x0f, 0x0f, 0x0f, 0x0f, // MOV R15, 0x0f0f0f0f (bit 31 clear)
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.r8, 0x11111111, "R8 should be preserved");
-    assert_eq!(regs.r15, 0x0f0f0f0f, "R15 should be preserved");
-}
-
-// Test RDPMC result format (EDX:EAX)
-#[test]
-fn test_rdpmc_result_format() {
-    let code = [
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // EAX should contain low 32 bits, EDX high 32 bits
-    let eax = regs.rax & 0xFFFFFFFF;
-    let edx = regs.rdx & 0xFFFFFFFF;
-    let _ = (eax, edx);
-}
-
-// Test RDPMC with ECX = 0x80000000 (bit 31 set, fast read mode on some processors)
-#[test]
-fn test_rdpmc_fast_read_mode() {
-    let code = [
-        0xb9, 0x00, 0x00, 0x00, 0x80, // MOV ECX, 0x80000000 (fast read mode)
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rax >> 32, 0, "Upper bits of RAX cleared");
-    assert_eq!(regs.rdx >> 32, 0, "Upper bits of RDX cleared");
-}
-
-// Test RDPMC preserves stack pointer
-#[test]
-fn test_rdpmc_preserves_stack_pointer() {
-    let code = [
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let mut regs = Registers::default();
-    regs.rsp = 0x8000;
-    let (mut vcpu, _) = setup_vm(&code, Some(regs));
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rsp, 0x8000, "RSP should be unchanged");
-}
-
-// Test RDPMC value is non-negative
-#[test]
-fn test_rdpmc_value_nonnegative() {
-    let code = [
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // PMC counters are unsigned
-    let pmc = ((regs.rdx as u64) << 32) | (regs.rax as u64);
-    let _ = pmc;
-}
-
-// Test RDPMC with arithmetic operations
-#[test]
-fn test_rdpmc_after_arithmetic() {
-    let code = [
-        0x48, 0xc7, 0xc3, 0x01, 0x00, 0x00, 0x00, // MOV RBX, 1
-        0x48, 0x83, 0xc3, 0x02, // ADD RBX, 2
-        0x48, 0xf7, 0xdb, // NEG RBX
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    // RBX should still have result of NEG
-    assert_eq!(regs.rbx as i64, -3, "RBX should be -3");
-}
-
-// Test RDPMC preserves base pointer
-#[test]
-fn test_rdpmc_preserves_base_pointer() {
-    let code = [
-        0x48, 0xc7, 0xc5, 0x00, 0x70, 0x00, 0x00, // MOV RBP, 0x7000
-        0x48, 0x31, 0xc9, // XOR RCX, RCX
-        0x0f, 0x33, // RDPMC
-        0xf4, // HLT
-    ];
-    let (mut vcpu, _) = setup_vm(&code, None);
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-
-    assert_eq!(regs.rbp, 0x7000, "RBP should be preserved");
+    assert_eq!([regs.rax, regs.rbx, regs.rcx, regs.rdx], [0, 0, 0, 0]);
 }

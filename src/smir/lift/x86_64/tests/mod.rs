@@ -36,6 +36,8 @@ mod packed_string;
 #[cfg(test)]
 mod pkru;
 #[cfg(test)]
+mod rdpmc;
+#[cfg(test)]
 mod rdtscp;
 #[cfg(test)]
 mod read_control;

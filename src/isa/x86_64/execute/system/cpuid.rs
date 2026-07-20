@@ -148,6 +148,13 @@ pub(crate) fn evaluate_cpuid(
                                   | (1 << 30); // RDRAND
             (signature, 0x00000000, features_ecx, features_edx)
         }
+        0x0A => {
+            // Architectural performance monitoring version zero selects the
+            // legacy RDPMC format. The deterministic profile exposes eight
+            // model-specific 40-bit reference-clock PMCs but deliberately does
+            // not claim architectural PMU counter/control-MSR facilities.
+            (0, 0, 0, 0)
+        }
         0x15 => {
             // TSC/Crystal ratio - helps kernel determine TSC frequency
             // Return: EAX = denominator, EBX = numerator, ECX = crystal frequency in Hz

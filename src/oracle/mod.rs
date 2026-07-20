@@ -26,6 +26,7 @@ use crate::smir::ir::ops::X86DebugReg;
 use crate::smir::ir::ops::X86MonitorMwaitOp;
 use crate::smir::ir::ops::X86MsrOp;
 use crate::smir::ir::ops::X86PackedStringKind;
+use crate::smir::ir::ops::X86ReadPmcOp;
 use crate::smir::ir::ops::X86ReadTscOp;
 use crate::smir::ir::ops::X86Sha32Op;
 use crate::smir::ir::ops::X86ThreeDNowKind;
@@ -4097,6 +4098,11 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             dst_hi,
             dst_aux,
         }) => op_json!("x86_read_tsc", dst_lo, dst_hi, dst_aux),
+        OpKind::X86ReadPmc(X86ReadPmcOp {
+            dst_lo,
+            dst_hi,
+            selector,
+        }) => op_json!("x86_read_pmc", dst_lo, dst_hi, selector),
         OpKind::Nop => op_json!("nop"),
         OpKind::Undefined { opcode } => {
             let mut obj = Map::new();

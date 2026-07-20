@@ -3748,6 +3748,12 @@ mod jit_msr;
 use jit_msr::rax_jit_msr;
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_pmc.rs"]
+mod jit_pmc;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_pmc::rax_jit_pmc;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_tsc.rs"]
 mod jit_tsc;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4664,7 +4670,12 @@ impl X86_64Vcpu {
                 .iter()
                 .filter(|block| !exits.contains_key(&block.id))
                 .flat_map(|block| &block.ops)
-                .any(|op| matches!(op.kind, OpKind::X86ReadTsc(..) | OpKind::X86Msr(..)));
+                .any(|op| {
+                    matches!(
+                        op.kind,
+                        OpKind::X86ReadTsc(..) | OpKind::X86ReadPmc(..) | OpKind::X86Msr(..)
+                    )
+                });
             #[cfg(target_arch = "x86_64")]
             if uses_mmx && !x86_native_mmx_features_supported_excluding(&func, &exits) {
                 if jit_bail_log() {
@@ -4887,6 +4898,7 @@ impl X86_64Vcpu {
         // writes end the region immediately after this call.
         gr.control_write_fn = rax_jit_write_control as usize as u64;
         gr.msr_fn = rax_jit_msr as usize as u64;
+        gr.pmc_fn = rax_jit_pmc as usize as u64;
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
@@ -6145,6 +6157,10 @@ mod jit_monitor_mwait_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_tsc_tests.rs"]
 mod jit_tsc_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_pmc_tests.rs"]
+mod jit_pmc_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_msr_tests.rs"]

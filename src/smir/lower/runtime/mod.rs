@@ -254,6 +254,9 @@ pub struct GuestRegs {
     pub sysenter_cs: u64,
     pub sysenter_esp: u64,
     pub sysenter_eip: u64,
+    /// Address of `extern "C" fn(state) -> ok`, implementing the deterministic
+    /// legacy-PMU RDPMC profile and committing EDX:EAX only on success.
+    pub pmc_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -321,6 +324,7 @@ impl Default for GuestRegs {
             sysenter_cs: 0,
             sysenter_esp: 0,
             sysenter_eip: 0,
+            pmc_fn: 0,
         }
     }
 }

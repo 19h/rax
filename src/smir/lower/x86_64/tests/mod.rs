@@ -38,6 +38,8 @@ mod msr;
 #[cfg(test)]
 mod pkru;
 #[cfg(test)]
+mod pmc;
+#[cfg(test)]
 mod read_control;
 #[cfg(test)]
 mod read_debug;

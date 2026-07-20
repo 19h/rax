@@ -1073,6 +1073,30 @@ impl X86_64Lifter {
                 ))
             }
 
+            // RDPMC (0F 33): ECX selects a model-specific PMC and EDX:EAX
+            // receive its zero-extended value. LOCK and APX REX2 are invalid;
+            // other legacy and ordinary REX prefixes are ignored.
+            0x33 => {
+                if prefix2.lock || prefix2.rex2.is_some() {
+                    return Err(LiftError::InvalidEncoding {
+                        addr: pc,
+                        bytes: vec![opcode2],
+                    });
+                }
+                Ok(LiftResult::fallthrough(
+                    vec![SmirOp::new(
+                        OpId(0),
+                        pc,
+                        OpKind::X86ReadPmc(X86ReadPmcOp {
+                            dst_lo: self.gpr(0),
+                            dst_hi: self.gpr(2),
+                            selector: self.gpr(1),
+                        }),
+                    )],
+                    prefix2.cursor,
+                ))
+            }
+
             // CPUID (0F A2): EAX/ECX select the leaf and EAX/EBX/ECX/EDX
             // receive 32-bit zero-extended results. Intel defines only LOCK as
             // invalid; other legacy prefixes are ignored.

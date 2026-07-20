@@ -41,6 +41,16 @@ pub struct X86ReadTscOp {
     pub dst_aux: Option<VReg>,
 }
 
+/// x86 RDPMC read under the deterministic legacy-PMU profile. `selector` is
+/// ECX; the operation validates privilege and selector state before committing
+/// zero-extended EDX:EAX destinations.
+#[derive(Clone, Debug)]
+pub struct X86ReadPmcOp {
+    pub dst_lo: VReg,
+    pub dst_hi: VReg,
+    pub selector: VReg,
+}
+
 /// RDMSR/WRMSR implicit-register operation. `write == false` reads the MSR
 /// selected by ECX into zero-extended EDX:EAX. `write == true` writes the low
 /// 32-bit EDX:EAX pair, preserves all three GPRs, and terminates native

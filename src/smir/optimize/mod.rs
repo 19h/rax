@@ -3892,6 +3892,7 @@ impl OpKind {
                 }
             }
             OpKind::X86Cpuid { leaf, subleaf, .. } => result.extend([*leaf, *subleaf]),
+            OpKind::X86ReadPmc(read) => result.push(read.selector),
             OpKind::X86Msr(msr) => {
                 result.push(msr.ecx);
                 if msr.write {

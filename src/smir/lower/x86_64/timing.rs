@@ -1,11 +1,12 @@
-//! Fault-precise, helper-backed RDTSC/RDTSCP lowering.
+//! Fault-precise, helper-backed RDTSC/RDTSCP/RDPMC lowering.
 
-use crate::smir::ir::ops::{OpKind, SmirOp, X86ReadTscOp};
+use crate::smir::ir::ops::{OpKind, SmirOp, X86ReadPmcOp, X86ReadTscOp};
 use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
 use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::{
     LowerError, X86_GUEST_CPL_OFFSET, X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET,
-    X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_TSC_FN_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_PMC_FN_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_TSC_FN_OFFSET,
+    X86_STATE_PTR_AT_RBP,
 };
 
 use super::{X86_64Lowerer, X86Cond, X86Emitter};
@@ -21,6 +22,20 @@ pub(crate) fn x86_read_tsc_shape_valid(kind: &OpKind) -> bool {
             dst_aux: None | Some(VReg::Arch(ArchReg::X86(X86Reg::Rcx))),
         })
     )
+}
+
+/// Validate RDPMC's fixed implicit-register shape and absence of unrelated
+/// encoding metadata.
+pub(crate) fn x86_read_pmc_shape_valid(op: &SmirOp) -> bool {
+    op.x86_hint.is_none()
+        && matches!(
+            &op.kind,
+            OpKind::X86ReadPmc(X86ReadPmcOp {
+                dst_lo: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                dst_hi: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
+                selector: VReg::Arch(ArchReg::X86(X86Reg::Rcx)),
+            })
+        )
 }
 
 impl X86_64Lowerer {
@@ -122,6 +137,60 @@ impl X86_64Lowerer {
         }
         self.code.patch_i32(fault_branch, rel as i32);
         self.code.emit_bytes(&[0x48, 0x89, 0xC1]); // mov rcx,rax
+        self.emit_reload_all(PhysReg::Rcx);
+        self.code.emit_u8(0x9D);
+        self.emit_flag_preserving_stack_pop8();
+        self.emit_native_exit(op.guest_pc);
+
+        self.patch_rel32_to_current(done)?;
+        Ok(())
+    }
+
+    /// Lower RDPMC through the canonical deterministic guest-PMU helper.
+    /// Dynamic privilege and selector failures restore the complete entry state
+    /// and deoptimize at the faulting PC before EDX:EAX commits.
+    pub(crate) fn emit_x86_read_pmc(&mut self, op: &SmirOp) -> Result<(), LowerError> {
+        if !self.jit_fault_deopt_guards {
+            return Err(LowerError::UnsupportedOp {
+                op: "X86ReadPmc requires JIT fault-deoptimization guards".to_string(),
+            });
+        }
+        if !x86_read_pmc_shape_valid(op) {
+            return Err(LowerError::InvalidOperand {
+                op: "X86ReadPmc".to_string(),
+                operand: "requires ECX selector and EAX/EDX destinations".to_string(),
+            });
+        }
+
+        // Publish the identity-mapped GPRs before borrowing RAX as the state
+        // pointer. Saved RFLAGS hide the helper call and success test.
+        self.code.emit_u8(0x50); // push guest RAX
+        self.emit_load_state_ptr_rax();
+        self.code.emit_u8(0x9C); // pushfq; helper call remains 16-byte aligned
+        self.emit_spill_legacy_gprs_to_state_from_rax(8);
+
+        self.emit_helper_call_state(PhysReg::Rax, true, self.preserve_vector_system_helpers);
+        self.code.emit_u8(0xFC); // cld: platform ABI requires DF=0
+        self.code.emit_bytes(&[0x48, 0x89, 0xC7]); // mov rdi,rax (GuestRegs)
+        self.code.emit_u8(0xFF);
+        self.code.emit_u8(0x90); // call qword [rax+pmc_fn]
+        self.code.emit_u32(X86_GUEST_PMC_FN_OFFSET as u32);
+
+        self.code.emit_bytes(&[0x48, 0x8B, 0x4D]);
+        self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8); // mov rcx,[rbp+state_ptr]
+        self.code.emit_bytes(&[0x48, 0x85, 0xC0]); // test rax,rax
+        let helper_fault = self.emit_jcc_placeholder(X86Cond::E);
+
+        self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_system_helpers);
+        self.emit_reload_all(PhysReg::Rcx);
+        self.code.emit_u8(0x9D); // popfq
+        self.emit_flag_preserving_stack_pop8(); // discard saved pre-read RAX
+        self.code.emit_u8(0xE9);
+        let done = self.code.position();
+        self.code.emit_u32(0);
+
+        self.patch_rel32_to_current(helper_fault)?;
+        self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_system_helpers);
         self.emit_reload_all(PhysReg::Rcx);
         self.code.emit_u8(0x9D);
         self.emit_flag_preserving_stack_pop8();

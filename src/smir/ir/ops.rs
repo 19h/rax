@@ -4089,6 +4089,11 @@ pub enum OpKind {
     /// counter, with an optional IA32_TSC_AUX destination for RDTSCP.
     X86ReadTsc(X86ReadTscOp),
 
+    /// x86 RDPMC read of a deterministic model-specific performance counter.
+    /// The selector remains explicit because invalid runtime values raise
+    /// #GP(0) before either destination commits.
+    X86ReadPmc(X86ReadPmcOp),
+
     /// x86 CPUID: evaluate the emulator's guest CPU profile using EAX/ECX and
     /// commit zero-extended EAX, EBX, ECX, and EDX results atomically. The
     /// profile itself is runtime architectural/configuration state rather than
@@ -4480,6 +4485,7 @@ impl OpKind {
                 | OpKind::X86MonitorMwait(..)
                 | OpKind::X86Pkru { .. }
                 | OpKind::X86ReadTsc(..)
+                | OpKind::X86ReadPmc(..)
                 | OpKind::SetAC { .. }
                 | OpKind::X86Cpuid { .. }
                 | OpKind::X86Count { .. }
@@ -4698,6 +4704,8 @@ impl OpKind {
                 dests.extend(op.dst_aux);
                 dests
             }
+
+            OpKind::X86ReadPmc(op) => vec![op.dst_lo, op.dst_hi],
 
             OpKind::X86Cpuid {
                 dst_eax,
@@ -5194,6 +5202,7 @@ impl OpKind {
                     | OpKind::Swi { .. }
                     | OpKind::WriteSysReg { .. }
                     | OpKind::X86ReadTsc(..)
+                    | OpKind::X86ReadPmc(..)
                     | OpKind::X86Cpuid { .. }
                     | OpKind::Breakpoint
             )
