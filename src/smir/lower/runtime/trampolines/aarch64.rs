@@ -1277,6 +1277,7 @@ pub(crate) fn aarch64_block_is_clobber_safe(
                 | OpKind::X86Msr(..)
                 | OpKind::X86ReadControl { .. }
                 | OpKind::X86Smsw(..)
+                | OpKind::X86Lmsw(..)
                 | OpKind::X86WriteControl { .. }
                 | OpKind::X86ReadDebug { .. }
                 | OpKind::X86WriteDebug { .. }

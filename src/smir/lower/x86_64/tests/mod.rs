@@ -24,6 +24,8 @@ mod fsgsbase;
 #[cfg(test)]
 mod jit;
 #[cfg(test)]
+mod lmsw;
+#[cfg(test)]
 mod memory;
 #[cfg(test)]
 mod misc;

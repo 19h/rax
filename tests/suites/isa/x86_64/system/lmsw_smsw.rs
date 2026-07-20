@@ -1,9 +1,9 @@
-use crate::common::{run_until_hlt, setup_vm};
-use rax::vm::vcpu::Registers;
+use crate::common::{run_until_hlt, setup_vm, setup_vm_no_idt};
+use rax::vm::vcpu::{Registers, VCpu};
 
 // LMSW - Load Machine Status Word
 // Opcode: 0F 01 /6
-// Loads the source operand into the machine status word (bits 0-15 of CR0)
+// Reads a 16-bit source and replaces CR0[3:0], without clearing CR0.PE.
 // Privilege level 0 required
 
 // SMSW - Store Machine Status Word
@@ -530,4 +530,59 @@ fn test_smsw_rex2_targets_the_full_apx_register_id() {
 
     assert_eq!(regs.r31, regs.rax as u32 as u64);
     assert_eq!(regs.rdi, 0xD1D1_D1D1_D1D1_D1D1);
+}
+
+#[test]
+fn test_lmsw_cpl3_faults_before_memory_and_preserves_cr0() {
+    let mut input = Registers::default();
+    input.rax = 0x20_000;
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x01, 0x30], Some(input));
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cr0 |= 1;
+    sregs.cs.selector = 3;
+    vcpu.set_sregs(&sregs).unwrap();
+    let cr0_before = vcpu.get_sregs().unwrap().cr0;
+
+    let error = format!("{:#}", vcpu.step().expect_err("CPL 3 LMSW must fault"));
+
+    assert!(
+        error.contains("IDT entry 13 not present"),
+        "#GP(0) must precede the unmapped source: {error}"
+    );
+    assert_eq!(vcpu.get_sregs().unwrap().cr0, cr0_before);
+    assert_eq!(vcpu.get_regs().unwrap().rip, 0x1000);
+}
+
+#[test]
+fn test_lmsw_cannot_clear_pe_and_changes_only_cr0_bits_3_through_1() {
+    let mut input = Registers::default();
+    input.rax = 0;
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x01, 0xF0], Some(input));
+    let before = vcpu.get_sregs().unwrap().cr0 | 0xF;
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cr0 = before;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    assert!(vcpu.step().unwrap().is_none());
+
+    assert_eq!(vcpu.get_sregs().unwrap().cr0, (before & !0xF) | 1);
+}
+
+#[test]
+fn test_lmsw_rex2_reads_the_full_apx_register_id() {
+    let mut input = Registers::default();
+    input.rdi = 0;
+    input.r31 = 0xE;
+    let (mut vcpu, _) = setup_vm_no_idt(&[0xD5, 0x91, 0x01, 0xF7], Some(input));
+    vcpu.set_apx_enabled(true);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cr0 = (sregs.cr0 & !0xF) | 1;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    assert!(vcpu.step().unwrap().is_none());
+
+    assert_eq!(vcpu.get_sregs().unwrap().cr0 & 0xF, 0xF);
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rdi, 0);
+    assert_eq!(regs.r31, 0xE);
 }

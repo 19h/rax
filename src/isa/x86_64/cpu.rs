@@ -4627,6 +4627,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86Msr(..)
                                 | OpKind::X86ReadControl { .. }
                                 | OpKind::X86Smsw(..)
+                                | OpKind::X86Lmsw(..)
                                 | OpKind::X86WriteControl { .. }
                                 | OpKind::X86ReadDebug { .. }
                                 | OpKind::X86WriteDebug { .. }
@@ -6186,6 +6187,10 @@ mod jit_read_control_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_smsw_tests.rs"]
 mod jit_smsw_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_lmsw_tests.rs"]
+mod jit_lmsw_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_read_debug_tests.rs"]

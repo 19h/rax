@@ -1,11 +1,12 @@
 //! trampolines::clobber tests
 
 use super::*;
-use crate::smir::ir::ops::{X86MonitorMwaitOp, X86SmswTarget};
+use crate::smir::ir::ops::{X86LmswSource, X86MonitorMwaitOp, X86SmswTarget};
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::x86_64::{
-    x86_clts_shape_valid, x86_read_control_shape_valid, x86_read_debug_shape_valid,
-    x86_smsw_shape_valid, x86_write_control_shape_valid, x86_write_debug_shape_valid,
+    x86_clts_shape_valid, x86_lmsw_shape_valid, x86_read_control_shape_valid,
+    x86_read_debug_shape_valid, x86_smsw_shape_valid, x86_write_control_shape_valid,
+    x86_write_debug_shape_valid,
 };
 
 /// Admit only scalar MMU-helper transfers that the x86-64 state-backed
@@ -482,6 +483,15 @@ pub(crate) fn block_is_clobber_safe(
             },
             _ => false,
         };
+        let lmsw_ok = match &op.kind {
+            OpKind::X86Lmsw(lmsw) if x86_lmsw_shape_valid(op) => match &lmsw.source {
+                X86LmswSource::Register { .. } => true,
+                X86LmswSource::Memory { addr } => {
+                    allow_mem && x86_jit_mem_address_shape_valid(addr)
+                }
+            },
+            _ => false,
+        };
         let read_debug_ok = x86_read_debug_shape_valid(&op.kind);
         let write_control_ok = x86_write_control_shape_valid(op);
         let write_debug_ok = x86_write_debug_shape_valid(&op.kind);
@@ -523,6 +533,7 @@ pub(crate) fn block_is_clobber_safe(
             || fsgsbase_ok
             || read_control_ok
             || smsw_ok
+            || lmsw_ok
             || read_debug_ok
             || write_control_ok
             || write_debug_ok;
@@ -660,6 +671,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86Smsw(..)) && !smsw_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86Lmsw(..)) && !lmsw_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86ReadDebug { .. }) && !read_debug_ok {

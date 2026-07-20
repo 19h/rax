@@ -82,6 +82,8 @@ mod jit_call;
 pub use jit_call::*;
 mod jit_memory_address;
 pub use jit_memory_address::*;
+mod lmsw;
+pub use lmsw::*;
 mod memory;
 pub use memory::*;
 mod mmx_helpers;

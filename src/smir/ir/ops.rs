@@ -3987,6 +3987,11 @@ pub enum OpKind {
     /// can raise #UD/#GP(0), and a memory target can fault or reach MMIO.
     X86Smsw(X86SmswOp),
 
+    /// LMSW reads a fixed-width register or memory source after APX/CPL
+    /// validation, updates CR0[3:0] without clearing PE, and is serializing.
+    /// Native execution must hand off at `next_pc` after a successful commit.
+    X86Lmsw(X86LmswOp),
+
     /// `MOV CR0/CR2/CR3/CR4/CR8, r64`. Dynamic CPL, reserved-bit, PCID, and
     /// IA-32e transition checks are non-committing. `next_pc` is the exact
     /// post-instruction frontier: a successful native write must terminate its
@@ -4484,6 +4489,7 @@ impl OpKind {
                 | OpKind::X86Msr(..)
                 | OpKind::X86ReadControl { .. }
                 | OpKind::X86Smsw(..)
+                | OpKind::X86Lmsw(..)
                 | OpKind::X86WriteControl { .. }
                 | OpKind::X86ReadDebug { .. }
                 | OpKind::X86WriteDebug { .. }
@@ -5026,6 +5032,7 @@ impl OpKind {
                 target: X86SmswTarget::Memory { .. },
                 ..
             })
+            | OpKind::X86Lmsw(..)
             | OpKind::X86WriteControl { .. }
             | OpKind::X86WriteDebug { .. }
             | OpKind::X86MonitorMwait(..)
@@ -5199,6 +5206,7 @@ impl OpKind {
                     | OpKind::X86Msr(..)
                     | OpKind::X86ReadControl { .. }
                     | OpKind::X86Smsw(..)
+                    | OpKind::X86Lmsw(..)
                     | OpKind::X86WriteControl { .. }
                     | OpKind::X86ReadDebug { .. }
                     | OpKind::X86WriteDebug { .. }
@@ -5252,6 +5260,10 @@ impl OpKind {
                 | OpKind::VHist { .. }
                 | OpKind::X86LoadMxcsr { .. }
                 | OpKind::X86MonitorMwait(X86MonitorMwaitOp { addr: Some(_), .. })
+                | OpKind::X86Lmsw(X86LmswOp {
+                    source: X86LmswSource::Memory { .. },
+                    ..
+                })
                 | OpKind::X86X87Control {
                     kind: X86X87ControlKind::LoadControlWord
                         | X86X87ControlKind::LoadEnvironment(_)

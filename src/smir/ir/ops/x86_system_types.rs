@@ -82,6 +82,24 @@ pub struct X86SmswOp {
     pub requires_apx: bool,
 }
 
+/// Architecturally distinct LMSW sources. Both forms read exactly 16 bits;
+/// operand-size prefixes never change the source width.
+#[derive(Clone, Debug)]
+pub enum X86LmswSource {
+    Register { src: VReg },
+    Memory { addr: Address },
+}
+
+/// LMSW reads its source only after dynamic APX and CPL validation, updates
+/// CR0[3:0] without clearing an already-set CR0.PE, serializes execution, and
+/// hands native execution off at the exact next instruction.
+#[derive(Clone, Debug)]
+pub struct X86LmswOp {
+    pub source: X86LmswSource,
+    pub requires_apx: bool,
+    pub next_pc: u64,
+}
+
 /// MONITOR/MWAIT under the deterministic guest profile. `Some(addr)` is
 /// MONITOR: `hint` is EDX, validate CPL/RCX, then perform an ordered faulting
 /// byte read from the monitored linear address. `None` is MWAIT: `hint` is

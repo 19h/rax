@@ -23,6 +23,8 @@ use crate::smir::ir::ops::X86CacheControlKind;
 use crate::smir::ir::ops::X86ControlReg;
 use crate::smir::ir::ops::X86CountKind;
 use crate::smir::ir::ops::X86DebugReg;
+use crate::smir::ir::ops::X86LmswOp;
+use crate::smir::ir::ops::X86LmswSource;
 use crate::smir::ir::ops::X86MonitorMwaitOp;
 use crate::smir::ir::ops::X86MsrOp;
 use crate::smir::ir::ops::X86PackedStringKind;
@@ -1119,6 +1121,23 @@ impl OracleJson for X86SmswTarget {
             X86SmswTarget::Memory { addr } => json!({
                 "kind": "memory",
                 "addr": addr.oracle_json(),
+            }),
+        }
+    }
+}
+
+impl OracleJson for X86LmswSource {
+    fn oracle_json(&self) -> Value {
+        match self {
+            X86LmswSource::Register { src } => json!({
+                "kind": "register",
+                "src": src.oracle_json(),
+                "width": "W16",
+            }),
+            X86LmswSource::Memory { addr } => json!({
+                "kind": "memory",
+                "addr": addr.oracle_json(),
+                "width": "B2",
             }),
         }
     }
@@ -2515,6 +2534,11 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             target,
             requires_apx,
         }) => op_json!("x86_smsw", target, requires_apx),
+        OpKind::X86Lmsw(X86LmswOp {
+            source,
+            requires_apx,
+            next_pc,
+        }) => op_json!("x86_lmsw", source, requires_apx, next_pc),
         OpKind::X86WriteControl {
             src,
             control,

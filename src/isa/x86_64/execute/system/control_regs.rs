@@ -357,9 +357,12 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             }
             vcpu.regs.rip += ctx.cursor as u64;
         }
-        // LMSW r/m16 - Load Machine Status Word (lower 16 bits of CR0)
+        // LMSW r/m16 - replace CR0[3:0] from a fixed 16-bit source.
         6 => {
-            let rm = (modrm & 0x07) | ctx.rex_b();
+            if !is_cpl0(vcpu) {
+                return raise_gp0(vcpu);
+            }
+            let rm = (modrm & 0x07) | ctx.any_rex_b();
             let is_memory = modrm >> 6 != 3;
             let msw = if is_memory {
                 let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
@@ -371,7 +374,8 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             // LMSW can set PE (bit 0) but cannot clear it
             // It only affects bits 0-3 of CR0
             let mask = 0x000F_u64;
-            vcpu.sregs.cr0 = (vcpu.sregs.cr0 & !mask) | ((msw as u64) & mask);
+            let old_pe = vcpu.sregs.cr0 & 1;
+            vcpu.sregs.cr0 = (vcpu.sregs.cr0 & !mask) | ((msw as u64) & mask) | old_pe;
             vcpu.regs.rip += ctx.cursor as u64;
         }
         // INVLPG m (reg_op=7 with memory operand)

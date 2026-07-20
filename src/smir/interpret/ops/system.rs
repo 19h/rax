@@ -10,10 +10,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
-    X86CacheControlKind, X86ControlReg, X86CountKind, X86DebugReg, X86MonitorMwaitOp, X86OpHint,
-    X86SmswTarget, X86ThreeDNowKind, X86X87ArithmeticDestination, X86X87ArithmeticSource,
-    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
-    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+    X86CacheControlKind, X86ControlReg, X86CountKind, X86DebugReg, X86LmswSource,
+    X86MonitorMwaitOp, X86OpHint, X86SmswTarget, X86ThreeDNowKind, X86X87ArithmeticDestination,
+    X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
+    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -263,6 +263,75 @@ impl SmirInterpreter {
                         self.store_memory(memory, effective_addr, cr0, MemWidth::B2)?;
                     }
                 }
+            }
+
+            OpKind::X86Lmsw(lmsw) => {
+                let instruction_len = lmsw.next_pc.checked_sub(op.guest_pc);
+                let source_shape = match &lmsw.source {
+                    X86LmswSource::Register { src } => matches!(
+                        src,
+                        VReg::Arch(ArchReg::X86(reg))
+                            if reg.gpr_index().is_some_and(|index| {
+                                index < 16 || lmsw.requires_apx
+                            })
+                    ),
+                    X86LmswSource::Memory { addr } => {
+                        let uses_egpr = addr.regs().iter().any(
+                            |reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()),
+                        );
+                        addr.is_x86_state_backed_shape() && (!uses_egpr || lmsw.requires_apx)
+                    }
+                };
+                if !matches!(instruction_len, Some(3..=15))
+                    || op.x86_hint.is_some()
+                    || !source_shape
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let old_cr0 = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => {
+                        if lmsw.requires_apx && !x86.apx_enabled {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        }
+                        if x86.cr0 & 1 != 0 && x86.cpl != 0 {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                        x86.cr0
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+
+                let source = match &lmsw.source {
+                    X86LmswSource::Register { src } => ctx.read_vreg(*src),
+                    X86LmswSource::Memory { addr } => {
+                        let effective_addr = self.compute_address(ctx, addr);
+                        self.load_memory(memory, effective_addr, MemWidth::B2, SignExtend::Zero)?
+                    }
+                };
+                let new_cr0 = (old_cr0 & !0xF) | (source & 0xF) | (old_cr0 & 1);
+                let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                    unreachable!("validated x86 LMSW state changed")
+                };
+                x86.cr0 = new_cr0;
             }
 
             OpKind::X86WriteControl {

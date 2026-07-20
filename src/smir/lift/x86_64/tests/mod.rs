@@ -26,6 +26,8 @@ mod fsgsbase;
 #[cfg(test)]
 mod hypercall_hints;
 #[cfg(test)]
+mod lmsw;
+#[cfg(test)]
 mod monitor_mwait;
 #[cfg(test)]
 mod movdir64b;
