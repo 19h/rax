@@ -166,6 +166,13 @@ pub(crate) fn evaluate_cpuid(
             // Return a simple valid response
             (0x01, 0, 0, 0) // AL=1 = single iteration required
         }
+        5 => {
+            // MONITOR/MWAIT enumeration. The deterministic emulator profile
+            // models a 64-byte monitor line and no MWAIT extensions or C-state
+            // sub-state enumeration. In particular ECX[1]=0 means MWAIT must
+            // reject RCX[0]=1 with #GP(0).
+            (64, 64, 0, 0)
+        }
         7 => {
             // Structured extended feature flags.
             if subleaf == 0 {

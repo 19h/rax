@@ -8,8 +8,8 @@ use std::collections::{HashMap, HashSet};
 
 use crate::smir::ir::flags::{FlagSet, FlagState, FlagUpdate};
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AdxKind, X86OpHint, X86RepMode, X86StringKind, X86ThreeDNowKind,
-    X86VecAlign, X86X87DataKind,
+    OpKind, SmirOp, X86AdxKind, X86MonitorMwaitOp, X86OpHint, X86RepMode, X86StringKind,
+    X86ThreeDNowKind, X86VecAlign, X86X87DataKind,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, BlockId, FpRoundMode, HexagonReg, MemWidth, OpWidth, ShiftOp,
@@ -3870,6 +3870,14 @@ impl OpKind {
                 gs_base,
                 kernel_gs_base,
             } => result.extend([*gs_base, *kernel_gs_base]),
+            OpKind::X86MonitorMwait(X86MonitorMwaitOp {
+                rcx, hint, addr, ..
+            }) => {
+                result.extend([*rcx, *hint]);
+                if let Some(addr) = addr {
+                    result.extend(addr.regs());
+                }
+            }
             OpKind::X86Pkru {
                 eax,
                 ecx,

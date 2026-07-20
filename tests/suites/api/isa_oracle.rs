@@ -296,6 +296,69 @@ fn emits_and_executes_exact_swapgs_state_dataflow() {
 }
 
 #[test]
+fn emits_and_executes_exact_monitor_mwait_semantics() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let monitor = decode_to_json(&[0x0F, 0x01, 0xC8], &opts).unwrap();
+    assert_eq!(monitor["smir"]["available"], true);
+    assert_eq!(monitor["smir"]["bytes_consumed"], 3);
+    let op = &monitor["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_monitor_mwait");
+    assert_eq!(op["kind"]["rcx"]["name"], "rcx");
+    assert_eq!(op["kind"]["hint"]["name"], "rdx");
+    assert_eq!(op["kind"]["stack_segment"], false);
+    assert!(!op["kind"]["addr"].is_null());
+    assert_eq!(op["writes"].as_array().unwrap().len(), 0);
+    assert_eq!(op["memory"]["reads"], true);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+
+    let mwait = decode_to_json(&[0x0F, 0x01, 0xC9], &opts).unwrap();
+    let op = &mwait["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_monitor_mwait");
+    assert_eq!(op["kind"]["rcx"]["name"], "rcx");
+    assert_eq!(op["kind"]["hint"]["name"], "rax");
+    assert_eq!(op["kind"]["stack_segment"], false);
+    assert!(op["kind"]["addr"].is_null());
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+
+    let ss_monitor = decode_to_json(&[0x36, 0x0F, 0x01, 0xC8], &opts).unwrap();
+    assert_eq!(ss_monitor["smir"]["ops"][0]["kind"]["stack_segment"], true);
+
+    let seed = OracleSeed {
+        regs: vec![
+            ("rax".to_string(), 0x20),
+            ("rcx".to_string(), 0),
+            ("rdx".to_string(), 0xA5A5),
+        ],
+        memory: vec![OracleMemorySeed {
+            addr: 0x20,
+            bytes: vec![0x5A],
+        }],
+        memory_size: Some(0x100),
+    };
+    let executed = decode_to_json_with_seed(&[0x0F, 0x01, 0xC8], &opts, Some(&seed)).unwrap();
+    assert_eq!(executed["side_effects"]["available"], true);
+    assert_eq!(
+        executed["side_effects"]["changed_regs"]
+            .as_object()
+            .unwrap()
+            .len(),
+        0
+    );
+    assert_eq!(
+        executed["side_effects"]["changed_memory"]
+            .as_array()
+            .unwrap()
+            .len(),
+        0
+    );
+}
+
+#[test]
 fn emits_exact_legacy_pcmpxstrx_semantics() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

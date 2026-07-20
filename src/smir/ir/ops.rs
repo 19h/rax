@@ -11,6 +11,8 @@ mod x86_crypto_types;
 pub use x86_crypto_types::*;
 mod x86_packed_string_types;
 pub use x86_packed_string_types::*;
+mod x86_system_types;
+pub use x86_system_types::*;
 
 // ============================================================================
 // Operation Structure
@@ -3975,6 +3977,8 @@ pub enum OpKind {
         kernel_gs_base: VReg,
     },
 
+    X86MonitorMwait(X86MonitorMwaitOp),
+
     /// RDPKRU/WRPKRU. The implicit GPR and PKRU operands are explicit so
     /// liveness, static analysis, interpretation, and native state handoff all
     /// observe the same architectural data flow. Dynamic CR4.PKE and selector
@@ -4346,10 +4350,10 @@ pub enum HexDfOp {
 
 impl OpKind {
     /// Fail-safe whitelist for the SMIR native hot-block JIT: returns true ONLY
-    /// for register/immediate-only integer ops and explicitly state-backed
-    /// control reads that have been validated by native-execution differentials
-    /// (including KVM-backed suites where available) and that touch NO memory
-    /// (their operands are `VReg`/`SrcOperand`, never an `Address`).
+    /// for register/immediate-only integer ops, explicitly state-backed control
+    /// reads, and narrowly modeled system operations with exact helper-backed
+    /// memory semantics. Every target gate must additionally validate operand
+    /// shape, helper availability, and host support before execution.
     /// Everything else — memory/stack ops (Load/Store/Push/Pop/string/atomic),
     /// DivU/DivS (native x86 division can raise a host #DE until an exact
     /// guarded lowering rules out zero divisors and quotient overflow),
@@ -4415,6 +4419,7 @@ impl OpKind {
                 | OpKind::X86XSetBv { .. }
                 | OpKind::X86FsGsBase { .. }
                 | OpKind::X86SwapGs { .. }
+                | OpKind::X86MonitorMwait(..)
                 | OpKind::X86Pkru { .. }
                 | OpKind::X86Cpuid { .. }
                 | OpKind::X86Count { .. }
@@ -4921,6 +4926,7 @@ impl OpKind {
             | OpKind::X86XSave { .. }
             | OpKind::X86XRstor { .. }
             | OpKind::X86XSetBv { .. }
+            | OpKind::X86MonitorMwait(..)
             | OpKind::Syscall { .. }
             | OpKind::IoOut { .. }
             | OpKind::Swi { .. }
@@ -5088,6 +5094,7 @@ impl OpKind {
                     | OpKind::X86XSetBv { .. }
                     | OpKind::X86FsGsBase { .. }
                     | OpKind::X86SwapGs { .. }
+                    | OpKind::X86MonitorMwait(..)
                     | OpKind::X86Pkru { .. }
                     | OpKind::X86Random { .. }
                     // A saturating clamp ORs the Hexagon USR:OVF sticky bit when it
@@ -5133,6 +5140,7 @@ impl OpKind {
                 | OpKind::PredVLoad { .. }
                 | OpKind::VHist { .. }
                 | OpKind::X86LoadMxcsr { .. }
+                | OpKind::X86MonitorMwait(X86MonitorMwaitOp { addr: Some(_), .. })
                 | OpKind::X86X87Control {
                     kind: X86X87ControlKind::LoadControlWord
                         | X86X87ControlKind::LoadEnvironment(_)

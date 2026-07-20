@@ -3,13 +3,14 @@
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
-    /// Lift XGETBV/XSETBV, RDPKRU/WRPKRU, SERIALIZE, SWAPGS, and the RTM fixed
-    /// ModR/M encodings in 0F 01.
+    /// Lift MONITOR/MWAIT, XGETBV/XSETBV, RDPKRU/WRPKRU, SERIALIZE, SWAPGS,
+    /// and the RTM fixed ModR/M encodings in 0F 01.
     pub(crate) fn lift_xcr_0f01(
         &self,
         bytes: &[u8],
         prefix: &X86Prefix,
         pc: u64,
+        ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
         let Some(&modrm) = bytes.first() else {
             return Err(LiftError::Incomplete {
@@ -23,6 +24,54 @@ impl X86_64Lifter {
                 addr: pc,
                 bytes: bytes[..1].to_vec(),
             });
+        }
+
+        if matches!(modrm, 0xC8 | 0xC9) {
+            let addr = if modrm == 0xC8 {
+                let x86_addr = X86Address {
+                    base: Some(0),
+                    index: None,
+                    scale: 1,
+                    disp: 0,
+                    rip_relative: false,
+                    address_width: if prefix.address_size_override {
+                        OpWidth::W32
+                    } else {
+                        OpWidth::W64
+                    },
+                    disp_size: DispSize::Auto,
+                    segment: match prefix.segment_override {
+                        Some(0x64) => Some(X86Reg::FsBase),
+                        Some(0x65) => Some(X86Reg::GsBase),
+                        _ => None,
+                    },
+                };
+                let next_rip = pc + prefix.cursor as u64 + 1;
+                if prefix.address_size_override {
+                    Some(Address::X86Addr32(Box::new(
+                        self.x86_addr32_state_address(&x86_addr, next_rip),
+                    )))
+                } else {
+                    let (addr, pre_ops) = self.x86_addr_to_smir(&x86_addr, next_rip, ctx);
+                    debug_assert!(pre_ops.is_empty());
+                    Some(addr)
+                }
+            } else {
+                None
+            };
+            return Ok(LiftResult::fallthrough(
+                vec![SmirOp::new(
+                    OpId(0),
+                    pc,
+                    OpKind::X86MonitorMwait(X86MonitorMwaitOp {
+                        rcx: self.gpr(1),
+                        hint: self.gpr(if modrm == 0xC8 { 2 } else { 0 }),
+                        addr,
+                        stack_segment: modrm == 0xC8 && prefix.segment_override == Some(0x36),
+                    }),
+                )],
+                prefix.cursor + 1,
+            ));
         }
 
         let kind = match modrm {

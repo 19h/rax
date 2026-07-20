@@ -20,6 +20,8 @@ mod evex;
 #[cfg(test)]
 mod fsgsbase;
 #[cfg(test)]
+mod monitor_mwait;
+#[cfg(test)]
 mod movdir64b;
 #[cfg(test)]
 mod movdiri;

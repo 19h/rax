@@ -21,6 +21,7 @@ use crate::smir::ir::ops::X86AdxKind;
 use crate::smir::ir::ops::X86BlsKind;
 use crate::smir::ir::ops::X86CacheControlKind;
 use crate::smir::ir::ops::X86CountKind;
+use crate::smir::ir::ops::X86MonitorMwaitOp;
 use crate::smir::ir::ops::X86PackedStringKind;
 use crate::smir::ir::ops::X86Sha32Op;
 use crate::smir::ir::ops::X86ThreeDNowKind;
@@ -2485,6 +2486,14 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             gs_base,
             kernel_gs_base,
         } => op_json!("x86_swapgs", gs_base, kernel_gs_base),
+        OpKind::X86MonitorMwait(X86MonitorMwaitOp {
+            rcx,
+            hint,
+            addr,
+            stack_segment,
+        }) => {
+            op_json!("x86_monitor_mwait", rcx, hint, addr, stack_segment)
+        }
         OpKind::X86Pkru {
             eax,
             ecx,

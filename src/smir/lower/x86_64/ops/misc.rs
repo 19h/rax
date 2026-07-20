@@ -122,6 +122,8 @@ impl X86_64Lowerer {
 
             OpKind::X86SwapGs { .. } => self.emit_x86_swapgs(op)?,
 
+            OpKind::X86MonitorMwait(..) => self.emit_x86_monitor_mwait(op)?,
+
             OpKind::X86Pkru { .. } => self.emit_x86_pkru(op)?,
 
             OpKind::Undefined { .. } => {

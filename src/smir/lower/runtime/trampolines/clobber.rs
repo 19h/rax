@@ -1,6 +1,7 @@
 //! trampolines::clobber tests
 
 use super::*;
+use crate::smir::ir::ops::X86MonitorMwaitOp;
 use crate::smir::lower::runtime::*;
 
 /// Admit only scalar MMU-helper transfers that the x86-64 state-backed
@@ -468,6 +469,16 @@ pub(crate) fn block_is_clobber_safe(
         let state_xchg_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let fsgsbase_ok = crate::smir::lower::x86_64::x86_fsgsbase_shape_valid(&op.kind);
         let swapgs_ok = crate::smir::lower::x86_64::x86_swapgs_shape_valid(&op.kind);
+        let monitor_mwait_ok = match &op.kind {
+            OpKind::X86MonitorMwait(X86MonitorMwaitOp { addr, .. })
+                if crate::smir::lower::x86_64::x86_monitor_mwait_shape_valid(&op.kind) =>
+            {
+                addr.as_ref().map_or(true, |addr| {
+                    allow_mem && x86_jit_mem_address_shape_valid(addr)
+                })
+            }
+            _ => false,
+        };
         let pkru_ok = crate::smir::lower::x86_64::x86_pkru_shape_valid(&op.kind);
         let stack_state_ok = stack_mov_ok
             || stack_alu_ok
@@ -624,6 +635,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86SwapGs { .. }) && !swapgs_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86MonitorMwait(..)) && !monitor_mwait_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86Pkru { .. }) && !pkru_ok {

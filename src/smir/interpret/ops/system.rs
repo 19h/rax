@@ -6,9 +6,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
-    X86CacheControlKind, X86CountKind, X86OpHint, X86ThreeDNowKind, X86X87ArithmeticDestination,
-    X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
-    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+    X86CacheControlKind, X86CountKind, X86MonitorMwaitOp, X86OpHint, X86ThreeDNowKind,
+    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
+    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
+    X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -169,6 +170,61 @@ impl SmirInterpreter {
                 let old_kernel_gs_base = ctx.read_vreg(*kernel_gs_base);
                 ctx.write_vreg(*gs_base, old_kernel_gs_base);
                 ctx.write_vreg(*kernel_gs_base, old_gs_base);
+            }
+
+            OpKind::X86MonitorMwait(X86MonitorMwaitOp {
+                rcx,
+                hint,
+                addr,
+                stack_segment,
+            }) => {
+                let cpl = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => x86.cpl,
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                if cpl != 0 {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+                if ctx.read_vreg(*rcx) != 0 {
+                    ctx.request_exit(ExitReason::GeneralProtection {
+                        addr: op.guest_pc,
+                        error_code: 0,
+                    });
+                    return Ok(());
+                }
+                // EDX for MONITOR and EAX for MWAIT are architecturally read
+                // hint inputs. Their values are implementation-dependent and
+                // intentionally have no effect in the deterministic profile.
+                let _ = ctx.read_vreg(*hint);
+                if let Some(addr) = addr {
+                    let effective_addr = self.compute_address(ctx, addr);
+                    if (((effective_addr as i64) << 16 >> 16) as u64) != effective_addr {
+                        ctx.request_exit(if *stack_segment {
+                            ExitReason::StackSegment {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            }
+                        } else {
+                            ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            }
+                        });
+                        return Ok(());
+                    }
+                    let _ =
+                        self.load_memory(memory, effective_addr, MemWidth::B1, SignExtend::Zero)?;
+                }
             }
 
             OpKind::X86Pkru {

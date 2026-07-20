@@ -48,6 +48,8 @@ pub use dispatch::*;
 mod emitter;
 mod fsgsbase;
 pub use fsgsbase::*;
+mod monitor_mwait;
+pub use monitor_mwait::*;
 mod pkru;
 pub use pkru::*;
 mod serialize;

@@ -20,6 +20,49 @@ fn is_canonical_48(addr: u64) -> bool {
 
 impl X86_64Vcpu {
     #[inline(always)]
+    fn monitor_mwait_cpl0(&self) -> bool {
+        self.regs.rflags & (1 << 17) == 0
+            && (self.sregs.cr0 & 1 == 0 || self.sregs.cs.selector & 3 == 0)
+    }
+
+    #[inline(always)]
+    fn monitor_mwait_extension(&self) -> u64 {
+        if self.sregs.cs.l {
+            self.regs.rcx
+        } else {
+            u64::from(self.regs.rcx as u32)
+        }
+    }
+
+    #[inline(always)]
+    fn monitor_linear_address(&self, ctx: &InsnContext) -> u64 {
+        let offset = if self.sregs.cs.l {
+            if ctx.address_size_override {
+                u64::from(self.regs.rax as u32)
+            } else {
+                self.regs.rax
+            }
+        } else {
+            let default_16bit = !self.sregs.cs.db;
+            if default_16bit ^ ctx.address_size_override {
+                u64::from(self.regs.rax as u16)
+            } else {
+                u64::from(self.regs.rax as u32)
+            }
+        };
+        let segment_base = if self.sregs.cs.l {
+            match ctx.segment_override {
+                Some(0x64) => self.sregs.fs.base,
+                Some(0x65) => self.sregs.gs.base,
+                _ => 0,
+            }
+        } else {
+            self.get_segment_base(ctx.segment_override)
+        };
+        segment_base.wrapping_add(offset)
+    }
+
+    #[inline(always)]
     pub(in crate::isa::x86_64) fn require_cr0_ts_clear_for_nm(&mut self) -> Result<bool> {
         if self.sregs.cr0 & CR0_TS != 0 {
             self.inject_exception(7, None)?;
@@ -59,18 +102,44 @@ impl X86_64Vcpu {
                     Ok(None)
                 }
                 0xC8 => {
-                    // MONITOR (0x0F 0x01 0xC8) - Set up address range monitoring
                     ctx.consume_u8()?; // consume modrm
-                    // MONITOR sets up an address range for monitoring using RAX/EAX
-                    // For emulation, treat as NOP - no actual hardware monitoring
+                    // MONITOR is available in the fixed guest CPUID profile but
+                    // remains privileged. Undefined optional extensions fault
+                    // before the architecturally ordered byte read.
+                    if !self.monitor_mwait_cpl0() {
+                        return self.inject_undefined_instruction();
+                    }
+                    if self.monitor_mwait_extension() != 0 {
+                        self.inject_exception(13, Some(0))?;
+                        return Ok(None);
+                    }
+                    let addr = self.monitor_linear_address(ctx);
+                    if self.sregs.cs.l && !is_canonical_48(addr) {
+                        let vector = if ctx.segment_override == Some(0x36) {
+                            12 // #SS(0)
+                        } else {
+                            13 // #GP(0)
+                        };
+                        self.inject_exception(vector, Some(0))?;
+                        return Ok(None);
+                    }
+                    let _ = self.read_mem(addr, 1)?;
+                    // Monitor hardware state is intentionally not retained;
+                    // the deterministic MWAIT profile returns immediately.
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 0xC9 => {
-                    // MWAIT (0x0F 0x01 0xC9) - Monitor wait
                     ctx.consume_u8()?; // consume modrm
-                    // MWAIT hints processor to enter optimized state while waiting
-                    // For emulation, treat as NOP - no power management
+                    if !self.monitor_mwait_cpl0() {
+                        return self.inject_undefined_instruction();
+                    }
+                    // CPUID.05H:ECX[1]=0, so RCX[0] is not an accepted
+                    // interrupt-break extension and every RCX bit is reserved.
+                    if self.monitor_mwait_extension() != 0 {
+                        self.inject_exception(13, Some(0))?;
+                        return Ok(None);
+                    }
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }

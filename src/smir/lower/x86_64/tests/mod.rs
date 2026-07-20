@@ -28,6 +28,8 @@ mod mmx_helpers;
 #[cfg(all(test, feature = "smir-jit"))]
 mod mmx_memory_source;
 #[cfg(test)]
+mod monitor_mwait;
+#[cfg(test)]
 mod pkru;
 #[cfg(test)]
 mod serialize;

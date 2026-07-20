@@ -187,11 +187,13 @@ fn test_cpuid_function_5_monitor_mwait() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // RAX contains smallest monitor line size
-    // RBX contains largest monitor line size
-    // RCX contains MONITOR/MWAIT features
-    // RDX contains MWAIT sub-C states
-    let _ = regs;
+    assert_eq!(regs.rax as u32, 64, "smallest monitor-line size in bytes");
+    assert_eq!(regs.rbx as u32, 64, "largest monitor-line size in bytes");
+    assert_eq!(
+        regs.rcx as u32, 0,
+        "no MONITOR/MWAIT extensions, including interrupt-break"
+    );
+    assert_eq!(regs.rdx as u32, 0, "no enumerated MWAIT C-substates");
 }
 
 // CPUID function 6 - Thermal Power Management

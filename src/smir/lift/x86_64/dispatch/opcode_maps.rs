@@ -306,7 +306,7 @@ impl X86_64Lifter {
         };
 
         match opcode2 {
-            0x01 => self.lift_xcr_0f01(after_opcode, &prefix2, pc),
+            0x01 => self.lift_xcr_0f01(after_opcode, &prefix2, pc, ctx),
 
             // Cache-maintenance instructions modeled as no-ops by the base
             // emulator profile.

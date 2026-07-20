@@ -4580,11 +4580,12 @@ impl X86_64Vcpu {
                 }
                 continue 'modes;
             }
-            // Standalone x86-64 SMIR models the 64-bit FSGSBASE/SWAPGS
-            // contracts, but this CPU can also compile compatibility-mode
-            // regions. Both are #UD outside CS.L=1, so reject any executed
-            // such op before native admission and let the mode-aware direct
-            // decoder deliver the exception. CS.L is in the JIT cache tag.
+            // Standalone x86-64 SMIR models the 64-bit FSGSBASE/SWAPGS and
+            // MONITOR/MWAIT contracts, but this CPU can also compile
+            // compatibility-mode regions. Reject these mode-dependent ops
+            // before native admission and let the direct decoder apply the
+            // compatibility-mode operand/address and exception rules. CS.L is
+            // in the JIT cache tag.
             #[cfg(target_arch = "x86_64")]
             if !self.sregs.cs.l
                 && func
@@ -4595,7 +4596,9 @@ impl X86_64Vcpu {
                     .any(|op| {
                         matches!(
                             op.kind,
-                            OpKind::X86FsGsBase { .. } | OpKind::X86SwapGs { .. }
+                            OpKind::X86FsGsBase { .. }
+                                | OpKind::X86SwapGs { .. }
+                                | OpKind::X86MonitorMwait(..)
                         )
                     })
             {
@@ -5925,6 +5928,10 @@ mod jit_pkru_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_swapgs_tests.rs"]
 mod jit_swapgs_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_monitor_mwait_tests.rs"]
+mod jit_monitor_mwait_tests;
 
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {

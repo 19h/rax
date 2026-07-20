@@ -1,4 +1,5 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_vm, setup_vm_no_idt};
+use rax::vm::vcpu::{Registers, VCpu};
 
 // MONITOR/MWAIT - Set Up Monitor Address / Monitor Wait
 //
@@ -16,6 +17,15 @@ use crate::common::{run_until_hlt, setup_vm};
 // These instructions require CPL = 0 (kernel mode) on most processors.
 
 const ALIGNED_ADDR: u64 = 0x3000;
+
+fn assert_gp(code: &[u8]) {
+    let (mut vcpu, _) = setup_vm_no_idt(code, None);
+    let error = run_until_hlt(&mut vcpu).expect_err("reserved RCX extension must raise #GP(0)");
+    assert!(
+        error.to_string().contains("IDT entry 13 not present"),
+        "unexpected MONITOR/MWAIT extension fault: {error:#}"
+    );
+}
 
 #[test]
 fn test_monitor_basic() {
@@ -53,7 +63,7 @@ fn test_mwait_basic() {
 }
 
 #[test]
-fn test_monitor_with_rcx_hints() {
+fn test_monitor_rejects_undefined_rcx_extension() {
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
@@ -65,8 +75,7 @@ fn test_monitor_with_rcx_hints() {
         0x0f, 0x01, 0xc8, // MONITOR
         0xf4, // HLT
     ]);
-    let (mut vcpu, _) = setup_vm(&full_code, None);
-    run_until_hlt(&mut vcpu).unwrap();
+    assert_gp(&full_code);
 }
 
 #[test]
@@ -87,7 +96,7 @@ fn test_monitor_with_rdx_hints() {
 }
 
 #[test]
-fn test_mwait_with_c0_substate() {
+fn test_mwait_with_c0_hint() {
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
@@ -97,7 +106,8 @@ fn test_mwait_with_c0_substate() {
         0x31, 0xc9, // XOR ECX, ECX
         0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0x01, 0xc8, // MONITOR
-        0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (C0 state)
+        0xb8, 0xf0, 0x00, 0x00, 0x00, // MOV EAX, 0xF0 (C0 hint)
+        0x31, 0xc9, // XOR ECX, ECX
         0x0f, 0x01, 0xc9, // MWAIT
         0xf4, // HLT
     ]);
@@ -106,7 +116,7 @@ fn test_mwait_with_c0_substate() {
 }
 
 #[test]
-fn test_mwait_with_c1_substate() {
+fn test_mwait_with_c1_substate_hint() {
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
@@ -116,7 +126,8 @@ fn test_mwait_with_c1_substate() {
         0x31, 0xc9, // XOR ECX, ECX
         0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0x01, 0xc8, // MONITOR
-        0xb9, 0x10, 0x00, 0x00, 0x00, // MOV ECX, 0x10 (C1 state)
+        0xb8, 0x03, 0x00, 0x00, 0x00, // MOV EAX, 3 (C1 substate hint)
+        0x31, 0xc9, // XOR ECX, ECX
         0x0f, 0x01, 0xc9, // MWAIT
         0xf4, // HLT
     ]);
@@ -125,7 +136,7 @@ fn test_mwait_with_c1_substate() {
 }
 
 #[test]
-fn test_mwait_with_interrupt_break() {
+fn test_mwait_rejects_unenumerated_interrupt_break_extension() {
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
@@ -139,8 +150,7 @@ fn test_mwait_with_interrupt_break() {
         0x0f, 0x01, 0xc9, // MWAIT
         0xf4, // HLT
     ]);
-    let (mut vcpu, _) = setup_vm(&full_code, None);
-    run_until_hlt(&mut vcpu).unwrap();
+    assert_gp(&full_code);
 }
 
 #[test]
@@ -360,7 +370,7 @@ fn test_monitor_with_r9() {
 }
 
 #[test]
-fn test_mwait_with_ecx_substate_0() {
+fn test_mwait_with_zero_ecx_extension() {
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
@@ -379,7 +389,7 @@ fn test_mwait_with_ecx_substate_0() {
 }
 
 #[test]
-fn test_mwait_with_ecx_substate_1() {
+fn test_mwait_rejects_reserved_ecx_bit_0() {
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
@@ -393,12 +403,11 @@ fn test_mwait_with_ecx_substate_1() {
         0x0f, 0x01, 0xc9, // MWAIT
         0xf4, // HLT
     ]);
-    let (mut vcpu, _) = setup_vm(&full_code, None);
-    run_until_hlt(&mut vcpu).unwrap();
+    assert_gp(&full_code);
 }
 
 #[test]
-fn test_mwait_with_ecx_substate_2() {
+fn test_mwait_rejects_reserved_ecx_bit_5() {
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
@@ -412,12 +421,11 @@ fn test_mwait_with_ecx_substate_2() {
         0x0f, 0x01, 0xc9, // MWAIT
         0xf4, // HLT
     ]);
-    let (mut vcpu, _) = setup_vm(&full_code, None);
-    run_until_hlt(&mut vcpu).unwrap();
+    assert_gp(&full_code);
 }
 
 #[test]
-fn test_mwait_with_ecx_substate_3() {
+fn test_mwait_rejects_multiple_reserved_ecx_bits() {
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
@@ -431,8 +439,7 @@ fn test_mwait_with_ecx_substate_3() {
         0x0f, 0x01, 0xc9, // MWAIT
         0xf4, // HLT
     ]);
-    let (mut vcpu, _) = setup_vm(&full_code, None);
-    run_until_hlt(&mut vcpu).unwrap();
+    assert_gp(&full_code);
 }
 
 #[test]
@@ -456,7 +463,7 @@ fn test_monitor_mwait_pattern_1() {
 }
 
 #[test]
-fn test_monitor_mwait_pattern_2() {
+fn test_monitor_mwait_pattern_rejects_reserved_mwait_extension() {
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
@@ -471,12 +478,11 @@ fn test_monitor_mwait_pattern_2() {
         0x0f, 0x01, 0xc9, // MWAIT
         0xf4, // HLT
     ]);
-    let (mut vcpu, _) = setup_vm(&full_code, None);
-    run_until_hlt(&mut vcpu).unwrap();
+    assert_gp(&full_code);
 }
 
 #[test]
-fn test_monitor_multiple_granularities() {
+fn test_monitor_rejects_undefined_extension_with_hint() {
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
@@ -488,12 +494,11 @@ fn test_monitor_multiple_granularities() {
         0x0f, 0x01, 0xc8, // MONITOR
         0xf4, // HLT
     ]);
-    let (mut vcpu, _) = setup_vm(&full_code, None);
-    run_until_hlt(&mut vcpu).unwrap();
+    assert_gp(&full_code);
 }
 
 #[test]
-fn test_monitor_with_max_hints() {
+fn test_monitor_rejects_max_undefined_extension() {
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
@@ -505,12 +510,11 @@ fn test_monitor_with_max_hints() {
         0x0f, 0x01, 0xc8, // MONITOR
         0xf4, // HLT
     ]);
-    let (mut vcpu, _) = setup_vm(&full_code, None);
-    run_until_hlt(&mut vcpu).unwrap();
+    assert_gp(&full_code);
 }
 
 #[test]
-fn test_mwait_with_max_hints() {
+fn test_mwait_rejects_max_reserved_extension() {
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
@@ -524,8 +528,7 @@ fn test_mwait_with_max_hints() {
         0x0f, 0x01, 0xc9, // MWAIT
         0xf4, // HLT
     ]);
-    let (mut vcpu, _) = setup_vm(&full_code, None);
-    run_until_hlt(&mut vcpu).unwrap();
+    assert_gp(&full_code);
 }
 
 #[test]
@@ -551,7 +554,11 @@ fn test_monitor_high_address() {
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
-    run_until_hlt(&mut vcpu).unwrap();
+    let error = run_until_hlt(&mut vcpu).expect_err("MONITOR must perform a faulting byte read");
+    assert!(
+        error.to_string().contains("0x7fffffff"),
+        "unexpected MONITOR address fault: {error:#}"
+    );
 }
 
 #[test]
@@ -628,7 +635,7 @@ fn test_monitor_different_registers_sequence() {
 }
 
 #[test]
-fn test_mwait_different_ecx_sequence() {
+fn test_mwait_sequence_rejects_later_reserved_extension() {
     let code = [
         0x48, 0xb8, // MOV RAX, imm64
     ];
@@ -645,8 +652,7 @@ fn test_mwait_different_ecx_sequence() {
         0x0f, 0x01, 0xc9, // MWAIT
         0xf4, // HLT
     ]);
-    let (mut vcpu, _) = setup_vm(&full_code, None);
-    run_until_hlt(&mut vcpu).unwrap();
+    assert_gp(&full_code);
 }
 
 #[test]
@@ -660,7 +666,7 @@ fn test_monitor_mwait_comprehensive() {
         0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0
         0xba, 0x00, 0x00, 0x00, 0x00, // MOV EDX, 0
         0x0f, 0x01, 0xc8, // MONITOR
-        0xb9, 0x01, 0x00, 0x00, 0x00, // MOV ECX, 1
+        0x31, 0xc9, // XOR ECX, ECX
         0xba, 0x00, 0x00, 0x00, 0x00, // MOV EDX, 0
         0x0f, 0x01, 0xc9, // MWAIT
         0xf4, // HLT
@@ -682,8 +688,7 @@ fn test_monitor_with_various_ecx() {
         0x0f, 0x01, 0xc8, // MONITOR
         0xf4, // HLT
     ]);
-    let (mut vcpu, _) = setup_vm(&full_code, None);
-    run_until_hlt(&mut vcpu).unwrap();
+    assert_gp(&full_code);
 }
 
 #[test]
@@ -718,8 +723,7 @@ fn test_mwait_with_various_ecx() {
         0x0f, 0x01, 0xc9, // MWAIT
         0xf4, // HLT
     ]);
-    let (mut vcpu, _) = setup_vm(&full_code, None);
-    run_until_hlt(&mut vcpu).unwrap();
+    assert_gp(&full_code);
 }
 
 #[test]
@@ -754,16 +758,105 @@ fn test_mwait_state_transition_pattern() {
         0x31, 0xc9, // XOR ECX, ECX
         0x31, 0xd2, // XOR EDX, EDX
         0x0f, 0x01, 0xc8, // MONITOR
-        0xb9, 0x00, 0x00, 0x00, 0x00, // MOV ECX, 0 (C0)
+        0xb8, 0xf0, 0x00, 0x00, 0x00, // MOV EAX, 0xF0 (C0 hint)
+        0x31, 0xc9, // XOR ECX, ECX
         0x0f, 0x01, 0xc9, // MWAIT
+        0x48, 0xc7, 0xc0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, ALIGNED_ADDR
         0x0f, 0x01, 0xc8, // MONITOR
-        0xb9, 0x10, 0x00, 0x00, 0x00, // MOV ECX, 0x10 (C1)
+        0x31, 0xc0, // XOR EAX, EAX (C1 hint)
+        0x31, 0xc9, // XOR ECX, ECX
         0x0f, 0x01, 0xc9, // MWAIT
+        0x48, 0xc7, 0xc0, 0x00, 0x30, 0x00, 0x00, // MOV RAX, ALIGNED_ADDR
         0x0f, 0x01, 0xc8, // MONITOR
-        0xb9, 0x20, 0x00, 0x00, 0x00, // MOV ECX, 0x20 (C2)
+        0xb8, 0x10, 0x00, 0x00, 0x00, // MOV EAX, 0x10 (C2 hint)
+        0x31, 0xc9, // XOR ECX, ECX
         0x0f, 0x01, 0xc9, // MWAIT
         0xf4, // HLT
     ]);
     let (mut vcpu, _) = setup_vm(&full_code, None);
     run_until_hlt(&mut vcpu).unwrap();
+}
+
+#[test]
+fn monitor_cpl_fault_precedes_reserved_rcx_extension() {
+    let code = [0x0F, 0x01, 0xC8, 0xF4];
+    let mut regs = Registers::default();
+    regs.rax = ALIGNED_ADDR;
+    regs.rcx = 1;
+    let (mut vcpu, _) = setup_vm_no_idt(&code, Some(regs));
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = (sregs.cs.selector & !3) | 3;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    let error = vcpu
+        .step()
+        .expect_err("CPL != 0 MONITOR must raise #UD before checking RCX");
+    assert!(
+        error.to_string().contains("IDT entry 6 not present"),
+        "unexpected MONITOR privilege fault: {error:#}"
+    );
+}
+
+#[test]
+fn monitor_noncanonical_linear_address_raises_gp() {
+    let code = [0x0F, 0x01, 0xC8, 0xF4];
+    let mut regs = Registers::default();
+    regs.rax = 0x0000_8000_0000_0000;
+    regs.rcx = 0;
+    let (mut vcpu, _) = setup_vm_no_idt(&code, Some(regs));
+
+    let error =
+        run_until_hlt(&mut vcpu).expect_err("noncanonical MONITOR address must raise #GP(0)");
+    assert!(
+        error.to_string().contains("IDT entry 13 not present"),
+        "unexpected MONITOR canonicality fault: {error:#}"
+    );
+}
+
+#[test]
+fn monitor_noncanonical_ss_address_raises_ss() {
+    let code = [0x36, 0x0F, 0x01, 0xC8, 0xF4];
+    let mut regs = Registers::default();
+    regs.rax = 0x0000_8000_0000_0000;
+    regs.rcx = 0;
+    let (mut vcpu, _) = setup_vm_no_idt(&code, Some(regs));
+
+    let error = run_until_hlt(&mut vcpu).expect_err("noncanonical SS:MONITOR must raise #SS(0)");
+    assert!(
+        error.to_string().contains("IDT entry 12 not present"),
+        "unexpected SS:MONITOR canonicality fault: {error:#}"
+    );
+}
+
+#[test]
+fn monitor_addr32_ignores_non_fs_gs_segment_bases_in_long_mode() {
+    // DS override + address-size override + MONITOR; HLT.
+    let code = [0x3E, 0x67, 0x0F, 0x01, 0xC8, 0xF4];
+    let mut regs = Registers::default();
+    regs.rax = 0xFFFF_FFFF_0000_3000;
+    regs.rcx = 0;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.ds.base = 0x0200_0000;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    let after = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(after.rax, 0xFFFF_FFFF_0000_3000);
+}
+
+#[test]
+fn monitor_fs_override_contributes_the_long_mode_segment_base() {
+    // FS override + MONITOR; HLT. The unsegmented RAX address is outside the
+    // 16 MiB fixture, while FS.base + RAX wraps to the mapped address 0x3000.
+    let code = [0x64, 0x0F, 0x01, 0xC8, 0xF4];
+    let mut regs = Registers::default();
+    regs.rax = 0x0200_0000;
+    regs.rcx = 0;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.fs.base = 0xFFFF_FFFF_FE00_3000;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    let after = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(after.rax, 0x0200_0000);
 }
