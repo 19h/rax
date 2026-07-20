@@ -120,6 +120,8 @@ impl X86_64Lowerer {
 
             OpKind::X86Clts => self.emit_x86_clts(op)?,
 
+            OpKind::X86Msr(..) => self.emit_x86_msr(op)?,
+
             OpKind::X86ReadControl { .. } => self.emit_x86_read_control(op)?,
 
             OpKind::X86ReadDebug { .. } => self.emit_x86_read_debug(op)?,

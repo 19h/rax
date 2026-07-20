@@ -34,6 +34,8 @@ mod mmx_memory_source;
 #[cfg(test)]
 mod monitor_mwait;
 #[cfg(test)]
+mod msr;
+#[cfg(test)]
 mod pkru;
 #[cfg(test)]
 mod read_control;

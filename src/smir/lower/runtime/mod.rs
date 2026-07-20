@@ -31,12 +31,13 @@ use super::{
     X86_GUEST_EXIT_PC_OFFSET, X86_GUEST_FS_BASE_OFFSET, X86_GUEST_GPR_COUNT,
     X86_GUEST_GS_BASE_OFFSET, X86_GUEST_K_OFFSET, X86_GUEST_KERNEL_GS_BASE_OFFSET,
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MM_OFFSET, X86_GUEST_MMX_ACTIVE_OFFSET,
-    X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET, X86_GUEST_PAIR_STORE_FN_OFFSET,
-    X86_GUEST_PKRU_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
-    X86_GUEST_TR_TYPE_OFFSET, X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_TSC_FN_OFFSET,
-    X86_GUEST_VEC_LOAD_FN_OFFSET, X86_GUEST_VEC_STORE_FN_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET,
-    X86_GUEST_X87_TAG_WORD_OFFSET, X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET,
-    X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_MSR_FN_OFFSET, X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET,
+    X86_GUEST_PAIR_STORE_FN_OFFSET, X86_GUEST_PKRU_OFFSET, X86_GUEST_RFLAGS_OFFSET,
+    X86_GUEST_STORE_FN_OFFSET, X86_GUEST_TR_TYPE_OFFSET, X86_GUEST_TSC_ADJUST_OFFSET,
+    X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_TSC_FN_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET,
+    X86_GUEST_VEC_STORE_FN_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_X87_TAG_WORD_OFFSET,
+    X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET,
+    X86_STATE_PTR_AT_RBP,
 };
 
 // ---- module tree (auto-split) ----
@@ -239,6 +240,20 @@ pub struct GuestRegs {
     /// Address of `extern "C" fn(state, control, value) -> ok`, implementing
     /// canonical MOV-to-control-register validation and TLB synchronization.
     pub control_write_fn: u64,
+    /// Address of `extern "C" fn(state, write) -> ok`, implementing the
+    /// complete deterministic RDMSR/WRMSR profile.
+    pub msr_fn: u64,
+    /// IA32_TSC_ADJUST local timestamp-counter offset.
+    pub tsc_adjust: u64,
+    /// System-call and SYSENTER MSRs not otherwise represented by dedicated
+    /// native state fields.
+    pub star: u64,
+    pub lstar: u64,
+    pub cstar: u64,
+    pub fmask: u64,
+    pub sysenter_cs: u64,
+    pub sysenter_esp: u64,
+    pub sysenter_eip: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -297,6 +312,15 @@ impl Default for GuestRegs {
             cs_l: 0,
             tr_type: 0,
             control_write_fn: 0,
+            msr_fn: 0,
+            tsc_adjust: 0,
+            star: 0,
+            lstar: 0,
+            cstar: 0,
+            fmask: 0,
+            sysenter_cs: 0,
+            sysenter_esp: 0,
+            sysenter_eip: 0,
         }
     }
 }

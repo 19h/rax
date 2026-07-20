@@ -1,7 +1,8 @@
 //! System/privileged op execution
 
 use crate::isa::x86_64::execute::system::{
-    X86ControlWriteFault, X86ControlWriteState, validate_x86_control_write,
+    X86ControlWriteFault, X86ControlWriteState, X86MsrFault, X86MsrState, read_x86_msr,
+    validate_x86_control_write, validate_x86_msr_write,
 };
 use crate::smir::interpret::*;
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext, VecValue};
@@ -74,6 +75,95 @@ impl SmirInterpreter {
                     return Ok(());
                 }
                 x86.cr0 &= !(1 << 3);
+            }
+
+            OpKind::X86Msr(msr) => {
+                let index = ctx.read_vreg(msr.ecx) as u32;
+                let write_value = ((ctx.read_vreg(msr.edx) & u64::from(u32::MAX)) << 32)
+                    | (ctx.read_vreg(msr.eax) & u64::from(u32::MAX));
+                let tsc_base = ctx.cycle_count;
+                let state = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => {
+                        if x86.cr0 & 1 != 0 && x86.cpl != 0 {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                        X86MsrState {
+                            cr0: x86.cr0,
+                            tsc_adjust: x86.tsc_adjust,
+                            tsc_aux: x86.tsc_aux,
+                            efer: x86.efer,
+                            star: x86.star,
+                            lstar: x86.lstar,
+                            cstar: x86.cstar,
+                            fmask: x86.fmask,
+                            sysenter_cs: x86.sysenter_cs,
+                            sysenter_esp: x86.sysenter_esp,
+                            sysenter_eip: x86.sysenter_eip,
+                            fs_base: x86.fs_base,
+                            gs_base: x86.gs_base,
+                            kernel_gs_base: x86.kernel_gs_base,
+                        }
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                let tsc = tsc_base.wrapping_add(state.tsc_adjust);
+
+                if msr.write {
+                    let effect = match validate_x86_msr_write(index, write_value, state, tsc) {
+                        Ok(effect) => effect,
+                        Err(X86MsrFault::GeneralProtection) => {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                    };
+                    let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                        unreachable!("validated x86 MSR state changed")
+                    };
+                    x86.tsc_adjust = effect.state.tsc_adjust;
+                    x86.tsc_aux = effect.state.tsc_aux;
+                    x86.efer = effect.state.efer;
+                    x86.star = effect.state.star;
+                    x86.lstar = effect.state.lstar;
+                    x86.cstar = effect.state.cstar;
+                    x86.fmask = effect.state.fmask;
+                    x86.sysenter_cs = effect.state.sysenter_cs;
+                    x86.sysenter_esp = effect.state.sysenter_esp;
+                    x86.sysenter_eip = effect.state.sysenter_eip;
+                    x86.fs_base = effect.state.fs_base;
+                    x86.gs_base = effect.state.gs_base;
+                    x86.kernel_gs_base = effect.state.kernel_gs_base;
+                } else {
+                    let value = match read_x86_msr(index, state, tsc) {
+                        Ok(value) => value,
+                        Err(X86MsrFault::GeneralProtection) => {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                    };
+                    Self::write_x86_partial(
+                        ctx,
+                        msr.eax,
+                        value & u64::from(u32::MAX),
+                        OpWidth::W32,
+                    );
+                    Self::write_x86_partial(ctx, msr.edx, value >> 32, OpWidth::W32);
+                }
             }
 
             OpKind::X86ReadControl { dst, control } => {

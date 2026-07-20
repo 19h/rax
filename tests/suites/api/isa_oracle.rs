@@ -294,6 +294,38 @@ fn emits_exact_clts_guest_cr0_state_metadata() {
 }
 
 #[test]
+fn emits_exact_rdmsr_wrmsr_metadata_and_frontiers() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let read = decode_to_json(&[0x0F, 0x32], &opts).unwrap();
+    assert_eq!(read["smir"]["available"], true);
+    assert_eq!(read["smir"]["bytes_consumed"], 2);
+    let op = &read["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_msr");
+    assert_eq!(op["kind"]["eax"]["name"], "rax");
+    assert_eq!(op["kind"]["ecx"]["name"], "rcx");
+    assert_eq!(op["kind"]["edx"]["name"], "rdx");
+    assert_eq!(op["kind"]["write"], false);
+    assert_eq!(op["kind"]["next_pc"], 0x1002);
+    assert_eq!(op["writes"][0]["name"], "rax");
+    assert_eq!(op["writes"][1]["name"], "rdx");
+    assert_eq!(op["side_effects"], true);
+
+    let write = decode_to_json(&[0x66, 0x0F, 0x30], &opts).unwrap();
+    assert_eq!(write["smir"]["available"], true);
+    assert_eq!(write["smir"]["bytes_consumed"], 3);
+    let op = &write["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_msr");
+    assert_eq!(op["kind"]["write"], true);
+    assert_eq!(op["kind"]["next_pc"], 0x1003);
+    assert_eq!(op["writes"].as_array().unwrap().len(), 0);
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+}
+
+#[test]
 fn emits_exact_mov_from_control_register_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

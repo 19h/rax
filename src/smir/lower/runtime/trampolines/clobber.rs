@@ -641,6 +641,11 @@ pub(crate) fn block_is_clobber_safe(
         if matches!(op.kind, OpKind::X86Clts) && !x86_clts_shape_valid(&op.kind) {
             return false;
         }
+        if matches!(op.kind, OpKind::X86Msr(..))
+            && !crate::smir::lower::x86_64::x86_msr_shape_valid(op)
+        {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86ReadControl { .. }) && !read_control_ok {
             return false;
         }

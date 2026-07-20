@@ -1,98 +1,403 @@
 //! MSR instructions: RDMSR, WRMSR.
 
 use crate::error::Result;
+use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::vm::vcpu::VcpuExit;
 
 use super::control_regs::{is_cpl0, raise_gp0};
-use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 
-/// WRMSR (0x0F 0x30)
-pub fn wrmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // Privileged: WRMSR requires CPL 0.
-    if !is_cpl0(vcpu) {
-        return raise_gp0(vcpu);
-    }
-    let ecx = vcpu.regs.rcx as u32;
-    let value = ((vcpu.regs.rdx & 0xFFFF_FFFF) << 32) | (vcpu.regs.rax & 0xFFFF_FFFF);
+pub(crate) const IA32_TSC: u32 = 0x10;
+pub(crate) const IA32_APIC_BASE: u32 = 0x1B;
+pub(crate) const IA32_TSC_ADJUST: u32 = 0x3B;
+pub(crate) const IA32_SYSENTER_CS: u32 = 0x174;
+pub(crate) const IA32_SYSENTER_ESP: u32 = 0x175;
+pub(crate) const IA32_SYSENTER_EIP: u32 = 0x176;
+pub(crate) const IA32_TSC_DEADLINE: u32 = 0x6E0;
+pub(crate) const IA32_EFER: u32 = 0xC000_0080;
+pub(crate) const IA32_STAR: u32 = 0xC000_0081;
+pub(crate) const IA32_LSTAR: u32 = 0xC000_0082;
+pub(crate) const IA32_CSTAR: u32 = 0xC000_0083;
+pub(crate) const IA32_FMASK: u32 = 0xC000_0084;
+pub(crate) const IA32_FS_BASE: u32 = 0xC000_0100;
+pub(crate) const IA32_GS_BASE: u32 = 0xC000_0101;
+pub(crate) const IA32_KERNEL_GS_BASE: u32 = 0xC000_0102;
+pub(crate) const IA32_TSC_AUX: u32 = 0xC000_0103;
 
-    match ecx {
-        0x3B => vcpu.tsc_adjust = value,          // IA32_TSC_ADJUST
-        0x6E0 => {} // IA32_TSC_DEADLINE, not latched in the base profile
-        0xC0000080 => vcpu.sregs.efer = value, // EFER
-        0xC0000081 => vcpu.sregs.star = value, // STAR
-        0xC0000082 => vcpu.sregs.lstar = value, // LSTAR
-        0xC0000083 => vcpu.sregs.cstar = value, // CSTAR
-        0xC0000084 => vcpu.sregs.fmask = value, // FMASK
-        0x174 => vcpu.sregs.sysenter_cs = value, // IA32_SYSENTER_CS
-        0x175 => vcpu.sregs.sysenter_esp = value, // IA32_SYSENTER_ESP
-        0x176 => vcpu.sregs.sysenter_eip = value, // IA32_SYSENTER_EIP
-        0xC0000100 => vcpu.sregs.fs.base = value, // FS.base (TLS)
-        0xC0000101 => {
-            vcpu.sregs.gs.base = value; // GS.base (per-CPU data)
-            // WORKAROUND: When gs.base is set to a non-zero value, update the per-CPU
-            // CR0 shadow with the current CR0 value. This fixes the case where CR0 was
-            // written before per-CPU was set up, and the shadow was copied with garbage.
-            if value != 0 {
-                let percpu_offset = 0xffffffff836ee018u64;
-                let instance_addr = value.wrapping_add(percpu_offset);
-                // Flush TLB to ensure clean state
-                vcpu.mmu.flush_tlb();
-                // Write current CR0 to per-CPU shadow (ignore errors)
-                let _ = vcpu
-                    .mmu
-                    .write_u64(instance_addr, vcpu.sregs.cr0, &vcpu.sregs);
+const APIC_BASE_PROFILE_VALUE: u64 = (1 << 8) | (1 << 11) | 0xFEE0_0000;
+const CR0_PE: u64 = 1 << 0;
+const CR0_PG: u64 = 1 << 31;
+const EFER_SCE: u64 = 1 << 0;
+const EFER_LME: u64 = 1 << 8;
+const EFER_LMA: u64 = 1 << 10;
+const EFER_NXE: u64 = 1 << 11;
+const EFER_WRITABLE: u64 = EFER_SCE | EFER_LME | EFER_NXE;
+const EFER_DEFINED: u64 = EFER_WRITABLE | EFER_LMA;
+
+/// Architectural MSR state shared by direct execution, standalone SMIR
+/// interpretation, and helper-backed native execution.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) struct X86MsrState {
+    pub cr0: u64,
+    pub tsc_adjust: u64,
+    pub tsc_aux: u32,
+    pub efer: u64,
+    pub star: u64,
+    pub lstar: u64,
+    pub cstar: u64,
+    pub fmask: u64,
+    pub sysenter_cs: u64,
+    pub sysenter_esp: u64,
+    pub sysenter_eip: u64,
+    pub fs_base: u64,
+    pub gs_base: u64,
+    pub kernel_gs_base: u64,
+}
+
+/// Fully validated result of one WRMSR. Validation is pure and completes
+/// before any caller-visible state is committed.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86MsrWriteEffect {
+    pub state: X86MsrState,
+    /// WRMSR is serializing except for IA32_TSC_DEADLINE and x2APIC MSRs. The
+    /// deterministic profile exposes no x2APIC MSRs.
+    pub serializing: bool,
+    /// Preserve the direct emulator's Linux per-CPU CR0-shadow synchronization
+    /// after a successful IA32_GS_BASE write.
+    pub sync_gs_cr0_shadow: bool,
+    /// Invalidate cached translations when a translation-relevant EFER bit
+    /// changes. Validation remains non-committing; callers apply this effect
+    /// only after the complete WRMSR candidate has been accepted.
+    pub flush_tlb: bool,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum X86MsrFault {
+    GeneralProtection,
+}
+
+#[inline]
+pub(crate) fn is_canonical_48(value: u64) -> bool {
+    let upper = value >> 48;
+    upper == if value & (1 << 47) != 0 { 0xFFFF } else { 0 }
+}
+
+/// Read one implemented MSR. `tsc` is the caller's current architectural TSC,
+/// including IA32_TSC_ADJUST.
+pub(crate) fn read_x86_msr(
+    index: u32,
+    state: X86MsrState,
+    tsc: u64,
+) -> core::result::Result<u64, X86MsrFault> {
+    let value = match index {
+        IA32_TSC => tsc,
+        IA32_APIC_BASE => APIC_BASE_PROFILE_VALUE,
+        IA32_TSC_ADJUST => state.tsc_adjust,
+        IA32_SYSENTER_CS => state.sysenter_cs,
+        IA32_SYSENTER_ESP => state.sysenter_esp,
+        IA32_SYSENTER_EIP => state.sysenter_eip,
+        // The base profile does not latch a deadline because it does not expose
+        // LAPIC deadline mode. Retaining the established zero value keeps the
+        // hidden compatibility MSR deterministic.
+        IA32_TSC_DEADLINE => 0,
+        IA32_EFER => state.efer,
+        IA32_STAR => state.star,
+        IA32_LSTAR => state.lstar,
+        IA32_CSTAR => state.cstar,
+        IA32_FMASK => state.fmask,
+        IA32_FS_BASE => state.fs_base,
+        IA32_GS_BASE => state.gs_base,
+        IA32_KERNEL_GS_BASE => state.kernel_gs_base,
+        IA32_TSC_AUX => u64::from(state.tsc_aux),
+        _ => return Err(X86MsrFault::GeneralProtection),
+    };
+    Ok(value)
+}
+
+/// Validate and normalize one WRMSR candidate. `tsc` is the current
+/// architectural TSC, including the old IA32_TSC_ADJUST value.
+pub(crate) fn validate_x86_msr_write(
+    index: u32,
+    value: u64,
+    mut state: X86MsrState,
+    tsc: u64,
+) -> core::result::Result<X86MsrWriteEffect, X86MsrFault> {
+    let gp = || Err(X86MsrFault::GeneralProtection);
+    let mut sync_gs_cr0_shadow = false;
+    let mut flush_tlb = false;
+
+    match index {
+        IA32_TSC => {
+            // Writing IA32_TSC changes the local offset without changing the
+            // invariant clock source: new_adjust = old_adjust + (value-old_tsc).
+            state.tsc_adjust = state.tsc_adjust.wrapping_add(value.wrapping_sub(tsc));
+        }
+        IA32_APIC_BASE => {
+            // The emulator's LAPIC MMIO window is fixed. A same-value write is
+            // architecturally observable as success; relocation/disable values
+            // cannot be represented by the current machine profile.
+            if value != APIC_BASE_PROFILE_VALUE {
+                return gp();
             }
         }
-        0xC0000102 => vcpu.kernel_gs_base = value, // KernelGSbase
-        0xC0000103 => vcpu.tsc_aux = value as u32, // IA32_TSC_AUX
-        _ => {}                                    // Ignore unknown MSRs
+        IA32_TSC_ADJUST => state.tsc_adjust = value,
+        IA32_SYSENTER_CS => {
+            if value >> 32 != 0 {
+                return gp();
+            }
+            state.sysenter_cs = value;
+        }
+        IA32_SYSENTER_ESP => {
+            if !is_canonical_48(value) {
+                return gp();
+            }
+            state.sysenter_esp = value;
+        }
+        IA32_SYSENTER_EIP => {
+            if !is_canonical_48(value) {
+                return gp();
+            }
+            state.sysenter_eip = value;
+        }
+        IA32_TSC_DEADLINE => {
+            // Compatibility MSR: accepted but intentionally not latched.
+        }
+        IA32_EFER => {
+            if value & !EFER_DEFINED != 0 {
+                return gp();
+            }
+            if state.cr0 & CR0_PG != 0 && (value ^ state.efer) & EFER_LME != 0 {
+                return gp();
+            }
+            // LMA is processor-maintained and ignores software writes. This
+            // permits the standard read/modify/write sequence while active.
+            let normalized = (value & EFER_WRITABLE) | (state.efer & EFER_LMA);
+            flush_tlb = (normalized ^ state.efer) & (EFER_LME | EFER_NXE) != 0;
+            state.efer = normalized;
+        }
+        IA32_STAR => state.star = value,
+        IA32_LSTAR => {
+            if !is_canonical_48(value) {
+                return gp();
+            }
+            state.lstar = value;
+        }
+        IA32_CSTAR => state.cstar = value,
+        IA32_FMASK => {
+            if value >> 32 != 0 {
+                return gp();
+            }
+            state.fmask = value;
+        }
+        IA32_FS_BASE => {
+            if !is_canonical_48(value) {
+                return gp();
+            }
+            state.fs_base = value;
+        }
+        IA32_GS_BASE => {
+            if !is_canonical_48(value) {
+                return gp();
+            }
+            state.gs_base = value;
+            sync_gs_cr0_shadow = value != 0;
+        }
+        IA32_KERNEL_GS_BASE => {
+            if !is_canonical_48(value) {
+                return gp();
+            }
+            state.kernel_gs_base = value;
+        }
+        IA32_TSC_AUX => {
+            if value >> 32 != 0 {
+                return gp();
+            }
+            state.tsc_aux = value as u32;
+        }
+        _ => return gp(),
+    }
+
+    Ok(X86MsrWriteEffect {
+        state,
+        serializing: index != IA32_TSC_DEADLINE,
+        sync_gs_cr0_shadow,
+        flush_tlb,
+    })
+}
+
+fn vcpu_msr_state(vcpu: &X86_64Vcpu) -> X86MsrState {
+    X86MsrState {
+        cr0: vcpu.sregs.cr0,
+        tsc_adjust: vcpu.tsc_adjust,
+        tsc_aux: vcpu.tsc_aux,
+        efer: vcpu.sregs.efer,
+        star: vcpu.sregs.star,
+        lstar: vcpu.sregs.lstar,
+        cstar: vcpu.sregs.cstar,
+        fmask: vcpu.sregs.fmask,
+        sysenter_cs: vcpu.sregs.sysenter_cs,
+        sysenter_esp: vcpu.sregs.sysenter_esp,
+        sysenter_eip: vcpu.sregs.sysenter_eip,
+        fs_base: vcpu.sregs.fs.base,
+        gs_base: vcpu.sregs.gs.base,
+        kernel_gs_base: vcpu.kernel_gs_base,
+    }
+}
+
+fn commit_vcpu_msr_state(vcpu: &mut X86_64Vcpu, state: X86MsrState) {
+    vcpu.tsc_adjust = state.tsc_adjust;
+    vcpu.tsc_aux = state.tsc_aux;
+    vcpu.sregs.efer = state.efer;
+    vcpu.sregs.star = state.star;
+    vcpu.sregs.lstar = state.lstar;
+    vcpu.sregs.cstar = state.cstar;
+    vcpu.sregs.fmask = state.fmask;
+    vcpu.sregs.sysenter_cs = state.sysenter_cs;
+    vcpu.sregs.sysenter_esp = state.sysenter_esp;
+    vcpu.sregs.sysenter_eip = state.sysenter_eip;
+    vcpu.sregs.fs.base = state.fs_base;
+    vcpu.sregs.gs.base = state.gs_base;
+    vcpu.kernel_gs_base = state.kernel_gs_base;
+}
+
+pub(crate) fn sync_gs_cr0_shadow(vcpu: &mut X86_64Vcpu, gs_base: u64) {
+    // Existing Linux-boot compatibility: when GS.base establishes per-CPU
+    // storage after CR0 was initialized, refresh the shadow used by that guest.
+    let percpu_offset = 0xFFFF_FFFF_836E_E018u64;
+    let instance_addr = gs_base.wrapping_add(percpu_offset);
+    vcpu.mmu.flush_tlb();
+    let _ = vcpu
+        .mmu
+        .write_u64(instance_addr, vcpu.sregs.cr0, &vcpu.sregs);
+}
+
+#[inline]
+fn msr_access_allowed(vcpu: &X86_64Vcpu) -> bool {
+    vcpu.sregs.cr0 & CR0_PE == 0 || is_cpl0(vcpu)
+}
+
+/// WRMSR (`0F 30`).
+pub fn wrmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if !msr_access_allowed(vcpu) {
+        return raise_gp0(vcpu);
+    }
+    let index = vcpu.regs.rcx as u32;
+    let value =
+        ((vcpu.regs.rdx & u64::from(u32::MAX)) << 32) | (vcpu.regs.rax & u64::from(u32::MAX));
+    let tsc = vcpu.tsc();
+    let effect = match validate_x86_msr_write(index, value, vcpu_msr_state(vcpu), tsc) {
+        Ok(effect) => effect,
+        Err(X86MsrFault::GeneralProtection) => return raise_gp0(vcpu),
+    };
+
+    commit_vcpu_msr_state(vcpu, effect.state);
+    if effect.flush_tlb {
+        vcpu.mmu.flush_tlb();
+    }
+    if effect.sync_gs_cr0_shadow {
+        sync_gs_cr0_shadow(vcpu, effect.state.gs_base);
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
 
-/// RDMSR (0x0F 0x32)
+/// RDMSR (`0F 32`).
 pub fn rdmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // Privileged: RDMSR requires CPL 0.
-    if !is_cpl0(vcpu) {
+    if !msr_access_allowed(vcpu) {
         return raise_gp0(vcpu);
     }
-    let ecx = vcpu.regs.rcx as u32;
-
-    let value = match ecx {
-        0x10 => {
-            // IA32_TIME_STAMP_COUNTER. Return the same real-time value as the
-            // RDTSC instruction (vcpu.tsc()) so reads via the MSR and via the
-            // instruction agree; previously this used host wall-clock directly,
-            // which disagreed with RDTSC and made boots nondeterministic.
-            vcpu.tsc()
-        }
-        0x3B => vcpu.tsc_adjust, // IA32_TSC_ADJUST
-        0x1B => {
-            // IA32_APIC_BASE - APIC base address
-            // Bit 8: BSP flag (this is the bootstrap processor)
-            // Bit 11: APIC global enable
-            // Bits 12-35: APIC base physical address (default 0xFEE00000)
-            (1u64 << 8) | (1u64 << 11) | 0xFEE00000u64
-        }
-        0xC0000080 => vcpu.sregs.efer,     // EFER
-        0xC0000081 => vcpu.sregs.star,     // STAR
-        0xC0000082 => vcpu.sregs.lstar,    // LSTAR
-        0xC0000083 => vcpu.sregs.cstar,    // CSTAR
-        0xC0000084 => vcpu.sregs.fmask,    // FMASK
-        0x174 => vcpu.sregs.sysenter_cs,   // IA32_SYSENTER_CS
-        0x175 => vcpu.sregs.sysenter_esp,  // IA32_SYSENTER_ESP
-        0x176 => vcpu.sregs.sysenter_eip,  // IA32_SYSENTER_EIP
-        0x6E0 => 0,                        // IA32_TSC_DEADLINE
-        0xC0000100 => vcpu.sregs.fs.base,  // FS.base
-        0xC0000101 => vcpu.sregs.gs.base,  // GS.base
-        0xC0000102 => vcpu.kernel_gs_base, // KernelGSbase
-        0xC0000103 => vcpu.tsc_aux as u64, // IA32_TSC_AUX
-        _ => 0,                            // Return 0 for unknown MSRs
+    let index = vcpu.regs.rcx as u32;
+    let value = match read_x86_msr(index, vcpu_msr_state(vcpu), vcpu.tsc()) {
+        Ok(value) => value,
+        Err(X86MsrFault::GeneralProtection) => return raise_gp0(vcpu),
     };
 
-    vcpu.regs.rax = (value & 0xFFFF_FFFF) as u64;
-    vcpu.regs.rdx = (value >> 32) as u64;
+    vcpu.regs.rax = u64::from(value as u32);
+    vcpu.regs.rdx = u64::from((value >> 32) as u32);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn canonical_48_boundaries_are_exact() {
+        for value in [0, 0x0000_7FFF_FFFF_FFFF, 0xFFFF_8000_0000_0000, u64::MAX] {
+            assert!(is_canonical_48(value), "{value:#018x}");
+        }
+        for value in [0x0000_8000_0000_0000, 0xFFFF_7FFF_FFFF_FFFF] {
+            assert!(!is_canonical_48(value), "{value:#018x}");
+        }
+    }
+
+    #[test]
+    fn efer_writes_preserve_lma_and_reject_reserved_or_live_lme_changes() {
+        let state = X86MsrState {
+            cr0: CR0_PG,
+            efer: EFER_LME | EFER_LMA | EFER_NXE,
+            ..Default::default()
+        };
+        let effect = validate_x86_msr_write(
+            IA32_EFER,
+            EFER_SCE | EFER_LME | EFER_LMA | EFER_NXE,
+            state,
+            0,
+        )
+        .unwrap();
+        assert_eq!(effect.state.efer, EFER_SCE | EFER_LME | EFER_LMA | EFER_NXE);
+        assert!(!effect.flush_tlb, "SCE alone does not affect translation");
+        let nxe_effect = validate_x86_msr_write(IA32_EFER, EFER_LME | EFER_LMA, state, 0).unwrap();
+        assert!(nxe_effect.flush_tlb, "NXE changes invalidate translations");
+        assert_eq!(
+            validate_x86_msr_write(IA32_EFER, EFER_SCE | EFER_NXE, state, 0),
+            Err(X86MsrFault::GeneralProtection)
+        );
+        assert_eq!(
+            validate_x86_msr_write(IA32_EFER, state.efer | (1 << 12), state, 0),
+            Err(X86MsrFault::GeneralProtection)
+        );
+    }
+
+    #[test]
+    fn unknown_and_noncanonical_msr_accesses_fault_without_state() {
+        let state = X86MsrState {
+            fs_base: 0x1234,
+            ..Default::default()
+        };
+        assert_eq!(
+            read_x86_msr(0xDEAD_BEEF, state, 0),
+            Err(X86MsrFault::GeneralProtection)
+        );
+        assert_eq!(
+            validate_x86_msr_write(IA32_FS_BASE, 0x0000_8000_0000_0000, state, 0),
+            Err(X86MsrFault::GeneralProtection)
+        );
+        assert_eq!(state.fs_base, 0x1234);
+    }
+
+    #[test]
+    fn write_effects_classify_serialization_and_gs_shadow_exactly() {
+        let state = X86MsrState::default();
+        assert!(
+            validate_x86_msr_write(IA32_STAR, 0x1234, state, 0)
+                .unwrap()
+                .serializing
+        );
+        assert!(
+            !validate_x86_msr_write(IA32_TSC_DEADLINE, u64::MAX, state, 0)
+                .unwrap()
+                .serializing
+        );
+        assert!(
+            !validate_x86_msr_write(IA32_GS_BASE, 0, state, 0)
+                .unwrap()
+                .sync_gs_cr0_shadow
+        );
+        assert!(
+            validate_x86_msr_write(IA32_GS_BASE, 0x1000, state, 0)
+                .unwrap()
+                .sync_gs_cr0_shadow
+        );
+    }
 }

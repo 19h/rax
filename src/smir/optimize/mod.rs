@@ -3892,6 +3892,12 @@ impl OpKind {
                 }
             }
             OpKind::X86Cpuid { leaf, subleaf, .. } => result.extend([*leaf, *subleaf]),
+            OpKind::X86Msr(msr) => {
+                result.push(msr.ecx);
+                if msr.write {
+                    result.extend([msr.eax, msr.edx]);
+                }
+            }
             OpKind::X86WriteControl { src, .. } | OpKind::X86WriteDebug { src, .. } => {
                 result.push(*src)
             }

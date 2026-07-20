@@ -195,6 +195,7 @@ pub(crate) fn evaluate_cpuid(
                         | (1u32 << 8) // BMI2
                         | (1u32 << 5) // AVX2
                         | (1u32 << 3) // BMI1
+                        | (1u32 << 1) // TSC_ADJUST (IA32_TSC_ADJUST implemented)
                         | (1u32 << 0); // FSGSBASE
                 if state.xeon_phi_avx512 {
                     ebx |= (1u32 << 26) // AVX512PF

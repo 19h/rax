@@ -1599,12 +1599,13 @@ impl X86_64Vcpu {
     /// Execute a single instruction.
     #[inline]
     /// Per-vCPU timestamp counter. Real-time: tracks host wall-clock elapsed
-    /// since emulator start, scaled to the advertised 3 GHz (3 cycles/ns), so
-    /// the guest's RDTSC/TSC clocksource measures real time and delay loops
-    /// complete in real time — not tied to emulator instruction throughput.
+    /// since emulator start, scaled to the advertised 3 GHz (3 cycles/ns), and
+    /// applies the architectural per-vCPU IA32_TSC_ADJUST offset.
     #[inline(always)]
     pub(super) fn tsc(&self) -> u64 {
-        crate::vm::timing::elapsed_nanos().wrapping_mul(3)
+        crate::vm::timing::elapsed_nanos()
+            .wrapping_mul(3)
+            .wrapping_add(self.tsc_adjust)
     }
 
     pub fn step(&mut self) -> Result<Option<VcpuExit>> {
@@ -3741,6 +3742,12 @@ mod jit_control;
 use jit_control::rax_jit_write_control;
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_msr.rs"]
+mod jit_msr;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_msr::rax_jit_msr;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_tsc.rs"]
 mod jit_tsc;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4611,6 +4618,7 @@ impl X86_64Vcpu {
                             OpKind::X86FsGsBase { .. }
                                 | OpKind::X86SwapGs { .. }
                                 | OpKind::X86MonitorMwait(..)
+                                | OpKind::X86Msr(..)
                                 | OpKind::X86ReadControl { .. }
                                 | OpKind::X86WriteControl { .. }
                                 | OpKind::X86ReadDebug { .. }
@@ -4656,7 +4664,7 @@ impl X86_64Vcpu {
                 .iter()
                 .filter(|block| !exits.contains_key(&block.id))
                 .flat_map(|block| &block.ops)
-                .any(|op| matches!(op.kind, OpKind::X86ReadTsc(..)));
+                .any(|op| matches!(op.kind, OpKind::X86ReadTsc(..) | OpKind::X86Msr(..)));
             #[cfg(target_arch = "x86_64")]
             if uses_mmx && !x86_native_mmx_features_supported_excluding(&func, &exits) {
                 if jit_bail_log() {
@@ -4878,11 +4886,20 @@ impl X86_64Vcpu {
         // Canonical MOV-to-control-register validator/commit helper. Successful
         // writes end the region immediately after this call.
         gr.control_write_fn = rax_jit_write_control as usize as u64;
+        gr.msr_fn = rax_jit_msr as usize as u64;
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
         gr.kernel_gs_base = self.kernel_gs_base;
+        gr.tsc_adjust = self.tsc_adjust;
         gr.tsc_aux = self.tsc_aux;
+        gr.star = self.sregs.star;
+        gr.lstar = self.sregs.lstar;
+        gr.cstar = self.sregs.cstar;
+        gr.fmask = self.sregs.fmask;
+        gr.sysenter_cs = self.sregs.sysenter_cs;
+        gr.sysenter_esp = self.sregs.sysenter_esp;
+        gr.sysenter_eip = self.sregs.sysenter_eip;
         gr.pkru = self.pkru;
         gr.xcr0 = self.xcr0;
         gr.xgetbv1 = self.xgetbv1_value;
@@ -4998,6 +5015,8 @@ impl X86_64Vcpu {
         // the marshalled ABI before returning at a precise next-instruction PC.
         self.xcr0 = gr.xcr0;
         self.pkru = gr.pkru;
+        self.tsc_adjust = gr.tsc_adjust;
+        self.tsc_aux = gr.tsc_aux;
         self.sregs.cr0 = gr.cr0;
         self.sregs.cr2 = gr.cr2;
         self.sregs.cr3 = gr.cr3;
@@ -5010,6 +5029,13 @@ impl X86_64Vcpu {
         self.sregs.dr6 = gr.dr6;
         self.sregs.dr7 = gr.dr7;
         self.sregs.efer = gr.efer;
+        self.sregs.star = gr.star;
+        self.sregs.lstar = gr.lstar;
+        self.sregs.cstar = gr.cstar;
+        self.sregs.fmask = gr.fmask;
+        self.sregs.sysenter_cs = gr.sysenter_cs;
+        self.sregs.sysenter_esp = gr.sysenter_esp;
+        self.sregs.sysenter_eip = gr.sysenter_eip;
         self.sregs.fs.base = gr.fs_base;
         self.sregs.gs.base = gr.gs_base;
         self.kernel_gs_base = gr.kernel_gs_base;
@@ -5143,6 +5169,8 @@ impl X86_64Vcpu {
         let snap_fs_base = self.sregs.fs.base;
         let snap_gs_base = self.sregs.gs.base;
         let snap_kernel_gs_base = self.kernel_gs_base;
+        let snap_tsc_adjust = self.tsc_adjust;
+        let snap_tsc_aux = self.tsc_aux;
         let snap_pkru = self.pkru;
         let snap_cr0 = self.sregs.cr0;
         let snap_cr2 = self.sregs.cr2;
@@ -5150,6 +5178,13 @@ impl X86_64Vcpu {
         let snap_cr4 = self.sregs.cr4;
         let snap_cr8 = self.sregs.cr8;
         let snap_efer = self.sregs.efer;
+        let snap_star = self.sregs.star;
+        let snap_lstar = self.sregs.lstar;
+        let snap_cstar = self.sregs.cstar;
+        let snap_fmask = self.sregs.fmask;
+        let snap_sysenter_cs = self.sregs.sysenter_cs;
+        let snap_sysenter_esp = self.sregs.sysenter_esp;
+        let snap_sysenter_eip = self.sregs.sysenter_eip;
         let snap_dr0 = self.sregs.dr0;
         let snap_dr1 = self.sregs.dr1;
         let snap_dr2 = self.sregs.dr2;
@@ -5167,6 +5202,8 @@ impl X86_64Vcpu {
         let jit_fs_base = self.sregs.fs.base;
         let jit_gs_base = self.sregs.gs.base;
         let jit_kernel_gs_base = self.kernel_gs_base;
+        let jit_tsc_adjust = self.tsc_adjust;
+        let jit_tsc_aux = self.tsc_aux;
         let jit_pkru = self.pkru;
         let jit_cr0 = self.sregs.cr0;
         let jit_cr2 = self.sregs.cr2;
@@ -5174,6 +5211,13 @@ impl X86_64Vcpu {
         let jit_cr4 = self.sregs.cr4;
         let jit_cr8 = self.sregs.cr8;
         let jit_efer = self.sregs.efer;
+        let jit_star = self.sregs.star;
+        let jit_lstar = self.sregs.lstar;
+        let jit_cstar = self.sregs.cstar;
+        let jit_fmask = self.sregs.fmask;
+        let jit_sysenter_cs = self.sregs.sysenter_cs;
+        let jit_sysenter_esp = self.sregs.sysenter_esp;
+        let jit_sysenter_eip = self.sregs.sysenter_eip;
         let jit_dr0 = self.sregs.dr0;
         let jit_dr1 = self.sregs.dr1;
         let jit_dr2 = self.sregs.dr2;
@@ -5216,6 +5260,8 @@ impl X86_64Vcpu {
         self.sregs.fs.base = snap_fs_base;
         self.sregs.gs.base = snap_gs_base;
         self.kernel_gs_base = snap_kernel_gs_base;
+        self.tsc_adjust = snap_tsc_adjust;
+        self.tsc_aux = snap_tsc_aux;
         self.pkru = snap_pkru;
         self.sregs.cr0 = snap_cr0;
         self.sregs.cr2 = snap_cr2;
@@ -5223,6 +5269,13 @@ impl X86_64Vcpu {
         self.sregs.cr4 = snap_cr4;
         self.sregs.cr8 = snap_cr8;
         self.sregs.efer = snap_efer;
+        self.sregs.star = snap_star;
+        self.sregs.lstar = snap_lstar;
+        self.sregs.cstar = snap_cstar;
+        self.sregs.fmask = snap_fmask;
+        self.sregs.sysenter_cs = snap_sysenter_cs;
+        self.sregs.sysenter_esp = snap_sysenter_esp;
+        self.sregs.sysenter_eip = snap_sysenter_eip;
         self.sregs.dr0 = snap_dr0;
         self.sregs.dr1 = snap_dr1;
         self.sregs.dr2 = snap_dr2;
@@ -5339,6 +5392,8 @@ impl X86_64Vcpu {
                 ("fs_base", self.sregs.fs.base, jit_fs_base),
                 ("gs_base", self.sregs.gs.base, jit_gs_base),
                 ("kernel_gs_base", self.kernel_gs_base, jit_kernel_gs_base),
+                ("tsc_adjust", self.tsc_adjust, jit_tsc_adjust),
+                ("tsc_aux", u64::from(self.tsc_aux), u64::from(jit_tsc_aux)),
                 ("pkru", u64::from(self.pkru), u64::from(jit_pkru)),
                 ("cr0", self.sregs.cr0, jit_cr0),
                 ("cr2", self.sregs.cr2, jit_cr2),
@@ -5346,6 +5401,13 @@ impl X86_64Vcpu {
                 ("cr4", self.sregs.cr4, jit_cr4),
                 ("cr8", self.sregs.cr8, jit_cr8),
                 ("efer", self.sregs.efer, jit_efer),
+                ("star", self.sregs.star, jit_star),
+                ("lstar", self.sregs.lstar, jit_lstar),
+                ("cstar", self.sregs.cstar, jit_cstar),
+                ("fmask", self.sregs.fmask, jit_fmask),
+                ("sysenter_cs", self.sregs.sysenter_cs, jit_sysenter_cs),
+                ("sysenter_esp", self.sregs.sysenter_esp, jit_sysenter_esp),
+                ("sysenter_eip", self.sregs.sysenter_eip, jit_sysenter_eip),
                 ("dr0", self.sregs.dr0, jit_dr0),
                 ("dr1", self.sregs.dr1, jit_dr1),
                 ("dr2", self.sregs.dr2, jit_dr2),
@@ -5500,6 +5562,8 @@ impl X86_64Vcpu {
         self.sregs.fs.base = jit_fs_base;
         self.sregs.gs.base = jit_gs_base;
         self.kernel_gs_base = jit_kernel_gs_base;
+        self.tsc_adjust = jit_tsc_adjust;
+        self.tsc_aux = jit_tsc_aux;
         self.pkru = jit_pkru;
         self.sregs.cr0 = jit_cr0;
         self.sregs.cr2 = jit_cr2;
@@ -5507,6 +5571,13 @@ impl X86_64Vcpu {
         self.sregs.cr4 = jit_cr4;
         self.sregs.cr8 = jit_cr8;
         self.sregs.efer = jit_efer;
+        self.sregs.star = jit_star;
+        self.sregs.lstar = jit_lstar;
+        self.sregs.cstar = jit_cstar;
+        self.sregs.fmask = jit_fmask;
+        self.sregs.sysenter_cs = jit_sysenter_cs;
+        self.sregs.sysenter_esp = jit_sysenter_esp;
+        self.sregs.sysenter_eip = jit_sysenter_eip;
         self.sregs.dr0 = jit_dr0;
         self.sregs.dr1 = jit_dr1;
         self.sregs.dr2 = jit_dr2;
@@ -6074,6 +6145,10 @@ mod jit_monitor_mwait_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_tsc_tests.rs"]
 mod jit_tsc_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_msr_tests.rs"]
+mod jit_msr_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_ac_tests.rs"]

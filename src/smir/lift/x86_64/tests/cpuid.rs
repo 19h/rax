@@ -165,6 +165,7 @@ fn cpuid_interpreter_tracks_every_mutable_guest_profile_input() {
         x86.vp2intersect = true;
     });
     assert_eq!(leaf7[1] & ((1 << 26) | (1 << 27)), (1 << 26) | (1 << 27));
+    assert_ne!(leaf7[1] & (1 << 1), 0, "IA32_TSC_ADJUST must be enumerated");
     assert_ne!(leaf7[2] & (1 << 4), 0, "CR4.PKE must drive OSPKE");
     assert_ne!(leaf7[3] & (1 << 8), 0, "VP2INTERSECT gate");
 

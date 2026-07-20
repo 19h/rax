@@ -41,6 +41,19 @@ pub struct X86ReadTscOp {
     pub dst_aux: Option<VReg>,
 }
 
+/// RDMSR/WRMSR implicit-register operation. `write == false` reads the MSR
+/// selected by ECX into zero-extended EDX:EAX. `write == true` writes the low
+/// 32-bit EDX:EAX pair, preserves all three GPRs, and terminates native
+/// execution at the exact `next_pc` after a successful state transition.
+#[derive(Clone, Debug)]
+pub struct X86MsrOp {
+    pub eax: VReg,
+    pub ecx: VReg,
+    pub edx: VReg,
+    pub write: bool,
+    pub next_pc: u64,
+}
+
 /// MONITOR/MWAIT under the deterministic guest profile. `Some(addr)` is
 /// MONITOR: `hint` is EDX, validate CPL/RCX, then perform an ordered faulting
 /// byte read from the monitored linear address. `None` is MWAIT: `hint` is

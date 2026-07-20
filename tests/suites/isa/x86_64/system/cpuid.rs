@@ -235,7 +235,11 @@ fn test_cpuid_function_7_extended_features() {
     // implemented scalar/SIMD/system feature surface. IBT (EDX bit 20) must NOT
     // be advertised because the emulator does not enforce CET branch tracking.
     assert_eq!(regs.rax as u32, 1, "leaf 7 max subleaf");
-    assert_eq!(regs.rbx as u32, 0xF1BF0729, "leaf 7 EBX feature mask");
+    assert_eq!(regs.rbx as u32, 0xF1BF072B, "leaf 7 EBX feature mask");
+    assert!(
+        regs.rbx as u32 & (1 << 1) != 0,
+        "IA32_TSC_ADJUST advertised"
+    );
     assert!(regs.rbx as u32 & (1 << 5) != 0, "AVX2 advertised");
     assert!(regs.rbx as u32 & (1 << 9) != 0, "ERMS advertised");
     assert!(regs.rbx as u32 & (1 << 10) != 0, "INVPCID advertised");

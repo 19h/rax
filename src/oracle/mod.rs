@@ -24,6 +24,7 @@ use crate::smir::ir::ops::X86ControlReg;
 use crate::smir::ir::ops::X86CountKind;
 use crate::smir::ir::ops::X86DebugReg;
 use crate::smir::ir::ops::X86MonitorMwaitOp;
+use crate::smir::ir::ops::X86MsrOp;
 use crate::smir::ir::ops::X86PackedStringKind;
 use crate::smir::ir::ops::X86ReadTscOp;
 use crate::smir::ir::ops::X86Sha32Op;
@@ -2481,6 +2482,13 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src_high,
         } => op_json!("x86_xsetbv", selector, src_low, src_high),
         OpKind::X86Clts => op_json!("x86_clts"),
+        OpKind::X86Msr(X86MsrOp {
+            eax,
+            ecx,
+            edx,
+            write,
+            next_pc,
+        }) => op_json!("x86_msr", eax, ecx, edx, write, next_pc),
         OpKind::X86ReadControl { dst, control } => {
             op_json!("x86_read_control", dst, control)
         }

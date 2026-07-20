@@ -30,6 +30,8 @@ mod movdir64b;
 #[cfg(test)]
 mod movdiri;
 #[cfg(test)]
+mod msr;
+#[cfg(test)]
 mod packed_string;
 #[cfg(test)]
 mod pkru;

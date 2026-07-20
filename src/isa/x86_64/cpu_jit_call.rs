@@ -66,6 +66,8 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     vcpu.sregs.fs.base = gr.fs_base;
     vcpu.sregs.gs.base = gr.gs_base;
     vcpu.kernel_gs_base = gr.kernel_gs_base;
+    vcpu.tsc_adjust = gr.tsc_adjust;
+    vcpu.tsc_aux = gr.tsc_aux;
     vcpu.pkru = gr.pkru;
     // Publish every control register carried by the native ABI so the direct
     // callee observes prior native state and later native reads observe every
@@ -76,6 +78,13 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     vcpu.sregs.cr4 = gr.cr4;
     vcpu.sregs.cr8 = gr.cr8;
     vcpu.sregs.efer = gr.efer;
+    vcpu.sregs.star = gr.star;
+    vcpu.sregs.lstar = gr.lstar;
+    vcpu.sregs.cstar = gr.cstar;
+    vcpu.sregs.fmask = gr.fmask;
+    vcpu.sregs.sysenter_cs = gr.sysenter_cs;
+    vcpu.sregs.sysenter_esp = gr.sysenter_esp;
+    vcpu.sregs.sysenter_eip = gr.sysenter_eip;
     vcpu.sregs.dr0 = gr.dr0;
     vcpu.sregs.dr1 = gr.dr1;
     vcpu.sregs.dr2 = gr.dr2;
@@ -213,6 +222,8 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     gr.fs_base = vcpu.sregs.fs.base;
     gr.gs_base = vcpu.sregs.gs.base;
     gr.kernel_gs_base = vcpu.kernel_gs_base;
+    gr.tsc_adjust = vcpu.tsc_adjust;
+    gr.tsc_aux = vcpu.tsc_aux;
     gr.pkru = vcpu.pkru;
     gr.xcr0 = vcpu.xcr0;
     gr.xgetbv1 = vcpu.xgetbv1_value;
@@ -222,6 +233,13 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     gr.cr3 = vcpu.sregs.cr3;
     gr.cr8 = vcpu.sregs.cr8;
     gr.efer = vcpu.sregs.efer;
+    gr.star = vcpu.sregs.star;
+    gr.lstar = vcpu.sregs.lstar;
+    gr.cstar = vcpu.sregs.cstar;
+    gr.fmask = vcpu.sregs.fmask;
+    gr.sysenter_cs = vcpu.sregs.sysenter_cs;
+    gr.sysenter_esp = vcpu.sregs.sysenter_esp;
+    gr.sysenter_eip = vcpu.sregs.sysenter_eip;
     gr.cs_l = u64::from(vcpu.sregs.cs.l);
     gr.tr_type = u64::from(vcpu.sregs.tr.type_ & 0x0F);
     gr.dr0 = vcpu.sregs.dr0;

@@ -10,7 +10,7 @@
 //! Opcode: 0F 32
 //! Flags affected: None
 //!
-//! Reference: docs/rdmsr.txt
+//! Reference: Intel SDM Vol. 2B, RDMSR—Read From Model Specific Register.
 
 use crate::common::*;
 use rax::vm::vcpu::Registers;
@@ -34,6 +34,22 @@ fn test_rdmsr_basic() {
     // Upper 32 bits of RAX and RDX should be cleared in 64-bit mode
     assert_eq!(regs.rax >> 32, 0, "Upper 32 bits of RAX should be cleared");
     assert_eq!(regs.rdx >> 32, 0, "Upper 32 bits of RDX should be cleared");
+}
+
+#[test]
+fn test_rdmsr_real_mode_ignores_stale_cs_rpl() {
+    let mut input = Registers::default();
+    input.rcx = 0xC000_0081; // IA32_STAR
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x32], Some(input));
+    let expected = vcpu.get_sregs().unwrap().star;
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cr0 &= !1; // CR0.PE=0: real-address mode has no CPL.
+    sregs.cs.selector = 3;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    assert!(vcpu.step().unwrap().is_none());
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!((regs.rdx << 32) | regs.rax, expected);
 }
 
 #[test]
@@ -115,16 +131,18 @@ fn test_rdmsr_preserves_other_registers() {
 // ============================================================================
 
 #[test]
-fn test_rdmsr_msr_0() {
-    // Read MSR 0
+fn test_rdmsr_tsc_adjust() {
+    // Read the profile's IA32_TSC_ADJUST state.
     let code = [0x0F, 0x32, 0xF4];
     let mut regs = Registers::default();
-    regs.rcx = 0;
+    regs.rcx = 0x3B;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    assert_eq!(regs.rcx, 0, "ECX should not be modified");
+    assert_eq!(regs.rcx, 0x3B, "ECX should not be modified");
+    assert_eq!(regs.rax >> 32, 0);
+    assert_eq!(regs.rdx >> 32, 0);
 }
 
 #[test]
@@ -140,6 +158,23 @@ fn test_rdmsr_high_rcx_ignored() {
     // Should read MSR 0x10, ignoring high 32 bits
     assert_eq!(regs.rax >> 32, 0);
     assert_eq!(regs.rdx >> 32, 0);
+}
+
+#[test]
+fn test_rdmsr_lock_and_rex2_prefixes_raise_ud_without_outputs() {
+    for code in [&[0xF0, 0x0F, 0x32, 0xF4][..], &[0xD5, 0x80, 0x32, 0xF4]] {
+        let mut input = Registers::default();
+        input.rcx = 0x3B;
+        input.rax = 0x1111_2222_3333_4444;
+        input.rdx = 0x5555_6666_7777_8888;
+        let (mut vcpu, _) = setup_vm(code, Some(input));
+
+        let _ = vcpu.step();
+        let regs = vcpu.get_regs().unwrap();
+        assert_eq!(regs.rip, INT_HANDLER_ADDR, "{code:02X?}");
+        assert_eq!(regs.rax, 0x1111_2222_3333_4444);
+        assert_eq!(regs.rdx, 0x5555_6666_7777_8888);
+    }
 }
 
 #[test]
@@ -186,11 +221,11 @@ fn test_rdmsr_msr_c0000082_lstar() {
 }
 
 #[test]
-fn test_rdmsr_msr_mtrr_physbase0() {
-    // Read MTRR Physical Base 0
+fn test_rdmsr_tsc_aux() {
+    // Read IA32_TSC_AUX, consumed by RDTSCP and RDPID.
     let code = [0x0F, 0x32, 0xF4];
     let mut regs = Registers::default();
-    regs.rcx = 0x200; // IA32_MTRR_PHYSBASE0
+    regs.rcx = 0xC0000103; // IA32_TSC_AUX
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -310,17 +345,25 @@ fn test_rdmsr_eax_edx_loading() {
 // ============================================================================
 
 #[test]
-fn test_rdmsr_ecx_zero() {
-    // Reading MSR 0 (if implemented)
+fn test_rdmsr_unknown_selector_faults_without_clobbering_outputs() {
+    // The deterministic profile does not implement MSR 0, so RDMSR must #GP(0).
     let code = [0x0F, 0x32, 0xF4];
     let mut regs = Registers::default();
     regs.rcx = 0;
+    regs.rax = 0x1111_2222_3333_4444;
+    regs.rdx = 0x5555_6666_7777_8888;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
-    let regs = run_until_hlt(&mut vcpu).unwrap();
+    let _ = vcpu.step();
+    let regs = vcpu.get_regs().unwrap();
 
-    // Should complete (may #GP if MSR 0 not implemented, but that's expected)
+    assert_eq!(
+        regs.rip, INT_HANDLER_ADDR,
+        "unknown RDMSR must deliver #GP(0)"
+    );
     assert_eq!(regs.rcx, 0);
+    assert_eq!(regs.rax, 0x1111_2222_3333_4444);
+    assert_eq!(regs.rdx, 0x5555_6666_7777_8888);
 }
 
 #[test]
@@ -356,11 +399,11 @@ fn test_rdmsr_with_previous_eax_edx() {
 }
 
 #[test]
-fn test_rdmsr_ia32_misc_enable() {
-    // Read IA32_MISC_ENABLE (MSR 0x1A0)
+fn test_rdmsr_fmask() {
+    // Read IA32_FMASK.
     let code = [0x0F, 0x32, 0xF4];
     let mut regs = Registers::default();
-    regs.rcx = 0x1A0;
+    regs.rcx = 0xC0000084;
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -370,11 +413,11 @@ fn test_rdmsr_ia32_misc_enable() {
 }
 
 #[test]
-fn test_rdmsr_pat() {
-    // Read Page Attribute Table (PAT) MSR
+fn test_rdmsr_fs_base() {
+    // Read IA32_FS_BASE.
     let code = [0x0F, 0x32, 0xF4];
     let mut regs = Registers::default();
-    regs.rcx = 0x277; // IA32_PAT
+    regs.rcx = 0xC0000100; // IA32_FS_BASE
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
@@ -409,11 +452,11 @@ fn test_rdmsr_vs_rdtsc() {
 }
 
 #[test]
-fn test_rdmsr_perf_global_ctrl() {
-    // Read IA32_PERF_GLOBAL_CTRL
+fn test_rdmsr_tsc_adjust_again_after_tsc_reads() {
+    // IA32_TSC_ADJUST remains implemented after volatile timestamp reads.
     let code = [0x0F, 0x32, 0xF4];
     let mut regs = Registers::default();
-    regs.rcx = 0x38F; // IA32_PERF_GLOBAL_CTRL
+    regs.rcx = 0x3B; // IA32_TSC_ADJUST
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
 
     let regs = run_until_hlt(&mut vcpu).unwrap();

@@ -420,8 +420,18 @@ pub struct X86RegState {
     pub sse4a: bool,
     /// Whether the guest profile exposes Intel APX and its XSAVE component.
     pub apx_enabled: bool,
+    /// IA32_TSC_ADJUST local timestamp-counter offset.
+    pub tsc_adjust: u64,
     /// IA32_TSC_AUX value returned by RDPID (architecturally 32 bits).
     pub tsc_aux: u32,
+    /// System-call and SYSENTER MSR state used by RDMSR/WRMSR.
+    pub star: u64,
+    pub lstar: u64,
+    pub cstar: u64,
+    pub fmask: u64,
+    pub sysenter_cs: u64,
+    pub sysenter_esp: u64,
+    pub sysenter_eip: u64,
     /// x87 architectural environment and exact 80-bit physical registers.
     pub x87: X86X87State,
 }

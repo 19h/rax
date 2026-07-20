@@ -3967,6 +3967,11 @@ pub enum OpKind {
     /// no explicit operands but is stateful and potentially faulting.
     X86Clts,
 
+    /// RDMSR/WRMSR. Selector, values, and destinations are the fixed implicit
+    /// ECX/EDX:EAX registers; privilege and MSR-specific validation remain
+    /// dynamic and fault before any destination or MSR state commits.
+    X86Msr(X86MsrOp),
+
     /// `MOV r64, CR0/CR2/CR3/CR4/CR8`. The selected control register is
     /// implicit architecture state; `dst` is the encoded 64-bit GPR. The
     /// operation performs its dynamic real-mode/CPL check and is retained as
@@ -4465,6 +4470,7 @@ impl OpKind {
                 | OpKind::X86XGetBv { .. }
                 | OpKind::X86XSetBv { .. }
                 | OpKind::X86Clts
+                | OpKind::X86Msr(..)
                 | OpKind::X86ReadControl { .. }
                 | OpKind::X86WriteControl { .. }
                 | OpKind::X86ReadDebug { .. }
@@ -4879,6 +4885,14 @@ impl OpKind {
                 }
             }
 
+            OpKind::X86Msr(msr) => {
+                if msr.write {
+                    vec![]
+                } else {
+                    vec![msr.eax, msr.edx]
+                }
+            }
+
             OpKind::X86Cmpxchg8b16b { dst_lo, dst_hi, .. } => vec![*dst_lo, *dst_hi],
 
             OpKind::X86Random { dst, .. }
@@ -5159,6 +5173,7 @@ impl OpKind {
                     | OpKind::X86XGetBv { .. }
                     | OpKind::X86XSetBv { .. }
                     | OpKind::X86Clts
+                    | OpKind::X86Msr(..)
                     | OpKind::X86ReadControl { .. }
                     | OpKind::X86WriteControl { .. }
                     | OpKind::X86ReadDebug { .. }

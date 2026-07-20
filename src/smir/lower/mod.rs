@@ -157,6 +157,18 @@ pub const X86_GUEST_CS_L_OFFSET: i32 = X86_GUEST_EFER_OFFSET + 8;
 pub const X86_GUEST_TR_TYPE_OFFSET: i32 = X86_GUEST_CS_L_OFFSET + 8;
 /// Byte offset of the helper-backed MOV-to-control-register function pointer.
 pub const X86_GUEST_CONTROL_WRITE_FN_OFFSET: i32 = X86_GUEST_TR_TYPE_OFFSET + 8;
+/// Byte offset of the helper-backed RDMSR/WRMSR function pointer.
+pub const X86_GUEST_MSR_FN_OFFSET: i32 = X86_GUEST_CONTROL_WRITE_FN_OFFSET + 8;
+/// Byte offset of IA32_TSC_ADJUST.
+pub const X86_GUEST_TSC_ADJUST_OFFSET: i32 = X86_GUEST_MSR_FN_OFFSET + 8;
+/// Byte offsets of system-call and SYSENTER MSR state.
+pub const X86_GUEST_STAR_OFFSET: i32 = X86_GUEST_TSC_ADJUST_OFFSET + 8;
+pub const X86_GUEST_LSTAR_OFFSET: i32 = X86_GUEST_STAR_OFFSET + 8;
+pub const X86_GUEST_CSTAR_OFFSET: i32 = X86_GUEST_LSTAR_OFFSET + 8;
+pub const X86_GUEST_FMASK_OFFSET: i32 = X86_GUEST_CSTAR_OFFSET + 8;
+pub const X86_GUEST_SYSENTER_CS_OFFSET: i32 = X86_GUEST_FMASK_OFFSET + 8;
+pub const X86_GUEST_SYSENTER_ESP_OFFSET: i32 = X86_GUEST_SYSENTER_CS_OFFSET + 8;
+pub const X86_GUEST_SYSENTER_EIP_OFFSET: i32 = X86_GUEST_SYSENTER_ESP_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

@@ -54,6 +54,8 @@ mod fsgsbase;
 pub use fsgsbase::*;
 mod monitor_mwait;
 pub use monitor_mwait::*;
+mod msr;
+pub use msr::*;
 mod pkru;
 pub use pkru::*;
 mod read_control;

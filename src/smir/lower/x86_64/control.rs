@@ -639,6 +639,12 @@ impl X86_64Lowerer {
                 // Control-state changes must not execute a later native op.
                 return Ok(());
             }
+            if matches!(&block.ops[idx].kind, OpKind::X86Msr(msr) if msr.write) {
+                self.emit_x86_msr(&block.ops[idx])?;
+                // Successful WRMSR changes architectural admission state and
+                // both success/fault paths leave through exact exit stubs.
+                return Ok(());
+            }
             // The memory-fusion peepholes emit direct host-pointer accesses,
             // which are invalid under the JIT's MMU helper-call mode. In that
             // mode each Load/Store is lowered individually via the helper path

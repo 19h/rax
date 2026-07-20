@@ -7,10 +7,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign, X86VecMap,
-    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
-    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
-    X86XSaveKind,
+    X86MsrOp, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign,
+    X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
+    X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
+    X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -1024,6 +1024,32 @@ impl X86_64Lifter {
                 control_flow: ControlFlow::Syscall,
                 branch_targets: vec![],
             }),
+
+            // WRMSR/RDMSR (0F 30/32): ECX selects the MSR and EDX:EAX carries
+            // the 64-bit value. LOCK and REX2 are invalid; legacy size/repeat,
+            // segment, address-size, and ordinary REX prefixes are ignored.
+            0x30 | 0x32 => {
+                if prefix2.lock || prefix2.rex2.is_some() {
+                    return Err(LiftError::InvalidEncoding {
+                        addr: pc,
+                        bytes: vec![opcode2],
+                    });
+                }
+                Ok(LiftResult::fallthrough(
+                    vec![SmirOp::new(
+                        OpId(0),
+                        pc,
+                        OpKind::X86Msr(X86MsrOp {
+                            eax: self.gpr(0),
+                            ecx: self.gpr(1),
+                            edx: self.gpr(2),
+                            write: opcode2 == 0x30,
+                            next_pc: pc.wrapping_add(prefix2.cursor as u64),
+                        }),
+                    )],
+                    prefix2.cursor,
+                ))
+            }
 
             // RDTSC (0F 31): EDX:EAX := time-stamp counter.
             0x31 => {
