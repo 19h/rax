@@ -26,7 +26,6 @@ use crate::smir::ir::ops::X86DebugReg;
 use crate::smir::ir::ops::X86DescriptorTable;
 use crate::smir::ir::ops::X86DescriptorTableLoadOp;
 use crate::smir::ir::ops::X86DescriptorTableStoreOp;
-use crate::smir::ir::ops::X86FarJumpOp;
 use crate::smir::ir::ops::X86LmswOp;
 use crate::smir::ir::ops::X86LmswSource;
 use crate::smir::ir::ops::X86MonitorMwaitOp;
@@ -51,6 +50,7 @@ use crate::smir::ir::ops::X86X87EnvWidth;
 use crate::smir::ir::ops::X86X87FloatWidth;
 use crate::smir::ir::ops::X86X87IntWidth;
 use crate::smir::ir::ops::X86XSaveKind;
+use crate::smir::ir::ops::{X86FarCallOp, X86FarJumpOp};
 use crate::smir::ir::types::DispSize;
 use crate::smir::ir::types::X86AesOp;
 use crate::smir::lift::riscv::RiscVExtensions;
@@ -2605,6 +2605,22 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             next_pc,
         }) => op_json!(
             "x86_far_jump",
+            addr,
+            target,
+            offset_width,
+            requires_apx,
+            stack_segment,
+            next_pc
+        ),
+        OpKind::X86FarCall(X86FarCallOp {
+            addr,
+            target,
+            offset_width,
+            requires_apx,
+            stack_segment,
+            next_pc,
+        }) => op_json!(
+            "x86_far_call",
             addr,
             target,
             offset_width,

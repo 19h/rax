@@ -1,8 +1,9 @@
 //! System/privileged op execution
 
 use crate::isa::x86_64::execute::control::{
-    X86FarJumpDescriptor, decode_x86_far_jump_call_gate_target, decode_x86_far_jump_descriptor,
-    x86_far_jump_is_ia32e_call_gate,
+    X86FarJumpDescriptor, decode_x86_far_call_descriptor, decode_x86_far_call_gate_target,
+    decode_x86_far_jump_call_gate_target, decode_x86_far_jump_descriptor,
+    validate_x86_far_call_target_offset, x86_far_jump_is_ia32e_call_gate,
 };
 use crate::isa::x86_64::execute::system::{
     X86ControlWriteFault, X86ControlWriteState, X86MsrFault, X86MsrState, X86PmcFault, X86PmcState,
@@ -18,8 +19,8 @@ use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
     X86CacheControlKind, X86ControlReg, X86CountKind, X86DebugReg, X86DescriptorTable,
-    X86FarJumpOp, X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86SmswTarget, X86SystemSelector,
-    X86SystemSelectorSource, X86SystemSelectorTarget, X86ThreeDNowKind,
+    X86FarCallOp, X86FarJumpOp, X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86SmswTarget,
+    X86SystemSelector, X86SystemSelectorSource, X86SystemSelectorTarget, X86ThreeDNowKind,
     X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
     X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
     X86XSaveKind,
@@ -107,6 +108,53 @@ fn read_smir_u64(memory: &mut dyn SmirMemory, address: u64) -> Result<u64, Memor
     let mut bytes = [0_u8; 8];
     memory.read(address, &mut bytes)?;
     Ok(u64::from_le_bytes(bytes))
+}
+
+#[derive(Clone, Copy)]
+struct SmirFarCallStackWrite {
+    address: u64,
+    width: u8,
+    value: u64,
+}
+
+fn build_smir_far_call_frame(
+    initial_rsp: u64,
+    values: &[(u8, u64)],
+) -> Result<(Vec<SmirFarCallStackWrite>, u64), ()> {
+    let mut rsp = initial_rsp;
+    let mut writes = Vec::with_capacity(values.len());
+    for &(width, value) in values {
+        rsp = rsp.wrapping_sub(u64::from(width));
+        let canonical = rsp.checked_add(u64::from(width) - 1).is_some_and(|last| {
+            crate::isa::x86_64::execute::system::is_canonical_48(rsp)
+                && crate::isa::x86_64::execute::system::is_canonical_48(last)
+        });
+        if !canonical {
+            return Err(());
+        }
+        writes.push(SmirFarCallStackWrite {
+            address: rsp,
+            width,
+            value,
+        });
+    }
+    Ok((writes, rsp))
+}
+
+fn smir_null_long_mode_ss(cpl: u8) -> X86SystemSegmentCache {
+    X86SystemSegmentCache {
+        base: 0,
+        limit: 0xFFFF_FFFF,
+        type_: 0x3,
+        present: true,
+        dpl: cpl,
+        db: true,
+        s: true,
+        l: false,
+        g: true,
+        avl: false,
+        unusable: false,
+    }
 }
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -787,6 +835,302 @@ impl SmirInterpreter {
                 x86.cs_l = target_state.segment.l;
                 x86.cs_cache = cache;
                 ctx.write_vreg(*target, target_offset);
+            }
+
+            OpKind::X86FarCall(call) => {
+                let X86FarCallOp {
+                    addr,
+                    target,
+                    offset_width,
+                    requires_apx,
+                    stack_segment,
+                    next_pc,
+                } = call;
+                let uses_egpr = addr
+                    .regs()
+                    .iter()
+                    .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
+                let valid_shape = op.x86_hint.is_none()
+                    && matches!(next_pc.checked_sub(op.guest_pc), Some(2..=15))
+                    && matches!(offset_width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+                    && *target == VReg::Arch(ArchReg::X86(X86Reg::Rip))
+                    && addr.is_x86_state_backed_shape()
+                    && (!uses_egpr || *requires_apx);
+                if !valid_shape {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let (
+                    cpl,
+                    gdtr_base,
+                    gdtr_limit,
+                    ldtr_selector,
+                    ldtr_cache,
+                    tr_selector,
+                    tr_cache,
+                    old_cs,
+                    old_ss,
+                    old_rsp,
+                ) = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86)
+                        if x86.cr0 & 1 != 0
+                            && x86.rflags & crate::isa::x86_64::flags::bits::VM == 0
+                            && x86.efer & (1 << 10) != 0
+                            && x86.cs_l
+                            && (!*requires_apx || x86.apx_enabled) =>
+                    {
+                        (
+                            x86.cpl,
+                            x86.gdtr_base,
+                            x86.gdtr_limit,
+                            x86.ldtr_selector,
+                            x86.ldtr_cache.clone(),
+                            x86.tr_selector,
+                            x86.tr_cache.clone(),
+                            x86.cs_selector,
+                            x86.ss_selector,
+                            x86.gpr[4],
+                        )
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+
+                let pointer_address = self.compute_address(ctx, addr);
+                let pointer_size = offset_width.bits() as u64 / 8 + 2;
+                let canonical_pointer =
+                    pointer_address
+                        .checked_add(pointer_size - 1)
+                        .is_some_and(|last| {
+                            crate::isa::x86_64::execute::system::is_canonical_48(pointer_address)
+                                && crate::isa::x86_64::execute::system::is_canonical_48(last)
+                        });
+                if !canonical_pointer {
+                    ctx.request_exit(if *stack_segment {
+                        ExitReason::StackSegment {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        }
+                    } else {
+                        ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        }
+                    });
+                    return Ok(());
+                }
+
+                let mem_width = offset_width.to_mem_width();
+                let pointer_offset =
+                    self.load_memory(memory, pointer_address, mem_width, SignExtend::Zero)?;
+                let selector = self.load_memory(
+                    memory,
+                    pointer_address.wrapping_add(u64::from(mem_width.bytes())),
+                    MemWidth::B2,
+                    SignExtend::Zero,
+                )? as u16;
+
+                let mut descriptor_state = crate::smir::ir::context::X86RegState::new();
+                descriptor_state.gdtr_base = gdtr_base;
+                descriptor_state.gdtr_limit = gdtr_limit;
+                descriptor_state.ldtr_selector = ldtr_selector;
+                descriptor_state.ldtr_cache = ldtr_cache;
+                let mut selected_address =
+                    match x86_far_jump_descriptor_address(&descriptor_state, selector, 8) {
+                        Ok(address) => address,
+                        Err(fault) => {
+                            request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                            return Ok(());
+                        }
+                    };
+                let mut selected_low = read_smir_u64(memory, selected_address)?;
+                let selected_high = if x86_far_jump_is_ia32e_call_gate(selected_low, true) {
+                    selected_address =
+                        match x86_far_jump_descriptor_address(&descriptor_state, selector, 16) {
+                            Ok(address) => address,
+                            Err(fault) => {
+                                request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                                return Ok(());
+                            }
+                        };
+                    Some(read_smir_u64(memory, selected_address.wrapping_add(8))?)
+                } else {
+                    None
+                };
+                let descriptor = match decode_x86_far_call_descriptor(
+                    selector,
+                    selected_low,
+                    selected_high,
+                    pointer_offset,
+                    *offset_width,
+                    cpl,
+                    true,
+                ) {
+                    Ok(descriptor) => descriptor,
+                    Err(fault) => {
+                        request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                        return Ok(());
+                    }
+                };
+
+                let (target_state, stack_writes, final_rsp, new_ss) = match descriptor {
+                    X86FarJumpDescriptor::Code(target_state) => {
+                        let width = mem_width.bytes() as u8;
+                        let Ok((writes, final_rsp)) = build_smir_far_call_frame(
+                            old_rsp,
+                            &[(width, u64::from(old_cs)), (width, *next_pc)],
+                        ) else {
+                            ctx.request_exit(ExitReason::StackSegment {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        };
+                        (target_state, writes, final_rsp, None)
+                    }
+                    X86FarJumpDescriptor::CallGate(gate) => {
+                        selected_address = match x86_far_jump_descriptor_address(
+                            &descriptor_state,
+                            gate.selector,
+                            8,
+                        ) {
+                            Ok(address) => address,
+                            Err(fault) => {
+                                request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                                return Ok(());
+                            }
+                        };
+                        selected_low = read_smir_u64(memory, selected_address)?;
+                        let target_state = match decode_x86_far_call_gate_target(
+                            gate.selector,
+                            selected_low,
+                            gate.offset,
+                            cpl,
+                        ) {
+                            Ok(target) => target,
+                            Err(fault) => {
+                                request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                                return Ok(());
+                            }
+                        };
+                        let target_cpl = (target_state.segment.selector & 3) as u8;
+                        if target_cpl < cpl {
+                            let tr_error = u32::from(tr_selector & 0xFFFC);
+                            if tr_selector & 0xFFFC == 0
+                                || tr_cache.unusable
+                                || !tr_cache.present
+                                || tr_cache.s
+                                || !matches!(tr_cache.type_ & 0xF, 0x9 | 0xB)
+                            {
+                                ctx.request_exit(ExitReason::InvalidTss {
+                                    addr: op.guest_pc,
+                                    error_code: tr_error,
+                                });
+                                return Ok(());
+                            }
+                            let tss_offset = 4_u64 + u64::from(target_cpl) * 8;
+                            let tss_address = tr_cache.base.checked_add(tss_offset);
+                            let tss_valid = tss_offset + 7 <= u64::from(tr_cache.limit)
+                                && tss_address.is_some_and(|address| {
+                                    address.checked_add(7).is_some_and(|last| {
+                                        crate::isa::x86_64::execute::system::is_canonical_48(
+                                            address,
+                                        ) && crate::isa::x86_64::execute::system::is_canonical_48(
+                                            last,
+                                        )
+                                    })
+                                });
+                            if !tss_valid {
+                                ctx.request_exit(ExitReason::InvalidTss {
+                                    addr: op.guest_pc,
+                                    error_code: tr_error,
+                                });
+                                return Ok(());
+                            }
+                            let new_rsp = read_smir_u64(memory, tss_address.unwrap())?;
+                            let Ok((writes, final_rsp)) = build_smir_far_call_frame(
+                                new_rsp,
+                                &[
+                                    (8, u64::from(old_ss)),
+                                    (8, old_rsp),
+                                    (8, u64::from(old_cs)),
+                                    (8, *next_pc),
+                                ],
+                            ) else {
+                                ctx.request_exit(ExitReason::StackSegment {
+                                    addr: op.guest_pc,
+                                    error_code: 0,
+                                });
+                                return Ok(());
+                            };
+                            (
+                                target_state,
+                                writes,
+                                final_rsp,
+                                Some((u16::from(target_cpl), smir_null_long_mode_ss(target_cpl))),
+                            )
+                        } else {
+                            let Ok((writes, final_rsp)) = build_smir_far_call_frame(
+                                old_rsp,
+                                &[(8, u64::from(old_cs)), (8, *next_pc)],
+                            ) else {
+                                ctx.request_exit(ExitReason::StackSegment {
+                                    addr: op.guest_pc,
+                                    error_code: 0,
+                                });
+                                return Ok(());
+                            };
+                            (target_state, writes, final_rsp, None)
+                        }
+                    }
+                };
+                if let Err(fault) = validate_x86_far_call_target_offset(&target_state) {
+                    request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                    return Ok(());
+                }
+
+                // Probe every write before the first store. This preserves the
+                // operation's all-state-or-fault contract across page edges.
+                if selected_low != target_state.accessed_low {
+                    memory.probe(selected_address, 8, true)?;
+                }
+                for write in &stack_writes {
+                    memory.probe(write.address, usize::from(write.width), true)?;
+                }
+                if selected_low != target_state.accessed_low {
+                    memory.write(selected_address, &target_state.accessed_low.to_le_bytes())?;
+                }
+                for write in &stack_writes {
+                    let bytes = write.value.to_le_bytes();
+                    memory.write(write.address, &bytes[..usize::from(write.width)])?;
+                }
+
+                let target_offset = target_state.offset;
+                let target_selector = target_state.segment.selector;
+                let target_l = target_state.segment.l;
+                let target_cache = x86_system_segment_cache(&target_state.segment);
+                let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                    unreachable!("validated x86 far-CALL context changed")
+                };
+                if let Some((selector, cache)) = new_ss {
+                    x86.ss_selector = selector;
+                    x86.ss_cache = cache;
+                }
+                x86.gpr[4] = final_rsp;
+                x86.cs_selector = target_selector;
+                x86.cs_l = target_l;
+                x86.cs_cache = target_cache;
+                x86.cpl = (target_selector & 3) as u8;
+                x86.rip = target_offset;
             }
 
             OpKind::X86Lmsw(lmsw) => {

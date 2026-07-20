@@ -146,6 +146,24 @@ pub struct X86FarJumpOp {
     pub next_pc: u64,
 }
 
+/// Indirect far CALL (`FF /3`) through a memory far pointer. Direct code
+/// targets push a width-selected CS:return-IP frame; IA-32e call gates use
+/// fixed 64-bit entries and may select a more-privileged TSS stack. Pointer,
+/// descriptor, TSS, stack, accessed-bit, and CS:RIP:RSP[:SS] effects form one
+/// fault-precise operation.
+#[derive(Clone, Debug)]
+pub struct X86FarCallOp {
+    pub addr: Address,
+    pub target: VReg,
+    pub offset_width: OpWidth,
+    pub requires_apx: bool,
+    /// Select #SS(0), rather than #GP(0), for a noncanonical far-pointer range
+    /// whose default segment is SS.
+    pub stack_segment: bool,
+    /// Architectural return address and exact source-instruction end.
+    pub next_pc: u64,
+}
+
 /// Architecturally distinct LMSW sources. Both forms read exactly 16 bits;
 /// operand-size prefixes never change the source width.
 #[derive(Clone, Debug)]

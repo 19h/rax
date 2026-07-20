@@ -664,6 +664,19 @@ impl X86_64Lowerer {
                 // deoptimization paths return before the generic indirect term.
                 return Ok(());
             }
+            if matches!(block.ops[idx].kind, OpKind::X86FarCall(..)) {
+                if idx + 1 != block.ops.len() || !x86_far_call_terminal_shape_valid(block) {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86FarCall".to_string(),
+                        operand: "must be the sole owner of a matching terminal indirect branch"
+                            .to_string(),
+                    });
+                }
+                self.emit_x86_far_call(&block.ops[idx])?;
+                // The helper owns return-frame construction and the dynamic
+                // target; both success and replay paths return before the term.
+                return Ok(());
+            }
             if matches!(&block.ops[idx].kind, OpKind::X86Msr(msr) if msr.write) {
                 self.emit_x86_msr(&block.ops[idx])?;
                 // Successful WRMSR changes architectural admission state and

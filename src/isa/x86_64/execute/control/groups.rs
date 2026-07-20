@@ -3,8 +3,8 @@
 use crate::error::{Error, Result};
 use crate::vm::vcpu::VcpuExit;
 
-use super::X86FarJumpLoadFault;
 use super::call::{near_branch_op_size, validate_far_selector};
+use super::{X86FarCallLoadFault, X86FarJumpLoadFault};
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::execute::system::X86SystemDescriptorFault;
 use crate::smir::ir::types::OpWidth;
@@ -120,10 +120,52 @@ fn group5_call_far(
         vcpu.inject_exception(6, None)?;
         return Ok(None);
     }
-    let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
+    let (addr, extra, stack_segment) =
+        vcpu.decode_modrm_addr_with_stack_segment(ctx, modrm_start)?;
     ctx.cursor = modrm_start + 1 + extra;
 
     let offset_size = ctx.op_size;
+
+    if vcpu.sregs.cs.l && vcpu.sregs.efer & (1 << 10) != 0 {
+        let width = match offset_size {
+            2 => OpWidth::W16,
+            4 => OpWidth::W32,
+            8 => OpWidth::W64,
+            _ => {
+                return Err(Error::Emulator(format!(
+                    "CALL FAR invalid long-mode offset size: {offset_size}"
+                )));
+            }
+        };
+        let return_pc = vcpu.regs.rip.wrapping_add(ctx.cursor as u64);
+        match vcpu.call_far_long_mode(addr, width, stack_segment, return_pc, false) {
+            Ok(()) => return Ok(None),
+            Err(X86FarCallLoadFault::Architectural(
+                X86SystemDescriptorFault::GeneralProtection { error_code },
+            )) => {
+                vcpu.inject_exception(13, Some(u64::from(error_code)))?;
+                return Ok(None);
+            }
+            Err(X86FarCallLoadFault::Architectural(
+                X86SystemDescriptorFault::SegmentNotPresent { error_code },
+            )) => {
+                vcpu.inject_exception(11, Some(u64::from(error_code)))?;
+                return Ok(None);
+            }
+            Err(X86FarCallLoadFault::StackSegment { error_code }) => {
+                vcpu.inject_exception(12, Some(u64::from(error_code)))?;
+                return Ok(None);
+            }
+            Err(X86FarCallLoadFault::InvalidTss { error_code }) => {
+                vcpu.inject_exception(10, Some(u64::from(error_code)))?;
+                return Ok(None);
+            }
+            Err(X86FarCallLoadFault::Memory(error)) => return Err(error),
+            Err(X86FarCallLoadFault::NativeDeopt) => {
+                unreachable!("direct long-mode far CALL does not request native preflight")
+            }
+        }
+    }
 
     // Read offset and selector from memory
     let offset = vcpu.read_mem(addr, offset_size)?;
@@ -133,7 +175,7 @@ fn group5_call_far(
     let new_cpl = selector & 0x3;
     if new_cpl != old_cpl {
         return Err(Error::Emulator(
-            "JMP FAR privilege change not supported".to_string(),
+            "CALL FAR privilege change not supported".to_string(),
         ));
     }
 
@@ -162,8 +204,7 @@ fn group5_call_far(
         }
     }
 
-    // Load new CS:IP. Far JMP cannot lower CPL; use the same lenient,
-    // CPL-preserving CS load as the immediate far-JMP path.
+    // Compatibility/legacy execution retains the historical lenient loader.
     vcpu.load_code_segment_far_jmp(selector);
     vcpu.regs.rip = offset;
     Ok(None)

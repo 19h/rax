@@ -3762,6 +3762,12 @@ mod jit_far_jump;
 use jit_far_jump::rax_jit_far_jump;
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_far_call.rs"]
+mod jit_far_call;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_far_call::rax_jit_far_call;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_msr.rs"]
 mod jit_msr;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4475,7 +4481,9 @@ impl X86_64Vcpu {
             x86_native_vector_uses_k16_opmasks_excluding,
         };
         #[cfg(target_arch = "x86_64")]
-        use crate::smir::lower::x86_64::{X86_64Lowerer, x86_far_jump_terminal_shape_valid};
+        use crate::smir::lower::x86_64::{
+            X86_64Lowerer, x86_far_call_terminal_shape_valid, x86_far_jump_terminal_shape_valid,
+        };
         use crate::smir::optimize::{OptLevel, optimize_function};
         use std::collections::HashMap;
 
@@ -4557,7 +4565,8 @@ impl X86_64Vcpu {
                     Terminator::IndirectBranch { .. } => {
                         #[cfg(target_arch = "x86_64")]
                         {
-                            !x86_far_jump_terminal_shape_valid(b)
+                            !(x86_far_jump_terminal_shape_valid(b)
+                                || x86_far_call_terminal_shape_valid(b))
                         }
                         #[cfg(target_arch = "aarch64")]
                         {
@@ -4601,7 +4610,10 @@ impl X86_64Vcpu {
                 .blocks
                 .iter()
                 .filter(|block| !exits.contains_key(&block.id))
-                .any(x86_far_jump_terminal_shape_valid);
+                .any(|block| {
+                    x86_far_jump_terminal_shape_valid(block)
+                        || x86_far_call_terminal_shape_valid(block)
+                });
             #[cfg(target_arch = "aarch64")]
             let has_native_terminal = false;
             if exits.is_empty() && edge_exits.is_empty() && !has_native_terminal {
@@ -4670,6 +4682,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86SystemSelectorStore(..)
                                 | OpKind::X86SystemSelectorLoad(..)
                                 | OpKind::X86FarJump(..)
+                                | OpKind::X86FarCall(..)
                                 | OpKind::X86WriteControl { .. }
                                 | OpKind::X86ReadDebug { .. }
                                 | OpKind::X86WriteDebug { .. }
@@ -4948,6 +4961,7 @@ impl X86_64Vcpu {
         gr.system_selector_fn = rax_jit_system_selector as usize as u64;
         gr.system_selector_load_fn = rax_jit_system_selector_load as usize as u64;
         gr.far_jump_fn = rax_jit_far_jump as usize as u64;
+        gr.far_call_fn = rax_jit_far_call as usize as u64;
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
@@ -6255,6 +6269,10 @@ mod jit_selector_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_far_jump_tests.rs"]
 mod jit_far_jump_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_far_call_tests.rs"]
+mod jit_far_call_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_read_debug_tests.rs"]

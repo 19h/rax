@@ -852,6 +852,46 @@ impl Mmu {
         }
     }
 
+    /// Preflight every translated chunk of a write without modifying guest
+    /// data. Multi-access architectural operations use this before their first
+    /// store so a later translation or unmapped-physical-range failure cannot
+    /// expose a partially written frame.
+    pub(super) fn preflight_write_range(
+        &mut self,
+        vaddr: u64,
+        len: usize,
+        sregs: &SystemRegisters,
+    ) -> Result<()> {
+        if len == 0 {
+            return Ok(());
+        }
+        if vaddr.checked_add(len as u64 - 1).is_none() {
+            return Err(Error::Emulator(format!(
+                "write range wraps the linear-address space at {vaddr:#x}"
+            )));
+        }
+
+        let mut current = vaddr;
+        let mut remaining = len;
+        while remaining != 0 {
+            let page_remaining = (0x1000 - (current & 0xFFF)) as usize;
+            let chunk = remaining.min(page_remaining);
+            let paddr = self.translate(current, AccessType::Write, sregs)?;
+            let physical_range_valid = Self::is_lapic_addr(paddr)
+                || self.in_pci_aperture(paddr)
+                || self.in_ram(paddr, chunk)
+                || self.memory.check_range(GuestAddress(paddr), chunk);
+            if !physical_range_valid {
+                return Err(Error::Emulator(format!(
+                    "failed to preflight write at {paddr:#x}: physical range is unmapped"
+                )));
+            }
+            remaining -= chunk;
+            current = current.wrapping_add(chunk as u64);
+        }
+        Ok(())
+    }
+
     /// Check that an entire translated access resolves to ordinary RAM without
     /// performing the data access. Native helpers that may subsequently deopt
     /// use this fail-closed probe to avoid speculatively touching MMIO and then

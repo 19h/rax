@@ -165,7 +165,7 @@ fn far_jump_strictly_lifts_widths_addresses_segments_and_dynamic_target() {
 }
 
 #[test]
-fn far_jump_invalid_group5_encodings_trap_without_reintroducing_far_call_support() {
+fn far_jump_invalid_group5_encodings_trap_while_far_call_has_its_own_typed_op() {
     for bytes in [
         &[0xFF, 0xE8][..], // register FF /5
         &[0xFF, 0xD8],     // register FF /3
@@ -182,8 +182,11 @@ fn far_jump_invalid_group5_encodings_trap_without_reintroducing_far_call_support
         ));
     }
     assert!(matches!(
-        lift_single(&[0xFF, 0x18]),
-        Err(LiftError::Unsupported { mnemonic, .. }) if mnemonic == "group5 far call"
+        lift_single(&[0xFF, 0x18]).unwrap().ops.as_slice(),
+        [SmirOp {
+            kind: OpKind::X86FarCall(_),
+            ..
+        }]
     ));
     assert!(matches!(
         lift_single(&[0xF0, 0xFF, 0x28]),

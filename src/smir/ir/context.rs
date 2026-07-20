@@ -35,6 +35,8 @@ pub enum ExitReason {
     Debug { addr: GuestAddr },
     /// x86 stack-segment exception with its architectural error code.
     StackSegment { addr: GuestAddr, error_code: u32 },
+    /// x86 invalid-TSS exception with its selector-derived error code.
+    InvalidTss { addr: GuestAddr, error_code: u32 },
     /// x86 unmasked SIMD floating-point exception (#XM).
     SimdFloatingPoint { addr: GuestAddr },
     /// External interrupt
@@ -404,6 +406,10 @@ pub struct X86RegState {
     /// update these atomically with RIP after every memory and descriptor check.
     pub cs_selector: u16,
     pub cs_cache: X86SystemSegmentCache,
+    /// Visible SS selector and hidden cache. IA-32e call-gate privilege
+    /// transitions install a null selector whose RPL equals the new CPL.
+    pub ss_selector: u16,
+    pub ss_cache: X86SystemSegmentCache,
     /// Local descriptor-table selector exposed by SLDT.
     pub ldtr_selector: u16,
     /// Hidden descriptor cache loaded by LLDT. The visible selector remains a

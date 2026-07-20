@@ -1,6 +1,6 @@
 //! Legacy opcode `FF` Group 5 lifting.
 
-use crate::smir::ir::ops::X86FarJumpOp;
+use crate::smir::ir::ops::{X86FarCallOp, X86FarJumpOp};
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
@@ -132,20 +132,37 @@ impl X86_64Lifter {
             });
         }
 
-        // Far CALL remains the one valid Group-5 form not yet represented in
-        // SMIR. Keep its strict barrier explicit and do not synthesize an
-        // ordinary scalar load that would split its fault/stack transaction.
         if group == 3 {
-            if self.strict {
-                return Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: "group5 far call".to_string(),
-                });
-            }
-            return Ok(LiftResult::fallthrough(
-                vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
-                prefix.cursor + modrm.bytes_consumed,
+            let x86_addr = modrm
+                .addr
+                .as_ref()
+                .expect("validated far-CALL memory operand changed");
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            ops.extend(pre_ops);
+            let target = VReg::Arch(ArchReg::X86(X86Reg::Rip));
+            let stack_segment = match prefix.segment_override {
+                Some(0x36) => true,
+                Some(_) => false,
+                None => x86_addr.base.is_some_and(|base| matches!(base & 7, 4 | 5)),
+            };
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86FarCall(X86FarCallOp {
+                    addr,
+                    target,
+                    offset_width: prefix.op_width(),
+                    requires_apx: prefix.rex2.is_some(),
+                    stack_segment,
+                    next_pc,
+                }),
             ));
+            return Ok(LiftResult {
+                ops,
+                bytes_consumed: prefix.cursor + modrm.bytes_consumed,
+                control_flow: ControlFlow::IndirectBranch { target },
+                branch_targets: vec![],
+            });
         }
 
         if modrm.is_memory && (group == 2 || group == 4) {

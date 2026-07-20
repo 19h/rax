@@ -4001,6 +4001,11 @@ pub enum OpKind {
     /// or IA-32e call gate; all descriptor effects precede one CS:RIP commit.
     X86FarJump(X86FarJumpOp),
 
+    /// `FF /3` indirect far CALL. The operation owns pointer/descriptor/TSS
+    /// reads, the complete return frame, and the terminal CS:RIP:RSP[:SS]
+    /// commit so no generic load or near-CALL lowering can split its faults.
+    X86FarCall(X86FarCallOp),
+
     /// LMSW reads a fixed-width register or memory source after APX/CPL
     /// validation, updates CR0[3:0] without clearing PE, and is serializing.
     /// Native execution must hand off at `next_pc` after a successful commit.
@@ -4518,6 +4523,7 @@ impl OpKind {
                 | OpKind::X86SystemSelectorStore(..)
                 | OpKind::X86SystemSelectorLoad(..)
                 | OpKind::X86FarJump(..)
+                | OpKind::X86FarCall(..)
                 | OpKind::X86Lmsw(..)
                 | OpKind::X86DescriptorTableStore(..)
                 | OpKind::X86DescriptorTableLoad(..)
@@ -4959,6 +4965,7 @@ impl OpKind {
                 ..
             }) => vec![*dst],
             OpKind::X86FarJump(jump) => vec![jump.target],
+            OpKind::X86FarCall(call) => vec![call.target],
             OpKind::X86ReadDebug { dst, .. } => vec![*dst],
 
             OpKind::CmpyW128Sat { dst, .. } | OpKind::SatOrigShl { dst, .. } => vec![*dst],
@@ -5252,6 +5259,7 @@ impl OpKind {
                     | OpKind::X86SystemSelectorStore(..)
                     | OpKind::X86SystemSelectorLoad(..)
                     | OpKind::X86FarJump(..)
+                    | OpKind::X86FarCall(..)
                     | OpKind::X86Lmsw(..)
                     | OpKind::X86DescriptorTableStore(..)
                     | OpKind::X86DescriptorTableLoad(..)
@@ -5372,6 +5380,7 @@ impl OpKind {
                 | OpKind::X86XRstor { .. }
                 | OpKind::X86SystemSelectorLoad(..)
                 | OpKind::X86FarJump(..)
+                | OpKind::X86FarCall(..)
                 | OpKind::X86DescriptorTableLoad(..)
                 | OpKind::X86Cmpxchg8b16b { .. }
                 | OpKind::X86XSave {
@@ -5454,6 +5463,7 @@ impl OpKind {
                     ..
                 })
                 | OpKind::X86FarJump(..)
+                | OpKind::X86FarCall(..)
                 | OpKind::X86DescriptorTableStore(..)
                 | OpKind::RvVector { .. }
         )

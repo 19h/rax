@@ -280,6 +280,10 @@ pub struct GuestRegs {
     /// operand for exact noncanonical-address fault selection. Success commits
     /// CS and dynamic `exit_pc`.
     pub far_jump_fn: u64,
+    /// Address of `extern "C" fn(state, pointer_address, encoding, return_pc)
+    /// -> ok` for long-mode `FF /3`. Success commits the complete far-CALL
+    /// frame plus CS:RIP:RSP[:SS] and leaves the dynamic target in `exit_pc`.
+    pub far_call_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -353,6 +357,7 @@ impl Default for GuestRegs {
             system_selector_fn: 0,
             system_selector_load_fn: 0,
             far_jump_fn: 0,
+            far_call_fn: 0,
         }
     }
 }

@@ -1,5 +1,6 @@
 use crate::common::*;
 use rax::isa::x86_64::X86_64Vcpu;
+use std::sync::Arc;
 
 // Comprehensive tests for FAR CALL instruction (inter-segment call)
 // CALL ptr16:16, CALL ptr16:32, CALL m16:16, CALL m16:32, CALL m16:64
@@ -928,6 +929,276 @@ fn test_load_code_segment_not_present_faults_np() {
     assert!(err.is_err(), "not-present descriptor must fault");
     let msg = format!("{:?}", err.unwrap_err());
     assert!(msg.contains("#NP"), "expected #NP, got: {}", msg);
+}
+
+fn encode_ia32e_call_gate(target_selector: u16, target_offset: u64, dpl: u8) -> [u8; 16] {
+    let low = (target_offset & 0xFFFF)
+        | (u64::from(target_selector) << 16)
+        | (0xC << 40)
+        | (u64::from(dpl & 3) << 45)
+        | (1 << 47)
+        | (((target_offset >> 16) & 0xFFFF) << 48);
+    let high = (target_offset >> 32) & 0xFFFF_FFFF;
+    let mut bytes = [0_u8; 16];
+    bytes[..8].copy_from_slice(&low.to_le_bytes());
+    bytes[8..].copy_from_slice(&high.to_le_bytes());
+    bytes
+}
+
+#[test]
+fn test_far_call_long_mode_direct_descriptor_pushes_exact_frame_and_marks_accessed() {
+    let code = [
+        0x48, 0xff, 0x1c, 0x25, 0x00, 0x70, 0x00, 0x00, // CALL FAR m16:64 [0x7000]
+    ];
+    let (mut vcpu, mem) = setup_vm_no_idt(&code, None);
+    let target = 0x3000_u64;
+    let selector = 0x30_u16;
+    let mut pointer = target.to_le_bytes().to_vec();
+    pointer.extend_from_slice(&selector.to_le_bytes());
+    mem.write_slice(&pointer, GuestAddress(0x7000)).unwrap();
+    let descriptor = encode_descriptor(0, 0xFFFFF, 0x9A, 0b0010);
+    install_gdt_descriptor(&mut vcpu, &mem, 0x30, descriptor);
+
+    vcpu.step().expect("exact long-mode far CALL");
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rip, target);
+    assert_eq!(regs.rsp, STACK_ADDR - 16);
+    let mut frame = [0_u8; 16];
+    mem.read_slice(&mut frame, GuestAddress(STACK_ADDR - 16))
+        .unwrap();
+    assert_eq!(
+        u64::from_le_bytes(frame[..8].try_into().unwrap()),
+        CODE_ADDR + 8
+    );
+    assert_eq!(u64::from_le_bytes(frame[8..].try_into().unwrap()), 0x8);
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(sregs.cs.selector, selector);
+    let mut descriptor_after = [0_u8; 8];
+    mem.read_slice(
+        &mut descriptor_after,
+        GuestAddress(GDT_BASE + u64::from(selector)),
+    )
+    .unwrap();
+    assert_eq!(descriptor_after[5] & 1, 1);
+}
+
+#[test]
+fn test_far_call_long_mode_privilege_gate_loads_rsp0_and_pushes_outer_frame() {
+    const TSS_BASE: u64 = 0x6800;
+    const NEW_RSP: u64 = 0x9000;
+    let code = [
+        0x48, 0xff, 0x1c, 0x25, 0x00, 0x70, 0x00, 0x00, // CALL FAR m16:64 [0x7000]
+    ];
+    let (mut vcpu, mem) = setup_vm_no_idt(&code, None);
+    let gate_selector = 0x1B_u16;
+    let target_selector = 0x30_u16;
+    let target = 0x4000_u64;
+    let mut pointer = u64::MAX.to_le_bytes().to_vec();
+    pointer.extend_from_slice(&gate_selector.to_le_bytes());
+    mem.write_slice(&pointer, GuestAddress(0x7000)).unwrap();
+    mem.write_slice(
+        &encode_ia32e_call_gate(target_selector, target, 3),
+        GuestAddress(GDT_BASE + 0x18),
+    )
+    .unwrap();
+    install_gdt_descriptor(
+        &mut vcpu,
+        &mem,
+        0x30,
+        encode_descriptor(0, 0xFFFFF, 0x9A, 0b0010),
+    );
+    mem.write_slice(&NEW_RSP.to_le_bytes(), GuestAddress(TSS_BASE + 4))
+        .unwrap();
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 0x0B;
+    sregs.cs.dpl = 3;
+    sregs.ss.selector = 0x13;
+    sregs.ss.dpl = 3;
+    sregs.tr.base = TSS_BASE;
+    sregs.tr.limit = 0x67;
+    sregs.tr.selector = 0x28;
+    sregs.tr.type_ = 0xB;
+    sregs.tr.present = true;
+    sregs.tr.s = false;
+    sregs.tr.unusable = false;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    vcpu.step().expect("ring3-to-ring0 call gate");
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rip, target);
+    assert_eq!(regs.rsp, NEW_RSP - 32);
+    let mut frame = [0_u8; 32];
+    mem.read_slice(&mut frame, GuestAddress(NEW_RSP - 32))
+        .unwrap();
+    assert_eq!(
+        u64::from_le_bytes(frame[0..8].try_into().unwrap()),
+        CODE_ADDR + 8
+    );
+    assert_eq!(u64::from_le_bytes(frame[8..16].try_into().unwrap()), 0x0B);
+    assert_eq!(
+        u64::from_le_bytes(frame[16..24].try_into().unwrap()),
+        STACK_ADDR
+    );
+    assert_eq!(u64::from_le_bytes(frame[24..32].try_into().unwrap()), 0x13);
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(sregs.cs.selector, target_selector);
+    assert_eq!(sregs.ss.selector, 0);
+    assert_eq!(sregs.ss.dpl, 0);
+}
+
+#[test]
+fn test_far_call_invalid_tss_raises_ts_without_state_or_stack_commit() {
+    let code = [0x48, 0xff, 0x1c, 0x25, 0x00, 0x70, 0x00, 0x00];
+    let (mut vcpu, mem) = setup_vm_no_idt(&code, None);
+    let mut pointer = u64::MAX.to_le_bytes().to_vec();
+    pointer.extend_from_slice(&0x1B_u16.to_le_bytes());
+    mem.write_slice(&pointer, GuestAddress(0x7000)).unwrap();
+    mem.write_slice(
+        &encode_ia32e_call_gate(0x30, 0x0000_8000_0000_4000, 3),
+        GuestAddress(GDT_BASE + 0x18),
+    )
+    .unwrap();
+    install_gdt_descriptor(
+        &mut vcpu,
+        &mem,
+        0x30,
+        encode_descriptor(0, 0xFFFFF, 0x9A, 0b0010),
+    );
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 0x0B;
+    sregs.cs.dpl = 3;
+    sregs.ss.selector = 0x13;
+    sregs.ss.dpl = 3;
+    sregs.tr.base = 0x6800;
+    sregs.tr.limit = 3;
+    sregs.tr.selector = 0x28;
+    sregs.tr.type_ = 0xB;
+    sregs.tr.present = true;
+    sregs.tr.s = false;
+    sregs.tr.unusable = false;
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut stack_before = [0_u8; 32];
+    mem.read_slice(&mut stack_before, GuestAddress(STACK_ADDR - 32))
+        .unwrap();
+
+    let error = vcpu.step().expect_err("short TSS must inject #TS");
+    assert!(
+        error.to_string().contains("IDT entry 10 not present"),
+        "{error}"
+    );
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rip, CODE_ADDR);
+    assert_eq!(regs.rsp, STACK_ADDR);
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(sregs.cs.selector, 0x0B);
+    assert_eq!(sregs.ss.selector, 0x13);
+    let mut stack_after = [0_u8; 32];
+    mem.read_slice(&mut stack_after, GuestAddress(STACK_ADDR - 32))
+        .unwrap();
+    assert_eq!(stack_after, stack_before);
+}
+
+#[test]
+fn test_far_call_stack_fault_precedes_noncanonical_target_fault() {
+    let code = [0x48, 0xff, 0x1c, 0x25, 0x00, 0x70, 0x00, 0x00];
+    let mut regs = Registers {
+        rsp: 0x0000_8000_0000_0008,
+        ..Registers::default()
+    };
+    regs.rflags = 2;
+    let (mut vcpu, mem) = setup_vm_no_idt(&code, Some(regs));
+    let mut pointer = 0x0000_8000_0000_4000_u64.to_le_bytes().to_vec();
+    pointer.extend_from_slice(&0x30_u16.to_le_bytes());
+    mem.write_slice(&pointer, GuestAddress(0x7000)).unwrap();
+    install_gdt_descriptor(
+        &mut vcpu,
+        &mem,
+        0x30,
+        encode_descriptor(0, 0xFFFFF, 0x9A, 0b0010),
+    );
+
+    let error = vcpu
+        .step()
+        .expect_err("noncanonical stack must fault before noncanonical target");
+    assert!(
+        error.to_string().contains("IDT entry 12 not present"),
+        "{error}"
+    );
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rip, CODE_ADDR);
+    assert_eq!(regs.rsp, 0x0000_8000_0000_0008);
+    let mut descriptor_after = [0_u8; 8];
+    mem.read_slice(&mut descriptor_after, GuestAddress(GDT_BASE + 0x30))
+        .unwrap();
+    assert_eq!(descriptor_after[5] & 1, 0);
+}
+
+#[test]
+fn test_far_call_preflights_every_stack_write_before_accessed_or_frame_commit() {
+    const SPARSE_STACK: u64 = 0x20000;
+    let code = [0x48, 0xff, 0x1c, 0x25, 0x00, 0x70, 0x00, 0x00];
+    let memory = Arc::new(
+        GuestMemoryMmap::<()>::from_ranges(&[
+            (GuestAddress(CODE_ADDR), 0x1000),
+            (GuestAddress(0x7000), 0x1000),
+            (GuestAddress(GDT_BASE), 0x1000),
+            (GuestAddress(SPARSE_STACK), 0x1000),
+        ])
+        .unwrap(),
+    );
+    memory.write_slice(&code, GuestAddress(CODE_ADDR)).unwrap();
+    let mut pointer = 0x4000_u64.to_le_bytes().to_vec();
+    pointer.extend_from_slice(&0x30_u16.to_le_bytes());
+    memory.write_slice(&pointer, GuestAddress(0x7000)).unwrap();
+    let descriptor = encode_descriptor(0, 0xFFFFF, 0x9A, 0b0010);
+    memory
+        .write_slice(&descriptor, GuestAddress(GDT_BASE + 0x30))
+        .unwrap();
+    let sentinel = 0xA5A5_5A5A_DEAD_BEEF_u64;
+    memory
+        .write_slice(&sentinel.to_le_bytes(), GuestAddress(SPARSE_STACK))
+        .unwrap();
+
+    let mut vcpu = X86_64Vcpu::new(0, memory.clone());
+    vcpu.set_regs(&Registers {
+        rip: CODE_ADDR,
+        rsp: SPARSE_STACK + 8,
+        rflags: 2,
+        ..Registers::default()
+    })
+    .unwrap();
+    let mut sregs = SystemRegisters::default();
+    sregs.cr0 = 0x0005_0033;
+    sregs.cr4 = 0x20;
+    sregs.efer = 0x501;
+    sregs.cs.l = true;
+    sregs.cs.selector = 0x8;
+    sregs.gdt.base = GDT_BASE;
+    sregs.gdt.limit = 0x37;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    let error = vcpu
+        .step()
+        .expect_err("second frame qword lies in the sparse-memory hole");
+    assert!(
+        error
+            .to_string()
+            .contains("failed to preflight write at 0x1fff8"),
+        "{error}"
+    );
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rip, CODE_ADDR);
+    assert_eq!(regs.rsp, SPARSE_STACK + 8);
+    let mut stack_after = [0_u8; 8];
+    memory
+        .read_slice(&mut stack_after, GuestAddress(SPARSE_STACK))
+        .unwrap();
+    assert_eq!(u64::from_le_bytes(stack_after), sentinel);
+    let mut descriptor_after = [0_u8; 8];
+    memory
+        .read_slice(&mut descriptor_after, GuestAddress(GDT_BASE + 0x30))
+        .unwrap();
+    assert_eq!(descriptor_after[5] & 1, 0);
 }
 
 #[test]

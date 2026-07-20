@@ -187,6 +187,9 @@ pub const X86_GUEST_SYSTEM_SELECTOR_LOAD_FN_OFFSET: i32 = X86_GUEST_SYSTEM_SELEC
 /// Offset of [`runtime::GuestRegs::far_jump_fn`]. Appended to keep all prior
 /// helper ABI offsets stable.
 pub const X86_GUEST_FAR_JUMP_FN_OFFSET: i32 = X86_GUEST_SYSTEM_SELECTOR_LOAD_FN_OFFSET + 8;
+/// Offset of [`runtime::GuestRegs::far_call_fn`]. Appended to preserve every
+/// pre-existing helper ABI offset.
+pub const X86_GUEST_FAR_CALL_FN_OFFSET: i32 = X86_GUEST_FAR_JUMP_FN_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

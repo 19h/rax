@@ -3,6 +3,7 @@
 mod call;
 mod cmov;
 mod far;
+mod far_call;
 mod groups;
 mod int;
 mod jump;
@@ -14,6 +15,7 @@ mod xlat;
 pub use call::*;
 pub use cmov::*;
 pub(crate) use far::*;
+pub(crate) use far_call::*;
 pub use groups::*;
 pub use int::*;
 pub use jump::*;

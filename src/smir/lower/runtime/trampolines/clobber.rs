@@ -7,11 +7,11 @@ use crate::smir::ir::ops::{
 };
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::x86_64::{
-    x86_clts_shape_valid, x86_far_jump_shape_valid, x86_far_jump_terminal_shape_valid,
-    x86_lmsw_shape_valid, x86_read_control_shape_valid, x86_read_debug_shape_valid,
-    x86_smsw_shape_valid, x86_system_selector_load_shape_valid,
-    x86_system_selector_store_shape_valid, x86_write_control_shape_valid,
-    x86_write_debug_shape_valid,
+    x86_clts_shape_valid, x86_far_call_shape_valid, x86_far_call_terminal_shape_valid,
+    x86_far_jump_shape_valid, x86_far_jump_terminal_shape_valid, x86_lmsw_shape_valid,
+    x86_read_control_shape_valid, x86_read_debug_shape_valid, x86_smsw_shape_valid,
+    x86_system_selector_load_shape_valid, x86_system_selector_store_shape_valid,
+    x86_write_control_shape_valid, x86_write_debug_shape_valid,
 };
 
 /// Admit only scalar MMU-helper transfers that the x86-64 state-backed
@@ -139,12 +139,16 @@ pub(crate) fn block_is_clobber_safe(
     };
 
     let n = block.ops.len();
-    let far_jump_count = block
+    let far_control_count = block
         .ops
         .iter()
-        .filter(|op| matches!(op.kind, OpKind::X86FarJump(..)))
+        .filter(|op| matches!(op.kind, OpKind::X86FarJump(..) | OpKind::X86FarCall(..)))
         .count();
-    if far_jump_count != 0 && (far_jump_count != 1 || !x86_far_jump_terminal_shape_valid(block)) {
+    if far_control_count != 0
+        && (far_control_count != 1
+            || !(x86_far_jump_terminal_shape_valid(block)
+                || x86_far_call_terminal_shape_valid(block)))
+    {
         return false;
     }
     let native_replay_spans =
@@ -551,6 +555,13 @@ pub(crate) fn block_is_clobber_safe(
                     && x86_far_jump_shape_valid(op)
                     && x86_jit_mem_address_shape_valid(&jump.addr)
         );
+        let far_call_ok = matches!(
+            &op.kind,
+            OpKind::X86FarCall(call)
+                if allow_mem
+                    && x86_far_call_shape_valid(op)
+                    && x86_jit_mem_address_shape_valid(&call.addr)
+        );
         let read_debug_ok = x86_read_debug_shape_valid(&op.kind);
         let write_control_ok = x86_write_control_shape_valid(op);
         let write_debug_ok = x86_write_debug_shape_valid(&op.kind);
@@ -652,6 +663,7 @@ pub(crate) fn block_is_clobber_safe(
             || descriptor_store_ok
             || descriptor_load_ok
             || far_jump_ok
+            || far_call_ok
             || selector_load_ok
             || matches!(
                 &op.kind,
@@ -762,6 +774,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86FarJump(..)) && !far_jump_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86FarCall(..)) && !far_call_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86ReadDebug { .. }) && !read_debug_ok {

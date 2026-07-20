@@ -8,7 +8,7 @@ use crate::smir::ir::types::OpWidth;
 use crate::vm::vcpu::Segment;
 
 #[inline]
-fn selector_error_code(selector: u16) -> u32 {
+pub(super) fn selector_error_code(selector: u16) -> u32 {
     u32::from(selector & 0xFFFC)
 }
 
@@ -80,6 +80,8 @@ fn decode_x86_far_jump_code(
     cpl: u8,
     ia32e_active: bool,
     through_call_gate: bool,
+    call_gate_may_lower_privilege: bool,
+    validate_target_offset: bool,
 ) -> Result<X86FarJumpTarget, X86SystemDescriptorFault> {
     let error_code = selector_error_code(selector);
     let type_ = ((raw >> 40) & 0x0F) as u8;
@@ -99,6 +101,8 @@ fn decode_x86_far_jump_code(
     let rpl = (selector & 3) as u8;
     let privilege_invalid = if conforming {
         dpl > cpl
+    } else if through_call_gate && call_gate_may_lower_privilege {
+        dpl > cpl
     } else {
         dpl != cpl || !through_call_gate && rpl > cpl
     };
@@ -109,26 +113,31 @@ fn decode_x86_far_jump_code(
         return Err(X86SystemDescriptorFault::SegmentNotPresent { error_code });
     }
 
-    let Some(offset) = normalized_far_offset(offset, offset_width) else {
+    let Some(mut offset) = normalized_far_offset(offset, offset_width) else {
         return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
     };
-    let limit = descriptor_limit(raw);
-    if !l && offset > u64::from(limit) {
-        return Err(X86SystemDescriptorFault::GeneralProtection { error_code: 0 });
+    // An IA-32e transfer into a compatibility code segment loads EIP, even
+    // when a REX.W far pointer supplied 64 offset bits. Operand-size 16 then
+    // applies the narrower IP mask as usual.
+    if ia32e_active && !l {
+        offset &= 0xFFFF_FFFF;
     }
-    if l && !is_canonical_48(offset) {
-        return Err(X86SystemDescriptorFault::GeneralProtection { error_code: 0 });
-    }
-
-    Ok(X86FarJumpTarget {
+    let target = X86FarJumpTarget {
         segment: Segment {
             base: if ia32e_active && l {
                 0
             } else {
                 descriptor_base(raw)
             },
-            limit,
-            selector: (selector & !3) | u16::from(cpl),
+            limit: descriptor_limit(raw),
+            selector: (selector & !3)
+                | u16::from(
+                    if through_call_gate && call_gate_may_lower_privilege && !conforming {
+                        dpl
+                    } else {
+                        cpl
+                    },
+                ),
             type_: type_ | 1,
             present: true,
             dpl,
@@ -141,7 +150,25 @@ fn decode_x86_far_jump_code(
         },
         offset,
         accessed_low: raw | (1_u64 << 40),
-    })
+    };
+    if validate_target_offset {
+        validate_x86_far_call_target_offset(&target)?;
+    }
+    Ok(target)
+}
+
+/// Validate the target offset after a far CALL has checked the complete return
+/// frame. Intel gives stack/TSS faults priority over a target-limit or
+/// canonicality fault, whereas far JMP validates the same target immediately.
+pub(crate) fn validate_x86_far_call_target_offset(
+    target: &X86FarJumpTarget,
+) -> Result<(), X86SystemDescriptorFault> {
+    if (!target.segment.l && target.offset > u64::from(target.segment.limit))
+        || (target.segment.l && !is_canonical_48(target.offset))
+    {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code: 0 });
+    }
+    Ok(())
 }
 
 /// Whether a selected descriptor requires the upper qword of an IA-32e
@@ -153,7 +180,7 @@ pub(crate) fn x86_far_jump_is_ia32e_call_gate(raw: u64, ia32e_active: bool) -> b
 /// Decode the descriptor selected by the memory far pointer. IA-32e admits a
 /// conforming/nonconforming code segment or a 16-byte 64-bit call gate. The
 /// offset embedded in a far pointer is ignored for the call-gate case.
-pub(crate) fn decode_x86_far_jump_descriptor(
+fn decode_x86_far_control_descriptor(
     selector: u16,
     low: u64,
     high: Option<u64>,
@@ -161,6 +188,7 @@ pub(crate) fn decode_x86_far_jump_descriptor(
     offset_width: OpWidth,
     cpl: u8,
     ia32e_active: bool,
+    validate_target_offset: bool,
 ) -> Result<X86FarJumpDescriptor, X86SystemDescriptorFault> {
     let error_code = selector_error_code(selector);
     if selector & 0xFFFC == 0 {
@@ -176,6 +204,8 @@ pub(crate) fn decode_x86_far_jump_descriptor(
             cpl,
             ia32e_active,
             false,
+            false,
+            validate_target_offset,
         )
         .map(X86FarJumpDescriptor::Code);
     }
@@ -214,6 +244,53 @@ pub(crate) fn decode_x86_far_jump_descriptor(
     }))
 }
 
+/// Decode the selector chosen by a far JMP, including immediate target-offset
+/// validation because the operation has no stack fault with higher priority.
+pub(crate) fn decode_x86_far_jump_descriptor(
+    selector: u16,
+    low: u64,
+    high: Option<u64>,
+    pointer_offset: u64,
+    offset_width: OpWidth,
+    cpl: u8,
+    ia32e_active: bool,
+) -> Result<X86FarJumpDescriptor, X86SystemDescriptorFault> {
+    decode_x86_far_control_descriptor(
+        selector,
+        low,
+        high,
+        pointer_offset,
+        offset_width,
+        cpl,
+        ia32e_active,
+        true,
+    )
+}
+
+/// Decode the selector chosen by a far CALL while deferring target-offset
+/// validation until after the return-frame/TSS checks required by the
+/// architectural exception-priority order.
+pub(crate) fn decode_x86_far_call_descriptor(
+    selector: u16,
+    low: u64,
+    high: Option<u64>,
+    pointer_offset: u64,
+    offset_width: OpWidth,
+    cpl: u8,
+    ia32e_active: bool,
+) -> Result<X86FarJumpDescriptor, X86SystemDescriptorFault> {
+    decode_x86_far_control_descriptor(
+        selector,
+        low,
+        high,
+        pointer_offset,
+        offset_width,
+        cpl,
+        ia32e_active,
+        false,
+    )
+}
+
 /// Validate the code descriptor selected by an already-validated IA-32e call
 /// gate. IA-32e gates may target only a 64-bit code segment (L=1, D=0).
 pub(crate) fn decode_x86_far_jump_call_gate_target(
@@ -222,11 +299,44 @@ pub(crate) fn decode_x86_far_jump_call_gate_target(
     offset: u64,
     cpl: u8,
 ) -> Result<X86FarJumpTarget, X86SystemDescriptorFault> {
-    decode_x86_far_jump_code(selector, raw, offset, OpWidth::W64, cpl, true, true)
+    decode_x86_far_jump_code(
+        selector,
+        raw,
+        offset,
+        OpWidth::W64,
+        cpl,
+        true,
+        true,
+        false,
+        true,
+    )
+}
+
+/// Validate the code segment selected by an IA-32e far-CALL gate. A
+/// nonconforming target may lower CPL to its DPL; a conforming target retains
+/// the caller's CPL. The returned segment selector already carries that final
+/// CPL in its RPL bits.
+pub(crate) fn decode_x86_far_call_gate_target(
+    selector: u16,
+    raw: u64,
+    offset: u64,
+    cpl: u8,
+) -> Result<X86FarJumpTarget, X86SystemDescriptorFault> {
+    decode_x86_far_jump_code(
+        selector,
+        raw,
+        offset,
+        OpWidth::W64,
+        cpl,
+        true,
+        true,
+        true,
+        false,
+    )
 }
 
 impl X86_64Vcpu {
-    fn far_jump_descriptor_address(
+    pub(super) fn far_jump_descriptor_address(
         &self,
         selector: u16,
         size: u64,
@@ -296,14 +406,18 @@ impl X86_64Vcpu {
         }
     }
 
-    fn read_far_jump_descriptor_qword(&mut self, address: u64) -> Result<u64, Error> {
+    pub(super) fn read_far_jump_descriptor_qword(&mut self, address: u64) -> Result<u64, Error> {
         let value = self.mmu.read_u64_supervisor(address, &self.sregs)?;
         #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
         self.push_jit_mem_trace((0, address, 8, value));
         Ok(value)
     }
 
-    fn write_far_jump_descriptor_qword(&mut self, address: u64, value: u64) -> Result<(), Error> {
+    pub(super) fn write_far_jump_descriptor_qword(
+        &mut self,
+        address: u64,
+        value: u64,
+    ) -> Result<(), Error> {
         self.mmu.write_u64_supervisor(address, value, &self.sregs)?;
         #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
         self.push_jit_mem_trace((1, address, 8, value));
@@ -670,5 +784,58 @@ mod tests {
             .err(),
             Some(X86SystemDescriptorFault::GeneralProtection { error_code: 0x28 })
         );
+    }
+
+    #[test]
+    fn far_call_gate_target_allows_only_architectural_privilege_transitions() {
+        let offset = 0xFFFF_8000_1234_5678;
+        let ring0 = code_descriptor(0, true, false, true, false, 0);
+        assert_eq!(
+            decode_x86_far_jump_call_gate_target(0x30, ring0, offset, 3).err(),
+            Some(X86SystemDescriptorFault::GeneralProtection { error_code: 0x30 }),
+            "far JMP must not use a gate to lower CPL"
+        );
+        let call_target = decode_x86_far_call_gate_target(0x30, ring0, offset, 3)
+            .expect("far CALL may enter a more-privileged nonconforming segment");
+        assert_eq!(call_target.segment.selector, 0x30);
+        assert_eq!(call_target.segment.dpl, 0);
+
+        let conforming = code_descriptor(0, true, true, true, false, 0);
+        let conforming_target =
+            decode_x86_far_call_gate_target(0x30, conforming, offset, 3).unwrap();
+        assert_eq!(
+            conforming_target.segment.selector, 0x33,
+            "conforming target retains caller CPL"
+        );
+        assert_eq!(
+            decode_x86_far_call_gate_target(
+                0x33,
+                code_descriptor(3, true, false, true, false, 0),
+                offset,
+                0,
+            )
+            .err(),
+            Some(X86SystemDescriptorFault::GeneralProtection { error_code: 0x30 })
+        );
+    }
+
+    #[test]
+    fn ia32e_compatibility_target_loads_eip_even_from_m16_64_pointer() {
+        let compat = code_descriptor(3, true, false, false, true, 0xF_FFFF);
+        let X86FarJumpDescriptor::Code(target) = decode_x86_far_jump_descriptor(
+            0x1B,
+            compat,
+            None,
+            0xFFFF_FFFF_0001_2345,
+            OpWidth::W64,
+            3,
+            true,
+        )
+        .expect("REX.W far pointer truncates to compatibility EIP") else {
+            panic!("compatibility descriptor decoded as a gate")
+        };
+        assert_eq!(target.offset, 0x0001_2345);
+        assert!(!target.segment.l);
+        assert!(target.segment.db);
     }
 }

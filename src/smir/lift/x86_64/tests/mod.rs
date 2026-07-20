@@ -24,6 +24,8 @@ mod descriptor_table;
 #[cfg(test)]
 mod evex;
 #[cfg(test)]
+mod far_call;
+#[cfg(test)]
 mod far_jump;
 #[cfg(test)]
 mod fsgsbase;

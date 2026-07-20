@@ -75,7 +75,7 @@ impl X86_64Vcpu {
 }
 
 /// The implicit descriptor-register state that JIT verification must restore
-/// before direct replay and compare before adopting the native result. CS,
+/// before direct replay and compare before adopting the native result. CS, SS,
 /// LDTR, and TR can change inside helper/interpreter callouts even when the
 /// surrounding native region only exposes their visible selectors.
 #[derive(Clone)]
@@ -85,6 +85,7 @@ pub(super) struct DescriptorStateSnapshot {
     idtr_base: u64,
     idtr_limit: u16,
     cs: Segment,
+    ss: Segment,
     ldtr: Segment,
     tr: Segment,
 }
@@ -128,6 +129,7 @@ impl DescriptorStateSnapshot {
         vcpu.sregs.idt.base = self.idtr_base;
         vcpu.sregs.idt.limit = self.idtr_limit;
         vcpu.sregs.cs = self.cs.clone();
+        vcpu.sregs.ss = self.ss.clone();
         vcpu.sregs.ldt = self.ldtr.clone();
         vcpu.sregs.tr = self.tr.clone();
     }
@@ -153,6 +155,7 @@ impl DescriptorStateSnapshot {
         }
         for (name, interp, native) in [
             ("cs", &vcpu.sregs.cs, &self.cs),
+            ("ss", &vcpu.sregs.ss, &self.ss),
             ("ldtr", &vcpu.sregs.ldt, &self.ldtr),
             ("tr", &vcpu.sregs.tr, &self.tr),
         ] {
@@ -173,6 +176,7 @@ impl X86_64Vcpu {
             idtr_base: self.sregs.idt.base,
             idtr_limit: self.sregs.idt.limit,
             cs: self.sregs.cs.clone(),
+            ss: self.sregs.ss.clone(),
             ldtr: self.sregs.ldt.clone(),
             tr: self.sregs.tr.clone(),
         }
