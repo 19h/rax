@@ -97,6 +97,15 @@ impl X86_64Vcpu {
         // Check for special instructions with mod=3
         if modrm >> 6 == 3 {
             match modrm {
+                0xC0 | 0xCF | 0xD7 => {
+                    // ENCLV, ENCLS, and ENCLU are Intel SGX root instructions.
+                    // The fixed profile never enters an active RTM transaction
+                    // and does not enumerate SGX or any leaf-12H SGX
+                    // capability, so #UD precedes VMX, CPL, CR0.TS, leaf, and
+                    // architectural-state checks for all three fixed encodings.
+                    ctx.consume_u8()?; // consume modrm
+                    self.inject_undefined_instruction()
+                }
                 0xC1 => {
                     // VMCALL (0x0F 0x01 0xC1) - VMX hypercall
                     ctx.consume_u8()?; // consume modrm

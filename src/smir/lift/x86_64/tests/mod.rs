@@ -50,6 +50,8 @@ mod scalar;
 #[cfg(test)]
 mod serialize;
 #[cfg(test)]
+mod sgx_controls;
+#[cfg(test)]
 mod sha_ni;
 #[cfg(test)]
 mod sse;

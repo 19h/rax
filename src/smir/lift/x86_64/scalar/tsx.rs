@@ -3,9 +3,9 @@
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
-    /// Lift VMCALL/VMMCALL hints, disabled VMX/SVM controls, MONITOR/MWAIT,
-    /// CLAC/STAC, XGETBV/XSETBV, RDPKRU/WRPKRU, SERIALIZE, SWAPGS, RDTSCP,
-    /// and the RTM fixed ModR/M encodings in 0F 01.
+    /// Lift VMCALL/VMMCALL hints, disabled VMX/SVM/SGX controls,
+    /// MONITOR/MWAIT, CLAC/STAC, XGETBV/XSETBV, RDPKRU/WRPKRU, SERIALIZE,
+    /// SWAPGS, RDTSCP, and the RTM fixed ModR/M encodings in 0F 01.
     pub(crate) fn lift_xcr_0f01(
         &self,
         bytes: &[u8],
@@ -32,6 +32,22 @@ impl X86_64Lifter {
             // profile exposes neither SVM nor SEV-ES, so those aliases are
             // #UD. REX2 is Intel APX while VMMCALL is AMD-only; consequently
             // the compressed D9 encoding is undefined on both vendor profiles.
+            return Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed: prefix.cursor + 1,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
+            });
+        }
+
+        if matches!(modrm, 0xC0 | 0xCF | 0xD7) {
+            // ENCLV, ENCLS, and ENCLU are SGX root instructions. RAX never
+            // enters an active RTM transaction and does not enumerate SGX or
+            // any leaf-12H SGX capability, so all three roots deterministically
+            // raise #UD before VMX, CPL, CR0.TS, leaf, or architectural-state
+            // checks.
             return Ok(LiftResult {
                 ops: Vec::new(),
                 bytes_consumed: prefix.cursor + 1,

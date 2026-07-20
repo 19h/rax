@@ -7,6 +7,7 @@
 //! - VMCALL - Call to VM Monitor
 //! - VMMCALL/VMGEXIT - AMD hypercall and SEV-ES exit encodings
 //! - VMRUN/VMLOAD/VMSAVE/STGI/CLGI/SKINIT/INVLPGA - disabled AMD SVM controls
+//! - ENCLV/ENCLS/ENCLU - disabled Intel SGX root instructions
 //! - VMCLEAR - Clear Virtual Machine Control Structure
 //! - VMLAUNCH - Launch Virtual Machine
 //! - VMRESUME - Resume Virtual Machine
@@ -605,6 +606,39 @@ fn test_disabled_svm_controls_raise_ud_before_cpl_or_state_commit() {
         assert!(
             error.to_string().contains("IDT entry 6 not present"),
             "{name}: SVM-disabled #UD must precede CPL3 #GP, got {error}"
+        );
+        assert_eq!(virtualization_public_state(&vcpu), before, "{name}");
+    }
+}
+
+#[test]
+fn test_disabled_sgx_roots_raise_ud_before_dynamic_checks_or_state_commit() {
+    for (name, bytes, apx, cpl, task_switched) in [
+        ("ENCLV", &[0x0F, 0x01, 0xC0][..], false, 3, false),
+        ("ENCLS", &[0x0F, 0x01, 0xCF][..], false, 3, false),
+        ("ENCLU", &[0x0F, 0x01, 0xD7][..], false, 3, true),
+        ("REX2 ENCLV", &[0xD5, 0x80, 0x01, 0xC0][..], true, 0, false),
+        ("REX2 ENCLS", &[0xD5, 0x80, 0x01, 0xCF][..], true, 0, false),
+        ("REX2 ENCLU", &[0xD5, 0x80, 0x01, 0xD7][..], true, 0, true),
+    ] {
+        let initial = virtualization_fault_registers();
+        let (mut vcpu, _) = if apx {
+            setup_apx_vm_no_idt(bytes, Some(initial))
+        } else {
+            setup_vm_no_idt(bytes, Some(initial))
+        };
+        seed_virtualization_fault_state(&mut vcpu, cpl);
+        if task_switched {
+            let mut sregs = vcpu.get_sregs().unwrap();
+            sregs.cr0 |= 1 << 3;
+            vcpu.set_sregs(&sregs).unwrap();
+        }
+        let before = virtualization_public_state(&vcpu);
+
+        let error = vcpu.step().expect_err("disabled SGX root must inject #UD");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{name}: SGX-disabled #UD must precede CPL, TS, and leaf checks, got {error}"
         );
         assert_eq!(virtualization_public_state(&vcpu), before, "{name}");
     }
