@@ -250,6 +250,15 @@ impl X86_64Vcpu {
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
+                0xD8 | 0xDA..=0xDF => {
+                    // VMRUN, VMLOAD, VMSAVE, STGI, CLGI, SKINIT, and INVLPGA
+                    // require AMD SVM or an associated optional facility. The
+                    // fixed guest profile advertises none of SVM, SVML, DEV,
+                    // or SKINIT and keeps EFER.SVME reserved, so #UD precedes
+                    // CPL, operand, and architectural-state checks.
+                    ctx.consume_u8()?; // consume modrm
+                    self.inject_undefined_instruction()
+                }
                 0xCA => {
                     // CLAC (0x0F 0x01 0xCA) - Clear AC flag
                     ctx.consume_u8()?; // consume modrm

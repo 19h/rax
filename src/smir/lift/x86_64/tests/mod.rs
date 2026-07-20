@@ -54,6 +54,8 @@ mod sha_ni;
 #[cfg(test)]
 mod sse;
 #[cfg(test)]
+mod svm_controls;
+#[cfg(test)]
 mod swapgs;
 #[cfg(test)]
 mod tsx;

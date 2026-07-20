@@ -6,6 +6,7 @@
 //! Instructions covered:
 //! - VMCALL - Call to VM Monitor
 //! - VMMCALL/VMGEXIT - AMD hypercall and SEV-ES exit encodings
+//! - VMRUN/VMLOAD/VMSAVE/STGI/CLGI/SKINIT/INVLPGA - disabled AMD SVM controls
 //! - VMCLEAR - Clear Virtual Machine Control Structure
 //! - VMLAUNCH - Launch Virtual Machine
 //! - VMRESUME - Resume Virtual Machine
@@ -25,6 +26,7 @@
 //!            docs/invept.txt, docs/invvpid.txt
 
 use crate::common::*;
+use rax::isa::x86_64::X86_64Vcpu;
 use rax::vm::vcpu::Registers;
 
 // ============================================================================
@@ -502,6 +504,45 @@ fn test_vmresume_after_vmptrld() {
     let _ = run_until_hlt(&mut vcpu);
 }
 
+fn virtualization_fault_registers() -> Registers {
+    Registers {
+        rax: 0x0123_4567_89AB_CDEF,
+        rbx: 0xFEDC_BA98_7654_3210,
+        rcx: 0x1111_2222_3333_4444,
+        rdx: 0xAAAA_BBBB_CCCC_DDDD,
+        rsp: STACK_ADDR,
+        rbp: 0x5555_6666_7777_8888,
+        r16: 0x1616_1616_1616_1616,
+        r31: 0x3131_3131_3131_3131,
+        rflags: 0x0CD7,
+        xmm: [[0x1111_2222_3333_4444, 0xAAAA_BBBB_CCCC_DDDD]; 16],
+        ymm_high: [[0x5555_6666_7777_8888, 0x9999_AAAA_BBBB_CCCC]; 16],
+        zmm_high: [[0x1234_5678_9ABC_DEF0; 4]; 16],
+        zmm_ext: [[0x0FED_CBA9_8765_4321; 8]; 16],
+        k: [0xA5A5_5A5A_A5A5_5A5A; 8],
+        mm: [0x1122_3344_5566_7788; 8],
+        ..Registers::default()
+    }
+}
+
+fn seed_virtualization_fault_state(vcpu: &mut X86_64Vcpu, cpl: u16) -> serde_json::Value {
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = cpl;
+    sregs.cr2 = 0x2222_0000;
+    sregs.cr3 = 0x3333_0000;
+    sregs.cr4 |= 0x4444;
+    sregs.cr8 = 0x8;
+    sregs.fs.base = 0x0000_1111_2222_3333;
+    sregs.gs.base = 0x0000_4444_5555_6666;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    virtualization_public_state(vcpu)
+}
+
+fn virtualization_public_state(vcpu: &X86_64Vcpu) -> serde_json::Value {
+    serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap())).unwrap()
+}
+
 #[test]
 fn test_disabled_vmx_controls_raise_ud_before_privilege_or_state_commit() {
     for (name, bytes, apx, cpl) in [
@@ -514,41 +555,13 @@ fn test_disabled_vmx_controls_raise_ud_before_privilege_or_state_commit() {
         ("REX2 VMXOFF", &[0xD5, 0x80, 0x01, 0xC4][..], true, 3),
         ("REX2 VMFUNC", &[0xD5, 0x80, 0x01, 0xD4][..], true, 0),
     ] {
-        let initial = Registers {
-            rax: 0x0123_4567_89AB_CDEF,
-            rbx: 0xFEDC_BA98_7654_3210,
-            rcx: 0x1111_2222_3333_4444,
-            rdx: 0xAAAA_BBBB_CCCC_DDDD,
-            rsp: STACK_ADDR,
-            rbp: 0x5555_6666_7777_8888,
-            r16: 0x1616_1616_1616_1616,
-            r31: 0x3131_3131_3131_3131,
-            rflags: 0x0CD7,
-            xmm: [[0x1111_2222_3333_4444, 0xAAAA_BBBB_CCCC_DDDD]; 16],
-            ymm_high: [[0x5555_6666_7777_8888, 0x9999_AAAA_BBBB_CCCC]; 16],
-            zmm_high: [[0x1234_5678_9ABC_DEF0; 4]; 16],
-            zmm_ext: [[0x0FED_CBA9_8765_4321; 8]; 16],
-            k: [0xA5A5_5A5A_A5A5_5A5A; 8],
-            mm: [0x1122_3344_5566_7788; 8],
-            ..Registers::default()
-        };
+        let initial = virtualization_fault_registers();
         let (mut vcpu, _) = if apx {
             setup_apx_vm_no_idt(bytes, Some(initial))
         } else {
             setup_vm_no_idt(bytes, Some(initial))
         };
-        let mut sregs = vcpu.get_sregs().unwrap();
-        sregs.cs.selector = cpl;
-        sregs.cr2 = 0x2222_0000;
-        sregs.cr3 = 0x3333_0000;
-        sregs.cr4 |= 0x4444;
-        sregs.cr8 = 0x8;
-        sregs.fs.base = 0x0000_1111_2222_3333;
-        sregs.gs.base = 0x0000_4444_5555_6666;
-        vcpu.set_sregs(&sregs).unwrap();
-
-        let before =
-            serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap())).unwrap();
+        let before = seed_virtualization_fault_state(&mut vcpu, cpl);
         let error = vcpu
             .step()
             .expect_err("disabled VMX control must inject #UD");
@@ -556,9 +569,44 @@ fn test_disabled_vmx_controls_raise_ud_before_privilege_or_state_commit() {
             error.to_string().contains("IDT entry 6 not present"),
             "{name}: expected #UD delivery failure, got {error}"
         );
-        let after =
-            serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap())).unwrap();
-        assert_eq!(after, before, "{name}");
+        assert_eq!(virtualization_public_state(&vcpu), before, "{name}");
+    }
+}
+
+#[test]
+fn test_disabled_svm_controls_raise_ud_before_cpl_or_state_commit() {
+    for (name, bytes, apx) in [
+        ("VMRUN", &[0x0F, 0x01, 0xD8][..], false),
+        ("VMLOAD", &[0x0F, 0x01, 0xDA][..], false),
+        ("VMSAVE", &[0x0F, 0x01, 0xDB][..], false),
+        ("STGI", &[0x0F, 0x01, 0xDC][..], false),
+        ("CLGI", &[0x0F, 0x01, 0xDD][..], false),
+        ("SKINIT", &[0x0F, 0x01, 0xDE][..], false),
+        ("INVLPGA", &[0x0F, 0x01, 0xDF][..], false),
+        ("REX2 VMRUN", &[0xD5, 0x80, 0x01, 0xD8][..], true),
+        ("REX2 VMLOAD", &[0xD5, 0x80, 0x01, 0xDA][..], true),
+        ("REX2 VMSAVE", &[0xD5, 0x80, 0x01, 0xDB][..], true),
+        ("REX2 STGI", &[0xD5, 0x80, 0x01, 0xDC][..], true),
+        ("REX2 CLGI", &[0xD5, 0x80, 0x01, 0xDD][..], true),
+        ("REX2 SKINIT", &[0xD5, 0x80, 0x01, 0xDE][..], true),
+        ("REX2 INVLPGA", &[0xD5, 0x80, 0x01, 0xDF][..], true),
+    ] {
+        let initial = virtualization_fault_registers();
+        let (mut vcpu, _) = if apx {
+            setup_apx_vm_no_idt(bytes, Some(initial))
+        } else {
+            setup_vm_no_idt(bytes, Some(initial))
+        };
+        let before = seed_virtualization_fault_state(&mut vcpu, 3);
+
+        let error = vcpu
+            .step()
+            .expect_err("disabled SVM control must inject #UD");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{name}: SVM-disabled #UD must precede CPL3 #GP, got {error}"
+        );
+        assert_eq!(virtualization_public_state(&vcpu), before, "{name}");
     }
 }
 

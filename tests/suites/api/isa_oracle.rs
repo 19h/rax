@@ -261,6 +261,29 @@ fn reports_disabled_vmx_controls_as_exact_invalid_opcode_traps() {
 }
 
 #[test]
+fn reports_disabled_svm_controls_as_exact_invalid_opcode_traps() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    for modrm in [0xD8, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF] {
+        for bytes in [vec![0x0F, 0x01, modrm], vec![0xD5, 0x80, 0x01, modrm]] {
+            let value = decode_to_json(&bytes, &opts).unwrap();
+            let smir = &value["smir"];
+            assert_eq!(smir["available"], true, "{bytes:02X?}");
+            assert_eq!(smir["bytes_consumed"], bytes.len(), "{bytes:02X?}");
+            assert_eq!(smir["ops"], serde_json::json!([]), "{bytes:02X?}");
+            assert_eq!(smir["control_flow"]["kind"], "trap", "{bytes:02X?}");
+            assert_eq!(
+                smir["control_flow"]["trap"], "InvalidOpcode",
+                "{bytes:02X?}"
+            );
+            assert_eq!(smir["ends_block"], true, "{bytes:02X?}");
+            assert_eq!(smir["ends_function"], true, "{bytes:02X?}");
+        }
+    }
+}
+
+#[test]
 fn emits_structured_smir_ops() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

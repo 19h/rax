@@ -3,7 +3,7 @@
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
-    /// Lift VMCALL/VMMCALL hints, disabled VMX controls, MONITOR/MWAIT,
+    /// Lift VMCALL/VMMCALL hints, disabled VMX/SVM controls, MONITOR/MWAIT,
     /// CLAC/STAC, XGETBV/XSETBV, RDPKRU/WRPKRU, SERIALIZE, SWAPGS, RDTSCP,
     /// and the RTM fixed ModR/M encodings in 0F 01.
     pub(crate) fn lift_xcr_0f01(
@@ -55,6 +55,22 @@ impl X86_64Lifter {
             // RAX exposes neither execution state, so these four controls are
             // deterministic fault-class traps before CPL, VMCS, EAX, flags,
             // or any other architectural state can be observed or committed.
+            return Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed: prefix.cursor + 1,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
+            });
+        }
+
+        if matches!(modrm, 0xD8 | 0xDA..=0xDF) {
+            // VMRUN, VMLOAD, VMSAVE, STGI, CLGI, SKINIT, and INVLPGA
+            // require AMD SVM or an associated optional facility. RAX's fixed
+            // guest profile exposes none of SVM, SVML, DEV, or SKINIT and
+            // keeps EFER.SVME reserved, so all seven encodings deterministically
+            // raise #UD before CPL, operand, or architectural-state checks.
             return Ok(LiftResult {
                 ops: Vec::new(),
                 bytes_consumed: prefix.cursor + 1,
