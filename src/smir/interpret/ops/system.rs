@@ -6,7 +6,7 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
-    X86CacheControlKind, X86ControlReg, X86CountKind, X86MonitorMwaitOp, X86OpHint,
+    X86CacheControlKind, X86ControlReg, X86CountKind, X86DebugReg, X86MonitorMwaitOp, X86OpHint,
     X86ThreeDNowKind, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
     X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
     X86X87IntWidth, X86XSaveKind,
@@ -92,6 +92,59 @@ impl SmirInterpreter {
                             X86ControlReg::Cr3 => x86.cr3,
                             X86ControlReg::Cr4 => x86.cr4,
                             X86ControlReg::Cr8 => x86.cr8,
+                        }
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                Self::write_x86_partial(ctx, *dst, value, OpWidth::W64);
+            }
+
+            OpKind::X86ReadDebug { dst, debug } => {
+                const CR4_DE: u64 = 1 << 3;
+                const DR6_BD: u64 = 1 << 13;
+                const DR7_GD: u64 = 1 << 13;
+
+                let value = match &mut ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => {
+                        // General detect is a fault before the MOV executes.
+                        // Set BD before reporting it; GD is cleared only when
+                        // the architectural #DB handler is actually entered.
+                        if x86.dr7 & DR7_GD != 0 {
+                            x86.dr6 |= DR6_BD;
+                            ctx.request_exit(ExitReason::Debug { addr: op.guest_pc });
+                            return Ok(());
+                        }
+                        if matches!(debug, X86DebugReg::Dr4 | X86DebugReg::Dr5)
+                            && x86.cr4 & CR4_DE != 0
+                        {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        }
+                        // Real-address mode permits the read. Effective CPL
+                        // already maps virtual-8086 execution to CPL3.
+                        if x86.cr0 & 1 != 0 && x86.cpl != 0 {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                        match debug {
+                            X86DebugReg::Dr0 => x86.dr0,
+                            X86DebugReg::Dr1 => x86.dr1,
+                            X86DebugReg::Dr2 => x86.dr2,
+                            X86DebugReg::Dr3 => x86.dr3,
+                            X86DebugReg::Dr4 | X86DebugReg::Dr6 => x86.dr6,
+                            X86DebugReg::Dr5 | X86DebugReg::Dr7 => x86.dr7,
                         }
                     }
                     _ => {

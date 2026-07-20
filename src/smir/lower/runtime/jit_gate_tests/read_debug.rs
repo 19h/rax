@@ -1,0 +1,74 @@
+//! Fail-closed native admission for x86 MOV-from-debug-register operations.
+
+use super::*;
+use crate::smir::ir::ops::X86DebugReg;
+use crate::smir::lower::x86_64::x86_read_debug_shape_valid;
+
+fn read(dst: VReg, debug: X86DebugReg) -> OpKind {
+    OpKind::X86ReadDebug { dst, debug }
+}
+
+#[test]
+fn x86_read_debug_gate_admits_exact_legacy_gprs_including_rsp_rbp() {
+    for destination in [X86Reg::Rax, X86Reg::Rsp, X86Reg::Rbp, X86Reg::R15] {
+        for debug in [
+            X86DebugReg::Dr0,
+            X86DebugReg::Dr1,
+            X86DebugReg::Dr2,
+            X86DebugReg::Dr3,
+            X86DebugReg::Dr4,
+            X86DebugReg::Dr5,
+            X86DebugReg::Dr6,
+            X86DebugReg::Dr7,
+        ] {
+            let op = read(x86(destination), debug);
+            assert!(op.is_jit_safe(), "{destination:?} {debug:?}");
+            assert!(x86_read_debug_shape_valid(&op));
+            assert!(x86_gate(op), "{destination:?} {debug:?}");
+        }
+    }
+}
+
+#[test]
+fn x86_read_debug_gate_rejects_non_lifter_shapes_and_cross_hosts() {
+    for malformed in [
+        read(VReg::virt(1), X86DebugReg::Dr0),
+        read(VReg::Imm(0), X86DebugReg::Dr2),
+        read(x86(X86Reg::gpr(16)), X86DebugReg::Dr6),
+        read(arm_x(0), X86DebugReg::Dr7),
+    ] {
+        assert!(!x86_read_debug_shape_valid(&malformed));
+        assert!(!x86_gate(malformed));
+    }
+
+    let exact = read(x86(X86Reg::Rax), X86DebugReg::Dr0);
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    builder.push_op(0x1000, exact.clone());
+    builder.set_terminator(Terminator::Return { values: vec![] });
+    assert!(!is_x86_aarch64_native_clobber_safe_excluding(
+        &builder.finish(),
+        &std::collections::HashMap::new(),
+    ));
+    assert!(!x86_aarch64_scalar_shape_valid(&exact));
+    assert!(!aarch64_gate(vec![exact], false));
+}
+
+#[test]
+fn x86_read_debug_survives_o2_and_remains_admitted() {
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    builder.push_op(0x1000, read(x86(X86Reg::Rbx), X86DebugReg::Dr3));
+    builder.set_terminator(Terminator::Return { values: vec![] });
+    let mut function = builder.finish();
+    crate::smir::optimize::optimize_function(&mut function, crate::smir::optimize::OptLevel::O2);
+
+    assert!(function.entry_block().unwrap().ops.iter().any(|op| {
+        matches!(
+            op.kind,
+            OpKind::X86ReadDebug {
+                debug: X86DebugReg::Dr3,
+                ..
+            }
+        )
+    }));
+    assert!(is_native_clobber_safe(&function));
+}

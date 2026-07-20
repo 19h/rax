@@ -135,6 +135,19 @@ pub const X86_GUEST_CR2_OFFSET: i32 = X86_GUEST_AC_FLAG_OFFSET + 8;
 pub const X86_GUEST_CR3_OFFSET: i32 = X86_GUEST_CR2_OFFSET + 8;
 /// Byte offset of guest CR8.
 pub const X86_GUEST_CR8_OFFSET: i32 = X86_GUEST_CR3_OFFSET + 8;
+/// Byte offset of guest DR0. Debug-register state is appended so every
+/// established helper/trampoline field retains its existing offset.
+pub const X86_GUEST_DR0_OFFSET: i32 = X86_GUEST_CR8_OFFSET + 8;
+/// Byte offset of guest DR1.
+pub const X86_GUEST_DR1_OFFSET: i32 = X86_GUEST_DR0_OFFSET + 8;
+/// Byte offset of guest DR2.
+pub const X86_GUEST_DR2_OFFSET: i32 = X86_GUEST_DR1_OFFSET + 8;
+/// Byte offset of guest DR3.
+pub const X86_GUEST_DR3_OFFSET: i32 = X86_GUEST_DR2_OFFSET + 8;
+/// Byte offset of guest DR6.
+pub const X86_GUEST_DR6_OFFSET: i32 = X86_GUEST_DR3_OFFSET + 8;
+/// Byte offset of guest DR7.
+pub const X86_GUEST_DR7_OFFSET: i32 = X86_GUEST_DR6_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

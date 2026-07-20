@@ -58,6 +58,8 @@ mod pkru;
 pub use pkru::*;
 mod read_control;
 pub use read_control::*;
+mod read_debug;
+pub use read_debug::*;
 mod serialize;
 pub use serialize::*;
 mod swapgs;

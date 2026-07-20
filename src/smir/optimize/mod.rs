@@ -3929,6 +3929,7 @@ impl OpKind {
             | OpKind::SetAC { .. }
             | OpKind::X86Clts
             | OpKind::X86ReadControl { .. }
+            | OpKind::X86ReadDebug { .. }
             | OpKind::X86ReadTsc(..)
             | OpKind::X86Random { .. }
             | OpKind::X86ReadPid { .. }

@@ -3976,6 +3976,16 @@ pub enum OpKind {
         control: X86ControlReg,
     },
 
+    /// `MOV r64, DR0-DR7`. The selector remains encoded so DR4/DR5 can
+    /// dynamically alias DR6/DR7 or fault according to CR4.DE. DR7.GD can
+    /// raise a fault-class #DB before the destination commits. The six status
+    /// flags are architecturally undefined; SMIR deterministically preserves
+    /// them to match the direct implementation.
+    X86ReadDebug {
+        dst: VReg,
+        debug: X86DebugReg,
+    },
+
     /// RDFSBASE/RDGSBASE/WRFSBASE/WRGSBASE. `operand` is the encoded GPR and
     /// `base` is exactly FS.base or GS.base. A read writes `operand` from
     /// `base`; a write commits `operand` to `base`. The operation performs its
@@ -4436,6 +4446,7 @@ impl OpKind {
                 | OpKind::X86XSetBv { .. }
                 | OpKind::X86Clts
                 | OpKind::X86ReadControl { .. }
+                | OpKind::X86ReadDebug { .. }
                 | OpKind::X86FsGsBase { .. }
                 | OpKind::X86SwapGs { .. }
                 | OpKind::X86MonitorMwait(..)
@@ -4851,6 +4862,7 @@ impl OpKind {
             OpKind::X86Random { dst, .. }
             | OpKind::X86ReadPid { dst }
             | OpKind::X86ReadControl { dst, .. } => vec![*dst],
+            OpKind::X86ReadDebug { dst, .. } => vec![*dst],
 
             OpKind::CmpyW128Sat { dst, .. } | OpKind::SatOrigShl { dst, .. } => vec![*dst],
 
@@ -5124,6 +5136,7 @@ impl OpKind {
                     | OpKind::X86XSetBv { .. }
                     | OpKind::X86Clts
                     | OpKind::X86ReadControl { .. }
+                    | OpKind::X86ReadDebug { .. }
                     | OpKind::X86FsGsBase { .. }
                     | OpKind::X86SwapGs { .. }
                     | OpKind::X86MonitorMwait(..)

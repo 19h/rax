@@ -3,7 +3,9 @@
 use super::*;
 use crate::smir::ir::ops::X86MonitorMwaitOp;
 use crate::smir::lower::runtime::*;
-use crate::smir::lower::x86_64::{x86_clts_shape_valid, x86_read_control_shape_valid};
+use crate::smir::lower::x86_64::{
+    x86_clts_shape_valid, x86_read_control_shape_valid, x86_read_debug_shape_valid,
+};
 
 /// Admit only scalar MMU-helper transfers that the x86-64 state-backed
 /// lowerer can reconstruct without allocator-owned values. The subsequent
@@ -470,6 +472,7 @@ pub(crate) fn block_is_clobber_safe(
         let state_xchg_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_xchg_valid(op);
         let fsgsbase_ok = crate::smir::lower::x86_64::x86_fsgsbase_shape_valid(&op.kind);
         let read_control_ok = x86_read_control_shape_valid(&op.kind);
+        let read_debug_ok = x86_read_debug_shape_valid(&op.kind);
         let swapgs_ok = crate::smir::lower::x86_64::x86_swapgs_shape_valid(&op.kind);
         let monitor_mwait_ok = match &op.kind {
             OpKind::X86MonitorMwait(X86MonitorMwaitOp { addr, .. })
@@ -506,7 +509,8 @@ pub(crate) fn block_is_clobber_safe(
             || state_bswap_ok
             || state_xchg_ok
             || fsgsbase_ok
-            || read_control_ok;
+            || read_control_ok
+            || read_debug_ok;
         if (crate::smir::lower::x86_64::x86_state_backed_gpr_extend_candidate(op)
             && !state_extend_ok)
             || (crate::smir::lower::x86_64::x86_state_backed_gpr_cmove_candidate(op)
@@ -633,6 +637,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86ReadControl { .. }) && !read_control_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86ReadDebug { .. }) && !read_debug_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86Cpuid { .. })

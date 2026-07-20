@@ -14,6 +14,21 @@ pub enum X86ControlReg {
     Cr8,
 }
 
+/// Encoded debug-register selector accepted by `MOV r64, DRn`. DR4 and DR5
+/// remain explicit because their CR4.DE-dependent invalidity and DR6/DR7 alias
+/// behavior are architectural runtime state, not static decode properties.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86DebugReg {
+    Dr0,
+    Dr1,
+    Dr2,
+    Dr3,
+    Dr4,
+    Dr5,
+    Dr6,
+    Dr7,
+}
+
 /// x86 RDTSC/RDTSCP timestamp read. Both forms write EDX:EAX with 32-bit
 /// zero-extending writes. `dst_aux == Some(ECX)` selects RDTSCP: it additionally
 /// reads guest IA32_TSC_AUX and has the architectural prior-load ordering

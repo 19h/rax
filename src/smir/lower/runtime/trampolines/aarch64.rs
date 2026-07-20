@@ -1272,7 +1272,10 @@ pub(crate) fn aarch64_block_is_clobber_safe(
         // their generic JIT-safety classification must not admit them here.
         if matches!(
             op.kind,
-            OpKind::SetAC { .. } | OpKind::X86Clts | OpKind::X86ReadControl { .. }
+            OpKind::SetAC { .. }
+                | OpKind::X86Clts
+                | OpKind::X86ReadControl { .. }
+                | OpKind::X86ReadDebug { .. }
         ) {
             return false;
         }

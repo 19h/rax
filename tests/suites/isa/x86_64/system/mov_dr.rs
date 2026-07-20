@@ -1,4 +1,7 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{
+    CODE_ADDR, INT_HANDLER_ADDR, VCpu, run_until_hlt, setup_apx_vm_no_idt, setup_vm,
+    setup_vm_no_idt,
+};
 use rax::vm::vcpu::Registers;
 
 // MOV DR - Move to/from Debug Registers
@@ -422,7 +425,7 @@ fn test_dr_preserves_other_registers() {
 #[test]
 fn test_dr0_to_r8() {
     let code = [
-        0x4c, 0x0f, 0x21, 0xc0, // MOV R8, DR0
+        0x49, 0x0f, 0x21, 0xc0, // MOV R8, DR0
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -435,7 +438,7 @@ fn test_dr0_to_r8() {
 #[test]
 fn test_dr1_to_r9() {
     let code = [
-        0x4c, 0x0f, 0x21, 0xc9, // MOV R9, DR1
+        0x49, 0x0f, 0x21, 0xc9, // MOV R9, DR1
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -448,7 +451,7 @@ fn test_dr1_to_r9() {
 #[test]
 fn test_dr2_to_r10() {
     let code = [
-        0x4c, 0x0f, 0x21, 0xd2, // MOV R10, DR2
+        0x49, 0x0f, 0x21, 0xd2, // MOV R10, DR2
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -461,7 +464,7 @@ fn test_dr2_to_r10() {
 #[test]
 fn test_dr3_to_r11() {
     let code = [
-        0x4c, 0x0f, 0x21, 0xdb, // MOV R11, DR3
+        0x49, 0x0f, 0x21, 0xdb, // MOV R11, DR3
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -474,7 +477,7 @@ fn test_dr3_to_r11() {
 #[test]
 fn test_dr6_to_r14() {
     let code = [
-        0x4c, 0x0f, 0x21, 0xf6, // MOV R14, DR6
+        0x49, 0x0f, 0x21, 0xf6, // MOV R14, DR6
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -487,7 +490,7 @@ fn test_dr6_to_r14() {
 #[test]
 fn test_dr7_to_r15() {
     let code = [
-        0x4c, 0x0f, 0x21, 0xff, // MOV R15, DR7
+        0x49, 0x0f, 0x21, 0xff, // MOV R15, DR7
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -516,7 +519,7 @@ fn test_r8_to_dr0() {
 fn test_r15_to_dr7() {
     let code = [
         0x0f, 0x21, 0xff, // MOV R15, DR7
-        0x4c, 0x0f, 0x23, 0xff, // MOV DR7, R15
+        0x49, 0x0f, 0x23, 0xff, // MOV DR7, R15
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -661,4 +664,184 @@ fn test_dr7_control_setting() {
 
     // DR7 has some bits that are always 1 (bit 10)
     let _ = regs.rax;
+}
+
+#[test]
+fn mov_from_dr_reads_exact_state_and_ignores_mod_bits_without_an_address() {
+    for (modrm, expected) in [
+        (0x00, 0x1111_2222_3333_4444), // mod=00, DR0 -> RAX
+        (0x48, 0x2222_3333_4444_5555), // mod=01, DR1 -> RAX
+        (0x90, 0x3333_4444_5555_6666), // mod=10, DR2 -> RAX
+        (0xD8, 0x4444_5555_6666_7777), // mod=11, DR3 -> RAX
+    ] {
+        let (mut vcpu, _) = setup_vm(&[0x0F, 0x21, modrm, 0xF4], None);
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.dr0 = 0x1111_2222_3333_4444;
+        sregs.dr1 = 0x2222_3333_4444_5555;
+        sregs.dr2 = 0x3333_4444_5555_6666;
+        sregs.dr3 = 0x4444_5555_6666_7777;
+        vcpu.set_sregs(&sregs).unwrap();
+
+        assert!(vcpu.step().unwrap().is_none(), "ModR/M={modrm:#04x}");
+        let regs = vcpu.get_regs().unwrap();
+        assert_eq!(regs.rax, expected, "ModR/M={modrm:#04x}");
+        assert_eq!(
+            regs.rip,
+            CODE_ADDR + 3,
+            "ignored mod bits consume no SIB/displacement"
+        );
+    }
+
+    let (mut vcpu, _) = setup_vm(&[0x49, 0x0F, 0x21, 0xC7, 0xF4], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.dr0 = 0x0123_4567_89AB_CDEF;
+    vcpu.set_sregs(&sregs).unwrap();
+    assert!(vcpu.step().unwrap().is_none());
+    assert_eq!(vcpu.get_regs().unwrap().r15, sregs.dr0);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR + 4);
+}
+
+#[test]
+fn mov_from_dr_decode_faults_precede_dynamic_state_without_committing() {
+    for (name, code) in [
+        ("rex-r", &[0x44, 0x0F, 0x21, 0xC0][..]),
+        ("lock", &[0xF0, 0x0F, 0x21, 0xC0]),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(code, None);
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cs.selector = 3;
+        sregs.dr7 = 1 << 13;
+        vcpu.set_sregs(&sregs).unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xA5A5_5A5A_DEAD_BEEF;
+        vcpu.set_regs(&regs).unwrap();
+
+        let error = vcpu.step().expect_err("invalid MOV-from-DR must #UD");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{name}: wrong exception: {error}"
+        );
+        assert_eq!(vcpu.get_regs().unwrap().rax, regs.rax, "{name}");
+        assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
+        assert_eq!(vcpu.get_sregs().unwrap().dr6 & (1 << 13), 0, "{name}");
+    }
+
+    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x80, 0x21, 0xC0], None);
+    let error = vcpu
+        .step()
+        .expect_err("REX2 MOV-from-DR must remain undefined with APX enabled");
+    assert!(error.to_string().contains("IDT entry 6 not present"));
+}
+
+#[test]
+fn mov_from_dr_de_privilege_and_real_mode_checks_are_precise() {
+    let (mut de, _) = setup_vm_no_idt(&[0x0F, 0x21, 0xE0], None);
+    let mut sregs = de.get_sregs().unwrap();
+    sregs.cr4 |= 1 << 3;
+    sregs.cs.selector = 3;
+    de.set_sregs(&sregs).unwrap();
+    let error = de
+        .step()
+        .expect_err("DR4 with CR4.DE must #UD before the CPL fault");
+    assert!(error.to_string().contains("IDT entry 6 not present"));
+    assert_eq!(de.get_regs().unwrap().rip, CODE_ADDR);
+
+    for (name, selector, vm) in [
+        ("protected-cpl3", 3, false),
+        ("virtual-8086-cs-rpl0", 0, true),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x21, 0xD0], None);
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cr0 |= 1;
+        sregs.cs.selector = selector;
+        sregs.dr2 = 0x2222;
+        vcpu.set_sregs(&sregs).unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xA5A5_5A5A_DEAD_BEEF;
+        if vm {
+            regs.rflags |= 1 << 17;
+        }
+        vcpu.set_regs(&regs).unwrap();
+
+        let error = vcpu.step().expect_err("MOV-from-DR privilege must #GP(0)");
+        assert!(
+            error.to_string().contains("IDT entry 13 not present"),
+            "{name}: wrong exception: {error}"
+        );
+        assert_eq!(vcpu.get_regs().unwrap().rax, regs.rax, "{name}");
+        assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
+    }
+
+    let (mut real_mode, _) = setup_vm_no_idt(&[0x0F, 0x21, 0xD0], None);
+    let mut sregs = real_mode.get_sregs().unwrap();
+    sregs.cr0 &= !1;
+    sregs.cs.selector = 3;
+    sregs.dr2 = 0x2222;
+    real_mode.set_sregs(&sregs).unwrap();
+    assert!(real_mode.step().unwrap().is_none());
+    assert_eq!(real_mode.get_regs().unwrap().rax, 0x2222);
+}
+
+#[test]
+fn mov_from_dr_general_detect_precedes_de_and_privilege_checks() {
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x21, 0xE0], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cr4 |= 1 << 3;
+    sregs.cs.selector = 3;
+    sregs.dr6 = 0x400;
+    sregs.dr7 = 1 << 13;
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rax = 0xA5A5_5A5A_DEAD_BEEF;
+    vcpu.set_regs(&regs).unwrap();
+
+    let error = vcpu
+        .step()
+        .expect_err("DR7.GD faults prior to executing the MOV");
+    assert!(
+        error.to_string().contains("IDT entry 1 not present"),
+        "wrong exception priority: {error}"
+    );
+    assert_eq!(vcpu.get_regs().unwrap().rax, regs.rax);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR);
+    assert_ne!(vcpu.get_sregs().unwrap().dr6 & (1 << 13), 0);
+}
+
+#[test]
+fn mov_from_dr_general_detect_sets_bd_clears_gd_on_handler_entry_and_does_not_commit() {
+    let (mut vcpu, _) = setup_vm(&[0x0F, 0x21, 0xC0], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.dr0 = 0x0123_4567_89AB_CDEF;
+    sregs.dr6 = 0x400;
+    sregs.dr7 = 1 << 13;
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rax = 0xA5A5_5A5A_DEAD_BEEF;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(vcpu.step().unwrap().is_none());
+    let after_regs = vcpu.get_regs().unwrap();
+    let after_sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(after_regs.rip, INT_HANDLER_ADDR, "fault-class #DB handler");
+    assert_eq!(after_regs.rax, regs.rax, "destination is non-committing");
+    assert_ne!(after_sregs.dr6 & (1 << 13), 0, "DR6.BD set before #DB");
+    assert_eq!(after_sregs.dr7 & (1 << 13), 0, "handler entry clears GD");
+}
+
+#[test]
+fn mov_from_dr_outside_64_bit_mode_is_an_ignored_prefix_32_bit_write() {
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x66, 0x0F, 0x21, 0xD0], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.l = false;
+    sregs.cs.db = true;
+    sregs.dr2 = 0xFFFF_AAAA_8765_4321;
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rax = u64::MAX;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(vcpu.step().unwrap().is_none());
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rax, 0x8765_4321);
+    assert_eq!(regs.rip, CODE_ADDR + 4);
 }

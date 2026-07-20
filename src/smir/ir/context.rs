@@ -29,6 +29,8 @@ pub enum ExitReason {
     Undefined { addr: GuestAddr, opcode: u32 },
     /// x86 general-protection exception with its architectural error code.
     GeneralProtection { addr: GuestAddr, error_code: u32 },
+    /// Fault-class x86 debug exception, including DR7.GD general detect.
+    Debug { addr: GuestAddr },
     /// x86 stack-segment exception with its architectural error code.
     StackSegment { addr: GuestAddr, error_code: u32 },
     /// x86 unmasked SIMD floating-point exception (#XM).
@@ -390,6 +392,15 @@ pub struct X86RegState {
     pub cr4: u64,
     /// Guest CR8 task-priority state.
     pub cr8: u64,
+    /// Guest breakpoint linear-address registers.
+    pub dr0: u64,
+    pub dr1: u64,
+    pub dr2: u64,
+    pub dr3: u64,
+    /// Guest debug status register.
+    pub dr6: u64,
+    /// Guest debug control register.
+    pub dr7: u64,
     /// Effective current privilege level used by privileged system
     /// instructions, including virtual-8086 mode as CPL3.
     pub cpl: u8,

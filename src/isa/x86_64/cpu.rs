@@ -4606,6 +4606,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86SwapGs { .. }
                                 | OpKind::X86MonitorMwait(..)
                                 | OpKind::X86ReadControl { .. }
+                                | OpKind::X86ReadDebug { .. }
                         )
                     })
             {
@@ -4879,6 +4880,12 @@ impl X86_64Vcpu {
         gr.cr2 = self.sregs.cr2;
         gr.cr3 = self.sregs.cr3;
         gr.cr8 = self.sregs.cr8;
+        gr.dr0 = self.sregs.dr0;
+        gr.dr1 = self.sregs.dr1;
+        gr.dr2 = self.sregs.dr2;
+        gr.dr3 = self.sregs.dr3;
+        gr.dr6 = self.sregs.dr6;
+        gr.dr7 = self.sregs.dr7;
         gr.cpl = if self.regs.rflags & flags::bits::VM != 0 {
             3
         } else {
@@ -4982,6 +4989,12 @@ impl X86_64Vcpu {
         self.sregs.cr3 = gr.cr3;
         self.sregs.cr4 = gr.cr4;
         self.sregs.cr8 = gr.cr8;
+        self.sregs.dr0 = gr.dr0;
+        self.sregs.dr1 = gr.dr1;
+        self.sregs.dr2 = gr.dr2;
+        self.sregs.dr3 = gr.dr3;
+        self.sregs.dr6 = gr.dr6;
+        self.sregs.dr7 = gr.dr7;
         self.sregs.fs.base = gr.fs_base;
         self.sregs.gs.base = gr.gs_base;
         self.kernel_gs_base = gr.kernel_gs_base;
@@ -5121,6 +5134,12 @@ impl X86_64Vcpu {
         let snap_cr3 = self.sregs.cr3;
         let snap_cr4 = self.sregs.cr4;
         let snap_cr8 = self.sregs.cr8;
+        let snap_dr0 = self.sregs.dr0;
+        let snap_dr1 = self.sregs.dr1;
+        let snap_dr2 = self.sregs.dr2;
+        let snap_dr3 = self.sregs.dr3;
+        let snap_dr6 = self.sregs.dr6;
+        let snap_dr7 = self.sregs.dr7;
 
         // 1) Run natively with store-logging (to UNDO writes) and an access
         //    trace (to diff against the interpreter's access sequence).
@@ -5138,6 +5157,12 @@ impl X86_64Vcpu {
         let jit_cr3 = self.sregs.cr3;
         let jit_cr4 = self.sregs.cr4;
         let jit_cr8 = self.sregs.cr8;
+        let jit_dr0 = self.sregs.dr0;
+        let jit_dr1 = self.sregs.dr1;
+        let jit_dr2 = self.sregs.dr2;
+        let jit_dr3 = self.sregs.dr3;
+        let jit_dr6 = self.sregs.dr6;
+        let jit_dr7 = self.sregs.dr7;
         let jit_rflags = self.regs.rflags; // already materialized by the native bridge
         let exit_pc = self.regs.rip;
         // Take the native trace NOW, before the undo/re-read loops add to it.
@@ -5180,6 +5205,12 @@ impl X86_64Vcpu {
         self.sregs.cr3 = snap_cr3;
         self.sregs.cr4 = snap_cr4;
         self.sregs.cr8 = snap_cr8;
+        self.sregs.dr0 = snap_dr0;
+        self.sregs.dr1 = snap_dr1;
+        self.sregs.dr2 = snap_dr2;
+        self.sregs.dr3 = snap_dr3;
+        self.sregs.dr6 = snap_dr6;
+        self.sregs.dr7 = snap_dr7;
         // A lift-through-call callee can update translation controls through
         // the direct interpreter. The verification replay must not reuse TLB
         // entries created under the native run's CR0/CR3/CR4 state.
@@ -5296,6 +5327,12 @@ impl X86_64Vcpu {
                 ("cr3", self.sregs.cr3, jit_cr3),
                 ("cr4", self.sregs.cr4, jit_cr4),
                 ("cr8", self.sregs.cr8, jit_cr8),
+                ("dr0", self.sregs.dr0, jit_dr0),
+                ("dr1", self.sregs.dr1, jit_dr1),
+                ("dr2", self.sregs.dr2, jit_dr2),
+                ("dr3", self.sregs.dr3, jit_dr3),
+                ("dr6", self.sregs.dr6, jit_dr6),
+                ("dr7", self.sregs.dr7, jit_dr7),
             ] {
                 if interp != native {
                     diffs.push(format!("{name}: interp={interp:#x} jit={native:#x}"));
@@ -5450,6 +5487,12 @@ impl X86_64Vcpu {
         self.sregs.cr3 = jit_cr3;
         self.sregs.cr4 = jit_cr4;
         self.sregs.cr8 = jit_cr8;
+        self.sregs.dr0 = jit_dr0;
+        self.sregs.dr1 = jit_dr1;
+        self.sregs.dr2 = jit_dr2;
+        self.sregs.dr3 = jit_dr3;
+        self.sregs.dr6 = jit_dr6;
+        self.sregs.dr7 = jit_dr7;
         self.mmu.flush_tlb();
     }
 
@@ -6023,6 +6066,10 @@ mod jit_clts_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_read_control_tests.rs"]
 mod jit_read_control_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_read_debug_tests.rs"]
+mod jit_read_debug_tests;
 
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {

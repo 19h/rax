@@ -6,8 +6,11 @@ use crate::vm::vcpu::VcpuExit;
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 
 const CR0_HIGH_RESERVED_MASK: u64 = 0xFFFF_FFFF_0000_0000;
+const CR4_DE: u64 = 1 << 3;
 const CR4_UMIP: u64 = 1 << 11;
 const CR4_HIGH_RESERVED_MASK: u64 = 0xFFFF_FFFF_0000_0000;
+const DR6_BD: u64 = 1 << 13;
+const DR7_GD: u64 = 1 << 13;
 
 /// Current Privilege Level of the executing code.
 ///
@@ -69,6 +72,19 @@ fn read_descriptor_table(vcpu: &mut X86_64Vcpu, addr: u64) -> Result<(u16, u64)>
 #[inline]
 pub(super) fn raise_gp0(vcpu: &mut X86_64Vcpu) -> Result<Option<VcpuExit>> {
     vcpu.inject_exception(13, Some(0))?;
+    Ok(None)
+}
+
+/// Raise the fault-class #DB caused by DR7.GD on a debug-register access.
+///
+/// Intel specifies that DR6.BD is set before exception generation and that
+/// DR7.GD is cleared upon entry to the #DB handler. Keep GD set if exception
+/// delivery itself fails: no handler was entered in that case.
+#[inline]
+fn raise_debug_register_access(vcpu: &mut X86_64Vcpu) -> Result<Option<VcpuExit>> {
+    vcpu.sregs.dr6 |= DR6_BD;
+    vcpu.inject_exception(1, None)?;
+    vcpu.sregs.dr7 &= !DR7_GD;
     Ok(None)
 }
 
@@ -244,36 +260,54 @@ pub fn mov_r_cr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
     Ok(None)
 }
 
-/// MOV r64, DRn (0x0F 0x21)
+/// MOV r32/r64, DRn (0x0F 0x21)
 pub fn mov_r_dr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // Privileged: accessing debug registers requires CPL 0.
-    if !is_cpl0(vcpu) {
-        return raise_gp0(vcpu);
-    }
     let modrm = ctx.consume_u8()?;
     let dr = (modrm >> 3) & 0x07;
     let rm = (modrm & 0x07) | ctx.rex_b();
+
+    // REX.R is an architecturally invalid extension for MOV-DR. APX REX2
+    // defines no replacement form. These decode-time failures precede all
+    // dynamic debug-register checks.
+    if ctx.rex_r() != 0 || ctx.rex2.is_some() {
+        return vcpu.inject_undefined_instruction();
+    }
+
+    // General detect protects every debug-register access and faults before
+    // the MOV commits. DR6.BD is set before delivery; successful handler entry
+    // clears DR7.GD so the handler can inspect the debug registers.
+    if vcpu.sregs.dr7 & DR7_GD != 0 {
+        return raise_debug_register_access(vcpu);
+    }
+
+    // DR4/DR5 are invalid when debug extensions are enabled. Otherwise they
+    // retain the Intel386/Intel486 aliases to DR6/DR7.
+    if matches!(dr, 4 | 5) && vcpu.sregs.cr4 & CR4_DE != 0 {
+        return vcpu.inject_undefined_instruction();
+    }
+
+    // Real-address mode is permitted. Protected, compatibility, and 64-bit
+    // modes require CPL0; virtual-8086 mode has effective CPL3.
+    if !is_cpl0(vcpu) {
+        return raise_gp0(vcpu);
+    }
+
     let value = match dr {
         0 => vcpu.sregs.dr0,
         1 => vcpu.sregs.dr1,
         2 => vcpu.sregs.dr2,
         3 => vcpu.sregs.dr3,
-        4 | 5 => {
-            // DR4 and DR5 are reserved; they alias DR6 and DR7 when CR4.DE=0
-            if vcpu.sregs.cr4 & (1 << 3) != 0 {
-                return vcpu.inject_undefined_instruction();
-            }
-            if dr == 4 {
-                vcpu.sregs.dr6
-            } else {
-                vcpu.sregs.dr7
-            }
-        }
+        4 => vcpu.sregs.dr6,
+        5 => vcpu.sregs.dr7,
         6 => vcpu.sregs.dr6,
         7 => vcpu.sregs.dr7,
-        _ => return vcpu.inject_undefined_instruction(),
+        _ => unreachable!("three-bit debug-register selector changed"),
     };
-    vcpu.set_reg(rm, value, 8);
+
+    // Outside 64-bit mode the operand is always 32 bits and the 66H prefix is
+    // ignored. Preserve the existing deterministic policy for the six status
+    // flags that Intel documents as undefined.
+    vcpu.set_reg(rm, value, if vcpu.sregs.cs.l { 8 } else { 4 });
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

@@ -337,6 +337,10 @@ impl X86_64Lifter {
             // address handling.
             0x20 => self.lift_read_control_0f20(after_opcode, &prefix2, pc, ctx),
 
+            // MOV r64, DR0-DR7. ModR/M.mod is ignored and DR4/DR5 validity is
+            // dynamic in CR4.DE, so retain the raw encoded selector.
+            0x21 => self.lift_read_debug_0f21(after_opcode, &prefix2, pc, ctx),
+
             // EMMS marks every x87/MMX register empty while preserving the
             // aliased payloads. FEMMS performs the same defined tag transition
             // but leaves those payloads architecturally undefined; retaining

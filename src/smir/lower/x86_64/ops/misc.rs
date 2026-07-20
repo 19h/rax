@@ -122,6 +122,8 @@ impl X86_64Lowerer {
 
             OpKind::X86ReadControl { .. } => self.emit_x86_read_control(op)?,
 
+            OpKind::X86ReadDebug { .. } => self.emit_x86_read_debug(op)?,
+
             OpKind::X86FsGsBase { .. } => self.emit_x86_fsgsbase(op)?,
 
             OpKind::X86SwapGs { .. } => self.emit_x86_swapgs(op)?,

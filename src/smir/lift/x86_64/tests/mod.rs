@@ -38,6 +38,8 @@ mod rdtscp;
 #[cfg(test)]
 mod read_control;
 #[cfg(test)]
+mod read_debug;
+#[cfg(test)]
 mod scalar;
 #[cfg(test)]
 mod serialize;
