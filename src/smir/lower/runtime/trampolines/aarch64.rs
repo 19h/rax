@@ -1267,10 +1267,10 @@ pub(crate) fn aarch64_block_is_clobber_safe(
                 }
             }
         }
-        // `SetAC` is x86 architectural state backed by `GuestRegs::ac_flag`.
-        // The AArch64 guest-state ABI has no corresponding field or lowerer,
-        // so the generic JIT-safety classification must not admit it here.
-        if matches!(op.kind, OpKind::SetAC { .. }) {
+        // These operand-free operations mutate x86 architectural state. The
+        // AArch64 guest-state ABI has no corresponding fields or lowerers, so
+        // their generic JIT-safety classification must not admit them here.
+        if matches!(op.kind, OpKind::SetAC { .. } | OpKind::X86Clts) {
             return false;
         }
         let mem_ok = allow_mem && aarch64_mem_helper_op(&op.kind);

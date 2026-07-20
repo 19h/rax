@@ -2476,6 +2476,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src_low,
             src_high,
         } => op_json!("x86_xsetbv", selector, src_low, src_high),
+        OpKind::X86Clts => op_json!("x86_clts"),
         OpKind::X86FsGsBase {
             operand,
             base,

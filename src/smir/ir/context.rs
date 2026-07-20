@@ -381,9 +381,11 @@ pub struct X86RegState {
     /// Guest CR4. CPUID leaf 1 reflects OSXSAVE (bit 18), and leaf 7 reflects
     /// OSPKE (bit 22).
     pub cr4: u64,
-    /// Guest CR0. PE (bit 0) participates in RDTSC/RDTSCP privilege checks.
+    /// Guest CR0. PE (bit 0) participates in timestamp and CLTS privilege
+    /// checks; CLTS clears TS (bit 3).
     pub cr0: u64,
-    /// Current privilege level used by privileged system instructions.
+    /// Effective current privilege level used by privileged system
+    /// instructions, including virtual-8086 mode as CPL3.
     pub cpl: u8,
     /// Opt-in Xeon Phi AVX-512 feature profile used by CPUID leaf 7.
     pub xeon_phi_avx512: bool,

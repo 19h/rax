@@ -3,6 +3,7 @@
 use super::*;
 use crate::smir::ir::ops::X86MonitorMwaitOp;
 use crate::smir::lower::runtime::*;
+use crate::smir::lower::x86_64::x86_clts_shape_valid;
 
 /// Admit only scalar MMU-helper transfers that the x86-64 state-backed
 /// lowerer can reconstruct without allocator-owned values. The subsequent
@@ -624,6 +625,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86XGetBv { .. }) && !x86_xgetbv_shape_valid(&op.kind) {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86Clts) && !x86_clts_shape_valid(&op.kind) {
             return false;
         }
         if matches!(op.kind, OpKind::X86Cpuid { .. })

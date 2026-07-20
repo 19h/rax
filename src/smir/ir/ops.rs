@@ -3962,6 +3962,11 @@ pub enum OpKind {
         src_high: VReg,
     },
 
+    /// CLTS: clear CR0.TS after the real-mode/CPL privilege check. CR0 is
+    /// architecture context rather than a scalar VReg, so this operation has
+    /// no explicit operands but is stateful and potentially faulting.
+    X86Clts,
+
     /// RDFSBASE/RDGSBASE/WRFSBASE/WRGSBASE. `operand` is the encoded GPR and
     /// `base` is exactly FS.base or GS.base. A read writes `operand` from
     /// `base`; a write commits `operand` to `base`. The operation performs its
@@ -4420,6 +4425,7 @@ impl OpKind {
                 | OpKind::X86ReadPid { .. }
                 | OpKind::X86XGetBv { .. }
                 | OpKind::X86XSetBv { .. }
+                | OpKind::X86Clts
                 | OpKind::X86FsGsBase { .. }
                 | OpKind::X86SwapGs { .. }
                 | OpKind::X86MonitorMwait(..)
@@ -4936,6 +4942,7 @@ impl OpKind {
             | OpKind::X86XSave { .. }
             | OpKind::X86XRstor { .. }
             | OpKind::X86XSetBv { .. }
+            | OpKind::X86Clts
             | OpKind::X86MonitorMwait(..)
             | OpKind::Syscall { .. }
             | OpKind::IoOut { .. }
@@ -5103,6 +5110,7 @@ impl OpKind {
                     | OpKind::X86XSave { .. }
                     | OpKind::X86XGetBv { .. }
                     | OpKind::X86XSetBv { .. }
+                    | OpKind::X86Clts
                     | OpKind::X86FsGsBase { .. }
                     | OpKind::X86SwapGs { .. }
                     | OpKind::X86MonitorMwait(..)

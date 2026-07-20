@@ -277,6 +277,23 @@ fn emits_exact_clac_stac_guest_ac_metadata() {
 }
 
 #[test]
+fn emits_exact_clts_guest_cr0_state_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let decoded = decode_to_json(&[0x0F, 0x06], &opts).unwrap();
+    assert_eq!(decoded["smir"]["available"], true);
+    assert_eq!(decoded["smir"]["bytes_consumed"], 2);
+    let op = &decoded["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_clts");
+    assert!(op["reads"].is_null());
+    assert_eq!(op["writes"].as_array().unwrap().len(), 0);
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+}
+
+#[test]
 fn emits_exact_rdtsc_and_rdtscp_destination_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

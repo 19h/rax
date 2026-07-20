@@ -43,6 +43,8 @@ mod common;
 pub use common::*;
 mod control;
 pub use control::*;
+mod clts;
+pub use clts::*;
 mod cpuid;
 pub use cpuid::*;
 mod dispatch;

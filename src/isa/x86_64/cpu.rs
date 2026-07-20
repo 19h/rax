@@ -4969,10 +4969,11 @@ impl X86_64Vcpu {
             return;
         }
 
-        // Stateful control instructions such as XSETBV commit through the
+        // Stateful control instructions such as XSETBV and CLTS commit through the
         // marshalled ABI before returning at a precise next-instruction PC.
         self.xcr0 = gr.xcr0;
         self.pkru = gr.pkru;
+        self.sregs.cr0 = gr.cr0;
         self.sregs.fs.base = gr.fs_base;
         self.sregs.gs.base = gr.gs_base;
         self.kernel_gs_base = gr.kernel_gs_base;
@@ -5107,6 +5108,7 @@ impl X86_64Vcpu {
         let snap_gs_base = self.sregs.gs.base;
         let snap_kernel_gs_base = self.kernel_gs_base;
         let snap_pkru = self.pkru;
+        let snap_cr0 = self.sregs.cr0;
 
         // 1) Run natively with store-logging (to UNDO writes) and an access
         //    trace (to diff against the interpreter's access sequence).
@@ -5119,6 +5121,7 @@ impl X86_64Vcpu {
         let jit_gs_base = self.sregs.gs.base;
         let jit_kernel_gs_base = self.kernel_gs_base;
         let jit_pkru = self.pkru;
+        let jit_cr0 = self.sregs.cr0;
         let jit_rflags = self.regs.rflags; // already materialized by the native bridge
         let exit_pc = self.regs.rip;
         // Take the native trace NOW, before the undo/re-read loops add to it.
@@ -5156,6 +5159,7 @@ impl X86_64Vcpu {
         self.sregs.gs.base = snap_gs_base;
         self.kernel_gs_base = snap_kernel_gs_base;
         self.pkru = snap_pkru;
+        self.sregs.cr0 = snap_cr0;
         self.jit_mem_trace = Some(Vec::new());
         let cap = 50_000_000u64;
         let mut steps = 0u64;
@@ -5263,6 +5267,7 @@ impl X86_64Vcpu {
                 ("gs_base", self.sregs.gs.base, jit_gs_base),
                 ("kernel_gs_base", self.kernel_gs_base, jit_kernel_gs_base),
                 ("pkru", u64::from(self.pkru), u64::from(jit_pkru)),
+                ("cr0", self.sregs.cr0, jit_cr0),
             ] {
                 if interp != native {
                     diffs.push(format!("{name}: interp={interp:#x} jit={native:#x}"));
@@ -5412,6 +5417,7 @@ impl X86_64Vcpu {
         self.sregs.gs.base = jit_gs_base;
         self.kernel_gs_base = jit_kernel_gs_base;
         self.pkru = jit_pkru;
+        self.sregs.cr0 = jit_cr0;
     }
 
     /// Re-lift + optimize the region at `entry` and pretty-print its blocks/ops
@@ -5976,6 +5982,10 @@ mod jit_tsc_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_ac_tests.rs"]
 mod jit_ac_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_clts_tests.rs"]
+mod jit_clts_tests;
 
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {

@@ -53,6 +53,26 @@ impl SmirInterpreter {
                 // Simplified: no-op
             }
 
+            OpKind::X86Clts => {
+                let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                };
+                // Real-address mode permits CLTS regardless of stale CS.RPL.
+                // X86RegState.cpl is the effective CPL, including VM86 as CPL3.
+                if x86.cr0 & 1 != 0 && x86.cpl != 0 {
+                    ctx.request_exit(ExitReason::GeneralProtection {
+                        addr: op.guest_pc,
+                        error_code: 0,
+                    });
+                    return Ok(());
+                }
+                x86.cr0 &= !(1 << 3);
+            }
+
             OpKind::X86ReadTsc(read) => {
                 let (cr0, cr4, cpl, tsc_aux) = match &ctx.arch_regs {
                     ArchRegState::X86_64(x86) => (x86.cr0, x86.cr4, x86.cpl, x86.tsc_aux),

@@ -11,16 +11,22 @@ const CR4_HIGH_RESERVED_MASK: u64 = 0xFFFF_FFFF_0000_0000;
 
 /// Current Privilege Level of the executing code.
 ///
-/// The CPL is the low two bits of the CS selector. In real mode (CR0.PE=0)
-/// there is no privilege concept and the processor effectively runs as ring 0;
-/// many rax test fixtures also leave CS unset (selector 0) while exercising
-/// privileged instructions, so a non-protected-mode vCPU must be treated as
-/// CPL 0 to avoid spurious faults.
+/// The CPL is the low two bits of the CS selector in protected mode, except
+/// that virtual-8086 mode always executes with effective CPL 3. In real mode
+/// (CR0.PE=0) there is no privilege concept and the processor effectively runs
+/// as ring 0; many rax test fixtures also leave CS unset (selector 0) while
+/// exercising privileged instructions, so a non-protected-mode vCPU must be
+/// treated as CPL 0 to avoid spurious faults.
 #[inline]
 pub(super) fn current_cpl(vcpu: &X86_64Vcpu) -> u8 {
     // CR0.PE (bit 0) distinguishes protected mode from real mode.
     if vcpu.sregs.cr0 & 1 == 0 {
         return 0;
+    }
+    // RFLAGS.VM (bit 17) identifies virtual-8086 mode. CS.RPL is not an
+    // authoritative privilege indicator there.
+    if vcpu.regs.rflags & (1 << 17) != 0 {
+        return 3;
     }
     (vcpu.sregs.cs.selector & 0x3) as u8
 }
@@ -194,6 +200,11 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
 
 /// CLTS - Clear Task-Switched Flag in CR0 (0x0F 0x06)
 pub fn clts(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    // Real-address mode is explicitly permitted. Protected, compatibility,
+    // and 64-bit modes require CPL0; virtual-8086 mode has effective CPL3.
+    if !is_cpl0(vcpu) {
+        return raise_gp0(vcpu);
+    }
     vcpu.sregs.cr0 &= !(1u64 << 3);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)

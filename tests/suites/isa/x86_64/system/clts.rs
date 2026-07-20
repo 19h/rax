@@ -1,4 +1,4 @@
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{CODE_ADDR, VCpu, run_until_hlt, setup_vm, setup_vm_no_idt};
 
 // CLTS - Clear Task-Switched Flag in CR0
 // Opcode: 0F 06
@@ -476,4 +476,106 @@ fn test_clts_instruction_length() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(regs.rax, 0x42, "RIP should advance correctly");
+}
+
+#[test]
+fn clts_clears_exactly_cr0_ts() {
+    let (mut vcpu, _) = setup_vm(&[0x0F, 0x06, 0xF4], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cr0 = 0x0005_003B;
+    let expected = sregs.cr0 & !(1 << 3);
+    vcpu.set_sregs(&sregs).unwrap();
+    let before_regs = vcpu.get_regs().unwrap();
+
+    assert!(vcpu.step().unwrap().is_none());
+
+    assert_eq!(vcpu.get_sregs().unwrap().cr0, expected);
+    let after_regs = vcpu.get_regs().unwrap();
+    assert_eq!(after_regs.rip, CODE_ADDR + 2);
+    assert_eq!(after_regs.rax, before_regs.rax);
+    assert_eq!(after_regs.rflags, before_regs.rflags);
+}
+
+#[test]
+fn clts_real_mode_ignores_stale_cs_rpl() {
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x06], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cr0 = (sregs.cr0 & !1) | (1 << 3);
+    sregs.cs.selector = 3;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    assert!(vcpu.step().unwrap().is_none());
+    assert_eq!(vcpu.get_sregs().unwrap().cr0 & (1 << 3), 0);
+}
+
+#[test]
+fn clts_protected_cpl3_and_vm86_fault_without_clearing_ts() {
+    for (name, selector, vm) in [
+        ("protected-cpl3", 3, false),
+        ("virtual-8086-cs-rpl0", 0, true),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(&[0x0F, 0x06], None);
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cr0 |= 1 | (1 << 3);
+        sregs.cs.selector = selector;
+        let initial_cr0 = sregs.cr0;
+        vcpu.set_sregs(&sregs).unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        if vm {
+            regs.rflags |= 1 << 17;
+        }
+        vcpu.set_regs(&regs).unwrap();
+
+        let error = vcpu
+            .step()
+            .expect_err("CLTS privilege violation must #GP(0)");
+        assert!(
+            error.to_string().contains("IDT entry 13 not present"),
+            "{name}: wrong exception: {error}"
+        );
+        assert_eq!(vcpu.get_sregs().unwrap().cr0, initial_cr0, "{name}");
+        assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
+    }
+}
+
+#[test]
+fn lock_clts_faults_ud_before_clearing_ts() {
+    let (mut vcpu, _) = setup_vm_no_idt(&[0xF0, 0x0F, 0x06], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cr0 |= 1 | (1 << 3);
+    sregs.cs.selector = 3;
+    let initial_cr0 = sregs.cr0;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    let error = vcpu.step().expect_err("LOCK CLTS must #UD");
+    assert!(error.to_string().contains("IDT entry 6 not present"));
+    assert_eq!(vcpu.get_sregs().unwrap().cr0, initial_cr0);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR);
+}
+
+#[test]
+fn clts_ignores_non_lock_legacy_and_rex_prefixes() {
+    for prefix in [
+        0x26, 0x2E, 0x36, 0x3E, 0x64, 0x65, // segment overrides
+        0x66, 0x67, // operand/address size
+        0x40, 0x41, 0x42, 0x44, 0x48, 0x4F, // representative REX forms
+        0xF2, 0xF3, // repeat prefixes
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(&[prefix, 0x0F, 0x06], None);
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cr0 |= 1 << 3;
+        vcpu.set_sregs(&sregs).unwrap();
+
+        assert!(vcpu.step().unwrap().is_none(), "prefix {prefix:#04x}");
+        assert_eq!(
+            vcpu.get_sregs().unwrap().cr0 & (1 << 3),
+            0,
+            "prefix {prefix:#04x}"
+        );
+        assert_eq!(
+            vcpu.get_regs().unwrap().rip,
+            CODE_ADDR + 3,
+            "prefix {prefix:#04x}"
+        );
+    }
 }

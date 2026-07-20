@@ -10,6 +10,8 @@ mod ac;
 #[cfg(test)]
 mod addr32_memory;
 #[cfg(test)]
+mod clts;
+#[cfg(test)]
 mod cpuid;
 #[cfg(test)]
 mod evex;

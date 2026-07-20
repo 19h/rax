@@ -157,7 +157,8 @@ pub struct GuestRegs {
     /// Guest CR4. XGETBV deoptimizes unless OSXSAVE (bit 18) is set, allowing
     /// the interpreter to deliver the architectural #UD precisely.
     pub cr4: u64,
-    /// Guest CR0. XSETBV checks PE before enforcing CPL=0.
+    /// Guest CR0. XSETBV checks PE before enforcing CPL0; CLTS checks PE/CPL
+    /// and clears TS (bit 3) in this state-backed value.
     pub cr0: u64,
     /// Effective current privilege level derived from CS.RPL, with virtual-8086
     /// mode represented as CPL3.

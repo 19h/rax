@@ -67,6 +67,10 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     vcpu.sregs.gs.base = gr.gs_base;
     vcpu.kernel_gs_base = gr.kernel_gs_base;
     vcpu.pkru = gr.pkru;
+    // CR0 is normally read-only to native regions. CLTS is the narrow state-
+    // backed exception: publish its current value before an interpreter callout
+    // so a callee observes CR0.TS exactly as the native caller left it.
+    vcpu.sregs.cr0 = gr.cr0;
     vcpu.lazy_flags = LazyFlags {
         op: LazyFlagOp::None,
         ..Default::default()
