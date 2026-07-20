@@ -2,6 +2,17 @@
 
 use crate::smir::ir::types::{Address, VReg};
 
+/// x86 RDTSC/RDTSCP timestamp read. Both forms write EDX:EAX with 32-bit
+/// zero-extending writes. `dst_aux == Some(ECX)` selects RDTSCP: it additionally
+/// reads guest IA32_TSC_AUX and has the architectural prior-load ordering
+/// guarantee. `None` selects the unordered RDTSC form.
+#[derive(Clone, Debug)]
+pub struct X86ReadTscOp {
+    pub dst_lo: VReg,
+    pub dst_hi: VReg,
+    pub dst_aux: Option<VReg>,
+}
+
 /// MONITOR/MWAIT under the deterministic guest profile. `Some(addr)` is
 /// MONITOR: `hint` is EDX, validate CPL/RCX, then perform an ordered faulting
 /// byte read from the monitored linear address. `None` is MWAIT: `hint` is

@@ -4,7 +4,7 @@ use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
     /// Lift MONITOR/MWAIT, XGETBV/XSETBV, RDPKRU/WRPKRU, SERIALIZE, SWAPGS,
-    /// and the RTM fixed ModR/M encodings in 0F 01.
+    /// RDTSCP, and the RTM fixed ModR/M encodings in 0F 01.
     pub(crate) fn lift_xcr_0f01(
         &self,
         bytes: &[u8],
@@ -162,6 +162,11 @@ impl X86_64Lifter {
                 gs_base: VReg::Arch(ArchReg::X86(X86Reg::GsBase)),
                 kernel_gs_base: VReg::Arch(ArchReg::X86(X86Reg::KernelGsBase)),
             },
+            0xF9 => OpKind::X86ReadTsc(X86ReadTscOp {
+                dst_lo: self.gpr(0),
+                dst_hi: self.gpr(2),
+                dst_aux: Some(self.gpr(1)),
+            }),
             _ => {
                 return Err(LiftError::Unsupported {
                     addr: pc,

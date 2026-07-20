@@ -30,6 +30,8 @@ mod packed_string;
 #[cfg(test)]
 mod pkru;
 #[cfg(test)]
+mod rdtscp;
+#[cfg(test)]
 mod scalar;
 #[cfg(test)]
 mod serialize;

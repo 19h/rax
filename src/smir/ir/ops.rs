@@ -4030,12 +4030,9 @@ pub enum OpKind {
         src: VReg,
     },
 
-    /// x86 RDTSC: read the monotonically increasing SMIR cycle counter into
-    /// EDX:EAX (both destinations are 32-bit zero-extending writes).
-    X86ReadTsc {
-        dst_lo: VReg,
-        dst_hi: VReg,
-    },
+    /// x86 RDTSC/RDTSCP read of the monotonically increasing guest timestamp
+    /// counter, with an optional IA32_TSC_AUX destination for RDTSCP.
+    X86ReadTsc(X86ReadTscOp),
 
     /// x86 CPUID: evaluate the emulator's guest CPU profile using EAX/ECX and
     /// commit zero-extended EAX, EBX, ECX, and EDX results atomically. The
@@ -4421,6 +4418,7 @@ impl OpKind {
                 | OpKind::X86SwapGs { .. }
                 | OpKind::X86MonitorMwait(..)
                 | OpKind::X86Pkru { .. }
+                | OpKind::X86ReadTsc(..)
                 | OpKind::X86Cpuid { .. }
                 | OpKind::X86Count { .. }
                 | OpKind::X86X87Control {
@@ -4633,7 +4631,11 @@ impl OpKind {
 
             OpKind::ArmDpRegShift { dst, .. } => dst.iter().copied().collect(),
 
-            OpKind::X86ReadTsc { dst_lo, dst_hi } => vec![*dst_lo, *dst_hi],
+            OpKind::X86ReadTsc(op) => {
+                let mut dests = vec![op.dst_lo, op.dst_hi];
+                dests.extend(op.dst_aux);
+                dests
+            }
 
             OpKind::X86Cpuid {
                 dst_eax,
@@ -5107,7 +5109,7 @@ impl OpKind {
                     | OpKind::Syscall { .. }
                     | OpKind::Swi { .. }
                     | OpKind::WriteSysReg { .. }
-                    | OpKind::X86ReadTsc { .. }
+                    | OpKind::X86ReadTsc(..)
                     | OpKind::X86Cpuid { .. }
                     | OpKind::Breakpoint
             )

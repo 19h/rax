@@ -381,6 +381,8 @@ pub struct X86RegState {
     /// Guest CR4. CPUID leaf 1 reflects OSXSAVE (bit 18), and leaf 7 reflects
     /// OSPKE (bit 22).
     pub cr4: u64,
+    /// Guest CR0. PE (bit 0) participates in RDTSC/RDTSCP privilege checks.
+    pub cr0: u64,
     /// Current privilege level used by privileged system instructions.
     pub cpl: u8,
     /// Opt-in Xeon Phi AVX-512 feature profile used by CPUID leaf 7.
@@ -405,6 +407,8 @@ impl X86RegState {
         // Initialize MXCSR with default
         state.mxcsr = 0x1F80; // Default rounding, all exceptions masked
         state.xcr0 = 1;
+        // SourceArch::X86_64 contexts model protected/long-mode execution.
+        state.cr0 = 1;
         state
     }
 

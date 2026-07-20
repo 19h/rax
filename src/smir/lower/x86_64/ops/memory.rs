@@ -3340,18 +3340,7 @@ impl X86_64Lowerer {
                 emitter.emit_x86_string(*kind, *rep, *width, *address_width)?;
             }
 
-            OpKind::X86ReadTsc { dst_lo, dst_hi } => {
-                let lo = self.get_dst_reg(*dst_lo)?;
-                let hi = self.get_dst_reg(*dst_hi)?;
-                if lo != PhysReg::Rax || hi != PhysReg::Rdx {
-                    return Err(LowerError::InvalidOperand {
-                        op: "X86ReadTsc".to_string(),
-                        operand: "requires EAX/EDX destinations".to_string(),
-                    });
-                }
-                self.code.emit_u8(0x0F);
-                self.code.emit_u8(0x31);
-            }
+            OpKind::X86ReadTsc(..) => self.emit_x86_read_tsc(op)?,
 
             OpKind::X86Random { dst, width, seed } => {
                 if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {

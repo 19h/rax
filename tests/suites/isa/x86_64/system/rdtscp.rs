@@ -1,6 +1,6 @@
-use rax::vm::vcpu::Registers;
+use rax::vm::vcpu::{Registers, VCpu};
 
-use crate::common::{run_until_hlt, setup_vm};
+use crate::common::{run_until_hlt, setup_vm, setup_vm_no_idt};
 
 // RDTSCP - Read Time-Stamp Counter and Processor ID
 // Opcode: 0F 01 F9
@@ -549,4 +549,101 @@ fn test_rdtscp_tsc_aux_value() {
     // RBX should contain processor ID
     let tsc_aux = regs.rbx & 0xFFFFFFFF;
     let _ = tsc_aux;
+}
+
+fn set_timestamp_controls(
+    vcpu: &mut rax::isa::x86_64::X86_64Vcpu,
+    cpl: u16,
+    tsd: bool,
+    protected_mode: bool,
+) {
+    let mut sregs = vcpu.get_sregs().unwrap();
+    if protected_mode {
+        sregs.cr0 |= 1; // CR0.PE
+    } else {
+        sregs.cr0 &= !1;
+    }
+    if tsd {
+        sregs.cr4 |= 1 << 2;
+    } else {
+        sregs.cr4 &= !(1 << 2);
+    }
+    sregs.cs.selector = (sregs.cs.selector & !3) | cpl;
+    sregs.cs.dpl = cpl as u8;
+    sregs.ss.selector = (sregs.ss.selector & !3) | cpl;
+    sregs.ss.dpl = cpl as u8;
+    vcpu.set_sregs(&sregs).unwrap();
+}
+
+#[test]
+fn timestamp_reads_raise_gp_at_cpl3_when_cr4_tsd_is_set_without_committing() {
+    for code in [&[0x0F, 0x31][..], &[0x0F, 0x01, 0xF9]] {
+        let initial = Registers {
+            rax: 0x1111,
+            rcx: 0x2222,
+            rdx: 0x3333,
+            ..Registers::default()
+        };
+        let (mut vcpu, _) = setup_vm_no_idt(code, Some(initial));
+        set_timestamp_controls(&mut vcpu, 3, true, true);
+
+        let err = vcpu
+            .step()
+            .expect_err("CR4.TSD timestamp read at CPL3 must inject #GP(0)");
+        assert!(
+            err.to_string().contains("IDT entry 13 not present"),
+            "expected #GP delivery failure, got {err}"
+        );
+        let regs = vcpu.get_regs().unwrap();
+        assert_eq!(regs.rax, 0x1111);
+        assert_eq!(regs.rcx, 0x2222);
+        assert_eq!(regs.rdx, 0x3333);
+    }
+}
+
+#[test]
+fn timestamp_reads_allow_each_architectural_tsd_bypass() {
+    for (code, cpl, tsd, protected_mode) in [
+        (&[0x0F, 0x31][..], 0, true, true),
+        (&[0x0F, 0x01, 0xF9][..], 0, true, true),
+        (&[0x0F, 0x31][..], 3, false, true),
+        (&[0x0F, 0x01, 0xF9][..], 3, false, true),
+        (&[0x0F, 0x31][..], 3, true, false),
+        (&[0x0F, 0x01, 0xF9][..], 3, true, false),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(code, None);
+        set_timestamp_controls(&mut vcpu, cpl, tsd, protected_mode);
+        assert!(vcpu.step().expect("permitted timestamp read").is_none());
+        let regs = vcpu.get_regs().unwrap();
+        assert_eq!(regs.rip, 0x1000 + code.len() as u64);
+        assert_eq!(regs.rax >> 32, 0);
+        assert_eq!(regs.rdx >> 32, 0);
+        if code.len() == 3 {
+            assert_eq!(regs.rcx >> 32, 0);
+        }
+    }
+}
+
+#[test]
+fn locked_timestamp_reads_raise_ud_before_any_output_write() {
+    for code in [&[0xF0, 0x0F, 0x31][..], &[0xF0, 0x0F, 0x01, 0xF9]] {
+        let initial = Registers {
+            rax: 0x1111,
+            rcx: 0x2222,
+            rdx: 0x3333,
+            ..Registers::default()
+        };
+        let (mut vcpu, _) = setup_vm_no_idt(code, Some(initial));
+        let err = vcpu
+            .step()
+            .expect_err("LOCK-prefixed timestamp read must inject #UD");
+        assert!(
+            err.to_string().contains("IDT entry 6 not present"),
+            "expected #UD delivery failure, got {err}"
+        );
+        let regs = vcpu.get_regs().unwrap();
+        assert_eq!(regs.rax, 0x1111);
+        assert_eq!(regs.rcx, 0x2222);
+        assert_eq!(regs.rdx, 0x3333);
+    }
 }

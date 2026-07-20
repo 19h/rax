@@ -1,6 +1,7 @@
 //! tests::dead_code tests
 
 use super::*;
+use crate::smir::ir::ops::X86ReadTscOp;
 use crate::smir::optimize::*;
 
 #[test]
@@ -146,15 +147,16 @@ fn dead_code_elimination_preserves_volatile_x86_timestamp_read() {
     let mut block = SmirBlock::new(BlockId(0), 0x1000);
     block.push_op(make_op(
         0,
-        OpKind::X86ReadTsc {
+        OpKind::X86ReadTsc(X86ReadTscOp {
             dst_lo: VReg::virt(0),
             dst_hi: VReg::virt(1),
-        },
+            dst_aux: None,
+        }),
     ));
     block.set_terminator(Terminator::Return { values: vec![] });
 
     assert_eq!(dead_code_elimination(&mut block), 0);
-    assert!(matches!(block.ops[0].kind, OpKind::X86ReadTsc { .. }));
+    assert!(matches!(block.ops[0].kind, OpKind::X86ReadTsc(..)));
 }
 #[test]
 fn test_dead_flag_elimination() {

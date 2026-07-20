@@ -88,7 +88,8 @@ pub const X86_GUEST_XGETBV1_OFFSET: i32 = X86_GUEST_XCR0_OFFSET + 8;
 pub const X86_GUEST_CR4_OFFSET: i32 = X86_GUEST_XGETBV1_OFFSET + 8;
 /// Byte offset of guest CR0, whose PE bit participates in XSETBV privilege checks.
 pub const X86_GUEST_CR0_OFFSET: i32 = X86_GUEST_CR4_OFFSET + 8;
-/// Byte offset of the current privilege level (CS.RPL) used by XSETBV.
+/// Byte offset of the effective current privilege level used by guarded system
+/// instructions. Virtual-8086 mode is represented as CPL3.
 pub const X86_GUEST_CPL_OFFSET: i32 = X86_GUEST_CR0_OFFSET + 8;
 /// Byte offset of the emulator's APX enable policy used to validate XCR0.APX_F.
 pub const X86_GUEST_APX_ENABLED_OFFSET: i32 = X86_GUEST_CPL_OFFSET + 8;
@@ -122,6 +123,8 @@ pub const X86_GUEST_CPUID_VP2INTERSECT_OFFSET: i32 = X86_GUEST_CPUID_XEON_PHI_AV
 pub const X86_GUEST_CPUID_SSE4A_OFFSET: i32 = X86_GUEST_CPUID_VP2INTERSECT_OFFSET + 8;
 /// Byte offset of the guest IA32_KERNEL_GS_BASE value used by SWAPGS.
 pub const X86_GUEST_KERNEL_GS_BASE_OFFSET: i32 = X86_GUEST_CPUID_SSE4A_OFFSET + 8;
+/// Byte offset of the emulated guest timestamp-counter helper pointer.
+pub const X86_GUEST_TSC_FN_OFFSET: i32 = X86_GUEST_KERNEL_GS_BASE_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

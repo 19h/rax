@@ -3298,10 +3298,11 @@ fn lift_rdtsc_has_exact_destinations_and_length() {
     assert!(matches!(
         result.ops.as_slice(),
         [SmirOp {
-            kind: OpKind::X86ReadTsc {
+            kind: OpKind::X86ReadTsc(X86ReadTscOp {
                 dst_lo: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
                 dst_hi: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
-            },
+                dst_aux: None,
+            }),
             ..
         }]
     ));

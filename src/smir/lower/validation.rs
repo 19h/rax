@@ -1466,7 +1466,6 @@ mod tests {
             ("shr rax, 4", vec![0x48, 0xC1, 0xE8, 0x04]),
             ("sar rax, 4", vec![0x48, 0xC1, 0xF8, 0x04]),
             ("sete al", vec![0x0F, 0x94, 0xC0]),
-            ("rdtsc", vec![0x0F, 0x31]),
             ("movups xmm0,xmm1", vec![0x0F, 0x10, 0xC1]),
             ("addps xmm0,xmm1", vec![0x0F, 0x58, 0xC1]),
             ("divpd xmm0,xmm1", vec![0x66, 0x0F, 0x5E, 0xC1]),
@@ -1495,6 +1494,17 @@ mod tests {
             let lowered = lower_body_bytes(name, &bytes).expect("lower body bytes");
             assert_eq!(lowered, bytes, "{}: bytes mismatch", name);
         }
+    }
+
+    #[test]
+    fn timestamp_reads_are_not_host_opcode_roundtrips() {
+        let error = lower_body_bytes("rdtsc", &[0x0F, 0x31])
+            .expect_err("guest RDTSC must require guarded guest-clock lowering");
+
+        assert!(
+            error.contains("X86ReadTsc requires JIT fault-deoptimization guards"),
+            "unexpected RDTSC lowering error: {error}"
+        );
     }
 
     #[test]

@@ -3926,7 +3926,7 @@ impl OpKind {
             OpKind::ReadFlags { .. }
             | OpKind::SetCF { .. }
             | OpKind::SetDF { .. }
-            | OpKind::X86ReadTsc { .. }
+            | OpKind::X86ReadTsc(..)
             | OpKind::X86Random { .. }
             | OpKind::X86ReadPid { .. }
             | OpKind::X86X87Control { addr: None, .. }

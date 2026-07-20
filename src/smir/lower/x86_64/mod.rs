@@ -56,6 +56,8 @@ mod serialize;
 pub use serialize::*;
 mod swapgs;
 pub use swapgs::*;
+mod timing;
+pub use timing::*;
 mod ops;
 pub use emitter::*;
 mod jit;

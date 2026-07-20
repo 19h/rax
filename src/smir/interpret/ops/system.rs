@@ -53,10 +53,30 @@ impl SmirInterpreter {
                 // Simplified: no-op
             }
 
-            OpKind::X86ReadTsc { dst_lo, dst_hi } => {
+            OpKind::X86ReadTsc(read) => {
+                let (cr0, cr4, cpl, tsc_aux) = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => (x86.cr0, x86.cr4, x86.cpl, x86.tsc_aux),
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                if cr0 & 1 != 0 && cr4 & (1 << 2) != 0 && cpl != 0 {
+                    ctx.request_exit(ExitReason::GeneralProtection {
+                        addr: op.guest_pc,
+                        error_code: 0,
+                    });
+                    return Ok(());
+                }
                 let tsc = ctx.cycle_count;
-                Self::write_x86_partial(ctx, *dst_lo, tsc & u32::MAX as u64, OpWidth::W32);
-                Self::write_x86_partial(ctx, *dst_hi, tsc >> 32, OpWidth::W32);
+                Self::write_x86_partial(ctx, read.dst_lo, tsc & u32::MAX as u64, OpWidth::W32);
+                Self::write_x86_partial(ctx, read.dst_hi, tsc >> 32, OpWidth::W32);
+                if let Some(dst_aux) = read.dst_aux {
+                    Self::write_x86_partial(ctx, dst_aux, u64::from(tsc_aux), OpWidth::W32);
+                }
             }
 
             OpKind::X86Cpuid {

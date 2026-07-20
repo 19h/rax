@@ -21,4 +21,9 @@ pub(super) struct JitRegion {
     /// Whether the native entry bridge must marshal MM0-MM7 and guest x87 tags.
     #[cfg(target_arch = "x86_64")]
     pub(super) uses_mmx: bool,
+    /// Whether the region reads the real-time guest timestamp counter. Such a
+    /// region cannot be replayed bit-for-bit by RAX_JIT_VERIFY because its
+    /// interpreter replay necessarily observes a later clock value.
+    #[cfg(target_arch = "x86_64")]
+    pub(super) uses_timestamp: bool,
 }

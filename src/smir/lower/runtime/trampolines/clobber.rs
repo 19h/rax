@@ -631,6 +631,11 @@ pub(crate) fn block_is_clobber_safe(
         {
             return false;
         }
+        if matches!(op.kind, OpKind::X86ReadTsc(..))
+            && !crate::smir::lower::x86_64::x86_read_tsc_shape_valid(&op.kind)
+        {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86FsGsBase { .. }) && !fsgsbase_ok {
             return false;
         }

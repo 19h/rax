@@ -38,6 +38,8 @@ mod sqrt;
 #[cfg(test)]
 mod swapgs;
 #[cfg(test)]
+mod timing;
+#[cfg(test)]
 mod trap;
 #[cfg(test)]
 mod vector;

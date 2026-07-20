@@ -258,6 +258,39 @@ fn emits_exact_pkru_state_direction_and_implicit_register_metadata() {
 }
 
 #[test]
+fn emits_exact_rdtsc_and_rdtscp_destination_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let rdtsc = decode_to_json(&[0x0F, 0x31], &opts).unwrap();
+    assert_eq!(rdtsc["smir"]["available"], true);
+    assert_eq!(rdtsc["smir"]["bytes_consumed"], 2);
+    let op = &rdtsc["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_read_tsc");
+    assert_eq!(op["kind"]["dst_lo"]["name"], "rax");
+    assert_eq!(op["kind"]["dst_hi"]["name"], "rdx");
+    assert!(op["kind"]["dst_aux"].is_null());
+    assert_eq!(op["writes"][0]["name"], "rax");
+    assert_eq!(op["writes"][1]["name"], "rdx");
+    assert_eq!(op["side_effects"], true);
+
+    let rdtscp = decode_to_json(&[0x0F, 0x01, 0xF9], &opts).unwrap();
+    assert_eq!(rdtscp["smir"]["available"], true);
+    assert_eq!(rdtscp["smir"]["bytes_consumed"], 3);
+    let op = &rdtscp["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_read_tsc");
+    assert_eq!(op["kind"]["dst_lo"]["name"], "rax");
+    assert_eq!(op["kind"]["dst_hi"]["name"], "rdx");
+    assert_eq!(op["kind"]["dst_aux"]["name"], "rcx");
+    assert_eq!(op["writes"][0]["name"], "rax");
+    assert_eq!(op["writes"][1]["name"], "rdx");
+    assert_eq!(op["writes"][2]["name"], "rcx");
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+}
+
+#[test]
 fn emits_and_executes_exact_swapgs_state_dataflow() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

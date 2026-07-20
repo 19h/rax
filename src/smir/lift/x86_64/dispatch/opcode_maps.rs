@@ -992,17 +992,26 @@ impl X86_64Lifter {
             }),
 
             // RDTSC (0F 31): EDX:EAX := time-stamp counter.
-            0x31 => Ok(LiftResult::fallthrough(
-                vec![SmirOp::new(
-                    OpId(0),
-                    pc,
-                    OpKind::X86ReadTsc {
-                        dst_lo: self.gpr(0),
-                        dst_hi: self.gpr(2),
-                    },
-                )],
-                prefix2.cursor,
-            )),
+            0x31 => {
+                if prefix2.lock {
+                    return Err(LiftError::InvalidEncoding {
+                        addr: pc,
+                        bytes: vec![opcode2],
+                    });
+                }
+                Ok(LiftResult::fallthrough(
+                    vec![SmirOp::new(
+                        OpId(0),
+                        pc,
+                        OpKind::X86ReadTsc(X86ReadTscOp {
+                            dst_lo: self.gpr(0),
+                            dst_hi: self.gpr(2),
+                            dst_aux: None,
+                        }),
+                    )],
+                    prefix2.cursor,
+                ))
+            }
 
             // CPUID (0F A2): EAX/ECX select the leaf and EAX/EBX/ECX/EDX
             // receive 32-bit zero-extended results. Intel defines only LOCK as

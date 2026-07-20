@@ -264,9 +264,9 @@ impl Default for LazyFlags {
 /// Emulated x86_64 vCPU.
 pub struct X86_64Vcpu {
     id: u32,
-    /// Per-vCPU retired-instruction counter. Drives RDTSC (insn_count*3000) and
-    /// is published to the global counter only at run() yield boundaries, so the
-    /// hot loop stays atomic-free.
+    /// Per-vCPU retired-instruction counter. Published to the global counter
+    /// only at run() yield boundaries so the hot loop stays atomic-free. The
+    /// architectural TSC uses the separate real-time guest clock in [`Self::tsc`].
     pub(super) insn_count: u64,
     pub(super) regs: Registers,
     pub(super) sregs: SystemRegisters,
@@ -1608,8 +1608,8 @@ impl X86_64Vcpu {
     }
 
     pub fn step(&mut self) -> Result<Option<VcpuExit>> {
-        // Retired-instruction counter; drives TSC. Plain add - no atomics on the
-        // hot path (published to the global counter at run() yield boundaries).
+        // Retired-instruction counter. Plain add - no atomics on the hot path
+        // (published to the global counter at run() yield boundaries).
         self.insn_count = self.insn_count.wrapping_add(1);
 
         // Start profiling timer
@@ -3734,6 +3734,12 @@ mod jit_cpuid;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use jit_cpuid::rax_jit_cpuid;
 
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_tsc.rs"]
+mod jit_tsc;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_tsc::rax_jit_tsc;
+
 /// RAX_JIT_BAIL=1 logs why each hot region is rejected by the JIT (diagnostic
 /// for expanding the whitelist toward the highest-frequency bail reasons).
 #[cfg(all(
@@ -4635,6 +4641,13 @@ impl X86_64Vcpu {
             #[cfg(target_arch = "x86_64")]
             let uses_mmx = uses_x86_native_mmx_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
+            let uses_timestamp = func
+                .blocks
+                .iter()
+                .filter(|block| !exits.contains_key(&block.id))
+                .flat_map(|block| &block.ops)
+                .any(|op| matches!(op.kind, OpKind::X86ReadTsc(..)));
+            #[cfg(target_arch = "x86_64")]
             if uses_mmx && !x86_native_mmx_features_supported_excluding(&func, &exits) {
                 if jit_bail_log() {
                     eprintln!("[JIT-BAIL] host-mmx-features @ {entry:#x} (call={cm})");
@@ -4751,6 +4764,8 @@ impl X86_64Vcpu {
                 narrow_vector_opmasks,
                 #[cfg(target_arch = "x86_64")]
                 uses_mmx,
+                #[cfg(target_arch = "x86_64")]
+                uses_timestamp,
             }));
         }
         Ok(None)
@@ -4847,6 +4862,9 @@ impl X86_64Vcpu {
         // Deterministic guest CPUID evaluator. The lowered block separately
         // executes a fixed host CPUID only as a serialization barrier.
         gr.cpuid_fn = rax_jit_cpuid as usize as u64;
+        // Guest-clock evaluator used by RDTSC/RDTSCP. Native code must not
+        // expose the host TSC or its frequency/offset domain.
+        gr.tsc_fn = rax_jit_tsc as usize as u64;
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
@@ -4857,7 +4875,11 @@ impl X86_64Vcpu {
         gr.xgetbv1 = self.xgetbv1_value;
         gr.cr4 = self.sregs.cr4;
         gr.cr0 = self.sregs.cr0;
-        gr.cpl = u64::from(self.sregs.cs.selector & 3);
+        gr.cpl = if self.regs.rflags & flags::bits::VM != 0 {
+            3
+        } else {
+            u64::from(self.sregs.cs.selector & 3)
+        };
         gr.apx_enabled = u64::from(self.apx_enabled());
         gr.cpuid_xeon_phi_avx512 = u64::from(self.xeon_phi_avx512_enabled());
         gr.cpuid_vp2intersect = u64::from(self.vp2intersect_enabled());
@@ -5064,6 +5086,15 @@ impl X86_64Vcpu {
     /// Verify a compiled region against the interpreter (RAX_JIT_VERIFY=1).
     #[cfg(target_arch = "x86_64")]
     fn jit_run_region_verified(&mut self, region: &JitRegion) {
+        // RDTSC/RDTSCP read the real-time guest clock. A second interpreter
+        // execution cannot reproduce the earlier native value, and that value
+        // can influence arbitrary later data/control flow in the same region.
+        // Execute these regions normally; dedicated deterministic helper tests
+        // validate their native semantics without producing false divergences.
+        if region.uses_timestamp {
+            self.jit_run_region_native(region);
+            return;
+        }
         let entry_pc = self.regs.rip;
         let snap = self.regs.clone();
         let snap_fpu = self.fpu.clone();
@@ -5788,6 +5819,7 @@ mod decode_cache_invalidation_tests {
             uses_xmm_state: false,
             narrow_vector_opmasks: false,
             uses_mmx: false,
+            uses_timestamp: false,
         };
         vcpu.jit_cache
             .insert((head, register_only), Some(Arc::new(cached)));
@@ -5932,6 +5964,10 @@ mod jit_swapgs_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_monitor_mwait_tests.rs"]
 mod jit_monitor_mwait_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_tsc_tests.rs"]
+mod jit_tsc_tests;
 
 #[cfg(all(test, feature = "debug"))]
 mod debugger_breakpoint_tests {

@@ -40,6 +40,8 @@ mod state;
 #[cfg(test)]
 mod swapgs;
 #[cfg(test)]
+mod timing;
+#[cfg(test)]
 mod tsx;
 #[cfg(all(test, feature = "smir-jit"))]
 mod vector_maskmov;

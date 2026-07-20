@@ -29,9 +29,10 @@ use super::{
     X86_GUEST_LOAD_FN_OFFSET, X86_GUEST_MM_OFFSET, X86_GUEST_MMX_ACTIVE_OFFSET,
     X86_GUEST_MXCSR_OFFSET, X86_GUEST_PAIR_LOAD_FN_OFFSET, X86_GUEST_PAIR_STORE_FN_OFFSET,
     X86_GUEST_PKRU_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_STORE_FN_OFFSET,
-    X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET, X86_GUEST_VEC_STORE_FN_OFFSET,
-    X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_X87_TAG_WORD_OFFSET, X86_GUEST_XCR0_OFFSET,
-    X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_TSC_AUX_OFFSET, X86_GUEST_TSC_FN_OFFSET, X86_GUEST_VEC_LOAD_FN_OFFSET,
+    X86_GUEST_VEC_STORE_FN_OFFSET, X86_GUEST_VECTOR_ACTIVE_OFFSET, X86_GUEST_X87_TAG_WORD_OFFSET,
+    X86_GUEST_XCR0_OFFSET, X86_GUEST_XGETBV1_OFFSET, X86_GUEST_ZMM_OFFSET, X86_HOST_MXCSR_OFFSET,
+    X86_STATE_PTR_AT_RBP,
 };
 
 // ---- module tree (auto-split) ----
@@ -157,7 +158,8 @@ pub struct GuestRegs {
     pub cr4: u64,
     /// Guest CR0. XSETBV checks PE before enforcing CPL=0.
     pub cr0: u64,
-    /// Current privilege level derived from CS.RPL.
+    /// Effective current privilege level derived from CS.RPL, with virtual-8086
+    /// mode represented as CPL3.
     pub cpl: u64,
     /// Non-zero when the emulator exposes APX and permits XCR0.APX_F.
     pub apx_enabled: u64,
@@ -198,6 +200,10 @@ pub struct GuestRegs {
     /// IA32_KERNEL_GS_BASE. SWAPGS exchanges this with `gs_base` without ever
     /// executing the host's privileged SWAPGS instruction.
     pub kernel_gs_base: u64,
+    /// Address of `extern "C" fn(state)` implementing the emulator's guest
+    /// timestamp counter. The helper commits zero-extended EAX and EDX slots;
+    /// RDTSCP lowering separately commits guest IA32_TSC_AUX to ECX.
+    pub tsc_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -241,6 +247,7 @@ impl Default for GuestRegs {
             cpuid_vp2intersect: 0,
             cpuid_sse4a: 0,
             kernel_gs_base: 0,
+            tsc_fn: 0,
         }
     }
 }
