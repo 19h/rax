@@ -20,6 +20,8 @@ mod cpuid;
 #[cfg(test)]
 mod decode;
 #[cfg(test)]
+mod descriptor_table;
+#[cfg(test)]
 mod evex;
 #[cfg(test)]
 mod fsgsbase;

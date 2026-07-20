@@ -225,13 +225,7 @@ pub(super) fn umip_blocks_user_instruction(vcpu: &X86_64Vcpu) -> bool {
 }
 
 fn write_descriptor_table(vcpu: &mut X86_64Vcpu, addr: u64, limit: u16, base: u64) -> Result<()> {
-    vcpu.mmu.write_u16(addr, limit, &vcpu.sregs)?;
-    if vcpu.sregs.cs.l {
-        vcpu.mmu.write_u64(addr + 2, base, &vcpu.sregs)?;
-    } else {
-        vcpu.mmu.write_u32(addr + 2, base as u32, &vcpu.sregs)?;
-    }
-    Ok(())
+    vcpu.write_descriptor_table_mem(addr, limit, base)
 }
 
 fn read_descriptor_table(vcpu: &mut X86_64Vcpu, addr: u64) -> Result<(u16, u64)> {

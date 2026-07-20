@@ -561,6 +561,38 @@ fn emits_exact_smsw_register_and_memory_metadata() {
 }
 
 #[test]
+fn emits_exact_sgdt_sidt_memory_table_and_apx_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let sidt = decode_to_json(&[0x48, 0x0F, 0x01, 0x48, 0x08], &opts).unwrap();
+    assert_eq!(sidt["smir"]["available"], true);
+    assert_eq!(sidt["smir"]["bytes_consumed"], 5);
+    let op = &sidt["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_descriptor_table_store");
+    assert_eq!(op["kind"]["table"], "Idt");
+    assert_eq!(op["kind"]["addr"]["kind"], "base_offset");
+    assert_eq!(op["kind"]["addr"]["base"]["name"], "rax");
+    assert_eq!(op["kind"]["addr"]["offset"], 8);
+    assert_eq!(op["kind"]["requires_apx"], false);
+    assert!(op["reads"].is_null());
+    assert_eq!(op["writes"].as_array().unwrap().len(), 0);
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], true);
+    assert_eq!(op["side_effects"], true);
+
+    let sgdt = decode_to_json(&[0xD5, 0xB3, 0x01, 0x04, 0xD1], &opts).unwrap();
+    assert_eq!(sgdt["smir"]["available"], true);
+    let op = &sgdt["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_descriptor_table_store");
+    assert_eq!(op["kind"]["table"], "Gdt");
+    assert_eq!(op["kind"]["requires_apx"], true);
+    assert_eq!(op["kind"]["addr"]["base"]["name"], "r25");
+    assert_eq!(op["kind"]["addr"]["index"]["name"], "r26");
+    assert_eq!(op["kind"]["addr"]["scale"], 8);
+}
+
+#[test]
 fn emits_exact_lmsw_register_memory_and_handoff_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

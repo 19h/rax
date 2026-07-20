@@ -47,6 +47,8 @@ mod clts;
 pub use clts::*;
 mod cpuid;
 pub use cpuid::*;
+mod descriptor_table;
+pub use descriptor_table::*;
 mod dispatch;
 pub use dispatch::*;
 mod emitter;

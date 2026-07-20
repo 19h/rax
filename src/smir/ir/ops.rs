@@ -3992,6 +3992,12 @@ pub enum OpKind {
     /// Native execution must hand off at `next_pc` after a successful commit.
     X86Lmsw(X86LmswOp),
 
+    /// SGDT/SIDT store the selected implicit descriptor-table register as one
+    /// fault-precise 10-byte long-mode memory transfer. The operation remains
+    /// side-effecting because APX/UMIP validation and the memory write can
+    /// fault even when the resulting bytes are otherwise unobserved.
+    X86DescriptorTableStore(X86DescriptorTableStoreOp),
+
     /// `MOV CR0/CR2/CR3/CR4/CR8, r64`. Dynamic CPL, reserved-bit, PCID, and
     /// IA-32e transition checks are non-committing. `next_pc` is the exact
     /// post-instruction frontier: a successful native write must terminate its
@@ -4490,6 +4496,7 @@ impl OpKind {
                 | OpKind::X86ReadControl { .. }
                 | OpKind::X86Smsw(..)
                 | OpKind::X86Lmsw(..)
+                | OpKind::X86DescriptorTableStore(..)
                 | OpKind::X86WriteControl { .. }
                 | OpKind::X86ReadDebug { .. }
                 | OpKind::X86WriteDebug { .. }
@@ -5033,6 +5040,7 @@ impl OpKind {
                 ..
             })
             | OpKind::X86Lmsw(..)
+            | OpKind::X86DescriptorTableStore(..)
             | OpKind::X86WriteControl { .. }
             | OpKind::X86WriteDebug { .. }
             | OpKind::X86MonitorMwait(..)
@@ -5207,6 +5215,7 @@ impl OpKind {
                     | OpKind::X86ReadControl { .. }
                     | OpKind::X86Smsw(..)
                     | OpKind::X86Lmsw(..)
+                    | OpKind::X86DescriptorTableStore(..)
                     | OpKind::X86WriteControl { .. }
                     | OpKind::X86ReadDebug { .. }
                     | OpKind::X86WriteDebug { .. }
@@ -5394,6 +5403,7 @@ impl OpKind {
                     target: X86SmswTarget::Memory { .. },
                     ..
                 })
+                | OpKind::X86DescriptorTableStore(..)
                 | OpKind::RvVector { .. }
         )
     }

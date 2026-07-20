@@ -23,6 +23,8 @@ use crate::smir::ir::ops::X86CacheControlKind;
 use crate::smir::ir::ops::X86ControlReg;
 use crate::smir::ir::ops::X86CountKind;
 use crate::smir::ir::ops::X86DebugReg;
+use crate::smir::ir::ops::X86DescriptorTable;
+use crate::smir::ir::ops::X86DescriptorTableStoreOp;
 use crate::smir::ir::ops::X86LmswOp;
 use crate::smir::ir::ops::X86LmswSource;
 use crate::smir::ir::ops::X86MonitorMwaitOp;
@@ -1157,6 +1159,7 @@ macro_rules! debug_name_json {
 
 debug_name_json!(
     ArmDpRegShiftKind,
+    X86DescriptorTable,
     OpWidth,
     MemWidth,
     SignExtend,
@@ -2539,6 +2542,11 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             requires_apx,
             next_pc,
         }) => op_json!("x86_lmsw", source, requires_apx, next_pc),
+        OpKind::X86DescriptorTableStore(X86DescriptorTableStoreOp {
+            addr,
+            table,
+            requires_apx,
+        }) => op_json!("x86_descriptor_table_store", addr, table, requires_apx),
         OpKind::X86WriteControl {
             src,
             control,

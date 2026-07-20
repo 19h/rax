@@ -3914,6 +3914,7 @@ impl OpKind {
                 source: X86LmswSource::Memory { addr },
                 ..
             }) => result.extend(addr.regs()),
+            OpKind::X86DescriptorTableStore(store) => result.extend(store.addr.regs()),
 
             OpKind::X86Cmpxchg8b16b {
                 addr,

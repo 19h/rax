@@ -3741,6 +3741,11 @@ mod jit_control;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use jit_control::rax_jit_write_control;
 
+#[path = "cpu_descriptor_table.rs"]
+mod descriptor_table;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use descriptor_table::rax_jit_descriptor_table_store;
+
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_msr.rs"]
 mod jit_msr;
@@ -4628,6 +4633,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86ReadControl { .. }
                                 | OpKind::X86Smsw(..)
                                 | OpKind::X86Lmsw(..)
+                                | OpKind::X86DescriptorTableStore(..)
                                 | OpKind::X86WriteControl { .. }
                                 | OpKind::X86ReadDebug { .. }
                                 | OpKind::X86WriteDebug { .. }
@@ -4901,6 +4907,7 @@ impl X86_64Vcpu {
         gr.control_write_fn = rax_jit_write_control as usize as u64;
         gr.msr_fn = rax_jit_msr as usize as u64;
         gr.pmc_fn = rax_jit_pmc as usize as u64;
+        gr.descriptor_store_fn = rax_jit_descriptor_table_store as usize as u64;
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
@@ -6191,6 +6198,10 @@ mod jit_smsw_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_lmsw_tests.rs"]
 mod jit_lmsw_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_descriptor_table_tests.rs"]
+mod jit_descriptor_table_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_read_debug_tests.rs"]

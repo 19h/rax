@@ -128,6 +128,8 @@ impl X86_64Lowerer {
 
             OpKind::X86Lmsw(..) => self.emit_x86_lmsw(op)?,
 
+            OpKind::X86DescriptorTableStore(..) => self.emit_x86_descriptor_table_store(op)?,
+
             OpKind::X86ReadDebug { .. } => self.emit_x86_read_debug(op)?,
 
             OpKind::X86WriteDebug { .. } => self.emit_x86_write_debug(op)?,

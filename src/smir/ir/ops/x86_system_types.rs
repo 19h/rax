@@ -100,6 +100,24 @@ pub struct X86LmswOp {
     pub next_pc: u64,
 }
 
+/// Descriptor-table register selected by SGDT/SIDT.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86DescriptorTable {
+    Gdt,
+    Idt,
+}
+
+/// SGDT/SIDT store the selected implicit descriptor-table register through a
+/// memory-only operand. `SourceArch::X86_64` fixes the payload at 10 bytes:
+/// the 16-bit limit followed by the 64-bit base. A REX2 encoding requires the
+/// dynamic APX profile even when every address component is a legacy GPR.
+#[derive(Clone, Debug)]
+pub struct X86DescriptorTableStoreOp {
+    pub addr: Address,
+    pub table: X86DescriptorTable,
+    pub requires_apx: bool,
+}
+
 /// MONITOR/MWAIT under the deterministic guest profile. `Some(addr)` is
 /// MONITOR: `hint` is EDX, validate CPL/RCX, then perform an ordered faulting
 /// byte read from the monitored linear address. `None` is MWAIT: `hint` is

@@ -10,10 +10,11 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate, LazyFlagOp, LazyFlags};
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
-    X86CacheControlKind, X86ControlReg, X86CountKind, X86DebugReg, X86LmswSource,
-    X86MonitorMwaitOp, X86OpHint, X86SmswTarget, X86ThreeDNowKind, X86X87ArithmeticDestination,
-    X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
-    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+    X86CacheControlKind, X86ControlReg, X86CountKind, X86DebugReg, X86DescriptorTable,
+    X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86SmswTarget, X86ThreeDNowKind,
+    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
+    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
+    X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -332,6 +333,60 @@ impl SmirInterpreter {
                     unreachable!("validated x86 LMSW state changed")
                 };
                 x86.cr0 = new_cr0;
+            }
+
+            OpKind::X86DescriptorTableStore(store) => {
+                let uses_egpr = store
+                    .addr
+                    .regs()
+                    .iter()
+                    .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
+                if op.x86_hint.is_some()
+                    || !store.addr.is_x86_state_backed_shape()
+                    || (uses_egpr && !store.requires_apx)
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                let (limit, base) = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => {
+                        if store.requires_apx && !x86.apx_enabled {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        }
+                        if x86.cr4 & (1 << 11) != 0 && x86.cpl != 0 {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                        match store.table {
+                            X86DescriptorTable::Gdt => (x86.gdtr_limit, x86.gdtr_base),
+                            X86DescriptorTable::Idt => (x86.idtr_limit, x86.idtr_base),
+                        }
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+
+                let effective_addr = self.compute_address(ctx, &store.addr);
+                let mut payload = [0u8; 10];
+                payload[..2].copy_from_slice(&limit.to_le_bytes());
+                payload[2..].copy_from_slice(&base.to_le_bytes());
+                memory.write(effective_addr, &payload)?;
             }
 
             OpKind::X86WriteControl {

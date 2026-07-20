@@ -172,6 +172,9 @@ pub const X86_GUEST_SYSENTER_EIP_OFFSET: i32 = X86_GUEST_SYSENTER_ESP_OFFSET + 8
 /// Byte offset of the helper-backed deterministic RDPMC evaluator. Appended so
 /// every pre-existing native helper/state field retains its established ABI.
 pub const X86_GUEST_PMC_FN_OFFSET: i32 = X86_GUEST_SYSENTER_EIP_OFFSET + 8;
+/// Byte offset of the helper-backed SGDT/SIDT store function. Appended so all
+/// pre-existing native helper/state fields retain their established ABI.
+pub const X86_GUEST_DESCRIPTOR_STORE_FN_OFFSET: i32 = X86_GUEST_PMC_FN_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

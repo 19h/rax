@@ -18,6 +18,8 @@ mod clts;
 #[cfg(test)]
 mod cpuid;
 #[cfg(test)]
+mod descriptor_table;
+#[cfg(test)]
 mod fp_binary;
 #[cfg(test)]
 mod fsgsbase;
