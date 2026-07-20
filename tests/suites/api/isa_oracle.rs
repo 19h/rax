@@ -231,6 +231,36 @@ fn reports_exact_hypercall_hint_and_unsupported_alias_profiles() {
 }
 
 #[test]
+fn reports_disabled_vmx_controls_as_exact_invalid_opcode_traps() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    for bytes in [
+        &[0x0F, 0x01, 0xC2][..], // VMLAUNCH
+        &[0x0F, 0x01, 0xC3],     // VMRESUME
+        &[0x0F, 0x01, 0xC4],     // VMXOFF
+        &[0x0F, 0x01, 0xD4],     // VMFUNC
+        &[0xD5, 0x80, 0x01, 0xC2],
+        &[0xD5, 0x80, 0x01, 0xC3],
+        &[0xD5, 0x80, 0x01, 0xC4],
+        &[0xD5, 0x80, 0x01, 0xD4],
+    ] {
+        let value = decode_to_json(bytes, &opts).unwrap();
+        let smir = &value["smir"];
+        assert_eq!(smir["available"], true, "{bytes:02X?}");
+        assert_eq!(smir["bytes_consumed"], bytes.len(), "{bytes:02X?}");
+        assert_eq!(smir["ops"], serde_json::json!([]), "{bytes:02X?}");
+        assert_eq!(smir["control_flow"]["kind"], "trap", "{bytes:02X?}");
+        assert_eq!(
+            smir["control_flow"]["trap"], "InvalidOpcode",
+            "{bytes:02X?}"
+        );
+        assert_eq!(smir["ends_block"], true, "{bytes:02X?}");
+        assert_eq!(smir["ends_function"], true, "{bytes:02X?}");
+    }
+}
+
+#[test]
 fn emits_structured_smir_ops() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

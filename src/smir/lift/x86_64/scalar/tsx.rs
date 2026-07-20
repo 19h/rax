@@ -3,9 +3,9 @@
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
-    /// Lift VMCALL/VMMCALL hints, MONITOR/MWAIT, CLAC/STAC, XGETBV/XSETBV,
-    /// RDPKRU/WRPKRU, SERIALIZE, SWAPGS, RDTSCP, and the RTM fixed ModR/M
-    /// encodings in 0F 01.
+    /// Lift VMCALL/VMMCALL hints, disabled VMX controls, MONITOR/MWAIT,
+    /// CLAC/STAC, XGETBV/XSETBV, RDPKRU/WRPKRU, SERIALIZE, SWAPGS, RDTSCP,
+    /// and the RTM fixed ModR/M encodings in 0F 01.
     pub(crate) fn lift_xcr_0f01(
         &self,
         bytes: &[u8],
@@ -47,6 +47,22 @@ impl X86_64Lifter {
             // VMCALL/VMMCALL as paravirtualized hints: no register, flag,
             // memory, or control-state effect beyond instruction advance.
             return Ok(LiftResult::fallthrough(Vec::new(), prefix.cursor + 1));
+        }
+
+        if matches!(modrm, 0xC2 | 0xC3 | 0xC4 | 0xD4) {
+            // VMLAUNCH, VMRESUME, and VMXOFF first raise #UD outside VMX
+            // operation; VMFUNC raises #UD outside VMX non-root operation.
+            // RAX exposes neither execution state, so these four controls are
+            // deterministic fault-class traps before CPL, VMCS, EAX, flags,
+            // or any other architectural state can be observed or committed.
+            return Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed: prefix.cursor + 1,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
+            });
         }
 
         if matches!(modrm, 0xC8 | 0xC9) {

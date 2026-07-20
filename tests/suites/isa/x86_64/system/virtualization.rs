@@ -502,6 +502,66 @@ fn test_vmresume_after_vmptrld() {
     let _ = run_until_hlt(&mut vcpu);
 }
 
+#[test]
+fn test_disabled_vmx_controls_raise_ud_before_privilege_or_state_commit() {
+    for (name, bytes, apx, cpl) in [
+        ("VMLAUNCH", &[0x0F, 0x01, 0xC2][..], false, 0),
+        ("VMRESUME", &[0x0F, 0x01, 0xC3][..], false, 3),
+        ("VMXOFF", &[0x0F, 0x01, 0xC4][..], false, 0),
+        ("VMFUNC", &[0x0F, 0x01, 0xD4][..], false, 3),
+        ("REX2 VMLAUNCH", &[0xD5, 0x80, 0x01, 0xC2][..], true, 3),
+        ("REX2 VMRESUME", &[0xD5, 0x80, 0x01, 0xC3][..], true, 0),
+        ("REX2 VMXOFF", &[0xD5, 0x80, 0x01, 0xC4][..], true, 3),
+        ("REX2 VMFUNC", &[0xD5, 0x80, 0x01, 0xD4][..], true, 0),
+    ] {
+        let initial = Registers {
+            rax: 0x0123_4567_89AB_CDEF,
+            rbx: 0xFEDC_BA98_7654_3210,
+            rcx: 0x1111_2222_3333_4444,
+            rdx: 0xAAAA_BBBB_CCCC_DDDD,
+            rsp: STACK_ADDR,
+            rbp: 0x5555_6666_7777_8888,
+            r16: 0x1616_1616_1616_1616,
+            r31: 0x3131_3131_3131_3131,
+            rflags: 0x0CD7,
+            xmm: [[0x1111_2222_3333_4444, 0xAAAA_BBBB_CCCC_DDDD]; 16],
+            ymm_high: [[0x5555_6666_7777_8888, 0x9999_AAAA_BBBB_CCCC]; 16],
+            zmm_high: [[0x1234_5678_9ABC_DEF0; 4]; 16],
+            zmm_ext: [[0x0FED_CBA9_8765_4321; 8]; 16],
+            k: [0xA5A5_5A5A_A5A5_5A5A; 8],
+            mm: [0x1122_3344_5566_7788; 8],
+            ..Registers::default()
+        };
+        let (mut vcpu, _) = if apx {
+            setup_apx_vm_no_idt(bytes, Some(initial))
+        } else {
+            setup_vm_no_idt(bytes, Some(initial))
+        };
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.cs.selector = cpl;
+        sregs.cr2 = 0x2222_0000;
+        sregs.cr3 = 0x3333_0000;
+        sregs.cr4 |= 0x4444;
+        sregs.cr8 = 0x8;
+        sregs.fs.base = 0x0000_1111_2222_3333;
+        sregs.gs.base = 0x0000_4444_5555_6666;
+        vcpu.set_sregs(&sregs).unwrap();
+
+        let before =
+            serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap())).unwrap();
+        let error = vcpu
+            .step()
+            .expect_err("disabled VMX control must inject #UD");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{name}: expected #UD delivery failure, got {error}"
+        );
+        let after =
+            serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap())).unwrap();
+        assert_eq!(after, before, "{name}");
+    }
+}
+
 // ============================================================================
 // VMCALL Tests - Call to VM Monitor
 // ============================================================================

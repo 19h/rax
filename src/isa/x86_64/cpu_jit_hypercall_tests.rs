@@ -1,4 +1,4 @@
-//! Native x86-64 JIT differentials for deterministic hypercall hints.
+//! Native x86-64 JIT differentials for deterministic virtualization profiles.
 
 use super::*;
 use std::sync::Arc;
@@ -146,6 +146,42 @@ fn vmgexit_and_rex2_vmmcall_aliases_are_precise_ud_without_commit() {
         let before_system = system_state(&vcpu);
 
         let error = vcpu.step().expect_err("invalid alias must inject #UD");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{name}: expected #UD delivery failure, got {error}"
+        );
+        assert_eq!(scalar_state(&vcpu), before_scalar, "{name}");
+        assert_eq!(system_state(&vcpu), before_system, "{name}");
+    }
+}
+
+#[test]
+fn jit_disabled_vmx_controls_exit_at_the_exact_faulting_frontier() {
+    for (name, modrm) in [
+        ("VMLAUNCH", 0xC2),
+        ("VMRESUME", 0xC3),
+        ("VMXOFF", 0xC4),
+        ("VMFUNC", 0xD4),
+    ] {
+        let memory = memory_with_code(&[
+            0xB8, 0x78, 0x56, 0x34, 0x12, // mov eax,12345678h
+            0xEB, 0x02, // jmp disabled VMX control
+            0x90, 0x90, // unreachable padding
+            0x0F, 0x01, modrm,
+        ]);
+        let mut vcpu = test_vcpu(memory);
+        let region = vcpu
+            .jit_compile_region()
+            .expect("compile region ending at disabled VMX control")
+            .expect("supported prefix must remain native before VMX frontier");
+
+        vcpu.jit_run_region_native(&region);
+        assert_eq!(vcpu.regs.rax, 0x1234_5678, "{name}");
+        assert_eq!(vcpu.regs.rip, 9, "{name}");
+
+        let before_scalar = scalar_state(&vcpu);
+        let before_system = system_state(&vcpu);
+        let error = vcpu.step().expect_err("VMX frontier must deliver #UD");
         assert!(
             error.to_string().contains("IDT entry 6 not present"),
             "{name}: expected #UD delivery failure, got {error}"

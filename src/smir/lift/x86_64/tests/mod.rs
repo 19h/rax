@@ -60,6 +60,8 @@ mod tsx;
 #[cfg(test)]
 mod vex;
 #[cfg(test)]
+mod vmx_controls;
+#[cfg(test)]
 mod write_control;
 #[cfg(test)]
 mod write_debug;
