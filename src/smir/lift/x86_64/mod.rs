@@ -169,6 +169,12 @@ fn x86_interpreter_frontier_control_flow(result: &LiftResult, lift_through_calls
                     kind: OpKind::X86FarCall(call),
                     ..
                 }) if call.target == *target
+            ) || matches!(
+                result.ops.last(),
+                Some(SmirOp {
+                    kind: OpKind::X86FarReturn(ret),
+                    ..
+                }) if ret.target == *target
             ) =>
         {
             false

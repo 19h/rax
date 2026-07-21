@@ -21,6 +21,14 @@ pub(crate) struct X86FarJumpTarget {
     pub(crate) accessed_low: u64,
 }
 
+/// A validated outer-privilege stack segment for far RET. A null SS is legal
+/// only for a return to 64-bit code at CPL0-2; in that case `accessed_low` is
+/// `None` because there is no descriptor to update.
+pub(crate) struct X86FarReturnStack {
+    pub(crate) segment: Segment,
+    pub(crate) accessed_low: Option<u64>,
+}
+
 /// The target selector and 64-bit offset carried by an IA-32e call gate.
 pub(crate) struct X86FarJumpCallGate {
     pub(crate) selector: u16,
@@ -67,6 +75,138 @@ fn descriptor_limit(raw: u64) -> u32 {
 #[inline]
 fn descriptor_base(raw: u64) -> u64 {
     ((raw >> 16) & 0xFFFF) | (((raw >> 32) & 0xFF) << 16) | (((raw >> 56) & 0xFF) << 24)
+}
+
+/// Decode the code descriptor selected by an IA-32e far RET. Unlike a far
+/// CALL/JMP, the selector RPL names the privilege level being returned to and
+/// therefore may be numerically greater than the current CPL.
+pub(crate) fn decode_x86_far_return_code(
+    selector: u16,
+    raw: u64,
+    offset: u64,
+    offset_width: OpWidth,
+    cpl: u8,
+    validate_target_offset: bool,
+) -> Result<X86FarJumpTarget, X86SystemDescriptorFault> {
+    let error_code = selector_error_code(selector);
+    if selector & 0xFFFC == 0 {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code: 0 });
+    }
+
+    let type_ = ((raw >> 40) & 0x0F) as u8;
+    if raw >> 44 & 1 == 0 || type_ & 0x8 == 0 {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    }
+    let l = raw >> 53 & 1 != 0;
+    let db = raw >> 54 & 1 != 0;
+    if l && db {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    }
+
+    let rpl = (selector & 3) as u8;
+    let dpl = ((raw >> 45) & 3) as u8;
+    let conforming = type_ & 0x4 != 0;
+    if rpl < cpl || (conforming && dpl > rpl) || (!conforming && dpl != rpl) {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    }
+    if raw >> 47 & 1 == 0 {
+        return Err(X86SystemDescriptorFault::SegmentNotPresent { error_code });
+    }
+
+    let Some(offset) = normalized_far_offset(offset, offset_width) else {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    };
+    let target = X86FarJumpTarget {
+        segment: Segment {
+            base: if l { 0 } else { descriptor_base(raw) },
+            limit: descriptor_limit(raw),
+            selector,
+            type_: type_ | 1,
+            present: true,
+            dpl,
+            db,
+            s: true,
+            l,
+            g: raw >> 55 & 1 != 0,
+            avl: raw >> 52 & 1 != 0,
+            unusable: false,
+        },
+        offset,
+        accessed_low: raw | (1_u64 << 40),
+    };
+    if validate_target_offset {
+        validate_x86_far_call_target_offset(&target)?;
+    }
+    Ok(target)
+}
+
+/// Decode the SS descriptor selected by an outer-privilege IA-32e far RET.
+/// `SegmentNotPresent` is deliberately returned for a non-present descriptor;
+/// the owning RET operation maps that stack-specific result to #SS(selector).
+pub(crate) fn decode_x86_far_return_stack(
+    selector: u16,
+    raw: Option<u64>,
+    target_cpl: u8,
+    target_cs_l: bool,
+) -> Result<X86FarReturnStack, X86SystemDescriptorFault> {
+    let error_code = selector_error_code(selector);
+    if selector & 0xFFFC == 0 {
+        if !target_cs_l || target_cpl == 3 || (selector & 3) as u8 != target_cpl {
+            return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+        }
+        return Ok(X86FarReturnStack {
+            segment: Segment {
+                base: 0,
+                limit: 0xFFFF_FFFF,
+                selector,
+                type_: 0x3,
+                present: true,
+                dpl: target_cpl,
+                db: true,
+                s: true,
+                l: false,
+                g: true,
+                avl: false,
+                unusable: false,
+            },
+            accessed_low: None,
+        });
+    }
+
+    let Some(raw) = raw else {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    };
+    let type_ = ((raw >> 40) & 0x0F) as u8;
+    let dpl = ((raw >> 45) & 3) as u8;
+    if raw >> 44 & 1 == 0
+        || type_ & 0x8 != 0
+        || type_ & 0x2 == 0
+        || (selector & 3) as u8 != target_cpl
+        || dpl != target_cpl
+    {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    }
+    if raw >> 47 & 1 == 0 {
+        return Err(X86SystemDescriptorFault::SegmentNotPresent { error_code });
+    }
+
+    Ok(X86FarReturnStack {
+        segment: Segment {
+            base: descriptor_base(raw),
+            limit: descriptor_limit(raw),
+            selector,
+            type_: type_ | 1,
+            present: true,
+            dpl,
+            db: raw >> 54 & 1 != 0,
+            s: true,
+            l: false,
+            g: raw >> 55 & 1 != 0,
+            avl: raw >> 52 & 1 != 0,
+            unusable: false,
+        },
+        accessed_low: Some(raw | (1_u64 << 40)),
+    })
 }
 
 /// Decode a code descriptor reached directly or through a call gate. The
@@ -374,7 +514,12 @@ impl X86_64Vcpu {
         Ok(address)
     }
 
-    fn far_jump_plain_read(&mut self, address: u64, size: usize, supervisor: bool) -> bool {
+    pub(super) fn far_jump_plain_read(
+        &mut self,
+        address: u64,
+        size: usize,
+        supervisor: bool,
+    ) -> bool {
         #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
         {
             let mut sregs = self.sregs.clone();
@@ -390,7 +535,12 @@ impl X86_64Vcpu {
         }
     }
 
-    fn far_jump_plain_write(&mut self, address: u64, size: usize, supervisor: bool) -> bool {
+    pub(super) fn far_jump_plain_write(
+        &mut self,
+        address: u64,
+        size: usize,
+        supervisor: bool,
+    ) -> bool {
         #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
         {
             let mut sregs = self.sregs.clone();

@@ -1,9 +1,13 @@
 //! Call and return instructions: CALL, RET, RETF.
 
 use crate::error::{Error, Result};
+use crate::isa::x86_64::execute::system::X86SystemDescriptorFault;
+use crate::smir::ir::types::OpWidth;
 use crate::vm::vcpu::VcpuExit;
 
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
+
+use super::X86FarReturnLoadFault;
 
 /// Operand size for near branches (CALL/RET near, JMP/Jcc near) and the stack
 /// push/pop of the return address. These instructions default to 64-bit
@@ -136,9 +140,48 @@ fn mask_ip(ip: u64, op_size: u8) -> u64 {
     }
 }
 
+fn retf_long_mode(vcpu: &mut X86_64Vcpu, op_size: u8, pop_bytes: u16) -> Result<Option<VcpuExit>> {
+    let width = match op_size {
+        2 => OpWidth::W16,
+        4 => OpWidth::W32,
+        8 => OpWidth::W64,
+        _ => {
+            return Err(Error::Emulator(format!(
+                "RETF invalid long-mode operand size: {op_size}"
+            )));
+        }
+    };
+    match vcpu.return_far_long_mode(width, pop_bytes, false) {
+        Ok(()) => Ok(None),
+        Err(X86FarReturnLoadFault::Architectural(
+            X86SystemDescriptorFault::GeneralProtection { error_code },
+        )) => {
+            vcpu.inject_exception(13, Some(u64::from(error_code)))?;
+            Ok(None)
+        }
+        Err(X86FarReturnLoadFault::Architectural(
+            X86SystemDescriptorFault::SegmentNotPresent { error_code },
+        )) => {
+            vcpu.inject_exception(11, Some(u64::from(error_code)))?;
+            Ok(None)
+        }
+        Err(X86FarReturnLoadFault::StackSegment { error_code }) => {
+            vcpu.inject_exception(12, Some(u64::from(error_code)))?;
+            Ok(None)
+        }
+        Err(X86FarReturnLoadFault::Memory(error)) => Err(error),
+        Err(X86FarReturnLoadFault::NativeDeopt) => {
+            unreachable!("direct long-mode far RET does not request native preflight")
+        }
+    }
+}
+
 /// RETF - far return (0xCB)
 pub fn retf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
+    if vcpu.sregs.cs.l && vcpu.sregs.efer & (1 << 10) != 0 {
+        return retf_long_mode(vcpu, op_size, 0);
+    }
     let ret_addr = pop_by_size(vcpu, op_size)?;
     let cs = pop_by_size(vcpu, op_size)? as u16;
     validate_far_selector(vcpu, cs)?;
@@ -169,6 +212,9 @@ pub fn retf(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
 pub fn retf_imm16(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let imm = ctx.consume_u16()?;
     let op_size = ctx.op_size;
+    if vcpu.sregs.cs.l && vcpu.sregs.efer & (1 << 10) != 0 {
+        return retf_long_mode(vcpu, op_size, imm);
+    }
     let ret_addr = pop_by_size(vcpu, op_size)?;
     let cs = pop_by_size(vcpu, op_size)? as u16;
     validate_far_selector(vcpu, cs)?;

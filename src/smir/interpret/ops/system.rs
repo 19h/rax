@@ -28,7 +28,9 @@ use crate::smir::ir::ops::{
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 
-fn x86_system_segment_cache(segment: &crate::vm::vcpu::Segment) -> X86SystemSegmentCache {
+pub(super) fn x86_system_segment_cache(
+    segment: &crate::vm::vcpu::Segment,
+) -> X86SystemSegmentCache {
     X86SystemSegmentCache {
         base: segment.base,
         limit: segment.limit,
@@ -44,7 +46,7 @@ fn x86_system_segment_cache(segment: &crate::vm::vcpu::Segment) -> X86SystemSegm
     }
 }
 
-fn request_x86_descriptor_fault(
+pub(super) fn request_x86_descriptor_fault(
     ctx: &mut SmirContext,
     guest_pc: u64,
     fault: X86SystemDescriptorFault,
@@ -65,7 +67,7 @@ fn request_x86_descriptor_fault(
     }
 }
 
-fn x86_far_jump_descriptor_address(
+pub(super) fn x86_far_jump_descriptor_address(
     x86: &crate::smir::ir::context::X86RegState,
     selector: u16,
     size: u64,
@@ -104,7 +106,7 @@ fn x86_far_jump_descriptor_address(
     Ok(address)
 }
 
-fn read_smir_u64(memory: &mut dyn SmirMemory, address: u64) -> Result<u64, MemoryError> {
+pub(super) fn read_smir_u64(memory: &mut dyn SmirMemory, address: u64) -> Result<u64, MemoryError> {
     let mut bytes = [0_u8; 8];
     memory.read(address, &mut bytes)?;
     Ok(u64::from_le_bytes(bytes))
@@ -156,6 +158,7 @@ fn smir_null_long_mode_ss(cpl: u8) -> X86SystemSegmentCache {
         unusable: false,
     }
 }
+
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
@@ -1131,6 +1134,10 @@ impl SmirInterpreter {
                 x86.cs_cache = target_cache;
                 x86.cpl = (target_selector & 3) as u8;
                 x86.rip = target_offset;
+            }
+
+            OpKind::X86FarReturn(..) => {
+                return self.execute_op_far_return(ctx, memory, op);
             }
 
             OpKind::X86Lmsw(lmsw) => {

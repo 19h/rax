@@ -284,6 +284,10 @@ pub struct GuestRegs {
     /// -> ok` for long-mode `FF /3`. Success commits the complete far-CALL
     /// frame plus CS:RIP:RSP[:SS] and leaves the dynamic target in `exit_pc`.
     pub far_call_fn: u64,
+    /// Address of `extern "C" fn(state, encoding) -> ok` for protected
+    /// IA-32e `CA`/`CB`. Encoding bits 1:0 select W16/W32/W64, bit two records
+    /// REX2/APX, and bits 31:16 carry the immediate parameter-release count.
+    pub far_return_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -358,6 +362,7 @@ impl Default for GuestRegs {
             system_selector_load_fn: 0,
             far_jump_fn: 0,
             far_call_fn: 0,
+            far_return_fn: 0,
         }
     }
 }

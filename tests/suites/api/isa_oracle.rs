@@ -718,6 +718,35 @@ fn emits_exact_far_call_pointer_frame_target_and_handoff_metadata() {
 }
 
 #[test]
+fn emits_exact_far_return_frame_target_and_handoff_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let decoded = decode_to_json(&[0x48, 0xCA, 0x34, 0x12], &opts).unwrap();
+    assert_eq!(decoded["smir"]["available"], true);
+    assert_eq!(decoded["smir"]["bytes_consumed"], 4);
+    let op = &decoded["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_far_return");
+    assert_eq!(op["kind"]["target"]["name"], "rip");
+    assert_eq!(op["kind"]["offset_width"], "W64");
+    assert_eq!(op["kind"]["pop_bytes"], 0x1234);
+    assert_eq!(op["kind"]["requires_apx"], false);
+    assert_eq!(op["kind"]["next_pc"], 0x1004);
+    assert!(op["reads"].is_null());
+    assert_eq!(op["writes"][0]["name"], "rip");
+    assert_eq!(op["memory"]["reads"], true);
+    assert_eq!(op["memory"]["writes"], true);
+    assert_eq!(op["side_effects"], true);
+    assert_eq!(decoded["smir"]["control_flow"]["kind"], "indirect_branch");
+    assert_eq!(decoded["smir"]["ends_block"], true);
+    assert_eq!(decoded["smir"]["ends_function"], false);
+
+    let apx = decode_to_json(&[0xD5, 0x18, 0xCB], &opts).unwrap();
+    assert_eq!(apx["smir"]["ops"][0]["kind"]["requires_apx"], true);
+    assert_eq!(apx["smir"]["ops"][0]["kind"]["offset_width"], "W64");
+}
+
+#[test]
 fn emits_exact_descriptor_table_memory_table_handoff_and_apx_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

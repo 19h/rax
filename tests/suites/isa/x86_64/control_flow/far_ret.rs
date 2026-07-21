@@ -28,6 +28,29 @@ fn write_far_outer_frame(
     write_stack_value(mem, rsp + 3 * op_size as u64, op_size, new_ss as u64);
 }
 
+fn code_descriptor(dpl: u8) -> [u8; 8] {
+    (0xFFFF_u64 | (0xA << 40) | (1 << 44) | (u64::from(dpl & 3) << 45) | (1 << 47) | (1 << 53))
+        .to_le_bytes()
+}
+
+fn stack_descriptor(dpl: u8) -> [u8; 8] {
+    (0xFFFF_u64 | (0x2 << 40) | (1 << 44) | (u64::from(dpl & 3) << 45) | (1 << 47) | (1 << 54))
+        .to_le_bytes()
+}
+
+fn install_outer_return_descriptors(
+    vcpu: &mut rax::isa::x86_64::X86_64Vcpu,
+    mem: &GuestMemoryMmap,
+) {
+    mem.write_slice(&code_descriptor(3), GuestAddress(GDT_BASE + 0x18))
+        .unwrap();
+    mem.write_slice(&stack_descriptor(3), GuestAddress(GDT_BASE + 0x20))
+        .unwrap();
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.gdt.limit = 0x27;
+    vcpu.set_sregs(&sregs).unwrap();
+}
+
 // Comprehensive tests for FAR RET instruction (inter-segment return)
 // RET (far return), RETF, RETF imm16
 // Opcode: CA imm16 (with immediate), CB (without immediate)
@@ -240,7 +263,8 @@ fn test_far_ret_to_outer_privilege() {
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_far_outer_frame(&mem, 0x8000, 4, 0x2000, 0x1b, 0x9000, 0x1b);
+    install_outer_return_descriptors(&mut vcpu, &mem);
+    write_far_outer_frame(&mem, 0x8000, 4, 0x2000, 0x1b, 0x9000, 0x23);
 
     let target_code = [
         0x48, 0xc7, 0xc1, 0xbb, 0x00, 0x00, 0x00, // MOV RCX, 0xBB
@@ -262,7 +286,8 @@ fn test_far_ret_restores_outer_stack() {
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_far_outer_frame(&mem, 0x8000, 4, 0x2000, 0x1b, 0xa000, 0x1b);
+    install_outer_return_descriptors(&mut vcpu, &mem);
+    write_far_outer_frame(&mem, 0x8000, 4, 0x2000, 0x1b, 0xa000, 0x23);
 
     let target_code = [
         0x48, 0x89, 0xe2, // MOV RDX, RSP (check restored stack)
@@ -358,8 +383,8 @@ fn test_far_ret_non_present_segment() {
 }
 
 #[test]
-fn test_far_ret_to_data_segment() {
-    // Return using a non-default selector (descriptor checks not modeled).
+fn test_far_ret_rejects_data_segment() {
+    // A far return target must select a code descriptor.
     let code = [
         0x48, 0xc7, 0xc4, 0x00, 0x80, 0x00, 0x00, // MOV RSP, 0x8000
         0xcb, // RETF
@@ -368,15 +393,7 @@ fn test_far_ret_to_data_segment() {
     let (mut vcpu, mem) = setup_vm(&code, None);
     write_far_frame(&mem, 0x8000, 4, 0x2000, 0x10);
 
-    let target_code = [
-        0x48, 0xc7, 0xc0, 0x04, 0x00, 0x00, 0x00, // MOV RAX, 4
-        0xf4,
-    ];
-    mem.write_slice(&target_code, vm_memory::GuestAddress(0x2000))
-        .unwrap();
-
-    let regs = run_until_hlt(&mut vcpu).unwrap();
-    assert_eq!(regs.rax, 4);
+    assert!(run_until_hlt(&mut vcpu).is_err());
 }
 
 // ============================================================================
@@ -592,7 +609,9 @@ fn test_far_ret_different_code_segment() {
         0xf4,
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
-    write_far_frame(&mem, 0x8000, 4, 0x2000, 0x10);
+    mem.write_slice(&code_descriptor(0), GuestAddress(GDT_BASE + 0x18))
+        .unwrap();
+    write_far_frame(&mem, 0x8000, 4, 0x2000, 0x18);
 
     let target_code = [
         0x48, 0xc7, 0xc6, 0xcc, 0x00, 0x00, 0x00, // MOV RSI, 0xCC

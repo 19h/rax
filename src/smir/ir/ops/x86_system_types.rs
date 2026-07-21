@@ -164,6 +164,22 @@ pub struct X86FarCallOp {
     pub next_pc: u64,
 }
 
+/// Far RET (`CA`/`CB`). The operation owns all width-selected stack reads,
+/// code/stack descriptor validation, accessed-bit transitions, optional outer
+/// privilege stack restoration, data-segment invalidation, and the terminal
+/// CS:RIP:RSP[:SS] commit.
+#[derive(Clone, Debug)]
+pub struct X86FarReturnOp {
+    pub target: VReg,
+    pub offset_width: OpWidth,
+    /// Immediate parameter-release count. `CB` and `CA 00 00` are
+    /// architecturally equivalent apart from source length.
+    pub pop_bytes: u16,
+    pub requires_apx: bool,
+    /// Exact end of the source instruction, retained for native shape checks.
+    pub next_pc: u64,
+}
+
 /// Architecturally distinct LMSW sources. Both forms read exactly 16 bits;
 /// operand-size prefixes never change the source width.
 #[derive(Clone, Debug)]

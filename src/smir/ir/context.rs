@@ -410,6 +410,18 @@ pub struct X86RegState {
     /// transitions install a null selector whose RPL equals the new CPL.
     pub ss_selector: u16,
     pub ss_cache: X86SystemSegmentCache,
+    /// Visible data-segment selectors and hidden caches. An outer-privilege
+    /// far RET clears any data or nonconforming-code selector whose cached DPL
+    /// is not accessible at the returned CPL. FS/GS linear bases remain in
+    /// their dedicated MSR-backed fields above.
+    pub es_selector: u16,
+    pub es_cache: X86SystemSegmentCache,
+    pub ds_selector: u16,
+    pub ds_cache: X86SystemSegmentCache,
+    pub fs_selector: u16,
+    pub fs_cache: X86SystemSegmentCache,
+    pub gs_selector: u16,
+    pub gs_cache: X86SystemSegmentCache,
     /// Local descriptor-table selector exposed by SLDT.
     pub ldtr_selector: u16,
     /// Hidden descriptor cache loaded by LLDT. The visible selector remains a

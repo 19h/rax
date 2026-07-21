@@ -58,6 +58,8 @@ mod far_jump;
 pub use far_jump::*;
 mod far_call;
 pub use far_call::*;
+mod far_return;
+pub use far_return::*;
 mod monitor_mwait;
 pub use monitor_mwait::*;
 mod msr;

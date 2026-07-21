@@ -5,6 +5,7 @@ mod avx10;
 mod binary;
 mod bit;
 mod data_movement;
+mod far_return;
 mod flags;
 mod fp;
 mod logic;

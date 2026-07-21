@@ -195,6 +195,15 @@ impl X86_64Lifter {
                 pc,
                 ctx,
             ),
+            0xCA | 0xCB => self.lift_far_ret(
+                opcode,
+                after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+            ),
             0xC8 => self.lift_enter(
                 after_opcode,
                 &X86Prefix {

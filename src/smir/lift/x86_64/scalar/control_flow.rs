@@ -7,10 +7,10 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign, X86VecMap,
-    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
-    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
-    X86XSaveKind,
+    X86FarReturnOp, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind,
+    X86VecAlign, X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource,
+    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
+    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -135,6 +135,60 @@ impl X86_64Lifter {
         ));
 
         Ok(LiftResult::ret(ops, prefix.cursor + 2))
+    }
+
+    /// Lift far RET (`CA iw`/`CB`) as one fault-precise system operation. The
+    /// operation owns all stack and descriptor accesses because decomposing
+    /// them into ordinary loads would commit architectural state too early.
+    pub(crate) fn lift_far_ret(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![opcode],
+            });
+        }
+
+        let (pop_bytes, immediate_len) = match opcode {
+            0xCB => (0, 0),
+            0xCA => {
+                if bytes.len() < 2 {
+                    return Err(LiftError::Incomplete {
+                        addr: pc,
+                        have: bytes.len(),
+                        need: 2,
+                    });
+                }
+                (u16::from_le_bytes([bytes[0], bytes[1]]), 2)
+            }
+            _ => unreachable!("far-RET lifter called for non-RETF opcode"),
+        };
+
+        let bytes_consumed = prefix.cursor + immediate_len;
+        let target = VReg::Arch(ArchReg::X86(X86Reg::Rip));
+        let op = SmirOp::new(
+            OpId(0),
+            pc,
+            OpKind::X86FarReturn(X86FarReturnOp {
+                target,
+                offset_width: prefix.op_width(),
+                pop_bytes,
+                requires_apx: prefix.rex2.is_some(),
+                next_pc: pc + bytes_consumed as u64,
+            }),
+        );
+
+        Ok(LiftResult {
+            ops: vec![op],
+            bytes_consumed,
+            control_flow: ControlFlow::IndirectBranch { target },
+            branch_targets: vec![],
+        })
     }
 
     /// Lift JMP rel8 (EB)

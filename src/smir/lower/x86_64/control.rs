@@ -677,6 +677,19 @@ impl X86_64Lowerer {
                 // target; both success and replay paths return before the term.
                 return Ok(());
             }
+            if matches!(block.ops[idx].kind, OpKind::X86FarReturn(..)) {
+                if idx + 1 != block.ops.len() || !x86_far_return_terminal_shape_valid(block) {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86FarReturn".to_string(),
+                        operand: "must be the sole owner of a matching terminal indirect branch"
+                            .to_string(),
+                    });
+                }
+                self.emit_x86_far_return(&block.ops[idx])?;
+                // The helper owns the return-frame reads and dynamic target;
+                // both success and replay paths return before the terminator.
+                return Ok(());
+            }
             if matches!(&block.ops[idx].kind, OpKind::X86Msr(msr) if msr.write) {
                 self.emit_x86_msr(&block.ops[idx])?;
                 // Successful WRMSR changes architectural admission state and
