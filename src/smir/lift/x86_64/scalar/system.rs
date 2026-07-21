@@ -334,10 +334,18 @@ impl X86_64Lifter {
                     prefix.cursor + modrm.bytes_consumed,
                 ))
             }
-            _ => Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("0F C7 /{group}"),
+            0 | 2 => Ok(LiftResult {
+                // Intel SDM Table A-6 leaves the /0 and /2 Group 9 columns
+                // unassigned. Decode the complete ModR/M address form above,
+                // but do not evaluate it or emit any operation before #UD.
+                ops: Vec::new(),
+                bytes_consumed: prefix.cursor + modrm.bytes_consumed,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
             }),
+            _ => unreachable!("Group 9 selector is masked to three bits"),
         }
     }
 
