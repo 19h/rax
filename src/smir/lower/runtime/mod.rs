@@ -275,7 +275,9 @@ pub struct GuestRegs {
     /// 8-byte selector source, and bit six marks a POP stack source. Bit seven
     /// marks a far pointer; then bits 12:8 select its GPR and bits 14:13 encode
     /// its 2-, 4-, or 8-byte offset. All architectural destinations commit only
-    /// after source and descriptor effects succeed.
+    /// after source and descriptor effects succeed. Internal tagged namespaces
+    /// additionally carry VERR/VERW and LAR/LSL queries through this helper;
+    /// they return one for ZF=0, two for ZF=1, and zero for precise replay.
     pub system_selector_load_fn: u64,
     /// Address of `extern "C" fn(state, pointer_address, encoding) -> ok` for
     /// long-mode `FF /5`. Encoding bits 1:0 select W16/W32/W64 and bit two

@@ -560,6 +560,10 @@ impl SmirInterpreter {
                 self.execute_x86_selector_verify(ctx, memory, op, verify)?;
             }
 
+            OpKind::X86SelectorQuery(query) => {
+                self.execute_x86_selector_query(ctx, memory, op, query)?;
+            }
+
             OpKind::X86FarJump(jump) => {
                 let X86FarJumpOp {
                     addr,

@@ -208,6 +208,36 @@ pub struct X86SelectorVerifyOp {
     pub next_pc: u64,
 }
 
+/// Descriptor value selected by LAR/LSL after their non-faulting selector
+/// checks. AccessRights retains Intel's architecturally undefined result bits
+/// 19:16 as the deterministic descriptor image used by the direct engine.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86SelectorQueryKind {
+    AccessRights,
+    Limit,
+}
+
+/// Fixed-width LAR/LSL selector source. The source is always truncated to 16
+/// bits independently of the destination operand size.
+#[derive(Clone, Debug)]
+pub enum X86SelectorQuerySource {
+    Register { src: VReg },
+    Memory { addr: Address, stack_segment: bool },
+}
+
+/// LAR/LSL atomically combine a faulting source read, one implicit 8- or
+/// 16-byte descriptor read, a conditional width-specific GPR write, and a ZF
+/// update. Invalid selectors leave `dst` unchanged and commit ZF=0.
+#[derive(Clone, Debug)]
+pub struct X86SelectorQueryOp {
+    pub kind: X86SelectorQueryKind,
+    pub dst: VReg,
+    pub source: X86SelectorQuerySource,
+    pub width: OpWidth,
+    pub requires_apx: bool,
+    pub next_pc: u64,
+}
+
 /// Indirect far JMP (`FF /5`) through a memory far pointer. The strict x86-64
 /// lifter records the encoded 16-, 32-, or 64-bit offset width and produces the
 /// target in architectural RIP. Descriptor-table reads, optional call-gate

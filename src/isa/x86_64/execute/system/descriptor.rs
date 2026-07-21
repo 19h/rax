@@ -527,6 +527,24 @@ pub(crate) enum X86SelectorVerifyAccess {
     Write,
 }
 
+/// Descriptor value selected by LAR/LSL after the non-faulting selector,
+/// descriptor-type, and privilege checks have succeeded. Descriptor presence
+/// is deliberately not a validity predicate for either instruction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum X86SelectorQueryAccess {
+    AccessRights,
+    Limit,
+}
+
+/// Direct/JIT failures while LAR/LSL read a selector descriptor. Null,
+/// out-of-bounds, invalid-type, and invisible selectors are represented by a
+/// successful `None`, because the architecture reports those cases with ZF=0.
+#[derive(Debug)]
+pub(in crate::isa::x86_64) enum X86SelectorQueryFault {
+    Memory(Error),
+    NativeDeopt,
+}
+
 /// Evaluate the descriptor/type/privilege portion of VERR/VERW after selector
 /// nullness, table selection, bounds, and the descriptor read have succeeded.
 /// Neither instruction raises a selector-derived protection exception.
@@ -548,10 +566,6 @@ pub(crate) fn x86_selector_verifies(
 }
 
 impl Descriptor {
-    fn present(self) -> bool {
-        (self.raw >> 47) & 1 != 0
-    }
-
     fn type_(self) -> u8 {
         ((self.raw >> 40) & 0x0F) as u8
     }
@@ -592,50 +606,161 @@ impl Descriptor {
         }
         limit
     }
+}
 
-    fn can_lar(self, selector: u16, cpl: u8) -> bool {
-        if !self.present() {
-            return false;
-        }
-
-        let valid_type = self.is_code_or_data() || matches!(self.type_(), 0x2 | 0x9 | 0xB | 0xC);
-
-        valid_type && self.visible_from(selector, cpl)
+fn selector_query_type_valid(
+    descriptor: Descriptor,
+    ia32e_active: bool,
+    access: X86SelectorQueryAccess,
+) -> bool {
+    if descriptor.is_code_or_data() {
+        return true;
     }
 
-    fn can_lsl(self, selector: u16, cpl: u8) -> bool {
-        if !self.present() {
-            return false;
+    match (ia32e_active, access) {
+        (false, X86SelectorQueryAccess::AccessRights) => {
+            matches!(
+                descriptor.type_(),
+                0x1 | 0x2 | 0x3 | 0x4 | 0x5 | 0x9 | 0xB | 0xC
+            )
         }
-
-        let valid_type = self.is_code_or_data() || matches!(self.type_(), 0x2 | 0x9 | 0xB);
-
-        valid_type && self.visible_from(selector, cpl)
+        (false, X86SelectorQueryAccess::Limit) => {
+            matches!(descriptor.type_(), 0x1 | 0x2 | 0x3 | 0x9 | 0xB)
+        }
+        (true, X86SelectorQueryAccess::AccessRights) => {
+            matches!(descriptor.type_(), 0x2 | 0x9 | 0xB | 0xC)
+        }
+        (true, X86SelectorQueryAccess::Limit) => {
+            matches!(descriptor.type_(), 0x2 | 0x9 | 0xB)
+        }
     }
 }
 
-fn descriptor_for_selector(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Option<Descriptor>> {
-    if selector & 0xFFFC == 0 {
-        return Ok(None);
+/// Whether an otherwise type-valid LAR/LSL system descriptor occupies the
+/// 16-byte IA-32e format. Code/data descriptors always remain 8 bytes.
+pub(crate) fn x86_selector_query_needs_high(
+    raw: u64,
+    ia32e_active: bool,
+    access: X86SelectorQueryAccess,
+) -> bool {
+    let descriptor = Descriptor { raw };
+    ia32e_active
+        && !descriptor.is_code_or_data()
+        && selector_query_type_valid(descriptor, ia32e_active, access)
+}
+
+/// Evaluate the type, IA-32e extended-descriptor, and privilege portion of
+/// LAR/LSL after selector nullness, table selection, bounds, and descriptor
+/// memory accesses have completed. Intel defines LAR result bits 19:16 as
+/// undefined; this implementation retains the existing deterministic choice
+/// of copying the corresponding descriptor bits.
+pub(crate) fn x86_selector_query(
+    selector: u16,
+    raw: u64,
+    high: Option<u64>,
+    cpl: u8,
+    ia32e_active: bool,
+    access: X86SelectorQueryAccess,
+) -> Option<u64> {
+    let descriptor = Descriptor { raw };
+    if !selector_query_type_valid(descriptor, ia32e_active, access)
+        || !descriptor.visible_from(selector, cpl)
+    {
+        return None;
+    }
+    if x86_selector_query_needs_high(raw, ia32e_active, access)
+        && high.is_none_or(|upper| (upper >> 40) & 0x1F != 0)
+    {
+        return None;
     }
 
-    let ti = (selector & 0x4) != 0;
-    let index = (selector >> 3) as u64;
-    let (table_base, table_limit) = if ti {
-        (vcpu.sregs.ldt.base, vcpu.sregs.ldt.limit as u64)
-    } else {
-        (vcpu.sregs.gdt.base, vcpu.sregs.gdt.limit as u64)
-    };
+    Some(match access {
+        X86SelectorQueryAccess::AccessRights => descriptor.access_rights(),
+        X86SelectorQueryAccess::Limit => descriptor.limit(),
+    })
+}
 
-    let offset = index * 8;
-    if offset + 7 > table_limit {
-        return Ok(None);
+impl X86_64Vcpu {
+    /// Read and evaluate one LAR/LSL descriptor without turning selector-
+    /// derived failures into exceptions. Native preflight admits only plain
+    /// RAM reads so direct replay can reproduce MMIO and translation effects
+    /// exactly once at the original guest frontier.
+    pub(in crate::isa::x86_64) fn query_selector_descriptor(
+        &mut self,
+        selector: u16,
+        access: X86SelectorQueryAccess,
+        native_preflight: bool,
+    ) -> std::result::Result<Option<u64>, X86SelectorQueryFault> {
+        if selector & 0xFFFC == 0 {
+            return Ok(None);
+        }
+
+        let ti = selector & 0x4 != 0;
+        if ti && (self.sregs.ldt.selector & 0xFFFC == 0 || self.sregs.ldt.unusable) {
+            return Ok(None);
+        }
+        let (table_base, table_limit) = if ti {
+            (self.sregs.ldt.base, u64::from(self.sregs.ldt.limit))
+        } else {
+            (self.sregs.gdt.base, u64::from(self.sregs.gdt.limit))
+        };
+        let offset = u64::from(selector >> 3) * 8;
+        if offset.checked_add(7).is_none_or(|last| last > table_limit) {
+            return Ok(None);
+        }
+        let Some(address) = table_base.checked_add(offset) else {
+            return Ok(None);
+        };
+        let Some(last) = address.checked_add(7) else {
+            return Ok(None);
+        };
+        let ia32e_active = self.sregs.efer & (1 << 10) != 0;
+        if ia32e_active && (!is_canonical_48(address) || !is_canonical_48(last)) {
+            return Ok(None);
+        }
+        if native_preflight && !self.far_jump_plain_read(address, 8, true) {
+            return Err(X86SelectorQueryFault::NativeDeopt);
+        }
+        let raw = self
+            .read_far_jump_descriptor_qword(address)
+            .map_err(X86SelectorQueryFault::Memory)?;
+
+        let high = if x86_selector_query_needs_high(raw, ia32e_active, access) {
+            if offset
+                .checked_add(15)
+                .is_none_or(|last_offset| last_offset > table_limit)
+            {
+                return Ok(None);
+            }
+            let Some(high_address) = address.checked_add(8) else {
+                return Ok(None);
+            };
+            let Some(high_last) = high_address.checked_add(7) else {
+                return Ok(None);
+            };
+            if !is_canonical_48(high_address) || !is_canonical_48(high_last) {
+                return Ok(None);
+            }
+            if native_preflight && !self.far_jump_plain_read(high_address, 8, true) {
+                return Err(X86SelectorQueryFault::NativeDeopt);
+            }
+            Some(
+                self.read_far_jump_descriptor_qword(high_address)
+                    .map_err(X86SelectorQueryFault::Memory)?,
+            )
+        } else {
+            None
+        };
+
+        Ok(x86_selector_query(
+            selector,
+            raw,
+            high,
+            current_cpl(self),
+            ia32e_active,
+            access,
+        ))
     }
-
-    let raw = vcpu
-        .mmu
-        .read_u64_supervisor(table_base + offset, &vcpu.sregs)?;
-    Ok(Some(Descriptor { raw }))
 }
 
 fn descriptor_for_verification(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Option<Descriptor>> {
@@ -665,18 +790,8 @@ fn descriptor_for_verification(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<O
     Ok(Some(Descriptor { raw }))
 }
 
-fn descriptor_for_lar(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Option<Descriptor>> {
-    let cpl = current_cpl(vcpu);
-    Ok(descriptor_for_selector(vcpu, selector)?.filter(|desc| desc.can_lar(selector, cpl)))
-}
-
-fn descriptor_for_lsl(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Option<Descriptor>> {
-    let cpl = current_cpl(vcpu);
-    Ok(descriptor_for_selector(vcpu, selector)?.filter(|desc| desc.can_lsl(selector, cpl)))
-}
-
 fn set_zf(vcpu: &mut X86_64Vcpu, set: bool) {
-    vcpu.clear_lazy_flags();
+    vcpu.materialize_flags();
     if set {
         vcpu.regs.rflags |= flags::bits::ZF;
     } else {
@@ -684,7 +799,7 @@ fn set_zf(vcpu: &mut X86_64Vcpu, set: bool) {
     }
 }
 
-fn read_group6_selector_load_source(
+fn read_fixed_selector_source(
     vcpu: &mut X86_64Vcpu,
     ctx: &mut InsnContext,
     modrm_start: usize,
@@ -758,8 +873,7 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             if !is_cpl0(vcpu) {
                 return raise_gp0(vcpu);
             }
-            let Some(selector) =
-                read_group6_selector_load_source(vcpu, ctx, modrm_start, modrm, rm)?
+            let Some(selector) = read_fixed_selector_source(vcpu, ctx, modrm_start, modrm, rm)?
             else {
                 return Ok(None);
             };
@@ -786,8 +900,7 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             if !is_cpl0(vcpu) {
                 return raise_gp0(vcpu);
             }
-            let Some(selector) =
-                read_group6_selector_load_source(vcpu, ctx, modrm_start, modrm, rm)?
+            let Some(selector) = read_fixed_selector_source(vcpu, ctx, modrm_start, modrm, rm)?
             else {
                 return Ok(None);
             };
@@ -810,8 +923,7 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         }
         // VERR - Verify Read (0x0F 0x00 /4)
         4 => {
-            let Some(selector) =
-                read_group6_selector_load_source(vcpu, ctx, modrm_start, modrm, rm)?
+            let Some(selector) = read_fixed_selector_source(vcpu, ctx, modrm_start, modrm, rm)?
             else {
                 return Ok(None);
             };
@@ -825,8 +937,7 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         }
         // VERW - Verify Write (0x0F 0x00 /5)
         5 => {
-            let Some(selector) =
-                read_group6_selector_load_source(vcpu, ctx, modrm_start, modrm, rm)?
+            let Some(selector) = read_fixed_selector_source(vcpu, ctx, modrm_start, modrm, rm)?
             else {
                 return Ok(None);
             };
@@ -846,58 +957,49 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
     Ok(None)
 }
 
-/// LAR - Load Access Rights (0x0F 0x02)
-pub fn lar(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+fn lar_lsl(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    access: X86SelectorQueryAccess,
+) -> Result<Option<VcpuExit>> {
+    // Both instructions are recognized only in protected mode and are invalid
+    // in virtual-8086 mode. Reject before decoding or touching the source.
+    if vcpu.sregs.cr0 & 1 == 0 || vcpu.regs.rflags & flags::bits::VM != 0 {
+        return vcpu.inject_undefined_instruction();
+    }
+
     let modrm_start = ctx.cursor;
     let modrm = ctx.consume_u8()?;
-    let reg = ((modrm >> 3) & 0x07) | ctx.rex_r();
-    let rm = (modrm & 0x07) | ctx.rex_b();
-    let is_memory = modrm >> 6 != 3;
-
-    let selector = if is_memory {
-        let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
-        ctx.cursor = modrm_start + 1 + extra;
-        vcpu.mmu.read_u16(addr, &vcpu.sregs)?
-    } else {
-        vcpu.get_reg(rm, 2) as u16
+    let reg = ((modrm >> 3) & 0x07) | ctx.any_rex_r();
+    let rm = (modrm & 0x07) | ctx.any_rex_b();
+    let Some(selector) = read_fixed_selector_source(vcpu, ctx, modrm_start, modrm, rm)? else {
+        return Ok(None);
     };
 
-    if let Some(desc) = descriptor_for_lar(vcpu, selector)? {
-        vcpu.set_reg(reg, desc.access_rights(), ctx.op_size);
-        set_zf(vcpu, true); // Valid selector
-    } else {
-        set_zf(vcpu, false); // Null selector
+    let value = match vcpu.query_selector_descriptor(selector, access, false) {
+        Ok(value) => value,
+        Err(X86SelectorQueryFault::Memory(error)) => return Err(error),
+        Err(X86SelectorQueryFault::NativeDeopt) => {
+            unreachable!("direct LAR/LSL descriptor query cannot request native replay")
+        }
+    };
+    if let Some(value) = value {
+        vcpu.set_reg(reg, value, ctx.op_size);
     }
+    set_zf(vcpu, value.is_some());
 
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
 
+/// LAR - Load Access Rights (0x0F 0x02)
+pub fn lar(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    lar_lsl(vcpu, ctx, X86SelectorQueryAccess::AccessRights)
+}
+
 /// LSL - Load Segment Limit (0x0F 0x03)
 pub fn lsl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let modrm_start = ctx.cursor;
-    let modrm = ctx.consume_u8()?;
-    let reg = ((modrm >> 3) & 0x07) | ctx.rex_r();
-    let rm = (modrm & 0x07) | ctx.rex_b();
-    let is_memory = modrm >> 6 != 3;
-
-    let selector = if is_memory {
-        let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
-        ctx.cursor = modrm_start + 1 + extra;
-        vcpu.mmu.read_u16(addr, &vcpu.sregs)?
-    } else {
-        vcpu.get_reg(rm, 2) as u16
-    };
-
-    if let Some(desc) = descriptor_for_lsl(vcpu, selector)? {
-        vcpu.set_reg(reg, desc.limit(), ctx.op_size);
-        set_zf(vcpu, true); // Valid selector
-    } else {
-        set_zf(vcpu, false); // Null selector
-    }
-
-    vcpu.regs.rip += ctx.cursor as u64;
-    Ok(None)
+    lar_lsl(vcpu, ctx, X86SelectorQueryAccess::Limit)
 }
 
 #[cfg(test)]
@@ -1024,6 +1126,107 @@ mod tests {
             3,
             X86SelectorVerifyAccess::Write
         ));
+    }
+
+    #[test]
+    fn selector_query_type_matrices_privilege_and_presence_are_exact() {
+        for present in [false, true] {
+            let data = descriptor(0x2, 3, present, false);
+            for access in [
+                X86SelectorQueryAccess::AccessRights,
+                X86SelectorQueryAccess::Limit,
+            ] {
+                assert!(x86_selector_query(0x13, data, None, 3, false, access).is_some());
+                assert!(x86_selector_query(0x13, data, None, 3, true, access).is_some());
+            }
+        }
+
+        for (access, legacy_valid, ia32e_valid) in [
+            (
+                X86SelectorQueryAccess::AccessRights,
+                &[0x1, 0x2, 0x3, 0x4, 0x5, 0x9, 0xB, 0xC][..],
+                &[0x2, 0x9, 0xB, 0xC][..],
+            ),
+            (
+                X86SelectorQueryAccess::Limit,
+                &[0x1, 0x2, 0x3, 0x9, 0xB][..],
+                &[0x2, 0x9, 0xB][..],
+            ),
+        ] {
+            for type_ in 0..=0xF {
+                let raw = descriptor(type_, 3, false, true);
+                assert_eq!(
+                    x86_selector_query(0x13, raw, None, 3, false, access).is_some(),
+                    legacy_valid.contains(&type_),
+                    "legacy {access:?} type {type_:#x}"
+                );
+                let high = ia32e_valid.contains(&type_).then_some(0);
+                assert_eq!(
+                    x86_selector_query(0x13, raw, high, 3, true, access).is_some(),
+                    ia32e_valid.contains(&type_),
+                    "IA-32e {access:?} type {type_:#x}"
+                );
+            }
+        }
+
+        let dpl_two = descriptor(0x2, 2, false, false);
+        assert!(
+            x86_selector_query(0x12, dpl_two, None, 2, true, X86SelectorQueryAccess::Limit)
+                .is_some()
+        );
+        assert!(
+            x86_selector_query(0x13, dpl_two, None, 2, true, X86SelectorQueryAccess::Limit)
+                .is_none()
+        );
+        let conforming = descriptor(0xC, 0, false, false);
+        assert!(
+            x86_selector_query(
+                0x13,
+                conforming,
+                None,
+                3,
+                true,
+                X86SelectorQueryAccess::AccessRights
+            )
+            .is_some()
+        );
+    }
+
+    #[test]
+    fn selector_query_extended_descriptor_and_values_are_exact() {
+        let system = descriptor(0x2, 0, false, true);
+        for access in [
+            X86SelectorQueryAccess::AccessRights,
+            X86SelectorQueryAccess::Limit,
+        ] {
+            assert!(x86_selector_query_needs_high(system, true, access));
+            assert!(x86_selector_query(0x10, system, None, 0, true, access).is_none());
+            assert!(x86_selector_query(0x10, system, Some(1 << 40), 0, true, access).is_none());
+            assert!(x86_selector_query(0x10, system, Some(0), 0, true, access).is_some());
+            assert!(!x86_selector_query_needs_high(system, false, access));
+        }
+
+        let data = descriptor(0x2, 0, false, false);
+        assert!(!x86_selector_query_needs_high(
+            data,
+            true,
+            X86SelectorQueryAccess::AccessRights
+        ));
+        assert_eq!(
+            x86_selector_query(
+                0x10,
+                data,
+                None,
+                0,
+                true,
+                X86SelectorQueryAccess::AccessRights
+            ),
+            Some(((data >> 40) & 0xFFFF) << 8)
+        );
+        assert_eq!(
+            x86_selector_query(0x10, data, None, 0, true, X86SelectorQueryAccess::Limit),
+            Some(0xA_BCDE_FFF)
+        );
     }
 
     #[test]

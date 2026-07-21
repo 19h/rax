@@ -221,6 +221,26 @@ pub(crate) const X86_SELECTOR_VERIFY_HELPER_OPTION_MASK: u32 = X86_SELECTOR_VERI
     | X86_SELECTOR_VERIFY_HELPER_APX
     | X86_SELECTOR_VERIFY_HELPER_WRITE;
 
+/// Internal selector-loader helper namespace for LAR/LSL. Bit 16 lies beyond
+/// every legacy selector-load encoding and the existing bit-15 malformed-shape
+/// boundary. Options encode source class, APX, query kind, destination GPR,
+/// and destination width; every other bit remains fail-closed.
+pub(crate) const X86_SELECTOR_QUERY_HELPER_TAG: u32 = 1 << 16;
+pub(crate) const X86_SELECTOR_QUERY_HELPER_MEMORY: u32 = 1;
+pub(crate) const X86_SELECTOR_QUERY_HELPER_APX: u32 = 1 << 1;
+pub(crate) const X86_SELECTOR_QUERY_HELPER_LIMIT: u32 = 1 << 2;
+pub(crate) const X86_SELECTOR_QUERY_HELPER_DST_SHIFT: u32 = 3;
+pub(crate) const X86_SELECTOR_QUERY_HELPER_DST_MASK: u32 =
+    0x1F << X86_SELECTOR_QUERY_HELPER_DST_SHIFT;
+pub(crate) const X86_SELECTOR_QUERY_HELPER_WIDTH_SHIFT: u32 = 8;
+pub(crate) const X86_SELECTOR_QUERY_HELPER_WIDTH_MASK: u32 =
+    0x3 << X86_SELECTOR_QUERY_HELPER_WIDTH_SHIFT;
+pub(crate) const X86_SELECTOR_QUERY_HELPER_OPTION_MASK: u32 = X86_SELECTOR_QUERY_HELPER_MEMORY
+    | X86_SELECTOR_QUERY_HELPER_APX
+    | X86_SELECTOR_QUERY_HELPER_LIMIT
+    | X86_SELECTOR_QUERY_HELPER_DST_MASK
+    | X86_SELECTOR_QUERY_HELPER_WIDTH_MASK;
+
 // ============================================================================
 // Lowerer Trait
 // ============================================================================

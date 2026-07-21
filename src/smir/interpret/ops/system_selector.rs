@@ -1,10 +1,10 @@
-//! Fault-precise LLDT/LTR, `MOV Sreg,r/m`, `POP FS/GS`, and `LSS/LFS/LGS`
-//! interpretation.
+//! Fault-precise system-selector load, verification, and query interpretation.
 
 use crate::isa::x86_64::execute::system::{
-    X86SegmentLoadTarget, X86SelectorVerifyAccess, X86SystemDescriptorFault,
-    decode_x86_ldt_descriptor, decode_x86_segment_load_descriptor, decode_x86_tss_descriptor,
-    is_canonical_48, x86_real_mode_segment, x86_selector_verifies,
+    X86SegmentLoadTarget, X86SelectorQueryAccess, X86SelectorVerifyAccess,
+    X86SystemDescriptorFault, decode_x86_ldt_descriptor, decode_x86_segment_load_descriptor,
+    decode_x86_tss_descriptor, is_canonical_48, x86_real_mode_segment, x86_selector_query,
+    x86_selector_query_needs_high, x86_selector_verifies,
 };
 use crate::smir::interpret::*;
 use crate::smir::ir::context::{
@@ -12,7 +12,8 @@ use crate::smir::ir::context::{
 };
 use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
-    SmirOp, X86SelectorVerifyKind, X86SelectorVerifyOp, X86SelectorVerifySource, X86SystemSelector,
+    SmirOp, X86SelectorQueryKind, X86SelectorQueryOp, X86SelectorQuerySource,
+    X86SelectorVerifyKind, X86SelectorVerifyOp, X86SelectorVerifySource, X86SystemSelector,
     X86SystemSelectorLoadOp, X86SystemSelectorSource,
 };
 use crate::smir::ir::types::{ArchReg, MemWidth, OpWidth, SignExtend, VReg};
@@ -126,7 +127,57 @@ fn selector_verify_shape_valid(op: &SmirOp, verify: &X86SelectorVerifyOp) -> boo
     }
 }
 
-fn selector_verify_descriptor_address(x86: &X86RegState, selector: u16) -> Option<u64> {
+fn selector_query_shape_valid(op: &SmirOp, query: &X86SelectorQueryOp) -> bool {
+    let minimum_len = if query.requires_apx {
+        4 + u64::from(query.width == OpWidth::W16)
+    } else {
+        3 + u64::from(query.width != OpWidth::W32)
+    };
+    if op.x86_hint.is_some()
+        || !matches!(query.width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+        || !query
+            .next_pc
+            .checked_sub(op.guest_pc)
+            .is_some_and(|length| (minimum_len..=15).contains(&length))
+    {
+        return false;
+    }
+    let Some(dst_index) = (match query.dst {
+        VReg::Arch(ArchReg::X86(reg)) => reg.gpr_index(),
+        _ => None,
+    }) else {
+        return false;
+    };
+    if dst_index >= 16 && !query.requires_apx {
+        return false;
+    }
+
+    match &query.source {
+        X86SelectorQuerySource::Register { src } => matches!(
+            src,
+            VReg::Arch(ArchReg::X86(reg))
+                if reg.gpr_index().is_some_and(|index| index < 16 || query.requires_apx)
+        ),
+        X86SelectorQuerySource::Memory { addr, .. } => {
+            let uses_egpr = addr
+                .regs()
+                .iter()
+                .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
+            addr.is_x86_state_backed_shape() && (!uses_egpr || query.requires_apx)
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct SelectorDescriptorLocation {
+    address: u64,
+    bytes_available: u64,
+}
+
+fn selector_descriptor_location(
+    x86: &X86RegState,
+    selector: u16,
+) -> Option<SelectorDescriptorLocation> {
     if selector & 0xFFFC == 0 {
         return None;
     }
@@ -148,7 +199,10 @@ fn selector_verify_descriptor_address(x86: &X86RegState, selector: u16) -> Optio
     if x86.efer & (1 << 10) != 0 && (!is_canonical_48(address) || !is_canonical_48(last)) {
         return None;
     }
-    Some(address)
+    Some(SelectorDescriptorLocation {
+        address,
+        bytes_available: limit - offset + 1,
+    })
 }
 
 fn commit_ordinary_segment(
@@ -252,9 +306,9 @@ impl SmirInterpreter {
         };
 
         let verified = match &ctx.arch_regs {
-            ArchRegState::X86_64(x86) => match selector_verify_descriptor_address(x86, selector) {
-                Some(address) => {
-                    let raw = read_smir_u64(memory, address)?;
+            ArchRegState::X86_64(x86) => match selector_descriptor_location(x86, selector) {
+                Some(location) => {
+                    let raw = read_smir_u64(memory, location.address)?;
                     let access = match verify.kind {
                         X86SelectorVerifyKind::Read => X86SelectorVerifyAccess::Read,
                         X86SelectorVerifyKind::Write => X86SelectorVerifyAccess::Write,
@@ -268,6 +322,114 @@ impl SmirInterpreter {
 
         ctx.flags.materialize_all();
         ctx.flags.materialized.zf = verified;
+        ctx.flags.lazy = None;
+        Ok(())
+    }
+
+    pub(super) fn execute_x86_selector_query(
+        &self,
+        ctx: &mut SmirContext,
+        memory: &mut dyn SmirMemory,
+        op: &SmirOp,
+        query: &X86SelectorQueryOp,
+    ) -> Result<(), MemoryError> {
+        if !selector_query_shape_valid(op, query) {
+            ctx.request_exit(ExitReason::Undefined {
+                addr: op.guest_pc,
+                opcode: 0,
+            });
+            return Ok(());
+        }
+
+        let (ia32e_active, cpl) = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => {
+                if query.requires_apx && !x86.apx_enabled
+                    || x86.cr0 & 1 == 0
+                    || x86.rflags & crate::isa::x86_64::flags::bits::VM != 0
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+                (x86.efer & (1 << 10) != 0, x86.cpl)
+            }
+            _ => {
+                ctx.request_exit(ExitReason::Undefined {
+                    addr: op.guest_pc,
+                    opcode: 0,
+                });
+                return Ok(());
+            }
+        };
+
+        let selector = match &query.source {
+            X86SelectorQuerySource::Register { src } => ctx.read_vreg(*src) as u16,
+            X86SelectorQuerySource::Memory {
+                addr,
+                stack_segment,
+            } => {
+                let effective_addr = self.compute_address(ctx, addr);
+                let canonical = effective_addr.checked_add(1).is_some_and(|last| {
+                    !ia32e_active || is_canonical_48(effective_addr) && is_canonical_48(last)
+                });
+                if !canonical {
+                    ctx.request_exit(if *stack_segment {
+                        ExitReason::StackSegment {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        }
+                    } else {
+                        ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        }
+                    });
+                    return Ok(());
+                }
+                self.load_memory(memory, effective_addr, MemWidth::B2, SignExtend::Zero)? as u16
+            }
+        };
+
+        let access = match query.kind {
+            X86SelectorQueryKind::AccessRights => X86SelectorQueryAccess::AccessRights,
+            X86SelectorQueryKind::Limit => X86SelectorQueryAccess::Limit,
+        };
+        let value = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => match selector_descriptor_location(x86, selector) {
+                Some(location) => {
+                    let raw = read_smir_u64(memory, location.address)?;
+                    let high = if x86_selector_query_needs_high(raw, ia32e_active, access) {
+                        let complete = location.bytes_available >= 16
+                            && location.address.checked_add(15).is_some_and(|last| {
+                                !ia32e_active
+                                    || is_canonical_48(location.address) && is_canonical_48(last)
+                            });
+                        if !complete {
+                            None
+                        } else {
+                            Some(read_smir_u64(memory, location.address + 8)?)
+                        }
+                    } else {
+                        None
+                    };
+                    if x86_selector_query_needs_high(raw, ia32e_active, access) && high.is_none() {
+                        None
+                    } else {
+                        x86_selector_query(selector, raw, high, cpl, ia32e_active, access)
+                    }
+                }
+                None => None,
+            },
+            _ => unreachable!("validated x86 selector-query state changed"),
+        };
+
+        if let Some(value) = value {
+            Self::write_gpr(ctx, query.dst, value, query.width);
+        }
+        ctx.flags.materialize_all();
+        ctx.flags.materialized.zf = value.is_some();
         ctx.flags.lazy = None;
         Ok(())
     }

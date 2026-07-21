@@ -330,6 +330,7 @@ impl X86_64Lifter {
                 }
             }
             0x01 => self.lift_group7_0f01(after_opcode, &prefix2, pc, ctx),
+            0x02 | 0x03 => self.lift_selector_query_0f(opcode2, after_opcode, &prefix2, pc, ctx),
 
             // CLTS (0F 06): clear CR0.TS after a dynamic privilege check.
             // Intel specifies only LOCK as an invalid prefix; other legacy and

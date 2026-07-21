@@ -3,14 +3,18 @@
 use super::{Result, X86_64Vcpu};
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use crate::isa::x86_64::execute::system::{
-    X86SegmentLoadTarget, X86SelectorVerifyAccess, decode_x86_ldt_descriptor,
-    decode_x86_tss_descriptor, is_canonical_48, x86_selector_verifies,
+    X86SegmentLoadTarget, X86SelectorQueryAccess, X86SelectorVerifyAccess,
+    decode_x86_ldt_descriptor, decode_x86_tss_descriptor, is_canonical_48, x86_selector_verifies,
 };
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use crate::smir::lower::{
-    X86_SELECTOR_VERIFY_HELPER_APX, X86_SELECTOR_VERIFY_HELPER_MEMORY,
-    X86_SELECTOR_VERIFY_HELPER_OPTION_MASK, X86_SELECTOR_VERIFY_HELPER_TAG,
-    X86_SELECTOR_VERIFY_HELPER_WRITE,
+    X86_SELECTOR_QUERY_HELPER_APX, X86_SELECTOR_QUERY_HELPER_DST_MASK,
+    X86_SELECTOR_QUERY_HELPER_DST_SHIFT, X86_SELECTOR_QUERY_HELPER_LIMIT,
+    X86_SELECTOR_QUERY_HELPER_MEMORY, X86_SELECTOR_QUERY_HELPER_OPTION_MASK,
+    X86_SELECTOR_QUERY_HELPER_TAG, X86_SELECTOR_QUERY_HELPER_WIDTH_MASK,
+    X86_SELECTOR_QUERY_HELPER_WIDTH_SHIFT, X86_SELECTOR_VERIFY_HELPER_APX,
+    X86_SELECTOR_VERIFY_HELPER_MEMORY, X86_SELECTOR_VERIFY_HELPER_OPTION_MASK,
+    X86_SELECTOR_VERIFY_HELPER_TAG, X86_SELECTOR_VERIFY_HELPER_WRITE,
 };
 use crate::vm::vcpu::Segment;
 
@@ -324,11 +328,10 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector(
     }
 }
 
-/// JIT LLDT/LTR, `MOV Sreg,r/m`, `POP FS/GS`, `LSS/LFS/LGS`, and VERR/VERW
-/// helper. Every architectural guard, source read, descriptor read, and
-/// implicit descriptor write is ordered before architectural commit. Selector
-/// loads return one on success. Verification returns one for ZF=0 or two for
-/// ZF=1. Zero always requests precise direct replay at the original guest PC.
+/// JIT LLDT/LTR, `MOV Sreg,r/m`, `POP FS/GS`, `LSS/LFS/LGS`, VERR/VERW, and
+/// LAR/LSL helper. Every guard and memory effect precedes architectural commit.
+/// Selector loads return one on success. Verification/query operations return
+/// one for ZF=0 or two for ZF=1. Zero requests precise direct replay.
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
     state: *mut crate::smir::lower::runtime::GuestRegs,
@@ -341,6 +344,70 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
     let Some(vcpu) = (unsafe { (state.ctx as *mut X86_64Vcpu).as_mut() }) else {
         return 0;
     };
+    let query = encoding & !X86_SELECTOR_QUERY_HELPER_OPTION_MASK == X86_SELECTOR_QUERY_HELPER_TAG;
+    if query {
+        let memory_source = encoding & X86_SELECTOR_QUERY_HELPER_MEMORY != 0;
+        let requires_apx = encoding & X86_SELECTOR_QUERY_HELPER_APX != 0;
+        let access = if encoding & X86_SELECTOR_QUERY_HELPER_LIMIT != 0 {
+            X86SelectorQueryAccess::Limit
+        } else {
+            X86SelectorQueryAccess::AccessRights
+        };
+        let dst = ((encoding & X86_SELECTOR_QUERY_HELPER_DST_MASK)
+            >> X86_SELECTOR_QUERY_HELPER_DST_SHIFT) as usize;
+        let width_code = (encoding & X86_SELECTOR_QUERY_HELPER_WIDTH_MASK)
+            >> X86_SELECTOR_QUERY_HELPER_WIDTH_SHIFT;
+        if !vcpu.sregs.cs.l
+            || vcpu.sregs.cr0 & 1 == 0
+            || vcpu.regs.rflags & crate::isa::x86_64::flags::bits::VM != 0
+            || requires_apx && !vcpu.apx_enabled()
+            || dst >= 16 && !requires_apx
+            || !matches!(width_code, 0..=2)
+        {
+            return 0;
+        }
+
+        let saved_trace = vcpu.jit_mem_trace.clone();
+        let saved_log = vcpu.jit_mem_log.clone();
+        let mem_record_checkpoint = vcpu.mmu.mem_record_checkpoint();
+        let queried = (|| -> Option<Option<u64>> {
+            let selector = if memory_source {
+                let last = operand.checked_add(1)?;
+                if !is_canonical_48(operand)
+                    || !is_canonical_48(last)
+                    || !vcpu.mmu.read_range_is_plain_ram(operand, 2, &vcpu.sregs)
+                {
+                    return None;
+                }
+                vcpu.read_mem(operand, 2).ok()? as u16
+            } else {
+                operand as u16
+            };
+            vcpu.query_selector_descriptor(selector, access, true).ok()
+        })();
+        return match queried {
+            Some(value) => {
+                if let Some(value) = value {
+                    state.gpr[dst] = match width_code {
+                        0 => {
+                            (state.gpr[dst] & !u64::from(u16::MAX)) | (value & u64::from(u16::MAX))
+                        }
+                        1 | 2 => value & u64::from(u32::MAX),
+                        _ => unreachable!("validated selector-query width changed"),
+                    };
+                }
+                1 + u64::from(value.is_some())
+            }
+            None => {
+                vcpu.jit_mem_trace = saved_trace;
+                vcpu.jit_mem_log = saved_log;
+                vcpu.mmu
+                    .restore_mem_record_checkpoint(mem_record_checkpoint);
+                0
+            }
+        };
+    }
+
     let verify =
         encoding & !X86_SELECTOR_VERIFY_HELPER_OPTION_MASK == X86_SELECTOR_VERIFY_HELPER_TAG;
     if verify {

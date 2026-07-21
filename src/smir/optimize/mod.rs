@@ -9,9 +9,10 @@ use std::collections::{HashMap, HashSet};
 use crate::smir::ir::flags::{FlagSet, FlagState, FlagUpdate};
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86LmswOp, X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86RepMode,
-    X86SelectorVerifyOp, X86SelectorVerifySource, X86SmswOp, X86SmswTarget, X86StringKind,
-    X86SystemSelectorLoadOp, X86SystemSelectorSource, X86SystemSelectorStoreOp,
-    X86SystemSelectorTarget, X86ThreeDNowKind, X86VecAlign, X86X87DataKind,
+    X86SelectorQueryOp, X86SelectorQuerySource, X86SelectorVerifyOp, X86SelectorVerifySource,
+    X86SmswOp, X86SmswTarget, X86StringKind, X86SystemSelectorLoadOp, X86SystemSelectorSource,
+    X86SystemSelectorStoreOp, X86SystemSelectorTarget, X86ThreeDNowKind, X86VecAlign,
+    X86X87DataKind,
 };
 use crate::smir::ir::types::{
     Address, ArchReg, ArmReg, BlockId, FpRoundMode, HexagonReg, MemWidth, OpWidth, ShiftOp,
@@ -2188,7 +2189,7 @@ impl OpKind {
 
             OpKind::X86Cmpxchg8b16b { .. } => FlagSet::ZF,
 
-            OpKind::X86SelectorVerify(..) => FlagSet::ZF,
+            OpKind::X86SelectorVerify(..) | OpKind::X86SelectorQuery(..) => FlagSet::ZF,
 
             OpKind::X86Random { .. } => FlagSet::ALL_X86,
 
@@ -3953,6 +3954,19 @@ impl OpKind {
                 source: X86SelectorVerifySource::Memory { addr, .. },
                 ..
             }) => result.extend(addr.regs()),
+            OpKind::X86SelectorQuery(X86SelectorQueryOp {
+                dst,
+                source: X86SelectorQuerySource::Register { src },
+                ..
+            }) => result.extend([*dst, *src]),
+            OpKind::X86SelectorQuery(X86SelectorQueryOp {
+                dst,
+                source: X86SelectorQuerySource::Memory { addr, .. },
+                ..
+            }) => {
+                result.push(*dst);
+                result.extend(addr.regs());
+            }
             OpKind::X86FarJump(jump) => result.extend(jump.addr.regs()),
             OpKind::X86FarCall(call) => result.extend(call.addr.regs()),
             OpKind::X86FarReturn(..) => {}

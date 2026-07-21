@@ -4022,6 +4022,11 @@ pub enum OpKind {
     /// descriptor-table reads retain their architectural fault behavior.
     X86SelectorVerify(X86SelectorVerifyOp),
 
+    /// LAR/LSL query a fixed-width selector source, conditionally update one
+    /// 16-/32-/64-bit GPR destination, and update only ZF. The source plus
+    /// implicit 8-/16-byte descriptor reads remain one fault-precise op.
+    X86SelectorQuery(X86SelectorQueryOp),
+
     /// `FF /5` indirect far JMP. The memory far pointer selects a code segment
     /// or IA-32e call gate; all descriptor effects precede one CS:RIP commit.
     X86FarJump(X86FarJumpOp),
@@ -4552,6 +4557,7 @@ impl OpKind {
                 | OpKind::X86SystemSelectorStore(..)
                 | OpKind::X86SystemSelectorLoad(..)
                 | OpKind::X86SelectorVerify(..)
+                | OpKind::X86SelectorQuery(..)
                 | OpKind::X86FarJump(..)
                 | OpKind::X86FarCall(..)
                 | OpKind::X86FarReturn(..)
@@ -5009,6 +5015,7 @@ impl OpKind {
                 source: X86SystemSelectorSource::FarPointer { dst, .. },
                 ..
             }) => vec![*dst],
+            OpKind::X86SelectorQuery(query) => vec![query.dst],
             OpKind::X86FarJump(jump) => vec![jump.target],
             OpKind::X86FarCall(call) => vec![call.target],
             OpKind::X86FarReturn(ret) => vec![ret.target],
@@ -5310,6 +5317,7 @@ impl OpKind {
                     | OpKind::X86SystemSelectorStore(..)
                     | OpKind::X86SystemSelectorLoad(..)
                     | OpKind::X86SelectorVerify(..)
+                    | OpKind::X86SelectorQuery(..)
                     | OpKind::X86FarJump(..)
                     | OpKind::X86FarCall(..)
                     | OpKind::X86FarReturn(..)
@@ -5433,6 +5441,7 @@ impl OpKind {
                 | OpKind::X86XRstor { .. }
                 | OpKind::X86SystemSelectorLoad(..)
                 | OpKind::X86SelectorVerify(..)
+                | OpKind::X86SelectorQuery(..)
                 | OpKind::X86FarJump(..)
                 | OpKind::X86FarCall(..)
                 | OpKind::X86FarReturn(..)

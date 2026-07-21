@@ -33,6 +33,9 @@ use crate::smir::ir::ops::X86MsrOp;
 use crate::smir::ir::ops::X86PackedStringKind;
 use crate::smir::ir::ops::X86ReadPmcOp;
 use crate::smir::ir::ops::X86ReadTscOp;
+use crate::smir::ir::ops::X86SelectorQueryKind;
+use crate::smir::ir::ops::X86SelectorQueryOp;
+use crate::smir::ir::ops::X86SelectorQuerySource;
 use crate::smir::ir::ops::X86SelectorVerifyKind;
 use crate::smir::ir::ops::X86SelectorVerifyOp;
 use crate::smir::ir::ops::X86SelectorVerifySource;
@@ -1230,6 +1233,27 @@ impl OracleJson for X86SelectorVerifySource {
     }
 }
 
+impl OracleJson for X86SelectorQuerySource {
+    fn oracle_json(&self) -> Value {
+        match self {
+            X86SelectorQuerySource::Register { src } => json!({
+                "kind": "register",
+                "src": src.oracle_json(),
+                "width": "W16",
+            }),
+            X86SelectorQuerySource::Memory {
+                addr,
+                stack_segment,
+            } => json!({
+                "kind": "memory",
+                "addr": addr.oracle_json(),
+                "width": "B2",
+                "stack_segment": stack_segment,
+            }),
+        }
+    }
+}
+
 impl OracleJson for X86LmswSource {
     fn oracle_json(&self) -> Value {
         match self {
@@ -1263,6 +1287,7 @@ debug_name_json!(
     ArmDpRegShiftKind,
     X86DescriptorTable,
     X86SystemSelector,
+    X86SelectorQueryKind,
     X86SelectorVerifyKind,
     OpWidth,
     MemWidth,
@@ -2664,6 +2689,22 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             requires_apx,
             next_pc,
         }) => op_json!("x86_selector_verify", kind, source, requires_apx, next_pc),
+        OpKind::X86SelectorQuery(X86SelectorQueryOp {
+            kind,
+            dst,
+            source,
+            width,
+            requires_apx,
+            next_pc,
+        }) => op_json!(
+            "x86_selector_query",
+            kind,
+            dst,
+            source,
+            width,
+            requires_apx,
+            next_pc
+        ),
         OpKind::X86FarJump(X86FarJumpOp {
             addr,
             target,

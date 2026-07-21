@@ -661,6 +661,51 @@ fn emits_exact_verr_verw_source_access_flags_and_apx_metadata() {
 }
 
 #[test]
+fn emits_exact_lar_lsl_destination_source_width_flags_and_apx_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let register = decode_to_json(&[0xD5, 0xD5, 0x02, 0xF7], &opts).unwrap();
+    assert_eq!(register["smir"]["available"], true);
+    assert_eq!(register["smir"]["bytes_consumed"], 4);
+    let op = &register["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_selector_query");
+    assert_eq!(op["kind"]["kind"], "AccessRights");
+    assert_eq!(op["kind"]["dst"]["name"], "r30");
+    assert_eq!(op["kind"]["source"]["kind"], "register");
+    assert_eq!(op["kind"]["source"]["src"]["name"], "r31");
+    assert_eq!(op["kind"]["source"]["width"], "W16");
+    assert_eq!(op["kind"]["width"], "W32");
+    assert_eq!(op["kind"]["requires_apx"], true);
+    assert_eq!(op["kind"]["next_pc"], 0x1004);
+    assert_eq!(op["writes"][0]["name"], "r30");
+    assert_eq!(op["memory"]["reads"], true);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+
+    let memory = decode_to_json(&[0x36, 0x48, 0x0F, 0x03, 0x50, 0x08], &opts).unwrap();
+    assert_eq!(memory["smir"]["available"], true);
+    assert_eq!(memory["smir"]["bytes_consumed"], 6);
+    let op = &memory["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_selector_query");
+    assert_eq!(op["kind"]["kind"], "Limit");
+    assert_eq!(op["kind"]["dst"]["name"], "rdx");
+    assert_eq!(op["kind"]["source"]["kind"], "memory");
+    assert_eq!(op["kind"]["source"]["width"], "B2");
+    assert_eq!(op["kind"]["source"]["stack_segment"], true);
+    assert_eq!(op["kind"]["source"]["addr"]["kind"], "base_offset");
+    assert_eq!(op["kind"]["source"]["addr"]["base"]["name"], "rax");
+    assert_eq!(op["kind"]["source"]["addr"]["offset"], 8);
+    assert_eq!(op["kind"]["width"], "W64");
+    assert_eq!(op["kind"]["requires_apx"], false);
+    assert_eq!(op["kind"]["next_pc"], 0x1006);
+    assert_eq!(op["writes"][0]["name"], "rdx");
+    assert_eq!(op["memory"]["reads"], true);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+}
+
+#[test]
 fn emits_exact_push_fs_gs_atomic_stack_width_and_apx_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

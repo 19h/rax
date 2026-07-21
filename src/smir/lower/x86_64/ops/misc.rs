@@ -131,6 +131,7 @@ impl X86_64Lowerer {
             OpKind::X86SystemSelectorLoad(..) => self.emit_x86_system_selector_load(op)?,
 
             OpKind::X86SelectorVerify(..) => self.emit_x86_selector_verify(op)?,
+            OpKind::X86SelectorQuery(..) => self.emit_x86_selector_query(op)?,
 
             OpKind::X86FarJump(..) => self.emit_x86_far_jump(op)?,
             OpKind::X86FarCall(..) => self.emit_x86_far_call(op)?,

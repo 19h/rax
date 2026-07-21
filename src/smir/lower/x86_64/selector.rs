@@ -1,8 +1,9 @@
 //! Fault-precise, helper-backed selector-store and selector-load lowering.
 
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86SelectorVerifyKind, X86SelectorVerifyOp, X86SelectorVerifySource,
-    X86SystemSelector, X86SystemSelectorLoadOp, X86SystemSelectorSource, X86SystemSelectorStoreOp,
+    OpKind, SmirOp, X86SelectorQueryKind, X86SelectorQueryOp, X86SelectorQuerySource,
+    X86SelectorVerifyKind, X86SelectorVerifyOp, X86SelectorVerifySource, X86SystemSelector,
+    X86SystemSelectorLoadOp, X86SystemSelectorSource, X86SystemSelectorStoreOp,
     X86SystemSelectorTarget,
 };
 use crate::smir::ir::types::{Address, ArchReg, MemWidth, OpWidth, SignExtend, VReg};
@@ -11,6 +12,9 @@ use crate::smir::lower::{
     LowerError, X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CPL_OFFSET, X86_GUEST_CR0_OFFSET,
     X86_GUEST_CR4_OFFSET, X86_GUEST_CS_L_OFFSET, X86_GUEST_EFER_OFFSET, X86_GUEST_RFLAGS_OFFSET,
     X86_GUEST_SYSTEM_SELECTOR_FN_OFFSET, X86_GUEST_SYSTEM_SELECTOR_LOAD_FN_OFFSET,
+    X86_SELECTOR_QUERY_HELPER_APX, X86_SELECTOR_QUERY_HELPER_DST_SHIFT,
+    X86_SELECTOR_QUERY_HELPER_LIMIT, X86_SELECTOR_QUERY_HELPER_MEMORY,
+    X86_SELECTOR_QUERY_HELPER_TAG, X86_SELECTOR_QUERY_HELPER_WIDTH_SHIFT,
     X86_SELECTOR_VERIFY_HELPER_APX, X86_SELECTOR_VERIFY_HELPER_MEMORY,
     X86_SELECTOR_VERIFY_HELPER_TAG, X86_SELECTOR_VERIFY_HELPER_WRITE, X86_STATE_PTR_AT_RBP,
 };
@@ -184,6 +188,64 @@ pub(crate) fn x86_selector_verify_shape_valid(op: &SmirOp) -> bool {
             index < 16 || *requires_apx
         }
         X86SelectorVerifySource::Memory { addr, .. } => {
+            let uses_egpr = addr
+                .regs()
+                .iter()
+                .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
+            addr.is_x86_state_backed_shape() && (!uses_egpr || *requires_apx)
+        }
+    }
+}
+
+/// Validate the exact LAR/LSL form emitted by the strict x86 lifter. The
+/// destination is conditionally written, so its previous value remains an
+/// explicit source in optimizer liveness even for 32-/64-bit forms.
+pub(crate) fn x86_selector_query_shape_valid(op: &SmirOp) -> bool {
+    let OpKind::X86SelectorQuery(X86SelectorQueryOp {
+        dst,
+        source,
+        width,
+        requires_apx,
+        next_pc,
+        ..
+    }) = &op.kind
+    else {
+        return false;
+    };
+    let minimum_len = if *requires_apx {
+        4 + u64::from(*width == OpWidth::W16)
+    } else {
+        3 + u64::from(*width != OpWidth::W32)
+    };
+    if op.x86_hint.is_some()
+        || !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+        || !next_pc
+            .checked_sub(op.guest_pc)
+            .is_some_and(|length| (minimum_len..=15).contains(&length))
+    {
+        return false;
+    }
+    let Some(dst_index) = (match dst {
+        VReg::Arch(ArchReg::X86(reg)) => reg.gpr_index(),
+        _ => None,
+    }) else {
+        return false;
+    };
+    if dst_index >= 16 && !*requires_apx {
+        return false;
+    }
+
+    match source {
+        X86SelectorQuerySource::Register { src } => {
+            let Some(src_index) = (match src {
+                VReg::Arch(ArchReg::X86(reg)) => reg.gpr_index(),
+                _ => None,
+            }) else {
+                return false;
+            };
+            src_index < 16 || *requires_apx
+        }
+        X86SelectorQuerySource::Memory { addr, .. } => {
             let uses_egpr = addr
                 .regs()
                 .iter()
@@ -836,6 +898,141 @@ impl X86_64Lowerer {
         let helper_fault = self.emit_jcc_placeholder(X86Cond::E);
 
         // Clear only saved ZF, then set it exactly when the helper returned 2.
+        self.code
+            .emit_bytes(&[0x48, 0x81, 0x24, 0x24, 0xBF, 0xFF, 0xFF, 0xFF]);
+        self.code.emit_bytes(&[0x83, 0xF8, 0x02]); // cmp eax,2
+        let zf_clear = self.emit_jcc_placeholder(X86Cond::Ne);
+        self.code.emit_bytes(&[0x48, 0x83, 0x0C, 0x24, 0x40]); // or qword [rsp],ZF
+        self.patch_rel32_to_current(zf_clear)?;
+
+        self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_mem_helpers);
+        self.emit_reload_all(PhysReg::Rcx);
+        self.code.emit_u8(0x9D); // popfq: commits the patched ZF only
+        self.emit_flag_preserving_stack_pop8();
+        self.code.emit_u8(0xE9);
+        let done = self.code.position();
+        self.code.emit_u32(0);
+
+        for branch in guard_faults {
+            self.patch_rel32_to_current(branch)?;
+        }
+        self.code.emit_bytes(&[0x48, 0x89, 0xC1]); // mov rcx,rax
+        self.patch_rel32_to_current(helper_fault)?;
+        self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_mem_helpers);
+        self.emit_reload_all(PhysReg::Rcx);
+        self.code.emit_u8(0x9D);
+        self.emit_flag_preserving_stack_pop8();
+        self.emit_native_exit(op.guest_pc);
+
+        self.patch_rel32_to_current(done)?;
+        Ok(())
+    }
+
+    /// Execute LAR/LSL through the owning-vCPU descriptor helper. The helper
+    /// updates the marshalled destination only on success and returns zero for
+    /// replay, one for completed ZF=0, or two for completed ZF=1. Native code
+    /// patches only saved ZF and continues within the current region.
+    pub(crate) fn emit_x86_selector_query(&mut self, op: &SmirOp) -> Result<(), LowerError> {
+        if !self.jit_fault_deopt_guards {
+            return Err(LowerError::UnsupportedOp {
+                op: "X86SelectorQuery requires JIT fault-deoptimization guards".to_string(),
+            });
+        }
+        if !self.mem_helpers {
+            return Err(LowerError::UnsupportedOp {
+                op: "X86SelectorQuery requires JIT MMU helpers".to_string(),
+            });
+        }
+        if !x86_selector_query_shape_valid(op) {
+            return Err(LowerError::InvalidOperand {
+                op: "X86SelectorQuery".to_string(),
+                operand: "requires an unhinted width-tagged x86 GPR destination, fixed-width x86 GPR or state-backed memory source, APX for every EGPR, and an exact next PC"
+                    .to_string(),
+            });
+        }
+        let OpKind::X86SelectorQuery(query) = &op.kind else {
+            unreachable!("validated X86SelectorQuery shape changed")
+        };
+        let VReg::Arch(ArchReg::X86(dst)) = query.dst else {
+            unreachable!("validated selector-query destination changed")
+        };
+        let dst_index = dst
+            .gpr_index()
+            .expect("validated selector-query GPR destination changed");
+        let width_code = match query.width {
+            OpWidth::W16 => 0,
+            OpWidth::W32 => 1,
+            OpWidth::W64 => 2,
+            _ => unreachable!("validated selector-query width changed"),
+        };
+
+        self.code.emit_u8(0x50); // push guest RAX
+        self.emit_load_state_ptr_rax();
+        self.code.emit_u8(0x9C); // pushfq; guest RAX is at [rsp+8]
+        self.emit_spill_legacy_gprs_to_state_from_rax(8);
+
+        let mut guard_faults = Vec::with_capacity(3);
+        if query.requires_apx {
+            self.code.emit_bytes(&[0x83, 0xB8]); // cmp dword [rax+apx],0
+            self.code.emit_u32(X86_GUEST_APX_ENABLED_OFFSET as u32);
+            self.code.emit_u8(0);
+            guard_faults.push(self.emit_jcc_placeholder(X86Cond::E));
+        }
+        self.code.emit_bytes(&[0xF7, 0x80]); // test dword [rax+cr0],PE
+        self.code.emit_u32(X86_GUEST_CR0_OFFSET as u32);
+        self.code.emit_u32(1);
+        guard_faults.push(self.emit_jcc_placeholder(X86Cond::E));
+        self.code.emit_bytes(&[0x48, 0xF7, 0x80]); // test qword [rax+rflags],VM
+        self.code.emit_u32(X86_GUEST_RFLAGS_OFFSET as u32);
+        self.code
+            .emit_u32(crate::isa::x86_64::flags::bits::VM as u32);
+        guard_faults.push(self.emit_jcc_placeholder(X86Cond::Ne));
+
+        self.emit_helper_call_state(PhysReg::Rax, true, self.preserve_vector_mem_helpers);
+        match &query.source {
+            X86SelectorQuerySource::Register { src } => {
+                let VReg::Arch(ArchReg::X86(reg)) = src else {
+                    unreachable!("validated selector-query register source changed")
+                };
+                self.emit_struct_mov(
+                    PhysReg::Rax,
+                    6,
+                    i32::from(reg.gpr_index().unwrap()) * 8,
+                    false,
+                );
+            }
+            X86SelectorQuerySource::Memory { addr, .. } => {
+                self.emit_jit_mem_effective_address(addr, false)?;
+            }
+        }
+        {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rr(PhysReg::Rdi, PhysReg::Rax, OpWidth::W64);
+            let mut encoding = X86_SELECTOR_QUERY_HELPER_TAG
+                | (u32::from(dst_index) << X86_SELECTOR_QUERY_HELPER_DST_SHIFT)
+                | (width_code << X86_SELECTOR_QUERY_HELPER_WIDTH_SHIFT);
+            if matches!(&query.source, X86SelectorQuerySource::Memory { .. }) {
+                encoding |= X86_SELECTOR_QUERY_HELPER_MEMORY;
+            }
+            if query.requires_apx {
+                encoding |= X86_SELECTOR_QUERY_HELPER_APX;
+            }
+            if query.kind == X86SelectorQueryKind::Limit {
+                encoding |= X86_SELECTOR_QUERY_HELPER_LIMIT;
+            }
+            emitter.emit_mov_ri(PhysReg::Rdx, i64::from(encoding), OpWidth::W32);
+        }
+        self.code.emit_u8(0xFC); // cld: platform ABI requires DF=0
+        self.code.emit_u8(0xFF);
+        self.code.emit_u8(0x90); // call qword [rax+system_selector_load_fn]
+        self.code
+            .emit_u32(X86_GUEST_SYSTEM_SELECTOR_LOAD_FN_OFFSET as u32);
+
+        self.code.emit_bytes(&[0x48, 0x8B, 0x4D]);
+        self.code.emit_u8(X86_STATE_PTR_AT_RBP as u8); // mov rcx,[rbp+state_ptr]
+        self.code.emit_bytes(&[0x48, 0x85, 0xC0]); // test rax,rax
+        let helper_fault = self.emit_jcc_placeholder(X86Cond::E);
+
         self.code
             .emit_bytes(&[0x48, 0x81, 0x24, 0x24, 0xBF, 0xFF, 0xFF, 0xFF]);
         self.code.emit_bytes(&[0x83, 0xF8, 0x02]); // cmp eax,2

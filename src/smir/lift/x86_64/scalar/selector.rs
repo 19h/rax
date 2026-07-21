@@ -2,8 +2,9 @@
 
 use crate::smir::ir::TrapKind;
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86SelectorVerifyKind, X86SelectorVerifyOp, X86SelectorVerifySource,
-    X86SystemSelector, X86SystemSelectorLoadOp, X86SystemSelectorSource, X86SystemSelectorStoreOp,
+    OpKind, SmirOp, X86SelectorQueryKind, X86SelectorQueryOp, X86SelectorQuerySource,
+    X86SelectorVerifyKind, X86SelectorVerifyOp, X86SelectorVerifySource, X86SystemSelector,
+    X86SystemSelectorLoadOp, X86SystemSelectorSource, X86SystemSelectorStoreOp,
     X86SystemSelectorTarget,
 };
 use crate::smir::ir::types::{MemWidth, OpId};
@@ -394,6 +395,68 @@ impl X86_64Lifter {
                 OpKind::X86SelectorVerify(X86SelectorVerifyOp {
                     kind,
                     source,
+                    requires_apx: prefix.rex2.is_some(),
+                    next_pc,
+                }),
+            )],
+            bytes_consumed,
+        ))
+    }
+
+    /// Lift LAR/LSL (`0F 02 /r` and `0F 03 /r`). The source is fixed at 16
+    /// bits; the destination follows the 16-/32-/64-bit operand size. Selector
+    /// failures preserve the destination and clear ZF, while source and
+    /// implicit descriptor-table reads remain faulting inside one atomic op.
+    pub(crate) fn lift_selector_query_0f(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..bytes.len().min(1)].to_vec(),
+            });
+        }
+
+        let kind = match opcode {
+            0x02 => X86SelectorQueryKind::AccessRights,
+            0x03 => X86SelectorQueryKind::Limit,
+            _ => unreachable!("selector-query dispatcher admitted another opcode"),
+        };
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let bytes_consumed = prefix.cursor + modrm.bytes_consumed;
+        let next_pc = pc.wrapping_add(bytes_consumed as u64);
+        let source = if let Some(x86_addr) = modrm.addr.as_ref() {
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            debug_assert!(pre_ops.is_empty());
+            let stack_segment = match prefix.segment_override {
+                Some(0x36) => true,
+                Some(_) => false,
+                None => x86_addr.base.is_some_and(|base| matches!(base & 7, 4 | 5)),
+            };
+            X86SelectorQuerySource::Memory {
+                addr,
+                stack_segment,
+            }
+        } else {
+            X86SelectorQuerySource::Register {
+                src: self.gpr(modrm.rm),
+            }
+        };
+
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::X86SelectorQuery(X86SelectorQueryOp {
+                    kind,
+                    dst: self.gpr(modrm.reg),
+                    source,
+                    width: prefix.op_width(),
                     requires_apx: prefix.rex2.is_some(),
                     next_pc,
                 }),
