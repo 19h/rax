@@ -4011,9 +4011,9 @@ pub enum OpKind {
     /// width; memory destinations store exactly 2 bytes.
     X86SystemSelectorStore(X86SystemSelectorStoreOp),
 
-    /// LLDT/LTR read a fixed 16-bit source and load one implicit system-segment
-    /// selector plus its hidden descriptor cache. Successful execution is
-    /// serializing and terminates native execution at `next_pc`.
+    /// LLDT/LTR and `MOV Sreg,r/m` load one visible selector plus its hidden
+    /// cache. Descriptor side effects and selector commit remain one
+    /// fault-precise operation that terminates native execution at `next_pc`.
     X86SystemSelectorLoad(X86SystemSelectorLoadOp),
 
     /// `FF /5` indirect far JMP. The memory far pointer selects a code segment
@@ -5492,7 +5492,12 @@ impl OpKind {
                     ..
                 })
                 | OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
-                    selector: X86SystemSelector::Tr,
+                    selector: X86SystemSelector::Tr
+                        | X86SystemSelector::Es
+                        | X86SystemSelector::Ss
+                        | X86SystemSelector::Ds
+                        | X86SystemSelector::Fs
+                        | X86SystemSelector::Gs,
                     ..
                 })
                 | OpKind::X86FarJump(..)

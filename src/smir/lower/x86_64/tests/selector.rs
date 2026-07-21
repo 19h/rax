@@ -64,9 +64,24 @@ fn load_memory_for(
     requires_apx: bool,
     next_pc: u64,
 ) -> OpKind {
+    load_memory_for_width(selector, addr, MemWidth::B2, false, requires_apx, next_pc)
+}
+
+fn load_memory_for_width(
+    selector: X86SystemSelector,
+    addr: Address,
+    width: MemWidth,
+    stack_segment: bool,
+    requires_apx: bool,
+    next_pc: u64,
+) -> OpKind {
     OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
         selector,
-        source: X86SystemSelectorSource::Memory { addr },
+        source: X86SystemSelectorSource::Memory {
+            addr,
+            width,
+            stack_segment,
+        },
         requires_apx,
         next_pc,
     })
@@ -342,7 +357,7 @@ fn lower_selector_loads_require_guards_helpers_serialize_and_never_touch_host_st
 #[test]
 fn lower_selector_loads_reject_every_non_lifter_shape_and_frontier() {
     for malformed in [
-        load_register_for(X86SystemSelector::Es, 0, false, 0x1003),
+        load_register_for(X86SystemSelector::Cs, 0, false, 0x1003),
         OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
             selector: X86SystemSelector::Tr,
             source: X86SystemSelectorSource::Register { src: VReg::virt(0) },
@@ -373,6 +388,23 @@ fn lower_selector_loads_reject_every_non_lifter_shape_and_frontier() {
         load_register(0, false, 0x1002),
         load_register(0, false, 0x1010),
         load_register(0, false, 0x0FFF),
+        load_register_for(X86SystemSelector::Es, 0, false, 0x1001),
+        load_memory_for_width(
+            X86SystemSelector::Ldtr,
+            Address::Direct(x86(X86Reg::Rax)),
+            MemWidth::B8,
+            false,
+            false,
+            0x1003,
+        ),
+        load_memory_for_width(
+            X86SystemSelector::Ds,
+            Address::Direct(x86(X86Reg::Rax)),
+            MemWidth::B4,
+            false,
+            false,
+            0x1002,
+        ),
     ] {
         assert!(matches!(
             lower(malformed, true, true),
@@ -392,6 +424,54 @@ fn lower_selector_loads_reject_every_non_lifter_shape_and_frontier() {
         lowerer.lower_function(&hinted),
         Err(LowerError::InvalidOperand { .. })
     ));
+}
+
+#[test]
+fn lower_mov_sreg_load_admits_all_ordinary_selectors_and_both_memory_widths() {
+    for selector in [
+        X86SystemSelector::Es,
+        X86SystemSelector::Ss,
+        X86SystemSelector::Ds,
+        X86SystemSelector::Fs,
+        X86SystemSelector::Gs,
+    ] {
+        for kind in [
+            load_register_for(selector, 0, false, 0x1002),
+            load_register_for(selector, 31, true, 0x1004),
+            load_memory_for_width(
+                selector,
+                Address::Direct(x86(X86Reg::Rsp)),
+                MemWidth::B2,
+                true,
+                false,
+                0x1002,
+            ),
+            load_memory_for_width(
+                selector,
+                Address::Direct(x86(X86Reg::R31)),
+                MemWidth::B8,
+                false,
+                true,
+                0x1004,
+            ),
+        ] {
+            let function = {
+                let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+                builder.push_op(0x1000, kind.clone());
+                builder.set_terminator(Terminator::Return { values: vec![] });
+                builder.finish()
+            };
+            assert!(x86_system_selector_load_shape_valid(
+                &function.blocks[0].ops[0]
+            ));
+            let (code, _) = lower(kind, true, true)
+                .unwrap_or_else(|error| panic!("{selector:?} lowering failed: {error}"));
+            assert!(
+                !code.windows(2).any(|window| window == [0x0F, 0xA2]),
+                "MOV Sreg is not serializing: {selector:?} {code:02X?}"
+            );
+        }
+    }
 }
 
 #[test]
@@ -620,6 +700,63 @@ fn native_selector_load_register_sources_cover_both_selectors_aliases_and_egprs(
             assert_eq!(regs.rflags & (0x08D5 | (1 << 10)), 0x08D5 | (1 << 10));
             assert_eq!(regs.ac_flag, 1);
             assert_eq!(regs.exit_pc, 0x1004);
+        }
+    }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_mov_sreg_load_encodes_selectors_widths_and_skips_system_privilege_guards() {
+    for (selector, selector_id) in [
+        (X86SystemSelector::Es, 2_u32),
+        (X86SystemSelector::Ss, 4),
+        (X86SystemSelector::Ds, 5),
+        (X86SystemSelector::Fs, 6),
+        (X86SystemSelector::Gs, 7),
+    ] {
+        let mut register_context = SelectorContext {
+            load_ok: 1,
+            ..SelectorContext::default()
+        };
+        let register = execute_load(
+            load_register_for(selector, 0, false, 0x1002),
+            &mut register_context,
+            |regs| {
+                // MOV Sreg has no LLDT/LTR PE/VM/CPL guards in the lowerer;
+                // the owning runtime helper handles the current execution mode.
+                regs.cr0 = 0;
+                regs.rflags |= 1 << 17;
+                regs.cpl = 3;
+            },
+        );
+        assert_eq!(register_context.load_calls, 1, "{selector:?}");
+        assert_eq!(register_context.last_encoding, selector_id << 2);
+        assert_eq!(register.exit_pc, 0x1002);
+
+        for (width, width_bit) in [(MemWidth::B2, 0_u32), (MemWidth::B8, 1 << 5)] {
+            let mut memory_context = SelectorContext {
+                load_ok: 1,
+                ..SelectorContext::default()
+            };
+            let memory = execute_load(
+                load_memory_for_width(
+                    selector,
+                    Address::Direct(x86(X86Reg::Rax)),
+                    width,
+                    false,
+                    false,
+                    0x1002,
+                ),
+                &mut memory_context,
+                |regs| regs.gpr[0] = 0x3456,
+            );
+            assert_eq!(memory_context.load_calls, 1, "{selector:?} {width:?}");
+            assert_eq!(memory_context.last_operand, 0x3456);
+            assert_eq!(
+                memory_context.last_encoding,
+                1 | (selector_id << 2) | width_bit
+            );
+            assert_eq!(memory.exit_pc, 0x1002);
         }
     }
 }

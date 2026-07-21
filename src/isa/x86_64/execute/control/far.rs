@@ -479,7 +479,7 @@ pub(crate) fn decode_x86_far_call_gate_target(
 }
 
 impl X86_64Vcpu {
-    pub(super) fn far_jump_descriptor_address(
+    pub(in crate::isa::x86_64) fn far_jump_descriptor_address(
         &self,
         selector: u16,
         size: u64,
@@ -517,7 +517,7 @@ impl X86_64Vcpu {
         Ok(address)
     }
 
-    pub(super) fn far_jump_plain_read(
+    pub(in crate::isa::x86_64) fn far_jump_plain_read(
         &mut self,
         address: u64,
         size: usize,
@@ -538,7 +538,7 @@ impl X86_64Vcpu {
         }
     }
 
-    pub(super) fn far_jump_plain_write(
+    pub(in crate::isa::x86_64) fn far_jump_plain_write(
         &mut self,
         address: u64,
         size: usize,
@@ -559,14 +559,17 @@ impl X86_64Vcpu {
         }
     }
 
-    pub(super) fn read_far_jump_descriptor_qword(&mut self, address: u64) -> Result<u64, Error> {
+    pub(in crate::isa::x86_64) fn read_far_jump_descriptor_qword(
+        &mut self,
+        address: u64,
+    ) -> Result<u64, Error> {
         let value = self.mmu.read_u64_supervisor(address, &self.sregs)?;
         #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
         self.push_jit_mem_trace((0, address, 8, value));
         Ok(value)
     }
 
-    pub(super) fn write_far_jump_descriptor_qword(
+    pub(in crate::isa::x86_64) fn write_far_jump_descriptor_qword(
         &mut self,
         address: u64,
         value: u64,

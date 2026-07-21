@@ -524,7 +524,7 @@ pub(crate) fn block_is_clobber_safe(
                 allow_mem
                     && match &load.source {
                         X86SystemSelectorSource::Register { .. } => true,
-                        X86SystemSelectorSource::Memory { addr } => {
+                        X86SystemSelectorSource::Memory { addr, .. } => {
                             x86_jit_mem_address_shape_valid(addr)
                         }
                     }

@@ -1,0 +1,349 @@
+//! Fault-precise LLDT/LTR and `MOV Sreg,r/m` interpretation.
+
+use crate::isa::x86_64::execute::system::{
+    X86SegmentLoadTarget, X86SystemDescriptorFault, decode_x86_ldt_descriptor,
+    decode_x86_segment_load_descriptor, decode_x86_tss_descriptor, is_canonical_48,
+    x86_real_mode_segment,
+};
+use crate::smir::interpret::*;
+use crate::smir::ir::context::{
+    ArchRegState, ExitReason, SmirContext, X86RegState, X86SystemSegmentCache,
+};
+use crate::smir::ir::memory::{MemoryError, SmirMemory};
+use crate::smir::ir::ops::{
+    SmirOp, X86SystemSelector, X86SystemSelectorLoadOp, X86SystemSelectorSource,
+};
+use crate::smir::ir::types::{ArchReg, MemWidth, SignExtend, VReg};
+
+use super::system::{
+    read_smir_u64, request_x86_descriptor_fault, x86_far_jump_descriptor_address,
+    x86_system_segment_cache,
+};
+
+fn ordinary_target(selector: X86SystemSelector) -> Option<X86SegmentLoadTarget> {
+    Some(match selector {
+        X86SystemSelector::Es => X86SegmentLoadTarget::Es,
+        X86SystemSelector::Ss => X86SegmentLoadTarget::Ss,
+        X86SystemSelector::Ds => X86SegmentLoadTarget::Ds,
+        X86SystemSelector::Fs => X86SegmentLoadTarget::Fs,
+        X86SystemSelector::Gs => X86SegmentLoadTarget::Gs,
+        X86SystemSelector::Ldtr | X86SystemSelector::Tr | X86SystemSelector::Cs => return None,
+    })
+}
+
+fn selector_load_shape_valid(op: &SmirOp, load: &X86SystemSelectorLoadOp) -> bool {
+    let system = matches!(
+        load.selector,
+        X86SystemSelector::Ldtr | X86SystemSelector::Tr
+    );
+    let ordinary = ordinary_target(load.selector).is_some();
+    let instruction_len = load.next_pc.checked_sub(op.guest_pc);
+    let length_valid = if system {
+        matches!(instruction_len, Some(3..=15))
+    } else {
+        matches!(instruction_len, Some(2..=15))
+    };
+    if op.x86_hint.is_some() || !(system || ordinary) || !length_valid {
+        return false;
+    }
+
+    match &load.source {
+        X86SystemSelectorSource::Register { src } => matches!(
+            src,
+            VReg::Arch(ArchReg::X86(reg))
+                if reg.gpr_index().is_some_and(|index| index < 16 || load.requires_apx)
+        ),
+        X86SystemSelectorSource::Memory { addr, width, .. } => {
+            let uses_egpr = addr
+                .regs()
+                .iter()
+                .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
+            let width_valid = *width == MemWidth::B2 || ordinary && *width == MemWidth::B8;
+            addr.is_x86_state_backed_shape() && (!uses_egpr || load.requires_apx) && width_valid
+        }
+    }
+}
+
+fn commit_ordinary_segment(
+    x86: &mut X86RegState,
+    target: X86SegmentLoadTarget,
+    segment: crate::vm::vcpu::Segment,
+) {
+    let cache = x86_system_segment_cache(&segment);
+    match target {
+        X86SegmentLoadTarget::Es => {
+            x86.es_selector = segment.selector;
+            x86.es_cache = cache;
+        }
+        X86SegmentLoadTarget::Ss => {
+            x86.ss_selector = segment.selector;
+            x86.ss_cache = cache;
+            x86.interrupt_inhibit = true;
+        }
+        X86SegmentLoadTarget::Ds => {
+            x86.ds_selector = segment.selector;
+            x86.ds_cache = cache;
+        }
+        X86SegmentLoadTarget::Fs => {
+            x86.fs_selector = segment.selector;
+            x86.fs_base = segment.base;
+            x86.fs_cache = cache;
+        }
+        X86SegmentLoadTarget::Gs => {
+            x86.gs_selector = segment.selector;
+            x86.gs_base = segment.base;
+            x86.gs_cache = cache;
+        }
+    }
+}
+
+impl SmirInterpreter {
+    pub(super) fn execute_x86_system_selector_load(
+        &self,
+        ctx: &mut SmirContext,
+        memory: &mut dyn SmirMemory,
+        op: &SmirOp,
+        load: &X86SystemSelectorLoadOp,
+    ) -> Result<(), MemoryError> {
+        if !selector_load_shape_valid(op, load) {
+            ctx.request_exit(ExitReason::Undefined {
+                addr: op.guest_pc,
+                opcode: 0,
+            });
+            return Ok(());
+        }
+
+        let system = matches!(
+            load.selector,
+            X86SystemSelector::Ldtr | X86SystemSelector::Tr
+        );
+        let (protected, virtual_8086, cpl, long_mode, ia32e_active) = match &ctx.arch_regs {
+            ArchRegState::X86_64(x86) => {
+                if load.requires_apx && !x86.apx_enabled {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+                (
+                    x86.cr0 & 1 != 0,
+                    x86.rflags & crate::isa::x86_64::flags::bits::VM != 0,
+                    x86.cpl,
+                    x86.cs_l,
+                    x86.efer & (1 << 10) != 0,
+                )
+            }
+            _ => {
+                ctx.request_exit(ExitReason::Undefined {
+                    addr: op.guest_pc,
+                    opcode: 0,
+                });
+                return Ok(());
+            }
+        };
+
+        // LLDT/LTR mode and privilege faults precede source-memory access.
+        if system && (!protected || virtual_8086) {
+            ctx.request_exit(ExitReason::Undefined {
+                addr: op.guest_pc,
+                opcode: 0,
+            });
+            return Ok(());
+        }
+        if system && cpl != 0 {
+            ctx.request_exit(ExitReason::GeneralProtection {
+                addr: op.guest_pc,
+                error_code: 0,
+            });
+            return Ok(());
+        }
+
+        let selector = match &load.source {
+            X86SystemSelectorSource::Register { src } => ctx.read_vreg(*src) as u16,
+            X86SystemSelectorSource::Memory {
+                addr,
+                width,
+                stack_segment,
+            } => {
+                let effective_addr = self.compute_address(ctx, addr);
+                let width_bytes = width.bytes() as u64;
+                let canonical = effective_addr
+                    .checked_add(width_bytes - 1)
+                    .is_some_and(|last| {
+                        !ia32e_active || is_canonical_48(effective_addr) && is_canonical_48(last)
+                    });
+                if !canonical {
+                    ctx.request_exit(if *stack_segment {
+                        ExitReason::StackSegment {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        }
+                    } else {
+                        ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        }
+                    });
+                    return Ok(());
+                }
+                self.load_memory(memory, effective_addr, *width, SignExtend::Zero)? as u16
+            }
+        };
+
+        if let Some(target) = ordinary_target(load.selector) {
+            if !protected || virtual_8086 {
+                let segment = x86_real_mode_segment(selector, virtual_8086);
+                let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                    unreachable!("validated x86 selector-load state changed")
+                };
+                commit_ordinary_segment(x86, target, segment);
+                return Ok(());
+            }
+
+            if selector & 0xFFFC == 0 {
+                if target == X86SegmentLoadTarget::Ss
+                    && (!long_mode || cpl == 3 || (selector & 3) as u8 != cpl)
+                {
+                    ctx.request_exit(ExitReason::GeneralProtection {
+                        addr: op.guest_pc,
+                        error_code: 0,
+                    });
+                    return Ok(());
+                }
+                let segment = crate::vm::vcpu::Segment {
+                    selector,
+                    dpl: cpl,
+                    unusable: true,
+                    ..crate::vm::vcpu::Segment::default()
+                };
+                let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                    unreachable!("validated x86 selector-load state changed")
+                };
+                commit_ordinary_segment(x86, target, segment);
+                return Ok(());
+            }
+
+            let descriptor_addr = {
+                let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+                    unreachable!("validated x86 selector-load state changed")
+                };
+                match x86_far_jump_descriptor_address(x86, selector, 8) {
+                    Ok(address) => address,
+                    Err(fault) => {
+                        request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                        return Ok(());
+                    }
+                }
+            };
+            let low = read_smir_u64(memory, descriptor_addr)?;
+            let descriptor = match decode_x86_segment_load_descriptor(target, selector, low, cpl) {
+                Ok(descriptor) => descriptor,
+                Err(X86SystemDescriptorFault::SegmentNotPresent { error_code })
+                    if target == X86SegmentLoadTarget::Ss =>
+                {
+                    ctx.request_exit(ExitReason::StackSegment {
+                        addr: op.guest_pc,
+                        error_code,
+                    });
+                    return Ok(());
+                }
+                Err(fault) => {
+                    request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                    return Ok(());
+                }
+            };
+            if low != descriptor.accessed_low {
+                memory.write(descriptor_addr, &descriptor.accessed_low.to_le_bytes())?;
+            }
+            let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                unreachable!("validated x86 selector-load state changed")
+            };
+            commit_ordinary_segment(x86, target, descriptor.segment);
+            return Ok(());
+        }
+
+        if selector & 0xFFFC == 0 {
+            if load.selector == X86SystemSelector::Tr {
+                ctx.request_exit(ExitReason::GeneralProtection {
+                    addr: op.guest_pc,
+                    error_code: 0,
+                });
+                return Ok(());
+            }
+            let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                unreachable!("validated x86 selector-load state changed")
+            };
+            x86.ldtr_selector = selector;
+            x86.ldtr_cache = X86SystemSegmentCache {
+                unusable: true,
+                ..X86SystemSegmentCache::default()
+            };
+            return Ok(());
+        }
+
+        if selector & 4 != 0 {
+            ctx.request_exit(ExitReason::GeneralProtection {
+                addr: op.guest_pc,
+                error_code: u32::from(selector & 0xFFFC),
+            });
+            return Ok(());
+        }
+        let descriptor_size = if long_mode { 16 } else { 8 };
+        let descriptor_addr = {
+            let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+                unreachable!("validated x86 selector-load state changed")
+            };
+            match x86_far_jump_descriptor_address(x86, selector, descriptor_size) {
+                Ok(address) => address,
+                Err(fault) => {
+                    request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                    return Ok(());
+                }
+            }
+        };
+        let low = read_smir_u64(memory, descriptor_addr)?;
+        let high = if long_mode {
+            Some(read_smir_u64(memory, descriptor_addr.wrapping_add(8))?)
+        } else {
+            None
+        };
+        let decoded = match load.selector {
+            X86SystemSelector::Ldtr => decode_x86_ldt_descriptor(selector, low, high, long_mode)
+                .map(|segment| (segment, None)),
+            X86SystemSelector::Tr => {
+                decode_x86_tss_descriptor(selector, low, high, long_mode, ia32e_active)
+                    .map(|descriptor| (descriptor.segment, Some(descriptor.busy_low)))
+            }
+            _ => unreachable!("validated system selector-load kind changed"),
+        };
+        let (segment, busy_low) = match decoded {
+            Ok(decoded) => decoded,
+            Err(fault) => {
+                request_x86_descriptor_fault(ctx, op.guest_pc, fault);
+                return Ok(());
+            }
+        };
+        if let Some(busy_low) = busy_low {
+            memory.write(descriptor_addr, &busy_low.to_le_bytes())?;
+        }
+
+        let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+            unreachable!("validated x86 selector-load state changed")
+        };
+        let cache = x86_system_segment_cache(&segment);
+        match load.selector {
+            X86SystemSelector::Ldtr => {
+                x86.ldtr_selector = segment.selector;
+                x86.ldtr_cache = cache;
+            }
+            X86SystemSelector::Tr => {
+                x86.tr_selector = segment.selector;
+                x86.tr_type = segment.type_;
+                x86.tr_cache = cache;
+            }
+            _ => unreachable!("validated system selector-load kind changed"),
+        }
+        Ok(())
+    }
+}

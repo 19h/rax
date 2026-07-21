@@ -617,6 +617,12 @@ fn test_push_fs_nonzero_value_on_stack() {
         0xf4, // HLT
     ];
     let (mut vcpu, mem) = setup_vm(&code, None);
+    let descriptor = [0xFF, 0xFF, 0x00, 0x00, 0x00, 0xF2, 0xCF, 0x00];
+    mem.write_slice(&descriptor, GuestAddress(GDT_BASE + 0x20))
+        .unwrap();
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.gdt.limit = 0x27;
+    vcpu.set_sregs(&sregs).unwrap();
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.rsp, STACK_ADDR - 8, "PUSH FS decrements RSP by 8");
     let mut buf = [0u8; 8];
@@ -640,7 +646,13 @@ fn test_push_fs_pop_gs_transfers_selector() {
         0x8c, 0xeb, // MOV BX, GS
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let descriptor = [0xFF, 0xFF, 0x00, 0x00, 0x00, 0xF2, 0xCF, 0x00];
+    mem.write_slice(&descriptor, GuestAddress(GDT_BASE + 0x30))
+        .unwrap();
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.gdt.limit = 0x37;
+    vcpu.set_sregs(&sregs).unwrap();
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(
         regs.rbx & 0xFFFF,

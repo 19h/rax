@@ -68,6 +68,8 @@ mod read_debug;
 #[cfg(test)]
 mod scalar;
 #[cfg(test)]
+mod segment_selector_load;
+#[cfg(test)]
 mod segment_selector_store;
 #[cfg(test)]
 mod selector;

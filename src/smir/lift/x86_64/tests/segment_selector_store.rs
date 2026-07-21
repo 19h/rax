@@ -366,12 +366,12 @@ fn mov_rm_sreg_interpreter_apx_gate_and_non_x86_shape_are_noncommitting() {
 }
 
 #[test]
-fn ordinary_segment_selector_is_fail_closed_when_injected_into_selector_load_ir() {
+fn cs_selector_is_fail_closed_when_injected_into_selector_load_ir() {
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
     builder.push_op(
         0x1000,
         OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
-            selector: X86SystemSelector::Es,
+            selector: X86SystemSelector::Cs,
             source: X86SystemSelectorSource::Register { src: x86_gpr(0) },
             requires_apx: false,
             next_pc: 0x1003,

@@ -98,6 +98,36 @@ fn install_ltr_descriptor(memory: &GuestMemoryMmap, descriptor: &[u8; 16]) {
     install_lldt_descriptor(memory, descriptor);
 }
 
+fn data_descriptor(
+    base: u64,
+    raw_limit: u32,
+    dpl: u8,
+    present: bool,
+    type_: u8,
+    accessed: bool,
+) -> [u8; 8] {
+    assert!(raw_limit <= 0xF_FFFF);
+    let raw = u64::from(raw_limit & 0xFFFF)
+        | ((base & 0xFFFF) << 16)
+        | (((base >> 16) & 0xFF) << 32)
+        | (u64::from((type_ & 0xE) | u8::from(accessed)) << 40)
+        | (1 << 44)
+        | (u64::from(dpl & 3) << 45)
+        | (u64::from(present) << 47)
+        | (u64::from((raw_limit >> 16) & 0xF) << 48)
+        | (1 << 52)
+        | (1 << 54)
+        | (1 << 55)
+        | (((base >> 24) & 0xFF) << 56);
+    raw.to_le_bytes()
+}
+
+fn install_data_descriptor(memory: &GuestMemoryMmap, descriptor: &[u8; 8]) {
+    memory
+        .write_slice(descriptor, GuestAddress(0x1010))
+        .unwrap();
+}
+
 fn segment_fingerprint(
     segment: &crate::vm::vcpu::Segment,
 ) -> (
@@ -613,7 +643,7 @@ fn ltr_helper_commits_busy_with_exact_traces_and_rolls_back_every_failed_probe()
     assert_eq!(&observed[8..], &available[8..]);
 
     assert_eq!(
-        unsafe { rax_jit_system_selector_load(&mut state, 0x10, 0x8) },
+        unsafe { rax_jit_system_selector_load(&mut state, 0x10, 0x40) },
         0,
         "unknown helper encoding bits must remain fail-closed"
     );
@@ -1219,6 +1249,216 @@ fn jit_rejects_selector_stores_outside_cs_l_and_direct_preserves_mode_widths() {
         assert_eq!(compatibility.regs.rax, expected, "CS.D={db}");
     }
 }
+
+#[test]
+fn jit_mov_sreg_register_selectors_rex_r_rex2_and_hidden_state_match_direct() {
+    for (name, instruction, field, source_index, apx) in [
+        (
+            "ES-REX.R-ignored",
+            &[0x4C, 0x8E, 0xC0][..],
+            0_u8,
+            0_usize,
+            false,
+        ),
+        ("SS", &[0x8E, 0xD0], 2, 0, false),
+        ("DS", &[0x8E, 0xD8], 3, 0, false),
+        ("FS-R31", &[0xD5, 0x55, 0x8E, 0xE7], 4, 31, true),
+        ("GS", &[0x8E, 0xE8], 5, 0, false),
+    ] {
+        let mut code = instruction.to_vec();
+        code.push(0xF4);
+        let direct_memory = memory_with_code(&code);
+        let native_memory = memory_with_code(&code);
+        let descriptor = data_descriptor(0x1234_5000, 0xA_BCDE, 0, true, 0x2, false);
+        install_data_descriptor(&direct_memory, &descriptor);
+        install_data_descriptor(&native_memory, &descriptor);
+        let mut direct = test_vcpu(direct_memory.clone());
+        let mut native = test_vcpu(native_memory.clone());
+        for vcpu in [&mut direct, &mut native] {
+            vcpu.set_jit_mem(true);
+            vcpu.set_apx_enabled(apx);
+            // arm64-hosted amd64 translation can drop AF in the native
+            // trampoline; lowerer tests cover the physical flag round trip.
+            vcpu.regs.rflags &= !flags::bits::AF;
+            if source_index == 31 {
+                vcpu.regs.r31 = 0xA5A5_5A5A_0000_0010;
+            } else {
+                vcpu.regs.rax = 0xA5A5_5A5A_0000_0010;
+            }
+        }
+
+        assert!(direct.step().expect("direct MOV Sreg").is_none(), "{name}");
+        let region = native
+            .jit_compile_region()
+            .expect("compile MOV Sreg register region")
+            .unwrap_or_else(|| panic!("{name}: MOV Sreg must be native eligible"));
+        native.jit_run_region_verified(&region);
+
+        let (direct_segment, native_segment) = match field {
+            0 => (&direct.sregs.es, &native.sregs.es),
+            2 => (&direct.sregs.ss, &native.sregs.ss),
+            3 => (&direct.sregs.ds, &native.sregs.ds),
+            4 => (&direct.sregs.fs, &native.sregs.fs),
+            5 => (&direct.sregs.gs, &native.sregs.gs),
+            _ => unreachable!(),
+        };
+        assert_eq!(
+            segment_fingerprint(native_segment),
+            segment_fingerprint(direct_segment),
+            "{name}"
+        );
+        assert_eq!(native_segment.selector, 0x10, "{name}");
+        assert_eq!(native_segment.base, 0x1234_5000, "{name}");
+        assert_eq!(native_segment.limit, 0xA_BCDE_FFF, "{name}");
+        assert_eq!(native_segment.type_, 0x3, "{name}");
+        assert_eq!(native.interrupt_inhibit, direct.interrupt_inhibit, "{name}");
+        assert_eq!(native.interrupt_inhibit, field == 2, "{name}");
+        assert_eq!(gprs(&native.regs), gprs(&direct.regs), "{name}");
+        assert_eq!(native.regs.rflags, direct.regs.rflags, "{name}");
+        assert_eq!(native.regs.rip, instruction.len() as u64, "{name}");
+        let mut direct_raw = [0_u8; 8];
+        let mut native_raw = [0_u8; 8];
+        direct_memory
+            .read_slice(&mut direct_raw, GuestAddress(0x1010))
+            .unwrap();
+        native_memory
+            .read_slice(&mut native_raw, GuestAddress(0x1010))
+            .unwrap();
+        assert_eq!(native_raw, direct_raw, "{name}");
+        assert_ne!(u64::from_le_bytes(native_raw) & (1 << 40), 0, "{name}");
+    }
+}
+
+#[test]
+fn jit_mov_sreg_memory_b2_b8_sources_and_fs_gs_bases_match_direct() {
+    for (name, instruction, field, source_len) in [
+        ("GS-m16", &[0x8E, 0x28][..], 5_u8, 2_usize),
+        ("FS-m64", &[0x48, 0x8E, 0x20], 4, 8),
+    ] {
+        let mut code = instruction.to_vec();
+        code.push(0xF4);
+        let direct_memory = memory_with_code(&code);
+        let native_memory = memory_with_code(&code);
+        let descriptor = data_descriptor(0x7654_3000, 0xF_FFFF, 0, true, 0x2, false);
+        for memory in [&direct_memory, &native_memory] {
+            install_data_descriptor(memory, &descriptor);
+            let mut source = [0xA5_u8; 8];
+            source[..2].copy_from_slice(&0x10_u16.to_le_bytes());
+            memory
+                .write_slice(&source[..source_len], GuestAddress(0x3000))
+                .unwrap();
+        }
+        let mut direct = test_vcpu(direct_memory);
+        let mut native = test_vcpu(native_memory);
+        for vcpu in [&mut direct, &mut native] {
+            vcpu.set_jit_mem(true);
+            // See the register-source differential above.
+            vcpu.regs.rflags &= !flags::bits::AF;
+            vcpu.regs.rax = 0x3000;
+        }
+
+        assert!(
+            direct.step().expect("direct memory MOV Sreg").is_none(),
+            "{name}"
+        );
+        let region = native
+            .jit_compile_region()
+            .expect("compile memory MOV Sreg")
+            .unwrap_or_else(|| panic!("{name}: memory MOV Sreg must be native eligible"));
+        native.jit_run_region_verified(&region);
+        let (direct_segment, native_segment) = if field == 4 {
+            (&direct.sregs.fs, &native.sregs.fs)
+        } else {
+            (&direct.sregs.gs, &native.sregs.gs)
+        };
+        assert_eq!(
+            segment_fingerprint(native_segment),
+            segment_fingerprint(direct_segment),
+            "{name}"
+        );
+        assert_eq!(native_segment.selector, 0x10, "{name}");
+        assert_eq!(native_segment.base, 0x7654_3000, "{name}");
+        assert_eq!(gprs(&native.regs), gprs(&direct.regs), "{name}");
+        assert_eq!(native.regs.rflags, direct.regs.rflags, "{name}");
+        assert_eq!(native.regs.rip, instruction.len() as u64, "{name}");
+    }
+}
+
+#[test]
+fn jit_mov_sreg_descriptor_faults_deopt_without_selector_or_accessed_commit() {
+    for (name, instruction, descriptor, expected_vector) in [
+        (
+            "DS wrong type",
+            &[0x8E, 0xD8][..],
+            data_descriptor(0, 0xFFFF, 0, true, 0x8, false),
+            13,
+        ),
+        (
+            "DS not present",
+            &[0x8E, 0xD8],
+            data_descriptor(0, 0xFFFF, 0, false, 0x2, false),
+            11,
+        ),
+        (
+            "SS not present",
+            &[0x8E, 0xD0],
+            data_descriptor(0, 0xFFFF, 0, false, 0x2, false),
+            12,
+        ),
+    ] {
+        let mut code = instruction.to_vec();
+        code.push(0xF4);
+        let memory = memory_with_code(&code);
+        install_data_descriptor(&memory, &descriptor);
+        let mut vcpu = test_vcpu(memory.clone());
+        vcpu.set_jit_mem(true);
+        vcpu.regs.rax = 0x10;
+        let before_ds = segment_fingerprint(&vcpu.sregs.ds);
+        let before_ss = segment_fingerprint(&vcpu.sregs.ss);
+        let before_regs = vcpu.regs.clone();
+
+        let region = vcpu
+            .jit_compile_region()
+            .expect("compile faulting MOV Sreg")
+            .unwrap_or_else(|| panic!("{name}: dynamic descriptor fault must remain eligible"));
+        vcpu.jit_run_region_native(&region);
+        assert_eq!(vcpu.regs.rip, 0, "{name}");
+        assert_eq!(gprs(&vcpu.regs), gprs(&before_regs), "{name}");
+        assert_eq!(segment_fingerprint(&vcpu.sregs.ds), before_ds, "{name}");
+        assert_eq!(segment_fingerprint(&vcpu.sregs.ss), before_ss, "{name}");
+        assert!(!vcpu.interrupt_inhibit, "{name}");
+        let mut observed = [0_u8; 8];
+        memory
+            .read_slice(&mut observed, GuestAddress(0x1010))
+            .unwrap();
+        assert_eq!(observed, descriptor, "{name}");
+
+        let error = exception_without_idt(&mut vcpu);
+        assert!(
+            error.contains(&format!("IDT entry {expected_vector} not present")),
+            "{name}: {error}"
+        );
+        assert_eq!(segment_fingerprint(&vcpu.sregs.ds), before_ds, "{name}");
+        assert_eq!(segment_fingerprint(&vcpu.sregs.ss), before_ss, "{name}");
+    }
+}
+
+#[test]
+fn direct_mov_sreg_rejects_cs_and_reserved_fields_before_invalid_memory_access() {
+    for modrm in [0x08_u8, 0x30, 0x38] {
+        let memory = memory_with_code(&[0x8E, modrm, 0xF4]);
+        let mut vcpu = test_vcpu(memory);
+        vcpu.regs.rax = 0x20_000;
+        let error = exception_without_idt(&mut vcpu);
+        assert!(
+            error.contains("IDT entry 6 not present"),
+            "modrm={modrm:#04x}: invalid selector must precede source memory: {error}"
+        );
+    }
+}
+
+#[path = "cpu_jit_segment_load_fault_tests.rs"]
+mod segment_load_faults;
 
 #[test]
 fn jit_rejects_lldt_outside_cs_l_and_direct_uses_legacy_descriptor_width() {

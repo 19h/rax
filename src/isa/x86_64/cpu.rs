@@ -273,11 +273,11 @@ pub struct X86_64Vcpu {
     pub(super) mmu: Mmu,
     pub(super) fpu: FpuState,
     pub(super) halted: bool,
-    /// STI maskable-interrupt shadow. When true, external maskable interrupt
-    /// injection remains blocked through the next instruction boundary. The
-    /// direct `step()` wrapper consumes the prior shadow before attempting that
-    /// instruction; a successful STI can establish a fresh shadow while it
-    /// executes.
+    /// STI/MOV-SS maskable-interrupt shadow. When true, external maskable
+    /// interrupt injection remains blocked through the next instruction
+    /// boundary. The direct `step()` wrapper consumes the prior shadow before
+    /// attempting that instruction; a qualifying instruction can establish a
+    /// fresh shadow while it executes.
     pub(super) interrupt_inhibit: bool,
     io_pending: Option<IoPending>,
     /// IA32_KERNEL_GS_BASE MSR (0xC0000102) for SWAPGS
@@ -1615,9 +1615,9 @@ impl X86_64Vcpu {
             .wrapping_add(self.tsc_adjust)
     }
 
-    /// Execute one instruction attempt and consume any STI interrupt shadow
-    /// that protected this boundary. Fetch/decode/execution faults also consume
-    /// the shadow because delivery of that event ends STI inhibition.
+    /// Execute one instruction attempt and consume any STI/MOV-SS interrupt
+    /// shadow that protected this boundary. Fetch/decode/execution faults also
+    /// consume the shadow because delivery of that event ends inhibition.
     pub fn step(&mut self) -> Result<Option<VcpuExit>> {
         self.interrupt_inhibit = false;
         self.step_inner()
@@ -3420,7 +3420,7 @@ impl VCpu for X86_64Vcpu {
         self.regs = state.regs.clone();
         self.sregs = state.sregs.clone();
         // External state injection is a serializing boundary and does not carry
-        // the emulator-private STI interrupt shadow.
+        // the emulator-private STI/MOV-SS interrupt shadow.
         self.interrupt_inhibit = false;
         // Injecting CPU state is a serializing event: drop the decode cache so we
         // re-decode from (possibly externally rewritten) code memory. Not hot -

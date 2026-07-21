@@ -51,7 +51,8 @@ pub(crate) fn x86_system_selector_store_shape_valid(op: &SmirOp) -> bool {
     }
 }
 
-/// Validate the strict long-mode LLDT/LTR form admitted by native lowering.
+/// Validate strict long-mode LLDT/LTR and `MOV Sreg,r/m` forms admitted by
+/// native lowering.
 pub(crate) fn x86_system_selector_load_shape_valid(op: &SmirOp) -> bool {
     let OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
         selector,
@@ -63,10 +64,21 @@ pub(crate) fn x86_system_selector_load_shape_valid(op: &SmirOp) -> bool {
     else {
         return false;
     };
-    if !matches!(selector, X86SystemSelector::Ldtr | X86SystemSelector::Tr)
-        || op.x86_hint.is_some()
-        || !matches!(next_pc.checked_sub(op.guest_pc), Some(3..=15))
-    {
+    let system = matches!(selector, X86SystemSelector::Ldtr | X86SystemSelector::Tr);
+    let ordinary = matches!(
+        selector,
+        X86SystemSelector::Es
+            | X86SystemSelector::Ss
+            | X86SystemSelector::Ds
+            | X86SystemSelector::Fs
+            | X86SystemSelector::Gs
+    );
+    let length_valid = if system {
+        matches!(next_pc.checked_sub(op.guest_pc), Some(3..=15))
+    } else {
+        matches!(next_pc.checked_sub(op.guest_pc), Some(2..=15))
+    };
+    if !(system || ordinary) || op.x86_hint.is_some() || !length_valid {
         return false;
     }
 
@@ -80,12 +92,13 @@ pub(crate) fn x86_system_selector_load_shape_valid(op: &SmirOp) -> bool {
             };
             index < 16 || *requires_apx
         }
-        X86SystemSelectorSource::Memory { addr } => {
+        X86SystemSelectorSource::Memory { addr, width, .. } => {
             let uses_egpr = addr
                 .regs()
                 .iter()
                 .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
-            addr.is_x86_state_backed_shape() && (!uses_egpr || *requires_apx)
+            let width_valid = *width == MemWidth::B2 || ordinary && *width == MemWidth::B8;
+            addr.is_x86_state_backed_shape() && (!uses_egpr || *requires_apx) && width_valid
         }
     }
 }
@@ -291,11 +304,12 @@ impl X86_64Lowerer {
         Ok(())
     }
 
-    /// Load LDTR/TR through the owning vCPU's MMU and descriptor validator. The
-    /// operation exits natively after a successful serializing commit; every
-    /// dynamic guard, source-memory, descriptor, or LTR busy-store fault
-    /// restores the complete pre-instruction register/flag image and replays
-    /// direct at `guest_pc`.
+    /// Load LDTR/TR or an ordinary segment register through the owning vCPU's
+    /// MMU and descriptor validator. Every variant exits natively after a
+    /// successful commit; LLDT/LTR additionally serialize. Every dynamic guard,
+    /// source-memory, descriptor, or implicit descriptor-store fault restores
+    /// the complete pre-instruction register/flag image and replays direct at
+    /// `guest_pc`.
     pub(crate) fn emit_x86_system_selector_load(&mut self, op: &SmirOp) -> Result<(), LowerError> {
         if !self.jit_fault_deopt_guards {
             return Err(LowerError::UnsupportedOp {
@@ -310,9 +324,8 @@ impl X86_64Lowerer {
         if !x86_system_selector_load_shape_valid(op) {
             return Err(LowerError::InvalidOperand {
                 op: "X86SystemSelectorLoad".to_string(),
-                operand:
-                    "requires an unhinted LLDT/LTR source, APX for every EGPR, and an exact next PC"
-                        .to_string(),
+                operand: "requires an unhinted LLDT/LTR or MOV-Sreg source, valid memory width, APX for every EGPR, and an exact next PC"
+                    .to_string(),
             });
         }
         let OpKind::X86SystemSelectorLoad(load) = &op.kind else {
@@ -333,19 +346,24 @@ impl X86_64Lowerer {
             self.code.emit_u8(0);
             guard_faults.push(self.emit_jcc_placeholder(X86Cond::E));
         }
-        self.code.emit_bytes(&[0xF7, 0x80]); // test dword [rax+cr0],PE
-        self.code.emit_u32(X86_GUEST_CR0_OFFSET as u32);
-        self.code.emit_u32(1);
-        guard_faults.push(self.emit_jcc_placeholder(X86Cond::E));
-        self.code.emit_bytes(&[0x48, 0xF7, 0x80]); // test qword [rax+rflags],VM
-        self.code.emit_u32(X86_GUEST_RFLAGS_OFFSET as u32);
-        self.code
-            .emit_u32(crate::isa::x86_64::flags::bits::VM as u32);
-        guard_faults.push(self.emit_jcc_placeholder(X86Cond::Ne));
-        self.code.emit_bytes(&[0x48, 0x83, 0xB8]); // cmp qword [rax+cpl],0
-        self.code.emit_u32(X86_GUEST_CPL_OFFSET as u32);
-        self.code.emit_u8(0);
-        guard_faults.push(self.emit_jcc_placeholder(X86Cond::Ne));
+        if matches!(
+            load.selector,
+            X86SystemSelector::Ldtr | X86SystemSelector::Tr
+        ) {
+            self.code.emit_bytes(&[0xF7, 0x80]); // test dword [rax+cr0],PE
+            self.code.emit_u32(X86_GUEST_CR0_OFFSET as u32);
+            self.code.emit_u32(1);
+            guard_faults.push(self.emit_jcc_placeholder(X86Cond::E));
+            self.code.emit_bytes(&[0x48, 0xF7, 0x80]); // test qword [rax+rflags],VM
+            self.code.emit_u32(X86_GUEST_RFLAGS_OFFSET as u32);
+            self.code
+                .emit_u32(crate::isa::x86_64::flags::bits::VM as u32);
+            guard_faults.push(self.emit_jcc_placeholder(X86Cond::Ne));
+            self.code.emit_bytes(&[0x48, 0x83, 0xB8]); // cmp qword [rax+cpl],0
+            self.code.emit_u32(X86_GUEST_CPL_OFFSET as u32);
+            self.code.emit_u8(0);
+            guard_faults.push(self.emit_jcc_placeholder(X86Cond::Ne));
+        }
 
         self.emit_helper_call_state(PhysReg::Rax, true, self.preserve_vector_mem_helpers);
         let memory_source = matches!(&load.source, X86SystemSelectorSource::Memory { .. });
@@ -361,7 +379,7 @@ impl X86_64Lowerer {
                     false,
                 );
             }
-            X86SystemSelectorSource::Memory { addr } => {
+            X86SystemSelectorSource::Memory { addr, .. } => {
                 self.emit_jit_mem_effective_address(addr, false)?;
             }
         }
@@ -371,10 +389,24 @@ impl X86_64Lowerer {
             let selector = match load.selector {
                 X86SystemSelector::Ldtr => 0,
                 X86SystemSelector::Tr => 1,
-                _ => unreachable!("validated selector-load kind changed"),
+                X86SystemSelector::Es => 2,
+                X86SystemSelector::Ss => 4,
+                X86SystemSelector::Ds => 5,
+                X86SystemSelector::Fs => 6,
+                X86SystemSelector::Gs => 7,
+                X86SystemSelector::Cs => unreachable!("validated selector-load kind changed"),
             };
-            let encoding =
-                i64::from(memory_source) | (i64::from(load.requires_apx) << 1) | (selector << 2);
+            let memory64 = matches!(
+                load.source,
+                X86SystemSelectorSource::Memory {
+                    width: MemWidth::B8,
+                    ..
+                }
+            );
+            let encoding = i64::from(memory_source)
+                | (i64::from(load.requires_apx) << 1)
+                | (selector << 2)
+                | (i64::from(memory64) << 5);
             emitter.emit_mov_ri(PhysReg::Rdx, encoding, OpWidth::W32);
         }
         self.code.emit_u8(0xFC); // cld: platform ABI requires DF=0
@@ -388,7 +420,12 @@ impl X86_64Lowerer {
         self.code.emit_bytes(&[0x48, 0x85, 0xC0]); // test rax,rax
         let helper_fault = self.emit_jcc_placeholder(X86Cond::E);
 
-        self.emit_x86_serialize();
+        if matches!(
+            load.selector,
+            X86SystemSelector::Ldtr | X86SystemSelector::Tr
+        ) {
+            self.emit_x86_serialize();
+        }
         self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_mem_helpers);
         self.emit_reload_all(PhysReg::Rcx);
         self.code.emit_u8(0x9D); // popfq

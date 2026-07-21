@@ -656,6 +656,51 @@ fn emits_exact_lldt_ltr_source_hidden_state_handoff_busy_and_apx_metadata() {
 }
 
 #[test]
+fn emits_exact_mov_sreg_source_width_stack_descriptor_effects_and_apx_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let register = decode_to_json(&[0xD5, 0x55, 0x8E, 0xE7], &opts).unwrap();
+    assert_eq!(register["smir"]["available"], true);
+    assert_eq!(register["smir"]["bytes_consumed"], 4);
+    let op = &register["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_system_selector_load");
+    assert_eq!(op["kind"]["selector"], "Fs");
+    assert_eq!(op["kind"]["source"]["kind"], "register");
+    assert_eq!(op["kind"]["source"]["src"]["name"], "r31");
+    assert_eq!(op["kind"]["source"]["width"], "W16");
+    assert_eq!(op["kind"]["requires_apx"], true);
+    assert_eq!(op["kind"]["next_pc"], 0x1004);
+    assert!(op["reads"].is_null());
+    assert_eq!(op["writes"].as_array().unwrap().len(), 0);
+    assert_eq!(op["memory"]["reads"], true);
+    assert_eq!(op["memory"]["writes"], true);
+    assert_eq!(op["side_effects"], true);
+
+    let memory = decode_to_json(&[0x48, 0x8E, 0x5C, 0x24, 0x08], &opts).unwrap();
+    assert_eq!(memory["smir"]["available"], true);
+    assert_eq!(memory["smir"]["bytes_consumed"], 5);
+    let op = &memory["smir"]["ops"][0];
+    assert_eq!(op["kind"]["selector"], "Ds");
+    assert_eq!(op["kind"]["source"]["kind"], "memory");
+    assert_eq!(op["kind"]["source"]["width"], "B8");
+    assert_eq!(op["kind"]["source"]["stack_segment"], true);
+    assert_eq!(op["kind"]["source"]["addr"]["kind"], "base_offset");
+    assert_eq!(op["kind"]["source"]["addr"]["base"]["name"], "rsp");
+    assert_eq!(op["kind"]["source"]["addr"]["offset"], 8);
+    assert_eq!(op["kind"]["next_pc"], 0x1005);
+
+    for modrm in [0xC8, 0xF0, 0xF8] {
+        let invalid = decode_to_json(&[0x8E, modrm], &opts).unwrap();
+        assert_eq!(invalid["smir"]["available"], true);
+        assert_eq!(invalid["smir"]["bytes_consumed"], 2);
+        assert_eq!(invalid["smir"]["ops"].as_array().unwrap().len(), 0);
+        assert_eq!(invalid["smir"]["control_flow"]["kind"], "trap");
+        assert_eq!(invalid["smir"]["control_flow"]["trap"], "InvalidOpcode");
+    }
+}
+
+#[test]
 fn emits_exact_far_jump_pointer_target_descriptor_and_handoff_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

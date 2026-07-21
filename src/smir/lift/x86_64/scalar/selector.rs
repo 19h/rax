@@ -1,12 +1,13 @@
 //! Legacy system-segment selector stores and loads.
 
+use crate::smir::ir::TrapKind;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86SystemSelector, X86SystemSelectorLoadOp, X86SystemSelectorSource,
     X86SystemSelectorStoreOp, X86SystemSelectorTarget,
 };
-use crate::smir::ir::types::OpId;
+use crate::smir::ir::types::{MemWidth, OpId};
 use crate::smir::lift::x86_64::{X86_64Lifter, X86Prefix, decode_modrm};
-use crate::smir::lift::{LiftContext, LiftError, LiftResult};
+use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult};
 
 impl X86_64Lifter {
     /// Lift `MOV r/m16/32/64, Sreg` (`8C /r`). The ModR/M.reg field selects
@@ -148,7 +149,101 @@ impl X86_64Lifter {
         let source = if let Some(x86_addr) = modrm.addr.as_ref() {
             let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
             debug_assert!(pre_ops.is_empty());
-            X86SystemSelectorSource::Memory { addr }
+            let stack_segment = match prefix.segment_override {
+                Some(0x36) => true,
+                Some(_) => false,
+                None => x86_addr.base.is_some_and(|base| matches!(base & 7, 4 | 5)),
+            };
+            X86SystemSelectorSource::Memory {
+                addr,
+                width: MemWidth::B2,
+                stack_segment,
+            }
+        } else {
+            X86SystemSelectorSource::Register {
+                src: self.gpr(modrm.rm),
+            }
+        };
+
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+                    selector,
+                    source,
+                    requires_apx: prefix.rex2.is_some(),
+                    next_pc,
+                }),
+            )],
+            bytes_consumed,
+        ))
+    }
+
+    /// Lift `MOV Sreg,r/m` (`8E /r`). ModR/M.reg selects ES/SS/DS/FS/GS and
+    /// ignores REX.R plus both REX2 R extension bits. Register sources always
+    /// contribute their low 16 bits. Memory sources are 2 bytes unless W=1
+    /// selects the Intel-defined 8-byte read whose low 16 bits are loaded.
+    pub(crate) fn lift_segment_selector_load_8e(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..bytes.len().min(1)].to_vec(),
+            });
+        }
+
+        let Some(&raw_modrm) = bytes.first() else {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: prefix.cursor,
+                need: prefix.cursor + 1,
+            });
+        };
+        let selector = match (raw_modrm >> 3) & 7 {
+            0 => X86SystemSelector::Es,
+            2 => X86SystemSelector::Ss,
+            3 => X86SystemSelector::Ds,
+            4 => X86SystemSelector::Fs,
+            5 => X86SystemSelector::Gs,
+            // CS and /6-/7 are invalid independently of the source operand.
+            1 | 6 | 7 => {
+                return Ok(LiftResult {
+                    ops: vec![],
+                    bytes_consumed: prefix.cursor + 1,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::InvalidOpcode,
+                    },
+                    branch_targets: vec![],
+                });
+            }
+            _ => unreachable!("three-bit segment selector changed"),
+        };
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let bytes_consumed = prefix.cursor + modrm.bytes_consumed;
+        let next_pc = pc.wrapping_add(bytes_consumed as u64);
+        let source = if let Some(x86_addr) = modrm.addr.as_ref() {
+            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+            debug_assert!(pre_ops.is_empty());
+            let stack_segment = match prefix.segment_override {
+                Some(0x36) => true,
+                Some(_) => false,
+                None => x86_addr.base.is_some_and(|base| matches!(base & 7, 4 | 5)),
+            };
+            X86SystemSelectorSource::Memory {
+                addr,
+                width: if prefix.rex_w() {
+                    MemWidth::B8
+                } else {
+                    MemWidth::B2
+                },
+                stack_segment,
+            }
         } else {
             X86SystemSelectorSource::Register {
                 src: self.gpr(modrm.rm),

@@ -4,6 +4,9 @@ use crate::error::{Error, Result};
 use crate::vm::vcpu::VcpuExit;
 
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
+use crate::isa::x86_64::execute::system::{
+    X86SegmentLoadTarget, X86SegmentSelectorLoadFault, X86SystemDescriptorFault,
+};
 
 #[inline(always)]
 fn is_canonical_48(addr: u64) -> bool {
@@ -190,23 +193,64 @@ pub fn mov_rm_sreg(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
     Ok(None)
 }
 
-/// MOV Sreg, r/m16 (0x8E)
+/// MOV Sreg, r/m16 or r/m64 (0x8E). Register sources always contribute their
+/// low 16 bits; W=1 selects an 8-byte memory read and still loads only bits
+/// 15:0. ModR/M.reg is not extended by REX/REX2.
 pub fn mov_sreg_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    let (sreg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-
-    let value = if is_memory {
-        vcpu.mmu.read_u16(addr, &vcpu.sregs)?
-    } else {
-        vcpu.get_reg(rm, 2) as u16
+    let modrm_start = ctx.cursor;
+    let modrm = ctx.peek_u8()?;
+    let target = match (modrm >> 3) & 7 {
+        0 => X86SegmentLoadTarget::Es,
+        2 => X86SegmentLoadTarget::Ss,
+        3 => X86SegmentLoadTarget::Ds,
+        4 => X86SegmentLoadTarget::Fs,
+        5 => X86SegmentLoadTarget::Gs,
+        // CS and /6-/7 are invalid before any source-memory access.
+        1 | 6 | 7 => return vcpu.inject_undefined_instruction(),
+        _ => unreachable!("three-bit segment selector changed"),
     };
-    if sreg == 1 {
-        return vcpu.inject_undefined_instruction();
+    ctx.consume_u8()?;
+    let rm = (modrm & 7) | ctx.any_rex_b();
+    let value = if modrm >> 6 == 3 {
+        vcpu.get_reg(rm, 2) as u16
+    } else {
+        let (addr, extra, stack_segment) =
+            vcpu.decode_modrm_addr_with_stack_segment(ctx, modrm_start)?;
+        ctx.cursor = modrm_start + 1 + extra;
+        let width = if ctx.any_rex_w() { 8 } else { 2 };
+        let canonical_range = addr.checked_add(u64::from(width - 1)).is_some_and(|last| {
+            vcpu.sregs.efer & (1 << 10) == 0 || is_canonical_48(addr) && is_canonical_48(last)
+        });
+        if !canonical_range {
+            vcpu.inject_exception(if stack_segment { 12 } else { 13 }, Some(0))?;
+            return Ok(None);
+        }
+        vcpu.read_mem(addr, width)? as u16
+    };
+
+    match vcpu.load_segment_selector(target, value, false) {
+        Ok(()) => {}
+        Err(X86SegmentSelectorLoadFault::Architectural(
+            X86SystemDescriptorFault::GeneralProtection { error_code },
+        )) => {
+            vcpu.inject_exception(13, Some(u64::from(error_code)))?;
+            return Ok(None);
+        }
+        Err(X86SegmentSelectorLoadFault::Architectural(
+            X86SystemDescriptorFault::SegmentNotPresent { error_code },
+        )) => {
+            vcpu.inject_exception(11, Some(u64::from(error_code)))?;
+            return Ok(None);
+        }
+        Err(X86SegmentSelectorLoadFault::StackSegment { error_code }) => {
+            vcpu.inject_exception(12, Some(u64::from(error_code)))?;
+            return Ok(None);
+        }
+        Err(X86SegmentSelectorLoadFault::Memory(error)) => return Err(error),
+        Err(X86SegmentSelectorLoadFault::NativeDeopt) => {
+            unreachable!("direct segment load cannot request native deoptimization")
+        }
     }
-    if sreg == 2 && vcpu.sregs.cr0 & 1 != 0 && value & 0xfffc == 0 {
-        vcpu.inject_exception(13, Some(0))?;
-        return Ok(None);
-    }
-    vcpu.set_sreg(sreg, value);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

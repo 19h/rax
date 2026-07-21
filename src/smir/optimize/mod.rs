@@ -3917,7 +3917,7 @@ impl OpKind {
                 ..
             }) => result.push(*src),
             OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
-                source: X86SystemSelectorSource::Memory { addr },
+                source: X86SystemSelectorSource::Memory { addr, .. },
                 ..
             }) => result.extend(addr.regs()),
             OpKind::X86FarJump(jump) => result.extend(jump.addr.regs()),

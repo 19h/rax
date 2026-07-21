@@ -53,9 +53,23 @@ fn load_register(selector: X86SystemSelector, src: VReg, requires_apx: bool) -> 
 }
 
 fn load_memory(selector: X86SystemSelector, addr: Address, requires_apx: bool) -> OpKind {
+    load_memory_width(selector, addr, MemWidth::B2, false, requires_apx)
+}
+
+fn load_memory_width(
+    selector: X86SystemSelector,
+    addr: Address,
+    width: MemWidth,
+    stack_segment: bool,
+    requires_apx: bool,
+) -> OpKind {
     OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
         selector,
-        source: X86SystemSelectorSource::Memory { addr },
+        source: X86SystemSelectorSource::Memory {
+            addr,
+            width,
+            stack_segment,
+        },
         requires_apx,
         next_pc: 0x1003,
     })
@@ -136,9 +150,46 @@ fn x86_selector_load_gate_requires_mmu_helpers_for_both_selectors_and_sources() 
 }
 
 #[test]
+fn x86_mov_sreg_load_gate_admits_all_selectors_widths_stack_metadata_and_apx() {
+    for selector in [
+        X86SystemSelector::Es,
+        X86SystemSelector::Ss,
+        X86SystemSelector::Ds,
+        X86SystemSelector::Fs,
+        X86SystemSelector::Gs,
+    ] {
+        for op in [
+            load_register(selector, x86(X86Reg::Rax), false),
+            load_register(selector, x86(X86Reg::R31), true),
+            load_memory_width(
+                selector,
+                Address::Direct(x86(X86Reg::Rsp)),
+                MemWidth::B2,
+                true,
+                false,
+            ),
+            load_memory_width(
+                selector,
+                Address::Direct(x86(X86Reg::R31)),
+                MemWidth::B8,
+                false,
+                true,
+            ),
+        ] {
+            let function = function(op.clone());
+            assert!(x86_system_selector_load_shape_valid(
+                &function.blocks[0].ops[0]
+            ));
+            assert!(!gate(op.clone(), false), "{op:?}");
+            assert!(gate(op, true));
+        }
+    }
+}
+
+#[test]
 fn x86_selector_load_gate_rejects_malformed_sources_hints_and_frontiers() {
     for malformed in [
-        load_register(X86SystemSelector::Es, x86(X86Reg::Rax), false),
+        load_register(X86SystemSelector::Cs, x86(X86Reg::Rax), false),
         load_register(X86SystemSelector::Ldtr, VReg::virt(0), false),
         load_register(X86SystemSelector::Tr, arm_x(0), false),
         load_register(X86SystemSelector::Ldtr, x86(X86Reg::R16), false),
@@ -156,6 +207,20 @@ fn x86_selector_load_gate_rejects_malformed_sources_hints_and_frontiers() {
             requires_apx: false,
             next_pc: 0x1002,
         }),
+        load_memory_width(
+            X86SystemSelector::Ldtr,
+            Address::Direct(x86(X86Reg::Rax)),
+            MemWidth::B8,
+            false,
+            false,
+        ),
+        load_memory_width(
+            X86SystemSelector::Ds,
+            Address::Direct(x86(X86Reg::Rax)),
+            MemWidth::B4,
+            false,
+            false,
+        ),
     ] {
         let function = function(malformed.clone());
         assert!(!x86_system_selector_load_shape_valid(

@@ -2,7 +2,9 @@
 
 use super::{Result, X86_64Vcpu};
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-use crate::isa::x86_64::execute::system::{decode_x86_ldt_descriptor, decode_x86_tss_descriptor};
+use crate::isa::x86_64::execute::system::{
+    X86SegmentLoadTarget, decode_x86_ldt_descriptor, decode_x86_tss_descriptor,
+};
 use crate::vm::vcpu::Segment;
 
 impl X86_64Vcpu {
@@ -315,10 +317,10 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector(
     }
 }
 
-/// JIT LLDT/LTR helper. Every architectural guard and the optional operand,
-/// implicit GDT reads, and LTR busy-bit write are ordered before selector-state
-/// commit. Failure returns zero so native code replays the direct instruction
-/// at its original guest PC and delivers the precise architectural fault there.
+/// JIT LLDT/LTR and `MOV Sreg,r/m` helper. Every architectural guard, optional
+/// source read, descriptor read, and implicit descriptor write is ordered
+/// before selector/cache commit. Failure returns zero so native code replays
+/// the direct instruction at its original guest PC.
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
     state: *mut crate::smir::lower::runtime::GuestRegs,
@@ -331,12 +333,27 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
     let Some(vcpu) = (unsafe { (state.ctx as *mut X86_64Vcpu).as_mut() }) else {
         return 0;
     };
-    if encoding & !0x7 != 0
+    let memory_source = encoding & 1 != 0;
+    let requires_apx = encoding & 0x2 != 0;
+    let selector_id = (encoding >> 2) & 7;
+    let memory64 = encoding & 0x20 != 0;
+    let ordinary_target = match selector_id {
+        2 => Some(X86SegmentLoadTarget::Es),
+        4 => Some(X86SegmentLoadTarget::Ss),
+        5 => Some(X86SegmentLoadTarget::Ds),
+        6 => Some(X86SegmentLoadTarget::Fs),
+        7 => Some(X86SegmentLoadTarget::Gs),
+        _ => None,
+    };
+    let system_selector = selector_id <= 1;
+    if encoding & !0x3F != 0
+        || !(system_selector || ordinary_target.is_some())
+        || memory64 && (!memory_source || system_selector)
         || !vcpu.sregs.cs.l
         || vcpu.sregs.cr0 & 1 == 0
         || vcpu.regs.rflags & crate::isa::x86_64::flags::bits::VM != 0
-        || vcpu.sregs.cs.selector & 3 != 0
-        || encoding & 0x2 != 0 && !vcpu.apx_enabled()
+        || system_selector && vcpu.sregs.cs.selector & 3 != 0
+        || requires_apx && !vcpu.apx_enabled()
     {
         return 0;
     }
@@ -349,11 +366,15 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
     let saved_log = vcpu.jit_mem_log.clone();
     let mem_record_checkpoint = vcpu.mmu.mem_record_checkpoint();
     let loaded = (|| {
-        let selector = if encoding & 1 != 0 {
-            if !vcpu.mmu.read_range_is_plain_ram(operand, 2, &vcpu.sregs) {
+        let source_width = if memory64 { 8 } else { 2 };
+        let selector = if memory_source {
+            if !vcpu
+                .mmu
+                .read_range_is_plain_ram(operand, source_width, &vcpu.sregs)
+            {
                 return false;
             }
-            let Ok(value) = vcpu.read_mem(operand, 2) else {
+            let Ok(value) = vcpu.read_mem(operand, source_width as u8) else {
                 return false;
             };
             value as u16
@@ -361,7 +382,11 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
             operand as u16
         };
 
-        let load_tr = encoding & 0x4 != 0;
+        if let Some(target) = ordinary_target {
+            return vcpu.load_segment_selector(target, selector, true).is_ok();
+        }
+
+        let load_tr = selector_id == 1;
         if selector & 0xFFFC == 0 {
             if load_tr {
                 return false;
@@ -422,6 +447,9 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
             .is_ok()
     })();
     if loaded {
+        state.fs_base = vcpu.sregs.fs.base;
+        state.gs_base = vcpu.sregs.gs.base;
+        state.interrupt_inhibit = u64::from(vcpu.interrupt_inhibit);
         1
     } else {
         vcpu.jit_mem_trace = saved_trace;

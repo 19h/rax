@@ -462,6 +462,15 @@ impl X86_64Lifter {
                 pc,
                 ctx,
             ),
+            0x8E => self.lift_segment_selector_load_8e(
+                after_opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+                ctx,
+            ),
             0x86 | 0x87 => self.lift_xchg_rm_r(
                 opcode,
                 after_opcode,

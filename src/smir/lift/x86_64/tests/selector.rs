@@ -426,6 +426,7 @@ fn selector_loads_lift_fixed_two_byte_memory_addresses_and_apx_components() {
         X86SystemSelectorLoadOp {
             source: X86SystemSelectorSource::Memory {
                 addr: Address::Direct(base),
+                ..
             },
             requires_apx: false,
             ..
@@ -442,7 +443,8 @@ fn selector_loads_lift_fixed_two_byte_memory_addresses_and_apx_components() {
                 scale: 4,
                 disp: 0x7F,
                 disp_size: DispSize::Disp8,
-            }
+            },
+            ..
         } if *base == x86_gpr(0) && *index == x86_gpr(1)
     ));
 
@@ -451,6 +453,7 @@ fn selector_loads_lift_fixed_two_byte_memory_addresses_and_apx_components() {
         &exact_selector_load(&addr32).source,
         X86SystemSelectorSource::Memory {
             addr: Address::X86Addr32(inner),
+            ..
         } if matches!(
             inner.as_ref(),
             Address::BaseIndexScale {
@@ -474,6 +477,7 @@ fn selector_loads_lift_fixed_two_byte_memory_addresses_and_apx_components() {
                     scale: 8,
                     ..
                 },
+                ..
             },
             requires_apx: true,
             ..
@@ -487,6 +491,7 @@ fn selector_loads_lift_fixed_two_byte_memory_addresses_and_apx_components() {
             selector: X86SystemSelector::Tr,
             source: X86SystemSelectorSource::Memory {
                 addr: Address::X86Addr32(inner),
+                ..
             },
             ..
         } if matches!(inner.as_ref(), Address::Absolute(0x1234_5678))
@@ -591,6 +596,21 @@ fn ltr_implicit_busy_write_invalidates_proven_load_forwarding() {
         ltr.entry_block().unwrap().ops[2].kind,
         OpKind::Load { .. }
     ));
+
+    for selector in [
+        X86SystemSelector::Es,
+        X86SystemSelector::Ss,
+        X86SystemSelector::Ds,
+        X86SystemSelector::Fs,
+        X86SystemSelector::Gs,
+    ] {
+        let mut ordinary = build(selector);
+        assert_eq!(redundant_load_elimination(&mut ordinary), 0, "{selector:?}");
+        assert!(matches!(
+            ordinary.entry_block().unwrap().ops[2].kind,
+            OpKind::Load { .. }
+        ));
+    }
 }
 
 #[test]

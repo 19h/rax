@@ -1,6 +1,6 @@
 //! Structured x86 system-operation payloads.
 
-use crate::smir::ir::types::{Address, OpWidth, VReg};
+use crate::smir::ir::types::{Address, MemWidth, OpWidth, VReg};
 
 /// Architecturally readable x86 control registers accepted by `MOV r64, CRn`
 /// in 64-bit mode. Reserved control-register numbers are represented as an
@@ -117,18 +117,29 @@ pub struct X86SystemSelectorStoreOp {
     pub requires_apx: bool,
 }
 
-/// Architecturally fixed 16-bit source of LLDT/LTR. Operand-size prefixes do
-/// not alter either register reads or memory-transfer width.
+/// Selector-load source. Register forms always consume the low 16 bits. LLDT
+/// and LTR memory forms are fixed at 2 bytes; `MOV Sreg,r/m` uses 2 bytes
+/// unless REX.W/REX2.W selects an 8-byte memory read whose low 16 bits are
+/// loaded. `stack_segment` preserves the architecturally distinct #SS(0)
+/// classification for a noncanonical SS-based memory range.
 #[derive(Clone, Debug)]
 pub enum X86SystemSelectorSource {
-    Register { src: VReg },
-    Memory { addr: Address },
+    Register {
+        src: VReg,
+    },
+    Memory {
+        addr: Address,
+        width: MemWidth,
+        stack_segment: bool,
+    },
 }
 
-/// Load LDTR or TR and its hidden descriptor cache. Ordinary segment-selector
-/// variants are invalid shapes for this operation. LTR also performs the
-/// implicit available-to-busy GDT descriptor transition before task-register
-/// commit. Successful execution serializes and hands off at `next_pc`.
+/// Load one visible selector and its hidden descriptor cache. LLDT/LTR perform
+/// their system-descriptor checks; `MOV Sreg,r/m` admits ES/SS/DS/FS/GS and
+/// performs data/stack descriptor validation plus the implicit accessed-bit
+/// transition. LTR performs the available-to-busy GDT transition. LLDT/LTR
+/// serialize; every variant terminates native execution and hands off at
+/// `next_pc` so the updated segment state is visible before later guest work.
 #[derive(Clone, Debug)]
 pub struct X86SystemSelectorLoadOp {
     pub selector: X86SystemSelector,

@@ -32,6 +32,124 @@ fn selector_error_code(selector: u16) -> u32 {
     u32::from(selector & 0xFFFC)
 }
 
+/// Ordinary segment register admitted by `MOV Sreg,r/m` (`8E /r`). CS has no
+/// encoding in this direction and is deliberately absent.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum X86SegmentLoadTarget {
+    Es,
+    Ss,
+    Ds,
+    Fs,
+    Gs,
+}
+
+/// A validated code/data descriptor and the descriptor qword after the
+/// architecturally implicit accessed-bit transition.
+#[derive(Debug)]
+pub(crate) struct X86SegmentLoadDescriptor {
+    pub(crate) segment: Segment,
+    pub(crate) accessed_low: u64,
+}
+
+/// Direct/JIT failures before an ordinary segment-selector commit. Native-only
+/// preflight failures are replayed by the direct engine so MMIO, translation,
+/// and architectural faults are observed exactly once at the guest frontier.
+#[derive(Debug)]
+pub(in crate::isa::x86_64) enum X86SegmentSelectorLoadFault {
+    Architectural(X86SystemDescriptorFault),
+    StackSegment { error_code: u32 },
+    Memory(Error),
+    NativeDeopt,
+}
+
+#[inline]
+fn segment_descriptor_base(raw: u64) -> u64 {
+    ((raw >> 16) & 0xFFFF) | (((raw >> 32) & 0xFF) << 16) | (((raw >> 56) & 0xFF) << 24)
+}
+
+#[inline]
+fn segment_descriptor_limit(raw: u64) -> u32 {
+    let raw_limit = ((raw & 0xFFFF) | (((raw >> 48) & 0x0F) << 16)) as u32;
+    if raw >> 55 & 1 != 0 {
+        (raw_limit << 12) | 0xFFF
+    } else {
+        raw_limit
+    }
+}
+
+/// Decode and validate one non-null data/stack selector. Type and privilege
+/// checks precede presence, matching the architectural exception priority.
+pub(crate) fn decode_x86_segment_load_descriptor(
+    target: X86SegmentLoadTarget,
+    selector: u16,
+    raw: u64,
+    cpl: u8,
+) -> std::result::Result<X86SegmentLoadDescriptor, X86SystemDescriptorFault> {
+    let error_code = selector_error_code(selector);
+    if selector & 0xFFFC == 0 {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code: 0 });
+    }
+
+    let type_ = ((raw >> 40) & 0x0F) as u8;
+    let code_or_data = raw >> 44 & 1 != 0;
+    let executable = type_ & 0x8 != 0;
+    let readable_or_writable = type_ & 0x2 != 0;
+    let conforming = executable && type_ & 0x4 != 0;
+    let dpl = ((raw >> 45) & 3) as u8;
+    let rpl = (selector & 3) as u8;
+
+    let valid = if target == X86SegmentLoadTarget::Ss {
+        code_or_data && !executable && readable_or_writable && rpl == cpl && dpl == cpl
+    } else {
+        let readable = !executable || readable_or_writable;
+        let privilege_ok = conforming || (cpl <= dpl && rpl <= dpl);
+        code_or_data && readable && privilege_ok
+    };
+    if !valid {
+        return Err(X86SystemDescriptorFault::GeneralProtection { error_code });
+    }
+    if raw >> 47 & 1 == 0 {
+        return Err(X86SystemDescriptorFault::SegmentNotPresent { error_code });
+    }
+
+    Ok(X86SegmentLoadDescriptor {
+        segment: Segment {
+            base: segment_descriptor_base(raw),
+            limit: segment_descriptor_limit(raw),
+            selector,
+            type_: type_ | 1,
+            present: true,
+            dpl,
+            db: raw >> 54 & 1 != 0,
+            s: true,
+            l: raw >> 53 & 1 != 0,
+            g: raw >> 55 & 1 != 0,
+            avl: raw >> 52 & 1 != 0,
+            unusable: false,
+        },
+        accessed_low: raw | (1_u64 << 40),
+    })
+}
+
+/// Real and virtual-8086 modes load selector-derived 64 KiB segments without
+/// consulting a descriptor table. Virtual-8086 caches carry DPL 3.
+pub(crate) fn x86_real_mode_segment(selector: u16, virtual_8086: bool) -> Segment {
+    Segment {
+        base: u64::from(selector) << 4,
+        limit: 0xFFFF,
+        selector,
+        type_: 0x3,
+        present: true,
+        dpl: if virtual_8086 { 3 } else { 0 },
+        db: false,
+        s: true,
+        l: false,
+        g: false,
+        avl: false,
+        unusable: false,
+    }
+}
+
 /// Decode and validate one LDT system descriptor after the owning GDT bytes
 /// have been read. In 64-bit mode the descriptor is 16 bytes: the upper base
 /// dword is followed by a reserved dword, and the legacy L/D attribute bits
@@ -290,6 +408,106 @@ impl X86_64Vcpu {
             .map_err(X86SystemSelectorLoadFault::Memory)?;
         Ok(())
     }
+
+    fn commit_segment_selector(&mut self, target: X86SegmentLoadTarget, segment: Segment) {
+        match target {
+            X86SegmentLoadTarget::Es => self.sregs.es = segment,
+            X86SegmentLoadTarget::Ss => {
+                self.sregs.ss = segment;
+                // MOV SS inhibits maskable interrupts and selected debug traps
+                // through the boundary following the next instruction.
+                self.interrupt_inhibit = true;
+            }
+            X86SegmentLoadTarget::Ds => self.sregs.ds = segment,
+            X86SegmentLoadTarget::Fs => self.sregs.fs = segment,
+            X86SegmentLoadTarget::Gs => self.sregs.gs = segment,
+        }
+    }
+
+    /// Validate and load ES/SS/DS/FS/GS for `MOV Sreg,r/m`. Descriptor reads
+    /// and the implicit accessed-bit store precede selector/cache exposure.
+    /// `native_preflight` excludes accesses that cannot be speculated exactly
+    /// once before direct replay.
+    pub(in crate::isa::x86_64) fn load_segment_selector(
+        &mut self,
+        target: X86SegmentLoadTarget,
+        selector: u16,
+        native_preflight: bool,
+    ) -> std::result::Result<(), X86SegmentSelectorLoadFault> {
+        let virtual_8086 = self.regs.rflags & flags::bits::VM != 0;
+        if self.sregs.cr0 & 1 == 0 || virtual_8086 {
+            self.commit_segment_selector(target, x86_real_mode_segment(selector, virtual_8086));
+            return Ok(());
+        }
+
+        let cpl = current_cpl(self);
+        if selector & 0xFFFC == 0 {
+            if target == X86SegmentLoadTarget::Ss
+                && (!self.sregs.cs.l || cpl == 3 || (selector & 3) as u8 != cpl)
+            {
+                return Err(X86SegmentSelectorLoadFault::Architectural(
+                    X86SystemDescriptorFault::GeneralProtection { error_code: 0 },
+                ));
+            }
+            self.commit_segment_selector(
+                target,
+                Segment {
+                    selector,
+                    dpl: cpl,
+                    unusable: true,
+                    ..Segment::default()
+                },
+            );
+            return Ok(());
+        }
+
+        let descriptor_address = self
+            .far_jump_descriptor_address(selector, 8)
+            .map_err(X86SegmentSelectorLoadFault::Architectural)?;
+        if native_preflight && !self.far_jump_plain_read(descriptor_address, 8, true) {
+            return Err(X86SegmentSelectorLoadFault::NativeDeopt);
+        }
+        let low = self
+            .read_far_jump_descriptor_qword(descriptor_address)
+            .map_err(X86SegmentSelectorLoadFault::Memory)?;
+        let descriptor = match decode_x86_segment_load_descriptor(target, selector, low, cpl) {
+            Ok(descriptor) => descriptor,
+            Err(X86SystemDescriptorFault::SegmentNotPresent { error_code })
+                if target == X86SegmentLoadTarget::Ss =>
+            {
+                return Err(X86SegmentSelectorLoadFault::StackSegment { error_code });
+            }
+            Err(fault) => return Err(X86SegmentSelectorLoadFault::Architectural(fault)),
+        };
+
+        if low != descriptor.accessed_low {
+            if native_preflight {
+                let Some(last) = descriptor_address.checked_add(7) else {
+                    return Err(X86SegmentSelectorLoadFault::NativeDeopt);
+                };
+                if self.mmu.is_code_page(descriptor_address)
+                    || self.mmu.is_code_page(last)
+                    || !self.far_jump_plain_write(descriptor_address, 8, true)
+                {
+                    return Err(X86SegmentSelectorLoadFault::NativeDeopt);
+                }
+            }
+            // Verification restores logged stores through the guest access
+            // path. A user-mode supervisor descriptor cannot be undone there;
+            // replay directly and perform the transition exactly once.
+            #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+            if native_preflight && self.jit_mem_log_active() && cpl != 0 {
+                return Err(X86SegmentSelectorLoadFault::NativeDeopt);
+            }
+            #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+            self.push_jit_mem_log((descriptor_address, 8, low));
+            self.write_far_jump_descriptor_qword(descriptor_address, descriptor.accessed_low)
+                .map_err(X86SegmentSelectorLoadFault::Memory)?;
+        }
+
+        self.commit_segment_selector(target, descriptor.segment);
+        Ok(())
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -423,6 +641,29 @@ fn set_zf(vcpu: &mut X86_64Vcpu, set: bool) {
     }
 }
 
+fn read_group6_selector_load_source(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    modrm_start: usize,
+    modrm: u8,
+    rm: u8,
+) -> Result<Option<u16>> {
+    if modrm >> 6 == 3 {
+        return Ok(Some(vcpu.get_reg(rm, 2) as u16));
+    }
+    let (addr, extra, stack_segment) =
+        vcpu.decode_modrm_addr_with_stack_segment(ctx, modrm_start)?;
+    ctx.cursor = modrm_start + 1 + extra;
+    let canonical = addr.checked_add(1).is_some_and(|last| {
+        vcpu.sregs.efer & (1 << 10) == 0 || is_canonical_48(addr) && is_canonical_48(last)
+    });
+    if !canonical {
+        vcpu.inject_exception(if stack_segment { 12 } else { 13 }, Some(0))?;
+        return Ok(None);
+    }
+    Ok(Some(vcpu.read_mem(addr, 2)? as u16))
+}
+
 /// Group 6 - SLDT, STR, LLDT, LTR, VERR, VERW (0x0F 0x00)
 pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     // Every Group-6 instruction is recognized only in protected mode and is
@@ -474,12 +715,10 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             if !is_cpl0(vcpu) {
                 return raise_gp0(vcpu);
             }
-            let selector = if is_memory {
-                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
-                ctx.cursor = modrm_start + 1 + extra;
-                vcpu.read_mem(addr, 2)? as u16
-            } else {
-                vcpu.get_reg(rm, 2) as u16
+            let Some(selector) =
+                read_group6_selector_load_source(vcpu, ctx, modrm_start, modrm, rm)?
+            else {
+                return Ok(None);
             };
             match vcpu.load_ldtr_selector(selector) {
                 Ok(()) => {}
@@ -504,12 +743,10 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             if !is_cpl0(vcpu) {
                 return raise_gp0(vcpu);
             }
-            let selector = if is_memory {
-                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
-                ctx.cursor = modrm_start + 1 + extra;
-                vcpu.read_mem(addr, 2)? as u16
-            } else {
-                vcpu.get_reg(rm, 2) as u16
+            let Some(selector) =
+                read_group6_selector_load_source(vcpu, ctx, modrm_start, modrm, rm)?
+            else {
+                return Ok(None);
             };
             match vcpu.load_tr_selector(selector) {
                 Ok(()) => {}
@@ -618,4 +855,150 @@ pub fn lsl(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn descriptor(type_: u8, dpl: u8, present: bool, system: bool) -> u64 {
+        0xBCDE_u64
+            | (0x5000_u64 << 16)
+            | (0x34_u64 << 32)
+            | (u64::from(type_ & 0xF) << 40)
+            | (u64::from(!system) << 44)
+            | (u64::from(dpl & 3) << 45)
+            | (u64::from(present) << 47)
+            | (0xA_u64 << 48)
+            | (1 << 52)
+            | (1 << 54)
+            | (1 << 55)
+            | (0x12_u64 << 56)
+    }
+
+    #[test]
+    fn ordinary_segment_descriptor_decode_preserves_cache_and_sets_accessed() {
+        let raw = descriptor(0x2, 0, true, false);
+        for target in [
+            X86SegmentLoadTarget::Es,
+            X86SegmentLoadTarget::Ss,
+            X86SegmentLoadTarget::Ds,
+            X86SegmentLoadTarget::Fs,
+            X86SegmentLoadTarget::Gs,
+        ] {
+            let decoded = decode_x86_segment_load_descriptor(target, 0x10, raw, 0).unwrap();
+            assert_eq!(decoded.segment.selector, 0x10);
+            assert_eq!(decoded.segment.base, 0x1234_5000);
+            assert_eq!(decoded.segment.limit, 0xA_BCDE_FFF);
+            assert_eq!(decoded.segment.type_, 0x3);
+            assert_eq!(decoded.segment.dpl, 0);
+            assert!(decoded.segment.present);
+            assert!(decoded.segment.db);
+            assert!(decoded.segment.s);
+            assert!(decoded.segment.g);
+            assert!(decoded.segment.avl);
+            assert!(!decoded.segment.unusable);
+            assert_eq!(decoded.accessed_low, raw | (1 << 40));
+        }
+    }
+
+    #[test]
+    fn ordinary_data_descriptor_type_privilege_and_presence_faults_are_exact() {
+        for (name, raw, selector, cpl, expected) in [
+            (
+                "system",
+                descriptor(0x2, 0, true, true),
+                0x10,
+                0,
+                X86SystemDescriptorFault::GeneralProtection { error_code: 0x10 },
+            ),
+            (
+                "unreadable code",
+                descriptor(0x8, 0, true, false),
+                0x10,
+                0,
+                X86SystemDescriptorFault::GeneralProtection { error_code: 0x10 },
+            ),
+            (
+                "RPL",
+                descriptor(0x2, 0, true, false),
+                0x13,
+                0,
+                X86SystemDescriptorFault::GeneralProtection { error_code: 0x10 },
+            ),
+            (
+                "CPL",
+                descriptor(0x2, 2, true, false),
+                0x12,
+                3,
+                X86SystemDescriptorFault::GeneralProtection { error_code: 0x10 },
+            ),
+            (
+                "not present",
+                descriptor(0x2, 0, false, false),
+                0x10,
+                0,
+                X86SystemDescriptorFault::SegmentNotPresent { error_code: 0x10 },
+            ),
+        ] {
+            assert_eq!(
+                decode_x86_segment_load_descriptor(X86SegmentLoadTarget::Ds, selector, raw, cpl,)
+                    .expect_err(name),
+                expected,
+                "{name}"
+            );
+        }
+
+        // Readable conforming code is loadable independently of DPL.
+        assert!(
+            decode_x86_segment_load_descriptor(
+                X86SegmentLoadTarget::Ds,
+                0x13,
+                descriptor(0xE, 0, true, false),
+                3,
+            )
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn stack_descriptor_requires_writable_data_and_exact_cpl_rpl_dpl() {
+        for (raw, selector, cpl) in [
+            (descriptor(0x0, 0, true, false), 0x10, 0),
+            (descriptor(0x2, 1, true, false), 0x10, 0),
+            (descriptor(0x2, 0, true, false), 0x11, 0),
+            (descriptor(0xA, 0, true, false), 0x10, 0),
+        ] {
+            assert!(matches!(
+                decode_x86_segment_load_descriptor(X86SegmentLoadTarget::Ss, selector, raw, cpl,),
+                Err(X86SystemDescriptorFault::GeneralProtection { error_code: 0x10 })
+            ));
+        }
+        assert!(matches!(
+            decode_x86_segment_load_descriptor(
+                X86SegmentLoadTarget::Ss,
+                0x10,
+                descriptor(0x2, 0, false, false),
+                0,
+            ),
+            Err(X86SystemDescriptorFault::SegmentNotPresent { error_code: 0x10 })
+        ));
+    }
+
+    #[test]
+    fn real_and_virtual_8086_segment_images_are_selector_derived() {
+        for (virtual_8086, dpl) in [(false, 0), (true, 3)] {
+            let segment = x86_real_mode_segment(0xF123, virtual_8086);
+            assert_eq!(segment.base, 0xF_1230);
+            assert_eq!(segment.limit, 0xFFFF);
+            assert_eq!(segment.selector, 0xF123);
+            assert_eq!(segment.type_, 0x3);
+            assert_eq!(segment.dpl, dpl);
+            assert!(segment.present && segment.s);
+            assert!(!segment.db);
+            assert!(!segment.l);
+            assert!(!segment.g);
+            assert!(!segment.unusable);
+        }
+    }
 }

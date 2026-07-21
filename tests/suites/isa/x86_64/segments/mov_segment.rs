@@ -214,18 +214,16 @@ fn test_mov_ds_cx() {
 }
 
 #[test]
-fn test_mov_ss_dx() {
+fn test_mov_ss_dx_allows_null_selector_at_cpl0_in_64_bit_mode() {
     let code = [
         0x48, 0xc7, 0xc2, 0x00, 0x00, 0x00, 0x00, // MOV RDX, 0
         0x8e, 0xd2, // MOV SS, DX
         0x8c, 0xd0, // MOV AX, SS (read back)
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm_no_idt(&code, None);
-    assert!(
-        run_until_hlt(&mut vcpu).is_err(),
-        "loading SS with a null selector in protected mode should fault"
-    );
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax & 0xFFFF, 0);
 }
 
 #[test]
@@ -667,13 +665,27 @@ fn test_mov_fs_nonzero_selector_roundtrip() {
         0x8c, 0xe3, // MOV BX, FS
         0xf4,
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    // GDT entry 2: present ring-0 writable data, base 0, 4 GiB limit, with
+    // A=0 so MOV must perform the architecturally implicit accessed-bit store.
+    let descriptor = [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x92, 0xCF, 0x00];
+    mem.write_slice(&descriptor, GuestAddress(GDT_BASE + 0x10))
+        .unwrap();
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(
         regs.rbx & 0xFFFF,
         0x0010,
         "FS reads back loaded selector 0x10"
     );
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(sregs.fs.selector, 0x10);
+    assert_eq!(sregs.fs.limit, u32::MAX);
+    assert_eq!(sregs.fs.type_, 0x3);
+    assert!(sregs.fs.present && !sregs.fs.unusable);
+    let mut accessed = [0_u8; 8];
+    mem.read_slice(&mut accessed, GuestAddress(GDT_BASE + 0x10))
+        .unwrap();
+    assert_eq!(accessed[5], 0x93, "MOV FS must set descriptor A");
 }
 
 #[test]

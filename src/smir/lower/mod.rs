@@ -200,8 +200,8 @@ pub const X86_GUEST_INTERRUPT_FLAGS_OFFSET: i32 = X86_GUEST_FAR_RETURN_FN_OFFSET
 /// Offset of the helper-backed CLI evaluator function pointer.
 pub const X86_GUEST_CLI_FN_OFFSET: i32 = X86_GUEST_INTERRUPT_FLAGS_OFFSET + 8;
 /// Offset of [`runtime::GuestRegs::interrupt_inhibit`]. The value is zero or
-/// one and carries the emulator-private STI maskable-interrupt shadow across a
-/// native handoff.
+/// one and carries the emulator-private STI/MOV-SS maskable-interrupt shadow
+/// across a native handoff.
 pub const X86_GUEST_INTERRUPT_INHIBIT_OFFSET: i32 = X86_GUEST_CLI_FN_OFFSET + 8;
 /// Offset of the helper-backed STI evaluator function pointer.
 pub const X86_GUEST_STI_FN_OFFSET: i32 = X86_GUEST_INTERRUPT_INHIBIT_OFFSET + 8;

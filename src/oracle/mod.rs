@@ -1160,10 +1160,15 @@ impl OracleJson for X86SystemSelectorSource {
                 "src": src.oracle_json(),
                 "width": "W16",
             }),
-            X86SystemSelectorSource::Memory { addr } => json!({
+            X86SystemSelectorSource::Memory {
+                addr,
+                width,
+                stack_segment,
+            } => json!({
                 "kind": "memory",
                 "addr": addr.oracle_json(),
-                "width": "B2",
+                "width": width.oracle_json(),
+                "stack_segment": stack_segment,
             }),
         }
     }
