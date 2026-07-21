@@ -43,6 +43,17 @@ fn memory_for(selector: X86SystemSelector, addr: Address, requires_apx: bool) ->
     })
 }
 
+fn stack_for(selector: X86SystemSelector, width: MemWidth, requires_apx: bool) -> OpKind {
+    OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
+        selector,
+        target: X86SystemSelectorTarget::Stack {
+            stack_pointer: x86(X86Reg::Rsp),
+            width,
+        },
+        requires_apx,
+    })
+}
+
 fn load_register(selector: X86SystemSelector, src: VReg, requires_apx: bool) -> OpKind {
     OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
         selector,
@@ -303,6 +314,39 @@ fn x86_mov_rm_sreg_gate_admits_all_selectors_registers_memory_and_apx_shapes() {
 }
 
 #[test]
+fn x86_push_segment_gate_requires_mmu_and_rejects_every_non_lifter_stack_shape() {
+    for (selector, width, requires_apx) in [
+        (X86SystemSelector::Fs, MemWidth::B8, false),
+        (X86SystemSelector::Gs, MemWidth::B2, false),
+        (X86SystemSelector::Gs, MemWidth::B8, true),
+    ] {
+        let op = stack_for(selector, width, requires_apx);
+        assert!(op.is_jit_safe(), "{op:?}");
+        assert!(shape_valid(op.clone()), "{op:?}");
+        assert!(!gate(op.clone(), false), "{op:?}");
+        assert!(x86_jit_op_uses_mem_helper(&op));
+        assert!(gate(op, true), "{selector:?} {width:?}");
+    }
+
+    for malformed in [
+        stack_for(X86SystemSelector::Cs, MemWidth::B8, false),
+        stack_for(X86SystemSelector::Fs, MemWidth::B1, false),
+        stack_for(X86SystemSelector::Gs, MemWidth::B4, false),
+        OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
+            selector: X86SystemSelector::Fs,
+            target: X86SystemSelectorTarget::Stack {
+                stack_pointer: x86(X86Reg::Rax),
+                width: MemWidth::B8,
+            },
+            requires_apx: false,
+        }),
+    ] {
+        assert!(!shape_valid(malformed.clone()), "{malformed:?}");
+        assert!(!gate(malformed, true));
+    }
+}
+
+#[test]
 fn x86_selector_gate_requires_memory_helpers_and_accepts_state_backed_addresses() {
     for (addr, requires_apx) in [
         (Address::Absolute(0x4000), false),
@@ -387,6 +431,7 @@ fn x86_selector_gate_rejects_both_aarch64_host_paths() {
         register_for(X86SystemSelector::Cs, x86(X86Reg::R31), OpWidth::W64, true),
         memory(Address::Absolute(0x4000), false),
         memory_for(X86SystemSelector::Fs, Address::Absolute(0x5000), false),
+        stack_for(X86SystemSelector::Gs, MemWidth::B8, true),
         load_register(X86SystemSelector::Ldtr, x86(X86Reg::Rax), false),
         load_register(X86SystemSelector::Tr, x86(X86Reg::R31), true),
         load_memory(X86SystemSelector::Tr, Address::Absolute(0x4000), false),
@@ -410,6 +455,10 @@ fn x86_selector_survives_o2_and_remains_admitted_with_memory_helpers() {
     );
     builder.push_op(0x1003, register(x86(X86Reg::Rbp), OpWidth::W16, false));
     builder.push_op(0x1006, memory(Address::Direct(x86(X86Reg::Rsp)), false));
+    builder.push_op(
+        0x1009,
+        stack_for(X86SystemSelector::Fs, MemWidth::B8, false),
+    );
     builder.set_terminator(Terminator::Return { values: vec![] });
     let mut function = builder.finish();
     crate::smir::optimize::optimize_function(&mut function, crate::smir::optimize::OptLevel::O2);
@@ -420,7 +469,7 @@ fn x86_selector_survives_o2_and_remains_admitted_with_memory_helpers() {
             .iter()
             .filter(|op| matches!(op.kind, OpKind::X86SystemSelectorStore(..)))
             .count(),
-        2
+        3
     );
     assert_eq!(
         function.blocks[0]

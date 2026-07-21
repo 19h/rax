@@ -10,6 +10,52 @@ use crate::smir::lift::x86_64::{X86_64Lifter, X86Prefix, decode_modrm};
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult};
 
 impl X86_64Lifter {
+    /// Lift long-mode `PUSH FS` (`0F A0`) and `PUSH GS` (`0F A8`). The stack
+    /// address is always 64 bits. The operand is 8 bytes by default, 2 bytes
+    /// under 66H, and 8 bytes when REX.W/REX2.W overrides 66H. A single stack
+    /// target preserves the architectural non-commit rule when the write
+    /// faults. REX2 availability remains a dynamic APX check.
+    pub(crate) fn lift_push_segment_0f(
+        &self,
+        opcode: u8,
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![opcode],
+            });
+        }
+
+        let selector = match opcode {
+            0xA0 => X86SystemSelector::Fs,
+            0xA8 => X86SystemSelector::Gs,
+            _ => unreachable!("PUSH-segment dispatcher admitted another opcode"),
+        };
+        let width = if prefix.operand_size_override && !prefix.rex_w() {
+            MemWidth::B2
+        } else {
+            MemWidth::B8
+        };
+
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
+                    selector,
+                    target: X86SystemSelectorTarget::Stack {
+                        stack_pointer: self.rsp(),
+                        width,
+                    },
+                    requires_apx: prefix.rex2.is_some(),
+                }),
+            )],
+            prefix.cursor,
+        ))
+    }
+
     /// Lift `MOV r/m16/32/64, Sreg` (`8C /r`). The ModR/M.reg field selects
     /// ES/CS/SS/DS/FS/GS and ignores both legacy REX.R and REX2.R4/R3. Register
     /// destinations use the encoded operand width; memory destinations always

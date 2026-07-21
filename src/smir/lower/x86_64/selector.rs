@@ -4,12 +4,13 @@ use crate::smir::ir::ops::{
     OpKind, SmirOp, X86SystemSelector, X86SystemSelectorLoadOp, X86SystemSelectorSource,
     X86SystemSelectorStoreOp, X86SystemSelectorTarget,
 };
-use crate::smir::ir::types::{ArchReg, MemWidth, OpWidth, SignExtend, VReg};
+use crate::smir::ir::types::{Address, ArchReg, MemWidth, OpWidth, SignExtend, VReg};
 use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::{
     LowerError, X86_GUEST_APX_ENABLED_OFFSET, X86_GUEST_CPL_OFFSET, X86_GUEST_CR0_OFFSET,
-    X86_GUEST_CR4_OFFSET, X86_GUEST_RFLAGS_OFFSET, X86_GUEST_SYSTEM_SELECTOR_FN_OFFSET,
-    X86_GUEST_SYSTEM_SELECTOR_LOAD_FN_OFFSET, X86_STATE_PTR_AT_RBP,
+    X86_GUEST_CR4_OFFSET, X86_GUEST_CS_L_OFFSET, X86_GUEST_EFER_OFFSET, X86_GUEST_RFLAGS_OFFSET,
+    X86_GUEST_SYSTEM_SELECTOR_FN_OFFSET, X86_GUEST_SYSTEM_SELECTOR_LOAD_FN_OFFSET,
+    X86_STATE_PTR_AT_RBP,
 };
 
 use super::{X86_64Lowerer, X86Cond, X86Emitter};
@@ -19,9 +20,9 @@ use super::{X86_64Lowerer, X86Cond, X86Emitter};
 /// REX2 may also encode a legacy register or address.
 pub(crate) fn x86_system_selector_store_shape_valid(op: &SmirOp) -> bool {
     let OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
+        selector,
         target,
         requires_apx,
-        ..
     }) = &op.kind
     else {
         return false;
@@ -47,6 +48,14 @@ pub(crate) fn x86_system_selector_store_shape_valid(op: &SmirOp) -> bool {
                 .iter()
                 .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
             addr.is_x86_state_backed_shape() && (!uses_egpr || *requires_apx)
+        }
+        X86SystemSelectorTarget::Stack {
+            stack_pointer,
+            width,
+        } => {
+            *stack_pointer == VReg::Arch(ArchReg::X86(crate::smir::ir::types::X86Reg::Rsp))
+                && matches!(width, MemWidth::B2 | MemWidth::B8)
+                && matches!(selector, X86SystemSelector::Fs | X86SystemSelector::Gs)
         }
     }
 }
@@ -105,15 +114,17 @@ pub(crate) fn x86_system_selector_load_shape_valid(op: &SmirOp) -> bool {
 
 impl X86_64Lowerer {
     /// Emit APX and selector-specific checks while RAX is the live `GuestRegs`
-    /// base. SLDT/STR require protected-mode, VM86, and UMIP checks; MOV
-    /// r/m,Sreg only requires APX when encoded with REX2. Every failure replays
-    /// the direct instruction at its original PC.
+    /// base. SLDT/STR require protected-mode, VM86, and UMIP checks; PUSH FS/GS
+    /// requires EFER.LMA and CS.L; MOV r/m,Sreg has no mode guard. Every REX2
+    /// form requires APX, and every failure replays the direct instruction at
+    /// its original PC.
     fn emit_x86_system_selector_store_guards(
         &mut self,
         selector: X86SystemSelector,
         requires_apx: bool,
+        stack_width: Option<MemWidth>,
     ) -> (Vec<usize>, Vec<usize>) {
-        let mut fault_branches = Vec::with_capacity(4);
+        let mut fault_branches = Vec::with_capacity(9);
         let mut commit_branches = Vec::with_capacity(1);
 
         if requires_apx {
@@ -121,6 +132,56 @@ impl X86_64Lowerer {
             self.code.emit_u32(X86_GUEST_APX_ENABLED_OFFSET as u32);
             self.code.emit_u8(0);
             fault_branches.push(self.emit_jcc_placeholder(X86Cond::E));
+        }
+
+        if let Some(width) = stack_width {
+            let range_tail = match width {
+                MemWidth::B2 => 1,
+                MemWidth::B8 => 7,
+                _ => unreachable!("validated PUSH-segment width changed"),
+            };
+            self.code.emit_bytes(&[0x48, 0xF7, 0x80]); // test qword [rax+efer],LMA
+            self.code.emit_u32(X86_GUEST_EFER_OFFSET as u32);
+            self.code.emit_u32(1 << 10);
+            fault_branches.push(self.emit_jcc_placeholder(X86Cond::E));
+
+            self.code.emit_bytes(&[0x48, 0x83, 0xB8]); // cmp qword [rax+cs_l],0
+            self.code.emit_u32(X86_GUEST_CS_L_OFFSET as u32);
+            self.code.emit_u8(0);
+            fault_branches.push(self.emit_jcc_placeholder(X86Cond::E));
+
+            // Compute the complete post-decrement stack range from the
+            // state-backed RSP. Every byte must remain within one canonical
+            // 48-bit region, and the range must not wrap through 2^64. These
+            // checks precede selector observation and the generic MMU helper;
+            // the latter intentionally reports only success/failure and cannot
+            // by itself preserve the architectural #SS(0) classification.
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rax, 4 * 8, OpWidth::W64);
+                emitter.emit_lea(PhysReg::Rdx, PhysReg::Rdx, -(width.bytes() as i32));
+            }
+            self.code.emit_bytes(&[
+                0x48, 0x89, 0xD1, // mov rcx,rdx
+                0x48, 0xC1, 0xE1, 0x10, // shl rcx,16
+                0x48, 0xC1, 0xF9, 0x10, // sar rcx,16
+                0x48, 0x39, 0xD1, // cmp rcx,rdx
+            ]);
+            fault_branches.push(self.emit_jcc_placeholder(X86Cond::Ne));
+
+            self.code.emit_bytes(&[
+                0x48, 0x89, 0xD1, // mov rcx,rdx
+                0x48, 0x83, 0xC1, // add rcx,imm8
+                range_tail,
+            ]);
+            fault_branches.push(self.emit_jcc_placeholder(X86Cond::B));
+            self.code.emit_bytes(&[
+                0x48, 0x89, 0xCA, // mov rdx,rcx
+                0x48, 0xC1, 0xE2, 0x10, // shl rdx,16
+                0x48, 0xC1, 0xFA, 0x10, // sar rdx,16
+                0x48, 0x39, 0xCA, // cmp rdx,rcx
+            ]);
+            fault_branches.push(self.emit_jcc_placeholder(X86Cond::Ne));
         }
 
         if !matches!(selector, X86SystemSelector::Ldtr | X86SystemSelector::Tr) {
@@ -152,9 +213,10 @@ impl X86_64Lowerer {
     }
 
     /// Read the selected guest-visible selector through the owning-vCPU helper
-    /// and commit the encoded GPR width or one exact 2-byte MMU-backed store.
-    /// Host selector instructions are never emitted because they would observe
-    /// host state rather than the guest vCPU.
+    /// and commit the encoded GPR width, one exact 2-byte ordinary store, or a
+    /// fault-precise long-mode stack store. Host selector instructions are
+    /// never emitted because they would observe host state rather than the
+    /// guest vCPU.
     pub(crate) fn emit_x86_system_selector_store(&mut self, op: &SmirOp) -> Result<(), LowerError> {
         if !self.jit_fault_deopt_guards {
             return Err(LowerError::UnsupportedOp {
@@ -164,7 +226,7 @@ impl X86_64Lowerer {
         if !x86_system_selector_store_shape_valid(op) {
             return Err(LowerError::InvalidOperand {
                 op: "X86SystemSelectorStore".to_string(),
-                operand: "requires an unhinted W16/W32/W64 x86 GPR or state-backed memory target, with APX for every EGPR"
+                operand: "requires an unhinted W16/W32/W64 x86 GPR, state-backed memory, or FS/GS long-mode stack target, with APX for every EGPR"
                     .to_string(),
             });
         }
@@ -176,15 +238,20 @@ impl X86_64Lowerer {
         else {
             unreachable!("validated X86SystemSelectorStore shape changed")
         };
-        if matches!(target, X86SystemSelectorTarget::Memory { .. }) && !self.mem_helpers {
+        let memory_target = matches!(
+            target,
+            X86SystemSelectorTarget::Memory { .. } | X86SystemSelectorTarget::Stack { .. }
+        );
+        if memory_target && !self.mem_helpers {
             return Err(LowerError::UnsupportedOp {
                 op: "x86 selector-store memory destination requires JIT MMU helpers".to_string(),
             });
         }
 
-        // A memory form owns one aligned 16-byte value slot across its helper
-        // calls. The slot does not alter SysV call alignment.
-        if matches!(target, X86SystemSelectorTarget::Memory { .. }) {
+        // A memory-writing form owns one aligned 16-byte value slot across its
+        // selector and MMU helper calls. The slot does not alter SysV call
+        // alignment.
+        if memory_target {
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, -16);
         }
@@ -195,8 +262,12 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x9C); // pushfq
         self.emit_spill_legacy_gprs_to_state_from_rax(8);
 
+        let stack_width = match target {
+            X86SystemSelectorTarget::Stack { width, .. } => Some(*width),
+            _ => None,
+        };
         let (fault_branches, commit_branches) =
-            self.emit_x86_system_selector_store_guards(*selector, *requires_apx);
+            self.emit_x86_system_selector_store_guards(*selector, *requires_apx, stack_width);
         for branch in commit_branches {
             self.patch_rel32_to_current(branch)?;
         }
@@ -279,6 +350,51 @@ impl X86_64Lowerer {
                 let mut emitter = X86Emitter::new(&mut self.code);
                 emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
             }
+            X86SystemSelectorTarget::Stack {
+                stack_pointer,
+                width,
+            } => {
+                {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    // Two snapshots precede the outer selector slot.
+                    emitter.emit_mov_mr(PhysReg::Rsp, 16, PhysReg::Rax, OpWidth::W64);
+                }
+                self.emit_reload_all(PhysReg::Rcx);
+                self.code.emit_u8(0x9D);
+                self.emit_flag_preserving_stack_pop8();
+
+                let stack_addr = Address::base_off(*stack_pointer, -(i64::from(width.bytes())));
+                self.emit_jit_mem_op(
+                    op.guest_pc,
+                    false,
+                    None,
+                    None,
+                    None,
+                    None,
+                    Some(16),
+                    &stack_addr,
+                    *width,
+                    SignExtend::Zero,
+                    16,
+                )?;
+
+                // The MMU write succeeded. Commit GuestRegs.gpr[RSP] without
+                // changing guest flags or any identity-mapped guest GPR.
+                self.code.emit_u8(0x50); // push guest RAX
+                self.code.emit_u8(0x52); // push guest RDX
+                self.emit_load_state_ptr_rax();
+                self.emit_struct_mov(PhysReg::Rax, 2, 4 * 8, false);
+                {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_lea(PhysReg::Rdx, PhysReg::Rdx, -(width.bytes() as i32));
+                }
+                self.emit_struct_mov(PhysReg::Rax, 2, 4 * 8, true);
+                self.code.emit_u8(0x5A); // pop guest RDX
+                self.code.emit_u8(0x58); // pop guest RAX
+
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
+            }
         }
 
         self.code.emit_u8(0xE9);
@@ -294,7 +410,7 @@ impl X86_64Lowerer {
         self.emit_reload_all(PhysReg::Rcx);
         self.code.emit_u8(0x9D);
         self.emit_flag_preserving_stack_pop8();
-        if matches!(target, X86SystemSelectorTarget::Memory { .. }) {
+        if memory_target {
             let mut emitter = X86Emitter::new(&mut self.code);
             emitter.emit_lea(PhysReg::Rsp, PhysReg::Rsp, 16);
         }

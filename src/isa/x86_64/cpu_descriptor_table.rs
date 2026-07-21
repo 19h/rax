@@ -290,9 +290,9 @@ pub(super) unsafe extern "C" fn rax_jit_descriptor_table_load(
     1
 }
 
-/// Return one authoritative guest selector for native SLDT/STR or MOV
-/// r/m,Sreg lowering. Reading through the owning vCPU keeps a native region
-/// coherent with prior interpreter callouts that changed selector state.
+/// Return one authoritative guest selector for native SLDT/STR, MOV r/m,Sreg,
+/// or PUSH FS/GS lowering. Reading through the owning vCPU keeps a native
+/// region coherent with prior interpreter callouts that changed selector state.
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 pub(super) unsafe extern "C" fn rax_jit_system_selector(
     state: *mut crate::smir::lower::runtime::GuestRegs,

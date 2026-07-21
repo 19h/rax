@@ -99,17 +99,29 @@ pub enum X86SystemSelector {
 }
 
 /// Architecturally distinct selector-store destinations. Register forms write
-/// the selected 16-, 32-, or 64-bit GPR width; memory forms always store exactly
-/// the 16-bit selector independently of the encoded operand size.
+/// the selected 16-, 32-, or 64-bit GPR width; ordinary memory forms always
+/// store exactly the 16-bit selector independently of the encoded operand
+/// size. Stack forms model long-mode `PUSH FS/GS` atomically: the selected
+/// width is written at the decremented stack pointer, and the architectural
+/// stack pointer is committed only after the write succeeds.
 #[derive(Clone, Debug)]
 pub enum X86SystemSelectorTarget {
-    Register { dst: VReg, width: OpWidth },
-    Memory { addr: Address },
+    Register {
+        dst: VReg,
+        width: OpWidth,
+    },
+    Memory {
+        addr: Address,
+    },
+    Stack {
+        stack_pointer: VReg,
+        width: MemWidth,
+    },
 }
 
 /// Read one visible selector. SLDT/STR require protected-mode and UMIP
-/// validation; `MOV r/m, Sreg` does not. Every REX2 encoding requires the
-/// dynamic APX profile even when it addresses only legacy GPRs.
+/// validation; `MOV r/m, Sreg` and `PUSH FS/GS` do not. Every REX2 encoding
+/// requires the dynamic APX profile even when it addresses only legacy state.
 #[derive(Clone, Debug)]
 pub struct X86SystemSelectorStoreOp {
     pub selector: X86SystemSelector,

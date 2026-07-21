@@ -662,6 +662,118 @@ fn test_push_fs_pop_gs_transfers_selector() {
     assert_eq!(regs.rsp, STACK_ADDR, "stack balanced after PUSH/POP");
 }
 
+#[test]
+fn push_fs_rex_w_takes_precedence_over_operand_size_override() {
+    for (encoding, width, apx) in [
+        (&[0x0F, 0xA0][..], 8_usize, false),
+        (&[0x66, 0x0F, 0xA0][..], 2, false),
+        (&[0x48, 0x0F, 0xA0][..], 8, false),
+        (&[0x66, 0x48, 0x0F, 0xA0][..], 8, false),
+        (&[0x66, 0x40, 0x0F, 0xA0][..], 2, false),
+        (&[0xD5, 0x80, 0xA0][..], 8, true),
+        (&[0x66, 0xD5, 0x80, 0xA0][..], 2, true),
+        (&[0x66, 0xD5, 0x88, 0xA0][..], 8, true),
+    ] {
+        let mut code = encoding.to_vec();
+        code.push(0xF4);
+        let (mut vcpu, mem) = if apx {
+            setup_apx_vm(&code, None)
+        } else {
+            setup_vm(&code, None)
+        };
+        mem.write_slice(&[0xA5; 8], GuestAddress(STACK_ADDR - 8))
+            .unwrap();
+
+        let regs = run_until_hlt(&mut vcpu).unwrap();
+        assert_eq!(
+            regs.rsp,
+            STACK_ADDR - width as u64,
+            "{encoding:02X?} stack decrement"
+        );
+
+        let mut observed = [0_u8; 8];
+        mem.read_slice(&mut observed, GuestAddress(STACK_ADDR - 8))
+            .unwrap();
+        let expected = if width == 8 {
+            [0; 8]
+        } else {
+            [0xA5, 0xA5, 0xA5, 0xA5, 0xA5, 0xA5, 0, 0]
+        };
+        assert_eq!(observed, expected, "{encoding:02X?} store width");
+    }
+}
+
+#[test]
+fn push_fs_rex2_requires_apx_without_committing() {
+    let initial = Registers {
+        rsp: STACK_ADDR,
+        ..Registers::default()
+    };
+    let (mut vcpu, mem) = setup_vm_no_idt(&[0xD5, 0x80, 0xA0], Some(initial));
+    mem.write_slice(&[0xA5; 8], GuestAddress(STACK_ADDR - 8))
+        .unwrap();
+
+    let error = vcpu
+        .step()
+        .expect_err("REX2 PUSH FS without APX must raise #UD")
+        .to_string();
+    assert!(
+        error.contains("IDT entry 6 not present"),
+        "expected #UD, got {error}"
+    );
+    let observed = vcpu.get_regs().unwrap();
+    assert_eq!(observed.rsp, STACK_ADDR);
+    assert_eq!(observed.rip, CODE_ADDR);
+    let mut bytes = [0_u8; 8];
+    mem.read_slice(&mut bytes, GuestAddress(STACK_ADDR - 8))
+        .unwrap();
+    assert_eq!(bytes, [0xA5; 8]);
+}
+
+#[test]
+fn push_fs_noncanonical_or_wrapping_stack_range_raises_ss_without_commit() {
+    for (name, instruction, rsp) in [
+        (
+            "B8 lower canonical boundary",
+            &[0x0F, 0xA0][..],
+            0x0000_8000_0000_0004_u64,
+        ),
+        (
+            "B8 upper canonical boundary",
+            &[0x0F, 0xA0][..],
+            0xFFFF_8000_0000_0004,
+        ),
+        ("B8 64-bit wrap", &[0x0F, 0xA0][..], 4),
+        (
+            "B2 lower canonical boundary",
+            &[0x66, 0x0F, 0xA0][..],
+            0x0000_8000_0000_0001,
+        ),
+        (
+            "B2 upper canonical boundary",
+            &[0x66, 0x0F, 0xA0][..],
+            0xFFFF_8000_0000_0001,
+        ),
+        ("B2 64-bit wrap", &[0x66, 0x0F, 0xA0][..], 1),
+    ] {
+        let mut initial = Registers::default();
+        initial.rsp = rsp;
+        let (mut vcpu, _) = setup_vm_no_idt(instruction, Some(initial));
+
+        let error = vcpu
+            .step()
+            .expect_err("invalid PUSH FS stack range must raise #SS(0)")
+            .to_string();
+        assert!(
+            error.contains("IDT entry 12 not present"),
+            "{name}: expected #SS(0), got {error}"
+        );
+        let observed = vcpu.get_regs().unwrap();
+        assert_eq!(observed.rsp, rsp, "{name}: RSP must not commit");
+        assert_eq!(observed.rip, CODE_ADDR, "{name}: RIP must not commit");
+    }
+}
+
 // POP FS from a prepared stack loads exactly the low 16 bits and clears the rest.
 #[test]
 fn test_pop_fs_loads_low16_only() {

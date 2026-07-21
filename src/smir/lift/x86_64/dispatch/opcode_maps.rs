@@ -1136,6 +1136,10 @@ impl X86_64Lifter {
                 ))
             }
 
+            // PUSH FS/GS (0F A0/A8): selector observation, stack write, and
+            // fault-precise RSP commit form one selector-store operation.
+            0xA0 | 0xA8 => self.lift_push_segment_0f(opcode2, &prefix2, pc),
+
             // UD2 (0F 0B): architecturally guaranteed invalid opcode trap.
             0x0B => Ok(LiftResult {
                 ops: vec![],

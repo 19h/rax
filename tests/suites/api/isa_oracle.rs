@@ -619,6 +619,37 @@ fn emits_exact_sldt_str_selector_target_width_and_apx_metadata() {
 }
 
 #[test]
+fn emits_exact_push_fs_gs_atomic_stack_width_and_apx_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let legacy = decode_to_json(&[0x0F, 0xA0], &opts).unwrap();
+    assert_eq!(legacy["smir"]["available"], true);
+    assert_eq!(legacy["smir"]["bytes_consumed"], 2);
+    let op = &legacy["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_system_selector_store");
+    assert_eq!(op["kind"]["selector"], "Fs");
+    assert_eq!(op["kind"]["target"]["kind"], "stack");
+    assert_eq!(op["kind"]["target"]["stack_pointer"]["name"], "rsp");
+    assert_eq!(op["kind"]["target"]["width"], "B8");
+    assert_eq!(op["kind"]["target"]["commit"], "after_write");
+    assert_eq!(op["kind"]["requires_apx"], false);
+    assert_eq!(op["writes"][0]["name"], "rsp");
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], true);
+    assert_eq!(op["side_effects"], true);
+
+    let rex2_w = decode_to_json(&[0x66, 0xD5, 0x88, 0xA8], &opts).unwrap();
+    assert_eq!(rex2_w["smir"]["available"], true);
+    assert_eq!(rex2_w["smir"]["bytes_consumed"], 4);
+    let op = &rex2_w["smir"]["ops"][0];
+    assert_eq!(op["kind"]["selector"], "Gs");
+    assert_eq!(op["kind"]["target"]["kind"], "stack");
+    assert_eq!(op["kind"]["target"]["width"], "B8");
+    assert_eq!(op["kind"]["requires_apx"], true);
+}
+
+#[test]
 fn emits_exact_lldt_ltr_source_hidden_state_handoff_busy_and_apx_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

@@ -425,6 +425,17 @@ impl SmirInterpreter {
                         );
                         addr.is_x86_state_backed_shape() && (!uses_egpr || store.requires_apx)
                     }
+                    X86SystemSelectorTarget::Stack {
+                        stack_pointer,
+                        width,
+                    } => {
+                        matches!(stack_pointer, VReg::Arch(ArchReg::X86(X86Reg::Rsp)))
+                            && matches!(width, MemWidth::B2 | MemWidth::B8)
+                            && matches!(
+                                store.selector,
+                                X86SystemSelector::Fs | X86SystemSelector::Gs
+                            )
+                    }
                 };
                 if op.x86_hint.is_some() || !target_shape {
                     ctx.request_exit(ExitReason::Undefined {
@@ -501,6 +512,42 @@ impl SmirInterpreter {
                             u64::from(selector),
                             MemWidth::B2,
                         )?;
+                    }
+                    X86SystemSelectorTarget::Stack { width, .. } => {
+                        let initial_rsp = match &ctx.arch_regs {
+                            ArchRegState::X86_64(x86) if x86.efer & (1 << 10) != 0 && x86.cs_l => {
+                                x86.gpr[4]
+                            }
+                            _ => {
+                                ctx.request_exit(ExitReason::Undefined {
+                                    addr: op.guest_pc,
+                                    opcode: 0,
+                                });
+                                return Ok(());
+                            }
+                        };
+                        let width_bytes = width.bytes() as u64;
+                        let new_rsp = initial_rsp.wrapping_sub(width_bytes);
+                        let canonical = new_rsp.checked_add(width_bytes - 1).is_some_and(|last| {
+                            crate::isa::x86_64::execute::system::is_canonical_48(new_rsp)
+                                && crate::isa::x86_64::execute::system::is_canonical_48(last)
+                        });
+                        if !canonical {
+                            ctx.request_exit(ExitReason::StackSegment {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+
+                        // Commit RSP only after the complete stack write. This
+                        // is required for fault-class restart at the original
+                        // instruction frontier.
+                        self.store_memory(memory, new_rsp, u64::from(selector), *width)?;
+                        let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                            unreachable!("validated x86 PUSH-segment state changed")
+                        };
+                        x86.gpr[4] = new_rsp;
                     }
                 }
             }

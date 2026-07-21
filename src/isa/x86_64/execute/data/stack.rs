@@ -4,6 +4,14 @@ use crate::error::{Error, Result};
 use crate::vm::vcpu::VcpuExit;
 
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
+use crate::isa::x86_64::execute::system::is_canonical_48;
+
+fn long_mode_stack_write_is_canonical(rsp: u64, width: u8) -> bool {
+    let address = rsp.wrapping_sub(u64::from(width));
+    address
+        .checked_add(u64::from(width - 1))
+        .is_some_and(|last| is_canonical_48(address) && is_canonical_48(last))
+}
 
 /// PUSH r64 (0x50-0x57)
 pub fn push_r64(
@@ -34,7 +42,14 @@ fn segment_op_size(vcpu: &X86_64Vcpu, ctx: &InsnContext) -> u8 {
     let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
     if in_64bit_mode {
-        if ctx.operand_size_override { 2 } else { 8 }
+        // Intel defines REX.W/REX2.W as taking precedence over 66H. The
+        // default is already 64 bits, so W is observable only for the combined
+        // 66+W encoding.
+        if ctx.any_rex_w() || !ctx.operand_size_override {
+            8
+        } else {
+            2
+        }
     } else {
         let default_16bit = !vcpu.sregs.cs.db;
         let is_16bit = default_16bit ^ ctx.operand_size_override;
@@ -88,6 +103,10 @@ pub fn push_sreg(
     }
 
     let op_size = segment_op_size(vcpu, ctx);
+    if in_64bit_mode && !long_mode_stack_write_is_canonical(vcpu.regs.rsp, op_size) {
+        vcpu.inject_exception(12, Some(0))?;
+        return Ok(None);
+    }
     let value = vcpu.get_sreg(sreg) as u64;
     match op_size {
         2 => vcpu.push16(value as u16)?,

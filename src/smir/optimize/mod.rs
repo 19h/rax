@@ -3912,6 +3912,10 @@ impl OpKind {
                 target: X86SystemSelectorTarget::Memory { addr },
                 ..
             }) => result.extend(addr.regs()),
+            OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
+                target: X86SystemSelectorTarget::Stack { stack_pointer, .. },
+                ..
+            }) => result.push(*stack_pointer),
             OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
                 source: X86SystemSelectorSource::Register { src },
                 ..

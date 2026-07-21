@@ -1148,6 +1148,15 @@ impl OracleJson for X86SystemSelectorTarget {
                 "addr": addr.oracle_json(),
                 "width": "B2",
             }),
+            X86SystemSelectorTarget::Stack {
+                stack_pointer,
+                width,
+            } => json!({
+                "kind": "stack",
+                "stack_pointer": stack_pointer.oracle_json(),
+                "width": width.oracle_json(),
+                "commit": "after_write",
+            }),
         }
     }
 }

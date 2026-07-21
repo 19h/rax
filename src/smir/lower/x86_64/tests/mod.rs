@@ -52,6 +52,8 @@ mod pkru;
 #[cfg(test)]
 mod pmc;
 #[cfg(test)]
+mod push_segment;
+#[cfg(test)]
 mod read_control;
 #[cfg(test)]
 mod read_debug;

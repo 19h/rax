@@ -4990,6 +4990,10 @@ impl OpKind {
                 target: X86SystemSelectorTarget::Register { dst, .. },
                 ..
             }) => vec![*dst],
+            OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
+                target: X86SystemSelectorTarget::Stack { stack_pointer, .. },
+                ..
+            }) => vec![*stack_pointer],
             OpKind::X86FarJump(jump) => vec![jump.target],
             OpKind::X86FarCall(call) => vec![call.target],
             OpKind::X86FarReturn(ret) => vec![ret.target],
@@ -5488,7 +5492,8 @@ impl OpKind {
                     ..
                 })
                 | OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
-                    target: X86SystemSelectorTarget::Memory { .. },
+                    target: X86SystemSelectorTarget::Memory { .. }
+                        | X86SystemSelectorTarget::Stack { .. },
                     ..
                 })
                 | OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {

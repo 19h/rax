@@ -515,6 +515,7 @@ pub(crate) fn block_is_clobber_safe(
                     X86SystemSelectorTarget::Memory { addr } => {
                         allow_mem && x86_jit_mem_address_shape_valid(addr)
                     }
+                    X86SystemSelectorTarget::Stack { .. } => allow_mem,
                 }
             }
             _ => false,
@@ -681,7 +682,11 @@ pub(crate) fn block_is_clobber_safe(
                 &op.kind,
                 OpKind::X86SystemSelectorStore(store)
                     if selector_store_ok
-                        && matches!(&store.target, X86SystemSelectorTarget::Memory { .. })
+                        && matches!(
+                            &store.target,
+                            X86SystemSelectorTarget::Memory { .. }
+                                | X86SystemSelectorTarget::Stack { .. }
+                        )
             );
         let scalar_ok = matches!(
             op.kind,
