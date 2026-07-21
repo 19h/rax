@@ -14,6 +14,8 @@ mod callout;
 #[cfg(test)]
 mod clac_stac;
 #[cfg(test)]
+mod cli;
+#[cfg(test)]
 mod clts;
 #[cfg(test)]
 mod cpuid;

@@ -288,6 +288,13 @@ pub struct GuestRegs {
     /// IA-32e `CA`/`CB`. Encoding bits 1:0 select W16/W32/W64, bit two records
     /// REX2/APX, and bits 31:16 carry the immediate parameter-release count.
     pub far_return_fn: u64,
+    /// Guest RFLAGS.IF/IOPL/VM/VIF/VIP shadow. These control fields cannot be
+    /// imported into or recovered from the host thread's user-mode RFLAGS.
+    pub interrupt_flags: u64,
+    /// Address of `extern "C" fn(state, requires_apx) -> ok`, implementing the
+    /// architectural CLI privilege/virtualization decision and committing only
+    /// IF or VIF in `interrupt_flags` on success.
+    pub cli_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -363,6 +370,8 @@ impl Default for GuestRegs {
             far_jump_fn: 0,
             far_call_fn: 0,
             far_return_fn: 0,
+            interrupt_flags: 0,
+            cli_fn: 0,
         }
     }
 }

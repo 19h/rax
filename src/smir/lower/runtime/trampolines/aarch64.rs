@@ -1273,6 +1273,7 @@ pub(crate) fn aarch64_block_is_clobber_safe(
         if matches!(
             op.kind,
             OpKind::SetAC { .. }
+                | OpKind::X86Cli { .. }
                 | OpKind::X86Clts
                 | OpKind::X86Msr(..)
                 | OpKind::X86ReadControl { .. }

@@ -66,6 +66,47 @@ impl SmirInterpreter {
                 ctx.flags.materialized.ac = *value;
             }
 
+            OpKind::X86Cli {
+                requires_apx,
+                next_pc: _,
+            } => {
+                use crate::isa::x86_64::execute::system::{
+                    X86CliEffect, X86CliFault, X86CliState, evaluate_x86_cli,
+                };
+                use crate::isa::x86_64::flags;
+
+                let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                };
+                if *requires_apx && !x86.apx_enabled {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                match evaluate_x86_cli(X86CliState {
+                    cr0: x86.cr0,
+                    cr4: x86.cr4,
+                    rflags: x86.rflags,
+                    cpl: x86.cpl,
+                }) {
+                    Ok(X86CliEffect::ClearIf) => x86.rflags &= !flags::bits::IF,
+                    Ok(X86CliEffect::ClearVif) => x86.rflags &= !flags::bits::VIF,
+                    Err(X86CliFault::GeneralProtection) => {
+                        ctx.request_exit(ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        });
+                    }
+                }
+            }
+
             OpKind::CmcCF => {
                 let cf = ctx.flags.get_cf();
                 ctx.flags.materialize_all();

@@ -3853,6 +3853,15 @@ pub enum OpKind {
         value: bool,
     },
 
+    /// x86 CLI with architectural IOPL/VME/PVI routing. `requires_apx`
+    /// records a REX2 encoding so execution can deliver #UD before privilege
+    /// checks when APX is disabled. Native execution hands off at the exact
+    /// `next_pc` after a successful control-flag update.
+    X86Cli {
+        requires_apx: bool,
+        next_pc: GuestAddr,
+    },
+
     /// Complement carry flag
     CmcCF,
 
@@ -4542,6 +4551,7 @@ impl OpKind {
                 | OpKind::X86ReadTsc(..)
                 | OpKind::X86ReadPmc(..)
                 | OpKind::SetAC { .. }
+                | OpKind::X86Cli { .. }
                 | OpKind::X86Cpuid { .. }
                 | OpKind::X86Count { .. }
                 | OpKind::X86X87Control {
@@ -5050,6 +5060,7 @@ impl OpKind {
             | OpKind::SetCF { .. }
             | OpKind::SetDF { .. }
             | OpKind::SetAC { .. }
+            | OpKind::X86Cli { .. }
             | OpKind::CmcCF
             | OpKind::MaterializeFlags
             | OpKind::X86XTest
@@ -5134,6 +5145,7 @@ impl OpKind {
                     | OpKind::SetCF { .. }
                     | OpKind::SetDF { .. }
                     | OpKind::SetAC { .. }
+                    | OpKind::X86Cli { .. }
                     | OpKind::CmcCF
                     | OpKind::MaterializeFlags
                     | OpKind::X86XTest

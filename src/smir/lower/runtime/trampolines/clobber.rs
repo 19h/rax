@@ -7,12 +7,12 @@ use crate::smir::ir::ops::{
 };
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::x86_64::{
-    x86_clts_shape_valid, x86_far_call_shape_valid, x86_far_call_terminal_shape_valid,
-    x86_far_jump_shape_valid, x86_far_jump_terminal_shape_valid, x86_far_return_shape_valid,
-    x86_far_return_terminal_shape_valid, x86_lmsw_shape_valid, x86_read_control_shape_valid,
-    x86_read_debug_shape_valid, x86_smsw_shape_valid, x86_system_selector_load_shape_valid,
-    x86_system_selector_store_shape_valid, x86_write_control_shape_valid,
-    x86_write_debug_shape_valid,
+    x86_cli_shape_valid, x86_clts_shape_valid, x86_far_call_shape_valid,
+    x86_far_call_terminal_shape_valid, x86_far_jump_shape_valid, x86_far_jump_terminal_shape_valid,
+    x86_far_return_shape_valid, x86_far_return_terminal_shape_valid, x86_lmsw_shape_valid,
+    x86_read_control_shape_valid, x86_read_debug_shape_valid, x86_smsw_shape_valid,
+    x86_system_selector_load_shape_valid, x86_system_selector_store_shape_valid,
+    x86_write_control_shape_valid, x86_write_debug_shape_valid,
 };
 
 /// Admit only scalar MMU-helper transfers that the x86-64 state-backed
@@ -573,6 +573,7 @@ pub(crate) fn block_is_clobber_safe(
         let read_debug_ok = x86_read_debug_shape_valid(&op.kind);
         let write_control_ok = x86_write_control_shape_valid(op);
         let write_debug_ok = x86_write_debug_shape_valid(&op.kind);
+        let cli_ok = x86_cli_shape_valid(op);
         let swapgs_ok = crate::smir::lower::x86_64::x86_swapgs_shape_valid(&op.kind);
         let monitor_mwait_ok = match &op.kind {
             OpKind::X86MonitorMwait(X86MonitorMwaitOp { addr, .. })
@@ -798,6 +799,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86WriteDebug { .. }) && !write_debug_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86Cli { .. }) && !cli_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86Cpuid { .. })

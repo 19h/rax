@@ -118,6 +118,24 @@ impl X86_64Lifter {
                 vec![SmirOp::new(OpId(0), pc, OpKind::SetCF { value: true })],
                 prefix.cursor + 1,
             )),
+            0xFA if prefix.lock => Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..(prefix.cursor + 1).min(bytes.len())].to_vec(),
+            }),
+            0xFA => {
+                let bytes_consumed = prefix.cursor + 1;
+                Ok(LiftResult::fallthrough(
+                    vec![SmirOp::new(
+                        OpId(0),
+                        pc,
+                        OpKind::X86Cli {
+                            requires_apx: prefix.rex2.is_some(),
+                            next_pc: pc.wrapping_add(bytes_consumed as u64),
+                        },
+                    )],
+                    bytes_consumed,
+                ))
+            }
             0xFC => Ok(LiftResult::fallthrough(
                 vec![SmirOp::new(OpId(0), pc, OpKind::SetDF { value: false })],
                 prefix.cursor + 1,

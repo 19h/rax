@@ -4255,6 +4255,10 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         OpKind::SetCF { value } => op_json!("set_cf", value),
         OpKind::SetDF { value } => op_json!("set_df", value),
         OpKind::SetAC { value } => op_json!("set_ac", value),
+        OpKind::X86Cli {
+            requires_apx,
+            next_pc,
+        } => op_json!("x86_cli", requires_apx, next_pc),
         OpKind::CmcCF => op_json!("cmc_cf"),
         OpKind::MaterializeFlags => op_json!("materialize_flags"),
         OpKind::X86XTest => op_json!("x86_xtest"),

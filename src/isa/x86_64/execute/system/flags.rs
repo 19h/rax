@@ -7,6 +7,75 @@ use super::control_regs::{current_cpl, raise_gp0};
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::flags;
 
+const CR0_PE: u64 = 1 << 0;
+const CR4_VME: u64 = 1 << 0;
+const CR4_PVI: u64 = 1 << 1;
+
+/// Guest RFLAGS fields needed to evaluate virtualized interrupt-flag
+/// instructions. Native execution carries these fields outside host RFLAGS:
+/// user-mode PUSHFQ cannot round-trip IF/IOPL, and host VM/VIF/VIP are not
+/// guest architectural state.
+pub(crate) const X86_INTERRUPT_CONTROL_RFLAGS_MASK: u64 = flags::bits::IF
+    | flags::bits::IOPL_MASK
+    | flags::bits::VM
+    | flags::bits::VIF
+    | flags::bits::VIP;
+
+/// Architectural inputs used by one CLI decision.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86CliState {
+    pub cr0: u64,
+    pub cr4: u64,
+    pub rflags: u64,
+    /// Effective CPL. Virtual-8086 mode is represented as CPL3.
+    pub cpl: u8,
+}
+
+/// The single architectural flag bit cleared by a successful CLI.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum X86CliEffect {
+    ClearIf,
+    ClearVif,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum X86CliFault {
+    GeneralProtection,
+}
+
+/// Evaluate CLI without committing architectural state.
+///
+/// Real mode always clears IF. Protected mode clears IF when CPL is permitted
+/// by IOPL. Otherwise virtual-8086 mode can redirect the write to VIF through
+/// CR4.VME, and protected CPL3 can do so through CR4.PVI; every other case
+/// faults with #GP(0).
+pub(crate) fn evaluate_x86_cli(
+    state: X86CliState,
+) -> core::result::Result<X86CliEffect, X86CliFault> {
+    if state.cr0 & CR0_PE == 0 {
+        return Ok(X86CliEffect::ClearIf);
+    }
+
+    let iopl = ((state.rflags & flags::bits::IOPL_MASK) >> 12) as u8;
+    if state.cpl <= iopl {
+        return Ok(X86CliEffect::ClearIf);
+    }
+
+    if state.rflags & flags::bits::VM != 0 {
+        return if state.cr4 & CR4_VME != 0 {
+            Ok(X86CliEffect::ClearVif)
+        } else {
+            Err(X86CliFault::GeneralProtection)
+        };
+    }
+
+    if state.cpl == 3 && state.cr4 & CR4_PVI != 0 {
+        Ok(X86CliEffect::ClearVif)
+    } else {
+        Err(X86CliFault::GeneralProtection)
+    }
+}
+
 /// CLI/STI fault with #GP(0) when the current privilege level is numerically
 /// greater (less privileged) than the I/O privilege level (IOPL, bits 12-13 of
 /// RFLAGS). When CPL <= IOPL the instruction is permitted.
@@ -19,13 +88,20 @@ fn iopl_blocks(vcpu: &X86_64Vcpu) -> bool {
 /// CLI - Clear Interrupt Flag (0xFA)
 pub fn cli(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     use crate::isa::x86_64::cpu::log_if_transition;
-    // #GP(0) when CPL > IOPL (insufficient privilege to modify IF).
-    if iopl_blocks(vcpu) {
-        return raise_gp0(vcpu);
+    match evaluate_x86_cli(X86CliState {
+        cr0: vcpu.sregs.cr0,
+        cr4: vcpu.sregs.cr4,
+        rflags: vcpu.regs.rflags,
+        cpl: current_cpl(vcpu),
+    }) {
+        Ok(X86CliEffect::ClearIf) => {
+            let old_if = (vcpu.regs.rflags & flags::bits::IF) != 0;
+            vcpu.regs.rflags &= !flags::bits::IF;
+            log_if_transition(vcpu.regs.rip, old_if, false, "CLI");
+        }
+        Ok(X86CliEffect::ClearVif) => vcpu.regs.rflags &= !flags::bits::VIF,
+        Err(X86CliFault::GeneralProtection) => return raise_gp0(vcpu),
     }
-    let old_if = (vcpu.regs.rflags & flags::bits::IF) != 0;
-    vcpu.regs.rflags &= !flags::bits::IF;
-    log_if_transition(vcpu.regs.rip, old_if, false, "CLI");
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

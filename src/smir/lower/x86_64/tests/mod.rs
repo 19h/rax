@@ -14,6 +14,8 @@ mod apx;
 #[cfg(test)]
 mod call_helpers;
 #[cfg(test)]
+mod cli;
+#[cfg(test)]
 mod clts;
 #[cfg(test)]
 mod cpuid;

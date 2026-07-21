@@ -45,6 +45,8 @@ mod control;
 pub use control::*;
 mod clts;
 pub use clts::*;
+mod cli;
+pub use cli::*;
 mod cpuid;
 pub use cpuid::*;
 mod descriptor_table;

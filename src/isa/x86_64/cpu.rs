@@ -3768,6 +3768,12 @@ mod jit_control;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use jit_control::rax_jit_write_control;
 
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_cli.rs"]
+mod jit_cli;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_cli::rax_jit_cli;
+
 #[path = "cpu_descriptor_table.rs"]
 mod descriptor_table;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4994,6 +5000,7 @@ impl X86_64Vcpu {
         gr.far_jump_fn = rax_jit_far_jump as usize as u64;
         gr.far_call_fn = rax_jit_far_call as usize as u64;
         gr.far_return_fn = rax_jit_far_return as usize as u64;
+        gr.cli_fn = rax_jit_cli as usize as u64;
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
@@ -5067,6 +5074,8 @@ impl X86_64Vcpu {
         gr.gpr[31] = self.regs.r31;
         gr.rflags = self.regs.rflags & !flags::bits::AC;
         gr.ac_flag = u64::from(self.regs.rflags & flags::bits::AC != 0);
+        gr.interrupt_flags = self.regs.rflags
+            & crate::isa::x86_64::execute::system::X86_INTERRUPT_CONTROL_RFLAGS_MASK;
         gr.exit_pc = self.regs.rip; // fallback (an exit stub overwrites this)
         if region.uses_vector || region.uses_xmm_state {
             for index in 0..16 {
@@ -5194,17 +5203,21 @@ impl X86_64Vcpu {
             self.regs.mm = gr.mm;
             self.fpu.tag_word = gr.x87_tag_word as u16;
         }
-        // Merge status flags from the host result, AC from its dedicated guest
-        // shadow, and preserve every other bit (IF, DF, IOPL, NT, reserved, …)
-        // from the pre-region value. Host AC is deliberately always clear.
+        // Merge status flags from the host result, AC and virtualized interrupt
+        // control fields from their dedicated guest shadows, and preserve every
+        // other bit (DF, NT, reserved, …) from the pre-region value. Host AC is
+        // deliberately always clear.
         const STATUS: u64 = flags::bits::CF
             | flags::bits::PF
             | flags::bits::AF
             | flags::bits::ZF
             | flags::bits::SF
             | flags::bits::OF;
-        self.regs.rflags = (pre_rflags & !(STATUS | flags::bits::AC))
+        const INTERRUPT_CONTROL: u64 =
+            crate::isa::x86_64::execute::system::X86_INTERRUPT_CONTROL_RFLAGS_MASK;
+        self.regs.rflags = (pre_rflags & !(STATUS | flags::bits::AC | INTERRUPT_CONTROL))
             | (gr.rflags & STATUS)
+            | (gr.interrupt_flags & INTERRUPT_CONTROL)
             | if gr.ac_flag != 0 { flags::bits::AC } else { 0 };
         self.regs.rip = gr.exit_pc;
         // The native region produced fully-materialized RFLAGS. Mark the lazy
@@ -5470,10 +5483,19 @@ impl X86_64Vcpu {
                 }
             }
 
-            // Status flags (CF PF AF ZF SF OF) + IF (0x200) + DF (0x400): the JIT
-            // must change ONLY the status flags and preserve IF/DF — IF
-            // corruption (spurious interrupt enable) crashed the kernel boot.
-            const MASK: u64 = 0x0000_0000_0000_0ED5;
+            // Status flags (CF/PF/AF/ZF/SF/OF), DF, and every virtualized
+            // interrupt-control field. CLI may clear IF or VIF; every other
+            // admitted operation must preserve IF/IOPL/VM/VIF/VIP. Comparing
+            // the complete shadow catches native bridge corruption at the
+            // exact handoff frontier.
+            const MASK: u64 = flags::bits::CF
+                | flags::bits::PF
+                | flags::bits::AF
+                | flags::bits::ZF
+                | flags::bits::SF
+                | flags::bits::OF
+                | flags::bits::DF
+                | crate::isa::x86_64::execute::system::X86_INTERRUPT_CONTROL_RFLAGS_MASK;
             let g = [
                 ("rax", self.regs.rax, jit.rax),
                 ("rcx", self.regs.rcx, jit.rcx),
@@ -6277,6 +6299,10 @@ mod jit_ac_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_clts_tests.rs"]
 mod jit_clts_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_cli_tests.rs"]
+mod jit_cli_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_read_control_tests.rs"]

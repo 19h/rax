@@ -167,6 +167,8 @@ fn jit_callout_return_push_fault_deopts_at_call_pc_without_executing_target() {
     gr.gpr[0] = 41;
     gr.gpr[4] = 0x10008;
     gr.rflags = 0x246;
+    gr.interrupt_flags =
+        gr.rflags & crate::isa::x86_64::execute::system::X86_INTERRUPT_CONTROL_RFLAGS_MASK;
     let call_pc = 0x80;
 
     let ok = unsafe { rax_jit_call(&mut gr, 0x100, 0x200, call_pc) };
@@ -193,11 +195,14 @@ fn jit_callout_resynchronizes_virtual_8086_as_effective_cpl3() {
     gr.gpr[4] = 0x10008;
     gr.rflags = 0x2 | flags::bits::VM | flags::bits::AC;
     gr.ac_flag = 1;
+    gr.interrupt_flags =
+        gr.rflags & crate::isa::x86_64::execute::system::X86_INTERRUPT_CONTROL_RFLAGS_MASK;
 
     let ok = unsafe { rax_jit_call(&mut gr, 0x100, 0x200, 0x80) };
 
     assert_eq!(ok, 0, "unmapped return-address push must deoptimize");
     assert_ne!(gr.rflags & flags::bits::VM, 0);
+    assert_ne!(gr.interrupt_flags & flags::bits::VM, 0);
     assert_eq!(gr.rflags & flags::bits::AC, 0, "host image excludes AC");
     assert_eq!(gr.ac_flag, 1, "guest AC remains in its shadow field");
     assert_eq!(gr.cpl, 3, "virtual-8086 mode has effective CPL3");
