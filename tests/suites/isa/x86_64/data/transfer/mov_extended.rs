@@ -748,3 +748,43 @@ fn test_mov_r13_with_displacement() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(regs.r13, 0x123456789ABCDEF0);
 }
+
+#[test]
+fn test_group11_reserved_selectors_raise_ud_before_operand_decode() {
+    for opcode in [0xC6, 0xC7] {
+        for group in 1..=7 {
+            for raw_modrm in [0xC1 | (group << 3), 0x05 | (group << 3)] {
+                if raw_modrm == 0xF8 {
+                    continue;
+                }
+
+                let instruction = [opcode, raw_modrm];
+                let mut initial = Registers::default();
+                initial.rax = 0xA5A5_5A5A_DEAD_BEEF;
+                initial.rcx = 0x0123_4567_89AB_CDEF;
+                let (mut vcpu, _) = setup_vm_no_idt(&instruction, Some(initial));
+
+                for path in ["cold decode", "decode-cache hit"] {
+                    let mut before = vcpu.get_regs().unwrap();
+                    before.rip = CODE_ADDR;
+                    before.rax = 0xA5A5_5A5A_DEAD_BEEF;
+                    before.rcx = 0x0123_4567_89AB_CDEF;
+                    vcpu.set_regs(&before).unwrap();
+
+                    let error = vcpu
+                        .step()
+                        .expect_err("reserved Group 11 selector must raise #UD")
+                        .to_string();
+                    assert!(
+                        error.contains("IDT entry 6 not present"),
+                        "opcode={opcode:02X} ModR/M={raw_modrm:02X} ({path}): {error}"
+                    );
+                    let after = vcpu.get_regs().unwrap();
+                    assert_eq!(after.rip, CODE_ADDR, "fault RIP ({path})");
+                    assert_eq!(after.rax, before.rax, "RAX commit ({path})");
+                    assert_eq!(after.rcx, before.rcx, "RCX commit ({path})");
+                }
+            }
+        }
+    }
+}

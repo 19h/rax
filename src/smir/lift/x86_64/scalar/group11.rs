@@ -10,6 +10,10 @@ fn is_canonical_48(addr: u64) -> bool {
 impl X86_64Lifter {
     /// Lift MOV r/m, imm (C6/C7), XABORT (C6 F8 ib), and
     /// XBEGIN (C7 F8 iw/id).
+    ///
+    /// The raw ModR/M.reg field is an opcode extension. Values /1-/7 are
+    /// reserved except for the exact F8 RTM aliases, so they raise #UD before
+    /// any apparent SIB, displacement, memory operand, or immediate is decoded.
     pub(crate) fn lift_mov_rm_imm(
         &self,
         opcode: u8,
@@ -32,15 +36,34 @@ impl X86_64Lifter {
         let width = self.size_to_width(op_size);
         let mem_width = self.size_to_memwidth(op_size);
 
+        let Some(&raw_modrm) = bytes.first() else {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: 0,
+                need: 1,
+            });
+        };
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![raw_modrm],
+            });
+        }
+
+        let group = (raw_modrm >> 3) & 0x07;
+        if raw_modrm != 0xF8 && group != 0 {
+            return Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed: prefix.cursor + 1,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
+            });
+        }
+
         let modrm = decode_modrm(bytes, prefix, pc)?;
         if modrm.byte == 0xF8 {
-            if prefix.lock {
-                return Err(LiftError::InvalidEncoding {
-                    addr: pc,
-                    bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
-                });
-            }
-
             // XABORT and XBEGIN use fixed raw ModR/M F8. REX/REX2 register
             // extension fields and all non-LOCK legacy prefixes are ignored.
             let imm_size = if is_8bit {
@@ -101,19 +124,7 @@ impl X86_64Lifter {
             return Ok(LiftResult::branch(ops, insn_len, fallback));
         }
 
-        let group = (modrm.byte >> 3) & 0x07;
-        if group != 0 {
-            if self.strict {
-                return Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: format!("mov group {}", group),
-                });
-            }
-            return Ok(LiftResult::fallthrough(
-                vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
-                prefix.cursor + modrm.bytes_consumed,
-            ));
-        }
+        debug_assert_eq!(group, 0);
 
         let imm_offset = modrm.bytes_consumed;
         let imm_size = if is_8bit {

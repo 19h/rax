@@ -34,6 +34,8 @@ mod far_return;
 #[cfg(test)]
 mod fsgsbase;
 #[cfg(test)]
+mod group11;
+#[cfg(test)]
 mod hypercall_hints;
 #[cfg(test)]
 mod icebp;
