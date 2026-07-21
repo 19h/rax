@@ -298,3 +298,46 @@ fn jit_disabled_pconfig_exits_at_the_exact_faulting_frontier() {
         assert_eq!(system_state(&vcpu), before_system, "{name}");
     }
 }
+
+#[test]
+fn jit_disabled_group7_residual_forms_exit_at_the_exact_faulting_frontier() {
+    for (name, instruction, apx) in [
+        ("XRESLDTRK", &[0xF2, 0x0F, 0x01, 0xE9][..], false),
+        (
+            "RSTORSSP memory",
+            &[0xF3, 0x0F, 0x01, 0x6C, 0x24, 0x7F][..],
+            false,
+        ),
+        ("INVLPGB", &[0x0F, 0x01, 0xFE][..], false),
+        ("reserved REX2", &[0xD5, 0x80, 0x01, 0xC7][..], true),
+    ] {
+        let mut code = vec![
+            0xB8, 0x78, 0x56, 0x34, 0x12, // mov eax,12345678h
+            0xEB, 0x02, // jmp disabled Group 7 form
+            0x90, 0x90, // unreachable padding
+        ];
+        code.extend_from_slice(instruction);
+        let mut vcpu = test_vcpu(memory_with_code(&code));
+        vcpu.set_apx_enabled(apx);
+        let region = vcpu
+            .jit_compile_region()
+            .expect("compile region ending at disabled Group 7 form")
+            .expect("supported prefix must remain native before Group 7 frontier");
+
+        vcpu.jit_run_region_native(&region);
+        assert_eq!(vcpu.regs.rax, 0x1234_5678, "{name}");
+        assert_eq!(vcpu.regs.rip, 9, "{name}");
+
+        let before_scalar = scalar_state(&vcpu);
+        let before_system = system_state(&vcpu);
+        let error = vcpu
+            .step()
+            .expect_err("disabled Group 7 frontier must deliver #UD");
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{name}: expected #UD delivery failure, got {error}"
+        );
+        assert_eq!(scalar_state(&vcpu), before_scalar, "{name}");
+        assert_eq!(system_state(&vcpu), before_system, "{name}");
+    }
+}

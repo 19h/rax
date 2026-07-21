@@ -38,6 +38,8 @@ mod fsgsbase;
 #[cfg(test)]
 mod group11;
 #[cfg(test)]
+mod group7_invalid;
+#[cfg(test)]
 mod hypercall_hints;
 #[cfg(test)]
 mod icebp;

@@ -3,10 +3,9 @@
 use crate::smir::lift::x86_64::*;
 
 impl X86_64Lifter {
-    /// Lift VMCALL/VMMCALL hints, disabled VMX/SVM/SGX/PCONFIG and
-    /// WRMSRNS/MSRLIST controls, MONITOR/MWAIT, CLAC/STAC, XGETBV/XSETBV,
-    /// RDPKRU/WRPKRU, SERIALIZE, SWAPGS, RDTSCP, and the RTM fixed ModR/M
-    /// encodings in 0F 01.
+    /// Lift VMCALL/VMMCALL hints, disabled VMX/SVM/SGX/PCONFIG and extension
+    /// controls, MONITOR/MWAIT, CLAC/STAC, XGETBV/XSETBV, RDPKRU/WRPKRU,
+    /// SERIALIZE, SWAPGS, RDTSCP, and the RTM fixed ModR/M encodings in 0F 01.
     pub(crate) fn lift_xcr_0f01(
         &self,
         bytes: &[u8],
@@ -283,9 +282,18 @@ impl X86_64Lifter {
                 dst_aux: Some(self.gpr(1)),
             }),
             _ => {
-                return Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: format!("0F 01 {modrm:02X}"),
+                // The Group 7 router admits only ModR/M.mod=11 fixed forms
+                // here. Every remaining value is either a reserved encoding
+                // or an extension alias whose feature is absent from RAX's
+                // deterministic CPUID profile, matching the direct decoder's
+                // terminal #UD behavior.
+                return Ok(LiftResult {
+                    ops: Vec::new(),
+                    bytes_consumed: prefix.cursor + 1,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::InvalidOpcode,
+                    },
+                    branch_targets: Vec::new(),
                 });
             }
         };

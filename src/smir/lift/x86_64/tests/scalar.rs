@@ -831,9 +831,13 @@ fn lift_xgetbv_xsetbv_fixed_encodings_and_legality() {
             Err(LiftError::InvalidEncoding { .. })
         ));
     }
+    let reserved_neighbor = lift_single(&[0x0F, 0x01, 0xD2]).unwrap();
+    assert!(reserved_neighbor.ops.is_empty());
     assert!(matches!(
-        lift_single(&[0x0F, 0x01, 0xD2]),
-        Err(LiftError::Unsupported { .. })
+        reserved_neighbor.control_flow,
+        ControlFlow::Trap {
+            kind: TrapKind::InvalidOpcode
+        }
     ));
     assert!(matches!(
         lift_single(&[0x0F, 0x01]),

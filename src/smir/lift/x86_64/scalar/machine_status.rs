@@ -1,12 +1,13 @@
 //! Legacy machine-status instruction lifting.
 
+use crate::smir::ir::TrapKind;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86DescriptorTable, X86DescriptorTableLoadOp, X86DescriptorTableStoreOp,
     X86InvlpgOp, X86LmswOp, X86LmswSource, X86SmswOp, X86SmswTarget,
 };
 use crate::smir::ir::types::OpId;
 use crate::smir::lift::x86_64::{X86_64Lifter, X86Prefix, decode_modrm};
-use crate::smir::lift::{LiftContext, LiftError, LiftResult};
+use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult};
 
 impl X86_64Lifter {
     /// Route Group 7 (`0F 01`) memory-only SGDT/SIDT/LGDT/LIDT and all
@@ -52,10 +53,45 @@ impl X86_64Lifter {
                 X86DescriptorTable::Idt,
             ),
             Some((_, 4)) => self.lift_smsw_0f01(bytes, prefix, pc, ctx),
+            Some((mode, 5)) if mode != 3 => {
+                self.lift_disabled_group7_memory_0f01(bytes, prefix, pc)
+            }
             Some((_, 6)) => self.lift_lmsw_0f01(bytes, prefix, pc, ctx),
             Some((mode, 7)) if mode != 3 => self.lift_invlpg_0f01(bytes, prefix, pc, ctx),
             _ => self.lift_xcr_0f01(bytes, prefix, pc, ctx),
         }
+    }
+
+    /// Lift the Group 7 memory-only `/5` slot. Intel assigns
+    /// `F3 0F 01 /5` to RSTORSSP when CET shadow stacks are enumerated; the
+    /// fixed guest profile does not enumerate CET, and the remaining prefix
+    /// forms are not valid instructions in that profile. Decode the complete
+    /// address encoding to retain the exact instruction boundary, but do not
+    /// evaluate the address or access memory before the feature-disabled #UD.
+    fn lift_disabled_group7_memory_0f01(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..bytes.len().min(1)].to_vec(),
+            });
+        }
+
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        debug_assert_ne!(modrm.byte >> 6, 3);
+        debug_assert_eq!((modrm.byte >> 3) & 7, 5);
+        Ok(LiftResult {
+            ops: Vec::new(),
+            bytes_consumed: prefix.cursor + modrm.bytes_consumed,
+            control_flow: ControlFlow::Trap {
+                kind: TrapKind::InvalidOpcode,
+            },
+            branch_targets: Vec::new(),
+        })
     }
 
     /// Lift memory-only SGDT/SIDT (`0F 01 /0` and `/1`) in long mode.
