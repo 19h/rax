@@ -1,4 +1,4 @@
-//! Fail-closed native admission and helper ABI for x86 SLDT/STR/LLDT/LTR.
+//! Fail-closed native admission and helper ABI for x86 selector stores/loads.
 
 use super::*;
 use crate::smir::ir::ops::{
@@ -15,16 +15,29 @@ use crate::smir::lower::{
 };
 
 fn register(dst: VReg, width: OpWidth, requires_apx: bool) -> OpKind {
+    register_for(X86SystemSelector::Ldtr, dst, width, requires_apx)
+}
+
+fn register_for(
+    selector: X86SystemSelector,
+    dst: VReg,
+    width: OpWidth,
+    requires_apx: bool,
+) -> OpKind {
     OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
-        selector: X86SystemSelector::Ldtr,
+        selector,
         target: X86SystemSelectorTarget::Register { dst, width },
         requires_apx,
     })
 }
 
 fn memory(addr: Address, requires_apx: bool) -> OpKind {
+    memory_for(X86SystemSelector::Tr, addr, requires_apx)
+}
+
+fn memory_for(selector: X86SystemSelector, addr: Address, requires_apx: bool) -> OpKind {
     OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
-        selector: X86SystemSelector::Tr,
+        selector,
         target: X86SystemSelectorTarget::Memory { addr },
         requires_apx,
     })
@@ -125,6 +138,7 @@ fn x86_selector_load_gate_requires_mmu_helpers_for_both_selectors_and_sources() 
 #[test]
 fn x86_selector_load_gate_rejects_malformed_sources_hints_and_frontiers() {
     for malformed in [
+        load_register(X86SystemSelector::Es, x86(X86Reg::Rax), false),
         load_register(X86SystemSelector::Ldtr, VReg::virt(0), false),
         load_register(X86SystemSelector::Tr, arm_x(0), false),
         load_register(X86SystemSelector::Ldtr, x86(X86Reg::R16), false),
@@ -179,6 +193,48 @@ fn x86_selector_gate_admits_exact_register_widths_stack_aliases_and_egprs() {
 
     // REX2 may encode a legacy GPR and still requires the dynamic APX guard.
     assert!(gate(register(x86(X86Reg::Rax), OpWidth::W32, true), false));
+}
+
+#[test]
+fn x86_mov_rm_sreg_gate_admits_all_selectors_registers_memory_and_apx_shapes() {
+    for selector in [
+        X86SystemSelector::Es,
+        X86SystemSelector::Cs,
+        X86SystemSelector::Ss,
+        X86SystemSelector::Ds,
+        X86SystemSelector::Fs,
+        X86SystemSelector::Gs,
+    ] {
+        for (dst, width, requires_apx) in [
+            (x86(X86Reg::Rax), OpWidth::W16, false),
+            (x86(X86Reg::R15), OpWidth::W32, false),
+            (x86(X86Reg::R31), OpWidth::W64, true),
+        ] {
+            let op = register_for(selector, dst, width, requires_apx);
+            assert!(op.is_jit_safe(), "{op:?}");
+            assert!(shape_valid(op.clone()), "{op:?}");
+            assert!(gate(op, false), "{selector:?}");
+        }
+
+        let legacy_memory = memory_for(selector, Address::Direct(x86(X86Reg::Rsp)), false);
+        assert!(shape_valid(legacy_memory.clone()), "{selector:?}");
+        assert!(!gate(legacy_memory.clone(), false), "{selector:?}");
+        assert!(gate(legacy_memory, true), "{selector:?}");
+
+        let apx_memory = memory_for(
+            selector,
+            Address::BaseIndexScale {
+                base: Some(x86(X86Reg::R25)),
+                index: x86(X86Reg::R26),
+                scale: 8,
+                disp: 0x20,
+                disp_size: DispSize::Disp8,
+            },
+            true,
+        );
+        assert!(shape_valid(apx_memory.clone()), "{selector:?}");
+        assert!(gate(apx_memory, true), "{selector:?}");
+    }
 }
 
 #[test]
@@ -263,7 +319,9 @@ fn x86_selector_gate_rejects_malformed_and_hinted_ir_fail_closed() {
 fn x86_selector_gate_rejects_both_aarch64_host_paths() {
     for op in [
         register(x86(X86Reg::Rax), OpWidth::W32, false),
+        register_for(X86SystemSelector::Cs, x86(X86Reg::R31), OpWidth::W64, true),
         memory(Address::Absolute(0x4000), false),
+        memory_for(X86SystemSelector::Fs, Address::Absolute(0x5000), false),
         load_register(X86SystemSelector::Ldtr, x86(X86Reg::Rax), false),
         load_register(X86SystemSelector::Tr, x86(X86Reg::R31), true),
         load_memory(X86SystemSelector::Tr, Address::Absolute(0x4000), false),

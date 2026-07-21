@@ -1,5 +1,5 @@
-//! Direct/native x86-64 JIT differentials for SLDT/STR/LLDT/LTR state,
-//! descriptor memory, and faults.
+//! Direct/native x86-64 JIT differentials for selector stores/loads, descriptor
+//! memory, and faults.
 
 use super::*;
 use std::sync::Arc;
@@ -136,7 +136,7 @@ fn run_direct_to(vcpu: &mut X86_64Vcpu, target: u64) {
             return;
         }
         assert!(
-            vcpu.step().expect("direct SLDT/STR instruction").is_none(),
+            vcpu.step().expect("direct selector instruction").is_none(),
             "unexpected direct exit at {:#x}",
             vcpu.regs.rip
         );
@@ -199,6 +199,72 @@ fn jit_selector_register_widths_stack_aliases_rex2_and_both_sources_match_direct
     assert_eq!(native.regs.rsp & 0xFFFF, 0xBEEF);
     assert_eq!(native.regs.rbp, 0x1357);
     assert_eq!(native.regs.r31, 0xBEEF);
+}
+
+#[test]
+fn jit_mov_rm_sreg_all_selectors_widths_rex_b_rex2_and_memory_match_direct() {
+    let code = [
+        0x66, 0x8C, 0xC0, // MOV AX,ES
+        0x8C, 0xCB, // MOV EBX,CS
+        0x48, 0x8C, 0xD1, // MOV RCX,SS
+        0x49, 0x8C, 0xDA, // MOV R10,DS
+        0xD5, 0x19, 0x8C, 0xE7, // MOV R31,FS
+        0x8C, 0x6C, 0x24, 0x10, // MOV word ptr [RSP+0x10],GS
+        0xEB, 0x00, 0xF4,
+    ];
+    let direct_memory = memory_with_code(&code);
+    let native_memory = memory_with_code(&code);
+    let mut direct = test_vcpu(direct_memory.clone());
+    let mut native = test_vcpu(native_memory.clone());
+    for vcpu in [&mut direct, &mut native] {
+        vcpu.set_apx_enabled(true);
+        vcpu.set_jit_mem(true);
+        vcpu.sregs.es.selector = 0x0100;
+        vcpu.sregs.cs.selector = 0x0200;
+        vcpu.sregs.ss.selector = 0x0300;
+        vcpu.sregs.ds.selector = 0x0400;
+        vcpu.sregs.fs.selector = 0x0500;
+        vcpu.sregs.gs.selector = 0x0600;
+        // QEMU-user does not round-trip AF across the native trampoline; the
+        // existing selector-native tests cover AF exactly on real x86 hosts.
+        vcpu.regs.rflags &= !flags::bits::AF;
+        vcpu.regs.rax = 0xAAAA_BBBB_CCCC_DDDD;
+        vcpu.regs.rbx = u64::MAX;
+        vcpu.regs.rcx = u64::MAX;
+        vcpu.regs.r10 = u64::MAX;
+        vcpu.regs.r31 = u64::MAX;
+    }
+    for memory in [&direct_memory, &native_memory] {
+        memory
+            .write_slice(&[0xA5; 4], GuestAddress(0x800F))
+            .unwrap();
+    }
+
+    run_direct_to(&mut direct, 21);
+    let region = native
+        .jit_compile_region()
+        .expect("compile MOV r/m,Sreg region")
+        .expect("all MOV r/m,Sreg forms must be native eligible");
+    native.jit_run_region_native(&region);
+
+    assert_eq!(gprs(&native.regs), gprs(&direct.regs));
+    assert_eq!(native.regs.rflags, direct.regs.rflags);
+    assert_eq!(native.regs.rip, 21);
+    assert_eq!(native.regs.rax, 0xAAAA_BBBB_CCCC_0100);
+    assert_eq!(native.regs.rbx, 0x0200);
+    assert_eq!(native.regs.rcx, 0x0300);
+    assert_eq!(native.regs.r10, 0x0400);
+    assert_eq!(native.regs.r31, 0x0500);
+    let mut observed = [0; 4];
+    native_memory
+        .read_slice(&mut observed, GuestAddress(0x800F))
+        .unwrap();
+    assert_eq!(observed, [0xA5, 0x00, 0x06, 0xA5]);
+    let mut direct_observed = [0; 4];
+    direct_memory
+        .read_slice(&mut direct_observed, GuestAddress(0x800F))
+        .unwrap();
+    assert_eq!(observed, direct_observed);
 }
 
 #[test]
@@ -351,19 +417,39 @@ fn jit_selector_apx_mode_umip_and_memory_fault_priority_is_precise_noncommitting
 }
 
 #[test]
-fn selector_helper_reads_authoritative_state_and_rejects_invalid_inputs() {
+fn selector_helper_reads_every_authoritative_selector_and_rejects_invalid_inputs() {
     use crate::smir::lower::runtime::GuestRegs;
 
     let memory = memory_with_code(&[]);
     let mut vcpu = test_vcpu(memory.clone());
     vcpu.sregs.ldt.selector = 0x2468;
     vcpu.sregs.tr.selector = 0xBEEF;
+    vcpu.sregs.es.selector = 0x0100;
+    vcpu.sregs.cs.selector = 0x0200;
+    vcpu.sregs.ss.selector = 0x0300;
+    vcpu.sregs.ds.selector = 0x0400;
+    vcpu.sregs.fs.selector = 0x0500;
+    vcpu.sregs.gs.selector = 0x0600;
     let mut state = GuestRegs::default();
     state.ctx = (&mut vcpu as *mut X86_64Vcpu) as u64;
 
-    assert_eq!(unsafe { rax_jit_system_selector(&mut state, 0) }, 0x2468);
-    assert_eq!(unsafe { rax_jit_system_selector(&mut state, 1) }, 0xBEEF);
-    assert_eq!(unsafe { rax_jit_system_selector(&mut state, 2) }, 0);
+    for (selector, expected) in [
+        (0, 0x2468),
+        (1, 0xBEEF),
+        (2, 0x0100),
+        (3, 0x0200),
+        (4, 0x0300),
+        (5, 0x0400),
+        (6, 0x0500),
+        (7, 0x0600),
+        (8, 0),
+    ] {
+        assert_eq!(
+            unsafe { rax_jit_system_selector(&mut state, selector) },
+            expected,
+            "selector ID {selector}"
+        );
+    }
     assert_eq!(
         unsafe { rax_jit_system_selector(std::ptr::null_mut(), 0) },
         0

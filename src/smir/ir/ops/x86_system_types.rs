@@ -82,15 +82,24 @@ pub struct X86SmswOp {
     pub requires_apx: bool,
 }
 
-/// Implicit system-segment selector exposed by SLDT or STR.
+/// Architecturally readable x86 selector register. `Ldtr` and `Tr` are exposed
+/// by SLDT/STR; the remaining variants are the visible segment selectors read
+/// by `MOV r/m16/32/64, Sreg` (`8C /r`). The system variants remain first so
+/// their established native-helper encodings stay append-only.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum X86SystemSelector {
     Ldtr,
     Tr,
+    Es,
+    Cs,
+    Ss,
+    Ds,
+    Fs,
+    Gs,
 }
 
-/// Architecturally distinct SLDT/STR destinations. Register forms write the
-/// selected 16-, 32-, or 64-bit GPR width; memory forms always store exactly
+/// Architecturally distinct selector-store destinations. Register forms write
+/// the selected 16-, 32-, or 64-bit GPR width; memory forms always store exactly
 /// the 16-bit selector independently of the encoded operand size.
 #[derive(Clone, Debug)]
 pub enum X86SystemSelectorTarget {
@@ -98,9 +107,9 @@ pub enum X86SystemSelectorTarget {
     Memory { addr: Address },
 }
 
-/// SLDT/STR read an implicit descriptor-register selector after protected-mode,
-/// APX, and UMIP validation. A REX2 encoding requires the dynamic APX profile
-/// even when it addresses only legacy GPRs.
+/// Read one visible selector. SLDT/STR require protected-mode and UMIP
+/// validation; `MOV r/m, Sreg` does not. Every REX2 encoding requires the
+/// dynamic APX profile even when it addresses only legacy GPRs.
 #[derive(Clone, Debug)]
 pub struct X86SystemSelectorStoreOp {
     pub selector: X86SystemSelector,
@@ -116,10 +125,10 @@ pub enum X86SystemSelectorSource {
     Memory { addr: Address },
 }
 
-/// Load one system-segment selector and its hidden descriptor cache. LTR also
-/// performs the implicit available-to-busy GDT descriptor transition before
-/// task-register commit. Successful execution serializes and hands off at
-/// `next_pc`.
+/// Load LDTR or TR and its hidden descriptor cache. Ordinary segment-selector
+/// variants are invalid shapes for this operation. LTR also performs the
+/// implicit available-to-busy GDT descriptor transition before task-register
+/// commit. Successful execution serializes and hands off at `next_pc`.
 #[derive(Clone, Debug)]
 pub struct X86SystemSelectorLoadOp {
     pub selector: X86SystemSelector,

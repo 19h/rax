@@ -178,8 +178,8 @@ pub const X86_GUEST_DESCRIPTOR_STORE_FN_OFFSET: i32 = X86_GUEST_PMC_FN_OFFSET + 
 /// Byte offset of the helper-backed LGDT/LIDT load function. Appended so all
 /// pre-existing native helper/state fields retain their established ABI.
 pub const X86_GUEST_DESCRIPTOR_LOAD_FN_OFFSET: i32 = X86_GUEST_DESCRIPTOR_STORE_FN_OFFSET + 8;
-/// Byte offset of the helper-backed SLDT/STR selector reader. Appended so all
-/// pre-existing native helper/state fields retain their established ABI.
+/// Byte offset of the helper-backed system/segment-selector reader. Appended so
+/// all pre-existing native helper/state fields retain their established ABI.
 pub const X86_GUEST_SYSTEM_SELECTOR_FN_OFFSET: i32 = X86_GUEST_DESCRIPTOR_LOAD_FN_OFFSET + 8;
 /// Byte offset of the helper-backed LLDT/LTR selector loader. Appended so all
 /// pre-existing native helper/state fields retain their established ABI.

@@ -164,7 +164,14 @@ pub fn mov_r_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// MOV r/m, Sreg (0x8C)
 pub fn mov_rm_sreg(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
-    let (sreg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    let modrm = ctx.peek_u8()?;
+    // ModR/M.reg names a segment register, so legacy REX.R and both REX2 R
+    // extension bits are ignored. Encodings /6 and /7 name no segment register.
+    let sreg = (modrm >> 3) & 7;
+    if sreg >= 6 {
+        return vcpu.inject_undefined_instruction();
+    }
+    let (_, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     let value = vcpu.get_sreg(sreg);
 
     if is_memory {

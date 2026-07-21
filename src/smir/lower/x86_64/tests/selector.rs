@@ -1,4 +1,4 @@
-//! Fault-precise helper-backed native lowering for SLDT/STR/LLDT/LTR.
+//! Fault-precise helper-backed native lowering for selector stores and loads.
 
 use super::*;
 use crate::smir::ir::ops::{
@@ -152,6 +152,63 @@ fn lower_selector_store_requires_guards_helpers_and_never_emits_host_sldt_str() 
 }
 
 #[test]
+fn lower_mov_rm_sreg_uses_selector_helper_without_sldt_str_mode_or_umip_guards() {
+    for selector in [
+        X86SystemSelector::Es,
+        X86SystemSelector::Cs,
+        X86SystemSelector::Ss,
+        X86SystemSelector::Ds,
+        X86SystemSelector::Fs,
+        X86SystemSelector::Gs,
+    ] {
+        let (code, _) = lower(register(selector, 0, OpWidth::W32, false), false, true)
+            .unwrap_or_else(|error| panic!("lower MOV EAX,{selector:?}: {error}"));
+        assert!(
+            code.windows(4).any(|window| {
+                window == (X86_GUEST_SYSTEM_SELECTOR_FN_OFFSET as u32).to_le_bytes()
+            }),
+            "{selector:?}: missing selector helper"
+        );
+        for offset in [
+            X86_GUEST_CR0_OFFSET,
+            X86_GUEST_RFLAGS_OFFSET,
+            X86_GUEST_CR4_OFFSET,
+            X86_GUEST_CPL_OFFSET,
+            X86_GUEST_APX_ENABLED_OFFSET,
+        ] {
+            assert!(
+                !code
+                    .windows(4)
+                    .any(|window| window == (offset as u32).to_le_bytes()),
+                "{selector:?}: MOV r/m,Sreg must not test state offset {offset}: {code:02X?}"
+            );
+        }
+    }
+
+    let (apx, _) = lower(
+        register(X86SystemSelector::Cs, 31, OpWidth::W64, true),
+        false,
+        true,
+    )
+    .expect("lower REX2 MOV R31,CS");
+    assert!(
+        apx.windows(4)
+            .any(|window| window == (X86_GUEST_APX_ENABLED_OFFSET as u32).to_le_bytes())
+    );
+    for offset in [
+        X86_GUEST_CR0_OFFSET,
+        X86_GUEST_RFLAGS_OFFSET,
+        X86_GUEST_CR4_OFFSET,
+        X86_GUEST_CPL_OFFSET,
+    ] {
+        assert!(
+            !apx.windows(4)
+                .any(|window| window == (offset as u32).to_le_bytes())
+        );
+    }
+}
+
+#[test]
 fn lower_selector_store_rejects_every_non_lifter_shape() {
     let wrap = |target, requires_apx| {
         OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
@@ -285,6 +342,7 @@ fn lower_selector_loads_require_guards_helpers_serialize_and_never_touch_host_st
 #[test]
 fn lower_selector_loads_reject_every_non_lifter_shape_and_frontier() {
     for malformed in [
+        load_register_for(X86SystemSelector::Es, 0, false, 0x1003),
         OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
             selector: X86SystemSelector::Tr,
             source: X86SystemSelectorSource::Register { src: VReg::virt(0) },
@@ -446,6 +504,7 @@ fn lower_selector_store_wraps_its_system_helper_with_vector_state_when_requested
 struct SelectorContext {
     ldtr: u64,
     tr: u64,
+    segments: [u64; 6],
     selector_calls: u64,
     last_selector: u64,
     stores: u64,
@@ -471,6 +530,7 @@ unsafe extern "C" fn read_selector(
     match selector {
         0 => context.ldtr,
         1 => context.tr,
+        2..=7 => context.segments[(selector - 2) as usize],
         _ => u64::MAX,
     }
 }
@@ -696,6 +756,119 @@ fn native_selector_registers_cover_both_selectors_widths_stack_aliases_egprs_and
             }
         }
     }
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_mov_rm_sreg_covers_all_selectors_widths_egprs_and_ignores_system_guards() {
+    let selectors = [
+        (X86SystemSelector::Es, 2_u64, 0x0101_u64),
+        (X86SystemSelector::Cs, 3, 0x0202),
+        (X86SystemSelector::Ss, 4, 0x0303),
+        (X86SystemSelector::Ds, 5, 0x0404),
+        (X86SystemSelector::Fs, 6, 0x0505),
+        (X86SystemSelector::Gs, 7, 0x0606),
+    ];
+    for (selector, selector_id, value) in selectors {
+        for index in [0_u8, 4, 5, 15, 16, 31] {
+            for width in [OpWidth::W16, OpWidth::W32, OpWidth::W64] {
+                let mut context = SelectorContext {
+                    segments: [0x0101, 0x0202, 0x0303, 0x0404, 0x0505, 0x0606],
+                    ..SelectorContext::default()
+                };
+                let requires_apx = index >= 16;
+                let regs = execute_register(
+                    register(selector, index, width, requires_apx),
+                    &mut context,
+                    |regs| {
+                        regs.apx_enabled = u64::from(requires_apx);
+                        // These are SLDT/STR guards, not MOV r/m,Sreg guards.
+                        regs.cr0 = 0;
+                        regs.rflags |= 1 << 17;
+                        regs.cr4 = 1 << 11;
+                        regs.cpl = 3;
+                    },
+                );
+                let incoming = 0xA500_0000_0000_0000 | u64::from(index);
+                let expected = match width {
+                    OpWidth::W16 => (incoming & !0xFFFF) | value,
+                    OpWidth::W32 | OpWidth::W64 => value,
+                    _ => unreachable!(),
+                };
+                for (other, observed) in regs.gpr.iter().enumerate() {
+                    let expected_gpr = if other == usize::from(index) {
+                        expected
+                    } else {
+                        0xA500_0000_0000_0000 | other as u64
+                    };
+                    assert_eq!(*observed, expected_gpr, "{selector:?} {index} {width:?}");
+                }
+                assert_eq!(context.selector_calls, 1);
+                assert_eq!(context.last_selector, selector_id);
+                assert_eq!(
+                    regs.rflags & (0x08D5 | (1 << 10)),
+                    0x08D5 | (1 << 10),
+                    "{selector:?} {index} {width:?}"
+                );
+                assert_eq!(regs.ac_flag, 1);
+                assert_eq!(regs.exit_pc, 0xDEAD_BEEF_DEAD_BEEF);
+            }
+        }
+    }
+
+    let mut disabled = SelectorContext {
+        segments: [0x0101, 0x0202, 0x0303, 0x0404, 0x0505, 0x0606],
+        ..SelectorContext::default()
+    };
+    let regs = execute_register(
+        register(X86SystemSelector::Cs, 31, OpWidth::W64, true),
+        &mut disabled,
+        |regs| regs.apx_enabled = 0,
+    );
+    assert_eq!(disabled.selector_calls, 0);
+    assert_eq!(regs.gpr[31], 0xA500_0000_0000_001F);
+    assert_eq!(regs.exit_pc, 0x1000);
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_mov_rm_sreg_memory_bypasses_system_guards_and_stores_exactly_two_bytes() {
+    use crate::smir::lower::runtime::{ExecMem, GuestRegs};
+
+    let (code, entry) = lower(
+        memory(
+            X86SystemSelector::Fs,
+            Address::Direct(x86(X86Reg::Rsp)),
+            false,
+        ),
+        true,
+        true,
+    )
+    .expect("lower MOV [RSP],FS");
+    let exec = ExecMem::new(&code).expect("map MOV [RSP],FS");
+    let mut context = SelectorContext {
+        segments: [0x0101, 0x0202, 0x0303, 0x0404, 0xBEEF, 0x0606],
+        store_ok: 1,
+        ..SelectorContext::default()
+    };
+    let mut regs = GuestRegs::default();
+    regs.gpr[4] = 0x2345;
+    regs.cr0 = 0;
+    regs.rflags = 0x2 | (1 << 17);
+    regs.cr4 = 1 << 11;
+    regs.cpl = 3;
+    regs.ctx = (&mut context as *mut SelectorContext) as u64;
+    regs.store_fn = store as usize as u64;
+    regs.system_selector_fn = read_selector as usize as u64;
+    exec.run(entry, &mut regs);
+
+    assert_eq!(context.selector_calls, 1);
+    assert_eq!(context.last_selector, 6);
+    assert_eq!(context.stores, 1);
+    assert_eq!(context.last_addr, 0x2345);
+    assert_eq!(context.last_value, 0xBEEF);
+    assert_eq!(context.last_size, 2);
+    assert_eq!(regs.gpr[4], 0x2345);
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]

@@ -445,26 +445,39 @@ impl SmirInterpreter {
                             });
                             return Ok(());
                         }
-                        // SLDT/STR are recognized only in protected mode and
-                        // are invalid in virtual-8086 mode.
-                        if x86.cr0 & 1 == 0 || x86.rflags & crate::isa::x86_64::flags::bits::VM != 0
-                        {
-                            ctx.request_exit(ExitReason::Undefined {
-                                addr: op.guest_pc,
-                                opcode: 0,
-                            });
-                            return Ok(());
-                        }
-                        if x86.cr4 & (1 << 11) != 0 && x86.cpl != 0 {
-                            ctx.request_exit(ExitReason::GeneralProtection {
-                                addr: op.guest_pc,
-                                error_code: 0,
-                            });
-                            return Ok(());
+                        if matches!(
+                            store.selector,
+                            X86SystemSelector::Ldtr | X86SystemSelector::Tr
+                        ) {
+                            // SLDT/STR are recognized only in protected mode,
+                            // are invalid in virtual-8086 mode, and are subject
+                            // to UMIP. MOV r/m,Sreg has none of these guards.
+                            if x86.cr0 & 1 == 0
+                                || x86.rflags & crate::isa::x86_64::flags::bits::VM != 0
+                            {
+                                ctx.request_exit(ExitReason::Undefined {
+                                    addr: op.guest_pc,
+                                    opcode: 0,
+                                });
+                                return Ok(());
+                            }
+                            if x86.cr4 & (1 << 11) != 0 && x86.cpl != 0 {
+                                ctx.request_exit(ExitReason::GeneralProtection {
+                                    addr: op.guest_pc,
+                                    error_code: 0,
+                                });
+                                return Ok(());
+                            }
                         }
                         match store.selector {
                             X86SystemSelector::Ldtr => x86.ldtr_selector,
                             X86SystemSelector::Tr => x86.tr_selector,
+                            X86SystemSelector::Es => x86.es_selector,
+                            X86SystemSelector::Cs => x86.cs_selector,
+                            X86SystemSelector::Ss => x86.ss_selector,
+                            X86SystemSelector::Ds => x86.ds_selector,
+                            X86SystemSelector::Fs => x86.fs_selector,
+                            X86SystemSelector::Gs => x86.gs_selector,
                         }
                     }
                     _ => {
@@ -509,7 +522,10 @@ impl SmirInterpreter {
                         addr.is_x86_state_backed_shape() && (!uses_egpr || load.requires_apx)
                     }
                 };
-                if !matches!(instruction_len, Some(3..=15))
+                if !matches!(
+                    load.selector,
+                    X86SystemSelector::Ldtr | X86SystemSelector::Tr
+                ) || !matches!(instruction_len, Some(3..=15))
                     || op.x86_hint.is_some()
                     || !source_shape
                 {
@@ -619,6 +635,7 @@ impl SmirInterpreter {
                         decode_x86_tss_descriptor(selector, low, high, long_mode, ia32e_active)
                             .map(|descriptor| (descriptor.segment, Some(descriptor.busy_low)))
                     }
+                    _ => unreachable!("validated selector-load kind changed"),
                 };
                 let (segment, busy_low) = match decoded {
                     Ok(decoded) => decoded,
@@ -659,6 +676,7 @@ impl SmirInterpreter {
                         x86.tr_type = segment.type_;
                         x86.tr_cache = cache;
                     }
+                    _ => unreachable!("validated selector-load kind changed"),
                 }
             }
 

@@ -1,5 +1,5 @@
 use crate::common::*;
-use rax::vm::vcpu::Registers;
+use rax::vm::vcpu::{Registers, VCpu};
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress};
 
@@ -562,13 +562,17 @@ fn test_mov_segment_cascade() {
 }
 
 #[test]
-fn test_mov_segment_r8_r15() {
+fn test_mov_segment_rex_b_extends_r8_r9() {
     let code = [
-        0x4c, 0x8c, 0xd8, // MOV R8, DS (with REX prefix)
-        0x4c, 0x8c, 0xe1, // MOV R9, FS
+        0x49, 0x8c, 0xd8, // MOV R8, DS (REX.W+B)
+        0x49, 0x8c, 0xe1, // MOV R9, FS (REX.W+B)
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.r8 = u64::MAX;
+    regs.r9 = u64::MAX;
+    vcpu.set_regs(&regs).unwrap();
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // R8 = DS selector (0), R9 = FS selector (0); upper bits zeroed too.
     assert_eq!(regs.r8, 0x0000, "R8 = DS selector (0)");
@@ -670,6 +674,104 @@ fn test_mov_fs_nonzero_selector_roundtrip() {
         0x0010,
         "FS reads back loaded selector 0x10"
     );
+}
+
+#[test]
+fn test_mov_rm_sreg_reads_every_visible_selector_exactly() {
+    let code = [
+        0x48, 0x8c, 0xc0, // MOV RAX, ES
+        0x48, 0x8c, 0xcb, // MOV RBX, CS
+        0x48, 0x8c, 0xd1, // MOV RCX, SS
+        0x48, 0x8c, 0xda, // MOV RDX, DS
+        0x48, 0x8c, 0xe6, // MOV RSI, FS
+        0x48, 0x8c, 0xef, // MOV RDI, GS
+        0xf4,
+    ];
+    let (mut vcpu, _) = setup_vm(&code, None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.es.selector = 0x0101;
+    sregs.cs.selector = 0x0202;
+    sregs.ss.selector = 0x0303;
+    sregs.ds.selector = 0x0404;
+    sregs.fs.selector = 0x0505;
+    sregs.gs.selector = 0x0606;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0x0101);
+    assert_eq!(regs.rbx, 0x0202);
+    assert_eq!(regs.rcx, 0x0303);
+    assert_eq!(regs.rdx, 0x0404);
+    assert_eq!(regs.rsi, 0x0505);
+    assert_eq!(regs.rdi, 0x0606);
+}
+
+#[test]
+fn test_mov_rm_sreg_ignores_rex_r_on_cold_and_decode_cache_paths() {
+    let (mut vcpu, _) = setup_vm_no_idt(&[0x4c, 0x8c, 0xc8], None); // MOV RAX,CS
+    for path in ["cold decode", "decode-cache hit"] {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = u64::MAX;
+        regs.rip = CODE_ADDR;
+        vcpu.set_regs(&regs).unwrap();
+        vcpu.step()
+            .unwrap_or_else(|error| panic!("{path}: {error}"));
+        let after = vcpu.get_regs().unwrap();
+        assert_eq!(after.rax, 0x08, "{path}: REX.R must not extend Sreg");
+        assert_eq!(after.rip, CODE_ADDR + 3, "{path}: exact length");
+    }
+}
+
+#[test]
+fn test_mov_rm_sreg_rex2_ignores_both_r_bits_and_addresses_r31() {
+    // REX2.R4/R3 are ignored for the Sreg field; B4/B3 extend r/m=7 to R31.
+    let (mut vcpu, _) = setup_vm_no_idt(&[0xd5, 0x5d, 0x8c, 0xcf], None);
+    vcpu.set_apx_enabled(true);
+    for path in ["cold decode", "decode-cache hit"] {
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.r31 = u64::MAX;
+        regs.rip = CODE_ADDR;
+        vcpu.set_regs(&regs).unwrap();
+        vcpu.step()
+            .unwrap_or_else(|error| panic!("{path}: {error}"));
+        let after = vcpu.get_regs().unwrap();
+        assert_eq!(after.r31, 0x08, "{path}: MOV R31,CS");
+        assert_eq!(after.rip, CODE_ADDR + 4, "{path}: exact REX2 length");
+    }
+}
+
+#[test]
+fn test_mov_rm_sreg_invalid_encodings_are_fault_class_ud_and_noncommitting() {
+    for (name, instruction, apx_enabled) in [
+        ("reserved /6", &[0x8c, 0xf0][..], false),
+        ("reserved /7", &[0x8c, 0xf8], false),
+        ("LOCK", &[0xf0, 0x8c, 0xc8], false),
+        ("APX-disabled REX2", &[0xd5, 0x00, 0x8c, 0xc8], false),
+        ("REX before REX2", &[0x48, 0xd5, 0x00, 0x8c, 0xc8], true),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(instruction, None);
+        vcpu.set_apx_enabled(apx_enabled);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rax = 0xA5A5_5A5A_DEAD_BEEF;
+        vcpu.set_regs(&regs).unwrap();
+
+        for path in ["cold decode", "decode-cache hit"] {
+            let error = vcpu
+                .step()
+                .expect_err("decode-invalid MOV r/m,Sreg must raise #UD")
+                .to_string();
+            assert!(
+                error.contains("IDT entry 6 not present"),
+                "{name} ({path}): wrong exception vector: {error}"
+            );
+            let after = vcpu.get_regs().unwrap();
+            assert_eq!(after.rip, CODE_ADDR, "{name} ({path}): fault RIP");
+            assert_eq!(
+                after.rax, 0xA5A5_5A5A_DEAD_BEEF,
+                "{name} ({path}): destination must not commit"
+            );
+        }
+    }
 }
 
 // FS-base + override: a load through an FS override reads from (fs.base + EA).

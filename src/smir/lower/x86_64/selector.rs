@@ -1,4 +1,4 @@
-//! Fault-precise, helper-backed SLDT/STR/LLDT/LTR lowering.
+//! Fault-precise, helper-backed selector-store and selector-load lowering.
 
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86SystemSelector, X86SystemSelectorLoadOp, X86SystemSelectorSource,
@@ -54,6 +54,7 @@ pub(crate) fn x86_system_selector_store_shape_valid(op: &SmirOp) -> bool {
 /// Validate the strict long-mode LLDT/LTR form admitted by native lowering.
 pub(crate) fn x86_system_selector_load_shape_valid(op: &SmirOp) -> bool {
     let OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+        selector,
         source,
         requires_apx,
         next_pc,
@@ -62,7 +63,10 @@ pub(crate) fn x86_system_selector_load_shape_valid(op: &SmirOp) -> bool {
     else {
         return false;
     };
-    if op.x86_hint.is_some() || !matches!(next_pc.checked_sub(op.guest_pc), Some(3..=15)) {
+    if !matches!(selector, X86SystemSelector::Ldtr | X86SystemSelector::Tr)
+        || op.x86_hint.is_some()
+        || !matches!(next_pc.checked_sub(op.guest_pc), Some(3..=15))
+    {
         return false;
     }
 
@@ -87,11 +91,13 @@ pub(crate) fn x86_system_selector_load_shape_valid(op: &SmirOp) -> bool {
 }
 
 impl X86_64Lowerer {
-    /// Emit APX, protected-mode, VM86, and UMIP checks while RAX is the live
-    /// `GuestRegs` base. Every failure replays the direct instruction at its
-    /// original PC; a disabled UMIP control transfers directly to commit.
+    /// Emit APX and selector-specific checks while RAX is the live `GuestRegs`
+    /// base. SLDT/STR require protected-mode, VM86, and UMIP checks; MOV
+    /// r/m,Sreg only requires APX when encoded with REX2. Every failure replays
+    /// the direct instruction at its original PC.
     fn emit_x86_system_selector_store_guards(
         &mut self,
+        selector: X86SystemSelector,
         requires_apx: bool,
     ) -> (Vec<usize>, Vec<usize>) {
         let mut fault_branches = Vec::with_capacity(4);
@@ -102,6 +108,10 @@ impl X86_64Lowerer {
             self.code.emit_u32(X86_GUEST_APX_ENABLED_OFFSET as u32);
             self.code.emit_u8(0);
             fault_branches.push(self.emit_jcc_placeholder(X86Cond::E));
+        }
+
+        if !matches!(selector, X86SystemSelector::Ldtr | X86SystemSelector::Tr) {
+            return (fault_branches, commit_branches);
         }
 
         self.code.emit_bytes(&[0xF7, 0x80]); // test dword [rax+cr0],PE
@@ -128,10 +138,10 @@ impl X86_64Lowerer {
         (fault_branches, commit_branches)
     }
 
-    /// Read the guest LDTR/TR selector through the owning-vCPU helper and
-    /// commit the encoded GPR width or one exact 2-byte MMU-backed store. Host
-    /// SLDT/STR are never emitted because they would observe host descriptor
-    /// state and host UMIP controls.
+    /// Read the selected guest-visible selector through the owning-vCPU helper
+    /// and commit the encoded GPR width or one exact 2-byte MMU-backed store.
+    /// Host selector instructions are never emitted because they would observe
+    /// host state rather than the guest vCPU.
     pub(crate) fn emit_x86_system_selector_store(&mut self, op: &SmirOp) -> Result<(), LowerError> {
         if !self.jit_fault_deopt_guards {
             return Err(LowerError::UnsupportedOp {
@@ -155,7 +165,7 @@ impl X86_64Lowerer {
         };
         if matches!(target, X86SystemSelectorTarget::Memory { .. }) && !self.mem_helpers {
             return Err(LowerError::UnsupportedOp {
-                op: "SLDT/STR memory destination requires JIT MMU helpers".to_string(),
+                op: "x86 selector-store memory destination requires JIT MMU helpers".to_string(),
             });
         }
 
@@ -173,7 +183,7 @@ impl X86_64Lowerer {
         self.emit_spill_legacy_gprs_to_state_from_rax(8);
 
         let (fault_branches, commit_branches) =
-            self.emit_x86_system_selector_store_guards(*requires_apx);
+            self.emit_x86_system_selector_store_guards(*selector, *requires_apx);
         for branch in commit_branches {
             self.patch_rel32_to_current(branch)?;
         }
@@ -187,6 +197,12 @@ impl X86_64Lowerer {
                 match selector {
                     X86SystemSelector::Ldtr => 0,
                     X86SystemSelector::Tr => 1,
+                    X86SystemSelector::Es => 2,
+                    X86SystemSelector::Cs => 3,
+                    X86SystemSelector::Ss => 4,
+                    X86SystemSelector::Ds => 5,
+                    X86SystemSelector::Fs => 6,
+                    X86SystemSelector::Gs => 7,
                 },
                 OpWidth::W32,
             );
@@ -355,6 +371,7 @@ impl X86_64Lowerer {
             let selector = match load.selector {
                 X86SystemSelector::Ldtr => 0,
                 X86SystemSelector::Tr => 1,
+                _ => unreachable!("validated selector-load kind changed"),
             };
             let encoding =
                 i64::from(memory_source) | (i64::from(load.requires_apx) << 1) | (selector << 2);

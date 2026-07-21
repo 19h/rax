@@ -4006,9 +4006,9 @@ pub enum OpKind {
     /// can raise #UD/#GP(0), and a memory target can fault or reach MMIO.
     X86Smsw(X86SmswOp),
 
-    /// SLDT/STR expose the implicit LDTR/TR selector after protected-mode,
-    /// APX, and UMIP validation. Register destinations use the encoded
-    /// 16-/32-/64-bit width; memory destinations store exactly 2 bytes.
+    /// Selector stores expose LDTR/TR for SLDT/STR or ES/CS/SS/DS/FS/GS for
+    /// MOV r/m,Sreg. Register destinations use the encoded 16-/32-/64-bit
+    /// width; memory destinations store exactly 2 bytes.
     X86SystemSelectorStore(X86SystemSelectorStoreOp),
 
     /// LLDT/LTR read a fixed 16-bit source and load one implicit system-segment
