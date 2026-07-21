@@ -6351,6 +6351,10 @@ mod jit_fence_alias_tests;
 #[path = "cpu_waitpkg_tests.rs"]
 mod waitpkg_tests;
 
+#[cfg(test)]
+#[path = "cpu_ptwrite_tests.rs"]
+mod ptwrite_tests;
+
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_hypercall_tests.rs"]
 mod jit_hypercall_tests;

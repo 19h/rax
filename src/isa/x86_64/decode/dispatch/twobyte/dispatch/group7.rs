@@ -404,6 +404,12 @@ impl X86_64Vcpu {
         let modrm = ctx.consume_u8()?;
         let reg_op = (modrm >> 3) & 0x07;
 
+        if reg_op == 4 && ctx.rep_prefix == Some(0xF3) {
+            // The deterministic CPUID profile returns zero for leaf 14H, so
+            // PTWRITE must #UD before observing either register or memory data.
+            return self.inject_undefined_instruction();
+        }
+
         // Memory fences and FSGSBASE (mod=3, specific reg values)
         if modrm >> 6 == 3 {
             let rm = (modrm & 0x07) | ctx.any_rex_b();

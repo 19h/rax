@@ -14,6 +14,8 @@ mod movdir;
 pub use movdir::*;
 mod group11;
 pub use group11::*;
+mod group15;
+pub use group15::*;
 mod group5;
 pub use group5::*;
 mod machine_status;
