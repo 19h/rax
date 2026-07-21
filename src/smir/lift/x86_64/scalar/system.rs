@@ -191,6 +191,60 @@ impl X86_64Lifter {
                 prefix.cursor + modrm.bytes_consumed,
             ));
         }
+        if !modrm.is_memory && group == 6 {
+            let kind = if prefix.rep_prefix == Some(0xF3) {
+                let x86_addr = X86Address {
+                    base: Some(modrm.rm),
+                    index: None,
+                    scale: 1,
+                    disp: 0,
+                    rip_relative: false,
+                    address_width: if prefix.address_size_override {
+                        OpWidth::W32
+                    } else {
+                        OpWidth::W64
+                    },
+                    disp_size: DispSize::Auto,
+                    segment: match prefix.segment_override {
+                        Some(0x64) => Some(X86Reg::FsBase),
+                        Some(0x65) => Some(X86Reg::GsBase),
+                        _ => None,
+                    },
+                };
+                let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+                let addr = if prefix.address_size_override {
+                    Address::X86Addr32(Box::new(self.x86_addr32_state_address(&x86_addr, next_pc)))
+                } else {
+                    let (addr, pre_ops) = self.x86_addr_to_smir(&x86_addr, next_pc, ctx);
+                    debug_assert!(pre_ops.is_empty());
+                    addr
+                };
+                Some(X86WaitPkgOp::Umonitor {
+                    addr,
+                    stack_segment: prefix.segment_override == Some(0x36),
+                })
+            } else if prefix.rep_prefix == Some(0xF2) {
+                Some(X86WaitPkgOp::Umwait {
+                    control: self.gpr(modrm.rm),
+                    deadline_low: self.gpr(0),
+                    deadline_high: self.gpr(2),
+                })
+            } else if prefix.operand_size_override {
+                Some(X86WaitPkgOp::Tpause {
+                    control: self.gpr(modrm.rm),
+                    deadline_low: self.gpr(0),
+                    deadline_high: self.gpr(2),
+                })
+            } else {
+                None
+            };
+            if let Some(kind) = kind {
+                return Ok(LiftResult::fallthrough(
+                    vec![SmirOp::new(OpId(0), pc, OpKind::X86WaitPkg(kind))],
+                    prefix.cursor + modrm.bytes_consumed,
+                ));
+            }
+        }
         if !modrm.is_memory && group == 5 && prefix.rep_prefix == Some(0xF3) {
             // F3 0F AE /5 is INCSSPD/INCSSPQ, not LFENCE. RAX does not
             // enumerate CET shadow stacks, so every register selector is #UD.

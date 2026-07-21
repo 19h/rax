@@ -68,6 +68,8 @@ mod far_return;
 pub use far_return::*;
 mod monitor_mwait;
 pub use monitor_mwait::*;
+mod waitpkg;
+pub use waitpkg::*;
 mod msr;
 pub use msr::*;
 mod pkru;

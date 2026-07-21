@@ -4122,6 +4122,9 @@ pub enum OpKind {
 
     X86MonitorMwait(X86MonitorMwaitOp),
 
+    /// UMONITOR/UMWAIT/TPAUSE user-mode monitor and deterministic wait.
+    X86WaitPkg(X86WaitPkgOp),
+
     /// RDPKRU/WRPKRU. The implicit GPR and PKRU operands are explicit so
     /// liveness, static analysis, interpretation, and native state handoff all
     /// observe the same architectural data flow. Dynamic CR4.PKE and selector
@@ -4583,6 +4586,7 @@ impl OpKind {
                 | OpKind::X86FsGsBase { .. }
                 | OpKind::X86SwapGs { .. }
                 | OpKind::X86MonitorMwait(..)
+                | OpKind::X86WaitPkg(..)
                 | OpKind::X86Pkru { .. }
                 | OpKind::X86ReadTsc(..)
                 | OpKind::X86ReadPmc(..)
@@ -5158,6 +5162,7 @@ impl OpKind {
             | OpKind::X86WriteControl { .. }
             | OpKind::X86WriteDebug { .. }
             | OpKind::X86MonitorMwait(..)
+            | OpKind::X86WaitPkg(..)
             | OpKind::Syscall { .. }
             | OpKind::IoOut { .. }
             | OpKind::Swi { .. }
@@ -5348,6 +5353,7 @@ impl OpKind {
                     | OpKind::X86FsGsBase { .. }
                     | OpKind::X86SwapGs { .. }
                     | OpKind::X86MonitorMwait(..)
+                    | OpKind::X86WaitPkg(..)
                     | OpKind::X86Pkru { .. }
                     | OpKind::X86Random { .. }
                     // A saturating clamp ORs the Hexagon USR:OVF sticky bit when it
@@ -5395,6 +5401,7 @@ impl OpKind {
                 | OpKind::VHist { .. }
                 | OpKind::X86LoadMxcsr { .. }
                 | OpKind::X86MonitorMwait(X86MonitorMwaitOp { addr: Some(_), .. })
+                | OpKind::X86WaitPkg(X86WaitPkgOp::Umonitor { .. })
                 | OpKind::X86Lmsw(X86LmswOp {
                     source: X86LmswSource::Memory { .. },
                     ..

@@ -367,3 +367,29 @@ pub struct X86MonitorMwaitOp {
     /// a noncanonical 64-bit linear address. Always false for MWAIT.
     pub stack_segment: bool,
 }
+
+/// WAITPKG under the deterministic guest profile. UMONITOR performs the
+/// architecturally ordered, faulting byte probe but does not retain monitor
+/// hardware state. UMWAIT and TPAUSE validate their explicit 32-bit control
+/// source and CR4.TSD privilege state, read the implicit EDX:EAX deadline, and
+/// return immediately with CF/PF/AF/ZF/SF/OF cleared. An implementation-
+/// dependent wake event is permitted to end either wait before its deadline.
+#[derive(Clone, Debug)]
+pub enum X86WaitPkgOp {
+    Umonitor {
+        addr: Address,
+        /// An SS override selects #SS(0), rather than #GP(0), for a
+        /// noncanonical 64-bit linear address.
+        stack_segment: bool,
+    },
+    Umwait {
+        control: VReg,
+        deadline_low: VReg,
+        deadline_high: VReg,
+    },
+    Tpause {
+        control: VReg,
+        deadline_low: VReg,
+        deadline_high: VReg,
+    },
+}

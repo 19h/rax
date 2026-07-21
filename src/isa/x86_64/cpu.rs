@@ -4743,7 +4743,7 @@ impl X86_64Vcpu {
                 continue 'modes;
             }
             // Standalone x86-64 SMIR models the 64-bit FSGSBASE/SWAPGS and
-            // MONITOR/MWAIT contracts, but this CPU can also compile
+            // MONITOR/MWAIT/WAITPKG contracts, but this CPU can also compile
             // compatibility-mode regions. Reject these mode-dependent ops
             // before native admission and let the direct decoder apply the
             // compatibility-mode operand/address and exception rules. CS.L is
@@ -4761,6 +4761,7 @@ impl X86_64Vcpu {
                             OpKind::X86FsGsBase { .. }
                                 | OpKind::X86SwapGs { .. }
                                 | OpKind::X86MonitorMwait(..)
+                                | OpKind::X86WaitPkg(..)
                                 | OpKind::X86Msr(..)
                                 | OpKind::X86ReadControl { .. }
                                 | OpKind::X86Smsw(..)
@@ -6345,6 +6346,10 @@ mod jit_fsgsbase_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_fence_alias_tests.rs"]
 mod jit_fence_alias_tests;
+
+#[cfg(test)]
+#[path = "cpu_waitpkg_tests.rs"]
+mod waitpkg_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_hypercall_tests.rs"]

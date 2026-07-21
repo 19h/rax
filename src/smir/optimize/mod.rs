@@ -11,7 +11,7 @@ use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86LmswOp, X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86RepMode,
     X86SelectorQueryOp, X86SelectorQuerySource, X86SelectorVerifyOp, X86SelectorVerifySource,
     X86SmswOp, X86SmswTarget, X86StringKind, X86SystemSelectorLoadOp, X86SystemSelectorSource,
-    X86SystemSelectorStoreOp, X86SystemSelectorTarget, X86ThreeDNowKind, X86VecAlign,
+    X86SystemSelectorStoreOp, X86SystemSelectorTarget, X86ThreeDNowKind, X86VecAlign, X86WaitPkgOp,
     X86X87DataKind,
 };
 use crate::smir::ir::types::{
@@ -1928,6 +1928,10 @@ impl OpKind {
 
             OpKind::X86Random { .. } => FlagSet::ALL_X86,
 
+            OpKind::X86WaitPkg(X86WaitPkgOp::Umwait { .. } | X86WaitPkgOp::Tpause { .. }) => {
+                FlagSet::ALL_X86
+            }
+
             OpKind::X86XTest => FlagSet::ALL_X86,
 
             OpKind::X86X87Data {
@@ -3618,6 +3622,21 @@ impl OpKind {
                     result.extend(addr.regs());
                 }
             }
+            OpKind::X86WaitPkg(X86WaitPkgOp::Umonitor { addr, .. }) => {
+                result.extend(addr.regs());
+            }
+            OpKind::X86WaitPkg(
+                X86WaitPkgOp::Umwait {
+                    control,
+                    deadline_low,
+                    deadline_high,
+                }
+                | X86WaitPkgOp::Tpause {
+                    control,
+                    deadline_low,
+                    deadline_high,
+                },
+            ) => result.extend([*control, *deadline_low, *deadline_high]),
             OpKind::X86Pkru {
                 eax,
                 ecx,

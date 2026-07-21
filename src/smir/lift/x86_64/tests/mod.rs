@@ -126,6 +126,8 @@ mod vex;
 #[cfg(test)]
 mod vmx_controls;
 #[cfg(test)]
+mod waitpkg;
+#[cfg(test)]
 mod write_control;
 #[cfg(test)]
 mod write_debug;

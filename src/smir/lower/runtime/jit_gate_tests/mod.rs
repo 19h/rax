@@ -82,6 +82,8 @@ mod trap;
 #[cfg(test)]
 mod vector;
 #[cfg(test)]
+mod waitpkg;
+#[cfg(test)]
 mod write_control;
 #[cfg(test)]
 mod write_debug;

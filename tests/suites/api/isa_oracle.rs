@@ -1352,6 +1352,50 @@ fn emits_and_executes_exact_monitor_mwait_semantics() {
 }
 
 #[test]
+fn emits_exact_waitpkg_register_address_deadline_and_apx_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let monitor = decode_to_json(&[0x36, 0xF3, 0x0F, 0xAE, 0xF0], &opts).unwrap();
+    assert_eq!(monitor["smir"]["available"], true);
+    assert_eq!(monitor["smir"]["bytes_consumed"], 5);
+    let op = &monitor["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_waitpkg_umonitor");
+    assert_eq!(op["kind"]["addr"]["kind"], "direct");
+    assert_eq!(op["kind"]["addr"]["reg"]["name"], "rax");
+    assert_eq!(op["kind"]["stack_segment"], true);
+    assert_eq!(op["writes"].as_array().unwrap().len(), 0);
+    assert_eq!(op["memory"]["reads"], true);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+
+    let wait = decode_to_json(&[0xF2, 0x0F, 0xAE, 0xF1], &opts).unwrap();
+    assert_eq!(wait["smir"]["available"], true);
+    assert_eq!(wait["smir"]["bytes_consumed"], 4);
+    let op = &wait["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_waitpkg_umwait");
+    assert_eq!(op["kind"]["control"]["name"], "rcx");
+    assert_eq!(op["kind"]["deadline_low"]["name"], "rax");
+    assert_eq!(op["kind"]["deadline_high"]["name"], "rdx");
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], false);
+    assert_eq!(op["side_effects"], true);
+
+    let pause = decode_to_json(&[0x66, 0xD5, 0x90, 0xAE, 0xF0], &opts).unwrap();
+    assert_eq!(pause["smir"]["available"], true);
+    assert_eq!(pause["smir"]["bytes_consumed"], 5);
+    assert_eq!(pause["smir"]["ops"][0]["kind"]["opcode"], "x86_require_apx");
+    let op = &pause["smir"]["ops"][1];
+    assert_eq!(op["kind"]["opcode"], "x86_waitpkg_tpause");
+    assert_eq!(op["kind"]["control"]["name"], "r16");
+    assert_eq!(op["kind"]["deadline_low"]["name"], "rax");
+    assert_eq!(op["kind"]["deadline_high"]["name"], "rdx");
+    assert_eq!(op["writes"].as_array().unwrap().len(), 0);
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["side_effects"], true);
+}
+
+#[test]
 fn emits_exact_legacy_pcmpxstrx_semantics() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

@@ -124,6 +124,8 @@ impl X86_64Lowerer {
 
             OpKind::X86Msr(..) => self.emit_x86_msr(op)?,
 
+            OpKind::X86WaitPkg(..) => self.emit_x86_waitpkg(op)?,
+
             OpKind::X86ReadControl { .. } => self.emit_x86_read_control(op)?,
 
             OpKind::X86Smsw(..) => self.emit_x86_smsw(op)?,

@@ -292,7 +292,7 @@ pub(crate) fn x86_flag_uses(op: &crate::smir::ir::ops::OpKind) -> crate::smir::i
 }
 pub(crate) fn x86_flag_defs(op: &crate::smir::ir::ops::OpKind) -> crate::smir::ir::flags::FlagSet {
     use crate::smir::ir::flags::FlagSet;
-    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::ops::{OpKind, X86WaitPkgOp};
 
     match op {
         OpKind::Add { flags, .. }
@@ -327,6 +327,9 @@ pub(crate) fn x86_flag_defs(op: &crate::smir::ir::ops::OpKind) -> crate::smir::i
         | OpKind::X86Count { flags, .. } => flags.as_set(),
         OpKind::Cmp { .. } | OpKind::Test { .. } | OpKind::X86XTest => FlagSet::ALL_X86,
         OpKind::X86Random { .. } => FlagSet::ALL_X86,
+        OpKind::X86WaitPkg(X86WaitPkgOp::Umwait { .. } | X86WaitPkgOp::Tpause { .. }) => {
+            FlagSet::ALL_X86
+        }
         OpKind::Bt { .. }
         | OpKind::Bts { .. }
         | OpKind::Btr { .. }

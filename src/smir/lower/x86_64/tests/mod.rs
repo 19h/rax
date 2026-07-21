@@ -90,6 +90,8 @@ mod tsx;
 #[cfg(all(test, feature = "smir-jit"))]
 mod vector_maskmov;
 #[cfg(test)]
+mod waitpkg;
+#[cfg(test)]
 mod write_control;
 #[cfg(test)]
 mod write_debug;

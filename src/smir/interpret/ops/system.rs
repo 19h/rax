@@ -21,9 +21,9 @@ use crate::smir::ir::ops::{
     X86CacheControlKind, X86ControlReg, X86CountKind, X86DebugReg, X86DescriptorTable,
     X86FarCallOp, X86FarJumpOp, X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86SmswTarget,
     X86SystemSelector, X86SystemSelectorSource, X86SystemSelectorTarget, X86ThreeDNowKind,
-    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
-    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
-    X86XSaveKind,
+    X86WaitPkgOp, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
+    X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
+    X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -1698,6 +1698,79 @@ impl SmirInterpreter {
                         self.load_memory(memory, effective_addr, MemWidth::B1, SignExtend::Zero)?;
                 }
             }
+
+            OpKind::X86WaitPkg(wait) => match wait {
+                X86WaitPkgOp::Umonitor {
+                    addr,
+                    stack_segment,
+                } => {
+                    if !matches!(ctx.arch_regs, ArchRegState::X86_64(_)) {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                    let effective_addr = self.compute_address(ctx, addr);
+                    if (((effective_addr as i64) << 16 >> 16) as u64) != effective_addr {
+                        ctx.request_exit(if *stack_segment {
+                            ExitReason::StackSegment {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            }
+                        } else {
+                            ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            }
+                        });
+                        return Ok(());
+                    }
+                    let _ =
+                        self.load_memory(memory, effective_addr, MemWidth::B1, SignExtend::Zero)?;
+                }
+                X86WaitPkgOp::Umwait {
+                    control,
+                    deadline_low,
+                    deadline_high,
+                }
+                | X86WaitPkgOp::Tpause {
+                    control,
+                    deadline_low,
+                    deadline_high,
+                } => {
+                    let (cr0, cr4, cpl) = match &ctx.arch_regs {
+                        ArchRegState::X86_64(x86) => (x86.cr0, x86.cr4, x86.cpl),
+                        _ => {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        }
+                    };
+                    let control = ctx.read_vreg(*control) as u32;
+                    if control & !1 != 0 || (cr0 & 1 != 0 && cr4 & (1 << 2) != 0 && cpl != 0) {
+                        ctx.request_exit(ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        });
+                        return Ok(());
+                    }
+                    // EDX:EAX is an architecturally read deadline. The
+                    // deterministic profile takes an allowed immediate wake
+                    // event, so the value has no further observable effect.
+                    let _deadline = (ctx.read_vreg(*deadline_high) as u32 as u64) << 32
+                        | ctx.read_vreg(*deadline_low) as u32 as u64;
+                    ctx.flags.materialize_all();
+                    ctx.flags.materialized.cf = false;
+                    ctx.flags.materialized.pf = false;
+                    ctx.flags.materialized.af = false;
+                    ctx.flags.materialized.zf = false;
+                    ctx.flags.materialized.sf = false;
+                    ctx.flags.materialized.of = false;
+                }
+            },
 
             OpKind::X86Pkru {
                 eax,

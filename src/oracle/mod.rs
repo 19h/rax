@@ -49,6 +49,7 @@ use crate::smir::ir::ops::X86SystemSelectorSource;
 use crate::smir::ir::ops::X86SystemSelectorStoreOp;
 use crate::smir::ir::ops::X86SystemSelectorTarget;
 use crate::smir::ir::ops::X86ThreeDNowKind;
+use crate::smir::ir::ops::X86WaitPkgOp;
 use crate::smir::ir::ops::X86X87CompareSource;
 use crate::smir::ir::ops::X86X87Constant;
 use crate::smir::ir::ops::X86X87ControlKind;
@@ -2809,6 +2810,20 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
         }) => {
             op_json!("x86_monitor_mwait", rcx, hint, addr, stack_segment)
         }
+        OpKind::X86WaitPkg(X86WaitPkgOp::Umonitor {
+            addr,
+            stack_segment,
+        }) => op_json!("x86_waitpkg_umonitor", addr, stack_segment),
+        OpKind::X86WaitPkg(X86WaitPkgOp::Umwait {
+            control,
+            deadline_low,
+            deadline_high,
+        }) => op_json!("x86_waitpkg_umwait", control, deadline_low, deadline_high),
+        OpKind::X86WaitPkg(X86WaitPkgOp::Tpause {
+            control,
+            deadline_low,
+            deadline_high,
+        }) => op_json!("x86_waitpkg_tpause", control, deadline_low, deadline_high),
         OpKind::X86Pkru {
             eax,
             ecx,

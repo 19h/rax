@@ -9,6 +9,7 @@ use crate::isa::x86_64::execute::crypto::aes;
 use crate::isa::x86_64::flags;
 
 const CR0_TS: u64 = 1 << 3;
+const CR4_TSD: u64 = 1 << 2;
 const CR4_FSGSBASE: u64 = 1 << 16;
 const CR4_OSXSAVE: u64 = 1 << 18;
 const CR4_PKE: u64 = 1 << 22;
@@ -41,19 +42,19 @@ impl X86_64Vcpu {
     }
 
     #[inline(always)]
-    fn monitor_linear_address(&self, ctx: &InsnContext) -> u64 {
+    fn monitor_linear_address(&self, ctx: &InsnContext, reg: u8) -> u64 {
         let offset = if self.sregs.cs.l {
             if ctx.address_size_override {
-                u64::from(self.regs.rax as u32)
+                self.get_reg(reg, 4)
             } else {
-                self.regs.rax
+                self.get_reg(reg, 8)
             }
         } else {
             let default_16bit = !self.sregs.cs.db;
             if default_16bit ^ ctx.address_size_override {
-                u64::from(self.regs.rax as u16)
+                self.get_reg(reg, 2)
             } else {
-                u64::from(self.regs.rax as u32)
+                self.get_reg(reg, 4)
             }
         };
         let segment_base = if self.sregs.cs.l {
@@ -136,7 +137,7 @@ impl X86_64Vcpu {
                         self.inject_exception(13, Some(0))?;
                         return Ok(None);
                     }
-                    let addr = self.monitor_linear_address(ctx);
+                    let addr = self.monitor_linear_address(ctx, 0);
                     if self.sregs.cs.l && !is_canonical_48(addr) {
                         let vector = if ctx.segment_override == Some(0x36) {
                             12 // #SS(0)
@@ -415,13 +416,36 @@ impl X86_64Vcpu {
             match reg_op {
                 // WAITPKG register forms using the 0F AE /6 slot.
                 6 if ctx.rep_prefix == Some(0xF3) => {
-                    // UMONITOR r16/r32/r64 - arm monitor hardware. No visible state in emulation.
+                    // UMONITOR performs the permission checks and ordered byte
+                    // read but does not retain monitor hardware state.
+                    let addr = self.monitor_linear_address(ctx, rm);
+                    if self.sregs.cs.l && !is_canonical_48(addr) {
+                        let vector = if ctx.segment_override == Some(0x36) {
+                            12 // #SS(0)
+                        } else {
+                            13 // #GP(0)
+                        };
+                        self.inject_exception(vector, Some(0))?;
+                        return Ok(None);
+                    }
+                    let _ = self.read_mem(addr, 1)?;
                     self.regs.rip += ctx.cursor as u64;
                     Ok(None)
                 }
                 6 if ctx.rep_prefix == Some(0xF2) || ctx.operand_size_override => {
-                    // UMWAIT/TPAUSE return immediately in emulation. For the deterministic
-                    // zero-deadline case this matches hardware: CF=0 and other status flags clear.
+                    // UMWAIT/TPAUSE return immediately on an allowed
+                    // implementation-dependent wake event. Validate every
+                    // architecturally faulting input before changing flags.
+                    let control = self.get_reg(rm, 4) as u32;
+                    if control & !1 != 0
+                        || (self.sregs.cr0 & 1 != 0
+                            && self.sregs.cr4 & CR4_TSD != 0
+                            && (self.regs.rflags & flags::bits::VM != 0
+                                || self.sregs.cs.selector & 3 != 0))
+                    {
+                        self.inject_exception(13, Some(0))?;
+                        return Ok(None);
+                    }
                     self.clear_lazy_flags();
                     self.regs.rflags &= !(flags::bits::CF
                         | flags::bits::PF

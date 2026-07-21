@@ -3,7 +3,7 @@
 use super::*;
 use crate::smir::ir::ops::{
     X86LmswSource, X86MonitorMwaitOp, X86SelectorQuerySource, X86SelectorVerifySource,
-    X86SmswTarget, X86SystemSelectorSource, X86SystemSelectorTarget,
+    X86SmswTarget, X86SystemSelectorSource, X86SystemSelectorTarget, X86WaitPkgOp,
 };
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::x86_64::{
@@ -13,7 +13,7 @@ use crate::smir::lower::x86_64::{
     x86_lmsw_shape_valid, x86_read_control_shape_valid, x86_read_debug_shape_valid,
     x86_selector_query_shape_valid, x86_selector_verify_shape_valid, x86_smsw_shape_valid,
     x86_sti_shape_valid, x86_system_selector_load_shape_valid,
-    x86_system_selector_store_shape_valid, x86_write_control_shape_valid,
+    x86_system_selector_store_shape_valid, x86_waitpkg_shape_valid, x86_write_control_shape_valid,
     x86_write_debug_shape_valid,
 };
 
@@ -623,6 +623,15 @@ pub(crate) fn block_is_clobber_safe(
             }
             _ => false,
         };
+        let waitpkg_ok = match &op.kind {
+            OpKind::X86WaitPkg(X86WaitPkgOp::Umonitor { addr, .. }) => {
+                allow_mem && x86_waitpkg_shape_valid(op) && x86_jit_mem_address_shape_valid(addr)
+            }
+            OpKind::X86WaitPkg(X86WaitPkgOp::Umwait { .. } | X86WaitPkgOp::Tpause { .. }) => {
+                x86_waitpkg_shape_valid(op)
+            }
+            _ => false,
+        };
         let pkru_ok = crate::smir::lower::x86_64::x86_pkru_shape_valid(&op.kind);
         let stack_state_ok = stack_mov_ok
             || stack_alu_ok
@@ -647,6 +656,7 @@ pub(crate) fn block_is_clobber_safe(
             || state_pdep_pext_ok
             || state_bswap_ok
             || state_xchg_ok
+            || waitpkg_ok
             || fsgsbase_ok
             || read_control_ok
             || smsw_ok
@@ -890,6 +900,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86MonitorMwait(..)) && !monitor_mwait_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86WaitPkg(..)) && !waitpkg_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86Pkru { .. }) && !pkru_ok {
