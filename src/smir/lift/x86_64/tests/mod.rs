@@ -137,6 +137,8 @@ mod write_debug;
 mod x87_aliases;
 #[cfg(test)]
 mod x87_noops;
+#[cfg(test)]
+mod x87_reserved;
 
 /// Test memory reader for unit tests
 struct TestMemory {

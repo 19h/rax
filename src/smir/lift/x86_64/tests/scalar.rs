@@ -932,19 +932,16 @@ fn lift_x87_environment_control_encodings_and_legality() {
         &[0xF0, 0xD9, 0x30][..],
         &[0xF0, 0xDD, 0x20][..],
     ] {
-        assert!(matches!(
-            lift_single(bytes),
-            Err(LiftError::InvalidEncoding { .. })
-        ));
+        let result = lift_single(bytes).expect("LOCK x87 control form must strictly lift to #UD");
+        assert_invalid_opcode_trap(&result, bytes.len());
     }
     for bytes in [
         &[0xD9, 0xD1][..], // reserved register encoding
         &[0xD9, 0x08][..], // reserved memory /1
     ] {
-        assert!(matches!(
-            lift_single(bytes),
-            Err(LiftError::Unsupported { .. })
-        ));
+        let result =
+            lift_single(bytes).expect("reserved x87 control form must strictly lift to #UD");
+        assert_invalid_opcode_trap(&result, bytes.len());
     }
 }
 #[test]
@@ -2184,10 +2181,8 @@ fn lift_x87_exact_data_transfer_encodings_addressing_and_legality() {
         &[0xF0, 0xDB, 0x38][..],
         &[0xF0, 0xDD, 0xC0][..],
     ] {
-        assert!(matches!(
-            lift_single(bytes),
-            Err(LiftError::InvalidEncoding { .. })
-        ));
+        let result = lift_single(bytes).expect("LOCK x87 data form must strictly lift to #UD");
+        assert_invalid_opcode_trap(&result, bytes.len());
     }
 }
 #[test]

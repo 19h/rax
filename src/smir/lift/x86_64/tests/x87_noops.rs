@@ -20,25 +20,20 @@ fn obsolete_x87_control_encodings_lift_as_exact_no_operations() {
 }
 
 #[test]
-fn obsolete_x87_no_operations_do_not_hide_invalid_or_unsupported_neighbors() {
+fn obsolete_x87_no_operations_do_not_hide_invalid_neighbors() {
     for bytes in [
         &[0xF0, 0xDB, 0xE0][..],
         &[0xF0, 0xDB, 0xE1][..],
         &[0xF0, 0xDB, 0xE4][..],
     ] {
-        assert!(
-            matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
-            "LOCK-prefixed x87 no-operation must remain invalid: {bytes:02X?}",
-        );
+        let result =
+            lift_single(bytes).expect("LOCK-prefixed x87 no-operation must strictly lift to #UD");
+        assert_invalid_opcode_trap(&result, bytes.len());
     }
 
-    match lift_single(&[0xDB, 0xE5]) {
-        Err(LiftError::Unsupported { addr, mnemonic }) => {
-            assert_eq!(addr, 0x1000);
-            assert_eq!(mnemonic, "x87 DB E5");
-        }
-        result => panic!("reserved neighbor DB E5 must remain unsupported, got {result:?}"),
-    }
+    let reserved =
+        lift_single(&[0xDB, 0xE5]).expect("reserved neighbor DB E5 must strictly lift to #UD");
+    assert_invalid_opcode_trap(&reserved, 2);
 }
 
 #[test]

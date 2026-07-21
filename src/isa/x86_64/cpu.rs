@@ -6347,6 +6347,10 @@ mod jit_fsgsbase_tests;
 #[path = "cpu_jit_fence_alias_tests.rs"]
 mod jit_fence_alias_tests;
 
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_x87_reserved_tests.rs"]
+mod jit_x87_reserved_tests;
+
 #[cfg(test)]
 #[path = "cpu_waitpkg_tests.rs"]
 mod waitpkg_tests;

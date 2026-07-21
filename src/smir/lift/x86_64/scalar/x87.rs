@@ -1,5 +1,6 @@
 //! x87 escape instruction lifting.
 
+use crate::smir::ir::TrapKind;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
     X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
@@ -7,9 +8,20 @@ use crate::smir::ir::ops::{
 };
 use crate::smir::ir::types::{Condition, OpId};
 use crate::smir::lift::x86_64::{X86_64Lifter, X86Prefix, decode_modrm};
-use crate::smir::lift::{LiftContext, LiftError, LiftResult};
+use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult};
 
 impl X86_64Lifter {
+    fn x87_invalid_opcode(prefix: &X86Prefix, modrm_bytes: usize) -> LiftResult {
+        LiftResult {
+            ops: Vec::new(),
+            bytes_consumed: prefix.cursor + modrm_bytes,
+            control_flow: ControlFlow::Trap {
+                kind: TrapKind::InvalidOpcode,
+            },
+            branch_targets: Vec::new(),
+        }
+    }
+
     /// Lift exact x87 environment/control, stack transfers, conversions, and
     /// the arithmetic families whose FCW-controlled binary80 semantics are
     /// represented explicitly in SMIR.
@@ -23,10 +35,7 @@ impl X86_64Lifter {
     ) -> Result<LiftResult, LiftError> {
         let modrm = decode_modrm(bytes, prefix, pc)?;
         if prefix.lock {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
-            });
+            return Ok(Self::x87_invalid_opcode(prefix, modrm.bytes_consumed));
         }
 
         let group = (modrm.byte >> 3) & 7;
@@ -545,12 +554,20 @@ impl X86_64Lifter {
             | (0xDB, false, _, 0xE0)
             | (0xDB, false, _, 0xE1)
             | (0xDB, false, _, 0xE4) => None,
-            _ => {
+            _ if opcode == 0xD9
+                && !modrm.is_memory
+                && matches!(modrm.byte, 0xF0..=0xF3 | 0xF9 | 0xFB | 0xFE..=0xFF) =>
+            {
                 return Err(LiftError::Unsupported {
                     addr: pc,
                     mnemonic: format!("x87 {opcode:02X} {:02X}", modrm.byte),
                 });
             }
+            // Intel SDM Tables A-7 through A-22 leave every residual cell
+            // blank. The direct engine's deterministic profile injects #UD
+            // for these reserved forms after decoding the complete ModR/M
+            // address, so expose the same terminal frontier to strict SMIR.
+            _ => return Ok(Self::x87_invalid_opcode(prefix, modrm.bytes_consumed)),
         };
 
         let mut ops = if kind.is_none() {

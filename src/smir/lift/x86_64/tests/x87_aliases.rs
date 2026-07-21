@@ -96,7 +96,7 @@ fn all_direct_accepted_legacy_x87_register_ranges_lift_exactly() {
 }
 
 #[test]
-fn legacy_x87_register_ranges_reject_lock_and_survive_o2_in_order() {
+fn legacy_x87_register_ranges_trap_on_lock_and_survive_o2_in_order() {
     for bytes in [
         &[0xF0, 0xDC, 0xD0][..],
         &[0xF0, 0xDC, 0xD8][..],
@@ -105,10 +105,9 @@ fn legacy_x87_register_ranges_reject_lock_and_survive_o2_in_order() {
         &[0xF0, 0xDF, 0xC0][..],
         &[0xF0, 0xDF, 0xD0][..],
     ] {
-        assert!(
-            matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
-            "LOCK-prefixed x87 register encoding must be invalid: {bytes:02X?}",
-        );
+        let result = lift_single(bytes)
+            .expect("LOCK-prefixed x87 register encoding must strictly lift to #UD");
+        assert_invalid_opcode_trap(&result, bytes.len());
     }
 
     let memory = TestMemory::new(
