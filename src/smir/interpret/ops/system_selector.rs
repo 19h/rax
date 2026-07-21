@@ -1,4 +1,4 @@
-//! Fault-precise LLDT/LTR and `MOV Sreg,r/m` interpretation.
+//! Fault-precise LLDT/LTR, `MOV Sreg,r/m`, and `POP FS/GS` interpretation.
 
 use crate::isa::x86_64::execute::system::{
     X86SegmentLoadTarget, X86SystemDescriptorFault, decode_x86_ldt_descriptor,
@@ -60,6 +60,16 @@ fn selector_load_shape_valid(op: &SmirOp, load: &X86SystemSelectorLoadOp) -> boo
                 .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
             let width_valid = *width == MemWidth::B2 || ordinary && *width == MemWidth::B8;
             addr.is_x86_state_backed_shape() && (!uses_egpr || load.requires_apx) && width_valid
+        }
+        X86SystemSelectorSource::Stack {
+            stack_pointer,
+            width,
+        } => {
+            let minimum_len = 2 + u64::from(load.requires_apx) + u64::from(*width == MemWidth::B2);
+            *stack_pointer == VReg::Arch(ArchReg::X86(crate::smir::ir::types::X86Reg::Rsp))
+                && matches!(width, MemWidth::B2 | MemWidth::B8)
+                && matches!(load.selector, X86SystemSelector::Fs | X86SystemSelector::Gs)
+                && instruction_len.is_some_and(|length| (minimum_len..=15).contains(&length))
         }
     }
 }
@@ -159,8 +169,8 @@ impl SmirInterpreter {
             return Ok(());
         }
 
-        let selector = match &load.source {
-            X86SystemSelectorSource::Register { src } => ctx.read_vreg(*src) as u16,
+        let (selector, stack_commit) = match &load.source {
+            X86SystemSelectorSource::Register { src } => (ctx.read_vreg(*src) as u16, None),
             X86SystemSelectorSource::Memory {
                 addr,
                 width,
@@ -187,7 +197,38 @@ impl SmirInterpreter {
                     });
                     return Ok(());
                 }
-                self.load_memory(memory, effective_addr, *width, SignExtend::Zero)? as u16
+                (
+                    self.load_memory(memory, effective_addr, *width, SignExtend::Zero)? as u16,
+                    None,
+                )
+            }
+            X86SystemSelectorSource::Stack {
+                stack_pointer,
+                width,
+            } => {
+                if !ia32e_active || !long_mode {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+                let rsp = ctx.read_vreg(*stack_pointer);
+                let width_bytes = u64::from(width.bytes());
+                let canonical = rsp
+                    .checked_add(width_bytes - 1)
+                    .is_some_and(|last| is_canonical_48(rsp) && is_canonical_48(last));
+                if !canonical {
+                    ctx.request_exit(ExitReason::StackSegment {
+                        addr: op.guest_pc,
+                        error_code: 0,
+                    });
+                    return Ok(());
+                }
+                (
+                    self.load_memory(memory, rsp, *width, SignExtend::Zero)? as u16,
+                    Some((*stack_pointer, rsp.wrapping_add(width_bytes))),
+                )
             }
         };
 
@@ -198,6 +239,9 @@ impl SmirInterpreter {
                     unreachable!("validated x86 selector-load state changed")
                 };
                 commit_ordinary_segment(x86, target, segment);
+                if let Some((stack_pointer, value)) = stack_commit {
+                    ctx.write_vreg(stack_pointer, value);
+                }
                 return Ok(());
             }
 
@@ -221,6 +265,9 @@ impl SmirInterpreter {
                     unreachable!("validated x86 selector-load state changed")
                 };
                 commit_ordinary_segment(x86, target, segment);
+                if let Some((stack_pointer, value)) = stack_commit {
+                    ctx.write_vreg(stack_pointer, value);
+                }
                 return Ok(());
             }
 
@@ -260,8 +307,13 @@ impl SmirInterpreter {
                 unreachable!("validated x86 selector-load state changed")
             };
             commit_ordinary_segment(x86, target, descriptor.segment);
+            if let Some((stack_pointer, value)) = stack_commit {
+                ctx.write_vreg(stack_pointer, value);
+            }
             return Ok(());
         }
+
+        debug_assert!(stack_commit.is_none());
 
         if selector & 0xFFFC == 0 {
             if load.selector == X86SystemSelector::Tr {

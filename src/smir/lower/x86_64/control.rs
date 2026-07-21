@@ -647,9 +647,9 @@ impl X86_64Lowerer {
             }
             if matches!(block.ops[idx].kind, OpKind::X86SystemSelectorLoad(..)) {
                 self.emit_x86_system_selector_load(&block.ops[idx])?;
-                // LLDT/LTR serialize; MOV Sreg still changes hidden segment
-                // state. Every success and fault path leaves through an exact
-                // exit stub before any later guest op.
+                // LLDT/LTR serialize; MOV Sreg and POP FS/GS still change
+                // hidden segment state. Every success and fault path leaves
+                // through an exact exit stub before any later guest op.
                 return Ok(());
             }
             if matches!(block.ops[idx].kind, OpKind::X86FarJump(..)) {

@@ -1179,6 +1179,15 @@ impl OracleJson for X86SystemSelectorSource {
                 "width": width.oracle_json(),
                 "stack_segment": stack_segment,
             }),
+            X86SystemSelectorSource::Stack {
+                stack_pointer,
+                width,
+            } => json!({
+                "kind": "stack",
+                "stack_pointer": stack_pointer.oracle_json(),
+                "width": width.oracle_json(),
+                "commit": "after_selector_load",
+            }),
         }
     }
 }

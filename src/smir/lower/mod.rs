@@ -181,8 +181,9 @@ pub const X86_GUEST_DESCRIPTOR_LOAD_FN_OFFSET: i32 = X86_GUEST_DESCRIPTOR_STORE_
 /// Byte offset of the helper-backed system/segment-selector reader. Appended so
 /// all pre-existing native helper/state fields retain their established ABI.
 pub const X86_GUEST_SYSTEM_SELECTOR_FN_OFFSET: i32 = X86_GUEST_DESCRIPTOR_LOAD_FN_OFFSET + 8;
-/// Byte offset of the helper-backed LLDT/LTR selector loader. Appended so all
-/// pre-existing native helper/state fields retain their established ABI.
+/// Byte offset of the helper-backed LLDT/LTR, MOV-Sreg, and POP-FS/GS selector
+/// loader. Appended so all pre-existing native helper/state fields retain their
+/// established ABI.
 pub const X86_GUEST_SYSTEM_SELECTOR_LOAD_FN_OFFSET: i32 = X86_GUEST_SYSTEM_SELECTOR_FN_OFFSET + 8;
 /// Offset of [`runtime::GuestRegs::far_jump_fn`]. Appended to keep all prior
 /// helper ABI offsets stable.

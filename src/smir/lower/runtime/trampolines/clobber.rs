@@ -528,6 +528,7 @@ pub(crate) fn block_is_clobber_safe(
                         X86SystemSelectorSource::Memory { addr, .. } => {
                             x86_jit_mem_address_shape_valid(addr)
                         }
+                        X86SystemSelectorSource::Stack { .. } => true,
                     }
             }
             _ => false,

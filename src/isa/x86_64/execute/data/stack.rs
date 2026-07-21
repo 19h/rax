@@ -4,13 +4,20 @@ use crate::error::{Error, Result};
 use crate::vm::vcpu::VcpuExit;
 
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
-use crate::isa::x86_64::execute::system::is_canonical_48;
+use crate::isa::x86_64::execute::system::{
+    X86SegmentLoadTarget, X86SegmentSelectorLoadFault, X86SystemDescriptorFault, is_canonical_48,
+};
 
 fn long_mode_stack_write_is_canonical(rsp: u64, width: u8) -> bool {
     let address = rsp.wrapping_sub(u64::from(width));
     address
         .checked_add(u64::from(width - 1))
         .is_some_and(|last| is_canonical_48(address) && is_canonical_48(last))
+}
+
+fn long_mode_stack_read_is_canonical(rsp: u64, width: u8) -> bool {
+    rsp.checked_add(u64::from(width - 1))
+        .is_some_and(|last| is_canonical_48(rsp) && is_canonical_48(last))
 }
 
 /// PUSH r64 (0x50-0x57)
@@ -139,19 +146,83 @@ pub fn pop_sreg(
         return Ok(None);
     }
 
-    let op_size = segment_op_size(vcpu, ctx);
-    let value = match op_size {
-        2 => vcpu.pop16()? as u64,
-        4 => vcpu.pop32()? as u64,
-        8 => vcpu.pop64()?,
+    let target = match sreg {
+        0 => X86SegmentLoadTarget::Es,
+        2 => X86SegmentLoadTarget::Ss,
+        3 => X86SegmentLoadTarget::Ds,
+        4 => X86SegmentLoadTarget::Fs,
+        5 => X86SegmentLoadTarget::Gs,
         _ => {
             return Err(Error::Emulator(format!(
-                "invalid POP Sreg size: {}",
-                op_size
+                "invalid POP segment register: {sreg}"
             )));
         }
     };
-    vcpu.set_sreg(sreg, (value & 0xFFFF) as u16);
+
+    let op_size = segment_op_size(vcpu, ctx);
+    if !matches!(op_size, 2 | 4 | 8) {
+        return Err(Error::Emulator(format!("invalid POP Sreg size: {op_size}")));
+    }
+    let stack_offset = vcpu.stack_pointer_offset();
+    let stack_address_size = if vcpu.sregs.cs.l {
+        8
+    } else if vcpu.sregs.ss.db {
+        4
+    } else {
+        2
+    };
+    let stack_address = if vcpu.sregs.cs.l {
+        stack_offset
+    } else {
+        vcpu.sregs.ss.base.wrapping_add(stack_offset)
+    };
+    if in_64bit_mode && !long_mode_stack_read_is_canonical(stack_address, op_size) {
+        vcpu.inject_exception(12, Some(0))?;
+        return Ok(None);
+    }
+    let value = vcpu.read_mem(stack_address, op_size)? as u16;
+
+    match vcpu.load_segment_selector(target, value, false) {
+        Ok(()) => {}
+        Err(X86SegmentSelectorLoadFault::Architectural(
+            X86SystemDescriptorFault::GeneralProtection { error_code },
+        )) => {
+            vcpu.inject_exception(13, Some(u64::from(error_code)))?;
+            return Ok(None);
+        }
+        Err(X86SegmentSelectorLoadFault::Architectural(
+            X86SystemDescriptorFault::SegmentNotPresent { error_code },
+        )) => {
+            vcpu.inject_exception(11, Some(u64::from(error_code)))?;
+            return Ok(None);
+        }
+        Err(X86SegmentSelectorLoadFault::StackSegment { error_code }) => {
+            vcpu.inject_exception(12, Some(u64::from(error_code)))?;
+            return Ok(None);
+        }
+        Err(X86SegmentSelectorLoadFault::Memory(error)) => return Err(error),
+        Err(X86SegmentSelectorLoadFault::NativeDeopt) => {
+            unreachable!("direct segment load cannot request native deoptimization")
+        }
+    }
+
+    let new_stack_offset = match stack_address_size {
+        2 => u64::from((stack_offset as u16).wrapping_add(u16::from(op_size))),
+        4 => u64::from((stack_offset as u32).wrapping_add(u32::from(op_size))),
+        8 => stack_offset.wrapping_add(u64::from(op_size)),
+        _ => unreachable!("x86 stack-address width changed"),
+    };
+    // POP SS can change SS.B. The stack read and pointer increment both use
+    // the pre-instruction stack-address size, so commit without consulting the
+    // newly loaded descriptor.
+    match stack_address_size {
+        2 => {
+            vcpu.regs.rsp = (vcpu.regs.rsp & !0xFFFF) | (new_stack_offset & 0xFFFF);
+        }
+        4 => vcpu.regs.rsp = new_stack_offset & 0xFFFF_FFFF,
+        8 => vcpu.regs.rsp = new_stack_offset,
+        _ => unreachable!("x86 stack-address width changed"),
+    }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

@@ -3,7 +3,7 @@
 use super::{Result, X86_64Vcpu};
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use crate::isa::x86_64::execute::system::{
-    X86SegmentLoadTarget, decode_x86_ldt_descriptor, decode_x86_tss_descriptor,
+    X86SegmentLoadTarget, decode_x86_ldt_descriptor, decode_x86_tss_descriptor, is_canonical_48,
 };
 use crate::vm::vcpu::Segment;
 
@@ -317,9 +317,10 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector(
     }
 }
 
-/// JIT LLDT/LTR and `MOV Sreg,r/m` helper. Every architectural guard, optional
-/// source read, descriptor read, and implicit descriptor write is ordered
-/// before selector/cache commit. Failure returns zero so native code replays
+/// JIT LLDT/LTR, `MOV Sreg,r/m`, and `POP FS/GS` helper. Every architectural
+/// guard, source read, descriptor read, and implicit descriptor write is
+/// ordered before selector/cache commit. The native caller commits POP's RSP
+/// increment only after success. Failure returns zero so native code replays
 /// the direct instruction at its original guest PC.
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
@@ -337,6 +338,7 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
     let requires_apx = encoding & 0x2 != 0;
     let selector_id = (encoding >> 2) & 7;
     let memory64 = encoding & 0x20 != 0;
+    let stack_source = encoding & 0x40 != 0;
     let ordinary_target = match selector_id {
         2 => Some(X86SegmentLoadTarget::Es),
         4 => Some(X86SegmentLoadTarget::Ss),
@@ -346,9 +348,17 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
         _ => None,
     };
     let system_selector = selector_id <= 1;
-    if encoding & !0x3F != 0
+    if encoding & !0x7F != 0
         || !(system_selector || ordinary_target.is_some())
         || memory64 && (!memory_source || system_selector)
+        || stack_source
+            && (!memory_source
+                || system_selector
+                || !matches!(
+                    ordinary_target,
+                    Some(X86SegmentLoadTarget::Fs | X86SegmentLoadTarget::Gs)
+                )
+                || vcpu.sregs.efer & (1 << 10) == 0)
         || !vcpu.sregs.cs.l
         || vcpu.sregs.cr0 & 1 == 0
         || vcpu.regs.rflags & crate::isa::x86_64::flags::bits::VM != 0
@@ -366,8 +376,16 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
     let saved_log = vcpu.jit_mem_log.clone();
     let mem_record_checkpoint = vcpu.mmu.mem_record_checkpoint();
     let loaded = (|| {
-        let source_width = if memory64 { 8 } else { 2 };
+        let source_width: usize = if memory64 { 8 } else { 2 };
         let selector = if memory_source {
+            if stack_source {
+                let Some(last) = operand.checked_add(source_width as u64 - 1) else {
+                    return false;
+                };
+                if !is_canonical_48(operand) || !is_canonical_48(last) {
+                    return false;
+                }
+            }
             if !vcpu
                 .mmu
                 .read_range_is_plain_ram(operand, source_width, &vcpu.sregs)

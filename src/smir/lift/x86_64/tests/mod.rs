@@ -60,6 +60,8 @@ mod pconfig;
 #[cfg(test)]
 mod pkru;
 #[cfg(test)]
+mod pop_segment;
+#[cfg(test)]
 mod push_segment;
 #[cfg(test)]
 mod rdpmc;

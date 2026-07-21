@@ -60,8 +60,8 @@ pub(crate) fn x86_system_selector_store_shape_valid(op: &SmirOp) -> bool {
     }
 }
 
-/// Validate strict long-mode LLDT/LTR and `MOV Sreg,r/m` forms admitted by
-/// native lowering.
+/// Validate strict long-mode LLDT/LTR, `MOV Sreg,r/m`, and `POP FS/GS` forms
+/// admitted by native lowering.
 pub(crate) fn x86_system_selector_load_shape_valid(op: &SmirOp) -> bool {
     let OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
         selector,
@@ -108,6 +108,18 @@ pub(crate) fn x86_system_selector_load_shape_valid(op: &SmirOp) -> bool {
                 .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
             let width_valid = *width == MemWidth::B2 || ordinary && *width == MemWidth::B8;
             addr.is_x86_state_backed_shape() && (!uses_egpr || *requires_apx) && width_valid
+        }
+        X86SystemSelectorSource::Stack {
+            stack_pointer,
+            width,
+        } => {
+            let minimum_len = 2 + u64::from(*requires_apx) + u64::from(*width == MemWidth::B2);
+            *stack_pointer == VReg::Arch(ArchReg::X86(crate::smir::ir::types::X86Reg::Rsp))
+                && matches!(width, MemWidth::B2 | MemWidth::B8)
+                && matches!(selector, X86SystemSelector::Fs | X86SystemSelector::Gs)
+                && next_pc
+                    .checked_sub(op.guest_pc)
+                    .is_some_and(|length| (minimum_len..=15).contains(&length))
         }
     }
 }
@@ -421,11 +433,12 @@ impl X86_64Lowerer {
     }
 
     /// Load LDTR/TR or an ordinary segment register through the owning vCPU's
-    /// MMU and descriptor validator. Every variant exits natively after a
-    /// successful commit; LLDT/LTR additionally serialize. Every dynamic guard,
-    /// source-memory, descriptor, or implicit descriptor-store fault restores
-    /// the complete pre-instruction register/flag image and replays direct at
-    /// `guest_pc`.
+    /// MMU and descriptor validator. POP FS/GS also commits its RSP increment
+    /// only after the selector load succeeds. Every variant exits natively
+    /// after a successful commit; LLDT/LTR additionally serialize. Every
+    /// dynamic guard, source-memory, descriptor, or implicit descriptor-store
+    /// fault restores the complete pre-instruction register/flag image and
+    /// replays direct at `guest_pc`.
     pub(crate) fn emit_x86_system_selector_load(&mut self, op: &SmirOp) -> Result<(), LowerError> {
         if !self.jit_fault_deopt_guards {
             return Err(LowerError::UnsupportedOp {
@@ -440,7 +453,7 @@ impl X86_64Lowerer {
         if !x86_system_selector_load_shape_valid(op) {
             return Err(LowerError::InvalidOperand {
                 op: "X86SystemSelectorLoad".to_string(),
-                operand: "requires an unhinted LLDT/LTR or MOV-Sreg source, valid memory width, APX for every EGPR, and an exact next PC"
+                operand: "requires an unhinted LLDT/LTR, MOV-Sreg, or POP-FS/GS source; valid widths; APX for every EGPR; and an exact next PC"
                     .to_string(),
             });
         }
@@ -480,9 +493,59 @@ impl X86_64Lowerer {
             self.code.emit_u8(0);
             guard_faults.push(self.emit_jcc_placeholder(X86Cond::Ne));
         }
+        let stack_width = match &load.source {
+            X86SystemSelectorSource::Stack { width, .. } => Some(*width),
+            _ => None,
+        };
+        if let Some(width) = stack_width {
+            let range_tail = match width {
+                MemWidth::B2 => 1,
+                MemWidth::B8 => 7,
+                _ => unreachable!("validated POP-segment width changed"),
+            };
+            self.code.emit_bytes(&[0x48, 0xF7, 0x80]); // test qword [rax+efer],LMA
+            self.code.emit_u32(X86_GUEST_EFER_OFFSET as u32);
+            self.code.emit_u32(1 << 10);
+            guard_faults.push(self.emit_jcc_placeholder(X86Cond::E));
+            self.code.emit_bytes(&[0x48, 0x83, 0xB8]); // cmp qword [rax+cs_l],0
+            self.code.emit_u32(X86_GUEST_CS_L_OFFSET as u32);
+            self.code.emit_u8(0);
+            guard_faults.push(self.emit_jcc_placeholder(X86Cond::E));
+
+            // Validate the complete pre-increment source range before the
+            // helper can observe memory. This preserves #SS(0) and excludes a
+            // 2^64 wrap even when the owning MMU has paging disabled.
+            {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_rm(PhysReg::Rdx, PhysReg::Rax, 4 * 8, OpWidth::W64);
+            }
+            self.code.emit_bytes(&[
+                0x48, 0x89, 0xD1, // mov rcx,rdx
+                0x48, 0xC1, 0xE1, 0x10, // shl rcx,16
+                0x48, 0xC1, 0xF9, 0x10, // sar rcx,16
+                0x48, 0x39, 0xD1, // cmp rcx,rdx
+            ]);
+            guard_faults.push(self.emit_jcc_placeholder(X86Cond::Ne));
+            self.code.emit_bytes(&[
+                0x48, 0x89, 0xD1, // mov rcx,rdx
+                0x48, 0x83, 0xC1, // add rcx,imm8
+                range_tail,
+            ]);
+            guard_faults.push(self.emit_jcc_placeholder(X86Cond::B));
+            self.code.emit_bytes(&[
+                0x48, 0x89, 0xCA, // mov rdx,rcx
+                0x48, 0xC1, 0xE2, 0x10, // shl rdx,16
+                0x48, 0xC1, 0xFA, 0x10, // sar rdx,16
+                0x48, 0x39, 0xCA, // cmp rdx,rcx
+            ]);
+            guard_faults.push(self.emit_jcc_placeholder(X86Cond::Ne));
+        }
 
         self.emit_helper_call_state(PhysReg::Rax, true, self.preserve_vector_mem_helpers);
-        let memory_source = matches!(&load.source, X86SystemSelectorSource::Memory { .. });
+        let memory_source = matches!(
+            &load.source,
+            X86SystemSelectorSource::Memory { .. } | X86SystemSelectorSource::Stack { .. }
+        );
         match &load.source {
             X86SystemSelectorSource::Register { src } => {
                 let VReg::Arch(ArchReg::X86(reg)) = src else {
@@ -497,6 +560,9 @@ impl X86_64Lowerer {
             }
             X86SystemSelectorSource::Memory { addr, .. } => {
                 self.emit_jit_mem_effective_address(addr, false)?;
+            }
+            X86SystemSelectorSource::Stack { .. } => {
+                self.emit_struct_mov(PhysReg::Rax, 6, 4 * 8, false);
             }
         }
         {
@@ -517,12 +583,17 @@ impl X86_64Lowerer {
                 X86SystemSelectorSource::Memory {
                     width: MemWidth::B8,
                     ..
+                } | X86SystemSelectorSource::Stack {
+                    width: MemWidth::B8,
+                    ..
                 }
             );
+            let stack_source = matches!(load.source, X86SystemSelectorSource::Stack { .. });
             let encoding = i64::from(memory_source)
                 | (i64::from(load.requires_apx) << 1)
                 | (selector << 2)
-                | (i64::from(memory64) << 5);
+                | (i64::from(memory64) << 5)
+                | (i64::from(stack_source) << 6);
             emitter.emit_mov_ri(PhysReg::Rdx, encoding, OpWidth::W32);
         }
         self.code.emit_u8(0xFC); // cld: platform ABI requires DF=0
@@ -536,6 +607,12 @@ impl X86_64Lowerer {
         self.code.emit_bytes(&[0x48, 0x85, 0xC0]); // test rax,rax
         let helper_fault = self.emit_jcc_placeholder(X86Cond::E);
 
+        if let Some(width) = stack_width {
+            let mut emitter = X86Emitter::new(&mut self.code);
+            emitter.emit_mov_rm(PhysReg::Rax, PhysReg::Rcx, 4 * 8, OpWidth::W64);
+            emitter.emit_lea(PhysReg::Rax, PhysReg::Rax, width.bytes() as i32);
+            emitter.emit_mov_mr(PhysReg::Rcx, 4 * 8, PhysReg::Rax, OpWidth::W64);
+        }
         if matches!(
             load.selector,
             X86SystemSelector::Ldtr | X86SystemSelector::Tr

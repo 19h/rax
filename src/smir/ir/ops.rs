@@ -4011,9 +4011,10 @@ pub enum OpKind {
     /// width; memory destinations store exactly 2 bytes.
     X86SystemSelectorStore(X86SystemSelectorStoreOp),
 
-    /// LLDT/LTR and `MOV Sreg,r/m` load one visible selector plus its hidden
-    /// cache. Descriptor side effects and selector commit remain one
-    /// fault-precise operation that terminates native execution at `next_pc`.
+    /// LLDT/LTR, `MOV Sreg,r/m`, and `POP FS/GS` load one visible selector plus
+    /// its hidden cache. Descriptor side effects, selector commit, and any POP
+    /// stack-pointer increment remain one fault-precise operation that
+    /// terminates native execution at `next_pc`.
     X86SystemSelectorLoad(X86SystemSelectorLoadOp),
 
     /// `FF /5` indirect far JMP. The memory far pointer selects a code segment
@@ -4992,6 +4993,10 @@ impl OpKind {
             }) => vec![*dst],
             OpKind::X86SystemSelectorStore(X86SystemSelectorStoreOp {
                 target: X86SystemSelectorTarget::Stack { stack_pointer, .. },
+                ..
+            }) => vec![*stack_pointer],
+            OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+                source: X86SystemSelectorSource::Stack { stack_pointer, .. },
                 ..
             }) => vec![*stack_pointer],
             OpKind::X86FarJump(jump) => vec![jump.target],

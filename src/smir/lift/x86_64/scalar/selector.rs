@@ -56,6 +56,54 @@ impl X86_64Lifter {
         ))
     }
 
+    /// Lift long-mode `POP FS` (`0F A1`) and `POP GS` (`0F A9`). The stack
+    /// address is always 64 bits. The operand is 8 bytes by default, 2 bytes
+    /// under 66H, and 8 bytes when REX.W/REX2.W overrides 66H. Selector and
+    /// hidden-cache state plus RSP commit only after the complete stack read
+    /// and descriptor transition succeed. REX2 availability remains dynamic.
+    pub(crate) fn lift_pop_segment_0f(
+        &self,
+        opcode: u8,
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![opcode],
+            });
+        }
+
+        let selector = match opcode {
+            0xA1 => X86SystemSelector::Fs,
+            0xA9 => X86SystemSelector::Gs,
+            _ => unreachable!("POP-segment dispatcher admitted another opcode"),
+        };
+        let width = if prefix.operand_size_override && !prefix.rex_w() {
+            MemWidth::B2
+        } else {
+            MemWidth::B8
+        };
+        let next_pc = pc.wrapping_add(prefix.cursor as u64);
+
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+                    selector,
+                    source: X86SystemSelectorSource::Stack {
+                        stack_pointer: self.rsp(),
+                        width,
+                    },
+                    requires_apx: prefix.rex2.is_some(),
+                    next_pc,
+                }),
+            )],
+            prefix.cursor,
+        ))
+    }
+
     /// Lift `MOV r/m16/32/64, Sreg` (`8C /r`). The ModR/M.reg field selects
     /// ES/CS/SS/DS/FS/GS and ignores both legacy REX.R and REX2.R4/R3. Register
     /// destinations use the encoded operand width; memory destinations always

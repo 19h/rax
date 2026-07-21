@@ -6388,6 +6388,10 @@ mod jit_descriptor_table_tests;
 mod jit_selector_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_pop_segment_tests.rs"]
+mod jit_pop_segment_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_far_jump_tests.rs"]
 mod jit_far_jump_tests;
 

@@ -133,7 +133,10 @@ pub struct X86SystemSelectorStoreOp {
 /// and LTR memory forms are fixed at 2 bytes; `MOV Sreg,r/m` uses 2 bytes
 /// unless REX.W/REX2.W selects an 8-byte memory read whose low 16 bits are
 /// loaded. `stack_segment` preserves the architecturally distinct #SS(0)
-/// classification for a noncanonical SS-based memory range.
+/// classification for a noncanonical SS-based memory range. Stack forms model
+/// long-mode `POP FS/GS` atomically: the width-selected read supplies the low
+/// 16-bit selector, and the stack pointer commits only after the complete
+/// segment load succeeds.
 #[derive(Clone, Debug)]
 pub enum X86SystemSelectorSource {
     Register {
@@ -144,14 +147,20 @@ pub enum X86SystemSelectorSource {
         width: MemWidth,
         stack_segment: bool,
     },
+    Stack {
+        stack_pointer: VReg,
+        width: MemWidth,
+    },
 }
 
 /// Load one visible selector and its hidden descriptor cache. LLDT/LTR perform
 /// their system-descriptor checks; `MOV Sreg,r/m` admits ES/SS/DS/FS/GS and
 /// performs data/stack descriptor validation plus the implicit accessed-bit
-/// transition. LTR performs the available-to-busy GDT transition. LLDT/LTR
-/// serialize; every variant terminates native execution and hands off at
-/// `next_pc` so the updated segment state is visible before later guest work.
+/// transition; `POP FS/GS` additionally commits its stack-pointer increment
+/// only after that transition. LTR performs the available-to-busy GDT
+/// transition. LLDT/LTR serialize; every variant terminates native execution
+/// and hands off at `next_pc` so the updated state is visible before later
+/// guest work.
 #[derive(Clone, Debug)]
 pub struct X86SystemSelectorLoadOp {
     pub selector: X86SystemSelector,

@@ -414,8 +414,9 @@ impl X86_64Vcpu {
             X86SegmentLoadTarget::Es => self.sregs.es = segment,
             X86SegmentLoadTarget::Ss => {
                 self.sregs.ss = segment;
-                // MOV SS inhibits maskable interrupts and selected debug traps
-                // through the boundary following the next instruction.
+                // MOV SS and POP SS inhibit maskable interrupts and selected
+                // debug traps through the boundary following the next
+                // instruction.
                 self.interrupt_inhibit = true;
             }
             X86SegmentLoadTarget::Ds => self.sregs.ds = segment,
@@ -424,10 +425,10 @@ impl X86_64Vcpu {
         }
     }
 
-    /// Validate and load ES/SS/DS/FS/GS for `MOV Sreg,r/m`. Descriptor reads
-    /// and the implicit accessed-bit store precede selector/cache exposure.
-    /// `native_preflight` excludes accesses that cannot be speculated exactly
-    /// once before direct replay.
+    /// Validate and load ES/SS/DS/FS/GS for `MOV Sreg,r/m` or `POP Sreg`.
+    /// Descriptor reads and the implicit accessed-bit store precede
+    /// selector/cache exposure. `native_preflight` excludes accesses that
+    /// cannot be speculated exactly once before direct replay.
     pub(in crate::isa::x86_64) fn load_segment_selector(
         &mut self,
         target: X86SegmentLoadTarget,

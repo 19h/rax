@@ -3924,6 +3924,10 @@ impl OpKind {
                 source: X86SystemSelectorSource::Memory { addr, .. },
                 ..
             }) => result.extend(addr.regs()),
+            OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+                source: X86SystemSelectorSource::Stack { stack_pointer, .. },
+                ..
+            }) => result.push(*stack_pointer),
             OpKind::X86FarJump(jump) => result.extend(jump.addr.regs()),
             OpKind::X86FarCall(call) => result.extend(call.addr.regs()),
             OpKind::X86FarReturn(..) => {}

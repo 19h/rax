@@ -5,14 +5,14 @@ use super::*;
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
-fn memory_with_code(code: &[u8]) -> Arc<GuestMemoryMmap> {
+pub(super) fn memory_with_code(code: &[u8]) -> Arc<GuestMemoryMmap> {
     let memory =
         Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap());
     memory.write_slice(code, GuestAddress(0)).unwrap();
     memory
 }
 
-fn test_vcpu(memory: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
+pub(super) fn test_vcpu(memory: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
     let mut vcpu = X86_64Vcpu::new(0, memory);
     vcpu.sregs.cr0 = 0x0005_0033;
     vcpu.sregs.efer = 1 << 10;
@@ -98,7 +98,7 @@ fn install_ltr_descriptor(memory: &GuestMemoryMmap, descriptor: &[u8; 16]) {
     install_lldt_descriptor(memory, descriptor);
 }
 
-fn data_descriptor(
+pub(super) fn data_descriptor(
     base: u64,
     raw_limit: u32,
     dpl: u8,
@@ -122,13 +122,13 @@ fn data_descriptor(
     raw.to_le_bytes()
 }
 
-fn install_data_descriptor(memory: &GuestMemoryMmap, descriptor: &[u8; 8]) {
+pub(super) fn install_data_descriptor(memory: &GuestMemoryMmap, descriptor: &[u8; 8]) {
     memory
         .write_slice(descriptor, GuestAddress(0x1010))
         .unwrap();
 }
 
-fn segment_fingerprint(
+pub(super) fn segment_fingerprint(
     segment: &crate::vm::vcpu::Segment,
 ) -> (
     u64,
@@ -174,7 +174,7 @@ fn run_direct_to(vcpu: &mut X86_64Vcpu, target: u64) {
     panic!("direct execution did not reach {target:#x}");
 }
 
-fn exception_without_idt(vcpu: &mut X86_64Vcpu) -> String {
+pub(super) fn exception_without_idt(vcpu: &mut X86_64Vcpu) -> String {
     format!(
         "{:#}",
         vcpu.step()
@@ -182,7 +182,7 @@ fn exception_without_idt(vcpu: &mut X86_64Vcpu) -> String {
     )
 }
 
-fn gprs(regs: &Registers) -> [u64; 32] {
+pub(super) fn gprs(regs: &Registers) -> [u64; 32] {
     [
         regs.rax, regs.rcx, regs.rdx, regs.rbx, regs.rsp, regs.rbp, regs.rsi, regs.rdi, regs.r8,
         regs.r9, regs.r10, regs.r11, regs.r12, regs.r13, regs.r14, regs.r15, regs.r16, regs.r17,
@@ -643,7 +643,7 @@ fn ltr_helper_commits_busy_with_exact_traces_and_rolls_back_every_failed_probe()
     assert_eq!(&observed[8..], &available[8..]);
 
     assert_eq!(
-        unsafe { rax_jit_system_selector_load(&mut state, 0x10, 0x40) },
+        unsafe { rax_jit_system_selector_load(&mut state, 0x10, 0x80) },
         0,
         "unknown helper encoding bits must remain fail-closed"
     );

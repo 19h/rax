@@ -1,7 +1,39 @@
 use crate::common::*;
-use rax::vm::vcpu::Registers;
+use rax::vm::vcpu::{Registers, Segment};
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress};
+
+fn segment_fingerprint(
+    segment: &Segment,
+) -> (
+    u64,
+    u32,
+    u16,
+    u8,
+    bool,
+    u8,
+    bool,
+    bool,
+    bool,
+    bool,
+    bool,
+    bool,
+) {
+    (
+        segment.base,
+        segment.limit,
+        segment.selector,
+        segment.type_,
+        segment.present,
+        segment.dpl,
+        segment.db,
+        segment.s,
+        segment.l,
+        segment.g,
+        segment.avl,
+        segment.unusable,
+    )
+}
 
 fn assert_invalid_segment(code: &[u8]) {
     let (mut vcpu, _) = setup_vm_no_idt(code, None);
@@ -575,16 +607,19 @@ fn test_push_segment_after_modification() {
 #[test]
 fn test_pop_segment_clears_high_bits() {
     let code = [
-        0x48, 0xc7, 0xc0, 0xff, 0xff, 0xff, 0xff, // MOV RAX, 0xFFFFFFFF
+        0x48, 0xc7, 0xc0, 0x10, 0x00, 0xff, 0xff, // MOV RAX, 0xFFFFFFFFFFFF0010
         0x50, // PUSH RAX
         0x0f, 0xa1, // POP FS
         0x8c, 0xe3, // MOV BX, FS
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let descriptor = [0xFF, 0xFF, 0, 0, 0, 0x92, 0xCF, 0];
+    mem.write_slice(&descriptor, GuestAddress(GDT_BASE + 0x10))
+        .unwrap();
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // FS should only have lower 16 bits
-    assert_eq!(regs.rbx & 0xFFFF, 0xFFFF);
+    assert_eq!(regs.rbx & 0xFFFF, 0x0010);
 }
 
 #[test]
@@ -774,23 +809,198 @@ fn push_fs_noncanonical_or_wrapping_stack_range_raises_ss_without_commit() {
     }
 }
 
-// POP FS from a prepared stack loads exactly the low 16 bits and clears the rest.
+// POP FS from a prepared stack loads exactly the low 16 bits, validates the
+// selected descriptor, and ignores all upper source bits.
 #[test]
 fn test_pop_fs_loads_low16_only() {
     let code = [
-        0x48, 0xb8, 0x99, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
-        0xff, // MOV RAX, 0xFFFFFFFF00000099
+        0x48, 0xb8, 0x10, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
+        0xff, // MOV RAX, 0xFFFFFFFF00000010
         0x50, // PUSH RAX
         0x0f, 0xa1, // POP FS
         0x8c, 0xe3, // MOV BX, FS
         0xf4, // HLT
     ];
-    let (mut vcpu, _) = setup_vm(&code, None);
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    let descriptor = [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x92, 0xCF, 0x00];
+    mem.write_slice(&descriptor, GuestAddress(GDT_BASE + 0x10))
+        .unwrap();
     let regs = run_until_hlt(&mut vcpu).unwrap();
     assert_eq!(
         regs.rbx & 0xFFFF,
-        0x0099,
+        0x0010,
         "POP FS takes low 16 bits of the stack word"
     );
     assert_eq!(regs.rsp, STACK_ADDR, "RSP restored after PUSH/POP pair");
+}
+
+#[test]
+fn pop_fs_rex_w_takes_precedence_over_operand_size_override() {
+    for (encoding, width, apx) in [
+        (&[0x0F, 0xA1][..], 8_u64, false),
+        (&[0x66, 0x0F, 0xA1][..], 2, false),
+        (&[0x48, 0x0F, 0xA1][..], 8, false),
+        (&[0x66, 0x48, 0x0F, 0xA1][..], 8, false),
+        (&[0x66, 0x40, 0x0F, 0xA1][..], 2, false),
+        (&[0xD5, 0x80, 0xA1][..], 8, true),
+        (&[0x66, 0xD5, 0x80, 0xA1][..], 2, true),
+        (&[0x66, 0xD5, 0x88, 0xA1][..], 8, true),
+    ] {
+        let mut code = encoding.to_vec();
+        code.push(0xF4);
+        let (mut vcpu, mem) = if apx {
+            setup_apx_vm(&code, None)
+        } else {
+            setup_vm(&code, None)
+        };
+        mem.write_slice(&[0; 8], GuestAddress(STACK_ADDR)).unwrap();
+        let regs = run_until_hlt(&mut vcpu).unwrap();
+        assert_eq!(regs.rsp, STACK_ADDR + width, "{encoding:02X?}");
+    }
+}
+
+#[test]
+fn pop_fs_rex2_requires_apx_without_reading_or_committing() {
+    let initial = Registers {
+        rsp: STACK_ADDR,
+        ..Registers::default()
+    };
+    let (mut vcpu, mem) = setup_vm_no_idt(&[0xD5, 0x80, 0xA1], Some(initial));
+    mem.write_slice(&0x10_u64.to_le_bytes(), GuestAddress(STACK_ADDR))
+        .unwrap();
+    let before_fs = vcpu.get_sregs().unwrap().fs;
+
+    let error = vcpu
+        .step()
+        .expect_err("REX2 POP FS without APX must raise #UD")
+        .to_string();
+    assert!(error.contains("IDT entry 6 not present"), "{error}");
+    let observed = vcpu.get_regs().unwrap();
+    assert_eq!(observed.rsp, STACK_ADDR);
+    assert_eq!(observed.rip, CODE_ADDR);
+    assert_eq!(
+        segment_fingerprint(&vcpu.get_sregs().unwrap().fs),
+        segment_fingerprint(&before_fs)
+    );
+}
+
+#[test]
+fn pop_fs_noncanonical_or_wrapping_stack_range_raises_ss_without_commit() {
+    for (name, instruction, rsp) in [
+        (
+            "B8 crosses lower canonical boundary",
+            &[0x0F, 0xA1][..],
+            0x0000_7FFF_FFFF_FFFC_u64,
+        ),
+        (
+            "B8 noncanonical upper gap",
+            &[0x0F, 0xA1][..],
+            0xFFFF_7FFF_FFFF_FFFF,
+        ),
+        ("B8 64-bit wrap", &[0x0F, 0xA1][..], u64::MAX - 3),
+        (
+            "B2 crosses lower canonical boundary",
+            &[0x66, 0x0F, 0xA1][..],
+            0x0000_7FFF_FFFF_FFFF,
+        ),
+        (
+            "B2 noncanonical upper gap",
+            &[0x66, 0x0F, 0xA1][..],
+            0xFFFF_7FFF_FFFF_FFFF,
+        ),
+        ("B2 64-bit wrap", &[0x66, 0x0F, 0xA1][..], u64::MAX),
+    ] {
+        let mut initial = Registers::default();
+        initial.rsp = rsp;
+        let (mut vcpu, _) = setup_vm_no_idt(instruction, Some(initial));
+        let before_fs = vcpu.get_sregs().unwrap().fs;
+        let error = vcpu
+            .step()
+            .expect_err("invalid POP FS stack range must raise #SS(0)")
+            .to_string();
+        assert!(
+            error.contains("IDT entry 12 not present"),
+            "{name}: expected #SS(0), got {error}"
+        );
+        let observed = vcpu.get_regs().unwrap();
+        assert_eq!(observed.rsp, rsp, "{name}");
+        assert_eq!(observed.rip, CODE_ADDR, "{name}");
+        assert_eq!(
+            segment_fingerprint(&vcpu.get_sregs().unwrap().fs),
+            segment_fingerprint(&before_fs),
+            "{name}"
+        );
+    }
+}
+
+#[test]
+fn pop_fs_descriptor_faults_do_not_commit_rsp_selector_or_cache() {
+    for (name, selector, descriptor, vector) in [
+        ("GDT limit", 0x20_u16, None, 13_u8),
+        (
+            "not present",
+            0x10,
+            Some([0xFF, 0xFF, 0, 0, 0, 0x12, 0xCF, 0]),
+            11,
+        ),
+    ] {
+        let initial = Registers {
+            rsp: STACK_ADDR,
+            ..Registers::default()
+        };
+        let (mut vcpu, mem) = setup_vm_no_idt(&[0x0F, 0xA1], Some(initial));
+        mem.write_slice(&u64::from(selector).to_le_bytes(), GuestAddress(STACK_ADDR))
+            .unwrap();
+        if let Some(descriptor) = descriptor {
+            mem.write_slice(&descriptor, GuestAddress(GDT_BASE + 0x10))
+                .unwrap();
+        }
+        let before_fs = vcpu.get_sregs().unwrap().fs;
+        let error = vcpu
+            .step()
+            .expect_err("POP FS descriptor fault must be delivered")
+            .to_string();
+        assert!(
+            error.contains(&format!("IDT entry {vector} not present")),
+            "{name}: {error}"
+        );
+        let observed = vcpu.get_regs().unwrap();
+        assert_eq!(observed.rsp, STACK_ADDR, "{name}");
+        assert_eq!(observed.rip, CODE_ADDR, "{name}");
+        assert_eq!(
+            segment_fingerprint(&vcpu.get_sregs().unwrap().fs),
+            segment_fingerprint(&before_fs),
+            "{name}"
+        );
+    }
+}
+
+#[test]
+fn pop_ss_commits_sp_with_preinstruction_stack_address_size() {
+    let initial_rsp = 0xAAAA_BBBB_0000_8000_u64;
+    let initial = Registers {
+        rsp: initial_rsp,
+        ..Registers::default()
+    };
+    let (mut vcpu, memory) = setup_vm_compat(&[0x17, 0xF4], Some(initial));
+    let mut initial_sregs = vcpu.get_sregs().unwrap();
+    initial_sregs.ss.base = 0;
+    initial_sregs.ss.db = false;
+    vcpu.set_sregs(&initial_sregs).unwrap();
+    // Writable ring-0 data, B=1, G=1. POP SS starts with the harness's B=0
+    // stack and changes the cached descriptor to a 32-bit stack.
+    let descriptor = [0xFF, 0xFF, 0, 0, 0, 0x92, 0xCF, 0];
+    memory
+        .write_slice(&descriptor, GuestAddress(GDT_BASE + 0x10))
+        .unwrap();
+    memory
+        .write_slice(&0x10_u16.to_le_bytes(), GuestAddress(STACK_ADDR))
+        .unwrap();
+
+    assert!(vcpu.step().expect("compatibility-mode POP SS").is_none());
+    let regs = vcpu.get_regs().unwrap();
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(regs.rsp, 0xAAAA_BBBB_0000_8002);
+    assert_eq!(sregs.ss.selector, 0x10);
+    assert!(sregs.ss.db);
 }
