@@ -76,6 +76,8 @@ mod sha_ni;
 #[cfg(test)]
 mod smsw;
 #[cfg(test)]
+mod software_interrupt;
+#[cfg(test)]
 mod sse;
 #[cfg(test)]
 mod sti;

@@ -52,3 +52,13 @@ fn x86_debug_trap_is_interpreter_only() {
         requires_apx: false,
     });
 }
+
+#[test]
+fn x86_software_interrupt_trap_is_interpreter_only() {
+    assert_trap_is_interpreter_only(TrapKind::X86SoftwareInterrupt {
+        vector: 0x80,
+        fault_pc: 0x1000,
+        return_pc: 0x1002,
+        requires_apx: false,
+    });
+}

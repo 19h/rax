@@ -187,6 +187,38 @@ impl X86_64Lifter {
                     branch_targets: vec![],
                 })
             }
+            // INT imm8 is terminal: IDT/IVT lookup, software-gate DPL checks,
+            // privilege transitions, and frame construction remain in the
+            // direct interpreter. Preserve the full encoding and trap payload
+            // so strict/static lifting succeeds and JIT regions hand off at the
+            // exact instruction frontier.
+            0xCD if prefix.lock => Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..(prefix.cursor + 1).min(bytes.len())].to_vec(),
+            }),
+            0xCD => {
+                let Some(&vector) = after_opcode.first() else {
+                    return Err(LiftError::Incomplete {
+                        addr: pc,
+                        have: bytes.len(),
+                        need: prefix.cursor + 2,
+                    });
+                };
+                let bytes_consumed = prefix.cursor + 2;
+                Ok(LiftResult {
+                    ops: vec![],
+                    bytes_consumed,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::X86SoftwareInterrupt {
+                            vector,
+                            fault_pc: pc,
+                            return_pc: pc.wrapping_add(bytes_consumed as u64),
+                            requires_apx: prefix.rex2.is_some(),
+                        },
+                    },
+                    branch_targets: vec![],
+                })
+            }
             0xCC => Ok(LiftResult::fallthrough(
                 vec![SmirOp::new(OpId(0), pc, OpKind::Breakpoint)],
                 prefix.cursor + 1,

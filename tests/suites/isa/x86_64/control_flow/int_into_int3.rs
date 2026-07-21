@@ -193,6 +193,91 @@ fn test_int3_multiple_consecutive() {
 // ============================================================================
 
 #[test]
+fn test_int_imm8_prefixes_save_exact_return_rip_and_rex2_is_apx_gated() {
+    let encodings: &[(&str, &[u8], bool)] = &[
+        ("bare", &[0xCD, 0x80], false),
+        ("operand-size", &[0x66, 0xCD, 0x80], false),
+        ("address-size", &[0x67, 0xCD, 0x80], false),
+        ("REPNE", &[0xF2, 0xCD, 0x80], false),
+        ("REP", &[0xF3, 0xCD, 0x80], false),
+        ("segment", &[0x2E, 0xCD, 0x80], false),
+        ("REX.W", &[0x48, 0xCD, 0x80], false),
+        ("REX2", &[0xD5, 0x00, 0xCD, 0x80], true),
+        (
+            "ordered legacy plus REX2",
+            &[0x66, 0x67, 0xF3, 0x2E, 0xD5, 0x00, 0xCD, 0x80],
+            true,
+        ),
+    ];
+
+    for &(name, instruction, apx_enabled) in encodings {
+        let mut code = instruction.to_vec();
+        code.push(0xF4);
+        let (mut vcpu, memory) = setup_vm(&code, None);
+        vcpu.set_apx_enabled(apx_enabled);
+        // Capture the software interrupt's saved RIP, then return to HLT.
+        memory
+            .write_slice(
+                &[0x48, 0x8B, 0x04, 0x24, 0x48, 0xCF],
+                GuestAddress(INT_HANDLER_ADDR),
+            )
+            .unwrap();
+
+        let regs = run_until_hlt(&mut vcpu).unwrap_or_else(|error| panic!("{name}: {error}"));
+        assert_eq!(
+            regs.rax,
+            CODE_ADDR + instruction.len() as u64,
+            "{name}: INT imm8 must save the post-immediate RIP"
+        );
+    }
+
+    let rex2 = [0xD5, 0x00, 0xCD, 0x80];
+    let (mut disabled, _) = setup_vm_no_idt(&rex2, None);
+    for path in ["cold decode", "decode-cache hit"] {
+        let error = disabled
+            .step()
+            .expect_err("disabled REX2 INT imm8 must raise #UD")
+            .to_string();
+        assert!(
+            error.contains("IDT entry 6 not present"),
+            "{path}: expected #UD delivery failure, got {error}"
+        );
+        assert_eq!(
+            disabled.get_regs().unwrap().rip,
+            CODE_ADDR,
+            "{path}: APX-disabled #UD must retain the instruction RIP"
+        );
+    }
+}
+
+#[test]
+fn test_int_imm8_illegal_prefixes_raise_fault_class_invalid_opcode() {
+    for (name, instruction, apx_enabled) in [
+        ("LOCK", &[0xF0, 0xCD, 0x80][..], false),
+        ("LOCK REX2", &[0xF0, 0xD5, 0x00, 0xCD, 0x80], true),
+        ("REX before REX2", &[0x48, 0xD5, 0x00, 0xCD, 0x80], true),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(instruction, None);
+        vcpu.set_apx_enabled(apx_enabled);
+        for path in ["cold decode", "decode-cache hit"] {
+            let error = vcpu
+                .step()
+                .expect_err("invalid INT imm8 prefix must raise #UD")
+                .to_string();
+            assert!(
+                error.contains("IDT entry 6 not present"),
+                "{name} ({path}): wrong exception vector: {error}"
+            );
+            assert_eq!(
+                vcpu.get_regs().unwrap().rip,
+                CODE_ADDR,
+                "{name} ({path}): #UD must retain the faulting RIP"
+            );
+        }
+    }
+}
+
+#[test]
 fn test_int_imm8_vector_0() {
     // INT 0 - divide error interrupt
     let code = [
