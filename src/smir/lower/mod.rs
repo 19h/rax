@@ -209,6 +209,18 @@ pub const X86_GUEST_STI_FN_OFFSET: i32 = X86_GUEST_INTERRUPT_INHIBIT_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 
+/// Internal selector-loader helper namespace reserved for VERR/VERW. The tag
+/// combines selector ID 3 with far-pointer width code 3, both invalid for every
+/// selector-load operation, while staying below the loader's established
+/// unknown-bit boundary at bit 15.
+pub(crate) const X86_SELECTOR_VERIFY_HELPER_TAG: u32 = 0x600C;
+pub(crate) const X86_SELECTOR_VERIFY_HELPER_MEMORY: u32 = 1;
+pub(crate) const X86_SELECTOR_VERIFY_HELPER_APX: u32 = 1 << 1;
+pub(crate) const X86_SELECTOR_VERIFY_HELPER_WRITE: u32 = 1 << 5;
+pub(crate) const X86_SELECTOR_VERIFY_HELPER_OPTION_MASK: u32 = X86_SELECTOR_VERIFY_HELPER_MEMORY
+    | X86_SELECTOR_VERIFY_HELPER_APX
+    | X86_SELECTOR_VERIFY_HELPER_WRITE;
+
 // ============================================================================
 // Lowerer Trait
 // ============================================================================

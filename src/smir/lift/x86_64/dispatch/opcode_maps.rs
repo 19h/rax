@@ -306,17 +306,28 @@ impl X86_64Lifter {
         };
 
         match opcode2 {
-            0x00 if after_opcode
-                .first()
-                .is_some_and(|modrm| ((modrm >> 3) & 7) <= 1) =>
-            {
-                self.lift_system_selector_store_0f00(after_opcode, &prefix2, pc, ctx)
-            }
-            0x00 if after_opcode
-                .first()
-                .is_some_and(|modrm| matches!((modrm >> 3) & 7, 2 | 3)) =>
-            {
-                self.lift_system_selector_load_0f00(after_opcode, &prefix2, pc, ctx)
+            0x00 => {
+                let Some(modrm) = after_opcode.first() else {
+                    return Err(LiftError::Incomplete {
+                        addr: pc,
+                        have: prefix2.cursor,
+                        need: prefix2.cursor + 1,
+                    });
+                };
+                match (modrm >> 3) & 7 {
+                    0 | 1 => self.lift_system_selector_store_0f00(after_opcode, &prefix2, pc, ctx),
+                    2 | 3 => self.lift_system_selector_load_0f00(after_opcode, &prefix2, pc, ctx),
+                    4 | 5 => self.lift_selector_verify_0f00(after_opcode, &prefix2, pc, ctx),
+                    6 | 7 => Ok(LiftResult {
+                        ops: vec![],
+                        bytes_consumed: prefix2.cursor + 1,
+                        control_flow: ControlFlow::Trap {
+                            kind: TrapKind::InvalidOpcode,
+                        },
+                        branch_targets: vec![],
+                    }),
+                    _ => unreachable!("three-bit Group-6 selector changed"),
+                }
             }
             0x01 => self.lift_group7_0f01(after_opcode, &prefix2, pc, ctx),
 

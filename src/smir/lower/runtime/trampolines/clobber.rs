@@ -2,16 +2,16 @@
 
 use super::*;
 use crate::smir::ir::ops::{
-    X86LmswSource, X86MonitorMwaitOp, X86SmswTarget, X86SystemSelectorSource,
-    X86SystemSelectorTarget,
+    X86LmswSource, X86MonitorMwaitOp, X86SelectorVerifySource, X86SmswTarget,
+    X86SystemSelectorSource, X86SystemSelectorTarget,
 };
 use crate::smir::lower::runtime::*;
 use crate::smir::lower::x86_64::{
     x86_cli_shape_valid, x86_clts_shape_valid, x86_far_call_shape_valid,
     x86_far_call_terminal_shape_valid, x86_far_jump_shape_valid, x86_far_jump_terminal_shape_valid,
     x86_far_return_shape_valid, x86_far_return_terminal_shape_valid, x86_lmsw_shape_valid,
-    x86_read_control_shape_valid, x86_read_debug_shape_valid, x86_smsw_shape_valid,
-    x86_sti_shape_valid, x86_system_selector_load_shape_valid,
+    x86_read_control_shape_valid, x86_read_debug_shape_valid, x86_selector_verify_shape_valid,
+    x86_smsw_shape_valid, x86_sti_shape_valid, x86_system_selector_load_shape_valid,
     x86_system_selector_store_shape_valid, x86_write_control_shape_valid,
     x86_write_debug_shape_valid,
 };
@@ -536,6 +536,18 @@ pub(crate) fn block_is_clobber_safe(
             }
             _ => false,
         };
+        let selector_verify_ok = match &op.kind {
+            OpKind::X86SelectorVerify(verify) if x86_selector_verify_shape_valid(op) => {
+                allow_mem
+                    && match &verify.source {
+                        X86SelectorVerifySource::Register { .. } => true,
+                        X86SelectorVerifySource::Memory { addr, .. } => {
+                            x86_jit_mem_address_shape_valid(addr)
+                        }
+                    }
+            }
+            _ => false,
+        };
         let lmsw_ok = match &op.kind {
             OpKind::X86Lmsw(lmsw) if x86_lmsw_shape_valid(op) => match &lmsw.source {
                 X86LmswSource::Register { .. } => true,
@@ -621,6 +633,7 @@ pub(crate) fn block_is_clobber_safe(
             || smsw_ok
             || selector_store_ok
             || selector_load_ok
+            || selector_verify_ok
             || lmsw_ok
             || descriptor_store_ok
             || descriptor_load_ok
@@ -682,6 +695,7 @@ pub(crate) fn block_is_clobber_safe(
             || far_call_ok
             || far_return_ok
             || selector_load_ok
+            || selector_verify_ok
             || matches!(
                 &op.kind,
                 OpKind::X86SystemSelectorStore(store)
@@ -783,6 +797,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86SystemSelectorLoad(..)) && !selector_load_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86SelectorVerify(..)) && !selector_verify_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86Lmsw(..)) && !lmsw_ok {

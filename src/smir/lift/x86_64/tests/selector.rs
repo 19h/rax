@@ -367,7 +367,7 @@ fn selector_stores_lift_fixed_two_byte_memory_addresses_and_apx_components() {
 }
 
 #[test]
-fn selector_stores_honor_prefixes_reject_lock_and_leave_other_group6_unsupported() {
+fn selector_stores_honor_prefixes_and_reject_lock() {
     let rex_w_wins = lift_single(&[0x66, 0x48, 0x0F, 0x00, 0xC0]).unwrap();
     assert!(matches!(
         exact_selector(&rex_w_wins).target,
@@ -384,12 +384,6 @@ fn selector_stores_honor_prefixes_reject_lock_and_leave_other_group6_unsupported
         lift_single(&[0xF0, 0x0F, 0x00, 0xC0]),
         Err(LiftError::InvalidEncoding { .. })
     ));
-    for modrm in [0xE0, 0xE8] {
-        assert!(matches!(
-            lift_single(&[0x0F, 0x00, modrm]),
-            Err(LiftError::Unsupported { .. })
-        ));
-    }
 }
 
 #[test]

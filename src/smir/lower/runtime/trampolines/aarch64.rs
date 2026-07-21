@@ -1281,6 +1281,7 @@ pub(crate) fn aarch64_block_is_clobber_safe(
                 | OpKind::X86Smsw(..)
                 | OpKind::X86SystemSelectorStore(..)
                 | OpKind::X86SystemSelectorLoad(..)
+                | OpKind::X86SelectorVerify(..)
                 | OpKind::X86FarJump(..)
                 | OpKind::X86FarCall(..)
                 | OpKind::X86FarReturn(..)

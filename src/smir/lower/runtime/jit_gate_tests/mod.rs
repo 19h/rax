@@ -58,6 +58,8 @@ mod read_debug;
 #[cfg(test)]
 mod selector;
 #[cfg(test)]
+mod selector_verify;
+#[cfg(test)]
 mod serialize;
 #[cfg(test)]
 mod smsw;

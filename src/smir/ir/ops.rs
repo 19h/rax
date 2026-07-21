@@ -4017,6 +4017,11 @@ pub enum OpKind {
     /// terminates native execution at `next_pc`.
     X86SystemSelectorLoad(X86SystemSelectorLoadOp),
 
+    /// VERR/VERW verify a fixed-width selector source and update only ZF.
+    /// Selector/type/privilege failures are non-faulting; source and implicit
+    /// descriptor-table reads retain their architectural fault behavior.
+    X86SelectorVerify(X86SelectorVerifyOp),
+
     /// `FF /5` indirect far JMP. The memory far pointer selects a code segment
     /// or IA-32e call gate; all descriptor effects precede one CS:RIP commit.
     X86FarJump(X86FarJumpOp),
@@ -4546,6 +4551,7 @@ impl OpKind {
                 | OpKind::X86Smsw(..)
                 | OpKind::X86SystemSelectorStore(..)
                 | OpKind::X86SystemSelectorLoad(..)
+                | OpKind::X86SelectorVerify(..)
                 | OpKind::X86FarJump(..)
                 | OpKind::X86FarCall(..)
                 | OpKind::X86FarReturn(..)
@@ -5122,6 +5128,7 @@ impl OpKind {
                 ..
             })
             | OpKind::X86SystemSelectorLoad(..)
+            | OpKind::X86SelectorVerify(..)
             | OpKind::X86Lmsw(..)
             | OpKind::X86DescriptorTableStore(..)
             | OpKind::X86DescriptorTableLoad(..)
@@ -5302,6 +5309,7 @@ impl OpKind {
                     | OpKind::X86Smsw(..)
                     | OpKind::X86SystemSelectorStore(..)
                     | OpKind::X86SystemSelectorLoad(..)
+                    | OpKind::X86SelectorVerify(..)
                     | OpKind::X86FarJump(..)
                     | OpKind::X86FarCall(..)
                     | OpKind::X86FarReturn(..)
@@ -5424,6 +5432,7 @@ impl OpKind {
                 | OpKind::X86FxRstor { .. }
                 | OpKind::X86XRstor { .. }
                 | OpKind::X86SystemSelectorLoad(..)
+                | OpKind::X86SelectorVerify(..)
                 | OpKind::X86FarJump(..)
                 | OpKind::X86FarCall(..)
                 | OpKind::X86FarReturn(..)

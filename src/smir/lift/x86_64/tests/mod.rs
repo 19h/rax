@@ -82,6 +82,8 @@ mod segment_selector_store;
 #[cfg(test)]
 mod selector;
 #[cfg(test)]
+mod selector_verify;
+#[cfg(test)]
 mod serialize;
 #[cfg(test)]
 mod sgx_controls;

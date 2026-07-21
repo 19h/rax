@@ -4755,6 +4755,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86DescriptorTableLoad(..)
                                 | OpKind::X86SystemSelectorStore(..)
                                 | OpKind::X86SystemSelectorLoad(..)
+                                | OpKind::X86SelectorVerify(..)
                                 | OpKind::X86FarJump(..)
                                 | OpKind::X86FarCall(..)
                                 | OpKind::X86FarReturn(..)
@@ -6386,6 +6387,10 @@ mod jit_descriptor_table_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_selector_tests.rs"]
 mod jit_selector_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_selector_verify_tests.rs"]
+mod jit_selector_verify_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_pop_segment_tests.rs"]

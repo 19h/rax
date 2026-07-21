@@ -517,6 +517,36 @@ struct Descriptor {
     raw: u64,
 }
 
+/// Access class selected by VERR/VERW. This is deliberately distinct from a
+/// segment-register load: Intel and AMD define verification in terms of type
+/// and privilege only, so a clear descriptor Present bit does not make an
+/// otherwise admissible selector fail verification.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum X86SelectorVerifyAccess {
+    Read,
+    Write,
+}
+
+/// Evaluate the descriptor/type/privilege portion of VERR/VERW after selector
+/// nullness, table selection, bounds, and the descriptor read have succeeded.
+/// Neither instruction raises a selector-derived protection exception.
+pub(crate) fn x86_selector_verifies(
+    selector: u16,
+    raw: u64,
+    cpl: u8,
+    access: X86SelectorVerifyAccess,
+) -> bool {
+    let descriptor = Descriptor { raw };
+    if !descriptor.is_code_or_data() || !descriptor.visible_from(selector, cpl) {
+        return false;
+    }
+
+    match access {
+        X86SelectorVerifyAccess::Read => !descriptor.executable() || descriptor.type_() & 0x2 != 0,
+        X86SelectorVerifyAccess::Write => !descriptor.executable() && descriptor.type_() & 0x2 != 0,
+    }
+}
+
 impl Descriptor {
     fn present(self) -> bool {
         (self.raw >> 47) & 1 != 0
@@ -582,22 +612,6 @@ impl Descriptor {
 
         valid_type && self.visible_from(selector, cpl)
     }
-
-    fn can_verr(self, selector: u16, cpl: u8) -> bool {
-        if !self.present() || !self.is_code_or_data() || !self.visible_from(selector, cpl) {
-            return false;
-        }
-
-        !self.executable() || self.type_() & 0x2 != 0
-    }
-
-    fn can_verw(self, selector: u16, cpl: u8) -> bool {
-        self.present()
-            && self.is_code_or_data()
-            && self.visible_from(selector, cpl)
-            && !self.executable()
-            && self.type_() & 0x2 != 0
-    }
 }
 
 fn descriptor_for_selector(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Option<Descriptor>> {
@@ -621,6 +635,33 @@ fn descriptor_for_selector(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Optio
     let raw = vcpu
         .mmu
         .read_u64_supervisor(table_base + offset, &vcpu.sregs)?;
+    Ok(Some(Descriptor { raw }))
+}
+
+fn descriptor_for_verification(vcpu: &mut X86_64Vcpu, selector: u16) -> Result<Option<Descriptor>> {
+    if selector & 0xFFFC == 0 {
+        return Ok(None);
+    }
+
+    let ti = selector & 0x4 != 0;
+    if ti && (vcpu.sregs.ldt.selector & 0xFFFC == 0 || vcpu.sregs.ldt.unusable) {
+        return Ok(None);
+    }
+    let (table_base, table_limit) = if ti {
+        (vcpu.sregs.ldt.base, u64::from(vcpu.sregs.ldt.limit))
+    } else {
+        (vcpu.sregs.gdt.base, u64::from(vcpu.sregs.gdt.limit))
+    };
+    let offset = u64::from(selector >> 3) * 8;
+    if offset.checked_add(7).is_none_or(|last| last > table_limit) {
+        return Ok(None);
+    }
+    let Some(address) = table_base.checked_add(offset) else {
+        return Ok(None);
+    };
+    let raw = vcpu.mmu.read_u64_supervisor(address, &vcpu.sregs)?;
+    #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+    vcpu.push_jit_mem_trace((0, address, 8, raw));
     Ok(Some(Descriptor { raw }))
 }
 
@@ -769,31 +810,31 @@ pub fn group6(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
         }
         // VERR - Verify Read (0x0F 0x00 /4)
         4 => {
-            let selector = if is_memory {
-                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
-                ctx.cursor = modrm_start + 1 + extra;
-                vcpu.mmu.read_u16(addr, &vcpu.sregs)?
-            } else {
-                vcpu.get_reg(rm, 2) as u16
+            let Some(selector) =
+                read_group6_selector_load_source(vcpu, ctx, modrm_start, modrm, rm)?
+            else {
+                return Ok(None);
             };
             let cpl = current_cpl(vcpu);
-            let readable = descriptor_for_selector(vcpu, selector)?
-                .map(|desc| desc.can_verr(selector, cpl))
+            let readable = descriptor_for_verification(vcpu, selector)?
+                .map(|desc| {
+                    x86_selector_verifies(selector, desc.raw, cpl, X86SelectorVerifyAccess::Read)
+                })
                 .unwrap_or(false);
             set_zf(vcpu, readable);
         }
         // VERW - Verify Write (0x0F 0x00 /5)
         5 => {
-            let selector = if is_memory {
-                let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
-                ctx.cursor = modrm_start + 1 + extra;
-                vcpu.mmu.read_u16(addr, &vcpu.sregs)?
-            } else {
-                vcpu.get_reg(rm, 2) as u16
+            let Some(selector) =
+                read_group6_selector_load_source(vcpu, ctx, modrm_start, modrm, rm)?
+            else {
+                return Ok(None);
             };
             let cpl = current_cpl(vcpu);
-            let writable = descriptor_for_selector(vcpu, selector)?
-                .map(|desc| desc.can_verw(selector, cpl))
+            let writable = descriptor_for_verification(vcpu, selector)?
+                .map(|desc| {
+                    x86_selector_verifies(selector, desc.raw, cpl, X86SelectorVerifyAccess::Write)
+                })
                 .unwrap_or(false);
             set_zf(vcpu, writable);
         }
@@ -902,6 +943,87 @@ mod tests {
             assert!(!decoded.segment.unusable);
             assert_eq!(decoded.accessed_low, raw | (1 << 40));
         }
+    }
+
+    #[test]
+    fn selector_verification_uses_type_and_privilege_but_ignores_presence() {
+        for present in [false, true] {
+            let read_only = descriptor(0x0, 3, present, false);
+            let writable = descriptor(0x2, 3, present, false);
+            let execute_only = descriptor(0x8, 3, present, false);
+            let readable_code = descriptor(0xA, 3, present, false);
+            let conforming_readable = descriptor(0xE, 0, present, false);
+            let system = descriptor(0x2, 3, present, true);
+
+            assert!(x86_selector_verifies(
+                0x13,
+                read_only,
+                3,
+                X86SelectorVerifyAccess::Read
+            ));
+            assert!(!x86_selector_verifies(
+                0x13,
+                read_only,
+                3,
+                X86SelectorVerifyAccess::Write
+            ));
+            assert!(x86_selector_verifies(
+                0x13,
+                writable,
+                3,
+                X86SelectorVerifyAccess::Write
+            ));
+            assert!(!x86_selector_verifies(
+                0x13,
+                execute_only,
+                3,
+                X86SelectorVerifyAccess::Read
+            ));
+            assert!(x86_selector_verifies(
+                0x13,
+                readable_code,
+                3,
+                X86SelectorVerifyAccess::Read
+            ));
+            assert!(!x86_selector_verifies(
+                0x13,
+                readable_code,
+                3,
+                X86SelectorVerifyAccess::Write
+            ));
+            assert!(x86_selector_verifies(
+                0x13,
+                conforming_readable,
+                3,
+                X86SelectorVerifyAccess::Read
+            ));
+            assert!(!x86_selector_verifies(
+                0x13,
+                system,
+                3,
+                X86SelectorVerifyAccess::Read
+            ));
+        }
+
+        let dpl_two = descriptor(0x2, 2, true, false);
+        assert!(x86_selector_verifies(
+            0x12,
+            dpl_two,
+            2,
+            X86SelectorVerifyAccess::Write
+        ));
+        assert!(!x86_selector_verifies(
+            0x13,
+            dpl_two,
+            2,
+            X86SelectorVerifyAccess::Write
+        ));
+        assert!(!x86_selector_verifies(
+            0x12,
+            dpl_two,
+            3,
+            X86SelectorVerifyAccess::Write
+        ));
     }
 
     #[test]

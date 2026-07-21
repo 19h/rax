@@ -177,6 +177,37 @@ pub struct X86SystemSelectorLoadOp {
     pub next_pc: u64,
 }
 
+/// Access predicate selected by Group-6 VERR/VERW. Descriptor presence is not
+/// part of either predicate; only descriptor type, access bits, and privilege
+/// determine the ZF result after a selector names an in-bounds descriptor.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86SelectorVerifyKind {
+    Read,
+    Write,
+}
+
+/// Fixed-width VERR/VERW selector source. Register forms consume the low 16
+/// bits. Memory forms read exactly 2 bytes, with `stack_segment` retaining the
+/// #SS(0) versus #GP(0) distinction for a noncanonical long-mode range.
+#[derive(Clone, Debug)]
+pub enum X86SelectorVerifySource {
+    Register { src: VReg },
+    Memory { addr: Address, stack_segment: bool },
+}
+
+/// VERR/VERW verify a code/data selector without loading it. Invalid selectors
+/// and descriptors commit ZF=0 rather than a selector-derived exception; source
+/// and descriptor-table memory accesses remain faulting. Every REX2 encoding
+/// requires the dynamic APX profile, and `next_pc` records the exact strict-lift
+/// instruction boundary for native shape validation.
+#[derive(Clone, Debug)]
+pub struct X86SelectorVerifyOp {
+    pub kind: X86SelectorVerifyKind,
+    pub source: X86SelectorVerifySource,
+    pub requires_apx: bool,
+    pub next_pc: u64,
+}
+
 /// Indirect far JMP (`FF /5`) through a memory far pointer. The strict x86-64
 /// lifter records the encoded 16-, 32-, or 64-bit offset width and produces the
 /// target in architectural RIP. Descriptor-table reads, optional call-gate
