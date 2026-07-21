@@ -1,8 +1,120 @@
-use crate::common::{run_until_hlt, setup_vm, setup_vm_compat, setup_vm_no_idt};
+use crate::common::{
+    Bytes, CODE_ADDR, GuestAddress, INT_HANDLER_ADDR, run_until_hlt, setup_vm, setup_vm_compat,
+    setup_vm_no_idt,
+};
 use rax::vm::vcpu::{Registers, VCpu, VcpuExit};
 
-// Comprehensive tests for INT, INTO, INT3 instructions (software interrupts)
-// INT imm8 (CD), INTO (CE), INT3 (CC)
+// Comprehensive tests for INT, INTO, INT3, and INT1 instructions (software interrupts)
+// INT imm8 (CD), INTO (CE), INT3 (CC), INT1/ICEBP (F1)
+
+// ============================================================================
+// INT1/ICEBP - Debug Trap (0xF1)
+// ============================================================================
+
+#[test]
+fn test_int1_icebp_saves_post_instruction_rip_and_preserves_dr6() {
+    const DR6_SENTINEL: u64 = 0xFFFF_0FF0;
+    let encodings: &[(&str, &[u8])] = &[
+        ("bare", &[0xF1]),
+        ("operand-size", &[0x66, 0xF1]),
+        ("address-size", &[0x67, 0xF1]),
+        ("REPNE", &[0xF2, 0xF1]),
+        ("REP", &[0xF3, 0xF1]),
+        ("segment", &[0x2E, 0xF1]),
+        ("REX.W", &[0x48, 0xF1]),
+    ];
+
+    for &(name, instruction) in encodings {
+        let mut code = instruction.to_vec();
+        code.push(0xF4);
+        let (mut vcpu, memory) = setup_vm(&code, None);
+        // Capture the return RIP from the top of the #DB frame, then IRETQ.
+        memory
+            .write_slice(
+                &[0x48, 0x8B, 0x04, 0x24, 0x48, 0xCF],
+                GuestAddress(INT_HANDLER_ADDR),
+            )
+            .unwrap();
+        let mut sregs = vcpu.get_sregs().unwrap();
+        sregs.dr6 = DR6_SENTINEL;
+        vcpu.set_sregs(&sregs).unwrap();
+
+        let regs = run_until_hlt(&mut vcpu).unwrap_or_else(|error| panic!("{name}: {error}"));
+        assert_eq!(
+            regs.rax,
+            CODE_ADDR + instruction.len() as u64,
+            "{name}: #DB must save the post-INT1 RIP"
+        );
+        assert_eq!(
+            vcpu.get_sregs().unwrap().dr6,
+            DR6_SENTINEL,
+            "{name}: INT1 must not set any DR6 cause bit"
+        );
+    }
+}
+
+#[test]
+fn test_rex2_int1_icebp_is_apx_gated_and_saves_post_instruction_rip() {
+    const DR6_SENTINEL: u64 = 0x1234_5678;
+    let instruction = [0xD5, 0x00, 0xF1];
+
+    let (mut disabled, _) = setup_vm_no_idt(&instruction, None);
+    let error = disabled
+        .step()
+        .expect_err("disabled REX2 INT1 must raise #UD")
+        .to_string();
+    assert!(error.contains("IDT entry 6 not present"), "{error}");
+    assert_eq!(
+        disabled.get_regs().unwrap().rip,
+        CODE_ADDR,
+        "disabled REX2 must raise fault-class #UD before INT1"
+    );
+
+    let mut code = instruction.to_vec();
+    code.push(0xF4);
+    let (mut vcpu, memory) = setup_vm(&code, None);
+    vcpu.set_apx_enabled(true);
+    memory
+        .write_slice(
+            &[0x48, 0x8B, 0x04, 0x24, 0x48, 0xCF],
+            GuestAddress(INT_HANDLER_ADDR),
+        )
+        .unwrap();
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.dr6 = DR6_SENTINEL;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, CODE_ADDR + instruction.len() as u64);
+    assert_eq!(vcpu.get_sregs().unwrap().dr6, DR6_SENTINEL);
+}
+
+#[test]
+fn test_invalid_int1_prefixes_raise_fault_class_invalid_opcode() {
+    for (name, instruction, apx_enabled) in [
+        ("LOCK", &[0xF0, 0xF1][..], false),
+        ("LOCK REX2", &[0xF0, 0xD5, 0x00, 0xF1], true),
+        ("REX before REX2", &[0x48, 0xD5, 0x00, 0xF1], true),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(instruction, None);
+        vcpu.set_apx_enabled(apx_enabled);
+        for path in ["cold decode", "decode-cache hit"] {
+            let error = vcpu
+                .step()
+                .expect_err("invalid INT1 prefix must raise #UD")
+                .to_string();
+            assert!(
+                error.contains("IDT entry 6 not present"),
+                "{name} ({path}): wrong exception vector: {error}"
+            );
+            assert_eq!(
+                vcpu.get_regs().unwrap().rip,
+                CODE_ADDR,
+                "{name} ({path}): #UD must retain the faulting RIP"
+            );
+        }
+    }
+}
 
 // ============================================================================
 // INT3 - Breakpoint Interrupt (0xCC)

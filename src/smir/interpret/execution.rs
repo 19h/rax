@@ -313,6 +313,24 @@ impl SmirInterpreter {
                     TrapKind::Breakpoint => {
                         BlockResult::Exit(ExitReason::Breakpoint { addr: ctx.pc })
                     }
+                    TrapKind::X86Debug {
+                        fault_pc,
+                        return_pc,
+                        requires_apx,
+                    } => {
+                        let encoding_enabled = matches!(
+                            &ctx.arch_regs,
+                            ArchRegState::X86_64(x86) if !*requires_apx || x86.apx_enabled
+                        );
+                        if !encoding_enabled {
+                            BlockResult::Exit(ExitReason::Undefined {
+                                addr: *fault_pc,
+                                opcode: 0,
+                            })
+                        } else {
+                            BlockResult::Exit(ExitReason::Debug { addr: *return_pc })
+                        }
+                    }
                     TrapKind::SystemCall => {
                         // Already handled in Syscall op
                         BlockResult::Continue(ctx.pc)

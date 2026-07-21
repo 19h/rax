@@ -61,6 +61,16 @@ impl X86_64Lifter {
             });
         }
 
+        // Intel APX defines a legacy REX immediately before REX2 as #UD.
+        // Reject it before either map can dispatch so strict lifting agrees
+        // with direct decode for every REX2-capable opcode.
+        if prefix.rex.is_some() && prefix.rex2.is_some() {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..(prefix.cursor + 1).min(bytes.len())].to_vec(),
+            });
+        }
+
         let prefixed_vec = matches!(opcode_bytes[0], 0x62 | 0xC4 | 0xC5);
         if prefixed_vec {
             return self.lift_prefixed_vec(pc, bytes, &prefix, ctx);
@@ -116,6 +126,31 @@ impl X86_64Lifter {
                 vec![SmirOp::new(OpId(0), pc, OpKind::SetDF { value: true })],
                 prefix.cursor + 1,
             )),
+            // INT1/ICEBP raises trap-class #DB without modifying DR6. Unlike
+            // INT n/INT3, gate-DPL checks do not apply. Keep it terminal so a
+            // native region hands the instruction to the direct interpreter
+            // instead of raising a host debug exception.
+            0xF1 if prefix.lock => {
+                Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: bytes[..(prefix.cursor + 1).min(bytes.len())].to_vec(),
+                })
+            }
+            0xF1 => {
+                let bytes_consumed = prefix.cursor + 1;
+                Ok(LiftResult {
+                    ops: vec![],
+                    bytes_consumed,
+                    control_flow: ControlFlow::Trap {
+                        kind: TrapKind::X86Debug {
+                            fault_pc: pc,
+                            return_pc: pc + bytes_consumed as u64,
+                            requires_apx: prefix.rex2.is_some(),
+                        },
+                    },
+                    branch_targets: vec![],
+                })
+            }
             0xCC => Ok(LiftResult::fallthrough(
                 vec![SmirOp::new(OpId(0), pc, OpKind::Breakpoint)],
                 prefix.cursor + 1,

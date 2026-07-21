@@ -6,12 +6,9 @@ use crate::smir::lower::aarch64::Aarch64Lowerer;
 use crate::smir::lower::x86_64::X86_64Lowerer;
 use crate::smir::lower::{LowerError, SmirLowerer};
 
-#[test]
-fn general_protection_trap_is_interpreter_only() {
+fn assert_trap_is_interpreter_only(kind: TrapKind) {
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
-    builder.set_terminator(Terminator::Trap {
-        kind: TrapKind::GeneralProtection,
-    });
+    builder.set_terminator(Terminator::Trap { kind });
     let function = builder.finish();
 
     assert!(!is_native_clobber_safe(&function));
@@ -40,4 +37,18 @@ fn general_protection_trap_is_interpreter_only() {
     assert!(matches!(x86_error, LowerError::UnsupportedOp { .. }));
     let aarch64_error = Aarch64Lowerer::new().lower_function(&function).unwrap_err();
     assert!(matches!(aarch64_error, LowerError::UnsupportedOp { .. }));
+}
+
+#[test]
+fn general_protection_trap_is_interpreter_only() {
+    assert_trap_is_interpreter_only(TrapKind::GeneralProtection);
+}
+
+#[test]
+fn x86_debug_trap_is_interpreter_only() {
+    assert_trap_is_interpreter_only(TrapKind::X86Debug {
+        fault_pc: 0x1000,
+        return_pc: 0x1001,
+        requires_apx: false,
+    });
 }

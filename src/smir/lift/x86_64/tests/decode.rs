@@ -60,6 +60,23 @@ fn legacy_prefix_after_rex_invalidates_rex_state() {
 }
 
 #[test]
+fn rex_immediately_before_rex2_is_invalid_but_an_intervening_legacy_prefix_clears_rex() {
+    for bytes in [
+        &[0x48, 0xD5, 0x00, 0x89, 0xC0][..],
+        &[0x4F, 0xD5, 0x80, 0xAF, 0xC0],
+    ] {
+        assert!(matches!(
+            lift_single(bytes),
+            Err(LiftError::InvalidEncoding { addr: 0x1000, .. })
+        ));
+    }
+
+    let result = lift_single(&[0x48, 0x66, 0xD5, 0x00, 0x89, 0xC0])
+        .expect("legacy prefix after REX must invalidate REX before REX2");
+    assert_eq!(result.bytes_consumed, 6);
+}
+
+#[test]
 fn legacy_prefix_order_controls_effective_rex_width() {
     let rex_then_66 = lift_single(&[0x48, 0x66, 0xB8, 0x34, 0x12]).unwrap();
     assert_eq!(rex_then_66.bytes_consumed, 5);

@@ -1677,6 +1677,10 @@ impl X86_64Vcpu {
                     boundary_gp: false,
                 };
 
+                if self.reject_invalid_rex2_prefix_order(&ctx)? {
+                    return Ok(None);
+                }
+
                 if self.reject_disabled_apx(&ctx)? {
                     return Ok(None);
                 }
@@ -1790,6 +1794,10 @@ impl X86_64Vcpu {
                 has_lock,
                 handler,
             };
+        }
+
+        if self.reject_invalid_rex2_prefix_order(&ctx)? {
+            return Ok(None);
         }
 
         if self.reject_disabled_apx(&ctx)? {
@@ -1962,6 +1970,19 @@ impl X86_64Vcpu {
 
         self.inject_exception(6, None)?;
         Ok(true)
+    }
+
+    /// Intel APX requires REX2 to be the final prefix and defines an immediately
+    /// preceding legacy REX prefix as #UD. Prefix decoding retains both fields
+    /// so the cold and decode-cache-hit paths can enforce the rule identically.
+    #[inline(always)]
+    fn reject_invalid_rex2_prefix_order(&mut self, ctx: &InsnContext) -> Result<bool> {
+        if ctx.rex.is_some() && ctx.rex2.is_some() {
+            self.inject_exception(6, None)?;
+            return Ok(true);
+        }
+
+        Ok(false)
     }
 
     #[inline(always)]
