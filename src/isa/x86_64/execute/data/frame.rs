@@ -93,18 +93,20 @@ pub fn bound_or_evex(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
     let in_64bit_mode = in_long_mode && vcpu.sregs.cs.l;
 
     if in_64bit_mode || looks_like_evex_prefix(vcpu, ctx) {
-        // A legacy REX (0x40-0x4F) or REX2 (0xD5) prefix preceding an EVEX prefix
-        // is an illegal encoding: EVEX carries its own R/X/B/W register-extension
-        // bits, and the Intel SDM specifies #UD when a REX/REX2 prefix precedes a
-        // VEX/EVEX prefix. The prefix scanner records such a stray REX in
-        // ctx.rex/ctx.rex2, which would otherwise leak into decode_modrm()
-        // (reg |= any_rex_r(), rm |= any_rex_b()) and push the EVEX vector-register
-        // index past 31 — an out-of-bounds access into regs.zmm_ext that aborts the
-        // host (and abort an aborting build). Reject it as #UD before decoding
-        // the EVEX payload.
+        // Address-size and segment overrides are the only legacy prefixes that
+        // may precede VEX/EVEX (including APX extended EVEX). Inspect the raw
+        // prefix bytes: the generic scanner intentionally applies x86's
+        // last-REX rule, so a later 67H or segment override can clear ctx.rex and
+        // must not hide an earlier forbidden REX. Reject every other legacy byte
+        // before decoding the EVEX payload or allowing stale extension state to
+        // reach decode_modrm().
         // RIP is left on the faulting instruction (advanced only on retire), so the
         // fault points at it.
-        if ctx.has_any_rex() {
+        let opcode_offset = ctx.cursor.saturating_sub(1).min(ctx.bytes_len);
+        let has_forbidden_legacy_prefix = ctx.bytes[..opcode_offset]
+            .iter()
+            .any(|byte| !matches!(byte, 0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 | 0x67));
+        if has_forbidden_legacy_prefix || ctx.has_any_rex() {
             vcpu.inject_exception(6, None)?; // #UD = vector 6
             return Ok(None);
         }

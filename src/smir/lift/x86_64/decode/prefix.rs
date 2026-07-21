@@ -138,6 +138,8 @@ pub(crate) struct VecPrefix {
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct ApxEvexPrefix {
     pub(crate) bytes: usize,
+    pub(crate) address_size_override: bool,
+    pub(crate) segment_override: Option<u8>,
     pub(crate) r: bool,
     pub(crate) x: bool,
     pub(crate) vvvv: u8,
@@ -222,6 +224,8 @@ impl ApxEvexPrefix {
             }),
             cursor,
             operand_size_override: self.operand_size_override,
+            address_size_override: self.address_size_override,
+            segment_override: self.segment_override,
             ..X86Prefix::default()
         }
     }
@@ -574,17 +578,40 @@ pub(crate) fn decode_apx_evex_prefix_for_map(
     addr: u64,
     expected_mm: u8,
 ) -> Result<ApxEvexPrefix, LiftError> {
-    if bytes.len() < 4 {
-        return Err(LiftError::Incomplete {
+    // Intel APX follows the ordinary extended-EVEX prefix-order contract:
+    // only address-size and segment overrides may precede 62H.  Decode those
+    // legacy groups here so every APX caller (MAP4 and promoted BMI maps) sees
+    // one absolute prefix length and the same effective-address attributes.
+    let legacy = decode_prefixes(bytes)?;
+    let has_forbidden_legacy_prefix = bytes[..legacy.cursor]
+        .iter()
+        .any(|byte| !matches!(byte, 0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 | 0x67));
+    if has_forbidden_legacy_prefix
+        || legacy.rex.is_some()
+        || legacy.rex2.is_some()
+        || legacy.lock
+        || legacy.operand_size_override
+        || legacy.rep_prefix.is_some()
+        || bytes.get(legacy.cursor) != Some(&0x62)
+    {
+        return Err(LiftError::InvalidEncoding {
             addr,
-            have: bytes.len(),
-            need: 4,
+            bytes: bytes.to_vec(),
         });
     }
 
-    let p0 = bytes[1];
-    let p1 = bytes[2];
-    let p2 = bytes[3];
+    let evex = legacy.cursor;
+    if bytes.len() < evex + 4 {
+        return Err(LiftError::Incomplete {
+            addr,
+            have: bytes.len(),
+            need: evex + 4,
+        });
+    }
+
+    let p0 = bytes[evex + 1];
+    let p1 = bytes[evex + 2];
+    let p2 = bytes[evex + 3];
     let mm = p0 & 0x07;
     if mm != expected_mm {
         return Err(LiftError::Unsupported {
@@ -594,7 +621,9 @@ pub(crate) fn decode_apx_evex_prefix_for_map(
     }
 
     Ok(ApxEvexPrefix {
-        bytes: 4,
+        bytes: evex + 4,
+        address_size_override: legacy.address_size_override,
+        segment_override: legacy.segment_override,
         r: (p0 & 0x80) != 0,
         x: (p0 & 0x40) != 0,
         vvvv: (p1 >> 3) & 0x0F,

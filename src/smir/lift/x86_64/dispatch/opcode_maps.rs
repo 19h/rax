@@ -149,7 +149,11 @@ impl X86_64Lifter {
     ) -> Result<LiftResult, LiftError> {
         // VEX/EVEX may follow address-size or segment prefixes, but must not
         // be preceded by REX, LOCK, or a separately encoded SIMD prefix.
-        if legacy.rex.is_some()
+        let has_forbidden_legacy_prefix = bytes[..legacy.cursor]
+            .iter()
+            .any(|byte| !matches!(byte, 0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 | 0x67));
+        if has_forbidden_legacy_prefix
+            || legacy.rex.is_some()
             || legacy.rex2.is_some()
             || legacy.lock
             || legacy.operand_size_override
@@ -160,6 +164,19 @@ impl X86_64Lifter {
                 bytes: bytes.to_vec(),
             });
         }
+
+        // Extended EVEX retains ordinary EVEX prefix ordering, so 67H and
+        // segment overrides are legal before an APX MAP4 instruction.  Route
+        // MAP4 before the vector decoder rejects the previously reserved map;
+        // the APX decoder below preserves both effective-address attributes.
+        if bytes.get(legacy.cursor) == Some(&0x62)
+            && bytes
+                .get(legacy.cursor + 1)
+                .is_some_and(|p0| p0 & 0x07 == 4)
+        {
+            return self.lift_apx_evex_map4(pc, bytes, ctx);
+        }
+
         let mut prefix = match bytes.get(legacy.cursor) {
             Some(0x62) => decode_evex_prefix(&bytes[legacy.cursor..], pc)?,
             _ => decode_vex_prefix(&bytes[legacy.cursor..], pc)?,

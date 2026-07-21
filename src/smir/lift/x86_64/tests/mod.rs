@@ -10,6 +10,8 @@ mod addr32_assertions;
 #[cfg(test)]
 mod apx;
 #[cfg(test)]
+mod apx_prefixes;
+#[cfg(test)]
 mod callout;
 #[cfg(test)]
 mod clac_stac;

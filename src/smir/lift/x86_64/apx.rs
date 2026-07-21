@@ -153,7 +153,7 @@ impl X86_64Lifter {
         allow_nf: bool,
     ) -> Result<(), LiftError> {
         let allowed_p2 = 0x08 | if allow_nf { 0x04 } else { 0 };
-        if bytes[3] & !allowed_p2 != 0 || (!allow_nf && prefix.nf) {
+        if bytes[prefix.bytes - 1] & !allowed_p2 != 0 || (!allow_nf && prefix.nf) {
             return Err(LiftError::Unsupported {
                 addr: pc,
                 mnemonic: "APX BMI reserved EVEX field".to_string(),
@@ -401,7 +401,12 @@ impl X86_64Lifter {
             }
             VecEncodingKind::Evex => {
                 let apx = decode_apx_evex_prefix_for_map(bytes, pc, 2)?;
-                if apx.pp != 1 || apx.aaa != 0 || apx.nf || apx.nd || (bytes[3] & 0xE0) != 0 {
+                if apx.pp != 1
+                    || apx.aaa != 0
+                    || apx.nf
+                    || apx.nd
+                    || (bytes[apx.bytes - 1] & 0xE0) != 0
+                {
                     return Err(LiftError::Unsupported {
                         addr: pc,
                         mnemonic: "EVEX CMPccXADD reserved field".to_string(),
@@ -1862,7 +1867,7 @@ impl X86_64Lifter {
             || prefix.aaa != 0
             || prefix.vvvv != 0x0F
             || !prefix.v_prime
-            || (full_bytes[3] & 0xE0) != 0
+            || (full_bytes[prefix.bytes - 1] & 0xE0) != 0
         {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
@@ -1890,7 +1895,7 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        if !prefix.nd || prefix.nf || (full_bytes[3] & 0x80) != 0 {
+        if !prefix.nd || prefix.nf || (full_bytes[prefix.bytes - 1] & 0x80) != 0 {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: full_bytes.to_vec(),
