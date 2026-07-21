@@ -1041,6 +1041,9 @@ impl X86_64Lowerer {
         self.patch_rel32_to_current(zf_clear)?;
 
         self.emit_helper_call_state(PhysReg::Rcx, false, self.preserve_vector_mem_helpers);
+        if dst_index == 5 {
+            self.emit_sync_saved_rbp_from_state(PhysReg::Rcx);
+        }
         self.emit_reload_all(PhysReg::Rcx);
         self.code.emit_u8(0x9D); // popfq: commits the patched ZF only
         self.emit_flag_preserving_stack_pop8();
