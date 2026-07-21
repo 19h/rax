@@ -18,9 +18,13 @@ pub(super) struct JitRegion {
     /// memory. False selects the general AVX512BW KMOVQ path.
     #[cfg(target_arch = "x86_64")]
     pub(super) narrow_vector_opmasks: bool,
-    /// Whether the native entry bridge must marshal MM0-MM7 and guest x87 tags.
+    /// Whether the native entry bridge must marshal MM0-MM7 and enter MMX state.
     #[cfg(target_arch = "x86_64")]
     pub(super) uses_mmx: bool,
+    /// Whether an x87/MMX state marker reads or commits the guest tag word.
+    /// `EMMS` needs this channel without activating MM0-MM7 marshalling.
+    #[cfg(target_arch = "x86_64")]
+    pub(super) uses_x87_tag_state: bool,
     /// Whether the region reads the real-time guest timestamp counter. Such a
     /// region cannot be replayed bit-for-bit by RAX_JIT_VERIFY because its
     /// interpreter replay necessarily observes a later clock value.

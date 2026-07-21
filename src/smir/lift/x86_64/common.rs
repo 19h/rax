@@ -1,5 +1,6 @@
 //! Register, addressing, and condition-code lifting helpers
 
+use crate::isa::x86_64::apx::rex2_reserved_opcode_len;
 use crate::smir::lift::x86_64::*;
 use std::collections::{HashMap, HashSet};
 
@@ -22,6 +23,24 @@ use crate::smir::lift::{
 };
 
 impl X86_64Lifter {
+    /// Return the decode length at which a REX2 reservation is known.
+    ///
+    /// Intel APX reserves map-0 rows 4, 7, A (except JMPABS A1), and E,
+    /// map-1 rows 3 and 8, and every memory XSAVE*/XRSTOR* encoding. A missing
+    /// XSAVE-family ModR/M byte is not classified here so the owning decoder
+    /// can report the exact incomplete-fetch boundary.
+    pub(crate) fn rex2_reserved_bytes_consumed(
+        &self,
+        prefix: &X86Prefix,
+        opcode_bytes: &[u8],
+    ) -> Option<usize> {
+        prefix.rex2?;
+        let &opcode = opcode_bytes.first()?;
+        let opcode_len =
+            rex2_reserved_opcode_len(prefix.rex2_m(), opcode, opcode_bytes.get(1).copied())?;
+        Some(prefix.cursor + opcode_len)
+    }
+
     /// Materialize the dynamic APX availability requirement carried by a REX2
     /// encoding when the instruction's ordinary SMIR semantics do not retain
     /// prefix provenance themselves.
@@ -31,6 +50,72 @@ impl X86_64Lifter {
         } else {
             Vec::new()
         }
+    }
+
+    /// Preserve the dynamic APX requirement for every successful REX2 lift.
+    /// Dedicated fault-precise system operations retain the requirement in
+    /// their first operation; all generic instruction decompositions receive
+    /// an operand-free guard before their first temporary, memory access, flag
+    /// update, architectural commit, or control-flow effect.
+    pub(crate) fn retain_rex2_apx_requirement(
+        &self,
+        prefix: &X86Prefix,
+        pc: u64,
+        mut result: LiftResult,
+    ) -> LiftResult {
+        if prefix.rex2.is_none() || Self::result_starts_with_apx_requirement(&result) {
+            return result;
+        }
+
+        result
+            .ops
+            .insert(0, SmirOp::new(OpId(0), pc, OpKind::X86RequireApx));
+        for (index, op) in result.ops.iter_mut().enumerate() {
+            op.id = OpId(index as u16);
+        }
+        result
+    }
+
+    fn result_starts_with_apx_requirement(result: &LiftResult) -> bool {
+        let op_guarded = result.ops.first().is_some_and(|op| match &op.kind {
+            OpKind::X86RequireApx => true,
+            OpKind::X86Cli { requires_apx, .. }
+            | OpKind::X86Sti { requires_apx, .. }
+            | OpKind::X86FsGsBase { requires_apx, .. } => *requires_apx,
+            OpKind::X86Smsw(op) => op.requires_apx,
+            OpKind::X86SystemSelectorStore(op) => op.requires_apx,
+            OpKind::X86SystemSelectorLoad(op) => op.requires_apx,
+            OpKind::X86SelectorVerify(op) => op.requires_apx,
+            OpKind::X86SelectorQuery(op) => op.requires_apx,
+            OpKind::X86FarJump(op) => op.requires_apx,
+            OpKind::X86FarCall(op) => op.requires_apx,
+            OpKind::X86FarReturn(op) => op.requires_apx,
+            OpKind::X86Lmsw(op) => op.requires_apx,
+            OpKind::X86DescriptorTableStore(op) => op.requires_apx,
+            OpKind::X86DescriptorTableLoad(op) => op.requires_apx,
+            _ => false,
+        });
+        op_guarded
+            || matches!(
+                &result.control_flow,
+                ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode
+                } | ControlFlow::Trap {
+                    kind: TrapKind::X86Debug {
+                        requires_apx: true,
+                        ..
+                    } | TrapKind::X86SoftwareInterrupt {
+                        requires_apx: true,
+                        ..
+                    } | TrapKind::X86InterruptReturn {
+                        requires_apx: true,
+                        ..
+                    } | TrapKind::X86StringIo {
+                        requires_apx: true,
+                        ..
+                    }
+                }
+            )
     }
 
     /// Convert x86 register number to VReg

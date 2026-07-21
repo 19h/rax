@@ -111,7 +111,6 @@ fn xtest_lifts_exact_flag_operation_and_xend_lifts_to_gp0() {
     for bytes in [
         &[0x0F, 0x01, 0xD6][..],
         &[0x66, 0xF2, 0x67, 0x64, 0x48, 0x0F, 0x01, 0xD6],
-        &[0xD5, 0x00, 0x0F, 0x01, 0xD6],
     ] {
         let result = lift_at(0x1000, bytes).unwrap_or_else(|error| {
             panic!("XTEST {bytes:02X?} must accept ignored prefixes: {error:?}")
@@ -129,11 +128,19 @@ fn xtest_lifts_exact_flag_operation_and_xend_lifts_to_gp0() {
     for bytes in [
         &[0x0F, 0x01, 0xD5][..],
         &[0x66, 0xF2, 0x67, 0x64, 0x48, 0x0F, 0x01, 0xD5],
-        &[0xD5, 0x00, 0x0F, 0x01, 0xD5],
     ] {
         let result = lift_at(0x1000, bytes)
             .unwrap_or_else(|error| panic!("XEND {bytes:02X?} must lift to #GP(0): {error:?}"));
         assert_gp0_trap(&result, bytes.len());
+    }
+
+    for bytes in [
+        &[0xD5, 0x00, 0x0F, 0x01, 0xD6][..],
+        &[0xD5, 0x00, 0x0F, 0x01, 0xD5][..],
+    ] {
+        let result =
+            lift_at(0x1000, bytes).expect("REX2 followed by a legacy 0F escape is an explicit #UD");
+        assert_invalid_opcode_trap(&result, 3);
     }
 }
 

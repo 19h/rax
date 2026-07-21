@@ -20,6 +20,10 @@ fn x86_mmx_region_discriminator_tracks_precise_enter_state_and_exits() {
         &function,
         &std::collections::HashMap::new()
     ));
+    assert!(uses_x86_x87_tag_state_excluding(
+        &function,
+        &std::collections::HashMap::new()
+    ));
     assert!(is_native_clobber_safe(&function));
     assert!(!x86_native_mmx_pairs_valid_excluding(
         &function,
@@ -32,6 +36,7 @@ fn x86_mmx_region_discriminator_tracks_precise_enter_state_and_exits() {
 
     let excluded = std::collections::HashMap::from([(function.entry, 0x1001)]);
     assert!(!uses_x86_native_mmx_excluding(&function, &excluded));
+    assert!(!uses_x86_x87_tag_state_excluding(&function, &excluded));
 
     let mut x87 = FunctionBuilder::new(FunctionId(1), 0x2000);
     x87.push_op(
@@ -42,8 +47,13 @@ fn x86_mmx_region_discriminator_tracks_precise_enter_state_and_exits() {
         },
     );
     x87.set_terminator(Terminator::Return { values: vec![] });
+    let x87 = x87.finish();
     assert!(!uses_x86_native_mmx_excluding(
-        &x87.finish(),
+        &x87,
+        &std::collections::HashMap::new()
+    ));
+    assert!(!uses_x86_x87_tag_state_excluding(
+        &x87,
         &std::collections::HashMap::new()
     ));
 
@@ -58,6 +68,10 @@ fn x86_mmx_region_discriminator_tracks_precise_enter_state_and_exits() {
     emms.set_terminator(Terminator::Return { values: vec![] });
     let emms = emms.finish();
     assert!(!uses_x86_native_mmx_excluding(
+        &emms,
+        &std::collections::HashMap::new()
+    ));
+    assert!(uses_x86_x87_tag_state_excluding(
         &emms,
         &std::collections::HashMap::new()
     ));

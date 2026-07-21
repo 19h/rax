@@ -96,16 +96,13 @@ fn cpuid_accepts_ignored_legacy_rex_and_address_prefixes_but_rejects_lock() {
         }]
     ));
 
-    for rex2 in [
-        &[0xD5, 0x00, 0x0F, 0xA2][..],
-        &[0xD5, 0x80, 0xA2][..],
-        &[0xD5, 0xFF, 0xA2][..],
-    ] {
+    for rex2 in [&[0xD5, 0x80, 0xA2][..], &[0xD5, 0xFF, 0xA2][..]] {
         let result = lift_single(rex2).expect("CPUID accepts ignored REX2 fields");
         assert_eq!(result.bytes_consumed, rex2.len());
         assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+        let ops = assert_rex2_guarded_ops(&result, 1);
         assert!(matches!(
-            result.ops.as_slice(),
+            ops,
             [SmirOp {
                 kind: OpKind::X86Cpuid { .. },
                 ..
@@ -113,16 +110,22 @@ fn cpuid_accepts_ignored_legacy_rex_and_address_prefixes_but_rejects_lock() {
         ));
     }
 
-    for locked in [
-        &[0xF0, 0x0F, 0xA2][..],
-        &[0xF0, 0xD5, 0x00, 0x0F, 0xA2][..],
-        &[0xF0, 0xD5, 0x80, 0xA2][..],
-    ] {
+    // REX2 is the final prefix. With M=0, a following legacy 0F escape is
+    // itself the map-0 opcode and is reserved before CPUID can be decoded.
+    let explicit_escape = lift_single(&[0xD5, 0x00, 0x0F, 0xA2])
+        .expect("REX2 followed by a legacy 0F escape is an explicit #UD");
+    assert_invalid_opcode_trap(&explicit_escape, 3);
+
+    for locked in [&[0xF0, 0x0F, 0xA2][..], &[0xF0, 0xD5, 0x80, 0xA2][..]] {
         assert!(matches!(
             lift_single(locked),
             Err(LiftError::InvalidEncoding { .. })
         ));
     }
+
+    let locked_explicit_escape = lift_single(&[0xF0, 0xD5, 0x00, 0x0F, 0xA2])
+        .expect("reserved REX2 opcode precedes LOCK legality");
+    assert_invalid_opcode_trap(&locked_explicit_escape, 4);
 }
 
 #[test]

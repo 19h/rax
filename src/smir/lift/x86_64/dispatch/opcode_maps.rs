@@ -405,7 +405,7 @@ impl X86_64Lifter {
             // but leaves those payloads architecturally undefined; retaining
             // them is one permitted deterministic outcome.
             0x0E | 0x77 => {
-                if prefix2.lock || prefix2.rex2.is_some() {
+                if prefix2.lock || opcode2 == 0x0E && prefix2.rex2.is_some() {
                     return Err(LiftError::InvalidEncoding {
                         addr: pc,
                         bytes: vec![opcode2],

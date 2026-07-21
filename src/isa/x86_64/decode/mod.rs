@@ -3,6 +3,7 @@
 mod dispatch;
 
 use crate::error::{Error, Result};
+use crate::isa::x86_64::apx::rex2_reserved_opcode_len;
 use crate::isa::x86_64::cpu::{InsnContext, Rex2Prefix, X86_64Vcpu};
 
 /// Lookup table for prefix detection (256 bytes, index = byte value).
@@ -647,6 +648,43 @@ impl X86_64Vcpu {
         // Illegal LOCK use: deliver #UD (vector 6, no error code). RIP still
         // points at the faulting instruction (it is only advanced by handlers
         // on success), which is the architecturally correct fault behaviour.
+        self.inject_exception(6, None)?;
+        Ok(true)
+    }
+
+    /// Reject opcode-space reservations and XSAVE-family exceptions from the
+    /// architectural REX2 applicability table before instruction dispatch.
+    ///
+    /// For compressed map 1, `ctx.cursor` still names the effective opcode;
+    /// for map 0, `opcode` is the already-consumed effective opcode. XSAVE and
+    /// XRSTOR aliases require the raw ModR/M group to distinguish them from
+    /// valid register-form instructions sharing 0F AE or 0F C7.
+    #[inline(always)]
+    pub(super) fn reject_reserved_rex2_opcode(
+        &mut self,
+        ctx: &InsnContext,
+        opcode: u8,
+    ) -> Result<bool> {
+        let Some(rex2) = ctx.rex2 else {
+            return Ok(false);
+        };
+        let effective_opcode = if rex2.m {
+            if ctx.cursor >= ctx.bytes_len {
+                return Ok(false);
+            }
+            ctx.bytes[ctx.cursor]
+        } else {
+            opcode
+        };
+
+        let following = if rex2.m && ctx.cursor + 1 < ctx.bytes_len {
+            Some(ctx.bytes[ctx.cursor + 1])
+        } else {
+            None
+        };
+        if rex2_reserved_opcode_len(rex2.m, effective_opcode, following).is_none() {
+            return Ok(false);
+        }
         self.inject_exception(6, None)?;
         Ok(true)
     }

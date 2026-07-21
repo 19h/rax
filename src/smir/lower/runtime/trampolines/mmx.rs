@@ -656,6 +656,29 @@ pub fn uses_x86_native_mmx_excluding(
         })
 }
 
+/// Whether an executable block commits the architectural x87/MMX tag word.
+///
+/// `EMMS` changes the tag word without reading or writing MM0-MM7, so this
+/// state channel is deliberately distinct from the native-MMX discriminator.
+pub fn uses_x86_x87_tag_state_excluding(
+    func: &SmirFunction,
+    excluded: &HashMap<BlockId, u64>,
+) -> bool {
+    func.blocks
+        .iter()
+        .filter(|block| !excluded.contains_key(&block.id))
+        .flat_map(|block| &block.ops)
+        .any(|op| {
+            matches!(
+                op.kind,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx | X86X87ControlKind::EmptyMmx,
+                    ..
+                }
+            )
+        })
+}
+
 pub(crate) fn x86_native_mmx_op_requires_ssse3(op: &SmirOp) -> bool {
     matches!(
         op.kind,

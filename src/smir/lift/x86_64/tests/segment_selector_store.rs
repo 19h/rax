@@ -121,12 +121,8 @@ fn mov_rm_sreg_rex2_map0_exhaustively_ignores_r_fields_and_extends_only_destinat
     }
 
     let map1 = lift_single(&[0xD5, 0x80, 0x8C, 0, 0, 0, 0])
-        .expect("REX2.M1 8C must remain 0F 8C JL rel32");
-    assert_eq!(map1.bytes_consumed, 7);
-    assert!(!matches!(
-        map1.ops.first().map(|op| &op.kind),
-        Some(OpKind::X86SystemSelectorStore(..))
-    ));
+        .expect("REX2 compressed map 1 row 8 is an explicit #UD");
+    assert_invalid_opcode_trap(&map1, 3);
 }
 
 #[test]

@@ -64,12 +64,14 @@ fn rdpmc_ignores_legacy_and_rex_prefixes_but_rejects_lock_and_rex2() {
         exact_pmc(&result);
     }
 
-    for bytes in [&[0xF0, 0x0F, 0x33][..], &[0xD5, 0x80, 0x33]] {
-        assert!(
-            matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
-            "{bytes:02X?}"
-        );
-    }
+    assert!(matches!(
+        lift_single(&[0xF0, 0x0F, 0x33]),
+        Err(LiftError::InvalidEncoding { .. })
+    ));
+
+    let reserved_row =
+        lift_single(&[0xD5, 0x80, 0x33]).expect("REX2 compressed map 1 row 3 is #UD");
+    assert_invalid_opcode_trap(&reserved_row, 3);
 }
 
 #[test]

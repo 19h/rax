@@ -234,14 +234,19 @@ fn legacy_sha_ni_accepts_redundant_prefixes_and_rejects_faulting_encodings() {
 
     for bytes in [
         &[0xF0, 0x0F, 0x38, 0xC8, 0xC1][..],
-        &[0xD5, 0x00, 0x0F, 0x38, 0xC8, 0xC1][..],
         &[0xF0, 0x0F, 0x3A, 0xCC, 0xC1, 0x03][..],
-        &[0xD5, 0x00, 0x0F, 0x3A, 0xCC, 0xC1, 0x03][..],
     ] {
         assert!(
             matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
             "invalid SHA-NI encoding accepted: {bytes:02X?}",
         );
+    }
+    for bytes in [
+        &[0xD5, 0x00, 0x0F, 0x38, 0xC8, 0xC1][..],
+        &[0xD5, 0x00, 0x0F, 0x3A, 0xCC, 0xC1, 0x03][..],
+    ] {
+        let result = lift_single(bytes).expect("REX2 followed by 0F is an explicit #UD");
+        assert_invalid_opcode_trap(&result, 3);
     }
     for bytes in [
         &[0x0F, 0x38, 0xC8][..],

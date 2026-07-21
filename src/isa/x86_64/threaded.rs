@@ -98,7 +98,7 @@ impl X86_64Vcpu {
                     // always carries the full instruction.
                     boundary_gp: false,
                 };
-                return self.dispatch_threaded(cached.opcode, &mut ctx);
+                return self.dispatch_threaded(cached.opcode, cached.has_lock, &mut ctx);
             }
 
             self.decode_cache[cache_idx] = Default::default();
@@ -165,14 +165,34 @@ impl X86_64Vcpu {
             };
         }
 
-        self.dispatch_threaded(opcode, &mut ctx)
+        self.dispatch_threaded(opcode, has_lock, &mut ctx)
     }
 
     /// Threaded dispatch - delegates to standard execute for now.
     /// TODO: Re-enable inlined handlers after fixing mode-aware issues.
     #[inline(always)]
-    fn dispatch_threaded(&mut self, opcode: u8, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-        // For now, just use the standard execute to isolate issues
+    fn dispatch_threaded(
+        &mut self,
+        opcode: u8,
+        has_lock: bool,
+        ctx: &mut InsnContext,
+    ) -> Result<Option<VcpuExit>> {
+        // Preserve the same pre-dispatch architectural checks and fault
+        // ordering as the ordinary cold/cache decode paths.
+        if self.reject_invalid_rex2_prefix_order(ctx)? {
+            return Ok(None);
+        }
+        if self.reject_reserved_rex2_opcode(ctx, opcode)? {
+            return Ok(None);
+        }
+        if self.reject_disabled_apx(ctx)? {
+            return Ok(None);
+        }
+        if has_lock && self.enforce_lock_prefix_cold(ctx, opcode)? {
+            return Ok(None);
+        }
+
+        // For now, just use the standard execute to isolate issues.
         self.execute(opcode, ctx)
     }
 
@@ -490,11 +510,78 @@ impl X86_64Vcpu {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Arc;
+    use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
+
+    fn vcpu_with_code(code: &[u8]) -> X86_64Vcpu {
+        let memory =
+            Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x1000)]).unwrap());
+        memory.write_slice(code, GuestAddress(0)).unwrap();
+        let mut vcpu = X86_64Vcpu::new(0, memory);
+        vcpu.sregs.efer = 1 << 10;
+        vcpu.sregs.cs.l = true;
+        vcpu.sregs.cr0 = 0x0005_0033;
+        vcpu
+    }
+
+    fn assert_threaded_ud_on_cold_and_cache_hit(code: &[u8], name: &str) {
+        let mut vcpu = vcpu_with_code(code);
+        vcpu.set_apx_enabled(true);
+        vcpu.fpu.tag_word = 0x1357;
+
+        for pass in 0..2 {
+            let error = vcpu
+                .threaded_step()
+                .expect_err("threaded instruction must raise #UD");
+            assert!(
+                format!("{error:#}").contains("IDT entry 6 not present"),
+                "{name}, pass {pass}: {error:#}"
+            );
+            assert_eq!(vcpu.regs.rip, 0, "{name}, pass {pass}");
+            assert_eq!(vcpu.fpu.tag_word, 0x1357, "{name}, pass {pass}");
+            if pass == 0 {
+                let cached = vcpu.decode_cache[(vcpu.regs.rip as usize) & DECODE_CACHE_MASK];
+                assert_ne!(cached.bytes_len, 0, "{name}: cold decode was not cached");
+            }
+        }
+    }
 
     #[test]
     fn test_threaded_batch_size() {
         // Ensure batch size is reasonable
         assert!(THREADED_BATCH_SIZE >= 16);
         assert!(THREADED_BATCH_SIZE <= 256);
+    }
+
+    #[test]
+    fn threaded_dispatch_enforces_rex2_and_lock_admission_on_cache_hits() {
+        for (name, code) in [
+            ("reserved map-0 row", &[0xD5, 0x00, 0x40][..]),
+            ("reserved map-1 row", &[0xD5, 0x80, 0x33][..]),
+            ("reserved XSAVE group", &[0xD5, 0x80, 0xAE, 0x20][..]),
+            ("REX before REX2", &[0x48, 0xD5, 0x18, 0x90][..]),
+            ("LOCK REX2 EMMS", &[0xF0, 0xD5, 0x80, 0x77][..]),
+        ] {
+            assert_threaded_ud_on_cold_and_cache_hit(code, name);
+        }
+
+        let mut vcpu = vcpu_with_code(&[0xD5, 0x80, 0x77]);
+        vcpu.set_apx_enabled(false);
+        vcpu.fpu.tag_word = 0x2468;
+        let error = vcpu
+            .threaded_step()
+            .expect_err("APX-disabled threaded REX2 EMMS must raise #UD");
+        assert!(format!("{error:#}").contains("IDT entry 6 not present"));
+        assert_eq!(vcpu.regs.rip, 0);
+        assert_eq!(vcpu.fpu.tag_word, 0x2468);
+
+        vcpu.set_apx_enabled(true);
+        assert!(
+            vcpu.threaded_step()
+                .expect("APX-enabled cached threaded REX2 EMMS")
+                .is_none()
+        );
+        assert_eq!(vcpu.regs.rip, 3);
+        assert_eq!(vcpu.fpu.tag_word, 0xFFFF);
     }
 }

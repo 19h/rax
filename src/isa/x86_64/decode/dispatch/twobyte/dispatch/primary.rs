@@ -28,7 +28,13 @@ impl X86_64Vcpu {
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
         let opcode2 = ctx.consume_u8()?;
-        if is_legacy_0f_simd_opcode(opcode2) && self.reject_rex2_for_legacy_simd(ctx)? {
+        // Operand-free EMMS is valid with REX2. Other legacy SIMD forms remain
+        // fail-closed until their vector-register and memory EGPR extensions
+        // are decoded distinctly.
+        if is_legacy_0f_simd_opcode(opcode2)
+            && opcode2 != 0x77
+            && self.reject_rex2_for_legacy_simd(ctx)?
+        {
             return Ok(None);
         }
 

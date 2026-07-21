@@ -1131,7 +1131,6 @@ fn lift_3dnow_all_suffix_forms_lengths_registers_and_fault_order() {
     ));
     for bytes in [
         &[0xF0, 0x0F, 0x0F, 0xC1, 0xBF][..],
-        &[0xD5, 0x00, 0x0F, 0x0F, 0xC1, 0xBF][..],
         &[0xD5, 0x80, 0x0F, 0xC1, 0xBF][..],
     ] {
         assert!(matches!(
@@ -1139,6 +1138,10 @@ fn lift_3dnow_all_suffix_forms_lengths_registers_and_fault_order() {
             Err(LiftError::InvalidEncoding { .. })
         ));
     }
+
+    let reserved_escape = lift_single(&[0xD5, 0x00, 0x0F, 0x0F, 0xC1, 0xBF])
+        .expect("REX2 followed by 0F is an explicit #UD");
+    assert_invalid_opcode_trap(&reserved_escape, 3);
 }
 #[test]
 fn lift_x87_exact_data_transfer_encodings_addressing_and_legality() {

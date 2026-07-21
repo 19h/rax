@@ -140,8 +140,9 @@ fn lock_no_effect_forms_fail_before_any_operand_or_immediate_fetch() {
 fn rex2_b_extension_keeps_xchg_precedence_over_pause_aliasing() {
     let result = lift_single(&[0xF3, 0xD5, 0x10, 0x90]).expect("REX2 XCHG RAX,R16");
     assert_eq!(result.bytes_consumed, 4);
+    let ops = assert_rex2_guarded_ops(&result, 1);
     assert!(matches!(
-        result.ops.as_slice(),
+        ops,
         [SmirOp {
             kind: OpKind::Xchg {
                 reg1: VReg::Arch(ArchReg::X86(X86Reg::Rax)),

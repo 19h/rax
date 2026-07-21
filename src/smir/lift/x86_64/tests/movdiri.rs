@@ -131,13 +131,16 @@ fn legacy_movdiri_rejects_invalid_and_incomplete_encodings() {
         &[0x66, 0x0F, 0x38, 0xF9, 0x08][..],
         &[0xF0, 0x0F, 0x38, 0xF9, 0x08][..],
         &[0x0F, 0x38, 0xF9, 0xC8][..],
-        &[0xD5, 0x00, 0x0F, 0x38, 0xF9, 0x08][..],
     ] {
         assert!(
             matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
             "invalid MOVDIRI encoding accepted: {bytes:02X?}",
         );
     }
+
+    let reserved_escape = lift_single(&[0xD5, 0x00, 0x0F, 0x38, 0xF9, 0x08])
+        .expect("REX2 followed by 0F is an explicit #UD");
+    assert_invalid_opcode_trap(&reserved_escape, 3);
 
     for bytes in [
         &[0x0F, 0x38, 0xF9][..],

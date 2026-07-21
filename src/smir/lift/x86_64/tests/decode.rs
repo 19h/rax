@@ -325,10 +325,6 @@ fn lift_0f38_movbe_rejects_invalid_forms_and_routes_f2_to_crc32() {
         (&[0x0F, 0x38, 0xF1, 0xC0][..], "store register operand"),
         (&[0xF0, 0x0F, 0x38, 0xF0, 0x00][..], "lock prefix"),
         (&[0xF3, 0x0F, 0x38, 0xF0, 0x00][..], "rep prefix"),
-        (
-            &[0xD5, 0xF8, 0x38, 0xF0, 0x54, 0x88, 0x20][..],
-            "rex2 compressed 0f38",
-        ),
     ] {
         let err = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap_err();
         assert!(
@@ -336,6 +332,15 @@ fn lift_0f38_movbe_rejects_invalid_forms_and_routes_f2_to_crc32() {
             "{name}: {err:?}"
         );
     }
+
+    let reserved_map1_row = lifter
+        .lift_insn(
+            0x1000,
+            &[0xD5, 0xF8, 0x38, 0xF0, 0x54, 0x88, 0x20],
+            &mut ctx,
+        )
+        .expect("REX2 compressed map 1 row 3 is an explicit #UD");
+    assert_invalid_opcode_trap(&reserved_map1_row, 3);
 
     let crc = lifter
         .lift_insn(0x1000, &[0xF2, 0x0F, 0x38, 0xF0, 0xC3], &mut ctx)
@@ -648,18 +653,35 @@ fn lift_emms_and_femms_exact_state_transition_prefixes_and_legality() {
         ));
     }
 
-    for bytes in [
-        &[0xF0, 0x0F, 0x77][..],
-        &[0xD5, 0x00, 0x0F, 0x77][..],
-        &[0xD5, 0x80, 0x77][..],
-        &[0xF0, 0x0F, 0x0E][..],
-        &[0xD5, 0x00, 0x0F, 0x0E][..],
-        &[0xD5, 0x80, 0x0E][..],
-    ] {
+    for bytes in [&[0xF0, 0x0F, 0x77][..], &[0xF0, 0x0F, 0x0E][..]] {
         assert!(
             matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
             "accepted invalid EMMS/FEMMS encoding {bytes:02X?}"
         );
+    }
+
+    let rex2_emms = lift_single(&[0xD5, 0x80, 0x77]).expect("REX2 compressed map 1 EMMS");
+    assert_eq!(rex2_emms.bytes_consumed, 3);
+    let ops = assert_rex2_guarded_ops(&rex2_emms, 1);
+    assert!(matches!(
+        ops,
+        [SmirOp {
+            kind: OpKind::X86X87Control {
+                kind: X86X87ControlKind::EmptyMmx,
+                addr: None,
+            },
+            ..
+        }]
+    ));
+
+    assert!(matches!(
+        lift_single(&[0xD5, 0x80, 0x0E]),
+        Err(LiftError::InvalidEncoding { .. })
+    ));
+
+    for bytes in [&[0xD5, 0x00, 0x0F, 0x77][..], &[0xD5, 0x00, 0x0F, 0x0E][..]] {
+        let result = lift_single(bytes).expect("REX2 followed by 0F is an explicit #UD");
+        assert_invalid_opcode_trap(&result, 3);
     }
 }
 #[test]
@@ -811,8 +833,8 @@ fn lift_ud0_is_an_explicit_two_byte_trap_without_operand_fetch() {
         (&[0x48, 0x0F, 0xFF, 0xC0], 3),
         // REX2.M selects the 0F map without an encoded 0F byte.
         (&[0xD5, 0x80, 0xFF, 0xC0], 3),
-        // REX2.M=0 leaves an explicit 0F map byte in the instruction stream.
-        (&[0xD5, 0x00, 0x0F, 0xFF, 0xC0], 4),
+        // REX2.M=0 makes a following 0F byte a reserved map-0 opcode.
+        (&[0xD5, 0x00, 0x0F, 0xFF, 0xC0], 3),
     ];
 
     for &(bytes, expected_len) in cases {

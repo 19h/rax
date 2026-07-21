@@ -71,19 +71,31 @@ impl X86_64Lifter {
             });
         }
 
-        let prefixed_vec = matches!(opcode_bytes[0], 0x62 | 0xC4 | 0xC5);
+        if let Some(bytes_consumed) = self.rex2_reserved_bytes_consumed(&prefix, opcode_bytes) {
+            return Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
+            });
+        }
+
+        let prefixed_vec = prefix.rex2.is_none() && matches!(opcode_bytes[0], 0x62 | 0xC4 | 0xC5);
         if prefixed_vec {
             return self.lift_prefixed_vec(pc, bytes, &prefix, ctx);
         }
 
         if prefix.rex2_m() {
-            return self.lift_0f_opcode(opcode_bytes, &prefix, pc, ctx, 1);
+            let result = self.lift_0f_opcode(opcode_bytes, &prefix, pc, ctx, 1)?;
+            return Ok(self.retain_rex2_apx_requirement(&prefix, pc, result));
         }
 
         let opcode = opcode_bytes[0];
         let after_opcode = &opcode_bytes[1..];
 
-        match opcode {
+        let result = match opcode {
             // XCHG rax, r64 / NOP / PAUSE (with REP prefix)
             0x90..=0x97 => {
                 if prefix.lock {
@@ -827,6 +839,7 @@ impl X86_64Lifter {
                     ))
                 }
             }
-        }
+        }?;
+        Ok(self.retain_rex2_apx_requirement(&prefix, pc, result))
     }
 }

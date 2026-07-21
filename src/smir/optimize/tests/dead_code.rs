@@ -158,6 +158,91 @@ fn dead_code_elimination_preserves_volatile_x86_timestamp_read() {
     assert_eq!(dead_code_elimination(&mut block), 0);
     assert!(matches!(block.ops[0].kind, OpKind::X86ReadTsc(..)));
 }
+
+#[test]
+fn apx_deopt_edge_keeps_pre_guard_flags_live_against_post_guard_overwrite() {
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    builder.push_op(
+        0x1000,
+        OpKind::Cmp {
+            src1: rax,
+            src2: SrcOperand::Reg(rax),
+            width: OpWidth::W64,
+        },
+    );
+    builder.push_op(0x1003, OpKind::X86RequireApx);
+    builder.push_op(
+        0x1007,
+        OpKind::Cmp {
+            src1: rbx,
+            src2: SrcOperand::Reg(rax),
+            width: OpWidth::W64,
+        },
+    );
+    builder.set_terminator(Terminator::Return { values: vec![] });
+    let mut function = builder.finish();
+
+    optimize_function(&mut function, OptLevel::O2);
+
+    assert_eq!(
+        function.blocks[0]
+            .ops
+            .iter()
+            .filter(|op| matches!(op.kind, OpKind::Cmp { .. }))
+            .count(),
+        2,
+        "the enabled continuation's CMP must not kill flags observed by the disabled guard edge",
+    );
+    assert!(matches!(
+        function.blocks[0].ops.get(1).map(|op| &op.kind),
+        Some(OpKind::X86RequireApx)
+    ));
+}
+
+#[test]
+fn apx_deopt_edge_propagates_arch_register_liveness_to_predecessors() {
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    let guarded = builder.create_block(0x1004);
+    builder.push_op(
+        0x1000,
+        OpKind::Mov {
+            dst: rax,
+            src: SrcOperand::Imm(1),
+            width: OpWidth::W64,
+        },
+    );
+    builder.set_terminator(Terminator::Branch { target: guarded });
+    builder.switch_to_block(guarded);
+    builder.push_op(0x1004, OpKind::X86RequireApx);
+    builder.push_op(
+        0x1008,
+        OpKind::Mov {
+            dst: rax,
+            src: SrcOperand::Imm(2),
+            width: OpWidth::W64,
+        },
+    );
+    builder.set_terminator(Terminator::Return { values: vec![] });
+    let mut function = builder.finish();
+
+    optimize_function(&mut function, OptLevel::O1);
+
+    assert!(matches!(
+        function.blocks[0].ops.as_slice(),
+        [SmirOp {
+            kind: OpKind::Mov {
+                dst,
+                src: SrcOperand::Imm(1),
+                width: OpWidth::W64,
+            },
+            ..
+        }] if *dst == rax
+    ));
+}
+
 #[test]
 fn test_dead_flag_elimination() {
     let mut block = SmirBlock::new(BlockId(0), 0x1000);

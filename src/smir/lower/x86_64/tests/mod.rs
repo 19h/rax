@@ -147,7 +147,7 @@ fn lower_rex2_block_with_options(
 }
 
 fn lower_rex2_block_with_mem_helpers(bytes: &[u8], mem_helpers: bool) -> (Vec<u8>, usize) {
-    lower_rex2_block_with_options(bytes, mem_helpers, false)
+    lower_rex2_block_with_options(bytes, mem_helpers, true)
 }
 
 fn lower_jit_guarded_x86_block(bytes: &[u8], mem_helpers: bool) -> (Vec<u8>, usize) {
@@ -174,6 +174,7 @@ fn lower_rex2_block_err(bytes: &[u8]) -> LowerError {
     func.add_block(block);
 
     let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_jit_fault_deopt_guards(true);
     lowerer
         .lower_function(&func)
         .expect_err("REX2 block should fail to lower")

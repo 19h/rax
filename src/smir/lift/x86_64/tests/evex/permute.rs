@@ -14,7 +14,8 @@ fn lift_rex2_m_compressed_0f_map_uses_llvm_encoding() {
         .lift_insn(0x1000, &[0xD5, 0xC8, 0xAF, 0xC0], &mut ctx)
         .unwrap();
     assert_eq!(result.bytes_consumed, 4);
-    match &result.ops[0].kind {
+    let ops = assert_rex2_guarded_ops(&result, 1);
+    match &ops[0].kind {
         OpKind::MulS {
             dst_lo,
             dst_hi: None,

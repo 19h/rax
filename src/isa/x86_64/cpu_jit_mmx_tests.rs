@@ -34,6 +34,7 @@ fn jit_native_region_synchronizes_mmx_values_and_precise_guest_tags() {
         uses_xmm_state: false,
         narrow_vector_opmasks: false,
         uses_mmx: true,
+        uses_x87_tag_state: true,
         uses_timestamp: false,
     };
     let mut vcpu = test_vcpu();

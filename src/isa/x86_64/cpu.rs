@@ -1697,6 +1697,10 @@ impl X86_64Vcpu {
                     return Ok(None);
                 }
 
+                if self.reject_reserved_rex2_opcode(&ctx, cached.opcode)? {
+                    return Ok(None);
+                }
+
                 if self.reject_disabled_apx(&ctx)? {
                     return Ok(None);
                 }
@@ -1813,6 +1817,10 @@ impl X86_64Vcpu {
         }
 
         if self.reject_invalid_rex2_prefix_order(&ctx)? {
+            return Ok(None);
+        }
+
+        if self.reject_reserved_rex2_opcode(&ctx, opcode)? {
             return Ok(None);
         }
 
@@ -1992,7 +2000,7 @@ impl X86_64Vcpu {
     /// preceding legacy REX prefix as #UD. Prefix decoding retains both fields
     /// so the cold and decode-cache-hit paths can enforce the rule identically.
     #[inline(always)]
-    fn reject_invalid_rex2_prefix_order(&mut self, ctx: &InsnContext) -> Result<bool> {
+    pub(super) fn reject_invalid_rex2_prefix_order(&mut self, ctx: &InsnContext) -> Result<bool> {
         if ctx.rex.is_some() && ctx.rex2.is_some() {
             self.inject_exception(6, None)?;
             return Ok(true);
@@ -2002,7 +2010,7 @@ impl X86_64Vcpu {
     }
 
     #[inline(always)]
-    fn reject_disabled_apx(&mut self, ctx: &InsnContext) -> Result<bool> {
+    pub(super) fn reject_disabled_apx(&mut self, ctx: &InsnContext) -> Result<bool> {
         if ctx.rex2.is_some() && !self.apx_enabled() {
             self.inject_exception(6, None)?;
             return Ok(true);
@@ -4546,8 +4554,9 @@ impl X86_64Vcpu {
         use crate::smir::lower::runtime::{
             is_native_clobber_safe_excluding, uses_x86_maskmovdqu_state_excluding,
             uses_x86_native_mmx_excluding, uses_x86_native_vectors_excluding,
-            x86_jit_op_uses_mem_helper, x86_native_mmx_features_supported_excluding,
-            x86_native_mmx_pairs_valid_excluding, x86_native_scalar_features_supported_excluding,
+            uses_x86_x87_tag_state_excluding, x86_jit_op_uses_mem_helper,
+            x86_native_mmx_features_supported_excluding, x86_native_mmx_pairs_valid_excluding,
+            x86_native_scalar_features_supported_excluding,
             x86_native_vector_features_supported_excluding,
             x86_native_vector_uses_k16_opmasks_excluding,
         };
@@ -4799,6 +4808,8 @@ impl X86_64Vcpu {
             #[cfg(target_arch = "x86_64")]
             let uses_mmx = uses_x86_native_mmx_excluding(&func, &exits);
             #[cfg(target_arch = "x86_64")]
+            let uses_x87_tag_state = uses_x86_x87_tag_state_excluding(&func, &exits);
+            #[cfg(target_arch = "x86_64")]
             let uses_timestamp = func
                 .blocks
                 .iter()
@@ -4927,6 +4938,8 @@ impl X86_64Vcpu {
                 narrow_vector_opmasks,
                 #[cfg(target_arch = "x86_64")]
                 uses_mmx,
+                #[cfg(target_arch = "x86_64")]
+                uses_x87_tag_state,
                 #[cfg(target_arch = "x86_64")]
                 uses_timestamp,
             }));
@@ -5149,6 +5162,8 @@ impl X86_64Vcpu {
         if region.uses_mmx {
             gr.mm = self.regs.mm;
             gr.mmx_active = 1;
+        }
+        if region.uses_x87_tag_state {
             gr.x87_tag_word = u64::from(self.fpu.tag_word);
         }
 
@@ -5243,6 +5258,8 @@ impl X86_64Vcpu {
         }
         if region.uses_mmx {
             self.regs.mm = gr.mm;
+        }
+        if region.uses_x87_tag_state {
             self.fpu.tag_word = gr.x87_tag_word as u16;
         }
         // Merge status flags from the host result, AC and virtualized interrupt
@@ -6183,6 +6200,7 @@ mod decode_cache_invalidation_tests {
             uses_xmm_state: false,
             narrow_vector_opmasks: false,
             uses_mmx: false,
+            uses_x87_tag_state: false,
             uses_timestamp: false,
         };
         vcpu.jit_cache
@@ -6360,6 +6378,10 @@ mod jit_cli_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_reserved_nop_tests.rs"]
 mod jit_reserved_nop_tests;
+
+#[cfg(test)]
+#[path = "cpu_rex2_admission_tests.rs"]
+mod rex2_admission_tests;
 
 #[cfg(test)]
 #[path = "cpu_sti_tests.rs"]

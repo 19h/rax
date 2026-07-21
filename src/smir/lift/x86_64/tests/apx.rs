@@ -675,8 +675,8 @@ fn lift_rex2_mov_egpr_imm64_uses_llvm_encoding() {
         )
         .unwrap();
     assert_eq!(result.bytes_consumed, 11);
-    assert_eq!(result.ops.len(), 1);
-    match &result.ops[0].kind {
+    let ops = assert_rex2_guarded_ops(&result, 1);
+    match &ops[0].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Imm64(0x1122_3344_5566_7788),
@@ -695,7 +695,8 @@ fn lift_rex2_mov_egpr_imm64_uses_llvm_encoding() {
             &mut ctx,
         )
         .unwrap();
-    match &result.ops[0].kind {
+    let ops = assert_rex2_guarded_ops(&result, 1);
+    match &ops[0].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Imm64(0x1122_3344_5566_7788),
@@ -714,7 +715,8 @@ fn lift_rex2_mov_egpr_reg_uses_llvm_encoding() {
         .lift_insn(0x1000, &[0xD5, 0x18, 0x89, 0xC0], &mut ctx)
         .unwrap();
     assert_eq!(result.bytes_consumed, 4);
-    match &result.ops[0].kind {
+    let ops = assert_rex2_guarded_ops(&result, 1);
+    match &ops[0].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Reg(src),
@@ -731,7 +733,8 @@ fn lift_rex2_mov_egpr_reg_uses_llvm_encoding() {
     let result = lifter
         .lift_insn(0x1000, &[0xD5, 0x48, 0x89, 0xC0], &mut ctx)
         .unwrap();
-    match &result.ops[0].kind {
+    let ops = assert_rex2_guarded_ops(&result, 1);
+    match &ops[0].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Reg(src),
@@ -747,7 +750,8 @@ fn lift_rex2_mov_egpr_reg_uses_llvm_encoding() {
     let result = lifter
         .lift_insn(0x1000, &[0xD5, 0x5D, 0x89, 0xF8], &mut ctx)
         .unwrap();
-    match &result.ops[0].kind {
+    let ops = assert_rex2_guarded_ops(&result, 1);
+    match &ops[0].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Reg(src),
@@ -770,8 +774,8 @@ fn lift_rex2_push_pop_egpr_uses_llvm_encoding() {
         .lift_insn(0x1000, &[0xD5, 0x10, 0x50], &mut ctx)
         .unwrap();
     assert_eq!(result.bytes_consumed, 3);
-    assert_eq!(result.ops.len(), 2);
-    match &result.ops[1].kind {
+    let ops = assert_rex2_guarded_ops(&result, 2);
+    match &ops[1].kind {
         OpKind::Store {
             src,
             addr: Address::Direct(_),
@@ -785,7 +789,8 @@ fn lift_rex2_push_pop_egpr_uses_llvm_encoding() {
         .lift_insn(0x1000, &[0xD5, 0x18, 0x50], &mut ctx)
         .unwrap();
     assert_eq!(result.bytes_consumed, 3);
-    match &result.ops[1].kind {
+    let ops = assert_rex2_guarded_ops(&result, 2);
+    match &ops[1].kind {
         OpKind::Store {
             src,
             addr: Address::Direct(_),
@@ -800,7 +805,8 @@ fn lift_rex2_push_pop_egpr_uses_llvm_encoding() {
         .lift_insn(0x1000, &[0xD5, 0x11, 0x5F], &mut ctx)
         .unwrap();
     assert_eq!(result.bytes_consumed, 3);
-    match &result.ops[0].kind {
+    let ops = assert_rex2_guarded_ops(&result, 2);
+    match &ops[0].kind {
         OpKind::Load {
             dst,
             addr: Address::Direct(_),
@@ -815,7 +821,8 @@ fn lift_rex2_push_pop_egpr_uses_llvm_encoding() {
         .lift_insn(0x1000, &[0xD5, 0x18, 0x58], &mut ctx)
         .unwrap();
     assert_eq!(result.bytes_consumed, 3);
-    match &result.ops[0].kind {
+    let ops = assert_rex2_guarded_ops(&result, 2);
+    match &ops[0].kind {
         OpKind::Load {
             dst,
             addr: Address::Direct(_),
@@ -835,9 +842,9 @@ fn lift_rex2_cmpxchg_registers_like_llvm() {
         .lift_insn(0x1000, &[0xD5, 0xD8, 0xB1, 0xC8], &mut ctx)
         .unwrap();
     assert_eq!(result.bytes_consumed, 4);
-    assert_eq!(result.ops.len(), 7);
+    let ops = assert_rex2_guarded_ops(&result, 7);
 
-    let saved_src = match &result.ops[0].kind {
+    let saved_src = match &ops[0].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Reg(src),
@@ -848,7 +855,7 @@ fn lift_rex2_cmpxchg_registers_like_llvm() {
         }
         other => panic!("expected CMPXCHG source snapshot, got {other:?}"),
     };
-    let saved_acc = match &result.ops[1].kind {
+    let saved_acc = match &ops[1].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Reg(src),
@@ -859,7 +866,7 @@ fn lift_rex2_cmpxchg_registers_like_llvm() {
         }
         other => panic!("expected CMPXCHG accumulator snapshot, got {other:?}"),
     };
-    let old_dst = match &result.ops[2].kind {
+    let old_dst = match &ops[2].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Reg(src),
@@ -870,7 +877,7 @@ fn lift_rex2_cmpxchg_registers_like_llvm() {
         }
         other => panic!("expected CMPXCHG destination snapshot, got {other:?}"),
     };
-    match &result.ops[3].kind {
+    match &ops[3].kind {
         OpKind::Cmp {
             src1,
             src2: SrcOperand::Reg(src2),
@@ -881,7 +888,7 @@ fn lift_rex2_cmpxchg_registers_like_llvm() {
         }
         other => panic!("expected CMPXCHG compare, got {other:?}"),
     }
-    match &result.ops[4].kind {
+    match &ops[4].kind {
         OpKind::SetCC {
             cond: Condition::Eq,
             width: OpWidth::W8,
@@ -892,7 +899,7 @@ fn lift_rex2_cmpxchg_registers_like_llvm() {
     // The destination/accumulator writes use CMove, which preserves the
     // register on the no-op path instead of an unconditional Select that would
     // zero-extend a sub-64-bit write and clear the upper bits. (#21)
-    match &result.ops[5].kind {
+    match &ops[5].kind {
         OpKind::CMove {
             dst,
             src,
@@ -904,7 +911,7 @@ fn lift_rex2_cmpxchg_registers_like_llvm() {
         }
         other => panic!("expected CMPXCHG destination cmove, got {other:?}"),
     }
-    match &result.ops[6].kind {
+    match &ops[6].kind {
         OpKind::CMove {
             dst,
             src,
@@ -927,9 +934,9 @@ fn lift_rex2_cmpxchg_memory_egpr_sib_like_llvm() {
         .lift_insn(0x1000, &[0xD5, 0xF8, 0xB1, 0x54, 0x88, 0x20], &mut ctx)
         .unwrap();
     assert_eq!(result.bytes_consumed, 6);
-    assert_eq!(result.ops.len(), 8);
+    let ops = assert_rex2_guarded_ops(&result, 8);
 
-    let saved_src = match &result.ops[0].kind {
+    let saved_src = match &ops[0].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Reg(src),
@@ -940,7 +947,7 @@ fn lift_rex2_cmpxchg_memory_egpr_sib_like_llvm() {
         }
         other => panic!("expected CMPXCHG memory source snapshot, got {other:?}"),
     };
-    let saved_acc = match &result.ops[1].kind {
+    let saved_acc = match &ops[1].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Reg(src),
@@ -951,7 +958,7 @@ fn lift_rex2_cmpxchg_memory_egpr_sib_like_llvm() {
         }
         other => panic!("expected CMPXCHG memory accumulator snapshot, got {other:?}"),
     };
-    let old_dst = match &result.ops[2].kind {
+    let old_dst = match &ops[2].kind {
         OpKind::Load {
             dst,
             addr:
@@ -971,7 +978,7 @@ fn lift_rex2_cmpxchg_memory_egpr_sib_like_llvm() {
         }
         other => panic!("expected CMPXCHG memory destination load, got {other:?}"),
     };
-    match &result.ops[3].kind {
+    match &ops[3].kind {
         OpKind::Cmp {
             src1,
             src2: SrcOperand::Reg(src2),
@@ -982,7 +989,7 @@ fn lift_rex2_cmpxchg_memory_egpr_sib_like_llvm() {
         }
         other => panic!("expected CMPXCHG memory compare, got {other:?}"),
     }
-    let matched = match &result.ops[4].kind {
+    let matched = match &ops[4].kind {
         OpKind::SetCC {
             dst,
             cond: Condition::Eq,
@@ -990,7 +997,7 @@ fn lift_rex2_cmpxchg_memory_egpr_sib_like_llvm() {
         } => *dst,
         other => panic!("expected CMPXCHG memory equality condition, got {other:?}"),
     };
-    let new_dst = match &result.ops[5].kind {
+    let new_dst = match &ops[5].kind {
         OpKind::Select {
             dst,
             cond,
@@ -1005,7 +1012,7 @@ fn lift_rex2_cmpxchg_memory_egpr_sib_like_llvm() {
         }
         other => panic!("expected CMPXCHG memory destination select, got {other:?}"),
     };
-    match &result.ops[6].kind {
+    match &ops[6].kind {
         OpKind::PredStore {
             src: SrcOperand::Reg(src),
             cond,
@@ -1028,7 +1035,7 @@ fn lift_rex2_cmpxchg_memory_egpr_sib_like_llvm() {
     }
     // The accumulator write uses CMove so a successful compare leaves RAX
     // unchanged rather than zero-extending a sub-64-bit Select write. (#21)
-    match &result.ops[7].kind {
+    match &ops[7].kind {
         OpKind::CMove {
             dst,
             src,
@@ -1098,6 +1105,7 @@ fn lift_rex2_xadd_registers_like_llvm() {
         //   `xadd r24, r31`   => d5 dd c1 f8
         let result = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap();
         assert_eq!(result.bytes_consumed, *bytes_consumed, "{name}");
+        assert_rex2_guarded_ops(&result, 5);
         assert_xadd_register_ops(&result, name, *dst_reg, *src_reg, *width);
     }
 }
@@ -1151,9 +1159,9 @@ fn lift_rex2_xadd_memory_egpr_sib_like_llvm() {
         // emitted AFTER the store (and writeback), not before. The store-feeding
         // Add therefore carries no flags; a trailing flag-only Add commits them
         // once the store has retired. (#23)
-        assert_eq!(result.ops.len(), 6, "{name}");
+        let ops = assert_rex2_guarded_ops(&result, 6);
 
-        let saved_src = match &result.ops[0].kind {
+        let saved_src = match &ops[0].kind {
             OpKind::Mov {
                 dst,
                 src: SrcOperand::Reg(src),
@@ -1165,7 +1173,7 @@ fn lift_rex2_xadd_memory_egpr_sib_like_llvm() {
             }
             other => panic!("expected REX2 {name} source snapshot, got {other:?}"),
         };
-        let old_dst = match &result.ops[1].kind {
+        let old_dst = match &ops[1].kind {
             OpKind::Load {
                 dst,
                 addr,
@@ -1180,7 +1188,7 @@ fn lift_rex2_xadd_memory_egpr_sib_like_llvm() {
         };
         // Store-feeding sum: NO flags, so a faulting store cannot have committed
         // flag state.
-        let sum = match &result.ops[2].kind {
+        let sum = match &ops[2].kind {
             OpKind::Add {
                 dst,
                 src1,
@@ -1195,7 +1203,7 @@ fn lift_rex2_xadd_memory_egpr_sib_like_llvm() {
             }
             other => panic!("expected REX2 {name} flag-free store sum, got {other:?}"),
         };
-        match &result.ops[3].kind {
+        match &ops[3].kind {
             OpKind::Store { src, addr, width } => {
                 assert_eq!(*src, sum, "{name}");
                 assert_rex2_xadd_sib_addr(addr, name);
@@ -1203,7 +1211,7 @@ fn lift_rex2_xadd_memory_egpr_sib_like_llvm() {
             }
             other => panic!("expected REX2 {name} memory store, got {other:?}"),
         }
-        match &result.ops[4].kind {
+        match &ops[4].kind {
             OpKind::Mov {
                 dst,
                 src: SrcOperand::Reg(src),
@@ -1217,7 +1225,7 @@ fn lift_rex2_xadd_memory_egpr_sib_like_llvm() {
         }
         // Flags are committed only after the store and writeback have retired,
         // recomputed from the same operands as the store-feeding sum.
-        match &result.ops[5].kind {
+        match &ops[5].kind {
             OpKind::Add {
                 dst: _,
                 src1,
@@ -1277,9 +1285,9 @@ fn lift_rex2_lock_xadd_memory_uses_atomic_add_like_spec() {
         //   `lock xaddb %r18b, 32(%r16,%r17,4)` => f0 d5 f0 c0 54 88 20
         let result = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap();
         assert_eq!(result.bytes_consumed, *bytes_consumed, "{name}");
-        assert_eq!(result.ops.len(), 4, "{name}");
+        let ops = assert_rex2_guarded_ops(&result, 4);
 
-        let saved_src = match &result.ops[0].kind {
+        let saved_src = match &ops[0].kind {
             OpKind::Mov {
                 dst,
                 src: SrcOperand::Reg(src),
@@ -1291,7 +1299,7 @@ fn lift_rex2_lock_xadd_memory_uses_atomic_add_like_spec() {
             }
             other => panic!("expected REX2 {name} source snapshot, got {other:?}"),
         };
-        let old_dst = match &result.ops[1].kind {
+        let old_dst = match &ops[1].kind {
             OpKind::AtomicRmw {
                 dst,
                 addr,
@@ -1307,7 +1315,7 @@ fn lift_rex2_lock_xadd_memory_uses_atomic_add_like_spec() {
             }
             other => panic!("expected REX2 {name} AtomicRmw Add, got {other:?}"),
         };
-        match &result.ops[2].kind {
+        match &ops[2].kind {
             OpKind::Add {
                 dst: _,
                 src1,
@@ -1321,7 +1329,7 @@ fn lift_rex2_lock_xadd_memory_uses_atomic_add_like_spec() {
             }
             other => panic!("expected REX2 {name} flag-producing add, got {other:?}"),
         }
-        match &result.ops[3].kind {
+        match &ops[3].kind {
             OpKind::Mov {
                 dst,
                 src: SrcOperand::Reg(src),
@@ -1356,8 +1364,8 @@ fn lift_rex2_xchg_registers_like_llvm() {
     ] {
         let result = lifter.lift_insn(0x1000, &bytes, &mut ctx).unwrap();
         assert_eq!(result.bytes_consumed, 4, "{name}");
-        assert_eq!(result.ops.len(), 1, "{name}");
-        match &result.ops[0].kind {
+        let ops = assert_rex2_guarded_ops(&result, 1);
+        match &ops[0].kind {
             OpKind::Xchg {
                 reg1: got_reg1,
                 reg2: got_reg2,
@@ -1394,9 +1402,9 @@ fn lift_rex2_xchg_memory_uses_atomic_swap_like_llvm() {
         //   `xchgb %r18b, 32(%r16,%r17,4)` => d5 70 86 54 88 20
         let result = lifter.lift_insn(0x1000, &bytes, &mut ctx).unwrap();
         assert_eq!(result.bytes_consumed, 6, "{name}");
-        assert_eq!(result.ops.len(), 2, "{name}");
+        let ops = assert_rex2_guarded_ops(&result, 2);
 
-        let old_mem = match &result.ops[0].kind {
+        let old_mem = match &ops[0].kind {
             OpKind::AtomicRmw {
                 dst,
                 addr:
@@ -1421,7 +1429,7 @@ fn lift_rex2_xchg_memory_uses_atomic_swap_like_llvm() {
             other => panic!("expected REX2 {name} AtomicRmw Swap, got {other:?}"),
         };
 
-        match &result.ops[1].kind {
+        match &ops[1].kind {
             OpKind::Mov {
                 dst,
                 src: SrcOperand::Reg(src),
@@ -1451,7 +1459,7 @@ fn lift_rex2_jmpabs_uses_llvm_encoding() {
         )
         .unwrap();
     assert_eq!(result.bytes_consumed, 11);
-    assert!(result.ops.is_empty());
+    assert_rex2_guarded_ops(&result, 0);
     match result.control_flow {
         ControlFlow::Branch {
             target: 0x1122_3344_5566_7788,
@@ -1475,6 +1483,7 @@ fn lift_rex2_jmpabs_ignores_w_bit_like_llvm() {
         )
         .unwrap();
     assert_eq!(result.bytes_consumed, 11);
+    assert_rex2_guarded_ops(&result, 0);
     match result.control_flow {
         ControlFlow::Branch {
             target: 0x1234_5678_8765_4321,

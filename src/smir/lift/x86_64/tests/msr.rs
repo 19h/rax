@@ -103,16 +103,16 @@ fn rdmsr_wrmsr_reject_lock_and_rex2_but_ignore_other_legacy_prefixes() {
         }
     }
 
-    for bytes in [
-        &[0xF0, 0x0F, 0x30][..],
-        &[0xF0, 0x0F, 0x32],
-        &[0xD5, 0x80, 0x30],
-        &[0xD5, 0x80, 0x32],
-    ] {
+    for bytes in [&[0xF0, 0x0F, 0x30][..], &[0xF0, 0x0F, 0x32]] {
         assert!(
             matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
             "{bytes:02X?}"
         );
+    }
+
+    for bytes in [&[0xD5, 0x80, 0x30][..], &[0xD5, 0x80, 0x32]] {
+        let result = lift_single(bytes).expect("REX2 compressed map 1 row 3 is an explicit #UD");
+        assert_invalid_opcode_trap(&result, 3);
     }
 }
 

@@ -76,6 +76,8 @@ mod read_debug;
 #[cfg(test)]
 mod reserved_nop;
 #[cfg(test)]
+mod rex2_admission;
+#[cfg(test)]
 mod rex2_no_effect;
 #[cfg(test)]
 mod scalar;
@@ -706,6 +708,35 @@ fn assert_rex2_xadd_sib_addr(addr: &Address, name: &str) {
     }
 }
 
+fn assert_rex2_guarded_ops(result: &LiftResult, semantic_len: usize) -> &[SmirOp] {
+    assert_eq!(result.ops.len(), semantic_len + 1);
+    assert!(matches!(
+        result.ops.first(),
+        Some(SmirOp {
+            id: OpId(0),
+            guest_pc: 0x1000,
+            kind: OpKind::X86RequireApx,
+            x86_hint: None,
+        })
+    ));
+    for (index, op) in result.ops.iter().enumerate() {
+        assert_eq!(op.id, OpId(index as u16));
+    }
+    &result.ops[1..]
+}
+
+fn assert_invalid_opcode_trap(result: &LiftResult, expected_len: usize) {
+    assert_eq!(result.bytes_consumed, expected_len);
+    assert!(result.ops.is_empty());
+    assert!(result.branch_targets.is_empty());
+    assert!(matches!(
+        result.control_flow,
+        ControlFlow::Trap {
+            kind: TrapKind::InvalidOpcode
+        }
+    ));
+}
+
 fn assert_xadd_register_ops(
     result: &LiftResult,
     name: &str,
@@ -713,8 +744,19 @@ fn assert_xadd_register_ops(
     src_reg: VReg,
     width: OpWidth,
 ) {
-    assert_eq!(result.ops.len(), 5, "{name}");
-    let saved_src = match &result.ops[0].kind {
+    let ops = if matches!(
+        result.ops.first(),
+        Some(SmirOp {
+            kind: OpKind::X86RequireApx,
+            ..
+        })
+    ) {
+        &result.ops[1..]
+    } else {
+        result.ops.as_slice()
+    };
+    assert_eq!(ops.len(), 5, "{name}");
+    let saved_src = match &ops[0].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Reg(src),
@@ -726,7 +768,7 @@ fn assert_xadd_register_ops(
         }
         other => panic!("expected {name} source snapshot, got {other:?}"),
     };
-    let old_dst = match &result.ops[1].kind {
+    let old_dst = match &ops[1].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Reg(src),
@@ -738,7 +780,7 @@ fn assert_xadd_register_ops(
         }
         other => panic!("expected {name} destination snapshot, got {other:?}"),
     };
-    let sum = match &result.ops[2].kind {
+    let sum = match &ops[2].kind {
         OpKind::Add {
             dst,
             src1,
@@ -753,7 +795,7 @@ fn assert_xadd_register_ops(
         }
         other => panic!("expected {name} flagged add, got {other:?}"),
     };
-    match &result.ops[3].kind {
+    match &ops[3].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Reg(src),
@@ -765,7 +807,7 @@ fn assert_xadd_register_ops(
         }
         other => panic!("expected {name} source writeback, got {other:?}"),
     }
-    match &result.ops[4].kind {
+    match &ops[4].kind {
         OpKind::Mov {
             dst,
             src: SrcOperand::Reg(src),
@@ -780,8 +822,19 @@ fn assert_xadd_register_ops(
 }
 
 fn assert_bswap_op(result: &LiftResult, name: &str, reg: VReg, width: OpWidth) {
-    assert_eq!(result.ops.len(), 1, "{name}");
-    match &result.ops[0].kind {
+    let ops = if matches!(
+        result.ops.first(),
+        Some(SmirOp {
+            kind: OpKind::X86RequireApx,
+            ..
+        })
+    ) {
+        assert_rex2_guarded_ops(result, 1)
+    } else {
+        assert_eq!(result.ops.len(), 1, "{name}");
+        result.ops.as_slice()
+    };
+    match &ops[0].kind {
         OpKind::Bswap {
             dst,
             src,

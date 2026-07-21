@@ -158,13 +158,16 @@ fn legacy_movdir64b_rejects_invalid_and_incomplete_encodings() {
         &[0xF2, 0x66, 0x0F, 0x38, 0xF8, 0x08][..],
         &[0xF3, 0x66, 0x0F, 0x38, 0xF8, 0x08][..],
         &[0x66, 0x0F, 0x38, 0xF8, 0xC8][..],
-        &[0x66, 0xD5, 0x00, 0x0F, 0x38, 0xF8, 0x08][..],
     ] {
         assert!(
             matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
             "invalid MOVDIR64B encoding accepted: {bytes:02X?}",
         );
     }
+
+    let reserved_escape = lift_single(&[0x66, 0xD5, 0x00, 0x0F, 0x38, 0xF8, 0x08])
+        .expect("REX2 followed by 0F is an explicit #UD");
+    assert_invalid_opcode_trap(&reserved_escape, 4);
 
     for bytes in [
         &[0x66, 0x0F, 0x38, 0xF8][..],

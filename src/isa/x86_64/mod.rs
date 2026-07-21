@@ -1,5 +1,6 @@
 //! x86_64 CPU emulator implementation.
 
+pub(crate) mod apx;
 pub mod bios;
 mod cpu;
 mod decode;
