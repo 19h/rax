@@ -1320,6 +1320,7 @@ fn exec_rex2_mov_egpr_roundtrips_through_jit_state() {
     let mut regs = GuestRegs::default();
     let status = 0x8D5u64; // CF/PF/AF/ZF/SF/OF
     regs.rflags = 0x2 | status;
+    regs.apx_enabled = 1;
 
     mem.run(entry_offset, &mut regs);
 
