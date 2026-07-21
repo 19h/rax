@@ -778,10 +778,10 @@ fn lift_fwait_and_memory_fences() {
             ..
         }]
     ));
-    assert!(matches!(
-        lift_single(&[0xF0, 0x0F, 0xAE, 0xF0]),
-        Err(LiftError::InvalidEncoding { .. })
-    ));
+    assert_invalid_opcode_trap(
+        &lift_single(&[0xF0, 0x0F, 0xAE, 0xF0]).expect("LOCK MFENCE must strictly lift to #UD"),
+        4,
+    );
     assert!(matches!(
         lift_single(&[0xF0, 0x9B]),
         Err(LiftError::InvalidEncoding { .. })
@@ -2244,10 +2244,9 @@ fn lift_fxsave_fxrstor_width_addressing_and_legality() {
         &[0x0F, 0xAE, 0xC0][..],
         &[0x0F, 0xAE, 0xC8][..],
     ] {
-        assert!(matches!(
-            lift_single(bytes),
-            Err(LiftError::InvalidEncoding { .. })
-        ));
+        let result =
+            lift_single(bytes).expect("invalid FXSAVE/FXRSTOR form must strictly lift to #UD");
+        assert_invalid_opcode_trap(&result, bytes.len());
     }
 }
 #[test]
@@ -2324,10 +2323,10 @@ fn lift_xsave_xsaveopt_xrstor_width_addressing_and_legality() {
         &[0xF3, 0x0F, 0xAE, 0x2B][..],
         &[0xF3, 0x0F, 0xAE, 0x33][..],
     ] {
-        assert!(
-            matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
-            "{bytes:02X?}"
-        );
+        let result = lift_single(bytes).unwrap_or_else(|error| {
+            panic!("invalid XSAVE-family form entered fallback: {bytes:02X?}: {error:?}")
+        });
+        assert_invalid_opcode_trap(&result, bytes.len());
     }
 
     assert!(matches!(

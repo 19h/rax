@@ -549,6 +549,8 @@ fn lift_legacy_and_vex_mxcsr_memory_operations() {
     for (bytes, load, vex) in [
         (&[0x0F, 0xAE, 0x10][..], true, false),
         (&[0x0F, 0xAE, 0x58, 0x04][..], false, false),
+        (&[0x66, 0x0F, 0xAE, 0x10][..], true, false),
+        (&[0xF3, 0x0F, 0xAE, 0x58, 0x04][..], false, false),
         (&[0xC5, 0xF8, 0xAE, 0x10][..], true, true),
         (&[0xC5, 0xF8, 0xAE, 0x58, 0x04][..], false, true),
     ] {
@@ -572,9 +574,11 @@ fn lift_legacy_and_vex_mxcsr_memory_operations() {
         }
     }
 
+    let reserved_register = lift_single(&[0x0F, 0xAE, 0xD0])
+        .expect("reserved legacy register /2 must strictly lift to #UD");
+    assert_invalid_opcode_trap(&reserved_register, 3);
+
     for bytes in [
-        &[0x0F, 0xAE, 0xD0][..],       // register /2
-        &[0x66, 0x0F, 0xAE, 0x10][..], // legacy mandatory prefix
         &[0xC5, 0xFC, 0xAE, 0x10][..], // VEX.L=1
         &[0xC5, 0xE8, 0xAE, 0x10][..], // reserved VEX.vvvv
     ] {
@@ -583,7 +587,7 @@ fn lift_legacy_and_vex_mxcsr_memory_operations() {
                 lift_single(bytes),
                 Err(LiftError::InvalidEncoding { .. } | LiftError::Unsupported { .. })
             ),
-            "accepted reserved fence encoding {bytes:02X?}"
+            "accepted reserved VEX MXCSR encoding {bytes:02X?}"
         );
     }
 

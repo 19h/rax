@@ -30,23 +30,15 @@ impl X86_64Lifter {
     ) -> Result<LiftResult, LiftError> {
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let group = (modrm.byte >> 3) & 7;
-        if let Some(result) =
-            self.lift_group15_profile_form(bytes, prefix, &modrm, group, pc, ctx)?
-        {
+        if let Some(result) = self.lift_group15_profile_form(prefix, &modrm, group, pc, ctx)? {
             return Ok(result);
         }
         if prefix.lock {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: bytes.to_vec(),
-            });
+            return Ok(Self::group15_invalid_opcode(prefix, &modrm));
         }
         if modrm.is_memory && matches!(group, 4 | 5 | 6) && !prefix.operand_size_override {
             if prefix.rep_prefix.is_some() {
-                return Err(LiftError::InvalidEncoding {
-                    addr: pc,
-                    bytes: bytes.to_vec(),
-                });
+                return Ok(Self::group15_invalid_opcode(prefix, &modrm));
             }
             let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
             let (addr, mut ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
@@ -82,17 +74,11 @@ impl X86_64Lifter {
             && (prefix.rep_prefix.is_some() || prefix.operand_size_override)
             && !(group == 6 && prefix.operand_size_override && prefix.rep_prefix.is_none())
         {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
-            });
+            return Ok(Self::group15_invalid_opcode(prefix, &modrm));
         }
         if matches!(group, 0 | 1) {
             if !modrm.is_memory {
-                return Err(LiftError::InvalidEncoding {
-                    addr: pc,
-                    bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
-                });
+                return Ok(Self::group15_invalid_opcode(prefix, &modrm));
             }
             let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
             let (addr, mut ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
@@ -117,12 +103,9 @@ impl X86_64Lifter {
             ));
         }
         if modrm.is_memory && matches!(group, 2 | 3) {
-            if prefix.rep_prefix.is_some() || prefix.operand_size_override {
-                return Err(LiftError::InvalidEncoding {
-                    addr: pc,
-                    bytes: bytes.to_vec(),
-                });
-            }
+            // Intel reserves otherwise-unused legacy prefixes on these SSE
+            // memory forms. Match the direct engine's deterministic policy of
+            // ignoring them rather than forcing a JIT handoff.
             let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
             let (addr, mut ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
             ops.push(SmirOp::new(
@@ -141,10 +124,7 @@ impl X86_64Lifter {
         }
         if modrm.is_memory && ((group == 7) || (group == 6 && prefix.operand_size_override)) {
             if prefix.rep_prefix.is_some() {
-                return Err(LiftError::InvalidEncoding {
-                    addr: pc,
-                    bytes: bytes.to_vec(),
-                });
+                return Ok(Self::group15_invalid_opcode(prefix, &modrm));
             }
             let kind = match (group, prefix.operand_size_override) {
                 (7, false) => X86CacheControlKind::Clflush,
@@ -169,20 +149,14 @@ impl X86_64Lifter {
         let kind = match modrm.byte {
             // Intel specifies that the r/m field is ignored for all three
             // fences, making each complete eight-value ModR/M range valid.
-            0xE8..=0xEF if no_mandatory_prefix => FenceKind::LoadLoad,
+            // Otherwise-reserved legacy prefixes follow the direct engine's
+            // deterministic ignore policy after alternate mnemonics above.
+            0xE8..=0xEF => FenceKind::LoadLoad,
             0xF0..=0xF7 if no_mandatory_prefix => FenceKind::Full,
-            0xF8..=0xFF if no_mandatory_prefix => FenceKind::StoreStore,
-            // Preserve the existing accepted redundant-prefix behavior for the
-            // canonical LFENCE and SFENCE encodings. Group /6 mandatory-prefix
-            // forms are WAITPKG instructions and must not become MFENCE.
-            0xE8 => FenceKind::LoadLoad,
-            0xF8 => FenceKind::StoreStore,
-            _ => {
-                return Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: format!("0F AE /{}", (modrm.byte >> 3) & 7),
-                });
-            }
+            0xF8..=0xFF => FenceKind::StoreStore,
+            // Group /6 mandatory-prefix forms are WAITPKG instructions and
+            // were consumed above. Every remaining register slot is reserved.
+            _ => return Ok(Self::group15_invalid_opcode(prefix, &modrm)),
         };
         Ok(LiftResult::fallthrough(
             vec![SmirOp::new(OpId(0), pc, OpKind::Fence { kind })],

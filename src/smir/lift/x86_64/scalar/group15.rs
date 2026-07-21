@@ -8,11 +8,24 @@ use crate::smir::ir::types::*;
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult};
 
 impl X86_64Lifter {
+    /// Construct the exact terminal result shared by reserved, profile-disabled,
+    /// and illegal-prefix Group-15 encodings after their complete ModR/M form
+    /// has been decoded.
+    pub(super) fn group15_invalid_opcode(prefix: &X86Prefix, modrm: &ModRm) -> LiftResult {
+        LiftResult {
+            ops: Vec::new(),
+            bytes_consumed: prefix.cursor + modrm.bytes_consumed,
+            control_flow: ControlFlow::Trap {
+                kind: TrapKind::InvalidOpcode,
+            },
+            branch_targets: Vec::new(),
+        }
+    }
+
     /// Lift Group-15 forms whose meaning depends on deterministic guest-profile
     /// feature enumeration rather than the generic XSAVE/fence dispatch.
     pub(crate) fn lift_group15_profile_form(
         &self,
-        bytes: &[u8],
         prefix: &X86Prefix,
         modrm: &ModRm,
         group: u8,
@@ -30,10 +43,7 @@ impl X86_64Lifter {
             // FSGSBASE has only W32 and W64 forms. A 66h prefix without W=1
             // requests the nonexistent W16 form and is therefore #UD.
             if prefix.operand_size_override && !prefix.rex_w() {
-                return Err(LiftError::InvalidEncoding {
-                    addr: pc,
-                    bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
-                });
+                return Ok(Some(Self::group15_invalid_opcode(prefix, modrm)));
             }
             return Ok(Some(LiftResult::fallthrough(
                 vec![SmirOp::new(
@@ -63,27 +73,13 @@ impl X86_64Lifter {
             // F3 0F AE /4 is PTWRITE. The fixed guest CPUID profile returns
             // zero for leaf 14H, including EBX.PTWRITE[4], so every register
             // and memory form terminates with #UD before operand observation.
-            return Ok(Some(LiftResult {
-                ops: Vec::new(),
-                bytes_consumed: prefix.cursor + modrm.bytes_consumed,
-                control_flow: ControlFlow::Trap {
-                    kind: TrapKind::InvalidOpcode,
-                },
-                branch_targets: Vec::new(),
-            }));
+            return Ok(Some(Self::group15_invalid_opcode(prefix, modrm)));
         }
 
         if !modrm.is_memory && group == 5 && prefix.rep_prefix == Some(0xF3) {
             // F3 0F AE /5 is INCSSPD/INCSSPQ, not LFENCE. RAX does not
             // enumerate CET shadow stacks, so every register selector is #UD.
-            return Ok(Some(LiftResult {
-                ops: Vec::new(),
-                bytes_consumed: prefix.cursor + modrm.bytes_consumed,
-                control_flow: ControlFlow::Trap {
-                    kind: TrapKind::InvalidOpcode,
-                },
-                branch_targets: Vec::new(),
-            }));
+            return Ok(Some(Self::group15_invalid_opcode(prefix, modrm)));
         }
 
         if modrm.is_memory || group != 6 {

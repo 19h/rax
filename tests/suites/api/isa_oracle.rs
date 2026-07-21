@@ -275,6 +275,44 @@ fn reports_profile_disabled_ptwrite_as_an_exact_invalid_opcode_trap() {
 }
 
 #[test]
+fn reports_residual_group15_forms_without_an_unsupported_frontier() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    for bytes in [
+        &[0x66, 0x0F, 0xAE, 0xE9][..],
+        &[0xF2, 0x0F, 0xAE, 0xEF],
+        &[0x66, 0x0F, 0xAE, 0xFF],
+        &[0xF3, 0x0F, 0xAE, 0xF9],
+        &[0xF3, 0x0F, 0xAE, 0x10],
+    ] {
+        let value = decode_to_json(bytes, &opts).unwrap();
+        let smir = &value["smir"];
+        assert_eq!(smir["available"], true, "{bytes:02X?}");
+        assert_eq!(smir["bytes_consumed"], bytes.len(), "{bytes:02X?}");
+        assert_eq!(smir["control_flow"]["kind"], "fallthrough", "{bytes:02X?}");
+    }
+
+    for bytes in [
+        &[0x0F, 0xAE, 0xD0][..],
+        &[0xF2, 0x0F, 0xAE, 0xE0],
+        &[0x66, 0xF3, 0x0F, 0xAE, 0xC0],
+        &[0xF0, 0x0F, 0xAE, 0xF0],
+    ] {
+        let value = decode_to_json(bytes, &opts).unwrap();
+        let smir = &value["smir"];
+        assert_eq!(smir["available"], true, "{bytes:02X?}");
+        assert_eq!(smir["bytes_consumed"], bytes.len(), "{bytes:02X?}");
+        assert_eq!(smir["ops"], serde_json::json!([]), "{bytes:02X?}");
+        assert_eq!(smir["control_flow"]["kind"], "trap", "{bytes:02X?}");
+        assert_eq!(
+            smir["control_flow"]["trap"], "InvalidOpcode",
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
 fn reports_exact_hypercall_hint_and_unsupported_alias_profiles() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

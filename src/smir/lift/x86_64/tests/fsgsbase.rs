@@ -163,10 +163,11 @@ fn fsgsbase_lifts_rex_and_rex2_register_extensions_exactly() {
 
 #[test]
 fn fsgsbase_enforces_w32_w64_and_reserved_encoding_boundaries() {
-    assert!(matches!(
-        lift_single(&[0x66, 0xF3, 0x0F, 0xAE, 0xC0]),
-        Err(LiftError::InvalidEncoding { .. })
-    ));
+    assert_invalid_opcode_trap(
+        &lift_single(&[0x66, 0xF3, 0x0F, 0xAE, 0xC0])
+            .expect("reserved FSGSBASE W16 form must strictly lift"),
+        5,
+    );
     let with_rex_w = lift_single(&[0x66, 0xF3, 0x48, 0x0F, 0xAE, 0xC0])
         .expect("REX.W overrides 66h for FSGSBASE");
     assert!(matches!(
@@ -177,10 +178,11 @@ fn fsgsbase_enforces_w32_w64_and_reserved_encoding_boundaries() {
         }
     ));
 
-    assert!(matches!(
-        lift_single(&[0xF0, 0xF3, 0x0F, 0xAE, 0xC0]),
-        Err(LiftError::InvalidEncoding { .. })
-    ));
+    assert_invalid_opcode_trap(
+        &lift_single(&[0xF0, 0xF3, 0x0F, 0xAE, 0xC0])
+            .expect("LOCK FSGSBASE must strictly lift to #UD"),
+        5,
+    );
 
     // F3 is an ignored legacy prefix on memory-form FXSAVE; ModR/M.mod, not
     // the prefix alone, distinguishes that instruction from RDFSBASE.
@@ -193,7 +195,9 @@ fn fsgsbase_enforces_w32_w64_and_reserved_encoding_boundaries() {
         }]
     ));
     for missing_f3 in [&[0x0F, 0xAE, 0xC0][..], &[0xF2, 0x0F, 0xAE, 0xD0]] {
-        assert!(lift_single(missing_f3).is_err());
+        let result = lift_single(missing_f3)
+            .expect("reserved non-F3 Group-15 register form must strictly lift");
+        assert_invalid_opcode_trap(&result, missing_f3.len());
     }
 
     for accepted in [

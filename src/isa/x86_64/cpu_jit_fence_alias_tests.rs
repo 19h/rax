@@ -70,3 +70,75 @@ fn jit_fence_aliases_match_direct_without_state_commit() {
     assert_eq!(native.regs.rip, direct.regs.rip);
     assert_eq!(native.regs.rip, 11);
 }
+
+#[test]
+fn jit_reserved_prefix_fence_aliases_match_the_direct_deterministic_policy() {
+    let memory = memory_with_code(&[
+        0x66, 0x0F, 0xAE, 0xEF, // 66 LFENCE alias
+        0xF2, 0x0F, 0xAE, 0xE9, // F2 LFENCE alias
+        0x66, 0x0F, 0xAE, 0xFF, // 66 SFENCE alias
+        0xF3, 0x0F, 0xAE, 0xF9, // F3 SFENCE alias
+        0xEB, 0x00, // jmp hlt
+        0xF4,
+    ]);
+    let mut direct = test_vcpu(memory.clone());
+    let mut native = test_vcpu(memory);
+
+    run_direct_to(&mut direct, 18);
+    let region = native
+        .jit_compile_region()
+        .expect("compile reserved-prefix fence-alias region")
+        .expect("direct-policy fence aliases must be native eligible");
+    native.jit_run_region_native(&region);
+
+    assert_eq!(native.regs.rax, direct.regs.rax);
+    assert_eq!(native.regs.rbx, direct.regs.rbx);
+    assert_eq!(native.regs.rsp, direct.regs.rsp);
+    assert_eq!(native.regs.rbp, direct.regs.rbp);
+    assert_eq!(native.regs.rflags, direct.regs.rflags);
+    assert_eq!(native.regs.rip, direct.regs.rip);
+    assert_eq!(native.regs.rip, 18);
+}
+
+#[test]
+fn jit_reserved_group15_slot_exits_at_the_exact_noncommitting_frontier() {
+    let memory = memory_with_code(&[
+        0xB8, 0x78, 0x56, 0x34, 0x12, // mov eax,12345678h
+        0xEB, 0x02, // jmp reserved Group-15 slot
+        0x90, 0x90, // unreachable padding
+        0x0F, 0xAE, 0xD0, // reserved register /2
+    ]);
+    let mut vcpu = test_vcpu(memory);
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile region ending at reserved Group-15 slot")
+        .expect("supported prefix must remain native before Group-15 frontier");
+
+    vcpu.jit_run_region_native(&region);
+    assert_eq!(vcpu.regs.rax, 0x1234_5678);
+    assert_eq!(vcpu.regs.rip, 9);
+
+    let before = (
+        vcpu.regs.rax,
+        vcpu.regs.rsp,
+        vcpu.regs.rbp,
+        vcpu.regs.rflags,
+    );
+    let error = vcpu
+        .step()
+        .expect_err("reserved Group-15 frontier must deliver #UD");
+    assert!(
+        error.to_string().contains("IDT entry 6 not present"),
+        "expected #UD delivery failure, got {error}"
+    );
+    assert_eq!(
+        (
+            vcpu.regs.rax,
+            vcpu.regs.rsp,
+            vcpu.regs.rbp,
+            vcpu.regs.rflags,
+        ),
+        before
+    );
+    assert_eq!(vcpu.regs.rip, 9);
+}
