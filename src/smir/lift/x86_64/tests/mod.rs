@@ -34,6 +34,8 @@ mod far_pointer_load;
 #[cfg(test)]
 mod far_return;
 #[cfg(test)]
+mod fence_aliases;
+#[cfg(test)]
 mod fsgsbase;
 #[cfg(test)]
 mod group11;

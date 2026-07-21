@@ -191,9 +191,31 @@ impl X86_64Lifter {
                 prefix.cursor + modrm.bytes_consumed,
             ));
         }
+        if !modrm.is_memory && group == 5 && prefix.rep_prefix == Some(0xF3) {
+            // F3 0F AE /5 is INCSSPD/INCSSPQ, not LFENCE. RAX does not
+            // enumerate CET shadow stacks, so every register selector is #UD.
+            return Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed: prefix.cursor + modrm.bytes_consumed,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
+            });
+        }
+
+        let no_mandatory_prefix =
+            !modrm.is_memory && prefix.rep_prefix.is_none() && !prefix.operand_size_override;
         let kind = match modrm.byte {
+            // Intel specifies that the r/m field is ignored for all three
+            // fences, making each complete eight-value ModR/M range valid.
+            0xE8..=0xEF if no_mandatory_prefix => FenceKind::LoadLoad,
+            0xF0..=0xF7 if no_mandatory_prefix => FenceKind::Full,
+            0xF8..=0xFF if no_mandatory_prefix => FenceKind::StoreStore,
+            // Preserve the existing accepted redundant-prefix behavior for the
+            // canonical LFENCE and SFENCE encodings. Group /6 mandatory-prefix
+            // forms are WAITPKG instructions and must not become MFENCE.
             0xE8 => FenceKind::LoadLoad,
-            0xF0 => FenceKind::Full,
             0xF8 => FenceKind::StoreStore,
             _ => {
                 return Err(LiftError::Unsupported {
