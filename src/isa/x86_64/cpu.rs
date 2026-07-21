@@ -6364,6 +6364,10 @@ mod sti_tests;
 mod jit_sti_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_string_io_tests.rs"]
+mod jit_string_io_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_read_control_tests.rs"]
 mod jit_read_control_tests;
 

@@ -182,6 +182,26 @@ fn decodes_x86_with_smir_lift() {
 }
 
 #[test]
+fn emits_exact_string_port_io_handoff_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let value = decode_to_json(&[0xF3, 0x64, 0x67, 0x66, 0x6F], &opts).unwrap();
+    let smir = &value["smir"];
+    assert_eq!(smir["available"], true);
+    assert_eq!(smir["bytes_consumed"], 5);
+    assert_eq!(smir["ops"], serde_json::json!([]));
+    assert_eq!(smir["control_flow"]["kind"], "trap");
+    assert_eq!(
+        smir["control_flow"]["trap"],
+        "X86StringIo { kind: Outs, width: B2, address_width: W32, repeated: true, \
+         memory_segment: Fs, fault_pc: 4096, return_pc: 4101, requires_apx: false }"
+    );
+    assert_eq!(smir["ends_block"], true);
+    assert_eq!(smir["ends_function"], true);
+}
+
+#[test]
 fn reports_x86_ud0_as_an_exact_two_byte_invalid_opcode_trap() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

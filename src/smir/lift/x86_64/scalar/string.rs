@@ -15,13 +15,102 @@ use crate::smir::ir::ops::{
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
     CallTarget, CallingConv, FunctionAttrs, SmirBlock, SmirFunction, Terminator, TrapKind,
-    X86InstructionBytes,
+    X86InstructionBytes, X86Segment, X86StringIoKind,
 };
 use crate::smir::lift::{
     ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
 };
 
 impl X86_64Lifter {
+    /// Lift terminal string port I/O (`INS*`/`OUTS*`, `6C`--`6F`).
+    ///
+    /// The direct x86 CPU owns externally visible port exits and precise REP
+    /// partial progress. Preserve the complete semantic request as a typed,
+    /// noncommitting terminator so strict/static lifting succeeds and the JIT
+    /// can execute a supported prefix before handing off at the exact opcode.
+    pub(crate) fn lift_string_io(
+        &self,
+        opcode: u8,
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: vec![opcode],
+            });
+        }
+
+        let (kind, width) = match opcode {
+            0x6C => (X86StringIoKind::Ins, MemWidth::B1),
+            0x6D => (
+                X86StringIoKind::Ins,
+                if prefix.operand_size_override {
+                    MemWidth::B2
+                } else {
+                    MemWidth::B4
+                },
+            ),
+            0x6E => (X86StringIoKind::Outs, MemWidth::B1),
+            0x6F => (
+                X86StringIoKind::Outs,
+                if prefix.operand_size_override {
+                    MemWidth::B2
+                } else {
+                    MemWidth::B4
+                },
+            ),
+            _ => {
+                return Err(LiftError::InvalidEncoding {
+                    addr: pc,
+                    bytes: vec![opcode],
+                });
+            }
+        };
+
+        let memory_segment = match kind {
+            // INS always uses ES; a segment-override prefix cannot redirect it.
+            X86StringIoKind::Ins => X86Segment::Es,
+            X86StringIoKind::Outs => match prefix.segment_override {
+                Some(0x26) => X86Segment::Es,
+                Some(0x2E) => X86Segment::Cs,
+                Some(0x36) => X86Segment::Ss,
+                Some(0x3E) | None => X86Segment::Ds,
+                Some(0x64) => X86Segment::Fs,
+                Some(0x65) => X86Segment::Gs,
+                Some(other) => {
+                    return Err(LiftError::InvalidEncoding {
+                        addr: pc,
+                        bytes: vec![other, opcode],
+                    });
+                }
+            },
+        };
+        let bytes_consumed = prefix.cursor;
+
+        Ok(LiftResult {
+            ops: vec![],
+            bytes_consumed,
+            control_flow: ControlFlow::Trap {
+                kind: TrapKind::X86StringIo {
+                    kind,
+                    width,
+                    address_width: if prefix.address_size_override {
+                        OpWidth::W32
+                    } else {
+                        OpWidth::W64
+                    },
+                    repeated: prefix.rep_prefix.is_some(),
+                    memory_segment,
+                    fault_pc: pc,
+                    return_pc: pc.wrapping_add(bytes_consumed as u64),
+                    requires_apx: prefix.rex2.is_some(),
+                },
+            },
+            branch_targets: vec![],
+        })
+    }
+
     /// Lift MOVS/STOS/LODS/SCAS/CMPS, with or without REP prefixes.
     pub(crate) fn lift_string(
         &self,

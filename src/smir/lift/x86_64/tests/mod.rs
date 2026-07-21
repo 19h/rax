@@ -90,6 +90,8 @@ mod sse;
 #[cfg(test)]
 mod sti;
 #[cfg(test)]
+mod string_io;
+#[cfg(test)]
 mod svm_controls;
 #[cfg(test)]
 mod swapgs;

@@ -681,6 +681,18 @@ impl X86_64Lifter {
                 pc,
             ),
 
+            // String port I/O. The direct x86 integration owns the observable
+            // I/O exit and precise REP progress, represented as a typed terminal
+            // handoff rather than an unsafe host IN/OUT instruction.
+            0x6C..=0x6F => self.lift_string_io(
+                opcode,
+                &X86Prefix {
+                    cursor: prefix.cursor + 1,
+                    ..prefix
+                },
+                pc,
+            ),
+
             // String ops
             0xA4..=0xA7 | 0xAA..=0xAF => self.lift_string(
                 opcode,

@@ -7,6 +7,7 @@ use std::collections::{HashMap, HashSet};
 use crate::smir::ir::flags::FlagState;
 use crate::smir::ir::memory::{ExclusiveMonitor, SmirMemory};
 use crate::smir::ir::types::*;
+use crate::smir::ir::{X86Segment, X86StringIoKind};
 
 // ============================================================================
 // Exit Reason
@@ -51,6 +52,21 @@ pub enum ExitReason {
     /// width. No stack, descriptor, flag, or control-flow state has been
     /// committed by SMIR when this exit is reported.
     X86InterruptReturn { width: OpWidth, fault_pc: GuestAddr },
+    /// Pending x86 `INS*`/`OUTS*` string port-I/O operation.
+    ///
+    /// The architecture integration must re-execute the operation beginning at
+    /// `fault_pc`; SMIR has not performed the port access, memory access, or any
+    /// REP/index/count update. `return_pc` is the eventual successful
+    /// fallthrough after the last requested element.
+    X86StringIo {
+        kind: X86StringIoKind,
+        width: MemWidth,
+        address_width: OpWidth,
+        repeated: bool,
+        memory_segment: X86Segment,
+        fault_pc: GuestAddr,
+        return_pc: GuestAddr,
+    },
     /// x86 stack-segment exception with its architectural error code.
     StackSegment { addr: GuestAddr, error_code: u32 },
     /// x86 invalid-TSS exception with its selector-derived error code.

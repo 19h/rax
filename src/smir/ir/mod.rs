@@ -13,7 +13,7 @@ pub mod flags;
 pub mod memory;
 pub mod ops;
 mod trap;
-pub use trap::TrapKind;
+pub use trap::{TrapKind, X86Segment, X86StringIoKind};
 pub mod types;
 
 use std::collections::HashMap;
