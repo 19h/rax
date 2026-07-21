@@ -87,6 +87,8 @@ mod waitpkg;
 mod write_control;
 #[cfg(test)]
 mod write_debug;
+#[cfg(test)]
+mod x87_transcendental;
 
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::ops::{

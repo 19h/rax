@@ -21,5 +21,4 @@ src/smir/lift/x86_64/dispatch/opcode_maps.rs|4|mixed-dispatch|LiftError::Unsuppo
 src/smir/lift/x86_64/dispatch/vector.rs|4|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/mod.rs|1|mixed-dispatch|LiftError::Unsupported
 src/smir/lift/x86_64/scalar/system.rs|1|dead-diagnostic|LiftError::Unsupported
-src/smir/lift/x86_64/scalar/x87.rs|1|valid-gap-needs-diff|LiftError::Unsupported
 src/smir/lift/x86_64/simd/evex/misc.rs|1|mixed-dispatch|LiftError::Unsupported

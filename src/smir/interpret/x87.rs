@@ -1,5 +1,7 @@
 //! x87 FPU instruction interpretation
 
+mod transcendental;
+
 use crate::smir::interpret::*;
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -11,7 +13,7 @@ use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
     X86CacheControlKind, X86CountKind, X86OpHint, X86ThreeDNowKind, X86X87ArithmeticDestination,
     X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind,
-    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
+    X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth, X86X87TranscendentalKind, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -851,6 +853,9 @@ impl SmirInterpreter {
                     }
                     next.set_logical_raw(0, result.raw);
                 }
+            }
+            X86X87DataKind::Transcendental(transcendental) => {
+                Self::x86_x87_execute_transcendental(&original, &mut next, transcendental);
             }
             X86X87DataKind::Multiply {
                 source,

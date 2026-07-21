@@ -4,7 +4,7 @@ use crate::smir::ir::TrapKind;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
     X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
-    X86X87IntWidth,
+    X86X87IntWidth, X86X87TranscendentalKind,
 };
 use crate::smir::ir::types::{Condition, OpId};
 use crate::smir::lift::x86_64::{X86_64Lifter, X86Prefix, decode_modrm};
@@ -477,11 +477,35 @@ impl X86_64Lifter {
             (0xD9, false, _, 0xE4) => Some(X86X87DataKind::TestZero),
             (0xD9, false, _, 0xE5) => Some(X86X87DataKind::Examine),
             (0xD9, false, _, 0xF4) => Some(X86X87DataKind::Extract),
+            (0xD9, false, _, 0xF0) => Some(X86X87DataKind::Transcendental(
+                X86X87TranscendentalKind::Exp2MinusOne,
+            )),
+            (0xD9, false, _, 0xF1) => Some(X86X87DataKind::Transcendental(
+                X86X87TranscendentalKind::YLog2X,
+            )),
+            (0xD9, false, _, 0xF2) => Some(X86X87DataKind::Transcendental(
+                X86X87TranscendentalKind::Tangent,
+            )),
+            (0xD9, false, _, 0xF3) => Some(X86X87DataKind::Transcendental(
+                X86X87TranscendentalKind::Arctangent,
+            )),
             (0xD9, false, _, 0xF5) => Some(X86X87DataKind::Remainder { nearest: true }),
             (0xD9, false, _, 0xF8) => Some(X86X87DataKind::Remainder { nearest: false }),
+            (0xD9, false, _, 0xF9) => Some(X86X87DataKind::Transcendental(
+                X86X87TranscendentalKind::YLog2Xp1,
+            )),
             (0xD9, false, _, 0xFA) => Some(X86X87DataKind::SquareRoot),
+            (0xD9, false, _, 0xFB) => Some(X86X87DataKind::Transcendental(
+                X86X87TranscendentalKind::SineCosine,
+            )),
             (0xD9, false, _, 0xFC) => Some(X86X87DataKind::RoundInteger),
             (0xD9, false, _, 0xFD) => Some(X86X87DataKind::Scale),
+            (0xD9, false, _, 0xFE) => Some(X86X87DataKind::Transcendental(
+                X86X87TranscendentalKind::Sine,
+            )),
+            (0xD9, false, _, 0xFF) => Some(X86X87DataKind::Transcendental(
+                X86X87TranscendentalKind::Cosine,
+            )),
             (0xD9, false, _, 0xF6) => Some(X86X87DataKind::DecrementTop),
             (0xD9, false, _, 0xF7) => Some(X86X87DataKind::IncrementTop),
             (0xD9, false, _, 0xE8) => Some(X86X87DataKind::LoadConstant(X86X87Constant::One)),
@@ -554,15 +578,6 @@ impl X86_64Lifter {
             | (0xDB, false, _, 0xE0)
             | (0xDB, false, _, 0xE1)
             | (0xDB, false, _, 0xE4) => None,
-            _ if opcode == 0xD9
-                && !modrm.is_memory
-                && matches!(modrm.byte, 0xF0..=0xF3 | 0xF9 | 0xFB | 0xFE..=0xFF) =>
-            {
-                return Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: format!("x87 {opcode:02X} {:02X}", modrm.byte),
-                });
-            }
             // Intel SDM Tables A-7 through A-22 leave every residual cell
             // blank. The direct engine's deterministic profile injects #UD
             // for these reserved forms after decoding the complete ModR/M

@@ -38,9 +38,9 @@ pub enum X86X87EnvWidth {
     W32,
 }
 
-/// Exact x87 data-stack operations and explicit format conversions. Arithmetic
-/// remains separate because it requires binary80 result rounding and its own
-/// exception precedence rather than a transfer/conversion response.
+/// x87 data-stack operations, explicit format conversions, and arithmetic.
+/// Each arithmetic family has a distinct variant because binary80 rounding and
+/// exception precedence differ from transfer/conversion responses.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum X86X87DataKind {
     /// `FLD ST(i)`.
@@ -93,6 +93,10 @@ pub enum X86X87DataKind {
     Scale,
     /// `FSQRT` square root rounded according to FCW.PC and FCW.RC.
     SquareRoot,
+    /// One of the x87 exponential, logarithmic, or trigonometric operations.
+    /// The operation kind captures its exact stack shape and status-word
+    /// contract; the interpreter retains binary80 inputs and results.
+    Transcendental(X86X87TranscendentalKind),
     /// `FMUL`, `FMULP`, or `FIMUL` exact binary80 multiplication.
     Multiply {
         source: X86X87ArithmeticSource,
@@ -138,6 +142,29 @@ pub enum X86X87DataKind {
     StoreFloat { width: X86X87FloatWidth, pop: bool },
     /// `FBSTP m80bcd`.
     StoreBcd,
+}
+
+/// x87 operations whose architecturally specified result is a transcendental
+/// approximation. Intel guarantees bounded error for reduced arguments while
+/// defining instruction-specific stack, range, and exception behavior.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86X87TranscendentalKind {
+    /// `F2XM1`: replace ST(0) with `2^ST(0) - 1`.
+    Exp2MinusOne,
+    /// `FYL2X`: replace ST(1) with `ST(1) * log2(ST(0))`, then pop.
+    YLog2X,
+    /// `FPTAN`: replace ST(0) with its tangent, then push 1.0.
+    Tangent,
+    /// `FPATAN`: replace ST(1) with `atan2(ST(1), ST(0))`, then pop.
+    Arctangent,
+    /// `FYL2XP1`: replace ST(1) with `ST(1) * log2(ST(0) + 1)`, then pop.
+    YLog2Xp1,
+    /// `FSINCOS`: replace ST(0) with its sine, then push its cosine.
+    SineCosine,
+    /// `FSIN`: replace ST(0) with its sine.
+    Sine,
+    /// `FCOS`: replace ST(0) with its cosine.
+    Cosine,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

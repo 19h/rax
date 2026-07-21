@@ -12,3 +12,5 @@ mod part1;
 mod part2;
 #[cfg(test)]
 mod part3;
+#[cfg(test)]
+mod x87_transcendental;

@@ -3906,9 +3906,9 @@ pub enum OpKind {
         addr: Option<Address>,
     },
 
-    /// Exact x87 register-stack or m80fp transfer. Memory forms carry an
-    /// address; register forms select logical `ST(st)`. `fop` is the 11-bit
-    /// x87 opcode recorded in the architectural environment.
+    /// x87 data-stack operation, conversion, arithmetic, or transcendental.
+    /// Memory forms carry an address; register forms select logical `ST(st)`.
+    /// `fop` is the 11-bit opcode recorded in the architectural environment.
     X86X87Data {
         kind: X86X87DataKind,
         addr: Option<Address>,

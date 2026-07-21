@@ -24,8 +24,6 @@ const LEGACY_PREFIX_LEADERS: [&[u8]; 19] = [
     &[0xD5, 0x00],
 ];
 
-const VALID_UNIMPLEMENTED_D9: [u8; 8] = [0xF0, 0xF1, 0xF2, 0xF3, 0xF9, 0xFB, 0xFE, 0xFF];
-
 fn complete_x87_form(leader: &[u8], opcode: u8, modrm: u8) -> Vec<u8> {
     let mode = modrm >> 6;
     let rm = modrm & 7;
@@ -125,26 +123,15 @@ fn every_map0_rex2_payload_preserves_reserved_x87_invalid_opcode_results() {
 }
 
 #[test]
-fn every_complete_non_lock_x87_form_has_only_eight_known_semantic_gaps() {
+fn every_complete_non_lock_x87_form_has_a_strict_smir_frontier() {
     for leader in LEGACY_PREFIX_LEADERS {
         for opcode in 0xD8..=0xDF {
             for modrm in u8::MIN..=u8::MAX {
                 let bytes = complete_x87_form(leader, opcode, modrm);
-                let result = lift_single(&bytes);
-                if opcode == 0xD9
-                    && VALID_UNIMPLEMENTED_D9.contains(&modrm)
-                    && !is_direct_rejected_reserved_cell(opcode, modrm)
-                {
-                    assert!(
-                        matches!(result, Err(LiftError::Unsupported { .. })),
-                        "valid x87 semantic gap changed classification: {bytes:02X?}: {result:?}"
-                    );
-                } else {
-                    let lifted = result.unwrap_or_else(|error| {
-                        panic!("unexpected complete x87 fallback: {bytes:02X?}: {error:?}")
-                    });
-                    assert_eq!(lifted.bytes_consumed, bytes.len(), "{bytes:02X?}");
-                }
+                let lifted = lift_single(&bytes).unwrap_or_else(|error| {
+                    panic!("unexpected complete x87 fallback: {bytes:02X?}: {error:?}")
+                });
+                assert_eq!(lifted.bytes_consumed, bytes.len(), "{bytes:02X?}");
             }
         }
     }

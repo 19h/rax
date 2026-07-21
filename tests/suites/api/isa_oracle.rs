@@ -313,7 +313,7 @@ fn reports_residual_group15_forms_without_an_unsupported_frontier() {
 }
 
 #[test]
-fn reports_reserved_x87_cells_as_exact_traps_and_preserves_valid_gaps() {
+fn reports_reserved_x87_cells_as_exact_traps_and_transcendentals_as_smir() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;
 
@@ -342,23 +342,34 @@ fn reports_reserved_x87_cells_as_exact_traps_and_preserves_valid_gaps() {
         assert_eq!(smir["ends_function"], true, "{bytes:02X?}");
     }
 
-    for modrm in [0xF0, 0xF1, 0xF2, 0xF3, 0xF9, 0xFB, 0xFE, 0xFF] {
+    for (modrm, kind) in [
+        (0xF0, "Transcendental(Exp2MinusOne)"),
+        (0xF1, "Transcendental(YLog2X)"),
+        (0xF2, "Transcendental(Tangent)"),
+        (0xF3, "Transcendental(Arctangent)"),
+        (0xF9, "Transcendental(YLog2Xp1)"),
+        (0xFB, "Transcendental(SineCosine)"),
+        (0xFE, "Transcendental(Sine)"),
+        (0xFF, "Transcendental(Cosine)"),
+    ] {
         let bytes = [0xD9, modrm];
         let value = decode_to_json(&bytes, &opts).unwrap();
         let smir = &value["smir"];
         assert_eq!(smir["available"], true, "{bytes:02X?}");
-        assert!(
-            smir["error"]
-                .as_str()
-                .is_some_and(|error| error.contains("unsupported instruction")),
-            "{bytes:02X?}: {smir}"
-        );
-        assert!(
-            smir["debug"]
-                .as_str()
-                .is_some_and(|debug| debug.contains(&format!("x87 D9 {modrm:02X}"))),
-            "{bytes:02X?}: {smir}"
-        );
+        assert_eq!(smir["bytes_consumed"], 2, "{bytes:02X?}");
+        assert_eq!(smir["control_flow"]["kind"], "fallthrough", "{bytes:02X?}");
+        assert!(smir.get("error").is_none(), "{bytes:02X?}: {smir}");
+        let ops = smir["ops"].as_array().unwrap();
+        assert_eq!(ops.len(), 1, "{bytes:02X?}: {smir}");
+        let op = &ops[0];
+        assert_eq!(op["kind"]["opcode"], "x86_x87_data", "{bytes:02X?}");
+        assert_eq!(op["kind"]["kind"], kind, "{bytes:02X?}");
+        assert_eq!(op["kind"]["addr"], serde_json::Value::Null, "{bytes:02X?}");
+        assert_eq!(op["kind"]["st"], modrm & 7, "{bytes:02X?}");
+        assert_eq!(op["kind"]["fop"], 0x0100 | modrm as u16, "{bytes:02X?}");
+        assert_eq!(op["side_effects"], true, "{bytes:02X?}");
+        assert_eq!(op["memory"]["reads"], false, "{bytes:02X?}");
+        assert_eq!(op["memory"]["writes"], false, "{bytes:02X?}");
     }
 }
 

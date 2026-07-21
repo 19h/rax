@@ -139,6 +139,8 @@ mod x87_aliases;
 mod x87_noops;
 #[cfg(test)]
 mod x87_reserved;
+#[cfg(test)]
+mod x87_transcendental;
 
 /// Test memory reader for unit tests
 struct TestMemory {
