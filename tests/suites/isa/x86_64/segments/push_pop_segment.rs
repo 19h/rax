@@ -4,14 +4,21 @@ use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress};
 
 fn assert_invalid_segment(code: &[u8]) {
-    // Use setup_vm_no_idt so exceptions return errors instead of being handled
     let (mut vcpu, _) = setup_vm_no_idt(code, None);
-    let result = vcpu.run();
-    match result {
-        Ok(VcpuExit::Hlt) => panic!("segment opcode should be invalid in 64-bit mode"),
-        Ok(VcpuExit::Shutdown) => {}
-        Err(_) => {}
-        _ => {}
+    for path in ["cold decode", "decode-cache hit"] {
+        let error = vcpu
+            .step()
+            .expect_err("legacy segment PUSH/POP must raise #UD")
+            .to_string();
+        assert!(
+            error.contains("IDT entry 6 not present"),
+            "{path}: expected #UD delivery failure, got {error}"
+        );
+        assert_eq!(
+            vcpu.get_regs().unwrap().rip,
+            CODE_ADDR,
+            "{path}: fault-class #UD must retain the instruction RIP"
+        );
     }
 }
 

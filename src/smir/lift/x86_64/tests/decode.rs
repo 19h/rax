@@ -810,31 +810,93 @@ fn lift_enter_decodes_width_nesting_mask_and_invalid_forms() {
 }
 #[test]
 fn lift_long_mode_invalid_legacy_opcodes_are_explicit_ud_traps() {
-    for opcode in [
-        0x27, 0x2F, 0x37, 0x3F, 0x60, 0x61, 0x82, 0x9A, 0xCE, 0xD4, 0xEA,
-    ] {
-        let result = lift_single(&[opcode]).unwrap();
-        assert_eq!(result.bytes_consumed, 1, "opcode {opcode:02X}");
-        assert!(result.ops.is_empty(), "opcode {opcode:02X}");
+    const INVALID: &[u8] = &[
+        0x06, 0x07, 0x0E, 0x16, 0x17, 0x1E, 0x1F, // legacy segment PUSH/POP
+        0x27, 0x2F, 0x37, 0x3F, // DAA/DAS/AAA/AAS
+        0x60, 0x61, // PUSHA/POPA
+        0x82, // legacy Group-1 alias
+        0x9A, 0xEA, // far CALL/JMP immediate
+        0xCE, // INTO
+        0xD4, 0xD6, // AAM/SALC; D5 is the REX2 prefix in 64-bit mode
+    ];
+    const PREFIXES: &[&[u8]] = &[
+        &[],
+        &[0x66],
+        &[0x67],
+        &[0xF2],
+        &[0xF3],
+        &[0x2E],
+        &[0x48],
+        &[0xF0],
+        &[0xD5, 0x00],
+        &[0x66, 0x67, 0xF3, 0x2E, 0xD5, 0x00],
+    ];
+
+    for &opcode in INVALID {
+        for &prefixes in PREFIXES {
+            let mut bytes = prefixes.to_vec();
+            bytes.push(opcode);
+            let result = lift_single(&bytes).unwrap_or_else(|error| {
+                panic!("opcode {opcode:02X}, prefixes {prefixes:02X?}: {error:?}")
+            });
+            assert_eq!(
+                result.bytes_consumed,
+                bytes.len(),
+                "opcode {opcode:02X}, prefixes {prefixes:02X?}"
+            );
+            assert!(
+                result.ops.is_empty(),
+                "opcode {opcode:02X}, prefixes {prefixes:02X?}"
+            );
+            assert!(
+                result.branch_targets.is_empty(),
+                "opcode {opcode:02X}, prefixes {prefixes:02X?}"
+            );
+            assert!(
+                matches!(
+                    result.control_flow,
+                    ControlFlow::Trap {
+                        kind: TrapKind::InvalidOpcode
+                    }
+                ),
+                "opcode {opcode:02X}, prefixes {prefixes:02X?}",
+            );
+        }
+    }
+}
+
+#[test]
+fn long_mode_invalid_primary_opcode_is_an_exact_interpreter_frontier() {
+    for opcode in [0x06, 0x07, 0x0E, 0x16, 0x17, 0x1E, 0x1F, 0xD6] {
+        let code = vec![0x48, 0x83, 0xC0, 0x01, opcode]; // ADD RAX,1; #UD
+        let mut lifter = X86_64Lifter::strict();
+        lifter.set_interpreter_frontiers(true);
+        let mut context = LiftContext::new(SourceArch::X86_64);
+        let function = lifter
+            .lift_function(0x1800, &TestMemory::new(0x1800, code), &mut context)
+            .unwrap_or_else(|error| panic!("opcode {opcode:02X}: {error:?}"));
+
+        let prefix = function
+            .blocks
+            .iter()
+            .find(|block| block.guest_pc == 0x1800)
+            .unwrap_or_else(|| panic!("opcode {opcode:02X}: missing supported prefix"));
+        let frontier = function
+            .blocks
+            .iter()
+            .find(|block| block.guest_pc == 0x1804)
+            .unwrap_or_else(|| panic!("opcode {opcode:02X}: missing exact #UD frontier"));
+        assert!(!prefix.ops.is_empty(), "opcode {opcode:02X}");
         assert!(
-            matches!(
-                result.control_flow,
-                ControlFlow::Trap {
-                    kind: TrapKind::InvalidOpcode
-                }
-            ),
-            "opcode {opcode:02X}",
+            matches!(prefix.terminator, Terminator::Branch { target } if target == frontier.id),
+            "opcode {opcode:02X}"
+        );
+        assert!(frontier.ops.is_empty(), "opcode {opcode:02X}");
+        assert!(
+            matches!(frontier.terminator, Terminator::Return { .. }),
+            "opcode {opcode:02X}"
         );
     }
-
-    let prefixed = lift_single(&[0x66, 0xD4]).unwrap();
-    assert_eq!(prefixed.bytes_consumed, 2);
-    assert!(matches!(
-        prefixed.control_flow,
-        ControlFlow::Trap {
-            kind: TrapKind::InvalidOpcode
-        }
-    ));
 }
 #[test]
 fn lift_0f3a_extracts_cover_lanes_widths_scalar_tuples_high_regs_and_invalids() {

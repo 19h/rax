@@ -204,12 +204,14 @@ impl X86_64Lifter {
 
             // Instructions architecturally invalid in 64-bit mode. Model the
             // guaranteed #UD explicitly rather than reporting missing support.
-            0x27 | 0x2F | 0x37 | 0x3F // DAA/DAS/AAA/AAS
+            0x06 | 0x0E | 0x16 | 0x1E // PUSH ES/CS/SS/DS
+            | 0x07 | 0x17 | 0x1F      // POP ES/SS/DS
+            | 0x27 | 0x2F | 0x37 | 0x3F // DAA/DAS/AAA/AAS
             | 0x60 | 0x61             // PUSHA/POPA
             | 0x82                    // legacy Group-1 alias
             | 0x9A | 0xEA             // far CALL/JMP immediate
             | 0xCE                    // INTO
-            | 0xD4 => Ok(LiftResult { // AAM (D5 is APX REX2 in this decoder)
+            | 0xD4 | 0xD6 => Ok(LiftResult { // AAM/SALC (D5 is APX REX2 in this decoder)
                 ops: vec![],
                 bytes_consumed: prefix.cursor + 1,
                 control_flow: ControlFlow::Trap {

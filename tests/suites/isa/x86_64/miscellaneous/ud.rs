@@ -1,4 +1,4 @@
-use crate::common::setup_vm_no_idt;
+use crate::common::{CODE_ADDR, setup_vm_no_idt};
 use rax::vm::vcpu::{VCpu, VcpuExit};
 
 // UD - Undefined Instruction
@@ -41,11 +41,38 @@ fn test_ud2_basic() {
 }
 
 #[test]
-fn test_unimplemented_primary_opcode_injects_ud() {
-    assert_missing_idt_ud(&[
-        0xd6, // Undefined/invalid primary opcode
-        0xf4, // HLT (should not be reached)
-    ]);
+fn test_salc_is_invalid_in_64bit_mode_for_all_prefix_classes() {
+    for (name, instruction, apx_enabled) in [
+        ("bare", &[0xD6][..], false),
+        ("operand-size", &[0x66, 0xD6], false),
+        ("address-size", &[0x67, 0xD6], false),
+        ("REPNE", &[0xF2, 0xD6], false),
+        ("REP", &[0xF3, 0xD6], false),
+        ("segment", &[0x2E, 0xD6], false),
+        ("REX.W", &[0x48, 0xD6], false),
+        ("LOCK", &[0xF0, 0xD6], false),
+        ("REX2", &[0xD5, 0x00, 0xD6], true),
+    ] {
+        let mut code = instruction.to_vec();
+        code.push(0xF4);
+        let (mut vcpu, _) = setup_vm_no_idt(&code, None);
+        vcpu.set_apx_enabled(apx_enabled);
+        for path in ["cold decode", "decode-cache hit"] {
+            let error = vcpu
+                .step()
+                .expect_err("SALC must raise #UD in 64-bit mode")
+                .to_string();
+            assert!(
+                error.contains("IDT entry 6 not present"),
+                "{name} ({path}): expected #UD delivery failure, got {error}"
+            );
+            assert_eq!(
+                vcpu.get_regs().unwrap().rip,
+                CODE_ADDR,
+                "{name} ({path}): fault-class #UD must retain the instruction RIP"
+            );
+        }
+    }
 }
 
 #[test]
