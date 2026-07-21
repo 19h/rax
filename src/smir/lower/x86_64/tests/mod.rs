@@ -30,6 +30,8 @@ mod far_pointer_load;
 #[cfg(test)]
 mod far_return;
 #[cfg(test)]
+mod fast_system_transfer;
+#[cfg(test)]
 mod fp_binary;
 #[cfg(test)]
 mod fsgsbase;

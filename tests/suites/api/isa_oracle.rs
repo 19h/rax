@@ -1102,6 +1102,39 @@ fn emits_exact_far_jump_pointer_target_descriptor_and_handoff_metadata() {
 }
 
 #[test]
+fn emits_exact_sysenter_sysexit_dynamic_state_and_handoff_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    for (bytes, kind, operand64) in [
+        (&[0x0F, 0x34][..], "Sysenter", false),
+        (&[0x48, 0x0F, 0x35][..], "Sysexit", true),
+    ] {
+        let decoded = decode_to_json(bytes, &opts).unwrap();
+        assert_eq!(decoded["smir"]["available"], true);
+        assert_eq!(decoded["smir"]["bytes_consumed"], bytes.len());
+        let op = &decoded["smir"]["ops"][0];
+        assert_eq!(op["kind"]["opcode"], "x86_fast_system_transfer");
+        assert_eq!(op["kind"]["kind"], kind);
+        assert_eq!(op["kind"]["target"]["name"], "rip");
+        assert_eq!(op["kind"]["stack_pointer"]["name"], "rsp");
+        assert_eq!(op["kind"]["return_target"]["name"], "rdx");
+        assert_eq!(op["kind"]["return_stack_pointer"]["name"], "rcx");
+        assert_eq!(op["kind"]["operand64"], operand64);
+        assert_eq!(op["kind"]["next_pc"], 0x1000 + bytes.len() as u64);
+        assert!(op["reads"].is_null());
+        assert_eq!(op["writes"][0]["name"], "rip");
+        assert_eq!(op["writes"][1]["name"], "rsp");
+        assert_eq!(op["memory"]["reads"], false);
+        assert_eq!(op["memory"]["writes"], false);
+        assert_eq!(op["side_effects"], true);
+        assert_eq!(decoded["smir"]["control_flow"]["kind"], "indirect_branch");
+        assert_eq!(decoded["smir"]["ends_block"], true);
+        assert_eq!(decoded["smir"]["ends_function"], false);
+    }
+}
+
+#[test]
 fn emits_exact_far_call_pointer_frame_target_and_handoff_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

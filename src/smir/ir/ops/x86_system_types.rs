@@ -290,6 +290,31 @@ pub struct X86FarReturnOp {
     pub next_pc: u64,
 }
 
+/// Intel fast system-transfer instruction selected by map-1 opcodes `0F 34`
+/// and `0F 35` under RAX's fixed `GenuineIntel` guest profile.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum X86FastSystemTransferKind {
+    Sysenter,
+    Sysexit,
+}
+
+/// Fault-precise SYSENTER/SYSEXIT state transition. Both forms write
+/// architectural RIP and RSP and install fixed CS/SS descriptor caches.
+/// SYSEXIT additionally consumes RCX/RDX as its return RSP/RIP sources;
+/// SYSENTER instead consumes the implicit IA32_SYSENTER_* state. `operand64`
+/// is meaningful only for SYSEXIT and selects its REX.W return-to-64-bit form.
+#[derive(Clone, Debug)]
+pub struct X86FastSystemTransferOp {
+    pub kind: X86FastSystemTransferKind,
+    pub target: VReg,
+    pub stack_pointer: VReg,
+    pub return_target: VReg,
+    pub return_stack_pointer: VReg,
+    pub operand64: bool,
+    /// Exact end of the source instruction, retained for native shape checks.
+    pub next_pc: u64,
+}
+
 /// Architecturally distinct LMSW sources. Both forms read exactly 16 bits;
 /// operand-size prefixes never change the source width.
 #[derive(Clone, Debug)]

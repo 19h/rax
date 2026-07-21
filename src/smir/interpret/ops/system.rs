@@ -6,9 +6,11 @@ use crate::isa::x86_64::execute::control::{
     validate_x86_far_call_target_offset, x86_far_jump_is_ia32e_call_gate,
 };
 use crate::isa::x86_64::execute::system::{
-    X86ControlWriteFault, X86ControlWriteState, X86MsrFault, X86MsrState, X86PmcFault, X86PmcState,
-    X86SystemDescriptorFault, decode_x86_ldt_descriptor, decode_x86_tss_descriptor, read_x86_msr,
-    read_x86_pmc, validate_x86_control_write, validate_x86_msr_write,
+    X86ControlWriteFault, X86ControlWriteState, X86FastSystemTransferFault,
+    X86FastSystemTransferState, X86MsrFault, X86MsrState, X86PmcFault, X86PmcState,
+    X86SystemDescriptorFault, decode_x86_ldt_descriptor, decode_x86_tss_descriptor,
+    evaluate_x86_sysenter, evaluate_x86_sysexit, read_x86_msr, read_x86_pmc,
+    validate_x86_control_write, validate_x86_msr_write,
 };
 use crate::smir::interpret::*;
 use crate::smir::ir::context::{
@@ -19,11 +21,11 @@ use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     HexFpOp, HexFpRecipKind, OpKind, RvVectorState, SmirOp, X86AdxKind, X86BlsKind,
     X86CacheControlKind, X86ControlReg, X86CountKind, X86DebugReg, X86DescriptorTable,
-    X86FarCallOp, X86FarJumpOp, X86LmswSource, X86MonitorMwaitOp, X86OpHint, X86SmswTarget,
-    X86SystemSelector, X86SystemSelectorSource, X86SystemSelectorTarget, X86ThreeDNowKind,
-    X86WaitPkgOp, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
-    X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
-    X86X87IntWidth, X86XSaveKind,
+    X86FarCallOp, X86FarJumpOp, X86FastSystemTransferKind, X86LmswSource, X86MonitorMwaitOp,
+    X86OpHint, X86SmswTarget, X86SystemSelector, X86SystemSelectorSource, X86SystemSelectorTarget,
+    X86ThreeDNowKind, X86WaitPkgOp, X86X87ArithmeticDestination, X86X87ArithmeticSource,
+    X86X87CompareSource, X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth,
+    X86X87FloatWidth, X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
@@ -1040,6 +1042,98 @@ impl SmirInterpreter {
 
             OpKind::X86FarReturn(..) => {
                 return self.execute_op_far_return(ctx, memory, op);
+            }
+
+            OpKind::X86FastSystemTransfer(transfer) => {
+                let valid_shape = op.x86_hint.is_none()
+                    && matches!(transfer.next_pc.checked_sub(op.guest_pc), Some(2..=15))
+                    && transfer.target == VReg::Arch(ArchReg::X86(X86Reg::Rip))
+                    && transfer.stack_pointer == VReg::Arch(ArchReg::X86(X86Reg::Rsp))
+                    && transfer.return_target == VReg::Arch(ArchReg::X86(X86Reg::Rdx))
+                    && transfer.return_stack_pointer == VReg::Arch(ArchReg::X86(X86Reg::Rcx))
+                    && (transfer.kind == X86FastSystemTransferKind::Sysexit || !transfer.operand64);
+                if !valid_shape {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+                let state = match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => X86FastSystemTransferState {
+                        cr0: x86.cr0,
+                        efer: x86.efer,
+                        cpl: x86.cpl,
+                        rflags: x86.rflags,
+                        sysenter_cs: x86.sysenter_cs,
+                        sysenter_esp: x86.sysenter_esp,
+                        sysenter_eip: x86.sysenter_eip,
+                        rcx: x86.gpr[1],
+                        rdx: x86.gpr[2],
+                    },
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+                let effect = match transfer.kind {
+                    X86FastSystemTransferKind::Sysenter => evaluate_x86_sysenter(state),
+                    X86FastSystemTransferKind::Sysexit => {
+                        evaluate_x86_sysexit(state, transfer.operand64)
+                    }
+                };
+                let effect = match effect {
+                    Ok(effect) => effect,
+                    Err(X86FastSystemTransferFault::GeneralProtection) => {
+                        ctx.request_exit(ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        });
+                        return Ok(());
+                    }
+                };
+
+                let code_cache = X86SystemSegmentCache {
+                    base: 0,
+                    limit: 0x000F_FFFF,
+                    type_: 0x0B,
+                    present: true,
+                    dpl: effect.cpl,
+                    db: effect.cs_default_big,
+                    s: true,
+                    l: effect.cs_long,
+                    g: true,
+                    avl: false,
+                    unusable: false,
+                };
+                let stack_cache = X86SystemSegmentCache {
+                    base: 0,
+                    limit: 0x000F_FFFF,
+                    type_: 0x03,
+                    present: true,
+                    dpl: effect.cpl,
+                    db: true,
+                    s: true,
+                    l: false,
+                    g: true,
+                    avl: false,
+                    unusable: false,
+                };
+                let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                    unreachable!("validated x86 fast-system-transfer context changed")
+                };
+                x86.rflags = effect.rflags;
+                x86.cpl = effect.cpl;
+                x86.cs_selector = effect.cs_selector;
+                x86.cs_cache = code_cache;
+                x86.cs_l = effect.cs_long;
+                x86.ss_selector = effect.ss_selector;
+                x86.ss_cache = stack_cache;
+                ctx.write_vreg(transfer.stack_pointer, effect.rsp);
+                ctx.write_vreg(transfer.target, effect.rip);
             }
 
             OpKind::X86Lmsw(lmsw) => {

@@ -208,6 +208,8 @@ pub const X86_GUEST_INTERRUPT_INHIBIT_OFFSET: i32 = X86_GUEST_CLI_FN_OFFSET + 8;
 pub const X86_GUEST_STI_FN_OFFSET: i32 = X86_GUEST_INTERRUPT_INHIBIT_OFFSET + 8;
 /// Offset of the append-only INVLPG helper pointer.
 pub const X86_GUEST_INVLPG_FN_OFFSET: i32 = X86_GUEST_STI_FN_OFFSET + 8;
+/// Offset of the append-only SYSENTER/SYSEXIT transition helper pointer.
+pub const X86_GUEST_FAST_SYSTEM_TRANSFER_FN_OFFSET: i32 = X86_GUEST_INVLPG_FN_OFFSET + 8;
 /// Offset of the `*mut GuestRegs` state pointer in the native block frame.
 pub const X86_STATE_PTR_AT_RBP: i32 = 24;
 

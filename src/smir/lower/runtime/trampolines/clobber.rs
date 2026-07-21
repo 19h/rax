@@ -9,10 +9,11 @@ use crate::smir::lower::runtime::*;
 use crate::smir::lower::x86_64::{
     x86_cli_shape_valid, x86_clts_shape_valid, x86_far_call_shape_valid,
     x86_far_call_terminal_shape_valid, x86_far_jump_shape_valid, x86_far_jump_terminal_shape_valid,
-    x86_far_return_shape_valid, x86_far_return_terminal_shape_valid, x86_invlpg_shape_valid,
-    x86_lmsw_shape_valid, x86_read_control_shape_valid, x86_read_debug_shape_valid,
-    x86_selector_query_shape_valid, x86_selector_verify_shape_valid, x86_smsw_shape_valid,
-    x86_sti_shape_valid, x86_system_selector_load_shape_valid,
+    x86_far_return_shape_valid, x86_far_return_terminal_shape_valid,
+    x86_fast_system_transfer_shape_valid, x86_fast_system_transfer_terminal_shape_valid,
+    x86_invlpg_shape_valid, x86_lmsw_shape_valid, x86_read_control_shape_valid,
+    x86_read_debug_shape_valid, x86_selector_query_shape_valid, x86_selector_verify_shape_valid,
+    x86_smsw_shape_valid, x86_sti_shape_valid, x86_system_selector_load_shape_valid,
     x86_system_selector_store_shape_valid, x86_waitpkg_shape_valid, x86_write_control_shape_valid,
     x86_write_debug_shape_valid,
 };
@@ -142,21 +143,25 @@ pub(crate) fn block_is_clobber_safe(
     };
 
     let n = block.ops.len();
-    let far_control_count = block
+    let terminal_control_count = block
         .ops
         .iter()
         .filter(|op| {
             matches!(
                 op.kind,
-                OpKind::X86FarJump(..) | OpKind::X86FarCall(..) | OpKind::X86FarReturn(..)
+                OpKind::X86FarJump(..)
+                    | OpKind::X86FarCall(..)
+                    | OpKind::X86FarReturn(..)
+                    | OpKind::X86FastSystemTransfer(..)
             )
         })
         .count();
-    if far_control_count != 0
-        && (far_control_count != 1
+    if terminal_control_count != 0
+        && (terminal_control_count != 1
             || !(x86_far_jump_terminal_shape_valid(block)
                 || x86_far_call_terminal_shape_valid(block)
-                || x86_far_return_terminal_shape_valid(block)))
+                || x86_far_return_terminal_shape_valid(block)
+                || x86_fast_system_transfer_terminal_shape_valid(block)))
     {
         return false;
     }
@@ -607,6 +612,7 @@ pub(crate) fn block_is_clobber_safe(
                     && x86_jit_mem_address_shape_valid(&call.addr)
         );
         let far_return_ok = allow_mem && x86_far_return_shape_valid(op);
+        let fast_system_transfer_ok = x86_fast_system_transfer_shape_valid(op);
         let read_debug_ok = x86_read_debug_shape_valid(&op.kind);
         let write_control_ok = x86_write_control_shape_valid(op);
         let write_debug_ok = x86_write_debug_shape_valid(&op.kind);
@@ -668,6 +674,7 @@ pub(crate) fn block_is_clobber_safe(
             || descriptor_store_ok
             || descriptor_load_ok
             || invlpg_ok
+            || fast_system_transfer_ok
             || read_debug_ok
             || write_control_ok
             || write_debug_ok;
@@ -856,6 +863,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86FarReturn(..)) && !far_return_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86FastSystemTransfer(..)) && !fast_system_transfer_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86ReadDebug { .. }) && !read_debug_ok {

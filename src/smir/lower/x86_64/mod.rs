@@ -66,6 +66,8 @@ mod far_call;
 pub use far_call::*;
 mod far_return;
 pub use far_return::*;
+mod fast_system_transfer;
+pub use fast_system_transfer::*;
 mod monitor_mwait;
 pub use monitor_mwait::*;
 mod waitpkg;

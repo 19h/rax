@@ -58,7 +58,9 @@ use crate::smir::ir::ops::X86X87EnvWidth;
 use crate::smir::ir::ops::X86X87FloatWidth;
 use crate::smir::ir::ops::X86X87IntWidth;
 use crate::smir::ir::ops::X86XSaveKind;
-use crate::smir::ir::ops::{X86FarCallOp, X86FarJumpOp, X86FarReturnOp};
+use crate::smir::ir::ops::{
+    X86FarCallOp, X86FarJumpOp, X86FarReturnOp, X86FastSystemTransferKind, X86FastSystemTransferOp,
+};
 use crate::smir::ir::types::DispSize;
 use crate::smir::ir::types::X86AesOp;
 use crate::smir::lift::riscv::RiscVExtensions;
@@ -1325,6 +1327,7 @@ debug_name_json!(
     X86CacheControlKind,
     X86ControlReg,
     X86DebugReg,
+    X86FastSystemTransferKind,
     X86BlsKind,
     X86CountKind,
     X86ThreeDNowKind,
@@ -2751,6 +2754,24 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             offset_width,
             pop_bytes,
             requires_apx,
+            next_pc
+        ),
+        OpKind::X86FastSystemTransfer(X86FastSystemTransferOp {
+            kind,
+            target,
+            stack_pointer,
+            return_target,
+            return_stack_pointer,
+            operand64,
+            next_pc,
+        }) => op_json!(
+            "x86_fast_system_transfer",
+            kind,
+            target,
+            stack_pointer,
+            return_target,
+            return_stack_pointer,
+            operand64,
             next_pc
         ),
         OpKind::X86Lmsw(X86LmswOp {

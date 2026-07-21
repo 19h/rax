@@ -698,6 +698,21 @@ impl X86_64Lowerer {
                 // both success and replay paths return before the terminator.
                 return Ok(());
             }
+            if matches!(block.ops[idx].kind, OpKind::X86FastSystemTransfer(..)) {
+                if idx + 1 != block.ops.len()
+                    || !x86_fast_system_transfer_terminal_shape_valid(block)
+                {
+                    return Err(LowerError::InvalidOperand {
+                        op: "X86FastSystemTransfer".to_string(),
+                        operand: "must be the sole owner of a matching terminal indirect branch"
+                            .to_string(),
+                    });
+                }
+                self.emit_x86_fast_system_transfer(&block.ops[idx])?;
+                // The helper supplies the dynamic target and both success and
+                // replay paths return before generic indirect lowering.
+                return Ok(());
+            }
             if matches!(&block.ops[idx].kind, OpKind::X86Msr(msr) if msr.write) {
                 self.emit_x86_msr(&block.ops[idx])?;
                 // Successful WRMSR changes architectural admission state and

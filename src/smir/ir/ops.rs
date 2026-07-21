@@ -4046,6 +4046,11 @@ pub enum OpKind {
     /// outer-stack restoration, segment invalidation, and its terminal branch.
     X86FarReturn(X86FarReturnOp),
 
+    /// Intel SYSENTER/SYSEXIT. Dynamic mode, privilege, selector, and
+    /// canonicality checks precede one atomic RIP:RSP:CS:SS:CPL[:RFLAGS]
+    /// transition. The operation owns its terminal indirect branch.
+    X86FastSystemTransfer(X86FastSystemTransferOp),
+
     /// LMSW reads a fixed-width register or memory source after APX/CPL
     /// validation, updates CR0[3:0] without clearing PE, and is serializing.
     /// Native execution must hand off at `next_pc` after a successful commit.
@@ -4576,6 +4581,7 @@ impl OpKind {
                 | OpKind::X86FarJump(..)
                 | OpKind::X86FarCall(..)
                 | OpKind::X86FarReturn(..)
+                | OpKind::X86FastSystemTransfer(..)
                 | OpKind::X86Lmsw(..)
                 | OpKind::X86DescriptorTableStore(..)
                 | OpKind::X86DescriptorTableLoad(..)
@@ -5037,6 +5043,9 @@ impl OpKind {
             OpKind::X86FarJump(jump) => vec![jump.target],
             OpKind::X86FarCall(call) => vec![call.target],
             OpKind::X86FarReturn(ret) => vec![ret.target],
+            OpKind::X86FastSystemTransfer(transfer) => {
+                vec![transfer.target, transfer.stack_pointer]
+            }
             OpKind::X86ReadDebug { dst, .. } => vec![*dst],
 
             OpKind::CmpyW128Sat { dst, .. } | OpKind::SatOrigShl { dst, .. } => vec![*dst],
@@ -5343,6 +5352,7 @@ impl OpKind {
                     | OpKind::X86FarJump(..)
                     | OpKind::X86FarCall(..)
                     | OpKind::X86FarReturn(..)
+                    | OpKind::X86FastSystemTransfer(..)
                     | OpKind::X86Lmsw(..)
                     | OpKind::X86DescriptorTableStore(..)
                     | OpKind::X86DescriptorTableLoad(..)

@@ -312,6 +312,11 @@ pub struct GuestRegs {
     /// INVLPG's dynamic validity checks and synchronizing every translation-
     /// dependent cache in the owning vCPU for a canonical linear address.
     pub invlpg_fn: u64,
+    /// Address of `extern "C" fn(state, kind, operand64) -> ok` implementing
+    /// Intel SYSENTER (`kind=0`) and SYSEXIT (`kind=1`). Success installs the
+    /// fixed CS/SS caches through the owning vCPU and commits dynamic RSP/RIP
+    /// through `gpr[4]` and `exit_pc`; failure requests exact direct replay.
+    pub fast_system_transfer_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -392,6 +397,7 @@ impl Default for GuestRegs {
             interrupt_inhibit: 0,
             sti_fn: 0,
             invlpg_fn: 0,
+            fast_system_transfer_fn: 0,
         }
     }
 }

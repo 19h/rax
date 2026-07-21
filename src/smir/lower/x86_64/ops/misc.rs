@@ -140,6 +140,7 @@ impl X86_64Lowerer {
             OpKind::X86FarJump(..) => self.emit_x86_far_jump(op)?,
             OpKind::X86FarCall(..) => self.emit_x86_far_call(op)?,
             OpKind::X86FarReturn(..) => self.emit_x86_far_return(op)?,
+            OpKind::X86FastSystemTransfer(..) => self.emit_x86_fast_system_transfer(op)?,
 
             OpKind::X86Lmsw(..) => self.emit_x86_lmsw(op)?,
 

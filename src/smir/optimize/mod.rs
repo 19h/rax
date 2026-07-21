@@ -3724,6 +3724,11 @@ impl OpKind {
             OpKind::X86FarJump(jump) => result.extend(jump.addr.regs()),
             OpKind::X86FarCall(call) => result.extend(call.addr.regs()),
             OpKind::X86FarReturn(..) => {}
+            OpKind::X86FastSystemTransfer(transfer) => {
+                if transfer.kind == crate::smir::ir::ops::X86FastSystemTransferKind::Sysexit {
+                    result.extend([transfer.return_stack_pointer, transfer.return_target]);
+                }
+            }
             OpKind::X86Lmsw(X86LmswOp {
                 source: X86LmswSource::Register { src },
                 ..

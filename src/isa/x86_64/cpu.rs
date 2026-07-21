@@ -3852,6 +3852,12 @@ mod jit_far_return;
 use jit_far_return::rax_jit_far_return;
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_fast_system_transfer.rs"]
+mod jit_fast_system_transfer;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_fast_system_transfer::rax_jit_fast_system_transfer;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_msr.rs"]
 mod jit_msr;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -4568,7 +4574,7 @@ impl X86_64Vcpu {
         #[cfg(target_arch = "x86_64")]
         use crate::smir::lower::x86_64::{
             X86_64Lowerer, x86_far_call_terminal_shape_valid, x86_far_jump_terminal_shape_valid,
-            x86_far_return_terminal_shape_valid,
+            x86_far_return_terminal_shape_valid, x86_fast_system_transfer_terminal_shape_valid,
         };
         use crate::smir::optimize::{OptLevel, optimize_function};
         use std::collections::HashMap;
@@ -4653,7 +4659,8 @@ impl X86_64Vcpu {
                         {
                             !(x86_far_jump_terminal_shape_valid(b)
                                 || x86_far_call_terminal_shape_valid(b)
-                                || x86_far_return_terminal_shape_valid(b))
+                                || x86_far_return_terminal_shape_valid(b)
+                                || x86_fast_system_transfer_terminal_shape_valid(b))
                         }
                         #[cfg(target_arch = "aarch64")]
                         {
@@ -4701,6 +4708,7 @@ impl X86_64Vcpu {
                     x86_far_jump_terminal_shape_valid(block)
                         || x86_far_call_terminal_shape_valid(block)
                         || x86_far_return_terminal_shape_valid(block)
+                        || x86_fast_system_transfer_terminal_shape_valid(block)
                 });
             #[cfg(target_arch = "aarch64")]
             let has_native_terminal = false;
@@ -4776,6 +4784,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86FarJump(..)
                                 | OpKind::X86FarCall(..)
                                 | OpKind::X86FarReturn(..)
+                                | OpKind::X86FastSystemTransfer(..)
                                 | OpKind::X86WriteControl { .. }
                                 | OpKind::X86ReadDebug { .. }
                                 | OpKind::X86WriteDebug { .. }
@@ -5060,6 +5069,7 @@ impl X86_64Vcpu {
         gr.far_jump_fn = rax_jit_far_jump as usize as u64;
         gr.far_call_fn = rax_jit_far_call as usize as u64;
         gr.far_return_fn = rax_jit_far_return as usize as u64;
+        gr.fast_system_transfer_fn = rax_jit_fast_system_transfer as usize as u64;
         gr.cli_fn = rax_jit_cli as usize as u64;
         gr.sti_fn = rax_jit_sti as usize as u64;
         gr.invlpg_fn = rax_jit_invlpg as usize as u64;
@@ -6470,6 +6480,10 @@ mod jit_far_call_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_far_return_tests.rs"]
 mod jit_far_return_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_fast_system_transfer_tests.rs"]
+mod jit_fast_system_transfer_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_read_debug_tests.rs"]

@@ -7,10 +7,11 @@ use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86MsrOp, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign,
-    X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
-    X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
-    X86X87IntWidth, X86XSaveKind,
+    X86FastSystemTransferKind, X86FastSystemTransferOp, X86MsrOp, X86OpHint, X86RepMode,
+    X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign, X86VecMap,
+    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
+    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
+    X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -1165,6 +1166,46 @@ impl X86_64Lifter {
                     )],
                     prefix2.cursor,
                 ))
+            }
+
+            // Intel SYSENTER/SYSEXIT (0F 34/35). Both instructions own a
+            // dynamic terminal control transfer and fixed CS/SS cache update.
+            // LOCK is invalid. APX reserves the complete map-1 30H row, so a
+            // REX2 form is normally converted to #UD before this dispatcher.
+            // Other legacy and ordinary REX prefixes are ignored; only REX.W
+            // selects SYSEXIT's 64-bit return form.
+            0x34 | 0x35 => {
+                if prefix2.lock || prefix2.rex2.is_some() {
+                    return Err(LiftError::InvalidEncoding {
+                        addr: pc,
+                        bytes: vec![opcode2],
+                    });
+                }
+                let target = VReg::Arch(ArchReg::X86(X86Reg::Rip));
+                let stack_pointer = self.gpr(4);
+                let kind = if opcode2 == 0x34 {
+                    X86FastSystemTransferKind::Sysenter
+                } else {
+                    X86FastSystemTransferKind::Sysexit
+                };
+                Ok(LiftResult {
+                    ops: vec![SmirOp::new(
+                        OpId(0),
+                        pc,
+                        OpKind::X86FastSystemTransfer(X86FastSystemTransferOp {
+                            kind,
+                            target,
+                            stack_pointer,
+                            return_target: self.gpr(2),
+                            return_stack_pointer: self.gpr(1),
+                            operand64: opcode2 == 0x35 && prefix2.rex_w(),
+                            next_pc: pc.wrapping_add(prefix2.cursor as u64),
+                        }),
+                    )],
+                    bytes_consumed: prefix2.cursor,
+                    control_flow: ControlFlow::IndirectBranch { target },
+                    branch_targets: vec![],
+                })
             }
 
             // CPUID (0F A2): EAX/ECX select the leaf and EAX/EBX/ECX/EDX
