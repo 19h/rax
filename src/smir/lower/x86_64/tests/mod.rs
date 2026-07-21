@@ -62,6 +62,8 @@ mod read_control;
 #[cfg(test)]
 mod read_debug;
 #[cfg(test)]
+mod require_apx;
+#[cfg(test)]
 mod selector;
 #[cfg(test)]
 mod selector_query;

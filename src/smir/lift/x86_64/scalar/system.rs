@@ -1495,7 +1495,10 @@ impl X86_64Lifter {
     }
 
     /// Lift NOP (90)
-    pub(crate) fn lift_nop(&self, prefix: &X86Prefix, _pc: u64) -> Result<LiftResult, LiftError> {
-        Ok(LiftResult::fallthrough(vec![], prefix.cursor))
+    pub(crate) fn lift_nop(&self, prefix: &X86Prefix, pc: u64) -> Result<LiftResult, LiftError> {
+        Ok(LiftResult::fallthrough(
+            self.rex2_apx_guard_ops(prefix, pc),
+            prefix.cursor,
+        ))
     }
 }

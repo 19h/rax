@@ -365,7 +365,18 @@ impl X86_64Lifter {
 
             // Cache-maintenance instructions modeled as no-ops by the base
             // emulator profile.
-            0x08 | 0x09 => Ok(LiftResult::fallthrough(vec![], prefix2.cursor)),
+            0x08 | 0x09 => {
+                if prefix2.lock {
+                    return Err(LiftError::InvalidEncoding {
+                        addr: pc,
+                        bytes: vec![opcode2],
+                    });
+                }
+                Ok(LiftResult::fallthrough(
+                    self.rex2_apx_guard_ops(&prefix2, pc),
+                    prefix2.cursor,
+                ))
+            }
 
             // 3DNow! uses the final imm8 after ModR/M and any displacement as
             // an opcode suffix.
@@ -415,7 +426,21 @@ impl X86_64Lifter {
 
             // NOP/cache/prefetch hint encodings still consume a complete
             // ModR/M addressing form even though they have no state effect.
-            0x0D | 0x18 | 0x1A | 0x1B | 0x1E | 0x1F => {
+            0x0D | 0x18 | 0x19 | 0x1A | 0x1B | 0x1E | 0x1F => {
+                // LOCK is invalid for every hint/NOP encoding in this branch.
+                // Expose #UD without requiring an otherwise-unused ModR/M or
+                // address byte, matching the direct decoder's prefix-legality
+                // frontier.
+                if prefix2.lock {
+                    return Ok(LiftResult {
+                        ops: vec![],
+                        bytes_consumed: prefix2.cursor,
+                        control_flow: ControlFlow::Trap {
+                            kind: TrapKind::InvalidOpcode,
+                        },
+                        branch_targets: vec![],
+                    });
+                }
                 let modrm = decode_modrm(after_opcode, &prefix2, pc)?;
                 if opcode2 == 0x1E
                     && prefix2.rep_prefix == Some(0xF3)
@@ -431,8 +456,9 @@ impl X86_64Lifter {
                         branch_targets: vec![],
                     });
                 }
+                let ops = self.rex2_apx_guard_ops(&prefix2, pc);
                 Ok(LiftResult::fallthrough(
-                    vec![],
+                    ops,
                     prefix2.cursor + modrm.bytes_consumed,
                 ))
             }
@@ -451,8 +477,13 @@ impl X86_64Lifter {
                 }
                 if modrm.is_memory && ((modrm.byte >> 3) & 7) == 0 {
                     let next_pc = pc + prefix2.cursor as u64 + modrm.bytes_consumed as u64;
-                    let (addr, mut ops) =
+                    let (addr, pre_ops) =
                         self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                    let mut ops = self.rex2_apx_guard_ops(&prefix2, pc);
+                    for mut op in pre_ops {
+                        op.id = OpId(ops.len() as u16);
+                        ops.push(op);
+                    }
                     ops.push(SmirOp::new(
                         OpId(ops.len() as u16),
                         pc,
@@ -467,7 +498,7 @@ impl X86_64Lifter {
                     ))
                 } else {
                     Ok(LiftResult::fallthrough(
-                        vec![],
+                        self.rex2_apx_guard_ops(&prefix2, pc),
                         prefix2.cursor + modrm.bytes_consumed,
                     ))
                 }

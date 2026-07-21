@@ -66,6 +66,18 @@ impl SmirInterpreter {
                 ctx.flags.materialized.ac = *value;
             }
 
+            OpKind::X86RequireApx => {
+                if !matches!(
+                    &ctx.arch_regs,
+                    ArchRegState::X86_64(x86) if x86.apx_enabled
+                ) {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                }
+            }
+
             OpKind::X86Cli {
                 requires_apx,
                 next_pc: _,

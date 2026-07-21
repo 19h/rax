@@ -22,6 +22,17 @@ use crate::smir::lift::{
 };
 
 impl X86_64Lifter {
+    /// Materialize the dynamic APX availability requirement carried by a REX2
+    /// encoding when the instruction's ordinary SMIR semantics do not retain
+    /// prefix provenance themselves.
+    pub(crate) fn rex2_apx_guard_ops(&self, prefix: &X86Prefix, pc: u64) -> Vec<SmirOp> {
+        if prefix.rex2.is_some() {
+            vec![SmirOp::new(OpId(0), pc, OpKind::X86RequireApx)]
+        } else {
+            Vec::new()
+        }
+    }
+
     /// Convert x86 register number to VReg
     pub(crate) fn x86_gpr(&self, reg: u8) -> VReg {
         VReg::Arch(ArchReg::X86(X86Reg::gpr(reg)))

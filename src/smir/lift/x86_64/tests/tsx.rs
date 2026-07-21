@@ -56,7 +56,17 @@ fn xabort_consumes_immediate_and_accepts_ignored_non_lock_prefixes() {
         let result = lift_at(0x1000, bytes)
             .unwrap_or_else(|error| panic!("XABORT {bytes:02X?} must lift completely: {error:?}"));
         assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
-        assert!(result.ops.is_empty(), "{bytes:02X?}");
+        if bytes.starts_with(&[0xD5]) {
+            assert!(matches!(
+                result.ops.as_slice(),
+                [SmirOp {
+                    kind: OpKind::X86RequireApx,
+                    ..
+                }]
+            ));
+        } else {
+            assert!(result.ops.is_empty(), "{bytes:02X?}");
+        }
         assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
     }
 }

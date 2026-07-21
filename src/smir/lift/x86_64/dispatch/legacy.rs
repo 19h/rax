@@ -86,13 +86,25 @@ impl X86_64Lifter {
         match opcode {
             // XCHG rax, r64 / NOP / PAUSE (with REP prefix)
             0x90..=0x97 => {
-                if opcode == 0x90 && prefix.rep_prefix == Some(0xF3) {
+                if prefix.lock {
+                    return Err(LiftError::InvalidEncoding {
+                        addr: pc,
+                        bytes: bytes[..(prefix.cursor + 1).min(bytes.len())].to_vec(),
+                    });
+                }
+                if opcode == 0x90 && prefix.rex_b() == 0 && prefix.rep_prefix == Some(0xF3) {
                     // PAUSE - treat as NOP for lifting
-                    Ok(LiftResult::fallthrough(vec![], prefix.cursor + 1))
+                    Ok(LiftResult::fallthrough(
+                        self.rex2_apx_guard_ops(&prefix, pc),
+                        prefix.cursor + 1,
+                    ))
                 } else if opcode == 0x90 && prefix.rex_b() == 0 {
                     // 90 (including 66/REX.W 90) is the architectural NOP
                     // alias, not a 32-bit self-write that clears EAX[63:32].
-                    Ok(LiftResult::fallthrough(vec![], prefix.cursor + 1))
+                    Ok(LiftResult::fallthrough(
+                        self.rex2_apx_guard_ops(&prefix, pc),
+                        prefix.cursor + 1,
+                    ))
                 } else {
                     self.lift_xchg_rax(
                         opcode,
@@ -379,7 +391,10 @@ impl X86_64Lifter {
                 ctx,
             ),
             // WAIT/FWAIT has no state effect in the base emulator profile.
-            0x9B if !prefix.lock => Ok(LiftResult::fallthrough(vec![], prefix.cursor + 1)),
+            0x9B if !prefix.lock => Ok(LiftResult::fallthrough(
+                self.rex2_apx_guard_ops(&prefix, pc),
+                prefix.cursor + 1,
+            )),
             0x9B => Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes[..(prefix.cursor + 1).min(bytes.len())].to_vec(),

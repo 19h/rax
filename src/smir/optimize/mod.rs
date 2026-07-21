@@ -4015,6 +4015,7 @@ impl OpKind {
             | OpKind::SetCF { .. }
             | OpKind::SetDF { .. }
             | OpKind::SetAC { .. }
+            | OpKind::X86RequireApx
             | OpKind::X86Cli { .. }
             | OpKind::X86Sti { .. }
             | OpKind::X86Clts

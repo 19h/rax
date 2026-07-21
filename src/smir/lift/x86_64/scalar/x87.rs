@@ -553,7 +553,11 @@ impl X86_64Lifter {
             }
         };
 
-        let mut ops = Vec::new();
+        let mut ops = if kind.is_none() {
+            self.rex2_apx_guard_ops(prefix, pc)
+        } else {
+            Vec::new()
+        };
         if let Some(kind) = kind {
             let addr = if modrm.is_memory {
                 let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;

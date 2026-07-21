@@ -1,5 +1,5 @@
-use crate::common::{run_until_hlt, setup_vm};
-use rax::vm::vcpu::Registers;
+use crate::common::{CODE_ADDR, run_until_hlt, setup_vm, setup_vm_no_idt};
+use rax::vm::vcpu::{Registers, VCpu};
 
 // NOP Variants - Multi-byte NOP instructions
 // Various NOP encodings for alignment and optimization
@@ -506,4 +506,114 @@ fn test_all_nop_lengths_sequence() {
         0xBAADF00D,
         "RAX unchanged after all NOP variants"
     );
+}
+
+fn assert_reserved_nop_0f19(instruction: &[u8], apx_enabled: bool) {
+    let mut code = instruction.to_vec();
+    code.push(0xF4);
+    let initial = Registers {
+        rax: 0x0000_8000_0000_0000,
+        rbx: 0x1111_2222_3333_4444,
+        rcx: 0x5555_6666_7777_8888,
+        rdx: 0x9999_AAAA_BBBB_CCCC,
+        rsp: 0x8000,
+        rbp: 0x7000,
+        r8: 0x0808_0808_0808_0808,
+        r15: 0x1515_1515_1515_1515,
+        r16: 0x1616_1616_1616_1616,
+        r31: 0xFFFF_8000_0000_0000,
+        rflags: 0x0CD7,
+        xmm: [[0x0123_4567_89AB_CDEF, 0xFEDC_BA98_7654_3210]; 16],
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_vm(&code, Some(initial));
+    vcpu.set_apx_enabled(apx_enabled);
+
+    for path in ["cold decode", "decode-cache hit"] {
+        let mut before = vcpu.get_regs().unwrap();
+        before.rip = CODE_ADDR;
+        vcpu.set_regs(&before).unwrap();
+        let before_sregs = vcpu.get_sregs().unwrap();
+        let mut expected = before.clone();
+        expected.rip += instruction.len() as u64;
+
+        assert!(
+            vcpu.step()
+                .unwrap_or_else(|error| panic!("{instruction:02X?} ({path}): {error}"))
+                .is_none(),
+            "{instruction:02X?} ({path})"
+        );
+
+        let actual =
+            serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap())).unwrap();
+        let expected = serde_json::to_value((expected, before_sregs)).unwrap();
+        assert_eq!(actual, expected, "{instruction:02X?} ({path})");
+    }
+}
+
+#[test]
+fn test_reserved_nop_0f19_executes_every_modrm_register_form() {
+    for modrm in 0xC0..=0xFF {
+        assert_reserved_nop_0f19(&[0x0F, 0x19, modrm], false);
+    }
+}
+
+#[test]
+fn test_reserved_nop_0f19_prefix_address_and_rex2_forms_are_non_accessing() {
+    for (instruction, apx_enabled) in [
+        (&[0x66, 0x0F, 0x19, 0xC0][..], false),
+        (&[0x67, 0x0F, 0x19, 0xC0][..], false),
+        (&[0xF2, 0x0F, 0x19, 0xC0][..], false),
+        (&[0xF3, 0x0F, 0x19, 0xC0][..], false),
+        (&[0x2E, 0x0F, 0x19, 0xC0][..], false),
+        (&[0x48, 0x0F, 0x19, 0xC0][..], false),
+        (&[0x0F, 0x19, 0x00][..], false),
+        (&[0x0F, 0x19, 0x7F, 0x80][..], false),
+        (&[0x0F, 0x19, 0x80, 0x78, 0x56, 0x34, 0x12][..], false),
+        (&[0x0F, 0x19, 0x04, 0x25, 0x78, 0x56, 0x34, 0x12][..], false),
+        (&[0x0F, 0x19, 0x05, 0x78, 0x56, 0x34, 0x12][..], false),
+        (
+            &[0x67, 0x0F, 0x19, 0x04, 0x25, 0x78, 0x56, 0x34, 0x12][..],
+            false,
+        ),
+        (
+            &[0x4F, 0x0F, 0x19, 0x84, 0x7F, 0x78, 0x56, 0x34, 0x12][..],
+            false,
+        ),
+        (&[0xD5, 0x80, 0x19, 0xC0][..], true),
+        (
+            &[0xD5, 0xFF, 0x19, 0x84, 0x7F, 0x78, 0x56, 0x34, 0x12][..],
+            true,
+        ),
+        (&[0x66, 0x67, 0xF3, 0x2E, 0xD5, 0x80, 0x19, 0xC0][..], true),
+    ] {
+        assert_reserved_nop_0f19(instruction, apx_enabled);
+    }
+}
+
+#[test]
+fn test_lock_reserved_nop_0f19_faults_before_state_commit_on_both_decode_paths() {
+    for (instruction, apx_enabled) in [
+        (&[0xF0, 0x0F, 0x19, 0xC0][..], false),
+        (&[0xF0, 0xD5, 0x80, 0x19, 0xC0][..], true),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(instruction, None);
+        vcpu.set_apx_enabled(apx_enabled);
+        for path in ["cold decode", "decode-cache hit"] {
+            let before =
+                serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap()))
+                    .unwrap();
+            let error = vcpu
+                .step()
+                .expect_err("LOCK reserved NOP must inject #UD")
+                .to_string();
+            assert!(
+                error.contains("IDT entry 6 not present"),
+                "{instruction:02X?} ({path}): {error}"
+            );
+            let after = serde_json::to_value((vcpu.get_regs().unwrap(), vcpu.get_sregs().unwrap()))
+                .unwrap();
+            assert_eq!(after, before, "{instruction:02X?} ({path})");
+        }
+    }
 }

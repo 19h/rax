@@ -6357,6 +6357,10 @@ mod jit_clts_tests;
 #[path = "cpu_jit_cli_tests.rs"]
 mod jit_cli_tests;
 
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_reserved_nop_tests.rs"]
+mod jit_reserved_nop_tests;
+
 #[cfg(test)]
 #[path = "cpu_sti_tests.rs"]
 mod sti_tests;

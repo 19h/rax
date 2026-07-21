@@ -97,6 +97,8 @@ impl X86_64Lowerer {
                 emitter.emit_nop();
             }
 
+            OpKind::X86RequireApx => self.emit_x86_require_apx(op)?,
+
             OpKind::Breakpoint => {
                 let mut emitter = X86Emitter::new(&mut self.code);
                 emitter.emit_int3();

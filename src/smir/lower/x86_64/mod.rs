@@ -70,6 +70,8 @@ mod msr;
 pub use msr::*;
 mod pkru;
 pub use pkru::*;
+mod require_apx;
+pub use require_apx::*;
 mod read_control;
 pub use read_control::*;
 mod read_debug;

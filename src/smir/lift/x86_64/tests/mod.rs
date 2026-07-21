@@ -74,6 +74,10 @@ mod read_control;
 #[cfg(test)]
 mod read_debug;
 #[cfg(test)]
+mod reserved_nop;
+#[cfg(test)]
+mod rex2_no_effect;
+#[cfg(test)]
 mod scalar;
 #[cfg(test)]
 mod segment_selector_load;

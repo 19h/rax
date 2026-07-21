@@ -86,7 +86,10 @@ impl X86_64Lifter {
             if is_8bit {
                 // Outside transactional execution XABORT is a no-op, but its
                 // immediate remains part of the architectural instruction.
-                return Ok(LiftResult::fallthrough(vec![], insn_len));
+                return Ok(LiftResult::fallthrough(
+                    self.rex2_apx_guard_ops(prefix, pc),
+                    insn_len,
+                ));
             }
 
             let offset = if imm_size == 2 {

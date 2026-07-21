@@ -846,6 +846,11 @@ pub(crate) fn block_is_clobber_safe(
         if matches!(op.kind, OpKind::X86WriteDebug { .. }) && !write_debug_ok {
             return false;
         }
+        if matches!(op.kind, OpKind::X86RequireApx)
+            && !crate::smir::lower::x86_64::x86_require_apx_shape_valid(op)
+        {
+            return false;
+        }
         if matches!(op.kind, OpKind::X86Cli { .. }) && !cli_ok {
             return false;
         }

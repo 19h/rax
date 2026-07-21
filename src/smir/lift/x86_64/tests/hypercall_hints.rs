@@ -58,11 +58,14 @@ fn hypercall_hints_accept_only_semantically_ignored_legacy_and_rex_prefixes() {
 #[test]
 fn hypercall_hints_keep_rex2_feature_and_vendor_boundaries_fail_closed() {
     // Intel APX permits a REX2-compressed VMCALL only when APX is enabled.
-    // Empty-op SMIR has no dynamic APX feature guard, so this form must remain
-    // an interpreter frontier rather than bypassing the direct decoder's #UD.
+    let vmcall = lift_single(&[0xD5, 0x80, 0x01, 0xC1])
+        .expect("REX2 VMCALL hint must retain a dynamic APX guard");
     assert!(matches!(
-        lift_single(&[0xD5, 0x80, 0x01, 0xC1]),
-        Err(LiftError::Unsupported { .. })
+        vmcall.ops.as_slice(),
+        [SmirOp {
+            kind: OpKind::X86RequireApx,
+            ..
+        }]
     ));
 
     // VMMCALL is an AMD instruction, while REX2 is Intel APX. The compressed

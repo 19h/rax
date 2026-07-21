@@ -90,10 +90,19 @@ impl X86_64Lifter {
             });
         }
 
-        if matches!(modrm, 0xC1 | 0xD9) && prefix.rex2.is_none() {
+        if modrm == 0xC1 {
             // RAX's deterministic non-virtualized profile treats ordinary
-            // VMCALL/VMMCALL as paravirtualized hints: no register, flag,
-            // memory, or control-state effect beyond instruction advance.
+            // VMCALL as a paravirtualized hint: no register, flag, memory, or
+            // control-state effect beyond instruction advance. A compressed
+            // REX2 encoding retains its dynamic APX requirement explicitly.
+            return Ok(LiftResult::fallthrough(
+                self.rex2_apx_guard_ops(prefix, pc),
+                prefix.cursor + 1,
+            ));
+        }
+
+        if modrm == 0xD9 && prefix.rex2.is_none() {
+            // VMMCALL is the corresponding AMD-only paravirtualized hint.
             return Ok(LiftResult::fallthrough(Vec::new(), prefix.cursor + 1));
         }
 

@@ -3853,6 +3853,12 @@ pub enum OpKind {
         value: bool,
     },
 
+    /// Require x86 APX to be enabled before the remainder of the guest
+    /// instruction may execute. The strict x86 lifter emits this guard when a
+    /// REX2 instruction's ordinary SMIR semantics do not retain prefix
+    /// provenance. Failure requests #UD at `SmirOp::guest_pc`.
+    X86RequireApx,
+
     /// x86 CLI with architectural IOPL/VME/PVI routing. `requires_apx`
     /// records a REX2 encoding so execution can deliver #UD before privilege
     /// checks when APX is disabled. Native execution hands off at the exact
@@ -4574,6 +4580,7 @@ impl OpKind {
                 | OpKind::X86ReadTsc(..)
                 | OpKind::X86ReadPmc(..)
                 | OpKind::SetAC { .. }
+                | OpKind::X86RequireApx
                 | OpKind::X86Cli { .. }
                 | OpKind::X86Sti { .. }
                 | OpKind::X86Cpuid { .. }
@@ -5097,6 +5104,7 @@ impl OpKind {
             | OpKind::SetCF { .. }
             | OpKind::SetDF { .. }
             | OpKind::SetAC { .. }
+            | OpKind::X86RequireApx
             | OpKind::X86Cli { .. }
             | OpKind::X86Sti { .. }
             | OpKind::CmcCF
@@ -5184,6 +5192,7 @@ impl OpKind {
                     | OpKind::SetCF { .. }
                     | OpKind::SetDF { .. }
                     | OpKind::SetAC { .. }
+                    | OpKind::X86RequireApx
                     | OpKind::X86Cli { .. }
                     | OpKind::X86Sti { .. }
                     | OpKind::CmcCF
