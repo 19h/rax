@@ -36,9 +36,9 @@ use crate::vm::vcpu::state::CpuState;
 /// Magic number for checkpoint files: "RAXCKPT\0"
 const CHECKPOINT_MAGIC: [u8; 8] = *b"RAXCKPT\0";
 
-/// Current checkpoint format version. Bumped from the legacy version-1 `.snap`
-/// format (CPU + memory only) to add embedded config + device state.
-const CHECKPOINT_VERSION: u32 = 2;
+/// Current checkpoint format version. Version 2 added embedded config + device
+/// state; version 3 adds the emulator-private STI interrupt shadow.
+const CHECKPOINT_VERSION: u32 = 3;
 
 /// Canonical checkpoint file extension ("RaX Checkpoint").
 pub const CHECKPOINT_EXT: &str = "rxc";
@@ -112,6 +112,9 @@ pub struct EmulatorState {
     #[serde(default = "default_mxcsr")]
     pub mxcsr: u32,
     pub halted: bool,
+    /// Emulator-private STI interrupt shadow.
+    #[serde(default)]
+    pub interrupt_inhibit: bool,
 }
 
 fn default_mxcsr() -> u32 {
@@ -129,6 +132,7 @@ impl Default for EmulatorState {
             pkru: 0,
             mxcsr: default_mxcsr(),
             halted: false,
+            interrupt_inhibit: false,
         }
     }
 }
@@ -436,6 +440,17 @@ mod tests {
         assert_eq!(back.cmdline, cp.cmdline);
         assert_eq!(back.arch, cp.arch);
         assert_eq!(back.backend, cp.backend);
+    }
+
+    #[test]
+    fn emulator_state_bincode_roundtrip_preserves_sti_shadow() {
+        let state = EmulatorState {
+            interrupt_inhibit: true,
+            ..EmulatorState::default()
+        };
+        let bytes = bincode::serialize(&state).expect("serialize emulator state");
+        let back: EmulatorState = bincode::deserialize(&bytes).expect("deserialize emulator state");
+        assert!(back.interrupt_inhibit);
     }
 
     #[test]

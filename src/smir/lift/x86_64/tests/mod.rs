@@ -78,6 +78,8 @@ mod smsw;
 #[cfg(test)]
 mod sse;
 #[cfg(test)]
+mod sti;
+#[cfg(test)]
 mod svm_controls;
 #[cfg(test)]
 mod swapgs;

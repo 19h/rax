@@ -364,6 +364,9 @@ pub struct X86RegState {
     pub rip: u64,
     /// Flags register
     pub rflags: u64,
+    /// STI maskable-interrupt shadow. A successful STI that changes IF from
+    /// zero to one sets this until the following instruction or event boundary.
+    pub interrupt_inhibit: bool,
     /// FS base
     pub fs_base: u64,
     /// GS base

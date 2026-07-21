@@ -107,6 +107,55 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::X86Sti {
+                requires_apx,
+                next_pc: _,
+            } => {
+                use crate::isa::x86_64::execute::system::{
+                    X86StiEffect, X86StiFault, X86StiState, evaluate_x86_sti,
+                };
+                use crate::isa::x86_64::flags;
+
+                let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                };
+
+                // Reaching this instruction consumes any prior STI shadow. A
+                // successful IF 0->1 transition below may establish a fresh
+                // one; VIF updates and fault delivery leave none.
+                x86.interrupt_inhibit = false;
+                if *requires_apx && !x86.apx_enabled {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                match evaluate_x86_sti(X86StiState {
+                    cr0: x86.cr0,
+                    cr4: x86.cr4,
+                    rflags: x86.rflags,
+                    cpl: x86.cpl,
+                }) {
+                    Ok(X86StiEffect::SetIf { inhibit_interrupts }) => {
+                        x86.rflags |= flags::bits::IF;
+                        x86.interrupt_inhibit = inhibit_interrupts;
+                    }
+                    Ok(X86StiEffect::SetVif) => x86.rflags |= flags::bits::VIF,
+                    Err(X86StiFault::GeneralProtection) => {
+                        ctx.request_exit(ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        });
+                    }
+                }
+            }
+
             OpKind::CmcCF => {
                 let cf = ctx.flags.get_cf();
                 ctx.flags.materialize_all();

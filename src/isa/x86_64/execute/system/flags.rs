@@ -43,6 +43,32 @@ pub(crate) enum X86CliFault {
     GeneralProtection,
 }
 
+/// Architectural inputs used by one STI decision.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct X86StiState {
+    pub cr0: u64,
+    pub cr4: u64,
+    pub rflags: u64,
+    /// Effective CPL. Virtual-8086 mode is represented as CPL3.
+    pub cpl: u8,
+}
+
+/// Architectural state change produced by a successful STI.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum X86StiEffect {
+    /// Set IF. `inhibit_interrupts` is true exactly when IF was initially zero,
+    /// requiring maskable external interrupts to remain blocked through the
+    /// following instruction boundary.
+    SetIf { inhibit_interrupts: bool },
+    /// Set VIF through protected-mode or virtual-8086 interrupt virtualization.
+    SetVif,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum X86StiFault {
+    GeneralProtection,
+}
+
 /// Evaluate CLI without committing architectural state.
 ///
 /// Real mode always clears IF. Protected mode clears IF when CPL is permitted
@@ -76,13 +102,40 @@ pub(crate) fn evaluate_x86_cli(
     }
 }
 
-/// CLI/STI fault with #GP(0) when the current privilege level is numerically
-/// greater (less privileged) than the I/O privilege level (IOPL, bits 12-13 of
-/// RFLAGS). When CPL <= IOPL the instruction is permitted.
-#[inline]
-fn iopl_blocks(vcpu: &X86_64Vcpu) -> bool {
-    let iopl = ((vcpu.regs.rflags & flags::bits::IOPL_MASK) >> 12) as u8;
-    current_cpl(vcpu) > iopl
+/// Evaluate STI without committing architectural state.
+///
+/// Real mode sets IF. Protected and virtual-8086 modes set IF when CPL is
+/// permitted by IOPL. Otherwise CR4.PVI or CR4.VME can redirect the update to
+/// VIF, but a pending virtual interrupt (VIP=1) faults with #GP(0). The
+/// one-instruction maskable-interrupt inhibition is produced only when STI
+/// changes IF from zero to one; setting VIF never creates that physical
+/// interrupt shadow.
+pub(crate) fn evaluate_x86_sti(
+    state: X86StiState,
+) -> core::result::Result<X86StiEffect, X86StiFault> {
+    let set_if = || X86StiEffect::SetIf {
+        inhibit_interrupts: state.rflags & flags::bits::IF == 0,
+    };
+
+    if state.cr0 & CR0_PE == 0 {
+        return Ok(set_if());
+    }
+
+    let iopl = ((state.rflags & flags::bits::IOPL_MASK) >> 12) as u8;
+    if state.cpl <= iopl {
+        return Ok(set_if());
+    }
+
+    let virtual_interrupts = if state.rflags & flags::bits::VM != 0 {
+        state.cr4 & CR4_VME != 0
+    } else {
+        state.cpl == 3 && state.cr4 & CR4_PVI != 0
+    };
+    if !virtual_interrupts || state.rflags & flags::bits::VIP != 0 {
+        return Err(X86StiFault::GeneralProtection);
+    }
+
+    Ok(X86StiEffect::SetVif)
 }
 
 /// CLI - Clear Interrupt Flag (0xFA)
@@ -109,13 +162,21 @@ pub fn cli(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuEx
 /// STI - Set Interrupt Flag (0xFB)
 pub fn sti(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     use crate::isa::x86_64::cpu::log_if_transition;
-    // #GP(0) when CPL > IOPL (insufficient privilege to modify IF).
-    if iopl_blocks(vcpu) {
-        return raise_gp0(vcpu);
+    match evaluate_x86_sti(X86StiState {
+        cr0: vcpu.sregs.cr0,
+        cr4: vcpu.sregs.cr4,
+        rflags: vcpu.regs.rflags,
+        cpl: current_cpl(vcpu),
+    }) {
+        Ok(X86StiEffect::SetIf { inhibit_interrupts }) => {
+            let old_if = (vcpu.regs.rflags & flags::bits::IF) != 0;
+            vcpu.regs.rflags |= flags::bits::IF;
+            vcpu.interrupt_inhibit = inhibit_interrupts;
+            log_if_transition(vcpu.regs.rip, old_if, true, "STI");
+        }
+        Ok(X86StiEffect::SetVif) => vcpu.regs.rflags |= flags::bits::VIF,
+        Err(X86StiFault::GeneralProtection) => return raise_gp0(vcpu),
     }
-    let old_if = (vcpu.regs.rflags & flags::bits::IF) != 0;
-    vcpu.regs.rflags |= flags::bits::IF;
-    log_if_transition(vcpu.regs.rip, old_if, true, "STI");
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

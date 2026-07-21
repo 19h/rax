@@ -65,6 +65,7 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     vcpu.regs.rflags = (gr.rflags & !(flags::bits::AC | interrupt_control))
         | (gr.interrupt_flags & interrupt_control)
         | if gr.ac_flag != 0 { flags::bits::AC } else { 0 };
+    vcpu.interrupt_inhibit = gr.interrupt_inhibit != 0;
     vcpu.sregs.fs.base = gr.fs_base;
     vcpu.sregs.gs.base = gr.gs_base;
     vcpu.kernel_gs_base = gr.kernel_gs_base;
@@ -222,6 +223,7 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     gr.rflags = vcpu.regs.rflags & !flags::bits::AC;
     gr.ac_flag = u64::from(vcpu.regs.rflags & flags::bits::AC != 0);
     gr.interrupt_flags = vcpu.regs.rflags & interrupt_control;
+    gr.interrupt_inhibit = u64::from(vcpu.interrupt_inhibit);
     gr.fs_base = vcpu.sregs.fs.base;
     gr.gs_base = vcpu.sregs.gs.base;
     gr.kernel_gs_base = vcpu.kernel_gs_base;

@@ -64,6 +64,8 @@ mod smsw;
 #[cfg(test)]
 mod sqrt;
 #[cfg(test)]
+mod sti;
+#[cfg(test)]
 mod swapgs;
 #[cfg(test)]
 mod timing;

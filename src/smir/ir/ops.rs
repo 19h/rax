@@ -3862,6 +3862,16 @@ pub enum OpKind {
         next_pc: GuestAddr,
     },
 
+    /// x86 STI with architectural IOPL/VME/PVI/VIP routing. A successful IF
+    /// transition from zero to one creates the one-instruction maskable-
+    /// interrupt shadow. `requires_apx` records a REX2 encoding for #UD-before-
+    /// privilege ordering; native execution exits at the exact `next_pc` so
+    /// the shadowed instruction is retired by the boundary-aware direct path.
+    X86Sti {
+        requires_apx: bool,
+        next_pc: GuestAddr,
+    },
+
     /// Complement carry flag
     CmcCF,
 
@@ -4552,6 +4562,7 @@ impl OpKind {
                 | OpKind::X86ReadPmc(..)
                 | OpKind::SetAC { .. }
                 | OpKind::X86Cli { .. }
+                | OpKind::X86Sti { .. }
                 | OpKind::X86Cpuid { .. }
                 | OpKind::X86Count { .. }
                 | OpKind::X86X87Control {
@@ -5061,6 +5072,7 @@ impl OpKind {
             | OpKind::SetDF { .. }
             | OpKind::SetAC { .. }
             | OpKind::X86Cli { .. }
+            | OpKind::X86Sti { .. }
             | OpKind::CmcCF
             | OpKind::MaterializeFlags
             | OpKind::X86XTest
@@ -5146,6 +5158,7 @@ impl OpKind {
                     | OpKind::SetDF { .. }
                     | OpKind::SetAC { .. }
                     | OpKind::X86Cli { .. }
+                    | OpKind::X86Sti { .. }
                     | OpKind::CmcCF
                     | OpKind::MaterializeFlags
                     | OpKind::X86XTest

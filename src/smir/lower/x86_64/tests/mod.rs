@@ -66,6 +66,8 @@ mod smsw;
 #[cfg(test)]
 mod state;
 #[cfg(test)]
+mod sti;
+#[cfg(test)]
 mod swapgs;
 #[cfg(test)]
 mod timing;

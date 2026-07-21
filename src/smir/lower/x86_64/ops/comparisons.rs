@@ -2406,6 +2406,8 @@ impl X86_64Lowerer {
 
             OpKind::X86Cli { .. } => self.emit_x86_cli(op)?,
 
+            OpKind::X86Sti { .. } => self.emit_x86_sti(op)?,
+
             OpKind::CmcCF => {
                 let mut emitter = X86Emitter::new(&mut self.code);
                 emitter.emit_cmc();

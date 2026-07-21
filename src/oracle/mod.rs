@@ -4259,6 +4259,10 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             requires_apx,
             next_pc,
         } => op_json!("x86_cli", requires_apx, next_pc),
+        OpKind::X86Sti {
+            requires_apx,
+            next_pc,
+        } => op_json!("x86_sti", requires_apx, next_pc),
         OpKind::CmcCF => op_json!("cmc_cf"),
         OpKind::MaterializeFlags => op_json!("materialize_flags"),
         OpKind::X86XTest => op_json!("x86_xtest"),

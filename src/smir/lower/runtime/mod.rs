@@ -295,6 +295,14 @@ pub struct GuestRegs {
     /// architectural CLI privilege/virtualization decision and committing only
     /// IF or VIF in `interrupt_flags` on success.
     pub cli_fn: u64,
+    /// Zero or one STI maskable-interrupt shadow. This field is distinct from
+    /// architectural RFLAGS and survives the immediate native-to-direct
+    /// handoff at a successful STI frontier.
+    pub interrupt_inhibit: u64,
+    /// Address of `extern "C" fn(state, requires_apx) -> ok`, implementing the
+    /// architectural STI privilege/VIP decision and committing IF/VIF plus the
+    /// interrupt shadow only on success.
+    pub sti_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -372,6 +380,8 @@ impl Default for GuestRegs {
             far_return_fn: 0,
             interrupt_flags: 0,
             cli_fn: 0,
+            interrupt_inhibit: 0,
+            sti_fn: 0,
         }
     }
 }

@@ -273,6 +273,12 @@ pub struct X86_64Vcpu {
     pub(super) mmu: Mmu,
     pub(super) fpu: FpuState,
     pub(super) halted: bool,
+    /// STI maskable-interrupt shadow. When true, external maskable interrupt
+    /// injection remains blocked through the next instruction boundary. The
+    /// direct `step()` wrapper consumes the prior shadow before attempting that
+    /// instruction; a successful STI can establish a fresh shadow while it
+    /// executes.
+    pub(super) interrupt_inhibit: bool,
     io_pending: Option<IoPending>,
     /// IA32_KERNEL_GS_BASE MSR (0xC0000102) for SWAPGS
     pub(super) kernel_gs_base: u64,
@@ -961,6 +967,7 @@ impl X86_64Vcpu {
             mmu: Mmu::new(mem),
             fpu: FpuState::default(),
             halted: false,
+            interrupt_inhibit: false,
             io_pending: None,
             kernel_gs_base: 0,
             tsc_adjust: 0,
@@ -1608,7 +1615,16 @@ impl X86_64Vcpu {
             .wrapping_add(self.tsc_adjust)
     }
 
+    /// Execute one instruction attempt and consume any STI interrupt shadow
+    /// that protected this boundary. Fetch/decode/execution faults also consume
+    /// the shadow because delivery of that event ends STI inhibition.
     pub fn step(&mut self) -> Result<Option<VcpuExit>> {
+        self.interrupt_inhibit = false;
+        self.step_inner()
+    }
+
+    #[inline]
+    fn step_inner(&mut self) -> Result<Option<VcpuExit>> {
         // Retired-instruction counter. Plain add - no atomics on the hot path
         // (published to the global counter at run() yield boundaries).
         self.insn_count = self.insn_count.wrapping_add(1);
@@ -3093,6 +3109,11 @@ impl X86_64Vcpu {
             self.sregs.cs.db = false; // D must be 0 when L=1
         }
 
+        // Delivery of any event ends the one-boundary STI inhibition. This is
+        // intentionally committed only after the complete exception frame and
+        // handler state have been installed successfully.
+        self.interrupt_inhibit = false;
+
         Ok(())
     }
 }
@@ -3185,6 +3206,7 @@ impl X86_64Vcpu {
         self.fpu = FpuState::default();
         self.lazy_flags = LazyFlags::default();
         self.halted = false;
+        self.interrupt_inhibit = false;
         self.io_pending = None;
         self.kernel_gs_base = 0;
         self.tsc_adjust = 0;
@@ -3272,7 +3294,10 @@ impl VCpu for X86_64Vcpu {
             ))]
             let _jit_rip_before = {
                 let rip = self.regs.rip;
-                if !self.jit_disabled_for_debugger() && !self.jit_cache.is_empty() {
+                if !self.interrupt_inhibit
+                    && !self.jit_disabled_for_debugger()
+                    && !self.jit_cache.is_empty()
+                {
                     let key = (rip, self.jit_mode_tag());
                     if let Some(slot) = self.jit_cache.get(&key).cloned() {
                         if let Some(region) = slot {
@@ -3394,6 +3419,9 @@ impl VCpu for X86_64Vcpu {
         };
         self.regs = state.regs.clone();
         self.sregs = state.sregs.clone();
+        // External state injection is a serializing boundary and does not carry
+        // the emulator-private STI interrupt shadow.
+        self.interrupt_inhibit = false;
         // Injecting CPU state is a serializing event: drop the decode cache so we
         // re-decode from (possibly externally rewritten) code memory. Not hot -
         // set_state is only called at init / snapshot restore / GDB, never in run().
@@ -3514,7 +3542,9 @@ impl VCpu for X86_64Vcpu {
     fn can_inject_interrupt(&self) -> bool {
         // IF is set/cleared only by STI/CLI/POPF/IRET (written straight to
         // regs.rflags), never by the lazy ALU-flag engine - so read it directly.
-        (self.regs.rflags & flags::bits::IF) != 0
+        // A successful IF 0->1 STI additionally blocks maskable injection
+        // through the following instruction boundary.
+        (self.regs.rflags & flags::bits::IF) != 0 && !self.interrupt_inhibit
     }
 
     fn inject_interrupt(&mut self, vector: u8) -> Result<bool> {
@@ -3626,6 +3656,7 @@ impl VCpu for X86_64Vcpu {
             pkru: self.pkru,
             mxcsr: self.mxcsr,
             halted: self.halted,
+            interrupt_inhibit: self.interrupt_inhibit,
         })
     }
 
@@ -3665,6 +3696,7 @@ impl VCpu for X86_64Vcpu {
         self.pkru = state.pkru;
         self.mxcsr = state.mxcsr;
         self.halted = state.halted;
+        self.interrupt_inhibit = state.interrupt_inhibit;
 
         Ok(())
     }
@@ -3773,6 +3805,12 @@ use jit_control::rax_jit_write_control;
 mod jit_cli;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 use jit_cli::rax_jit_cli;
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_sti.rs"]
+mod jit_sti;
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+use jit_sti::rax_jit_sti;
 
 #[path = "cpu_descriptor_table.rs"]
 mod descriptor_table;
@@ -4376,7 +4414,7 @@ impl X86_64Vcpu {
     /// native code uninterruptibly — callers should only invoke this for
     /// regions known to terminate (e.g. promoted hot loops with an exit edge).
     pub fn jit_try_block(&mut self) -> Result<bool> {
-        if self.jit_disabled_for_debugger() {
+        if self.interrupt_inhibit || self.jit_disabled_for_debugger() {
             return Ok(false);
         }
 
@@ -5001,6 +5039,7 @@ impl X86_64Vcpu {
         gr.far_call_fn = rax_jit_far_call as usize as u64;
         gr.far_return_fn = rax_jit_far_return as usize as u64;
         gr.cli_fn = rax_jit_cli as usize as u64;
+        gr.sti_fn = rax_jit_sti as usize as u64;
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
@@ -5076,6 +5115,7 @@ impl X86_64Vcpu {
         gr.ac_flag = u64::from(self.regs.rflags & flags::bits::AC != 0);
         gr.interrupt_flags = self.regs.rflags
             & crate::isa::x86_64::execute::system::X86_INTERRUPT_CONTROL_RFLAGS_MASK;
+        gr.interrupt_inhibit = u64::from(self.interrupt_inhibit);
         gr.exit_pc = self.regs.rip; // fallback (an exit stub overwrites this)
         if region.uses_vector || region.uses_xmm_state {
             for index in 0..16 {
@@ -5219,6 +5259,7 @@ impl X86_64Vcpu {
             | (gr.rflags & STATUS)
             | (gr.interrupt_flags & INTERRUPT_CONTROL)
             | if gr.ac_flag != 0 { flags::bits::AC } else { 0 };
+        self.interrupt_inhibit = gr.interrupt_inhibit != 0;
         self.regs.rip = gr.exit_pc;
         // The native region produced fully-materialized RFLAGS. Mark the lazy
         // state as materialized so the interpreter, on resume, reads
@@ -5312,6 +5353,7 @@ impl X86_64Vcpu {
         let snap_dr6 = self.sregs.dr6;
         let snap_dr7 = self.sregs.dr7;
         let snap_descriptor_state = self.descriptor_state_snapshot();
+        let snap_interrupt_inhibit = self.interrupt_inhibit;
 
         // 1) Run natively with store-logging (to UNDO writes) and an access
         //    trace (to diff against the interpreter's access sequence).
@@ -5346,6 +5388,7 @@ impl X86_64Vcpu {
         let jit_dr6 = self.sregs.dr6;
         let jit_dr7 = self.sregs.dr7;
         let jit_descriptor_state = self.descriptor_state_snapshot();
+        let jit_interrupt_inhibit = self.interrupt_inhibit;
         let jit_rflags = self.regs.rflags; // already materialized by the native bridge
         let exit_pc = self.regs.rip;
         // Take the native trace NOW, before the undo/re-read loops add to it.
@@ -5404,6 +5447,7 @@ impl X86_64Vcpu {
         self.sregs.dr3 = snap_dr3;
         self.sregs.dr6 = snap_dr6;
         self.sregs.dr7 = snap_dr7;
+        self.interrupt_inhibit = snap_interrupt_inhibit;
         snap_descriptor_state.restore(self);
         // A lift-through-call callee can update translation controls through
         // the direct interpreter. The verification replay must not reuse TLB
@@ -5552,6 +5596,12 @@ impl X86_64Vcpu {
                 }
             }
             jit_descriptor_state.append_verify_diffs(self, &mut diffs);
+            if self.interrupt_inhibit != jit_interrupt_inhibit {
+                diffs.push(format!(
+                    "interrupt_inhibit: interp={} jit={}",
+                    self.interrupt_inhibit, jit_interrupt_inhibit
+                ));
+            }
             // Vector (XMM/YMM/ZMM) + opmask (k) state. A masked-EVEX miscompile —
             // or any vector divergence — surfaces here. The interpreter result is
             // in self.regs, the native result in `jit`; the GPR/flags/memory checks
@@ -5717,6 +5767,7 @@ impl X86_64Vcpu {
         self.sregs.dr3 = jit_dr3;
         self.sregs.dr6 = jit_dr6;
         self.sregs.dr7 = jit_dr7;
+        self.interrupt_inhibit = jit_interrupt_inhibit;
         jit_descriptor_state.restore(self);
         self.mmu.flush_tlb();
     }
@@ -5800,7 +5851,7 @@ impl X86_64Vcpu {
     /// compiles exactly there. Ineligible heads are cached as `None` so they are
     /// never retried.
     fn jit_sample_backedge(&mut self, rip_before: u64) {
-        if self.jit_disabled_for_debugger() {
+        if self.interrupt_inhibit || self.jit_disabled_for_debugger() {
             return;
         }
 
@@ -6303,6 +6354,14 @@ mod jit_clts_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_cli_tests.rs"]
 mod jit_cli_tests;
+
+#[cfg(test)]
+#[path = "cpu_sti_tests.rs"]
+mod sti_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_sti_tests.rs"]
+mod jit_sti_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_read_control_tests.rs"]

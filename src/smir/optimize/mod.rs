@@ -3969,6 +3969,7 @@ impl OpKind {
             | OpKind::SetDF { .. }
             | OpKind::SetAC { .. }
             | OpKind::X86Cli { .. }
+            | OpKind::X86Sti { .. }
             | OpKind::X86Clts
             | OpKind::X86ReadControl { .. }
             | OpKind::X86Smsw(X86SmswOp {
