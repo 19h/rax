@@ -11,14 +11,15 @@ use crate::smir::lower::{
 use super::{X86_64Lowerer, X86Cond, X86Emitter};
 
 /// Validate the exact 64-bit GPR/control-register shape emitted by the strict
-/// x86-64 lifter. APX EGPRs are excluded because MOV-from-CR has no REX2 form.
+/// x86-64 lifter. REX2 permits every GPR through R31; the preceding
+/// `X86RequireApx` operation retains the source encoding's dynamic admission.
 pub(crate) fn x86_read_control_shape_valid(kind: &OpKind) -> bool {
     let OpKind::X86ReadControl { dst, control } = kind else {
         return false;
     };
     matches!(
         dst,
-        VReg::Arch(ArchReg::X86(reg)) if reg.gpr_index().is_some_and(|index| index < 16)
+        VReg::Arch(ArchReg::X86(reg)) if reg.gpr_index().is_some_and(|index| index < 32)
     ) && matches!(
         control,
         X86ControlReg::Cr0
@@ -47,8 +48,7 @@ impl X86_64Lowerer {
         if !x86_read_control_shape_valid(&op.kind) {
             return Err(LowerError::InvalidOperand {
                 op: "X86ReadControl".to_string(),
-                operand: "requires one legacy x86 GPR destination and CR0/CR2/CR3/CR4/CR8"
-                    .to_string(),
+                operand: "requires one x86 GPR destination and CR0/CR2/CR3/CR4/CR8".to_string(),
             });
         }
         let OpKind::X86ReadControl { dst, control } = &op.kind else {

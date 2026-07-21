@@ -11,9 +11,10 @@ impl X86_64Lifter {
     ///
     /// Intel defines the ModR/M.mod field as ignored for this instruction, so
     /// only the raw ModR/M byte is consumed: apparent memory forms do not carry
-    /// a SIB or displacement. Reserved control-register numbers are guaranteed
-    /// #UDs and therefore become explicit invalid-opcode traps rather than
-    /// unsupported frontiers.
+    /// a SIB or displacement. REX2.R4/R3 extend the control selector and
+    /// REX2.B4/B3 extend the destination through R31. Reserved control-register
+    /// numbers are guaranteed #UDs and therefore become explicit invalid-opcode
+    /// traps rather than unsupported frontiers.
     pub(crate) fn lift_read_control_0f20(
         &self,
         bytes: &[u8],
@@ -28,7 +29,7 @@ impl X86_64Lifter {
                 need: prefix.cursor + 1,
             });
         }
-        if prefix.lock || prefix.rex2.is_some() {
+        if prefix.lock {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: vec![bytes[0]],
@@ -74,7 +75,8 @@ impl X86_64Lifter {
     /// The strict x86-64 source model always has the 64-bit operand form. The
     /// direct decoder retains the architecturally distinct r32 behavior for
     /// compatibility/legacy mode. ModR/M.mod is ignored and therefore cannot
-    /// introduce a SIB, displacement, or memory access.
+    /// introduce a SIB, displacement, or memory access. REX2.R4/R3 extend the
+    /// control selector and REX2.B4/B3 extend the source through R31.
     pub(crate) fn lift_write_control_0f22(
         &self,
         bytes: &[u8],
@@ -89,7 +91,7 @@ impl X86_64Lifter {
                 need: prefix.cursor + 1,
             });
         }
-        if prefix.lock || prefix.rex2.is_some() {
+        if prefix.lock {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: vec![bytes[0]],

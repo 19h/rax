@@ -726,11 +726,42 @@ fn mov_from_dr_decode_faults_precede_dynamic_state_without_committing() {
         assert_eq!(vcpu.get_sregs().unwrap().dr6 & (1 << 13), 0, "{name}");
     }
 
-    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x80, 0x21, 0xC0], None);
+    // LLVM encodes MOV R16,DR0 as D5 90 21 C0. A valid REX2 form must
+    // survive decode and reach the dynamic DR7.GD check without committing R16.
+    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x90, 0x21, 0xC0], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 3;
+    sregs.dr6 &= !(1 << 13);
+    sregs.dr7 = 1 << 13;
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.r16 = 0xA5A5_5A5A_DEAD_BEEF;
+    vcpu.set_regs(&regs).unwrap();
     let error = vcpu
         .step()
-        .expect_err("REX2 MOV-from-DR must remain undefined with APX enabled");
+        .expect_err("valid REX2 MOV-from-DR must reach the DR7.GD check");
+    assert!(error.to_string().contains("IDT entry 1 not present"));
+    assert_eq!(vcpu.get_regs().unwrap().r16, regs.r16);
+    assert_ne!(vcpu.get_sregs().unwrap().dr6 & (1 << 13), 0);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR);
+
+    // REX2.R3 selects the nonexistent DR8. That #UD precedes DR7.GD and CPL.
+    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x84, 0x21, 0xC0], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 3;
+    sregs.dr6 &= !(1 << 13);
+    sregs.dr7 = 1 << 13;
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rax = 0xA5A5_5A5A_DEAD_BEEF;
+    vcpu.set_regs(&regs).unwrap();
+    let error = vcpu
+        .step()
+        .expect_err("REX2 MOV-from-DR8 must #UD before dynamic checks");
     assert!(error.to_string().contains("IDT entry 6 not present"));
+    assert_eq!(vcpu.get_regs().unwrap().rax, regs.rax);
+    assert_eq!(vcpu.get_sregs().unwrap().dr6 & (1 << 13), 0);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR);
 }
 
 #[test]
@@ -910,11 +941,40 @@ fn mov_to_dr_decode_faults_precede_dynamic_state_without_committing() {
         assert_eq!(vcpu.get_sregs().unwrap().dr6 & (1 << 13), 0, "{name}");
     }
 
-    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x80, 0x23, 0xC0], None);
+    // LLVM encodes MOV DR0,R16 as D5 90 23 C0. A valid REX2 form must
+    // survive decode and reach the dynamic DR7.GD check without committing DR0.
+    let mut initial = Registers::default();
+    initial.r16 = 0xA5A5_5A5A_DEAD_BEEF;
+    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x90, 0x23, 0xC0], Some(initial));
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 3;
+    sregs.dr0 = 0x1111_2222_3333_4444;
+    sregs.dr6 &= !(1 << 13);
+    sregs.dr7 = 1 << 13;
+    vcpu.set_sregs(&sregs).unwrap();
     let error = vcpu
         .step()
-        .expect_err("REX2 MOV-to-DR must remain undefined with APX enabled");
+        .expect_err("valid REX2 MOV-to-DR must reach the DR7.GD check");
+    assert!(error.to_string().contains("IDT entry 1 not present"));
+    assert_eq!(vcpu.get_sregs().unwrap().dr0, sregs.dr0);
+    assert_ne!(vcpu.get_sregs().unwrap().dr6 & (1 << 13), 0);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR);
+
+    // REX2.R3 selects the nonexistent DR8. That #UD precedes DR7.GD and CPL.
+    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x84, 0x23, 0xC0], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 3;
+    sregs.dr0 = 0x1111_2222_3333_4444;
+    sregs.dr6 &= !(1 << 13);
+    sregs.dr7 = 1 << 13;
+    vcpu.set_sregs(&sregs).unwrap();
+    let error = vcpu
+        .step()
+        .expect_err("REX2 MOV-to-DR8 must #UD before dynamic checks");
     assert!(error.to_string().contains("IDT entry 6 not present"));
+    assert_eq!(vcpu.get_sregs().unwrap().dr0, sregs.dr0);
+    assert_eq!(vcpu.get_sregs().unwrap().dr6 & (1 << 13), 0);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR);
 }
 
 #[test]

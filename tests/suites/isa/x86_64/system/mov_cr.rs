@@ -779,11 +779,36 @@ fn mov_from_cr_decode_faults_precede_privilege_faults_without_committing() {
         assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
     }
 
-    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x80, 0x20, 0xC0], None);
+    // LLVM encodes MOV R16,CR0 as D5 90 20 C0. A valid REX2 form must
+    // survive decode and reach the ordinary CPL check without committing R16.
+    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x90, 0x20, 0xC0], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 3;
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.r16 = 0xA5A5_5A5A_DEAD_BEEF;
+    vcpu.set_regs(&regs).unwrap();
     let error = vcpu
         .step()
-        .expect_err("REX2 MOV-from-CR must remain undefined with APX enabled");
+        .expect_err("valid REX2 MOV-from-CR must reach the CPL check");
+    assert!(error.to_string().contains("IDT entry 13 not present"));
+    assert_eq!(vcpu.get_regs().unwrap().r16, regs.r16);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR);
+
+    // REX2.R4 selects the nonexistent CR16. That decode fault precedes CPL.
+    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0xC0, 0x20, 0xC0], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 3;
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rax = 0xA5A5_5A5A_DEAD_BEEF;
+    vcpu.set_regs(&regs).unwrap();
+    let error = vcpu
+        .step()
+        .expect_err("REX2 MOV-from-CR16 must #UD before the CPL check");
     assert!(error.to_string().contains("IDT entry 6 not present"));
+    assert_eq!(vcpu.get_regs().unwrap().rax, regs.rax);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR);
 }
 
 #[test]
@@ -873,11 +898,31 @@ fn mov_to_cr_decode_faults_precede_privilege_faults_without_committing() {
         assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR, "{name}");
     }
 
-    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x80, 0x22, 0xC0], None);
-    let before = vcpu.get_sregs().unwrap();
+    // LLVM encodes MOV CR0,R16 as D5 90 22 C0. A valid REX2 form must
+    // survive decode and reach the ordinary CPL check without committing CR0.
+    let mut initial = rax::vm::vcpu::Registers::default();
+    initial.r16 = 0xA5A5_5A5A_DEAD_BEEF;
+    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0x90, 0x22, 0xC0], Some(initial));
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 3;
+    let before = sregs.clone();
+    vcpu.set_sregs(&sregs).unwrap();
     let error = vcpu
         .step()
-        .expect_err("REX2 MOV-to-CR must remain undefined with APX enabled");
+        .expect_err("valid REX2 MOV-to-CR must reach the CPL check");
+    assert!(error.to_string().contains("IDT entry 13 not present"));
+    assert_eq!(vcpu.get_sregs().unwrap().cr0, before.cr0);
+    assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR);
+
+    // REX2.R4 selects the nonexistent CR16. That decode fault precedes CPL.
+    let (mut vcpu, _) = setup_apx_vm_no_idt(&[0xD5, 0xC0, 0x22, 0xC0], None);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 3;
+    let before = sregs.clone();
+    vcpu.set_sregs(&sregs).unwrap();
+    let error = vcpu
+        .step()
+        .expect_err("REX2 MOV-to-CR16 must #UD before the CPL check");
     assert!(error.to_string().contains("IDT entry 6 not present"));
     assert_eq!(vcpu.get_sregs().unwrap().cr0, before.cr0);
     assert_eq!(vcpu.get_regs().unwrap().rip, CODE_ADDR);

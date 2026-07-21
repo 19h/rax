@@ -30,37 +30,39 @@ fn lower_read_control_requires_fault_guards_uses_state_and_never_emits_host_mov_
         Err(LowerError::UnsupportedOp { .. })
     ));
 
-    for (control, offset) in [
-        (X86ControlReg::Cr0, X86_GUEST_CR0_OFFSET),
-        (X86ControlReg::Cr2, X86_GUEST_CR2_OFFSET),
-        (X86ControlReg::Cr3, X86_GUEST_CR3_OFFSET),
-        (X86ControlReg::Cr4, X86_GUEST_CR4_OFFSET),
-        (X86ControlReg::Cr8, X86_GUEST_CR8_OFFSET),
-    ] {
-        let (code, _) = lower_read_control(kind(x86(X86Reg::R15), control), true)
-            .expect("guarded MOV-from-CR lowering");
-        assert!(
-            !code.windows(2).any(|window| window == [0x0F, 0x20]),
-            "guest MOV-from-CR must not execute on the host: {code:02X?}"
-        );
-        assert!(
-            code.windows(4)
-                .any(|window| window == (offset as u32).to_le_bytes()),
-            "missing GuestRegs {control:?} offset {offset}"
-        );
-        for guard_offset in [X86_GUEST_CR0_OFFSET, X86_GUEST_CPL_OFFSET] {
+    for destination in [X86Reg::R15, X86Reg::R31] {
+        for (control, offset) in [
+            (X86ControlReg::Cr0, X86_GUEST_CR0_OFFSET),
+            (X86ControlReg::Cr2, X86_GUEST_CR2_OFFSET),
+            (X86ControlReg::Cr3, X86_GUEST_CR3_OFFSET),
+            (X86ControlReg::Cr4, X86_GUEST_CR4_OFFSET),
+            (X86ControlReg::Cr8, X86_GUEST_CR8_OFFSET),
+        ] {
+            let (code, _) = lower_read_control(kind(x86(destination), control), true)
+                .expect("guarded MOV-from-CR lowering");
+            assert!(
+                !code.windows(2).any(|window| window == [0x0F, 0x20]),
+                "guest MOV-from-CR must not execute on the host: {code:02X?}"
+            );
             assert!(
                 code.windows(4)
-                    .any(|window| window == (guard_offset as u32).to_le_bytes()),
-                "missing privilege-guard offset {guard_offset}"
+                    .any(|window| window == (offset as u32).to_le_bytes()),
+                "missing GuestRegs {control:?} offset {offset}"
+            );
+            for guard_offset in [X86_GUEST_CR0_OFFSET, X86_GUEST_CPL_OFFSET] {
+                assert!(
+                    code.windows(4)
+                        .any(|window| window == (guard_offset as u32).to_le_bytes()),
+                    "missing privilege-guard offset {guard_offset}"
+                );
+            }
+            let has_cpuid = code.windows(2).any(|window| window == [0x0F, 0xA2]);
+            assert_eq!(
+                has_cpuid,
+                !matches!(control, X86ControlReg::Cr8),
+                "CR0/2/3/4 reads serialize; CR8 does not"
             );
         }
-        let has_cpuid = code.windows(2).any(|window| window == [0x0F, 0xA2]);
-        assert_eq!(
-            has_cpuid,
-            !matches!(control, X86ControlReg::Cr8),
-            "CR0/2/3/4 reads serialize; CR8 does not"
-        );
     }
 }
 
@@ -72,7 +74,6 @@ fn lower_read_control_rejects_every_non_lifter_operand_class() {
             VReg::Arch(ArchReg::Arm(crate::smir::ir::types::ArmReg::X(0))),
             X86ControlReg::Cr2,
         ),
-        kind(x86(X86Reg::gpr(16)), X86ControlReg::Cr3),
         kind(VReg::Imm(0), X86ControlReg::Cr4),
     ] {
         assert!(!x86_read_control_shape_valid(&malformed));
@@ -123,6 +124,8 @@ fn native_read_control_covers_all_registers_stack_aliases_and_flag_preservation(
         (0x1006, kind(x86(X86Reg::Rbp), X86ControlReg::Cr3)),
         (0x1009, kind(x86(X86Reg::R14), X86ControlReg::Cr4)),
         (0x100C, kind(x86(X86Reg::R15), X86ControlReg::Cr8)),
+        (0x100F, kind(x86(X86Reg::R16), X86ControlReg::Cr0)),
+        (0x1012, kind(x86(X86Reg::R31), X86ControlReg::Cr8)),
     ];
     let regs = execute_native(&ops, |regs| {
         regs.cr0 = 0x8005_0033;
@@ -138,6 +141,8 @@ fn native_read_control_covers_all_registers_stack_aliases_and_flag_preservation(
     assert_eq!(regs.gpr[5], regs.cr3);
     assert_eq!(regs.gpr[14], regs.cr4);
     assert_eq!(regs.gpr[15], regs.cr8);
+    assert_eq!(regs.gpr[16], regs.cr0);
+    assert_eq!(regs.gpr[31], regs.cr8);
     assert_eq!(regs.gpr[3], 0xA500_0000_0000_0003);
     assert_eq!(regs.rflags & (0x08D5 | (1 << 10)), 0x08D5 | (1 << 10));
     assert_eq!(regs.ac_flag, 1);

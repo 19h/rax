@@ -43,6 +43,23 @@ fn register_image(vcpu: &X86_64Vcpu) -> serde_json::Value {
         .expect("serialize x86 register image")
 }
 
+fn control_debug_image(vcpu: &X86_64Vcpu) -> [u64; 12] {
+    [
+        vcpu.sregs.cr0,
+        vcpu.sregs.cr2,
+        vcpu.sregs.cr3,
+        vcpu.sregs.cr4,
+        vcpu.sregs.cr8,
+        vcpu.sregs.efer,
+        vcpu.sregs.dr0,
+        vcpu.sregs.dr1,
+        vcpu.sregs.dr2,
+        vcpu.sregs.dr3,
+        vcpu.sregs.dr6,
+        vcpu.sregs.dr7,
+    ]
+}
+
 fn step_error(vcpu: &mut X86_64Vcpu, name: &str) -> String {
     match vcpu.step() {
         Ok(exit) => panic!("{name}: expected #UD, got {exit:?}"),
@@ -133,6 +150,118 @@ fn direct_rex2_emms_is_dynamic_and_cache_stable() {
     assert_eq!(vcpu.fpu.tag_word, 0x2468);
 }
 
+#[test]
+fn direct_rex2_control_debug_transfers_use_full_extensions_on_cold_and_cache_hits() {
+    let status = 0x08C5 | flags::bits::DF;
+
+    // LLVM 23 encodes `movq %cr8,%r31` as D5 95 20 C7.
+    let mut read_control = test_vcpu(memory_with_code(&[0xD5, 0x95, 0x20, 0xC7]));
+    read_control.set_apx_enabled(true);
+    read_control.sregs.cr8 = 0xD;
+    for pass in 0..2 {
+        read_control.regs.rip = 0;
+        read_control.regs.r31 = u64::MAX;
+        assert!(read_control.step().expect("REX2 MOV-from-CR").is_none());
+        assert_eq!(read_control.regs.rip, 4, "MOV-from-CR pass {pass}");
+        assert_eq!(read_control.regs.r31, 0xD, "MOV-from-CR pass {pass}");
+        assert_eq!(read_control.regs.rflags & status, status);
+    }
+
+    // LLVM 23 encodes `movq %r16,%cr2` as D5 90 22 D0.
+    let mut write_control = test_vcpu(memory_with_code(&[0xD5, 0x90, 0x22, 0xD0]));
+    write_control.set_apx_enabled(true);
+    write_control.regs.r16 = 0x1616_2222_3333_4444;
+    for pass in 0..2 {
+        write_control.regs.rip = 0;
+        write_control.sregs.cr2 = 0xA5A5;
+        assert!(write_control.step().expect("REX2 MOV-to-CR").is_none());
+        assert_eq!(write_control.regs.rip, 4, "MOV-to-CR pass {pass}");
+        assert_eq!(
+            write_control.sregs.cr2, 0x1616_2222_3333_4444,
+            "MOV-to-CR pass {pass}"
+        );
+        assert_eq!(write_control.regs.rflags & status, status);
+    }
+
+    // LLVM 23 encodes `movq %dr7,%r31` as D5 91 21 FF.
+    let mut read_debug = test_vcpu(memory_with_code(&[0xD5, 0x91, 0x21, 0xFF]));
+    read_debug.set_apx_enabled(true);
+    read_debug.sregs.dr7 = 0x400;
+    for pass in 0..2 {
+        read_debug.regs.rip = 0;
+        read_debug.regs.r31 = u64::MAX;
+        assert!(read_debug.step().expect("REX2 MOV-from-DR").is_none());
+        assert_eq!(read_debug.regs.rip, 4, "MOV-from-DR pass {pass}");
+        assert_eq!(read_debug.regs.r31, 0x400, "MOV-from-DR pass {pass}");
+        assert_eq!(read_debug.regs.rflags & status, status);
+    }
+
+    // LLVM 23 encodes `movq %r31,%dr3` as D5 91 23 DF.
+    let mut write_debug = test_vcpu(memory_with_code(&[0xD5, 0x91, 0x23, 0xDF]));
+    write_debug.set_apx_enabled(true);
+    write_debug.regs.r31 = 0x3131_2222_3333_4444;
+    for pass in 0..2 {
+        write_debug.regs.rip = 0;
+        write_debug.sregs.dr3 = 0xA5A5;
+        assert!(write_debug.step().expect("REX2 MOV-to-DR").is_none());
+        assert_eq!(write_debug.regs.rip, 4, "MOV-to-DR pass {pass}");
+        assert_eq!(
+            write_debug.sregs.dr3, 0x3131_2222_3333_4444,
+            "MOV-to-DR pass {pass}"
+        );
+        assert_eq!(write_debug.regs.rflags & status, status);
+    }
+
+    // The valid cached decode must still re-evaluate APX before the handler.
+    read_control.regs.rip = 0;
+    read_control.regs.r31 = 0x3131_3131_3131_3131;
+    read_control.set_apx_enabled(false);
+    let before_regs = register_image(&read_control);
+    let before_system = control_debug_image(&read_control);
+    let error = step_error(&mut read_control, "cached APX-disabled MOV-from-CR");
+    assert!(error.contains("IDT entry 6 not present"), "{error}");
+    assert_eq!(register_image(&read_control), before_regs);
+    assert_eq!(control_debug_image(&read_control), before_system);
+}
+
+#[test]
+fn direct_rex2_control_debug_nonexistent_selectors_ud_before_all_state() {
+    for (name, code) in [
+        ("MOV r64,CR16", &[0xD5, 0xC0, 0x20, 0xC0][..]),
+        ("MOV CR9,r64", &[0xD5, 0x84, 0x22, 0xC8]),
+        ("MOV r64,DR8", &[0xD5, 0x84, 0x21, 0xC0]),
+        ("MOV DR16,r64", &[0xD5, 0xC0, 0x23, 0xC0]),
+    ] {
+        let mut vcpu = test_vcpu(memory_with_code(code));
+        vcpu.set_apx_enabled(true);
+        vcpu.sregs.cr2 = 0x2222_3333_4444_5555;
+        vcpu.sregs.dr0 = 0x1111_2222_3333_4444;
+        vcpu.sregs.dr6 = 0x400;
+        vcpu.sregs.dr7 = 1 << 13;
+        let before_regs = register_image(&vcpu);
+        let before_system = control_debug_image(&vcpu);
+
+        for pass in 0..2 {
+            let error = step_error(&mut vcpu, &format!("{name}, pass {pass}"));
+            assert!(
+                error.contains("IDT entry 6 not present"),
+                "{name}, pass {pass}: {error}"
+            );
+            assert_eq!(register_image(&vcpu), before_regs, "{name}, pass {pass}");
+            assert_eq!(
+                control_debug_image(&vcpu),
+                before_system,
+                "{name}, pass {pass}"
+            );
+            assert_eq!(vcpu.regs.rip, 0, "{name}, pass {pass}");
+            if pass == 0 {
+                let cached = vcpu.decode_cache[X86_64Vcpu::decode_cache_index(0)];
+                assert_ne!(cached.bytes_len, 0, "{name}: cold decode was not cached");
+            }
+        }
+    }
+}
+
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 #[test]
 fn native_rex2_emms_matches_direct_and_rechecks_apx_without_commit() {
@@ -180,6 +309,114 @@ fn native_rex2_emms_matches_direct_and_rechecks_apx_without_commit() {
     assert_eq!(register_image(&disabled), before);
     assert_eq!(disabled.fpu.tag_word, 0x2468);
     assert_eq!(disabled.regs.rip, 0);
+}
+
+#[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
+#[test]
+fn native_rex2_control_debug_transfers_match_direct_and_recheck_apx() {
+    // MOV R31,CR8 continues through the following branch.
+    let memory = memory_with_code(&[0xD5, 0x95, 0x20, 0xC7, 0xEB, 0x00, 0xF4]);
+    let mut direct = test_vcpu(memory.clone());
+    let mut native = test_vcpu(memory.clone());
+    for vcpu in [&mut direct, &mut native] {
+        vcpu.set_apx_enabled(true);
+        vcpu.sregs.cr8 = 0xD;
+        vcpu.regs.r31 = u64::MAX;
+    }
+    for _ in 0..2 {
+        assert!(direct.step().expect("direct REX2 MOV-from-CR").is_none());
+    }
+    let region = native
+        .jit_compile_region()
+        .expect("compile REX2 MOV-from-CR")
+        .expect("REX2 MOV-from-CR must be native eligible");
+    native.jit_run_region_native(&region);
+    assert_eq!(register_image(&native), register_image(&direct));
+    assert_eq!(control_debug_image(&native), control_debug_image(&direct));
+    assert_eq!(native.regs.r31, 0xD);
+
+    // MOV CR2,R16 ends at its exact post-instruction frontier.
+    let memory = memory_with_code(&[0xD5, 0x90, 0x22, 0xD0, 0xEB, 0x00, 0xF4]);
+    let mut direct = test_vcpu(memory.clone());
+    let mut native = test_vcpu(memory);
+    for vcpu in [&mut direct, &mut native] {
+        vcpu.set_apx_enabled(true);
+        vcpu.regs.r16 = 0x1616_2222_3333_4444;
+        vcpu.sregs.cr2 = 0;
+    }
+    assert!(direct.step().expect("direct REX2 MOV-to-CR").is_none());
+    let region = native
+        .jit_compile_region()
+        .expect("compile REX2 MOV-to-CR")
+        .expect("REX2 MOV-to-CR must be native eligible");
+    native.jit_run_region_native(&region);
+    assert_eq!(register_image(&native), register_image(&direct));
+    assert_eq!(control_debug_image(&native), control_debug_image(&direct));
+    assert_eq!(native.regs.rip, 4);
+    assert_eq!(native.sregs.cr2, 0x1616_2222_3333_4444);
+
+    // MOV R31,DR7 continues through the following branch.
+    let memory = memory_with_code(&[0xD5, 0x91, 0x21, 0xFF, 0xEB, 0x00, 0xF4]);
+    let mut direct = test_vcpu(memory.clone());
+    let mut native = test_vcpu(memory);
+    for vcpu in [&mut direct, &mut native] {
+        vcpu.set_apx_enabled(true);
+        vcpu.sregs.dr7 = 0x400;
+        vcpu.regs.r31 = u64::MAX;
+    }
+    for _ in 0..2 {
+        assert!(direct.step().expect("direct REX2 MOV-from-DR").is_none());
+    }
+    let region = native
+        .jit_compile_region()
+        .expect("compile REX2 MOV-from-DR")
+        .expect("REX2 MOV-from-DR must be native eligible");
+    native.jit_run_region_native(&region);
+    assert_eq!(register_image(&native), register_image(&direct));
+    assert_eq!(control_debug_image(&native), control_debug_image(&direct));
+    assert_eq!(native.regs.r31, 0x400);
+
+    // MOV DR3,R31 commits the state-backed EGPR source.
+    let memory = memory_with_code(&[0xD5, 0x91, 0x23, 0xDF, 0xEB, 0x00, 0xF4]);
+    let mut direct = test_vcpu(memory.clone());
+    let mut native = test_vcpu(memory);
+    for vcpu in [&mut direct, &mut native] {
+        vcpu.set_apx_enabled(true);
+        vcpu.regs.r31 = 0x3131_2222_3333_4444;
+        vcpu.sregs.dr3 = 0;
+    }
+    for _ in 0..2 {
+        assert!(direct.step().expect("direct REX2 MOV-to-DR").is_none());
+    }
+    let region = native
+        .jit_compile_region()
+        .expect("compile REX2 MOV-to-DR")
+        .expect("REX2 MOV-to-DR must be native eligible");
+    native.jit_run_region_native(&region);
+    assert_eq!(register_image(&native), register_image(&direct));
+    assert_eq!(control_debug_image(&native), control_debug_image(&direct));
+    assert_eq!(native.sregs.dr3, 0x3131_2222_3333_4444);
+
+    // The generic APX guard must win before the CR privilege guard and commit.
+    let memory = memory_with_code(&[0xD5, 0x95, 0x20, 0xC7, 0xF4]);
+    let mut disabled = test_vcpu(memory);
+    disabled.set_apx_enabled(true);
+    disabled.sregs.cr8 = 0xD;
+    disabled.sregs.cs.selector = 3;
+    disabled.regs.r31 = 0x3131_3131_3131_3131;
+    let region = disabled
+        .jit_compile_region()
+        .expect("compile dynamically guarded REX2 MOV-from-CR")
+        .expect("dynamic APX and CPL guards must not block native admission");
+    disabled.set_apx_enabled(false);
+    let before_regs = register_image(&disabled);
+    let before_system = control_debug_image(&disabled);
+    disabled.jit_run_region_native(&region);
+    assert_eq!(register_image(&disabled), before_regs);
+    assert_eq!(control_debug_image(&disabled), before_system);
+    assert_eq!(disabled.regs.rip, 0);
+    let error = step_error(&mut disabled, "APX-disabled REX2 MOV-from-CR replay");
+    assert!(error.contains("IDT entry 6 not present"), "{error}");
 }
 
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]

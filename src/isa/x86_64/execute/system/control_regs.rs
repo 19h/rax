@@ -395,14 +395,12 @@ pub fn clts(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuE
 
 /// MOV r32/r64, CRn (0x0F 0x20)
 pub fn mov_r_cr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // REX2/APX does not define an extended MOV-from-control-register form.
-    // Decode-time #UD conditions take precedence over the dynamic CPL check.
-    if ctx.rex2.is_some() {
-        return vcpu.inject_undefined_instruction();
-    }
     let modrm = ctx.consume_u8()?;
-    let cr = ((modrm >> 3) & 0x07) | ctx.rex_r();
-    let rm = (modrm & 0x07) | ctx.rex_b();
+    // REX2.R4/R3 extend the control-register selector, while REX2.B4/B3
+    // extend the GPR operand through R31. Nonexistent CR selectors #UD before
+    // privilege checks or any destination commit.
+    let cr = ((modrm >> 3) & 0x07) | ctx.any_rex_r();
+    let rm = (modrm & 0x07) | ctx.any_rex_b();
     if !matches!(cr, 0 | 2 | 3 | 4 | 8) || (cr == 8 && !vcpu.sregs.cs.l) {
         return vcpu.inject_undefined_instruction();
     }
@@ -430,13 +428,12 @@ pub fn mov_r_cr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// MOV r32/r64, DRn (0x0F 0x21)
 pub fn mov_r_dr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm = ctx.consume_u8()?;
-    let dr = (modrm >> 3) & 0x07;
-    let rm = (modrm & 0x07) | ctx.rex_b();
+    let dr = ((modrm >> 3) & 0x07) | ctx.any_rex_r();
+    let rm = (modrm & 0x07) | ctx.any_rex_b();
 
-    // REX.R is an architecturally invalid extension for MOV-DR. APX REX2
-    // defines no replacement form. These decode-time failures precede all
-    // dynamic debug-register checks.
-    if ctx.rex_r() != 0 || ctx.rex2.is_some() {
+    // Legacy REX.R and either REX2.R extension select nonexistent DR8-DR31.
+    // This decode-time #UD precedes GD, DE, CPL, and destination effects.
+    if dr >= 8 {
         return vcpu.inject_undefined_instruction();
     }
 
@@ -482,13 +479,12 @@ pub fn mov_r_dr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 /// MOV DRn, r32/r64 (0x0F 0x23)
 pub fn mov_dr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
     let modrm = ctx.consume_u8()?;
-    let dr = (modrm >> 3) & 0x07;
-    let rm = (modrm & 0x07) | ctx.rex_b();
+    let dr = ((modrm >> 3) & 0x07) | ctx.any_rex_r();
+    let rm = (modrm & 0x07) | ctx.any_rex_b();
 
-    // REX.R is an architecturally invalid extension for MOV-DR. APX REX2
-    // defines no replacement form. These decode-time failures precede all
-    // dynamic debug-register checks.
-    if ctx.rex_r() != 0 || ctx.rex2.is_some() {
+    // Legacy REX.R and either REX2.R extension select nonexistent DR8-DR31.
+    // This decode-time #UD precedes GD, DE, CPL, source reads, and writes.
+    if dr >= 8 {
         return vcpu.inject_undefined_instruction();
     }
 
@@ -541,14 +537,12 @@ pub fn mov_dr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<V
 
 /// MOV CRn, r32/r64 (0x0F 0x22)
 pub fn mov_cr_r(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    // REX2/APX defines no extended MOV-to-control-register form. Decode-time
-    // #UD conditions take precedence over the dynamic privilege/value checks.
-    if ctx.rex2.is_some() {
-        return vcpu.inject_undefined_instruction();
-    }
     let modrm = ctx.consume_u8()?;
-    let cr = ((modrm >> 3) & 0x07) | ctx.rex_r();
-    let rm = (modrm & 0x07) | ctx.rex_b();
+    // REX2.R4/R3 extend the control-register selector, while REX2.B4/B3
+    // extend the GPR operand through R31. Nonexistent CR selectors #UD before
+    // privilege checks, source-dependent validation, or architectural writes.
+    let cr = ((modrm >> 3) & 0x07) | ctx.any_rex_r();
+    let rm = (modrm & 0x07) | ctx.any_rex_b();
     if !matches!(cr, 0 | 2 | 3 | 4 | 8) || (cr == 8 && !vcpu.sregs.cs.l) {
         return vcpu.inject_undefined_instruction();
     }

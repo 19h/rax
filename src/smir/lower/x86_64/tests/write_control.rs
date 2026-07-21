@@ -34,40 +34,42 @@ fn lower_write_control_requires_guards_calls_helper_and_serializes_selectively()
         Err(LowerError::UnsupportedOp { .. })
     ));
 
-    for control in [
-        X86ControlReg::Cr0,
-        X86ControlReg::Cr2,
-        X86ControlReg::Cr3,
-        X86ControlReg::Cr4,
-        X86ControlReg::Cr8,
-    ] {
-        let (code, _) = lower_write_control(kind(x86(X86Reg::R15), control, 0x1004), true)
-            .expect("guarded MOV-to-CR lowering");
-        assert!(
-            !code.windows(2).any(|window| window == [0x0F, 0x22]),
-            "guest MOV-to-CR must not execute on the host: {code:02X?}"
-        );
-        assert!(
-            code.windows(4).any(|window| {
-                window == (X86_GUEST_CONTROL_WRITE_FN_OFFSET as u32).to_le_bytes()
-            }),
-            "missing canonical helper offset"
-        );
-        assert_eq!(
-            code.windows(2).any(|window| window == [0x0F, 0xA2]),
-            !matches!(control, X86ControlReg::Cr8),
-            "CR0/2/3/4 writes serialize; CR8 does not"
-        );
-        assert!(
-            code.windows(4)
-                .any(|window| window == 0x1000u32.to_le_bytes()),
-            "fault exit must retain the original PC"
-        );
-        assert!(
-            code.windows(4)
-                .any(|window| window == 0x1004u32.to_le_bytes()),
-            "success exit must use the encoded next PC"
-        );
+    for source in [X86Reg::R15, X86Reg::R31] {
+        for control in [
+            X86ControlReg::Cr0,
+            X86ControlReg::Cr2,
+            X86ControlReg::Cr3,
+            X86ControlReg::Cr4,
+            X86ControlReg::Cr8,
+        ] {
+            let (code, _) = lower_write_control(kind(x86(source), control, 0x1004), true)
+                .expect("guarded MOV-to-CR lowering");
+            assert!(
+                !code.windows(2).any(|window| window == [0x0F, 0x22]),
+                "guest MOV-to-CR must not execute on the host: {code:02X?}"
+            );
+            assert!(
+                code.windows(4).any(|window| {
+                    window == (X86_GUEST_CONTROL_WRITE_FN_OFFSET as u32).to_le_bytes()
+                }),
+                "missing canonical helper offset"
+            );
+            assert_eq!(
+                code.windows(2).any(|window| window == [0x0F, 0xA2]),
+                !matches!(control, X86ControlReg::Cr8),
+                "CR0/2/3/4 writes serialize; CR8 does not"
+            );
+            assert!(
+                code.windows(4)
+                    .any(|window| window == 0x1000u32.to_le_bytes()),
+                "fault exit must retain the original PC"
+            );
+            assert!(
+                code.windows(4)
+                    .any(|window| window == 0x1004u32.to_le_bytes()),
+                "success exit must use the encoded next PC"
+            );
+        }
     }
 }
 
@@ -80,7 +82,7 @@ fn lower_write_control_rejects_every_non_lifter_operand_and_frontier_shape() {
             X86ControlReg::Cr2,
             0x1003,
         ),
-        kind(x86(X86Reg::gpr(16)), X86ControlReg::Cr3, 0x1003),
+        kind(x86(X86Reg::R16), X86ControlReg::Cr3, 0x1003),
         kind(VReg::Imm(0), X86ControlReg::Cr4, 0x1003),
         kind(x86(X86Reg::Rax), X86ControlReg::Cr8, 0x1002),
         kind(x86(X86Reg::Rax), X86ControlReg::Cr8, 0x1010),
@@ -170,6 +172,8 @@ fn native_write_control_uses_all_selectors_stack_sources_and_exact_success_front
         (X86ControlReg::Cr3, 5, 0x3333_4444_5555_6666),
         (X86ControlReg::Cr4, 14, 0x4444_5555_6666_7777),
         (X86ControlReg::Cr8, 15, 0xD),
+        (X86ControlReg::Cr2, 16, 0x1616_2222_3333_4444),
+        (X86ControlReg::Cr8, 31, 0xF),
     ];
 
     for (control, source, value) in cases {

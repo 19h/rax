@@ -34,48 +34,50 @@ fn lower_read_debug_requires_fault_guards_uses_state_and_never_emits_host_mov_dr
         Err(LowerError::UnsupportedOp { .. })
     ));
 
-    for (debug, offset) in [
-        (X86DebugReg::Dr0, X86_GUEST_DR0_OFFSET),
-        (X86DebugReg::Dr1, X86_GUEST_DR1_OFFSET),
-        (X86DebugReg::Dr2, X86_GUEST_DR2_OFFSET),
-        (X86DebugReg::Dr3, X86_GUEST_DR3_OFFSET),
-        (X86DebugReg::Dr4, X86_GUEST_DR6_OFFSET),
-        (X86DebugReg::Dr5, X86_GUEST_DR7_OFFSET),
-        (X86DebugReg::Dr6, X86_GUEST_DR6_OFFSET),
-        (X86DebugReg::Dr7, X86_GUEST_DR7_OFFSET),
-    ] {
-        let (code, _) = lower_read_debug(kind(x86(X86Reg::R15), debug), true)
-            .expect("guarded MOV-from-DR lowering");
-        assert!(
-            !code.windows(2).any(|window| window == [0x0F, 0x21]),
-            "guest MOV-from-DR must not execute on the host: {code:02X?}"
-        );
-        assert!(
-            code.windows(4)
-                .any(|window| window == (offset as u32).to_le_bytes()),
-            "missing GuestRegs {debug:?} offset {offset}"
-        );
-        for guard_offset in [
-            X86_GUEST_CR0_OFFSET,
-            X86_GUEST_CPL_OFFSET,
-            X86_GUEST_DR7_OFFSET,
+    for destination in [X86Reg::R15, X86Reg::R31] {
+        for (debug, offset) in [
+            (X86DebugReg::Dr0, X86_GUEST_DR0_OFFSET),
+            (X86DebugReg::Dr1, X86_GUEST_DR1_OFFSET),
+            (X86DebugReg::Dr2, X86_GUEST_DR2_OFFSET),
+            (X86DebugReg::Dr3, X86_GUEST_DR3_OFFSET),
+            (X86DebugReg::Dr4, X86_GUEST_DR6_OFFSET),
+            (X86DebugReg::Dr5, X86_GUEST_DR7_OFFSET),
+            (X86DebugReg::Dr6, X86_GUEST_DR6_OFFSET),
+            (X86DebugReg::Dr7, X86_GUEST_DR7_OFFSET),
         ] {
+            let (code, _) = lower_read_debug(kind(x86(destination), debug), true)
+                .expect("guarded MOV-from-DR lowering");
+            assert!(
+                !code.windows(2).any(|window| window == [0x0F, 0x21]),
+                "guest MOV-from-DR must not execute on the host: {code:02X?}"
+            );
             assert!(
                 code.windows(4)
-                    .any(|window| window == (guard_offset as u32).to_le_bytes()),
-                "missing dynamic-guard offset {guard_offset}"
+                    .any(|window| window == (offset as u32).to_le_bytes()),
+                "missing GuestRegs {debug:?} offset {offset}"
+            );
+            for guard_offset in [
+                X86_GUEST_CR0_OFFSET,
+                X86_GUEST_CPL_OFFSET,
+                X86_GUEST_DR7_OFFSET,
+            ] {
+                assert!(
+                    code.windows(4)
+                        .any(|window| window == (guard_offset as u32).to_le_bytes()),
+                    "missing dynamic-guard offset {guard_offset}"
+                );
+            }
+            assert_eq!(
+                code.windows(4)
+                    .any(|window| window == (X86_GUEST_CR4_OFFSET as u32).to_le_bytes()),
+                matches!(debug, X86DebugReg::Dr4 | X86DebugReg::Dr5),
+                "only DR4/DR5 require the CR4.DE guard"
+            );
+            assert!(
+                !code.windows(2).any(|window| window == [0x0F, 0xA2]),
+                "MOV-from-DR is not serializing"
             );
         }
-        assert_eq!(
-            code.windows(4)
-                .any(|window| window == (X86_GUEST_CR4_OFFSET as u32).to_le_bytes()),
-            matches!(debug, X86DebugReg::Dr4 | X86DebugReg::Dr5),
-            "only DR4/DR5 require the CR4.DE guard"
-        );
-        assert!(
-            !code.windows(2).any(|window| window == [0x0F, 0xA2]),
-            "MOV-from-DR is not serializing"
-        );
     }
 }
 
@@ -87,7 +89,6 @@ fn lower_read_debug_rejects_every_non_lifter_operand_class() {
             VReg::Arch(ArchReg::Arm(crate::smir::ir::types::ArmReg::X(0))),
             X86DebugReg::Dr2,
         ),
-        kind(x86(X86Reg::gpr(16)), X86DebugReg::Dr6),
         kind(VReg::Imm(0), X86DebugReg::Dr7),
     ] {
         assert!(!x86_read_debug_shape_valid(&malformed));
@@ -141,6 +142,8 @@ fn native_read_debug_covers_all_selectors_stack_aliases_and_flag_preservation() 
         (0x100F, kind(x86(X86Reg::Rbp), X86DebugReg::Dr5)),
         (0x1012, kind(x86(X86Reg::R14), X86DebugReg::Dr6)),
         (0x1015, kind(x86(X86Reg::R15), X86DebugReg::Dr7)),
+        (0x1018, kind(x86(X86Reg::R16), X86DebugReg::Dr0)),
+        (0x101B, kind(x86(X86Reg::R31), X86DebugReg::Dr7)),
     ];
     let regs = execute_native(&ops, |regs| {
         regs.cr0 = 1;
@@ -162,6 +165,8 @@ fn native_read_debug_covers_all_selectors_stack_aliases_and_flag_preservation() 
     assert_eq!(regs.gpr[5], regs.dr7);
     assert_eq!(regs.gpr[14], regs.dr6);
     assert_eq!(regs.gpr[15], regs.dr7);
+    assert_eq!(regs.gpr[16], regs.dr0);
+    assert_eq!(regs.gpr[31], regs.dr7);
     assert_eq!(regs.rflags & (0x08D5 | (1 << 10)), 0x08D5 | (1 << 10));
     assert_eq!(regs.ac_flag, 1);
     assert_eq!(regs.exit_pc, 0xDEAD_BEEF);

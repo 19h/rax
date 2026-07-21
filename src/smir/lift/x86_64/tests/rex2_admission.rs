@@ -6,6 +6,7 @@ use crate::smir::ir::FunctionBuilder;
 use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
 use crate::smir::ir::flags::MaterializedFlags;
 use crate::smir::ir::memory::FlatMemory;
+use crate::smir::ir::ops::{X86ControlReg, X86DebugReg};
 use crate::smir::optimize::{OptLevel, optimize_function};
 
 fn result_retains_apx_requirement(result: &LiftResult) -> bool {
@@ -116,6 +117,124 @@ fn reserved_rex2_rows_prefix_bytes_and_xsave_groups_trap_before_operand_decode()
             }
         ));
     }
+}
+
+fn rex2_r_extension(payload: u8) -> u8 {
+    u8::from(payload & 0x40 != 0) * 16 | u8::from(payload & 0x04 != 0) * 8
+}
+
+fn rex2_b_extension(payload: u8) -> u8 {
+    u8::from(payload & 0x10 != 0) * 16 | u8::from(payload & 0x01 != 0) * 8
+}
+
+fn control_register(selector: u8) -> Option<X86ControlReg> {
+    match selector {
+        0 => Some(X86ControlReg::Cr0),
+        2 => Some(X86ControlReg::Cr2),
+        3 => Some(X86ControlReg::Cr3),
+        4 => Some(X86ControlReg::Cr4),
+        8 => Some(X86ControlReg::Cr8),
+        _ => None,
+    }
+}
+
+fn debug_register(selector: u8) -> Option<X86DebugReg> {
+    match selector {
+        0 => Some(X86DebugReg::Dr0),
+        1 => Some(X86DebugReg::Dr1),
+        2 => Some(X86DebugReg::Dr2),
+        3 => Some(X86DebugReg::Dr3),
+        4 => Some(X86DebugReg::Dr4),
+        5 => Some(X86DebugReg::Dr5),
+        6 => Some(X86DebugReg::Dr6),
+        7 => Some(X86DebugReg::Dr7),
+        _ => None,
+    }
+}
+
+#[test]
+fn rex2_control_debug_transfers_exhaust_every_payload_modrm_and_direction() {
+    let mut valid_control_encodings = 0usize;
+    let mut valid_debug_encodings = 0usize;
+
+    // M=1 selects the compressed 0F map. Exhausting the remaining seven
+    // payload bits proves R4/R3 and B4/B3 selection while varying ignored X/W
+    // fields; exhausting ModR/M also proves that mod is ignored.
+    for payload in 0x80u8..=u8::MAX {
+        for modrm in 0u8..=u8::MAX {
+            let selector = ((modrm >> 3) & 7) | rex2_r_extension(payload);
+            let gpr = (modrm & 7) | rex2_b_extension(payload);
+
+            for opcode in [0x20, 0x22] {
+                let result = lift_single(&[0xD5, payload, opcode, modrm]).unwrap_or_else(|error| {
+                    panic!(
+                        "REX2 MOV-CR payload={payload:#04x} opcode={opcode:#04x} ModR/M={modrm:#04x}: {error:?}"
+                    )
+                });
+                assert_eq!(result.bytes_consumed, 4);
+                if let Some(control) = control_register(selector) {
+                    let ops = assert_rex2_guarded_ops(&result, 1);
+                    assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+                    match (&ops[0].kind, opcode) {
+                        (OpKind::X86ReadControl { dst, control: got }, 0x20) => {
+                            assert_eq!(*dst, x86_gpr(gpr));
+                            assert_eq!(*got, control);
+                        }
+                        (
+                            OpKind::X86WriteControl {
+                                src,
+                                control: got,
+                                next_pc,
+                            },
+                            0x22,
+                        ) => {
+                            assert_eq!(*src, x86_gpr(gpr));
+                            assert_eq!(*got, control);
+                            assert_eq!(*next_pc, 0x1004);
+                        }
+                        other => panic!("unexpected REX2 MOV-CR operation: {other:?}"),
+                    }
+                } else {
+                    assert_invalid_opcode_trap(&result, 4);
+                }
+            }
+            if control_register(selector).is_some() {
+                valid_control_encodings += 1;
+            }
+
+            for opcode in [0x21, 0x23] {
+                let result = lift_single(&[0xD5, payload, opcode, modrm]).unwrap_or_else(|error| {
+                    panic!(
+                        "REX2 MOV-DR payload={payload:#04x} opcode={opcode:#04x} ModR/M={modrm:#04x}: {error:?}"
+                    )
+                });
+                assert_eq!(result.bytes_consumed, 4);
+                if let Some(debug) = debug_register(selector) {
+                    let ops = assert_rex2_guarded_ops(&result, 1);
+                    assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+                    match (&ops[0].kind, opcode) {
+                        (OpKind::X86ReadDebug { dst, debug: got }, 0x21) => {
+                            assert_eq!(*dst, x86_gpr(gpr));
+                            assert_eq!(*got, debug);
+                        }
+                        (OpKind::X86WriteDebug { src, debug: got }, 0x23) => {
+                            assert_eq!(*src, x86_gpr(gpr));
+                            assert_eq!(*got, debug);
+                        }
+                        other => panic!("unexpected REX2 MOV-DR operation: {other:?}"),
+                    }
+                } else {
+                    assert_invalid_opcode_trap(&result, 4);
+                }
+            }
+            if debug_register(selector).is_some() {
+                valid_debug_encodings += 1;
+            }
+        }
+    }
+
+    assert_eq!(valid_control_encodings, 5_120);
+    assert_eq!(valid_debug_encodings, 8_192);
 }
 
 #[test]

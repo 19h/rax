@@ -52,14 +52,21 @@ fn mov_to_control_register_strictly_lifts_every_register_and_extension() {
         (&[0x44, 0x0F, 0x22, 0xC4], X86ControlReg::Cr8, 4),
         (&[0x45, 0x0F, 0x22, 0xC7], X86ControlReg::Cr8, 15),
         (&[0x49, 0x0F, 0x22, 0xE6], X86ControlReg::Cr4, 14),
+        (&[0xD5, 0x90, 0x22, 0xC0], X86ControlReg::Cr0, 16),
+        (&[0xD5, 0x95, 0x22, 0xC7], X86ControlReg::Cr8, 31),
     ];
 
     for (bytes, expected_control, expected_src) in cases {
         let result = lift_single(bytes).expect("strict MOV-to-CR lift");
         assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
         assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+        let ops = if bytes[0] == 0xD5 {
+            assert_rex2_guarded_ops(&result, 1)
+        } else {
+            result.ops.as_slice()
+        };
         assert!(matches!(
-            result.ops.as_slice(),
+            ops,
             [SmirOp {
                 kind: OpKind::X86WriteControl {
                     src,
@@ -122,6 +129,7 @@ fn mov_to_control_register_accepts_ignored_prefixes_and_models_invalid_encodings
         &[0x0F, 0x22, 0xF0],       // CR6
         &[0x0F, 0x22, 0xF8],       // CR7
         &[0x44, 0x0F, 0x22, 0xC8], // CR9
+        &[0xD5, 0xC0, 0x22, 0xC0], // CR16
     ] {
         let result = lift_single(bytes).expect("reserved CR number has explicit trap");
         assert_eq!(result.bytes_consumed, bytes.len());
@@ -134,12 +142,10 @@ fn mov_to_control_register_accepts_ignored_prefixes_and_models_invalid_encodings
         ));
     }
 
-    for bytes in [&[0xF0, 0x0F, 0x22, 0xC0][..], &[0xD5, 0x80, 0x22, 0xC0]] {
-        assert!(
-            matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
-            "{bytes:02X?}"
-        );
-    }
+    assert!(matches!(
+        lift_single(&[0xF0, 0x0F, 0x22, 0xC0]),
+        Err(LiftError::InvalidEncoding { .. })
+    ));
 }
 
 #[test]

@@ -9,8 +9,15 @@ fn read(dst: VReg, control: X86ControlReg) -> OpKind {
 }
 
 #[test]
-fn x86_read_control_gate_admits_exact_legacy_gprs_including_rsp_rbp() {
-    for destination in [X86Reg::Rax, X86Reg::Rsp, X86Reg::Rbp, X86Reg::R15] {
+fn x86_read_control_gate_admits_every_gpr_including_stack_aliases_and_egprs() {
+    for destination in [
+        X86Reg::Rax,
+        X86Reg::Rsp,
+        X86Reg::Rbp,
+        X86Reg::R15,
+        X86Reg::R16,
+        X86Reg::R31,
+    ] {
         for control in [
             X86ControlReg::Cr0,
             X86ControlReg::Cr2,
@@ -31,7 +38,6 @@ fn x86_read_control_gate_rejects_non_lifter_shapes_and_cross_hosts() {
     for malformed in [
         read(VReg::virt(1), X86ControlReg::Cr0),
         read(VReg::Imm(0), X86ControlReg::Cr2),
-        read(x86(X86Reg::gpr(16)), X86ControlReg::Cr3),
         read(arm_x(0), X86ControlReg::Cr4),
     ] {
         assert!(!x86_read_control_shape_valid(&malformed));

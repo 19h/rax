@@ -52,14 +52,21 @@ fn mov_from_debug_register_strictly_lifts_every_selector_and_gpr_extension() {
         (&[0x0F, 0x21, 0xFF], X86DebugReg::Dr7, 7),
         (&[0x41, 0x0F, 0x21, 0xC7], X86DebugReg::Dr0, 15),
         (&[0x49, 0x0F, 0x21, 0xFE], X86DebugReg::Dr7, 14),
+        (&[0xD5, 0x90, 0x21, 0xC0], X86DebugReg::Dr0, 16),
+        (&[0xD5, 0x91, 0x21, 0xFF], X86DebugReg::Dr7, 31),
     ];
 
     for (bytes, expected_debug, expected_dst) in cases {
         let result = lift_single(bytes).expect("strict MOV-from-DR lift");
         assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
         assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+        let ops = if bytes[0] == 0xD5 {
+            assert_rex2_guarded_ops(&result, 1)
+        } else {
+            result.ops.as_slice()
+        };
         assert!(matches!(
-            result.ops.as_slice(),
+            ops,
             [SmirOp {
                 kind: OpKind::X86ReadDebug { dst, debug },
                 guest_pc: 0x1000,
@@ -89,7 +96,7 @@ fn mov_from_debug_register_ignores_mod_bits_without_consuming_an_address() {
 }
 
 #[test]
-fn mov_from_debug_register_accepts_ignored_prefixes_and_rejects_invalid_extensions() {
+fn mov_from_debug_register_accepts_ignored_prefixes_and_traps_invalid_extensions() {
     for prefix in [
         0x26, 0x2E, 0x36, 0x3E, 0x64, 0x65, // segment overrides
         0x66, 0x67, // operand/address size
@@ -108,15 +115,17 @@ fn mov_from_debug_register_accepts_ignored_prefixes_and_rejects_invalid_extensio
         ));
     }
 
+    assert!(matches!(
+        lift_single(&[0xF0, 0x0F, 0x21, 0xC0]),
+        Err(LiftError::InvalidEncoding { .. })
+    ));
     for bytes in [
-        &[0xF0, 0x0F, 0x21, 0xC0][..], // LOCK
-        &[0x44, 0x0F, 0x21, 0xC0],     // REX.R
-        &[0xD5, 0x80, 0x21, 0xC0],     // REX2 map-0F
+        &[0x44, 0x0F, 0x21, 0xC0][..], // REX.R selects DR8
+        &[0xD5, 0x84, 0x21, 0xC0],     // REX2.R3 selects DR8
+        &[0xD5, 0xC0, 0x21, 0xC0],     // REX2.R4 selects DR16
     ] {
-        assert!(
-            matches!(lift_single(bytes), Err(LiftError::InvalidEncoding { .. })),
-            "{bytes:02X?}"
-        );
+        let result = lift_single(bytes).expect("nonexistent DR has explicit #UD trap");
+        assert_invalid_opcode_trap(&result, bytes.len());
     }
 }
 

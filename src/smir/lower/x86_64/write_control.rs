@@ -11,8 +11,9 @@ use super::{X86_64Lowerer, X86Cond, X86Emitter};
 ///
 /// The instruction is at least three and at most fifteen bytes. Requiring an
 /// exact, forward `next_pc` prevents malformed hand-built IR from selecting an
-/// arbitrary native handoff frontier. APX EGPRs are excluded because 0F 22 has
-/// no REX2 form.
+/// arbitrary native handoff frontier. REX2 permits every GPR through R31; the
+/// preceding `X86RequireApx` operation retains the source encoding's dynamic
+/// admission.
 pub(crate) fn x86_write_control_shape_valid(op: &SmirOp) -> bool {
     let OpKind::X86WriteControl {
         src,
@@ -23,13 +24,18 @@ pub(crate) fn x86_write_control_shape_valid(op: &SmirOp) -> bool {
         return false;
     };
     let instruction_len = next_pc.checked_sub(op.guest_pc);
-    matches!(instruction_len, Some(3..=15))
+    let source_index = match src {
+        VReg::Arch(ArchReg::X86(reg)) => reg.gpr_index(),
+        _ => None,
+    };
+    let minimum_len = if source_index.is_some_and(|index| index >= 16) {
+        4
+    } else {
+        3
+    };
+    instruction_len.is_some_and(|length| (minimum_len..=15).contains(&length))
         && op.x86_hint.is_none()
-        && matches!(
-            src,
-            VReg::Arch(ArchReg::X86(reg))
-                if reg.gpr_index().is_some_and(|index| index < 16)
-        )
+        && source_index.is_some_and(|index| index < 32)
         && matches!(
             control,
             X86ControlReg::Cr0
@@ -57,8 +63,7 @@ impl X86_64Lowerer {
         if !x86_write_control_shape_valid(op) {
             return Err(LowerError::InvalidOperand {
                 op: "X86WriteControl".to_string(),
-                operand: "requires one legacy x86 GPR, CR0/2/3/4/8, and an exact next PC"
-                    .to_string(),
+                operand: "requires one x86 GPR, CR0/2/3/4/8, and an exact next PC".to_string(),
             });
         }
         let OpKind::X86WriteControl {

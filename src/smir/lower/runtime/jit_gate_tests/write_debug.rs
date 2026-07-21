@@ -9,8 +9,15 @@ fn write(src: VReg, debug: X86DebugReg) -> OpKind {
 }
 
 #[test]
-fn x86_write_debug_gate_admits_exact_legacy_gprs_including_rsp_rbp() {
-    for source in [X86Reg::Rax, X86Reg::Rsp, X86Reg::Rbp, X86Reg::R15] {
+fn x86_write_debug_gate_admits_every_gpr_including_stack_aliases_and_egprs() {
+    for source in [
+        X86Reg::Rax,
+        X86Reg::Rsp,
+        X86Reg::Rbp,
+        X86Reg::R15,
+        X86Reg::R16,
+        X86Reg::R31,
+    ] {
         for debug in [
             X86DebugReg::Dr0,
             X86DebugReg::Dr1,
@@ -34,7 +41,6 @@ fn x86_write_debug_gate_rejects_non_lifter_shapes_and_cross_hosts() {
     for malformed in [
         write(VReg::virt(1), X86DebugReg::Dr0),
         write(VReg::Imm(0), X86DebugReg::Dr2),
-        write(x86(X86Reg::gpr(16)), X86DebugReg::Dr6),
         write(arm_x(0), X86DebugReg::Dr7),
     ] {
         assert!(!x86_write_debug_shape_valid(&malformed));

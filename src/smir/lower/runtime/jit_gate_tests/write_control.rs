@@ -35,7 +35,14 @@ fn x86_write_control_layout_and_gate_admit_exact_lifter_shapes() {
         X86_GUEST_CONTROL_WRITE_FN_OFFSET as usize
     );
 
-    for source in [X86Reg::Rax, X86Reg::Rsp, X86Reg::Rbp, X86Reg::R15] {
+    for source in [
+        X86Reg::Rax,
+        X86Reg::Rsp,
+        X86Reg::Rbp,
+        X86Reg::R15,
+        X86Reg::R16,
+        X86Reg::R31,
+    ] {
         for control in [
             X86ControlReg::Cr0,
             X86ControlReg::Cr2,
@@ -43,7 +50,12 @@ fn x86_write_control_layout_and_gate_admit_exact_lifter_shapes() {
             X86ControlReg::Cr4,
             X86ControlReg::Cr8,
         ] {
-            for length in [3, 4, 15] {
+            let lengths: &[u64] = if source.gpr_index().unwrap() >= 16 {
+                &[4, 15]
+            } else {
+                &[3, 4, 15]
+            };
+            for &length in lengths {
                 let kind = write(x86(source), control, 0x1000 + length);
                 let op = smir_op(0x1000, kind.clone());
                 assert!(kind.is_jit_safe(), "{source:?} {control:?} len={length}");
@@ -62,7 +74,7 @@ fn x86_write_control_gate_rejects_non_lifter_shapes_and_cross_hosts() {
     for malformed in [
         write(VReg::virt(1), X86ControlReg::Cr0, 0x1003),
         write(VReg::Imm(0), X86ControlReg::Cr2, 0x1003),
-        write(x86(X86Reg::gpr(16)), X86ControlReg::Cr3, 0x1003),
+        write(x86(X86Reg::R16), X86ControlReg::Cr3, 0x1003),
         write(arm_x(0), X86ControlReg::Cr4, 0x1003),
         write(x86(X86Reg::Rax), X86ControlReg::Cr8, 0x1002),
         write(x86(X86Reg::Rax), X86ControlReg::Cr8, 0x1010),

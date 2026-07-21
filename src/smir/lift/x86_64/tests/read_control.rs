@@ -49,14 +49,21 @@ fn mov_from_control_register_strictly_lifts_every_register_and_extension() {
         (&[0x44, 0x0F, 0x20, 0xC4], X86ControlReg::Cr8, 4),
         (&[0x45, 0x0F, 0x20, 0xC7], X86ControlReg::Cr8, 15),
         (&[0x49, 0x0F, 0x20, 0xE6], X86ControlReg::Cr4, 14),
+        (&[0xD5, 0x90, 0x20, 0xC0], X86ControlReg::Cr0, 16),
+        (&[0xD5, 0x95, 0x20, 0xC7], X86ControlReg::Cr8, 31),
     ];
 
     for (bytes, expected_control, expected_dst) in cases {
         let result = lift_single(bytes).expect("strict MOV-from-CR lift");
         assert_eq!(result.bytes_consumed, bytes.len(), "{bytes:02X?}");
         assert!(matches!(result.control_flow, ControlFlow::Fallthrough));
+        let ops = if bytes[0] == 0xD5 {
+            assert_rex2_guarded_ops(&result, 1)
+        } else {
+            result.ops.as_slice()
+        };
         assert!(matches!(
-            result.ops.as_slice(),
+            ops,
             [SmirOp {
                 kind: OpKind::X86ReadControl { dst, control },
                 guest_pc: 0x1000,
@@ -107,13 +114,14 @@ fn mov_from_control_register_ignores_non_lock_legacy_size_and_repeat_prefixes() 
 }
 
 #[test]
-fn mov_from_control_register_models_reserved_numbers_as_ud_and_rejects_lock_rex2() {
+fn mov_from_control_register_models_reserved_numbers_as_ud_and_rejects_lock() {
     for bytes in [
         &[0x0F, 0x20, 0xC8][..],   // CR1
         &[0x0F, 0x20, 0xE8],       // CR5
         &[0x0F, 0x20, 0xF0],       // CR6
         &[0x0F, 0x20, 0xF8],       // CR7
         &[0x44, 0x0F, 0x20, 0xC8], // CR9
+        &[0xD5, 0xC0, 0x20, 0xC0], // CR16
     ] {
         let result = lift_single(bytes).expect("reserved CR number has explicit trap");
         assert_eq!(result.bytes_consumed, bytes.len());
@@ -128,10 +136,6 @@ fn mov_from_control_register_models_reserved_numbers_as_ud_and_rejects_lock_rex2
 
     assert!(matches!(
         lift_single(&[0xF0, 0x0F, 0x20, 0xC0]),
-        Err(LiftError::InvalidEncoding { .. })
-    ));
-    assert!(matches!(
-        lift_single(&[0xD5, 0x80, 0x20, 0xC0]),
         Err(LiftError::InvalidEncoding { .. })
     ));
 }
