@@ -644,6 +644,8 @@ mod x86_64_rotate_shld_shrd_extended;
 mod x86_64_rotate_shrd;
 
 // Segment
+#[path = "segments/load_far_pointer.rs"]
+mod x86_64_segment_load_far_pointer;
 #[path = "segments/mov_segment.rs"]
 mod x86_64_segment_mov_segment;
 #[path = "segments/push_pop_segment.rs"]

@@ -136,7 +136,9 @@ pub struct X86SystemSelectorStoreOp {
 /// classification for a noncanonical SS-based memory range. Stack forms model
 /// long-mode `POP FS/GS` atomically: the width-selected read supplies the low
 /// 16-bit selector, and the stack pointer commits only after the complete
-/// segment load succeeds.
+/// segment load succeeds. Far-pointer forms read an offset followed by a
+/// 16-bit selector for `LSS/LFS/LGS`; the width-tagged GPR destination commits
+/// only after descriptor validation and the hidden-cache transition succeed.
 #[derive(Clone, Debug)]
 pub enum X86SystemSelectorSource {
     Register {
@@ -151,16 +153,22 @@ pub enum X86SystemSelectorSource {
         stack_pointer: VReg,
         width: MemWidth,
     },
+    FarPointer {
+        addr: Address,
+        dst: VReg,
+        offset_width: OpWidth,
+        stack_segment: bool,
+    },
 }
 
 /// Load one visible selector and its hidden descriptor cache. LLDT/LTR perform
 /// their system-descriptor checks; `MOV Sreg,r/m` admits ES/SS/DS/FS/GS and
 /// performs data/stack descriptor validation plus the implicit accessed-bit
 /// transition; `POP FS/GS` additionally commits its stack-pointer increment
-/// only after that transition. LTR performs the available-to-busy GDT
-/// transition. LLDT/LTR serialize; every variant terminates native execution
-/// and hands off at `next_pc` so the updated state is visible before later
-/// guest work.
+/// only after that transition; and `LSS/LFS/LGS` commit their paired GPR only
+/// after that transition. LTR performs the available-to-busy GDT transition.
+/// LLDT/LTR serialize; every variant terminates native execution and hands off
+/// at `next_pc` so the updated state is visible before later guest work.
 #[derive(Clone, Debug)]
 pub struct X86SystemSelectorLoadOp {
     pub selector: X86SystemSelector,

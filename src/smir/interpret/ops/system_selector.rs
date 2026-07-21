@@ -1,4 +1,5 @@
-//! Fault-precise LLDT/LTR, `MOV Sreg,r/m`, and `POP FS/GS` interpretation.
+//! Fault-precise LLDT/LTR, `MOV Sreg,r/m`, `POP FS/GS`, and `LSS/LFS/LGS`
+//! interpretation.
 
 use crate::isa::x86_64::execute::system::{
     X86SegmentLoadTarget, X86SystemDescriptorFault, decode_x86_ldt_descriptor,
@@ -13,7 +14,7 @@ use crate::smir::ir::memory::{MemoryError, SmirMemory};
 use crate::smir::ir::ops::{
     SmirOp, X86SystemSelector, X86SystemSelectorLoadOp, X86SystemSelectorSource,
 };
-use crate::smir::ir::types::{ArchReg, MemWidth, SignExtend, VReg};
+use crate::smir::ir::types::{ArchReg, MemWidth, OpWidth, SignExtend, VReg};
 
 use super::system::{
     read_smir_u64, request_x86_descriptor_fault, x86_far_jump_descriptor_address,
@@ -69,6 +70,35 @@ fn selector_load_shape_valid(op: &SmirOp, load: &X86SystemSelectorLoadOp) -> boo
             *stack_pointer == VReg::Arch(ArchReg::X86(crate::smir::ir::types::X86Reg::Rsp))
                 && matches!(width, MemWidth::B2 | MemWidth::B8)
                 && matches!(load.selector, X86SystemSelector::Fs | X86SystemSelector::Gs)
+                && instruction_len.is_some_and(|length| (minimum_len..=15).contains(&length))
+        }
+        X86SystemSelectorSource::FarPointer {
+            addr,
+            dst,
+            offset_width,
+            ..
+        } => {
+            let uses_egpr = addr
+                .regs()
+                .iter()
+                .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
+            let Some(dst_index) = (match dst {
+                VReg::Arch(ArchReg::X86(reg)) => reg.gpr_index(),
+                _ => None,
+            }) else {
+                return false;
+            };
+            let minimum_len = 3
+                + u64::from(load.requires_apx)
+                + u64::from(*offset_width == OpWidth::W16)
+                + u64::from(*offset_width == OpWidth::W64 && !load.requires_apx);
+            addr.is_x86_state_backed_shape()
+                && ((!uses_egpr && dst_index < 16) || load.requires_apx)
+                && matches!(offset_width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+                && matches!(
+                    load.selector,
+                    X86SystemSelector::Ss | X86SystemSelector::Fs | X86SystemSelector::Gs
+                )
                 && instruction_len.is_some_and(|length| (minimum_len..=15).contains(&length))
         }
     }
@@ -169,8 +199,8 @@ impl SmirInterpreter {
             return Ok(());
         }
 
-        let (selector, stack_commit) = match &load.source {
-            X86SystemSelectorSource::Register { src } => (ctx.read_vreg(*src) as u16, None),
+        let (selector, stack_commit, far_pointer_commit) = match &load.source {
+            X86SystemSelectorSource::Register { src } => (ctx.read_vreg(*src) as u16, None, None),
             X86SystemSelectorSource::Memory {
                 addr,
                 width,
@@ -200,13 +230,14 @@ impl SmirInterpreter {
                 (
                     self.load_memory(memory, effective_addr, *width, SignExtend::Zero)? as u16,
                     None,
+                    None,
                 )
             }
             X86SystemSelectorSource::Stack {
                 stack_pointer,
                 width,
             } => {
-                if !ia32e_active || !long_mode {
+                if !protected || virtual_8086 || !ia32e_active || !long_mode {
                     ctx.request_exit(ExitReason::Undefined {
                         addr: op.guest_pc,
                         opcode: 0,
@@ -228,7 +259,55 @@ impl SmirInterpreter {
                 (
                     self.load_memory(memory, rsp, *width, SignExtend::Zero)? as u16,
                     Some((*stack_pointer, rsp.wrapping_add(width_bytes))),
+                    None,
                 )
+            }
+            X86SystemSelectorSource::FarPointer {
+                addr,
+                dst,
+                offset_width,
+                stack_segment,
+            } => {
+                if !protected || virtual_8086 || !ia32e_active || !long_mode {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+                let effective_addr = self.compute_address(ctx, addr);
+                let offset_bytes = u64::from(offset_width.bytes());
+                let pointer_bytes = offset_bytes + 2;
+                let canonical = effective_addr
+                    .checked_add(pointer_bytes - 1)
+                    .is_some_and(|last| is_canonical_48(effective_addr) && is_canonical_48(last));
+                if !canonical {
+                    ctx.request_exit(if *stack_segment {
+                        ExitReason::StackSegment {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        }
+                    } else {
+                        ExitReason::GeneralProtection {
+                            addr: op.guest_pc,
+                            error_code: 0,
+                        }
+                    });
+                    return Ok(());
+                }
+                let offset = self.load_memory(
+                    memory,
+                    effective_addr,
+                    offset_width.to_mem_width(),
+                    SignExtend::Zero,
+                )?;
+                let selector = self.load_memory(
+                    memory,
+                    effective_addr + offset_bytes,
+                    MemWidth::B2,
+                    SignExtend::Zero,
+                )? as u16;
+                (selector, None, Some((*dst, offset, *offset_width)))
             }
         };
 
@@ -241,6 +320,9 @@ impl SmirInterpreter {
                 commit_ordinary_segment(x86, target, segment);
                 if let Some((stack_pointer, value)) = stack_commit {
                     ctx.write_vreg(stack_pointer, value);
+                }
+                if let Some((dst, value, width)) = far_pointer_commit {
+                    Self::write_gpr(ctx, dst, value, width);
                 }
                 return Ok(());
             }
@@ -267,6 +349,9 @@ impl SmirInterpreter {
                 commit_ordinary_segment(x86, target, segment);
                 if let Some((stack_pointer, value)) = stack_commit {
                     ctx.write_vreg(stack_pointer, value);
+                }
+                if let Some((dst, value, width)) = far_pointer_commit {
+                    Self::write_gpr(ctx, dst, value, width);
                 }
                 return Ok(());
             }
@@ -310,10 +395,14 @@ impl SmirInterpreter {
             if let Some((stack_pointer, value)) = stack_commit {
                 ctx.write_vreg(stack_pointer, value);
             }
+            if let Some((dst, value, width)) = far_pointer_commit {
+                Self::write_gpr(ctx, dst, value, width);
+            }
             return Ok(());
         }
 
         debug_assert!(stack_commit.is_none());
+        debug_assert!(far_pointer_commit.is_none());
 
         if selector & 0xFFFC == 0 {
             if load.selector == X86SystemSelector::Tr {

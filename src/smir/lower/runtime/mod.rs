@@ -269,10 +269,13 @@ pub struct GuestRegs {
     /// TR, ES, CS, SS, DS, FS, or GS for selector IDs zero through seven after
     /// any prior interpreter callout.
     pub system_selector_fn: u64,
-    /// Address of `extern "C" fn(state, operand, encoding) -> ok`. Encoding bit
-    /// zero selects a 16-bit memory source, bit one records a REX2/APX encoding,
-    /// and bit two selects LTR instead of LLDT. The helper performs complete
-    /// descriptor validation and commits LDTR/TR only on success.
+    /// Address of `extern "C" fn(state, operand, encoding) -> ok` for LLDT/LTR,
+    /// MOV-Sreg, POP-FS/GS, and LSS/LFS/LGS. Bit zero marks memory, bit one
+    /// records REX2/APX, bits 4:2 select the segment register, bit five marks an
+    /// 8-byte selector source, and bit six marks a POP stack source. Bit seven
+    /// marks a far pointer; then bits 12:8 select its GPR and bits 14:13 encode
+    /// its 2-, 4-, or 8-byte offset. All architectural destinations commit only
+    /// after source and descriptor effects succeed.
     pub system_selector_load_fn: u64,
     /// Address of `extern "C" fn(state, pointer_address, encoding) -> ok` for
     /// long-mode `FF /5`. Encoding bits 1:0 select W16/W32/W64 and bit two

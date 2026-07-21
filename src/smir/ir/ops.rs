@@ -4999,6 +4999,10 @@ impl OpKind {
                 source: X86SystemSelectorSource::Stack { stack_pointer, .. },
                 ..
             }) => vec![*stack_pointer],
+            OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+                source: X86SystemSelectorSource::FarPointer { dst, .. },
+                ..
+            }) => vec![*dst],
             OpKind::X86FarJump(jump) => vec![jump.target],
             OpKind::X86FarCall(call) => vec![call.target],
             OpKind::X86FarReturn(ret) => vec![ret.target],

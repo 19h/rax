@@ -104,6 +104,75 @@ impl X86_64Lifter {
         ))
     }
 
+    /// Lift long-mode `LSS/LFS/LGS r16/32/64,m16:16/32/64` (`0F
+    /// B2/B4/B5`). The complete memory far pointer, descriptor accessed-bit
+    /// transition, visible/hidden segment state, and width-tagged GPR write are
+    /// represented by one fault-precise selector-load operation. REX2 extends
+    /// the destination and address registers and remains a dynamic APX check.
+    pub(crate) fn lift_far_pointer_segment_load_0f(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..bytes.len().min(1)].to_vec(),
+            });
+        }
+
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let bytes_consumed = prefix.cursor + modrm.bytes_consumed;
+        if !modrm.is_memory {
+            return Ok(LiftResult {
+                ops: vec![],
+                bytes_consumed,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: vec![],
+            });
+        }
+
+        let selector = match opcode {
+            0xB2 => X86SystemSelector::Ss,
+            0xB4 => X86SystemSelector::Fs,
+            0xB5 => X86SystemSelector::Gs,
+            _ => unreachable!("far-pointer selector-load dispatcher admitted another opcode"),
+        };
+        let x86_addr = modrm
+            .addr
+            .as_ref()
+            .expect("validated far-pointer selector-load memory operand changed");
+        let next_pc = pc.wrapping_add(bytes_consumed as u64);
+        let (addr, mut ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+        let stack_segment = match prefix.segment_override {
+            Some(0x36) => true,
+            Some(_) => false,
+            None => x86_addr.base.is_some_and(|base| matches!(base & 7, 4 | 5)),
+        };
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+                selector,
+                source: X86SystemSelectorSource::FarPointer {
+                    addr,
+                    dst: self.gpr(modrm.reg),
+                    offset_width: prefix.op_width(),
+                    stack_segment,
+                },
+                requires_apx: prefix.rex2.is_some(),
+                next_pc,
+            }),
+        ));
+
+        Ok(LiftResult::fallthrough(ops, bytes_consumed))
+    }
+
     /// Lift `MOV r/m16/32/64, Sreg` (`8C /r`). The ModR/M.reg field selects
     /// ES/CS/SS/DS/FS/GS and ignores both legacy REX.R and REX2.R4/R3. Register
     /// destinations use the encoded operand width; memory destinations always

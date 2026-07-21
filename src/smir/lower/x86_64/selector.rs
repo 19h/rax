@@ -121,6 +121,37 @@ pub(crate) fn x86_system_selector_load_shape_valid(op: &SmirOp) -> bool {
                     .checked_sub(op.guest_pc)
                     .is_some_and(|length| (minimum_len..=15).contains(&length))
         }
+        X86SystemSelectorSource::FarPointer {
+            addr,
+            dst,
+            offset_width,
+            ..
+        } => {
+            let uses_egpr = addr
+                .regs()
+                .iter()
+                .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
+            let Some(dst_index) = (match dst {
+                VReg::Arch(ArchReg::X86(reg)) => reg.gpr_index(),
+                _ => None,
+            }) else {
+                return false;
+            };
+            let minimum_len = 3
+                + u64::from(*requires_apx)
+                + u64::from(*offset_width == OpWidth::W16)
+                + u64::from(*offset_width == OpWidth::W64 && !*requires_apx);
+            addr.is_x86_state_backed_shape()
+                && ((!uses_egpr && dst_index < 16) || *requires_apx)
+                && matches!(offset_width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64)
+                && matches!(
+                    selector,
+                    X86SystemSelector::Ss | X86SystemSelector::Fs | X86SystemSelector::Gs
+                )
+                && next_pc
+                    .checked_sub(op.guest_pc)
+                    .is_some_and(|length| (minimum_len..=15).contains(&length))
+        }
     }
 }
 
@@ -433,12 +464,12 @@ impl X86_64Lowerer {
     }
 
     /// Load LDTR/TR or an ordinary segment register through the owning vCPU's
-    /// MMU and descriptor validator. POP FS/GS also commits its RSP increment
-    /// only after the selector load succeeds. Every variant exits natively
-    /// after a successful commit; LLDT/LTR additionally serialize. Every
-    /// dynamic guard, source-memory, descriptor, or implicit descriptor-store
-    /// fault restores the complete pre-instruction register/flag image and
-    /// replays direct at `guest_pc`.
+    /// MMU and descriptor validator. POP FS/GS also commits its RSP increment,
+    /// and LSS/LFS/LGS their width-tagged GPR, only after the selector load
+    /// succeeds. Every variant exits natively after a successful commit;
+    /// LLDT/LTR additionally serialize. Every dynamic guard, source-memory,
+    /// descriptor, or implicit descriptor-store fault restores the complete
+    /// pre-instruction register/flag image and replays direct at `guest_pc`.
     pub(crate) fn emit_x86_system_selector_load(&mut self, op: &SmirOp) -> Result<(), LowerError> {
         if !self.jit_fault_deopt_guards {
             return Err(LowerError::UnsupportedOp {
@@ -453,7 +484,7 @@ impl X86_64Lowerer {
         if !x86_system_selector_load_shape_valid(op) {
             return Err(LowerError::InvalidOperand {
                 op: "X86SystemSelectorLoad".to_string(),
-                operand: "requires an unhinted LLDT/LTR, MOV-Sreg, or POP-FS/GS source; valid widths; APX for every EGPR; and an exact next PC"
+                operand: "requires an unhinted LLDT/LTR, MOV-Sreg, POP-FS/GS, or LSS/LFS/LGS source; valid widths; APX for every EGPR; and an exact next PC"
                     .to_string(),
             });
         }
@@ -497,6 +528,22 @@ impl X86_64Lowerer {
             X86SystemSelectorSource::Stack { width, .. } => Some(*width),
             _ => None,
         };
+        let far_pointer = match &load.source {
+            X86SystemSelectorSource::FarPointer {
+                dst, offset_width, ..
+            } => Some((*dst, *offset_width)),
+            _ => None,
+        };
+        if far_pointer.is_some() {
+            self.code.emit_bytes(&[0x48, 0xF7, 0x80]); // test qword [rax+efer],LMA
+            self.code.emit_u32(X86_GUEST_EFER_OFFSET as u32);
+            self.code.emit_u32(1 << 10);
+            guard_faults.push(self.emit_jcc_placeholder(X86Cond::E));
+            self.code.emit_bytes(&[0x48, 0x83, 0xB8]); // cmp qword [rax+cs_l],0
+            self.code.emit_u32(X86_GUEST_CS_L_OFFSET as u32);
+            self.code.emit_u8(0);
+            guard_faults.push(self.emit_jcc_placeholder(X86Cond::E));
+        }
         if let Some(width) = stack_width {
             let range_tail = match width {
                 MemWidth::B2 => 1,
@@ -544,7 +591,9 @@ impl X86_64Lowerer {
         self.emit_helper_call_state(PhysReg::Rax, true, self.preserve_vector_mem_helpers);
         let memory_source = matches!(
             &load.source,
-            X86SystemSelectorSource::Memory { .. } | X86SystemSelectorSource::Stack { .. }
+            X86SystemSelectorSource::Memory { .. }
+                | X86SystemSelectorSource::Stack { .. }
+                | X86SystemSelectorSource::FarPointer { .. }
         );
         match &load.source {
             X86SystemSelectorSource::Register { src } => {
@@ -563,6 +612,9 @@ impl X86_64Lowerer {
             }
             X86SystemSelectorSource::Stack { .. } => {
                 self.emit_struct_mov(PhysReg::Rax, 6, 4 * 8, false);
+            }
+            X86SystemSelectorSource::FarPointer { addr, .. } => {
+                self.emit_jit_mem_effective_address(addr, false)?;
             }
         }
         {
@@ -589,11 +641,27 @@ impl X86_64Lowerer {
                 }
             );
             let stack_source = matches!(load.source, X86SystemSelectorSource::Stack { .. });
+            let (far_pointer_source, far_dst, far_width) = match far_pointer {
+                Some((VReg::Arch(ArchReg::X86(dst)), width)) => {
+                    let width_code = match width {
+                        OpWidth::W16 => 0_i64,
+                        OpWidth::W32 => 1,
+                        OpWidth::W64 => 2,
+                        _ => unreachable!("validated far-pointer width changed"),
+                    };
+                    (1_i64, i64::from(dst.gpr_index().unwrap()), width_code)
+                }
+                Some(_) => unreachable!("validated far-pointer destination changed"),
+                None => (0, 0, 0),
+            };
             let encoding = i64::from(memory_source)
                 | (i64::from(load.requires_apx) << 1)
                 | (selector << 2)
                 | (i64::from(memory64) << 5)
-                | (i64::from(stack_source) << 6);
+                | (i64::from(stack_source) << 6)
+                | (far_pointer_source << 7)
+                | (far_dst << 8)
+                | (far_width << 13);
             emitter.emit_mov_ri(PhysReg::Rdx, encoding, OpWidth::W32);
         }
         self.code.emit_u8(0xFC); // cld: platform ABI requires DF=0

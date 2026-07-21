@@ -57,7 +57,7 @@ fn pop_segment_helper_stack_encoding_loads_exact_width_and_rejects_malformed_sha
         ("stack bit requires memory", STACK, 0x58_u32),
         ("system selector cannot use stack", STACK, 0x41),
         ("DS cannot use stack", STACK, 0x55),
-        ("unknown bit", STACK, 0xD9),
+        ("unknown bit", STACK, 0x8000),
         ("unmapped source", 0x20_000, 0x79),
         ("noncanonical start", 0x0000_8000_0000_0000, 0x79),
         ("crosses lower boundary", 0x0000_7FFF_FFFF_FFFC, 0x79),

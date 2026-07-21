@@ -684,6 +684,48 @@ fn emits_exact_pop_fs_gs_atomic_stack_width_frontier_and_apx_metadata() {
 }
 
 #[test]
+fn emits_exact_lss_lfs_lgs_atomic_far_pointer_width_destination_and_apx_metadata() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let legacy = decode_to_json(&[0x66, 0x0F, 0xB4, 0x0C, 0x24], &opts).unwrap();
+    assert_eq!(legacy["smir"]["available"], true);
+    assert_eq!(legacy["smir"]["bytes_consumed"], 5);
+    let op = &legacy["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_system_selector_load");
+    assert_eq!(op["kind"]["selector"], "Fs");
+    assert_eq!(op["kind"]["source"]["kind"], "far_pointer");
+    assert_eq!(op["kind"]["source"]["addr"]["kind"], "direct");
+    assert_eq!(op["kind"]["source"]["addr"]["reg"]["name"], "rsp");
+    assert_eq!(op["kind"]["source"]["dst"]["name"], "rcx");
+    assert_eq!(op["kind"]["source"]["offset_width"], "W16");
+    assert_eq!(op["kind"]["source"]["selector_width"], "B2");
+    assert_eq!(op["kind"]["source"]["stack_segment"], true);
+    assert_eq!(op["kind"]["source"]["commit"], "after_selector_load");
+    assert_eq!(op["kind"]["requires_apx"], false);
+    assert_eq!(op["kind"]["next_pc"], 0x1005);
+    assert_eq!(op["writes"][0]["name"], "rcx");
+    assert_eq!(op["memory"]["reads"], true);
+    assert_eq!(op["memory"]["writes"], true);
+    assert_eq!(op["side_effects"], true);
+
+    let rex2 = decode_to_json(&[0xD5, 0xDC, 0xB2, 0x38], &opts).unwrap();
+    assert_eq!(rex2["smir"]["available"], true);
+    assert_eq!(rex2["smir"]["bytes_consumed"], 4);
+    let op = &rex2["smir"]["ops"][0];
+    assert_eq!(op["kind"]["selector"], "Ss");
+    assert_eq!(op["kind"]["source"]["kind"], "far_pointer");
+    assert_eq!(op["kind"]["source"]["addr"]["kind"], "direct");
+    assert_eq!(op["kind"]["source"]["addr"]["reg"]["name"], "r16");
+    assert_eq!(op["kind"]["source"]["dst"]["name"], "r31");
+    assert_eq!(op["kind"]["source"]["offset_width"], "W64");
+    assert_eq!(op["kind"]["source"]["stack_segment"], false);
+    assert_eq!(op["kind"]["requires_apx"], true);
+    assert_eq!(op["kind"]["next_pc"], 0x1004);
+    assert_eq!(op["writes"][0]["name"], "r31");
+}
+
+#[test]
 fn emits_exact_lldt_ltr_source_hidden_state_handoff_busy_and_apx_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

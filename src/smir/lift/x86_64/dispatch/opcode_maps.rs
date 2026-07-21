@@ -1144,6 +1144,12 @@ impl X86_64Lifter {
             // selector/cache update, and fault-precise RSP commit are one op.
             0xA1 | 0xA9 => self.lift_pop_segment_0f(opcode2, &prefix2, pc),
 
+            // LSS/LFS/LGS (0F B2/B4/B5): far-pointer memory reads, descriptor
+            // effects, segment cache, and paired GPR commit are one atomic op.
+            0xB2 | 0xB4 | 0xB5 => {
+                self.lift_far_pointer_segment_load_0f(opcode2, after_opcode, &prefix2, pc, ctx)
+            }
+
             // UD2 (0F 0B): architecturally guaranteed invalid opcode trap.
             0x0B => Ok(LiftResult {
                 ops: vec![],

@@ -317,10 +317,11 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector(
     }
 }
 
-/// JIT LLDT/LTR, `MOV Sreg,r/m`, and `POP FS/GS` helper. Every architectural
-/// guard, source read, descriptor read, and implicit descriptor write is
-/// ordered before selector/cache commit. The native caller commits POP's RSP
-/// increment only after success. Failure returns zero so native code replays
+/// JIT LLDT/LTR, `MOV Sreg,r/m`, `POP FS/GS`, and `LSS/LFS/LGS` helper. Every
+/// architectural guard, source read, descriptor read, and implicit descriptor
+/// write is ordered before selector/cache commit. The native caller commits
+/// POP's RSP increment after success; this helper commits a far-pointer GPR only
+/// after its segment load succeeds. Failure returns zero so native code replays
 /// the direct instruction at its original guest PC.
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
 pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
@@ -339,6 +340,9 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
     let selector_id = (encoding >> 2) & 7;
     let memory64 = encoding & 0x20 != 0;
     let stack_source = encoding & 0x40 != 0;
+    let far_pointer = encoding & 0x80 != 0;
+    let far_dst = ((encoding >> 8) & 0x1F) as usize;
+    let far_width_code = (encoding >> 13) & 3;
     let ordinary_target = match selector_id {
         2 => Some(X86SegmentLoadTarget::Es),
         4 => Some(X86SegmentLoadTarget::Ss),
@@ -348,9 +352,26 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
         _ => None,
     };
     let system_selector = selector_id <= 1;
-    if encoding & !0x7F != 0
+    if encoding & !0x7FFF != 0
+        || !far_pointer && encoding & 0x7F80 != 0
         || !(system_selector || ordinary_target.is_some())
         || memory64 && (!memory_source || system_selector)
+        || far_pointer
+            && (!memory_source
+                || memory64
+                || stack_source
+                || system_selector
+                || !matches!(
+                    ordinary_target,
+                    Some(
+                        X86SegmentLoadTarget::Ss
+                            | X86SegmentLoadTarget::Fs
+                            | X86SegmentLoadTarget::Gs
+                    )
+                )
+                || far_width_code == 3
+                || far_dst >= 16 && !requires_apx
+                || vcpu.sregs.efer & (1 << 10) == 0)
         || stack_source
             && (!memory_source
                 || system_selector
@@ -376,10 +397,23 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
     let saved_log = vcpu.jit_mem_log.clone();
     let mem_record_checkpoint = vcpu.mmu.mem_record_checkpoint();
     let loaded = (|| {
-        let source_width: usize = if memory64 { 8 } else { 2 };
+        let mut far_offset = None;
         let selector = if memory_source {
-            if stack_source {
-                let Some(last) = operand.checked_add(source_width as u64 - 1) else {
+            let source_width = if far_pointer {
+                match far_width_code {
+                    0 => 2_usize,
+                    1 => 4,
+                    2 => 8,
+                    _ => unreachable!("validated far-pointer width code changed"),
+                }
+            } else if memory64 {
+                8
+            } else {
+                2
+            };
+            let transfer_width = source_width + if far_pointer { 2 } else { 0 };
+            if stack_source || far_pointer {
+                let Some(last) = operand.checked_add(transfer_width as u64 - 1) else {
                     return false;
                 };
                 if !is_canonical_48(operand) || !is_canonical_48(last) {
@@ -388,20 +422,39 @@ pub(super) unsafe extern "C" fn rax_jit_system_selector_load(
             }
             if !vcpu
                 .mmu
-                .read_range_is_plain_ram(operand, source_width, &vcpu.sregs)
+                .read_range_is_plain_ram(operand, transfer_width, &vcpu.sregs)
             {
                 return false;
             }
             let Ok(value) = vcpu.read_mem(operand, source_width as u8) else {
                 return false;
             };
-            value as u16
+            if far_pointer {
+                far_offset = Some(value);
+                let Ok(selector) = vcpu.read_mem(operand + source_width as u64, 2) else {
+                    return false;
+                };
+                selector as u16
+            } else {
+                value as u16
+            }
         } else {
             operand as u16
         };
 
         if let Some(target) = ordinary_target {
-            return vcpu.load_segment_selector(target, selector, true).is_ok();
+            if vcpu.load_segment_selector(target, selector, true).is_err() {
+                return false;
+            }
+            if let Some(offset) = far_offset {
+                state.gpr[far_dst] = match far_width_code {
+                    0 => (state.gpr[far_dst] & !0xFFFF) | (offset & 0xFFFF),
+                    1 => offset & 0xFFFF_FFFF,
+                    2 => offset,
+                    _ => unreachable!("validated far-pointer width code changed"),
+                };
+            }
+            return true;
         }
 
         let load_tr = selector_id == 1;

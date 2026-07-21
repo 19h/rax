@@ -6392,6 +6392,10 @@ mod jit_selector_tests;
 mod jit_pop_segment_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_far_pointer_load_tests.rs"]
+mod jit_far_pointer_load_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_far_jump_tests.rs"]
 mod jit_far_jump_tests;
 

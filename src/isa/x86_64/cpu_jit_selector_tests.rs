@@ -643,7 +643,7 @@ fn ltr_helper_commits_busy_with_exact_traces_and_rolls_back_every_failed_probe()
     assert_eq!(&observed[8..], &available[8..]);
 
     assert_eq!(
-        unsafe { rax_jit_system_selector_load(&mut state, 0x10, 0x80) },
+        unsafe { rax_jit_system_selector_load(&mut state, 0x10, 0x8000) },
         0,
         "unknown helper encoding bits must remain fail-closed"
     );

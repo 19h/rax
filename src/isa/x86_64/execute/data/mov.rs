@@ -258,7 +258,7 @@ pub fn mov_sreg_rm(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Optio
 fn load_pointer_to_segment(
     vcpu: &mut X86_64Vcpu,
     ctx: &mut InsnContext,
-    segment: u8,
+    target: X86SegmentLoadTarget,
 ) -> Result<Option<VcpuExit>> {
     let op_size = ctx.op_size;
     if op_size != 2 && op_size != 4 && op_size != 8 {
@@ -267,48 +267,79 @@ fn load_pointer_to_segment(
         )));
     }
 
-    let (reg, _, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    if !is_memory {
+    let modrm_start = ctx.cursor;
+    let modrm = ctx.consume_u8()?;
+    if modrm >> 6 == 3 {
         return vcpu.inject_undefined_instruction();
+    }
+    let reg = ((modrm >> 3) & 7) | ctx.any_rex_r();
+    let (addr, extra, stack_segment) =
+        vcpu.decode_modrm_addr_with_stack_segment(ctx, modrm_start)?;
+    ctx.cursor = modrm_start + 1 + extra;
+
+    let pointer_size = u64::from(op_size) + 2;
+    let canonical_range = addr.checked_add(pointer_size - 1).is_some_and(|last| {
+        vcpu.sregs.efer & (1 << 10) == 0 || is_canonical_48(addr) && is_canonical_48(last)
+    });
+    if !canonical_range {
+        vcpu.inject_exception(if stack_segment { 12 } else { 13 }, Some(0))?;
+        return Ok(None);
     }
 
     let offset = vcpu.read_mem(addr, op_size)?;
-    let selector = vcpu
-        .mmu
-        .read_u16(addr.wrapping_add(op_size as u64), &vcpu.sregs)?;
-    if segment == 2 && vcpu.sregs.cr0 & 1 != 0 && selector & 0xfffc == 0 {
-        vcpu.inject_exception(13, Some(0))?;
-        return Ok(None);
+    let selector = vcpu.read_mem(addr + u64::from(op_size), 2)? as u16;
+    match vcpu.load_segment_selector(target, selector, false) {
+        Ok(()) => {}
+        Err(X86SegmentSelectorLoadFault::Architectural(
+            X86SystemDescriptorFault::GeneralProtection { error_code },
+        )) => {
+            vcpu.inject_exception(13, Some(u64::from(error_code)))?;
+            return Ok(None);
+        }
+        Err(X86SegmentSelectorLoadFault::Architectural(
+            X86SystemDescriptorFault::SegmentNotPresent { error_code },
+        )) => {
+            vcpu.inject_exception(11, Some(u64::from(error_code)))?;
+            return Ok(None);
+        }
+        Err(X86SegmentSelectorLoadFault::StackSegment { error_code }) => {
+            vcpu.inject_exception(12, Some(u64::from(error_code)))?;
+            return Ok(None);
+        }
+        Err(X86SegmentSelectorLoadFault::Memory(error)) => return Err(error),
+        Err(X86SegmentSelectorLoadFault::NativeDeopt) => {
+            unreachable!("direct far-pointer segment load cannot request native deoptimization")
+        }
     }
+
     vcpu.set_reg(reg, offset, op_size);
-    vcpu.set_sreg(segment, selector);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
 
 /// LES r16/32, m16:16/32 (0xC4) - Load far pointer into ES and GPR.
 pub fn les(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    load_pointer_to_segment(vcpu, ctx, 0)
+    load_pointer_to_segment(vcpu, ctx, X86SegmentLoadTarget::Es)
 }
 
 /// LDS r16/32, m16:16/32 (0xC5) - Load far pointer into DS and GPR.
 pub fn lds(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    load_pointer_to_segment(vcpu, ctx, 3)
+    load_pointer_to_segment(vcpu, ctx, X86SegmentLoadTarget::Ds)
 }
 
 /// LSS r16/32/64, m16:16/32/64 (0F B2) - Load far pointer into SS and GPR.
 pub fn lss(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    load_pointer_to_segment(vcpu, ctx, 2)
+    load_pointer_to_segment(vcpu, ctx, X86SegmentLoadTarget::Ss)
 }
 
 /// LFS r16/32/64, m16:16/32/64 (0F B4) - Load far pointer into FS and GPR.
 pub fn lfs(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    load_pointer_to_segment(vcpu, ctx, 4)
+    load_pointer_to_segment(vcpu, ctx, X86SegmentLoadTarget::Fs)
 }
 
 /// LGS r16/32/64, m16:16/32/64 (0F B5) - Load far pointer into GS and GPR.
 pub fn lgs(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-    load_pointer_to_segment(vcpu, ctx, 5)
+    load_pointer_to_segment(vcpu, ctx, X86SegmentLoadTarget::Gs)
 }
 
 /// MOV r/m8, imm8 (0xC6 /0) or XABORT (0xC6 F8 imm8)

@@ -1188,6 +1188,20 @@ impl OracleJson for X86SystemSelectorSource {
                 "width": width.oracle_json(),
                 "commit": "after_selector_load",
             }),
+            X86SystemSelectorSource::FarPointer {
+                addr,
+                dst,
+                offset_width,
+                stack_segment,
+            } => json!({
+                "kind": "far_pointer",
+                "addr": addr.oracle_json(),
+                "dst": dst.oracle_json(),
+                "offset_width": offset_width.oracle_json(),
+                "selector_width": "B2",
+                "stack_segment": stack_segment,
+                "commit": "after_selector_load",
+            }),
         }
     }
 }

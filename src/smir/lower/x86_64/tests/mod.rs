@@ -26,6 +26,8 @@ mod far_call;
 #[cfg(test)]
 mod far_jump;
 #[cfg(test)]
+mod far_pointer_load;
+#[cfg(test)]
 mod far_return;
 #[cfg(test)]
 mod fp_binary;

@@ -103,6 +103,27 @@ fn load_stack(
     })
 }
 
+fn load_far(
+    selector: X86SystemSelector,
+    addr: Address,
+    dst: VReg,
+    width: OpWidth,
+    requires_apx: bool,
+    next_pc: u64,
+) -> OpKind {
+    OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+        selector,
+        source: X86SystemSelectorSource::FarPointer {
+            addr,
+            dst,
+            offset_width: width,
+            stack_segment: selector == X86SystemSelector::Ss,
+        },
+        requires_apx,
+        next_pc,
+    })
+}
+
 fn function(kind: OpKind) -> crate::smir::ir::SmirFunction {
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
     builder.push_op(0x1000, kind);
@@ -168,6 +189,22 @@ fn x86_selector_load_gate_requires_mmu_helpers_for_both_selectors_and_sources() 
         ),
         load_stack(X86SystemSelector::Fs, MemWidth::B8, false, 0x1002),
         load_stack(X86SystemSelector::Gs, MemWidth::B2, true, 0x1004),
+        load_far(
+            X86SystemSelector::Fs,
+            Address::Direct(x86(X86Reg::Rax)),
+            x86(X86Reg::Rcx),
+            OpWidth::W32,
+            false,
+            0x1003,
+        ),
+        load_far(
+            X86SystemSelector::Ss,
+            Address::Direct(x86(X86Reg::R31)),
+            x86(X86Reg::R30),
+            OpWidth::W64,
+            true,
+            0x1004,
+        ),
     ] {
         let function = function(op.clone());
         assert!(op.is_jit_safe(), "{op:?}");
@@ -175,6 +212,52 @@ fn x86_selector_load_gate_requires_mmu_helpers_for_both_selectors_and_sources() 
             &function.blocks[0].ops[0]
         ));
         assert!(!gate(op.clone(), false), "{op:?}");
+        assert!(gate(op, true));
+    }
+}
+
+#[test]
+fn x86_far_pointer_load_gate_admits_exact_targets_widths_addresses_and_apx() {
+    for (selector, addr, dst, width, requires_apx, next_pc) in [
+        (
+            X86SystemSelector::Fs,
+            Address::Absolute(0x4000),
+            x86(X86Reg::Rax),
+            OpWidth::W16,
+            false,
+            0x1004,
+        ),
+        (
+            X86SystemSelector::Gs,
+            Address::Direct(x86(X86Reg::Rsp)),
+            x86(X86Reg::R15),
+            OpWidth::W32,
+            false,
+            0x1003,
+        ),
+        (
+            X86SystemSelector::Ss,
+            Address::BaseIndexScale {
+                base: Some(x86(X86Reg::R16)),
+                index: x86(X86Reg::R31),
+                scale: 8,
+                disp: -8,
+                disp_size: DispSize::Disp8,
+            },
+            x86(X86Reg::R30),
+            OpWidth::W64,
+            true,
+            0x1006,
+        ),
+    ] {
+        let op = load_far(selector, addr, dst, width, requires_apx, next_pc);
+        let function = function(op.clone());
+        assert!(op.is_jit_safe(), "{op:?}");
+        assert!(x86_system_selector_load_shape_valid(
+            &function.blocks[0].ops[0]
+        ));
+        assert!(!gate(op.clone(), false), "{op:?}");
+        assert!(x86_jit_op_uses_mem_helper(&op));
         assert!(gate(op, true));
     }
 }
@@ -265,6 +348,54 @@ fn x86_selector_load_gate_rejects_malformed_sources_hints_and_frontiers() {
         load_stack(X86SystemSelector::Gs, MemWidth::B2, false, 0x1002),
         load_stack(X86SystemSelector::Gs, MemWidth::B2, true, 0x1003),
         load_stack(X86SystemSelector::Fs, MemWidth::B8, true, 0x1002),
+        load_far(
+            X86SystemSelector::Ds,
+            Address::Direct(x86(X86Reg::Rax)),
+            x86(X86Reg::Rcx),
+            OpWidth::W32,
+            false,
+            0x1003,
+        ),
+        load_far(
+            X86SystemSelector::Fs,
+            Address::Direct(VReg::virt(0)),
+            x86(X86Reg::Rcx),
+            OpWidth::W32,
+            false,
+            0x1003,
+        ),
+        load_far(
+            X86SystemSelector::Fs,
+            Address::Direct(x86(X86Reg::R31)),
+            x86(X86Reg::Rcx),
+            OpWidth::W32,
+            false,
+            0x1003,
+        ),
+        load_far(
+            X86SystemSelector::Fs,
+            Address::Direct(x86(X86Reg::Rax)),
+            x86(X86Reg::R31),
+            OpWidth::W32,
+            false,
+            0x1003,
+        ),
+        load_far(
+            X86SystemSelector::Fs,
+            Address::Direct(x86(X86Reg::Rax)),
+            x86(X86Reg::Rcx),
+            OpWidth::W8,
+            false,
+            0x1003,
+        ),
+        load_far(
+            X86SystemSelector::Fs,
+            Address::Direct(x86(X86Reg::Rax)),
+            x86(X86Reg::Rcx),
+            OpWidth::W64,
+            false,
+            0x1003,
+        ),
     ] {
         let function = function(malformed.clone());
         assert!(!x86_system_selector_load_shape_valid(
@@ -470,6 +601,22 @@ fn x86_selector_gate_rejects_both_aarch64_host_paths() {
         load_memory(X86SystemSelector::Tr, Address::Absolute(0x4000), false),
         load_stack(X86SystemSelector::Fs, MemWidth::B8, false, 0x1002),
         load_stack(X86SystemSelector::Gs, MemWidth::B2, true, 0x1004),
+        load_far(
+            X86SystemSelector::Fs,
+            Address::Direct(x86(X86Reg::Rax)),
+            x86(X86Reg::Rcx),
+            OpWidth::W32,
+            false,
+            0x1003,
+        ),
+        load_far(
+            X86SystemSelector::Ss,
+            Address::Direct(x86(X86Reg::R31)),
+            x86(X86Reg::R30),
+            OpWidth::W64,
+            true,
+            0x1004,
+        ),
     ] {
         let function = function(op.clone());
         assert!(!is_x86_aarch64_native_clobber_safe_excluding(
@@ -498,6 +645,17 @@ fn x86_selector_survives_o2_and_remains_admitted_with_memory_helpers() {
         0x100B,
         load_stack(X86SystemSelector::Gs, MemWidth::B2, false, 0x100E),
     );
+    builder.push_op(
+        0x100E,
+        load_far(
+            X86SystemSelector::Fs,
+            Address::Direct(x86(X86Reg::Rax)),
+            x86(X86Reg::Rcx),
+            OpWidth::W32,
+            false,
+            0x1011,
+        ),
+    );
     builder.set_terminator(Terminator::Return { values: vec![] });
     let mut function = builder.finish();
     crate::smir::optimize::optimize_function(&mut function, crate::smir::optimize::OptLevel::O2);
@@ -516,7 +674,7 @@ fn x86_selector_survives_o2_and_remains_admitted_with_memory_helpers() {
             .iter()
             .filter(|op| matches!(op.kind, OpKind::X86SystemSelectorLoad(..)))
             .count(),
-        2
+        3
     );
     assert!(is_native_clobber_safe_excluding(
         &function,

@@ -3928,6 +3928,21 @@ impl OpKind {
                 source: X86SystemSelectorSource::Stack { stack_pointer, .. },
                 ..
             }) => result.push(*stack_pointer),
+            OpKind::X86SystemSelectorLoad(X86SystemSelectorLoadOp {
+                source:
+                    X86SystemSelectorSource::FarPointer {
+                        addr,
+                        dst,
+                        offset_width,
+                        ..
+                    },
+                ..
+            }) => {
+                result.extend(addr.regs());
+                if *offset_width == OpWidth::W16 {
+                    result.push(*dst);
+                }
+            }
             OpKind::X86FarJump(jump) => result.extend(jump.addr.regs()),
             OpKind::X86FarCall(call) => result.extend(call.addr.regs()),
             OpKind::X86FarReturn(..) => {}

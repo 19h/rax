@@ -425,7 +425,8 @@ impl X86_64Vcpu {
         }
     }
 
-    /// Validate and load ES/SS/DS/FS/GS for `MOV Sreg,r/m` or `POP Sreg`.
+    /// Validate and load ES/SS/DS/FS/GS for `MOV Sreg,r/m`, `POP Sreg`, or a
+    /// far-pointer segment load (`LES/LDS/LSS/LFS/LGS`).
     /// Descriptor reads and the implicit accessed-bit store precede
     /// selector/cache exposure. `native_preflight` excludes accesses that
     /// cannot be speculated exactly once before direct replay.
