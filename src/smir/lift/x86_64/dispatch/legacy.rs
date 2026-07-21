@@ -219,6 +219,27 @@ impl X86_64Lifter {
                     branch_targets: vec![],
                 })
             }
+            // IRET is terminal and mode-sensitive. Stack reads, descriptor and
+            // privilege checks, NMI unblocking, flag restoration, and the
+            // control transfer remain in the direct interpreter. Preserve the
+            // encoded operand width and exact instruction frontier so lifting
+            // succeeds without speculatively committing any return state.
+            0xCF if prefix.lock => Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..(prefix.cursor + 1).min(bytes.len())].to_vec(),
+            }),
+            0xCF => Ok(LiftResult {
+                ops: vec![],
+                bytes_consumed: prefix.cursor + 1,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::X86InterruptReturn {
+                        width: prefix.op_width(),
+                        fault_pc: pc,
+                        requires_apx: prefix.rex2.is_some(),
+                    },
+                },
+                branch_targets: vec![],
+            }),
             0xCC => Ok(LiftResult::fallthrough(
                 vec![SmirOp::new(OpId(0), pc, OpKind::Breakpoint)],
                 prefix.cursor + 1,

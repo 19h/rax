@@ -354,6 +354,27 @@ impl SmirInterpreter {
                             })
                         }
                     }
+                    TrapKind::X86InterruptReturn {
+                        width,
+                        fault_pc,
+                        requires_apx,
+                    } => {
+                        let encoding_enabled = matches!(
+                            &ctx.arch_regs,
+                            ArchRegState::X86_64(x86) if !*requires_apx || x86.apx_enabled
+                        );
+                        if !encoding_enabled {
+                            BlockResult::Exit(ExitReason::Undefined {
+                                addr: *fault_pc,
+                                opcode: 0,
+                            })
+                        } else {
+                            BlockResult::Exit(ExitReason::X86InterruptReturn {
+                                width: *width,
+                                fault_pc: *fault_pc,
+                            })
+                        }
+                    }
                     TrapKind::SystemCall => {
                         // Already handled in Syscall op
                         BlockResult::Continue(ctx.pc)

@@ -38,6 +38,8 @@ mod hypercall_hints;
 #[cfg(test)]
 mod icebp;
 #[cfg(test)]
+mod interrupt_return;
+#[cfg(test)]
 mod lmsw;
 #[cfg(test)]
 mod monitor_mwait;

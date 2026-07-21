@@ -1,5 +1,5 @@
 use crate::common::*;
-use rax::vm::vcpu::Registers;
+use rax::vm::vcpu::{Registers, VCpu};
 
 fn write_stack_value(mem: &GuestMemoryMmap, addr: u64, size: u8, value: u64) {
     match size {
@@ -29,6 +29,28 @@ fn write_iret_outer_frame(
     write_iret_frame(mem, rsp, op_size, rip, cs, flags);
     write_stack_value(mem, rsp + 3 * op_size as u64, op_size, new_rsp);
     write_stack_value(mem, rsp + 4 * op_size as u64, op_size, new_ss as u64);
+}
+
+fn run_iret_encoding(instruction: &[u8], op_size: u8, apx_enabled: bool) -> Registers {
+    let mut code = vec![
+        0x48, 0xC7, 0xC4, 0x00, 0x80, 0x00, 0x00, // MOV RSP, 0x8000
+    ];
+    code.extend_from_slice(instruction);
+    code.push(0xF4);
+
+    let (mut vcpu, mem) = setup_vm(&code, None);
+    vcpu.set_apx_enabled(apx_enabled);
+    write_iret_outer_frame(&mem, 0x8000, op_size, 0x3000, 0x08, 0x2, 0x7000, 0x10);
+    mem.write_slice(
+        &[
+            0x48, 0x89, 0xE0, // MOV RAX, RSP
+            0xF4,
+        ],
+        vm_memory::GuestAddress(0x3000),
+    )
+    .unwrap();
+
+    run_until_hlt(&mut vcpu).unwrap()
 }
 
 // Comprehensive tests for IRET/IRETD/IRETQ instructions (interrupt return)
@@ -180,6 +202,74 @@ fn test_iretq_restores_rflags() {
     // Check ZF (bit 6), PF (bit 2) are set in restored flags (0x246 = ZF|PF|IF|reserved)
     assert_ne!(regs.rax & 0x40, 0, "ZF should be set");
     assert_ne!(regs.rax & 0x04, 0, "PF should be set");
+}
+
+#[test]
+fn test_iret_family_prefixes_select_exact_width_and_rex2_is_apx_gated() {
+    let cases: &[(&str, &[u8], u8, bool)] = &[
+        ("bare IRETD", &[0xCF], 4, false),
+        ("segment override", &[0x2E, 0xCF], 4, false),
+        ("address size", &[0x67, 0xCF], 4, false),
+        ("REPNE", &[0xF2, 0xCF], 4, false),
+        ("REP", &[0xF3, 0xCF], 4, false),
+        ("REX payload", &[0x47, 0xCF], 4, false),
+        ("IRET", &[0x66, 0xCF], 2, false),
+        ("IRETQ", &[0x48, 0xCF], 8, false),
+        ("66 then REX.W", &[0x66, 0x48, 0xCF], 8, false),
+        ("REX.W then 66", &[0x48, 0x66, 0xCF], 2, false),
+        ("REX2 ignored fields", &[0xD5, 0x07, 0xCF], 4, true),
+        ("REX2.W", &[0xD5, 0x08, 0xCF], 8, true),
+        ("REX2 all map-0 fields", &[0xD5, 0x7F, 0xCF], 8, true),
+        (
+            "legacy prefixes then REX2",
+            &[0x66, 0x67, 0xF2, 0x2E, 0xD5, 0x07, 0xCF],
+            2,
+            true,
+        ),
+        ("66 then REX2.W", &[0x66, 0xD5, 0x08, 0xCF], 8, true),
+    ];
+
+    for &(name, instruction, op_size, apx_enabled) in cases {
+        let regs = run_iret_encoding(instruction, op_size, apx_enabled);
+        assert_eq!(regs.rax, 0x7000, "{name}: exact frame width");
+        assert_eq!(regs.rip, 0x3004, "{name}: exact return target");
+    }
+}
+
+#[test]
+fn test_iret_family_invalid_prefixes_are_fault_class_ud_and_noncommitting() {
+    for (name, instruction, apx_enabled) in [
+        ("APX-disabled REX2", &[0xD5, 0x00, 0xCF][..], false),
+        ("LOCK", &[0xF0, 0xCF], false),
+        ("LOCK REX2", &[0xF0, 0xD5, 0x00, 0xCF], true),
+        ("REX before REX2", &[0x48, 0xD5, 0x00, 0xCF], true),
+    ] {
+        let (mut vcpu, _) = setup_vm_no_idt(instruction, None);
+        vcpu.set_apx_enabled(apx_enabled);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rsp = 0x8000;
+        vcpu.set_regs(&regs).unwrap();
+
+        for path in ["cold decode", "decode-cache hit"] {
+            let error = vcpu
+                .step()
+                .expect_err("invalid IRET-family encoding must raise #UD")
+                .to_string();
+            assert!(
+                error.contains("IDT entry 6 not present"),
+                "{name} ({path}): wrong exception vector: {error}"
+            );
+            let after = vcpu.get_regs().unwrap();
+            assert_eq!(
+                after.rip, CODE_ADDR,
+                "{name} ({path}): #UD must retain the faulting RIP"
+            );
+            assert_eq!(
+                after.rsp, 0x8000,
+                "{name} ({path}): #UD must not consume the return frame"
+            );
+        }
+    }
 }
 
 // ============================================================================

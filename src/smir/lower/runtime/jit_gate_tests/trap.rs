@@ -62,3 +62,12 @@ fn x86_software_interrupt_trap_is_interpreter_only() {
         requires_apx: false,
     });
 }
+
+#[test]
+fn x86_interrupt_return_trap_is_interpreter_only() {
+    assert_trap_is_interpreter_only(TrapKind::X86InterruptReturn {
+        width: OpWidth::W64,
+        fault_pc: 0x1000,
+        requires_apx: false,
+    });
+}
