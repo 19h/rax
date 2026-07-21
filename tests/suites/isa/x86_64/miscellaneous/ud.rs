@@ -76,11 +76,53 @@ fn test_salc_is_invalid_in_64bit_mode_for_all_prefix_classes() {
 }
 
 #[test]
-fn test_unimplemented_two_byte_opcode_injects_ud() {
-    assert_missing_idt_ud(&[
-        0x0f, 0x04, // Unimplemented 0F opcode
-        0xf4, // HLT (should not be reached)
-    ]);
+fn test_reserved_two_byte_opcodes_inject_ud_for_all_prefix_classes() {
+    const PREFIXES: &[(&str, &[u8], bool, bool)] = &[
+        ("bare", &[], false, false),
+        ("operand-size", &[0x66], false, false),
+        ("address-size", &[0x67], false, false),
+        ("REPNE", &[0xF2], false, false),
+        ("REP", &[0xF3], false, false),
+        ("segment", &[0x2E], false, false),
+        ("REX.W", &[0x48], false, false),
+        ("LOCK", &[0xF0], false, false),
+        ("REX2.M", &[0xD5, 0x80], true, true),
+        ("REX2.M all fields", &[0xD5, 0xFF], true, true),
+        (
+            "stacked REX2.M",
+            &[0x66, 0x67, 0xF3, 0x2E, 0xD5, 0x80],
+            true,
+            true,
+        ),
+    ];
+
+    for opcode in [0x04, 0x0A, 0x0C] {
+        for &(name, prefixes, rex2_map1, apx_enabled) in PREFIXES {
+            let mut code = prefixes.to_vec();
+            if !rex2_map1 {
+                code.push(0x0F);
+            }
+            code.extend([opcode, 0xF4]);
+            let (mut vcpu, _) = setup_vm_no_idt(&code, None);
+            vcpu.set_apx_enabled(apx_enabled);
+
+            for path in ["cold decode", "decode-cache hit"] {
+                let error = vcpu
+                    .step()
+                    .expect_err("reserved two-byte opcode must raise #UD")
+                    .to_string();
+                assert!(
+                    error.contains("IDT entry 6 not present"),
+                    "0F {opcode:02X}, {name} ({path}): expected #UD delivery failure, got {error}"
+                );
+                assert_eq!(
+                    vcpu.get_regs().unwrap().rip,
+                    CODE_ADDR,
+                    "0F {opcode:02X}, {name} ({path}): fault-class #UD must retain RIP"
+                );
+            }
+        }
+    }
 }
 
 #[test]

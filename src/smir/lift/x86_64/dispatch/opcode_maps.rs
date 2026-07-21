@@ -332,6 +332,21 @@ impl X86_64Lifter {
             0x01 => self.lift_group7_0f01(after_opcode, &prefix2, pc, ctx),
             0x02 | 0x03 => self.lift_selector_query_0f(opcode2, after_opcode, &prefix2, pc, ctx),
 
+            // These blank cells are reserved in both the Intel and AMD
+            // legacy map-1 opcode tables. They have no operand encoding, so
+            // terminate at the main opcode and expose the architectural #UD
+            // directly instead of forcing an interpreter fallback. Intel APX
+            // specifies that an opcode which #UDs without REX2 continues to
+            // #UD when REX2.M0 selects this map.
+            0x04 | 0x0A | 0x0C => Ok(LiftResult {
+                ops: vec![],
+                bytes_consumed: prefix2.cursor,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: vec![],
+            }),
+
             // CLTS (0F 06): clear CR0.TS after a dynamic privilege check.
             // Intel specifies only LOCK as an invalid prefix; other legacy and
             // REX prefixes are ignored.

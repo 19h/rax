@@ -218,6 +218,34 @@ fn reports_x86_ud0_as_an_exact_two_byte_invalid_opcode_trap() {
 }
 
 #[test]
+fn reports_reserved_x86_two_byte_opcodes_as_exact_invalid_opcode_traps() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    for (bytes, expected_len) in [
+        (&[0x0F, 0x04][..], 2),
+        (&[0x66, 0x0F, 0x0A], 3),
+        (&[0xF0, 0x0F, 0x0C], 3),
+        (&[0xD5, 0x80, 0x04], 3),
+        (&[0x66, 0xD5, 0x80, 0x0A], 4),
+        (&[0x0F, 0x0C, 0x04, 0x25, 0x78, 0x56, 0x34, 0x12], 2),
+    ] {
+        let value = decode_to_json(bytes, &opts).unwrap();
+        let smir = &value["smir"];
+        assert_eq!(smir["available"], true, "{bytes:02X?}");
+        assert_eq!(smir["bytes_consumed"], expected_len, "{bytes:02X?}");
+        assert_eq!(smir["ops"], serde_json::json!([]), "{bytes:02X?}");
+        assert_eq!(smir["control_flow"]["kind"], "trap", "{bytes:02X?}");
+        assert_eq!(
+            smir["control_flow"]["trap"], "InvalidOpcode",
+            "{bytes:02X?}"
+        );
+        assert_eq!(smir["ends_block"], true, "{bytes:02X?}");
+        assert_eq!(smir["ends_function"], true, "{bytes:02X?}");
+    }
+}
+
+#[test]
 fn reports_exact_hypercall_hint_and_unsupported_alias_profiles() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

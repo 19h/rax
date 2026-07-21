@@ -710,6 +710,97 @@ fn lift_ud2_is_an_explicit_invalid_opcode_trap() {
 }
 
 #[test]
+fn lift_reserved_two_byte_opcodes_are_explicit_invalid_opcode_traps() {
+    const RESERVED: &[u8] = &[0x04, 0x0A, 0x0C];
+    const LEGACY_PREFIXES: &[&[u8]] = &[
+        &[],
+        &[0x66],
+        &[0x67],
+        &[0xF2],
+        &[0xF3],
+        &[0x2E],
+        &[0x48],
+        &[0xF0],
+        &[0x66, 0x67, 0xF3, 0x2E, 0x48],
+    ];
+
+    let assert_trap = |bytes: &[u8], expected_len: usize| {
+        let result = lift_single(bytes)
+            .unwrap_or_else(|error| panic!("reserved opcode {bytes:02X?}: {error:?}"));
+        assert_eq!(result.bytes_consumed, expected_len, "{bytes:02X?}");
+        assert!(result.ops.is_empty(), "{bytes:02X?}");
+        assert!(result.branch_targets.is_empty(), "{bytes:02X?}");
+        assert!(
+            matches!(
+                result.control_flow,
+                ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode
+                }
+            ),
+            "{bytes:02X?}"
+        );
+    };
+
+    for &opcode in RESERVED {
+        for &prefixes in LEGACY_PREFIXES {
+            let mut bytes = prefixes.to_vec();
+            bytes.extend([0x0F, opcode]);
+            assert_trap(&bytes, bytes.len());
+        }
+
+        // REX2.M0=1 selects legacy map 1 without an encoded 0F escape.
+        for bytes in [
+            vec![0xD5, 0x80, opcode],
+            vec![0xD5, 0xFF, opcode],
+            vec![0x66, 0x67, 0xF3, 0x2E, 0xD5, 0x80, opcode],
+        ] {
+            assert_trap(&bytes, bytes.len());
+        }
+
+        // No ModR/M, SIB, displacement, or immediate byte belongs to a blank
+        // opcode-map cell. Deterministically stop before operand-like bytes.
+        let trailing = [0x0F, opcode, 0x04, 0x25, 0x78, 0x56, 0x34, 0x12];
+        assert_trap(&trailing, 2);
+    }
+}
+
+#[test]
+fn reserved_two_byte_opcodes_are_exact_interpreter_frontiers_without_operand_fetch() {
+    for opcode in [0x04, 0x0A, 0x0C] {
+        // The memory image ends at the reserved main opcode. Successful
+        // lifting therefore proves that no undefined operand byte was read.
+        let code = vec![0x48, 0x83, 0xC0, 0x01, 0x0F, opcode];
+        let mut lifter = X86_64Lifter::strict();
+        lifter.set_interpreter_frontiers(true);
+        let mut context = LiftContext::new(SourceArch::X86_64);
+        let function = lifter
+            .lift_function(0x1800, &TestMemory::new(0x1800, code), &mut context)
+            .unwrap_or_else(|error| panic!("reserved opcode 0F {opcode:02X}: {error:?}"));
+
+        let prefix = function
+            .blocks
+            .iter()
+            .find(|block| block.guest_pc == 0x1800)
+            .unwrap_or_else(|| panic!("0F {opcode:02X}: missing supported prefix"));
+        let frontier = function
+            .blocks
+            .iter()
+            .find(|block| block.guest_pc == 0x1804)
+            .unwrap_or_else(|| panic!("0F {opcode:02X}: missing exact #UD frontier"));
+        assert!(!prefix.ops.is_empty(), "0F {opcode:02X}");
+        assert!(
+            matches!(prefix.terminator, Terminator::Branch { target } if target == frontier.id),
+            "0F {opcode:02X}"
+        );
+        assert!(frontier.ops.is_empty(), "0F {opcode:02X}");
+        assert!(
+            matches!(frontier.terminator, Terminator::Return { .. }),
+            "0F {opcode:02X}"
+        );
+    }
+}
+
+#[test]
 fn lift_ud0_is_an_explicit_two_byte_trap_without_operand_fetch() {
     let cases: &[(&[u8], usize)] = &[
         (&[0x0F, 0xFF], 2),
