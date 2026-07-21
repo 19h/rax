@@ -118,7 +118,10 @@ pub(crate) fn decode_x86_far_return_code(
     };
     let target = X86FarJumpTarget {
         segment: Segment {
-            base: if l { 0 } else { descriptor_base(raw) },
+            // Preserve the descriptor-cache image. 64-bit instruction fetch
+            // treats CS.base as zero when `L=1`; the CPU fetch path applies
+            // that rule without discarding the hidden descriptor base.
+            base: descriptor_base(raw),
             limit: descriptor_limit(raw),
             selector,
             type_: type_ | 1,

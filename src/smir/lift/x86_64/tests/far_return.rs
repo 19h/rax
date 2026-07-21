@@ -37,13 +37,28 @@ fn code_descriptor(
     present: bool,
     accessed: bool,
 ) -> [u8; 8] {
+    code_descriptor_with_base(0, dpl, conforming, l, db, present, accessed)
+}
+
+fn code_descriptor_with_base(
+    base: u32,
+    dpl: u8,
+    conforming: bool,
+    l: bool,
+    db: bool,
+    present: bool,
+    accessed: bool,
+) -> [u8; 8] {
     let raw = 0xFFFF_u64
+        | (u64::from(base & 0xFFFF) << 16)
+        | (u64::from((base >> 16) & 0xFF) << 32)
         | ((0xA_u64 | (u64::from(conforming) << 2) | u64::from(accessed)) << 40)
         | (1 << 44)
         | (u64::from(dpl & 3) << 45)
         | (u64::from(present) << 47)
         | (u64::from(l) << 53)
-        | (u64::from(db) << 54);
+        | (u64::from(db) << 54)
+        | (u64::from(base >> 24) << 56);
     raw.to_le_bytes()
 }
 
@@ -207,6 +222,8 @@ fn interpreter_frontiers_and_optimizer_preserve_typed_far_return_ownership() {
 
 #[test]
 fn far_return_interpreter_same_privilege_commits_width_frame_and_accessed_bit_last() {
+    const TARGET_CS_BASE: u64 = 0x000B_0000;
+
     for (bytes, width, pop_bytes, target) in [
         (&[0x66, 0xCB][..], OpWidth::W16, 0_u16, 0x1234_u64),
         (&[0xCA, 0x10, 0x00], OpWidth::W32, 0x10, 0x3456),
@@ -217,7 +234,7 @@ fn far_return_interpreter_same_privilege_commits_width_frame_and_accessed_bit_la
         let mut memory = FlatMemory::with_base(MEMORY_BASE, 0x1800);
         memory.load(
             (GDT + 0x18 - MEMORY_BASE) as usize,
-            &code_descriptor(0, false, true, false, true, false),
+            &code_descriptor_with_base(TARGET_CS_BASE as u32, 0, false, true, false, true, false),
         );
         write_slot(&mut memory, RSP, width, target);
         write_slot(
@@ -234,6 +251,7 @@ fn far_return_interpreter_same_privilege_commits_width_frame_and_accessed_bit_la
         };
         assert_eq!(x86.rip, target);
         assert_eq!(x86.cs_selector, selector);
+        assert_eq!(x86.cs_cache.base, TARGET_CS_BASE);
         assert_eq!(
             x86.gpr[4],
             RSP + 2 * u64::from(width.bytes()) + u64::from(pop_bytes)

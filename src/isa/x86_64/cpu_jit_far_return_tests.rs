@@ -47,13 +47,27 @@ fn test_vcpu(memory: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
 }
 
 fn code_descriptor(dpl: u8, present: bool, l: bool, db: bool, accessed: bool) -> [u8; 8] {
+    code_descriptor_with_base(0, dpl, present, l, db, accessed)
+}
+
+fn code_descriptor_with_base(
+    base: u32,
+    dpl: u8,
+    present: bool,
+    l: bool,
+    db: bool,
+    accessed: bool,
+) -> [u8; 8] {
     let raw = 0xFFFF_u64
+        | (u64::from(base & 0xFFFF) << 16)
+        | (u64::from((base >> 16) & 0xFF) << 32)
         | ((0xA_u64 | u64::from(accessed)) << 40)
         | (1 << 44)
         | (u64::from(dpl & 3) << 45)
         | (u64::from(present) << 47)
         | (u64::from(l) << 53)
-        | (u64::from(db) << 54);
+        | (u64::from(db) << 54)
+        | (u64::from(base >> 24) << 56);
     raw.to_le_bytes()
 }
 
@@ -129,6 +143,8 @@ fn exception_without_idt(vcpu: &mut X86_64Vcpu) -> String {
 
 #[test]
 fn jit_far_return_widths_immediate_and_apx_match_direct() {
+    const TARGET_CS_BASE: u64 = 0x000B_0000;
+
     for (name, instruction, width, pop_bytes, target, apx) in [
         ("W16", &[0x66, 0xCB][..], 2, 0_u16, 0x5678_u64, false),
         (
@@ -151,7 +167,11 @@ fn jit_far_return_widths_immediate_and_apx_match_direct() {
         let direct_memory = memory_with_code(instruction);
         let native_memory = memory_with_code(instruction);
         for memory in [&direct_memory, &native_memory] {
-            install_descriptor(memory, 0x18, &code_descriptor(0, true, true, false, false));
+            install_descriptor(
+                memory,
+                0x18,
+                &code_descriptor_with_base(TARGET_CS_BASE as u32, 0, true, true, false, false),
+            );
             write_slot(memory, STACK, width, target);
             write_slot(memory, STACK + width as u64, width, 0x18);
         }
@@ -176,6 +196,7 @@ fn jit_far_return_widths_immediate_and_apx_match_direct() {
             "{name}"
         );
         assert_eq!(native.regs.rsp, direct.regs.rsp, "{name}");
+        assert_eq!(native.sregs.cs.base, TARGET_CS_BASE, "{name}");
         assert_eq!(
             segment_fingerprint(&native.sregs.cs),
             segment_fingerprint(&direct.sregs.cs),
