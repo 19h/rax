@@ -645,6 +645,12 @@ impl X86_64Lowerer {
                 // Descriptor state must be visible before any later guest op.
                 return Ok(());
             }
+            if matches!(block.ops[idx].kind, OpKind::X86Invlpg(..)) {
+                self.emit_x86_invlpg(&block.ops[idx])?;
+                // Translation invalidation is a serializing exact frontier;
+                // no later operation may execute using the old mapping.
+                return Ok(());
+            }
             if matches!(block.ops[idx].kind, OpKind::X86SystemSelectorLoad(..)) {
                 self.emit_x86_system_selector_load(&block.ops[idx])?;
                 // LLDT/LTR serialize; MOV Sreg, POP FS/GS, and LSS/LFS/LGS

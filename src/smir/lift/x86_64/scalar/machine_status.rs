@@ -2,7 +2,7 @@
 
 use crate::smir::ir::ops::{
     OpKind, SmirOp, X86DescriptorTable, X86DescriptorTableLoadOp, X86DescriptorTableStoreOp,
-    X86LmswOp, X86LmswSource, X86SmswOp, X86SmswTarget,
+    X86InvlpgOp, X86LmswOp, X86LmswSource, X86SmswOp, X86SmswTarget,
 };
 use crate::smir::ir::types::OpId;
 use crate::smir::lift::x86_64::{X86_64Lifter, X86Prefix, decode_modrm};
@@ -53,6 +53,7 @@ impl X86_64Lifter {
             ),
             Some((_, 4)) => self.lift_smsw_0f01(bytes, prefix, pc, ctx),
             Some((_, 6)) => self.lift_lmsw_0f01(bytes, prefix, pc, ctx),
+            Some((mode, 7)) if mode != 3 => self.lift_invlpg_0f01(bytes, prefix, pc, ctx),
             _ => self.lift_xcr_0f01(bytes, prefix, pc, ctx),
         }
     }
@@ -237,6 +238,49 @@ impl X86_64Lifter {
                     source,
                     requires_apx: prefix.rex2.is_some(),
                     next_pc: pc.wrapping_add(bytes_consumed as u64),
+                }),
+            )],
+            bytes_consumed,
+        ))
+    }
+
+    /// Lift memory-only `INVLPG m` (`0F 01 /7`). The address expression is
+    /// retained without a load: privilege, APX availability, canonicality, and
+    /// translation-cache invalidation belong to the atomic system operation.
+    fn lift_invlpg_0f01(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..bytes.len().min(1)].to_vec(),
+            });
+        }
+
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let Some(x86_addr) = modrm.addr.as_ref() else {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes[..bytes.len().min(modrm.bytes_consumed)].to_vec(),
+            });
+        };
+        let bytes_consumed = prefix.cursor + modrm.bytes_consumed;
+        let next_pc = pc.wrapping_add(bytes_consumed as u64);
+        let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
+        debug_assert!(pre_ops.is_empty());
+
+        Ok(LiftResult::fallthrough(
+            vec![SmirOp::new(
+                OpId(0),
+                pc,
+                OpKind::X86Invlpg(X86InvlpgOp {
+                    addr,
+                    requires_apx: prefix.rex2.is_some(),
+                    next_pc,
                 }),
             )],
             bytes_consumed,

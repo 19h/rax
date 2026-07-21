@@ -253,6 +253,42 @@ fn test_invlpg_basic() {
 }
 
 #[test]
+fn test_invlpg_requires_cpl0_and_faults_without_advancing_or_committing() {
+    let code = [0x0F, 0x01, 0x38, 0xF4]; // INVLPG [RAX]; HLT
+    let mut initial = Registers::default();
+    initial.rax = 0x4000;
+    initial.rflags = 0x2 | 0x08D5 | (1 << 10);
+    let (mut vcpu, _) = setup_vm(&code, Some(initial));
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 3;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    assert!(vcpu.step().expect("deliver INVLPG #GP(0)").is_none());
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rip, INT_HANDLER_ADDR, "CPL3 INVLPG must enter #GP");
+    assert_eq!(regs.rax, 0x4000);
+    assert_eq!(regs.rflags & (0x08D5 | (1 << 10)), 0x08D5 | (1 << 10));
+}
+
+#[test]
+fn test_invlpg_noncanonical_64_bit_address_is_a_flag_preserving_nop() {
+    let code = [
+        0x0F, 0x01, 0x38, // INVLPG [RAX]
+        0xBB, 0x78, 0x56, 0x34, 0x12, // MOV EBX, 0x12345678
+        0xF4,
+    ];
+    let mut initial = Registers::default();
+    initial.rax = 0x0000_8000_0000_0000;
+    initial.rflags = 0x2 | 0x08D5 | (1 << 10);
+    let (mut vcpu, _) = setup_vm(&code, Some(initial));
+
+    let regs = run_until_hlt(&mut vcpu).expect("noncanonical INVLPG is a NOP");
+    assert_eq!(regs.rax, 0x0000_8000_0000_0000);
+    assert_eq!(regs.rbx, 0x1234_5678);
+    assert_eq!(regs.rflags & (0x08D5 | (1 << 10)), 0x08D5 | (1 << 10));
+}
+
+#[test]
 fn test_invlpg_preserves_registers() {
     // INVLPG should not modify registers
     let code = [

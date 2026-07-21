@@ -308,6 +308,10 @@ pub struct GuestRegs {
     /// architectural STI privilege/VIP decision and committing IF/VIF plus the
     /// interrupt shadow only on success.
     pub sti_fn: u64,
+    /// Address of `extern "C" fn(state, addr, requires_apx) -> ok`, applying
+    /// INVLPG's dynamic validity checks and synchronizing every translation-
+    /// dependent cache in the owning vCPU for a canonical linear address.
+    pub invlpg_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -387,6 +391,7 @@ impl Default for GuestRegs {
             cli_fn: 0,
             interrupt_inhibit: 0,
             sti_fn: 0,
+            invlpg_fn: 0,
         }
     }
 }

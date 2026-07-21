@@ -339,6 +339,18 @@ pub struct X86DescriptorTableLoadOp {
     pub next_pc: u64,
 }
 
+/// INVLPG names a linear page without reading or writing the addressed byte.
+/// Dynamic APX and CPL validation precede the invalidation. In 64-bit mode a
+/// non-canonical effective address is architecturally a successful no-op. A
+/// successful native execution terminates at `next_pc` so subsequent fetches
+/// and data accesses observe the updated translation-cache state.
+#[derive(Clone, Debug)]
+pub struct X86InvlpgOp {
+    pub addr: Address,
+    pub requires_apx: bool,
+    pub next_pc: u64,
+}
+
 /// MONITOR/MWAIT under the deterministic guest profile. `Some(addr)` is
 /// MONITOR: `hint` is EDX, validate CPL/RCX, then perform an ordered faulting
 /// byte read from the monitored linear address. `None` is MWAIT: `hint` is

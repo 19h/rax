@@ -32,6 +32,8 @@ mod fsgsbase;
 #[cfg(test)]
 mod gate;
 #[cfg(test)]
+mod invlpg;
+#[cfg(test)]
 mod lmsw;
 #[cfg(test)]
 mod maskmovdqu;

@@ -1236,6 +1236,60 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::X86Invlpg(invlpg) => {
+                let instruction_len = invlpg.next_pc.checked_sub(op.guest_pc);
+                let uses_egpr = invlpg
+                    .addr
+                    .regs()
+                    .iter()
+                    .any(|reg| matches!(reg, VReg::Arch(ArchReg::X86(x86)) if x86.is_egpr()));
+                let minimum_len = if invlpg.requires_apx { 4 } else { 3 };
+                if !instruction_len.is_some_and(|len| (minimum_len..=15).contains(&len))
+                    || op.x86_hint.is_some()
+                    || !invlpg.addr.is_x86_state_backed_shape()
+                    || (uses_egpr && !invlpg.requires_apx)
+                {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                }
+
+                match &ctx.arch_regs {
+                    ArchRegState::X86_64(x86) => {
+                        if invlpg.requires_apx && !x86.apx_enabled {
+                            ctx.request_exit(ExitReason::Undefined {
+                                addr: op.guest_pc,
+                                opcode: 0,
+                            });
+                            return Ok(());
+                        }
+                        // The strict x86-64 operation denotes 64-bit mode,
+                        // where INVLPG requires effective CPL0.
+                        if x86.cpl != 0 {
+                            ctx.request_exit(ExitReason::GeneralProtection {
+                                addr: op.guest_pc,
+                                error_code: 0,
+                            });
+                            return Ok(());
+                        }
+                    }
+                    _ => {
+                        ctx.request_exit(ExitReason::Undefined {
+                            addr: op.guest_pc,
+                            opcode: 0,
+                        });
+                        return Ok(());
+                    }
+                }
+
+                let effective_addr = self.compute_address(ctx, &invlpg.addr);
+                if crate::isa::x86_64::execute::system::is_canonical_48(effective_addr) {
+                    memory.invalidate_translation(effective_addr);
+                }
+            }
+
             OpKind::X86WriteControl {
                 src,
                 control,

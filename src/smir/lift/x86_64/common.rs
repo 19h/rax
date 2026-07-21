@@ -91,6 +91,7 @@ impl X86_64Lifter {
             OpKind::X86FarCall(op) => op.requires_apx,
             OpKind::X86FarReturn(op) => op.requires_apx,
             OpKind::X86Lmsw(op) => op.requires_apx,
+            OpKind::X86Invlpg(op) => op.requires_apx,
             OpKind::X86DescriptorTableStore(op) => op.requires_apx,
             OpKind::X86DescriptorTableLoad(op) => op.requires_apx,
             _ => false,

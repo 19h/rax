@@ -53,6 +53,8 @@ mod cpuid;
 pub use cpuid::*;
 mod descriptor_table;
 pub use descriptor_table::*;
+mod invlpg;
+pub use invlpg::*;
 mod dispatch;
 pub use dispatch::*;
 mod emitter;

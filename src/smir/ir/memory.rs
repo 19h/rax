@@ -217,6 +217,16 @@ pub trait SmirMemory: Send {
         // Default: no-op
     }
 
+    /// Invalidate cached address translations for the page containing `addr`.
+    ///
+    /// Flat or already-physical memory models need no action. Translated
+    /// implementations may override this hook to discard TLB, page-walk, or
+    /// equivalent cached mappings. The operation itself performs no memory
+    /// access and therefore cannot report a memory fault.
+    fn invalidate_translation(&mut self, _addr: GuestAddr) {
+        // Default: no translation cache.
+    }
+
     /// Check if address range is valid
     fn probe(&self, addr: GuestAddr, size: usize, write: bool) -> Result<(), MemoryError>;
 }

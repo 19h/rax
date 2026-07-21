@@ -786,9 +786,14 @@ impl Mmu {
 
     /// Invalidate TLB entry for a virtual address.
     #[inline]
-    pub fn invlpg(&mut self, vaddr: u64) {
-        let index = Self::tlb_index(vaddr);
-        self.tlb[index].valid = false;
+    pub fn invlpg(&mut self, _vaddr: u64) {
+        // Intel permits INVLPG to invalidate additional translations, up to
+        // the entire TLB. RAX's direct-mapped cache can contain several entries
+        // for distinct 4 KiB subpages of one cached 2 MiB or 1 GiB mapping, so
+        // a full flush is the conservative implementation that also satisfies
+        // the architectural requirement to invalidate every entry for a large
+        // page.
+        self.flush_tlb();
     }
 
     /// Translate a virtual address to a physical address.

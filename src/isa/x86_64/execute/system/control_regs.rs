@@ -368,10 +368,17 @@ pub fn group7(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcp
             if modrm >> 6 == 3 {
                 return vcpu.inject_undefined_instruction();
             }
+            if !is_cpl0(vcpu) {
+                return raise_gp0(vcpu);
+            }
             let (addr, extra) = vcpu.decode_modrm_addr(ctx, modrm_start)?;
             ctx.cursor = modrm_start + 1 + extra;
-            // Invalidate TLB entry for address
-            vcpu.mmu.invlpg(addr);
+            // In 64-bit mode Intel defines a non-canonical address as a
+            // successful NOP. Compatibility mode follows protected-mode
+            // behavior; its ordinary 32-bit offsets are already canonical.
+            if !vcpu.sregs.cs.l || super::is_canonical_48(addr) {
+                vcpu.invalidate_linear_translation(addr);
+            }
             vcpu.regs.rip += ctx.cursor as u64;
         }
         _ => {

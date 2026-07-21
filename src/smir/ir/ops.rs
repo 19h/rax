@@ -4063,6 +4063,12 @@ pub enum OpKind {
     /// block because it can fault and changes subsequent descriptor semantics.
     X86DescriptorTableLoad(X86DescriptorTableLoadOp),
 
+    /// `INVLPG m` invalidates cached translations for the page containing its
+    /// effective linear address. The operand performs no memory access. APX and
+    /// CPL failures are non-committing, and a non-canonical 64-bit address is a
+    /// successful no-op. Native execution hands off at `next_pc` after success.
+    X86Invlpg(X86InvlpgOp),
+
     /// `MOV CR0/CR2/CR3/CR4/CR8, r64`. Dynamic CPL, reserved-bit, PCID, and
     /// IA-32e transition checks are non-committing. `next_pc` is the exact
     /// post-instruction frontier: a successful native write must terminate its
@@ -4570,6 +4576,7 @@ impl OpKind {
                 | OpKind::X86Lmsw(..)
                 | OpKind::X86DescriptorTableStore(..)
                 | OpKind::X86DescriptorTableLoad(..)
+                | OpKind::X86Invlpg(..)
                 | OpKind::X86WriteControl { .. }
                 | OpKind::X86ReadDebug { .. }
                 | OpKind::X86WriteDebug { .. }
@@ -5147,6 +5154,7 @@ impl OpKind {
             | OpKind::X86Lmsw(..)
             | OpKind::X86DescriptorTableStore(..)
             | OpKind::X86DescriptorTableLoad(..)
+            | OpKind::X86Invlpg(..)
             | OpKind::X86WriteControl { .. }
             | OpKind::X86WriteDebug { .. }
             | OpKind::X86MonitorMwait(..)
@@ -5333,6 +5341,7 @@ impl OpKind {
                     | OpKind::X86Lmsw(..)
                     | OpKind::X86DescriptorTableStore(..)
                     | OpKind::X86DescriptorTableLoad(..)
+                    | OpKind::X86Invlpg(..)
                     | OpKind::X86WriteControl { .. }
                     | OpKind::X86ReadDebug { .. }
                     | OpKind::X86WriteDebug { .. }
