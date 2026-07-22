@@ -272,7 +272,13 @@ fn jit_msr_faults_are_dynamic_precise_and_noncommitting() {
         ("live EFER.LME change", true, IA32_EFER, 1 << 11, |_| {}),
         ("wide SYSENTER_CS", true, IA32_SYSENTER_CS, 1 << 32, |_| {}),
         ("PAT reserved type", true, IA32_PAT, 2, |_| {}),
-        ("XSS unsupported component", true, IA32_XSS, 1, |_| {}),
+        (
+            "XSS component outside CPUID profile",
+            true,
+            IA32_XSS,
+            1,
+            |_| {},
+        ),
         (
             "UMWAIT_CONTROL reserved bit",
             true,
