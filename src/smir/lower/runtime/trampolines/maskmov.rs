@@ -267,6 +267,7 @@ pub(crate) fn x86_jit_op_uses_mem_helper(op: &OpKind) -> bool {
             | OpKind::PredStore { .. }
             | OpKind::X86DescriptorTableStore(..)
             | OpKind::X86DescriptorTableLoad(..)
+            | OpKind::X86Invpcid(..)
             | OpKind::X86SystemSelectorLoad(..)
             | OpKind::X86SelectorVerify(..)
             | OpKind::X86SelectorQuery(..)

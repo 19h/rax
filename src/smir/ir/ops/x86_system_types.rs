@@ -376,6 +376,20 @@ pub struct X86InvlpgOp {
     pub next_pc: u64,
 }
 
+/// INVPCID reads one 128-bit descriptor after APX and CPL validation, validates
+/// the register-selected invalidation type and descriptor fields, then
+/// synchronizes translation-dependent state. `stack_segment` retains the
+/// #SS(0)/#GP(0) distinction for a noncanonical 16-byte source range. Native
+/// success terminates at `next_pc`; every fault replays at the original PC.
+#[derive(Clone, Debug)]
+pub struct X86InvpcidOp {
+    pub invpcid_type: VReg,
+    pub addr: Address,
+    pub requires_apx: bool,
+    pub stack_segment: bool,
+    pub next_pc: u64,
+}
+
 /// MONITOR/MWAIT under the deterministic guest profile. `Some(addr)` is
 /// MONITOR: `hint` is EDX, validate CPL/RCX, then perform an ordered faulting
 /// byte read from the monitored linear address. `None` is MWAIT: `hint` is

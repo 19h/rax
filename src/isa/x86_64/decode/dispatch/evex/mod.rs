@@ -23,6 +23,8 @@ mod apx;
 pub(crate) use apx::*;
 mod apx_crc32;
 pub(crate) use apx_crc32::*;
+mod apx_invpcid;
+pub(crate) use apx_invpcid::*;
 mod apx_movdir;
 pub(crate) use apx_movdir::*;
 mod fp;
@@ -40,6 +42,9 @@ pub(crate) use misc::*;
 
 #[cfg(test)]
 mod apx_crc32_tests;
+
+#[cfg(test)]
+mod apx_invpcid_tests;
 
 #[cfg(test)]
 mod apx_movdir_tests;

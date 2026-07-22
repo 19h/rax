@@ -20,6 +20,8 @@ mod group15;
 pub use group15::*;
 mod group5;
 pub use group5::*;
+mod invpcid;
+pub use invpcid::*;
 mod machine_status;
 pub use machine_status::*;
 mod selector;

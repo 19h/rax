@@ -16,3 +16,4 @@ mod simd;
 mod system;
 mod system_selector;
 mod unary;
+mod x86_invpcid;

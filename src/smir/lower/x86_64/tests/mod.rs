@@ -38,6 +38,8 @@ mod fsgsbase;
 #[cfg(test)]
 mod invlpg;
 #[cfg(test)]
+mod invpcid;
+#[cfg(test)]
 mod jit;
 #[cfg(test)]
 mod lmsw;

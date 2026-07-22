@@ -4,6 +4,9 @@ use rax::oracle::{
     RiscVIsaProfile, decode_to_json, decode_to_json_with_seed, parse_hex_bytes,
 };
 
+#[path = "isa_oracle_invpcid.rs"]
+mod invpcid;
+
 #[test]
 fn parses_hex_bytes_with_prefixes_and_separators() {
     let bytes = parse_hex_bytes("0x90, 48-b8").unwrap();

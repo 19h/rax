@@ -1384,6 +1384,10 @@ impl SmirInterpreter {
                 }
             }
 
+            OpKind::X86Invpcid(invpcid) => {
+                self.execute_x86_invpcid(ctx, memory, op, invpcid)?;
+            }
+
             OpKind::X86WriteControl {
                 src,
                 control,

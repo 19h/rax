@@ -2821,6 +2821,7 @@ impl X86_64Lifter {
             0xF0 | 0xF1 => {
                 self.lift_apx_crc32(prefix, opcode, &bytes[prefix.bytes + 1..], bytes, pc, ctx)
             }
+            0xF2 => self.lift_apx_invpcid(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx),
             0xF8 if prefix.pp == 1 => {
                 self.lift_apx_movdir64b(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx)
             }

@@ -3740,6 +3740,10 @@ impl OpKind {
             OpKind::X86DescriptorTableStore(store) => result.extend(store.addr.regs()),
             OpKind::X86DescriptorTableLoad(load) => result.extend(load.addr.regs()),
             OpKind::X86Invlpg(invlpg) => result.extend(invlpg.addr.regs()),
+            OpKind::X86Invpcid(invpcid) => {
+                result.push(invpcid.invpcid_type);
+                result.extend(invpcid.addr.regs());
+            }
 
             OpKind::X86Cmpxchg8b16b {
                 addr,

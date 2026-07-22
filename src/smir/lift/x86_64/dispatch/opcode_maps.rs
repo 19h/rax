@@ -72,6 +72,7 @@ impl X86_64Lifter {
             0xCF => self.lift_sse_gfni(opcode3, after_opcode, &prefix3, false, pc, ctx),
             0xDB..=0xDF => self.lift_sse_aes_round(opcode3, after_opcode, &prefix3, pc, ctx),
             0x8A | 0x8B => self.lift_movrs_0f38(opcode3, after_opcode, &prefix3, pc, ctx),
+            0x82 => self.lift_invpcid_0f38(after_opcode, &prefix3, pc, ctx),
             0xF6 => self.lift_adx_0f38(after_opcode, &prefix3, pc, ctx),
             0xF0 | 0xF1 if prefix3.rep_prefix == Some(0xF2) => {
                 self.lift_crc32_0f38(opcode3, after_opcode, &prefix3, pc, ctx)

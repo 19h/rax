@@ -3823,7 +3823,7 @@ use jit_sti::rax_jit_sti;
 #[path = "cpu_invlpg.rs"]
 mod invlpg;
 #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
-use invlpg::rax_jit_invlpg;
+use invlpg::{rax_jit_invlpg, rax_jit_invpcid};
 
 #[path = "cpu_descriptor_table.rs"]
 mod descriptor_table;
@@ -4777,6 +4777,7 @@ impl X86_64Vcpu {
                                 | OpKind::X86DescriptorTableStore(..)
                                 | OpKind::X86DescriptorTableLoad(..)
                                 | OpKind::X86Invlpg(..)
+                                | OpKind::X86Invpcid(..)
                                 | OpKind::X86SystemSelectorStore(..)
                                 | OpKind::X86SystemSelectorLoad(..)
                                 | OpKind::X86SelectorVerify(..)
@@ -5073,6 +5074,7 @@ impl X86_64Vcpu {
         gr.cli_fn = rax_jit_cli as usize as u64;
         gr.sti_fn = rax_jit_sti as usize as u64;
         gr.invlpg_fn = rax_jit_invlpg as usize as u64;
+        gr.invpcid_fn = rax_jit_invpcid as usize as u64;
         // Segment bases for `fs:`/`gs:`-overridden operands (Address::SegmentRel).
         gr.fs_base = self.sregs.fs.base;
         gr.gs_base = self.sregs.gs.base;
@@ -6436,6 +6438,10 @@ mod jit_sti_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_invlpg_tests.rs"]
 mod jit_invlpg_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_invpcid_tests.rs"]
+mod jit_invpcid_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_string_io_tests.rs"]

@@ -661,6 +661,12 @@ impl X86_64Lowerer {
                 // no later operation may execute using the old mapping.
                 return Ok(());
             }
+            if matches!(block.ops[idx].kind, OpKind::X86Invpcid(..)) {
+                self.emit_x86_invpcid(&block.ops[idx])?;
+                // Process-context invalidation is an exact translation-cache
+                // frontier; no later native operation may use the old mapping.
+                return Ok(());
+            }
             if matches!(block.ops[idx].kind, OpKind::X86SystemSelectorLoad(..)) {
                 self.emit_x86_system_selector_load(&block.ops[idx])?;
                 // LLDT/LTR serialize; MOV Sreg, POP FS/GS, and LSS/LFS/LGS

@@ -4074,6 +4074,11 @@ pub enum OpKind {
     /// successful no-op. Native execution hands off at `next_pc` after success.
     X86Invlpg(X86InvlpgOp),
 
+    /// `INVPCID r64,m128` atomically owns APX/privilege validation, the complete
+    /// descriptor read, descriptor-value checks, and translation invalidation.
+    /// Native execution hands off at `next_pc` after a successful cache flush.
+    X86Invpcid(X86InvpcidOp),
+
     /// `MOV CR0/CR2/CR3/CR4/CR8, r64`. Dynamic CPL, reserved-bit, PCID, and
     /// IA-32e transition checks are non-committing. `next_pc` is the exact
     /// post-instruction frontier: a successful native write must terminate its
@@ -4586,6 +4591,7 @@ impl OpKind {
                 | OpKind::X86DescriptorTableStore(..)
                 | OpKind::X86DescriptorTableLoad(..)
                 | OpKind::X86Invlpg(..)
+                | OpKind::X86Invpcid(..)
                 | OpKind::X86WriteControl { .. }
                 | OpKind::X86ReadDebug { .. }
                 | OpKind::X86WriteDebug { .. }
@@ -5168,6 +5174,7 @@ impl OpKind {
             | OpKind::X86DescriptorTableStore(..)
             | OpKind::X86DescriptorTableLoad(..)
             | OpKind::X86Invlpg(..)
+            | OpKind::X86Invpcid(..)
             | OpKind::X86WriteControl { .. }
             | OpKind::X86WriteDebug { .. }
             | OpKind::X86MonitorMwait(..)
@@ -5357,6 +5364,7 @@ impl OpKind {
                     | OpKind::X86DescriptorTableStore(..)
                     | OpKind::X86DescriptorTableLoad(..)
                     | OpKind::X86Invlpg(..)
+                    | OpKind::X86Invpcid(..)
                     | OpKind::X86WriteControl { .. }
                     | OpKind::X86ReadDebug { .. }
                     | OpKind::X86WriteDebug { .. }
@@ -5412,6 +5420,7 @@ impl OpKind {
                 | OpKind::X86LoadMxcsr { .. }
                 | OpKind::X86MonitorMwait(X86MonitorMwaitOp { addr: Some(_), .. })
                 | OpKind::X86WaitPkg(X86WaitPkgOp::Umonitor { .. })
+                | OpKind::X86Invpcid(..)
                 | OpKind::X86Lmsw(X86LmswOp {
                     source: X86LmswSource::Memory { .. },
                     ..

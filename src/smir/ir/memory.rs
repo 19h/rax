@@ -227,6 +227,17 @@ pub trait SmirMemory: Send {
         // Default: no translation cache.
     }
 
+    /// Invalidate cached translations according to one x86 INVPCID request.
+    ///
+    /// `invpcid_type` is in the architecturally defined range 0 through 3,
+    /// `pcid` contains descriptor bits 11:0, and `linear` contains descriptor
+    /// bits 127:64. Implementations may conservatively invalidate additional
+    /// translations, including their complete translation cache. Flat or
+    /// already-physical memory models need no action.
+    fn invalidate_process_context(&mut self, _invpcid_type: u8, _pcid: u16, _linear: GuestAddr) {
+        // Default: no translation cache.
+    }
+
     /// Check if address range is valid
     fn probe(&self, addr: GuestAddr, size: usize, write: bool) -> Result<(), MemoryError>;
 }

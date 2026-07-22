@@ -55,6 +55,8 @@ mod descriptor_table;
 pub use descriptor_table::*;
 mod invlpg;
 pub use invlpg::*;
+mod invpcid;
+pub use invpcid::*;
 mod dispatch;
 pub use dispatch::*;
 mod emitter;

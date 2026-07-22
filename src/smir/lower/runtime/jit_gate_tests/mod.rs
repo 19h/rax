@@ -36,6 +36,8 @@ mod gate;
 #[cfg(test)]
 mod invlpg;
 #[cfg(test)]
+mod invpcid;
+#[cfg(test)]
 mod lmsw;
 #[cfg(test)]
 mod maskmovdqu;

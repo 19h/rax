@@ -317,6 +317,10 @@ pub struct GuestRegs {
     /// fixed CS/SS caches through the owning vCPU and commits dynamic RSP/RIP
     /// through `gpr[4]` and `exit_pc`; failure requests exact direct replay.
     pub fast_system_transfer_fn: u64,
+    /// Address of `extern "C" fn(state, addr, type, requires_apx) -> ok`.
+    /// The helper reads and validates one complete 128-bit INVPCID descriptor,
+    /// then synchronizes every translation-dependent cache in the owning vCPU.
+    pub invpcid_fn: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -398,6 +402,7 @@ impl Default for GuestRegs {
             sti_fn: 0,
             invlpg_fn: 0,
             fast_system_transfer_fn: 0,
+            invpcid_fn: 0,
         }
     }
 }

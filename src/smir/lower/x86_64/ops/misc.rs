@@ -150,6 +150,8 @@ impl X86_64Lowerer {
 
             OpKind::X86Invlpg(..) => self.emit_x86_invlpg(op)?,
 
+            OpKind::X86Invpcid(..) => self.emit_x86_invpcid(op)?,
+
             OpKind::X86ReadDebug { .. } => self.emit_x86_read_debug(op)?,
 
             OpKind::X86WriteDebug { .. } => self.emit_x86_write_debug(op)?,
