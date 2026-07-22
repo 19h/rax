@@ -2553,17 +2553,8 @@ impl X86_64Lifter {
                 {
                     self.lift_vex_bmi2_shift_0f38(prefix, bytes, pc, ctx)
                 }
-                0xF5 | 0xF6 | 0xF7
-                    if prefix.encoding == VecEncodingKind::Evex
-                        && !matches!(prefix.pp, X86SsePrefix::None) =>
-                {
-                    self.lift_apx_bmi2_0f38(opcode, bytes, pc, ctx)
-                }
-                0xF2 | 0xF3 | 0xF5 | 0xF7
-                    if prefix.encoding == VecEncodingKind::Evex
-                        && prefix.pp == X86SsePrefix::None =>
-                {
-                    self.lift_apx_nf_bmi_0f38(opcode, bytes, pc, ctx)
+                0xF2 | 0xF3 | 0xF5 | 0xF6 | 0xF7 if prefix.encoding == VecEncodingKind::Evex => {
+                    self.lift_apx_bmi_0f38(opcode, bytes, pc, ctx)
                 }
                 0x40 => self.lift_vec_pmul_low(prefix, opcode, bytes, pc, ctx),
                 _ => Err(LiftError::Unsupported {
@@ -2636,7 +2627,7 @@ impl X86_64Lifter {
                     self.lift_vex_bmi2_rorx_0f3a(prefix, bytes, pc, ctx)
                 }
                 0xF0 if prefix.encoding == VecEncodingKind::Evex => {
-                    self.lift_apx_bmi2_rorx(bytes, pc, ctx)
+                    self.lift_apx_bmi_rorx(bytes, pc, ctx)
                 }
                 0xC2 => self.lift_vec_fp_compare(prefix, bytes, pc, ctx),
                 _ => Err(LiftError::Unsupported {

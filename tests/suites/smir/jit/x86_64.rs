@@ -15,6 +15,8 @@ use rax::vm::vcpu::{Registers, SystemRegisters, VCpu, VcpuExit};
 const LOAD_ADDR: u64 = 0x10_0000;
 const MEM_SIZE: u64 = 16 * 1024 * 1024;
 
+#[path = "x86_64/apx_bmi.rs"]
+mod apx_bmi;
 #[path = "x86_64/apx_push2_pop2.rs"]
 mod apx_push2_pop2;
 

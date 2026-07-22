@@ -3,20 +3,6 @@
 use super::*;
 
 impl X86_64Lifter {
-    /// Construct the terminal #UD known from an APX prefix, opcode, and ModR/M
-    /// byte. Reserved Group 4/5 cells and invalid paired-stack encodings do not
-    /// decode a SIB/displacement or observe an apparent operand.
-    pub(super) fn apx_modrm_invalid_opcode(prefix: ApxEvexPrefix) -> LiftResult {
-        LiftResult {
-            ops: Vec::new(),
-            bytes_consumed: prefix.bytes + 2,
-            control_flow: ControlFlow::Trap {
-                kind: TrapKind::InvalidOpcode,
-            },
-            branch_targets: Vec::new(),
-        }
-    }
-
     pub(crate) fn lift_apx_push2(
         &self,
         prefix: ApxEvexPrefix,
