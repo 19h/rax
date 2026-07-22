@@ -10,15 +10,25 @@ mod addr32_assertions;
 #[cfg(test)]
 mod apx;
 #[cfg(test)]
+mod apx_alu;
+#[cfg(test)]
 mod apx_bmi;
 #[cfg(test)]
 mod apx_cmpccxadd;
 #[cfg(test)]
+mod apx_conditional;
+#[cfg(test)]
 mod apx_crc32;
+#[cfg(test)]
+mod apx_dispatch;
+#[cfg(test)]
+mod apx_group3;
 #[cfg(test)]
 mod apx_prefixes;
 #[cfg(test)]
 mod apx_push2_pop2;
+#[cfg(test)]
+mod apx_shift;
 #[cfg(test)]
 mod callout;
 #[cfg(test)]

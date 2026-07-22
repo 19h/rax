@@ -20,4 +20,20 @@ impl X86_64Lifter {
     pub(super) fn apx_modrm_invalid_opcode(prefix: ApxEvexPrefix) -> LiftResult {
         Self::apx_invalid_opcode(prefix.bytes + 2)
     }
+
+    /// Read the first operand byte while retaining full-instruction lengths in
+    /// an `Incomplete` diagnostic. APX family lifters receive a slice beginning
+    /// at ModR/M, whereas `ApxEvexPrefix::bytes` is measured from the original
+    /// instruction start.
+    pub(super) fn apx_operand_modrm_byte(
+        prefix: ApxEvexPrefix,
+        bytes: &[u8],
+        pc: u64,
+    ) -> Result<u8, LiftError> {
+        bytes.first().copied().ok_or(LiftError::Incomplete {
+            addr: pc,
+            have: prefix.bytes + 1,
+            need: prefix.bytes + 2,
+        })
+    }
 }

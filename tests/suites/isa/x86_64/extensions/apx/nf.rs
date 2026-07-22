@@ -12,13 +12,14 @@
 //!
 //! Instructions supporting NF:
 //! - ADD, SUB, AND, OR, XOR
-//! - ADC, SBB (still use CF as input, but don't modify flags)
-//! - SHL, SHR, SAR, ROL, ROR, RCL, RCR
-//! - INC, DEC
-//! - NEG, NOT
-//! - IMUL
+//! - SAL, SAR, SHL, SHR, ROL, ROR
+//! - INC, DEC, NEG
 //! - SHLD, SHRD
+//! - IMUL, IDIV, MUL, DIV
 //! - POPCNT, LZCNT, TZCNT
+//!
+//! ADC, SBB, RCL, RCR, and NOT support NDD but require EVEX.NF=0. EVEX.NF=1
+//! raises #UD under Intel APX Architecture Specification revision 7.0.
 
 use crate::common::*;
 
@@ -310,31 +311,42 @@ fn test_nf_inc_preserves_cf() {
 }
 
 // ============================================================================
-// NF NEG/NOT (no flags unary)
+// NF NEG and the NF=0 boundary for NOT
 // ============================================================================
 
 #[test]
 fn test_nf_neg_reg() {
-    // NEG{NF} RAX
+    const FLAG_MASK: u64 = 0x8D5;
     let code = [
-        0x62, 0xF4, 0xFC, 0x08, // EVEX with NF
+        0x62, 0xF4, 0xFC, 0x0C, // EVEX with NF=1
         0xF7, 0xD8, // NEG r/m64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_apx_vm(&code, None);
-    let _ = run_until_hlt(&mut vcpu);
+    let regs = Registers {
+        rax: 1,
+        rflags: 0x2 | FLAG_MASK,
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, u64::MAX);
+    assert_eq!(regs.rflags & FLAG_MASK, FLAG_MASK);
 }
 
 #[test]
-fn test_nf_not_reg() {
-    // NOT{NF} RAX (NOT doesn't affect flags anyway, but NF is valid)
+fn test_apx_not_without_nf() {
     let code = [
-        0x62, 0xF4, 0xFC, 0x08, // EVEX with NF
+        0x62, 0xF4, 0xFC, 0x08, // EVEX with NF=0
         0xF7, 0xD0, // NOT r/m64
         0xF4,
     ];
-    let (mut vcpu, _) = setup_apx_vm(&code, None);
-    let _ = run_until_hlt(&mut vcpu);
+    let regs = Registers {
+        rax: 0x0123_4567_89AB_CDEF,
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 0xFEDC_BA98_7654_3210);
 }
 
 // ============================================================================
@@ -413,32 +425,44 @@ fn test_nf_idiv_implicit_match_llvm() {
 }
 
 // ============================================================================
-// NF ADC/SBB (uses CF as input but doesn't update flags)
+// ADC/SBB require NF=0 and continue to consume and update CF
 // ============================================================================
 
 #[test]
-fn test_nf_adc_uses_cf() {
-    // ADC{NF} RAX, RBX - uses CF but doesn't modify flags
+fn test_apx_adc_without_nf_uses_and_updates_cf() {
+    const CF: u64 = 1;
     let code = [
-        // STC (set CF)
-        0xF9, // ADC{NF} RAX, RBX (RAX = RAX + RBX + 1)
-        0x62, 0xF4, 0xFC, 0x08, 0x11, 0xD8, // CF should still be set (from STC)
+        0xF9, // STC
+        0x62, 0xF4, 0xFC, 0x08, 0x11, 0xD8, // ADC RAX,RBX with NF=0
         0xF4,
     ];
-    let (mut vcpu, _) = setup_apx_vm(&code, None);
-    let _ = run_until_hlt(&mut vcpu);
+    let regs = Registers {
+        rax: 1,
+        rbx: 2,
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 4);
+    assert_eq!(regs.rflags & CF, 0);
 }
 
 #[test]
-fn test_nf_sbb_uses_cf() {
-    // SBB{NF} RAX, RBX - uses CF but doesn't modify flags
+fn test_apx_sbb_without_nf_uses_and_updates_cf() {
+    const CF: u64 = 1;
     let code = [
-        // STC
-        0xF9, // SBB{NF} RAX, RBX (RAX = RAX - RBX - 1)
+        0xF9, // STC
         0x62, 0xF4, 0xFC, 0x08, 0x19, 0xD8, 0xF4,
     ];
-    let (mut vcpu, _) = setup_apx_vm(&code, None);
-    let _ = run_until_hlt(&mut vcpu);
+    let regs = Registers {
+        rax: 5,
+        rbx: 2,
+        ..Registers::default()
+    };
+    let (mut vcpu, _) = setup_apx_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!(regs.rax, 2);
+    assert_eq!(regs.rflags & CF, 0);
 }
 
 // ============================================================================

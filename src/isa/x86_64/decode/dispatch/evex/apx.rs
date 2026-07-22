@@ -38,8 +38,15 @@ impl X86_64Vcpu {
             // OR variants (0x08-0x0B)
             0x08 | 0x09 | 0x0A | 0x0B => self.execute_apx_alu(ctx, opcode, ndd, nf, ApxAluOp::Or),
 
+            // Intel APX revision 7.0 specifies NF=0 for ADC. Reject from the
+            // opcode alone, before observing ModR/M or an apparent operand.
+            0x10 | 0x11 | 0x12 | 0x13 if nf => self.inject_invalid_opcode(),
+
             // ADC variants (0x10-0x13)
             0x10 | 0x11 | 0x12 | 0x13 => self.execute_apx_alu(ctx, opcode, ndd, nf, ApxAluOp::Adc),
+
+            // Intel APX revision 7.0 likewise specifies NF=0 for SBB.
+            0x18 | 0x19 | 0x1A | 0x1B if nf => self.inject_invalid_opcode(),
 
             // SBB variants (0x18-0x1B)
             0x18 | 0x19 | 0x1A | 0x1B => self.execute_apx_alu(ctx, opcode, ndd, nf, ApxAluOp::Sbb),
@@ -908,14 +915,21 @@ impl X86_64Vcpu {
         ndd: bool,
         nf: bool,
     ) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.peek_u8()?;
+        let op = (modrm >> 3) & 0x07;
+        // Group 1 does not identify ADC/SBB until ModR/M.reg. NF=1 is #UD
+        // before address generation, operand access, or immediate fetch.
+        if nf && matches!(op, 2 | 3) {
+            return self.inject_invalid_opcode();
+        }
+
         let op_size = if matches!(opcode, 0x80 | 0x82) {
             1
         } else {
             Self::apx_scalar_op_size(ctx)
         };
 
-        let (op, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let op = op & 0x07;
+        let (_, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let src_reg = rm | ctx.evex_rm_reg();
         let src = if is_memory {
             self.read_mem(addr, op_size)?
@@ -996,6 +1010,12 @@ impl X86_64Vcpu {
 
         let modrm = ctx.peek_u8()?;
         let shift_type = (modrm >> 3) & 0x07;
+        // Intel APX revision 7.0 specifies NF=0 for RCL (/2) and RCR (/3).
+        // Reject after ModR/M classification and before decoding its address
+        // or fetching the immediate.
+        if nf && matches!(shift_type, 2 | 3) {
+            return self.inject_invalid_opcode();
+        }
         let (_, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let rm = rm | ctx.evex_rm_reg();
         let imm = ctx.consume_u8()?;
@@ -1048,6 +1068,9 @@ impl X86_64Vcpu {
 
         let modrm = ctx.peek_u8()?;
         let shift_type = (modrm >> 3) & 0x07;
+        if nf && matches!(shift_type, 2 | 3) {
+            return self.inject_invalid_opcode();
+        }
         let (_, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let rm = rm | ctx.evex_rm_reg();
 
@@ -1093,13 +1116,21 @@ impl X86_64Vcpu {
         ndd: bool,
         nf: bool,
     ) -> Result<Option<VcpuExit>> {
+        let modrm = ctx.peek_u8()?;
+        let op_type = (modrm >> 3) & 0x07;
+        // Intel APX revision 7.0 specifies NF=0 for NOT. Group 3 does not
+        // identify NOT until ModR/M.reg=/2, but no address or operand is needed
+        // to establish #UD.
+        if nf && op_type == 2 {
+            return self.inject_invalid_opcode();
+        }
+
         let op_size = if opcode == 0xF6 {
             1
         } else {
             Self::apx_scalar_op_size(ctx)
         };
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let op_type = reg & 0x07;
+        let (_, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let src_reg = rm | ctx.evex_rm_reg();
         let src = if is_memory {
             self.read_mem(addr, op_size)?

@@ -21,373 +21,14 @@ use crate::smir::lift::{
     ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
 };
 
+mod alu;
 mod bmi;
 mod cmpccxadd;
 mod invalid;
 mod paired_stack;
+mod shift;
 
 impl X86_64Lifter {
-    pub(crate) fn apx_alu_op(
-        &self,
-        group: u8,
-        dst: VReg,
-        src1: VReg,
-        src2: SrcOperand,
-        width: OpWidth,
-        flags: FlagUpdate,
-        pc: u64,
-    ) -> Result<OpKind, LiftError> {
-        match group {
-            0 => Ok(OpKind::Add {
-                dst,
-                src1,
-                src2,
-                width,
-                flags,
-            }),
-            1 => Ok(OpKind::Or {
-                dst,
-                src1,
-                src2,
-                width,
-                flags,
-            }),
-            2 => {
-                if !flags.updates_any() {
-                    return Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: "APX NF ADC".to_string(),
-                    });
-                }
-                Ok(OpKind::Adc {
-                    dst,
-                    src1,
-                    src2,
-                    width,
-                    flags,
-                })
-            }
-            3 => {
-                if !flags.updates_any() {
-                    return Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: "APX NF SBB".to_string(),
-                    });
-                }
-                Ok(OpKind::Sbb {
-                    dst,
-                    src1,
-                    src2,
-                    width,
-                    flags,
-                })
-            }
-            4 => Ok(OpKind::And {
-                dst,
-                src1,
-                src2,
-                width,
-                flags,
-            }),
-            5 => Ok(OpKind::Sub {
-                dst,
-                src1,
-                src2,
-                width,
-                flags,
-            }),
-            6 => Ok(OpKind::Xor {
-                dst,
-                src1,
-                src2,
-                width,
-                flags,
-            }),
-            _ => Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("APX ALU group {group}"),
-            }),
-        }
-    }
-
-    pub(crate) fn lift_apx_alu(
-        &self,
-        prefix: ApxEvexPrefix,
-        opcode: u8,
-        bytes: &[u8],
-        pc: u64,
-        ctx: &mut LiftContext,
-    ) -> Result<LiftResult, LiftError> {
-        let low = opcode & 0x07;
-        let (is_byte, rm_is_legacy_dst) = match low {
-            0 => (true, true),
-            1 => (false, true),
-            2 => (true, false),
-            3 => (false, false),
-            _ => {
-                return Err(LiftError::InvalidEncoding {
-                    addr: pc,
-                    bytes: bytes.to_vec(),
-                });
-            }
-        };
-        let group = (opcode >> 3) & 0x07;
-        let op_size = prefix.op_size(is_byte);
-        let width = self.size_to_width(op_size);
-        let mem_width = self.size_to_memwidth(op_size);
-        let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
-        let modrm = decode_modrm(bytes, &modrm_prefix, pc)?;
-        let next_pc = pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64;
-        let mut ops = Vec::new();
-
-        let reg = self.gpr(modrm.reg);
-        let (rm, rm_addr) = if modrm.is_memory {
-            let x86_addr = modrm.addr.as_ref().unwrap();
-            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
-            ops.extend(pre_ops);
-
-            let tmp = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Load {
-                    dst: tmp,
-                    addr: addr.clone(),
-                    width: mem_width,
-                    sign: SignExtend::Zero,
-                },
-            ));
-            (tmp, Some(addr))
-        } else {
-            (self.gpr(modrm.rm), None)
-        };
-
-        let (legacy_dst, src2, legacy_dst_addr) = if rm_is_legacy_dst {
-            (rm, reg, rm_addr)
-        } else {
-            (reg, rm, None)
-        };
-        let dst = if prefix.nd {
-            self.gpr(prefix.vvvv_reg())
-        } else {
-            legacy_dst
-        };
-        let src2_operand = SrcOperand::Reg(src2);
-        let op_kind = self.apx_alu_op(
-            group,
-            dst,
-            legacy_dst,
-            src2_operand,
-            width,
-            prefix.flags(),
-            pc,
-        )?;
-        let hint = X86OpHint::AluEncoding(if rm_is_legacy_dst {
-            X86AluEncoding::RmReg
-        } else {
-            X86AluEncoding::RegRm
-        });
-        ops.push(SmirOp::with_hint(OpId(ops.len() as u16), pc, op_kind, hint));
-
-        if !prefix.nd {
-            if let Some(addr) = legacy_dst_addr {
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Store {
-                        src: dst,
-                        addr,
-                        width: mem_width,
-                    },
-                ));
-            }
-        }
-
-        Ok(LiftResult::fallthrough(
-            ops,
-            prefix.bytes + 1 + modrm.bytes_consumed,
-        ))
-    }
-
-    pub(crate) fn lift_apx_group1_imm(
-        &self,
-        prefix: ApxEvexPrefix,
-        opcode: u8,
-        bytes: &[u8],
-        pc: u64,
-        ctx: &mut LiftContext,
-    ) -> Result<LiftResult, LiftError> {
-        let is_byte = opcode == 0x80;
-        let op_size = prefix.op_size(is_byte);
-        let width = self.size_to_width(op_size);
-        let mem_width = self.size_to_memwidth(op_size);
-        let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
-        let modrm = decode_modrm(bytes, &modrm_prefix, pc)?;
-        let imm_offset = modrm.bytes_consumed;
-
-        let (imm, imm_size) = match opcode {
-            0x80 => {
-                if bytes.len() < imm_offset + 1 {
-                    return Err(LiftError::Incomplete {
-                        addr: pc,
-                        have: bytes.len(),
-                        need: imm_offset + 1,
-                    });
-                }
-                (bytes[imm_offset] as i8 as i64, 1)
-            }
-            0x81 => {
-                if bytes.len() < imm_offset + 4 {
-                    return Err(LiftError::Incomplete {
-                        addr: pc,
-                        have: bytes.len(),
-                        need: imm_offset + 4,
-                    });
-                }
-                (
-                    i32::from_le_bytes([
-                        bytes[imm_offset],
-                        bytes[imm_offset + 1],
-                        bytes[imm_offset + 2],
-                        bytes[imm_offset + 3],
-                    ]) as i64,
-                    4,
-                )
-            }
-            0x83 => {
-                if bytes.len() < imm_offset + 1 {
-                    return Err(LiftError::Incomplete {
-                        addr: pc,
-                        have: bytes.len(),
-                        need: imm_offset + 1,
-                    });
-                }
-                (bytes[imm_offset] as i8 as i64, 1)
-            }
-            _ => unreachable!(),
-        };
-
-        let next_pc = pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64 + imm_size as u64;
-        let mut ops = Vec::new();
-        let group = (modrm.byte >> 3) & 0x07;
-        if group == 7 {
-            if prefix.nd {
-                return Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: "APX CCMP immediate with NDD".to_string(),
-                });
-            }
-
-            let memory_load = if modrm.is_memory {
-                let x86_addr = modrm.addr.as_ref().unwrap();
-                let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
-                ops.extend(pre_ops);
-
-                let tmp = ctx.alloc_vreg();
-                Some((tmp, addr))
-            } else {
-                None
-            };
-            let src1 = memory_load
-                .as_ref()
-                .map(|(tmp, _)| *tmp)
-                .unwrap_or_else(|| self.gpr(modrm.rm));
-
-            self.push_apx_conditional_flags_with(
-                &mut ops,
-                pc,
-                ctx,
-                self.x86_cond(prefix.ccmp_cond()),
-                prefix.ccmp_default_flags(),
-                |ops, cond_reg| {
-                    if let Some((dst, addr)) = memory_load {
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::PredLoad {
-                                dst,
-                                cond: cond_reg,
-                                addr,
-                                width: mem_width,
-                                signed: SignExtend::Zero,
-                            },
-                        ));
-                    }
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::Cmp {
-                            src1,
-                            src2: SrcOperand::Imm(imm),
-                            width,
-                        },
-                    ));
-                },
-            );
-
-            return Ok(LiftResult::fallthrough(
-                ops,
-                prefix.bytes + 1 + modrm.bytes_consumed + imm_size,
-            ));
-        }
-
-        let (legacy_dst, legacy_dst_addr) = if modrm.is_memory {
-            let x86_addr = modrm.addr.as_ref().unwrap();
-            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
-            ops.extend(pre_ops);
-
-            let tmp = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Load {
-                    dst: tmp,
-                    addr: addr.clone(),
-                    width: mem_width,
-                    sign: SignExtend::Zero,
-                },
-            ));
-            (tmp, Some(addr))
-        } else {
-            (self.gpr(modrm.rm), None)
-        };
-
-        let dst = if prefix.nd {
-            self.gpr(prefix.vvvv_reg())
-        } else {
-            legacy_dst
-        };
-        let op_kind = self.apx_alu_op(
-            group,
-            dst,
-            legacy_dst,
-            SrcOperand::Imm(imm),
-            width,
-            prefix.flags(),
-            pc,
-        )?;
-        ops.push(SmirOp::new(OpId(ops.len() as u16), pc, op_kind));
-
-        if !prefix.nd {
-            if let Some(addr) = legacy_dst_addr {
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Store {
-                        src: dst,
-                        addr,
-                        width: mem_width,
-                    },
-                ));
-            }
-        }
-
-        Ok(LiftResult::fallthrough(
-            ops,
-            prefix.bytes + 1 + modrm.bytes_consumed + imm_size,
-        ))
-    }
-
     pub(crate) fn lift_apx_movbe(
         &self,
         prefix: ApxEvexPrefix,
@@ -924,13 +565,20 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
+        let modrm_byte = Self::apx_operand_modrm_byte(prefix, bytes, pc)?;
+        let group = (modrm_byte >> 3) & 0x07;
+        // Intel APX revision 7.0 specifies {NF=0} for NOT. ModR/M.reg=/2
+        // establishes the reserved form before SIB, displacement, or memory.
+        if prefix.nf && group == 2 {
+            return Ok(Self::apx_modrm_invalid_opcode(prefix));
+        }
+
         let is_byte = opcode == 0xF6;
         let op_size = prefix.op_size(is_byte);
         let width = self.size_to_width(op_size);
         let mem_width = self.size_to_memwidth(op_size);
         let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
         let modrm = decode_modrm(bytes, &modrm_prefix, pc)?;
-        let group = (modrm.byte >> 3) & 0x07;
 
         if group == 0 {
             return self.lift_apx_ctest_imm(prefix, opcode, bytes, pc, ctx);
@@ -1811,168 +1459,6 @@ impl X86_64Lifter {
         ))
     }
 
-    pub(crate) fn apx_shift_op(
-        &self,
-        group: u8,
-        dst: VReg,
-        src: VReg,
-        amount: SrcOperand,
-        width: OpWidth,
-        flags: FlagUpdate,
-        pc: u64,
-    ) -> Result<OpKind, LiftError> {
-        if matches!(group, 2 | 3) && !flags.updates_any() {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: "APX NF carry rotate".to_string(),
-            });
-        }
-        let rotate_flags = if flags.updates_any() {
-            x86_rotate_flags()
-        } else {
-            FlagUpdate::None
-        };
-        match group {
-            0 => Ok(OpKind::Rol {
-                dst,
-                src,
-                amount,
-                width,
-                flags: rotate_flags,
-            }),
-            1 => Ok(OpKind::Ror {
-                dst,
-                src,
-                amount,
-                width,
-                flags: rotate_flags,
-            }),
-            2 => Ok(OpKind::Rcl {
-                dst,
-                src,
-                amount,
-                width,
-                flags: rotate_flags,
-            }),
-            3 => Ok(OpKind::Rcr {
-                dst,
-                src,
-                amount,
-                width,
-                flags: rotate_flags,
-            }),
-            4 | 6 => Ok(OpKind::Shl {
-                dst,
-                src,
-                amount,
-                width,
-                flags,
-            }),
-            5 => Ok(OpKind::Shr {
-                dst,
-                src,
-                amount,
-                width,
-                flags,
-            }),
-            7 => Ok(OpKind::Sar {
-                dst,
-                src,
-                amount,
-                width,
-                flags,
-            }),
-            _ => Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("APX shift group {group}"),
-            }),
-        }
-    }
-
-    pub(crate) fn lift_apx_shift(
-        &self,
-        prefix: ApxEvexPrefix,
-        opcode: u8,
-        bytes: &[u8],
-        pc: u64,
-        ctx: &mut LiftContext,
-    ) -> Result<LiftResult, LiftError> {
-        let is_byte = matches!(opcode, 0xC0 | 0xD0 | 0xD2);
-        let op_size = prefix.op_size(is_byte);
-        let width = self.size_to_width(op_size);
-        let mem_width = self.size_to_memwidth(op_size);
-        let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
-        let modrm = decode_modrm(bytes, &modrm_prefix, pc)?;
-        let group = (modrm.byte >> 3) & 0x07;
-
-        let (amount, imm_size) = match opcode {
-            0xC0 | 0xC1 => {
-                if bytes.len() < modrm.bytes_consumed + 1 {
-                    return Err(LiftError::Incomplete {
-                        addr: pc,
-                        have: bytes.len(),
-                        need: modrm.bytes_consumed + 1,
-                    });
-                }
-                (SrcOperand::Imm(bytes[modrm.bytes_consumed] as i64), 1)
-            }
-            0xD0 | 0xD1 => (SrcOperand::Imm(1), 0),
-            0xD2 | 0xD3 => (SrcOperand::Reg(self.gpr(1)), 0),
-            _ => unreachable!(),
-        };
-
-        let next_pc = pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64 + imm_size as u64;
-        let mut ops = Vec::new();
-        let (legacy_dst, legacy_dst_addr) = if modrm.is_memory {
-            let x86_addr = modrm.addr.as_ref().unwrap();
-            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
-            ops.extend(pre_ops);
-
-            let tmp = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Load {
-                    dst: tmp,
-                    addr: addr.clone(),
-                    width: mem_width,
-                    sign: SignExtend::Zero,
-                },
-            ));
-            (tmp, Some(addr))
-        } else {
-            (self.gpr(modrm.rm), None)
-        };
-
-        let dst = if prefix.nd {
-            self.gpr(prefix.vvvv_reg())
-        } else {
-            legacy_dst
-        };
-        let op_kind =
-            self.apx_shift_op(group, dst, legacy_dst, amount, width, prefix.flags(), pc)?;
-        ops.push(SmirOp::new(OpId(ops.len() as u16), pc, op_kind));
-
-        if !prefix.nd {
-            if let Some(addr) = legacy_dst_addr {
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Store {
-                        src: dst,
-                        addr,
-                        width: mem_width,
-                    },
-                ));
-            }
-        }
-
-        Ok(LiftResult::fallthrough(
-            ops,
-            prefix.bytes + 1 + modrm.bytes_consumed + imm_size,
-        ))
-    }
-
     pub(crate) fn lift_apx_double_shift(
         &self,
         prefix: ApxEvexPrefix,
@@ -2155,14 +1641,18 @@ impl X86_64Lifter {
         }
 
         let opcode = bytes[prefix.bytes];
-        if bytes.len() < prefix.bytes + 2 {
+        let nf_carry_opcode = prefix.nf
+            && matches!(
+                opcode,
+                0x10..=0x13 | 0x18..=0x1B
+            );
+        if !nf_carry_opcode && bytes.len() < prefix.bytes + 2 {
             return Err(LiftError::Incomplete {
                 addr: pc,
                 have: bytes.len(),
                 need: prefix.bytes + 2,
             });
         }
-        let modrm = bytes[prefix.bytes + 1];
         match opcode {
             0x00..=0x03
             | 0x08..=0x0B
@@ -2211,13 +1701,29 @@ impl X86_64Lifter {
                 self.lift_apx_group3(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx)
             }
             0xFE => self.lift_apx_inc_dec(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx),
-            0x8F => self.lift_apx_pop2(prefix, modrm, pc, ctx),
-            0xFF if ((modrm >> 3) & 0x07) == 6 => self.lift_apx_push2(prefix, modrm, pc, ctx),
-            0xFF => self.lift_apx_inc_dec(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx),
-            _ => Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("APX MAP4 opcode 0x{opcode:02X}"),
-            }),
+            0x8F => {
+                let modrm = Self::apx_operand_modrm_byte(prefix, &bytes[prefix.bytes + 1..], pc)?;
+                self.lift_apx_pop2(prefix, modrm, pc, ctx)
+            }
+            0xFF => {
+                let modrm = Self::apx_operand_modrm_byte(prefix, &bytes[prefix.bytes + 1..], pc)?;
+                if ((modrm >> 3) & 0x07) == 6 {
+                    self.lift_apx_push2(prefix, modrm, pc, ctx)
+                } else {
+                    self.lift_apx_inc_dec(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx)
+                }
+            }
+            _ => {
+                // This fallback still includes valid-but-unimplemented APX
+                // encodings (notably WRUSS and several F8 families). Preserve
+                // its historical ModR/M frontier until those opcode classes
+                // are classified and implemented independently.
+                let _ = Self::apx_operand_modrm_byte(prefix, &bytes[prefix.bytes + 1..], pc)?;
+                Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: format!("APX MAP4 opcode 0x{opcode:02X}"),
+                })
+            }
         }
     }
 }

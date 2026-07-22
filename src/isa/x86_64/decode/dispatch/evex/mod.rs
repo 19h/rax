@@ -50,6 +50,9 @@ mod apx_invpcid_tests;
 mod apx_movdir_tests;
 
 #[cfg(test)]
+mod apx_nf_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
