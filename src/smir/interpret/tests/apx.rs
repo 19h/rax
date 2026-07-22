@@ -6,6 +6,156 @@ use crate::smir::ir::FunctionBuilder;
 use crate::smir::ir::flags::{FlagSet, FlagUpdate, MaterializedFlags};
 use crate::smir::ir::memory::{FlatMemory, SmirMemory};
 use crate::smir::ir::types::ShiftOp;
+use crate::smir::optimize::{OptLevel, optimize_function};
+
+fn execute_optimized_apx_group3(
+    bytes: &[u8],
+    level: OptLevel,
+    ctx: &mut SmirContext,
+) -> BlockResult {
+    use crate::smir::ir::types::SourceArch;
+    use crate::smir::lift::x86_64::X86_64Lifter;
+    use crate::smir::lift::{LiftContext, SmirLifter};
+
+    let mut lifter = X86_64Lifter::strict();
+    let mut lctx = LiftContext::new(SourceArch::X86_64);
+    let result = lifter.lift_insn(0x1000, bytes, &mut lctx).unwrap();
+    assert_eq!(result.bytes_consumed, bytes.len());
+
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    builder.set_terminator(Terminator::Trap {
+        kind: TrapKind::Halt,
+    });
+    let mut function = builder.finish();
+    function.blocks[0].ops = result.ops;
+    optimize_function(&mut function, level);
+    SmirInterpreter::new().execute_block(ctx, &mut FlatMemory::new(0x1000), &function.blocks[0])
+}
+
+#[test]
+fn lifted_apx_group3_implicit_matches_nf_contract_at_o0_o1_o2() {
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+    let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+    const CF_OF: u64 = (1 << 0) | (1 << 11);
+    const STATUS: u64 = 0x08D5;
+    const SEED: u64 = 0x2 | STATUS;
+
+    for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+        for nf in [false, true] {
+            let p2 = if nf { 0x0C } else { 0x08 };
+            for group in 4..=7 {
+                let mut ctx = SmirContext::new_x86_64();
+                ctx.flags.materialized = MaterializedFlags::from_rflags(SEED);
+                ctx.flags.lazy = None;
+
+                match group {
+                    4 => {
+                        ctx.write_vreg(rax, 1 << 63);
+                        ctx.write_vreg(rdx, 0xAABB_CCDD_EEFF_0011);
+                        ctx.write_vreg(rbx, 2);
+                    }
+                    5 => {
+                        ctx.write_vreg(rax, i64::MAX as u64);
+                        ctx.write_vreg(rdx, 0xAABB_CCDD_EEFF_0011);
+                        ctx.write_vreg(rbx, 2);
+                    }
+                    6 => {
+                        ctx.write_vreg(rax, 5);
+                        ctx.write_vreg(rdx, 1);
+                        ctx.write_vreg(rbx, 10);
+                    }
+                    7 => {
+                        ctx.write_vreg(rax, (-100_i64) as u64);
+                        ctx.write_vreg(rdx, u64::MAX);
+                        ctx.write_vreg(rbx, 7);
+                    }
+                    _ => unreachable!(),
+                }
+
+                let bytes = [0x62, 0xF4, 0xFC, p2, 0xF7, 0xC3 | (group << 3)];
+                let exit = execute_optimized_apx_group3(&bytes, level, &mut ctx);
+                assert!(
+                    matches!(exit, BlockResult::Exit(ExitReason::Halt)),
+                    "group=/{group} NF={nf} {level:?}: {exit:?}"
+                );
+
+                match group {
+                    4 => {
+                        assert_eq!(ctx.read_vreg(rax), 0);
+                        assert_eq!(ctx.read_vreg(rdx), 1);
+                    }
+                    5 => {
+                        assert_eq!(ctx.read_vreg(rax), u64::MAX - 1);
+                        assert_eq!(ctx.read_vreg(rdx), 0);
+                    }
+                    6 => {
+                        let dividend = (1_u128 << 64) | 5;
+                        assert_eq!(ctx.read_vreg(rax), (dividend / 10) as u64);
+                        assert_eq!(ctx.read_vreg(rdx), (dividend % 10) as u64);
+                    }
+                    7 => {
+                        assert_eq!(ctx.read_vreg(rax), (-14_i64) as u64);
+                        assert_eq!(ctx.read_vreg(rdx), (-2_i64) as u64);
+                    }
+                    _ => unreachable!(),
+                }
+
+                ctx.flags.materialize_all();
+                let flags = ctx.flags.materialized.to_rflags();
+                if nf {
+                    assert_eq!(flags & STATUS, SEED & STATUS, "NF flag image");
+                } else if matches!(group, 4 | 5) {
+                    assert_eq!(flags & CF_OF, CF_OF, "defined multiply flags");
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn lifted_apx_group3_divide_errors_remain_noncommitting_at_o0_o1_o2() {
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+    let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+    const SEED: u64 = 0x08D7;
+
+    for level in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+        for nf in [false, true] {
+            let p2 = if nf { 0x0C } else { 0x08 };
+            for (group, rax_value, rdx_value, divisor, name) in [
+                (6, 0x1234, 0, 0, "DIV zero"),
+                (6, 0, 1, 1, "DIV quotient overflow"),
+                (7, 0, 1 << 63, u64::MAX, "IDIV quotient overflow"),
+            ] {
+                let mut ctx = SmirContext::new_x86_64();
+                ctx.write_vreg(rax, rax_value);
+                ctx.write_vreg(rdx, rdx_value);
+                ctx.write_vreg(rbx, divisor);
+                ctx.flags.materialized = MaterializedFlags::from_rflags(SEED);
+                ctx.flags.lazy = None;
+
+                let bytes = [0x62, 0xF4, 0xFC, p2, 0xF7, 0xC3 | (group << 3)];
+                let exit = execute_optimized_apx_group3(&bytes, level, &mut ctx);
+                assert!(
+                    matches!(
+                        exit,
+                        BlockResult::Exit(ExitReason::Undefined { addr: 0x1000, .. })
+                    ),
+                    "{name} NF={nf} {level:?}: {exit:?}"
+                );
+                assert_eq!(ctx.read_vreg(rax), rax_value, "{name}: RAX commit");
+                assert_eq!(ctx.read_vreg(rdx), rdx_value, "{name}: RDX commit");
+                ctx.flags.materialize_all();
+                assert_eq!(
+                    ctx.flags.materialized.to_rflags() & 0x08D5,
+                    SEED & 0x08D5,
+                    "{name}: flags commit"
+                );
+            }
+        }
+    }
+}
 
 #[test]
 fn lifted_apx_ndd_double_shifts_execute_aliases_partial_writes_and_nf_exactly() {

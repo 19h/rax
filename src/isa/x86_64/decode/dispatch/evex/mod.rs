@@ -46,6 +46,9 @@ pub(crate) use misc::*;
 mod apx_crc32_tests;
 
 #[cfg(test)]
+mod apx_group3_tests;
+
+#[cfg(test)]
 mod apx_invpcid_tests;
 
 #[cfg(test)]

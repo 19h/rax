@@ -201,6 +201,12 @@ impl X86_64Lifter {
         if matches!(group, 0 | 1) {
             return self.lift_apx_ctest_imm(prefix, opcode, bytes, pc, ctx);
         }
+        // Intel APX revision 7.0 specifies {ND=0} and optional {NF} for the
+        // implicit MUL/IMUL/DIV/IDIV forms. ModR/M.reg=/4..=/7 establishes an
+        // ND=1 reserved encoding before address generation or operand access.
+        if matches!(group, 4..=7) && prefix.nd {
+            return Ok(Self::apx_modrm_invalid_opcode(prefix));
+        }
 
         let is_byte = opcode == 0xF6;
         let op_size = prefix.op_size(is_byte);
@@ -208,20 +214,6 @@ impl X86_64Lifter {
         let mem_width = self.size_to_memwidth(op_size);
         let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
         let modrm = decode_modrm(bytes, &modrm_prefix, pc)?;
-
-        if !matches!(group, 2..=7) {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("APX F6/F7 /{group}"),
-            });
-        }
-
-        if matches!(group, 4..=7) && (!prefix.nf || prefix.nd) {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("APX F6/F7 /{group} without implicit NF form"),
-            });
-        }
 
         let next_pc = pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();

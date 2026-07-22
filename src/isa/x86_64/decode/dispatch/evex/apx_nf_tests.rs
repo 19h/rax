@@ -208,6 +208,40 @@ fn every_apx_nf_group3_not_form_is_precise_ud_at_modrm() {
 }
 
 #[test]
+fn every_apx_group3_implicit_nd_form_is_precise_ud_at_modrm() {
+    // MUL/IMUL/DIV/IDIV use implicit accumulator destinations and therefore
+    // specify ND=0 while allowing either NF state. ModR/M.reg=/4..=/7 is the
+    // complete classification frontier; apparent base, SIB, displacement, and
+    // register operands must not be decoded or accessed for ND=1.
+    for nf in [false, true] {
+        for w in [false, true] {
+            for opcode in [0xF6, 0xF7] {
+                let valid_pp = if opcode == 0xF6 {
+                    &[0][..]
+                } else {
+                    &[0, 1][..]
+                };
+                for &pp in valid_pp {
+                    for group in 4..=7 {
+                        for (mode, rm) in [(0, 0), (0, 4), (1, 0), (2, 0), (3, 0)] {
+                            let modrm = (mode << 6) | (group << 3) | rm;
+                            let mut code = apx_prefix(true, w, pp, nf).to_vec();
+                            code.extend_from_slice(&[opcode, modrm]);
+                            assert_precise_ud(
+                                &code,
+                                &format!(
+                                    "Group3 /{group} ND=1 opcode={opcode:02X} NF={nf} W={w} pp={pp} ModRM={modrm:02X}"
+                                ),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn apx_nf_exclusion_is_narrow_for_legal_neighbors_and_required_nf0_forms() {
     for nd in [false, true] {
         for instruction in [

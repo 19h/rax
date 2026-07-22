@@ -779,6 +779,21 @@ pub(crate) fn block_is_clobber_safe(
         if matches!(
             op.kind,
             OpKind::MulU {
+                dst_hi: None,
+                width: crate::smir::ir::types::OpWidth::W8,
+                ..
+            } | OpKind::MulS {
+                dst_hi: None,
+                width: crate::smir::ir::types::OpWidth::W8,
+                ..
+            }
+        ) && !x86_byte_full_mul_shape_valid(&op.kind)
+        {
+            return false;
+        }
+        if matches!(
+            op.kind,
+            OpKind::MulU {
                 dst_hi: Some(_),
                 width: crate::smir::ir::types::OpWidth::W16,
                 ..
@@ -787,7 +802,7 @@ pub(crate) fn block_is_clobber_safe(
                 width: crate::smir::ir::types::OpWidth::W16,
                 ..
             }
-        ) && !x86_word_full_mul_shape_valid(&op.kind)
+        ) && !x86_word_full_mul_shape_valid(&op.kind, true)
         {
             return false;
         }

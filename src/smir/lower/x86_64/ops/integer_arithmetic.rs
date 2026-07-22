@@ -455,9 +455,14 @@ impl X86_64Lowerer {
                 flags,
             } => {
                 let preserve_flags = !flags.updates_any();
+                let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+                let implicit_byte =
+                    *width == OpWidth::W8 && dst_hi.is_none() && *dst_lo == rax && *src1 == rax;
                 // For two-operand IMUL (dst = src1 * src2), we use the efficient form
                 // For widening multiply (dst_hi:dst_lo = src1 * src2), we use IMUL with RAX
-                if dst_hi.is_some() {
+                // W8 implicit IMUL also enters this path: its complete product
+                // is AX, represented by dst_lo=RAX and no separate high VReg.
+                if dst_hi.is_some() || implicit_byte {
                     // Widening multiply: IMUL r/m -> RDX:RAX = RAX * r/m
                     // Move src1 to RAX
                     let src1_reg = self.get_reg(*src1)?;
@@ -531,6 +536,12 @@ impl X86_64Lowerer {
                         }
                     }
                 } else {
+                    if *width == OpWidth::W8 {
+                        return Err(LowerError::InvalidOperand {
+                            op: "MulS".to_string(),
+                            operand: "W8 requires the implicit AX product shape".to_string(),
+                        });
+                    }
                     // Two-operand form: dst = src1 * src2
                     let dst_reg = self.get_dst_reg(*dst_lo)?;
                     let src1_reg = self.get_reg(*src1)?;

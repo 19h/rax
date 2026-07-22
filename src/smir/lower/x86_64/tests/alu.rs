@@ -82,6 +82,57 @@ fn lower_mulx_hint_rejects_malformed_shapes() {
         assert!(lowerer.lower_function(&func).is_err(), "{name}");
     }
 }
+
+#[test]
+fn lower_byte_implicit_imul_uses_the_one_operand_ax_form() {
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    let rcx = VReg::Arch(ArchReg::X86(X86Reg::Rcx));
+
+    for flags in [FlagUpdate::All, FlagUpdate::None] {
+        let code = lower_single_op(OpKind::MulS {
+            dst_lo: rax,
+            dst_hi: None,
+            src1: rax,
+            src2: SrcOperand::Reg(rcx),
+            width: OpWidth::W8,
+            flags,
+        });
+        assert!(
+            code.windows(2).any(|bytes| bytes == [0xF6, 0xE9]),
+            "implicit IMUL CL must produce AX with F6 /5: {code:02X?}"
+        );
+        assert!(
+            !code.windows(2).any(|bytes| bytes == [0x0F, 0xAF]),
+            "the nonexistent two-operand byte IMUL form must not be emitted: {code:02X?}"
+        );
+        assert_eq!(code.contains(&0x9C), flags == FlagUpdate::None);
+        assert_eq!(code.contains(&0x9D), flags == FlagUpdate::None);
+    }
+
+    let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    builder.push_op(
+        0x1000,
+        OpKind::MulS {
+            dst_lo: rbx,
+            dst_hi: None,
+            src1: rbx,
+            src2: SrcOperand::Reg(rcx),
+            width: OpWidth::W8,
+            flags: FlagUpdate::All,
+        },
+    );
+    builder.set_terminator(Terminator::Return { values: vec![] });
+    let mut lowerer = X86_64Lowerer::new();
+    assert!(
+        matches!(
+            lowerer.lower_function(&builder.finish()),
+            Err(LowerError::InvalidOperand { .. })
+        ),
+        "non-implicit W8 MulS must fail closed"
+    );
+}
+
 #[test]
 fn lower_x86_count_honors_flag_contracts_and_rejects_malformed_ir() {
     let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));

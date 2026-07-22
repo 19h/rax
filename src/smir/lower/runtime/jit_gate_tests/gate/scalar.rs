@@ -1227,6 +1227,62 @@ fn x86_unsigned_division_gate_accepts_exact_sources_and_fails_closed() {
     );
     assert!(is_native_clobber_safe(&high));
 }
+
+#[test]
+fn x86_subword_full_multiply_gate_accepts_exact_shapes_and_both_flag_contracts() {
+    let rax = x86(X86Reg::Rax);
+    let rdx = x86(X86Reg::Rdx);
+    let rbx = x86(X86Reg::Rbx);
+
+    for flags in [FlagUpdate::All, FlagUpdate::None] {
+        for op in [
+            OpKind::MulU {
+                dst_lo: rax,
+                dst_hi: None,
+                src1: rax,
+                src2: SrcOperand::Reg(rbx),
+                width: OpWidth::W8,
+                flags,
+            },
+            OpKind::MulS {
+                dst_lo: rax,
+                dst_hi: None,
+                src1: rax,
+                src2: SrcOperand::Reg(rbx),
+                width: OpWidth::W8,
+                flags,
+            },
+            OpKind::MulU {
+                dst_lo: rax,
+                dst_hi: Some(rdx),
+                src1: rax,
+                src2: SrcOperand::Reg(rbx),
+                width: OpWidth::W16,
+                flags,
+            },
+            OpKind::MulS {
+                dst_lo: rax,
+                dst_hi: Some(rdx),
+                src1: rax,
+                src2: SrcOperand::Reg(rbx),
+                width: OpWidth::W16,
+                flags,
+            },
+        ] {
+            assert!(x86_gate(op), "subword full multiply {flags:?}");
+        }
+    }
+
+    assert!(!x86_gate(OpKind::MulS {
+        dst_lo: rbx,
+        dst_hi: None,
+        src1: rbx,
+        src2: SrcOperand::Reg(rax),
+        width: OpWidth::W8,
+        flags: FlagUpdate::All,
+    }));
+}
+
 #[test]
 fn x86_signed_division_gate_accepts_exact_sources_and_fails_closed() {
     let rax = x86(X86Reg::Rax);

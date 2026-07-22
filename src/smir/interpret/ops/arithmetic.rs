@@ -322,7 +322,7 @@ impl SmirInterpreter {
                 let b = (self.read_src_operand(ctx, src2) & mask) as u128;
                 if b == 0 {
                     ctx.request_exit(ExitReason::Undefined {
-                        addr: ctx.pc,
+                        addr: op.guest_pc,
                         opcode: 0,
                     });
                     return Ok(());
@@ -344,7 +344,7 @@ impl SmirInterpreter {
                 if q > mask as u128 {
                     // Quotient overflow -> #DE.
                     ctx.request_exit(ExitReason::Undefined {
-                        addr: ctx.pc,
+                        addr: op.guest_pc,
                         opcode: 0,
                     });
                     return Ok(());
@@ -376,7 +376,7 @@ impl SmirInterpreter {
                 let b = self.sign_extend(self.read_src_operand(ctx, src2), *width) as i64 as i128;
                 if b == 0 {
                     ctx.request_exit(ExitReason::Undefined {
-                        addr: ctx.pc,
+                        addr: op.guest_pc,
                         opcode: 0,
                     });
                     return Ok(());
@@ -403,7 +403,7 @@ impl SmirInterpreter {
                     let qmin = -(1i128 << (bits - 1));
                     if q < qmin || q > qmax {
                         ctx.request_exit(ExitReason::Undefined {
-                            addr: ctx.pc,
+                            addr: op.guest_pc,
                             opcode: 0,
                         });
                         return Ok(());

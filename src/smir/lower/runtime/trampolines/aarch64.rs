@@ -181,7 +181,7 @@ pub(crate) fn x86_aarch64_block_is_clobber_safe(
                 width: crate::smir::ir::types::OpWidth::W16,
                 ..
             }
-        ) && !x86_word_full_mul_shape_valid(&op.kind)
+        ) && !x86_word_full_mul_shape_valid(&op.kind, false)
         {
             return false;
         }

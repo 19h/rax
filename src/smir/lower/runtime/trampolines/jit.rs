@@ -2827,7 +2827,10 @@ pub(crate) fn x86_xchg_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
         } if native_gpr(reg1) && native_gpr(reg2)
     )
 }
-pub(crate) fn x86_word_full_mul_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+pub(crate) fn x86_word_full_mul_shape_valid(
+    op: &crate::smir::ir::ops::OpKind,
+    allow_flag_updates: bool,
+) -> bool {
     use crate::smir::ir::flags::FlagUpdate;
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
@@ -2840,7 +2843,7 @@ pub(crate) fn x86_word_full_mul_shape_valid(op: &crate::smir::ir::ops::OpKind) -
             src1: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
             src2: SrcOperand::Reg(src2),
             width: OpWidth::W16,
-            flags: FlagUpdate::None,
+            flags,
         }
             | OpKind::MulS {
                 dst_lo: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
@@ -2848,8 +2851,35 @@ pub(crate) fn x86_word_full_mul_shape_valid(op: &crate::smir::ir::ops::OpKind) -
                 src1: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
                 src2: SrcOperand::Reg(src2),
                 width: OpWidth::W16,
-                flags: FlagUpdate::None,
+                flags,
             } if x86_aarch64_legacy_gpr(src2)
+                && matches!(flags, FlagUpdate::None | FlagUpdate::All)
+                && (allow_flag_updates || *flags == FlagUpdate::None)
+    )
+}
+pub(crate) fn x86_byte_full_mul_shape_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::flags::FlagUpdate;
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{ArchReg, OpWidth, SrcOperand, VReg, X86Reg};
+
+    matches!(
+        op,
+        OpKind::MulU {
+            dst_lo: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+            dst_hi: None,
+            src1: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+            src2: SrcOperand::Reg(src2),
+            width: OpWidth::W8,
+            flags: FlagUpdate::None | FlagUpdate::All,
+        }
+            | OpKind::MulS {
+                dst_lo: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                dst_hi: None,
+                src1: VReg::Arch(ArchReg::X86(X86Reg::Rax)),
+                src2: SrcOperand::Reg(src2),
+                width: OpWidth::W8,
+                flags: FlagUpdate::None | FlagUpdate::All,
+            } if x86_native_identity_gpr(src2)
     )
 }
 pub(crate) fn x86_movx_uses_ambiguous_high_byte_source(op: &crate::smir::ir::ops::SmirOp) -> bool {
