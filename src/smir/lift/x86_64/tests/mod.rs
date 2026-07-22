@@ -12,6 +12,8 @@ mod apx;
 #[cfg(test)]
 mod apx_bmi;
 #[cfg(test)]
+mod apx_cmpccxadd;
+#[cfg(test)]
 mod apx_crc32;
 #[cfg(test)]
 mod apx_prefixes;

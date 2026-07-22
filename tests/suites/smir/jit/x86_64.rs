@@ -19,6 +19,8 @@ const MEM_SIZE: u64 = 16 * 1024 * 1024;
 mod apx_bmi;
 #[path = "x86_64/apx_push2_pop2.rs"]
 mod apx_push2_pop2;
+#[path = "x86_64/cmpccxadd.rs"]
+mod cmpccxadd;
 
 /// Build a vcpu loaded with the `bench_loop` hot loop for `iters` iterations.
 //   xor eax,eax ; mov ecx,iters ; loop: add eax,3 ; xor edx,edx ; sub eax,1 ;

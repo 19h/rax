@@ -22,95 +22,11 @@ use crate::smir::lift::{
 };
 
 mod bmi;
+mod cmpccxadd;
 mod invalid;
 mod paired_stack;
 
 impl X86_64Lifter {
-    pub(crate) fn lift_cmpccxadd(
-        &self,
-        prefix: VecPrefix,
-        opcode: u8,
-        bytes: &[u8],
-        pc: u64,
-        ctx: &mut LiftContext,
-    ) -> Result<LiftResult, LiftError> {
-        if prefix.pp != X86SsePrefix::OpSize || prefix.width != VecWidth::V128 {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: "CMPccXADD reserved vector prefix".to_string(),
-            });
-        }
-
-        let (modrm_prefix, add, width, prefix_bytes) = match prefix.encoding {
-            VecEncodingKind::Vex => {
-                let width = if prefix.w { MemWidth::B8 } else { MemWidth::B4 };
-                (
-                    X86Prefix {
-                        rex: prefix.rex,
-                        operand_size_override: true,
-                        cursor: prefix.bytes + 1,
-                        ..X86Prefix::default()
-                    },
-                    self.gpr(prefix.vvvv),
-                    width,
-                    prefix.bytes,
-                )
-            }
-            VecEncodingKind::Evex => {
-                let apx = decode_apx_evex_prefix_for_map(bytes, pc, 2)?;
-                if apx.pp != 1
-                    || apx.aaa != 0
-                    || apx.nf
-                    || apx.nd
-                    || (bytes[apx.bytes - 1] & 0xE0) != 0
-                {
-                    return Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: "EVEX CMPccXADD reserved field".to_string(),
-                    });
-                }
-                let width = if apx.w { MemWidth::B8 } else { MemWidth::B4 };
-                (
-                    apx.as_modrm_prefix(apx.bytes + 1),
-                    self.gpr(apx.vvvv_reg()),
-                    width,
-                    apx.bytes,
-                )
-            }
-        };
-
-        let modrm = decode_modrm(&bytes[prefix_bytes + 1..], &modrm_prefix, pc)?;
-        if !modrm.is_memory {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: bytes.to_vec(),
-            });
-        }
-
-        let next_pc = pc + prefix_bytes as u64 + 1 + modrm.bytes_consumed as u64;
-        let x86_addr = modrm.addr.as_ref().unwrap();
-        let (addr, mut ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
-        let cmp = self.gpr(modrm.reg);
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::AtomicCmpXadd {
-                dst_old: cmp,
-                addr,
-                cmp,
-                add,
-                cond: self.x86_cond(opcode & 0x0F),
-                width,
-                order: MemoryOrder::SeqCst,
-            },
-        ));
-
-        Ok(LiftResult::fallthrough(
-            ops,
-            prefix_bytes + 1 + modrm.bytes_consumed,
-        ))
-    }
-
     pub(crate) fn apx_alu_op(
         &self,
         group: u8,
