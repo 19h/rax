@@ -6417,6 +6417,10 @@ mod jit_reserved_nop_tests;
 #[path = "cpu_jit_apx_prefix_tests.rs"]
 mod jit_apx_prefix_tests;
 
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_apx_crc32_tests.rs"]
+mod jit_apx_crc32_tests;
+
 #[cfg(test)]
 #[path = "cpu_rex2_admission_tests.rs"]
 mod rex2_admission_tests;

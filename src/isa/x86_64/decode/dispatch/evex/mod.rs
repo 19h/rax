@@ -21,6 +21,8 @@ use crate::isa::x86_64::{execute, flags};
 // ---- module tree (auto-split) ----
 mod apx;
 pub(crate) use apx::*;
+mod apx_crc32;
+pub(crate) use apx_crc32::*;
 mod fp;
 pub(crate) use fp::*;
 mod map0f;
@@ -33,6 +35,9 @@ mod map5;
 pub(crate) use map5::*;
 mod misc;
 pub(crate) use misc::*;
+
+#[cfg(test)]
+mod apx_crc32_tests;
 
 #[cfg(test)]
 mod tests {

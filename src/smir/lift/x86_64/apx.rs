@@ -2818,6 +2818,9 @@ impl X86_64Lifter {
                 self.lift_apx_count(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx)
             }
             0xF4 | 0xF5 => self.lift_apx_count(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx),
+            0xF0 | 0xF1 => {
+                self.lift_apx_crc32(prefix, opcode, &bytes[prefix.bytes + 1..], bytes, pc, ctx)
+            }
             0xFC => self.lift_apx_rao_int(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx),
             0xF6 | 0xF7 => {
                 self.lift_apx_group3(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx)

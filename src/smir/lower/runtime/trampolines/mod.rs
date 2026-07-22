@@ -5,6 +5,8 @@ mod aarch64;
 pub use aarch64::*;
 mod clobber;
 pub use clobber::*;
+mod crc32;
+pub use crc32::*;
 mod jit;
 pub use jit::*;
 mod maskmov;

@@ -6,6 +6,8 @@ mod control_flow;
 pub use control_flow::*;
 mod control_regs;
 pub use control_regs::*;
+mod crc32;
+pub use crc32::*;
 mod debug_regs;
 pub use debug_regs::*;
 mod data_movement;

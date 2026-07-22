@@ -95,6 +95,9 @@ impl X86_64Vcpu {
             // TZCNT/LZCNT with NF
             0xF4 | 0xF5 => self.execute_apx_count(ctx, opcode, ndd, nf),
 
+            // APX-promoted CRC32
+            0xF0 | 0xF1 => self.execute_apx_crc32(ctx, opcode),
+
             // Group 3 NOT/NEG (0xF6, 0xF7 /2,/3)
             0xF6 | 0xF7 => self.execute_apx_group3(ctx, opcode, ndd, nf),
 

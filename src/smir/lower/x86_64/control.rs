@@ -512,6 +512,16 @@ impl X86_64Lowerer {
                         validate_idx += consumed;
                         continue;
                     }
+                    if crate::smir::lower::runtime::x86_mem_crc32_pair_valid(
+                        block,
+                        validate_idx,
+                        true,
+                        &virtual_definitions,
+                        &virtual_uses,
+                    ) {
+                        validate_idx += 2;
+                        continue;
+                    }
                     if let Some(consumed) = crate::smir::lower::runtime::x86_jit_pop2_sequence_len(
                         block,
                         validate_idx,

@@ -361,7 +361,7 @@ impl X86_64Vcpu {
                         self.get_reg8(rm, has_rex) as u8
                     };
                     let crc_in = self.get_reg(reg, 4) as u32;
-                    let crc_out = crc32c_u8(crc_in, src);
+                    let crc_out = execute::crc32c(crc_in, u64::from(src), 1);
                     if ctx.rex_w() {
                         self.set_reg(reg, crc_out as u64, 8);
                     } else {
@@ -395,14 +395,14 @@ impl X86_64Vcpu {
                     let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
                     let crc_in = self.get_reg(reg, 4) as u32;
 
-                    let crc_out = if ctx.rex_w() {
+                    let (src, data_width) = if ctx.rex_w() {
                         // 64-bit source
                         let src = if is_memory {
                             self.read_mem(addr, 8)?
                         } else {
                             self.get_reg(rm, 8)
                         };
-                        crc32c_u64(crc_in, src)
+                        (src, 8)
                     } else if ctx.op_size == 2 {
                         // 16-bit source. This follows the operand-size attribute,
                         // not the raw 66 prefix: in a 16-bit compat segment 66
@@ -412,7 +412,7 @@ impl X86_64Vcpu {
                         } else {
                             self.get_reg(rm, 2) as u16
                         };
-                        crc32c_u16(crc_in, src)
+                        (u64::from(src), 2)
                     } else {
                         // 32-bit source
                         let src = if is_memory {
@@ -420,8 +420,9 @@ impl X86_64Vcpu {
                         } else {
                             self.get_reg(rm, 4) as u32
                         };
-                        crc32c_u32(crc_in, src)
+                        (u64::from(src), 4)
                     };
+                    let crc_out = execute::crc32c(crc_in, src, data_width);
 
                     if ctx.rex_w() {
                         self.set_reg(reg, crc_out as u64, 8);
@@ -471,52 +472,4 @@ impl X86_64Vcpu {
 
 fn is_canonical_48(addr: u64) -> bool {
     ((addr as i64) << 16 >> 16) as u64 == addr
-}
-
-// CRC-32C polynomial (Castagnoli) in reflected form
-const CRC32C_POLY: u32 = 0x82F63B78;
-
-/// Compute CRC32C for a single byte
-fn crc32c_u8(crc: u32, data: u8) -> u32 {
-    let mut crc = crc ^ (data as u32);
-    for _ in 0..8 {
-        if crc & 1 != 0 {
-            crc = (crc >> 1) ^ CRC32C_POLY;
-        } else {
-            crc >>= 1;
-        }
-    }
-    crc
-}
-
-/// Compute CRC32C for a 16-bit word
-fn crc32c_u16(crc: u32, data: u16) -> u32 {
-    let mut crc = crc;
-    crc = crc32c_u8(crc, data as u8);
-    crc = crc32c_u8(crc, (data >> 8) as u8);
-    crc
-}
-
-/// Compute CRC32C for a 32-bit dword
-fn crc32c_u32(crc: u32, data: u32) -> u32 {
-    let mut crc = crc;
-    crc = crc32c_u8(crc, data as u8);
-    crc = crc32c_u8(crc, (data >> 8) as u8);
-    crc = crc32c_u8(crc, (data >> 16) as u8);
-    crc = crc32c_u8(crc, (data >> 24) as u8);
-    crc
-}
-
-/// Compute CRC32C for a 64-bit qword
-fn crc32c_u64(crc: u32, data: u64) -> u32 {
-    let mut crc = crc;
-    crc = crc32c_u8(crc, data as u8);
-    crc = crc32c_u8(crc, (data >> 8) as u8);
-    crc = crc32c_u8(crc, (data >> 16) as u8);
-    crc = crc32c_u8(crc, (data >> 24) as u8);
-    crc = crc32c_u8(crc, (data >> 32) as u8);
-    crc = crc32c_u8(crc, (data >> 40) as u8);
-    crc = crc32c_u8(crc, (data >> 48) as u8);
-    crc = crc32c_u8(crc, (data >> 56) as u8);
-    crc
 }

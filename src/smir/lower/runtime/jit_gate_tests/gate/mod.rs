@@ -4,6 +4,8 @@ use super::*;
 
 // ---- split submodules ----
 #[cfg(test)]
+mod crc32;
+#[cfg(test)]
 mod memory;
 #[cfg(test)]
 mod misc;

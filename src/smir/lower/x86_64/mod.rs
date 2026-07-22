@@ -100,6 +100,8 @@ mod ops;
 pub use emitter::*;
 mod jit;
 pub use jit::*;
+mod jit_crc32;
+pub use jit_crc32::*;
 mod jit_call;
 pub use jit_call::*;
 mod jit_memory_address;
