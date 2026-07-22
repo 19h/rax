@@ -72,11 +72,11 @@ impl X86_64Vcpu {
             // MOVBE reg, reg (0x61)
             0x61 => self.execute_apx_movbe(ctx, ndd, nf),
 
-            // POPCNT with NF shares MAP4 opcode 0x88 with MOV r/m8,r8.
-            0x88 if nf => self.execute_apx_count(ctx, opcode, ndd, nf),
+            // APX-promoted POPCNT, with optional NF.
+            0x88 => self.execute_apx_count(ctx, opcode),
 
-            // MOV variants (0x88-0x8B)
-            0x88 | 0x89 | 0x8A | 0x8B => self.execute_apx_mov(ctx, opcode),
+            // MOV variants (0x89-0x8B)
+            0x89 | 0x8A | 0x8B => self.execute_apx_mov(ctx, opcode),
 
             // LEA (0x8D)
             0x8D => self.execute_apx_lea(ctx),
@@ -103,7 +103,7 @@ impl X86_64Vcpu {
             0xD0 | 0xD1 | 0xD2 | 0xD3 => self.execute_apx_shift_cl(ctx, opcode, ndd, nf),
 
             // TZCNT/LZCNT with NF
-            0xF4 | 0xF5 => self.execute_apx_count(ctx, opcode, ndd, nf),
+            0xF4 | 0xF5 => self.execute_apx_count(ctx, opcode),
 
             // APX-promoted CRC32
             0xF0 | 0xF1 => self.execute_apx_crc32(ctx, opcode),
@@ -455,63 +455,6 @@ impl X86_64Vcpu {
             2 => (value as u16).swap_bytes() as u64,
             4 => (value as u32).swap_bytes() as u64,
             8 => value.swap_bytes(),
-            _ => unreachable!(),
-        };
-
-        self.set_reg(dest, result, op_size);
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
-    }
-
-    /// APX NF POPCNT/LZCNT/TZCNT.
-    pub(crate) fn execute_apx_count(
-        &mut self,
-        ctx: &mut InsnContext,
-        opcode: u8,
-        ndd: bool,
-        nf: bool,
-    ) -> Result<Option<VcpuExit>> {
-        if ndd || !nf {
-            return self.inject_invalid_opcode();
-        }
-
-        let op_size = Self::apx_scalar_op_size(ctx);
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let dest = reg | ctx.evex_dest_reg();
-        let src = if is_memory {
-            self.read_mem(addr, op_size)?
-        } else {
-            let src_reg = rm | ctx.evex_rm_reg();
-            self.get_reg(src_reg, op_size)
-        };
-
-        let bit_count = (op_size * 8) as u64;
-        let result = match opcode {
-            0x88 => match op_size {
-                2 => (src as u16).count_ones() as u64,
-                4 => (src as u32).count_ones() as u64,
-                8 => src.count_ones() as u64,
-                _ => unreachable!(),
-            },
-            0xF4 => {
-                if src == 0 {
-                    bit_count
-                } else {
-                    src.trailing_zeros() as u64
-                }
-            }
-            0xF5 => {
-                if src == 0 {
-                    bit_count
-                } else {
-                    match op_size {
-                        2 => (src as u16).leading_zeros() as u64,
-                        4 => (src as u32).leading_zeros() as u64,
-                        8 => src.leading_zeros() as u64,
-                        _ => unreachable!(),
-                    }
-                }
-            }
             _ => unreachable!(),
         };
 

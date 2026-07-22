@@ -18,6 +18,8 @@ mod apx_cmpccxadd;
 #[cfg(test)]
 mod apx_conditional;
 #[cfg(test)]
+mod apx_count;
+#[cfg(test)]
 mod apx_crc32;
 #[cfg(test)]
 mod apx_dispatch;

@@ -3,11 +3,11 @@
 use crate::smir::lift::x86_64::*;
 use std::collections::{HashMap, HashSet};
 
-use crate::smir::ir::flags::{FlagSet, FlagUpdate};
+use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign, X86VecMap,
+    OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86OpHint,
+    X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign, X86VecMap,
     X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
     X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
     X86XSaveKind,
@@ -25,6 +25,7 @@ mod alu;
 mod bmi;
 mod cmpccxadd;
 mod conditional;
+mod count;
 mod invalid;
 mod paired_stack;
 mod shift;
@@ -424,74 +425,6 @@ impl X86_64Lifter {
                 ));
             }
         }
-
-        Ok(LiftResult::fallthrough(
-            ops,
-            prefix.bytes + 1 + modrm.bytes_consumed,
-        ))
-    }
-
-    pub(crate) fn lift_apx_count(
-        &self,
-        prefix: ApxEvexPrefix,
-        opcode: u8,
-        bytes: &[u8],
-        pc: u64,
-        ctx: &mut LiftContext,
-    ) -> Result<LiftResult, LiftError> {
-        if prefix.nd || !prefix.nf {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: "APX count without required NF-only form".to_string(),
-            });
-        }
-
-        let op_size = prefix.op_size(false);
-        let width = self.size_to_width(op_size);
-        let mem_width = self.size_to_memwidth(op_size);
-        let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
-        let modrm = decode_modrm(bytes, &modrm_prefix, pc)?;
-        let next_pc = pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64;
-        let mut ops = Vec::new();
-
-        let src = if modrm.is_memory {
-            let x86_addr = modrm.addr.as_ref().unwrap();
-            let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
-            ops.extend(pre_ops);
-
-            let tmp = ctx.alloc_vreg();
-            ops.push(SmirOp::new(
-                OpId(ops.len() as u16),
-                pc,
-                OpKind::Load {
-                    dst: tmp,
-                    addr,
-                    width: mem_width,
-                    sign: SignExtend::Zero,
-                },
-            ));
-            tmp
-        } else {
-            self.gpr(modrm.rm)
-        };
-        let dst = self.gpr(modrm.reg);
-        let kind = match opcode {
-            0x88 => X86CountKind::Popcnt,
-            0xF4 => X86CountKind::Tzcnt,
-            0xF5 => X86CountKind::Lzcnt,
-            _ => unreachable!(),
-        };
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::X86Count {
-                dst,
-                src,
-                width,
-                kind,
-                flags: FlagUpdate::None,
-            },
-        ));
 
         Ok(LiftResult::fallthrough(
             ops,
@@ -1306,10 +1239,9 @@ impl X86_64Lifter {
                 self.lift_apx_imul_imm(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx)
             }
             0xAF => self.lift_apx_imul_reg(prefix, &bytes[prefix.bytes + 1..], pc, ctx),
-            0x88 if prefix.nf => {
+            0x88 | 0xF4 | 0xF5 => {
                 self.lift_apx_count(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx)
             }
-            0xF4 | 0xF5 => self.lift_apx_count(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx),
             0xF0 | 0xF1 => {
                 self.lift_apx_crc32(prefix, opcode, &bytes[prefix.bytes + 1..], bytes, pc, ctx)
             }
