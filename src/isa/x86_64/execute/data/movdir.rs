@@ -28,6 +28,26 @@ pub fn movdiri(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
         return Ok(None);
     }
 
+    let op_size = if ctx.rex_w() { 8 } else { 4 };
+    movdiri_decoded(vcpu, ctx, 0, op_size)
+}
+
+/// Execute a validated APX-promoted MOVDIRI with EVEX register extension.
+pub(crate) fn movdiri_apx(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+) -> Result<Option<VcpuExit>> {
+    let reg_extension = ctx.evex_dest_reg();
+    let op_size = if ctx.evex_w() { 8 } else { 4 };
+    movdiri_decoded(vcpu, ctx, reg_extension, op_size)
+}
+
+fn movdiri_decoded(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    reg_extension: u8,
+    op_size: u8,
+) -> Result<Option<VcpuExit>> {
     let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
         // MOVDIRI with a register destination (ModRM.mod = 11) is invalid -> #UD.
@@ -35,8 +55,7 @@ pub fn movdiri(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vc
         return Ok(None);
     }
 
-    let op_size = if ctx.rex_w() { 8 } else { 4 };
-    let value = vcpu.get_reg(reg, op_size);
+    let value = vcpu.get_reg(reg | reg_extension, op_size);
     vcpu.write_mem(addr, value, op_size)?;
 
     vcpu.regs.rip += ctx.cursor as u64;
@@ -54,6 +73,23 @@ pub fn movdir64b(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         return Ok(None);
     }
 
+    movdir64b_decoded(vcpu, ctx, 0)
+}
+
+/// Execute a validated APX-promoted MOVDIR64B with EVEX register extension.
+pub(crate) fn movdir64b_apx(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+) -> Result<Option<VcpuExit>> {
+    let reg_extension = ctx.evex_dest_reg();
+    movdir64b_decoded(vcpu, ctx, reg_extension)
+}
+
+fn movdir64b_decoded(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    reg_extension: u8,
+) -> Result<Option<VcpuExit>> {
     let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
     if !is_memory {
         // MOVDIR64B with a register source (ModRM.mod = 11) is invalid -> #UD.
@@ -61,7 +97,7 @@ pub fn movdir64b(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<
         return Ok(None);
     }
 
-    let dest_reg = reg;
+    let dest_reg = reg | reg_extension;
     let addr_size = movdir_addr_size(vcpu, ctx);
     let dest_addr = match addr_size {
         2 => vcpu.get_reg(dest_reg, 2) as u64,

@@ -25,33 +25,28 @@ impl X86_64Lifter {
         }
 
         let modrm = decode_modrm(bytes, prefix, pc)?;
-        if !modrm.is_memory {
+        self.lift_movdiri_modrm(modrm, prefix, bytes, pc, ctx, false)
+    }
+
+    /// Lift APX-promoted `EVEX.LLZ.NP.MAP4 F9 !(11):rrr:bbb` MOVDIRI.
+    pub(crate) fn lift_apx_movdiri(
+        &self,
+        prefix: ApxEvexPrefix,
+        bytes: &[u8],
+        full_bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.pp != 0 || !Self::apx_movdir_fields_valid(prefix) {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
-                bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+                bytes: full_bytes.to_vec(),
             });
         }
 
-        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
-        let (addr, mut ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Store {
-                src: self.gpr(modrm.reg),
-                addr,
-                width: if prefix.rex_w() {
-                    MemWidth::B8
-                } else {
-                    MemWidth::B4
-                },
-            },
-        ));
-
-        Ok(LiftResult::fallthrough(
-            ops,
-            prefix.cursor + modrm.bytes_consumed,
-        ))
+        let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
+        let modrm = Self::decode_apx_movdir_modrm(bytes, &modrm_prefix, pc)?;
+        self.lift_movdiri_modrm(modrm, &modrm_prefix, full_bytes, pc, ctx, true)
     }
 
     /// Lift legacy MOVDIR64B r64,m512 (66 0F 38 F8 /r) in 64-bit mode.
@@ -76,16 +71,134 @@ impl X86_64Lifter {
         }
 
         let modrm = decode_modrm(bytes, prefix, pc)?;
+        self.lift_movdir64b_modrm(modrm, prefix, bytes, pc, ctx, false)
+    }
+
+    /// Lift APX-promoted `EVEX.LLZ.66.MAP4.W0 F8 !(11):rrr:bbb` MOVDIR64B.
+    pub(crate) fn lift_apx_movdir64b(
+        &self,
+        prefix: ApxEvexPrefix,
+        bytes: &[u8],
+        full_bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.pp != 1 || prefix.w || !Self::apx_movdir_fields_valid(prefix) {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: full_bytes.to_vec(),
+            });
+        }
+
+        let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
+        let modrm = Self::decode_apx_movdir_modrm(bytes, &modrm_prefix, pc)?;
+        self.lift_movdir64b_modrm(modrm, &modrm_prefix, full_bytes, pc, ctx, true)
+    }
+
+    fn apx_movdir_fields_valid(prefix: ApxEvexPrefix) -> bool {
+        !prefix.nd
+            && !prefix.nf
+            && !prefix.z
+            && prefix.ll == 0
+            && prefix.aaa == 0
+            && prefix.vvvv_reg() == 0
+    }
+
+    fn decode_apx_movdir_modrm(
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+    ) -> Result<ModRm, LiftError> {
+        decode_modrm(bytes, prefix, pc).map_err(|error| match error {
+            LiftError::Incomplete { addr, have, need } => LiftError::Incomplete {
+                addr,
+                have: prefix.cursor + have,
+                need: prefix.cursor + need,
+            },
+            other => other,
+        })
+    }
+
+    fn lift_movdiri_modrm(
+        &self,
+        modrm: ModRm,
+        prefix: &X86Prefix,
+        invalid_bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+        requires_apx: bool,
+    ) -> Result<LiftResult, LiftError> {
         if !modrm.is_memory {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
-                bytes: bytes[..modrm.bytes_consumed.min(bytes.len())].to_vec(),
+                bytes: if requires_apx {
+                    invalid_bytes.to_vec()
+                } else {
+                    invalid_bytes[..modrm.bytes_consumed.min(invalid_bytes.len())].to_vec()
+                },
+            });
+        }
+
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let (addr, address_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+        let mut ops = if requires_apx {
+            vec![SmirOp::new(OpId(0), pc, OpKind::X86RequireApx)]
+        } else {
+            Vec::new()
+        };
+        ops.extend(address_ops);
+        for (index, op) in ops.iter_mut().enumerate() {
+            op.id = OpId(index as u16);
+        }
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::Store {
+                src: self.gpr(modrm.reg),
+                addr,
+                width: if prefix.rex_w() {
+                    MemWidth::B8
+                } else {
+                    MemWidth::B4
+                },
+            },
+        ));
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
+    fn lift_movdir64b_modrm(
+        &self,
+        modrm: ModRm,
+        prefix: &X86Prefix,
+        invalid_bytes: &[u8],
+        pc: u64,
+        ctx: &mut LiftContext,
+        requires_apx: bool,
+    ) -> Result<LiftResult, LiftError> {
+        if !modrm.is_memory {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: if requires_apx {
+                    invalid_bytes.to_vec()
+                } else {
+                    invalid_bytes[..modrm.bytes_consumed.min(invalid_bytes.len())].to_vec()
+                },
             });
         }
 
         let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
         let (source_addr, mut ops) =
             self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+        if requires_apx {
+            ops.insert(0, SmirOp::new(OpId(0), pc, OpKind::X86RequireApx));
+            for (index, op) in ops.iter_mut().enumerate() {
+                op.id = OpId(index as u16);
+            }
+        }
         let destination_offset = Address::Direct(self.gpr(modrm.reg));
         let destination_addr = if prefix.address_size_override {
             Address::X86Addr32(Box::new(destination_offset))

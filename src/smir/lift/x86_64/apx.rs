@@ -2821,6 +2821,10 @@ impl X86_64Lifter {
             0xF0 | 0xF1 => {
                 self.lift_apx_crc32(prefix, opcode, &bytes[prefix.bytes + 1..], bytes, pc, ctx)
             }
+            0xF8 if prefix.pp == 1 => {
+                self.lift_apx_movdir64b(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx)
+            }
+            0xF9 => self.lift_apx_movdiri(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx),
             0xFC => self.lift_apx_rao_int(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx),
             0xF6 | 0xF7 => {
                 self.lift_apx_group3(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx)

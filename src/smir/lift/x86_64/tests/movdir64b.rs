@@ -2,7 +2,7 @@
 
 use super::*;
 use crate::smir::interpret::{BlockResult, SmirInterpreter};
-use crate::smir::ir::context::{ExitReason, SmirContext};
+use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
 use crate::smir::ir::memory::{FlatMemory, SmirMemory};
 
 fn transfer(result: &LiftResult) -> (&Address, VReg, &Address) {
@@ -326,6 +326,197 @@ fn legacy_movdir64b_interpreter_preserves_fault_priority_and_direction() {
 #[test]
 fn legacy_movdir64b_native_gate_remains_fail_closed_for_the_buffered_temporary() {
     let mut block = block_for(&[0x66, 0x0F, 0x38, 0xF8, 0x08]);
+    block.set_terminator(Terminator::Return { values: vec![] });
+    let mut function = SmirFunction::new(FunctionId(0), block.id, 0x1000);
+    function.add_block(block);
+    let excluded = HashMap::new();
+
+    assert!(
+        !crate::smir::lower::runtime::is_native_clobber_safe_excluding(&function, &excluded, false,)
+    );
+    assert!(
+        !crate::smir::lower::runtime::is_native_clobber_safe_excluding(&function, &excluded, true,)
+    );
+}
+
+#[test]
+fn apx_movdir64b_strictly_lifts_egpr_and_complex_address_forms() {
+    // LLVM 23: `movdir64b r16, [r17]`.
+    let base = [0x62, 0xEC, 0x7D, 0x08, 0xF8, 0x01];
+    let result = lift_single(&base).expect("APX MOVDIR64B r16,[r17]");
+    assert_eq!(result.bytes_consumed, base.len());
+    assert!(matches!(result.ops[0].kind, OpKind::X86RequireApx));
+    let (source, _, destination) = transfer(&result);
+    assert!(matches!(
+        source,
+        Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::R17)))
+    ));
+    assert!(matches!(
+        destination,
+        Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::R16)))
+    ));
+
+    // LLVM 23: `movdir64b r9, [r20 + 4*r21 + 64]`.
+    let sib = [0x62, 0x7C, 0x79, 0x08, 0xF8, 0x4C, 0xAC, 0x40];
+    let result = lift_single(&sib).expect("APX MOVDIR64B EGPR SIB");
+    assert_eq!(result.bytes_consumed, sib.len());
+    assert!(matches!(result.ops[0].kind, OpKind::X86RequireApx));
+    let (source, _, destination) = transfer(&result);
+    assert!(matches!(
+        source,
+        Address::BaseIndexScale {
+            base: Some(VReg::Arch(ArchReg::X86(X86Reg::R20))),
+            index: VReg::Arch(ArchReg::X86(X86Reg::R21)),
+            scale: 4,
+            disp: 0x40,
+            disp_size: DispSize::Disp8,
+        }
+    ));
+    assert!(matches!(
+        destination,
+        Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::R9)))
+    ));
+    for (index, op) in result.ops.iter().enumerate() {
+        assert_eq!(op.id, OpId(index as u16));
+    }
+
+    let fs_addr32 = [0x64, 0x67, 0x62, 0x7C, 0x79, 0x08, 0xF8, 0x4C, 0xAC, 0x40];
+    let result = lift_single(&fs_addr32).expect("APX MOVDIR64B FS addr32");
+    assert_eq!(result.bytes_consumed, fs_addr32.len());
+    assert!(matches!(result.ops[0].kind, OpKind::X86RequireApx));
+    let (source, _, destination) = transfer(&result);
+    assert!(matches!(
+        source,
+        Address::X86Addr32(inner) if matches!(
+            inner.as_ref(),
+            Address::SegmentRel {
+                segment: VReg::Arch(ArchReg::X86(X86Reg::FsBase)),
+                base: Some(VReg::Arch(ArchReg::X86(X86Reg::R20))),
+                index: Some(VReg::Arch(ArchReg::X86(X86Reg::R21))),
+                scale: 4,
+                disp: 0x40,
+            }
+        )
+    ));
+    assert!(matches!(
+        destination,
+        Address::X86Addr32(inner) if matches!(
+            inner.as_ref(),
+            Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::R9)))
+        )
+    ));
+}
+
+#[test]
+fn apx_movdir64b_rejects_reserved_fields_and_reports_absolute_incomplete_lengths() {
+    for (bytes, name) in [
+        (&[0x62, 0xEC, 0xFD, 0x08, 0xF8, 0x01][..], "W=1"),
+        (&[0x62, 0xEC, 0x7D, 0x18, 0xF8, 0x01][..], "ND"),
+        (&[0x62, 0xEC, 0x7D, 0x0C, 0xF8, 0x01][..], "NF"),
+        (&[0x62, 0xEC, 0x7D, 0x88, 0xF8, 0x01][..], "z"),
+        (&[0x62, 0xEC, 0x7D, 0x28, 0xF8, 0x01][..], "LL"),
+        (&[0x62, 0xEC, 0x7D, 0x09, 0xF8, 0x01][..], "aaa"),
+        (&[0x62, 0xEC, 0x75, 0x08, 0xF8, 0x01][..], "V3:0"),
+        (&[0x62, 0xEC, 0x7D, 0x00, 0xF8, 0x01][..], "V4"),
+        (&[0x62, 0xEC, 0x7D, 0x08, 0xF8, 0xC1][..], "mod=3"),
+        (
+            &[0x66, 0x62, 0xEC, 0x7D, 0x08, 0xF8, 0x01][..],
+            "leading 66",
+        ),
+    ] {
+        let error = lift_single(bytes).expect_err(name);
+        assert!(
+            matches!(error, LiftError::InvalidEncoding { .. }),
+            "{name}: {error:?}"
+        );
+    }
+
+    assert!(matches!(
+        lift_single(&[0x62, 0xEC, 0x7D, 0x08, 0xF8]),
+        Err(LiftError::Incomplete {
+            have: 5,
+            need: 6,
+            ..
+        })
+    ));
+    assert!(matches!(
+        lift_single(&[0x62, 0xEC, 0x7D, 0x08, 0xF8, 0x84]),
+        Err(LiftError::Incomplete {
+            have: 6,
+            need: 7,
+            ..
+        })
+    ));
+    assert!(matches!(
+        lift_single(&[0x62, 0xEC, 0x7D, 0x08, 0xF8, 0x84, 0xAC]),
+        Err(LiftError::Incomplete {
+            have: 7,
+            need: 11,
+            ..
+        })
+    ));
+}
+
+#[test]
+fn apx_movdir64b_dynamic_guard_precedes_alignment_and_memory_faults() {
+    let block = block_for(&[0x62, 0xEC, 0x7D, 0x08, 0xF8, 0x01]);
+    assert!(matches!(block.ops[0].kind, OpKind::X86RequireApx));
+
+    for enabled in [false, true] {
+        let mut context = SmirContext::new_x86_64();
+        context.write_vreg(x86_gpr(16), 0x3001);
+        context.write_vreg(x86_gpr(17), 0xDEAD_0000);
+        let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+            unreachable!()
+        };
+        x86.apx_enabled = enabled;
+        let execution = SmirInterpreter::new().execute_block(
+            &mut context,
+            &mut FlatMemory::with_base(0x3000, 0x100),
+            &block,
+        );
+        if enabled {
+            assert!(matches!(
+                execution,
+                BlockResult::Exit(ExitReason::GeneralProtection {
+                    addr: 0x1000,
+                    error_code: 0,
+                })
+            ));
+        } else {
+            assert!(matches!(
+                execution,
+                BlockResult::Exit(ExitReason::Undefined {
+                    addr: 0x1000,
+                    opcode: 0,
+                })
+            ));
+        }
+    }
+
+    let source: Vec<u8> = (0u8..64).map(|byte| byte ^ 0x5A).collect();
+    let mut memory = FlatMemory::with_base(0x2000, 0x1100);
+    memory.write(0x2000, &source).unwrap();
+    let mut context = SmirContext::new_x86_64();
+    context.write_vreg(x86_gpr(16), 0x3000);
+    context.write_vreg(x86_gpr(17), 0x2000);
+    let ArchRegState::X86_64(x86) = &mut context.arch_regs else {
+        unreachable!()
+    };
+    x86.apx_enabled = true;
+    assert!(matches!(
+        SmirInterpreter::new().execute_block(&mut context, &mut memory, &block),
+        BlockResult::Exit(ExitReason::Halt)
+    ));
+    let mut observed = [0u8; 64];
+    memory.read(0x3000, &mut observed).unwrap();
+    assert_eq!(observed.as_slice(), source.as_slice());
+}
+
+#[cfg(feature = "smir-jit")]
+#[test]
+fn apx_movdir64b_native_gate_remains_fail_closed_for_buffered_512_bit_transfer() {
+    let mut block = block_for(&[0x62, 0xEC, 0x7D, 0x08, 0xF8, 0x01]);
     block.set_terminator(Terminator::Return { values: vec![] });
     let mut function = SmirFunction::new(FunctionId(0), block.id, 0x1000);
     function.add_block(block);

@@ -47,7 +47,7 @@ const OUT_RFLAGS: usize = OUT_GPR + GPR_REGS * 8;
 const OUT_SCRATCH: usize = OUT_RFLAGS + 8;
 const OUT_STACK: usize = OUT_SCRATCH + SCRATCH_BYTES;
 
-const LLVM_MATTR: &str = "+egpr,+ndd,+ccmp";
+const LLVM_MATTR: &str = "+egpr,+ndd,+ccmp,+movdiri,+movdir64b";
 
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -494,6 +494,34 @@ fn generated_specs() -> Vec<CaseSpec> {
         FLAGS_STATUS,
     );
 
+    asm_case(
+        &mut specs,
+        "movdiri",
+        "movdiri_l_to_scratch",
+        "{evex} movdiri dword ptr [rax + 4], ecx",
+        MODE_SCRATCH_RAX,
+        preserved,
+        FLAGS_STATUS,
+    );
+    asm_case(
+        &mut specs,
+        "movdiri",
+        "movdiri_q_to_scratch",
+        "{evex} movdiri qword ptr [rax + 8], rcx",
+        MODE_SCRATCH_RAX,
+        preserved,
+        FLAGS_STATUS,
+    );
+    asm_case(
+        &mut specs,
+        "movdir64b",
+        "movdir64b_buffered_overlap",
+        "{evex} movdir64b rax, [rax + 64]",
+        MODE_SCRATCH_RAX,
+        preserved,
+        FLAGS_STATUS,
+    );
+
     byte_case(
         &mut specs,
         "lea",
@@ -723,6 +751,8 @@ fn expected_families() -> &'static [&'static str] {
         "double_shift",
         "movbe",
         "movrs",
+        "movdiri",
+        "movdir64b",
         "lea",
         "ccmp",
         "ctest",

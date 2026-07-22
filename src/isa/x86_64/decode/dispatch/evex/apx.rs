@@ -98,6 +98,10 @@ impl X86_64Vcpu {
             // APX-promoted CRC32
             0xF0 | 0xF1 => self.execute_apx_crc32(ctx, opcode),
 
+            // APX-promoted direct stores
+            0xF8 if evex.pp == 1 => self.execute_apx_movdir64b(ctx),
+            0xF9 => self.execute_apx_movdiri(ctx),
+
             // Group 3 NOT/NEG (0xF6, 0xF7 /2,/3)
             0xF6 | 0xF7 => self.execute_apx_group3(ctx, opcode, ndd, nf),
 
