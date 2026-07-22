@@ -69,8 +69,8 @@ impl X86_64Vcpu {
             // CTEST variants (0x84-0x85)
             0x84 | 0x85 => self.execute_apx_ctest(ctx, opcode),
 
-            // MOVBE reg, reg (0x61)
-            0x61 => self.execute_apx_movbe(ctx, ndd, nf),
+            // APX-promoted MOVBE load/store directions.
+            0x60 | 0x61 => self.execute_apx_movbe(ctx, opcode),
 
             // APX-promoted POPCNT, with optional NF.
             0x88 => self.execute_apx_count(ctx, opcode),
@@ -429,38 +429,6 @@ impl X86_64Vcpu {
         } else {
             4
         }
-    }
-
-    /// APX MOVBE reg, reg.
-    pub(crate) fn execute_apx_movbe(
-        &mut self,
-        ctx: &mut InsnContext,
-        ndd: bool,
-        nf: bool,
-    ) -> Result<Option<VcpuExit>> {
-        if ndd || nf {
-            return self.inject_invalid_opcode();
-        }
-
-        let op_size = Self::apx_scalar_op_size(ctx);
-        let (reg, rm, is_memory, _, _) = self.decode_modrm(ctx)?;
-        if is_memory {
-            return self.inject_invalid_opcode();
-        }
-
-        let dest = rm | ctx.evex_rm_reg();
-        let src = reg | ctx.evex_dest_reg();
-        let value = self.get_reg(src, op_size);
-        let result = match op_size {
-            2 => (value as u16).swap_bytes() as u64,
-            4 => (value as u32).swap_bytes() as u64,
-            8 => value.swap_bytes(),
-            _ => unreachable!(),
-        };
-
-        self.set_reg(dest, result, op_size);
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
     }
 
     /// APX LEA operation

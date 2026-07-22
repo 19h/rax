@@ -1011,6 +1011,97 @@ fn x86_apx_guard_on_aarch64_is_dynamic_precise_and_noncommitting() {
 }
 
 #[test]
+fn x86_apx_movbe_register_forms_execute_and_guard_precisely_on_aarch64() {
+    const RAX: u64 = 0x0123_4567_89AB_CDEF;
+    const RBX: u64 = 0xFEDC_BA98_7654_3210;
+    const INITIAL_R8: u64 = 0x8877_6655_4433_2211;
+
+    for (label, p0, p1, opcode, modrm, expected) in [
+        (
+            "opcode 60 W32",
+            0x74,
+            0x7C,
+            0x60,
+            0xC3,
+            u64::from((RBX as u32).swap_bytes()),
+        ),
+        (
+            "opcode 61 W32",
+            0xD4,
+            0x7C,
+            0x61,
+            0xC0,
+            u64::from((RAX as u32).swap_bytes()),
+        ),
+        ("opcode 60 W64", 0x74, 0xFC, 0x60, 0xC3, RBX.swap_bytes()),
+        ("opcode 61 W64", 0xD4, 0xFC, 0x61, 0xC0, RAX.swap_bytes()),
+    ] {
+        let code = [0x62, p0, p1, 0x08, opcode, modrm, 0xF4];
+        let setup = |vcpu: &mut X86_64Vcpu| {
+            vcpu.set_apx_enabled(true);
+            let mut regs = vcpu.get_regs().unwrap();
+            regs.rax = RAX;
+            regs.rbx = RBX;
+            regs.r8 = INITIAL_R8;
+            regs.rflags = 0xCD7;
+            vcpu.set_regs(&regs).unwrap();
+        };
+
+        let mut interpreter = make_vcpu_code(&code);
+        setup(&mut interpreter);
+        run_to_hlt(&mut interpreter);
+        let expected_state = interpreter.get_regs().unwrap();
+
+        let mut jit = make_vcpu_code(&code);
+        setup(&mut jit);
+        assert!(
+            jit.jit_try_block()
+                .unwrap_or_else(|error| panic!("{label}: JIT attempt: {error:?}")),
+            "{label}: APX MOVBE register form must enter the AArch64 native tier"
+        );
+        run_to_hlt(&mut jit);
+        let actual = jit.get_regs().unwrap();
+
+        assert_mapped_state_eq(&actual, &expected_state, label);
+        assert_eq!(actual.r8, expected, "{label}: byte order and upper bits");
+        assert_eq!(actual.rax, RAX, "{label}: RAX source preserved");
+        assert_eq!(actual.rbx, RBX, "{label}: RBX source preserved");
+        assert_eq!(actual.rflags, 0xCD7, "{label}: complete RFLAGS");
+    }
+
+    // The region remains compilable with APX disabled, but the dynamic guard
+    // must hand off before MOVBE commits its destination or changes RFLAGS.
+    let code = [0x62, 0x74, 0xFC, 0x08, 0x60, 0xC3, 0xF4];
+    let mut disabled = make_vcpu_code(&code);
+    disabled.set_apx_enabled(false);
+    let mut regs = disabled.get_regs().unwrap();
+    regs.rbx = RBX;
+    regs.r8 = INITIAL_R8;
+    regs.rflags = 0xCD7;
+    disabled.set_regs(&regs).unwrap();
+    let before = disabled.get_regs().unwrap();
+
+    assert!(
+        disabled
+            .jit_try_block()
+            .expect("disabled-APX MOVBE JIT attempt"),
+        "the dynamic APX guard must not block MOVBE register-tier admission"
+    );
+    let guarded = disabled.get_regs().unwrap();
+    assert_mapped_state_eq(&guarded, &before, "disabled APX MOVBE guard");
+
+    let error = format!(
+        "{:#}",
+        disabled
+            .step()
+            .expect_err("direct replay of disabled APX MOVBE must raise #UD")
+    );
+    assert!(error.contains("IDT entry 6 not present"), "{error}");
+    let replayed = disabled.get_regs().unwrap();
+    assert_mapped_state_eq(&replayed, &before, "disabled APX MOVBE replay");
+}
+
+#[test]
 fn x86_w16_tzcnt_lzcnt_merge_cf_zf_and_preserve_other_flags() {
     // LLVM 23 encodings: TZCNT cx,cx; LZCNT si,dx. The final high-bit LZCNT
     // result is zero, so ZF=1/CF=0 and JNZ falls through.

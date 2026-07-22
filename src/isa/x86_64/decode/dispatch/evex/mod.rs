@@ -25,6 +25,8 @@ mod apx_conditional;
 pub(crate) use apx_conditional::*;
 mod apx_count;
 pub(crate) use apx_count::*;
+mod apx_movbe;
+pub(crate) use apx_movbe::*;
 mod apx_crc32;
 pub(crate) use apx_crc32::*;
 mod apx_invpcid;
@@ -49,6 +51,9 @@ mod apx_crc32_tests;
 
 #[cfg(test)]
 mod apx_count_tests;
+
+#[cfg(test)]
+mod apx_movbe_tests;
 
 #[cfg(test)]
 mod apx_group3_tests;

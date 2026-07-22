@@ -13,6 +13,8 @@ mod maskmov;
 pub use maskmov::*;
 mod misc;
 pub use misc::*;
+mod movbe;
+pub use movbe::*;
 mod mmx;
 pub use mmx::*;
 mod mmx_memory;

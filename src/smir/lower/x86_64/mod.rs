@@ -112,6 +112,10 @@ mod lmsw;
 pub use lmsw::*;
 mod memory;
 pub use memory::*;
+#[cfg(feature = "smir-jit")]
+mod movbe_memory;
+#[cfg(feature = "smir-jit")]
+pub use movbe_memory::*;
 mod mmx_helpers;
 pub use mmx_helpers::*;
 #[cfg(feature = "smir-jit")]

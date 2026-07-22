@@ -26,6 +26,8 @@ mod apx_dispatch;
 #[cfg(test)]
 mod apx_group3;
 #[cfg(test)]
+mod apx_movbe;
+#[cfg(test)]
 mod apx_prefixes;
 #[cfg(test)]
 mod apx_push2_pop2;

@@ -53,6 +53,8 @@ mod mmx_helpers;
 mod mmx_memory_source;
 #[cfg(test)]
 mod monitor_mwait;
+#[cfg(all(test, feature = "smir-jit"))]
+mod movbe_memory;
 #[cfg(test)]
 mod msr;
 #[cfg(test)]

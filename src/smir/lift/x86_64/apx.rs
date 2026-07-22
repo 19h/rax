@@ -27,110 +27,11 @@ mod cmpccxadd;
 mod conditional;
 mod count;
 mod invalid;
+mod movbe;
 mod paired_stack;
 mod shift;
 
 impl X86_64Lifter {
-    pub(crate) fn lift_apx_movbe(
-        &self,
-        prefix: ApxEvexPrefix,
-        opcode: u8,
-        bytes: &[u8],
-        pc: u64,
-        ctx: &mut LiftContext,
-    ) -> Result<LiftResult, LiftError> {
-        if prefix.nd || prefix.nf || prefix.pp > 1 {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: "APX MOVBE with NDD/NF".to_string(),
-            });
-        }
-
-        let op_size = prefix.op_size(false);
-        let width = self.size_to_width(op_size);
-        let mem_width = self.size_to_memwidth(op_size);
-        let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
-        let modrm = decode_modrm(bytes, &modrm_prefix, pc)?;
-        let next_pc = pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64;
-        let mut ops = Vec::new();
-
-        match opcode {
-            0x60 => {
-                let dst = self.gpr(modrm.reg);
-                let src = if modrm.is_memory {
-                    let x86_addr = modrm.addr.as_ref().unwrap();
-                    let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
-                    ops.extend(pre_ops);
-
-                    let tmp = ctx.alloc_vreg();
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::Load {
-                            dst: tmp,
-                            addr,
-                            width: mem_width,
-                            sign: SignExtend::Zero,
-                        },
-                    ));
-                    tmp
-                } else {
-                    self.gpr(modrm.rm)
-                };
-
-                ops.push(SmirOp::new(
-                    OpId(ops.len() as u16),
-                    pc,
-                    OpKind::Bswap { dst, src, width },
-                ));
-            }
-            0x61 => {
-                let src = self.gpr(modrm.reg);
-                if modrm.is_memory {
-                    let x86_addr = modrm.addr.as_ref().unwrap();
-                    let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
-                    ops.extend(pre_ops);
-
-                    let tmp = ctx.alloc_vreg();
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::Bswap {
-                            dst: tmp,
-                            src,
-                            width,
-                        },
-                    ));
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::Store {
-                            src: tmp,
-                            addr,
-                            width: mem_width,
-                        },
-                    ));
-                } else {
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::Bswap {
-                            dst: self.gpr(modrm.rm),
-                            src,
-                            width,
-                        },
-                    ));
-                }
-            }
-            _ => unreachable!("APX MOVBE is only dispatched for opcodes 0x60 and 0x61"),
-        }
-
-        Ok(LiftResult::fallthrough(
-            ops,
-            prefix.bytes + 1 + modrm.bytes_consumed,
-        ))
-    }
-
     pub(crate) fn lift_apx_movrs(
         &self,
         prefix: ApxEvexPrefix,
