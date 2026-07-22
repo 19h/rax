@@ -656,6 +656,7 @@ impl X86_64Vcpu {
             .evex
             .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
         if (modrm >> 6) != 3
+            || ((modrm >> 3) & 0x07) != 0
             || !evex.nd
             || evex.nf
             || evex.z
@@ -696,6 +697,7 @@ impl X86_64Vcpu {
             .evex
             .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
         if (modrm >> 6) != 3
+            || ((modrm >> 3) & 0x07) != 6
             || !evex.nd
             || evex.nf
             || evex.z
@@ -1375,10 +1377,7 @@ impl X86_64Vcpu {
             return self.execute_apx_push2(ctx);
         }
         if op_type > 1 {
-            return Err(Error::Emulator(format!(
-                "Unimplemented APX group opcode {:#x} /{} at RIP={:#x}",
-                opcode, op_type, self.regs.rip
-            )));
+            return self.inject_invalid_opcode();
         }
         self.execute_apx_inc_dec(ctx, opcode, ndd, nf)
     }

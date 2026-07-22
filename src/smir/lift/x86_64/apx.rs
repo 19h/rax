@@ -21,6 +21,8 @@ use crate::smir::lift::{
     ControlFlow, LiftContext, LiftError, LiftResult, MemoryReader, SmirLifter,
 };
 
+mod paired_stack;
+
 impl X86_64Lifter {
     pub(crate) fn lift_apx_nf_bmi_0f38(
         &self,
@@ -452,204 +454,6 @@ impl X86_64Lifter {
             ops,
             prefix_bytes + 1 + modrm.bytes_consumed,
         ))
-    }
-
-    pub(crate) fn lift_apx_push2(
-        &self,
-        prefix: ApxEvexPrefix,
-        modrm: u8,
-        pc: u64,
-        ctx: &mut LiftContext,
-    ) -> Result<LiftResult, LiftError> {
-        if !prefix.nd
-            || prefix.nf
-            || prefix.z
-            || prefix.ll != 0
-            || prefix.aaa != 0
-            || prefix.pp != 0
-            || !prefix.x4
-        {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: Vec::new(),
-            });
-        }
-        if (modrm >> 6) != 3 {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: "APX PUSH2 memory form".to_string(),
-            });
-        }
-        let group = (modrm >> 3) & 0x07;
-        if group != 6 {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("APX FF /{group}"),
-            });
-        }
-
-        let reg1 = (modrm & 0x07) | prefix.rm_ext();
-        let reg2 = prefix.vvvv_reg();
-        if reg1 == 4 || reg2 == 4 {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: Vec::new(),
-            });
-        }
-        let tmp1 = ctx.alloc_vreg();
-        let tmp2 = ctx.alloc_vreg();
-        let rsp = self.rsp();
-        let ops = vec![
-            SmirOp::new(
-                OpId(0),
-                pc,
-                OpKind::Mov {
-                    dst: tmp1,
-                    src: SrcOperand::Reg(self.gpr(reg1)),
-                    width: OpWidth::W64,
-                },
-            ),
-            SmirOp::new(
-                OpId(1),
-                pc,
-                OpKind::Mov {
-                    dst: tmp2,
-                    src: SrcOperand::Reg(self.gpr(reg2)),
-                    width: OpWidth::W64,
-                },
-            ),
-            SmirOp::new(
-                OpId(2),
-                pc,
-                OpKind::Sub {
-                    dst: rsp,
-                    src1: rsp,
-                    src2: SrcOperand::Imm(16),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ),
-            SmirOp::new(
-                OpId(3),
-                pc,
-                OpKind::Store {
-                    src: tmp1,
-                    addr: Address::Direct(rsp),
-                    width: MemWidth::B8,
-                },
-            ),
-            SmirOp::new(
-                OpId(4),
-                pc,
-                OpKind::Store {
-                    src: tmp2,
-                    addr: Address::base_off(rsp, 8),
-                    width: MemWidth::B8,
-                },
-            ),
-        ];
-
-        Ok(LiftResult::fallthrough(ops, prefix.bytes + 2))
-    }
-
-    pub(crate) fn lift_apx_pop2(
-        &self,
-        prefix: ApxEvexPrefix,
-        modrm: u8,
-        pc: u64,
-        ctx: &mut LiftContext,
-    ) -> Result<LiftResult, LiftError> {
-        if !prefix.nd
-            || prefix.nf
-            || prefix.z
-            || prefix.ll != 0
-            || prefix.aaa != 0
-            || prefix.pp != 0
-            || !prefix.x4
-        {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: Vec::new(),
-            });
-        }
-        if (modrm >> 6) != 3 {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: "APX POP2 memory form".to_string(),
-            });
-        }
-        let group = (modrm >> 3) & 0x07;
-        if group != 0 {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("APX 8F /{group}"),
-            });
-        }
-
-        let reg1 = (modrm & 0x07) | prefix.rm_ext();
-        let reg2 = prefix.vvvv_reg();
-        if reg1 == 4 || reg2 == 4 || reg1 == reg2 {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: Vec::new(),
-            });
-        }
-        let tmp1 = ctx.alloc_vreg();
-        let tmp2 = ctx.alloc_vreg();
-        let rsp = self.rsp();
-        let ops = vec![
-            SmirOp::new(
-                OpId(0),
-                pc,
-                OpKind::Load {
-                    dst: tmp1,
-                    addr: Address::Direct(rsp),
-                    width: MemWidth::B8,
-                    sign: SignExtend::Zero,
-                },
-            ),
-            SmirOp::new(
-                OpId(1),
-                pc,
-                OpKind::Load {
-                    dst: tmp2,
-                    addr: Address::base_off(rsp, 8),
-                    width: MemWidth::B8,
-                    sign: SignExtend::Zero,
-                },
-            ),
-            SmirOp::new(
-                OpId(2),
-                pc,
-                OpKind::Add {
-                    dst: rsp,
-                    src1: rsp,
-                    src2: SrcOperand::Imm(16),
-                    width: OpWidth::W64,
-                    flags: FlagUpdate::None,
-                },
-            ),
-            SmirOp::new(
-                OpId(3),
-                pc,
-                OpKind::Mov {
-                    dst: self.gpr(reg2),
-                    src: SrcOperand::Reg(tmp1),
-                    width: OpWidth::W64,
-                },
-            ),
-            SmirOp::new(
-                OpId(4),
-                pc,
-                OpKind::Mov {
-                    dst: self.gpr(reg1),
-                    src: SrcOperand::Reg(tmp2),
-                    width: OpWidth::W64,
-                },
-            ),
-        ];
-
-        Ok(LiftResult::fallthrough(ops, prefix.bytes + 2))
     }
 
     pub(crate) fn apx_alu_op(
@@ -1699,19 +1503,24 @@ impl X86_64Lifter {
         pc: u64,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
+        let Some(&modrm_byte) = bytes.first() else {
+            return Err(LiftError::Incomplete {
+                addr: pc,
+                have: 0,
+                need: 1,
+            });
+        };
+        let group = (modrm_byte >> 3) & 0x07;
+        if !matches!(group, 0 | 1) {
+            return Ok(Self::apx_modrm_invalid_opcode(prefix));
+        }
+
         let is_byte = opcode == 0xFE;
         let op_size = prefix.op_size(is_byte);
         let width = self.size_to_width(op_size);
         let mem_width = self.size_to_memwidth(op_size);
         let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
         let modrm = decode_modrm(bytes, &modrm_prefix, pc)?;
-        let group = (modrm.byte >> 3) & 0x07;
-        if !matches!(group, 0 | 1) {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: format!("APX FE/FF /{group}"),
-            });
-        }
 
         let next_pc = pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64;
         let mut ops = Vec::new();

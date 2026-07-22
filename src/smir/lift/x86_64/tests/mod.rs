@@ -14,6 +14,8 @@ mod apx_crc32;
 #[cfg(test)]
 mod apx_prefixes;
 #[cfg(test)]
+mod apx_push2_pop2;
+#[cfg(test)]
 mod callout;
 #[cfg(test)]
 mod clac_stac;

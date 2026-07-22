@@ -202,6 +202,74 @@ mod tests {
         assert_eq!(read_u64(&mut vcpu, u64::MAX - 7), 0xAAAA_BBBB_CCCC_DDDD);
     }
 
+    fn assert_apx_reserved_group_ud(code: &[u8]) {
+        let mut vcpu = long_mode_vcpu(code);
+        vcpu.regs.rax = 0x0123_4567_89AB_CDEF;
+        vcpu.regs.rbx = 0xFEDC_BA98_7654_3210;
+        vcpu.regs.rsp = DATA;
+        vcpu.regs.rflags = 0x2 | flags::bits::CF | flags::bits::ZF;
+        write_u64(&mut vcpu, DATA, 0x1111_2222_3333_4444);
+        write_u64(&mut vcpu, DATA + 8, 0xAAAA_BBBB_CCCC_DDDD);
+
+        let before = vcpu.regs.clone();
+        let error = vcpu.step().expect_err("reserved APX group form must #UD");
+        assert!(
+            format!("{error:?}").contains("IDT entry 6 not present"),
+            "wrong exception for {code:02X?}: {error:?}"
+        );
+        assert_eq!(vcpu.regs.rax, before.rax, "{code:02X?}: RAX");
+        assert_eq!(vcpu.regs.rbx, before.rbx, "{code:02X?}: RBX");
+        assert_eq!(vcpu.regs.rsp, before.rsp, "{code:02X?}: RSP");
+        assert_eq!(vcpu.regs.rflags, before.rflags, "{code:02X?}: RFLAGS");
+        assert_eq!(vcpu.regs.rip, before.rip, "{code:02X?}: fault RIP");
+        assert_eq!(
+            read_u64(&mut vcpu, DATA),
+            0x1111_2222_3333_4444,
+            "{code:02X?}: lower stack qword"
+        );
+        assert_eq!(
+            read_u64(&mut vcpu, DATA + 8),
+            0xAAAA_BBBB_CCCC_DDDD,
+            "{code:02X?}: upper stack qword"
+        );
+    }
+
+    #[test]
+    fn apx_reserved_pop2_and_group45_forms_raise_precise_ud() {
+        // Intel APX revision 5.0 assigns MAP4 8F only to POP2 /0 and assigns
+        // FE/FF only to INC /0, DEC /1, plus FF /6 PUSH2. Every other group is
+        // reserved. ModRM.Mod != 3 is independently #UD for PUSH2 and POP2,
+        // and must not trigger SIB/displacement decoding or stack observation.
+        for mode in 0..=3 {
+            for group in 1..=7 {
+                let modrm = (mode << 6) | (group << 3) | 3;
+                assert_apx_reserved_group_ud(&[0x62, 0xF4, 0x7C, 0x18, 0x8F, modrm]);
+            }
+
+            for group in 2..=7 {
+                let modrm = (mode << 6) | (group << 3) | 3;
+                assert_apx_reserved_group_ud(&[0x62, 0xF4, 0x64, 0x18, 0xFE, modrm]);
+            }
+
+            for group in [2, 3, 4, 5, 7] {
+                let modrm = (mode << 6) | (group << 3) | 3;
+                assert_apx_reserved_group_ud(&[0x62, 0xF4, 0x64, 0x18, 0xFF, modrm]);
+            }
+        }
+
+        for mode in 0..3 {
+            assert_apx_reserved_group_ud(&[0x62, 0xF4, 0x7C, 0x18, 0x8F, (mode << 6) | 4]);
+            assert_apx_reserved_group_ud(&[
+                0x62,
+                0xF4,
+                0x64,
+                0x18,
+                0xFF,
+                (mode << 6) | (6 << 3) | 4,
+            ]);
+        }
+    }
+
     #[test]
     fn apx_ctest_default_flags_clear_stale_lazy_flags() {
         let code = [
