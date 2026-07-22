@@ -161,6 +161,11 @@ pub(crate) fn x86_aarch64_block_is_clobber_safe(
         if !x86_aarch64_scalar_shape_valid(&op.kind) {
             return false;
         }
+        if matches!(op.kind, OpKind::X86RequireApx)
+            && !crate::smir::lower::x86_64::x86_require_apx_shape_valid(op)
+        {
+            return false;
+        }
         // AH/CH/DH/BH require x86 byte-lane extraction. The generic AArch64
         // register map sees only the parent GPR and cannot infer that lane from
         // the encoding hint, so retain interpreter fallback for these forms.
@@ -494,6 +499,7 @@ pub(crate) fn x86_aarch64_scalar_shape_valid(op: &crate::smir::ir::ops::OpKind) 
         | OpKind::Lea { .. }
         | OpKind::SetCF { .. }
         | OpKind::CmcCF
+        | OpKind::X86RequireApx
         | OpKind::Nop => true,
         OpKind::Fence {
             kind: FenceKind::InstructionSerialize,

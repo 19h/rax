@@ -12,7 +12,7 @@ fn op() -> crate::smir::ir::ops::SmirOp {
 }
 
 #[test]
-fn x86_gate_admits_only_the_exact_apx_guard_and_cross_hosts_reject_it() {
+fn x86_gates_admit_only_the_exact_apx_guard_and_aarch64_guest_rejects_it() {
     let exact = op();
     assert!(exact.kind.is_jit_safe());
     assert!(exact.is_jit_safe());
@@ -20,8 +20,8 @@ fn x86_gate_admits_only_the_exact_apx_guard_and_cross_hosts_reject_it() {
     assert!(x86_gate(OpKind::X86RequireApx));
 
     assert!(!aarch64_gate(vec![OpKind::X86RequireApx], false));
-    assert!(!x86_aarch64_gate(vec![OpKind::X86RequireApx]));
-    assert!(!x86_aarch64_scalar_shape_valid(&OpKind::X86RequireApx));
+    assert!(x86_aarch64_gate(vec![OpKind::X86RequireApx]));
+    assert!(x86_aarch64_scalar_shape_valid(&OpKind::X86RequireApx));
 
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
     builder.push_op(0x1000, OpKind::X86RequireApx);
@@ -30,6 +30,10 @@ fn x86_gate_admits_only_the_exact_apx_guard_and_cross_hosts_reject_it() {
     hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::RexByteReg);
     assert!(!x86_require_apx_shape_valid(&hinted.blocks[0].ops[0]));
     assert!(!is_native_clobber_safe(&hinted));
+    assert!(!is_x86_aarch64_native_clobber_safe_excluding(
+        &hinted,
+        &std::collections::HashMap::new(),
+    ));
 }
 
 #[test]

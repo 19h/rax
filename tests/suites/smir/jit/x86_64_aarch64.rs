@@ -978,6 +978,39 @@ fn x86_apx_nf_w16_counts_merge_partial_registers_and_preserve_flags() {
 }
 
 #[test]
+fn x86_apx_guard_on_aarch64_is_dynamic_precise_and_noncommitting() {
+    // {nf} POPCNT r8w,ax; HLT. The region remains compilable while APX is
+    // disabled, but its dynamic guard must hand off at the POPCNT frontier so
+    // direct execution can deliver #UD without committing R8 or flags.
+    let code = [0x62, 0x74, 0x7D, 0x0C, 0x88, 0xC0, 0xF4];
+    let mut jit = make_vcpu_code(&code);
+    jit.set_apx_enabled(false);
+    let mut regs = jit.get_regs().unwrap();
+    regs.rax = 0xaaaa_bbbb_cccc_f0f0;
+    regs.r8 = 0x8888_7777_6666_5555;
+    regs.r9 = 0x9999_8888_7777_6666;
+    regs.rflags = 0xcd7;
+    jit.set_regs(&regs).unwrap();
+    let before = jit.get_regs().unwrap();
+
+    assert!(
+        jit.jit_try_block().expect("disabled-APX JIT attempt"),
+        "the dynamic APX guard must not block AArch64 tier admission"
+    );
+    let guarded = jit.get_regs().unwrap();
+    assert_mapped_state_eq(&guarded, &before, "disabled APX guard");
+
+    let error = format!(
+        "{:#}",
+        jit.step()
+            .expect_err("direct replay of disabled APX must raise #UD")
+    );
+    assert!(error.contains("IDT entry 6 not present"), "{error}");
+    let replayed = jit.get_regs().unwrap();
+    assert_mapped_state_eq(&replayed, &before, "disabled APX direct replay");
+}
+
+#[test]
 fn x86_w16_tzcnt_lzcnt_merge_cf_zf_and_preserve_other_flags() {
     // LLVM 23 encodings: TZCNT cx,cx; LZCNT si,dx. The final high-bit LZCNT
     // result is zero, so ZF=1/CF=0 and JNZ falls through.

@@ -419,13 +419,14 @@ impl GuestRegs {
     }
 }
 
-/// AArch64 guest register file for state-backed x86-64 lowering.
+/// AArch64-host identity-map register file.
 ///
-/// Unlike [`GuestRegs`], this ABI does not rely on identity-mapping guest
-/// registers into host registers. Lowered code is entered as a normal SysV
-/// function with `RDI = *mut Aarch64GuestRegs` and reads/writes architectural
-/// state through this struct. NZCV is stored in architectural PSTATE position
-/// (bits 31:28); the remaining bits are preserved as zero for now.
+/// The native entry trampoline maps the architectural X/V register images into
+/// matching host registers. The same host ABI is also used by the constrained
+/// x86-on-AArch64 bridge, whose additional dynamic feature state is appended
+/// after the architecture-neutral exit metadata. NZCV is stored in
+/// architectural PSTATE position (bits 31:28); the remaining bits are
+/// preserved as zero for now.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Aarch64GuestRegs {
@@ -478,6 +479,10 @@ pub struct Aarch64GuestRegs {
     /// remaining bits carry architecture-specific state changes that cannot be
     /// represented by `pc` alone (currently AArch32 CPSR.T interworking).
     pub exit_flags: u64,
+    /// Dynamic Intel APX enable state for admitted x86-on-AArch64 regions.
+    /// Ordinary AArch64 and AArch32 guests leave this zero and cannot admit
+    /// x86-specific feature guards through their native gates.
+    pub x86_apx_enabled: u64,
 }
 
 impl Default for Aarch64GuestRegs {
@@ -499,6 +504,7 @@ impl Default for Aarch64GuestRegs {
             vec_load_fn: 0,
             vec_store_fn: 0,
             exit_flags: 0,
+            x86_apx_enabled: 0,
         }
     }
 }
@@ -520,6 +526,7 @@ impl Aarch64GuestRegs {
     pub const VEC_LOAD_FN_OFFSET: i32 = Self::EXCLUSIVE_VALID_OFFSET + 8;
     pub const VEC_STORE_FN_OFFSET: i32 = Self::VEC_LOAD_FN_OFFSET + 8;
     pub const EXIT_FLAGS_OFFSET: i32 = Self::VEC_STORE_FN_OFFSET + 8;
+    pub const X86_APX_ENABLED_OFFSET: i32 = Self::EXIT_FLAGS_OFFSET + 8;
 
     /// A native exit, rather than an ordinary `Return`, recorded `pc`.
     pub const EXIT_VALID: u64 = 1 << 0;

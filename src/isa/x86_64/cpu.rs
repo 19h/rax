@@ -4892,6 +4892,8 @@ impl X86_64Vcpu {
 
             #[cfg(target_arch = "aarch64")]
             let mut lowerer = Aarch64Lowerer::new();
+            #[cfg(target_arch = "aarch64")]
+            lowerer.set_x86_guest_state_guards(true);
             #[cfg(target_arch = "x86_64")]
             let mut lowerer = X86_64Lowerer::new();
             #[cfg(target_arch = "x86_64")]
@@ -5329,6 +5331,7 @@ impl X86_64Vcpu {
         let mut state = Aarch64GuestRegs {
             pc: self.regs.rip,
             nzcv: x86_rflags_to_aarch64_nzcv(pre_rflags),
+            x86_apx_enabled: u64::from(self.apx_enabled()),
             ..Default::default()
         };
         for index in 0_u8..16 {

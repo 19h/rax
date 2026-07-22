@@ -45,6 +45,8 @@ mod misc;
 pub use misc::*;
 mod mov;
 pub use mov::*;
+mod require_apx;
+pub use require_apx::*;
 mod shift;
 pub use shift::*;
 mod simd;
@@ -85,6 +87,7 @@ const A64_GUEST_STORE_FN_OFFSET: u32 = 816;
 const A64_GUEST_VEC_LOAD_FN_OFFSET: u32 = 848;
 const A64_GUEST_VEC_STORE_FN_OFFSET: u32 = 856;
 const A64_GUEST_EXIT_FLAGS_OFFSET: u32 = 864;
+const A64_GUEST_X86_APX_ENABLED_OFFSET: u32 = A64_GUEST_EXIT_FLAGS_OFFSET + 8;
 const A64_EXIT_VALID: i64 = 1 << 0;
 const A64_EXIT_AARCH32_T: i64 = 1 << 1;
 const A64_EXIT_AARCH32_T_VALID: i64 = 1 << 2;
@@ -123,6 +126,11 @@ pub struct Aarch64Lowerer {
     /// recorded as PC and target bit 0 is exported as CPSR.T. This must only be
     /// enabled after the AArch32 structural gate validates the terminator.
     guest_indirect_exits: bool,
+    /// When true, x86-specific dynamic guards may read the appended bridge
+    /// fields in `Aarch64GuestRegs`. This mode must be paired with the strict
+    /// x86-on-AArch64 native gate; ordinary AArch64/AArch32 callers leave it
+    /// disabled and fail closed on x86 architectural state.
+    x86_guest_state_guards: bool,
     /// When true, memory ops lower to runtime-helper call-outs (MMU-translated)
     /// instead of inline native LDR/STR against the raw guest address. Set via
     /// [`Self::set_mem_helpers`].

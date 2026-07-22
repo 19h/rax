@@ -24,6 +24,8 @@ mod memory;
 #[cfg(test)]
 mod misc;
 #[cfg(test)]
+mod require_apx;
+#[cfg(test)]
 mod shift;
 #[cfg(test)]
 mod vector;
