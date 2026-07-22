@@ -219,6 +219,9 @@ impl X86_64Lifter {
         if prefix.nf && matches!(group, 2 | 3) {
             return Ok(Self::apx_modrm_invalid_opcode(prefix));
         }
+        if group == 7 {
+            return self.lift_apx_ccmp_imm(prefix, opcode, bytes, pc, ctx);
+        }
 
         let is_byte = opcode == 0x80;
         let op_size = prefix.op_size(is_byte);
@@ -272,66 +275,6 @@ impl X86_64Lifter {
 
         let next_pc = pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64 + imm_size as u64;
         let mut ops = Vec::new();
-        if group == 7 {
-            if prefix.nd {
-                return Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: "APX CCMP immediate with NDD".to_string(),
-                });
-            }
-
-            let memory_load = if modrm.is_memory {
-                let x86_addr = modrm.addr.as_ref().unwrap();
-                let (addr, pre_ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
-                ops.extend(pre_ops);
-
-                let tmp = ctx.alloc_vreg();
-                Some((tmp, addr))
-            } else {
-                None
-            };
-            let src1 = memory_load
-                .as_ref()
-                .map(|(tmp, _)| *tmp)
-                .unwrap_or_else(|| self.gpr(modrm.rm));
-
-            self.push_apx_conditional_flags_with(
-                &mut ops,
-                pc,
-                ctx,
-                self.x86_cond(prefix.ccmp_cond()),
-                prefix.ccmp_default_flags(),
-                |ops, cond_reg| {
-                    if let Some((dst, addr)) = memory_load {
-                        ops.push(SmirOp::new(
-                            OpId(ops.len() as u16),
-                            pc,
-                            OpKind::PredLoad {
-                                dst,
-                                cond: cond_reg,
-                                addr,
-                                width: mem_width,
-                                signed: SignExtend::Zero,
-                            },
-                        ));
-                    }
-                    ops.push(SmirOp::new(
-                        OpId(ops.len() as u16),
-                        pc,
-                        OpKind::Cmp {
-                            src1,
-                            src2: SrcOperand::Imm(imm),
-                            width,
-                        },
-                    ));
-                },
-            );
-
-            return Ok(LiftResult::fallthrough(
-                ops,
-                prefix.bytes + 1 + modrm.bytes_consumed + imm_size,
-            ));
-        }
 
         let Some(kind) = ApxAluKind::from_group(group) else {
             return Ok(Self::apx_modrm_invalid_opcode(prefix));

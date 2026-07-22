@@ -635,16 +635,21 @@ fn assert_apx_conditional_flag_shape_with_true_ops(
     default_rflags: i64,
     true_op_count: usize,
 ) -> VReg {
-    let true_flags_idx = 4 + true_op_count;
+    let start = result
+        .ops
+        .iter()
+        .position(|op| matches!(op.kind, OpKind::ReadFlags { .. }))
+        .expect("APX conditional must snapshot old flags");
+    let true_flags_idx = start + 4 + true_op_count;
     let select_idx = true_flags_idx + 1;
     let write_flags_idx = select_idx + 1;
     assert_eq!(result.ops.len(), write_flags_idx + 1);
 
-    let old_flags = match &result.ops[0].kind {
+    let old_flags = match &result.ops[start].kind {
         OpKind::ReadFlags { dst } => *dst,
         other => panic!("expected APX conditional old ReadFlags, got {other:?}"),
     };
-    let cond_reg = match &result.ops[1].kind {
+    let cond_reg = match &result.ops[start + 1].kind {
         OpKind::SetCC {
             dst,
             cond: got_cond,
@@ -655,7 +660,7 @@ fn assert_apx_conditional_flag_shape_with_true_ops(
         }
         other => panic!("expected APX conditional SetCC, got {other:?}"),
     };
-    let false_flags = match &result.ops[2].kind {
+    let false_flags = match &result.ops[start + 2].kind {
         OpKind::And {
             dst,
             src1,
@@ -669,7 +674,7 @@ fn assert_apx_conditional_flag_shape_with_true_ops(
         }
         other => panic!("expected APX conditional false-flag mask, got {other:?}"),
     };
-    match &result.ops[3].kind {
+    match &result.ops[start + 3].kind {
         OpKind::Or {
             dst,
             src1,
@@ -709,26 +714,19 @@ fn assert_apx_conditional_flag_shape_with_true_ops(
     cond_reg
 }
 
-fn assert_apx_conditional_predload(
-    result: &LiftResult,
-    cond_reg: VReg,
-    index: usize,
-    width: MemWidth,
-) -> VReg {
+fn assert_apx_conditional_load(result: &LiftResult, index: usize, width: MemWidth) -> VReg {
     match &result.ops[index].kind {
-        OpKind::PredLoad {
+        OpKind::Load {
             dst,
-            cond,
             addr: Address::Direct(base),
             width: got_width,
-            signed: SignExtend::Zero,
+            sign: SignExtend::Zero,
         } => {
-            assert_eq!(*cond, cond_reg);
             assert_eq!(*base, x86_gpr(3));
             assert_eq!(*got_width, width);
             *dst
         }
-        other => panic!("expected APX conditional PredLoad, got {other:?}"),
+        other => panic!("expected APX conditional Load, got {other:?}"),
     }
 }
 

@@ -92,8 +92,11 @@ impl X86_64Vcpu {
             // SHLD/SHRD double shifts (0x24, 0x2C imm8; 0xA5, 0xAD CL)
             0x24 | 0x2C | 0xA5 | 0xAD => self.execute_apx_double_shift(ctx, opcode, ndd, nf),
 
-            // Group 1 immediate ALU operations (0x80, 0x81, 0x82, 0x83 /0..7)
-            0x80 | 0x81 | 0x82 | 0x83 => self.execute_apx_group1_imm(ctx, opcode, ndd, nf),
+            // Group 1 immediate ALU operations (0x80, 0x81, 0x83 /0..7).
+            0x80 | 0x81 | 0x83 => self.execute_apx_group1_imm(ctx, opcode, ndd, nf),
+
+            // Legacy opcode 82H is not promoted into APX map 4.
+            0x82 => self.inject_invalid_opcode(),
 
             // Shift variants (0xC0, 0xC1, 0xD0-0xD3)
             0xC0 | 0xC1 => self.execute_apx_shift_imm(ctx, opcode, ndd, nf),
@@ -235,125 +238,6 @@ impl X86_64Vcpu {
                 }
                 _ => self.update_flags_alu(result, src1, src2, op_size, alu_op),
             }
-        }
-
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
-    }
-
-    pub(crate) fn apx_ccmp_condition_and_default_flags(ctx: &InsnContext) -> Result<(u8, u8)> {
-        let evex = ctx
-            .evex
-            .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
-        let cc = ((evex.v_prime as u8) << 3) | evex.aaa;
-        let dfv = evex.vvvv;
-        Ok((cc, dfv))
-    }
-
-    pub(crate) fn apply_apx_ccmp_default_flags(&mut self, dfv: u8) {
-        let mut flags = self.regs.rflags & !0x8D5; // CF, PF, AF, ZF, SF, OF
-        if dfv & 0x1 != 0 {
-            flags |= 0x001; // CF
-        }
-        if dfv & 0x2 != 0 {
-            flags |= 0x040; // ZF
-        }
-        if dfv & 0x4 != 0 {
-            flags |= 0x080; // SF
-        }
-        if dfv & 0x8 != 0 {
-            flags |= 0x800; // OF
-        }
-        self.regs.rflags = flags;
-        self.clear_lazy_flags();
-    }
-
-    /// APX CCMP operation.
-    pub(crate) fn execute_apx_ccmp(
-        &mut self,
-        ctx: &mut InsnContext,
-        opcode: u8,
-    ) -> Result<Option<VcpuExit>> {
-        let is_byte = (opcode & 0x01) == 0;
-        let op_size = if is_byte {
-            1
-        } else {
-            Self::apx_scalar_op_size(ctx)
-        };
-        let reg_is_src = (opcode & 0x02) == 0;
-        let (cc, dfv) = Self::apx_ccmp_condition_and_default_flags(ctx)?;
-
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let reg = reg | ctx.evex_dest_reg();
-        let rm = if is_memory {
-            rm
-        } else {
-            rm | ctx.evex_rm_reg()
-        };
-
-        if self.check_condition(cc) {
-            let (src1, src2) = if reg_is_src {
-                let r_val = self.get_reg(reg, op_size);
-                let rm_val = if is_memory {
-                    self.read_mem(addr, op_size)?
-                } else {
-                    self.get_reg(rm, op_size)
-                };
-                (rm_val, r_val)
-            } else {
-                let r_val = self.get_reg(reg, op_size);
-                let rm_val = if is_memory {
-                    self.read_mem(addr, op_size)?
-                } else {
-                    self.get_reg(rm, op_size)
-                };
-                (r_val, rm_val)
-            };
-
-            let result = src1.wrapping_sub(src2);
-            self.update_flags_alu(result, src1, src2, op_size, ApxAluOp::Sub);
-        } else {
-            self.apply_apx_ccmp_default_flags(dfv);
-        }
-
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
-    }
-
-    /// APX CTEST operation.
-    pub(crate) fn execute_apx_ctest(
-        &mut self,
-        ctx: &mut InsnContext,
-        opcode: u8,
-    ) -> Result<Option<VcpuExit>> {
-        let is_byte = opcode == 0x84;
-        let op_size = if is_byte {
-            1
-        } else {
-            Self::apx_scalar_op_size(ctx)
-        };
-        let (cc, dfv) = Self::apx_ccmp_condition_and_default_flags(ctx)?;
-
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let reg = reg | ctx.evex_dest_reg();
-        let rm = if is_memory {
-            rm
-        } else {
-            rm | ctx.evex_rm_reg()
-        };
-
-        if self.check_condition(cc) {
-            let src1 = self.get_reg(reg, op_size);
-            let src2 = if is_memory {
-                self.read_mem(addr, op_size)?
-            } else {
-                self.get_reg(rm, op_size)
-            };
-
-            let result = src1 & src2;
-            self.update_flags_alu(result, src1, src2, op_size, ApxAluOp::And);
-        } else {
-            self.apply_apx_ccmp_default_flags(dfv);
         }
 
         self.regs.rip += ctx.cursor as u64;
@@ -922,8 +806,11 @@ impl X86_64Vcpu {
         if nf && matches!(op, 2 | 3) {
             return self.inject_invalid_opcode();
         }
+        if op == 7 {
+            return self.execute_apx_ccmp_imm(ctx, opcode);
+        }
 
-        let op_size = if matches!(opcode, 0x80 | 0x82) {
+        let op_size = if opcode == 0x80 {
             1
         } else {
             Self::apx_scalar_op_size(ctx)
@@ -938,7 +825,7 @@ impl X86_64Vcpu {
         };
 
         let imm = match opcode {
-            0x80 | 0x82 => ctx.consume_u8()? as u64,
+            0x80 => ctx.consume_u8()? as u64,
             0x81 if op_size == 2 => ctx.consume_u16()? as u64,
             0x81 if op_size == 8 => ctx.consume_u32()? as i32 as i64 as u64,
             0x81 => ctx.consume_u32()? as u64,
@@ -956,19 +843,17 @@ impl X86_64Vcpu {
             2 => src.wrapping_add(imm).wrapping_add(u64::from(cf_in)),
             3 => src.wrapping_sub(imm).wrapping_sub(u64::from(cf_in)),
             4 => src & imm,
-            5 | 7 => src.wrapping_sub(imm),
+            5 => src.wrapping_sub(imm),
             6 => src ^ imm,
             _ => unreachable!(),
         };
 
-        if op != 7 {
-            if ndd {
-                self.set_reg(ctx.evex_vvvv(), result, op_size);
-            } else if is_memory {
-                self.write_mem(addr, result, op_size)?;
-            } else {
-                self.set_reg(src_reg, result, op_size);
-            }
+        if ndd {
+            self.set_reg(ctx.evex_vvvv(), result, op_size);
+        } else if is_memory {
+            self.write_mem(addr, result, op_size)?;
+        } else {
+            self.set_reg(src_reg, result, op_size);
         }
 
         if !nf {
@@ -982,7 +867,7 @@ impl X86_64Vcpu {
                     flags::update_flags_sbb(&mut self.regs.rflags, src, imm, cf_in, result, op_size)
                 }
                 4 => self.update_flags_alu(result, src, imm, op_size, ApxAluOp::And),
-                5 | 7 => self.update_flags_alu(result, src, imm, op_size, ApxAluOp::Sub),
+                5 => self.update_flags_alu(result, src, imm, op_size, ApxAluOp::Sub),
                 6 => self.update_flags_alu(result, src, imm, op_size, ApxAluOp::Xor),
                 _ => unreachable!(),
             }
@@ -1123,6 +1008,9 @@ impl X86_64Vcpu {
         // to establish #UD.
         if nf && op_type == 2 {
             return self.inject_invalid_opcode();
+        }
+        if matches!(op_type, 0 | 1) {
+            return self.execute_apx_ctest_imm(ctx, opcode);
         }
 
         let op_size = if opcode == 0xF6 {

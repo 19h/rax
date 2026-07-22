@@ -21,6 +21,8 @@ use crate::isa::x86_64::{execute, flags};
 // ---- module tree (auto-split) ----
 mod apx;
 pub(crate) use apx::*;
+mod apx_conditional;
+pub(crate) use apx_conditional::*;
 mod apx_crc32;
 pub(crate) use apx_crc32::*;
 mod apx_invpcid;
