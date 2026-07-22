@@ -2,9 +2,10 @@
 
 use super::*;
 use crate::isa::x86_64::execute::system::{
-    IA32_APIC_BASE, IA32_CSTAR, IA32_EFER, IA32_FMASK, IA32_FS_BASE, IA32_GS_BASE,
-    IA32_KERNEL_GS_BASE, IA32_LSTAR, IA32_STAR, IA32_SYSENTER_CS, IA32_SYSENTER_EIP,
-    IA32_SYSENTER_ESP, IA32_TSC, IA32_TSC_ADJUST, IA32_TSC_AUX, IA32_TSC_DEADLINE,
+    IA32_APIC_BASE, IA32_BIOS_SIGN_ID, IA32_CSTAR, IA32_EFER, IA32_FMASK, IA32_FS_BASE,
+    IA32_GS_BASE, IA32_KERNEL_GS_BASE, IA32_LSTAR, IA32_MISC_ENABLE, IA32_MISC_ENABLE_RESET,
+    IA32_PAT, IA32_PLATFORM_ID, IA32_STAR, IA32_SYSENTER_CS, IA32_SYSENTER_EIP, IA32_SYSENTER_ESP,
+    IA32_TSC, IA32_TSC_ADJUST, IA32_TSC_AUX, IA32_TSC_DEADLINE, IA32_UMWAIT_CONTROL, IA32_XSS,
 };
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
@@ -76,7 +77,7 @@ fn test_vcpu(memory: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
     vcpu
 }
 
-fn msr_state(vcpu: &X86_64Vcpu) -> [u64; 14] {
+fn msr_state(vcpu: &X86_64Vcpu) -> [u64; 17] {
     [
         vcpu.tsc_adjust,
         u64::from(vcpu.tsc_aux),
@@ -88,6 +89,9 @@ fn msr_state(vcpu: &X86_64Vcpu) -> [u64; 14] {
         vcpu.sregs.sysenter_cs,
         vcpu.sregs.sysenter_esp,
         vcpu.sregs.sysenter_eip,
+        vcpu.misc_enable,
+        vcpu.pat,
+        vcpu.umwait_control,
         vcpu.sregs.fs.base,
         vcpu.sregs.gs.base,
         vcpu.kernel_gs_base,
@@ -144,10 +148,15 @@ fn install_msr_inputs(vcpu: &mut X86_64Vcpu, index: u32, value: u64) {
 fn jit_wrmsr_matches_direct_for_every_profiled_nonvolatile_selector() {
     let cases = [
         (IA32_APIC_BASE, APIC_BASE_PROFILE_VALUE),
+        (IA32_BIOS_SIGN_ID, 0),
+        (IA32_XSS, 0),
+        (IA32_UMWAIT_CONTROL, 0x0000_0000_0001_86A0),
         (IA32_TSC_ADJUST, 0xCAFE_BABE_DEAD_BEEF),
         (IA32_SYSENTER_CS, 0x10),
         (IA32_SYSENTER_ESP, 0x0000_7FFF_FFFF_D000),
         (IA32_SYSENTER_EIP, 0xFFFF_8000_0000_3000),
+        (IA32_MISC_ENABLE, IA32_MISC_ENABLE_RESET),
+        (IA32_PAT, 0x0706_0504_0100_0706),
         (IA32_TSC_DEADLINE, 0x0123_4567_89AB_CDEF),
         (IA32_EFER, 0xD01),
         (IA32_STAR, 0x0033_0020_CAFE_BABE),
@@ -192,11 +201,17 @@ fn jit_wrmsr_matches_direct_for_every_profiled_nonvolatile_selector() {
 fn jit_rdmsr_matches_direct_and_zero_extends_for_every_stable_selector() {
     let selectors = [
         IA32_APIC_BASE,
+        IA32_BIOS_SIGN_ID,
+        IA32_PLATFORM_ID,
         IA32_TSC_ADJUST,
         IA32_SYSENTER_CS,
         IA32_SYSENTER_ESP,
         IA32_SYSENTER_EIP,
+        IA32_MISC_ENABLE,
+        IA32_PAT,
         IA32_TSC_DEADLINE,
+        IA32_XSS,
+        IA32_UMWAIT_CONTROL,
         IA32_EFER,
         IA32_STAR,
         IA32_LSTAR,
@@ -256,6 +271,29 @@ fn jit_msr_faults_are_dynamic_precise_and_noncommitting() {
         ("reserved EFER", true, IA32_EFER, 1 << 12, |_| {}),
         ("live EFER.LME change", true, IA32_EFER, 1 << 11, |_| {}),
         ("wide SYSENTER_CS", true, IA32_SYSENTER_CS, 1 << 32, |_| {}),
+        ("PAT reserved type", true, IA32_PAT, 2, |_| {}),
+        ("XSS unsupported component", true, IA32_XSS, 1, |_| {}),
+        (
+            "UMWAIT_CONTROL reserved bit",
+            true,
+            IA32_UMWAIT_CONTROL,
+            2,
+            |_| {},
+        ),
+        (
+            "MISC_ENABLE read-only profile bit",
+            true,
+            IA32_MISC_ENABLE,
+            IA32_MISC_ENABLE_RESET ^ (1 << 11),
+            |_| {},
+        ),
+        (
+            "MISC_ENABLE inert XD-disable bit",
+            true,
+            IA32_MISC_ENABLE,
+            IA32_MISC_ENABLE_RESET | (1 << 34),
+            |_| {},
+        ),
     ];
 
     for (name, write, index, value, configure) in cases {
@@ -484,8 +522,10 @@ fn jit_disabled_msr_extensions_exit_at_the_exact_faulting_frontier() {
             .step()
             .expect_err("disabled MSR extension frontier must deliver #UD");
         assert!(
-            error.to_string().contains("IDT entry 6 not present"),
-            "{name}: expected #UD delivery failure, got {error}"
+            error
+                .to_string()
+                .contains("triple fault while delivering vector 6"),
+            "{name}: expected #UD-to-triple-fault delivery chain, got {error}"
         );
         assert_eq!(
             (msr_state(&native), scalar_state(&native)),

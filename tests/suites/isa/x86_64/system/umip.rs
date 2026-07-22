@@ -106,6 +106,8 @@ fn test_group6_real_and_virtual_8086_modes_raise_ud_before_umip_or_memory() {
             let mut sregs = vcpu.get_sregs().unwrap();
             if !virtual_8086 {
                 sregs.cr0 &= !1;
+                // Real mode IVT entries do not carry a present bit.
+                sregs.idt.limit = 0;
             }
             sregs.cr4 |= CR4_UMIP;
             sregs.cs.selector = 3;

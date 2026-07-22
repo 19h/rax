@@ -265,6 +265,12 @@ fn setup_handlers(mem: &GuestMemoryMmap) {
 
 /// Create a vCPU with paging enabled
 fn create_paged_vcpu(mem: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
+    // Exception delivery validates the IDT gate's target descriptor rather
+    // than trusting the hidden CS cache. Install selector 0x08 as a present,
+    // readable 64-bit code segment (base 0, four-GiB limit).
+    let code64_descriptor = [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x9A, 0xAF, 0x00];
+    mem.write_slice(&code64_descriptor, GuestAddress(GDT_ADDR + 8))
+        .unwrap();
     let mut vcpu = X86_64Vcpu::new(0, mem);
 
     let mut sregs = SystemRegisters::default();

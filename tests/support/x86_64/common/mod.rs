@@ -32,6 +32,40 @@ pub const IDT_BASE: u64 = 0x11000;
 /// GDT base address
 pub const GDT_BASE: u64 = 0x10000;
 
+/// 64-bit TSS backing the shared exception-delivery fixture.
+pub const TSS_BASE: u64 = 0x15000;
+
+/// Ring-0 stack selected by the shared TSS for CPL3-to-CPL0 delivery.
+pub const TSS_RSP0: u64 = 0x9000;
+
+const TSS_SELECTOR: u16 = 0x18;
+
+fn install_test_tss(mem: &GuestMemoryMmap) {
+    // A 64-bit TSS descriptor occupies two adjacent GDT slots. The low qword
+    // describes a present busy TSS (type 0xB), base 0x15000, limit 0x67; the
+    // high qword supplies base[63:32] and is zero for this fixture.
+    let descriptor = [
+        0x67, 0x00, 0x00, 0x50, 0x01, 0x8B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00,
+    ];
+    mem.write_slice(&descriptor, GuestAddress(GDT_BASE + 0x18))
+        .unwrap();
+    // In a 64-bit TSS, RSP0 starts at byte offset 4.
+    mem.write_slice(&TSS_RSP0.to_le_bytes(), GuestAddress(TSS_BASE + 4))
+        .unwrap();
+}
+
+fn configure_test_tss(sregs: &mut SystemRegisters) {
+    sregs.gdt.limit = 0x27; // includes the 16-byte descriptor at selector 0x18
+    sregs.tr.base = TSS_BASE;
+    sregs.tr.limit = 0x67;
+    sregs.tr.selector = TSS_SELECTOR;
+    sregs.tr.type_ = 0x0B;
+    sregs.tr.present = true;
+    sregs.tr.s = false;
+    sregs.tr.unusable = false;
+}
+
 pub const CR4_FSGSBASE: u64 = 1 << 16;
 pub const CR4_OSXSAVE: u64 = 1 << 18;
 pub const CR4_PKE: u64 = 1 << 22;
@@ -96,6 +130,7 @@ pub fn setup_vm(
         .unwrap();
     mem.write_slice(&code64_descriptor, GuestAddress(GDT_BASE + 8))
         .unwrap();
+    install_test_tss(&mem);
 
     // Set up IDT entries for all 256 interrupt vectors
     // Each IDT entry in 64-bit mode is 16 bytes:
@@ -169,7 +204,7 @@ pub fn setup_vm(
     sregs.cs.selector = 0x8;
     // Initialize GDT and IDT with reasonable defaults for testing
     sregs.gdt.base = GDT_BASE;
-    sregs.gdt.limit = 0x1F; // 4 descriptors (32 bytes - 1)
+    configure_test_tss(&mut sregs);
     sregs.idt.base = IDT_BASE;
     sregs.idt.limit = 0xFFF; // 256 entries * 16 bytes = 4096 bytes - 1
     vcpu.set_sregs(&sregs).unwrap();
@@ -224,6 +259,7 @@ pub fn setup_vm_compat(
         .unwrap();
     mem.write_slice(&code64_descriptor, GuestAddress(GDT_BASE + 8))
         .unwrap();
+    install_test_tss(&mem);
 
     // Set up IDT entries for all 256 interrupt vectors (64-bit format)
     let handler_addr = INT_HANDLER_ADDR;
@@ -280,7 +316,7 @@ pub fn setup_vm_compat(
     sregs.cs.selector = 0x8;
     // Initialize GDT and IDT
     sregs.gdt.base = GDT_BASE;
-    sregs.gdt.limit = 0x1F;
+    configure_test_tss(&mut sregs);
     sregs.idt.base = IDT_BASE;
     sregs.idt.limit = 0xFFF; // 256 entries * 16 bytes = 4096 bytes - 1
     vcpu.set_sregs(&sregs).unwrap();
@@ -288,9 +324,10 @@ pub fn setup_vm_compat(
     (vcpu, mem)
 }
 
-/// Create a test VM without IDT entries.
-/// Use this for tests that verify exception behavior - without IDT entries,
-/// exceptions will return errors rather than being handled (and looping).
+/// Create a test VM with valid but non-present gates for architectural
+/// exception vectors. This makes delivery fail specifically with #NP(IDT),
+/// rather than the higher-priority #GP that an all-zero (invalid gate-type)
+/// descriptor requires.
 pub fn setup_vm_no_idt(
     code: &[u8],
     initial_regs: Option<Registers>,
@@ -300,6 +337,14 @@ pub fn setup_vm_no_idt(
     let mem = Arc::new(GuestMemoryMmap::<()>::from_ranges(&regions).unwrap());
 
     mem.write_slice(code, GuestAddress(CODE_ADDR)).unwrap();
+
+    for vector in 0_u64..16 {
+        let mut entry = [0_u8; 16];
+        entry[2..4].copy_from_slice(&8_u16.to_le_bytes());
+        entry[5] = 0x0E; // valid 64-bit interrupt gate, P=0
+        mem.write_slice(&entry, GuestAddress(IDT_BASE + vector * 16))
+            .unwrap();
+    }
 
     let mut vcpu = X86_64Vcpu::new(0, mem.clone());
 
@@ -321,7 +366,7 @@ pub fn setup_vm_no_idt(
     sregs.gdt.base = GDT_BASE;
     sregs.gdt.limit = 0x1F;
     sregs.idt.base = IDT_BASE;
-    sregs.idt.limit = 0xFF; // Small limit, no entries populated
+    sregs.idt.limit = 0xFF; // 16 valid, deliberately non-present gates
     vcpu.set_sregs(&sregs).unwrap();
 
     (vcpu, mem)

@@ -345,6 +345,54 @@ fn test_rdmsr_eax_edx_loading() {
 // ============================================================================
 
 #[test]
+fn test_rdmsr_linux_verify_cpu_misc_enable_before_full_idt() {
+    // This is the exact selector read by arch/x86/kernel/verify_cpu.S for the
+    // advertised GenuineIntel family-6/model-15 profile. No exception handler
+    // should be needed: a successful read advances directly to HLT.
+    let code = [0x0F, 0x32, 0xF4];
+    let mut regs = Registers::default();
+    regs.rcx = 0x1A0;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+
+    let regs = run_until_hlt(&mut vcpu).expect("IA32_MISC_ENABLE must be present");
+    let value = (regs.rdx << 32) | regs.rax;
+    assert_eq!(value, 0x0000_0000_0004_1801);
+}
+
+#[test]
+fn test_rdmsr_linux_microcode_signature_profile_is_zero() {
+    let code = [0x0F, 0x32, 0xF4];
+    let mut regs = Registers::default();
+    regs.rcx = 0x8B; // IA32_BIOS_SIGN_ID
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!((regs.rdx << 32) | regs.rax, 0);
+}
+
+#[test]
+fn test_rdmsr_linux_platform_and_xss_profiles_are_zero() {
+    for index in [0x17_u64, 0xDA0] {
+        let code = [0x0F, 0x32, 0xF4];
+        let mut regs = Registers::default();
+        regs.rcx = index;
+        let (mut vcpu, _) = setup_vm(&code, Some(regs));
+        let regs = run_until_hlt(&mut vcpu).unwrap();
+        assert_eq!((regs.rdx << 32) | regs.rax, 0, "MSR {index:#x}");
+    }
+}
+
+#[test]
+fn test_rdmsr_waitpkg_control_reset_profile_is_zero() {
+    let code = [0x0F, 0x32, 0xF4];
+    let mut regs = Registers::default();
+    regs.rcx = 0xE1; // IA32_UMWAIT_CONTROL
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+    assert_eq!((regs.rdx << 32) | regs.rax, 0);
+}
+
+#[test]
 fn test_rdmsr_unknown_selector_faults_without_clobbering_outputs() {
     // The deterministic profile does not implement MSR 0, so RDMSR must #GP(0).
     let code = [0x0F, 0x32, 0xF4];

@@ -286,6 +286,13 @@ pub struct X86_64Vcpu {
     pub(super) tsc_adjust: u64,
     /// IA32_TSC_AUX MSR (0xC0000103), consumed by RDPID and RDTSCP.
     pub(super) tsc_aux: u32,
+    /// IA32_MISC_ENABLE MSR (0x1A0) for the deterministic Intel CPU profile.
+    pub(super) misc_enable: u64,
+    /// IA32_PAT MSR (0x277). The MMU currently treats memory types uniformly,
+    /// but the architectural register remains validated and snapshot-visible.
+    pub(super) pat: u64,
+    /// IA32_UMWAIT_CONTROL MSR (0xE1), exposed with WAITPKG.
+    pub(super) umwait_control: u64,
     /// Protection Key Rights Register (PKRU).
     pub(super) pkru: u32,
     /// SIMD floating-point control/status register used by LDMXCSR/STMXCSR and
@@ -972,6 +979,9 @@ impl X86_64Vcpu {
             kernel_gs_base: 0,
             tsc_adjust: 0,
             tsc_aux: 0,
+            misc_enable: execute::system::IA32_MISC_ENABLE_RESET,
+            pat: execute::system::IA32_PAT_RESET,
+            umwait_control: 0,
             pkru: 0,
             mxcsr: 0x1F80,
             xcr0: 1, // x87 state component always enabled
@@ -2993,137 +3003,6 @@ impl X86_64Vcpu {
         self.sregs.cr2 = vaddr;
         self.inject_exception(14, Some(error_code))
     }
-
-    /// Inject a generic exception into the guest.
-    /// vector: exception vector number (0-255)
-    /// error_code: optional error code (only for exceptions that have error codes)
-    pub fn inject_exception(&mut self, vector: u8, error_code: Option<u64>) -> Result<()> {
-        // Read IDT entry for the vector
-        // Each IDT entry in 64-bit mode is 16 bytes
-        let idt_base = self.sregs.idt.base;
-        let idt_entry_addr = idt_base + (vector as u64) * 16;
-
-        // Read the 16-byte IDT entry (using supervisor access - exception delivery
-        // always uses supervisor privilege regardless of current CPL)
-        let mut idt_entry = [0u8; 16];
-        self.mmu
-            .read_supervisor(idt_entry_addr, &mut idt_entry, &self.sregs)?;
-
-        let offset_low = u16::from_le_bytes([idt_entry[0], idt_entry[1]]) as u64;
-        let selector = u16::from_le_bytes([idt_entry[2], idt_entry[3]]);
-        let ist = idt_entry[4] & 0x07;
-        let type_attr = idt_entry[5];
-        let offset_mid = u16::from_le_bytes([idt_entry[6], idt_entry[7]]) as u64;
-        let offset_high =
-            u32::from_le_bytes([idt_entry[8], idt_entry[9], idt_entry[10], idt_entry[11]]) as u64;
-
-        // Check if entry is present
-        if type_attr & 0x80 == 0 {
-            return Err(Error::Emulator(format!(
-                "IDT entry {} not present (type_attr={:#x})",
-                vector, type_attr
-            )));
-        }
-
-        let handler_addr = offset_low | (offset_mid << 16) | (offset_high << 32);
-
-        // Materialize lazy flags before saving RFLAGS
-        self.materialize_flags();
-
-        // In 64-bit mode, push exception frame (in this order, growing downward):
-        // SS, RSP, RFLAGS, CS, RIP, [Error Code if applicable]
-
-        // Save current state
-        let old_ss = self.sregs.ss.selector;
-        let old_rsp = self.regs.rsp;
-        let old_rflags = self.regs.rflags;
-        let old_cs = self.sregs.cs.selector;
-        let old_rip = self.regs.rip;
-
-        // Determine privilege levels for stack switching
-        // The target CPL comes from the code segment selector in the IDT gate (RPL bits)
-        // For kernel exception handlers, this is typically 0x10 (ring 0 code segment)
-        let target_cpl = (selector & 0x3) as u8;
-        let old_cpl = (old_cs & 0x3) as u8;
-
-        // Stack switching rules for 64-bit mode:
-        // 1. If IST is non-zero, use the IST stack (regardless of privilege change)
-        // 2. Else if transitioning to a more privileged level, load RSP from TSS
-        //    (CPL 3 to 0 uses RSP0, CPL 3 to 1 uses RSP1, etc.)
-        // 3. Else keep current RSP (same or less privileged)
-        if ist != 0 {
-            // IST entries are in the TSS at offset 0x24 + (ist-1)*8
-            let tss_base = self.sregs.tr.base;
-            let ist_offset = 0x24 + ((ist as u64 - 1) * 8);
-            let ist_addr = tss_base + ist_offset;
-            let ist_rsp = self.mmu.read_u64_supervisor(ist_addr, &self.sregs)?;
-            if ist_rsp != 0 {
-                self.regs.rsp = ist_rsp;
-                self.set_sreg(2, 0); // SS = 0 for IST switches
-            }
-        } else if old_cpl > target_cpl {
-            // Inter-privilege transition - load RSP from TSS
-            // RSP0 is at offset 0x04, RSP1 at 0x0C, RSP2 at 0x14 in 64-bit TSS
-            let tss_base = self.sregs.tr.base;
-            let rsp_offset = 0x04 + (target_cpl as u64) * 8;
-            let new_rsp = self
-                .mmu
-                .read_u64_supervisor(tss_base + rsp_offset, &self.sregs)?;
-            if new_rsp != 0 {
-                self.regs.rsp = new_rsp;
-                self.set_sreg(2, 0); // SS = 0 for inter-privilege switches
-            }
-        }
-        // If same privilege or less privileged, keep current RSP
-
-        // Push exception frame (each push is 8 bytes in 64-bit mode)
-        // Use supervisor access since we're writing to the kernel stack
-        self.push64_supervisor(old_ss as u64)?;
-        self.push64_supervisor(old_rsp)?;
-        self.push64_supervisor(old_rflags)?;
-        self.push64_supervisor(old_cs as u64)?;
-        self.push64_supervisor(old_rip)?;
-        if let Some(ec) = error_code {
-            self.push64_supervisor(ec)?;
-        }
-
-        // Clear IF (disable interrupts) for interrupt gates (type 0xE)
-        // Trap gates (type 0xF) don't clear IF
-        let gate_type = type_attr & 0x0F;
-        if gate_type == 0x0E {
-            let old_if = (self.regs.rflags & flags::bits::IF) != 0;
-            self.regs.rflags &= !flags::bits::IF;
-            log_if_transition(
-                handler_addr,
-                old_if,
-                false,
-                &format!("INT_GATE(vec={})", vector),
-            );
-        }
-
-        // Jump to the handler
-        self.regs.rip = handler_addr;
-
-        // Update CS selector (handler runs in kernel mode)
-        // The segment selector from the IDT entry becomes the new CS
-        self.set_sreg(1, selector);
-
-        // For 64-bit interrupt/trap gates (type 0x0E/0x0F), the handler must run in 64-bit mode
-        // Set CS.L = true to enable 64-bit mode for the handler
-        // Note: set_sreg doesn't load the GDT descriptor, so we must set this explicitly
-        let gate_type = type_attr & 0x0F;
-        if gate_type == 0x0E || gate_type == 0x0F {
-            self.sregs.cs.l = true;
-            self.sregs.cs.db = false; // D must be 0 when L=1
-        }
-
-        // Delivery of any event ends the one-boundary STI inhibition. This is
-        // intentionally committed only after the complete exception frame and
-        // handler state have been installed successfully.
-        self.interrupt_inhibit = false;
-
-        Ok(())
-    }
 }
 
 /// Spawn a one-shot background thread (when `RAX_MIPS` is set) that prints the
@@ -3219,6 +3098,9 @@ impl X86_64Vcpu {
         self.kernel_gs_base = 0;
         self.tsc_adjust = 0;
         self.tsc_aux = 0;
+        self.misc_enable = execute::system::IA32_MISC_ENABLE_RESET;
+        self.pat = execute::system::IA32_PAT_RESET;
+        self.umwait_control = 0;
         self.pkru = 0;
         self.xcr0 = 1;
         self.xgetbv1_value = 0;
@@ -3563,7 +3445,7 @@ impl VCpu for X86_64Vcpu {
 
         // Inject the external interrupt
         // External interrupts don't push an error code
-        self.inject_exception(vector, None)?;
+        self.inject_external_event(vector, None)?;
 
         // Clear the halted state if we were halted
         self.halted = false;
@@ -3574,7 +3456,7 @@ impl VCpu for X86_64Vcpu {
     fn inject_nmi(&mut self) -> Result<bool> {
         // NMI is vector 2 and ignores IF flag
         // TODO: Track NMI blocking (NMIs are blocked until IRET after an NMI)
-        self.inject_exception(2, None)?;
+        self.inject_external_event(2, None)?;
         self.halted = false;
         tracing::debug!("Injected NMI");
         Ok(true)
@@ -3661,6 +3543,9 @@ impl VCpu for X86_64Vcpu {
             kernel_gs_base: self.kernel_gs_base,
             tsc_adjust: self.tsc_adjust,
             tsc_aux: self.tsc_aux,
+            misc_enable: self.misc_enable,
+            pat: self.pat,
+            umwait_control: self.umwait_control,
             pkru: self.pkru,
             mxcsr: self.mxcsr,
             halted: self.halted,
@@ -3701,6 +3586,9 @@ impl VCpu for X86_64Vcpu {
         self.kernel_gs_base = state.kernel_gs_base;
         self.tsc_adjust = state.tsc_adjust;
         self.tsc_aux = state.tsc_aux;
+        self.misc_enable = state.misc_enable;
+        self.pat = state.pat;
+        self.umwait_control = state.umwait_control;
         self.pkru = state.pkru;
         self.mxcsr = state.mxcsr;
         self.halted = state.halted;
@@ -5083,6 +4971,9 @@ impl X86_64Vcpu {
         gr.kernel_gs_base = self.kernel_gs_base;
         gr.tsc_adjust = self.tsc_adjust;
         gr.tsc_aux = self.tsc_aux;
+        gr.misc_enable = self.misc_enable;
+        gr.pat = self.pat;
+        gr.umwait_control = self.umwait_control;
         gr.star = self.sregs.star;
         gr.lstar = self.sregs.lstar;
         gr.cstar = self.sregs.cstar;
@@ -5212,6 +5103,9 @@ impl X86_64Vcpu {
         self.pkru = gr.pkru;
         self.tsc_adjust = gr.tsc_adjust;
         self.tsc_aux = gr.tsc_aux;
+        self.misc_enable = gr.misc_enable;
+        self.pat = gr.pat;
+        self.umwait_control = gr.umwait_control;
         self.sregs.cr0 = gr.cr0;
         self.sregs.cr2 = gr.cr2;
         self.sregs.cr3 = gr.cr3;
@@ -5374,6 +5268,9 @@ impl X86_64Vcpu {
         let snap_kernel_gs_base = self.kernel_gs_base;
         let snap_tsc_adjust = self.tsc_adjust;
         let snap_tsc_aux = self.tsc_aux;
+        let snap_misc_enable = self.misc_enable;
+        let snap_pat = self.pat;
+        let snap_umwait_control = self.umwait_control;
         let snap_pkru = self.pkru;
         let snap_cr0 = self.sregs.cr0;
         let snap_cr2 = self.sregs.cr2;
@@ -5409,6 +5306,9 @@ impl X86_64Vcpu {
         let jit_kernel_gs_base = self.kernel_gs_base;
         let jit_tsc_adjust = self.tsc_adjust;
         let jit_tsc_aux = self.tsc_aux;
+        let jit_misc_enable = self.misc_enable;
+        let jit_pat = self.pat;
+        let jit_umwait_control = self.umwait_control;
         let jit_pkru = self.pkru;
         let jit_cr0 = self.sregs.cr0;
         let jit_cr2 = self.sregs.cr2;
@@ -5469,6 +5369,9 @@ impl X86_64Vcpu {
         self.kernel_gs_base = snap_kernel_gs_base;
         self.tsc_adjust = snap_tsc_adjust;
         self.tsc_aux = snap_tsc_aux;
+        self.misc_enable = snap_misc_enable;
+        self.pat = snap_pat;
+        self.umwait_control = snap_umwait_control;
         self.pkru = snap_pkru;
         self.sregs.cr0 = snap_cr0;
         self.sregs.cr2 = snap_cr2;
@@ -5612,6 +5515,9 @@ impl X86_64Vcpu {
                 ("kernel_gs_base", self.kernel_gs_base, jit_kernel_gs_base),
                 ("tsc_adjust", self.tsc_adjust, jit_tsc_adjust),
                 ("tsc_aux", u64::from(self.tsc_aux), u64::from(jit_tsc_aux)),
+                ("misc_enable", self.misc_enable, jit_misc_enable),
+                ("pat", self.pat, jit_pat),
+                ("umwait_control", self.umwait_control, jit_umwait_control),
                 ("pkru", u64::from(self.pkru), u64::from(jit_pkru)),
                 ("cr0", self.sregs.cr0, jit_cr0),
                 ("cr2", self.sregs.cr2, jit_cr2),
@@ -5789,6 +5695,9 @@ impl X86_64Vcpu {
         self.kernel_gs_base = jit_kernel_gs_base;
         self.tsc_adjust = jit_tsc_adjust;
         self.tsc_aux = jit_tsc_aux;
+        self.misc_enable = jit_misc_enable;
+        self.pat = jit_pat;
+        self.umwait_control = jit_umwait_control;
         self.pkru = jit_pkru;
         self.sregs.cr0 = jit_cr0;
         self.sregs.cr2 = jit_cr2;

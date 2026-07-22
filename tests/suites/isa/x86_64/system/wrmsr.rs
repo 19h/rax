@@ -790,6 +790,41 @@ fn test_msr_roundtrip_sysenter_eip() {
 }
 
 #[test]
+fn test_msr_roundtrip_misc_enable_linux_verify_cpu_profile() {
+    // Linux verify_cpu reads this selector before its full IDT exists and may
+    // clear XD_DISABLE (bit 34) only when firmware left it set. The deterministic
+    // profile starts with XD enabled, so its exact idempotent image is accepted.
+    let v = 0x0000_0000_0004_1801u64;
+    assert_eq!(msr_round_trip(0x1A0, v), v, "IA32_MISC_ENABLE round-trip");
+}
+
+#[test]
+fn test_msr_bios_signature_architectural_clear_sequence() {
+    assert_eq!(msr_round_trip(0x8B, 0), 0, "IA32_BIOS_SIGN_ID clear/read");
+}
+
+#[test]
+fn test_msr_xss_accepts_only_zero_supervisor_component_mask() {
+    assert_eq!(msr_round_trip(0xDA0, 0), 0, "IA32_XSS zero mask");
+}
+
+#[test]
+fn test_msr_roundtrip_umwait_control_linux_profile() {
+    let value = 0x0000_0000_0001_86A0;
+    assert_eq!(
+        msr_round_trip(0xE1, value),
+        value,
+        "IA32_UMWAIT_CONTROL round-trip"
+    );
+}
+
+#[test]
+fn test_msr_roundtrip_pat_all_defined_memory_types() {
+    let v = 0x0706_0504_0100_0706u64;
+    assert_eq!(msr_round_trip(0x277, v), v, "IA32_PAT round-trip");
+}
+
+#[test]
 fn test_msr_unimplemented_write_faults_without_committing_inputs() {
     let code = [0x0F, 0x30, 0xF4];
     let mut input = Registers::default();

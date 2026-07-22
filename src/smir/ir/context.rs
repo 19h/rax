@@ -502,6 +502,13 @@ pub struct X86RegState {
     pub tsc_adjust: u64,
     /// IA32_TSC_AUX value returned by RDPID (architecturally 32 bits).
     pub tsc_aux: u32,
+    /// Model-specific state for the deterministic Intel family-6 profile.
+    pub misc_enable: u64,
+    /// IA32_PAT memory-type table. Standalone SMIR preserves and validates the
+    /// architectural value even though its memory model has no cache types.
+    pub pat: u64,
+    /// IA32_UMWAIT_CONTROL associated with the advertised WAITPKG feature.
+    pub umwait_control: u64,
     /// System-call and SYSENTER MSR state used by RDMSR/WRMSR.
     pub star: u64,
     pub lstar: u64,
@@ -558,6 +565,9 @@ impl X86RegState {
         // Initialize MXCSR with default
         state.mxcsr = 0x1F80; // Default rounding, all exceptions masked
         state.xcr0 = 1;
+        state.misc_enable = crate::isa::x86_64::execute::system::IA32_MISC_ENABLE_RESET;
+        state.pat = crate::isa::x86_64::execute::system::IA32_PAT_RESET;
+        state.umwait_control = 0;
         // SourceArch::X86_64 contexts model protected/long-mode execution.
         state.cr0 = 1;
         state

@@ -523,6 +523,9 @@ fn ltr_mode_privilege_lock_and_operand_fault_priority_is_precise() {
         let mut sregs = vcpu.get_sregs().unwrap();
         if real {
             sregs.cr0 &= !1;
+            // Real mode uses a four-byte IVT entry with no present bit. Make
+            // the no-handler condition architectural via the IDTR limit.
+            sregs.idt.limit = 0;
         }
         if cpl3 {
             sregs.cs.selector |= 3;

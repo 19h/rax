@@ -321,6 +321,11 @@ pub struct GuestRegs {
     /// The helper reads and validates one complete 128-bit INVPCID descriptor,
     /// then synchronizes every translation-dependent cache in the owning vCPU.
     pub invpcid_fn: u64,
+    /// Model MSRs are appended so every established native helper ABI offset
+    /// above remains stable.
+    pub misc_enable: u64,
+    pub pat: u64,
+    pub umwait_control: u64,
 }
 
 pub const X86_VECTOR_STATE_INACTIVE: u64 = 0;
@@ -403,6 +408,9 @@ impl Default for GuestRegs {
             invlpg_fn: 0,
             fast_system_transfer_fn: 0,
             invpcid_fn: 0,
+            misc_enable: crate::isa::x86_64::execute::system::IA32_MISC_ENABLE_RESET,
+            pat: crate::isa::x86_64::execute::system::IA32_PAT_RESET,
+            umwait_control: 0,
         }
     }
 }

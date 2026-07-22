@@ -1,8 +1,8 @@
 use crate::common::{
-    Bytes, CODE_ADDR, GuestAddress, INT_HANDLER_ADDR, run_until_hlt, setup_vm, setup_vm_compat,
-    setup_vm_no_idt,
+    Bytes, CODE_ADDR, GDT_BASE, GuestAddress, GuestMemoryMmap, IDT_BASE, INT_HANDLER_ADDR,
+    STACK_ADDR, run_until_hlt, setup_vm, setup_vm_compat, setup_vm_no_idt,
 };
-use rax::vm::vcpu::{Registers, VCpu, VcpuExit};
+use rax::vm::vcpu::{Registers, Segment, VCpu, VcpuExit};
 
 // Comprehensive tests for INT, INTO, INT3, and INT1 instructions (software interrupts)
 // INT imm8 (CD), INTO (CE), INT3 (CC), INT1/ICEBP (F1)
@@ -433,6 +433,501 @@ fn test_int_pushes_flags_cs_ip() {
 
     let regs = run_until_hlt(&mut vcpu).unwrap();
     // Stack should have been modified if interrupt executed
+}
+
+#[test]
+fn test_ia32e_event_frame_contains_old_ss_rsp_rflags_cs_rip() {
+    let (mut vcpu, memory) = setup_vm(&[0xF4], None);
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rip = CODE_ADDR;
+    regs.rsp = STACK_ADDR;
+    regs.rflags = 0x202;
+    vcpu.set_regs(&regs).unwrap();
+
+    vcpu.inject_exception(3, None).unwrap();
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rsp, STACK_ADDR - 5 * 8);
+    let frame = (0..5)
+        .map(|slot| {
+            memory
+                .read_obj::<u64>(GuestAddress(regs.rsp + slot * 8))
+                .unwrap()
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        frame,
+        [CODE_ADDR, 0x8, 0x202, STACK_ADDR, 0],
+        "lowest address is the IRETQ-visible RIP"
+    );
+}
+
+#[test]
+fn test_real_mode_event_uses_four_byte_ivt_and_16_bit_frame() {
+    let (mut vcpu, memory) = setup_vm(&[0xF4], None);
+    let vector = 0x21_u64;
+    let handler_ip = 0x3456_u16;
+    let handler_cs = 0x0200_u16;
+    memory
+        .write_obj(handler_ip, GuestAddress(IDT_BASE + vector * 4))
+        .unwrap();
+    memory
+        .write_obj(handler_cs, GuestAddress(IDT_BASE + vector * 4 + 2))
+        .unwrap();
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cr0 &= !1;
+    sregs.efer = 0;
+    sregs.idt.limit = 0x3FF;
+    sregs.cs.selector = 0x100;
+    sregs.cs.base = 0x1000;
+    sregs.ss.selector = 0;
+    sregs.ss.base = 0;
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rip = 0x2345;
+    regs.rsp = STACK_ADDR;
+    regs.rflags = 0x40302; // AC|IF|TF|required bit.
+    vcpu.set_regs(&regs).unwrap();
+
+    vcpu.inject_exception(vector as u8, None).unwrap();
+    let regs = vcpu.get_regs().unwrap();
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(regs.rip, u64::from(handler_ip));
+    assert_eq!(regs.rsp, STACK_ADDR - 6);
+    assert_eq!(sregs.cs.selector, handler_cs);
+    assert_eq!(sregs.cs.base, u64::from(handler_cs) << 4);
+    assert_eq!(regs.rflags & ((1 << 18) | (1 << 9) | (1 << 8)), 0);
+    assert_eq!(
+        [
+            memory.read_obj::<u16>(GuestAddress(regs.rsp)).unwrap(),
+            memory.read_obj::<u16>(GuestAddress(regs.rsp + 2)).unwrap(),
+            memory.read_obj::<u16>(GuestAddress(regs.rsp + 4)).unwrap(),
+        ],
+        [0x2345, 0x100, 0x0302]
+    );
+}
+
+fn configure_legacy_protected_delivery(
+    vcpu: &mut rax::isa::x86_64::X86_64Vcpu,
+    memory: &GuestMemoryMmap,
+    code_32: bool,
+) {
+    let code = if code_32 {
+        [0xFF, 0xFF, 0, 0, 0, 0x9A, 0xCF, 0]
+    } else {
+        [0xFF, 0xFF, 0, 0, 0, 0x9A, 0x00, 0]
+    };
+    let data = if code_32 {
+        [0xFF, 0xFF, 0, 0, 0, 0x92, 0xCF, 0]
+    } else {
+        [0xFF, 0xFF, 0, 0, 0, 0x92, 0x00, 0]
+    };
+    memory
+        .write_slice(&code, GuestAddress(GDT_BASE + 8))
+        .unwrap();
+    memory
+        .write_slice(&data, GuestAddress(GDT_BASE + 16))
+        .unwrap();
+
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.efer &= !(1 << 10);
+    sregs.cs = Segment {
+        selector: 8,
+        limit: if code_32 { u32::MAX } else { 0xFFFF },
+        type_: 0xB,
+        present: true,
+        db: code_32,
+        s: true,
+        ..Segment::default()
+    };
+    sregs.ss = Segment {
+        selector: 16,
+        limit: if code_32 { u32::MAX } else { 0xFFFF },
+        type_: 3,
+        present: true,
+        db: code_32,
+        s: true,
+        ..Segment::default()
+    };
+    sregs.gdt.limit = 0x27;
+    sregs.idt.limit = 256 * 8 - 1;
+    vcpu.set_sregs(&sregs).unwrap();
+}
+
+fn write_legacy_gate(memory: &GuestMemoryMmap, vector: u8, handler: u32, type_attr: u8) {
+    let mut gate = [0_u8; 8];
+    gate[0..2].copy_from_slice(&(handler as u16).to_le_bytes());
+    gate[2..4].copy_from_slice(&8_u16.to_le_bytes());
+    gate[5] = type_attr;
+    gate[6..8].copy_from_slice(&((handler >> 16) as u16).to_le_bytes());
+    memory
+        .write_slice(&gate, GuestAddress(IDT_BASE + u64::from(vector) * 8))
+        .unwrap();
+}
+
+#[test]
+fn test_legacy_16_and_32_bit_gates_build_width_exact_same_privilege_frames() {
+    for (name, code_32, gate_type, handler, width) in [
+        ("16-bit", false, 0x86, 0x3456_u32, 2_u64),
+        ("32-bit", true, 0x8E, 0x0012_3456, 4),
+    ] {
+        let (mut vcpu, memory) = setup_vm(&[0xF4], None);
+        configure_legacy_protected_delivery(&mut vcpu, &memory, code_32);
+        write_legacy_gate(&memory, 0x30, handler, gate_type);
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rip = CODE_ADDR;
+        regs.rsp = STACK_ADDR;
+        regs.rflags = 0x202;
+        vcpu.set_regs(&regs).unwrap();
+
+        vcpu.inject_exception(0x30, None).unwrap();
+        let regs = vcpu.get_regs().unwrap();
+        assert_eq!(regs.rip, u64::from(handler), "{name}");
+        assert_eq!(regs.rsp, STACK_ADDR - 3 * width, "{name}");
+        let mut frame = [0_u32; 3];
+        for (slot, value) in frame.iter_mut().enumerate() {
+            let address = GuestAddress(regs.rsp + slot as u64 * width);
+            *value = if code_32 {
+                memory.read_obj::<u32>(address).unwrap()
+            } else {
+                u32::from(memory.read_obj::<u16>(address).unwrap())
+            };
+        }
+        assert_eq!(frame, [CODE_ADDR as u32, 8, 0x202], "{name}");
+        assert_eq!(regs.rflags & (1 << 9), 0, "{name} interrupt gate clears IF");
+    }
+}
+
+#[test]
+fn test_legacy_cpl3_delivery_uses_tss_stack_and_pushes_outer_frame_and_error() {
+    const TSS: u64 = 0x14000;
+    const ESP0: u32 = 0xA000;
+    let (mut vcpu, memory) = setup_vm(&[0xF4], None);
+    configure_legacy_protected_delivery(&mut vcpu, &memory, true);
+    write_legacy_gate(&memory, 13, 0x1234, 0x8E);
+    memory.write_obj(ESP0, GuestAddress(TSS + 4)).unwrap();
+    memory.write_obj(0x10_u16, GuestAddress(TSS + 8)).unwrap();
+
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 0x1B;
+    sregs.cs.dpl = 3;
+    sregs.ss.selector = 0x23;
+    sregs.ss.dpl = 3;
+    sregs.tr = Segment {
+        base: TSS,
+        limit: 0x67,
+        selector: 0x18,
+        type_: 0xB,
+        present: true,
+        s: false,
+        ..Segment::default()
+    };
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rip = CODE_ADDR;
+    regs.rsp = 0x7000;
+    regs.rflags = 0x202;
+    vcpu.set_regs(&regs).unwrap();
+
+    vcpu.inject_exception(13, Some(0xBEEF)).unwrap();
+    let regs = vcpu.get_regs().unwrap();
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(regs.rip, 0x1234);
+    assert_eq!(regs.rsp, u64::from(ESP0) - 6 * 4);
+    assert_eq!(sregs.cs.selector, 8);
+    assert_eq!(sregs.ss.selector, 0x10);
+    let frame = (0..6)
+        .map(|slot| {
+            memory
+                .read_obj::<u32>(GuestAddress(regs.rsp + slot * 4))
+                .unwrap()
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(frame, [0xBEEF, CODE_ADDR as u32, 0x1B, 0x202, 0x7000, 0x23]);
+}
+
+#[test]
+fn test_virtual_8086_exception_uses_cpl3_and_saves_and_clears_data_segments() {
+    const TSS: u64 = 0x14000;
+    const ESP0: u32 = 0xA000;
+    let (mut vcpu, memory) = setup_vm(&[0xF4], None);
+    configure_legacy_protected_delivery(&mut vcpu, &memory, true);
+    write_legacy_gate(&memory, 6, 0x1234, 0x8E);
+    memory.write_obj(ESP0, GuestAddress(TSS + 4)).unwrap();
+    memory.write_obj(0x10_u16, GuestAddress(TSS + 8)).unwrap();
+
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 0x1234; // RPL is ignored: VM86 execution is always CPL3.
+    sregs.cs.dpl = 3;
+    sregs.ss.selector = 0x2000;
+    sregs.ss.dpl = 3;
+    sregs.es.selector = 0x3000;
+    sregs.ds.selector = 0x4000;
+    sregs.fs.selector = 0x5000;
+    sregs.gs.selector = 0x6000;
+    sregs.tr = Segment {
+        base: TSS,
+        limit: 0x67,
+        selector: 0x18,
+        type_: 0xB,
+        present: true,
+        s: false,
+        ..Segment::default()
+    };
+    vcpu.set_sregs(&sregs).unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rip = CODE_ADDR;
+    regs.rsp = 0x7000;
+    regs.rflags = 0x2 | (1 << 9) | (1 << 17);
+    vcpu.set_regs(&regs).unwrap();
+
+    vcpu.inject_exception(6, None).unwrap();
+    let regs = vcpu.get_regs().unwrap();
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(regs.rsp, u64::from(ESP0) - 9 * 4);
+    let frame = (0..9)
+        .map(|slot| {
+            memory
+                .read_obj::<u32>(GuestAddress(regs.rsp + slot * 4))
+                .unwrap()
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        frame,
+        [
+            CODE_ADDR as u32,
+            0x1234,
+            0x2 | (1 << 9) | (1 << 17),
+            0x7000,
+            0x2000,
+            0x3000,
+            0x4000,
+            0x5000,
+            0x6000,
+        ]
+    );
+    assert_eq!(regs.rflags & ((1 << 9) | (1 << 17)), 0);
+    for segment in [&sregs.es, &sregs.ds, &sregs.fs, &sregs.gs] {
+        assert_eq!(segment.selector, 0);
+        assert!(segment.unusable);
+    }
+}
+
+#[test]
+fn test_interrupt_and_trap_gate_flag_clearing_is_exact() {
+    const TF: u64 = 1 << 8;
+    const IF: u64 = 1 << 9;
+    const NT: u64 = 1 << 14;
+    const RF: u64 = 1 << 16;
+    const VM: u64 = 1 << 17;
+    let cleared = TF | NT | RF | VM;
+
+    for (gate_type, expect_if) in [(0x8E, false), (0x8F, true)] {
+        let (mut vcpu, memory) = setup_vm(&[0xF4], None);
+        memory
+            .write_obj(gate_type, GuestAddress(IDT_BASE + 3 * 16 + 5))
+            .unwrap();
+        let mut regs = vcpu.get_regs().unwrap();
+        regs.rflags = 0x2 | IF | cleared;
+        vcpu.set_regs(&regs).unwrap();
+
+        vcpu.inject_exception(3, None).unwrap();
+        let flags = vcpu.get_regs().unwrap().rflags;
+        assert_eq!(flags & cleared, 0, "gate {gate_type:#x}");
+        assert_eq!(flags & IF != 0, expect_if, "gate {gate_type:#x}");
+    }
+}
+
+#[test]
+fn test_idt_delivery_faults_escalate_with_exact_error_codes() {
+    let (mut limit, limit_memory) = setup_vm(&[0xF4], None);
+    let mut sregs = limit.get_sregs().unwrap();
+    sregs.idt.limit = 13 * 16 + 14;
+    limit.set_sregs(&sregs).unwrap();
+    limit.inject_exception(13, Some(0)).unwrap();
+    let regs = limit.get_regs().unwrap();
+    assert_eq!(
+        regs.rip, INT_HANDLER_ADDR,
+        "#GP while delivering #GP becomes #DF"
+    );
+    assert_eq!(
+        limit_memory
+            .read_obj::<u64>(GuestAddress(regs.rsp))
+            .unwrap(),
+        0,
+        "#DF pushes error code zero"
+    );
+
+    for (name, offset, value, expected_error) in [
+        ("reserved IST", 4_u64, 8_u8, 0x1A_u64),
+        ("invalid type", 5, 0x8C, 0x1A),
+        ("null selector low", 2, 0, 0x0),
+        ("null selector high", 3, 0, 0x0),
+    ] {
+        let (mut vcpu, memory) = setup_vm(&[0xF4], None);
+        if name.starts_with("null") {
+            memory
+                .write_obj(0_u16, GuestAddress(IDT_BASE + 3 * 16 + 2))
+                .unwrap();
+        } else {
+            memory
+                .write_obj(value, GuestAddress(IDT_BASE + 3 * 16 + offset))
+                .unwrap();
+        }
+        vcpu.inject_exception(3, None).unwrap();
+        let regs = vcpu.get_regs().unwrap();
+        assert_eq!(regs.rip, INT_HANDLER_ADDR, "{name}");
+        assert_eq!(
+            memory.read_obj::<u64>(GuestAddress(regs.rsp)).unwrap(),
+            expected_error,
+            "{name} nested exception error code"
+        );
+    }
+}
+
+#[test]
+fn test_external_interrupt_delivery_fault_sets_ext_in_nested_error_code() {
+    let (mut vcpu, memory) = setup_vm(&[0xF4], None);
+    memory
+        .write_obj(8_u8, GuestAddress(IDT_BASE + 0x20 * 16 + 4))
+        .unwrap();
+    let mut regs = vcpu.get_regs().unwrap();
+    regs.rflags |= 1 << 9;
+    vcpu.set_regs(&regs).unwrap();
+
+    assert!(vcpu.inject_interrupt(0x20).unwrap());
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rip, INT_HANDLER_ADDR);
+    assert_eq!(
+        memory.read_obj::<u64>(GuestAddress(regs.rsp)).unwrap(),
+        0x103,
+        "#GP names IDT vector 0x20 and sets IDT+EXT"
+    );
+}
+
+#[test]
+fn test_fault_during_double_fault_delivery_reports_triple_fault_chain() {
+    let (mut vcpu, _) = setup_vm_no_idt(&[0xF4], None);
+    let error = vcpu.inject_exception(6, None).unwrap_err().to_string();
+    assert!(error.contains("triple fault"), "{error}");
+    for vector in [6, 11, 8] {
+        assert!(
+            error.contains(&format!("IDT entry {vector} not present")),
+            "missing vector {vector} in chain: {error}"
+        );
+    }
+}
+
+#[test]
+fn test_gate_selector_rpl_does_not_choose_target_cpl() {
+    let (mut vcpu, memory) = setup_vm(&[0xF4], None);
+    memory
+        .write_obj(0x000B_u16, GuestAddress(IDT_BASE + 3 * 16 + 2))
+        .unwrap();
+
+    vcpu.inject_exception(3, None).unwrap();
+    let sregs = vcpu.get_sregs().unwrap();
+    assert_eq!(sregs.cs.selector, 0x8);
+    assert_eq!(sregs.cs.dpl, 0);
+    assert!(sregs.cs.l);
+    assert!(!sregs.cs.db);
+    assert_eq!(
+        memory
+            .read_obj::<u8>(GuestAddress(GDT_BASE + 8 + 5))
+            .unwrap()
+            & 1,
+        1,
+        "loading CS marks the code descriptor accessed"
+    );
+}
+
+#[test]
+fn test_software_interrupt_gate_dpl_fault_retains_faulting_rip() {
+    const TSS_BASE: u64 = 0x14000;
+    const RSP0: u64 = 0xA000;
+    let (mut vcpu, memory) = setup_vm(&[0xCD, 0x80], None);
+    memory.write_obj(RSP0, GuestAddress(TSS_BASE + 4)).unwrap();
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cs.selector = 0xB; // CPL3; the vector-0x80 gate remains DPL0.
+    sregs.cs.dpl = 3;
+    sregs.tr.base = TSS_BASE;
+    sregs.tr.limit = 0x67;
+    sregs.tr.selector = 0x10;
+    sregs.tr.type_ = 11;
+    sregs.tr.present = true;
+    sregs.tr.unusable = false;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    assert!(vcpu.step().unwrap().is_none());
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rip, INT_HANDLER_ADDR);
+    assert_eq!(
+        memory.read_obj::<u64>(GuestAddress(regs.rsp)).unwrap(),
+        0x402
+    );
+    assert_eq!(
+        memory.read_obj::<u64>(GuestAddress(regs.rsp + 8)).unwrap(),
+        CODE_ADDR,
+        "nested #GP saves the faulting INT address"
+    );
+}
+
+#[test]
+fn test_ist_switch_uses_validated_tss_pointer_and_aligned_stack() {
+    const TSS_BASE: u64 = 0x14000;
+    const IST1_RSP: u64 = 0xA00F;
+    let (mut vcpu, memory) = setup_vm(&[0xF4], None);
+    memory
+        .write_obj(1_u8, GuestAddress(IDT_BASE + 3 * 16 + 4))
+        .unwrap();
+    memory
+        .write_obj(IST1_RSP, GuestAddress(TSS_BASE + 0x24))
+        .unwrap();
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.tr.base = TSS_BASE;
+    sregs.tr.limit = 0x67;
+    sregs.tr.selector = 0x10;
+    sregs.tr.type_ = 11;
+    sregs.tr.present = true;
+    sregs.tr.unusable = false;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    vcpu.inject_exception(3, None).unwrap();
+    let regs = vcpu.get_regs().unwrap();
+    let aligned_top = IST1_RSP & !0xF;
+    assert_eq!(regs.rsp, aligned_top - 5 * 8);
+    assert_eq!(
+        memory
+            .read_obj::<u64>(GuestAddress(regs.rsp + 3 * 8))
+            .unwrap(),
+        STACK_ADDR,
+        "IST frame retains the interrupted RSP"
+    );
+    assert_eq!(vcpu.get_sregs().unwrap().ss.selector, 0);
+}
+
+#[test]
+fn test_ist_switch_rejects_tss_limit_before_reading_pointer() {
+    let (mut vcpu, memory) = setup_vm(&[0xF4], None);
+    memory
+        .write_obj(1_u8, GuestAddress(IDT_BASE + 3 * 16 + 4))
+        .unwrap();
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.tr.base = 0x14000;
+    sregs.tr.limit = 0x2A;
+    sregs.tr.selector = 0x10;
+    sregs.tr.type_ = 11;
+    sregs.tr.present = true;
+    sregs.tr.unusable = false;
+    vcpu.set_sregs(&sregs).unwrap();
+
+    vcpu.inject_exception(3, None).unwrap();
+    let regs = vcpu.get_regs().unwrap();
+    assert_eq!(regs.rip, INT_HANDLER_ADDR);
+    assert_eq!(
+        memory.read_obj::<u64>(GuestAddress(regs.rsp)).unwrap(),
+        0x10,
+        "#TS error code names the current TSS without EXT for #BP delivery"
+    );
 }
 
 #[test]

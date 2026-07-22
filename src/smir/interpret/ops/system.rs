@@ -247,6 +247,9 @@ impl SmirInterpreter {
                             sysenter_cs: x86.sysenter_cs,
                             sysenter_esp: x86.sysenter_esp,
                             sysenter_eip: x86.sysenter_eip,
+                            misc_enable: x86.misc_enable,
+                            pat: x86.pat,
+                            umwait_control: x86.umwait_control,
                             fs_base: x86.fs_base,
                             gs_base: x86.gs_base,
                             kernel_gs_base: x86.kernel_gs_base,
@@ -286,6 +289,9 @@ impl SmirInterpreter {
                     x86.sysenter_cs = effect.state.sysenter_cs;
                     x86.sysenter_esp = effect.state.sysenter_esp;
                     x86.sysenter_eip = effect.state.sysenter_eip;
+                    x86.misc_enable = effect.state.misc_enable;
+                    x86.pat = effect.state.pat;
+                    x86.umwait_control = effect.state.umwait_control;
                     x86.fs_base = effect.state.fs_base;
                     x86.gs_base = effect.state.gs_base;
                     x86.kernel_gs_base = effect.state.kernel_gs_base;

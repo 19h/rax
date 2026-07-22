@@ -7,12 +7,18 @@ use crate::vm::vcpu::VcpuExit;
 use super::control_regs::{is_cpl0, raise_gp0};
 
 pub(crate) const IA32_TSC: u32 = 0x10;
+pub(crate) const IA32_PLATFORM_ID: u32 = 0x17;
 pub(crate) const IA32_APIC_BASE: u32 = 0x1B;
 pub(crate) const IA32_TSC_ADJUST: u32 = 0x3B;
+pub(crate) const IA32_BIOS_SIGN_ID: u32 = 0x8B;
+pub(crate) const IA32_UMWAIT_CONTROL: u32 = 0xE1;
 pub(crate) const IA32_SYSENTER_CS: u32 = 0x174;
 pub(crate) const IA32_SYSENTER_ESP: u32 = 0x175;
 pub(crate) const IA32_SYSENTER_EIP: u32 = 0x176;
+pub(crate) const IA32_MISC_ENABLE: u32 = 0x1A0;
+pub(crate) const IA32_PAT: u32 = 0x277;
 pub(crate) const IA32_TSC_DEADLINE: u32 = 0x6E0;
+pub(crate) const IA32_XSS: u32 = 0xDA0;
 pub(crate) const IA32_EFER: u32 = 0xC000_0080;
 pub(crate) const IA32_STAR: u32 = 0xC000_0081;
 pub(crate) const IA32_LSTAR: u32 = 0xC000_0082;
@@ -33,9 +39,30 @@ const EFER_NXE: u64 = 1 << 11;
 const EFER_WRITABLE: u64 = EFER_SCE | EFER_LME | EFER_NXE;
 const EFER_DEFINED: u64 = EFER_WRITABLE | EFER_LMA;
 
+// The deterministic Intel family-6 profile has no architectural PMU, BTS, or
+// PEBS state, so the two corresponding IA32_MISC_ENABLE availability bits are
+// read-only one. MONITOR/MWAIT and fast strings are implemented and enabled at
+// reset. The register remains fixed until each writable bit is wired to its
+// owning execution and CPUID behavior; accepting inert writes would expose a
+// dishonest model-specific profile.
+const MISC_ENABLE_FAST_STRING: u64 = 1 << 0;
+const MISC_ENABLE_BTS_UNAVAILABLE: u64 = 1 << 11;
+const MISC_ENABLE_PEBS_UNAVAILABLE: u64 = 1 << 12;
+const MISC_ENABLE_MONITOR: u64 = 1 << 18;
+const MISC_ENABLE_READ_ONLY: u64 = MISC_ENABLE_BTS_UNAVAILABLE | MISC_ENABLE_PEBS_UNAVAILABLE;
+pub(crate) const IA32_MISC_ENABLE_RESET: u64 =
+    MISC_ENABLE_FAST_STRING | MISC_ENABLE_READ_ONLY | MISC_ENABLE_MONITOR;
+
+/// Architectural IA32_PAT reset image: WB, WT, UC-, UC repeated twice.
+pub(crate) const IA32_PAT_RESET: u64 = 0x0007_0406_0007_0406;
+
+/// IA32_UMWAIT_CONTROL defines bit 0 (C0.2 disable) and bits 31:2 (maximum
+/// time). Bit 1 and the high 32 bits are reserved.
+const UMWAIT_CONTROL_RESERVED: u64 = (1 << 1) | 0xFFFF_FFFF_0000_0000;
+
 /// Architectural MSR state shared by direct execution, standalone SMIR
 /// interpretation, and helper-backed native execution.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct X86MsrState {
     pub cr0: u64,
     pub tsc_adjust: u64,
@@ -48,9 +75,36 @@ pub(crate) struct X86MsrState {
     pub sysenter_cs: u64,
     pub sysenter_esp: u64,
     pub sysenter_eip: u64,
+    pub misc_enable: u64,
+    pub pat: u64,
+    pub umwait_control: u64,
     pub fs_base: u64,
     pub gs_base: u64,
     pub kernel_gs_base: u64,
+}
+
+impl Default for X86MsrState {
+    fn default() -> Self {
+        Self {
+            cr0: 0,
+            tsc_adjust: 0,
+            tsc_aux: 0,
+            efer: 0,
+            star: 0,
+            lstar: 0,
+            cstar: 0,
+            fmask: 0,
+            sysenter_cs: 0,
+            sysenter_esp: 0,
+            sysenter_eip: 0,
+            misc_enable: IA32_MISC_ENABLE_RESET,
+            pat: IA32_PAT_RESET,
+            umwait_control: 0,
+            fs_base: 0,
+            gs_base: 0,
+            kernel_gs_base: 0,
+        }
+    }
 }
 
 /// Fully validated result of one WRMSR. Validation is pure and completes
@@ -81,6 +135,16 @@ pub(crate) fn is_canonical_48(value: u64) -> bool {
     upper == if value & (1 << 47) != 0 { 0xFFFF } else { 0 }
 }
 
+/// IA32_PAT contains eight independent eight-bit memory-type fields. Bits
+/// 7:3 of each field are reserved, and encodings 2 and 3 are reserved.
+#[inline]
+pub(crate) fn is_valid_pat(value: u64) -> bool {
+    (0..8).all(|index| {
+        let entry = ((value >> (index * 8)) & 0xFF) as u8;
+        entry & !0x07 == 0 && entry != 2 && entry != 3
+    })
+}
+
 /// Read one implemented MSR. `tsc` is the caller's current architectural TSC,
 /// including IA32_TSC_ADJUST.
 pub(crate) fn read_x86_msr(
@@ -90,15 +154,26 @@ pub(crate) fn read_x86_msr(
 ) -> core::result::Result<u64, X86MsrFault> {
     let value = match index {
         IA32_TSC => tsc,
+        // Platform zero is the sole microcode platform in this virtual CPU.
+        IA32_PLATFORM_ID => 0,
         IA32_APIC_BASE => APIC_BASE_PROFILE_VALUE,
         IA32_TSC_ADJUST => state.tsc_adjust,
+        // The deterministic profile has no updatable microcode image. Intel's
+        // discovery sequence writes zero, executes CPUID, then reads this MSR;
+        // a zero signature accurately reports that no revision is installed.
+        IA32_BIOS_SIGN_ID => 0,
+        IA32_UMWAIT_CONTROL => state.umwait_control,
         IA32_SYSENTER_CS => state.sysenter_cs,
         IA32_SYSENTER_ESP => state.sysenter_esp,
         IA32_SYSENTER_EIP => state.sysenter_eip,
+        IA32_MISC_ENABLE => state.misc_enable,
+        IA32_PAT => state.pat,
         // The base profile does not latch a deadline because it does not expose
         // LAPIC deadline mode. Retaining the established zero value keeps the
         // hidden compatibility MSR deterministic.
         IA32_TSC_DEADLINE => 0,
+        // CPUID.(EAX=0DH,ECX=1):ECX:EDX exposes no supervisor components.
+        IA32_XSS => 0,
         IA32_EFER => state.efer,
         IA32_STAR => state.star,
         IA32_LSTAR => state.lstar,
@@ -131,6 +206,7 @@ pub(crate) fn validate_x86_msr_write(
             // invariant clock source: new_adjust = old_adjust + (value-old_tsc).
             state.tsc_adjust = state.tsc_adjust.wrapping_add(value.wrapping_sub(tsc));
         }
+        IA32_PLATFORM_ID => return gp(),
         IA32_APIC_BASE => {
             // The emulator's LAPIC MMIO window is fixed. A same-value write is
             // architecturally observable as success; relocation/disable values
@@ -140,6 +216,19 @@ pub(crate) fn validate_x86_msr_write(
             }
         }
         IA32_TSC_ADJUST => state.tsc_adjust = value,
+        IA32_BIOS_SIGN_ID => {
+            // Software clears the latch before CPUID. Non-zero writes are not
+            // part of the architectural discovery protocol and remain #GP.
+            if value != 0 {
+                return gp();
+            }
+        }
+        IA32_UMWAIT_CONTROL => {
+            if value & UMWAIT_CONTROL_RESERVED != 0 {
+                return gp();
+            }
+            state.umwait_control = value;
+        }
         IA32_SYSENTER_CS => {
             if value >> 32 != 0 {
                 return gp();
@@ -158,8 +247,25 @@ pub(crate) fn validate_x86_msr_write(
             }
             state.sysenter_eip = value;
         }
+        IA32_MISC_ENABLE => {
+            if value != state.misc_enable {
+                return gp();
+            }
+        }
+        IA32_PAT => {
+            if !is_valid_pat(value) {
+                return gp();
+            }
+            flush_tlb = value != state.pat;
+            state.pat = value;
+        }
         IA32_TSC_DEADLINE => {
             // Compatibility MSR: accepted but intentionally not latched.
+        }
+        IA32_XSS => {
+            if value != 0 {
+                return gp();
+            }
         }
         IA32_EFER => {
             if value & !EFER_DEFINED != 0 {
@@ -237,6 +343,9 @@ fn vcpu_msr_state(vcpu: &X86_64Vcpu) -> X86MsrState {
         sysenter_cs: vcpu.sregs.sysenter_cs,
         sysenter_esp: vcpu.sregs.sysenter_esp,
         sysenter_eip: vcpu.sregs.sysenter_eip,
+        misc_enable: vcpu.misc_enable,
+        pat: vcpu.pat,
+        umwait_control: vcpu.umwait_control,
         fs_base: vcpu.sregs.fs.base,
         gs_base: vcpu.sregs.gs.base,
         kernel_gs_base: vcpu.kernel_gs_base,
@@ -254,6 +363,9 @@ fn commit_vcpu_msr_state(vcpu: &mut X86_64Vcpu, state: X86MsrState) {
     vcpu.sregs.sysenter_cs = state.sysenter_cs;
     vcpu.sregs.sysenter_esp = state.sysenter_esp;
     vcpu.sregs.sysenter_eip = state.sysenter_eip;
+    vcpu.misc_enable = state.misc_enable;
+    vcpu.pat = state.pat;
+    vcpu.umwait_control = state.umwait_control;
     vcpu.sregs.fs.base = state.fs_base;
     vcpu.sregs.gs.base = state.gs_base;
     vcpu.kernel_gs_base = state.kernel_gs_base;
@@ -374,6 +486,117 @@ mod tests {
             Err(X86MsrFault::GeneralProtection)
         );
         assert_eq!(state.fs_base, 0x1234);
+    }
+
+    #[test]
+    fn misc_enable_reset_and_read_only_profile_bits_are_exact() {
+        let state = X86MsrState::default();
+        assert_eq!(
+            read_x86_msr(IA32_MISC_ENABLE, state, 0),
+            Ok(IA32_MISC_ENABLE_RESET)
+        );
+
+        let effect = validate_x86_msr_write(IA32_MISC_ENABLE, state.misc_enable, state, 0).unwrap();
+        assert_eq!(effect.state.misc_enable, state.misc_enable);
+        assert!(!effect.flush_tlb);
+
+        for fixed_bit in [
+            MISC_ENABLE_FAST_STRING,
+            MISC_ENABLE_BTS_UNAVAILABLE,
+            MISC_ENABLE_PEBS_UNAVAILABLE,
+            MISC_ENABLE_MONITOR,
+            1 << 34,
+        ] {
+            assert_eq!(
+                validate_x86_msr_write(IA32_MISC_ENABLE, state.misc_enable ^ fixed_bit, state, 0,),
+                Err(X86MsrFault::GeneralProtection)
+            );
+        }
+    }
+
+    #[test]
+    fn bios_signature_discovery_accepts_only_the_architectural_clear() {
+        let state = X86MsrState::default();
+        assert_eq!(read_x86_msr(IA32_BIOS_SIGN_ID, state, 0), Ok(0));
+        assert_eq!(
+            validate_x86_msr_write(IA32_BIOS_SIGN_ID, 0, state, 0)
+                .unwrap()
+                .state,
+            state
+        );
+        assert_eq!(
+            validate_x86_msr_write(IA32_BIOS_SIGN_ID, 1, state, 0),
+            Err(X86MsrFault::GeneralProtection)
+        );
+    }
+
+    #[test]
+    fn platform_and_supervisor_xstate_msrs_match_cpuid_profile() {
+        let state = X86MsrState::default();
+        assert_eq!(read_x86_msr(IA32_PLATFORM_ID, state, 0), Ok(0));
+        assert_eq!(read_x86_msr(IA32_XSS, state, 0), Ok(0));
+        assert_eq!(
+            validate_x86_msr_write(IA32_PLATFORM_ID, 0, state, 0),
+            Err(X86MsrFault::GeneralProtection)
+        );
+        assert!(validate_x86_msr_write(IA32_XSS, 0, state, 0).is_ok());
+        assert_eq!(
+            validate_x86_msr_write(IA32_XSS, 1, state, 0),
+            Err(X86MsrFault::GeneralProtection)
+        );
+    }
+
+    #[test]
+    fn umwait_control_matches_advertised_waitpkg_profile() {
+        let state = X86MsrState::default();
+        assert_eq!(read_x86_msr(IA32_UMWAIT_CONTROL, state, 0), Ok(0));
+
+        for value in [1, 4, 0x0000_0000_FFFF_FFFD] {
+            let effect = validate_x86_msr_write(IA32_UMWAIT_CONTROL, value, state, 0).unwrap();
+            assert_eq!(effect.state.umwait_control, value);
+            assert_eq!(
+                read_x86_msr(IA32_UMWAIT_CONTROL, effect.state, 0),
+                Ok(value)
+            );
+        }
+        for reserved in [2, 0x1_0000_0000, u64::MAX] {
+            assert_eq!(
+                validate_x86_msr_write(IA32_UMWAIT_CONTROL, reserved, state, 0),
+                Err(X86MsrFault::GeneralProtection)
+            );
+        }
+    }
+
+    #[test]
+    fn pat_accepts_all_memory_types_and_rejects_every_reserved_encoding() {
+        let state = X86MsrState::default();
+        assert_eq!(read_x86_msr(IA32_PAT, state, 0), Ok(IA32_PAT_RESET));
+
+        let all_defined = 0x0706_0504_0100_0706;
+        let effect = validate_x86_msr_write(IA32_PAT, all_defined, state, 0).unwrap();
+        assert_eq!(effect.state.pat, all_defined);
+        assert!(effect.flush_tlb);
+        assert!(
+            !validate_x86_msr_write(IA32_PAT, IA32_PAT_RESET, state, 0)
+                .unwrap()
+                .flush_tlb
+        );
+
+        for byte_index in 0..8 {
+            for reserved in [2_u64, 3, 8, 0x80, 0xFF] {
+                let value =
+                    (IA32_PAT_RESET & !(0xFF << (byte_index * 8))) | (reserved << (byte_index * 8));
+                assert!(
+                    !is_valid_pat(value),
+                    "entry {byte_index}, value {value:#018x}"
+                );
+                assert_eq!(
+                    validate_x86_msr_write(IA32_PAT, value, state, 0),
+                    Err(X86MsrFault::GeneralProtection),
+                    "entry {byte_index}, value {value:#018x}"
+                );
+            }
+        }
     }
 
     #[test]

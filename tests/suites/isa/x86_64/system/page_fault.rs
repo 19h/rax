@@ -38,6 +38,7 @@ const GP_HANDLER_ADDR: u64 = 0x8000; // General protection handler
 
 /// Test result storage (physical address)
 const RESULT_ADDR: u64 = 0x40000;
+const GDT_ADDR: u64 = 0x9000;
 
 /// Page table entry flags
 mod pte_flags {
@@ -70,6 +71,13 @@ fn setup_paged_memory() -> Arc<GuestMemoryMmap> {
 
     // Set up IDT with exception handlers
     setup_idt(&mem);
+
+    // Event delivery reloads and validates the IDT gate's code selector from
+    // the descriptor table; hidden CS cache state alone is not sufficient.
+    let code64 = 0x0020_9A00_0000_0000_u64;
+    let data64 = 0x00CF_9200_0000_FFFF_u64;
+    mem.write_obj(code64, GuestAddress(GDT_ADDR + 8)).unwrap();
+    mem.write_obj(data64, GuestAddress(GDT_ADDR + 16)).unwrap();
 
     // Set up exception handlers
     setup_handlers(&mem);
@@ -333,7 +341,7 @@ fn create_paged_vcpu(mem: Arc<GuestMemoryMmap>) -> X86_64Vcpu {
 
     // Set up GDT (minimal - just needs valid selectors)
     sregs.gdt = DescriptorTable {
-        base: 0x9000,
+        base: GDT_ADDR,
         limit: 0x1F,
     };
 

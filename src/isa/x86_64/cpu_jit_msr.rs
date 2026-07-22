@@ -19,6 +19,9 @@ fn msr_state(state: &GuestRegs) -> X86MsrState {
         sysenter_cs: state.sysenter_cs,
         sysenter_esp: state.sysenter_esp,
         sysenter_eip: state.sysenter_eip,
+        misc_enable: state.misc_enable,
+        pat: state.pat,
+        umwait_control: state.umwait_control,
         fs_base: state.fs_base,
         gs_base: state.gs_base,
         kernel_gs_base: state.kernel_gs_base,
@@ -36,6 +39,9 @@ fn commit_msr_state(state: &mut GuestRegs, msr: X86MsrState) {
     state.sysenter_cs = msr.sysenter_cs;
     state.sysenter_esp = msr.sysenter_esp;
     state.sysenter_eip = msr.sysenter_eip;
+    state.misc_enable = msr.misc_enable;
+    state.pat = msr.pat;
+    state.umwait_control = msr.umwait_control;
     state.fs_base = msr.fs_base;
     state.gs_base = msr.gs_base;
     state.kernel_gs_base = msr.kernel_gs_base;

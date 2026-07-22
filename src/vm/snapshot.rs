@@ -8,7 +8,8 @@
 //!     so `rax --checkpoint file.rxc` can rebuild the machine with no other
 //!     flags (and the user may override any of it),
 //!   - the full CPU register file + emulator-specific state (lazy flags, FPU,
-//!     kernel_gs_base, IA32_TSC_ADJUST, IA32_TSC_AUX, PKRU, halted),
+//!     kernel_gs_base, IA32_TSC_ADJUST, IA32_TSC_AUX, IA32_MISC_ENABLE,
+//!     IA32_PAT, IA32_UMWAIT_CONTROL, PKRU, halted),
 //!   - the complete writable guest RAM (zstd compressed) — which also contains
 //!     the kernel/initrd that were loaded into it, so read-only images need not
 //!     be shipped separately,
@@ -37,8 +38,9 @@ use crate::vm::vcpu::state::CpuState;
 const CHECKPOINT_MAGIC: [u8; 8] = *b"RAXCKPT\0";
 
 /// Current checkpoint format version. Version 2 added embedded config + device
-/// state; version 3 adds the emulator-private STI interrupt shadow.
-const CHECKPOINT_VERSION: u32 = 3;
+/// state; version 3 added the emulator-private STI interrupt shadow; version 4
+/// added IA32_MISC_ENABLE and IA32_PAT; version 5 adds IA32_UMWAIT_CONTROL.
+const CHECKPOINT_VERSION: u32 = 5;
 
 /// Canonical checkpoint file extension ("RaX Checkpoint").
 pub const CHECKPOINT_EXT: &str = "rxc";
@@ -108,6 +110,12 @@ pub struct EmulatorState {
     pub tsc_adjust: u64,
     #[serde(default)]
     pub tsc_aux: u32,
+    #[serde(default = "default_misc_enable")]
+    pub misc_enable: u64,
+    #[serde(default = "default_pat")]
+    pub pat: u64,
+    #[serde(default)]
+    pub umwait_control: u64,
     pub pkru: u32,
     #[serde(default = "default_mxcsr")]
     pub mxcsr: u32,
@@ -121,6 +129,14 @@ fn default_mxcsr() -> u32 {
     0x1F80
 }
 
+fn default_misc_enable() -> u64 {
+    crate::isa::x86_64::execute::system::IA32_MISC_ENABLE_RESET
+}
+
+fn default_pat() -> u64 {
+    crate::isa::x86_64::execute::system::IA32_PAT_RESET
+}
+
 impl Default for EmulatorState {
     fn default() -> Self {
         EmulatorState {
@@ -129,6 +145,9 @@ impl Default for EmulatorState {
             kernel_gs_base: 0,
             tsc_adjust: 0,
             tsc_aux: 0,
+            misc_enable: default_misc_enable(),
+            pat: default_pat(),
+            umwait_control: 0,
             pkru: 0,
             mxcsr: default_mxcsr(),
             halted: false,
@@ -443,14 +462,20 @@ mod tests {
     }
 
     #[test]
-    fn emulator_state_bincode_roundtrip_preserves_sti_shadow() {
+    fn emulator_state_bincode_roundtrip_preserves_interrupt_and_model_msr_state() {
         let state = EmulatorState {
             interrupt_inhibit: true,
+            misc_enable: 0x0000_0004_0004_1801,
+            pat: 0x0706_0504_0100_0706,
+            umwait_control: 0x0000_0000_0001_86A0,
             ..EmulatorState::default()
         };
         let bytes = bincode::serialize(&state).expect("serialize emulator state");
         let back: EmulatorState = bincode::deserialize(&bytes).expect("deserialize emulator state");
         assert!(back.interrupt_inhibit);
+        assert_eq!(back.misc_enable, state.misc_enable);
+        assert_eq!(back.pat, state.pat);
+        assert_eq!(back.umwait_control, state.umwait_control);
     }
 
     #[test]

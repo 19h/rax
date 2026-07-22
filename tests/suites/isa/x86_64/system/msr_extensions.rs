@@ -70,6 +70,9 @@ fn assert_disabled_msr_extension_ud(name: &str, bytes: &[u8], apx: bool, mode: E
         sregs.cr0 |= 1;
     } else {
         sregs.cr0 &= !1;
+        // Real mode has no IVT present bit; an undersized IDTR is the precise
+        // way for this no-handler fixture to reject vector 6.
+        sregs.idt.limit = 0;
     }
     if matches!(
         mode,

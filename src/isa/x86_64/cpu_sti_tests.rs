@@ -14,15 +14,12 @@ fn vcpu_with_code(code: &[u8]) -> X86_64Vcpu {
     vcpu
 }
 
-fn install_trap_gate(memory: &GuestMemoryMmap, idt_base: u64, vector: u8, handler: u64) {
-    let mut entry = [0_u8; 16];
-    entry[0..2].copy_from_slice(&(handler as u16).to_le_bytes());
+fn install_real_mode_vector(memory: &GuestMemoryMmap, idt_base: u64, vector: u8, handler: u16) {
+    let mut entry = [0_u8; 4];
+    entry[0..2].copy_from_slice(&handler.to_le_bytes());
     entry[2..4].copy_from_slice(&0_u16.to_le_bytes());
-    entry[5] = 0x8F;
-    entry[6..8].copy_from_slice(&((handler >> 16) as u16).to_le_bytes());
-    entry[8..12].copy_from_slice(&((handler >> 32) as u32).to_le_bytes());
     memory
-        .write_slice(&entry, GuestAddress(idt_base + u64::from(vector) * 16))
+        .write_slice(&entry, GuestAddress(idt_base + u64::from(vector) * 4))
         .unwrap();
 }
 
@@ -74,10 +71,11 @@ fn maskable_injection_is_blocked_but_nmi_delivery_consumes_the_sti_shadow() {
     let memory =
         Arc::new(GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x4000)]).unwrap());
     memory.write_slice(&[0xFB, 0x90], GuestAddress(0)).unwrap();
-    install_trap_gate(&memory, 0x1000, 2, 0x2000);
+    install_real_mode_vector(&memory, 0x1000, 2, 0x2000);
     let mut vcpu = X86_64Vcpu::new(0, memory);
     vcpu.sregs.cr0 = 0;
     vcpu.sregs.idt.base = 0x1000;
+    vcpu.sregs.idt.limit = 0x03FF;
     vcpu.regs.rflags = 0x2;
     vcpu.regs.rsp = 0x3800;
 
@@ -90,7 +88,7 @@ fn maskable_injection_is_blocked_but_nmi_delivery_consumes_the_sti_shadow() {
 
     assert!(vcpu.inject_nmi().unwrap());
     assert_eq!(vcpu.regs.rip, 0x2000);
-    assert_eq!(vcpu.regs.rsp, rsp_after_sti - 5 * 8);
+    assert_eq!(vcpu.regs.rsp, rsp_after_sti - 3 * 2);
     assert!(!vcpu.interrupt_inhibit);
 }
 

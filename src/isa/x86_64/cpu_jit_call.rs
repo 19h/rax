@@ -71,6 +71,9 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     vcpu.kernel_gs_base = gr.kernel_gs_base;
     vcpu.tsc_adjust = gr.tsc_adjust;
     vcpu.tsc_aux = gr.tsc_aux;
+    vcpu.misc_enable = gr.misc_enable;
+    vcpu.pat = gr.pat;
+    vcpu.umwait_control = gr.umwait_control;
     vcpu.pkru = gr.pkru;
     // Publish every control register carried by the native ABI so the direct
     // callee observes prior native state and later native reads observe every
@@ -229,6 +232,9 @@ pub(super) unsafe extern "C" fn rax_jit_call(
     gr.kernel_gs_base = vcpu.kernel_gs_base;
     gr.tsc_adjust = vcpu.tsc_adjust;
     gr.tsc_aux = vcpu.tsc_aux;
+    gr.misc_enable = vcpu.misc_enable;
+    gr.pat = vcpu.pat;
+    gr.umwait_control = vcpu.umwait_control;
     gr.pkru = vcpu.pkru;
     gr.xcr0 = vcpu.xcr0;
     gr.xgetbv1 = vcpu.xgetbv1_value;
