@@ -425,6 +425,19 @@ pub fn x86_evex_vector_align_replay_spans(
     })
 }
 
+/// Identify valid register-only EVEX 128-bit-chunk shuffle replay groups in
+/// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
+pub fn x86_evex_chunk_shuffle_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_chunk_shuffle_needs_vl()
+            .map(|needs_vl| (needs_vl, false, false))
+    })
+}
+
 /// Identify valid register-only EVEX floating shuffle/interleave replay groups
 /// in `block` in O(N) time and O(P) space for N operations and P unique guest
 /// PCs.
@@ -640,6 +653,11 @@ pub fn x86_evex_native_replay_spans(
             .or_else(|| {
                 instruction
                     .evex_register_vector_align_needs_vl()
+                    .map(|needs_vl| (needs_vl, false, false))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_chunk_shuffle_needs_vl()
                     .map(|needs_vl| (needs_vl, false, false))
             })
             .or_else(|| {

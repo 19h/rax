@@ -120,6 +120,7 @@ impl X86_64Vcpu {
                 let es = if evex.w { 8 } else { 4 };
                 execute::simd::evex_shuffle_128_lanes(self, ctx, es)
             }
+            0x23 | 0x43 => self.inject_undefined_instruction(),
             // VPCLMULQDQ.
             0x44 if evex.pp == 1 => execute::simd::evex_pclmulqdq(self, ctx),
 

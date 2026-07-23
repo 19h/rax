@@ -20,6 +20,8 @@ mod descriptor_table;
 #[cfg(test)]
 mod evex;
 #[cfg(test)]
+mod evex_chunk_shuffle_replay;
+#[cfg(test)]
 mod evex_fp16_scalar_replay;
 #[cfg(test)]
 mod evex_gpr_broadcast_replay;
