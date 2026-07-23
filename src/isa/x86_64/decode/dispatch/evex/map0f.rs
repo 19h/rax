@@ -463,9 +463,8 @@ impl X86_64Vcpu {
             0xF4 if evex.pp == 1 && evex.w => {
                 execute::simd::evex_int_arith(self, ctx, execute::simd::IntOp::MulUDQ)
             }
-            0xF5 if evex.pp == 1 => {
-                execute::simd::evex_int_arith(self, ctx, execute::simd::IntOp::MaddWD)
-            }
+            0xF5 if evex.pp == 1 => execute::simd::evex_bw_pmaddwd(self, ctx),
+            0xF5 => self.inject_undefined_instruction(),
             // VPACKSSWB/VPACKSSDW/VPACKUSWB.
             0x63 if evex.pp == 1 => execute::simd::evex_pack_saturate(
                 self,

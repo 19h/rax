@@ -82,6 +82,9 @@ mod apx_reserved_tests;
 mod align_tests;
 
 #[cfg(test)]
+mod bw_shuffle_madd_tests;
+
+#[cfg(test)]
 mod chunk_shuffle_tests;
 
 #[cfg(test)]

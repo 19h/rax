@@ -31,9 +31,8 @@ impl X86_64Vcpu {
                 }
             }
             // VPMADDUBSW (0x04)
-            0x04 if evex.pp == 1 => {
-                execute::simd::evex_int_arith(self, ctx, execute::simd::IntOp::MaddUBSW)
-            }
+            0x04 if evex.pp == 1 => execute::simd::evex_bw_pmaddubsw(self, ctx),
+            0x04 => self.inject_undefined_instruction(),
             // VPMULHRSW (0x0B). EVEX.W is architecturally ignored (WIG).
             0x0B if evex.pp == 1 => {
                 execute::simd::evex_int_arith(self, ctx, execute::simd::IntOp::MulHighRoundSW)
@@ -157,7 +156,8 @@ impl X86_64Vcpu {
                 execute::simd::evex_p2intersect(self, ctx, es)
             }
             // VPSHUFB.
-            0x00 if evex.pp == 1 => execute::simd::evex_pshufb(self, ctx),
+            0x00 if evex.pp == 1 => execute::simd::evex_bw_pshufb(self, ctx),
+            0x00 => self.inject_undefined_instruction(),
             // Per-element variable shifts: VPSRLV*, VPSRAV*, VPSLLV*.
             0x10 if evex.pp == 1 && evex.w => {
                 execute::simd::evex_shift_per_elem(self, ctx, execute::simd::ShiftKind::Srl, 2)

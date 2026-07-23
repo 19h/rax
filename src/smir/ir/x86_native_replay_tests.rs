@@ -4,6 +4,9 @@ use super::*;
 use crate::smir::ir::ops::{OpKind, SmirOp};
 use crate::smir::ir::types::OpId;
 
+#[path = "x86_native_replay_tests/bw_shuffle_madd.rs"]
+mod bw_shuffle_madd;
+
 #[path = "x86_native_replay_tests/chunk_shuffle.rs"]
 mod chunk_shuffle;
 
