@@ -30,6 +30,7 @@ fn jit_native_region_synchronizes_mmx_values_and_precise_guest_tags() {
     let region = JitRegion {
         exec: crate::smir::lower::runtime::ExecMem::new(&code).expect("map MMX region"),
         entry_offset: 0,
+        source_pages: Vec::new(),
         uses_vector: false,
         uses_xmm_state: false,
         narrow_vector_opmasks: false,

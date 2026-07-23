@@ -35,6 +35,8 @@ mod group3_alias;
 mod legacy_0f38_terminal;
 #[path = "x86_64/legacy_0f3a_reserved.rs"]
 mod legacy_0f3a_reserved;
+#[path = "x86_64/smc.rs"]
+mod smc;
 #[path = "x86_64/sse4a_bitfield.rs"]
 mod sse4a_bitfield;
 #[path = "x86_64/three_dnow_reserved.rs"]

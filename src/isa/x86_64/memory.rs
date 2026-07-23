@@ -687,7 +687,8 @@ impl Mmu {
     }
 
     /// Mark a page as containing executed code.
-    /// Called when fetching instructions from a page.
+    /// Called by direct instruction fetch and before a native JIT region uses
+    /// instruction bytes from the page.
     #[inline(always)]
     pub fn mark_code_page(&mut self, vaddr: u64) {
         let (byte_idx, bit_mask) = Self::code_page_index(vaddr);

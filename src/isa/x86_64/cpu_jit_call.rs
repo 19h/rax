@@ -10,9 +10,11 @@ use super::*;
 /// before native execution resumes at `return_pc`.
 ///
 /// Returns `1` after a clean return. Returns `0` and writes `gr.exit_pc` when
-/// the stack push faults, the callee yields a VMM-bound exit, or interpretation
-/// fails. A push fault leaves guest RSP unchanged and deoptimizes at `call_pc`;
-/// the target is never executed.
+/// the stack push faults, the callee yields a VMM-bound exit, interpretation
+/// fails, or the callee modifies a source page of the active native region. A
+/// push fault leaves guest RSP unchanged and deoptimizes at `call_pc`; active
+/// source-page modification preserves completed callee state and resumes at
+/// the callee's current guest PC without entering a stale native continuation.
 ///
 /// # Safety
 ///
@@ -136,6 +138,15 @@ pub(super) unsafe extern "C" fn rax_jit_call(
         let start_time = std::time::Instant::now();
         let mut steps: u64 = 0;
         loop {
+            // The CALL push or previous callee instruction may have written a
+            // source page of the active native region. Drain before recognizing
+            // return_pc so CALL $+5 and a final store cannot bypass the stale-
+            // region escape. Unrelated code-page writes leave this region live.
+            vcpu.drain_smc();
+            if vcpu.jit_active_region_stale {
+                ok = 0;
+                break;
+            }
             if vcpu.regs.rip == return_pc {
                 break;
             }
@@ -149,8 +160,6 @@ pub(super) unsafe extern "C" fn rax_jit_call(
                 ok = 0;
                 break;
             }
-            // This direct-step loop bypasses the run-loop SMC drain.
-            vcpu.drain_smc();
             match vcpu.step() {
                 Ok(None) => {}
                 Ok(Some(exit)) => {

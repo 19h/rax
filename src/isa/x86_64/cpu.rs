@@ -400,6 +400,22 @@ pub struct X86_64Vcpu {
         any(target_arch = "x86_64", target_arch = "aarch64")
     ))]
     jit_ineligible_dirty: std::collections::HashSet<(u64, u64)>,
+    /// Inclusive virtual source-page range of the native region currently in
+    /// flight. The bounded contiguous lift window makes this a compact exact
+    /// representation without allocating on every region entry.
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
+    jit_active_source_range: Option<(u64, u64)>,
+    /// Set when an interpreter callout invalidates a source page belonging to
+    /// the in-flight native region. The callout then exits at its current guest
+    /// PC instead of returning into a stale native continuation.
+    #[cfg(all(
+        feature = "smir-jit",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
+    jit_active_region_stale: bool,
     /// JIT of memory-touching regions (Load/Store via MMU helper calls). Enabled
     /// by default; `RAX_JIT_NO_MEM` disables it. Independently settable in tests.
     #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -1024,6 +1040,16 @@ impl X86_64Vcpu {
                 any(target_arch = "x86_64", target_arch = "aarch64")
             ))]
             jit_ineligible_dirty: std::collections::HashSet::new(),
+            #[cfg(all(
+                feature = "smir-jit",
+                any(target_arch = "x86_64", target_arch = "aarch64")
+            ))]
+            jit_active_source_range: None,
+            #[cfg(all(
+                feature = "smir-jit",
+                any(target_arch = "x86_64", target_arch = "aarch64")
+            ))]
+            jit_active_region_stale: false,
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
             jit_mem: jit_mem_enabled() || jit_call_enabled(),
             #[cfg(all(feature = "smir-jit", target_arch = "x86_64"))]
@@ -2238,11 +2264,9 @@ impl X86_64Vcpu {
 
     /// Invalidate every cached decode and JIT region overlapping the 4 KiB page
     /// at `page_base`. The decode cache is indexed by `RIP & 0xFFF`, so all 4096
-    /// entries are scanned. JIT regions are keyed by entry RIP; a region's body
-    /// fits in one ≤512B lift window, so a write to page P can stale a region
-    /// keyed on P (body starts here) or on P-1 (body extends into P) — evict
-    /// both, and drop their hotness counters so they re-promote against the new
-    /// code.
+    /// entries are scanned. Runnable JIT regions retain their exact source-page
+    /// sets; hotness and ineligible memos retain the conservative entry-page or
+    /// preceding-page test implied by the ≤512-byte lift window.
     fn invalidate_code_page(&mut self, page_base: u64) {
         for idx in 0..DECODE_CACHE_SIZE {
             let entry = &mut self.decode_cache[idx];
@@ -2260,13 +2284,24 @@ impl X86_64Vcpu {
             any(target_arch = "x86_64", target_arch = "aarch64")
         ))]
         {
+            if self
+                .jit_active_source_range
+                .is_some_and(|(first, last)| page_base >= first && page_base <= last)
+            {
+                self.jit_active_region_stale = true;
+            }
             let prev_page = page_base.wrapping_sub(0x1000);
             let overlaps = |rip: u64| {
                 let p = rip & !0xFFF;
                 p == page_base || p == prev_page
             };
             if !self.jit_cache.is_empty() || !self.jit_hot.is_empty() {
-                self.jit_cache.retain(|&(rip, _), _| !overlaps(rip));
+                self.jit_cache.retain(|&(rip, _), region| match region {
+                    Some(region) if !region.source_pages.is_empty() => {
+                        !region.source_pages.contains(&page_base)
+                    }
+                    _ => !overlaps(rip),
+                });
                 self.jit_hot.retain(|&rip, _| !overlaps(rip));
             }
             for &(rip, mode_tag) in self.jit_ineligible.keys() {
@@ -3955,11 +3990,17 @@ unsafe extern "C" fn rax_jit_mem_store(
     size: u32,
 ) -> u64 {
     let vcpu = unsafe { &mut *ctx };
+    let Some(last) = (match size {
+        1 | 2 | 4 | 8 => addr.checked_add(u64::from(size) - 1),
+        _ => None,
+    }) else {
+        return 0;
+    };
     // A store to a code page is self-modifying code (e.g. the kernel's
     // text_poke / alternatives patching). Bail to the interpreter so the full
     // SMC + instruction-patching semantics (decode/JIT invalidation ordering,
     // int3 batching) are handled there rather than mid-native-region.
-    if vcpu.mmu.is_code_page(addr) {
+    if vcpu.mmu.is_code_page(addr) || vcpu.mmu.is_code_page(last) {
         return 0;
     }
     // Verify mode: record the pre-store value so the region's writes can be
@@ -4039,7 +4080,9 @@ unsafe extern "C" fn rax_jit_vec_store(
     let Some(vcpu) = (unsafe { (state.ctx as *mut X86_64Vcpu).as_mut() }) else {
         return 0;
     };
-    let last = addr.wrapping_add(u64::from(size) - 1);
+    let Some(last) = addr.checked_add(u64::from(size) - 1) else {
+        return 0;
+    };
     if vcpu.mmu.is_code_page(addr) || vcpu.mmu.is_code_page(last) {
         return 0;
     }
@@ -4546,6 +4589,16 @@ impl X86_64Vcpu {
                 }
             };
 
+            // Capture source pages before optimization can merge or discard IR
+            // structure. A runnable region with incomplete provenance cannot be
+            // protected against self-modifying code and therefore fails closed.
+            let Some(source_pages) = JitRegion::collect_source_pages(&func) else {
+                if jit_bail_log() {
+                    eprintln!("[JIT-BAIL] source-pages @ {entry:#x} (call={cm})");
+                }
+                continue 'modes;
+            };
+
             // Optimize before computing exits / lowering (frontier-aware, see note).
             if std::env::var_os("RAX_JIT_NO_OPT").is_none() {
                 optimize_function(&mut func, OptLevel::O2);
@@ -4920,6 +4973,7 @@ impl X86_64Vcpu {
             return Ok(Some(JitRegion {
                 exec,
                 entry_offset: res.entry_offset,
+                source_pages,
                 #[cfg(target_arch = "x86_64")]
                 uses_vector,
                 #[cfg(target_arch = "x86_64")]
@@ -4970,6 +5024,8 @@ impl X86_64Vcpu {
     #[cfg(target_arch = "x86_64")]
     pub(super) fn jit_run_region_native(&mut self, region: &JitRegion) {
         use crate::smir::lower::runtime::GuestRegs;
+
+        self.jit_enter_region(region);
 
         // Crash diagnostic (RAX_JIT_TRACE=1): record the region entry about to run
         // natively and install a SIGSEGV/SIGBUS/SIGILL handler that prints it + the
@@ -5295,6 +5351,7 @@ impl X86_64Vcpu {
             op: LazyFlagOp::None,
             ..Default::default()
         };
+        self.jit_leave_region();
     }
 
     /// Execute x86-lifted scalar SMIR as AArch64 identity-mapped code. Legacy
@@ -5305,6 +5362,8 @@ impl X86_64Vcpu {
         use crate::smir::lower::runtime::{
             Aarch64GuestRegs, merge_aarch64_nzcv_into_x86_rflags, x86_rflags_to_aarch64_nzcv,
         };
+
+        self.jit_enter_region(region);
 
         // The interpreter defers flag computation. Materialize before exporting
         // CF/ZF/SF/OF into NZCV and retain the complete snapshot so PF/AF and all
@@ -5335,6 +5394,7 @@ impl X86_64Vcpu {
             op: LazyFlagOp::None,
             ..Default::default()
         };
+        self.jit_leave_region();
     }
 
     /// Verify a compiled region against the interpreter (RAX_JIT_VERIFY=1).
@@ -6253,6 +6313,7 @@ mod decode_cache_invalidation_tests {
         let cached = JitRegion {
             exec: crate::smir::lower::runtime::ExecMem::new(&[0xC3]).unwrap(),
             entry_offset: 0,
+            source_pages: vec![head & !0xFFF],
             uses_vector: false,
             uses_xmm_state: false,
             narrow_vector_opmasks: false,
