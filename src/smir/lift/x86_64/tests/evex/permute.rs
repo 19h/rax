@@ -435,6 +435,35 @@ fn lift_evex_vector_align_covers_elements_widths_e4nf_memory_and_invalids() {
         );
     }
 }
+
+#[test]
+fn lift_evex_valignq_128_masks_immediate_to_bit_zero() {
+    // valignq $0xff, xmm3, xmm2, xmm1. For KL=2, Intel specifies
+    // COUNT := imm8[0], so the result begins with src2[1], src1[0].
+    let lifted = lift_single(&[0x62, 0xF3, 0xED, 0x08, 0x03, 0xCB, 0xFF]).unwrap();
+    let extracts = lifted
+        .ops
+        .iter()
+        .filter_map(|op| match op.kind {
+            OpKind::VExtractLane {
+                vec: VReg::Arch(ArchReg::X86(register)),
+                lane,
+                elem,
+                sign: SignExtend::Zero,
+                ..
+            } => Some((register, lane, elem)),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        extracts,
+        [
+            (X86Reg::Xmm(3), 1, VecElementType::I64),
+            (X86Reg::Xmm(2), 0, VecElementType::I64),
+        ]
+    );
+}
+
 #[test]
 fn lift_two_source_shuffle_covers_legacy_vex_evex_and_invalids() {
     for (bytes, elem, lanes) in [

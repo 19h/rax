@@ -128,6 +128,7 @@ impl X86_64Vcpu {
                 let es = if evex.w { 8 } else { 4 };
                 execute::simd::evex_valign(self, ctx, es)
             }
+            0x03 => self.inject_undefined_instruction(),
 
             // VPTERNLOGD/Q (0x25): destination is both input and output.
             0x25 if evex.pp == 1 => {

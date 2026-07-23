@@ -39,6 +39,8 @@ mod packed_compare_replay;
 mod packed_extend_replay;
 #[path = "avx512_inventory/packed_move_replay.rs"]
 mod packed_move_replay;
+#[path = "avx512_inventory/vector_align_replay.rs"]
+mod vector_align_replay;
 #[path = "avx512_inventory/vector_to_mask_replay.rs"]
 mod vector_to_mask_replay;
 

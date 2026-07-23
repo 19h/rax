@@ -79,6 +79,9 @@ mod apx_nf_tests;
 mod apx_reserved_tests;
 
 #[cfg(test)]
+mod align_tests;
+
+#[cfg(test)]
 mod gpr_broadcast_tests;
 
 #[cfg(test)]

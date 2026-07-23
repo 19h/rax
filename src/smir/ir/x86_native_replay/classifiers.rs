@@ -954,6 +954,39 @@ impl X86InstructionBytes {
         Some(ll != 2)
     }
 
+    /// Validate register-only EVEX VALIGND/Q and return whether the vector
+    /// length requires AVX-512VL. All vector register-extension channels and
+    /// every imm8 value are architectural. Memory sources, EVEX.b, reserved
+    /// vector lengths, malformed masks, and incorrect lengths fail closed.
+    pub fn evex_register_vector_align_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if bytes.len() != 7 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+
+        if p0 & 0x0F != 3 || p1 & 0x04 == 0 || p1 & 0x03 != 1 || opcode != 0x03 || modrm >> 6 != 3 {
+            return None;
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_broadcast = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_broadcast || (zeroing && mask == 0) {
+            return None;
+        }
+        match ll {
+            0 | 1 => Some(true),
+            2 => Some(false),
+            _ => None,
+        }
+    }
+
     /// Validate register-only EVEX binary32/binary64 shuffle and unpack
     /// operations and return whether the vector length requires AVX-512VL.
     /// VSHUF* carries an imm8 while VUNPCKL*/VUNPCKH* does not. Memory,

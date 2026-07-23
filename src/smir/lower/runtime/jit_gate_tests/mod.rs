@@ -40,6 +40,8 @@ mod evex_packed_extend_replay;
 #[cfg(test)]
 mod evex_permute_replay;
 #[cfg(test)]
+mod evex_vector_align_replay;
+#[cfg(test)]
 mod evex_vector_to_mask_replay;
 #[cfg(test)]
 mod far_call;
