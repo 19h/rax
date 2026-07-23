@@ -41,6 +41,8 @@ mod smc;
 mod sse4a_bitfield;
 #[path = "x86_64/three_dnow_reserved.rs"]
 mod three_dnow_reserved;
+#[path = "x86_64/vector_legacy_prefix_reserved.rs"]
+mod vector_legacy_prefix_reserved;
 #[path = "x86_64/vector_prefix_reserved.rs"]
 mod vector_prefix_reserved;
 #[path = "x86_64/vex_bmi_reserved.rs"]

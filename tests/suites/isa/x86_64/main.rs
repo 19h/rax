@@ -892,6 +892,8 @@ mod x86_64_simd_avx_vdivss_vdivsd;
 mod x86_64_simd_avx_vdppd;
 #[path = "simd/avx/vdpps.rs"]
 mod x86_64_simd_avx_vdpps;
+#[path = "simd/avx/vex_legacy_prefix_ud.rs"]
+mod x86_64_simd_avx_vex_legacy_prefix_ud;
 #[path = "simd/avx/vextractf128.rs"]
 mod x86_64_simd_avx_vextractf128;
 #[path = "simd/avx/vextractf128_vinsertf128.rs"]

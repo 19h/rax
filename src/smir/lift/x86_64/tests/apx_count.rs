@@ -212,10 +212,8 @@ fn apx_count_reserved_payloads_strictly_trap_at_modrm_without_tail_decode() {
         &[0x66, 0x62, 0x74, 0x7C, 0x08, 0xF4, 0xC3],
         &[0x48, 0x62, 0x74, 0x7C, 0x08, 0xF5, 0xC3],
     ] {
-        assert!(matches!(
-            lift_single(bytes),
-            Err(LiftError::InvalidEncoding { .. })
-        ));
+        let result = lift_single(bytes).expect("legacy prefix before APX count must be #UD");
+        assert_invalid_opcode_trap(&result, 2);
     }
 }
 

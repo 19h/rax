@@ -249,10 +249,8 @@ fn movrs_invalid_forms_are_terminal_at_the_earliest_decoded_frontier() {
         &[0xF3, 0x62, 0xEC, 0x78, 0x08, 0x8B, 0x03],
         &[0x48, 0x62, 0xEC, 0x78, 0x08, 0x8B, 0x03],
     ] {
-        assert!(matches!(
-            lift_single(bytes),
-            Err(LiftError::InvalidEncoding { .. })
-        ));
+        let result = lift_single(bytes).expect("legacy prefix before APX MOVRS must be #UD");
+        assert_invalid_opcode_trap(&result, 2);
     }
 }
 

@@ -6,12 +6,28 @@ use crate::vm::vcpu::VcpuExit;
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::isa::x86_64::execute;
 
+/// Detect a forbidden legacy prefix before the already-consumed C4H/C5H lead.
+///
+/// Inspect the raw bytes rather than decoded prefix state: the generic prefix
+/// scanner intentionally clears REX when a later legacy prefix is encountered,
+/// but Intel SDM Vol. 2A section 2.3.4 still requires #UD for that ordering.
+fn has_forbidden_vex_legacy_prefix(ctx: &InsnContext) -> bool {
+    let vex_offset = ctx.cursor.saturating_sub(1).min(ctx.bytes_len);
+    ctx.bytes[..vex_offset]
+        .iter()
+        .any(|byte| !matches!(byte, 0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 | 0x67))
+}
+
 impl X86_64Vcpu {
     /// Execute 2-byte VEX-encoded instructions (0xC5 prefix)
     pub(in crate::isa::x86_64) fn execute_vex2(
         &mut self,
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
+        if has_forbidden_vex_legacy_prefix(ctx) {
+            return self.inject_undefined_instruction();
+        }
+
         // VEX 2-byte prefix: 0xC5 [R vvvv L pp]
         // Implied: m-mmmm = 1 (0F escape), X = 1, B = 1, W = 0
         let vex1 = ctx.consume_u8()?;
@@ -41,6 +57,10 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
+        if has_forbidden_vex_legacy_prefix(ctx) {
+            return self.inject_undefined_instruction();
+        }
+
         // VEX 3-byte prefix (0xC4)
         let vex1 = ctx.consume_u8()?;
         let vex2 = ctx.consume_u8()?;

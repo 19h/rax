@@ -151,8 +151,12 @@ impl X86_64Lifter {
         legacy: &X86Prefix,
         ctx: &mut LiftContext,
     ) -> Result<LiftResult, LiftError> {
-        // VEX/EVEX may follow address-size or segment prefixes, but must not
-        // be preceded by REX, LOCK, or a separately encoded SIMD prefix.
+        // Intel SDM Vol. 2A sections 2.3.2-2.3.4 require #UD when LOCK,
+        // 66H/F2H/F3H, or REX precedes VEX. EVEX and APX extended EVEX retain
+        // the same prefix-order contract. The violation is decisive as soon as
+        // the vector lead byte is present: do not demand any VEX/EVEX payload,
+        // opcode, ModR/M, or immediate bytes before establishing the trap.
+        // Address-size and segment overrides remain admissible.
         let has_forbidden_legacy_prefix = bytes[..legacy.cursor]
             .iter()
             .any(|byte| !matches!(byte, 0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 | 0x67));
@@ -163,9 +167,13 @@ impl X86_64Lifter {
             || legacy.operand_size_override
             || legacy.rep_prefix.is_some()
         {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: bytes.to_vec(),
+            return Ok(LiftResult {
+                ops: Vec::new(),
+                bytes_consumed: legacy.cursor + 1,
+                control_flow: ControlFlow::Trap {
+                    kind: TrapKind::InvalidOpcode,
+                },
+                branch_targets: Vec::new(),
             });
         }
 

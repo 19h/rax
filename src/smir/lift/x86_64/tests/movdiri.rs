@@ -449,10 +449,6 @@ fn apx_movdiri_rejects_reserved_fields_and_reports_absolute_incomplete_lengths()
         (&[0x62, 0xEC, 0x74, 0x08, 0xF9, 0x08][..], "V3:0"),
         (&[0x62, 0xEC, 0x7C, 0x00, 0xF9, 0x08][..], "V4"),
         (&[0x62, 0xEC, 0x7C, 0x08, 0xF9, 0xC8][..], "mod=3"),
-        (
-            &[0x66, 0x62, 0xEC, 0x7C, 0x08, 0xF9, 0x08][..],
-            "leading 66",
-        ),
     ] {
         let error = lift_single(bytes).expect_err(name);
         assert!(
@@ -460,6 +456,10 @@ fn apx_movdiri_rejects_reserved_fields_and_reports_absolute_incomplete_lengths()
             "{name}: {error:?}"
         );
     }
+
+    let leading_66 = lift_single(&[0x66, 0x62, 0xEC, 0x7C, 0x08, 0xF9, 0x08])
+        .expect("66 before APX MOVDIRI must be #UD");
+    assert_invalid_opcode_trap(&leading_66, 2);
 
     assert!(matches!(
         lift_single(&[0x62, 0xEC, 0x7C, 0x08, 0xF9]),

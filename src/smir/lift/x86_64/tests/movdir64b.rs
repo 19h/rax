@@ -429,10 +429,9 @@ fn apx_movdir64b_rejects_reserved_fields_and_reports_absolute_incomplete_lengths
         .expect("APX MOVDIR64B register source must strictly lift to #UD");
     assert_invalid_opcode_trap(&register_source, 6);
 
-    assert!(matches!(
-        lift_single(&[0x66, 0x62, 0xEC, 0x7D, 0x08, 0xF8, 0x01]),
-        Err(LiftError::InvalidEncoding { .. })
-    ));
+    let leading_66 = lift_single(&[0x66, 0x62, 0xEC, 0x7D, 0x08, 0xF8, 0x01])
+        .expect("66 before APX MOVDIR64B must be #UD");
+    assert_invalid_opcode_trap(&leading_66, 2);
 
     assert!(matches!(
         lift_single(&[0x62, 0xEC, 0x7D, 0x08, 0xF8]),

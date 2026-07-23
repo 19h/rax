@@ -246,10 +246,8 @@ fn apx_movbe_reserved_payloads_strictly_trap_at_modrm_frontier() {
         &[0x66, 0x62, 0x74, 0x7C, 0x08, 0x61, 0xC3],
         &[0x48, 0x62, 0x74, 0x7C, 0x08, 0x60, 0xC3],
     ] {
-        assert!(matches!(
-            lift_single(bytes),
-            Err(LiftError::InvalidEncoding { .. })
-        ));
+        let result = lift_single(bytes).expect("legacy prefix before APX MOVBE must be #UD");
+        assert_invalid_opcode_trap(&result, 2);
     }
 }
 

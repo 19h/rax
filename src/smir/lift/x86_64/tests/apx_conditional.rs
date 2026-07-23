@@ -440,10 +440,8 @@ fn conditional_forms_reject_forbidden_legacy_prefixes() {
         let mut bytes = vec![prefix];
         bytes.extend_from_slice(&conditional_prefix(0, true, 0, 0x0A, true));
         bytes.extend_from_slice(&[0x39, 0xD8]);
-        assert!(matches!(
-            lift_single(&bytes),
-            Err(LiftError::InvalidEncoding { .. })
-        ));
+        let result = lift_single(&bytes).expect("legacy prefix before APX conditional must be #UD");
+        assert_invalid_opcode_trap(&result, 2);
     }
 }
 

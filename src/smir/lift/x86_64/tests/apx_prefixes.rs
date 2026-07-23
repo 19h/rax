@@ -78,11 +78,9 @@ fn apx_map4_accepts_only_architecturally_permitted_legacy_prefix_groups() {
     ] {
         let mut bytes = prefixes.to_vec();
         bytes.extend_from_slice(&[0x62, 0xF4, 0x7C, 0x08, 0x03, 0xC1]);
-        let error = lift_single(&bytes).expect_err(name);
-        assert!(
-            matches!(error, LiftError::InvalidEncoding { .. }),
-            "{name}: {error:?}"
-        );
+        let result = lift_single(&bytes)
+            .unwrap_or_else(|error| panic!("{name}: expected terminal #UD: {error:?}"));
+        assert_invalid_opcode_trap(&result, prefixes.len() + 1);
     }
 
     // REX2 makes 62H the effective legacy-map opcode, which is a reserved APX
@@ -98,10 +96,9 @@ fn shared_evex_router_does_not_hide_a_rex_before_an_allowed_prefix() {
     // The ordinary EVEX path shares the prefix router used to reach prefixed
     // APX forms. A later 67H must not erase the earlier forbidden REX from the
     // router's legality decision.
-    assert!(matches!(
-        lift_single(&[0x40, 0x67, 0x62, 0xF2, 0x7D, 0x49, 0xC6, 0x4C, 0x80, 0x7F,]),
-        Err(LiftError::InvalidEncoding { .. })
-    ));
+    let result = lift_single(&[0x40, 0x67, 0x62, 0xF2, 0x7D, 0x49, 0xC6, 0x4C, 0x80, 0x7F])
+        .expect("hidden REX before EVEX must be a terminal #UD");
+    assert_invalid_opcode_trap(&result, 3);
 }
 
 #[test]

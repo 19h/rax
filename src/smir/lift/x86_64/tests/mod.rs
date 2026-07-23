@@ -170,6 +170,8 @@ mod three_dnow;
 #[cfg(test)]
 mod tsx;
 #[cfg(test)]
+mod vector_legacy_prefix_reserved;
+#[cfg(test)]
 mod vector_prefix;
 #[cfg(test)]
 mod vex;
