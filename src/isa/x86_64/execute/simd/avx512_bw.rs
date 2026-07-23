@@ -1,6 +1,6 @@
-//! EVEX AVX-512BW byte-shuffle and multiply-add validation frontiers.
+//! EVEX AVX-512BW byte-transform and multiply-add validation frontiers.
 
-use super::avx512::{IntOp, evex_int_arith, evex_pshufb};
+use super::avx512::{IntOp, evex_int_arith, evex_palignr, evex_pshufb};
 use crate::error::{Error, Result};
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
 use crate::vm::vcpu::VcpuExit;
@@ -37,4 +37,25 @@ pub fn evex_bw_pmaddwd(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<O
         return vcpu.inject_undefined_instruction();
     }
     evex_int_arith(vcpu, ctx, IntOp::MaddWD)
+}
+
+/// Execute EVEX VPALIGNR after rejecting reserved fields before state or
+/// memory access. EVEX.W is architecturally ignored.
+pub fn evex_bw_palignr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    if evex_bw_encoding_is_reserved(ctx)? {
+        return vcpu.inject_undefined_instruction();
+    }
+    evex_palignr(vcpu, ctx)
+}
+
+/// Execute EVEX VDBPSADBW after rejecting reserved fields before state or
+/// memory access. EVEX.W must be zero.
+pub fn evex_bw_dbpsadbw(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
+    let evex = ctx
+        .evex
+        .ok_or_else(|| Error::Emulator("VDBPSADBW requires EVEX prefix".to_string()))?;
+    if evex.w || evex_bw_encoding_is_reserved(ctx)? {
+        return vcpu.inject_undefined_instruction();
+    }
+    vcpu.execute_vdbpsadbw(ctx)
 }

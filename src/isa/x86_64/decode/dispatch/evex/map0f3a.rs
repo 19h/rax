@@ -84,7 +84,8 @@ impl X86_64Vcpu {
             0xCF if evex.pp == 1 && evex.w => execute::simd::evex_gf2p8_affine(self, ctx, true),
 
             // VPALIGNR.
-            0x0F if evex.pp == 1 => execute::simd::evex_palignr(self, ctx),
+            0x0F if evex.pp == 1 => execute::simd::evex_bw_palignr(self, ctx),
+            0x0F => self.inject_undefined_instruction(),
 
             // VCVTPS2PH: packed FP32-to-FP16 store-style conversion with imm8 rounding control.
             0x1D if evex.pp == 1 && !evex.w => {
@@ -372,7 +373,8 @@ impl X86_64Vcpu {
             // ============================================================================
 
             // VDBPSADBW (0x42) - Double Block Packed Sum-Absolute-Differences
-            0x42 if evex.pp == 1 => self.execute_vdbpsadbw(ctx),
+            0x42 if evex.pp == 1 && !evex.w => execute::simd::evex_bw_dbpsadbw(self, ctx),
+            0x42 => self.inject_undefined_instruction(),
 
             // ============================================================================
             // AVX10.2 VMINMAX Instructions

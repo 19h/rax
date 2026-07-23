@@ -1025,6 +1025,46 @@ impl X86InstructionBytes {
         }
     }
 
+    /// Validate register-only EVEX VPALIGNR/VDBPSADBW and return whether the
+    /// vector length requires AVX-512VL. VPALIGNR is WIG; VDBPSADBW requires
+    /// W0. Every imm8 is architectural. Memory, EVEX.b, reserved vector
+    /// lengths, malformed masks, incorrect prefixes/opcodes, and incorrect
+    /// lengths fail closed.
+    pub fn evex_register_bw_immediate_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if bytes.len() != 7 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+        let w = p1 & 0x80 != 0;
+
+        if p0 & 0x0F != 3
+            || p1 & 0x04 == 0
+            || p1 & 0x03 != 1
+            || !matches!((opcode, w), (0x0F, _) | (0x42, false))
+            || modrm >> 6 != 3
+        {
+            return None;
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_broadcast = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_broadcast || (zeroing && mask == 0) {
+            return None;
+        }
+        match ll {
+            0 | 1 => Some(true),
+            2 => Some(false),
+            _ => None,
+        }
+    }
+
     /// Validate register-only EVEX VSHUFF32x4/VSHUFF64x2 and
     /// VSHUFI32x4/VSHUFI64x2, returning whether AVX-512VL is required. Only
     /// 256- and 512-bit vector lengths exist; memory, EVEX.b, malformed masks,
