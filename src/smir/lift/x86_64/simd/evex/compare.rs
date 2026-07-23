@@ -238,6 +238,35 @@ impl X86_64Lifter {
         }
 
         let mask = VReg::Arch(ArchReg::X86(X86Reg::K(prefix.aaa)));
+        // Snapshot an aliased raw result before reconstructing `dst`.
+        // XMM/YMM/ZMM names with the same index share architectural backing;
+        // clearing inactive or upper lanes must not change later source lanes.
+        let aliases_dst = match (raw, dst) {
+            (
+                VReg::Arch(ArchReg::X86(
+                    X86Reg::Xmm(raw_index) | X86Reg::Ymm(raw_index) | X86Reg::Zmm(raw_index),
+                )),
+                VReg::Arch(ArchReg::X86(
+                    X86Reg::Xmm(dst_index) | X86Reg::Ymm(dst_index) | X86Reg::Zmm(dst_index),
+                )),
+            ) => raw_index == dst_index,
+            _ => raw == dst,
+        };
+        let raw_value = if aliases_dst {
+            let snapshot = ctx.alloc_vreg();
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::VMov {
+                    dst: snapshot,
+                    src: raw,
+                    width,
+                },
+            ));
+            snapshot
+        } else {
+            raw
+        };
         let old = if prefix.zeroing {
             None
         } else {
@@ -261,6 +290,21 @@ impl X86_64Lifter {
                 dst: zero,
                 src: SrcOperand::Imm(0),
                 width: OpWidth::W64,
+            },
+        ));
+        // Every EVEX vector-register destination clears architectural state
+        // above the operation's result width. Seed the lane reconstruction
+        // from a zero vector instead of `raw`: `raw` may be an architectural
+        // source register whose bits above `width` must not reach `dst`.
+        let result_base = ctx.alloc_vreg();
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::VBroadcast {
+                dst: result_base,
+                scalar: zero,
+                elem,
+                lanes,
             },
         ));
         for lane in 0..lanes {
@@ -295,7 +339,7 @@ impl X86_64Lifter {
                 pc,
                 OpKind::VExtractLane {
                     dst: active,
-                    vec: raw,
+                    vec: raw_value,
                     lane,
                     elem,
                     sign: SignExtend::Zero,
@@ -340,7 +384,7 @@ impl X86_64Lifter {
                 pc,
                 OpKind::VInsertLane {
                     dst,
-                    vec: if lane == 0 { raw } else { dst },
+                    vec: if lane == 0 { result_base } else { dst },
                     scalar: selected,
                     lane,
                     elem,

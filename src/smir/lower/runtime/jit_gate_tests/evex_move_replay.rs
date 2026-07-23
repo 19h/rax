@@ -185,7 +185,6 @@ fn packed_move_replay_admits_and_emits_240_generated_register_forms() {
     assert_eq!(admitted, 240);
 }
 
-#[cfg(target_arch = "x86_64")]
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct MoveState {
     vectors: [[u64; 8]; 32],
@@ -193,7 +192,6 @@ struct MoveState {
     mxcsr: u32,
 }
 
-#[cfg(target_arch = "x86_64")]
 fn interpret_move(bytes: &[u8], initial: &MoveState) -> MoveState {
     use crate::smir::interpret::{BlockResult, SmirInterpreter};
     use crate::smir::ir::TrapKind;
@@ -229,6 +227,104 @@ fn interpret_move(bytes: &[u8], initial: &MoveState) -> MoveState {
         mask: x86.k[1],
         mxcsr: x86.mxcsr,
     }
+}
+
+fn packed_move_element_bits((opcode, pp, w, _): PackedMoveShape) -> u32 {
+    match (opcode, pp, w) {
+        (0x10 | 0x11 | 0x28 | 0x29, 0, false) => 32,
+        (0x10 | 0x11 | 0x28 | 0x29, 1, true) => 64,
+        (0x6F | 0x7F, 3, false) => 8,
+        (0x6F | 0x7F, 3, true) => 16,
+        (0x6F | 0x7F, 1 | 2, false) => 32,
+        (0x6F | 0x7F, 1 | 2, true) => 64,
+        _ => unreachable!(),
+    }
+}
+
+fn packed_move_lane(vector: &[u64; 8], lane: usize, element_bits: u32) -> u64 {
+    let bit = lane * element_bits as usize;
+    let mask = if element_bits == 64 {
+        u64::MAX
+    } else {
+        (1u64 << element_bits) - 1
+    };
+    (vector[bit / 64] >> (bit % 64)) & mask
+}
+
+fn set_packed_move_lane(vector: &mut [u64; 8], lane: usize, element_bits: u32, value: u64) {
+    let bit = lane * element_bits as usize;
+    let mask = if element_bits == 64 {
+        u64::MAX
+    } else {
+        (1u64 << element_bits) - 1
+    };
+    let shift = bit % 64;
+    vector[bit / 64] = (vector[bit / 64] & !(mask << shift)) | ((value & mask) << shift);
+}
+
+fn expected_packed_move(
+    shape: PackedMoveShape,
+    reg: u8,
+    rm: u8,
+    encoded_mask: u8,
+    zeroing: bool,
+    initial: &MoveState,
+) -> MoveState {
+    let opcode = shape.0;
+    let vector_bits = 128usize << shape.3;
+    let element_bits = packed_move_element_bits(shape);
+    let lanes = vector_bits / element_bits as usize;
+    let (dst, src) = if matches!(opcode, 0x10 | 0x28 | 0x6F) {
+        (reg as usize, rm as usize)
+    } else {
+        (rm as usize, reg as usize)
+    };
+    let old_dst = initial.vectors[dst];
+    let source = initial.vectors[src];
+    let mut expected = initial.clone();
+    expected.vectors[dst] = [0; 8];
+    for lane in 0..lanes {
+        let active = encoded_mask == 0 || (initial.mask >> lane) & 1 != 0;
+        let value = if active {
+            packed_move_lane(&source, lane, element_bits)
+        } else if zeroing {
+            0
+        } else {
+            packed_move_lane(&old_dst, lane, element_bits)
+        };
+        set_packed_move_lane(&mut expected.vectors[dst], lane, element_bits, value);
+    }
+    expected
+}
+
+#[test]
+fn packed_move_interpretation_matches_manual_for_all_widths_masks_directions_and_aliases() {
+    let vectors = std::array::from_fn(|register| {
+        std::array::from_fn(|word| {
+            0x0123_4567_89AB_CDEFu64.rotate_left((register * 13 + word * 9) as u32)
+                ^ ((register as u64) << 60)
+                ^ (word as u64 * 0x1111_1111_1111_1111)
+        })
+    });
+    let initial = MoveState {
+        vectors,
+        mask: 0xA55A_3CC3_F00F_9696,
+        mxcsr: 0x1F80,
+    };
+
+    let mut executed = 0usize;
+    for shape in packed_move_shapes() {
+        for (reg, rm) in [(2, 3), (25, 26), (2, 2)] {
+            for (mask, zeroing) in [(0, false), (1, false), (1, true)] {
+                let bytes = native_move_encoding(shape, reg, rm, mask, zeroing);
+                let interpreted = interpret_move(&bytes, &initial);
+                let expected = expected_packed_move(shape, reg, rm, mask, zeroing, &initial);
+                assert_eq!(interpreted, expected, "{bytes:02X?}");
+                executed += 1;
+            }
+        }
+    }
+    assert_eq!(executed, 540);
 }
 
 #[cfg(target_arch = "x86_64")]
