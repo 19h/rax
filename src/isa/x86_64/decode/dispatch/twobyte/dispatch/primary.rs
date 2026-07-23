@@ -393,8 +393,12 @@ impl X86_64Vcpu {
                 }
             }
             // MOVNTSS/MOVNTSD - AMD SSE4A scalar non-temporal stores.
-            0x2B if ctx.rep_prefix == Some(0xF3) => self.execute_movnt_scalar_store(ctx, 4),
-            0x2B if ctx.rep_prefix == Some(0xF2) => self.execute_movnt_scalar_store(ctx, 8),
+            0x2B if ctx.rep_prefix == Some(0xF3) => {
+                execute::simd::execute_sse4a_movnt_store(self, ctx, 4)
+            }
+            0x2B if ctx.rep_prefix == Some(0xF2) => {
+                execute::simd::execute_sse4a_movnt_store(self, ctx, 8)
+            }
             // MOVNTPS/MOVNTPD - packed non-temporal stores.
             0x2B => self.execute_movnt_store(ctx),
             0x2E => execute::simd::ucomiss_ucomisd(self, ctx),

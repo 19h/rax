@@ -1,5 +1,5 @@
 use crate::common::{run_until_hlt, setup_vm as setup_base_vm};
-use rax::vm::vcpu::Registers;
+use rax::vm::vcpu::{Registers, VCpu};
 use vm_memory::{Bytes, GuestAddress};
 
 // MOVNTSS/MOVNTSD - Store Scalar Single/Double Precision Floating-Point Using Non-Temporal Hint
@@ -26,6 +26,9 @@ fn setup_vm(
 ) {
     let (mut vcpu, mem) = setup_base_vm(code, initial_regs);
     vcpu.set_sse4a_enabled(true);
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.cr4 |= 1 << 9; // CR4.OSFXSR: architectural SSE execution enable.
+    vcpu.set_sregs(&sregs).unwrap();
     (vcpu, mem)
 }
 

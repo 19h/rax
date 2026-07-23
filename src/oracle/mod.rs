@@ -4433,6 +4433,9 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             length,
             index,
         } => op_json!("x86_sse4a_bitfield", dst, source, kind, length, index),
+        OpKind::X86Sse4aMovntStore { src, addr, width } => {
+            op_json!("x86_sse4a_movnt_store", src, addr, width)
+        }
         OpKind::X86Cli {
             requires_apx,
             next_pc,

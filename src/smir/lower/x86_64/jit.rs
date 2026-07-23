@@ -149,11 +149,68 @@ impl X86_64Lowerer {
         // after the complete MMU read succeeds.
         let zero_upper = is_load && !matches!(hint, Some(X86OpHint::SseMov { .. }));
 
+        self.emit_jit_vector_mem_helper(guest_pc, is_load, index, addr, size, zero_upper, true)
+    }
+
+    /// Store the low scalar lane of an architectural XMM slot through the x86
+    /// MMU helper. State-backed-only regions read the marshalled slot directly;
+    /// a region that also executes native vector ops publishes/reloads the host
+    /// vector file around the helper through `preserve_vector_mem_helpers`.
+    pub(crate) fn emit_jit_xmm_state_store_op(
+        &mut self,
+        guest_pc: u64,
+        vector: VReg,
+        addr: &Address,
+        width: MemWidth,
+    ) -> Result<(), LowerError> {
+        let VReg::Arch(ArchReg::X86(X86Reg::Xmm(index @ 0..=15))) = vector else {
+            return Err(LowerError::InvalidOperand {
+                op: "X86Sse4aMovntStore".to_string(),
+                operand: "source must be an encodable architectural XMM register".to_string(),
+            });
+        };
+        let size = match width {
+            MemWidth::B4 => 4,
+            MemWidth::B8 => 8,
+            _ => {
+                return Err(LowerError::InvalidOperand {
+                    op: "X86Sse4aMovntStore".to_string(),
+                    operand: "width must be 4 or 8 bytes".to_string(),
+                });
+            }
+        };
+        if !self.mem_helpers {
+            return Err(LowerError::UnsupportedOp {
+                op: "X86Sse4aMovntStore requires JIT memory helpers".to_string(),
+            });
+        }
+
+        self.emit_jit_vector_mem_helper(
+            guest_pc,
+            false,
+            index,
+            addr,
+            size,
+            false,
+            self.preserve_vector_mem_helpers,
+        )
+    }
+
+    fn emit_jit_vector_mem_helper(
+        &mut self,
+        guest_pc: u64,
+        is_load: bool,
+        index: u8,
+        addr: &Address,
+        size: u32,
+        zero_upper: bool,
+        preserve_vectors: bool,
+    ) -> Result<(), LowerError> {
         self.code.emit_u8(0x50); // push guest RAX
         self.emit_load_state_ptr_rax();
         self.code.emit_u8(0x9C); // pushfq; stack remains 16-byte aligned
         self.emit_spill_legacy_gprs_to_state_from_rax(8);
-        self.emit_helper_call_state(PhysReg::Rax, true, true);
+        self.emit_helper_call_state(PhysReg::Rax, true, preserve_vectors);
         self.emit_x86_state_address_rsi(addr)?;
 
         self.code.emit_u8(0x48);
@@ -185,7 +242,7 @@ impl X86_64Lowerer {
         self.code.emit_u8(0xC0); // test rax,rax
         let fault = self.emit_jcc_placeholder(X86Cond::E);
 
-        self.emit_helper_call_state(PhysReg::Rcx, false, true);
+        self.emit_helper_call_state(PhysReg::Rcx, false, preserve_vectors);
         self.emit_reload_all(PhysReg::Rcx);
         self.code.emit_u8(0x9D); // popfq
         self.emit_flag_preserving_stack_pop8();
@@ -194,7 +251,7 @@ impl X86_64Lowerer {
         self.code.emit_u32(0);
 
         self.patch_rel32_to_current(fault)?;
-        self.emit_helper_call_state(PhysReg::Rcx, false, true);
+        self.emit_helper_call_state(PhysReg::Rcx, false, preserve_vectors);
         self.emit_reload_all(PhysReg::Rcx);
         self.code.emit_u8(0x9D);
         self.emit_flag_preserving_stack_pop8();

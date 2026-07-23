@@ -2975,6 +2975,11 @@ impl OpKind {
                 result.extend([*dst, *source]);
             }
 
+            OpKind::X86Sse4aMovntStore { src, addr, .. } => {
+                result.push(*src);
+                result.extend(addr.regs());
+            }
+
             OpKind::VConflict { src, mask, .. } => {
                 result.push(*src);
                 result.extend(mask.iter().copied());

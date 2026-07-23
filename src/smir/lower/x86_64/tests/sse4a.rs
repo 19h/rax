@@ -1,14 +1,15 @@
-//! Fault-precise state-backed native lowering for AMD SSE4A bitfields.
+//! Fault-precise state-backed native lowering for AMD SSE4A operations.
 
 use super::*;
 use crate::isa::x86_64::flags;
 use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86Sse4aBitfieldKind};
 use crate::smir::ir::types::{
-    ArchReg, FunctionId, OpId, OpWidth, SrcOperand, VReg, VirtualId, X86Reg,
+    Address, ArchReg, FunctionId, MemWidth, OpId, OpWidth, SrcOperand, VReg, VirtualId, X86Reg,
 };
 use crate::smir::ir::{FunctionBuilder, Terminator};
 use crate::smir::lower::{
-    X86_GUEST_CPUID_SSE4A_OFFSET, X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET, X86_GUEST_ZMM_OFFSET,
+    X86_GUEST_CPUID_SSE4A_OFFSET, X86_GUEST_CR0_OFFSET, X86_GUEST_CR4_OFFSET,
+    X86_GUEST_VEC_STORE_FN_OFFSET, X86_GUEST_ZMM_OFFSET,
 };
 
 const CR0_EM: u64 = 1 << 2;
@@ -35,7 +36,20 @@ fn bitfield(
     }
 }
 
+fn movnt(src: VReg, addr: Address, width: MemWidth) -> OpKind {
+    OpKind::X86Sse4aMovntStore { src, addr, width }
+}
+
 fn lower_ops(ops: Vec<(u64, OpKind)>, fault_guards: bool) -> Result<(Vec<u8>, usize), LowerError> {
+    lower_ops_with_memory(ops, fault_guards, false, false)
+}
+
+fn lower_ops_with_memory(
+    ops: Vec<(u64, OpKind)>,
+    fault_guards: bool,
+    mem_helpers: bool,
+    preserve_vectors: bool,
+) -> Result<(Vec<u8>, usize), LowerError> {
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
     for (pc, kind) in ops {
         builder.push_op(pc, kind);
@@ -43,9 +57,95 @@ fn lower_ops(ops: Vec<(u64, OpKind)>, fault_guards: bool) -> Result<(Vec<u8>, us
     builder.set_terminator(Terminator::Return { values: vec![] });
     let mut lowerer = X86_64Lowerer::new();
     lowerer.set_jit_fault_deopt_guards(fault_guards);
+    lowerer.set_mem_helpers(mem_helpers);
+    lowerer.set_preserve_vector_mem_helpers(preserve_vectors);
     let lowered = lowerer.lower_function(&builder.finish())?;
     assert!(lowered.relocations.is_empty());
     Ok((lowerer.finalize()?, lowered.entry_offset))
+}
+
+#[test]
+fn lower_sse4a_movnt_requires_memory_helpers_and_embeds_exact_helper_abi() {
+    for (name, source, width, size) in [
+        ("MOVNTSS", xmm(1), MemWidth::B4, 4_u32),
+        ("MOVNTSD extended XMM", xmm(9), MemWidth::B8, 8_u32),
+    ] {
+        let kind = movnt(
+            source,
+            Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rax))),
+            width,
+        );
+        assert!(matches!(
+            lower_ops(vec![(0x2345, kind.clone())], true),
+            Err(LowerError::UnsupportedOp { .. })
+        ));
+
+        let (code, _) = lower_ops_with_memory(vec![(0x2345, kind)], true, true, false)
+            .unwrap_or_else(|error| panic!("{name}: {error:?}"));
+        for (field, value) in [
+            (
+                "source index",
+                u32::from(match source {
+                    VReg::Arch(ArchReg::X86(X86Reg::Xmm(index))) => index,
+                    _ => unreachable!(),
+                }),
+            ),
+            ("byte size", size),
+            ("helper offset", X86_GUEST_VEC_STORE_FN_OFFSET as u32),
+            ("deoptimization PC", 0x2345),
+        ] {
+            assert!(
+                code.windows(4).any(|window| window == value.to_le_bytes()),
+                "{name}: missing {field} {value:#x}: {code:02X?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn lower_sse4a_movnt_rejects_every_noncanonical_shape() {
+    for (name, kind) in [
+        (
+            "virtual source",
+            movnt(
+                VReg::Virtual(VirtualId(0)),
+                Address::Absolute(0x2000),
+                MemWidth::B4,
+            ),
+        ),
+        (
+            "unencodable XMM",
+            movnt(xmm(16), Address::Absolute(0x2000), MemWidth::B8),
+        ),
+        (
+            "invalid width",
+            movnt(xmm(1), Address::Absolute(0x2000), MemWidth::B2),
+        ),
+    ] {
+        assert!(
+            matches!(
+                lower_ops_with_memory(vec![(0x1000, kind)], true, true, false),
+                Err(LowerError::InvalidOperand { .. })
+            ),
+            "{name}"
+        );
+    }
+
+    let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+    builder.push_op(
+        0x1000,
+        movnt(xmm(1), Address::Absolute(0x2000), MemWidth::B4),
+    );
+    builder.set_terminator(Terminator::Return { values: vec![] });
+    let mut hinted = builder.finish();
+    hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::RexByteReg);
+    assert!(!x86_sse4a_movnt_store_shape_valid(&hinted.blocks[0].ops[0]));
+    let mut lowerer = X86_64Lowerer::new();
+    lowerer.set_mem_helpers(true);
+    assert!(matches!(
+        lowerer.lower_function(&hinted),
+        Err(LowerError::InvalidOperand { .. })
+    ));
 }
 
 #[test]
@@ -351,5 +451,13 @@ fn sse4a_shape_validator_accepts_exact_lifted_contract() {
     ] {
         let op = SmirOp::new(OpId(0), 0x1000, kind);
         assert!(x86_sse4a_bitfield_shape_valid(&op), "{op:?}");
+    }
+
+    for kind in [
+        movnt(xmm(0), Address::Absolute(0x2000), MemWidth::B4),
+        movnt(xmm(15), Address::Absolute(0x2000), MemWidth::B8),
+    ] {
+        let op = SmirOp::new(OpId(0), 0x1000, kind);
+        assert!(x86_sse4a_movnt_store_shape_valid(&op), "{op:?}");
     }
 }

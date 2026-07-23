@@ -2,10 +2,15 @@
 
 use super::*;
 use crate::smir::ir::ops::{OpKind, SmirOp, X86OpHint, X86Sse4aBitfieldKind};
-use crate::smir::ir::types::{ArchReg, FunctionId, OpId, VReg, VirtualId, X86Reg};
+use crate::smir::ir::types::{
+    Address, ArchReg, FunctionId, MemWidth, OpId, VReg, VirtualId, X86Reg,
+};
 use crate::smir::ir::{FunctionBuilder, Terminator};
 use crate::smir::lower::runtime::GuestRegs;
-use crate::smir::lower::x86_64::{x86_require_sse4a_shape_valid, x86_sse4a_bitfield_shape_valid};
+use crate::smir::lower::x86_64::{
+    x86_require_sse4a_shape_valid, x86_sse4a_bitfield_shape_valid,
+    x86_sse4a_movnt_store_shape_valid,
+};
 
 fn xmm(index: u8) -> VReg {
     VReg::Arch(ArchReg::X86(X86Reg::Xmm(index)))
@@ -27,11 +32,23 @@ fn bitfield(
     }
 }
 
+fn movnt(src: VReg, addr: Address, width: MemWidth) -> OpKind {
+    OpKind::X86Sse4aMovntStore { src, addr, width }
+}
+
 fn function_with(kind: OpKind) -> crate::smir::ir::SmirFunction {
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
     builder.push_op(0x1000, kind);
     builder.set_terminator(Terminator::Return { values: vec![] });
     builder.finish()
+}
+
+fn x86_gate_with_mem(kind: OpKind, allow_mem: bool) -> bool {
+    is_native_clobber_safe_excluding(
+        &function_with(kind),
+        &std::collections::HashMap::new(),
+        allow_mem,
+    )
 }
 
 #[test]
@@ -130,6 +147,60 @@ fn sse4a_gate_rejects_malformed_operands_controls_and_hints() {
 }
 
 #[test]
+fn sse4a_movnt_gate_requires_memory_mode_and_exact_shape() {
+    for kind in [
+        movnt(xmm(0), Address::Absolute(0x2000), MemWidth::B4),
+        movnt(
+            xmm(15),
+            Address::Direct(VReg::Arch(ArchReg::X86(X86Reg::Rax))),
+            MemWidth::B8,
+        ),
+    ] {
+        let op = SmirOp::new(OpId(0), 0x1000, kind.clone());
+        assert!(!op.kind.is_jit_safe(), "custom memory gate is mandatory");
+        assert!(!op.is_jit_safe(), "custom memory gate is mandatory");
+        assert!(x86_sse4a_movnt_store_shape_valid(&op), "{op:?}");
+        assert!(!x86_gate_with_mem(kind.clone(), false), "{op:?}");
+        assert!(x86_gate_with_mem(kind.clone(), true), "{op:?}");
+        assert!(!aarch64_gate(vec![kind.clone()], true), "{op:?}");
+        assert!(!x86_aarch64_gate(vec![kind]), "{op:?}");
+    }
+
+    for (name, kind) in [
+        (
+            "virtual source",
+            movnt(
+                VReg::Virtual(VirtualId(0)),
+                Address::Absolute(0x2000),
+                MemWidth::B4,
+            ),
+        ),
+        (
+            "unencodable XMM",
+            movnt(xmm(16), Address::Absolute(0x2000), MemWidth::B8),
+        ),
+        (
+            "invalid width",
+            movnt(xmm(1), Address::Absolute(0x2000), MemWidth::B2),
+        ),
+        (
+            "non-x86 GP-relative address",
+            movnt(xmm(1), Address::GpRel { offset: 0 }, MemWidth::B4),
+        ),
+    ] {
+        assert!(!x86_gate_with_mem(kind, true), "{name}");
+    }
+
+    let mut hinted = function_with(movnt(xmm(1), Address::Absolute(0x2000), MemWidth::B4));
+    hinted.blocks[0].ops[0].x86_hint = Some(X86OpHint::RexByteReg);
+    assert!(!is_native_clobber_safe_excluding(
+        &hinted,
+        &std::collections::HashMap::new(),
+        true,
+    ));
+}
+
+#[test]
 fn sse4a_state_detection_layout_and_o2_retention_are_exact() {
     assert_eq!(GuestRegs::default().xmm_state_active, 0);
     assert_eq!(
@@ -175,6 +246,37 @@ fn sse4a_state_detection_layout_and_o2_retention_are_exact() {
         ]
     ));
     assert!(is_native_clobber_safe(&function));
+
+    let mut movnt_function = function_with(movnt(xmm(9), Address::Absolute(0x2000), MemWidth::B8));
+    assert!(uses_x86_xmm_state_excluding(&movnt_function, &excluded));
+    assert!(x86_jit_op_uses_mem_helper(
+        &movnt_function.blocks[0].ops[0].kind
+    ));
+    movnt_function.blocks[0]
+        .ops
+        .insert(0, SmirOp::new(OpId(2), 0x1000, OpKind::X86RequireSse4a));
+    crate::smir::optimize::optimize_function(
+        &mut movnt_function,
+        crate::smir::optimize::OptLevel::O2,
+    );
+    assert!(matches!(
+        movnt_function.entry_block().unwrap().ops.as_slice(),
+        [
+            SmirOp {
+                kind: OpKind::X86RequireSse4a,
+                ..
+            },
+            SmirOp {
+                kind: OpKind::X86Sse4aMovntStore { .. },
+                ..
+            }
+        ]
+    ));
+    assert!(is_native_clobber_safe_excluding(
+        &movnt_function,
+        &excluded,
+        true,
+    ));
 }
 
 #[test]
@@ -190,4 +292,7 @@ fn sse4a_side_effect_metadata_distinguishes_fault_guard_from_data_transform() {
         )
         .has_side_effects()
     );
+    let movnt = movnt(xmm(1), Address::Absolute(0x2000), MemWidth::B4);
+    assert!(movnt.has_side_effects());
+    assert!(movnt.writes_memory());
 }

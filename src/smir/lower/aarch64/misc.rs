@@ -3683,12 +3683,11 @@ impl Aarch64Lowerer {
             }),
             OpKind::MaterializeFlags => Ok(()),
             OpKind::X86RequireApx => self.emit_x86_require_apx(op),
-            OpKind::X86RequireSse4a | OpKind::X86Sse4aBitfield { .. } => {
-                Err(LowerError::UnsupportedOp {
-                    op: "x86 SSE4A state-backed operation has no AArch64 guest-vector bridge"
-                        .into(),
-                })
-            }
+            OpKind::X86RequireSse4a
+            | OpKind::X86Sse4aBitfield { .. }
+            | OpKind::X86Sse4aMovntStore { .. } => Err(LowerError::UnsupportedOp {
+                op: "x86 SSE4A state-backed operation has no AArch64 guest-vector bridge".into(),
+            }),
             OpKind::ClearExclusive => {
                 self.emit(0xd503_3f5f);
                 Ok(())

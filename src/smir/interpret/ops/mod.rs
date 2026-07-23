@@ -13,6 +13,7 @@ mod memory;
 mod meta;
 mod shift;
 mod simd;
+mod sse4a;
 mod system;
 mod system_selector;
 mod unary;

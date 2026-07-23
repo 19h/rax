@@ -699,6 +699,9 @@ impl X86_64Lifter {
             0x12 | 0x13 | 0x16 | 0x17 if prefix2.rep_prefix.is_none() => {
                 self.lift_sse_half_move(opcode2, after_opcode, &prefix2, pc, ctx)
             }
+            0x2B if prefix2.rep_prefix.is_some() => {
+                self.lift_sse4a_movnt_store(after_opcode, &prefix2, pc, ctx)
+            }
             0x2B | 0xE7 => self.lift_sse_movnt(opcode2, after_opcode, &prefix2, pc, ctx),
             0xC2 => self.lift_sse_fp_compare(after_opcode, &prefix2, pc, ctx),
             0xC6 => self.lift_sse_two_source_shuffle_imm(after_opcode, &prefix2, pc, ctx),

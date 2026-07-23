@@ -270,7 +270,10 @@ pub(crate) fn uses_x86_xmm_state_excluding(
             .iter()
             .filter(|block| !excluded.contains_key(&block.id))
             .flat_map(|block| &block.ops)
-            .any(crate::smir::lower::x86_64::x86_sse4a_bitfield_shape_valid)
+            .any(|op| {
+                crate::smir::lower::x86_64::x86_sse4a_bitfield_shape_valid(op)
+                    || crate::smir::lower::x86_64::x86_sse4a_movnt_store_shape_valid(op)
+            })
 }
 
 /// Operations that reach the x86 MMU helper path after exact sequence gates.
@@ -282,6 +285,7 @@ pub(crate) fn x86_jit_op_uses_mem_helper(op: &OpKind) -> bool {
             | OpKind::VLoad { .. }
             | OpKind::VStore { .. }
             | OpKind::PredStore { .. }
+            | OpKind::X86Sse4aMovntStore { .. }
             | OpKind::X86DescriptorTableStore(..)
             | OpKind::X86DescriptorTableLoad(..)
             | OpKind::X86Invpcid(..)

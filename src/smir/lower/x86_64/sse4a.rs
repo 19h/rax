@@ -1,7 +1,7 @@
-//! State-backed native lowering for AMD SSE4A EXTRQ/INSERTQ.
+//! State-backed native lowering for AMD SSE4A operations.
 
 use crate::smir::ir::ops::{OpKind, SmirOp, X86Sse4aBitfieldKind};
-use crate::smir::ir::types::{ArchReg, OpWidth, VReg, X86Reg};
+use crate::smir::ir::types::{ArchReg, MemWidth, OpWidth, VReg, X86Reg};
 use crate::smir::lower::regalloc::PhysReg;
 use crate::smir::lower::{LowerError, X86_GUEST_ZMM_OFFSET};
 
@@ -38,7 +38,31 @@ pub(crate) fn x86_sse4a_bitfield_shape_valid(op: &SmirOp) -> bool {
         || low_xmm_index(*source) == Some(dst_index)
 }
 
+pub(crate) fn x86_sse4a_movnt_store_shape_valid(op: &SmirOp) -> bool {
+    matches!(
+        &op.kind,
+        OpKind::X86Sse4aMovntStore {
+            src,
+            width: MemWidth::B4 | MemWidth::B8,
+            ..
+        } if op.x86_hint.is_none() && low_xmm_index(*src).is_some()
+    )
+}
+
 impl X86_64Lowerer {
+    pub(crate) fn emit_x86_sse4a_movnt_store(&mut self, op: &SmirOp) -> Result<(), LowerError> {
+        if !x86_sse4a_movnt_store_shape_valid(op) {
+            return Err(LowerError::InvalidOperand {
+                op: "X86Sse4aMovntStore".to_string(),
+                operand: "requires an unhinted low-XMM source and 4- or 8-byte width".to_string(),
+            });
+        }
+        let OpKind::X86Sse4aMovntStore { src, addr, width } = &op.kind else {
+            unreachable!("validated SSE4A MOVNT operation changed kind");
+        };
+        self.emit_jit_xmm_state_store_op(op.guest_pc, *src, addr, *width)
+    }
+
     /// Compute in the marshalled ZMM slot with GPR-only host instructions.
     /// Every scratch GPR and the complete native flags image are pushed before
     /// use, so the identity-mapped architectural GPR file remains unchanged.

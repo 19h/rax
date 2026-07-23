@@ -4030,7 +4030,7 @@ unsafe extern "C" fn rax_jit_vec_store(
     src_idx: u32,
     size: u32,
 ) -> u64 {
-    if src_idx >= 32 || !matches!(size, 16 | 32 | 64) {
+    if src_idx >= 32 || !matches!(size, 4 | 8 | 16 | 32 | 64) {
         return 0;
     }
     let Some(state) = (unsafe { state.as_mut() }) else {
@@ -4046,20 +4046,23 @@ unsafe extern "C" fn rax_jit_vec_store(
 
     let mut bytes = [0u8; 64];
     for (chunk, word) in bytes[..size as usize]
-        .chunks_exact_mut(8)
+        .chunks_mut(8)
         .zip(state.zmm[src_idx as usize])
     {
-        chunk.copy_from_slice(&word.to_le_bytes());
+        let word = word.to_le_bytes();
+        chunk.copy_from_slice(&word[..chunk.len()]);
     }
 
     if vcpu.jit_mem_log.is_some() {
         match vcpu.read_bytes(addr, size as usize) {
             Ok(old) => {
-                for (offset, chunk) in old.chunks_exact(8).enumerate() {
+                for (offset, chunk) in old.chunks(8).enumerate() {
+                    let mut value = [0u8; 8];
+                    value[..chunk.len()].copy_from_slice(chunk);
                     vcpu.push_jit_mem_log((
                         addr.wrapping_add((offset * 8) as u64),
-                        8,
-                        u64::from_le_bytes(chunk.try_into().expect("8-byte vector chunk")),
+                        chunk.len() as u8,
+                        u64::from_le_bytes(value),
                     ));
                     if vcpu.jit_mem_log.is_none() {
                         break;
@@ -6809,6 +6812,23 @@ mod tests {
             assert_eq!(value, 0xCCCC_CCCC_CCCC_CCCC);
         }
 
+        for (addr, size, expected_prefix) in [
+            (0x3100, 4_u32, &[0, 1, 2, 3][..]),
+            (0x3110, 8_u32, &[0, 1, 2, 3, 4, 5, 6, 7][..]),
+        ] {
+            mem.write_slice(&old[..8], GuestAddress(addr)).unwrap();
+            vcpu.jit_mem_log = Some(Vec::new());
+            assert_eq!(unsafe { rax_jit_vec_store(&mut state, addr, 31, size) }, 1);
+            let mut scalar = [0u8; 8];
+            mem.read_slice(&mut scalar, GuestAddress(addr)).unwrap();
+            assert_eq!(&scalar[..size as usize], expected_prefix);
+            assert_eq!(&scalar[size as usize..], &old[size as usize..8]);
+            assert_eq!(
+                vcpu.jit_mem_log.take().unwrap(),
+                vec![(addr, size as u8, 0xCCCC_CCCC_CCCC_CCCC >> (64 - size * 8))]
+            );
+        }
+
         vcpu.mmu.mark_code_page(0x6000);
         let protected = [0x55u8; 16];
         mem.write_slice(&protected, GuestAddress(0x5FF8)).unwrap();
@@ -6818,7 +6838,7 @@ mod tests {
             .unwrap();
         assert_eq!(unchanged, protected, "either covered code page must deopt");
         assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 32, 16) }, 0);
-        assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 0, 8) }, 0);
+        assert_eq!(unsafe { rax_jit_vec_store(&mut state, 0x3000, 0, 2) }, 0);
         assert_eq!(
             unsafe { rax_jit_vec_load(std::ptr::null_mut(), 0, 0, 16, 0) },
             0

@@ -2,7 +2,7 @@
 
 use crate::smir::ir::TrapKind;
 use crate::smir::ir::ops::{OpKind, SmirOp, X86Sse4aBitfieldKind};
-use crate::smir::ir::types::OpId;
+use crate::smir::ir::types::{MemWidth, OpId};
 use crate::smir::lift::x86_64::{X86_64Lifter, X86Prefix, decode_modrm};
 use crate::smir::lift::{ControlFlow, LiftContext, LiftError, LiftResult};
 
@@ -92,6 +92,48 @@ impl X86_64Lifter {
         Ok(LiftResult::fallthrough(
             ops,
             prefix.cursor + modrm.bytes_consumed + if immediate { 2 } else { 0 },
+        ))
+    }
+
+    pub(crate) fn lift_sse4a_movnt_store(
+        &self,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        let width = match (prefix.rep_prefix, prefix.operand_size_override) {
+            (Some(0xF3), false) => MemWidth::B4,
+            (Some(0xF2), false) => MemWidth::B8,
+            _ => return Ok(Self::sse4a_invalid_opcode(prefix.cursor)),
+        };
+        if prefix.lock || prefix.rex2.is_some() {
+            return Ok(Self::sse4a_invalid_opcode(prefix.cursor));
+        }
+
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        if !modrm.is_memory {
+            return Ok(Self::sse4a_invalid_opcode(
+                prefix.cursor + modrm.bytes_consumed,
+            ));
+        }
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let (addr, addr_ops) = self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+        let mut ops = Vec::with_capacity(addr_ops.len() + 2);
+        ops.push(SmirOp::new(OpId(0), pc, OpKind::X86RequireSse4a));
+        ops.extend(addr_ops);
+        ops.push(SmirOp::new(
+            OpId(ops.len() as u16),
+            pc,
+            OpKind::X86Sse4aMovntStore {
+                src: self.xmm(modrm.reg),
+                addr,
+                width,
+            },
+        ));
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
         ))
     }
 }

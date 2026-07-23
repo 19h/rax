@@ -1,4 +1,4 @@
-//! AMD SSE4A EXTRQ/INSERTQ execution.
+//! AMD SSE4A EXTRQ/INSERTQ and MOVNTSS/MOVNTSD execution.
 
 use crate::error::Result;
 use crate::isa::x86_64::cpu::{InsnContext, X86_64Vcpu};
@@ -15,6 +15,21 @@ fn sse4a_mask(length: u8) -> u64 {
     } else {
         u64::MAX >> (64 - length)
     }
+}
+
+/// Validate the dynamic SSE4A execution state in architectural exception
+/// priority order. Reserved encoding checks remain the caller's responsibility
+/// and must run before this helper so an encoding #UD wins over CR0.TS #NM.
+fn require_sse4a(vcpu: &mut X86_64Vcpu) -> Result<bool> {
+    if !vcpu.sse4a_enabled() || vcpu.sregs.cr0 & CR0_EM != 0 || vcpu.sregs.cr4 & CR4_OSFXSR == 0 {
+        vcpu.inject_undefined_instruction()?;
+        return Ok(false);
+    }
+    if vcpu.sregs.cr0 & CR0_TS != 0 {
+        vcpu.inject_exception(7, None)?;
+        return Ok(false);
+    }
+    Ok(true)
 }
 
 /// AMD SSE4A EXTRQ/INSERTQ (66/F2 0F 78/79).
@@ -44,11 +59,7 @@ pub(in crate::isa::x86_64) fn execute_sse4a_bitfield(
     // AMD APM Vol. 4 specifies #UD before #NM when the feature or architectural
     // SSE enable state is absent. No register value or immediate is consumed
     // before this dynamic check, so the fault remains non-committing.
-    if !vcpu.sse4a_enabled() || vcpu.sregs.cr0 & CR0_EM != 0 || vcpu.sregs.cr4 & CR4_OSFXSR == 0 {
-        return vcpu.inject_undefined_instruction();
-    }
-    if vcpu.sregs.cr0 & CR0_TS != 0 {
-        vcpu.inject_exception(7, None)?;
+    if !require_sse4a(vcpu)? {
         return Ok(None);
     }
 
@@ -92,6 +103,39 @@ pub(in crate::isa::x86_64) fn execute_sse4a_bitfield(
         let shifted_mask = mask.wrapping_shl(u32::from(index));
         (old & !shifted_mask) | ((source & mask).wrapping_shl(u32::from(index)))
     };
+    vcpu.regs.rip += ctx.cursor as u64;
+    Ok(None)
+}
+
+/// AMD SSE4A MOVNTSS/MOVNTSD (F3/F2 0F 2B /r).
+///
+/// RAX does not model cacheability or write-combining queues, so the
+/// non-temporal hint has the same functional memory effect as an ordinary
+/// 32-bit or 64-bit store. Encoding and execution-state faults remain exact.
+pub(in crate::isa::x86_64) fn execute_sse4a_movnt_store(
+    vcpu: &mut X86_64Vcpu,
+    ctx: &mut InsnContext,
+    size: u8,
+) -> Result<Option<VcpuExit>> {
+    let prefix_valid = matches!(
+        (size, ctx.rep_prefix, ctx.operand_size_override),
+        (4, Some(0xF3), false) | (8, Some(0xF2), false)
+    );
+    if !prefix_valid {
+        return vcpu.inject_undefined_instruction();
+    }
+
+    // The encoding is memory-only. Validate ModR/M before the dynamic state
+    // guard so a reserved register form raises #UD even when CR0.TS is set.
+    let (reg, _rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
+    if !is_memory {
+        return vcpu.inject_undefined_instruction();
+    }
+    if !require_sse4a(vcpu)? {
+        return Ok(None);
+    }
+
+    vcpu.write_mem(addr, vcpu.regs.xmm[reg as usize][0], size)?;
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }
@@ -228,6 +272,137 @@ mod tests {
             assert_eq!(vcpu.regs.rflags, INITIAL_FLAGS, "{} flags", case.name);
             assert_eq!(vcpu.regs.rip, case.code.len() as u64, "{} RIP", case.name);
         }
+    }
+
+    #[test]
+    fn direct_sse4a_movnt_stores_exact_scalar_width_and_extended_xmm() {
+        for (name, code, source, address, expected) in [
+            (
+                "MOVNTSS",
+                &[0xF3, 0x0F, 0x2B, 0x08][..],
+                1_usize,
+                0x2000_u64,
+                &[0x88, 0x77, 0x66, 0x55][..],
+            ),
+            (
+                "MOVNTSD extended XMM and disp8",
+                &[0xF2, 0x44, 0x0F, 0x2B, 0x48, 0x08][..],
+                9,
+                0x2008,
+                &[0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11][..],
+            ),
+        ] {
+            let mut vcpu = vcpu_with_code(code);
+            vcpu.regs.rax = 0x2000;
+            vcpu.regs.xmm[source] = [0x1122_3344_5566_7788, 0xA1A2_A3A4_A5A6_A7A8];
+            vcpu.write_mem(address, 0xCCCC_CCCC_CCCC_CCCC, 8).unwrap();
+            let before_xmm = vcpu.regs.xmm;
+
+            assert!(
+                vcpu.step()
+                    .unwrap_or_else(|error| panic!("{name}: {error:?}"))
+                    .is_none()
+            );
+            let stored = vcpu.read_mem(address, 8).unwrap().to_le_bytes();
+            assert_eq!(&stored[..expected.len()], expected, "{name}: scalar lane");
+            if expected.len() == 4 {
+                assert_eq!(&stored[4..], &[0xCC; 4], "{name}: adjacent bytes");
+            }
+            assert_eq!(vcpu.regs.xmm, before_xmm, "{name}: XMM source");
+            assert_eq!(vcpu.regs.rflags, INITIAL_FLAGS, "{name}: flags");
+            assert_eq!(vcpu.regs.rip, code.len() as u64, "{name}: RIP");
+        }
+    }
+
+    #[test]
+    fn direct_sse4a_movnt_dynamic_faults_are_precise_and_noncommitting() {
+        for (name, enabled, cr0, cr4, vector) in [
+            ("feature absent", false, 0x21, CR4_OSFXSR, 6),
+            ("CR0.EM", true, 0x21 | CR0_EM, CR4_OSFXSR, 6),
+            ("CR0.TS", true, 0x21 | CR0_TS, CR4_OSFXSR, 7),
+            ("CR4.OSFXSR absent", true, 0x21, 0, 6),
+            (
+                "feature absence precedes CR0.TS",
+                false,
+                0x21 | CR0_TS,
+                CR4_OSFXSR,
+                6,
+            ),
+            (
+                "CR0.EM precedes CR0.TS",
+                true,
+                0x21 | CR0_EM | CR0_TS,
+                CR4_OSFXSR,
+                6,
+            ),
+            (
+                "CR4.OSFXSR absence precedes CR0.TS",
+                true,
+                0x21 | CR0_TS,
+                0,
+                6,
+            ),
+        ] {
+            let mut vcpu = vcpu_with_code(&[0xF3, 0x0F, 0x2B, 0x08]);
+            vcpu.regs.rax = 0x2000;
+            vcpu.regs.xmm[1] = [0x1122_3344_5566_7788, 0xA1A2_A3A4_A5A6_A7A8];
+            vcpu.write_mem(0x2000, 0xCCCC_CCCC_CCCC_CCCC, 8).unwrap();
+            vcpu.set_sse4a_enabled(enabled);
+            vcpu.sregs.cr0 = cr0;
+            vcpu.sregs.cr4 = cr4;
+            let before = vcpu.regs.clone();
+
+            let error = format!("{:#}", vcpu.step().expect_err(name));
+            assert!(
+                error.contains(&format!("IDT entry {vector} not present")),
+                "{name}: {error}"
+            );
+            assert_eq!(
+                vcpu.read_mem(0x2000, 8).unwrap(),
+                0xCCCC_CCCC_CCCC_CCCC,
+                "{name}: memory"
+            );
+            assert_eq!(vcpu.regs.xmm, before.xmm, "{name}: XMM");
+            assert_eq!(vcpu.regs.rflags, before.rflags, "{name}: flags");
+            assert_eq!(vcpu.regs.rip, before.rip, "{name}: RIP");
+        }
+    }
+
+    #[test]
+    fn direct_sse4a_movnt_reserved_shapes_precede_ts_and_memory_faults_do_not_commit() {
+        for (name, code) in [
+            ("register form", &[0xF3, 0x0F, 0x2B, 0xC1][..]),
+            ("combined 66 prefix", &[0x66, 0xF3, 0x0F, 0x2B, 0x08][..]),
+            ("LOCK", &[0xF0, 0xF3, 0x0F, 0x2B, 0x08][..]),
+            ("REX2", &[0xF3, 0xD5, 0x00, 0x0F, 0x2B, 0x08][..]),
+        ] {
+            let mut vcpu = vcpu_with_code(code);
+            vcpu.sregs.cr0 |= CR0_TS;
+            vcpu.regs.rax = 0x2000;
+            vcpu.write_mem(0x2000, 0xCCCC_CCCC_CCCC_CCCC, 8).unwrap();
+            let before = vcpu.regs.clone();
+
+            let error = format!("{:#}", vcpu.step().expect_err(name));
+            assert!(error.contains("IDT entry 6 not present"), "{name}: {error}");
+            assert_eq!(
+                vcpu.read_mem(0x2000, 8).unwrap(),
+                0xCCCC_CCCC_CCCC_CCCC,
+                "{name}: memory"
+            );
+            assert_eq!(vcpu.regs.xmm, before.xmm, "{name}: XMM");
+            assert_eq!(vcpu.regs.rflags, before.rflags, "{name}: flags");
+            assert_eq!(vcpu.regs.rip, before.rip, "{name}: RIP");
+        }
+
+        let mut fault = vcpu_with_code(&[0xF2, 0x0F, 0x2B, 0x08]);
+        fault.regs.rax = 0x20_000;
+        fault.regs.xmm[1] = [0x1122_3344_5566_7788, 0xA1A2_A3A4_A5A6_A7A8];
+        let before = fault.regs.clone();
+        let error = format!("{:#}", fault.step().expect_err("unmapped MOVNTSD"));
+        assert!(error.contains("failed to write at 0x20000"), "{error}");
+        assert_eq!(fault.regs.xmm, before.xmm);
+        assert_eq!(fault.regs.rflags, before.rflags);
+        assert_eq!(fault.regs.rip, before.rip);
     }
 
     #[test]

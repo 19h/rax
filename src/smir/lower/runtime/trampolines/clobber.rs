@@ -505,6 +505,13 @@ pub(crate) fn block_is_clobber_safe(
         );
         let vector_mem_ok = allow_mem && x86_jit_vector_mem_shape_valid(&op.kind);
         let mmx_mem_ok = allow_mem && x86_jit_mmx_mem_shape_valid(op);
+        let sse4a_movnt_ok = allow_mem
+            && crate::smir::lower::x86_64::x86_sse4a_movnt_store_shape_valid(op)
+            && matches!(
+                &op.kind,
+                OpKind::X86Sse4aMovntStore { addr, .. }
+                    if x86_jit_mem_address_shape_valid(addr)
+            );
         let stack_mov_ok = x86_state_backed_stack_mov_valid(&op.kind);
         let stack_alu_ok = x86_state_backed_stack_alu_valid(&op.kind);
         let state_extend_ok = crate::smir::lower::x86_64::x86_state_backed_gpr_extend_valid(op);
@@ -764,6 +771,7 @@ pub(crate) fn block_is_clobber_safe(
             || alignment_ok
             || vector_mem_ok
             || mmx_mem_ok
+            || sse4a_movnt_ok
             || descriptor_store_ok
             || descriptor_load_ok
             || far_jump_ok
@@ -865,6 +873,9 @@ pub(crate) fn block_is_clobber_safe(
             && !vector_mem_ok
             && !mmx_mem_ok
         {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86Sse4aMovntStore { .. }) && !sse4a_movnt_ok {
             return false;
         }
         if matches!(op.kind, OpKind::X86XGetBv { .. }) && !x86_xgetbv_shape_valid(&op.kind) {

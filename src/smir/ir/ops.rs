@@ -3894,6 +3894,16 @@ pub enum OpKind {
         index: Option<u8>,
     },
 
+    /// AMD SSE4A MOVNTSS/MOVNTSD scalar non-temporal store. `src` is the
+    /// architectural XMM register and only its low 32 or 64 bits are written.
+    /// The non-temporal cache hint is architectural provenance; SMIR memory
+    /// backends that do not model cacheability perform an ordinary store.
+    X86Sse4aMovntStore {
+        src: VReg,
+        addr: Address,
+        width: MemWidth,
+    },
+
     /// x86 CLI with architectural IOPL/VME/PVI routing. `requires_apx`
     /// records a REX2 encoding so execution can deliver #UD before privilege
     /// checks when APX is disabled. Native execution hands off at the exact
@@ -5166,6 +5176,7 @@ impl OpKind {
             | OpKind::FCmp { .. }
             | OpKind::X86FpCompare { .. }
             | OpKind::VStore { .. }
+            | OpKind::X86Sse4aMovntStore { .. }
             | OpKind::WriteFlags { .. }
             | OpKind::SetCF { .. }
             | OpKind::SetDF { .. }
@@ -5258,6 +5269,7 @@ impl OpKind {
                     | OpKind::ClearExclusive
                     | OpKind::Fence { .. }
                     | OpKind::VStore { .. }
+                    | OpKind::X86Sse4aMovntStore { .. }
                     | OpKind::WriteFlags { .. }
                     | OpKind::SetCF { .. }
                     | OpKind::SetDF { .. }
@@ -5569,6 +5581,7 @@ impl OpKind {
                 | OpKind::AtomicCmpXadd { .. }
                 | OpKind::StoreExclusive { .. }
                 | OpKind::VStore { .. }
+                | OpKind::X86Sse4aMovntStore { .. }
                 | OpKind::X86StoreMxcsr { .. }
                 | OpKind::X86X87Control {
                     kind: X86X87ControlKind::StoreControlWord
