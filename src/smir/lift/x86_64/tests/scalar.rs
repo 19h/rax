@@ -12,7 +12,7 @@ fn lea_ignores_segment_override() {
     let addr = ops
         .iter()
         .find_map(|o| match &o.kind {
-            OpKind::Lea { addr, .. } => Some(addr),
+            OpKind::X86Lea { addr, .. } => Some(addr),
             _ => None,
         })
         .expect("a Lea op");
@@ -20,6 +20,39 @@ fn lea_ignores_segment_override() {
         !matches!(addr, Address::SegmentRel { .. }),
         "LEA must NOT add the segment base (got {addr:?})"
     );
+}
+
+#[test]
+fn lea_lifts_architectural_destination_width() {
+    for (name, bytes, width) in [
+        ("r16", &[0x66, 0x8d, 0x50, 0x01][..], OpWidth::W16),
+        ("r32", &[0x8d, 0x50, 0x01][..], OpWidth::W32),
+    ] {
+        let ops = lift_one(bytes).unwrap_or_else(|error| panic!("{name}: {error:?}"));
+        assert_eq!(ops.len(), 1, "{name}: one width-aware LEA");
+        match ops[0].kind {
+            OpKind::X86Lea {
+                dst,
+                width: got_width,
+                ..
+            } => {
+                assert_eq!(dst, x86_gpr(2), "{name}: architectural destination");
+                assert_eq!(got_width, width, "{name}: destination width");
+            }
+            ref other => panic!("{name}: expected x86 LEA, got {other:?}"),
+        }
+    }
+
+    let ops = lift_one(&[0x48, 0x8d, 0x50, 0x01]).expect("r64 LEA");
+    assert_eq!(ops.len(), 1);
+    assert!(matches!(
+        ops[0].kind,
+        OpKind::X86Lea {
+            dst: VReg::Arch(ArchReg::X86(X86Reg::Rdx)),
+            width: OpWidth::W64,
+            ..
+        }
+    ));
 }
 /// A genuine FS/GS LOAD, by contrast, DOES carry the segment base.
 #[test]
@@ -3244,13 +3277,16 @@ fn lift_nop_cache_and_prefetch_hints_consume_complete_encodings() {
         Err(LiftError::InvalidEncoding { .. })
     ));
 
-    let rdssp = lift_single(&[0xF3, 0x0F, 0x1E, 0xC8]).unwrap();
-    assert!(matches!(
-        rdssp.control_flow,
-        ControlFlow::Trap {
-            kind: TrapKind::InvalidOpcode
-        }
-    ));
+    for bytes in [
+        &[0xF3, 0x0F, 0x1E, 0xC8][..],
+        &[0xF3, 0x48, 0x0F, 0x1E, 0xC9][..],
+        &[0xF3, 0x49, 0x0F, 0x1E, 0xC8][..],
+    ] {
+        let rdssp = lift_single(bytes).unwrap();
+        assert_eq!(rdssp.bytes_consumed, bytes.len());
+        assert!(rdssp.ops.is_empty());
+        assert!(matches!(rdssp.control_flow, ControlFlow::Fallthrough));
+    }
 }
 #[test]
 fn lift_rdtsc_has_exact_destinations_and_length() {

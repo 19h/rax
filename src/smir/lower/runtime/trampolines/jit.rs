@@ -458,6 +458,34 @@ pub(crate) fn x86_state_backed_stack_alu_valid(op: &crate::smir::ir::ops::OpKind
         _ => false,
     }
 }
+
+/// Whether a generic scalar ALU immediate can be represented by the x86-64
+/// instruction selected by the native lowerer. In 64-bit operand size, Group 1
+/// and TEST encode only a sign-extended imm32; values such as +80000000h cannot
+/// be truncated into that field without changing their architectural value.
+pub(crate) fn x86_jit_scalar_alu_immediate_valid(op: &crate::smir::ir::ops::OpKind) -> bool {
+    use crate::smir::ir::ops::OpKind;
+    use crate::smir::ir::types::{OpWidth, SrcOperand};
+
+    let valid = |source: &SrcOperand, width: OpWidth| match source {
+        SrcOperand::Imm(value) => width != OpWidth::W64 || i32::try_from(*value).is_ok(),
+        SrcOperand::Imm64(_) => false,
+        _ => true,
+    };
+
+    match op {
+        OpKind::Add { src2, width, .. }
+        | OpKind::Sub { src2, width, .. }
+        | OpKind::Adc { src2, width, .. }
+        | OpKind::Sbb { src2, width, .. }
+        | OpKind::And { src2, width, .. }
+        | OpKind::Or { src2, width, .. }
+        | OpKind::Xor { src2, width, .. }
+        | OpKind::Cmp { src2, width, .. }
+        | OpKind::Test { src2, width, .. } => valid(src2, *width),
+        _ => true,
+    }
+}
 pub(crate) fn x86_native_rdpid_gpr(reg: &crate::smir::ir::types::VReg) -> bool {
     use crate::smir::ir::types::{ArchReg, VReg};
 

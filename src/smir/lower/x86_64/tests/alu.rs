@@ -13,6 +13,27 @@ fn test_emit_setcc() {
     // SETE AL = 0F 94 C0
     assert_eq!(buf.data(), &[0x0F, 0x94, 0xC0]);
 }
+
+#[test]
+fn test_immediate_encoding_tracks_operand_width() {
+    for (width, expected) in [
+        (OpWidth::W8, &[0x40, 0xF6, 0xC6, 0x7F][..]),
+        (OpWidth::W16, &[0x66, 0xF7, 0xC6, 0xFF, 0x0F][..]),
+        (OpWidth::W32, &[0xF7, 0xC6, 0xFF, 0x0F, 0x00, 0x00][..]),
+        (
+            OpWidth::W64,
+            &[0x48, 0xF7, 0xC6, 0xFF, 0x0F, 0x00, 0x00][..],
+        ),
+    ] {
+        let mut buffer = CodeBuffer::new();
+        X86Emitter::new(&mut buffer).emit_test_ri(
+            PhysReg::Rsi,
+            if width == OpWidth::W8 { 0x7F } else { 0x0FFF },
+            width,
+        );
+        assert_eq!(buffer.data(), expected, "{width:?}");
+    }
+}
 #[test]
 fn lower_mulx_hint_rejects_malformed_shapes() {
     let gpr = |reg| VReg::Arch(ArchReg::X86(reg));

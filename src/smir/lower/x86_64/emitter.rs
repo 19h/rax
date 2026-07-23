@@ -2214,19 +2214,13 @@ impl<'a> X86Emitter<'a> {
     /// TEST r/m, imm
     pub fn emit_test_ri(&mut self, op1: PhysReg, imm: i64, width: OpWidth) {
         self.emit_rex_for_width(width, PhysReg::Rax, op1);
-
-        match width {
-            OpWidth::W8 => {
-                self.code.emit_u8(0xF6);
-                self.emit_modrm_digit(0b11, 0, op1);
-                self.code.emit_u8(imm as u8);
-            }
-            _ => {
-                self.code.emit_u8(0xF7);
-                self.emit_modrm_digit(0b11, 0, op1);
-                self.code.emit_i32(imm as i32);
-            }
-        }
+        self.code
+            .emit_u8(if width == OpWidth::W8 { 0xF6 } else { 0xF7 });
+        self.emit_modrm_digit(0b11, 0, op1);
+        // TEST follows the operand width through W32; W64 alone uses the
+        // architectural sign-extended imm32. Emitting four bytes for W16 made
+        // the trailing 00 00 decode as `add byte ptr [rax],al`.
+        self.emit_imm_by_width(imm, width);
     }
 
     pub fn emit_test_mr_disp(
@@ -3434,7 +3428,18 @@ impl<'a> X86Emitter<'a> {
     }
 
     pub fn emit_lea_disp(&mut self, dst: PhysReg, base: PhysReg, disp: i32, disp_size: DispSize) {
-        self.emit_rex_rr(true, dst, base);
+        self.emit_lea_disp_width(dst, base, disp, disp_size, OpWidth::W64);
+    }
+
+    pub fn emit_lea_disp_width(
+        &mut self,
+        dst: PhysReg,
+        base: PhysReg,
+        disp: i32,
+        disp_size: DispSize,
+        width: OpWidth,
+    ) {
+        self.emit_rex_for_width_mem_reg(width, dst, base, None);
         self.code.emit_u8(0x8D);
         self.emit_modrm_mem_disp(dst, base, disp, disp_size);
     }
@@ -3460,14 +3465,31 @@ impl<'a> X86Emitter<'a> {
         disp: i32,
         disp_size: DispSize,
     ) {
-        self.emit_rex(true, dst, Some(index), base.unwrap_or(PhysReg::Rbp));
+        self.emit_lea_sib_disp_width(dst, base, index, scale, disp, disp_size, OpWidth::W64);
+    }
+
+    pub fn emit_lea_sib_disp_width(
+        &mut self,
+        dst: PhysReg,
+        base: Option<PhysReg>,
+        index: PhysReg,
+        scale: u8,
+        disp: i32,
+        disp_size: DispSize,
+        width: OpWidth,
+    ) {
+        self.emit_rex_for_width_mem_reg(width, dst, base.unwrap_or(PhysReg::Rbp), Some(index));
         self.code.emit_u8(0x8D);
         self.emit_modrm_sib_disp(dst, base, index, scale, disp, disp_size);
     }
 
     /// LEA r64, [rip + disp32]
     pub fn emit_lea_pcrel(&mut self, dst: PhysReg, disp: i32) -> usize {
-        self.emit_rex_rr(true, dst, PhysReg::Rbp);
+        self.emit_lea_pcrel_width(dst, disp, OpWidth::W64)
+    }
+
+    pub fn emit_lea_pcrel_width(&mut self, dst: PhysReg, disp: i32, width: OpWidth) -> usize {
+        self.emit_rex_for_width_mem_reg(width, dst, PhysReg::Rbp, None);
         self.code.emit_u8(0x8D);
         self.emit_modrm_pcrel(dst, disp)
     }

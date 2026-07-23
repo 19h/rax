@@ -1818,6 +1818,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             to_width,
         } => op_json!("truncate", dst, src, from_width, to_width),
         OpKind::Lea { dst, addr } => op_json!("lea", dst, addr),
+        OpKind::X86Lea { dst, addr, width } => op_json!("x86_lea", dst, addr, width),
         OpKind::Xchg { reg1, reg2, width } => op_json!("xchg", reg1, reg2, width),
         OpKind::Load {
             dst,

@@ -132,3 +132,32 @@ fn block_merging_migrates_x86_instruction_provenance() {
     let spans = x86_evex_fp_replay_spans(&function.blocks[0], &function.x86_instruction_bytes);
     assert_eq!(spans.get(&1).map(|span| span.end), Some(2));
 }
+
+#[test]
+fn block_merging_contracts_an_entire_linear_chain_without_dangling_targets() {
+    let entry = BlockId(0);
+    let middle = BlockId(1);
+    let tail = BlockId(2);
+    let mut first = SmirBlock::new(entry, 0x1000);
+    first.push_op(SmirOp::new(OpId(0), 0x1000, OpKind::Nop));
+    first.set_terminator(Terminator::Branch { target: middle });
+    let mut second = SmirBlock::new(middle, 0x1001);
+    second.push_op(SmirOp::new(OpId(1), 0x1001, OpKind::Nop));
+    second.set_terminator(Terminator::Branch { target: tail });
+    let mut third = SmirBlock::new(tail, 0x1002);
+    third.push_op(SmirOp::new(OpId(2), 0x1002, OpKind::Nop));
+    third.set_terminator(Terminator::Return { values: Vec::new() });
+    let mut function = SmirFunction::new(FunctionId(0), entry, 0x1000);
+    function.add_block(first);
+    function.add_block(second);
+    function.add_block(third);
+
+    assert_eq!(block_merging(&mut function), 2);
+    assert_eq!(function.blocks.len(), 1);
+    assert_eq!(function.blocks[0].id, entry);
+    assert_eq!(function.blocks[0].ops.len(), 3);
+    assert!(matches!(
+        function.blocks[0].terminator,
+        Terminator::Return { ref values } if values.is_empty()
+    ));
+}

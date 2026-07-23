@@ -1454,6 +1454,7 @@ fn native_xsetbv_validates_state_commits_and_hands_off_precisely() {
         ("x87+sse", 3, false),
         ("avx", 7, false),
         ("avx512", 0xE7, false),
+        ("pkru", 0x2E7, false),
         ("apx", 0x0008_00E7, true),
     ] {
         let regs = run(value, 1 << 18, 1, 0, apx_enabled, 0);

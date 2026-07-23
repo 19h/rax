@@ -1097,9 +1097,10 @@ impl X86_64Lifter {
         ops.push(SmirOp::new(
             OpId(ops.len() as u16),
             pc,
-            OpKind::Lea {
+            OpKind::X86Lea {
                 dst: self.gpr(modrm.reg),
                 addr,
+                width: prefix.op_width(),
             },
         ));
 

@@ -1021,6 +1021,15 @@ pub enum OpKind {
         addr: Address,
     },
 
+    /// x86 LEA with the architectural destination width. Address calculation
+    /// remains 64-bit (or is explicitly narrowed by lifted address-size ops),
+    /// while W32 zero-extends and W16 preserves the destination's upper bits.
+    X86Lea {
+        dst: VReg,
+        addr: Address,
+        width: OpWidth,
+    },
+
     /// Exchange registers
     Xchg {
         reg1: VReg,
@@ -4618,6 +4627,7 @@ impl OpKind {
                 // Dedicated x86 scan/count variants carry their flag contracts;
                 // generic count ops remain flag-neutral across architectures.
                 | OpKind::Lea { .. }
+                | OpKind::X86Lea { .. }
                 | OpKind::Nop
         )
     }
@@ -4678,6 +4688,7 @@ impl OpKind {
             | OpKind::Cwd { dst, .. }
             | OpKind::Truncate { dst, .. }
             | OpKind::Lea { dst, .. }
+            | OpKind::X86Lea { dst, .. }
             | OpKind::Load { dst, .. }
             | OpKind::PredLoad { dst, .. }
             | OpKind::AtomicLoad { dst, .. }

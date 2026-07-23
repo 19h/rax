@@ -1061,6 +1061,9 @@ pub(crate) fn block_is_clobber_safe(
         {
             return false;
         }
+        if !x86_jit_scalar_alu_immediate_valid(&op.kind) {
+            return false;
+        }
         // (2) no virtual-temp writes (would clobber a guest GPR).
         if op
             .kind

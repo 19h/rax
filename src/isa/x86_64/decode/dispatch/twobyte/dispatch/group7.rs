@@ -201,11 +201,15 @@ impl X86_64Vcpu {
                     let value = (self.regs.rax & 0xFFFF_FFFF) | (self.regs.rdx << 32);
                     // Only XCR0 exists; x87 (bit0) must stay set; AVX (bit2) requires
                     // SSE (bit1); AVX-512 state bits must be enabled as a group;
-                    // APX_F (bit19) enables APX EGPR state.
+                    // PKRU (bit9) is independently selectable; APX_F (bit19)
+                    // enables APX EGPR state.
                     const XCR0_AVX512: u64 = (1 << 5) | (1 << 6) | (1 << 7);
+                    const XCR0_PKRU: u64 = 1 << 9;
                     const XCR0_APX_F: u64 = 1 << 19;
-                    let supported =
-                        0x7 | XCR0_AVX512 | if self.apx_enabled() { XCR0_APX_F } else { 0 };
+                    let supported = 0x7
+                        | XCR0_AVX512
+                        | XCR0_PKRU
+                        | if self.apx_enabled() { XCR0_APX_F } else { 0 };
                     let avx512_bits = value & XCR0_AVX512;
                     let invalid = ecx != 0
                         || (value & 1) == 0

@@ -4539,6 +4539,12 @@ impl Aarch64Lowerer {
                 op_width,
             } => self.lower_bfi(*dst, *dst_in, *src, *lsb, *width_bits, *op_width),
             OpKind::Lea { dst, addr } => self.lower_lea(*dst, addr, op.guest_pc),
+            // Width-aware x86 LEA is admitted only by the x86-64 host gate.
+            // The AArch64 backend must reject it until W16 partial-register
+            // merging and W32 zero-extension are implemented and tested.
+            OpKind::X86Lea { .. } => Err(LowerError::UnsupportedOp {
+                op: "x86 width-aware LEA on AArch64 host".to_string(),
+            }),
             OpKind::ZeroExtend {
                 dst,
                 src,

@@ -122,6 +122,11 @@ impl SmirInterpreter {
                 ctx.write_vreg(*dst, effective_addr);
             }
 
+            OpKind::X86Lea { dst, addr, width } => {
+                let effective_addr = self.compute_address(ctx, addr);
+                Self::write_x86_partial(ctx, *dst, effective_addr, *width);
+            }
+
             OpKind::Xchg { reg1, reg2, width } => {
                 let v1 = ctx.read_vreg(*reg1) & width.mask();
                 let v2 = ctx.read_vreg(*reg2) & width.mask();

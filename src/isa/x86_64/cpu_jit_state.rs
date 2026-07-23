@@ -30,4 +30,16 @@ pub(super) struct JitRegion {
     /// interpreter replay necessarily observes a later clock value.
     #[cfg(target_arch = "x86_64")]
     pub(super) uses_timestamp: bool,
+    /// Guest PCs used as resume targets by synthesized backward-edge exits.
+    /// Verification must observe the actual backward transition to one of
+    /// these PCs, rather than stopping at an earlier forward arrival at the
+    /// same internal block.
+    #[cfg(target_arch = "x86_64")]
+    pub(super) yielded_backward_exit_pcs: Vec<u64>,
+    /// `(call_pc, return_pc)` pairs for near CALLs lowered through the direct
+    /// interpreter helper. Verification must ignore any coincidental visit to
+    /// the region's final exit PC while such a callee is still active, matching
+    /// the helper's own run-until-return contract.
+    #[cfg(target_arch = "x86_64")]
+    pub(super) callout_boundaries: Vec<(u64, u64)>,
 }

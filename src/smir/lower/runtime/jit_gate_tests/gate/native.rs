@@ -5,6 +5,29 @@ use crate::smir::lower::runtime::jit_gate_tests::*;
 use crate::smir::lower::runtime::*;
 
 #[test]
+fn scalar_alu_immediate_gate_requires_exact_w64_sign_extended_imm32() {
+    let add = |value, width| OpKind::Add {
+        dst: x86(X86Reg::Rbx),
+        src1: x86(X86Reg::Rbx),
+        src2: SrcOperand::Imm(value),
+        width,
+        flags: FlagUpdate::All,
+    };
+    let native = |op| {
+        let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
+        builder.push_op(0x1000, op);
+        builder.set_terminator(Terminator::Return { values: Vec::new() });
+        is_native_clobber_safe(&builder.finish())
+    };
+
+    assert!(native(add(i64::from(i32::MIN), OpWidth::W64)));
+    assert!(native(add(i64::from(i32::MAX), OpWidth::W64)));
+    assert!(!native(add(0x8000_0000, OpWidth::W64)));
+    assert!(!native(add(i64::from(i32::MIN) - 1, OpWidth::W64)));
+    assert!(native(add(0x8000_0000, OpWidth::W32)));
+}
+
+#[test]
 fn get_exponent_native_gate_validates_shapes_and_encodings() {
     let packed = OpKind::X86GetExponent {
         dst: x86(X86Reg::Zmm(17)),

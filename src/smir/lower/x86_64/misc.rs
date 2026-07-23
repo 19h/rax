@@ -320,7 +320,7 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x01); // test cl,1
         fault_branches.push(self.emit_jcc_placeholder(X86Cond::E));
 
-        // Supported state is x87/SSE/AVX/AVX-512 plus APX_F only when the
+        // Supported state is x87/SSE/AVX/AVX-512/PKRU plus APX_F only when the
         // emulator exposes APX. TEST r64,imm32 sign-extends the immediate, and
         // both complements have identical ones in bits 63:32.
         self.code.emit_u8(0x83);
@@ -331,7 +331,7 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x48);
         self.code.emit_u8(0xF7);
         self.code.emit_u8(0xC1);
-        self.code.emit_u32(!(0xE7u32 | (1 << 19))); // test rcx,!supported_with_apx
+        self.code.emit_u32(!(0x2E7u32 | (1 << 19))); // test rcx,!supported_with_apx
         fault_branches.push(self.emit_jcc_placeholder(X86Cond::Ne));
         self.code.emit_u8(0xE9);
         let supported = self.code.position();
@@ -340,7 +340,7 @@ impl X86_64Lowerer {
         self.code.emit_u8(0x48);
         self.code.emit_u8(0xF7);
         self.code.emit_u8(0xC1);
-        self.code.emit_u32(!0xE7u32); // test rcx,!supported_without_apx
+        self.code.emit_u32(!0x2E7u32); // test rcx,!supported_without_apx
         fault_branches.push(self.emit_jcc_placeholder(X86Cond::Ne));
         self.patch_rel32_to_current(supported)?;
 

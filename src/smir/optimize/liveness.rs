@@ -65,6 +65,7 @@ pub(super) fn op_out_width(kind: &OpKind) -> Option<OpWidth> {
         }
         // LEA computes a full pointer; SETcc writes a single byte.
         OpKind::Lea { .. } => Some(OpWidth::W64),
+        OpKind::X86Lea { width, .. } => Some(*width),
         OpKind::SetCC { .. } => Some(OpWidth::W8),
         OpKind::VBitSelect { width, .. } => match width {
             VecWidth::V64 => Some(OpWidth::W64),

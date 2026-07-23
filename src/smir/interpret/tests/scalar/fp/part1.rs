@@ -1346,14 +1346,14 @@ fn lifted_xgetbv_xsetbv_roundtrip_dependencies_and_faults() {
     ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
     ctx.flags.lazy = None;
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
-        x86.xcr0 = 0x0008_00E7;
+        x86.xcr0 = 0x0008_02E7;
         x86.xgetbv1 = 0x0000_0025;
     }
     ctx.write_vreg(rcx, 0);
     ctx.write_vreg(rax, u64::MAX);
     ctx.write_vreg(rdx, u64::MAX);
     execute_lifted_x86(&[0x0F, 0x01, 0xD0], &mut ctx, &mut memory);
-    assert_eq!(ctx.read_vreg(rax), 0x0008_00E7);
+    assert_eq!(ctx.read_vreg(rax), 0x0008_02E7);
     assert_eq!(ctx.read_vreg(rdx), 0);
     ctx.write_vreg(rcx, 1);
     execute_lifted_x86(&[0x0F, 0x01, 0xD0], &mut ctx, &mut memory);
@@ -1362,7 +1362,7 @@ fn lifted_xgetbv_xsetbv_roundtrip_dependencies_and_faults() {
     ctx.flags.materialize_all();
     assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
 
-    for value in [1u64, 3, 7, 0xE7, 0x0008_0001, 0x0008_00E7] {
+    for value in [1u64, 3, 7, 0xE7, 0x2E7, 0x0008_0001, 0x0008_02E7] {
         let mut ctx = SmirContext::new_x86_64();
         ctx.write_vreg(rcx, 0);
         ctx.write_vreg(rax, value | 0xFFFF_FFFF_0000_0000);
@@ -1423,7 +1423,7 @@ fn lifted_xsave_xsaveopt_xrstor_roundtrip_masks_initialization_and_faults() {
         u64::from_le_bytes(bytes)
     }
 
-    const ALL: u64 = 0x0008_00E7;
+    const ALL: u64 = 0x0008_02E7;
     let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
     let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
     let rbx = VReg::Arch(ArchReg::X86(X86Reg::Rbx));
@@ -1434,7 +1434,7 @@ fn lifted_xsave_xsaveopt_xrstor_roundtrip_masks_initialization_and_faults() {
     ctx.write_vreg(rdx, 0);
     ctx.flags.materialized = MaterializedFlags::from_rflags(0xCD7);
     ctx.flags.lazy = None;
-    memory.write(0x100, &[0u8; 2688]).unwrap();
+    memory.write(0x100, &[0u8; 2696]).unwrap();
     memory
         .write(0x100 + 520, &0x0123_4567_89AB_CDEFu64.to_le_bytes())
         .unwrap();
@@ -1452,6 +1452,7 @@ fn lifted_xsave_xsaveopt_xrstor_roundtrip_masks_initialization_and_faults() {
         x86.xmm[0][0..8].copy_from_slice(&[0x10, 0x11, 0x20, 0x21, 0x30, 0x31, 0x32, 0x33]);
         x86.xmm[16][0..8].copy_from_slice(&[0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47]);
         x86.k[3] = 0x5152_5354_5556_5758;
+        x86.pkru = 0xA1B2_C3D4;
         x86.gpr[16] = 0x6162_6364_6566_6768;
     }
 
@@ -1470,6 +1471,7 @@ fn lifted_xsave_xsaveopt_xrstor_roundtrip_masks_initialization_and_faults() {
     );
     assert_eq!(read_u64(&mut memory, 0x100 + 1152), 0x30);
     assert_eq!(read_u64(&mut memory, 0x100 + 1664), 0x40);
+    assert_eq!(read_u64(&mut memory, 0x100 + 2688), 0xA1B2_C3D4);
     ctx.flags.materialize_all();
     assert_eq!(ctx.flags.materialized.to_rflags(), 0xCD7);
 
@@ -1481,6 +1483,7 @@ fn lifted_xsave_xsaveopt_xrstor_roundtrip_masks_initialization_and_faults() {
         x86.mxcsr = 0x1F80;
         x86.xmm = [[0; 16]; 32];
         x86.k = [0; 8];
+        x86.pkru = 0;
         x86.gpr[16..32].fill(0);
     }
     execute_lifted_x86(&[0x48, 0x0F, 0xAE, 0x2B], &mut ctx, &mut memory);
@@ -1499,6 +1502,7 @@ fn lifted_xsave_xsaveopt_xrstor_roundtrip_masks_initialization_and_faults() {
             &[0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47]
         );
         assert_eq!(x86.k[3], 0x5152_5354_5556_5758);
+        assert_eq!(x86.pkru, 0xA1B2_C3D4);
         assert_eq!(x86.gpr[16], 0x6162_6364_6566_6768);
     }
 
@@ -1520,12 +1524,13 @@ fn lifted_xsave_xsaveopt_xrstor_roundtrip_masks_initialization_and_faults() {
                 .all(|register| register[..8].iter().all(|lane| *lane == 0))
         );
         assert_eq!(x86.k, [0; 8]);
+        assert_eq!(x86.pkru, 0);
         assert!(x86.gpr[16..32].iter().all(|register| *register == 0));
     }
 
     // A partial AVX-only XSAVEOPT transfers MXCSR and YMM_Hi128, preserves
     // unrelated legacy bytes, and preserves unrequested XSTATE_BV bits.
-    memory.write(0x500, &[0xA5; 2688]).unwrap();
+    memory.write(0x500, &[0xA5; 2696]).unwrap();
     memory
         .write(0x500 + 512, &(1u64 | (1 << 5)).to_le_bytes())
         .unwrap();
@@ -1638,7 +1643,7 @@ fn lifted_compacted_xsave_family_layout_restore_and_validation() {
         u64::from_le_bytes(bytes)
     }
 
-    const ALL: u64 = 0x0008_00E7;
+    const ALL: u64 = 0x0008_02E7;
     const COMPACTED: u64 = 1 << 63;
     let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
     let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
@@ -1648,7 +1653,7 @@ fn lifted_compacted_xsave_family_layout_restore_and_validation() {
     ctx.write_vreg(rbx, 0x100);
     ctx.write_vreg(rax, ALL);
     ctx.write_vreg(rdx, 0);
-    memory.write(0x100, &[0xA5; 2688]).unwrap();
+    memory.write(0x100, &[0xA5; 2696]).unwrap();
     memory.write(0x100 + 512, &[0u8; 64]).unwrap();
 
     let x87_raw = [9, 8, 7, 6, 5, 4, 3, 0x80, 0xFF, 0x3F];
@@ -1661,6 +1666,7 @@ fn lifted_compacted_xsave_family_layout_restore_and_validation() {
         x86.k[0] = 0x1111_2222_3333_4444;
         x86.xmm[0][4] = 0x5555_6666_7777_8888;
         x86.xmm[16][0] = 0x9999_AAAA_BBBB_CCCC;
+        x86.pkru = 0xA1B2_C3D4;
         x86.gpr[16] = 0xDDDD_EEEE_FFFF_0001;
         // AVX component 2 remains in its initial configuration.
         x86.xmm[0][2] = 0;
@@ -1683,13 +1689,15 @@ fn lifted_compacted_xsave_family_layout_restore_and_validation() {
     );
     assert_eq!(read_u64(&mut memory, 0x100 + 896), 0x5555_6666_7777_8888);
     assert_eq!(read_u64(&mut memory, 0x100 + 1408), 0x9999_AAAA_BBBB_CCCC);
-    assert_eq!(read_u64(&mut memory, 0x100 + 2432), 0xDDDD_EEEE_FFFF_0001);
+    assert_eq!(read_u64(&mut memory, 0x100 + 2432), 0xA1B2_C3D4);
+    assert_eq!(read_u64(&mut memory, 0x100 + 2440), 0xDDDD_EEEE_FFFF_0001);
 
     if let ArchRegState::X86_64(x86) = &mut ctx.arch_regs {
         x86.x87 = Default::default();
         x86.mxcsr = 0x1F80;
         x86.xmm = [[0xDEAD; 16]; 32];
         x86.k = [0; 8];
+        x86.pkru = 0;
         x86.gpr[16..32].fill(0);
     }
     execute_lifted_x86(&[0x48, 0x0F, 0xAE, 0x2B], &mut ctx, &mut memory);
@@ -1704,6 +1712,7 @@ fn lifted_compacted_xsave_family_layout_restore_and_validation() {
         assert_eq!(x86.k[0], 0x1111_2222_3333_4444);
         assert_eq!(x86.xmm[0][4], 0x5555_6666_7777_8888);
         assert_eq!(x86.xmm[16][0], 0x9999_AAAA_BBBB_CCCC);
+        assert_eq!(x86.pkru, 0xA1B2_C3D4);
         assert_eq!(x86.gpr[16], 0xDDDD_EEEE_FFFF_0001);
     }
 

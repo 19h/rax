@@ -781,15 +781,15 @@ fn test_cpuid_leaf_d_subleaf0_xsave_area() {
     let (mut vcpu, _) = setup_vm(&code, Some(regs));
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
-    // EAX = supported XCR0 low bits = x87|SSE|AVX|AVX-512 = 0xE7.
+    // EAX = supported XCR0 low bits = x87|SSE|AVX|AVX-512|PKRU = 0x2E7.
     // EBX = current enabled area size (XCR0 default has AVX disabled => 576).
     // ECX = max area size for all supported standard-format state. EDX = high XCR0 bits = 0.
     assert_eq!(
-        regs.rax as u32, 0xE7,
-        "XCR0 valid low bits x87|SSE|AVX|AVX-512"
+        regs.rax as u32, 0x2E7,
+        "XCR0 valid low bits x87|SSE|AVX|AVX-512|PKRU"
     );
     assert_eq!(regs.rbx as u32, 576, "current XSAVE area (AVX disabled)");
-    assert_eq!(regs.rcx as u32, 2688, "max XSAVE area");
+    assert_eq!(regs.rcx as u32, 2696, "max XSAVE area");
     assert_eq!(regs.rdx as u32, 0, "XCR0 high bits");
 }
 
@@ -807,11 +807,11 @@ fn test_cpuid_leaf_d_subleaf0_apx_enabled_xsave_area() {
     let regs = run_until_hlt(&mut vcpu).unwrap();
 
     assert_eq!(
-        regs.rax as u32, 0x800E7,
-        "XCR0 valid low bits x87|SSE|AVX|AVX-512|APX_F"
+        regs.rax as u32, 0x802E7,
+        "XCR0 valid low bits x87|SSE|AVX|AVX-512|PKRU|APX_F"
     );
     assert_eq!(regs.rbx as u32, 576, "current XSAVE area (AVX disabled)");
-    assert_eq!(regs.rcx as u32, 2688, "max XSAVE area");
+    assert_eq!(regs.rcx as u32, 2696, "max XSAVE area");
     assert_eq!(regs.rdx as u32, 0, "XCR0 high bits");
 }
 
@@ -860,6 +860,29 @@ fn test_cpuid_leaf_d_subleaf2_avx_component() {
     // YMM_Hi128 component: size = 256 bytes, offset = 576.
     assert_eq!(regs.rax as u32, 256, "AVX component size");
     assert_eq!(regs.rbx as u32, 576, "AVX component offset");
+}
+
+// CPUID leaf 0xD subleaf 9 - PKRU user-state component.
+#[test]
+fn test_cpuid_leaf_d_subleaf9_pkru_component() {
+    let code = [
+        0xb8, 0x0d, 0x00, 0x00, 0x00, // MOV EAX, 0xD
+        0xb9, 0x09, 0x00, 0x00, 0x00, // MOV ECX, 9
+        0x0f, 0xa2, // CPUID
+        0xf4, // HLT
+    ];
+    let mut regs = Registers::default();
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_vm(&code, Some(regs));
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rax as u32, 8, "PKRU component size");
+    assert_eq!(regs.rbx as u32, 2688, "PKRU component offset");
+    assert_eq!(
+        regs.rcx as u32, 0,
+        "PKRU is user state without alignment flag"
+    );
+    assert_eq!(regs.rdx as u32, 0, "PKRU component subleaf EDX is reserved");
 }
 
 // CPUID leaf 0xD subleaf 19 - APX_F EGPR component hidden by default.

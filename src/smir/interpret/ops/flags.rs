@@ -582,7 +582,7 @@ impl SmirInterpreter {
                 let value = (ctx.read_vreg(*src_low) as u32 as u64)
                     | ((ctx.read_vreg(*src_high) as u32 as u64) << 32);
                 const AVX512_STATE: u64 = (1 << 5) | (1 << 6) | (1 << 7);
-                const SUPPORTED: u64 = 0x7 | AVX512_STATE | (1 << 19);
+                const SUPPORTED: u64 = 0x7 | AVX512_STATE | (1 << 9) | (1 << 19);
                 let avx512 = value & AVX512_STATE;
                 let invalid = selector != 0
                     || value & 1 == 0

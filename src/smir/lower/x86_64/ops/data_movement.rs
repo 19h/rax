@@ -32,6 +32,114 @@ use crate::smir::lower::{
 };
 
 impl X86_64Lowerer {
+    fn lower_lea_width(
+        &mut self,
+        dst: VReg,
+        addr: &Address,
+        width: OpWidth,
+    ) -> Result<(), LowerError> {
+        if !matches!(width, OpWidth::W16 | OpWidth::W32 | OpWidth::W64) {
+            return Err(LowerError::InvalidOperand {
+                op: "Lea".to_string(),
+                operand: format!("unsupported destination width {width:?}"),
+            });
+        }
+        let dst_reg = self.get_dst_reg(dst)?;
+
+        match addr {
+            Address::Direct(base) => {
+                let base_reg = self.get_reg(*base)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_rr(dst_reg, base_reg, width);
+            }
+            Address::BaseOffset {
+                base,
+                offset,
+                disp_size,
+            } => {
+                let base_reg = self.get_reg(*base)?;
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_lea_disp_width(dst_reg, base_reg, *offset as i32, *disp_size, width);
+            }
+            Address::BaseIndexScale {
+                base,
+                index,
+                scale,
+                disp,
+                disp_size,
+            } => {
+                let index_reg = self.get_reg(*index)?;
+                let base_phys = match base {
+                    Some(base) => Some(self.get_reg(*base)?),
+                    None => None,
+                };
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_lea_sib_disp_width(
+                    dst_reg, base_phys, index_reg, *scale, *disp, *disp_size, width,
+                );
+            }
+            Address::PcRel { offset, base, .. } => {
+                if self.guest_pcrel_lea_immediates {
+                    if let Some(base_pc) = base {
+                        let target = base_pc.wrapping_add_signed(*offset);
+                        let mut emitter = X86Emitter::new(&mut self.code);
+                        emitter.emit_mov_ri(dst_reg, target as i64, width);
+                        return Ok(());
+                    }
+                }
+
+                let disp_offset = {
+                    let mut emitter = X86Emitter::new(&mut self.code);
+                    emitter.emit_lea_pcrel_width(dst_reg, 0, width)
+                };
+                let insn_end = self.code.position();
+
+                let disp = if let Some(base_pc) = base {
+                    let target = base_pc.wrapping_add_signed(*offset);
+                    let disp = if self.pcrel_adjust {
+                        let next_rip = self.guest_base as i64 + insn_end as i64;
+                        target as i64 - next_rip
+                    } else {
+                        *offset
+                    };
+                    if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                        return Err(LowerError::InvalidOperand {
+                            op: "Lea".to_string(),
+                            operand: "PcRel offset out of range".to_string(),
+                        });
+                    }
+                    self.relocations.push(Relocation {
+                        offset: disp_offset,
+                        kind: RelocKind::PcRel32,
+                        target: RelocTarget::GuestAddr(target),
+                    });
+                    disp
+                } else {
+                    let disp = *offset;
+                    if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
+                        return Err(LowerError::InvalidOperand {
+                            op: "Lea".to_string(),
+                            operand: "PcRel offset out of range".to_string(),
+                        });
+                    }
+                    disp
+                };
+
+                self.code.patch_i32(disp_offset, disp as i32);
+            }
+            Address::Absolute(addr) => {
+                let mut emitter = X86Emitter::new(&mut self.code);
+                emitter.emit_mov_ri(dst_reg, *addr as i64, width);
+            }
+            _ => {
+                return Err(LowerError::UnsupportedOp {
+                    op: format!("Lea with {addr:?} address"),
+                });
+            }
+        }
+        Ok(())
+    }
+
     pub(crate) fn lower_op_data_movement(
         &mut self,
         op: &crate::smir::ir::ops::SmirOp,
@@ -116,102 +224,9 @@ impl X86_64Lowerer {
                 }
             }
 
-            OpKind::Lea { dst, addr } => {
-                let dst_reg = self.get_dst_reg(*dst)?;
-
-                match addr {
-                    Address::Direct(base) => {
-                        let base_reg = self.get_reg(*base)?;
-                        // LEA dst, [base] is just a MOV
-                        let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter.emit_mov_rr(dst_reg, base_reg, OpWidth::W64);
-                    }
-                    Address::BaseOffset {
-                        base,
-                        offset,
-                        disp_size,
-                    } => {
-                        let base_reg = self.get_reg(*base)?;
-                        let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter.emit_lea_disp(dst_reg, base_reg, *offset as i32, *disp_size);
-                    }
-                    Address::BaseIndexScale {
-                        base,
-                        index,
-                        scale,
-                        disp,
-                        disp_size,
-                    } => {
-                        let index_reg = self.get_reg(*index)?;
-                        let base_phys = match base {
-                            Some(b) => Some(self.get_reg(*b)?),
-                            None => None,
-                        };
-                        let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter.emit_lea_sib_disp(
-                            dst_reg, base_phys, index_reg, *scale, *disp, *disp_size,
-                        );
-                    }
-                    Address::PcRel { offset, base, .. } => {
-                        if self.guest_pcrel_lea_immediates {
-                            if let Some(base_pc) = base {
-                                let target = base_pc.wrapping_add_signed(*offset);
-                                let mut emitter = X86Emitter::new(&mut self.code);
-                                emitter.emit_mov_ri(dst_reg, target as i64, OpWidth::W64);
-                                return Ok(());
-                            }
-                        }
-
-                        let disp_offset = {
-                            let mut emitter = X86Emitter::new(&mut self.code);
-                            emitter.emit_lea_pcrel(dst_reg, 0)
-                        };
-                        let insn_end = self.code.position();
-
-                        let disp = if let Some(base_pc) = base {
-                            let target = base_pc.wrapping_add_signed(*offset);
-                            let disp = if self.pcrel_adjust {
-                                let next_rip = self.guest_base as i64 + insn_end as i64;
-                                target as i64 - next_rip
-                            } else {
-                                *offset
-                            };
-                            if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
-                                return Err(LowerError::InvalidOperand {
-                                    op: "Lea".to_string(),
-                                    operand: "PcRel offset out of range".to_string(),
-                                });
-                            }
-                            self.relocations.push(Relocation {
-                                offset: disp_offset,
-                                kind: RelocKind::PcRel32,
-                                target: RelocTarget::GuestAddr(target),
-                            });
-                            disp
-                        } else {
-                            let disp = *offset;
-                            if disp < i32::MIN as i64 || disp > i32::MAX as i64 {
-                                return Err(LowerError::InvalidOperand {
-                                    op: "Lea".to_string(),
-                                    operand: "PcRel offset out of range".to_string(),
-                                });
-                            }
-                            disp
-                        };
-
-                        self.code.patch_i32(disp_offset, disp as i32);
-                    }
-                    Address::Absolute(addr) => {
-                        // LEA with absolute address - just MOV the constant
-                        let mut emitter = X86Emitter::new(&mut self.code);
-                        emitter.emit_mov_ri(dst_reg, *addr as i64, OpWidth::W64);
-                    }
-                    _ => {
-                        return Err(LowerError::UnsupportedOp {
-                            op: format!("Lea with {:?} address", addr),
-                        });
-                    }
-                }
+            OpKind::Lea { dst, addr } => self.lower_lea_width(*dst, addr, OpWidth::W64)?,
+            OpKind::X86Lea { dst, addr, width } => {
+                self.lower_lea_width(*dst, addr, *width)?;
             }
 
             OpKind::Xchg { reg1, reg2, width } => {

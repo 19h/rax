@@ -1346,9 +1346,6 @@ pub fn block_merging(func: &mut SmirFunction) -> usize {
         return 0;
     }
 
-    // Build predecessor count
-    let mut pred_count: HashMap<BlockId, usize> = HashMap::new();
-
     let interpreter_frontiers: HashSet<BlockId> = if func.attrs.preserve_interpreter_frontiers {
         func.blocks
             .iter()
@@ -1364,51 +1361,52 @@ pub fn block_merging(func: &mut SmirFunction) -> usize {
     } else {
         HashSet::new()
     };
-
-    for block in &func.blocks {
-        match &block.terminator {
-            Terminator::Branch { target } => {
-                *pred_count.entry(*target).or_default() += 1;
-            }
-            Terminator::CondBranch {
-                true_target,
-                false_target,
-                ..
-            } => {
-                *pred_count.entry(*true_target).or_default() += 1;
-                *pred_count.entry(*false_target).or_default() += 1;
-            }
-            Terminator::Switch {
-                targets, default, ..
-            } => {
-                for target in targets {
+    let mut merged_count = 0;
+    loop {
+        // Recompute predecessors after every merge. Selecting every pair from a
+        // single stale snapshot is unsound for A->B->C chains: merging A<-B and
+        // then B<-C leaves A targeting a removed C while resurrecting the now
+        // unreachable B. One-at-a-time contraction keeps each chosen edge and
+        // its single-predecessor proof valid.
+        let mut pred_count: HashMap<BlockId, usize> = HashMap::new();
+        for block in &func.blocks {
+            match &block.terminator {
+                Terminator::Branch { target } => {
                     *pred_count.entry(*target).or_default() += 1;
                 }
-                *pred_count.entry(*default).or_default() += 1;
+                Terminator::CondBranch {
+                    true_target,
+                    false_target,
+                    ..
+                } => {
+                    *pred_count.entry(*true_target).or_default() += 1;
+                    *pred_count.entry(*false_target).or_default() += 1;
+                }
+                Terminator::Switch {
+                    targets, default, ..
+                } => {
+                    for target in targets {
+                        *pred_count.entry(*target).or_default() += 1;
+                    }
+                    *pred_count.entry(*default).or_default() += 1;
+                }
+                _ => {}
             }
-            _ => {}
         }
-    }
 
-    // Find blocks to merge
-    let mut merge_pairs: Vec<(BlockId, BlockId)> = Vec::new();
-
-    for block in &func.blocks {
-        if let Terminator::Branch { target } = &block.terminator {
-            // Only merge if target has single predecessor
-            if pred_count.get(target) == Some(&1)
+        let merge_pair = func.blocks.iter().find_map(|block| {
+            let Terminator::Branch { target } = &block.terminator else {
+                return None;
+            };
+            (pred_count.get(target) == Some(&1)
                 && *target != block.id
-                && !interpreter_frontiers.contains(target)
-            {
-                merge_pairs.push((block.id, *target));
-            }
-        }
-    }
+                && !interpreter_frontiers.contains(target))
+            .then_some((block.id, *target))
+        });
+        let Some((from, to)) = merge_pair else {
+            break;
+        };
 
-    let merged_count = merge_pairs.len();
-
-    // Perform merges
-    for (from, to) in merge_pairs {
         let from_idx = func.blocks.iter().position(|b| b.id == from);
         let to_idx = func.blocks.iter().position(|b| b.id == to);
 
@@ -1446,13 +1444,17 @@ pub fn block_merging(func: &mut SmirFunction) -> usize {
             // Mark target block for removal
             func.blocks[to_idx].ops.clear();
             func.blocks[to_idx].terminator = Terminator::Unreachable;
+            merged_count += 1;
         }
-    }
 
-    // Remove empty blocks (but keep entry block)
-    func.blocks.retain(|b| {
-        b.id == func.entry || !b.ops.is_empty() || !matches!(b.terminator, Terminator::Unreachable)
-    });
+        // Remove the consumed target immediately so the next predecessor proof
+        // is computed from the contracted graph.
+        func.blocks.retain(|b| {
+            b.id == func.entry
+                || !b.ops.is_empty()
+                || !matches!(b.terminator, Terminator::Unreachable)
+        });
+    }
 
     merged_count
 }
@@ -1634,7 +1636,7 @@ fn update_pointer_alignment(op: &SmirOp, alignments: &mut HashMap<VReg, usize>) 
                 computed.insert(*dst, gcd(a, b));
             }
         }
-        OpKind::Lea { dst, addr } => {
+        OpKind::Lea { dst, addr } | OpKind::X86Lea { dst, addr, .. } => {
             if let Some(alignment) = address_alignment(addr, alignments) {
                 computed.insert(*dst, alignment);
             }
@@ -2289,7 +2291,7 @@ impl OpKind {
                 result.push(*src);
             }
 
-            OpKind::Lea { addr, .. } => {
+            OpKind::Lea { addr, .. } | OpKind::X86Lea { addr, .. } => {
                 result.extend(addr.regs());
             }
 

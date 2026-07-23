@@ -461,20 +461,9 @@ impl X86_64Lifter {
                     });
                 }
                 let modrm = decode_modrm(after_opcode, &prefix2, pc)?;
-                if opcode2 == 0x1E
-                    && prefix2.rep_prefix == Some(0xF3)
-                    && !modrm.is_memory
-                    && ((modrm.byte >> 3) & 7) == 1
-                {
-                    return Ok(LiftResult {
-                        ops: vec![],
-                        bytes_consumed: prefix2.cursor + modrm.bytes_consumed,
-                        control_flow: ControlFlow::Trap {
-                            kind: TrapKind::InvalidOpcode,
-                        },
-                        branch_targets: vec![],
-                    });
-                }
+                // F3 0F 1E /1, mod=11 is RDSSPD/RDSSPQ. With CET_SS not
+                // enumerated it is architecturally a destination-preserving
+                // NOP, so it remains in this no-op path alongside ENDBR/hints.
                 let ops = self.rex2_apx_guard_ops(&prefix2, pc);
                 Ok(LiftResult::fallthrough(
                     ops,

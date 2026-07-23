@@ -4175,8 +4175,9 @@ fn jit_classify_bail(
         is_x86_native_vector_op, x86_jit_mmx_mem_shape_valid, x86_jit_pop_candidate,
         x86_jit_pop_sequence_len, x86_jit_pop2_candidate, x86_jit_pop2_sequence_len,
         x86_jit_push_candidate, x86_jit_push_sequence_len, x86_jit_push2_candidate,
-        x86_jit_push2_sequence_len, x86_jit_vector_mem_shape_valid,
-        x86_state_backed_stack_alu_valid, x86_state_backed_stack_mov_valid,
+        x86_jit_push2_sequence_len, x86_jit_scalar_alu_immediate_valid,
+        x86_jit_vector_mem_shape_valid, x86_state_backed_stack_alu_valid,
+        x86_state_backed_stack_mov_valid,
     };
     let is_sp_bp = |v: &VReg| {
         matches!(
@@ -4270,6 +4271,9 @@ fn jit_classify_bail(
             let stack_state_ok = stack_mov_ok || stack_alu_ok;
             if !op.is_jit_safe() && !mem_ok && !vector_ok {
                 return variant(&op.kind);
+            }
+            if !x86_jit_scalar_alu_immediate_valid(&op.kind) {
+                return format!("unencodable-immediate:{}", variant(&op.kind));
             }
             if op
                 .kind
@@ -4401,12 +4405,27 @@ impl X86_64Vcpu {
                 continue;
             }
 
+            // O2 may merge a forward setup block with a later loop body while
+            // retaining the setup block's original `guest_pc`. The terminator
+            // is then located after that entry address; classifying against the
+            // stale block start misses edges that are backward from the actual
+            // branch (and lets a yielded native slice run extra iterations).
+            // The final semantic op carries the terminator boundary PC emitted
+            // by the lifter and follows the terminator across block merging.
+            let terminator_pc = block
+                .ops
+                .last()
+                .map(|op| op.guest_pc)
+                .unwrap_or(block.guest_pc);
             let mut add_backward_edge = |target| {
                 if exits.contains_key(&target) {
                     return;
                 }
                 if let Some(&target_pc) = guest_pcs.get(&target) {
-                    if target_pc <= block.guest_pc {
+                    // A distinct fallthrough block may start at the same guest
+                    // PC as the source block's final condition-materialization
+                    // op. Equality is backward only for a genuine self-loop.
+                    if target_pc < terminator_pc || target == block.id {
                         edge_exits.insert((block.id, target), target_pc);
                     }
                 }
@@ -4587,6 +4606,67 @@ impl X86_64Vcpu {
             } else {
                 HashMap::new()
             };
+            #[cfg(target_arch = "x86_64")]
+            let mut yielded_backward_exit_pcs: Vec<u64> = edge_exits.values().copied().collect();
+            #[cfg(target_arch = "x86_64")]
+            {
+                yielded_backward_exit_pcs.sort_unstable();
+                yielded_backward_exit_pcs.dedup();
+            }
+            #[cfg(target_arch = "x86_64")]
+            let mut callout_boundaries = Vec::new();
+            #[cfg(target_arch = "x86_64")]
+            if cm {
+                let block_pcs: HashMap<_, _> = func
+                    .blocks
+                    .iter()
+                    .map(|block| (block.id, block.guest_pc))
+                    .collect();
+                let mut metadata_complete = true;
+                for block in &func.blocks {
+                    let Terminator::Call {
+                        target,
+                        continuation,
+                        ..
+                    } = &block.terminator
+                    else {
+                        continue;
+                    };
+                    if !jit_call_target_supported(target, self.jit_mem)
+                        || !lifted.contains(continuation)
+                    {
+                        continue;
+                    }
+                    let Some(&return_pc) = block_pcs.get(continuation) else {
+                        metadata_complete = false;
+                        break;
+                    };
+                    let mut sites = func.x86_instruction_bytes.iter().filter_map(
+                        |(&(instruction_block, pc), instruction)| {
+                            (instruction_block == block.id
+                                && pc.checked_add(instruction.as_slice().len() as u64)
+                                    == Some(return_pc))
+                            .then_some(pc)
+                        },
+                    );
+                    let Some(call_pc) = sites.next() else {
+                        metadata_complete = false;
+                        break;
+                    };
+                    if sites.next().is_some() {
+                        metadata_complete = false;
+                        break;
+                    }
+                    callout_boundaries.push((call_pc, return_pc));
+                }
+                if !metadata_complete {
+                    // The lowerer also rejects missing/ambiguous CALL
+                    // provenance. Fail this mode before producing unverifiable
+                    // runtime metadata and retry the call-as-frontier mode.
+                    continue 'modes;
+                }
+                callout_boundaries.sort_unstable();
+            }
             #[cfg(target_arch = "x86_64")]
             let has_native_terminal = func
                 .blocks
@@ -4849,6 +4929,10 @@ impl X86_64Vcpu {
                 uses_x87_tag_state,
                 #[cfg(target_arch = "x86_64")]
                 uses_timestamp,
+                #[cfg(target_arch = "x86_64")]
+                yielded_backward_exit_pcs,
+                #[cfg(target_arch = "x86_64")]
+                callout_boundaries,
             }));
         }
         Ok(None)
@@ -5402,13 +5486,35 @@ impl X86_64Vcpu {
         let cap = 50_000_000u64;
         let mut steps = 0u64;
         let mut reached = true;
-        while self.regs.rip != exit_pc {
+        let expects_backward_exit = region
+            .yielded_backward_exit_pcs
+            .binary_search(&exit_pc)
+            .is_ok();
+        let mut observed_backward_exit = false;
+        let mut active_callout_return = None;
+        // A yielded edge can resume at the entry PC or at an internal block
+        // that the interpreter reaches earlier by a forward edge. PC equality
+        // alone therefore does not identify the native handoff. For an exit
+        // synthesized from a CFG backedge, replay through the actual backward
+        // transition (including a self-edge) before comparing state.
+        while self.regs.rip != exit_pc
+            || (expects_backward_exit && !observed_backward_exit)
+            || active_callout_return.is_some()
+        {
             if steps >= cap {
                 reached = false;
                 break;
             }
             // SMC: mirror the run-loop drain (this verify re-step bypasses it).
             self.drain_smc();
+            let rip_before = self.regs.rip;
+            let entering_callout = active_callout_return.is_none().then(|| {
+                region
+                    .callout_boundaries
+                    .binary_search_by_key(&rip_before, |&(call_pc, _)| call_pc)
+                    .ok()
+                    .map(|index| region.callout_boundaries[index].1)
+            });
             match self.step() {
                 Ok(None) => {}
                 _ => {
@@ -5417,60 +5523,41 @@ impl X86_64Vcpu {
                 }
             }
             steps += 1;
+            if let Some(return_pc) = entering_callout.flatten() {
+                active_callout_return = Some(return_pc);
+            }
+            if active_callout_return == Some(self.regs.rip) {
+                active_callout_return = None;
+            }
+            observed_backward_exit |=
+                expects_backward_exit && self.regs.rip == exit_pc && self.regs.rip <= rip_before;
         }
         let interp_trace = self.jit_mem_trace.take();
 
         if reached {
-            // Per-access trace diff: the FIRST point where the native and
-            // interpreter memory-access sequences differ pinpoints the exact
-            // miscompiled load/store (address or value).
-            if let (Some(jit_trace), Some(interp_trace)) = (&jit_trace, &interp_trace) {
-                let kindname = |k: u8| if k == 0 { "load " } else { "store" };
-                let n = jit_trace.len().min(interp_trace.len());
-                let mut diff_at: Option<usize> = None;
-                for i in 0..n {
-                    if jit_trace[i] != interp_trace[i] {
-                        diff_at = Some(i);
-                        break;
+            // Retain the first per-access mismatch for a possible architectural
+            // divergence report. Some direct handlers use typed MMU accessors
+            // outside read_mem/write_mem, so a trace-only length/order mismatch
+            // is diagnostic rather than proof of a JIT error and must not flood
+            // a long verification run.
+            let trace_diff_at =
+                if let (Some(jit_trace), Some(interp_trace)) = (&jit_trace, &interp_trace) {
+                    let n = jit_trace.len().min(interp_trace.len());
+                    let mut diff_at: Option<usize> = None;
+                    for i in 0..n {
+                        if jit_trace[i] != interp_trace[i] {
+                            diff_at = Some(i);
+                            break;
+                        }
                     }
-                }
-                let report = diff_at.is_some() || jit_trace.len() != interp_trace.len();
-                if report {
-                    eprintln!(
-                        "\n[JIT-VERIFY] MEM-TRACE DIVERGENCE entry={entry_pc:#x} (jit {} accesses, interp {}, first diff at {:?})",
-                        jit_trace.len(),
-                        interp_trace.len(),
-                        diff_at
-                    );
-                    eprintln!(
-                        "[JIT-VERIFY] trace-entry regs: rax={:#x} rcx={:#x} rdx={:#x} rbx={:#x} rsi={:#x} rdi={:#x}",
-                        snap.rax, snap.rcx, snap.rdx, snap.rbx, snap.rsi, snap.rdi
-                    );
-                    let bytes = self.read_bytes(entry_pc, 128).unwrap_or_default();
-                    eprintln!("[JIT-VERIFY] region bytes = {bytes:02x?}");
-                    let center = diff_at.unwrap_or(n.saturating_sub(1));
-                    let lo = center.saturating_sub(4);
-                    let hi = (center + 4).min(jit_trace.len().max(interp_trace.len()));
-                    for i in lo..hi {
-                        let j = jit_trace
-                            .get(i)
-                            .map(|&(k, a, s, v)| format!("{} [{a:#x}/{s}B]={v:#x}", kindname(k)));
-                        let ip = interp_trace
-                            .get(i)
-                            .map(|&(k, a, s, v)| format!("{} [{a:#x}/{s}B]={v:#x}", kindname(k)));
-                        let mark = if jit_trace.get(i) != interp_trace.get(i) {
-                            "<<<"
-                        } else {
-                            ""
-                        };
-                        eprintln!(
-                            "[JIT-VERIFY]   #{i:<3} jit={:<34} interp={:<34} {mark}",
-                            j.unwrap_or_else(|| "-".into()),
-                            ip.unwrap_or_else(|| "-".into())
-                        );
+                    if diff_at.is_some() || jit_trace.len() != interp_trace.len() {
+                        Some((diff_at, n))
+                    } else {
+                        None
                     }
-                }
-            }
+                } else {
+                    None
+                };
 
             // Status flags (CF/PF/AF/ZF/SF/OF), DF, and every virtualized
             // interrupt-control field. CLI may clear IF or VIF; every other
@@ -5648,6 +5735,38 @@ impl X86_64Vcpu {
                     snap.r11
                 );
                 eprintln!("[JIT-VERIFY] code@entry[256] = {code:02x?}");
+                if let (Some((diff_at, common_len)), Some(jit_trace), Some(interp_trace)) =
+                    (trace_diff_at, &jit_trace, &interp_trace)
+                {
+                    let kindname = |kind: u8| if kind == 0 { "load " } else { "store" };
+                    eprintln!(
+                        "[JIT-VERIFY] memory trace: jit={} interp={} first_diff={diff_at:?}",
+                        jit_trace.len(),
+                        interp_trace.len()
+                    );
+                    let center = diff_at.unwrap_or(common_len.saturating_sub(1));
+                    let lo = center.saturating_sub(4);
+                    let hi = (center + 4).min(jit_trace.len().max(interp_trace.len()));
+                    for index in lo..hi {
+                        let native = jit_trace.get(index).map(|&(kind, addr, size, value)| {
+                            format!("{} [{addr:#x}/{size}B]={value:#x}", kindname(kind))
+                        });
+                        let interpreted =
+                            interp_trace.get(index).map(|&(kind, addr, size, value)| {
+                                format!("{} [{addr:#x}/{size}B]={value:#x}", kindname(kind))
+                            });
+                        let mark = if jit_trace.get(index) != interp_trace.get(index) {
+                            "<<<"
+                        } else {
+                            ""
+                        };
+                        eprintln!(
+                            "[JIT-VERIFY]   #{index:<3} jit={:<34} interp={:<34} {mark}",
+                            native.unwrap_or_else(|| "-".into()),
+                            interpreted.unwrap_or_else(|| "-".into())
+                        );
+                    }
+                }
                 // The JIT's load trace reconstructs the memory the region reads
                 // (the helper funnels every JIT access through read_mem).
                 let loads: Vec<String> = jit_trace
@@ -6134,6 +6253,8 @@ mod decode_cache_invalidation_tests {
             uses_mmx: false,
             uses_x87_tag_state: false,
             uses_timestamp: false,
+            yielded_backward_exit_pcs: Vec::new(),
+            callout_boundaries: Vec::new(),
         };
         vcpu.jit_cache
             .insert((head, register_only), Some(Arc::new(cached)));
@@ -6245,6 +6366,62 @@ mod decode_cache_invalidation_tests {
             "the synthesized backedge exit must resume at the loop head"
         );
     }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn jit_verifier_replays_a_region_that_exits_at_its_entry_pc() {
+        let (mut vcpu, mem) = test_vcpu_with_mem();
+        // inc eax; jmp 0. Yielding compilation turns the backward edge into an
+        // exit at RIP=0, equal to the region's entry. The verifier must replay
+        // the increment and jump instead of treating the initial RIP match as
+        // completion.
+        mem.write_slice(&[0xFF, 0xC0, 0xEB, 0xFC], GuestAddress(0))
+            .unwrap();
+        vcpu.sregs.efer = 1 << 10;
+        vcpu.sregs.cs.l = true;
+        vcpu.regs.rip = 0;
+        vcpu.regs.rax = 41;
+        vcpu.regs.rflags = 2;
+
+        let region = vcpu
+            .jit_compile_region_with_edge_exits(true)
+            .unwrap()
+            .expect("yielded closed loop must be JIT eligible");
+        vcpu.jit_run_region_verified(&region);
+
+        assert_eq!(vcpu.regs.rax, 42);
+        assert_eq!(vcpu.regs.rip, 0);
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn jit_verifier_ignores_forward_arrival_at_an_internal_backedge_target() {
+        let (mut vcpu, mem) = test_vcpu_with_mem();
+        // jmp body; hlt; nop; body: inc eax; jmp body. The yielded native
+        // slice exits at PC=4 only after the jump at PC=6. Interpreter replay
+        // first reaches PC=4 through the forward entry edge and must not stop
+        // there.
+        mem.write_slice(
+            &[0xEB, 0x02, 0xF4, 0x90, 0xFF, 0xC0, 0xEB, 0xFC],
+            GuestAddress(0),
+        )
+        .unwrap();
+        vcpu.sregs.efer = 1 << 10;
+        vcpu.sregs.cs.l = true;
+        vcpu.regs.rip = 0;
+        vcpu.regs.rax = 41;
+        vcpu.regs.rflags = 2;
+
+        let region = vcpu
+            .jit_compile_region_with_edge_exits(true)
+            .unwrap()
+            .expect("internal-target loop must be JIT eligible");
+        assert_eq!(region.yielded_backward_exit_pcs, vec![4]);
+        vcpu.jit_run_region_verified(&region);
+
+        assert_eq!(vcpu.regs.rax, 42);
+        assert_eq!(vcpu.regs.rip, 4);
+    }
 }
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
@@ -6258,6 +6435,10 @@ mod jit_mmx_memory_source_tests;
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_call_tests.rs"]
 mod jit_call_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_scalar_tests.rs"]
+mod jit_scalar_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_cpuid_tests.rs"]
@@ -6858,6 +7039,84 @@ mod tests {
         assert!(!edges.contains_key(&(entry, body)));
         assert!(!edges.contains_key(&(body, self_loop)));
         assert!(!edges.contains_key(&(self_loop, exit)));
+    }
+
+    #[test]
+    fn jit_backward_edge_detection_uses_post_merge_terminator_pc() {
+        use crate::smir::ir::types::{BlockId, FunctionId, VReg};
+        use crate::smir::ir::{SmirBlock, SmirFunction, Terminator};
+        use std::collections::HashMap;
+
+        let merged = BlockId(0);
+        let loop_target = BlockId(1);
+        let exit = BlockId(2);
+        let mut function = SmirFunction::new(FunctionId(0), merged, 0x1000);
+
+        // Model O2's forward merge: the block retains entry PC 1000h, but its
+        // appended loop-body terminator is at 1020h and branches to 1010h.
+        let mut merged_block = SmirBlock::new(merged, 0x1000);
+        merged_block.push_op(crate::smir::ir::ops::SmirOp::new(
+            crate::smir::ir::types::OpId(0),
+            0x1020,
+            crate::smir::ir::ops::OpKind::Nop,
+        ));
+        merged_block.set_terminator(Terminator::CondBranch {
+            cond: VReg::virt(0),
+            true_target: loop_target,
+            false_target: exit,
+        });
+        function.add_block(merged_block);
+
+        let mut target_block = SmirBlock::new(loop_target, 0x1010);
+        target_block.set_terminator(Terminator::Branch { target: merged });
+        function.add_block(target_block);
+
+        let mut exit_block = SmirBlock::new(exit, 0x1030);
+        exit_block.set_terminator(Terminator::Return { values: Vec::new() });
+        function.add_block(exit_block);
+
+        let exits = HashMap::from([(exit, 0x1030)]);
+        let edges = X86_64Vcpu::jit_backward_native_exit_edges(&function, &exits);
+
+        assert_eq!(edges.get(&(merged, loop_target)), Some(&0x1010));
+    }
+
+    #[test]
+    fn jit_backward_edge_detection_keeps_equal_pc_fallthrough_internal() {
+        use crate::smir::ir::types::{BlockId, FunctionId, OpId, VReg};
+        use crate::smir::ir::{SmirBlock, SmirFunction, Terminator};
+        use std::collections::HashMap;
+
+        let entry = BlockId(0);
+        let fallthrough = BlockId(1);
+        let exit = BlockId(2);
+        let mut function = SmirFunction::new(FunctionId(0), entry, 0x1000);
+
+        let mut entry_block = SmirBlock::new(entry, 0x1000);
+        entry_block.push_op(crate::smir::ir::ops::SmirOp::new(
+            OpId(0),
+            0x1010,
+            crate::smir::ir::ops::OpKind::Nop,
+        ));
+        entry_block.set_terminator(Terminator::CondBranch {
+            cond: VReg::virt(0),
+            true_target: exit,
+            false_target: fallthrough,
+        });
+        function.add_block(entry_block);
+
+        let mut fallthrough_block = SmirBlock::new(fallthrough, 0x1010);
+        fallthrough_block.set_terminator(Terminator::Return { values: Vec::new() });
+        function.add_block(fallthrough_block);
+
+        let mut exit_block = SmirBlock::new(exit, 0x1020);
+        exit_block.set_terminator(Terminator::Return { values: Vec::new() });
+        function.add_block(exit_block);
+
+        let exits = HashMap::from([(exit, 0x1020)]);
+        let edges = X86_64Vcpu::jit_backward_native_exit_edges(&function, &exits);
+
+        assert!(!edges.contains_key(&(entry, fallthrough)));
     }
 
     #[cfg(unix)]

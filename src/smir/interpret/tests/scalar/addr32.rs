@@ -5,6 +5,28 @@ use crate::smir::interpret::tests::*;
 use crate::smir::interpret::*;
 
 #[test]
+fn x86_lea_interpretation_applies_destination_width() {
+    let rax = VReg::Arch(ArchReg::X86(X86Reg::Rax));
+    let rdx = VReg::Arch(ArchReg::X86(X86Reg::Rdx));
+    let mut ctx = SmirContext::new_x86_64();
+    let mut memory = FlatMemory::new(0x100);
+
+    ctx.write_vreg(rax, 0xffff_ffff);
+    ctx.write_vreg(rdx, u64::MAX);
+    execute_lifted_x86(&[0x8d, 0x50, 0x01], &mut ctx, &mut memory);
+    assert_eq!(ctx.read_vreg(rdx), 0, "r32 LEA must zero-extend");
+
+    ctx.write_vreg(rax, 0xffff);
+    ctx.write_vreg(rdx, 0x1234_5678_9abc_ffff);
+    execute_lifted_x86(&[0x66, 0x8d, 0x50, 0x01], &mut ctx, &mut memory);
+    assert_eq!(
+        ctx.read_vreg(rdx),
+        0x1234_5678_9abc_0000,
+        "r16 LEA must preserve bits 63:16"
+    );
+}
+
+#[test]
 fn addr32_memory_call_targets_wrap_before_segment_addition() {
     let r8 = VReg::Arch(ArchReg::X86(X86Reg::R8));
     let r12 = VReg::Arch(ArchReg::X86(X86Reg::R12));

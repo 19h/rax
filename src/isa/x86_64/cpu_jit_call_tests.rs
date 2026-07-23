@@ -539,3 +539,51 @@ fn jit_callout_rejects_legacy_operand_size_override_until_widths_are_unified() {
         "non-unified CALL width must remain an interpreter frontier"
     );
 }
+
+#[test]
+fn jit_verifier_ignores_region_exit_pc_visited_inside_a_callout() {
+    let (mut vcpu, memory) = test_vcpu_with_mem();
+    // Caller: call 100h; inc eax; jmp 400h. Address 400h lies outside the
+    // 512-byte lift window and is therefore the region's native exit. The
+    // callee deliberately visits 400h on its way to RET, before the caller
+    // later reaches the same PC as the real region handoff.
+    memory
+        .write_slice(
+            &[
+                0xE8, 0xFB, 0x00, 0x00, 0x00, // call 100h
+                0xFF, 0xC0, // inc eax
+                0xE9, 0xF4, 0x03, 0x00, 0x00, // jmp 400h
+            ],
+            GuestAddress(0),
+        )
+        .unwrap();
+    memory
+        .write_slice(
+            &[
+                0xE9, 0xFB, 0x02, 0x00, 0x00, // 100h: jmp 400h
+                0xC3, // 105h: ret
+            ],
+            GuestAddress(0x100),
+        )
+        .unwrap();
+    memory
+        .write_slice(
+            &[0xE9, 0x00, 0xFD, 0xFF, 0xFF], // 400h: jmp 105h
+            GuestAddress(0x400),
+        )
+        .unwrap();
+    configure_long_mode_jit(&mut vcpu);
+    vcpu.regs.rax = 41;
+    vcpu.regs.rsp = 0x8000;
+
+    let region = vcpu
+        .jit_compile_region()
+        .expect("compile callout collision region")
+        .expect("callout collision region must be JIT eligible");
+    assert_eq!(region.callout_boundaries, vec![(0, 5)]);
+    vcpu.jit_run_region_verified(&region);
+
+    assert_eq!(vcpu.regs.rax, 42);
+    assert_eq!(vcpu.regs.rsp, 0x8000);
+    assert_eq!(vcpu.regs.rip, 0x400);
+}

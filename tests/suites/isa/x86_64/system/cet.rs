@@ -143,19 +143,23 @@ fn test_incsspd_preserves_register() {
 // ============================================================================
 
 #[test]
-fn test_rdsspd_unsupported_injects_ud() {
-    assert_missing_idt_ud(&[
-        0xf3, 0x0f, 0x1e, 0xc8, // RDSSPD eax
-        0xf4, // HLT (should not be reached)
-    ]);
+fn test_rdsspd_is_destination_preserving_nop_without_cet_ss() {
+    let mut regs = Registers::default();
+    regs.rax = 0x1234_5678_9abc_def0;
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_vm(&[0xf3, 0x0f, 0x1e, 0xc8, 0xf4], Some(regs));
+    let result = run_until_hlt(&mut vcpu).expect("RDSSPD unsupported-feature NOP");
+    assert_eq!(result.rax, 0x1234_5678_9abc_def0);
 }
 
 #[test]
-fn test_rdsspq_unsupported_injects_ud() {
-    assert_missing_idt_ud(&[
-        0xf3, 0x48, 0x0f, 0x1e, 0xc9, // RDSSPQ rcx
-        0xf4, // HLT (should not be reached)
-    ]);
+fn test_rdsspq_is_destination_preserving_nop_without_cet_ss() {
+    let mut regs = Registers::default();
+    regs.rcx = 0xfedc_ba98_7654_3210;
+    regs.rsp = 0x1000;
+    let (mut vcpu, _) = setup_vm(&[0xf3, 0x48, 0x0f, 0x1e, 0xc9, 0xf4], Some(regs));
+    let result = run_until_hlt(&mut vcpu).expect("RDSSPQ unsupported-feature NOP");
+    assert_eq!(result.rcx, 0xfedc_ba98_7654_3210);
 }
 
 // ============================================================================

@@ -11,6 +11,7 @@ const XCR0_AVX: u64 = 1 << 2;
 const XCR0_OPMASK: u64 = 1 << 5;
 const XCR0_ZMM_HI256: u64 = 1 << 6;
 const XCR0_HI16_ZMM: u64 = 1 << 7;
+const XCR0_PKRU: u64 = 1 << 9;
 const XCR0_APX_F: u64 = 1 << 19;
 
 const XSAVE_LEGACY_SIZE: u32 = 512;
@@ -25,7 +26,9 @@ const XSAVE_ZMM_HI256_OFFSET: u32 = 0x480;
 const XSAVE_ZMM_HI256_SIZE: u32 = 512;
 const XSAVE_HI16_ZMM_OFFSET: u32 = 0x680;
 const XSAVE_HI16_ZMM_SIZE: u32 = 1024;
-const XSAVE_MAX_SIZE: u32 = XSAVE_HI16_ZMM_OFFSET + XSAVE_HI16_ZMM_SIZE;
+const XSAVE_PKRU_OFFSET: u32 = 0xA80;
+const XSAVE_PKRU_SIZE: u32 = 8;
+const XSAVE_MAX_SIZE: u32 = XSAVE_PKRU_OFFSET + XSAVE_PKRU_SIZE;
 
 fn standard_xsave_area_size(xcr0: u64) -> u32 {
     let mut size = XSAVE_LEGACY_SIZE + XSAVE_HEADER_SIZE;
@@ -40,6 +43,9 @@ fn standard_xsave_area_size(xcr0: u64) -> u32 {
     }
     if xcr0 & XCR0_HI16_ZMM != 0 {
         size = size.max(XSAVE_HI16_ZMM_OFFSET + XSAVE_HI16_ZMM_SIZE);
+    }
+    if xcr0 & XCR0_PKRU != 0 {
+        size = size.max(XSAVE_PKRU_OFFSET + XSAVE_PKRU_SIZE);
     }
     if xcr0 & XCR0_APX_F != 0 {
         size = size.max(XSAVE_APX_OFFSET + XSAVE_APX_SIZE);
@@ -60,6 +66,9 @@ fn compacted_xsave_area_size(xcr0: u64) -> u32 {
     }
     if xcr0 & XCR0_HI16_ZMM != 0 {
         size += XSAVE_HI16_ZMM_SIZE;
+    }
+    if xcr0 & XCR0_PKRU != 0 {
+        size += XSAVE_PKRU_SIZE;
     }
     if xcr0 & XCR0_APX_F != 0 {
         size += XSAVE_APX_SIZE;
@@ -309,7 +318,8 @@ pub(crate) fn evaluate_cpuid(
                         | XCR0_AVX
                         | XCR0_OPMASK
                         | XCR0_ZMM_HI256
-                        | XCR0_HI16_ZMM;
+                        | XCR0_HI16_ZMM
+                        | XCR0_PKRU;
                     if state.apx {
                         xcr0_valid |= XCR0_APX_F;
                     }
@@ -331,6 +341,8 @@ pub(crate) fn evaluate_cpuid(
                 6 => (XSAVE_ZMM_HI256_SIZE, XSAVE_ZMM_HI256_OFFSET, 0, 0),
                 // Subleaf 7: full ZMM16-31.
                 7 => (XSAVE_HI16_ZMM_SIZE, XSAVE_HI16_ZMM_OFFSET, 0, 0),
+                // Subleaf 9: user protection-key rights register.
+                9 => (XSAVE_PKRU_SIZE, XSAVE_PKRU_OFFSET, 0, 0),
                 // Subleaf 19: APX_F EGPR component (R16-R31).
                 19 if state.apx => (XSAVE_APX_SIZE, XSAVE_APX_OFFSET, 0, 0),
                 _ => (0, 0, 0, 0),

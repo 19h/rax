@@ -282,6 +282,23 @@ fn test_xsetbv_xcr0_valid_combination() {
 }
 
 #[test]
+fn test_xsetbv_accepts_pkru_component() {
+    let code = [
+        0xb8, 0x03, 0x02, 0x00, 0x00, // MOV EAX, x87|SSE|PKRU
+        0x31, 0xd2, // XOR EDX, EDX
+        0x31, 0xc9, // XOR ECX, ECX
+        0x0f, 0x01, 0xd1, // XSETBV
+        0x0f, 0x01, 0xd0, // XGETBV
+        0xf4, // HLT
+    ];
+    let (mut vcpu, _) = setup_vm_with_cr4(&code, None, CR4_OSXSAVE);
+    let regs = run_until_hlt(&mut vcpu).unwrap();
+
+    assert_eq!(regs.rax as u32, 0x203, "XCR0 should retain PKRU state bit");
+    assert_eq!(regs.rdx as u32, 0);
+}
+
+#[test]
 fn test_xsetbv_rejects_apx_f_bit_by_default() {
     let code = [
         0xb8, 0x07, 0x00, 0x08, 0x00, // MOV EAX, x87|SSE|AVX|APX_F

@@ -113,7 +113,7 @@ impl SmirInterpreter {
         }
     }
 
-    const X86_XSAVE_SUPPORTED: u64 = 0x7 | (1 << 5) | (1 << 6) | (1 << 7) | (1 << 19);
+    const X86_XSAVE_SUPPORTED: u64 = 0x7 | (1 << 5) | (1 << 6) | (1 << 7) | (1 << 9) | (1 << 19);
 
     pub(crate) fn x86_xstate_in_use(x86: &crate::smir::X86RegState) -> u64 {
         let mut result = 0;
@@ -152,6 +152,9 @@ impl SmirInterpreter {
             .any(|register| register[..8].iter().any(|lane| *lane != 0))
         {
             result |= 1 << 7;
+        }
+        if x86.pkru != 0 {
+            result |= 1 << 9;
         }
         if x86.gpr[16..32].iter().any(|register| *register != 0) {
             result |= 1 << 19;
@@ -231,6 +234,9 @@ impl SmirInterpreter {
             }
             memory.write(addr + 1088, &image)?;
         }
+        if save_mask & (1 << 9) != 0 {
+            memory.write(addr + 2688, &u64::from(x86.pkru).to_le_bytes())?;
+        }
 
         let new_xstate = (old_xstate & !rfbm) | (in_use & rfbm);
         memory.write(addr + 512, &new_xstate.to_le_bytes())?;
@@ -243,6 +249,7 @@ impl SmirInterpreter {
             5 => 64,
             6 => 512,
             7 => 1024,
+            9 => 8,
             19 => 128,
             _ => unreachable!("unsupported XSAVE component {component}"),
         }
@@ -282,6 +289,7 @@ impl SmirInterpreter {
                     }
                 }
             }
+            9 => image.extend_from_slice(&u64::from(x86.pkru).to_le_bytes()),
             19 => {
                 for register in &x86.gpr[16..32] {
                     image.extend_from_slice(&register.to_le_bytes());
@@ -329,7 +337,7 @@ impl SmirInterpreter {
         }
 
         let mut next_offset = 576;
-        for component in [2u8, 5, 6, 7, 19] {
+        for component in [2u8, 5, 6, 7, 9, 19] {
             let bit = 1u64 << component;
             if rfbm & bit != 0 {
                 if save_mask & bit != 0 {
@@ -470,8 +478,8 @@ impl SmirInterpreter {
             }
         }
 
-        let mut offsets = [None; 5];
-        let components = [2u8, 5, 6, 7, 19];
+        let mut offsets = [None; 6];
+        let components = [2u8, 5, 6, 7, 9, 19];
         if compacted {
             let mut next_offset = 576;
             for (index, component) in components.iter().copied().enumerate() {
@@ -481,7 +489,14 @@ impl SmirInterpreter {
                 }
             }
         } else {
-            offsets = [Some(576), Some(1088), Some(1152), Some(1664), Some(960)];
+            offsets = [
+                Some(576),
+                Some(1088),
+                Some(1152),
+                Some(1664),
+                Some(2688),
+                Some(960),
+            ];
         }
         for (index, component) in components.iter().copied().enumerate() {
             let bit = 1u64 << component;
@@ -510,6 +525,7 @@ impl SmirInterpreter {
                             register[0..8].fill(0);
                         }
                     }
+                    9 => restored.pkru = 0,
                     19 => restored.gpr[16..32].fill(0),
                     _ => unreachable!(),
                 }
@@ -543,6 +559,12 @@ impl SmirInterpreter {
             }
             6 => Self::restore_x86_xsave_lanes(memory, addr, &mut x86.xmm, 0..16, 4..8),
             7 => Self::restore_x86_xsave_lanes(memory, addr, &mut x86.xmm, 16..32, 0..8),
+            9 => {
+                let mut image = [0u8; 8];
+                memory.read(addr, &mut image)?;
+                x86.pkru = u64::from_le_bytes(image) as u32;
+                Ok(())
+            }
             19 => {
                 let mut image = [0u8; 128];
                 memory.read(addr, &mut image)?;
