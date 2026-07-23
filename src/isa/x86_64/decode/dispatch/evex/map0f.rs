@@ -489,7 +489,7 @@ impl X86_64Vcpu {
             0x75 if evex.pp == 1 => {
                 execute::simd::evex_int_cmp(self, ctx, 2, true, execute::simd::CmpPred::Eq, false)
             }
-            0x76 if evex.pp == 1 => {
+            0x76 if evex.pp == 1 && !evex.w => {
                 execute::simd::evex_int_cmp(self, ctx, 4, true, execute::simd::CmpPred::Eq, false)
             }
             0x64 if evex.pp == 1 => {
@@ -498,9 +498,10 @@ impl X86_64Vcpu {
             0x65 if evex.pp == 1 => {
                 execute::simd::evex_int_cmp(self, ctx, 2, true, execute::simd::CmpPred::Gt, false)
             }
-            0x66 if evex.pp == 1 => {
+            0x66 if evex.pp == 1 && !evex.w => {
                 execute::simd::evex_int_cmp(self, ctx, 4, true, execute::simd::CmpPred::Gt, false)
             }
+            0x66 | 0x76 if evex.pp == 1 => self.inject_undefined_instruction(),
 
             // Packed shift by immediate (group opcodes 0x71/0x72/0x73 with /reg selecting op)
             // 0x71: VPSRLW(/2), VPSRAW(/4), VPSLLW(/6)  (word)

@@ -483,6 +483,7 @@ impl X86_64Vcpu {
             0x37 if evex.pp == 1 && evex.w => {
                 execute::simd::evex_int_cmp(self, ctx, 8, true, execute::simd::CmpPred::Gt, false)
             }
+            0x29 | 0x37 if evex.pp == 1 => self.inject_undefined_instruction(),
             // Packed integer min/max.
             0x38 if evex.pp == 1 => {
                 execute::simd::evex_int_arith(self, ctx, execute::simd::IntOp::MinSB)

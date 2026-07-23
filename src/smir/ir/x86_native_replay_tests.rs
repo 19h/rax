@@ -260,6 +260,164 @@ fn avx512f_permute_replay_spans_require_only_vl_for_sub_512_widths() {
     }
 }
 
+type FixedPackedCompareShape = (u8, u8, bool, u8);
+
+fn fixed_packed_compare_shapes() -> Vec<FixedPackedCompareShape> {
+    let mut shapes = Vec::new();
+    for opcode in [0x64, 0x65, 0x74, 0x75] {
+        for w in [false, true] {
+            for ll in 0..=2 {
+                shapes.push((1, opcode, w, ll));
+            }
+        }
+    }
+    for (map, opcode, w) in [
+        (1, 0x66, false),
+        (1, 0x76, false),
+        (2, 0x29, true),
+        (2, 0x37, true),
+    ] {
+        for ll in 0..=2 {
+            shapes.push((map, opcode, w, ll));
+        }
+    }
+    shapes
+}
+
+fn generated_fixed_packed_compare_encoding(shape: FixedPackedCompareShape, rm: u8) -> [u8; 6] {
+    let (map, opcode, w, ll) = shape;
+    let mut p0 = 0xF0 | map;
+    if rm & 0x08 != 0 {
+        p0 &= !0x20;
+    }
+    if rm & 0x10 != 0 {
+        p0 &= !0x40;
+    }
+    [
+        0x62,
+        p0,
+        0x75 | if w { 0x80 } else { 0 },
+        (ll << 5) | 0x09,
+        opcode,
+        0xC8 | (rm & 0x07),
+    ]
+}
+
+#[test]
+fn fixed_packed_compare_replay_classifier_covers_144_register_encodings() {
+    let shapes = fixed_packed_compare_shapes();
+    assert_eq!(shapes.len(), 36);
+
+    let mut register_encodings = 0usize;
+    for shape in shapes {
+        for rm in [0, 8, 16, 24] {
+            let bytes = generated_fixed_packed_compare_encoding(shape, rm);
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .evex_register_packed_compare_needs_vl(),
+                Some(shape.3 != 2),
+                "{bytes:02X?}"
+            );
+            register_encodings += 1;
+        }
+
+        let mut memory = generated_fixed_packed_compare_encoding(shape, 0);
+        memory[5] = 0x08;
+        assert_eq!(
+            X86InstructionBytes::new(&memory)
+                .unwrap()
+                .evex_register_packed_compare_needs_vl(),
+            None,
+            "{memory:02X?}"
+        );
+    }
+    assert_eq!(register_encodings, 144);
+
+    // Independently assembled LLVM encodings cover all eight mnemonics and
+    // every high vector-source extension channel.
+    for bytes in [
+        &[0x62, 0x91, 0x35, 0x41, 0x74, 0xEA][..],
+        &[0x62, 0x91, 0x35, 0x41, 0x75, 0xEA],
+        &[0x62, 0x91, 0x35, 0x41, 0x76, 0xEA],
+        &[0x62, 0x92, 0xB5, 0x41, 0x29, 0xEA],
+        &[0x62, 0x91, 0x35, 0x41, 0x64, 0xEA],
+        &[0x62, 0x91, 0x35, 0x41, 0x65, 0xEA],
+        &[0x62, 0x91, 0x35, 0x41, 0x66, 0xEA],
+        &[0x62, 0x92, 0xB5, 0x41, 0x37, 0xEA],
+        // Intel WIG forms with W1, independently decoded by LLVM.
+        &[0x62, 0x91, 0xB5, 0x41, 0x74, 0xEA],
+        &[0x62, 0x91, 0xB5, 0x41, 0x75, 0xEA],
+        &[0x62, 0x91, 0xB5, 0x41, 0x64, 0xEA],
+        &[0x62, 0x91, 0xB5, 0x41, 0x65, 0xEA],
+    ] {
+        assert_eq!(
+            X86InstructionBytes::new(bytes)
+                .unwrap()
+                .evex_register_packed_compare_needs_vl(),
+            Some(false),
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn fixed_packed_compare_replay_classifier_rejects_every_reserved_frontier() {
+    let invalid: &[&[u8]] = &[
+        &[0x61, 0xF1, 0x75, 0x09, 0x74, 0xC8],       // not EVEX
+        &[0x62, 0xF3, 0x75, 0x09, 0x74, 0xC8],       // map 3
+        &[0x62, 0x71, 0x75, 0x09, 0x74, 0xC8],       // extended k destination via R
+        &[0x62, 0xE1, 0x75, 0x09, 0x74, 0xC8],       // extended k destination via R'
+        &[0x62, 0xF1, 0x71, 0x09, 0x74, 0xC8],       // missing fixed-one bit
+        &[0x62, 0xF1, 0x74, 0x09, 0x74, 0xC8],       // missing mandatory 66
+        &[0x62, 0xF1, 0xF5, 0x09, 0x76, 0xC8],       // VPCMPEQD with W1
+        &[0x62, 0xF2, 0x75, 0x09, 0x29, 0xC8],       // VPCMPEQQ with W0
+        &[0x62, 0xF1, 0x75, 0x89, 0x74, 0xC8],       // EVEX.z
+        &[0x62, 0xF1, 0x75, 0x19, 0x74, 0xC8],       // EVEX.b
+        &[0x62, 0xF1, 0x75, 0x69, 0x74, 0xC8],       // reserved L'L=3
+        &[0x62, 0xF1, 0x75, 0x09, 0x74, 0x08],       // memory source
+        &[0x62, 0xF1, 0x75, 0x09, 0x73, 0xC8],       // unrelated opcode
+        &[0x62, 0xF1, 0x75, 0x09, 0x74],             // missing ModR/M
+        &[0x62, 0xF1, 0x75, 0x09, 0x74, 0xC8, 0x00], // trailing byte
+    ];
+    for bytes in invalid {
+        assert_eq!(
+            X86InstructionBytes::new(bytes)
+                .unwrap()
+                .evex_register_packed_compare_needs_vl(),
+            None,
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn fixed_packed_compare_replay_spans_require_only_vl_for_sub_512_widths() {
+    let pc = 0x2F00;
+    let mut block = SmirBlock::new(BlockId(11), pc);
+    block.push_op(SmirOp::new(OpId(0), pc, OpKind::Nop));
+
+    for (bytes, needs_vl) in [
+        (&[0x62, 0xF1, 0x75, 0x09, 0x74, 0xC8][..], true),
+        (&[0x62, 0xF1, 0xF5, 0x29, 0x65, 0xC8], true),
+        (&[0x62, 0xF2, 0xF5, 0x49, 0x37, 0xC8], false),
+    ] {
+        let instruction = X86InstructionBytes::new(bytes).unwrap();
+        let provenance = HashMap::from([((BlockId(11), pc), instruction)]);
+        for spans in [
+            x86_evex_packed_compare_replay_spans(&block, &provenance),
+            x86_evex_native_replay_spans(&block, &provenance),
+        ] {
+            let span = spans.get(&0).unwrap_or_else(|| panic!("{bytes:02X?}"));
+            assert_eq!(span.end, 1, "{bytes:02X?}");
+            assert_eq!(span.instruction, instruction, "{bytes:02X?}");
+            assert_eq!(span.needs_avx512vl, needs_vl, "{bytes:02X?}");
+            assert!(!span.needs_avx512dq, "{bytes:02X?}");
+            assert!(!span.needs_avx512fp16, "{bytes:02X?}");
+        }
+    }
+}
+
 type PackedMoveShape = (u8, u8, bool, u8);
 
 fn packed_move_shapes() -> Vec<PackedMoveShape> {

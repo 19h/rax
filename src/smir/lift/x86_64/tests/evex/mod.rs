@@ -16,6 +16,8 @@ mod mask;
 #[cfg(test)]
 mod ops;
 #[cfg(test)]
+mod packed_compare;
+#[cfg(test)]
 mod permute;
 #[cfg(test)]
 mod scalar_integer_convert;

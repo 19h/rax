@@ -253,6 +253,83 @@ mod tests {
         }
     }
 
+    #[test]
+    fn evex_fixed_packed_compare_wig_executes_w0_and_w1_identically() {
+        let execute = |opcode: u8, w: bool| {
+            // vpcmpeq*/vpcmpgt* k3, xmm1, xmm2; only EVEX.W differs.
+            let mut code = [0x62, 0xF1, 0x75, 0x08, opcode, 0xDA];
+            if w {
+                code[2] |= 0x80;
+            }
+            let mut vcpu = long_mode_vcpu(&code);
+            vcpu.regs.xmm[1] = [0x7FFF_8000_0101_FF00, 0x8000_7FFF_FE02_0100];
+            vcpu.regs.xmm[2] = [0x7FFE_8000_0001_FF00, 0x8001_7FFF_FF02_0000];
+            vcpu.regs.k[3] = u64::MAX;
+
+            step_ok(&mut vcpu);
+            (vcpu.regs.k[3], vcpu.regs.rip)
+        };
+
+        for opcode in [0x64, 0x65, 0x74, 0x75] {
+            let w0 = execute(opcode, false);
+            let w1 = execute(opcode, true);
+            assert_eq!(w1, w0, "EVEX.W must be ignored for opcode {opcode:#04x}");
+            assert_eq!(w0.1, CODE + 6);
+        }
+    }
+
+    fn assert_evex_fixed_packed_compare_reserved_ud(code: &[u8]) {
+        let mut vcpu = long_mode_vcpu(code);
+        vcpu.regs.xmm[1] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        vcpu.regs.xmm[2] = [0x9999_AAAA_BBBB_CCCC, 0xDDDD_EEEE_FFFF_0000];
+        vcpu.regs.k = [
+            0x0000_0000_0000_0001,
+            0x0000_0000_0000_0002,
+            0x0000_0000_0000_0004,
+            0x0000_0000_0000_0008,
+            0x0000_0000_0000_0010,
+            0x0000_0000_0000_0020,
+            0x0000_0000_0000_0040,
+            0x0000_0000_0000_0080,
+        ];
+        let before = vcpu.regs.clone();
+
+        let error = vcpu
+            .step()
+            .expect_err("reserved EVEX fixed packed-compare form must #UD");
+        assert!(
+            format!("{error:?}").contains("IDT entry 6 not present"),
+            "wrong exception for {code:02X?}: {error:?}"
+        );
+        assert_eq!(vcpu.regs.rip, before.rip, "{code:02X?}: fault RIP");
+        assert_eq!(vcpu.regs.xmm, before.xmm, "{code:02X?}: XMM state");
+        assert_eq!(
+            vcpu.regs.ymm_high, before.ymm_high,
+            "{code:02X?}: YMM state"
+        );
+        assert_eq!(
+            vcpu.regs.zmm_high, before.zmm_high,
+            "{code:02X?}: ZMM state"
+        );
+        assert_eq!(vcpu.regs.k, before.k, "{code:02X?}: opmask state");
+    }
+
+    #[test]
+    fn evex_fixed_packed_compare_reserved_fields_raise_precise_ud() {
+        for code in [
+            &[0x62, 0x71, 0x75, 0x08, 0x74, 0xCA][..], // extended k destination via R
+            &[0x62, 0xE1, 0x75, 0x08, 0x74, 0xCA],     // extended k destination via R'
+            &[0x62, 0xF1, 0x75, 0x89, 0x74, 0xCA],     // EVEX.z is reserved
+            &[0x62, 0xF1, 0x75, 0x69, 0x74, 0xCA],     // reserved L'L=3
+            &[0x62, 0xF1, 0x75, 0x19, 0x74, 0xCA],     // EVEX.b with register source
+            &[0x62, 0xF1, 0xF5, 0x08, 0x76, 0xCA],     // VPCMPEQD requires W0
+            &[0x62, 0xF2, 0x75, 0x08, 0x29, 0xCA],     // VPCMPEQQ requires W1
+            &[0x62, 0xF1, 0x75, 0x18, 0x74, 0x00],     // byte compare has no broadcast
+        ] {
+            assert_evex_fixed_packed_compare_reserved_ud(code);
+        }
+    }
+
     fn enable_paging_for_wrapped_stack_test(vcpu: &mut X86_64Vcpu) {
         const PRESENT_WRITABLE: u64 = 0x3;
         const HUGE_PAGE: u64 = 0x80;

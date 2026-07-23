@@ -117,7 +117,7 @@ fn evex_vl_bytes(ll: u8) -> usize {
     }
 }
 
-fn evex_mask(vcpu: &X86_64Vcpu, aaa: u8, num_elems: usize) -> u64 {
+pub(super) fn evex_mask(vcpu: &X86_64Vcpu, aaa: u8, num_elems: usize) -> u64 {
     let full_mask = if num_elems == 64 {
         u64::MAX
     } else {
@@ -130,7 +130,7 @@ fn evex_mask(vcpu: &X86_64Vcpu, aaa: u8, num_elems: usize) -> u64 {
     }
 }
 
-fn read_reg_bytes(vcpu: &X86_64Vcpu, reg: u8, vl_bytes: usize) -> [u8; 64] {
+pub(super) fn read_reg_bytes(vcpu: &X86_64Vcpu, reg: u8, vl_bytes: usize) -> [u8; 64] {
     let mut data = [0u8; 64];
     match vl_bytes {
         16 => {
@@ -216,7 +216,7 @@ fn write_reg_bytes(vcpu: &mut X86_64Vcpu, reg: u8, vl_bytes: usize, data: &[u8; 
     }
 }
 
-fn load_mem_bytes(
+pub(super) fn load_mem_bytes(
     vcpu: &mut X86_64Vcpu,
     addr: u64,
     elem_size: usize,
@@ -615,7 +615,7 @@ pub fn vexpand_evex(
 
 /// Resolve VL in bytes (16/32/64) from EVEX.L'L.
 #[inline]
-fn vl_bytes_of(ll: u8) -> usize {
+pub(super) fn vl_bytes_of(ll: u8) -> usize {
     match ll {
         0 => 16,
         1 => 32,
@@ -6402,70 +6402,8 @@ pub fn evex_broadcast_mask(
     Ok(None)
 }
 
-/// Integer compare predicate (for the EQ/GT fixed forms and the imm8 VPCMP form).
-#[derive(Clone, Copy, PartialEq)]
-pub enum CmpPred {
-    Eq,
-    Lt,
-    Le,
-    /// "False" (never true) – predicate 3 for VPCMP.
-    FalseP,
-    Ne,
-    Nlt,
-    Nle,
-    /// "True" (always true) – predicate 7 for VPCMP.
-    TrueP,
-    /// Greater-than (used by the dedicated VPCMPGT* forms).
-    Gt,
-}
-
-impl CmpPred {
-    fn from_imm(imm: u8) -> CmpPred {
-        match imm & 0x7 {
-            0 => CmpPred::Eq,
-            1 => CmpPred::Lt,
-            2 => CmpPred::Le,
-            3 => CmpPred::FalseP,
-            4 => CmpPred::Ne,
-            5 => CmpPred::Nlt,
-            6 => CmpPred::Nle,
-            _ => CmpPred::TrueP,
-        }
-    }
-}
-
-/// Evaluate the compare predicate over two signed/unsigned integers represented
-/// as i128 (signed) or u128 (unsigned) ordering.
-fn cmp_eval_signed(pred: CmpPred, a: i128, b: i128) -> bool {
-    match pred {
-        CmpPred::Eq => a == b,
-        CmpPred::Lt => a < b,
-        CmpPred::Le => a <= b,
-        CmpPred::FalseP => false,
-        CmpPred::Ne => a != b,
-        CmpPred::Nlt => a >= b,
-        CmpPred::Nle => a > b,
-        CmpPred::TrueP => true,
-        CmpPred::Gt => a > b,
-    }
-}
-
-fn cmp_eval_unsigned(pred: CmpPred, a: u128, b: u128) -> bool {
-    match pred {
-        CmpPred::Eq => a == b,
-        CmpPred::Lt => a < b,
-        CmpPred::Le => a <= b,
-        CmpPred::FalseP => false,
-        CmpPred::Ne => a != b,
-        CmpPred::Nlt => a >= b,
-        CmpPred::Nle => a > b,
-        CmpPred::TrueP => true,
-        CmpPred::Gt => a > b,
-    }
-}
-
 /// Read a single element as a signed i128 (sign-extended) from a byte slice.
-fn elem_signed(bytes: &[u8], elem_size: usize) -> i128 {
+pub(super) fn elem_signed(bytes: &[u8], elem_size: usize) -> i128 {
     match elem_size {
         1 => bytes[0] as i8 as i128,
         2 => i16::from_le_bytes([bytes[0], bytes[1]]) as i128,
@@ -6478,7 +6416,7 @@ fn elem_signed(bytes: &[u8], elem_size: usize) -> i128 {
 }
 
 /// Read a single element as an unsigned u128 from a byte slice.
-fn elem_unsigned(bytes: &[u8], elem_size: usize) -> u128 {
+pub(super) fn elem_unsigned(bytes: &[u8], elem_size: usize) -> u128 {
     match elem_size {
         1 => bytes[0] as u128,
         2 => u16::from_le_bytes([bytes[0], bytes[1]]) as u128,
@@ -6488,105 +6426,6 @@ fn elem_unsigned(bytes: &[u8], elem_size: usize) -> u128 {
         ]) as u128,
         _ => 0,
     }
-}
-
-/// Generic EVEX integer compare into a k-mask destination.
-///
-/// `elem_size`: 1/2/4/8. `signed`: signed vs unsigned ordering. `pred`: predicate.
-/// `has_imm`: true for the VPCMP[U]B/W/D/Q imm8 forms (predicate from imm8 &7).
-/// Supports embedded broadcast for D/Q element widths.
-pub fn evex_int_cmp(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    elem_size: usize,
-    signed: bool,
-    fixed_pred: CmpPred,
-    has_imm: bool,
-) -> Result<Option<VcpuExit>> {
-    let evex = ctx
-        .evex
-        .ok_or_else(|| Error::Emulator("EVEX compare requires EVEX prefix".to_string()))?;
-
-    let modrm_start = ctx.cursor;
-    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-
-    // Destination is a k-mask register (reg field, low 3 bits).
-    let k_dst = (reg & 0x7) as usize;
-    let src1 = (evex.vvvv ^ 0xF) | if evex.v_prime { 0 } else { 16 };
-    let src2_reg = (rm & 0x07) | if evex.b { 0 } else { 8 } | if evex.x { 0 } else { 16 };
-
-    let vl_bytes = vl_bytes_of(evex.ll);
-    let num_elems = vl_bytes / elem_size;
-    let broadcast_ok = elem_size == 4 || elem_size == 8;
-    let addr = if is_memory {
-        let scale = if evex.broadcast && broadcast_ok {
-            elem_size
-        } else {
-            vl_bytes
-        };
-        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
-    } else {
-        addr
-    };
-
-    let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
-
-    let src2_bytes = if is_memory {
-        if evex.broadcast && broadcast_ok {
-            let elem = vcpu.read_mem(addr, elem_size as u8)?;
-            let elem_le = elem.to_le_bytes();
-            let mut data = [0u8; 64];
-            for i in 0..num_elems {
-                let base = i * elem_size;
-                data[base..base + elem_size].copy_from_slice(&elem_le[..elem_size]);
-            }
-            data
-        } else {
-            load_mem_bytes(vcpu, addr, elem_size, num_elems)?
-        }
-    } else {
-        read_reg_bytes(vcpu, src2_reg, vl_bytes)
-    };
-
-    let pred = if has_imm {
-        let imm = ctx.consume_u8()?;
-        CmpPred::from_imm(imm)
-    } else {
-        fixed_pred
-    };
-
-    let writemask = evex_mask(vcpu, evex.aaa, num_elems);
-
-    let mut result: u64 = 0;
-    for i in 0..num_elems {
-        // Only compute for active elements (k1 governs which lanes participate).
-        if (writemask >> i) & 1 == 0 {
-            continue;
-        }
-        let base = i * elem_size;
-        let cond = if signed {
-            cmp_eval_signed(
-                pred,
-                elem_signed(&src1_bytes[base..base + elem_size], elem_size),
-                elem_signed(&src2_bytes[base..base + elem_size], elem_size),
-            )
-        } else {
-            cmp_eval_unsigned(
-                pred,
-                elem_unsigned(&src1_bytes[base..base + elem_size], elem_size),
-                elem_unsigned(&src2_bytes[base..base + elem_size], elem_size),
-            )
-        };
-        if cond {
-            result |= 1u64 << i;
-        }
-    }
-
-    // The k-destination is fully written (inactive lanes produce 0 above).
-    vcpu.regs.k[k_dst] = result;
-
-    vcpu.regs.rip += ctx.cursor as u64;
-    Ok(None)
 }
 
 /// EVEX ternary bitwise logic (VPTERNLOGD/Q).

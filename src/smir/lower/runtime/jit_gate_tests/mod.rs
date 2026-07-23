@@ -24,6 +24,8 @@ mod evex_fp16_scalar_replay;
 #[cfg(test)]
 mod evex_move_replay;
 #[cfg(test)]
+mod evex_packed_compare_replay;
+#[cfg(test)]
 mod evex_packed_extend_replay;
 #[cfg(test)]
 mod evex_permute_replay;

@@ -716,15 +716,16 @@ impl X86InstructionBytes {
         }
     }
 
-    /// Validate register-only EVEX signed/unsigned packed integer compares
-    /// that write an opmask destination and return whether the vector length
-    /// requires AVX-512VL. Byte/word forms use AVX-512BW and
-    /// doubleword/quadword forms use AVX-512F. The destination is restricted
-    /// to canonical K0-K7 encoding, and EVEX.z is reserved because masked-off
-    /// comparison-result bits are unconditionally zeroed.
+    /// Validate register-only EVEX fixed-predicate and immediate-predicate
+    /// signed/unsigned packed integer compares that write an opmask
+    /// destination, and return whether the vector length requires AVX-512VL.
+    /// Byte/word forms use AVX-512BW and doubleword/quadword forms use
+    /// AVX-512F. The destination is restricted to canonical K0-K7 encoding,
+    /// fixed-W and WIG forms are distinguished exactly, and EVEX.z is reserved
+    /// because masked-off comparison-result bits are unconditionally zeroed.
     pub fn evex_register_packed_compare_needs_vl(&self) -> Option<bool> {
         let bytes = self.as_slice();
-        if bytes.len() != 7 || bytes[0] != 0x62 {
+        if !matches!(bytes.len(), 6 | 7) || bytes[0] != 0x62 {
             return None;
         }
         let p0 = bytes[1];
@@ -732,14 +733,22 @@ impl X86InstructionBytes {
         let p2 = bytes[3];
         let opcode = bytes[4];
         let modrm = bytes[5];
-        if p0 & 0x0f != 3
-            || p0 & 0x90 != 0x90
-            || p1 & 0x04 == 0
-            || p1 & 0x03 != 1
-            || !matches!(opcode, 0x1E | 0x1F | 0x3E | 0x3F)
-            || modrm >> 6 != 3
-        {
+        if p0 & 0x90 != 0x90 || p1 & 0x04 == 0 || p1 & 0x03 != 1 || modrm >> 6 != 3 {
             return None;
+        }
+
+        let map = p0 & 0x0f;
+        let w = p1 & 0x80 != 0;
+        match (bytes.len(), map, opcode, w) {
+            // VPCMP[U]D/Q/B/W imm8 families.
+            (7, 3, 0x1E | 0x1F | 0x3E | 0x3F, _) => {}
+            // VPCMPEQB/W and VPCMPGTB/W are WIG.
+            (6, 1, 0x64 | 0x65 | 0x74 | 0x75, _) => {}
+            // VPCMPEQD and VPCMPGTD require W0.
+            (6, 1, 0x66 | 0x76, false) => {}
+            // VPCMPEQQ and VPCMPGTQ require W1.
+            (6, 2, 0x29 | 0x37, true) => {}
+            _ => return None,
         }
 
         let zeroing = p2 & 0x80 != 0;

@@ -579,7 +579,9 @@ impl X86_64Lifter {
             ),
             _ => unreachable!(),
         };
-        if prefix.map == X86VecMap::Map0F38 && !prefix.w {
+        if (prefix.map == X86VecMap::Map0F38 && !prefix.w)
+            || (prefix.map == X86VecMap::Map0F && matches!(opcode, 0x66 | 0x76) && prefix.w)
+        {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
