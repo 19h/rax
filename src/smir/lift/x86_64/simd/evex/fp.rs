@@ -599,10 +599,7 @@ impl X86_64Lifter {
             ..X86Prefix::default()
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
-        if modrm.is_memory
-            || (mask_to_vector && (modrm.rm >= 8 || prefix.rm_high))
-            || (!mask_to_vector && (modrm.reg >= 8 || prefix.reg_high))
-        {
+        if modrm.is_memory || (!mask_to_vector && (modrm.reg >= 8 || prefix.reg_high)) {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
@@ -612,7 +609,8 @@ impl X86_64Lifter {
         let bits = elem.bytes() * 8;
         let mut ops = Vec::new();
         if mask_to_vector {
-            let src = VReg::Arch(ArchReg::X86(X86Reg::K(modrm.rm)));
+            // EVEX.X/B are ignored for a ModR/M.r/m K-register operand.
+            let src = VReg::Arch(ArchReg::X86(X86Reg::K(modrm.rm & 0x07)));
             let dst = self.vec_reg(
                 modrm.reg + if prefix.reg_high { 16 } else { 0 },
                 prefix.width,

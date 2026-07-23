@@ -539,6 +539,184 @@ mod tests {
         }
     }
 
+    #[test]
+    fn evex_mask_to_vector_ignores_k_source_extension_fields() {
+        let execute = |p0: u8| {
+            let code = [0x62, p0, 0x7E, 0x08, 0x28, 0xD1];
+            let mut vcpu = long_mode_vcpu(&code);
+            vcpu.regs.k[1] = 0xA55A;
+            vcpu.regs.xmm[2] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+            vcpu.regs.ymm_high[2] = [u64::MAX; 2];
+            vcpu.regs.zmm_high[2] = [u64::MAX; 4];
+            let before_flags = vcpu.regs.rflags;
+
+            step_ok(&mut vcpu);
+
+            assert_eq!(vcpu.regs.ymm_high[2], [0; 2], "{code:02X?}");
+            assert_eq!(vcpu.regs.zmm_high[2], [0; 4], "{code:02X?}");
+            assert_eq!(vcpu.regs.rflags, before_flags, "{code:02X?}");
+            assert_eq!(vcpu.regs.rip, CODE + 6, "{code:02X?}");
+            vcpu.regs.xmm[2]
+        };
+
+        let canonical = execute(0xF2);
+        for p0 in [0xD2, 0xB2, 0x92] {
+            assert_eq!(
+                execute(p0),
+                canonical,
+                "EVEX.X/B must be ignored: {p0:#04X}"
+            );
+        }
+    }
+
+    #[test]
+    fn evex_mask_to_vector_expands_all_shapes_and_clears_upper_lanes() {
+        for (opcode, w, elem_size) in [
+            (0x28, false, 1usize),
+            (0x28, true, 2),
+            (0x38, false, 4),
+            (0x38, true, 8),
+        ] {
+            for (ll, vl_bytes) in [(0u8, 16usize), (1, 32), (2, 64)] {
+                for destination in [1u8, 9, 17, 25] {
+                    for source in [0u8, 3, 7] {
+                        let mut p0 = 0xF2;
+                        if destination & 0x08 != 0 {
+                            p0 &= !0x80;
+                        }
+                        if destination & 0x10 != 0 {
+                            p0 &= !0x10;
+                        }
+                        let code = [
+                            0x62,
+                            p0,
+                            0x7E | if w { 0x80 } else { 0 },
+                            (ll << 5) | 0x08,
+                            opcode,
+                            0xC0 | ((destination & 0x07) << 3) | source,
+                        ];
+                        let mut vcpu = long_mode_vcpu(&code);
+                        for index in 0..16 {
+                            vcpu.regs.xmm[index] = [
+                                0x1111_2222_3333_4444 ^ index as u64,
+                                0xAAAA_BBBB_CCCC_DDDD ^ index as u64,
+                            ];
+                            vcpu.regs.ymm_high[index] = [0x5555_5555_5555_5555 ^ index as u64; 2];
+                            vcpu.regs.zmm_high[index] = [0xCCCC_CCCC_CCCC_CCCC ^ index as u64; 4];
+                            vcpu.regs.zmm_ext[index] = [0xF0F0_F0F0_F0F0_F0F0 ^ index as u64; 8];
+                        }
+                        vcpu.regs.k = std::array::from_fn(|index| {
+                            0xA55A_3CC3_F00F_9669u64.rotate_left((index * 7) as u32)
+                        });
+                        let before = vcpu.regs.clone();
+                        let source_mask = before.k[source as usize];
+
+                        step_ok(&mut vcpu);
+
+                        let mut expected_bytes = [0u8; 64];
+                        for lane in 0..(vl_bytes / elem_size) {
+                            if (source_mask >> lane) & 1 != 0 {
+                                expected_bytes[lane * elem_size..(lane + 1) * elem_size].fill(0xFF);
+                            }
+                        }
+                        let expected = std::array::from_fn(|index| {
+                            u64::from_le_bytes(
+                                expected_bytes[index * 8..index * 8 + 8].try_into().unwrap(),
+                            )
+                        });
+                        let actual = if destination < 16 {
+                            let index = destination as usize;
+                            let mut value = [0u64; 8];
+                            value[..2].copy_from_slice(&vcpu.regs.xmm[index]);
+                            value[2..4].copy_from_slice(&vcpu.regs.ymm_high[index]);
+                            value[4..].copy_from_slice(&vcpu.regs.zmm_high[index]);
+                            value
+                        } else {
+                            vcpu.regs.zmm_ext[(destination - 16) as usize]
+                        };
+                        assert_eq!(actual, expected, "{code:02X?}");
+                        assert_eq!(vcpu.regs.k, before.k, "{code:02X?}: opmask state");
+                        assert_eq!(vcpu.regs.rflags, before.rflags, "{code:02X?}: flags");
+                        assert_eq!(vcpu.regs.rip, CODE + 6, "{code:02X?}: RIP");
+
+                        for index in 0..32u8 {
+                            if index == destination {
+                                continue;
+                            }
+                            if index < 16 {
+                                let index = index as usize;
+                                assert_eq!(vcpu.regs.xmm[index], before.xmm[index], "{code:02X?}");
+                                assert_eq!(
+                                    vcpu.regs.ymm_high[index], before.ymm_high[index],
+                                    "{code:02X?}"
+                                );
+                                assert_eq!(
+                                    vcpu.regs.zmm_high[index], before.zmm_high[index],
+                                    "{code:02X?}"
+                                );
+                            } else {
+                                let index = (index - 16) as usize;
+                                assert_eq!(
+                                    vcpu.regs.zmm_ext[index], before.zmm_ext[index],
+                                    "{code:02X?}"
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn assert_evex_mask_to_vector_reserved_ud(code: &[u8]) {
+        let mut vcpu = long_mode_vcpu(code);
+        vcpu.regs.xmm[2] = [0x0123_4567_89AB_CDEF, 0xFEDC_BA98_7654_3210];
+        vcpu.regs.ymm_high[2] = [0xAAAA_AAAA_AAAA_AAAA; 2];
+        vcpu.regs.zmm_high[2] = [0xBBBB_BBBB_BBBB_BBBB; 4];
+        vcpu.regs.k =
+            std::array::from_fn(|index| 0xA55A_3CC3_F00F_9669u64.rotate_left((index * 7) as u32));
+        let before = vcpu.regs.clone();
+
+        let error = match vcpu.step() {
+            Err(error) => error,
+            Ok(exit) => {
+                panic!("reserved EVEX mask-to-vector form committed: {code:02X?}: {exit:?}")
+            }
+        };
+        assert!(
+            format!("{error:?}").contains("IDT entry 6 not present"),
+            "wrong exception for {code:02X?}: {error:?}"
+        );
+        assert_eq!(vcpu.regs.rip, before.rip, "{code:02X?}: fault RIP");
+        assert_eq!(vcpu.regs.xmm, before.xmm, "{code:02X?}: XMM state");
+        assert_eq!(
+            vcpu.regs.ymm_high, before.ymm_high,
+            "{code:02X?}: YMM state"
+        );
+        assert_eq!(
+            vcpu.regs.zmm_high, before.zmm_high,
+            "{code:02X?}: ZMM state"
+        );
+        assert_eq!(vcpu.regs.zmm_ext, before.zmm_ext, "{code:02X?}: ZMM16-31");
+        assert_eq!(vcpu.regs.k, before.k, "{code:02X?}: opmask state");
+        assert_eq!(vcpu.regs.rflags, before.rflags, "{code:02X?}: flags");
+    }
+
+    #[test]
+    fn evex_mask_to_vector_reserved_fields_raise_precise_ud() {
+        for code in [
+            &[0x62, 0xF2, 0x76, 0x08, 0x28, 0xD1][..], // EVEX.vvvv != 1111b
+            &[0x62, 0xF2, 0x7E, 0x00, 0x28, 0xD1],     // EVEX.V' is reserved
+            &[0x62, 0xF2, 0x7E, 0x09, 0x28, 0xD1],     // writemask is forbidden
+            &[0x62, 0xF2, 0x7E, 0x88, 0x28, 0xD1],     // EVEX.z is reserved
+            &[0x62, 0xF2, 0x7E, 0x18, 0x28, 0xD1],     // EVEX.b is reserved
+            &[0x62, 0xF2, 0x7E, 0x68, 0x28, 0xD1],     // L'L=3 is reserved
+            &[0x62, 0xF2, 0x7E, 0x08, 0x28, 0x11],     // memory source is forbidden
+        ] {
+            assert_evex_mask_to_vector_reserved_ud(code);
+        }
+    }
+
     fn assert_evex_vector_to_mask_reserved_ud(code: &[u8]) {
         let mut vcpu = long_mode_vcpu(code);
         vcpu.regs.zmm_ext[0] = [

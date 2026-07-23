@@ -832,6 +832,43 @@ impl X86InstructionBytes {
         Some((ll != 2, opcode == 0x39))
     }
 
+    /// Validate register-only EVEX VPMOVM2B/W/D/Q and return
+    /// `(needs AVX-512VL, needs AVX-512DQ)`. The byte/word forms require
+    /// AVX-512BW; the native vector-state trampoline already requires that
+    /// feature for full-width opmask marshalling. EVEX.X/B are accepted in
+    /// either state because Intel SDM Table 2-41 defines them as ignored for a
+    /// ModR/M.r/m K-register operand; EVEX.R/R' select the vector destination.
+    pub fn evex_register_mask_to_vector_requirements(&self) -> Option<(bool, bool)> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+
+        // Map 2 (0F38), F3, fixed-one P1 bit, reserved EVEX.vvvv=1111b,
+        // and a register-only K source. All four vector-destination extension
+        // buckets are valid.
+        if p0 & 0x0F != 0x02
+            || p1 & 0x7F != 0x7E
+            || !matches!(opcode, 0x28 | 0x38)
+            || modrm >> 6 != 3
+        {
+            return None;
+        }
+
+        let ll = (p2 >> 5) & 0x03;
+        // EVEX.z/b/aaa are reserved and V' must retain its encoded-one value.
+        if p2 & 0x9F != 0x08 || ll == 3 {
+            return None;
+        }
+
+        Some((ll != 2, opcode == 0x38))
+    }
+
     /// Validate register-only EVEX one-source lane shuffles and return whether
     /// the vector length requires AVX-512VL. This covers VMOVSLDUP,
     /// VMOVSHDUP, VMOVDDUP, VPSHUFD, VPSHUFHW, and VPSHUFLW. The word
