@@ -28,63 +28,11 @@ mod conditional;
 mod count;
 mod invalid;
 mod movbe;
+mod movrs;
 mod paired_stack;
 mod shift;
 
 impl X86_64Lifter {
-    pub(crate) fn lift_apx_movrs(
-        &self,
-        prefix: ApxEvexPrefix,
-        opcode: u8,
-        bytes: &[u8],
-        pc: u64,
-        ctx: &mut LiftContext,
-    ) -> Result<LiftResult, LiftError> {
-        let is_byte = opcode == 0x8A;
-        if prefix.nd
-            || prefix.nf
-            || prefix.pp > 1
-            || prefix.vvvv != 0x0F
-            || !prefix.v_prime
-            || (is_byte && (prefix.w || prefix.pp != 0))
-        {
-            return Err(LiftError::Unsupported {
-                addr: pc,
-                mnemonic: "APX MOVRS reserved EVEX field".to_string(),
-            });
-        }
-
-        let op_size = prefix.op_size(is_byte);
-        let mem_width = self.size_to_memwidth(op_size);
-        let modrm_prefix = prefix.as_modrm_prefix(prefix.bytes + 1);
-        let modrm = decode_modrm(bytes, &modrm_prefix, pc)?;
-        if !modrm.is_memory {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: bytes.to_vec(),
-            });
-        }
-
-        let next_pc = pc + prefix.bytes as u64 + 1 + modrm.bytes_consumed as u64;
-        let x86_addr = modrm.addr.as_ref().unwrap();
-        let (addr, mut ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Load {
-                dst: self.gpr(modrm.reg),
-                addr,
-                width: mem_width,
-                sign: SignExtend::Zero,
-            },
-        ));
-
-        Ok(LiftResult::fallthrough(
-            ops,
-            prefix.bytes + 1 + modrm.bytes_consumed,
-        ))
-    }
-
     pub(crate) fn lift_apx_group3(
         &self,
         prefix: ApxEvexPrefix,
@@ -1099,8 +1047,12 @@ impl X86_64Lifter {
             );
         let fixed_conditional_fields_invalid = matches!(opcode, 0x38..=0x3B | 0x84 | 0x85)
             && !Self::apx_conditional_opcode_fields_valid(prefix, opcode);
-        let opcode_is_terminal =
-            nf_carry_opcode || opcode == 0x82 || fixed_conditional_fields_invalid;
+        let fixed_movrs_fields_invalid =
+            matches!(opcode, 0x8A | 0x8B) && !Self::apx_movrs_opcode_fields_valid(prefix, opcode);
+        let opcode_is_terminal = nf_carry_opcode
+            || opcode == 0x82
+            || fixed_conditional_fields_invalid
+            || fixed_movrs_fields_invalid;
         if !opcode_is_terminal && bytes.len() < prefix.bytes + 2 {
             return Err(LiftError::Incomplete {
                 addr: pc,

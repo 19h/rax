@@ -97,6 +97,11 @@ impl X86_64Vcpu {
             // INVPCID r64, m128 (66 0F 38 82 /r in 64-bit mode).
             0x82 => execute::system::invpcid(self, ctx),
 
+            // MOVRS r8,m8 and r16/32/64,m16/32/64. The read-shared
+            // indication is a cache-placement hint; its architectural value
+            // transfer is an ordinary memory load.
+            0x8A | 0x8B => execute::data::movrs(self, ctx, opcode3),
+
             // GFNI: GF2P8MULB xmm1, xmm2/m128 (66 0F 38 CF)
             0xCF => execute::simd::gf2p8mulb(self, ctx),
 

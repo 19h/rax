@@ -325,6 +325,25 @@ pub(crate) fn block_is_clobber_safe(
             i += consumed;
             continue;
         }
+        if let Some(consumed) = x86_jit_movrs_high_byte_sequence_len(
+            block,
+            i,
+            allow_mem,
+            &virtual_definitions,
+            &virtual_uses,
+        ) {
+            i += consumed;
+            continue;
+        }
+        if let Some(consumed) = x86_jit_movrs_state_backed_load_sequence_len(
+            block,
+            i,
+            allow_mem,
+            x86_instruction_bytes.get(&(block.id, block.ops[i].guest_pc)),
+        ) {
+            i += consumed;
+            continue;
+        }
         if let Some(consumed) = x86_jit_movbe_memory_sequence_len(
             block,
             i,

@@ -75,8 +75,9 @@ impl X86_64Vcpu {
             // APX-promoted POPCNT, with optional NF.
             0x88 => self.execute_apx_count(ctx, opcode),
 
-            // MOV variants (0x89-0x8B)
-            0x89 | 0x8A | 0x8B => self.execute_apx_mov(ctx, opcode),
+            // MOV r/m,r and APX-promoted MOVRS memory loads.
+            0x89 => self.execute_apx_mov(ctx, opcode),
+            0x8A | 0x8B => self.execute_apx_movrs(ctx, opcode),
 
             // LEA (0x8D)
             0x8D => self.execute_apx_lea(ctx),

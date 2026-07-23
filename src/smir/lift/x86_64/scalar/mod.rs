@@ -14,6 +14,8 @@ mod data_movement;
 pub use data_movement::*;
 mod movdir;
 pub use movdir::*;
+mod movrs;
+pub use movrs::*;
 mod group11;
 pub use group11::*;
 mod group15;

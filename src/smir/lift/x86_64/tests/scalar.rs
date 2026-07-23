@@ -324,46 +324,6 @@ fn lift_legacy_group2_sal_alias_marks_memory_sequence_jit_unsafe() {
     }
 }
 #[test]
-fn lift_movrs_rejects_invalid_forms_like_llvm() {
-    let mut lifter = X86_64Lifter::strict();
-    let mut ctx = LiftContext::new(SourceArch::X86_64);
-
-    for (bytes, name) in [
-        (&[0x44, 0x0F, 0x38, 0x8B, 0xC0][..], "legacy_reg_source"),
-        (&[0x62, 0xEC, 0xF8, 0x08, 0x8B, 0xC0][..], "evex_reg_source"),
-    ] {
-        let err = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap_err();
-        assert!(
-            matches!(err, LiftError::InvalidEncoding { .. }),
-            "{name}: {err:?}"
-        );
-    }
-
-    for (bytes, name) in [
-        (&[0x62, 0xEC, 0xF8, 0x0C, 0x8B, 0x44, 0x91, 0x20][..], "nf"),
-        (&[0x62, 0xEC, 0xF8, 0x18, 0x8B, 0x44, 0x91, 0x20][..], "ndd"),
-        (
-            &[0x62, 0xEC, 0xF8, 0x08, 0x8A, 0x44, 0x91, 0x20][..],
-            "byte_w",
-        ),
-        (&[0x62, 0xEC, 0x7A, 0x08, 0x8B, 0x44, 0x91, 0x20][..], "pp2"),
-        (
-            &[0x62, 0xEC, 0x38, 0x08, 0x8B, 0x44, 0x91, 0x20][..],
-            "vvvv",
-        ),
-        (
-            &[0x62, 0xEC, 0xF8, 0x00, 0x8B, 0x44, 0x91, 0x20][..],
-            "vprime",
-        ),
-    ] {
-        let err = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap_err();
-        assert!(
-            matches!(err, LiftError::Unsupported { .. }),
-            "{name}: {err:?}"
-        );
-    }
-}
-#[test]
 fn lift_byte_group3_models_ax_as_the_only_implicit_destination() {
     let mut lifter = X86_64Lifter::strict();
     let mut ctx = LiftContext::new(SourceArch::X86_64);

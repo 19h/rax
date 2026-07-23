@@ -116,6 +116,10 @@ pub use memory::*;
 mod movbe_memory;
 #[cfg(feature = "smir-jit")]
 pub use movbe_memory::*;
+#[cfg(feature = "smir-jit")]
+mod movrs_memory;
+#[cfg(feature = "smir-jit")]
+pub use movrs_memory::*;
 mod mmx_helpers;
 pub use mmx_helpers::*;
 #[cfg(feature = "smir-jit")]

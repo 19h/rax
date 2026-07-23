@@ -256,46 +256,6 @@ impl X86_64Lifter {
         ))
     }
 
-    pub(crate) fn lift_movrs_0f38(
-        &self,
-        opcode: u8,
-        bytes: &[u8],
-        prefix: &X86Prefix,
-        pc: u64,
-        ctx: &mut LiftContext,
-    ) -> Result<LiftResult, LiftError> {
-        let is_byte = opcode == 0x8A;
-        let op_size = if is_byte { 1 } else { prefix.op_size() };
-        let mem_width = self.size_to_memwidth(op_size);
-
-        let modrm = decode_modrm(bytes, prefix, pc)?;
-        if !modrm.is_memory {
-            return Err(LiftError::InvalidEncoding {
-                addr: pc,
-                bytes: bytes.to_vec(),
-            });
-        }
-
-        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
-        let x86_addr = modrm.addr.as_ref().unwrap();
-        let (addr, mut ops) = self.x86_addr_to_smir(x86_addr, next_pc, ctx);
-        ops.push(SmirOp::new(
-            OpId(ops.len() as u16),
-            pc,
-            OpKind::Load {
-                dst: self.gpr(modrm.reg),
-                addr,
-                width: mem_width,
-                sign: SignExtend::Zero,
-            },
-        ));
-
-        Ok(LiftResult::fallthrough(
-            ops,
-            prefix.cursor + modrm.bytes_consumed,
-        ))
-    }
-
     /// Lift POP r/m16 or r/m64 (8F /0) in 64-bit mode.
     pub(crate) fn lift_pop_rm(
         &self,

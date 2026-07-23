@@ -206,64 +206,6 @@ fn lift_apx_imul_immediates_use_evex_destination_and_flags() {
     }
 }
 #[test]
-fn lift_apx_movrs_evex_memory_egpr_widths_like_llvm() {
-    let mut lifter = X86_64Lifter::strict();
-    let mut ctx = LiftContext::new(SourceArch::X86_64);
-
-    for (bytes, name, width) in [
-        (
-            &[0x62, 0xEC, 0xF8, 0x08, 0x8B, 0x44, 0x91, 0x20][..],
-            "movrs64",
-            MemWidth::B8,
-        ),
-        (
-            &[0x62, 0xEC, 0x78, 0x08, 0x8B, 0x44, 0x91, 0x20][..],
-            "movrs32",
-            MemWidth::B4,
-        ),
-        (
-            &[0x62, 0xEC, 0x79, 0x08, 0x8B, 0x44, 0x91, 0x20][..],
-            "movrs16",
-            MemWidth::B2,
-        ),
-        (
-            &[0x62, 0xEC, 0x78, 0x08, 0x8A, 0x44, 0x91, 0x20][..],
-            "movrs8",
-            MemWidth::B1,
-        ),
-        (
-            &[0x62, 0xEC, 0xF8, 0x09, 0x8B, 0x44, 0x91, 0x20][..],
-            "movrs64_aaa1",
-            MemWidth::B8,
-        ),
-    ] {
-        let result = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap();
-        assert_eq!(result.bytes_consumed, 8, "{name}");
-        assert_eq!(result.ops.len(), 1, "{name}");
-        match &result.ops[0].kind {
-            OpKind::Load {
-                dst,
-                addr:
-                    Address::BaseIndexScale {
-                        base: Some(base),
-                        index,
-                        scale: 4,
-                        disp: 0x20,
-                        ..
-                    },
-                width: got_width,
-                sign: SignExtend::Zero,
-            } => {
-                assert_eq!(*dst, x86_gpr(16), "{name}");
-                assert_eq!(*base, x86_gpr(17), "{name}");
-                assert_eq!(*index, x86_gpr(18), "{name}");
-                assert_eq!(*got_width, width, "{name}");
-            }
-            other => panic!("expected APX EVEX {name} Load, got {other:?}"),
-        }
-    }
-}
-#[test]
 fn lift_apx_evex_setcc_without_zu_keeps_byte_width_like_llvm() {
     let mut lifter = X86_64Lifter::strict();
     let mut ctx = LiftContext::new(SourceArch::X86_64);

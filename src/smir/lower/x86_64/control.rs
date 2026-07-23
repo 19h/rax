@@ -439,6 +439,30 @@ impl X86_64Lowerer {
                         continue;
                     }
                     if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_movrs_high_byte_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            &virtual_definitions,
+                            &virtual_uses,
+                        )
+                    {
+                        validate_idx += consumed;
+                        continue;
+                    }
+                    if let Some(consumed) =
+                        crate::smir::lower::runtime::x86_jit_movrs_state_backed_load_sequence_len(
+                            block,
+                            validate_idx,
+                            true,
+                            self.x86_instruction_bytes
+                                .get(&(block.id, block.ops[validate_idx].guest_pc)),
+                        )
+                    {
+                        validate_idx += consumed;
+                        continue;
+                    }
+                    if let Some(consumed) =
                         crate::smir::lower::runtime::x86_jit_movbe_memory_sequence_len(
                             block,
                             validate_idx,
@@ -848,6 +872,21 @@ impl X86_64Lowerer {
                 if let Some(consumed) =
                     self.try_lower_jit_mem_extend(block, idx, &virtual_definitions, &virtual_uses)?
                 {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_movrs_high_byte(
+                    block,
+                    idx,
+                    &virtual_definitions,
+                    &virtual_uses,
+                )? {
+                    idx += consumed;
+                    continue;
+                }
+                #[cfg(feature = "smir-jit")]
+                if let Some(consumed) = self.try_lower_jit_movrs_state_backed(block, idx)? {
                     idx += consumed;
                     continue;
                 }

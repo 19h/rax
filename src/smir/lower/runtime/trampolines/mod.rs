@@ -15,6 +15,8 @@ mod misc;
 pub use misc::*;
 mod movbe;
 pub use movbe::*;
+mod movrs;
+pub use movrs::*;
 mod mmx;
 pub use mmx::*;
 mod mmx_memory;

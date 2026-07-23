@@ -356,55 +356,6 @@ fn lift_0f38_movbe_rejects_invalid_forms_and_routes_f2_to_crc32() {
     )));
 }
 #[test]
-fn lift_movrs_0f38_legacy_widths_like_llvm() {
-    let mut lifter = X86_64Lifter::strict();
-    let mut ctx = LiftContext::new(SourceArch::X86_64);
-
-    for (bytes, name, width, consumed) in [
-        (
-            &[0x44, 0x0F, 0x38, 0x8A, 0x03][..],
-            "movrs8",
-            MemWidth::B1,
-            5,
-        ),
-        (
-            &[0x44, 0x0F, 0x38, 0x8B, 0x03][..],
-            "movrs32",
-            MemWidth::B4,
-            5,
-        ),
-        (
-            &[0x4C, 0x0F, 0x38, 0x8B, 0x03][..],
-            "movrs64",
-            MemWidth::B8,
-            5,
-        ),
-        (
-            &[0x66, 0x44, 0x0F, 0x38, 0x8B, 0x03][..],
-            "movrs16",
-            MemWidth::B2,
-            6,
-        ),
-    ] {
-        let result = lifter.lift_insn(0x1000, bytes, &mut ctx).unwrap();
-        assert_eq!(result.bytes_consumed, consumed, "{name}");
-        assert_eq!(result.ops.len(), 1, "{name}");
-        match &result.ops[0].kind {
-            OpKind::Load {
-                dst,
-                addr: Address::Direct(base),
-                width: got_width,
-                sign: SignExtend::Zero,
-            } => {
-                assert_eq!(*dst, x86_gpr(8), "{name}");
-                assert_eq!(*base, x86_gpr(3), "{name}");
-                assert_eq!(*got_width, width, "{name}");
-            }
-            other => panic!("expected legacy {name} Load, got {other:?}"),
-        }
-    }
-}
-#[test]
 fn test_modrm_decode() {
     // MOD=3 (register)
     let prefix = X86Prefix::default();

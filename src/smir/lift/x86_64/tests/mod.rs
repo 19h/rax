@@ -28,6 +28,8 @@ mod apx_group3;
 #[cfg(test)]
 mod apx_movbe;
 #[cfg(test)]
+mod apx_movrs;
+#[cfg(test)]
 mod apx_prefixes;
 #[cfg(test)]
 mod apx_push2_pop2;
