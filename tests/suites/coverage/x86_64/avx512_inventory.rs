@@ -23,6 +23,9 @@ mod avx512_inventory_data;
 #[path = "../../../support/x86_64/avx512_spec.rs"]
 mod avx512_spec;
 
+#[path = "avx512_inventory/packed_move_replay.rs"]
+mod packed_move_replay;
+
 use avx512_inventory_data::{
     RAX_EVEX_EXTRA_MNEMONICS_NOT_IN_AVX512_SPEC, RAX_EVEX_SIMD_DIFF_MNEMONICS,
 };
