@@ -835,6 +835,57 @@ impl X86InstructionBytes {
         }
     }
 
+    /// Validate register-only AVX-512F full-vector and in-lane dword/qword
+    /// permutes. This covers VPERMD/Q/PS/PD, VPERMI2D/Q/PS/PD,
+    /// VPERMT2D/Q/PS/PD, and the variable/immediate VPERMILPS/PD forms.
+    /// VPERMD/Q/PS/PD exclude 128-bit vector length; the remaining forms allow
+    /// 128/256/512-bit vectors. Immediate-control encodings additionally
+    /// require reserved EVEX.vvvv=1111b and EVEX.V'=1. Memory/broadcast forms,
+    /// EVEX.b, reserved vector lengths, and malformed masks fail closed.
+    pub fn evex_register_avx512f_permute_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if !matches!(bytes.len(), 6 | 7) || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+
+        // Every admitted form uses mandatory 66 and a register ModR/M source.
+        if p1 & 0x07 != 0x05 || modrm >> 6 != 3 {
+            return None;
+        }
+        let map = p0 & 0x0F;
+        let w = p1 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let immediate_control = match (bytes.len(), map, opcode, w) {
+            // Variable-control VPERMPS/PD and VPERMD/Q. EVEX.128 is reserved.
+            (6, 2, 0x16 | 0x36, _) if matches!(ll, 1 | 2) => false,
+            // Two-table full permutes, with W selecting D/PS or Q/PD.
+            (6, 2, 0x76 | 0x77 | 0x7E | 0x7F, _) if ll <= 2 => false,
+            // Variable-control in-lane permutes.
+            (6, 2, 0x0C, false) | (6, 2, 0x0D, true) if ll <= 2 => false,
+            // Immediate-control VPERMQ/PD. EVEX.128 is reserved.
+            (7, 3, 0x00 | 0x01, true) if matches!(ll, 1 | 2) => true,
+            // Immediate-control in-lane permutes.
+            (7, 3, 0x04, false) | (7, 3, 0x05, true) if ll <= 2 => true,
+            _ => return None,
+        };
+
+        let zeroing = p2 & 0x80 != 0;
+        let embedded_broadcast = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_broadcast || (zeroing && mask == 0) {
+            return None;
+        }
+        if immediate_control && (p1 & 0x78 != 0x78 || p2 & 0x08 == 0) {
+            return None;
+        }
+        Some(ll != 2)
+    }
+
     /// Validate register-source EVEX broadcasts whose repeated element or
     /// tuple has 32-bit or 64-bit granularity. The admitted encodings are
     /// VBROADCASTSS, VBROADCASTSD, VBROADCASTF32X2, VPBROADCASTD,
@@ -1242,6 +1293,20 @@ pub fn x86_evex_fp_shuffle_replay_spans(
     })
 }
 
+/// Identify valid register-only AVX-512F dword/qword full-vector and in-lane
+/// permute replay groups in `block` in O(N) time and O(P) space for N
+/// operations and P unique guest PCs.
+pub fn x86_evex_avx512f_permute_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_avx512f_permute_needs_vl()
+            .map(|needs_vl| (needs_vl, false, false))
+    })
+}
+
 /// Identify valid register-source EVEX 32/64-bit broadcast replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_evex_broadcast_replay_spans(
@@ -1364,6 +1429,11 @@ pub fn x86_evex_native_replay_spans(
             .or_else(|| {
                 instruction
                     .evex_register_fp_shuffle_needs_vl()
+                    .map(|needs_vl| (needs_vl, false, false))
+            })
+            .or_else(|| {
+                instruction
+                    .evex_register_avx512f_permute_needs_vl()
                     .map(|needs_vl| (needs_vl, false, false))
             })
             .or_else(|| {

@@ -92,16 +92,16 @@ pub use ir::types::{
 pub use ir::{
     CallTarget, CallingConv, FunctionBuilder, PhiNode, RuntimeFunc, SmirBlock, SmirFunction,
     SmirModule, Terminator, TrapKind, X86EvexFpReplaySpan, X86InstructionBytes,
-    X86NativeReplaySpan, x86_evex_fp_replay_spans, x86_evex_fp_shuffle_replay_spans,
-    x86_evex_immediate_count_shift_replay_spans, x86_evex_integer_arithmetic_replay_spans,
-    x86_evex_integer_interleave_replay_spans, x86_evex_integer_minmax_replay_spans,
-    x86_evex_integer_multiply_replay_spans, x86_evex_integer_pack_replay_spans,
-    x86_evex_logic_replay_spans, x86_evex_native_replay_spans, x86_evex_packed_abs_replay_spans,
-    x86_evex_packed_average_replay_spans, x86_evex_packed_compare_replay_spans,
-    x86_evex_packed_fma_replay_spans, x86_evex_packed_fp16_fma_replay_spans,
-    x86_evex_packed_test_replay_spans, x86_evex_scalar_fma_replay_spans,
-    x86_evex_scalar_fp16_arithmetic_replay_spans, x86_evex_scalar_fp16_fma_replay_spans,
-    x86_evex_shared_count_shift_replay_spans,
+    X86NativeReplaySpan, x86_evex_avx512f_permute_replay_spans, x86_evex_fp_replay_spans,
+    x86_evex_fp_shuffle_replay_spans, x86_evex_immediate_count_shift_replay_spans,
+    x86_evex_integer_arithmetic_replay_spans, x86_evex_integer_interleave_replay_spans,
+    x86_evex_integer_minmax_replay_spans, x86_evex_integer_multiply_replay_spans,
+    x86_evex_integer_pack_replay_spans, x86_evex_logic_replay_spans, x86_evex_native_replay_spans,
+    x86_evex_packed_abs_replay_spans, x86_evex_packed_average_replay_spans,
+    x86_evex_packed_compare_replay_spans, x86_evex_packed_fma_replay_spans,
+    x86_evex_packed_fp16_fma_replay_spans, x86_evex_packed_test_replay_spans,
+    x86_evex_scalar_fma_replay_spans, x86_evex_scalar_fp16_arithmetic_replay_spans,
+    x86_evex_scalar_fp16_fma_replay_spans, x86_evex_shared_count_shift_replay_spans,
 };
 pub use lift::aarch64::Aarch64Lifter;
 pub use lift::avx10::{Avx10Lifter, EvexPrefix};
