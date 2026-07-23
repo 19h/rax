@@ -76,6 +76,9 @@ mod apx_movdir_tests;
 mod apx_nf_tests;
 
 #[cfg(test)]
+mod apx_reserved_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 

@@ -25,6 +25,8 @@ mod apx_movrs;
 mod apx_nf_reserved;
 #[path = "x86_64/apx_push2_pop2.rs"]
 mod apx_push2_pop2;
+#[path = "x86_64/apx_reserved.rs"]
+mod apx_reserved;
 #[path = "x86_64/cmpccxadd.rs"]
 mod cmpccxadd;
 

@@ -83,12 +83,8 @@ impl X86_64Vcpu {
             // APX-promoted POPCNT, with optional NF.
             0x88 => self.execute_apx_count(ctx, opcode),
 
-            // MOV r/m,r and APX-promoted MOVRS memory loads.
-            0x89 => self.execute_apx_mov(ctx, opcode),
+            // APX-promoted MOVRS memory loads.
             0x8A | 0x8B => self.execute_apx_movrs(ctx, opcode),
-
-            // LEA (0x8D)
-            0x8D => self.execute_apx_lea(ctx),
 
             // POP2 (0x8F)
             0x8F => self.execute_apx_pop2(ctx),
@@ -130,10 +126,16 @@ impl X86_64Vcpu {
             // INC/DEC (0xFE, 0xFF /0,/1) and PUSH2 (0xFF /6)
             0xFE | 0xFF => self.execute_apx_group_ff(ctx, opcode, ndd, nf),
 
-            _ => Err(Error::Emulator(format!(
+            // These assigned families do not yet have a direct executor.
+            0xF8 | 0xFC => Err(Error::Emulator(format!(
                 "Unimplemented APX MAP4 opcode {:#x} at RIP={:#x}",
                 opcode, self.regs.rip
             ))),
+
+            // Intel APX revision 7.0's MAP4 assignments (section 3.1.5 plus
+            // section 6.38 MOVRS) are exhaustively dispatched above. Every
+            // remaining opcode byte faults before a ModR/M byte is observed.
+            _ => self.inject_invalid_opcode(),
         }
     }
 
@@ -386,50 +388,6 @@ impl X86_64Vcpu {
         Ok(None)
     }
 
-    /// APX MOV operation
-    pub(crate) fn execute_apx_mov(
-        &mut self,
-        ctx: &mut InsnContext,
-        opcode: u8,
-    ) -> Result<Option<VcpuExit>> {
-        let is_byte = (opcode & 0x01) == 0;
-        let op_size = if is_byte {
-            1
-        } else {
-            Self::apx_scalar_op_size(ctx)
-        };
-        let reg_is_src = (opcode & 0x02) == 0;
-
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let reg = reg | ctx.evex_dest_reg();
-        let rm = if is_memory {
-            rm
-        } else {
-            rm | ctx.evex_rm_reg()
-        };
-
-        if reg_is_src {
-            // MOV r/m, r
-            let value = self.get_reg(reg, op_size);
-            if is_memory {
-                self.write_mem(addr, value, op_size)?;
-            } else {
-                self.set_reg(rm, value, op_size);
-            }
-        } else {
-            // MOV r, r/m
-            let value = if is_memory {
-                self.read_mem(addr, op_size)?
-            } else {
-                self.get_reg(rm, op_size)
-            };
-            self.set_reg(reg, value, op_size);
-        }
-
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
-    }
-
     pub(crate) fn apx_scalar_op_size(ctx: &InsnContext) -> u8 {
         if ctx.evex_w() {
             8
@@ -438,26 +396,6 @@ impl X86_64Vcpu {
         } else {
             4
         }
-    }
-
-    /// APX LEA operation
-    pub(crate) fn execute_apx_lea(&mut self, ctx: &mut InsnContext) -> Result<Option<VcpuExit>> {
-        let op_size = Self::apx_scalar_op_size(ctx);
-        let modrm_start = ctx.cursor;
-        let (reg, _, is_memory, _, _) = self.decode_modrm(ctx)?;
-
-        if !is_memory {
-            return self.inject_invalid_opcode();
-        }
-
-        // Recalculate address without actually reading memory. LEA yields the
-        // segment OFFSET and must ignore any FS/GS override.
-        let (addr, _) = self.decode_lea_addr(ctx, modrm_start)?;
-        let reg = reg | ctx.evex_dest_reg();
-
-        self.set_reg(reg, addr, op_size);
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
     }
 
     /// APX POP2 - pop two registers with one aligned 16-byte stack transfer.

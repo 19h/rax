@@ -1045,7 +1045,8 @@ impl X86_64Lifter {
         let fixed_movrs_fields_invalid =
             matches!(opcode, 0x8A | 0x8B) && !Self::apx_movrs_opcode_fields_valid(prefix, opcode);
         let fixed_adx_fields_invalid = opcode == 0x66 && !Self::apx_adx_opcode_fields_valid(prefix);
-        let opcode_is_terminal = nf_carry_opcode
+        let opcode_is_terminal = !Self::apx_map4_opcode_is_assigned(opcode)
+            || nf_carry_opcode
             || opcode == 0x82
             || opcode == 0x65
             || fixed_conditional_fields_invalid
@@ -1103,6 +1104,16 @@ impl X86_64Lifter {
             0xF8 if prefix.pp == 1 => {
                 self.lift_apx_movdir64b(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx)
             }
+            0xF8 => {
+                // The remaining F8 encodings share ENQCMD/ENQCMDS and
+                // URDMSR/UWRMSR. Retain their ModR/M frontier until that
+                // assigned opcode family is classified independently.
+                let _ = Self::apx_operand_modrm_byte(prefix, &bytes[prefix.bytes + 1..], pc)?;
+                Err(LiftError::Unsupported {
+                    addr: pc,
+                    mnemonic: "APX MAP4 F8 family".to_string(),
+                })
+            }
             0xF9 => self.lift_apx_movdiri(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx),
             0xFC => self.lift_apx_rao_int(prefix, &bytes[prefix.bytes + 1..], bytes, pc, ctx),
             0xF6 | 0xF7 => {
@@ -1121,17 +1132,7 @@ impl X86_64Lifter {
                     self.lift_apx_inc_dec(prefix, opcode, &bytes[prefix.bytes + 1..], pc, ctx)
                 }
             }
-            _ => {
-                // This fallback still includes valid-but-unimplemented APX
-                // encodings (notably several F8 families). Preserve
-                // its historical ModR/M frontier until those opcode classes
-                // are classified and implemented independently.
-                let _ = Self::apx_operand_modrm_byte(prefix, &bytes[prefix.bytes + 1..], pc)?;
-                Err(LiftError::Unsupported {
-                    addr: pc,
-                    mnemonic: format!("APX MAP4 opcode 0x{opcode:02X}"),
-                })
-            }
+            _ => Ok(Self::apx_invalid_opcode(prefix.bytes + 1)),
         }
     }
 }
