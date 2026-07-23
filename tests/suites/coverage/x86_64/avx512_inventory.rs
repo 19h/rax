@@ -27,6 +27,8 @@ mod avx512_spec;
 mod bw_immediate_replay;
 #[path = "avx512_inventory/bw_shuffle_madd_replay.rs"]
 mod bw_shuffle_madd_replay;
+#[path = "avx512_inventory/chunk_extract_replay.rs"]
+mod chunk_extract_replay;
 #[path = "avx512_inventory/chunk_insert_replay.rs"]
 mod chunk_insert_replay;
 #[path = "avx512_inventory/chunk_shuffle_replay.rs"]

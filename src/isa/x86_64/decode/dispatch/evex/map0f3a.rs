@@ -200,12 +200,13 @@ impl X86_64Vcpu {
             // VEXTRACTF32x4/F64x2 and VEXTRACTI32x4/I64x2.
             0x19 if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
-                execute::simd::evex_extract_chunk(self, ctx, es, 16)
+                execute::simd::evex_extract_chunk_validated(self, ctx, es, 16)
             }
             0x39 if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
-                execute::simd::evex_extract_chunk(self, ctx, es, 16)
+                execute::simd::evex_extract_chunk_validated(self, ctx, es, 16)
             }
+            0x19 | 0x39 => self.inject_undefined_instruction(),
             // VINSERTF32x8/F64x4 and VINSERTI32x8/I64x4.
             0x1A if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
@@ -219,12 +220,13 @@ impl X86_64Vcpu {
             // VEXTRACTF32x8/F64x4 and VEXTRACTI32x8/I64x4.
             0x1B if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
-                execute::simd::evex_extract_chunk(self, ctx, es, 32)
+                execute::simd::evex_extract_chunk_validated(self, ctx, es, 32)
             }
             0x3B if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
-                execute::simd::evex_extract_chunk(self, ctx, es, 32)
+                execute::simd::evex_extract_chunk_validated(self, ctx, es, 32)
             }
+            0x1B | 0x3B => self.inject_undefined_instruction(),
 
             // Immediate funnel shifts: VPSHLD* (0x70/0x71), VPSHRD* (0x72/0x73).
             0x70 if evex.pp == 1 && evex.w => execute::simd::evex_funnel_shift_imm(
