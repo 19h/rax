@@ -59,6 +59,10 @@ impl X86_64Lowerer {
 
     pub(crate) fn ensure_native_stack_dests_safe(op: &SmirOp) -> Result<(), LowerError> {
         if Self::mov_touches_state_backed_gpr(&op.kind)
+            || matches!(
+                &op.kind,
+                OpKind::X86Opmask(opmask) if x86_opmask_native_shape_valid(opmask)
+            )
             || Self::alu_touches_state_backed_stack_gpr(&op.kind)
             || x86_state_backed_gpr_extend_valid(op)
             || x86_state_backed_gpr_cmove_valid(op)

@@ -910,6 +910,16 @@ macro_rules! x86_enter_native_trampoline {
             "mov [rax+120], r15",
             "pushfq",
             "pop rcx",
+            // Native execution owns only the six arithmetic status flags.
+            // Preserve every other host-safe bit from the guest image: userspace
+            // cannot import guest IF/IOPL through POPFQ, and exporting the raw
+            // host image would otherwise inject host control state into the
+            // guest. AC remains clear here because its guest value lives in the
+            // dedicated ac_flag shadow.
+            "mov rdx, [rax+256]",
+            "and rcx, 0x8D5",    // CF|PF|AF|ZF|SF|OF
+            "and rdx, -0x408D6", // complement of (0x8D5|AC)
+            "or rcx, rdx",
             "mov [rax+256], rcx",
             // Guest flags are captured above, so the vector-active test can no
             // longer alter the state returned to the emulator.
@@ -1684,6 +1694,32 @@ mod tests {
         regs.rflags = 0x2;
         mem.run(0, &mut regs);
         assert_eq!(regs.gpr[0], 42, "RAX should be RBX+RCX");
+    }
+
+    #[test]
+    fn x86_entry_trampoline_merges_only_status_flags_into_guest_rflags() {
+        // mov eax,0x7fffffff; add eax,1; ret. The ADD deterministically leaves
+        // PF=AF=SF=OF=1 and CF=ZF=0. Host IF is always set in userspace and
+        // cannot be cleared by POPFQ at CPL3, so exporting raw host RFLAGS
+        // would incorrectly inject IF into the guest image.
+        let code = [
+            0xB8, 0xFF, 0xFF, 0xFF, 0x7F, // mov eax,0x7fffffff
+            0x83, 0xC0, 0x01, // add eax,1
+            0xC3, // ret
+        ];
+        let mem = ExecMem::new(&code).expect("ExecMem map");
+        const STATUS: u64 = (1 << 0) | (1 << 2) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 11);
+        const RESULT_STATUS: u64 = (1 << 2) | (1 << 4) | (1 << 7) | (1 << 11);
+        const AC: u64 = 1 << 18;
+        let initial = 0x2 | (1 << 0) | (1 << 6) | AC | (1 << 21);
+        let mut regs = GuestRegs {
+            rflags: initial,
+            ..GuestRegs::default()
+        };
+
+        mem.run(0, &mut regs);
+
+        assert_eq!(regs.rflags, (initial & !(STATUS | AC)) | RESULT_STATUS);
     }
 
     #[test]

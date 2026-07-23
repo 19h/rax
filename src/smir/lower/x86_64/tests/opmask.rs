@@ -416,3 +416,46 @@ fn native_opmask_round_trips_full_k_state_and_state_backs_rsp_rbp() {
         assert_eq!(regs.k[index], preserved[index], "K{index}");
     }
 }
+
+#[test]
+fn lowerer_accepts_state_backed_rsp_rbp_opmask_moves_without_host_feature_probing() {
+    lower_with_options(
+        vec![
+            (
+                0x1000,
+                kind(X86OpmaskOp::MoveToMask {
+                    dst: k(1),
+                    src: X86OpmaskMoveSource::Gpr(gpr(X86Reg::Rsp)),
+                    width: OpWidth::W64,
+                }),
+            ),
+            (
+                0x1005,
+                kind(X86OpmaskOp::MoveToMask {
+                    dst: k(2),
+                    src: X86OpmaskMoveSource::Gpr(gpr(X86Reg::Rbp)),
+                    width: OpWidth::W64,
+                }),
+            ),
+            (
+                0x100A,
+                kind(X86OpmaskOp::MoveFromMask {
+                    dst: X86OpmaskMoveDestination::Gpr(gpr(X86Reg::Rsp)),
+                    src: k(1),
+                    width: OpWidth::W64,
+                }),
+            ),
+            (
+                0x100F,
+                kind(X86OpmaskOp::MoveFromMask {
+                    dst: X86OpmaskMoveDestination::Gpr(gpr(X86Reg::Rbp)),
+                    src: k(2),
+                    width: OpWidth::W64,
+                }),
+            ),
+        ],
+        false,
+        false,
+    )
+    .expect("RSP/RBP opmask moves use GuestRegs-backed paths");
+}
