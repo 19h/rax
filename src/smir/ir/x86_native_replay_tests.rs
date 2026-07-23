@@ -710,6 +710,178 @@ fn vector_to_mask_replay_spans_track_vl_and_dq_requirements() {
     }
 }
 
+type LaneShuffleShape = (u8, u8, bool, u8, bool);
+
+fn lane_shuffle_shapes() -> Vec<LaneShuffleShape> {
+    let mut shapes = Vec::new();
+    for (opcode, pp, w) in [(0x12, 2, false), (0x16, 2, false), (0x12, 3, true)] {
+        for ll in 0..=2 {
+            shapes.push((opcode, pp, w, ll, false));
+        }
+    }
+    for (pp, widths) in [
+        (1, &[false][..]),
+        (2, &[false, true][..]),
+        (3, &[false, true][..]),
+    ] {
+        for &w in widths {
+            for ll in 0..=2 {
+                shapes.push((0x70, pp, w, ll, true));
+            }
+        }
+    }
+    shapes
+}
+
+fn generated_lane_shuffle_encoding(
+    shape: LaneShuffleShape,
+    destination: u8,
+    source: u8,
+    mask: u8,
+    zeroing: bool,
+) -> Vec<u8> {
+    let (opcode, pp, w, ll, immediate) = shape;
+    assert!(destination < 32 && source < 32 && mask < 8 && (!zeroing || mask != 0));
+    let mut p0 = 0xF1;
+    if destination & 0x08 != 0 {
+        p0 &= !0x10;
+    }
+    if destination & 0x10 != 0 {
+        p0 &= !0x80;
+    }
+    if source & 0x08 != 0 {
+        p0 &= !0x20;
+    }
+    if source & 0x10 != 0 {
+        p0 &= !0x40;
+    }
+    let mut bytes = vec![
+        0x62,
+        p0,
+        0x7C | pp | if w { 0x80 } else { 0 },
+        (ll << 5) | 0x08 | mask | if zeroing { 0x80 } else { 0 },
+        opcode,
+        0xC0 | ((destination & 0x07) << 3) | (source & 0x07),
+    ];
+    if immediate {
+        bytes.push(0x93);
+    }
+    bytes
+}
+
+#[test]
+fn lane_shuffle_replay_classifier_covers_96_legal_register_encodings() {
+    let shapes = lane_shuffle_shapes();
+    assert_eq!(shapes.len(), 24);
+
+    let mut register_encodings = 0usize;
+    for shape in shapes {
+        for bucket in [0, 8, 16, 24] {
+            let bytes = generated_lane_shuffle_encoding(shape, 1 + bucket, bucket, 1, true);
+            assert_eq!(
+                X86InstructionBytes::new(&bytes)
+                    .unwrap()
+                    .evex_register_lane_shuffle_needs_vl(),
+                Some(shape.3 != 2),
+                "{bytes:02X?}"
+            );
+            register_encodings += 1;
+        }
+
+        let mut memory = generated_lane_shuffle_encoding(shape, 1, 0, 1, false);
+        memory[5] &= 0x3F;
+        assert_eq!(
+            X86InstructionBytes::new(&memory)
+                .unwrap()
+                .evex_register_lane_shuffle_needs_vl(),
+            None,
+            "{memory:02X?}"
+        );
+    }
+    assert_eq!(register_encodings, 96);
+
+    // Independent LLVM encodings cover all six mnemonics, every vector
+    // extension channel, and both values of W for the architecturally WIG
+    // word shuffles.
+    for bytes in [
+        &[0x62, 0x01, 0xFF, 0xCE, 0x12, 0xE8][..],
+        &[0x62, 0x21, 0x7E, 0x4D, 0x12, 0xD9],
+        &[0x62, 0x21, 0x7E, 0xAC, 0x16, 0xD0],
+        &[0x62, 0x21, 0x7D, 0x4B, 0x70, 0xCA, 0x1B],
+        &[0x62, 0x01, 0x7E, 0xAA, 0x70, 0xC7, 0xB1],
+        &[0x62, 0x81, 0x7F, 0x09, 0x70, 0xFE, 0x93],
+        &[0x62, 0x01, 0xFE, 0xAA, 0x70, 0xC7, 0xB1],
+        &[0x62, 0x81, 0xFF, 0x09, 0x70, 0xFE, 0x93],
+    ] {
+        assert!(
+            X86InstructionBytes::new(bytes)
+                .unwrap()
+                .evex_register_lane_shuffle_needs_vl()
+                .is_some(),
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn lane_shuffle_replay_classifier_rejects_every_reserved_frontier() {
+    let invalid: &[&[u8]] = &[
+        &[0x61, 0xF1, 0x7E, 0x09, 0x12, 0xC8],       // not EVEX
+        &[0x62, 0xF2, 0x7E, 0x09, 0x12, 0xC8],       // wrong map
+        &[0x62, 0xF1, 0x7A, 0x09, 0x12, 0xC8],       // missing fixed-one bit
+        &[0x62, 0xF1, 0x6E, 0x09, 0x12, 0xC8],       // nonreserved vvvv
+        &[0x62, 0xF1, 0x7E, 0x01, 0x12, 0xC8],       // nonreserved V'
+        &[0x62, 0xF1, 0xFE, 0x09, 0x12, 0xC8],       // VMOVSLDUP requires W0
+        &[0x62, 0xF1, 0x7F, 0x09, 0x12, 0xC8],       // VMOVDDUP requires W1
+        &[0x62, 0xF1, 0xFD, 0x09, 0x70, 0xC8, 0x93], // VPSHUFD requires W0
+        &[0x62, 0xF1, 0x7C, 0x09, 0x70, 0xC8, 0x93], // wrong mandatory prefix
+        &[0x62, 0xF1, 0x7E, 0x19, 0x12, 0xC8],       // EVEX.b
+        &[0x62, 0xF1, 0x7E, 0x69, 0x12, 0xC8],       // reserved L'L=3
+        &[0x62, 0xF1, 0x7E, 0x88, 0x12, 0xC8],       // {z} with k0
+        &[0x62, 0xF1, 0x7E, 0x09, 0x12, 0x08],       // memory source
+        &[0x62, 0xF1, 0x7E, 0x09, 0x13, 0xC8],       // unrelated opcode
+        &[0x62, 0xF1, 0x7E, 0x09, 0x12],             // missing ModR/M
+        &[0x62, 0xF1, 0x7D, 0x09, 0x70, 0xC8],       // missing imm8
+        &[0x62, 0xF1, 0x7E, 0x09, 0x12, 0xC8, 0x00], // trailing byte
+    ];
+    for bytes in invalid {
+        assert_eq!(
+            X86InstructionBytes::new(bytes)
+                .unwrap()
+                .evex_register_lane_shuffle_needs_vl(),
+            None,
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn lane_shuffle_replay_spans_require_only_vl_for_sub_512_widths() {
+    let pc = 0x3900;
+    let mut block = SmirBlock::new(BlockId(14), pc);
+    block.push_op(SmirOp::new(OpId(0), pc, OpKind::Nop));
+
+    for (bytes, needs_vl) in [
+        (&[0x62, 0xF1, 0x7E, 0x09, 0x12, 0xC8][..], true),
+        (&[0x62, 0x01, 0xFE, 0xAA, 0x70, 0xC7, 0xB1], true),
+        (&[0x62, 0x21, 0x7D, 0x4B, 0x70, 0xCA, 0x1B], false),
+    ] {
+        let instruction = X86InstructionBytes::new(bytes).unwrap();
+        let provenance = HashMap::from([((BlockId(14), pc), instruction)]);
+        for spans in [
+            x86_evex_lane_shuffle_replay_spans(&block, &provenance),
+            x86_evex_native_replay_spans(&block, &provenance),
+        ] {
+            let span = spans.get(&0).unwrap_or_else(|| panic!("{bytes:02X?}"));
+            assert_eq!(span.end, 1, "{bytes:02X?}");
+            assert_eq!(span.instruction, instruction, "{bytes:02X?}");
+            assert_eq!(span.needs_avx512vl, needs_vl, "{bytes:02X?}");
+            assert!(!span.needs_avx512dq, "{bytes:02X?}");
+            assert!(!span.needs_avx512fp16, "{bytes:02X?}");
+        }
+    }
+}
+
 type PackedMoveShape = (u8, u8, bool, u8);
 
 fn packed_move_shapes() -> Vec<PackedMoveShape> {

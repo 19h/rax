@@ -597,6 +597,117 @@ mod tests {
         }
     }
 
+    fn assert_evex_lane_shuffle_reserved_ud(code: &[u8]) {
+        let mut vcpu = long_mode_vcpu(code);
+        for index in 0..16 {
+            vcpu.regs.xmm[index] = [
+                0x1111_2222_3333_4444u64.rotate_left(index as u32),
+                0xAAAA_BBBB_CCCC_DDDDu64.rotate_right(index as u32),
+            ];
+            vcpu.regs.ymm_high[index] = [0x5555_5555_5555_5555 ^ index as u64; 2];
+            vcpu.regs.zmm_high[index] = [0xCCCC_CCCC_CCCC_CCCC ^ index as u64; 4];
+            vcpu.regs.zmm_ext[index] = [0xF0F0_F0F0_F0F0_F0F0 ^ index as u64; 8];
+        }
+        vcpu.regs.k =
+            std::array::from_fn(|index| 0xA55A_3CC3_F00F_9669u64.rotate_left((index * 7) as u32));
+        vcpu.regs.rflags = 0x2 | flags::bits::CF | flags::bits::ZF | flags::bits::OF;
+        let before = vcpu.regs.clone();
+
+        let error = match vcpu.step() {
+            Err(error) => error,
+            Ok(exit) => panic!("reserved EVEX lane-shuffle form committed: {code:02X?}: {exit:?}"),
+        };
+        assert!(
+            format!("{error:?}").contains("IDT entry 6 not present"),
+            "wrong exception for {code:02X?}: {error:?}"
+        );
+        assert_eq!(vcpu.regs.rip, before.rip, "{code:02X?}: fault RIP");
+        assert_eq!(vcpu.regs.xmm, before.xmm, "{code:02X?}: XMM state");
+        assert_eq!(
+            vcpu.regs.ymm_high, before.ymm_high,
+            "{code:02X?}: YMM state"
+        );
+        assert_eq!(
+            vcpu.regs.zmm_high, before.zmm_high,
+            "{code:02X?}: ZMM state"
+        );
+        assert_eq!(vcpu.regs.zmm_ext, before.zmm_ext, "{code:02X?}: ZMM16-31");
+        assert_eq!(vcpu.regs.k, before.k, "{code:02X?}: opmask state");
+        assert_eq!(vcpu.regs.rflags, before.rflags, "{code:02X?}: flags");
+    }
+
+    #[test]
+    fn evex_lane_shuffle_reserved_fields_raise_precise_ud() {
+        for code in [
+            &[0x62, 0xF1, 0x6E, 0x09, 0x12, 0xC8][..], // duplicate: nonreserved vvvv
+            &[0x62, 0xF1, 0x7E, 0x01, 0x12, 0xC8],     // duplicate: nonreserved V'
+            &[0x62, 0xF1, 0x7E, 0x19, 0x12, 0xC8],     // duplicate: EVEX.b
+            &[0x62, 0xF1, 0x7E, 0x69, 0x12, 0xC8],     // duplicate: reserved L'L=3
+            &[0x62, 0xF1, 0x7E, 0x88, 0x12, 0xC8],     // duplicate: {z} with k0
+            &[0x62, 0xF1, 0x6D, 0x09, 0x70, 0xC8, 0x93], // shuffle: nonreserved vvvv
+            &[0x62, 0xF1, 0x7D, 0x01, 0x70, 0xC8, 0x93], // shuffle: nonreserved V'
+            &[0x62, 0xF1, 0x7D, 0x19, 0x70, 0xC8, 0x93], // shuffle: EVEX.b register
+            &[0x62, 0xF1, 0x7E, 0x19, 0x70, 0x08, 0x93], // word shuffle: EVEX.b memory
+            &[0x62, 0xF1, 0x7D, 0x69, 0x70, 0xC8, 0x93], // shuffle: reserved L'L=3
+            &[0x62, 0xF1, 0x7D, 0x88, 0x70, 0xC8, 0x93], // shuffle: {z} with k0
+        ] {
+            assert_evex_lane_shuffle_reserved_ud(code);
+        }
+    }
+
+    #[test]
+    fn evex_word_lane_shuffles_treat_w_as_ignored() {
+        let execute = |pp: u8, w: bool| {
+            let code = [
+                0x62,
+                0xF1,
+                0x7C | pp | if w { 0x80 } else { 0 },
+                0x08,
+                0x70,
+                0xCA,
+                0x93,
+            ];
+            let mut vcpu = long_mode_vcpu(&code);
+            vcpu.regs.xmm[1] = [u64::MAX; 2];
+            vcpu.regs.ymm_high[1] = [u64::MAX; 2];
+            vcpu.regs.zmm_high[1] = [u64::MAX; 4];
+            vcpu.regs.xmm[2] = [0x7766_5544_3322_1100, 0xFFEE_DDCC_BBAA_9988];
+            let before_flags = vcpu.regs.rflags;
+
+            step_ok(&mut vcpu);
+            assert_eq!(vcpu.regs.ymm_high[1], [0; 2]);
+            assert_eq!(vcpu.regs.zmm_high[1], [0; 4]);
+            assert_eq!(vcpu.regs.rflags, before_flags);
+            (vcpu.regs.xmm[1], vcpu.regs.rip)
+        };
+
+        for pp in [2, 3] {
+            assert_eq!(execute(pp, true), execute(pp, false), "EVEX.pp={pp}");
+        }
+    }
+
+    #[test]
+    fn evex_vpshufd_memory_broadcast_remains_legal() {
+        // VPSHUFD xmm1{k1}, dword ptr [rax]{1to4}, 0; EVEX.b is legal only
+        // because ModR/M selects the m32bcst source.
+        let mut vcpu = long_mode_vcpu(&[0x62, 0xF1, 0x7D, 0x19, 0x70, 0x08, 0x00]);
+        vcpu.regs.rax = DATA;
+        vcpu.regs.k[1] = 0xF;
+        vcpu.regs.xmm[1] = [u64::MAX; 2];
+        vcpu.regs.ymm_high[1] = [u64::MAX; 2];
+        vcpu.regs.zmm_high[1] = [u64::MAX; 4];
+        write_u32(&mut vcpu, DATA, 0x1122_3344);
+        let before_flags = vcpu.regs.rflags;
+
+        step_ok(&mut vcpu);
+
+        assert_eq!(vcpu.regs.xmm[1], [0x1122_3344_1122_3344; 2]);
+        assert_eq!(vcpu.regs.ymm_high[1], [0; 2]);
+        assert_eq!(vcpu.regs.zmm_high[1], [0; 4]);
+        assert_eq!(vcpu.regs.rflags, before_flags);
+        assert_eq!(vcpu.regs.rip, CODE + 7);
+    }
+
     fn enable_paging_for_wrapped_stack_test(vcpu: &mut X86_64Vcpu) {
         const PRESENT_WRITABLE: u64 = 0x3;
         const HUGE_PAGE: u64 = 0x80;

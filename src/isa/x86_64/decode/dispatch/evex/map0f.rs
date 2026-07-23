@@ -18,6 +18,26 @@ impl X86_64Vcpu {
             .evex
             .ok_or_else(|| Error::Emulator("EVEX context missing".to_string()))?;
 
+        // Intel SDM exception classes E4NF/E5NF reserve the complete EVEX.vvvv
+        // field, L'L=11b, and zeroing without an explicit writemask for these
+        // one-source lane shuffles. EVEX.b is reserved except for a VPSHUFD
+        // memory broadcast. Validate before any architectural state changes.
+        let common_lane_shuffle_reserved =
+            evex.vvvv != 0xF || !evex.v_prime || evex.ll == 3 || (evex.z && evex.aaa == 0);
+        let lane_shuffle_reserved = match (opcode, evex.pp, evex.w) {
+            (0x12, 2, false) | (0x16, 2, false) | (0x12, 3, true) => {
+                common_lane_shuffle_reserved || evex.broadcast
+            }
+            (0x70, 1, false) => {
+                common_lane_shuffle_reserved || (evex.broadcast && ctx.peek_u8()? >> 6 == 3)
+            }
+            (0x70, 2 | 3, _) => common_lane_shuffle_reserved || evex.broadcast,
+            _ => false,
+        };
+        if lane_shuffle_reserved {
+            return self.inject_undefined_instruction();
+        }
+
         if opcode == 0x01 && matches!(ctx.peek_u8()?, 0xC5 | 0xC6) {
             // PCONFIG and the WRMSRNS/MSRLIST family have no EVEX encodings.
             // Consume the fixed ModR/M byte so instruction fetch remains

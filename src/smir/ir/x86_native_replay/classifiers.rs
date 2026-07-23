@@ -832,6 +832,54 @@ impl X86InstructionBytes {
         Some((ll != 2, opcode == 0x39))
     }
 
+    /// Validate register-only EVEX one-source lane shuffles and return whether
+    /// the vector length requires AVX-512VL. This covers VMOVSLDUP,
+    /// VMOVSHDUP, VMOVDDUP, VPSHUFD, VPSHUFHW, and VPSHUFLW. The word
+    /// shuffles are WIG; the other four forms have fixed W values. Memory
+    /// sources, embedded broadcast, reserved EVEX.vvvv/V', malformed masks,
+    /// reserved vector lengths, and incorrect instruction lengths fail closed.
+    pub fn evex_register_lane_shuffle_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if !matches!(bytes.len(), 6 | 7) || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+
+        // Every admitted form uses map 0F, reserved EVEX.vvvv=1111b and
+        // EVEX.V'=1, and a register ModR/M source.
+        if p0 & 0x0F != 1
+            || p1 & 0x04 == 0
+            || p1 & 0x78 != 0x78
+            || p2 & 0x08 == 0
+            || modrm >> 6 != 3
+        {
+            return None;
+        }
+
+        let pp = p1 & 0x03;
+        let w = p1 & 0x80 != 0;
+        match (bytes.len(), opcode, pp, w) {
+            // Fixed-W duplicate moves.
+            (6, 0x12, 2, false) | (6, 0x16, 2, false) | (6, 0x12, 3, true) => {}
+            // VPSHUFD is fixed W0; VPSHUFHW/LW are WIG.
+            (7, 0x70, 1, false) | (7, 0x70, 2 | 3, _) => {}
+            _ => return None,
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let embedded_broadcast = p2 & 0x10 != 0;
+        let mask = p2 & 0x07;
+        if embedded_broadcast || ll == 3 || (zeroing && mask == 0) {
+            return None;
+        }
+        Some(ll != 2)
+    }
+
     /// Validate register-only EVEX binary32/binary64 shuffle and unpack
     /// operations and return whether the vector length requires AVX-512VL.
     /// VSHUF* carries an imm8 while VUNPCKL*/VUNPCKH* does not. Memory,
