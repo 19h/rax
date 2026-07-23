@@ -4,6 +4,8 @@ use vm_memory::{Bytes, GuestAddress};
 
 // VEXTRACTF128 - Extract 128-bit Floating-Point Value
 // VINSERTF128 - Insert 128-bit Floating-Point Value
+// VEXTRACTI128 - Extract 128-bit Integer Value
+// VINSERTI128 - Insert 128-bit Integer Value
 //
 // VEXTRACTF128 extracts a 128-bit floating-point value from a 256-bit source
 // and stores it to a 128-bit destination (XMM register or memory).
@@ -560,4 +562,211 @@ fn test_vextract_then_vinsert_roundtrip() {
     // YMM2 low lane == EI_HI, high lane == YMM3 high lane.
     assert_eq!(kei_lo(&vcpu, 2), EI_HI);
     assert_eq!(kei_hi(&vcpu, 2), 0x3333_3333_3333_3333_4444_4444_4444_4444);
+}
+
+fn assert_vex_chunk_ud(code: &[u8], name: &str) {
+    let mut initial = Registers::default();
+    initial.rax = 0x0123_4567_89AB_CDEF;
+    initial.rflags = 0x2 | 0x08D5;
+    initial.xmm[0] = [1, 2];
+    initial.ymm_high[0] = [3, 4];
+    initial.zmm_high[0] = [5, 6, 7, 8];
+    initial.xmm[1] = [9, 10];
+    initial.ymm_high[1] = [11, 12];
+    initial.zmm_high[1] = [13, 14, 15, 16];
+
+    let (mut vcpu, _) = setup_vm_no_idt(code, Some(initial));
+    for path in ["cold decode", "decode-cache hit"] {
+        let before = vcpu.get_regs().unwrap();
+        let error = match vcpu.step() {
+            Err(error) => error,
+            Ok(exit) => panic!("{name} {path}: expected #UD, got {exit:?}"),
+        };
+        assert!(
+            error.to_string().contains("IDT entry 6 not present"),
+            "{name} {path}: expected #UD delivery failure, got {error}"
+        );
+        let after = vcpu.get_regs().unwrap();
+        assert_eq!(after.rip, before.rip, "{name} {path}: RIP");
+        assert_eq!(after.rax, before.rax, "{name} {path}: RAX");
+        assert_eq!(after.rflags, before.rflags, "{name} {path}: RFLAGS");
+        assert_eq!(after.xmm, before.xmm, "{name} {path}: XMM state");
+        assert_eq!(
+            after.ymm_high, before.ymm_high,
+            "{name} {path}: YMM upper state"
+        );
+        assert_eq!(
+            after.zmm_high, before.zmm_high,
+            "{name} {path}: ZMM upper state"
+        );
+    }
+}
+
+#[test]
+fn vex_chunk_reserved_fields_raise_ud_before_operand_fetch_or_commit() {
+    for (opcode, mnemonic) in [(0x18, "VINSERTF128"), (0x38, "VINSERTI128")] {
+        for (third, field) in [
+            (0xF5, "W=1"),
+            (0x71, "L=0"),
+            (0x74, "pp=none"),
+            (0x76, "pp=F3"),
+            (0x77, "pp=F2"),
+        ] {
+            assert_vex_chunk_ud(&[0xC4, 0xE3, third, opcode], &format!("{mnemonic} {field}"));
+        }
+    }
+
+    for (opcode, mnemonic) in [(0x19, "VEXTRACTF128"), (0x39, "VEXTRACTI128")] {
+        for (third, field) in [
+            (0xFD, "W=1"),
+            (0x79, "L=0"),
+            (0x75, "vvvv!=1111b"),
+            (0x7C, "pp=none"),
+            (0x7E, "pp=F3"),
+            (0x7F, "pp=F2"),
+        ] {
+            assert_vex_chunk_ud(&[0xC4, 0xE3, third, opcode], &format!("{mnemonic} {field}"));
+        }
+    }
+}
+
+#[test]
+fn vex_chunk_register_writes_clear_every_bit_above_the_architectural_result() {
+    for (opcode, mnemonic) in [(0x18, "VINSERTF128"), (0x38, "VINSERTI128")] {
+        let code = [0xC4, 0xE3, 0x75, opcode, 0xC2, 0x01, 0xF4];
+        let mut initial = Registers::default();
+        initial.xmm[1] = [0x1111, 0x2222];
+        initial.ymm_high[1] = [0x3333, 0x4444];
+        initial.xmm[2] = [0xAAAA, 0xBBBB];
+        // Keep the low 256-bit result bit-identical so the generic
+        // value-difference detector cannot perform the architectural zeroing.
+        initial.xmm[0] = [0x1111, 0x2222];
+        initial.ymm_high[0] = [0xAAAA, 0xBBBB];
+        initial.zmm_high[0] = [u64::MAX; 4];
+        let (mut vcpu, _) = setup_vm(&code, Some(initial));
+        run_until_hlt(&mut vcpu).unwrap();
+        let actual = vcpu.get_regs().unwrap();
+        assert_eq!(actual.xmm[0], [0x1111, 0x2222], "{mnemonic}: low lane");
+        assert_eq!(
+            actual.ymm_high[0],
+            [0xAAAA, 0xBBBB],
+            "{mnemonic}: inserted lane"
+        );
+        assert_eq!(actual.zmm_high[0], [0; 4], "{mnemonic}: ZMM[511:256]");
+    }
+
+    for (opcode, mnemonic) in [(0x19, "VEXTRACTF128"), (0x39, "VEXTRACTI128")] {
+        let code = [0xC4, 0xE3, 0x7D, opcode, 0xC8, 0x01, 0xF4];
+        let mut initial = Registers::default();
+        initial.xmm[1] = [0x1111, 0x2222];
+        initial.ymm_high[1] = [0x3333, 0x4444];
+        // The extracted XMM value and zero YMM-high half are already present;
+        // only the mandatory ZMM-high clearing is observable.
+        initial.xmm[0] = [0x3333, 0x4444];
+        initial.ymm_high[0] = [0; 2];
+        initial.zmm_high[0] = [u64::MAX; 4];
+        let (mut vcpu, _) = setup_vm(&code, Some(initial));
+        run_until_hlt(&mut vcpu).unwrap();
+        let actual = vcpu.get_regs().unwrap();
+        assert_eq!(actual.xmm[0], [0x3333, 0x4444], "{mnemonic}: result");
+        assert_eq!(actual.ymm_high[0], [0; 2], "{mnemonic}: YMM[255:128]");
+        assert_eq!(actual.zmm_high[0], [0; 4], "{mnemonic}: ZMM[511:256]");
+    }
+}
+
+#[test]
+fn vex_chunk_vex_r_and_b_extensions_select_the_high_register_bank() {
+    for (opcode, mnemonic) in [(0x18, "VINSERTF128"), (0x38, "VINSERTI128")] {
+        // Independently assembled as `{mnemonic} ymm12, ymm13, xmm14, 1`.
+        let code = [0xC4, 0x43, 0x15, opcode, 0xE6, 0x01, 0xF4];
+        let mut initial = Registers::default();
+        initial.xmm[4] = [0x4444; 2];
+        initial.ymm_high[4] = [0x4444; 2];
+        initial.xmm[6] = [0x6666; 2];
+        initial.xmm[12] = [0xCCCC; 2];
+        initial.ymm_high[12] = [0xCCCC; 2];
+        initial.xmm[13] = [0x1313, 0x2323];
+        initial.ymm_high[13] = [0x3333, 0x4343];
+        initial.xmm[14] = [0x1414, 0x2424];
+        let (mut vcpu, _) = setup_vm(&code, Some(initial));
+        run_until_hlt(&mut vcpu).unwrap();
+        let actual = vcpu.get_regs().unwrap();
+        assert_eq!(actual.xmm[12], [0x1313, 0x2323], "{mnemonic}: YMM12 low");
+        assert_eq!(
+            actual.ymm_high[12],
+            [0x1414, 0x2424],
+            "{mnemonic}: YMM12 high"
+        );
+        assert_eq!(actual.xmm[4], [0x4444; 2], "{mnemonic}: unextended dst");
+        assert_eq!(actual.xmm[6], [0x6666; 2], "{mnemonic}: unextended src2");
+    }
+
+    for (opcode, mnemonic) in [(0x19, "VEXTRACTF128"), (0x39, "VEXTRACTI128")] {
+        // Independently assembled as `{mnemonic} xmm14, ymm13, 1`.
+        let code = [0xC4, 0x43, 0x7D, opcode, 0xEE, 0x01, 0xF4];
+        let mut initial = Registers::default();
+        initial.ymm_high[5] = [0x5555; 2];
+        initial.xmm[6] = [0x6666; 2];
+        initial.xmm[13] = [0x1313, 0x2323];
+        initial.ymm_high[13] = [0x3333, 0x4343];
+        initial.xmm[14] = [0xEEEE; 2];
+        initial.ymm_high[14] = [u64::MAX; 2];
+        initial.zmm_high[14] = [u64::MAX; 4];
+        let (mut vcpu, _) = setup_vm(&code, Some(initial));
+        run_until_hlt(&mut vcpu).unwrap();
+        let actual = vcpu.get_regs().unwrap();
+        assert_eq!(actual.xmm[14], [0x3333, 0x4343], "{mnemonic}: XMM14");
+        assert_eq!(actual.ymm_high[14], [0; 2], "{mnemonic}: YMM14 high");
+        assert_eq!(actual.zmm_high[14], [0; 4], "{mnemonic}: ZMM14 high");
+        assert_eq!(
+            actual.ymm_high[5], [0x5555; 2],
+            "{mnemonic}: unextended src"
+        );
+        assert_eq!(actual.xmm[6], [0x6666; 2], "{mnemonic}: unextended dst");
+    }
+}
+
+#[test]
+fn vex_chunk_memory_extract_fault_does_not_partially_commit_the_store() {
+    const MEMORY_END: u64 = 16 * 1024 * 1024;
+    const ADDRESS: u64 = MEMORY_END - 8;
+    const BEFORE: [u8; 8] = [0xA5; 8];
+
+    for (opcode, mnemonic) in [(0x19, "VEXTRACTF128"), (0x39, "VEXTRACTI128")] {
+        let code = [0xC4, 0xE3, 0x7D, opcode, 0x00, 0x01];
+        let mut initial = Registers {
+            rax: ADDRESS,
+            ..Registers::default()
+        };
+        initial.xmm[0] = [0x1111, 0x2222];
+        initial.ymm_high[0] = [0x3333, 0x4444];
+        initial.zmm_high[0] = [0x5555, 0x6666, 0x7777, 0x8888];
+        let (mut vcpu, memory) = setup_vm_no_idt(&code, Some(initial));
+        memory.write_slice(&BEFORE, GuestAddress(ADDRESS)).unwrap();
+        let regs_before = vcpu.get_regs().unwrap();
+
+        let error = vcpu
+            .step()
+            .expect_err("128-bit store crossing memory end must fault");
+        assert!(
+            error.to_string().contains("write"),
+            "{mnemonic}: unexpected store fault: {error}"
+        );
+        let regs_after = vcpu.get_regs().unwrap();
+        assert_eq!(regs_after.rip, regs_before.rip, "{mnemonic}: fault RIP");
+        assert_eq!(regs_after.xmm, regs_before.xmm, "{mnemonic}: XMM state");
+        assert_eq!(
+            regs_after.ymm_high, regs_before.ymm_high,
+            "{mnemonic}: YMM upper state"
+        );
+        assert_eq!(
+            regs_after.zmm_high, regs_before.zmm_high,
+            "{mnemonic}: ZMM upper state"
+        );
+        let mut after = [0_u8; 8];
+        memory
+            .read_slice(&mut after, GuestAddress(ADDRESS))
+            .unwrap();
+        assert_eq!(after, BEFORE, "{mnemonic}: partial low-qword store");
+    }
 }

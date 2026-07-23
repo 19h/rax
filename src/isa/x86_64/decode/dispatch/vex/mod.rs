@@ -756,7 +756,7 @@ impl X86_64Vcpu {
                 }
                 // VINSERTF128 ymm1, ymm2, xmm3/m128, imm8 (VEX.66.0F3A.W0 18 /r ib)
                 0x18 => {
-                    return self.execute_vinsertf128(ctx, vex_l, vvvv);
+                    return self.execute_vinsertf128(ctx, vex_l, vex_w, vvvv);
                 }
                 // VCVTPS2PH: convert packed single-precision to packed half-precision.
                 0x1D if vex_w == 0 => {
@@ -764,7 +764,7 @@ impl X86_64Vcpu {
                 }
                 // VEXTRACTF128 xmm1/m128, ymm2, imm8 (VEX.66.0F3A.W0 19 /r ib)
                 0x19 => {
-                    return self.execute_vextractf128(ctx, vex_l);
+                    return self.execute_vextractf128(ctx, vex_l, vex_w, vvvv);
                 }
                 // VINSERTPS xmm1, xmm2, xmm3/m32, imm8 (VEX.66.0F3A.WIG 21 /r ib)
                 0x21 => {
@@ -780,11 +780,11 @@ impl X86_64Vcpu {
                 }
                 // VINSERTI128 ymm1, ymm2, xmm3/m128, imm8 (VEX.66.0F3A.W0 38 /r ib)
                 0x38 => {
-                    return self.execute_vinsertf128(ctx, vex_l, vvvv);
+                    return self.execute_vinsertf128(ctx, vex_l, vex_w, vvvv);
                 }
                 // VEXTRACTI128 xmm1/m128, ymm2, imm8 (VEX.66.0F3A.W0 39 /r ib)
                 0x39 => {
-                    return self.execute_vextractf128(ctx, vex_l);
+                    return self.execute_vextractf128(ctx, vex_l, vex_w, vvvv);
                 }
                 // VPERM2I128 ymm1, ymm2, ymm3/m256, imm8 (VEX.66.0F3A.W0 46 /r ib)
                 0x46 => {

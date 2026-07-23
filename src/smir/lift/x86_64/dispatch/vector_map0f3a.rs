@@ -28,6 +28,9 @@ impl X86_64Lifter {
             0x1D if prefix.pp == X86SsePrefix::OpSize => {
                 self.lift_vec_packed_f32_to_f16_store(prefix, bytes, pc, ctx)
             }
+            0x18 | 0x19 | 0x38 | 0x39 if prefix.encoding == VecEncodingKind::Vex => {
+                self.lift_vex_chunk_extract_insert(prefix, opcode, bytes, pc, ctx)
+            }
             0x18 | 0x19 | 0x1A | 0x1B | 0x38 | 0x39 | 0x3A | 0x3B
                 if prefix.encoding == VecEncodingKind::Evex =>
             {

@@ -178,6 +178,8 @@ mod vex;
 #[cfg(test)]
 mod vex_bmi_reserved;
 #[cfg(test)]
+mod vex_chunk;
+#[cfg(test)]
 mod vmx_controls;
 #[cfg(test)]
 mod vpblendd;

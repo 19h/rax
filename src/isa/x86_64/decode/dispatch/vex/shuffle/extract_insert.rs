@@ -321,8 +321,13 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
         vex_l: u8,
+        vex_w: u8,
         vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
+        if vex_l != 1 || vex_w != 0 {
+            return self.inject_undefined_instruction();
+        }
+
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
         let xmm_dst = reg as usize;
@@ -351,6 +356,9 @@ impl X86_64Vcpu {
             self.regs.ymm_high[xmm_dst][0] = insert_lo;
             self.regs.ymm_high[xmm_dst][1] = insert_hi;
         }
+        // The VEX.256 write clears ZMM[511:256] even if every low result bit
+        // was already equal to the destination's old value.
+        self.regs.zmm_high[xmm_dst] = [0; 4];
 
         self.regs.rip += ctx.cursor as u64;
         Ok(None)
@@ -360,7 +368,13 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
         vex_l: u8,
+        vex_w: u8,
+        vvvv: u8,
     ) -> Result<Option<VcpuExit>> {
+        if vex_l != 1 || vex_w != 0 || vvvv != 0 {
+            return self.inject_undefined_instruction();
+        }
+
         let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
         let imm8 = ctx.consume_u8()?;
         let xmm_src = reg as usize;
@@ -378,6 +392,9 @@ impl X86_64Vcpu {
         };
 
         if is_memory {
+            // Preflight the complete 16-byte destination before preserving the
+            // existing pair of qword writes (and their MMIO/trace semantics).
+            self.mmu.preflight_write_range(addr, 16, &self.sregs)?;
             self.write_mem(addr, extract_lo, 8)?;
             self.write_mem(addr + 8, extract_hi, 8)?;
         } else {
@@ -387,6 +404,7 @@ impl X86_64Vcpu {
             // VEX clears upper bits
             self.regs.ymm_high[xmm_dst][0] = 0;
             self.regs.ymm_high[xmm_dst][1] = 0;
+            self.regs.zmm_high[xmm_dst] = [0; 4];
         }
 
         self.regs.rip += ctx.cursor as u64;
