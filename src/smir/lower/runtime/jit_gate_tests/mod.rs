@@ -20,6 +20,8 @@ mod descriptor_table;
 #[cfg(test)]
 mod evex;
 #[cfg(test)]
+mod evex_fp16_scalar_replay;
+#[cfg(test)]
 mod far_call;
 #[cfg(test)]
 mod far_jump;

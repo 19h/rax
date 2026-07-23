@@ -100,7 +100,8 @@ pub use ir::{
     x86_evex_packed_average_replay_spans, x86_evex_packed_compare_replay_spans,
     x86_evex_packed_fma_replay_spans, x86_evex_packed_fp16_fma_replay_spans,
     x86_evex_packed_test_replay_spans, x86_evex_scalar_fma_replay_spans,
-    x86_evex_scalar_fp16_fma_replay_spans, x86_evex_shared_count_shift_replay_spans,
+    x86_evex_scalar_fp16_arithmetic_replay_spans, x86_evex_scalar_fp16_fma_replay_spans,
+    x86_evex_shared_count_shift_replay_spans,
 };
 pub use lift::aarch64::Aarch64Lifter;
 pub use lift::avx10::{Avx10Lifter, EvexPrefix};

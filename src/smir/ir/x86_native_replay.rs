@@ -432,6 +432,39 @@ impl X86InstructionBytes {
         Some(false)
     }
 
+    /// Validate register-only scalar AVX-512-FP16 arithmetic and square-root
+    /// instructions. VADDSH, VMULSH, VSUBSH, VMINSH, VDIVSH, VMAXSH, and
+    /// VSQRTSH require AVX-512-FP16 but not AVX-512VL. Their L'L field is LLIG;
+    /// for register sources EVEX.b either supplies embedded rounding or SAE, so
+    /// every L'L/EVEX.b combination is retained verbatim for native replay.
+    /// Memory forms and malformed zeroing-with-k0 encodings fail closed.
+    pub fn evex_register_scalar_fp16_arithmetic_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+
+        // MAP5, W0, mandatory F3, EVEX.P1 fixed-one, register ModR/M.
+        if p0 & 0x0F != 5 || p1 & 0x87 != 0x06 || modrm >> 6 != 3 {
+            return None;
+        }
+        if !matches!(opcode, 0x51 | 0x58 | 0x59 | 0x5C..=0x5F) {
+            return None;
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let mask = p2 & 0x07;
+        if zeroing && mask == 0 {
+            return None;
+        }
+        Some(false)
+    }
+
     /// Validate register-only EVEX packed signed/unsigned integer minimum and
     /// maximum operations and return whether the vector length requires
     /// AVX-512VL. Byte/word forms use AVX-512BW and doubleword/quadword forms
@@ -1073,6 +1106,20 @@ pub fn x86_evex_scalar_fp16_fma_replay_spans(
     })
 }
 
+/// Identify valid register-only EVEX scalar binary16 arithmetic and
+/// square-root replay groups in `block` in O(N) time and O(P) space for N
+/// operations and P unique guest PCs.
+pub fn x86_evex_scalar_fp16_arithmetic_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction
+            .evex_register_scalar_fp16_arithmetic_needs_vl()
+            .map(|needs_vl| (needs_vl, false, true))
+    })
+}
+
 /// Identify valid register-only EVEX packed integer min/max replay groups in
 /// `block` in O(N) time and O(P) space for N operations and P unique guest PCs.
 pub fn x86_evex_integer_minmax_replay_spans(
@@ -1271,6 +1318,11 @@ pub fn x86_evex_native_replay_spans(
             })
             .or_else(|| {
                 instruction
+                    .evex_register_scalar_fp16_arithmetic_needs_vl()
+                    .map(|needs_vl| (needs_vl, false, true))
+            })
+            .or_else(|| {
+                instruction
                     .evex_register_integer_minmax_needs_vl()
                     .map(|needs_vl| (needs_vl, false, false))
             })
@@ -1326,3 +1378,7 @@ pub fn x86_evex_native_replay_spans(
             })
     })
 }
+
+#[cfg(test)]
+#[path = "x86_native_replay_tests.rs"]
+mod tests;
