@@ -861,6 +861,157 @@ fn mask_to_vector_replay_spans_track_vl_and_dq_requirements() {
     }
 }
 
+type MaskBroadcastShape = (u8, bool, u8);
+
+fn mask_broadcast_shapes() -> Vec<MaskBroadcastShape> {
+    let mut shapes = Vec::new();
+    for (opcode, w) in [(0x2A, true), (0x3A, false)] {
+        for ll in 0..=2 {
+            shapes.push((opcode, w, ll));
+        }
+    }
+    shapes
+}
+
+fn generated_mask_broadcast_encoding(
+    shape: MaskBroadcastShape,
+    destination: u8,
+    source: u8,
+    ignored_x: bool,
+    ignored_b: bool,
+) -> [u8; 6] {
+    let (opcode, w, ll) = shape;
+    assert!(destination < 32 && source < 8);
+    let mut p0 = 0xF2;
+    if destination & 0x08 != 0 {
+        p0 &= !0x80;
+    }
+    if destination & 0x10 != 0 {
+        p0 &= !0x10;
+    }
+    if ignored_x {
+        p0 &= !0x40;
+    }
+    if ignored_b {
+        p0 &= !0x20;
+    }
+    [
+        0x62,
+        p0,
+        0x7E | if w { 0x80 } else { 0 },
+        (ll << 5) | 0x08,
+        opcode,
+        0xC0 | ((destination & 0x07) << 3) | source,
+    ]
+}
+
+#[test]
+fn mask_broadcast_replay_classifier_covers_96_register_encodings() {
+    let shapes = mask_broadcast_shapes();
+    assert_eq!(shapes.len(), 6);
+
+    let mut encodings = 0usize;
+    for shape in shapes {
+        for (destination, source) in [(1, 0), (9, 2), (17, 5), (25, 7)] {
+            for ignored_x in [false, true] {
+                for ignored_b in [false, true] {
+                    let bytes = generated_mask_broadcast_encoding(
+                        shape,
+                        destination,
+                        source,
+                        ignored_x,
+                        ignored_b,
+                    );
+                    assert_eq!(
+                        X86InstructionBytes::new(&bytes)
+                            .unwrap()
+                            .evex_register_mask_broadcast_needs_vl(),
+                        Some(shape.2 != 2),
+                        "{bytes:02X?}"
+                    );
+                    encodings += 1;
+                }
+            }
+        }
+    }
+    assert_eq!(encodings, 96);
+
+    // Independently assembled LLVM 23 encodings cover both mnemonics, all
+    // vector lengths, and both vector-destination extension channels.
+    for (bytes, needs_vl) in [
+        (&[0x62, 0xE2, 0xFE, 0x48, 0x2A, 0xCF][..], false),
+        (&[0x62, 0x62, 0x7E, 0x28, 0x3A, 0xCB], true),
+        (&[0x62, 0x62, 0xFE, 0x08, 0x2A, 0xF8], true),
+        (&[0x62, 0x72, 0x7E, 0x48, 0x3A, 0xC7], false),
+    ] {
+        assert_eq!(
+            X86InstructionBytes::new(bytes)
+                .unwrap()
+                .evex_register_mask_broadcast_needs_vl(),
+            Some(needs_vl),
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn mask_broadcast_replay_classifier_rejects_every_reserved_frontier() {
+    let invalid: &[&[u8]] = &[
+        &[0x61, 0xF2, 0xFE, 0x08, 0x2A, 0xD1],       // not EVEX
+        &[0x62, 0xF1, 0xFE, 0x08, 0x2A, 0xD1],       // wrong map
+        &[0x62, 0xF2, 0xFA, 0x08, 0x2A, 0xD1],       // missing fixed-one bit
+        &[0x62, 0xF2, 0xFD, 0x08, 0x2A, 0xD1],       // wrong mandatory prefix
+        &[0x62, 0xF2, 0xF6, 0x08, 0x2A, 0xD1],       // EVEX.vvvv != 1111b
+        &[0x62, 0xF2, 0x7E, 0x08, 0x2A, 0xD1],       // MB2Q requires W1
+        &[0x62, 0xF2, 0xFE, 0x08, 0x3A, 0xD1],       // MW2D requires W0
+        &[0x62, 0xF2, 0xFE, 0x00, 0x2A, 0xD1],       // EVEX.V' is reserved
+        &[0x62, 0xF2, 0xFE, 0x88, 0x2A, 0xD1],       // EVEX.z is reserved
+        &[0x62, 0xF2, 0xFE, 0x09, 0x2A, 0xD1],       // writemask is forbidden
+        &[0x62, 0xF2, 0xFE, 0x18, 0x2A, 0xD1],       // EVEX.b is reserved
+        &[0x62, 0xF2, 0xFE, 0x68, 0x2A, 0xD1],       // L'L=3 is reserved
+        &[0x62, 0xF2, 0xFE, 0x08, 0x2A, 0x11],       // memory source
+        &[0x62, 0xF2, 0xFE, 0x08, 0x2B, 0xD1],       // unrelated opcode
+        &[0x62, 0xF2, 0xFE, 0x08, 0x2A],             // missing ModR/M
+        &[0x62, 0xF2, 0xFE, 0x08, 0x2A, 0xD1, 0x00], // trailing byte
+    ];
+    for bytes in invalid {
+        assert_eq!(
+            X86InstructionBytes::new(bytes)
+                .unwrap()
+                .evex_register_mask_broadcast_needs_vl(),
+            None,
+            "{bytes:02X?}"
+        );
+    }
+}
+
+#[test]
+fn mask_broadcast_replay_spans_track_vl_requirements() {
+    let pc = 0x3A00;
+    let mut block = SmirBlock::new(BlockId(15), pc);
+    block.push_op(SmirOp::new(OpId(0), pc, OpKind::Nop));
+
+    for (bytes, needs_vl) in [
+        (&[0x62, 0xE2, 0xFE, 0x08, 0x2A, 0xCF][..], true),
+        (&[0x62, 0x62, 0x7E, 0x28, 0x3A, 0xCB], true),
+        (&[0x62, 0x72, 0x7E, 0x48, 0x3A, 0xC7], false),
+    ] {
+        let instruction = X86InstructionBytes::new(bytes).unwrap();
+        let provenance = HashMap::from([((BlockId(15), pc), instruction)]);
+        for spans in [
+            x86_evex_mask_broadcast_replay_spans(&block, &provenance),
+            x86_evex_native_replay_spans(&block, &provenance),
+        ] {
+            let span = spans.get(&0).unwrap_or_else(|| panic!("{bytes:02X?}"));
+            assert_eq!(span.end, 1, "{bytes:02X?}");
+            assert_eq!(span.instruction, instruction, "{bytes:02X?}");
+            assert_eq!(span.needs_avx512vl, needs_vl, "{bytes:02X?}");
+            assert!(!span.needs_avx512dq, "{bytes:02X?}");
+            assert!(!span.needs_avx512fp16, "{bytes:02X?}");
+        }
+    }
+}
+
 type LaneShuffleShape = (u8, u8, bool, u8, bool);
 
 fn lane_shuffle_shapes() -> Vec<LaneShuffleShape> {

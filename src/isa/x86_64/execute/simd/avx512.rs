@@ -6238,14 +6238,24 @@ pub fn evex_broadcast_mask(
         .evex
         .ok_or_else(|| Error::Emulator("EVEX mask broadcast requires EVEX prefix".to_string()))?;
 
-    if evex.vvvv != 0xF {
+    // Type E6NF is register-only and has no writemask/broadcast controls.
+    // EVEX.vvvv/V' are reserved. EVEX.X/B are deliberately not checked:
+    // Intel SDM Table 2-41 defines both fields as ignored when ModR/M.r/m
+    // encodes a K register. Validate before ModR/M decoding so no reserved
+    // form can perform address calculation or commit architectural state.
+    let modrm = ctx.peek_u8()?;
+    if evex.aaa != 0
+        || evex.z
+        || evex.broadcast
+        || evex.ll == 3
+        || evex.vvvv != 0xF
+        || !evex.v_prime
+        || modrm >> 6 != 3
+    {
         return vcpu.inject_undefined_instruction();
     }
 
-    let (reg, rm, is_memory, _, _) = vcpu.decode_modrm(ctx)?;
-    if is_memory {
-        return vcpu.inject_undefined_instruction();
-    }
+    let (reg, rm, _, _, _) = vcpu.decode_modrm(ctx)?;
 
     let dest = (reg & 0x07) | if evex.r { 0 } else { 8 } | if evex.r_prime { 0 } else { 16 };
     let mask = if src_bits == 8 { 0xff } else { 0xffff };

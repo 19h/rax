@@ -26,6 +26,8 @@ mod evex_lane_shuffle_replay;
 #[cfg(test)]
 mod evex_mask_blend_replay;
 #[cfg(test)]
+mod evex_mask_broadcast_replay;
+#[cfg(test)]
 mod evex_mask_to_vector_replay;
 #[cfg(test)]
 mod evex_move_replay;

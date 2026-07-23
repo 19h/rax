@@ -272,6 +272,7 @@ impl X86_64Vcpu {
             }
             // VPBROADCASTMB2Q (0x2A, F3.W1)
             0x2A if evex.pp == 2 && evex.w => execute::simd::evex_broadcast_mask(self, ctx, 8, 8),
+            0x2A if evex.pp == 2 => self.inject_undefined_instruction(),
             // VPBLENDMD/Q (0x64), VBLENDMPS/PD (0x65), VPBLENDMB/W (0x66).
             0x64 if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
@@ -517,6 +518,7 @@ impl X86_64Vcpu {
             }
             // VPBROADCASTMW2D (0x3A, F3.W0)
             0x3A if evex.pp == 2 && !evex.w => execute::simd::evex_broadcast_mask(self, ctx, 16, 4),
+            0x3A if evex.pp == 2 => self.inject_undefined_instruction(),
             0x3B if evex.pp == 1 => {
                 let op = if evex.w {
                     execute::simd::IntOp::MinUQ

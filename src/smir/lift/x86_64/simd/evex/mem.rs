@@ -402,7 +402,9 @@ impl X86_64Lifter {
             ..X86Prefix::default()
         };
         let modrm = decode_modrm(&bytes[cursor..], &modrm_prefix, pc)?;
-        if modrm.is_memory || modrm.rm >= 8 || prefix.rm_high {
+        // Intel SDM Table 2-41 defines EVEX.X/B as ignored when ModR/M.r/m
+        // selects an opmask register. Only the low three r/m bits select K0-K7.
+        if modrm.is_memory {
             return Err(LiftError::InvalidEncoding {
                 addr: pc,
                 bytes: bytes.to_vec(),
@@ -420,7 +422,7 @@ impl X86_64Lifter {
             pc,
             OpKind::And {
                 dst: scalar,
-                src1: VReg::Arch(ArchReg::X86(X86Reg::K(modrm.rm))),
+                src1: VReg::Arch(ArchReg::X86(X86Reg::K(modrm.rm & 7))),
                 src2: SrcOperand::Imm(source_mask),
                 width: OpWidth::W64,
                 flags: FlagUpdate::None,

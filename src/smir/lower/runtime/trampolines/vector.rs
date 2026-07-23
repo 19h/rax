@@ -5982,6 +5982,10 @@ pub fn x86_native_vector_features_supported_excluding(
             needs_vl |= span.needs_avx512vl;
             needs_dq |= span.needs_avx512dq;
             needs_fp16 |= span.needs_avx512fp16;
+            needs_cd |= span
+                .instruction
+                .evex_register_mask_broadcast_needs_vl()
+                .is_some();
         }
     }
 

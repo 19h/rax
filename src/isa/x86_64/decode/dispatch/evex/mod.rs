@@ -79,6 +79,9 @@ mod apx_nf_tests;
 mod apx_reserved_tests;
 
 #[cfg(test)]
+mod mask_broadcast_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 

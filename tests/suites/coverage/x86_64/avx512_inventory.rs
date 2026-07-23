@@ -27,6 +27,8 @@ mod avx512_spec;
 mod lane_shuffle_replay;
 #[path = "avx512_inventory/mask_blend_replay.rs"]
 mod mask_blend_replay;
+#[path = "avx512_inventory/mask_broadcast_replay.rs"]
+mod mask_broadcast_replay;
 #[path = "avx512_inventory/mask_to_vector_replay.rs"]
 mod mask_to_vector_replay;
 #[path = "avx512_inventory/packed_compare_replay.rs"]
