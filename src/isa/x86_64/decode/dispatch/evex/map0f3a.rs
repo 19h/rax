@@ -190,12 +190,13 @@ impl X86_64Vcpu {
             // VINSERTF32x4/F64x2 and VINSERTI32x4/I64x2.
             0x18 if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
-                execute::simd::evex_insert_chunk(self, ctx, es, 16)
+                execute::simd::evex_insert_chunk_validated(self, ctx, es, 16)
             }
             0x38 if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
-                execute::simd::evex_insert_chunk(self, ctx, es, 16)
+                execute::simd::evex_insert_chunk_validated(self, ctx, es, 16)
             }
+            0x18 | 0x38 => self.inject_undefined_instruction(),
             // VEXTRACTF32x4/F64x2 and VEXTRACTI32x4/I64x2.
             0x19 if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
@@ -208,12 +209,13 @@ impl X86_64Vcpu {
             // VINSERTF32x8/F64x4 and VINSERTI32x8/I64x4.
             0x1A if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
-                execute::simd::evex_insert_chunk(self, ctx, es, 32)
+                execute::simd::evex_insert_chunk_validated(self, ctx, es, 32)
             }
             0x3A if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };
-                execute::simd::evex_insert_chunk(self, ctx, es, 32)
+                execute::simd::evex_insert_chunk_validated(self, ctx, es, 32)
             }
+            0x1A | 0x3A => self.inject_undefined_instruction(),
             // VEXTRACTF32x8/F64x4 and VEXTRACTI32x8/I64x4.
             0x1B if evex.pp == 1 => {
                 let es = if evex.w { 8 } else { 4 };

@@ -24,6 +24,8 @@ mod evex_bw_immediate_replay;
 #[cfg(test)]
 mod evex_bw_shuffle_madd_replay;
 #[cfg(test)]
+mod evex_chunk_insert_replay;
+#[cfg(test)]
 mod evex_chunk_shuffle_replay;
 #[cfg(test)]
 mod evex_fp16_scalar_replay;

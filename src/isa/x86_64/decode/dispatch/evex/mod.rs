@@ -88,6 +88,9 @@ mod bw_immediate_tests;
 mod bw_shuffle_madd_tests;
 
 #[cfg(test)]
+mod chunk_insert_tests;
+
+#[cfg(test)]
 mod chunk_shuffle_tests;
 
 #[cfg(test)]

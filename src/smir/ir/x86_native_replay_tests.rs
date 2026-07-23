@@ -10,6 +10,9 @@ mod bw_immediate;
 #[path = "x86_native_replay_tests/bw_shuffle_madd.rs"]
 mod bw_shuffle_madd;
 
+#[path = "x86_native_replay_tests/chunk_insert.rs"]
+mod chunk_insert;
+
 #[path = "x86_native_replay_tests/chunk_shuffle.rs"]
 mod chunk_shuffle;
 
