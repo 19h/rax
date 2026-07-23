@@ -134,6 +134,27 @@ fn jit_callout_synchronizes_callee_vector_opmask_and_mmx_state() {
     assert_eq!(gr.xcr0, 0xE7, "callee XCR0 was not returned");
     assert_eq!(gr.cr4, vcpu.sregs.cr4, "callee CR4 was not returned");
 
+    // A returning callee may unmask SIMD exceptions with LDMXCSR. The helper
+    // must publish that state but deopt at the exact return PC instead of
+    // re-entering a native vector continuation that could raise host SIGFPE.
+    let mut unmasking_callee = vec![
+        0x0F, 0xAE, 0x15, 0x01, 0x00, 0x00, 0x00, // ldmxcsr 1(%rip)
+        0xC3, // ret
+    ];
+    unmasking_callee.extend_from_slice(&0x5F00u32.to_le_bytes());
+    mem.write_slice(&unmasking_callee, GuestAddress(0x700))
+        .unwrap();
+    gr.gpr[4] = 0x8000;
+    gr.mxcsr = 0x1F80;
+    let ok = unsafe { rax_jit_call(&mut gr, 0x700, 0x800, 0x680) };
+    assert_eq!(ok, 0);
+    assert_eq!(
+        gr.exit_pc, 0x800,
+        "deopt must resume after the completed CALL"
+    );
+    assert_eq!(gr.mxcsr, 0x5F00, "callee MXCSR was not returned");
+    assert!(vcpu.jit_callout_exit.is_none());
+
     // A callee that mutates vector state and then yields HLT must publish
     // that state before returning `ok=0`; the run loop consumes the stashed
     // exit while leaving the interpreter state exactly at the yield.

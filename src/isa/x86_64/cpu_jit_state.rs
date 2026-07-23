@@ -3,6 +3,17 @@
 use super::X86_64Vcpu;
 use crate::smir::ir::SmirFunction;
 
+/// MXCSR exception-mask bits IM..PM (bits 7..=12). Native vector execution
+/// cannot translate a host #XM/SIGFPE into the precise guest SMIR exit, so all
+/// six classes must remain masked at the native boundary.
+#[cfg(target_arch = "x86_64")]
+const X86_MXCSR_EXCEPTION_MASKS: u32 = 0x1F80;
+
+#[cfg(target_arch = "x86_64")]
+pub(super) fn jit_mxcsr_masks_all_exceptions(mxcsr: u32) -> bool {
+    mxcsr & X86_MXCSR_EXCEPTION_MASKS == X86_MXCSR_EXCEPTION_MASKS
+}
+
 /// A compiled native hot-block region. The lowered code is register-state
 /// independent (it marshals guest state in/out per run), so one `JitRegion` is
 /// cached by (RIP, mode_tag) and re-run for every later entry to that RIP until
@@ -74,6 +85,31 @@ impl JitRegion {
 }
 
 impl X86_64Vcpu {
+    /// The JIT cache key discriminator: address space (CR3), CPU mode (CS.L
+    /// long-mode, CS.DB default-size), and every mutable runtime capability that
+    /// changes region eligibility or lowering. A compiled region or ineligible
+    /// memo can therefore never be reused after memory-helper, call-through, or
+    /// native-vector MXCSR policy changes.
+    #[inline]
+    pub(super) fn jit_mode_tag(&self) -> u64 {
+        let mode =
+            (self.sregs.cr3 & !0xFFF) | (self.sregs.cs.l as u64) | ((self.sregs.cs.db as u64) << 1);
+
+        // CR3's page-offset bits are masked above and are available as tag-only
+        // discriminators. These fields exist only for the native x86-64 JIT;
+        // the aarch64 lowering path has neither capability.
+        #[cfg(target_arch = "x86_64")]
+        {
+            mode | (u64::from(self.jit_mem) << 2)
+                | (u64::from(self.jit_call) << 3)
+                | (u64::from(jit_mxcsr_masks_all_exceptions(self.mxcsr)) << 4)
+        }
+        #[cfg(target_arch = "aarch64")]
+        {
+            mode
+        }
+    }
+
     /// Establish the active native region before any helper can access guest
     /// memory. Marking is idempotent and costs O(P), where P is the number of
     /// source pages (currently P <= 2 for the 512-byte lift window).
@@ -114,6 +150,92 @@ mod tests {
         vcpu.sregs.cs.l = true;
         vcpu.regs.rflags = 0x2;
         (vcpu, memory)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn mxcsr_native_vector_boundary_requires_every_exception_mask() {
+        let masked_with_status_rounding_daz_and_ftz =
+            X86_MXCSR_EXCEPTION_MASKS | 0x3F | (3 << 13) | (1 << 6) | (1 << 15);
+        assert!(jit_mxcsr_masks_all_exceptions(
+            masked_with_status_rounding_daz_and_ftz
+        ));
+        for bit in 7..=12 {
+            assert!(
+                !jit_mxcsr_masks_all_exceptions(
+                    masked_with_status_rounding_daz_and_ftz & !(1 << bit)
+                ),
+                "MXCSR exception mask bit {bit}"
+            );
+        }
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn jit_mode_tag_separates_runtime_capability_and_mxcsr_policies() {
+        let (mut vcpu, _) = test_vcpu();
+        vcpu.sregs.cr3 = 0x1234_5000;
+        vcpu.sregs.cs.l = true;
+        vcpu.sregs.cs.db = true;
+
+        vcpu.set_jit_call(false);
+        vcpu.set_jit_mem(false);
+        let register_only = vcpu.jit_mode_tag();
+        assert_eq!(register_only & !0x1F, 0x1234_5000);
+        assert_eq!(register_only & 0x3, 0x3);
+        assert_ne!(register_only & (1 << 4), 0);
+
+        // Model both kinds of stale entry under the original policy. Enabling
+        // helpers must select a disjoint key without scanning or clearing either
+        // table, so the new capability can trigger a fresh compilation attempt.
+        let head = 0x2000;
+        let cached = JitRegion {
+            exec: crate::smir::lower::runtime::ExecMem::new(&[0xC3]).unwrap(),
+            entry_offset: 0,
+            source_pages: vec![head & !0xFFF],
+            uses_vector: false,
+            uses_xmm_state: false,
+            narrow_vector_opmasks: false,
+            uses_mmx: false,
+            uses_x87_tag_state: false,
+            uses_timestamp: false,
+            yielded_backward_exit_pcs: Vec::new(),
+            callout_boundaries: Vec::new(),
+        };
+        vcpu.jit_cache
+            .insert((head, register_only), Some(Arc::new(cached)));
+        vcpu.jit_ineligible
+            .insert((head, register_only), vec![0x90]);
+
+        vcpu.set_jit_mem(true);
+        let memory = vcpu.jit_mode_tag();
+        assert_eq!(register_only ^ memory, 1 << 2);
+        assert!(!vcpu.jit_cache.contains_key(&(head, memory)));
+        assert!(!vcpu.jit_ineligible.contains_key(&(head, memory)));
+
+        vcpu.set_jit_call(true);
+        let calls = vcpu.jit_mode_tag();
+        assert_eq!(memory ^ calls, 1 << 3);
+        assert!(!vcpu.jit_cache.contains_key(&(head, calls)));
+        assert!(!vcpu.jit_ineligible.contains_key(&(head, calls)));
+
+        // Restoring a policy must recover its original discriminator; this keeps
+        // cache reuse deterministic rather than leaking one tag per transition.
+        vcpu.set_jit_call(false);
+        assert_eq!(vcpu.jit_mode_tag(), memory);
+        vcpu.set_jit_mem(false);
+        assert_eq!(vcpu.jit_mode_tag(), register_only);
+
+        // A cached vector region compiled with masked exceptions cannot be
+        // selected after LDMXCSR exposes host #XM/SIGFPE. Restoring the mask
+        // recovers the original cache discriminator without invalidation.
+        vcpu.mxcsr &= !(1 << 7);
+        let unmasked = vcpu.jit_mode_tag();
+        assert_eq!(register_only ^ unmasked, 1 << 4);
+        assert!(!vcpu.jit_cache.contains_key(&(head, unmasked)));
+        assert!(!vcpu.jit_ineligible.contains_key(&(head, unmasked)));
+        vcpu.mxcsr |= 1 << 7;
+        assert_eq!(vcpu.jit_mode_tag(), register_only);
     }
 
     #[test]

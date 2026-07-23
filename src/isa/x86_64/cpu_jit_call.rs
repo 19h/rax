@@ -175,6 +175,17 @@ pub(super) unsafe extern "C" fn rax_jit_call(
         }
     }
 
+    // A vector call-through region entered with all SIMD exceptions masked,
+    // but its interpreted callee may execute LDMXCSR. Native continuation
+    // cannot translate a subsequent host #XM/SIGFPE into a precise guest exit,
+    // so deopt at the already-completed CALL's return PC before reloading that
+    // MXCSR into native execution. The state synchronization below publishes
+    // the callee's complete result and records the exact continuation in
+    // `exit_pc`.
+    if ok != 0 && gr.vector_active != 0 && !jit_mxcsr_masks_all_exceptions(vcpu.mxcsr) {
+        ok = 0;
+    }
+
     // Sync vcpu state back into the marshalled file. Materialize flags first so
     // the native reload or trampoline sees current architectural RFLAGS.
     vcpu.materialize_flags();
