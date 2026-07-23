@@ -627,14 +627,18 @@ pub(super) fn vl_bytes_of(ll: u8) -> usize {
 /// Write a result byte-buffer back to the destination vector register with the
 /// proper VL upper-zeroing semantics (128/256 zero the unused high bits).
 #[inline]
-fn write_vec_vl(vcpu: &mut X86_64Vcpu, dest: u8, vl_bytes: usize, data: &[u8; 64]) {
+pub(super) fn write_vec_vl(vcpu: &mut X86_64Vcpu, dest: u8, vl_bytes: usize, data: &[u8; 64]) {
     write_reg_bytes(vcpu, dest, vl_bytes, data);
 }
 
 /// Decode the three vector operands of a typical EVEX `op dest{k}, src1, src2/m`
 /// instruction. Returns (dest, src1, src2 reg, is_memory, addr).
 #[inline]
-fn evex_three_op(evex: &crate::isa::x86_64::cpu::EvexPrefix, reg: u8, rm: u8) -> (u8, u8, u8) {
+pub(super) fn evex_three_op(
+    evex: &crate::isa::x86_64::cpu::EvexPrefix,
+    reg: u8,
+    rm: u8,
+) -> (u8, u8, u8) {
     let dest = (reg & 0x07) | if evex.r { 0 } else { 8 } | if evex.r_prime { 0 } else { 16 };
     let src1 = (evex.vvvv ^ 0xF) | if evex.v_prime { 0 } else { 16 };
     let src2 = (rm & 0x07) | if evex.b { 0 } else { 8 } | if evex.x { 0 } else { 16 };
@@ -6219,72 +6223,6 @@ pub fn evex_nt_store(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Opt
     let addr = evex_scaled_disp8_addr(ctx, modrm_start, addr, vl_bytes);
     let data = read_reg_bytes(vcpu, src, vl_bytes);
     store_mem_bytes(vcpu, addr, 8, vl_bytes / 8, &data)?;
-    vcpu.regs.rip += ctx.cursor as u64;
-    Ok(None)
-}
-
-/// EVEX blend-mask selectors (VBLENDMPS/PD and VPBLENDM*).
-///
-/// The opmask is the element selector, not a writemask: selector bit 1 chooses
-/// the ModR/M source, selector bit 0 chooses EVEX.vvvv, unless EVEX.z requests
-/// zeroing for selector-zero lanes.
-pub fn evex_blend_select(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    elem_size: usize,
-) -> Result<Option<VcpuExit>> {
-    let evex = ctx
-        .evex
-        .ok_or_else(|| Error::Emulator("EVEX blend requires EVEX prefix".to_string()))?;
-
-    let modrm_start = ctx.cursor;
-    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let (dest, src1, src2_reg) = evex_three_op(&evex, reg, rm);
-
-    let vl_bytes = vl_bytes_of(evex.ll);
-    let num_elems = vl_bytes / elem_size;
-    let addr = if is_memory {
-        let scale = if evex.broadcast && matches!(elem_size, 4 | 8) {
-            elem_size
-        } else {
-            vl_bytes
-        };
-        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
-    } else {
-        addr
-    };
-    let src1_bytes = read_reg_bytes(vcpu, src1, vl_bytes);
-    let src2_bytes = if is_memory {
-        if evex.broadcast && matches!(elem_size, 4 | 8) {
-            let elem = vcpu.read_mem(addr, elem_size as u8)?;
-            let elem_le = elem.to_le_bytes();
-            let mut data = [0u8; 64];
-            for lane in 0..num_elems {
-                let base = lane * elem_size;
-                data[base..base + elem_size].copy_from_slice(&elem_le[..elem_size]);
-            }
-            data
-        } else {
-            load_mem_bytes(vcpu, addr, elem_size, num_elems)?
-        }
-    } else {
-        read_reg_bytes(vcpu, src2_reg, vl_bytes)
-    };
-
-    let selector = evex_mask(vcpu, evex.aaa, num_elems);
-    let mut result = [0u8; 64];
-    for lane in 0..num_elems {
-        let base = lane * elem_size;
-        if (selector >> lane) & 1 != 0 {
-            result[base..base + elem_size].copy_from_slice(&src2_bytes[base..base + elem_size]);
-        } else if evex.z {
-            // Zeroing: leave as 0.
-        } else {
-            result[base..base + elem_size].copy_from_slice(&src1_bytes[base..base + elem_size]);
-        }
-    }
-
-    write_vec_vl(vcpu, dest, vl_bytes, &result);
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
 }

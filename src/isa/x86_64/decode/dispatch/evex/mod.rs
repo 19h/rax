@@ -330,6 +330,134 @@ mod tests {
         }
     }
 
+    #[test]
+    fn evex_mask_blends_select_exact_elements_and_zero_upper_state() {
+        let src1 = [0x7766_5544_3322_1100, 0xFFEE_DDCC_BBAA_9988];
+        let src2 = [0x0123_4567_89AB_CDEF, 0xFEDC_BA98_7654_3210];
+        let src1_u128 = u128::from(src1[0]) | (u128::from(src1[1]) << 64);
+        let src2_u128 = u128::from(src2[0]) | (u128::from(src2[1]) << 64);
+        let selector = 0b1010_0101_1100_0011u64;
+
+        for (opcode, w, elem_size) in [
+            (0x64, false, 4usize),
+            (0x64, true, 8),
+            (0x65, false, 4),
+            (0x65, true, 8),
+            (0x66, false, 1),
+            (0x66, true, 2),
+        ] {
+            // vpblendm*/vblendm* xmm3{k1}, xmm1, xmm2
+            let code = [
+                0x62,
+                0xF2,
+                0x75 | if w { 0x80 } else { 0 },
+                0x09,
+                opcode,
+                0xDA,
+            ];
+            let mut vcpu = long_mode_vcpu(&code);
+            vcpu.regs.xmm[1] = src1;
+            vcpu.regs.xmm[2] = src2;
+            vcpu.regs.xmm[3] = [u64::MAX; 2];
+            vcpu.regs.ymm_high[3] = [u64::MAX; 2];
+            vcpu.regs.zmm_high[3] = [u64::MAX; 4];
+            vcpu.regs.k[1] = selector;
+
+            step_ok(&mut vcpu);
+
+            let elem_bits = elem_size * 8;
+            let elem_mask = (1u128 << elem_bits) - 1;
+            let mut expected = 0u128;
+            for lane in 0..(16 / elem_size) {
+                let shift = lane * elem_bits;
+                let source = if selector & (1u64 << lane) != 0 {
+                    src2_u128
+                } else {
+                    src1_u128
+                };
+                expected |= ((source >> shift) & elem_mask) << shift;
+            }
+            assert_eq!(
+                vcpu.regs.xmm[3],
+                [expected as u64, (expected >> 64) as u64],
+                "opcode {opcode:#04x}, W={w}"
+            );
+            assert_eq!(vcpu.regs.ymm_high[3], [0; 2]);
+            assert_eq!(vcpu.regs.zmm_high[3], [0; 4]);
+            assert_eq!(vcpu.regs.rip, CODE + 6);
+        }
+
+        // EVEX.z zeros selector-zero lanes rather than merging SRC1.
+        let mut zeroing = long_mode_vcpu(&[0x62, 0xF2, 0x75, 0x89, 0x66, 0xDA]);
+        zeroing.regs.xmm[1] = src1;
+        zeroing.regs.xmm[2] = src2;
+        zeroing.regs.xmm[3] = [u64::MAX; 2];
+        zeroing.regs.k[1] = selector;
+        step_ok(&mut zeroing);
+        let mut expected_zeroing = 0u128;
+        for lane in 0..16 {
+            if selector & (1u64 << lane) != 0 {
+                expected_zeroing |= ((src2_u128 >> (lane * 8)) & 0xFF) << (lane * 8);
+            }
+        }
+        assert_eq!(
+            zeroing.regs.xmm[3],
+            [expected_zeroing as u64, (expected_zeroing >> 64) as u64]
+        );
+
+        // k0 means no selector mask, so every lane comes from SRC2.
+        let mut no_mask = long_mode_vcpu(&[0x62, 0xF2, 0x75, 0x08, 0x64, 0xDA]);
+        no_mask.regs.xmm[1] = src1;
+        no_mask.regs.xmm[2] = src2;
+        no_mask.regs.xmm[3] = [u64::MAX; 2];
+        step_ok(&mut no_mask);
+        assert_eq!(no_mask.regs.xmm[3], src2);
+    }
+
+    fn assert_evex_mask_blend_reserved_ud(code: &[u8]) {
+        let mut vcpu = long_mode_vcpu(code);
+        vcpu.regs.xmm[1] = [0x1111_2222_3333_4444, 0x5555_6666_7777_8888];
+        vcpu.regs.xmm[2] = [0x9999_AAAA_BBBB_CCCC, 0xDDDD_EEEE_FFFF_0000];
+        vcpu.regs.xmm[3] = [0x0123_4567_89AB_CDEF, 0xFEDC_BA98_7654_3210];
+        vcpu.regs.ymm_high[3] = [0xAAAA_AAAA_AAAA_AAAA; 2];
+        vcpu.regs.zmm_high[3] = [0xBBBB_BBBB_BBBB_BBBB; 4];
+        vcpu.regs.k[1] = 0xA55A_3CC3_F00F_9669;
+        let before = vcpu.regs.clone();
+
+        let error = vcpu
+            .step()
+            .expect_err("reserved EVEX mask-blend form must #UD");
+        assert!(
+            format!("{error:?}").contains("IDT entry 6 not present"),
+            "wrong exception for {code:02X?}: {error:?}"
+        );
+        assert_eq!(vcpu.regs.rip, before.rip, "{code:02X?}: fault RIP");
+        assert_eq!(vcpu.regs.xmm, before.xmm, "{code:02X?}: XMM state");
+        assert_eq!(
+            vcpu.regs.ymm_high, before.ymm_high,
+            "{code:02X?}: YMM state"
+        );
+        assert_eq!(
+            vcpu.regs.zmm_high, before.zmm_high,
+            "{code:02X?}: ZMM state"
+        );
+        assert_eq!(vcpu.regs.zmm_ext, before.zmm_ext, "{code:02X?}: ZMM16-31");
+        assert_eq!(vcpu.regs.k, before.k, "{code:02X?}: opmask state");
+        assert_eq!(vcpu.regs.rflags, before.rflags, "{code:02X?}: flags");
+    }
+
+    #[test]
+    fn evex_mask_blend_reserved_fields_raise_precise_ud() {
+        for code in [
+            &[0x62, 0xF2, 0x75, 0x68, 0x64, 0xDA][..], // reserved L'L=3
+            &[0x62, 0xF2, 0x75, 0x88, 0x64, 0xDA],     // {z} requires k1-k7
+            &[0x62, 0xF2, 0x75, 0x19, 0x64, 0xDA],     // EVEX.b with register source
+            &[0x62, 0xF2, 0x75, 0x19, 0x66, 0x00],     // byte/word has no broadcast
+        ] {
+            assert_evex_mask_blend_reserved_ud(code);
+        }
+    }
+
     fn enable_paging_for_wrapped_stack_test(vcpu: &mut X86_64Vcpu) {
         const PRESENT_WRITABLE: u64 = 0x3;
         const HUGE_PAGE: u64 = 0x80;

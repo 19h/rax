@@ -764,6 +764,39 @@ impl X86InstructionBytes {
         }
     }
 
+    /// Validate register-only EVEX opmask-selector blends and return whether
+    /// the vector length requires AVX-512VL. The selector may be k0 (no
+    /// control mask), but EVEX.z then remains reserved. EVEX.b is reserved for
+    /// every register source.
+    pub fn evex_register_mask_blend_needs_vl(&self) -> Option<bool> {
+        let bytes = self.as_slice();
+        if bytes.len() != 6 || bytes[0] != 0x62 {
+            return None;
+        }
+        let p0 = bytes[1];
+        let p1 = bytes[2];
+        let p2 = bytes[3];
+        let opcode = bytes[4];
+        let modrm = bytes[5];
+        if p0 & 0x0f != 2
+            || p1 & 0x04 == 0
+            || p1 & 0x03 != 1
+            || !matches!(opcode, 0x64..=0x66)
+            || modrm >> 6 != 3
+        {
+            return None;
+        }
+
+        let zeroing = p2 & 0x80 != 0;
+        let ll = (p2 >> 5) & 0x03;
+        let broadcast = p2 & 0x10 != 0;
+        let selector = p2 & 0x07;
+        if broadcast || ll == 3 || (zeroing && selector == 0) {
+            return None;
+        }
+        Some(ll != 2)
+    }
+
     /// Validate register-only EVEX binary32/binary64 shuffle and unpack
     /// operations and return whether the vector length requires AVX-512VL.
     /// VSHUF* carries an imm8 while VUNPCKL*/VUNPCKH* does not. Memory,

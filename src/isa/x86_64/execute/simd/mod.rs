@@ -13,6 +13,7 @@
 mod arith;
 mod avx;
 mod avx512;
+mod avx512_blend;
 mod avx512_compare;
 mod compare;
 mod convert;
@@ -30,6 +31,7 @@ mod ssse3;
 pub use arith::*;
 pub use avx::*;
 pub use avx512::*;
+pub use avx512_blend::*;
 pub use avx512_compare::*;
 pub use compare::*;
 pub use convert::*;
