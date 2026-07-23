@@ -68,6 +68,8 @@ mod fsgsbase;
 #[cfg(test)]
 mod group11;
 #[cfg(test)]
+mod group3_alias;
+#[cfg(test)]
 mod group7_invalid;
 #[cfg(test)]
 mod group9_invalid;

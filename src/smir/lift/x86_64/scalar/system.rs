@@ -756,7 +756,9 @@ impl X86_64Lifter {
 
         let modrm = decode_modrm(bytes, prefix, pc)?;
         let group = (modrm.byte >> 3) & 0x07;
-        let imm_size = if group == 0 {
+        // Intel SDM section 24.15 defines Group 3 /1 as a compatibility alias
+        // of /0 TEST, including the corresponding immediate width.
+        let imm_size = if matches!(group, 0 | 1) {
             if is_8bit {
                 1
             } else if op_size == 2 {
@@ -882,7 +884,7 @@ impl X86_64Lifter {
         let mut writeback_value = operand;
 
         match group {
-            0 => {
+            0 | 1 => {
                 ops.push(SmirOp::new(
                     OpId(ops.len() as u16),
                     pc,
@@ -981,15 +983,7 @@ impl X86_64Lifter {
                     },
                 ));
             }
-            _ => {
-                if self.strict {
-                    return Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: format!("group3 {}", group),
-                    });
-                }
-                ops.push(SmirOp::new(OpId(ops.len() as u16), pc, OpKind::Nop));
-            }
+            _ => unreachable!("Group 3 selector is masked to three bits"),
         }
 
         if matches!(group, 2 | 3) {

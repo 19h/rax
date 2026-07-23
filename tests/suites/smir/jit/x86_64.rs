@@ -29,6 +29,8 @@ mod apx_push2_pop2;
 mod apx_reserved;
 #[path = "x86_64/cmpccxadd.rs"]
 mod cmpccxadd;
+#[path = "x86_64/group3_alias.rs"]
+mod group3_alias;
 
 /// Build a vcpu loaded with the `bench_loop` hot loop for `iters` iterations.
 //   xor eax,eax ; mov ecx,iters ; loop: add eax,3 ; xor edx,edx ; sub eax,1 ;
