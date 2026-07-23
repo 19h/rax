@@ -494,6 +494,17 @@ pub fn x86_evex_chunk_extract_replay_spans(
     })
 }
 
+/// Identify valid register-only EVEX VFPCLASS* replay groups in `block` in
+/// O(N) time and O(P) space for N operations and P unique guest PCs.
+pub fn x86_evex_fp_class_replay_spans(
+    block: &SmirBlock,
+    instruction_bytes: &HashMap<(BlockId, GuestAddr), X86InstructionBytes>,
+) -> HashMap<usize, X86NativeReplaySpan> {
+    x86_evex_replay_spans_where(block, instruction_bytes, |instruction| {
+        instruction.evex_register_fp_class_requirements()
+    })
+}
+
 /// Identify valid register-only EVEX floating shuffle/interleave replay groups
 /// in `block` in O(N) time and O(P) space for N operations and P unique guest
 /// PCs.
@@ -736,6 +747,7 @@ pub fn x86_evex_native_replay_spans(
                     .evex_register_chunk_extract_requirements()
                     .map(|(needs_vl, needs_dq)| (needs_vl, needs_dq, false))
             })
+            .or_else(|| instruction.evex_register_fp_class_requirements())
             .or_else(|| {
                 instruction
                     .evex_register_fp_shuffle_needs_vl()

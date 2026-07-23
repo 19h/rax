@@ -371,6 +371,7 @@ impl X86_64Vcpu {
             0x67 if evex.pp == 0 && !evex.w => execute::simd::evex_fpclass(self, ctx, 2, true),
             0x67 if evex.pp == 1 && !evex.w => execute::simd::evex_fpclass(self, ctx, 4, true),
             0x67 if evex.pp == 1 && evex.w => execute::simd::evex_fpclass(self, ctx, 8, true),
+            0x66 | 0x67 => self.inject_undefined_instruction(),
 
             // ============================================================================
             // AVX-512 VDBPSADBW Instruction

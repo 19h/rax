@@ -19,6 +19,9 @@ mod chunk_insert;
 #[path = "x86_native_replay_tests/chunk_shuffle.rs"]
 mod chunk_shuffle;
 
+#[path = "x86_native_replay_tests/fp_class.rs"]
+mod fp_class;
+
 #[path = "x86_native_replay_tests/gpr_broadcast.rs"]
 mod gpr_broadcast;
 

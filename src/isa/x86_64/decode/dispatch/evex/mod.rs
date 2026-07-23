@@ -97,6 +97,9 @@ mod chunk_insert_tests;
 mod chunk_shuffle_tests;
 
 #[cfg(test)]
+mod fp_class_tests;
+
+#[cfg(test)]
 mod gpr_broadcast_tests;
 
 #[cfg(test)]

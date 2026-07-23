@@ -2334,7 +2334,7 @@ fn evex_reg_gpr(evex: &crate::isa::x86_64::cpu::EvexPrefix, reg: u8) -> u8 {
 }
 
 #[inline]
-fn evex_rm_vec(evex: &crate::isa::x86_64::cpu::EvexPrefix, rm: u8) -> u8 {
+pub(super) fn evex_rm_vec(evex: &crate::isa::x86_64::cpu::EvexPrefix, rm: u8) -> u8 {
     (rm & 0x07) | if evex.b { 0 } else { 8 } | if evex.x { 0 } else { 16 }
 }
 
@@ -2792,78 +2792,6 @@ fn write_masked_conversion_result(
     write_vec_vl(vcpu, dest, dst_vl_bytes, &result);
 }
 
-fn fpclass_match_u16(bits: u16, imm: u8) -> bool {
-    let sign = (bits & 0x8000) != 0;
-    let exp = (bits >> 10) & 0x1f;
-    let frac = bits & 0x03ff;
-    let quiet_bit = 0x0200;
-
-    let class_bit = if exp == 0x1f && frac != 0 {
-        if (frac & quiet_bit) != 0 { 0 } else { 7 }
-    } else if exp == 0 && frac != 0 {
-        let mask = (1u8 << 5) | if sign { 1u8 << 6 } else { 0 };
-        return (imm & mask) != 0;
-    } else if exp == 0 && frac == 0 {
-        if sign { 2 } else { 1 }
-    } else if exp == 0x1f {
-        if sign { 4 } else { 3 }
-    } else if sign {
-        6
-    } else {
-        return false;
-    };
-
-    (imm >> class_bit) & 1 != 0
-}
-
-fn fpclass_match_u32(bits: u32, imm: u8) -> bool {
-    let sign = (bits & 0x8000_0000) != 0;
-    let exp = (bits >> 23) & 0xff;
-    let frac = bits & 0x007f_ffff;
-    let quiet_bit = 0x0040_0000;
-
-    let class_bit = if exp == 0xff && frac != 0 {
-        if (frac & quiet_bit) != 0 { 0 } else { 7 }
-    } else if exp == 0 && frac != 0 {
-        let mask = (1u8 << 5) | if sign { 1u8 << 6 } else { 0 };
-        return (imm & mask) != 0;
-    } else if exp == 0 && frac == 0 {
-        if sign { 2 } else { 1 }
-    } else if exp == 0xff {
-        if sign { 4 } else { 3 }
-    } else if sign {
-        6
-    } else {
-        return false;
-    };
-
-    (imm >> class_bit) & 1 != 0
-}
-
-fn fpclass_match_u64(bits: u64, imm: u8) -> bool {
-    let sign = (bits & 0x8000_0000_0000_0000) != 0;
-    let exp = (bits >> 52) & 0x7ff;
-    let frac = bits & 0x000f_ffff_ffff_ffff;
-    let quiet_bit = 0x0008_0000_0000_0000;
-
-    let class_bit = if exp == 0x7ff && frac != 0 {
-        if (frac & quiet_bit) != 0 { 0 } else { 7 }
-    } else if exp == 0 && frac != 0 {
-        let mask = (1u8 << 5) | if sign { 1u8 << 6 } else { 0 };
-        return (imm & mask) != 0;
-    } else if exp == 0 && frac == 0 {
-        if sign { 2 } else { 1 }
-    } else if exp == 0x7ff {
-        if sign { 4 } else { 3 }
-    } else if sign {
-        6
-    } else {
-        return false;
-    };
-
-    (imm >> class_bit) & 1 != 0
-}
-
 fn read_fp_elem(bytes: &[u8; 64], lane: usize, elem_size: usize) -> u64 {
     let base = lane * elem_size;
     let mut raw = [0u8; 8];
@@ -3042,79 +2970,6 @@ pub fn evex_fp_cmp(
             _ => false,
         };
         if cond {
-            result |= 1u64 << lane;
-        }
-    }
-
-    vcpu.regs.k[k_dst] = result;
-    vcpu.regs.rip += ctx.cursor as u64;
-    Ok(None)
-}
-
-/// EVEX VFPCLASSPS/PD/PH and VFPCLASSSS/SD/SH: classify FP elements into a k-mask.
-pub fn evex_fpclass(
-    vcpu: &mut X86_64Vcpu,
-    ctx: &mut InsnContext,
-    elem_size: usize,
-    scalar: bool,
-) -> Result<Option<VcpuExit>> {
-    let evex = ctx
-        .evex
-        .ok_or_else(|| Error::Emulator("EVEX FP classify requires EVEX prefix".to_string()))?;
-
-    if evex.vvvv != 0xF || evex.z {
-        return vcpu.inject_undefined_instruction();
-    }
-
-    let modrm_start = ctx.cursor;
-    let (reg, rm, is_memory, addr, _) = vcpu.decode_modrm(ctx)?;
-    let imm = ctx.consume_u8()?;
-
-    let k_dst = (reg & 0x07) as usize;
-    let src_reg = evex_rm_vec(&evex, rm);
-    let vl_bytes = if scalar { 16 } else { vl_bytes_of(evex.ll) };
-    let num_elems = if scalar { 1 } else { vl_bytes / elem_size };
-    let addr = if is_memory {
-        let scale = if evex.broadcast || scalar {
-            elem_size
-        } else {
-            vl_bytes
-        };
-        evex_scaled_disp8_addr(ctx, modrm_start, addr, scale)
-    } else {
-        addr
-    };
-
-    let src_bytes = if is_memory {
-        if evex.broadcast && !scalar {
-            let elem = vcpu.read_mem(addr, elem_size as u8)?;
-            let elem_le = elem.to_le_bytes();
-            let mut data = [0u8; 64];
-            for lane in 0..num_elems {
-                let base = lane * elem_size;
-                data[base..base + elem_size].copy_from_slice(&elem_le[..elem_size]);
-            }
-            data
-        } else {
-            load_mem_bytes(vcpu, addr, elem_size, num_elems)?
-        }
-    } else {
-        read_reg_bytes(vcpu, src_reg, vl_bytes)
-    };
-
-    let writemask = evex_mask(vcpu, evex.aaa, num_elems);
-    let mut result = 0u64;
-    for lane in 0..num_elems {
-        if (writemask >> lane) & 1 == 0 {
-            continue;
-        }
-        let matched = match elem_size {
-            2 => fpclass_match_u16(read_fp_elem(&src_bytes, lane, elem_size) as u16, imm),
-            4 => fpclass_match_u32(read_fp_elem(&src_bytes, lane, elem_size) as u32, imm),
-            8 => fpclass_match_u64(read_fp_elem(&src_bytes, lane, elem_size), imm),
-            _ => false,
-        };
-        if matched {
             result |= 1u64 << lane;
         }
     }
