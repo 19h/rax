@@ -19,6 +19,188 @@ use crate::smir::ir::{
 };
 
 impl X86_64Lifter {
+    /// Lift the six legacy MMX/SSE packed conversion forms in the `0F 2A`,
+    /// `0F 2C`, and `0F 2D` cells. MMX register indices remain three bits;
+    /// ordinary REX.R extends the XMM destination of `2A`, while REX.B extends
+    /// the XMM source of `2C`/`2D`.
+    pub(crate) fn lift_sse_mmx_fp_convert(
+        &self,
+        opcode: u8,
+        bytes: &[u8],
+        prefix: &X86Prefix,
+        pc: u64,
+        ctx: &mut LiftContext,
+    ) -> Result<LiftResult, LiftError> {
+        if prefix.lock
+            || prefix.rex2.is_some()
+            || prefix.rep_prefix.is_some()
+            || !matches!(opcode, 0x2A | 0x2C | 0x2D)
+        {
+            return Err(LiftError::InvalidEncoding {
+                addr: pc,
+                bytes: bytes.to_vec(),
+            });
+        }
+
+        let modrm = decode_modrm(bytes, prefix, pc)?;
+        let next_pc = pc + prefix.cursor as u64 + modrm.bytes_consumed as u64;
+        let fp_elem = if prefix.operand_size_override {
+            VecElementType::F64
+        } else {
+            VecElementType::F32
+        };
+        let prefix_kind = if prefix.operand_size_override {
+            X86SsePrefix::OpSize
+        } else {
+            X86SsePrefix::None
+        };
+        let mut ops = Vec::new();
+
+        if opcode == 0x2A {
+            let src = if modrm.is_memory {
+                let (addr, pre_ops) =
+                    self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                ops.extend(pre_ops);
+                let value = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VLoad {
+                        dst: value,
+                        addr,
+                        width: VecWidth::V64,
+                    },
+                ));
+                value
+            } else {
+                self.mm(modrm.rm)
+            };
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86PackedIntToFp {
+                    dst: self.xmm(modrm.reg),
+                    src,
+                    mask: None,
+                    int_elem: VecElementType::I32,
+                    fp_elem,
+                    signed: true,
+                    lanes: 2,
+                    src_width: VecWidth::V64,
+                    // CVTPI2PS writes only the low quadword; CVTPI2PD
+                    // overwrites the complete legacy XMM destination.
+                    dst_width: if fp_elem == VecElementType::F32 {
+                        VecWidth::V64
+                    } else {
+                        VecWidth::V128
+                    },
+                    mask_zeroing: false,
+                    zero_upper: false,
+                    round: FpRoundMode::Dynamic,
+                    suppress_exceptions: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: prefix_kind,
+                    opcode,
+                },
+            ));
+
+            // Intel specifies that CVTPI2PS enters MMX state for either
+            // source form. CVTPI2PD enters it only for an MM-register source;
+            // its m64 form neither enters MMX state nor takes x87 exceptions.
+            if fp_elem == VecElementType::F32 || !modrm.is_memory {
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86X87Control {
+                        kind: X86X87ControlKind::EnterMmx,
+                        addr: None,
+                    },
+                ));
+            }
+        } else {
+            let src_width = if fp_elem == VecElementType::F32 {
+                VecWidth::V64
+            } else {
+                VecWidth::V128
+            };
+            let src = if modrm.is_memory {
+                let (addr, pre_ops) =
+                    self.x86_addr_to_smir(modrm.addr.as_ref().unwrap(), next_pc, ctx);
+                ops.extend(pre_ops);
+                if fp_elem == VecElementType::F64 {
+                    // Table 24-4 classifies the legacy packed-double memory
+                    // forms as 16-byte-aligned before the 128-bit source read.
+                    ops.push(SmirOp::new(
+                        OpId(ops.len() as u16),
+                        pc,
+                        OpKind::X86CheckAlignment {
+                            addr: addr.clone(),
+                            alignment: 16,
+                        },
+                    ));
+                }
+                let value = ctx.alloc_vreg();
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::VLoad {
+                        dst: value,
+                        addr,
+                        width: src_width,
+                    },
+                ));
+                value
+            } else {
+                self.xmm(modrm.rm)
+            };
+            let truncate = opcode == 0x2C;
+            ops.push(SmirOp::with_hint(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86PackedFpToInt {
+                    dst: self.mm(modrm.reg),
+                    src,
+                    mask: None,
+                    fp_elem,
+                    int_elem: VecElementType::I32,
+                    signed: true,
+                    truncate,
+                    lanes: 2,
+                    src_width,
+                    dst_width: VecWidth::V64,
+                    mask_zeroing: false,
+                    zero_upper: false,
+                    round: if truncate {
+                        FpRoundMode::RoundTowardZero
+                    } else {
+                        FpRoundMode::Dynamic
+                    },
+                    suppress_exceptions: false,
+                },
+                X86OpHint::SseOp {
+                    prefix: prefix_kind,
+                    opcode,
+                },
+            ));
+            // The transition follows conversion so an unmasked SIMD
+            // exception leaves both the MMX destination and MMX state intact.
+            ops.push(SmirOp::new(
+                OpId(ops.len() as u16),
+                pc,
+                OpKind::X86X87Control {
+                    kind: X86X87ControlKind::EnterMmx,
+                    addr: None,
+                },
+            ));
+        }
+
+        Ok(LiftResult::fallthrough(
+            ops,
+            prefix.cursor + modrm.bytes_consumed,
+        ))
+    }
+
     pub(crate) fn lift_sse_sqrt(
         &self,
         bytes: &[u8],

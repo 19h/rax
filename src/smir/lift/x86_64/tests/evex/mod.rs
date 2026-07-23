@@ -18,5 +18,7 @@ mod ops;
 #[cfg(test)]
 mod permute;
 #[cfg(test)]
+mod scalar_integer_convert;
+#[cfg(test)]
 mod sqrt;
 use crate::smir::lift::x86_64::*;

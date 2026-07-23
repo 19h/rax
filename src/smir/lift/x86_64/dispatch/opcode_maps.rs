@@ -816,6 +816,12 @@ impl X86_64Lifter {
             0x2E | 0x2F => self.lift_sse_comi(opcode2, after_opcode, &prefix2, pc, ctx),
 
             // Scalar FP-to-signed-integer conversions.
+            // Legacy MMX/SSE conversion forms use no mandatory repeat prefix;
+            // 66H selects the packed-double variant. F2H/F3H retain the
+            // scalar XMM-to-GPR conversion family below.
+            0x2A | 0x2C | 0x2D if prefix2.rep_prefix.is_none() => {
+                self.lift_sse_mmx_fp_convert(opcode2, after_opcode, &prefix2, pc, ctx)
+            }
             0x2C | 0x2D => self.lift_sse_fp_to_int(opcode2, after_opcode, &prefix2, pc, ctx),
 
             // Scalar signed-integer-to-FP conversions.

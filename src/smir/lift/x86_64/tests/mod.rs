@@ -92,6 +92,8 @@ mod legacy_0f3a;
 #[cfg(test)]
 mod lmsw;
 #[cfg(test)]
+mod mmx_convert;
+#[cfg(test)]
 mod monitor_mwait;
 #[cfg(test)]
 mod movdir64b;
