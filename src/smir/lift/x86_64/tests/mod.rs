@@ -104,6 +104,8 @@ mod pkru;
 #[cfg(test)]
 mod pop_segment;
 #[cfg(test)]
+mod primary_dispatch;
+#[cfg(test)]
 mod ptwrite;
 #[cfg(test)]
 mod push_segment;

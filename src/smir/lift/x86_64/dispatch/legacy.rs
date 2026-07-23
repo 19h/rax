@@ -824,20 +824,15 @@ impl X86_64Lifter {
                 pc,
             ),
 
-            // Unsupported - return error with mnemonic
-            _ => {
-                if self.strict {
-                    Err(LiftError::Unsupported {
-                        addr: pc,
-                        mnemonic: format!("0x{:02X}", opcode),
-                    })
-                } else {
-                    // In non-strict mode, emit a Nop and continue
-                    Ok(LiftResult::fallthrough(
-                        vec![SmirOp::new(OpId(0), pc, OpKind::Nop)],
-                        prefix.cursor + 1,
-                    ))
-                }
+            // Prefix and vector-lead bytes cannot reach legacy primary
+            // dispatch. Ordinary prefixes are consumed by decode_prefixes(),
+            // 62/C4/C5 are intercepted above, and the same bytes after REX2
+            // are rejected by rex2_reserved_bytes_consumed(). Keep the match
+            // exhaustive so any newly unclassified primary opcode is a compile
+            // error instead of a strict-lifting barrier or a non-strict NOP.
+            0x26 | 0x2E | 0x36 | 0x3E | 0x40..=0x4F | 0x62 | 0x64..=0x67 | 0xC4 | 0xC5
+            | 0xD5 | 0xF0 | 0xF2 | 0xF3 => {
+                unreachable!("prefix or vector lead reached legacy primary dispatch")
             }
         }?;
         Ok(self.retain_rex2_apx_requirement(&prefix, pc, result))
