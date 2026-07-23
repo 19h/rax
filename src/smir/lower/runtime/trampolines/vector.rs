@@ -570,6 +570,10 @@ pub fn is_x86_native_vector_op(op: &crate::smir::ir::ops::OpKind) -> bool {
     use crate::smir::ir::ops::OpKind;
     use crate::smir::ir::types::{ArchReg, VReg, VecWidth, X86Reg};
 
+    if let OpKind::X86Opmask(opmask) = op {
+        return crate::smir::lower::x86_64::x86_opmask_native_shape_valid(opmask);
+    }
+
     if !matches!(
         op,
         OpKind::VMov { .. }
@@ -3525,6 +3529,10 @@ pub(crate) fn x86_native_vector_smir_op(op: &crate::smir::ir::ops::SmirOp) -> bo
     if !is_x86_native_vector_op(&op.kind) {
         return false;
     }
+    if let OpKind::X86Opmask(opmask) = &op.kind {
+        return op.x86_hint.is_none()
+            && crate::smir::lower::x86_64::x86_opmask_native_shape_valid(opmask);
+    }
     let low_vector = |reg: &VReg| {
         matches!(
             reg,
@@ -5994,6 +6002,10 @@ pub fn x86_native_vector_features_supported_excluding(
                 | OpKind::X86Recip28 { .. }
                 | OpKind::X86Rsqrt28 { .. }
         );
+        if let OpKind::X86Opmask(opmask) = kind {
+            needs_dq |= crate::smir::lower::x86_64::x86_opmask_needs_avx512dq(opmask);
+            continue;
+        }
         let width = match kind {
             OpKind::VMov { width, .. }
             | OpKind::VAnd { width, .. }

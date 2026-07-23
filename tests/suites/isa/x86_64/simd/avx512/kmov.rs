@@ -292,7 +292,7 @@ fn test_kmovw_edx_k7() {
 fn test_kmovd_k0_k1() {
     // KMOVD K0, K1
     let code = [
-        0xc5, 0xfb, 0x90, 0xc1, // KMOVD K0, K1
+        0xc4, 0xe1, 0xf9, 0x90, 0xc1, // KMOVD K0, K1
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -303,7 +303,7 @@ fn test_kmovd_k0_k1() {
 fn test_kmovd_k1_k2() {
     // KMOVD K1, K2
     let code = [
-        0xc5, 0xfb, 0x90, 0xca, // KMOVD K1, K2
+        0xc4, 0xe1, 0xf9, 0x90, 0xca, // KMOVD K1, K2
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -314,7 +314,7 @@ fn test_kmovd_k1_k2() {
 fn test_kmovd_k2_k3() {
     // KMOVD K2, K3
     let code = [
-        0xc5, 0xfb, 0x90, 0xd3, // KMOVD K2, K3
+        0xc4, 0xe1, 0xf9, 0x90, 0xd3, // KMOVD K2, K3
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -325,7 +325,7 @@ fn test_kmovd_k2_k3() {
 fn test_kmovd_k3_k4() {
     // KMOVD K3, K4
     let code = [
-        0xc5, 0xfb, 0x90, 0xdc, // KMOVD K3, K4
+        0xc4, 0xe1, 0xf9, 0x90, 0xdc, // KMOVD K3, K4
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -336,7 +336,7 @@ fn test_kmovd_k3_k4() {
 fn test_kmovd_k4_k5() {
     // KMOVD K4, K5
     let code = [
-        0xc5, 0xfb, 0x90, 0xe5, // KMOVD K4, K5
+        0xc4, 0xe1, 0xf9, 0x90, 0xe5, // KMOVD K4, K5
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -347,7 +347,7 @@ fn test_kmovd_k4_k5() {
 fn test_kmovd_k5_k6() {
     // KMOVD K5, K6
     let code = [
-        0xc5, 0xfb, 0x90, 0xee, // KMOVD K5, K6
+        0xc4, 0xe1, 0xf9, 0x90, 0xee, // KMOVD K5, K6
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -358,7 +358,7 @@ fn test_kmovd_k5_k6() {
 fn test_kmovd_k6_k7() {
     // KMOVD K6, K7
     let code = [
-        0xc5, 0xfb, 0x90, 0xf7, // KMOVD K6, K7
+        0xc4, 0xe1, 0xf9, 0x90, 0xf7, // KMOVD K6, K7
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -369,7 +369,7 @@ fn test_kmovd_k6_k7() {
 fn test_kmovd_k7_k0() {
     // KMOVD K7, K0
     let code = [
-        0xc5, 0xfb, 0x90, 0xf8, // KMOVD K7, K0
+        0xc4, 0xe1, 0xf9, 0x90, 0xf8, // KMOVD K7, K0
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -429,7 +429,7 @@ fn test_kmovd_edi_k7() {
 fn test_kmovq_k0_k1() {
     // KMOVQ K0, K1
     let code = [
-        0xc4, 0xe1, 0xfb, 0x90, 0xc1, // KMOVQ K0, K1
+        0xc4, 0xe1, 0xf8, 0x90, 0xc1, // KMOVQ K0, K1
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -440,7 +440,7 @@ fn test_kmovq_k0_k1() {
 fn test_kmovq_k1_k2() {
     // KMOVQ K1, K2
     let code = [
-        0xc4, 0xe1, 0xfb, 0x90, 0xca, // KMOVQ K1, K2
+        0xc4, 0xe1, 0xf8, 0x90, 0xca, // KMOVQ K1, K2
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -451,7 +451,7 @@ fn test_kmovq_k1_k2() {
 fn test_kmovq_k2_k3() {
     // KMOVQ K2, K3
     let code = [
-        0xc4, 0xe1, 0xfb, 0x90, 0xd3, // KMOVQ K2, K3
+        0xc4, 0xe1, 0xf8, 0x90, 0xd3, // KMOVQ K2, K3
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -462,7 +462,7 @@ fn test_kmovq_k2_k3() {
 fn test_kmovq_k3_k4() {
     // KMOVQ K3, K4
     let code = [
-        0xc4, 0xe1, 0xfb, 0x90, 0xdc, // KMOVQ K3, K4
+        0xc4, 0xe1, 0xf8, 0x90, 0xdc, // KMOVQ K3, K4
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -473,7 +473,7 @@ fn test_kmovq_k3_k4() {
 fn test_kmovq_k4_k5() {
     // KMOVQ K4, K5
     let code = [
-        0xc4, 0xe1, 0xfb, 0x90, 0xe5, // KMOVQ K4, K5
+        0xc4, 0xe1, 0xf8, 0x90, 0xe5, // KMOVQ K4, K5
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -484,7 +484,7 @@ fn test_kmovq_k4_k5() {
 fn test_kmovq_k5_k6() {
     // KMOVQ K5, K6
     let code = [
-        0xc4, 0xe1, 0xfb, 0x90, 0xee, // KMOVQ K5, K6
+        0xc4, 0xe1, 0xf8, 0x90, 0xee, // KMOVQ K5, K6
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -495,7 +495,7 @@ fn test_kmovq_k5_k6() {
 fn test_kmovq_k6_k7() {
     // KMOVQ K6, K7
     let code = [
-        0xc4, 0xe1, 0xfb, 0x90, 0xf7, // KMOVQ K6, K7
+        0xc4, 0xe1, 0xf8, 0x90, 0xf7, // KMOVQ K6, K7
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -506,7 +506,7 @@ fn test_kmovq_k6_k7() {
 fn test_kmovq_k7_k0() {
     // KMOVQ K7, K0
     let code = [
-        0xc4, 0xe1, 0xfb, 0x90, 0xf8, // KMOVQ K7, K0
+        0xc4, 0xe1, 0xf8, 0x90, 0xf8, // KMOVQ K7, K0
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);
@@ -579,13 +579,13 @@ fn test_kmovw_chain() {
 fn test_kmovd_chain_all() {
     // Chain all mask registers
     let code = [
-        0xc5, 0xfb, 0x90, 0xc8, // KMOVD K1, K0
-        0xc5, 0xfb, 0x90, 0xd1, // KMOVD K2, K1
-        0xc5, 0xfb, 0x90, 0xda, // KMOVD K3, K2
-        0xc5, 0xfb, 0x90, 0xe3, // KMOVD K4, K3
-        0xc5, 0xfb, 0x90, 0xec, // KMOVD K5, K4
-        0xc5, 0xfb, 0x90, 0xf5, // KMOVD K6, K5
-        0xc5, 0xfb, 0x90, 0xfe, // KMOVD K7, K6
+        0xc4, 0xe1, 0xf9, 0x90, 0xc8, // KMOVD K1, K0
+        0xc4, 0xe1, 0xf9, 0x90, 0xd1, // KMOVD K2, K1
+        0xc4, 0xe1, 0xf9, 0x90, 0xda, // KMOVD K3, K2
+        0xc4, 0xe1, 0xf9, 0x90, 0xe3, // KMOVD K4, K3
+        0xc4, 0xe1, 0xf9, 0x90, 0xec, // KMOVD K5, K4
+        0xc4, 0xe1, 0xf9, 0x90, 0xf5, // KMOVD K6, K5
+        0xc4, 0xe1, 0xf9, 0x90, 0xfe, // KMOVD K7, K6
         0xf4, // HLT
     ];
     let (mut vcpu, _) = setup_vm(&code, None);

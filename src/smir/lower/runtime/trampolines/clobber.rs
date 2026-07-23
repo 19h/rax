@@ -503,6 +503,20 @@ pub(crate) fn block_is_clobber_safe(
             OpKind::X86CheckAlignment { addr, alignment }
                 if matches!(alignment, 16 | 32 | 64) && x86_jit_mem_address_shape_valid(addr)
         );
+        let opmask_ok = matches!(
+            &op.kind,
+            OpKind::X86Opmask(opmask)
+                if op.x86_hint.is_none()
+                    && crate::smir::lower::x86_64::x86_opmask_native_shape_valid(opmask)
+                    && opmask.memory_address().is_none_or(|addr| {
+                        allow_mem && x86_jit_mem_address_shape_valid(addr)
+                    })
+        );
+        let opmask_mem_ok = opmask_ok
+            && matches!(
+                &op.kind,
+                OpKind::X86Opmask(opmask) if opmask.reads_memory() || opmask.writes_memory()
+            );
         let vector_mem_ok = allow_mem && x86_jit_vector_mem_shape_valid(&op.kind);
         let mmx_mem_ok = allow_mem && x86_jit_mmx_mem_shape_valid(op);
         let sse4a_movnt_ok = allow_mem
@@ -683,6 +697,7 @@ pub(crate) fn block_is_clobber_safe(
         };
         let pkru_ok = crate::smir::lower::x86_64::x86_pkru_shape_valid(&op.kind);
         let stack_state_ok = stack_mov_ok
+            || opmask_ok
             || stack_alu_ok
             || state_extend_ok
             || state_cmove_ok
@@ -769,6 +784,7 @@ pub(crate) fn block_is_clobber_safe(
         let mem_ok = (allow_mem && x86_jit_scalar_mem_shape_valid(&op.kind))
             || cldemote_ok
             || alignment_ok
+            || opmask_mem_ok
             || vector_mem_ok
             || mmx_mem_ok
             || sse4a_movnt_ok
@@ -797,7 +813,11 @@ pub(crate) fn block_is_clobber_safe(
                 | OpKind::X86Adx { .. }
                 | OpKind::X86XTest
         ) || guarded_div_ok;
-        let vector_ok = x86_native_vector_smir_op(op);
+        let vector_ok = if matches!(op.kind, OpKind::X86Opmask(_)) {
+            opmask_ok
+        } else {
+            x86_native_vector_smir_op(op)
+        };
         let mmx_ok = is_x86_native_mmx_op(op) || mmx_mem_ok;
         if !op.is_jit_safe() && !mem_ok && !scalar_ok && !vector_ok && !mmx_ok {
             return false;
@@ -867,6 +887,9 @@ pub(crate) fn block_is_clobber_safe(
             return false;
         }
         if matches!(op.kind, OpKind::X86CheckAlignment { .. }) && !alignment_ok {
+            return false;
+        }
+        if matches!(op.kind, OpKind::X86Opmask(_)) && !opmask_ok {
             return false;
         }
         if matches!(op.kind, OpKind::VLoad { .. } | OpKind::VStore { .. })

@@ -57,6 +57,11 @@ impl X86_64Lifter {
 
         match prefix.map {
             X86VecMap::Map0F => match opcode {
+                0x41 | 0x42 | 0x44..=0x47 | 0x4A | 0x4B | 0x90..=0x93 | 0x98 | 0x99
+                    if prefix.encoding == VecEncodingKind::Vex =>
+                {
+                    self.lift_vex_opmask(prefix, opcode, bytes, pc, ctx)
+                }
                 // Packed integer/FP32/FP64 conversions. The six 0F 5B/E6
                 // families have VEX encodings; the unsigned and I64 result
                 // families are EVEX-only.
@@ -2563,6 +2568,9 @@ impl X86_64Lifter {
                 }),
             },
             X86VecMap::Map0F3A => match opcode {
+                0x30..=0x33 if prefix.encoding == VecEncodingKind::Vex => {
+                    self.lift_vex_opmask(prefix, opcode, bytes, pc, ctx)
+                }
                 0x26 | 0x27
                     if prefix.encoding == VecEncodingKind::Evex
                         && matches!(prefix.pp, X86SsePrefix::None | X86SsePrefix::OpSize) =>

@@ -199,55 +199,47 @@ impl X86_64Vcpu {
                     (1, 1, 0x99) => return self.execute_ktest(ctx, vvvv, 32),
 
                     // KMOVW k1, k2/m16 - VEX.L0.0F.W0 90 /r
-                    (0, 0, 0x90) => return self.execute_kmov_load(ctx, 16),
+                    (0, 0, 0x90) => return self.execute_kmov_load(ctx, vvvv, 16),
                     // KMOVB k1, k2/m8 - VEX.L0.66.0F.W0 90 /r
-                    (1, 0, 0x90) => return self.execute_kmov_load(ctx, 8),
+                    (1, 0, 0x90) => return self.execute_kmov_load(ctx, vvvv, 8),
                     // KMOVD k1, k2/m32 - VEX.L0.66.0F.W1 90 /r
-                    (1, 1, 0x90) => return self.execute_kmov_load(ctx, 32),
-                    // KMOVD k1, k2/m32 - VEX.L0.F2.0F.W0 90 /r (alternate encoding)
-                    (3, 0, 0x90) => return self.execute_kmov_load(ctx, 32),
+                    (1, 1, 0x90) => return self.execute_kmov_load(ctx, vvvv, 32),
                     // KMOVQ k1, k2/m64 - VEX.L0.0F.W1 90 /r (memory/opmask form)
-                    (0, 1, 0x90) => return self.execute_kmov_load(ctx, 64),
-                    // KMOVQ k1, k2/m64 - VEX.L0.F2.0F.W1 90 /r (accepted alias)
-                    (3, 1, 0x90) => return self.execute_kmov_load(ctx, 64),
+                    (0, 1, 0x90) => return self.execute_kmov_load(ctx, vvvv, 64),
 
                     // KMOVW m16, k1 - VEX.L0.0F.W0 91 /r
-                    (0, 0, 0x91) => return self.execute_kmov_store(ctx, 16),
+                    (0, 0, 0x91) => return self.execute_kmov_store(ctx, vvvv, 16),
                     // KMOVB m8, k1 - VEX.L0.66.0F.W0 91 /r
-                    (1, 0, 0x91) => return self.execute_kmov_store(ctx, 8),
+                    (1, 0, 0x91) => return self.execute_kmov_store(ctx, vvvv, 8),
                     // KMOVD m32, k1 - VEX.L0.66.0F.W1 91 /r
-                    (1, 1, 0x91) => return self.execute_kmov_store(ctx, 32),
-                    // KMOVD m32, k1 - VEX.L0.F2.0F.W0 91 /r
-                    (3, 0, 0x91) => return self.execute_kmov_store(ctx, 32),
+                    (1, 1, 0x91) => return self.execute_kmov_store(ctx, vvvv, 32),
                     // KMOVQ m64, k1 - VEX.L0.0F.W1 91 /r
-                    (0, 1, 0x91) => return self.execute_kmov_store(ctx, 64),
-                    // KMOVQ m64, k1 - VEX.L0.F2.0F.W1 91 /r (accepted alias)
-                    (3, 1, 0x91) => return self.execute_kmov_store(ctx, 64),
+                    (0, 1, 0x91) => return self.execute_kmov_store(ctx, vvvv, 64),
 
                     // KMOVW k1, r32 - VEX.L0.0F.W0 92 /r
-                    (0, 0, 0x92) => return self.execute_kmov_from_gpr(ctx, 16),
+                    (0, 0, 0x92) => return self.execute_kmov_from_gpr(ctx, vvvv, 16),
                     // KMOVB k1, r32 - VEX.L0.66.0F.W0 92 /r
-                    (1, 0, 0x92) => return self.execute_kmov_from_gpr(ctx, 8),
+                    (1, 0, 0x92) => return self.execute_kmov_from_gpr(ctx, vvvv, 8),
                     // KMOVD k1, r32 - VEX.L0.F2.0F.W0 92 /r
-                    (3, 0, 0x92) => return self.execute_kmov_from_gpr(ctx, 32),
+                    (3, 0, 0x92) => return self.execute_kmov_from_gpr(ctx, vvvv, 32),
                     // KMOVQ k1, r64 - VEX.L0.F2.0F.W1 92 /r
-                    (3, 1, 0x92) => return self.execute_kmov_from_gpr(ctx, 64),
+                    (3, 1, 0x92) => return self.execute_kmov_from_gpr(ctx, vvvv, 64),
 
                     // KMOVW r32, k1 - VEX.L0.0F.W0 93 /r
-                    (0, 0, 0x93) => return self.execute_kmov_to_gpr(ctx, 16),
+                    (0, 0, 0x93) => return self.execute_kmov_to_gpr(ctx, vvvv, 16),
                     // KMOVB r32, k1 - VEX.L0.66.0F.W0 93 /r
-                    (1, 0, 0x93) => return self.execute_kmov_to_gpr(ctx, 8),
+                    (1, 0, 0x93) => return self.execute_kmov_to_gpr(ctx, vvvv, 8),
                     // KMOVD r32, k1 - VEX.L0.F2.0F.W0 93 /r
-                    (3, 0, 0x93) => return self.execute_kmov_to_gpr(ctx, 32),
+                    (3, 0, 0x93) => return self.execute_kmov_to_gpr(ctx, vvvv, 32),
                     // KMOVQ r64, k1 - VEX.L0.F2.0F.W1 93 /r
-                    (3, 1, 0x93) => return self.execute_kmov_to_gpr(ctx, 64),
+                    (3, 1, 0x93) => return self.execute_kmov_to_gpr(ctx, vvvv, 64),
 
                     // KNOTW/B/Q/D - VEX.L0.0F/66.W{0,1} 44 /r (unary opmask NOT).
                     // KNOT is L0 (unlike the L1 KAND/KOR/KXOR... binary ops).
-                    (0, 0, 0x44) => return self.execute_kmask_unaryop(ctx, 16, |a| !a),
-                    (1, 0, 0x44) => return self.execute_kmask_unaryop(ctx, 8, |a| !a),
-                    (0, 1, 0x44) => return self.execute_kmask_unaryop(ctx, 64, |a| !a),
-                    (1, 1, 0x44) => return self.execute_kmask_unaryop(ctx, 32, |a| !a),
+                    (0, 0, 0x44) => return self.execute_kmask_unaryop(ctx, vvvv, 16, |a| !a),
+                    (1, 0, 0x44) => return self.execute_kmask_unaryop(ctx, vvvv, 8, |a| !a),
+                    (0, 1, 0x44) => return self.execute_kmask_unaryop(ctx, vvvv, 64, |a| !a),
+                    (1, 1, 0x44) => return self.execute_kmask_unaryop(ctx, vvvv, 32, |a| !a),
 
                     _ => {}
                 }

@@ -72,6 +72,8 @@ mod fast_system_transfer;
 pub use fast_system_transfer::*;
 mod monitor_mwait;
 pub use monitor_mwait::*;
+mod opmask;
+pub use opmask::*;
 mod waitpkg;
 pub use waitpkg::*;
 mod msr;

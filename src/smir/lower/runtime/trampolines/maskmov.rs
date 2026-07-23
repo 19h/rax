@@ -300,5 +300,8 @@ pub(crate) fn x86_jit_op_uses_mem_helper(op: &OpKind) -> bool {
                     | crate::smir::ir::ops::X86SystemSelectorTarget::Stack { .. },
                 ..
             },)
+    ) || matches!(
+        op,
+        OpKind::X86Opmask(opmask) if opmask.reads_memory() || opmask.writes_memory()
     )
 }

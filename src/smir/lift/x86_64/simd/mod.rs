@@ -2,6 +2,8 @@
 
 mod evex;
 pub use evex::*;
+mod opmask;
+pub use opmask::*;
 mod sse;
 pub use sse::*;
 mod vector;

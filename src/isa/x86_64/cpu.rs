@@ -6496,6 +6496,10 @@ mod decode_cache_invalidation_tests {
 mod jit_mmx_tests;
 
 #[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
+#[path = "cpu_jit_opmask_tests.rs"]
+mod jit_opmask_tests;
+
+#[cfg(all(test, feature = "smir-jit", target_arch = "x86_64"))]
 #[path = "cpu_jit_mmx_memory_source_tests.rs"]
 mod jit_mmx_memory_source_tests;
 

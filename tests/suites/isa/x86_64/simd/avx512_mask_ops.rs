@@ -97,17 +97,17 @@ fn test_kmovq_rax_k1() {
 
 #[test]
 fn test_kmovd_k1_k2() {
-    TestCase::from("c5 fb 90 ca").check();
+    TestCase::from("c4 e1 f9 90 ca").check();
 }
 
 #[test]
 fn test_kmovd_k1_m32() {
-    TestCase::from("c5 fb 90 08").check();
+    TestCase::from("c4 e1 f9 90 08").check();
 }
 
 #[test]
 fn test_kmovd_m32_k1() {
-    TestCase::from("c5 fb 91 08").check();
+    TestCase::from("c4 e1 f9 91 08").check();
 }
 
 #[test]

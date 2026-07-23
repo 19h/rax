@@ -1100,12 +1100,16 @@ impl X86_64Vcpu {
     pub(in crate::isa::x86_64) fn execute_kmov_load(
         &mut self,
         ctx: &mut InsnContext,
+        vvvv: u8,
         size_bits: u8,
     ) -> Result<Option<VcpuExit>> {
         let modrm = ctx.consume_u8()?;
+        let mode = (modrm >> 6) & 0x03;
+        if vvvv != 0 || ctx.rex_r() != 0 || (mode == 3 && ctx.rex_b() != 0) {
+            return self.inject_undefined_instruction();
+        }
         let k_dst = ((modrm >> 3) & 0x07) as usize;
         let rm = modrm & 0x07;
-        let mode = (modrm >> 6) & 0x03;
 
         let value = if mode == 3 {
             // Register to register: source is another k reg
@@ -1132,8 +1136,12 @@ impl X86_64Vcpu {
     pub(in crate::isa::x86_64) fn execute_kmov_store(
         &mut self,
         ctx: &mut InsnContext,
+        vvvv: u8,
         size_bits: u8,
     ) -> Result<Option<VcpuExit>> {
+        if vvvv != 0 {
+            return self.inject_undefined_instruction();
+        }
         let (reg, _, is_memory, addr, _) = self.decode_modrm(ctx)?;
 
         if !is_memory {
@@ -1165,16 +1173,17 @@ impl X86_64Vcpu {
     pub(in crate::isa::x86_64) fn execute_kmov_from_gpr(
         &mut self,
         ctx: &mut InsnContext,
+        vvvv: u8,
         size_bits: u8,
     ) -> Result<Option<VcpuExit>> {
         let modrm = ctx.consume_u8()?;
-        let k_dst = ((modrm >> 3) & 0x07) as usize;
-        let rm = modrm & 0x07;
         let mode = (modrm >> 6) & 0x03;
 
-        if mode != 3 {
+        if vvvv != 0 || mode != 3 || ctx.rex_r() != 0 {
             return self.inject_undefined_instruction();
         }
+        let k_dst = ((modrm >> 3) & 0x07) as usize;
+        let rm = modrm & 0x07;
 
         // Get the GPR value
         let gpr_idx = rm + if ctx.rex_b() != 0 { 8 } else { 0 };
@@ -1193,16 +1202,17 @@ impl X86_64Vcpu {
     pub(in crate::isa::x86_64) fn execute_kmov_to_gpr(
         &mut self,
         ctx: &mut InsnContext,
+        vvvv: u8,
         size_bits: u8,
     ) -> Result<Option<VcpuExit>> {
         let modrm = ctx.consume_u8()?;
-        let gpr_reg = ((modrm >> 3) & 0x07) + if ctx.rex_r() != 0 { 8 } else { 0 };
-        let k_src = (modrm & 0x07) as usize;
         let mode = (modrm >> 6) & 0x03;
 
-        if mode != 3 {
+        if vvvv != 0 || mode != 3 || ctx.rex_b() != 0 {
             return self.inject_undefined_instruction();
         }
+        let gpr_reg = ((modrm >> 3) & 0x07) + if ctx.rex_r() != 0 { 8 } else { 0 };
+        let k_src = (modrm & 0x07) as usize;
 
         let value = self.regs.k[k_src];
 
@@ -1230,13 +1240,13 @@ impl X86_64Vcpu {
         F: Fn(u64, u64) -> u64,
     {
         let modrm = ctx.consume_u8()?;
-        let k_dst = ((modrm >> 3) & 0x07) as usize;
-        let k_src2 = (modrm & 0x07) as usize;
         let mode = (modrm >> 6) & 0x03;
 
-        if mode != 3 {
+        if mode != 3 || ctx.rex_r() != 0 || ctx.rex_b() != 0 {
             return self.inject_undefined_instruction();
         }
+        let k_dst = ((modrm >> 3) & 0x07) as usize;
+        let k_src2 = (modrm & 0x07) as usize;
 
         // VEX.vvvv selects the first source opmask register. As in execute_kunpck,
         // vvvv is a 4-bit field (0..=15) but only k0-k7 exist, so a guest can set
@@ -1269,6 +1279,7 @@ impl X86_64Vcpu {
     pub(in crate::isa::x86_64) fn execute_kmask_unaryop<F>(
         &mut self,
         ctx: &mut InsnContext,
+        vvvv: u8,
         size_bits: u8,
         op: F,
     ) -> Result<Option<VcpuExit>>
@@ -1276,13 +1287,13 @@ impl X86_64Vcpu {
         F: Fn(u64) -> u64,
     {
         let modrm = ctx.consume_u8()?;
-        let k_dst = ((modrm >> 3) & 0x07) as usize;
-        let k_src = (modrm & 0x07) as usize;
         let mode = (modrm >> 6) & 0x03;
 
-        if mode != 3 {
+        if vvvv != 0 || mode != 3 || ctx.rex_r() != 0 || ctx.rex_b() != 0 {
             return self.inject_undefined_instruction();
         }
+        let k_dst = ((modrm >> 3) & 0x07) as usize;
+        let k_src = (modrm & 0x07) as usize;
 
         let src = self.regs.k[k_src];
 
@@ -1309,7 +1320,7 @@ impl X86_64Vcpu {
         }
 
         let modrm = ctx.consume_u8()?;
-        if (modrm >> 6) != 3 {
+        if (modrm >> 6) != 3 || ctx.rex_r() != 0 || ctx.rex_b() != 0 {
             return self.inject_undefined_instruction();
         }
 
@@ -1349,7 +1360,7 @@ impl X86_64Vcpu {
         }
 
         let modrm = ctx.consume_u8()?;
-        if (modrm >> 6) != 3 {
+        if (modrm >> 6) != 3 || ctx.rex_r() != 0 || ctx.rex_b() != 0 {
             return self.inject_undefined_instruction();
         }
 
@@ -1384,7 +1395,7 @@ impl X86_64Vcpu {
         lane_bits: u8,
     ) -> Result<Option<VcpuExit>> {
         let modrm = ctx.consume_u8()?;
-        if (modrm >> 6) != 3 {
+        if (modrm >> 6) != 3 || ctx.rex_r() != 0 || ctx.rex_b() != 0 {
             return self.inject_undefined_instruction();
         }
 
@@ -1427,7 +1438,7 @@ impl X86_64Vcpu {
         }
 
         let modrm = ctx.consume_u8()?;
-        if (modrm >> 6) != 3 {
+        if (modrm >> 6) != 3 || ctx.rex_r() != 0 || ctx.rex_b() != 0 {
             return self.inject_undefined_instruction();
         }
 

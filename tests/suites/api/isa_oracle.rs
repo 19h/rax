@@ -185,6 +185,38 @@ fn decodes_x86_with_smir_lift() {
 }
 
 #[test]
+fn emits_structured_x86_opmask_smir() {
+    let mut opts = OracleOptions::default();
+    opts.isa = OracleIsa::X86_64;
+
+    let binary = decode_to_json(&[0xC5, 0xF4, 0x41, 0xDA], &opts).unwrap();
+    let op = &binary["smir"]["ops"][0];
+    assert_eq!(op["kind"]["opcode"], "x86_opmask");
+    assert_eq!(op["kind"]["op"]["operation"], "binary");
+    assert_eq!(op["kind"]["op"]["kind"], "and");
+    assert_eq!(op["kind"]["op"]["width"], "W16");
+    assert_eq!(op["kind"]["op"]["dst"]["name"], "k3");
+    assert_eq!(op["kind"]["op"]["src1"]["name"], "k1");
+    assert_eq!(op["kind"]["op"]["src2"]["name"], "k2");
+    assert_eq!(op["writes"][0]["name"], "k3");
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], false);
+
+    let store = decode_to_json(&[0xC4, 0xE1, 0xF8, 0x91, 0x68, 0x08], &opts).unwrap();
+    let op = &store["smir"]["ops"][0];
+    assert_eq!(op["kind"]["op"]["operation"], "move_from_mask");
+    assert_eq!(op["kind"]["op"]["src"]["name"], "k5");
+    assert_eq!(op["kind"]["op"]["dst"]["kind"], "memory");
+    assert_eq!(op["kind"]["op"]["dst"]["addr"]["kind"], "base_offset");
+    assert_eq!(op["kind"]["op"]["dst"]["addr"]["base"]["name"], "rax");
+    assert_eq!(op["kind"]["op"]["dst"]["addr"]["offset"], 8);
+    assert_eq!(op["kind"]["op"]["width"], "W64");
+    assert_eq!(op["memory"]["reads"], false);
+    assert_eq!(op["memory"]["writes"], true);
+    assert_eq!(op["side_effects"], true);
+}
+
+#[test]
 fn emits_exact_string_port_io_handoff_metadata() {
     let mut opts = OracleOptions::default();
     opts.isa = OracleIsa::X86_64;

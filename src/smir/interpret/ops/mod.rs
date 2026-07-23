@@ -11,6 +11,7 @@ mod fp;
 mod logic;
 mod memory;
 mod meta;
+mod opmask;
 mod shift;
 mod simd;
 mod sse4a;

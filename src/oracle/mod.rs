@@ -2,6 +2,7 @@
 
 mod address;
 mod call_target;
+mod x86_opmask;
 
 use call_target::call_target_json;
 
@@ -4463,6 +4464,7 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             dst_hi,
             selector,
         }) => op_json!("x86_read_pmc", dst_lo, dst_hi, selector),
+        OpKind::X86Opmask(op) => op_json!("x86_opmask", op),
         OpKind::Nop => op_json!("nop"),
         OpKind::Undefined { opcode } => {
             let mut obj = Map::new();

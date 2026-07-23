@@ -1919,7 +1919,7 @@ impl SmirInterpreter {
                 }
             }
 
-            _ => return self.execute_op_meta(ctx, memory, op),
+            _ => return self.execute_op_opmask(ctx, memory, op),
         }
 
         Ok(())

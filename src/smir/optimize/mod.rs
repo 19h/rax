@@ -1924,6 +1924,8 @@ impl OpKind {
 
             OpKind::X86PackedStringCompare { .. } => FlagSet::ALL_X86,
 
+            OpKind::X86Opmask(op) if op.is_test() => FlagSet::ALL_X86,
+
             OpKind::X86Cmpxchg8b16b { .. } => FlagSet::ZF,
 
             OpKind::X86SelectorVerify(..) | OpKind::X86SelectorQuery(..) => FlagSet::ZF,
@@ -2063,6 +2065,8 @@ impl OpKind {
         let mut result = Vec::new();
 
         match self {
+            OpKind::X86Opmask(op) => result.extend(op.source_vregs()),
+
             OpKind::Add { src1, src2, .. }
             | OpKind::Sub { src1, src2, .. }
             | OpKind::Adc { src1, src2, .. }

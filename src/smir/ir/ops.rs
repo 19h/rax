@@ -13,6 +13,8 @@ mod x86_packed_string_types;
 pub use x86_packed_string_types::*;
 mod x86_system_types;
 pub use x86_system_types::*;
+mod x86_opmask_types;
+pub use x86_opmask_types::*;
 
 // ============================================================================
 // Operation Structure
@@ -4006,6 +4008,11 @@ pub enum OpKind {
         dst_hi: VReg,
     },
 
+    /// VEX-encoded AVX-512 mask-register arithmetic, logic, movement, unpack,
+    /// immediate shift, and flag-only tests. The structured payload preserves
+    /// architectural K-register identity and fault-precise KMOV memory forms.
+    X86Opmask(X86OpmaskOp),
+
     /// RDRAND/RDSEED hardware nondeterministic value request.
     X86Random {
         dst: VReg,
@@ -4876,6 +4883,8 @@ impl OpKind {
 
             OpKind::X86ReadPmc(op) => vec![op.dst_lo, op.dst_hi],
 
+            OpKind::X86Opmask(op) => op.dests(),
+
             OpKind::X86Cpuid {
                 dst_eax,
                 dst_ebx,
@@ -5247,6 +5256,7 @@ impl OpKind {
         // Guest memory reads can fault or trigger MMIO/device effects even when
         // their destination is dead.
         self.reads_memory()
+            || matches!(self, OpKind::X86Opmask(op) if op.writes_memory())
             || matches!(
                 self,
                 OpKind::Store { .. }
@@ -5557,7 +5567,7 @@ impl OpKind {
                 }
                 | OpKind::RvVector { .. }
                 | OpKind::Leave
-        )
+        ) || matches!(self, OpKind::X86Opmask(op) if op.reads_memory())
     }
 
     /// Check if this operation writes memory
@@ -5636,7 +5646,7 @@ impl OpKind {
                 | OpKind::X86FarReturn(..)
                 | OpKind::X86DescriptorTableStore(..)
                 | OpKind::RvVector { .. }
-        )
+        ) || matches!(self, OpKind::X86Opmask(op) if op.writes_memory())
     }
 }
 
