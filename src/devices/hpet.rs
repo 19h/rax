@@ -239,15 +239,20 @@ impl Hpet {
             return;
         }
         if run {
-            // Re-anchor the epoch so elapsed ticks accumulate from `counter_offset`.
+            // The counter starts from `counter_offset` at this exact boundary.
+            // Record that value directly: sampling `main_counter()` after
+            // starting can already be several ticks later on a preempted host
+            // and would discard any comparator crossing in that interval.
+            self.last_counter = self.counter_offset;
             self.epoch = Instant::now();
             self.running = true;
         } else {
             // Latch the current value into the offset and stop accumulating.
-            self.counter_offset = self.main_counter();
+            let counter = self.main_counter();
+            self.counter_offset = counter;
+            self.last_counter = counter;
             self.running = false;
         }
-        self.last_counter = self.main_counter();
     }
 
     /// Read a 64-bit register value at an aligned offset.
@@ -575,6 +580,17 @@ mod tests {
             prev > 1000,
             "counter should advance meaningfully, got {prev}"
         );
+    }
+
+    #[test]
+    fn test_enable_preserves_exact_counter_crossing_boundary() {
+        let mut hpet = Hpet::new();
+        hpet.counter_offset = 0x1234_5678;
+
+        hpet.set_running(true);
+
+        assert_eq!(hpet.last_counter, 0x1234_5678);
+        assert!(hpet.running);
     }
 
     #[test]
