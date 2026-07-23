@@ -8,6 +8,7 @@ use crate::smir::ir::context::{ArchRegState, ExitReason, SmirContext};
 use crate::smir::ir::flags::MaterializedFlags;
 use crate::smir::ir::memory::{FlatMemory, SmirMemory};
 use crate::smir::optimize::{OptLevel, optimize_function};
+#[cfg(feature = "smir-jit")]
 use std::collections::HashMap;
 
 const INITIAL_FLAGS: u64 = 0x2 | 0x08D5;
@@ -781,6 +782,7 @@ fn memory_forms_enforce_alignment_fault_atomicity_and_cvtpi2pd_no_mmx_transition
 }
 
 #[test]
+#[cfg(feature = "smir-jit")]
 fn mixed_mmx_xmm_conversion_regions_remain_fail_closed_for_native_jit() {
     for bytes in [
         &[0x0F, 0x2A, 0xC1][..],
